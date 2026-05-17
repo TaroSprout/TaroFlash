@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, provide, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import DeckHero from '@/views/deck/deck-hero.vue'
+import DeckHero from '@/views/deck/deck-hero/index.vue'
 import ModeToolbar from './mode-toolbar/index.vue'
 import ModeStack from './mode-stack.vue'
 import PageDots from './page-dots.vue'

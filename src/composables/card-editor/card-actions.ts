@@ -54,6 +54,12 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
     setMode('view')
   }
 
+  /** Cleanup applied after any successful move: drop selection, refetch source deck. */
+  async function afterMove() {
+    selection.exitSelection()
+    await deck_query.refetch()
+  }
+
   /**
    * Confirm + delete a set of cards. Source of the set:
    *
@@ -80,7 +86,7 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
   function onSelectCard(id?: number) {
     if (id !== undefined) selection.toggleSelectCard(id)
     selection.enterSelection()
-    emitSfx('ui.etc_camera_shutter')
+    emitSfx('ui.select', { blocking: true })
   }
 
   /**
@@ -113,6 +119,7 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
     if (!target) return
 
     await mutations.moveCards({ cards, target_deck_id: target.deck_id })
+    await afterMove()
   }
 
   /** Exit the current mode: drop selection, return to view mode. */
