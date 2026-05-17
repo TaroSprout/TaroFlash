@@ -38,6 +38,8 @@ function onExit() {
         data-testid="bulk-toolbar__count"
         data-theme="purple-500"
         data-theme-dark="purple-800"
+        notch-side="left"
+        class="bgx-diagonal-stripes bgx-opacity-10"
       >
         {{ t('deck-view.bulk-toolbar.count', { count: selected_count }) }}
       </ui-tag>
