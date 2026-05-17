@@ -2,9 +2,12 @@
 name: update-tests
 description: Analyse branch changes in `src/` and `supabase/` and write tests to reach ~90% coverage of changed lines
 allowed-tools: Read, Edit, Write, Bash, Glob, Grep
-argument-hint: ''
-arguments: []
-lastUpdated: 2026-05-12T16:30:00-07:00
+arguments:
+  - name: additional-context
+    type: string
+    description: Optional context to help understand the changes
+argument-hint: '[additional-context]'
+lastUpdated: 2026-05-17T00:00:00Z
 ---
 
 ## Workflow
@@ -56,12 +59,14 @@ with no commits yet.
 Filter out:
 
 - Test files (`tests/`)
-- Config and fixture files (`*.config.*`)
-- Non-source files (`*.md`, `*.json`, `*.lock`, `*.css`)
+- Config and fixture files (`*.config.*`, `_fixtures.js`)
+- Non-source files (`*.md`, `*.json`, `*.lock`, `*.css`, `*.scss`)
 
 You now have the **changed source files**. Union this list with Step 0's regression list — work the union. Files in Step 0 but not Step 1 (test was deleted, source untouched) are still in scope. Files in Step 1 but not Step 0 (source changed, coverage held) get a brief sanity check (read the diff, confirm existing tests cover the new branches) and only get new tests if a branch went uncovered.
 
 **Don't re-narrow at this step.** A common trap: "this committed change has a `test(...)` commit nearby in the log, must already be covered." Read the actual coverage row, not the commit log. A `test(...)` commit can be net-negative if it deleted more than it added.
+
+If `$ARGUMENTS` is non-empty, treat it as additional context that shapes the test plan (e.g. "focus on the auth-restore race", "the deck-hero split changed prop wiring") — use it alongside source reading and session mining in Step 2.
 
 ### Step 2 — Understand the changes
 
@@ -160,6 +165,8 @@ For each changed unit of code, choose the **lowest-cost test type** that can mea
 
 **Default to integration tests for components.** Use `shallowMount` for isolated component tests (stub child components) and `mount` only when child component behaviour is directly under test.
 
+Don't shy away from a higher-cost tier if it's the only way to cover a critical regression.
+
 ### Step 4 — Run existing tests (baseline)
 
 Before writing any new tests, run the relevant existing test files to establish a baseline.
@@ -246,28 +253,50 @@ Compare top-line metrics (Statements / Branches / Functions / Lines) to `/tmp/co
 
 - Every metric must be **within 0.2pp** of master, or **above** master. If any regressed > 0.2pp, the work isn't done.
 - Re-diff the per-file table. Any file still on Step 0's regression list with coverage below master — go back to Step 5 and write more tests for it.
-- Don't report success until the deltas confirm recovery. The Step 8 table's "Lines covered" column must come from this re-measured run, not from a guess based on reading source.
+- Don't report success until the deltas confirm recovery. The coverage delta in the Step 8 report must come from this re-measured run, not from a guess based on reading source.
 
 If a regression is genuinely unfixable in this branch (e.g. depends on infra that isn't yet wired), surface it as a **Deferred coverage gap** in the Step 8 report with a one-line root-cause note — don't silently accept the regression.
 
 ### Step 8 — Report
 
-After writing all tests and confirming recovery in Step 7b, output a short summary table:
+1-line per test: test name (code-formatted) → rationale sentence explaining why the test exists. Grouped by module (bolded). Omit empty sections.
 
-| File changed | Test file | Type             | New tests | Lines covered (measured) |
-| ------------ | --------- | ---------------- | --------- | ------------------------ |
-| ...          | ...       | unit/integration | N         | X%                       |
+```markdown
+## New tests
 
-Include a **Coverage delta** block showing master baseline vs branch after, per top-line metric, so the user can verify recovery at a glance:
+**Integration | Component | DeckHero**
 
-```
+- `emits select-cards when bulk-action button clicked` → Regression guard, the bulk-select flow shipped without an event contract test
+- `shows count tag only when selection size > 0` → Edge case for the empty-selection branch added in this PR
+
+**Unit | Composable | useBulkActions**
+
+- `clearing the selection does not exit selection mode` → Captures the verbal invariant agreed mid-session (selection mode is sticky)
+
+## Fixed tests / Removed tests
+
+- same format
+
+## Bug found + fixed
+
+- one line per bug surfaced while writing tests, with the matching `fix(...)` commit hash
+
+## Coverage delta
+
             master  branch  Δ
-Statements  66.34   68.24   +1.90
-Branches    63.54   65.07   +1.53
-Functions   65.90   67.24   +1.34
-Lines       65.44   67.20   +1.76
+
+Statements 66.34 68.24 +1.90
+Branches 63.54 65.07 +1.53
+Functions 65.90 67.24 +1.34
+Lines 65.44 67.20 +1.76
+
+## Deferred coverage gaps
+
+- `src/foo.ts` — depends on infra not yet wired (one-line root cause)
+
+## Quality notes
+
+- non-critical issues spotted during the Step 7 review that were not auto-fixed
 ```
 
-If any changed file was skipped, explain why in one line. Skipping is reserved for the narrow valid cases only: barrel re-exports with no logic, files in `coverage.exclude`, or pure config / static-asset changes. "No test file exists yet", "out of scope for the PR", "covered indirectly elsewhere", and "would need a new harness" are **not** valid skip reasons — write the test (see Step 2 "Bias: always write the test").
-
-Also include a **Quality notes** section listing any non-critical issues spotted during the review (step 7) that were not auto-fixed, so the author is aware of them.
+Skip untestable files with one inline reason. Valid skip cases are narrow: barrel re-exports with no logic, files in `coverage.exclude`, pure config / static-asset changes. "No test file exists yet", "out of scope for the PR", "covered indirectly elsewhere", and "would need a new harness" are **not** valid skip reasons — write the test (see Step 2 "Bias: always write the test").
