@@ -15,9 +15,13 @@ export function invalidateDeck(
   options: InvalidateOptions = {}
 ) {
   if (deck_id === undefined) return
-  const refetch_mode = options.refetch_inactive ? 'all' : true
-  queryCache.invalidateQueries({ key: ['deck', deck_id] }, refetch_mode)
-  queryCache.invalidateQueries({ key: ['cards', deck_id] }, refetch_mode)
+  if (options.refetch_inactive) {
+    queryCache.invalidateQueries({ key: ['deck', deck_id] }, 'all')
+    queryCache.invalidateQueries({ key: ['cards', deck_id] }, 'all')
+    return
+  }
+  queryCache.invalidateQueries({ key: ['deck', deck_id] })
+  queryCache.invalidateQueries({ key: ['cards', deck_id] })
 }
 
 export function invalidateAllCardCounts(queryCache: QueryCache) {
