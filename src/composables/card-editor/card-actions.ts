@@ -129,5 +129,11 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
     selection.exitSelection()
   }
 
-  return { onDeleteCards, onSelectCard, onMoveCards, onCancel }
+  /** Exit selection mode only (keeps the current editor mode). */
+  function onCancelSelection() {
+    emitSfx('ui.digi_powerdown')
+    selection.exitSelection()
+  }
+
+  return { onDeleteCards, onSelectCard, onMoveCards, onCancel, onCancelSelection }
 }

@@ -1,32 +1,18 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui-kit/button.vue'
-import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { emitSfx } from '@/sfx/bus'
-import { type CardListController } from '@/composables/card-editor/card-list-controller'
+import { useBulkActions } from '@/composables/card-editor/use-bulk-actions'
 
 const { t } = useI18n()
 
-const { selection, actions } = inject<CardListController>('card-editor')!
-const { selected_count, all_cards_selected, select_all_mode } = selection
-
-const has_selection = computed(() => select_all_mode.value || selected_count.value > 0)
-
-const select_all_label = computed(() =>
-  all_cards_selected.value
-    ? t('deck-view.bulk-toolbar.deselect-all')
-    : t('deck-view.bulk-toolbar.select-all')
-)
-
-function onToggleSelectAll() {
-  emitSfx('ui.select')
-  selection.toggleSelectAll()
-}
-
-function onCancel() {
-  emitSfx('ui.digi_powerdown')
-  selection.exitSelection()
-}
+const {
+  actions,
+  all_cards_selected,
+  has_selection,
+  select_all_label,
+  onToggleSelectAll,
+  onCancel
+} = useBulkActions()
 </script>
 
 <template>
@@ -40,7 +26,7 @@ function onCancel() {
       icon-left="close"
       @click="onCancel"
     >
-      {{ t('deck-view.bulk-toolbar.cancel') }}
+      {{ t('deck-view.bulk-actions.cancel') }}
     </ui-button>
 
     <ui-button
@@ -65,7 +51,7 @@ function onCancel() {
       :disabled="!has_selection"
       @click="actions.onMoveCards()"
     >
-      {{ t('deck-view.bulk-toolbar.move') }}
+      {{ t('deck-view.bulk-actions.move') }}
     </ui-button>
 
     <ui-button
@@ -78,7 +64,7 @@ function onCancel() {
       :disabled="!has_selection"
       @click="actions.onDeleteCards()"
     >
-      {{ t('deck-view.bulk-toolbar.delete') }}
+      {{ t('deck-view.bulk-actions.delete') }}
     </ui-button>
   </div>
 </template>
