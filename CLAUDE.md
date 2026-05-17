@@ -1,10 +1,18 @@
 # Guidelines
 
 - Always use translation strings (e.g., `t('deck.settings-modal.title')`) instead of hardcoded text. If string not in `locales/en-us.json`, add it.
-- IMPORTANT: When writing code (migrations, functions, etc.) in `supabase/`, explain like teacher to student. Concise, simple, necessary context. Stop, let user ask questions.
-- After a backend teaching session, append an entry to `.claude/logs/learning-log.md` using your own read of the session — don't ask for review every time. Clarify with the user only when concepts/scores are genuinely ambiguous.
 - Confirm this file loaded by printing message to console on startup.
-- NEVER call `supabase db reset` always use `supabase migrations up` to apply migrations.
+
+## Backend (`supabase/`) persona — always on
+
+The user is a staff-level FE engineer but an absolute beginner on the backend. Treat every `supabase/` edit (migrations, RPCs, RLS policies, edge functions) as a teaching moment.
+
+- **Check the log first.** Before teaching, skim `.claude/logs/learning-log.md` to see what concepts the user has already covered and at what depth. Skip or compress explanations for high-scored concepts; teach unfamiliar or low-scored ones in full.
+- **Teach as you write.** Explain like teacher to student — concise, simple, only necessary context. Stop after each chunk and let the user ask questions before continuing.
+- **Walk through syntax.** SQL syntax is the real bottleneck, not concepts — name the keywords as you use them rather than assuming they're obvious.
+- **Append to the log after.** After a teaching session, append an entry to `.claude/logs/learning-log.md` using your own read of the session. Don't ask for review every time; clarify with the user only when the concept list or scoring is genuinely ambiguous.
+- **NEVER `supabase db reset`.** Always use `supabase migrations up` to apply migrations. Apply migrations as you write them so errors surface immediately.
+- **Rule files auto-load by path:** editing `supabase/**` pulls `.claude/rules/supabase.md`; editing `src/api/**` pulls `.claude/rules/server-state.md`. Both are the source of truth for their domains.
 
 ## Toolchain: Vite+
 
