@@ -6,12 +6,12 @@ import { emitSfx } from '@/sfx/bus'
 import { inject, ref } from 'vue'
 import { type CardListController } from '@/composables/card-editor/card-list-controller'
 
-const { actions } = inject<CardListController>('card-editor')!
+const { actions, selection } = inject<CardListController>('card-editor')!
 const { onDeleteCards, onMoveCards, onSelectCard } = actions
+const { is_selecting } = selection
 
-const { card, side, is_selecting } = defineProps<{
+const { card, side } = defineProps<{
   card: Card
-  is_selecting: boolean
   side: 'front' | 'back'
   selected: boolean
   card_attributes?: DeckCardAttributes
@@ -20,7 +20,7 @@ const { card, side, is_selecting } = defineProps<{
 const active_side = ref(side)
 
 function onCardClick() {
-  if (is_selecting) {
+  if (is_selecting.value) {
     onSelectCard(card.id!)
     return
   }
@@ -34,7 +34,7 @@ function onCardClick() {
   <div
     data-testid="grid-item"
     class="grid-item relative aspect-card w-full group pointer-fine:transition-transform duration-75 touch-manipulation"
-    :class="{ 'grid-item--outline pointer-fine:hover:scale-101': is_selecting }"
+    :class="{ 'card-outline pointer-fine:hover:scale-101': is_selecting }"
     v-sfx.hover="is_selecting ? 'ui.click_07' : undefined"
   >
     <card
@@ -73,30 +73,11 @@ function onCardClick() {
   transform: scale(var(--scale));
 }
 
-.grid-item--outline {
-  will-change: filter, transform;
+.grid-item.card-outline {
   --outline-color: var(--color-purple-500);
-  --outline-size: 2px;
-  --outline-size--inset: calc(var(--outline-size) * -1);
-  --outline-diag: calc(var(--outline-size) * 0.7071);
-  --outline-diag--inset: calc(var(--outline-diag) * -1);
-  --outline-filter: drop-shadow(var(--outline-size) 0 0 var(--outline-color))
-    drop-shadow(var(--outline-size--inset) 0 0 var(--outline-color))
-    drop-shadow(0 var(--outline-size) 0 var(--outline-color))
-    drop-shadow(0 var(--outline-size--inset) 0 var(--outline-color))
-    drop-shadow(var(--outline-diag) var(--outline-diag) 0 var(--outline-color))
-    drop-shadow(var(--outline-diag--inset) var(--outline-diag) 0 var(--outline-color))
-    drop-shadow(var(--outline-diag) var(--outline-diag--inset) 0 var(--outline-color))
-    drop-shadow(var(--outline-diag--inset) var(--outline-diag--inset) 0 var(--outline-color));
 }
 
-:global(.dark) .grid-item--outline {
+:global(.dark) .grid-item.card-outline {
   --outline-color: var(--color-purple-700);
-}
-
-@media (pointer: fine) {
-  .grid-item--outline:hover {
-    filter: var(--outline-filter);
-  }
 }
 </style>

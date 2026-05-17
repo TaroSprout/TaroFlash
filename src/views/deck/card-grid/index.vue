@@ -12,7 +12,7 @@ const { t } = useI18n()
 const { list, selection, carousel, card_attributes, hasNextPage, isLoading, observeSentinel } =
   inject<CardListController>('card-editor')!
 const { all_cards } = list
-const { is_selecting, isCardSelected } = selection
+const { isCardSelected } = selection
 const { visible_cards, setVisibleCapacity, page, page_size, page_direction, is_page_loading } =
   carousel
 
@@ -86,7 +86,6 @@ const cards_to_render = computed(() => (isMd.value ? visible_cards.value : all_c
               v-for="card in cards_to_render"
               :key="card.client_id"
               :card="card"
-              :is_selecting="is_selecting"
               :side="side"
               :card_attributes="card_attributes"
               :selected="card.id !== undefined ? isCardSelected(card.id) : false"

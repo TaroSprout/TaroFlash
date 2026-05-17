@@ -13,9 +13,9 @@ const { page, total_pages, prev_page_number, next_page_number, prevPage, nextPag
 </script>
 
 <template>
-  <div class="hidden md:flex items-center gap-2" data-testid="mode-view__pager">
+  <div class="hidden md:flex items-center gap-2" data-testid="pager">
     <ui-tag
-      data-testid="mode-view__page-counter"
+      data-testid="pager__counter"
       data-theme="green-400"
       data-theme-dark="green-800"
       class="bgx-diagonal-stripes bgx-opacity-10"
@@ -24,7 +24,7 @@ const { page, total_pages, prev_page_number, next_page_number, prevPage, nextPag
     </ui-tag>
 
     <ui-button
-      data-testid="mode-view__previous-page-button"
+      data-testid="pager__prev"
       data-theme="brown-300"
       data-theme-dark="stone-700"
       icon-only
@@ -37,7 +37,7 @@ const { page, total_pages, prev_page_number, next_page_number, prevPage, nextPag
     </ui-button>
 
     <ui-button
-      data-testid="mode-view__next-page-button"
+      data-testid="pager__next"
       data-theme="brown-300"
       data-theme-dark="stone-700"
       icon-only
