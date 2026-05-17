@@ -10,6 +10,8 @@ env:
 jobs:
   deploy:
     name: Deploy
+    permissions:
+      contents: write
     uses: ./.github/workflows/deploy.yml
     with:
       environment: production

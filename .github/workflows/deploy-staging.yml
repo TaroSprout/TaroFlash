@@ -50,6 +50,9 @@ jobs:
     name: Deploy
     needs: [start]
     if: contains(github.event.pull_request.labels.*.name, 'deploy:staging')
+    permissions:
+      contents: write
+      pull-requests: write
     uses: ./.github/workflows/deploy.yml
     with:
       environment: staging
