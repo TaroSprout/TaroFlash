@@ -50,7 +50,8 @@ const mask = computed(() => {
 <template>
   <span
     data-testid="ui-kit-tag"
-    class="bg-(--theme-primary) pl-4 pr-5 py-1 rounded-1 w-max"
+    class="bg-(--theme-primary) py-1 rounded-1 w-max"
+    :class="notchSide === 'right' ? 'pl-4 pr-5' : 'pl-5 pr-4'"
     :style="{ mask, WebkitMask: mask }"
   >
     <p class="text-(--theme-on-primary)">

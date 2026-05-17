@@ -94,7 +94,7 @@ describe('useCardActions', () => {
       actions.onSelectCard(7)
       expect(selection.toggleSelectCard).toHaveBeenCalledWith(7)
       expect(selection.enterSelection).toHaveBeenCalledOnce()
-      expect(emitSfxMock).toHaveBeenCalledWith('ui.etc_camera_shutter')
+      expect(emitSfxMock).toHaveBeenCalledWith('ui.select', { blocking: true })
     })
 
     test('without id, just enters selection mode', () => {
@@ -240,6 +240,31 @@ describe('useCardActions', () => {
       await actions.onMoveCards(7)
       expect(emitSfxMock).toHaveBeenCalledWith('ui.double_pop_up')
       expect(emitSfxMock).toHaveBeenCalledWith('ui.double_pop_down')
+    })
+
+    test('runs cleanup after a successful move: exitSelection + refetch', async () => {
+      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve({ deck_id: 42 }) })
+      const persisted = [makeCard({ id: 7 })]
+      const { actions, selection, deck_query, setMode } = makeActions({
+        list: makeList({ persisted }),
+        selection: makeSelection({ selected_ids: [7] })
+      })
+      await actions.onMoveCards()
+      expect(selection.exitSelection).toHaveBeenCalledOnce()
+      expect(deck_query.refetch).toHaveBeenCalledOnce()
+      expect(setMode).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── onCancelSelection ────────────────────────────────────────────────────
+
+  describe('onCancelSelection', () => {
+    test('exits selection mode and emits the digi-powerdown sfx', () => {
+      const { actions, selection, setMode } = makeActions()
+      actions.onCancelSelection()
+      expect(selection.exitSelection).toHaveBeenCalledOnce()
+      expect(emitSfxMock).toHaveBeenCalledWith('ui.digi_powerdown')
+      expect(setMode).not.toHaveBeenCalled()
     })
   })
 })

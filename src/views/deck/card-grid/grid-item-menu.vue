@@ -5,16 +5,22 @@ import UiActionMenu from '@/components/ui-kit/action-menu.vue'
 
 const { t } = useI18n()
 
+const emit = defineEmits<{
+  (e: 'select'): void
+  (e: 'move'): void
+  (e: 'delete'): void
+}>()
+
 defineOptions({ inheritAttrs: false })
 </script>
 
 <template>
   <ui-action-menu
+    class="absolute -top-1 -right-1"
     position="bottom-end"
     alignment="end"
     data-testid="grid-item__menu"
     :duration="0.4"
-    class="absolute -top-1 -right-1"
   >
     <template #trigger="{ toggle, is_open }">
       <ui-button
@@ -47,6 +53,7 @@ defineOptions({ inheritAttrs: false })
       size="sm"
       icon-right="move-item"
       class="shadow-xs"
+      @click="emit('move')"
     >
       {{ t('deck-view.item-options.move') }}
     </ui-button>
@@ -59,7 +66,14 @@ defineOptions({ inheritAttrs: false })
     >
       {{ t('deck-view.item-options.reorder') }}
     </ui-button>
-    <ui-button data-theme="brown-300" data-theme-dark="stone-900" size="sm" class="shadow-xs">
+    <ui-button
+      data-theme="brown-300"
+      data-theme-dark="stone-900"
+      size="sm"
+      icon-right="check"
+      class="shadow-xs"
+      @click="emit('select')"
+    >
       {{ t('deck-view.item-options.select') }}
     </ui-button>
     <ui-button
@@ -68,6 +82,7 @@ defineOptions({ inheritAttrs: false })
       size="sm"
       icon-right="delete"
       class="shadow-xs"
+      @click="emit('delete')"
     >
       {{ t('deck-view.item-options.delete') }}
     </ui-button>

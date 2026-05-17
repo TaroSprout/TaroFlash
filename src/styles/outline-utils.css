@@ -1,0 +1,30 @@
+/* Card-outline drop-shadow stack used by deck-thumbnail + grid-item.
+ * Consumers set --outline-color (defaults to white) and toggle the filter
+ * via :hover / [data-playing='true'] / their own modifier class.
+ */
+.card-outline {
+  will-change: filter, transform;
+  --outline-color: var(--color-white);
+  --outline-size: 2px;
+  --outline-size--inset: calc(var(--outline-size) * -1);
+  --outline-diag: calc(var(--outline-size) * 0.7071);
+  --outline-diag--inset: calc(var(--outline-diag) * -1);
+  --outline-filter: drop-shadow(var(--outline-size) 0 0 var(--outline-color))
+    drop-shadow(var(--outline-size--inset) 0 0 var(--outline-color))
+    drop-shadow(0 var(--outline-size) 0 var(--outline-color))
+    drop-shadow(0 var(--outline-size--inset) 0 var(--outline-color))
+    drop-shadow(var(--outline-diag) var(--outline-diag) 0 var(--outline-color))
+    drop-shadow(var(--outline-diag--inset) var(--outline-diag) 0 var(--outline-color))
+    drop-shadow(var(--outline-diag) var(--outline-diag--inset) 0 var(--outline-color))
+    drop-shadow(var(--outline-diag--inset) var(--outline-diag--inset) 0 var(--outline-color));
+}
+
+@media (pointer: fine) {
+  .card-outline:hover {
+    filter: var(--outline-filter);
+  }
+}
+
+.card-outline[data-playing='true'] {
+  filter: var(--outline-filter);
+}
