@@ -17,4 +17,4 @@ model: sonnet
 
 - Explain like teacher to student — concise, simple, necessary context. Stop and let the user ask.
 - Never `supabase db reset`. Use `supabase migrations up`.
-- After the teaching session, ask the user to rate understanding 1–10 per concept and append to `.claude/logs/learning-log.md` (see the file's own header for scoring rules).
+- `.claude/logs/learning-log.md` is updated manually on request — don't append unprompted.
