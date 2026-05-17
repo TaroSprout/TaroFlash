@@ -227,6 +227,29 @@ describe('useMoveCardsToDeckMutation', () => {
     expect(keys).toContainEqual(['deck', 20])
   })
 
+  // Regression: target/source decks may not be currently mounted after a
+  // cross-deck move. Default invalidate only refetches active queries, so
+  // stale cached pages render when the user navigates to the target deck.
+  // Pinia Colada's second-arg `'all'` forces refetch for inactive queries too.
+  test('deck-scoped invalidations pass "all" so non-active deck queries refetch', () => {
+    const { onSettled } = configFrom(useMoveCardsToDeckMutation)
+    invalidateSpy.mockClear()
+    onSettled(undefined, undefined, {
+      target_deck_id: 20,
+      card_ids: [1],
+      source_deck_ids: [10]
+    })
+
+    const deck_calls = invalidateSpy.mock.calls.filter(
+      ([filters]) => filters.key[0] === 'deck' || filters.key[0] === 'cards'
+    )
+    const deck_scoped = deck_calls.filter(([filters]) => typeof filters.key[1] === 'number')
+    expect(deck_scoped.length).toBeGreaterThan(0)
+    deck_scoped.forEach(([, refetch_mode]) => {
+      expect(refetch_mode).toBe('all')
+    })
+  })
+
   test('explicit mode: delegates to moveCardsToDeck with target + card_ids', async () => {
     const { mutation } = configFrom(useMoveCardsToDeckMutation)
     await mutation({ target_deck_id: 20, card_ids: [1, 2], source_deck_ids: [10] })

@@ -29,8 +29,13 @@ export function useMoveCardsToDeckMutation() {
   return useMutation({
     mutation: (vars: MoveCardsToDeckVars) => moveCardsToDeck(toDbArgs(vars)),
     onSettled: (_data, _error, vars) => {
-      sourceDeckIds(vars).forEach((id) => invalidateDeck(queryCache, id))
-      invalidateDeck(queryCache, vars.target_deck_id)
+      // refetch_inactive: user may be on neither source nor target deck after
+      // a cross-deck move. Without it, the previously-viewed target deck
+      // would render stale cached pages on re-entry.
+      sourceDeckIds(vars).forEach((id) =>
+        invalidateDeck(queryCache, id, { refetch_inactive: true })
+      )
+      invalidateDeck(queryCache, vars.target_deck_id, { refetch_inactive: true })
       invalidateAllCardCounts(queryCache)
     }
   })
