@@ -57,11 +57,6 @@ watch(
 // md+ renders the current page; below md renders everything and lets the
 // page scroll naturally with infinite-scroll loading more
 const cards_to_render = computed(() => (isMd.value ? visible_cards.value : all_cards.value))
-
-const emit = defineEmits<{
-  (e: 'card-selected', id: number): void
-  (e: 'card-deleted', id: number): void
-}>()
 </script>
 
 <template>
@@ -95,7 +90,6 @@ const emit = defineEmits<{
               :side="side"
               :card_attributes="card_attributes"
               :selected="card.id !== undefined ? isCardSelected(card.id) : false"
-              @card-selected="emit('card-selected', card.id!)"
             ></grid-item>
           </template>
 
