@@ -1,31 +1,6 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       cards: {
@@ -199,6 +174,7 @@ export type Database = {
           email: string | null
           id: string
           plan: string
+          preferences: Json
           role: Database['public']['Enums']['member_role']
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -211,6 +187,7 @@ export type Database = {
           email?: string | null
           id: string
           plan?: string
+          preferences?: Json
           role?: Database['public']['Enums']['member_role']
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -223,6 +200,7 @@ export type Database = {
           email?: string | null
           id?: string
           plan?: string
+          preferences?: Json
           role?: Database['public']['Enums']['member_role']
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -239,6 +217,7 @@ export type Database = {
       }
       plans: {
         Row: {
+          cards_per_deck_limit: number | null
           created_at: string
           display_name: string
           id: string
@@ -246,6 +225,7 @@ export type Database = {
           stripe_price_id: string | null
         }
         Insert: {
+          cards_per_deck_limit?: number | null
           created_at?: string
           display_name: string
           id: string
@@ -253,6 +233,7 @@ export type Database = {
           stripe_price_id?: string | null
         }
         Update: {
+          cards_per_deck_limit?: number | null
           created_at?: string
           display_name?: string
           id?: string
@@ -562,6 +543,10 @@ export type Database = {
         Returns: number
       }
       delete_deck: { Args: { p_deck_id: number }; Returns: undefined }
+      enforce_deck_card_limit: {
+        Args: { p_adding: number; p_deck_id: number }
+        Returns: undefined
+      }
       get_member_card_count: {
         Args: {
           p_member_id: string
@@ -616,6 +601,15 @@ export type Database = {
         Args: { p_anchor_id: number; p_card_id: number; p_side: string }
         Returns: number
       }
+      move_cards_to_deck: {
+        Args: {
+          p_card_ids?: number[]
+          p_except_ids?: number[]
+          p_source_deck_id?: number
+          p_target_deck_id: number
+        }
+        Returns: undefined
+      }
       reindex_deck_ranks: { Args: { p_deck_id: number }; Returns: undefined }
       reserve_card: {
         Args: {
@@ -628,6 +622,7 @@ export type Database = {
           out_rank: number
         }[]
       }
+      reset_deck_reviews: { Args: { p_deck_id: number }; Returns: undefined }
       save_review:
         | {
             Args: {
@@ -801,9 +796,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {}
-  },
   public: {
     Enums: {
       card_state: ['new', 'learning', 'young', 'mature', 'relearn'],

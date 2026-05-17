@@ -56,13 +56,7 @@ vi.mock('@/utils/logger', () => ({ default: { error: vi.fn() } }))
 // Deterministic uid so path assertions are stable.
 vi.mock('@/utils/uid', () => ({ default: () => 'FIXED_UID' }))
 
-import {
-  saveCard,
-  upsertCard,
-  upsertCards,
-  moveCardsToDeck,
-  setCardImage
-} from '@/api/cards/db/update'
+import { saveCard, upsertCard, upsertCards, setCardImage } from '@/api/cards/db/update'
 
 function makeCard(overrides = {}) {
   return {
@@ -154,20 +148,6 @@ describe('upsertCards', () => {
   test('throws when the DB returns an error', async () => {
     mocks.selectMock.mockResolvedValueOnce({ data: null, error: { message: 'boom' } })
     await expect(upsertCards([makeCard()])).rejects.toThrow('boom')
-  })
-})
-
-describe('moveCardsToDeck', () => {
-  test('sets deck_id on every card and upserts the batch', async () => {
-    await moveCardsToDeck([makeCard({ id: 1 }), makeCard({ id: 2 })], 99)
-    const { payload } = mocks.upsertMock.mock.calls[0][0]
-    expect(payload).toHaveLength(2)
-    expect(payload.every((c) => c.deck_id === 99)).toBe(true)
-  })
-
-  test('throws when the upsert fails', async () => {
-    mocks.upsertMock.mockResolvedValueOnce({ error: { message: 'rls' } })
-    await expect(moveCardsToDeck([makeCard()], 99)).rejects.toThrow('rls')
   })
 })
 

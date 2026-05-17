@@ -632,10 +632,12 @@ describe('useCardListController', () => {
       const ctrl = makeController([makeCard({ id: 7 })], [7])
       await ctrl.onMoveCards(7)
       expect(modalOpenMock).toHaveBeenCalledOnce()
-      expect(moveCardsMock).toHaveBeenCalledWith({
-        cards: expect.any(Array),
-        deck_id: 42
-      })
+      expect(moveCardsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          target_deck_id: 42,
+          card_ids: expect.any(Array)
+        })
+      )
     })
 
     test('onMoveCards does not fire the move mutation when the modal is dismissed', async () => {

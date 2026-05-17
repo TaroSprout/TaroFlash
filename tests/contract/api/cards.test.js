@@ -199,7 +199,7 @@ describe('moveCardsToDeck (contract)', () => {
       deck_id: deck.id,
       cards: [{ front_text: 'mover', back_text: '' }]
     })
-    await moveCardsToDeck([card], target.id)
+    await moveCardsToDeck({ target_deck_id: target.id, card_ids: [card.id] })
     const inTarget = await fetchCardsPageByDeckId({
       deck_id: target.id,
       offset: 0,

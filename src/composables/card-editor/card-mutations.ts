@@ -5,13 +5,13 @@ import {
   useInsertCardAtMutation,
   useMoveCardsToDeckMutation,
   useSaveCardMutation,
-  type InsertCardAtParams
+  type InsertCardAtParams,
+  type MoveCardsToDeckVars
 } from '@/api/cards'
 
 export type CardMutations = ReturnType<typeof useCardMutations>
 
 type DeleteArgs = { cards: Card[] } | { except_ids: number[] }
-type MoveArgs = { cards: Card[]; target_deck_id: number }
 
 /**
  * Persistence wrappers for card writes. A thin layer over `@/api/cards`
@@ -63,10 +63,10 @@ export function useCardMutations(deck_id: MaybeRefOrGetter<number | undefined>) 
     await delete_mutation.mutateAsync(args.cards)
   }
 
-  /** Move the given cards into `target_deck_id`. No-op if the array is empty. */
-  async function moveCards(args: MoveArgs) {
-    if (args.cards.length === 0) return
-    await move_mutation.mutateAsync({ cards: args.cards, deck_id: args.target_deck_id })
+  /** Move cards into the target deck. Vars are passed straight through. */
+  async function moveCards(vars: MoveCardsToDeckVars) {
+    if ('card_ids' in vars && vars.card_ids.length === 0) return
+    await move_mutation.mutateAsync(vars)
   }
 
   return { insertCard, saveCard, deleteCards, moveCards }

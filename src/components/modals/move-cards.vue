@@ -12,11 +12,14 @@ export type MoveCardsModalResponse = {
   deck_id: number
 }
 
-const { cards, current_deck_id, close } = defineProps<{
+type MoveCardsModalProps = {
   cards: Card[]
   current_deck_id: number
+  count?: number
   close: (response?: MoveCardsModalResponse | boolean) => void
-}>()
+}
+
+const { cards, current_deck_id, count, close } = defineProps<MoveCardsModalProps>()
 
 const { t } = useI18n()
 
@@ -25,10 +28,10 @@ const selected_deck_id = ref<number | undefined>(undefined)
 
 const title = computed(() => {
   const card = cards[0]
-  const count = !card.back_text && !card.front_text ? 0 : cards.length
+  const effective_count = count ?? (!card.back_text && !card.front_text ? 0 : cards.length)
 
   return t('move-cards-modal.title', {
-    count,
+    count: effective_count,
     front: card.front_text || '-',
     back: card.back_text || '-'
   })

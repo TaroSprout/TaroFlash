@@ -33,6 +33,16 @@ describe('invalidateDeck', () => {
     invalidateDeck(cache, 42)
     expect(cache.invalidateQueries).toHaveBeenCalledTimes(2)
   })
+
+  // Regression: cross-deck moves invalidate decks the user may not currently
+  // be viewing. Default refetchActive only refetches active queries — inactive
+  // queries get marked stale but kept their cached pages, so the user sees
+  // stale data on re-entry. `refetch_inactive: true` forces refetch.
+  test('refetch_inactive: true passes "all" so inactive queries refetch too', () => {
+    invalidateDeck(cache, 42, { refetch_inactive: true })
+    expect(cache.invalidateQueries).toHaveBeenCalledWith({ key: ['deck', 42] }, 'all')
+    expect(cache.invalidateQueries).toHaveBeenCalledWith({ key: ['cards', 42] }, 'all')
+  })
 })
 
 describe('invalidateAllCardCounts', () => {
