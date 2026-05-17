@@ -211,14 +211,6 @@ describe('CardGrid (card-grid/index.vue)', () => {
     expect(wrapper.findAllComponents({ name: 'GridItem' })[0].props('selected')).toBe(false)
   })
 
-  // ── card-selected emit ─────────────────────────────────────────────────────
-
-  test('re-emits card-selected upward with the card.id from the inner GridItem', async () => {
-    isMdRef.value = true
-    const cards = [{ id: 7 }]
-    const wrapper = mount({ editor: makeEditor({ cards, visible: cards }) })
-    const item = wrapper.findAllComponents({ name: 'GridItem' })[0]
-    await item.vm.$emit('card-selected')
-    expect(wrapper.emitted('card-selected')).toEqual([[7]])
-  })
+  // (selection now flows from grid-item directly into actions.onSelectCard
+  // via the injected card-editor — no card-selected emit chain to assert)
 })

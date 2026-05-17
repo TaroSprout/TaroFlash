@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h, useAttrs } from 'vue'
+import { defineComponent, h, ref, useAttrs } from 'vue'
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 
@@ -28,13 +28,11 @@ const CardStub = defineComponent({
 const UiRadioStub = defineComponent({
   name: 'UiRadio',
   props: ['checked'],
-  emits: ['click'],
-  setup(props, { emit }) {
+  setup(props) {
     return () =>
       h('button', {
         'data-testid': 'ui-radio-stub',
-        'data-checked': String(props.checked),
-        onClick: (e) => emit('click', e)
+        'data-checked': String(props.checked)
       })
   }
 })
@@ -48,24 +46,37 @@ const GridItemMenuStub = defineComponent({
 
 import GridItem from '@/views/deck/card-grid/grid-item.vue'
 
-function mountGridItem(props = {}) {
-  return mount(GridItem, {
-    props: {
-      card: { id: 1, front_text: 'q', back_text: 'a' },
-      side: 'front',
-      is_selecting: false,
-      selected: false,
-      ...props
+function makeEditor({ is_selecting = false } = {}) {
+  return {
+    actions: {
+      onSelectCard: vi.fn(),
+      onMoveCards: vi.fn(),
+      onDeleteCards: vi.fn()
     },
-    attachTo: document.body,
-    global: {
-      stubs: {
-        Card: CardStub,
-        UiRadio: UiRadioStub,
-        GridItemMenu: GridItemMenuStub
-      }
+    selection: {
+      is_selecting: ref(is_selecting)
     }
-  })
+  }
+}
+
+function mountGridItem({ props = {}, editor } = {}) {
+  const ed = editor ?? makeEditor()
+  return {
+    wrapper: mount(GridItem, {
+      props: {
+        card: { id: 1, front_text: 'q', back_text: 'a' },
+        side: 'front',
+        selected: false,
+        ...props
+      },
+      attachTo: document.body,
+      global: {
+        provide: { 'card-editor': ed },
+        stubs: { Card: CardStub, UiRadio: UiRadioStub, GridItemMenu: GridItemMenuStub }
+      }
+    }),
+    editor: ed
+  }
 }
 
 describe('GridItem (card-grid/grid-item.vue)', () => {
@@ -74,17 +85,17 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
   })
 
   test('renders root with data-testid="grid-item"', () => {
-    const wrapper = mountGridItem()
+    const { wrapper } = mountGridItem()
     expect(wrapper.find('[data-testid="grid-item"]').exists()).toBe(true)
   })
 
   test('initial side comes from the side prop', () => {
-    const wrapper = mountGridItem({ side: 'back' })
+    const { wrapper } = mountGridItem({ props: { side: 'back' } })
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('back')
   })
 
-  test('clicking the card flips front → back and emits transition_up sfx', async () => {
-    const wrapper = mountGridItem({ side: 'front' })
+  test('clicking the card flips front → back and emits transition_up sfx when not selecting', async () => {
+    const { wrapper } = mountGridItem({ props: { side: 'front' } })
     await wrapper.find('[data-testid="card-stub"]').trigger('click')
 
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('back')
@@ -92,7 +103,7 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
   })
 
   test('clicking again flips back → front and emits transition_down sfx', async () => {
-    const wrapper = mountGridItem({ side: 'front' })
+    const { wrapper } = mountGridItem({ props: { side: 'front' } })
     const card = wrapper.find('[data-testid="card-stub"]')
 
     await card.trigger('click')
@@ -103,47 +114,58 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.transition_down')
   })
 
-  test('does not flip or emit sfx when is_selecting is true', async () => {
-    const wrapper = mountGridItem({ side: 'front', is_selecting: true })
+  test('clicking the card during selection calls onSelectCard with the card id and does not flip', async () => {
+    const editor = makeEditor({ is_selecting: true })
+    const { wrapper } = mountGridItem({ props: { side: 'front' }, editor })
     await wrapper.find('[data-testid="card-stub"]').trigger('click')
 
+    expect(editor.actions.onSelectCard).toHaveBeenCalledWith(1)
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('front')
     expect(mockEmitSfx).not.toHaveBeenCalled()
   })
 
-  test('renders ui-radio inside the card while selecting', () => {
-    const wrapper = mountGridItem({ is_selecting: true, selected: false })
+  test('renders the radio while selecting, with the selected prop forwarded', () => {
+    const editor = makeEditor({ is_selecting: true })
+    const { wrapper } = mountGridItem({ props: { selected: true }, editor })
     const radio = wrapper.find('[data-testid="ui-radio-stub"]')
     expect(radio.exists()).toBe(true)
-    expect(radio.attributes('data-checked')).toBe('false')
-  })
-
-  test('forwards the selected prop to the radio', () => {
-    const wrapper = mountGridItem({ is_selecting: true, selected: true })
-    expect(wrapper.find('[data-testid="ui-radio-stub"]').attributes('data-checked')).toBe('true')
+    expect(radio.attributes('data-checked')).toBe('true')
   })
 
   test('omits the radio when not selecting', () => {
-    const wrapper = mountGridItem({ is_selecting: false })
+    const { wrapper } = mountGridItem()
     expect(wrapper.find('[data-testid="ui-radio-stub"]').exists()).toBe(false)
   })
 
   test('renders the grid-item-menu when not selecting', () => {
-    const wrapper = mountGridItem({ is_selecting: false })
+    const { wrapper } = mountGridItem()
     expect(wrapper.find('[data-testid="grid-item-menu-stub"]').exists()).toBe(true)
   })
 
   test('hides the grid-item-menu while selecting', () => {
-    const wrapper = mountGridItem({ is_selecting: true })
+    const editor = makeEditor({ is_selecting: true })
+    const { wrapper } = mountGridItem({ editor })
     expect(wrapper.find('[data-testid="grid-item-menu-stub"]').exists()).toBe(false)
   })
 
-  test('clicking the radio emits card-selected and does not flip the card', async () => {
-    const wrapper = mountGridItem({ side: 'front', is_selecting: true })
-    await wrapper.find('[data-testid="ui-radio-stub"]').trigger('click')
+  test('grid-item-menu select emit calls onSelectCard with the card id', async () => {
+    const editor = makeEditor({ is_selecting: false })
+    const { wrapper } = mountGridItem({ editor })
+    await wrapper.findComponent(GridItemMenuStub).vm.$emit('select')
+    expect(editor.actions.onSelectCard).toHaveBeenCalledWith(1)
+  })
 
-    expect(wrapper.emitted('card-selected')).toEqual([[]])
-    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('front')
-    expect(mockEmitSfx).not.toHaveBeenCalled()
+  test('grid-item-menu move emit calls onMoveCards with the card id', async () => {
+    const editor = makeEditor({ is_selecting: false })
+    const { wrapper } = mountGridItem({ editor })
+    await wrapper.findComponent(GridItemMenuStub).vm.$emit('move')
+    expect(editor.actions.onMoveCards).toHaveBeenCalledWith(1)
+  })
+
+  test('grid-item-menu delete emit calls onDeleteCards with the card id', async () => {
+    const editor = makeEditor({ is_selecting: false })
+    const { wrapper } = mountGridItem({ editor })
+    await wrapper.findComponent(GridItemMenuStub).vm.$emit('delete')
+    expect(editor.actions.onDeleteCards).toHaveBeenCalledWith(1)
   })
 })
