@@ -102,16 +102,23 @@ describe('useCardMutations', () => {
   })
 
   describe('moveCards', () => {
-    test('forwards { cards, target_deck_id } to the move mutation as { cards, deck_id }', async () => {
+    test('passes explicit-mode vars straight through to the move mutation', async () => {
       const m = makeMutations()
-      const cards = [makeCard({ id: 7 })]
-      await m.moveCards({ cards, target_deck_id: 99 })
-      expect(moveCardsMock).toHaveBeenCalledWith({ cards, deck_id: 99 })
+      const vars = { target_deck_id: 99, card_ids: [7], source_deck_ids: [42] }
+      await m.moveCards(vars)
+      expect(moveCardsMock).toHaveBeenCalledWith(vars)
     })
 
-    test('is a no-op when the cards array is empty', async () => {
+    test('passes select-all-mode vars straight through to the move mutation', async () => {
       const m = makeMutations()
-      await m.moveCards({ cards: [], target_deck_id: 99 })
+      const vars = { target_deck_id: 99, source_deck_id: 42, except_ids: [3] }
+      await m.moveCards(vars)
+      expect(moveCardsMock).toHaveBeenCalledWith(vars)
+    })
+
+    test('is a no-op when the card_ids array is empty', async () => {
+      const m = makeMutations()
+      await m.moveCards({ target_deck_id: 99, card_ids: [], source_deck_ids: [] })
       expect(moveCardsMock).not.toHaveBeenCalled()
     })
   })

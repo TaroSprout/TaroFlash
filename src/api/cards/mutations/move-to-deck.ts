@@ -1,21 +1,36 @@
 import { useMutation, useQueryCache } from '@pinia/colada'
-import type { CardBase } from '@type/card'
-import { moveCardsToDeck } from '../db'
+import { moveCardsToDeck, type MoveCardsToDeckArgs } from '../db'
 import { invalidateAllCardCounts, invalidateDeck } from './_invalidate'
 
-type MoveCardsToDeckVars = {
-  cards: CardBase[]
-  deck_id: number
+// Mutation vars mirror the RPC's two modes (explicit vs select-all) and add
+// `source_deck_ids` to the explicit variant so the hook can invalidate
+// source decks without the caller doing any cache work.
+export type MoveCardsToDeckVars =
+  | { target_deck_id: number; card_ids: number[]; source_deck_ids: number[] }
+  | { target_deck_id: number; source_deck_id: number; except_ids: number[] }
+
+function toDbArgs(vars: MoveCardsToDeckVars): MoveCardsToDeckArgs {
+  if ('card_ids' in vars) {
+    return { target_deck_id: vars.target_deck_id, card_ids: vars.card_ids }
+  }
+  return {
+    target_deck_id: vars.target_deck_id,
+    source_deck_id: vars.source_deck_id,
+    except_ids: vars.except_ids
+  }
+}
+
+function sourceDeckIds(vars: MoveCardsToDeckVars): number[] {
+  return 'card_ids' in vars ? vars.source_deck_ids : [vars.source_deck_id]
 }
 
 export function useMoveCardsToDeckMutation() {
   const queryCache = useQueryCache()
   return useMutation({
-    mutation: (vars: MoveCardsToDeckVars) => moveCardsToDeck(vars.cards, vars.deck_id),
+    mutation: (vars: MoveCardsToDeckVars) => moveCardsToDeck(toDbArgs(vars)),
     onSettled: (_data, _error, vars) => {
-      const source_ids = new Set(vars.cards.map((c) => c.deck_id).filter((id) => id !== undefined))
-      source_ids.forEach((id) => invalidateDeck(queryCache, id))
-      invalidateDeck(queryCache, vars.deck_id)
+      sourceDeckIds(vars).forEach((id) => invalidateDeck(queryCache, id))
+      invalidateDeck(queryCache, vars.target_deck_id)
       invalidateAllCardCounts(queryCache)
     }
   })

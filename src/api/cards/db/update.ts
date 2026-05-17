@@ -58,20 +58,6 @@ export async function upsertCards(cards: Partial<CardBase>[]): Promise<Card[]> {
   return data
 }
 
-export async function moveCardsToDeck(cards: CardBase[], deck_id: number): Promise<void> {
-  const sanitized = cards.map((card) => ({
-    ...card,
-    deck_id
-  }))
-
-  const { error } = await supabase.from('cards').upsert(sanitized)
-
-  if (error) {
-    logger.error(error.message)
-    throw new Error(error.message)
-  }
-}
-
 export async function setCardImage(card_id: number, file: File, side: 'front' | 'back') {
   const member_id = useMemberStore().id
   if (!member_id) throw new Error('Not authenticated')

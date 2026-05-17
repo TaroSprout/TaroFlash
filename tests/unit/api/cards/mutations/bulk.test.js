@@ -182,34 +182,29 @@ describe('useMoveCardMutation', () => {
 })
 
 describe('useMoveCardsToDeckMutation', () => {
-  test('invalidates both source deck(s) AND destination deck', () => {
+  test('explicit mode: invalidates every source deck plus the target', () => {
     const { onSettled } = configFrom(useMoveCardsToDeckMutation)
 
-    // Cards originally in deck 10 being moved to deck 20.
     onSettled(undefined, undefined, {
-      cards: [
-        { id: 1, deck_id: 10 },
-        { id: 2, deck_id: 10 }
-      ],
-      deck_id: 20
+      target_deck_id: 20,
+      card_ids: [1, 2],
+      source_deck_ids: [10]
     })
 
     const keys = invalidatedKeys()
-    expect(keys).toContainEqual(['deck', 10]) // source
-    expect(keys).toContainEqual(['deck', 20]) // destination
+    expect(keys).toContainEqual(['deck', 10])
+    expect(keys).toContainEqual(['deck', 20])
     expect(keys).toContainEqual(['cards', 10])
     expect(keys).toContainEqual(['cards', 20])
   })
 
-  test('invalidates multiple source decks when the batch spans decks', () => {
+  test('explicit mode: handles multiple source decks', () => {
     const { onSettled } = configFrom(useMoveCardsToDeckMutation)
 
     onSettled(undefined, undefined, {
-      cards: [
-        { id: 1, deck_id: 10 },
-        { id: 2, deck_id: 30 }
-      ],
-      deck_id: 20
+      target_deck_id: 20,
+      card_ids: [1, 2],
+      source_deck_ids: [10, 30]
     })
 
     const keys = invalidatedKeys()
@@ -218,10 +213,33 @@ describe('useMoveCardsToDeckMutation', () => {
     expect(keys).toContainEqual(['deck', 20])
   })
 
-  test('mutation delegates to moveCardsToDeck with the cards and destination deck_id', async () => {
+  test('select-all mode: invalidates source + target from vars', () => {
+    const { onSettled } = configFrom(useMoveCardsToDeckMutation)
+
+    onSettled(undefined, undefined, {
+      target_deck_id: 20,
+      source_deck_id: 10,
+      except_ids: []
+    })
+
+    const keys = invalidatedKeys()
+    expect(keys).toContainEqual(['deck', 10])
+    expect(keys).toContainEqual(['deck', 20])
+  })
+
+  test('explicit mode: delegates to moveCardsToDeck with target + card_ids', async () => {
     const { mutation } = configFrom(useMoveCardsToDeckMutation)
-    const cards = [{ id: 1, deck_id: 10 }]
-    await mutation({ cards, deck_id: 20 })
-    expect(moveCardsToDeckMock).toHaveBeenCalledWith(cards, 20)
+    await mutation({ target_deck_id: 20, card_ids: [1, 2], source_deck_ids: [10] })
+    expect(moveCardsToDeckMock).toHaveBeenCalledWith({ target_deck_id: 20, card_ids: [1, 2] })
+  })
+
+  test('select-all mode: delegates to moveCardsToDeck with target + source + except_ids', async () => {
+    const { mutation } = configFrom(useMoveCardsToDeckMutation)
+    await mutation({ target_deck_id: 20, source_deck_id: 10, except_ids: [7] })
+    expect(moveCardsToDeckMock).toHaveBeenCalledWith({
+      target_deck_id: 20,
+      source_deck_id: 10,
+      except_ids: [7]
+    })
   })
 })

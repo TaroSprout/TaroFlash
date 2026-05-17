@@ -227,7 +227,7 @@ describe('useCardActions', () => {
       await actions.onMoveCards(7)
       const [args] = mutations.moveCards.mock.calls[0]
       expect(args.target_deck_id).toBe(42)
-      expect(args.cards.map((c) => c.id)).toEqual([7])
+      expect(args.card_ids).toEqual([7])
     })
 
     test('emits the open + close move-modal sfx pair', async () => {
