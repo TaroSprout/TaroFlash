@@ -254,6 +254,37 @@ describe('useCardActions', () => {
       expect(deck_query.refetch).toHaveBeenCalledOnce()
       expect(setMode).not.toHaveBeenCalled()
     })
+
+    test('select-all mode passes { source_deck_id, except_ids } to mutation', async () => {
+      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve({ deck_id: 55 }) })
+      const { actions, mutations } = makeActions({
+        list: makeList(),
+        selection: makeSelection({ select_all: true, deselected: [3, 4] }),
+        deck_id: 10
+      })
+      await actions.onMoveCards()
+      const [vars] = mutations.moveCards.mock.calls[0]
+      expect(vars.target_deck_id).toBe(55)
+      expect(vars.source_deck_id).toBe(10)
+      expect(vars.except_ids).toEqual([3, 4])
+    })
+
+    test('select-all mode passes count to openMoveModal so the title shows total not preview length', async () => {
+      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
+      const persisted = [makeCard({ id: 1 }), makeCard({ id: 2 })]
+      const selection = makeSelection({ select_all: true })
+      selection.selected_count = { value: 200 }
+      const { actions } = makeActions({
+        list: makeList({ persisted }),
+        selection,
+        deck_id: 10
+      })
+      await actions.onMoveCards()
+      const [, options] = modalOpenMock.mock.calls[0]
+      // count=200 is the full selection; only 2 preview_cards loaded
+      expect(options.props.count).toBe(200)
+      expect(options.props.cards).toHaveLength(2)
+    })
   })
 
   // ── onCancelSelection ────────────────────────────────────────────────────

@@ -242,4 +242,63 @@ describe('useMoveCardsToDeckMutation', () => {
       except_ids: [7]
     })
   })
+
+  // [obligation] Mutation invalidation contract — hook owns its own invalidation.
+  // Both discriminated shapes must invalidate in onSettled without caller help.
+  test('explicit mode onSettled invalidates all card counts (moves shift deck totals)', () => {
+    const { onSettled } = configFrom(useMoveCardsToDeckMutation)
+    invalidateSpy.mockClear()
+    onSettled(undefined, undefined, {
+      target_deck_id: 20,
+      card_ids: [1],
+      source_deck_ids: [10]
+    })
+    const keys = invalidatedKeys()
+    expect(keys).toContainEqual(['cards', 'count'])
+    expect(keys).toContainEqual(['decks'])
+  })
+
+  test('select-all mode onSettled invalidates all card counts', () => {
+    const { onSettled } = configFrom(useMoveCardsToDeckMutation)
+    invalidateSpy.mockClear()
+    onSettled(undefined, undefined, {
+      target_deck_id: 20,
+      source_deck_id: 10,
+      except_ids: [3]
+    })
+    const keys = invalidatedKeys()
+    expect(keys).toContainEqual(['cards', 'count'])
+    expect(keys).toContainEqual(['decks'])
+  })
+
+  // [obligation] Hook must NOT rely on caller to invalidate — onSettled fires
+  // even on error (it's onSettled, not onSuccess).
+  test('explicit mode onSettled fires on error too (not just on success)', () => {
+    const { onSettled } = configFrom(useMoveCardsToDeckMutation)
+    invalidateSpy.mockClear()
+    const err = new Error('network')
+    onSettled(undefined, err, {
+      target_deck_id: 20,
+      card_ids: [1],
+      source_deck_ids: [10]
+    })
+    // Even on error the hook invalidates so stale data is cleared
+    const keys = invalidatedKeys()
+    expect(keys).toContainEqual(['deck', 20])
+    expect(keys).toContainEqual(['deck', 10])
+  })
+
+  test('select-all mode onSettled fires on error too', () => {
+    const { onSettled } = configFrom(useMoveCardsToDeckMutation)
+    invalidateSpy.mockClear()
+    const err = new Error('network')
+    onSettled(undefined, err, {
+      target_deck_id: 20,
+      source_deck_id: 10,
+      except_ids: []
+    })
+    const keys = invalidatedKeys()
+    expect(keys).toContainEqual(['deck', 20])
+    expect(keys).toContainEqual(['deck', 10])
+  })
 })
