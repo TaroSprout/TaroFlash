@@ -59,8 +59,8 @@ with no commits yet.
 Filter out:
 
 - Test files (`tests/`)
-- Config and fixture files (`*.config.*`, `_fixtures.js`)
-- Non-source files (`*.md`, `*.json`, `*.lock`, `*.css`, `*.scss`)
+- Config and fixture files (`*.config.*`, `_fixtures.ts`)
+- Non-source files (`*.md`, `*.json`, `*.lock`, `*.css`)
 
 You now have the **changed source files**. Union this list with Step 0's regression list — work the union. Files in Step 0 but not Step 1 (test was deleted, source untouched) are still in scope. Files in Step 1 but not Step 0 (source changed, coverage held) get a brief sanity check (read the diff, confirm existing tests cover the new branches) and only get new tests if a branch went uncovered.
 
