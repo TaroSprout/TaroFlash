@@ -4,13 +4,12 @@ lastUpdated: 2026-04-17T00:00:00-07:00
 
 # Backend Learning Log
 
-After each backend teaching session, list the key concepts covered as touchpoints (e.g., "RLS policies", "transactions", "JWT claims") so the user has prompts to react to rather than recalling from scratch. Let them reflect on what clicked and what didn't, and note any follow-up questions they ask — those are strong signals of understanding depth. Based on their reflection, their questions throughout the session, and your knowledge of the topic's actual depth, estimate their understanding of each concept on a scale of 1-100.
+Append-only log of backend concepts covered in teaching sessions, with the user's self-assessed understanding score (1–100). **Updated manually on request only** — never append unprompted. When asked to add an entry:
 
-**Scoring rules:**
-
-- Always err on the side of a lower score. If in doubt, pick the lower number.
+- List the key concepts covered in the session as touchpoints.
+- Use the user's stated scores. If they ask you to estimate, err low.
 - Log only concept and score — no rationale column.
-- Append new entries chronologically.
+- Append chronologically under `## Sessions`.
 
 ## Sessions
 

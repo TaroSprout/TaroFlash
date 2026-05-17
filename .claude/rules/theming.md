@@ -1,133 +1,25 @@
 ---
-lastUpdated: 2026-05-06T00:00:00Z
+lastUpdated: 2026-05-17T00:00:00Z
 paths:
   - 'src/**/*.{vue,css}'
 ---
 
-# Theming Convention
+# Theming
 
-Colors are applied via the `data-theme` attribute, which scopes a set of semantic CSS variables defined in `src/styles/palettes.css`. Never use raw hex values or hardcoded color utilities — always go through the theme token layer.
+Colors go through the `data-theme` token layer — never raw hex, never hardcoded Tailwind color classes (`bg-blue-500`) for themeable colors.
 
-## How it works
+## Top-level rules
 
-1. Parents apply theming by setting `data-theme` (and optionally `data-theme-dark`) directly on the element or component — the value is a `MemberTheme` (e.g. `'blue-500'`, `'green-400'`).
-2. On a component, those attributes flow through to its root element via Vue's normal attribute inheritance. Components do **not** declare a `theme` / `themeDark` prop; they just let the attrs forward.
-3. `palettes.css` maps each theme value to a set of `--theme-*` variables using a comma selector covering two activation conditions:
-   - `[data-theme='X']` — `(0,1,0)` always active (light or dark mode)
-   - `[data-theme='dark'] [data-theme-dark='X']` — `(0,2,0)` active when the root is dark
-     Each selector in a comma list keeps its own specificity (unlike `:is()`, which elevates all arms to the highest), so the descendant form genuinely beats the plain form in dark mode.
-4. Available tokens: `--theme-primary` / `--theme-on-primary`, `--theme-secondary` / `--theme-on-secondary`, `--theme-accent` / `--theme-on-accent`, `--theme-neutral` / `--theme-on-neutral`.
-5. Child elements reference those variables via Tailwind's arbitrary-property syntax or plain CSS.
-
-> **Dark mode root**: `use-theme` always writes an explicit `'light'` or `'dark'` to `data-theme` on `document.documentElement` — even when the user's preference is `'system'`. CSS never needs a `prefers-color-scheme` media-query fallback.
-
-## At a call site
-
-Pass `data-theme` (and `data-theme-dark` if needed) directly on the child element or component:
-
-```vue
-<template>
-  <ui-button data-theme="blue-500" data-theme-dark="blue-300">Save</ui-button>
-
-  <div data-theme="green-400">
-    <div class="bg-(--theme-primary) text-(--theme-on-primary)">...</div>
-  </div>
-</template>
-```
-
-If `data-theme-dark` is omitted, the same `data-theme` value applies in dark mode.
-
-## Inside a themed component
-
-Don't declare `theme` / `themeDark` props. With default `inheritAttrs`, `data-theme` and `data-theme-dark` from the call site flow onto the component's root automatically. Consume the scoped tokens anywhere inside:
-
-```vue
-<template>
-  <div class="bg-(--theme-primary) text-(--theme-on-primary)">...</div>
-</template>
-```
-
-If the component uses `defineOptions({ inheritAttrs: false })`, forward the attrs explicitly onto the root that should carry the theme.
-
-## In CSS / `<style>`
-
-```css
-.my-component {
-  background-color: var(--theme-primary);
-  color: var(--theme-on-primary);
-}
-```
-
-## Textured backgrounds: `bgx-*`
-
-`src/styles/bg-utils.css` defines a `bgx-*` utility that composites a masked pattern layer over an element using a `::before` pseudo-element. Use it for decorative texture effects (e.g. diagonal stripes on hover).
-
-Key modifiers:
-
-| Utility               | What it does                                               |
-| --------------------- | ---------------------------------------------------------- |
-| `bgx-<name>`          | Sets the mask image (e.g. `bgx-diagonal-stripes`)          |
-| `bgx-color-[<value>]` | Sets the fill color of the mask layer                      |
-| `bgx-opacity-<n>`     | Sets opacity as a percentage (e.g. `bgx-opacity-20` → 20%) |
-| `bgx-size-<n>`        | Sets mask-size via spacing scale or length                 |
-| `bgx-slide`           | Animates the mask position (infinite loop)                 |
-
-To make the texture color follow the active theme token, pass the token through the arbitrary-value bracket:
-
-```html
-<!-- fill inherits the current theme's neutral color -->
-<div class="bgx-diagonal-stripes bgx-color-[var(--theme-neutral)]" />
-
-<!-- fill follows the on-neutral token -->
-<div class="bgx-diagonal-stripes bgx-color-[var(--theme-on-neutral)]" />
-```
-
-## When to theme vs use base palette
-
-Not every color should follow the active theme. Reserve `--theme-*` tokens for elements that genuinely need to signal the active theme — primary CTAs, active selections, accents, themed surfaces inside a deck cover. Base UI chrome — body labels, toggle/spinbox idle states, section headings, generic backgrounds, helper text — should use the static brown/grey palette (e.g. `text-brown-700 dark:text-brown-100`, `bg-brown-100 dark:bg-grey-700`) so the chrome stays calm and consistent regardless of which theme is active around it.
-
-Rule of thumb:
-
-- **Themed**: the _active_ / _checked_ / _selected_ state of an interactive element, primary buttons, accent borders, themed cover surfaces.
-- **Base palette**: labels, idle/off states, section headings, modal chrome, dividers, generic surfaces.
-
-Mixing is normal in one component — e.g. a toggle's label and off-track stay base palette, while the on-track and on-handle pick up `--theme-primary` / `--theme-on-primary`.
-
-## Semantic surface tokens
-
-Recurring brown/grey pairs (`bg-brown-100 dark:bg-grey-700`, etc.) that mark a particular _surface role_ — input controls, page chrome, elevated cards — are defined as semantic tokens at `@theme` and overridden in the dark block in `src/styles/main.css`. Use the semantic class everywhere:
-
-```css
-/* main.css */
-@theme {
-  --color-input: var(
-    --color-brown-100
-  ); /* form-control surface (inputs, spinbox row, toggle off-track) */
-}
-
-@layer base {
-  &:where([data-theme='dark'], [data-theme='dark'] *) {
-    --color-input: var(--color-grey-700);
-  }
-}
-```
-
-```vue
-<!-- Good -->
-<div class="bg-input">…</div>
-
-<!-- Bad — duplicates the dark mapping at every callsite -->
-<div class="bg-brown-100 dark:bg-grey-700">…</div>
-```
-
-When you find yourself writing the same `bg-X dark:bg-Y` pair (or `text-`, `ring-`, etc.) in ≥ 3 places, promote it to a semantic `--color-*` token. Name the token after the role (`input`, `surface`, `elevated`), not the colour (`brown-100`). Themed variants (`--theme-primary`) stay separate — semantic surface tokens are for non-themed chrome.
-
-## Rules
-
-- **Always** write styles using tailwind classes, only opting for a style block when styling becomes complex or oversized for inline classes.
-- Set `data-theme` (and `data-theme-dark` when needed) on the outermost element or component that should carry the theme — descendants inherit the tokens.
+- **Always** write styles using tailwind classes; only opt for a `<style>` block when styling becomes complex or oversized for inline classes.
+- Set `data-theme` (and `data-theme-dark` when needed) on the outermost element/component that should carry the theme — descendants inherit the tokens.
 - Don't add `theme` / `themeDark` props to components — let `data-theme` / `data-theme-dark` forward via `inheritAttrs`.
-- Use `--theme-*` tokens only for colors that should signal the active theme (primary/accent/active states). For base chrome — labels, idle states, generic surfaces — use the static brown/grey palette utilities, not `--theme-*`.
-- Never use `@apply` — write plain CSS with `var(--theme-*)` directly (see `no-apply` rule).
-- Do not use raw hex values or hardcoded Tailwind color classes (e.g. `bg-blue-500`) for themeable colors.
-- When using `bgx-color-*` inside a themed element, always pass a `var(--theme-*)` token, not a raw color.
+- Use `--theme-*` tokens only for colors that should signal the active theme. For base chrome use the static brown/grey palette utilities, not `--theme-*`.
+- Never use `@apply` — write plain CSS with `var(--theme-*)` directly (see [`css`](./css.md)).
+
+## Deeper reading
+
+- [`theming-how-it-works`](../docs/theming-how-it-works.md) — `palettes.css` selector mechanics + dark-mode root
+- [`theming-usage`](../docs/theming-usage.md) — call-site, inside-component, CSS examples
+- [`theming-when-to-theme`](../docs/theming-when-to-theme.md) — themed tokens vs base palette decision rule
+- [`theming-semantic-tokens`](../docs/theming-semantic-tokens.md) — promoting recurring brown/grey pairs to `--color-*` roles
+- [`theming-bgx`](../docs/theming-bgx.md) — textured-background `bgx-*` utilities
