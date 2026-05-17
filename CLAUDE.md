@@ -2,6 +2,7 @@
 
 - Always use translation strings (e.g., `t('deck.settings-modal.title')`) instead of hardcoded text. If string not in `locales/en-us.json`, add it.
 - IMPORTANT: When writing code (migrations, functions, etc.) in `supabase/`, explain like teacher to student. Concise, simple, necessary context. Stop, let user ask questions.
+- After a backend teaching session, append an entry to `.claude/logs/learning-log.md` using your own read of the session — don't ask for review every time. Clarify with the user only when concepts/scores are genuinely ambiguous.
 - Confirm this file loaded by printing message to console on startup.
 - NEVER call `supabase db reset` always use `supabase migrations up` to apply migrations.
 

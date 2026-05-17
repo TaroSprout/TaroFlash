@@ -4,10 +4,12 @@ lastUpdated: 2026-04-17T00:00:00-07:00
 
 # Backend Learning Log
 
-Append-only log of backend concepts covered in teaching sessions, with the user's self-assessed understanding score (1–100). **Updated manually on request only** — never append unprompted. When asked to add an entry:
+Append-only log of backend concepts covered in teaching sessions, with the user's understanding score (1–100). Claude appends entries on its own judgment after a teaching session — no need to ask for review every time. Clarify with the user only when concepts or scores are genuinely ambiguous (e.g. session touched five topics and it's unclear which were the focus).
 
-- List the key concepts covered in the session as touchpoints.
-- Use the user's stated scores. If they ask you to estimate, err low.
+When appending:
+
+- List the key concepts covered as touchpoints (RLS, transactions, JWT claims, etc.).
+- Score from the user's questions, reactions, and your read of topic depth. Err low when in doubt.
 - Log only concept and score — no rationale column.
 - Append chronologically under `## Sessions`.
 
