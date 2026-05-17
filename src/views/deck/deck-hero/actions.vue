@@ -21,6 +21,10 @@ function onToggleEditCards() {
   if (!editor) return
   editor.setMode(editor.mode.value === 'edit' ? 'view' : 'edit')
 }
+
+function onSelectCards() {
+  editor?.actions.onSelectCard()
+}
 </script>
 
 <template>
@@ -57,6 +61,18 @@ function onToggleEditCards() {
       {{
         mode === 'edit' ? t('deck-view.actions.stop-editing') : t('deck-view.actions.edit-cards')
       }}
+    </ui-button>
+
+    <ui-button
+      data-testid="overview-panel__select-cards-button"
+      data-theme="brown-300"
+      data-theme-dark="stone-700"
+      icon-left="data-check"
+      full-width
+      size="xl"
+      @click="onSelectCards"
+    >
+      {{ t('deck-view.actions.select-cards') }}
     </ui-button>
   </div>
 </template>

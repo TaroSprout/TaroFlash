@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui-kit/button.vue'
-import UiTag from '@/components/ui-kit/tag.vue'
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { emitSfx } from '@/sfx/bus'
 import { type CardListController } from '@/composables/card-editor/card-list-controller'
 
 const { t } = useI18n()
@@ -17,31 +17,31 @@ const select_all_label = computed(() =>
     ? t('deck-view.bulk-toolbar.deselect-all')
     : t('deck-view.bulk-toolbar.select-all')
 )
+
+function onToggleSelectAll() {
+  emitSfx('ui.select')
+  selection.toggleSelectAll()
+}
+
+function onCancel() {
+  emitSfx('ui.digi_powerdown')
+  selection.exitSelection()
+}
 </script>
 
 <template>
   <div data-testid="bulk-actions" class="flex flex-col gap-2 w-full">
-    <div class="flex items-center justify-between">
-      <ui-tag
-        data-testid="bulk-actions__count"
-        data-theme="purple-500"
-        data-theme-dark="purple-800"
-      >
-        {{ t('deck-view.bulk-toolbar.count', { count: selected_count }) }}
-      </ui-tag>
-
-      <ui-button
-        data-testid="bulk-actions__exit"
-        data-theme="brown-300"
-        data-theme-dark="stone-700"
-        size="sm"
-        icon-left="close"
-        icon-only
-        @click="selection.exitSelection()"
-      >
-        {{ t('deck-view.bulk-toolbar.exit') }}
-      </ui-button>
-    </div>
+    <ui-button
+      data-testid="bulk-actions__cancel"
+      data-theme="brown-300"
+      data-theme-dark="stone-700"
+      full-width
+      size="xl"
+      icon-left="close"
+      @click="onCancel"
+    >
+      {{ t('deck-view.bulk-toolbar.cancel') }}
+    </ui-button>
 
     <ui-button
       data-testid="bulk-actions__select-all"
@@ -50,7 +50,7 @@ const select_all_label = computed(() =>
       full-width
       size="xl"
       :icon-left="all_cards_selected ? 'check-box' : 'check-box-outline-blank'"
-      @click="selection.toggleSelectAll()"
+      @click="onToggleSelectAll"
     >
       {{ select_all_label }}
     </ui-button>
