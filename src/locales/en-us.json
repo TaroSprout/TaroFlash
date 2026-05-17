@@ -331,6 +331,7 @@
   "deck-view.bulk-toolbar.move": "Move",
   "deck-view.bulk-toolbar.delete": "Delete",
   "deck-view.bulk-toolbar.exit": "Exit selection",
+  "deck-view.bulk-toolbar.cancel": "Cancel",
   "deck-view.card-editor.list-item.front-placeholder": "Front",
   "deck-view.card-editor.list-item.back-placeholder": "Back",
   "deck-view.actions.study-all": "Study <span>all</span> cards",
