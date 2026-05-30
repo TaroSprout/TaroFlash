@@ -106,6 +106,25 @@ Shipped on `refactor/card-editor-composables` (merged to master).
 
 **Test count:** 1132 passing. vue-tsc: 0 errors. Format: clean.
 
+### Session D — image orchestration + convention polish
+
+Shipped on `refactor/card-editor-image-orchestration`.
+
+- **Image writes routed through the layer (Item #4):** `setCardImage` /
+  `deleteCardImage` added to `useCardMutations` (deck_id from the closure),
+  exposed on the controller wrapped in `withSaving`. `list-item-card.vue` no
+  longer imports `@/api/cards` directly — it calls `editor.setCardImage` /
+  `editor.deleteCardImage`, keeping its toast error handling. Image ops now
+  share the `saving` flag and the mutation test surface.
+- **Magic timeout removed (Item #5):** `list-item-card.vue` dropped the
+  `setTimeout(resolve, FOCUS_DELAY)` blur-settle dance for native
+  `@focusin` / `@focusout` on the root, using `relatedTarget` to tell
+  intra-card focus moves from edge crossings. sfx is gated on contenteditable
+  focus so the image button doesn't trigger it. `FOCUS_DELAY` is gone.
+- **Named prop types (Item #5):** `ListItemProps` / `ListItemCardProps`
+  extracted per `.claude/rules/vue-props.md`.
+- **Item #3 dropped as obsolete** — see below.
+
 ---
 
 ## What remains — the follow-up refactor
@@ -122,103 +141,38 @@ Shipped Session C. Option (b) — client-side `client_id` instead of relying
 on id sign — chosen and implemented. The dev invariant assertion landed
 alongside.
 
-### 3. [MED] select-all completeness constraint
+### 3. [DROPPED — obsolete] select-all completeness constraint
 
-`src/composables/card-editor/card-list-controller.ts` — `onDeleteCards`
-select-all path correctly routes through `deleteCards({ except_ids })`
-which handles the whole-deck delete server-side. That path is safe.
+The truncation risk this guarded against no longer exists. Payload-building
+moved to `src/utils/card-editor/selection-payload.ts`, and **both** delete and
+move route select-all through the server-side paths (`{ except_ids }` /
+`{ source_deck_id, except_ids }`), so loaded-only enumeration is never used to
+build a write payload in select-all mode.
 
-But `loadedSelectedCards()` (and anything that calls
-`selection.filterSelected(list.persisted_cards.value)`) returns only loaded
-cards in select-all mode. If any flow builds a write payload from the
-loaded set while `select_all_mode && hasNextPage`, it silently truncates.
+The note's proposed hard guard (throw in `loadedSelectedCards` when
+`select_all_mode && hasNextPage`) is now actively wrong: `loadedSelectedCards`
+is deliberately called in select-all mode to build the move modal's
+`preview_cards`, and is documented "incomplete by design." A throw there would
+break the move preview. Nothing to do.
 
-Today: UI disables the Move toolbar button in select-all mode (soft guard).
+### 4. [DONE — Session D] Image mutations bypass the orchestration layer
 
-**Hard guard**: in `loadedSelectedCards` (or a higher-level check):
+`setCardImage` / `deleteCardImage` now live on `useCardMutations` (deck_id from
+the closure) and are exposed on the controller wrapped in `withSaving`.
+`list-item-card.vue` calls `editor.setCardImage` / `editor.deleteCardImage`
+instead of importing `@/api/cards`. Covered in `card-mutations.test.js` and
+`card-list-controller.test.js`; `list-item-card.test.js` asserts on the
+provided controller methods.
 
-```ts
-function loadedSelectedCards(): Card[] {
-  if (selection.select_all_mode.value && cards_query.hasNextPage.value) {
-    throw new Error(
-      'Cannot build a loaded-cards payload while select_all_mode is active ' +
-        'with unloaded pages. Use deleteCards({ except_ids }) or load all pages first.'
-    )
-  }
-  return ...
-}
-```
+### 5. [DONE — Session D] Convention polish (bundle)
 
-Or: make `onMoveCards` load all pages before building the payload when
-`select_all_mode` is true (async iteration of `cards_query.loadNextPage`
-until `!hasNextPage`).
-
-Bulk move via toolbar is currently a dead path (`onMoveCards` called with
-undefined id short-circuits via `cards.length === 0`). If bulk move is ever
-wanted, it must handle this.
-
-### 4. [MED] Image mutations bypass the orchestration layer
-
-`src/views/deck/card-editor/list-item-card.vue:5,29,30,49,60`:
-
-```ts
-import { useSetCardImageMutation, useDeleteCardImageMutation } from '@/api/cards'
-const set_image_mutation = useSetCardImageMutation()
-const delete_image_mutation = useDeleteCardImageMutation()
-```
-
-Direct imports in a leaf component. Every other card write goes through
-`useCardMutations` → exposed via controller. Image writes:
-
-- Are not debounced / deduped if user toggles rapidly
-- Don't use the `saving` flag (UI has no "saving image" indicator)
-- Don't live in the mutation layer's test surface
-- Continue firing if the component unmounts mid-upload
-
-**Fix**: add to `useCardMutations`:
-
-```ts
-const set_image_mutation = useSetCardImageMutation()
-const delete_image_mutation = useDeleteCardImageMutation()
-
-async function setCardImage(card_id: number, side: 'front' | 'back', file: File) {
-  if (deck_id.value === undefined) return
-  try {
-    await set_image_mutation.mutateAsync({ card_id, deck_id: deck_id.value, file, side })
-  } catch (e) {
-    // surface via toast? or return Result-style error
-  }
-}
-
-async function deleteCardImage(card_id: number, side: 'front' | 'back') { ... }
-```
-
-Expose `setCardImage` / `deleteCardImage` on the controller. `list-item-card`
-calls those instead of importing mutations directly.
-
-Tests: `list-item-card.test.js` already mocks `@/api/cards`; migrate to stub
-`editor.setCardImage` / `editor.deleteCardImage` and assert on those calls.
-
-Note: the controller now owns `updateCard` directly (Session C); pattern to
-mirror is `withSaving(() => mutations.setCardImage(...))`.
-
-### 5. [LOW] Convention polish (bundle)
-
-Small fixes worth doing together in one commit:
-
-- `src/views/deck/card-editor/list-item-card.vue:76–82` — replace
-  `setTimeout(resolve, FOCUS_DELAY)` with a focus-out event listener or a
-  transition event. Per `.claude/rules/animations.md` (no magic timeouts).
-- Extract `FOCUS_DELAY = 1` constant — if it stays, move to a shared
-  constants file so any change is single-source.
-- ~~Add invariant assertion in `virtual-card-list.ts` `all_cards` computed
-  (see #2 quick win).~~ Shipped Session C as `assertUniqueClientIds`.
-- `src/views/deck/card-editor/list-item.vue:10–14` + `list-item-card.vue:14–17`
-  — extract named `type ListItemProps = {...}` + `type ListItemCardProps = {...}`
-  per `.claude/rules/vue-props.md`.
-- ~~Add a doc comment block in `virtual-card-list.ts` explaining the temp →
-  real id promotion contract (helps anyone reading #2 cold).~~ Landed
-  Session C as JSDoc on `useVirtualCardList` + `promoteTemp`.
+- Magic timeout: `list-item-card.vue` replaced `setTimeout(resolve, FOCUS_DELAY)`
+  with native `@focusin` / `@focusout` + `relatedTarget`; `FOCUS_DELAY` removed.
+- Named prop types `ListItemProps` / `ListItemCardProps` extracted per
+  `.claude/rules/vue-props.md`.
+- ~~Invariant assertion in `virtual-card-list.ts`~~ — Session C
+  (`assertUniqueClientIds`).
+- ~~Temp → real id promotion doc block~~ — Session C JSDoc.
 
 ---
 
