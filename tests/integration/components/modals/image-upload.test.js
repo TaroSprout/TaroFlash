@@ -89,12 +89,12 @@ describe('ImageUpload modal', () => {
   })
 
   describe('layout', () => {
-    test('renders the dropzone and the single confirm button', () => {
+    test('renders the dropzone, cancel, and confirm buttons', () => {
       const { wrapper } = mountModal()
 
       expect(wrapper.find('[data-testid="image-upload__dropzone"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="image-upload__cancel"]').exists()).toBe(true)
       expect(wrapper.find('[data-testid="image-upload__confirm"]').exists()).toBe(true)
-      expect(wrapper.find('[data-testid="image-upload__cancel"]').exists()).toBe(false)
     })
 
     test('shows the prompt and disables confirm before a file is chosen', () => {
@@ -251,6 +251,15 @@ describe('ImageUpload modal', () => {
       await wrapper.find('[data-testid="image-upload__confirm"]').trigger('click')
 
       expect(close).not.toHaveBeenCalled()
+    })
+
+    test('cancel closes without a file', async () => {
+      const { wrapper, close } = mountModal()
+
+      await wrapper.find('[data-testid="image-upload__cancel"]').trigger('click')
+
+      expect(close).toHaveBeenCalledTimes(1)
+      expect(close).toHaveBeenCalledWith()
     })
 
     test('the mobile-sheet close button closes without a file', async () => {

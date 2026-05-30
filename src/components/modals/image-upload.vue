@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
+import Card from '@/components/card/index.vue'
 import MobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
@@ -137,53 +138,69 @@ function onConfirm() {
     data-testid="image-upload-container"
     data-theme="brown-500"
     class="sm:w-130"
-    :close_label="t('image-upload-modal.close-label')"
     @close="close()"
   >
     <div data-testid="image-upload__body" class="flex flex-col items-center gap-6 px-6 pt-16 pb-6">
-      <button
-        ref="dropZone"
-        type="button"
-        data-testid="image-upload__dropzone"
-        :data-dragging="dragging"
-        :data-has-preview="!!preview"
-        class="image-upload__dropzone"
-        @click="browse"
-      >
-        <img
-          v-if="preview"
-          data-testid="image-upload__preview"
-          :src="preview"
-          :alt="t('image-upload-modal.preview-alt')"
-          class="absolute inset-0 h-full w-full object-cover"
-        />
+      <card size="xl">
+        <template #front>
+          <button
+            ref="dropZone"
+            type="button"
+            data-testid="image-upload__dropzone"
+            :data-dragging="dragging"
+            :data-has-preview="!!preview"
+            class="image-upload__dropzone"
+            @click="browse"
+          >
+            <img
+              v-if="preview"
+              data-testid="image-upload__preview"
+              :src="preview"
+              :alt="t('image-upload-modal.preview-alt')"
+              class="absolute inset-0 h-full w-full object-cover"
+            />
 
-        <div
-          v-else
-          data-testid="image-upload__prompt"
-          class="flex flex-col items-center gap-3 px-6 text-center"
-        >
-          <ui-icon src="add-image" class="size-12 text-brown-500" />
-          <p class="text-brown-600">{{ t('image-upload-modal.drop-heading') }}</p>
-        </div>
-      </button>
+            <div
+              v-else
+              data-testid="image-upload__prompt"
+              class="flex flex-col items-center gap-3 px-6 text-center"
+            >
+              <ui-icon src="add-image" class="size-12" />
+              <p class="text-brown-600">{{ t('image-upload-modal.drop-heading') }}</p>
+            </div>
+          </button>
+        </template>
+      </card>
 
       <p v-if="error" data-testid="image-upload__error" class="text-red-500">
         {{ error_message }}
       </p>
 
-      <ui-button
-        data-testid="image-upload__confirm"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
-        icon-left="check"
-        size="lg"
-        full-width
-        :disabled="!preview"
-        @click="onConfirm"
-      >
-        {{ t('image-upload-modal.confirm-button') }}
-      </ui-button>
+      <div data-testid="image-upload__actions" class="flex w-full gap-3">
+        <ui-button
+          data-testid="image-upload__cancel"
+          data-theme="grey-400"
+          icon-left="close"
+          size="lg"
+          full-width
+          @click="close()"
+        >
+          {{ t('image-upload-modal.cancel-button') }}
+        </ui-button>
+
+        <ui-button
+          data-testid="image-upload__confirm"
+          data-theme="blue-500"
+          data-theme-dark="blue-650"
+          icon-left="check"
+          size="lg"
+          full-width
+          :disabled="!preview"
+          @click="onConfirm"
+        >
+          {{ t('image-upload-modal.confirm-button') }}
+        </ui-button>
+      </div>
     </div>
 
     <input
@@ -198,23 +215,23 @@ function onConfirm() {
 
 <style>
 .image-upload__dropzone {
-  /* Mirrors an `xl` card-face: 7/8 aspect ratio + 58px corner radius. */
+  /* Fills the host `card`, borrowing its scoped --face-radius so the corner
+     stays in sync with the card as its sizing evolves. */
   position: relative;
   overflow: hidden;
   width: 100%;
-  max-width: 19.625rem;
-  aspect-ratio: var(--aspect-card);
+  height: 100%;
 
   border: 3px dashed var(--color-brown-500);
-  border-radius: 58px;
-  background-color: var(--color-brown-200);
+  border-radius: var(--face-radius);
+  background-color: var(--color-white);
 
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
 
 .image-upload__dropzone[data-dragging='true'] {
-  background-color: var(--color-brown-300);
+  background-color: var(--color-brown-100);
 }
 
 .image-upload__dropzone[data-has-preview='true'] {
