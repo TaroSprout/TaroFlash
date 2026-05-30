@@ -279,6 +279,18 @@ describe('ListItemCard', () => {
     wrapper.unmount()
   })
 
+  test('does NOT emit ui.card_drop when a non-contenteditable element blurs to outside every card', async () => {
+    const wrapper = mountWithFocusStubs({ card: { id: 42 } })
+    // A non-contenteditable element (e.g. the image button) losing focus must not trigger the drop sfx.
+    const button = document.createElement('button')
+    wrapper.element.appendChild(button)
+    button.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: null }))
+    // e.target.isContentEditable is false → card_drop guard skipped
+    expect(mocks.emitSfxMock).not.toHaveBeenCalledWith('ui.card_drop')
+    button.remove()
+    wrapper.unmount()
+  })
+
   test('does NOT emit ui.card_drop when focus moves out to another card', async () => {
     const other = makeOtherCardEditor()
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
