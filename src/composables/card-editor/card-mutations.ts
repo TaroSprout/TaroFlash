@@ -1,10 +1,12 @@
 import { toValue, type MaybeRefOrGetter } from 'vue'
 import {
+  useDeleteCardImageMutation,
   useDeleteCardsMutation,
   useDeleteCardsInDeckMutation,
   useInsertCardAtMutation,
   useMoveCardsToDeckMutation,
   useSaveCardMutation,
+  useSetCardImageMutation,
   type InsertCardAtParams,
   type MoveCardsToDeckVars
 } from '@/api/cards'
@@ -30,6 +32,8 @@ export function useCardMutations(deck_id: MaybeRefOrGetter<number | undefined>) 
   const delete_mutation = useDeleteCardsMutation()
   const delete_in_deck_mutation = useDeleteCardsInDeckMutation()
   const move_mutation = useMoveCardsToDeckMutation()
+  const set_image_mutation = useSetCardImageMutation()
+  const delete_image_mutation = useDeleteCardImageMutation()
 
   /** Insert a new card at the anchor + side described by `params`. */
   function insertCard(params: InsertCardAtParams): Promise<{ id: number; rank: number }> {
@@ -69,5 +73,15 @@ export function useCardMutations(deck_id: MaybeRefOrGetter<number | undefined>) 
     await move_mutation.mutateAsync(vars)
   }
 
-  return { insertCard, saveCard, deleteCards, moveCards }
+  /** Upload and attach an image to one face of a card. */
+  function setCardImage(card_id: number, side: 'front' | 'back', file: File): Promise<unknown> {
+    return set_image_mutation.mutateAsync({ card_id, deck_id: toValue(deck_id)!, file, side })
+  }
+
+  /** Remove the image from one face of a card. */
+  function deleteCardImage(card_id: number, side: 'front' | 'back'): Promise<unknown> {
+    return delete_image_mutation.mutateAsync({ card_id, deck_id: toValue(deck_id)!, side })
+  }
+
+  return { insertCard, saveCard, deleteCards, moveCards, setCardImage, deleteCardImage }
 }

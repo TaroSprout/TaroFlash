@@ -2,14 +2,23 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { ref } from 'vue'
 import { card } from '@tests/fixtures/card'
 
-const { insertCardAtMock, saveCardMock, deleteCardsMock, deleteCardsInDeckMock, moveCardsMock } =
-  vi.hoisted(() => ({
-    insertCardAtMock: vi.fn(),
-    saveCardMock: vi.fn(),
-    deleteCardsMock: vi.fn(),
-    deleteCardsInDeckMock: vi.fn(),
-    moveCardsMock: vi.fn()
-  }))
+const {
+  insertCardAtMock,
+  saveCardMock,
+  deleteCardsMock,
+  deleteCardsInDeckMock,
+  moveCardsMock,
+  setCardImageMock,
+  deleteCardImageMock
+} = vi.hoisted(() => ({
+  insertCardAtMock: vi.fn(),
+  saveCardMock: vi.fn(),
+  deleteCardsMock: vi.fn(),
+  deleteCardsInDeckMock: vi.fn(),
+  moveCardsMock: vi.fn(),
+  setCardImageMock: vi.fn(),
+  deleteCardImageMock: vi.fn()
+}))
 
 vi.mock('@/api/cards', () => ({
   useInsertCardAtMutation: () => ({ mutate: insertCardAtMock, mutateAsync: insertCardAtMock }),
@@ -19,7 +28,12 @@ vi.mock('@/api/cards', () => ({
     mutate: deleteCardsInDeckMock,
     mutateAsync: deleteCardsInDeckMock
   }),
-  useMoveCardsToDeckMutation: () => ({ mutate: moveCardsMock, mutateAsync: moveCardsMock })
+  useMoveCardsToDeckMutation: () => ({ mutate: moveCardsMock, mutateAsync: moveCardsMock }),
+  useSetCardImageMutation: () => ({ mutate: setCardImageMock, mutateAsync: setCardImageMock }),
+  useDeleteCardImageMutation: () => ({
+    mutate: deleteCardImageMock,
+    mutateAsync: deleteCardImageMock
+  })
 }))
 
 import { useCardMutations } from '@/composables/card-editor/card-mutations'
@@ -43,6 +57,10 @@ beforeEach(() => {
   deleteCardsInDeckMock.mockResolvedValue(0)
   moveCardsMock.mockReset()
   moveCardsMock.mockResolvedValue(undefined)
+  setCardImageMock.mockReset()
+  setCardImageMock.mockResolvedValue(undefined)
+  deleteCardImageMock.mockReset()
+  deleteCardImageMock.mockResolvedValue(undefined)
 })
 
 describe('useCardMutations', () => {
@@ -120,6 +138,28 @@ describe('useCardMutations', () => {
       const m = makeMutations()
       await m.moveCards({ target_deck_id: 99, card_ids: [], source_deck_ids: [] })
       expect(moveCardsMock).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('setCardImage', () => {
+    test('forwards card_id, side, file, and the closed-over deck_id', async () => {
+      const m = makeMutations(10)
+      const file = new File(['x'], 'a.png', { type: 'image/png' })
+      await m.setCardImage(42, 'front', file)
+      expect(setCardImageMock).toHaveBeenCalledWith({
+        card_id: 42,
+        deck_id: 10,
+        file,
+        side: 'front'
+      })
+    })
+  })
+
+  describe('deleteCardImage', () => {
+    test('forwards card_id, side, and the closed-over deck_id', async () => {
+      const m = makeMutations(10)
+      await m.deleteCardImage(42, 'back')
+      expect(deleteCardImageMock).toHaveBeenCalledWith({ card_id: 42, deck_id: 10, side: 'back' })
     })
   })
 })

@@ -121,6 +121,16 @@ export function useCardListController(opts: Options) {
     return withSaving(() => mutations.saveCard(card, values))
   }
 
+  /** Upload and attach an image to one face of a card, toggling `saving`. */
+  function setCardImage(card_id: number, side: 'front' | 'back', file: File) {
+    return withSaving(() => mutations.setCardImage(card_id, side, file))
+  }
+
+  /** Remove the image from one face of a card, toggling `saving`. */
+  function deleteCardImage(card_id: number, side: 'front' | 'back') {
+    return withSaving(() => mutations.deleteCardImage(card_id, side))
+  }
+
   return {
     list,
     selection,
@@ -131,6 +141,8 @@ export function useCardListController(opts: Options) {
     setMode,
     saving,
     updateCard,
+    setCardImage,
+    deleteCardImage,
     card_attributes,
     deck_id: opts.deck_id,
 
