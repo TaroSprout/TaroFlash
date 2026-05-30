@@ -53,7 +53,7 @@ function onClick(e: MouseEvent) {
   <div
     data-testid="card-list-item"
     :data-id="card.id"
-    class="group/listitem relative grid w-full grid-cols-1 sm:grid-cols-[1fr_auto_1fr] sm:gap-x-6 place-items-center rounded-6 bg-transparent p-0 sm:p-6 transition-colors duration-100 ease-in-out hover:not-focus-within:bg-brown-200 dark:hover:not-focus-within:bg-grey-700"
+    class="group/listitem relative grid w-full grid-cols-1 sm:grid-cols-[1fr_auto_1fr] sm:gap-x-6 place-items-center rounded-6 bg-transparent p-0 sm:p-6 transition-colors duration-100 ease-in-out hover:not-focus-within:bg-brown-200 dark:hover:not-focus-within:bg-stone-900"
     :class="{
       'cursor-pointer': is_selecting,
       'focus-within:bg-brown-300 hover:focus-within:bg-brown-300 dark:focus-within:bg-blue-650 dark:hover:focus-within:bg-blue-650':
@@ -93,7 +93,7 @@ function onClick(e: MouseEvent) {
       icon-left="add"
       icon-only
       data-theme="brown-100"
-      data-theme-dark="stone-700"
+      data-theme-dark="grey-900"
       size="sm"
       class="absolute! z-1 top-0 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-100 ease-in-out group-hover/listitem:opacity-100 group-hover/listitem:pointer-events-auto group-focus-within/listitem:opacity-100 group-focus-within/listitem:pointer-events-auto *:[.btn-icon]:text-brown-500"
       @click.stop="prependCard(card.id!)"
@@ -104,7 +104,7 @@ function onClick(e: MouseEvent) {
       icon-left="add"
       icon-only
       data-theme="brown-100"
-      data-theme-dark="stone-700"
+      data-theme-dark="grey-900"
       size="sm"
       class="absolute! z-1 bottom-0 translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-100 ease-in-out group-hover/listitem:opacity-100 group-hover/listitem:pointer-events-auto group-focus-within/listitem:opacity-100 group-focus-within/listitem:pointer-events-auto *:[.btn-icon]:text-brown-500"
       @click.stop="appendCard(card.id!)"

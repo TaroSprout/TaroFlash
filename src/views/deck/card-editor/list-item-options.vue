@@ -18,6 +18,7 @@ const { t } = useI18n()
       icon-only
       icon-left="data-check"
       data-theme="brown-100"
+      data-theme-dark="grey-900"
       :sfx="{ hover: 'ui.pop_drip_mid' }"
     >
       {{ t('deck-view.item-options.select') }}
@@ -28,6 +29,7 @@ const { t } = useI18n()
       icon-only
       icon-left="move-item"
       data-theme="brown-100"
+      data-theme-dark="grey-900"
       :sfx="{ hover: 'ui.pop_drip_mid' }"
     >
       {{ t('deck-view.item-options.move') }}
@@ -38,6 +40,7 @@ const { t } = useI18n()
       icon-only
       icon-left="delete"
       data-theme="red-500"
+      data-theme-dark="red-600"
       :sfx="{ hover: 'ui.pop_drip_mid' }"
     >
       {{ t('deck-view.item-options.delete') }}
