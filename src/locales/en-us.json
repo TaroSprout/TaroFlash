@@ -367,6 +367,7 @@
   "image-upload-modal.invalid-type-error": "Use a PNG, JPEG, WebP, or GIF image.",
   "image-upload-modal.too-large-error": "Image must be under {max}.",
   "image-upload-modal.preview-alt": "Selected image",
+  "image-upload-modal.remove-button": "Remove image",
   "image-upload-modal.cancel-button": "Cancel",
   "image-upload-modal.confirm-button": "Save",
   "mobile-sheet.close-label": "Close",

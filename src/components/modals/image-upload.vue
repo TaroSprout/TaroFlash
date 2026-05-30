@@ -32,6 +32,10 @@ const preview = ref<string | null>(null)
 const selected_file = ref<File | null>(null)
 const drag_counter = ref(0)
 const error = ref<FileError | null>(null)
+// A fresh drop/pick leaves the pointer over the dropzone, which would trigger
+// the replace overlay and hide the new preview. Suppress it until the pointer
+// leaves once.
+const overlay_suppressed = ref(false)
 
 const dragging = computed(() => drag_counter.value > 0)
 const show_error = computed(() => !!error.value && !preview.value)
@@ -110,6 +114,7 @@ async function processFile(file: File) {
   try {
     preview.value = await readPreview(file)
     selected_file.value = file
+    overlay_suppressed.value = true
   } catch (err) {
     logger.error((err as Error).message)
   }
@@ -133,6 +138,13 @@ function readPreview(file: File): Promise<string> {
 function onConfirm() {
   if (selected_file.value) close(selected_file.value)
 }
+
+function removeImage() {
+  preview.value = null
+  selected_file.value = null
+  error.value = null
+  overlay_suppressed.value = false
+}
 </script>
 
 <template>
@@ -147,43 +159,59 @@ function onConfirm() {
       class="flex flex-col items-center gap-10 px-12 pt-16 pb-6"
     >
       <div data-testid="image-upload__picker" class="flex flex-col items-center gap-3">
-        <card size="xl">
-          <template #front>
-            <button
-              ref="dropZone"
-              type="button"
-              data-testid="image-upload__dropzone"
-              :data-dragging="dragging"
-              :data-has-preview="!!preview"
-              :data-error="show_error"
-              class="image-upload__dropzone"
-              v-sfx="{ hover: 'ui.click_07' }"
-              @click="browse"
-            >
-              <img
-                v-if="preview"
-                data-testid="image-upload__preview"
-                :src="preview"
-                :alt="t('image-upload-modal.preview-alt')"
-                class="image-upload__image"
-              />
-
-              <div
-                v-if="show_error"
-                data-testid="image-upload__error"
-                class="image-upload__overlay text-red-500"
+        <div data-testid="image-upload__frame" class="relative w-fit">
+          <card size="xl">
+            <template #front>
+              <button
+                ref="dropZone"
+                type="button"
+                data-testid="image-upload__dropzone"
+                :data-dragging="dragging"
+                :data-has-preview="!!preview"
+                :data-error="show_error"
+                :data-suppress-overlay="overlay_suppressed"
+                class="image-upload__dropzone"
+                v-sfx="{ hover: 'ui.click_07' }"
+                @click="browse"
+                @pointerleave="overlay_suppressed = false"
               >
-                <ui-icon src="close" class="size-12" />
-                <p class="text-sm">{{ error_message }}</p>
-              </div>
+                <img
+                  v-if="preview"
+                  data-testid="image-upload__preview"
+                  :src="preview"
+                  :alt="t('image-upload-modal.preview-alt')"
+                  class="image-upload__image"
+                />
 
-              <div v-else data-testid="image-upload__prompt" class="image-upload__overlay">
-                <ui-icon src="add-image" class="size-12" />
-                <p class="text-sm">{{ t('image-upload-modal.drop-heading') }}</p>
-              </div>
-            </button>
-          </template>
-        </card>
+                <div
+                  v-if="show_error"
+                  data-testid="image-upload__error"
+                  class="image-upload__overlay text-red-500"
+                >
+                  <ui-icon src="close" class="size-12" />
+                  <p class="text-sm">{{ error_message }}</p>
+                </div>
+
+                <div v-else data-testid="image-upload__prompt" class="image-upload__overlay">
+                  <ui-icon src="add-image" class="size-12" />
+                  <p class="text-sm">{{ t('image-upload-modal.drop-heading') }}</p>
+                </div>
+              </button>
+            </template>
+          </card>
+
+          <ui-button
+            v-if="preview"
+            data-testid="image-upload__remove"
+            icon-only
+            icon-left="delete"
+            data-theme="red-500"
+            class="absolute -top-3 -right-3 z-10"
+            @click.stop="removeImage"
+          >
+            {{ t('image-upload-modal.remove-button') }}
+          </ui-button>
+        </div>
 
         <i18n-t
           keypath="image-upload-modal.restrictions"
@@ -313,5 +341,12 @@ function onConfirm() {
 
 .image-upload__dropzone[data-has-preview='true']:hover .image-upload__overlay {
   opacity: 1;
+}
+
+/* Right after a drop/pick the pointer is already over the dropzone — keep the
+   replace overlay hidden until it leaves once, so the new preview is visible. */
+.image-upload__dropzone[data-has-preview='true'][data-suppress-overlay='true']:hover
+  .image-upload__overlay {
+  opacity: 0;
 }
 </style>

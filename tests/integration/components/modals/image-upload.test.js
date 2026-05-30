@@ -171,6 +171,43 @@ describe('ImageUpload modal', () => {
     })
   })
 
+  describe('remove + replace affordance', () => {
+    test('the remove button appears only once an image is chosen', async () => {
+      const { wrapper } = mountModal()
+
+      expect(wrapper.find('[data-testid="image-upload__remove"]').exists()).toBe(false)
+
+      await selectFile(wrapper, makeImageFile())
+
+      expect(wrapper.find('[data-testid="image-upload__remove"]').exists()).toBe(true)
+    })
+
+    test('removing clears the preview and disables confirm again', async () => {
+      const { wrapper } = mountModal()
+      await selectFile(wrapper, makeImageFile())
+
+      await wrapper.find('[data-testid="image-upload__remove"]').trigger('click')
+
+      expect(wrapper.find('[data-testid="image-upload__preview"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="image-upload__prompt"]').exists()).toBe(true)
+      expect(
+        wrapper.find('[data-testid="image-upload__confirm"]').attributes('disabled')
+      ).toBeDefined()
+    })
+
+    test('suppresses the replace overlay until the pointer leaves after adding', async () => {
+      const { wrapper } = mountModal()
+      await selectFile(wrapper, makeImageFile())
+
+      const dropzone = wrapper.find('[data-testid="image-upload__dropzone"]')
+      expect(dropzone.attributes('data-suppress-overlay')).toBe('true')
+
+      await dropzone.trigger('pointerleave')
+
+      expect(dropzone.attributes('data-suppress-overlay')).toBe('false')
+    })
+  })
+
   describe('accepted types', () => {
     test('the file input only accepts png, jpeg, webp, and gif', () => {
       const { wrapper } = mountModal()
