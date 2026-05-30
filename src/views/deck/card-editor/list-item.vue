@@ -69,15 +69,9 @@ function onClick(e: MouseEvent) {
       <ui-icon
         src="reorder"
         class="hidden"
-        :class="{
-          'group-hover/listitem:block group-focus-within/listitem:block': !is_selecting
-        }"
+        :class="{ 'group-hover/listitem:block': !is_selecting }"
       />
-      <span
-        :class="{
-          'group-focus-within/listitem:hidden group-hover/listitem:hidden': !is_selecting
-        }"
-      >
+      <span :class="{ 'group-hover/listitem:hidden': !is_selecting }">
         {{ index + 1 }}
       </span>
     </button>
