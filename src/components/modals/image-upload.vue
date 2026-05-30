@@ -8,12 +8,18 @@ import logger from '@/utils/logger'
 
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 const ACCEPT_ATTR = ACCEPTED_TYPES.join(',')
+const DEFAULT_MAX_BYTES = 5 * 1024 * 1024
 
 export type ImageUploadModalResponse = File
 
-const { close } = defineProps<{
+type FileError = 'invalid-type' | 'too-large'
+
+type ImageUploadModalProps = {
   close: (response?: ImageUploadModalResponse) => void
-}>()
+  max_bytes?: number
+}
+
+const { close, max_bytes = DEFAULT_MAX_BYTES } = defineProps<ImageUploadModalProps>()
 
 const { t } = useI18n()
 
@@ -23,9 +29,17 @@ const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 const preview = ref<string | null>(null)
 const selected_file = ref<File | null>(null)
 const drag_counter = ref(0)
-const invalid_type = ref(false)
+const error = ref<FileError | null>(null)
 
 const dragging = computed(() => drag_counter.value > 0)
+const max_label = computed(() => `${+(max_bytes / 1024 / 1024).toFixed(1)} MB`)
+const error_message = computed(() => {
+  if (error.value === 'invalid-type') return t('image-upload-modal.invalid-type-error')
+  if (error.value === 'too-large') {
+    return t('image-upload-modal.too-large-error', { max: max_label.value })
+  }
+  return ''
+})
 
 onMounted(() => {
   const el = dropZone.value
@@ -83,18 +97,25 @@ async function onFileChange(event: Event) {
 }
 
 async function processFile(file: File) {
-  if (!ACCEPTED_TYPES.includes(file.type)) {
-    invalid_type.value = true
+  const file_error = fileError(file)
+  if (file_error) {
+    error.value = file_error
     return
   }
 
-  invalid_type.value = false
+  error.value = null
   try {
     preview.value = await readPreview(file)
     selected_file.value = file
   } catch (err) {
     logger.error((err as Error).message)
   }
+}
+
+function fileError(file: File): FileError | null {
+  if (!ACCEPTED_TYPES.includes(file.type)) return 'invalid-type'
+  if (file.size > max_bytes) return 'too-large'
+  return null
 }
 
 function readPreview(file: File): Promise<string> {
@@ -144,8 +165,8 @@ function onConfirm() {
           </p>
         </template>
 
-        <p v-if="invalid_type" data-testid="image-upload__error" class="text-red-500">
-          {{ t('image-upload-modal.invalid-type-error') }}
+        <p v-if="error" data-testid="image-upload__error" class="text-red-500">
+          {{ error_message }}
         </p>
 
         <ui-button

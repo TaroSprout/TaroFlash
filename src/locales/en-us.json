@@ -363,6 +363,7 @@
   "image-upload-modal.title": "Add Image",
   "image-upload-modal.drop-heading": "Drag an image here",
   "image-upload-modal.invalid-type-error": "Use a PNG, JPEG, WebP, or GIF image.",
+  "image-upload-modal.too-large-error": "Image must be under {max}.",
   "image-upload-modal.preview-alt": "Selected image",
   "image-upload-modal.browse-button": "Browse",
   "image-upload-modal.replace-button": "Choose a different image",

@@ -53,8 +53,8 @@ import ImageUpload from '@/components/modals/image-upload.vue'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────────
 
-function mountModal(close = vi.fn()) {
-  const wrapper = mount(ImageUpload, { props: { close } })
+function mountModal({ close = vi.fn(), max_bytes } = {}) {
+  const wrapper = mount(ImageUpload, { props: { close, max_bytes } })
   return { wrapper, close }
 }
 
@@ -68,6 +68,10 @@ function makeTextFile(name = 'doc.txt') {
 
 function makeFile(type, name = 'file') {
   return new File(['content'], name, { type })
+}
+
+function makeSizedImageFile(bytes) {
+  return new File([new Uint8Array(bytes)], 'photo.png', { type: 'image/png' })
 }
 
 async function selectFile(wrapper, file) {
@@ -186,6 +190,37 @@ describe('ImageUpload modal', () => {
 
       await selectFile(wrapper, makeImageFile())
       expect(wrapper.find('[data-testid="image-upload__error"]').exists()).toBe(false)
+    })
+  })
+
+  describe('size limit', () => {
+    test('accepts a file at or under max_bytes', async () => {
+      const { wrapper } = mountModal({ max_bytes: 1000 })
+
+      await selectFile(wrapper, makeSizedImageFile(1000))
+
+      expect(wrapper.find('[data-testid="image-upload__preview"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="image-upload__error"]').exists()).toBe(false)
+    })
+
+    test('rejects a file larger than max_bytes and disables confirm', async () => {
+      const { wrapper } = mountModal({ max_bytes: 1000 })
+
+      await selectFile(wrapper, makeSizedImageFile(1001))
+
+      expect(wrapper.find('[data-testid="image-upload__preview"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="image-upload__error"]').exists()).toBe(true)
+      expect(
+        wrapper.find('[data-testid="image-upload__confirm"]').attributes('disabled')
+      ).toBeDefined()
+    })
+
+    test('the too-large error names the configured limit', async () => {
+      const { wrapper } = mountModal({ max_bytes: 2 * 1024 * 1024 })
+
+      await selectFile(wrapper, makeSizedImageFile(2 * 1024 * 1024 + 1))
+
+      expect(wrapper.find('[data-testid="image-upload__error"]').text()).toContain('2 MB')
     })
   })
 
