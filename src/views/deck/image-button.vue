@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import ImageUploader, { type ImageUploadPayload } from '@/components/image-uploader.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useI18n } from 'vue-i18n'
+import { useImageUploadModal } from '@/composables/modals/use-image-upload-modal'
 
 const { image } = defineProps<{
   image?: string
@@ -13,30 +13,36 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const imageUploadModal = useImageUploadModal()
 
-async function onImageUpload({ file }: ImageUploadPayload) {
-  emit('image-uploaded', file)
+async function onAddImage() {
+  const file = await imageUploadModal.open().response
+  if (file) emit('image-uploaded', file)
 }
 
-async function onImageDelete() {
+function onImageDelete() {
   emit('image-deleted')
 }
 </script>
 
 <template>
-  <image-uploader @image-uploaded="onImageUpload" :allow_drop="false" v-slot="{ trigger }">
-    <ui-button
-      v-if="image"
-      icon-only
-      icon-left="delete"
-      data-theme="red-500"
-      @click.stop="onImageDelete"
-    >
-      {{ t('deck-view.item-options.remove-image') }}
-    </ui-button>
+  <ui-button
+    v-if="image"
+    icon-only
+    icon-left="delete"
+    data-theme="red-500"
+    @click.stop="onImageDelete"
+  >
+    {{ t('deck-view.item-options.remove-image') }}
+  </ui-button>
 
-    <ui-button v-else icon-only icon-left="add-image" data-theme="yellow-500" @click.stop="trigger">
-      {{ t('deck-view.item-options.upload-image') }}
-    </ui-button>
-  </image-uploader>
+  <ui-button
+    v-else
+    icon-only
+    icon-left="add-image"
+    data-theme="yellow-500"
+    @click.stop="onAddImage"
+  >
+    {{ t('deck-view.item-options.upload-image') }}
+  </ui-button>
 </template>
