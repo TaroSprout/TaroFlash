@@ -55,7 +55,7 @@ watchEffect(() => {
         v-for="vrow in virtualizer.getVirtualItems()"
         :key="vrow.key as number"
         data-testid="card-list__row"
-        class="absolute top-0 left-0 w-full flex justify-center"
+        class="absolute top-0 left-0 w-full flex justify-center hover:z-10 focus-within:z-10"
         :style="{
           height: `${vrow.size}px`,
           transform: `translateY(${vrow.start}px)`

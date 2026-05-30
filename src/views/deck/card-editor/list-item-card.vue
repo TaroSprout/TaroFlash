@@ -72,20 +72,29 @@ async function onImageDelete(side: 'front' | 'back') {
   }
 }
 
-// focusin/focusout bubble from the editors, so relatedTarget tells us whether
-// focus moved within this card (front↔back) or crossed its edge — no
-// wall-clock wait for activeElement to settle. Gate the sfx on contenteditable
-// focus so the image button doesn't trigger it.
+// Whether a node lives inside any card in the editor (its own card or another).
+// Lets us tell "focus moved between cards" from "focus entered/left the editor".
+function withinAnyCard(node: EventTarget | null) {
+  return (node as HTMLElement | null)?.closest?.('[data-testid="list-item-card"]') != null
+}
+
+// Gate the sfx on contenteditable focus so the image button doesn't trigger it.
+// Arriving from another card (or the other side) clicks; arriving from outside
+// every card — i.e. activating a card when none was — slides up.
 function onFocusIn(e: FocusEvent) {
   if (!(e.target as HTMLElement | null)?.isContentEditable) return
 
-  const moved_within = list_item_card.value?.contains(e.relatedTarget as Node | null) ?? false
-  emitSfx(moved_within ? 'ui.click_04' : 'ui.slide_up')
+  emitSfx(withinAnyCard(e.relatedTarget) ? 'ui.click_04' : 'ui.slide_up')
   focused.value = true
 }
 
+// When an editor blurs to outside every card, the active card was deselected
+// with nothing new picked up — drop it.
 function onFocusOut(e: FocusEvent) {
   focused.value = list_item_card.value?.contains(e.relatedTarget as Node | null) ?? false
+
+  const left_editor = (e.target as HTMLElement | null)?.isContentEditable ?? false
+  if (left_editor && !withinAnyCard(e.relatedTarget)) emitSfx('ui.card_drop')
 }
 
 function hasFocusWithin() {
