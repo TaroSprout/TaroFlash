@@ -10,6 +10,8 @@ const {
   deleteCardsMock,
   deleteCardsInDeckMock,
   moveCardsMock,
+  setCardImageMock,
+  deleteCardImageMock,
   modalOpenMock,
   alertWarnMock,
   emitSfxMock,
@@ -22,6 +24,8 @@ const {
   deleteCardsMock: vi.fn(),
   deleteCardsInDeckMock: vi.fn(),
   moveCardsMock: vi.fn(),
+  setCardImageMock: vi.fn(),
+  deleteCardImageMock: vi.fn(),
   modalOpenMock: vi.fn(),
   alertWarnMock: vi.fn(),
   emitSfxMock: vi.fn(),
@@ -37,7 +41,12 @@ vi.mock('@/api/cards', () => ({
     mutate: deleteCardsInDeckMock,
     mutateAsync: deleteCardsInDeckMock
   }),
-  useMoveCardsToDeckMutation: () => ({ mutate: moveCardsMock, mutateAsync: moveCardsMock })
+  useMoveCardsToDeckMutation: () => ({ mutate: moveCardsMock, mutateAsync: moveCardsMock }),
+  useSetCardImageMutation: () => ({ mutate: setCardImageMock, mutateAsync: setCardImageMock }),
+  useDeleteCardImageMutation: () => ({
+    mutate: deleteCardImageMock,
+    mutateAsync: deleteCardImageMock
+  })
 }))
 
 vi.mock('@/api/decks', () => ({
@@ -121,6 +130,10 @@ describe('useCardListController', () => {
     deleteCardsInDeckMock.mockResolvedValue(0)
     moveCardsMock.mockReset()
     moveCardsMock.mockResolvedValue(undefined)
+    setCardImageMock.mockReset()
+    setCardImageMock.mockResolvedValue(undefined)
+    deleteCardImageMock.mockReset()
+    deleteCardImageMock.mockResolvedValue(undefined)
     modalOpenMock.mockReset()
     alertWarnMock.mockReset()
     emitSfxMock.mockReset()
@@ -302,6 +315,46 @@ describe('useCardListController', () => {
       saveCardMock.mockRejectedValueOnce(new Error('boom'))
       const { updateCard, saving } = makeController([makeCard({ id: 1 })])
       await expect(updateCard(1, { front_text: 'X' })).rejects.toThrow('boom')
+      expect(saving.value).toBe(false)
+    })
+  })
+
+  // ── image writes — routed through the mutation layer, toggling saving ──────
+
+  describe('setCardImage / deleteCardImage', () => {
+    test('setCardImage forwards card_id, side, file and the deck_id', async () => {
+      const { setCardImage } = makeController([makeCard({ id: 42 })])
+      const file = new File(['x'], 'a.png', { type: 'image/png' })
+      await setCardImage(42, 'front', file)
+      expect(setCardImageMock).toHaveBeenCalledWith({
+        card_id: 42,
+        deck_id: 10,
+        file,
+        side: 'front'
+      })
+    })
+
+    test('deleteCardImage forwards card_id, side and the deck_id', async () => {
+      const { deleteCardImage } = makeController([makeCard({ id: 42 })])
+      await deleteCardImage(42, 'back')
+      expect(deleteCardImageMock).toHaveBeenCalledWith({ card_id: 42, deck_id: 10, side: 'back' })
+    })
+
+    test('toggles saving around the image upload', async () => {
+      let resolveSet
+      setCardImageMock.mockReturnValueOnce(new Promise((r) => (resolveSet = r)))
+      const { setCardImage, saving } = makeController([makeCard({ id: 42 })])
+      const promise = setCardImage(42, 'front', new File(['x'], 'a.png'))
+      expect(saving.value).toBe(true)
+      resolveSet()
+      await promise
+      expect(saving.value).toBe(false)
+    })
+
+    test('resets saving even if the image upload rejects', async () => {
+      setCardImageMock.mockRejectedValueOnce(new Error('boom'))
+      const { setCardImage, saving } = makeController([makeCard({ id: 42 })])
+      await expect(setCardImage(42, 'front', new File(['x'], 'a.png'))).rejects.toThrow('boom')
       expect(saving.value).toBe(false)
     })
   })
