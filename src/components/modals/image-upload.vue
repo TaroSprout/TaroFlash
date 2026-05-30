@@ -7,6 +7,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import { emitSfx } from '@/sfx/bus'
+import { playButtonTap } from '@/utils/animations/button-tap'
 import logger from '@/utils/logger'
 
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
@@ -28,6 +29,7 @@ const { t } = useI18n()
 
 const dropZone = useTemplateRef<HTMLDivElement>('dropZone')
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
+const promptIcon = useTemplateRef<HTMLElement>('promptIcon')
 
 const preview = ref<string | null>(null)
 const selected_file = ref<File | null>(null)
@@ -93,6 +95,7 @@ function onDrop(e: DragEvent) {
 
 function browse() {
   emitSfx('ui.select')
+  if (promptIcon.value) playButtonTap(promptIcon.value, 0.5, { yoyo: true })
   fileInput.value?.click()
 }
 
@@ -197,7 +200,9 @@ function removeImage() {
                 </div>
 
                 <div v-else data-testid="image-upload__prompt" class="image-upload__overlay">
-                  <ui-icon src="add-image" class="size-12" />
+                  <span ref="promptIcon" class="inline-flex">
+                    <ui-icon src="add-image" class="size-12" />
+                  </span>
                   <p class="text-sm">{{ t('image-upload-modal.drop-heading') }}</p>
                 </div>
               </button>
