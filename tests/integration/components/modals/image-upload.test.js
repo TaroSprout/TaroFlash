@@ -50,6 +50,7 @@ vi.stubGlobal(
 )
 
 import ImageUpload from '@/components/modals/image-upload.vue'
+import UiTooltip from '@/components/ui-kit/tooltip.vue'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────────
 
@@ -107,13 +108,18 @@ describe('ImageUpload modal', () => {
       ).toBeDefined()
     })
 
-    test('shows the accepted formats and the configured size limit', () => {
+    test('shows the configured size limit and folds the formats into a tooltip', () => {
       const { wrapper } = mountModal({ max_bytes: 2 * 1024 * 1024 })
 
-      const text = wrapper.find('[data-testid="image-upload__restrictions"]').text()
-      expect(text).toContain('PNG')
-      expect(text).toContain('GIF')
-      expect(text).toContain('2 MB')
+      const restrictions = wrapper.find('[data-testid="image-upload__restrictions"]')
+      expect(restrictions.text()).toContain('2 MB')
+      expect(restrictions.text()).not.toContain('PNG')
+
+      const formats_tooltip = wrapper
+        .findAllComponents(UiTooltip)
+        .find((c) => c.props('text')?.includes('PNG'))
+      expect(formats_tooltip).toBeTruthy()
+      expect(formats_tooltip.props('text')).toContain('GIF')
     })
 
     test('clicking the dropzone opens the file picker', async () => {

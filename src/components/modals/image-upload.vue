@@ -5,6 +5,7 @@ import Card from '@/components/card/index.vue'
 import MobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import logger from '@/utils/logger'
 
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
@@ -176,9 +177,27 @@ function onConfirm() {
           </template>
         </card>
 
-        <p data-testid="image-upload__restrictions" class="text-sm text-brown-500">
-          {{ t('image-upload-modal.restrictions', { max: max_label }) }}
-        </p>
+        <i18n-t
+          keypath="image-upload-modal.restrictions"
+          tag="p"
+          data-testid="image-upload__restrictions"
+          class="text-sm text-brown-500"
+        >
+          <template #format>
+            <ui-tooltip
+              element="span"
+              :text="t('image-upload-modal.formats-list')"
+              position="bottom"
+              :fallback_placements="['bottom', 'right', 'left']"
+              :gap="4"
+              class="text-blue-500 cursor-pointer"
+              static_on_mobile
+            >
+              {{ t('image-upload-modal.format-trigger') }}
+            </ui-tooltip>
+          </template>
+          <template #max>{{ max_label }}</template>
+        </i18n-t>
 
         <p v-if="error" data-testid="image-upload__error" class="text-sm text-red-500">
           {{ error_message }}
