@@ -38,40 +38,26 @@ defineOptions({ inheritAttrs: false })
       />
     </template>
 
-    <ui-button
-      data-theme="brown-300"
-      data-theme-dark="stone-900"
-      size="sm"
-      icon-right="edit"
-      class="shadow-xs"
-    >
+    <ui-button data-theme="brown-300" data-theme-dark="stone-900" icon-only icon-right="edit">
       {{ t('deck-view.item-options.edit') }}
     </ui-button>
     <ui-button
       data-theme="brown-300"
       data-theme-dark="stone-900"
-      size="sm"
+      icon-only
       icon-right="move-item"
-      class="shadow-xs"
       @click="emit('move')"
     >
       {{ t('deck-view.item-options.move') }}
     </ui-button>
-    <ui-button
-      data-theme="brown-300"
-      data-theme-dark="stone-900"
-      size="sm"
-      icon-right="reorder"
-      class="shadow-xs"
-    >
+    <ui-button data-theme="brown-300" data-theme-dark="stone-900" icon-only icon-right="reorder">
       {{ t('deck-view.item-options.reorder') }}
     </ui-button>
     <ui-button
       data-theme="brown-300"
       data-theme-dark="stone-900"
-      size="sm"
+      icon-only
       icon-right="check"
-      class="shadow-xs"
       @click="emit('select')"
     >
       {{ t('deck-view.item-options.select') }}
@@ -79,9 +65,8 @@ defineOptions({ inheritAttrs: false })
     <ui-button
       data-theme="red-500"
       data-theme-dark="red-600"
-      size="sm"
+      icon-only
       icon-right="delete"
-      class="shadow-xs"
       @click="emit('delete')"
     >
       {{ t('deck-view.item-options.delete') }}
