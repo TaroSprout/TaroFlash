@@ -199,7 +199,19 @@ describe('ListItemCard', () => {
   // These tests use mountWithFocusStubs which renders contenteditable divs so
   // e.target.isContentEditable is true when events bubble to the root handler.
 
-  test('emits ui.slide_up when focus enters from outside the card (relatedTarget null)', async () => {
+  // A detached card editor used as relatedTarget to simulate focus arriving from
+  // or leaving to another card in the list.
+  function makeOtherCardEditor() {
+    const card = document.createElement('div')
+    card.dataset.testid = 'list-item-card'
+    const editor = document.createElement('div')
+    editor.contentEditable = 'true'
+    card.appendChild(editor)
+    document.body.appendChild(card)
+    return { card, editor }
+  }
+
+  test('emits ui.slide_up when a card is activated from outside every card (relatedTarget null)', async () => {
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
     const contenteditable = wrapper.find('[data-testid="text-editor-stub"]').element
     contenteditable.dispatchEvent(new FocusEvent('focusin', { bubbles: true, relatedTarget: null }))
@@ -207,7 +219,7 @@ describe('ListItemCard', () => {
     wrapper.unmount()
   })
 
-  test('emits ui.slide_up when focus enters from an element outside the card', async () => {
+  test('emits ui.slide_up when focus enters from an element outside every card', async () => {
     const external = document.createElement('div')
     document.body.appendChild(external)
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
@@ -220,20 +232,28 @@ describe('ListItemCard', () => {
     wrapper.unmount()
   })
 
-  test('emits ui.click_04 when focus moves within the card (relatedTarget inside root)', async () => {
+  test('emits ui.click_04 when focus moves within the card (between sides)', async () => {
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
-    const root = wrapper.element
     const editors = wrapper.findAll('[data-testid="text-editor-stub"]')
-    // Simulate focus moving from the first editor to the second — relatedTarget is
-    // the first editor, which is contained within the card root.
+    // Simulate focus moving from the first editor to the second.
     const first_editor = editors[0].element
     const second_editor = editors[1].element
     second_editor.dispatchEvent(
       new FocusEvent('focusin', { bubbles: true, relatedTarget: first_editor })
     )
-    // root.contains(first_editor) is true → moved_within = true → ui.click_04
-    expect(root.contains(first_editor)).toBe(true)
     expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.click_04')
+    wrapper.unmount()
+  })
+
+  test('emits ui.click_04 when focus moves in from another card', async () => {
+    const other = makeOtherCardEditor()
+    const wrapper = mountWithFocusStubs({ card: { id: 42 } })
+    const contenteditable = wrapper.find('[data-testid="text-editor-stub"]').element
+    contenteditable.dispatchEvent(
+      new FocusEvent('focusin', { bubbles: true, relatedTarget: other.editor })
+    )
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.click_04')
+    other.card.remove()
     wrapper.unmount()
   })
 
@@ -249,6 +269,38 @@ describe('ListItemCard', () => {
     wrapper.unmount()
   })
 
+  test('emits ui.card_drop when an editor blurs to outside every card', async () => {
+    const wrapper = mountWithFocusStubs({ card: { id: 42 } })
+    const contenteditable = wrapper.find('[data-testid="text-editor-stub"]').element
+    contenteditable.dispatchEvent(
+      new FocusEvent('focusout', { bubbles: true, relatedTarget: null })
+    )
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.card_drop')
+    wrapper.unmount()
+  })
+
+  test('does NOT emit ui.card_drop when focus moves out to another card', async () => {
+    const other = makeOtherCardEditor()
+    const wrapper = mountWithFocusStubs({ card: { id: 42 } })
+    const contenteditable = wrapper.find('[data-testid="text-editor-stub"]').element
+    contenteditable.dispatchEvent(
+      new FocusEvent('focusout', { bubbles: true, relatedTarget: other.editor })
+    )
+    expect(mocks.emitSfxMock).not.toHaveBeenCalledWith('ui.card_drop')
+    other.card.remove()
+    wrapper.unmount()
+  })
+
+  test('does NOT emit ui.card_drop when focus stays within the card (between sides)', async () => {
+    const wrapper = mountWithFocusStubs({ card: { id: 42 } })
+    const editors = wrapper.findAll('[data-testid="text-editor-stub"]')
+    editors[0].element.dispatchEvent(
+      new FocusEvent('focusout', { bubbles: true, relatedTarget: editors[1].element })
+    )
+    expect(mocks.emitSfxMock).not.toHaveBeenCalledWith('ui.card_drop')
+    wrapper.unmount()
+  })
+
   test('focusout with relatedTarget inside the card keeps focused true, so the next focusin emits click_04', async () => {
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
     const editors = wrapper.findAll('[data-testid="text-editor-stub"]')
@@ -260,8 +312,7 @@ describe('ListItemCard', () => {
     first_editor.dispatchEvent(
       new FocusEvent('focusout', { bubbles: true, relatedTarget: second_editor })
     )
-    // 3. The second editor now fires focusin with relatedTarget = first_editor (still inside)
-    //    Because focused stayed true after step 2, moved_within=true → ui.click_04
+    // 3. The second editor now fires focusin — focus stayed within the card
     mocks.emitSfxMock.mockReset()
     second_editor.dispatchEvent(
       new FocusEvent('focusin', { bubbles: true, relatedTarget: first_editor })
@@ -282,7 +333,7 @@ describe('ListItemCard', () => {
     // wrapper.element.contains(null) === false → focused becomes false
     // A subsequent focusEditor() call should try to focus the front-input
     // (we can't assert wrapper.vm.focused directly per blackbox rules, but we can
-    // verify the side effect: emitSfx is called with slide_up next time focus enters)
+    // verify the side effect: emitSfx slides up again next time focus enters)
     mocks.emitSfxMock.mockReset()
     contenteditable.dispatchEvent(new FocusEvent('focusin', { bubbles: true, relatedTarget: null }))
     expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.slide_up')
