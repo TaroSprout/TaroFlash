@@ -2,19 +2,18 @@
 import Card from '@/components/card/index.vue'
 import ImageButton from '../image-button.vue'
 import { useI18n } from 'vue-i18n'
-import { useSetCardImageMutation, useDeleteCardImageMutation } from '@/api/cards'
 import { useToast } from '@/composables/toast'
 import { inject, ref, useTemplateRef } from 'vue'
 import { type CardListController } from '@/composables/card-editor/card-list-controller'
 import textEditor from '@/components/text-editor/text-editor.vue'
 import { emitSfx } from '@/sfx/bus'
 
-const FOCUS_DELAY = 1
-
-const { card } = defineProps<{
+type ListItemCardProps = {
   card: Card
   duplicate: boolean
-}>()
+}
+
+const { card } = defineProps<ListItemCardProps>()
 
 const { t } = useI18n()
 const toast = useToast()
@@ -22,7 +21,6 @@ const list_item_card = useTemplateRef('list-item-card')
 const front_input = useTemplateRef('front-input')
 
 const focused = ref(false)
-const focusOutPromise = ref<Promise<void> | null>(null)
 
 // Local editor state is the source of truth while the component is mounted.
 // Initialised from the card prop; later cache updates are ignored so
@@ -31,10 +29,9 @@ const front_text = ref(card.front_text ?? '')
 const back_text = ref(card.back_text ?? '')
 const save_failed = ref(false)
 
-const { selection, updateCard, card_attributes } = inject<CardListController>('card-editor')!
+const { selection, updateCard, setCardImage, deleteCardImage, card_attributes } =
+  inject<CardListController>('card-editor')!
 const { is_selecting } = selection
-const set_image_mutation = useSetCardImageMutation()
-const delete_image_mutation = useDeleteCardImageMutation()
 
 async function onUpdate(side: 'front' | 'back', text: string) {
   if (side === 'front') front_text.value = text
@@ -56,42 +53,39 @@ function focusEditor() {
 }
 
 async function onImageUpload(side: 'front' | 'back', file: File) {
-  if (!card.id || card.deck_id === undefined) return
+  if (!card.id) return
 
   try {
-    await set_image_mutation.mutateAsync({ card_id: card.id, deck_id: card.deck_id, file, side })
-  } catch (e: any) {
+    await setCardImage(card.id, side, file)
+  } catch {
     toast.error(t('toast.error.card-image-upload-failed'))
   }
 }
 
 async function onImageDelete(side: 'front' | 'back') {
-  if (!card.id || card.deck_id === undefined) return
+  if (!card.id) return
 
   try {
-    await delete_image_mutation.mutateAsync({ card_id: card.id, deck_id: card.deck_id, side })
-  } catch (e: any) {
+    await deleteCardImage(card.id, side)
+  } catch {
     toast.error(t('toast.error.card-image-delete-failed'))
   }
 }
 
-async function onFocus() {
-  await focusOutPromise.value
+// focusin/focusout bubble from the editors, so relatedTarget tells us whether
+// focus moved within this card (front↔back) or crossed its edge — no
+// wall-clock wait for activeElement to settle. Gate the sfx on contenteditable
+// focus so the image button doesn't trigger it.
+function onFocusIn(e: FocusEvent) {
+  if (!(e.target as HTMLElement | null)?.isContentEditable) return
 
-  if (focused.value) {
-    emitSfx('ui.click_04')
-  } else {
-    emitSfx('ui.slide_up')
-  }
+  const moved_within = list_item_card.value?.contains(e.relatedTarget as Node | null) ?? false
+  emitSfx(moved_within ? 'ui.click_04' : 'ui.slide_up')
+  focused.value = true
 }
 
-async function onBlur() {
-  focusOutPromise.value = new Promise((resolve) =>
-    setTimeout(() => {
-      focused.value = hasFocusWithin()
-      resolve(undefined)
-    }, FOCUS_DELAY)
-  )
+function onFocusOut(e: FocusEvent) {
+  focused.value = list_item_card.value?.contains(e.relatedTarget as Node | null) ?? false
 }
 
 function hasFocusWithin() {
@@ -106,6 +100,8 @@ defineExpose({ focusEditor, hasFocusWithin })
     ref="list-item-card"
     data-testid="list-item-card"
     class="flex w-full flex-col justify-center gap-6 md:flex-row"
+    @focusin="onFocusIn"
+    @focusout="onFocusOut"
   >
     <card
       data-testid="front-input"
@@ -135,8 +131,6 @@ defineExpose({ focusEditor, hasFocusWithin })
           :placeholder="t('deck-view.card-editor.list-item.front-placeholder')"
           class="w-full h-full"
           @update="onUpdate('front', $event)"
-          @focus="onFocus"
-          @blur="onBlur"
         />
       </template>
     </card>
@@ -169,8 +163,6 @@ defineExpose({ focusEditor, hasFocusWithin })
           :placeholder="t('deck-view.card-editor.list-item.back-placeholder')"
           class="w-full h-full"
           @update="onUpdate('back', $event)"
-          @focus="onFocus"
-          @blur="onBlur"
         />
       </template>
     </card>

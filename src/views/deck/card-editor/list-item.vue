@@ -7,11 +7,13 @@ import { type CardListController } from '@/composables/card-editor/card-list-con
 import { inject, computed, useTemplateRef } from 'vue'
 import ListItemCard from './list-item-card.vue'
 
-const { card, index } = defineProps<{
+type ListItemProps = {
   index: number
   card: Card
   duplicate: boolean
-}>()
+}
+
+const { card, index } = defineProps<ListItemProps>()
 
 const { list, selection, actions } = inject<CardListController>('card-editor')!
 const { appendCard, prependCard } = list

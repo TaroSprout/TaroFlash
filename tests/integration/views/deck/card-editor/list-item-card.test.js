@@ -22,17 +22,6 @@ const mocks = vi.hoisted(() => ({
   emitSfxMock: vi.fn()
 }))
 
-vi.mock('@/api/cards', () => ({
-  useSetCardImageMutation: () => ({
-    mutate: mocks.setCardImageMock,
-    mutateAsync: mocks.setCardImageMock
-  }),
-  useDeleteCardImageMutation: () => ({
-    mutate: mocks.deleteCardImageMock,
-    mutateAsync: mocks.deleteCardImageMock
-  })
-}))
-
 vi.mock('@/sfx/bus', () => ({ emitSfx: mocks.emitSfxMock }))
 
 vi.mock('@/composables/toast', () => ({
@@ -63,6 +52,8 @@ function mount(props = {}) {
         'card-editor': {
           selection: { is_selecting: ref(false) },
           updateCard: mocks.updateCardMock,
+          setCardImage: mocks.setCardImageMock,
+          deleteCardImage: mocks.deleteCardImageMock,
           card_attributes: { front: {}, back: {} }
         }
       }
@@ -116,12 +107,7 @@ describe('ListItemCard', () => {
     const file = new File(['x'], 'a.png', { type: 'image/png' })
     const frontButton = wrapper.findAllComponents(ImageButton)[0]
     await frontButton.vm.$emit('image-uploaded', file)
-    expect(mocks.setCardImageMock).toHaveBeenCalledWith({
-      card_id: 42,
-      deck_id: 10,
-      file,
-      side: 'front'
-    })
+    expect(mocks.setCardImageMock).toHaveBeenCalledWith(42, 'front', file)
   })
 
   test('passes the side to setCardImage when the back image button emits', async () => {
@@ -129,23 +115,14 @@ describe('ListItemCard', () => {
     const file = new File(['x'], 'b.png', { type: 'image/png' })
     const backButton = wrapper.findAllComponents(ImageButton)[1]
     await backButton.vm.$emit('image-uploaded', file)
-    expect(mocks.setCardImageMock).toHaveBeenCalledWith({
-      card_id: 42,
-      deck_id: 10,
-      file,
-      side: 'back'
-    })
+    expect(mocks.setCardImageMock).toHaveBeenCalledWith(42, 'back', file)
   })
 
   test('deletes the front image when the front image button emits image-deleted', async () => {
     const wrapper = mount({ card: { id: 42 } })
     const frontButton = wrapper.findAllComponents(ImageButton)[0]
     await frontButton.vm.$emit('image-deleted')
-    expect(mocks.deleteCardImageMock).toHaveBeenCalledWith({
-      card_id: 42,
-      deck_id: 10,
-      side: 'front'
-    })
+    expect(mocks.deleteCardImageMock).toHaveBeenCalledWith(42, 'front')
   })
 
   // ── Auto-save wiring ──────────────────────────────────────────────────────
