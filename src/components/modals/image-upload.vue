@@ -6,6 +6,7 @@ import MobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
+import { emitSfx } from '@/sfx/bus'
 import logger from '@/utils/logger'
 
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
@@ -140,6 +141,7 @@ function onConfirm() {
 }
 
 function removeImage() {
+  emitSfx('ui.trash_crumple_short')
   preview.value = null
   selected_file.value = null
   error.value = null
@@ -206,7 +208,7 @@ function removeImage() {
             icon-only
             icon-left="delete"
             data-theme="red-500"
-            class="absolute -top-3 -right-3 z-10"
+            class="absolute! -top-1 -right-1 z-10"
             @click.stop="removeImage"
           >
             {{ t('image-upload-modal.remove-button') }}

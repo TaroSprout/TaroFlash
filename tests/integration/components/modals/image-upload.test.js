@@ -182,9 +182,10 @@ describe('ImageUpload modal', () => {
       expect(wrapper.find('[data-testid="image-upload__remove"]').exists()).toBe(true)
     })
 
-    test('removing clears the preview and disables confirm again', async () => {
+    test('removing clears the preview, disables confirm, and plays a trash sound', async () => {
       const { wrapper } = mountModal()
       await selectFile(wrapper, makeImageFile())
+      emitSfxMock.mockClear()
 
       await wrapper.find('[data-testid="image-upload__remove"]').trigger('click')
 
@@ -193,6 +194,7 @@ describe('ImageUpload modal', () => {
       expect(
         wrapper.find('[data-testid="image-upload__confirm"]').attributes('disabled')
       ).toBeDefined()
+      expect(emitSfxMock).toHaveBeenCalledWith('ui.trash_crumple_short')
     })
 
     test('suppresses the replace overlay until the pointer leaves after adding', async () => {
