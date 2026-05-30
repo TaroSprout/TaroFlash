@@ -135,77 +135,55 @@ function onConfirm() {
 <template>
   <mobile-sheet
     data-testid="image-upload-container"
-    data-theme="yellow-500"
-    data-theme-dark="yellow-800"
-    class="sm:w-150"
-    :title="t('image-upload-modal.title')"
-    :pattern_config="{ pattern: 'aztec' }"
+    data-theme="brown-500"
+    class="sm:w-130"
+    :close_label="t('image-upload-modal.close-label')"
     @close="close()"
   >
-    <div data-testid="image-upload__body" class="flex flex-col gap-6 p-6">
-      <div
+    <div data-testid="image-upload__body" class="flex flex-col items-center gap-6 px-6 pt-16 pb-6">
+      <button
         ref="dropZone"
+        type="button"
         data-testid="image-upload__dropzone"
         :data-dragging="dragging"
         :data-has-preview="!!preview"
-        class="flex flex-col items-center justify-center gap-4 rounded-8 border-3 border-dashed border-brown-400 bg-brown-200 p-10 text-center transition-colors data-[dragging=true]:border-yellow-500 data-[dragging=true]:bg-brown-300"
+        class="image-upload__dropzone"
+        @click="browse"
       >
         <img
           v-if="preview"
           data-testid="image-upload__preview"
           :src="preview"
           :alt="t('image-upload-modal.preview-alt')"
-          class="max-h-60 w-auto rounded-4 object-contain"
+          class="absolute inset-0 h-full w-full object-cover"
         />
 
-        <template v-else>
+        <div
+          v-else
+          data-testid="image-upload__prompt"
+          class="flex flex-col items-center gap-3 px-6 text-center"
+        >
           <ui-icon src="add-image" class="size-12 text-brown-500" />
-          <p data-testid="image-upload__prompt" class="text-brown-600">
-            {{ t('image-upload-modal.drop-heading') }}
-          </p>
-        </template>
+          <p class="text-brown-600">{{ t('image-upload-modal.drop-heading') }}</p>
+        </div>
+      </button>
 
-        <p v-if="error" data-testid="image-upload__error" class="text-red-500">
-          {{ error_message }}
-        </p>
+      <p v-if="error" data-testid="image-upload__error" class="text-red-500">
+        {{ error_message }}
+      </p>
 
-        <ui-button
-          data-testid="image-upload__browse"
-          data-theme="grey-400"
-          icon-left="image"
-          @click="browse"
-        >
-          {{
-            preview ? t('image-upload-modal.replace-button') : t('image-upload-modal.browse-button')
-          }}
-        </ui-button>
-      </div>
-
-      <div data-testid="image-upload__actions" class="flex gap-3">
-        <ui-button
-          data-testid="image-upload__cancel"
-          data-theme="grey-400"
-          icon-left="close"
-          size="lg"
-          full-width
-          @click="close()"
-        >
-          {{ t('image-upload-modal.cancel-button') }}
-        </ui-button>
-
-        <ui-button
-          data-testid="image-upload__confirm"
-          data-theme="blue-500"
-          data-theme-dark="blue-650"
-          icon-left="check"
-          size="lg"
-          full-width
-          :disabled="!preview"
-          @click="onConfirm"
-        >
-          {{ t('image-upload-modal.confirm-button') }}
-        </ui-button>
-      </div>
+      <ui-button
+        data-testid="image-upload__confirm"
+        data-theme="blue-500"
+        data-theme-dark="blue-650"
+        icon-left="check"
+        size="lg"
+        full-width
+        :disabled="!preview"
+        @click="onConfirm"
+      >
+        {{ t('image-upload-modal.confirm-button') }}
+      </ui-button>
     </div>
 
     <input
@@ -217,3 +195,29 @@ function onConfirm() {
     />
   </mobile-sheet>
 </template>
+
+<style>
+.image-upload__dropzone {
+  /* Mirrors an `xl` card-face: 7/8 aspect ratio + 58px corner radius. */
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 19.625rem;
+  aspect-ratio: var(--aspect-card);
+
+  border: 3px dashed var(--color-brown-500);
+  border-radius: 58px;
+  background-color: var(--color-brown-200);
+
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.image-upload__dropzone[data-dragging='true'] {
+  background-color: var(--color-brown-300);
+}
+
+.image-upload__dropzone[data-has-preview='true'] {
+  border-style: solid;
+}
+</style>

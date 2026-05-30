@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, provide, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { coverBindings } from '@/utils/cover'
 import { mobileSheetOverlayKey } from './mobile-sheet-overlay'
 import {
@@ -20,6 +21,7 @@ export type MobileSheetProps = {
   pattern_config?: SheetPatternConfig
   title?: string
   show_close_button?: boolean
+  close_label?: string
   surface?: SheetSurface
   header_border?: SheetHeaderBorder
 }
@@ -28,12 +30,12 @@ const {
   pattern_config,
   title,
   show_close_button = true,
+  close_label,
   surface = 'standard',
   header_border = 'wave'
 } = defineProps<MobileSheetProps>()
 
-const body_bg_class = computed(() => SHEET_BODY_BG[surface])
-const header_border_class = computed(() => SHEET_HEADER_BORDER_CLASS[header_border])
+const { t } = useI18n()
 
 const slots = defineSlots<{
   sidebar(): any
@@ -48,6 +50,14 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
+const body_bg_class = computed(() => SHEET_BODY_BG[surface])
+const header_border_class = computed(() => SHEET_HEADER_BORDER_CLASS[header_border])
+const close_label_text = computed(() => close_label ?? t('mobile-sheet.close-label'))
+
+// The default header owns the close button. A custom `header` slot replaces the
+// header entirely, so the caller owns its own close affordance there.
+const show_builtin_close = computed(() => show_close_button && !slots.header)
+
 const header_bindings = computed(() =>
   coverBindings(
     {
@@ -58,9 +68,7 @@ const header_bindings = computed(() =>
   )
 )
 
-const showHeader = computed(() => {
-  return slots.header || slots['header-content'] || title
-})
+const showHeader = computed(() => Boolean(slots.header || slots['header-content'] || title))
 
 const overlay_root = ref<HTMLElement>()
 provide(mobileSheetOverlayKey, overlay_root)
@@ -88,8 +96,25 @@ provide(mobileSheetOverlayKey, overlay_root)
       <div
         data-testid="mobile-sheet"
         :data-surface="surface"
-        :class="['flex w-full h-full flex-col', body_bg_class]"
+        :class="['relative flex w-full h-full flex-col', body_bg_class]"
       >
+        <div
+          v-if="show_builtin_close"
+          data-testid="mobile-sheet__close-slot"
+          class="absolute top-0 p-4 left-0 z-20 mobile-modal:left-auto mobile-modal:right-0 mobile-modal:left-hand:left-0 mobile-modal:left-hand:right-auto"
+        >
+          <ui-button
+            icon-left="close"
+            icon-only
+            :inverted="showHeader"
+            @click="emit('close')"
+            play-on-tap
+            :sfx="{ click: 'ui.select' }"
+          >
+            {{ close_label_text }}
+          </ui-button>
+        </div>
+
         <slot v-if="showHeader" name="header">
           <div
             data-testid="mobile-sheet__header"
@@ -100,21 +125,6 @@ provide(mobileSheetOverlayKey, overlay_root)
               header_border_class
             ]"
           >
-            <div
-              v-if="show_close_button"
-              data-testid="mobile-sheet__close-slot"
-              class="absolute top-0 p-4 left-0 mobile-modal:left-auto mobile-modal:right-0 mobile-modal:left-hand:left-0 mobile-modal:left-hand:right-auto"
-            >
-              <ui-button
-                icon-left="close"
-                icon-only
-                inverted
-                @click="emit('close')"
-                play-on-tap
-                :sfx="{ click: 'ui.select' }"
-              />
-            </div>
-
             <slot name="header-content">
               <h1 class="text-5xl text-white">{{ title }}</h1>
             </slot>

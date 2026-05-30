@@ -89,13 +89,12 @@ describe('ImageUpload modal', () => {
   })
 
   describe('layout', () => {
-    test('renders the dropzone, browse, and action buttons', () => {
+    test('renders the dropzone and the single confirm button', () => {
       const { wrapper } = mountModal()
 
       expect(wrapper.find('[data-testid="image-upload__dropzone"]').exists()).toBe(true)
-      expect(wrapper.find('[data-testid="image-upload__browse"]').exists()).toBe(true)
-      expect(wrapper.find('[data-testid="image-upload__cancel"]').exists()).toBe(true)
       expect(wrapper.find('[data-testid="image-upload__confirm"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="image-upload__cancel"]').exists()).toBe(false)
     })
 
     test('shows the prompt and disables confirm before a file is chosen', () => {
@@ -106,6 +105,16 @@ describe('ImageUpload modal', () => {
       expect(
         wrapper.find('[data-testid="image-upload__confirm"]').attributes('disabled')
       ).toBeDefined()
+    })
+
+    test('clicking the dropzone opens the file picker', async () => {
+      const { wrapper } = mountModal()
+      const input = wrapper.find('input[type="file"]').element
+      const clickSpy = vi.spyOn(input, 'click')
+
+      await wrapper.find('[data-testid="image-upload__dropzone"]').trigger('click')
+
+      expect(clickSpy).toHaveBeenCalledTimes(1)
     })
   })
 
@@ -242,15 +251,6 @@ describe('ImageUpload modal', () => {
       await wrapper.find('[data-testid="image-upload__confirm"]').trigger('click')
 
       expect(close).not.toHaveBeenCalled()
-    })
-
-    test('cancel closes without a file', async () => {
-      const { wrapper, close } = mountModal()
-
-      await wrapper.find('[data-testid="image-upload__cancel"]').trigger('click')
-
-      expect(close).toHaveBeenCalledTimes(1)
-      expect(close).toHaveBeenCalledWith()
     })
 
     test('the mobile-sheet close button closes without a file', async () => {
