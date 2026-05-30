@@ -164,23 +164,19 @@ function onConfirm() {
                 data-testid="image-upload__preview"
                 :src="preview"
                 :alt="t('image-upload-modal.preview-alt')"
-                class="absolute inset-0 h-full w-full object-cover"
+                class="image-upload__image"
               />
 
               <div
-                v-else-if="show_error"
+                v-if="show_error"
                 data-testid="image-upload__error"
-                class="flex flex-col items-center gap-3 px-6 text-center text-red-500"
+                class="image-upload__overlay text-red-500"
               >
                 <ui-icon src="close" class="size-12" />
                 <p class="text-sm">{{ error_message }}</p>
               </div>
 
-              <div
-                v-else
-                data-testid="image-upload__prompt"
-                class="flex flex-col items-center gap-3 px-6 text-center"
-              >
+              <div v-else data-testid="image-upload__prompt" class="image-upload__overlay">
                 <ui-icon src="add-image" class="size-12" />
                 <p class="text-sm">{{ t('image-upload-modal.drop-heading') }}</p>
               </div>
@@ -251,11 +247,14 @@ function onConfirm() {
 <style>
 .image-upload__dropzone {
   /* Fills the host `card`, borrowing its scoped --face-radius so the corner
-     stays in sync with the card as its sizing evolves. */
+     stays in sync with the card as its sizing evolves. The padding keeps the
+     dashed frame + white background visible around a chosen image, signalling
+     it's still replaceable. */
   position: relative;
   overflow: hidden;
   width: 100%;
   height: 100%;
+  padding: 12px;
 
   border: 3px dashed var(--color-brown-500);
   border-radius: var(--face-radius);
@@ -269,11 +268,41 @@ function onConfirm() {
   background-color: var(--color-brown-100);
 }
 
-.image-upload__dropzone[data-has-preview='true'] {
-  border-style: solid;
-}
-
 .image-upload__dropzone[data-error='true'] {
   border-color: var(--color-red-500);
+}
+
+.image-upload__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: calc(var(--face-radius) - 15px);
+}
+
+/* Prompt/error sit above the image, centered. With a chosen image they become
+   a hover-only "replace" affordance, backed by a scrim so the text stays fully
+   legible over any image. */
+.image-upload__overlay {
+  position: absolute;
+  inset: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding-inline: 1rem;
+  text-align: center;
+  border-radius: calc(var(--face-radius) - 15px);
+  transition: opacity 0.15s ease;
+}
+
+.image-upload__dropzone[data-has-preview='true'] .image-upload__overlay {
+  opacity: 0;
+  background-color: color-mix(in srgb, var(--color-white) 85%, transparent);
+}
+
+.image-upload__dropzone[data-has-preview='true']:hover .image-upload__overlay {
+  opacity: 1;
 }
 </style>

@@ -142,7 +142,8 @@ describe('ImageUpload modal', () => {
       const preview = wrapper.find('[data-testid="image-upload__preview"]')
       expect(preview.exists()).toBe(true)
       expect(preview.attributes('src')).toBe(FAKE_PREVIEW)
-      expect(wrapper.find('[data-testid="image-upload__prompt"]').exists()).toBe(false)
+      // Prompt stays in the DOM beneath the image as the hover-to-replace affordance.
+      expect(wrapper.find('[data-testid="image-upload__prompt"]').exists()).toBe(true)
       expect(
         wrapper.find('[data-testid="image-upload__confirm"]').attributes('disabled')
       ).toBeUndefined()
