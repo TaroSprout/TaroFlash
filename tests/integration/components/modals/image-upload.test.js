@@ -147,6 +147,7 @@ describe('ImageUpload modal', () => {
       expect(
         wrapper.find('[data-testid="image-upload__confirm"]').attributes('disabled')
       ).toBeUndefined()
+      expect(emitSfxMock).toHaveBeenCalledWith('ui.snappy_button_2')
     })
 
     test('marks the dropzone as having a preview once an image is chosen', async () => {

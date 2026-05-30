@@ -116,6 +116,7 @@ async function processFile(file: File) {
     preview.value = await readPreview(file)
     selected_file.value = file
     overlay_suppressed.value = true
+    emitSfx('ui.snappy_button_2')
   } catch (err) {
     logger.error((err as Error).message)
   }
