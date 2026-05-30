@@ -40,7 +40,14 @@ function onImageDelete() {
     {{ t('deck-view.item-options.remove-image') }}
   </ui-button>
 
-  <ui-button v-else icon-only icon-left="add-image" data-theme="blue-500" @click.stop="onAddImage">
+  <ui-button
+    v-else
+    icon-only
+    icon-left="add-image"
+    data-theme="blue-500"
+    data-theme-dark="stone-700"
+    @click.stop="onAddImage"
+  >
     {{ t('deck-view.item-options.upload-image') }}
   </ui-button>
 </template>

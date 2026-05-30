@@ -63,7 +63,7 @@ function onClick(e: MouseEvent) {
   >
     <button
       data-testid="card-list-item__reorder"
-      class="hidden h-12 w-12 cursor-grab items-center justify-center rounded-full bg-brown-300 text-lg text-brown-700 sm:flex group-focus-within/listitem:bg-brown-100 row-span-2"
+      class="hidden h-12 w-12 cursor-grab items-center justify-center rounded-full bg-brown-300 text-lg text-brown-700 sm:flex group-focus-within/listitem:bg-brown-100 row-span-2 dark:bg-stone-700 dark:text-brown-100 dark:group-focus-within/listitem:bg-stone-900"
       @click.stop
     >
       <ui-icon
@@ -93,6 +93,7 @@ function onClick(e: MouseEvent) {
       icon-left="add"
       icon-only
       data-theme="brown-100"
+      data-theme-dark="stone-700"
       size="sm"
       class="absolute! z-1 top-0 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-100 ease-in-out group-hover/listitem:opacity-100 group-hover/listitem:pointer-events-auto group-focus-within/listitem:opacity-100 group-focus-within/listitem:pointer-events-auto *:[.btn-icon]:text-brown-500"
       @click.stop="prependCard(card.id!)"
@@ -103,6 +104,7 @@ function onClick(e: MouseEvent) {
       icon-left="add"
       icon-only
       data-theme="brown-100"
+      data-theme-dark="stone-700"
       size="sm"
       class="absolute! z-1 bottom-0 translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-100 ease-in-out group-hover/listitem:opacity-100 group-hover/listitem:pointer-events-auto group-focus-within/listitem:opacity-100 group-focus-within/listitem:pointer-events-auto *:[.btn-icon]:text-brown-500"
       @click.stop="appendCard(card.id!)"
