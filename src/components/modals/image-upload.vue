@@ -157,6 +157,7 @@ function onConfirm() {
               :data-has-preview="!!preview"
               :data-error="show_error"
               class="image-upload__dropzone"
+              v-sfx="{ hover: 'ui.click_07' }"
               @click="browse"
             >
               <img
@@ -270,6 +271,14 @@ function onConfirm() {
 
 .image-upload__dropzone[data-error='true'] {
   border-color: var(--color-red-500);
+}
+
+.image-upload__dropzone:hover:not([data-error='true']) {
+  border-color: var(--color-blue-500);
+}
+
+.image-upload__dropzone:hover:not([data-error='true']) .image-upload__overlay {
+  color: var(--color-blue-500);
 }
 
 .image-upload__image {
