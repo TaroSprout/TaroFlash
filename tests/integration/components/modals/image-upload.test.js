@@ -357,4 +357,54 @@ describe('ImageUpload modal', () => {
       expect(dropzone.attributes('data-dragging')).toBe('false')
     })
   })
+
+  describe('drop file processing', () => {
+    test('dropping a valid image shows preview and plays snappy_button_2 sound', async () => {
+      const { wrapper } = mountModal()
+      const dropzone = wrapper.find('[data-testid="image-upload__dropzone"]')
+
+      const file = makeImageFile()
+      const dt = new DataTransfer()
+      dt.items.add(file)
+
+      const dropEvent = new DragEvent('drop', { bubbles: true, dataTransfer: dt })
+      dropzone.element.dispatchEvent(dropEvent)
+      await flushPromises()
+
+      expect(wrapper.find('[data-testid="image-upload__preview"]').exists()).toBe(true)
+      expect(emitSfxMock).toHaveBeenCalledWith('ui.snappy_button_2')
+    })
+
+    test('dropping a disallowed MIME type shows error and never previews', async () => {
+      const { wrapper } = mountModal()
+      const dropzone = wrapper.find('[data-testid="image-upload__dropzone"]')
+
+      const file = new File(['x'], 'image.svg', { type: 'image/svg+xml' })
+      const dt = new DataTransfer()
+      dt.items.add(file)
+
+      const dropEvent = new DragEvent('drop', { bubbles: true, dataTransfer: dt })
+      dropzone.element.dispatchEvent(dropEvent)
+      await flushPromises()
+
+      expect(wrapper.find('[data-testid="image-upload__preview"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="image-upload__error"]').exists()).toBe(true)
+    })
+
+    test('dropping a too-large file rejects it and shows size error', async () => {
+      const { wrapper } = mountModal({ max_bytes: 100 })
+      const dropzone = wrapper.find('[data-testid="image-upload__dropzone"]')
+
+      const file = makeSizedImageFile(200)
+      const dt = new DataTransfer()
+      dt.items.add(file)
+
+      const dropEvent = new DragEvent('drop', { bubbles: true, dataTransfer: dt })
+      dropzone.element.dispatchEvent(dropEvent)
+      await flushPromises()
+
+      expect(wrapper.find('[data-testid="image-upload__preview"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="image-upload__error"]').exists()).toBe(true)
+    })
+  })
 })
