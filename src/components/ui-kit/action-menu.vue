@@ -157,7 +157,7 @@ function onItemsClick() {
 
     <div
       data-testid="ui-kit-action-menu__items"
-      class="flex flex-col gap-1 bg-transparent"
+      class="flex flex-col gap-0.5 bg-transparent"
       :class="alignment_class[alignment]"
       @click="onItemsClick"
     >

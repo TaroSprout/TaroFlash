@@ -1,6 +1,16 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
+import { defineComponent, h } from 'vue'
 import MobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
+
+// Render-function stub (no runtime compiler in tests) that exposes the close
+// button's default slot so its label text can be asserted.
+const UiButtonSlotStub = defineComponent({
+  name: 'UiButton',
+  setup(_props, { slots }) {
+    return () => h('button', slots.default?.())
+  }
+})
 
 function mountSheet(props = {}, slots = {}, attrs = {}) {
   return shallowMount(MobileSheet, { props, slots, attrs })
@@ -96,6 +106,37 @@ describe('MobileSheet', () => {
     const closeBtn = wrapper.findComponent({ name: 'UiButton' })
     expect(closeBtn.props('playOnTap')).toBe(true)
     expect(closeBtn.props('sfx')).toEqual({ click: 'ui.select' })
+  })
+
+  test('renders the built-in close button even when there is no header', () => {
+    const wrapper = mountSheet()
+    expect(wrapper.findComponent({ name: 'UiButton' }).exists()).toBe(true)
+  })
+
+  test('suppresses the built-in close button when a custom header slot is provided', () => {
+    const wrapper = mountSheet({}, { header: '<div data-testid="custom-header">x</div>' })
+    expect(wrapper.findComponent({ name: 'UiButton' }).exists()).toBe(false)
+  })
+
+  test('close button is inverted over a header but plain without one', () => {
+    expect(mountSheet({ title: 'x' }).findComponent({ name: 'UiButton' }).props('inverted')).toBe(
+      true
+    )
+    expect(mountSheet().findComponent({ name: 'UiButton' }).props('inverted')).toBe(false)
+  })
+
+  test('close button label defaults to "Close" and accepts a close_label override', () => {
+    const def = shallowMount(MobileSheet, {
+      props: { title: 'x' },
+      global: { stubs: { UiButton: UiButtonSlotStub } }
+    })
+    expect(def.findComponent({ name: 'UiButton' }).text()).toContain('Close')
+
+    const override = shallowMount(MobileSheet, {
+      props: { title: 'x', close_label: 'Cancel' },
+      global: { stubs: { UiButton: UiButtonSlotStub } }
+    })
+    expect(override.findComponent({ name: 'UiButton' }).text()).toContain('Cancel')
   })
 
   // ── default + footer slots ─────────────────────────────────────────────────

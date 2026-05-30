@@ -151,3 +151,10 @@ When appending:
 | `->` vs `->>` (jsonb extraction operators)                        | 1     |
 | `RETURNS SETOF table_name` + `RETURN NEXT row_var`                | 1     |
 | `MAX(rank) + step` append pattern (no neighbor resolution needed) | 1     |
+
+### 2026-05-30 — cards bucket: lower size limit via new migration
+
+| Concept                                                              | Score |
+| ------------------------------------------------------------------- | ----- |
+| Amend a shipped bucket with a targeted `UPDATE ... WHERE id` migration | 2     |
+| New migration vs editing a shipped one (idempotent settings change)    | 2     |
