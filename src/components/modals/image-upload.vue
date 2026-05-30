@@ -141,40 +141,46 @@ function onConfirm() {
     @close="close()"
   >
     <div data-testid="image-upload__body" class="flex flex-col items-center gap-6 px-6 pt-16 pb-6">
-      <card size="xl">
-        <template #front>
-          <button
-            ref="dropZone"
-            type="button"
-            data-testid="image-upload__dropzone"
-            :data-dragging="dragging"
-            :data-has-preview="!!preview"
-            class="image-upload__dropzone"
-            @click="browse"
-          >
-            <img
-              v-if="preview"
-              data-testid="image-upload__preview"
-              :src="preview"
-              :alt="t('image-upload-modal.preview-alt')"
-              class="absolute inset-0 h-full w-full object-cover"
-            />
-
-            <div
-              v-else
-              data-testid="image-upload__prompt"
-              class="flex flex-col items-center gap-3 px-6 text-center"
+      <div data-testid="image-upload__picker" class="flex flex-col items-center gap-3">
+        <card size="xl">
+          <template #front>
+            <button
+              ref="dropZone"
+              type="button"
+              data-testid="image-upload__dropzone"
+              :data-dragging="dragging"
+              :data-has-preview="!!preview"
+              class="image-upload__dropzone"
+              @click="browse"
             >
-              <ui-icon src="add-image" class="size-12" />
-              <p class="text-brown-600">{{ t('image-upload-modal.drop-heading') }}</p>
-            </div>
-          </button>
-        </template>
-      </card>
+              <img
+                v-if="preview"
+                data-testid="image-upload__preview"
+                :src="preview"
+                :alt="t('image-upload-modal.preview-alt')"
+                class="absolute inset-0 h-full w-full object-cover"
+              />
 
-      <p v-if="error" data-testid="image-upload__error" class="text-red-500">
-        {{ error_message }}
-      </p>
+              <div
+                v-else
+                data-testid="image-upload__prompt"
+                class="flex flex-col items-center gap-3 px-6 text-center"
+              >
+                <ui-icon src="add-image" class="size-12" />
+                <p class="text-brown-600">{{ t('image-upload-modal.drop-heading') }}</p>
+              </div>
+            </button>
+          </template>
+        </card>
+
+        <p data-testid="image-upload__restrictions" class="text-sm text-brown-500">
+          {{ t('image-upload-modal.restrictions', { max: max_label }) }}
+        </p>
+
+        <p v-if="error" data-testid="image-upload__error" class="text-sm text-red-500">
+          {{ error_message }}
+        </p>
+      </div>
 
       <div data-testid="image-upload__actions" class="flex w-full gap-3">
         <ui-button

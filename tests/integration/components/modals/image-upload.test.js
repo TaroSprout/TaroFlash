@@ -107,6 +107,15 @@ describe('ImageUpload modal', () => {
       ).toBeDefined()
     })
 
+    test('shows the accepted formats and the configured size limit', () => {
+      const { wrapper } = mountModal({ max_bytes: 2 * 1024 * 1024 })
+
+      const text = wrapper.find('[data-testid="image-upload__restrictions"]').text()
+      expect(text).toContain('PNG')
+      expect(text).toContain('GIF')
+      expect(text).toContain('2 MB')
+    })
+
     test('clicking the dropzone opens the file picker', async () => {
       const { wrapper } = mountModal()
       const input = wrapper.find('input[type="file"]').element
