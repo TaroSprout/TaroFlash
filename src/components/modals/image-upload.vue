@@ -6,6 +6,9 @@ import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import logger from '@/utils/logger'
 
+const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+const ACCEPT_ATTR = ACCEPTED_TYPES.join(',')
+
 export type ImageUploadModalResponse = File
 
 const { close } = defineProps<{
@@ -20,6 +23,7 @@ const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 const preview = ref<string | null>(null)
 const selected_file = ref<File | null>(null)
 const drag_counter = ref(0)
+const invalid_type = ref(false)
 
 const dragging = computed(() => drag_counter.value > 0)
 
@@ -79,8 +83,12 @@ async function onFileChange(event: Event) {
 }
 
 async function processFile(file: File) {
-  if (!file.type.startsWith('image/')) return
+  if (!ACCEPTED_TYPES.includes(file.type)) {
+    invalid_type.value = true
+    return
+  }
 
+  invalid_type.value = false
   try {
     preview.value = await readPreview(file)
     selected_file.value = file
@@ -136,6 +144,10 @@ function onConfirm() {
           </p>
         </template>
 
+        <p v-if="invalid_type" data-testid="image-upload__error" class="text-red-500">
+          {{ t('image-upload-modal.invalid-type-error') }}
+        </p>
+
         <ui-button
           data-testid="image-upload__browse"
           data-theme="grey-400"
@@ -175,6 +187,12 @@ function onConfirm() {
       </div>
     </div>
 
-    <input ref="fileInput" type="file" accept="image/*" class="sr-only" @change="onFileChange" />
+    <input
+      ref="fileInput"
+      type="file"
+      :accept="ACCEPT_ATTR"
+      class="sr-only"
+      @change="onFileChange"
+    />
   </mobile-sheet>
 </template>

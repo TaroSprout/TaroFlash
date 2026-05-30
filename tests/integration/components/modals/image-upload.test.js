@@ -66,6 +66,10 @@ function makeTextFile(name = 'doc.txt') {
   return new File(['content'], name, { type: 'text/plain' })
 }
 
+function makeFile(type, name = 'file') {
+  return new File(['content'], name, { type })
+}
+
 async function selectFile(wrapper, file) {
   const input = wrapper.find('input[type="file"]')
   Object.defineProperty(input.element, 'files', { value: [file], configurable: true })
@@ -135,6 +139,53 @@ describe('ImageUpload modal', () => {
       expect(
         wrapper.find('[data-testid="image-upload__confirm"]').attributes('disabled')
       ).toBeDefined()
+    })
+  })
+
+  describe('accepted types', () => {
+    test('the file input only accepts png, jpeg, webp, and gif', () => {
+      const { wrapper } = mountModal()
+
+      expect(wrapper.find('input[type="file"]').attributes('accept')).toBe(
+        'image/png,image/jpeg,image/webp,image/gif'
+      )
+    })
+
+    test.each(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])(
+      'accepts %s',
+      async (type) => {
+        const { wrapper } = mountModal()
+
+        await selectFile(wrapper, makeFile(type))
+
+        expect(wrapper.find('[data-testid="image-upload__preview"]').exists()).toBe(true)
+        expect(wrapper.find('[data-testid="image-upload__error"]').exists()).toBe(false)
+      }
+    )
+
+    test.each(['image/svg+xml', 'image/bmp', 'image/tiff'])(
+      'rejects %s and shows an error',
+      async (type) => {
+        const { wrapper } = mountModal()
+
+        await selectFile(wrapper, makeFile(type))
+
+        expect(wrapper.find('[data-testid="image-upload__preview"]').exists()).toBe(false)
+        expect(wrapper.find('[data-testid="image-upload__error"]').exists()).toBe(true)
+        expect(
+          wrapper.find('[data-testid="image-upload__confirm"]').attributes('disabled')
+        ).toBeDefined()
+      }
+    )
+
+    test('clears the error once a valid image is chosen', async () => {
+      const { wrapper } = mountModal()
+
+      await selectFile(wrapper, makeFile('image/svg+xml'))
+      expect(wrapper.find('[data-testid="image-upload__error"]').exists()).toBe(true)
+
+      await selectFile(wrapper, makeImageFile())
+      expect(wrapper.find('[data-testid="image-upload__error"]').exists()).toBe(false)
     })
   })
 
