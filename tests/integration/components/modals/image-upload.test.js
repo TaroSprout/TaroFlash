@@ -215,6 +215,17 @@ describe('ImageUpload modal', () => {
       await selectFile(wrapper, makeImageFile())
       expect(wrapper.find('[data-testid="image-upload__error"]').exists()).toBe(false)
     })
+
+    test('an invalid file flags the dropzone and replaces the prompt with the error', async () => {
+      const { wrapper } = mountModal()
+
+      await selectFile(wrapper, makeFile('image/svg+xml'))
+
+      const dropzone = wrapper.find('[data-testid="image-upload__dropzone"]')
+      expect(dropzone.attributes('data-error')).toBe('true')
+      expect(wrapper.find('[data-testid="image-upload__prompt"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="image-upload__error"]').exists()).toBe(true)
+    })
   })
 
   describe('size limit', () => {

@@ -34,6 +34,7 @@ const drag_counter = ref(0)
 const error = ref<FileError | null>(null)
 
 const dragging = computed(() => drag_counter.value > 0)
+const show_error = computed(() => !!error.value && !preview.value)
 const max_label = computed(() => `${+(max_bytes / 1024 / 1024).toFixed(1)} MB`)
 const error_message = computed(() => {
   if (error.value === 'invalid-type') return t('image-upload-modal.invalid-type-error')
@@ -154,6 +155,7 @@ function onConfirm() {
               data-testid="image-upload__dropzone"
               :data-dragging="dragging"
               :data-has-preview="!!preview"
+              :data-error="show_error"
               class="image-upload__dropzone"
               @click="browse"
             >
@@ -164,6 +166,15 @@ function onConfirm() {
                 :alt="t('image-upload-modal.preview-alt')"
                 class="absolute inset-0 h-full w-full object-cover"
               />
+
+              <div
+                v-else-if="show_error"
+                data-testid="image-upload__error"
+                class="flex flex-col items-center gap-3 px-6 text-center text-red-500"
+              >
+                <ui-icon src="close" class="size-12" />
+                <p class="text-sm">{{ error_message }}</p>
+              </div>
 
               <div
                 v-else
@@ -198,10 +209,6 @@ function onConfirm() {
           </template>
           <template #max>{{ max_label }}</template>
         </i18n-t>
-
-        <p v-if="error" data-testid="image-upload__error" class="text-sm text-red-500">
-          {{ error_message }}
-        </p>
       </div>
 
       <div data-testid="image-upload__actions" class="flex w-full gap-3">
@@ -264,5 +271,9 @@ function onConfirm() {
 
 .image-upload__dropzone[data-has-preview='true'] {
   border-style: solid;
+}
+
+.image-upload__dropzone[data-error='true'] {
+  border-color: var(--color-red-500);
 }
 </style>
