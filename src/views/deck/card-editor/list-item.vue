@@ -5,6 +5,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import UiRadio from '@/components/ui-kit/radio.vue'
 import { type CardListController } from '@/composables/card-editor/card-list-controller'
 import { inject, computed, useTemplateRef } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ListItemCard from './list-item-card.vue'
 
 type ListItemProps = {
@@ -15,6 +16,7 @@ type ListItemProps = {
 
 const { card, index } = defineProps<ListItemProps>()
 
+const { t } = useI18n()
 const { list, selection, actions } = inject<CardListController>('card-editor')!
 const { appendCard, prependCard } = list
 const { is_selecting, isCardSelected } = selection
@@ -97,7 +99,9 @@ function onClick(e: MouseEvent) {
       size="sm"
       class="absolute! z-1 top-0 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-100 ease-in-out group-hover/listitem:opacity-100 group-hover/listitem:pointer-events-auto group-focus-within/listitem:opacity-100 group-focus-within/listitem:pointer-events-auto *:[.btn-icon]:text-brown-500"
       @click.stop="prependCard(card.id!)"
-    />
+    >
+      {{ t('deck-view.card-editor.list-item.add-above') }}
+    </ui-button>
     <ui-button
       v-if="!is_selecting"
       data-testid="card-list-item__add-below"
@@ -108,6 +112,8 @@ function onClick(e: MouseEvent) {
       size="sm"
       class="absolute! z-1 bottom-0 translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-100 ease-in-out group-hover/listitem:opacity-100 group-hover/listitem:pointer-events-auto group-focus-within/listitem:opacity-100 group-focus-within/listitem:pointer-events-auto *:[.btn-icon]:text-brown-500"
       @click.stop="appendCard(card.id!)"
-    />
+    >
+      {{ t('deck-view.card-editor.list-item.add-below') }}
+    </ui-button>
   </div>
 </template>
