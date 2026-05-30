@@ -137,10 +137,13 @@ function onConfirm() {
   <mobile-sheet
     data-testid="image-upload-container"
     data-theme="brown-500"
-    class="sm:w-130"
+    class="sm:w-fit"
     @close="close()"
   >
-    <div data-testid="image-upload__body" class="flex flex-col items-center gap-6 px-6 pt-16 pb-6">
+    <div
+      data-testid="image-upload__body"
+      class="flex flex-col items-center gap-10 px-12 pt-16 pb-6"
+    >
       <div data-testid="image-upload__picker" class="flex flex-col items-center gap-3">
         <card size="xl">
           <template #front>
@@ -167,7 +170,7 @@ function onConfirm() {
                 class="flex flex-col items-center gap-3 px-6 text-center"
               >
                 <ui-icon src="add-image" class="size-12" />
-                <p class="text-brown-600">{{ t('image-upload-modal.drop-heading') }}</p>
+                <p class="text-sm">{{ t('image-upload-modal.drop-heading') }}</p>
               </div>
             </button>
           </template>
@@ -185,9 +188,9 @@ function onConfirm() {
       <div data-testid="image-upload__actions" class="flex w-full gap-3">
         <ui-button
           data-testid="image-upload__cancel"
-          data-theme="grey-400"
+          data-theme="brown-100"
           icon-left="close"
-          size="lg"
+          size="xl"
           full-width
           @click="close()"
         >
@@ -199,7 +202,7 @@ function onConfirm() {
           data-theme="blue-500"
           data-theme-dark="blue-650"
           icon-left="check"
-          size="lg"
+          size="xl"
           full-width
           :disabled="!preview"
           @click="onConfirm"
