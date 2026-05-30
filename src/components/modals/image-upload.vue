@@ -92,6 +92,7 @@ function onDrop(e: DragEvent) {
 }
 
 function browse() {
+  emitSfx('ui.select')
   fileInput.value?.click()
 }
 

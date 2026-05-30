@@ -122,7 +122,7 @@ describe('ImageUpload modal', () => {
       expect(formats_tooltip.props('text')).toContain('GIF')
     })
 
-    test('clicking the dropzone opens the file picker', async () => {
+    test('clicking the dropzone opens the file picker and plays a select sound', async () => {
       const { wrapper } = mountModal()
       const input = wrapper.find('input[type="file"]').element
       const clickSpy = vi.spyOn(input, 'click')
@@ -130,6 +130,7 @@ describe('ImageUpload modal', () => {
       await wrapper.find('[data-testid="image-upload__dropzone"]').trigger('click')
 
       expect(clickSpy).toHaveBeenCalledTimes(1)
+      expect(emitSfxMock).toHaveBeenCalledWith('ui.select')
     })
   })
 
