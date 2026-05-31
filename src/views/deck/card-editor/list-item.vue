@@ -7,7 +7,7 @@ import { type CardListController } from '@/composables/card-editor/card-list-con
 import { inject, computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ListItemCard from './list-item-card.vue'
-import { getImageUrl } from '@/api/media'
+import { cardImageUrl } from '@/api/media'
 import { useToast } from '@/composables/toast'
 import { useCardImageUploadModal } from '@/composables/modals/use-card-image-upload-modal'
 import { type FaceImage } from '@/components/modals/card-image-upload/index.vue'
@@ -78,7 +78,7 @@ async function onUploadImage() {
 }
 
 function faceUrl(path?: string) {
-  return path ? getImageUrl('cards', path) : undefined
+  return path ? cardImageUrl(path) : undefined
 }
 
 async function applyFace(side: 'front' | 'back', change: FaceImage) {

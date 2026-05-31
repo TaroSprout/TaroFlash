@@ -22,7 +22,7 @@ const mocks = vi.hoisted(() => ({
   isCardSelectedMock: vi.fn(),
   setFaceImageMock: vi.fn(),
   cardImageModalOpenMock: vi.fn(),
-  getImageUrlMock: vi.fn(),
+  cardImageUrlMock: vi.fn(),
   toastErrorMock: vi.fn()
 }))
 
@@ -31,7 +31,7 @@ vi.mock('@/composables/modals/use-card-image-upload-modal', () => ({
 }))
 
 vi.mock('@/api/media', () => ({
-  getImageUrl: mocks.getImageUrlMock
+  cardImageUrl: mocks.cardImageUrlMock
 }))
 
 vi.mock('@/composables/toast', () => ({
@@ -99,8 +99,8 @@ beforeEach(() => {
   mocks.setFaceImageMock.mockReset()
   mocks.setFaceImageMock.mockResolvedValue(undefined)
   mocks.cardImageModalOpenMock.mockReset()
-  mocks.getImageUrlMock.mockReset()
-  mocks.getImageUrlMock.mockImplementation((bucket, path) => `https://cdn.example.com/${path}`)
+  mocks.cardImageUrlMock.mockReset()
+  mocks.cardImageUrlMock.mockImplementation((path) => `https://cdn.example.com/${path}`)
   mocks.toastErrorMock.mockReset()
 })
 

@@ -25,6 +25,11 @@ export function getImageUrl(bucket: string, path: string): string {
   return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl
 }
 
+/** Public URL for a card-face image, which always lives in the `cards` bucket. */
+export function cardImageUrl(path: string): string {
+  return getImageUrl('cards', path)
+}
+
 export async function insertMedia(params: Media): Promise<void> {
   if (!params.card_id && !params.deck_id) {
     throw new Error('insertMedia requires either card_id or deck_id')

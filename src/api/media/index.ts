@@ -1,2 +1,2 @@
 export * from './mutations'
-export { getImageUrl } from './db'
+export { getImageUrl, cardImageUrl } from './db'
