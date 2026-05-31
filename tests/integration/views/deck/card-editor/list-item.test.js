@@ -20,8 +20,7 @@ const mocks = vi.hoisted(() => ({
   onMoveCardsMock: vi.fn(),
   onSelectCardMock: vi.fn(),
   isCardSelectedMock: vi.fn(),
-  setCardImageMock: vi.fn(),
-  deleteCardImageMock: vi.fn(),
+  setFaceImageMock: vi.fn(),
   cardImageModalOpenMock: vi.fn(),
   getImageUrlMock: vi.fn(),
   toastErrorMock: vi.fn()
@@ -74,8 +73,7 @@ function makeProvide({ is_selecting = ref(false) } = {}) {
         onMoveCards: mocks.onMoveCardsMock,
         onSelectCard: mocks.onSelectCardMock
       },
-      setCardImage: mocks.setCardImageMock,
-      deleteCardImage: mocks.deleteCardImageMock
+      setFaceImage: mocks.setFaceImageMock
     }
   }
 }
@@ -98,10 +96,8 @@ beforeEach(() => {
   mocks.onSelectCardMock.mockReset()
   mocks.isCardSelectedMock.mockReset()
   mocks.isCardSelectedMock.mockReturnValue(false)
-  mocks.setCardImageMock.mockReset()
-  mocks.setCardImageMock.mockResolvedValue(undefined)
-  mocks.deleteCardImageMock.mockReset()
-  mocks.deleteCardImageMock.mockResolvedValue(undefined)
+  mocks.setFaceImageMock.mockReset()
+  mocks.setFaceImageMock.mockResolvedValue(undefined)
   mocks.cardImageModalOpenMock.mockReset()
   mocks.getImageUrlMock.mockReset()
   mocks.getImageUrlMock.mockImplementation((bucket, path) => `https://cdn.example.com/${path}`)
@@ -201,7 +197,7 @@ describe('ListItem', () => {
     )
   })
 
-  test('calls setCardImage for a front File result', async () => {
+  test('applies a front File result via setFaceImage', async () => {
     const file = new File(['x'], 'front.png', { type: 'image/png' })
     mocks.cardImageModalOpenMock.mockReturnValueOnce({
       response: Promise.resolve({ target: 'faces', front: file, back: undefined })
@@ -211,11 +207,11 @@ describe('ListItem', () => {
     wrapper.findComponent(ItemOptions).vm.$emit('upload-image')
     await flushPromises()
 
-    expect(mocks.setCardImageMock).toHaveBeenCalledWith(3, 'front', file)
-    expect(mocks.deleteCardImageMock).not.toHaveBeenCalled()
+    expect(mocks.setFaceImageMock).toHaveBeenCalledWith(3, 'front', file)
+    expect(mocks.setFaceImageMock).toHaveBeenCalledTimes(1)
   })
 
-  test('calls setCardImage for a back File result', async () => {
+  test('applies a back File result via setFaceImage', async () => {
     const file = new File(['x'], 'back.png', { type: 'image/png' })
     mocks.cardImageModalOpenMock.mockReturnValueOnce({
       response: Promise.resolve({ target: 'faces', front: undefined, back: file })
@@ -225,11 +221,11 @@ describe('ListItem', () => {
     wrapper.findComponent(ItemOptions).vm.$emit('upload-image')
     await flushPromises()
 
-    expect(mocks.setCardImageMock).toHaveBeenCalledWith(3, 'back', file)
-    expect(mocks.deleteCardImageMock).not.toHaveBeenCalled()
+    expect(mocks.setFaceImageMock).toHaveBeenCalledWith(3, 'back', file)
+    expect(mocks.setFaceImageMock).toHaveBeenCalledTimes(1)
   })
 
-  test('calls deleteCardImage when front result is null', async () => {
+  test('passes a null result (removal) through to setFaceImage', async () => {
     mocks.cardImageModalOpenMock.mockReturnValueOnce({
       response: Promise.resolve({ target: 'faces', front: null, back: undefined })
     })
@@ -238,24 +234,26 @@ describe('ListItem', () => {
     wrapper.findComponent(ItemOptions).vm.$emit('upload-image')
     await flushPromises()
 
-    expect(mocks.deleteCardImageMock).toHaveBeenCalledWith(3, 'front')
-    expect(mocks.setCardImageMock).not.toHaveBeenCalled()
+    expect(mocks.setFaceImageMock).toHaveBeenCalledWith(3, 'front', null)
+    expect(mocks.setFaceImageMock).toHaveBeenCalledTimes(1)
   })
 
-  test('calls deleteCardImage when back result is null', async () => {
+  test('applies both faces when both results are present', async () => {
+    const file = new File(['x'], 'front.png', { type: 'image/png' })
     mocks.cardImageModalOpenMock.mockReturnValueOnce({
-      response: Promise.resolve({ target: 'faces', front: undefined, back: null })
+      response: Promise.resolve({ target: 'faces', front: file, back: null })
     })
 
     const wrapper = mount({ card: { id: 3 } })
     wrapper.findComponent(ItemOptions).vm.$emit('upload-image')
     await flushPromises()
 
-    expect(mocks.deleteCardImageMock).toHaveBeenCalledWith(3, 'back')
-    expect(mocks.setCardImageMock).not.toHaveBeenCalled()
+    expect(mocks.setFaceImageMock).toHaveBeenCalledWith(3, 'front', file)
+    expect(mocks.setFaceImageMock).toHaveBeenCalledWith(3, 'back', null)
+    expect(mocks.setFaceImageMock).toHaveBeenCalledTimes(2)
   })
 
-  test('calls neither setCardImage nor deleteCardImage when both results are undefined', async () => {
+  test('skips setFaceImage for an undefined (untouched) face', async () => {
     mocks.cardImageModalOpenMock.mockReturnValueOnce({
       response: Promise.resolve({ target: 'faces', front: undefined, back: undefined })
     })
@@ -264,8 +262,7 @@ describe('ListItem', () => {
     wrapper.findComponent(ItemOptions).vm.$emit('upload-image')
     await flushPromises()
 
-    expect(mocks.setCardImageMock).not.toHaveBeenCalled()
-    expect(mocks.deleteCardImageMock).not.toHaveBeenCalled()
+    expect(mocks.setFaceImageMock).not.toHaveBeenCalled()
   })
 
   test('does nothing when modal is dismissed (response undefined)', async () => {
@@ -277,7 +274,6 @@ describe('ListItem', () => {
     wrapper.findComponent(ItemOptions).vm.$emit('upload-image')
     await flushPromises()
 
-    expect(mocks.setCardImageMock).not.toHaveBeenCalled()
-    expect(mocks.deleteCardImageMock).not.toHaveBeenCalled()
+    expect(mocks.setFaceImageMock).not.toHaveBeenCalled()
   })
 })

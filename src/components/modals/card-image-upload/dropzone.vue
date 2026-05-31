@@ -6,6 +6,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { emitSfx } from '@/sfx/bus'
 import { playButtonTap } from '@/utils/animations/button-tap'
+import { bytesToMbLabel } from '@/utils/file-size'
 import logger from '@/utils/logger'
 
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
@@ -44,11 +45,11 @@ const overlay_suppressed = ref(false)
 
 const dragging = computed(() => drag_counter.value > 0)
 const show_error = computed(() => !!error.value && !preview.value)
-const max_label = computed(() => `${+(max_bytes / 1024 / 1024).toFixed(1)} MB`)
+const max_label = computed(() => bytesToMbLabel(max_bytes))
 const error_message = computed(() => {
-  if (error.value === 'invalid-type') return t('card-image-upload.invalid-type-error')
+  if (error.value === 'invalid-type') return t('card-image-upload-modal.invalid-type-error')
   if (error.value === 'too-large') {
-    return t('card-image-upload.too-large-error', { max: max_label.value })
+    return t('card-image-upload-modal.too-large-error', { max: max_label.value })
   }
   return ''
 })
@@ -175,7 +176,7 @@ function removeImage() {
             v-if="preview"
             data-testid="card-image-dropzone__preview"
             :src="preview"
-            :alt="t('card-image-upload.preview-alt')"
+            :alt="t('card-image-upload-modal.preview-alt')"
             class="card-image-dropzone__image"
           />
 
@@ -196,7 +197,7 @@ function removeImage() {
             <span ref="promptIcon" class="inline-flex">
               <ui-icon src="add-image" class="size-12" />
             </span>
-            <p class="text-sm">{{ t('card-image-upload.drop-heading') }}</p>
+            <p class="text-sm">{{ t('card-image-upload-modal.drop-heading') }}</p>
           </div>
         </button>
       </template>
@@ -211,7 +212,7 @@ function removeImage() {
       class="absolute! -top-1 -right-1 z-10"
       @click.stop="removeImage"
     >
-      {{ t('card-image-upload.remove-button') }}
+      {{ t('card-image-upload-modal.remove-button') }}
     </ui-button>
 
     <input

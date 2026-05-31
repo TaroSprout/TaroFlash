@@ -27,8 +27,7 @@ const { card, index } = defineProps<ListItemProps>()
 const { t } = useI18n()
 const toast = useToast()
 const cardImageModal = useCardImageUploadModal()
-const { list, selection, actions, setCardImage, deleteCardImage } =
-  inject<CardListController>('card-editor')!
+const { list, selection, actions, setFaceImage } = inject<CardListController>('card-editor')!
 const { appendCard, prependCard } = list
 const { is_selecting, isCardSelected } = selection
 const { onDeleteCards, onMoveCards, onSelectCard } = actions
@@ -82,23 +81,16 @@ function faceUrl(path?: string) {
   return path ? getImageUrl('cards', path) : undefined
 }
 
-// Apply one face's pending change: File sets it, null removes it, undefined
-// leaves it untouched.
 async function applyFace(side: 'front' | 'back', change: FaceImage) {
   if (change === undefined) return
 
-  const apply =
-    change === null
-      ? () => deleteCardImage(card.id!, side)
-      : () => setCardImage(card.id!, side, change)
-  const error_key =
-    change === null
-      ? 'toast.error.card-image-delete-failed'
-      : 'toast.error.card-image-upload-failed'
-
   try {
-    await apply()
+    await setFaceImage(card.id!, side, change)
   } catch {
+    const error_key =
+      change === null
+        ? 'toast.error.card-image-delete-failed'
+        : 'toast.error.card-image-upload-failed'
     toast.error(t(error_key))
   }
 }

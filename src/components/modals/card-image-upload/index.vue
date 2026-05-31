@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import MobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
+import { bytesToMbLabel } from '@/utils/file-size'
 import Dropzone, { type FaceImage } from './dropzone.vue'
 
 const DEFAULT_MAX_BYTES = 5 * 1024 * 1024
@@ -36,23 +37,29 @@ const {
 
 const { t } = useI18n()
 
-const front_result = ref<FaceImage>(undefined)
-const back_result = ref<FaceImage>(undefined)
-const cover_result = ref<FaceImage>(undefined)
+const results = reactive<Record<'front' | 'back' | 'cover', FaceImage>>({
+  front: undefined,
+  back: undefined,
+  cover: undefined
+})
 
-const max_label = computed(() => `${+(max_bytes / 1024 / 1024).toFixed(1)} MB`)
+const faces = computed(() => [
+  { key: 'front' as const, label: 'card-image-upload-modal.front-label', image: front_image },
+  { key: 'back' as const, label: 'card-image-upload-modal.back-label', image: back_image }
+])
+const max_label = computed(() => bytesToMbLabel(max_bytes))
 const changed = computed(() => {
-  if (target === 'cover') return cover_result.value !== undefined
-  return front_result.value !== undefined || back_result.value !== undefined
+  if (target === 'cover') return results.cover !== undefined
+  return results.front !== undefined || results.back !== undefined
 })
 
 function onConfirm() {
   if (target === 'cover') {
-    close({ target: 'cover', image: cover_result.value })
+    close({ target: 'cover', image: results.cover })
     return
   }
 
-  close({ target: 'faces', front: front_result.value, back: back_result.value })
+  close({ target: 'faces', front: results.front, back: results.back })
 }
 </script>
 
@@ -74,31 +81,27 @@ function onConfirm() {
           data-testid="card-image-upload__faces"
           class="flex flex-col gap-6 md:flex-row"
         >
-          <div data-testid="card-image-upload__front" class="flex flex-col items-center gap-2">
-            <p class="text-sm font-medium text-brown-500">
-              {{ t('card-image-upload.front-label') }}
-            </p>
-            <dropzone v-model="front_result" :existing_image="front_image" :max_bytes="max_bytes" />
-          </div>
-
-          <div data-testid="card-image-upload__back" class="flex flex-col items-center gap-2">
-            <p class="text-sm font-medium text-brown-500">
-              {{ t('card-image-upload.back-label') }}
-            </p>
-            <dropzone v-model="back_result" :existing_image="back_image" :max_bytes="max_bytes" />
+          <div
+            v-for="face in faces"
+            :key="face.key"
+            :data-testid="`card-image-upload__${face.key}`"
+            class="flex flex-col items-center gap-2"
+          >
+            <p class="text-sm font-medium text-brown-500">{{ t(face.label) }}</p>
+            <dropzone
+              v-model="results[face.key]"
+              :existing_image="face.image"
+              :max_bytes="max_bytes"
+            />
           </div>
         </div>
 
-        <dropzone
-          v-else
-          v-model="cover_result"
-          data-testid="card-image-upload__cover"
-          :existing_image="cover_image"
-          :max_bytes="max_bytes"
-        />
+        <div v-else data-testid="card-image-upload__cover">
+          <dropzone v-model="results.cover" :existing_image="cover_image" :max_bytes="max_bytes" />
+        </div>
 
         <i18n-t
-          keypath="card-image-upload.restrictions"
+          keypath="card-image-upload-modal.restrictions"
           tag="p"
           data-testid="card-image-upload__restrictions"
           class="text-sm text-brown-500"
@@ -106,14 +109,14 @@ function onConfirm() {
           <template #format>
             <ui-tooltip
               element="span"
-              :text="t('card-image-upload.formats-list')"
+              :text="t('card-image-upload-modal.formats-list')"
               position="bottom"
               :fallback_placements="['bottom', 'right', 'left']"
               :gap="4"
               class="text-blue-500 cursor-pointer"
               static_on_mobile
             >
-              {{ t('card-image-upload.format-trigger') }}
+              {{ t('card-image-upload-modal.format-trigger') }}
             </ui-tooltip>
           </template>
           <template #max>{{ max_label }}</template>
@@ -130,7 +133,7 @@ function onConfirm() {
           full-width
           @click="close()"
         >
-          {{ t('card-image-upload.cancel-button') }}
+          {{ t('card-image-upload-modal.cancel-button') }}
         </ui-button>
 
         <ui-button
@@ -143,7 +146,7 @@ function onConfirm() {
           :disabled="!changed"
           @click="onConfirm"
         >
-          {{ t('card-image-upload.confirm-button') }}
+          {{ t('card-image-upload-modal.confirm-button') }}
         </ui-button>
       </div>
     </div>
