@@ -155,7 +155,7 @@ function onPointerLeave() {
 // Dismiss a lingering error when the user commits attention to another card.
 function onDocumentPointerDown(e: PointerEvent) {
   const root = cardRef.value?.$el as HTMLElement | undefined
-  if (root && !root.contains(e.target as Node)) clearError()
+  if (root && !root.contains(e.target as Node)) onDismissError()
 }
 
 // Chime once when a drag first enters the card (not on every child dragenter).

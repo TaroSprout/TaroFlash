@@ -303,6 +303,7 @@ describe('CardFaceUploader', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(false)
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.snappy_button_5')
     wrapper.unmount()
   })
 
