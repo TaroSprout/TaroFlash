@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { flushPromises } from '@vue/test-utils'
-import { useImageUploadModal } from '@/composables/modals/use-image-upload-modal'
+import { useCardImageUploadModal } from '@/composables/modals/use-card-image-upload-modal'
 
 const { mockEmitSfx, mockOpen } = vi.hoisted(() => ({
   mockEmitSfx: vi.fn(),
@@ -12,14 +12,15 @@ vi.mock('@/composables/modal', () => ({
   useModal: vi.fn(() => ({ open: mockOpen }))
 }))
 
-// useImageUploadModal wraps the component with defineAsyncComponent; assert on shape.
+// useCardImageUploadModal wraps the component with defineAsyncComponent; assert
+// on shape rather than identity.
 const asyncComponentMatcher = expect.objectContaining({ __asyncLoader: expect.any(Function) })
 
 function makeModalResult(value) {
   return { response: Promise.resolve(value) }
 }
 
-describe('useImageUploadModal', () => {
+describe('useCardImageUploadModal', () => {
   beforeEach(() => {
     mockEmitSfx.mockClear()
     mockOpen.mockReset()
@@ -28,7 +29,7 @@ describe('useImageUploadModal', () => {
   test('opens with backdrop and mobile-sheet mode', () => {
     mockOpen.mockReturnValueOnce(makeModalResult(undefined))
 
-    useImageUploadModal().open()
+    useCardImageUploadModal().open({ target: 'faces' })
 
     expect(mockOpen).toHaveBeenCalledWith(
       asyncComponentMatcher,
@@ -36,60 +37,67 @@ describe('useImageUploadModal', () => {
     )
   })
 
-  test('forwards max_bytes as a prop to the opened modal', () => {
-    const max_bytes = 2 * 1024 * 1024
+  test('forwards all options as props to the opened modal', () => {
+    const options = {
+      target: 'faces',
+      max_bytes: 2 * 1024 * 1024,
+      front_image: 'https://example.com/front.png',
+      back_image: 'https://example.com/back.png'
+    }
     mockOpen.mockReturnValueOnce(makeModalResult(undefined))
 
-    useImageUploadModal().open({ max_bytes })
+    useCardImageUploadModal().open(options)
 
     expect(mockOpen).toHaveBeenCalledWith(
       asyncComponentMatcher,
-      expect.objectContaining({ props: { max_bytes } })
+      expect.objectContaining({ props: options })
     )
   })
 
-  test('open() with no options passes an empty props object', () => {
+  test('cover target with cover_image is forwarded correctly', () => {
+    const options = { target: 'cover', cover_image: 'https://example.com/cover.png' }
     mockOpen.mockReturnValueOnce(makeModalResult(undefined))
 
-    useImageUploadModal().open()
+    useCardImageUploadModal().open(options)
 
     expect(mockOpen).toHaveBeenCalledWith(
       asyncComponentMatcher,
-      expect.objectContaining({ props: {} })
+      expect.objectContaining({ props: options })
     )
   })
 
   test('plays the open sfx when called', () => {
     mockOpen.mockReturnValueOnce(makeModalResult(undefined))
 
-    useImageUploadModal().open()
+    useCardImageUploadModal().open({ target: 'faces' })
 
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.alert_clicks_wooden')
   })
 
   test('returns the modal result object so callers can await .response', () => {
-    const handle = makeModalResult(new File(['x'], 'img.png', { type: 'image/png' }))
+    const handle = makeModalResult({ target: 'faces', front: null, back: undefined })
     mockOpen.mockReturnValueOnce(handle)
 
-    const returned = useImageUploadModal().open({ max_bytes: 5_000_000 })
+    const returned = useCardImageUploadModal().open({ target: 'faces' })
 
     expect(returned).toBe(handle)
   })
 
-  test('.response resolves with the File when the user confirms', async () => {
+  test('.response resolves with the faces response when the user confirms', async () => {
     const file = new File(['x'], 'photo.png', { type: 'image/png' })
-    mockOpen.mockReturnValueOnce(makeModalResult(file))
+    const response_value = { target: 'faces', front: file, back: null }
+    mockOpen.mockReturnValueOnce(makeModalResult(response_value))
 
-    const { response } = useImageUploadModal().open()
+    const { response } = useCardImageUploadModal().open({ target: 'faces' })
     const result = await response
 
-    expect(result).toBe(file)
+    expect(result).toBe(response_value)
   })
 
   test('.response resolves with undefined when the user dismisses', async () => {
     mockOpen.mockReturnValueOnce(makeModalResult(undefined))
 
-    const { response } = useImageUploadModal().open()
+    const { response } = useCardImageUploadModal().open({ target: 'cover' })
     const result = await response
 
     expect(result).toBeUndefined()
@@ -98,7 +106,7 @@ describe('useImageUploadModal', () => {
   test('plays the close sfx after the modal resolves', async () => {
     mockOpen.mockReturnValueOnce(makeModalResult(undefined))
 
-    useImageUploadModal().open()
+    useCardImageUploadModal().open({ target: 'faces' })
     const openSfxCount = mockEmitSfx.mock.calls.length
 
     await flushPromises()

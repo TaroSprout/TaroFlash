@@ -359,6 +359,35 @@ describe('useCardListController', () => {
     })
   })
 
+  describe('setFaceImage', () => {
+    test('routes a File to the set-image mutation', async () => {
+      const { setFaceImage } = makeController([makeCard({ id: 42 })])
+      const file = new File(['x'], 'a.png', { type: 'image/png' })
+      await setFaceImage(42, 'front', file)
+      expect(setCardImageMock).toHaveBeenCalledWith({
+        card_id: 42,
+        deck_id: 10,
+        file,
+        side: 'front'
+      })
+      expect(deleteCardImageMock).not.toHaveBeenCalled()
+    })
+
+    test('routes null to the delete-image mutation', async () => {
+      const { setFaceImage } = makeController([makeCard({ id: 42 })])
+      await setFaceImage(42, 'back', null)
+      expect(deleteCardImageMock).toHaveBeenCalledWith({ card_id: 42, deck_id: 10, side: 'back' })
+      expect(setCardImageMock).not.toHaveBeenCalled()
+    })
+
+    test('is a no-op for undefined (untouched face)', async () => {
+      const { setFaceImage } = makeController([makeCard({ id: 42 })])
+      await setFaceImage(42, 'front', undefined)
+      expect(setCardImageMock).not.toHaveBeenCalled()
+      expect(deleteCardImageMock).not.toHaveBeenCalled()
+    })
+  })
+
   // ── selection — positive mode ──────────────────────────────────────────────
 
   describe('selection — positive mode', () => {

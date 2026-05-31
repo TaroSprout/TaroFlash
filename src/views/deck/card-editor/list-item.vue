@@ -7,6 +7,14 @@ import { type CardListController } from '@/composables/card-editor/card-list-con
 import { inject, computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ListItemCard from './list-item-card.vue'
+import { cardImageUrl } from '@/api/media'
+import { useToast } from '@/composables/toast'
+import { useCardImageUploadModal } from '@/composables/modals/use-card-image-upload-modal'
+import { type FaceImage } from '@/components/modals/card-image-upload/index.vue'
+
+// Card images render small but are the app's highest-volume asset, so cap them
+// well below the bucket's 10 MiB backstop.
+const CARD_IMAGE_MAX_BYTES = 2 * 1024 * 1024
 
 type ListItemProps = {
   index: number
@@ -17,7 +25,9 @@ type ListItemProps = {
 const { card, index } = defineProps<ListItemProps>()
 
 const { t } = useI18n()
-const { list, selection, actions } = inject<CardListController>('card-editor')!
+const toast = useToast()
+const cardImageModal = useCardImageUploadModal()
+const { list, selection, actions, setFaceImage } = inject<CardListController>('card-editor')!
 const { appendCard, prependCard } = list
 const { is_selecting, isCardSelected } = selection
 const { onDeleteCards, onMoveCards, onSelectCard } = actions
@@ -25,6 +35,9 @@ const { onDeleteCards, onMoveCards, onSelectCard } = actions
 const list_item_card = useTemplateRef('list-item-card')
 
 const selected = computed(() => isCardSelected(card.id!))
+// Image writes go through insert-backed RPCs that need a persisted row; temp
+// cards (id <= 0) aren't saved yet, so disable upload until they are.
+const can_upload_image = computed(() => (card.id ?? 0) > 0)
 
 function onClick(e: MouseEvent) {
   const closest = (selector: string) => !!(e.target as HTMLElement)?.closest(selector)
@@ -48,6 +61,38 @@ function onClick(e: MouseEvent) {
 
   // focus the card's front-text editor if the card doesn't already have focus
   if (!list_item_card.value?.hasFocusWithin()) list_item_card.value?.focusEditor()
+}
+
+async function onUploadImage() {
+  const res = await cardImageModal.open({
+    target: 'faces',
+    max_bytes: CARD_IMAGE_MAX_BYTES,
+    front_image: faceUrl(card.front_image_path),
+    back_image: faceUrl(card.back_image_path)
+  }).response
+
+  if (res?.target !== 'faces') return
+
+  await applyFace('front', res.front)
+  await applyFace('back', res.back)
+}
+
+function faceUrl(path?: string) {
+  return path ? cardImageUrl(path) : undefined
+}
+
+async function applyFace(side: 'front' | 'back', change: FaceImage) {
+  if (change === undefined) return
+
+  try {
+    await setFaceImage(card.id!, side, change)
+  } catch {
+    const error_key =
+      change === null
+        ? 'toast.error.card-image-delete-failed'
+        : 'toast.error.card-image-upload-failed'
+    toast.error(t(error_key))
+  }
 }
 </script>
 
@@ -83,7 +128,8 @@ function onClick(e: MouseEvent) {
     <item-options
       v-if="!is_selecting"
       class="hidden sm:grid opacity-0 pointer-events-none transition-opacity duration-100 ease-in-out group-hover/listitem:opacity-100 group-hover/listitem:pointer-events-auto group-focus-within/listitem:opacity-100 group-focus-within/listitem:pointer-events-auto row-span-2"
-      @select="onSelectCard(card.id!)"
+      :upload-disabled="!can_upload_image"
+      @upload-image="onUploadImage"
       @move="onMoveCards(card.id!)"
       @delete="onDeleteCards(card.id!)"
     />

@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import CardFace from './card-face.vue'
 import CardCover from './card-cover.vue'
 import { type CardBase } from '@type/card'
-import { getImageUrl } from '@/api/media'
+import { cardImageUrl } from '@/api/media'
 import { type SfxOptions } from '@/sfx/directive'
 import { gsap } from 'gsap'
 
@@ -35,12 +35,12 @@ const {
 
 const front_image_url = computed(() => {
   if (!front_image_path) return undefined
-  return getImageUrl('cards', front_image_path)
+  return cardImageUrl(front_image_path)
 })
 
 const back_image_url = computed(() => {
   if (!back_image_path) return undefined
-  return getImageUrl('cards', back_image_path)
+  return cardImageUrl(back_image_path)
 })
 
 function onEnter(el: Element, done: () => void) {

@@ -131,6 +131,16 @@ export function useCardListController(opts: Options) {
     return withSaving(() => mutations.deleteCardImage(card_id, side))
   }
 
+  /**
+   * Apply one face's pending image change, routing on the value: a `File`
+   * sets it, `null` removes it, `undefined` is a no-op. Centralizes the
+   * File/null/undefined → RPC mapping so callers don't branch on it.
+   */
+  function setFaceImage(card_id: number, side: 'front' | 'back', change: File | null | undefined) {
+    if (change === undefined) return Promise.resolve()
+    return change === null ? deleteCardImage(card_id, side) : setCardImage(card_id, side, change)
+  }
+
   return {
     list,
     selection,
@@ -143,6 +153,7 @@ export function useCardListController(opts: Options) {
     updateCard,
     setCardImage,
     deleteCardImage,
+    setFaceImage,
     card_attributes,
     deck_id: opts.deck_id,
 

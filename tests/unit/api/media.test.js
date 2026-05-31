@@ -28,7 +28,14 @@ vi.mock('@/supabase-client', () => ({
 vi.mock('@/utils/logger', () => ({ default: { error: vi.fn() } }))
 
 import { supabase } from '@/supabase-client'
-import { uploadImage, deleteImage, getImageUrl, insertMedia, deleteMedia } from '@/api/media/db'
+import {
+  uploadImage,
+  deleteImage,
+  getImageUrl,
+  cardImageUrl,
+  insertMedia,
+  deleteMedia
+} from '@/api/media/db'
 
 describe('uploadImage', () => {
   beforeEach(() => {
@@ -91,6 +98,20 @@ describe('getImageUrl', () => {
     const url = getImageUrl('cards', 'member/card/front/abc.png')
     expect(mocks.getPublicUrlMock).toHaveBeenCalledWith('member/card/front/abc.png')
     expect(url).toBe('https://cdn/x')
+  })
+})
+
+describe('cardImageUrl', () => {
+  beforeEach(() => {
+    mocks.getPublicUrlMock.mockReset()
+  })
+
+  test('resolves the path against the cards bucket', () => {
+    mocks.getPublicUrlMock.mockReturnValueOnce({ data: { publicUrl: 'https://cdn/card' } })
+    const url = cardImageUrl('member/card/front/abc.png')
+    expect(supabase.storage.from).toHaveBeenCalledWith('cards')
+    expect(mocks.getPublicUrlMock).toHaveBeenCalledWith('member/card/front/abc.png')
+    expect(url).toBe('https://cdn/card')
   })
 })
 
