@@ -247,6 +247,8 @@ watch(file_error, (err) => {
       :class="
         has_image ? 'card-face-uploader__overlay--inset' : 'card-face-uploader__overlay--full'
       "
+      @mousedown.stop
+      @click.stop="onBrowse"
     >
       <ui-icon src="close" class="size-12" />
       <p class="text-sm">{{ error_message }}</p>
