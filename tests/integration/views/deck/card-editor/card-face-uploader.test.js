@@ -235,6 +235,28 @@ describe('CardFaceUploader', () => {
 
   // ── Error overlay persistence ─────────────────────────────────────────────
 
+  test('clicking the add control opens the file picker (fileInput is wired)', async () => {
+    const wrapper = mount({ card: { id: 5 } })
+    const input = wrapper.find('input[type="file"]').element
+    const clickSpy = vi.spyOn(input, 'click').mockImplementation(() => {})
+
+    await wrapper.find('[data-testid="card-face-uploader__add"]').trigger('click')
+
+    expect(clickSpy).toHaveBeenCalled()
+  })
+
+  test('clicking the error scrim opens the file picker to re-pick', async () => {
+    const wrapper = mount({ card: { id: 5 } })
+    await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
+    await flushPromises()
+    const input = wrapper.find('input[type="file"]').element
+    const clickSpy = vi.spyOn(input, 'click').mockImplementation(() => {})
+
+    await wrapper.find('[data-testid="card-face-uploader__error"]').trigger('click')
+
+    expect(clickSpy).toHaveBeenCalled()
+  })
+
   test('error overlay has a Dismiss button', async () => {
     const wrapper = mount({ card: { id: 5 } })
     await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
