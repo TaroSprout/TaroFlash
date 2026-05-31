@@ -274,6 +274,7 @@ describe('CardFaceUploader', () => {
     await wrapper.find('[data-testid="card-face-uploader__dismiss-error"]').trigger('click')
 
     expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(false)
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.snappy_button_5')
   })
 
   test('error has no auto-dismiss: overlay stays up without any user action', async () => {

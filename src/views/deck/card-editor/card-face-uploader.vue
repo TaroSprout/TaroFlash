@@ -128,6 +128,11 @@ function onBrowse() {
   browse()
 }
 
+function onDismissError() {
+  emitSfx('ui.snappy_button_5')
+  clearError()
+}
+
 // A fresh drop/pick lands with the pointer still over the card, which would
 // immediately reveal the replace scrim over the new image. Hold the hover state
 // off until the pointer leaves once, or until the timeout releases it.
@@ -262,7 +267,7 @@ watch(file_error, (err) => {
         data-testid="card-face-uploader__dismiss-error"
         size="sm"
         data-theme="red-500"
-        @click.stop="clearError"
+        @click.stop="onDismissError"
       >
         {{ t('deck-view.card-editor.list-item.dismiss-error-button') }}
       </ui-button>
