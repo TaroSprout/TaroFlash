@@ -3,6 +3,9 @@ import { computed, ref, useTemplateRef, watch, onBeforeUnmount } from 'vue'
 import { useFloating, flip, autoUpdate, offset, type Placement } from '@floating-ui/vue'
 import { useMediaQuery } from '@/composables/use-media-query'
 
+// The popover is teleported to <body>, so it can't inherit data-theme through
+// the DOM and reading it off $attrs would wrongly pick up a theme a parent
+// component forwarded to this tooltip. Theme it via explicit props instead.
 const {
   text,
   position = 'top',
@@ -11,7 +14,9 @@ const {
   element = 'div',
   visible = false,
   suppress = false,
-  static_on_mobile = false
+  static_on_mobile = false,
+  theme = 'white',
+  theme_dark = 'brown-100'
 } = defineProps<{
   text?: string
   position?: Placement
@@ -21,6 +26,8 @@ const {
   visible?: boolean
   suppress?: boolean
   static_on_mobile?: boolean
+  theme?: string
+  theme_dark?: string
 }>()
 
 const triggerRef = useTemplateRef<HTMLElement>('ui-tooltip-trigger')
@@ -93,8 +100,8 @@ function onPointerLeave(e: PointerEvent) {
       <div
         ref="ui-tooltip"
         data-testid="ui-tooltip"
-        data-theme="white"
-        data-theme-dark="brown-100"
+        :data-theme="theme"
+        :data-theme-dark="theme_dark"
         :style="floatingStyles"
         class="ui-tooltip ui-tooltip--visible bg-(--theme-primary) text-(--theme-on-primary) rounded-full py-1.5 px-2 text-sm pointer-events-none z-100 select-none"
       >
