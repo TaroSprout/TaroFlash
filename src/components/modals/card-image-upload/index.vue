@@ -8,6 +8,8 @@ import Dropzone, { type FaceImage } from './dropzone.vue'
 
 const DEFAULT_MAX_BYTES = 5 * 1024 * 1024
 
+export type { FaceImage }
+
 export type CardImageTarget = 'cover' | 'faces'
 
 export type CardImageUploadResponse =

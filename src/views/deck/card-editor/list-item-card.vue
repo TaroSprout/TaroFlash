@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import Card from '@/components/card/index.vue'
-import ImageButton from '../image-button.vue'
 import { useI18n } from 'vue-i18n'
-import { useToast } from '@/composables/toast'
 import { inject, ref, useTemplateRef } from 'vue'
 import { type CardListController } from '@/composables/card-editor/card-list-controller'
 import textEditor from '@/components/text-editor/text-editor.vue'
@@ -16,7 +14,6 @@ type ListItemCardProps = {
 const { card } = defineProps<ListItemCardProps>()
 
 const { t } = useI18n()
-const toast = useToast()
 const list_item_card = useTemplateRef('list-item-card')
 const front_input = useTemplateRef('front-input')
 
@@ -29,8 +26,7 @@ const front_text = ref(card.front_text ?? '')
 const back_text = ref(card.back_text ?? '')
 const save_failed = ref(false)
 
-const { selection, updateCard, setCardImage, deleteCardImage, card_attributes } =
-  inject<CardListController>('card-editor')!
+const { selection, updateCard, card_attributes } = inject<CardListController>('card-editor')!
 const { is_selecting } = selection
 
 async function onUpdate(side: 'front' | 'back', text: string) {
@@ -49,26 +45,6 @@ async function onUpdate(side: 'front' | 'back', text: string) {
 function focusEditor() {
   if (!focused.value) {
     front_input.value?.focus()
-  }
-}
-
-async function onImageUpload(side: 'front' | 'back', file: File) {
-  if (!card.id) return
-
-  try {
-    await setCardImage(card.id, side, file)
-  } catch {
-    toast.error(t('toast.error.card-image-upload-failed'))
-  }
-}
-
-async function onImageDelete(side: 'front' | 'back') {
-  if (!card.id) return
-
-  try {
-    await deleteCardImage(card.id, side)
-  } catch {
-    toast.error(t('toast.error.card-image-delete-failed'))
   }
 }
 
@@ -123,15 +99,6 @@ defineExpose({ focusEditor, hasFocusWithin })
       class="group/card"
       :class="{ 'pointer-events-none': is_selecting }"
     >
-      <image-button
-        v-if="card.id > 0"
-        class="absolute! -top-2 -left-2 opacity-0 transition-opacity duration-100 ease-in-out group-hover/card:opacity-100"
-        :image="card.front_image_path"
-        @image-uploaded="onImageUpload('front', $event)"
-        @image-deleted="onImageDelete('front')"
-        @click.stop
-      />
-
       <template #editor>
         <text-editor
           ref="front-input"
@@ -155,15 +122,6 @@ defineExpose({ focusEditor, hasFocusWithin })
       class="group/card"
       :class="{ 'pointer-events-none': is_selecting }"
     >
-      <image-button
-        v-if="card.id > 0"
-        class="absolute! -top-2 -right-2 opacity-0 transition-opacity duration-100 ease-in-out group-hover/card:opacity-100"
-        :image="card.back_image_path"
-        @image-uploaded="onImageUpload('back', $event)"
-        @image-deleted="onImageDelete('back')"
-        @click.stop
-      />
-
       <template #editor>
         <text-editor
           ref="back-input"
