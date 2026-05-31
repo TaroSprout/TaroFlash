@@ -158,6 +158,7 @@ function removeImage() {
   <mobile-sheet
     data-testid="image-upload-container"
     data-theme="brown-500"
+    data-theme-dark="stone-700"
     class="sm:w-fit"
     @close="close()"
   >
@@ -249,6 +250,7 @@ function removeImage() {
         <ui-button
           data-testid="image-upload__cancel"
           data-theme="brown-100"
+          data-theme-dark="stone-700"
           icon-left="close"
           size="xl"
           full-width
@@ -316,6 +318,18 @@ function removeImage() {
 
 .image-upload__dropzone:hover:not([data-error='true']) .image-upload__overlay {
   color: var(--color-blue-500);
+}
+
+[data-theme='dark'] .image-upload__dropzone {
+  background-color: var(--color-stone-700);
+}
+
+[data-theme='dark'] .image-upload__dropzone:hover:not([data-error='true']) {
+  border-color: var(--color-blue-650);
+}
+
+[data-theme='dark'] .image-upload__dropzone:hover:not([data-error='true']) .image-upload__overlay {
+  color: var(--color-blue-650);
 }
 
 .image-upload__image {
