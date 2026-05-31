@@ -43,7 +43,8 @@ const {
   onDrop
 } = useImageDropzone({
   maxBytes: CARD_IMAGE_MAX_BYTES,
-  onFile: uploadFile
+  onFile: uploadFile,
+  onError: () => emitSfx('ui.digi_powerdown')
 })
 
 const image_path = computed(() => (side === 'front' ? card.front_image_path : card.back_image_path))
@@ -98,6 +99,7 @@ function onBrowse() {
     :side="side"
     v-bind="card"
     :error="error"
+    :sfx="has_image ? { hover: 'ui.click_07' } : undefined"
     :data-active="active || undefined"
     :class="{ 'pointer-events-none': disabled }"
     @pointerenter="hovered = true"

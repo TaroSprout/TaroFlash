@@ -9,6 +9,8 @@ type UseImageDropzoneOptions = {
   maxBytes: MaybeRefOrGetter<number>
   // Invoked with a validated File once the user drops or picks one.
   onFile: (file: File) => void
+  // Invoked when a dropped/picked file fails validation.
+  onError?: (error: ImageFileError) => void
 }
 
 /**
@@ -26,7 +28,7 @@ type UseImageDropzoneOptions = {
  *   onFile: (file) => upload(file)
  * })
  */
-export function useImageDropzone({ maxBytes, onFile }: UseImageDropzoneOptions) {
+export function useImageDropzone({ maxBytes, onFile, onError }: UseImageDropzoneOptions) {
   const fileInput = ref<HTMLInputElement | null>(null)
   const drag_counter = ref(0)
   const error = ref<ImageFileError | null>(null)
@@ -75,6 +77,7 @@ export function useImageDropzone({ maxBytes, onFile }: UseImageDropzoneOptions) 
     const file_error = fileError(file)
     if (file_error) {
       error.value = file_error
+      onError?.(file_error)
       return
     }
 
