@@ -96,29 +96,6 @@ describe('CardList (list.vue)', () => {
     expect(items[1].props('card').front_text).toBe('c')
   })
 
-  test('forwards card.is_duplicate as the duplicate prop', () => {
-    const cards = [
-      { id: 1, is_duplicate: true },
-      { id: 2, is_duplicate: false }
-    ]
-    setupVirtualizer({ items: makeVirtualItems([0, 1]), totalSize: 2 * ROW_PITCH })
-
-    const wrapper = mount({ editor: makeEditor({ cards }) })
-
-    const items = wrapper.findAllComponents({ name: 'ListItem' })
-    expect(items[0].props('duplicate')).toBe(true)
-    expect(items[1].props('duplicate')).toBe(false)
-  })
-
-  test('defaults duplicate to false when card.is_duplicate is missing', () => {
-    const cards = [{ id: 1 }]
-    setupVirtualizer({ items: makeVirtualItems([0]), totalSize: ROW_PITCH })
-
-    const wrapper = mount({ editor: makeEditor({ cards }) })
-
-    expect(wrapper.findAllComponents({ name: 'ListItem' })[0].props('duplicate')).toBe(false)
-  })
-
   test('sets viewport height from virtualizer.getTotalSize', () => {
     const cards = Array.from({ length: 5 }, (_, i) => ({ id: i }))
     setupVirtualizer({ items: makeVirtualItems([0]), totalSize: 5 * ROW_PITCH })

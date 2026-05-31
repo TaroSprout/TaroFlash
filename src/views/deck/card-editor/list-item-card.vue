@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Card from '@/components/card/index.vue'
+import CardFaceUploader from './card-face-uploader.vue'
 import { useI18n } from 'vue-i18n'
 import { inject, ref, useTemplateRef } from 'vue'
 import { type CardListController } from '@/composables/card-editor/card-list-controller'
@@ -8,7 +8,6 @@ import { emitSfx } from '@/sfx/bus'
 
 type ListItemCardProps = {
   card: Card
-  duplicate: boolean
 }
 
 const { card } = defineProps<ListItemCardProps>()
@@ -88,16 +87,13 @@ defineExpose({ focusEditor, hasFocusWithin })
     @focusin="onFocusIn"
     @focusout="onFocusOut"
   >
-    <card
+    <card-face-uploader
       data-testid="front-input"
       :data-id="card.id"
+      :card="card"
       side="front"
-      size="xl"
-      mode="edit"
-      v-bind="card"
+      :disabled="is_selecting"
       :error="save_failed"
-      class="group/card"
-      :class="{ 'pointer-events-none': is_selecting }"
     >
       <template #editor>
         <text-editor
@@ -109,18 +105,15 @@ defineExpose({ focusEditor, hasFocusWithin })
           @update="onUpdate('front', $event)"
         />
       </template>
-    </card>
+    </card-face-uploader>
 
-    <card
+    <card-face-uploader
       data-testid="back-input"
       :data-id="card.id"
+      :card="card"
       side="back"
-      size="xl"
-      mode="edit"
-      v-bind="card"
+      :disabled="is_selecting"
       :error="save_failed"
-      class="group/card"
-      :class="{ 'pointer-events-none': is_selecting }"
     >
       <template #editor>
         <text-editor
@@ -132,6 +125,6 @@ defineExpose({ focusEditor, hasFocusWithin })
           @update="onUpdate('back', $event)"
         />
       </template>
-    </card>
+    </card-face-uploader>
   </div>
 </template>

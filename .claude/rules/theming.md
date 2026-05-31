@@ -12,7 +12,7 @@ Colors go through the `data-theme` token layer — never raw hex, never hardcode
 
 - **Always** write styles using tailwind classes; only opt for a `<style>` block when styling becomes complex or oversized for inline classes.
 - Set `data-theme` (and `data-theme-dark` when needed) on the outermost element/component that should carry the theme — descendants inherit the tokens.
-- Don't add `theme` / `themeDark` props to components — let `data-theme` / `data-theme-dark` forward via `inheritAttrs`.
+- Don't add `theme` / `themeDark` props to components — let `data-theme` / `data-theme-dark` forward via `inheritAttrs`. Exception: content teleported out of the DOM (e.g. `ui-kit/tooltip`'s popover) can't inherit, so it takes explicit `theme` / `theme_dark` props.
 - Use `--theme-*` tokens only for colors that should signal the active theme. For base chrome use the static brown/grey palette utilities, not `--theme-*`.
 - Never use `@apply` — write plain CSS with `var(--theme-*)` directly (see [`css`](./css.md)).
 

@@ -2,15 +2,21 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
 
-// Stub Card so its default + editor slots render under shallowMount.
-// Forward attrs so `data-testid="front-input"` / `back-input` make it through.
-const CardStub = defineComponent({
-  name: 'Card',
+// Stub CardFaceUploader so its editor slot renders under shallowMount.
+// Forward attrs so `data-testid="front-input"` / `back-input` make it through,
+// and declare `error` so the save-failure tests can read the forwarded prop.
+const CardFaceUploaderStub = defineComponent({
+  name: 'CardFaceUploader',
   inheritAttrs: false,
-  props: { error: { type: Boolean, default: false } },
+  props: {
+    card: { type: Object, required: true },
+    side: String,
+    disabled: Boolean,
+    error: Boolean
+  },
   setup(_props, { slots }) {
     const attrs = useAttrs()
-    return () => h('div', attrs, [slots.default?.(), slots.editor?.()])
+    return () => h('div', attrs, slots.editor?.())
   }
 })
 
@@ -50,10 +56,10 @@ function makeCard(overrides = {}) {
   }
 }
 
-function makeProvide() {
+function makeProvide({ is_selecting = ref(false) } = {}) {
   return {
     'card-editor': {
-      selection: { is_selecting: ref(false) },
+      selection: { is_selecting },
       updateCard: mocks.updateCardMock,
       card_attributes: { front: {}, back: {} }
     }
@@ -61,15 +67,15 @@ function makeProvide() {
 }
 
 function mount(props = {}) {
+  const { is_selecting, ...rest } = props
   return shallowMount(ListItemCard, {
     props: {
-      duplicate: false,
-      ...props,
-      card: makeCard(props.card)
+      ...rest,
+      card: makeCard(rest.card)
     },
     global: {
-      stubs: { Card: CardStub },
-      provide: makeProvide()
+      stubs: { CardFaceUploader: CardFaceUploaderStub },
+      provide: makeProvide({ is_selecting })
     }
   })
 }
@@ -80,12 +86,11 @@ function mountWithFocusStubs(props = {}) {
   return shallowMount(ListItemCard, {
     attachTo: document.body,
     props: {
-      duplicate: false,
       ...props,
       card: makeCard(props.card)
     },
     global: {
-      stubs: { Card: CardStub, TextEditor: TextEditorStub },
+      stubs: { CardFaceUploader: CardFaceUploaderStub, TextEditor: TextEditorStub },
       provide: makeProvide()
     }
   })
@@ -104,6 +109,13 @@ describe('ListItemCard', () => {
     const wrapper = mount()
     expect(wrapper.find('[data-testid="front-input"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="back-input"]').exists()).toBe(true)
+  })
+
+  test('forwards is_selecting to both uploaders as the disabled prop', () => {
+    const wrapper = mount({ is_selecting: ref(true), card: { id: 42 } })
+    const uploaders = wrapper.findAllComponents(CardFaceUploaderStub)
+    expect(uploaders[0].props('disabled')).toBe(true)
+    expect(uploaders[1].props('disabled')).toBe(true)
   })
 
   // ── Auto-save wiring ──────────────────────────────────────────────────────
@@ -279,9 +291,9 @@ describe('ListItemCard', () => {
 
   test('starts with error=false on both faces', () => {
     const wrapper = mount({ card: { id: 42 } })
-    const cards = wrapper.findAllComponents(CardStub)
-    expect(cards[0].props('error')).toBe(false)
-    expect(cards[1].props('error')).toBe(false)
+    const uploaders = wrapper.findAllComponents(CardFaceUploaderStub)
+    expect(uploaders[0].props('error')).toBe(false)
+    expect(uploaders[1].props('error')).toBe(false)
   })
 
   test('sets error=true on both faces when updateCard rejects', async () => {
@@ -289,9 +301,9 @@ describe('ListItemCard', () => {
     const wrapper = mount({ card: { id: 42 } })
     await wrapper.findAllComponents(textEditor)[0].vm.$emit('update', 'X')
     await flushPromises()
-    const cards = wrapper.findAllComponents(CardStub)
-    expect(cards[0].props('error')).toBe(true)
-    expect(cards[1].props('error')).toBe(true)
+    const uploaders = wrapper.findAllComponents(CardFaceUploaderStub)
+    expect(uploaders[0].props('error')).toBe(true)
+    expect(uploaders[1].props('error')).toBe(true)
   })
 
   test('clears error on the next update', async () => {
@@ -299,10 +311,10 @@ describe('ListItemCard', () => {
     const wrapper = mount({ card: { id: 42 } })
     await wrapper.findAllComponents(textEditor)[0].vm.$emit('update', 'X')
     await flushPromises()
-    expect(wrapper.findAllComponents(CardStub)[0].props('error')).toBe(true)
+    expect(wrapper.findAllComponents(CardFaceUploaderStub)[0].props('error')).toBe(true)
 
     await wrapper.findAllComponents(textEditor)[0].vm.$emit('update', 'XY')
     await flushPromises()
-    expect(wrapper.findAllComponents(CardStub)[0].props('error')).toBe(false)
+    expect(wrapper.findAllComponents(CardFaceUploaderStub)[0].props('error')).toBe(false)
   })
 })

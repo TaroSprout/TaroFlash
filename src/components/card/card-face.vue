@@ -11,7 +11,12 @@ const { image, text } = defineProps<{
 
 <template>
   <div class="card-face" :data-image="!!image" :data-text="!!text" :data-mode="mode">
-    <img v-if="image" :src="image" class="h-full w-full object-cover" />
+    <img
+      v-if="image"
+      data-testid="card-face__image"
+      :src="image"
+      class="card-face__image h-full w-full object-cover"
+    />
 
     <slot name="editor" v-else>
       <text-editor
@@ -69,7 +74,51 @@ const { image, text } = defineProps<{
 }
 
 .card-face[data-image='true'] {
+  overflow: hidden;
+}
+
+/* Images fill the face by default — always in view mode, and in the editor
+   until the card is hovered. */
+.card-face[data-mode='view'][data-image='true'],
+.card-face[data-mode='edit'][data-image='true'] {
   padding: 0;
+}
+
+/* Card editor: hovering anywhere on the card reveals a dropzone-style frame —
+   the card background and a dashed border show around a padded, inner-rounded
+   image, signalling the image is replaceable. The dashed outline is inset so it
+   reads as a border around the card without shifting layout. */
+.card-face[data-mode='edit'][data-image='true'] {
+  outline: 3px dashed transparent;
+  outline-offset: -3px;
+  transition:
+    padding 0.15s ease,
+    outline-color 0.15s ease;
+}
+
+.card-face[data-mode='edit'] .card-face__image {
+  border-radius: var(--face-radius);
+  transition: border-radius 0.15s ease;
+}
+
+.card-container--edit[data-active] .card-face[data-mode='edit'][data-image='true'] {
+  padding: var(--face-image-padding);
+  outline-color: var(--color-brown-500);
+}
+
+/* While a file is dragged over, the frame turns blue to match the drop affordance. */
+.card-container--edit[data-dragging] .card-face[data-mode='edit'][data-image='true'] {
+  outline-color: var(--color-blue-500);
+}
+
+[data-theme='dark']
+  .card-container--edit[data-dragging]
+  .card-face[data-mode='edit'][data-image='true'] {
+  outline-color: var(--color-blue-650);
+}
+
+.card-container--edit[data-active] .card-face[data-mode='edit'] .card-face__image {
+  border-radius: calc(var(--face-radius) - var(--face-image-padding));
 }
 
 .card-face__text-editor {
