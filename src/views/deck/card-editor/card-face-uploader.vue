@@ -77,6 +77,10 @@ const can_upload = computed(() => (card.id ?? 0) > 0)
 const active = computed(
   () => ((hovered.value || dragging.value) && !hover_suppressed.value) || !!file_error.value
 )
+// While a drag or error overlay covers the editor, make it inert: the user
+// can't see what's behind the scrim, so they shouldn't be able to focus it
+// (which would show a stray blue focus ring) or type into it.
+const covered = computed(() => dragging.value || !!file_error.value)
 const error_message = computed(() => {
   if (file_error.value === 'invalid-type') {
     return t('deck-view.card-editor.list-item.invalid-type-error')
@@ -265,7 +269,13 @@ watch(file_error, (err) => {
     </div>
 
     <template #editor>
-      <slot name="editor" />
+      <div
+        data-testid="card-face-uploader__editor"
+        :inert="covered || undefined"
+        class="h-full w-full"
+      >
+        <slot name="editor" />
+      </div>
     </template>
   </card>
 </template>
