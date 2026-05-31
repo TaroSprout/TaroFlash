@@ -1,15 +1,18 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { ref } from 'vue'
 import { useImageDropzone } from '@/composables/card-editor/use-image-dropzone'
 
 const MAX_BYTES = 1024
 
 let onFile
 let onError
+let fileInput
 
 function setup(maxBytes = MAX_BYTES) {
   onFile = vi.fn()
   onError = vi.fn()
-  return useImageDropzone({ maxBytes, onFile, onError })
+  fileInput = ref(null)
+  return useImageDropzone({ maxBytes, fileInput, onFile, onError })
 }
 
 function pngFile(bytes = 1) {
@@ -24,6 +27,7 @@ function dropEvent(file) {
 beforeEach(() => {
   onFile = undefined
   onError = undefined
+  fileInput = undefined
 })
 
 describe('useImageDropzone', () => {
@@ -98,10 +102,10 @@ describe('useImageDropzone', () => {
     expect(input.value).toBe('')
   })
 
-  test('browse clicks the bound file input', () => {
+  test('browse clicks the consumer-provided file input', () => {
     const dz = setup()
     const click = vi.fn()
-    dz.fileInput.value = { click }
+    fileInput.value = { click }
     dz.browse()
     expect(click).toHaveBeenCalled()
   })

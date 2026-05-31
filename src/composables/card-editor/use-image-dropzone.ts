@@ -1,4 +1,4 @@
-import { computed, ref, toValue, type MaybeRefOrGetter } from 'vue'
+import { computed, ref, toValue, type MaybeRefOrGetter, type ShallowRef } from 'vue'
 
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 const ACCEPT_ATTR = ACCEPTED_TYPES.join(',')
@@ -7,6 +7,8 @@ export type ImageFileError = 'invalid-type' | 'too-large'
 
 type UseImageDropzoneOptions = {
   maxBytes: MaybeRefOrGetter<number>
+  // Template ref to the hidden <input type="file">, owned by the consumer.
+  fileInput: Readonly<ShallowRef<HTMLInputElement | null>>
   // Invoked with a validated File once the user drops or picks one.
   onFile: (file: File) => void
   // Invoked when a dropped/picked file fails validation.
@@ -15,7 +17,8 @@ type UseImageDropzoneOptions = {
 
 /**
  * File-input + drag-and-drop plumbing for an image upload surface, with no
- * knowledge of where the file ends up — the consumer supplies `onFile`.
+ * knowledge of where the file ends up — the consumer supplies `onFile` and the
+ * `fileInput` template ref.
  *
  * Validation (accepted MIME types + `maxBytes`) runs before `onFile` fires;
  * a rejected file sets `error` and skips the callback. Dragging is tracked
@@ -23,18 +26,25 @@ type UseImageDropzoneOptions = {
  * crosses child elements of the drop target.
  *
  * @example
- * const { dragging, onDrop, browse, fileInput } = useImageDropzone({
+ * const fileInput = useTemplateRef('fileInput')
+ * const { dragging, onDrop, browse } = useImageDropzone({
  *   maxBytes: MAX,
+ *   fileInput,
  *   onFile: (file) => upload(file)
  * })
  */
-export function useImageDropzone({ maxBytes, onFile, onError }: UseImageDropzoneOptions) {
-  const fileInput = ref<HTMLInputElement | null>(null)
+export function useImageDropzone({
+  maxBytes,
+  fileInput,
+  onFile,
+  onError
+}: UseImageDropzoneOptions) {
   const drag_counter = ref(0)
   const error = ref<ImageFileError | null>(null)
 
   const dragging = computed(() => drag_counter.value > 0)
 
+  /** Clear any validation error. */
   function clearError() {
     error.value = null
   }
@@ -44,6 +54,7 @@ export function useImageDropzone({ maxBytes, onFile, onError }: UseImageDropzone
     fileInput.value?.click()
   }
 
+  /** Validate a file picked via the input, then reset it so re-picking refires. */
   function onFileChange(event: Event) {
     const input = event.target as HTMLInputElement
     const file = input.files?.[0]
@@ -53,21 +64,25 @@ export function useImageDropzone({ maxBytes, onFile, onError }: UseImageDropzone
     input.value = ''
   }
 
+  /** Track a drag entering the drop target; clears any prior error. */
   function onDragEnter(e: DragEvent) {
     e.preventDefault()
     clearError()
     drag_counter.value++
   }
 
+  /** Track a drag leaving the drop target. */
   function onDragLeave(e: DragEvent) {
     e.preventDefault()
     drag_counter.value--
   }
 
+  /** Allow dropping by preventing the browser's default navigate-to-file. */
   function onDragOver(e: DragEvent) {
     e.preventDefault()
   }
 
+  /** Accept a dropped file and validate it. */
   function onDrop(e: DragEvent) {
     e.preventDefault()
     drag_counter.value = 0
@@ -97,7 +112,6 @@ export function useImageDropzone({ maxBytes, onFile, onError }: UseImageDropzone
 
   return {
     accept: ACCEPT_ATTR,
-    fileInput,
     dragging,
     error,
     clearError,

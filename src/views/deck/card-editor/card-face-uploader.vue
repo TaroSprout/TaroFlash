@@ -43,6 +43,7 @@ const { setFaceImage } = inject<CardListController>('card-editor')!
 
 const addIcon = useTemplateRef<HTMLElement>('addIcon')
 const cardRef = useTemplateRef<ComponentPublicInstance>('cardRef')
+const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 
 const hovered = ref(false)
 const hover_suppressed = ref(false)
@@ -53,7 +54,6 @@ const {
   error: file_error,
   clearError,
   accept,
-  fileInput,
   browse,
   onFileChange,
   onDragEnter,
@@ -62,6 +62,7 @@ const {
   onDrop
 } = useImageDropzone({
   maxBytes: CARD_IMAGE_MAX_BYTES,
+  fileInput,
   onFile: uploadFile,
   onError: () => emitSfx('ui.digi_powerdown')
 })
@@ -88,7 +89,10 @@ const error_message = computed(() => {
   return ''
 })
 
-onBeforeUnmount(() => clearTimeout(suppress_timer))
+onBeforeUnmount(() => {
+  clearTimeout(suppress_timer)
+  document.removeEventListener('pointerdown', onDocumentPointerDown)
+})
 
 async function uploadFile(file: File) {
   if (!can_upload.value) return
@@ -144,8 +148,6 @@ function onDocumentPointerDown(e: PointerEvent) {
   const root = cardRef.value?.$el as HTMLElement | undefined
   if (root && !root.contains(e.target as Node)) clearError()
 }
-
-onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPointerDown))
 
 // Chime once when a drag first enters the card (not on every child dragenter).
 watch(dragging, (now, was) => {
