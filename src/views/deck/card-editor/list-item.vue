@@ -11,7 +11,6 @@ import ListItemCard from './list-item-card.vue'
 type ListItemProps = {
   index: number
   card: Card
-  duplicate: boolean
 }
 
 const { card, index } = defineProps<ListItemProps>()
@@ -78,7 +77,7 @@ function onClick(e: MouseEvent) {
       </span>
     </button>
 
-    <list-item-card ref="list-item-card" :card="card" :duplicate="duplicate" />
+    <list-item-card ref="list-item-card" :card="card" />
 
     <item-options
       v-if="!is_selecting"

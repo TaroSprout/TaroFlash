@@ -70,7 +70,6 @@ function mount(props = {}) {
   const { is_selecting, ...rest } = props
   return shallowMount(ListItemCard, {
     props: {
-      duplicate: false,
       ...rest,
       card: makeCard(rest.card)
     },
@@ -87,7 +86,6 @@ function mountWithFocusStubs(props = {}) {
   return shallowMount(ListItemCard, {
     attachTo: document.body,
     props: {
-      duplicate: false,
       ...props,
       card: makeCard(props.card)
     },

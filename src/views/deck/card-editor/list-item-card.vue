@@ -8,7 +8,6 @@ import { emitSfx } from '@/sfx/bus'
 
 type ListItemCardProps = {
   card: Card
-  duplicate: boolean
 }
 
 const { card } = defineProps<ListItemCardProps>()

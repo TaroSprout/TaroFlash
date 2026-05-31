@@ -56,9 +56,9 @@ function makeProvide({ is_selecting = ref(false) } = {}) {
   }
 }
 
-function mount({ card, index = 0, duplicate = false, is_selecting } = {}) {
+function mount({ card, index = 0, is_selecting } = {}) {
   return shallowMount(ListItem, {
-    props: { card: makeCard(card), index, duplicate },
+    props: { card: makeCard(card), index },
     global: {
       stubs: { UiButton: UiButtonStub },
       provide: makeProvide({ is_selecting })

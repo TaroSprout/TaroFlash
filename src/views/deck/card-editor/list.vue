@@ -61,11 +61,7 @@ watchEffect(() => {
           transform: `translateY(${vrow.start}px)`
         }"
       >
-        <list-item
-          :index="vrow.index"
-          :card="all_cards[vrow.index]"
-          :duplicate="all_cards[vrow.index].is_duplicate ?? false"
-        />
+        <list-item :index="vrow.index" :card="all_cards[vrow.index]" />
       </div>
     </div>
 
