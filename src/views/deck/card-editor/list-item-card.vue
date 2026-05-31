@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Card from '@/components/card/index.vue'
+import UiButton from '@/components/ui-kit/button.vue'
 import { useI18n } from 'vue-i18n'
 import { inject, ref, useTemplateRef } from 'vue'
 import { type CardListController } from '@/composables/card-editor/card-list-controller'
@@ -12,6 +13,10 @@ type ListItemCardProps = {
 }
 
 const { card } = defineProps<ListItemCardProps>()
+
+const emit = defineEmits<{
+  (e: 'delete-image', side: 'front' | 'back'): void
+}>()
 
 const { t } = useI18n()
 const list_item_card = useTemplateRef('list-item-card')
@@ -99,6 +104,18 @@ defineExpose({ focusEditor, hasFocusWithin })
       class="group/card"
       :class="{ 'pointer-events-none': is_selecting }"
     >
+      <ui-button
+        v-if="card.front_image_path && !is_selecting"
+        data-testid="list-item-card__delete-front-image"
+        icon-only
+        icon-left="delete"
+        data-theme="red-500"
+        class="absolute! -top-1 -right-1 z-10"
+        @click.stop="emit('delete-image', 'front')"
+      >
+        {{ t('deck-view.card-editor.list-item.remove-image-button') }}
+      </ui-button>
+
       <template #editor>
         <text-editor
           ref="front-input"
@@ -122,6 +139,18 @@ defineExpose({ focusEditor, hasFocusWithin })
       class="group/card"
       :class="{ 'pointer-events-none': is_selecting }"
     >
+      <ui-button
+        v-if="card.back_image_path && !is_selecting"
+        data-testid="list-item-card__delete-back-image"
+        icon-only
+        icon-left="delete"
+        data-theme="red-500"
+        class="absolute! -top-1 -right-1 z-10"
+        @click.stop="emit('delete-image', 'back')"
+      >
+        {{ t('deck-view.card-editor.list-item.remove-image-button') }}
+      </ui-button>
+
       <template #editor>
         <text-editor
           ref="back-input"

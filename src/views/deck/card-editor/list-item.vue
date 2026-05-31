@@ -11,6 +11,7 @@ import { cardImageUrl } from '@/api/media'
 import { useToast } from '@/composables/toast'
 import { useCardImageUploadModal } from '@/composables/modals/use-card-image-upload-modal'
 import { type FaceImage } from '@/components/modals/card-image-upload/index.vue'
+import { emitSfx } from '@/sfx/bus'
 
 // Card images render small but are the app's highest-volume asset, so cap them
 // well below the bucket's 10 MiB backstop.
@@ -81,6 +82,11 @@ function faceUrl(path?: string) {
   return path ? cardImageUrl(path) : undefined
 }
 
+function onDeleteImage(side: 'front' | 'back') {
+  emitSfx('ui.trash_crumple_short')
+  applyFace(side, null)
+}
+
 async function applyFace(side: 'front' | 'back', change: FaceImage) {
   if (change === undefined) return
 
@@ -123,7 +129,12 @@ async function applyFace(side: 'front' | 'back', change: FaceImage) {
       </span>
     </button>
 
-    <list-item-card ref="list-item-card" :card="card" :duplicate="duplicate" />
+    <list-item-card
+      ref="list-item-card"
+      :card="card"
+      :duplicate="duplicate"
+      @delete-image="onDeleteImage"
+    />
 
     <item-options
       v-if="!is_selecting"

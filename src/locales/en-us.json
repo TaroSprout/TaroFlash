@@ -341,6 +341,7 @@
   "deck-view.card-editor.list-item.back-placeholder": "Back",
   "deck-view.card-editor.list-item.add-above": "Add Card",
   "deck-view.card-editor.list-item.add-below": "Add Card",
+  "deck-view.card-editor.list-item.remove-image-button": "Remove image",
   "deck-view.actions.study-all": "Study <span>all</span> cards",
   "deck-view.actions.edit-cards": "Edit Cards",
   "deck-view.actions.stop-editing": "Stop Editing",
