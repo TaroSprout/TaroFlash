@@ -105,4 +105,66 @@ describe('useImageDropzone', () => {
     dz.browse()
     expect(click).toHaveBeenCalled()
   })
+
+  // ── clearError ─────────────────────────────────────────────────────────────
+
+  test('clearError resets error to null', () => {
+    const dz = setup()
+    dz.onDrop(dropEvent(new File(['x'], 'a.txt', { type: 'text/plain' })))
+    expect(dz.error.value).toBe('invalid-type')
+
+    dz.clearError()
+    expect(dz.error.value).toBe(null)
+  })
+
+  test('clearError is a no-op when error is already null', () => {
+    const dz = setup()
+    expect(dz.error.value).toBe(null)
+    dz.clearError()
+    expect(dz.error.value).toBe(null)
+  })
+
+  // ── drag_counter flicker protection ───────────────────────────────────────
+
+  test('enter/enter/leave keeps dragging true (flicker-proof)', () => {
+    const dz = setup()
+    dz.onDragEnter(dropEvent())
+    dz.onDragEnter(dropEvent())
+    dz.onDragLeave(dropEvent())
+    expect(dz.dragging.value).toBe(true)
+
+    dz.onDragLeave(dropEvent())
+    expect(dz.dragging.value).toBe(false)
+  })
+
+  // ── onFileChange input reset ───────────────────────────────────────────────
+
+  test('onFileChange resets input.value so re-picking the same file refires', () => {
+    const dz = setup()
+    const file = pngFile()
+    const input = { files: [file], value: 'C:/fakepath/a.png' }
+    dz.onFileChange({ target: input })
+
+    expect(input.value).toBe('')
+  })
+
+  // ── onError callback ───────────────────────────────────────────────────────
+
+  test('onError is called with the failure code on an invalid file', () => {
+    const dz = setup()
+    dz.onDrop(dropEvent(new File(['x'], 'a.txt', { type: 'text/plain' })))
+    expect(onError).toHaveBeenCalledWith('invalid-type')
+  })
+
+  test('onError is NOT called on a valid file', () => {
+    const dz = setup()
+    dz.onDrop(dropEvent(pngFile()))
+    expect(onError).not.toHaveBeenCalled()
+  })
+
+  test('onFile is NOT called on an invalid file', () => {
+    const dz = setup()
+    dz.onDrop(dropEvent(new File(['x'], 'a.txt', { type: 'text/plain' })))
+    expect(onFile).not.toHaveBeenCalled()
+  })
 })

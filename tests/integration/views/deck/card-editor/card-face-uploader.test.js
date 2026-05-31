@@ -1,13 +1,14 @@
-import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 
 // Card stub: render the default + editor slots and forward attrs so the
-// data-active flag, drag listeners, and pointer listeners reach a real element.
+// data-active, data-dragging flags, drag listeners, and pointer listeners
+// reach a real element.
 const CardStub = defineComponent({
   name: 'Card',
   inheritAttrs: false,
-  props: ['side', 'mode', 'size', 'error'],
+  props: ['side', 'mode', 'size', 'error', 'sfx'],
   setup(_props, { slots }) {
     const attrs = useAttrs()
     return () =>
@@ -15,8 +16,7 @@ const CardStub = defineComponent({
   }
 })
 
-// UiButton/UiIcon stubs: real elements forwarding attrs so data-testid is
-// queryable and native clicks fire the bound handlers.
+// UiButton stub: forward attrs + native clicks
 const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
@@ -26,7 +26,23 @@ const UiButtonStub = defineComponent({
   }
 })
 
-const UiIconStub = defineComponent({ name: 'UiIcon', props: ['src'], setup: () => () => h('i') })
+// UiIcon stub (no output needed — just prevents warnings)
+const UiIconStub = defineComponent({
+  name: 'UiIcon',
+  props: ['src'],
+  setup: () => () => h('i')
+})
+
+// UiTooltip stub: forward attrs as a button so click handlers fire
+const UiTooltipStub = defineComponent({
+  name: 'UiTooltip',
+  inheritAttrs: false,
+  props: ['text', 'position', 'gap', 'theme', 'themeDark'],
+  setup(_p, { slots }) {
+    const attrs = useAttrs()
+    return () => h('button', attrs, slots.default?.())
+  }
+})
 
 const mocks = vi.hoisted(() => ({
   setFaceImageMock: vi.fn(),
@@ -37,25 +53,25 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/composables/toast', () => ({ useToast: () => ({ error: mocks.toastErrorMock }) }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mocks.emitSfxMock, emitHoverSfx: vi.fn() }))
 
+// playButtonTap touches a DOM element via GSAP — stub it out entirely
+vi.mock('@/utils/animations/button-tap', () => ({
+  BUTTON_TAP_DURATION: 0.1,
+  playButtonTap: vi.fn()
+}))
+
 import CardFaceUploader from '@/views/deck/card-editor/card-face-uploader.vue'
 
 function makeCard(overrides = {}) {
   return { id: 1, deck_id: 10, front_text: 'Q', back_text: 'A', rank: 1000, ...overrides }
 }
 
-function mount(props = {}) {
-  const { card, ...rest } = props
-  return shallowMount(CardFaceUploader, {
-    props: { side: 'front', card: makeCard(card), ...rest },
-    global: {
-      stubs: { Card: CardStub, UiButton: UiButtonStub, UiIcon: UiIconStub },
-      provide: { 'card-editor': { setFaceImage: mocks.setFaceImageMock } }
-    }
-  })
-}
-
 function pngFile() {
   return new File(['x'], 'a.png', { type: 'image/png' })
+}
+
+function oversizeFile() {
+  // 3 MiB — above the 2 MiB cap in the component
+  return new File([new Uint8Array(3 * 1024 * 1024)], 'big.png', { type: 'image/png' })
 }
 
 function dropImage(wrapper, file) {
@@ -64,11 +80,38 @@ function dropImage(wrapper, file) {
   return wrapper.find('[data-testid="card-root"]').trigger('drop', { dataTransfer })
 }
 
+let _wrapper
+
+function mount(props = {}) {
+  const { card, ...rest } = props
+  _wrapper = shallowMount(CardFaceUploader, {
+    props: { side: 'front', card: makeCard(card), ...rest },
+    global: {
+      stubs: {
+        Card: CardStub,
+        UiButton: UiButtonStub,
+        UiIcon: UiIconStub,
+        UiTooltip: UiTooltipStub
+      },
+      directives: { sfx: {} },
+      provide: { 'card-editor': { setFaceImage: mocks.setFaceImageMock } }
+    }
+  })
+  return _wrapper
+}
+
 beforeEach(() => {
   mocks.setFaceImageMock.mockReset()
   mocks.setFaceImageMock.mockResolvedValue(undefined)
   mocks.toastErrorMock.mockReset()
   mocks.emitSfxMock.mockReset()
+  _wrapper = undefined
+})
+
+afterEach(() => {
+  // Always unmount — releases document-level pointerdown listeners
+  // that the component attaches while an error is showing.
+  _wrapper?.unmount()
 })
 
 describe('CardFaceUploader', () => {
@@ -85,9 +128,15 @@ describe('CardFaceUploader', () => {
     expect(wrapper.find('[data-testid="card-face-uploader__add"]').exists()).toBe(false)
   })
 
-  test('hides controls when disabled (selection mode)', () => {
-    const wrapper = mount({ card: { id: 5 }, disabled: true })
+  test('hides the add-image button on a negative-id temp card', () => {
+    const wrapper = mount({ card: { id: -1 } })
     expect(wrapper.find('[data-testid="card-face-uploader__add"]').exists()).toBe(false)
+  })
+
+  test('hides add and remove controls when disabled (selection mode)', () => {
+    const wrapper = mount({ card: { id: 5, front_image_path: 'cards/f.png' }, disabled: true })
+    expect(wrapper.find('[data-testid="card-face-uploader__add"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="card-face-uploader__remove"]').exists()).toBe(false)
   })
 
   // ── Image face ────────────────────────────────────────────────────────────────
@@ -119,21 +168,34 @@ describe('CardFaceUploader', () => {
     await root.trigger('dragenter')
     expect(root.attributes('data-active')).toBe('true')
     expect(wrapper.find('[data-testid="card-face-uploader__empty-overlay"]').exists()).toBe(true)
+    expect(root.attributes('data-dragging')).toBe('true')
   })
 
-  // ── Upload / replace / remove ───────────────────────────────────────────────
+  // ── Upload success ──────────────────────────────────────────────────────────
 
-  test('uploads a valid dropped file via setFaceImage', async () => {
+  test('uploads a valid dropped file via setFaceImage and plays music_plink_ok with blocking:true', async () => {
     const wrapper = mount({ card: { id: 5 }, side: 'back' })
     const file = pngFile()
     await dropImage(wrapper, file)
     await flushPromises()
 
     expect(mocks.setFaceImageMock).toHaveBeenCalledWith(5, 'back', file)
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.snappy_button_2', { blocking: true })
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.music_plink_ok', { blocking: true })
   })
 
-  test('does not upload a temp card even on drop', async () => {
+  test('blocking option is explicitly passed (suppresses overlapping sfx)', async () => {
+    const wrapper = mount({ card: { id: 5 } })
+    await dropImage(wrapper, pngFile())
+    await flushPromises()
+
+    const call = mocks.emitSfxMock.mock.calls.find((c) => c[0] === 'ui.music_plink_ok')
+    expect(call).toBeDefined()
+    expect(call[1]).toEqual({ blocking: true })
+  })
+
+  // ── Upload — temp card gate ────────────────────────────────────────────────
+
+  test('does not upload on a temp card (id = 0) even on drop', async () => {
     const wrapper = mount({ card: { id: 0 } })
     await dropImage(wrapper, pngFile())
     await flushPromises()
@@ -141,16 +203,215 @@ describe('CardFaceUploader', () => {
     expect(mocks.setFaceImageMock).not.toHaveBeenCalled()
   })
 
-  test('shows an inline error and skips upload for an invalid file', async () => {
+  test('does not upload on a negative-id temp card', async () => {
+    const wrapper = mount({ card: { id: -1 } })
+    await dropImage(wrapper, pngFile())
+    await flushPromises()
+
+    expect(mocks.setFaceImageMock).not.toHaveBeenCalled()
+  })
+
+  // ── Invalid file ─────────────────────────────────────────────────────────────
+
+  test('invalid type: does not call setFaceImage, plays digi_powerdown, shows error overlay', async () => {
     const wrapper = mount({ card: { id: 5 } })
     await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
     await flushPromises()
 
     expect(mocks.setFaceImageMock).not.toHaveBeenCalled()
     expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.digi_powerdown')
-    const overlay = wrapper.find('[data-testid="card-face-uploader__empty-overlay"]')
-    expect(overlay.exists()).toBe(true)
-    expect(overlay.attributes('data-error')).toBe('true')
+    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+  })
+
+  test('oversized file: does not call setFaceImage, plays digi_powerdown, shows error overlay', async () => {
+    const wrapper = mount({ card: { id: 5 } })
+    await dropImage(wrapper, oversizeFile())
+    await flushPromises()
+
+    expect(mocks.setFaceImageMock).not.toHaveBeenCalled()
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.digi_powerdown')
+    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+  })
+
+  // ── Error overlay persistence ─────────────────────────────────────────────
+
+  test('error overlay has a Dismiss button', async () => {
+    const wrapper = mount({ card: { id: 5 } })
+    await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="card-face-uploader__dismiss-error"]').exists()).toBe(true)
+  })
+
+  test('clicking Dismiss hides the error overlay', async () => {
+    const wrapper = mount({ card: { id: 5 } })
+    await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
+    await flushPromises()
+    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+
+    await wrapper.find('[data-testid="card-face-uploader__dismiss-error"]').trigger('click')
+
+    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(false)
+  })
+
+  test('error has no auto-dismiss: overlay stays up without any user action', async () => {
+    vi.useFakeTimers()
+    const wrapper = mount({ card: { id: 5 } })
+    await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
+    await flushPromises()
+    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+
+    // Advance past the 1 s hover-suppression timer — error must still be shown
+    vi.advanceTimersByTime(2000)
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+    vi.useRealTimers()
+  })
+
+  test('outside pointerdown clears the error overlay', async () => {
+    const wrapper = mount({ card: { id: 5 } })
+    await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
+    await flushPromises()
+    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+
+    // Dispatch a pointerdown on body (outside the card root)
+    document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  test('pointerdown inside the card root does NOT clear the error overlay', async () => {
+    const wrapper = mount({ card: { id: 5 } })
+    await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
+    await flushPromises()
+    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+
+    // Dispatch pointerdown on the card root element itself (which is inside)
+    const root = wrapper.find('[data-testid="card-root"]').element
+    root.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  test('error is cleared when the remove button is clicked (via onRemove calling clearError)', async () => {
+    // Trigger an error first, then trigger remove — error should be gone
+    const wrapper = mount({ card: { id: 5, front_image_path: 'cards/f.png' } })
+    await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
+    await flushPromises()
+    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+
+    await wrapper.find('[data-testid="card-face-uploader__remove"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(false)
+  })
+
+  // ── data-active stays truthy while error is showing ───────────────────────
+
+  test('data-active is truthy while the error overlay is showing even when not hovered', async () => {
+    const wrapper = mount({ card: { id: 5 } })
+    const root = wrapper.find('[data-testid="card-root"]')
+
+    // No hover, no drag — baseline: not active
+    expect(root.attributes('data-active')).toBeUndefined()
+
+    // Trigger an error
+    await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
+    await flushPromises()
+
+    // Error is up — card must stay active so the image keeps its padded frame
+    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+    expect(root.attributes('data-active')).toBe('true')
+  })
+
+  // ── Hover suppression after successful drop ───────────────────────────────
+
+  test('after a successful drop, data-active is false even while hovered (hover suppressed)', async () => {
+    vi.useFakeTimers()
+    const wrapper = mount({ card: { id: 5 } })
+    const root = wrapper.find('[data-testid="card-root"]')
+
+    // Simulate pointer over card during drop
+    await root.trigger('pointerenter')
+    await dropImage(wrapper, pngFile())
+    await flushPromises()
+
+    // Hover is suppressed immediately after upload — active should be falsy
+    expect(root.attributes('data-active')).toBeUndefined()
+
+    vi.useRealTimers()
+  })
+
+  test('pointerleave clears hover suppression so data-active returns to normal', async () => {
+    vi.useFakeTimers()
+    const wrapper = mount({ card: { id: 5 } })
+    const root = wrapper.find('[data-testid="card-root"]')
+
+    await root.trigger('pointerenter')
+    await dropImage(wrapper, pngFile())
+    await flushPromises()
+
+    // Still suppressed
+    expect(root.attributes('data-active')).toBeUndefined()
+
+    // Pointer leaves — suppression clears, hovered becomes false too
+    await root.trigger('pointerleave')
+    expect(root.attributes('data-active')).toBeUndefined()
+
+    // If user re-hovers now, suppression is gone so active should be true
+    await root.trigger('pointerenter')
+    expect(root.attributes('data-active')).toBe('true')
+
+    vi.useRealTimers()
+  })
+
+  // ── Drag enter plays music_plink_mid (once per drag) ─────────────────────
+
+  test('first dragenter plays music_plink_mid once', async () => {
+    const wrapper = mount({ card: { id: 5 } })
+    const root = wrapper.find('[data-testid="card-root"]')
+    await root.trigger('dragenter')
+
+    const midCalls = mocks.emitSfxMock.mock.calls.filter((c) => c[0] === 'ui.music_plink_mid')
+    expect(midCalls).toHaveLength(1)
+  })
+
+  test('subsequent dragenter events (child boundary crossings) do NOT re-play music_plink_mid', async () => {
+    const wrapper = mount({ card: { id: 5 } })
+    const root = wrapper.find('[data-testid="card-root"]')
+
+    // Enter, leave child (counter goes 1→2→1), enter again — still mid-drag
+    await root.trigger('dragenter')
+    await root.trigger('dragenter')
+    await root.trigger('dragleave')
+
+    const midCalls = mocks.emitSfxMock.mock.calls.filter((c) => c[0] === 'ui.music_plink_mid')
+    expect(midCalls).toHaveLength(1)
+  })
+
+  test('drag chime is gated on can_upload — no chime on a temp card', async () => {
+    const wrapper = mount({ card: { id: 0 } })
+    const root = wrapper.find('[data-testid="card-root"]')
+    await root.trigger('dragenter')
+
+    const midCalls = mocks.emitSfxMock.mock.calls.filter((c) => c[0] === 'ui.music_plink_mid')
+    expect(midCalls).toHaveLength(0)
+  })
+
+  // ── Remove button ─────────────────────────────────────────────────────────
+
+  test('remove button calls setFaceImage(id, side, null) and plays trash_crumple_short', async () => {
+    const wrapper = mount({ card: { id: 5, front_image_path: 'cards/f.png' } })
+    await wrapper.find('[data-testid="card-face-uploader__remove"]').trigger('click')
+    await flushPromises()
+
+    expect(mocks.setFaceImageMock).toHaveBeenCalledWith(5, 'front', null)
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.trash_crumple_short')
   })
 
   test('toasts when an upload fails', async () => {
@@ -162,12 +423,26 @@ describe('CardFaceUploader', () => {
     expect(mocks.toastErrorMock).toHaveBeenCalled()
   })
 
-  test('removes the image via setFaceImage(null) when the remove button is clicked', async () => {
-    const wrapper = mount({ card: { id: 5, front_image_path: 'cards/f.png' } })
-    await wrapper.find('[data-testid="card-face-uploader__remove"]').trigger('click')
-    await flushPromises()
+  // ── Browse / onBrowse ─────────────────────────────────────────────────────
 
-    expect(mocks.setFaceImageMock).toHaveBeenCalledWith(5, 'front', null)
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.trash_crumple_short')
+  test('clicking the add-image button plays ui.select', async () => {
+    const wrapper = mount({ card: { id: 5 } })
+    await wrapper.find('[data-testid="card-face-uploader__add"]').trigger('click')
+
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.select')
+  })
+
+  // ── sfx prop on the Card ──────────────────────────────────────────────────
+
+  test('passes sfx hover prop to Card when the face has an image', () => {
+    const wrapper = mount({ card: { front_image_path: 'cards/f.png' } })
+    const cardEl = wrapper.findComponent(CardStub)
+    expect(cardEl.props('sfx')).toEqual({ hover: 'ui.click_07' })
+  })
+
+  test('does NOT pass sfx prop to Card when the face has no image', () => {
+    const wrapper = mount({ card: { id: 5 } })
+    const cardEl = wrapper.findComponent(CardStub)
+    expect(cardEl.props('sfx')).toBeUndefined()
   })
 })

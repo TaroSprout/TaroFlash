@@ -16,9 +16,10 @@ vi.mock('@/composables/use-media-query', () => ({
   useMediaQuery: vi.fn(() => ({ value: false }))
 }))
 
-function mountTooltip(props = {}, slots = {}) {
+function mountTooltip(props = {}, slots = {}, attrs = {}) {
   return mount(UiTooltip, {
     props: { text: 'hello', ...props },
+    attrs,
     slots: { default: '<span data-testid="trigger-label">trigger</span>', ...slots },
     attachTo: document.body
   })
@@ -110,6 +111,41 @@ describe('UiTooltip', () => {
       await dispatchPointer(wrapper, 'pointerenter', 'mouse')
 
       expect(tooltipExists()).toBe(false)
+      wrapper.unmount()
+    })
+  })
+
+  describe('theme — popover uses explicit props, not fallthrough attrs', () => {
+    test('popover uses white/brown-100 defaults when no theme prop is passed', async () => {
+      const wrapper = mountTooltip()
+      await dispatchPointer(wrapper, 'pointerenter', 'mouse')
+
+      const popover = document.body.querySelector('[data-testid="ui-tooltip"]')
+      expect(popover.getAttribute('data-theme')).toBe('white')
+      expect(popover.getAttribute('data-theme-dark')).toBe('brown-100')
+      wrapper.unmount()
+    })
+
+    test('passing theme prop changes the popover data-theme', async () => {
+      const wrapper = mountTooltip({ theme: 'blue-500', theme_dark: 'blue-650' })
+      await dispatchPointer(wrapper, 'pointerenter', 'mouse')
+
+      const popover = document.body.querySelector('[data-testid="ui-tooltip"]')
+      expect(popover.getAttribute('data-theme')).toBe('blue-500')
+      expect(popover.getAttribute('data-theme-dark')).toBe('blue-650')
+      wrapper.unmount()
+    })
+
+    test('a data-theme attr arriving via fallthrough attrs does NOT change the popover theme (regression guard)', async () => {
+      // When a parent component sets data-theme on <ui-tooltip data-theme="red-500">,
+      // that attr should fall through to the trigger element only — NOT reach
+      // the teleported popover, which is themed exclusively via the theme prop.
+      const wrapper = mountTooltip({}, {}, { 'data-theme': 'red-500' })
+      await dispatchPointer(wrapper, 'pointerenter', 'mouse')
+
+      const popover = document.body.querySelector('[data-testid="ui-tooltip"]')
+      // Popover must still use the default white theme
+      expect(popover.getAttribute('data-theme')).toBe('white')
       wrapper.unmount()
     })
   })
