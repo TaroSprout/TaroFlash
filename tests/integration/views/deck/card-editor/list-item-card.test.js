@@ -14,6 +14,17 @@ const CardStub = defineComponent({
   }
 })
 
+// Stub UiButton as a real button forwarding attrs so the delete-image button's
+// data-testid is queryable and native clicks fire its handler.
+const UiButtonStub = defineComponent({
+  name: 'UiButton',
+  inheritAttrs: false,
+  setup(_p, { slots }) {
+    const attrs = useAttrs()
+    return () => h('button', attrs, slots.default?.())
+  }
+})
+
 // Stub TextEditor as a real contenteditable div so focusin/focusout
 // tests can dispatch events with e.target.isContentEditable === true.
 const TextEditorStub = defineComponent({
@@ -50,10 +61,10 @@ function makeCard(overrides = {}) {
   }
 }
 
-function makeProvide() {
+function makeProvide({ is_selecting = ref(false) } = {}) {
   return {
     'card-editor': {
-      selection: { is_selecting: ref(false) },
+      selection: { is_selecting },
       updateCard: mocks.updateCardMock,
       card_attributes: { front: {}, back: {} }
     }
@@ -61,15 +72,16 @@ function makeProvide() {
 }
 
 function mount(props = {}) {
+  const { is_selecting, ...rest } = props
   return shallowMount(ListItemCard, {
     props: {
       duplicate: false,
-      ...props,
-      card: makeCard(props.card)
+      ...rest,
+      card: makeCard(rest.card)
     },
     global: {
-      stubs: { Card: CardStub },
-      provide: makeProvide()
+      stubs: { Card: CardStub, UiButton: UiButtonStub },
+      provide: makeProvide({ is_selecting })
     }
   })
 }
@@ -104,6 +116,41 @@ describe('ListItemCard', () => {
     const wrapper = mount()
     expect(wrapper.find('[data-testid="front-input"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="back-input"]').exists()).toBe(true)
+  })
+
+  // ── Inline image delete button ─────────────────────────────────────────────
+
+  test('renders a delete button on a face that has an image', () => {
+    const wrapper = mount({
+      card: { front_image_path: 'cards/front.png', back_image_path: 'cards/back.png' }
+    })
+    expect(wrapper.find('[data-testid="list-item-card__delete-front-image"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="list-item-card__delete-back-image"]').exists()).toBe(true)
+  })
+
+  test('renders no delete button on a face without an image', () => {
+    const wrapper = mount({ card: { front_image_path: 'cards/front.png' } })
+    expect(wrapper.find('[data-testid="list-item-card__delete-front-image"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="list-item-card__delete-back-image"]').exists()).toBe(false)
+  })
+
+  test('clicking a face delete button emits delete-image with that side', async () => {
+    const wrapper = mount({
+      card: { front_image_path: 'cards/front.png', back_image_path: 'cards/back.png' }
+    })
+    await wrapper.find('[data-testid="list-item-card__delete-front-image"]').trigger('click')
+    await wrapper.find('[data-testid="list-item-card__delete-back-image"]').trigger('click')
+
+    expect(wrapper.emitted('delete-image')).toEqual([['front'], ['back']])
+  })
+
+  test('hides the delete buttons in selection mode', () => {
+    const wrapper = mount({
+      is_selecting: ref(true),
+      card: { front_image_path: 'cards/front.png', back_image_path: 'cards/back.png' }
+    })
+    expect(wrapper.find('[data-testid="list-item-card__delete-front-image"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="list-item-card__delete-back-image"]').exists()).toBe(false)
   })
 
   // ── Auto-save wiring ──────────────────────────────────────────────────────

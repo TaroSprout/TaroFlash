@@ -23,7 +23,8 @@ const mocks = vi.hoisted(() => ({
   setFaceImageMock: vi.fn(),
   cardImageModalOpenMock: vi.fn(),
   cardImageUrlMock: vi.fn(),
-  toastErrorMock: vi.fn()
+  toastErrorMock: vi.fn(),
+  emitSfxMock: vi.fn()
 }))
 
 vi.mock('@/composables/modals/use-card-image-upload-modal', () => ({
@@ -39,11 +40,12 @@ vi.mock('@/composables/toast', () => ({
 }))
 
 vi.mock('@/sfx/bus', () => ({
-  emitSfx: vi.fn(),
+  emitSfx: mocks.emitSfxMock,
   emitHoverSfx: vi.fn()
 }))
 
 import ListItem from '@/views/deck/card-editor/list-item.vue'
+import ListItemCard from '@/views/deck/card-editor/list-item-card.vue'
 import ItemOptions from '@/views/deck/card-editor/list-item-options.vue'
 
 function makeCard(overrides = {}) {
@@ -102,6 +104,7 @@ beforeEach(() => {
   mocks.cardImageUrlMock.mockReset()
   mocks.cardImageUrlMock.mockImplementation((path) => `https://cdn.example.com/${path}`)
   mocks.toastErrorMock.mockReset()
+  mocks.emitSfxMock.mockReset()
 })
 
 describe('ListItem', () => {
@@ -275,5 +278,27 @@ describe('ListItem', () => {
     await flushPromises()
 
     expect(mocks.setFaceImageMock).not.toHaveBeenCalled()
+  })
+
+  // ── onDeleteImage — inline face delete from ListItemCard ──────────────────
+
+  test('deletes a face image via setFaceImage(null) when ListItemCard emits delete-image', async () => {
+    const wrapper = mount({ card: { id: 3, front_image_path: 'cards/front.png' } })
+    wrapper.findComponent(ListItemCard).vm.$emit('delete-image', 'front')
+    await flushPromises()
+
+    expect(mocks.setFaceImageMock).toHaveBeenCalledWith(3, 'front', null)
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.trash_crumple_short')
+  })
+
+  test('toasts an error when an inline face delete fails', async () => {
+    mocks.setFaceImageMock.mockRejectedValueOnce(new Error('boom'))
+
+    const wrapper = mount({ card: { id: 3, back_image_path: 'cards/back.png' } })
+    wrapper.findComponent(ListItemCard).vm.$emit('delete-image', 'back')
+    await flushPromises()
+
+    expect(mocks.setFaceImageMock).toHaveBeenCalledWith(3, 'back', null)
+    expect(mocks.toastErrorMock).toHaveBeenCalled()
   })
 })
