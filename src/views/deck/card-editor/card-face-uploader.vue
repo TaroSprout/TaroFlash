@@ -220,6 +220,7 @@ function onBrowse() {
   border-radius: var(--face-radius);
   background-color: color-mix(in srgb, var(--color-white) 85%, transparent);
 
+  color: var(--color-brown-700);
   opacity: 0;
 }
 
