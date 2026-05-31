@@ -11,7 +11,12 @@ const { image, text } = defineProps<{
 
 <template>
   <div class="card-face" :data-image="!!image" :data-text="!!text" :data-mode="mode">
-    <img v-if="image" :src="image" class="h-full w-full object-cover" />
+    <img
+      v-if="image"
+      data-testid="card-face__image"
+      :src="image"
+      class="card-face__image h-full w-full object-cover"
+    />
 
     <slot name="editor" v-else>
       <text-editor
@@ -69,7 +74,15 @@ const { image, text } = defineProps<{
 }
 
 .card-face[data-image='true'] {
+  overflow: hidden;
+}
+
+.card-face[data-mode='view'][data-image='true'] {
   padding: 0;
+}
+
+.card-face[data-mode='edit'] .card-face__image {
+  border-radius: var(--inner-radius);
 }
 
 .card-face__text-editor {
