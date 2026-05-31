@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import Card from '@/components/card/index.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import { type CardListController } from '@/composables/card-editor/card-list-controller'
 import { useImageDropzone } from '@/composables/card-editor/use-image-dropzone'
 import { useToast } from '@/composables/toast'
@@ -108,19 +109,21 @@ function onBrowse() {
   >
     <input ref="fileInput" type="file" :accept="accept" class="sr-only" @change="onFileChange" />
 
-    <ui-button
+    <ui-tooltip
       v-if="!has_image && can_upload && !disabled && !dragging"
+      element="button"
+      type="button"
+      :text="t('deck-view.card-editor.list-item.upload-image-button')"
+      position="top"
+      :gap="4"
       data-testid="card-face-uploader__add"
-      icon-only
-      icon-left="add-image"
-      data-theme="brown-100"
-      data-theme-dark="grey-900"
-      class="absolute! top-2 right-2 z-20 transition-opacity duration-150"
+      :aria-label="t('deck-view.card-editor.list-item.upload-image-button')"
+      class="absolute! top-(--face-padding) right-(--face-padding) z-20 cursor-pointer text-brown-500 transition-[color,opacity] duration-150 hover:text-blue-500 dark:text-brown-100 dark:hover:text-blue-650"
       :class="hovered ? 'opacity-100' : 'opacity-0'"
       @click.stop="onBrowse"
     >
-      {{ t('deck-view.card-editor.list-item.upload-image-button') }}
-    </ui-button>
+      <ui-icon src="add-image" class="size-7" />
+    </ui-tooltip>
 
     <ui-button
       v-if="has_image && !disabled"
