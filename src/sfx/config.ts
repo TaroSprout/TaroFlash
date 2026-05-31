@@ -50,7 +50,8 @@ export const AUDIO_CONFIG = createAudioConfig({
     tap_05: {},
     alert_clicks_wooden: {},
     pop_up_close: {},
-    snappy_button_2: {}
+    snappy_button_2: {},
+    snappy_button_5: {}
   }
 })
 

@@ -71,6 +71,9 @@ jobs:
       - name: Run lint
         run: pnpm exec vp lint
 
+      - name: Run type-check
+        run: pnpm type-check
+
       - name: Install Playwright Chromium
         run: pnpm exec playwright install chromium
 
