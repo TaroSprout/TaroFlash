@@ -75,7 +75,6 @@ function emitClickSfx() {
 <template>
   <ui-tooltip
     element="button"
-    theme="brown-100"
     :gap="-6"
     :suppress="!tooltip_active"
     :static_on_mobile="mobileTooltip"
