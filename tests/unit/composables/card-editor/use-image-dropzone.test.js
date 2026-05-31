@@ -4,10 +4,12 @@ import { useImageDropzone } from '@/composables/card-editor/use-image-dropzone'
 const MAX_BYTES = 1024
 
 let onFile
+let onError
 
 function setup(maxBytes = MAX_BYTES) {
   onFile = vi.fn()
-  return useImageDropzone({ maxBytes, onFile })
+  onError = vi.fn()
+  return useImageDropzone({ maxBytes, onFile, onError })
 }
 
 function pngFile(bytes = 1) {
@@ -21,6 +23,7 @@ function dropEvent(file) {
 
 beforeEach(() => {
   onFile = undefined
+  onError = undefined
 })
 
 describe('useImageDropzone', () => {
@@ -47,21 +50,23 @@ describe('useImageDropzone', () => {
 
   // ── Validation + callback ────────────────────────────────────────────────────
 
-  test('a valid dropped file clears error and invokes onFile', () => {
+  test('a valid dropped file clears error and invokes onFile, not onError', () => {
     const dz = setup()
     const file = pngFile()
     dz.onDrop(dropEvent(file))
 
     expect(dz.error.value).toBe(null)
     expect(onFile).toHaveBeenCalledWith(file)
+    expect(onError).not.toHaveBeenCalled()
   })
 
-  test('a wrong-type file sets invalid-type and skips onFile', () => {
+  test('a wrong-type file sets invalid-type, skips onFile, and invokes onError', () => {
     const dz = setup()
     dz.onDrop(dropEvent(new File(['x'], 'a.txt', { type: 'text/plain' })))
 
     expect(dz.error.value).toBe('invalid-type')
     expect(onFile).not.toHaveBeenCalled()
+    expect(onError).toHaveBeenCalledWith('invalid-type')
   })
 
   test('an oversized file sets too-large and skips onFile', () => {

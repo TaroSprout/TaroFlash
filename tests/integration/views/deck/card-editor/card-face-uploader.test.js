@@ -130,6 +130,7 @@ describe('CardFaceUploader', () => {
     await flushPromises()
 
     expect(mocks.setFaceImageMock).toHaveBeenCalledWith(5, 'back', file)
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.snappy_button_2')
   })
 
   test('does not upload a temp card even on drop', async () => {
@@ -146,6 +147,7 @@ describe('CardFaceUploader', () => {
     await flushPromises()
 
     expect(mocks.setFaceImageMock).not.toHaveBeenCalled()
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.digi_powerdown')
     const overlay = wrapper.find('[data-testid="card-face-uploader__empty-overlay"]')
     expect(overlay.exists()).toBe(true)
     expect(overlay.attributes('data-error')).toBe('true')
