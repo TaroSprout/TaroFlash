@@ -2,26 +2,21 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
 
-// Stub Card so its default + editor slots render under shallowMount.
-// Forward attrs so `data-testid="front-input"` / `back-input` make it through.
-const CardStub = defineComponent({
-  name: 'Card',
+// Stub CardFaceUploader so its editor slot renders under shallowMount.
+// Forward attrs so `data-testid="front-input"` / `back-input` make it through,
+// and declare `error` so the save-failure tests can read the forwarded prop.
+const CardFaceUploaderStub = defineComponent({
+  name: 'CardFaceUploader',
   inheritAttrs: false,
-  props: { error: { type: Boolean, default: false } },
+  props: {
+    card: { type: Object, required: true },
+    side: String,
+    disabled: Boolean,
+    error: Boolean
+  },
   setup(_props, { slots }) {
     const attrs = useAttrs()
-    return () => h('div', attrs, [slots.default?.(), slots.editor?.()])
-  }
-})
-
-// Stub UiButton as a real button forwarding attrs so the delete-image button's
-// data-testid is queryable and native clicks fire its handler.
-const UiButtonStub = defineComponent({
-  name: 'UiButton',
-  inheritAttrs: false,
-  setup(_p, { slots }) {
-    const attrs = useAttrs()
-    return () => h('button', attrs, slots.default?.())
+    return () => h('div', attrs, slots.editor?.())
   }
 })
 
@@ -80,7 +75,7 @@ function mount(props = {}) {
       card: makeCard(rest.card)
     },
     global: {
-      stubs: { Card: CardStub, UiButton: UiButtonStub },
+      stubs: { CardFaceUploader: CardFaceUploaderStub },
       provide: makeProvide({ is_selecting })
     }
   })
@@ -97,7 +92,7 @@ function mountWithFocusStubs(props = {}) {
       card: makeCard(props.card)
     },
     global: {
-      stubs: { Card: CardStub, TextEditor: TextEditorStub },
+      stubs: { CardFaceUploader: CardFaceUploaderStub, TextEditor: TextEditorStub },
       provide: makeProvide()
     }
   })
@@ -118,39 +113,11 @@ describe('ListItemCard', () => {
     expect(wrapper.find('[data-testid="back-input"]').exists()).toBe(true)
   })
 
-  // ── Inline image delete button ─────────────────────────────────────────────
-
-  test('renders a delete button on a face that has an image', () => {
-    const wrapper = mount({
-      card: { front_image_path: 'cards/front.png', back_image_path: 'cards/back.png' }
-    })
-    expect(wrapper.find('[data-testid="list-item-card__delete-front-image"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="list-item-card__delete-back-image"]').exists()).toBe(true)
-  })
-
-  test('renders no delete button on a face without an image', () => {
-    const wrapper = mount({ card: { front_image_path: 'cards/front.png' } })
-    expect(wrapper.find('[data-testid="list-item-card__delete-front-image"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="list-item-card__delete-back-image"]').exists()).toBe(false)
-  })
-
-  test('clicking a face delete button emits delete-image with that side', async () => {
-    const wrapper = mount({
-      card: { front_image_path: 'cards/front.png', back_image_path: 'cards/back.png' }
-    })
-    await wrapper.find('[data-testid="list-item-card__delete-front-image"]').trigger('click')
-    await wrapper.find('[data-testid="list-item-card__delete-back-image"]').trigger('click')
-
-    expect(wrapper.emitted('delete-image')).toEqual([['front'], ['back']])
-  })
-
-  test('hides the delete buttons in selection mode', () => {
-    const wrapper = mount({
-      is_selecting: ref(true),
-      card: { front_image_path: 'cards/front.png', back_image_path: 'cards/back.png' }
-    })
-    expect(wrapper.find('[data-testid="list-item-card__delete-front-image"]').exists()).toBe(false)
-    expect(wrapper.find('[data-testid="list-item-card__delete-back-image"]').exists()).toBe(false)
+  test('forwards is_selecting to both uploaders as the disabled prop', () => {
+    const wrapper = mount({ is_selecting: ref(true), card: { id: 42 } })
+    const uploaders = wrapper.findAllComponents(CardFaceUploaderStub)
+    expect(uploaders[0].props('disabled')).toBe(true)
+    expect(uploaders[1].props('disabled')).toBe(true)
   })
 
   // ── Auto-save wiring ──────────────────────────────────────────────────────
@@ -326,9 +293,9 @@ describe('ListItemCard', () => {
 
   test('starts with error=false on both faces', () => {
     const wrapper = mount({ card: { id: 42 } })
-    const cards = wrapper.findAllComponents(CardStub)
-    expect(cards[0].props('error')).toBe(false)
-    expect(cards[1].props('error')).toBe(false)
+    const uploaders = wrapper.findAllComponents(CardFaceUploaderStub)
+    expect(uploaders[0].props('error')).toBe(false)
+    expect(uploaders[1].props('error')).toBe(false)
   })
 
   test('sets error=true on both faces when updateCard rejects', async () => {
@@ -336,9 +303,9 @@ describe('ListItemCard', () => {
     const wrapper = mount({ card: { id: 42 } })
     await wrapper.findAllComponents(textEditor)[0].vm.$emit('update', 'X')
     await flushPromises()
-    const cards = wrapper.findAllComponents(CardStub)
-    expect(cards[0].props('error')).toBe(true)
-    expect(cards[1].props('error')).toBe(true)
+    const uploaders = wrapper.findAllComponents(CardFaceUploaderStub)
+    expect(uploaders[0].props('error')).toBe(true)
+    expect(uploaders[1].props('error')).toBe(true)
   })
 
   test('clears error on the next update', async () => {
@@ -346,10 +313,10 @@ describe('ListItemCard', () => {
     const wrapper = mount({ card: { id: 42 } })
     await wrapper.findAllComponents(textEditor)[0].vm.$emit('update', 'X')
     await flushPromises()
-    expect(wrapper.findAllComponents(CardStub)[0].props('error')).toBe(true)
+    expect(wrapper.findAllComponents(CardFaceUploaderStub)[0].props('error')).toBe(true)
 
     await wrapper.findAllComponents(textEditor)[0].vm.$emit('update', 'XY')
     await flushPromises()
-    expect(wrapper.findAllComponents(CardStub)[0].props('error')).toBe(false)
+    expect(wrapper.findAllComponents(CardFaceUploaderStub)[0].props('error')).toBe(false)
   })
 })
