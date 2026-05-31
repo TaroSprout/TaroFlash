@@ -35,6 +35,10 @@ export function useImageDropzone({ maxBytes, onFile, onError }: UseImageDropzone
 
   const dragging = computed(() => drag_counter.value > 0)
 
+  function clearError() {
+    error.value = null
+  }
+
   /** Open the native file picker. */
   function browse() {
     fileInput.value?.click()
@@ -51,7 +55,7 @@ export function useImageDropzone({ maxBytes, onFile, onError }: UseImageDropzone
 
   function onDragEnter(e: DragEvent) {
     e.preventDefault()
-    error.value = null
+    clearError()
     drag_counter.value++
   }
 
@@ -81,7 +85,7 @@ export function useImageDropzone({ maxBytes, onFile, onError }: UseImageDropzone
       return
     }
 
-    error.value = null
+    clearError()
     onFile(file)
   }
 
@@ -96,6 +100,7 @@ export function useImageDropzone({ maxBytes, onFile, onError }: UseImageDropzone
     fileInput,
     dragging,
     error,
+    clearError,
     browse,
     onFileChange,
     onDragEnter,

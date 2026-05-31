@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { computed, inject, ref } from 'vue'
+import {
+  computed,
+  inject,
+  onBeforeUnmount,
+  ref,
+  useTemplateRef,
+  watch,
+  type ComponentPublicInstance
+} from 'vue'
 import { useI18n } from 'vue-i18n'
 import Card from '@/components/card/index.vue'
 import UiButton from '@/components/ui-kit/button.vue'
@@ -9,11 +17,16 @@ import { type CardListController } from '@/composables/card-editor/card-list-con
 import { useImageDropzone } from '@/composables/card-editor/use-image-dropzone'
 import { useToast } from '@/composables/toast'
 import { emitSfx } from '@/sfx/bus'
+import { playButtonTap } from '@/utils/animations/button-tap'
 import { bytesToMbLabel } from '@/utils/file-size'
 
 // Card images render small but are the app's highest-volume asset, so cap them
 // well below the bucket's 10 MiB backstop.
 const CARD_IMAGE_MAX_BYTES = 2 * 1024 * 1024
+
+// A fresh drop/pick leaves the pointer over the card; suppress the replace
+// scrim so the new image is visible, until the pointer leaves or this elapses.
+const SUPPRESS_HOVER_MS = 1000
 
 type CardFaceUploaderProps = {
   card: Card
@@ -28,11 +41,17 @@ const { t } = useI18n()
 const toast = useToast()
 const { setFaceImage } = inject<CardListController>('card-editor')!
 
+const addIcon = useTemplateRef<HTMLElement>('addIcon')
+const cardRef = useTemplateRef<ComponentPublicInstance>('cardRef')
+
 const hovered = ref(false)
+const hover_suppressed = ref(false)
+let suppress_timer: ReturnType<typeof setTimeout> | undefined
 
 const {
   dragging,
   error: file_error,
+  clearError,
   accept,
   fileInput,
   browse,
@@ -52,7 +71,11 @@ const has_image = computed(() => !!image_path.value)
 // Image writes go through insert-backed RPCs that need a persisted row; temp
 // cards (id <= 0) aren't saved yet, so disable upload until they are.
 const can_upload = computed(() => (card.id ?? 0) > 0)
-const active = computed(() => hovered.value || dragging.value)
+// Keep the image in its hover (padded/rounded) state behind a visible error
+// scrim so it doesn't pop back to full-bleed underneath the overlay.
+const active = computed(
+  () => ((hovered.value || dragging.value) && !hover_suppressed.value) || !!file_error.value
+)
 const error_message = computed(() => {
   if (file_error.value === 'invalid-type') {
     return t('deck-view.card-editor.list-item.invalid-type-error')
@@ -65,12 +88,16 @@ const error_message = computed(() => {
   return ''
 })
 
+onBeforeUnmount(() => clearTimeout(suppress_timer))
+
 async function uploadFile(file: File) {
   if (!can_upload.value) return
 
+  suppressHover()
+
   try {
     await setFaceImage(card.id!, side, file)
-    emitSfx('ui.snappy_button_2', { blocking: true })
+    emitSfx('ui.music_plink_ok', { blocking: true })
   } catch {
     toast.error(t('toast.error.card-image-upload-failed'))
   }
@@ -78,6 +105,7 @@ async function uploadFile(file: File) {
 
 async function onRemove() {
   emitSfx('ui.trash_crumple_short')
+  clearError()
 
   try {
     await setFaceImage(card.id!, side, null)
@@ -88,12 +116,52 @@ async function onRemove() {
 
 function onBrowse() {
   emitSfx('ui.select')
+  if (addIcon.value) playButtonTap(addIcon.value, 0.35, { yoyo: true })
   browse()
 }
+
+// A fresh drop/pick lands with the pointer still over the card, which would
+// immediately reveal the replace scrim over the new image. Hold the hover state
+// off until the pointer leaves once, or until the timeout releases it.
+function suppressHover() {
+  hover_suppressed.value = true
+  clearTimeout(suppress_timer)
+  suppress_timer = setTimeout(() => (hover_suppressed.value = false), SUPPRESS_HOVER_MS)
+}
+
+function onPointerEnter() {
+  hovered.value = true
+}
+
+function onPointerLeave() {
+  hovered.value = false
+  clearTimeout(suppress_timer)
+  hover_suppressed.value = false
+}
+
+// Dismiss a lingering error when the user commits attention to another card.
+function onDocumentPointerDown(e: PointerEvent) {
+  const root = cardRef.value?.$el as HTMLElement | undefined
+  if (root && !root.contains(e.target as Node)) clearError()
+}
+
+onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPointerDown))
+
+// Chime once when a drag first enters the card (not on every child dragenter).
+watch(dragging, (now, was) => {
+  if (now && !was && can_upload.value) emitSfx('ui.music_plink_mid')
+})
+
+// Only listen for outside clicks while an error is actually showing.
+watch(file_error, (err) => {
+  if (err) document.addEventListener('pointerdown', onDocumentPointerDown)
+  else document.removeEventListener('pointerdown', onDocumentPointerDown)
+})
 </script>
 
 <template>
   <card
+    ref="cardRef"
     mode="edit"
     size="xl"
     :side="side"
@@ -101,9 +169,10 @@ function onBrowse() {
     :error="error"
     :sfx="has_image ? { hover: 'ui.click_07' } : undefined"
     :data-active="active || undefined"
+    :data-dragging="dragging || undefined"
     :class="{ 'pointer-events-none': disabled }"
-    @pointerenter="hovered = true"
-    @pointerleave="hovered = false"
+    @pointerenter="onPointerEnter"
+    @pointerleave="onPointerLeave"
     @dragenter="onDragEnter"
     @dragleave="onDragLeave"
     @dragover="onDragOver"
@@ -118,20 +187,25 @@ function onBrowse() {
       :text="t('deck-view.card-editor.list-item.upload-image-button')"
       position="top"
       :gap="4"
+      theme="blue-500"
+      theme-dark="blue-650"
       data-testid="card-face-uploader__add"
       :aria-label="t('deck-view.card-editor.list-item.upload-image-button')"
       class="absolute! top-(--face-padding) right-(--face-padding) z-20 cursor-pointer text-brown-500 transition-[color,opacity] duration-150 hover:text-blue-500 dark:text-brown-100 dark:hover:text-blue-650"
       :class="hovered ? 'opacity-100' : 'opacity-0'"
+      v-sfx="{ hover: 'ui.click_07' }"
       @click.stop="onBrowse"
     >
-      <ui-icon src="add-image" class="size-7" />
+      <span ref="addIcon" class="inline-flex">
+        <ui-icon src="add-image" class="size-7" />
+      </span>
     </ui-tooltip>
 
     <ui-button
       v-if="has_image && !disabled"
       data-testid="card-face-uploader__remove"
       icon-only
-      icon-left="delete"
+      icon-left="remove-image"
       data-theme="red-500"
       class="absolute! z-20 -translate-y-1/4 translate-x-1/4 transition-[top,right,opacity] duration-150 ease-[ease]"
       :class="
@@ -145,30 +219,46 @@ function onBrowse() {
     </ui-button>
 
     <button
-      v-if="!has_image && can_upload && (dragging || file_error)"
+      v-if="!has_image && can_upload && dragging && !file_error"
       type="button"
       data-testid="card-face-uploader__empty-overlay"
-      :data-error="!!file_error || undefined"
       class="card-face-uploader__overlay card-face-uploader__overlay--full"
       @click.stop="onBrowse"
     >
-      <ui-icon :src="file_error ? 'close' : 'add-image'" class="size-12" />
-      <p v-if="file_error" class="text-sm">{{ error_message }}</p>
+      <ui-icon src="add-image" class="size-12" />
     </button>
 
     <button
-      v-if="has_image && can_upload && !disabled"
+      v-if="has_image && can_upload && !disabled && !file_error"
       type="button"
       data-testid="card-face-uploader__scrim"
-      :data-error="!!file_error || undefined"
       class="card-face-uploader__overlay card-face-uploader__overlay--inset"
       @click.stop="onBrowse"
     >
-      <ui-icon :src="file_error ? 'close' : 'add-image'" class="size-12" />
-      <p class="text-sm">
-        {{ file_error ? error_message : t('deck-view.card-editor.list-item.replace-heading') }}
-      </p>
+      <ui-icon src="add-image" class="size-12" />
+      <p class="text-sm">{{ t('deck-view.card-editor.list-item.replace-heading') }}</p>
     </button>
+
+    <div
+      v-if="file_error"
+      data-testid="card-face-uploader__error"
+      data-error
+      class="card-face-uploader__overlay"
+      :class="
+        has_image ? 'card-face-uploader__overlay--inset' : 'card-face-uploader__overlay--full'
+      "
+    >
+      <ui-icon src="close" class="size-12" />
+      <p class="text-sm">{{ error_message }}</p>
+      <ui-button
+        data-testid="card-face-uploader__dismiss-error"
+        size="sm"
+        data-theme="red-500"
+        @click.stop="clearError"
+      >
+        {{ t('deck-view.card-editor.list-item.dismiss-error-button') }}
+      </ui-button>
+    </div>
 
     <template #editor>
       <slot name="editor" />
@@ -204,13 +294,20 @@ function onBrowse() {
 
 .card-face-uploader__overlay--full {
   inset: 0;
-  border: 3px dashed var(--color-brown-500);
+  border: 3px dashed var(--color-blue-500);
   border-radius: var(--face-radius);
   background-color: var(--color-white);
+
+  color: var(--color-blue-500);
 }
 
 [data-theme='dark'] .card-face-uploader__overlay--full {
   background-color: var(--color-stone-700);
+}
+
+[data-theme='dark'] .card-face-uploader__overlay--full:not([data-error]) {
+  border-color: var(--color-blue-650);
+  color: var(--color-blue-650);
 }
 
 .card-face-uploader__overlay--full[data-error] {
@@ -221,6 +318,8 @@ function onBrowse() {
   inset: 0;
   border-radius: var(--face-radius);
   background-color: color-mix(in srgb, var(--color-white) 85%, transparent);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 
   color: var(--color-brown-700);
   opacity: 0;
@@ -242,5 +341,15 @@ function onBrowse() {
   border-radius: calc(var(--face-radius) - var(--face-image-padding));
 
   opacity: 1;
+}
+
+/* Dragging a file over an image card turns the replace scrim blue, matching
+   the empty-card drop affordance. */
+.card-container--edit[data-dragging] .card-face-uploader__overlay--inset {
+  color: var(--color-blue-500);
+}
+
+[data-theme='dark'] .card-container--edit[data-dragging] .card-face-uploader__overlay--inset {
+  color: var(--color-blue-650);
 }
 </style>

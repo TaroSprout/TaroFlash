@@ -346,6 +346,7 @@
   "deck-view.card-editor.list-item.replace-heading": "Drag an image here, or click to browse",
   "deck-view.card-editor.list-item.invalid-type-error": "Use a PNG, JPEG, WebP, or GIF image.",
   "deck-view.card-editor.list-item.too-large-error": "Image must be under {max}.",
+  "deck-view.card-editor.list-item.dismiss-error-button": "Dismiss",
   "deck-view.actions.study-all": "Study <span>all</span> cards",
   "deck-view.actions.edit-cards": "Edit Cards",
   "deck-view.actions.stop-editing": "Stop Editing",
