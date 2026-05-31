@@ -351,6 +351,32 @@ describe('CardFaceUploader', () => {
     expect(root.attributes('data-active')).toBe('true')
   })
 
+  // ── Editor is inert while an overlay covers it ────────────────────────────
+
+  test('editor is interactive on an idle empty face', () => {
+    const wrapper = mount({ card: { id: 5 } })
+    const editor = wrapper.find('[data-testid="card-face-uploader__editor"]')
+    expect(editor.exists()).toBe(true)
+    expect(editor.attributes('inert')).toBeUndefined()
+  })
+
+  test('editor becomes inert while a file is dragged over the card', async () => {
+    const wrapper = mount({ card: { id: 5 } })
+    await wrapper.find('[data-testid="card-root"]').trigger('dragenter')
+    expect(
+      wrapper.find('[data-testid="card-face-uploader__editor"]').attributes('inert')
+    ).toBeDefined()
+  })
+
+  test('editor becomes inert while the error overlay covers it (no typing behind the scrim)', async () => {
+    const wrapper = mount({ card: { id: 5 } })
+    await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
+    await flushPromises()
+    expect(
+      wrapper.find('[data-testid="card-face-uploader__editor"]').attributes('inert')
+    ).toBeDefined()
+  })
+
   // ── Hover suppression after successful drop ───────────────────────────────
 
   test('after a successful drop, data-active is false even while hovered (hover suppressed)', async () => {
