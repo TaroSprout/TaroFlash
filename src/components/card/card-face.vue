@@ -77,12 +77,37 @@ const { image, text } = defineProps<{
   overflow: hidden;
 }
 
-.card-face[data-mode='view'][data-image='true'] {
+/* Images fill the face by default — always in view mode, and in the editor
+   until the card is hovered. */
+.card-face[data-mode='view'][data-image='true'],
+.card-face[data-mode='edit'][data-image='true'] {
   padding: 0;
 }
 
+/* Card editor: hovering anywhere on the card reveals a dropzone-style frame —
+   the card background and a dashed border show around a padded, inner-rounded
+   image, signalling the image is replaceable. The dashed outline is inset so it
+   reads as a border around the card without shifting layout. */
+.card-face[data-mode='edit'][data-image='true'] {
+  outline: 3px dashed transparent;
+  outline-offset: -3px;
+  transition:
+    padding 0.15s ease,
+    outline-color 0.15s ease;
+}
+
 .card-face[data-mode='edit'] .card-face__image {
-  border-radius: var(--inner-radius);
+  border-radius: var(--face-radius);
+  transition: border-radius 0.15s ease;
+}
+
+.card-container--edit[data-active] .card-face[data-mode='edit'][data-image='true'] {
+  padding: var(--face-image-padding);
+  outline-color: var(--color-brown-500);
+}
+
+.card-container--edit[data-active] .card-face[data-mode='edit'] .card-face__image {
+  border-radius: calc(var(--face-radius) - var(--face-image-padding));
 }
 
 .card-face__text-editor {

@@ -126,6 +126,7 @@ function onLeave(el: Element, done: () => void) {
   transform-style: preserve-3d;
 
   --min-element-height: 80px;
+  --face-image-padding: calc(var(--face-padding) / 2);
   --card-bg-color: var(--color-white);
   --card-text-color: var(--color-brown-700);
   --card-text-color--placeholder: var(--color-brown-500);
