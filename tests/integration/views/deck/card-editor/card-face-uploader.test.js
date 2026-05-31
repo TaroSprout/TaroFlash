@@ -130,7 +130,7 @@ describe('CardFaceUploader', () => {
     await flushPromises()
 
     expect(mocks.setFaceImageMock).toHaveBeenCalledWith(5, 'back', file)
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.snappy_button_2')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.snappy_button_2', { blocking: true })
   })
 
   test('does not upload a temp card even on drop', async () => {

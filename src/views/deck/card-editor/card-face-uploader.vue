@@ -70,7 +70,7 @@ async function uploadFile(file: File) {
 
   try {
     await setFaceImage(card.id!, side, file)
-    emitSfx('ui.snappy_button_2')
+    emitSfx('ui.snappy_button_2', { blocking: true })
   } catch {
     toast.error(t('toast.error.card-image-upload-failed'))
   }
