@@ -106,6 +106,17 @@ const { image, text } = defineProps<{
   outline-color: var(--color-brown-500);
 }
 
+/* While a file is dragged over, the frame turns blue to match the drop affordance. */
+.card-container--edit[data-dragging] .card-face[data-mode='edit'][data-image='true'] {
+  outline-color: var(--color-blue-500);
+}
+
+[data-theme='dark']
+  .card-container--edit[data-dragging]
+  .card-face[data-mode='edit'][data-image='true'] {
+  outline-color: var(--color-blue-650);
+}
+
 .card-container--edit[data-active] .card-face[data-mode='edit'] .card-face__image {
   border-radius: calc(var(--face-radius) - var(--face-image-padding));
 }
