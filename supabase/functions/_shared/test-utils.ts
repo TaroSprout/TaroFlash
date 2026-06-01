@@ -3,7 +3,9 @@
 
 export type FakeSupabaseOpts<Row> = {
   rows?: Row[]
+  activeRows?: { bucket: string; path: string }[]
   selectError?: any
+  refcountError?: any
   removeErrors?: Map<string, any[]>
   deleteError?: any
 }
@@ -19,7 +21,9 @@ export type FakeSupabase = {
 }
 
 // Minimal supabase-js stand-in covering the surface our edge functions touch:
-// `.from(t).select().not().limit()`, `.from(t).delete().in()`, `.storage.from(b).remove()`.
+// `.from(t).select().not().limit()` (soft-deleted candidates),
+// `.from(t).select().is().in()` (active-row refcount lookup),
+// `.from(t).delete().in()`, `.storage.from(b).remove()`.
 // Storage `remove` errors are queued per bucket so retries can be exercised.
 export function makeFakeSupabase<Row>(opts: FakeSupabaseOpts<Row> = {}): {
   supabase: FakeSupabase
@@ -38,6 +42,14 @@ export function makeFakeSupabase<Row>(opts: FakeSupabaseOpts<Row> = {}): {
               opts.selectError
                 ? { data: null, error: opts.selectError }
                 : { data: opts.rows ?? [], error: null }
+            )
+        }),
+        is: () => ({
+          in: () =>
+            Promise.resolve(
+              opts.refcountError
+                ? { data: null, error: opts.refcountError }
+                : { data: opts.activeRows ?? [], error: null }
             )
         })
       }),
