@@ -106,11 +106,11 @@ describe('cardImageUrl', () => {
     mocks.getPublicUrlMock.mockReset()
   })
 
-  test('resolves the path against the cards bucket', () => {
+  test('resolves the path against the member-images bucket', () => {
     mocks.getPublicUrlMock.mockReturnValueOnce({ data: { publicUrl: 'https://cdn/card' } })
-    const url = cardImageUrl('member/card/front/abc.png')
-    expect(supabase.storage.from).toHaveBeenCalledWith('cards')
-    expect(mocks.getPublicUrlMock).toHaveBeenCalledWith('member/card/front/abc.png')
+    const url = cardImageUrl('member-uuid/abc123.png')
+    expect(supabase.storage.from).toHaveBeenCalledWith('member-images')
+    expect(mocks.getPublicUrlMock).toHaveBeenCalledWith('member-uuid/abc123.png')
     expect(url).toBe('https://cdn/card')
   })
 })
