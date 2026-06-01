@@ -100,4 +100,31 @@ describe('useCan', () => {
       expect(can.createDeck.value).toBe(true)
     })
   })
+
+  describe('useCardImages', () => {
+    test('true when plan is paid', () => {
+      planRef.value = 'paid'
+      expect(useCan().useCardImages.value).toBe(true)
+    })
+
+    test('false when plan is free', () => {
+      planRef.value = 'free'
+      expect(useCan().useCardImages.value).toBe(false)
+    })
+
+    test('false when plan is undefined', () => {
+      planRef.value = null
+      expect(useCan().useCardImages.value).toBe(false)
+    })
+
+    test('is a ComputedRef that re-evaluates when plan changes', () => {
+      const can = useCan()
+      planRef.value = 'free'
+      expect(can.useCardImages.value).toBe(false)
+      planRef.value = 'paid'
+      expect(can.useCardImages.value).toBe(true)
+      planRef.value = 'free'
+      expect(can.useCardImages.value).toBe(false)
+    })
+  })
 })
