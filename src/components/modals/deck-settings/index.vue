@@ -58,8 +58,8 @@ const active_tab = useSessionRef<ActiveTab | null>('deck-settings.active-tab', n
 const tab_outlet = ref<HTMLElement>()
 
 const tabs = computed(() => [
-  { value: 'general', icon: 'label', label: t('deck.settings-modal.tab.general') },
-  { value: 'design', icon: 'design-services', label: t('deck.settings-modal.tab.design') },
+  { value: 'general', icon: 'tag-chevron', label: t('deck.settings-modal.tab.general') },
+  { value: 'design', icon: 'paint-brush', label: t('deck.settings-modal.tab.design') },
   { value: 'study', icon: 'school-cap', label: t('deck.settings-modal.tab.study') },
   { value: 'danger-zone', icon: 'delete', label: t('deck.settings-modal.tab.danger-zone') }
 ])
