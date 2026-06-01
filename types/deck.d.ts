@@ -1,7 +1,10 @@
+type CardImageLayout = 'above' | 'below' | 'behind'
+
 type CardAttributes = {
   horizontal_alignment?: 'left' | 'center' | 'right'
   vertical_alignment?: 'top' | 'center' | 'bottom'
   text_size?: number
+  image_layout?: CardImageLayout
 }
 
 type DeckCardAttributes = {

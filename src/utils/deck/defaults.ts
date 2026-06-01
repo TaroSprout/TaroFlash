@@ -20,8 +20,11 @@ export const DECK_CONFIG_DEFAULTS: Required<DeckConfig> = {
   auto_play: false
 }
 
-export const CARD_ATTRIBUTES_DEFAULTS: Required<Pick<CardAttributes, 'text_size'>> = {
-  text_size: 4
+export const CARD_ATTRIBUTES_DEFAULTS: Required<
+  Pick<CardAttributes, 'text_size' | 'image_layout'>
+> = {
+  text_size: 4,
+  image_layout: 'above'
 }
 
 /**

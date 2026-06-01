@@ -34,5 +34,7 @@ export function useCan() {
     return limit === null || count < limit
   })
 
-  return { useProFeature, createDeck }
+  const useCardImages = computed(() => member.plan === 'paid')
+
+  return { useProFeature, createDeck, useCardImages }
 }
