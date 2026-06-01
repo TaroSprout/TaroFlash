@@ -168,13 +168,13 @@ shortcuts.register([
             :tabindex="tab.value === active ? 0 : -1"
             :data-active="tab.value === active"
             :class="[
-              'text-left py-3 px-4 rounded-4 flex items-center cursor-pointer text-brown-700 dark:text-brown-100 data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary) hover:bg-(--theme-neutral) hover:text-(--theme-on-neutral) data-[active=false]:hover:[&_svg]:scale-120 data-[active=false]:hover:[&_svg]:rotate-6 [&_svg]:transition-transform [&_svg]:duration-75 focus:outline-none',
+              'text-left py-3 px-4 rounded-4 flex items-center gap-3 cursor-pointer text-brown-700 dark:text-brown-100 data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary) hover:bg-(--theme-neutral) hover:text-(--theme-on-neutral) data-[active=false]:hover:[&_svg]:scale-120 data-[active=false]:hover:[&_svg]:rotate-6 [&_svg]:transition-transform [&_svg]:duration-75 focus:outline-none',
               parts?.tab
             ]"
             v-sfx.hover="tab.value === active ? '' : hover_sfx"
             @click="selectOption(tab.value)"
           >
-            <ui-icon v-if="tab.icon" :src="tab.icon" class="mr-2" />
+            <ui-icon v-if="tab.icon" :src="tab.icon" class="w-6 h-6" />
             {{ tab.label }}
           </button>
         </div>

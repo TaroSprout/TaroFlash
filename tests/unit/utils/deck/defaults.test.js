@@ -29,6 +29,10 @@ describe('deck defaults', () => {
     expect(CARD_ATTRIBUTES_DEFAULTS.text_size).toBe(4)
   })
 
+  test('CARD_ATTRIBUTES_DEFAULTS exposes image_layout default as "above"', () => {
+    expect(CARD_ATTRIBUTES_DEFAULTS.image_layout).toBe('above')
+  })
+
   test('DAILY_LIMIT_BOUNDS exposes shared step + min and per-row max + default', () => {
     expect(DAILY_LIMIT_BOUNDS.step).toBe(5)
     expect(DAILY_LIMIT_BOUNDS.min).toBe(5)

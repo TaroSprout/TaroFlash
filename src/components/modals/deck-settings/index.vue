@@ -58,8 +58,8 @@ const active_tab = useSessionRef<ActiveTab | null>('deck-settings.active-tab', n
 const tab_outlet = ref<HTMLElement>()
 
 const tabs = computed(() => [
-  { value: 'general', icon: 'label', label: t('deck.settings-modal.tab.general') },
-  { value: 'design', icon: 'design-services', label: t('deck.settings-modal.tab.design') },
+  { value: 'general', icon: 'tag-chevron', label: t('deck.settings-modal.tab.general') },
+  { value: 'design', icon: 'paint-brush', label: t('deck.settings-modal.tab.design') },
   { value: 'study', icon: 'school-cap', label: t('deck.settings-modal.tab.study') },
   { value: 'danger-zone', icon: 'delete', label: t('deck.settings-modal.tab.danger-zone') }
 ])
@@ -134,7 +134,7 @@ watch(is_tablet, (is_below) => {
     data-testid="deck-settings-container"
     data-theme="green-500"
     data-theme-dark="green-800"
-    class="w-full! max-w-205.5 lg:pointer-fine:max-w-none lg:pointer-fine:w-250! md:h-167 max-md:[--sheet-px:2rem]"
+    class="w-full! max-w-205.5 lg:pointer-fine:max-w-none lg:pointer-fine:w-257! md:h-172 max-md:[--sheet-px:2rem]"
     :tabs="tabs"
     :pattern_config="{ pattern: 'endless-clouds' }"
     :parts="{ content: 'flex gap-14 h-full items-start' }"

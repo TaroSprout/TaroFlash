@@ -1,7 +1,20 @@
-import { describe, test, expect } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { reactive, defineComponent, h } from 'vue'
+import { reactive, defineComponent, h, ref, computed } from 'vue'
 import CardDesigner from '@/components/modals/deck-settings/tab-design/card-designer/index.vue'
+
+const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
+vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
+
+const useCardImagesRef = ref(false)
+
+vi.mock('@/composables/use-can', () => ({
+  useCan: () => ({
+    useProFeature: computed(() => false),
+    createDeck: computed(() => true),
+    useCardImages: computed(() => useCardImagesRef.value)
+  })
+}))
 
 const AlignPickerStub = defineComponent({
   name: 'AlignPicker',
@@ -43,14 +56,18 @@ function makeToolbar(initial = {}) {
   const wrapper = mount(CardDesigner, {
     props: { attributes },
     global: {
-      stubs: { AlignPicker: AlignPickerStub, UiSpinbox: UiSpinboxStub },
-      mocks: { $t: (k) => k }
+      stubs: { AlignPicker: AlignPickerStub, UiSpinbox: UiSpinboxStub }
     }
   })
   return { wrapper, attributes }
 }
 
 describe('CardDesigner', () => {
+  beforeEach(() => {
+    mockEmitSfx.mockClear()
+    useCardImagesRef.value = false
+  })
+
   test('renders the toolbar container', () => {
     const { wrapper } = makeToolbar()
     expect(wrapper.find('[data-testid="card-designer"]').exists()).toBe(true)
@@ -104,5 +121,21 @@ describe('CardDesigner', () => {
     spinbox.vm.$emit('update:value', 8)
     await wrapper.vm.$nextTick()
     expect(attributes.text_size).toBe(8)
+  })
+
+  describe('image layout section gating', () => {
+    test('hides image-layout-label and picker when useCardImages is false', () => {
+      useCardImagesRef.value = false
+      const { wrapper } = makeToolbar()
+      expect(wrapper.find('[data-testid="card-designer__image-layout-label"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="image-layout-picker"]').exists()).toBe(false)
+    })
+
+    test('shows image-layout-label and picker when useCardImages is true', () => {
+      useCardImagesRef.value = true
+      const { wrapper } = makeToolbar()
+      expect(wrapper.find('[data-testid="card-designer__image-layout-label"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="image-layout-picker"]').exists()).toBe(true)
+    })
   })
 })
