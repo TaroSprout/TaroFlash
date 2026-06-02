@@ -22,22 +22,22 @@ afterEach(async () => {
 
 describe('uploadImage / deleteImage / getImageUrl (contract)', () => {
   test('uploads a file under the member folder, returns a public URL, then deletes it', async () => {
-    const path = `${session.userId}/${card.id}/front/test.png`
-    const url = await uploadImage('cards', path, makeImageFile())
+    const path = `${session.userId}/contract-upload.png`
+    const url = await uploadImage('member-images', path, makeImageFile())
     expect(url).toContain(path)
 
-    expect(getImageUrl('cards', path)).toBe(url)
+    expect(getImageUrl('member-images', path)).toBe(url)
 
-    await deleteImage('cards', path)
+    await deleteImage('member-images', path)
   })
 })
 
 describe('insertMedia / deleteMedia (contract)', () => {
   test('inserts a media row and soft-deletes via deleteMedia', async () => {
-    const path = `${session.userId}/${card.id}/front/im.png`
-    await uploadImage('cards', path, makeImageFile())
+    const path = `${session.userId}/contract-media.png`
+    await uploadImage('member-images', path, makeImageFile())
 
-    await insertMedia({ bucket: 'cards', path, card_id: card.id, slot: 'card_front' })
+    await insertMedia({ bucket: 'member-images', path, card_id: card.id, slot: 'card_front' })
 
     const { data: rows } = await session.client
       .from('media')
@@ -56,12 +56,12 @@ describe('insertMedia / deleteMedia (contract)', () => {
       .single()
     expect(after.deleted_at).not.toBeNull()
 
-    await deleteImage('cards', path)
+    await deleteImage('member-images', path)
   })
 
   test('rejects when neither card_id nor deck_id is provided', async () => {
     await expect(
-      insertMedia({ bucket: 'cards', path: 'x/y.png', slot: 'card_front' })
+      insertMedia({ bucket: 'member-images', path: 'x/y.png', slot: 'card_front' })
     ).rejects.toThrow(/card_id or deck_id/)
   })
 })

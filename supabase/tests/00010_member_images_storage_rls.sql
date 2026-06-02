@@ -1,10 +1,12 @@
 -- =============================================================================
--- RLS tests: storage.objects policies for the `cards` bucket
+-- RLS tests: storage.objects policies for the `member-images` bucket
 --
--- Enforces per-member isolation via owner::text = foldername[1]. The SELECT
--- policy is required even on pure INSERTs because supabase-js's
--- upload-with-upsert flow emits INSERT ... ON CONFLICT DO UPDATE, which
--- needs SELECT privilege for the conflict-check step.
+-- Enforces per-member isolation via auth.uid()::text = foldername[1]. Paths are
+-- content-addressed (`<member_id>/<sha256>.<ext>`), so only the first segment —
+-- the owner's member_id — is policy-relevant. The SELECT policy is required
+-- even on pure INSERTs because supabase-js's upload-with-upsert flow emits
+-- INSERT ... ON CONFLICT DO UPDATE, which needs SELECT privilege for the
+-- conflict-check step.
 -- =============================================================================
 
 BEGIN;
@@ -26,8 +28,8 @@ SELECT lives_ok(
   $$
     INSERT INTO storage.objects (bucket_id, name, owner, owner_id)
     VALUES (
-      'cards',
-      'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/42/front/a.png',
+      'member-images',
+      'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/abc123.png',
       'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid,
       'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
     )
@@ -40,8 +42,8 @@ SELECT throws_ok(
   $$
     INSERT INTO storage.objects (bucket_id, name, owner, owner_id)
     VALUES (
-      'cards',
-      'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/42/front/hack.png',
+      'member-images',
+      'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/hack.png',
       'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid,
       'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
     )
@@ -53,14 +55,16 @@ SELECT throws_ok(
 
 -- Test 3: UPSERT (INSERT ... ON CONFLICT DO UPDATE) succeeds for Alice's own
 -- row. This is the shape supabase-js emits when upload({ upsert: true }) is
--- called. Without the SELECT policy this would fail even with no conflicting
--- row, because Postgres needs SELECT for the conflict check.
+-- called — and content-addressing makes it the common path, since re-uploading
+-- identical bytes resolves to the same name. Without the SELECT policy this
+-- would fail even with no conflicting row, because Postgres needs SELECT for
+-- the conflict check.
 SELECT lives_ok(
   $$
     INSERT INTO storage.objects (bucket_id, name, owner, owner_id, version)
     VALUES (
-      'cards',
-      'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/42/front/a.png',
+      'member-images',
+      'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/abc123.png',
       'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid,
       'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
       'v2'
@@ -81,8 +85,8 @@ SET LOCAL role = 'authenticated';
 -- programmatic SELECT path used by list()/download()/upsert-conflict-check.)
 SELECT is(
   (SELECT count(*) FROM storage.objects
-   WHERE name = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/42/front/a.png'
-     AND bucket_id = 'cards')::int,
+   WHERE name = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/abc123.png'
+     AND bucket_id = 'member-images')::int,
   0,
   'Bob cannot SELECT Alice''s object through storage.objects RLS'
 );
@@ -90,14 +94,14 @@ SELECT is(
 -- Test 5: Bob cannot UPDATE a row in Alice's folder.
 UPDATE storage.objects
 SET version = 'hacked'
-WHERE name = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/42/front/a.png'
-  AND bucket_id = 'cards';
+WHERE name = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/abc123.png'
+  AND bucket_id = 'member-images';
 
 SET LOCAL role = 'postgres';
 SELECT isnt(
   (SELECT version FROM storage.objects
-   WHERE name = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/42/front/a.png'
-     AND bucket_id = 'cards'),
+   WHERE name = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/abc123.png'
+     AND bucket_id = 'member-images'),
   'hacked',
   'Bob cannot UPDATE rows in Alice''s folder'
 );

@@ -25,9 +25,9 @@ export function getImageUrl(bucket: string, path: string): string {
   return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl
 }
 
-/** Public URL for a card-face image, which always lives in the `cards` bucket. */
+/** Public URL for a card-face image, which lives in the `member-images` bucket. */
 export function cardImageUrl(path: string): string {
-  return getImageUrl('cards', path)
+  return getImageUrl('member-images', path)
 }
 
 export async function insertMedia(params: Media): Promise<void> {

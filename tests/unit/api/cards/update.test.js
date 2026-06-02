@@ -53,8 +53,8 @@ vi.mock('@/stores/member', () => ({
 
 vi.mock('@/utils/logger', () => ({ default: { error: vi.fn() } }))
 
-// Deterministic uid so path assertions are stable.
-vi.mock('@/utils/uid', () => ({ default: () => 'FIXED_UID' }))
+// Deterministic content hash so path assertions are stable.
+vi.mock('@/utils/hash', () => ({ hashFile: () => Promise.resolve('FIXED_HASH') }))
 
 import { saveCard, upsertCard, upsertCards, setCardImage } from '@/api/cards/db/update'
 
@@ -152,7 +152,7 @@ describe('upsertCards', () => {
 })
 
 describe('setCardImage', () => {
-  test('builds the path with member_id/card_id/side/uid.ext and uploads first, then inserts media', async () => {
+  test('builds a content-addressed member_id/hash.ext path and uploads first, then inserts media', async () => {
     const call_order = []
     mocks.uploadImageMock.mockImplementationOnce(async () => call_order.push('upload'))
     mocks.insertMediaMock.mockImplementationOnce(async () => call_order.push('insert'))
@@ -161,24 +161,32 @@ describe('setCardImage', () => {
     await setCardImage(42, file, 'front')
 
     expect(mocks.uploadImageMock).toHaveBeenCalledWith(
-      'cards',
-      'member-uuid-1/42/front/FIXED_UID.png',
+      'member-images',
+      'member-uuid-1/FIXED_HASH.png',
       file
     )
     expect(mocks.insertMediaMock).toHaveBeenCalledWith({
-      bucket: 'cards',
-      path: 'member-uuid-1/42/front/FIXED_UID.png',
+      bucket: 'member-images',
+      path: 'member-uuid-1/FIXED_HASH.png',
       card_id: 42,
       slot: 'card_front'
     })
     expect(call_order).toEqual(['upload', 'insert'])
   })
 
+  test('path is independent of card_id/side so identical bytes dedupe across cards', async () => {
+    const file = new File(['x'], 'f.png', { type: 'image/png' })
+    await setCardImage(42, file, 'front')
+    await setCardImage(99, file, 'back')
+    const [, frontPath] = mocks.uploadImageMock.mock.calls[0]
+    const [, backPath] = mocks.uploadImageMock.mock.calls[1]
+    expect(frontPath).toBe('member-uuid-1/FIXED_HASH.png')
+    expect(backPath).toBe('member-uuid-1/FIXED_HASH.png')
+  })
+
   test('uses card_back slot for back images', async () => {
     const file = new File(['x'], 'f.png', { type: 'image/png' })
     await setCardImage(42, file, 'back')
-    const [, path] = mocks.uploadImageMock.mock.calls[0]
-    expect(path).toContain('/back/')
     const [params] = mocks.insertMediaMock.mock.calls[0]
     expect(params.slot).toBe('card_back')
   })

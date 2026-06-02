@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 
 const BATCH_SIZE = 500
 
-type MediaRow = { id: number; bucket: string; path: string; member_id: string }
-type Group = { bucket: string; memberId: string; paths: string[]; ids: number[] }
+type MediaRow = { id: number; bucket: string; path: string }
+type RemovalGroup = { paths: string[]; ids: number[] }
 
 export type Sleep = (ms: number) => Promise<void>
 export type SupabaseLike = {
@@ -33,48 +33,64 @@ async function withRetry<T>(fn: () => Promise<T>, attempts: number, sleep: Sleep
   throw lastError
 }
 
-function groupByBucketAndMember(rows: MediaRow[]): Group[] {
-  const groups = new Map<string, Group>()
+// Content-addressed storage means one object can back many cards (the same
+// image reused across cards / as a deck bg). A soft-deleted row only means
+// "this card no longer uses the image" — the object must survive as long as
+// any *active* row still references its (bucket, path). Partition the
+// candidates accordingly:
+//   - keepObjectIds: stale rows whose object is still referenced → delete the
+//     row, leave the object.
+//   - byBucket: orphaned objects (no active reference) → remove from storage,
+//     then delete the rows. Paths are deduped per bucket so two stale rows
+//     sharing an object trigger a single remove.
+function partitionCandidates(rows: MediaRow[], stillReferenced: Set<string>) {
+  const keepObjectIds: number[] = []
+  const byBucket = new Map<string, RemovalGroup>()
+  const seenPaths = new Set<string>()
 
   for (const row of rows) {
-    const key = `${row.bucket}::${row.member_id}`
-    if (!groups.has(key)) {
-      groups.set(key, { bucket: row.bucket, memberId: row.member_id, paths: [], ids: [] })
+    const key = `${row.bucket}::${row.path}`
+    if (stillReferenced.has(key)) {
+      keepObjectIds.push(row.id)
+      continue
     }
-    const g = groups.get(key)!
-    g.paths.push(row.path)
-    g.ids.push(row.id)
+
+    const group = byBucket.get(row.bucket) ?? { paths: [], ids: [] }
+    group.ids.push(row.id)
+    if (!seenPaths.has(key)) {
+      group.paths.push(row.path)
+      seenPaths.add(key)
+    }
+    byBucket.set(row.bucket, group)
   }
 
-  return [...groups.values()]
+  return { keepObjectIds, byBucket }
 }
 
-async function removeGroupFromStorage(
+async function removeBucketObjects(
   supabase: SupabaseLike,
-  group: Group,
+  bucket: string,
+  paths: string[],
   attempts: number,
   sleep: Sleep
-): Promise<{ ids: number[]; error: string | null }> {
-  const fullPaths = group.paths.map((p) => `${group.memberId}/${p}`)
-
+): Promise<string | null> {
+  // media.path is the full storage key (`<member_id>/<sha256>.<ext>`), so it's
+  // passed to storage.remove as-is — no member_id re-prefixing.
   try {
     await withRetry(
       () =>
         supabase.storage
-          .from(group.bucket)
-          .remove(fullPaths)
+          .from(bucket)
+          .remove(paths)
           .then(({ error }) => {
             if (error) throw error
           }),
       attempts,
       sleep
     )
-    return { ids: group.ids, error: null }
+    return null
   } catch (err: any) {
-    return {
-      ids: [],
-      error: `bucket=${group.bucket} member=${group.memberId}: ${err?.message ?? err}`
-    }
+    return `bucket=${bucket}: ${err?.message ?? err}`
   }
 }
 
@@ -83,7 +99,7 @@ export async function handler({ supabase, sleep, retryAttempts = 3 }: Deps): Pro
 
   const { data: mediaRows, error: selectError } = await supabase
     .from('media')
-    .select('id, bucket, path, member_id')
+    .select('id, bucket, path')
     .not('deleted_at', 'is', null)
     .limit(BATCH_SIZE)
 
@@ -96,23 +112,40 @@ export async function handler({ supabase, sleep, retryAttempts = 3 }: Deps): Pro
     return new Response(JSON.stringify({ message: 'No media to clean' }), { status: 200 })
   }
 
-  const groups = groupByBucketAndMember(mediaRows)
+  const candidatePaths = [...new Set(mediaRows.map((r: MediaRow) => r.path))]
+  const { data: activeRows, error: refcountError } = await supabase
+    .from('media')
+    .select('bucket, path')
+    .is('deleted_at', null)
+    .in('path', candidatePaths)
 
-  const successfulIds: number[] = []
+  if (refcountError) {
+    console.error('Error refcounting media:', refcountError)
+    return new Response(JSON.stringify({ error: 'refcount_failed' }), { status: 500 })
+  }
+
+  const stillReferenced = new Set<string>(
+    (activeRows ?? []).map((r: { bucket: string; path: string }) => `${r.bucket}::${r.path}`)
+  )
+  const { keepObjectIds, byBucket } = partitionCandidates(mediaRows, stillReferenced)
+
+  const removedIds: number[] = []
   const storageErrors: string[] = []
 
-  for (const group of groups) {
-    const { ids, error } = await removeGroupFromStorage(supabase, group, retryAttempts, wait)
+  for (const [bucket, group] of byBucket) {
+    const error = await removeBucketObjects(supabase, bucket, group.paths, retryAttempts, wait)
     if (error) {
       console.error('Storage delete failed after retries:', error)
       storageErrors.push(error)
       continue
     }
-    successfulIds.push(...ids)
+    removedIds.push(...group.ids)
   }
 
-  if (successfulIds.length > 0) {
-    const { error: deleteError } = await supabase.from('media').delete().in('id', successfulIds)
+  const deletableIds = [...keepObjectIds, ...removedIds]
+
+  if (deletableIds.length > 0) {
+    const { error: deleteError } = await supabase.from('media').delete().in('id', deletableIds)
 
     if (deleteError) {
       console.error('Error deleting media rows:', deleteError)
@@ -127,8 +160,8 @@ export async function handler({ supabase, sleep, retryAttempts = 3 }: Deps): Pro
   return new Response(
     JSON.stringify({
       message: 'Media cleanup complete',
-      processed: successfulIds.length,
-      skipped: mediaRows.length - successfulIds.length,
+      processed: deletableIds.length,
+      skipped: mediaRows.length - deletableIds.length,
       ...(storageErrors.length > 0 && { storage_errors: storageErrors })
     }),
     { status }

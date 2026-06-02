@@ -3,7 +3,7 @@ import logger from '@/utils/logger'
 import { isoNow } from '@/utils/date'
 import { uploadImage, insertMedia } from '@/api/media/db'
 import { useMemberStore } from '@/stores/member'
-import uid from '@/utils/uid'
+import { hashFile } from '@/utils/hash'
 import { buildCardPayload } from '@/utils/card/payload'
 import { type CardBase } from '@type/card'
 
@@ -62,12 +62,14 @@ export async function setCardImage(card_id: number, file: File, side: 'front' | 
   const member_id = useMemberStore().id
   if (!member_id) throw new Error('Not authenticated')
 
-  const bucket = 'cards'
+  const bucket = 'member-images'
   const slot = `card_${side}` as const
-  // Path includes member_id so any viewer (not just the owner) builds a
-  // correct storage URL. The storage policies enforce that only the owner
-  // can INSERT/UPDATE/DELETE under their own folder.
-  const path = `${member_id}/${card_id}/${side}/${uid()}.${file.type.split('/')[1]}`
+  // Content-addressed path: hashing the bytes means the same image reused
+  // across cards (or as a deck bg) collapses to one storage object. member_id
+  // stays the first segment — it scopes dedup per-member and satisfies the
+  // storage RLS foldername check. Which card/side uses the image lives in
+  // `media` (card_id + slot), not in the path.
+  const path = `${member_id}/${await hashFile(file)}.${file.type.split('/')[1]}`
 
   // Upload first so we don't soft-delete the previous image (via the DB
   // trigger on insertMedia) until the new file is actually in storage.
