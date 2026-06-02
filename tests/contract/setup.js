@@ -109,7 +109,14 @@ export async function signInAsTestUser() {
     cleanup: async () => {
       ctx.client = null
       ctx.memberId = null
-      await adminClient.auth.admin.deleteUser(userId).catch(() => {})
+      // Deleting the auth user cascades to members -> decks/cards/reviews/etc.
+      // (members.id -> auth.users ON DELETE CASCADE). Surface failures instead
+      // of swallowing them — a silent .catch() here previously let thousands of
+      // test users + their data leak into the local DB run after run.
+      const { error } = await adminClient.auth.admin.deleteUser(userId)
+      if (error) {
+        throw new Error(`Contract cleanup failed to delete test user ${userId}: ${error.message}`)
+      }
     }
   }
 }
