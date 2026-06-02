@@ -52,10 +52,10 @@ SELECT tests.set_claims('11111111-1111-1111-1111-111111111111'::uuid);
 SET LOCAL role = 'authenticated';
 
 INSERT INTO public.media (card_id, slot, bucket, path)
-VALUES (1000, 'card_front'::public.media_slot, 'cards', 'first.png');
+VALUES (1000, 'card_front'::public.media_slot, 'member-images', 'first.png');
 
 INSERT INTO public.media (card_id, slot, bucket, path)
-VALUES (1000, 'card_front'::public.media_slot, 'cards', 'second.png');
+VALUES (1000, 'card_front'::public.media_slot, 'member-images', 'second.png');
 
 SET LOCAL role = 'postgres';
 
@@ -75,7 +75,7 @@ SELECT tests.set_claims('11111111-1111-1111-1111-111111111111'::uuid);
 SET LOCAL role = 'authenticated';
 
 INSERT INTO public.media (card_id, slot, bucket, path)
-VALUES (1000, 'card_back'::public.media_slot, 'cards', 'back.png');
+VALUES (1000, 'card_back'::public.media_slot, 'member-images', 'back.png');
 
 SET LOCAL role = 'postgres';
 
@@ -97,7 +97,7 @@ SET LOCAL role = 'authenticated';
 SELECT throws_ok(
   $$
     INSERT INTO public.media (card_id, slot, bucket, path)
-    VALUES (1000, 'card_front'::public.media_slot, 'cards', 'bypass.png')
+    VALUES (1000, 'card_front'::public.media_slot, 'member-images', 'bypass.png')
   $$,
   '23505',
   NULL,
