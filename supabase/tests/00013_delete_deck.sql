@@ -5,15 +5,17 @@
 --   • owner can delete their own deck
 --   • non-owner cannot delete someone else's deck
 --   • cards in the deck are cascade-deleted
+--   • reviews / review_logs of those cards are cascade-deleted
 --   • media rows tied to the deck (via deck_id or via card_id) are tombstoned
 --     and have their FK columns NULLed — not hard-deleted (so cleanup-media
 --     can still reap their storage objects)
 --   • pre-existing tombstones preserve their original deleted_at (COALESCE)
+--   • reviews / review_logs of unrelated decks are untouched
 -- =============================================================================
 
 BEGIN;
 
-SELECT plan(8);
+SELECT plan(11);
 
 -- ── Setup ─────────────────────────────────────────────────────────────────────
 
@@ -42,6 +44,17 @@ INSERT INTO public.media (id, member_id, card_id, deck_id, bucket, path, slot, d
   (930001, '11111111-1111-1111-1111-111111111111'::uuid, 93001, NULL, 'cards', 'p/b', 'card_back'::public.media_slot, '2020-01-01 00:00:00+00'),
   (930002, '11111111-1111-1111-1111-111111111111'::uuid, NULL, 9300, 'decks', 'p/cover', NULL, NULL),
   (930100, '11111111-1111-1111-1111-111111111111'::uuid, 3100, NULL, 'cards', 'p/c', 'card_front'::public.media_slot, NULL);
+
+-- Reviews + review_logs: one set on a card of the delete-target deck (9300),
+-- one set on the control deck's card (3100). reviews.member_id is auto-stamped
+-- by set_member_id (claims are Alice's); review_logs has no such trigger, so its
+-- NOT NULL member_id is set explicitly.
+INSERT INTO public.reviews (id, card_id, due) VALUES
+  (9301001, 93000, now()),   -- target deck card
+  (9301002, 3100, now());    -- control deck card
+INSERT INTO public.review_logs (id, card_id, member_id, rating, state, due, review) VALUES
+  (9301001, 93000, '11111111-1111-1111-1111-111111111111'::uuid, 3, 2, now(), now()),
+  (9301002, 3100,  '11111111-1111-1111-1111-111111111111'::uuid, 3, 2, now(), now());
 
 SELECT tests.set_claims('22222222-2222-2222-2222-222222222222'::uuid);
 INSERT INTO public.decks (id, title, is_public) VALUES (9400, 'Bob Deck', false);
@@ -119,6 +132,28 @@ SELECT ok(
   (SELECT card_id = 3100 AND deck_id IS NULL AND deleted_at IS NULL
      FROM public.media WHERE id = 930100),
   'media belonging to unrelated decks is untouched'
+);
+
+-- Test 9: reviews of the deleted deck's cards are cascade-removed
+-- (reviews.card_id -> cards ON DELETE CASCADE, fired by the card cascade).
+SELECT is(
+  (SELECT count(*) FROM public.reviews WHERE card_id IN (93000, 93001))::int,
+  0,
+  'reviews of the deleted deck''s cards are cascade-removed'
+);
+
+-- Test 10: review_logs of the deleted deck's cards are cascade-removed.
+SELECT is(
+  (SELECT count(*) FROM public.review_logs WHERE card_id IN (93000, 93001))::int,
+  0,
+  'review_logs of the deleted deck''s cards are cascade-removed'
+);
+
+-- Test 11: the control deck's review + review_log are untouched.
+SELECT ok(
+  (SELECT count(*) FROM public.reviews WHERE id = 9301002) = 1
+    AND (SELECT count(*) FROM public.review_logs WHERE id = 9301002) = 1,
+  'reviews/review_logs of unrelated decks are untouched'
 );
 
 

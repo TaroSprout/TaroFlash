@@ -12,7 +12,7 @@
 
 BEGIN;
 
-SELECT plan(4);
+SELECT plan(6);
 
 -- Setup: a user (helper inserts auth.users + fires the signup trigger that
 -- creates the member row), then a deck + card owned by them.
@@ -33,6 +33,14 @@ VALUES (
   'cccccccc-cccc-cccc-cccc-cccccccccccc', 990001, 'member-images',
   'cccccccc-cccc-cccc-cccc-cccccccccccc/abc.png', 'card_front', now()
 );
+
+-- A review + review_log for the card. Both cascade to the member two ways
+-- (reviews/review_logs -> members and -> cards are ON DELETE CASCADE), so the
+-- account-deletion cascade must remove them.
+INSERT INTO public.reviews (id, card_id, member_id, due)
+VALUES (990001, 990001, 'cccccccc-cccc-cccc-cccc-cccccccccccc', now());
+INSERT INTO public.review_logs (id, card_id, member_id, rating, state, due, review)
+VALUES (990001, 990001, 'cccccccc-cccc-cccc-cccc-cccccccccccc', 3, 2, now(), now());
 
 SELECT is(
   (SELECT count(*) FROM public.cards WHERE id = 990001)::int,
@@ -57,6 +65,18 @@ SELECT is(
   (SELECT count(*) FROM public.cards WHERE id = 990001)::int,
   0,
   'card is cascade-deleted despite a lingering soft-deleted media row'
+);
+
+SELECT is(
+  (SELECT count(*) FROM public.reviews WHERE id = 990001)::int,
+  0,
+  'review is cascade-deleted with the auth user'
+);
+
+SELECT is(
+  (SELECT count(*) FROM public.review_logs WHERE id = 990001)::int,
+  0,
+  'review_log is cascade-deleted with the auth user'
 );
 
 SELECT is(
