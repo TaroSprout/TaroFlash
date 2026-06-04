@@ -15,7 +15,7 @@ const OPENAI_TRANSCRIBE_URL = 'https://api.openai.com/v1/audio/transcriptions'
 function jsonError(code: string, status: number): Response {
   return new Response(JSON.stringify({ code }), {
     status,
-    headers: { ...cors, 'Content-Type': 'application/json' },
+    headers: { ...cors, 'Content-Type': 'application/json' }
   })
 }
 
@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
   const res = await fetch(OPENAI_TRANSCRIBE_URL, {
     method: 'POST',
     headers: { Authorization: `Bearer ${Deno.env.get('OPENAI_API_KEY')}` },
-    body: openaiForm,
+    body: openaiForm
   })
 
   if (!res.ok) {
@@ -75,15 +75,15 @@ Deno.serve(async (req) => {
   const segments = (data.segments ?? []).map((s) => ({
     start: s.start,
     end: s.end,
-    text: s.text.trim(),
+    text: s.text.trim()
   }))
   const words = (data.words ?? []).map((w) => ({
     word: w.word,
     start: w.start,
-    end: w.end,
+    end: w.end
   }))
 
   return new Response(JSON.stringify({ text: data.text, segments, words, lang: data.language }), {
-    headers: { ...cors, 'Content-Type': 'application/json' },
+    headers: { ...cors, 'Content-Type': 'application/json' }
   })
 })

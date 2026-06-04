@@ -7,7 +7,7 @@
 
 BEGIN;
 
-SELECT plan(8);
+SELECT plan(11);
 
 -- ── Setup ─────────────────────────────────────────────────────────────────────
 
@@ -108,6 +108,51 @@ SELECT is(
   (SELECT count(*) FROM public.lessons WHERE id = 100)::int,
   1,
   'Alice''s lesson still exists after Bob tried to delete it'
+);
+
+
+-- ── create_lesson RPC + lesson-delete media trigger ────────────────────────────
+SELECT tests.set_claims('22222222-2222-2222-2222-222222222222'::uuid);
+SET LOCAL role = 'authenticated';
+
+-- Test 9: create_lesson runs for the owner (lesson + media insert in one txn)
+SELECT lives_ok(
+  $$
+    SELECT public.create_lesson(
+      'Bob RPC Lesson',
+      '22222222-2222-2222-2222-222222222222/rpc.mp3',
+      '{"text":"hi","segments":[]}'::jsonb,
+      'zh'
+    )
+  $$,
+  'create_lesson RPC runs for the owner'
+);
+
+-- Test 10: it also inserts a live audio media row linked to the lesson
+SET LOCAL role = 'postgres';
+SELECT is(
+  (SELECT count(*) FROM public.media
+   WHERE bucket = 'audio-lessons'
+     AND path = '22222222-2222-2222-2222-222222222222/rpc.mp3'
+     AND lesson_id IS NOT NULL
+     AND deleted_at IS NULL)::int,
+  1,
+  'create_lesson inserts a live audio media row linked to the lesson'
+);
+
+-- Test 11: deleting the lesson soft-deletes its media row and nulls lesson_id
+SELECT tests.set_claims('22222222-2222-2222-2222-222222222222'::uuid);
+SET LOCAL role = 'authenticated';
+DELETE FROM public.lessons WHERE audio_path = '22222222-2222-2222-2222-222222222222/rpc.mp3';
+
+SET LOCAL role = 'postgres';
+SELECT is(
+  (SELECT count(*) FROM public.media
+   WHERE path = '22222222-2222-2222-2222-222222222222/rpc.mp3'
+     AND deleted_at IS NOT NULL
+     AND lesson_id IS NULL)::int,
+  1,
+  'deleting a lesson soft-deletes its audio media row and nulls lesson_id'
 );
 
 

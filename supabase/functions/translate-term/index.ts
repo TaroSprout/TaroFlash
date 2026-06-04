@@ -15,7 +15,7 @@ import { cors, requireAdmin } from '../_shared/require-admin.ts'
 function jsonError(code: string, status: number): Response {
   return new Response(JSON.stringify({ code }), {
     status,
-    headers: { ...cors, 'Content-Type': 'application/json' },
+    headers: { ...cors, 'Content-Type': 'application/json' }
   })
 }
 
@@ -41,16 +41,17 @@ const RESULT_SCHEMA = {
     translation: { type: 'string' },
     reading: { type: 'string' },
     pos: { type: 'string' },
-    description: { type: 'string' },
+    description: { type: 'string' }
   },
   required: ['translation', 'reading', 'pos', 'description'],
-  additionalProperties: false,
+  additionalProperties: false
 }
 
 // Not prompt-cached: Haiku's minimum cacheable prefix is 4096 tokens and this
 // system prompt is far shorter, so cache_control would silently never engage —
 // and call volume is low. Revisit if the prompt grows or volume spikes.
-const SYSTEM_PROMPT = 'You are a precise bilingual dictionary for language learners. ' +
+const SYSTEM_PROMPT =
+  'You are a precise bilingual dictionary for language learners. ' +
   'Given a term and the sentence it appears in, return its meaning in the requested target language. ' +
   'translation: the meaning of the term in the target language, as used in this sentence. ' +
   'reading: phonetic reading of the term in its own language (e.g. pinyin for Chinese, romaji for Japanese); empty string if not applicable. ' +
@@ -75,23 +76,23 @@ Deno.serve(async (req) => {
     return jsonError('missing_fields', 400)
   }
 
-  const userPrompt = `Term: ${term}\n` + `Sentence: ${sentence ?? term}\n` +
-    `Target language: ${target_lang}`
+  const userPrompt =
+    `Term: ${term}\n` + `Sentence: ${sentence ?? term}\n` + `Target language: ${target_lang}`
 
   const res = await fetch(ANTHROPIC_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'x-api-key': Deno.env.get('ANTHROPIC_API_KEY')!,
-      'anthropic-version': '2023-06-01',
+      'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
       model: MODEL,
       max_tokens: 400,
       system: SYSTEM_PROMPT,
       output_config: { format: { type: 'json_schema', schema: RESULT_SCHEMA } },
-      messages: [{ role: 'user', content: userPrompt }],
-    }),
+      messages: [{ role: 'user', content: userPrompt }]
+    })
   })
 
   if (!res.ok) {
@@ -118,6 +119,6 @@ Deno.serve(async (req) => {
   }
 
   return new Response(JSON.stringify(parsed), {
-    headers: { ...cors, 'Content-Type': 'application/json' },
+    headers: { ...cors, 'Content-Type': 'application/json' }
   })
 })

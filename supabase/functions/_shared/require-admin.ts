@@ -11,7 +11,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 export const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 }
 
 type RequireAdminResult =
@@ -29,12 +29,12 @@ export async function requireAdmin(req: Request): Promise<RequireAdminResult> {
   const userClient = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_ANON_KEY')!,
-    { global: { headers: { Authorization: authHeader } } },
+    { global: { headers: { Authorization: authHeader } } }
   )
 
   const {
     data: { user },
-    error: authError,
+    error: authError
   } = await userClient.auth.getUser()
   if (authError || !user) {
     return { error: new Response('Unauthorized', { status: 401, headers: cors }) }
@@ -43,7 +43,7 @@ export async function requireAdmin(req: Request): Promise<RequireAdminResult> {
   // Service-role client bypasses RLS for the privileged role lookup.
   const admin = createClient(
     Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   )
 
   const { data: member } = await admin.from('members').select('role').eq('id', user.id).single()
