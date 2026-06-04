@@ -36,5 +36,9 @@ export function useCan() {
 
   const useCardImages = computed(() => member.plan === 'paid')
 
-  return { useProFeature, createDeck, useCardImages }
+  // Admin-only for now (the audio reader is unreleased). Re-enforced server-side
+  // in the transcribe-audio / translate-term edge functions — this gate is UX.
+  const useAudioReader = computed(() => member.role === 'admin')
+
+  return { useProFeature, createDeck, useCardImages, useAudioReader }
 }

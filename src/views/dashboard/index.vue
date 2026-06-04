@@ -8,13 +8,16 @@ import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useMediaQuery } from '@/composables/use-media-query'
 import ReviewInbox from './review-inbox.vue'
+import AudioReaderSection from './audio-reader-section.vue'
 import { useDeckCreateModal } from '@/composables/modals/use-deck-create-modal'
 import { useDeckActions } from '@/composables/deck/use-deck-actions'
+import { useCan } from '@/composables/use-can'
 
 const { t } = useI18n()
 const toast = useToast()
 const router = useRouter()
 const is_md = useMediaQuery('md')
+const can = useCan()
 
 const deck_create_modal = useDeckCreateModal()
 const deck_actions = useDeckActions()
@@ -72,5 +75,7 @@ async function onCreateDeckClicked() {
         @click="onDeckClicked(deck)"
       />
     </div>
+
+    <audio-reader-section v-if="can.useAudioReader.value" class="md:col-span-2" />
   </div>
 </template>
