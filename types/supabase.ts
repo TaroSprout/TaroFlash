@@ -1,6 +1,31 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       cards: {
@@ -107,6 +132,47 @@ export type Database = {
           }
         ]
       }
+      lessons: {
+        Row: {
+          audio_path: string
+          created_at: string
+          id: number
+          lang: string | null
+          member_id: string
+          title: string
+          transcript: Json
+          updated_at: string
+        }
+        Insert: {
+          audio_path: string
+          created_at?: string
+          id?: number
+          lang?: string | null
+          member_id: string
+          title: string
+          transcript?: Json
+          updated_at?: string
+        }
+        Update: {
+          audio_path?: string
+          created_at?: string
+          id?: number
+          lang?: string | null
+          member_id?: string
+          title?: string
+          transcript?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'lessons_member_id_fkey'
+            columns: ['member_id']
+            isOneToOne: false
+            referencedRelation: 'members'
+            referencedColumns: ['id']
+          }
+        ]
+      }
       media: {
         Row: {
           bucket: string
@@ -115,6 +181,7 @@ export type Database = {
           deck_id: number | null
           deleted_at: string | null
           id: number
+          lesson_id: number | null
           member_id: string | null
           path: string
           slot: Database['public']['Enums']['media_slot'] | null
@@ -126,6 +193,7 @@ export type Database = {
           deck_id?: number | null
           deleted_at?: string | null
           id?: number
+          lesson_id?: number | null
           member_id?: string | null
           path: string
           slot?: Database['public']['Enums']['media_slot'] | null
@@ -137,6 +205,7 @@ export type Database = {
           deck_id?: number | null
           deleted_at?: string | null
           id?: number
+          lesson_id?: number | null
           member_id?: string | null
           path?: string
           slot?: Database['public']['Enums']['media_slot'] | null
@@ -161,6 +230,13 @@ export type Database = {
             columns: ['deck_id']
             isOneToOne: false
             referencedRelation: 'decks'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'media_lesson_id_fkey'
+            columns: ['lesson_id']
+            isOneToOne: false
+            referencedRelation: 'lessons'
             referencedColumns: ['id']
           }
         ]
@@ -516,6 +592,30 @@ export type Database = {
         }
         Returns: number
       }
+      create_lesson: {
+        Args: {
+          p_audio_path: string
+          p_lang?: string
+          p_title: string
+          p_transcript: Json
+        }
+        Returns: {
+          audio_path: string
+          created_at: string
+          id: number
+          lang: string | null
+          member_id: string
+          title: string
+          transcript: Json
+          updated_at: string
+        }
+        SetofOptions: {
+          from: '*'
+          to: 'lessons'
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       decks_with_stats: {
         Args: { p_today_start: string }
         Returns: {
@@ -796,6 +896,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {}
+  },
   public: {
     Enums: {
       card_state: ['new', 'learning', 'young', 'mature', 'relearn'],

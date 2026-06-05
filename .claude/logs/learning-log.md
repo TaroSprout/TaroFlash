@@ -154,7 +154,39 @@ When appending:
 
 ### 2026-05-30 — cards bucket: lower size limit via new migration
 
-| Concept                                                              | Score |
-| ------------------------------------------------------------------- | ----- |
+| Concept                                                                | Score |
+| ---------------------------------------------------------------------- | ----- |
 | Amend a shipped bucket with a targeted `UPDATE ... WHERE id` migration | 2     |
 | New migration vs editing a shipped one (idempotent settings change)    | 2     |
+
+### 2026-06-01 — member-images: content-addressed storage + refcounted cleanup
+
+| Concept                                                    | Score |
+| ---------------------------------------------------------- | ----- |
+| Content-addressed storage (dedup by content hash)          | 4     |
+| Bucket = policy boundary, not feature boundary             | 5     |
+| Reference counting before deleting a shared object         | 3     |
+| storage.protect_delete: empty/drop buckets via Storage API | 2     |
+
+### 2026-06-01 — account-deletion cascade: FK actions, function search_path
+
+| Concept                                                          | Score |
+| ---------------------------------------------------------------- | ----- |
+| ON DELETE CASCADE vs NO ACTION (FK delete actions)               | 5     |
+| Changing an FK action = DROP + ADD CONSTRAINT                    | 4     |
+| Cascade only reaches as far as every link is CASCADE             | 4     |
+| search_path / schema-qualifying objects in functions             | 2     |
+| Role context in cascades (supabase_auth_admin vs postgres)       | 2     |
+| Trigger WHERE clause must cover soft-deleted rows to unblock FKs | 2     |
+| Reading the real error from Postgres container logs              | 3     |
+
+### 2026-06-04 — audio-reader: lessons table/bucket, edge functions
+
+| Concept                                                        | Score |
+| -------------------------------------------------------------- | ----- |
+| Owner column is what RLS compares against (load-bearing)       | 6     |
+| set_member_id trigger vs `default (select auth.uid())`         | 5     |
+| UPSERT needs a SELECT policy (ON CONFLICT probe) — re-exposure | 4     |
+| Private bucket + signed URLs vs public bucket                  | 4     |
+| Edge fn auth: user-scoped client vs service-role client        | 3     |
+| Re-checking role server-side (FE gate is not a boundary)       | 3     |
