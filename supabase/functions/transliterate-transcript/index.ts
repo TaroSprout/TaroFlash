@@ -38,8 +38,9 @@ Deno.serve(async (req) => {
     return jsonError('missing_fields', 400)
   }
 
+  // Resilient by design: failed batches come back as blank readings, so this
+  // always returns a full aligned array rather than erroring the whole lesson.
   const readings = await readSentences(sentences, lang)
-  if (!readings) return jsonError('transliteration_failed', 502)
 
   return new Response(JSON.stringify({ readings }), {
     headers: { ...cors, 'Content-Type': 'application/json' }

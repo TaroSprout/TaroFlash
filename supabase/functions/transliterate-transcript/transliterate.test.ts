@@ -106,52 +106,56 @@ Deno.test('batches by token count and concatenates in order (cap 80)', async () 
   )
 })
 
-Deno.test('returns null when a batch returns the wrong number of readings', async () => {
+Deno.test('blanks a batch that returns the wrong number of readings', async () => {
   await withFetch(
     (count) => ok(Array.from({ length: count - 1 }, (_, k) => `r${k}`)),
     async () => {
-      assertEquals(await readSentences([{ text: 'x', words: ['a', 'b', 'c'] }], 'Japanese'), null)
+      assertEquals(await readSentences([{ text: 'x', words: ['a', 'b', 'c'] }], 'Japanese'), [
+        '',
+        '',
+        ''
+      ])
     }
   )
 })
 
-Deno.test('returns null on a truncated (max_tokens) response', async () => {
+Deno.test('blanks a batch on a truncated (max_tokens) response', async () => {
   await withFetch(
     () => new Response(JSON.stringify({ stop_reason: 'max_tokens', content: [] }), { status: 200 }),
     async () => {
-      assertEquals(await readSentences([{ text: 'x', words: ['a'] }], 'Japanese'), null)
+      assertEquals(await readSentences([{ text: 'x', words: ['a'] }], 'Japanese'), [''])
     }
   )
 })
 
-Deno.test('returns null on a refusal', async () => {
+Deno.test('blanks a batch on a refusal', async () => {
   await withFetch(
     () => new Response(JSON.stringify({ stop_reason: 'refusal', content: [] }), { status: 200 }),
     async () => {
-      assertEquals(await readSentences([{ text: 'x', words: ['a'] }], 'Japanese'), null)
+      assertEquals(await readSentences([{ text: 'x', words: ['a'] }], 'Japanese'), [''])
     }
   )
 })
 
-Deno.test('returns null on a non-2xx upstream response', async () => {
+Deno.test('blanks a batch on a non-2xx upstream response', async () => {
   await withFetch(
     () => new Response('upstream boom', { status: 500 }),
     async () => {
-      assertEquals(await readSentences([{ text: 'x', words: ['a'] }], 'Japanese'), null)
+      assertEquals(await readSentences([{ text: 'x', words: ['a'] }], 'Japanese'), [''])
     }
   )
 })
 
-Deno.test('returns null when the model body is not parseable JSON', async () => {
+Deno.test('blanks a batch when the model body is not parseable JSON', async () => {
   await withFetch(
     () => new Response(JSON.stringify({ content: [{ text: 'not json' }] }), { status: 200 }),
     async () => {
-      assertEquals(await readSentences([{ text: 'x', words: ['a'] }], 'Japanese'), null)
+      assertEquals(await readSentences([{ text: 'x', words: ['a'] }], 'Japanese'), [''])
     }
   )
 })
 
-Deno.test('fails the whole request when a later batch fails (all-or-nothing)', async () => {
+Deno.test('a failed batch yields blanks while other batches survive', async () => {
   const sentences = [sentence('a', 50), sentence('b', 50)]
 
   await withFetch(
@@ -159,7 +163,12 @@ Deno.test('fails the whole request when a later batch fails (all-or-nothing)', a
     (count, callIndex) =>
       callIndex === 0 ? ok(Array.from({ length: count }, (_, k) => `r${k}`)) : ok(['only-one']),
     async () => {
-      assertEquals(await readSentences(sentences, 'Japanese'), null)
+      const result = await readSentences(sentences, 'Japanese')
+      assertEquals(result.length, 100)
+      assertEquals(result[0], 'r0')
+      assertEquals(result[49], 'r49')
+      assertEquals(result[50], '') // second batch blanked, not the whole lesson
+      assertEquals(result[99], '')
     }
   )
 })

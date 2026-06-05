@@ -131,18 +131,17 @@ async function readBatch(batch: ReadingSentence[], lang: string): Promise<string
 }
 
 // Read every word, batching internally. Returns the full flat list aligned to
-// the words in send order (skipping empty sentences), or null if any batch fails
-// — so callers treat it as all-or-nothing.
-export async function readSentences(
-  sentences: ReadingSentence[],
-  lang: string
-): Promise<string[] | null> {
+// the words in send order (skipping empty sentences). A batch that fails
+// (upstream error, refusal, truncation, or a count mismatch) contributes blank
+// readings for its own words rather than sinking the whole lesson — so a single
+// hiccup costs that batch's furigana, not all of it.
+export async function readSentences(sentences: ReadingSentence[], lang: string): Promise<string[]> {
   const readings: string[] = []
 
   for (const batch of batchSentences(sentences)) {
+    const total = batch.reduce((sum, sentence) => sum + sentence.words.length, 0)
     const result = await readBatch(batch, lang)
-    if (!result) return null
-    readings.push(...result)
+    readings.push(...(result ?? new Array<string>(total).fill('')))
   }
 
   return readings
