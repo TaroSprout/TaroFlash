@@ -41,6 +41,13 @@ describe('TranscriptSegment', () => {
       expect(words[0].props('display')).toBe('Hello ')
       expect(words[1].props('display')).toBe('world')
     })
+
+    test('passes each word reading through to TranscriptWord', () => {
+      const wrapper = mountSegment({
+        group: group([{ display: '猫', start: 0, index: 0, reading: 'ねこ' }])
+      })
+      expect(wrapper.findAllComponents(TranscriptWord)[0].props('reading')).toBe('ねこ')
+    })
   })
 
   describe('word identity', () => {

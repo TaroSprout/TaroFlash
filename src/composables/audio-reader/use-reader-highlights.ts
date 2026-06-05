@@ -99,16 +99,45 @@ export function useReaderHighlights(
     return el ? Number(el.getAttribute('data-word-index')) : null
   }
 
-  /** A DOM range spanning whole words `lo`..`hi`, for measuring + reading text. */
-  function wordRange({ lo, hi }: WordRange): Range | null {
-    const first = wordEl(lo)
-    const last = wordEl(hi)
-    if (!first || !last) return null
+  /**
+   * The selected term, reconstructed from each word's `data-word-text` rather
+   * than the DOM range's text — a range's `.toString()` would also pull in the
+   * furigana `<rt>` annotations and corrupt the term.
+   */
+  function rangeText({ lo, hi }: WordRange): string {
+    let text = ''
+    for (let i = lo; i <= hi; i++) text += wordEl(i)?.dataset.wordText ?? ''
+    return text
+  }
 
-    const range = document.createRange()
-    range.setStartBefore(first)
-    range.setEndAfter(last)
-    return range
+  // The word's base-text element — the ruby minus its `<rt>` reading — so
+  // measurements cover only the main text, not the furigana band above it.
+  // Falls back to the word element itself when there's no base marker.
+  function wordBaseEl(index: number): HTMLElement | null {
+    const el = wordEl(index)
+    return el?.querySelector<HTMLElement>('[data-word-base]') ?? el
+  }
+
+  function unionRect(a: DOMRect, b: DOMRect): DOMRect {
+    const left = Math.min(a.left, b.left)
+    const top = Math.min(a.top, b.top)
+    const right = Math.max(a.right, b.right)
+    const bottom = Math.max(a.bottom, b.bottom)
+    return new DOMRect(left, top, right - left, bottom - top)
+  }
+
+  // Bounding rect of words `lo`..`hi` over their base text only. Each base rect
+  // is unioned individually — a DOM range across the rubies would re-include the
+  // intermediate `<rt>` annotations and inflate the box upward.
+  function rangeRect({ lo, hi }: WordRange): DOMRect | null {
+    let box: DOMRect | null = null
+    for (let i = lo; i <= hi; i++) {
+      const el = wordBaseEl(i)
+      if (!el) continue
+      const rect = el.getBoundingClientRect()
+      box = box ? unionRect(box, rect) : rect
+    }
+    return box
   }
 
   // Map a viewport rect onto the content's own coordinate space, where the
@@ -124,12 +153,12 @@ export function useReaderHighlights(
   }
 
   function rangeBox(range: WordRange): CursorBox | null {
-    const dom = wordRange(range)
-    return dom ? boxOf(dom.getBoundingClientRect()) : null
+    const rect = rangeRect(range)
+    return rect ? boxOf(rect) : null
   }
 
   function wordBox(index: number): CursorBox | null {
-    const el = wordEl(index)
+    const el = wordBaseEl(index)
     return el ? boxOf(el.getBoundingClientRect()) : null
   }
 
@@ -189,15 +218,15 @@ export function useReaderHighlights(
     if (anchor_index.value === null || focus_index.value === null) return
 
     const range = orderedRange(anchor_index.value, focus_index.value)
-    const dom = wordRange(range)
+    const rect = rangeRect(range)
     const anchor = wordEl(range.lo)
-    if (!dom || !anchor) return
+    if (!rect || !anchor) return
 
-    const term = cleanTerm(dom.toString())
+    const term = cleanTerm(rangeText(range))
     if (!term) return
 
     committed.value = range
-    onSelect({ term, rect: dom.getBoundingClientRect(), anchor })
+    onSelect({ term, rect, anchor })
   }
 
   function onPointerDown(event: PointerEvent) {

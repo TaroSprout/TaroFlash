@@ -16,6 +16,7 @@ const { group, index } = defineProps<{
         :key="word.index"
         :display="word.display"
         :index="word.index"
+        :reading="word.reading"
     /></span>
     <span
       v-if="group.translation"
