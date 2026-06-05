@@ -41,9 +41,17 @@ const Host = defineComponent({
       [
         h('div', { ref: 'playhead' }),
         h('div', { ref: 'hover' }),
-        h('span', { 'data-testid': 'w0', 'data-word-index': '0' }, 'Hello '),
-        h('span', { 'data-testid': 'w1', 'data-word-index': '1' }, 'world'),
-        h('span', { 'data-testid': 'w2', 'data-word-index': '2' }, '. ')
+        h(
+          'span',
+          { 'data-testid': 'w0', 'data-word-index': '0', 'data-word-text': 'Hello ' },
+          'Hello '
+        ),
+        h(
+          'span',
+          { 'data-testid': 'w1', 'data-word-index': '1', 'data-word-text': 'world' },
+          'world'
+        ),
+        h('span', { 'data-testid': 'w2', 'data-word-index': '2', 'data-word-text': '. ' }, '. ')
       ]
     )
   }

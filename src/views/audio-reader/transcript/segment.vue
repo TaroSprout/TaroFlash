@@ -16,11 +16,12 @@ const { group, index } = defineProps<{
         :key="word.index"
         :display="word.display"
         :index="word.index"
+        :reading="word.reading"
     /></span>
     <span
       v-if="group.translation"
       data-testid="transcript-segment__translation"
-      class="mt-1 block text-lg text-brown-500 dark:text-brown-300"
+      class="block text-lg text-brown-500 dark:text-brown-300 leading-[1.5]"
       >{{ group.translation }}</span
     >
   </div>

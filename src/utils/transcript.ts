@@ -2,6 +2,8 @@ export type DisplayWord = {
   display: string
   start: number
   index: number
+  // Phonetic reading rendered above the word (furigana, pinyin, …), when present.
+  reading?: string
 }
 
 export type SentenceWords = {
@@ -117,7 +119,8 @@ function displayWords(text: string, words: TranscriptWord[]): DisplayWord[] {
   return words.map((word, i) => ({
     display: text.slice(bounds[i], bounds[i + 1]) || word.word.trim(),
     start: word.start,
-    index: i
+    index: i,
+    reading: word.reading
   }))
 }
 

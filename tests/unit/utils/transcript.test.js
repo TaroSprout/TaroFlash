@@ -133,6 +133,26 @@ describe('groupWordsBySentence — translation passthrough', () => {
   })
 })
 
+describe('groupWordsBySentence — reading passthrough', () => {
+  test('copies each word reading onto its display word', () => {
+    const words = [
+      { word: '猫', start: 0, end: 0.3, reading: 'ねこ' },
+      { word: 'が', start: 0.3, end: 0.6, reading: '' },
+      { word: '好き', start: 0.6, end: 0.9, reading: 'すき' }
+    ]
+
+    const groups = groupWordsBySentence([seg(0, 2, '猫が好き')], words, '猫が好き')
+
+    expect(groups[0].words.map((d) => d.reading)).toEqual(['ねこ', '', 'すき'])
+  })
+
+  test('leaves reading undefined when the word has none', () => {
+    const groups = groupWordsBySentence([seg(0, 2, 'The cat')], [w('The', 0), w('cat', 0.6)])
+
+    expect(groups[0].words[0].reading).toBeUndefined()
+  })
+})
+
 describe('groupWordsBySentence — inter-sentence spacing invariant', () => {
   test('preserves the space between sentences in the word display slices', () => {
     // "Hello world. How are you?" — ". " between sentences stays on the last

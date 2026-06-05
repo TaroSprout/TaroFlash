@@ -46,7 +46,7 @@ function commitSelection({ term, rect, anchor }: { term: string; rect: DOMRect; 
     <div
       ref="content"
       data-testid="transcript-view__content"
-      class="relative isolate flex select-none flex-col gap-7 text-2xl leading-relaxed text-brown-700 dark:text-brown-200"
+      class="relative isolate flex select-none flex-col gap-7 text-4xl leading-[2.5] text-brown-700 dark:text-brown-200"
       @pointerdown="onPointerDown"
       @pointermove="onPointerMove"
       @pointerup="onPointerUp"
