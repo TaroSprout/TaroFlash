@@ -190,3 +190,12 @@ When appending:
 | Private bucket + signed URLs vs public bucket                  | 4     |
 | Edge fn auth: user-scoped client vs service-role client        | 3     |
 | Re-checking role server-side (FE gate is not a boundary)       | 3     |
+
+### 2026-06-05 — lesson_collections: backfill + reparent existing lessons
+
+| Concept                                                       | Score |
+| ------------------------------------------------------------- | ----- |
+| DISABLE/ENABLE TRIGGER around a migration backfill            | 3     |
+| Data-modifying CTE (INSERT ... RETURNING driving an UPDATE)   | 2     |
+| Backfill → SET NOT NULL → ADD FK (ordering invariant lock-in) | 7     |
+| Correlated count subquery in a security_invoker view          | 5     |
