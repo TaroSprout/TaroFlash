@@ -6,7 +6,7 @@ defineProps<{
 </script>
 
 <template>
-  <div data-testid="ui-kit-divider" class="w-full flex items-center gap-2.5 px-2.5">
+  <div data-testid="ui-kit-divider" class="w-full flex items-center gap-2.5">
     <hr class="w-full border-t border-t-brown-500" :class="{ 'border-dashed ': dashed }" />
 
     <span v-if="label" class="text-brown-500">{{ label }}</span>

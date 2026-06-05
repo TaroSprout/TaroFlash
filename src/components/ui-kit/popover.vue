@@ -10,7 +10,8 @@ import {
   hide,
   type Placement,
   type Strategy,
-  type Padding
+  type Padding,
+  type VirtualElement
 } from '@floating-ui/vue'
 import uid from '@/utils/uid'
 
@@ -27,6 +28,7 @@ type PopoverProps = {
   shadow?: boolean
   use_arrow?: boolean
   clip?: boolean
+  anchor_rect?: DOMRect | null
 }
 
 const {
@@ -41,7 +43,8 @@ const {
   fallback_placements = ['right', 'left', 'top', 'bottom'],
   shadow = false,
   use_arrow = true,
-  clip = true
+  clip = true,
+  anchor_rect = null
 } = defineProps<PopoverProps>()
 
 const emit = defineEmits<{
@@ -55,7 +58,14 @@ const popoverRef = useTemplateRef('popoverRef')
 const arrowRef = useTemplateRef('arrowRef')
 const id = uid()
 
-const { placement, middlewareData, floatingStyles } = useFloating(triggerRef, popoverRef, {
+// Anchor against a selection rect (virtual element) when one is provided —
+// text-selection popovers have no DOM trigger to wrap. Falls back to the
+// wrapped trigger element otherwise.
+const reference = computed(() =>
+  anchor_rect ? ({ getBoundingClientRect: () => anchor_rect } as VirtualElement) : triggerRef.value
+)
+
+const { placement, middlewareData, floatingStyles } = useFloating(reference, popoverRef, {
   placement: position,
   strategy: strategy,
   whileElementsMounted: autoUpdate,

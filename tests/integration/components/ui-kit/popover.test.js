@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { useFloating } from '@floating-ui/vue'
 import UiPopover from '@/components/ui-kit/popover.vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
@@ -43,6 +44,7 @@ describe('UiPopover', () => {
   beforeEach(() => {
     floatingState.placement.value = 'top'
     floatingState.middlewareData.value = {}
+    useFloating.mockClear()
   })
 
   // ── Structure ──────────────────────────────────────────────────────────────
@@ -139,6 +141,23 @@ describe('UiPopover', () => {
     await nextTick()
     const arrowEl = wrapper.find('[data-testid="ui-kit-popover__arrow"]')
     expect(arrowEl.attributes('style')).toContain('top: 15px')
+  })
+
+  // ── anchor_rect — virtual reference element ─────────────────────────────────
+
+  test('anchors against a virtual element returning the provided rect when anchor_rect is set', () => {
+    const rect = new DOMRect(10, 20, 30, 40)
+    mountPopover({ open: true, anchor_rect: rect })
+
+    const reference = useFloating.mock.calls.at(-1)[0]
+    expect(reference.value.getBoundingClientRect()).toBe(rect)
+  })
+
+  test('falls back to the trigger element when anchor_rect is not provided', () => {
+    mountPopover({ open: true })
+
+    const reference = useFloating.mock.calls.at(-1)[0]
+    expect(reference.value).toBeInstanceOf(HTMLElement)
   })
 
   // ── close event on outside click ───────────────────────────────────────────

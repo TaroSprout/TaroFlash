@@ -28,7 +28,7 @@ function onSettingsClicked() {
         data-theme="blue-500"
         data-theme-dark="blue-650"
         icon-left="build"
-        class="absolute! -top-2.5 -left-2.5 border-t border-r border-brown-300 dark:border-stone-700"
+        class="absolute! -top-2.5 -left-2.5 ring-4 ring-brown-300 dark:border-stone-700"
         icon-only
       >
         {{ t('deck.settings-modal.title') }}
