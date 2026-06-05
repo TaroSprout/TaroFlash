@@ -16,7 +16,7 @@ const { display, index, reading } = defineProps<{
     ><rt
       v-if="reading"
       data-testid="transcript-word__reading"
-      class="select-none text-base text-brown-500 dark:text-grey-400"
+      class="-translate-y-1 select-none text-base text-brown-500 dark:text-grey-400"
       >{{ reading }}</rt
     ></ruby
   >
