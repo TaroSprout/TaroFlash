@@ -162,7 +162,7 @@ describe('translateTerm', () => {
 })
 
 describe('transliterateTranscript', () => {
-  const args = { words: ['猫', 'が', '好き'], lang: 'Japanese' }
+  const args = { sentences: [{ text: '猫が好き', words: ['猫', 'が', '好き'] }], lang: 'Japanese' }
 
   test('returns the readings on success', async () => {
     const data = { readings: ['ねこ', '', 'すき'] }

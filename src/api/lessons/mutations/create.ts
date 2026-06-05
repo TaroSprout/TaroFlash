@@ -5,6 +5,7 @@ import logger from '@/utils/logger'
 import { uploadLessonAudio, deleteLessonAudio } from '../db/audio'
 import { transcribeAudio, translateTranscript, transliterateTranscript } from '../db/ai'
 import { createLesson } from '../db/lessons'
+import { groupWordsBySentence } from '@/utils/transcript'
 
 // Interlinear translations are English-only in admin v1 (matches the term
 // popover's target). A per-member target language can replace this later.
@@ -35,7 +36,7 @@ export function useCreateLessonMutation() {
       try {
         const { text, segments, words, lang } = await transcribeAudio(file, script)
         const translated = await translateSegments(segments, onPhase)
-        const read = await transliterateWords(words, lang, onPhase)
+        const read = await transliterateWords(words, segments, text, lang, onPhase)
         return await createLesson({
           title,
           audio_path: path,
@@ -88,6 +89,8 @@ async function translateSegments(
  */
 async function transliterateWords(
   words: TranscriptWord[] | undefined,
+  segments: TranscriptSegment[],
+  text: string,
   lang: string | undefined,
   onPhase?: (phase: CreateLessonPhase) => void
 ): Promise<TranscriptWord[] | undefined> {
@@ -95,8 +98,20 @@ async function transliterateWords(
 
   onPhase?.('transliterating')
   try {
-    const { readings } = await transliterateTranscript({ words: words.map((w) => w.word), lang })
-    return words.map((word, i) => ({ ...word, reading: readings[i] || undefined }))
+    // Group words under their sentence so the model reads each in context, then
+    // scatter the flat, send-order readings back onto the words by global index.
+    const grouped = groupWordsBySentence(segments, words, text)
+    const sentences = grouped.map((group) => ({
+      text: group.sentence,
+      words: group.words.map((word) => words[word.index].word)
+    }))
+    const ids = grouped.flatMap((group) => group.words.map((word) => word.index))
+
+    const { readings } = await transliterateTranscript({ sentences, lang })
+
+    const read = words.map((word) => ({ ...word }))
+    ids.forEach((id, i) => (read[id].reading = readings[i] || undefined))
+    return read
   } catch (error) {
     logger.error(`Lesson transliteration failed: ${(error as Error).message}`)
     return words

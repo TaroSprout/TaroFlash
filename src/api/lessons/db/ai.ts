@@ -30,8 +30,13 @@ export type TranscriptTranslation = {
   translations: string[]
 }
 
-export type TransliterateTranscriptArgs = {
+export type ReadingSentence = {
+  text: string
   words: string[]
+}
+
+export type TransliterateTranscriptArgs = {
+  sentences: ReadingSentence[]
   lang: string
 }
 

@@ -269,7 +269,7 @@ describe('useCreateLessonMutation', () => {
       await mutation({ title: 'My Lesson', file })
 
       expect(transliterateTranscriptMock).toHaveBeenCalledWith({
-        words: ['猫', 'が', '好き'],
+        sentences: [{ text: '猫が好き', words: ['猫', 'が', '好き'] }],
         lang: 'ja'
       })
     })
