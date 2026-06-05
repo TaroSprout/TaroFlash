@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useSessionStore } from '@/stores/session'
+import { useMemberStore } from '@/stores/member'
 import { prefetchMemberDecks } from '@/api/decks'
 import { prefetchMemberById } from '@/api/members'
 import WelcomeView from '@/views/welcome/welcome-view.vue'
@@ -10,6 +11,16 @@ import AuthCallbackView from '@/views/auth/callback.vue'
 
 const Dashboard = () => import('@/views/dashboard/index.vue')
 const DeckView = () => import('@/views/deck/index.vue')
+const AudioReaderLesson = () => import('@/views/audio-reader/index.vue')
+
+// Mirrors useCan().useAudioReader (admin-only). Awaits the member query so a
+// direct URL hit doesn't read an empty role mid-restore. The real boundary is
+// the edge functions; this just keeps non-admins out of the UI.
+async function requireAudioReader() {
+  const id = useSessionStore().user?.id
+  if (id) await prefetchMemberById(id)
+  if (useMemberStore().role !== 'admin') return { name: 'dashboard' }
+}
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -62,6 +73,13 @@ const router = createRouter({
           name: 'deck',
           component: DeckView,
           props: true
+        },
+        {
+          path: 'audio-reader/:id',
+          name: 'audio-reader-lesson',
+          component: AudioReaderLesson,
+          props: true,
+          beforeEnter: requireAudioReader
         }
       ]
     }
