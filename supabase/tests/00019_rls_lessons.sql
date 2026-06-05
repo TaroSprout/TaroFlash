@@ -14,14 +14,18 @@ SELECT plan(11);
 SELECT tests.create_user('11111111-1111-1111-1111-111111111111'::uuid, 'alice_lessons');
 SELECT tests.create_user('22222222-2222-2222-2222-222222222222'::uuid, 'bob_lessons');
 
--- Insert lessons with claims set so the set_member_id trigger resolves auth.uid().
+-- Every lesson belongs to a collection (lessons.collection_id is NOT NULL), so
+-- each user gets one first. Claims are set so the set_member_id trigger stamps
+-- the owner on both the collection and its lessons.
 SELECT tests.set_claims('11111111-1111-1111-1111-111111111111'::uuid);
-INSERT INTO public.lessons (id, title, audio_path) VALUES
-  (100, 'Alice Lesson', '11111111-1111-1111-1111-111111111111/a.mp3');
+INSERT INTO public.lesson_collections (id, title) VALUES (10, 'Alice Collection');
+INSERT INTO public.lessons (id, collection_id, title, audio_path) VALUES
+  (100, 10, 'Alice Lesson', '11111111-1111-1111-1111-111111111111/a.mp3');
 
 SELECT tests.set_claims('22222222-2222-2222-2222-222222222222'::uuid);
-INSERT INTO public.lessons (id, title, audio_path) VALUES
-  (200, 'Bob Lesson', '22222222-2222-2222-2222-222222222222/b.mp3');
+INSERT INTO public.lesson_collections (id, title) VALUES (20, 'Bob Collection');
+INSERT INTO public.lessons (id, collection_id, title, audio_path) VALUES
+  (200, 20, 'Bob Lesson', '22222222-2222-2222-2222-222222222222/b.mp3');
 
 
 -- ── Act as Alice ──────────────────────────────────────────────────────────────
@@ -51,15 +55,15 @@ SELECT is(
 -- Test 3: Bob can create a lesson
 SELECT lives_ok(
   $$
-    INSERT INTO public.lessons (id, title, audio_path)
-    VALUES (201, 'Bob New Lesson', '22222222-2222-2222-2222-222222222222/c.mp3')
+    INSERT INTO public.lessons (id, collection_id, title, audio_path)
+    VALUES (201, 20, 'Bob New Lesson', '22222222-2222-2222-2222-222222222222/c.mp3')
   $$,
   'Bob can create a lesson'
 );
 
 -- Test 4: Trigger corrects member_id even if client sends a different value
-INSERT INTO public.lessons (id, title, audio_path, member_id)
-VALUES (999, 'Sneaky Lesson', 'x/d.mp3', '11111111-1111-1111-1111-111111111111');
+INSERT INTO public.lessons (id, collection_id, title, audio_path, member_id)
+VALUES (999, 20, 'Sneaky Lesson', 'x/d.mp3', '11111111-1111-1111-1111-111111111111');
 
 SET LOCAL role = 'postgres';
 SELECT is(
@@ -119,6 +123,7 @@ SET LOCAL role = 'authenticated';
 SELECT lives_ok(
   $$
     SELECT public.create_lesson(
+      20,
       'Bob RPC Lesson',
       '22222222-2222-2222-2222-222222222222/rpc.mp3',
       '{"text":"hi","segments":[]}'::jsonb,
