@@ -30,6 +30,15 @@ export type TranscriptTranslation = {
   translations: string[]
 }
 
+export type TransliterateTranscriptArgs = {
+  words: string[]
+  lang: string
+}
+
+export type TranscriptReadings = {
+  readings: string[]
+}
+
 // The edge functions return a JSON body `{ code }` on failure (e.g.
 // 'output_truncated', 'file_too_large'). supabase-js surfaces non-2xx as a
 // FunctionsHttpError carrying the Response on `.context`; this re-throws a typed
@@ -85,4 +94,10 @@ export function translateTerm(args: TranslateTermArgs): Promise<TranslationResul
 
 export function translateTranscript(args: TranslateTranscriptArgs): Promise<TranscriptTranslation> {
   return invokeEdge<TranscriptTranslation>('translate-transcript', args)
+}
+
+export function transliterateTranscript(
+  args: TransliterateTranscriptArgs
+): Promise<TranscriptReadings> {
+  return invokeEdge<TranscriptReadings>('transliterate-transcript', args)
 }

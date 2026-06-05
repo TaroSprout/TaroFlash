@@ -7,6 +7,7 @@ const {
   deleteLessonAudioMock,
   transcribeAudioMock,
   translateTranscriptMock,
+  transliterateTranscriptMock,
   createLessonMock
 } = vi.hoisted(() => ({
   useMutationSpy: vi.fn((cfg) => cfg),
@@ -15,6 +16,7 @@ const {
   deleteLessonAudioMock: vi.fn().mockResolvedValue(undefined),
   transcribeAudioMock: vi.fn(),
   translateTranscriptMock: vi.fn(),
+  transliterateTranscriptMock: vi.fn(),
   createLessonMock: vi.fn()
 }))
 
@@ -30,7 +32,8 @@ vi.mock('@/api/lessons/db/audio', () => ({
 
 vi.mock('@/api/lessons/db/ai', () => ({
   transcribeAudio: transcribeAudioMock,
-  translateTranscript: translateTranscriptMock
+  translateTranscript: translateTranscriptMock,
+  transliterateTranscript: transliterateTranscriptMock
 }))
 
 vi.mock('@/api/lessons/db/lessons', () => ({
@@ -52,6 +55,7 @@ beforeEach(() => {
   deleteLessonAudioMock.mockClear()
   transcribeAudioMock.mockReset()
   translateTranscriptMock.mockReset()
+  transliterateTranscriptMock.mockReset()
   createLessonMock.mockReset()
 })
 
@@ -240,6 +244,75 @@ describe('useCreateLessonMutation', () => {
 
       const { mutation } = configFrom(useCreateLessonMutation)
       await expect(mutation({ title: 'My Lesson', file })).resolves.not.toThrow()
+    })
+  })
+
+  describe('transliteration', () => {
+    const wordedTranscribe = {
+      text: '猫が好き',
+      segments: [{ start: 0, end: 1, text: '猫が好き' }],
+      words: [
+        { word: '猫', start: 0, end: 0.3 },
+        { word: 'が', start: 0.3, end: 0.6 },
+        { word: '好き', start: 0.6, end: 0.9 }
+      ],
+      lang: 'ja'
+    }
+
+    test('calls transliterateTranscript with the word tokens and lang', async () => {
+      transcribeAudioMock.mockResolvedValueOnce(wordedTranscribe)
+      translateTranscriptMock.mockResolvedValueOnce({ translations: ['I like cats'] })
+      transliterateTranscriptMock.mockResolvedValueOnce({ readings: ['ねこ', '', 'すき'] })
+      createLessonMock.mockResolvedValueOnce(lesson)
+
+      const { mutation } = configFrom(useCreateLessonMutation)
+      await mutation({ title: 'My Lesson', file })
+
+      expect(transliterateTranscriptMock).toHaveBeenCalledWith({
+        words: ['猫', 'が', '好き'],
+        lang: 'ja'
+      })
+    })
+
+    test('merges readings onto words and drops empty ones before createLesson', async () => {
+      transcribeAudioMock.mockResolvedValueOnce(wordedTranscribe)
+      translateTranscriptMock.mockResolvedValueOnce({ translations: ['I like cats'] })
+      transliterateTranscriptMock.mockResolvedValueOnce({ readings: ['ねこ', '', 'すき'] })
+      createLessonMock.mockResolvedValueOnce(lesson)
+
+      const { mutation } = configFrom(useCreateLessonMutation)
+      await mutation({ title: 'My Lesson', file })
+
+      const words = createLessonMock.mock.calls[0][0].transcript.words
+      expect(words[0].reading).toBe('ねこ')
+      expect(words[1].reading).toBeUndefined()
+      expect(words[2].reading).toBe('すき')
+    })
+
+    test('skips transliteration when there are no words', async () => {
+      transcribeAudioMock.mockResolvedValueOnce(transcribeResult)
+      translateTranscriptMock.mockResolvedValueOnce(translateResult)
+      createLessonMock.mockResolvedValueOnce(lesson)
+
+      const { mutation } = configFrom(useCreateLessonMutation)
+      await mutation({ title: 'My Lesson', file })
+
+      expect(transliterateTranscriptMock).not.toHaveBeenCalled()
+    })
+
+    test('still creates the lesson with unread words when transliterateTranscript rejects', async () => {
+      transcribeAudioMock.mockResolvedValueOnce(wordedTranscribe)
+      translateTranscriptMock.mockResolvedValueOnce({ translations: ['I like cats'] })
+      transliterateTranscriptMock.mockRejectedValueOnce(new Error('AI unavailable'))
+      createLessonMock.mockResolvedValueOnce(lesson)
+
+      const { mutation } = configFrom(useCreateLessonMutation)
+      const result = await mutation({ title: 'My Lesson', file })
+
+      expect(result).toEqual(lesson)
+      expect(deleteLessonAudioMock).not.toHaveBeenCalled()
+      const words = createLessonMock.mock.calls[0][0].transcript.words
+      expect(words.every((w) => w.reading === undefined)).toBe(true)
     })
   })
 

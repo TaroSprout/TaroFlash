@@ -14,7 +14,12 @@ vi.mock('@/supabase-client', () => ({
 
 vi.mock('@/utils/logger', () => ({ default: { error: vi.fn() } }))
 
-import { transcribeAudio, translateTerm, EdgeFunctionError } from '@/api/lessons/db/ai'
+import {
+  transcribeAudio,
+  translateTerm,
+  transliterateTranscript,
+  EdgeFunctionError
+} from '@/api/lessons/db/ai'
 
 beforeEach(() => {
   invokeMock.mockReset()
@@ -152,6 +157,38 @@ describe('translateTerm', () => {
 
     await expect(translateTerm(args)).rejects.toSatisfy(
       (e) => e instanceof EdgeFunctionError && e.code === 'no_data'
+    )
+  })
+})
+
+describe('transliterateTranscript', () => {
+  const args = { words: ['猫', 'が', '好き'], lang: 'Japanese' }
+
+  test('returns the readings on success', async () => {
+    const data = { readings: ['ねこ', '', 'すき'] }
+    invokeMock.mockResolvedValueOnce({ data, error: null })
+
+    const result = await transliterateTranscript(args)
+    expect(result).toEqual(data)
+  })
+
+  test('invokes the transliterate-transcript edge function with the args as body', async () => {
+    invokeMock.mockResolvedValueOnce({ data: { readings: [] }, error: null })
+    await transliterateTranscript(args)
+
+    const [name, opts] = invokeMock.mock.calls[0]
+    expect(name).toBe('transliterate-transcript')
+    expect(opts.body).toEqual(args)
+  })
+
+  test('throws EdgeFunctionError with parsed code on failure', async () => {
+    invokeMock.mockResolvedValueOnce({
+      data: null,
+      error: makeErrorWithContext({ code: 'transliteration_failed' })
+    })
+
+    await expect(transliterateTranscript(args)).rejects.toSatisfy(
+      (e) => e instanceof EdgeFunctionError && e.code === 'transliteration_failed'
     )
   })
 })

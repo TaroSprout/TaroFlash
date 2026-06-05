@@ -3,14 +3,14 @@ import { useMemberStore } from '@/stores/member'
 import uid from '@/utils/uid'
 import logger from '@/utils/logger'
 import { uploadLessonAudio, deleteLessonAudio } from '../db/audio'
-import { transcribeAudio, translateTranscript } from '../db/ai'
+import { transcribeAudio, translateTranscript, transliterateTranscript } from '../db/ai'
 import { createLesson } from '../db/lessons'
 
 // Interlinear translations are English-only in admin v1 (matches the term
 // popover's target). A per-member target language can replace this later.
 const TARGET_LANG = 'English'
 
-export type CreateLessonPhase = 'transcribing' | 'translating'
+export type CreateLessonPhase = 'transcribing' | 'translating' | 'transliterating'
 
 export type CreateLessonVars = {
   title: string
@@ -35,10 +35,11 @@ export function useCreateLessonMutation() {
       try {
         const { text, segments, words, lang } = await transcribeAudio(file, script)
         const translated = await translateSegments(segments, onPhase)
+        const read = await transliterateWords(words, lang, onPhase)
         return await createLesson({
           title,
           audio_path: path,
-          transcript: { text, segments: translated, words },
+          transcript: { text, segments: translated, words: read },
           lang
         })
       } catch (error) {
@@ -76,5 +77,28 @@ async function translateSegments(
   } catch (error) {
     logger.error(`Lesson translation failed: ${(error as Error).message}`)
     return segments
+  }
+}
+
+/**
+ * Best-effort: enrich each word with its phonetic reading for the furigana
+ * layer. Like translation, a failure must NOT sink the upload — we already hold
+ * a valid transcript — so this swallows errors and returns the words unread.
+ * Empty readings are dropped so only words that need one carry it.
+ */
+async function transliterateWords(
+  words: TranscriptWord[] | undefined,
+  lang: string | undefined,
+  onPhase?: (phase: CreateLessonPhase) => void
+): Promise<TranscriptWord[] | undefined> {
+  if (!words || words.length === 0 || !lang) return words
+
+  onPhase?.('transliterating')
+  try {
+    const { readings } = await transliterateTranscript({ words: words.map((w) => w.word), lang })
+    return words.map((word, i) => ({ ...word, reading: readings[i] || undefined }))
+  } catch (error) {
+    logger.error(`Lesson transliteration failed: ${(error as Error).message}`)
+    return words
   }
 }

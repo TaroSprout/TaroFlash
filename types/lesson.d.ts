@@ -14,6 +14,9 @@ type TranscriptWord = {
   word: string
   start: number
   end: number
+  // Phonetic reading shown above the word in the reader (furigana, pinyin, …);
+  // empty/absent when the word needs none or the lesson predates transliteration.
+  reading?: string
 }
 
 type LessonTranscript = {
