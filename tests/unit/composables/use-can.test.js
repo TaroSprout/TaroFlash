@@ -2,14 +2,19 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 
 let planRef
 let deckCountRef
+let roleRef
 
 vi.mock('@/stores/member', async () => {
   const { ref } = await vi.importActual('vue')
   planRef = ref(null)
+  roleRef = ref(null)
   return {
     useMemberStore: () => ({
       get plan() {
         return planRef.value
+      },
+      get role() {
+        return roleRef.value
       }
     })
   }
@@ -29,6 +34,7 @@ describe('useCan', () => {
   beforeEach(() => {
     planRef.value = null
     deckCountRef.value = 0
+    roleRef.value = null
   })
 
   describe('useProFeature', () => {
@@ -125,6 +131,33 @@ describe('useCan', () => {
       expect(can.useCardImages.value).toBe(true)
       planRef.value = 'free'
       expect(can.useCardImages.value).toBe(false)
+    })
+  })
+
+  describe('useAudioReader', () => {
+    test('true when member role is admin', () => {
+      roleRef.value = 'admin'
+      expect(useCan().useAudioReader.value).toBe(true)
+    })
+
+    test('false when member role is not admin', () => {
+      roleRef.value = 'member'
+      expect(useCan().useAudioReader.value).toBe(false)
+    })
+
+    test('false when member role is null', () => {
+      roleRef.value = null
+      expect(useCan().useAudioReader.value).toBe(false)
+    })
+
+    test('is a ComputedRef that re-evaluates when role changes', () => {
+      const can = useCan()
+      roleRef.value = 'member'
+      expect(can.useAudioReader.value).toBe(false)
+      roleRef.value = 'admin'
+      expect(can.useAudioReader.value).toBe(true)
+      roleRef.value = 'member'
+      expect(can.useAudioReader.value).toBe(false)
     })
   })
 })
