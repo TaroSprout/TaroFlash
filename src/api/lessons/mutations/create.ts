@@ -14,6 +14,8 @@ const TARGET_LANG = 'English'
 export type CreateLessonPhase = 'transcribing' | 'translating' | 'transliterating'
 
 export type CreateLessonVars = {
+  // The collection the new lesson is uploaded into.
+  collection_id: number
   title: string
   file: File
   // Which Chinese script to convert the transcript to (Whisper tends to emit
@@ -27,7 +29,13 @@ export function useCreateLessonMutation() {
   const queryCache = useQueryCache()
 
   return useMutation({
-    mutation: async ({ title, file, script, onPhase }: CreateLessonVars): Promise<Lesson> => {
+    mutation: async ({
+      collection_id,
+      title,
+      file,
+      script,
+      onPhase
+    }: CreateLessonVars): Promise<Lesson> => {
       const ext = (file.name.split('.').pop() || 'mp3').toLowerCase()
       const path = `${useMemberStore().id}/${uid()}.${ext}`
 
@@ -38,6 +46,7 @@ export function useCreateLessonMutation() {
         const translated = await translateSegments(segments, onPhase)
         const read = await transliterateWords(words, segments, text, lang, onPhase)
         return await createLesson({
+          collection_id,
           title,
           audio_path: path,
           transcript: { text, segments: translated, words: read },
@@ -50,8 +59,11 @@ export function useCreateLessonMutation() {
         throw error
       }
     },
-    onSettled: () => {
-      queryCache.invalidateQueries({ key: ['lessons'] })
+    onSettled: (_data, _error, { collection_id }) => {
+      // The lesson list is keyed by collection; the collection's lesson_count
+      // (read from the counts view) also changed.
+      queryCache.invalidateQueries({ key: ['lessons', collection_id] })
+      queryCache.invalidateQueries({ key: ['lesson-collections'] })
     }
   })
 }
