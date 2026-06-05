@@ -7,13 +7,17 @@ const UploadLesson = defineAsyncComponent(
   () => import('@/components/modals/upload-lesson/index.vue')
 )
 
-/** Open the upload-lesson modal. Resolves to the created Lesson, or undefined if cancelled. */
+/**
+ * Open the upload-lesson modal for a collection. Resolves to the created
+ * Lesson, or undefined if cancelled.
+ */
 export function useUploadLessonModal() {
   const modal = useModal()
 
-  function open() {
+  function open(collection_id: number) {
     emitSfx('ui.alert_clicks_wooden')
     const result = modal.open<UploadLessonResponse>(UploadLesson, {
+      props: { collection_id },
       backdrop: true,
       mode: 'mobile-sheet'
     })

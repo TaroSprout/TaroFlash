@@ -11,7 +11,7 @@ import AuthCallbackView from '@/views/auth/callback.vue'
 
 const Dashboard = () => import('@/views/dashboard/index.vue')
 const DeckView = () => import('@/views/deck/index.vue')
-const AudioReaderLesson = () => import('@/views/audio-reader/index.vue')
+const LessonCollection = () => import('@/views/audio-reader/collection/index.vue')
 
 // Mirrors useCan().useAudioReader (admin-only). Awaits the member query so a
 // direct URL hit doesn't read an empty role mid-restore. The real boundary is
@@ -75,9 +75,9 @@ const router = createRouter({
           props: true
         },
         {
-          path: 'audio-reader/:id',
-          name: 'audio-reader-lesson',
-          component: AudioReaderLesson,
+          path: 'audio-reader/collection/:id',
+          name: 'lesson-collection',
+          component: LessonCollection,
           props: true,
           beforeEnter: requireAudioReader
         }
