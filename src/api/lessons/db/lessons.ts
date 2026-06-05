@@ -1,19 +1,19 @@
 import { supabase } from '@/supabase-client'
-import { useMemberStore } from '@/stores/member'
 import logger from '@/utils/logger'
 
 export type CreateLessonParams = {
+  collection_id: number
   title: string
   audio_path: string
   transcript: LessonTranscript
   lang?: string
 }
 
-export async function fetchMemberLessons(): Promise<Lesson[]> {
+export async function fetchLessonsByCollection(collection_id: number): Promise<Lesson[]> {
   const { data, error } = await supabase
     .from('lessons')
     .select('*')
-    .eq('member_id', useMemberStore().id)
+    .eq('collection_id', collection_id)
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -40,6 +40,7 @@ export async function createLesson(params: CreateLessonParams): Promise<Lesson> 
   // migration). transcript is jsonb-serialized by supabase-js.
   const { data, error } = await supabase
     .rpc('create_lesson', {
+      p_collection_id: params.collection_id,
       p_title: params.title,
       p_audio_path: params.audio_path,
       p_transcript: params.transcript,

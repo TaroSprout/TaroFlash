@@ -2,49 +2,49 @@
 import { computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { useLessonsQuery, useDeleteLessonMutation } from '@/api/lessons'
+import { useLessonCollectionsQuery, useDeleteLessonCollectionMutation } from '@/api/lessons'
 import { useToast } from '@/composables/toast'
 import { useAlert } from '@/composables/alert'
-import { useUploadLessonModal } from '@/composables/modals/use-upload-lesson-modal'
+import { useCollectionCreateModal } from '@/composables/modals/use-collection-create-modal'
 import UiButton from '@/components/ui-kit/button.vue'
-import LessonCard from '@/views/audio-reader/lesson-card.vue'
+import CollectionCard from '@/views/audio-reader/collection-card.vue'
 
 const { t } = useI18n()
 const router = useRouter()
 const toast = useToast()
 const alert = useAlert()
-const upload_modal = useUploadLessonModal()
-const delete_lesson = useDeleteLessonMutation()
+const create_modal = useCollectionCreateModal()
+const delete_collection = useDeleteLessonCollectionMutation()
 
-const { data: lessons_data, error: lessons_error } = useLessonsQuery()
-const lessons = computed(() => lessons_data.value ?? [])
+const { data: collections_data, error: collections_error } = useLessonCollectionsQuery()
+const collections = computed(() => collections_data.value ?? [])
 
-watch(lessons_error, (err) => {
+watch(collections_error, (err) => {
   if (err) toast.error(err.message)
 })
 
-function onOpen(lesson: Lesson) {
-  router.push({ name: 'audio-reader-lesson', params: { id: lesson.id } })
+function onOpen(collection: LessonCollectionWithCount) {
+  router.push({ name: 'lesson-collection', params: { id: collection.id } })
 }
 
-async function onUpload() {
-  const lesson = await upload_modal.open().response
-  if (lesson) router.push({ name: 'audio-reader-lesson', params: { id: lesson.id } })
+async function onCreate() {
+  const collection = await create_modal.open().response
+  if (collection) router.push({ name: 'lesson-collection', params: { id: collection.id } })
 }
 
-async function onDelete(lesson: Lesson) {
+async function onDelete(collection: LessonCollectionWithCount) {
   const confirmed = await alert.warn({
-    title: t('alert.delete-lesson.title'),
-    message: t('alert.delete-lesson.message'),
-    confirmLabel: t('alert.delete-lesson.confirm'),
+    title: t('alert.delete-collection.title'),
+    message: t('alert.delete-collection.message'),
+    confirmLabel: t('alert.delete-collection.confirm'),
     confirmAudio: 'ui.trash_crumple_short'
   }).response
   if (!confirmed) return
 
   try {
-    await delete_lesson.mutateAsync(lesson.id)
+    await delete_collection.mutateAsync(collection.id)
   } catch {
-    toast.error(t('audio-reader.section.delete-error'))
+    toast.error(t('lesson-collections.section.delete-error'))
   }
 }
 </script>
@@ -53,7 +53,7 @@ async function onDelete(lesson: Lesson) {
   <section data-testid="audio-reader-section" class="flex flex-col gap-6">
     <header data-testid="audio-reader-section__header" class="flex items-center justify-between">
       <h2 class="text-3xl text-brown-700 dark:text-brown-300">
-        {{ t('audio-reader.section.heading') }}
+        {{ t('lesson-collections.section.heading') }}
       </h2>
 
       <ui-button
@@ -62,27 +62,27 @@ async function onDelete(lesson: Lesson) {
         data-theme-dark="blue-650"
         icon-left="add"
         size="lg"
-        @click="onUpload"
+        @click="onCreate"
       >
-        {{ t('audio-reader.section.new-button') }}
+        {{ t('lesson-collections.section.new-button') }}
       </ui-button>
     </header>
 
     <p
-      v-if="lessons.length === 0"
+      v-if="collections.length === 0"
       data-testid="audio-reader-section__empty"
       class="text-brown-500 dark:text-grey-400"
     >
-      {{ t('audio-reader.section.empty-fallback') }}
+      {{ t('lesson-collections.section.empty-fallback') }}
     </p>
 
     <div v-else data-testid="audio-reader-section__list" class="flex flex-wrap gap-6">
-      <lesson-card
-        v-for="lesson in lessons"
-        :key="lesson.id"
-        :lesson="lesson"
-        @open="onOpen(lesson)"
-        @delete="onDelete(lesson)"
+      <collection-card
+        v-for="collection in collections"
+        :key="collection.id"
+        :collection="collection"
+        @open="onOpen(collection)"
+        @delete="onDelete(collection)"
       />
     </div>
   </section>

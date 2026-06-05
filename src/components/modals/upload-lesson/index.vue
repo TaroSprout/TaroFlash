@@ -14,7 +14,8 @@ export type UploadLessonResponse = Lesson | undefined
 // an over-cap file fails instantly instead of after an upload round-trip.
 const MAX_BYTES = 26214400
 
-const { close } = defineProps<{
+const { collection_id, close } = defineProps<{
+  collection_id: number
   close: (response?: UploadLessonResponse) => void
 }>()
 
@@ -56,6 +57,7 @@ async function onSubmit() {
   phase.value = 'transcribing'
   try {
     const lesson = await create.mutateAsync({
+      collection_id,
       title: title.value.trim(),
       file: file.value,
       script: script.value,

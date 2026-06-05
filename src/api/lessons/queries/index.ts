@@ -1,3 +1,5 @@
-export * from './list'
+export * from './collections'
+export * from './collection-by-id'
+export * from './lessons-by-collection'
 export * from './by-id'
 export * from './audio-url'

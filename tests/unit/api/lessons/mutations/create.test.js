@@ -357,16 +357,22 @@ describe('useCreateLessonMutation', () => {
   })
 
   describe('onSettled', () => {
-    test('invalidates ["lessons"] query on success', () => {
+    test('invalidates the collection lesson list on success', () => {
       const { onSettled } = configFrom(useCreateLessonMutation)
-      onSettled(lesson, undefined, { title: 'My Lesson', file })
-      expect(invalidateSpy).toHaveBeenCalledWith({ key: ['lessons'] })
+      onSettled(lesson, undefined, { collection_id: 7, title: 'My Lesson', file })
+      expect(invalidateSpy).toHaveBeenCalledWith({ key: ['lessons', 7] })
     })
 
-    test('invalidates ["lessons"] query on error', () => {
+    test('invalidates ["lesson-collections"] so the dashboard count refreshes', () => {
       const { onSettled } = configFrom(useCreateLessonMutation)
-      onSettled(undefined, new Error('boom'), { title: 'My Lesson', file })
-      expect(invalidateSpy).toHaveBeenCalledWith({ key: ['lessons'] })
+      onSettled(lesson, undefined, { collection_id: 7, title: 'My Lesson', file })
+      expect(invalidateSpy).toHaveBeenCalledWith({ key: ['lesson-collections'] })
+    })
+
+    test('invalidates the collection lesson list on error', () => {
+      const { onSettled } = configFrom(useCreateLessonMutation)
+      onSettled(undefined, new Error('boom'), { collection_id: 7, title: 'My Lesson', file })
+      expect(invalidateSpy).toHaveBeenCalledWith({ key: ['lessons', 7] })
     })
   })
 })

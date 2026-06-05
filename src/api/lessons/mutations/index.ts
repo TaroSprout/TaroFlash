@@ -1,3 +1,5 @@
 export * from './create'
 export * from './delete'
+export * from './create-collection'
+export * from './delete-collection'
 export * from './translate-term'

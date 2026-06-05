@@ -28,12 +28,28 @@ type LessonTranscript = {
 type Lesson = {
   id: number
   member_id?: string
+  collection_id: number
   title: string
   audio_path: string
   transcript: LessonTranscript
   lang?: string
   created_at?: string
   updated_at?: string
+}
+
+// A deck-like grouping of lessons. Every lesson belongs to exactly one.
+type LessonCollection = {
+  id: number
+  member_id?: string
+  title: string
+  created_at?: string
+  updated_at?: string
+}
+
+// Shape returned by the lesson_collections_with_counts view — the dashboard
+// card reads the lesson count from here in a single query.
+type LessonCollectionWithCount = LessonCollection & {
+  lesson_count: number
 }
 
 // A term the reader tapped or selected, with the sentence it sits in (translator
