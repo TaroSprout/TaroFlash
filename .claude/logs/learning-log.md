@@ -207,3 +207,12 @@ When appending:
 | ADD COLUMN ... CHECK (col IN (...)) as a lightweight enum       | 2     |
 | DEFAULT on a new NOT NULL column = no backfill for existing rows| 3     |
 | Sibling RPC (create_pending_lesson) vs reusing one signature    | 2     |
+
+### 2026-06-05 — async transcription: background worker edge function
+
+| Concept                                                          | Score |
+| ---------------------------------------------------------------- | ----- |
+| EdgeRuntime.waitUntil — finish work after returning the response | 2     |
+| user-client (RLS insert) vs service-role (trusted write) split   | 3     |
+| Shared module in _shared vs cross-function imports               | 2     |
+| AbortController timeout + bounded retry on a fetch               | 2     |
