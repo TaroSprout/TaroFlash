@@ -42,7 +42,34 @@ a 48-min file: the edge runtime hit its **wall-clock limit** (~20s locally,
 - **Wall-clock ceiling.** Any one invocation is time-boxed. The fix is to keep
   each invocation's work _small_, not to make one call longer.
 
-## Phase B direction — prefer model B
+## First fork: do we even chunk? (Whisper vs async ASR provider)
+
+Chunking is only forced by **Whisper's API shape**: synchronous, 25 MB cap, and
+no "transcribe seconds X–Y" parameter — so the only way to bound a single call
+is to split the audio into smaller files. The upload itself is NOT a problem
+(a 48-min file lands in storage fine), so compression is optional once chunked.
+
+Two fundamentally different Phase B paths — decide this before anything else:
+
+- **Path 1 — stay on Whisper, chunk it ourselves.** Split the audio into short
+  pieces, transcribe each within budget, merge. Requires ffmpeg-level splitting
+  somewhere (the edge runtime is a bad host: no native ffmpeg + wall-clock
+  bound), which is why client-side ffmpeg.wasm comes up. Heavy (~25 MB wasm,
+  client CPU). Detailed below.
+- **Path 2 — async long-audio ASR provider** (AssemblyAI, Deepgram, …). Submit a
+  signed URL of the already-uploaded audio; the provider transcribes long audio
+  server-side and notifies via webhook/poll. **No chunking, no ffmpeg, no client
+  work, no wall-clock ceiling** — `start` just submits and returns (fast,
+  synchronous), and a webhook handler maps the transcript → translate/
+  transliterate → `ready`. Likely needs **no `waitUntil`**, so `oneshot`/
+  hot-reload could stay. Trade-off: a new ASR vendor (cost, and mapping the
+  provider's segment/word timestamps onto our `transcript` JSON), versus
+  Whisper. **This may be simpler and more robust than Path 1 — evaluate it
+  first.**
+
+The rest of this note details Path 1.
+
+## Phase B direction (Path 1) — prefer model B
 
 **Chunk + compress the audio so each transcription unit is small, and process
 those units with a durable/incremental worker.**
