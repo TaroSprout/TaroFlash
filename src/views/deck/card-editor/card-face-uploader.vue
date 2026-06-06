@@ -14,6 +14,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import { type CardListController } from '@/composables/card-editor/card-list-controller'
+import { useCardImageGate } from '@/composables/card-editor/use-card-image-gate'
 import { useImageDropzone } from '@/composables/card-editor/use-image-dropzone'
 import { useToast } from '@/composables/toast'
 import { emitSfx } from '@/sfx/bus'
@@ -39,6 +40,7 @@ const { card, side, disabled = false, error = false } = defineProps<CardFaceUplo
 
 const { t } = useI18n()
 const toast = useToast()
+const { guardCardImage } = useCardImageGate()
 const { setFaceImage } = inject<CardListController>('card-editor')!
 
 const addIcon = useTemplateRef<HTMLElement>('addIcon')
@@ -64,7 +66,8 @@ const {
   maxBytes: CARD_IMAGE_MAX_BYTES,
   fileInput,
   onFile: uploadFile,
-  onError: () => emitSfx('ui.digi_powerdown')
+  onError: () => emitSfx('ui.digi_powerdown'),
+  guard: guardCardImage
 })
 
 const image_path = computed(() => (side === 'front' ? card.front_image_path : card.back_image_path))
@@ -122,7 +125,11 @@ async function onRemove() {
   }
 }
 
-function onBrowse() {
+async function onBrowse() {
+  // Card images are paid; a free member gets the upgrade alert instead of the
+  // file picker. The drop path is gated via the dropzone `guard`.
+  if (!(await guardCardImage())) return
+
   emitSfx('ui.select')
   if (addIcon.value) playButtonTap(addIcon.value, 0.35, { yoyo: true })
   browse()

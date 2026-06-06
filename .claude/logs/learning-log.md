@@ -202,11 +202,11 @@ When appending:
 
 ### 2026-06-05 — lessons: async transcription job-state columns
 
-| Concept                                                        | Score |
-| -------------------------------------------------------------- | ----- |
-| ADD COLUMN ... CHECK (col IN (...)) as a lightweight enum       | 2     |
-| DEFAULT on a new NOT NULL column = no backfill for existing rows| 3     |
-| Sibling RPC (create_pending_lesson) vs reusing one signature    | 2     |
+| Concept                                                          | Score |
+| ---------------------------------------------------------------- | ----- |
+| ADD COLUMN ... CHECK (col IN (...)) as a lightweight enum        | 2     |
+| DEFAULT on a new NOT NULL column = no backfill for existing rows | 3     |
+| Sibling RPC (create_pending_lesson) vs reusing one signature     | 2     |
 
 ### 2026-06-05 — async transcription: background worker edge function
 
@@ -214,15 +214,26 @@ When appending:
 | ---------------------------------------------------------------- | ----- |
 | EdgeRuntime.waitUntil — finish work after returning the response | 2     |
 | user-client (RLS insert) vs service-role (trusted write) split   | 3     |
-| Shared module in _shared vs cross-function imports               | 2     |
+| Shared module in \_shared vs cross-function imports              | 2     |
 | AbortController timeout + bounded retry on a fetch               | 2     |
 
 ### 2026-06-06 — lessons: chapter position (window fn) + progress bookmark
 
-| Concept                                                          | Score |
-| ---------------------------------------------------------------- | ----- |
-| Window function: row_number() over (partition by / order by)     | 1     |
-| Window fn keeps rows (vs group by collapsing them)               | 2     |
-| Window fn not allowed in UPDATE SET — subquery + join back by id | 1     |
-| ON DELETE SET NULL (third FK delete action, vs cascade/no action)| 3     |
-| Server-computed sort key (position = max+1, like card rank)      | 3     |
+| Concept                                                           | Score |
+| ----------------------------------------------------------------- | ----- |
+| Window function: row_number() over (partition by / order by)      | 1     |
+| Window fn keeps rows (vs group by collapsing them)                | 2     |
+| Window fn not allowed in UPDATE SET — subquery + join back by id  | 1     |
+| ON DELETE SET NULL (third FK delete action, vs cascade/no action) | 3     |
+| Server-computed sort key (position = max+1, like card rank)       | 3     |
+
+### 2026-06-06 — card-image paywall: RLS plan gate, SECURITY DEFINER grants, orphan GC
+
+| Concept                                                             | Score |
+| ------------------------------------------------------------------- | ----- |
+| RLS WITH CHECK on INSERT gating a column value (re-exposure)        | 8     |
+| Three-valued logic + COALESCE for a nullable column in a policy     | 6     |
+| SECURITY DEFINER function reading storage.objects                   | 5     |
+| Function EXECUTE grants: REVOKE FROM public ≠ anon/authenticated    | 4     |
+| Supabase default-privileges (DB-as-API) + why definer fns are risky | 4     |
+| Storage orphan GC: tracked-bucket scan + created_at grace window    | 5     |

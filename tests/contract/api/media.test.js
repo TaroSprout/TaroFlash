@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vite-plus/test'
 import { signInAsTestUser } from '../setup.js'
-import { createDeck, insertCardDirect, makeImageFile } from '../fixtures.js'
+import { createDeck, insertCardDirect, makeImageFile, setMemberPlan } from '../fixtures.js'
 import { uploadImage, deleteImage, getImageUrl, insertMedia, deleteMedia } from '@/api/media/db'
 
 let session
@@ -34,6 +34,9 @@ describe('uploadImage / deleteImage / getImageUrl (contract)', () => {
 
 describe('insertMedia / deleteMedia (contract)', () => {
   test('inserts a media row and soft-deletes via deleteMedia', async () => {
+    // Card-image media INSERT requires a paid plan (enforced by RLS).
+    await setMemberPlan(session.userId, 'paid')
+
     const path = `${session.userId}/contract-media.png`
     await uploadImage('member-images', path, makeImageFile())
 
