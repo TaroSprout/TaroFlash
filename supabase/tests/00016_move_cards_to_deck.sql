@@ -70,11 +70,20 @@ INSERT INTO public.decks (id, title, is_public) VALUES
 -- auth.uid() (even for postgres-role inserts). Set Alice's claims before
 -- inserting Alice's cards so the trigger stamps the correct UUID.
 --
--- Advance the card sequence to 100000 BEFORE any explicit-ID inserts so that
+-- Advance the card sequence above 100000 BEFORE any explicit-ID inserts so that
 -- subsequent auto-ID inserts (generate_series) start above 100000 and never
 -- collide with our explicit IDs (9001-9090).
+--
+-- setval is NON-transactional, so it survives this test's ROLLBACK. Using a flat
+-- 100000 would strand the sequence below any committed card whose id is already
+-- past 100000 (dev DBs accumulate these), making the NEXT insert anywhere collide
+-- on Cards_pkey. GREATEST(100000, max(id)) keeps the sequence at or above the
+-- real high-water mark, so it's always safe to leave behind.
 
-SELECT setval(pg_get_serial_sequence('public.cards', 'id'), 100000);
+SELECT setval(
+  pg_get_serial_sequence('public.cards', 'id'),
+  GREATEST(100000, (SELECT COALESCE(MAX(id), 0) FROM public.cards))
+);
 
 SELECT tests.set_claims('aaaaaaaa-aaaa-aaaa-aaaa-000000000001'::uuid);
 

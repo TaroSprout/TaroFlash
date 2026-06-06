@@ -6,11 +6,18 @@ import {
   hideReaderCursor,
   type CursorBox
 } from '@/utils/animations/reader-cursor'
+import { scrollLineIntoView } from '@/utils/animations/transcript-scroll'
 
 // How far each highlight bleeds past the text on every side, so it reads as a
 // padded pill rather than a tight box.
 const PAD_X = 3
 const PAD_Y = 2
+
+// The active-sentence backdrop bleeds further than the word pills so it reads as
+// a padded block behind the whole line; it glides calmly rather than snapping.
+const SENTENCE_PAD_X = 8
+const SENTENCE_PAD_Y = 6
+const SENTENCE_DURATION = 0.3
 
 // The interaction pill answers the pointer, so it glides faster than the
 // audio-driven playhead (which keeps the slower, stretchy default).
@@ -59,6 +66,7 @@ export function useReaderHighlights(
   const content = useTemplateRef<HTMLElement>('content')
   const playhead = useTemplateRef<HTMLElement>('playhead')
   const hover = useTemplateRef<HTMLElement>('hover')
+  const sentence = useTemplateRef<HTMLElement>('sentence')
 
   // The word under the pointer (hover) or, while dragging, the focus end of the
   // range. `anchor_index` is the fixed end of a drag — null when not dragging.
@@ -188,7 +196,68 @@ export function useReaderHighlights(
     }
 
     moveReaderCursor(playhead.value, box, { stretch: true })
-    wordEl(toValue(active_word))?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }
+
+  /** The segment (sentence) element the active word sits in, or null for none. */
+  function activeSegmentEl(): HTMLElement | null {
+    const index = toValue(active_word)
+    if (index < 0) return null
+    return (wordEl(index)?.closest('[data-testid="transcript-segment"]') as HTMLElement) ?? null
+  }
+
+  function segmentBox(el: HTMLElement): CursorBox {
+    const base = content.value!.getBoundingClientRect()
+    const rect = el.getBoundingClientRect()
+    return {
+      left: rect.left - base.left - SENTENCE_PAD_X,
+      top: rect.top - base.top - SENTENCE_PAD_Y,
+      width: rect.width + SENTENCE_PAD_X * 2,
+      height: rect.height + SENTENCE_PAD_Y * 2
+    }
+  }
+
+  function positionSentence() {
+    if (!sentence.value) return
+
+    const seg = activeSegmentEl()
+    if (!seg) {
+      hideReaderCursor(sentence.value)
+      return
+    }
+
+    moveReaderCursor(sentence.value, segmentBox(seg), {
+      stretch: false,
+      duration: SENTENCE_DURATION
+    })
+  }
+
+  // The nearest ancestor that actually scrolls — the reader column on desktop.
+  // On mobile the column isn't bounded so nothing overflows; fall back to the
+  // window, which is the real scroller there. Requiring real overflow (not just
+  // an `overflow-y: auto` style) is what makes that fallback kick in.
+  function scrollParentOf(el: HTMLElement | null): HTMLElement | Window {
+    let node = el?.parentElement ?? null
+    while (node) {
+      const overflow_y = getComputedStyle(node).overflowY
+      const scrollable = overflow_y === 'auto' || overflow_y === 'scroll'
+      if (scrollable && node.scrollHeight > node.clientHeight) return node
+      node = node.parentElement
+    }
+    return window
+  }
+
+  // Follow the active line down the column, but only when the *sentence* changes
+  // — re-scrolling on every word would jitter mid-sentence.
+  let last_segment_index = -1
+  function followActiveSentence() {
+    const seg = activeSegmentEl()
+    if (!seg) return
+
+    const index = Number(seg.getAttribute('data-index'))
+    if (index === last_segment_index) return
+    last_segment_index = index
+
+    scrollLineIntoView(scrollParentOf(content.value), seg)
   }
 
   function positionInteraction() {
@@ -206,6 +275,7 @@ export function useReaderHighlights(
   function reposition() {
     positionPlayhead()
     positionInteraction()
+    positionSentence()
   }
 
   function orderedRange(a: number, b: number): WordRange {
@@ -279,7 +349,15 @@ export function useReaderHighlights(
   }
 
   // flush: 'post' so any layout settling lands before we measure word rects.
-  watch(() => toValue(active_word), positionPlayhead, { flush: 'post' })
+  watch(
+    () => toValue(active_word),
+    () => {
+      positionPlayhead()
+      positionSentence()
+      followActiveSentence()
+    },
+    { flush: 'post' }
+  )
   watch([focus_index, anchor_index, committed], positionInteraction, { flush: 'post' })
   watch(
     () => toValue(popover_open),
@@ -288,5 +366,14 @@ export function useReaderHighlights(
     }
   )
 
-  return { content, playhead, hover, onPointerDown, onPointerMove, onPointerUp, onPointerLeave }
+  return {
+    content,
+    playhead,
+    hover,
+    sentence,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerLeave
+  }
 }

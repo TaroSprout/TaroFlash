@@ -217,6 +217,16 @@ When appending:
 | Shared module in \_shared vs cross-function imports              | 2     |
 | AbortController timeout + bounded retry on a fetch               | 2     |
 
+### 2026-06-06 — lessons: chapter position (window fn) + progress bookmark
+
+| Concept                                                           | Score |
+| ----------------------------------------------------------------- | ----- |
+| Window function: row_number() over (partition by / order by)      | 1     |
+| Window fn keeps rows (vs group by collapsing them)                | 2     |
+| Window fn not allowed in UPDATE SET — subquery + join back by id  | 1     |
+| ON DELETE SET NULL (third FK delete action, vs cascade/no action) | 3     |
+| Server-computed sort key (position = max+1, like card rank)       | 3     |
+
 ### 2026-06-06 — card-image paywall: RLS plan gate, SECURITY DEFINER grants, orphan GC
 
 | Concept                                                             | Score |

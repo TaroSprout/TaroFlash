@@ -8,7 +8,7 @@ const { collection } = defineProps<{ collection: LessonCollectionWithCount }>()
 
 const emit = defineEmits<{
   (e: 'open'): void
-  (e: 'delete'): void
+  (e: 'edit'): void
 }>()
 
 const { t } = useI18n()
@@ -22,7 +22,7 @@ const { t } = useI18n()
     <button
       data-testid="collection-card__open"
       type="button"
-      class="flex flex-col gap-3"
+      class="flex cursor-pointer flex-col gap-3"
       @click="emit('open')"
     >
       <span
@@ -52,15 +52,15 @@ const { t } = useI18n()
     </button>
 
     <ui-button
-      data-testid="collection-card__delete"
+      data-testid="collection-card__edit"
       data-theme="grey-400"
-      icon-left="delete"
+      icon-left="settings"
       icon-only
       size="sm"
       class="absolute top-3 right-3 opacity-0 group-hover:opacity-100"
-      @click="emit('delete')"
+      @click="emit('edit')"
     >
-      {{ t('lesson-collections.card.delete-button') }}
+      {{ t('lesson-collections.card.edit-button') }}
     </ui-button>
   </div>
 </template>

@@ -4,21 +4,27 @@ import { defineComponent, h } from 'vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { collectionsDataRef, mutateAsyncMock, createModalOpenMock, alertWarnMock, routerPushMock } =
+const { collectionsDataRef, openCollectionMock, editModalOpenMock, createModalOpenMock } =
   vi.hoisted(() => ({
     collectionsDataRef: { value: [] },
-    mutateAsyncMock: vi.fn().mockResolvedValue(undefined),
-    createModalOpenMock: vi.fn().mockReturnValue({ response: Promise.resolve(undefined) }),
-    alertWarnMock: vi.fn().mockReturnValue({ response: Promise.resolve(true) }),
-    routerPushMock: vi.fn()
+    openCollectionMock: vi.fn(),
+    editModalOpenMock: vi.fn(),
+    createModalOpenMock: vi.fn().mockReturnValue({ response: Promise.resolve(undefined) })
   }))
 
 vi.mock('@/api/lessons', () => ({
   useLessonCollectionsQuery: () => ({
     data: collectionsDataRef,
     error: { value: null }
-  }),
-  useDeleteLessonCollectionMutation: () => ({ mutateAsync: mutateAsyncMock })
+  })
+}))
+
+vi.mock('@/composables/audio-reader/use-open-collection', () => ({
+  useOpenCollection: () => ({ openCollection: openCollectionMock })
+}))
+
+vi.mock('@/composables/modals/use-collection-edit-modal', () => ({
+  useCollectionEditModal: () => ({ open: editModalOpenMock })
 }))
 
 vi.mock('@/composables/modals/use-collection-create-modal', () => ({
@@ -29,20 +35,12 @@ vi.mock('@/composables/toast', () => ({
   useToast: () => ({ success: vi.fn(), error: vi.fn() })
 }))
 
-vi.mock('@/composables/alert', () => ({
-  useAlert: () => ({ warn: alertWarnMock })
-}))
-
-vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: routerPushMock })
-}))
-
 // ── Stubs ──────────────────────────────────────────────────────────────────────
 
 const CollectionCardStub = defineComponent({
   name: 'CollectionCard',
   props: ['collection'],
-  emits: ['open', 'delete'],
+  emits: ['open', 'edit'],
   setup(props, { emit }) {
     return () =>
       h('div', { 'data-testid': 'collection-card', 'data-collection-id': props.collection.id }, [
@@ -51,11 +49,7 @@ const CollectionCardStub = defineComponent({
           { 'data-testid': 'collection-card__open', onClick: () => emit('open') },
           'Open'
         ),
-        h(
-          'button',
-          { 'data-testid': 'collection-card__delete', onClick: () => emit('delete') },
-          'Delete'
-        )
+        h('button', { 'data-testid': 'collection-card__edit', onClick: () => emit('edit') }, 'Edit')
       ])
   }
 })
@@ -85,10 +79,9 @@ function mountSection() {
 
 beforeEach(() => {
   collectionsDataRef.value = []
-  mutateAsyncMock.mockClear()
+  openCollectionMock.mockClear()
+  editModalOpenMock.mockClear()
   createModalOpenMock.mockReturnValue({ response: Promise.resolve(undefined) })
-  alertWarnMock.mockReturnValue({ response: Promise.resolve(true) })
-  routerPushMock.mockClear()
 })
 
 describe('AudioReaderSection', () => {
@@ -127,14 +120,20 @@ describe('AudioReaderSection', () => {
   })
 
   describe('opening a collection', () => {
-    test('clicking a collection card open pushes to lesson-collection route', async () => {
+    test('clicking a collection card open calls openCollection with the collection', async () => {
       collectionsDataRef.value = COLLECTIONS
       const wrapper = mountSection()
       await wrapper.find('[data-testid="collection-card__open"]').trigger('click')
-      expect(routerPushMock).toHaveBeenCalledWith({
-        name: 'lesson-collection',
-        params: { id: COLLECTIONS[0].id }
-      })
+      expect(openCollectionMock).toHaveBeenCalledWith(COLLECTIONS[0])
+    })
+  })
+
+  describe('editing a collection', () => {
+    test('clicking a collection card edit calls editModal.open with the collection id', async () => {
+      collectionsDataRef.value = COLLECTIONS
+      const wrapper = mountSection()
+      await wrapper.find('[data-testid="collection-card__edit"]').trigger('click')
+      expect(editModalOpenMock).toHaveBeenCalledWith(COLLECTIONS[0].id)
     })
   })
 
@@ -145,48 +144,21 @@ describe('AudioReaderSection', () => {
       expect(createModalOpenMock).toHaveBeenCalled()
     })
 
-    test('navigates to the new collection when the modal resolves with one', async () => {
+    test('opens edit modal for the new collection when the create modal resolves with one', async () => {
       const newCollection = { id: 99, title: 'New', lesson_count: 0, created_at: '' }
       createModalOpenMock.mockReturnValue({ response: Promise.resolve(newCollection) })
       const wrapper = mountSection()
       await wrapper.find('[data-testid="audio-reader-section__new"]').trigger('click')
       await flushPromises()
-      expect(routerPushMock).toHaveBeenCalledWith({
-        name: 'lesson-collection',
-        params: { id: newCollection.id }
-      })
+      expect(editModalOpenMock).toHaveBeenCalledWith(newCollection.id)
     })
 
-    test('does not navigate when the modal is cancelled', async () => {
+    test('does not open edit modal when the create modal is cancelled', async () => {
       createModalOpenMock.mockReturnValue({ response: Promise.resolve(undefined) })
       const wrapper = mountSection()
       await wrapper.find('[data-testid="audio-reader-section__new"]').trigger('click')
       await flushPromises()
-      expect(routerPushMock).not.toHaveBeenCalled()
-    })
-  })
-
-  describe('deleting a collection', () => {
-    test('confirming delete calls mutateAsync with the collection id', async () => {
-      collectionsDataRef.value = COLLECTIONS
-      alertWarnMock.mockReturnValue({ response: Promise.resolve(true) })
-      const wrapper = mountSection()
-
-      await wrapper.find('[data-testid="collection-card__delete"]').trigger('click')
-      await flushPromises()
-
-      expect(mutateAsyncMock).toHaveBeenCalledWith(COLLECTIONS[0].id)
-    })
-
-    test('cancelling delete does not call mutateAsync', async () => {
-      collectionsDataRef.value = COLLECTIONS
-      alertWarnMock.mockReturnValue({ response: Promise.resolve(false) })
-      const wrapper = mountSection()
-
-      await wrapper.find('[data-testid="collection-card__delete"]').trigger('click')
-      await flushPromises()
-
-      expect(mutateAsyncMock).not.toHaveBeenCalled()
+      expect(editModalOpenMock).not.toHaveBeenCalled()
     })
   })
 })
