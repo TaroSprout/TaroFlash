@@ -4,7 +4,8 @@
 // Claude Haiku with structured output. Sentences are translated in batches so a
 // long lesson can't blow max_tokens.
 
-const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
+import { requestStructured } from './anthropic.ts'
+
 const MODEL = 'claude-haiku-4-5'
 
 // Few enough that a batch's translations comfortably fit under max_tokens, but
@@ -42,31 +43,13 @@ async function translateBatch(sentences: string[], target_lang: string): Promise
   const numbered = sentences.map((s, i) => `${i + 1}. ${s}`).join('\n')
   const userPrompt = `Target language: ${target_lang}\nSentences (${sentences.length}):\n${numbered}`
 
-  const res = await fetch(ANTHROPIC_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': Deno.env.get('ANTHROPIC_API_KEY')!,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: 4096,
-      system: SYSTEM_PROMPT,
-      output_config: { format: { type: 'json_schema', schema: RESULT_SCHEMA } },
-      messages: [{ role: 'user', content: userPrompt }]
-    })
+  const raw = await requestStructured({
+    model: MODEL,
+    system: SYSTEM_PROMPT,
+    prompt: userPrompt,
+    schema: RESULT_SCHEMA
   })
-
-  if (!res.ok) {
-    console.error('Anthropic error', res.status, await res.text())
-    return null
-  }
-
-  const data = await res.json()
-  if (data?.stop_reason === 'max_tokens' || data?.stop_reason === 'refusal') return null
-
-  const raw = data?.content?.[0]?.text ?? ''
+  if (raw === null) return null
 
   let translations: unknown
   try {
