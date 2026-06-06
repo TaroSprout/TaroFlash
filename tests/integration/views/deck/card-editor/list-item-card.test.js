@@ -120,14 +120,33 @@ describe('ListItemCard', () => {
 
   // ── Auto-save wiring ──────────────────────────────────────────────────────
 
-  test('forwards text-editor updates to updateCard with the matching side key', async () => {
-    const wrapper = mount({ card: { id: 42 } })
+  test('forwards text-editor updates to updateCard with both sides from local state', async () => {
+    const wrapper = mount({ card: { id: 42, front_text: 'Q', back_text: 'A' } })
     const editors = wrapper.findAllComponents(textEditor)
+
     await editors[0].vm.$emit('update', 'new front')
-    expect(mocks.updateCardMock).toHaveBeenCalledWith(42, { front_text: 'new front' })
+    expect(mocks.updateCardMock).toHaveBeenCalledWith(42, {
+      front_text: 'new front',
+      back_text: 'A'
+    })
 
     await editors[1].vm.$emit('update', 'new back')
-    expect(mocks.updateCardMock).toHaveBeenLastCalledWith(42, { back_text: 'new back' })
+    expect(mocks.updateCardMock).toHaveBeenLastCalledWith(42, {
+      front_text: 'new front',
+      back_text: 'new back'
+    })
+  })
+
+  test('an edit to one side carries the other side, so a save cannot clobber it', async () => {
+    // Regression: editing back then front used to send only the changed side,
+    // and the save path merged it over the stale cached card — wiping the back.
+    const wrapper = mount({ card: { id: 42, front_text: '', back_text: '' } })
+    const editors = wrapper.findAllComponents(textEditor)
+
+    await editors[1].vm.$emit('update', 'B')
+    await editors[0].vm.$emit('update', 'F')
+
+    expect(mocks.updateCardMock).toHaveBeenLastCalledWith(42, { front_text: 'F', back_text: 'B' })
   })
 
   // ── Focus sound effects via native focusin/focusout ───────────────────────
