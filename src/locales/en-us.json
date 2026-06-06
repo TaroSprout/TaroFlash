@@ -266,6 +266,8 @@
   "lesson-view.prev-button": "Previous chapter",
   "lesson-view.next-button": "Next chapter",
   "lesson-view.edit-button": "Edit collection",
+  "lesson-view.audio.play-button": "Play",
+  "lesson-view.audio.pause-button": "Pause",
   "audio-reader.lesson-card.delete-button": "Delete lesson",
   "audio-reader.lesson-card.retry-button": "Retry",
   "audio-reader.lesson-card.processing-fallback": "Processing…",

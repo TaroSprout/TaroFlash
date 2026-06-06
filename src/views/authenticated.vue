@@ -21,11 +21,11 @@ const session = useSessionStore()
     class="absolute inset-0 text-white"
     @finish="clearStaticLoader"
   >
-    <div class="flex flex-col h-full w-full md:items-center">
+    <div class="flex flex-col min-h-dvh w-full shrink-0 md:items-center">
       <nav-bar />
       <phone />
 
-      <main class="md:flex-1 md:min-h-0 w-full max-w-(--page-width) px-4 sm:px-16">
+      <main class="w-full max-w-(--page-width) px-4 sm:px-16">
         <router-view v-slot="{ Component, route }">
           <suspense>
             <component :is="Component" />

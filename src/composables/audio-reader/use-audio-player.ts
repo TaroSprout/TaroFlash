@@ -106,3 +106,5 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
 
   return { current_time, duration, is_playing, play, pause, seek }
 }
+
+export type AudioPlayer = ReturnType<typeof useAudioPlayer>

@@ -35,8 +35,8 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
   const { data: audio_url } = useLessonAudioUrlQuery(audio_path)
 
   const audio_el = useTemplateRef<HTMLAudioElement>('audio')
-  const { current_time } = useAudioPlayer(audio_el)
-  const { active_index: active_word } = useTranscriptSync(words, current_time)
+  const player = useAudioPlayer(audio_el)
+  const { active_index: active_word } = useTranscriptSync(words, player.current_time)
 
   const selection = ref<TermSelection | null>(null)
   const popover_open = ref(false)
@@ -63,6 +63,7 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
     selection,
     popover_open,
     openTerm,
-    closeTerm
+    closeTerm,
+    player
   }
 }
