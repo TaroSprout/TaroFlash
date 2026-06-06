@@ -19,13 +19,13 @@ SELECT tests.create_user('22222222-2222-2222-2222-222222222222'::uuid, 'bob_less
 -- the owner on both the collection and its lessons.
 SELECT tests.set_claims('11111111-1111-1111-1111-111111111111'::uuid);
 INSERT INTO public.lesson_collections (id, title) VALUES (10, 'Alice Collection');
-INSERT INTO public.lessons (id, collection_id, title, audio_path) VALUES
-  (100, 10, 'Alice Lesson', '11111111-1111-1111-1111-111111111111/a.mp3');
+INSERT INTO public.lessons (id, collection_id, title, audio_path, "position") VALUES
+  (100, 10, 'Alice Lesson', '11111111-1111-1111-1111-111111111111/a.mp3', 1);
 
 SELECT tests.set_claims('22222222-2222-2222-2222-222222222222'::uuid);
 INSERT INTO public.lesson_collections (id, title) VALUES (20, 'Bob Collection');
-INSERT INTO public.lessons (id, collection_id, title, audio_path) VALUES
-  (200, 20, 'Bob Lesson', '22222222-2222-2222-2222-222222222222/b.mp3');
+INSERT INTO public.lessons (id, collection_id, title, audio_path, "position") VALUES
+  (200, 20, 'Bob Lesson', '22222222-2222-2222-2222-222222222222/b.mp3', 1);
 
 
 -- ── Act as Alice ──────────────────────────────────────────────────────────────
@@ -55,15 +55,15 @@ SELECT is(
 -- Test 3: Bob can create a lesson
 SELECT lives_ok(
   $$
-    INSERT INTO public.lessons (id, collection_id, title, audio_path)
-    VALUES (201, 20, 'Bob New Lesson', '22222222-2222-2222-2222-222222222222/c.mp3')
+    INSERT INTO public.lessons (id, collection_id, title, audio_path, "position")
+    VALUES (201, 20, 'Bob New Lesson', '22222222-2222-2222-2222-222222222222/c.mp3', 2)
   $$,
   'Bob can create a lesson'
 );
 
 -- Test 4: Trigger corrects member_id even if client sends a different value
-INSERT INTO public.lessons (id, collection_id, title, audio_path, member_id)
-VALUES (999, 20, 'Sneaky Lesson', 'x/d.mp3', '11111111-1111-1111-1111-111111111111');
+INSERT INTO public.lessons (id, collection_id, title, audio_path, member_id, "position")
+VALUES (999, 20, 'Sneaky Lesson', 'x/d.mp3', '11111111-1111-1111-1111-111111111111', 3);
 
 SET LOCAL role = 'postgres';
 SELECT is(
@@ -115,22 +115,22 @@ SELECT is(
 );
 
 
--- ── create_lesson RPC + lesson-delete media trigger ────────────────────────────
+-- ── create_pending_lesson RPC + lesson-delete media trigger ────────────────────
 SELECT tests.set_claims('22222222-2222-2222-2222-222222222222'::uuid);
 SET LOCAL role = 'authenticated';
 
--- Test 9: create_lesson runs for the owner (lesson + media insert in one txn)
+-- Test 9: create_pending_lesson runs for the owner (lesson + media insert in one txn)
 SELECT lives_ok(
   $$
-    SELECT public.create_lesson(
+    SELECT public.create_pending_lesson(
       20,
       'Bob RPC Lesson',
       '22222222-2222-2222-2222-222222222222/rpc.mp3',
-      '{"text":"hi","segments":[]}'::jsonb,
+      'original',
       'zh'
     )
   $$,
-  'create_lesson RPC runs for the owner'
+  'create_pending_lesson RPC runs for the owner'
 );
 
 -- Test 10: it also inserts a live audio media row linked to the lesson
