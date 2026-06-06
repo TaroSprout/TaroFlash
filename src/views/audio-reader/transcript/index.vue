@@ -53,6 +53,12 @@ function commitSelection({ term, rect, anchor }: { term: string; rect: DOMRect; 
       @pointerleave="onPointerLeave"
     >
       <div
+        ref="sentence"
+        data-testid="transcript-view__sentence"
+        aria-hidden="true"
+        class="pointer-events-none absolute left-0 top-0 -z-20 rounded-4 bg-brown-300 opacity-0 dark:bg-grey-700"
+      />
+      <div
         ref="playhead"
         data-testid="transcript-view__playhead"
         aria-hidden="true"

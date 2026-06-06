@@ -22,7 +22,7 @@ const { t } = useI18n()
     <button
       data-testid="collection-card__open"
       type="button"
-      class="flex flex-col gap-3"
+      class="flex cursor-pointer flex-col gap-3"
       @click="emit('open')"
     >
       <span

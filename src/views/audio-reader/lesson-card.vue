@@ -62,7 +62,7 @@ const error_label = computed(
     <button
       data-testid="lesson-card__open"
       type="button"
-      class="flex flex-col gap-3 text-left disabled:cursor-default"
+      class="flex cursor-pointer flex-col gap-3 text-left disabled:cursor-default"
       :disabled="!is_ready"
       @click="emit('open')"
     >

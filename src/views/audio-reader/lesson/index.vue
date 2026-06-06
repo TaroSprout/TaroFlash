@@ -6,6 +6,7 @@ import { useLessonsByCollectionQuery, useSetCollectionProgressMutation } from '@
 import { useLessonReader } from '@/composables/audio-reader/use-lesson-reader'
 import { useCollectionEditModal } from '@/composables/modals/use-collection-edit-modal'
 import UiButton from '@/components/ui-kit/button.vue'
+import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import TranscriptView from '@/views/audio-reader/transcript/index.vue'
 import TermPopover from '@/views/audio-reader/term-popover/index.vue'
 
@@ -69,7 +70,7 @@ watch(
         data-testid="lesson-view__chapter"
         :data-active="chapter.id === lesson_id"
         type="button"
-        class="shrink-0 rounded-7 bg-brown-200 px-4 py-2 text-left text-base text-brown-700 data-[active=true]:bg-blue-500 data-[active=true]:text-white xl:shrink dark:bg-grey-700 dark:text-brown-200 dark:data-[active=true]:bg-blue-650"
+        class="shrink-0 cursor-pointer rounded-7 bg-brown-200 px-4 py-2 text-left text-base text-brown-700 data-[active=true]:bg-blue-500 data-[active=true]:text-white xl:shrink dark:bg-grey-700 dark:text-brown-200 dark:data-[active=true]:bg-blue-650"
         @click="goToChapter(chapter.id)"
       >
         <span class="line-clamp-1">{{ index + 1 }}. {{ chapter.title }}</span>
@@ -102,15 +103,22 @@ watch(
         </ui-button>
       </header>
 
-      <div
-        data-testid="lesson-view__transcript"
-        class="min-h-0 flex-1 overflow-y-auto rounded-7 bg-brown-100 px-6 pt-6 pb-2 dark:bg-grey-800"
-      >
-        <transcript-view
-          :paragraphs="paragraphs"
-          :active_word="active_word"
-          :popover_open="popover_open"
-          @select="openTerm"
+      <div data-testid="lesson-view__transcript-wrap" class="relative min-h-0 flex-1">
+        <div
+          data-testid="lesson-view__transcript"
+          class="scroll-hidden h-full overflow-y-auto rounded-7 bg-brown-100 px-6 pt-6 pb-2 dark:bg-grey-800"
+        >
+          <transcript-view
+            :paragraphs="paragraphs"
+            :active_word="active_word"
+            :popover_open="popover_open"
+            @select="openTerm"
+          />
+        </div>
+
+        <scroll-bar
+          class="absolute inset-y-3 right-2"
+          target="[data-testid='lesson-view__transcript']"
         />
       </div>
 
