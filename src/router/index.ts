@@ -24,6 +24,12 @@ async function requireAudioReader() {
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+  // The app scrolls the page (not inner containers), so reset to the top on each
+  // navigation — including chapter-to-chapter param changes — and restore the
+  // saved position on back/forward.
+  scrollBehavior(_to, _from, savedPosition) {
+    return savedPosition ?? { top: 0 }
+  },
   routes: [
     {
       path: '/welcome',

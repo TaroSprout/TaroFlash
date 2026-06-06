@@ -61,9 +61,12 @@ watch(
 <template>
   <section
     data-testid="lesson-view"
-    class="flex h-[calc(100dvh-var(--nav-height))] flex-col gap-6 xl:flex-row"
+    class="flex min-h-[calc(100dvh-var(--nav-height))] flex-col gap-6 xl:flex-row"
   >
-    <aside data-testid="lesson-view__sidebar" class="flex shrink-0 flex-col gap-4 xl:w-56">
+    <aside
+      data-testid="lesson-view__sidebar"
+      class="flex shrink-0 flex-col gap-4 xl:sticky xl:top-(--nav-height) xl:max-h-[calc(100dvh-var(--nav-height))] xl:w-56 xl:self-start xl:overflow-y-auto"
+    >
       <header data-testid="lesson-view__header" class="flex items-center justify-between gap-4">
         <div data-testid="lesson-view__heading" class="flex flex-col gap-1">
           <h1 class="text-3xl text-brown-700 dark:text-brown-300">{{ lesson?.title }}</h1>
@@ -91,7 +94,7 @@ watch(
 
       <nav
         data-testid="lesson-view__chapters"
-        class="flex gap-2 overflow-x-auto pb-2 xl:min-h-0 xl:flex-1 xl:flex-col xl:overflow-x-visible xl:overflow-y-auto xl:pb-0"
+        class="flex gap-2 overflow-x-auto pb-2 xl:flex-col xl:overflow-x-visible xl:pb-0"
       >
         <button
           v-for="(chapter, index) in chapters"
@@ -107,61 +110,59 @@ watch(
       </nav>
     </aside>
 
-    <div data-testid="lesson-view__reader" class="relative flex min-h-0 flex-1 flex-col xl:min-w-0">
-      <div data-testid="lesson-view__scroll" class="scroll-hidden min-h-0 flex-1 overflow-y-auto">
-        <div
-          data-testid="lesson-view__transcript"
-          class="rounded-7 bg-brown-100 px-0 pt-6 pb-2 sm:px-6 dark:bg-grey-800"
-        >
-          <transcript-view
-            :paragraphs="paragraphs"
-            :active_word="active_word"
-            :popover_open="popover_open"
-            @select="openTerm"
-          />
-        </div>
-
-        <footer
-          data-testid="lesson-view__bar"
-          class="sticky bottom-0 z-30 mt-4 flex flex-col gap-2 border-t border-brown-300 bg-brown-100 pt-3 pb-[env(safe-area-inset-bottom)] pointer-coarse:pr-18 dark:border-grey-700 dark:bg-grey-900"
-        >
-          <audio
-            ref="audio"
-            data-testid="lesson-view__audio"
-            :src="audio_url ?? undefined"
-            controls
-            class="w-full"
-          />
-
-          <div data-testid="lesson-view__nav" class="flex items-center justify-between gap-3">
-            <ui-button
-              data-testid="lesson-view__prev"
-              data-theme="grey-400"
-              icon-left="chevron-left"
-              icon-only
-              size="lg"
-              :disabled="!prev_chapter"
-              @click="prev_chapter && goToChapter(prev_chapter.id)"
-            >
-              {{ t('lesson-view.prev-button') }}
-            </ui-button>
-
-            <ui-button
-              data-testid="lesson-view__next"
-              data-theme="grey-400"
-              icon-left="chevron-right"
-              icon-only
-              size="lg"
-              :disabled="!next_chapter"
-              @click="next_chapter && goToChapter(next_chapter.id)"
-            >
-              {{ t('lesson-view.next-button') }}
-            </ui-button>
-          </div>
-        </footer>
+    <div data-testid="lesson-view__reader" class="relative flex flex-1 flex-col xl:min-w-0">
+      <div
+        data-testid="lesson-view__transcript"
+        class="rounded-7 bg-brown-100 px-0 pt-6 pb-2 sm:px-6 dark:bg-grey-800"
+      >
+        <transcript-view
+          :paragraphs="paragraphs"
+          :active_word="active_word"
+          :popover_open="popover_open"
+          @select="openTerm"
+        />
       </div>
 
-      <scroll-bar class="absolute inset-y-3 right-2" target="[data-testid='lesson-view__scroll']" />
+      <footer
+        data-testid="lesson-view__bar"
+        class="sticky bottom-0 z-30 mt-4 flex flex-col gap-2 border-t border-brown-300 bg-brown-100 pt-3 pb-[env(safe-area-inset-bottom)] pointer-coarse:pr-18 dark:border-grey-700 dark:bg-grey-900"
+      >
+        <audio
+          ref="audio"
+          data-testid="lesson-view__audio"
+          :src="audio_url ?? undefined"
+          controls
+          class="w-full"
+        />
+
+        <div data-testid="lesson-view__nav" class="flex items-center justify-between gap-3">
+          <ui-button
+            data-testid="lesson-view__prev"
+            data-theme="grey-400"
+            icon-left="chevron-left"
+            icon-only
+            size="lg"
+            :disabled="!prev_chapter"
+            @click="prev_chapter && goToChapter(prev_chapter.id)"
+          >
+            {{ t('lesson-view.prev-button') }}
+          </ui-button>
+
+          <ui-button
+            data-testid="lesson-view__next"
+            data-theme="grey-400"
+            icon-left="chevron-right"
+            icon-only
+            size="lg"
+            :disabled="!next_chapter"
+            @click="next_chapter && goToChapter(next_chapter.id)"
+          >
+            {{ t('lesson-view.next-button') }}
+          </ui-button>
+        </div>
+      </footer>
+
+      <scroll-bar class="fixed top-(--nav-height) right-1 bottom-3" target="html" />
 
       <term-popover
         v-if="selection"

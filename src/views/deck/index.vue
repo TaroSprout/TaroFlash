@@ -36,7 +36,7 @@ const { prev_page_number, next_page_number } = editor.carousel
 <template>
   <section
     data-testid="deck-view"
-    class="flex md:h-full flex-col xl:flex-row items-center xl:items-start gap-6 md:gap-15"
+    class="flex md:h-[calc(100dvh-var(--nav-height))] flex-col xl:flex-row items-center xl:items-start gap-6 md:gap-15"
   >
     <deck-hero
       v-if="deck"

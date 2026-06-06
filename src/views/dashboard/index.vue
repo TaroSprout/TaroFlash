@@ -45,7 +45,7 @@ async function onCreateDeckClicked() {
 <template>
   <div
     data-testid="dashboard"
-    class="grid grid-cols-[1fr] md:grid-cols-[345px_1fr] md:grid-rows-[auto_1fr] gap-x-15.5 gap-y-6 md:gap-y-11.5 h-full pb-12"
+    class="grid grid-cols-[1fr] md:grid-cols-[345px_1fr] md:grid-rows-[auto_auto] gap-x-15.5 gap-y-6 md:gap-y-11.5 pb-12"
   >
     <ui-button
       icon-left="add"
