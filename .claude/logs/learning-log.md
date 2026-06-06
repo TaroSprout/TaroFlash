@@ -237,3 +237,13 @@ When appending:
 | Function EXECUTE grants: REVOKE FROM public ≠ anon/authenticated    | 4     |
 | Supabase default-privileges (DB-as-API) + why definer fns are risky | 4     |
 | Storage orphan GC: tracked-bucket scan + created_at grace window    | 5     |
+
+### 2026-06-06 — transcription: durable phase chain + stall reaper
+
+| Concept                                                            | Score |
+| ------------------------------------------------------------------ | ----- |
+| Trigger-driven state machine: a phase write fires the next step    | 2     |
+| pg_net.http_post from a SECURITY DEFINER trigger (reuses Vault)    | 2     |
+| IS DISTINCT FROM as null-safe inequality in a trigger guard        | 2     |
+| AFTER trigger fires after commit, so pg_net never reads a stale row | 2     |
+| Reaper/watchdog cron: time-based sweep that settles stuck rows     | 3     |
