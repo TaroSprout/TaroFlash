@@ -231,15 +231,19 @@ export function useReaderHighlights(
     })
   }
 
-  // The nearest scrollable ancestor — the reader column the transcript lives in.
-  function scrollParentOf(el: HTMLElement | null): HTMLElement | null {
+  // The nearest ancestor that actually scrolls — the reader column on desktop.
+  // On mobile the column isn't bounded so nothing overflows; fall back to the
+  // window, which is the real scroller there. Requiring real overflow (not just
+  // an `overflow-y: auto` style) is what makes that fallback kick in.
+  function scrollParentOf(el: HTMLElement | null): HTMLElement | Window {
     let node = el?.parentElement ?? null
     while (node) {
       const overflow_y = getComputedStyle(node).overflowY
-      if (overflow_y === 'auto' || overflow_y === 'scroll') return node
+      const scrollable = overflow_y === 'auto' || overflow_y === 'scroll'
+      if (scrollable && node.scrollHeight > node.clientHeight) return node
       node = node.parentElement
     }
-    return null
+    return window
   }
 
   // Follow the active line down the column, but only when the *sentence* changes
@@ -253,8 +257,7 @@ export function useReaderHighlights(
     if (index === last_segment_index) return
     last_segment_index = index
 
-    const container = scrollParentOf(content.value)
-    if (container) scrollLineIntoView(container, seg)
+    scrollLineIntoView(scrollParentOf(content.value), seg)
   }
 
   function positionInteraction() {
