@@ -66,16 +66,21 @@ async function onCreateDeckClicked() {
 
     <review-inbox :due_decks="due_decks" />
 
-    <div class="flex gap-x-6.5 gap-y-8 flex-wrap md:col-start-2">
-      <DeckThumbnail
-        v-for="(deck, index) in decks"
-        :key="index"
-        :deck="deck"
-        :size="is_md ? 'base' : 'sm'"
-        @click="onDeckClicked(deck)"
-      />
-    </div>
+    <div
+      data-testid="dashboard__main-column"
+      class="flex flex-col gap-y-11.5 self-start md:col-start-2 md:row-start-2"
+    >
+      <div data-testid="dashboard__decks" class="flex gap-x-6.5 gap-y-8 flex-wrap">
+        <DeckThumbnail
+          v-for="(deck, index) in decks"
+          :key="index"
+          :deck="deck"
+          :size="is_md ? 'base' : 'sm'"
+          @click="onDeckClicked(deck)"
+        />
+      </div>
 
-    <audio-reader-section v-if="can.useAudioReader.value" class="md:col-span-2" />
+      <audio-reader-section v-if="can.useAudioReader.value" />
+    </div>
   </div>
 </template>
