@@ -4,8 +4,10 @@
 export type FakeSupabaseOpts<Row> = {
   rows?: Row[]
   activeRows?: { bucket: string; path: string }[]
+  orphans?: { bucket: string; name: string }[]
   selectError?: any
   refcountError?: any
+  orphanError?: any
   removeErrors?: Map<string, any[]>
   deleteError?: any
 }
@@ -13,11 +15,13 @@ export type FakeSupabaseOpts<Row> = {
 export type FakeSupabaseCalls = {
   removed: { bucket: string; paths: string[] }[]
   deletedIds: number[][]
+  rpc: { fn: string; args: any }[]
 }
 
 export type FakeSupabase = {
   from: (table: string) => any
   storage: { from: (bucket: string) => { remove: (paths: string[]) => Promise<{ error: any }> } }
+  rpc: (fn: string, args?: any) => Promise<{ data: any; error: any }>
 }
 
 // Minimal supabase-js stand-in covering the surface our edge functions touch:
@@ -29,7 +33,7 @@ export function makeFakeSupabase<Row>(opts: FakeSupabaseOpts<Row> = {}): {
   supabase: FakeSupabase
   calls: FakeSupabaseCalls
 } {
-  const calls: FakeSupabaseCalls = { removed: [], deletedIds: [] }
+  const calls: FakeSupabaseCalls = { removed: [], deletedIds: [], rpc: [] }
   const removeErrors = opts.removeErrors ?? new Map()
   const consumed = new Map<string, number>()
 
@@ -71,6 +75,14 @@ export function makeFakeSupabase<Row>(opts: FakeSupabaseOpts<Row> = {}): {
           return Promise.resolve({ error })
         }
       })
+    },
+    rpc: (fn: string, args?: any) => {
+      calls.rpc.push({ fn, args })
+      return Promise.resolve(
+        opts.orphanError
+          ? { data: null, error: opts.orphanError }
+          : { data: opts.orphans ?? [], error: null }
+      )
     }
   }
 

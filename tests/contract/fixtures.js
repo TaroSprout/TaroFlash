@@ -33,6 +33,14 @@ export async function setMemberDisplayName(client, member_id, suffix) {
   return display_name
 }
 
+// Set a member's plan via the service-role client (bypasses the self-update RLS
+// lock that blocks members from changing their own plan). Card-image media
+// INSERT requires plan='paid'.
+export async function setMemberPlan(member_id, plan) {
+  const { error } = await adminClient.from('members').update({ plan }).eq('id', member_id)
+  if (error) throw error
+}
+
 export async function seedShopItem(overrides = {}) {
   const { data, error } = await adminClient
     .from('shop_items')

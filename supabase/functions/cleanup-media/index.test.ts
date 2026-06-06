@@ -4,15 +4,22 @@ import { handler } from './index.ts'
 
 type MediaRow = { id: number; bucket: string; path: string }
 
-Deno.test('returns 200 with no-rows message when nothing to clean', async () => {
+Deno.test('completes with zero counts when there is nothing to clean', async () => {
   const { supabase, calls } = makeFakeSupabase({ rows: [] })
 
   const res = await handler({ supabase, sleep: noSleep })
 
   assertEquals(res.status, 200)
-  assertEquals(await res.json(), { message: 'No media to clean' })
+  assertEquals(await res.json(), {
+    message: 'Media cleanup complete',
+    processed: 0,
+    skipped: 0,
+    orphans_removed: 0
+  })
   assertEquals(calls.removed.length, 0)
   assertEquals(calls.deletedIds.length, 0)
+  // The orphan sweep runs even with no soft-deleted rows.
+  assertEquals(calls.rpc.length, 1)
 })
 
 Deno.test('returns 500 on select error', async () => {
@@ -46,7 +53,12 @@ Deno.test('removes orphaned objects grouped by bucket, uses path as-is, deletes 
   const res = await handler({ supabase, sleep: noSleep })
 
   assertEquals(res.status, 200)
-  assertEquals(await res.json(), { message: 'Media cleanup complete', processed: 3, skipped: 0 })
+  assertEquals(await res.json(), {
+    message: 'Media cleanup complete',
+    processed: 3,
+    skipped: 0,
+    orphans_removed: 0
+  })
 
   assertEquals(calls.removed.length, 2)
   const images = calls.removed.find((r) => r.bucket === 'member-images')
@@ -69,7 +81,12 @@ Deno.test('keeps a shared object when an active row still references it, but del
   const res = await handler({ supabase, sleep: noSleep })
 
   assertEquals(res.status, 200)
-  assertEquals(await res.json(), { message: 'Media cleanup complete', processed: 1, skipped: 0 })
+  assertEquals(await res.json(), {
+    message: 'Media cleanup complete',
+    processed: 1,
+    skipped: 0,
+    orphans_removed: 0
+  })
   assertEquals(calls.removed.length, 0)
   assertEquals(calls.deletedIds, [[1]])
 })
@@ -122,6 +139,65 @@ Deno.test('retries transient storage failures before succeeding', async () => {
   assertEquals(res.status, 200)
   assertEquals(calls.removed.length, 3)
   assertEquals(calls.deletedIds, [[1]])
+})
+
+Deno.test('reaps true orphans from the finder, grouped by bucket, deletes no rows', async () => {
+  const orphans = [
+    { bucket: 'member-images', name: 'm1/x.png' },
+    { bucket: 'member-images', name: 'm1/y.png' },
+    { bucket: 'audio-lessons', name: 'm2/z.mp3' }
+  ]
+  const { supabase, calls } = makeFakeSupabase({ rows: [], orphans })
+
+  const res = await handler({ supabase, sleep: noSleep })
+
+  assertEquals(res.status, 200)
+  const body = await res.json()
+  assertEquals(body.orphans_removed, 3)
+  assertEquals(body.processed, 0)
+
+  assertEquals(calls.removed.length, 2)
+  assertEquals(calls.removed.find((r) => r.bucket === 'member-images')?.paths, [
+    'm1/x.png',
+    'm1/y.png'
+  ])
+  assertEquals(calls.removed.find((r) => r.bucket === 'audio-lessons')?.paths, ['m2/z.mp3'])
+  // Orphans have no media row, so nothing is deleted from the table.
+  assertEquals(calls.deletedIds.length, 0)
+})
+
+Deno.test('orphan scan error is logged but soft-deleted work still completes', async () => {
+  const rows: MediaRow[] = [{ id: 1, bucket: 'member-images', path: 'm1/a.png' }]
+  const { supabase, calls } = makeFakeSupabase({
+    rows,
+    activeRows: [],
+    orphanError: { message: 'boom' }
+  })
+
+  const res = await handler({ supabase, sleep: noSleep })
+
+  assertEquals(res.status, 200)
+  const body = await res.json()
+  assertEquals(body.processed, 1)
+  assertEquals(body.orphans_removed, 0)
+  // The soft-deleted object was still removed and its row deleted.
+  assertEquals(calls.removed[0]?.paths, ['m1/a.png'])
+  assertEquals(calls.deletedIds, [[1]])
+})
+
+Deno.test('orphan removal failure surfaces as 207 without blocking the rest', async () => {
+  const orphans = [{ bucket: 'member-images', name: 'm1/x.png' }]
+  const removeErrors = new Map([
+    ['member-images', [{ message: 'fail' }, { message: 'fail' }, { message: 'fail' }]]
+  ])
+  const { supabase } = makeFakeSupabase({ rows: [], orphans, removeErrors })
+
+  const res = await handler({ supabase, sleep: noSleep })
+
+  assertEquals(res.status, 207)
+  const body = await res.json()
+  assertEquals(body.orphans_removed, 0)
+  assertEquals(body.storage_errors.length, 1)
 })
 
 Deno.test('returns 500 when DB delete fails after storage success', async () => {
