@@ -42,6 +42,8 @@ type Lesson = {
   transcript: LessonTranscript
   lang?: string
   status: LessonStatus
+  // Chapter order within the collection (numeric sort key, server-assigned).
+  position: number
   // The step in flight while status is 'processing'; null/absent once settled.
   phase?: LessonPhase | null
   // Machine-readable failure reason when status is 'failed'.
@@ -57,6 +59,9 @@ type LessonCollection = {
   id: number
   member_id?: string
   title: string
+  // The last chapter the member opened — the dashboard reopens the book here.
+  // null/absent until they open the collection for the first time.
+  last_lesson_id?: number | null
   created_at?: string
   updated_at?: string
 }

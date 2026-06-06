@@ -6,7 +6,7 @@ export async function fetchLessonsByCollection(collection_id: number): Promise<L
     .from('lessons')
     .select('*')
     .eq('collection_id', collection_id)
-    .order('created_at', { ascending: false })
+    .order('position', { ascending: true })
 
   if (error) {
     logger.error(error.message)
