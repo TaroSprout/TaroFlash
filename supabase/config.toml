@@ -267,8 +267,12 @@ enabled = false
 [edge_runtime]
 enabled = true
 # Configure one of the supported request policies: `oneshot`, `per_worker`.
-# Use `oneshot` for hot reload, or `per_worker` for load testing.
-policy = "oneshot"
+# `oneshot` gives function hot-reload but TERMINATES the worker the moment it
+# returns a response — which kills `EdgeRuntime.waitUntil` background tasks. The
+# transcribe-lesson worker runs transcription in the background after returning
+# 202, so it needs `per_worker` (also matches hosted Supabase's behavior). The
+# cost is no hot-reload: restart `supabase` to pick up edge-function edits.
+policy = "per_worker"
 # Port to attach the Chrome inspector for debugging edge functions.
 inspector_port = 8083
 
