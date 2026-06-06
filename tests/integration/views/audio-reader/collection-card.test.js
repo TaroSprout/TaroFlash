@@ -43,10 +43,10 @@ describe('CollectionCard', () => {
       expect(wrapper.emitted('open')).toBeTruthy()
     })
 
-    test('clicking collection-card__delete emits "delete"', async () => {
+    test('clicking collection-card__edit emits "edit"', async () => {
       const wrapper = mountCard()
-      await wrapper.find('[data-testid="collection-card__delete"]').trigger('click')
-      expect(wrapper.emitted('delete')).toBeTruthy()
+      await wrapper.find('[data-testid="collection-card__edit"]').trigger('click')
+      expect(wrapper.emitted('edit')).toBeTruthy()
     })
   })
 })
