@@ -199,3 +199,11 @@ When appending:
 | Data-modifying CTE (INSERT ... RETURNING driving an UPDATE)   | 2     |
 | Backfill → SET NOT NULL → ADD FK (ordering invariant lock-in) | 7     |
 | Correlated count subquery in a security_invoker view          | 5     |
+
+### 2026-06-05 — lessons: async transcription job-state columns
+
+| Concept                                                        | Score |
+| -------------------------------------------------------------- | ----- |
+| ADD COLUMN ... CHECK (col IN (...)) as a lightweight enum       | 2     |
+| DEFAULT on a new NOT NULL column = no backfill for existing rows| 3     |
+| Sibling RPC (create_pending_lesson) vs reusing one signature    | 2     |
