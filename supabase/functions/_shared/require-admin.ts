@@ -4,8 +4,12 @@
 // their members.role is 'admin'. The frontend useCan() gate is UX only — this is
 // the real security boundary, so every admin-only function calls this first.
 //
-// Returns either { user, admin } on success, or { error: Response } to return
-// verbatim (401 missing/invalid auth, 403 authenticated-but-not-admin).
+// Returns either { user, admin, userClient } on success, or { error: Response }
+// to return verbatim (401 missing/invalid auth, 403 authenticated-but-not-admin).
+//
+// `admin` is service-role (bypasses RLS) for trusted writes; `userClient` carries
+// the caller's JWT, so inserts run under RLS and the set_member_id trigger stamps
+// member_id from auth.uid() — use it for anything the caller must "own".
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
@@ -15,7 +19,7 @@ export const cors = {
 }
 
 type RequireAdminResult =
-  | { user: { id: string; email?: string }; admin: SupabaseClient }
+  | { user: { id: string; email?: string }; admin: SupabaseClient; userClient: SupabaseClient }
   | { error: Response }
 
 export async function requireAdmin(req: Request): Promise<RequireAdminResult> {
@@ -52,5 +56,5 @@ export async function requireAdmin(req: Request): Promise<RequireAdminResult> {
     return { error: new Response('Forbidden', { status: 403, headers: cors }) }
   }
 
-  return { user, admin }
+  return { user, admin, userClient }
 }

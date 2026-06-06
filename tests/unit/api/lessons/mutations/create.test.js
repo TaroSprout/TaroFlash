@@ -5,19 +5,13 @@ const {
   invalidateSpy,
   uploadLessonAudioMock,
   deleteLessonAudioMock,
-  transcribeAudioMock,
-  translateTranscriptMock,
-  transliterateTranscriptMock,
-  createLessonMock
+  startLessonTranscriptionMock
 } = vi.hoisted(() => ({
   useMutationSpy: vi.fn((cfg) => cfg),
   invalidateSpy: vi.fn(),
   uploadLessonAudioMock: vi.fn().mockResolvedValue(undefined),
   deleteLessonAudioMock: vi.fn().mockResolvedValue(undefined),
-  transcribeAudioMock: vi.fn(),
-  translateTranscriptMock: vi.fn(),
-  transliterateTranscriptMock: vi.fn(),
-  createLessonMock: vi.fn()
+  startLessonTranscriptionMock: vi.fn()
 }))
 
 vi.mock('@pinia/colada', () => ({
@@ -31,13 +25,7 @@ vi.mock('@/api/lessons/db/audio', () => ({
 }))
 
 vi.mock('@/api/lessons/db/ai', () => ({
-  transcribeAudio: transcribeAudioMock,
-  translateTranscript: translateTranscriptMock,
-  transliterateTranscript: transliterateTranscriptMock
-}))
-
-vi.mock('@/api/lessons/db/lessons', () => ({
-  createLesson: createLessonMock
+  startLessonTranscription: startLessonTranscriptionMock
 }))
 
 vi.mock('@/stores/member', () => ({
@@ -46,17 +34,15 @@ vi.mock('@/stores/member', () => ({
 
 vi.mock('@/utils/uid', () => ({ default: () => 'fixed-uid' }))
 
-import { useCreateLessonMutation } from '@/api/lessons/mutations/create'
+import { useStartLessonMutation } from '@/api/lessons/mutations/create'
 
 beforeEach(() => {
   useMutationSpy.mockClear()
   invalidateSpy.mockClear()
   uploadLessonAudioMock.mockClear()
+  uploadLessonAudioMock.mockResolvedValue(undefined)
   deleteLessonAudioMock.mockClear()
-  transcribeAudioMock.mockReset()
-  translateTranscriptMock.mockReset()
-  transliterateTranscriptMock.mockReset()
-  createLessonMock.mockReset()
+  startLessonTranscriptionMock.mockReset()
 })
 
 function configFrom(hook) {
@@ -64,314 +50,110 @@ function configFrom(hook) {
   return useMutationSpy.mock.calls.at(-1)[0]
 }
 
-describe('useCreateLessonMutation', () => {
+describe('useStartLessonMutation', () => {
   const file = new File(['audio'], 'lesson.mp3', { type: 'audio/mpeg' })
-  const transcribeResult = {
-    text: 'Hello world',
-    segments: [{ start: 0, end: 1, text: 'Hello world' }],
-    words: [],
-    lang: 'en'
-  }
-  const lesson = { id: 1, title: 'My Lesson', audio_path: 'member-uuid-1/fixed-uid.mp3' }
-  // Default translation response used by tests that don't care about translation details
-  const translateResult = { translations: ['こんにちは世界'] }
+  const lesson = { id: 1, title: 'My Lesson', status: 'processing' }
+  const vars = { collection_id: 7, title: 'My Lesson', file, script: 'simplified' }
 
   describe('mutation', () => {
-    test('calls uploadLessonAudio first with the constructed path', async () => {
-      transcribeAudioMock.mockResolvedValueOnce(transcribeResult)
-      translateTranscriptMock.mockResolvedValueOnce(translateResult)
-      createLessonMock.mockResolvedValueOnce(lesson)
+    test('uploads the audio first, to the constructed path', async () => {
+      startLessonTranscriptionMock.mockResolvedValueOnce(lesson)
 
-      const { mutation } = configFrom(useCreateLessonMutation)
-      await mutation({ title: 'My Lesson', file })
+      const { mutation } = configFrom(useStartLessonMutation)
+      await mutation(vars)
 
       expect(uploadLessonAudioMock).toHaveBeenCalledWith('member-uuid-1/fixed-uid.mp3', file)
     })
 
-    test('calls transcribeAudio after upload succeeds', async () => {
+    test('starts transcription after upload with the path and script', async () => {
       const callOrder = []
-      uploadLessonAudioMock.mockImplementationOnce(async () => {
-        callOrder.push('upload')
-      })
-      transcribeAudioMock.mockImplementationOnce(async () => {
-        callOrder.push('transcribe')
-        return transcribeResult
-      })
-      translateTranscriptMock.mockImplementationOnce(async () => {
-        callOrder.push('translate')
-        return translateResult
-      })
-      createLessonMock.mockImplementationOnce(async () => {
-        callOrder.push('create')
+      uploadLessonAudioMock.mockImplementationOnce(async () => void callOrder.push('upload'))
+      startLessonTranscriptionMock.mockImplementationOnce(async () => {
+        callOrder.push('start')
         return lesson
       })
 
-      const { mutation } = configFrom(useCreateLessonMutation)
-      await mutation({ title: 'My Lesson', file })
+      const { mutation } = configFrom(useStartLessonMutation)
+      await mutation(vars)
 
-      expect(callOrder).toEqual(['upload', 'transcribe', 'translate', 'create'])
-    })
-
-    test('calls translateTranscript with each segment text after transcribing', async () => {
-      const multiSegmentTranscribe = {
-        text: 'Hello world. How are you?',
-        segments: [
-          { start: 0, end: 1, text: 'Hello world.' },
-          { start: 1, end: 2, text: 'How are you?' }
-        ],
-        words: [],
-        lang: 'en'
-      }
-      transcribeAudioMock.mockResolvedValueOnce(multiSegmentTranscribe)
-      translateTranscriptMock.mockResolvedValueOnce({
-        translations: ['こんにちは世界。', 'お元気ですか？']
-      })
-      createLessonMock.mockResolvedValueOnce(lesson)
-
-      const { mutation } = configFrom(useCreateLessonMutation)
-      await mutation({ title: 'My Lesson', file })
-
-      expect(translateTranscriptMock).toHaveBeenCalledWith({
-        sentences: ['Hello world.', 'How are you?'],
-        target_lang: 'English'
+      expect(callOrder).toEqual(['upload', 'start'])
+      expect(startLessonTranscriptionMock).toHaveBeenCalledWith({
+        collection_id: 7,
+        title: 'My Lesson',
+        audio_path: 'member-uuid-1/fixed-uid.mp3',
+        script: 'simplified'
       })
     })
 
-    test('merges translations onto segments before calling createLesson', async () => {
-      const multiSegmentTranscribe = {
-        text: 'Hello world. How are you?',
-        segments: [
-          { start: 0, end: 1, text: 'Hello world.' },
-          { start: 1, end: 2, text: 'How are you?' }
-        ],
-        words: [],
-        lang: 'en'
-      }
-      transcribeAudioMock.mockResolvedValueOnce(multiSegmentTranscribe)
-      translateTranscriptMock.mockResolvedValueOnce({
-        translations: ['こんにちは世界。', 'お元気ですか？']
-      })
-      createLessonMock.mockResolvedValueOnce(lesson)
+    test("defaults script to 'original' when omitted", async () => {
+      startLessonTranscriptionMock.mockResolvedValueOnce(lesson)
 
-      const { mutation } = configFrom(useCreateLessonMutation)
-      await mutation({ title: 'My Lesson', file })
+      const { mutation } = configFrom(useStartLessonMutation)
+      await mutation({ collection_id: 7, title: 'My Lesson', file })
 
-      const call = createLessonMock.mock.calls[0][0]
-      expect(call.transcript.segments[0].translation).toBe('こんにちは世界。')
-      expect(call.transcript.segments[1].translation).toBe('お元気ですか？')
+      expect(startLessonTranscriptionMock).toHaveBeenCalledWith(
+        expect.objectContaining({ script: 'original' })
+      )
     })
 
-    test('calls createLesson with transcript data and audio_path', async () => {
-      transcribeAudioMock.mockResolvedValueOnce(transcribeResult)
-      translateTranscriptMock.mockResolvedValueOnce(translateResult)
-      createLessonMock.mockResolvedValueOnce(lesson)
+    test('returns the pending lesson from startLessonTranscription', async () => {
+      startLessonTranscriptionMock.mockResolvedValueOnce(lesson)
 
-      const { mutation } = configFrom(useCreateLessonMutation)
-      await mutation({ title: 'My Lesson', file })
-
-      const call = createLessonMock.mock.calls[0][0]
-      expect(call.title).toBe('My Lesson')
-      expect(call.audio_path).toBe('member-uuid-1/fixed-uid.mp3')
-      expect(call.transcript.text).toBe(transcribeResult.text)
-      expect(call.transcript.words).toEqual(transcribeResult.words)
-      expect(call.lang).toBe(transcribeResult.lang)
-    })
-
-    test('returns the created lesson', async () => {
-      transcribeAudioMock.mockResolvedValueOnce(transcribeResult)
-      translateTranscriptMock.mockResolvedValueOnce(translateResult)
-      createLessonMock.mockResolvedValueOnce(lesson)
-
-      const { mutation } = configFrom(useCreateLessonMutation)
-      const result = await mutation({ title: 'My Lesson', file })
+      const { mutation } = configFrom(useStartLessonMutation)
+      const result = await mutation(vars)
 
       expect(result).toEqual(lesson)
     })
 
-    test('uses the file extension to build the storage path', async () => {
+    test('builds the storage path from the file extension', async () => {
       const wavFile = new File(['audio'], 'lesson.wav', { type: 'audio/wav' })
-      transcribeAudioMock.mockResolvedValueOnce(transcribeResult)
-      translateTranscriptMock.mockResolvedValueOnce(translateResult)
-      createLessonMock.mockResolvedValueOnce(lesson)
+      startLessonTranscriptionMock.mockResolvedValueOnce(lesson)
 
-      const { mutation } = configFrom(useCreateLessonMutation)
-      await mutation({ title: 'My Lesson', file: wavFile })
+      const { mutation } = configFrom(useStartLessonMutation)
+      await mutation({ collection_id: 7, title: 'My Lesson', file: wavFile })
 
       expect(uploadLessonAudioMock).toHaveBeenCalledWith('member-uuid-1/fixed-uid.wav', wavFile)
     })
   })
 
-  describe('translation best-effort guard', () => {
-    test('still creates the lesson when translateTranscript rejects', async () => {
-      transcribeAudioMock.mockResolvedValueOnce(transcribeResult)
-      translateTranscriptMock.mockRejectedValueOnce(new Error('AI unavailable'))
-      createLessonMock.mockResolvedValueOnce(lesson)
-
-      const { mutation } = configFrom(useCreateLessonMutation)
-      const result = await mutation({ title: 'My Lesson', file })
-
-      expect(createLessonMock).toHaveBeenCalledTimes(1)
-      expect(result).toEqual(lesson)
-    })
-
-    test('passes segments WITHOUT translation to createLesson when translateTranscript rejects', async () => {
-      transcribeAudioMock.mockResolvedValueOnce(transcribeResult)
-      translateTranscriptMock.mockRejectedValueOnce(new Error('AI unavailable'))
-      createLessonMock.mockResolvedValueOnce(lesson)
-
-      const { mutation } = configFrom(useCreateLessonMutation)
-      await mutation({ title: 'My Lesson', file })
-
-      const call = createLessonMock.mock.calls[0][0]
-      expect(call.transcript.segments[0].translation).toBeUndefined()
-    })
-
-    test('does NOT delete the audio when translateTranscript rejects', async () => {
-      transcribeAudioMock.mockResolvedValueOnce(transcribeResult)
-      translateTranscriptMock.mockRejectedValueOnce(new Error('AI unavailable'))
-      createLessonMock.mockResolvedValueOnce(lesson)
-
-      const { mutation } = configFrom(useCreateLessonMutation)
-      await mutation({ title: 'My Lesson', file })
-
-      expect(deleteLessonAudioMock).not.toHaveBeenCalled()
-    })
-
-    test('does NOT throw when translateTranscript rejects', async () => {
-      transcribeAudioMock.mockResolvedValueOnce(transcribeResult)
-      translateTranscriptMock.mockRejectedValueOnce(new Error('AI unavailable'))
-      createLessonMock.mockResolvedValueOnce(lesson)
-
-      const { mutation } = configFrom(useCreateLessonMutation)
-      await expect(mutation({ title: 'My Lesson', file })).resolves.not.toThrow()
-    })
-  })
-
-  describe('transliteration', () => {
-    const wordedTranscribe = {
-      text: '猫が好き',
-      segments: [{ start: 0, end: 1, text: '猫が好き' }],
-      words: [
-        { word: '猫', start: 0, end: 0.3 },
-        { word: 'が', start: 0.3, end: 0.6 },
-        { word: '好き', start: 0.6, end: 0.9 }
-      ],
-      lang: 'ja'
-    }
-
-    test('calls transliterateTranscript with the word tokens and lang', async () => {
-      transcribeAudioMock.mockResolvedValueOnce(wordedTranscribe)
-      translateTranscriptMock.mockResolvedValueOnce({ translations: ['I like cats'] })
-      transliterateTranscriptMock.mockResolvedValueOnce({ readings: ['ねこ', '', 'すき'] })
-      createLessonMock.mockResolvedValueOnce(lesson)
-
-      const { mutation } = configFrom(useCreateLessonMutation)
-      await mutation({ title: 'My Lesson', file })
-
-      expect(transliterateTranscriptMock).toHaveBeenCalledWith({
-        sentences: [{ text: '猫が好き', words: ['猫', 'が', '好き'] }],
-        lang: 'ja'
-      })
-    })
-
-    test('merges readings onto words and drops empty ones before createLesson', async () => {
-      transcribeAudioMock.mockResolvedValueOnce(wordedTranscribe)
-      translateTranscriptMock.mockResolvedValueOnce({ translations: ['I like cats'] })
-      transliterateTranscriptMock.mockResolvedValueOnce({ readings: ['ねこ', '', 'すき'] })
-      createLessonMock.mockResolvedValueOnce(lesson)
-
-      const { mutation } = configFrom(useCreateLessonMutation)
-      await mutation({ title: 'My Lesson', file })
-
-      const words = createLessonMock.mock.calls[0][0].transcript.words
-      expect(words[0].reading).toBe('ねこ')
-      expect(words[1].reading).toBeUndefined()
-      expect(words[2].reading).toBe('すき')
-    })
-
-    test('skips transliteration when there are no words', async () => {
-      transcribeAudioMock.mockResolvedValueOnce(transcribeResult)
-      translateTranscriptMock.mockResolvedValueOnce(translateResult)
-      createLessonMock.mockResolvedValueOnce(lesson)
-
-      const { mutation } = configFrom(useCreateLessonMutation)
-      await mutation({ title: 'My Lesson', file })
-
-      expect(transliterateTranscriptMock).not.toHaveBeenCalled()
-    })
-
-    test('still creates the lesson with unread words when transliterateTranscript rejects', async () => {
-      transcribeAudioMock.mockResolvedValueOnce(wordedTranscribe)
-      translateTranscriptMock.mockResolvedValueOnce({ translations: ['I like cats'] })
-      transliterateTranscriptMock.mockRejectedValueOnce(new Error('AI unavailable'))
-      createLessonMock.mockResolvedValueOnce(lesson)
-
-      const { mutation } = configFrom(useCreateLessonMutation)
-      const result = await mutation({ title: 'My Lesson', file })
-
-      expect(result).toEqual(lesson)
-      expect(deleteLessonAudioMock).not.toHaveBeenCalled()
-      const words = createLessonMock.mock.calls[0][0].transcript.words
-      expect(words.every((w) => w.reading === undefined)).toBe(true)
-    })
-  })
-
   describe('error cleanup', () => {
-    test('calls deleteLessonAudio when transcribeAudio throws', async () => {
-      const transcribeError = new Error('transcribe failed')
-      transcribeAudioMock.mockRejectedValueOnce(transcribeError)
+    test('deletes the orphan audio when start fails, then rethrows', async () => {
+      const startError = new Error('create_failed')
+      startLessonTranscriptionMock.mockRejectedValueOnce(startError)
 
-      const { mutation } = configFrom(useCreateLessonMutation)
-      await expect(mutation({ title: 'My Lesson', file })).rejects.toThrow('transcribe failed')
-
-      expect(deleteLessonAudioMock).toHaveBeenCalledWith('member-uuid-1/fixed-uid.mp3')
-    })
-
-    test('calls deleteLessonAudio when createLesson throws', async () => {
-      transcribeAudioMock.mockResolvedValueOnce(transcribeResult)
-      translateTranscriptMock.mockResolvedValueOnce(translateResult)
-      createLessonMock.mockRejectedValueOnce(new Error('db error'))
-
-      const { mutation } = configFrom(useCreateLessonMutation)
-      await expect(mutation({ title: 'My Lesson', file })).rejects.toThrow('db error')
+      const { mutation } = configFrom(useStartLessonMutation)
+      await expect(mutation(vars)).rejects.toBe(startError)
 
       expect(deleteLessonAudioMock).toHaveBeenCalledWith('member-uuid-1/fixed-uid.mp3')
     })
 
-    test('rethrows the original error after cleanup', async () => {
-      const transcribeError = new Error('edge function bombed')
-      transcribeAudioMock.mockRejectedValueOnce(transcribeError)
+    test('does not start or delete when the upload itself fails', async () => {
+      uploadLessonAudioMock.mockRejectedValueOnce(new Error('upload failed'))
 
-      const { mutation } = configFrom(useCreateLessonMutation)
-      await expect(mutation({ title: 'My Lesson', file })).rejects.toBe(transcribeError)
-    })
+      const { mutation } = configFrom(useStartLessonMutation)
+      await expect(mutation(vars)).rejects.toThrow('upload failed')
 
-    test('does not call createLesson when transcribeAudio fails', async () => {
-      transcribeAudioMock.mockRejectedValueOnce(new Error('fail'))
-
-      const { mutation } = configFrom(useCreateLessonMutation)
-      await expect(mutation({ title: 'My Lesson', file })).rejects.toThrow()
-
-      expect(createLessonMock).not.toHaveBeenCalled()
+      expect(startLessonTranscriptionMock).not.toHaveBeenCalled()
+      expect(deleteLessonAudioMock).not.toHaveBeenCalled()
     })
   })
 
   describe('onSettled', () => {
     test('invalidates the collection lesson list on success', () => {
-      const { onSettled } = configFrom(useCreateLessonMutation)
-      onSettled(lesson, undefined, { collection_id: 7, title: 'My Lesson', file })
+      const { onSettled } = configFrom(useStartLessonMutation)
+      onSettled(lesson, undefined, vars)
       expect(invalidateSpy).toHaveBeenCalledWith({ key: ['lessons', 7] })
     })
 
     test('invalidates ["lesson-collections"] so the dashboard count refreshes', () => {
-      const { onSettled } = configFrom(useCreateLessonMutation)
-      onSettled(lesson, undefined, { collection_id: 7, title: 'My Lesson', file })
+      const { onSettled } = configFrom(useStartLessonMutation)
+      onSettled(lesson, undefined, vars)
       expect(invalidateSpy).toHaveBeenCalledWith({ key: ['lesson-collections'] })
     })
 
     test('invalidates the collection lesson list on error', () => {
-      const { onSettled } = configFrom(useCreateLessonMutation)
-      onSettled(undefined, new Error('boom'), { collection_id: 7, title: 'My Lesson', file })
+      const { onSettled } = configFrom(useStartLessonMutation)
+      onSettled(undefined, new Error('boom'), vars)
       expect(invalidateSpy).toHaveBeenCalledWith({ key: ['lessons', 7] })
     })
   })

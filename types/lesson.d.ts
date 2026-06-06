@@ -25,6 +25,14 @@ type LessonTranscript = {
   words?: TranscriptWord[]
 }
 
+// Lifecycle of the background transcription job. A lesson row exists from upload
+// onward: 'processing' while the worker transcribes, 'ready' once the transcript
+// is filled, 'failed' if the worker gave up (see error_code).
+type LessonStatus = 'processing' | 'ready' | 'failed'
+
+// The worker's current step while processing, surfaced as a progress label.
+type LessonPhase = 'transcribing' | 'translating' | 'transliterating'
+
 type Lesson = {
   id: number
   member_id?: string
@@ -33,6 +41,13 @@ type Lesson = {
   audio_path: string
   transcript: LessonTranscript
   lang?: string
+  status: LessonStatus
+  // The step in flight while status is 'processing'; null/absent once settled.
+  phase?: LessonPhase | null
+  // Machine-readable failure reason when status is 'failed'.
+  error_code?: string | null
+  // Script the transcript was converted to; a retry reproduces it.
+  script?: TranscriptScript
   created_at?: string
   updated_at?: string
 }

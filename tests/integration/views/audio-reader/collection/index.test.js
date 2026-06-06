@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, ref } from 'vue'
+import { defineComponent, h } from 'vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
@@ -8,6 +8,8 @@ const {
   collectionDataRef,
   lessonsDataRef,
   mutateAsyncMock,
+  retryMutateAsyncMock,
+  refetchMock,
   uploadModalOpenMock,
   readerModalOpenMock,
   alertWarnMock,
@@ -16,6 +18,8 @@ const {
   collectionDataRef: { value: { id: 1, title: 'JLPT N5' } },
   lessonsDataRef: { value: [] },
   mutateAsyncMock: vi.fn().mockResolvedValue(undefined),
+  retryMutateAsyncMock: vi.fn().mockResolvedValue(undefined),
+  refetchMock: vi.fn(),
   uploadModalOpenMock: vi.fn(),
   readerModalOpenMock: vi.fn(),
   alertWarnMock: vi.fn().mockReturnValue({ response: Promise.resolve(true) }),
@@ -29,9 +33,11 @@ vi.mock('@/api/lessons', () => ({
   }),
   useLessonsByCollectionQuery: () => ({
     data: lessonsDataRef,
-    error: { value: null }
+    error: { value: null },
+    refetch: refetchMock
   }),
-  useDeleteLessonMutation: () => ({ mutateAsync: mutateAsyncMock })
+  useDeleteLessonMutation: () => ({ mutateAsync: mutateAsyncMock }),
+  useRetryLessonMutation: () => ({ mutateAsync: retryMutateAsyncMock })
 }))
 
 vi.mock('@/composables/modals/use-upload-lesson-modal', () => ({
@@ -59,16 +65,29 @@ vi.mock('vue-router', () => ({
 const LessonCardStub = defineComponent({
   name: 'LessonCard',
   props: ['lesson'],
-  emits: ['open', 'delete'],
+  emits: ['open', 'retry', 'delete'],
   setup(props, { emit }) {
     return () =>
       h('div', { 'data-testid': 'lesson-card', 'data-lesson-id': props.lesson.id }, [
         h('button', { 'data-testid': 'lesson-card__open', onClick: () => emit('open') }, 'Open'),
+        h('button', { 'data-testid': 'lesson-card__retry', onClick: () => emit('retry') }, 'Retry'),
         h(
           'button',
           { 'data-testid': 'lesson-card__delete', onClick: () => emit('delete') },
           'Delete'
         )
+      ])
+  }
+})
+
+const CollectionHeroStub = defineComponent({
+  name: 'CollectionHero',
+  props: ['collection', 'lessonCount'],
+  emits: ['upload'],
+  setup(props, { emit }) {
+    return () =>
+      h('div', { 'data-testid': 'collection-hero', 'data-lesson-count': props.lessonCount }, [
+        h('button', { 'data-testid': 'collection-view__new', onClick: () => emit('upload') }, 'New')
       ])
   }
 })
@@ -80,15 +99,15 @@ import CollectionView from '@/views/audio-reader/collection/index.vue'
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const LESSONS = [
-  { id: 10, title: 'Lesson One', created_at: '2026-06-01T00:00:00Z' },
-  { id: 11, title: 'Lesson Two', created_at: '2026-06-02T00:00:00Z' }
+  { id: 10, title: 'Lesson One', status: 'ready', created_at: '2026-06-01T00:00:00Z' },
+  { id: 11, title: 'Lesson Two', status: 'ready', created_at: '2026-06-02T00:00:00Z' }
 ]
 
 function mountView(props = {}) {
   return shallowMount(CollectionView, {
     props: { id: '1', ...props },
     global: {
-      stubs: { LessonCard: LessonCardStub }
+      stubs: { LessonCard: LessonCardStub, CollectionHero: CollectionHeroStub }
     }
   })
 }
@@ -98,6 +117,8 @@ function mountView(props = {}) {
 beforeEach(() => {
   lessonsDataRef.value = []
   mutateAsyncMock.mockClear()
+  retryMutateAsyncMock.mockClear()
+  refetchMock.mockClear()
   uploadModalOpenMock.mockClear()
   readerModalOpenMock.mockClear()
   alertWarnMock.mockReturnValue({ response: Promise.resolve(true) })
@@ -139,17 +160,51 @@ describe('CollectionView', () => {
     })
   })
 
+  describe('hero sidebar', () => {
+    test('renders collection-hero when the collection is loaded', () => {
+      const wrapper = mountView()
+      expect(wrapper.find('[data-testid="collection-hero"]').exists()).toBe(true)
+    })
+
+    test('passes the lesson count to collection-hero', () => {
+      lessonsDataRef.value = LESSONS
+      const wrapper = mountView()
+      expect(wrapper.find('[data-testid="collection-hero"]').attributes('data-lesson-count')).toBe(
+        '2'
+      )
+    })
+  })
+
   describe('opening a lesson', () => {
-    test('clicking a lesson card open calls useLessonReaderModal().open with the lesson id', async () => {
+    test('clicking a ready lesson card open calls useLessonReaderModal().open with the lesson id', async () => {
       lessonsDataRef.value = LESSONS
       const wrapper = mountView()
       await wrapper.find('[data-testid="lesson-card__open"]').trigger('click')
       expect(readerModalOpenMock).toHaveBeenCalledWith(LESSONS[0].id)
     })
+
+    test('does not open the reader for a lesson that is not ready', async () => {
+      lessonsDataRef.value = [{ id: 12, title: 'Processing', status: 'processing' }]
+      const wrapper = mountView()
+      await wrapper.find('[data-testid="lesson-card__open"]').trigger('click')
+      expect(readerModalOpenMock).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('retrying a lesson', () => {
+    test('lesson-card retry calls the retry mutation with { id, collection_id }', async () => {
+      lessonsDataRef.value = [{ id: 13, title: 'Failed', status: 'failed', error_code: 'timeout' }]
+      const wrapper = mountView({ id: '1' })
+
+      await wrapper.find('[data-testid="lesson-card__retry"]').trigger('click')
+      await flushPromises()
+
+      expect(retryMutateAsyncMock).toHaveBeenCalledWith({ id: 13, collection_id: 1 })
+    })
   })
 
   describe('uploading a new lesson', () => {
-    test('clicking collection-view__new calls useUploadLessonModal().open with the numeric id', async () => {
+    test('collection-hero upload event calls useUploadLessonModal().open with the numeric id', async () => {
       const wrapper = mountView({ id: '5' })
       await wrapper.find('[data-testid="collection-view__new"]').trigger('click')
       expect(uploadModalOpenMock).toHaveBeenCalledWith(5)

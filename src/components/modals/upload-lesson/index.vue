@@ -6,7 +6,7 @@ import UiInput from '@/components/ui-kit/input.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import MobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
 import ScriptSelect from './script-select.vue'
-import { useCreateLessonMutation, EdgeFunctionError, type CreateLessonPhase } from '@/api/lessons'
+import { useStartLessonMutation, EdgeFunctionError } from '@/api/lessons'
 
 export type UploadLessonResponse = Lesson | undefined
 
@@ -20,21 +20,15 @@ const { collection_id, close } = defineProps<{
 }>()
 
 const { t } = useI18n()
-const create = useCreateLessonMutation()
+const start = useStartLessonMutation()
 
 const title = ref('')
 const file = ref<File | null>(null)
 const script = ref<TranscriptScript>('original')
 const error_key = ref<string | null>(null)
-const phase = ref<CreateLessonPhase | null>(null)
+const is_submitting = ref(false)
 
 const can_submit = computed(() => title.value.trim().length > 0 && file.value !== null)
-const is_uploading = computed(() => phase.value !== null)
-const submit_label = computed(() => {
-  if (phase.value === 'translating') return 'audio-reader.upload.translating-button'
-  if (phase.value === 'transcribing') return 'audio-reader.upload.uploading-button'
-  return 'audio-reader.upload.submit-button'
-})
 
 function onFileChange(event: Event) {
   error_key.value = null
@@ -54,20 +48,21 @@ async function onSubmit() {
   if (!can_submit.value || !file.value) return
 
   error_key.value = null
-  phase.value = 'transcribing'
+  is_submitting.value = true
   try {
-    const lesson = await create.mutateAsync({
+    // Returns once the lesson row exists in `processing`; transcription runs in
+    // the background and the collection view polls it to completion.
+    const lesson = await start.mutateAsync({
       collection_id,
       title: title.value.trim(),
       file: file.value,
-      script: script.value,
-      onPhase: (next) => (phase.value = next)
+      script: script.value
     })
     close(lesson)
   } catch (error) {
     error_key.value = errorKeyFor(error)
   } finally {
-    phase.value = null
+    is_submitting.value = false
   }
 }
 
@@ -123,7 +118,7 @@ function errorKeyFor(error: unknown): string {
           icon-left="close"
           size="lg"
           full-width
-          :disabled="is_uploading"
+          :disabled="is_submitting"
           @click="close(undefined)"
         >
           {{ t('audio-reader.upload.cancel-button') }}
@@ -135,10 +130,11 @@ function errorKeyFor(error: unknown): string {
           icon-left="add"
           size="lg"
           full-width
-          :disabled="!can_submit || is_uploading"
+          :disabled="!can_submit"
+          :loading="is_submitting"
           @click="onSubmit"
         >
-          {{ t(submit_label) }}
+          {{ t('audio-reader.upload.submit-button') }}
         </ui-button>
       </div>
     </div>

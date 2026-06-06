@@ -1,4 +1,5 @@
 export * from './create'
+export * from './retry'
 export * from './delete'
 export * from './create-collection'
 export * from './delete-collection'

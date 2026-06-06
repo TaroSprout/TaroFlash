@@ -1,13 +1,6 @@
 import { supabase } from '@/supabase-client'
 import logger from '@/utils/logger'
 
-export type TranscribeResult = {
-  text: string
-  segments: TranscriptSegment[]
-  words?: TranscriptWord[]
-  lang?: string
-}
-
 export type TranslationResult = {
   translation: string
   reading: string
@@ -21,27 +14,11 @@ export type TranslateTermArgs = {
   target_lang: string
 }
 
-export type TranslateTranscriptArgs = {
-  sentences: string[]
-  target_lang: string
-}
-
-export type TranscriptTranslation = {
-  translations: string[]
-}
-
-export type ReadingSentence = {
-  text: string
-  words: string[]
-}
-
-export type TransliterateTranscriptArgs = {
-  sentences: ReadingSentence[]
-  lang: string
-}
-
-export type TranscriptReadings = {
-  readings: string[]
+export type StartLessonArgs = {
+  collection_id: number
+  title: string
+  audio_path: string
+  script: TranscriptScript
 }
 
 // The edge functions return a JSON body `{ code }` on failure (e.g.
@@ -83,26 +60,24 @@ async function invokeEdge<T>(name: string, body: FormData | object): Promise<T> 
   return data
 }
 
-export function transcribeAudio(
-  file: File,
-  script: TranscriptScript = 'original'
-): Promise<TranscribeResult> {
-  const form = new FormData()
-  form.append('file', file)
-  form.append('script', script)
-  return invokeEdge<TranscribeResult>('transcribe-audio', form)
-}
-
 export function translateTerm(args: TranslateTermArgs): Promise<TranslationResult> {
   return invokeEdge<TranslationResult>('translate-term', args)
 }
 
-export function translateTranscript(args: TranslateTranscriptArgs): Promise<TranscriptTranslation> {
-  return invokeEdge<TranscriptTranslation>('translate-transcript', args)
+// Kick off async transcription: the edge function creates the lesson row in a
+// `processing` state and returns it immediately (202) while a background worker
+// fills the transcript. The FE polls the row for the result.
+export function startLessonTranscription(args: StartLessonArgs): Promise<Lesson> {
+  return invokeEdge<{ lesson: Lesson }>('transcribe-lesson', { action: 'start', ...args }).then(
+    (data) => data.lesson
+  )
 }
 
-export function transliterateTranscript(
-  args: TransliterateTranscriptArgs
-): Promise<TranscriptReadings> {
-  return invokeEdge<TranscriptReadings>('transliterate-transcript', args)
+// Re-run transcription for a lesson that previously failed. The audio is still in
+// storage, so this just resets the row to `processing` and restarts the worker.
+export function retryLessonTranscription(lesson_id: number): Promise<Lesson> {
+  return invokeEdge<{ lesson: Lesson }>('transcribe-lesson', {
+    action: 'retry',
+    lesson_id
+  }).then((data) => data.lesson)
 }

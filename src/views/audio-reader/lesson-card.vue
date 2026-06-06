@@ -1,35 +1,77 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { formatShortDate } from '@/utils/date'
+
+const PHASE_KEYS: Record<LessonPhase, string> = {
+  transcribing: 'audio-reader.lesson-card.phase-transcribing',
+  translating: 'audio-reader.lesson-card.phase-translating',
+  transliterating: 'audio-reader.lesson-card.phase-transliterating'
+}
+
+const ERROR_KEYS: Record<string, string> = {
+  timeout: 'audio-reader.lesson-error.timeout',
+  rate_limited: 'audio-reader.lesson-error.rate-limited',
+  file_too_large: 'audio-reader.lesson-error.file-too-large',
+  invalid_audio: 'audio-reader.lesson-error.invalid-audio',
+  upstream_error: 'audio-reader.lesson-error.upstream',
+  audio_unavailable: 'audio-reader.lesson-error.audio-unavailable'
+}
 
 const { lesson } = defineProps<{ lesson: Lesson }>()
 
 const emit = defineEmits<{
   (e: 'open'): void
   (e: 'delete'): void
+  (e: 'retry'): void
 }>()
 
 const { t } = useI18n()
+
+const is_ready = computed(() => lesson.status === 'ready')
+const is_processing = computed(() => lesson.status === 'processing')
+const is_failed = computed(() => lesson.status === 'failed')
+
+const status_icon = computed(() => {
+  if (is_failed.value) return 'close'
+  if (is_processing.value) return 'loading-dots'
+  return 'music-note'
+})
+
+const icon_class = computed(() =>
+  is_failed.value ? 'bg-red-500 text-white' : 'bg-blue-500 text-white dark:bg-blue-650'
+)
+
+const processing_label = computed(() =>
+  lesson.phase ? PHASE_KEYS[lesson.phase] : 'audio-reader.lesson-card.processing-fallback'
+)
+
+const error_label = computed(
+  () => ERROR_KEYS[lesson.error_code ?? ''] ?? 'audio-reader.lesson-error.unknown'
+)
 </script>
 
 <template>
   <div
     data-testid="lesson-card"
+    :data-status="lesson.status"
     class="group relative flex w-56 flex-col gap-3 rounded-7 bg-brown-200 p-4 text-left dark:bg-grey-700"
   >
     <button
       data-testid="lesson-card__open"
       type="button"
-      class="flex flex-col gap-3"
+      class="flex flex-col gap-3 text-left disabled:cursor-default"
+      :disabled="!is_ready"
       @click="emit('open')"
     >
       <span
         data-testid="lesson-card__icon"
-        class="flex size-10 items-center justify-center rounded-full bg-blue-500 text-white dark:bg-blue-650"
+        class="flex size-10 items-center justify-center rounded-full"
+        :class="icon_class"
       >
-        <ui-icon src="music-note" class="h-5" />
+        <ui-icon :src="status_icon" class="h-5" />
       </span>
 
       <span
@@ -39,10 +81,43 @@ const { t } = useI18n()
         {{ lesson.title }}
       </span>
 
-      <span data-testid="lesson-card__date" class="text-sm text-brown-500 dark:text-grey-400">
+      <span
+        v-if="is_ready"
+        data-testid="lesson-card__date"
+        class="text-sm text-brown-500 dark:text-grey-400"
+      >
         {{ formatShortDate(lesson.created_at ?? '') }}
       </span>
+
+      <span
+        v-else-if="is_processing"
+        data-testid="lesson-card__status"
+        class="text-base text-blue-500 dark:text-blue-400"
+      >
+        {{ t(processing_label) }}
+      </span>
+
+      <span
+        v-else
+        data-testid="lesson-card__status"
+        class="text-base text-red-500 dark:text-red-400"
+      >
+        {{ t(error_label) }}
+      </span>
     </button>
+
+    <ui-button
+      v-if="is_failed"
+      data-testid="lesson-card__retry"
+      data-theme="blue-500"
+      data-theme-dark="blue-650"
+      icon-left="play"
+      size="sm"
+      full-width
+      @click="emit('retry')"
+    >
+      {{ t('audio-reader.lesson-card.retry-button') }}
+    </ui-button>
 
     <ui-button
       data-testid="lesson-card__delete"

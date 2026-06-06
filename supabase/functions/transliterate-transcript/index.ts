@@ -10,7 +10,7 @@
 // Admin-only: requireAdmin() runs before any work.
 
 import { cors, requireAdmin } from '../_shared/require-admin.ts'
-import { readSentences, type ReadingSentence } from './transliterate.ts'
+import { readSentences, type ReadingSentence } from '../_shared/transcription/transliterate.ts'
 
 type TransliterateRequest = { sentences: ReadingSentence[]; lang: string }
 
