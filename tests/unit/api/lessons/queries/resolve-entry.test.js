@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 
 const { ensureMock, fetchMock, fetchLessonsByCollectionMock } = vi.hoisted(() => ({
   ensureMock: vi.fn(),
-  fetchMock: vi.fn().mockResolvedValue([]),
+  fetchMock: vi.fn().mockResolvedValue({ data: [] }),
   fetchLessonsByCollectionMock: vi.fn().mockResolvedValue([])
 }))
 
@@ -40,10 +40,12 @@ describe('resolveCollectionEntryLesson', () => {
     test('returns the first lesson id from the cache fetch', async () => {
       const entry = Symbol('entry')
       ensureMock.mockReturnValue(entry)
-      fetchMock.mockResolvedValue([
-        { id: 10, title: 'Chapter 1' },
-        { id: 11, title: 'Chapter 2' }
-      ])
+      fetchMock.mockResolvedValue({
+        data: [
+          { id: 10, title: 'Chapter 1' },
+          { id: 11, title: 'Chapter 2' }
+        ]
+      })
 
       const collection = { id: 5, last_lesson_id: null }
       const result = await resolveCollectionEntryLesson(collection)
@@ -56,7 +58,7 @@ describe('resolveCollectionEntryLesson', () => {
     test('returns null when the lesson list is empty', async () => {
       const entry = Symbol('entry')
       ensureMock.mockReturnValue(entry)
-      fetchMock.mockResolvedValue([])
+      fetchMock.mockResolvedValue({ data: [] })
 
       const collection = { id: 7, last_lesson_id: null }
       const result = await resolveCollectionEntryLesson(collection)

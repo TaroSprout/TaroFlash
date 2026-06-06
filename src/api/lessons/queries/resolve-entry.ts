@@ -22,7 +22,7 @@ export async function resolveCollectionEntryLesson(
     key: ['lessons', collection.id],
     query: () => fetchLessonsByCollection(collection.id)
   })
-  const lessons = (await cache.fetch(entry)) as Lesson[]
+  const { data } = await cache.fetch(entry)
 
-  return lessons[0]?.id ?? null
+  return data?.[0]?.id ?? null
 }
