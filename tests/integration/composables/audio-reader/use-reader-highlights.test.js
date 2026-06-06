@@ -3,13 +3,23 @@ import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import { useReaderHighlights } from '@/composables/audio-reader/use-reader-highlights'
 
-const { moveMock, hideMock } = vi.hoisted(() => ({ moveMock: vi.fn(), hideMock: vi.fn() }))
+const { moveMock, hideMock, scrollMock } = vi.hoisted(() => ({
+  moveMock: vi.fn(),
+  hideMock: vi.fn(),
+  scrollMock: vi.fn()
+}))
 
 // Mock the animator so positioning is observable as calls (real geometry is zero
 // in the test DOM anyway); selection behaviour is asserted via these.
 vi.mock('@/utils/animations/reader-cursor', () => ({
   moveReaderCursor: moveMock,
   hideReaderCursor: hideMock
+}))
+
+// Mock the scroll animator so following the active sentence is observable as a
+// call; the real gsap scrolling is exercised in transcript-scroll's own tests.
+vi.mock('@/utils/animations/transcript-scroll', () => ({
+  scrollLineIntoView: scrollMock
 }))
 
 // Host wiring the composable's pointer handlers + template refs, with words
@@ -41,17 +51,19 @@ const Host = defineComponent({
       [
         h('div', { ref: 'playhead' }),
         h('div', { ref: 'hover' }),
-        h(
-          'span',
-          { 'data-testid': 'w0', 'data-word-index': '0', 'data-word-text': 'Hello ' },
-          'Hello '
-        ),
-        h(
-          'span',
-          { 'data-testid': 'w1', 'data-word-index': '1', 'data-word-text': 'world' },
-          'world'
-        ),
-        h('span', { 'data-testid': 'w2', 'data-word-index': '2', 'data-word-text': '. ' }, '. ')
+        h('div', { 'data-testid': 'transcript-segment', 'data-index': '0' }, [
+          h(
+            'span',
+            { 'data-testid': 'w0', 'data-word-index': '0', 'data-word-text': 'Hello ' },
+            'Hello '
+          ),
+          h(
+            'span',
+            { 'data-testid': 'w1', 'data-word-index': '1', 'data-word-text': 'world' },
+            'world'
+          ),
+          h('span', { 'data-testid': 'w2', 'data-word-index': '2', 'data-word-text': '. ' }, '. ')
+        ])
       ]
     )
   }
@@ -59,7 +71,6 @@ const Host = defineComponent({
 
 describe('useReaderHighlights', () => {
   let words
-  let scroll_into_view
 
   // The composable hit-tests via elementFromPoint; map a synthetic clientX (the
   // word index) onto its element so the gesture is deterministic, not layout-bound.
@@ -80,8 +91,7 @@ describe('useReaderHighlights', () => {
   beforeEach(() => {
     moveMock.mockClear()
     hideMock.mockClear()
-    scroll_into_view = vi.fn()
-    Element.prototype.scrollIntoView = scroll_into_view
+    scrollMock.mockClear()
   })
 
   afterEach(() => {
@@ -228,7 +238,7 @@ describe('useReaderHighlights', () => {
 
       await wrapper.setProps({ activeWord: 1 })
 
-      expect(scroll_into_view).toHaveBeenCalled()
+      expect(scrollMock).toHaveBeenCalled()
     })
   })
 })
