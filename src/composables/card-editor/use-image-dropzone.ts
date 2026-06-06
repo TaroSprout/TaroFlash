@@ -13,6 +13,9 @@ type UseImageDropzoneOptions = {
   onFile: (file: File) => void
   // Invoked when a dropped/picked file fails validation.
   onError?: (error: ImageFileError) => void
+  // Precondition checked on drop before validation. When it resolves false the
+  // drop is abandoned (e.g. a feature gate showed its own prompt instead).
+  guard?: () => boolean | Promise<boolean>
 }
 
 /**
@@ -37,7 +40,8 @@ export function useImageDropzone({
   maxBytes,
   fileInput,
   onFile,
-  onError
+  onError,
+  guard
 }: UseImageDropzoneOptions) {
   const drag_counter = ref(0)
   const error = ref<ImageFileError | null>(null)
@@ -82,13 +86,18 @@ export function useImageDropzone({
     e.preventDefault()
   }
 
-  /** Accept a dropped file and validate it. */
-  function onDrop(e: DragEvent) {
+  /** Accept a dropped file and validate it, unless `guard` vetoes the drop. */
+  async function onDrop(e: DragEvent) {
     e.preventDefault()
     drag_counter.value = 0
 
+    // Capture the file before any await — `dataTransfer` is cleared once the
+    // event handler yields.
     const file = e.dataTransfer?.files[0]
-    if (file) processFile(file)
+    if (!file) return
+
+    if (guard && !(await guard())) return
+    processFile(file)
   }
 
   // Validate, then either record the error or hand the file to the consumer.

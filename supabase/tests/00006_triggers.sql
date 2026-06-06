@@ -14,6 +14,11 @@ SELECT plan(5);
 
 SELECT tests.create_user('11111111-1111-1111-1111-111111111111'::uuid, 'alice_triggers');
 
+-- The media dedupe tests below INSERT card-image rows as the authenticated user,
+-- which the paywall policy (20260606000002) gates on plan='paid'. Put Alice on
+-- the paid plan so those inserts exercise the trigger rather than tripping RLS.
+UPDATE public.members SET plan = 'paid' WHERE id = '11111111-1111-1111-1111-111111111111';
+
 SELECT tests.set_claims('11111111-1111-1111-1111-111111111111'::uuid);
 INSERT INTO public.decks (id, title, is_public) VALUES (100, 'Alice Deck', false);
 
