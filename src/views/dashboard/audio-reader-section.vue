@@ -1,52 +1,41 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
-import { useLessonCollectionsQuery, useDeleteLessonCollectionMutation } from '@/api/lessons'
+import { useLessonCollectionsQuery } from '@/api/lessons'
 import { useToast } from '@/composables/toast'
-import { useAlert } from '@/composables/alert'
+import { useOpenCollection } from '@/composables/audio-reader/use-open-collection'
 import { useCollectionCreateModal } from '@/composables/modals/use-collection-create-modal'
+import { useCollectionEditModal } from '@/composables/modals/use-collection-edit-modal'
 import UiButton from '@/components/ui-kit/button.vue'
 import CollectionCard from '@/views/audio-reader/collection-card.vue'
 
 const { t } = useI18n()
-const router = useRouter()
 const toast = useToast()
-const alert = useAlert()
+const { openCollection } = useOpenCollection()
 const create_modal = useCollectionCreateModal()
-const delete_collection = useDeleteLessonCollectionMutation()
+const edit_modal = useCollectionEditModal()
 
 const { data: collections_data, error: collections_error } = useLessonCollectionsQuery()
 const collections = computed(() => collections_data.value ?? [])
 
-watch(collections_error, (err) => {
-  if (err) toast.error(err.message)
-})
-
 function onOpen(collection: LessonCollectionWithCount) {
-  router.push({ name: 'lesson-collection', params: { id: collection.id } })
+  openCollection(collection)
+}
+
+function onEdit(collection: LessonCollectionWithCount) {
+  edit_modal.open(collection.id)
 }
 
 async function onCreate() {
+  // A fresh collection has no chapters yet, so drop straight into its edit modal
+  // to upload the first lesson.
   const collection = await create_modal.open().response
-  if (collection) router.push({ name: 'lesson-collection', params: { id: collection.id } })
+  if (collection) edit_modal.open(collection.id)
 }
 
-async function onDelete(collection: LessonCollectionWithCount) {
-  const confirmed = await alert.warn({
-    title: t('alert.delete-collection.title'),
-    message: t('alert.delete-collection.message'),
-    confirmLabel: t('alert.delete-collection.confirm'),
-    confirmAudio: 'ui.trash_crumple_short'
-  }).response
-  if (!confirmed) return
-
-  try {
-    await delete_collection.mutateAsync(collection.id)
-  } catch {
-    toast.error(t('lesson-collections.section.delete-error'))
-  }
-}
+watch(collections_error, (err) => {
+  if (err) toast.error(err.message)
+})
 </script>
 
 <template>
@@ -82,7 +71,7 @@ async function onDelete(collection: LessonCollectionWithCount) {
         :key="collection.id"
         :collection="collection"
         @open="onOpen(collection)"
-        @delete="onDelete(collection)"
+        @edit="onEdit(collection)"
       />
     </div>
   </section>
