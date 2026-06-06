@@ -28,6 +28,10 @@ const save_failed = ref(false)
 const { selection, updateCard, card_attributes } = inject<CardListController>('card-editor')!
 const { is_selecting } = selection
 
+// Persist both sides from local state, not just the edited one: the merge base
+// in the save path is the cached card, so sending a single side would let it
+// clobber the other side with stale cache data. Local refs are the source of
+// truth while mounted, so they carry the complete, current card.
 async function onUpdate(side: 'front' | 'back', text: string) {
   if (side === 'front') front_text.value = text
   else back_text.value = text
@@ -35,7 +39,7 @@ async function onUpdate(side: 'front' | 'back', text: string) {
   save_failed.value = false
 
   try {
-    await updateCard(card.id, { [`${side}_text`]: text })
+    await updateCard(card.id, { front_text: front_text.value, back_text: back_text.value })
   } catch {
     save_failed.value = true
   }

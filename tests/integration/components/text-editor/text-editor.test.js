@@ -158,6 +158,33 @@ describe('TextEditor', () => {
     expect(wrapper.emitted('update')).toEqual([['typed']])
   })
 
+  // ── Uncontrolled editable surface ──────────────────────────────────────────
+  // The editable div is seeded once on mount, then owned by the browser. It must
+  // not re-sync from `content` — in edit mode `content` is just the user's own
+  // input echoed back, and rewriting it would snap the caret to the start. This
+  // is what previously broke multi-line backspace (caret jumped to line one).
+
+  test('editable editor ignores content prop changes after mount (caret-safe)', async () => {
+    const wrapper = makeEditor({ content: 'x' })
+    const el = getEditorEl(wrapper).element
+
+    // The browser owns the editable DOM after mount (here standing in for the
+    // user's typing). A later content change must not rewrite it.
+    el.textContent = 'user typed\nline two'
+    await wrapper.setProps({ content: 'something external' })
+
+    expect(el.textContent).toBe('user typed\nline two')
+  })
+
+  test('disabled editor renders content reactively via Vue (no imperative sync)', async () => {
+    const wrapper = makeEditor({ disabled: true, content: 'old' })
+    expect(getEditorEl(wrapper).element.textContent).toBe('old')
+
+    await wrapper.setProps({ content: 'new' })
+
+    expect(getEditorEl(wrapper).element.textContent).toBe('new')
+  })
+
   test('emits focus and blur on native focus events', async () => {
     const wrapper = makeEditor()
     const el = getEditorEl(wrapper)
