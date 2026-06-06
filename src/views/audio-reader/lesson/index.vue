@@ -59,25 +59,11 @@ watch(
 </script>
 
 <template>
-  <section data-testid="lesson-view" class="flex h-full flex-col gap-6 xl:flex-row">
-    <nav
-      data-testid="lesson-view__chapters"
-      class="flex shrink-0 gap-2 overflow-x-auto pb-2 xl:w-56 xl:flex-col xl:overflow-x-visible xl:overflow-y-auto xl:pb-0"
-    >
-      <button
-        v-for="(chapter, index) in chapters"
-        :key="chapter.id"
-        data-testid="lesson-view__chapter"
-        :data-active="chapter.id === lesson_id"
-        type="button"
-        class="shrink-0 cursor-pointer rounded-7 bg-brown-200 px-4 py-2 text-left text-base text-brown-700 data-[active=true]:bg-blue-500 data-[active=true]:text-white xl:shrink dark:bg-grey-700 dark:text-brown-200 dark:data-[active=true]:bg-blue-650"
-        @click="goToChapter(chapter.id)"
-      >
-        <span class="line-clamp-1">{{ index + 1 }}. {{ chapter.title }}</span>
-      </button>
-    </nav>
-
-    <div data-testid="lesson-view__reader" class="flex min-h-0 flex-1 flex-col gap-4">
+  <section
+    data-testid="lesson-view"
+    class="flex h-[calc(100dvh-var(--nav-height))] flex-col gap-6 xl:flex-row"
+  >
+    <aside data-testid="lesson-view__sidebar" class="flex shrink-0 flex-col gap-4 xl:w-56">
       <header data-testid="lesson-view__header" class="flex items-center justify-between gap-4">
         <div data-testid="lesson-view__heading" class="flex flex-col gap-1">
           <h1 class="text-3xl text-brown-700 dark:text-brown-300">{{ lesson?.title }}</h1>
@@ -103,10 +89,29 @@ watch(
         </ui-button>
       </header>
 
-      <div data-testid="lesson-view__transcript-wrap" class="relative min-h-0 flex-1">
+      <nav
+        data-testid="lesson-view__chapters"
+        class="flex gap-2 overflow-x-auto pb-2 xl:min-h-0 xl:flex-1 xl:flex-col xl:overflow-x-visible xl:overflow-y-auto xl:pb-0"
+      >
+        <button
+          v-for="(chapter, index) in chapters"
+          :key="chapter.id"
+          data-testid="lesson-view__chapter"
+          :data-active="chapter.id === lesson_id"
+          type="button"
+          class="shrink-0 cursor-pointer rounded-7 bg-brown-200 px-4 py-2 text-left text-base text-brown-700 data-[active=true]:bg-blue-500 data-[active=true]:text-white xl:shrink dark:bg-grey-700 dark:text-brown-200 dark:data-[active=true]:bg-blue-650"
+          @click="goToChapter(chapter.id)"
+        >
+          <span class="line-clamp-1">{{ index + 1 }}. {{ chapter.title }}</span>
+        </button>
+      </nav>
+    </aside>
+
+    <div data-testid="lesson-view__reader" class="relative flex min-h-0 flex-1 flex-col xl:min-w-0">
+      <div data-testid="lesson-view__scroll" class="scroll-hidden min-h-0 flex-1 overflow-y-auto">
         <div
           data-testid="lesson-view__transcript"
-          class="scroll-hidden h-full overflow-y-auto rounded-7 bg-brown-100 px-6 pt-6 pb-2 dark:bg-grey-800"
+          class="rounded-7 bg-brown-100 px-0 pt-6 pb-2 sm:px-6 dark:bg-grey-800"
         >
           <transcript-view
             :paragraphs="paragraphs"
@@ -116,11 +121,47 @@ watch(
           />
         </div>
 
-        <scroll-bar
-          class="absolute inset-y-3 right-2"
-          target="[data-testid='lesson-view__transcript']"
-        />
+        <footer
+          data-testid="lesson-view__bar"
+          class="sticky bottom-0 z-30 mt-4 flex flex-col gap-2 border-t border-brown-300 bg-brown-100 pt-3 pb-[env(safe-area-inset-bottom)] pointer-coarse:pr-18 dark:border-grey-700 dark:bg-grey-900"
+        >
+          <audio
+            ref="audio"
+            data-testid="lesson-view__audio"
+            :src="audio_url ?? undefined"
+            controls
+            class="w-full"
+          />
+
+          <div data-testid="lesson-view__nav" class="flex items-center justify-between gap-3">
+            <ui-button
+              data-testid="lesson-view__prev"
+              data-theme="grey-400"
+              icon-left="chevron-left"
+              icon-only
+              size="lg"
+              :disabled="!prev_chapter"
+              @click="prev_chapter && goToChapter(prev_chapter.id)"
+            >
+              {{ t('lesson-view.prev-button') }}
+            </ui-button>
+
+            <ui-button
+              data-testid="lesson-view__next"
+              data-theme="grey-400"
+              icon-left="chevron-right"
+              icon-only
+              size="lg"
+              :disabled="!next_chapter"
+              @click="next_chapter && goToChapter(next_chapter.id)"
+            >
+              {{ t('lesson-view.next-button') }}
+            </ui-button>
+          </div>
+        </footer>
       </div>
+
+      <scroll-bar class="absolute inset-y-3 right-2" target="[data-testid='lesson-view__scroll']" />
 
       <term-popover
         v-if="selection"
@@ -131,43 +172,6 @@ watch(
         :target_lang="TARGET_LANG"
         @close="closeTerm"
       />
-
-      <footer
-        data-testid="lesson-view__bar"
-        class="flex items-center gap-3 border-t border-brown-300 pt-3 dark:border-grey-700"
-      >
-        <ui-button
-          data-testid="lesson-view__prev"
-          data-theme="grey-400"
-          icon-left="chevron-left"
-          icon-only
-          size="lg"
-          :disabled="!prev_chapter"
-          @click="prev_chapter && goToChapter(prev_chapter.id)"
-        >
-          {{ t('lesson-view.prev-button') }}
-        </ui-button>
-
-        <audio
-          ref="audio"
-          data-testid="lesson-view__audio"
-          :src="audio_url ?? undefined"
-          controls
-          class="w-full"
-        />
-
-        <ui-button
-          data-testid="lesson-view__next"
-          data-theme="grey-400"
-          icon-left="chevron-right"
-          icon-only
-          size="lg"
-          :disabled="!next_chapter"
-          @click="next_chapter && goToChapter(next_chapter.id)"
-        >
-          {{ t('lesson-view.next-button') }}
-        </ui-button>
-      </footer>
     </div>
   </section>
 </template>
