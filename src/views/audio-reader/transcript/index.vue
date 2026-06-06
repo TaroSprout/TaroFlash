@@ -42,7 +42,7 @@ function commitSelection({ term, rect, anchor }: { term: string; rect: DOMRect; 
 </script>
 
 <template>
-  <div data-testid="transcript-view" class="overflow-y-auto px-2 py-1">
+  <div data-testid="transcript-view" class="px-2 py-1">
     <div
       ref="content"
       data-testid="transcript-view__content"
