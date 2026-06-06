@@ -7,6 +7,7 @@ import { useLessonReader } from '@/composables/audio-reader/use-lesson-reader'
 import { useCollectionEditModal } from '@/composables/modals/use-collection-edit-modal'
 import UiButton from '@/components/ui-kit/button.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
+import AudioPlayer from '@/views/audio-reader/lesson/audio-player.vue'
 import TranscriptView from '@/views/audio-reader/transcript/index.vue'
 import TermPopover from '@/views/audio-reader/term-popover/index.vue'
 
@@ -24,8 +25,17 @@ const set_progress = useSetCollectionProgressMutation()
 const collection_id = computed(() => Number(collectionId))
 const lesson_id = computed(() => Number(lessonId))
 
-const { lesson, paragraphs, audio_url, active_word, selection, popover_open, openTerm, closeTerm } =
-  useLessonReader(lesson_id)
+const {
+  lesson,
+  paragraphs,
+  audio_url,
+  active_word,
+  selection,
+  popover_open,
+  openTerm,
+  closeTerm,
+  player
+} = useLessonReader(lesson_id)
 
 const { data: lessons_data } = useLessonsByCollectionQuery(collection_id)
 
@@ -125,44 +135,43 @@ watch(
 
       <footer
         data-testid="lesson-view__bar"
-        class="sticky bottom-0 z-30 mt-4 flex flex-col gap-2 border-t border-brown-300 bg-brown-100 pt-3 pb-[env(safe-area-inset-bottom)] pointer-coarse:pr-18 dark:border-grey-700 dark:bg-grey-900"
+        class="sticky bottom-0 z-30 mt-4 flex items-center gap-3 border-t border-brown-300 bg-brown-100 pt-3 pb-[env(safe-area-inset-bottom)] pointer-coarse:pr-18 pointer-fine:pb-6 dark:border-grey-700 dark:bg-grey-900"
       >
+        <ui-button
+          data-testid="lesson-view__prev"
+          data-theme="grey-400"
+          icon-left="chevron-left"
+          icon-only
+          size="lg"
+          :disabled="!prev_chapter"
+          @click="prev_chapter && goToChapter(prev_chapter.id)"
+        >
+          {{ t('lesson-view.prev-button') }}
+        </ui-button>
+
+        <audio-player :player="player" />
+
+        <ui-button
+          data-testid="lesson-view__next"
+          data-theme="grey-400"
+          icon-left="chevron-right"
+          icon-only
+          size="lg"
+          :disabled="!next_chapter"
+          @click="next_chapter && goToChapter(next_chapter.id)"
+        >
+          {{ t('lesson-view.next-button') }}
+        </ui-button>
+
         <audio
           ref="audio"
           data-testid="lesson-view__audio"
           :src="audio_url ?? undefined"
-          controls
-          class="w-full"
+          class="hidden"
         />
-
-        <div data-testid="lesson-view__nav" class="flex items-center justify-between gap-3">
-          <ui-button
-            data-testid="lesson-view__prev"
-            data-theme="grey-400"
-            icon-left="chevron-left"
-            icon-only
-            size="lg"
-            :disabled="!prev_chapter"
-            @click="prev_chapter && goToChapter(prev_chapter.id)"
-          >
-            {{ t('lesson-view.prev-button') }}
-          </ui-button>
-
-          <ui-button
-            data-testid="lesson-view__next"
-            data-theme="grey-400"
-            icon-left="chevron-right"
-            icon-only
-            size="lg"
-            :disabled="!next_chapter"
-            @click="next_chapter && goToChapter(next_chapter.id)"
-          >
-            {{ t('lesson-view.next-button') }}
-          </ui-button>
-        </div>
       </footer>
 
-      <scroll-bar class="fixed top-(--nav-height) right-1 bottom-3" target="html" />
+      <scroll-bar class="fixed top-(--nav-height) right-6 bottom-6" target="html" />
 
       <term-popover
         v-if="selection"
