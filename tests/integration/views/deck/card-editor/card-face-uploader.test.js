@@ -47,11 +47,18 @@ const UiTooltipStub = defineComponent({
 const mocks = vi.hoisted(() => ({
   setFaceImageMock: vi.fn(),
   toastErrorMock: vi.fn(),
-  emitSfxMock: vi.fn()
+  emitSfxMock: vi.fn(),
+  guardCardImageMock: vi.fn()
 }))
 
 vi.mock('@/composables/toast', () => ({ useToast: () => ({ error: mocks.toastErrorMock }) }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mocks.emitSfxMock, emitHoverSfx: vi.fn() }))
+
+// The paywall gate's own logic is unit-tested separately; here we drive it to
+// assert how the uploader wires it into the click + drop paths.
+vi.mock('@/composables/card-editor/use-card-image-gate', () => ({
+  useCardImageGate: () => ({ guardCardImage: mocks.guardCardImageMock })
+}))
 
 // playButtonTap touches a DOM element via GSAP — stub it out entirely
 vi.mock('@/utils/animations/button-tap', () => ({
@@ -105,6 +112,9 @@ beforeEach(() => {
   mocks.setFaceImageMock.mockResolvedValue(undefined)
   mocks.toastErrorMock.mockReset()
   mocks.emitSfxMock.mockReset()
+  mocks.guardCardImageMock.mockReset()
+  // Default: paid member — uploads proceed. Paywalled cases override per-test.
+  mocks.guardCardImageMock.mockResolvedValue(true)
   _wrapper = undefined
 })
 
@@ -241,6 +251,7 @@ describe('CardFaceUploader', () => {
     const clickSpy = vi.spyOn(input, 'click').mockImplementation(() => {})
 
     await wrapper.find('[data-testid="card-face-uploader__add"]').trigger('click')
+    await flushPromises()
 
     expect(clickSpy).toHaveBeenCalled()
   })
@@ -478,8 +489,47 @@ describe('CardFaceUploader', () => {
   test('clicking the add-image button plays ui.select', async () => {
     const wrapper = mount({ card: { id: 5 } })
     await wrapper.find('[data-testid="card-face-uploader__add"]').trigger('click')
+    await flushPromises()
 
     expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.select')
+  })
+
+  // ── Paid-plan gate ────────────────────────────────────────────────────────
+
+  test('clicking add as a free member runs the gate and does NOT open the picker', async () => {
+    mocks.guardCardImageMock.mockResolvedValue(false)
+    const wrapper = mount({ card: { id: 5 } })
+    const input = wrapper.find('input[type="file"]').element
+    const clickSpy = vi.spyOn(input, 'click').mockImplementation(() => {})
+
+    await wrapper.find('[data-testid="card-face-uploader__add"]').trigger('click')
+    await flushPromises()
+
+    expect(mocks.guardCardImageMock).toHaveBeenCalled()
+    expect(clickSpy).not.toHaveBeenCalled()
+    expect(mocks.emitSfxMock).not.toHaveBeenCalledWith('ui.select')
+  })
+
+  test('dropping a file as a free member runs the gate and does NOT upload', async () => {
+    mocks.guardCardImageMock.mockResolvedValue(false)
+    const wrapper = mount({ card: { id: 5 } })
+
+    await dropImage(wrapper, pngFile())
+    await flushPromises()
+
+    expect(mocks.guardCardImageMock).toHaveBeenCalled()
+    expect(mocks.setFaceImageMock).not.toHaveBeenCalled()
+  })
+
+  test('a blocked free-member drop of an invalid file shows no error overlay (gate runs first)', async () => {
+    mocks.guardCardImageMock.mockResolvedValue(false)
+    const wrapper = mount({ card: { id: 5 } })
+
+    await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
+    await flushPromises()
+
+    expect(mocks.setFaceImageMock).not.toHaveBeenCalled()
+    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(false)
   })
 
   // ── sfx prop on the Card ──────────────────────────────────────────────────

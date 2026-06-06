@@ -7,7 +7,13 @@ const { useDeckQueryMock, useCardListControllerMock } = vi.hoisted(() => ({
   useCardListControllerMock: vi.fn()
 }))
 
-vi.mock('@/api/decks', () => ({ useDeckQuery: useDeckQueryMock }))
+// card-face-uploader (reached statically via mode-stack → list-item-card) now
+// imports useCan, which pulls useMemberDeckCountQuery from this barrel — so the
+// mock must expose it too, or ESM linking of the graph fails.
+vi.mock('@/api/decks', () => ({
+  useDeckQuery: useDeckQueryMock,
+  useMemberDeckCountQuery: () => ({ data: { value: 0 }, refresh: vi.fn() })
+}))
 vi.mock('@/composables/card-editor/card-list-controller', () => ({
   useCardListController: useCardListControllerMock
 }))

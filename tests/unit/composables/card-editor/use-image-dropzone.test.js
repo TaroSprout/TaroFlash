@@ -15,6 +15,13 @@ function setup(maxBytes = MAX_BYTES) {
   return useImageDropzone({ maxBytes, fileInput, onFile, onError })
 }
 
+function setupWithGuard(guard, maxBytes = MAX_BYTES) {
+  onFile = vi.fn()
+  onError = vi.fn()
+  fileInput = ref(null)
+  return useImageDropzone({ maxBytes, fileInput, onFile, onError, guard })
+}
+
 function pngFile(bytes = 1) {
   return new File(['x'.repeat(bytes)], 'a.png', { type: 'image/png' })
 }
@@ -170,5 +177,40 @@ describe('useImageDropzone', () => {
     const dz = setup()
     dz.onDrop(dropEvent(new File(['x'], 'a.txt', { type: 'text/plain' })))
     expect(onFile).not.toHaveBeenCalled()
+  })
+
+  // ── guard ────────────────────────────────────────────────────────────────
+
+  test('a passing guard lets a valid drop reach onFile', async () => {
+    const guard = vi.fn().mockResolvedValue(true)
+    const dz = setupWithGuard(guard)
+    const file = pngFile()
+
+    await dz.onDrop(dropEvent(file))
+
+    expect(guard).toHaveBeenCalled()
+    expect(onFile).toHaveBeenCalledWith(file)
+  })
+
+  test('a blocking guard abandons the drop before validation runs', async () => {
+    const guard = vi.fn().mockResolvedValue(false)
+    const dz = setupWithGuard(guard)
+
+    // An invalid file: if validation ran it would set an error / call onError.
+    await dz.onDrop(dropEvent(new File(['x'], 'a.txt', { type: 'text/plain' })))
+
+    expect(guard).toHaveBeenCalled()
+    expect(onFile).not.toHaveBeenCalled()
+    expect(onError).not.toHaveBeenCalled()
+    expect(dz.error.value).toBe(null)
+  })
+
+  test('the drag counter still resets when the guard blocks', async () => {
+    const dz = setupWithGuard(vi.fn().mockResolvedValue(false))
+    dz.onDragEnter(dropEvent())
+
+    await dz.onDrop(dropEvent(pngFile()))
+
+    expect(dz.dragging.value).toBe(false)
   })
 })
