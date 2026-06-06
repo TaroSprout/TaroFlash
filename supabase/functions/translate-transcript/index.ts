@@ -9,7 +9,7 @@
 // Admin-only: requireAdmin() runs before any work.
 
 import { cors, requireAdmin } from '../_shared/require-admin.ts'
-import { translateSentences } from './translate.ts'
+import { translateSentences } from '../_shared/transcription/translate.ts'
 
 type TranslateRequest = { sentences: string[]; target_lang: string }
 
