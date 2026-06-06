@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, onBeforeUnmount, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
 import {
   useLessonCollectionQuery,
   useLessonsByCollectionQuery,
-  useDeleteLessonMutation
+  useDeleteLessonMutation,
+  useRetryLessonMutation
 } from '@/api/lessons'
 import { useToast } from '@/composables/toast'
 import { useAlert } from '@/composables/alert'
@@ -14,35 +14,54 @@ import { useLessonReaderModal } from '@/composables/modals/use-lesson-reader-mod
 import LessonCard from '@/views/audio-reader/lesson-card.vue'
 import CollectionHero from '@/views/audio-reader/collection-hero.vue'
 
+// How often to re-fetch the list while a lesson is still transcribing.
+const POLL_INTERVAL_MS = 5000
+
 const { id: collection_id } = defineProps<{ id: string }>()
 
 const { t } = useI18n()
-const router = useRouter()
 const toast = useToast()
 const alert = useAlert()
 const upload_modal = useUploadLessonModal()
 const reader_modal = useLessonReaderModal()
 const delete_lesson = useDeleteLessonMutation()
+const retry_lesson = useRetryLessonMutation()
 
 const id = computed(() => Number(collection_id))
 
 const { data: collection_data, error: collection_error } = useLessonCollectionQuery(id)
-const { data: lessons_data, error: lessons_error } = useLessonsByCollectionQuery(id)
+const {
+  data: lessons_data,
+  error: lessons_error,
+  refetch: refetchLessons
+} = useLessonsByCollectionQuery(id)
 
 const collection = computed(() => collection_data.value)
 const lessons = computed(() => lessons_data.value ?? [])
+const has_processing = computed(() =>
+  lessons.value.some((lesson) => lesson.status === 'processing')
+)
 
-watch([collection_error, lessons_error], ([c, l]) => {
-  if (c) toast.error(c.message)
-  if (l) toast.error(l.message)
-})
+let poll_timer: ReturnType<typeof setInterval> | undefined
+
+onBeforeUnmount(() => clearInterval(poll_timer))
 
 function onOpen(lesson: Lesson) {
+  // A lesson is only readable once its transcript is filled in.
+  if (lesson.status !== 'ready') return
   reader_modal.open(lesson.id)
 }
 
 function onUpload() {
   upload_modal.open(id.value)
+}
+
+async function onRetry(lesson: Lesson) {
+  try {
+    await retry_lesson.mutateAsync({ id: lesson.id, collection_id: id.value })
+  } catch {
+    toast.error(t('collection-view.retry-error'))
+  }
 }
 
 async function onDelete(lesson: Lesson) {
@@ -60,6 +79,22 @@ async function onDelete(lesson: Lesson) {
     toast.error(t('collection-view.delete-error'))
   }
 }
+
+watch([collection_error, lessons_error], ([c, l]) => {
+  if (c) toast.error(c.message)
+  if (l) toast.error(l.message)
+})
+
+// Start/stop polling as lessons enter/leave the processing state, so a card
+// flips to ready/failed on its own without the user refreshing.
+watch(
+  has_processing,
+  (active) => {
+    clearInterval(poll_timer)
+    if (active) poll_timer = setInterval(() => refetchLessons(), POLL_INTERVAL_MS)
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
@@ -90,6 +125,7 @@ async function onDelete(lesson: Lesson) {
           :key="lesson.id"
           :lesson="lesson"
           @open="onOpen(lesson)"
+          @retry="onRetry(lesson)"
           @delete="onDelete(lesson)"
         />
       </div>
