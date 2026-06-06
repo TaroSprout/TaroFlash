@@ -77,7 +77,7 @@ async function callWhisper(file: File): Promise<WhisperResponse> {
     if (res === 'timeout') throw new TranscribeError('timeout')
     if (res === 'network') {
       transientCode = 'upstream_error'
-      await backoff(attempt)
+      await maybeBackoff(attempt)
       continue
     }
 
@@ -93,7 +93,7 @@ async function callWhisper(file: File): Promise<WhisperResponse> {
     // Transient — back off and retry 429 / 5xx.
     if (res.status === 429 || res.status >= 500) {
       transientCode = res.status === 429 ? 'rate_limited' : 'upstream_error'
-      await backoff(attempt)
+      await maybeBackoff(attempt)
       continue
     }
 
@@ -132,6 +132,9 @@ async function sendOnce(file: File): Promise<Response | 'timeout' | 'network'> {
   }
 }
 
-function backoff(attempt: number): Promise<void> {
+// Wait before the next attempt, scaling with the attempt number. No wait after
+// the final attempt — there's no retry left to pace, so don't delay the failure.
+function maybeBackoff(attempt: number): Promise<void> {
+  if (attempt >= MAX_ATTEMPTS) return Promise.resolve()
   return new Promise((resolve) => setTimeout(resolve, attempt * 1000))
 }
