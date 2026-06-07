@@ -4,7 +4,7 @@ import mobileSheet, { type MobileSheetProps } from './mobile-sheet.vue'
 import { SHEET_SIDEBAR_BG } from './sheet-surface'
 import { activeTabKey } from './tab-sheet-context'
 import { useShortcuts } from '@/composables/use-shortcuts'
-import { useMediaQuery } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/use-media-query'
 import { emitSfx } from '@/sfx/bus'
 import type { NamespacedAudioKey } from '@/sfx/config'
 import uid from '@/utils/uid'
@@ -62,12 +62,10 @@ provide(activeTabKey, active)
 const sidebar_bg_class = computed(() => SHEET_SIDEBAR_BG[surface])
 
 const has_tabs = computed(() => !!tabs?.length)
-// Sidebar render condition mirrors CSS `lg:pointer-fine:flex`. Hide
+// Mirrors the CSS sidebar condition `lg:pointer-fine:flex` exactly. Hide
 // mobile-sheet's close button whenever the sidebar (which carries its own
 // close) is visible; otherwise the user sees two stacked close buttons.
-const lg_width = useMediaQuery('lg')
-const pointer_fine = useMediaQuery('fine')
-const has_sidebar = computed(() => lg_width.value && pointer_fine.value)
+const has_sidebar = useMatchMedia('w>=lg & fine')
 const sheet_close_button = computed(
   () => (!has_tabs.value || !has_sidebar.value) && show_close_button
 )

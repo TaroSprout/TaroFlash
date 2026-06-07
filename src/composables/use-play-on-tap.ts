@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { useMediaQuery } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/use-media-query'
 import { BUTTON_TAP_DURATION, playButtonTap } from '@/utils/animations/button-tap'
 
 type Options = {
@@ -39,7 +39,7 @@ export function usePlayOnTap(options: Options = {}) {
   const reset = options.reset ?? true
   const duration = options.duration ?? BUTTON_TAP_DURATION
   const active_on = options.activeOn ?? 'coarse-only'
-  const is_coarse = useMediaQuery('coarse')
+  const is_coarse = useMatchMedia('coarse')
 
   /** Run the tap lifecycle for `e`. `onTap` always fires; the rest fire only when the intercept actually plays. */
   async function interceptClick(e: MouseEvent, hooks: Hooks = {}) {

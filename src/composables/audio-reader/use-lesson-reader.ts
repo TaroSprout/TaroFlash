@@ -2,7 +2,7 @@ import { computed, defineAsyncComponent, ref, toValue, useTemplateRef, watch } f
 import type { MaybeRefOrGetter } from 'vue'
 import { useToast } from '@/composables/toast'
 import { useModal, type ModalCloseFn } from '@/composables/modal'
-import { useMobileBreakpoint } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/use-media-query'
 import { useLessonQuery, useLessonAudioUrlQuery } from '@/api/lessons'
 import { useAudioPlayer } from './use-audio-player'
 import { useTranscriptSync } from './use-transcript-sync'
@@ -29,7 +29,7 @@ const TermSheet = defineAsyncComponent(() => import('@/views/audio-reader/term-p
 export function useLessonReader(id: MaybeRefOrGetter<number>) {
   const toast = useToast()
   const modal = useModal()
-  const is_mobile = useMobileBreakpoint()
+  const is_mobile = useMatchMedia('w<sm | h<sm')
 
   const lesson_id = computed(() => toValue(id))
   const { data: lesson, error } = useLessonQuery(lesson_id)

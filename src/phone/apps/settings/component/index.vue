@@ -17,7 +17,7 @@ import {
   memberDangerActionsKey
 } from '@/composables/member/use-member-danger-actions'
 import { useSessionRef } from '@/composables/use-session-ref'
-import { useMediaQuery, useMobileBreakpoint } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/use-media-query'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTagButton from '@/components/ui-kit/tag-button.vue'
@@ -45,16 +45,11 @@ const tabs = computed(() => [
 type ActiveTab = 'profile' | 'subscription' | 'app' | 'danger-zone'
 const active_tab = useSessionRef<ActiveTab | null>('settings.active-tab', null)
 
-const is_mobile = useMobileBreakpoint('md')
+const is_mobile = useMatchMedia('w<md | h<sm')
 
-// Sidebar is shown by CSS via `lg:pointer-fine:flex`, which is a viewport-only
-// width check + a pointer-fine media query. `useIsTablet` also folds in a
-// height check, so it can read `true` on a wide-but-short desktop window even
-// while the sidebar is visible — leaving the main column on the mobile index.
-// Match the CSS condition exactly so the displayed tab tracks the sidebar.
-const lg_width = useMediaQuery('lg')
-const pointer_fine = useMediaQuery('fine')
-const has_sidebar = computed(() => lg_width.value && pointer_fine.value)
+// Mirrors the CSS sidebar condition `lg:pointer-fine:flex` exactly, so the
+// displayed tab always tracks whether the sidebar is actually visible.
+const has_sidebar = useMatchMedia('w>=lg & fine')
 
 watch(has_sidebar, (visible) => {
   if (!visible && active_tab.value === 'danger-zone') active_tab.value = null

@@ -4,7 +4,7 @@ import { type CardListController } from '@/composables/card-editor/card-list-con
 import { computed, inject, ref, useTemplateRef, watch, type CSSProperties } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useGridCapacity } from '@/composables/use-grid-capacity'
-import { useMediaQuery } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/use-media-query'
 import { slideInFromDirection, slideOutInDirection } from '@/utils/animations/grid-page'
 
 const { t } = useI18n()
@@ -20,7 +20,7 @@ const side = ref<'front' | 'back'>('front')
 const grid_wrapper = useTemplateRef<HTMLElement>('grid_wrapper')
 const sentinel = useTemplateRef<HTMLElement>('sentinel')
 
-const isMd = useMediaQuery('md')
+const isMd = useMatchMedia('w>=md')
 
 observeSentinel(sentinel)
 

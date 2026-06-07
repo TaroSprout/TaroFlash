@@ -14,7 +14,7 @@ import { useModal } from '@/composables/modal'
 import phoneSm from '@/phone/components/phone-sm.vue'
 import phoneBase from '@/phone/components/phone-base.vue'
 import { useI18n } from 'vue-i18n'
-import { useMediaQuery } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/use-media-query'
 import {
   slideDownBlurIn,
   slideUpBlurOut,
@@ -24,7 +24,7 @@ import {
 
 const shortcuts = useShortcuts('phone', { priority: 'background' })
 const { open: openModal, pop: popModal, modal_stack } = useModal()
-const is_pointer_coarse = useMediaQuery('coarse')
+const is_pointer_coarse = useMatchMedia('coarse')
 
 const loading = ref(false)
 const open = ref(false)

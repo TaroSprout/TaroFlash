@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { useMediaQuery } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/use-media-query'
 import storage from '@/utils/storage'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
@@ -20,7 +20,7 @@ system_mql.addEventListener('change', () => {
 
 export const useThemeStore = defineStore('theme', () => {
   const mode = ref<ThemeMode>('system')
-  const is_system_dark = useMediaQuery('dark')
+  const is_system_dark = useMatchMedia('dark')
 
   const is_dark = computed(() => {
     if (mode.value === 'system') return is_system_dark.value

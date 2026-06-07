@@ -11,7 +11,7 @@ import {
   deckDangerActionsKey
 } from '@/composables/deck/use-deck-danger-actions'
 import { useSessionRef } from '@/composables/use-session-ref'
-import { useIsTablet, useMobileBreakpoint } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/use-media-query'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTagButton from '@/components/ui-kit/tag-button.vue'
@@ -51,8 +51,8 @@ provide(deckEditorKey, editor)
 const danger = useDeckDangerActions(editor, deck, close)
 provide(deckDangerActionsKey, danger)
 
-const is_tablet = useIsTablet()
-const is_mobile = useMobileBreakpoint('md')
+const is_tablet = useMatchMedia('w<lg | h<lg | coarse')
+const is_mobile = useMatchMedia('w<md | h<sm')
 
 const active_tab = useSessionRef<ActiveTab | null>('deck-settings.active-tab', null)
 const tab_outlet = ref<HTMLElement>()

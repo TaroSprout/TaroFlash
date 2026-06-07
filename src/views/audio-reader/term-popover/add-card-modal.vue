@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useMemberDecksQuery } from '@/api/decks'
 import { useInsertCardAtMutation } from '@/api/cards'
 import { useLastDeck } from '@/composables/use-last-deck'
-import { useMobileBreakpoint } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/use-media-query'
 import { useToast } from '@/composables/toast'
 import MobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
 import UiButton from '@/components/ui-kit/button.vue'
@@ -25,7 +25,7 @@ const insert_card = useInsertCardAtMutation()
 const { setLastDeck } = useLastDeck()
 // Match the modal's own `mobile_below_width: 'md'` so the sheet and the
 // single-card flip layout cross over at the same breakpoint.
-const is_mobile = useMobileBreakpoint('md', 'md')
+const is_mobile = useMatchMedia('w<md | h<md')
 
 const { data: decks_data } = useMemberDecksQuery()
 

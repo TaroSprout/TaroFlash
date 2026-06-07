@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef, watch, onBeforeUnmount } from 'vue'
 import { useFloating, flip, autoUpdate, offset, type Placement } from '@floating-ui/vue'
-import { useMediaQuery } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/use-media-query'
 
 // The popover is teleported to <body>, so it can't inherit data-theme through
 // the DOM and reading it off $attrs would wrongly pick up a theme a parent
@@ -34,7 +34,7 @@ const triggerRef = useTemplateRef<HTMLElement>('ui-tooltip-trigger')
 const popoverRef = useTemplateRef<HTMLElement>('ui-tooltip')
 
 const is_active = ref(false)
-const is_coarse_pointer = useMediaQuery('coarse')
+const is_coarse_pointer = useMatchMedia('coarse')
 
 // gates both DOM mount (v-if) and autoUpdate — keeps unused tooltips out of
 // the DOM entirely so switching modes doesn't pay the cost of mounting N
