@@ -4,8 +4,9 @@ import { h } from 'vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { mutateAsyncMock } = vi.hoisted(() => ({
-  mutateAsyncMock: vi.fn()
+const { mutateAsyncMock, openModalMock } = vi.hoisted(() => ({
+  mutateAsyncMock: vi.fn(),
+  openModalMock: vi.fn()
 }))
 
 vi.mock('@/api/lessons', () => ({
@@ -17,6 +18,10 @@ vi.mock('@/api/lessons', () => ({
       this.code = code
     }
   }
+}))
+
+vi.mock('@/composables/modals/use-add-card-modal', () => ({
+  useAddCardModal: () => ({ open: openModalMock })
 }))
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -36,6 +41,16 @@ const UiTagStub = {
   }
 }
 
+// Auto-stubs swallow click handlers; this one forwards them so the add button works.
+const UiButtonStub = {
+  name: 'UiButton',
+  inheritAttrs: false,
+  emits: ['click'],
+  setup(_props, { slots, emit, attrs }) {
+    return () => h('button', { ...attrs, onClick: () => emit('click') }, slots.default?.())
+  }
+}
+
 function mountCard(props = {}) {
   return shallowMount(TermCard, {
     props: {
@@ -45,7 +60,7 @@ function mountCard(props = {}) {
       ...props
     },
     global: {
-      stubs: { UiTag: UiTagStub },
+      stubs: { UiTag: UiTagStub, UiButton: UiButtonStub },
       mocks: { $t: (key) => key }
     }
   })
@@ -56,6 +71,7 @@ import { EdgeFunctionError } from '@/api/lessons'
 
 beforeEach(() => {
   mutateAsyncMock.mockReset()
+  openModalMock.mockReset()
 })
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -209,6 +225,19 @@ describe('TermCard', () => {
 
       await wrapper.find('[data-testid="term-card__close"]').trigger('click')
 
+      expect(wrapper.emitted('close')).toBeTruthy()
+    })
+  })
+
+  describe('add card', () => {
+    test('opens the add-card modal with the term and translation, then closes the popover', async () => {
+      mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
+      const wrapper = mountCard({ term: '猫', sentence: 'test' })
+      await flushPromises()
+
+      await wrapper.find('[data-testid="term-card__add"]').trigger('click')
+
+      expect(openModalMock).toHaveBeenCalledWith('猫', 'cat')
       expect(wrapper.emitted('close')).toBeTruthy()
     })
   })
