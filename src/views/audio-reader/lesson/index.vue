@@ -11,10 +11,6 @@ import AudioPlayer from '@/views/audio-reader/lesson/audio-player.vue'
 import TranscriptView from '@/views/audio-reader/transcript/index.vue'
 import TermPopover from '@/views/audio-reader/term-popover/index.vue'
 
-// Translate into the app language. A per-member target language can replace this
-// later; admin-only v1 is English.
-const TARGET_LANG = 'English'
-
 const { collectionId, lessonId } = defineProps<{ collectionId: string; lessonId: string }>()
 
 const { t } = useI18n()
@@ -32,6 +28,7 @@ const {
   active_word,
   selection,
   popover_open,
+  target_lang,
   openTerm,
   closeTerm,
   player
@@ -75,7 +72,7 @@ watch(
   >
     <aside
       data-testid="lesson-view__sidebar"
-      class="flex shrink-0 flex-col gap-4 xl:sticky xl:top-(--nav-height) xl:max-h-[calc(100dvh-var(--nav-height))] xl:w-56 xl:self-start xl:overflow-y-auto"
+      class="hidden shrink-0 flex-col gap-4 xl:flex xl:sticky xl:top-(--nav-height) xl:max-h-[calc(100dvh-var(--nav-height))] xl:w-56 xl:self-start xl:overflow-y-auto"
     >
       <header data-testid="lesson-view__header" class="flex items-center justify-between gap-4">
         <div data-testid="lesson-view__heading" class="flex flex-col gap-1">
@@ -121,6 +118,18 @@ watch(
     </aside>
 
     <div data-testid="lesson-view__reader" class="relative flex flex-1 flex-col xl:min-w-0">
+      <header
+        data-testid="lesson-view__title"
+        class="flex flex-col items-center px-4 pb-6 text-center xl:hidden"
+      >
+        <h1
+          data-testid="lesson-view__title-text"
+          class="text-3xl text-brown-700 dark:text-brown-300"
+        >
+          {{ lesson?.title }}
+        </h1>
+      </header>
+
       <div
         data-testid="lesson-view__transcript"
         class="rounded-7 bg-brown-100 px-0 pt-6 pb-2 sm:px-6 dark:bg-grey-800"
@@ -179,7 +188,7 @@ watch(
         :rect="selection.rect"
         :term="selection.term"
         :sentence="selection.sentence"
-        :target_lang="TARGET_LANG"
+        :target_lang="target_lang"
         @close="closeTerm"
       />
     </div>

@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, ref } from 'vue'
+import { defineComponent, h } from 'vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
@@ -11,6 +11,7 @@ const {
   activeWordRef,
   selectionRef,
   popoverOpenRef,
+  targetLang,
   openTermMock,
   closeTermMock,
   chaptersRef,
@@ -24,6 +25,7 @@ const {
   activeWordRef: { value: null },
   selectionRef: { value: null },
   popoverOpenRef: { value: false },
+  targetLang: 'English',
   openTermMock: vi.fn(),
   closeTermMock: vi.fn(),
   chaptersRef: { value: [] },
@@ -40,6 +42,7 @@ vi.mock('@/composables/audio-reader/use-lesson-reader', () => ({
     active_word: activeWordRef,
     selection: selectionRef,
     popover_open: popoverOpenRef,
+    target_lang: targetLang,
     openTerm: openTermMock,
     closeTerm: closeTermMock
   })
@@ -242,6 +245,13 @@ describe('LessonView', () => {
       const wrapper = mountView()
 
       expect(wrapper.find('[data-testid="lesson-view__chapter-of"]').exists()).toBe(false)
+    })
+  })
+
+  describe('mobile title', () => {
+    test('renders a centered lesson-title heading above the transcript', () => {
+      const wrapper = mountView()
+      expect(wrapper.find('[data-testid="lesson-view__title-text"]').exists()).toBe(true)
     })
   })
 

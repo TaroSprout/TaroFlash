@@ -23,6 +23,11 @@ const SENTENCE_DURATION = 0.3
 // audio-driven playhead (which keeps the slower, stretchy default).
 const HOVER_DURATION = 0.12
 
+// How far a touch may drift between press and release and still count as a tap
+// rather than a scroll. Past this the finger is panning the column, not picking
+// a word.
+const TAP_SLOP = 10
+
 // What a committed selection hands back: the bare term, the rect to anchor the
 // popover against, and the first word's element so the caller can resolve which
 // sentence it sits in (translator context).
@@ -36,12 +41,15 @@ type WordRange = { lo: number; hi: number }
  * **interaction** pill — which doubles as the hover indicator, the drag-to-select
  * highlight, and the standing selection while its popover is open.
  *
- * The pill is the selection: press a word and the pill anchors there; drag and
- * it stretches word by word to cover the range; release commits the term via
- * `onSelect` (a plain click is a zero-width range, so it selects one word). The
- * committed range stays lit — hover is held off — until `popover_open` flips
- * false. The translation gloss carries no `data-word-index`, so it can never join
- * a range; native text selection is left disabled by the host.
+ * The pill is the selection: with a mouse, press a word and the pill anchors
+ * there; drag and it stretches word by word to cover the range; release commits
+ * the term via `onSelect` (a plain click is a zero-width range, so it selects one
+ * word). A touch instead claims nothing on the way down — the column scrolls
+ * freely under the finger — and selects the word on release, but only if the
+ * finger stayed put; a touch that drifts past `TAP_SLOP` is a scroll and commits
+ * nothing. The committed range stays lit — hover is held off — until
+ * `popover_open` flips false. The translation gloss carries no `data-word-index`,
+ * so it can never join a range; native text selection is left disabled by the host.
  *
  * "Which word" is JS state; the DOM is read only to measure "where is word N",
  * located by its stable `data-word-index`. Pills live inside `content` and are
@@ -74,6 +82,10 @@ export function useReaderHighlights(
   const focus_index = ref<number | null>(null)
   const anchor_index = ref<number | null>(null)
   const committed = ref<WordRange | null>(null)
+
+  // A touch in flight: where it landed and which word, held until release decides
+  // tap-vs-scroll. Plain (non-reactive) state — it never drives a pill directly.
+  let tap: { x: number; y: number; index: number } | null = null
 
   let resize_observer: ResizeObserver | null = null
 
@@ -302,6 +314,22 @@ export function useReaderHighlights(
   function onPointerDown(event: PointerEvent) {
     committed.value = null
 
+    if (event.pointerType === 'touch') {
+      beginTap(event)
+      return
+    }
+
+    beginDrag(event)
+  }
+
+  // A touch defers everything to release: just remember where it landed and which
+  // word, leaving the gesture to the browser so the column still scrolls.
+  function beginTap(event: PointerEvent) {
+    const index = wordIndexAt(event.clientX, event.clientY)
+    tap = index === null ? null : { x: event.clientX, y: event.clientY, index }
+  }
+
+  function beginDrag(event: PointerEvent) {
     const index = wordIndexAt(event.clientX, event.clientY)
     if (index === null) return
 
@@ -320,6 +348,11 @@ export function useReaderHighlights(
   }
 
   function onPointerMove(event: PointerEvent) {
+    if (event.pointerType === 'touch') {
+      trackTap(event)
+      return
+    }
+
     const index = wordIndexAt(event.clientX, event.clientY)
 
     // Mid-drag, ignore gaps (translation gloss, padding) so the range holds its
@@ -336,11 +369,38 @@ export function useReaderHighlights(
     if (index !== focus_index.value) focus_index.value = index
   }
 
-  function onPointerUp() {
+  // A touch that travels past the slop is a scroll, not a tap — forget it so
+  // release selects nothing.
+  function trackTap(event: PointerEvent) {
+    if (!tap) return
+    if (Math.hypot(event.clientX - tap.x, event.clientY - tap.y) > TAP_SLOP) tap = null
+  }
+
+  function onPointerUp(event: PointerEvent) {
+    if (event.pointerType === 'touch') {
+      commitTap()
+      return
+    }
+
     if (anchor_index.value === null) return
 
     commitSelection()
     anchor_index.value = null
+  }
+
+  // Release of a stationary touch selects its word; a scroll (tap already cleared)
+  // commits nothing. The range collapses to the one tapped word, then clears so
+  // the committed pill — not a lingering hover — is what stays lit.
+  function commitTap() {
+    if (!tap) return
+
+    anchor_index.value = tap.index
+    focus_index.value = tap.index
+    tap = null
+
+    commitSelection()
+    anchor_index.value = null
+    focus_index.value = null
   }
 
   function onPointerLeave() {
