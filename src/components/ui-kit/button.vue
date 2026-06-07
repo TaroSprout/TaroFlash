@@ -51,6 +51,8 @@ const merged_sfx = computed(() => {
 
 const tooltip_active = computed(() => iconOnly && !!slots.default)
 
+const has_trailing = computed(() => !!slots.trailing)
+
 function onCaptureClick(e: MouseEvent) {
   if (!playOnTap) return
   const handler = attrs.onClick as ((ev: MouseEvent) => void) | undefined
@@ -90,16 +92,23 @@ function emitClickSfx() {
       {
         'ui-kit-btn--icon-only': iconOnly,
         'ui-kit-btn--inverted': inverted,
+        'ui-kit-btn--split': has_trailing,
         'rounded-full!': roundedFull,
         'w-full!': fullWidth
       }
     ]"
   >
-    <ui-icon v-if="iconLeft" class="btn-icon btn-icon--left" :src="iconLeft" />
-    <div v-if="!iconOnly" class="btn-label">
-      <slot></slot>
+    <div class="btn-content" data-testid="ui-kit-button__content">
+      <ui-icon v-if="iconLeft" class="btn-icon btn-icon--left" :src="iconLeft" />
+      <div v-if="!iconOnly" class="btn-label">
+        <slot></slot>
+      </div>
+      <ui-icon v-if="iconRight" class="btn-icon btn-icon--right" :src="iconRight" />
     </div>
-    <ui-icon v-if="iconRight" class="btn-icon btn-icon--right" :src="iconRight" />
+
+    <div v-if="has_trailing" class="btn-trailing" data-testid="ui-kit-button__trailing">
+      <slot name="trailing"></slot>
+    </div>
 
     <div
       class="absolute inset-0 bgx-diagonal-stripes animation-safe:bgx-slide rounded-(--btn-border-radius) pointer-events-none"
@@ -132,18 +141,28 @@ function emitClickSfx() {
 
   outline: var(--btn-outline-width, 0) solid var(--btn-outline-color);
   border-radius: var(--btn-border-radius);
-  padding: var(--btn-padding);
   height: var(--btn-height, max-content);
   width: max-content;
 
   flex-grow: 0;
 
   display: flex;
+  align-items: stretch;
+  user-select: none;
+  cursor: pointer;
+}
+
+/* Inner container carries the padding + gap so the trailing slot can sit flush
+   in the raw, unpadded button and style itself freely. */
+.ui-kit-btn .btn-content {
+  flex: 1;
+
+  display: flex;
   gap: var(--btn-gap);
   align-items: center;
   justify-content: center;
-  user-select: none;
-  cursor: pointer;
+
+  padding: var(--btn-padding);
 }
 
 .ui-kit-btn--solid {
@@ -193,20 +212,31 @@ function emitClickSfx() {
   aspect-ratio: 1/1;
 }
 
-/* Button sizes */
-.ui-kit-btn.ui-kit-btn--xl {
+.ui-kit-btn .btn-trailing {
+  display: flex;
+}
+.ui-kit-btn--split .btn-content {
+  justify-content: flex-start;
+}
+
+/* Button sizes — the `-tokens-` alias exposes the same custom properties to
+   non-button elements (e.g. the dropdown-button menu) without the base layout. */
+.ui-kit-btn.ui-kit-btn--xl,
+.ui-kit-btn-tokens--xl {
   --btn-font-size: var(--text-xl);
   --btn-font-size--line-height: var(--text-xl--line-height);
   --btn-border-radius: 22.5px;
   --btn-gap: 10px;
   --btn-padding: 14px 24px;
   --btn-height: 50px;
+  --icon-size: 18px;
 
   &.ui-kit-btn--icon-only {
     --btn-padding: 14px;
   }
 }
-.ui-kit-btn.ui-kit-btn--lg {
+.ui-kit-btn.ui-kit-btn--lg,
+.ui-kit-btn-tokens--lg {
   --btn-font-size: var(--text-xl);
   --btn-font-size--line-height: var(--text-xl--line-height);
   --btn-border-radius: 19px;
@@ -219,7 +249,8 @@ function emitClickSfx() {
     --btn-padding: 10px;
   }
 }
-.ui-kit-btn.ui-kit-btn--base {
+.ui-kit-btn.ui-kit-btn--base,
+.ui-kit-btn-tokens--base {
   --btn-font-size: var(--text-lg);
   --btn-font-size--line-height: var(--text-lg--line-height);
   --btn-border-radius: 18px;
@@ -233,7 +264,8 @@ function emitClickSfx() {
     --btn-padding: 8px;
   }
 }
-.ui-kit-btn.ui-kit-btn--sm {
+.ui-kit-btn.ui-kit-btn--sm,
+.ui-kit-btn-tokens--sm {
   --btn-font-size: var(--text-base);
   --btn-font-size--line-height: var(--text-base--line-height);
   --btn-border-radius: 13px;
