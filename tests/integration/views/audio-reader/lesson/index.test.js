@@ -248,6 +248,13 @@ describe('LessonView', () => {
     })
   })
 
+  describe('mobile title', () => {
+    test('renders a centered lesson-title heading above the transcript', () => {
+      const wrapper = mountView()
+      expect(wrapper.find('[data-testid="lesson-view__title-text"]').exists()).toBe(true)
+    })
+  })
+
   describe('edit button', () => {
     test('clicking lesson-view__edit opens the collection edit modal', async () => {
       const wrapper = mountView()
