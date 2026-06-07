@@ -1,5 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
+import { defineComponent, h, useAttrs } from 'vue'
 
 const { coarseRef, mockEmitSfx } = vi.hoisted(() => ({
   coarseRef: { value: true },
@@ -22,8 +23,30 @@ vi.mock('@/sfx/bus', () => ({
 import UiButton from '@/components/ui-kit/button.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 
+// A UiTooltip stub that forwards attrs and renders slot content so inner
+// data-testid elements (ui-kit-button__content, ui-kit-button__trailing) are
+// accessible in tests that assert on button structure.
+const UiTooltipSlotStub = defineComponent({
+  name: 'UiTooltip',
+  inheritAttrs: false,
+  props: ['element', 'gap', 'suppress', 'static_on_mobile', 'text'],
+  setup(_props, { slots, attrs }) {
+    return () => h('button', { ...attrs, 'data-testid': 'ui-kit-button' }, slots.default?.())
+  }
+})
+
 function mountButton(props = {}, slots = {}) {
   return shallowMount(UiButton, { props, slots })
+}
+
+// Variant used for trailing-slot structure tests — uses a slot-rendering stub
+// so inner data-testid elements are reachable.
+function mountButtonWithSlots(props = {}, slots = {}) {
+  return shallowMount(UiButton, {
+    props,
+    slots,
+    global: { stubs: { UiTooltip: UiTooltipSlotStub }, directives: { sfx: {} } }
+  })
 }
 
 function findTooltip(wrapper) {
@@ -182,6 +205,46 @@ describe('UiButton', () => {
       await wrapper.find('[data-testid="ui-kit-button"]').trigger('click')
 
       expect(mockEmitSfx).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── trailing slot / split layout [obligation] ──────────────────────────────
+  // Uses mountButtonWithSlots — a UiTooltip stub that renders slot content so
+  // inner data-testid elements (ui-kit-button__content, ui-kit-button__trailing)
+  // are reachable in the wrapper tree.
+
+  describe('trailing slot', () => {
+    test('renders ui-kit-button__content when no #trailing slot is provided', () => {
+      const wrapper = mountButtonWithSlots({}, { default: 'Label' })
+      expect(wrapper.find('[data-testid="ui-kit-button__content"]').exists()).toBe(true)
+    })
+
+    test('does NOT render ui-kit-button__trailing when no #trailing slot is provided [obligation]', () => {
+      const wrapper = mountButtonWithSlots({}, { default: 'Label' })
+      expect(wrapper.find('[data-testid="ui-kit-button__trailing"]').exists()).toBe(false)
+    })
+
+    test('renders ui-kit-button__trailing when a #trailing slot is provided [obligation]', () => {
+      const wrapper = mountButtonWithSlots({}, { trailing: () => h('span', 'caret') })
+      expect(wrapper.find('[data-testid="ui-kit-button__trailing"]').exists()).toBe(true)
+    })
+
+    test('renders ui-kit-button__content alongside the trailing slot [obligation]', () => {
+      const wrapper = mountButtonWithSlots(
+        {},
+        { default: 'Label', trailing: () => h('span', 'caret') }
+      )
+      expect(wrapper.find('[data-testid="ui-kit-button__content"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="ui-kit-button__trailing"]').exists()).toBe(true)
+    })
+
+    test('trailing slot content is rendered inside ui-kit-button__trailing', () => {
+      const wrapper = mountButtonWithSlots(
+        {},
+        { trailing: () => h('span', { 'data-testid': 'caret' }, '▼') }
+      )
+      const trailing = wrapper.find('[data-testid="ui-kit-button__trailing"]')
+      expect(trailing.find('[data-testid="caret"]').exists()).toBe(true)
     })
   })
 })
