@@ -96,6 +96,9 @@ function onLeave(el: Element, done: () => void) {
           :mode="mode"
           :attributes="card_attributes?.front"
         >
+          <template #image>
+            <slot name="image"></slot>
+          </template>
           <template #editor>
             <slot name="editor"></slot>
           </template>
@@ -111,6 +114,9 @@ function onLeave(el: Element, done: () => void) {
           :mode="mode"
           :attributes="card_attributes?.back"
         >
+          <template #image>
+            <slot name="image"></slot>
+          </template>
           <template #editor>
             <slot name="editor"></slot>
           </template>
