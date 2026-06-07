@@ -391,6 +391,43 @@ describe('useCardListController', () => {
       await expect(updateCard(1, { front_text: 'X' })).rejects.toThrow('boom')
       expect(saving.value).toBe(false)
     })
+
+    // A staged temp can slip past the stage-time guardAddCards check (stale
+    // card_count, concurrent edits on another device) and get rejected by the
+    // backend's enforce_deck_card_limit on the INSERT. The insert path routes
+    // that rejection through handleLimitError so the upgrade alert still fires.
+    test('routes a card-limit insert rejection through handleLimitError instead of throwing', async () => {
+      const limit_error = { code: 'PT001' }
+      insertCardAtMock.mockRejectedValueOnce(limit_error)
+      handleLimitErrorMock.mockReturnValueOnce(true)
+      const { addCard, all_cards, updateCard, saving } = makeController()
+      addCard()
+      const temp_id = all_cards.value[0].id
+      await updateCard(temp_id, { front_text: 'X' })
+      expect(handleLimitErrorMock).toHaveBeenCalledWith(limit_error)
+      expect(saving.value).toBe(false)
+    })
+
+    test('leaves the temp card staged when the insert is rejected by the card limit', async () => {
+      insertCardAtMock.mockRejectedValueOnce({ code: 'PT001' })
+      handleLimitErrorMock.mockReturnValueOnce(true)
+      const { addCard, all_cards, updateCard } = makeController()
+      addCard()
+      const temp_id = all_cards.value[0].id
+      await updateCard(temp_id, { front_text: 'X' })
+      // Still a temp (real_id null) so an upgrade-then-retry re-runs the INSERT.
+      expect(all_cards.value.find((c) => c.id === temp_id)).toBeDefined()
+    })
+
+    test('rethrows a non-limit insert rejection so generic error handling still runs', async () => {
+      insertCardAtMock.mockRejectedValueOnce(new Error('boom'))
+      handleLimitErrorMock.mockReturnValueOnce(false)
+      const { addCard, all_cards, updateCard, saving } = makeController()
+      addCard()
+      const temp_id = all_cards.value[0].id
+      await expect(updateCard(temp_id, { front_text: 'X' })).rejects.toThrow('boom')
+      expect(saving.value).toBe(false)
+    })
   })
 
   // ── image writes — routed through the mutation layer, toggling saving ──────

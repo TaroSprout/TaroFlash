@@ -119,17 +119,30 @@ export function useCardListController(opts: Options) {
     }
   }
 
-  /** Insert the staged temp via `insert_card_at` and promote it on success. */
+  /**
+   * Insert the staged temp via `insert_card_at` and promote it on success.
+   *
+   * `guardAddCards` already vetoes staging past the plan cap, but that check
+   * runs when the temp is added — a stale `card_count` or a concurrent edit on
+   * another device can still let a write reach `enforce_deck_card_limit` and be
+   * rejected here. `handleLimitError` re-surfaces the upgrade alert for that
+   * case and the temp stays staged (still `real_id: null`), so upgrading and
+   * re-saving retries the same INSERT. Any other rejection propagates.
+   */
   async function insertTemp(temp_id: number, entry: CardEntry, values: Partial<Card>) {
-    const inserted = await mutations.insertCard({
-      deck_id: opts.deck_id,
-      anchor_id: entry.anchor_id,
-      side: entry.side,
-      front_text: values.front_text ?? entry.card.front_text ?? '',
-      back_text: values.back_text ?? entry.card.back_text ?? ''
-    })
+    try {
+      const inserted = await mutations.insertCard({
+        deck_id: opts.deck_id,
+        anchor_id: entry.anchor_id,
+        side: entry.side,
+        front_text: values.front_text ?? entry.card.front_text ?? '',
+        back_text: values.back_text ?? entry.card.back_text ?? ''
+      })
 
-    list.promoteTemp(temp_id, inserted.id, inserted.rank, values)
+      list.promoteTemp(temp_id, inserted.id, inserted.rank, values)
+    } catch (error) {
+      if (!limit_gate.handleLimitError(error)) throw error
+    }
   }
 
   /**
