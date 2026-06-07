@@ -86,11 +86,10 @@ For any feature work or code changes:
 
 1. **Check current branch.** If on `master`, or current branch's scope doesn't match the requested work, create a new branch before editing.
 2. **Check staleness.** At session start, verify the current branch isn't already merged (e.g. `gh pr view --json state,mergedAt` or `git log master..HEAD`). If merged, create a fresh branch off `master`.
-3. **Commit in logical chunks.** Group related changes into separate commits with clear messages — don't batch unrelated work into one commit.
-4. **Open a PR early.** If the branch has no PR yet, open one (draft is fine) after the first meaningful commit. Push subsequent commits to that PR as you go for incremental review.
-5. **Push as you commit.** Don't accumulate local commits — push after each logical chunk so the PR stays current.
-6. **Squash iterative fixes.** When several attempts go into landing the _same_ logical change (initial fix → didn't work → second fix → third fix), collapse them into a single commit before review. Don't ship `fix attempt 1` / `fix attempt 2` / `fix attempt 3` as separate commits.
+3. **Commit in logical chunks.** Group related changes into separate commits with clear messages — don't batch unrelated work into one commit. Commit freely as work progresses; don't wait for the end of the session.
+4. **Don't open PRs automatically.** Open or push a PR only when explicitly asked. Committing locally is fine; surfacing the work as a PR is the user's call.
+5. **Squash iterative fixes.** When several attempts go into landing the _same_ logical change (initial fix → didn't work → second fix → third fix), collapse them into a single commit before review. Don't ship `fix attempt 1` / `fix attempt 2` / `fix attempt 3` as separate commits.
    - **Not yet pushed:** `git reset --soft HEAD~N` then re-commit, or `git commit --amend --no-edit` for each follow-up before push.
    - **Already pushed to a feature branch:** `git reset --soft HEAD~N && git commit` then `git push --force-with-lease`. Force-push is allowed on a feature branch you own; never on `master`.
    - Logical chunks (e.g. `feat(...)` and the test commit covering it) stay separate. This rule applies only to repeated attempts at the same change.
-7. **No Claude attribution.** Never add `Co-Authored-By: Claude` trailers to commits, and never add the "Generated with Claude Code" footer to PR bodies.
+6. **No Claude attribution.** Never add `Co-Authored-By: Claude` trailers to commits, and never add the "Generated with Claude Code" footer to PR bodies.
