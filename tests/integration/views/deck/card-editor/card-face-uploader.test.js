@@ -212,8 +212,33 @@ describe('CardFaceUploader', () => {
 
   // ── Activation (hover / drag) ─────────────────────────────────────────────────
 
-  test('marks the card active on hover and clears it on leave', async () => {
+  test('card-root pointerenter does NOT set data-active in region mode (hover scoped to image region)', async () => {
+    // above/below layout — hover must be scoped to the image region, not the whole card
     const wrapper = mount({ card: { front_image_path: 'cards/f.png' } })
+    const root = wrapper.find('[data-testid="card-root"]')
+    expect(root.attributes('data-active')).toBeUndefined()
+
+    await root.trigger('pointerenter')
+    expect(root.attributes('data-active')).toBeUndefined()
+  })
+
+  test('card-root pointerenter DOES set data-active in behind mode (full-bleed, card-wide hover)', async () => {
+    const wrapper = mount({
+      card: { front_image_path: 'cards/f.png' },
+      cardEditor: { card_attributes: ref({ front: { image_layout: 'behind' }, back: {} }) }
+    })
+    const root = wrapper.find('[data-testid="card-root"]')
+    expect(root.attributes('data-active')).toBeUndefined()
+
+    await root.trigger('pointerenter')
+    expect(root.attributes('data-active')).toBe('true')
+
+    await root.trigger('pointerleave')
+    expect(root.attributes('data-active')).toBeUndefined()
+  })
+
+  test('card-root pointerenter DOES set data-active on an empty card (no image)', async () => {
+    const wrapper = mount({ card: { id: 5 } })
     const root = wrapper.find('[data-testid="card-root"]')
     expect(root.attributes('data-active')).toBeUndefined()
 
@@ -586,10 +611,19 @@ describe('CardFaceUploader', () => {
 
   // ── sfx prop on the Card ──────────────────────────────────────────────────
 
-  test('passes sfx hover prop to Card when the face has an image', () => {
-    const wrapper = mount({ card: { front_image_path: 'cards/f.png' } })
+  test('passes the hover sfx to Card for a behind-layout image (full-bleed, card-wide hover)', () => {
+    const wrapper = mount({
+      card: { front_image_path: 'cards/f.png' },
+      cardEditor: { card_attributes: ref({ front: { image_layout: 'behind' }, back: {} }) }
+    })
     const cardEl = wrapper.findComponent(CardStub)
     expect(cardEl.props('sfx')).toEqual({ hover: 'ui.click_07' })
+  })
+
+  test('does NOT pass card sfx in region mode (hover sfx is scoped to the image region)', () => {
+    const wrapper = mount({ card: { front_image_path: 'cards/f.png' } })
+    const cardEl = wrapper.findComponent(CardStub)
+    expect(cardEl.props('sfx')).toBeUndefined()
   })
 
   test('does NOT pass sfx prop to Card when the face has no image', () => {
