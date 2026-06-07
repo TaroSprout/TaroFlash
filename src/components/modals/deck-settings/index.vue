@@ -52,7 +52,9 @@ const danger = useDeckDangerActions(editor, deck, close)
 provide(deckDangerActionsKey, danger)
 
 const tab_sheet = useTemplateRef('tab_sheet')
-const is_mobile = useMatchMedia('w<md | h<sm')
+// Width-only: matches the template's `max-md:` layout switch. The aside +
+// floating preview drop on a narrow viewport, never on a short one.
+const is_mobile = useMatchMedia('w<md')
 
 const active_tab = useSessionRef<ActiveTab | null>('deck-settings.active-tab', null)
 const tab_outlet = ref<HTMLElement>()
