@@ -28,7 +28,7 @@ export const MODAL_MODE_CONFIG: Record<ModalMode, ModeConfig> = {
   // avoids touch-disrupting setAttribute calls during scroll on iOS Safari.
   'mobile-sheet': {
     containerClass:
-      'items-center mobile-modal:flex-col mobile-modal:overflow-y-auto mobile-modal:overscroll-y-contain mobile-modal:justify-start mobile-modal:pt-4 mobile-modal:pointer-events-auto mobile-modal:items-stretch',
+      'items-center mobile-modal:flex-col mobile-modal:overflow-y-auto mobile-modal:overscroll-y-contain mobile-modal:justify-start mobile-modal:pt-4 mobile-modal:pointer-events-auto',
     enter: (el, is_mobile, done) =>
       is_mobile ? slideUpFromEdge(el, done) : slideUpFadeIn(el, done),
     leave: (el, is_mobile, done) =>
