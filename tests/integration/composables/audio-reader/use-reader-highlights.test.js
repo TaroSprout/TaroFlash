@@ -88,6 +88,22 @@ describe('useReaderHighlights', () => {
     return wrapper.vm.$nextTick()
   }
 
+  // A touch over word `index`, optionally drifted `y` px down (the hit-test keys
+  // off clientX = index, so vertical drift moves the finger without leaving the
+  // word). Carries pointerType 'touch' so the composable takes its tap path.
+  function touch(wrapper, type, index, y = 0) {
+    words[index].dispatchEvent(
+      new PointerEvent(type, {
+        bubbles: true,
+        pointerId: 1,
+        pointerType: 'touch',
+        clientX: index,
+        clientY: y
+      })
+    )
+    return wrapper.vm.$nextTick()
+  }
+
   beforeEach(() => {
     moveMock.mockClear()
     hideMock.mockClear()
@@ -156,6 +172,62 @@ describe('useReaderHighlights', () => {
 
       expect(onSelect.mock.calls[0][0].term).toBe('Hello world')
       expect(onSelect.mock.calls[0][0].anchor).toBe(words[0])
+    })
+  })
+
+  describe('touch selects on release, not on press', () => {
+    test('a stationary tap commits the word on release', async () => {
+      const onSelect = vi.fn()
+      const wrapper = mountHost(onSelect)
+
+      await touch(wrapper, 'pointerdown', 1)
+      expect(onSelect).not.toHaveBeenCalled()
+
+      await touch(wrapper, 'pointerup', 1)
+
+      expect(onSelect).toHaveBeenCalledTimes(1)
+      expect(onSelect.mock.calls[0][0].term).toBe('world')
+    })
+
+    test('press does not claim the gesture, so the column can still scroll', async () => {
+      const wrapper = mountHost(vi.fn())
+      const prevent = vi.fn()
+
+      const event = new PointerEvent('pointerdown', {
+        bubbles: true,
+        pointerId: 1,
+        pointerType: 'touch',
+        clientX: 1,
+        clientY: 0
+      })
+      event.preventDefault = prevent
+      words[1].dispatchEvent(event)
+      await wrapper.vm.$nextTick()
+
+      expect(prevent).not.toHaveBeenCalled()
+    })
+
+    test('a touch that drifts past the slop is a scroll and commits nothing', async () => {
+      const onSelect = vi.fn()
+      const wrapper = mountHost(onSelect)
+
+      await touch(wrapper, 'pointerdown', 1)
+      await touch(wrapper, 'pointermove', 1, 40)
+      await touch(wrapper, 'pointerup', 1, 40)
+
+      expect(onSelect).not.toHaveBeenCalled()
+    })
+
+    test('a touch that drifts within the slop still commits', async () => {
+      const onSelect = vi.fn()
+      const wrapper = mountHost(onSelect)
+
+      await touch(wrapper, 'pointerdown', 1)
+      await touch(wrapper, 'pointermove', 1, 5)
+      await touch(wrapper, 'pointerup', 1, 5)
+
+      expect(onSelect).toHaveBeenCalledTimes(1)
+      expect(onSelect.mock.calls[0][0].term).toBe('world')
     })
   })
 
