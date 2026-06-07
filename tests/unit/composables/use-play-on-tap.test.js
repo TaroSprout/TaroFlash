@@ -15,7 +15,7 @@ const { coarseRef, mockUseMediaQuery, mockPlayButtonTap } = vi.hoisted(() => {
 })
 
 vi.mock('@/composables/use-media-query', () => ({
-  useMediaQuery: mockUseMediaQuery
+  useMatchMedia: mockUseMediaQuery
 }))
 
 vi.mock('@/utils/animations/button-tap', () => ({

@@ -22,9 +22,11 @@ const is_mobile = ref(false)
  *   beforeEach(() => resetResponsive())
  */
 export const responsiveMockModule = {
-  useMobileBreakpoint: () => is_mobile,
-  useMediaQuery: () => ref(false),
-  useIsTablet: () => is_tablet
+  useMatchMedia: (query) => {
+    if (query.includes('coarse') && query.includes('lg')) return is_tablet
+    if (query.startsWith('w<')) return is_mobile
+    return ref(false)
+  }
 }
 
 export function setBelowLg(v) {

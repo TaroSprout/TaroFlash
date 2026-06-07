@@ -42,8 +42,7 @@ vi.mock('@/composables/use-session-ref', async () => {
 vi.mock('@/composables/use-media-query', async () => {
   const { ref } = await import('vue')
   return {
-    useMobileBreakpoint: () => ref(false),
-    useMediaQuery: () => ref(state.hasSidebar)
+    useMatchMedia: (query) => ref(query.includes('&') ? state.hasSidebar : false)
   }
 })
 

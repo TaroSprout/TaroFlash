@@ -7,7 +7,7 @@ const { coarseRef, mockEmitSfx } = vi.hoisted(() => ({
 }))
 
 vi.mock('@/composables/use-media-query', () => ({
-  useMediaQuery: () => coarseRef
+  useMatchMedia: () => coarseRef
 }))
 
 vi.mock('gsap', () => ({

@@ -38,7 +38,7 @@ vi.mock('@/composables/use-last-deck', () => ({
 vi.mock('@/composables/use-media-query', async (importOriginal) => {
   const actual = await importOriginal()
   const { ref } = await import('vue')
-  return { ...actual, useMobileBreakpoint: () => ref(mediaState.mobile) }
+  return { ...actual, useMatchMedia: () => ref(mediaState.mobile) }
 })
 
 // ── Stubs ──────────────────────────────────────────────────────────────────────
