@@ -7,6 +7,7 @@ import { useCardSelection } from './card-selection'
 import { useCardMutations } from './card-mutations'
 import { useCardCarousel } from './card-carousel'
 import { useCardActions } from './card-actions'
+import { useCardLimitGate } from '@/composables/use-card-limit-gate'
 
 export type CardListController = ReturnType<typeof useCardListController>
 
@@ -47,6 +48,7 @@ export function useCardListController(opts: Options) {
   const list = useVirtualCardList(cards_query, opts.deck_id)
   const selection = useCardSelection(card_count)
   const mutations = useCardMutations(opts.deck_id)
+  const limit_gate = useCardLimitGate(() => deck_query.data.value)
 
   const mode = ref<CardEditorMode>('view')
   const saving = ref(false)
@@ -61,6 +63,30 @@ export function useCardListController(opts: Options) {
   /** Set the editor's UI mode (view / edit / import-export). */
   function setMode(new_mode: CardEditorMode) {
     mode.value = new_mode
+  }
+
+  /**
+   * Stage a new temp card, gated on the deck's plan card cap. The single funnel
+   * every editor "add card" intent (toolbar, empty-state, per-row append /
+   * prepend) flows through, so the cap is enforced in one place. A capped free
+   * member gets the upgrade alert and nothing is staged.
+   *
+   * @param left_card_id  - If given, the new card is placed `after` this id.
+   * @param right_card_id - If given (and `left_card_id` is not), `before` it.
+   */
+  async function addCard(left_card_id?: number, right_card_id?: number) {
+    if (!(await limit_gate.guardAddCards())) return
+    list.addCard(left_card_id, right_card_id)
+  }
+
+  /** Gated stage of a new temp card immediately after the card with `card_id`. */
+  function appendCard(card_id: number) {
+    return addCard(card_id)
+  }
+
+  /** Gated stage of a new temp card immediately before the card with `card_id`. */
+  function prependCard(card_id: number) {
+    return addCard(undefined, card_id)
   }
 
   const actions = useCardActions({
@@ -149,6 +175,11 @@ export function useCardListController(opts: Options) {
 
     mode,
     setMode,
+    addCard,
+    appendCard,
+    prependCard,
+    guardAddCards: limit_gate.guardAddCards,
+    handleLimitError: limit_gate.handleLimitError,
     saving,
     updateCard,
     setCardImage,

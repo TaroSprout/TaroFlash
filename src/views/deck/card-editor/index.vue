@@ -8,8 +8,8 @@ import { type CardListController } from '@/composables/card-editor/card-list-con
 defineOptions({ inheritAttrs: false })
 
 const { t } = useI18n()
-const { list } = inject<CardListController>('card-editor')!
-const { all_cards, addCard } = list
+const { list, addCard } = inject<CardListController>('card-editor')!
+const { all_cards } = list
 </script>
 
 <template>
