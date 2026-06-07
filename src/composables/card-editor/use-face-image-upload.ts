@@ -6,7 +6,6 @@ import {
   toValue,
   watch,
   type MaybeRefOrGetter,
-  type Readonly,
   type ShallowRef
 } from 'vue'
 import { useI18n } from 'vue-i18n'
