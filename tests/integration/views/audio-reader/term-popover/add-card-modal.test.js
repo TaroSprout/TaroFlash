@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 
@@ -6,11 +6,15 @@ import { defineComponent, h } from 'vue'
 // vi.hoisted runs before any module imports, so Vue's ref() is unavailable here.
 // Plain objects with a .value property work identically for mock factories.
 
-const { mutateAsyncMock, decksDataRef, successMock, errorMock } = vi.hoisted(() => {
-  const mutateAsyncMock = vi.fn().mockResolvedValue({ id: 99 })
-  const decksDataRef = { value: [] }
-  return { mutateAsyncMock, decksDataRef, successMock: vi.fn(), errorMock: vi.fn() }
-})
+const { mutateAsyncMock, decksDataRef, successMock, errorMock, setLastDeckMock, mediaState } =
+  vi.hoisted(() => ({
+    mutateAsyncMock: vi.fn().mockResolvedValue({ id: 99 }),
+    decksDataRef: { value: [] },
+    successMock: vi.fn(),
+    errorMock: vi.fn(),
+    setLastDeckMock: vi.fn(),
+    mediaState: { mobile: false }
+  }))
 
 vi.mock('@/api/decks', () => ({
   useMemberDecksQuery: () => ({ data: decksDataRef })
@@ -23,6 +27,19 @@ vi.mock('@/api/cards', () => ({
 vi.mock('@/composables/toast', () => ({
   useToast: () => ({ success: successMock, error: errorMock })
 }))
+
+vi.mock('@/composables/use-last-deck', () => ({
+  useLastDeck: () => ({ last_deck_id: { value: null }, setLastDeck: setLastDeckMock })
+}))
+
+// Drive the mobile breakpoint directly so the test doesn't depend on the real
+// viewport size (these run in a headless browser, not jsdom). Keep the module's
+// other exports — they're imported elsewhere in the graph.
+vi.mock('@/composables/use-media-query', async (importOriginal) => {
+  const actual = await importOriginal()
+  const { ref } = await import('vue')
+  return { ...actual, useMobileBreakpoint: () => ref(mediaState.mobile) }
+})
 
 // ── Stubs ──────────────────────────────────────────────────────────────────────
 
@@ -56,14 +73,15 @@ const MobileSheetStub = defineComponent({
   }
 })
 
-// Uncontrolled in real life; here we just surface content + an update emitter so
-// tests can simulate the user editing a face.
-const TextEditorStub = defineComponent({
-  name: 'TextEditor',
-  props: ['content', 'placeholder'],
-  emits: ['update'],
+// Stand in for the real <Card>-backed face: surface the seeded text and an update
+// emitter so tests can drive edits without GSAP / contenteditable.
+const CardFaceFieldStub = defineComponent({
+  name: 'CardFaceField',
+  props: ['side', 'text', 'attributes', 'placeholder', 'size', 'error'],
+  emits: ['update:text'],
   setup(props) {
-    return () => h('div', { 'data-testid': 'text-editor-stub' }, props.content)
+    return () =>
+      h('div', { 'data-testid': 'card-face-field-stub', 'data-side': props.side }, props.text)
   }
 })
 
@@ -74,7 +92,7 @@ import AddCardModal from '@/views/audio-reader/term-popover/add-card-modal.vue'
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 const TEST_DECKS = [
-  { id: 1, title: 'Deck Alpha' },
+  { id: 1, title: 'Deck Alpha', card_attributes: { front: { text_size: 6 }, back: {} } },
   { id: 2, title: 'Deck Beta' }
 ]
 
@@ -86,12 +104,16 @@ function mountModal(props = {}) {
       stubs: {
         MobileSheet: MobileSheetStub,
         UiButton: UiButtonStub,
-        TextEditor: TextEditorStub
+        CardFaceField: CardFaceFieldStub
       },
       mocks: { $t: (key) => key }
     }
   })
   return { wrapper, close }
+}
+
+function faceField(wrapper, side) {
+  return wrapper.findAllComponents(CardFaceFieldStub).find((field) => field.props('side') === side)
 }
 
 function saveButton(wrapper) {
@@ -107,31 +129,43 @@ function selectDeck(wrapper, id) {
 
 beforeEach(() => {
   decksDataRef.value = []
+  mediaState.mobile = false
   mutateAsyncMock.mockClear()
   mutateAsyncMock.mockResolvedValue({ id: 99 })
   successMock.mockClear()
   errorMock.mockClear()
+  setLastDeckMock.mockClear()
 })
 
 describe('AddCardModal', () => {
-  describe('rendering', () => {
-    test('renders the modal body with both editable faces', () => {
+  describe('rendering (desktop: both faces shown)', () => {
+    test('renders the modal body with a front and back card face', () => {
       const { wrapper } = mountModal()
       expect(wrapper.find('[data-testid="add-card-modal__body"]').exists()).toBe(true)
       expect(wrapper.find('[data-testid="add-card-modal__front"]').exists()).toBe(true)
       expect(wrapper.find('[data-testid="add-card-modal__back"]').exists()).toBe(true)
     })
 
-    test('seeds the front and back editors from the props', () => {
+    test('does not render the mobile single-card flip layout above md', () => {
+      const { wrapper } = mountModal()
+      expect(wrapper.find('[data-testid="add-card-modal__flip"]').exists()).toBe(false)
+    })
+
+    test('seeds the front and back faces from the props', () => {
       const { wrapper } = mountModal({ front: 'Dog', back: '犬' })
-      const front = wrapper
-        .find('[data-testid="add-card-modal__front"]')
-        .findComponent(TextEditorStub)
-      const back = wrapper
-        .find('[data-testid="add-card-modal__back"]')
-        .findComponent(TextEditorStub)
-      expect(front.props('content')).toBe('Dog')
-      expect(back.props('content')).toBe('犬')
+      expect(faceField(wrapper, 'front').props('text')).toBe('Dog')
+      expect(faceField(wrapper, 'back').props('text')).toBe('犬')
+    })
+  })
+
+  describe('card attributes from the selected deck', () => {
+    test('passes the chosen deck attributes through to the faces', async () => {
+      decksDataRef.value = TEST_DECKS
+      const { wrapper } = mountModal()
+      await flushPromises()
+      await selectDeck(wrapper, 1)
+
+      expect(faceField(wrapper, 'front').props('attributes')).toEqual({ text_size: 6 })
     })
   })
 
@@ -150,6 +184,19 @@ describe('AddCardModal', () => {
     test('shows only the placeholder when no decks are loaded', () => {
       const { wrapper } = mountModal()
       expect(wrapper.findAll('[data-testid="add-card-modal__deck"] option').length).toBe(1)
+    })
+
+    test('pre-selects the deck passed in so saving needs no extra click', async () => {
+      decksDataRef.value = TEST_DECKS
+      const { wrapper } = mountModal({ deck_id: 2 })
+      await flushPromises()
+
+      expect(saveButton(wrapper).attributes('disabled')).toBeUndefined()
+
+      await saveButton(wrapper).trigger('click')
+      await flushPromises()
+
+      expect(mutateAsyncMock).toHaveBeenCalledWith(expect.objectContaining({ deck_id: 2 }))
     })
   })
 
@@ -174,10 +221,7 @@ describe('AddCardModal', () => {
       await flushPromises()
       await selectDeck(wrapper, TEST_DECKS[0].id)
 
-      const front = wrapper
-        .find('[data-testid="add-card-modal__front"]')
-        .findComponent(TextEditorStub)
-      front.vm.$emit('update', '   ')
+      faceField(wrapper, 'front').vm.$emit('update:text', '   ')
       await flushPromises()
 
       expect(saveButton(wrapper).attributes('disabled')).toBeDefined()
@@ -203,16 +247,13 @@ describe('AddCardModal', () => {
       })
     })
 
-    test('persists edits made in the editors', async () => {
+    test('persists edits made in the faces', async () => {
       decksDataRef.value = TEST_DECKS
       const { wrapper } = mountModal({ front: 'Dog', back: '犬' })
       await flushPromises()
       await selectDeck(wrapper, TEST_DECKS[0].id)
 
-      wrapper
-        .find('[data-testid="add-card-modal__back"]')
-        .findComponent(TextEditorStub)
-        .vm.$emit('update', '犬 (inu)')
+      faceField(wrapper, 'back').vm.$emit('update:text', '犬 (inu)')
       await flushPromises()
 
       await saveButton(wrapper).trigger('click')
@@ -221,6 +262,17 @@ describe('AddCardModal', () => {
       expect(mutateAsyncMock).toHaveBeenCalledWith(
         expect.objectContaining({ front_text: 'Dog', back_text: '犬 (inu)' })
       )
+    })
+
+    test('remembers the saved deck as the last-used deck', async () => {
+      decksDataRef.value = TEST_DECKS
+      const { wrapper } = mountModal({ deck_id: 1 })
+      await flushPromises()
+
+      await saveButton(wrapper).trigger('click')
+      await flushPromises()
+
+      expect(setLastDeckMock).toHaveBeenCalledWith(1)
     })
 
     test('calls close(true) after a successful mutateAsync', async () => {
@@ -243,17 +295,17 @@ describe('AddCardModal', () => {
       expect(mutateAsyncMock).not.toHaveBeenCalled()
     })
 
-    test('does not close when mutateAsync rejects', async () => {
+    test('does not close or remember the deck when mutateAsync rejects', async () => {
       mutateAsyncMock.mockRejectedValueOnce(new Error('fail'))
       decksDataRef.value = TEST_DECKS
-      const { wrapper, close } = mountModal()
+      const { wrapper, close } = mountModal({ deck_id: 1 })
       await flushPromises()
-      await selectDeck(wrapper, TEST_DECKS[0].id)
 
       await saveButton(wrapper).trigger('click')
       await flushPromises()
 
       expect(close).not.toHaveBeenCalled()
+      expect(setLastDeckMock).not.toHaveBeenCalled()
       expect(errorMock).toHaveBeenCalled()
     })
   })
@@ -272,6 +324,52 @@ describe('AddCardModal', () => {
       await wrapper.find('[data-testid="mobile-sheet__close"]').trigger('click')
 
       expect(close).toHaveBeenCalledWith(false)
+    })
+  })
+
+  describe('mobile (single card with flip)', () => {
+    beforeEach(() => {
+      mediaState.mobile = true
+    })
+    afterEach(() => {
+      mediaState.mobile = false
+    })
+
+    test('renders the single-card flip layout, not the two-up faces', () => {
+      const { wrapper } = mountModal()
+      expect(wrapper.find('[data-testid="add-card-modal__flip"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="add-card-modal__faces"]').exists()).toBe(false)
+    })
+
+    test('shows the front side first, then flips to the back', async () => {
+      const { wrapper } = mountModal()
+      expect(wrapper.findComponent(CardFaceFieldStub).props('side')).toBe('front')
+      expect(wrapper.find('[data-testid="add-card-modal__side-label"]').text()).toBe('Front')
+
+      await wrapper.find('[data-testid="add-card-modal__flip-button"]').trigger('click')
+
+      expect(wrapper.findComponent(CardFaceFieldStub).props('side')).toBe('back')
+    })
+
+    test('binds the active side text and routes edits to that side on save', async () => {
+      decksDataRef.value = TEST_DECKS
+      const { wrapper } = mountModal({ front: 'Dog', back: '犬' })
+      await flushPromises()
+
+      expect(wrapper.findComponent(CardFaceFieldStub).props('text')).toBe('Dog')
+      wrapper.findComponent(CardFaceFieldStub).vm.$emit('update:text', 'Doggo')
+      await flushPromises()
+
+      await wrapper.find('[data-testid="add-card-modal__flip-button"]').trigger('click')
+      expect(wrapper.findComponent(CardFaceFieldStub).props('text')).toBe('犬')
+
+      await selectDeck(wrapper, TEST_DECKS[0].id)
+      await saveButton(wrapper).trigger('click')
+      await flushPromises()
+
+      expect(mutateAsyncMock).toHaveBeenCalledWith(
+        expect.objectContaining({ front_text: 'Doggo', back_text: '犬' })
+      )
     })
   })
 })
