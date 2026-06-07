@@ -2,8 +2,17 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 
-const { bulkInsertMock } = vi.hoisted(() => ({
-  bulkInsertMock: vi.fn().mockResolvedValue([])
+const { bulkInsertMock, guardAddCardsMock, handleLimitErrorMock, toastErrorMock } = vi.hoisted(
+  () => ({
+    bulkInsertMock: vi.fn().mockResolvedValue([]),
+    guardAddCardsMock: vi.fn().mockResolvedValue(true),
+    handleLimitErrorMock: vi.fn().mockReturnValue(false),
+    toastErrorMock: vi.fn()
+  })
+)
+
+vi.mock('@/composables/toast', () => ({
+  useToast: () => ({ error: toastErrorMock })
 }))
 
 vi.mock('@/api/cards', () => ({
@@ -33,6 +42,11 @@ const UiButtonStub = defineComponent({
 beforeEach(() => {
   bulkInsertMock.mockReset()
   bulkInsertMock.mockResolvedValue([])
+  guardAddCardsMock.mockReset()
+  guardAddCardsMock.mockResolvedValue(true)
+  handleLimitErrorMock.mockReset()
+  handleLimitErrorMock.mockReturnValue(false)
+  toastErrorMock.mockReset()
 })
 
 function mount({ deck_id = 10 } = {}) {
@@ -40,7 +54,11 @@ function mount({ deck_id = 10 } = {}) {
     global: {
       stubs: { UiButton: UiButtonStub },
       provide: {
-        'card-editor': { deck_id }
+        'card-editor': {
+          deck_id,
+          guardAddCards: guardAddCardsMock,
+          handleLimitError: handleLimitErrorMock
+        }
       }
     }
   })
@@ -133,5 +151,48 @@ describe('CardImporter', () => {
     const wrapper = mount()
     await saveButton(wrapper).trigger('click')
     expect(bulkInsertMock).not.toHaveBeenCalled()
+  })
+
+  // ── Card-limit gate (obligation tests) ────────────────────────────────────
+
+  test('passes cards.length to guardAddCards so a batch that crosses the cap is rejected', async () => {
+    const wrapper = mount()
+    await wrapper.find('textarea').setValue('a1::b1\na2::b2\na3::b3')
+    await importButton(wrapper).trigger('click')
+    await saveButton(wrapper).trigger('click')
+    expect(guardAddCardsMock).toHaveBeenCalledWith(3)
+  })
+
+  test('does not call the mutation when guardAddCards resolves false', async () => {
+    guardAddCardsMock.mockResolvedValue(false)
+    const wrapper = mount()
+    await wrapper.find('textarea').setValue('a::b')
+    await importButton(wrapper).trigger('click')
+    await saveButton(wrapper).trigger('click')
+    expect(bulkInsertMock).not.toHaveBeenCalled()
+  })
+
+  test('calls handleLimitError on a failed save and skips the generic toast when it returns true', async () => {
+    const pt001 = { code: 'PT001', message: 'limit exceeded' }
+    bulkInsertMock.mockRejectedValueOnce(pt001)
+    handleLimitErrorMock.mockReturnValue(true)
+    const wrapper = mount()
+    await wrapper.find('textarea').setValue('a::b')
+    await importButton(wrapper).trigger('click')
+    await saveButton(wrapper).trigger('click')
+    expect(handleLimitErrorMock).toHaveBeenCalledWith(pt001)
+    expect(toastErrorMock).not.toHaveBeenCalled()
+  })
+
+  test('shows the generic toast when handleLimitError returns false (non-PT001 error)', async () => {
+    const generic = new Error('server error')
+    bulkInsertMock.mockRejectedValueOnce(generic)
+    handleLimitErrorMock.mockReturnValue(false)
+    const wrapper = mount()
+    await wrapper.find('textarea').setValue('a::b')
+    await importButton(wrapper).trigger('click')
+    await saveButton(wrapper).trigger('click')
+    expect(handleLimitErrorMock).toHaveBeenCalledWith(generic)
+    expect(toastErrorMock).toHaveBeenCalled()
   })
 })

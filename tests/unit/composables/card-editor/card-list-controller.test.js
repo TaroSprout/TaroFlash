@@ -15,7 +15,9 @@ const {
   modalOpenMock,
   alertWarnMock,
   emitSfxMock,
-  useInfiniteScrollMock
+  useInfiniteScrollMock,
+  guardAddCardsMock,
+  handleLimitErrorMock
 } = vi.hoisted(() => ({
   cardsInfiniteQueryMock: vi.fn(),
   deckQueryMock: vi.fn(),
@@ -29,7 +31,9 @@ const {
   modalOpenMock: vi.fn(),
   alertWarnMock: vi.fn(),
   emitSfxMock: vi.fn(),
-  useInfiniteScrollMock: vi.fn()
+  useInfiniteScrollMock: vi.fn(),
+  guardAddCardsMock: vi.fn().mockResolvedValue(true),
+  handleLimitErrorMock: vi.fn().mockReturnValue(false)
 }))
 
 vi.mock('@/api/cards', () => ({
@@ -63,6 +67,13 @@ vi.mock('@/composables/alert', () => ({
 
 vi.mock('@/composables/modal', () => ({
   useModal: () => ({ open: modalOpenMock })
+}))
+
+vi.mock('@/composables/use-card-limit-gate', () => ({
+  useCardLimitGate: () => ({
+    guardAddCards: guardAddCardsMock,
+    handleLimitError: handleLimitErrorMock
+  })
 }))
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: emitSfxMock }))
@@ -114,6 +125,13 @@ function makeController(persisted = [], ids = persisted.map((c) => c.id), deck_q
     ...controller.selection,
     ...controller.carousel,
     ...controller.actions,
+    // Re-expose gated wrappers after the list spread so tests can call the
+    // gated versions (addCard/appendCard/prependCard with the limit gate) via
+    // ctrl.gated_addCard etc. The list spread above overwrites the ungated
+    // versions onto the same keys — these aliases preserve the gated surface.
+    gated_addCard: controller.addCard,
+    gated_appendCard: controller.appendCard,
+    gated_prependCard: controller.prependCard,
     deck_query: dq
   }
 }
@@ -138,6 +156,10 @@ describe('useCardListController', () => {
     alertWarnMock.mockReset()
     emitSfxMock.mockReset()
     useInfiniteScrollMock.mockReset()
+    guardAddCardsMock.mockReset()
+    guardAddCardsMock.mockResolvedValue(true)
+    handleLimitErrorMock.mockReset()
+    handleLimitErrorMock.mockReturnValue(false)
   })
 
   // ── Initialization ─────────────────────────────────────────────────────────
@@ -231,6 +253,58 @@ describe('useCardListController', () => {
       addCard()
       const ids = all_cards.value.map((c) => c.id)
       expect(ids[0]).not.toBe(ids[1])
+    })
+
+    // Gate tests use the controller's gated addCard/appendCard/prependCard directly
+    // (not the spread-in list.addCard) so the guardAddCards call path is exercised.
+    // Gate tests use gated_addCard/appendCard/prependCard — aliases preserved in
+    // makeController after the list spread (list spread overwrites the same keys).
+    test('does not stage a temp card when guardAddCards resolves false', async () => {
+      const { gated_addCard, all_cards } = makeController()
+      guardAddCardsMock.mockResolvedValue(false)
+      await gated_addCard()
+      expect(all_cards.value).toHaveLength(0)
+    })
+
+    test('stages a temp card when guardAddCards resolves true', async () => {
+      const { gated_addCard, all_cards } = makeController()
+      guardAddCardsMock.mockResolvedValue(true)
+      await gated_addCard()
+      expect(all_cards.value).toHaveLength(1)
+    })
+
+    test('appendCard calls list.addCard with the target as left neighbor when gate passes', async () => {
+      const { gated_appendCard, all_cards } = makeController([
+        makeCard({ id: 100 }),
+        makeCard({ id: 200 })
+      ])
+      guardAddCardsMock.mockResolvedValue(true)
+      await gated_appendCard(100)
+      expect(all_cards.value.map((c) => c.id)).toEqual([100, all_cards.value[1].id, 200])
+    })
+
+    test('prependCard calls list.addCard with the target as right neighbor when gate passes', async () => {
+      const { gated_prependCard, all_cards } = makeController([
+        makeCard({ id: 100 }),
+        makeCard({ id: 200 })
+      ])
+      guardAddCardsMock.mockResolvedValue(true)
+      await gated_prependCard(200)
+      expect(all_cards.value.map((c) => c.id)).toEqual([100, all_cards.value[1].id, 200])
+    })
+
+    test('appendCard does not stage a card when guardAddCards resolves false', async () => {
+      const { gated_appendCard, all_cards } = makeController([makeCard({ id: 100 })])
+      guardAddCardsMock.mockResolvedValue(false)
+      await gated_appendCard(100)
+      expect(all_cards.value).toHaveLength(1)
+    })
+
+    test('prependCard does not stage a card when guardAddCards resolves false', async () => {
+      const { gated_prependCard, all_cards } = makeController([makeCard({ id: 100 })])
+      guardAddCardsMock.mockResolvedValue(false)
+      await gated_prependCard(100)
+      expect(all_cards.value).toHaveLength(1)
     })
   })
 

@@ -6,15 +6,25 @@ import { defineComponent, h } from 'vue'
 // vi.hoisted runs before any module imports, so Vue's ref() is unavailable here.
 // Plain objects with a .value property work identically for mock factories.
 
-const { mutateAsyncMock, decksDataRef, successMock, errorMock, setLastDeckMock, mediaState } =
-  vi.hoisted(() => ({
-    mutateAsyncMock: vi.fn().mockResolvedValue({ id: 99 }),
-    decksDataRef: { value: [] },
-    successMock: vi.fn(),
-    errorMock: vi.fn(),
-    setLastDeckMock: vi.fn(),
-    mediaState: { mobile: false }
-  }))
+const {
+  mutateAsyncMock,
+  decksDataRef,
+  successMock,
+  errorMock,
+  setLastDeckMock,
+  mediaState,
+  guardAddCardsMock,
+  handleLimitErrorMock
+} = vi.hoisted(() => ({
+  mutateAsyncMock: vi.fn().mockResolvedValue({ id: 99 }),
+  decksDataRef: { value: [] },
+  successMock: vi.fn(),
+  errorMock: vi.fn(),
+  setLastDeckMock: vi.fn(),
+  mediaState: { mobile: false },
+  guardAddCardsMock: vi.fn().mockResolvedValue(true),
+  handleLimitErrorMock: vi.fn().mockReturnValue(false)
+}))
 
 vi.mock('@/api/decks', () => ({
   useMemberDecksQuery: () => ({ data: decksDataRef })
@@ -30,6 +40,13 @@ vi.mock('@/composables/toast', () => ({
 
 vi.mock('@/composables/use-last-deck', () => ({
   useLastDeck: () => ({ last_deck_id: { value: null }, setLastDeck: setLastDeckMock })
+}))
+
+vi.mock('@/composables/use-card-limit-gate', () => ({
+  useCardLimitGate: () => ({
+    guardAddCards: guardAddCardsMock,
+    handleLimitError: handleLimitErrorMock
+  })
 }))
 
 // Drive the mobile breakpoint directly so the test doesn't depend on the real
@@ -135,6 +152,10 @@ beforeEach(() => {
   successMock.mockClear()
   errorMock.mockClear()
   setLastDeckMock.mockClear()
+  guardAddCardsMock.mockClear()
+  guardAddCardsMock.mockResolvedValue(true)
+  handleLimitErrorMock.mockClear()
+  handleLimitErrorMock.mockReturnValue(false)
 })
 
 describe('AddCardModal', () => {
@@ -370,6 +391,50 @@ describe('AddCardModal', () => {
       expect(mutateAsyncMock).toHaveBeenCalledWith(
         expect.objectContaining({ front_text: 'Doggo', back_text: '犬' })
       )
+    })
+  })
+
+  describe('card-limit gate (obligation tests)', () => {
+    test('does not call mutateAsync when guardAddCards resolves false', async () => {
+      guardAddCardsMock.mockResolvedValue(false)
+      decksDataRef.value = TEST_DECKS
+      const { wrapper } = mountModal({ deck_id: 1 })
+      await flushPromises()
+
+      await saveButton(wrapper).trigger('click')
+      await flushPromises()
+
+      expect(mutateAsyncMock).not.toHaveBeenCalled()
+    })
+
+    test('calls handleLimitError on a failed save and skips the generic toast when it returns true', async () => {
+      const pt001 = { code: 'PT001', message: 'limit exceeded' }
+      mutateAsyncMock.mockRejectedValueOnce(pt001)
+      handleLimitErrorMock.mockReturnValue(true)
+      decksDataRef.value = TEST_DECKS
+      const { wrapper } = mountModal({ deck_id: 1 })
+      await flushPromises()
+
+      await saveButton(wrapper).trigger('click')
+      await flushPromises()
+
+      expect(handleLimitErrorMock).toHaveBeenCalledWith(pt001)
+      expect(errorMock).not.toHaveBeenCalled()
+    })
+
+    test('shows the generic toast when handleLimitError returns false (non-PT001 error)', async () => {
+      const generic = new Error('server error')
+      mutateAsyncMock.mockRejectedValueOnce(generic)
+      handleLimitErrorMock.mockReturnValue(false)
+      decksDataRef.value = TEST_DECKS
+      const { wrapper } = mountModal({ deck_id: 1 })
+      await flushPromises()
+
+      await saveButton(wrapper).trigger('click')
+      await flushPromises()
+
+      expect(handleLimitErrorMock).toHaveBeenCalledWith(generic)
+      expect(errorMock).toHaveBeenCalled()
     })
   })
 })
