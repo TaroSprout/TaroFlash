@@ -1,18 +1,50 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, useAttrs } from 'vue'
+import { defineComponent, h, ref, useAttrs } from 'vue'
 
-// Card stub: render the default + editor slots and forward attrs so the
+// Card stub: render the default + image + editor slots and forward attrs so the
 // data-active, data-dragging flags, drag listeners, and pointer listeners
 // reach a real element.
 const CardStub = defineComponent({
   name: 'Card',
   inheritAttrs: false,
-  props: ['side', 'mode', 'size', 'error', 'sfx'],
+  props: ['side', 'mode', 'size', 'error', 'sfx', 'cardAttributes'],
   setup(_props, { slots }) {
     const attrs = useAttrs()
     return () =>
-      h('div', { ...attrs, 'data-testid': 'card-root' }, [slots.default?.(), slots.editor?.()])
+      h('div', { ...attrs, 'data-testid': 'card-root' }, [
+        slots.default?.(),
+        slots.image?.(),
+        slots.editor?.()
+      ])
+  }
+})
+
+// FaceImageDropzone stub: surfaces the controls it owns as testid'd buttons and
+// re-emits, so the uploader's wiring (remove/browse/dismiss) can be asserted.
+const FaceImageDropzoneStub = defineComponent({
+  name: 'FaceImageDropzone',
+  inheritAttrs: false,
+  props: ['mode', 'image', 'active', 'disabled', 'error'],
+  emits: ['browse', 'remove', 'dismiss-error'],
+  setup(props, { emit }) {
+    return () =>
+      h('div', { 'data-testid': 'face-image-dropzone', 'data-mode': props.mode }, [
+        h('button', {
+          'data-testid': 'face-image-dropzone__remove',
+          onClick: () => emit('remove')
+        }),
+        h('button', {
+          'data-testid': 'face-image-dropzone__scrim',
+          onClick: () => emit('browse')
+        }),
+        props.error
+          ? h('button', {
+              'data-testid': 'face-image-dropzone__error',
+              onClick: () => emit('browse')
+            })
+          : null
+      ])
   }
 })
 
@@ -90,7 +122,7 @@ function dropImage(wrapper, file) {
 let _wrapper
 
 function mount(props = {}) {
-  const { card, ...rest } = props
+  const { card, cardEditor, ...rest } = props
   _wrapper = shallowMount(CardFaceUploader, {
     props: { side: 'front', card: makeCard(card), ...rest },
     global: {
@@ -98,10 +130,17 @@ function mount(props = {}) {
         Card: CardStub,
         UiButton: UiButtonStub,
         UiIcon: UiIconStub,
-        UiTooltip: UiTooltipStub
+        UiTooltip: UiTooltipStub,
+        FaceImageDropzone: FaceImageDropzoneStub
       },
       directives: { sfx: {} },
-      provide: { 'card-editor': { setFaceImage: mocks.setFaceImageMock } }
+      provide: {
+        'card-editor': {
+          setFaceImage: mocks.setFaceImageMock,
+          card_attributes: ref({ front: {}, back: {} }),
+          ...cardEditor
+        }
+      }
     }
   })
   return _wrapper
@@ -143,19 +182,32 @@ describe('CardFaceUploader', () => {
     expect(wrapper.find('[data-testid="card-face-uploader__add"]').exists()).toBe(false)
   })
 
-  test('hides add and remove controls when disabled (selection mode)', () => {
+  test('hides add control and the image dropzone when disabled (selection mode)', () => {
     const wrapper = mount({ card: { id: 5, front_image_path: 'cards/f.png' }, disabled: true })
     expect(wrapper.find('[data-testid="card-face-uploader__add"]').exists()).toBe(false)
-    expect(wrapper.find('[data-testid="card-face-uploader__remove"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="face-image-dropzone"]').exists()).toBe(false)
   })
 
   // ── Image face ────────────────────────────────────────────────────────────────
 
-  test('shows the remove button and replace scrim on a face that has an image', () => {
+  test('renders the region dropzone on a face that has an image', () => {
     const wrapper = mount({ card: { front_image_path: 'cards/f.png' } })
-    expect(wrapper.find('[data-testid="card-face-uploader__remove"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="card-face-uploader__scrim"]').exists()).toBe(true)
+    const dropzone = wrapper.find('[data-testid="face-image-dropzone"]')
+    expect(dropzone.exists()).toBe(true)
+    expect(dropzone.attributes('data-mode')).toBe('region')
+    expect(wrapper.find('[data-testid="face-image-dropzone__remove"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="face-image-dropzone__scrim"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="card-face-uploader__add"]').exists()).toBe(false)
+  })
+
+  test('renders the corners dropzone for a behind-layout image', () => {
+    const wrapper = mount({
+      card: { front_image_path: 'cards/f.png' },
+      cardEditor: { card_attributes: ref({ front: { image_layout: 'behind' }, back: {} }) }
+    })
+    const dropzone = wrapper.find('[data-testid="face-image-dropzone"]')
+    expect(dropzone.exists()).toBe(true)
+    expect(dropzone.attributes('data-mode')).toBe('corners')
   })
 
   // ── Activation (hover / drag) ─────────────────────────────────────────────────
@@ -338,12 +390,12 @@ describe('CardFaceUploader', () => {
     const wrapper = mount({ card: { id: 5, front_image_path: 'cards/f.png' } })
     await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
     await flushPromises()
-    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="face-image-dropzone__error"]').exists()).toBe(true)
 
-    await wrapper.find('[data-testid="card-face-uploader__remove"]').trigger('click')
+    await wrapper.find('[data-testid="face-image-dropzone__remove"]').trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="face-image-dropzone__error"]').exists()).toBe(false)
   })
 
   // ── data-active stays truthy while error is showing ───────────────────────
@@ -468,7 +520,7 @@ describe('CardFaceUploader', () => {
 
   test('remove button calls setFaceImage(id, side, null) and plays trash_crumple_short', async () => {
     const wrapper = mount({ card: { id: 5, front_image_path: 'cards/f.png' } })
-    await wrapper.find('[data-testid="card-face-uploader__remove"]').trigger('click')
+    await wrapper.find('[data-testid="face-image-dropzone__remove"]').trigger('click')
     await flushPromises()
 
     expect(mocks.setFaceImageMock).toHaveBeenCalledWith(5, 'front', null)

@@ -40,7 +40,7 @@ const mocks = vi.hoisted(() => ({
   emitSfxMock: vi.fn()
 }))
 
-vi.mock('@/sfx/bus', () => ({ emitSfx: mocks.emitSfxMock }))
+vi.mock('@/sfx/bus', () => ({ emitSfx: mocks.emitSfxMock, emitHoverSfx: vi.fn() }))
 
 import ListItemCard from '@/views/deck/card-editor/list-item-card.vue'
 import textEditor from '@/components/text-editor/text-editor.vue'
