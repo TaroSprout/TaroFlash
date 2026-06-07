@@ -5,7 +5,7 @@ import { useTranslateTermMutation, EdgeFunctionError, type TranslationResult } f
 import UiButton from '@/components/ui-kit/button.vue'
 import UiDivider from '@/components/ui-kit/divider.vue'
 import UiTag from '@/components/ui-kit/tag.vue'
-import AddCardForm from './add-card-form.vue'
+import { useAddCardModal } from '@/composables/modals/use-add-card-modal'
 
 const { term, sentence, target_lang } = defineProps<{
   term: string
@@ -19,16 +19,15 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const translate = useTranslateTermMutation()
+const add_card_modal = useAddCardModal()
 
 const result = ref<TranslationResult | null>(null)
 const is_loading = ref(false)
 const error_key = ref<string | null>(null)
-const adding = ref(false)
 
 async function fetchTranslation() {
   result.value = null
   error_key.value = null
-  adding.value = false
   is_loading.value = true
   try {
     result.value = await translate.mutateAsync({ term, sentence, target_lang })
@@ -40,6 +39,13 @@ async function fetchTranslation() {
   } finally {
     is_loading.value = false
   }
+}
+
+// Hand the translation off to the add-card modal and dismiss the popover — the
+// modal lives in the global stack, so closing the popover here doesn't unmount it.
+function onAddCard(translation: string) {
+  add_card_modal.open(term, translation)
+  emit('close')
 }
 
 // The card only mounts while a term is showing, so fetch on mount and whenever
@@ -122,15 +128,7 @@ watch(
         </p>
       </div>
 
-      <add-card-form
-        v-if="adding"
-        :front="term"
-        :back="result.translation"
-        @saved="emit('close')"
-        @cancel="adding = false"
-      />
       <ui-button
-        v-else
         data-testid="term-card__add"
         data-theme="blue-500"
         data-theme-dark="blue-650"
@@ -138,7 +136,7 @@ watch(
         size="sm"
         full-width
         class="mt-3"
-        @click="adding = true"
+        @click="onAddCard(result.translation)"
       >
         {{ t('audio-reader.popover.add-card-button') }}
       </ui-button>
