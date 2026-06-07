@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, nextTick, ref, withAttrs } from 'vue'
 import ModalUiKit from '@/components/ui-kit/modal.vue'
@@ -6,20 +6,10 @@ import { useModal, useModalRequestClose, request_close_handlers } from '@/compos
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockDisableBodyScroll, mockEnableBodyScroll } = vi.hoisted(() => ({
-  mockDisableBodyScroll: vi.fn(),
-  mockEnableBodyScroll: vi.fn()
-}))
-
 const { mockRegister, mockDispose, mockClearScope } = vi.hoisted(() => ({
   mockRegister: vi.fn(),
   mockDispose: vi.fn(),
   mockClearScope: vi.fn()
-}))
-
-vi.mock('body-scroll-lock', () => ({
-  disableBodyScroll: mockDisableBodyScroll,
-  enableBodyScroll: mockEnableBodyScroll
 }))
 
 vi.mock('@/composables/use-shortcuts', () => ({
@@ -65,9 +55,28 @@ const ModalStub = defineComponent({
   }
 })
 
+// A modal whose body is a real overflow scroller, for boundary-chaining tests.
+const ScrollableStub = defineComponent({
+  render() {
+    return h('div', { 'data-testid': 'scroll-stub', style: 'overflow-y: auto; height: 50px;' }, [
+      h('div', { style: 'height: 500px;' })
+    ])
+  }
+})
+
+// Modal hosts attach real window listeners while open — unmount every mount so
+// they don't leak into later tests.
+const mounted = []
+
 function mountModal() {
-  return mount(ModalUiKit, { attachTo: document.body })
+  const wrapper = mount(ModalUiKit, { attachTo: document.body })
+  mounted.push(wrapper)
+  return wrapper
 }
+
+afterEach(() => {
+  while (mounted.length > 0) mounted.pop().unmount()
+})
 
 function containerMode(wrapper) {
   return wrapper.find('[data-testid="ui-kit-modal-container"]').attributes('data-modal-mode')
@@ -248,46 +257,83 @@ describe('modal.vue', () => {
     })
   })
 
-  describe('html overflow lock', () => {
-    beforeEach(() => {
-      document.documentElement.style.overflow = ''
-    })
+  describe('background scroll lock', () => {
+    // The lock decides off `wheel`/`touchmove`; wheel is the simplest to forge
+    // and runs through the exact same boundary logic.
+    function fireWheel(target, deltaY = 50) {
+      const event = new WheelEvent('wheel', { deltaY, cancelable: true, bubbles: true })
+      target.dispatchEvent(event)
+      return event
+    }
 
-    test('locks html overflow to hidden while a modal is open', async () => {
+    test('blocks background scroll while a modal is open', async () => {
       const { open } = useModal()
       open(ModalStub)
 
       mountModal()
       await nextTick()
 
-      expect(document.documentElement.style.overflow).toBe('hidden')
+      expect(fireWheel(document.body).defaultPrevented).toBe(true)
     })
 
-    test('restores html overflow when the last modal closes', async () => {
+    test('does not block scroll when no modal is open', async () => {
+      mountModal()
+      await nextTick()
+
+      expect(fireWheel(document.body).defaultPrevented).toBe(false)
+    })
+
+    test('lets a scroll through when the modal scroller has room, so its content scrolls', async () => {
+      const { open } = useModal()
+      open(ScrollableStub)
+
+      const wrapper = mountModal()
+      await nextTick()
+
+      const scroller = wrapper.find('[data-testid="scroll-stub"]').element
+      scroller.scrollTop = 20 // mid-scroll: not at either edge
+
+      expect(fireWheel(scroller, 50).defaultPrevented).toBe(false)
+    })
+
+    test('blocks a scroll at the modal scroller edge so it does not chain to the page', async () => {
+      const { open } = useModal()
+      open(ScrollableStub)
+
+      const wrapper = mountModal()
+      await nextTick()
+
+      const scroller = wrapper.find('[data-testid="scroll-stub"]').element
+      scroller.scrollTop = 0 // at the top, scrolling up
+
+      expect(fireWheel(scroller, -50).defaultPrevented).toBe(true)
+    })
+
+    test('stops blocking background scroll once the last modal closes', async () => {
       const { open, pop } = useModal()
       open(ModalStub)
 
       mountModal()
       await nextTick()
-      expect(document.documentElement.style.overflow).toBe('hidden')
+      expect(fireWheel(document.body).defaultPrevented).toBe(true)
 
       pop()
       await nextTick()
 
-      expect(document.documentElement.style.overflow).toBe('')
+      expect(fireWheel(document.body).defaultPrevented).toBe(false)
     })
 
-    test('restores html overflow on unmount', async () => {
+    test('stops blocking background scroll on unmount', async () => {
       const { open } = useModal()
       open(ModalStub)
 
       const wrapper = mountModal()
       await nextTick()
-      expect(document.documentElement.style.overflow).toBe('hidden')
+      expect(fireWheel(document.body).defaultPrevented).toBe(true)
 
       wrapper.unmount()
 
-      expect(document.documentElement.style.overflow).toBe('')
+      expect(fireWheel(document.body).defaultPrevented).toBe(false)
     })
   })
 })
