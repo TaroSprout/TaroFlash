@@ -6,7 +6,7 @@ import { useMobileBreakpoint } from '@/composables/use-media-query'
 import { useLessonQuery, useLessonAudioUrlQuery } from '@/api/lessons'
 import { useAudioPlayer } from './use-audio-player'
 import { useTranscriptSync } from './use-transcript-sync'
-import { groupWordsBySentence, groupSentencesIntoParagraphs } from '@/utils/transcript'
+import { groupWordsBySentence } from '@/utils/transcript'
 
 // Translate into the app language. A per-member target language can replace this
 // later; admin-only v1 is English.
@@ -35,10 +35,11 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
   const { data: lesson, error } = useLessonQuery(lesson_id)
 
   const words = computed(() => lesson.value?.transcript.words ?? [])
+  // Each sentence renders as its own block (one interlinear gloss apiece), evenly
+  // spaced — see the reader's transcript view.
   const paragraphs = computed(() => {
     const segments = lesson.value?.transcript.segments ?? []
-    const groups = groupWordsBySentence(segments, words.value, lesson.value?.transcript.text)
-    return groupSentencesIntoParagraphs(groups)
+    return groupWordsBySentence(segments, words.value, lesson.value?.transcript.text)
   })
 
   const audio_path = computed(() => lesson.value?.audio_path)

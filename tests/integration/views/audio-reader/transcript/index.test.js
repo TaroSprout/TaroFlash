@@ -15,21 +15,19 @@ const sentence = (index, sentenceText, words, extra = {}) => ({
   ...extra
 })
 
-// Two paragraphs: [[s0], [s1, s2]]
-function makeParagraphs() {
+// Each sentence renders as its own block (one segment apiece).
+function makeSentences() {
   return [
-    [sentence(0, 'Hello world.', [word('Hello ', 0), word('world.', 1)])],
-    [
-      sentence(1, 'How are you?', [word('How ', 2), word('are ', 3), word('you?', 4)]),
-      sentence(2, 'Fine thanks.', [word('Fine ', 5), word('thanks.', 6)])
-    ]
+    sentence(0, 'Hello world.', [word('Hello ', 0), word('world.', 1)]),
+    sentence(1, 'How are you?', [word('How ', 2), word('are ', 3), word('you?', 4)]),
+    sentence(2, 'Fine thanks.', [word('Fine ', 5), word('thanks.', 6)])
   ]
 }
 
 function mountView(props = {}) {
   return mount(TranscriptView, {
     props: {
-      paragraphs: makeParagraphs(),
+      paragraphs: makeSentences(),
       active_word: -1,
       ...props
     }
@@ -43,13 +41,8 @@ describe('TranscriptView', () => {
     vi.restoreAllMocks()
   })
 
-  describe('paragraph rendering', () => {
-    test('renders one paragraph element per paragraph', () => {
-      const wrapper = mountView()
-      expect(wrapper.findAll('[data-testid="transcript-view__paragraph"]')).toHaveLength(2)
-    })
-
-    test('renders one transcript-segment per sentence across all paragraphs', () => {
+  describe('segment rendering', () => {
+    test('renders one transcript-segment per sentence block', () => {
       const wrapper = mountView()
       expect(wrapper.findAll('[data-testid="transcript-segment"]')).toHaveLength(3)
     })

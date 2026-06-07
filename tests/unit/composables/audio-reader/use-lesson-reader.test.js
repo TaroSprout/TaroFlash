@@ -97,15 +97,14 @@ describe('useLessonReader', () => {
   })
 
   describe('transcript shaping', () => {
-    test('shapes the lesson transcript into paragraphs of sentences', () => {
+    test('shapes the lesson transcript into one block per sentence', () => {
       let reader
       ;[reader, app] = withReader()
 
-      const paragraphs = reader.paragraphs.value
-      const sentences = paragraphs.flat()
-      expect(sentences).toHaveLength(2)
-      expect(sentences[0].sentence).toBe('Hello world.')
-      expect(sentences.flatMap((s) => s.words)).toHaveLength(5)
+      const blocks = reader.paragraphs.value
+      expect(blocks).toHaveLength(2)
+      expect(blocks[0].sentence).toBe('Hello world.')
+      expect(blocks.flatMap((s) => s.words)).toHaveLength(5)
     })
 
     test('is empty before the lesson resolves', () => {
