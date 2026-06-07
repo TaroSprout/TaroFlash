@@ -16,7 +16,11 @@ export const deck = build({
     }),
     cards: () => [],
     tags: () => [],
-    image_path: () => faker.image.url(),
+    // Use a self-contained data URI, not faker.image.url() (loremflickr/picsum):
+    // browser-mode tests render decks in real <img> elements, and those external
+    // requests hang in CI (no network egress), racing Playwright's route handler
+    // into an "already handled" unhandled rejection that crashes the whole run.
+    image_path: () => faker.image.dataUri(),
     due_cards: () => [],
     study_config: () => ({
       study_all_cards: false
