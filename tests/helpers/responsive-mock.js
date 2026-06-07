@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 
-const is_tablet = ref(false)
+const has_sidebar = ref(false)
 const is_mobile = ref(false)
 
 /**
@@ -10,8 +10,11 @@ const is_mobile = ref(false)
  * sees the same instances the test code does. Vitest's per-file module
  * isolation keeps state from leaking between test files.
  *
+ * `'w>=lg & fine'` is the one desktop-sidebar token (toggle with `setSidebar`);
+ * any `w<…` compact token resolves to the mobile ref (toggle with `setBelowMd`).
+ *
  * @example
- *   import { responsiveMockModule, setBelowLg, setBelowMd, resetResponsive }
+ *   import { responsiveMockModule, setSidebar, setBelowMd, resetResponsive }
  *     from '../../helpers/responsive-mock'
  *
  *   vi.mock('@/composables/use-media-query', async () => {
@@ -23,14 +26,14 @@ const is_mobile = ref(false)
  */
 export const responsiveMockModule = {
   useMatchMedia: (query) => {
-    if (query.includes('coarse') && query.includes('lg')) return is_tablet
+    if (query.includes('&')) return has_sidebar
     if (query.startsWith('w<')) return is_mobile
     return ref(false)
   }
 }
 
-export function setBelowLg(v) {
-  is_tablet.value = v
+export function setSidebar(v) {
+  has_sidebar.value = v
 }
 
 export function setBelowMd(v) {
@@ -38,6 +41,6 @@ export function setBelowMd(v) {
 }
 
 export function resetResponsive() {
-  is_tablet.value = false
+  has_sidebar.value = false
   is_mobile.value = false
 }

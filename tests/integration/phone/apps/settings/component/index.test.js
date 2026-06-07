@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, useAttrs } from 'vue'
+import { defineComponent, h, nextTick, useAttrs } from 'vue'
+import { useMatchMedia } from '@/composables/use-media-query'
 
 const { mockEditor, mockDanger, mockEmitSfx, state } = vi.hoisted(() => ({
   state: { hasSidebar: true },
@@ -109,7 +110,9 @@ const TabSheetStub = defineComponent({
   props: ['active', 'tabs', 'surface', 'header_border'],
   emits: ['close', 'update:active'],
   inheritAttrs: false,
-  setup(props, { slots, emit }) {
+  setup(props, { slots, emit, expose }) {
+    // Mirror the real TabSheet: own sidebar visibility and expose it upward.
+    expose({ has_sidebar: useMatchMedia('w>=lg & fine') })
     return () =>
       h(
         'div',
@@ -204,8 +207,10 @@ describe('settings app — tab routing', () => {
 })
 
 describe('settings app — header copy follows displayed tab', () => {
-  test('renders default profile header when no tab has been selected', () => {
+  test('renders default profile header when no tab has been selected', async () => {
     const wrapper = makeWrapper()
+    // has_sidebar arrives from TabSheet via a template ref — one render late.
+    await nextTick()
     expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('Profile')
   })
 
