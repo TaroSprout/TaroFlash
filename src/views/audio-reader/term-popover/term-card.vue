@@ -5,7 +5,8 @@ import { useTranslateTermMutation, EdgeFunctionError, type TranslationResult } f
 import UiButton from '@/components/ui-kit/button.vue'
 import UiDivider from '@/components/ui-kit/divider.vue'
 import UiTag from '@/components/ui-kit/tag.vue'
-import AddCardForm from './add-card-form.vue'
+import AddCardControl from './add-card-control.vue'
+import { useAddCardModal } from '@/composables/modals/use-add-card-modal'
 
 const { term, sentence, target_lang } = defineProps<{
   term: string
@@ -19,16 +20,15 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const translate = useTranslateTermMutation()
+const add_card_modal = useAddCardModal()
 
 const result = ref<TranslationResult | null>(null)
 const is_loading = ref(false)
 const error_key = ref<string | null>(null)
-const adding = ref(false)
 
 async function fetchTranslation() {
   result.value = null
   error_key.value = null
-  adding.value = false
   is_loading.value = true
   try {
     result.value = await translate.mutateAsync({ term, sentence, target_lang })
@@ -40,6 +40,15 @@ async function fetchTranslation() {
   } finally {
     is_loading.value = false
   }
+}
+
+// Hand the translation off to the add-card modal and dismiss the popover — the
+// modal lives in the global stack, so closing the popover here doesn't unmount it.
+function onAddCard(deck_id: number | null) {
+  if (!result.value) return
+
+  add_card_modal.open(term, result.value.translation, deck_id)
+  emit('close')
 }
 
 // The card only mounts while a term is showing, so fetch on mount and whenever
@@ -62,7 +71,11 @@ watch(
       >
         {{ term }}
       </span>
+
+      <add-card-control v-if="result" @add="onAddCard" />
+
       <ui-button
+        v-else
         data-testid="term-card__close"
         data-theme="grey-400"
         icon-left="close"
@@ -105,44 +118,21 @@ watch(
       {{ t(error_key) }}
     </p>
 
-    <template v-else-if="result">
-      <div data-testid="term-card__result" class="flex flex-col gap-1">
-        <p
-          data-testid="term-card__translation"
-          class="text-3xl text-brown-700 capitalize dark:text-brown-200"
-        >
-          {{ result.translation }}
-        </p>
-        <p
-          v-if="result.description"
-          data-testid="term-card__description"
-          class="text-base text-brown-700 dark:text-grey-300"
-        >
-          {{ result.description }}
-        </p>
-      </div>
-
-      <add-card-form
-        v-if="adding"
-        :front="term"
-        :back="result.translation"
-        @saved="emit('close')"
-        @cancel="adding = false"
-      />
-      <ui-button
-        v-else
-        data-testid="term-card__add"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
-        icon-left="add"
-        size="sm"
-        full-width
-        class="mt-3"
-        @click="adding = true"
+    <div v-else-if="result" data-testid="term-card__result" class="flex flex-col gap-1">
+      <p
+        data-testid="term-card__translation"
+        class="text-3xl text-brown-700 capitalize dark:text-brown-200"
       >
-        {{ t('audio-reader.popover.add-card-button') }}
-      </ui-button>
-    </template>
+        {{ result.translation }}
+      </p>
+      <p
+        v-if="result.description"
+        data-testid="term-card__description"
+        class="text-base text-brown-700 dark:text-grey-300"
+      >
+        {{ result.description }}
+      </p>
+    </div>
   </div>
 </template>
 

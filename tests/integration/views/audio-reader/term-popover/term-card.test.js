@@ -4,8 +4,9 @@ import { h } from 'vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { mutateAsyncMock } = vi.hoisted(() => ({
-  mutateAsyncMock: vi.fn()
+const { mutateAsyncMock, openModalMock } = vi.hoisted(() => ({
+  mutateAsyncMock: vi.fn(),
+  openModalMock: vi.fn()
 }))
 
 vi.mock('@/api/lessons', () => ({
@@ -17,6 +18,10 @@ vi.mock('@/api/lessons', () => ({
       this.code = code
     }
   }
+}))
+
+vi.mock('@/composables/modals/use-add-card-modal', () => ({
+  useAddCardModal: () => ({ open: openModalMock })
 }))
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -36,6 +41,25 @@ const UiTagStub = {
   }
 }
 
+// Auto-stubs swallow click handlers; this one forwards them so the close button works.
+const UiButtonStub = {
+  name: 'UiButton',
+  inheritAttrs: false,
+  emits: ['click'],
+  setup(_props, { slots, emit, attrs }) {
+    return () => h('button', { ...attrs, onClick: () => emit('click') }, slots.default?.())
+  }
+}
+
+// The add control fetches decks of its own; stub it and drive its `add` event.
+const AddCardControlStub = {
+  name: 'AddCardControl',
+  emits: ['add'],
+  setup() {
+    return () => h('div', { 'data-testid': 'add-card-control-stub' })
+  }
+}
+
 function mountCard(props = {}) {
   return shallowMount(TermCard, {
     props: {
@@ -45,7 +69,7 @@ function mountCard(props = {}) {
       ...props
     },
     global: {
-      stubs: { UiTag: UiTagStub },
+      stubs: { UiTag: UiTagStub, UiButton: UiButtonStub, AddCardControl: AddCardControlStub },
       mocks: { $t: (key) => key }
     }
   })
@@ -56,6 +80,7 @@ import { EdgeFunctionError } from '@/api/lessons'
 
 beforeEach(() => {
   mutateAsyncMock.mockReset()
+  openModalMock.mockReset()
 })
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -202,14 +227,50 @@ describe('TermCard', () => {
       expect(wrapper.find('[data-testid="term-card__header"]').text()).toContain('猫')
     })
 
-    test('emits close when the header close button is clicked', async () => {
-      mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
+    // The close button only stands in while there's no result yet (loading /
+    // error); once a translation lands, the add control takes its place.
+    test('emits close when the header close button is clicked in the error state', async () => {
+      mutateAsyncMock.mockRejectedValueOnce(new Error('fail'))
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
       await flushPromises()
 
       await wrapper.find('[data-testid="term-card__close"]').trigger('click')
 
       expect(wrapper.emitted('close')).toBeTruthy()
+    })
+
+    test('swaps the close button for the add control once a translation loads', async () => {
+      mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
+      const wrapper = mountCard({ term: '猫', sentence: 'test' })
+      await flushPromises()
+
+      expect(wrapper.find('[data-testid="term-card__close"]').exists()).toBe(false)
+      expect(wrapper.findComponent(AddCardControlStub).exists()).toBe(true)
+    })
+  })
+
+  describe('add card', () => {
+    test('opens the modal with term, translation, and chosen deck, then closes the popover', async () => {
+      mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
+      const wrapper = mountCard({ term: '猫', sentence: 'test' })
+      await flushPromises()
+
+      wrapper.findComponent(AddCardControlStub).vm.$emit('add', 7)
+      await flushPromises()
+
+      expect(openModalMock).toHaveBeenCalledWith('猫', 'cat', 7)
+      expect(wrapper.emitted('close')).toBeTruthy()
+    })
+
+    test('forwards a null deck id when the control has no default', async () => {
+      mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
+      const wrapper = mountCard({ term: '猫', sentence: 'test' })
+      await flushPromises()
+
+      wrapper.findComponent(AddCardControlStub).vm.$emit('add', null)
+      await flushPromises()
+
+      expect(openModalMock).toHaveBeenCalledWith('猫', 'cat', null)
     })
   })
 })
