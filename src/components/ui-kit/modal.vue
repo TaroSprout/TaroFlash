@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onUnmounted, watchEffect, computed, useTemplateRef } from 'vue'
-import { disableBodyScroll, enableBodyScroll } from 'body-scroll-lock'
 import { useModal, request_close_handlers, type ModalMode } from '@/composables/modal'
 import { useMobileBreakpoint, type BreakpointKey } from '@/composables/use-media-query'
+import { useScrollLock } from '@/composables/use-scroll-lock'
 import { useShortcuts } from '@/composables/use-shortcuts'
 import { MODAL_MODE_CONFIG } from './modal-mode-config'
 import ModalSlot from './modal-slot.vue'
@@ -35,6 +35,7 @@ function isMobileFor(el: Element) {
 }
 
 const modal_container = useTemplateRef<{ $el: HTMLElement }>('modal_container')
+const scroll_lock = useScrollLock(() => modal_container.value?.$el)
 
 function requestClose() {
   const top = modal_stack.value.at(-1)
@@ -50,24 +51,16 @@ function requestClose() {
 
 onUnmounted(() => {
   shortcuts.dispose()
-  if (modal_container.value?.$el) enableBodyScroll(modal_container.value.$el)
-  document.documentElement.style.overflow = ''
 })
 
 watchEffect(() => {
   if (!modal_container.value?.$el) return
 
   if (modal_stack.value.length > 0) {
-    // body-scroll-lock locks the body but iOS Safari still lets the html
-    // element scroll via rubber-banding. Lock html explicitly.
-    document.documentElement.style.overflow = 'hidden'
-    disableBodyScroll(modal_container.value.$el, {
-      allowTouchMove: (el) => modal_container.value!.$el.contains(el as Node)
-    })
+    scroll_lock.lock()
     shortcuts.register({ combo: 'esc', handler: requestClose })
   } else {
-    document.documentElement.style.overflow = ''
-    enableBodyScroll(modal_container.value.$el)
+    scroll_lock.unlock()
     shortcuts.clearScope()
   }
 })

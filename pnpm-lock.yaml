@@ -51,9 +51,6 @@ importers:
       '@types/howler':
         specifier: ^2.2.12
         version: 2.2.12
-      body-scroll-lock:
-        specifier: 4.0.0-beta.0
-        version: 4.0.0-beta.0
       gsap:
         specifier: ^3.15.0
         version: 3.15.0
@@ -2143,9 +2140,6 @@ packages:
 
   birpc@2.9.0:
     resolution: {integrity: sha512-KrayHS5pBi69Xi9JmvoqrIgYGDkD6mcSe/i6YKi3w5kekCLzrX4+nawcXqrj2tIp50Kw/mT/s3p+GVK0A0sKxw==}
-
-  body-scroll-lock@4.0.0-beta.0:
-    resolution: {integrity: sha512-a7tP5+0Mw3YlUJcGAKUqIBkYYGlYxk2fnCasq/FUph1hadxlTRjF+gAcZksxANnaMnALjxEddmSi/H3OR8ugcQ==}
 
   boolbase@1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
@@ -5544,8 +5538,6 @@ snapshots:
   binary-extensions@2.3.0: {}
 
   birpc@2.9.0: {}
-
-  body-scroll-lock@4.0.0-beta.0: {}
 
   boolbase@1.0.0: {}
 
