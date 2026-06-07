@@ -16,7 +16,7 @@ export function useDeckSettingsModal() {
       backdrop: true,
       mode: 'mobile-sheet',
       mobile_below_width: 'md',
-      mobile_below_height: 'lg',
+      mobile_below_height: 'md',
       props: { deck }
     })
     result.response.then(() => emitSfx('ui.pop_up_close'))
