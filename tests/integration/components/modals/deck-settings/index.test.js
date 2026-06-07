@@ -1,9 +1,10 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, ref } from 'vue'
+import { defineComponent, h, nextTick, ref } from 'vue'
 import DeckSettings from '@/components/modals/deck-settings/index.vue'
+import { useMatchMedia } from '@/composables/use-media-query'
 import { deck as deckFixture } from '../../../../fixtures/deck'
-import { setBelowLg, setBelowMd, resetResponsive } from '../../../../helpers/responsive-mock'
+import { setSidebar, setBelowMd, resetResponsive } from '../../../../helpers/responsive-mock'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -130,7 +131,9 @@ vi.mock('@/composables/use-session-ref', () => ({
 
 const TabSheetStub = defineComponent({
   emits: ['close', 'update:active'],
-  setup(_props, { slots, emit }) {
+  setup(_props, { slots, emit, expose }) {
+    // Mirror the real TabSheet: own sidebar visibility and expose it upward.
+    expose({ has_sidebar: useMatchMedia('w>=lg & fine') })
     return () =>
       h('div', { 'data-testid': 'tab-sheet' }, [
         h('div', { 'data-testid': 'tab-sheet__header-content' }, slots['header-content']?.()),
@@ -324,42 +327,50 @@ describe('DeckSettings — aside wiring', () => {
   })
 })
 
-describe('DeckSettings — null active_tab + breakpoint redirect', () => {
-  test('null active_tab renders the general header on desktop', () => {
+describe('DeckSettings — null active_tab tracks sidebar visibility', () => {
+  // The default tab must be the strict inverse of whether TabSheet shows its
+  // sidebar ('w>=lg & fine'): sidebar visible -> general, hidden -> index.
+  test('null active_tab renders the general header when the sidebar is visible', async () => {
     initialTab.value = null
-    setBelowLg(false)
+    setSidebar(true)
     const { wrapper } = makeWrapper()
+    // has_sidebar arrives from TabSheet via a template ref — one render late.
+    await nextTick()
     expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe(
       'Details & Settings'
     )
+    expect(wrapper.find('[data-testid="deck-settings__back-button"]').exists()).toBe(false)
   })
 
-  test('null active_tab renders the index header below lg', () => {
+  test('null active_tab renders the index header when the sidebar is hidden', () => {
     initialTab.value = null
-    setBelowLg(true)
+    setSidebar(false)
     const { wrapper } = makeWrapper()
     expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Deck Settings')
   })
 
-  test('crossing into below-lg with danger-zone selected redirects to the index (null)', async () => {
+  test('hiding the sidebar with danger-zone selected redirects to the index (null)', async () => {
     initialTab.value = 'danger-zone'
-    setBelowLg(false)
+    setSidebar(true)
     const { wrapper } = makeWrapper()
+    // Let the sidebar-visible state settle before hiding it, so the watch sees
+    // the real true -> false transition (not a no-op false -> false).
+    await nextTick()
 
     expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Danger Zone')
 
-    setBelowLg(true)
+    setSidebar(false)
     await flushPromises()
 
     expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Deck Settings')
   })
 
-  test('explicit general tab persists across resize (no auto-collapse to index)', async () => {
+  test('explicit general tab persists when the sidebar hides (no auto-collapse to index)', async () => {
     initialTab.value = 'general'
-    setBelowLg(false)
+    setSidebar(true)
     const { wrapper } = makeWrapper()
 
-    setBelowLg(true)
+    setSidebar(false)
     await flushPromises()
 
     expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe(
@@ -464,9 +475,9 @@ describe('DeckSettings — overlay actions', () => {
     setActiveSide.mockRestore()
   })
 
-  test('back button clears active_tab when below lg', async () => {
+  test('back button shows and clears active_tab when the sidebar is hidden', async () => {
     initialTab.value = 'design'
-    setBelowLg(true)
+    setSidebar(false)
     const { wrapper } = makeWrapper()
 
     expect(wrapper.find('[data-testid="deck-settings__back-button"]').exists()).toBe(true)

@@ -6,14 +6,14 @@ import CardDesigner from './card-designer/index.vue'
 import TabBar from '@/components/layout-kit/tab-bar.vue'
 import DeckDesignPreview from '@/components/deck/deck-design-preview.vue'
 import { deckEditorKey } from '@/composables/deck-editor'
-import { useMobileBreakpoint } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/use-media-query'
 
 type SideTab = { value: CardSide; label: string }
 
 const { t } = useI18n()
 const editor = inject(deckEditorKey)!
 
-const is_mobile = useMobileBreakpoint('md')
+const is_mobile = useMatchMedia('w<md | h<sm')
 
 const tabs = computed<SideTab[]>(() => [
   { value: 'cover', label: t('deck.settings-modal.design.designer-tabs.cover') },

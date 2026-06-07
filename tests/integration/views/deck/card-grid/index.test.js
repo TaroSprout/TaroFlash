@@ -5,15 +5,9 @@ import { ref, computed } from 'vue'
 vi.mock('@/composables/use-media-query', async () => {
   const { ref } = await import('vue')
   const isMd = ref(true)
-  const isSm = ref(true)
   return {
-    useMediaQuery: (key) => {
-      if (key === 'md') return isMd
-      if (key === 'sm') return isSm
-      return ref(false)
-    },
-    __isMd: isMd,
-    __isSm: isSm
+    useMatchMedia: (query) => (query === 'w>=md' ? isMd : ref(false)),
+    __isMd: isMd
   }
 })
 

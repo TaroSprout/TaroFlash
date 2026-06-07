@@ -1,6 +1,4 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { defineComponent, nextTick } from 'vue'
-import { mount } from '@vue/test-utils'
 
 function createMockMql(matches = false) {
   const handlers = new Set()
@@ -14,285 +12,149 @@ function createMockMql(matches = false) {
   }
 }
 
-function withSetup(composable) {
-  let result
-  const Wrapper = defineComponent({
-    setup() {
-      result = composable()
-      return () => null
-    }
-  })
-  const wrapper = mount(Wrapper)
-  return [result, wrapper]
-}
-
-describe('useMediaQuery', () => {
-  let mockMql
-  let useMediaQuery
+describe('useMatchMedia', () => {
+  let useMatchMedia
 
   beforeEach(async () => {
-    // Reset module cache so the internal `cache` Map starts fresh each test
+    // Reset module cache so the internal query cache starts fresh each test.
     vi.resetModules()
-    mockMql = createMockMql(false)
-    window.matchMedia = vi.fn().mockReturnValue(mockMql)
-    ;({ useMediaQuery } = await import('@/composables/use-media-query'))
+    window.matchMedia = vi.fn(() => createMockMql(false))
+    ;({ useMatchMedia } = await import('@/composables/use-media-query'))
   })
 
-  test('returns false initially when matchMedia does not match', async () => {
-    mockMql.matches = false
-    const [result, wrapper] = withSetup(() => useMediaQuery('dark'))
-    await nextTick()
-    expect(result.value).toBe(false)
-    wrapper.unmount()
-  })
+  function compiledFor(token) {
+    useMatchMedia(token)
+    return window.matchMedia.mock.lastCall[0]
+  }
 
-  test('syncs ref to matchMedia.matches on mount', async () => {
-    mockMql.matches = true
-    const [result, wrapper] = withSetup(() => useMediaQuery('dark'))
-    await nextTick()
-    expect(result.value).toBe(true)
-    wrapper.unmount()
-  })
-
-  test('maps coarse pointer key to (pointer: coarse)', () => {
-    const [, w] = withSetup(() => useMediaQuery('coarse'))
-    expect(window.matchMedia).toHaveBeenCalledWith('(pointer: coarse)')
-    w.unmount()
-  })
-
-  test('maps fine pointer key to (pointer: fine)', () => {
-    const [, w] = withSetup(() => useMediaQuery('fine'))
-    expect(window.matchMedia).toHaveBeenCalledWith('(pointer: fine)')
-    w.unmount()
-  })
-
-  test('maps light key to (prefers-color-scheme: light)', () => {
-    const [, w] = withSetup(() => useMediaQuery('light'))
-    expect(window.matchMedia).toHaveBeenCalledWith('(prefers-color-scheme: light)')
-    w.unmount()
-  })
-
-  test('maps dark key to (prefers-color-scheme: dark)', () => {
-    const [, w] = withSetup(() => useMediaQuery('dark'))
-    expect(window.matchMedia).toHaveBeenCalledWith('(prefers-color-scheme: dark)')
-    w.unmount()
-  })
-
-  test('maps breakpoint key to (min-width: ...) query', () => {
-    const [, w] = withSetup(() => useMediaQuery('sm'))
-    expect(window.matchMedia).toHaveBeenCalledWith(expect.stringMatching(/^\(min-width:/))
-    w.unmount()
-  })
-
-  test('caches entry — matchMedia not called again for same query', () => {
-    const [, w1] = withSetup(() => useMediaQuery('dark'))
-    const [, w2] = withSetup(() => useMediaQuery('dark'))
-    expect(window.matchMedia).toHaveBeenCalledTimes(1)
-    w1.unmount()
-    w2.unmount()
-  })
-
-  test('returns the same ref for the same query', () => {
-    const [ref1, w1] = withSetup(() => useMediaQuery('dark'))
-    const [ref2, w2] = withSetup(() => useMediaQuery('dark'))
-    expect(ref1).toBe(ref2)
-    w1.unmount()
-    w2.unmount()
-  })
-
-  test('updates ref value when media query change fires', async () => {
-    const [result, wrapper] = withSetup(() => useMediaQuery('dark'))
-    await nextTick()
-    mockMql.matches = true
-    mockMql._fire()
-    expect(result.value).toBe(true)
-    wrapper.unmount()
-  })
-
-  test('does not remove listener on unmount — cache is app-lifetime', async () => {
-    const [, wrapper] = withSetup(() => useMediaQuery('dark'))
-    await nextTick()
-    wrapper.unmount()
-    expect(mockMql.removeEventListener).not.toHaveBeenCalled()
-  })
-
-  test('different queries create separate cache entries', () => {
-    const mockMql2 = createMockMql(true)
-    window.matchMedia.mockReturnValueOnce(mockMql).mockReturnValueOnce(mockMql2)
-    const [ref1, w1] = withSetup(() => useMediaQuery('dark'))
-    const [ref2, w2] = withSetup(() => useMediaQuery('light'))
-    expect(ref1).not.toBe(ref2)
-    w1.unmount()
-    w2.unmount()
-  })
-})
-
-describe('useMobileBreakpoint', () => {
-  let widthMql
-  let heightMql
-  let useMobileBreakpoint
-
-  beforeEach(async () => {
-    vi.resetModules()
-    widthMql = createMockMql(false)
-    heightMql = createMockMql(false)
-
-    window.matchMedia = vi.fn((query) => {
-      if (query.includes('min-width')) return widthMql
-      if (query.includes('min-height')) return heightMql
-      return createMockMql(false)
+  describe('atom compilation', () => {
+    test('coarse pointer', () => {
+      expect(compiledFor('coarse')).toBe('(pointer: coarse)')
     })
-    ;({ useMobileBreakpoint } = await import('@/composables/use-media-query'))
-  })
 
-  test('queries both width and height against the same breakpoint token', () => {
-    const [, w] = withSetup(() => useMobileBreakpoint('sm'))
-
-    const queries = window.matchMedia.mock.calls.map((c) => c[0])
-    expect(queries.some((q) => q.includes('min-width'))).toBe(true)
-    expect(queries.some((q) => q.includes('min-height'))).toBe(true)
-    w.unmount()
-  })
-
-  test('returns false when both width and height match are false', async () => {
-    const [result, w] = withSetup(() => useMobileBreakpoint('sm'))
-    await nextTick()
-    expect(result.value).toBe(false)
-    w.unmount()
-  })
-
-  test('returns true when only width is below threshold', async () => {
-    widthMql.matches = true
-    const [result, w] = withSetup(() => useMobileBreakpoint('sm'))
-    await nextTick()
-    expect(result.value).toBe(true)
-    w.unmount()
-  })
-
-  test('returns true when only height is below threshold', async () => {
-    heightMql.matches = true
-    const [result, w] = withSetup(() => useMobileBreakpoint('sm'))
-    await nextTick()
-    expect(result.value).toBe(true)
-    w.unmount()
-  })
-
-  test('returns true when both are below threshold', async () => {
-    widthMql.matches = true
-    heightMql.matches = true
-    const [result, w] = withSetup(() => useMobileBreakpoint('sm'))
-    await nextTick()
-    expect(result.value).toBe(true)
-    w.unmount()
-  })
-
-  test('reacts when width crosses the threshold', async () => {
-    const [result, w] = withSetup(() => useMobileBreakpoint('sm'))
-    await nextTick()
-    expect(result.value).toBe(false)
-
-    widthMql.matches = true
-    widthMql._fire()
-    await nextTick()
-    expect(result.value).toBe(true)
-    w.unmount()
-  })
-
-  test('reacts when height crosses the threshold', async () => {
-    const [result, w] = withSetup(() => useMobileBreakpoint('sm'))
-    await nextTick()
-
-    heightMql.matches = true
-    heightMql._fire()
-    await nextTick()
-    expect(result.value).toBe(true)
-    w.unmount()
-  })
-
-  test('width and height axes are queried separately', () => {
-    const [, w] = withSetup(() => useMobileBreakpoint('md', 'lg'))
-
-    const queries = window.matchMedia.mock.calls.map((c) => c[0])
-    expect(queries.some((q) => q.includes('min-width'))).toBe(true)
-    expect(queries.some((q) => q.includes('min-height'))).toBe(true)
-    w.unmount()
-  })
-
-  test('defaults both width and height to "sm"', () => {
-    const [, w] = withSetup(() => useMobileBreakpoint())
-
-    const queries = window.matchMedia.mock.calls.map((c) => c[0])
-    const widthQuery = queries.find((q) => q.includes('min-width'))
-    const heightQuery = queries.find((q) => q.includes('min-height'))
-
-    const widthValue = widthQuery.match(/min-width:\s*([^)]*)\)/)?.[1]
-    const heightValue = heightQuery.match(/min-height:\s*([^)]*)\)/)?.[1]
-    expect(widthValue).toBe(heightValue)
-    w.unmount()
-  })
-})
-
-describe('useIsTablet', () => {
-  let widthMql
-  let heightMql
-  let coarseMql
-  let useIsTablet
-
-  beforeEach(async () => {
-    vi.resetModules()
-    widthMql = createMockMql(false)
-    heightMql = createMockMql(false)
-    coarseMql = createMockMql(false)
-
-    window.matchMedia = vi.fn((query) => {
-      if (query.includes('min-width')) return widthMql
-      if (query.includes('min-height')) return heightMql
-      if (query.includes('pointer: coarse')) return coarseMql
-      return createMockMql(false)
+    test('fine pointer', () => {
+      expect(compiledFor('fine')).toBe('(pointer: fine)')
     })
-    ;({ useIsTablet } = await import('@/composables/use-media-query'))
+
+    test('dark color scheme', () => {
+      expect(compiledFor('dark')).toBe('(prefers-color-scheme: dark)')
+    })
+
+    test('light color scheme', () => {
+      expect(compiledFor('light')).toBe('(prefers-color-scheme: light)')
+    })
+
+    test('width at-or-above uses a bare min-width', () => {
+      const q = compiledFor('w>=md')
+      expect(q).toContain('(min-width:')
+      expect(q).not.toContain('not all')
+    })
+
+    test('width below uses the Safari-safe `not all and (min-width)` form', () => {
+      expect(compiledFor('w<md')).toMatch(/^not all and \(min-width:/)
+    })
+
+    test('height at-or-above uses a bare min-height', () => {
+      const q = compiledFor('h>=lg')
+      expect(q).toContain('(min-height:')
+      expect(q).not.toContain('not all')
+    })
+
+    test('height below uses the negated min-height form', () => {
+      expect(compiledFor('h<sm')).toMatch(/^not all and \(min-height:/)
+    })
+
+    test('tolerates surrounding whitespace', () => {
+      expect(compiledFor('  coarse  ')).toBe('(pointer: coarse)')
+    })
   })
 
-  test('returns false on a wide fine-pointer viewport', async () => {
-    const [result, w] = withSetup(() => useIsTablet())
-    await nextTick()
-    expect(result.value).toBe(false)
-    w.unmount()
+  describe('combinators', () => {
+    test('`|` comma-joins each atom as a standalone OR clause', () => {
+      const q = compiledFor('w<md | h<sm')
+      expect(q.split(', ')).toHaveLength(2)
+      expect(q).toContain('not all and (min-width:')
+      expect(q).toContain('not all and (min-height:')
+    })
+
+    test('`&` joins atoms into one conjunction clause', () => {
+      const q = compiledFor('w>=lg & fine')
+      expect(q).toContain(' and ')
+      expect(q).toContain('(min-width:')
+      expect(q).toContain('(pointer: fine)')
+      expect(q).not.toContain(',')
+    })
+
+    test('tablet token compiles to three OR clauses including coarse', () => {
+      const q = compiledFor('w<lg | h<lg | coarse')
+      expect(q.split(', ')).toHaveLength(3)
+      expect(q).toContain('(pointer: coarse)')
+    })
+
+    test('whitespace around the combinator is optional', () => {
+      expect(compiledFor('w<md|h<sm')).toBe(compiledFor('w<md | h<sm'))
+    })
   })
 
-  test('returns true when below the lg width breakpoint', async () => {
-    widthMql.matches = true
-    const [result, w] = withSetup(() => useIsTablet())
-    await nextTick()
-    expect(result.value).toBe(true)
-    w.unmount()
+  describe('reactivity', () => {
+    test('seeds the ref from matchMedia.matches', () => {
+      window.matchMedia = vi.fn(() => createMockMql(true))
+      expect(useMatchMedia('dark').value).toBe(true)
+    })
+
+    test('updates when the media query change event fires', () => {
+      const mql = createMockMql(false)
+      window.matchMedia = vi.fn(() => mql)
+      const result = useMatchMedia('dark')
+      expect(result.value).toBe(false)
+
+      mql.matches = true
+      mql._fire()
+      expect(result.value).toBe(true)
+    })
+
+    test('never removes its listener — the cache is app-lifetime', () => {
+      const mql = createMockMql(false)
+      window.matchMedia = vi.fn(() => mql)
+      useMatchMedia('dark')
+      expect(mql.removeEventListener).not.toHaveBeenCalled()
+    })
   })
 
-  test('returns true when below the lg height breakpoint', async () => {
-    heightMql.matches = true
-    const [result, w] = withSetup(() => useIsTablet())
-    await nextTick()
-    expect(result.value).toBe(true)
-    w.unmount()
+  describe('caching', () => {
+    test('same token returns the same ref and queries matchMedia once', () => {
+      const a = useMatchMedia('w<md | h<sm')
+      const b = useMatchMedia('w<md | h<sm')
+      expect(a).toBe(b)
+      expect(window.matchMedia).toHaveBeenCalledTimes(1)
+    })
+
+    test('tokens that compile to the same query dedupe', () => {
+      const a = useMatchMedia('coarse')
+      const b = useMatchMedia(' coarse ')
+      expect(a).toBe(b)
+      expect(window.matchMedia).toHaveBeenCalledTimes(1)
+    })
+
+    test('different queries get separate refs', () => {
+      const a = useMatchMedia('dark')
+      const b = useMatchMedia('light')
+      expect(a).not.toBe(b)
+    })
   })
 
-  test('returns true on a wide viewport when the pointer is coarse', async () => {
-    coarseMql.matches = true
-    const [result, w] = withSetup(() => useIsTablet())
-    await nextTick()
-    expect(result.value).toBe(true)
-    w.unmount()
-  })
+  describe('invalid queries throw', () => {
+    test('mixing `&` and `|`', () => {
+      expect(() => useMatchMedia('w<md & h<sm | coarse')).toThrow(/mix/)
+    })
 
-  test('reacts when the pointer becomes coarse mid-session', async () => {
-    const [result, w] = withSetup(() => useIsTablet())
-    await nextTick()
-    expect(result.value).toBe(false)
+    test('unknown atom', () => {
+      expect(() => useMatchMedia('w<<md')).toThrow(/unknown atom/)
+      expect(() => useMatchMedia('tablet')).toThrow(/unknown atom/)
+    })
 
-    coarseMql.matches = true
-    coarseMql._fire()
-    await nextTick()
-    expect(result.value).toBe(true)
-    w.unmount()
+    test('a `<` atom under `&` (would need max-* support)', () => {
+      expect(() => useMatchMedia('w<md & fine')).toThrow(/"<" atoms/)
+    })
   })
 })

@@ -45,7 +45,7 @@ describe('useDeckSettingsModal', () => {
       backdrop: true,
       mode: 'mobile-sheet',
       mobile_below_width: 'md',
-      mobile_below_height: 'lg',
+      mobile_below_height: 'md',
       props: { deck }
     })
   })

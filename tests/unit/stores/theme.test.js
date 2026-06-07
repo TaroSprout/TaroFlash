@@ -5,7 +5,7 @@ import { setActivePinia, createPinia } from 'pinia'
 vi.mock('@/composables/use-media-query')
 
 import { useThemeStore } from '@/stores/theme'
-import { useMediaQuery } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/use-media-query'
 
 describe('theme store', () => {
   beforeEach(() => {
@@ -16,8 +16,8 @@ describe('theme store', () => {
     // at import time, so the handler would be lost if we reset the array here.
     global.__matchMedia.matches = false
 
-    // Set up useMediaQuery mock before any store call captures the ref.
-    vi.mocked(useMediaQuery).mockReturnValue(ref(false))
+    // Set up useMatchMedia mock before any store call captures the ref.
+    vi.mocked(useMatchMedia).mockReturnValue(ref(false))
     // Reset store mode to 'system' (also writes to localStorage).
     useThemeStore().setMode('system')
     // Clear localStorage so load() tests start clean.
@@ -133,7 +133,7 @@ describe('theme store', () => {
   })
 
   test('is_dark reflects system preference when mode is system and system is dark', () => {
-    vi.mocked(useMediaQuery).mockReturnValue(ref(true))
+    vi.mocked(useMatchMedia).mockReturnValue(ref(true))
     setActivePinia(createPinia())
     expect(useThemeStore().is_dark).toBe(true)
   })
@@ -159,7 +159,7 @@ describe('theme store', () => {
   })
 
   test('cycle advances from system to light when system preference is dark', () => {
-    vi.mocked(useMediaQuery).mockReturnValue(ref(true))
+    vi.mocked(useMatchMedia).mockReturnValue(ref(true))
     setActivePinia(createPinia())
     const store = useThemeStore()
     store.cycle()

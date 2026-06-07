@@ -8,12 +8,12 @@ import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import MemberCard from '@/components/member/member-card.vue'
 import { memberEditorKey } from '@/composables/member-editor'
-import { useMobileBreakpoint } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/use-media-query'
 import { SUPPORTED_THEMES, SUPPORTED_PATTERNS } from '@/utils/cover'
 
 const { t } = useI18n()
 const editor = inject(memberEditorKey)!
-const is_mobile = useMobileBreakpoint('md')
+const is_mobile = useMatchMedia('w<md | h<sm')
 </script>
 
 <template>

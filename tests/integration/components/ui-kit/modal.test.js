@@ -34,8 +34,7 @@ const mobileBreakpointRef = ref(false)
 const mockUseMobileBreakpoint = vi.fn(() => mobileBreakpointRef)
 
 vi.mock('@/composables/use-media-query', () => ({
-  useMediaQuery: vi.fn(() => ({ value: true })),
-  useMobileBreakpoint: (...args) => mockUseMobileBreakpoint(...args)
+  useMatchMedia: (...args) => mockUseMobileBreakpoint(...args)
 }))
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

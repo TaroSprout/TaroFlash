@@ -4,16 +4,11 @@ import { defineComponent, h } from 'vue'
 import { setActivePinia, createPinia } from 'pinia'
 
 vi.mock('@/composables/use-media-query', () => ({
-  useMobileBreakpoint: () => ({ value: false }),
-  useMediaQuery: (key) => ({
+  useMatchMedia: (query) => ({
     get value() {
-      if (key === 'lg' || key === 'fine') return !(globalThis.__isTablet ?? false)
+      // has_sidebar — 'w>=lg & fine'; visible exactly when not in tablet mode.
+      if (query.includes('&')) return !(globalThis.__isTablet ?? false)
       return false
-    }
-  }),
-  useIsTablet: () => ({
-    get value() {
-      return globalThis.__isTablet ?? false
     }
   })
 }))

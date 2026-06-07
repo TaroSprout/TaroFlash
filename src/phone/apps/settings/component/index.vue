@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, provide, ref, watch } from 'vue'
+import { computed, provide, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import TabProfile from './tab-profile/index.vue'
 import TabSubscription from './tab-subscription/index.vue'
@@ -17,7 +17,7 @@ import {
   memberDangerActionsKey
 } from '@/composables/member/use-member-danger-actions'
 import { useSessionRef } from '@/composables/use-session-ref'
-import { useMediaQuery, useMobileBreakpoint } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/use-media-query'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTagButton from '@/components/ui-kit/tag-button.vue'
@@ -45,16 +45,12 @@ const tabs = computed(() => [
 type ActiveTab = 'profile' | 'subscription' | 'app' | 'danger-zone'
 const active_tab = useSessionRef<ActiveTab | null>('settings.active-tab', null)
 
-const is_mobile = useMobileBreakpoint('md')
+const is_mobile = useMatchMedia('w<md | h<sm')
+const tab_sheet = useTemplateRef('tab_sheet')
 
-// Sidebar is shown by CSS via `lg:pointer-fine:flex`, which is a viewport-only
-// width check + a pointer-fine media query. `useIsTablet` also folds in a
-// height check, so it can read `true` on a wide-but-short desktop window even
-// while the sidebar is visible — leaving the main column on the mobile index.
-// Match the CSS condition exactly so the displayed tab tracks the sidebar.
-const lg_width = useMediaQuery('lg')
-const pointer_fine = useMediaQuery('fine')
-const has_sidebar = computed(() => lg_width.value && pointer_fine.value)
+// Sourced from TabSheet (the one owner of sidebar visibility), so the displayed
+// tab tracks the actual sidebar instead of a re-derived condition that drifts.
+const has_sidebar = computed(() => tab_sheet.value?.has_sidebar ?? false)
 
 watch(has_sidebar, (visible) => {
   if (!visible && active_tab.value === 'danger-zone') active_tab.value = null
@@ -113,6 +109,7 @@ function onTabEnter(el: Element, done: () => void) {
 
 <template>
   <tab-sheet
+    ref="tab_sheet"
     data-testid="settings-container"
     data-theme="blue-500"
     data-theme-dark="blue-650"

@@ -13,7 +13,7 @@ vi.mock('@floating-ui/vue', () => ({
 }))
 
 vi.mock('@/composables/use-media-query', () => ({
-  useMediaQuery: vi.fn(() => ({ value: false }))
+  useMatchMedia: vi.fn(() => ({ value: false }))
 }))
 
 function mountTooltip(props = {}, slots = {}, attrs = {}) {

@@ -31,7 +31,7 @@ vi.mock('@/composables/toast', () => ({ useToast: () => ({ error: toastErrorMock
 vi.mock('@/composables/modal', () => ({
   useModal: () => ({ open: openModalMock, pop: vi.fn(), modal_stack: { value: [] } })
 }))
-vi.mock('@/composables/use-media-query', () => ({ useMobileBreakpoint: () => mobileRef }))
+vi.mock('@/composables/use-media-query', () => ({ useMatchMedia: () => mobileRef }))
 vi.mock('@/composables/audio-reader/use-audio-player', () => ({ useAudioPlayer: audioPlayerMock }))
 vi.mock('@/composables/audio-reader/use-transcript-sync', () => ({
   useTranscriptSync: transcriptSyncMock

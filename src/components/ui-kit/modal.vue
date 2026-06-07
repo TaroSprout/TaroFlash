@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onUnmounted, watchEffect, computed, useTemplateRef } from 'vue'
 import { useModal, request_close_handlers, type ModalMode } from '@/composables/modal'
-import { useMobileBreakpoint, type BreakpointKey } from '@/composables/use-media-query'
+import { useMatchMedia, type BreakpointKey } from '@/composables/use-media-query'
 import { useScrollLock } from '@/composables/use-scroll-lock'
 import { useShortcuts } from '@/composables/use-shortcuts'
 import { MODAL_MODE_CONFIG } from './modal-mode-config'
@@ -15,23 +15,11 @@ const shortcuts = useShortcuts('modal')
 const DEFAULT_WIDTH_KEY: BreakpointKey = 'sm'
 const DEFAULT_HEIGHT_KEY: BreakpointKey = 'sm'
 
-const mobile_refs = new Map<string, ReturnType<typeof useMobileBreakpoint>>()
-
-function getMobileRef(width_key: BreakpointKey, height_key: BreakpointKey) {
-  const cache_key = `${width_key}|${height_key}`
-  let r = mobile_refs.get(cache_key)
-  if (!r) {
-    r = useMobileBreakpoint(width_key, height_key)
-    mobile_refs.set(cache_key, r)
-  }
-  return r
-}
-
 function isMobileFor(el: Element) {
   const html = el as HTMLElement
   const width_key = (html.dataset.mobileBelowWidth as BreakpointKey) ?? DEFAULT_WIDTH_KEY
   const height_key = (html.dataset.mobileBelowHeight as BreakpointKey) ?? DEFAULT_HEIGHT_KEY
-  return getMobileRef(width_key, height_key).value
+  return useMatchMedia(`w<${width_key} | h<${height_key}`).value
 }
 
 const modal_container = useTemplateRef<{ $el: HTMLElement }>('modal_container')

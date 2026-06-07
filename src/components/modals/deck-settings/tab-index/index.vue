@@ -63,9 +63,9 @@ function onNavigate(value: TabIndexNavValue) {
           v-sfx.hover="'ui.click_07'"
           @click="onNavigate(entry.value)"
         >
-          <ui-icon :src="entry.icon" />
+          <ui-icon :src="entry.icon" class="w-6 h-6" />
           <span class="flex-1">{{ t(`deck.settings-modal.tab.${entry.value}`) }}</span>
-          <ui-icon src="chevron-right" />
+          <ui-icon src="chevron-right" class="w-6 h-6" />
         </button>
       </div>
     </labeled-section>

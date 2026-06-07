@@ -4,7 +4,7 @@ import mobileSheet, { type MobileSheetProps } from './mobile-sheet.vue'
 import { SHEET_SIDEBAR_BG } from './sheet-surface'
 import { activeTabKey } from './tab-sheet-context'
 import { useShortcuts } from '@/composables/use-shortcuts'
-import { useMediaQuery } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/use-media-query'
 import { emitSfx } from '@/sfx/bus'
 import type { NamespacedAudioKey } from '@/sfx/config'
 import uid from '@/utils/uid'
@@ -22,6 +22,7 @@ export type TabSheetParts = {
 export type TabSheetProps = MobileSheetProps & {
   tabs?: Tab[]
   parts?: TabSheetParts
+  sidebar_query?: string
   hover_sfx?: NamespacedAudioKey | ''
   select_sfx?: NamespacedAudioKey | ''
   reselect_sfx?: NamespacedAudioKey | ''
@@ -35,6 +36,7 @@ const {
   show_close_button = true,
   surface = 'standard',
   header_border = 'wave',
+  sidebar_query = 'w>=lg & fine',
   hover_sfx = 'ui.click_07',
   select_sfx = 'ui.select',
   reselect_sfx = 'ui.digi_powerdown'
@@ -62,15 +64,17 @@ provide(activeTabKey, active)
 const sidebar_bg_class = computed(() => SHEET_SIDEBAR_BG[surface])
 
 const has_tabs = computed(() => !!tabs?.length)
-// Sidebar render condition mirrors CSS `lg:pointer-fine:flex`. Hide
-// mobile-sheet's close button whenever the sidebar (which carries its own
-// close) is visible; otherwise the user sees two stacked close buttons.
-const lg_width = useMediaQuery('lg')
-const pointer_fine = useMediaQuery('fine')
-const has_sidebar = computed(() => lg_width.value && pointer_fine.value)
+// `sidebar_query` defaults to the CSS sidebar condition `lg:pointer-fine:flex`.
+// Exposed below so parents read this one source of truth rather than
+// re-deriving it (and drifting). Also hides mobile-sheet's close button while
+// the sidebar — which carries its own close — is visible, so the user never
+// sees two stacked close buttons.
+const has_sidebar = useMatchMedia(sidebar_query)
 const sheet_close_button = computed(
   () => (!has_tabs.value || !has_sidebar.value) && show_close_button
 )
+
+defineExpose({ has_sidebar })
 
 const tab_panel_id = 'tab-sheet__panel'
 const tab_id_prefix = `tab-sheet__tab--${uid()}--`

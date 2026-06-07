@@ -4,7 +4,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import { type PhoneApp, type TransitionPreset } from '@/phone/system/types'
 import { type AppSession } from '@/phone/system/runtime'
 import { computed } from 'vue'
-import { useMediaQuery } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/use-media-query'
 
 const { apps, transition, active_session } = defineProps<{
   apps: PhoneApp[]
@@ -16,7 +16,7 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
-const is_mobile = useMediaQuery('coarse')
+const is_mobile = useMatchMedia('coarse')
 
 const app = computed(() => {
   return active_session?.app.type === 'view' ? active_session.app : null

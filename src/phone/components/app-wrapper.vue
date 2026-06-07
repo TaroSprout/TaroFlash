@@ -2,7 +2,7 @@
 import { ref, useAttrs } from 'vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import UiBurst, { type BurstSize } from '@/components/ui-kit/burst.vue'
-import { useMediaQuery } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/use-media-query'
 import { usePlayOnTap } from '@/composables/use-play-on-tap'
 
 type AppWrapperProps = {
@@ -24,7 +24,7 @@ const emit = defineEmits<{ (e: 'tapStart'): void }>()
 defineOptions({ inheritAttrs: false })
 
 const attrs = useAttrs()
-const is_coarse = useMediaQuery('coarse')
+const is_coarse = useMatchMedia('coarse')
 const burst_id = ref(0)
 
 const { playing, interceptClick } = usePlayOnTap({
