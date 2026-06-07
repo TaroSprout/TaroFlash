@@ -48,7 +48,7 @@ const { t } = useI18n()
       icon-only
       icon-left="remove-image"
       data-theme="red-500"
-      class="face-image-dropzone__corner face-image-dropzone__corner--right"
+      class="absolute! top-(--face-image-padding) right-(--face-image-padding) z-30 transition-opacity duration-150"
       :class="active ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'"
       @click.stop="emit('remove')"
     >
@@ -62,7 +62,7 @@ const { t } = useI18n()
       icon-left="add-image"
       data-theme="blue-500"
       data-theme-dark="blue-650"
-      class="face-image-dropzone__corner face-image-dropzone__corner--left"
+      class="absolute! top-(--face-image-padding) left-(--face-image-padding) z-30 transition-opacity duration-150"
       :class="active ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'"
       @click.stop="emit('browse')"
     >
@@ -116,20 +116,6 @@ const { t } = useI18n()
   inset: 0;
   z-index: 20;
   pointer-events: none;
-}
-
-.face-image-dropzone__corner {
-  position: absolute;
-  top: var(--face-image-padding);
-  z-index: 30;
-
-  transition: opacity 0.15s ease;
-}
-.face-image-dropzone__corner--right {
-  right: var(--face-image-padding);
-}
-.face-image-dropzone__corner--left {
-  left: var(--face-image-padding);
 }
 
 .face-image-dropzone__overlay {

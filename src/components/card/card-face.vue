@@ -152,11 +152,12 @@ const layout = computed(() => attributes?.image_layout ?? CARD_ATTRIBUTES_DEFAUL
   background-color: var(--color-purple-400);
 }
 
-/* ----- Editor: full-bleed image reveals a replaceable dropzone frame ------- */
-/* Hovering a full-bleed image insets it behind a dashed frame, signalling the
-   image is replaceable. Partial (above/below) layouts get their own region-
-   scoped affordance from the uploader. */
-.card-face[data-mode='edit'][data-image='true'][data-text='false'] .card-face__image-region {
+/* ----- Editor: hovering an image reveals a replaceable dropzone frame ------ */
+/* The image region gets a dashed frame on hover/drag for above/below and the
+   full-bleed no-text case. Behind layout uses floating corner controls over the
+   text instead, so it's excluded here. */
+.card-face[data-mode='edit'][data-image='true']:not([data-layout='behind'])
+  .card-face__image-region {
   outline: 3px dashed transparent;
   outline-offset: -3px;
   transition:
@@ -166,25 +167,32 @@ const layout = computed(() => attributes?.image_layout ?? CARD_ATTRIBUTES_DEFAUL
 }
 
 .card-container--edit[data-active]
-  .card-face[data-mode='edit'][data-image='true'][data-text='false']
+  .card-face[data-mode='edit'][data-image='true']:not([data-layout='behind'])
   .card-face__image-region {
-  inset: var(--face-image-padding);
-
-  border-radius: calc(var(--face-radius) - var(--face-image-padding));
   outline-color: var(--color-brown-500);
 }
 
 .card-container--edit[data-dragging]
-  .card-face[data-mode='edit'][data-image='true'][data-text='false']
+  .card-face[data-mode='edit'][data-image='true']:not([data-layout='behind'])
   .card-face__image-region {
   outline-color: var(--color-blue-500);
 }
 
 [data-theme='dark']
   .card-container--edit[data-dragging]
-  .card-face[data-mode='edit'][data-image='true'][data-text='false']
+  .card-face[data-mode='edit'][data-image='true']:not([data-layout='behind'])
   .card-face__image-region {
   outline-color: var(--color-blue-650);
+}
+
+/* Full-bleed (no text): also inset the image so the dashed frame reads as a
+   border around it rather than sitting flush to the card edge. */
+.card-container--edit[data-active]
+  .card-face[data-mode='edit'][data-image='true'][data-text='false']:not([data-layout='behind'])
+  .card-face__image-region {
+  inset: var(--face-image-padding);
+
+  border-radius: calc(var(--face-radius) - var(--face-image-padding));
 }
 
 .card-face__text-editor {
