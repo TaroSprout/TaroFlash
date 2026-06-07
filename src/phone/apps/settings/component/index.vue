@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, provide, ref, watch } from 'vue'
+import { computed, provide, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import TabProfile from './tab-profile/index.vue'
 import TabSubscription from './tab-subscription/index.vue'
@@ -46,10 +46,11 @@ type ActiveTab = 'profile' | 'subscription' | 'app' | 'danger-zone'
 const active_tab = useSessionRef<ActiveTab | null>('settings.active-tab', null)
 
 const is_mobile = useMatchMedia('w<md | h<sm')
+const tab_sheet = useTemplateRef('tab_sheet')
 
-// Mirrors the CSS sidebar condition `lg:pointer-fine:flex` exactly, so the
-// displayed tab always tracks whether the sidebar is actually visible.
-const has_sidebar = useMatchMedia('w>=lg & fine')
+// Sourced from TabSheet (the one owner of sidebar visibility), so the displayed
+// tab tracks the actual sidebar instead of a re-derived condition that drifts.
+const has_sidebar = computed(() => tab_sheet.value?.has_sidebar ?? false)
 
 watch(has_sidebar, (visible) => {
   if (!visible && active_tab.value === 'danger-zone') active_tab.value = null
@@ -108,6 +109,7 @@ function onTabEnter(el: Element, done: () => void) {
 
 <template>
   <tab-sheet
+    ref="tab_sheet"
     data-testid="settings-container"
     data-theme="blue-500"
     data-theme-dark="blue-650"

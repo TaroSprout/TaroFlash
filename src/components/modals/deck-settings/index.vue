@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onMounted, provide, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, provide, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DeckAside from './deck-aside.vue'
 import { emitSfx } from '@/sfx/bus'
@@ -51,7 +51,7 @@ provide(deckEditorKey, editor)
 const danger = useDeckDangerActions(editor, deck, close)
 provide(deckDangerActionsKey, danger)
 
-const is_tablet = useMatchMedia('w<lg | h<lg | coarse')
+const tab_sheet = useTemplateRef('tab_sheet')
 const is_mobile = useMatchMedia('w<md | h<sm')
 
 const active_tab = useSessionRef<ActiveTab | null>('deck-settings.active-tab', null)
@@ -64,7 +64,11 @@ const tabs = computed(() => [
   { value: 'danger-zone', icon: 'delete', label: t('deck.settings-modal.tab.danger-zone') }
 ])
 
-const displayed_tab = computed(() => active_tab.value ?? (is_tablet.value ? 'index' : 'general'))
+// Sourced from TabSheet (the one owner of sidebar visibility), so the default
+// tab stays a strict inverse of the sidebar instead of a re-derived condition.
+const has_sidebar = computed(() => tab_sheet.value?.has_sidebar ?? false)
+
+const displayed_tab = computed(() => active_tab.value ?? (has_sidebar.value ? 'general' : 'index'))
 
 const sidebar_active = computed({
   get: () => active_tab.value ?? 'general',
@@ -124,13 +128,14 @@ function onTabEnter(el: Element, done: () => void) {
   tabHeightEnter(tab_outlet.value)(el, done)
 }
 
-watch(is_tablet, (is_below) => {
-  if (is_below && active_tab.value === 'danger-zone') active_tab.value = null
+watch(has_sidebar, (visible) => {
+  if (!visible && active_tab.value === 'danger-zone') active_tab.value = null
 })
 </script>
 
 <template>
   <tab-sheet
+    ref="tab_sheet"
     data-testid="deck-settings-container"
     data-theme="green-500"
     data-theme-dark="green-800"
@@ -180,7 +185,7 @@ watch(is_tablet, (is_below) => {
         @leave="(el, done) => slideFadeRightLeave(el, done)"
       >
         <ui-tag-button
-          v-if="is_tablet && active_tab !== null"
+          v-if="!has_sidebar && active_tab !== null"
           data-testid="deck-settings__back-button"
           :aria-label="t('deck.settings-modal.back-button')"
           data-theme="yellow-500"

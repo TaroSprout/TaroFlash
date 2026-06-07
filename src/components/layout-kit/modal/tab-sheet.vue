@@ -22,6 +22,7 @@ export type TabSheetParts = {
 export type TabSheetProps = MobileSheetProps & {
   tabs?: Tab[]
   parts?: TabSheetParts
+  sidebar_query?: string
   hover_sfx?: NamespacedAudioKey | ''
   select_sfx?: NamespacedAudioKey | ''
   reselect_sfx?: NamespacedAudioKey | ''
@@ -35,6 +36,7 @@ const {
   show_close_button = true,
   surface = 'standard',
   header_border = 'wave',
+  sidebar_query = 'w>=lg & fine',
   hover_sfx = 'ui.click_07',
   select_sfx = 'ui.select',
   reselect_sfx = 'ui.digi_powerdown'
@@ -62,13 +64,17 @@ provide(activeTabKey, active)
 const sidebar_bg_class = computed(() => SHEET_SIDEBAR_BG[surface])
 
 const has_tabs = computed(() => !!tabs?.length)
-// Mirrors the CSS sidebar condition `lg:pointer-fine:flex` exactly. Hide
-// mobile-sheet's close button whenever the sidebar (which carries its own
-// close) is visible; otherwise the user sees two stacked close buttons.
-const has_sidebar = useMatchMedia('w>=lg & fine')
+// `sidebar_query` defaults to the CSS sidebar condition `lg:pointer-fine:flex`.
+// Exposed below so parents read this one source of truth rather than
+// re-deriving it (and drifting). Also hides mobile-sheet's close button while
+// the sidebar — which carries its own close — is visible, so the user never
+// sees two stacked close buttons.
+const has_sidebar = useMatchMedia(sidebar_query)
 const sheet_close_button = computed(
   () => (!has_tabs.value || !has_sidebar.value) && show_close_button
 )
+
+defineExpose({ has_sidebar })
 
 const tab_panel_id = 'tab-sheet__panel'
 const tab_id_prefix = `tab-sheet__tab--${uid()}--`
