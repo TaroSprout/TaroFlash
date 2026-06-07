@@ -427,6 +427,7 @@
   "deck-view.card-editor.list-item.add-above": "Add Card",
   "deck-view.card-editor.list-item.add-below": "Add Card",
   "deck-view.card-editor.list-item.remove-image-button": "Remove image",
+  "deck-view.card-editor.list-item.replace-image-button": "Replace image",
   "deck-view.card-editor.list-item.upload-image-button": "Add image",
   "deck-view.card-editor.list-item.replace-heading": "Drag an image here, or click to browse",
   "deck-view.card-editor.list-item.invalid-type-error": "Use a PNG, JPEG, WebP, or GIF image.",
