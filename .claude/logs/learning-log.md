@@ -247,3 +247,10 @@ When appending:
 | IS DISTINCT FROM as null-safe inequality in a trigger guard        | 2     |
 | AFTER trigger fires after commit, so pg_net never reads a stale row | 2     |
 | Reaper/watchdog cron: time-based sweep that settles stuck rows     | 3     |
+
+### 2026-06-07 — card-limit error path: PostgREST PT errcode gotcha
+
+| Concept                                                              | Score |
+| ------------------------------------------------------------------- | ----- |
+| PostgREST `PTxyz` SQLSTATE sets HTTP status to `xyz` (PT001→bad 1)   | 2     |
+| Pick `PT402` for a real 402 Payment Required + body `code` for FE    | 2     |

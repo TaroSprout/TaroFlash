@@ -408,8 +408,8 @@ describe('AddCardModal', () => {
     })
 
     test('calls handleLimitError on a failed save and skips the generic toast when it returns true', async () => {
-      const pt001 = { code: 'PT001', message: 'limit exceeded' }
-      mutateAsyncMock.mockRejectedValueOnce(pt001)
+      const pt402 = { code: 'PT402', message: 'limit exceeded' }
+      mutateAsyncMock.mockRejectedValueOnce(pt402)
       handleLimitErrorMock.mockReturnValue(true)
       decksDataRef.value = TEST_DECKS
       const { wrapper } = mountModal({ deck_id: 1 })
@@ -418,11 +418,11 @@ describe('AddCardModal', () => {
       await saveButton(wrapper).trigger('click')
       await flushPromises()
 
-      expect(handleLimitErrorMock).toHaveBeenCalledWith(pt001)
+      expect(handleLimitErrorMock).toHaveBeenCalledWith(pt402)
       expect(errorMock).not.toHaveBeenCalled()
     })
 
-    test('shows the generic toast when handleLimitError returns false (non-PT001 error)', async () => {
+    test('shows the generic toast when handleLimitError returns false (non-PT402 error)', async () => {
       const generic = new Error('server error')
       mutateAsyncMock.mockRejectedValueOnce(generic)
       handleLimitErrorMock.mockReturnValue(false)

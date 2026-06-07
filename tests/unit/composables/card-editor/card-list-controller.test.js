@@ -397,7 +397,7 @@ describe('useCardListController', () => {
     // backend's enforce_deck_card_limit on the INSERT. The insert path routes
     // that rejection through handleLimitError so the upgrade alert still fires.
     test('routes a card-limit insert rejection through handleLimitError instead of throwing', async () => {
-      const limit_error = { code: 'PT001' }
+      const limit_error = { code: 'PT402' }
       insertCardAtMock.mockRejectedValueOnce(limit_error)
       handleLimitErrorMock.mockReturnValueOnce(true)
       const { addCard, all_cards, updateCard, saving } = makeController()
@@ -409,7 +409,7 @@ describe('useCardListController', () => {
     })
 
     test('leaves the temp card staged when the insert is rejected by the card limit', async () => {
-      insertCardAtMock.mockRejectedValueOnce({ code: 'PT001' })
+      insertCardAtMock.mockRejectedValueOnce({ code: 'PT402' })
       handleLimitErrorMock.mockReturnValueOnce(true)
       const { addCard, all_cards, updateCard } = makeController()
       addCard()

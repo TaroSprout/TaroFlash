@@ -163,9 +163,9 @@ describe('guardAddCards', () => {
 // ── handleLimitError ──────────────────────────────────────────────────────────
 
 describe('handleLimitError', () => {
-  test('returns true for a PT001 error code', () => {
+  test('returns true for a PT402 error code', () => {
     const { handleLimitError } = makeGate()
-    expect(handleLimitError({ code: 'PT001' })).toBe(true)
+    expect(handleLimitError({ code: 'PT402' })).toBe(true)
   })
 
   test('returns false for a P0001 code (rank-precision retry — must NOT be swallowed)', () => {
@@ -188,13 +188,13 @@ describe('handleLimitError', () => {
     expect(handleLimitError('some error')).toBe(false)
   })
 
-  test('shows the upgrade alert (fire-and-forget) when handling a PT001 error', () => {
+  test('shows the upgrade alert (fire-and-forget) when handling a PT402 error', () => {
     const { handleLimitError } = makeGate()
-    handleLimitError({ code: 'PT001' })
+    handleLimitError({ code: 'PT402' })
     expect(alertWarnMock).toHaveBeenCalledOnce()
   })
 
-  test('does not show the alert for non-PT001 errors', () => {
+  test('does not show the alert for non-PT402 errors', () => {
     const { handleLimitError } = makeGate()
     handleLimitError({ code: 'P0001' })
     handleLimitError(new Error('boom'))

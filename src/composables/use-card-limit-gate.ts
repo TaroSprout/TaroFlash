@@ -6,10 +6,11 @@ import { useModal } from '@/composables/modal'
 import { useMemberStore } from '@/stores/member'
 import { PLANS } from '@/config/plans'
 
-// Postgres error code raised by `enforce_deck_card_limit` when a write would
-// push a deck past its plan's `cards_per_deck_limit`. Distinct from the
-// rank-precision `P0001` so it survives the insert RPC's retry block.
-const CARD_LIMIT_ERRCODE = 'PT001'
+// SQLSTATE raised by `enforce_deck_card_limit` when a write would push a deck
+// past its plan's `cards_per_deck_limit`. The `PT` class is PostgREST's
+// HTTP-status convention, so this also makes the response a real 402 Payment
+// Required; the digits stay clear of the rank-precision `P0001` retry block.
+const CARD_LIMIT_ERRCODE = 'PT402'
 
 /** True when `error` is the backend's per-deck card-limit rejection. */
 function isCardLimitError(error: unknown): boolean {

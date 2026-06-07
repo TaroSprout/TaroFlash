@@ -173,18 +173,18 @@ describe('CardImporter', () => {
   })
 
   test('calls handleLimitError on a failed save and skips the generic toast when it returns true', async () => {
-    const pt001 = { code: 'PT001', message: 'limit exceeded' }
-    bulkInsertMock.mockRejectedValueOnce(pt001)
+    const pt402 = { code: 'PT402', message: 'limit exceeded' }
+    bulkInsertMock.mockRejectedValueOnce(pt402)
     handleLimitErrorMock.mockReturnValue(true)
     const wrapper = mount()
     await wrapper.find('textarea').setValue('a::b')
     await importButton(wrapper).trigger('click')
     await saveButton(wrapper).trigger('click')
-    expect(handleLimitErrorMock).toHaveBeenCalledWith(pt001)
+    expect(handleLimitErrorMock).toHaveBeenCalledWith(pt402)
     expect(toastErrorMock).not.toHaveBeenCalled()
   })
 
-  test('shows the generic toast when handleLimitError returns false (non-PT001 error)', async () => {
+  test('shows the generic toast when handleLimitError returns false (non-PT402 error)', async () => {
     const generic = new Error('server error')
     bulkInsertMock.mockRejectedValueOnce(generic)
     handleLimitErrorMock.mockReturnValue(false)
