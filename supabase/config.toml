@@ -267,12 +267,12 @@ enabled = false
 [edge_runtime]
 enabled = true
 # Configure one of the supported request policies: `oneshot`, `per_worker`.
-# `oneshot` gives function hot-reload but TERMINATES the worker the moment it
-# returns a response — which kills `EdgeRuntime.waitUntil` background tasks. The
-# transcribe-lesson worker runs transcription in the background after returning
-# 202, so it needs `per_worker` (also matches hosted Supabase's behavior). The
-# cost is no hot-reload: restart `supabase` to pick up edge-function edits.
-policy = "per_worker"
+# `oneshot` terminates the worker the moment it returns a response (and gives
+# local hot-reload). transcribe-lesson no longer backgrounds work past its
+# response — each invocation runs ONE phase synchronously and returns, with the
+# DB chain trigger driving the next phase — so `oneshot` is correct and we keep
+# hot-reload. (It was `per_worker` while the worker used EdgeRuntime.waitUntil.)
+policy = "oneshot"
 # Port to attach the Chrome inspector for debugging edge functions.
 inspector_port = 8083
 

@@ -17,7 +17,8 @@ const ERROR_KEYS: Record<string, string> = {
   file_too_large: 'audio-reader.lesson-error.file-too-large',
   invalid_audio: 'audio-reader.lesson-error.invalid-audio',
   upstream_error: 'audio-reader.lesson-error.upstream',
-  audio_unavailable: 'audio-reader.lesson-error.audio-unavailable'
+  audio_unavailable: 'audio-reader.lesson-error.audio-unavailable',
+  stalled: 'audio-reader.lesson-error.stalled'
 }
 
 const { lesson } = defineProps<{ lesson: Lesson }>()

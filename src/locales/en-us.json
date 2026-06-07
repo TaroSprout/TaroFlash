@@ -280,6 +280,7 @@
   "audio-reader.lesson-error.invalid-audio": "That audio couldn't be read.",
   "audio-reader.lesson-error.upstream": "Transcription service error. Try again.",
   "audio-reader.lesson-error.audio-unavailable": "Couldn't read the uploaded audio. Try again.",
+  "audio-reader.lesson-error.stalled": "Transcription stalled. Try again.",
   "audio-reader.lesson-error.unknown": "Transcription failed. Try again.",
   "audio-reader.upload.title": "New Lesson",
   "audio-reader.upload.title-placeholder": "Lesson title",

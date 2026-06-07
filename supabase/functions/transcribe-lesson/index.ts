@@ -1,16 +1,22 @@
-// transcribe-lesson: kick off (or retry) async transcription of a lesson.
+// transcribe-lesson: kick off (or retry) async transcription, and run one phase
+// of it when the DB chain asks.
 //
-// Request:  { action: 'start',  collection_id, title, audio_path, script?, lang? }
-//           { action: 'retry',  lesson_id }
-// Response: 202 { lesson }  — the row is created/reset to `processing` and a
-//           background worker transcribes it; the FE polls the row for the result.
+// Member-initiated (admin-gated, caller's JWT):
+//   { action: 'start',  collection_id, title, audio_path, script?, lang? }
+//   { action: 'retry',  lesson_id }
+//     → 202 { lesson }. The row is created/reset to `processing`; the DB chain
+//       trigger then drives transcription phase by phase. The FE polls the row.
 //
-// The OpenAI/Anthropic keys never reach the client. Admin-only: requireAdmin()
-// runs before any work.
+// Internal (service-role only, invoked by the chain trigger via pg_net):
+//   { action: 'process', lesson_id }
+//     → 200 { ok }. Runs the single phase the row is on and returns. Advancing
+//       the phase fires the next 'process'; settling ends the chain.
+//
+// The OpenAI/Anthropic keys never reach the client.
 
 import { cors, requireAdmin } from '../_shared/require-admin.ts'
-import { isTargetScript, type TargetScript } from '../_shared/transcription/script.ts'
-import { runTranscription } from './worker.ts'
+import { isTargetScript } from '../_shared/transcription/script.ts'
+import { processLessonPhase, serviceClient } from './worker.ts'
 import { type SupabaseClient } from '@supabase/supabase-js'
 
 function jsonError(code: string, status: number): Response {
@@ -27,16 +33,6 @@ function accepted(lesson: unknown): Response {
   })
 }
 
-// Supabase keeps the worker instance alive until the promise settles, so
-// transcription continues after we've returned 202. Falls back to a detached
-// call when the runtime global is absent (e.g. local `deno test`).
-function runInBackground(promise: Promise<unknown>): void {
-  const runtime = (globalThis as { EdgeRuntime?: { waitUntil(p: Promise<unknown>): void } })
-    .EdgeRuntime
-  if (runtime?.waitUntil) runtime.waitUntil(promise)
-  else void promise
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: cors })
@@ -45,19 +41,23 @@ Deno.serve(async (req) => {
     return new Response('Method Not Allowed', { status: 405, headers: cors })
   }
 
+  const body = await req.json().catch(() => ({}))
+
+  // 'process' is the internal step-runner: it authenticates by the service-role
+  // key the chain trigger sends, NOT by a member JWT, so it's handled before the
+  // admin gate that 'start'/'retry' go through.
+  if (body?.action === 'process') return handleProcess(req, body)
+
   const auth = await requireAdmin(req)
   if ('error' in auth) return auth.error
 
-  const body = await req.json().catch(() => ({}))
-
-  if (body?.action === 'start') return handleStart(body, auth.admin, auth.userClient)
+  if (body?.action === 'start') return handleStart(body, auth.userClient)
   if (body?.action === 'retry') return handleRetry(body, auth.admin, auth.userClient)
   return jsonError('bad_request', 400)
 })
 
 async function handleStart(
   body: Record<string, unknown>,
-  admin: SupabaseClient,
   userClient: SupabaseClient
 ): Promise<Response> {
   const { collection_id, title, audio_path } = body
@@ -66,7 +66,9 @@ async function handleStart(
   const script = isTargetScript(body.script) ? body.script : 'original'
 
   // Create the pending row under the caller's JWT so RLS applies and the
-  // set_member_id trigger stamps member_id; the worker then writes via service-role.
+  // set_member_id trigger stamps member_id. The INSERT (status='processing',
+  // phase='transcribing') fires the chain trigger — the first 'process' call —
+  // so there's nothing to background here; we just return the row.
   const { data: lesson, error } = await userClient
     .rpc('create_pending_lesson', {
       p_collection_id: collection_id,
@@ -75,14 +77,13 @@ async function handleStart(
       p_script: script,
       p_lang: body.lang ?? null
     })
-    .single<{ id: number; audio_path: string; script: string }>()
+    .single<{ id: number }>()
 
   if (error || !lesson) {
     console.error('create_pending_lesson failed', error?.message)
     return jsonError('create_failed', 400)
   }
 
-  runInBackground(runTranscription(admin, { ...lesson, script: script }))
   return accepted(lesson)
 }
 
@@ -97,17 +98,46 @@ async function handleRetry(
   // Read under the caller's JWT — RLS guarantees they can only retry their own.
   const { data: lesson, error } = await userClient
     .from('lessons')
-    .select('id, audio_path, script')
+    .select('id')
     .eq('id', lesson_id)
-    .single<{ id: number; audio_path: string; script: TargetScript }>()
+    .single<{ id: number }>()
 
   if (error || !lesson) return jsonError('not_found', 404)
 
-  await admin
+  // Reset to the start of the chain; the UPDATE re-fires the chain trigger. The
+  // audio + script are still on the row, so the worker reloads everything.
+  const reset = { status: 'processing', phase: 'transcribing', error_code: null }
+  const { error: updateError } = await admin
     .from('lessons')
-    .update({ status: 'processing', phase: 'transcribing', error_code: null })
+    .update({ ...reset, updated_at: new Date().toISOString() })
     .eq('id', lesson.id)
 
-  runInBackground(runTranscription(admin, lesson))
-  return accepted({ ...lesson, status: 'processing', phase: 'transcribing', error_code: null })
+  if (updateError) {
+    console.error('retry reset failed', updateError.message)
+    return jsonError('retry_failed', 400)
+  }
+
+  return accepted({ ...lesson, ...reset })
+}
+
+// Internal: run one phase. Authenticated by the service-role key (the chain
+// trigger sends it; verify_jwt at the gateway only proves it's a valid project
+// token, so we also check it IS the service key — a member token must not reach
+// here). Always 200 once authorized: processLessonPhase settles the row itself,
+// so the chain never retries on our response.
+async function handleProcess(req: Request, body: Record<string, unknown>): Promise<Response> {
+  const expected = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  if (!expected || req.headers.get('Authorization') !== `Bearer ${expected}`) {
+    return new Response('Forbidden', { status: 403, headers: cors })
+  }
+
+  const lessonId = Number(body.lesson_id)
+  if (!Number.isFinite(lessonId)) return jsonError('missing_fields', 400)
+
+  await processLessonPhase(serviceClient(), lessonId)
+
+  return new Response(JSON.stringify({ ok: true }), {
+    status: 200,
+    headers: { ...cors, 'Content-Type': 'application/json' }
+  })
 }
