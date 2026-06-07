@@ -16,8 +16,7 @@ type ListItemProps = {
 const { card, index } = defineProps<ListItemProps>()
 
 const { t } = useI18n()
-const { list, selection, actions } = inject<CardListController>('card-editor')!
-const { appendCard, prependCard } = list
+const { selection, actions, appendCard, prependCard } = inject<CardListController>('card-editor')!
 const { is_selecting, isCardSelected } = selection
 const { onDeleteCards, onMoveCards, onSelectCard } = actions
 

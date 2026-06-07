@@ -39,10 +39,10 @@ function makeCard(overrides = {}) {
 function makeProvide({ is_selecting = ref(false) } = {}) {
   return {
     'card-editor': {
-      list: {
-        appendCard: mocks.appendCardMock,
-        prependCard: mocks.prependCardMock
-      },
+      // appendCard/prependCard are injected from the root controller surface
+      // (card-list-controller.ts exposes them directly, not nested under list)
+      appendCard: mocks.appendCardMock,
+      prependCard: mocks.prependCardMock,
       selection: {
         is_selecting,
         isCardSelected: mocks.isCardSelectedMock
@@ -144,5 +144,20 @@ describe('ListItem', () => {
   test('hides ItemOptions in selection mode and shows the radio instead', () => {
     const wrapper = mount({ is_selecting: ref(true) })
     expect(wrapper.findComponent(ItemOptions).exists()).toBe(false)
+  })
+
+  // ── onClick — selection mode vs normal mode ───────────────────────────────
+
+  test('mousedown in selection mode calls onSelectCard with the card id', async () => {
+    const wrapper = mount({ card: { id: 5 }, is_selecting: ref(true) })
+    await wrapper.find('[data-testid="card-list-item"]').trigger('mousedown')
+    expect(mocks.onSelectCardMock).toHaveBeenCalledWith(5)
+  })
+
+  test('radio reflects isCardSelected result for the card', () => {
+    mocks.isCardSelectedMock.mockReturnValue(true)
+    const wrapper = mount({ card: { id: 3 }, is_selecting: ref(true) })
+    const radio = wrapper.findComponent({ name: 'UiRadio' })
+    expect(radio.props('checked')).toBe(true)
   })
 })

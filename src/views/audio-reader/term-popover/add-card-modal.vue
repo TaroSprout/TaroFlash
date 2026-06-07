@@ -5,6 +5,7 @@ import { useMemberDecksQuery } from '@/api/decks'
 import { useInsertCardAtMutation } from '@/api/cards'
 import { useLastDeck } from '@/composables/use-last-deck'
 import { useMatchMedia } from '@/composables/use-media-query'
+import { useCardLimitGate } from '@/composables/use-card-limit-gate'
 import { useToast } from '@/composables/toast'
 import MobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
 import UiButton from '@/components/ui-kit/button.vue'
@@ -34,6 +35,10 @@ const back_text = ref(back)
 const deck_id = ref<number | null>(initial_deck_id)
 const active_side = ref<'front' | 'back'>('front')
 const saving = ref(false)
+
+const { guardAddCards, handleLimitError } = useCardLimitGate(() =>
+  decks_data.value?.find((deck) => deck.id === deck_id.value)
+)
 
 const decks = computed(() => decks_data.value ?? [])
 const selected_deck = computed(() => decks.value.find((deck) => deck.id === deck_id.value))
@@ -81,6 +86,7 @@ function onEditActive(value: string) {
 
 async function onSave() {
   if (!can_save.value || deck_id.value === null) return
+  if (!(await guardAddCards())) return
 
   saving.value = true
   try {
@@ -94,8 +100,8 @@ async function onSave() {
     setLastDeck(deck_id.value)
     toast.success(t('audio-reader.add-card-modal.success'))
     close(true)
-  } catch {
-    toast.error(t('audio-reader.add-card-modal.error'))
+  } catch (error) {
+    if (!handleLimitError(error)) toast.error(t('audio-reader.add-card-modal.error'))
   } finally {
     saving.value = false
   }

@@ -19,9 +19,9 @@
 --  12  review/FSRS state travels with card (reviews row)
 --  13  review/FSRS state travels with card (review_logs row)
 --  14  duplicates allowed — move succeeds even when front+back match target card
---  15  free plan over cap raises PT001
+--  15  free plan over cap raises PT402
 --  16  paid plan is unbounded (succeeds moving into a 200-card deck)
---  17  insert_card_at P0001 retry block does NOT swallow PT001 cap error
+--  17  insert_card_at P0001 retry block does NOT swallow PT402 cap error
 --  18  enforce_deck_card_limit raises immediately when deck is at cap
 -- =============================================================================
 
@@ -406,7 +406,7 @@ SELECT lives_ok(
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Test 15: free plan over cap raises PT001
+-- Test 15: free plan over cap raises PT402
 -- Deck 5006 has 200 cards (at free limit). Card 9020 in 5007. Move → cap fires.
 -- ─────────────────────────────────────────────────────────────────────────────
 
@@ -415,9 +415,9 @@ SELECT throws_ok(
        p_target_deck_id := 5006,
        p_card_ids       := ARRAY[9020]::bigint[]
      ) $$,
-  'PT001',
+  'PT402',
   'deck_card_limit_exceeded',
-  'free plan: moving 1 card into a full 200-card deck raises PT001 deck_card_limit_exceeded'
+  'free plan: moving 1 card into a full 200-card deck raises PT402 deck_card_limit_exceeded'
 );
 
 
@@ -446,18 +446,18 @@ UPDATE public.members SET plan = 'free'
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Test 17: insert_card_at P0001 retry block does NOT swallow PT001 cap error
+-- Test 17: insert_card_at P0001 retry block does NOT swallow PT402 cap error
 -- Deck 5010 has 200 cards (free limit). insert_card_at catches SQLSTATE 'P0001'
--- (rank-precision) and retries — but PT001 must propagate, not be caught.
+-- (rank-precision) and retries — but PT402 must propagate, not be caught.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 SET LOCAL role = 'authenticated';
 
 SELECT throws_ok(
   $$ SELECT public.insert_card_at(5010, NULL, NULL, 'Over Cap', 'Over Cap') $$,
-  'PT001',
+  'PT402',
   'deck_card_limit_exceeded',
-  'insert_card_at P0001 retry block does not swallow PT001 cap error'
+  'insert_card_at P0001 retry block does not swallow PT402 cap error'
 );
 
 
@@ -467,9 +467,9 @@ SELECT throws_ok(
 
 SELECT throws_ok(
   $$ SELECT public.enforce_deck_card_limit(5010, 1) $$,
-  'PT001',
+  'PT402',
   'deck_card_limit_exceeded',
-  'enforce_deck_card_limit raises PT001 immediately when deck is at the free cap'
+  'enforce_deck_card_limit raises PT402 immediately when deck is at the free cap'
 );
 
 

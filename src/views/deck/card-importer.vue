@@ -4,9 +4,11 @@ import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import Card from '@/components/card/index.vue'
 import { useBulkInsertCardsInDeckMutation } from '@/api/cards'
+import { useToast } from '@/composables/toast'
 import { type CardListController } from '@/composables/card-editor/card-list-controller'
 
 const { t } = useI18n()
+const toast = useToast()
 
 type CardDraft = { front_text: string; back_text: string }
 
@@ -16,7 +18,7 @@ const raw_text = ref<string>('')
 const cards = ref<CardDraft[]>([])
 const bulk_insert_mutation = useBulkInsertCardsInDeckMutation()
 
-const { deck_id } = inject<CardListController>('card-editor')!
+const { deck_id, guardAddCards, handleLimitError } = inject<CardListController>('card-editor')!
 
 const has_unsaved_changes = computed(() => cards.value.length > 0)
 
@@ -32,11 +34,17 @@ function onImport() {
 
 async function onSave() {
   if (!has_unsaved_changes.value || saving.value) return
+  if (!(await guardAddCards(cards.value.length))) return
 
   saving.value = true
-  await bulk_insert_mutation.mutateAsync({ deck_id, cards: cards.value })
-  saving.value = false
-  cards.value = []
+  try {
+    await bulk_insert_mutation.mutateAsync({ deck_id, cards: cards.value })
+    cards.value = []
+  } catch (error) {
+    if (!handleLimitError(error)) toast.error(t('deck-view.card-importer.error'))
+  } finally {
+    saving.value = false
+  }
 }
 </script>
 
