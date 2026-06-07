@@ -13,6 +13,8 @@ import {
 } from '@/composables/card-editor/use-face-image-upload'
 import { cardImageUrl } from '@/api/media'
 import { CARD_ATTRIBUTES_DEFAULTS } from '@/utils/deck/defaults'
+import { emitSfx } from '@/sfx/bus'
+import { type SfxOptions } from '@/sfx/directive'
 import { playButtonTap } from '@/utils/animations/button-tap'
 import { bytesToMbLabel } from '@/utils/file-size'
 
@@ -66,6 +68,17 @@ const layout = computed(
 // corners; above/below give the image its own region to scope the dropzone to.
 const dropzone_mode = computed(() => (layout.value === 'behind' ? 'corners' : 'region'))
 const image_url = computed(() => (image_path.value ? cardImageUrl(image_path.value) : undefined))
+// In region mode the image is only part of the card, so hover is scoped to the
+// image region (the dropzone emits enter/leave). Empty cards (add button) and
+// behind layout (full-bleed image) use card-wide hover instead.
+const region_hover = computed(
+  () => has_image.value && !disabled && dropzone_mode.value === 'region'
+)
+// Behind/full-bleed plays the hover chime card-wide; region scopes it to the
+// image region (see onRegionPointerEnter), so the card stays silent there.
+const card_sfx = computed<SfxOptions | undefined>(() =>
+  has_image.value && dropzone_mode.value === 'corners' ? { hover: 'ui.click_07' } : undefined
+)
 
 const error_message = computed(() => {
   if (file_error.value === 'invalid-type') {
@@ -78,6 +91,22 @@ const error_message = computed(() => {
   }
   return ''
 })
+
+// Skip card-wide hover in region mode — the dropzone reports image-region hover.
+function onCardPointerEnter() {
+  if (!region_hover.value) onPointerEnter()
+}
+
+function onCardPointerLeave() {
+  if (!region_hover.value) onPointerLeave()
+}
+
+// Region mode scopes the hover chime to the image region; behind/full-bleed play
+// it card-wide via the card's own sfx prop.
+function onRegionPointerEnter() {
+  emitSfx('ui.click_07')
+  onPointerEnter()
+}
 
 function onAddClick() {
   if (addIcon.value) playButtonTap(addIcon.value, 0.35, { yoyo: true })
@@ -94,12 +123,12 @@ function onAddClick() {
     v-bind="card"
     :card_attributes="card_attributes"
     :error="error"
-    :sfx="has_image ? { hover: 'ui.click_07' } : undefined"
+    :sfx="card_sfx"
     :data-active="active || undefined"
     :data-dragging="dragging || undefined"
     :class="{ 'pointer-events-none': disabled }"
-    @pointerenter="onPointerEnter"
-    @pointerleave="onPointerLeave"
+    @pointerenter="onCardPointerEnter"
+    @pointerleave="onCardPointerLeave"
     @dragenter="onDragEnter"
     @dragleave="onDragLeave"
     @dragover="onDragOver"
@@ -176,6 +205,8 @@ function onAddClick() {
         :active="active"
         :disabled="disabled"
         :error="error_message"
+        @pointerenter="onRegionPointerEnter"
+        @pointerleave="onPointerLeave"
         @browse="openPicker"
         @remove="onRemove"
         @dismiss-error="onDismissError"

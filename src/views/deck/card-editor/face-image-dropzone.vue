@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
@@ -26,6 +27,14 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+// Behind/full-bleed images reach the card edges with a large corner radius, so
+// controls sit inset at the face padding to clear the rounded corner (matching
+// the text inset). Region images are inset already, so the remove button pokes
+// out past the image corner.
+const remove_position = computed(() =>
+  mode === 'corners' ? 'top-(--face-padding) right-(--face-padding)' : '-top-2 -right-2'
+)
 </script>
 
 <template>
@@ -48,8 +57,11 @@ const { t } = useI18n()
       icon-only
       icon-left="remove-image"
       data-theme="red-500"
-      class="absolute! top-(--face-image-padding) right-(--face-image-padding) z-30 transition-opacity duration-150"
-      :class="active ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'"
+      class="absolute! z-30 transition-opacity duration-150"
+      :class="[
+        remove_position,
+        active ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+      ]"
       @click.stop="emit('remove')"
     >
       {{ t('deck-view.card-editor.list-item.remove-image-button') }}
@@ -62,7 +74,7 @@ const { t } = useI18n()
       icon-left="add-image"
       data-theme="blue-500"
       data-theme-dark="blue-650"
-      class="absolute! top-(--face-image-padding) left-(--face-image-padding) z-30 transition-opacity duration-150"
+      class="absolute! top-(--face-padding) left-(--face-padding) z-30 transition-opacity duration-150"
       :class="active ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'"
       @click.stop="emit('browse')"
     >
@@ -103,10 +115,18 @@ const { t } = useI18n()
 </template>
 
 <style>
+/* Inherit the image region's radius so the image + scrim stay rounded without an
+   overflow:hidden wrapper (which would clip the poked-out remove button). */
 .face-image-dropzone[data-mode='region'] {
   position: relative;
   width: 100%;
   height: 100%;
+
+  border-radius: inherit;
+}
+
+.face-image-dropzone__image {
+  border-radius: inherit;
 }
 
 /* Corners mode overlays the whole face above the text so its controls sit on
@@ -116,6 +136,8 @@ const { t } = useI18n()
   inset: 0;
   z-index: 20;
   pointer-events: none;
+
+  border-radius: var(--face-radius);
 }
 
 .face-image-dropzone__overlay {
@@ -142,6 +164,7 @@ const { t } = useI18n()
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
 
+  border-radius: inherit;
   color: var(--color-brown-700);
   opacity: 0;
 }

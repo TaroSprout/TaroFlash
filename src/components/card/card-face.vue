@@ -89,13 +89,18 @@ const layout = computed(() => attributes?.image_layout ?? CARD_ATTRIBUTES_DEFAUL
   flex-direction: column-reverse;
 }
 
+/* No overflow:hidden here — the editor's remove button pokes out of the corner
+   and must not be clipped. The image itself rounds via border-radius instead. */
 .card-face__image-region {
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
 
   border-radius: var(--inner-radius);
+}
+
+.card-face__image {
+  border-radius: inherit;
 }
 
 .card-face__text-region {
@@ -166,6 +171,12 @@ const layout = computed(() => attributes?.image_layout ?? CARD_ATTRIBUTES_DEFAUL
     border-radius 0.15s ease;
 }
 
+/* above/below: the image stays put; draw the dashed frame just outside it. */
+.card-face[data-mode='edit'][data-image='true'][data-text='true']:not([data-layout='behind'])
+  .card-face__image-region {
+  outline-offset: 4px;
+}
+
 .card-container--edit[data-active]
   .card-face[data-mode='edit'][data-image='true']:not([data-layout='behind'])
   .card-face__image-region {
@@ -185,8 +196,9 @@ const layout = computed(() => attributes?.image_layout ?? CARD_ATTRIBUTES_DEFAUL
   outline-color: var(--color-blue-650);
 }
 
-/* Full-bleed (no text): also inset the image so the dashed frame reads as a
-   border around it rather than sitting flush to the card edge. */
+/* Full-bleed (no text): the image is absolutely positioned and fills the face,
+   so there's no room outside it — inset it on hover and draw the frame in the
+   revealed gap instead. */
 .card-container--edit[data-active]
   .card-face[data-mode='edit'][data-image='true'][data-text='false']:not([data-layout='behind'])
   .card-face__image-region {
