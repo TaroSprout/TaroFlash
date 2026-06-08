@@ -8,7 +8,7 @@ import { emitSfx } from '@/sfx/bus'
 import { flipEnter, flipLeave } from '@/utils/animations/flip'
 import { useDropdownSizing } from './use-dropdown-sizing'
 
-type DropdownOption = {
+export type DropdownOption = {
   label: string
   value: string | number
   icon?: string
@@ -62,9 +62,13 @@ const min_width_style = computed(() =>
   min_width.value ? { minWidth: `${min_width.value}px` } : undefined
 )
 
-const menu_style = computed(() =>
-  trigger_width.value ? { width: `${trigger_width.value}px` } : undefined
-)
+// Match the button's width, but never let the menu fall below the widest
+// option — guards the window before `trigger_width` settles to the final
+// (min-width-widened) button width.
+const menu_style = computed(() => ({
+  ...(trigger_width.value ? { width: `${trigger_width.value}px` } : {}),
+  ...(min_width.value ? { minWidth: `${min_width.value}px` } : {})
+}))
 
 function filter_attrs(keep: (key: string) => boolean) {
   const result: Record<string, unknown> = {}
@@ -124,7 +128,7 @@ function onSelect(option: DropdownOption) {
         <slot></slot>
         <template #trailing>
           <div
-            class="ui-kit-dropdown-button__trigger-wrap"
+            class="flex h-full p-2 pointer-coarse:p-1"
             data-testid="dropdown-button__trigger-wrap"
           >
             <transition mode="out-in" @enter="onCaretEnter" @leave="onCaretLeave">
@@ -135,7 +139,7 @@ function onSelect(option: DropdownOption) {
                 aria-haspopup="menu"
                 :aria-expanded="popover_open"
                 :data-active="popover_open"
-                class="ui-kit-dropdown-button__trigger"
+                class="relative z-1 flex aspect-square h-full cursor-pointer items-center justify-center rounded-[calc(var(--btn-border-radius)-8px)] pointer-coarse:rounded-[calc(var(--btn-border-radius)-4px)] bg-(--theme-secondary) text-(--theme-on-secondary) transition-[scale] duration-120 ease-[ease] hover:scale-110"
                 data-testid="dropdown-button__trigger"
                 v-sfx.hover="'ui.click_07'"
                 @click.stop="toggle"
@@ -143,8 +147,8 @@ function onSelect(option: DropdownOption) {
               >
                 <ui-icon
                   :src="triggerIcon"
-                  class="ui-kit-dropdown-button__trigger-icon"
-                  :class="{ 'ui-kit-dropdown-button__trigger-icon--open': popover_open }"
+                  class="size-[calc(var(--icon-size,20px)-6px)]"
+                  :class="{ 'rotate-180': popover_open }"
                 />
               </span>
             </transition>
@@ -156,17 +160,24 @@ function onSelect(option: DropdownOption) {
         ref="sizerRef"
         aria-hidden="true"
         data-testid="dropdown-button__sizer"
-        :class="['ui-kit-dropdown-button__sizer', `ui-kit-btn-tokens--${size}`]"
+        class="pointer-events-none invisible absolute top-0 -left-2499.75 flex flex-col"
+        :class="`ui-kit-btn-tokens--${size}`"
       >
-        <span v-for="option in options" :key="option.value" class="ui-kit-dropdown-button__row">
-          <ui-icon v-if="option.icon" :src="option.icon" class="ui-kit-dropdown-button__row-icon" />
+        <span
+          v-for="option in options"
+          :key="option.value"
+          data-testid="dropdown-button__sizer-row"
+          class="flex items-center gap-(--btn-gap) p-(--btn-padding) whitespace-nowrap"
+        >
+          <ui-icon v-if="option.icon" :src="option.icon" class="size-(--icon-size,20px) shrink-0" />
           <span>{{ option.label }}</span>
         </span>
       </span>
     </template>
 
     <div
-      :class="['ui-kit-dropdown-button__menu', `ui-kit-btn-tokens--${size}`]"
+      class="flex flex-col overflow-hidden rounded-(--btn-border-radius) bg-(--theme-primary) py-2 text-(length:--btn-font-size) leading-(--btn-font-size--line-height) text-(--theme-on-primary)"
+      :class="`ui-kit-btn-tokens--${size}`"
       :style="menu_style"
       data-testid="dropdown-button__menu"
     >
@@ -174,106 +185,13 @@ function onSelect(option: DropdownOption) {
         v-for="option in options"
         :key="option.value"
         type="button"
-        class="ui-kit-dropdown-button__row ui-kit-dropdown-button__option"
+        class="flex w-full cursor-pointer items-center gap-(--btn-gap) p-(--btn-padding) text-start whitespace-nowrap hover:bg-[color-mix(in_srgb,var(--theme-on-primary)_14%,transparent)]"
         data-testid="dropdown-button__option"
         @click="onSelect(option)"
       >
-        <ui-icon v-if="option.icon" :src="option.icon" class="ui-kit-dropdown-button__row-icon" />
+        <ui-icon v-if="option.icon" :src="option.icon" class="size-(--icon-size,20px) shrink-0" />
         <span>{{ option.label }}</span>
       </button>
     </div>
   </ui-popover>
 </template>
-
-<style>
-.ui-kit-dropdown-button__trigger-wrap {
-  display: flex;
-  height: 100%;
-  padding: 8px;
-}
-
-.ui-kit-dropdown-button__trigger {
-  position: relative;
-  z-index: 1;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  height: 100%;
-  aspect-ratio: 1;
-
-  background-color: var(--theme-secondary);
-  color: var(--theme-on-secondary);
-  border-radius: calc(var(--btn-border-radius) - 8px);
-  cursor: pointer;
-
-  transition: scale 120ms ease;
-}
-
-@media (hover: hover) {
-  .ui-kit-dropdown-button__trigger:hover {
-    scale: 1.1;
-  }
-}
-
-.ui-kit-dropdown-button__trigger-icon {
-  width: calc(var(--icon-size, 20px) - 6px);
-  height: calc(var(--icon-size, 20px) - 6px);
-}
-
-.ui-kit-dropdown-button__trigger-icon--open {
-  rotate: 180deg;
-}
-
-.ui-kit-dropdown-button__menu {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-
-  border-radius: var(--btn-border-radius);
-
-  background-color: var(--theme-primary);
-  color: var(--theme-on-primary);
-  font-size: var(--btn-font-size);
-  line-height: var(--btn-font-size--line-height);
-}
-
-.ui-kit-dropdown-button__row {
-  display: flex;
-  align-items: center;
-  gap: var(--btn-gap);
-
-  padding: var(--btn-padding);
-  white-space: nowrap;
-}
-
-.ui-kit-dropdown-button__row-icon {
-  width: var(--icon-size, 20px);
-  height: var(--icon-size, 20px);
-}
-
-.ui-kit-dropdown-button__option {
-  width: 100%;
-  text-align: start;
-  cursor: pointer;
-}
-
-@media (hover: hover) {
-  .ui-kit-dropdown-button__option:hover {
-    background-color: color-mix(in srgb, var(--theme-on-primary) 14%, transparent);
-  }
-}
-
-.ui-kit-dropdown-button__sizer {
-  position: absolute;
-  left: -9999px;
-  top: 0;
-
-  display: flex;
-  flex-direction: column;
-
-  visibility: hidden;
-  pointer-events: none;
-}
-</style>
