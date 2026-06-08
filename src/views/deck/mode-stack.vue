@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue'
 import CardEditor from './card-editor/index.vue'
-import CardGrid from './card-grid/index.vue'
+import CardGrid from './card-grid/scroll-grid.vue'
 import CardImporter from './card-importer.vue'
 import {
   primeOverlayBelow,
