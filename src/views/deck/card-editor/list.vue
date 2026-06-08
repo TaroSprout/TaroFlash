@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import ListItem from './list-item.vue'
-import { inject, useTemplateRef, computed, watchEffect } from 'vue'
+import { inject, useTemplateRef, computed, ref, watchEffect, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useVirtualizer } from '@tanstack/vue-virtual'
+import { useWindowVirtualizer } from '@tanstack/vue-virtual'
 import { type CardListController } from '@/composables/card-editor/card-list-controller'
 
 const { t } = useI18n()
@@ -14,17 +14,39 @@ const OVERSCAN = 3
 const { list, hasNextPage, isLoading, loadNextPage } = inject<CardListController>('card-editor')!
 const { all_cards } = list
 
-const scroll_el = useTemplateRef<HTMLElement>('scroll_el')
+const list_el = useTemplateRef<HTMLElement>('list_el')
+const scroll_margin = ref(0)
 
-const virtualizer = useVirtualizer(
+const virtualizer = useWindowVirtualizer(
   computed(() => ({
     count: all_cards.value.length,
-    getScrollElement: () => scroll_el.value,
     estimateSize: () => ROW_PITCH,
     overscan: OVERSCAN,
+    scrollMargin: scroll_margin.value,
     getItemKey: (i: number) => all_cards.value[i].client_id
   }))
 )
+
+// The list flows in the page below the sticky toolbar (and, below xl, the
+// hero), so the window virtualizer needs the list's document offset to map
+// page scroll onto row positions. Measure the container, not the list itself:
+// during a mode-swap the list is briefly transformed (it slides into place),
+// which would corrupt its own rect — the container stays in flow.
+function measureScrollMargin() {
+  const container = list_el.value?.parentElement
+  if (!container) return
+  scroll_margin.value = container.getBoundingClientRect().top + window.scrollY
+}
+
+let resize_observer: ResizeObserver | undefined
+
+onMounted(() => {
+  measureScrollMargin()
+  resize_observer = new ResizeObserver(measureScrollMargin)
+  resize_observer.observe(document.body)
+})
+
+onBeforeUnmount(() => resize_observer?.disconnect())
 
 watchEffect(() => {
   const items = virtualizer.value.getVirtualItems()
@@ -42,9 +64,9 @@ watchEffect(() => {
 
 <template>
   <div
-    ref="scroll_el"
+    ref="list_el"
     data-testid="card-list"
-    class="w-full h-full overflow-y-auto pb-24 pt-5 bg-brown-100 dark:bg-grey-900 scroll-hidden"
+    class="w-full pb-24 pt-5 bg-brown-100 dark:bg-grey-900"
   >
     <div
       data-testid="card-list__viewport"
@@ -58,7 +80,7 @@ watchEffect(() => {
         class="absolute top-0 left-0 w-full flex justify-center hover:z-10 focus-within:z-10"
         :style="{
           height: `${vrow.size}px`,
-          transform: `translateY(${vrow.start}px)`
+          transform: `translateY(${vrow.start - scroll_margin}px)`
         }"
       >
         <list-item :index="vrow.index" :card="all_cards[vrow.index]" />

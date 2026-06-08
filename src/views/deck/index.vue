@@ -3,8 +3,6 @@ import { computed, provide, ref } from 'vue'
 import DeckHero from '@/views/deck/deck-hero/index.vue'
 import ModeToolbar from './mode-toolbar/index.vue'
 import ModeStack from './mode-stack.vue'
-import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
-import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import { useDeckQuery } from '@/api/decks'
 import { useCardListController } from '@/composables/card-editor/card-list-controller'
 
@@ -29,7 +27,7 @@ const is_empty = computed(() => !editor.isLoading.value && editor.list.all_cards
 <template>
   <section
     data-testid="deck-view"
-    class="flex md:h-[calc(100dvh-var(--nav-height))] flex-col xl:flex-row items-center xl:items-start gap-6 md:gap-15"
+    class="flex flex-col xl:flex-row items-center xl:items-start gap-6 md:gap-15"
   >
     <deck-hero
       v-if="deck"
@@ -38,23 +36,13 @@ const is_empty = computed(() => !editor.isLoading.value && editor.list.all_cards
       :image-url="image_url"
     />
 
-    <div
-      data-testid="deck-view__main"
-      :data-mode="editor.mode.value"
-      class="md:h-full relative w-full grid grid-cols-1 grid-rows-[auto_minmax(0,1fr)] gap-y-4 pb-4"
-    >
-      <mode-toolbar />
+    <div data-testid="deck-view__main" :data-mode="editor.mode.value" class="relative w-full pb-4">
+      <div data-testid="deck-view__toolbar" class="sticky top-(--nav-height) z-20">
+        <mode-toolbar />
+      </div>
 
-      <div v-if="is_empty" data-testid="deck-view__empty" class="row-start-2" />
-      <mode-stack v-else class="row-start-2" />
-
-      <Transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
-        <scroll-bar
-          v-if="editor.mode.value === 'edit'"
-          class="row-start-2 absolute inset-y-10 left-1/2 -translate-x-1/2"
-          target="[data-testid='card-list']"
-        />
-      </Transition>
+      <div v-if="is_empty" data-testid="deck-view__empty" class="mt-6" />
+      <mode-stack v-else class="mt-6" />
     </div>
   </section>
 </template>
