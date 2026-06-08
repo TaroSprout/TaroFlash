@@ -32,13 +32,6 @@ const ModeStackStub = defineComponent({
   name: 'ModeStack',
   setup: () => () => h('div', { 'data-testid': 'mode-stack-stub' })
 })
-const ScrollBarStub = defineComponent({
-  name: 'ScrollBar',
-  props: ['target'],
-  setup: (props) => () =>
-    h('div', { 'data-testid': 'scroll-bar-stub', 'data-target': props.target })
-})
-
 function makeEditor({ mode = 'view', cards = [], isLoading = false } = {}) {
   return {
     mode: ref(mode),
@@ -60,8 +53,7 @@ function mount({ deck = { id: 1, name: 'Test' }, editorOpts = {} } = {}) {
       stubs: {
         DeckHero: DeckHeroStub,
         ModeToolbar: ModeToolbarStub,
-        ModeStack: ModeStackStub,
-        ScrollBar: ScrollBarStub
+        ModeStack: ModeStackStub
       }
     }
   })
@@ -125,28 +117,18 @@ describe('DeckView (views/deck/index.vue)', () => {
     expect(useCardListControllerMock).toHaveBeenCalledWith({ deck_id: 1 })
   })
 
-  test('does not render the scroll-bar in view mode', () => {
-    const wrapper = mount({ editorOpts: { mode: 'view' } })
-    expect(wrapper.find('[data-testid="scroll-bar-stub"]').exists()).toBe(false)
-  })
-
-  test('does not render the scroll-bar in import-export mode', () => {
-    const wrapper = mount({ editorOpts: { mode: 'import-export' } })
-    expect(wrapper.find('[data-testid="scroll-bar-stub"]').exists()).toBe(false)
-  })
-
-  test('renders the scroll-bar when mode is edit and targets the card-list', () => {
-    const wrapper = mount({ editorOpts: { mode: 'edit' } })
-    const bar = wrapper.find('[data-testid="scroll-bar-stub"]')
-    expect(bar.exists()).toBe(true)
-    expect(bar.attributes('data-target')).toBe("[data-testid='card-list']")
-  })
-
-  test('keeps the main grid layout stable across modes (no row-height swap)', () => {
+  test('keeps the main layout stable across modes (no mode-dependent classes)', () => {
     const view = mount({ editorOpts: { mode: 'view' } })
     const edit = mount({ editorOpts: { mode: 'edit' } })
     const viewClasses = view.find('[data-testid="deck-view__main"]').classes()
     const editClasses = edit.find('[data-testid="deck-view__main"]').classes()
     expect(viewClasses).toEqual(editClasses)
+  })
+
+  test('pins the toolbar below the nav via a sticky wrapper', () => {
+    const wrapper = mount()
+    const toolbar = wrapper.find('[data-testid="deck-view__toolbar"]')
+    expect(toolbar.exists()).toBe(true)
+    expect(toolbar.classes()).toContain('sticky')
   })
 })

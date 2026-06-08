@@ -10,6 +10,7 @@ vi.mock('gsap', () => ({ gsap: { set: mockSet, to: mockTo } }))
 import {
   primeOverlayBelow,
   slideOverlayUp,
+  settleOverlay,
   slideOverlayDown
 } from '@/utils/animations/deck-view/card-overlay'
 
@@ -22,10 +23,15 @@ describe('card-overlay animations', () => {
   })
 
   describe('primeOverlayBelow', () => {
-    test('places the overlay 100% below its rest position', () => {
+    test('lifts the entering pane out of flow, 100% below its rest position', () => {
       primeOverlayBelow(el)
 
-      expect(mockSet).toHaveBeenCalledWith(el, { translateY: '100%' })
+      expect(mockSet).toHaveBeenCalledWith(el, {
+        position: 'absolute',
+        inset: 0,
+        zIndex: 1,
+        translateY: '100%'
+      })
     })
 
     test('does not call gsap.to (priming only sets initial state)', () => {
@@ -60,6 +66,20 @@ describe('card-overlay animations', () => {
       slideOverlayUp(el, done)
 
       expect(mockSet).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('settleOverlay', () => {
+    test('clears the overlay props so the entered pane rejoins normal flow', () => {
+      settleOverlay(el)
+
+      expect(mockSet).toHaveBeenCalledWith(el, { clearProps: 'position,inset,zIndex,transform' })
+    })
+
+    test('does not call gsap.to (settling only resets state)', () => {
+      settleOverlay(el)
+
+      expect(mockTo).not.toHaveBeenCalled()
     })
   })
 

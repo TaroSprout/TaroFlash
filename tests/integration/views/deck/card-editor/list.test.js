@@ -2,8 +2,8 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { ref, computed, shallowRef } from 'vue'
 
-const { useVirtualizerMock } = vi.hoisted(() => ({ useVirtualizerMock: vi.fn() }))
-vi.mock('@tanstack/vue-virtual', () => ({ useVirtualizer: useVirtualizerMock }))
+const { useWindowVirtualizerMock } = vi.hoisted(() => ({ useWindowVirtualizerMock: vi.fn() }))
+vi.mock('@tanstack/vue-virtual', () => ({ useWindowVirtualizer: useWindowVirtualizerMock }))
 
 import List from '@/views/deck/card-editor/list.vue'
 
@@ -39,7 +39,7 @@ function setupVirtualizer({ items, totalSize }) {
     getVirtualItems: () => items,
     getTotalSize: () => totalSize
   })
-  useVirtualizerMock.mockReturnValue(virtualizer)
+  useWindowVirtualizerMock.mockReturnValue(virtualizer)
   return virtualizer
 }
 
@@ -56,7 +56,7 @@ function mount(options = {}) {
 
 describe('CardList (list.vue)', () => {
   beforeEach(() => {
-    useVirtualizerMock.mockReset()
+    useWindowVirtualizerMock.mockReset()
   })
 
   test('renders one row per virtual item from the virtualizer', () => {
