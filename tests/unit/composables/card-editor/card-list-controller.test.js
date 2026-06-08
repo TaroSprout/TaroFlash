@@ -638,6 +638,32 @@ describe('useCardListController', () => {
     })
   })
 
+  // ── card_count — server-side deck total projected from deck_query ─────────
+
+  describe('card_count', () => {
+    test('defaults to 0 when deck data is not yet loaded [obligation]', () => {
+      const dq = { data: ref(null), refetch: vi.fn() }
+      cardsInfiniteQueryMock.mockReturnValueOnce(makeCardsQuery([]))
+      deckQueryMock.mockReturnValue(dq)
+      const ctrl = useCardListController({ deck_id: 10 })
+      expect(ctrl.card_count.value).toBe(0)
+    })
+
+    test('reflects deck_query.data.card_count reactively [obligation]', () => {
+      const dq = makeDeckQuery(197)
+      const ctrl = makeController([], [], dq)
+      expect(ctrl.card_count.value).toBe(197)
+    })
+
+    test('updates when deck_query.data.card_count changes [obligation]', () => {
+      const dq = makeDeckQuery(10)
+      const ctrl = makeController([], [], dq)
+      expect(ctrl.card_count.value).toBe(10)
+      dq.data.value = { id: 10, card_count: 25 }
+      expect(ctrl.card_count.value).toBe(25)
+    })
+  })
+
   // ── card_attributes — projected from deck_query ──────────────────────────
 
   describe('card_attributes', () => {
