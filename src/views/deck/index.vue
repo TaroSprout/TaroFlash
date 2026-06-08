@@ -32,7 +32,7 @@ const is_empty = computed(() => !editor.isLoading.value && editor.list.all_cards
   >
     <deck-hero
       v-if="deck"
-      class="xl:sticky top-(--nav-height)"
+      class="relative z-30 xl:sticky xl:top-(--nav-height)"
       :deck="deck"
       :image-url="image_url"
     />
