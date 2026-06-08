@@ -3,6 +3,7 @@ import { computed, provide, ref } from 'vue'
 import DeckHero from '@/views/deck/deck-hero/index.vue'
 import ModeToolbar from './mode-toolbar/index.vue'
 import ModeStack from './mode-stack.vue'
+import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import { useDeckQuery } from '@/api/decks'
 import { useCardListController } from '@/composables/card-editor/card-list-controller'
 
@@ -44,5 +45,7 @@ const is_empty = computed(() => !editor.isLoading.value && editor.list.all_cards
       <div v-if="is_empty" data-testid="deck-view__empty" class="mt-6" />
       <mode-stack v-else class="mt-6" />
     </div>
+
+    <scroll-bar class="fixed right-4 top-(--nav-height) bottom-10 z-30" target="html" />
   </section>
 </template>

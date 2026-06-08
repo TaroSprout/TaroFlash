@@ -32,6 +32,12 @@ const ModeStackStub = defineComponent({
   name: 'ModeStack',
   setup: () => () => h('div', { 'data-testid': 'mode-stack-stub' })
 })
+const ScrollBarStub = defineComponent({
+  name: 'ScrollBar',
+  props: ['target'],
+  setup: (props) => () =>
+    h('div', { 'data-testid': 'scroll-bar-stub', 'data-target': props.target })
+})
 function makeEditor({ mode = 'view', cards = [], isLoading = false } = {}) {
   return {
     mode: ref(mode),
@@ -53,7 +59,8 @@ function mount({ deck = { id: 1, name: 'Test' }, editorOpts = {} } = {}) {
       stubs: {
         DeckHero: DeckHeroStub,
         ModeToolbar: ModeToolbarStub,
-        ModeStack: ModeStackStub
+        ModeStack: ModeStackStub,
+        ScrollBar: ScrollBarStub
       }
     }
   })
@@ -130,5 +137,14 @@ describe('DeckView (views/deck/index.vue)', () => {
     const toolbar = wrapper.find('[data-testid="deck-view__toolbar"]')
     expect(toolbar.exists()).toBe(true)
     expect(toolbar.classes()).toContain('sticky')
+  })
+
+  test('renders the page scroll-bar tracking the document in every mode', () => {
+    for (const mode of ['view', 'edit', 'import-export']) {
+      const wrapper = mount({ editorOpts: { mode } })
+      const bar = wrapper.find('[data-testid="scroll-bar-stub"]')
+      expect(bar.exists()).toBe(true)
+      expect(bar.attributes('data-target')).toBe('html')
+    }
   })
 })
