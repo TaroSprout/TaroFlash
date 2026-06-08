@@ -1,23 +1,33 @@
 import { defineAsyncComponent } from 'vue'
 import { useModal } from '@/composables/modal'
 import { emitSfx } from '@/sfx/bus'
-import type { DeckSettingsResponse } from '@/components/modals/deck-settings/index.vue'
+import type { ActiveTab, DeckSettingsResponse } from '@/components/modals/deck-settings/index.vue'
 
 const DeckSettings = defineAsyncComponent(
   () => import('@/components/modals/deck-settings/index.vue')
 )
 
+type OpenOptions = {
+  tab?: ActiveTab
+  side?: CardSide
+}
+
+/** Opens the deck-settings modal. */
 export function useDeckSettingsModal() {
   const modal = useModal()
 
-  function open(deck: Deck) {
+  /**
+   * @param options - jump straight to a tab and/or preselect a card face
+   *   (e.g. `{ tab: 'design', side: 'front' }`); both override any persisted state.
+   */
+  function open(deck: Deck, options: OpenOptions = {}) {
     emitSfx('ui.alert_clicks_wooden')
     const result = modal.open<DeckSettingsResponse>(DeckSettings, {
       backdrop: true,
       mode: 'mobile-sheet',
       mobile_below_width: 'md',
       mobile_below_height: 'md',
-      props: { deck }
+      props: { deck, initial_tab: options.tab, initial_side: options.side }
     })
     result.response.then(() => emitSfx('ui.pop_up_close'))
     return result

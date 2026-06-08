@@ -366,6 +366,29 @@ describe('UiDropdownButton', () => {
     expect(menu(wrapper).attributes('style')).toContain('width: 200px')
   })
 
+  test('menu has min-width but no width when min_width > 0 and trigger_width is 0 [obligation]', async () => {
+    // Regression: before the fix the menu could render narrower than its widest
+    // option while trigger_width hadn't settled yet (first paint).
+    sizing.min_width.value = 180
+    sizing.trigger_width.value = 0
+    const wrapper = mountDropdown()
+    await trigger(wrapper).trigger('click')
+    const style = menu(wrapper).attributes('style') ?? ''
+    expect(style).toContain('min-width: 180px')
+    // 'width:' without 'min-' prefix must not appear — match via regex
+    expect(style).not.toMatch(/(?<!min-)width:/)
+  })
+
+  test('menu has both width and min-width when both sizing values are set [obligation]', async () => {
+    sizing.min_width.value = 180
+    sizing.trigger_width.value = 220
+    const wrapper = mountDropdown()
+    await trigger(wrapper).trigger('click')
+    const style = menu(wrapper).attributes('style') ?? ''
+    expect(style).toContain('min-width: 180px')
+    expect(style).toContain('width: 220px')
+  })
+
   // ── Sizer element ─────────────────────────────────────────────────────────
 
   test('renders the hidden sizer element', () => {
@@ -377,6 +400,8 @@ describe('UiDropdownButton', () => {
     const wrapper = mountDropdown()
     const sizer = wrapper.find('[data-testid="dropdown-button__sizer"]')
     // Each option renders a span row inside the sizer
-    expect(sizer.findAll('.ui-kit-dropdown-button__row')).toHaveLength(DEFAULT_OPTIONS.length)
+    expect(sizer.findAll('[data-testid="dropdown-button__sizer-row"]')).toHaveLength(
+      DEFAULT_OPTIONS.length
+    )
   })
 })
