@@ -19,11 +19,13 @@ import Card from '@/components/card/index.vue'
 import TabSheet from '@/components/layout-kit/modal/tab-sheet.vue'
 
 export type DeckSettingsResponse = boolean
-type ActiveTab = 'general' | 'design' | 'study' | 'danger-zone'
+export type ActiveTab = 'general' | 'design' | 'study' | 'danger-zone'
 
-const { deck, close } = defineProps<{
+const { deck, close, initial_tab, initial_side } = defineProps<{
   deck: Deck
   close: (response?: DeckSettingsResponse) => void
+  initial_tab?: ActiveTab
+  initial_side?: CardSide
 }>()
 
 const TabDesign = defineAsyncComponent(() => import('./tab-design/index.vue'))
@@ -58,6 +60,9 @@ const is_mobile = useMatchMedia('w<md')
 
 const active_tab = useSessionRef<ActiveTab | null>('deck-settings.active-tab', null)
 const tab_outlet = ref<HTMLElement>()
+
+if (initial_tab) active_tab.value = initial_tab
+if (initial_side) editor.setActiveSide(initial_side)
 
 const tabs = computed(() => [
   { value: 'general', icon: 'tag-chevron', label: t('deck.settings-modal.tab.general') },
