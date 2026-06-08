@@ -9,7 +9,7 @@ vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 const CardStub = defineComponent({
   name: 'Card',
   inheritAttrs: false,
-  props: ['side'],
+  props: ['side', 'size'],
   setup(props, { slots }) {
     const attrs = useAttrs()
     return () =>
@@ -18,6 +18,7 @@ const CardStub = defineComponent({
         {
           'data-testid': 'card-stub',
           'data-side': props.side,
+          'data-size': props.size,
           onClick: attrs.onClick
         },
         slots.default?.()
@@ -167,5 +168,22 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     const { wrapper } = mountGridItem({ editor })
     await wrapper.findComponent(GridItemMenuStub).vm.$emit('delete')
     expect(editor.actions.onDeleteCards).toHaveBeenCalledWith(1)
+  })
+
+  // ── fill prop ─────────────────────────────────────────────────────────────
+
+  test('fill=true (default) renders Card at size="xl" [obligation]', () => {
+    const { wrapper } = mountGridItem({ props: { fill: true } })
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('xl')
+  })
+
+  test('fill=false renders Card at size="base" [obligation]', () => {
+    const { wrapper } = mountGridItem({ props: { fill: false } })
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('base')
+  })
+
+  test('fill defaults to true when prop is omitted', () => {
+    const { wrapper } = mountGridItem()
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('xl')
   })
 })

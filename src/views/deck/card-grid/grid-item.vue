@@ -10,11 +10,18 @@ const { actions, selection } = inject<CardListController>('card-editor')!
 const { onDeleteCards, onMoveCards, onSelectCard } = actions
 const { is_selecting } = selection
 
-const { card, side } = defineProps<{
+const {
+  card,
+  side,
+  fill = true
+} = defineProps<{
   card: Card
   side: 'front' | 'back'
   selected: boolean
   card_attributes?: DeckCardAttributes
+  // fill: scale an xl card to fill a computed carousel cell;
+  // false: render the card at its natural base size in normal flow
+  fill?: boolean
 }>()
 
 const active_side = ref(side)
@@ -33,14 +40,18 @@ function onCardClick() {
 <template>
   <div
     data-testid="grid-item"
-    class="grid-item relative aspect-card w-full group pointer-fine:transition-transform duration-75 touch-manipulation"
-    :class="{ 'card-outline pointer-fine:hover:scale-101': is_selecting }"
+    class="grid-item group relative touch-manipulation"
+    :class="[
+      fill ? 'aspect-card w-full pointer-fine:transition-transform duration-75' : 'w-fit',
+      { 'card-outline pointer-fine:hover:scale-101': is_selecting }
+    ]"
     v-sfx.hover="is_selecting ? 'ui.click_07' : undefined"
   >
     <card
       v-bind="card"
-      class="grid-item__card cursor-pointer"
-      size="xl"
+      class="cursor-pointer"
+      :class="{ 'grid-item__card': fill }"
+      :size="fill ? 'xl' : 'base'"
       :side="active_side"
       :card_attributes="card_attributes"
       @click="onCardClick"

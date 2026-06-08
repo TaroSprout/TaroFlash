@@ -4,7 +4,7 @@
   <div
     data-testid="deck-view__mode-toolbar-base"
     data-theme="brown-300"
-    data-theme-dark="grey-800"
+    data-theme-dark="stone-700"
     class="w-full flex justify-between items-center gap-1.5"
   >
     <div v-if="$slots.left" data-testid="mode-toolbar__left" class="flex gap-1.5 shrink-0">

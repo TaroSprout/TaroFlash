@@ -199,6 +199,7 @@ export function useCardListController(opts: Options) {
     deleteCardImage,
     setFaceImage,
     card_attributes,
+    card_count,
     deck_id: opts.deck_id,
 
     hasNextPage: cards_query.hasNextPage,

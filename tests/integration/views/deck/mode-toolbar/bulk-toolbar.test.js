@@ -37,10 +37,10 @@ const ToolbarBaseStub = defineComponent({
   }
 })
 
-const PagerStub = defineComponent({
-  name: 'Pager',
+const CardCountStub = defineComponent({
+  name: 'CardCount',
   setup() {
-    return () => h('div', { 'data-testid': 'pager-stub' })
+    return () => h('div', { 'data-testid': 'card-count-stub' })
   }
 })
 
@@ -48,10 +48,12 @@ import BulkToolbar from '@/views/deck/mode-toolbar/bulk-toolbar.vue'
 
 function makeEditor({
   selected_count = 0,
+  card_count = 0,
   exitSelection = vi.fn(),
   onCancelSelection = vi.fn(() => exitSelection())
 } = {}) {
   return {
+    card_count: ref(card_count),
     selection: {
       selected_count: ref(selected_count),
       all_cards_selected: ref(false),
@@ -75,7 +77,7 @@ function mount(editor = makeEditor()) {
           UiButton: UiButtonStub,
           UiTag: UiTagStub,
           toolbarBase: ToolbarBaseStub,
-          Pager: PagerStub
+          CardCount: CardCountStub
         },
         provide: { 'card-editor': editor }
       }
@@ -100,9 +102,9 @@ describe('mode-toolbar/bulk-toolbar', () => {
     expect(wrapper.find('[data-testid="bulk-toolbar__count"]').text()).toContain('4')
   })
 
-  test('renders the shared Pager in the right slot', () => {
+  test('renders the shared CardCount in the right slot [obligation]', () => {
     const { wrapper } = mount()
-    expect(wrapper.find('[data-testid="pager-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="card-count-stub"]').exists()).toBe(true)
   })
 
   test('clicking cancel calls onCancelSelection (which triggers exitSelection)', async () => {

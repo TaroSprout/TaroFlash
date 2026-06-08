@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import toolbarBase from './toolbar-base.vue'
-import Pager from './pager.vue'
+import CardCount from './card-count.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useI18n } from 'vue-i18n'
 import { inject } from 'vue'
@@ -38,7 +38,7 @@ const { addCard } = inject<CardListController>('card-editor')!
     </template>
 
     <template #right>
-      <pager />
+      <card-count />
     </template>
   </toolbar-base>
 </template>

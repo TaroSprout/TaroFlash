@@ -32,34 +32,17 @@ const ModeStackStub = defineComponent({
   name: 'ModeStack',
   setup: () => () => h('div', { 'data-testid': 'mode-stack-stub' })
 })
-const PageDotsStub = defineComponent({
-  name: 'PageDots',
-  setup: () => () => h('div', { 'data-testid': 'page-dots-stub' })
-})
-const PageNavButtonStub = defineComponent({
-  name: 'PageNavButton',
-  props: ['direction'],
-  setup:
-    (props, { slots }) =>
-    () =>
-      h('div', { 'data-testid': `page-nav-${props.direction}` }, slots.default?.())
-})
 const ScrollBarStub = defineComponent({
   name: 'ScrollBar',
   props: ['target'],
   setup: (props) => () =>
     h('div', { 'data-testid': 'scroll-bar-stub', 'data-target': props.target })
 })
-
 function makeEditor({ mode = 'view', cards = [], isLoading = false } = {}) {
   return {
     mode: ref(mode),
     list: { all_cards: computed(() => cards) },
-    isLoading: ref(isLoading),
-    carousel: {
-      prev_page_number: computed(() => 1),
-      next_page_number: computed(() => 2)
-    }
+    isLoading: ref(isLoading)
   }
 }
 
@@ -77,8 +60,6 @@ function mount({ deck = { id: 1, name: 'Test' }, editorOpts = {} } = {}) {
         DeckHero: DeckHeroStub,
         ModeToolbar: ModeToolbarStub,
         ModeStack: ModeStackStub,
-        PageDots: PageDotsStub,
-        PageNavButton: PageNavButtonStub,
         ScrollBar: ScrollBarStub
       }
     }
@@ -143,34 +124,34 @@ describe('DeckView (views/deck/index.vue)', () => {
     expect(useCardListControllerMock).toHaveBeenCalledWith({ deck_id: 1 })
   })
 
-  test('renders both page-nav buttons with their direction', () => {
-    const wrapper = mount()
-    expect(wrapper.find('[data-testid="page-nav-prev"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="page-nav-next"]').exists()).toBe(true)
-  })
-
-  test('does not render the scroll-bar in view mode', () => {
-    const wrapper = mount({ editorOpts: { mode: 'view' } })
-    expect(wrapper.find('[data-testid="scroll-bar-stub"]').exists()).toBe(false)
-  })
-
-  test('does not render the scroll-bar in import-export mode', () => {
-    const wrapper = mount({ editorOpts: { mode: 'import-export' } })
-    expect(wrapper.find('[data-testid="scroll-bar-stub"]').exists()).toBe(false)
-  })
-
-  test('renders the scroll-bar when mode is edit and targets the card-list', () => {
-    const wrapper = mount({ editorOpts: { mode: 'edit' } })
-    const bar = wrapper.find('[data-testid="scroll-bar-stub"]')
-    expect(bar.exists()).toBe(true)
-    expect(bar.attributes('data-target')).toBe("[data-testid='card-list']")
-  })
-
-  test('keeps the main grid layout stable across modes (no row-height swap)', () => {
+  test('keeps the main layout stable across modes (no mode-dependent classes)', () => {
     const view = mount({ editorOpts: { mode: 'view' } })
     const edit = mount({ editorOpts: { mode: 'edit' } })
     const viewClasses = view.find('[data-testid="deck-view__main"]').classes()
     const editClasses = edit.find('[data-testid="deck-view__main"]').classes()
     expect(viewClasses).toEqual(editClasses)
+  })
+
+  test('pins the toolbar below the nav via a sticky wrapper', () => {
+    const wrapper = mount()
+    const toolbar = wrapper.find('[data-testid="deck-view__toolbar"]')
+    expect(toolbar.exists()).toBe(true)
+    expect(toolbar.classes()).toContain('sticky')
+  })
+
+  test('backs the sticky toolbar with a filler that covers the gap up to the nav', () => {
+    const wrapper = mount()
+    const backing = wrapper.find('[data-testid="deck-view__toolbar-backing"]')
+    expect(backing.exists()).toBe(true)
+    expect(backing.attributes('aria-hidden')).toBe('true')
+  })
+
+  test('renders the page scroll-bar tracking the document in every mode', () => {
+    for (const mode of ['view', 'edit', 'import-export']) {
+      const wrapper = mount({ editorOpts: { mode } })
+      const bar = wrapper.find('[data-testid="scroll-bar-stub"]')
+      expect(bar.exists()).toBe(true)
+      expect(bar.attributes('data-target')).toBe('html')
+    }
   })
 })
