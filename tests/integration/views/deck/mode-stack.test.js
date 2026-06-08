@@ -3,6 +3,8 @@ import { shallowMount } from '@vue/test-utils'
 import { ref, nextTick } from 'vue'
 
 vi.mock('@/utils/animations/deck-view/card-overlay', () => ({
+  fadeScaleEnter: vi.fn((_el, done) => done?.()),
+  fadeScaleLeave: vi.fn((_el, done) => done?.()),
   primeOverlayBelow: vi.fn(),
   slideOverlayUp: vi.fn((_el, done) => done?.()),
   settleOverlay: vi.fn(),
