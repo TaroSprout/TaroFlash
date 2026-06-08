@@ -30,7 +30,12 @@ function makeEditor(mode = 'view') {
 
 function mount(editor = makeEditor()) {
   return shallowMount(ModeStack, {
-    global: { provide: { 'card-editor': editor } }
+    global: {
+      provide: { 'card-editor': editor },
+      // use the real <Transition> so v-show actually toggles display; the
+      // card-overlay hooks are mocked to complete synchronously
+      stubs: { transition: false }
+    }
   })
 }
 
@@ -45,37 +50,44 @@ describe('ModeStack', () => {
     expect(wrapper.classes()).toContain('relative')
   })
 
-  test('renders the card-grid in view mode', () => {
+  // The grid is kept mounted (v-show) so it never pays a re-mount cost; only
+  // the overlay panes (editor / importer) mount per mode. v-show drives its
+  // visibility, so assert on the display style rather than presence.
+  const gridDisplay = (wrapper) => wrapper.findComponent({ name: 'CardGrid' }).element.style.display
+
+  test('shows the card-grid in view mode, with no overlay mounted', () => {
     const wrapper = mount(makeEditor('view'))
-    expect(wrapper.findComponent({ name: 'CardGrid' }).exists()).toBe(true)
+    expect(gridDisplay(wrapper)).not.toBe('none')
     expect(wrapper.findComponent({ name: 'CardEditor' }).exists()).toBe(false)
     expect(wrapper.findComponent({ name: 'CardImporter' }).exists()).toBe(false)
   })
 
-  test('renders the card-editor in edit mode', () => {
+  test('mounts the card-editor and hides (not unmounts) the grid in edit mode', () => {
     const wrapper = mount(makeEditor('edit'))
     expect(wrapper.findComponent({ name: 'CardEditor' }).exists()).toBe(true)
-    expect(wrapper.findComponent({ name: 'CardGrid' }).exists()).toBe(false)
+    expect(wrapper.findComponent({ name: 'CardGrid' }).exists()).toBe(true)
+    expect(gridDisplay(wrapper)).toBe('none')
     expect(wrapper.findComponent({ name: 'CardImporter' }).exists()).toBe(false)
   })
 
-  test('renders the card-importer in import-export mode', () => {
+  test('mounts the card-importer and hides the grid in import-export mode', () => {
     const wrapper = mount(makeEditor('import-export'))
     expect(wrapper.findComponent({ name: 'CardImporter' }).exists()).toBe(true)
-    expect(wrapper.findComponent({ name: 'CardGrid' }).exists()).toBe(false)
+    expect(gridDisplay(wrapper)).toBe('none')
     expect(wrapper.findComponent({ name: 'CardEditor' }).exists()).toBe(false)
   })
 
-  test('swaps grid for editor when mode flips view → edit', async () => {
+  test('swaps grid for editor when mode flips view → edit (grid stays mounted)', async () => {
     const editor = makeEditor('view')
     const wrapper = mount(editor)
-    expect(wrapper.findComponent({ name: 'CardGrid' }).exists()).toBe(true)
+    expect(gridDisplay(wrapper)).not.toBe('none')
 
     editor.mode.value = 'edit'
     await nextTick()
     await nextTick()
 
-    expect(wrapper.findComponent({ name: 'CardGrid' }).exists()).toBe(false)
+    expect(wrapper.findComponent({ name: 'CardGrid' }).exists()).toBe(true)
+    expect(gridDisplay(wrapper)).toBe('none')
     expect(wrapper.findComponent({ name: 'CardEditor' }).exists()).toBe(true)
   })
 

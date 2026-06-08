@@ -36,10 +36,10 @@ describe('card-overlay animations', () => {
       )
     })
 
-    test('does not take the entering grid out of flow', () => {
+    test('clears leftover positioning so the entering grid rejoins flow', () => {
       fadeScaleEnter(el, done)
 
-      expect(mockSet).not.toHaveBeenCalled()
+      expect(mockSet).toHaveBeenCalledWith(el, { clearProps: 'position,top,left,width' })
     })
   })
 

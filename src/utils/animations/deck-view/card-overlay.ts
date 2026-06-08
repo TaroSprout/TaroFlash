@@ -18,8 +18,11 @@ function viewportDistance() {
 const ORIGIN = 'top center'
 
 // Entering grid stays in flow (it defines the settled height) and fades up
-// from a slightly shrunk state.
+// from a slightly shrunk state. The grid is kept mounted via v-show, so clear
+// the absolute positioning a prior leave left behind — it must rejoin flow to
+// define the page height again.
 export function fadeScaleEnter(el: Element, done: () => void) {
+  gsap.set(el, { clearProps: 'position,top,left,width' })
   gsap.fromTo(
     el,
     { opacity: 0, scale: SCALE, transformOrigin: ORIGIN },

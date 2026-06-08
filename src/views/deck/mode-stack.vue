@@ -51,7 +51,7 @@ function onOverlayAfterLeave() {
     :class="{ 'overflow-hidden': is_transitioning }"
   >
     <Transition :css="false" @enter="fadeScaleEnter" @leave="fadeScaleLeave">
-      <card-grid v-if="is_view" class="w-full" />
+      <card-grid v-show="is_view" class="w-full" />
     </Transition>
 
     <Transition
