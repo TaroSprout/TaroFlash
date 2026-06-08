@@ -437,6 +437,7 @@
   "deck-view.actions.edit-cards": "Edit Cards",
   "deck-view.actions.stop-editing": "Stop Editing",
   "deck-view.actions.select-cards": "Select Cards",
+  "deck-view.actions.edit-card-appearance": "Edit Card Appearance",
   "deck-view.actions.prev-page": "Page {page}",
   "deck-view.actions.next-page": "Page {page}",
   "deck-view.page-dots.tooltip": "Page {page}",

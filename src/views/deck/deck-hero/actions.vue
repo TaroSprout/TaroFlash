@@ -1,17 +1,32 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui-kit/button.vue'
-import { inject } from 'vue'
+import UiDropdownButton, {
+  type DropdownOption
+} from '@/components/ui-kit/dropdown-button/index.vue'
+import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useStudyModal } from '@/composables/modals/use-study-modal'
+import { useDeckSettingsModal } from '@/composables/modals/use-deck-settings-modal'
 import { type CardListController } from '@/composables/card-editor/card-list-controller'
 
 const { deck } = defineProps<{ deck: Deck }>()
 
 const { t } = useI18n()
 const study_session = useStudyModal()
+const deck_settings = useDeckSettingsModal()
 
 const editor = inject<CardListController | null>('card-editor', null)
 const mode = editor?.mode
+
+const is_editing = computed(() => mode?.value === 'edit')
+const edit_options = computed<DropdownOption[]>(() => [
+  { label: t('deck-view.actions.select-cards'), value: 'select', icon: 'data-check' },
+  {
+    label: t('deck-view.actions.edit-card-appearance'),
+    value: 'appearance',
+    icon: 'align-horizontal-frame'
+  }
+])
 
 function onStudyClicked() {
   study_session.start(deck)
@@ -22,8 +37,9 @@ function onToggleEditCards() {
   editor.setMode(editor.mode.value === 'edit' ? 'view' : 'edit')
 }
 
-function onSelectCards() {
-  editor?.actions.onSelectCard()
+function onEditOption(option: DropdownOption) {
+  if (option.value === 'select') editor?.actions.onSelectCard()
+  else if (option.value === 'appearance') deck_settings.open(deck, { tab: 'design', side: 'front' })
 }
 </script>
 
@@ -48,31 +64,19 @@ function onSelectCards() {
       </div>
     </ui-button>
 
-    <ui-button
+    <ui-dropdown-button
       data-testid="overview-panel__settings-button"
-      :icon-left="mode === 'edit' ? 'stop' : 'edit'"
-      :data-theme="mode === 'edit' ? 'yellow-500' : 'brown-300'"
-      :data-theme-dark="mode === 'edit' ? 'yellow-700' : 'stone-700'"
+      :options="edit_options"
+      :icon-left="is_editing ? 'stop' : 'edit'"
+      :data-theme="is_editing ? 'yellow-500' : 'brown-300'"
+      :data-theme-dark="is_editing ? 'yellow-700' : 'stone-700'"
       full-width
       size="xl"
+      :sfx="{ click: 'ui.select' }"
       @click="onToggleEditCards"
-      v-sfx.click="'ui.select'"
+      @select="onEditOption"
     >
-      {{
-        mode === 'edit' ? t('deck-view.actions.stop-editing') : t('deck-view.actions.edit-cards')
-      }}
-    </ui-button>
-
-    <ui-button
-      data-testid="overview-panel__select-cards-button"
-      data-theme="brown-300"
-      data-theme-dark="stone-700"
-      icon-left="data-check"
-      full-width
-      size="xl"
-      @click="onSelectCards"
-    >
-      {{ t('deck-view.actions.select-cards') }}
-    </ui-button>
+      {{ is_editing ? t('deck-view.actions.stop-editing') : t('deck-view.actions.edit-cards') }}
+    </ui-dropdown-button>
   </div>
 </template>
