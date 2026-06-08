@@ -1,0 +1,104 @@
+import { describe, test, expect, vi } from 'vite-plus/test'
+import { shallowMount } from '@vue/test-utils'
+import { defineComponent, h, ref } from 'vue'
+
+const GridItemStub = defineComponent({
+  name: 'GridItem',
+  props: ['card', 'side', 'fill', 'card_attributes', 'selected'],
+  setup(props) {
+    return () =>
+      h('div', {
+        'data-testid': 'grid-item-stub',
+        'data-card-id': props.card?.id,
+        'data-fill': String(props.fill)
+      })
+  }
+})
+
+import ScrollGrid from '@/views/deck/card-grid/scroll-grid.vue'
+
+function makeEditor({
+  all_cards = [],
+  card_attributes = ref({ front: {}, back: {} }),
+  hasNextPage = false,
+  isLoading = false,
+  observeSentinel = vi.fn()
+} = {}) {
+  return {
+    list: { all_cards: ref(all_cards) },
+    selection: { isCardSelected: vi.fn().mockReturnValue(false) },
+    card_attributes,
+    hasNextPage: ref(hasNextPage),
+    isLoading: ref(isLoading),
+    observeSentinel
+  }
+}
+
+function mountScrollGrid(editor = makeEditor()) {
+  return shallowMount(ScrollGrid, {
+    global: {
+      provide: { 'card-editor': editor },
+      stubs: { GridItem: GridItemStub }
+    }
+  })
+}
+
+describe('card-grid/scroll-grid', () => {
+  test('renders the grid container', () => {
+    const wrapper = mountScrollGrid()
+    expect(wrapper.find('[data-testid="card-grid-container"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="card-grid"]').exists()).toBe(true)
+  })
+
+  test('renders one grid-item per card in list.all_cards [obligation]', () => {
+    const editor = makeEditor({
+      all_cards: [
+        { id: 1, client_id: 'c1', front_text: 'q1', back_text: 'a1' },
+        { id: 2, client_id: 'c2', front_text: 'q2', back_text: 'a2' },
+        { id: 3, client_id: 'c3', front_text: 'q3', back_text: 'a3' }
+      ]
+    })
+    const wrapper = mountScrollGrid(editor)
+    const items = wrapper.findAll('[data-testid="grid-item-stub"]')
+    expect(items).toHaveLength(3)
+  })
+
+  test('renders grid-items with fill=false [obligation]', () => {
+    const editor = makeEditor({
+      all_cards: [{ id: 1, client_id: 'c1', front_text: 'q', back_text: 'a' }]
+    })
+    const wrapper = mountScrollGrid(editor)
+    expect(wrapper.find('[data-testid="grid-item-stub"]').attributes('data-fill')).toBe('false')
+  })
+
+  test('does not render the infinite-scroll sentinel when hasNextPage is false [obligation]', () => {
+    const editor = makeEditor({ hasNextPage: false })
+    const wrapper = mountScrollGrid(editor)
+    expect(wrapper.find('[data-testid="card-grid__sentinel"]').exists()).toBe(false)
+  })
+
+  test('renders the infinite-scroll sentinel only when hasNextPage is true [obligation]', () => {
+    const editor = makeEditor({ hasNextPage: true })
+    const wrapper = mountScrollGrid(editor)
+    expect(wrapper.find('[data-testid="card-grid__sentinel"]').exists()).toBe(true)
+  })
+
+  test('calls observeSentinel on mount', () => {
+    const editor = makeEditor()
+    mountScrollGrid(editor)
+    expect(editor.observeSentinel).toHaveBeenCalledOnce()
+  })
+
+  test('shows loading text inside the sentinel when isLoading is true', () => {
+    const editor = makeEditor({ hasNextPage: true, isLoading: true })
+    const wrapper = mountScrollGrid(editor)
+    expect(wrapper.find('[data-testid="card-grid__sentinel"]').text()).toContain('Loading')
+  })
+
+  test('renders an empty grid when all_cards is empty', () => {
+    const editor = makeEditor({ all_cards: [] })
+    const wrapper = mountScrollGrid(editor)
+    expect(wrapper.findAll('[data-testid="grid-item-stub"]')).toHaveLength(0)
+    expect(wrapper.find('[data-testid="card-grid"]').exists()).toBe(true)
+  })
+})
