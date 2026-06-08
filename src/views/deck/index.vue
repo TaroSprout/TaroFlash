@@ -39,6 +39,11 @@ const is_empty = computed(() => !editor.isLoading.value && editor.list.all_cards
 
     <div data-testid="deck-view__main" :data-mode="editor.mode.value" class="relative w-full pb-4">
       <div data-testid="deck-view__toolbar" class="sticky top-(--nav-height) z-20">
+        <div
+          data-testid="deck-view__toolbar-backing"
+          aria-hidden="true"
+          class="absolute inset-x-0 bottom-0 top-[calc(var(--nav-height)*-1)] -z-10 bg-brown-100 dark:bg-grey-900"
+        ></div>
         <mode-toolbar />
       </div>
 

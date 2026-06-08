@@ -139,6 +139,13 @@ describe('DeckView (views/deck/index.vue)', () => {
     expect(toolbar.classes()).toContain('sticky')
   })
 
+  test('backs the sticky toolbar with a filler that covers the gap up to the nav', () => {
+    const wrapper = mount()
+    const backing = wrapper.find('[data-testid="deck-view__toolbar-backing"]')
+    expect(backing.exists()).toBe(true)
+    expect(backing.attributes('aria-hidden')).toBe('true')
+  })
+
   test('renders the page scroll-bar tracking the document in every mode', () => {
     for (const mode of ['view', 'edit', 'import-export']) {
       const wrapper = mount({ editorOpts: { mode } })
