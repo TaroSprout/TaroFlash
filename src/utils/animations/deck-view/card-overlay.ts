@@ -1,32 +1,75 @@
 import { gsap } from 'gsap'
 
-const DURATION = 0.3
-const DISTANCE = '100%'
+const DURATION = 0.5
+const SCALE = 0.95
 
-// Lift the entering pane out of flow so it slides up *over* the outgoing pane
-// (which still occupies the container and gives it height to slide across).
-export function primeOverlayBelow(el: Element) {
-  gsap.set(el, { position: 'absolute', inset: 0, zIndex: 1, translateY: DISTANCE })
+// One screen of travel. The overlay (editor/importer) is a full page-flow
+// pane far taller than the viewport, so sliding by its own height would push
+// it mostly off-screen for the whole tween; a viewport-relative distance keeps
+// the slide visible regardless of content height.
+function viewportDistance() {
+  return window.innerHeight
 }
 
-export function slideOverlayUp(el: Element, done: () => void) {
+/* ── Grid pane: scales down + fades ───────────────────────────────────────── */
+
+// Anchor the scale to the top edge so it shrinks/grows downward only — a
+// centre origin drifts the top edge and reads as a vertical slide.
+const ORIGIN = 'top center'
+
+// Entering grid stays in flow (it defines the settled height) and fades up
+// from a slightly shrunk state.
+export function fadeScaleEnter(el: Element, done: () => void) {
+  gsap.fromTo(
+    el,
+    { opacity: 0, scale: SCALE, transformOrigin: ORIGIN },
+    { opacity: 1, scale: 1, duration: DURATION, ease: 'expo.out', onComplete: done }
+  )
+}
+
+// Leaving grid drops out of flow (so the entering pane owns the height) and
+// shrinks + fades in place.
+export function fadeScaleLeave(el: Element, done: () => void) {
+  gsap.set(el, { position: 'absolute', top: 0, left: 0, width: '100%' })
   gsap.to(el, {
-    translateY: 0,
+    opacity: 0,
+    scale: SCALE,
+    transformOrigin: ORIGIN,
     duration: DURATION,
     ease: 'expo.out',
     onComplete: done
   })
 }
 
-// Drop the entered pane back into normal flow so the page — not the pane —
-// owns the scroll once the swap settles.
-export function settleOverlay(el: Element) {
-  gsap.set(el, { clearProps: 'position,inset,zIndex,transform' })
+/* ── Overlay pane (editor / importer): slides up + down ───────────────────── */
+
+// Entering overlay stays in flow but starts one screen below its slot, layered
+// above the grid, and rises into place.
+export function primeOverlayBelow(el: Element) {
+  gsap.set(el, { position: 'relative', zIndex: 1, y: viewportDistance() })
 }
 
-export function slideOverlayDown(el: Element, done: () => void) {
+export function slideOverlayUp(el: Element, done: () => void) {
   gsap.to(el, {
-    translateY: DISTANCE,
+    y: 0,
+    duration: DURATION,
+    ease: 'expo.out',
+    onComplete: done
+  })
+}
+
+// Drop the entered overlay's inline overrides so it settles as a plain in-flow
+// block and the page — not the pane — owns the scroll.
+export function settleOverlay(el: Element) {
+  gsap.set(el, { clearProps: 'position,zIndex,transform' })
+}
+
+// Leaving overlay drops out of flow (so the entering grid owns the height) and
+// slides one screen down, still layered on top.
+export function slideOverlayDown(el: Element, done: () => void) {
+  gsap.set(el, { position: 'absolute', top: 0, left: 0, width: '100%', zIndex: 1 })
+  gsap.to(el, {
+    y: viewportDistance(),
     duration: DURATION,
     ease: 'expo.out',
     onComplete: done
