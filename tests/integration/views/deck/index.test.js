@@ -32,18 +32,6 @@ const ModeStackStub = defineComponent({
   name: 'ModeStack',
   setup: () => () => h('div', { 'data-testid': 'mode-stack-stub' })
 })
-const PageDotsStub = defineComponent({
-  name: 'PageDots',
-  setup: () => () => h('div', { 'data-testid': 'page-dots-stub' })
-})
-const PageNavButtonStub = defineComponent({
-  name: 'PageNavButton',
-  props: ['direction'],
-  setup:
-    (props, { slots }) =>
-    () =>
-      h('div', { 'data-testid': `page-nav-${props.direction}` }, slots.default?.())
-})
 const ScrollBarStub = defineComponent({
   name: 'ScrollBar',
   props: ['target'],
@@ -55,11 +43,7 @@ function makeEditor({ mode = 'view', cards = [], isLoading = false } = {}) {
   return {
     mode: ref(mode),
     list: { all_cards: computed(() => cards) },
-    isLoading: ref(isLoading),
-    carousel: {
-      prev_page_number: computed(() => 1),
-      next_page_number: computed(() => 2)
-    }
+    isLoading: ref(isLoading)
   }
 }
 
@@ -77,8 +61,6 @@ function mount({ deck = { id: 1, name: 'Test' }, editorOpts = {} } = {}) {
         DeckHero: DeckHeroStub,
         ModeToolbar: ModeToolbarStub,
         ModeStack: ModeStackStub,
-        PageDots: PageDotsStub,
-        PageNavButton: PageNavButtonStub,
         ScrollBar: ScrollBarStub
       }
     }
@@ -141,12 +123,6 @@ describe('DeckView (views/deck/index.vue)', () => {
   test('passes the parsed numeric deck id to useCardListController', () => {
     mount()
     expect(useCardListControllerMock).toHaveBeenCalledWith({ deck_id: 1 })
-  })
-
-  test('renders both page-nav buttons with their direction', () => {
-    const wrapper = mount()
-    expect(wrapper.find('[data-testid="page-nav-prev"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="page-nav-next"]').exists()).toBe(true)
   })
 
   test('does not render the scroll-bar in view mode', () => {
