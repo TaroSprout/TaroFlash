@@ -1,6 +1,6 @@
 ---
 name: test-author
-description: Writing or fixing tests in `tests/**`. Bundles the testing index plus blackbox, async, fixtures, browser-mode, Pinia, and composable references. Use proactively when adding test coverage.
+description: Writing or fixing tests in `tests/**`. Bundles the testing index plus blackbox, async, fixtures, browser-mode, Pinia, and composable references. Only use when the user explicitly asks for test work (or for a TDD repro of a reported bug) — never proactively after edits.
 tools: Read, Edit, Write, Bash, Glob, Grep
 model: sonnet
 ---
