@@ -227,10 +227,10 @@ const DeckAsideStub = defineComponent({
   }
 })
 
-function makeWrapper() {
+function makeWrapper(extraProps = {}) {
   const close = vi.fn()
   const wrapper = mount(DeckSettings, {
-    props: { deck: deckFixture.one({ overrides: { id: 1 } }), close },
+    props: { deck: deckFixture.one({ overrides: { id: 1 } }), close, ...extraProps },
     global: {
       stubs: {
         TabSheet: TabSheetStub,
@@ -523,5 +523,52 @@ describe('DeckSettings — overlay actions', () => {
     expect(idleSpy.mock.calls[0][0]).toBeTypeOf('function')
 
     window.requestIdleCallback = originalIdle
+  })
+})
+
+describe('DeckSettings — initial_tab / initial_side override persisted state [obligation]', () => {
+  test('initial_tab overrides persisted session tab (design wins over general)', () => {
+    // Simulates: user last had "general" persisted, but caller requests "design"
+    initialTab.value = 'general'
+    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Card Designer')
+  })
+
+  test('initial_tab overrides any persisted tab value (study wins over danger-zone)', () => {
+    initialTab.value = 'danger-zone'
+    const { wrapper } = makeWrapper({ initial_tab: 'study' })
+    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe(
+      'Study Preferences'
+    )
+  })
+
+  test('initial_side calls editor.setActiveSide with the provided side [obligation]', () => {
+    const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
+    initialTab.value = 'design'
+    makeWrapper({ initial_side: 'front' })
+    expect(setActiveSide).toHaveBeenCalledWith('front')
+    setActiveSide.mockRestore()
+  })
+
+  test('initial_side=back calls editor.setActiveSide("back") [obligation]', () => {
+    const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
+    initialTab.value = 'design'
+    makeWrapper({ initial_side: 'back' })
+    expect(setActiveSide).toHaveBeenCalledWith('back')
+    setActiveSide.mockRestore()
+  })
+
+  test('omitting initial_side does not call editor.setActiveSide', () => {
+    const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
+    initialTab.value = 'design'
+    makeWrapper()
+    expect(setActiveSide).not.toHaveBeenCalled()
+    setActiveSide.mockRestore()
+  })
+
+  test('omitting initial_tab leaves persisted tab unchanged (danger-zone)', () => {
+    initialTab.value = 'danger-zone'
+    const { wrapper } = makeWrapper()
+    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Danger Zone')
   })
 })
