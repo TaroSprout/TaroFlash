@@ -29,6 +29,7 @@ type PopoverProps = {
   use_arrow?: boolean
   clip?: boolean
   anchor_rect?: DOMRect | null
+  teleport?: boolean
 }
 
 const {
@@ -44,7 +45,8 @@ const {
   shadow = false,
   use_arrow = true,
   clip = true,
-  anchor_rect = null
+  anchor_rect = null,
+  teleport = false
 } = defineProps<PopoverProps>()
 
 const emit = defineEmits<{
@@ -135,39 +137,45 @@ watch(
   >
     <slot name="trigger"></slot>
 
-    <Transition
-      :duration="transition_duration"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      enter-active-class="transition-opacity duration-100 ease-in-out"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-      leave-active-class="transition-opacity duration-100 ease-in-out"
-    >
-      <div
-        v-if="open || mode === 'hover'"
-        v-show="!middlewareData.hide?.referenceHidden"
-        ref="popoverRef"
-        data-testid="ui-kit-popover"
-        class="ui-kit-popover"
-        :class="`ui-kit-popover--${side} ${shadow ? 'ui-kit-popover--shadow' : ''}`"
-        :style="floatingStyles"
+    <Teleport to="body" :disabled="!teleport">
+      <Transition
+        :duration="transition_duration"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        enter-active-class="transition-opacity duration-100 ease-in-out"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+        leave-active-class="transition-opacity duration-100 ease-in-out"
       >
-        <span data-testid="ui-kit-popover__bridge" class="ui-kit-popover__bridge"></span>
-        <slot></slot>
         <div
-          v-if="use_arrow"
-          ref="arrowRef"
-          data-testid="ui-kit-popover__arrow"
-          class="ui-kit-popover__arrow"
-          :style="arrowStyle"
+          v-if="open || mode === 'hover'"
+          v-show="!middlewareData.hide?.referenceHidden"
+          ref="popoverRef"
+          :data-id="id"
+          data-testid="ui-kit-popover"
+          class="ui-kit-popover"
+          :class="[
+            `ui-kit-popover--${side}`,
+            { 'ui-kit-popover--shadow': shadow, 'ui-kit-popover--open': open }
+          ]"
+          :style="floatingStyles"
         >
-          <slot name="arrow" :side="side">
-            <div class="ui-kit-popover__arrow-default" />
-          </slot>
+          <span data-testid="ui-kit-popover__bridge" class="ui-kit-popover__bridge"></span>
+          <slot></slot>
+          <div
+            v-if="use_arrow"
+            ref="arrowRef"
+            data-testid="ui-kit-popover__arrow"
+            class="ui-kit-popover__arrow"
+            :style="arrowStyle"
+          >
+            <slot name="arrow" :side="side">
+              <div class="ui-kit-popover__arrow-default" />
+            </slot>
+          </div>
         </div>
-      </div>
-    </Transition>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -182,7 +190,8 @@ watch(
 
 .ui-kit-popover-container--click.ui-kit-popover-container--open .ui-kit-popover,
 .ui-kit-popover-container--hover:hover .ui-kit-popover,
-.ui-kit-popover-container--hover .ui-kit-popover:hover {
+.ui-kit-popover-container--hover .ui-kit-popover:hover,
+.ui-kit-popover--open {
   display: block;
 }
 

@@ -138,8 +138,6 @@ function onLeave(el: Element, done: () => void) {
   --card-bg-color: var(--color-white);
   --card-text-color: var(--color-brown-700);
   --card-text-color--placeholder: var(--color-brown-500);
-  --card-font-size: var(--text-base);
-  --card-font-size--line-height: var(--text-base--line-height);
 
   aspect-ratio: var(--aspect-card);
   position: relative;
@@ -147,8 +145,6 @@ function onLeave(el: Element, done: () => void) {
   transition: width 0.05s ease-in-out;
 
   color: var(--card-text-color);
-  font-size: var(--card-font-size);
-  line-height: var(--card-font-size--line-height);
 }
 
 .card-container--2xl {
@@ -163,14 +159,19 @@ function onLeave(el: Element, done: () => void) {
   --face-radius: 58px;
   --face-padding: 30px;
   --min-element-height: 80px;
-  --card-font-size: var(--text-lg);
-  --card-font-size--line-height: var(--text-lg--line-height);
 }
 .card-container--lg {
   --card-width: 260px;
   --face-border-width: 6px;
   --face-radius: 56px;
   --face-padding: 24px;
+}
+.card-container--md {
+  --card-width: 240px;
+  --face-border-width: 4px;
+  --face-radius: 46px;
+  --face-padding: 16px;
+  --min-element-height: 80px;
 }
 .card-container--base {
   --card-width: 192px;

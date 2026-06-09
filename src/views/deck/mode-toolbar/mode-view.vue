@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import toolbarBase from './toolbar-base.vue'
 import CardCount from './card-count.vue'
+import PageSettings from './page-settings.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useI18n } from 'vue-i18n'
 import { inject } from 'vue'
@@ -24,6 +25,8 @@ const { addCard } = inject<CardListController>('card-editor')!
       >
         {{ t('deck-view.mode-view.search') }}
       </ui-button>
+
+      <page-settings />
 
       <ui-button
         data-testid="mode-view__add-card-button"

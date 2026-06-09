@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
 
@@ -22,7 +22,8 @@ function makeEditor({
   card_attributes = ref({ front: {}, back: {} }),
   hasNextPage = false,
   isLoading = false,
-  observeSentinel = vi.fn()
+  observeSentinel = vi.fn(),
+  grid_size = 'md'
 } = {}) {
   return {
     list: { all_cards: ref(all_cards) },
@@ -30,7 +31,8 @@ function makeEditor({
     card_attributes,
     hasNextPage: ref(hasNextPage),
     isLoading: ref(isLoading),
-    observeSentinel
+    observeSentinel,
+    grid_size: ref(grid_size)
   }
 }
 
@@ -44,6 +46,36 @@ function mountScrollGrid(editor = makeEditor()) {
 }
 
 describe('card-grid/scroll-grid', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
+  // ── grid_size → gridTemplateColumns track width ───────────────────────────
+
+  test('grid style uses 192px track width for grid_size="base" [obligation]', () => {
+    const editor = makeEditor({ grid_size: 'base' })
+    const wrapper = mountScrollGrid(editor)
+    expect(wrapper.find('[data-testid="card-grid"]').attributes('style')).toContain(
+      'grid-template-columns: repeat(auto-fill, 192px)'
+    )
+  })
+
+  test('grid style uses 240px track width for grid_size="md" [obligation]', () => {
+    const editor = makeEditor({ grid_size: 'md' })
+    const wrapper = mountScrollGrid(editor)
+    expect(wrapper.find('[data-testid="card-grid"]').attributes('style')).toContain(
+      'grid-template-columns: repeat(auto-fill, 240px)'
+    )
+  })
+
+  test('grid style uses 314px track width for grid_size="xl" [obligation]', () => {
+    const editor = makeEditor({ grid_size: 'xl' })
+    const wrapper = mountScrollGrid(editor)
+    expect(wrapper.find('[data-testid="card-grid"]').attributes('style')).toContain(
+      'grid-template-columns: repeat(auto-fill, 314px)'
+    )
+  })
+
   test('renders the grid container', () => {
     const wrapper = mountScrollGrid()
     expect(wrapper.find('[data-testid="card-grid-container"]').exists()).toBe(true)

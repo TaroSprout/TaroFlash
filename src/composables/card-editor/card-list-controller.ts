@@ -8,8 +8,12 @@ import { useCardMutations } from './card-mutations'
 import { useCardCarousel } from './card-carousel'
 import { useCardActions } from './card-actions'
 import { useCardLimitGate } from '@/composables/use-card-limit-gate'
+import { useLocalRef } from '@/composables/use-local-ref'
 
 export type CardListController = ReturnType<typeof useCardListController>
+
+/** Card render size for the deck grid — Small / Base / Full in the toolbar. */
+export type CardGridSize = 'base' | 'md' | 'xl'
 
 type Options = {
   deck_id: number
@@ -51,6 +55,7 @@ export function useCardListController(opts: Options) {
   const limit_gate = useCardLimitGate(() => deck_query.data.value)
 
   const mode = ref<CardEditorMode>('view')
+  const grid_size = useLocalRef<CardGridSize>('deck-grid-size', 'md')
   const saving = ref(false)
 
   const card_attributes = computed<DeckCardAttributes>(() => ({
@@ -63,6 +68,11 @@ export function useCardListController(opts: Options) {
   /** Set the editor's UI mode (view / edit / import-export). */
   function setMode(new_mode: CardEditorMode) {
     mode.value = new_mode
+  }
+
+  /** Set the card render size for the deck grid (Small / Base / Full). */
+  function setGridSize(size: CardGridSize) {
+    grid_size.value = size
   }
 
   /**
@@ -188,6 +198,8 @@ export function useCardListController(opts: Options) {
 
     mode,
     setMode,
+    grid_size,
+    setGridSize,
     addCard,
     appendCard,
     prependCard,
