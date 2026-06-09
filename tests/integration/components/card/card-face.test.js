@@ -141,4 +141,53 @@ describe('CardFace', () => {
     const wrapper = mountFace()
     expect(wrapper.find('.card-face').attributes('data-mode')).toBeUndefined()
   })
+
+  // ── Text-region font size (size × text_size level) ───────────────────────────
+  // Font size scales with BOTH the card size and the per-deck text_size level.
+  // The editor inherits it from the text-region via the cascade.
+
+  function textRegionStyle(wrapper) {
+    return wrapper.find('[data-testid="card-face__text-region"]').attributes('style')
+  }
+
+  test('defaults to base size, level 4 (15px) when no size/attributes provided', () => {
+    expect(textRegionStyle(mountFace())).toContain('font-size: 15px')
+  })
+
+  test('xl size preserves the canonical scale: level 4 maps to 30px', () => {
+    const wrapper = mountFace({ size: 'xl', attributes: { text_size: 4 } })
+    expect(textRegionStyle(wrapper)).toContain('font-size: 30px')
+  })
+
+  test('xl level 1 maps to 16px and level 10 maps to 84px', () => {
+    expect(textRegionStyle(mountFace({ size: 'xl', attributes: { text_size: 1 } }))).toContain(
+      'font-size: 16px'
+    )
+    expect(textRegionStyle(mountFace({ size: 'xl', attributes: { text_size: 10 } }))).toContain(
+      'font-size: 84px'
+    )
+  })
+
+  test('the same level scales down for smaller cards', () => {
+    expect(textRegionStyle(mountFace({ size: '2xl', attributes: { text_size: 4 } }))).toContain(
+      'font-size: 36px'
+    )
+    expect(textRegionStyle(mountFace({ size: 'xs', attributes: { text_size: 4 } }))).toContain(
+      'font-size: 10px'
+    )
+  })
+
+  test('level clamps within the size row', () => {
+    expect(textRegionStyle(mountFace({ size: 'xl', attributes: { text_size: 99 } }))).toContain(
+      'font-size: 84px'
+    )
+    expect(textRegionStyle(mountFace({ size: 'xl', attributes: { text_size: 0 } }))).toContain(
+      'font-size: 16px'
+    )
+  })
+
+  test('non-integer level rounds to the nearest level', () => {
+    const wrapper = mountFace({ size: 'xl', attributes: { text_size: 3.7 } })
+    expect(textRegionStyle(wrapper)).toContain('font-size: 30px')
+  })
 })
