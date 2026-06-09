@@ -157,7 +157,7 @@ function onLeave(el: Element, done: () => void) {
   --card-width: 314px;
   --face-border-width: 6px;
   --face-radius: 58px;
-  --face-padding: 30px;
+  --face-padding: 20px;
   --min-element-height: 80px;
 }
 .card-container--lg {
