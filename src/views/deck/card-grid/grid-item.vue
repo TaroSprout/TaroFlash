@@ -13,15 +13,17 @@ const { is_selecting } = selection
 const {
   card,
   side,
-  fill = true
+  fill = true,
+  size = 'base'
 } = defineProps<{
   card: Card
   side: 'front' | 'back'
   selected: boolean
   card_attributes?: DeckCardAttributes
   // fill: scale an xl card to fill a computed carousel cell;
-  // false: render the card at its natural base size in normal flow
+  // false: render the card at its natural `size` in normal flow
   fill?: boolean
+  size?: CardSize
 }>()
 
 const active_side = ref(side)
@@ -51,7 +53,7 @@ function onCardClick() {
       v-bind="card"
       class="cursor-pointer"
       :class="{ 'grid-item__card': fill }"
-      :size="fill ? 'xl' : 'base'"
+      :size="fill ? 'xl' : size"
       :side="active_side"
       :card_attributes="card_attributes"
       @click="onCardClick"
