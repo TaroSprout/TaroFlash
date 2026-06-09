@@ -10,9 +10,6 @@ type TextEditorProps = {
 
 const { disabled, content, attributes } = defineProps<TextEditorProps>()
 
-const LEVEL_PX = [16, 20, 24, 30, 36, 44, 52, 60, 70, 84]
-const DEFAULT_LEVEL = 4
-
 const emit = defineEmits<{
   (e: 'update', text: string): void
   (e: 'focus'): void
@@ -22,13 +19,8 @@ const emit = defineEmits<{
 const text_editor = useTemplateRef<HTMLDivElement>('text-editor')
 const has_content = ref(Boolean(content?.length))
 
-const font_size_px = computed(() => {
-  const level = attributes?.text_size ?? DEFAULT_LEVEL
-  const clamped = Math.min(LEVEL_PX.length, Math.max(1, Math.round(level)))
-  return LEVEL_PX[clamped - 1]
-})
-
-const editor_style = computed(() => ({ fontSize: `${font_size_px.value}px` }))
+// Font size is owned by the parent card-face and inherited via the cascade — see
+// SIZE_LEVEL_PX there. This surface only renders text and its alignment.
 const editor_classes = computed(() => [
   'text-editor',
   `text-editor--h-${attributes?.horizontal_alignment ?? 'center'}`,
@@ -59,13 +51,7 @@ defineExpose({ focus })
 
 <template>
   <div data-testid="text-editor-container" class="relative">
-    <div
-      v-if="disabled"
-      data-testid="text-editor"
-      contenteditable="false"
-      :style="editor_style"
-      :class="editor_classes"
-    >
+    <div v-if="disabled" data-testid="text-editor" contenteditable="false" :class="editor_classes">
       {{ content }}
     </div>
 
@@ -74,7 +60,6 @@ defineExpose({ focus })
       data-testid="text-editor"
       ref="text-editor"
       contenteditable="plaintext-only"
-      :style="editor_style"
       :class="editor_classes"
       @input="on_input"
       @focus="emit('focus')"

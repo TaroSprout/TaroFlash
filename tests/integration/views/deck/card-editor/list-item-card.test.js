@@ -43,7 +43,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/sfx/bus', () => ({ emitSfx: mocks.emitSfxMock, emitHoverSfx: vi.fn() }))
 
 import ListItemCard from '@/views/deck/card-editor/list-item-card.vue'
-import textEditor from '@/components/text-editor/text-editor.vue'
+import textEditor from '@/components/card/text-editor.vue'
 
 function makeCard(overrides = {}) {
   return {

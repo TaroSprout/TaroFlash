@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Card from '@/components/card/index.vue'
-import TextEditor from '@/components/text-editor/text-editor.vue'
+import TextEditor from '@/components/card/text-editor.vue'
 import { computed } from 'vue'
 import { useDeckContext } from './deck-context'
 

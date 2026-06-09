@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import Card from '@/components/card/index.vue'
-import textEditor from '@/components/text-editor/text-editor.vue'
+import textEditor from '@/components/card/text-editor.vue'
 
 type CardFaceFieldProps = {
   side: 'front' | 'back'

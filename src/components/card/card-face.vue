@@ -1,16 +1,44 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import textEditor from '../text-editor/text-editor.vue'
+import textEditor from './text-editor.vue'
 import { CARD_ATTRIBUTES_DEFAULTS } from '@/utils/deck/defaults'
 
-const { image, text, attributes } = defineProps<{
+const {
+  image,
+  text,
+  attributes,
+  size = 'base'
+} = defineProps<{
   image?: string
   text?: string
   mode?: 'view' | 'edit'
   attributes?: CardAttributes
+  size?: CardSize
 }>()
 
+// Font size depends on BOTH the card size and the per-deck text_size level (1–10).
+// The xl row is the canonical scale; other rows scale by card width. Both the
+// default editor and any slotted editor inherit this via the cascade.
+const SIZE_LEVEL_PX: Record<CardSize, number[]> = {
+  '2xl': [19, 24, 29, 36, 44, 53, 63, 73, 85, 102],
+  xl: [16, 20, 24, 30, 36, 44, 52, 60, 70, 84],
+  lg: [13, 17, 20, 25, 30, 36, 43, 50, 58, 70],
+  base: [8, 10, 12, 15, 18, 22, 27, 31, 36, 43],
+  sm: [7, 9, 11, 13, 16, 19, 23, 26, 31, 37],
+  xs: [5, 6, 8, 10, 12, 14, 17, 19, 23, 27],
+  '2xs': [4, 4, 4, 4, 5, 6, 7, 8, 10, 12],
+  '3xs': [4, 4, 4, 4, 4, 4, 5, 5, 6, 7]
+}
+const DEFAULT_TEXT_LEVEL = 4
+
 const layout = computed(() => attributes?.image_layout ?? CARD_ATTRIBUTES_DEFAULTS.image_layout)
+
+const font_size = computed(() => {
+  const levels = SIZE_LEVEL_PX[size]
+  const level = attributes?.text_size ?? DEFAULT_TEXT_LEVEL
+  const clamped = Math.min(levels.length, Math.max(1, Math.round(level)))
+  return `${levels[clamped - 1]}px`
+})
 </script>
 
 <template>
@@ -32,7 +60,11 @@ const layout = computed(() => attributes?.image_layout ?? CARD_ATTRIBUTES_DEFAUL
       </slot>
     </div>
 
-    <div data-testid="card-face__text-region" class="card-face__text-region">
+    <div
+      data-testid="card-face__text-region"
+      class="card-face__text-region"
+      :style="{ fontSize: font_size }"
+    >
       <slot name="editor">
         <text-editor
           :content="text"

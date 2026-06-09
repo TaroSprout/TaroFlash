@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import TextEditor from '@/components/text-editor/text-editor.vue'
+import TextEditor from '@/components/card/text-editor.vue'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -32,11 +32,7 @@ describe('TextEditor', () => {
   })
 
   // ── Default classes ────────────────────────────────────────────────────────
-
-  test('applies default font-size of 30px (level 4) when no attributes provided', () => {
-    const wrapper = makeEditor()
-    expect(getEditorEl(wrapper).attributes('style')).toContain('font-size: 30px')
-  })
+  // Font size is owned by the parent card-face (see card-face.test.js), not here.
 
   test('applies default horizontal alignment class when no attributes provided', () => {
     const wrapper = makeEditor()
@@ -46,43 +42,6 @@ describe('TextEditor', () => {
   test('applies default vertical alignment class when no attributes provided', () => {
     const wrapper = makeEditor()
     expect(getEditorEl(wrapper).classes()).toContain('text-editor--v-center')
-  })
-
-  // ── Font size by level ─────────────────────────────────────────────────────
-
-  test('level 1 maps to 16px', () => {
-    const wrapper = makeEditor({ attributes: { text_size: 1 } })
-    expect(getEditorEl(wrapper).attributes('style')).toContain('font-size: 16px')
-  })
-
-  test('level 2 maps to 20px', () => {
-    const wrapper = makeEditor({ attributes: { text_size: 2 } })
-    expect(getEditorEl(wrapper).attributes('style')).toContain('font-size: 20px')
-  })
-
-  test('level 4 maps to 30px (default level)', () => {
-    const wrapper = makeEditor({ attributes: { text_size: 4 } })
-    expect(getEditorEl(wrapper).attributes('style')).toContain('font-size: 30px')
-  })
-
-  test('level 10 maps to 84px (max)', () => {
-    const wrapper = makeEditor({ attributes: { text_size: 10 } })
-    expect(getEditorEl(wrapper).attributes('style')).toContain('font-size: 84px')
-  })
-
-  test('level above 10 clamps to 84px', () => {
-    const wrapper = makeEditor({ attributes: { text_size: 99 } })
-    expect(getEditorEl(wrapper).attributes('style')).toContain('font-size: 84px')
-  })
-
-  test('level below 1 clamps to 16px', () => {
-    const wrapper = makeEditor({ attributes: { text_size: 0 } })
-    expect(getEditorEl(wrapper).attributes('style')).toContain('font-size: 16px')
-  })
-
-  test('non-integer level rounds to nearest level', () => {
-    const wrapper = makeEditor({ attributes: { text_size: 3.7 } })
-    expect(getEditorEl(wrapper).attributes('style')).toContain('font-size: 30px')
   })
 
   // ── Alignment classes ──────────────────────────────────────────────────────
@@ -118,7 +77,6 @@ describe('TextEditor', () => {
       }
     })
     const el = getEditorEl(wrapper)
-    expect(el.attributes('style')).toContain('font-size: 44px')
     expect(el.classes()).toContain('text-editor--h-right')
     expect(el.classes()).toContain('text-editor--v-bottom')
   })
@@ -128,7 +86,6 @@ describe('TextEditor', () => {
   test('falls back to defaults for missing attribute fields', () => {
     const wrapper = makeEditor({ attributes: { text_size: 2 } })
     const el = getEditorEl(wrapper)
-    expect(el.attributes('style')).toContain('font-size: 20px')
     expect(el.classes()).toContain('text-editor--h-center')
     expect(el.classes()).toContain('text-editor--v-center')
   })
