@@ -17,11 +17,12 @@ const emit = defineEmits<{
   (e: 'select', selection: TermSelection): void
 }>()
 
-const { onPointerDown, onPointerMove, onPointerUp, onPointerLeave } = useReaderHighlights(
-  () => active_word,
-  commitSelection,
-  () => popover_open
-)
+const { onPointerDown, onPointerMove, onPointerUp, onPointerLeave, onPointerCancel } =
+  useReaderHighlights(
+    () => active_word,
+    commitSelection,
+    () => popover_open
+  )
 
 function paragraphIndexOf(node: Element): number | null {
   const segment = node.closest('[data-testid="transcript-segment"]')
@@ -48,6 +49,7 @@ function commitSelection({ term, rect, anchor }: { term: string; rect: DOMRect; 
       @pointermove="onPointerMove"
       @pointerup="onPointerUp"
       @pointerleave="onPointerLeave"
+      @pointercancel="onPointerCancel"
     >
       <div
         ref="sentence"
