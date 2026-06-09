@@ -14,17 +14,22 @@ const { list, selection, card_attributes, hasNextPage, isLoading, observeSentine
 const { all_cards } = list
 const { isCardSelected } = selection
 
-const COLUMN_WIDTH: Record<CardGridSize, string> = {
-  base: '192px',
-  md: '240px',
-  xl: '314px'
+// Cards always render at xl and scale uniformly, so one factor drives both the
+// rendered card and its grid column — no per-size visual tuning to keep in sync.
+const XL_CARD_WIDTH = 314
+const CARD_SCALE: Record<CardGridSize, number> = {
+  base: 0.6,
+  md: 0.75,
+  xl: 1
 }
 
 const side = ref<'front' | 'back'>('front')
 const sentinel = useTemplateRef<HTMLElement>('sentinel')
 
+const card_scale = computed(() => CARD_SCALE[grid_size.value])
+
 const grid_style = computed<CSSProperties>(() => ({
-  gridTemplateColumns: `repeat(auto-fill, ${COLUMN_WIDTH[grid_size.value]})`
+  gridTemplateColumns: `repeat(auto-fill, ${XL_CARD_WIDTH * card_scale.value}px)`
 }))
 
 observeSentinel(sentinel)
@@ -39,7 +44,7 @@ observeSentinel(sentinel)
         :card="card"
         :side="side"
         :fill="false"
-        :size="grid_size"
+        :scale="card_scale"
         :card_attributes="card_attributes"
         :selected="card.id !== undefined ? isCardSelected(card.id) : false"
       ></grid-item>
