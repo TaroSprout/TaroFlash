@@ -52,23 +52,23 @@ describe('card-grid/scroll-grid', () => {
 
   // ── grid_size → gridTemplateColumns track width ───────────────────────────
 
-  test('grid style uses 192px track width for grid_size="base" [obligation]', () => {
+  test('grid style scales the xl track to 0.6 for grid_size="base" [obligation]', () => {
     const editor = makeEditor({ grid_size: 'base' })
     const wrapper = mountScrollGrid(editor)
     expect(wrapper.find('[data-testid="card-grid"]').attributes('style')).toContain(
-      'grid-template-columns: repeat(auto-fill, 192px)'
+      'grid-template-columns: repeat(auto-fill, 188.4px)'
     )
   })
 
-  test('grid style uses 240px track width for grid_size="md" [obligation]', () => {
+  test('grid style scales the xl track to 0.75 for grid_size="md" [obligation]', () => {
     const editor = makeEditor({ grid_size: 'md' })
     const wrapper = mountScrollGrid(editor)
     expect(wrapper.find('[data-testid="card-grid"]').attributes('style')).toContain(
-      'grid-template-columns: repeat(auto-fill, 240px)'
+      'grid-template-columns: repeat(auto-fill, 235.5px)'
     )
   })
 
-  test('grid style uses 314px track width for grid_size="xl" [obligation]', () => {
+  test('grid style uses the full xl track width for grid_size="xl" [obligation]', () => {
     const editor = makeEditor({ grid_size: 'xl' })
     const wrapper = mountScrollGrid(editor)
     expect(wrapper.find('[data-testid="card-grid"]').attributes('style')).toContain(
