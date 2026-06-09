@@ -1,5 +1,5 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { shallowMount } from '@vue/test-utils'
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
+import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { useFloating } from '@floating-ui/vue'
 import UiPopover from '@/components/ui-kit/popover.vue'
@@ -34,8 +34,22 @@ vi.mock('@floating-ui/vue', () => ({
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+// Integration tests run in Chromium browser mode. <Teleport> and <Transition>
+// are Vue built-ins that shallowMount stubs away, preventing content from
+// rendering. We use full mount + attachTo: document.body so the component tree
+// is inserted into the live document and wrapper.find() traverses it fully.
+
+const wrappers = []
+
 function mountPopover(props = {}, slots = {}, mountOptions = {}) {
-  return shallowMount(UiPopover, { props, slots, ...mountOptions })
+  const wrapper = mount(UiPopover, {
+    props,
+    slots,
+    attachTo: document.body,
+    ...mountOptions
+  })
+  wrappers.push(wrapper)
+  return wrapper
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -45,6 +59,12 @@ describe('UiPopover', () => {
     floatingState.placement.value = 'top'
     floatingState.middlewareData.value = {}
     useFloating.mockClear()
+  })
+
+  afterEach(() => {
+    wrappers.forEach((w) => w.unmount())
+    wrappers.length = 0
+    document.body.innerHTML = ''
   })
 
   // ── Structure ──────────────────────────────────────────────────────────────
@@ -163,7 +183,7 @@ describe('UiPopover', () => {
   // ── close event on outside click ───────────────────────────────────────────
 
   test('outside-click listener fires in capture phase (sees clicks even when stopPropagation is used)', async () => {
-    const wrapper = mountPopover({ open: false, mode: 'click' }, {}, { attachTo: document.body })
+    const wrapper = mountPopover({ open: false, mode: 'click' })
     await wrapper.setProps({ open: true })
 
     const outside = document.createElement('button')
@@ -180,7 +200,7 @@ describe('UiPopover', () => {
 
   test('emits close when a click occurs outside the container (mode=click)', async () => {
     // The watcher only registers the click listener on the open false→true transition.
-    const wrapper = mountPopover({ open: false, mode: 'click' }, {}, { attachTo: document.body })
+    const wrapper = mountPopover({ open: false, mode: 'click' })
     await wrapper.setProps({ open: true })
 
     // Create an element outside the component and click it — `document` itself
@@ -193,5 +213,57 @@ describe('UiPopover', () => {
     outside.remove()
 
     expect(wrapper.emitted('close')).toHaveLength(1)
+  })
+
+  // ── default (no teleport) — panel renders inline ───────────────────────────
+
+  test('default: panel renders inside the container (not teleported) [obligation]', () => {
+    const wrapper = mountPopover({ open: true })
+    // The panel must be a descendant of the container — content stays inline
+    // when teleport is not set (default disabled teleport).
+    const container = wrapper.find('[data-testid="ui-kit-popover-container"]')
+    expect(container.find('[data-testid="ui-kit-popover"]').exists()).toBe(true)
+  })
+
+  // ── teleport=true — panel renders to body ─────────────────────────────────
+
+  test('panel renders to <body> and is present when open=true with teleport=true [obligation]', () => {
+    mountPopover({ open: true, teleport: true })
+    const panel = document.body.querySelector('[data-testid="ui-kit-popover"]')
+    expect(panel).not.toBeNull()
+  })
+
+  test('panel is absent in the DOM when open=false with teleport=true', () => {
+    mountPopover({ open: false, teleport: true })
+    const panel = document.body.querySelector('[data-testid="ui-kit-popover"]')
+    expect(panel).toBeNull()
+  })
+
+  // ── teleport + click-outside ───────────────────────────────────────────────
+
+  test('click-outside closes a teleported popover [obligation]', async () => {
+    const wrapper = mountPopover({ open: false, mode: 'click', teleport: true })
+    await wrapper.setProps({ open: true })
+
+    const outside = document.createElement('div')
+    document.body.appendChild(outside)
+    outside.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await nextTick()
+
+    outside.remove()
+    expect(wrapper.emitted('close')).toHaveLength(1)
+  })
+
+  test('click inside the teleported panel does NOT close the popover [obligation]', async () => {
+    const wrapper = mountPopover({ open: false, mode: 'click', teleport: true })
+    await wrapper.setProps({ open: true })
+
+    const panel = document.body.querySelector('[data-testid="ui-kit-popover"]')
+    expect(panel).not.toBeNull()
+
+    panel.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await nextTick()
+
+    expect(wrapper.emitted('close')).toBeFalsy()
   })
 })

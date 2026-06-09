@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { card } from '@tests/fixtures/card'
 
 const {
@@ -138,6 +138,7 @@ function makeController(persisted = [], ids = persisted.map((c) => c.id), deck_q
 
 describe('useCardListController', () => {
   beforeEach(() => {
+    localStorage.clear()
     insertCardAtMock.mockReset()
     insertCardAtMock.mockResolvedValue({ id: 9999, rank: 1500 })
     saveCardMock.mockReset()
@@ -177,6 +178,41 @@ describe('useCardListController', () => {
       expect(deselected_ids.value).toEqual([])
       expect(select_all_mode.value).toBe(false)
       expect(saving.value).toBe(false)
+    })
+
+    test('grid_size initializes to "md" when no persisted value exists [obligation]', () => {
+      const { grid_size } = makeController()
+      expect(grid_size.value).toBe('md')
+    })
+
+    test('grid_size rehydrates from localStorage under key deck-grid-size [obligation]', () => {
+      localStorage.setItem('deck-grid-size', JSON.stringify('xl'))
+      const { grid_size } = makeController()
+      expect(grid_size.value).toBe('xl')
+    })
+  })
+
+  // ── setGridSize ────────────────────────────────────────────────────────────
+
+  describe('setGridSize', () => {
+    test('setGridSize("xl") updates grid_size.value to "xl" [obligation]', () => {
+      const { grid_size, setGridSize } = makeController()
+      setGridSize('xl')
+      expect(grid_size.value).toBe('xl')
+    })
+
+    test('setGridSize persists to localStorage under key deck-grid-size [obligation]', async () => {
+      const { setGridSize } = makeController()
+      setGridSize('xl')
+      // watch is { deep: true } with immediate=false; nextTick flushes it
+      await nextTick()
+      expect(JSON.parse(localStorage.getItem('deck-grid-size'))).toBe('xl')
+    })
+
+    test('setGridSize("base") sets grid_size to "base"', () => {
+      const { grid_size, setGridSize } = makeController()
+      setGridSize('base')
+      expect(grid_size.value).toBe('base')
     })
   })
 

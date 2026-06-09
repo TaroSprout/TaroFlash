@@ -168,6 +168,24 @@ describe('CardFace', () => {
     )
   })
 
+  test('md size row: default level 4 maps to 19px [obligation]', () => {
+    expect(textRegionStyle(mountFace({ size: 'md', attributes: { text_size: 4 } }))).toContain(
+      'font-size: 19px'
+    )
+  })
+
+  test('md size row: level 1 maps to 10px [obligation]', () => {
+    expect(textRegionStyle(mountFace({ size: 'md', attributes: { text_size: 1 } }))).toContain(
+      'font-size: 10px'
+    )
+  })
+
+  test('md size row: level 10 maps to 52px', () => {
+    expect(textRegionStyle(mountFace({ size: 'md', attributes: { text_size: 10 } }))).toContain(
+      'font-size: 52px'
+    )
+  })
+
   test('the same level scales down for smaller cards', () => {
     expect(textRegionStyle(mountFace({ size: '2xl', attributes: { text_size: 4 } }))).toContain(
       'font-size: 36px'

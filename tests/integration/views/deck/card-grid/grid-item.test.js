@@ -182,6 +182,16 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('base')
   })
 
+  test('fill=false forwards the explicit size prop to Card [obligation]', () => {
+    const { wrapper } = mountGridItem({ props: { fill: false, size: 'md' } })
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('md')
+  })
+
+  test('fill=true overrides any size prop and always passes "xl" to Card [obligation]', () => {
+    const { wrapper } = mountGridItem({ props: { fill: true, size: 'base' } })
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('xl')
+  })
+
   test('fill defaults to true when prop is omitted', () => {
     const { wrapper } = mountGridItem()
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('xl')
