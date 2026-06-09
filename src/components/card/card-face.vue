@@ -80,7 +80,7 @@ const font_size = computed(() => {
 
 <style>
 .card-face {
-  --inner-radius: calc(var(--face-radius) - var(--face-border-width) - var(--face-padding));
+  --inner-radius: calc(var(--face-radius) - var(--face-padding));
 
   position: relative;
   display: flex;

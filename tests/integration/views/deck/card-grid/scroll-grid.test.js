@@ -4,13 +4,15 @@ import { defineComponent, h, ref } from 'vue'
 
 const GridItemStub = defineComponent({
   name: 'GridItem',
-  props: ['card', 'side', 'fill', 'card_attributes', 'selected'],
+  props: ['card', 'side', 'fill', 'scale', 'card_attributes', 'selected'],
   setup(props) {
     return () =>
       h('div', {
         'data-testid': 'grid-item-stub',
         'data-card-id': props.card?.id,
-        'data-fill': String(props.fill)
+        'data-fill': String(props.fill),
+        'data-scale': String(props.scale),
+        'data-selected': String(props.selected)
       })
   }
 })
@@ -52,23 +54,23 @@ describe('card-grid/scroll-grid', () => {
 
   // ── grid_size → gridTemplateColumns track width ───────────────────────────
 
-  test('grid style uses 192px track width for grid_size="base" [obligation]', () => {
+  test('grid style scales the xl track to 0.6 for grid_size="base" [obligation]', () => {
     const editor = makeEditor({ grid_size: 'base' })
     const wrapper = mountScrollGrid(editor)
     expect(wrapper.find('[data-testid="card-grid"]').attributes('style')).toContain(
-      'grid-template-columns: repeat(auto-fill, 192px)'
+      'grid-template-columns: repeat(auto-fill, 188.4px)'
     )
   })
 
-  test('grid style uses 240px track width for grid_size="md" [obligation]', () => {
+  test('grid style scales the xl track to 0.75 for grid_size="md" [obligation]', () => {
     const editor = makeEditor({ grid_size: 'md' })
     const wrapper = mountScrollGrid(editor)
     expect(wrapper.find('[data-testid="card-grid"]').attributes('style')).toContain(
-      'grid-template-columns: repeat(auto-fill, 240px)'
+      'grid-template-columns: repeat(auto-fill, 235.5px)'
     )
   })
 
-  test('grid style uses 314px track width for grid_size="xl" [obligation]', () => {
+  test('grid style uses the full xl track width for grid_size="xl" [obligation]', () => {
     const editor = makeEditor({ grid_size: 'xl' })
     const wrapper = mountScrollGrid(editor)
     expect(wrapper.find('[data-testid="card-grid"]').attributes('style')).toContain(
@@ -132,5 +134,22 @@ describe('card-grid/scroll-grid', () => {
     const wrapper = mountScrollGrid(editor)
     expect(wrapper.findAll('[data-testid="grid-item-stub"]')).toHaveLength(0)
     expect(wrapper.find('[data-testid="card-grid"]').exists()).toBe(true)
+  })
+
+  test('passes the computed card_scale to each grid-item as the scale prop', () => {
+    const editor = makeEditor({
+      grid_size: 'base',
+      all_cards: [{ id: 1, client_id: 'c1', front_text: 'q', back_text: 'a' }]
+    })
+    const wrapper = mountScrollGrid(editor)
+    expect(wrapper.find('[data-testid="grid-item-stub"]').attributes('data-scale')).toBe('0.6')
+  })
+
+  test('grid-item selected is false when card.id is undefined', () => {
+    const editor = makeEditor({
+      all_cards: [{ client_id: 'c1', front_text: 'q', back_text: 'a' }]
+    })
+    const wrapper = mountScrollGrid(editor)
+    expect(wrapper.find('[data-testid="grid-item-stub"]').attributes('data-selected')).toBe('false')
   })
 })

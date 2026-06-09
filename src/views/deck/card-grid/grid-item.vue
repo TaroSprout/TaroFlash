@@ -14,16 +14,16 @@ const {
   card,
   side,
   fill = true,
-  size = 'base'
+  scale = 1
 } = defineProps<{
   card: Card
   side: 'front' | 'back'
   selected: boolean
   card_attributes?: DeckCardAttributes
   // fill: scale an xl card to fill a computed carousel cell;
-  // false: render the card at its natural `size` in normal flow
+  // false: render an xl card uniformly scaled by `scale` into a fixed grid cell
   fill?: boolean
-  size?: CardSize
+  scale?: number
 }>()
 
 const active_side = ref(side)
@@ -42,9 +42,9 @@ function onCardClick() {
 <template>
   <div
     data-testid="grid-item"
-    class="grid-item group relative touch-manipulation"
+    class="grid-item group relative aspect-card w-full touch-manipulation"
     :class="[
-      fill ? 'aspect-card w-full pointer-fine:transition-transform duration-75' : 'w-fit',
+      { 'pointer-fine:transition-transform duration-75': fill },
       { 'card-outline pointer-fine:hover:scale-101': is_selecting }
     ]"
     v-sfx.hover="is_selecting ? 'ui.click_07' : undefined"
@@ -52,8 +52,9 @@ function onCardClick() {
     <card
       v-bind="card"
       class="cursor-pointer"
-      :class="{ 'grid-item__card': fill }"
-      :size="fill ? 'xl' : size"
+      :class="fill ? 'grid-item__card' : 'grid-item__card--scaled'"
+      :style="fill ? undefined : { '--card-scale': scale }"
+      size="xl"
       :side="active_side"
       :card_attributes="card_attributes"
       @click="onCardClick"
@@ -84,6 +85,18 @@ function onCardClick() {
 
   transform-origin: top left;
   transform: scale(var(--scale));
+}
+
+/* Uniform scale: an xl card rendered at its natural width, scaled by --card-scale
+   to fill the fixed grid cell (cell width = xl width × --card-scale). */
+.grid-item :deep(.grid-item__card--scaled) {
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  transform-origin: top left;
+  transform: scale(var(--card-scale));
+  transition: transform 0.05s ease-in-out;
 }
 
 .grid-item.card-outline {

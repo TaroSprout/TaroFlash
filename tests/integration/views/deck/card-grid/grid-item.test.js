@@ -19,6 +19,8 @@ const CardStub = defineComponent({
           'data-testid': 'card-stub',
           'data-side': props.side,
           'data-size': props.size,
+          'data-card-class': attrs.class,
+          'data-card-scale': attrs.style?.['--card-scale'],
           onClick: attrs.onClick
         },
         slots.default?.()
@@ -170,26 +172,28 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(editor.actions.onDeleteCards).toHaveBeenCalledWith(1)
   })
 
-  // ── fill prop ─────────────────────────────────────────────────────────────
+  // ── fill / scale props ──────────────────────────────────────────────────────
 
-  test('fill=true (default) renders Card at size="xl" [obligation]', () => {
-    const { wrapper } = mountGridItem({ props: { fill: true } })
-    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('xl')
+  test('renders Card at size="xl" regardless of fill [obligation]', () => {
+    const filled = mountGridItem({ props: { fill: true } })
+    const scaled = mountGridItem({ props: { fill: false } })
+    expect(filled.wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('xl')
+    expect(scaled.wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('xl')
   })
 
-  test('fill=false renders Card at size="base" [obligation]', () => {
-    const { wrapper } = mountGridItem({ props: { fill: false } })
-    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('base')
+  test('fill=false applies the scale prop as --card-scale on Card [obligation]', () => {
+    const { wrapper } = mountGridItem({ props: { fill: false, scale: 0.6 } })
+    const card = wrapper.find('[data-testid="card-stub"]')
+    expect(card.attributes('data-card-class')).toContain('grid-item__card--scaled')
+    expect(card.attributes('data-card-scale')).toBe('0.6')
   })
 
-  test('fill=false forwards the explicit size prop to Card [obligation]', () => {
-    const { wrapper } = mountGridItem({ props: { fill: false, size: 'md' } })
-    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('md')
-  })
-
-  test('fill=true overrides any size prop and always passes "xl" to Card [obligation]', () => {
-    const { wrapper } = mountGridItem({ props: { fill: true, size: 'base' } })
-    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('xl')
+  test('fill=true uses the fill class and no --card-scale [obligation]', () => {
+    const { wrapper } = mountGridItem({ props: { fill: true, scale: 0.6 } })
+    const card = wrapper.find('[data-testid="card-stub"]')
+    expect(card.attributes('data-card-class')).toContain('grid-item__card')
+    expect(card.attributes('data-card-class')).not.toContain('grid-item__card--scaled')
+    expect(card.attributes('data-card-scale')).toBeUndefined()
   })
 
   test('fill defaults to true when prop is omitted', () => {
