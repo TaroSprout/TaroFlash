@@ -3,7 +3,7 @@ import CardFaceUploader from './card-face-uploader.vue'
 import { useI18n } from 'vue-i18n'
 import { inject, ref, useTemplateRef } from 'vue'
 import { type CardListController } from '@/composables/card-editor/card-list-controller'
-import textEditor from '@/components/text-editor/text-editor.vue'
+import textEditor from '@/components/card/text-editor.vue'
 import { emitSfx } from '@/sfx/bus'
 
 type ListItemCardProps = {

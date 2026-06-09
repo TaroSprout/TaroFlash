@@ -30,4 +30,5 @@ declare global {
   type Review = FSRSCard
   type Card = Prettify<CardBase>
   type CardSide = 'front' | 'back' | 'cover'
+  type CardSize = '2xl' | 'xl' | 'lg' | 'base' | 'sm' | 'xs' | '2xs' | '3xs'
 }

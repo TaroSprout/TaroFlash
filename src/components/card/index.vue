@@ -8,7 +8,7 @@ import { type SfxOptions } from '@/sfx/directive'
 import { gsap } from 'gsap'
 
 type CardProps = Partial<CardBase> & {
-  size?: '2xl' | 'xl' | 'lg' | 'base' | 'sm' | 'xs' | '2xs' | '3xs'
+  size?: CardSize
   mode?: 'view' | 'edit'
   side?: CardSide
   cover_config?: DeckCover
@@ -94,6 +94,7 @@ function onLeave(el: Element, done: () => void) {
           :image="front_image_url"
           :text="front_text"
           :mode="mode"
+          :size="size"
           :attributes="card_attributes?.front"
         >
           <template #image>
@@ -112,6 +113,7 @@ function onLeave(el: Element, done: () => void) {
           :image="back_image_url"
           :text="back_text"
           :mode="mode"
+          :size="size"
           :attributes="card_attributes?.back"
         >
           <template #image>
