@@ -299,6 +299,8 @@
   "audio-reader.popover.loading": "Translating…",
   "audio-reader.popover.error": "Couldn't translate that. Try again.",
   "audio-reader.popover.too-long-error": "That selection is too long. Try a shorter phrase.",
+  "audio-reader.popover.play-word-button": "Play word",
+  "audio-reader.popover.play-from-here-button": "Play from here",
   "audio-reader.popover.add-card-button": "Add flashcard",
   "audio-reader.popover.add-to-deck-button": "Add to {deck}",
   "audio-reader.popover.choose-deck-button": "Choose a deck",

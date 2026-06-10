@@ -22,9 +22,19 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
   let el: HTMLAudioElement | null = null
   let raf = 0
 
+  // When set, playback is bounded to a single clip: the tick loop pauses the
+  // moment it reaches this time. Cleared by any pause, seek, or open-ended play.
+  let clip_end: number | null = null
+
   function tick() {
     if (!el) return
     current_time.value = el.currentTime
+
+    if (clip_end !== null && el.currentTime >= clip_end) {
+      pause()
+      return
+    }
+
     raf = requestAnimationFrame(tick)
   }
 
@@ -50,6 +60,7 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
   function onPause() {
     is_playing.value = false
     stopTicking()
+    clip_end = null
     if (el) current_time.value = el.currentTime
   }
 
@@ -92,11 +103,13 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
   /** Move playback to `seconds` and reflect it immediately (don't wait for timeupdate). */
   function seek(seconds: number) {
     if (!el) return
+    clip_end = null
     el.currentTime = seconds
     current_time.value = seconds
   }
 
   function play() {
+    clip_end = null
     el?.play()
   }
 
@@ -104,7 +117,16 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
     el?.pause()
   }
 
-  return { current_time, duration, is_playing, play, pause, seek }
+  /** Play just the span `[start, end]` — seek to `start`, play, and auto-pause at `end`. */
+  function playClip(start: number, end: number) {
+    if (!el) return
+    clip_end = end
+    el.currentTime = start
+    current_time.value = start
+    el.play()
+  }
+
+  return { current_time, duration, is_playing, play, pause, seek, playClip }
 }
 
 export type AudioPlayer = ReturnType<typeof useAudioPlayer>

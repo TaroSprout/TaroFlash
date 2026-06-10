@@ -61,11 +61,14 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
   })
 
   /**
-   * Show the translation for a tapped/selected term. On a coarse/narrow screen
-   * it opens as a bottom sheet (the anchored popover crowds a phone); on desktop
-   * it's the rect-anchored popover.
+   * Show the translation for a tapped/selected term. Pauses playback so the term
+   * holds still under the popover. On a coarse/narrow screen it opens as a bottom
+   * sheet (the anchored popover crowds a phone); on desktop it's the rect-anchored
+   * popover.
    */
   function openTerm(next: TermSelection) {
+    player.pause()
+
     if (is_mobile.value) {
       openTermSheet(next)
       return
@@ -84,7 +87,13 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
     const { response, close } = modal.open<void>(TermSheet, {
       mode: 'mobile-sheet',
       backdrop: true,
-      props: { term: next.term, sentence: next.sentence, target_lang: TARGET_LANG }
+      props: {
+        term: next.term,
+        sentence: next.sentence,
+        target_lang: TARGET_LANG,
+        play_from_here: () => playFromWord(next.word_index),
+        play_word: () => playWordRange(next.word_index, next.word_end_index)
+      }
     })
     sheet_close = close
     response.then(() => {
@@ -94,6 +103,38 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
 
   function closeTerm() {
     popover_open.value = false
+  }
+
+  /** Seek to the desktop popover's term and resume — its standing selection. */
+  function playFromHere() {
+    if (selection.value) playFromWord(selection.value.word_index)
+  }
+
+  /** Play just the desktop popover's term — its standing selection. */
+  function playClip() {
+    if (selection.value) playWordRange(selection.value.word_index, selection.value.word_end_index)
+  }
+
+  // Seek to a word's start time, resume playback, and dismiss the open term
+  // surface (popover on desktop, sheet on mobile — one is always a no-op).
+  function playFromWord(word_index: number) {
+    const start = words.value[word_index]?.start
+    if (start === undefined) return
+
+    player.seek(start)
+    player.play()
+    closeTerm()
+    sheet_close?.()
+  }
+
+  // Play only the selected phrase — its first word's start to its last word's end
+  // — then stop. Leaves the term surface open so its translation stays readable.
+  function playWordRange(first_index: number, last_index: number) {
+    const start = words.value[first_index]?.start
+    const end = words.value[last_index]?.end
+    if (start === undefined || end === undefined) return
+
+    player.playClip(start, end)
   }
 
   return {
@@ -106,6 +147,8 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
     target_lang: TARGET_LANG,
     openTerm,
     closeTerm,
+    playFromHere,
+    playClip,
     player
   }
 }

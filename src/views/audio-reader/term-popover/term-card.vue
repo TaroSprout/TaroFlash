@@ -16,6 +16,8 @@ const { term, sentence, target_lang } = defineProps<{
 
 const emit = defineEmits<{
   (e: 'close'): void
+  (e: 'play-from-here'): void
+  (e: 'play-word'): void
 }>()
 
 const { t } = useI18n()
@@ -65,12 +67,26 @@ watch(
 <template>
   <div data-testid="term-card" class="flex flex-col">
     <header data-testid="term-card__header" class="flex items-start justify-between gap-3">
-      <span
-        data-testid="term-card__term"
-        class="text-6xl leading-tight wrap-break-word text-brown-700 dark:text-brown-200"
-      >
-        {{ term }}
-      </span>
+      <div data-testid="term-card__term-group" class="flex min-w-0 items-center gap-2">
+        <span
+          data-testid="term-card__term"
+          class="text-6xl leading-tight wrap-break-word text-brown-700 dark:text-brown-200"
+        >
+          {{ term }}
+        </span>
+
+        <ui-button
+          data-testid="term-card__play-word"
+          data-theme="grey-400"
+          class="shrink-0"
+          icon-left="play"
+          icon-only
+          size="sm"
+          @click="emit('play-word')"
+        >
+          {{ t('audio-reader.popover.play-word-button') }}
+        </ui-button>
+      </div>
 
       <add-card-control v-if="result" @add="onAddCard" />
 
@@ -133,6 +149,18 @@ watch(
         {{ result.description }}
       </p>
     </div>
+
+    <footer data-testid="term-card__footer" class="mt-4 flex">
+      <ui-button
+        data-testid="term-card__play-from-here"
+        data-theme="grey-400"
+        icon-left="play"
+        size="sm"
+        @click="emit('play-from-here')"
+      >
+        {{ t('audio-reader.popover.play-from-here-button') }}
+      </ui-button>
+    </footer>
   </div>
 </template>
 

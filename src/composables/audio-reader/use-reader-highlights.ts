@@ -35,9 +35,16 @@ const TAP_SLOP = 10
 const LONG_PRESS_MS = 400
 
 // What a committed selection hands back: the bare term, the rect to anchor the
-// popover against, and the first word's element so the caller can resolve which
-// sentence it sits in (translator context).
-type ReaderSelection = { term: string; rect: DOMRect; anchor: HTMLElement }
+// popover against, the first word's element so the caller can resolve which
+// sentence it sits in (translator context), and the range's first/last word
+// indices so playback can seek there or play just the phrase.
+type ReaderSelection = {
+  term: string
+  rect: DOMRect
+  anchor: HTMLElement
+  index: number
+  end_index: number
+}
 
 type WordRange = { lo: number; hi: number }
 
@@ -332,7 +339,7 @@ export function useReaderHighlights(
     if (!term) return
 
     committed.value = range
-    onSelect({ term, rect, anchor })
+    onSelect({ term, rect, anchor, index: range.lo, end_index: range.hi })
   }
 
   function onPointerDown(event: PointerEvent) {

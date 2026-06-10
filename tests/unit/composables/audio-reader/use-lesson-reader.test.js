@@ -83,7 +83,13 @@ describe('useLessonReader', () => {
   beforeEach(() => {
     lessonQueryMock.mockReturnValue({ data: ref(makeLesson()), error: ref(null) })
     audioUrlQueryMock.mockReturnValue({ data: ref('https://cdn/1.mp3') })
-    audioPlayerMock.mockReturnValue({ current_time: ref(0) })
+    audioPlayerMock.mockReturnValue({
+      current_time: ref(0),
+      play: vi.fn(),
+      pause: vi.fn(),
+      seek: vi.fn(),
+      playClip: vi.fn()
+    })
     transcriptSyncMock.mockReturnValue({ active_index: ref(-1) })
     toastErrorMock.mockReset()
     openModalMock.mockReset()

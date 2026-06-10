@@ -12,6 +12,8 @@ const { open, rect, term, sentence, target_lang } = defineProps<{
 
 const emit = defineEmits<{
   (e: 'close'): void
+  (e: 'play-from-here'): void
+  (e: 'play-word'): void
 }>()
 </script>
 
@@ -32,6 +34,8 @@ const emit = defineEmits<{
         :sentence="sentence"
         :target_lang="target_lang"
         @close="emit('close')"
+        @play-from-here="emit('play-from-here')"
+        @play-word="emit('play-word')"
       />
     </div>
   </ui-popover>
