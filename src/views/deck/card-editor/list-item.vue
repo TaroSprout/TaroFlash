@@ -7,10 +7,11 @@ import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 import { inject, computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ListItemCard from './list-item-card.vue'
+import type { CardWithClientId } from '@/composables/card-editor/virtual-card-list'
 
 type ListItemProps = {
   index: number
-  card: Card
+  card: CardWithClientId
 }
 
 const { card, index } = defineProps<ListItemProps>()

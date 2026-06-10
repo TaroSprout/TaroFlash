@@ -37,7 +37,8 @@ const TextEditorStub = defineComponent({
 
 const mocks = vi.hoisted(() => ({
   updateCardMock: vi.fn(),
-  emitSfxMock: vi.fn()
+  emitSfxMock: vi.fn(),
+  claimFocusMock: vi.fn()
 }))
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: mocks.emitSfxMock, emitHoverSfx: vi.fn() }))
@@ -49,6 +50,7 @@ import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 function makeCard(overrides = {}) {
   return {
     id: 1,
+    client_id: 'c1',
     deck_id: 10,
     front_text: 'Q',
     back_text: 'A',
@@ -62,7 +64,8 @@ function makeProvide({ is_selecting = ref(false) } = {}) {
     [cardEditorKey]: {
       selection: { is_selecting },
       updateCard: mocks.updateCardMock,
-      card_attributes: { front: {}, back: {} }
+      card_attributes: { front: {}, back: {} },
+      claimFocus: mocks.claimFocusMock
     }
   }
 }
@@ -101,6 +104,8 @@ beforeEach(() => {
   mocks.updateCardMock.mockReset()
   mocks.updateCardMock.mockResolvedValue(undefined)
   mocks.emitSfxMock.mockReset()
+  mocks.claimFocusMock.mockReset()
+  mocks.claimFocusMock.mockReturnValue(false)
 })
 
 describe('ListItemCard', () => {

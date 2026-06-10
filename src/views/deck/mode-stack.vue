@@ -39,7 +39,10 @@ const clip_style = computed(() =>
 
 function onGridEnter(el: Element, done: () => void) {
   switch_pending.value = false
-  fadeScaleEnter(el, done)
+  fadeScaleEnter(el, () => {
+    done()
+    shell.notifyModeSettled()
+  })
 }
 
 function onGridLeave(el: Element, done: () => void) {
@@ -57,6 +60,7 @@ function onOverlayBeforeEnter(el: Element) {
 function onOverlayAfterEnter(el: Element) {
   settleOverlay(el)
   sliding.value--
+  shell.notifyModeSettled()
 }
 
 function onOverlayBeforeLeave() {

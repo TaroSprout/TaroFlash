@@ -38,7 +38,7 @@ import { deckViewShellKey } from '@/composables/card-editor/deck-view-shell'
 function makeShell(mode = 'view') {
   const mode_ref = ref(mode)
   const is_view = ref(mode === 'view')
-  return { mode: mode_ref, is_view }
+  return { mode: mode_ref, is_view, notifyModeSettled: vi.fn() }
 }
 
 function mount(shell = makeShell()) {

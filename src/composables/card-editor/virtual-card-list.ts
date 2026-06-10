@@ -196,27 +196,56 @@ export function useVirtualCardList(
    * @param left_card_id  - If given, the new card is placed `after` this id.
    * @param right_card_id - If given (and `left_card_id` is not), the new card
    *                        is placed `before` this id.
+   * @returns The stable `client_id` of the staged card, so the caller can later
+   *          target it (e.g. to autofocus its editor once it mounts).
    */
-  function addCard(left_card_id?: number, right_card_id?: number) {
+  function addCard(left_card_id?: number, right_card_id?: number): string {
     const { anchor_id, side } = resolveAnchor(left_card_id, right_card_id)
+    const client_id = uid()
 
     temp_entries.value.push({
-      client_id: uid(),
+      client_id,
       card: buildEmptyCard(),
       anchor_id,
       side,
       real_id: null
     })
+
+    return client_id
   }
 
   /** Stage a new temp card immediately after the card with `card_id`. */
   function appendCard(card_id: number) {
-    addCard(card_id)
+    return addCard(card_id)
   }
 
   /** Stage a new temp card immediately before the card with `card_id`. */
   function prependCard(card_id: number) {
-    addCard(undefined, card_id)
+    return addCard(undefined, card_id)
+  }
+
+  /**
+   * Stage a new temp card at the very top of the deck. Anchors `before` the
+   * first *persisted* card — a real id the insert RPC can resolve, where a
+   * still-unsaved temp's placeholder id can't — and `unshift`s the entry so it
+   * renders above any temps already stacked at the top (repeated "add at top"
+   * clicks each land newest-first). Appends with no anchor on an empty deck.
+   *
+   * @returns The stable `client_id` of the staged card.
+   */
+  function addCardAtTop(): string {
+    const first_persisted = persisted_cards.value[0]
+    const client_id = uid()
+
+    temp_entries.value.unshift({
+      client_id,
+      card: buildEmptyCard(),
+      anchor_id: first_persisted?.id ?? null,
+      side: first_persisted?.id !== undefined ? 'before' : null,
+      real_id: null
+    })
+
+    return client_id
   }
 
   /**
@@ -289,6 +318,7 @@ export function useVirtualCardList(
     addCard,
     appendCard,
     prependCard,
+    addCardAtTop,
     findEntryByCardId,
     findCard,
     promoteTemp
