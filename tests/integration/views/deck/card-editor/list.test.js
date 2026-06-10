@@ -6,6 +6,7 @@ const { useWindowVirtualizerMock } = vi.hoisted(() => ({ useWindowVirtualizerMoc
 vi.mock('@tanstack/vue-virtual', () => ({ useWindowVirtualizer: useWindowVirtualizerMock }))
 
 import List from '@/views/deck/card-editor/list.vue'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 
 const ROW_PITCH = 407
 
@@ -48,7 +49,7 @@ function mount(options = {}) {
   return shallowMount(List, {
     global: {
       provide: {
-        'card-editor': editor
+        [cardEditorKey]: editor
       }
     }
   })

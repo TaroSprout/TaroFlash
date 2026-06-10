@@ -3,9 +3,11 @@ import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref, computed } from 'vue'
 
 const { emitSfxMock } = vi.hoisted(() => ({ emitSfxMock: vi.fn() }))
-vi.mock('@/sfx/bus', () => ({ emitSfx: emitSfxMock }))
+vi.mock('@/sfx/bus', () => ({ emitSfx: emitSfxMock, emitHoverSfx: vi.fn() }))
 
 import PageDots from '@/views/deck/page-dots.vue'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
+import { deckViewShellKey } from '@/composables/card-editor/deck-view-shell'
 
 const UiTooltipStub = defineComponent({
   name: 'UiTooltip',
@@ -21,15 +23,8 @@ const UiTooltipStub = defineComponent({
   }
 })
 
-function makeEditor({
-  mode = 'view',
-  total_pages = 3,
-  page = 0,
-  can_paginate = true,
-  goToPage = vi.fn()
-} = {}) {
+function makeEditor({ total_pages = 3, page = 0, can_paginate = true, goToPage = vi.fn() } = {}) {
   return {
-    mode: ref(mode),
     carousel: {
       total_pages: computed(() => total_pages),
       page: ref(page),
@@ -39,10 +34,14 @@ function makeEditor({
   }
 }
 
-function mount(editor = makeEditor()) {
+function makeShell({ mode = 'view' } = {}) {
+  return { mode: ref(mode) }
+}
+
+function mount(editor = makeEditor(), shell = makeShell()) {
   return shallowMount(PageDots, {
     global: {
-      provide: { 'card-editor': editor },
+      provide: { [cardEditorKey]: editor, [deckViewShellKey]: shell },
       stubs: { UiTooltip: UiTooltipStub }
     }
   })
@@ -221,20 +220,18 @@ describe('PageDots', () => {
     expect(goToPage).not.toHaveBeenCalled()
   })
 
-  // The container is hidden via opacity classes when mode !== 'view'. Class
-  // assertion is unavoidable here — there is no other state signal exposed
-  // on the rendered DOM (mirrors page-nav-button's note).
-  test('applies hidden classes when editor.mode is not view', () => {
-    editor = makeEditor({ mode: 'edit' })
-    const wrapper = mount(editor)
+  // The container is hidden via opacity classes when mode_config.pagination is false.
+  // Class assertion is unavoidable here — there is no other state signal exposed
+  // on the rendered DOM (the component binds opacity classes directly).
+  test('applies hidden classes when shell mode is not view (pagination=false)', () => {
+    const wrapper = mount(makeEditor(), makeShell({ mode: 'edit' }))
     const cls = wrapper.find('[data-testid="deck-view__page-dots"]').classes()
     expect(cls).toContain('opacity-0')
     expect(cls).toContain('pointer-events-none')
   })
 
-  test('does not apply hidden classes in view mode', () => {
-    editor = makeEditor({ mode: 'view' })
-    const wrapper = mount(editor)
+  test('does not apply hidden classes in view mode (pagination=true)', () => {
+    const wrapper = mount(makeEditor(), makeShell({ mode: 'view' }))
     const cls = wrapper.find('[data-testid="deck-view__page-dots"]').classes()
     expect(cls).not.toContain('opacity-0')
   })

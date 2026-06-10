@@ -4,6 +4,8 @@ import { ref } from 'vue'
 import { defineComponent, h } from 'vue'
 
 import PageNavButton from '@/views/deck/page-nav-button.vue'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
+import { deckViewShellKey } from '@/composables/card-editor/deck-view-shell'
 
 const UiButtonStub = defineComponent({
   name: 'UiButton',
@@ -23,19 +25,27 @@ const UiButtonStub = defineComponent({
   }
 })
 
-function makeEditor({ mode = 'view', prevPage = vi.fn(), nextPage = vi.fn() } = {}) {
+function makeEditor({ prevPage = vi.fn(), nextPage = vi.fn() } = {}) {
   return {
-    mode: ref(mode),
     carousel: { prevPage, nextPage }
   }
 }
 
-function mount({ direction = 'prev', editor = makeEditor(), slot = 'click me' } = {}) {
+function makeShell({ mode = 'view' } = {}) {
+  return { mode: ref(mode) }
+}
+
+function mount({
+  direction = 'prev',
+  editor = makeEditor(),
+  shell = makeShell(),
+  slot = 'click me'
+} = {}) {
   return shallowMount(PageNavButton, {
     props: { direction },
     slots: { default: slot },
     global: {
-      provide: { 'card-editor': editor },
+      provide: { [cardEditorKey]: editor, [deckViewShellKey]: shell },
       stubs: { UiButton: UiButtonStub }
     }
   })
@@ -90,20 +100,18 @@ describe('PageNavButton', () => {
     expect(wrapper.text()).toContain('Page 3')
   })
 
-  // The button is hidden via opacity classes when mode !== 'view'. Class
-  // assertion is unavoidable here — there is no other state signal exposed
+  // The button is hidden via opacity classes when mode_config.pagination is false.
+  // Class assertion is unavoidable here — there is no other state signal exposed
   // on the rendered DOM (called out in quality notes).
-  test('applies hidden classes when editor.mode is not view', () => {
-    editor = makeEditor({ mode: 'edit' })
-    const wrapper = mount({ direction: 'prev', editor })
+  test('applies hidden classes when shell mode is not view (pagination=false)', () => {
+    const wrapper = mount({ direction: 'prev', shell: makeShell({ mode: 'edit' }) })
     const cls = wrapper.find('[data-testid="deck-view__previous-page-button"]').classes()
     expect(cls).toContain('opacity-0')
     expect(cls).toContain('pointer-events-none')
   })
 
-  test('does not apply hidden classes in view mode', () => {
-    editor = makeEditor({ mode: 'view' })
-    const wrapper = mount({ direction: 'prev', editor })
+  test('does not apply hidden classes in view mode (pagination=true)', () => {
+    const wrapper = mount({ direction: 'prev', shell: makeShell({ mode: 'view' }) })
     const cls = wrapper.find('[data-testid="deck-view__previous-page-button"]').classes()
     expect(cls).not.toContain('opacity-0')
   })

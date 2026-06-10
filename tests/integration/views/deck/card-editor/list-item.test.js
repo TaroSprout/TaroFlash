@@ -24,6 +24,7 @@ const mocks = vi.hoisted(() => ({
 
 import ListItem from '@/views/deck/card-editor/list-item.vue'
 import ItemOptions from '@/views/deck/card-editor/list-item-options.vue'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 
 function makeCard(overrides = {}) {
   return {
@@ -38,7 +39,7 @@ function makeCard(overrides = {}) {
 
 function makeProvide({ is_selecting = ref(false) } = {}) {
   return {
-    'card-editor': {
+    [cardEditorKey]: {
       // appendCard/prependCard are injected from the root controller surface
       // (card-list-controller.ts exposes them directly, not nested under list)
       appendCard: mocks.appendCardMock,

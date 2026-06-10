@@ -4,7 +4,7 @@ import { defineComponent, h, ref, useAttrs } from 'vue'
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 
-vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
+vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
 
 const CardStub = defineComponent({
   name: 'Card',
@@ -48,6 +48,7 @@ const GridItemMenuStub = defineComponent({
 })
 
 import GridItem from '@/views/deck/card-grid/grid-item.vue'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 
 function makeEditor({ is_selecting = false } = {}) {
   return {
@@ -74,7 +75,7 @@ function mountGridItem({ props = {}, editor } = {}) {
       },
       attachTo: document.body,
       global: {
-        provide: { 'card-editor': ed },
+        provide: { [cardEditorKey]: ed },
         stubs: { Card: CardStub, UiRadio: UiRadioStub, GridItemMenu: GridItemMenuStub }
       }
     }),

@@ -26,6 +26,7 @@ const UiButtonStub = defineComponent({
 })
 
 import BulkActions from '@/views/deck/deck-hero/bulk-actions.vue'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 
 function makeEditor({
   selected_count = 0,
@@ -54,7 +55,7 @@ function mount(editor = makeEditor()) {
     wrapper: shallowMount(BulkActions, {
       global: {
         stubs: { UiButton: UiButtonStub },
-        provide: { 'card-editor': editor }
+        provide: { [cardEditorKey]: editor }
       }
     }),
     editor

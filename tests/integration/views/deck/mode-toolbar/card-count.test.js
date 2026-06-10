@@ -10,6 +10,7 @@ const UiTagStub = defineComponent({
 })
 
 import CardCount from '@/views/deck/mode-toolbar/card-count.vue'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 
 function makeEditor({ card_count = 0 } = {}) {
   return {
@@ -21,7 +22,7 @@ function mount(editor = makeEditor()) {
   return shallowMount(CardCount, {
     global: {
       stubs: { UiTag: UiTagStub },
-      provide: { 'card-editor': editor },
+      provide: { [cardEditorKey]: editor },
       mocks: { $t: (key, n) => (n === 1 ? `${n} Card` : `${n} Cards`) }
     }
   })

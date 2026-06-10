@@ -9,6 +9,7 @@ vi.mock('vue-i18n', () => ({
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
 import { useBulkActions } from '@/composables/card-editor/use-bulk-actions'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 
 function makeEditor({
   selected_count = 0,
@@ -39,7 +40,10 @@ function withSetup(composable, { provide } = {}) {
       return () => {}
     }
   })
-  if (provide) Object.entries(provide).forEach(([k, v]) => app.provide(k, v))
+  if (provide) {
+    const entries = Array.isArray(provide) ? provide : Object.entries(provide)
+    entries.forEach(([k, v]) => app.provide(k, v))
+  }
   app.mount(document.createElement('div'))
   return [result, app]
 }
@@ -54,7 +58,7 @@ describe('useBulkActions', () => {
   function setup(opts) {
     const editor = makeEditor(opts)
     const [result, _app] = withSetup(useBulkActions, {
-      provide: { 'card-editor': editor }
+      provide: [[cardEditorKey, editor]]
     })
     app = _app
     return { result, editor }

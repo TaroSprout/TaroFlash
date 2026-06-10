@@ -48,21 +48,28 @@ const UiDropdownButtonStub = defineComponent({
 })
 
 import Actions from '@/views/deck/deck-hero/actions.vue'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
+import { deckViewShellKey } from '@/composables/card-editor/deck-view-shell'
 
-function makeEditor({ mode = 'view', setMode = vi.fn(), onSelectCard = vi.fn() } = {}) {
+function makeEditor({ onSelectCard = vi.fn() } = {}) {
   return {
-    mode: ref(mode),
-    setMode,
     actions: { onSelectCard }
   }
 }
 
-function mount({ deck = {}, editor } = {}) {
+function makeShell({ mode = 'view', toggleMode = vi.fn() } = {}) {
+  return { mode: ref(mode), toggleMode }
+}
+
+function mount({ deck = {}, editor, shell } = {}) {
+  const provide = {}
+  if (editor !== undefined) provide[cardEditorKey] = editor
+  if (shell !== undefined) provide[deckViewShellKey] = shell
   return shallowMount(Actions, {
     props: { deck: { id: 1, title: 'd', card_count: 10, due_count: 3, ...deck } },
     global: {
       stubs: { UiButton: UiButtonStub, UiDropdownButton: UiDropdownButtonStub },
-      provide: editor === undefined ? {} : { 'card-editor': editor }
+      provide
     }
   })
 }
@@ -91,31 +98,24 @@ describe('deck-hero/actions', () => {
     expect(studyBtn(wrapper).text()).toContain('12')
   })
 
-  test('shows "Edit Cards" when mode is view', () => {
-    const wrapper = mount({ editor: makeEditor({ mode: 'view' }) })
+  test('shows "Edit Cards" when shell mode is view', () => {
+    const wrapper = mount({ shell: makeShell({ mode: 'view' }) })
     expect(editBtn(wrapper).text()).toContain('Edit Cards')
   })
 
-  test('shows "Stop Editing" when mode is edit', () => {
-    const wrapper = mount({ editor: makeEditor({ mode: 'edit' }) })
+  test('shows "Stop Editing" when shell mode is edit', () => {
+    const wrapper = mount({ shell: makeShell({ mode: 'edit' }) })
     expect(editBtn(wrapper).text()).toContain('Stop Editing')
   })
 
-  test('clicking edit toggles view → edit', async () => {
-    const setMode = vi.fn()
-    const wrapper = mount({ editor: makeEditor({ mode: 'view', setMode }) })
+  test('clicking edit calls shell.toggleMode("edit")', async () => {
+    const toggleMode = vi.fn()
+    const wrapper = mount({ shell: makeShell({ mode: 'view', toggleMode }) })
     await editBtn(wrapper).trigger('click')
-    expect(setMode).toHaveBeenCalledWith('edit')
+    expect(toggleMode).toHaveBeenCalledWith('edit')
   })
 
-  test('clicking edit toggles edit → view', async () => {
-    const setMode = vi.fn()
-    const wrapper = mount({ editor: makeEditor({ mode: 'edit', setMode }) })
-    await editBtn(wrapper).trigger('click')
-    expect(setMode).toHaveBeenCalledWith('view')
-  })
-
-  test('clicking edit is a no-op when no editor is provided', async () => {
+  test('clicking edit is a no-op when no shell is provided', async () => {
     const wrapper = mount()
     await editBtn(wrapper).trigger('click')
     expect(editBtn(wrapper).exists()).toBe(true)

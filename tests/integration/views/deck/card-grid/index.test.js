@@ -21,6 +21,7 @@ vi.mock('gsap', () => ({
 
 import * as MediaQueryModule from '@/composables/use-media-query'
 import CardGrid from '@/views/deck/card-grid/index.vue'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 
 const isMdRef = MediaQueryModule.__isMd
 
@@ -66,7 +67,7 @@ function mount(options = {}) {
   return shallowMount(CardGrid, {
     global: {
       provide: {
-        'card-editor': editor
+        [cardEditorKey]: editor
       }
     }
   })
