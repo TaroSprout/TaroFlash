@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, provide, ref } from 'vue'
+import { computed, provide, ref, useTemplateRef } from 'vue'
 import DeckHero from '@/views/deck/deck-hero/index.vue'
 import ModeToolbar from './mode-toolbar/index.vue'
 import ModeStack from './mode-stack.vue'
@@ -14,6 +14,7 @@ const { id: deck_id } = defineProps<{
 const id = computed(() => Number(deck_id))
 
 const image_url = ref<string | undefined>()
+const toolbar = useTemplateRef<HTMLElement>('toolbar')
 
 const deck_query = useDeckQuery(id)
 const deck = deck_query.data
@@ -38,7 +39,7 @@ const is_empty = computed(() => !editor.isLoading.value && editor.list.all_cards
     />
 
     <div data-testid="deck-view__main" :data-mode="editor.mode.value" class="relative w-full pb-4">
-      <div data-testid="deck-view__toolbar" class="sticky top-(--nav-height) z-20">
+      <div ref="toolbar" data-testid="deck-view__toolbar" class="sticky top-(--nav-height) z-20">
         <div
           data-testid="deck-view__toolbar-backing"
           aria-hidden="true"
@@ -48,7 +49,7 @@ const is_empty = computed(() => !editor.isLoading.value && editor.list.all_cards
       </div>
 
       <div v-if="is_empty" data-testid="deck-view__empty" class="mt-6" />
-      <mode-stack v-else class="mt-6" />
+      <mode-stack v-else class="mt-6" :sticky_header="toolbar" />
     </div>
 
     <scroll-bar class="fixed right-4 top-(--nav-height) bottom-10 z-30" target="html" />
