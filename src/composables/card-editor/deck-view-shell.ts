@@ -1,5 +1,6 @@
 import { computed, ref, type InjectionKey } from 'vue'
 import { useLocalRef } from '@/composables/use-local-ref'
+import { emitSfx } from '@/sfx/bus'
 
 export type DeckViewShell = ReturnType<typeof useDeckViewShell>
 
@@ -25,21 +26,48 @@ export function useDeckViewShell() {
   const mode = ref<CardEditorMode>('view')
   const grid_size = useLocalRef<CardGridSize>('deck-grid-size', 'md')
 
+  // Resolvers waiting on the in-flight mode transition; drained by
+  // `notifyModeSettled` when the mode-stack reports an entering pane settled.
+  const settle_waiters = new Set<() => void>()
+
   const is_view = computed(() => mode.value === 'view')
 
-  /** Switch the deck view to `new_mode`. */
-  function setMode(new_mode: CardEditorMode) {
+  /**
+   * Switch the deck view to `new_mode`, resolving once that pane's enter
+   * transition has finished animating — the mode-stack calls `notifyModeSettled`
+   * from the GSAP completion. Resolves immediately when already in `new_mode`.
+   * `mode` still flips synchronously; only the returned promise is deferred, so
+   * callers that ignore it are unaffected. Plays the shared mode-switch chime
+   * (`ui.select`) on every real switch, so call sites don't each wire their own.
+   */
+  function setMode(new_mode: CardEditorMode): Promise<void> {
+    if (mode.value === new_mode) return Promise.resolve()
+
+    emitSfx('ui.select')
+
+    const settled = new Promise<void>((resolve) => settle_waiters.add(resolve))
     mode.value = new_mode
+    return settled
+  }
+
+  /**
+   * Resolve everyone waiting on the current transition. Called by the
+   * mode-stack when an entering pane finishes its GSAP animation.
+   */
+  function notifyModeSettled() {
+    const waiters = [...settle_waiters]
+    settle_waiters.clear()
+    waiters.forEach((resolve) => resolve())
   }
 
   /** Enter `target`, or fall back to the base view when it's already active. */
   function toggleMode(target: CardEditorMode) {
-    setMode(mode.value === target ? 'view' : target)
+    return setMode(mode.value === target ? 'view' : target)
   }
 
   /** Leave the current mode back to the base view. */
   function exitMode() {
-    setMode('view')
+    return setMode('view')
   }
 
   /** Set the card render size for the deck grid (Small / Base / Full). */
@@ -47,5 +75,14 @@ export function useDeckViewShell() {
     grid_size.value = size
   }
 
-  return { mode, is_view, grid_size, setMode, toggleMode, exitMode, setGridSize }
+  return {
+    mode,
+    is_view,
+    grid_size,
+    setMode,
+    notifyModeSettled,
+    toggleMode,
+    exitMode,
+    setGridSize
+  }
 }

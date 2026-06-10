@@ -22,10 +22,13 @@ const CardFaceUploaderStub = defineComponent({
 
 // Stub TextEditor as a real contenteditable div so focusin/focusout
 // tests can dispatch events with e.target.isContentEditable === true.
+// Exposes focus() so useTemplateRef('front-input')?.focus() doesn't throw when
+// the onMounted claimFocus branch runs.
 const TextEditorStub = defineComponent({
   name: 'TextEditor',
   props: ['content', 'attributes', 'placeholder'],
-  setup(_props, { attrs }) {
+  setup(_props, { attrs, expose }) {
+    expose({ focus: vi.fn() })
     return () =>
       h('div', {
         ...attrs,
@@ -37,10 +40,16 @@ const TextEditorStub = defineComponent({
 
 const mocks = vi.hoisted(() => ({
   updateCardMock: vi.fn(),
-  emitSfxMock: vi.fn()
+  emitSfxMock: vi.fn(),
+  claimFocusMock: vi.fn(),
+  gsapFromMock: vi.fn()
 }))
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: mocks.emitSfxMock, emitHoverSfx: vi.fn() }))
+
+vi.mock('@/utils/animations/list-item', () => ({
+  expandListItemIn: mocks.gsapFromMock
+}))
 
 import ListItemCard from '@/views/deck/card-editor/list-item-card.vue'
 import textEditor from '@/components/card/text-editor.vue'
@@ -49,6 +58,7 @@ import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 function makeCard(overrides = {}) {
   return {
     id: 1,
+    client_id: 'c1',
     deck_id: 10,
     front_text: 'Q',
     back_text: 'A',
@@ -62,7 +72,8 @@ function makeProvide({ is_selecting = ref(false) } = {}) {
     [cardEditorKey]: {
       selection: { is_selecting },
       updateCard: mocks.updateCardMock,
-      card_attributes: { front: {}, back: {} }
+      card_attributes: { front: {}, back: {} },
+      claimFocus: mocks.claimFocusMock
     }
   }
 }
@@ -101,6 +112,9 @@ beforeEach(() => {
   mocks.updateCardMock.mockReset()
   mocks.updateCardMock.mockResolvedValue(undefined)
   mocks.emitSfxMock.mockReset()
+  mocks.claimFocusMock.mockReset()
+  mocks.claimFocusMock.mockReturnValue(false)
+  mocks.gsapFromMock.mockReset()
 })
 
 describe('ListItemCard', () => {
@@ -304,6 +318,30 @@ describe('ListItemCard', () => {
     mocks.emitSfxMock.mockReset()
     contenteditable.dispatchEvent(new FocusEvent('focusin', { bubbles: true, relatedTarget: null }))
     expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.slide_up')
+    wrapper.unmount()
+  })
+
+  // ── onMounted autofocus — claimFocus true branch ──────────────────────────
+
+  test('does NOT run expandListItemIn when claimFocus returns false (scroll-mounted row) [obligation]', () => {
+    mocks.claimFocusMock.mockReturnValue(false)
+    mount({ card: { id: 99, client_id: 'c99' } })
+    expect(mocks.gsapFromMock).not.toHaveBeenCalled()
+  })
+
+  test('runs expandListItemIn on the root element when claimFocus returns true [obligation]', async () => {
+    mocks.claimFocusMock.mockReturnValue(true)
+    // Use mountWithFocusStubs so the front-input template ref resolves to a real
+    // contenteditable element whose .focus() exists; otherwise focusEditor() throws.
+    const wrapper = shallowMount(ListItemCard, {
+      attachTo: document.body,
+      props: { card: makeCard({ id: 77, client_id: 'c77' }) },
+      global: {
+        stubs: { CardFaceUploader: CardFaceUploaderStub, TextEditor: TextEditorStub },
+        provide: makeProvide()
+      }
+    })
+    expect(mocks.gsapFromMock).toHaveBeenCalledWith(wrapper.element)
     wrapper.unmount()
   })
 

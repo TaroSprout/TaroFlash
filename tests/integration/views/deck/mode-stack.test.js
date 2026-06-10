@@ -10,7 +10,8 @@ vi.mock('@/utils/animations/deck-view/card-overlay', () => ({
   primeOverlayBelow: vi.fn(),
   slideOverlayUp: vi.fn((_el, done) => done?.()),
   settleOverlay: vi.fn(),
-  slideOverlayDown: vi.fn((_el, _vp, done) => done?.())
+  slideOverlayDown: vi.fn((_el, _vp, done) => done?.()),
+  cancelOverlayAnimation: vi.fn()
 }))
 
 // Panes in DECK_MODES use defineAsyncComponent; mock the whole registry with
@@ -34,11 +35,12 @@ vi.mock('@/views/deck/modes.ts', async () => {
 
 import ModeStack from '@/views/deck/mode-stack.vue'
 import { deckViewShellKey } from '@/composables/card-editor/deck-view-shell'
+import { slideOverlayUp } from '@/utils/animations/deck-view/card-overlay'
 
 function makeShell(mode = 'view') {
   const mode_ref = ref(mode)
   const is_view = ref(mode === 'view')
-  return { mode: mode_ref, is_view }
+  return { mode: mode_ref, is_view, notifyModeSettled: vi.fn() }
 }
 
 function mount(shell = makeShell()) {
@@ -108,5 +110,65 @@ describe('ModeStack', () => {
   test('forwards w-full to the active pane', () => {
     const wrapper = mount(makeShell('edit'))
     expect(wrapper.findComponent({ name: 'CardEditor' }).classes()).toContain('w-full')
+  })
+
+  // ── notifyModeSettled — called from overlay enter and grid enter completions
+
+  test('calls shell.notifyModeSettled after the overlay pane finishes entering [obligation]', async () => {
+    const shell = makeShell('view')
+    mount(shell)
+
+    shell.mode.value = 'edit'
+    shell.is_view.value = false
+    await nextTick()
+    await nextTick()
+
+    // The slideOverlayUp mock calls done immediately, triggering after-enter
+    // which calls notifyModeSettled
+    expect(shell.notifyModeSettled).toHaveBeenCalled()
+  })
+
+  test('calls shell.notifyModeSettled after the grid pane finishes entering [obligation]', async () => {
+    const shell = makeShell('edit')
+    mount(shell)
+
+    shell.mode.value = 'view'
+    shell.is_view.value = true
+    await nextTick()
+    await nextTick()
+
+    // The fadeScaleEnter mock calls done immediately, triggering grid enter
+    // completion which calls notifyModeSettled
+    expect(shell.notifyModeSettled).toHaveBeenCalled()
+  })
+
+  // Regression: spamming the mode toggle interrupts the slide mid-flight. Vue
+  // fires enter-cancelled instead of after-enter, so a counter that only
+  // decremented in after-enter latched `is_transitioning` on forever — leaving
+  // the clip (overflow-hidden + min-height) stuck and the page scrolled past
+  // its content. The in-flight Set must release on cancellation.
+  test('releases the clip when a mode flip is interrupted mid-slide', async () => {
+    const shell = makeShell('view')
+    const wrapper = mount(shell)
+
+    // Hold the overlay slide open so its enter stays in flight (done uncalled).
+    slideOverlayUp.mockImplementationOnce(() => {})
+
+    shell.mode.value = 'edit'
+    shell.is_view.value = false
+    await nextTick()
+    await nextTick()
+
+    expect(wrapper.classes()).toContain('overflow-hidden')
+
+    // Interrupt before the slide finishes — the entering overlay is yanked,
+    // firing enter-cancelled.
+    shell.mode.value = 'view'
+    shell.is_view.value = true
+    await nextTick()
+    await nextTick()
+
+    expect(wrapper.classes()).not.toContain('overflow-hidden')
+    expect(wrapper.attributes('style') ?? '').not.toContain('min-height')
   })
 })

@@ -1,15 +1,19 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 
-const { mockSet, mockTo, mockFromTo } = vi.hoisted(() => ({
+const { mockSet, mockTo, mockFromTo, mockKillTweensOf } = vi.hoisted(() => ({
   mockSet: vi.fn(),
   mockTo: vi.fn(),
-  mockFromTo: vi.fn()
+  mockFromTo: vi.fn(),
+  mockKillTweensOf: vi.fn()
 }))
 
-vi.mock('gsap', () => ({ gsap: { set: mockSet, to: mockTo, fromTo: mockFromTo } }))
+vi.mock('gsap', () => ({
+  gsap: { set: mockSet, to: mockTo, fromTo: mockFromTo, killTweensOf: mockKillTweensOf }
+}))
 
 import {
   captureModeSwitch,
+  cancelOverlayAnimation,
   distanceToViewportBottom,
   fadeScaleEnter,
   fadeScaleLeave,
@@ -338,5 +342,20 @@ describe('card-overlay animations', () => {
     slideOverlayDown(el, makeVp(), done)
 
     expect(mockTo.mock.calls[0][1].duration).toBe(mockTo.mock.calls[1][1].duration)
+  })
+
+  // ── cancelOverlayAnimation ────────────────────────────────────────────────
+
+  describe('cancelOverlayAnimation', () => {
+    test('calls gsap.killTweensOf on the element [obligation]', () => {
+      cancelOverlayAnimation(el)
+      expect(mockKillTweensOf).toHaveBeenCalledWith(el)
+    })
+
+    test('does not call gsap.to or gsap.set (kill only, no new animation) [obligation]', () => {
+      cancelOverlayAnimation(el)
+      expect(mockTo).not.toHaveBeenCalled()
+      expect(mockSet).not.toHaveBeenCalled()
+    })
   })
 })

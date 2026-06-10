@@ -6,10 +6,24 @@ import UiButton from '@/components/ui-kit/button.vue'
 import { useI18n } from 'vue-i18n'
 import { inject } from 'vue'
 import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
+import { deckViewShellKey } from '@/composables/card-editor/deck-view-shell'
+import { emitSfx } from '@/sfx/bus'
 
 const { t } = useI18n()
 
-const { addCard } = inject(cardEditorKey)!
+const { setMode } = inject(deckViewShellKey)!
+const { addCardAtTop } = inject(cardEditorKey)!
+
+// Enter edit mode (no-op if already there; setMode plays the mode-switch chime)
+// and wait for the slide to settle before adding the card, so its focus +
+// scroll-into-view read final positions rather than the mid-animation transform.
+// The add chime is `blocking` so it suppresses the `slide_up` that focusing the
+// new card would otherwise fire.
+async function onNewCard() {
+  await setMode('edit')
+  emitSfx('ui.snappy_button_2', { blocking: true })
+  addCardAtTop()
+}
 </script>
 
 <template>
@@ -34,7 +48,7 @@ const { addCard } = inject(cardEditorKey)!
         data-theme-dark="blue-650"
         size="sm"
         icon-left="add"
-        @click="addCard()"
+        @click="onNewCard"
       >
         {{ t('deck-view.mode-view.new-card') }}
       </ui-button>

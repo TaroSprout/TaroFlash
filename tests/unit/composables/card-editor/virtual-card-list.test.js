@@ -153,6 +153,79 @@ describe('useVirtualCardList', () => {
     })
   })
 
+  describe('addCard / appendCard / prependCard return client_id', () => {
+    test('addCard returns the client_id of the staged entry [obligation]', () => {
+      const list = makeList()
+      const client_id = list.addCard()
+      expect(typeof client_id).toBe('string')
+      expect(client_id).toBe(list.temp_entries.value[0].client_id)
+    })
+
+    test('appendCard propagates the client_id returned by addCard [obligation]', () => {
+      const list = makeList([makeCard({ id: 50 })])
+      const client_id = list.appendCard(50)
+      expect(typeof client_id).toBe('string')
+      expect(client_id).toBe(list.temp_entries.value[0].client_id)
+    })
+
+    test('prependCard propagates the client_id returned by addCard [obligation]', () => {
+      const list = makeList([makeCard({ id: 50 })])
+      const client_id = list.prependCard(50)
+      expect(typeof client_id).toBe('string')
+      expect(client_id).toBe(list.temp_entries.value[0].client_id)
+    })
+  })
+
+  describe('addCardAtTop', () => {
+    test('anchors before the first persisted card (side=before) [obligation]', () => {
+      const list = makeList([makeCard({ id: 100 }), makeCard({ id: 200 })])
+      list.addCardAtTop()
+      const entry = list.temp_entries.value[0]
+      expect(entry.anchor_id).toBe(100)
+      expect(entry.side).toBe('before')
+    })
+
+    test('uses anchor=null and side=null on an empty deck [obligation]', () => {
+      const list = makeList()
+      list.addCardAtTop()
+      const entry = list.temp_entries.value[0]
+      expect(entry.anchor_id).toBeNull()
+      expect(entry.side).toBeNull()
+    })
+
+    test('unshifts so the new card renders at index 0 above any existing temps [obligation]', () => {
+      const list = makeList([makeCard({ id: 100 })])
+      const id1 = list.addCardAtTop()
+      const id2 = list.addCardAtTop()
+      // Newest (id2) should be at position 0, older (id1) at position 1
+      expect(list.temp_entries.value[0].client_id).toBe(id2)
+      expect(list.temp_entries.value[1].client_id).toBe(id1)
+    })
+
+    test('renders the new card at index 0 in all_cards [obligation]', () => {
+      const list = makeList([makeCard({ id: 100 })])
+      list.addCardAtTop()
+      expect(list.all_cards.value[0].id).toBeLessThan(0)
+      expect(list.all_cards.value[1].id).toBe(100)
+    })
+
+    test('returns the stable client_id of the staged card [obligation]', () => {
+      const list = makeList([makeCard({ id: 100 })])
+      const client_id = list.addCardAtTop()
+      expect(typeof client_id).toBe('string')
+      expect(client_id).toBe(list.temp_entries.value[0].client_id)
+    })
+
+    test('anchors before the first persisted card, not a previously-staged temp [obligation]', () => {
+      // A temp id is negative and would raise on the server — the anchor must be real
+      const list = makeList([makeCard({ id: 100 })])
+      list.addCardAtTop() // stages a temp at position 0
+      list.addCardAtTop() // second call — first persisted is still id=100
+      const latest_entry = list.temp_entries.value[0]
+      expect(latest_entry.anchor_id).toBe(100) // real id, not negative temp placeholder
+    })
+  })
+
   describe('all_cards merging', () => {
     test('places a side=after temp immediately after its left anchor', () => {
       const list = makeList([makeCard({ id: 100 }), makeCard({ id: 200 })])

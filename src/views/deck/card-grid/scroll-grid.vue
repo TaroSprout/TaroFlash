@@ -35,7 +35,7 @@ observeSentinel(sentinel)
 </script>
 
 <template>
-  <div data-testid="card-grid-container" class="w-full h-full md:min-h-0 overflow-y-auto">
+  <div data-testid="card-grid-container" class="w-full h-full md:min-h-0 overflow-y-auto py-2">
     <div data-testid="card-grid" class="grid justify-center gap-4" :style="grid_style">
       <grid-item
         v-for="card in all_cards"

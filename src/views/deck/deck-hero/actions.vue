@@ -72,7 +72,6 @@ function onEditOption(option: DropdownOption) {
       :data-theme-dark="is_editing ? 'yellow-700' : 'stone-700'"
       full-width
       size="xl"
-      :sfx="{ click: 'ui.select' }"
       @click="onToggleEditCards"
       @select="onEditOption"
     >

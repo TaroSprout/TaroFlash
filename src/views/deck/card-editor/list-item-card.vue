@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import CardFaceUploader from './card-face-uploader.vue'
 import { useI18n } from 'vue-i18n'
-import { inject, ref, useTemplateRef } from 'vue'
+import { inject, onMounted, ref, useTemplateRef } from 'vue'
 import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
+import type { CardWithClientId } from '@/composables/card-editor/virtual-card-list'
 import textEditor from '@/components/card/text-editor.vue'
 import { emitSfx } from '@/sfx/bus'
+import { expandListItemIn } from '@/utils/animations/list-item'
 
 type ListItemCardProps = {
-  card: Card
+  card: CardWithClientId
 }
 
 const { card } = defineProps<ListItemCardProps>()
@@ -25,8 +27,19 @@ const front_text = ref(card.front_text ?? '')
 const back_text = ref(card.back_text ?? '')
 const save_failed = ref(false)
 
-const { selection, updateCard, card_attributes } = inject(cardEditorKey)!
+const { selection, updateCard, card_attributes, claimFocus } = inject(cardEditorKey)!
 const { is_selecting } = selection
+
+// A card staged by the toolbar's "new card" intent claims its one-shot signal
+// the moment its row mounts: land the user in the front editor ready to type,
+// and reveal the new row with a grow-in (gated here so scroll-mounted rows
+// don't animate).
+onMounted(() => {
+  if (!claimFocus(card.client_id)) return
+
+  focusEditor()
+  if (list_item_card.value) expandListItemIn(list_item_card.value)
+})
 
 // Persist both sides from local state, not just the edited one: the merge base
 // in the save path is the cached card, so sending a single side would let it
