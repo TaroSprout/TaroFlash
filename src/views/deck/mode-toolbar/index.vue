@@ -2,10 +2,10 @@
 import ModeView from './mode-view.vue'
 import BulkToolbar from './bulk-toolbar.vue'
 import { computed, inject } from 'vue'
-import { type CardListController } from '@/composables/card-editor/card-list-controller'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 import { toolbarEnter, toolbarLeave } from '@/utils/animations/toolbar-swap'
 
-const { selection } = inject<CardListController>('card-editor')!
+const { selection } = inject(cardEditorKey)!
 
 const toolbarComponent = computed(() => (selection.is_selecting.value ? BulkToolbar : ModeView))
 </script>

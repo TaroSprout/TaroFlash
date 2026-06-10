@@ -5,11 +5,11 @@ import PageSettings from './page-settings.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useI18n } from 'vue-i18n'
 import { inject } from 'vue'
-import { type CardListController } from '@/composables/card-editor/card-list-controller'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 
 const { t } = useI18n()
 
-const { addCard } = inject<CardListController>('card-editor')!
+const { addCard } = inject(cardEditorKey)!
 </script>
 
 <template>

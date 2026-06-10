@@ -2,9 +2,10 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref, computed } from 'vue'
 
-const { useDeckQueryMock, useCardListControllerMock } = vi.hoisted(() => ({
+const { useDeckQueryMock, useCardListControllerMock, useDeckViewShellMock } = vi.hoisted(() => ({
   useDeckQueryMock: vi.fn(),
-  useCardListControllerMock: vi.fn()
+  useCardListControllerMock: vi.fn(),
+  useDeckViewShellMock: vi.fn()
 }))
 
 // card-face-uploader (reached statically via mode-stack → list-item-card) now
@@ -15,7 +16,12 @@ vi.mock('@/api/decks', () => ({
   useMemberDeckCountQuery: () => ({ data: { value: 0 }, refresh: vi.fn() })
 }))
 vi.mock('@/composables/card-editor/card-list-controller', () => ({
+  cardEditorKey: Symbol('cardEditor'),
   useCardListController: useCardListControllerMock
+}))
+vi.mock('@/composables/card-editor/deck-view-shell', () => ({
+  deckViewShellKey: Symbol('deckViewShell'),
+  useDeckViewShell: useDeckViewShellMock
 }))
 
 import DeckView from '@/views/deck/index.vue'
@@ -38,9 +44,13 @@ const ScrollBarStub = defineComponent({
   setup: (props) => () =>
     h('div', { 'data-testid': 'scroll-bar-stub', 'data-target': props.target })
 })
-function makeEditor({ mode = 'view', cards = [], isLoading = false } = {}) {
+
+function makeShell(mode = 'view') {
+  return { mode: ref(mode), is_view: ref(mode === 'view') }
+}
+
+function makeEditor({ cards = [], isLoading = false } = {}) {
   return {
-    mode: ref(mode),
     list: { all_cards: computed(() => cards) },
     isLoading: ref(isLoading)
   }
@@ -50,8 +60,9 @@ function makeDeckQuery(deck) {
   return { data: ref(deck) }
 }
 
-function mount({ deck = { id: 1, name: 'Test' }, editorOpts = {} } = {}) {
+function mount({ deck = { id: 1, name: 'Test' }, mode = 'view', editorOpts = {} } = {}) {
   useDeckQueryMock.mockReturnValue(makeDeckQuery(deck))
+  useDeckViewShellMock.mockReturnValue(makeShell(mode))
   useCardListControllerMock.mockReturnValue(makeEditor(editorOpts))
   return shallowMount(DeckView, {
     props: { id: '1' },
@@ -70,6 +81,7 @@ describe('DeckView (views/deck/index.vue)', () => {
   beforeEach(() => {
     useDeckQueryMock.mockReset()
     useCardListControllerMock.mockReset()
+    useDeckViewShellMock.mockReset()
   })
 
   test('renders the deck-hero when the deck query has data', () => {
@@ -100,14 +112,14 @@ describe('DeckView (views/deck/index.vue)', () => {
     expect(wrapper.find('[data-testid="deck-view__empty"]').exists()).toBe(false)
   })
 
-  test('reflects editor.mode in data-mode on the main grid', () => {
-    const view = mount({ editorOpts: { mode: 'view' } })
+  test('reflects shell.mode in data-mode on the main grid', () => {
+    const view = mount({ mode: 'view' })
     expect(view.find('[data-testid="deck-view__main"]').attributes('data-mode')).toBe('view')
 
-    const edit = mount({ editorOpts: { mode: 'edit' } })
+    const edit = mount({ mode: 'edit' })
     expect(edit.find('[data-testid="deck-view__main"]').attributes('data-mode')).toBe('edit')
 
-    const importExport = mount({ editorOpts: { mode: 'import-export' } })
+    const importExport = mount({ mode: 'import-export' })
     expect(importExport.find('[data-testid="deck-view__main"]').attributes('data-mode')).toBe(
       'import-export'
     )
@@ -119,14 +131,14 @@ describe('DeckView (views/deck/index.vue)', () => {
     expect(idArg.value).toBe(1)
   })
 
-  test('passes the parsed numeric deck id to useCardListController', () => {
+  test('passes the parsed numeric deck id and shell to useCardListController', () => {
     mount()
-    expect(useCardListControllerMock).toHaveBeenCalledWith({ deck_id: 1 })
+    expect(useCardListControllerMock).toHaveBeenCalledWith(expect.objectContaining({ deck_id: 1 }))
   })
 
   test('keeps the main layout stable across modes (no mode-dependent classes)', () => {
-    const view = mount({ editorOpts: { mode: 'view' } })
-    const edit = mount({ editorOpts: { mode: 'edit' } })
+    const view = mount({ mode: 'view' })
+    const edit = mount({ mode: 'edit' })
     const viewClasses = view.find('[data-testid="deck-view__main"]').classes()
     const editClasses = edit.find('[data-testid="deck-view__main"]').classes()
     expect(viewClasses).toEqual(editClasses)
@@ -148,7 +160,7 @@ describe('DeckView (views/deck/index.vue)', () => {
 
   test('renders the page scroll-bar tracking the document in every mode', () => {
     for (const mode of ['view', 'edit', 'import-export']) {
-      const wrapper = mount({ editorOpts: { mode } })
+      const wrapper = mount({ mode })
       const bar = wrapper.find('[data-testid="scroll-bar-stub"]')
       expect(bar.exists()).toBe(true)
       expect(bar.attributes('data-target')).toBe('html')

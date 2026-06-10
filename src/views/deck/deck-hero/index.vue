@@ -4,12 +4,12 @@ import DeckDetails from './details.vue'
 import Actions from './actions.vue'
 import BulkActions from './bulk-actions.vue'
 import { inject } from 'vue'
-import { type CardListController } from '@/composables/card-editor/card-list-controller'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 import { defaultEnter, defaultLeave, bulkEnter, bulkLeave } from '@/utils/animations/actions-swap'
 
 defineProps<{ deck: Deck; imageUrl?: string }>()
 
-const editor = inject<CardListController | null>('card-editor', null)
+const editor = inject(cardEditorKey, null)
 const is_selecting = editor?.selection.is_selecting
 </script>
 

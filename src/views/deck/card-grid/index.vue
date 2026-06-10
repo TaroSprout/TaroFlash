@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import GridItem from './grid-item.vue'
-import { type CardListController } from '@/composables/card-editor/card-list-controller'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 import { computed, inject, ref, useTemplateRef, watch, type CSSProperties } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useGridCapacity } from '@/composables/use-grid-capacity'
@@ -10,7 +10,7 @@ import { slideInFromDirection, slideOutInDirection } from '@/utils/animations/gr
 const { t } = useI18n()
 
 const { list, selection, carousel, card_attributes, hasNextPage, isLoading, observeSentinel } =
-  inject<CardListController>('card-editor')!
+  inject(cardEditorKey)!
 const { all_cards } = list
 const { isCardSelected } = selection
 const { visible_cards, setVisibleCapacity, page, page_size, page_direction, is_page_loading } =

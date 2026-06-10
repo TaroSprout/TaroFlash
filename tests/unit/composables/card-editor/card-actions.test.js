@@ -62,21 +62,25 @@ function makeDeckQuery() {
   return { refetch: vi.fn().mockResolvedValue(undefined) }
 }
 
+function makeShell(opts = {}) {
+  return { exitMode: opts.exitMode ?? vi.fn() }
+}
+
 function makeActions(opts = {}) {
   const list = opts.list ?? makeList()
   const selection = opts.selection ?? makeSelection()
   const mutations = opts.mutations ?? makeMutations()
   const deck_query = opts.deck_query ?? makeDeckQuery()
-  const setMode = opts.setMode ?? vi.fn()
+  const shell = opts.shell ?? makeShell()
   const actions = useCardActions({
     list,
     selection,
     mutations,
     deck_query,
     deck_id: opts.deck_id ?? 10,
-    setMode
+    shell
   })
-  return { actions, list, selection, mutations, deck_query, setMode }
+  return { actions, list, selection, mutations, deck_query, shell }
 }
 
 describe('useCardActions', () => {
@@ -108,10 +112,11 @@ describe('useCardActions', () => {
   // ── onCancel ──────────────────────────────────────────────────────────────
 
   describe('onCancel', () => {
-    test('returns to view mode, exits selection, and emits the cancel sfx', () => {
-      const { actions, selection, setMode } = makeActions()
+    test('calls shell.exitMode, exits selection, and emits the cancel sfx', () => {
+      const exitMode = vi.fn()
+      const { actions, selection } = makeActions({ shell: makeShell({ exitMode }) })
       actions.onCancel()
-      expect(setMode).toHaveBeenCalledWith('view')
+      expect(exitMode).toHaveBeenCalledOnce()
       expect(selection.exitSelection).toHaveBeenCalledOnce()
       expect(emitSfxMock).toHaveBeenCalledWith('ui.card_drop')
     })
@@ -156,17 +161,19 @@ describe('useCardActions', () => {
       expect(args.cards.map((c) => c.id)).toEqual([7])
     })
 
-    test('runs cleanup on confirm: refetch + setMode(view) + exitSelection', async () => {
+    test('runs cleanup on confirm: refetch + exitSelection (mode is NOT reset) [obligation]', async () => {
       alertWarnMock.mockReturnValueOnce({ response: Promise.resolve(true) })
       const persisted = [makeCard({ id: 1 })]
-      const { actions, mutations, selection, deck_query, setMode } = makeActions({
+      const exitMode = vi.fn()
+      const { actions, mutations, selection, deck_query } = makeActions({
         list: makeList({ persisted }),
-        selection: makeSelection({ selected_ids: [1] })
+        selection: makeSelection({ selected_ids: [1] }),
+        shell: makeShell({ exitMode })
       })
       await actions.onDeleteCards()
       expect(mutations.deleteCards).toHaveBeenCalledOnce()
       expect(deck_query.refetch).toHaveBeenCalledOnce()
-      expect(setMode).toHaveBeenCalledWith('view')
+      expect(exitMode).not.toHaveBeenCalled()
       expect(selection.exitSelection).toHaveBeenCalledOnce()
     })
 
@@ -242,17 +249,19 @@ describe('useCardActions', () => {
       expect(emitSfxMock).toHaveBeenCalledWith('ui.double_pop_down')
     })
 
-    test('runs cleanup after a successful move: exitSelection + refetch', async () => {
+    test('runs cleanup after a successful move: exitSelection + refetch (mode unchanged)', async () => {
       modalOpenMock.mockReturnValueOnce({ response: Promise.resolve({ deck_id: 42 }) })
       const persisted = [makeCard({ id: 7 })]
-      const { actions, selection, deck_query, setMode } = makeActions({
+      const exitMode = vi.fn()
+      const { actions, selection, deck_query } = makeActions({
         list: makeList({ persisted }),
-        selection: makeSelection({ selected_ids: [7] })
+        selection: makeSelection({ selected_ids: [7] }),
+        shell: makeShell({ exitMode })
       })
       await actions.onMoveCards()
       expect(selection.exitSelection).toHaveBeenCalledOnce()
       expect(deck_query.refetch).toHaveBeenCalledOnce()
-      expect(setMode).not.toHaveBeenCalled()
+      expect(exitMode).not.toHaveBeenCalled()
     })
 
     test('select-all mode passes { source_deck_id, except_ids } to mutation', async () => {
@@ -291,11 +300,10 @@ describe('useCardActions', () => {
 
   describe('onCancelSelection', () => {
     test('exits selection mode and emits the digi-powerdown sfx', () => {
-      const { actions, selection, setMode } = makeActions()
+      const { actions, selection } = makeActions()
       actions.onCancelSelection()
       expect(selection.exitSelection).toHaveBeenCalledOnce()
       expect(emitSfxMock).toHaveBeenCalledWith('ui.digi_powerdown')
-      expect(setMode).not.toHaveBeenCalled()
     })
   })
 })

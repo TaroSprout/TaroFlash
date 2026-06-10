@@ -5,7 +5,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import Card from '@/components/card/index.vue'
 import { useBulkInsertCardsInDeckMutation } from '@/api/cards'
 import { useToast } from '@/composables/toast'
-import { type CardListController } from '@/composables/card-editor/card-list-controller'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -18,7 +18,7 @@ const raw_text = ref<string>('')
 const cards = ref<CardDraft[]>([])
 const bulk_insert_mutation = useBulkInsertCardsInDeckMutation()
 
-const { deck_id, guardAddCards, handleLimitError } = inject<CardListController>('card-editor')!
+const { deck_id, guardAddCards, handleLimitError } = inject(cardEditorKey)!
 
 const has_unsaved_changes = computed(() => cards.value.length > 0)
 

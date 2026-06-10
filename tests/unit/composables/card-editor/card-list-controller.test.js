@@ -106,6 +106,11 @@ function makeDeckQuery(card_count = 0) {
   }
 }
 
+// Returns a minimal shell stub that satisfies the controller's `exitMode` requirement.
+function makeShell(overrides = {}) {
+  return { exitMode: overrides.exitMode ?? vi.fn() }
+}
+
 // Returns the controller with `deck_query` attached so refetch + reactive
 // data assertions can target the same handle the controller uses internally.
 // Mocks `useDeckQuery` for the lifetime of the call so both the controller
@@ -114,11 +119,12 @@ function makeDeckQuery(card_count = 0) {
 // Returns the controller flattened — sub-namespaces (list/selection/carousel/
 // actions) are spread onto the root for ergonomic test destructuring. Real
 // consumers reach in via the grouped surface; the flatten happens here only.
-function makeController(persisted = [], ids = persisted.map((c) => c.id), deck_query) {
+function makeController(persisted = [], ids = persisted.map((c) => c.id), deck_query, shell) {
   const dq = deck_query ?? makeDeckQuery(ids.length)
+  const sh = shell ?? makeShell()
   cardsInfiniteQueryMock.mockReturnValueOnce(makeCardsQuery(persisted))
   deckQueryMock.mockReturnValue(dq)
-  const controller = useCardListController({ deck_id: 10 })
+  const controller = useCardListController({ deck_id: 10, shell: sh })
   return {
     ...controller,
     ...controller.list,
@@ -132,7 +138,8 @@ function makeController(persisted = [], ids = persisted.map((c) => c.id), deck_q
     gated_addCard: controller.addCard,
     gated_appendCard: controller.appendCard,
     gated_prependCard: controller.prependCard,
-    deck_query: dq
+    deck_query: dq,
+    shell: sh
   }
 }
 
@@ -171,48 +178,12 @@ describe('useCardListController', () => {
       expect(all_cards.value.map((c) => c.id)).toEqual([1, 2])
     })
 
-    test('starts in view mode with no selection and not in select-all mode', () => {
-      const { mode, selected_card_ids, deselected_ids, select_all_mode, saving } = makeController()
-      expect(mode.value).toBe('view')
+    test('starts with no selection and not in select-all mode', () => {
+      const { selected_card_ids, deselected_ids, select_all_mode, saving } = makeController()
       expect(selected_card_ids.value).toEqual([])
       expect(deselected_ids.value).toEqual([])
       expect(select_all_mode.value).toBe(false)
       expect(saving.value).toBe(false)
-    })
-
-    test('grid_size initializes to "md" when no persisted value exists [obligation]', () => {
-      const { grid_size } = makeController()
-      expect(grid_size.value).toBe('md')
-    })
-
-    test('grid_size rehydrates from localStorage under key deck-grid-size [obligation]', () => {
-      localStorage.setItem('deck-grid-size', JSON.stringify('xl'))
-      const { grid_size } = makeController()
-      expect(grid_size.value).toBe('xl')
-    })
-  })
-
-  // ── setGridSize ────────────────────────────────────────────────────────────
-
-  describe('setGridSize', () => {
-    test('setGridSize("xl") updates grid_size.value to "xl" [obligation]', () => {
-      const { grid_size, setGridSize } = makeController()
-      setGridSize('xl')
-      expect(grid_size.value).toBe('xl')
-    })
-
-    test('setGridSize persists to localStorage under key deck-grid-size [obligation]', async () => {
-      const { setGridSize } = makeController()
-      setGridSize('xl')
-      // watch is { deep: true } with immediate=false; nextTick flushes it
-      await nextTick()
-      expect(JSON.parse(localStorage.getItem('deck-grid-size'))).toBe('xl')
-    })
-
-    test('setGridSize("base") sets grid_size to "base"', () => {
-      const { grid_size, setGridSize } = makeController()
-      setGridSize('base')
-      expect(grid_size.value).toBe('base')
     })
   })
 
@@ -681,7 +652,7 @@ describe('useCardListController', () => {
       const dq = { data: ref(null), refetch: vi.fn() }
       cardsInfiniteQueryMock.mockReturnValueOnce(makeCardsQuery([]))
       deckQueryMock.mockReturnValue(dq)
-      const ctrl = useCardListController({ deck_id: 10 })
+      const ctrl = useCardListController({ deck_id: 10, shell: makeShell() })
       expect(ctrl.card_count.value).toBe(0)
     })
 
@@ -716,13 +687,15 @@ describe('useCardListController', () => {
     })
   })
 
-  // ── setMode ────────────────────────────────────────────────────────────────
+  // ── shell plumbing — mode and grid_size live on the shell, not the controller
 
-  describe('setMode', () => {
-    test('updates the mode ref', () => {
-      const { mode, setMode } = makeController()
-      setMode('edit')
-      expect(mode.value).toBe('edit')
+  describe('shell plumbing', () => {
+    test('controller passes shell.exitMode to card-actions (onCancel calls exitMode)', () => {
+      const exitMode = vi.fn()
+      const sh = makeShell({ exitMode })
+      const ctrl = makeController([], [], undefined, sh)
+      ctrl.onCancel()
+      expect(exitMode).toHaveBeenCalledOnce()
     })
   })
 
@@ -775,26 +748,25 @@ describe('useCardListController', () => {
   // ── intent handlers — onCancel / onSelectCard / onDeleteCards / onMoveCards ─
 
   describe('intent handlers', () => {
-    test('onCancel resets mode to view, exits selection, and clears selection', async () => {
+    test('onCancel calls shell.exitMode, exits selection, and clears selection', async () => {
+      const exitMode = vi.fn()
+      const sh = makeShell({ exitMode })
       const deck_query = makeDeckQuery()
-      const ctrl = makeController([makeCard({ id: 1 })], [1], deck_query)
+      const ctrl = makeController([makeCard({ id: 1 })], [1], deck_query, sh)
       ctrl.selectCard(1)
       ctrl.enterSelection()
-      ctrl.setMode('edit')
       await ctrl.onCancel()
-      expect(ctrl.mode.value).toBe('view')
+      expect(exitMode).toHaveBeenCalledOnce()
       expect(ctrl.is_selecting.value).toBe(false)
       expect(ctrl.selected_card_ids.value).toEqual([])
       expect(deck_query.refetch).not.toHaveBeenCalled()
     })
 
-    test('onSelectCard toggles the id and enters selection mode without changing the editor mode', () => {
+    test('onSelectCard toggles the id and enters selection mode', () => {
       const ctrl = makeController([makeCard({ id: 1 })], [1])
-      ctrl.setMode('edit')
       ctrl.onSelectCard(1)
       expect(ctrl.isCardSelected(1)).toBe(true)
       expect(ctrl.is_selecting.value).toBe(true)
-      expect(ctrl.mode.value).toBe('edit')
     })
 
     test('onSelectCard without id just enters selection mode without mutating selection', () => {
@@ -812,16 +784,18 @@ describe('useCardListController', () => {
       expect(deleteCardsMock).not.toHaveBeenCalled()
     })
 
-    test('onDeleteCards deletes and returns to view mode when confirmed', async () => {
+    test('onDeleteCards deletes and clears selection, mode is unchanged [obligation]', async () => {
       alertWarnMock.mockReturnValueOnce({ response: Promise.resolve(true) })
+      const exitMode = vi.fn()
+      const sh = makeShell({ exitMode })
       const deck_query = makeDeckQuery()
-      const ctrl = makeController([makeCard({ id: 1 })], [1], deck_query)
+      const ctrl = makeController([makeCard({ id: 1 })], [1], deck_query, sh)
       ctrl.selectCard(1)
       ctrl.enterSelection()
       await ctrl.onDeleteCards()
       expect(deleteCardsMock).toHaveBeenCalledOnce()
       expect(deck_query.refetch).toHaveBeenCalledOnce()
-      expect(ctrl.mode.value).toBe('view')
+      expect(exitMode).not.toHaveBeenCalled()
       expect(ctrl.is_selecting.value).toBe(false)
     })
 
@@ -933,7 +907,7 @@ describe('useCardListController', () => {
       cardsInfiniteQueryMock.mockReturnValueOnce(cards_query)
       const dq = makeDeckQuery(card_count ?? ids.length)
       deckQueryMock.mockReturnValue(dq)
-      const root = useCardListController({ deck_id: 10 })
+      const root = useCardListController({ deck_id: 10, shell: makeShell() })
       const controller = { ...root, ...root.list, ...root.selection, ...root.carousel }
       return { controller, cards_query, deck_query: dq }
     }

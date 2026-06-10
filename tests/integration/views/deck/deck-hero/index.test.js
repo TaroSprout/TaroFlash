@@ -12,6 +12,7 @@ const ChildStub = (name) =>
   })
 
 import DeckHero from '@/views/deck/deck-hero/index.vue'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 
 function makeEditor({ is_selecting = false } = {}) {
   return { selection: { is_selecting: ref(is_selecting) } }
@@ -21,7 +22,7 @@ function mount({ editor } = {}) {
   return shallowMount(DeckHero, {
     props: { deck: { id: 1, title: 'd', card_count: 10 } },
     global: {
-      provide: editor === undefined ? {} : { 'card-editor': editor },
+      provide: editor === undefined ? {} : { [cardEditorKey]: editor },
       stubs: {
         Thumbnail: ChildStub('Thumbnail'),
         DeckDetails: ChildStub('DeckDetails'),

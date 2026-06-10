@@ -15,14 +15,33 @@ vi.mock('@/composables/toast', () => ({
   useToast: () => ({ error: toastErrorMock })
 }))
 
-vi.mock('@/api/cards', () => ({
-  useBulkInsertCardsInDeckMutation: () => ({
-    mutate: bulkInsertMock,
-    mutateAsync: bulkInsertMock
-  })
-}))
+vi.mock('@/api/cards', () => {
+  const noop_mutation = () => ({ mutate: vi.fn(), mutateAsync: vi.fn() })
+  const noop_query = () => ({ data: { value: null }, refresh: vi.fn() })
+  return {
+    useBulkInsertCardsInDeckMutation: () => ({
+      mutate: bulkInsertMock,
+      mutateAsync: bulkInsertMock
+    }),
+    useCardsInDeckInfiniteQuery: noop_query,
+    useDeleteCardImageMutation: noop_mutation,
+    useDeleteCardsInDeckMutation: noop_mutation,
+    useDeleteCardsMutation: noop_mutation,
+    useInsertCardAtMutation: noop_mutation,
+    useMemberCardCountQuery: noop_query,
+    useMoveCardMutation: noop_mutation,
+    useMoveCardsToDeckMutation: noop_mutation,
+    useSaveCardMutation: noop_mutation,
+    useSearchCardsInDeckQuery: noop_query,
+    useSetCardImageMutation: noop_mutation,
+    useStudySessionCardsQuery: noop_query,
+    useUpsertCardMutation: noop_mutation,
+    useUpsertCardsMutation: noop_mutation
+  }
+})
 
 import CardImporter from '@/views/deck/card-importer.vue'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 
 const UiButtonStub = defineComponent({
   name: 'UiButton',
@@ -54,7 +73,7 @@ function mount({ deck_id = 10 } = {}) {
     global: {
       stubs: { UiButton: UiButtonStub },
       provide: {
-        'card-editor': {
+        [cardEditorKey]: {
           deck_id,
           guardAddCards: guardAddCardsMock,
           handleLimitError: handleLimitErrorMock

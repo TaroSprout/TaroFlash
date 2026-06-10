@@ -3,7 +3,7 @@ import ItemOptions from './list-item-options.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiRadio from '@/components/ui-kit/radio.vue'
-import { type CardListController } from '@/composables/card-editor/card-list-controller'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 import { inject, computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ListItemCard from './list-item-card.vue'
@@ -16,7 +16,7 @@ type ListItemProps = {
 const { card, index } = defineProps<ListItemProps>()
 
 const { t } = useI18n()
-const { selection, actions, appendCard, prependCard } = inject<CardListController>('card-editor')!
+const { selection, actions, appendCard, prependCard } = inject(cardEditorKey)!
 const { is_selecting, isCardSelected } = selection
 const { onDeleteCards, onMoveCards, onSelectCard } = actions
 

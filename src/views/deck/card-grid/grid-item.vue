@@ -4,9 +4,9 @@ import UiRadio from '@/components/ui-kit/radio.vue'
 import GridItemMenu from './grid-item-menu.vue'
 import { emitSfx } from '@/sfx/bus'
 import { inject, ref } from 'vue'
-import { type CardListController } from '@/composables/card-editor/card-list-controller'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 
-const { actions, selection } = inject<CardListController>('card-editor')!
+const { actions, selection } = inject(cardEditorKey)!
 const { onDeleteCards, onMoveCards, onSelectCard } = actions
 const { is_selecting } = selection
 

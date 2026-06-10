@@ -99,6 +99,7 @@ vi.mock('@/utils/animations/button-tap', () => ({
 }))
 
 import CardFaceUploader from '@/views/deck/card-editor/card-face-uploader.vue'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 
 function makeCard(overrides = {}) {
   return { id: 1, deck_id: 10, front_text: 'Q', back_text: 'A', rank: 1000, ...overrides }
@@ -135,7 +136,7 @@ function mount(props = {}) {
       },
       directives: { sfx: {} },
       provide: {
-        'card-editor': {
+        [cardEditorKey]: {
           setFaceImage: mocks.setFaceImageMock,
           card_attributes: ref({ front: {}, back: {} }),
           ...cardEditor
