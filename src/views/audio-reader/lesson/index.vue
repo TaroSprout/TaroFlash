@@ -31,6 +31,8 @@ const {
   target_lang,
   openTerm,
   closeTerm,
+  playFromHere,
+  playClip,
   player
 } = useLessonReader(lesson_id)
 
@@ -190,6 +192,8 @@ watch(
         :sentence="selection.sentence"
         :target_lang="target_lang"
         @close="closeTerm"
+        @play-from-here="playFromHere"
+        @play-word="playClip"
       />
     </div>
   </section>

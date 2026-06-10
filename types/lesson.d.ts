@@ -73,9 +73,13 @@ type LessonCollectionWithCount = LessonCollection & {
 }
 
 // A term the reader tapped or selected, with the sentence it sits in (translator
-// context) and the rect to anchor the details popover against.
+// context), the rect to anchor the details popover against, and its first/last
+// word indices so playback can seek there ("play from here") or play just the
+// phrase ("play word").
 type TermSelection = {
   term: string
   sentence: string
   rect: DOMRect
+  word_index: number
+  word_end_index: number
 }

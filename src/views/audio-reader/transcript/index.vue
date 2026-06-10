@@ -17,11 +17,12 @@ const emit = defineEmits<{
   (e: 'select', selection: TermSelection): void
 }>()
 
-const { onPointerDown, onPointerMove, onPointerUp, onPointerLeave } = useReaderHighlights(
-  () => active_word,
-  commitSelection,
-  () => popover_open
-)
+const { onPointerDown, onPointerMove, onPointerUp, onPointerLeave, onPointerCancel } =
+  useReaderHighlights(
+    () => active_word,
+    commitSelection,
+    () => popover_open
+  )
 
 function paragraphIndexOf(node: Element): number | null {
   const segment = node.closest('[data-testid="transcript-segment"]')
@@ -29,12 +30,25 @@ function paragraphIndexOf(node: Element): number | null {
   return index === null || index === undefined ? null : Number(index)
 }
 
-// A committed word-range carries its own term + rect; the surrounding text
-// (translator context) is the whole paragraph the anchor word sits in.
-function commitSelection({ term, rect, anchor }: { term: string; rect: DOMRect; anchor: Element }) {
+// A committed word-range carries its own term + rect + first/last word indices;
+// the surrounding text (translator context) is the whole paragraph the anchor
+// word sits in.
+function commitSelection({
+  term,
+  rect,
+  anchor,
+  index: word_index,
+  end_index: word_end_index
+}: {
+  term: string
+  rect: DOMRect
+  anchor: Element
+  index: number
+  end_index: number
+}) {
   const index = paragraphIndexOf(anchor)
   const sentence = (index !== null && paragraphs[index]?.sentence) || term
-  emit('select', { term, sentence, rect })
+  emit('select', { term, sentence, rect, word_index, word_end_index })
 }
 </script>
 
@@ -48,6 +62,7 @@ function commitSelection({ term, rect, anchor }: { term: string; rect: DOMRect; 
       @pointermove="onPointerMove"
       @pointerup="onPointerUp"
       @pointerleave="onPointerLeave"
+      @pointercancel="onPointerCancel"
     >
       <div
         ref="sentence"
