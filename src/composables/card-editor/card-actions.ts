@@ -8,6 +8,7 @@ import type { useDeckQuery } from '@/api/decks'
 import type { CardSelection } from './card-selection'
 import type { VirtualCardList } from './virtual-card-list'
 import type { CardMutations } from './card-mutations'
+import type { DeckViewShell } from './deck-view-shell'
 
 export type CardActions = ReturnType<typeof useCardActions>
 
@@ -19,19 +20,20 @@ type Args = {
   mutations: CardMutations
   deck_query: Pick<DeckQuery, 'refetch'>
   deck_id: number
-  setMode: (mode: CardEditorMode) => void
+  shell: Pick<DeckViewShell, 'exitMode'>
 }
 
 /**
  * Intent handlers for the deck-editor: confirm + delete, open + move, enter
  * selection, exit mode. Composes modal / alert / sfx around the underlying
- * mutations so the controller doesn't carry that UI baggage.
+ * mutations so the controller doesn't carry that UI baggage. Flows that end
+ * editing hand control back to the deck-view shell via `shell.exitMode()`.
  *
  * @example
- * const actions = useCardActions({ list, selection, mutations, deck_id, setMode })
+ * const actions = useCardActions({ list, selection, mutations, deck_id, shell })
  * actions.onDeleteCards(card_id)
  */
-export function useCardActions({ list, selection, mutations, deck_query, deck_id, setMode }: Args) {
+export function useCardActions({ list, selection, mutations, deck_query, deck_id, shell }: Args) {
   const { t } = useI18n()
   const modal = useModal()
   const alert = useAlert()
@@ -47,11 +49,10 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
     return response
   }
 
-  /** Cleanup applied after any successful delete: drop selection, refetch, exit. */
+  /** Cleanup applied after any successful delete: drop selection, refetch. */
   async function afterDelete() {
     selection.exitSelection()
     await deck_query.refetch()
-    setMode('view')
   }
 
   /** Cleanup applied after any successful move: drop selection, refetch source deck. */
@@ -137,7 +138,7 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
   /** Exit the current mode: drop selection, return to view mode. */
   function onCancel() {
     emitSfx('ui.card_drop')
-    setMode('view')
+    shell.exitMode()
     selection.exitSelection()
   }
 

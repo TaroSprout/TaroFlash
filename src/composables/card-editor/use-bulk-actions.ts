@@ -1,7 +1,7 @@
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { emitSfx } from '@/sfx/bus'
-import { type CardListController } from './card-list-controller'
+import { cardEditorKey } from './card-list-controller'
 
 /**
  * Reactive labels + handlers shared by the bulk-actions stack and the
@@ -14,7 +14,7 @@ import { type CardListController } from './card-list-controller'
  */
 export function useBulkActions() {
   const { t } = useI18n()
-  const { selection, actions } = inject<CardListController>('card-editor')!
+  const { selection, actions } = inject(cardEditorKey)!
 
   const has_selection = computed(
     () => selection.select_all_mode.value || selection.selected_count.value > 0

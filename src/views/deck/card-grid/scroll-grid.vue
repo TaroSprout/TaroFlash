@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import GridItem from './grid-item.vue'
-import {
-  type CardGridSize,
-  type CardListController
-} from '@/composables/card-editor/card-list-controller'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
+import { deckViewShellKey, type CardGridSize } from '@/composables/card-editor/deck-view-shell'
 import { computed, inject, ref, useTemplateRef, type CSSProperties } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 
-const { list, selection, card_attributes, hasNextPage, isLoading, observeSentinel, grid_size } =
-  inject<CardListController>('card-editor')!
+const { list, selection, card_attributes, hasNextPage, isLoading, observeSentinel } =
+  inject(cardEditorKey)!
+const { grid_size } = inject(deckViewShellKey)!
 const { all_cards } = list
 const { isCardSelected } = selection
 

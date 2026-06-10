@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue'
 import UiButton from '@/components/ui-kit/button.vue'
-import type { CardListController } from '@/composables/card-editor/card-list-controller'
+import { useModeConfig } from './modes'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 
 type PageNavButtonProps = {
   direction: 'prev' | 'next'
@@ -9,7 +10,8 @@ type PageNavButtonProps = {
 
 const { direction } = defineProps<PageNavButtonProps>()
 
-const editor = inject<CardListController>('card-editor')!
+const editor = inject(cardEditorKey)!
+const mode_config = useModeConfig()
 
 const is_prev = computed(() => direction === 'prev')
 const testid = computed(() => `deck-view__${is_prev.value ? 'previous' : 'next'}-page-button`)
@@ -28,7 +30,7 @@ function onClick() {
     data-theme="brown-300"
     data-theme-dark="stone-700"
     class="sm:row-start-2 self-center max-sm:hidden! transition duration-300"
-    :class="[column, { 'opacity-0 pointer-events-none': editor.mode.value !== 'view' }]"
+    :class="[column, { 'opacity-0 pointer-events-none': !mode_config.pagination }]"
     icon-only
     :icon-left="icon"
     @click="onClick"

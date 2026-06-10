@@ -7,7 +7,8 @@ import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useStudyModal } from '@/composables/modals/use-study-modal'
 import { useDeckSettingsModal } from '@/composables/modals/use-deck-settings-modal'
-import { type CardListController } from '@/composables/card-editor/card-list-controller'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
+import { deckViewShellKey } from '@/composables/card-editor/deck-view-shell'
 
 const { deck } = defineProps<{ deck: Deck }>()
 
@@ -15,10 +16,10 @@ const { t } = useI18n()
 const study_session = useStudyModal()
 const deck_settings = useDeckSettingsModal()
 
-const editor = inject<CardListController | null>('card-editor', null)
-const mode = editor?.mode
+const editor = inject(cardEditorKey, null)
+const shell = inject(deckViewShellKey, null)
 
-const is_editing = computed(() => mode?.value === 'edit')
+const is_editing = computed(() => shell?.mode.value === 'edit')
 const edit_options = computed<DropdownOption[]>(() => [
   { label: t('deck-view.actions.select-cards'), value: 'select', icon: 'data-check' },
   {
@@ -33,8 +34,7 @@ function onStudyClicked() {
 }
 
 function onToggleEditCards() {
-  if (!editor) return
-  editor.setMode(editor.mode.value === 'edit' ? 'view' : 'edit')
+  shell?.toggleMode('edit')
 }
 
 function onEditOption(option: DropdownOption) {

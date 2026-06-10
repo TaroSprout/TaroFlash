@@ -9,7 +9,7 @@ import {
   type ShallowRef
 } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { type CardListController } from './card-list-controller'
+import { cardEditorKey } from './card-list-controller'
 import { useCardImageGate } from './use-card-image-gate'
 import { useImageDropzone } from './use-image-dropzone'
 import { useToast } from '@/composables/toast'
@@ -51,7 +51,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
   const { t } = useI18n()
   const toast = useToast()
   const { guardCardImage } = useCardImageGate()
-  const { setFaceImage } = inject<CardListController>('card-editor')!
+  const { setFaceImage } = inject(cardEditorKey)!
 
   const hovered = ref(false)
   const hover_suppressed = ref(false)

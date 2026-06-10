@@ -1,4 +1,4 @@
-import { computed, ref, type Ref } from 'vue'
+import { computed, ref, type InjectionKey, type Ref } from 'vue'
 import { useInfiniteScroll } from '@/composables/use-infinite-scroll'
 import { useCardsInDeckInfiniteQuery } from '@/api/cards'
 import { useDeckQuery } from '@/api/decks'
@@ -8,29 +8,29 @@ import { useCardMutations } from './card-mutations'
 import { useCardCarousel } from './card-carousel'
 import { useCardActions } from './card-actions'
 import { useCardLimitGate } from '@/composables/use-card-limit-gate'
-import { useLocalRef } from '@/composables/use-local-ref'
+import type { DeckViewShell } from './deck-view-shell'
 
 export type CardListController = ReturnType<typeof useCardListController>
 
-/** Card render size for the deck grid — Small / Base / Full in the toolbar. */
-export type CardGridSize = 'base' | 'md' | 'xl'
+export const cardEditorKey = Symbol('cardEditor') as InjectionKey<CardListController>
 
 type Options = {
   deck_id: number
+  // intent actions hand control back to the shell when a flow ends editing
+  shell: Pick<DeckViewShell, 'exitMode'>
 }
 
 /**
  * Single root composable for the deck-editor card list. Wires the infinite
  * cards query, deck query, virtual list, selection, mutations, carousel, and
  * intent actions together, and exposes the consolidated surface a single
- * `provide('card-editor')` hands to every consumer (list, grid, list-item,
+ * `provide(cardEditorKey)` hands to every consumer (list, grid, list-item,
  * list-item-card, card-importer, mode-toolbar, deck-hero).
  *
- * Owns:
- * - `mode` UI state (view / edit / import-export). Selection is orthogonal:
- *   `is_selecting` flips on the moment any card is selected, regardless of
- *   which mode is active.
- * - the `saving` flag and the INSERT-vs-UPDATE routing in `updateCard`.
+ * Pure card-data concerns: which mode/pane is on screen lives in
+ * `useDeckViewShell`. Selection is orthogonal to mode: `is_selecting` flips on
+ * the moment any card is selected, regardless of which mode is active. Also
+ * owns the `saving` flag and the INSERT-vs-UPDATE routing in `updateCard`.
  *
  * Calls `useDeckQuery` once internally and forwards `deck.card_count` into
  * `useCardSelection` and `useCardCarousel`. Pinia Colada dedupes by key, so
@@ -38,10 +38,13 @@ type Options = {
  * share the cache entry.
  *
  * @param opts.deck_id - Numeric deck id this controller is scoped to.
+ * @param opts.shell - The deck-view shell; intent actions call its `exitMode`
+ *   when a flow ends editing (e.g. deleting the whole selection).
  *
  * @example
- * const editor = useCardListController({ deck_id })
- * provide('card-editor', editor)
+ * const shell = useDeckViewShell()
+ * const editor = useCardListController({ deck_id, shell })
+ * provide(cardEditorKey, editor)
  */
 export function useCardListController(opts: Options) {
   const cards_query = useCardsInDeckInfiniteQuery(() => opts.deck_id)
@@ -54,8 +57,6 @@ export function useCardListController(opts: Options) {
   const mutations = useCardMutations(opts.deck_id)
   const limit_gate = useCardLimitGate(() => deck_query.data.value)
 
-  const mode = ref<CardEditorMode>('view')
-  const grid_size = useLocalRef<CardGridSize>('deck-grid-size', 'md')
   const saving = ref(false)
 
   const card_attributes = computed<DeckCardAttributes>(() => ({
@@ -64,16 +65,6 @@ export function useCardListController(opts: Options) {
   }))
 
   const carousel = useCardCarousel({ list, cards_query, card_count })
-
-  /** Set the editor's UI mode (view / edit / import-export). */
-  function setMode(new_mode: CardEditorMode) {
-    mode.value = new_mode
-  }
-
-  /** Set the card render size for the deck grid (Small / Base / Full). */
-  function setGridSize(size: CardGridSize) {
-    grid_size.value = size
-  }
 
   /**
    * Stage a new temp card, gated on the deck's plan card cap. The single funnel
@@ -105,7 +96,7 @@ export function useCardListController(opts: Options) {
     mutations,
     deck_query,
     deck_id: opts.deck_id,
-    setMode
+    shell: opts.shell
   })
 
   /**
@@ -196,10 +187,6 @@ export function useCardListController(opts: Options) {
     carousel,
     actions,
 
-    mode,
-    setMode,
-    grid_size,
-    setGridSize,
     addCard,
     appendCard,
     prependCard,

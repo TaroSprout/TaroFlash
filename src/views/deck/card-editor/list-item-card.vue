@@ -2,7 +2,7 @@
 import CardFaceUploader from './card-face-uploader.vue'
 import { useI18n } from 'vue-i18n'
 import { inject, ref, useTemplateRef } from 'vue'
-import { type CardListController } from '@/composables/card-editor/card-list-controller'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 import textEditor from '@/components/card/text-editor.vue'
 import { emitSfx } from '@/sfx/bus'
 
@@ -25,7 +25,7 @@ const front_text = ref(card.front_text ?? '')
 const back_text = ref(card.back_text ?? '')
 const save_failed = ref(false)
 
-const { selection, updateCard, card_attributes } = inject<CardListController>('card-editor')!
+const { selection, updateCard, card_attributes } = inject(cardEditorKey)!
 const { is_selecting } = selection
 
 // Persist both sides from local state, not just the edited one: the merge base

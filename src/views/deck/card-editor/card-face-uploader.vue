@@ -6,7 +6,7 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import FaceImageDropzone from './face-image-dropzone.vue'
 import UiButton from '@/components/ui-kit/button.vue'
-import { type CardListController } from '@/composables/card-editor/card-list-controller'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 import {
   CARD_IMAGE_MAX_BYTES,
   useFaceImageUpload
@@ -28,7 +28,7 @@ type CardFaceUploaderProps = {
 const { card, side, disabled = false, error = false } = defineProps<CardFaceUploaderProps>()
 
 const { t } = useI18n()
-const { card_attributes } = inject<CardListController>('card-editor')!
+const { card_attributes } = inject(cardEditorKey)!
 
 const addIcon = useTemplateRef<HTMLElement>('addIcon')
 const cardRef = useTemplateRef<ComponentPublicInstance>('cardRef')

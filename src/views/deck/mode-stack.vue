@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed, inject, ref, useTemplateRef, watch } from 'vue'
-import CardGrid from './card-grid/scroll-grid.vue'
-import CardEditor from './card-editor/index.vue'
-import CardImporter from './card-importer.vue'
+import { DECK_MODES } from './modes'
 import {
   captureModeSwitch,
   distanceToViewportBottom,
@@ -14,7 +12,7 @@ import {
   slideOverlayDown,
   type ModeSwitchViewport
 } from '@/utils/animations/deck-view/card-overlay'
-import type { CardListController } from '@/composables/card-editor/card-list-controller'
+import { deckViewShellKey } from '@/composables/card-editor/deck-view-shell'
 
 type ModeStackProps = {
   sticky_header?: HTMLElement | null
@@ -22,24 +20,25 @@ type ModeStackProps = {
 
 const { sticky_header = null } = defineProps<ModeStackProps>()
 
-const editor = inject<CardListController>('card-editor')!
+const shell = inject(deckViewShellKey)!
 
 const stack = useTemplateRef<HTMLElement>('stack')
 const sliding = ref(0)
+const switch_pending = ref(false)
 const clip_min_height = ref(0)
 
 let viewport: ModeSwitchViewport = { from_y: 0, settle_y: 0, stack_top: 0 }
 
-const is_view = computed(() => editor.mode.value === 'view')
-const overlay_component = computed(() =>
-  editor.mode.value === 'import-export' ? CardImporter : CardEditor
+const overlay_pane = computed(() =>
+  shell.is_view.value ? null : DECK_MODES[shell.mode.value].pane
 )
-const is_transitioning = computed(() => sliding.value > 0)
+const is_transitioning = computed(() => switch_pending.value || sliding.value > 0)
 const clip_style = computed(() =>
   is_transitioning.value ? { minHeight: `${clip_min_height.value}px` } : undefined
 )
 
 function onGridEnter(el: Element, done: () => void) {
+  switch_pending.value = false
   fadeScaleEnter(el, done)
 }
 
@@ -50,6 +49,7 @@ function onGridLeave(el: Element, done: () => void) {
 // The overlay overhangs the container as it travels, so clip only while it
 // slides — released at rest so card menus can overflow normally.
 function onOverlayBeforeEnter(el: Element) {
+  switch_pending.value = false
   sliding.value++
   primeOverlayBelow(el, viewport)
 }
@@ -74,11 +74,15 @@ function onOverlayAfterLeave() {
 // Sync flush: the DOM still shows the outgoing mode, so the capture reads the
 // scroll and rects the user is actually looking at. The scroll jump is never
 // seen — the transition hooks re-offset both panes before the next paint.
+// `switch_pending` holds the clip from this moment until the entering pane's
+// transition starts: a lazy overlay pane can take a beat to load on first
+// entry, and without the held min-height the stack collapses in that gap.
 watch(
-  editor.mode,
+  shell.mode,
   () => {
     if (!stack.value) return
 
+    switch_pending.value = true
     viewport = captureModeSwitch(stack.value, sticky_header)
     clip_min_height.value = distanceToViewportBottom(viewport)
     window.scrollTo(0, viewport.settle_y)
@@ -96,7 +100,7 @@ watch(
     :style="clip_style"
   >
     <Transition :css="false" @enter="onGridEnter" @leave="onGridLeave">
-      <card-grid v-show="is_view" class="w-full" />
+      <component :is="DECK_MODES.view.pane" v-show="shell.is_view.value" class="w-full" />
     </Transition>
 
     <Transition
@@ -108,7 +112,7 @@ watch(
       @leave="onOverlayLeave"
       @after-leave="onOverlayAfterLeave"
     >
-      <component :is="overlay_component" v-if="!is_view" :key="editor.mode.value" class="w-full" />
+      <component :is="overlay_pane" v-if="overlay_pane" :key="shell.mode.value" class="w-full" />
     </Transition>
   </div>
 </template>

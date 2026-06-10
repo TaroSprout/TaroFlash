@@ -3,7 +3,7 @@ import ListItem from './list-item.vue'
 import { inject, useTemplateRef, computed, ref, watchEffect, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useWindowVirtualizer } from '@tanstack/vue-virtual'
-import { type CardListController } from '@/composables/card-editor/card-list-controller'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 
 const { t } = useI18n()
 
@@ -11,7 +11,7 @@ const ROW_PITCH = 407
 const LOAD_MORE_THRESHOLD = 5
 const OVERSCAN = 3
 
-const { list, hasNextPage, isLoading, loadNextPage } = inject<CardListController>('card-editor')!
+const { list, hasNextPage, isLoading, loadNextPage } = inject(cardEditorKey)!
 const { all_cards } = list
 
 const list_el = useTemplateRef<HTMLElement>('list_el')

@@ -3,9 +3,11 @@ import { inject, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import { emitSfx } from '@/sfx/bus'
-import type { CardListController } from '@/composables/card-editor/card-list-controller'
+import { useModeConfig } from './modes'
+import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 
-const editor = inject<CardListController>('card-editor')!
+const editor = inject(cardEditorKey)!
+const mode_config = useModeConfig()
 const { t } = useI18n()
 
 const { total_pages, page, can_paginate, goToPage } = editor.carousel
@@ -46,7 +48,7 @@ function onClick() {
     data-theme-dark="brown-100"
     :data-engaged="hovered_index !== null || undefined"
     class="hidden md:block sm:row-start-3 sm:col-start-2 justify-self-center relative cursor-pointer transition-opacity duration-300 before:content-[''] before:absolute before:-inset-x-10 before:-inset-y-3"
-    :class="{ 'opacity-0 pointer-events-none overflow-hidden': editor.mode.value !== 'view' }"
+    :class="{ 'opacity-0 pointer-events-none overflow-hidden': !mode_config.pagination }"
     @pointermove="onPointerMove"
     @pointerleave="onPointerLeave"
     @click="onClick"

@@ -3,10 +3,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import UiPopover from '@/components/ui-kit/popover.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
-import {
-  type CardGridSize,
-  type CardListController
-} from '@/composables/card-editor/card-list-controller'
+import { deckViewShellKey, type CardGridSize } from '@/composables/card-editor/deck-view-shell'
 import { inject, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { emitSfx } from '@/sfx/bus'
@@ -20,7 +17,7 @@ type SizeOption = {
 
 const { t } = useI18n()
 
-const { grid_size, setGridSize } = inject<CardListController>('card-editor')!
+const { grid_size, setGridSize } = inject(deckViewShellKey)!
 
 const open = ref(false)
 
