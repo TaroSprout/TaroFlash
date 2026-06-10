@@ -108,7 +108,7 @@ function makeDeckQuery(card_count = 0) {
 
 // Returns a minimal shell stub that satisfies the controller's `exitMode` requirement.
 function makeShell(overrides = {}) {
-  return { exitMode: overrides.exitMode ?? vi.fn() }
+  return { exitMode: overrides.exitMode ?? vi.fn(), setMode: overrides.setMode ?? vi.fn() }
 }
 
 // Returns the controller with `deck_query` attached so refetch + reactive
@@ -137,6 +137,9 @@ function makeController(persisted = [], ids = persisted.map((c) => c.id), deck_q
     gated_addCard: controller.addCard,
     gated_appendCard: controller.appendCard,
     gated_prependCard: controller.prependCard,
+    // Expose controller-level addCardAtTop and claimFocus (not spread from list)
+    addCardAtTop: controller.addCardAtTop,
+    claimFocus: controller.claimFocus,
     deck_query: dq,
     shell: sh
   }
@@ -311,6 +314,62 @@ describe('useCardListController', () => {
       guardAddCardsMock.mockResolvedValue(false)
       await gated_prependCard(100)
       expect(all_cards.value).toHaveLength(1)
+    })
+  })
+
+  // ── addCardAtTop ──────────────────────────────────────────────────────────
+
+  describe('addCardAtTop', () => {
+    test('stages a card at the top of all_cards when gate passes [obligation]', async () => {
+      const { addCardAtTop, all_cards } = makeController([makeCard({ id: 100 })])
+      guardAddCardsMock.mockResolvedValue(true)
+      await addCardAtTop()
+      expect(all_cards.value[0].id).toBeLessThan(0)
+      expect(all_cards.value[1].id).toBe(100)
+    })
+
+    test('does not stage a card when guardAddCards resolves false [obligation]', async () => {
+      const { addCardAtTop, all_cards } = makeController([makeCard({ id: 100 })])
+      guardAddCardsMock.mockResolvedValue(false)
+      await addCardAtTop()
+      expect(all_cards.value).toHaveLength(1)
+      expect(all_cards.value[0].id).toBe(100)
+    })
+
+    test('sets pending_focus_client_id in the same synchronous block as staging [obligation]', async () => {
+      // Verify claimFocus returns true for the staged card immediately after addCardAtTop
+      // (no await between staging and target assignment in the source — this test pins that)
+      const { addCardAtTop, claimFocus, all_cards } = makeController([makeCard({ id: 100 })])
+      guardAddCardsMock.mockResolvedValue(true)
+      await addCardAtTop()
+      const staged_client_id = all_cards.value[0].client_id
+      expect(claimFocus(staged_client_id)).toBe(true)
+    })
+  })
+
+  // ── claimFocus ────────────────────────────────────────────────────────────
+
+  describe('claimFocus', () => {
+    test('returns false before any addCardAtTop call [obligation]', () => {
+      const { claimFocus } = makeController()
+      expect(claimFocus('some-id')).toBe(false)
+    })
+
+    test('returns true exactly once for the staged card client_id [obligation]', async () => {
+      const { addCardAtTop, claimFocus, all_cards } = makeController([makeCard({ id: 100 })])
+      guardAddCardsMock.mockResolvedValue(true)
+      await addCardAtTop()
+      const staged_client_id = all_cards.value[0].client_id
+      expect(claimFocus(staged_client_id)).toBe(true)
+      // Second call for the same id must return false (one-shot)
+      expect(claimFocus(staged_client_id)).toBe(false)
+    })
+
+    test('returns false for a different client_id than the one staged [obligation]', async () => {
+      const { addCardAtTop, claimFocus } = makeController([makeCard({ id: 100 })])
+      guardAddCardsMock.mockResolvedValue(true)
+      await addCardAtTop()
+      expect(claimFocus('other-id')).toBe(false)
     })
   })
 

@@ -112,6 +112,36 @@ describe('ModeStack', () => {
     expect(wrapper.findComponent({ name: 'CardEditor' }).classes()).toContain('w-full')
   })
 
+  // ── notifyModeSettled — called from overlay enter and grid enter completions
+
+  test('calls shell.notifyModeSettled after the overlay pane finishes entering [obligation]', async () => {
+    const shell = makeShell('view')
+    mount(shell)
+
+    shell.mode.value = 'edit'
+    shell.is_view.value = false
+    await nextTick()
+    await nextTick()
+
+    // The slideOverlayUp mock calls done immediately, triggering after-enter
+    // which calls notifyModeSettled
+    expect(shell.notifyModeSettled).toHaveBeenCalled()
+  })
+
+  test('calls shell.notifyModeSettled after the grid pane finishes entering [obligation]', async () => {
+    const shell = makeShell('edit')
+    mount(shell)
+
+    shell.mode.value = 'view'
+    shell.is_view.value = true
+    await nextTick()
+    await nextTick()
+
+    // The fadeScaleEnter mock calls done immediately, triggering grid enter
+    // completion which calls notifyModeSettled
+    expect(shell.notifyModeSettled).toHaveBeenCalled()
+  })
+
   // Regression: spamming the mode toggle interrupts the slide mid-flight. Vue
   // fires enter-cancelled instead of after-enter, so a counter that only
   // decremented in after-enter latched `is_transitioning` on forever — leaving
