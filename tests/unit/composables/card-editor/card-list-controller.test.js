@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
-import { ref, nextTick } from 'vue'
+import { ref } from 'vue'
 import { card } from '@tests/fixtures/card'
 
 const {
@@ -116,9 +116,9 @@ function makeShell(overrides = {}) {
 // Mocks `useDeckQuery` for the lifetime of the call so both the controller
 // and the inner card-selection composable resolve to this query — mirrors
 // Pinia Colada's per-key dedupe in production.
-// Returns the controller flattened — sub-namespaces (list/selection/carousel/
-// actions) are spread onto the root for ergonomic test destructuring. Real
-// consumers reach in via the grouped surface; the flatten happens here only.
+// Returns the controller flattened — sub-namespaces (list/selection/actions)
+// are spread onto the root for ergonomic test destructuring. Real consumers
+// reach in via the grouped surface; the flatten happens here only.
 function makeController(persisted = [], ids = persisted.map((c) => c.id), deck_query, shell) {
   const dq = deck_query ?? makeDeckQuery(ids.length)
   const sh = shell ?? makeShell()
@@ -129,7 +129,6 @@ function makeController(persisted = [], ids = persisted.map((c) => c.id), deck_q
     ...controller,
     ...controller.list,
     ...controller.selection,
-    ...controller.carousel,
     ...controller.actions,
     // Re-expose gated wrappers after the list spread so tests can call the
     // gated versions (addCard/appendCard/prependCard with the limit gate) via
@@ -883,198 +882,4 @@ describe('useCardListController', () => {
       expect(ctrl.isCardSelected(7)).toBe(false)
     })
   })
-
-  // ── pagination — page state, wrap, auto-load, and is_page_loading ──────────
-
-  describe('pagination', () => {
-    function makeReactiveCardsQuery({ persisted = [], hasNext = false, loading = false } = {}) {
-      return {
-        data: ref({ pages: [persisted], pageParams: [0] }),
-        hasNextPage: ref(hasNext),
-        isLoading: ref(loading),
-        loadNextPage: vi.fn()
-      }
-    }
-
-    function makePagingController({
-      persisted = [],
-      hasNext = false,
-      loading = false,
-      card_count
-    } = {}) {
-      const ids = persisted.map((c) => c.id)
-      const cards_query = makeReactiveCardsQuery({ persisted, hasNext, loading })
-      cardsInfiniteQueryMock.mockReturnValueOnce(cards_query)
-      const dq = makeDeckQuery(card_count ?? ids.length)
-      deckQueryMock.mockReturnValue(dq)
-      const root = useCardListController({ deck_id: 10, shell: makeShell() })
-      const controller = { ...root, ...root.list, ...root.selection, ...root.carousel }
-      return { controller, cards_query, deck_query: dq }
-    }
-
-    test('initial page state is page=0 with default forward direction', () => {
-      const { controller } = makePagingController()
-      expect(controller.page.value).toBe(0)
-      expect(controller.page_direction.value).toBe('forward')
-    })
-
-    test('page_size floors at 1 when no capacity has been reported', () => {
-      const { controller } = makePagingController()
-      expect(controller.page_size.value).toBe(1)
-    })
-
-    test('setVisibleCapacity drives page_size and total_pages', () => {
-      const { controller } = makePagingController({ card_count: 50 })
-      controller.setVisibleCapacity(8)
-      expect(controller.page_size.value).toBe(8)
-      // ceil(50 / 8) = 7
-      expect(controller.total_pages.value).toBe(7)
-    })
-
-    test('total_pages floors at 1 when card_count is zero', () => {
-      const { controller } = makePagingController({ card_count: 0 })
-      controller.setVisibleCapacity(8)
-      expect(controller.total_pages.value).toBe(1)
-    })
-
-    test('total_pages reflects the deck query card_count, not the loaded card length', () => {
-      const persisted = [makeCard({ id: 1 }), makeCard({ id: 2 })]
-      const { controller } = makePagingController({ persisted, card_count: 80 })
-      controller.setVisibleCapacity(10)
-      // ceil(80 / 10) === 8, even though only 2 cards are loaded
-      expect(controller.total_pages.value).toBe(8)
-    })
-
-    test('visible_cards returns all_cards.slice(0, 1) before capacity is reported (bootstrap)', () => {
-      const persisted = [makeCard({ id: 1 }), makeCard({ id: 2 }), makeCard({ id: 3 })]
-      const { controller } = makePagingController({ persisted, card_count: 3 })
-      expect(controller.visible_cards.value.map((c) => c.id)).toEqual([1])
-    })
-
-    test('visible_cards windows by page once capacity is set', () => {
-      const persisted = Array.from({ length: 10 }, (_, i) => makeCard({ id: i + 1 }))
-      const { controller } = makePagingController({ persisted, card_count: 10 })
-      controller.setVisibleCapacity(4)
-      expect(controller.visible_cards.value.map((c) => c.id)).toEqual([1, 2, 3, 4])
-      controller.nextPage()
-      expect(controller.visible_cards.value.map((c) => c.id)).toEqual([5, 6, 7, 8])
-    })
-
-    test('nextPage wraps from the last page back to 0 and sets direction=forward', () => {
-      const persisted = Array.from({ length: 10 }, (_, i) => makeCard({ id: i + 1 }))
-      const { controller } = makePagingController({ persisted, card_count: 10 })
-      controller.setVisibleCapacity(4)
-      controller.nextPage() // page 1
-      controller.nextPage() // page 2 (last, ceil(10/4)=3)
-      controller.nextPage() // wraps to 0
-      expect(controller.page.value).toBe(0)
-      expect(controller.page_direction.value).toBe('forward')
-    })
-
-    test('prevPage wraps from page 0 to the last page and sets direction=backward', () => {
-      const persisted = Array.from({ length: 10 }, (_, i) => makeCard({ id: i + 1 }))
-      const { controller } = makePagingController({ persisted, card_count: 10 })
-      controller.setVisibleCapacity(4)
-      controller.prevPage()
-      // total_pages=3, last index=2
-      expect(controller.page.value).toBe(2)
-      expect(controller.page_direction.value).toBe('backward')
-    })
-
-    test('prevPage and nextPage are no-ops when total_pages <= 1', () => {
-      const { controller } = makePagingController({ card_count: 4 })
-      controller.setVisibleCapacity(8)
-      expect(controller.total_pages.value).toBe(1)
-      controller.prevPage()
-      controller.nextPage()
-      expect(controller.page.value).toBe(0)
-    })
-
-    test('can_paginate is true only when total_pages > 1', () => {
-      const { controller } = makePagingController({ card_count: 5 })
-      controller.setVisibleCapacity(10)
-      expect(controller.can_paginate.value).toBe(false)
-      controller.setVisibleCapacity(2)
-      expect(controller.can_paginate.value).toBe(true)
-    })
-
-    test('page is clamped when total_pages shrinks below the current page', async () => {
-      const { controller } = makePagingController({ card_count: 100 })
-      controller.setVisibleCapacity(10) // total_pages = 10
-      controller.nextPage()
-      controller.nextPage()
-      controller.nextPage() // page = 3
-      controller.setVisibleCapacity(50) // total_pages = 2 → clamp page to 1
-      await flushMicrotasks()
-      expect(controller.page.value).toBeLessThanOrEqual(1)
-    })
-
-    test('is_page_loading is true when the target page lies beyond loaded cards and more remain', () => {
-      const persisted = Array.from({ length: 5 }, (_, i) => makeCard({ id: i + 1 }))
-      const { controller } = makePagingController({
-        persisted,
-        hasNext: true,
-        card_count: 100
-      })
-      controller.setVisibleCapacity(10)
-      controller.nextPage() // page 1, start=10, length=5 → start >= length
-      expect(controller.is_page_loading.value).toBe(true)
-    })
-
-    test('is_page_loading is false when there are no more pages, even if loaded < target', () => {
-      const persisted = Array.from({ length: 5 }, (_, i) => makeCard({ id: i + 1 }))
-      const { controller } = makePagingController({
-        persisted,
-        hasNext: false,
-        card_count: 5
-      })
-      controller.setVisibleCapacity(10)
-      expect(controller.is_page_loading.value).toBe(false)
-    })
-
-    test('auto-loader calls loadNextPage when target > loaded and the query can fetch', async () => {
-      const persisted = Array.from({ length: 5 }, (_, i) => makeCard({ id: i + 1 }))
-      const { controller, cards_query } = makePagingController({
-        persisted,
-        hasNext: true,
-        card_count: 100
-      })
-      controller.setVisibleCapacity(10)
-      controller.nextPage()
-      await flushMicrotasks()
-      expect(cards_query.loadNextPage).toHaveBeenCalled()
-    })
-
-    test('auto-loader does not call loadNextPage while isLoading is true', async () => {
-      const persisted = Array.from({ length: 5 }, (_, i) => makeCard({ id: i + 1 }))
-      const { controller, cards_query } = makePagingController({
-        persisted,
-        hasNext: true,
-        loading: true,
-        card_count: 100
-      })
-      controller.setVisibleCapacity(10)
-      controller.nextPage()
-      await flushMicrotasks()
-      expect(cards_query.loadNextPage).not.toHaveBeenCalled()
-    })
-
-    test('auto-loader does not call loadNextPage when hasNextPage is false', async () => {
-      const persisted = Array.from({ length: 5 }, (_, i) => makeCard({ id: i + 1 }))
-      const { controller, cards_query } = makePagingController({
-        persisted,
-        hasNext: false,
-        card_count: 100
-      })
-      controller.setVisibleCapacity(10)
-      controller.nextPage()
-      await flushMicrotasks()
-      expect(cards_query.loadNextPage).not.toHaveBeenCalled()
-    })
-  })
 })
-
-async function flushMicrotasks() {
-  await Promise.resolve()
-  await Promise.resolve()
-}

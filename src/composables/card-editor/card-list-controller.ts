@@ -5,7 +5,6 @@ import { useDeckQuery } from '@/api/decks'
 import { useVirtualCardList, type CardEntry } from './virtual-card-list'
 import { useCardSelection } from './card-selection'
 import { useCardMutations } from './card-mutations'
-import { useCardCarousel } from './card-carousel'
 import { useCardActions } from './card-actions'
 import { useCardLimitGate } from '@/composables/use-card-limit-gate'
 import type { DeckViewShell } from './deck-view-shell'
@@ -22,8 +21,8 @@ type Options = {
 
 /**
  * Single root composable for the deck-editor card list. Wires the infinite
- * cards query, deck query, virtual list, selection, mutations, carousel, and
- * intent actions together, and exposes the consolidated surface a single
+ * cards query, deck query, virtual list, selection, mutations, and intent
+ * actions together, and exposes the consolidated surface a single
  * `provide(cardEditorKey)` hands to every consumer (list, grid, list-item,
  * list-item-card, card-importer, mode-toolbar, deck-hero).
  *
@@ -33,9 +32,8 @@ type Options = {
  * owns the `saving` flag and the INSERT-vs-UPDATE routing in `updateCard`.
  *
  * Calls `useDeckQuery` once internally and forwards `deck.card_count` into
- * `useCardSelection` and `useCardCarousel`. Pinia Colada dedupes by key, so
- * other consumers (e.g. the deck overview panel) holding the same handle
- * share the cache entry.
+ * `useCardSelection`. Pinia Colada dedupes by key, so other consumers (e.g.
+ * the deck overview panel) holding the same handle share the cache entry.
  *
  * @param opts.deck_id - Numeric deck id this controller is scoped to.
  * @param opts.shell - The deck-view shell; intent actions call its `exitMode`
@@ -63,8 +61,6 @@ export function useCardListController(opts: Options) {
     front: deck_query.data.value?.card_attributes?.front ?? {},
     back: deck_query.data.value?.card_attributes?.back ?? {}
   }))
-
-  const carousel = useCardCarousel({ list, cards_query, card_count })
 
   /**
    * Stage a new temp card, gated on the deck's plan card cap. The single funnel
@@ -184,7 +180,6 @@ export function useCardListController(opts: Options) {
   return {
     list,
     selection,
-    carousel,
     actions,
 
     addCard,

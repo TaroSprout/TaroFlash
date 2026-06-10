@@ -4,13 +4,12 @@ import { defineComponent, h, ref } from 'vue'
 
 const GridItemStub = defineComponent({
   name: 'GridItem',
-  props: ['card', 'side', 'fill', 'scale', 'card_attributes', 'selected'],
+  props: ['card', 'side', 'scale', 'card_attributes', 'selected'],
   setup(props) {
     return () =>
       h('div', {
         'data-testid': 'grid-item-stub',
         'data-card-id': props.card?.id,
-        'data-fill': String(props.fill),
         'data-scale': String(props.scale),
         'data-selected': String(props.selected)
       })
@@ -98,12 +97,12 @@ describe('card-grid/scroll-grid', () => {
     expect(items).toHaveLength(3)
   })
 
-  test('renders grid-items with fill=false [obligation]', () => {
+  test('passes a scale to its grid-items [obligation]', () => {
     const editor = makeEditor({
       all_cards: [{ id: 1, client_id: 'c1', front_text: 'q', back_text: 'a' }]
     })
     const wrapper = mountScrollGrid(editor)
-    expect(wrapper.find('[data-testid="grid-item-stub"]').attributes('data-fill')).toBe('false')
+    expect(wrapper.find('[data-testid="grid-item-stub"]').attributes('data-scale')).toBeDefined()
   })
 
   test('does not render the infinite-scroll sentinel when hasNextPage is false [obligation]', () => {

@@ -42,7 +42,6 @@ observeSentinel(sentinel)
         :key="card.client_id"
         :card="card"
         :side="side"
-        :fill="false"
         :scale="card_scale"
         :card_attributes="card_attributes"
         :selected="card.id !== undefined ? isCardSelected(card.id) : false"
