@@ -21,7 +21,7 @@ export async function saveCard(card, values) { ... }
 
 Rules of thumb:
 
-- **No I/O + no reactive state** → `src/utils/<domain>/` (e.g. `src/utils/card/`, `src/utils/animations/`, `src/utils/text-composer/`).
+- **No I/O + no reactive state** → `src/utils/<domain>/` (e.g. `src/utils/card/`, `src/utils/animations/`).
 - **Network I/O (Supabase, fetch, storage)** → `src/api/<domain>/`, even if the function also does local orchestration around the call.
 - **Reactive state (refs, lifecycle, provide/inject)** → `src/composables/`.
 
