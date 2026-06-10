@@ -101,6 +101,14 @@ export function settleOverlay(el: Element) {
   gsap.set(el, { clearProps: 'position,zIndex,transform' })
 }
 
+// A mode flip can interrupt an in-flight slide. Kill the tween so its late
+// onComplete can't fire and its inline position/transform don't linger on a
+// reused element — the caller has already dropped the pane from its in-flight
+// set, this just stops GSAP from mutating it further.
+export function cancelOverlayAnimation(el: Element) {
+  gsap.killTweensOf(el)
+}
+
 // Leaving overlay drops out of flow (so the entering grid owns the height) and
 // slides one screen down from wherever the user was looking. When the user was
 // scrolled into the pane, one screen of travel can't carry its top edge past
