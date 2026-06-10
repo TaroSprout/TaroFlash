@@ -1,11 +1,8 @@
-import { computed, defineAsyncComponent, inject, type Component } from 'vue'
+import { defineAsyncComponent, type Component } from 'vue'
 import CardGrid from './card-grid/scroll-grid.vue'
-import { deckViewShellKey } from '@/composables/card-editor/deck-view-shell'
 
 type DeckModeConfig = {
   pane: Component
-  // page dots + prev/next nav stay interactive while this mode is active
-  pagination: boolean
 }
 
 const loadCardEditor = () => import('./card-editor/index.vue')
@@ -18,16 +15,13 @@ const loadCardImporter = () => import('./card-importer.vue')
 // overlay panes lazy-load out of the deck view's chunk.
 export const DECK_MODES = {
   view: {
-    pane: CardGrid,
-    pagination: true
+    pane: CardGrid
   },
   edit: {
-    pane: defineAsyncComponent(loadCardEditor),
-    pagination: false
+    pane: defineAsyncComponent(loadCardEditor)
   },
   'import-export': {
-    pane: defineAsyncComponent(loadCardImporter),
-    pagination: false
+    pane: defineAsyncComponent(loadCardImporter)
   }
 } satisfies Record<CardEditorMode, DeckModeConfig>
 
@@ -38,14 +32,4 @@ export const DECK_MODES = {
 export function preloadDeckModes() {
   loadCardEditor()
   loadCardImporter()
-}
-
-/**
- * Reactive config of the active mode for components inside the deck view
- * tree. Chrome reads its flags from here (e.g. `pagination`) instead of
- * comparing mode names, so new modes never touch existing components.
- */
-export function useModeConfig() {
-  const shell = inject(deckViewShellKey)!
-  return computed<DeckModeConfig>(() => DECK_MODES[shell.mode.value])
 }

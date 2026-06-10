@@ -6,7 +6,8 @@
     "cypress.config.*",
     "nightwatch.conf.*",
     "playwright.config.*",
-    "src/plugins/vite-datauri.ts"
+    "src/plugins/vite-datauri.ts",
+    "tests/browser-provider.ts"
   ],
   "compilerOptions": {
     "composite": true,

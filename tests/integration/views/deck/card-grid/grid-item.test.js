@@ -173,32 +173,17 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(editor.actions.onDeleteCards).toHaveBeenCalledWith(1)
   })
 
-  // ── fill / scale props ──────────────────────────────────────────────────────
+  // ── scale prop ───────────────────────────────────────────────────────────────
 
-  test('renders Card at size="xl" regardless of fill [obligation]', () => {
-    const filled = mountGridItem({ props: { fill: true } })
-    const scaled = mountGridItem({ props: { fill: false } })
-    expect(filled.wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('xl')
-    expect(scaled.wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('xl')
+  test('renders Card at size="xl" [obligation]', () => {
+    const { wrapper } = mountGridItem()
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('xl')
   })
 
-  test('fill=false applies the scale prop as --card-scale on Card [obligation]', () => {
-    const { wrapper } = mountGridItem({ props: { fill: false, scale: 0.6 } })
+  test('applies the scale prop as --card-scale on the scaled Card [obligation]', () => {
+    const { wrapper } = mountGridItem({ props: { scale: 0.6 } })
     const card = wrapper.find('[data-testid="card-stub"]')
     expect(card.attributes('data-card-class')).toContain('grid-item__card--scaled')
     expect(card.attributes('data-card-scale')).toBe('0.6')
-  })
-
-  test('fill=true uses the fill class and no --card-scale [obligation]', () => {
-    const { wrapper } = mountGridItem({ props: { fill: true, scale: 0.6 } })
-    const card = wrapper.find('[data-testid="card-stub"]')
-    expect(card.attributes('data-card-class')).toContain('grid-item__card')
-    expect(card.attributes('data-card-class')).not.toContain('grid-item__card--scaled')
-    expect(card.attributes('data-card-scale')).toBeUndefined()
-  })
-
-  test('fill defaults to true when prop is omitted', () => {
-    const { wrapper } = mountGridItem()
-    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('xl')
   })
 })

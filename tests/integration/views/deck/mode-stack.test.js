@@ -24,12 +24,11 @@ vi.mock('@/views/deck/modes.ts', async () => {
   const CardImporter = makePane('CardImporter', 'card-importer-stub')
   return {
     DECK_MODES: {
-      view: { pane: CardGrid, pagination: true },
-      edit: { pane: CardEditor, pagination: false },
-      'import-export': { pane: CardImporter, pagination: false }
+      view: { pane: CardGrid },
+      edit: { pane: CardEditor },
+      'import-export': { pane: CardImporter }
     },
-    preloadDeckModes: () => {},
-    useModeConfig: () => {}
+    preloadDeckModes: () => {}
   }
 })
 
