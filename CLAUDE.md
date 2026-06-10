@@ -59,7 +59,7 @@ vp dlx <bin>        # Run a one-off binary (instead of npx/pnpm dlx)
 
 **State**: Session + member profile = global Pinia stores. Most other state local or composable-scoped.
 
-**Rich text**: Cards use Lexical-based editor (`src/components/text-editor/`) with markdown support.
+**Card text**: Cards use a plain `contenteditable` editor (`src/components/card/text-editor.vue`).
 
 **Sound effects**: Custom `v-sfx` directive plays audio via Howler.js.
 
