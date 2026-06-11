@@ -169,9 +169,7 @@ function setMode(next: 'expanded' | 'mini') {
             play-on-tap
             :sfx="{ click: 'ui.select' }"
             @click="setMode('mini')"
-          >
-            {{ t('lesson-view.audio.collapse-button') }}
-          </ui-button>
+          />
         </div>
 
         <div data-testid="audio-toolbar__options-center" class="flex justify-center">
@@ -221,9 +219,7 @@ function setMode(next: 'expanded' | 'mini') {
         play-on-tap
         :sfx="{ click: 'ui.select' }"
         @click="setMode('expanded')"
-      >
-        {{ t('lesson-view.audio.expand-button') }}
-      </ui-button>
+      />
 
       <ui-button
         :key="String(is_playing)"
