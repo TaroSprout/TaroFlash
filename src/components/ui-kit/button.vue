@@ -174,9 +174,9 @@ function emitClickSfx() {
 
 .ui-kit-btn--outline {
   --btn-bg-color: transparent;
-  --btn-text-color: var(--theme-primary);
+  --btn-text-color: var(--theme-on-primary);
   --btn-outline-width: 2px;
-  --btn-outline-color: var(--theme-primary);
+  --btn-outline-color: var(--theme-on-primary);
 }
 
 /* Ghost: no background, no outline (transparent so the global hover-outline
@@ -263,10 +263,10 @@ function emitClickSfx() {
   --btn-font-size: var(--text-lg);
   --btn-font-size--line-height: var(--text-lg--line-height);
   --btn-border-radius: 18px;
-  --btn-gap: 4px;
+  --btn-gap: 8px;
   --btn-padding: 6px 14px;
   --btn-height: 40px;
-  --icon-size: 20px;
+  --icon-size: 18px;
   --btn-height: 40px;
 
   &.ui-kit-btn--icon-only {
