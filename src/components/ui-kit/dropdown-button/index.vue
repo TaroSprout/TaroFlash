@@ -23,6 +23,7 @@ type DropdownButtonProps = Pick<
   triggerIcon?: string
   gap?: number
   openOnTrigger?: boolean
+  hideTrigger?: boolean
 }
 
 defineOptions({ inheritAttrs: false })
@@ -38,7 +39,8 @@ const {
   position = 'bottom-start',
   triggerIcon = 'arrow-drop-down',
   gap = 4,
-  openOnTrigger = false
+  openOnTrigger = false,
+  hideTrigger = false
 } = defineProps<DropdownButtonProps>()
 
 const emit = defineEmits<{
@@ -59,6 +61,11 @@ const popover_open = ref(false)
 // @click — land on the inner button so they fire only from the label region.
 const popover_attrs = computed(() => filter_attrs((key) => !key.startsWith('on')))
 const button_attrs = computed(() => filter_attrs((key) => key.startsWith('on')))
+
+// The caret is the only way to open the menu unless the whole button is the
+// trigger, so it can only be hidden when `openOnTrigger` also makes the label
+// region open the popover.
+const show_trigger = computed(() => !hideTrigger || !openOnTrigger)
 
 const min_width_style = computed(() =>
   min_width.value ? { minWidth: `${min_width.value}px` } : undefined
@@ -137,6 +144,7 @@ function onSelect(option: DropdownOption) {
         <slot></slot>
         <template #trailing>
           <div
+            v-if="show_trigger"
             class="flex h-full p-2 pointer-coarse:p-1"
             data-testid="dropdown-button__trigger-wrap"
           >
