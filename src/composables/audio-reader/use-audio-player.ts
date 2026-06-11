@@ -68,6 +68,17 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
     if (el && !is_playing.value) current_time.value = el.currentTime
   }
 
+  // Background tabs freeze rAF, so the tick loop stalls and `current_time` drifts
+  // behind the audio (which keeps playing — the point of pocket listening). On the
+  // way back to the foreground, snap to the element's real position so the
+  // transcript cursor lands on the right word at once, and revive the loop if we're
+  // still playing rather than waiting for the next thawed frame.
+  function onVisible() {
+    if (!el || document.hidden) return
+    current_time.value = el.currentTime
+    if (is_playing.value) startTicking()
+  }
+
   function bind(next: HTMLAudioElement) {
     el = next
     el.addEventListener('loadedmetadata', onLoaded)
@@ -75,6 +86,7 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
     el.addEventListener('pause', onPause)
     el.addEventListener('ended', onPause)
     el.addEventListener('timeupdate', onTimeUpdate)
+    document.addEventListener('visibilitychange', onVisible)
     if (el.readyState >= 1) onLoaded()
   }
 
@@ -86,6 +98,7 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
     el.removeEventListener('pause', onPause)
     el.removeEventListener('ended', onPause)
     el.removeEventListener('timeupdate', onTimeUpdate)
+    document.removeEventListener('visibilitychange', onVisible)
     el = null
   }
 
