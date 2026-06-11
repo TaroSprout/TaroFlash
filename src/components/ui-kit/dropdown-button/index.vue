@@ -174,7 +174,7 @@ function onSelect(option: DropdownOption) {
                 aria-haspopup="menu"
                 :aria-expanded="popover_open"
                 :data-active="popover_open"
-                class="relative z-1 flex aspect-square h-full cursor-pointer items-center justify-center rounded-[calc(var(--btn-border-radius)-8px)] pointer-coarse:rounded-[calc(var(--btn-border-radius)-4px)] bg-(--theme-secondary) text-(--theme-on-secondary) transition-[scale] duration-120 ease-[ease] hover:scale-110"
+                class="relative z-1 flex aspect-square h-full cursor-pointer items-center justify-center rounded-[calc(var(--btn-border-radius)-8px)] pointer-coarse:rounded-(--btn-border-radius) bg-(--theme-secondary) text-(--theme-on-secondary) transition-[scale] duration-120 ease-[ease] hover:scale-110"
                 data-testid="dropdown-button__trigger"
                 v-sfx.hover="'ui.click_07'"
                 @click.stop="toggle"
