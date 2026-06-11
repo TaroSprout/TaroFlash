@@ -166,6 +166,7 @@ function setMode(next: 'expanded' | 'mini') {
           data-theme-dark="stone-900"
           icon-left="list"
           open-on-trigger
+          hide-trigger
           position="top-start"
           :options="chapter_options"
           @select="onChapter"
@@ -179,6 +180,7 @@ function setMode(next: 'expanded' | 'mini') {
             data-theme="brown-100"
             data-theme-dark="stone-900"
             open-on-trigger
+            hide-trigger
             position="top-end"
             :options="SPEED_OPTIONS"
             @select="onSpeed"
