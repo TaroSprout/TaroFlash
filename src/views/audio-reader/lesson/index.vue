@@ -104,7 +104,7 @@ watch(
         class="flex gap-2 overflow-x-auto pb-2 xl:flex-col xl:overflow-x-visible xl:pb-0"
       >
         <button
-          v-for="(chapter, index) in chapters"
+          v-for="chapter in chapters"
           :key="chapter.id"
           data-testid="lesson-view__chapter"
           :data-active="chapter.id === lesson_id"
@@ -112,7 +112,7 @@ watch(
           class="shrink-0 cursor-pointer rounded-7 bg-brown-200 px-4 py-2 text-left text-base text-brown-700 data-[active=true]:bg-blue-500 data-[active=true]:text-white xl:shrink dark:bg-grey-700 dark:text-brown-200 dark:data-[active=true]:bg-blue-650"
           @click="goToChapter(chapter.id)"
         >
-          <span class="line-clamp-1">{{ index + 1 }}. {{ chapter.title }}</span>
+          <span class="line-clamp-1">{{ chapter.title }}</span>
         </button>
       </nav>
     </aside>
@@ -130,10 +130,7 @@ watch(
         </h1>
       </header>
 
-      <div
-        data-testid="lesson-view__transcript"
-        class="rounded-7 bg-brown-100 px-0 pt-6 pb-2 sm:px-6 dark:bg-grey-800"
-      >
+      <div data-testid="lesson-view__transcript" class="px-0 pt-6 pb-2 sm:px-6">
         <transcript-view
           :paragraphs="paragraphs"
           :active_word="active_word"
@@ -144,7 +141,7 @@ watch(
 
       <footer
         data-testid="lesson-view__bar"
-        class="sticky bottom-0 z-30 mt-4 flex items-center gap-3 border-t border-brown-300 bg-brown-100 pt-3 pb-[env(safe-area-inset-bottom)] pointer-fine:pb-6 dark:border-grey-700 dark:bg-grey-900"
+        class="w-full left-0 fixed bottom-0 rounded-t-6 z-30 flex items-center gap-3 bg-brown-300 p-5 pb-2 pointer-fine:pb-6 dark:bg-stone-700"
       >
         <audio-toolbar
           :player="player"

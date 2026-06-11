@@ -55,16 +55,8 @@ vi.mock('@floating-ui/vue', () => ({
   autoUpdate: vi.fn(),
   arrow: vi.fn(() => ({})),
   offset: vi.fn(() => ({})),
-  hide: vi.fn(() => ({}))
-}))
-
-vi.mock('@/components/ui-kit/dropdown-button/use-dropdown-sizing', () => ({
-  useDropdownSizing: vi.fn(() => ({
-    triggerRef: { value: null },
-    sizerRef: { value: null },
-    min_width: { value: 0 },
-    trigger_width: { value: 0 }
-  }))
+  hide: vi.fn(() => ({})),
+  size: vi.fn(() => ({}))
 }))
 
 // ── Stubs ──────────────────────────────────────────────────────────────────────
@@ -298,7 +290,7 @@ describe('AudioToolbar', () => {
 
   // ── Dropdown wiring: chapters ──────────────────────────────────────────────
 
-  test('chapter options are formatted as "${index+1}. ${title}" [obligation]', () => {
+  test('chapter options use bare title (no number prefix) [obligation]', () => {
     const wrapper = mountToolbar({
       chapters: [
         { id: 10, title: 'Intro' },
@@ -309,8 +301,23 @@ describe('AudioToolbar', () => {
     const chapterDropdown = wrapper.find('[data-testid="audio-toolbar__chapter-select"]')
     const options = chapterDropdown.findAll('[data-testid="dropdown-button__option"]')
 
-    expect(options[0].text()).toBe('1. Intro')
-    expect(options[1].text()).toBe('2. Part Two')
+    expect(options[0].text()).toBe('Intro')
+    expect(options[1].text()).toBe('Part Two')
+  })
+
+  test('current chapter label is the bare chapter title (no number prefix) [obligation]', () => {
+    const wrapper = mountToolbar({
+      chapters: [
+        { id: 10, title: 'Intro' },
+        { id: 20, title: 'Part Two' }
+      ],
+      currentLessonId: 10
+    })
+
+    const chapterDropdown = wrapper.find('[data-testid="audio-toolbar__chapter-select"]')
+    // The default slot of the chapter dropdown renders current_chapter_label
+    expect(chapterDropdown.text()).toContain('Intro')
+    expect(chapterDropdown.text()).not.toMatch(/\d+\.\s/)
   })
 
   test('selecting a chapter option emits select-chapter with Number(value) [obligation]', async () => {

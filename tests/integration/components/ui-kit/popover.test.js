@@ -18,6 +18,10 @@ const { floatingState } = vi.hoisted(() => {
   return { floatingState }
 })
 
+const { sizeMock } = vi.hoisted(() => ({
+  sizeMock: vi.fn(() => ({}))
+}))
+
 vi.mock('@floating-ui/vue', () => ({
   useFloating: vi.fn(() => ({
     placement: floatingState.placement,
@@ -29,7 +33,8 @@ vi.mock('@floating-ui/vue', () => ({
   autoUpdate: vi.fn(),
   arrow: vi.fn(() => ({})),
   offset: vi.fn(() => ({})),
-  hide: vi.fn(() => ({}))
+  hide: vi.fn(() => ({})),
+  size: sizeMock
 }))
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -59,6 +64,7 @@ describe('UiPopover', () => {
     floatingState.placement.value = 'top'
     floatingState.middlewareData.value = {}
     useFloating.mockClear()
+    sizeMock.mockClear()
   })
 
   afterEach(() => {
@@ -265,5 +271,27 @@ describe('UiPopover', () => {
     await nextTick()
 
     expect(wrapper.emitted('close')).toBeFalsy()
+  })
+
+  // ── match_reference_width prop — size middleware wiring [obligation] ─────────
+
+  test('match_reference_width=true causes the size middleware to be included [obligation]', () => {
+    mountPopover({ open: true, match_reference_width: true })
+    // The `size` middleware factory must have been called to build the middleware array
+    expect(sizeMock).toHaveBeenCalledOnce()
+  })
+
+  test('match_reference_width=false (default) does NOT include the size middleware [obligation]', () => {
+    mountPopover({ open: true })
+    expect(sizeMock).not.toHaveBeenCalled()
+  })
+
+  test('match_reference_width=false leaves the popover with no inline minWidth set [obligation]', () => {
+    // Without the size middleware the floating element carries no minWidth from
+    // floating-ui — the mock returns empty floatingStyles so nothing is injected.
+    const wrapper = mountPopover({ open: true, match_reference_width: false })
+    const panel = wrapper.find('[data-testid="ui-kit-popover"]')
+    const style = panel.attributes('style') ?? ''
+    expect(style).not.toContain('min-width')
   })
 })

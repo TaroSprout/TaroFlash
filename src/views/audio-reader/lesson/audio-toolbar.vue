@@ -50,13 +50,11 @@ const { playing: forward_playing, interceptClick: interceptForward } = usePlayOn
 
 const is_playing = computed(() => player.is_playing.value)
 const chapter_options = computed<DropdownOption[]>(() =>
-  chapters.map((chapter, index) => ({ label: `${index + 1}. ${chapter.title}`, value: chapter.id }))
+  chapters.map((chapter) => ({ label: chapter.title, value: chapter.id }))
 )
-const current_chapter_label = computed(() => {
-  const index = chapters.findIndex((chapter) => chapter.id === currentLessonId)
-  if (index === -1) return ''
-  return `${index + 1}. ${chapters[index].title}`
-})
+const current_chapter_label = computed(
+  () => chapters.find((chapter) => chapter.id === currentLessonId)?.title ?? ''
+)
 const current_speed_label = computed(() => `${player.playback_rate.value}x`)
 
 function toggle() {
@@ -117,8 +115,10 @@ function setMode(next: 'expanded' | 'mini') {
         <button
           data-testid="audio-toolbar__skip-back"
           type="button"
+          data-theme="brown-200"
+          data-theme-dark="grey-700"
           :aria-label="t('lesson-view.audio.skip-back-button')"
-          class="flex size-13 cursor-pointer items-center justify-center rounded-full bg-brown-200 text-brown-700 transition active:scale-95 dark:bg-grey-700 dark:text-grey-200"
+          class="flex size-13 cursor-pointer items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
           :class="{ [TAP_BGX]: back_playing }"
           @click.capture="onBackTap"
           @click="skipBack"
@@ -129,10 +129,12 @@ function setMode(next: 'expanded' | 'mini') {
         <button
           data-testid="audio-toolbar__toggle"
           type="button"
+          data-theme="blue-500"
+          data-theme-dark="blue-650"
           :aria-label="
             is_playing ? t('lesson-view.audio.pause-button') : t('lesson-view.audio.play-button')
           "
-          class="flex size-18 cursor-pointer items-center justify-center rounded-full bg-blue-500 text-white transition active:scale-95 dark:bg-blue-650"
+          class="flex size-18 cursor-pointer items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
           :class="{ [TAP_BGX]: play_playing }"
           @click.capture="onPlayTap"
           @click="toggle"
@@ -143,8 +145,10 @@ function setMode(next: 'expanded' | 'mini') {
         <button
           data-testid="audio-toolbar__skip-forward"
           type="button"
+          data-theme="brown-200"
+          data-theme-dark="grey-700"
           :aria-label="t('lesson-view.audio.skip-forward-button')"
-          class="flex size-13 cursor-pointer items-center justify-center rounded-full bg-brown-200 text-brown-700 transition active:scale-95 dark:bg-grey-700 dark:text-grey-200"
+          class="flex size-13 cursor-pointer items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
           :class="{ [TAP_BGX]: forward_playing }"
           @click.capture="onForwardTap"
           @click="skipForward"
@@ -154,42 +158,49 @@ function setMode(next: 'expanded' | 'mini') {
       </div>
 
       <div data-testid="audio-toolbar__options" class="flex items-center justify-between gap-3">
-        <ui-dropdown-button
-          data-testid="audio-toolbar__chapter-select"
-          data-theme="brown-300"
-          icon-left="list"
-          open-on-trigger
-          position="top-start"
-          :options="chapter_options"
-          @select="onChapter"
+        <ui-button
+          data-testid="audio-toolbar__collapse"
+          data-theme="brown-100"
+          data-theme-dark="stone-900"
+          icon-left="arrow-drop-down"
+          variant="ghost"
+          icon-only
+          play-on-tap
+          :sfx="{ click: 'ui.select' }"
+          @click="setMode('mini')"
         >
-          {{ current_chapter_label }}
-        </ui-dropdown-button>
+          {{ t('lesson-view.audio.collapse-button') }}
+        </ui-button>
 
-        <div data-testid="audio-toolbar__options-end" class="flex items-center gap-3">
+        <div data-testid="audio-toolbar__options-end" class="flex items-center">
+          <ui-dropdown-button
+            data-testid="audio-toolbar__chapter-select"
+            data-theme="brown-100"
+            data-theme-dark="stone-900"
+            icon-left="browser-content"
+            variant="ghost"
+            open-on-trigger
+            hide-trigger
+            position="top-start"
+            :options="chapter_options"
+            @select="onChapter"
+          >
+            {{ current_chapter_label }}
+          </ui-dropdown-button>
           <ui-dropdown-button
             data-testid="audio-toolbar__speed-select"
-            data-theme="brown-300"
+            data-theme="brown-100"
+            data-theme-dark="stone-900"
+            icon-left="stopwatch"
+            variant="ghost"
             open-on-trigger
+            hide-trigger
             position="top-end"
             :options="SPEED_OPTIONS"
             @select="onSpeed"
           >
             {{ current_speed_label }}
           </ui-dropdown-button>
-
-          <ui-button
-            data-testid="audio-toolbar__collapse"
-            data-theme="brown-300"
-            icon-left="expand-more"
-            icon-only
-            size="lg"
-            play-on-tap
-            :sfx="{ click: 'ui.select' }"
-            @click="setMode('mini')"
-          >
-            {{ t('lesson-view.audio.collapse-button') }}
-          </ui-button>
         </div>
       </div>
     </div>

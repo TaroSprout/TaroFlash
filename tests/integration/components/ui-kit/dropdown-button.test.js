@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import { defineComponent, h, nextTick, ref } from 'vue'
+import { defineComponent, h, nextTick } from 'vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -18,24 +18,8 @@ vi.mock('gsap', () => ({
   }
 }))
 
-// Mock useDropdownSizing so tests don't need ResizeObserver or real DOM layout.
-// Plain { value } objects satisfy the component's `.value` reads at mount time.
-// Set sizing.min_width.value / sizing.trigger_width.value BEFORE mounting in
-// each test — the computed initialises once at setup with the current value.
-const { sizing } = vi.hoisted(() => ({
-  sizing: {
-    triggerRef: { value: null },
-    sizerRef: { value: null },
-    min_width: { value: 0 },
-    trigger_width: { value: 0 }
-  }
-}))
-
-vi.mock('@/components/ui-kit/dropdown-button/use-dropdown-sizing', () => ({
-  useDropdownSizing: vi.fn(() => sizing)
-}))
-
-// Stub floating-ui used transitively by UiPopover
+// Stub floating-ui used transitively by UiPopover; include `size` which is now
+// used by the match_reference_width middleware path.
 vi.mock('@floating-ui/vue', () => ({
   useFloating: vi.fn(() => ({
     placement: { value: 'bottom-start' },
@@ -47,7 +31,8 @@ vi.mock('@floating-ui/vue', () => ({
   autoUpdate: vi.fn(),
   arrow: vi.fn(() => ({})),
   offset: vi.fn(() => ({})),
-  hide: vi.fn(() => ({}))
+  hide: vi.fn(() => ({})),
+  size: vi.fn(() => ({}))
 }))
 
 // ── Stub UiButton so we can isolate dropdown-button logic ─────────────────────
@@ -75,7 +60,7 @@ const UiButtonStub = defineComponent({
 const UiPopoverStub = defineComponent({
   name: 'UiPopover',
   inheritAttrs: false,
-  props: ['open', 'position', 'gap', 'use_arrow'],
+  props: ['open', 'position', 'gap', 'use_arrow', 'match_reference_width'],
   emits: ['close'],
   setup(props, { slots, attrs, emit }) {
     return () =>
@@ -147,8 +132,6 @@ const menu = (w) => w.find('[data-testid="dropdown-button__menu"]')
 describe('UiDropdownButton', () => {
   beforeEach(() => {
     mockEmitSfx.mockClear()
-    sizing.min_width.value = 0
-    sizing.trigger_width.value = 0
   })
 
   // ── Structure ──────────────────────────────────────────────────────────────
@@ -343,66 +326,38 @@ describe('UiDropdownButton', () => {
     expect(trigger(wrapper).attributes('aria-haspopup')).toBe('menu')
   })
 
-  // ── Min-width style ────────────────────────────────────────────────────────
+  // ── No inline sizing styles on button or menu [obligation] ────────────────
 
-  test('applies min-width style to inner button when min_width is set', () => {
-    sizing.min_width.value = 150
+  test('main button carries no min-width inline style [obligation]', () => {
     const wrapper = mountDropdown()
-    expect(mainButton(wrapper).attributes('style')).toContain('min-width: 150px')
+    const style = mainButton(wrapper).attributes('style') ?? ''
+    expect(style).not.toContain('min-width')
   })
 
-  test('no min-width style when min_width is 0', () => {
-    sizing.min_width.value = 0
-    const wrapper = mountDropdown()
-    expect(mainButton(wrapper).attributes('style') ?? '').not.toContain('min-width')
-  })
-
-  // ── menu width style (trigger_width) ──────────────────────────────────────
-
-  test('applies width style to menu when trigger_width is set', async () => {
-    sizing.trigger_width.value = 200
-    const wrapper = mountDropdown()
-    await trigger(wrapper).trigger('click')
-    expect(menu(wrapper).attributes('style')).toContain('width: 200px')
-  })
-
-  test('menu has min-width but no width when min_width > 0 and trigger_width is 0 [obligation]', async () => {
-    // Regression: before the fix the menu could render narrower than its widest
-    // option while trigger_width hadn't settled yet (first paint).
-    sizing.min_width.value = 180
-    sizing.trigger_width.value = 0
+  test('menu carries no inline width or min-width style [obligation]', async () => {
     const wrapper = mountDropdown()
     await trigger(wrapper).trigger('click')
     const style = menu(wrapper).attributes('style') ?? ''
-    expect(style).toContain('min-width: 180px')
-    // 'width:' without 'min-' prefix must not appear — match via regex
-    expect(style).not.toMatch(/(?<!min-)width:/)
+    expect(style).not.toContain('width')
+    expect(style).not.toContain('min-width')
   })
 
-  test('menu has both width and min-width when both sizing values are set [obligation]', async () => {
-    sizing.min_width.value = 180
-    sizing.trigger_width.value = 220
-    const wrapper = mountDropdown()
-    await trigger(wrapper).trigger('click')
-    const style = menu(wrapper).attributes('style') ?? ''
-    expect(style).toContain('min-width: 180px')
-    expect(style).toContain('width: 220px')
-  })
+  // ── match_reference_width wiring [obligation] ─────────────────────────────
 
-  // ── Sizer element ─────────────────────────────────────────────────────────
-
-  test('renders the hidden sizer element', () => {
+  test('popover receives match_reference_width prop [obligation]', () => {
+    // The prop is passed as a bare boolean attribute in the template
+    // (`match_reference_width` without `:` binding). shallowMount stubs receive
+    // bare boolean Vue attrs as "" (HTML attribute) or true depending on version;
+    // assert the attribute is present on the stub element rather than the prop.
     const wrapper = mountDropdown()
-    expect(wrapper.find('[data-testid="dropdown-button__sizer"]').exists()).toBe(true)
-  })
-
-  test('sizer has a row per option', () => {
-    const wrapper = mountDropdown()
-    const sizer = wrapper.find('[data-testid="dropdown-button__sizer"]')
-    // Each option renders a span row inside the sizer
-    expect(sizer.findAll('[data-testid="dropdown-button__sizer-row"]')).toHaveLength(
-      DEFAULT_OPTIONS.length
-    )
+    const popover = wrapper.findComponent(UiPopoverStub)
+    // Bare `match_reference_width` attr is present on the stub root — confirms
+    // the prop is wired through to the popover.
+    const hasAttr =
+      popover.attributes('match_reference_width') !== undefined ||
+      popover.props('match_reference_width') === true ||
+      popover.props('match_reference_width') === ''
+    expect(hasAttr).toBe(true)
   })
 
   // ── openOnTrigger prop [obligation] ──────────────────────────────────────
@@ -445,5 +400,46 @@ describe('UiDropdownButton', () => {
     const wrapper = mountDropdown({ openOnTrigger: true })
     await trigger(wrapper).trigger('click')
     expect(menu(wrapper).exists()).toBe(true)
+  })
+
+  // ── hideTrigger + openOnTrigger gating [obligation] ───────────────────────
+
+  test('hideTrigger+openOnTrigger: caret is NOT rendered [obligation]', () => {
+    const wrapper = mountDropdown({ hideTrigger: true, openOnTrigger: true })
+    expect(wrapper.find('[data-testid="dropdown-button__trigger-wrap"]').exists()).toBe(false)
+  })
+
+  test('hideTrigger alone (no openOnTrigger): caret IS still rendered [obligation]', () => {
+    const wrapper = mountDropdown({ hideTrigger: true, openOnTrigger: false })
+    expect(wrapper.find('[data-testid="dropdown-button__trigger-wrap"]').exists()).toBe(true)
+  })
+
+  // ── trigger_style: open fill for transparent variants [obligation] ─────────
+
+  test('ghost variant: main button gets --btn-bg-color style when menu is open [obligation]', async () => {
+    const wrapper = mountDropdown({ variant: 'ghost' })
+    await trigger(wrapper).trigger('click')
+    expect(mainButton(wrapper).attributes('style')).toContain('--btn-bg-color')
+    expect(mainButton(wrapper).attributes('style')).toContain('var(--theme-primary)')
+  })
+
+  test('outline variant: main button gets --btn-bg-color style when menu is open [obligation]', async () => {
+    const wrapper = mountDropdown({ variant: 'outline' })
+    await trigger(wrapper).trigger('click')
+    expect(mainButton(wrapper).attributes('style')).toContain('--btn-bg-color')
+    expect(mainButton(wrapper).attributes('style')).toContain('var(--theme-primary)')
+  })
+
+  test('solid variant: main button does NOT get --btn-bg-color style when menu is open [obligation]', async () => {
+    const wrapper = mountDropdown({ variant: 'solid' })
+    await trigger(wrapper).trigger('click')
+    const style = mainButton(wrapper).attributes('style') ?? ''
+    expect(style).not.toContain('--btn-bg-color')
+  })
+
+  test('ghost variant: main button has no --btn-bg-color style when menu is closed [obligation]', () => {
+    const wrapper = mountDropdown({ variant: 'ghost' })
+    const style = mainButton(wrapper).attributes('style') ?? ''
+    expect(style).not.toContain('--btn-bg-color')
   })
 })

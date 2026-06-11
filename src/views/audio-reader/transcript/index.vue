@@ -68,19 +68,19 @@ function commitSelection({
         ref="sentence"
         data-testid="transcript-view__sentence"
         aria-hidden="true"
-        class="pointer-events-none absolute left-0 top-0 -z-20 rounded-4 bg-brown-300 opacity-0 dark:bg-grey-700"
+        class="pointer-events-none absolute left-0 top-0 -z-20 rounded-4 bg-brown-200 opacity-0 dark:bg-grey-700"
       />
       <div
         ref="playhead"
         data-testid="transcript-view__playhead"
         aria-hidden="true"
-        class="pointer-events-none absolute left-0 top-0 -z-10 rounded-2 bg-(--theme-primary) opacity-0"
+        class="pointer-events-none absolute left-0 top-0 -z-10 rounded-2 bg-brown-50 opacity-0 dark:bg-grey-500"
       />
       <div
         ref="hover"
         data-testid="transcript-view__hover"
         aria-hidden="true"
-        class="pointer-events-none absolute left-0 top-0 -z-10 rounded-2 bg-(--theme-primary) opacity-0"
+        class="pointer-events-none absolute left-0 top-0 -z-10 rounded-2 bg-blue-500 opacity-0"
       />
       <transcript-segment
         v-for="paragraph in paragraphs"

@@ -6,7 +6,6 @@ import UiPopover from '@/components/ui-kit/popover.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { emitSfx } from '@/sfx/bus'
 import { flipEnter, flipLeave } from '@/utils/animations/flip'
-import { useDropdownSizing } from './use-dropdown-sizing'
 
 export type DropdownOption = {
   label: string
@@ -23,6 +22,7 @@ type DropdownButtonProps = Pick<
   triggerIcon?: string
   gap?: number
   openOnTrigger?: boolean
+  hideTrigger?: boolean
 }
 
 defineOptions({ inheritAttrs: false })
@@ -38,7 +38,8 @@ const {
   position = 'bottom-start',
   triggerIcon = 'arrow-drop-down',
   gap = 4,
-  openOnTrigger = false
+  openOnTrigger = false,
+  hideTrigger = false
 } = defineProps<DropdownButtonProps>()
 
 const emit = defineEmits<{
@@ -50,7 +51,6 @@ const slots = defineSlots<{
 }>()
 
 const attrs = useAttrs()
-const { triggerRef, sizerRef, min_width, trigger_width } = useDropdownSizing(() => options)
 
 const popover_open = ref(false)
 
@@ -60,17 +60,18 @@ const popover_open = ref(false)
 const popover_attrs = computed(() => filter_attrs((key) => !key.startsWith('on')))
 const button_attrs = computed(() => filter_attrs((key) => key.startsWith('on')))
 
-const min_width_style = computed(() =>
-  min_width.value ? { minWidth: `${min_width.value}px` } : undefined
-)
+// The caret is the only way to open the menu unless the whole button is the
+// trigger, so it can only be hidden when `openOnTrigger` also makes the label
+// region open the popover.
+const show_trigger = computed(() => !hideTrigger || !openOnTrigger)
 
-// Match the button's width, but never let the menu fall below the widest
-// option — guards the window before `trigger_width` settles to the final
-// (min-width-widened) button width.
-const menu_style = computed(() => ({
-  ...(trigger_width.value ? { width: `${trigger_width.value}px` } : {}),
-  ...(min_width.value ? { minWidth: `${min_width.value}px` } : {})
-}))
+// Both transparent variants (ghost, outline) fill with theme-primary while the
+// menu is up, so the trigger and menu read as one continuous surface.
+const trigger_style = computed(() =>
+  variant !== 'solid' && popover_open.value
+    ? { '--btn-bg-color': 'var(--theme-primary)' }
+    : undefined
+)
 
 function filter_attrs(keep: (key: string) => boolean) {
   const result: Record<string, unknown> = {}
@@ -115,6 +116,7 @@ function onSelect(option: DropdownOption) {
     :position="position"
     :gap="gap"
     :use_arrow="false"
+    match_reference_width
     data-testid="dropdown-button"
     v-bind="popover_attrs"
     :class="{ 'z-100': popover_open }"
@@ -122,7 +124,6 @@ function onSelect(option: DropdownOption) {
   >
     <template #trigger>
       <ui-button
-        ref="triggerRef"
         v-bind="button_attrs"
         :size="size"
         :variant="variant"
@@ -130,13 +131,14 @@ function onSelect(option: DropdownOption) {
         :full-width="fullWidth"
         :icon-left="iconLeft"
         :sfx="sfx"
-        :style="min_width_style"
+        :style="trigger_style"
         data-testid="dropdown-button__button"
         @click="onTriggerClick"
       >
         <slot></slot>
         <template #trailing>
           <div
+            v-if="show_trigger"
             class="flex h-full p-2 pointer-coarse:p-1"
             data-testid="dropdown-button__trigger-wrap"
           >
@@ -164,30 +166,11 @@ function onSelect(option: DropdownOption) {
           </div>
         </template>
       </ui-button>
-
-      <span
-        ref="sizerRef"
-        aria-hidden="true"
-        data-testid="dropdown-button__sizer"
-        class="pointer-events-none invisible absolute top-0 -left-2499.75 flex flex-col"
-        :class="`ui-kit-btn-tokens--${size}`"
-      >
-        <span
-          v-for="option in options"
-          :key="option.value"
-          data-testid="dropdown-button__sizer-row"
-          class="flex items-center gap-(--btn-gap) p-(--btn-padding) whitespace-nowrap"
-        >
-          <ui-icon v-if="option.icon" :src="option.icon" class="size-(--icon-size,20px) shrink-0" />
-          <span>{{ option.label }}</span>
-        </span>
-      </span>
     </template>
 
     <div
       class="flex flex-col overflow-hidden rounded-(--btn-border-radius) bg-(--theme-primary) py-2 text-(length:--btn-font-size) leading-(--btn-font-size--line-height) text-(--theme-on-primary)"
       :class="`ui-kit-btn-tokens--${size}`"
-      :style="menu_style"
       data-testid="dropdown-button__menu"
     >
       <button

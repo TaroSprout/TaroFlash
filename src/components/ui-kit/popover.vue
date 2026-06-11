@@ -8,6 +8,7 @@ import {
   arrow,
   offset,
   hide,
+  size,
   type Placement,
   type Strategy,
   type Padding,
@@ -30,6 +31,7 @@ type PopoverProps = {
   clip?: boolean
   anchor_rect?: DOMRect | null
   teleport?: boolean
+  match_reference_width?: boolean
 }
 
 const {
@@ -46,7 +48,8 @@ const {
   use_arrow = true,
   clip = true,
   anchor_rect = null,
-  teleport = false
+  teleport = false,
+  match_reference_width = false
 } = defineProps<PopoverProps>()
 
 const emit = defineEmits<{
@@ -77,6 +80,17 @@ const { placement, middlewareData, floatingStyles } = useFloating(reference, pop
     flip({
       fallbackPlacements: fallback_placements
     }),
+    // Floor the floating element at the reference's width; its own content can
+    // still push it wider.
+    ...(match_reference_width
+      ? [
+          size({
+            apply({ rects, elements }) {
+              elements.floating.style.minWidth = `${rects.reference.width}px`
+            }
+          })
+        ]
+      : []),
     ...(use_arrow ? [arrow({ element: arrowRef })] : []),
     ...(clip ? [hide({ padding: clip_margin })] : [])
   ]
