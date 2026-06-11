@@ -17,7 +17,7 @@ const emit = defineEmits<{
   (e: 'select', selection: TermSelection): void
 }>()
 
-const { onPointerDown, onPointerMove, onPointerUp, onPointerLeave, onPointerCancel } =
+const { tap_active, onPointerDown, onPointerMove, onPointerUp, onPointerLeave, onPointerCancel } =
   useReaderHighlights(
     () => active_word,
     commitSelection,
@@ -80,8 +80,14 @@ function commitSelection({
         ref="hover"
         data-testid="transcript-view__hover"
         aria-hidden="true"
-        class="pointer-events-none absolute left-0 top-0 -z-10 rounded-2 bg-blue-500 opacity-0"
-      />
+        :data-playing="tap_active"
+        class="group/hover pointer-events-none absolute left-0 top-0 -z-10 rounded-2 bg-blue-500 opacity-0"
+      >
+        <div
+          data-testid="transcript-view__hover-texture"
+          class="absolute inset-0 hidden rounded-2 bgx-diagonal-stripes animation-safe:bgx-slide bgx-color-[currentColor] group-data-[playing=true]/hover:block"
+        />
+      </div>
       <transcript-segment
         v-for="paragraph in paragraphs"
         :key="paragraph.index"
