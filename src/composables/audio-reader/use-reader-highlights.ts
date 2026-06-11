@@ -1,6 +1,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, toValue, useTemplateRef, watch } from 'vue'
 import type { ComputedRef, InjectionKey, MaybeRefOrGetter } from 'vue'
 import { usePlayOnTap } from '@/composables/use-play-on-tap'
+import { emitSfx } from '@/sfx/bus'
 import { cleanTerm } from '@/utils/transcript'
 import {
   moveReaderCursor,
@@ -455,8 +456,9 @@ export function useReaderHighlights(
   }
 
   // The long-press fired with the finger still on its word: arm range-select. The
-  // pill lights on the anchor word and the drag now extends it; a brief haptic tick
-  // confirms (no-op where the Vibration API is absent, e.g. iOS Safari).
+  // pill lights on the anchor word and the drag now extends it; a haptic tick plus
+  // a `tap_05` tick confirm the first word joined (vibrate is a no-op where the API
+  // is absent, e.g. iOS Safari).
   function armTouchSelection() {
     long_press_timer = null
     if (!tap || tap.index === null) return
@@ -465,6 +467,7 @@ export function useReaderHighlights(
     anchor_index.value = tap.index
     focus_index.value = tap.index
     navigator.vibrate?.(10)
+    emitSfx('ui.tap_05')
   }
 
   function beginDrag(event: PointerEvent) {
@@ -525,10 +528,14 @@ export function useReaderHighlights(
   }
 
   // While armed, follow the finger word by word, holding the last extent over gaps
-  // (translation gloss, padding) so the range doesn't collapse between words.
+  // (translation gloss, padding) so the range doesn't collapse between words. Each
+  // new word ticks `tap_05`, so the range audibly ratchets as words join or leave.
   function extendTouchSelection(event: PointerEvent) {
     const index = wordIndexAt(event.clientX, event.clientY)
-    if (index !== null && index !== focus_index.value) focus_index.value = index
+    if (index === null || index === focus_index.value) return
+
+    focus_index.value = index
+    emitSfx('ui.tap_05')
   }
 
   function onPointerUp(event: PointerEvent) {
