@@ -1,6 +1,10 @@
 <script setup lang="ts">
+import { provide } from 'vue'
 import type { SentenceWords } from '@/utils/transcript'
-import { useReaderHighlights } from '@/composables/audio-reader/use-reader-highlights'
+import {
+  readerSelectionKey,
+  useReaderHighlights
+} from '@/composables/audio-reader/use-reader-highlights'
 import TranscriptSegment from './segment.vue'
 
 const {
@@ -17,12 +21,21 @@ const emit = defineEmits<{
   (e: 'select', selection: TermSelection): void
 }>()
 
-const { tap_active, onPointerDown, onPointerMove, onPointerUp, onPointerLeave, onPointerCancel } =
-  useReaderHighlights(
-    () => active_word,
-    commitSelection,
-    () => popover_open
-  )
+const {
+  tap_active,
+  interaction_range,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onPointerLeave,
+  onPointerCancel
+} = useReaderHighlights(
+  () => active_word,
+  commitSelection,
+  () => popover_open
+)
+
+provide(readerSelectionKey, interaction_range)
 
 function paragraphIndexOf(node: Element): number | null {
   const segment = node.closest('[data-testid="transcript-segment"]')

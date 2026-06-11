@@ -1,5 +1,5 @@
-import { onBeforeUnmount, onMounted, ref, toValue, useTemplateRef, watch } from 'vue'
-import type { MaybeRefOrGetter } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, toValue, useTemplateRef, watch } from 'vue'
+import type { ComputedRef, InjectionKey, MaybeRefOrGetter } from 'vue'
 import { usePlayOnTap } from '@/composables/use-play-on-tap'
 import { cleanTerm } from '@/utils/transcript'
 import {
@@ -47,7 +47,13 @@ type ReaderSelection = {
   end_index: number
 }
 
-type WordRange = { lo: number; hi: number }
+export type WordRange = { lo: number; hi: number }
+
+// The live selection range (drag, standing selection, or hover) shared down to the
+// words so each can tint itself when it falls under the blue interaction pill.
+export const readerSelectionKey = Symbol('readerSelection') as InjectionKey<
+  ComputedRef<WordRange | null>
+>
 
 /**
  * Drive the floating highlight layers in the transcript reader: the audio-driven
@@ -389,6 +395,18 @@ export function useReaderHighlights(
     return range !== null && index >= range.lo && index <= range.hi
   }
 
+  // The range under the blue interaction pill, by the same priority the pill uses:
+  // an in-progress drag, then the standing selection, then the plain hovered word.
+  // Words read this (via provide/inject) to tint their text against the pill.
+  const interaction_range = computed<WordRange | null>(() => {
+    if (anchor_index.value !== null && focus_index.value !== null) {
+      return orderedRange(anchor_index.value, focus_index.value)
+    }
+    if (committed.value) return committed.value
+    if (focus_index.value !== null) return { lo: focus_index.value, hi: focus_index.value }
+    return null
+  })
+
   function onPointerDown(event: PointerEvent) {
     if (event.pointerType === 'touch') {
       beginTap(event)
@@ -572,6 +590,7 @@ export function useReaderHighlights(
     hover,
     sentence,
     tap_active,
+    interaction_range,
     onPointerDown,
     onPointerMove,
     onPointerUp,
