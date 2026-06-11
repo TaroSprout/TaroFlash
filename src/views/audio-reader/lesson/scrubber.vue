@@ -7,6 +7,11 @@ type ScrubberProps = {
   layout?: 'inline' | 'stacked'
 }
 
+// Thumb diameter in px (size-4). The thumb is kept inside the track via a
+// percentage-translate, which shifts its center off the raw progress point —
+// so the fill is extended to land on the thumb center (see fill_width).
+const THUMB_SIZE = 16
+
 const { player, layout = 'inline' } = defineProps<ScrubberProps>()
 
 const track = useTemplateRef<HTMLElement>('track')
@@ -17,6 +22,12 @@ const progress = computed(() => {
 })
 const current_label = computed(() => formatTime(player.current_time.value))
 const duration_label = computed(() => formatTime(player.duration.value))
+// Reach the thumb's center, not the progress point, so the thumb always
+// overlaps the fill's rounded cap — no seam between the two rounded shapes.
+const fill_width = computed(() => {
+  const center_offset = THUMB_SIZE / 2 - (progress.value / 100) * THUMB_SIZE
+  return `calc(${progress.value}% + ${center_offset}px)`
+})
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return '0:00'
@@ -51,7 +62,7 @@ function onScrubMove(e: PointerEvent) {
   <div
     data-testid="scrubber"
     :data-layout="layout"
-    class="flex min-w-0 flex-1 items-center gap-3 data-[layout=stacked]:flex-col data-[layout=stacked]:items-stretch data-[layout=stacked]:gap-3"
+    class="flex min-w-0 flex-1 items-center gap-3 data-[layout=stacked]:relative data-[layout=stacked]:flex-col data-[layout=stacked]:items-stretch"
   >
     <span
       v-if="layout === 'inline'"
@@ -64,7 +75,8 @@ function onScrubMove(e: PointerEvent) {
     <div
       ref="track"
       data-testid="scrubber__track"
-      class="relative h-2.5 min-w-0 flex-1 cursor-pointer touch-none rounded-full bg-brown-200 dark:bg-grey-700"
+      :data-layout="layout"
+      class="relative h-2.5 min-w-0 cursor-pointer touch-none rounded-full bg-brown-200 data-[layout=inline]:flex-1 dark:bg-grey-700"
       role="slider"
       :aria-valuemin="0"
       :aria-valuemax="100"
@@ -75,13 +87,14 @@ function onScrubMove(e: PointerEvent) {
       <div
         data-testid="scrubber__fill"
         class="absolute top-0 left-0 h-2.5 rounded-full bg-blue-500 dark:bg-blue-650"
-        :style="{ width: `${progress}%` }"
-      >
-        <div
-          data-testid="scrubber__thumb"
-          class="absolute top-1/2 right-0 size-4 -translate-y-1/2 translate-x-1/2 rounded-full bg-blue-500 dark:bg-blue-650"
-        ></div>
-      </div>
+        :style="{ width: fill_width }"
+      ></div>
+
+      <div
+        data-testid="scrubber__thumb"
+        class="absolute top-1/2 left-0 size-4 rounded-full bg-blue-500 dark:bg-blue-650"
+        :style="{ left: `${progress}%`, translate: `-${progress}% -50%` }"
+      ></div>
     </div>
 
     <span
@@ -95,7 +108,7 @@ function onScrubMove(e: PointerEvent) {
     <div
       v-if="layout === 'stacked'"
       data-testid="scrubber__labels"
-      class="flex justify-between text-base text-brown-500 tabular-nums dark:text-grey-400"
+      class="absolute inset-x-0 top-full mt-1 flex justify-between text-base text-brown-500 tabular-nums dark:text-grey-400"
     >
       <span data-testid="scrubber__current">{{ current_label }}</span>
       <span data-testid="scrubber__duration">{{ duration_label }}</span>
