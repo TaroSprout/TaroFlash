@@ -3,6 +3,13 @@ import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import { useReaderHighlights } from '@/composables/audio-reader/use-reader-highlights'
 
+const { emitSfxMock } = vi.hoisted(() => ({ emitSfxMock: vi.fn() }))
+
+vi.mock('@/sfx/bus', () => ({
+  emitSfx: emitSfxMock,
+  emitHoverSfx: vi.fn()
+}))
+
 const { moveMock, hideMock, scrollMock } = vi.hoisted(() => ({
   moveMock: vi.fn(),
   hideMock: vi.fn(),
@@ -315,6 +322,307 @@ describe('useReaderHighlights', () => {
       await wrapper.setProps({ activeWord: 1 })
 
       expect(scrollMock).toHaveBeenCalled()
+    })
+  })
+
+  describe('trailing-click swallow after touch commit', () => {
+    test('after a touch tap commits, the next click outside the reader is swallowed [obligation]', async () => {
+      const wrapper = mountHost(vi.fn())
+      const onDocClick = vi.fn()
+      document.addEventListener('click', onDocClick, true)
+
+      await touch(wrapper, 'pointerdown', 1)
+      await touch(wrapper, 'pointerup', 1)
+
+      const outside = document.createElement('button')
+      document.body.appendChild(outside)
+      outside.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+
+      document.removeEventListener('click', onDocClick, true)
+      outside.remove()
+
+      expect(onDocClick).not.toHaveBeenCalled()
+    })
+
+    test('the swallow is one-shot: a subsequent click outside the reader reaches document handlers [obligation]', async () => {
+      const wrapper = mountHost(vi.fn())
+      const onDocClick = vi.fn()
+      document.addEventListener('click', onDocClick, true)
+
+      await touch(wrapper, 'pointerdown', 1)
+      await touch(wrapper, 'pointerup', 1)
+
+      const outside = document.createElement('button')
+      document.body.appendChild(outside)
+
+      // first click — consumed by the one-shot swallow
+      outside.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+
+      // second click — swallow is disarmed, reaches document
+      outside.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+
+      document.removeEventListener('click', onDocClick, true)
+      outside.remove()
+
+      expect(onDocClick).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('standing selection persists and re-tap reopens (mobile)', () => {
+    test('committed selection is NOT cleared when popover_open stays false (mobile path) [obligation]', async () => {
+      const onSelect = vi.fn()
+      const wrapper = mountHost(onSelect)
+
+      // Commit via touch tap (mobile: popover_open stays false)
+      await touch(wrapper, 'pointerdown', 1)
+      await touch(wrapper, 'pointerup', 1)
+      expect(onSelect).toHaveBeenCalledTimes(1)
+
+      // popover_open remains false throughout — committed must still be live
+      // Re-tap inside the committed word to confirm selection is still active
+      onSelect.mockClear()
+      await touch(wrapper, 'pointerdown', 1)
+      await touch(wrapper, 'pointerup', 1)
+
+      // Should re-emit the same committed range (not nothing)
+      expect(onSelect).toHaveBeenCalledTimes(1)
+    })
+
+    test('re-tapping a word inside the committed range re-emits the whole range [obligation]', async () => {
+      const onSelect = vi.fn()
+      const wrapper = mountHost(onSelect)
+
+      // Commit a long-press drag to cover words 0..1
+      vi.useFakeTimers()
+      await touch(wrapper, 'pointerdown', 0)
+      vi.advanceTimersByTime(500) // arm long-press
+      await wrapper.vm.$nextTick()
+      // drag from 0 to 1
+      words[1].dispatchEvent(
+        new PointerEvent('pointermove', {
+          bubbles: true,
+          pointerId: 1,
+          pointerType: 'touch',
+          clientX: 1,
+          clientY: 0
+        })
+      )
+      await wrapper.vm.$nextTick()
+      await touch(wrapper, 'pointerup', 1)
+      vi.useRealTimers()
+
+      expect(onSelect).toHaveBeenCalledTimes(1)
+      expect(onSelect.mock.calls[0][0].index).toBe(0)
+      expect(onSelect.mock.calls[0][0].end_index).toBe(1)
+
+      // Re-tap word 1 which is inside range lo=0 hi=1 — should re-emit the whole range
+      onSelect.mockClear()
+      await touch(wrapper, 'pointerdown', 1)
+      await touch(wrapper, 'pointerup', 1)
+
+      expect(onSelect).toHaveBeenCalledTimes(1)
+      expect(onSelect.mock.calls[0][0].index).toBe(0)
+      expect(onSelect.mock.calls[0][0].end_index).toBe(1)
+    })
+
+    test('tapping a word outside the committed range replaces the selection [obligation]', async () => {
+      const onSelect = vi.fn()
+      const wrapper = mountHost(onSelect)
+
+      // Commit word 1
+      await touch(wrapper, 'pointerdown', 1)
+      await touch(wrapper, 'pointerup', 1)
+      onSelect.mockClear()
+
+      // Tap word 0 — outside committed range {lo:1, hi:1}
+      await touch(wrapper, 'pointerdown', 0)
+      await touch(wrapper, 'pointerup', 0)
+
+      expect(onSelect).toHaveBeenCalledTimes(1)
+      expect(onSelect.mock.calls[0][0].term).toBe('Hello')
+      expect(onSelect.mock.calls[0][0].index).toBe(0)
+      expect(onSelect.mock.calls[0][0].end_index).toBe(0)
+    })
+  })
+
+  describe('empty-space tap deselects; scroll does not', () => {
+    test('a stationary tap that lands on no word clears the committed selection [obligation]', async () => {
+      const onSelect = vi.fn()
+      const wrapper = mountHost(onSelect)
+
+      // Commit word 1
+      await touch(wrapper, 'pointerdown', 1)
+      await touch(wrapper, 'pointerup', 1)
+      expect(onSelect).toHaveBeenCalledTimes(1)
+
+      // Tap empty space (no word under finger) — elementFromPoint returns null for index 3
+      const content = wrapper.find('[data-testid="content"]').element
+      content.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          bubbles: true,
+          pointerId: 1,
+          pointerType: 'touch',
+          clientX: 3,
+          clientY: 0
+        })
+      )
+      await wrapper.vm.$nextTick()
+      content.dispatchEvent(
+        new PointerEvent('pointerup', {
+          bubbles: true,
+          pointerId: 1,
+          pointerType: 'touch',
+          clientX: 3,
+          clientY: 0
+        })
+      )
+      await wrapper.vm.$nextTick()
+
+      // Verify: interaction_range should now be null (no committed selection)
+      expect(wrapper.vm.interaction_range).toBeNull()
+    })
+
+    test('a touch drift past slop (scroll) does not clear the committed selection [obligation]', async () => {
+      const onSelect = vi.fn()
+      const wrapper = mountHost(onSelect)
+
+      // Commit word 1
+      await touch(wrapper, 'pointerdown', 1)
+      await touch(wrapper, 'pointerup', 1)
+      expect(onSelect).toHaveBeenCalledTimes(1)
+      onSelect.mockClear()
+
+      // Drift past the slop — this is a scroll, commits nothing, leaves committed lit
+      await touch(wrapper, 'pointerdown', 1)
+      await touch(wrapper, 'pointermove', 1, 40) // y=40 > TAP_SLOP=10
+      await touch(wrapper, 'pointerup', 1, 40)
+
+      // committed selection must still be live (interaction_range non-null)
+      expect(wrapper.vm.interaction_range).not.toBeNull()
+      // No new commit fired
+      expect(onSelect).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('interaction_range provide + word data-active tint', () => {
+    test('a word with index inside the committed range reports data-active=true [obligation]', async () => {
+      const onSelect = vi.fn()
+      const wrapper = mountHost(onSelect)
+
+      await pointer(wrapper, 'pointerdown', 1, 1)
+      await pointer(wrapper, 'pointerup', 1, 0)
+
+      // interaction_range should cover lo=1 hi=1
+      const range = wrapper.vm.interaction_range
+      expect(range).not.toBeNull()
+      expect(range.lo).toBe(1)
+      expect(range.hi).toBe(1)
+    })
+
+    test('a word with index outside the committed range reports data-active=false [obligation]', async () => {
+      const onSelect = vi.fn()
+      const wrapper = mountHost(onSelect)
+
+      await pointer(wrapper, 'pointerdown', 1, 1)
+      await pointer(wrapper, 'pointerup', 1, 0)
+
+      // word 0 is outside range {lo:1, hi:1}
+      const range = wrapper.vm.interaction_range
+      expect(range).not.toBeNull()
+      const word0Active = range !== null && 0 >= range.lo && 0 <= range.hi
+      expect(word0Active).toBe(false)
+    })
+
+    test('interaction_range is null when there is no selection or hover [obligation]', () => {
+      const wrapper = mountHost(vi.fn())
+      expect(wrapper.vm.interaction_range).toBeNull()
+    })
+
+    test('interaction_range reflects hover (focus_index) when not dragging and not committed [obligation]', async () => {
+      const wrapper = mountHost(vi.fn())
+
+      await pointer(wrapper, 'pointermove', 1, 0)
+
+      const range = wrapper.vm.interaction_range
+      expect(range).toEqual({ lo: 1, hi: 1 })
+    })
+
+    test('interaction_range prefers drag over hover when drag is in progress [obligation]', async () => {
+      const wrapper = mountHost(vi.fn())
+
+      await pointer(wrapper, 'pointerdown', 0, 1)
+      await pointer(wrapper, 'pointermove', 1, 1)
+
+      // drag in progress: anchor=0, focus=1 → range 0..1
+      const range = wrapper.vm.interaction_range
+      expect(range).toEqual({ lo: 0, hi: 1 })
+    })
+  })
+
+  describe('tap_05 ratchet on range-select via long-press', () => {
+    test('arming range-select via long-press emits ui.tap_05 for the first word [obligation]', async () => {
+      const wrapper = mountHost(vi.fn())
+      emitSfxMock.mockClear()
+
+      vi.useFakeTimers()
+      await touch(wrapper, 'pointerdown', 0)
+      vi.advanceTimersByTime(500) // past LONG_PRESS_MS=400
+      await wrapper.vm.$nextTick()
+      vi.useRealTimers()
+
+      expect(emitSfxMock).toHaveBeenCalledWith('ui.tap_05')
+    })
+
+    test('each new word the drag adds emits ui.tap_05 [obligation]', async () => {
+      const wrapper = mountHost(vi.fn())
+
+      vi.useFakeTimers()
+      await touch(wrapper, 'pointerdown', 0)
+      vi.advanceTimersByTime(500)
+      await wrapper.vm.$nextTick()
+      emitSfxMock.mockClear()
+
+      // drag to word 1
+      words[1].dispatchEvent(
+        new PointerEvent('pointermove', {
+          bubbles: true,
+          pointerId: 1,
+          pointerType: 'touch',
+          clientX: 1,
+          clientY: 0
+        })
+      )
+      await wrapper.vm.$nextTick()
+      vi.useRealTimers()
+
+      expect(emitSfxMock).toHaveBeenCalledWith('ui.tap_05')
+    })
+
+    test('release does not emit an extra ui.tap_05 [obligation]', async () => {
+      const wrapper = mountHost(vi.fn())
+
+      vi.useFakeTimers()
+      await touch(wrapper, 'pointerdown', 0)
+      vi.advanceTimersByTime(500)
+      await wrapper.vm.$nextTick()
+
+      words[1].dispatchEvent(
+        new PointerEvent('pointermove', {
+          bubbles: true,
+          pointerId: 1,
+          pointerType: 'touch',
+          clientX: 1,
+          clientY: 0
+        })
+      )
+      await wrapper.vm.$nextTick()
+      emitSfxMock.mockClear()
+
+      await touch(wrapper, 'pointerup', 1)
+      vi.useRealTimers()
+
+      // release should not call tap_05 again
+      expect(emitSfxMock).not.toHaveBeenCalledWith('ui.tap_05')
     })
   })
 })

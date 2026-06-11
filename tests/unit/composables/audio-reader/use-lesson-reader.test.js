@@ -9,6 +9,7 @@ const {
   toastErrorMock,
   openModalMock,
   modalCloseMock,
+  mockEmitSfx,
   mobileRef
 } = vi.hoisted(() => ({
   lessonQueryMock: vi.fn(),
@@ -18,10 +19,13 @@ const {
   toastErrorMock: vi.fn(),
   openModalMock: vi.fn(),
   modalCloseMock: vi.fn(),
+  mockEmitSfx: vi.fn(),
   // Plain holder the composable reads at call time; flip .value per test to pick
   // the mobile (sheet) vs desktop (anchored popover) branch.
   mobileRef: { value: false }
 }))
+
+vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
 
 vi.mock('@/api/lessons', () => ({
   useLessonQuery: lessonQueryMock,
@@ -95,6 +99,7 @@ describe('useLessonReader', () => {
     openModalMock.mockReset()
     openModalMock.mockReturnValue({ response: Promise.resolve(), close: modalCloseMock })
     modalCloseMock.mockReset()
+    mockEmitSfx.mockReset()
     mobileRef.value = false
   })
 
@@ -136,6 +141,27 @@ describe('useLessonReader', () => {
   })
 
   describe('term popover', () => {
+    test('openTerm emits ui.pop_up_pop on every call (desktop and mobile) [obligation]', () => {
+      let reader
+      ;[reader, app] = withReader()
+      const term = { term: 'world', sentence: 'Hello world.', rect: new DOMRect() }
+
+      reader.openTerm(term)
+      expect(mockEmitSfx).toHaveBeenCalledWith('ui.pop_up_pop')
+    })
+
+    test('openTerm emits ui.pop_up_pop on re-tap/re-open (mobile) [obligation]', () => {
+      mobileRef.value = true
+      let reader
+      ;[reader, app] = withReader()
+      const term = { term: 'world', sentence: 'Hello world.', rect: new DOMRect() }
+
+      reader.openTerm(term)
+      reader.openTerm(term)
+      expect(mockEmitSfx).toHaveBeenCalledTimes(2)
+      expect(mockEmitSfx.mock.calls.every((c) => c[0] === 'ui.pop_up_pop')).toBe(true)
+    })
+
     test('on desktop, openTerm stores the selection and opens; closeTerm closes', () => {
       let reader
       ;[reader, app] = withReader()

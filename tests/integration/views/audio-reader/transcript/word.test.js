@@ -1,6 +1,8 @@
 import { describe, test, expect } from 'vite-plus/test'
-import { shallowMount } from '@vue/test-utils'
+import { shallowMount, mount } from '@vue/test-utils'
+import { defineComponent, h, ref, computed } from 'vue'
 import TranscriptWord from '@/views/audio-reader/transcript/word.vue'
+import { readerSelectionKey } from '@/composables/audio-reader/use-reader-highlights'
 
 function mountWord(props = {}) {
   return shallowMount(TranscriptWord, {
@@ -45,5 +47,47 @@ describe('TranscriptWord', () => {
   test('omits the rt annotation when there is no reading', () => {
     const wrapper = mountWord({ display: 'cat ' })
     expect(wrapper.find('[data-testid="transcript-word__reading"]').exists()).toBe(false)
+  })
+
+  describe('data-active via injected interaction_range [obligation]', () => {
+    // Build a provider wrapper that sets interaction_range and renders the word
+    function mountWordWithRange(wordIndex, range) {
+      const rangeRef = ref(range)
+      const rangeComputed = computed(() => rangeRef.value)
+
+      const Provider = defineComponent({
+        setup() {
+          return () => h(TranscriptWord, { display: 'test', index: wordIndex })
+        }
+      })
+
+      const wrapper = mount(Provider, {
+        global: {
+          provide: {
+            [readerSelectionKey]: rangeComputed
+          }
+        }
+      })
+      return wrapper
+    }
+
+    test('word reports data-active=true when its index falls inside the provided range [obligation]', () => {
+      const wrapper = mountWordWithRange(1, { lo: 0, hi: 2 })
+      expect(wrapper.find('[data-testid="transcript-word"]').attributes('data-active')).toBe('true')
+    })
+
+    test('word reports data-active=false when its index is outside the provided range [obligation]', () => {
+      const wrapper = mountWordWithRange(3, { lo: 0, hi: 2 })
+      expect(wrapper.find('[data-testid="transcript-word"]').attributes('data-active')).toBe(
+        'false'
+      )
+    })
+
+    test('word reports data-active=false when no range is provided (no selection) [obligation]', () => {
+      const wrapper = mountWord({ index: 1 })
+      expect(wrapper.find('[data-testid="transcript-word"]').attributes('data-active')).toBe(
+        'false'
+      )
+    })
   })
 })
