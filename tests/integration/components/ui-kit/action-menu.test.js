@@ -34,7 +34,8 @@ vi.mock('@floating-ui/vue', () => ({
   autoUpdate: vi.fn(),
   arrow: vi.fn(),
   offset: vi.fn(),
-  hide: vi.fn()
+  hide: vi.fn(),
+  size: vi.fn()
 }))
 
 const TriggerStub = defineComponent({

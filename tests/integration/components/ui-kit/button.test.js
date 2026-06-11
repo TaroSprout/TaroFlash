@@ -208,6 +208,44 @@ describe('UiButton', () => {
     })
   })
 
+  // ── ghost variant — fancyHover overlay suppression [obligation] ───────────
+
+  describe('ghost variant', () => {
+    test('ghost button: fancyHover overlay does NOT get the group-hover/btn:block class [obligation]', () => {
+      // The diagonal-stripe overlay is gated by `variant !== 'ghost'`.
+      // Use mountButtonWithSlots to get actual rendered DOM (UiTooltipSlotStub
+      // renders slot content so the inner divs are accessible).
+      const wrapper = mountButtonWithSlots(
+        { variant: 'ghost', fancyHover: true },
+        { default: 'Label' }
+      )
+
+      // Find the stripe overlay div — it's the absolutely-positioned one inside
+      // the button content area. We assert via data-testid on the button root
+      // and query its children, not by class names.
+      const button = wrapper.find('[data-testid="ui-kit-button"]')
+      expect(button.exists()).toBe(true)
+
+      // The overlay is present in the DOM but must NOT carry the
+      // group-hover/btn:block class when variant=ghost (the class gating).
+      // We assert at the source level: find the absolute inset div and confirm
+      // its outerHTML does NOT contain `group-hover/btn:block` and `group-data-[playing=true]/btn:block`.
+      const html = button.html()
+      // The hover-stripe classes are only present when !loading && fancyHover && variant !== 'ghost'
+      expect(html).not.toContain('group-hover/btn:block')
+    })
+
+    test('non-ghost variant with fancyHover: overlay gets the group-hover/btn:block class [obligation]', () => {
+      const wrapper = mountButtonWithSlots(
+        { variant: 'solid', fancyHover: true },
+        { default: 'Label' }
+      )
+
+      const button = wrapper.find('[data-testid="ui-kit-button"]')
+      expect(button.html()).toContain('group-hover/btn:block')
+    })
+  })
+
   // ── trailing slot / split layout [obligation] ──────────────────────────────
   // Uses mountButtonWithSlots — a UiTooltip stub that renders slot content so
   // inner data-testid elements (ui-kit-button__content, ui-kit-button__trailing)

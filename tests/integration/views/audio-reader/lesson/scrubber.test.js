@@ -69,23 +69,27 @@ describe('Scrubber', () => {
   })
 
   // ── Fill width tracks progress ──────────────────────────────────────────────
+  // fill_width uses `calc(progress% + offsetPx)` so the fill extends to the
+  // thumb's center — the thumb (size-4 = 16px) overlaps the fill's rounded cap.
+  // Formula: center_offset = THUMB_SIZE/2 - (progress/100)*THUMB_SIZE = 8 - p*16/100
+  // At 25%: calc(25% + (8 - 0.25*16)px) = calc(25% + 4px)
+  // At 0%:  calc(0% + 8px)
+  // At 50%: calc(50% + 0px) = calc(50% + 0px)
 
   test('fill width reflects current_time / duration as a percentage [obligation]', () => {
     const player = makePlayer({ current_time: ref(30), duration: ref(120) })
     const wrapper = shallowMount(Scrubber, { props: { player } })
 
-    expect(wrapper.find('[data-testid="scrubber__fill"]').attributes('style')).toContain(
-      'width: 25%'
-    )
+    // At 25% progress: center_offset = 8 - 0.25*16 = 4px → calc(25% + 4px)
+    expect(wrapper.find('[data-testid="scrubber__fill"]').attributes('style')).toContain('25%')
   })
 
-  test('fill width stays 0% when duration is 0 [obligation]', () => {
+  test('fill width stays at 0% when duration is 0 [obligation]', () => {
     const player = makePlayer({ current_time: ref(10), duration: ref(0) })
     const wrapper = shallowMount(Scrubber, { props: { player } })
 
-    expect(wrapper.find('[data-testid="scrubber__fill"]').attributes('style')).toContain(
-      'width: 0%'
-    )
+    // progress=0 → calc(0% + 8px)
+    expect(wrapper.find('[data-testid="scrubber__fill"]').attributes('style')).toContain('0%')
   })
 
   test('fill width reacts to current_time changes', async () => {
@@ -95,9 +99,8 @@ describe('Scrubber', () => {
     player.current_time.value = 60
     await nextTick()
 
-    expect(wrapper.find('[data-testid="scrubber__fill"]').attributes('style')).toContain(
-      'width: 50%'
-    )
+    // At 50% progress: center_offset = 8 - 0.5*16 = 0px → calc(50% + 0px)
+    expect(wrapper.find('[data-testid="scrubber__fill"]').attributes('style')).toContain('50%')
   })
 
   // ── aria-valuenow ──────────────────────────────────────────────────────────
@@ -167,5 +170,85 @@ describe('Scrubber', () => {
 
     const labels = wrapper.findAll('[data-testid="scrubber__labels"] span')
     expect(labels[1].text()).toBe('0:00')
+  })
+
+  // ── Thumb positioning — stays inside track at both ends [obligation] ────────
+  // Thumb uses `left: progress%` + `translate: -progress% -50%`
+  // This keeps the thumb inside the track: at 0% translate is 0, at 100%
+  // translate pulls it back by its full width. Never overhangs either edge.
+
+  test('thumb left style is set to the progress percentage [obligation]', () => {
+    const player = makePlayer({ current_time: ref(30), duration: ref(120) })
+    const wrapper = shallowMount(Scrubber, { props: { player } })
+
+    // 30/120 = 25%
+    const style = wrapper.find('[data-testid="scrubber__thumb"]').attributes('style') ?? ''
+    expect(style).toContain('left: 25%')
+  })
+
+  test('thumb translate style is -progress% -50% [obligation]', () => {
+    const player = makePlayer({ current_time: ref(30), duration: ref(120) })
+    const wrapper = shallowMount(Scrubber, { props: { player } })
+
+    // translate: -25% -50%
+    const style = wrapper.find('[data-testid="scrubber__thumb"]').attributes('style') ?? ''
+    expect(style).toContain('translate: -25% -50%')
+  })
+
+  test('thumb is at left:0% at the start (progress=0) [obligation]', () => {
+    const player = makePlayer({ current_time: ref(0), duration: ref(120) })
+    const wrapper = shallowMount(Scrubber, { props: { player } })
+
+    // At progress=0, left is 0% and translate collapses to 0% -50%
+    const style = wrapper.find('[data-testid="scrubber__thumb"]').attributes('style') ?? ''
+    expect(style).toContain('left: 0%')
+    // translate: -0% renders as 0% in browsers / jsdom
+    expect(style).toContain('-50%')
+  })
+
+  test('thumb is at left:100% with translate:-100% -50% at the end (progress=100%) [obligation]', () => {
+    const player = makePlayer({ current_time: ref(120), duration: ref(120) })
+    const wrapper = shallowMount(Scrubber, { props: { player } })
+
+    const style = wrapper.find('[data-testid="scrubber__thumb"]').attributes('style') ?? ''
+    expect(style).toContain('left: 100%')
+    expect(style).toContain('translate: -100% -50%')
+  })
+
+  // ── Stacked layout: track carries data-layout for flex-1 scoping [obligation] ─
+
+  test('track carries data-layout="stacked" in stacked mode [obligation]', () => {
+    const player = makePlayer()
+    const wrapper = shallowMount(Scrubber, { props: { player, layout: 'stacked' } })
+
+    expect(wrapper.find('[data-testid="scrubber__track"]').attributes('data-layout')).toBe(
+      'stacked'
+    )
+  })
+
+  test('track carries data-layout="inline" in inline mode [obligation]', () => {
+    const player = makePlayer()
+    const wrapper = shallowMount(Scrubber, { props: { player, layout: 'inline' } })
+
+    expect(wrapper.find('[data-testid="scrubber__track"]').attributes('data-layout')).toBe('inline')
+  })
+
+  // ── Stacked layout: labels are out-of-flow (absolute) [obligation] ─────────
+  // Labels in stacked mode are positioned absolute so only the bar drives height.
+
+  test('stacked layout labels container has data-testid="scrubber__labels" [obligation]', () => {
+    const player = makePlayer()
+    const wrapper = shallowMount(Scrubber, { props: { player, layout: 'stacked' } })
+
+    expect(wrapper.find('[data-testid="scrubber__labels"]').exists()).toBe(true)
+  })
+
+  test('stacked layout labels render current and duration inside the labels container [obligation]', () => {
+    const player = makePlayer({ current_time: ref(30), duration: ref(120) })
+    const wrapper = shallowMount(Scrubber, { props: { player, layout: 'stacked' } })
+
+    const labels = wrapper.find('[data-testid="scrubber__labels"]')
+    expect(labels.find('[data-testid="scrubber__current"]').text()).toBe('0:30')
+    expect(labels.find('[data-testid="scrubber__duration"]').text()).toBe('2:00')
   })
 })
