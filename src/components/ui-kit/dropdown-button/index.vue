@@ -15,7 +15,7 @@ export type DropdownOption = {
 
 type DropdownButtonProps = Pick<
   ButtonProps,
-  'size' | 'variant' | 'inverted' | 'fullWidth' | 'iconLeft' | 'sfx'
+  'size' | 'variant' | 'inverted' | 'fullWidth' | 'iconLeft' | 'sfx' | 'playOnTap'
 > & {
   options: DropdownOption[]
   position?: Placement
@@ -36,6 +36,7 @@ const {
   fullWidth,
   iconLeft,
   sfx,
+  playOnTap,
   position = 'bottom-start',
   triggerIcon = 'arrow-drop-down',
   gap = 4,
@@ -60,7 +61,12 @@ const popover_open = ref(false)
 // content inherits the theme), while event handlers — the consumer's primary
 // @click — land on the inner button so they fire only from the label region.
 const popover_attrs = computed(() => filter_attrs((key) => !key.startsWith('on')))
-const button_attrs = computed(() => filter_attrs((key) => key.startsWith('on')))
+// `onClick` is handled through `onButtonClick` instead of forwarded, so the inner
+// button never receives both it and the trigger handler as a merged array — which
+// its play-on-tap intercept can't invoke (it expects a single onClick function).
+const button_attrs = computed(() =>
+  filter_attrs((key) => key.startsWith('on') && key !== 'onClick')
+)
 
 // The caret is the only way to open the menu unless the whole button is the
 // trigger, so it can only be hidden when `openOnTrigger` also makes the label
@@ -92,6 +98,19 @@ function toggle() {
 // caret. The caret keeps its own `@click.stop`, so it never double-fires here.
 function onTriggerClick() {
   if (openOnTrigger) toggle()
+}
+
+// Single click handler for the label region: the dropdown's own trigger behaviour
+// plus the consumer's forwarded @click, so the inner button sees one onClick.
+function onButtonClick(e: MouseEvent) {
+  onTriggerClick()
+
+  const consumer = attrs.onClick as
+    | ((e: MouseEvent) => void)
+    | ((e: MouseEvent) => void)[]
+    | undefined
+  if (Array.isArray(consumer)) consumer.forEach((fn) => fn(e))
+  else consumer?.(e)
 }
 
 function onCaretEnter(el: Element, done: () => void) {
@@ -135,9 +154,10 @@ function onSelect(option: DropdownOption) {
         :full-width="fullWidth"
         :icon-left="iconLeft"
         :sfx="sfx"
+        :play-on-tap="playOnTap"
         :style="trigger_style"
         data-testid="dropdown-button__button"
-        @click="onTriggerClick"
+        @click="onButtonClick"
       >
         <slot></slot>
         <template #trailing>
