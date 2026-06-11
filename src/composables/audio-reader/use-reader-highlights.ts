@@ -1,5 +1,7 @@
-import { onBeforeUnmount, onMounted, ref, toValue, useTemplateRef, watch } from 'vue'
-import type { MaybeRefOrGetter } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, toValue, useTemplateRef, watch } from 'vue'
+import type { ComputedRef, InjectionKey, MaybeRefOrGetter } from 'vue'
+import { usePlayOnTap } from '@/composables/use-play-on-tap'
+import { emitSfx } from '@/sfx/bus'
 import { cleanTerm } from '@/utils/transcript'
 import {
   moveReaderCursor,
@@ -34,6 +36,11 @@ const TAP_SLOP = 10
 // ~500ms native long-press so it feels responsive without firing on a quick tap.
 const LONG_PRESS_MS = 400
 
+// On mobile the term sheet rises over roughly the bottom half of the viewport, so a
+// word committed past this fraction of the screen risks being buried by it. Such a
+// word is eased up into view before the sheet covers it.
+const SHEET_COVER_RATIO = 0.5
+
 // What a committed selection hands back: the bare term, the rect to anchor the
 // popover against, the first word's element so the caller can resolve which
 // sentence it sits in (translator context), and the range's first/last word
@@ -46,7 +53,13 @@ type ReaderSelection = {
   end_index: number
 }
 
-type WordRange = { lo: number; hi: number }
+export type WordRange = { lo: number; hi: number }
+
+// The live selection range (drag, standing selection, or hover) shared down to the
+// words so each can tint itself when it falls under the blue interaction pill.
+export const readerSelectionKey = Symbol('readerSelection') as InjectionKey<
+  ComputedRef<WordRange | null>
+>
 
 /**
  * Drive the floating highlight layers in the transcript reader: the audio-driven
@@ -62,8 +75,10 @@ type WordRange = { lo: number; hi: number }
  * finger stayed put; a touch that drifts past `TAP_SLOP` is a scroll and commits
  * nothing. Holding a word still for `LONG_PRESS_MS` arms range-select instead: the
  * column stops scrolling, the drag extends the range word by word, and release
- * commits it. The committed range stays lit — hover is held off — until
- * `popover_open` flips false. The translation gloss carries no `data-word-index`,
+ * commits it. The committed range stays lit — hover is held off — while its popover
+ * is open; on touch it persists after the popover closes, so re-tapping inside it
+ * reopens the same selection, tapping another word replaces it, and tapping empty
+ * space clears it. The translation gloss carries no `data-word-index`,
  * so it can never join a range; native text selection is left disabled by the host.
  *
  * "Which word" is JS state; the DOM is read only to measure "where is word N",
@@ -91,6 +106,15 @@ export function useReaderHighlights(
   const hover = useTemplateRef<HTMLElement>('hover')
   const sentence = useTemplateRef<HTMLElement>('sentence')
 
+  // Pops the interaction pill on every commit: the yoyo scale/rotate bumps the pill
+  // and `tap_active` drives its `data-playing`, which the texture overlay turns into
+  // a quick sliding bgx sweep for the same window.
+  const { playing: tap_active, interceptClick: playHighlightTap } = usePlayOnTap({
+    yoyo: true,
+    activeOn: 'always',
+    duration: 0.1
+  })
+
   // The word under the pointer (hover) or, while dragging, the focus end of the
   // range. `anchor_index` is the fixed end of a drag — null when not dragging.
   // `committed` is the released range, kept lit while its popover is open.
@@ -103,9 +127,15 @@ export function useReaderHighlights(
   // `touch_selecting` flips true once a long-press arms range-select; from there
   // the drag extends the range and the column no longer scrolls. The timer is the
   // pending arm, cleared the moment the finger drifts or lifts.
-  let tap: { x: number; y: number; index: number } | null = null
+  let tap: { x: number; y: number; index: number | null } | null = null
   let touch_selecting = false
   let long_press_timer: ReturnType<typeof setTimeout> | null = null
+
+  // A committed touch tap is trailed by a browser compatibility `click`. When the
+  // tap opened the mobile term sheet, that click lands on the sheet backdrop (over
+  // the tap point, outside `content`) and would dismiss it the same frame. Arm a
+  // one-shot swallow on commit so the trailing click is eaten wherever it lands.
+  let suppress_gesture_click = false
 
   let resize_observer: ResizeObserver | null = null
 
@@ -133,9 +163,16 @@ export function useReaderHighlights(
 
   // A pointer tap inside the reader is a word selection, not a click — yet the
   // browser still fires a compatibility `click` after `pointerup`. Swallow it in
-  // the capture phase (before document-level handlers run) so an open popover's
-  // outside-click dismiss never mistakes the selecting tap for a dismiss.
+  // the capture phase (before document-level handlers run) so a just-opened term
+  // surface's outside-click dismiss never mistakes the selecting tap for a dismiss.
+  // A committed touch arms `suppress_gesture_click` so its trailing click is eaten
+  // even when it lands on the mobile sheet backdrop, which sits outside `content`.
   function swallowGestureClick(event: MouseEvent) {
+    if (suppress_gesture_click) {
+      suppress_gesture_click = false
+      event.stopPropagation()
+      return
+    }
     if (content.value?.contains(event.target as Node)) event.stopPropagation()
   }
 
@@ -303,6 +340,21 @@ export function useReaderHighlights(
     scrollLineIntoView(scrollParentOf(content.value), seg)
   }
 
+  // Keep a just-committed word clear of the term sheet. Only on mobile — where the
+  // page itself scrolls and the sheet rises from the bottom — and only when the
+  // word sits low enough to be covered; otherwise leave the view put. Desktop
+  // scrolls the bounded column and anchors a popover that flips clear on its own.
+  function revealCommitted(range: WordRange) {
+    const scroller = scrollParentOf(content.value)
+    if (scroller !== window) return
+
+    const el = wordEl(range.lo)
+    if (!el) return
+    if (el.getBoundingClientRect().bottom <= window.innerHeight * SHEET_COVER_RATIO) return
+
+    scrollLineIntoView(window, el)
+  }
+
   function positionInteraction() {
     if (!hover.value) return
 
@@ -325,12 +377,9 @@ export function useReaderHighlights(
     return { lo: Math.min(a, b), hi: Math.max(a, b) }
   }
 
-  // Release commits the range as a term and lights it as the standing selection;
-  // an empty (punctuation-only) range is dropped so the popover never opens.
-  function commitSelection() {
-    if (anchor_index.value === null || focus_index.value === null) return
-
-    const range = orderedRange(anchor_index.value, focus_index.value)
+  // Light a word range as the standing selection and hand it to the host; an empty
+  // (punctuation-only) range is dropped so the popover never opens on nothing.
+  function commitRange(range: WordRange) {
     const rect = rangeRect(range)
     const anchor = wordEl(range.lo)
     if (!rect || !anchor) return
@@ -340,11 +389,47 @@ export function useReaderHighlights(
 
     committed.value = range
     onSelect({ term, rect, anchor, index: range.lo, end_index: range.hi })
+    pulseHighlight()
+    revealCommitted(range)
   }
 
-  function onPointerDown(event: PointerEvent) {
-    committed.value = null
+  // Fire the tap flag on the pill. usePlayOnTap reads its target from
+  // `currentTarget`, so hand it a minimal event pointing at the (pointer-inert)
+  // pill — there's no real DOM click to forward here.
+  function pulseHighlight() {
+    if (!hover.value) return
+    playHighlightTap({
+      currentTarget: hover.value,
+      preventDefault() {},
+      stopImmediatePropagation() {}
+    } as unknown as MouseEvent)
+  }
 
+  // Release commits the in-progress drag as the standing selection.
+  function commitDrag() {
+    if (anchor_index.value === null || focus_index.value === null) return
+    commitRange(orderedRange(anchor_index.value, focus_index.value))
+  }
+
+  /** Whether `index` falls inside the current standing selection. */
+  function committedContains(index: number): boolean {
+    const range = committed.value
+    return range !== null && index >= range.lo && index <= range.hi
+  }
+
+  // The range under the blue interaction pill, by the same priority the pill uses:
+  // an in-progress drag, then the standing selection, then the plain hovered word.
+  // Words read this (via provide/inject) to tint their text against the pill.
+  const interaction_range = computed<WordRange | null>(() => {
+    if (anchor_index.value !== null && focus_index.value !== null) {
+      return orderedRange(anchor_index.value, focus_index.value)
+    }
+    if (committed.value) return committed.value
+    if (focus_index.value !== null) return { lo: focus_index.value, hi: focus_index.value }
+    return null
+  })
+
+  function onPointerDown(event: PointerEvent) {
     if (event.pointerType === 'touch') {
       beginTap(event)
       return
@@ -354,12 +439,14 @@ export function useReaderHighlights(
   }
 
   // A touch defers to release or to a long-press: remember where it landed and
-  // which word, and start the arm timer. Until it fires the gesture stays the
-  // browser's, so the column scrolls; a drift past the slop cancels it (trackTap).
+  // which word (null when it missed every word), and start the arm timer. Until it
+  // fires the gesture stays the browser's, so the column scrolls; a drift past the
+  // slop cancels it (trackTap). An empty-space press is still recorded so release
+  // can tell a stationary tap-to-deselect from a scroll, but it can't arm a range.
   function beginTap(event: PointerEvent) {
     const index = wordIndexAt(event.clientX, event.clientY)
-    tap = index === null ? null : { x: event.clientX, y: event.clientY, index }
-    if (tap) long_press_timer = setTimeout(armTouchSelection, LONG_PRESS_MS)
+    tap = { x: event.clientX, y: event.clientY, index }
+    if (index !== null) long_press_timer = setTimeout(armTouchSelection, LONG_PRESS_MS)
   }
 
   function cancelLongPress() {
@@ -369,21 +456,25 @@ export function useReaderHighlights(
   }
 
   // The long-press fired with the finger still on its word: arm range-select. The
-  // pill lights on the anchor word and the drag now extends it; a brief haptic tick
-  // confirms (no-op where the Vibration API is absent, e.g. iOS Safari).
+  // pill lights on the anchor word and the drag now extends it; a haptic tick plus
+  // a `tap_05` tick confirm the first word joined (vibrate is a no-op where the API
+  // is absent, e.g. iOS Safari).
   function armTouchSelection() {
     long_press_timer = null
-    if (!tap) return
+    if (!tap || tap.index === null) return
 
     touch_selecting = true
     anchor_index.value = tap.index
     focus_index.value = tap.index
     navigator.vibrate?.(10)
+    emitSfx('ui.tap_05')
   }
 
   function beginDrag(event: PointerEvent) {
     const index = wordIndexAt(event.clientX, event.clientY)
     if (index === null) return
+
+    committed.value = null
 
     // Own the gesture: stop native text selection and keep receiving moves even
     // if the pointer strays outside the column mid-drag. Capture can reject a
@@ -437,10 +528,14 @@ export function useReaderHighlights(
   }
 
   // While armed, follow the finger word by word, holding the last extent over gaps
-  // (translation gloss, padding) so the range doesn't collapse between words.
+  // (translation gloss, padding) so the range doesn't collapse between words. Each
+  // new word ticks `tap_05`, so the range audibly ratchets as words join or leave.
   function extendTouchSelection(event: PointerEvent) {
     const index = wordIndexAt(event.clientX, event.clientY)
-    if (index !== null && index !== focus_index.value) focus_index.value = index
+    if (index === null || index === focus_index.value) return
+
+    focus_index.value = index
+    emitSfx('ui.tap_05')
   }
 
   function onPointerUp(event: PointerEvent) {
@@ -451,23 +546,33 @@ export function useReaderHighlights(
 
     if (anchor_index.value === null) return
 
-    commitSelection()
+    commitDrag()
     anchor_index.value = null
   }
 
-  // Release ends the touch gesture. An armed range commits its current extent; an
-  // un-armed stationary tap commits its single word; a drift (tap cleared, never
-  // armed) commits nothing. The range refs then clear so the committed pill — not
-  // a lingering hover — is what stays lit.
+  // Release ends the touch gesture. An armed long-press drag commits its current
+  // extent as a fresh range. A stationary tap on a word either reopens the standing
+  // selection it lands inside (the whole phrase, untouched) or starts a fresh
+  // single-word one. A stationary tap on empty space is a click outside the
+  // selection, so it clears it. A scroll (drift past the slop nulls `tap`) commits
+  // nothing and leaves the selection lit, so scrolling never deselects. The range
+  // refs then clear so the committed pill — not a lingering hover — is what stays lit.
   function commitTouch() {
     cancelLongPress()
 
-    if (!touch_selecting && tap) {
-      anchor_index.value = tap.index
-      focus_index.value = tap.index
+    if (touch_selecting && anchor_index.value !== null && focus_index.value !== null) {
+      commitRange(orderedRange(anchor_index.value, focus_index.value))
+      suppress_gesture_click = true
+    } else if (tap && tap.index !== null) {
+      const range = committedContains(tap.index)
+        ? committed.value!
+        : { lo: tap.index, hi: tap.index }
+      commitRange(range)
+      suppress_gesture_click = true
+    } else if (tap) {
+      committed.value = null
     }
 
-    commitSelection()
     anchor_index.value = null
     focus_index.value = null
     touch_selecting = false
@@ -512,6 +617,8 @@ export function useReaderHighlights(
     playhead,
     hover,
     sentence,
+    tap_active,
+    interaction_range,
     onPointerDown,
     onPointerMove,
     onPointerUp,

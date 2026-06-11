@@ -268,8 +268,6 @@
   "lesson-view.audio.pause-button": "Pause",
   "lesson-view.audio.skip-back-button": "Back 15 seconds",
   "lesson-view.audio.skip-forward-button": "Forward 15 seconds",
-  "lesson-view.audio.expand-button": "Expand player",
-  "lesson-view.audio.collapse-button": "Minimize player",
   "audio-reader.lesson-card.delete-button": "Delete lesson",
   "audio-reader.lesson-card.retry-button": "Retry",
   "audio-reader.lesson-card.processing-fallback": "Processing…",

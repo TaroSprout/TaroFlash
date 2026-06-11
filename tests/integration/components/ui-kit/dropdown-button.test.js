@@ -60,7 +60,7 @@ const UiButtonStub = defineComponent({
 const UiPopoverStub = defineComponent({
   name: 'UiPopover',
   inheritAttrs: false,
-  props: ['open', 'position', 'gap', 'use_arrow', 'match_reference_width'],
+  props: ['open', 'position', 'gap', 'use_arrow', 'match_reference_width', 'shadow'],
   emits: ['close'],
   setup(props, { slots, attrs, emit }) {
     return () =>
@@ -441,5 +441,44 @@ describe('UiDropdownButton', () => {
     const wrapper = mountDropdown({ variant: 'ghost' })
     const style = mainButton(wrapper).attributes('style') ?? ''
     expect(style).not.toContain('--btn-bg-color')
+  })
+
+  // ── shadow prop forwarded to popover [obligation] ─────────────────────────
+
+  test('shadow=true is forwarded to the popover [obligation]', () => {
+    const wrapper = mountDropdown({ shadow: true })
+    const popover = wrapper.findComponent(UiPopoverStub)
+    expect(popover.props('shadow')).toBe(true)
+  })
+
+  test('shadow=false (default) forwards false to the popover [obligation]', () => {
+    const wrapper = mountDropdown({ shadow: false })
+    const popover = wrapper.findComponent(UiPopoverStub)
+    expect(popover.props('shadow')).toBe(false)
+  })
+
+  // ── sfx emissions [obligation] ────────────────────────────────────────────
+
+  test('clicking the trigger emits ui.snappy_button_5 [obligation]', async () => {
+    const wrapper = mountDropdown()
+    mockEmitSfx.mockClear()
+    await trigger(wrapper).trigger('click')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5', { blocking: true })
+  })
+
+  test('clicking the trigger again (close) emits ui.snappy_button_5 [obligation]', async () => {
+    const wrapper = mountDropdown()
+    await trigger(wrapper).trigger('click')
+    mockEmitSfx.mockClear()
+    await trigger(wrapper).trigger('click')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5', { blocking: true })
+  })
+
+  test('selecting an option emits ui.select [obligation]', async () => {
+    const wrapper = mountDropdown()
+    await trigger(wrapper).trigger('click')
+    mockEmitSfx.mockClear()
+    await options(wrapper)[0].trigger('click')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
   })
 })

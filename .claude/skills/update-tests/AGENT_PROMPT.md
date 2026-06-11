@@ -2,6 +2,20 @@
 
 You are the `test-author` subagent invoked by the `update-tests` skill. The orchestrator passes you a list of **cross-cutting test obligations** distilled from a conversation you cannot see; treat each obligation as mandatory and satisfy it in addition to whatever diff/coverage analysis surfaces below. Return the Step 8 report when finished.
 
+## Cost discipline — full-suite coverage runs are the budget
+
+A full `vp test` (whole suite, browser mode, coverage instrumentation) costs **~5–6 minutes per run** — it is by far the most expensive thing you do. The workflow needs **exactly three** of them, each written to its own log and reused:
+
+1. **Step 0 branch baseline** → `/tmp/cov-branch.log`
+2. **Step 0 master baseline** (in the worktree) → `/tmp/cov-master.log`
+3. **Step 7b re-measure** → `/tmp/cov-branch-after.log`
+
+Rules:
+
+- Run each of these three **once**. Never re-run `vp test` to "re-check", "confirm", or "make sure" — `cat`/`grep` the saved log instead.
+- **Never launch a background coverage run**, and never duplicate a baseline (no `cov-branch2`, `cov-final`, etc.). Past runs wasted ~15 minutes doing exactly this.
+- The cheap, unlimited tool is **`vp test --no-coverage <file>`** (Steps 4/6) — a single targeted file runs in ~10–30s. Iterate freely with that; the three coverage passes are not for iteration.
+
 ## Step 0 — Coverage baseline diff (authoritative scope)
 
 `git diff --name-only` lies by omission: it only shows source-file edits, not the regression they caused. A `test(...)` commit can delete an old test file while the source it covered stays put — `git diff` shows nothing changed in the source, but coverage falls off a cliff. Likewise, a new `src/utils/foo.ts` shows up in the diff but the diff doesn't tell you whether existing indirect coverage was 90% or 0%. Trusting the diff alone is what makes "wrote tests, coverage still down" possible.
@@ -213,7 +227,7 @@ Once all tests are written and passing, review the full set of new tests for qua
 
 ## Step 7b — Re-measure coverage and verify recovery
 
-After all new tests are passing, re-run full-suite coverage and diff against the Step 0 master baseline.
+After all new tests are passing, re-run full-suite coverage **once** and diff against the Step 0 master baseline. This is the third and final full-suite run — do not run it again to double-check, and do not re-run the branch or master baselines (reuse `/tmp/cov-branch.log` and `/tmp/cov-master.log`).
 
 ```sh
 vp test 2>&1 | tee /tmp/cov-branch-after.log

@@ -23,6 +23,7 @@ type DropdownButtonProps = Pick<
   gap?: number
   openOnTrigger?: boolean
   hideTrigger?: boolean
+  shadow?: boolean
 }
 
 defineOptions({ inheritAttrs: false })
@@ -39,7 +40,8 @@ const {
   triggerIcon = 'arrow-drop-down',
   gap = 4,
   openOnTrigger = false,
-  hideTrigger = false
+  hideTrigger = false,
+  shadow = false
 } = defineProps<DropdownButtonProps>()
 
 const emit = defineEmits<{
@@ -82,7 +84,7 @@ function filter_attrs(keep: (key: string) => boolean) {
 }
 
 function toggle() {
-  emitSfx('ui.select', { blocking: true })
+  emitSfx('ui.snappy_button_5', { blocking: true })
   popover_open.value = !popover_open.value
 }
 
@@ -105,6 +107,7 @@ function close() {
 }
 
 function onSelect(option: DropdownOption) {
+  emitSfx('ui.select')
   emit('select', option)
   close()
 }
@@ -115,6 +118,7 @@ function onSelect(option: DropdownOption) {
     :open="popover_open"
     :position="position"
     :gap="gap"
+    :shadow="shadow"
     :use_arrow="false"
     match_reference_width
     data-testid="dropdown-button"

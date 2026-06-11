@@ -1,9 +1,19 @@
 <script setup lang="ts">
+import { computed, inject } from 'vue'
+import { readerSelectionKey } from '@/composables/audio-reader/use-reader-highlights'
+
 const { display, index, reading } = defineProps<{
   display: string
   index: number
   reading?: string
 }>()
+
+const selection = inject(readerSelectionKey, null)
+
+const selected = computed(() => {
+  const range = selection?.value
+  return !!range && index >= range.lo && index <= range.hi
+})
 </script>
 
 <template>
@@ -11,7 +21,8 @@ const { display, index, reading } = defineProps<{
     data-testid="transcript-word"
     :data-word-index="index"
     :data-word-text="display"
-    class="cursor-pointer"
+    :data-active="selected"
+    class="cursor-pointer transition-colors data-[active=true]:text-brown-100"
     ><span data-word-base>{{ display }}</span
     ><rt
       v-if="reading"
