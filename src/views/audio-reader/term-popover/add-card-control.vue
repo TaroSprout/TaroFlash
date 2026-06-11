@@ -53,8 +53,7 @@ function onSelect(option: DropdownOption) {
     size="base"
     menu-theme="brown-100"
     menu-theme-dark="stone-900"
-    shadow
-    position="top-end"
+    position="bottom-end"
     play-on-tap
     :sfx="{ click: 'ui.select' }"
     :options="deck_options"
