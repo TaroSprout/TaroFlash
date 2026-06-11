@@ -34,7 +34,13 @@ export function useAnimatedHeight(
     if (!el) return
 
     gsap.killTweensOf(el)
+    // Pin the content to the bottom while the height tweens: the clip then eats
+    // into the top and reveals downward, so a bottom-anchored panel (the footer)
+    // keeps its trailing element — e.g. the play button — still as it grows.
     el.style.overflow = 'hidden'
+    el.style.display = 'flex'
+    el.style.flexDirection = 'column'
+    el.style.justifyContent = 'flex-end'
     el.style.height = `${last}px`
     gsap.to(el, {
       height: target,
@@ -43,6 +49,9 @@ export function useAnimatedHeight(
       onComplete: () => {
         el.style.height = ''
         el.style.overflow = ''
+        el.style.display = ''
+        el.style.flexDirection = ''
+        el.style.justifyContent = ''
       }
     })
   }
