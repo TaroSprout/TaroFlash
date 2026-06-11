@@ -62,7 +62,7 @@ function onScrubMove(e: PointerEvent) {
   <div
     data-testid="scrubber"
     :data-layout="layout"
-    class="flex min-w-0 flex-1 items-center gap-3 data-[layout=stacked]:relative data-[layout=stacked]:flex-col data-[layout=stacked]:items-stretch"
+    class="flex min-w-0 flex-1 select-none items-center gap-3 data-[layout=stacked]:relative data-[layout=stacked]:flex-col data-[layout=stacked]:items-stretch"
   >
     <span
       v-if="layout === 'inline'"
