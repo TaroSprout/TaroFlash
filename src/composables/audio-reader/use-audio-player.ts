@@ -18,6 +18,7 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
   const current_time = ref(0)
   const duration = ref(0)
   const is_playing = ref(false)
+  const playback_rate = ref(1)
 
   let el: HTMLAudioElement | null = null
   let raf = 0
@@ -81,6 +82,7 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
 
   function bind(next: HTMLAudioElement) {
     el = next
+    el.playbackRate = playback_rate.value
     el.addEventListener('loadedmetadata', onLoaded)
     el.addEventListener('play', onPlay)
     el.addEventListener('pause', onPause)
@@ -121,6 +123,17 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
     current_time.value = seconds
   }
 
+  /** Jump `delta` seconds relative to now (negative rewinds), clamped to `[0, duration]`. */
+  function skip(delta: number) {
+    seek(Math.min(Math.max(current_time.value + delta, 0), duration.value))
+  }
+
+  /** Set playback speed (e.g. 1.5 for 1.5x); applied live and remembered for re-binds. */
+  function setPlaybackRate(rate: number) {
+    playback_rate.value = rate
+    if (el) el.playbackRate = rate
+  }
+
   function play() {
     clip_end = null
     el?.play()
@@ -139,7 +152,18 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
     el.play()
   }
 
-  return { current_time, duration, is_playing, play, pause, seek, playClip }
+  return {
+    current_time,
+    duration,
+    is_playing,
+    playback_rate,
+    play,
+    pause,
+    seek,
+    skip,
+    setPlaybackRate,
+    playClip
+  }
 }
 
 export type AudioPlayer = ReturnType<typeof useAudioPlayer>
