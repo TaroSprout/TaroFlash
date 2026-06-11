@@ -295,6 +295,7 @@
   "audio-reader.upload.cancel-button": "Cancel",
   "audio-reader.upload.submit-button": "Create",
   "audio-reader.popover.close-button": "Close",
+  "audio-reader.popover.back-button": "Back to controls",
   "audio-reader.popover.definition-label": "Definition",
   "audio-reader.popover.loading": "Translating…",
   "audio-reader.popover.error": "Couldn't translate that. Try again.",
