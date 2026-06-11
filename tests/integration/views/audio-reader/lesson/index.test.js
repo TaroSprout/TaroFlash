@@ -96,6 +96,7 @@ const TermPopoverStub = defineComponent({
 // ── Component import (after mocks) ────────────────────────────────────────────
 
 import LessonView from '@/views/audio-reader/lesson/index.vue'
+import AudioToolbar from '@/views/audio-reader/lesson/audio-toolbar.vue'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -147,35 +148,18 @@ describe('LessonView', () => {
     })
   })
 
-  describe('chapter navigation buttons', () => {
-    test('prev button is disabled on the first chapter', () => {
+  describe('chapter navigation via toolbar', () => {
+    test('the audio toolbar select-chapter event navigates to that chapter', async () => {
       chaptersRef.value = CHAPTERS
-      // lesson_id=1 is the first chapter
-      const wrapper = mountView({ lessonId: '1' })
-
-      expect(wrapper.find('[data-testid="lesson-view__prev"]').attributes('disabled')).toBeDefined()
-    })
-
-    test('next button is disabled on the last chapter', () => {
-      chaptersRef.value = CHAPTERS
-      // lesson_id=3 is the last chapter
-      const wrapper = mountView({ lessonId: '3' })
-
-      expect(wrapper.find('[data-testid="lesson-view__next"]').attributes('disabled')).toBeDefined()
-    })
-
-    test('a middle chapter has both prev and next enabled', () => {
-      chaptersRef.value = CHAPTERS
-      // lesson_id=2 is the middle chapter
       const wrapper = mountView({ lessonId: '2' })
 
-      // shallowMount stubs render :disabled=false as the string "false", not absent
-      expect(wrapper.find('[data-testid="lesson-view__prev"]').attributes('disabled')).not.toBe(
-        'true'
-      )
-      expect(wrapper.find('[data-testid="lesson-view__next"]').attributes('disabled')).not.toBe(
-        'true'
-      )
+      wrapper.findComponent(AudioToolbar).vm.$emit('select-chapter', 1)
+      await flushPromises()
+
+      expect(routerPushMock).toHaveBeenCalledWith({
+        name: 'lesson',
+        params: { collectionId: 5, lessonId: 1 }
+      })
     })
   })
 
@@ -202,32 +186,6 @@ describe('LessonView', () => {
       expect(routerPushMock).toHaveBeenCalledWith({
         name: 'lesson',
         params: { collectionId: 5, lessonId: 1 }
-      })
-    })
-  })
-
-  describe('prev/next navigation', () => {
-    test('clicking prev navigates to the previous chapter', async () => {
-      chaptersRef.value = CHAPTERS
-      const wrapper = mountView({ lessonId: '2' })
-
-      await wrapper.find('[data-testid="lesson-view__prev"]').trigger('click')
-
-      expect(routerPushMock).toHaveBeenCalledWith({
-        name: 'lesson',
-        params: { collectionId: 5, lessonId: 1 }
-      })
-    })
-
-    test('clicking next navigates to the next chapter', async () => {
-      chaptersRef.value = CHAPTERS
-      const wrapper = mountView({ lessonId: '2' })
-
-      await wrapper.find('[data-testid="lesson-view__next"]').trigger('click')
-
-      expect(routerPushMock).toHaveBeenCalledWith({
-        name: 'lesson',
-        params: { collectionId: 5, lessonId: 3 }
       })
     })
   })

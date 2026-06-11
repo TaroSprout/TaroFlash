@@ -34,6 +34,7 @@ function makeAudioEl() {
   return {
     currentTime: 0,
     duration: 120,
+    playbackRate: 1,
     readyState: 0, // HAVE_NOTHING — won't trigger onLoaded on bind
     play: vi.fn().mockResolvedValue(undefined),
     pause: vi.fn(),
@@ -424,6 +425,159 @@ describe('useAudioPlayer', () => {
       el._emit('timeupdate')
       // timeupdate is ignored while playing; current_time stays 0
       expect(result.current_time.value).toBe(0)
+    })
+  })
+
+  describe('skip()', () => {
+    test('seeks to current_time + delta for a normal in-bounds jump [obligation]', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      const el = makeAudioEl()
+      el.duration = 120
+      el.readyState = 1
+      target.value = el
+      await nextTick()
+      // readyState >= 1 triggers onLoaded, so duration.value = 120
+
+      result.seek(30) // current_time = 30
+      result.skip(10)
+
+      expect(el.currentTime).toBe(40)
+      expect(result.current_time.value).toBe(40)
+    })
+
+    test('clamps skip(+delta) past the end to duration [obligation]', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      const el = makeAudioEl()
+      el.duration = 120
+      target.value = el
+      await nextTick()
+
+      // loadedmetadata not fired, so trigger it manually via readyState trick
+      el.readyState = 1
+      // Simulate duration being set via seek call baseline
+      result.seek(110) // current_time = 110
+      // duration.value is 0 unless loadedmetadata fires; trigger it
+      el._emit('loadedmetadata')
+      // now duration.value = 120
+
+      result.skip(15)
+
+      expect(el.currentTime).toBe(120)
+    })
+
+    test('clamps skip(-delta) below 0 to 0 [obligation]', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      const el = makeAudioEl()
+      target.value = el
+      await nextTick()
+
+      result.seek(5) // current_time = 5
+      result.skip(-15)
+
+      expect(el.currentTime).toBe(0)
+      expect(result.current_time.value).toBe(0)
+    })
+
+    test('skip clears clip_end by going through seek [obligation]', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      const el = makeAudioEl()
+      el.duration = 120
+      el.readyState = 1
+      target.value = el
+      await nextTick()
+
+      result.playClip(5, 10) // sets clip_end = 10
+      el._emit('loadedmetadata') // duration = 120
+      el._emit('play')
+      // Advance to before clip_end so it hasn't fired yet
+      el.currentTime = 7
+      result.skip(0) // seek to current_time (7), clearing clip_end
+
+      // clip_end cleared: rAF tick past 10 should NOT auto-pause
+      el.currentTime = 11
+      rafCallback?.() // tick — if clip_end were still 10, el.pause() would be called
+
+      expect(el.pause).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('setPlaybackRate()', () => {
+    test('sets playback_rate ref to the given rate [obligation]', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      const el = makeAudioEl()
+      target.value = el
+      await nextTick()
+
+      result.setPlaybackRate(1.5)
+
+      expect(result.playback_rate.value).toBe(1.5)
+    })
+
+    test('applies the rate to the bound element live [obligation]', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      const el = makeAudioEl()
+      target.value = el
+      await nextTick()
+
+      result.setPlaybackRate(2)
+
+      expect(el.playbackRate).toBe(2)
+    })
+
+    test('rate set while bound survives an element re-bind [obligation]', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      const el1 = makeAudioEl()
+      target.value = el1
+      await nextTick()
+
+      result.setPlaybackRate(1.5)
+
+      // Swap to a new element — bind() must apply playback_rate.value
+      const el2 = makeAudioEl()
+      target.value = el2
+      await nextTick()
+
+      expect(el2.playbackRate).toBe(1.5)
+    })
+
+    test('bind() applies playback_rate to a freshly-bound element [obligation]', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      // Set rate BEFORE binding an element
+      result.setPlaybackRate(0.75)
+
+      // setPlaybackRate with no element bound only updates the ref, not el
+      expect(result.playback_rate.value).toBe(0.75)
+
+      const el = makeAudioEl()
+      target.value = el
+      await nextTick()
+
+      // On bind(), playback_rate.value is applied to the new element
+      expect(el.playbackRate).toBe(0.75)
     })
   })
 

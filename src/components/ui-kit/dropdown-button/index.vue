@@ -22,6 +22,7 @@ type DropdownButtonProps = Pick<
   position?: Placement
   triggerIcon?: string
   gap?: number
+  openOnTrigger?: boolean
 }
 
 defineOptions({ inheritAttrs: false })
@@ -36,7 +37,8 @@ const {
   sfx,
   position = 'bottom-start',
   triggerIcon = 'arrow-drop-down',
-  gap = 4
+  gap = 4,
+  openOnTrigger = false
 } = defineProps<DropdownButtonProps>()
 
 const emit = defineEmits<{
@@ -83,6 +85,12 @@ function toggle() {
   popover_open.value = !popover_open.value
 }
 
+// With `openOnTrigger`, the whole button is the dropdown trigger — not just the
+// caret. The caret keeps its own `@click.stop`, so it never double-fires here.
+function onTriggerClick() {
+  if (openOnTrigger) toggle()
+}
+
 function onCaretEnter(el: Element, done: () => void) {
   flipEnter(el, 'x', done)
 }
@@ -124,6 +132,7 @@ function onSelect(option: DropdownOption) {
         :sfx="sfx"
         :style="min_width_style"
         data-testid="dropdown-button__button"
+        @click="onTriggerClick"
       >
         <slot></slot>
         <template #trailing>

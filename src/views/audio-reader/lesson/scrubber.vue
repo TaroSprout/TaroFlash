@@ -1,20 +1,16 @@
 <script setup lang="ts">
 import { computed, useTemplateRef } from 'vue'
-import { useI18n } from 'vue-i18n'
-import UiButton from '@/components/ui-kit/button.vue'
 import type { AudioPlayer } from '@/composables/audio-reader/use-audio-player'
 
-type AudioPlayerProps = {
+type ScrubberProps = {
   player: AudioPlayer
+  layout?: 'inline' | 'stacked'
 }
 
-const { player } = defineProps<AudioPlayerProps>()
-
-const { t } = useI18n()
+const { player, layout = 'inline' } = defineProps<ScrubberProps>()
 
 const track = useTemplateRef<HTMLElement>('track')
 
-const is_playing = computed(() => player.is_playing.value)
 const progress = computed(() => {
   const total = player.duration.value
   return total > 0 ? (player.current_time.value / total) * 100 : 0
@@ -28,11 +24,6 @@ function formatTime(seconds: number) {
   const mins = Math.floor(seconds / 60)
   const secs = Math.floor(seconds % 60)
   return `${mins}:${secs.toString().padStart(2, '0')}`
-}
-
-function toggle() {
-  if (player.is_playing.value) player.pause()
-  else player.play()
 }
 
 function seekToClientX(client_x: number) {
@@ -57,20 +48,14 @@ function onScrubMove(e: PointerEvent) {
 </script>
 
 <template>
-  <div data-testid="audio-player" class="flex min-w-0 flex-1 items-center gap-3">
-    <ui-button
-      data-testid="audio-player__toggle"
-      data-theme="grey-400"
-      :icon-left="is_playing ? 'pause' : 'play'"
-      icon-only
-      size="lg"
-      @click="toggle"
-    >
-      {{ is_playing ? t('lesson-view.audio.pause-button') : t('lesson-view.audio.play-button') }}
-    </ui-button>
-
+  <div
+    data-testid="scrubber"
+    :data-layout="layout"
+    class="flex min-w-0 flex-1 items-center gap-3 data-[layout=stacked]:flex-col data-[layout=stacked]:items-stretch data-[layout=stacked]:gap-3"
+  >
     <span
-      data-testid="audio-player__current"
+      v-if="layout === 'inline'"
+      data-testid="scrubber__current"
       class="hidden shrink-0 text-base text-brown-500 tabular-nums sm:block dark:text-grey-400"
     >
       {{ current_label }}
@@ -78,7 +63,7 @@ function onScrubMove(e: PointerEvent) {
 
     <div
       ref="track"
-      data-testid="audio-player__track"
+      data-testid="scrubber__track"
       class="relative h-2.5 min-w-0 flex-1 cursor-pointer touch-none rounded-full bg-brown-200 dark:bg-grey-700"
       role="slider"
       :aria-valuemin="0"
@@ -88,22 +73,32 @@ function onScrubMove(e: PointerEvent) {
       @pointermove="onScrubMove"
     >
       <div
-        data-testid="audio-player__fill"
-        class="absolute inset-y-0 left-0 rounded-full bg-blue-500 dark:bg-blue-650"
+        data-testid="scrubber__fill"
+        class="absolute top-0 left-0 h-2.5 rounded-full bg-blue-500 dark:bg-blue-650"
         :style="{ width: `${progress}%` }"
       >
         <div
-          data-testid="audio-player__thumb"
+          data-testid="scrubber__thumb"
           class="absolute top-1/2 right-0 size-4 -translate-y-1/2 translate-x-1/2 rounded-full bg-blue-500 dark:bg-blue-650"
         ></div>
       </div>
     </div>
 
     <span
-      data-testid="audio-player__duration"
+      v-if="layout === 'inline'"
+      data-testid="scrubber__duration"
       class="hidden shrink-0 text-base text-brown-500 tabular-nums sm:block dark:text-grey-400"
     >
       {{ duration_label }}
     </span>
+
+    <div
+      v-if="layout === 'stacked'"
+      data-testid="scrubber__labels"
+      class="flex justify-between text-base text-brown-500 tabular-nums dark:text-grey-400"
+    >
+      <span data-testid="scrubber__current">{{ current_label }}</span>
+      <span data-testid="scrubber__duration">{{ duration_label }}</span>
+    </div>
   </div>
 </template>
