@@ -8,7 +8,21 @@
       "Bash(git push -u origin *)",
       "Bash(gh pr create*)",
       "Write(tests/**)",
-      "Edit(tests/**)"
+      "Edit(tests/**)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(wc:*)",
+      "Bash(mktemp:*)",
+      "Bash(tee /tmp/*)",
+      "Bash(git diff:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git fetch:*)",
+      "Bash(git worktree:*)"
     ],
     "deny": ["Bash(rm -rf *)"]
   },
