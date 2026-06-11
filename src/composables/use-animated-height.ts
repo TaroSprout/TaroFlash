@@ -18,13 +18,15 @@ const DURATION = 0.2
  * @param wrapper - the element whose height is animated (must tolerate `overflow: hidden`).
  * @param content - the in-flow element whose natural height is the tween target.
  * @param active - returns false to record-without-animating (defaults to always on).
+ * @param onSettled - called once each height tween finishes (not on silent baseline syncs).
  * @example
- * useAnimatedHeight(footer_swap, footer_term, () => !swapping)
+ * useAnimatedHeight(footer_swap, footer_term, () => !swapping, reclearSelection)
  */
 export function useAnimatedHeight(
   wrapper: Ref<HTMLElement | null>,
   content: Ref<HTMLElement | null>,
-  active: () => boolean = () => true
+  active: () => boolean = () => true,
+  onSettled?: () => void
 ) {
   let observer: ResizeObserver | null = null
   let last = 0
@@ -52,6 +54,7 @@ export function useAnimatedHeight(
         el.style.display = ''
         el.style.flexDirection = ''
         el.style.justifyContent = ''
+        onSettled?.()
       }
     })
   }

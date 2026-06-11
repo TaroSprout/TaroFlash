@@ -7,6 +7,7 @@ import { useLessonReader } from '@/composables/audio-reader/use-lesson-reader'
 import { useCollectionEditModal } from '@/composables/modals/use-collection-edit-modal'
 import { useMatchMedia } from '@/composables/use-media-query'
 import { useAnimatedHeight } from '@/composables/use-animated-height'
+import { scrollClearOf } from '@/utils/animations/transcript-scroll'
 import {
   footerSwapBeforeLeave,
   footerSwapEnter,
@@ -47,9 +48,13 @@ const {
 
 const { data: lessons_data } = useLessonsByCollectionQuery(collection_id)
 
+const footer_bar = useTemplateRef<HTMLElement>('footer_bar')
 const footer_swap = useTemplateRef<HTMLElement>('footer_swap')
 const footer_term = useTemplateRef<HTMLElement>('footer_term')
 const footer_toolbar = useTemplateRef<HTMLElement>('footer_toolbar')
+
+// Gap to leave between the selected word and the footer's top edge after a reveal.
+const FOOTER_CLEARANCE = 16
 
 // True while the toolbar ⇄ term crossfade owns the footer height, so the
 // content-driven height animation stands down and only tracks the baseline.
@@ -93,10 +98,23 @@ function onFooterAfterEnter() {
   swapping = false
 }
 
+// The word was scrolled clear of the footer when the term opened, but the footer
+// grows once the definition loads and can re-cover it — lift it back above the
+// settled footer.
+function reclearSelection() {
+  const sel = selection.value
+  if (!show_term_in_footer.value || !sel || !footer_bar.value) return
+
+  const word = document.querySelector<HTMLElement>(`[data-word-index="${sel.word_index}"]`)
+  if (!word) return
+
+  scrollClearOf(window, word, footer_bar.value.getBoundingClientRect().top - FOOTER_CLEARANCE)
+}
+
 // Track whichever pane is mounted: the term card swelling as its definition loads,
 // and the toolbar growing/shrinking between its mini and expanded modes. The
 // crossfade between the two panes owns the height while `swapping`.
-useAnimatedHeight(footer_swap, footer_term, () => !swapping)
+useAnimatedHeight(footer_swap, footer_term, () => !swapping, reclearSelection)
 useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
 
 // Bookmark the chapter once it's confirmed loaded, so the dashboard reopens the
@@ -186,6 +204,7 @@ watch(
       </div>
 
       <footer
+        ref="footer_bar"
         data-testid="lesson-view__bar"
         class="w-full left-0 fixed bottom-0 rounded-t-6 z-30 bg-brown-300 p-5 pb-2 pointer-fine:pb-6 dark:bg-stone-700"
       >
