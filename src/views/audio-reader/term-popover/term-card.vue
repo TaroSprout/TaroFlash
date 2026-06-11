@@ -7,7 +7,7 @@ import UiDivider from '@/components/ui-kit/divider.vue'
 import UiTag from '@/components/ui-kit/tag.vue'
 import AddCardControl from './add-card-control.vue'
 import AddCardPanel from './add-card-panel.vue'
-import { cardSlideEnter, cardSlideLeave } from '@/utils/animations/card-slide'
+import { cardSlideEnter, cardSlideLeave, type SlideDirection } from '@/utils/animations/card-slide'
 
 type AddCardDraft = { front: string; back: string; deck_id: number | null }
 
@@ -37,6 +37,8 @@ const result = ref<TranslationResult | null>(null)
 const is_loading = ref(false)
 const error_key = ref<string | null>(null)
 const adding = ref<AddCardDraft | null>(null)
+// Opening the panel pushes left; cancelling reverses so the term slides back in.
+const slide_direction = ref<SlideDirection>('forward')
 
 async function fetchTranslation() {
   result.value = null
@@ -60,17 +62,27 @@ async function fetchTranslation() {
 function onAddCard(deck_id: number | null) {
   if (!result.value) return
 
+  slide_direction.value = 'forward'
   adding.value = { front: term, back: result.value.translation, deck_id }
 }
 
 // Saving dismisses the whole term (back to the toolbar on mobile); cancelling
-// slides back to the translation.
+// reverses the push so the translation slides back in.
 function onPanelSaved() {
   emit('close')
 }
 
 function onPanelCancel() {
+  slide_direction.value = 'back'
   adding.value = null
+}
+
+function onSlideEnter(el: Element, done: () => void) {
+  cardSlideEnter(slide_direction.value)(el, done)
+}
+
+function onSlideLeave(el: Element, done: () => void) {
+  cardSlideLeave(slide_direction.value)(el, done)
 }
 
 // The card only mounts while a term is showing, so fetch on mount and whenever
@@ -89,7 +101,7 @@ watch(
     data-testid="term-card"
     class="relative overflow-hidden [--skeleton-sheen:var(--color-brown-200)] dark:[--skeleton-sheen:var(--color-grey-400)]"
   >
-    <transition :css="false" @enter="cardSlideEnter" @leave="cardSlideLeave">
+    <transition :css="false" @enter="onSlideEnter" @leave="onSlideLeave">
       <div v-if="!adding" key="term" data-testid="term-card__face" class="flex flex-col">
         <div
           v-if="show_back"
