@@ -50,13 +50,11 @@ const { playing: forward_playing, interceptClick: interceptForward } = usePlayOn
 
 const is_playing = computed(() => player.is_playing.value)
 const chapter_options = computed<DropdownOption[]>(() =>
-  chapters.map((chapter, index) => ({ label: `${index + 1}. ${chapter.title}`, value: chapter.id }))
+  chapters.map((chapter) => ({ label: chapter.title, value: chapter.id }))
 )
-const current_chapter_label = computed(() => {
-  const index = chapters.findIndex((chapter) => chapter.id === currentLessonId)
-  if (index === -1) return ''
-  return `${index + 1}. ${chapters[index].title}`
-})
+const current_chapter_label = computed(
+  () => chapters.find((chapter) => chapter.id === currentLessonId)?.title ?? ''
+)
 const current_speed_label = computed(() => `${player.playback_rate.value}x`)
 
 function toggle() {
@@ -159,12 +157,13 @@ function setMode(next: 'expanded' | 'mini') {
         </button>
       </div>
 
-      <div data-testid="audio-toolbar__options" class="flex items-center">
+      <div data-testid="audio-toolbar__options" class="flex items-center justify-between gap-3">
         <ui-button
           data-testid="audio-toolbar__collapse"
           data-theme="brown-100"
           data-theme-dark="stone-900"
           icon-left="expand-more"
+          variant="ghost"
           icon-only
           play-on-tap
           :sfx="{ click: 'ui.select' }"
@@ -172,26 +171,27 @@ function setMode(next: 'expanded' | 'mini') {
         >
           {{ t('lesson-view.audio.collapse-button') }}
         </ui-button>
-        <ui-dropdown-button
-          data-testid="audio-toolbar__chapter-select"
-          data-theme="brown-100"
-          data-theme-dark="stone-900"
-          icon-left="browser-content"
-          variant="ghost"
-          open-on-trigger
-          hide-trigger
-          position="top-start"
-          :options="chapter_options"
-          @select="onChapter"
-        >
-          {{ current_chapter_label }}
-        </ui-dropdown-button>
 
-        <div data-testid="audio-toolbar__options-end" class="flex items-center gap-3">
+        <div data-testid="audio-toolbar__options-end" class="flex items-center">
+          <ui-dropdown-button
+            data-testid="audio-toolbar__chapter-select"
+            data-theme="brown-100"
+            data-theme-dark="stone-900"
+            icon-left="browser-content"
+            variant="ghost"
+            open-on-trigger
+            hide-trigger
+            position="top-start"
+            :options="chapter_options"
+            @select="onChapter"
+          >
+            {{ current_chapter_label }}
+          </ui-dropdown-button>
           <ui-dropdown-button
             data-testid="audio-toolbar__speed-select"
             data-theme="brown-100"
             data-theme-dark="stone-900"
+            icon-left="stopwatch"
             variant="ghost"
             open-on-trigger
             hide-trigger
