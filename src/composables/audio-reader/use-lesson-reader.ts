@@ -1,5 +1,6 @@
 import { computed, defineAsyncComponent, ref, toValue, useTemplateRef, watch } from 'vue'
 import type { MaybeRefOrGetter } from 'vue'
+import { emitSfx } from '@/sfx/bus'
 import { useToast } from '@/composables/toast'
 import { useModal, type ModalCloseFn } from '@/composables/modal'
 import { useMatchMedia } from '@/composables/use-media-query'
@@ -67,6 +68,7 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
    * popover.
    */
   function openTerm(next: TermSelection) {
+    emitSfx('ui.pop_up_pop')
     player.pause()
 
     if (is_mobile.value) {
