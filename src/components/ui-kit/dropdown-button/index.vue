@@ -163,7 +163,7 @@ function onSelect(option: DropdownOption) {
         <template #trailing>
           <div
             v-if="show_trigger"
-            class="flex h-full p-2 pointer-coarse:p-1"
+            class="flex h-full p-2 pointer-coarse:p-0"
             data-testid="dropdown-button__trigger-wrap"
           >
             <transition mode="out-in" @enter="onCaretEnter" @leave="onCaretLeave">
