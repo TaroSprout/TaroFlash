@@ -157,22 +157,24 @@ function setMode(next: 'expanded' | 'mini') {
         </button>
       </div>
 
-      <div data-testid="audio-toolbar__options" class="flex items-center justify-between gap-3">
-        <ui-button
-          data-testid="audio-toolbar__collapse"
-          data-theme="brown-100"
-          data-theme-dark="stone-900"
-          icon-left="arrow-drop-down"
-          variant="ghost"
-          icon-only
-          play-on-tap
-          :sfx="{ click: 'ui.select' }"
-          @click="setMode('mini')"
-        >
-          {{ t('lesson-view.audio.collapse-button') }}
-        </ui-button>
+      <div data-testid="audio-toolbar__options" class="grid grid-cols-[68px_1fr_68px] items-center">
+        <div data-testid="audio-toolbar__options-start" class="flex justify-start">
+          <ui-button
+            data-testid="audio-toolbar__collapse"
+            data-theme="brown-100"
+            data-theme-dark="stone-900"
+            icon-left="minimize"
+            variant="ghost"
+            icon-only
+            play-on-tap
+            :sfx="{ click: 'ui.select' }"
+            @click="setMode('mini')"
+          >
+            {{ t('lesson-view.audio.collapse-button') }}
+          </ui-button>
+        </div>
 
-        <div data-testid="audio-toolbar__options-end" class="flex items-center">
+        <div data-testid="audio-toolbar__options-center" class="flex justify-center">
           <ui-dropdown-button
             data-testid="audio-toolbar__chapter-select"
             data-theme="brown-100"
@@ -181,12 +183,16 @@ function setMode(next: 'expanded' | 'mini') {
             variant="ghost"
             open-on-trigger
             hide-trigger
+            shadow
             position="top-start"
             :options="chapter_options"
             @select="onChapter"
           >
             {{ current_chapter_label }}
           </ui-dropdown-button>
+        </div>
+
+        <div data-testid="audio-toolbar__options-end" class="flex justify-end">
           <ui-dropdown-button
             data-testid="audio-toolbar__speed-select"
             data-theme="brown-100"
@@ -195,6 +201,7 @@ function setMode(next: 'expanded' | 'mini') {
             variant="ghost"
             open-on-trigger
             hide-trigger
+            shadow
             position="top-end"
             :options="SPEED_OPTIONS"
             @select="onSpeed"
@@ -209,9 +216,8 @@ function setMode(next: 'expanded' | 'mini') {
       <ui-button
         data-testid="audio-toolbar__expand"
         data-theme="brown-300"
-        icon-left="expand-less"
+        icon-left="maximize"
         icon-only
-        size="lg"
         play-on-tap
         :sfx="{ click: 'ui.select' }"
         @click="setMode('expanded')"
