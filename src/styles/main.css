@@ -151,6 +151,20 @@
   --shadow-lg: 6px 6px 0px 0px var(--shadow-color);
   --drop-shadow-lg: 6px 6px 0px var(--shadow-color);
 
+  /* Upward shadows — for bottom-anchored mobile sheets whose visible overhang
+     is the top-right edge (the bottom cast is clipped by the viewport) */
+  --shadow-xs-up: 3px -3px 0px 0px var(--shadow-color);
+  --drop-shadow-xs-up: 3px -3px 0px var(--shadow-color);
+
+  --shadow-sm-up: 4px -4px 0px 0px var(--shadow-color);
+  --drop-shadow-sm-up: 4px -4px 0px var(--shadow-color);
+
+  --shadow-md-up: 5px -5px 0px 0px var(--shadow-color);
+  --drop-shadow-md-up: 5px -5px 0px var(--shadow-color);
+
+  --shadow-lg-up: 6px -6px 0px 0px var(--shadow-color);
+  --drop-shadow-lg-up: 6px -6px 0px var(--shadow-color);
+
   /* Transitions */
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
   --duration-150: 150ms;
