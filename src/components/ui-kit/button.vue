@@ -183,7 +183,7 @@ function emitClickSfx() {
    rule never shows). Keeps the standard size padding. */
 .ui-kit-btn--ghost {
   --btn-bg-color: transparent;
-  --btn-text-color: var(--theme-primary);
+  --btn-text-color: var(--theme-on-primary);
   --btn-outline-color: transparent;
 }
 
