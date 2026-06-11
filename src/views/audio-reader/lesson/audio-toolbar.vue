@@ -221,19 +221,21 @@ function setMode(next: 'expanded' | 'mini') {
         @click="setMode('expanded')"
       />
 
-      <ui-button
-        :key="String(is_playing)"
+      <button
         data-testid="audio-toolbar__toggle"
-        data-theme="brown-300"
-        :icon-left="is_playing ? 'pause' : 'play'"
-        icon-only
-        size="lg"
-        play-on-tap
-        :sfx="{ click: 'ui.snappy_button_2' }"
+        type="button"
+        data-theme="blue-500"
+        data-theme-dark="blue-650"
+        :aria-label="
+          is_playing ? t('lesson-view.audio.pause-button') : t('lesson-view.audio.play-button')
+        "
+        class="flex size-11 cursor-pointer items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
+        :class="{ [TAP_BGX]: play_playing }"
+        @click.capture="onPlayTap"
         @click="toggle"
       >
-        {{ is_playing ? t('lesson-view.audio.pause-button') : t('lesson-view.audio.play-button') }}
-      </ui-button>
+        <ui-icon :src="is_playing ? 'pause' : 'play'" class="size-5" />
+      </button>
 
       <scrubber :player="player" layout="inline" />
     </div>
