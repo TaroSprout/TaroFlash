@@ -162,7 +162,7 @@ function setMode(next: 'expanded' | 'mini') {
           data-testid="audio-toolbar__collapse"
           data-theme="brown-100"
           data-theme-dark="stone-900"
-          icon-left="expand-more"
+          icon-left="arrow-drop-down"
           variant="ghost"
           icon-only
           play-on-tap
