@@ -10,7 +10,7 @@ defineOptions({ inheritAttrs: false })
 
 export type ButtonProps = {
   size?: 'xl' | 'lg' | 'base' | 'sm'
-  variant?: 'solid' | 'outline'
+  variant?: 'solid' | 'outline' | 'ghost'
   inverted?: boolean
   iconOnly?: boolean
   roundedFull?: boolean
@@ -115,7 +115,8 @@ function emitClickSfx() {
       :class="{
         'bg-(--theme-primary) flex items-center justify-center': loading,
         hidden: !loading,
-        'group-hover/btn:block group-data-[playing=true]/btn:block': !loading && fancyHover,
+        'group-hover/btn:block group-data-[playing=true]/btn:block':
+          !loading && fancyHover && variant !== 'ghost',
         'bgx-color-[var(--theme-neutral)]': variant === 'solid',
         'bgx-color-[var(--theme-on-neutral)]': inverted
       }"
@@ -176,6 +177,14 @@ function emitClickSfx() {
   --btn-text-color: var(--theme-primary);
   --btn-outline-width: 2px;
   --btn-outline-color: var(--theme-primary);
+}
+
+/* Ghost: no background, no outline (transparent so the global hover-outline
+   rule never shows). Keeps the standard size padding. */
+.ui-kit-btn--ghost {
+  --btn-bg-color: transparent;
+  --btn-text-color: var(--theme-primary);
+  --btn-outline-color: transparent;
 }
 
 .ui-kit-btn--solid.ui-kit-btn--inverted {
