@@ -84,7 +84,7 @@ function filter_attrs(keep: (key: string) => boolean) {
 }
 
 function toggle() {
-  emitSfx('ui.select', { blocking: true })
+  emitSfx('ui.snappy_button_5', { blocking: true })
   popover_open.value = !popover_open.value
 }
 
@@ -107,6 +107,7 @@ function close() {
 }
 
 function onSelect(option: DropdownOption) {
+  emitSfx('ui.select')
   emit('select', option)
   close()
 }
