@@ -35,6 +35,11 @@ const TAP_SLOP = 10
 // ~500ms native long-press so it feels responsive without firing on a quick tap.
 const LONG_PRESS_MS = 400
 
+// On mobile the term sheet rises over roughly the bottom half of the viewport, so a
+// word committed past this fraction of the screen risks being buried by it. Such a
+// word is eased up into view before the sheet covers it.
+const SHEET_COVER_RATIO = 0.5
+
 // What a committed selection hands back: the bare term, the rect to anchor the
 // popover against, the first word's element so the caller can resolve which
 // sentence it sits in (translator context), and the range's first/last word
@@ -334,6 +339,21 @@ export function useReaderHighlights(
     scrollLineIntoView(scrollParentOf(content.value), seg)
   }
 
+  // Keep a just-committed word clear of the term sheet. Only on mobile — where the
+  // page itself scrolls and the sheet rises from the bottom — and only when the
+  // word sits low enough to be covered; otherwise leave the view put. Desktop
+  // scrolls the bounded column and anchors a popover that flips clear on its own.
+  function revealCommitted(range: WordRange) {
+    const scroller = scrollParentOf(content.value)
+    if (scroller !== window) return
+
+    const el = wordEl(range.lo)
+    if (!el) return
+    if (el.getBoundingClientRect().bottom <= window.innerHeight * SHEET_COVER_RATIO) return
+
+    scrollLineIntoView(window, el)
+  }
+
   function positionInteraction() {
     if (!hover.value) return
 
@@ -369,6 +389,7 @@ export function useReaderHighlights(
     committed.value = range
     onSelect({ term, rect, anchor, index: range.lo, end_index: range.hi })
     pulseHighlight()
+    revealCommitted(range)
   }
 
   // Fire the tap flag on the pill. usePlayOnTap reads its target from
