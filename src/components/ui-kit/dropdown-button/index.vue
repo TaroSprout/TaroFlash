@@ -67,12 +67,13 @@ const button_attrs = computed(() => filter_attrs((key) => key.startsWith('on')))
 // region open the popover.
 const show_trigger = computed(() => !hideTrigger || !openOnTrigger)
 
-// A ghost dropdown reads as plain on-primary text until it opens, then fills
-// with theme-primary so it looks like a solid button while the menu is up.
+// A ghost dropdown reads as plain on-primary text until it opens. Both the
+// transparent variants (ghost, outline) fill with theme-primary while the menu
+// is up, so the trigger and menu read as one continuous surface.
 const trigger_style = computed(() => ({
   ...(min_width.value ? { minWidth: `${min_width.value}px` } : {}),
   ...(variant === 'ghost' && { '--btn-text-color': 'var(--theme-on-primary)' }),
-  ...(variant === 'ghost' && popover_open.value && { '--btn-bg-color': 'var(--theme-primary)' })
+  ...(variant !== 'solid' && popover_open.value && { '--btn-bg-color': 'var(--theme-primary)' })
 }))
 
 // Match the button's width, but never let the menu fall below the widest
