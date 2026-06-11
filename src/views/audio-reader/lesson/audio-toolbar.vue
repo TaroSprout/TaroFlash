@@ -117,8 +117,10 @@ function setMode(next: 'expanded' | 'mini') {
         <button
           data-testid="audio-toolbar__skip-back"
           type="button"
+          data-theme="brown-200"
+          data-theme-dark="grey-700"
           :aria-label="t('lesson-view.audio.skip-back-button')"
-          class="flex size-13 cursor-pointer items-center justify-center rounded-full bg-brown-200 text-brown-700 transition active:scale-95 dark:bg-grey-700 dark:text-grey-200"
+          class="flex size-13 cursor-pointer items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
           :class="{ [TAP_BGX]: back_playing }"
           @click.capture="onBackTap"
           @click="skipBack"
@@ -129,10 +131,12 @@ function setMode(next: 'expanded' | 'mini') {
         <button
           data-testid="audio-toolbar__toggle"
           type="button"
+          data-theme="blue-500"
+          data-theme-dark="blue-650"
           :aria-label="
             is_playing ? t('lesson-view.audio.pause-button') : t('lesson-view.audio.play-button')
           "
-          class="flex size-18 cursor-pointer items-center justify-center rounded-full bg-blue-500 text-white transition active:scale-95 dark:bg-blue-650"
+          class="flex size-18 cursor-pointer items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
           :class="{ [TAP_BGX]: play_playing }"
           @click.capture="onPlayTap"
           @click="toggle"
@@ -143,8 +147,10 @@ function setMode(next: 'expanded' | 'mini') {
         <button
           data-testid="audio-toolbar__skip-forward"
           type="button"
+          data-theme="brown-200"
+          data-theme-dark="grey-700"
           :aria-label="t('lesson-view.audio.skip-forward-button')"
-          class="flex size-13 cursor-pointer items-center justify-center rounded-full bg-brown-200 text-brown-700 transition active:scale-95 dark:bg-grey-700 dark:text-grey-200"
+          class="flex size-13 cursor-pointer items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
           :class="{ [TAP_BGX]: forward_playing }"
           @click.capture="onForwardTap"
           @click="skipForward"
@@ -156,7 +162,8 @@ function setMode(next: 'expanded' | 'mini') {
       <div data-testid="audio-toolbar__options" class="flex items-center justify-between gap-3">
         <ui-dropdown-button
           data-testid="audio-toolbar__chapter-select"
-          data-theme="brown-300"
+          data-theme="brown-100"
+          data-theme-dark="stone-900"
           icon-left="list"
           open-on-trigger
           position="top-start"
@@ -169,7 +176,8 @@ function setMode(next: 'expanded' | 'mini') {
         <div data-testid="audio-toolbar__options-end" class="flex items-center gap-3">
           <ui-dropdown-button
             data-testid="audio-toolbar__speed-select"
-            data-theme="brown-300"
+            data-theme="brown-100"
+            data-theme-dark="stone-900"
             open-on-trigger
             position="top-end"
             :options="SPEED_OPTIONS"
@@ -180,7 +188,8 @@ function setMode(next: 'expanded' | 'mini') {
 
           <ui-button
             data-testid="audio-toolbar__collapse"
-            data-theme="brown-300"
+            data-theme="brown-100"
+            data-theme-dark="stone-900"
             icon-left="expand-more"
             icon-only
             size="lg"
