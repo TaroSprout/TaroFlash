@@ -159,12 +159,25 @@ function setMode(next: 'expanded' | 'mini') {
         </button>
       </div>
 
-      <div data-testid="audio-toolbar__options" class="flex items-center justify-between gap-3">
+      <div data-testid="audio-toolbar__options" class="flex items-center">
+        <ui-button
+          data-testid="audio-toolbar__collapse"
+          data-theme="brown-100"
+          data-theme-dark="stone-900"
+          icon-left="expand-more"
+          icon-only
+          play-on-tap
+          :sfx="{ click: 'ui.select' }"
+          @click="setMode('mini')"
+        >
+          {{ t('lesson-view.audio.collapse-button') }}
+        </ui-button>
         <ui-dropdown-button
           data-testid="audio-toolbar__chapter-select"
           data-theme="brown-100"
           data-theme-dark="stone-900"
-          icon-left="list"
+          icon-left="browser-content"
+          variant="ghost"
           open-on-trigger
           hide-trigger
           position="top-start"
@@ -179,6 +192,7 @@ function setMode(next: 'expanded' | 'mini') {
             data-testid="audio-toolbar__speed-select"
             data-theme="brown-100"
             data-theme-dark="stone-900"
+            variant="ghost"
             open-on-trigger
             hide-trigger
             position="top-end"
@@ -187,20 +201,6 @@ function setMode(next: 'expanded' | 'mini') {
           >
             {{ current_speed_label }}
           </ui-dropdown-button>
-
-          <ui-button
-            data-testid="audio-toolbar__collapse"
-            data-theme="brown-100"
-            data-theme-dark="stone-900"
-            icon-left="expand-more"
-            icon-only
-            size="lg"
-            play-on-tap
-            :sfx="{ click: 'ui.select' }"
-            @click="setMode('mini')"
-          >
-            {{ t('lesson-view.audio.collapse-button') }}
-          </ui-button>
         </div>
       </div>
     </div>
