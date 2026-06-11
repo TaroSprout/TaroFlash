@@ -6,7 +6,7 @@ const BUCKET = 'audio-lessons'
 // The bucket is private, so playback uses a short-lived signed URL rather than a
 // public URL (contrast with member-images). One hour is generous for a single
 // listening session; the reader re-mints if it expires.
-const SIGNED_URL_TTL_SECONDS = 60 * 60
+export const SIGNED_URL_TTL_SECONDS = 60 * 60
 
 export async function uploadLessonAudio(path: string, file: File): Promise<void> {
   const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true })
