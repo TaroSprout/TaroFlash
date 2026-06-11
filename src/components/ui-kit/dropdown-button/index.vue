@@ -24,6 +24,10 @@ type DropdownButtonProps = Pick<
   openOnTrigger?: boolean
   hideTrigger?: boolean
   shadow?: boolean
+  // The menu is teleported, so it can't inherit a `data-theme` ancestor — it
+  // takes its theme explicitly.
+  menuTheme?: Theme
+  menuThemeDark?: Theme
 }
 
 defineOptions({ inheritAttrs: false })
@@ -42,7 +46,9 @@ const {
   gap = 4,
   openOnTrigger = false,
   hideTrigger = false,
-  shadow = false
+  shadow = false,
+  menuTheme = 'brown-300',
+  menuThemeDark
 } = defineProps<DropdownButtonProps>()
 
 const emit = defineEmits<{
@@ -195,6 +201,8 @@ function onSelect(option: DropdownOption) {
     <div
       class="flex flex-col overflow-hidden rounded-(--btn-border-radius) bg-(--theme-primary) py-2 text-(length:--btn-font-size) leading-(--btn-font-size--line-height) text-(--theme-on-primary)"
       :class="`ui-kit-btn-tokens--${size}`"
+      :data-theme="menuTheme"
+      :data-theme-dark="menuThemeDark"
       data-testid="dropdown-button__menu"
     >
       <button

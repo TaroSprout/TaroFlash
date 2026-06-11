@@ -51,6 +51,8 @@ function onSelect(option: DropdownOption) {
     data-theme-dark="blue-650"
     icon-left="card-add"
     size="base"
+    menu-theme="brown-100"
+    menu-theme-dark="stone-900"
     shadow
     position="top-end"
     play-on-tap
