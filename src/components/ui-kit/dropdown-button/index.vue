@@ -67,9 +67,13 @@ const button_attrs = computed(() => filter_attrs((key) => key.startsWith('on')))
 // region open the popover.
 const show_trigger = computed(() => !hideTrigger || !openOnTrigger)
 
-const min_width_style = computed(() =>
-  min_width.value ? { minWidth: `${min_width.value}px` } : undefined
-)
+// A ghost dropdown reads as plain on-primary text until it opens, then fills
+// with theme-primary so it looks like a solid button while the menu is up.
+const trigger_style = computed(() => ({
+  ...(min_width.value ? { minWidth: `${min_width.value}px` } : {}),
+  ...(variant === 'ghost' && { '--btn-text-color': 'var(--theme-on-primary)' }),
+  ...(variant === 'ghost' && popover_open.value && { '--btn-bg-color': 'var(--theme-primary)' })
+}))
 
 // Match the button's width, but never let the menu fall below the widest
 // option — guards the window before `trigger_width` settles to the final
@@ -137,7 +141,7 @@ function onSelect(option: DropdownOption) {
         :full-width="fullWidth"
         :icon-left="iconLeft"
         :sfx="sfx"
-        :style="min_width_style"
+        :style="trigger_style"
         data-testid="dropdown-button__button"
         @click="onTriggerClick"
       >
