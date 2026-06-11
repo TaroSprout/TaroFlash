@@ -131,10 +131,13 @@ export function useReaderHighlights(
   let touch_selecting = false
   let long_press_timer: ReturnType<typeof setTimeout> | null = null
 
-  // A committed touch tap is trailed by a browser compatibility `click`. When the
-  // tap opened the mobile term sheet, that click lands on the sheet backdrop (over
-  // the tap point, outside `content`) and would dismiss it the same frame. Arm a
-  // one-shot swallow on commit so the trailing click is eaten wherever it lands.
+  // A committed touch tap is trailed by a browser compatibility `click`. That click
+  // can land on the just-opened term surface (over the tap point) and act on it the
+  // same frame. Arm a one-shot swallow on commit so the trailing click is eaten
+  // wherever it lands. The trailing click sometimes never fires — a scroll from
+  // `revealCommitted` (or the surface swapping the element under the finger) makes
+  // the browser cancel it — so a fresh `pointerdown` also disarms the flag, or it
+  // would stay armed and eat the next genuine tap (the first action tap).
   let suppress_gesture_click = false
 
   let resize_observer: ResizeObserver | null = null
@@ -144,12 +147,14 @@ export function useReaderHighlights(
     if (content.value) resize_observer.observe(content.value)
     content.value?.addEventListener('touchmove', blockScrollWhileSelecting, { passive: false })
     window.addEventListener('click', swallowGestureClick, true)
+    window.addEventListener('pointerdown', disarmGestureClick, true)
   })
 
   onBeforeUnmount(() => {
     resize_observer?.disconnect()
     content.value?.removeEventListener('touchmove', blockScrollWhileSelecting)
     window.removeEventListener('click', swallowGestureClick, true)
+    window.removeEventListener('pointerdown', disarmGestureClick, true)
     cancelLongPress()
   })
 
@@ -174,6 +179,14 @@ export function useReaderHighlights(
       return
     }
     if (content.value?.contains(event.target as Node)) event.stopPropagation()
+  }
+
+  // A fresh press starts a new gesture, so any trailing click still owed by the
+  // previous tap is moot — drop the armed swallow before it can eat this gesture's
+  // click. (The selecting tap's own pointerdown runs before the flag is armed, so
+  // this is a harmless no-op there.)
+  function disarmGestureClick() {
+    suppress_gesture_click = false
   }
 
   /** Locate a word's element within the content by its stable index attribute. */
