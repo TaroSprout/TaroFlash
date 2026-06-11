@@ -20,7 +20,7 @@ type AudioToolbarProps = {
   currentLessonId: number
 }
 
-const SKIP_SECONDS = 15
+const SKIP_SECONDS = 10
 // Striped texture that slides across a transport button while its tap-pop plays.
 // `currentColor` makes the stripes track each button's own icon color.
 const TAP_BGX = 'bgx-diagonal-stripes animation-safe:bgx-slide bgx-color-[currentColor]'
@@ -75,17 +75,17 @@ function skipForward() {
 // only fires on coarse; `onAfter` runs the action there, the bubble @click on
 // fine — exactly one activation per pointer type.
 function onPlayTap(e: MouseEvent) {
-  emitSfx('ui.snappy_button_2')
+  emitSfx(player.is_playing.value ? 'ui.snappy_button_3' : 'ui.snappy_button_2')
   interceptPlay(e, { onAfter: toggle })
 }
 
 function onBackTap(e: MouseEvent) {
-  emitSfx('ui.toggle_off')
+  emitSfx('ui.snappy_button_5')
   interceptBack(e, { onAfter: skipBack })
 }
 
 function onForwardTap(e: MouseEvent) {
-  emitSfx('ui.toggle_on')
+  emitSfx('ui.snappy_button_5')
   interceptForward(e, { onAfter: skipForward })
 }
 
@@ -123,7 +123,7 @@ function setMode(next: 'expanded' | 'mini') {
           @click.capture="onBackTap"
           @click="skipBack"
         >
-          <ui-icon src="arrow-back" class="size-6" />
+          <ui-icon src="skip-backward-10" class="size-6" />
         </button>
 
         <button
@@ -153,7 +153,7 @@ function setMode(next: 'expanded' | 'mini') {
           @click.capture="onForwardTap"
           @click="skipForward"
         >
-          <ui-icon src="arrow-forward" class="size-6" />
+          <ui-icon src="skip-forward-10" class="size-6" />
         </button>
       </div>
 

@@ -1,3 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24">
-  <path d="M320-200v-560l440 280-440 280Z" fill="currentColor" />
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="Button-Play--Streamline-Flex">
+  <desc>
+    Button Play Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="button-play--button-television-buttons-movies-play-tv-video-controls">
+    <path id="Union" fill="currentColor" fill-rule="evenodd" d="M3.88857 0.426962C2.8265 -0.0971128 1.5 0.610506 1.5 1.83225V12.1678c0 1.2218 1.3265 1.9294 2.38857 1.4053 1.42799 -0.7046 3.53281 -1.8009 5.28613 -2.9508 0.8748 -0.5737 1.6806 -1.17263 2.2734 -1.75389 0.2965 -0.2907 0.5524 -0.58916 0.7367 -0.88968 0.1825 -0.29749 0.3152 -0.6299 0.3152 -0.97869 0 -0.34879 -0.1327 -0.6812 -0.3152 -0.97869 -0.1843 -0.30052 -0.4402 -0.59898 -0.7367 -0.88968 -0.5928 -0.58126 -1.3986 -1.18021 -2.2734 -1.75391C7.42138 2.22792 5.31656 1.1316 3.88857 0.426962Z" clip-rule="evenodd" stroke-width="1"></path>
+  </g>
 </svg>
