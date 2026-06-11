@@ -51,7 +51,7 @@ function onScrubMove(e: PointerEvent) {
   <div
     data-testid="scrubber"
     :data-layout="layout"
-    class="flex min-w-0 flex-1 items-center gap-3 data-[layout=stacked]:flex-col data-[layout=stacked]:items-stretch data-[layout=stacked]:gap-1.5"
+    class="flex min-w-0 flex-1 items-center gap-3 data-[layout=stacked]:flex-col data-[layout=stacked]:items-stretch data-[layout=stacked]:gap-3"
   >
     <span
       v-if="layout === 'inline'"
@@ -74,7 +74,7 @@ function onScrubMove(e: PointerEvent) {
     >
       <div
         data-testid="scrubber__fill"
-        class="absolute inset-y-0 left-0 rounded-full bg-blue-500 dark:bg-blue-650"
+        class="absolute top-0 left-0 h-2.5 rounded-full bg-blue-500 dark:bg-blue-650"
         :style="{ width: `${progress}%` }"
       >
         <div

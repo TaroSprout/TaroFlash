@@ -2,11 +2,14 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
+import UiIcon from '@/components/ui-kit/icon.vue'
 import UiDropdownButton, {
   type DropdownOption
 } from '@/components/ui-kit/dropdown-button/index.vue'
 import Scrubber from '@/views/audio-reader/lesson/scrubber.vue'
 import { useLocalRef } from '@/composables/use-local-ref'
+import { usePlayOnTap } from '@/composables/use-play-on-tap'
+import { emitSfx } from '@/sfx/bus'
 import type { AudioPlayer } from '@/composables/audio-reader/use-audio-player'
 
 type ToolbarChapter = { id: number; title: string }
@@ -17,7 +20,10 @@ type AudioToolbarProps = {
   currentLessonId: number
 }
 
-const SKIP_SECONDS = 30
+const SKIP_SECONDS = 15
+// Striped texture that slides across a transport button while its tap-pop plays.
+// `currentColor` makes the stripes track each button's own icon color.
+const TAP_BGX = 'bgx-diagonal-stripes animation-safe:bgx-slide bgx-color-[currentColor]'
 const SPEED_OPTIONS: DropdownOption[] = [
   { label: '0.5x', value: 0.5 },
   { label: '0.75x', value: 0.75 },
@@ -35,6 +41,12 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const mode = useLocalRef<'expanded' | 'mini'>('audio-reader.toolbar-mode', 'expanded')
+
+const { playing: back_playing, interceptClick: interceptBack } = usePlayOnTap({ yoyo: true })
+const { playing: play_playing, interceptClick: interceptPlay } = usePlayOnTap({ yoyo: true })
+const { playing: forward_playing, interceptClick: interceptForward } = usePlayOnTap({
+  yoyo: true
+})
 
 const is_playing = computed(() => player.is_playing.value)
 const chapter_options = computed<DropdownOption[]>(() =>
@@ -60,6 +72,25 @@ function skipForward() {
   player.skip(SKIP_SECONDS)
 }
 
+// The transport buttons are custom markup, so they wire the tap-pop + select
+// chime themselves (button.vue does this internally for kit buttons). The pop
+// only fires on coarse; `onAfter` runs the action there, the bubble @click on
+// fine — exactly one activation per pointer type.
+function onPlayTap(e: MouseEvent) {
+  emitSfx('ui.snappy_button_2')
+  interceptPlay(e, { onAfter: toggle })
+}
+
+function onBackTap(e: MouseEvent) {
+  emitSfx('ui.toggle_off')
+  interceptBack(e, { onAfter: skipBack })
+}
+
+function onForwardTap(e: MouseEvent) {
+  emitSfx('ui.toggle_on')
+  interceptForward(e, { onAfter: skipForward })
+}
+
 function onChapter(option: DropdownOption) {
   emit('select-chapter', Number(option.value))
 }
@@ -78,51 +109,54 @@ function setMode(next: 'expanded' | 'mini') {
     <div
       v-if="mode === 'expanded'"
       data-testid="audio-toolbar__expanded"
-      class="flex flex-col gap-3"
+      class="flex flex-col gap-5"
     >
       <scrubber :player="player" layout="stacked" />
 
-      <div data-testid="audio-toolbar__controls" class="flex items-center justify-center gap-5">
-        <ui-button
+      <div data-testid="audio-toolbar__controls" class="flex items-center justify-center gap-6">
+        <button
           data-testid="audio-toolbar__skip-back"
-          data-theme="grey-400"
-          icon-left="arrow-back"
-          icon-only
-          size="lg"
+          type="button"
+          :aria-label="t('lesson-view.audio.skip-back-button')"
+          class="flex size-13 cursor-pointer items-center justify-center rounded-full bg-brown-200 text-brown-700 transition active:scale-95 dark:bg-grey-700 dark:text-grey-200"
+          :class="{ [TAP_BGX]: back_playing }"
+          @click.capture="onBackTap"
           @click="skipBack"
         >
-          {{ t('lesson-view.audio.skip-back-button') }}
-        </ui-button>
+          <ui-icon src="arrow-back" class="size-6" />
+        </button>
 
-        <ui-button
+        <button
           data-testid="audio-toolbar__toggle"
-          data-theme="grey-400"
-          :icon-left="is_playing ? 'pause' : 'play'"
-          icon-only
-          size="xl"
+          type="button"
+          :aria-label="
+            is_playing ? t('lesson-view.audio.pause-button') : t('lesson-view.audio.play-button')
+          "
+          class="flex size-18 cursor-pointer items-center justify-center rounded-full bg-blue-500 text-white transition active:scale-95 dark:bg-blue-650"
+          :class="{ [TAP_BGX]: play_playing }"
+          @click.capture="onPlayTap"
           @click="toggle"
         >
-          {{
-            is_playing ? t('lesson-view.audio.pause-button') : t('lesson-view.audio.play-button')
-          }}
-        </ui-button>
+          <ui-icon :src="is_playing ? 'pause' : 'play'" class="size-8" />
+        </button>
 
-        <ui-button
+        <button
           data-testid="audio-toolbar__skip-forward"
-          data-theme="grey-400"
-          icon-left="arrow-forward"
-          icon-only
-          size="lg"
+          type="button"
+          :aria-label="t('lesson-view.audio.skip-forward-button')"
+          class="flex size-13 cursor-pointer items-center justify-center rounded-full bg-brown-200 text-brown-700 transition active:scale-95 dark:bg-grey-700 dark:text-grey-200"
+          :class="{ [TAP_BGX]: forward_playing }"
+          @click.capture="onForwardTap"
           @click="skipForward"
         >
-          {{ t('lesson-view.audio.skip-forward-button') }}
-        </ui-button>
+          <ui-icon src="arrow-forward" class="size-6" />
+        </button>
       </div>
 
       <div data-testid="audio-toolbar__options" class="flex items-center justify-between gap-3">
         <ui-dropdown-button
           data-testid="audio-toolbar__chapter-select"
-          data-theme="grey-400"
+          data-theme="brown-300"
           icon-left="list"
           open-on-trigger
           position="top-start"
@@ -135,7 +169,7 @@ function setMode(next: 'expanded' | 'mini') {
         <div data-testid="audio-toolbar__options-end" class="flex items-center gap-3">
           <ui-dropdown-button
             data-testid="audio-toolbar__speed-select"
-            data-theme="grey-400"
+            data-theme="brown-300"
             open-on-trigger
             position="top-end"
             :options="SPEED_OPTIONS"
@@ -146,10 +180,12 @@ function setMode(next: 'expanded' | 'mini') {
 
           <ui-button
             data-testid="audio-toolbar__collapse"
-            data-theme="grey-400"
+            data-theme="brown-300"
             icon-left="expand-more"
             icon-only
             size="lg"
+            play-on-tap
+            :sfx="{ click: 'ui.select' }"
             @click="setMode('mini')"
           >
             {{ t('lesson-view.audio.collapse-button') }}
@@ -161,21 +197,26 @@ function setMode(next: 'expanded' | 'mini') {
     <div v-else data-testid="audio-toolbar__mini" class="flex items-center gap-3">
       <ui-button
         data-testid="audio-toolbar__expand"
-        data-theme="grey-400"
+        data-theme="brown-300"
         icon-left="expand-less"
         icon-only
         size="lg"
+        play-on-tap
+        :sfx="{ click: 'ui.select' }"
         @click="setMode('expanded')"
       >
         {{ t('lesson-view.audio.expand-button') }}
       </ui-button>
 
       <ui-button
+        :key="String(is_playing)"
         data-testid="audio-toolbar__toggle"
-        data-theme="grey-400"
+        data-theme="brown-300"
         :icon-left="is_playing ? 'pause' : 'play'"
         icon-only
         size="lg"
+        play-on-tap
+        :sfx="{ click: 'ui.snappy_button_2' }"
         @click="toggle"
       >
         {{ is_playing ? t('lesson-view.audio.pause-button') : t('lesson-view.audio.play-button') }}

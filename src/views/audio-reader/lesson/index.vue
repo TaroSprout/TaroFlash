@@ -144,7 +144,7 @@ watch(
 
       <footer
         data-testid="lesson-view__bar"
-        class="sticky bottom-0 z-30 mt-4 flex items-center gap-3 border-t border-brown-300 bg-brown-100 pt-3 pb-[env(safe-area-inset-bottom)] pointer-coarse:pr-18 pointer-fine:pb-6 dark:border-grey-700 dark:bg-grey-900"
+        class="sticky bottom-0 z-30 mt-4 flex items-center gap-3 border-t border-brown-300 bg-brown-100 pt-3 pb-[env(safe-area-inset-bottom)] pointer-fine:pb-6 dark:border-grey-700 dark:bg-grey-900"
       >
         <audio-toolbar
           :player="player"
