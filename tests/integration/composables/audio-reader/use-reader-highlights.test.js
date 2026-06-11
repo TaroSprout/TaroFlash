@@ -71,11 +71,13 @@ const Host = defineComponent({
 
 describe('useReaderHighlights', () => {
   let words
+  let mounted = []
 
   // The composable hit-tests via elementFromPoint; map a synthetic clientX (the
   // word index) onto its element so the gesture is deterministic, not layout-bound.
   function mountHost(onSelect) {
     const wrapper = mount(Host, { props: { onSelect } })
+    mounted.push(wrapper)
     words = ['w0', 'w1', 'w2'].map((id) => wrapper.find(`[data-testid="${id}"]`).element)
     vi.spyOn(document, 'elementFromPoint').mockImplementation((x) => words[x] ?? null)
     return wrapper
@@ -111,6 +113,8 @@ describe('useReaderHighlights', () => {
   })
 
   afterEach(() => {
+    mounted.forEach((wrapper) => wrapper.unmount())
+    mounted = []
     vi.restoreAllMocks()
   })
 
