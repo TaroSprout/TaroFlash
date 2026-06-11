@@ -39,6 +39,9 @@ const error_key = ref<string | null>(null)
 const adding = ref<AddCardDraft | null>(null)
 // Opening the panel pushes left; cancelling reverses so the term slides back in.
 const slide_direction = ref<SlideDirection>('forward')
+// Clip the face strip only while it slides — at rest the buttons' tap animations
+// need to overflow the card.
+const sliding = ref(false)
 
 async function fetchTranslation() {
   result.value = null
@@ -78,11 +81,17 @@ function onPanelCancel() {
 }
 
 function onSlideEnter(el: Element, done: () => void) {
+  sliding.value = true
   cardSlideEnter(slide_direction.value)(el, done)
 }
 
 function onSlideLeave(el: Element, done: () => void) {
+  sliding.value = true
   cardSlideLeave(slide_direction.value)(el, done)
+}
+
+function onSlideAfterEnter() {
+  sliding.value = false
 }
 
 // The card only mounts while a term is showing, so fetch on mount and whenever
@@ -99,9 +108,15 @@ watch(
 <template>
   <div
     data-testid="term-card"
-    class="relative overflow-hidden [--skeleton-sheen:var(--color-brown-200)] dark:[--skeleton-sheen:var(--color-grey-400)]"
+    class="relative [--skeleton-sheen:var(--color-brown-200)] dark:[--skeleton-sheen:var(--color-grey-400)]"
+    :class="{ 'overflow-hidden': sliding }"
   >
-    <transition :css="false" @enter="onSlideEnter" @leave="onSlideLeave">
+    <transition
+      :css="false"
+      @enter="onSlideEnter"
+      @leave="onSlideLeave"
+      @after-enter="onSlideAfterEnter"
+    >
       <div v-if="!adding" key="term" data-testid="term-card__face" class="flex flex-col">
         <div
           v-if="show_back"
