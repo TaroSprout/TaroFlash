@@ -404,4 +404,46 @@ describe('UiDropdownButton', () => {
       DEFAULT_OPTIONS.length
     )
   })
+
+  // ── openOnTrigger prop [obligation] ──────────────────────────────────────
+
+  test('openOnTrigger=false (default): clicking the main button does NOT open the menu [obligation]', async () => {
+    // Default behavior — back-compat: the main button does not open the dropdown
+    const wrapper = mountDropdown({ openOnTrigger: false })
+    await mainButton(wrapper).trigger('click')
+    expect(menu(wrapper).exists()).toBe(false)
+  })
+
+  test('openOnTrigger=true: clicking the main button opens the menu [obligation]', async () => {
+    const wrapper = mountDropdown({ openOnTrigger: true })
+    await mainButton(wrapper).trigger('click')
+    expect(menu(wrapper).exists()).toBe(true)
+  })
+
+  test('openOnTrigger=true: clicking the main button again closes the menu [obligation]', async () => {
+    const wrapper = mountDropdown({ openOnTrigger: true })
+    await mainButton(wrapper).trigger('click')
+    await mainButton(wrapper).trigger('click')
+    expect(menu(wrapper).exists()).toBe(false)
+  })
+
+  test('openOnTrigger=true: the caret still toggles the menu [obligation]', async () => {
+    const wrapper = mountDropdown({ openOnTrigger: true })
+    await trigger(wrapper).trigger('click')
+    expect(menu(wrapper).exists()).toBe(true)
+  })
+
+  test('openOnTrigger=false: the caret still toggles the menu [obligation]', async () => {
+    const wrapper = mountDropdown({ openOnTrigger: false })
+    await trigger(wrapper).trigger('click')
+    expect(menu(wrapper).exists()).toBe(true)
+  })
+
+  test('openOnTrigger=true: clicking caret does not double-fire (opens once) [obligation]', async () => {
+    // The caret uses @click.stop so it doesn't bubble to the main button.
+    // Clicking the caret once should open, not immediately close (double-fire would close it).
+    const wrapper = mountDropdown({ openOnTrigger: true })
+    await trigger(wrapper).trigger('click')
+    expect(menu(wrapper).exists()).toBe(true)
+  })
 })
