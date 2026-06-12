@@ -127,14 +127,14 @@ watch(
             data-testid="term-card__back"
             data-theme="brown-100"
             data-theme-dark="stone-900"
-            icon-left="arrow-back"
+            icon-left="close"
             icon-only
             size="base"
             play-on-tap
             :sfx="{ click: 'ui.snappy_button_5' }"
             @click="emit('back')"
           >
-            {{ t('audio-reader.popover.back-button') }}
+            {{ t('audio-reader.popover.close-button') }}
           </ui-button>
 
           <add-card-control :disabled="!result" @add="onAddCard" />
