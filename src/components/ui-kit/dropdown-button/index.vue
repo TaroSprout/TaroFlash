@@ -24,6 +24,9 @@ type DropdownButtonProps = Pick<
   openOnTrigger?: boolean
   hideTrigger?: boolean
   shadow?: boolean
+  // Disable only the primary action — the caret trigger stays live so the menu
+  // can still be opened (e.g. "already added, but add to another deck").
+  primaryDisabled?: boolean
   // The menu is teleported, so it can't inherit a `data-theme` ancestor — it
   // takes its theme explicitly.
   menuTheme?: Theme
@@ -48,6 +51,7 @@ const {
   openOnTrigger = false,
   hideTrigger = false,
   shadow = false,
+  primaryDisabled = false,
   menuTheme = 'brown-300',
   menuThemeDark
 } = defineProps<DropdownButtonProps>()
@@ -163,6 +167,7 @@ function onSelect(option: DropdownOption) {
         :sfx="sfx"
         :play-on-tap="playOnTap"
         :tap-animate="tapAnimate"
+        :disabled="primaryDisabled"
         :style="trigger_style"
         data-testid="dropdown-button__button"
         @click="onButtonClick"

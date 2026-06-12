@@ -61,6 +61,13 @@ function invalidatedKeys() {
 }
 
 describe('useUpsertCardsMutation', () => {
+  test('mutation delegates to upsertCards', async () => {
+    const { mutation } = configFrom(useUpsertCardsMutation)
+    const cards = [{ id: 1, deck_id: 10, front_text: 'Q' }]
+    await mutation(cards)
+    expect(upsertCardsMock).toHaveBeenCalledWith(cards)
+  })
+
   test('aggregates unique deck_ids from the batch and invalidates each', () => {
     const { onSettled } = configFrom(useUpsertCardsMutation)
 
@@ -96,6 +103,12 @@ describe('useUpsertCardsMutation', () => {
     const keys = invalidatedKeys()
     expect(keys).toContainEqual(['cards', 'count'])
     expect(keys).toContainEqual(['decks'])
+  })
+
+  test('onSettled invalidates card index — upserted fronts must appear in highlights [obligation]', () => {
+    const { onSettled } = configFrom(useUpsertCardsMutation)
+    onSettled([], undefined, [{ id: 1, deck_id: 10 }])
+    expect(invalidatedKeys()).toContainEqual(['cards', 'index'])
   })
 })
 
@@ -142,6 +155,12 @@ describe('useBulkInsertCardsInDeckMutation', () => {
     expect(keys).toContainEqual(['cards', 10])
     expect(keys).toContainEqual(['cards', 'count'])
     expect(keys).toContainEqual(['decks'])
+  })
+
+  test('onSettled invalidates card index — inserted fronts must appear in highlights [obligation]', () => {
+    const { onSettled } = configFrom(useBulkInsertCardsInDeckMutation)
+    onSettled([], undefined, { deck_id: 10, cards: [] })
+    expect(invalidatedKeys()).toContainEqual(['cards', 'index'])
   })
 })
 
@@ -323,5 +342,16 @@ describe('useMoveCardsToDeckMutation', () => {
     const keys = invalidatedKeys()
     expect(keys).toContainEqual(['deck', 20])
     expect(keys).toContainEqual(['deck', 10])
+  })
+
+  test('onSettled invalidates card index — deck membership changes alter highlights [obligation]', () => {
+    const { onSettled } = configFrom(useMoveCardsToDeckMutation)
+    invalidateSpy.mockClear()
+    onSettled(undefined, undefined, {
+      target_deck_id: 20,
+      card_ids: [1],
+      source_deck_ids: [10]
+    })
+    expect(invalidatedKeys()).toContainEqual(['cards', 'index'])
   })
 })

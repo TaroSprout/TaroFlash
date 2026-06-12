@@ -1,20 +1,25 @@
 <script setup lang="ts">
 import { computed, provide } from 'vue'
 import type { SentenceWords } from '@/utils/transcript'
+import type { CardMatch } from '@/utils/transcript-match'
 import {
   readerActiveWordKey,
+  readerMatchesKey,
   readerSelectionKey,
-  useReaderHighlights
+  useReaderHighlights,
+  type WordRange
 } from '@/composables/audio-reader/use-reader-highlights'
 import TranscriptSegment from './segment.vue'
 import SelectionPreview from './selection-preview.vue'
 
 const {
   paragraphs,
+  matches = new Map(),
   active_word,
   popover_open = false
 } = defineProps<{
   paragraphs: SentenceWords[]
+  matches?: Map<number, CardMatch>
   active_word: number
   popover_open?: boolean
 }>()
@@ -37,7 +42,8 @@ const {
   () => active_word,
   commitSelection,
   () => popover_open,
-  () => emit('dismiss')
+  () => emit('dismiss'),
+  matchRangeAt
 )
 
 provide(readerSelectionKey, interaction_range)
@@ -45,6 +51,17 @@ provide(
   readerActiveWordKey,
   computed(() => active_word)
 )
+provide(
+  readerMatchesKey,
+  computed(() => matches)
+)
+
+// A tap/click on a word inside a card match selects the whole matched phrase;
+// null for an unmatched word, so the caller falls back to single-word select.
+function matchRangeAt(index: number): WordRange | null {
+  const match = matches.get(index)
+  return match ? { lo: match.lo, hi: match.hi } : null
+}
 
 function paragraphIndexOf(node: Element): number | null {
   const segment = node.closest('[data-testid="transcript-segment"]')

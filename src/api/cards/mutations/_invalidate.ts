@@ -28,3 +28,10 @@ export function invalidateAllCardCounts(queryCache: QueryCache) {
   queryCache.invalidateQueries({ key: ['cards', 'count'] })
   queryCache.invalidateQueries({ key: ['decks'] })
 }
+
+// The member-wide card index (front text → decks) drifts whenever a card is
+// created, deleted, has its front edited, or moves decks. Marks the query stale;
+// it only refetches while a lesson is actually mounted.
+export function invalidateCardIndex(queryCache: QueryCache) {
+  queryCache.invalidateQueries({ key: ['cards', 'index'] })
+}

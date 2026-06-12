@@ -655,6 +655,15 @@ export type Database = {
         }
         Returns: number
       }
+      get_member_card_index: {
+        Args: {
+          p_member_id: string
+        }
+        Returns: {
+          deck_ids: number[]
+          term: string
+        }[]
+      }
       get_study_session_cards: {
         Args: {
           p_deck_id: number

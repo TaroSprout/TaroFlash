@@ -1,6 +1,6 @@
 import { useMutation, useQueryCache } from '@pinia/colada'
 import { bulkInsertCardsInDeck, type BulkInsertCardsParams } from '../db'
-import { invalidateAllCardCounts, invalidateDeck } from './_invalidate'
+import { invalidateAllCardCounts, invalidateCardIndex, invalidateDeck } from './_invalidate'
 
 export function useBulkInsertCardsInDeckMutation() {
   const queryCache = useQueryCache()
@@ -9,6 +9,7 @@ export function useBulkInsertCardsInDeckMutation() {
     onSettled: (_data, _error, params) => {
       invalidateDeck(queryCache, params.deck_id)
       invalidateAllCardCounts(queryCache)
+      invalidateCardIndex(queryCache)
     }
   })
 }

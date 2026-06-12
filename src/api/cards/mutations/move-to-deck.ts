@@ -1,6 +1,6 @@
 import { useMutation, useQueryCache } from '@pinia/colada'
 import { moveCardsToDeck, type MoveCardsToDeckArgs } from '../db'
-import { invalidateAllCardCounts, invalidateDeck } from './_invalidate'
+import { invalidateAllCardCounts, invalidateCardIndex, invalidateDeck } from './_invalidate'
 
 // Mutation vars mirror the RPC's two modes (explicit vs select-all) and add
 // `source_deck_ids` to the explicit variant so the hook can invalidate
@@ -37,6 +37,7 @@ export function useMoveCardsToDeckMutation() {
       )
       invalidateDeck(queryCache, vars.target_deck_id, { refetch_inactive: true })
       invalidateAllCardCounts(queryCache)
+      invalidateCardIndex(queryCache)
     }
   })
 }

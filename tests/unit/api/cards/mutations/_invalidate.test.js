@@ -1,5 +1,9 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { invalidateDeck, invalidateAllCardCounts } from '@/api/cards/mutations/_invalidate'
+import {
+  invalidateDeck,
+  invalidateAllCardCounts,
+  invalidateCardIndex
+} from '@/api/cards/mutations/_invalidate'
 
 function makeCache() {
   return { invalidateQueries: vi.fn() }
@@ -59,5 +63,22 @@ describe('invalidateAllCardCounts', () => {
   test('invalidates ["decks"] because decks_with_stats exposes card counts per deck', () => {
     invalidateAllCardCounts(cache)
     expect(cache.invalidateQueries).toHaveBeenCalledWith({ key: ['decks'] })
+  })
+})
+
+describe('invalidateCardIndex [obligation]', () => {
+  let cache
+  beforeEach(() => {
+    cache = makeCache()
+  })
+
+  test('invalidates ["cards", "index"] — the member-wide term→decks lookup [obligation]', () => {
+    invalidateCardIndex(cache)
+    expect(cache.invalidateQueries).toHaveBeenCalledWith({ key: ['cards', 'index'] })
+  })
+
+  test('fires exactly one invalidation (narrow key, not a broad sweep) [obligation]', () => {
+    invalidateCardIndex(cache)
+    expect(cache.invalidateQueries).toHaveBeenCalledTimes(1)
   })
 })

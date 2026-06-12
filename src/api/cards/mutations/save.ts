@@ -2,6 +2,7 @@ import { setInfiniteQueryData, useMutation, useQueryCache } from '@pinia/colada'
 import { debounce } from '@/utils/debounce'
 import { saveCard } from '../db'
 import { cardsInDeckQueryKey } from '../queries/cards-page'
+import { invalidateCardIndex } from './_invalidate'
 
 type QueryCache = ReturnType<typeof useQueryCache>
 
@@ -49,6 +50,9 @@ export function useSaveCardMutation() {
       debounce(() => saveCard(card, values), { key: `card-${card.id}` }),
     onMutate: ({ card, values }: SaveCardVars) => {
       patchCardInDeckCache(queryCache, card, values)
+    },
+    onSettled: () => {
+      invalidateCardIndex(queryCache)
     }
   })
 }

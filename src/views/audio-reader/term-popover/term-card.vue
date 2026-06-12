@@ -15,11 +15,14 @@ const {
   term,
   sentence,
   target_lang,
+  existing_decks = [],
   show_back = false
 } = defineProps<{
   term: string
   sentence: string
   target_lang: string
+  // Decks already holding this term, forwarded to the add-card control.
+  existing_decks?: number[]
   show_back?: boolean
 }>()
 
@@ -136,7 +139,7 @@ watch(
             {{ t('audio-reader.popover.close-button') }}
           </ui-button>
 
-          <add-card-control :disabled="!result" @add="onAddCard" />
+          <add-card-control :disabled="!result" :existing_decks="existing_decks" @add="onAddCard" />
         </div>
 
         <header
@@ -168,7 +171,7 @@ watch(
           </div>
 
           <template v-if="!show_back">
-            <add-card-control v-if="result" @add="onAddCard" />
+            <add-card-control v-if="result" :existing_decks="existing_decks" @add="onAddCard" />
 
             <ui-button
               v-else

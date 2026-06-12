@@ -88,7 +88,7 @@ function stubElementFromPoint(returnFn) {
  * component instance, so words appended to contentEl are reachable via the
  * internal `content.value?.querySelector(...)` calls inside the composable.
  */
-function withHighlights({ active_word = ref(-1), popover_open = ref(false) } = {}) {
+function withHighlights({ active_word = ref(-1), popover_open = ref(false), matchRangeAt } = {}) {
   const { h: vueH, defineComponent } = require('vue')
   let result
 
@@ -100,11 +100,14 @@ function withHighlights({ active_word = ref(-1), popover_open = ref(false) } = {
 
   const HostComponent = defineComponent({
     setup() {
+      // matchRangeAt left undefined → the composable's own `() => null` default
+      // applies, so callers that don't care about card matches are unaffected.
       result = useReaderHighlights(
         () => active_word.value,
         onSelect,
         () => popover_open.value,
-        onDismiss
+        onDismiss,
+        matchRangeAt
       )
       return () =>
         vueH('div', {}, [
@@ -674,6 +677,115 @@ describe('useReaderHighlights', () => {
 
       // interaction_range still reflects committed word 0
       expect(result.interaction_range.value).toEqual({ lo: 0, hi: 0 })
+    })
+  })
+
+  // A tap/click on a word the matcher covers selects the whole matched phrase;
+  // a deliberate drag or long-press range-select still commits exactly what was
+  // swept, so a long-press on a highlight selects freely as if it weren't there.
+  describe('match-aware selection [obligation]', () => {
+    // Lay out words `2,3,4` as a horizontal row of base rects so commitRange can
+    // measure a multi-word range.
+    function addPhrase(contentEl) {
+      const els = [2, 3, 4].map((i, n) => {
+        const el = addWord(contentEl, i, `字${i}`)
+        el.querySelector('[data-word-base]').getBoundingClientRect = () =>
+          new DOMRect(10 + n * 30, 10, 20, 20)
+        return el
+      })
+      contentEl.getBoundingClientRect = () => new DOMRect(0, 0, 300, 200)
+      return els
+    }
+
+    test('a click on a matched word selects the whole matched phrase', async () => {
+      const matchRangeAt = (i) => (i === 3 ? { lo: 2, hi: 4 } : null)
+      const { result, contentEl, onSelect } = withHighlights({ matchRangeAt })
+      const [, w3] = addPhrase(contentEl)
+
+      stubElementFromPoint(() => w3)
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'mouse', clientX: 45, clientY: 15 })
+      )
+      result.onPointerUp(
+        new PointerEvent('pointerup', { pointerType: 'mouse', clientX: 45, clientY: 15 })
+      )
+      await nextTick()
+
+      expect(onSelect).toHaveBeenCalledTimes(1)
+      expect(onSelect.mock.calls[0][0]).toMatchObject({ index: 2, end_index: 4 })
+    })
+
+    test('a touch tap on a matched word selects the whole matched phrase', async () => {
+      const matchRangeAt = (i) => (i === 3 ? { lo: 2, hi: 4 } : null)
+      const { result, contentEl, onSelect } = withHighlights({ matchRangeAt })
+      const [, w3] = addPhrase(contentEl)
+
+      stubElementFromPoint(() => w3)
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'touch', clientX: 45, clientY: 15 })
+      )
+      result.onPointerUp(
+        new PointerEvent('pointerup', { pointerType: 'touch', clientX: 45, clientY: 15 })
+      )
+      await nextTick()
+
+      expect(onSelect).toHaveBeenCalledTimes(1)
+      expect(onSelect.mock.calls[0][0]).toMatchObject({ index: 2, end_index: 4 })
+    })
+
+    test('a drag commits exactly the swept range, ignoring any match', async () => {
+      // matchRangeAt would expand a *click* to the whole phrase — a real drag must
+      // ignore it and commit only what was swept.
+      const matchRangeAt = () => ({ lo: 2, hi: 4 })
+      const { result, contentEl, onSelect } = withHighlights({ matchRangeAt })
+      const [w2, w3] = addPhrase(contentEl)
+
+      stubElementFromPoint(() => w2)
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'mouse', clientX: 15, clientY: 15 })
+      )
+      document.elementFromPoint = () => w3
+      result.onPointerMove(
+        new PointerEvent('pointermove', { pointerType: 'mouse', clientX: 45, clientY: 15 })
+      )
+      result.onPointerUp(
+        new PointerEvent('pointerup', { pointerType: 'mouse', clientX: 45, clientY: 15 })
+      )
+      await nextTick()
+
+      // Swept 2→3, not the match's 2→4
+      expect(onSelect.mock.calls[0][0]).toMatchObject({ index: 2, end_index: 3 })
+    })
+
+    describe('long-press over a highlight', () => {
+      beforeEach(() => vi.useFakeTimers())
+      afterEach(() => vi.useRealTimers())
+
+      test('arms free selection and ignores the match (selects just the held word)', async () => {
+        // The match would expand a tap to a whole phrase; a long-press must select
+        // freely instead — here just the single word it armed on.
+        const matchRangeAt = () => ({ lo: 0, hi: 9 })
+        const { result, contentEl, onSelect } = withHighlights({ matchRangeAt })
+        const w1 = addWord(contentEl, 1, '語')
+        w1.querySelector('[data-word-base]').getBoundingClientRect = () =>
+          new DOMRect(10, 10, 20, 20)
+        contentEl.getBoundingClientRect = () => new DOMRect(0, 0, 300, 200)
+
+        stubElementFromPoint(() => w1)
+        result.onPointerDown(
+          new PointerEvent('pointerdown', { pointerType: 'touch', clientX: 15, clientY: 15 })
+        )
+        vi.advanceTimersByTime(410)
+        await nextTick()
+
+        result.onPointerUp(
+          new PointerEvent('pointerup', { pointerType: 'touch', clientX: 15, clientY: 15 })
+        )
+        await nextTick()
+
+        // Committed the held word alone, NOT the match's {0,9}
+        expect(onSelect.mock.calls[0][0]).toMatchObject({ index: 1, end_index: 1 })
+      })
     })
   })
 })

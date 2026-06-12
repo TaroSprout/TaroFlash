@@ -9,6 +9,7 @@ import {
   type CursorBox
 } from '@/utils/animations/reader-cursor'
 import { scrollLineIntoView } from '@/utils/animations/transcript-scroll'
+import type { CardMatch } from '@/utils/transcript-match'
 
 // How far each highlight bleeds past the text on every side, so it reads as a
 // padded pill rather than a tight box.
@@ -58,6 +59,12 @@ export const readerSelectionKey = Symbol('readerSelection') as InjectionKey<
 // active word can tint its own text as the playhead reaches it.
 export const readerActiveWordKey = Symbol('readerActiveWord') as InjectionKey<ComputedRef<number>>
 
+// Matches keyed by every word they cover, shared down so each word can mark
+// itself when it sits on a card the member already has.
+export const readerMatchesKey = Symbol('readerMatches') as InjectionKey<
+  ComputedRef<Map<number, CardMatch>>
+>
+
 /**
  * Drive the pointer-driven **interaction** pill in the transcript reader — which
  * doubles as the hover indicator, the drag-to-select highlight, and the standing
@@ -93,6 +100,9 @@ export const readerActiveWordKey = Symbol('readerActiveWord') as InjectionKey<Co
  * @param onDismiss - called when a tap on empty space clears the selection, so the
  *   host can dismiss the term surface too (the mobile footer has no outside-click
  *   close of its own, unlike the desktop popover).
+ * @param matchRangeAt - resolves the card-match range covering a word, or null
+ *   when none. A tap/click on a matched word selects the whole matched phrase;
+ *   a drag (or long-press range select) still commits exactly what was swept.
  * @example
  * const { onPointerDown, onPointerMove, onPointerUp, onPointerLeave, onPointerCancel } =
  *   useReaderHighlights(() => active_word, commitSelection, () => popover_open, dismiss)
@@ -101,7 +111,8 @@ export function useReaderHighlights(
   active_word: MaybeRefOrGetter<number>,
   onSelect: (selection: ReaderSelection) => void,
   popover_open: MaybeRefOrGetter<boolean>,
-  onDismiss: () => void
+  onDismiss: () => void,
+  matchRangeAt: (index: number) => WordRange | null = () => null
 ) {
   const content = useTemplateRef<HTMLElement>('content')
   const hover = useTemplateRef<HTMLElement>('hover')
@@ -378,10 +389,18 @@ export function useReaderHighlights(
     } as unknown as MouseEvent)
   }
 
-  // Release commits the in-progress drag as the standing selection.
+  // Release commits the in-progress drag as the standing selection. A click
+  // (anchor === focus) on a matched word selects the whole matched phrase; a real
+  // drag commits exactly what the pointer swept, even across a match.
   function commitDrag() {
     if (anchor_index.value === null || focus_index.value === null) return
-    commitRange(orderedRange(anchor_index.value, focus_index.value))
+
+    const range =
+      anchor_index.value === focus_index.value
+        ? (matchRangeAt(anchor_index.value) ?? { lo: anchor_index.value, hi: anchor_index.value })
+        : orderedRange(anchor_index.value, focus_index.value)
+
+    commitRange(range)
   }
 
   /** Whether `index` falls inside the current standing selection. */
@@ -561,7 +580,7 @@ export function useReaderHighlights(
     } else if (tap && tap.index !== null) {
       const range = committedContains(tap.index)
         ? committed.value!
-        : { lo: tap.index, hi: tap.index }
+        : (matchRangeAt(tap.index) ?? { lo: tap.index, hi: tap.index })
       commitRange(range)
       suppress_gesture_click = true
     } else if (tap) {
