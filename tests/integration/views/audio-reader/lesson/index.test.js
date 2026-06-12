@@ -38,7 +38,7 @@ const {
   playerRef: { is_playing: { value: false } },
   chaptersRef: { value: [] },
   progressMutate: vi.fn(),
-  useReaderProgressMock: vi.fn(),
+  useReaderProgressMock: vi.fn(() => ({ restored: { value: true } })),
   editModalOpenMock: vi.fn(),
   routerPushMock: vi.fn(),
   emitSfxMock: vi.fn()

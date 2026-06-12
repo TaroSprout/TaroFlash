@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, useTemplateRef } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { emitSfx } from '@/sfx/bus'
@@ -10,12 +10,14 @@ import { useCollectionEditModal } from '@/composables/modals/use-collection-edit
 import { useMatchMedia } from '@/composables/use-media-query'
 import { useAnimatedHeight } from '@/composables/use-animated-height'
 import { scrollClearOf } from '@/utils/animations/transcript-scroll'
+import { fadeLeave } from '@/utils/animations/fade'
 import {
   footerSwapBeforeLeave,
   footerSwapEnter,
   footerSwapLeave
 } from '@/utils/animations/footer-swap'
 import UiButton from '@/components/ui-kit/button.vue'
+import UiIcon from '@/components/ui-kit/icon.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import AudioToolbar from '@/views/audio-reader/lesson/audio-toolbar.vue'
 import TranscriptView from '@/views/audio-reader/transcript/index.vue'
@@ -49,7 +51,7 @@ const {
   player
 } = useLessonReader(lesson_id)
 
-useReaderProgress(collection_id, lesson_id, player)
+const { restored } = useReaderProgress(collection_id, lesson_id, player)
 
 const { data: lessons_data } = useLessonsByCollectionQuery(collection_id)
 
@@ -65,6 +67,11 @@ const FOOTER_CLEARANCE = 16
 // content-driven height animation stands down and only tracks the baseline.
 let swapping = false
 
+// Live footer height, so the loading veil can stop at the footer's top edge and
+// centre the spinner in the reading area rather than behind the toolbar.
+const footer_height = ref(0)
+let footer_resize: ResizeObserver | null = null
+
 const chapters = computed(() => lessons_data.value ?? [])
 const current_index = computed(() => chapters.value.findIndex((c) => c.id === lesson_id.value))
 const chapter_of = computed(() => ({
@@ -77,6 +84,21 @@ const chapter_of = computed(() => ({
 const show_term_in_footer = computed(
   () => is_mobile.value && popover_open.value && !!selection.value
 )
+
+// Veil the reader until the transcript is loaded and the chapter has been
+// positioned at its resume offset, so the resume seek lands behind the veil and
+// the reveal shows the reader already at the right spot.
+const ready = computed(() => !!lesson.value && restored.value)
+
+onMounted(() => {
+  if (!footer_bar.value) return
+  footer_resize = new ResizeObserver(() => {
+    if (footer_bar.value) footer_height.value = footer_bar.value.offsetHeight
+  })
+  footer_resize.observe(footer_bar.value)
+})
+
+onBeforeUnmount(() => footer_resize?.disconnect())
 
 function goToChapter(id: number) {
   router.push({ name: 'lesson', params: { collectionId: collection_id.value, lessonId: id } })
@@ -134,6 +156,17 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
     data-testid="lesson-view"
     class="flex min-h-[calc(100dvh-var(--nav-height))] flex-col gap-6 xl:flex-row"
   >
+    <transition :css="false" @leave="fadeLeave">
+      <div
+        v-if="!ready"
+        data-testid="lesson-view__loader"
+        :style="{ bottom: `${footer_height}px` }"
+        class="fixed inset-x-0 top-(--nav-height) z-20 flex items-center justify-center bg-brown-100 dark:bg-grey-900"
+      >
+        <ui-icon src="loading-dots" class="h-16 w-16 text-brown-700 dark:text-brown-100" />
+      </div>
+    </transition>
+
     <aside
       data-testid="lesson-view__sidebar"
       class="hidden shrink-0 flex-col gap-4 xl:flex xl:sticky xl:top-(--nav-height) xl:max-h-[calc(100dvh-var(--nav-height))] xl:w-56 xl:self-start xl:overflow-y-auto"
