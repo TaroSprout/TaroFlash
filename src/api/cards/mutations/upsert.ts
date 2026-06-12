@@ -1,7 +1,7 @@
 import { useMutation, useQueryCache } from '@pinia/colada'
 import type { CardBase } from '@type/card'
 import { upsertCard } from '../db'
-import { invalidateDeck } from './_invalidate'
+import { invalidateCardIndex, invalidateDeck } from './_invalidate'
 
 export function useUpsertCardMutation() {
   const queryCache = useQueryCache()
@@ -9,6 +9,7 @@ export function useUpsertCardMutation() {
     mutation: (card: Partial<CardBase>) => upsertCard(card),
     onSettled: (_data, _error, card) => {
       invalidateDeck(queryCache, card.deck_id)
+      invalidateCardIndex(queryCache)
     }
   })
 }
