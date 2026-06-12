@@ -216,4 +216,85 @@ describe('AddCardControl', () => {
       ).toBeUndefined()
     })
   })
+
+  // ── existing_decks — already-a-card state [obligation] ────────────────────
+
+  describe('existing_decks — already-a-card state [obligation]', () => {
+    test('when existing_decks is non-empty, clicking primary does NOT emit add [obligation]', async () => {
+      const wrapper = mountControl({ existing_decks: [1] })
+      await wrapper.find('[data-testid="add-card-control__primary"]').trigger('click')
+      expect(wrapper.emitted('add')).toBeFalsy()
+    })
+
+    test('when existing_decks is empty, primary click emits add [obligation]', async () => {
+      const wrapper = mountControl({ existing_decks: [] })
+      await wrapper.find('[data-testid="add-card-control__primary"]').trigger('click')
+      expect(wrapper.emitted('add')).toBeTruthy()
+    })
+
+    test('selecting a deck NOT in existing_decks emits add with that deck id [obligation]', async () => {
+      // Deck 1 is existing; selecting deck 2 (not existing) should emit
+      const wrapper = mountControl({ existing_decks: [1] })
+      const options = optionButtons(wrapper)
+      // Deck Beta (id=2) is not in existing_decks
+      await options[1].trigger('click')
+      expect(wrapper.emitted('add')).toEqual([[2]])
+    })
+
+    test('selecting a deck that IS in existing_decks does NOT emit add [obligation]', async () => {
+      // Deck 1 is in existing_decks — selecting it should be a no-op
+      const wrapper = mountControl({ existing_decks: [1] })
+      const options = optionButtons(wrapper)
+      // Deck Alpha (id=1) is in existing_decks
+      await options[0].trigger('click')
+      expect(wrapper.emitted('add')).toBeFalsy()
+    })
+
+    test('deck options for existing decks show the check icon [obligation]', () => {
+      const wrapper = mountControl({ existing_decks: [1] })
+      // The UiDropdownButton stub receives options with icon: 'check' for deck 1
+      // We verify the options prop passed to the stub
+      const stub = wrapper.findComponent(UiDropdownButtonStub)
+      const opts = stub.props('options')
+      const existing_opt = opts.find((o) => o.value === 1)
+      expect(existing_opt?.icon).toBe('check')
+    })
+
+    test('deck options for non-existing decks show the card-deck icon [obligation]', () => {
+      const wrapper = mountControl({ existing_decks: [1] })
+      const stub = wrapper.findComponent(UiDropdownButtonStub)
+      const opts = stub.props('options')
+      const new_opt = opts.find((o) => o.value === 2)
+      expect(new_opt?.icon).toBe('card-deck')
+    })
+  })
+
+  // ── primary_deck: naming the owning deck [obligation] ─────────────────────
+
+  describe('primary_deck label — names the owning deck [obligation]', () => {
+    test('when in exactly one deck, primary label is THAT deck title [obligation]', () => {
+      const wrapper = mountControl({ existing_decks: [2] })
+      // primary_deck should be Deck Beta (id=2)
+      expect(wrapper.find('[data-testid="add-card-control__primary"]').text()).toContain(
+        'Deck Beta'
+      )
+    })
+
+    test('when in multiple decks, primary label falls back to the default (last-used) deck [obligation]', () => {
+      lastDeckState.id = 1
+      const wrapper = mountControl({ existing_decks: [1, 2] })
+      // Multiple decks → falls back to last-used (Deck Alpha, id=1)
+      expect(wrapper.find('[data-testid="add-card-control__primary"]').text()).toContain(
+        'Deck Alpha'
+      )
+    })
+
+    test('when in multiple decks and no last deck, falls back to first deck [obligation]', () => {
+      lastDeckState.id = null
+      const wrapper = mountControl({ existing_decks: [1, 2] })
+      expect(wrapper.find('[data-testid="add-card-control__primary"]').text()).toContain(
+        'Deck Alpha'
+      )
+    })
+  })
 })

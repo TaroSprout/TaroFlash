@@ -6,9 +6,11 @@ const {
   debounceMock,
   setInfiniteQueryDataMock,
   getQueryDataMock,
+  invalidateSpy,
   queryCache
 } = vi.hoisted(() => {
   const getQueryDataMock = vi.fn()
+  const invalidateSpy = vi.fn()
   return {
     useMutationSpy: vi.fn((cfg) => cfg),
     saveCardMock: vi.fn().mockResolvedValue(undefined),
@@ -17,7 +19,8 @@ const {
     debounceMock: vi.fn((fn) => fn()),
     setInfiniteQueryDataMock: vi.fn(),
     getQueryDataMock,
-    queryCache: { getQueryData: getQueryDataMock }
+    invalidateSpy,
+    queryCache: { getQueryData: getQueryDataMock, invalidateQueries: invalidateSpy }
   }
 })
 
@@ -50,6 +53,7 @@ beforeEach(() => {
   setInfiniteQueryDataMock.mockClear()
   getQueryDataMock.mockReset()
   getQueryDataMock.mockReturnValue({ pages: [], pageParams: [] })
+  invalidateSpy.mockClear()
 })
 
 function configFrom() {
@@ -76,11 +80,15 @@ describe('useSaveCardMutation', () => {
     expect(saveCardMock).toHaveBeenCalledWith(card, values)
   })
 
-  test('does not install an onSettled handler — deck cache is not invalidated on self-save', () => {
-    // Refetch after a self-save would clobber the component-owned editor
-    // state that's driving the input. Bulk ops invalidate explicitly.
-    const config = configFrom()
-    expect(config.onSettled).toBeUndefined()
+  test('onSettled invalidates the card index so the highlight overlay stays in sync [obligation]', () => {
+    // Front-text edits change which terms are indexed; the card index query
+    // must be marked stale so the highlight overlay updates after a save.
+    const { onSettled } = configFrom()
+    expect(onSettled).toBeDefined()
+    // The invalidation targets ['cards', 'index']
+    invalidateSpy.mockClear()
+    onSettled()
+    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 'index'] })
   })
 
   // ── Optimistic cache patch ────────────────────────────────────────────────

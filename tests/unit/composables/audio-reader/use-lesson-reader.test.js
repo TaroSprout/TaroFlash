@@ -6,6 +6,8 @@ const {
   audioUrlQueryMock,
   audioPlayerMock,
   transcriptSyncMock,
+  cardIndexQueryMock,
+  decksQueryMock,
   toastErrorMock,
   mockEmitSfx
 } = vi.hoisted(() => ({
@@ -13,6 +15,8 @@ const {
   audioUrlQueryMock: vi.fn(),
   audioPlayerMock: vi.fn(),
   transcriptSyncMock: vi.fn(),
+  cardIndexQueryMock: vi.fn(),
+  decksQueryMock: vi.fn(),
   toastErrorMock: vi.fn(),
   mockEmitSfx: vi.fn()
 }))
@@ -23,6 +27,11 @@ vi.mock('@/api/lessons', () => ({
   useLessonQuery: lessonQueryMock,
   useLessonAudioUrlQuery: audioUrlQueryMock
 }))
+// The reader joins the member card index (for highlights) and the member decks
+// (for highlight colour); both are Pinia Colada hooks, mocked here so the bare
+// host app doesn't need a Pinia/Colada instance.
+vi.mock('@/api/cards', () => ({ useMemberCardIndexQuery: cardIndexQueryMock }))
+vi.mock('@/api/decks', () => ({ useMemberDecksQuery: decksQueryMock }))
 vi.mock('@/composables/toast', () => ({ useToast: () => ({ error: toastErrorMock }) }))
 vi.mock('@/composables/audio-reader/use-audio-player', () => ({ useAudioPlayer: audioPlayerMock }))
 vi.mock('@/composables/audio-reader/use-transcript-sync', () => ({
@@ -83,6 +92,8 @@ describe('useLessonReader', () => {
       playClip: vi.fn()
     })
     transcriptSyncMock.mockReturnValue({ active_index: ref(-1) })
+    cardIndexQueryMock.mockReturnValue({ data: ref([]) })
+    decksQueryMock.mockReturnValue({ data: ref([]) })
     toastErrorMock.mockReset()
     mockEmitSfx.mockReset()
   })
@@ -237,6 +248,207 @@ describe('useLessonReader', () => {
       await nextTick()
 
       expect(toastErrorMock).toHaveBeenCalledWith('lesson exploded')
+    })
+  })
+
+  // The default lesson is "Hello world. How are you?", so word index 1 is
+  // "world" — the term these tests highlight.
+  describe('card-match highlights [obligation]', () => {
+    test('matches is empty until the card index loads', () => {
+      // Default beforeEach leaves the index empty (unloaded).
+      let reader
+      ;[reader, app] = withReader()
+
+      expect(reader.matches.value.size).toBe(0)
+    })
+
+    test('a card front that appears in the lesson is keyed by its word index', () => {
+      cardIndexQueryMock.mockReturnValue({ data: ref([{ term: 'world', deck_ids: [7] }]) })
+      decksQueryMock.mockReturnValue({
+        data: ref([{ id: 7, cover_config: { theme: 'blue-500' } }])
+      })
+
+      let reader
+      ;[reader, app] = withReader()
+
+      const match = reader.matches.value.get(1)
+      expect(match).toBeTruthy()
+      expect(match).toMatchObject({ lo: 1, hi: 1, deck_ids: [7] })
+    })
+
+    test('a word with no matching card is absent from the matches map', () => {
+      cardIndexQueryMock.mockReturnValue({ data: ref([{ term: 'world', deck_ids: [7] }]) })
+
+      let reader
+      ;[reader, app] = withReader()
+
+      // "Hello" (index 0) has no card
+      expect(reader.matches.value.has(0)).toBe(false)
+    })
+
+    test('themeMatch colours a single-deck match with that deck cover theme', () => {
+      cardIndexQueryMock.mockReturnValue({ data: ref([{ term: 'world', deck_ids: [7] }]) })
+      decksQueryMock.mockReturnValue({
+        data: ref([{ id: 7, cover_config: { theme: 'blue-500', theme_dark: 'blue-900' } }])
+      })
+
+      let reader
+      ;[reader, app] = withReader()
+
+      const match = reader.matches.value.get(1)
+      expect(match.theme).toBe('blue-500')
+      expect(match.theme_dark).toBe('blue-900')
+    })
+
+    test('themeMatch colours a multi-deck match by the FIRST deck in member order', () => {
+      // "world" lives in decks 7 and 3; the member list has deck 3 first, so its
+      // cover wins — proving the tie-break is member-list order, not deck_ids order.
+      cardIndexQueryMock.mockReturnValue({ data: ref([{ term: 'world', deck_ids: [7, 3] }]) })
+      decksQueryMock.mockReturnValue({
+        data: ref([
+          { id: 3, cover_config: { theme: 'green-400', theme_dark: 'green-800' } },
+          { id: 7, cover_config: { theme: 'blue-500' } }
+        ])
+      })
+
+      let reader
+      ;[reader, app] = withReader()
+
+      const match = reader.matches.value.get(1)
+      expect(match.theme).toBe('green-400')
+      expect(match.theme_dark).toBe('green-800')
+    })
+
+    test('themeMatch leaves theme unset when the owning deck has no cover theme', () => {
+      cardIndexQueryMock.mockReturnValue({ data: ref([{ term: 'world', deck_ids: [7] }]) })
+      decksQueryMock.mockReturnValue({ data: ref([{ id: 7, cover_config: {} }]) })
+
+      let reader
+      ;[reader, app] = withReader()
+
+      const match = reader.matches.value.get(1)
+      expect(match.theme).toBeUndefined()
+      expect(match.theme_dark).toBeUndefined()
+    })
+  })
+
+  describe('selected_term_decks [obligation]', () => {
+    test('is empty before anything is selected', () => {
+      let reader
+      ;[reader, app] = withReader()
+
+      expect(reader.selected_term_decks.value).toEqual([])
+    })
+
+    test('reports the decks holding the selected term', () => {
+      cardIndexQueryMock.mockReturnValue({ data: ref([{ term: 'world', deck_ids: [7, 3] }]) })
+
+      let reader
+      ;[reader, app] = withReader()
+      reader.openTerm({ term: 'world', sentence: 'Hello world.', rect: new DOMRect() })
+
+      expect(reader.selected_term_decks.value).toEqual([7, 3])
+    })
+
+    test('matches a hand-selected term case-insensitively, not just tapped highlights', () => {
+      cardIndexQueryMock.mockReturnValue({ data: ref([{ term: 'world', deck_ids: [7] }]) })
+
+      let reader
+      ;[reader, app] = withReader()
+      // A range hand-selected as "World" still resolves to the saved card's decks.
+      reader.openTerm({ term: 'World', sentence: 'Hello world.', rect: new DOMRect() })
+
+      expect(reader.selected_term_decks.value).toEqual([7])
+    })
+
+    test('is empty when the selected term is not a card', () => {
+      cardIndexQueryMock.mockReturnValue({ data: ref([{ term: 'world', deck_ids: [7] }]) })
+
+      let reader
+      ;[reader, app] = withReader()
+      reader.openTerm({ term: 'xyzzy', sentence: 'Hello world.', rect: new DOMRect() })
+
+      expect(reader.selected_term_decks.value).toEqual([])
+    })
+  })
+
+  // Default lesson word starts: Hello 0, world 0.5, How 1, are 1.3, you 1.6 (end 2).
+  describe('playback from a term', () => {
+    function withPlayer() {
+      const player = {
+        current_time: ref(0),
+        play: vi.fn(),
+        pause: vi.fn(),
+        seek: vi.fn(),
+        playClip: vi.fn()
+      }
+      audioPlayerMock.mockReturnValue(player)
+      return player
+    }
+
+    test('playFromHere seeks to the term word start, resumes, and closes the term', () => {
+      const player = withPlayer()
+      let reader
+      ;[reader, app] = withReader()
+      reader.openTerm({
+        term: 'world',
+        sentence: 'Hello world.',
+        rect: new DOMRect(),
+        word_index: 1,
+        word_end_index: 1
+      })
+
+      reader.playFromHere()
+
+      expect(player.seek).toHaveBeenCalledWith(0.5)
+      expect(player.play).toHaveBeenCalled()
+      expect(reader.popover_open.value).toBe(false)
+    })
+
+    test('playClip plays only the selected phrase (first start → last end)', () => {
+      const player = withPlayer()
+      let reader
+      ;[reader, app] = withReader()
+      reader.openTerm({
+        term: 'How are you',
+        sentence: 'How are you?',
+        rect: new DOMRect(),
+        word_index: 2,
+        word_end_index: 4
+      })
+
+      reader.playClip()
+
+      // words[2].start = 1, words[4].end = 2
+      expect(player.playClip).toHaveBeenCalledWith(1, 2)
+    })
+
+    test('playClip leaves the term open so its translation stays readable', () => {
+      withPlayer()
+      let reader
+      ;[reader, app] = withReader()
+      reader.openTerm({
+        term: 'world',
+        sentence: 'Hello world.',
+        rect: new DOMRect(),
+        word_index: 1,
+        word_end_index: 1
+      })
+
+      reader.playClip()
+
+      expect(reader.popover_open.value).toBe(true)
+    })
+
+    test('playFromHere is a no-op when nothing is selected', () => {
+      const player = withPlayer()
+      let reader
+      ;[reader, app] = withReader()
+
+      reader.playFromHere()
+
+      expect(player.seek).not.toHaveBeenCalled()
+      expect(player.play).not.toHaveBeenCalled()
     })
   })
 })

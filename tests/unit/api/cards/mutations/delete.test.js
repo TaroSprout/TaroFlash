@@ -52,6 +52,12 @@ describe('useDeleteCardsMutation', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'] })
   })
 
+  test('onSettled invalidates the card index so deleted fronts are removed from highlights [obligation]', () => {
+    const { onSettled } = configFrom(useDeleteCardsMutation)
+    onSettled(undefined, undefined, [{ id: 1, deck_id: 10 }])
+    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 'index'] })
+  })
+
   test('onSettled invalidates each distinct deck once when cards span multiple decks', () => {
     const { onSettled } = configFrom(useDeleteCardsMutation)
     onSettled(undefined, undefined, [
@@ -83,5 +89,11 @@ describe('useDeleteCardsInDeckMutation', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 10] })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 'count'] })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'] })
+  })
+
+  test('onSettled invalidates the card index so bulk-deleted fronts are removed from highlights [obligation]', () => {
+    const { onSettled } = configFrom(useDeleteCardsInDeckMutation)
+    onSettled(undefined, undefined, { deck_id: 10, except_ids: [] })
+    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 'index'] })
   })
 })

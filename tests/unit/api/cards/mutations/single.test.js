@@ -45,6 +45,12 @@ describe('useUpsertCardMutation', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['deck', 10] })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 10] })
   })
+
+  test('onSettled invalidates card index — upserted front text changes highlights [obligation]', () => {
+    const { onSettled } = configFrom(useUpsertCardMutation)
+    onSettled(undefined, undefined, { id: 1, deck_id: 10 })
+    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 'index'] })
+  })
 })
 
 describe('useInsertCardAtMutation', () => {
@@ -74,5 +80,17 @@ describe('useInsertCardAtMutation', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 10] })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 'count'] })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'] })
+  })
+
+  test('onSettled invalidates card index — new front text must appear in highlights [obligation]', () => {
+    const { onSettled } = configFrom(useInsertCardAtMutation)
+    onSettled({ id: 9, rank: 1000 }, undefined, {
+      deck_id: 10,
+      anchor_id: null,
+      side: null,
+      front_text: 'Q',
+      back_text: 'A'
+    })
+    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 'index'] })
   })
 })
