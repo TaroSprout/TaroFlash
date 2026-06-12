@@ -33,6 +33,7 @@ function makePlayer(overrides = {}) {
     duration: ref(120),
     is_playing: ref(false),
     seek: vi.fn(),
+    resumeAt: vi.fn(),
     ...overrides
   }
 }
@@ -69,7 +70,7 @@ describe('useReaderProgress', () => {
   })
 
   describe('restore', () => {
-    test('seeks to the stored offset and re-bookmarks when this chapter is the bookmark', async () => {
+    test('arms the stored offset as the resume point and re-bookmarks when this chapter is the bookmark', async () => {
       collectionRef.current = ref({ id: 5, last_lesson_id: 2, last_position_seconds: 42 })
       const player = makePlayer()
       ;[, app] = withSetup(() => useReaderProgress(ref(5), ref(2), player))
@@ -77,7 +78,7 @@ describe('useReaderProgress', () => {
       player.loaded.value = true
       await nextTick()
 
-      expect(player.seek).toHaveBeenCalledWith(42)
+      expect(player.resumeAt).toHaveBeenCalledWith(42)
       expect(mutateSpy).toHaveBeenCalledWith({
         collection_id: 5,
         lesson_id: 2,
@@ -85,7 +86,7 @@ describe('useReaderProgress', () => {
       })
     })
 
-    test('starts at 0 (no seek) when a different chapter holds the bookmark', async () => {
+    test('arms nothing when a different chapter holds the bookmark', async () => {
       collectionRef.current = ref({ id: 5, last_lesson_id: 99, last_position_seconds: 42 })
       const player = makePlayer()
       ;[, app] = withSetup(() => useReaderProgress(ref(5), ref(2), player))
@@ -93,7 +94,7 @@ describe('useReaderProgress', () => {
       player.loaded.value = true
       await nextTick()
 
-      expect(player.seek).not.toHaveBeenCalled()
+      expect(player.resumeAt).not.toHaveBeenCalled()
       expect(mutateSpy).toHaveBeenCalledWith({
         collection_id: 5,
         lesson_id: 2,
@@ -109,7 +110,7 @@ describe('useReaderProgress', () => {
       player.loaded.value = true
       await nextTick()
 
-      expect(player.seek).not.toHaveBeenCalled()
+      expect(player.resumeAt).not.toHaveBeenCalled()
       expect(mutateSpy).toHaveBeenCalledWith({
         collection_id: 5,
         lesson_id: 2,
@@ -117,7 +118,7 @@ describe('useReaderProgress', () => {
       })
     })
 
-    test('does not re-seek when the collection cache is patched under the same chapter', async () => {
+    test('does not re-arm when the collection cache is patched under the same chapter', async () => {
       const data = ref({ id: 5, last_lesson_id: 2, last_position_seconds: 42 })
       collectionRef.current = data
       const player = makePlayer()
@@ -125,15 +126,15 @@ describe('useReaderProgress', () => {
 
       player.loaded.value = true
       await nextTick()
-      player.seek.mockClear()
+      player.resumeAt.mockClear()
 
       data.value = { id: 5, last_lesson_id: 2, last_position_seconds: 0 }
       await nextTick()
 
-      expect(player.seek).not.toHaveBeenCalled()
+      expect(player.resumeAt).not.toHaveBeenCalled()
     })
 
-    test('stays paused after restoring — seek is called but play is never called [obligation]', async () => {
+    test('stays paused after restoring — resumeAt is called but play is never called [obligation]', async () => {
       collectionRef.current = ref({ id: 5, last_lesson_id: 2, last_position_seconds: 42 })
       const player = makePlayer({ play: vi.fn() })
       ;[, app] = withSetup(() => useReaderProgress(ref(5), ref(2), player))
@@ -141,24 +142,8 @@ describe('useReaderProgress', () => {
       player.loaded.value = true
       await nextTick()
 
-      expect(player.seek).toHaveBeenCalledWith(42)
+      expect(player.resumeAt).toHaveBeenCalledWith(42)
       expect(player.play).not.toHaveBeenCalled()
-    })
-
-    test('different chapter starts at 0 with no seek but still writes bookmark at 0 [obligation]', async () => {
-      collectionRef.current = ref({ id: 5, last_lesson_id: 99, last_position_seconds: 42 })
-      const player = makePlayer()
-      ;[, app] = withSetup(() => useReaderProgress(ref(5), ref(2), player))
-
-      player.loaded.value = true
-      await nextTick()
-
-      expect(player.seek).not.toHaveBeenCalled()
-      expect(mutateSpy).toHaveBeenCalledWith({
-        collection_id: 5,
-        lesson_id: 2,
-        position_seconds: 0
-      })
     })
   })
 

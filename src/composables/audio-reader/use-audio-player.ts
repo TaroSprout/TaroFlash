@@ -30,6 +30,12 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
   // moment it reaches this time. Cleared by any pause, seek, or open-ended play.
   let clip_end: number | null = null
 
+  // A resume offset to apply on the next play(). iOS Safari ignores `currentTime`
+  // writes made on load (no user gesture, media not yet seekable), so the seek is
+  // deferred to the play tap — the one place it reliably lands. Cleared by any
+  // manual seek/clip so a user's own scrub wins over a stale resume.
+  let pending_seek: number | null = null
+
   function tick() {
     if (!el) return
     current_time.value = el.currentTime
@@ -131,7 +137,20 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
   function seek(seconds: number) {
     if (!el) return
     clip_end = null
+    pending_seek = null
     el.currentTime = seconds
+    current_time.value = seconds
+  }
+
+  /**
+   * Mark a position to resume from on the next play(), reflecting it now so the
+   * transcript highlight lands there while paused. The element itself isn't
+   * seeked until play() runs inside the user's tap — iOS Safari drops a
+   * `currentTime` write made on load, leaving audio at 0 while the highlight
+   * jumped ahead. A manual seek before play clears this.
+   */
+  function resumeAt(seconds: number) {
+    pending_seek = seconds
     current_time.value = seconds
   }
 
@@ -148,7 +167,16 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
 
   function play() {
     clip_end = null
-    el?.play()
+    if (!el) return
+
+    // Apply a deferred resume here, inside the tap, where iOS honours the seek.
+    if (pending_seek !== null) {
+      el.currentTime = pending_seek
+      current_time.value = pending_seek
+      pending_seek = null
+    }
+
+    el.play()
   }
 
   function pause() {
@@ -159,6 +187,7 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
   function playClip(start: number, end: number) {
     if (!el) return
     clip_end = end
+    pending_seek = null
     el.currentTime = start
     current_time.value = start
     el.play()
@@ -173,6 +202,7 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
     play,
     pause,
     seek,
+    resumeAt,
     skip,
     setPlaybackRate,
     playClip

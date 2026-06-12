@@ -13,7 +13,8 @@ const END_EPSILON_SECONDS = 2
  * chapter it seeks to the stored offset (only when that chapter is the book's
  * bookmark) and re-bookmarks the chapter; while listening it saves the position
  * — throttled by playback progress, plus on pause, tab-hide, and unmount — so a
- * refresh resumes where they left off. Stays paused after the restoring seek.
+ * refresh resumes where they left off. Stays paused; the audio seeks to the
+ * stored offset on the first play (iOS only honours a seek inside the tap).
  *
  * One resume point per book: opening a different chapter than the bookmark
  * starts at 0 and makes that chapter the new bookmark.
@@ -33,7 +34,7 @@ export function useReaderProgress(
   const set_progress = useSetCollectionProgressMutation()
 
   // The chapter whose stored offset we've already applied — guards against
-  // re-seeking when the collection cache is patched under the same chapter.
+  // re-applying when the collection cache is patched under the same chapter.
   let restored_for: number | null = null
   // Playback position (seconds) at the last save; the throttle measures from here.
   let saved_at = 0
@@ -47,9 +48,9 @@ export function useReaderProgress(
     })
   }
 
-  // Seek to the stored offset (if this chapter is the bookmark) and re-bookmark
-  // the chapter at that offset. Waits for the collection data and the current
-  // chapter's audio so the seek sticks; runs once per chapter open.
+  // Arm the stored offset as the resume point (if this chapter is the bookmark)
+  // and re-bookmark the chapter at that offset. Waits for the collection data and
+  // the current chapter's audio metadata; runs once per chapter open.
   function restore() {
     const data = collection.value
     const lesson_id = toValue(lessonId)
@@ -59,7 +60,7 @@ export function useReaderProgress(
     const stored = data.last_lesson_id === lesson_id ? (data.last_position_seconds ?? 0) : 0
     const target = stored < player.duration.value - END_EPSILON_SECONDS ? stored : 0
 
-    if (target > 0) player.seek(target)
+    if (target > 0) player.resumeAt(target)
     save(target)
   }
 
