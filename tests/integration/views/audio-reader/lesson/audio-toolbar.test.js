@@ -242,50 +242,60 @@ describe('AudioToolbar', () => {
     expect(player.play).not.toHaveBeenCalled()
   })
 
-  test('audio-toolbar__skip-back calls player.skip(-15) [obligation]', async () => {
+  test('audio-toolbar__skip-back calls player.skip(-10) [obligation]', async () => {
     const player = makePlayer()
     const wrapper = mountToolbar({ player })
 
     await wrapper.find('[data-testid="audio-toolbar__skip-back"]').trigger('click')
 
-    expect(player.skip).toHaveBeenCalledWith(-15)
+    expect(player.skip).toHaveBeenCalledWith(-10)
   })
 
-  test('audio-toolbar__skip-forward calls player.skip(15) [obligation]', async () => {
+  test('audio-toolbar__skip-forward calls player.skip(10) [obligation]', async () => {
     const player = makePlayer()
     const wrapper = mountToolbar({ player })
 
     await wrapper.find('[data-testid="audio-toolbar__skip-forward"]').trigger('click')
 
-    expect(player.skip).toHaveBeenCalledWith(15)
+    expect(player.skip).toHaveBeenCalledWith(10)
   })
 
   // ── Sfx wiring ─────────────────────────────────────────────────────────────
 
-  test('skip-back click.capture emits ui.toggle_off sfx [obligation]', async () => {
+  test('skip-back click.capture emits ui.snappy_button_5 sfx [obligation]', async () => {
     const wrapper = mountToolbar()
 
     // click.capture fires on the element's capture phase — trigger('click') fires
     // the click event which is caught by the @click.capture="onBackTap" handler
     await wrapper.find('[data-testid="audio-toolbar__skip-back"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.toggle_off')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5')
   })
 
-  test('skip-forward click.capture emits ui.toggle_on sfx [obligation]', async () => {
+  test('skip-forward click.capture emits ui.snappy_button_5 sfx [obligation]', async () => {
     const wrapper = mountToolbar()
 
     await wrapper.find('[data-testid="audio-toolbar__skip-forward"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.toggle_on')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5')
   })
 
-  test('play/pause toggle click.capture emits ui.snappy_button_2 sfx [obligation]', async () => {
-    const wrapper = mountToolbar()
+  test('play/pause toggle click.capture emits ui.snappy_button_2 when paused [obligation]', async () => {
+    const player = makePlayer({ is_playing: ref(false) })
+    const wrapper = mountToolbar({ player })
 
     await wrapper.find('[data-testid="audio-toolbar__toggle"]').trigger('click')
 
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_2')
+  })
+
+  test('play/pause toggle click.capture emits ui.snappy_button_3 when playing [obligation]', async () => {
+    const player = makePlayer({ is_playing: ref(true) })
+    const wrapper = mountToolbar({ player })
+
+    await wrapper.find('[data-testid="audio-toolbar__toggle"]').trigger('click')
+
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_3')
   })
 
   // ── Dropdown wiring: chapters ──────────────────────────────────────────────

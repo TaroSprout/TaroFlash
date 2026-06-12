@@ -7,22 +7,14 @@ const {
   audioPlayerMock,
   transcriptSyncMock,
   toastErrorMock,
-  openModalMock,
-  modalCloseMock,
-  mockEmitSfx,
-  mobileRef
+  mockEmitSfx
 } = vi.hoisted(() => ({
   lessonQueryMock: vi.fn(),
   audioUrlQueryMock: vi.fn(),
   audioPlayerMock: vi.fn(),
   transcriptSyncMock: vi.fn(),
   toastErrorMock: vi.fn(),
-  openModalMock: vi.fn(),
-  modalCloseMock: vi.fn(),
-  mockEmitSfx: vi.fn(),
-  // Plain holder the composable reads at call time; flip .value per test to pick
-  // the mobile (sheet) vs desktop (anchored popover) branch.
-  mobileRef: { value: false }
+  mockEmitSfx: vi.fn()
 }))
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
@@ -32,10 +24,6 @@ vi.mock('@/api/lessons', () => ({
   useLessonAudioUrlQuery: audioUrlQueryMock
 }))
 vi.mock('@/composables/toast', () => ({ useToast: () => ({ error: toastErrorMock }) }))
-vi.mock('@/composables/modal', () => ({
-  useModal: () => ({ open: openModalMock, pop: vi.fn(), modal_stack: { value: [] } })
-}))
-vi.mock('@/composables/use-media-query', () => ({ useMatchMedia: () => mobileRef }))
 vi.mock('@/composables/audio-reader/use-audio-player', () => ({ useAudioPlayer: audioPlayerMock }))
 vi.mock('@/composables/audio-reader/use-transcript-sync', () => ({
   useTranscriptSync: transcriptSyncMock
@@ -96,11 +84,7 @@ describe('useLessonReader', () => {
     })
     transcriptSyncMock.mockReturnValue({ active_index: ref(-1) })
     toastErrorMock.mockReset()
-    openModalMock.mockReset()
-    openModalMock.mockReturnValue({ response: Promise.resolve(), close: modalCloseMock })
-    modalCloseMock.mockReset()
     mockEmitSfx.mockReset()
-    mobileRef.value = false
   })
 
   afterEach(() => {
@@ -140,8 +124,32 @@ describe('useLessonReader', () => {
     })
   })
 
-  describe('term popover', () => {
-    test('openTerm emits ui.pop_up_pop on every call (desktop and mobile) [obligation]', () => {
+  describe('term popover [obligation]', () => {
+    test('openTerm always sets selection and popover_open=true regardless of viewport', () => {
+      let reader
+      ;[reader, app] = withReader()
+      const term = { term: 'world', sentence: 'Hello world.', rect: new DOMRect() }
+
+      reader.openTerm(term)
+
+      expect(reader.selection.value).toEqual(term)
+      expect(reader.popover_open.value).toBe(true)
+    })
+
+    test('openTerm stores selection on re-tap (same call, new value)', () => {
+      let reader
+      ;[reader, app] = withReader()
+      const term1 = { term: 'world', sentence: 'Hello world.', rect: new DOMRect() }
+      const term2 = { term: 'how', sentence: 'How are you?', rect: new DOMRect() }
+
+      reader.openTerm(term1)
+      reader.openTerm(term2)
+
+      expect(reader.selection.value).toEqual(term2)
+      expect(reader.popover_open.value).toBe(true)
+    })
+
+    test('openTerm emits ui.pop_up_pop on every call [obligation]', () => {
       let reader
       ;[reader, app] = withReader()
       const term = { term: 'world', sentence: 'Hello world.', rect: new DOMRect() }
@@ -150,62 +158,71 @@ describe('useLessonReader', () => {
       expect(mockEmitSfx).toHaveBeenCalledWith('ui.pop_up_pop')
     })
 
-    test('openTerm emits ui.pop_up_pop on re-tap/re-open (mobile) [obligation]', () => {
-      mobileRef.value = true
+    test('openTerm emits ui.pop_up_pop on re-tap [obligation]', () => {
       let reader
       ;[reader, app] = withReader()
       const term = { term: 'world', sentence: 'Hello world.', rect: new DOMRect() }
 
       reader.openTerm(term)
       reader.openTerm(term)
+
       expect(mockEmitSfx).toHaveBeenCalledTimes(2)
       expect(mockEmitSfx.mock.calls.every((c) => c[0] === 'ui.pop_up_pop')).toBe(true)
     })
 
-    test('on desktop, openTerm stores the selection and opens; closeTerm closes', () => {
+    test('openTerm never opens a global modal [obligation]', () => {
       let reader
       ;[reader, app] = withReader()
       const term = { term: 'world', sentence: 'Hello world.', rect: new DOMRect() }
 
       reader.openTerm(term)
-      expect(reader.selection.value).toEqual(term)
+
+      // The composable no longer imports useModal — calling openTerm should not
+      // throw and should never trigger modal machinery. The assertion is simply
+      // that selection + popover_open are set (modal path is gone).
       expect(reader.popover_open.value).toBe(true)
-      expect(openModalMock).not.toHaveBeenCalled()
+    })
+
+    test('closeTerm sets popover_open to false [obligation]', () => {
+      let reader
+      ;[reader, app] = withReader()
+      const term = { term: 'world', sentence: 'Hello world.', rect: new DOMRect() }
+
+      reader.openTerm(term)
+      expect(reader.popover_open.value).toBe(true)
 
       reader.closeTerm()
       expect(reader.popover_open.value).toBe(false)
     })
 
-    test('on mobile, openTerm opens the term as a mobile sheet, not the anchored popover', () => {
-      mobileRef.value = true
+    test('closeTerm does not clear the selection — selection stays for re-read', () => {
+      let reader
+      ;[reader, app] = withReader()
+      const term = { term: 'world', sentence: 'Hello world.', rect: new DOMRect() }
+
+      reader.openTerm(term)
+      reader.closeTerm()
+
+      // selection is kept so the view can still read it after close
+      expect(reader.selection.value).toEqual(term)
+    })
+
+    test('openTerm pauses playback', () => {
+      const pauseMock = vi.fn()
+      audioPlayerMock.mockReturnValue({
+        current_time: ref(0),
+        play: vi.fn(),
+        pause: pauseMock,
+        seek: vi.fn(),
+        playClip: vi.fn()
+      })
+
       let reader
       ;[reader, app] = withReader()
 
       reader.openTerm({ term: 'world', sentence: 'Hello world.', rect: new DOMRect() })
 
-      expect(openModalMock).toHaveBeenCalledTimes(1)
-      const [, opts] = openModalMock.mock.calls[0]
-      expect(opts.mode).toBe('mobile-sheet')
-      expect(opts.backdrop).toBe(true)
-      expect(opts.props).toMatchObject({
-        term: 'world',
-        sentence: 'Hello world.',
-        target_lang: 'English'
-      })
-      expect(reader.popover_open.value).toBe(false)
-      expect(reader.selection.value).toBe(null)
-    })
-
-    test('on mobile, selecting another term dismisses the previous sheet first', () => {
-      mobileRef.value = true
-      let reader
-      ;[reader, app] = withReader()
-
-      reader.openTerm({ term: 'a', sentence: 's', rect: new DOMRect() })
-      reader.openTerm({ term: 'b', sentence: 's', rect: new DOMRect() })
-
-      expect(modalCloseMock).toHaveBeenCalledTimes(1)
-      expect(openModalMock).toHaveBeenCalledTimes(2)
+      expect(pauseMock).toHaveBeenCalled()
     })
   })
 
