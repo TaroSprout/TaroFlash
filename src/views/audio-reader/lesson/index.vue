@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, useTemplateRef, watch } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { emitSfx } from '@/sfx/bus'
-import { useLessonsByCollectionQuery, useSetCollectionProgressMutation } from '@/api/lessons'
+import { useLessonsByCollectionQuery } from '@/api/lessons'
 import { useLessonReader } from '@/composables/audio-reader/use-lesson-reader'
+import { useReaderProgress } from '@/composables/audio-reader/use-reader-progress'
 import { useCollectionEditModal } from '@/composables/modals/use-collection-edit-modal'
 import { useMatchMedia } from '@/composables/use-media-query'
 import { useAnimatedHeight } from '@/composables/use-animated-height'
@@ -26,7 +27,6 @@ const { collectionId, lessonId } = defineProps<{ collectionId: string; lessonId:
 const { t } = useI18n()
 const router = useRouter()
 const edit_modal = useCollectionEditModal()
-const set_progress = useSetCollectionProgressMutation()
 const is_mobile = useMatchMedia('w<sm | h<sm')
 
 const collection_id = computed(() => Number(collectionId))
@@ -48,6 +48,8 @@ const {
   playClip,
   player
 } = useLessonReader(lesson_id)
+
+useReaderProgress(collection_id, lesson_id, player)
 
 const { data: lessons_data } = useLessonsByCollectionQuery(collection_id)
 
@@ -125,17 +127,6 @@ function reclearSelection() {
 // crossfade between the two panes owns the height while `swapping`.
 useAnimatedHeight(footer_swap, footer_term, () => !swapping, reclearSelection)
 useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
-
-// Bookmark the chapter once it's confirmed loaded, so the dashboard reopens the
-// book here next time. Reacting to the loaded lesson id (not the raw route param)
-// avoids writing a bookmark for a lesson that doesn't exist.
-watch(
-  () => lesson.value?.id,
-  (id) => {
-    if (id) set_progress.mutate({ collection_id: collection_id.value, lesson_id: id })
-  },
-  { immediate: true }
-)
 </script>
 
 <template>
