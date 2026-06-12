@@ -144,7 +144,7 @@ function emitClickSfx() {
         'bgx-color-[var(--theme-on-neutral)]': inverted
       }"
     >
-      <ui-icon v-if="loading" src="loading-dots" class="h-12 w-12" />
+      <ui-icon v-if="loading" src="loading-dots" class="h-12 w-12 text-brown-100" />
     </div>
 
     <template v-if="tooltip_active" #tooltip>

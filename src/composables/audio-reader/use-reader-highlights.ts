@@ -103,6 +103,9 @@ export const readerMatchesKey = Symbol('readerMatches') as InjectionKey<
  * @param matchRangeAt - resolves the card-match range covering a word, or null
  *   when none. A tap/click on a matched word selects the whole matched phrase;
  *   a drag (or long-press range select) still commits exactly what was swept.
+ * @param is_playing - whether the audio is playing; the active-line follow
+ *   animates while it's true and jumps instantly otherwise (a resume seek or a
+ *   scrub mustn't leave a scroll tween running — it locks up iOS Safari).
  * @example
  * const { onPointerDown, onPointerMove, onPointerUp, onPointerLeave, onPointerCancel } =
  *   useReaderHighlights(() => active_word, commitSelection, () => popover_open, dismiss)
@@ -112,7 +115,8 @@ export function useReaderHighlights(
   onSelect: (selection: ReaderSelection) => void,
   popover_open: MaybeRefOrGetter<boolean>,
   onDismiss: () => void,
-  matchRangeAt: (index: number) => WordRange | null = () => null
+  matchRangeAt: (index: number) => WordRange | null = () => null,
+  is_playing: MaybeRefOrGetter<boolean> = false
 ) {
   const content = useTemplateRef<HTMLElement>('content')
   const hover = useTemplateRef<HTMLElement>('hover')
@@ -323,7 +327,9 @@ export function useReaderHighlights(
     if (index === last_segment_index) return
     last_segment_index = index
 
-    scrollLineIntoView(scrollParentOf(content.value), seg)
+    // Animate only while playing; a paused jump (resume seek, scrub) repositions
+    // instantly so no scroll tween runs into the next play tap (iOS Safari lock).
+    scrollLineIntoView(scrollParentOf(content.value), seg, toValue(is_playing))
   }
 
   // Keep a just-committed word clear of the term sheet. Only on mobile — where the

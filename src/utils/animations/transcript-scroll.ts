@@ -70,13 +70,18 @@ export function scrollClearOf(scroller: Scroller, el: HTMLElement, limit_bottom:
 }
 
 /**
- * Smoothly scroll `scroller` so `el` rests ~40% down the viewport, clamped to
- * the scrollable range. Used to follow the active transcript line as audio plays.
+ * Scroll `scroller` so `el` rests ~40% down the viewport, clamped to the
+ * scrollable range. Used to follow the active transcript line as audio plays.
  * `scroller` is the transcript column on desktop and the window on mobile.
  * ScrollToPlugin isn't registered, so we tween a proxy and write the scroll
  * offset in onUpdate.
+ *
+ * Pass `animate = false` to jump instantly. A rAF-driven `window.scrollTo` tween
+ * starves rAF on iOS Safari (it suspends rAF mid programmatic scroll), so the
+ * paused-state repositioning — a resume seek, a scrub, a skip — must jump rather
+ * than tween, or the audio tick and page lock up the moment playback starts.
  */
-export function scrollLineIntoView(scroller: Scroller, el: HTMLElement) {
+export function scrollLineIntoView(scroller: Scroller, el: HTMLElement, animate = true) {
   const el_rect = el.getBoundingClientRect()
   const { current, viewport, max, top } = metrics(scroller)
 
@@ -92,6 +97,14 @@ export function scrollLineIntoView(scroller: Scroller, el: HTMLElement) {
 
   state.y = current
   gsap.killTweensOf(state)
+
+  if (!animate) {
+    state.y = target
+    if (isWindow(scroller)) window.scrollTo(0, target)
+    else scroller.scrollTop = target
+    return
+  }
+
   gsap.to(state, {
     y: target,
     duration: DURATION,

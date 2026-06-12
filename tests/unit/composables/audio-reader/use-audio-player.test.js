@@ -338,6 +338,74 @@ describe('useAudioPlayer', () => {
     })
   })
 
+  describe('resumeAt() — deferred resume seek [obligation]', () => {
+    test('reflects the position immediately but does not seek the element yet', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      const el = makeAudioEl()
+      el.currentTime = 0
+      target.value = el
+      await nextTick()
+
+      result.resumeAt(42)
+
+      expect(result.current_time.value).toBe(42)
+      expect(el.currentTime).toBe(0) // element untouched until the play gesture
+    })
+
+    test('applies the armed seek inside play() — the iOS-safe gesture', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      const el = makeAudioEl()
+      el.currentTime = 0
+      target.value = el
+      await nextTick()
+
+      result.resumeAt(42)
+      result.play()
+
+      expect(el.currentTime).toBe(42)
+      expect(el.play).toHaveBeenCalled()
+    })
+
+    test('only applies once — a second play() does not re-seek', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      const el = makeAudioEl()
+      target.value = el
+      await nextTick()
+
+      result.resumeAt(42)
+      result.play()
+      el.currentTime = 50 // user listened on
+      result.play()
+
+      expect(el.currentTime).toBe(50)
+    })
+
+    test('a manual seek before play clears the armed resume so the scrub wins', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      const el = makeAudioEl()
+      target.value = el
+      await nextTick()
+
+      result.resumeAt(42)
+      result.seek(10)
+      result.play()
+
+      expect(el.currentTime).toBe(10)
+    })
+  })
+
   describe('play() and pause() call-through', () => {
     test('play() calls el.play()', async () => {
       const target = ref(null)
