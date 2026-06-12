@@ -15,7 +15,7 @@ export type DropdownOption = {
 
 type DropdownButtonProps = Pick<
   ButtonProps,
-  'size' | 'variant' | 'inverted' | 'fullWidth' | 'iconLeft' | 'sfx' | 'playOnTap'
+  'size' | 'variant' | 'inverted' | 'fullWidth' | 'iconLeft' | 'sfx' | 'playOnTap' | 'tapAnimate'
 > & {
   options: DropdownOption[]
   position?: Placement
@@ -41,6 +41,7 @@ const {
   iconLeft,
   sfx,
   playOnTap,
+  tapAnimate,
   position = 'bottom-start',
   triggerIcon = 'arrow-drop-down',
   gap = 4,
@@ -161,6 +162,7 @@ function onSelect(option: DropdownOption) {
         :icon-left="iconLeft"
         :sfx="sfx"
         :play-on-tap="playOnTap"
+        :tap-animate="tapAnimate"
         :style="trigger_style"
         data-testid="dropdown-button__button"
         @click="onButtonClick"

@@ -22,6 +22,9 @@ export type ButtonProps = {
   fullWidth?: boolean
   mobileTooltip?: boolean
   playOnTap?: boolean
+  // With playOnTap, drop the scale/rotate tween so the tap shows only the
+  // bgx-slide sweep + sfx. Defaults to true (the full tap bounce).
+  tapAnimate?: boolean
 }
 
 const {
@@ -34,13 +37,14 @@ const {
   sfx = {},
   fullWidth = false,
   mobileTooltip = false,
-  playOnTap = false
+  playOnTap = false,
+  tapAnimate = true
 } = defineProps<ButtonProps>()
 
 const slots = useSlots()
 const attrs = useAttrs()
 
-const { playing, interceptClick } = usePlayOnTap({ reset: false })
+const { playing, interceptClick } = usePlayOnTap({ reset: false, animate: tapAnimate })
 
 const merged_sfx = computed(() => {
   return {
@@ -96,6 +100,7 @@ function emitClickSfx() {
         'ui-kit-btn--icon-only': iconOnly,
         'ui-kit-btn--inverted': inverted,
         'ui-kit-btn--split': has_trailing,
+        'ui-kit-btn--quiet-tap': playOnTap && !tapAnimate,
         'rounded-full!': roundedFull,
         'w-full!': fullWidth
       }
@@ -154,6 +159,9 @@ function emitClickSfx() {
   align-items: stretch;
   user-select: none;
   cursor: pointer;
+  /* Suppress the double-tap-to-zoom gesture so a quick double tap fires two
+     clicks instead of zooming the page. */
+  touch-action: manipulation;
 }
 
 /* Inner container carries the padding + gap so the trailing slot can sit flush
@@ -311,5 +319,11 @@ function emitClickSfx() {
 }
 .ui-kit-btn[data-playing] .btn-icon.btn-icon--right {
   transform: scale(1.3) rotate(5deg);
+}
+
+/* Quiet tap: the bgx sweep still plays via [data-playing], but the icon holds
+   still — no scale/rotate on tap. Hover keeps its own nudge. */
+.ui-kit-btn--quiet-tap[data-playing] .btn-icon {
+  transform: none;
 }
 </style>
