@@ -35,9 +35,11 @@ const lesson_id = computed(() => Number(lessonId))
 const {
   lesson,
   paragraphs,
+  matches,
   audio_url,
   active_word,
   selection,
+  selected_term_decks,
   popover_open,
   target_lang,
   openTerm,
@@ -204,6 +206,7 @@ watch(
       <div data-testid="lesson-view__transcript" class="px-0 pt-6 pb-2 sm:px-6">
         <transcript-view
           :paragraphs="paragraphs"
+          :matches="matches"
           :active_word="active_word"
           :popover_open="popover_open"
           @select="openTerm"
@@ -235,6 +238,7 @@ watch(
                 :term="selection.term"
                 :sentence="selection.sentence"
                 :target_lang="target_lang"
+                :existing_decks="selected_term_decks"
                 show_back
                 @back="closeTerm"
                 @close="closeTerm"
@@ -276,6 +280,7 @@ watch(
         :term="selection.term"
         :sentence="selection.sentence"
         :target_lang="target_lang"
+        :existing_decks="selected_term_decks"
         @close="closeTerm"
         @play-from-here="playFromHere"
         @play-word="playClip"

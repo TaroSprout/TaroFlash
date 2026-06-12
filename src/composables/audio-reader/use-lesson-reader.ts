@@ -3,9 +3,18 @@ import type { MaybeRefOrGetter } from 'vue'
 import { emitSfx } from '@/sfx/bus'
 import { useToast } from '@/composables/toast'
 import { useLessonQuery, useLessonAudioUrlQuery } from '@/api/lessons'
+import { useMemberCardIndexQuery } from '@/api/cards'
+import { useMemberDecksQuery } from '@/api/decks'
 import { useAudioPlayer } from './use-audio-player'
 import { useTranscriptSync } from './use-transcript-sync'
 import { groupWordsBySentence } from '@/utils/transcript'
+import {
+  buildCardTermMap,
+  decksForTerm,
+  matchCardsInWords,
+  matchesByWord,
+  type CardMatch
+} from '@/utils/transcript-match'
 
 // Translate into the app language. A per-member target language can replace this
 // later; admin-only v1 is English.
@@ -37,6 +46,20 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
     return groupWordsBySentence(segments, words.value, lesson.value?.transcript.text)
   })
 
+  // The member-wide card index, mapped to normalized term → decks. Fetched once
+  // and reused across lessons; absent until it loads, so matches start empty.
+  const { data: card_index } = useMemberCardIndexQuery()
+  const card_terms = computed(() => buildCardTermMap(card_index.value ?? []))
+
+  // Decks are already in cache for this page (the add-card control reads them);
+  // reuse them to colour each highlight by its owning deck's cover.
+  const { data: decks } = useMemberDecksQuery()
+
+  const flat_words = computed(() => paragraphs.value.flatMap((p) => p.words))
+  const matches = computed(() =>
+    matchesByWord(matchCardsInWords(flat_words.value, card_terms.value).map(themeMatch))
+  )
+
   const audio_path = computed(() => lesson.value?.audio_path)
   const { data: audio_url } = useLessonAudioUrlQuery(audio_path)
 
@@ -47,9 +70,24 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
   const selection = ref<TermSelection | null>(null)
   const popover_open = ref(false)
 
+  // The decks already holding the open term — empty when it isn't a card yet.
+  // Drives the term panel's add-button state regardless of how the term was
+  // selected (tapping a highlight or hand-selecting a range that happens to match).
+  const selected_term_decks = computed(() =>
+    selection.value ? decksForTerm(card_terms.value, selection.value.term) : []
+  )
+
   watch(error, (err) => {
     if (err) toast.error(err.message)
   })
+
+  // Colour a match by the cover of the first of its decks in the member's list:
+  // a single-deck term gets that deck, a multi-deck term a deterministic home.
+  function themeMatch(match: CardMatch): CardMatch {
+    const ids = new Set(match.deck_ids)
+    const cover = decks.value?.find((deck) => ids.has(deck.id))?.cover_config
+    return { ...match, theme: cover?.theme, theme_dark: cover?.theme_dark }
+  }
 
   /**
    * Show the translation for a tapped/selected term. Pauses playback so the term
@@ -103,9 +141,11 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
   return {
     lesson,
     paragraphs,
+    matches,
     audio_url,
     active_word,
     selection,
+    selected_term_decks,
     popover_open,
     target_lang: TARGET_LANG,
     openTerm,
