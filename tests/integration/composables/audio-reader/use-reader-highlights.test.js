@@ -559,6 +559,34 @@ describe('useReaderHighlights', () => {
     })
   })
 
+  describe('pointerdown disarms the suppress flag (regression guard) [obligation]', () => {
+    test('after a touch tap whose trailing click never fires, a fresh pointerdown+click reaches document handlers', async () => {
+      const wrapper = mountHost(vi.fn())
+      const onDocClick = vi.fn()
+      document.addEventListener('click', onDocClick, true)
+
+      // Commit a touch tap — this arms suppress_gesture_click
+      await touch(wrapper, 'pointerdown', 1)
+      await touch(wrapper, 'pointerup', 1)
+
+      // The trailing click never fires (e.g. cancelled by scroll). A fresh
+      // pointerdown starts a new gesture and must disarm the flag.
+      const outside = document.createElement('button')
+      document.body.appendChild(outside)
+
+      outside.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1 }))
+      await wrapper.vm.$nextTick()
+
+      // Now a click on that element should NOT be swallowed (flag was disarmed)
+      outside.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+
+      document.removeEventListener('click', onDocClick, true)
+      outside.remove()
+
+      expect(onDocClick).toHaveBeenCalledTimes(1)
+    })
+  })
+
   describe('tap_05 ratchet on range-select via long-press', () => {
     test('arming range-select via long-press emits ui.tap_05 for the first word [obligation]', async () => {
       const wrapper = mountHost(vi.fn())

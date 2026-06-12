@@ -55,6 +55,9 @@ const has_trailing = computed(() => !!slots.trailing)
 
 function onCaptureClick(e: MouseEvent) {
   if (!playOnTap) return
+  // The trailing slot (e.g. a split-button caret) is its own action — a click
+  // there shouldn't fire the main button's tap animation.
+  if ((e.target as HTMLElement).closest?.('.btn-trailing')) return
   const handler = attrs.onClick as ((ev: MouseEvent) => void) | undefined
   if (!handler) return
 

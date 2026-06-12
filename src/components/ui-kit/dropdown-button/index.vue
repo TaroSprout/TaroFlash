@@ -15,7 +15,7 @@ export type DropdownOption = {
 
 type DropdownButtonProps = Pick<
   ButtonProps,
-  'size' | 'variant' | 'inverted' | 'fullWidth' | 'iconLeft' | 'sfx'
+  'size' | 'variant' | 'inverted' | 'fullWidth' | 'iconLeft' | 'sfx' | 'playOnTap'
 > & {
   options: DropdownOption[]
   position?: Placement
@@ -24,6 +24,10 @@ type DropdownButtonProps = Pick<
   openOnTrigger?: boolean
   hideTrigger?: boolean
   shadow?: boolean
+  // The menu is teleported, so it can't inherit a `data-theme` ancestor — it
+  // takes its theme explicitly.
+  menuTheme?: Theme
+  menuThemeDark?: Theme
 }
 
 defineOptions({ inheritAttrs: false })
@@ -36,12 +40,15 @@ const {
   fullWidth,
   iconLeft,
   sfx,
+  playOnTap,
   position = 'bottom-start',
   triggerIcon = 'arrow-drop-down',
   gap = 4,
   openOnTrigger = false,
   hideTrigger = false,
-  shadow = false
+  shadow = false,
+  menuTheme = 'brown-300',
+  menuThemeDark
 } = defineProps<DropdownButtonProps>()
 
 const emit = defineEmits<{
@@ -60,7 +67,12 @@ const popover_open = ref(false)
 // content inherits the theme), while event handlers — the consumer's primary
 // @click — land on the inner button so they fire only from the label region.
 const popover_attrs = computed(() => filter_attrs((key) => !key.startsWith('on')))
-const button_attrs = computed(() => filter_attrs((key) => key.startsWith('on')))
+// `onClick` is handled through `onButtonClick` instead of forwarded, so the inner
+// button never receives both it and the trigger handler as a merged array — which
+// its play-on-tap intercept can't invoke (it expects a single onClick function).
+const button_attrs = computed(() =>
+  filter_attrs((key) => key.startsWith('on') && key !== 'onClick')
+)
 
 // The caret is the only way to open the menu unless the whole button is the
 // trigger, so it can only be hidden when `openOnTrigger` also makes the label
@@ -92,6 +104,19 @@ function toggle() {
 // caret. The caret keeps its own `@click.stop`, so it never double-fires here.
 function onTriggerClick() {
   if (openOnTrigger) toggle()
+}
+
+// Single click handler for the label region: the dropdown's own trigger behaviour
+// plus the consumer's forwarded @click, so the inner button sees one onClick.
+function onButtonClick(e: MouseEvent) {
+  onTriggerClick()
+
+  const consumer = attrs.onClick as
+    | ((e: MouseEvent) => void)
+    | ((e: MouseEvent) => void)[]
+    | undefined
+  if (Array.isArray(consumer)) consumer.forEach((fn) => fn(e))
+  else consumer?.(e)
 }
 
 function onCaretEnter(el: Element, done: () => void) {
@@ -135,15 +160,16 @@ function onSelect(option: DropdownOption) {
         :full-width="fullWidth"
         :icon-left="iconLeft"
         :sfx="sfx"
+        :play-on-tap="playOnTap"
         :style="trigger_style"
         data-testid="dropdown-button__button"
-        @click="onTriggerClick"
+        @click="onButtonClick"
       >
         <slot></slot>
         <template #trailing>
           <div
             v-if="show_trigger"
-            class="flex h-full p-2 pointer-coarse:p-1"
+            class="flex h-full p-2 pointer-coarse:p-0"
             data-testid="dropdown-button__trigger-wrap"
           >
             <transition mode="out-in" @enter="onCaretEnter" @leave="onCaretLeave">
@@ -154,7 +180,7 @@ function onSelect(option: DropdownOption) {
                 aria-haspopup="menu"
                 :aria-expanded="popover_open"
                 :data-active="popover_open"
-                class="relative z-1 flex aspect-square h-full cursor-pointer items-center justify-center rounded-[calc(var(--btn-border-radius)-8px)] pointer-coarse:rounded-[calc(var(--btn-border-radius)-4px)] bg-(--theme-secondary) text-(--theme-on-secondary) transition-[scale] duration-120 ease-[ease] hover:scale-110"
+                class="relative z-1 flex aspect-square h-full cursor-pointer items-center justify-center rounded-[calc(var(--btn-border-radius)-8px)] pointer-coarse:rounded-(--btn-border-radius) bg-(--theme-secondary) text-(--theme-on-secondary) transition-[scale] duration-120 ease-[ease] hover:scale-110"
                 data-testid="dropdown-button__trigger"
                 v-sfx.hover="'ui.click_07'"
                 @click.stop="toggle"
@@ -175,6 +201,8 @@ function onSelect(option: DropdownOption) {
     <div
       class="flex flex-col overflow-hidden rounded-(--btn-border-radius) bg-(--theme-primary) py-2 text-(length:--btn-font-size) leading-(--btn-font-size--line-height) text-(--theme-on-primary)"
       :class="`ui-kit-btn-tokens--${size}`"
+      :data-theme="menuTheme"
+      :data-theme-dark="menuThemeDark"
       data-testid="dropdown-button__menu"
     >
       <button

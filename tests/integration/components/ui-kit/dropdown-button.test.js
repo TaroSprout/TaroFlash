@@ -443,6 +443,42 @@ describe('UiDropdownButton', () => {
     expect(style).not.toContain('--btn-bg-color')
   })
 
+  // ── consumer @click fires exactly once per activation [obligation] ────────
+
+  test('consumer @click fires exactly once when main button is clicked (not merged into array) [obligation]', async () => {
+    const onClick = vi.fn()
+    const wrapper = mountDropdown({}, { attrs: { onClick } })
+    await mainButton(wrapper).trigger('click')
+    expect(onClick).toHaveBeenCalledTimes(1)
+  })
+
+  test('consumer @click fires exactly once even with openOnTrigger=true [obligation]', async () => {
+    const onClick = vi.fn()
+    const wrapper = mountDropdown({ openOnTrigger: true }, { attrs: { onClick } })
+    await mainButton(wrapper).trigger('click')
+    expect(onClick).toHaveBeenCalledTimes(1)
+  })
+
+  // ── menuTheme/menuThemeDark forwarded to menu container [obligation] ───────
+
+  test('menuTheme prop is applied as data-theme on the menu container [obligation]', async () => {
+    const wrapper = mountDropdown({ menuTheme: 'blue-500' })
+    await trigger(wrapper).trigger('click')
+    expect(menu(wrapper).attributes('data-theme')).toBe('blue-500')
+  })
+
+  test('default menuTheme is brown-300 [obligation]', async () => {
+    const wrapper = mountDropdown()
+    await trigger(wrapper).trigger('click')
+    expect(menu(wrapper).attributes('data-theme')).toBe('brown-300')
+  })
+
+  test('menuThemeDark prop is applied as data-theme-dark on the menu container [obligation]', async () => {
+    const wrapper = mountDropdown({ menuThemeDark: 'stone-900' })
+    await trigger(wrapper).trigger('click')
+    expect(menu(wrapper).attributes('data-theme-dark')).toBe('stone-900')
+  })
+
   // ── shadow prop forwarded to popover [obligation] ─────────────────────────
 
   test('shadow=true is forwarded to the popover [obligation]', () => {

@@ -17,6 +17,7 @@ export const AUDIO_CONFIG = createAudioConfig({
     double_pop_up: {},
     etc_camera_reel: {},
     etc_camera_shutter: {},
+    etc_error_break: {},
     etc_woodblock_stuck: {},
     pop_drip_mid: {
       default_volume: 0.1
@@ -51,6 +52,7 @@ export const AUDIO_CONFIG = createAudioConfig({
     alert_clicks_wooden: {},
     pop_up_close: {},
     snappy_button_2: {},
+    snappy_button_3: {},
     snappy_button_5: {},
     pop_up_pop: {}
   }

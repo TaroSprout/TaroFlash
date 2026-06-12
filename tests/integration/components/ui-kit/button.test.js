@@ -246,6 +246,38 @@ describe('UiButton', () => {
     })
   })
 
+  // ── playOnTap bails for clicks inside .btn-trailing [obligation] ──────────
+
+  describe('playOnTap — trailing region bail', () => {
+    test('clicking inside .btn-trailing skips the play-on-tap intercept so GSAP is NOT called [obligation]', async () => {
+      // Verify that the `onCaptureClick` guard bails when the click target is
+      // inside `.btn-trailing`, leaving the event for the caret's own handler.
+      // We confirm GSAP is never invoked — the tap-pop animation is the intercept.
+      const { gsap } = await import('gsap')
+      gsap.to.mockClear()
+
+      const onClick = vi.fn()
+      const wrapper = mountButtonWithSlots(
+        { playOnTap: true },
+        {
+          default: 'Label',
+          // The trailing div carries the .btn-trailing class so closest() finds it.
+          trailing: () =>
+            h('div', { class: 'btn-trailing' }, [h('span', { 'data-testid': 'caret-inner' }, '▼')])
+        }
+      )
+
+      // Dispatch a click whose target is the inner caret span — it is a descendant
+      // of .btn-trailing so closest('.btn-trailing') returns truthy → bail.
+      const caretInner = wrapper.find('[data-testid="caret-inner"]').element
+      caretInner.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      await wrapper.vm.$nextTick()
+
+      // The tap-pop GSAP animation must NOT have been triggered.
+      expect(gsap.to).not.toHaveBeenCalled()
+    })
+  })
+
   // ── trailing slot / split layout [obligation] ──────────────────────────────
   // Uses mountButtonWithSlots — a UiTooltip stub that renders slot content so
   // inner data-testid elements (ui-kit-button__content, ui-kit-button__trailing)

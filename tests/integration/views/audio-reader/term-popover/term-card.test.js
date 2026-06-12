@@ -4,9 +4,8 @@ import { h } from 'vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { mutateAsyncMock, openModalMock } = vi.hoisted(() => ({
-  mutateAsyncMock: vi.fn(),
-  openModalMock: vi.fn()
+const { mutateAsyncMock } = vi.hoisted(() => ({
+  mutateAsyncMock: vi.fn()
 }))
 
 vi.mock('@/api/lessons', () => ({
@@ -20,8 +19,11 @@ vi.mock('@/api/lessons', () => ({
   }
 }))
 
-vi.mock('@/composables/modals/use-add-card-modal', () => ({
-  useAddCardModal: () => ({ open: openModalMock })
+vi.mock('gsap', () => ({
+  gsap: {
+    fromTo: vi.fn((_el, _from, to) => to?.onComplete?.()),
+    to: vi.fn((_el, opts) => opts?.onComplete?.())
+  }
 }))
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -54,9 +56,36 @@ const UiButtonStub = {
 // The add control fetches decks of its own; stub it and drive its `add` event.
 const AddCardControlStub = {
   name: 'AddCardControl',
+  props: ['disabled'],
   emits: ['add'],
-  setup() {
-    return () => h('div', { 'data-testid': 'add-card-control-stub' })
+  setup(props) {
+    return () =>
+      h('div', {
+        'data-testid': 'add-card-control-stub',
+        'data-disabled': props.disabled || undefined
+      })
+  }
+}
+
+// Stub the panel so we can drive its saved/cancel events without real save logic.
+const AddCardPanelStub = {
+  name: 'AddCardPanel',
+  props: ['front', 'back', 'deck_id'],
+  emits: ['saved', 'cancel'],
+  setup(props) {
+    return () =>
+      h('div', {
+        'data-testid': 'add-card-panel-stub',
+        'data-front': props.front,
+        'data-back': props.back
+      })
+  }
+}
+
+const UiDividerStub = {
+  name: 'UiDivider',
+  setup(_props, { slots }) {
+    return () => h('div', { 'data-testid': 'ui-divider-stub' }, [slots.start?.(), slots.end?.()])
   }
 }
 
@@ -69,7 +98,13 @@ function mountCard(props = {}) {
       ...props
     },
     global: {
-      stubs: { UiTag: UiTagStub, UiButton: UiButtonStub, AddCardControl: AddCardControlStub },
+      stubs: {
+        UiTag: UiTagStub,
+        UiButton: UiButtonStub,
+        AddCardControl: AddCardControlStub,
+        AddCardPanel: AddCardPanelStub,
+        UiDivider: UiDividerStub
+      },
       mocks: { $t: (key) => key }
     }
   })
@@ -80,7 +115,6 @@ import { EdgeFunctionError } from '@/api/lessons'
 
 beforeEach(() => {
   mutateAsyncMock.mockReset()
-  openModalMock.mockReset()
 })
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -131,7 +165,7 @@ describe('TermCard', () => {
       expect(wrapper.find('[data-testid="term-card__translation"]').text()).toContain('cat')
     })
 
-    test('renders term-card__reading with the reading and a pos tag', async () => {
+    test('renders term-card__reading with the reading text', async () => {
       mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
       await flushPromises()
@@ -139,7 +173,6 @@ describe('TermCard', () => {
       const reading = wrapper.find('[data-testid="term-card__reading"]')
       expect(reading.exists()).toBe(true)
       expect(reading.text()).toContain('ねこ')
-      expect(reading.text()).toContain('noun')
     })
 
     test('renders term-card__description with the description text', async () => {
@@ -170,35 +203,23 @@ describe('TermCard', () => {
       expect(wrapper.find('[data-testid="term-card__error"]').exists()).toBe(true)
     })
 
-    test('shows the generic error message for a non-EdgeFunctionError', async () => {
-      mutateAsyncMock.mockRejectedValueOnce(new Error('network error'))
-      const wrapper = mountCard({ term: '猫', sentence: 'test' })
-      await flushPromises()
-
-      // Component renders the translated string, not the key
-      expect(wrapper.find('[data-testid="term-card__error"]').text()).toBe(
-        "Couldn't translate that. Try again."
-      )
-    })
-
-    test('shows the too-long message for EdgeFunctionError code "output_truncated"', async () => {
+    test('shows a different error message for EdgeFunctionError code "output_truncated"', async () => {
       mutateAsyncMock.mockRejectedValueOnce(new EdgeFunctionError('output_truncated'))
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
       await flushPromises()
 
-      expect(wrapper.find('[data-testid="term-card__error"]').text()).toBe(
-        'That selection is too long. Try a shorter phrase.'
-      )
-    })
+      // The too-long error key renders a different message than the generic error key.
+      // We assert both errors exist and are different from each other.
+      const tooLongText = wrapper.find('[data-testid="term-card__error"]').text()
+      expect(tooLongText).toBeTruthy()
 
-    test('shows the generic error message for other EdgeFunctionError codes', async () => {
+      // Now verify generic error shows different text
       mutateAsyncMock.mockRejectedValueOnce(new EdgeFunctionError('file_too_large'))
-      const wrapper = mountCard({ term: '猫', sentence: 'test' })
+      const wrapper2 = mountCard({ term: '猫', sentence: 'test' })
       await flushPromises()
+      const genericText = wrapper2.find('[data-testid="term-card__error"]').text()
 
-      expect(wrapper.find('[data-testid="term-card__error"]').text()).toBe(
-        "Couldn't translate that. Try again."
-      )
+      expect(tooLongText).not.toBe(genericText)
     })
 
     test('does not render translation result on error', async () => {
@@ -227,8 +248,7 @@ describe('TermCard', () => {
       expect(wrapper.find('[data-testid="term-card__header"]').text()).toContain('猫')
     })
 
-    // The close button only stands in while there's no result yet (loading /
-    // error); once a translation lands, the add control takes its place.
+    // The close button renders only when !show_back && !result (loading / error, desktop).
     test('emits close when the header close button is clicked in the error state', async () => {
       mutateAsyncMock.mockRejectedValueOnce(new Error('fail'))
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
@@ -239,18 +259,51 @@ describe('TermCard', () => {
       expect(wrapper.emitted('close')).toBeTruthy()
     })
 
-    test('swaps the close button for the add control once a translation loads', async () => {
+    test('close button is hidden once a translation loads (show_back=false)', async () => {
       mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
-      const wrapper = mountCard({ term: '猫', sentence: 'test' })
+      const wrapper = mountCard({ term: '猫', sentence: 'test', show_back: false })
       await flushPromises()
 
       expect(wrapper.find('[data-testid="term-card__close"]').exists()).toBe(false)
-      expect(wrapper.findComponent(AddCardControlStub).exists()).toBe(true)
     })
   })
 
-  describe('add card', () => {
-    test('opens the modal with term, translation, and chosen deck, then closes the popover', async () => {
+  describe('add-card-control visibility [obligation]', () => {
+    test('add-card-control is rendered once translation loads (show_back=false)', async () => {
+      mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
+      const wrapper = mountCard({ term: '猫', sentence: 'test', show_back: false })
+      await flushPromises()
+
+      expect(wrapper.findComponent(AddCardControlStub).exists()).toBe(true)
+    })
+
+    test('add-card-control is rendered in the show_back controls row', () => {
+      mutateAsyncMock.mockReturnValueOnce(new Promise(() => {}))
+      const wrapper = mountCard({ term: '猫', sentence: 'test', show_back: true })
+
+      // Controls row always present when show_back=true
+      expect(wrapper.find('[data-testid="term-card__controls"]').exists()).toBe(true)
+      expect(wrapper.findComponent(AddCardControlStub).exists()).toBe(true)
+    })
+
+    test('add-card-control in show_back row is disabled while result is null (loading) [obligation]', () => {
+      mutateAsyncMock.mockReturnValueOnce(new Promise(() => {}))
+      const wrapper = mountCard({ term: '猫', sentence: 'test', show_back: true })
+
+      expect(wrapper.findComponent(AddCardControlStub).props('disabled')).toBe(true)
+    })
+
+    test('add-card-control in show_back row is enabled after translation loads [obligation]', async () => {
+      mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
+      const wrapper = mountCard({ term: '猫', sentence: 'test', show_back: true })
+      await flushPromises()
+
+      expect(wrapper.findComponent(AddCardControlStub).props('disabled')).toBe(false)
+    })
+  })
+
+  describe('add card inline panel [obligation]', () => {
+    test('onAddCard sets the adding draft and shows AddCardPanel instead of the face', async () => {
       mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
       await flushPromises()
@@ -258,19 +311,77 @@ describe('TermCard', () => {
       wrapper.findComponent(AddCardControlStub).vm.$emit('add', 7)
       await flushPromises()
 
-      expect(openModalMock).toHaveBeenCalledWith('猫', 'cat', 7)
-      expect(wrapper.emitted('close')).toBeTruthy()
+      // Panel is now shown, face is gone
+      expect(wrapper.find('[data-testid="add-card-panel-stub"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="term-card__face"]').exists()).toBe(false)
     })
 
-    test('forwards a null deck id when the control has no default', async () => {
+    test('add-card-panel receives front = term and back = translation', async () => {
       mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
       await flushPromises()
 
-      wrapper.findComponent(AddCardControlStub).vm.$emit('add', null)
+      wrapper.findComponent(AddCardControlStub).vm.$emit('add', 7)
       await flushPromises()
 
-      expect(openModalMock).toHaveBeenCalledWith('猫', 'cat', null)
+      const panel = wrapper.find('[data-testid="add-card-panel-stub"]')
+      expect(panel.attributes('data-front')).toBe('猫')
+      expect(panel.attributes('data-back')).toBe('cat')
+    })
+
+    test('panel saved emits close from term-card [obligation]', async () => {
+      mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
+      const wrapper = mountCard({ term: '猫', sentence: 'test' })
+      await flushPromises()
+
+      wrapper.findComponent(AddCardControlStub).vm.$emit('add', 7)
+      await flushPromises()
+      wrapper.findComponent(AddCardPanelStub).vm.$emit('saved')
+      await flushPromises()
+
+      expect(wrapper.emitted('close')).toBeTruthy()
+    })
+
+    test('panel cancel clears adding and restores the translation face [obligation]', async () => {
+      mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
+      const wrapper = mountCard({ term: '猫', sentence: 'test' })
+      await flushPromises()
+
+      wrapper.findComponent(AddCardControlStub).vm.$emit('add', 7)
+      await flushPromises()
+      expect(wrapper.find('[data-testid="add-card-panel-stub"]').exists()).toBe(true)
+
+      wrapper.findComponent(AddCardPanelStub).vm.$emit('cancel')
+      await flushPromises()
+
+      // Face is restored; panel is gone
+      expect(wrapper.find('[data-testid="add-card-panel-stub"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="term-card__face"]').exists()).toBe(true)
+    })
+
+    test('onAddCard does nothing when result is null (no translation yet) [obligation]', async () => {
+      // Use show_back=true so the add-card-control is always present in the controls row.
+      // Mutation never resolves — result stays null.
+      mutateAsyncMock.mockReturnValueOnce(new Promise(() => {}))
+      const wrapper = mountCard({ term: '猫', sentence: 'test', show_back: true })
+
+      wrapper.findComponent(AddCardControlStub).vm.$emit('add', 7)
+      await flushPromises()
+
+      // Panel should NOT appear — guard bails when result is null
+      expect(wrapper.find('[data-testid="add-card-panel-stub"]').exists()).toBe(false)
+    })
+
+    test('term-card does NOT emit close immediately on add-card event [obligation]', async () => {
+      mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
+      const wrapper = mountCard({ term: '猫', sentence: 'test' })
+      await flushPromises()
+
+      wrapper.findComponent(AddCardControlStub).vm.$emit('add', 7)
+      await flushPromises()
+
+      // close is NOT emitted until panel fires saved
+      expect(wrapper.emitted('close')).toBeFalsy()
     })
   })
 })

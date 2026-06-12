@@ -3,8 +3,11 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useMemberDecksQuery } from '@/api/decks'
 import { useLastDeck } from '@/composables/use-last-deck'
-import UiActionMenu from '@/components/ui-kit/action-menu.vue'
-import UiButton from '@/components/ui-kit/button.vue'
+import UiDropdownButton, {
+  type DropdownOption
+} from '@/components/ui-kit/dropdown-button/index.vue'
+
+const { disabled = false } = defineProps<{ disabled?: boolean }>()
 
 const emit = defineEmits<{
   (e: 'add', deck_id: number | null): void
@@ -24,61 +27,41 @@ const default_deck = computed(
 const primary_label = computed(
   () => default_deck.value?.title ?? t('audio-reader.popover.add-card-button')
 )
-const primary_aria = computed(() =>
-  default_deck.value
-    ? t('audio-reader.popover.add-to-deck-button', { deck: default_deck.value.title })
-    : t('audio-reader.popover.add-card-button')
+const deck_options = computed<DropdownOption[]>(() =>
+  decks.value.map((deck) => ({
+    label: deck.title ?? t('audio-reader.popover.add-card-button'),
+    value: deck.id,
+    icon: 'card-deck'
+  }))
 )
 
 function onPrimary() {
   emit('add', default_deck.value?.id ?? null)
 }
 
-function onPick(deck_id: number) {
-  emit('add', deck_id)
+function onSelect(option: DropdownOption) {
+  emit('add', Number(option.value))
 }
 </script>
 
 <template>
-  <div data-testid="add-card-control" class="flex items-stretch gap-0.5">
-    <ui-button
-      data-testid="add-card-control__primary"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
-      icon-left="add"
-      size="sm"
-      :aria-label="primary_aria"
-      @click="onPrimary"
-    >
-      <span class="block max-w-[8rem] truncate">{{ primary_label }}</span>
-    </ui-button>
-
-    <ui-action-menu position="bottom-end" alignment="end">
-      <template #trigger="{ toggle }">
-        <ui-button
-          data-testid="add-card-control__toggle"
-          data-theme="blue-500"
-          data-theme-dark="blue-650"
-          icon-only
-          icon-left="arrow-drop-down"
-          size="sm"
-          @click="toggle"
-        >
-          {{ t('audio-reader.popover.choose-deck-button') }}
-        </ui-button>
-      </template>
-
-      <ui-button
-        v-for="deck in decks"
-        :key="deck.id"
-        data-testid="add-card-control__deck-option"
-        data-theme="brown-300"
-        icon-left="card-deck"
-        size="sm"
-        @click="onPick(deck.id)"
-      >
-        {{ deck.title }}
-      </ui-button>
-    </ui-action-menu>
-  </div>
+  <ui-dropdown-button
+    data-testid="add-card-control"
+    data-theme="blue-500"
+    data-theme-dark="blue-650"
+    icon-left="card-add"
+    size="base"
+    menu-theme="brown-100"
+    menu-theme-dark="stone-900"
+    position="bottom-end"
+    play-on-tap
+    :sfx="{ click: 'ui.select' }"
+    :options="deck_options"
+    :aria-disabled="disabled || undefined"
+    :class="{ 'pointer-events-none opacity-50': disabled }"
+    @click="onPrimary"
+    @select="onSelect"
+  >
+    <span class="block max-w-[8rem] truncate">{{ primary_label }}</span>
+  </ui-dropdown-button>
 </template>

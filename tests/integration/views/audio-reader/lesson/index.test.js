@@ -1,19 +1,24 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, ref } from 'vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
+// Plain-object refs suffice for state the script reads via .value (watch, onMounted).
+// For values that Vue's template auto-unwraps (selection, popover_open, is_mobile)
+// we need real Vue refs — created at module level after imports so the template
+// reactive system sees them as refs and auto-unwraps them correctly.
 
 const {
   lessonRef,
   paragraphsRef,
   audioUrlRef,
   activeWordRef,
-  selectionRef,
-  popoverOpenRef,
   targetLang,
   openTermMock,
   closeTermMock,
+  playFromHereMock,
+  playClipMock,
+  playerRef,
   chaptersRef,
   progressMutate,
   editModalOpenMock,
@@ -23,16 +28,23 @@ const {
   paragraphsRef: { value: [] },
   audioUrlRef: { value: null },
   activeWordRef: { value: null },
-  selectionRef: { value: null },
-  popoverOpenRef: { value: false },
   targetLang: 'English',
   openTermMock: vi.fn(),
   closeTermMock: vi.fn(),
+  playFromHereMock: vi.fn(),
+  playClipMock: vi.fn(),
+  playerRef: { value: {} },
   chaptersRef: { value: [] },
   progressMutate: vi.fn(),
   editModalOpenMock: vi.fn(),
   routerPushMock: vi.fn()
 }))
+
+// Real Vue refs for template-reactive state. Created here (after imports) so
+// `ref()` is available. The vi.mock factories below close over these variables.
+const selectionRef = ref(null)
+const popoverOpenRef = ref(false)
+const isMobileRef = ref(false)
 
 vi.mock('@/composables/audio-reader/use-lesson-reader', () => ({
   useLessonReader: () => ({
@@ -44,8 +56,30 @@ vi.mock('@/composables/audio-reader/use-lesson-reader', () => ({
     popover_open: popoverOpenRef,
     target_lang: targetLang,
     openTerm: openTermMock,
-    closeTerm: closeTermMock
+    closeTerm: closeTermMock,
+    playFromHere: playFromHereMock,
+    playClip: playClipMock,
+    player: playerRef
   })
+}))
+
+vi.mock('@/composables/use-media-query', () => ({
+  useMatchMedia: () => isMobileRef
+}))
+
+vi.mock('@/composables/use-animated-height', () => ({
+  useAnimatedHeight: vi.fn()
+}))
+
+vi.mock('@/utils/animations/footer-swap', () => ({
+  footerSwapBeforeLeave: vi.fn(() => vi.fn()),
+  footerSwapEnter: vi.fn(() => vi.fn((_el, done) => done?.())),
+  footerSwapLeave: vi.fn((_el, done) => done?.())
+}))
+
+vi.mock('@/utils/animations/transcript-scroll', () => ({
+  scrollClearOf: vi.fn(),
+  scrollLineIntoView: vi.fn()
 }))
 
 vi.mock('@/api/lessons', () => ({
@@ -93,6 +127,27 @@ const TermPopoverStub = defineComponent({
   }
 })
 
+const TermCardStub = defineComponent({
+  name: 'TermCard',
+  props: ['term', 'sentence', 'target_lang', 'show_back'],
+  emits: ['back', 'close', 'play-from-here', 'play-word'],
+  setup(_props, { emit }) {
+    return () =>
+      h('div', { 'data-testid': 'term-card-stub' }, [
+        h('button', { 'data-testid': 'term-card-stub__back', onClick: () => emit('back') }),
+        h('button', { 'data-testid': 'term-card-stub__close', onClick: () => emit('close') }),
+        h('button', {
+          'data-testid': 'term-card-stub__play-from-here',
+          onClick: () => emit('play-from-here')
+        }),
+        h('button', {
+          'data-testid': 'term-card-stub__play-word',
+          onClick: () => emit('play-word')
+        })
+      ])
+  }
+})
+
 // ── Component import (after mocks) ────────────────────────────────────────────
 
 import LessonView from '@/views/audio-reader/lesson/index.vue'
@@ -113,7 +168,11 @@ function mountView(props = {}) {
   return shallowMount(LessonView, {
     props: { collectionId: COLLECTION_ID, lessonId: LESSON_ID, ...props },
     global: {
-      stubs: { TranscriptView: TranscriptViewStub, TermPopover: TermPopoverStub }
+      stubs: {
+        TranscriptView: TranscriptViewStub,
+        TermPopover: TermPopoverStub,
+        TermCard: TermCardStub
+      }
     }
   })
 }
@@ -123,9 +182,16 @@ function mountView(props = {}) {
 beforeEach(() => {
   lessonRef.value = { id: 2, title: 'Hiragana Basics' }
   chaptersRef.value = []
+  selectionRef.value = null
+  popoverOpenRef.value = false
+  isMobileRef.value = false
   progressMutate.mockClear()
   editModalOpenMock.mockClear()
   routerPushMock.mockClear()
+  openTermMock.mockClear()
+  closeTermMock.mockClear()
+  playFromHereMock.mockClear()
+  playClipMock.mockClear()
 })
 
 describe('LessonView', () => {
@@ -220,6 +286,152 @@ describe('LessonView', () => {
 
       expect(editModalOpenMock).toHaveBeenCalledOnce()
       expect(editModalOpenMock).toHaveBeenCalledWith(5)
+    })
+  })
+
+  describe('mobile footer — show_term_in_footer [obligation]', () => {
+    test('footer shows toolbar by default (not mobile)', () => {
+      const wrapper = mountView()
+
+      expect(wrapper.find('[data-testid="lesson-view__footer-toolbar"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="lesson-view__footer-term"]').exists()).toBe(false)
+    })
+
+    test('footer shows term-card when mobile + popover open + selection set [obligation]', async () => {
+      isMobileRef.value = true
+      popoverOpenRef.value = true
+      selectionRef.value = { term: 'hello', sentence: 'say hello', word_index: 3, rect: {} }
+
+      const wrapper = mountView()
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-testid="lesson-view__footer-term"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="lesson-view__footer-toolbar"]').exists()).toBe(false)
+    })
+
+    test('footer shows toolbar when mobile but popover is closed [obligation]', async () => {
+      isMobileRef.value = true
+      popoverOpenRef.value = false
+      selectionRef.value = { term: 'hello', sentence: 'say hello', word_index: 3, rect: {} }
+
+      const wrapper = mountView()
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-testid="lesson-view__footer-toolbar"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="lesson-view__footer-term"]').exists()).toBe(false)
+    })
+
+    test('footer shows toolbar when mobile + popover open but no selection [obligation]', async () => {
+      isMobileRef.value = true
+      popoverOpenRef.value = true
+      selectionRef.value = null
+
+      const wrapper = mountView()
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-testid="lesson-view__footer-toolbar"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="lesson-view__footer-term"]').exists()).toBe(false)
+    })
+
+    test('term-card in footer receives the selection term and sentence [obligation]', async () => {
+      isMobileRef.value = true
+      popoverOpenRef.value = true
+      selectionRef.value = {
+        term: 'konnichiwa',
+        sentence: 'konnichiwa world',
+        word_index: 0,
+        rect: {}
+      }
+
+      const wrapper = mountView()
+      await wrapper.vm.$nextTick()
+
+      const termCard = wrapper.findComponent({ name: 'TermCard' })
+      expect(termCard.exists()).toBe(true)
+      expect(termCard.props('term')).toBe('konnichiwa')
+      expect(termCard.props('sentence')).toBe('konnichiwa world')
+    })
+
+    test('term-card back event calls closeTerm [obligation]', async () => {
+      isMobileRef.value = true
+      popoverOpenRef.value = true
+      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
+
+      const wrapper = mountView()
+      await wrapper.vm.$nextTick()
+
+      await wrapper.find('[data-testid="term-card-stub__back"]').trigger('click')
+      expect(closeTermMock).toHaveBeenCalledOnce()
+    })
+
+    test('term-card close event calls closeTerm [obligation]', async () => {
+      isMobileRef.value = true
+      popoverOpenRef.value = true
+      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
+
+      const wrapper = mountView()
+      await wrapper.vm.$nextTick()
+
+      await wrapper.find('[data-testid="term-card-stub__close"]').trigger('click')
+      expect(closeTermMock).toHaveBeenCalledOnce()
+    })
+
+    test('term-card play-from-here event calls playFromHere [obligation]', async () => {
+      isMobileRef.value = true
+      popoverOpenRef.value = true
+      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
+
+      const wrapper = mountView()
+      await wrapper.vm.$nextTick()
+
+      await wrapper.find('[data-testid="term-card-stub__play-from-here"]').trigger('click')
+      expect(playFromHereMock).toHaveBeenCalledOnce()
+    })
+
+    test('term-card play-word event calls playClip [obligation]', async () => {
+      isMobileRef.value = true
+      popoverOpenRef.value = true
+      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
+
+      const wrapper = mountView()
+      await wrapper.vm.$nextTick()
+
+      await wrapper.find('[data-testid="term-card-stub__play-word"]').trigger('click')
+      expect(playClipMock).toHaveBeenCalledOnce()
+    })
+  })
+
+  describe('term-popover — desktop only [obligation]', () => {
+    test('term-popover is rendered on desktop when selection is set [obligation]', async () => {
+      isMobileRef.value = false
+      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
+      popoverOpenRef.value = true
+
+      const wrapper = mountView()
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.findComponent(TermPopoverStub).exists()).toBe(true)
+    })
+
+    test('term-popover is NOT rendered on mobile even when selection is set [obligation]', async () => {
+      isMobileRef.value = true
+      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
+      popoverOpenRef.value = true
+
+      const wrapper = mountView()
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.findComponent(TermPopoverStub).exists()).toBe(false)
+    })
+
+    test('term-popover is NOT rendered when selection is null [obligation]', async () => {
+      isMobileRef.value = false
+      selectionRef.value = null
+
+      const wrapper = mountView()
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.findComponent(TermPopoverStub).exists()).toBe(false)
     })
   })
 })

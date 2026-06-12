@@ -39,6 +39,37 @@ function metrics(scroller: Scroller) {
 }
 
 /**
+ * Lift `el` clear above `limit_bottom` (a viewport Y, e.g. a fixed footer's top
+ * edge) by scrolling `scroller` up just enough. No-op when `el` already sits
+ * above the limit. Used to re-clear a selected word after the term footer grows.
+ */
+export function scrollClearOf(scroller: Scroller, el: HTMLElement, limit_bottom: number) {
+  const overshoot = el.getBoundingClientRect().bottom - limit_bottom
+  if (overshoot <= 0) return
+
+  const { current, max } = metrics(scroller)
+  const target = Math.max(0, Math.min(max, current + overshoot))
+
+  let state = stateByScroller.get(scroller)
+  if (!state) {
+    state = { y: current }
+    stateByScroller.set(scroller, state)
+  }
+
+  state.y = current
+  gsap.killTweensOf(state)
+  gsap.to(state, {
+    y: target,
+    duration: DURATION,
+    ease: 'power3.out',
+    onUpdate: () => {
+      if (isWindow(scroller)) window.scrollTo(0, state.y)
+      else scroller.scrollTop = state.y
+    }
+  })
+}
+
+/**
  * Smoothly scroll `scroller` so `el` rests ~40% down the viewport, clamped to
  * the scrollable range. Used to follow the active transcript line as audio plays.
  * `scroller` is the transcript column on desktop and the window on mobile.
