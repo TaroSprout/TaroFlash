@@ -35,7 +35,7 @@ const {
   closeTermMock: vi.fn(),
   playFromHereMock: vi.fn(),
   playClipMock: vi.fn(),
-  playerRef: { value: {} },
+  playerRef: { is_playing: { value: false } },
   chaptersRef: { value: [] },
   progressMutate: vi.fn(),
   useReaderProgressMock: vi.fn(),

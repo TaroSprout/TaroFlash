@@ -16,12 +16,14 @@ const {
   paragraphs,
   matches = new Map(),
   active_word,
-  popover_open = false
+  popover_open = false,
+  is_playing = false
 } = defineProps<{
   paragraphs: SentenceWords[]
   matches?: Map<number, CardMatch>
   active_word: number
   popover_open?: boolean
+  is_playing?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -43,7 +45,8 @@ const {
   commitSelection,
   () => popover_open,
   () => emit('dismiss'),
-  matchRangeAt
+  matchRangeAt,
+  () => is_playing
 )
 
 provide(readerSelectionKey, interaction_range)
