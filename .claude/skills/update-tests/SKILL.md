@@ -1,13 +1,13 @@
 ---
 name: update-tests
 description: Mine the current conversation for cross-cutting test obligations, then dispatch the `test-author` subagent to handle diff/coverage-driven tests + the obligations.
-allowed-tools: Read, Glob, Grep, Agent
+allowed-tools: Read, Glob, Grep, Agent, Bash
 arguments:
   - name: additional-context
     type: string
     description: Optional context to help understand the changes
 argument-hint: '[additional-context]'
-lastUpdated: 2026-06-11T00:00:00Z
+lastUpdated: 2026-06-12T00:00:00Z
 ---
 
 The main thread runs **only** the obligation-mining step below. The subagent has none of this conversation in its context, so the cross-cutting tests that depend on it must be discovered here and passed in explicitly. Everything mechanical (scoped per-file coverage of touched files, diff, type selection, writing, validation, re-measure, report) happens inside the subagent. The subagent measures coverage **only for touched files** and targets ~90% lines each — it does not run the full suite or baseline against master.
@@ -45,10 +45,33 @@ Cross-cutting test obligations from the orchestrating conversation (treat as man
 
 Additional context from \$ARGUMENTS: <verbatim $ARGUMENTS, or "None.">
 
-Return the final report defined in the workflow's Step 8.`
+Return the final report defined in the workflow's Step 8. Do NOT commit anything — leave every new and modified test file uncommitted in the working tree for the orchestrator to review and commit.`
 })
 ```
 
-## Step C — Relay the report
+## Step C — Review, decide, commit
 
-Print the subagent's final report back to the user verbatim. Don't re-run the workflow, don't summarise, don't second-guess coverage numbers. If the subagent surfaced a suspected source bug or asked a clarifying question, forward that to the user and wait.
+The subagent returns its report and leaves all test changes **uncommitted** in the working tree. You own the decision of whether coverage is sufficient and the responsibility for committing it. Time-box the whole skill run — initial dispatch, your review, and at most **one** focused re-dispatch — to **~10 minutes**. Favour a single targeted re-dispatch over an open-ended loop; if gaps remain after one, commit what's solid and report the rest rather than iterating.
+
+### Review the report against reality — don't take it at face value
+
+The subagent works from a cold diff and can mis-scope or over-claim. Cross-check before trusting it:
+
+1. **Scope completeness.** Run `git diff master...HEAD --name-only -- src/ supabase/` and `git status --short -- src/` yourself, and compare against the report's coverage table. A file the subagent claims "wasn't in the diff" but that actually appears here is a **missed obligation, not a scope decision** — this is the most common and most damaging failure. Every changed source file must be accounted for (covered, or an explicit justified deferral).
+2. **Obligations.** Every Step-A obligation must appear under "Obligations satisfied" with a ✅. Any ❌ or silent omission is a gap to close.
+3. **No collateral breakage.** The branch's own source changes can have broken existing test files the subagent never ran (it scopes to "touched files" and may not realise an untouched test exercises touched source). Run the mirror test files for the touched source once — `vp test --no-coverage <files>` — and confirm green. A composable that gained a new query dependency, for instance, throws `getActivePinia()` in every pre-existing test until its harness mocks the new hook.
+4. **Coverage floor.** Touched files should be ~90% lines; note any genuine deferrals.
+
+### Decide
+
+- **Gaps found, closable quickly** → re-dispatch the subagent with a _focused_ prompt naming exactly the files and obligations still uncovered. It has no memory of the first run, so restate the relevant obligations and conventions. One re-dispatch max within the budget.
+- **Coverage is sufficient** (or the budget is spent and what exists is solid) → commit.
+
+### Commit
+
+Once satisfied, **you** commit — the subagent never does:
+
+- `vp fmt` the new/changed test files, then commit them as `test(<scope>): <summary>`.
+- If the subagent surfaced a suspected source bug and the user confirmed it, apply and commit the fix as a separate `fix(<scope>):` commit.
+
+Then give the user a short summary: what was covered, any obligations left unmet, and any deferred gaps — you don't need to dump the full report verbatim.

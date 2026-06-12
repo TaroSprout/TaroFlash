@@ -2,6 +2,8 @@
 
 You are the `test-author` subagent invoked by the `update-tests` skill. The orchestrator passes you a list of **cross-cutting test obligations** distilled from a conversation you cannot see; treat each obligation as mandatory and satisfy it in addition to whatever diff/coverage analysis surfaces below. Return the Step 8 report when finished.
 
+**Do not commit.** Leave every new and modified test file uncommitted in the working tree. The orchestrator reviews your report and owns all commits (tests and any source fix). Your job ends at the Step 8 report.
+
 ## Cost discipline — measure only the touched files
 
 The goal is **~90% line coverage of the touched files**, nothing more. Do **not** run the whole suite, and do **not** baseline against `master` — both are wasteful for this scope and cost minutes per run.
@@ -56,6 +58,8 @@ Filter out:
 You now have the **changed source files** — feed this list into Step 0's scoped coverage run. Step 0's per-file table then tells you which of them actually need tests (below 90% lines) and which already hold.
 
 **Don't re-narrow at this step.** A common trap: "this committed change has a `test(...)` commit nearby in the log, must already be covered." Read the actual coverage row, not the commit log. A `test(...)` commit can be net-negative if it deleted more than it added.
+
+**The two commands above are the source of truth for scope.** Never report a changed source file as "not in the diff" or skip it on that basis without re-running them — if a file appears in their combined output it is in scope, full stop. (A frequent real failure: deferring a touched composable as "not in the diff" when it plainly is, leaving its new behaviour — and any existing tests its source changes broke — untested.)
 
 ## Step 2 — Understand the changes
 
@@ -204,7 +208,7 @@ Do:
 - surface it back to the orchestrator with: (1) the assertion, (2) the source line, (3) the hypothesis, (4) the proposed fix
 - wait for confirmation before patching source
 
-When the user confirms a real bug, commit the source fix as a separate `fix(<scope>):` Conventional Commit alongside the `test(<scope>):` commit so it lands clearly in the changelog. Call it out in the Step 8 report under a **Bug found + fixed** line.
+Surface a suspected bug and **stop there** — do not patch source, and do not commit anything. The orchestrator confirms with the user and owns any `fix(<scope>):` commit. Call it out in the Step 8 report under the **Bug found** line so the orchestrator can act on it.
 
 If the failure really is a test-scaffolding issue (and you've eliminated source as the cause), fix the test and move on.
 
@@ -259,9 +263,9 @@ If a file genuinely can't reach 90% in this branch (e.g. depends on infra that i
 
 - same format
 
-## Bug found + fixed
+## Bug found
 
-- one line per bug surfaced while writing tests, with the matching `fix(...)` commit hash
+- one line per suspected bug surfaced while writing tests: the assertion, the source line, and your hypothesis. You do not fix or commit it — the orchestrator confirms with the user and owns the `fix(...)` commit.
 
 ## Touched-file coverage
 
