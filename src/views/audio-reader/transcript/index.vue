@@ -7,6 +7,7 @@ import {
   useReaderHighlights
 } from '@/composables/audio-reader/use-reader-highlights'
 import TranscriptSegment from './segment.vue'
+import SelectionPreview from './selection-preview.vue'
 
 const {
   paragraphs,
@@ -26,6 +27,7 @@ const emit = defineEmits<{
 const {
   tap_active,
   interaction_range,
+  selection_preview,
   onPointerDown,
   onPointerMove,
   onPointerUp,
@@ -103,5 +105,7 @@ function commitSelection({
         :index="paragraph.index"
       />
     </div>
+
+    <selection-preview :preview="selection_preview" />
   </div>
 </template>
