@@ -220,6 +220,72 @@ describe('AudioToolbar', () => {
     expect(wrapper.find('[data-testid="audio-toolbar__expanded"]').exists()).toBe(true)
   })
 
+  // ── Mini mode controls [obligation] ───────────────────────────────────────
+
+  test('mini mode renders all five controls via data-testid [obligation]', () => {
+    localRefStore.next = 'mini'
+    const wrapper = mountToolbar()
+
+    expect(wrapper.find('[data-testid="audio-toolbar__expand"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="audio-toolbar__skip-back"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="audio-toolbar__toggle"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="audio-toolbar__skip-forward"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="audio-toolbar__speed-select"]').exists()).toBe(true)
+  })
+
+  test('mini mode audio-toolbar__toggle calls player.play() when paused [obligation]', async () => {
+    localRefStore.next = 'mini'
+    const player = makePlayer({ is_playing: ref(false) })
+    const wrapper = mountToolbar({ player })
+
+    await wrapper.find('[data-testid="audio-toolbar__toggle"]').trigger('click')
+
+    expect(player.play).toHaveBeenCalledOnce()
+  })
+
+  test('mini mode audio-toolbar__toggle calls player.pause() when playing [obligation]', async () => {
+    localRefStore.next = 'mini'
+    const player = makePlayer({ is_playing: ref(true) })
+    const wrapper = mountToolbar({ player })
+
+    await wrapper.find('[data-testid="audio-toolbar__toggle"]').trigger('click')
+
+    expect(player.pause).toHaveBeenCalledOnce()
+  })
+
+  test('mini mode audio-toolbar__skip-back calls player.skip(-10) [obligation]', async () => {
+    localRefStore.next = 'mini'
+    const player = makePlayer()
+    const wrapper = mountToolbar({ player })
+
+    await wrapper.find('[data-testid="audio-toolbar__skip-back"]').trigger('click')
+
+    expect(player.skip).toHaveBeenCalledWith(-10)
+  })
+
+  test('mini mode audio-toolbar__skip-forward calls player.skip(10) [obligation]', async () => {
+    localRefStore.next = 'mini'
+    const player = makePlayer()
+    const wrapper = mountToolbar({ player })
+
+    await wrapper.find('[data-testid="audio-toolbar__skip-forward"]').trigger('click')
+
+    expect(player.skip).toHaveBeenCalledWith(10)
+  })
+
+  test('mini mode audio-toolbar__speed-select calls player.setPlaybackRate [obligation]', async () => {
+    localRefStore.next = 'mini'
+    const player = makePlayer()
+    const wrapper = mountToolbar({ player })
+
+    const speedDropdown = wrapper.find('[data-testid="audio-toolbar__speed-select"]')
+    const options = speedDropdown.findAll('[data-testid="dropdown-button__option"]')
+    // Options: 0.5x, 0.75x, 1x, 1.5x, 2x — click 2x (index 4)
+    await options[4].trigger('click')
+
+    expect(player.setPlaybackRate).toHaveBeenCalledWith(2)
+  })
+
   // ── Transport actions ──────────────────────────────────────────────────────
 
   test('audio-toolbar__toggle calls player.play() when paused [obligation]', async () => {

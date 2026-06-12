@@ -470,6 +470,141 @@ describe('useReaderHighlights', () => {
     })
   })
 
+  describe('selection_preview', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    test('is null before any pointer activity', () => {
+      const { result } = withHighlights()
+
+      expect(result.selection_preview.value).toBeNull()
+    })
+
+    test('is non-null the instant a touch long-press arms with NO drag [obligation]', async () => {
+      const { result, contentEl } = withHighlights()
+      const wordEl = addWord(contentEl, 1, '語')
+      const base = wordEl.querySelector('[data-word-base]')
+      base.getBoundingClientRect = () => new DOMRect(10, 50, 40, 20)
+
+      stubElementFromPoint(() => wordEl)
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'touch', clientX: 30, clientY: 55 })
+      )
+      await nextTick()
+
+      // Not armed yet — preview is null before the long-press fires
+      expect(result.selection_preview.value).toBeNull()
+
+      // Advance past LONG_PRESS_MS (400ms) without any pointermove
+      vi.advanceTimersByTime(500)
+      await nextTick()
+
+      // IMMEDIATELY non-null — no drag required [regression guard]
+      expect(result.selection_preview.value).not.toBeNull()
+    })
+
+    test('selection_preview shape has text, x, top, bottom [obligation]', async () => {
+      const { result, contentEl } = withHighlights()
+      const wordEl = addWord(contentEl, 2, '日本語')
+      const base = wordEl.querySelector('[data-word-base]')
+      base.getBoundingClientRect = () => new DOMRect(10, 80, 60, 24)
+
+      stubElementFromPoint(() => wordEl)
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'touch', clientX: 40, clientY: 90 })
+      )
+
+      vi.advanceTimersByTime(500)
+      await nextTick()
+
+      const preview = result.selection_preview.value
+      expect(preview).not.toBeNull()
+      // text from the word
+      expect(typeof preview.text).toBe('string')
+      // x comes from the finger's clientX at the time of arming (tap.x)
+      expect(preview.x).toBe(40)
+      // top/bottom come from the focus word's base-element rect
+      expect(preview.top).toBe(80)
+      expect(preview.bottom).toBe(80 + 24)
+    })
+
+    test('selection_preview stays null for mouse pointerdown + drag [obligation]', async () => {
+      const { result, contentEl } = withHighlights()
+      const wordEl1 = addWord(contentEl, 0, 'Hello')
+      const wordEl2 = addWord(contentEl, 1, 'World')
+      const base1 = wordEl1.querySelector('[data-word-base]')
+      const base2 = wordEl2.querySelector('[data-word-base]')
+      base1.getBoundingClientRect = () => new DOMRect(0, 50, 40, 20)
+      base2.getBoundingClientRect = () => new DOMRect(50, 50, 40, 20)
+      contentEl.getBoundingClientRect = () => new DOMRect(0, 0, 300, 200)
+
+      stubElementFromPoint(() => wordEl1)
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'mouse', clientX: 10, clientY: 55 })
+      )
+      await nextTick()
+
+      document.elementFromPoint = () => wordEl2
+      result.onPointerMove(
+        new PointerEvent('pointermove', { pointerType: 'mouse', clientX: 60, clientY: 55 })
+      )
+      await nextTick()
+
+      // Mouse drag must never produce a selection_preview
+      expect(result.selection_preview.value).toBeNull()
+    })
+
+    test('selection_preview resets to null after commitTouch (pointerup) [obligation]', async () => {
+      const { result, contentEl } = withHighlights()
+      const wordEl = addWord(contentEl, 3, '選')
+      const base = wordEl.querySelector('[data-word-base]')
+      base.getBoundingClientRect = () => new DOMRect(10, 50, 30, 20)
+      contentEl.getBoundingClientRect = () => new DOMRect(0, 0, 300, 200)
+
+      stubElementFromPoint(() => wordEl)
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'touch', clientX: 25, clientY: 55 })
+      )
+      vi.advanceTimersByTime(500)
+      await nextTick()
+
+      expect(result.selection_preview.value).not.toBeNull()
+
+      result.onPointerUp(
+        new PointerEvent('pointerup', { pointerType: 'touch', clientX: 25, clientY: 55 })
+      )
+      await nextTick()
+
+      expect(result.selection_preview.value).toBeNull()
+    })
+
+    test('selection_preview resets to null after onPointerCancel [obligation]', async () => {
+      const { result, contentEl } = withHighlights()
+      const wordEl = addWord(contentEl, 4, '語')
+      const base = wordEl.querySelector('[data-word-base]')
+      base.getBoundingClientRect = () => new DOMRect(10, 50, 30, 20)
+
+      stubElementFromPoint(() => wordEl)
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'touch', clientX: 25, clientY: 55 })
+      )
+      vi.advanceTimersByTime(500)
+      await nextTick()
+
+      expect(result.selection_preview.value).not.toBeNull()
+
+      result.onPointerCancel(new PointerEvent('pointercancel', { pointerType: 'touch' }))
+      await nextTick()
+
+      expect(result.selection_preview.value).toBeNull()
+    })
+  })
+
   describe('popover_open watcher', () => {
     test('committed range is cleared when popover_open goes false', async () => {
       // Start with popover open (true) so closing it (false) triggers the watcher.

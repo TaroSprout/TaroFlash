@@ -122,6 +122,11 @@ export function useReaderHighlights(
   const anchor_index = ref<number | null>(null)
   const committed = ref<WordRange | null>(null)
 
+  // While an armed touch drag is extending the range, the finger's live viewport
+  // position — drives the preview bubble that trails the finger. Null whenever no
+  // armed touch selection is in flight, so the bubble shows on coarse pointers only.
+  const touch_point = ref<{ x: number; y: number } | null>(null)
+
   // A touch in flight: where it landed and which word, held until release decides
   // tap-vs-scroll. Plain (non-reactive) state — it never drives a pill directly.
   // `touch_selecting` flips true once a long-press arms range-select; from there
@@ -397,6 +402,23 @@ export function useReaderHighlights(
     return null
   })
 
+  // The live preview shown over an armed touch drag: the selected text, the
+  // finger's x (the bubble tracks it horizontally), and the focus word's line rect
+  // (so the bubble rides above that line, fixed vertically rather than bobbing with
+  // the finger). Null whenever no touch selection is dragging, so the host renders
+  // the bubble on touch only.
+  const selection_preview = computed(() => {
+    if (!touch_point.value || anchor_index.value === null || focus_index.value === null) return null
+
+    const text = rangeText(orderedRange(anchor_index.value, focus_index.value))
+    if (!text) return null
+
+    const rect = wordBaseEl(focus_index.value)?.getBoundingClientRect()
+    if (!rect) return null
+
+    return { text, x: touch_point.value.x, top: rect.top, bottom: rect.bottom }
+  })
+
   function onPointerDown(event: PointerEvent) {
     if (event.pointerType === 'touch') {
       beginTap(event)
@@ -434,6 +456,7 @@ export function useReaderHighlights(
     touch_selecting = true
     anchor_index.value = tap.index
     focus_index.value = tap.index
+    touch_point.value = { x: tap.x, y: tap.y }
     navigator.vibrate?.(10)
     emitSfx('ui.tap_05')
   }
@@ -499,6 +522,10 @@ export function useReaderHighlights(
   // (translation gloss, padding) so the range doesn't collapse between words. Each
   // new word ticks `tap_05`, so the range audibly ratchets as words join or leave.
   function extendTouchSelection(event: PointerEvent) {
+    // Update the point every move so the preview bubble tracks the finger smoothly,
+    // even while it travels within the same word.
+    touch_point.value = { x: event.clientX, y: event.clientY }
+
     const index = wordIndexAt(event.clientX, event.clientY)
     if (index === null || index === focus_index.value) return
 
@@ -545,6 +572,7 @@ export function useReaderHighlights(
     anchor_index.value = null
     focus_index.value = null
     touch_selecting = false
+    touch_point.value = null
     tap = null
   }
 
@@ -555,6 +583,7 @@ export function useReaderHighlights(
     anchor_index.value = null
     focus_index.value = null
     touch_selecting = false
+    touch_point.value = null
     tap = null
   }
 
@@ -578,6 +607,7 @@ export function useReaderHighlights(
     hover,
     tap_active,
     interaction_range,
+    selection_preview,
     onPointerDown,
     onPointerMove,
     onPointerUp,

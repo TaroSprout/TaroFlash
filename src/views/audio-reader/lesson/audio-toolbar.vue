@@ -118,7 +118,7 @@ function setMode(next: 'expanded' | 'mini') {
           data-theme="brown-200"
           data-theme-dark="grey-700"
           :aria-label="t('lesson-view.audio.skip-back-button')"
-          class="flex size-13 cursor-pointer items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
+          class="flex size-13 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
           :class="{ [TAP_BGX]: back_playing }"
           @click.capture="onBackTap"
           @click="skipBack"
@@ -134,7 +134,7 @@ function setMode(next: 'expanded' | 'mini') {
           :aria-label="
             is_playing ? t('lesson-view.audio.pause-button') : t('lesson-view.audio.play-button')
           "
-          class="flex size-18 cursor-pointer items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
+          class="flex size-18 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
           :class="{ [TAP_BGX]: play_playing }"
           @click.capture="onPlayTap"
           @click="toggle"
@@ -148,7 +148,7 @@ function setMode(next: 'expanded' | 'mini') {
           data-theme="brown-200"
           data-theme-dark="grey-700"
           :aria-label="t('lesson-view.audio.skip-forward-button')"
-          class="flex size-13 cursor-pointer items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
+          class="flex size-13 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
           :class="{ [TAP_BGX]: forward_playing }"
           @click.capture="onForwardTap"
           @click="skipForward"
@@ -167,7 +167,7 @@ function setMode(next: 'expanded' | 'mini') {
             variant="ghost"
             icon-only
             play-on-tap
-            :sfx="{ click: 'ui.select' }"
+            :sfx="{ click: 'ui.snappy_button_5' }"
             @click="setMode('mini')"
           />
         </div>
@@ -210,16 +210,36 @@ function setMode(next: 'expanded' | 'mini') {
       </div>
     </div>
 
-    <div v-else data-testid="audio-toolbar__mini" class="flex items-center gap-3">
+    <div
+      v-else
+      data-testid="audio-toolbar__mini"
+      class="grid grid-cols-5 items-center justify-items-center gap-2"
+    >
       <ui-button
         data-testid="audio-toolbar__expand"
-        data-theme="brown-300"
+        data-theme="brown-100"
+        data-theme-dark="stone-700"
         icon-left="maximize"
+        variant="ghost"
         icon-only
         play-on-tap
-        :sfx="{ click: 'ui.select' }"
+        :sfx="{ click: 'ui.snappy_button_5' }"
         @click="setMode('expanded')"
       />
+
+      <button
+        data-testid="audio-toolbar__skip-back"
+        type="button"
+        data-theme="brown-200"
+        data-theme-dark="grey-700"
+        :aria-label="t('lesson-view.audio.skip-back-button')"
+        class="flex size-13 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
+        :class="{ [TAP_BGX]: back_playing }"
+        @click.capture="onBackTap"
+        @click="skipBack"
+      >
+        <ui-icon src="skip-backward-10" class="size-6" />
+      </button>
 
       <button
         data-testid="audio-toolbar__toggle"
@@ -229,15 +249,43 @@ function setMode(next: 'expanded' | 'mini') {
         :aria-label="
           is_playing ? t('lesson-view.audio.pause-button') : t('lesson-view.audio.play-button')
         "
-        class="flex size-11 cursor-pointer items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
+        class="flex size-18 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
         :class="{ [TAP_BGX]: play_playing }"
         @click.capture="onPlayTap"
         @click="toggle"
       >
-        <ui-icon :src="is_playing ? 'pause' : 'play'" class="size-5" />
+        <ui-icon :src="is_playing ? 'pause' : 'play'" class="size-8" />
       </button>
 
-      <scrubber :player="player" layout="inline" />
+      <button
+        data-testid="audio-toolbar__skip-forward"
+        type="button"
+        data-theme="brown-200"
+        data-theme-dark="grey-700"
+        :aria-label="t('lesson-view.audio.skip-forward-button')"
+        class="flex size-13 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
+        :class="{ [TAP_BGX]: forward_playing }"
+        @click.capture="onForwardTap"
+        @click="skipForward"
+      >
+        <ui-icon src="skip-forward-10" class="size-6" />
+      </button>
+
+      <ui-dropdown-button
+        data-testid="audio-toolbar__speed-select"
+        data-theme="brown-100"
+        data-theme-dark="stone-700"
+        icon-left="stopwatch"
+        variant="ghost"
+        open-on-trigger
+        hide-trigger
+        shadow
+        position="top-end"
+        :options="SPEED_OPTIONS"
+        @select="onSpeed"
+      >
+        {{ current_speed_label }}
+      </ui-dropdown-button>
     </div>
   </div>
 </template>
