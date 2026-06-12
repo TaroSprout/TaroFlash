@@ -25,6 +25,9 @@ export type ButtonProps = {
   // With playOnTap, drop the scale/rotate tween so the tap shows only the
   // bgx-slide sweep + sfx. Defaults to true (the full tap bounce).
   tapAnimate?: boolean
+  // Inert + muted label region. The trailing slot (a split-button caret) stays
+  // live, so only the primary action is disabled — not the whole control.
+  disabled?: boolean
 }
 
 const {
@@ -38,7 +41,8 @@ const {
   fullWidth = false,
   mobileTooltip = false,
   playOnTap = false,
-  tapAnimate = true
+  tapAnimate = true,
+  disabled = false
 } = defineProps<ButtonProps>()
 
 const slots = useSlots()
@@ -46,7 +50,8 @@ const attrs = useAttrs()
 
 const { playing, interceptClick } = usePlayOnTap({ reset: false, animate: tapAnimate })
 
-const merged_sfx = computed(() => {
+const merged_sfx = computed<SfxOptions>(() => {
+  if (disabled) return {}
   return {
     ...sfx,
     hover: sfx.hover ?? 'ui.click_07'
@@ -58,10 +63,18 @@ const tooltip_active = computed(() => iconOnly && !!slots.default)
 const has_trailing = computed(() => !!slots.trailing)
 
 function onCaptureClick(e: MouseEvent) {
-  if (!playOnTap) return
   // The trailing slot (e.g. a split-button caret) is its own action — a click
-  // there shouldn't fire the main button's tap animation.
-  if ((e.target as HTMLElement).closest?.('.btn-trailing')) return
+  // there shouldn't fire the main button's tap animation, nor be blocked when
+  // only the primary action is disabled.
+  const in_trailing = !!(e.target as HTMLElement).closest?.('.btn-trailing')
+
+  if (disabled && !in_trailing) {
+    e.stopImmediatePropagation()
+    e.preventDefault()
+    return
+  }
+
+  if (!playOnTap || in_trailing) return
   const handler = attrs.onClick as ((ev: MouseEvent) => void) | undefined
   if (!handler) return
 
@@ -92,6 +105,7 @@ function emitClickSfx() {
     v-sfx="merged_sfx"
     v-bind="$attrs"
     :data-playing="playing || null"
+    :aria-disabled="disabled || undefined"
     @click.capture="onCaptureClick"
     :class="[
       `ui-kit-btn--${size}`,
@@ -101,6 +115,7 @@ function emitClickSfx() {
         'ui-kit-btn--inverted': inverted,
         'ui-kit-btn--split': has_trailing,
         'ui-kit-btn--quiet-tap': playOnTap && !tapAnimate,
+        'ui-kit-btn--disabled': disabled,
         'rounded-full!': roundedFull,
         'w-full!': fullWidth
       }
@@ -124,7 +139,7 @@ function emitClickSfx() {
         'bg-(--theme-primary) flex items-center justify-center': loading,
         hidden: !loading,
         'group-hover/btn:block group-data-[playing=true]/btn:block':
-          !loading && fancyHover && variant !== 'ghost',
+          !loading && !disabled && fancyHover && variant !== 'ghost',
         'bgx-color-[var(--theme-neutral)]': variant === 'solid',
         'bgx-color-[var(--theme-on-neutral)]': inverted
       }"
@@ -162,6 +177,16 @@ function emitClickSfx() {
   /* Suppress the double-tap-to-zoom gesture so a quick double tap fires two
      clicks instead of zooming the page. */
   touch-action: manipulation;
+}
+
+/* Disabled mutes + inerts only the primary label region; a split-button's
+   trailing caret stays fully live and lit. */
+.ui-kit-btn--disabled {
+  cursor: not-allowed;
+}
+
+.ui-kit-btn--disabled .btn-content {
+  opacity: 0.5;
 }
 
 /* Inner container carries the padding + gap so the trailing slot can sit flush
