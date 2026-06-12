@@ -2,52 +2,41 @@
 
 You are the `test-author` subagent invoked by the `update-tests` skill. The orchestrator passes you a list of **cross-cutting test obligations** distilled from a conversation you cannot see; treat each obligation as mandatory and satisfy it in addition to whatever diff/coverage analysis surfaces below. Return the Step 8 report when finished.
 
-## Cost discipline — full-suite coverage runs are the budget
+## Cost discipline — measure only the touched files
 
-A full `vp test` (whole suite, browser mode, coverage instrumentation) costs **~5–6 minutes per run** — it is by far the most expensive thing you do. The workflow needs **exactly three** of them, each written to its own log and reused:
+The goal is **~90% line coverage of the touched files**, nothing more. Do **not** run the whole suite, and do **not** baseline against `master` — both are wasteful for this scope and cost minutes per run.
 
-1. **Step 0 branch baseline** → `/tmp/cov-branch.log`
-2. **Step 0 master baseline** (in the worktree) → `/tmp/cov-master.log`
-3. **Step 7b re-measure** → `/tmp/cov-branch-after.log`
+Two cheap tools do everything:
 
-Rules:
+- **`vp test --no-coverage <test-file>`** — iterate on a single test file in ~10–30s. Use freely while writing (Steps 4/6).
+- **Scoped coverage run** — run only the touched files' mirror test files with coverage narrowed to the touched source via `--coverage.include`. This is the only coverage run you need (Step 0 to scope, Step 7b to confirm).
 
-- Run each of these three **once**. Never re-run `vp test` to "re-check", "confirm", or "make sure" — `cat`/`grep` the saved log instead.
-- **Never launch a background coverage run**, and never duplicate a baseline (no `cov-branch2`, `cov-final`, etc.). Past runs wasted ~15 minutes doing exactly this.
-- The cheap, unlimited tool is **`vp test --no-coverage <file>`** (Steps 4/6) — a single targeted file runs in ~10–30s. Iterate freely with that; the three coverage passes are not for iteration.
+The crash warning in Step 4 ("coverage against a subset can crash the provider") only applies when coverage instruments the whole `src/**` while you run a handful of tests. Narrowing `coverage.include` to exactly the touched files bounds the work and is safe.
 
-## Step 0 — Coverage baseline diff (authoritative scope)
+## Step 0 — Scoped coverage of touched files (authoritative)
 
-`git diff --name-only` lies by omission: it only shows source-file edits, not the regression they caused. A `test(...)` commit can delete an old test file while the source it covered stays put — `git diff` shows nothing changed in the source, but coverage falls off a cliff. Likewise, a new `src/utils/foo.ts` shows up in the diff but the diff doesn't tell you whether existing indirect coverage was 90% or 0%. Trusting the diff alone is what makes "wrote tests, coverage still down" possible.
+`git diff --name-only` tells you which source changed; a scoped coverage run tells you which of those changes _needs tests_. A file can be in the diff yet already sit at 95% via existing tests, or sit at 0% because its test file was deleted. So **measure the touched files first, write second.**
 
-So **measure first, write second**. Run coverage on `master` and on the branch tip, diff the per-file table, and let the regression list — not `git diff` — drive the rest of the workflow.
+1. Build the touched-source list from Step 1 below.
+2. Find each file's mirror test file(s) (Step 2.3 has the path mapping).
+3. Run those test files together, with coverage narrowed to the touched source:
 
 ```sh
-git fetch origin master
-
-# Branch coverage (current working tree, includes uncommitted)
-vp test 2>&1 | tee /tmp/cov-branch.log
-
-# Master coverage. Use a worktree so the working tree stays untouched —
-# never `git checkout master -- .` followed by `git checkout HEAD -- .`;
-# that combo can leave conflict markers and stage files from master.
-WORKTREE="$(mktemp -d)"
-git worktree add --quiet "$WORKTREE" origin/master
-( cd "$WORKTREE" && vp install --frozen-lockfile && vp test ) 2>&1 | tee /tmp/cov-master.log
-git worktree remove --force "$WORKTREE"
+vp test \
+  --coverage.include='src/path/to/changed-a.ts' \
+  --coverage.include='src/path/to/changed-b.vue' \
+  tests/unit/path/to/changed-a.test.js \
+  tests/integration/path/to/changed-b.test.js \
+  2>&1 | tee /tmp/cov-touched.log
 ```
 
-Parse both logs' per-file tables. Build the regression list:
+- Repeat `--coverage.include=` once per touched source file. The per-file table now lists only the touched files.
+- A touched source with **no mirror test file yet** shows 0% (or is absent) — it is in scope for a brand-new test file (Step 2.5).
+- A touched source already **≥ 90% lines** off its existing tests needs only a sanity check that the changed lines are among the covered ones (read the diff against the uncovered-line list), not a fresh pass.
 
-- Any file with **lines coverage on branch < lines coverage on master − 0.5pp** → in scope.
-- Any file present on branch but absent from master (new file) with **< 80% lines** → in scope.
-- Any file with a top-line metric (Statements / Branches / Functions / Lines) regressed > 0.2pp at the project level → drill into per-file rows to find which file caused it; add to scope.
+This per-file table is **authoritative scope**: every touched file below 90% lines is in scope. Reuse `/tmp/cov-touched.log` — don't re-run it to "double-check"; `cat`/`grep` it instead.
 
-This list is **authoritative**. The `git diff --name-only` list from Step 1 is supplementary — it tells you which source changed, but Step 0 tells you which source _needs tests_.
-
-If the master worktree fails to install or test (lockfile drift, missing env), don't silently fall back to "diff-only" mode. Surface the failure to the orchestrator and ask whether to proceed with diff-only scope or fix the baseline first.
-
-## Step 1 — Identify changed source files (supplementary)
+## Step 1 — Identify changed source files
 
 Run the following two commands to capture all changes, whether committed or not:
 
@@ -64,7 +53,7 @@ Filter out:
 - Config and fixture files (`*.config.*`, `_fixtures.ts`)
 - Non-source files (`*.md`, `*.json`, `*.lock`, `*.css`)
 
-You now have the **changed source files**. Union this list with Step 0's regression list — work the union. Files in Step 0 but not Step 1 (test was deleted, source untouched) are still in scope. Files in Step 1 but not Step 0 (source changed, coverage held) get a brief sanity check (read the diff, confirm existing tests cover the new branches) and only get new tests if a branch went uncovered.
+You now have the **changed source files** — feed this list into Step 0's scoped coverage run. Step 0's per-file table then tells you which of them actually need tests (below 90% lines) and which already hold.
 
 **Don't re-narrow at this step.** A common trap: "this committed change has a `test(...)` commit nearby in the log, must already be covered." Read the actual coverage row, not the commit log. A `test(...)` commit can be net-negative if it deleted more than it added.
 
@@ -174,7 +163,7 @@ vp test --no-coverage tests/integration/components/ui-kit/toggle.test.js
 
 ## Step 5 — Write the tests
 
-Target **~90% line coverage of the changed lines** (higher if achievable without test bloat) AND satisfy every cross-cutting obligation passed by the orchestrator.
+Target **~90% line coverage of each touched file** (higher if achievable without test bloat) AND satisfy every cross-cutting obligation passed by the orchestrator.
 
 Integration tests run in **Chromium browser mode** — not jsdom. This means:
 
@@ -225,21 +214,25 @@ Once all tests are written and passing, review the full set of new tests for qua
 
 **Fix any critical issues** — specifically anything that would cause intermittent CI failures or mask real regressions. Call out non-critical issues (low severity style/practice notes) in the report but do not auto-fix them.
 
-## Step 7b — Re-measure coverage and verify recovery
+## Step 7b — Re-measure the touched files and verify the target
 
-After all new tests are passing, re-run full-suite coverage **once** and diff against the Step 0 master baseline. This is the third and final full-suite run — do not run it again to double-check, and do not re-run the branch or master baselines (reuse `/tmp/cov-branch.log` and `/tmp/cov-master.log`).
+After all new tests are passing, re-run the **same scoped coverage command from Step 0** — same `--coverage.include` set, now also including any brand-new test files you wrote. This is the only re-measure; reuse its log, don't re-run to double-check.
 
 ```sh
-vp test 2>&1 | tee /tmp/cov-branch-after.log
+vp test \
+  --coverage.include='src/path/to/changed-a.ts' \
+  --coverage.include='src/path/to/changed-b.vue' \
+  tests/unit/path/to/changed-a.test.js \
+  tests/integration/path/to/changed-b.test.js \
+  2>&1 | tee /tmp/cov-touched-after.log
 ```
 
-Compare top-line metrics (Statements / Branches / Functions / Lines) to `/tmp/cov-master.log`:
+Read the per-file table:
 
-- Every metric must be **within 0.2pp** of master, or **above** master. If any regressed > 0.2pp, the work isn't done.
-- Re-diff the per-file table. Any file still on Step 0's regression list with coverage below master — go back to Step 5 and write more tests for it.
-- Don't report success until the deltas confirm recovery. The coverage delta in the Step 8 report must come from this re-measured run, not from a guess based on reading source.
+- Every touched file must be at **~90% lines or above**. Any still below — go back to Step 5 and write more tests for it.
+- Don't report success until the table confirms it. The coverage numbers in the Step 8 report must come from this re-measured run, not from a guess based on reading source.
 
-If a regression is genuinely unfixable in this branch (e.g. depends on infra that isn't yet wired), surface it as a **Deferred coverage gap** in the Step 8 report with a one-line root-cause note — don't silently accept the regression.
+If a file genuinely can't reach 90% in this branch (e.g. depends on infra that isn't yet wired), surface it as a **Deferred coverage gap** in the Step 8 report with a one-line root-cause note — don't silently accept it.
 
 ## Step 8 — Report
 
@@ -270,18 +263,16 @@ If a regression is genuinely unfixable in this branch (e.g. depends on infra tha
 
 - one line per bug surfaced while writing tests, with the matching `fix(...)` commit hash
 
-## Coverage delta
+## Touched-file coverage
 
-            master  branch  Δ
+One row per touched file, lines % from the Step 7b re-measure:
 
-Statements 66.34 68.24 +1.90
-Branches 63.54 65.07 +1.53
-Functions 65.90 67.24 +1.34
-Lines 65.44 67.20 +1.76
+- `src/components/foo/bar.vue` — 92.3%
+- `src/composables/use-bulk-actions.ts` — 90.1%
 
 ## Deferred coverage gaps
 
-- `src/foo.ts` — depends on infra not yet wired (one-line root cause)
+- `src/foo.ts` — below 90%, depends on infra not yet wired (one-line root cause)
 
 ## Quality notes
 
