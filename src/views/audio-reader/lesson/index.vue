@@ -2,6 +2,7 @@
 import { computed, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import { emitSfx } from '@/sfx/bus'
 import { useLessonsByCollectionQuery, useSetCollectionProgressMutation } from '@/api/lessons'
 import { useLessonReader } from '@/composables/audio-reader/use-lesson-reader'
 import { useCollectionEditModal } from '@/composables/modals/use-collection-edit-modal'
@@ -79,6 +80,12 @@ function goToChapter(id: number) {
 
 function onEdit() {
   edit_modal.open(collection_id.value)
+}
+
+// Tapping outside the term dismisses it with the same cue as its close button.
+function dismissTerm() {
+  emitSfx('ui.snappy_button_5')
+  closeTerm()
 }
 
 // Freeze the footer height before the outgoing pane pins absolute, then tween it
@@ -200,13 +207,14 @@ watch(
           :active_word="active_word"
           :popover_open="popover_open"
           @select="openTerm"
+          @dismiss="dismissTerm"
         />
       </div>
 
       <footer
         ref="footer_bar"
         data-testid="lesson-view__bar"
-        class="w-full left-0 fixed bottom-0 rounded-t-6 z-30 bg-brown-300 p-5 pb-2 pointer-fine:pb-6 dark:bg-stone-700"
+        class="w-full left-0 fixed bottom-0 rounded-t-6 z-30 bg-brown-300 p-5 pb-2 pointer-fine:pb-6 dark:bg-stone-900"
       >
         <div ref="footer_swap" data-testid="lesson-view__footer-swap" class="relative w-full">
           <transition

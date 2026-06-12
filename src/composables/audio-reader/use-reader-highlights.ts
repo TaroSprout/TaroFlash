@@ -15,14 +15,7 @@ import { scrollLineIntoView } from '@/utils/animations/transcript-scroll'
 const PAD_X = 3
 const PAD_Y = 2
 
-// The active-sentence backdrop bleeds further than the word pills so it reads as
-// a padded block behind the whole line; it glides calmly rather than snapping.
-const SENTENCE_PAD_X = 8
-const SENTENCE_PAD_Y = 6
-const SENTENCE_DURATION = 0.3
-
-// The interaction pill answers the pointer, so it glides faster than the
-// audio-driven playhead (which keeps the slower, stretchy default).
+// The interaction pill answers the pointer, so it glides quickly.
 const HOVER_DURATION = 0.12
 
 // How far a touch may drift between press and release and still count as a tap
@@ -61,11 +54,16 @@ export const readerSelectionKey = Symbol('readerSelection') as InjectionKey<
   ComputedRef<WordRange | null>
 >
 
+// The word index the audio is currently on (-1 for none), shared down so the
+// active word can tint its own text as the playhead reaches it.
+export const readerActiveWordKey = Symbol('readerActiveWord') as InjectionKey<ComputedRef<number>>
+
 /**
- * Drive the floating highlight layers in the transcript reader: the audio-driven
- * **playhead** (stretchy, follows `active_word`) and the pointer-driven
- * **interaction** pill — which doubles as the hover indicator, the drag-to-select
- * highlight, and the standing selection while its popover is open.
+ * Drive the pointer-driven **interaction** pill in the transcript reader — which
+ * doubles as the hover indicator, the drag-to-select highlight, and the standing
+ * selection while its popover is open. The audio position (`active_word`) only
+ * scrolls the active line into view here; its visual cues live in the words
+ * themselves.
  *
  * The pill is the selection: with a mouse, press a word and the pill anchors
  * there; drag and it stretches word by word to cover the range; release commits
@@ -85,26 +83,28 @@ export const readerSelectionKey = Symbol('readerSelection') as InjectionKey<
  * located by its stable `data-word-index`. Pills live inside `content` and are
  * positioned in its coordinate space, so they scroll with the column for free.
  *
- * Binds three template refs by name — the host must declare `ref="content"`,
- * `ref="playhead"`, and `ref="hover"`.
+ * Binds two template refs by name — the host must declare `ref="content"` and
+ * `ref="hover"`.
  *
  * @param active_word - index of the word the audio is on, or -1 for none.
  * @param onSelect - called on release with the committed range's term + rect.
  * @param popover_open - whether the term popover is showing; the selection holds
  *   while true and clears when it goes false.
+ * @param onDismiss - called when a tap on empty space clears the selection, so the
+ *   host can dismiss the term surface too (the mobile footer has no outside-click
+ *   close of its own, unlike the desktop popover).
  * @example
  * const { onPointerDown, onPointerMove, onPointerUp, onPointerLeave, onPointerCancel } =
- *   useReaderHighlights(() => active_word, commitSelection, () => popover_open)
+ *   useReaderHighlights(() => active_word, commitSelection, () => popover_open, dismiss)
  */
 export function useReaderHighlights(
   active_word: MaybeRefOrGetter<number>,
   onSelect: (selection: ReaderSelection) => void,
-  popover_open: MaybeRefOrGetter<boolean>
+  popover_open: MaybeRefOrGetter<boolean>,
+  onDismiss: () => void
 ) {
   const content = useTemplateRef<HTMLElement>('content')
-  const playhead = useTemplateRef<HTMLElement>('playhead')
   const hover = useTemplateRef<HTMLElement>('hover')
-  const sentence = useTemplateRef<HTMLElement>('sentence')
 
   // Pops the interaction pill on every commit: the yoyo scale/rotate bumps the pill
   // and `tap_active` drives its `data-playing`, which the texture overlay turns into
@@ -263,11 +263,6 @@ export function useReaderHighlights(
     return el ? boxOf(el.getBoundingClientRect()) : null
   }
 
-  function playheadBox(): CursorBox | null {
-    const index = toValue(active_word)
-    return index < 0 ? null : wordBox(index)
-  }
-
   // Priority: an in-progress drag, then a committed selection (popover open),
   // then the plain hovered word.
   function interactionBox(): CursorBox | null {
@@ -279,49 +274,11 @@ export function useReaderHighlights(
     return null
   }
 
-  function positionPlayhead() {
-    if (!playhead.value) return
-
-    const box = playheadBox()
-    if (!box) {
-      hideReaderCursor(playhead.value)
-      return
-    }
-
-    moveReaderCursor(playhead.value, box, { stretch: true })
-  }
-
   /** The segment (sentence) element the active word sits in, or null for none. */
   function activeSegmentEl(): HTMLElement | null {
     const index = toValue(active_word)
     if (index < 0) return null
     return (wordEl(index)?.closest('[data-testid="transcript-segment"]') as HTMLElement) ?? null
-  }
-
-  function segmentBox(el: HTMLElement): CursorBox {
-    const base = content.value!.getBoundingClientRect()
-    const rect = el.getBoundingClientRect()
-    return {
-      left: rect.left - base.left - SENTENCE_PAD_X,
-      top: rect.top - base.top - SENTENCE_PAD_Y,
-      width: rect.width + SENTENCE_PAD_X * 2,
-      height: rect.height + SENTENCE_PAD_Y * 2
-    }
-  }
-
-  function positionSentence() {
-    if (!sentence.value) return
-
-    const seg = activeSegmentEl()
-    if (!seg) {
-      hideReaderCursor(sentence.value)
-      return
-    }
-
-    moveReaderCursor(sentence.value, segmentBox(seg), {
-      stretch: false,
-      duration: SENTENCE_DURATION
-    })
   }
 
   // The nearest ancestor that actually scrolls — the reader column on desktop.
@@ -377,13 +334,11 @@ export function useReaderHighlights(
       return
     }
 
-    moveReaderCursor(hover.value, box, { stretch: false, duration: HOVER_DURATION })
+    moveReaderCursor(hover.value, box, { duration: HOVER_DURATION })
   }
 
   function reposition() {
-    positionPlayhead()
     positionInteraction()
-    positionSentence()
   }
 
   function orderedRange(a: number, b: number): WordRange {
@@ -584,6 +539,7 @@ export function useReaderHighlights(
       suppress_gesture_click = true
     } else if (tap) {
       committed.value = null
+      onDismiss()
     }
 
     anchor_index.value = null
@@ -607,16 +563,8 @@ export function useReaderHighlights(
     focus_index.value = null
   }
 
-  // flush: 'post' so any layout settling lands before we measure word rects.
-  watch(
-    () => toValue(active_word),
-    () => {
-      positionPlayhead()
-      positionSentence()
-      followActiveSentence()
-    },
-    { flush: 'post' }
-  )
+  // flush: 'post' so any layout settling lands before we measure the line rect.
+  watch(() => toValue(active_word), followActiveSentence, { flush: 'post' })
   watch([focus_index, anchor_index, committed], positionInteraction, { flush: 'post' })
   watch(
     () => toValue(popover_open),
@@ -627,9 +575,7 @@ export function useReaderHighlights(
 
   return {
     content,
-    playhead,
     hover,
-    sentence,
     tap_active,
     interaction_range,
     onPointerDown,
