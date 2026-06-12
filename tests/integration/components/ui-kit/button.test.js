@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 
@@ -205,6 +205,82 @@ describe('UiButton', () => {
       await wrapper.find('[data-testid="ui-kit-button"]').trigger('click')
 
       expect(mockEmitSfx).not.toHaveBeenCalled()
+    })
+
+    describe('tapAnimate=false — quiet tap mode [obligation]', () => {
+      beforeEach(() => {
+        vi.useFakeTimers()
+      })
+      afterEach(() => {
+        vi.useRealTimers()
+      })
+
+      test('tapAnimate=false still toggles data-playing on a coarse tap [obligation]', async () => {
+        const { gsap } = await import('gsap')
+        gsap.to.mockClear()
+
+        const onClick = vi.fn()
+        const wrapper = shallowMount(UiButton, {
+          props: { playOnTap: true, tapAnimate: false },
+          attrs: { onClick }
+        })
+
+        wrapper
+          .find('[data-testid="ui-kit-button"]')
+          .element.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.find('[data-testid="ui-kit-button"]').attributes('data-playing')).toBe(
+          'true'
+        )
+      })
+
+      test('tapAnimate=false does NOT invoke the GSAP tween [obligation]', async () => {
+        const { gsap } = await import('gsap')
+        gsap.to.mockClear()
+
+        const onClick = vi.fn()
+        const wrapper = shallowMount(UiButton, {
+          props: { playOnTap: true, tapAnimate: false },
+          attrs: { onClick }
+        })
+
+        wrapper
+          .find('[data-testid="ui-kit-button"]')
+          .element.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await wrapper.vm.$nextTick()
+
+        expect(gsap.to).not.toHaveBeenCalled()
+      })
+
+      test('tapAnimate=false still fires click sfx when sfx.click is set [obligation]', async () => {
+        mockEmitSfx.mockClear()
+        const wrapper = shallowMount(UiButton, {
+          props: { playOnTap: true, tapAnimate: false, sfx: { click: 'ui.select' } },
+          attrs: { onClick: vi.fn() }
+        })
+
+        wrapper
+          .find('[data-testid="ui-kit-button"]')
+          .element.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await wrapper.vm.$nextTick()
+
+        expect(mockEmitSfx).toHaveBeenCalledWith('ui.select', expect.any(Object))
+      })
+
+      test('tapAnimate=true (default) still uses GSAP tween [obligation]', async () => {
+        const { gsap } = await import('gsap')
+        gsap.to.mockClear()
+
+        const wrapper = shallowMount(UiButton, {
+          props: { playOnTap: true, tapAnimate: true },
+          attrs: { onClick: vi.fn() }
+        })
+
+        await wrapper.find('[data-testid="ui-kit-button"]').trigger('click')
+
+        expect(gsap.to).toHaveBeenCalled()
+      })
     })
   })
 

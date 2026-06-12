@@ -22,7 +22,8 @@ const {
   chaptersRef,
   progressMutate,
   editModalOpenMock,
-  routerPushMock
+  routerPushMock,
+  emitSfxMock
 } = vi.hoisted(() => ({
   lessonRef: { value: { id: 2, title: 'Hiragana Basics' } },
   paragraphsRef: { value: [] },
@@ -37,7 +38,8 @@ const {
   chaptersRef: { value: [] },
   progressMutate: vi.fn(),
   editModalOpenMock: vi.fn(),
-  routerPushMock: vi.fn()
+  routerPushMock: vi.fn(),
+  emitSfxMock: vi.fn()
 }))
 
 // Real Vue refs for template-reactive state. Created here (after imports) so
@@ -107,14 +109,25 @@ vi.mock('vue-router', () => ({
   useRouter: () => ({ push: routerPushMock })
 }))
 
+vi.mock('@/sfx/bus', () => ({
+  emitSfx: emitSfxMock,
+  emitHoverSfx: vi.fn()
+}))
+
 // ── Stubs ──────────────────────────────────────────────────────────────────────
 
 const TranscriptViewStub = defineComponent({
   name: 'TranscriptView',
   props: ['paragraphs', 'active_word', 'popover_open'],
-  emits: ['select'],
-  setup() {
-    return () => h('div', { 'data-testid': 'transcript-view-stub' })
+  emits: ['select', 'dismiss'],
+  setup(_props, { emit }) {
+    return () =>
+      h('div', { 'data-testid': 'transcript-view-stub' }, [
+        h('button', {
+          'data-testid': 'transcript-stub__dismiss',
+          onClick: () => emit('dismiss')
+        })
+      ])
   }
 })
 
@@ -152,6 +165,8 @@ const TermCardStub = defineComponent({
 
 import LessonView from '@/views/audio-reader/lesson/index.vue'
 import AudioToolbar from '@/views/audio-reader/lesson/audio-toolbar.vue'
+import { footerSwapBeforeLeave, footerSwapEnter } from '@/utils/animations/footer-swap'
+import { useAnimatedHeight } from '@/composables/use-animated-height'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -192,6 +207,7 @@ beforeEach(() => {
   closeTermMock.mockClear()
   playFromHereMock.mockClear()
   playClipMock.mockClear()
+  emitSfxMock.mockClear()
 })
 
 describe('LessonView', () => {
@@ -432,6 +448,60 @@ describe('LessonView', () => {
       await wrapper.vm.$nextTick()
 
       expect(wrapper.findComponent(TermPopoverStub).exists()).toBe(false)
+    })
+  })
+
+  describe('dismissTerm — transcript dismiss event [obligation]', () => {
+    test('transcript dismiss event calls closeTerm [obligation]', async () => {
+      isMobileRef.value = true
+      popoverOpenRef.value = true
+      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
+
+      const wrapper = mountView()
+      await wrapper.vm.$nextTick()
+
+      await wrapper.find('[data-testid="transcript-stub__dismiss"]').trigger('click')
+
+      expect(closeTermMock).toHaveBeenCalledOnce()
+    })
+
+    test('transcript dismiss event emits ui.snappy_button_5 [obligation]', async () => {
+      isMobileRef.value = true
+      popoverOpenRef.value = true
+      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
+
+      const wrapper = mountView()
+      await wrapper.vm.$nextTick()
+
+      await wrapper.find('[data-testid="transcript-stub__dismiss"]').trigger('click')
+
+      expect(emitSfxMock).toHaveBeenCalledWith('ui.snappy_button_5')
+    })
+
+    test('closeTerm alone does NOT emit ui.snappy_button_5 [obligation]', async () => {
+      isMobileRef.value = true
+      popoverOpenRef.value = true
+      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
+
+      const wrapper = mountView()
+      await wrapper.vm.$nextTick()
+
+      // Trigger close via term-card's close event (not dismiss)
+      await wrapper.find('[data-testid="term-card-stub__close"]').trigger('click')
+
+      // closeTermMock was called but sfx was NOT emitted (sfx only in dismissTerm)
+      expect(closeTermMock).toHaveBeenCalledOnce()
+      expect(emitSfxMock).not.toHaveBeenCalledWith('ui.snappy_button_5')
+    })
+  })
+
+  describe('footer layout', () => {
+    test('useAnimatedHeight is wired during setup', () => {
+      vi.clearAllMocks()
+      mountView()
+
+      // Wired once for footer_term and once for footer_toolbar
+      expect(useAnimatedHeight).toHaveBeenCalledTimes(2)
     })
   })
 })
