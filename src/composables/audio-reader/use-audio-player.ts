@@ -19,6 +19,9 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
   const duration = ref(0)
   const is_playing = ref(false)
   const playback_rate = ref(1)
+  // True once the bound source's metadata is in (so seeking sticks); flips back to
+  // false on `emptied` when the src swaps to another chapter, awaiting its load.
+  const loaded = ref(false)
 
   let el: HTMLAudioElement | null = null
   let raf = 0
@@ -51,6 +54,12 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
 
   function onLoaded() {
     if (el) duration.value = el.duration || 0
+    loaded.value = true
+  }
+
+  function onEmptied() {
+    loaded.value = false
+    duration.value = 0
   }
 
   function onPlay() {
@@ -84,6 +93,7 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
     el = next
     el.playbackRate = playback_rate.value
     el.addEventListener('loadedmetadata', onLoaded)
+    el.addEventListener('emptied', onEmptied)
     el.addEventListener('play', onPlay)
     el.addEventListener('pause', onPause)
     el.addEventListener('ended', onPause)
@@ -94,8 +104,10 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
 
   function unbind() {
     stopTicking()
+    loaded.value = false
     if (!el) return
     el.removeEventListener('loadedmetadata', onLoaded)
+    el.removeEventListener('emptied', onEmptied)
     el.removeEventListener('play', onPlay)
     el.removeEventListener('pause', onPause)
     el.removeEventListener('ended', onPause)
@@ -157,6 +169,7 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
     duration,
     is_playing,
     playback_rate,
+    loaded,
     play,
     pause,
     seek,

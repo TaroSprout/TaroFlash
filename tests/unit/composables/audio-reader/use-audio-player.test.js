@@ -79,6 +79,12 @@ describe('useAudioPlayer', () => {
       app = a
       expect(result.duration.value).toBe(0)
     })
+
+    test('loaded starts as false [obligation]', () => {
+      const [result, a] = withSetup(() => useAudioPlayer(ref(null)))
+      app = a
+      expect(result.loaded.value).toBe(false)
+    })
   })
 
   describe('binding to an audio element', () => {
@@ -144,6 +150,81 @@ describe('useAudioPlayer', () => {
       await nextTick()
 
       expect(result.duration.value).toBe(180)
+    })
+
+    test('loaded becomes true when loadedmetadata event fires [obligation]', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      const el = makeAudioEl()
+      target.value = el
+      await nextTick()
+
+      expect(result.loaded.value).toBe(false)
+      el._emit('loadedmetadata')
+      expect(result.loaded.value).toBe(true)
+    })
+
+    test('loaded returns to false and duration resets to 0 on emptied event (src swap) [obligation]', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      const el = makeAudioEl()
+      el.readyState = 1
+      el.duration = 120
+      target.value = el
+      await nextTick()
+      // loadedmetadata fired on bind because readyState >= 1
+      expect(result.loaded.value).toBe(true)
+      expect(result.duration.value).toBe(120)
+
+      el._emit('emptied')
+      expect(result.loaded.value).toBe(false)
+      expect(result.duration.value).toBe(0)
+    })
+
+    test('loaded returns to false on unbind (target ref becomes null) [obligation]', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      const el = makeAudioEl()
+      el.readyState = 1
+      target.value = el
+      await nextTick()
+      expect(result.loaded.value).toBe(true)
+
+      target.value = null
+      await nextTick()
+      expect(result.loaded.value).toBe(false)
+    })
+
+    test('loaded returns to false on unmount [obligation]', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+
+      const el = makeAudioEl()
+      el.readyState = 1
+      target.value = el
+      await nextTick()
+      expect(result.loaded.value).toBe(true)
+
+      a.unmount()
+      expect(result.loaded.value).toBe(false)
+    })
+
+    test('attaches emptied event listener when element is bound [obligation]', async () => {
+      const target = ref(null)
+      const [, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      const el = makeAudioEl()
+      target.value = el
+      await nextTick()
+
+      expect(el.addEventListener).toHaveBeenCalledWith('emptied', expect.any(Function))
     })
   })
 
