@@ -706,4 +706,102 @@ describe('useReaderHighlights', () => {
       expect(emitSfxMock).not.toHaveBeenCalledWith('ui.tap_05')
     })
   })
+
+  describe('selection_preview', () => {
+    test('is non-null the instant a touch long-press arms with NO drag [obligation]', async () => {
+      const wrapper = mountHost(vi.fn())
+
+      vi.useFakeTimers()
+      await touch(wrapper, 'pointerdown', 0)
+
+      // Not armed yet — selection_preview is null
+      expect(wrapper.vm.selection_preview).toBeNull()
+
+      // Advance past LONG_PRESS_MS=400 — no pointermove dispatched
+      vi.advanceTimersByTime(500)
+      await wrapper.vm.$nextTick()
+      vi.useRealTimers()
+
+      // Immediately non-null without any drag [regression guard for the fixed bug]
+      expect(wrapper.vm.selection_preview).not.toBeNull()
+    })
+
+    test('selection_preview x comes from finger clientX at arm time, top/bottom from word rect [obligation]', async () => {
+      const wrapper = mountHost(vi.fn())
+
+      // words[0] is 'Hello ' — give it a measured rect
+      vi.spyOn(words[0], 'getBoundingClientRect').mockReturnValue(new DOMRect(10, 120, 50, 24))
+
+      vi.useFakeTimers()
+      // Press at clientX=0 (maps to words[0] via elementFromPoint stub)
+      words[0].dispatchEvent(
+        new PointerEvent('pointerdown', {
+          bubbles: true,
+          pointerId: 1,
+          pointerType: 'touch',
+          clientX: 0,
+          clientY: 5
+        })
+      )
+      await wrapper.vm.$nextTick()
+
+      vi.advanceTimersByTime(500)
+      await wrapper.vm.$nextTick()
+      vi.useRealTimers()
+
+      const preview = wrapper.vm.selection_preview
+      expect(preview).not.toBeNull()
+      // x is the finger's clientX at arm time
+      expect(preview.x).toBe(0)
+      // top/bottom come from the word's getBoundingClientRect
+      expect(preview.top).toBe(120)
+      expect(preview.bottom).toBe(120 + 24)
+    })
+
+    test('selection_preview stays null for a mouse drag [obligation]', async () => {
+      const wrapper = mountHost(vi.fn())
+
+      await pointer(wrapper, 'pointerdown', 0, 1)
+      await pointer(wrapper, 'pointermove', 1, 1)
+
+      expect(wrapper.vm.selection_preview).toBeNull()
+    })
+
+    test('selection_preview resets to null after commitTouch (pointerup) [obligation]', async () => {
+      const wrapper = mountHost(vi.fn())
+
+      vi.useFakeTimers()
+      await touch(wrapper, 'pointerdown', 0)
+      vi.advanceTimersByTime(500)
+      await wrapper.vm.$nextTick()
+      vi.useRealTimers()
+
+      expect(wrapper.vm.selection_preview).not.toBeNull()
+
+      await touch(wrapper, 'pointerup', 0)
+
+      expect(wrapper.vm.selection_preview).toBeNull()
+    })
+
+    test('selection_preview resets to null after onPointerCancel [obligation]', async () => {
+      const wrapper = mountHost(vi.fn())
+
+      vi.useFakeTimers()
+      await touch(wrapper, 'pointerdown', 0)
+      vi.advanceTimersByTime(500)
+      await wrapper.vm.$nextTick()
+      vi.useRealTimers()
+
+      expect(wrapper.vm.selection_preview).not.toBeNull()
+
+      // The Host component doesn't bind onPointercancel on the content element;
+      // call the handler directly (the composable exposes it on the vm).
+      wrapper.vm.onPointerCancel(
+        new PointerEvent('pointercancel', { bubbles: true, pointerId: 1, pointerType: 'touch' })
+      )
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.vm.selection_preview).toBeNull()
+    })
+  })
 })

@@ -204,6 +204,65 @@ describe('TranscriptView', () => {
     })
   })
 
+  describe('pointerleave and pointercancel handlers', () => {
+    test('pointerleave on the content element does not throw', async () => {
+      const wrapper = mountView()
+      const content = wrapper.find('[data-testid="transcript-view__content"]').element
+
+      expect(() => {
+        content.dispatchEvent(new PointerEvent('pointerleave', { bubbles: true, pointerId: 1 }))
+      }).not.toThrow()
+    })
+
+    test('pointercancel on the content element does not throw', async () => {
+      const wrapper = mountView()
+      const content = wrapper.find('[data-testid="transcript-view__content"]').element
+
+      expect(() => {
+        content.dispatchEvent(new PointerEvent('pointercancel', { bubbles: true, pointerId: 1 }))
+      }).not.toThrow()
+    })
+
+    test('pointercancel after a touch long-press does not leave selection active', async () => {
+      const wrapper = mountView()
+      const wordEls = wrapper.findAll('[data-testid="transcript-word"]').map((w) => w.element)
+      vi.spyOn(document, 'elementFromPoint').mockImplementation((x) => wordEls[x] ?? null)
+
+      const content = wrapper.find('[data-testid="transcript-view__content"]').element
+
+      vi.useFakeTimers()
+      // Touch press on word 0
+      content.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          bubbles: true,
+          pointerId: 1,
+          pointerType: 'touch',
+          clientX: 0,
+          clientY: 0
+        })
+      )
+      await wrapper.vm.$nextTick()
+
+      // Cancel the gesture (browser claims the scroll)
+      content.dispatchEvent(
+        new PointerEvent('pointercancel', {
+          bubbles: true,
+          pointerId: 1,
+          pointerType: 'touch'
+        })
+      )
+      await wrapper.vm.$nextTick()
+
+      // Advance past long-press — should NOT arm after cancel
+      vi.advanceTimersByTime(500)
+      await wrapper.vm.$nextTick()
+      vi.useRealTimers()
+
+      // No selection should have been committed
+      expect(wrapper.emitted('select')).toBeFalsy()
+    })
+  })
+
   describe('readerActiveWordKey provide [obligation]', () => {
     test('provides readerActiveWordKey to child words reflecting active_word prop [obligation]', async () => {
       const wrapper = mountView({ active_word: 3 })
