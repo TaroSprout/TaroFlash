@@ -2,11 +2,7 @@ import { gsap } from 'gsap'
 
 export type CursorBox = { left: number; top: number; width: number; height: number }
 
-// The leading edge snaps quickly while the trailing edge follows slower, so a
-// fast passage stretches the highlight across the words it sweeps past, then it
-// contracts snug around the active one once the audio settles.
 const LEAD = 0.16
-const TRAIL = 0.45
 const VERTICAL = 0.2
 const FADE = 0.2
 
@@ -23,21 +19,14 @@ function paint(el: HTMLElement, edges: Edges) {
 
 /**
  * Glide a floating highlight `el` to cover `box` (coordinates relative to its
- * offset parent). With `stretch` (the default, used for audio-driven moves) the
- * leading edge leads and the trailing edge lags, so the highlight elongates
- * through fast passages then shrinks back to one word. With `stretch: false`
- * (the hover layer) it moves both edges together to cover `box` directly;
- * `duration` overrides the edge/vertical speed so the hover pill can answer the
- * pointer faster than the audio playhead.
- *
- * A line change (different `top`) can't be stretched horizontally either, so it
- * also slides straight across. The first call drops the highlight onto the box
- * with no animation.
+ * offset parent), moving both edges together. `duration` overrides the default
+ * edge/vertical speed so the pointer-driven pill can answer the pointer quickly.
+ * The first call drops the highlight onto the box with no animation.
  */
 export function moveReaderCursor(
   el: HTMLElement,
   box: CursorBox,
-  { stretch = true, duration }: { stretch?: boolean; duration?: number } = {}
+  { duration }: { duration?: number } = {}
 ) {
   const target_right = box.left + box.width
   const edges = edgesByEl.get(el)
@@ -50,8 +39,6 @@ export function moveReaderCursor(
     return
   }
 
-  const line_jump = Math.abs(box.top - (gsap.getProperty(el, 'top') as number)) > 1
-
   gsap.to(el, {
     top: box.top,
     height: box.height,
@@ -62,27 +49,10 @@ export function moveReaderCursor(
   })
   gsap.killTweensOf(edges)
 
-  if (line_jump || !stretch) {
-    gsap.to(edges, {
-      left: box.left,
-      right: target_right,
-      duration: duration ?? LEAD,
-      ease: 'power2.out',
-      onUpdate: () => paint(el, edges)
-    })
-    return
-  }
-
-  const forward = target_right >= edges.right
   gsap.to(edges, {
     left: box.left,
-    duration: forward ? TRAIL : LEAD,
-    ease: 'power2.out',
-    onUpdate: () => paint(el, edges)
-  })
-  gsap.to(edges, {
     right: target_right,
-    duration: forward ? LEAD : TRAIL,
+    duration: duration ?? LEAD,
     ease: 'power2.out',
     onUpdate: () => paint(el, edges)
   })

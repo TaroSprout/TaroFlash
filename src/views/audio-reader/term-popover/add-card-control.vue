@@ -52,9 +52,10 @@ function onSelect(option: DropdownOption) {
     icon-left="card-add"
     size="base"
     menu-theme="brown-100"
-    menu-theme-dark="stone-900"
+    menu-theme-dark="stone-700"
     position="bottom-end"
     play-on-tap
+    :tap-animate="false"
     :sfx="{ click: 'ui.select' }"
     :options="deck_options"
     :aria-disabled="disabled || undefined"

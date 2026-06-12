@@ -7,10 +7,10 @@ arguments:
     type: string
     description: Optional context to help understand the changes
 argument-hint: '[additional-context]'
-lastUpdated: 2026-05-17T00:00:00Z
+lastUpdated: 2026-06-11T00:00:00Z
 ---
 
-The main thread runs **only** the obligation-mining step below. The subagent has none of this conversation in its context, so the cross-cutting tests that depend on it must be discovered here and passed in explicitly. Everything mechanical (coverage baseline, diff, type selection, writing, validation, re-measure, report) happens inside the subagent.
+The main thread runs **only** the obligation-mining step below. The subagent has none of this conversation in its context, so the cross-cutting tests that depend on it must be discovered here and passed in explicitly. Everything mechanical (scoped per-file coverage of touched files, diff, type selection, writing, validation, re-measure, report) happens inside the subagent. The subagent measures coverage **only for touched files** and targets ~90% lines each — it does not run the full suite or baseline against master.
 
 ## Step A — Mine the conversation for test obligations
 

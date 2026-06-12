@@ -65,17 +65,16 @@ async function fetchTranslation() {
 function onAddCard(deck_id: number | null) {
   if (!result.value) return
 
+  const { translation, reading } = result.value
+  const back = reading ? `${translation}\n\n${reading}` : translation
+
   slide_direction.value = 'forward'
-  adding.value = { front: term, back: result.value.translation, deck_id }
+  adding.value = { front: term, back, deck_id }
 }
 
-// Saving dismisses the whole term (back to the toolbar on mobile); cancelling
-// reverses the push so the translation slides back in.
-function onPanelSaved() {
-  emit('close')
-}
-
-function onPanelCancel() {
+// Saving and cancelling both reverse the push so the term card slides back in —
+// a saved card is confirmed by its own toast, so the term stays open to add more.
+function returnToTermCard() {
   slide_direction.value = 'back'
   adding.value = null
 }
@@ -126,7 +125,7 @@ watch(
           <ui-button
             data-testid="term-card__back"
             data-theme="brown-100"
-            data-theme-dark="stone-900"
+            data-theme-dark="stone-700"
             icon-left="close"
             icon-only
             size="base"
@@ -259,11 +258,12 @@ watch(
           <ui-button
             data-testid="term-card__play-from-here"
             data-theme="brown-100"
-            data-theme-dark="stone-900"
+            data-theme-dark="stone-700"
             icon-left="play"
             size="xl"
             full-width
             play-on-tap
+            :tap-animate="false"
             :sfx="{ click: 'ui.snappy_button_3' }"
             @click="emit('play-from-here')"
           >
@@ -278,8 +278,8 @@ watch(
         :front="adding.front"
         :back="adding.back"
         :deck_id="adding.deck_id"
-        @cancel="onPanelCancel"
-        @saved="onPanelSaved"
+        @cancel="returnToTermCard"
+        @saved="returnToTermCard"
       />
     </transition>
   </div>

@@ -316,7 +316,7 @@ describe('TermCard', () => {
       expect(wrapper.find('[data-testid="term-card__face"]').exists()).toBe(false)
     })
 
-    test('add-card-panel receives front = term and back = translation', async () => {
+    test('add-card-panel back is translation + "\\n\\n" + reading when reading is present [obligation]', async () => {
       mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
       await flushPromises()
@@ -326,10 +326,23 @@ describe('TermCard', () => {
 
       const panel = wrapper.find('[data-testid="add-card-panel-stub"]')
       expect(panel.attributes('data-front')).toBe('猫')
+      expect(panel.attributes('data-back')).toBe('cat\n\nねこ')
+    })
+
+    test('add-card-panel back is just translation (no trailing blank lines) when reading is absent [obligation]', async () => {
+      const no_reading_result = { translation: 'cat', reading: '', pos: 'noun', description: '' }
+      mutateAsyncMock.mockResolvedValueOnce(no_reading_result)
+      const wrapper = mountCard({ term: '猫', sentence: 'test' })
+      await flushPromises()
+
+      wrapper.findComponent(AddCardControlStub).vm.$emit('add', 7)
+      await flushPromises()
+
+      const panel = wrapper.find('[data-testid="add-card-panel-stub"]')
       expect(panel.attributes('data-back')).toBe('cat')
     })
 
-    test('panel saved emits close from term-card [obligation]', async () => {
+    test('panel saved slides back to term card and does NOT emit close [obligation]', async () => {
       mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
       await flushPromises()
@@ -339,10 +352,28 @@ describe('TermCard', () => {
       wrapper.findComponent(AddCardPanelStub).vm.$emit('saved')
       await flushPromises()
 
-      expect(wrapper.emitted('close')).toBeTruthy()
+      // Panel unmounts (term face restored), but close is NOT emitted
+      expect(wrapper.find('[data-testid="add-card-panel-stub"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="term-card__face"]').exists()).toBe(true)
+      expect(wrapper.emitted('close')).toBeFalsy()
     })
 
-    test('panel cancel clears adding and restores the translation face [obligation]', async () => {
+    test('panel cancel slides back to term card and does NOT emit close [obligation]', async () => {
+      mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
+      const wrapper = mountCard({ term: '猫', sentence: 'test' })
+      await flushPromises()
+
+      wrapper.findComponent(AddCardControlStub).vm.$emit('add', 7)
+      await flushPromises()
+      wrapper.findComponent(AddCardPanelStub).vm.$emit('cancel')
+      await flushPromises()
+
+      expect(wrapper.find('[data-testid="add-card-panel-stub"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="term-card__face"]').exists()).toBe(true)
+      expect(wrapper.emitted('close')).toBeFalsy()
+    })
+
+    test('panel cancel is handled by the shared returnToTermCard handler', async () => {
       mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
       await flushPromises()
@@ -354,7 +385,7 @@ describe('TermCard', () => {
       wrapper.findComponent(AddCardPanelStub).vm.$emit('cancel')
       await flushPromises()
 
-      // Face is restored; panel is gone
+      // Face is restored; panel is gone (same returnToTermCard behaviour as saved)
       expect(wrapper.find('[data-testid="add-card-panel-stub"]').exists()).toBe(false)
       expect(wrapper.find('[data-testid="term-card__face"]').exists()).toBe(true)
     })
@@ -382,6 +413,48 @@ describe('TermCard', () => {
 
       // close is NOT emitted until panel fires saved
       expect(wrapper.emitted('close')).toBeFalsy()
+    })
+  })
+
+  describe('show_back mode events', () => {
+    test('clicking term-card__back in show_back mode emits back', async () => {
+      mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
+      const wrapper = mountCard({ term: '猫', sentence: 'test', show_back: true })
+      await flushPromises()
+
+      await wrapper.find('[data-testid="term-card__back"]').trigger('click')
+
+      expect(wrapper.emitted('back')).toBeTruthy()
+    })
+  })
+
+  describe('play actions', () => {
+    test('clicking term-card__play-word emits play-word', async () => {
+      mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
+      const wrapper = mountCard({ term: '猫', sentence: 'test', show_back: false })
+      await flushPromises()
+
+      await wrapper.find('[data-testid="term-card__play-word"]').trigger('click')
+
+      expect(wrapper.emitted('play-word')).toBeTruthy()
+    })
+
+    test('clicking term-card__play-from-here emits play-from-here', async () => {
+      mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
+      const wrapper = mountCard({ term: '猫', sentence: 'test', show_back: false })
+      await flushPromises()
+
+      await wrapper.find('[data-testid="term-card__play-from-here"]').trigger('click')
+
+      expect(wrapper.emitted('play-from-here')).toBeTruthy()
+    })
+
+    test('play-word button is NOT rendered when show_back=true', async () => {
+      mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
+      const wrapper = mountCard({ term: '猫', sentence: 'test', show_back: true })
+      await flushPromises()
+
+      expect(wrapper.find('[data-testid="term-card__play-word"]').exists()).toBe(false)
     })
   })
 })

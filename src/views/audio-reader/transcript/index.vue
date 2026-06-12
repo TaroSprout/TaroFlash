@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { provide } from 'vue'
+import { computed, provide } from 'vue'
 import type { SentenceWords } from '@/utils/transcript'
 import {
+  readerActiveWordKey,
   readerSelectionKey,
   useReaderHighlights
 } from '@/composables/audio-reader/use-reader-highlights'
@@ -19,6 +20,7 @@ const {
 
 const emit = defineEmits<{
   (e: 'select', selection: TermSelection): void
+  (e: 'dismiss'): void
 }>()
 
 const {
@@ -32,10 +34,15 @@ const {
 } = useReaderHighlights(
   () => active_word,
   commitSelection,
-  () => popover_open
+  () => popover_open,
+  () => emit('dismiss')
 )
 
 provide(readerSelectionKey, interaction_range)
+provide(
+  readerActiveWordKey,
+  computed(() => active_word)
+)
 
 function paragraphIndexOf(node: Element): number | null {
   const segment = node.closest('[data-testid="transcript-segment"]')
@@ -78,23 +85,11 @@ function commitSelection({
       @pointercancel="onPointerCancel"
     >
       <div
-        ref="sentence"
-        data-testid="transcript-view__sentence"
-        aria-hidden="true"
-        class="pointer-events-none absolute left-0 top-0 -z-20 rounded-4 bg-brown-200 opacity-0 dark:bg-grey-700"
-      />
-      <div
-        ref="playhead"
-        data-testid="transcript-view__playhead"
-        aria-hidden="true"
-        class="pointer-events-none absolute left-0 top-0 -z-10 rounded-2 bg-brown-50 opacity-0 dark:bg-grey-500"
-      />
-      <div
         ref="hover"
         data-testid="transcript-view__hover"
         aria-hidden="true"
         :data-playing="tap_active"
-        class="group/hover pointer-events-none absolute left-0 top-0 -z-10 rounded-2 bg-blue-500 opacity-0"
+        class="group/hover pointer-events-none absolute left-0 top-0 -z-10 rounded-2 bg-blue-500 opacity-0 dark:bg-blue-650"
       >
         <div
           data-testid="transcript-view__hover-texture"

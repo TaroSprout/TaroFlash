@@ -162,7 +162,7 @@ function setMode(next: 'expanded' | 'mini') {
           <ui-button
             data-testid="audio-toolbar__collapse"
             data-theme="brown-100"
-            data-theme-dark="stone-900"
+            data-theme-dark="stone-700"
             icon-left="minimize"
             variant="ghost"
             icon-only
@@ -176,7 +176,7 @@ function setMode(next: 'expanded' | 'mini') {
           <ui-dropdown-button
             data-testid="audio-toolbar__chapter-select"
             data-theme="brown-100"
-            data-theme-dark="stone-900"
+            data-theme-dark="stone-700"
             icon-left="browser-content"
             variant="ghost"
             open-on-trigger
@@ -194,7 +194,7 @@ function setMode(next: 'expanded' | 'mini') {
           <ui-dropdown-button
             data-testid="audio-toolbar__speed-select"
             data-theme="brown-100"
-            data-theme-dark="stone-900"
+            data-theme-dark="stone-700"
             icon-left="stopwatch"
             variant="ghost"
             open-on-trigger

@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import TranscriptView from '@/views/audio-reader/transcript/index.vue'
+import { readerActiveWordKey } from '@/composables/audio-reader/use-reader-highlights'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -57,9 +58,8 @@ describe('TranscriptView', () => {
   })
 
   describe('highlight layers', () => {
-    test('renders a playhead and a hover layer as separate coexisting elements', () => {
+    test('renders the pointer-driven hover layer', () => {
       const wrapper = mountView()
-      expect(wrapper.find('[data-testid="transcript-view__playhead"]').exists()).toBe(true)
       expect(wrapper.find('[data-testid="transcript-view__hover"]').exists()).toBe(true)
     })
 
@@ -135,6 +135,91 @@ describe('TranscriptView', () => {
       await wrapper.vm.$nextTick()
 
       expect(wrapper.emitted('select')).toBeFalsy()
+    })
+  })
+
+  describe('dismiss event [obligation]', () => {
+    test('a touch tap on empty space emits dismiss [obligation]', async () => {
+      const wrapper = mountView()
+      const wordEls = wrapper.findAll('[data-testid="transcript-word"]').map((w) => w.element)
+      // Map clientX → word element; anything beyond the word count returns null (empty space)
+      vi.spyOn(document, 'elementFromPoint').mockImplementation((x) => wordEls[x] ?? null)
+
+      const content = wrapper.find('[data-testid="transcript-view__content"]').element
+      // Tap at clientX=99 — no word there, so elementFromPoint returns null
+      content.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          bubbles: true,
+          pointerId: 1,
+          pointerType: 'touch',
+          clientX: 99,
+          clientY: 0
+        })
+      )
+      await wrapper.vm.$nextTick()
+      content.dispatchEvent(
+        new PointerEvent('pointerup', {
+          bubbles: true,
+          pointerId: 1,
+          pointerType: 'touch',
+          clientX: 99,
+          clientY: 0
+        })
+      )
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.emitted('dismiss')).toBeTruthy()
+      expect(wrapper.emitted('select')).toBeFalsy()
+    })
+
+    test('a touch tap ON a word emits select and does NOT emit dismiss [obligation]', async () => {
+      const wrapper = mountView()
+      const wordEls = wrapper.findAll('[data-testid="transcript-word"]').map((w) => w.element)
+      vi.spyOn(document, 'elementFromPoint').mockImplementation((x) => wordEls[x] ?? null)
+
+      const content = wrapper.find('[data-testid="transcript-view__content"]').element
+      content.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          bubbles: true,
+          pointerId: 1,
+          pointerType: 'touch',
+          clientX: 0,
+          clientY: 0
+        })
+      )
+      await wrapper.vm.$nextTick()
+      content.dispatchEvent(
+        new PointerEvent('pointerup', {
+          bubbles: true,
+          pointerId: 1,
+          pointerType: 'touch',
+          clientX: 0,
+          clientY: 0
+        })
+      )
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.emitted('select')).toBeTruthy()
+      expect(wrapper.emitted('dismiss')).toBeFalsy()
+    })
+  })
+
+  describe('readerActiveWordKey provide [obligation]', () => {
+    test('provides readerActiveWordKey to child words reflecting active_word prop [obligation]', async () => {
+      const wrapper = mountView({ active_word: 3 })
+      // The provided value is a ComputedRef<number>. We can inspect it via
+      // the component's provides (internal). Drive it via a child word instead:
+      // a word at index 3 should have data-playing=true when active_word=3.
+      const words = wrapper.findAll('[data-testid="transcript-word"]')
+      // word at index 3 is "are " in sentence 1 (index 3 in the flat list)
+      expect(words[3].attributes('data-playing')).toBe('true')
+    })
+
+    test('words that are not the active word have data-playing=false [obligation]', async () => {
+      const wrapper = mountView({ active_word: 3 })
+      const words = wrapper.findAll('[data-testid="transcript-word"]')
+      // word 0 is not the active word
+      expect(words[0].attributes('data-playing')).toBe('false')
     })
   })
 })

@@ -35,13 +35,15 @@ const Host = defineComponent({
   props: {
     activeWord: { type: Number, default: -1 },
     open: { type: Boolean, default: false },
-    onSelect: { type: Function, default: () => {} }
+    onSelect: { type: Function, default: () => {} },
+    onDismiss: { type: Function, default: () => {} }
   },
   setup(props) {
     return useReaderHighlights(
       () => props.activeWord,
       props.onSelect,
-      () => props.open
+      () => props.open,
+      props.onDismiss
     )
   },
   render() {
@@ -56,7 +58,6 @@ const Host = defineComponent({
         onPointerleave: this.onPointerLeave
       },
       [
-        h('div', { ref: 'playhead' }),
         h('div', { ref: 'hover' }),
         h('div', { 'data-testid': 'transcript-segment', 'data-index': '0' }, [
           h(
@@ -82,8 +83,8 @@ describe('useReaderHighlights', () => {
 
   // The composable hit-tests via elementFromPoint; map a synthetic clientX (the
   // word index) onto its element so the gesture is deterministic, not layout-bound.
-  function mountHost(onSelect) {
-    const wrapper = mount(Host, { props: { onSelect } })
+  function mountHost(onSelect, onDismiss) {
+    const wrapper = mount(Host, { props: { onSelect, onDismiss } })
     mounted.push(wrapper)
     words = ['w0', 'w1', 'w2'].map((id) => wrapper.find(`[data-testid="${id}"]`).element)
     vi.spyOn(document, 'elementFromPoint').mockImplementation((x) => words[x] ?? null)
@@ -315,7 +316,7 @@ describe('useReaderHighlights', () => {
     })
   })
 
-  describe('playhead from active word', () => {
+  describe('active-word scroll follow', () => {
     test('scrolls the active word into view when active_word changes', async () => {
       const wrapper = mountHost()
 
@@ -448,7 +449,8 @@ describe('useReaderHighlights', () => {
   describe('empty-space tap deselects; scroll does not', () => {
     test('a stationary tap that lands on no word clears the committed selection [obligation]', async () => {
       const onSelect = vi.fn()
-      const wrapper = mountHost(onSelect)
+      const onDismiss = vi.fn()
+      const wrapper = mountHost(onSelect, onDismiss)
 
       // Commit word 1
       await touch(wrapper, 'pointerdown', 1)
@@ -482,15 +484,65 @@ describe('useReaderHighlights', () => {
       expect(wrapper.vm.interaction_range).toBeNull()
     })
 
+    test('a tap on empty space calls onDismiss [obligation]', async () => {
+      const onSelect = vi.fn()
+      const onDismiss = vi.fn()
+      const wrapper = mountHost(onSelect, onDismiss)
+
+      // Commit word 1 first
+      await touch(wrapper, 'pointerdown', 1)
+      await touch(wrapper, 'pointerup', 1)
+      onDismiss.mockClear()
+
+      // Tap empty space — no word under clientX=3
+      const content = wrapper.find('[data-testid="content"]').element
+      content.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          bubbles: true,
+          pointerId: 1,
+          pointerType: 'touch',
+          clientX: 3,
+          clientY: 0
+        })
+      )
+      await wrapper.vm.$nextTick()
+      content.dispatchEvent(
+        new PointerEvent('pointerup', {
+          bubbles: true,
+          pointerId: 1,
+          pointerType: 'touch',
+          clientX: 3,
+          clientY: 0
+        })
+      )
+      await wrapper.vm.$nextTick()
+
+      expect(onDismiss).toHaveBeenCalledTimes(1)
+    })
+
+    test('a tap ON a word commits onSelect and does NOT call onDismiss [obligation]', async () => {
+      const onSelect = vi.fn()
+      const onDismiss = vi.fn()
+      const wrapper = mountHost(onSelect, onDismiss)
+
+      await touch(wrapper, 'pointerdown', 1)
+      await touch(wrapper, 'pointerup', 1)
+
+      expect(onSelect).toHaveBeenCalledTimes(1)
+      expect(onDismiss).not.toHaveBeenCalled()
+    })
+
     test('a touch drift past slop (scroll) does not clear the committed selection [obligation]', async () => {
       const onSelect = vi.fn()
-      const wrapper = mountHost(onSelect)
+      const onDismiss = vi.fn()
+      const wrapper = mountHost(onSelect, onDismiss)
 
       // Commit word 1
       await touch(wrapper, 'pointerdown', 1)
       await touch(wrapper, 'pointerup', 1)
       expect(onSelect).toHaveBeenCalledTimes(1)
       onSelect.mockClear()
+      onDismiss.mockClear()
 
       // Drift past the slop — this is a scroll, commits nothing, leaves committed lit
       await touch(wrapper, 'pointerdown', 1)
@@ -499,8 +551,9 @@ describe('useReaderHighlights', () => {
 
       // committed selection must still be live (interaction_range non-null)
       expect(wrapper.vm.interaction_range).not.toBeNull()
-      // No new commit fired
+      // No new commit fired, no dismiss either
       expect(onSelect).not.toHaveBeenCalled()
+      expect(onDismiss).not.toHaveBeenCalled()
     })
   })
 

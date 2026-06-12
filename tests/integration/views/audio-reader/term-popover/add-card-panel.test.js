@@ -11,7 +11,8 @@ const {
   errorMock,
   setLastDeckMock,
   guardAddCardsMock,
-  handleLimitErrorMock
+  handleLimitErrorMock,
+  emitSfxMock
 } = vi.hoisted(() => ({
   mutateAsyncMock: vi.fn().mockResolvedValue({ id: 99 }),
   decksDataRef: { value: [] },
@@ -19,7 +20,8 @@ const {
   errorMock: vi.fn(),
   setLastDeckMock: vi.fn(),
   guardAddCardsMock: vi.fn().mockResolvedValue(true),
-  handleLimitErrorMock: vi.fn().mockReturnValue(false)
+  handleLimitErrorMock: vi.fn().mockReturnValue(false),
+  emitSfxMock: vi.fn()
 }))
 
 vi.mock('@/api/decks', () => ({
@@ -45,12 +47,39 @@ vi.mock('@/composables/use-card-limit-gate', () => ({
   })
 }))
 
+vi.mock('@/sfx/bus', () => ({
+  emitSfx: emitSfxMock,
+  emitHoverSfx: vi.fn()
+}))
+
+vi.mock('gsap', () => ({
+  gsap: {
+    fromTo: vi.fn((_el, _from, to) => to?.onComplete?.()),
+    to: vi.fn((_el, opts) => opts?.onComplete?.())
+  }
+}))
+
+vi.mock('@floating-ui/vue', () => ({
+  useFloating: vi.fn(() => ({
+    placement: { value: 'bottom-start' },
+    middlewareData: { value: {} },
+    floatingStyles: { value: {} }
+  })),
+  shift: vi.fn(() => ({})),
+  flip: vi.fn(() => ({})),
+  autoUpdate: vi.fn(),
+  arrow: vi.fn(() => ({})),
+  offset: vi.fn(() => ({})),
+  hide: vi.fn(() => ({})),
+  size: vi.fn(() => ({}))
+}))
+
 // ── Stubs ──────────────────────────────────────────────────────────────────────
 
 const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
-  props: ['disabled'],
+  props: ['disabled', 'tapAnimate'],
   emits: ['click'],
   setup(props, { slots, emit, attrs }) {
     return () =>
@@ -72,6 +101,28 @@ const CardFaceFieldStub = defineComponent({
   }
 })
 
+// Stub the dropdown-button: renders the trigger + exposes a `select` event
+// so tests can drive deck selection without floating-ui machinery.
+const UiDropdownButtonStub = defineComponent({
+  name: 'UiDropdownButton',
+  inheritAttrs: false,
+  props: ['options'],
+  emits: ['select'],
+  setup(props, { slots, emit, attrs }) {
+    return () =>
+      h('div', { ...attrs, 'data-testid': attrs['data-testid'] ?? 'ui-dropdown-button-stub' }, [
+        slots.default?.(),
+        // Render one button per option so tests can trigger select by option index
+        ...(props.options ?? []).map((opt) =>
+          h('button', {
+            'data-testid': `deck-option-${opt.value}`,
+            onClick: () => emit('select', opt)
+          })
+        )
+      ])
+  }
+})
+
 // ── Component import (must come after mocks) ──────────────────────────────────
 
 import AddCardPanel from '@/views/audio-reader/term-popover/add-card-panel.vue'
@@ -87,7 +138,11 @@ function mountPanel(props = {}) {
   return mount(AddCardPanel, {
     props: { front: 'Hello', back: 'こんにちは', ...props },
     global: {
-      stubs: { UiButton: UiButtonStub, CardFaceField: CardFaceFieldStub },
+      stubs: {
+        UiButton: UiButtonStub,
+        UiDropdownButton: UiDropdownButtonStub,
+        CardFaceField: CardFaceFieldStub
+      },
       mocks: { $t: (key) => key }
     }
   })
@@ -98,12 +153,15 @@ function faceField(wrapper, side) {
 }
 
 function saveButton(wrapper) {
+  // The save button is the last button in the actions row
   const buttons = wrapper.findAll('[data-testid="add-card-panel__actions"] button')
   return buttons[buttons.length - 1]
 }
 
+// Simulate selecting a deck via the dropdown stub's emitted select event.
 function selectDeck(wrapper, id) {
-  return wrapper.find('[data-testid="add-card-panel__deck"]').setValue(String(id))
+  wrapper.findComponent(UiDropdownButtonStub).vm.$emit('select', { value: id, label: `Deck ${id}` })
+  return wrapper.vm.$nextTick()
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -119,13 +177,15 @@ beforeEach(() => {
   guardAddCardsMock.mockResolvedValue(true)
   handleLimitErrorMock.mockClear()
   handleLimitErrorMock.mockReturnValue(false)
+  emitSfxMock.mockClear()
 })
 
 describe('AddCardPanel', () => {
   describe('rendering', () => {
-    test('renders the flip toggle and action buttons', () => {
+    test('renders the actions-row, preview, and actions sections', () => {
       const wrapper = mountPanel()
-      expect(wrapper.find('[data-testid="add-card-panel__flip"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="add-card-panel__actions-row"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="add-card-panel__preview"]').exists()).toBe(true)
       expect(wrapper.find('[data-testid="add-card-panel__actions"]').exists()).toBe(true)
     })
 
@@ -156,6 +216,89 @@ describe('AddCardPanel', () => {
       await wrapper.find('[data-testid="add-card-panel__flip-button"]').trigger('click')
 
       expect(wrapper.findComponent(CardFaceFieldStub).props('side')).toBe('front')
+    })
+
+    test('flipping to back emits ui.transition_up [obligation]', async () => {
+      const wrapper = mountPanel()
+      emitSfxMock.mockClear()
+
+      // Start on front; flip to back
+      await wrapper.find('[data-testid="add-card-panel__flip-button"]').trigger('click')
+
+      expect(emitSfxMock).toHaveBeenCalledWith('ui.transition_up')
+    })
+
+    test('flipping to front emits ui.transition_down [obligation]', async () => {
+      const wrapper = mountPanel()
+
+      // Flip to back first, then back to front
+      await wrapper.find('[data-testid="add-card-panel__flip-button"]').trigger('click')
+      emitSfxMock.mockClear()
+      await wrapper.find('[data-testid="add-card-panel__flip-button"]').trigger('click')
+
+      expect(emitSfxMock).toHaveBeenCalledWith('ui.transition_down')
+    })
+  })
+
+  describe('focus cue [obligation]', () => {
+    test('focusin on a contenteditable target emits ui.slide_up [obligation]', async () => {
+      const wrapper = mountPanel()
+      emitSfxMock.mockClear()
+
+      const preview = wrapper.find('[data-testid="add-card-panel__preview"]').element
+      const editable = document.createElement('div')
+      editable.contentEditable = 'true'
+      preview.appendChild(editable)
+
+      // Dispatch on the editable itself so event.target === editable; it bubbles to preview.
+      editable.dispatchEvent(new FocusEvent('focusin', { bubbles: true }))
+      await wrapper.vm.$nextTick()
+
+      expect(emitSfxMock).toHaveBeenCalledWith('ui.slide_up')
+      editable.remove()
+    })
+
+    test('focusin on a non-editable element does NOT emit ui.slide_up [obligation]', async () => {
+      const wrapper = mountPanel()
+      emitSfxMock.mockClear()
+
+      const preview = wrapper.find('[data-testid="add-card-panel__preview"]').element
+      const button = document.createElement('button')
+      preview.appendChild(button)
+
+      // Dispatch on the button itself so event.target === button; it bubbles to preview.
+      button.dispatchEvent(new FocusEvent('focusin', { bubbles: true }))
+      await wrapper.vm.$nextTick()
+
+      expect(emitSfxMock).not.toHaveBeenCalledWith('ui.slide_up')
+      button.remove()
+    })
+  })
+
+  describe('deck dropdown [obligation]', () => {
+    test('deck_options excludes the currently-selected deck [obligation]', async () => {
+      decksDataRef.value = TEST_DECKS
+      const wrapper = mountPanel({ deck_id: 1 })
+      await flushPromises()
+
+      const dropdown = wrapper.findComponent(UiDropdownButtonStub)
+      const options = dropdown.props('options')
+      // deck 1 is selected → only deck 2 should appear
+      expect(options).toHaveLength(1)
+      expect(options[0].value).toBe(2)
+    })
+
+    test('selecting a deck option sets deck_id via onSelectDeck [obligation]', async () => {
+      decksDataRef.value = TEST_DECKS
+      const wrapper = mountPanel()
+      await flushPromises()
+
+      await selectDeck(wrapper, TEST_DECKS[0].id)
+
+      // After selection, deck 1 is selected → options list excludes deck 1
+      const dropdown = wrapper.findComponent(UiDropdownButtonStub)
+      const options = dropdown.props('options')
+      expect(options.every((o) => o.value !== 1)).toBe(true)
     })
   })
 
@@ -194,7 +337,7 @@ describe('AddCardPanel', () => {
   })
 
   describe('save action [obligation]', () => {
-    test('calls mutateAsync with deck_id, null anchor/side, and both face texts', async () => {
+    test('calls mutateAsync with deck_id, null anchor/side, and both face texts [obligation]', async () => {
       decksDataRef.value = TEST_DECKS
       const wrapper = mountPanel({ front: 'Dog', back: '犬' })
       await flushPromises()
@@ -263,7 +406,7 @@ describe('AddCardPanel', () => {
       await flushPromises()
       await selectDeck(wrapper, TEST_DECKS[0].id)
 
-      // Flip to the back side to access the back CardFaceField
+      // Flip to back side and edit
       await wrapper.find('[data-testid="add-card-panel__flip-button"]').trigger('click')
       wrapper.findComponent(CardFaceFieldStub).vm.$emit('update:text', '犬 (inu)')
       await flushPromises()
@@ -275,40 +418,28 @@ describe('AddCardPanel', () => {
         expect.objectContaining({ back_text: '犬 (inu)' })
       )
     })
-  })
 
-  describe('cancel [obligation]', () => {
-    test('cancel button emits cancel [obligation]', async () => {
-      const wrapper = mountPanel()
-      const cancel = wrapper.findAll('[data-testid="add-card-panel__actions"] button')[0]
-      await cancel.trigger('click')
-
-      expect(wrapper.emitted('cancel')).toBeTruthy()
-    })
-  })
-
-  describe('deck select population', () => {
-    test('populates the select with options from useMemberDecksQuery', async () => {
-      decksDataRef.value = TEST_DECKS
-      const wrapper = mountPanel()
-      await flushPromises()
-
-      const options = wrapper.findAll('[data-testid="add-card-panel__deck"] option').slice(1)
-      expect(options.length).toBe(TEST_DECKS.length)
-      expect(options[0].text()).toContain('Deck Alpha')
-    })
-
-    test('pre-selects the deck passed via deck_id prop', async () => {
+    test('pre-selects the deck passed via deck_id prop [obligation]', async () => {
       decksDataRef.value = TEST_DECKS
       const wrapper = mountPanel({ deck_id: 2 })
       await flushPromises()
 
+      // Save button should be enabled (deck already selected, both faces have text)
       expect(saveButton(wrapper).attributes('disabled')).toBeUndefined()
 
       await saveButton(wrapper).trigger('click')
       await flushPromises()
 
       expect(mutateAsyncMock).toHaveBeenCalledWith(expect.objectContaining({ deck_id: 2 }))
+    })
+  })
+
+  describe('cancel [obligation]', () => {
+    test('back button emits cancel [obligation]', async () => {
+      const wrapper = mountPanel()
+      await wrapper.find('[data-testid="add-card-panel__back"]').trigger('click')
+
+      expect(wrapper.emitted('cancel')).toBeTruthy()
     })
   })
 
