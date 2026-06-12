@@ -37,6 +37,25 @@ function makePlayer(overrides = {}) {
   }
 }
 
+// Capture and control the visibilitychange handler registered on document.
+function spyOnVisibilityChange() {
+  let handler = null
+  const addSpy = vi.spyOn(document, 'addEventListener').mockImplementation((event, cb) => {
+    if (event === 'visibilitychange') handler = cb
+  })
+  const removeSpy = vi.spyOn(document, 'removeEventListener')
+  return {
+    fire() {
+      handler?.()
+    },
+    restore() {
+      addSpy.mockRestore()
+      removeSpy.mockRestore()
+      Object.defineProperty(document, 'hidden', { value: false, configurable: true })
+    }
+  }
+}
+
 describe('useReaderProgress', () => {
   let app
 
@@ -113,6 +132,34 @@ describe('useReaderProgress', () => {
 
       expect(player.seek).not.toHaveBeenCalled()
     })
+
+    test('stays paused after restoring — seek is called but play is never called [obligation]', async () => {
+      collectionRef.current = ref({ id: 5, last_lesson_id: 2, last_position_seconds: 42 })
+      const player = makePlayer({ play: vi.fn() })
+      ;[, app] = withSetup(() => useReaderProgress(ref(5), ref(2), player))
+
+      player.loaded.value = true
+      await nextTick()
+
+      expect(player.seek).toHaveBeenCalledWith(42)
+      expect(player.play).not.toHaveBeenCalled()
+    })
+
+    test('different chapter starts at 0 with no seek but still writes bookmark at 0 [obligation]', async () => {
+      collectionRef.current = ref({ id: 5, last_lesson_id: 99, last_position_seconds: 42 })
+      const player = makePlayer()
+      ;[, app] = withSetup(() => useReaderProgress(ref(5), ref(2), player))
+
+      player.loaded.value = true
+      await nextTick()
+
+      expect(player.seek).not.toHaveBeenCalled()
+      expect(mutateSpy).toHaveBeenCalledWith({
+        collection_id: 5,
+        lesson_id: 2,
+        position_seconds: 0
+      })
+    })
   })
 
   describe('save', () => {
@@ -178,6 +225,100 @@ describe('useReaderProgress', () => {
         lesson_id: 2,
         position_seconds: 12
       })
+    })
+
+    test('saves on visibilitychange when document.hidden is true (tab switch / close) [obligation]', async () => {
+      const spy = spyOnVisibilityChange()
+      collectionRef.current = ref({ id: 5, last_lesson_id: 2, last_position_seconds: 0 })
+      const player = makePlayer()
+      ;[, app] = withSetup(() => useReaderProgress(ref(5), ref(2), player))
+
+      player.loaded.value = true
+      await nextTick()
+      player.current_time.value = 22
+      mutateSpy.mockClear()
+
+      Object.defineProperty(document, 'hidden', { value: true, configurable: true })
+      spy.fire()
+
+      expect(mutateSpy).toHaveBeenCalledWith({
+        collection_id: 5,
+        lesson_id: 2,
+        position_seconds: 22
+      })
+
+      spy.restore()
+    })
+
+    test('does not save on visibilitychange when document is visible (returning to foreground) [obligation]', async () => {
+      const spy = spyOnVisibilityChange()
+      collectionRef.current = ref({ id: 5, last_lesson_id: 2, last_position_seconds: 0 })
+      const player = makePlayer()
+      ;[, app] = withSetup(() => useReaderProgress(ref(5), ref(2), player))
+
+      player.loaded.value = true
+      await nextTick()
+      mutateSpy.mockClear()
+
+      Object.defineProperty(document, 'hidden', { value: false, configurable: true })
+      spy.fire()
+
+      expect(mutateSpy).not.toHaveBeenCalled()
+
+      spy.restore()
+    })
+
+    test('throttle by playback: does not save while playing when advance < 5s since last save [obligation]', async () => {
+      collectionRef.current = ref({ id: 5, last_lesson_id: 2, last_position_seconds: 0 })
+      const player = makePlayer()
+      ;[, app] = withSetup(() => useReaderProgress(ref(5), ref(2), player))
+
+      player.loaded.value = true
+      await nextTick()
+      mutateSpy.mockClear()
+      player.is_playing.value = true
+
+      // Advance 4 seconds — below the 5s threshold
+      player.current_time.value = 4
+      await nextTick()
+
+      expect(mutateSpy).not.toHaveBeenCalled()
+    })
+
+    test('throttle by playback: saves once current_time advances ≥ 5s since last save [obligation]', async () => {
+      collectionRef.current = ref({ id: 5, last_lesson_id: 2, last_position_seconds: 0 })
+      const player = makePlayer()
+      ;[, app] = withSetup(() => useReaderProgress(ref(5), ref(2), player))
+
+      player.loaded.value = true
+      await nextTick()
+      mutateSpy.mockClear()
+      player.is_playing.value = true
+
+      player.current_time.value = 5
+      await nextTick()
+
+      expect(mutateSpy).toHaveBeenCalledWith({
+        collection_id: 5,
+        lesson_id: 2,
+        position_seconds: 5
+      })
+    })
+
+    test('does not save via throttle watcher when not playing [obligation]', async () => {
+      collectionRef.current = ref({ id: 5, last_lesson_id: 2, last_position_seconds: 0 })
+      const player = makePlayer()
+      ;[, app] = withSetup(() => useReaderProgress(ref(5), ref(2), player))
+
+      player.loaded.value = true
+      await nextTick()
+      mutateSpy.mockClear()
+      // is_playing stays false
+
+      player.current_time.value = 10
+      await nextTick()
+
+      expect(mutateSpy).not.toHaveBeenCalled()
     })
   })
 })

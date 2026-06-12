@@ -1,17 +1,26 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 
-const { useMutationSpy, getQueryDataSpy, setQueryDataSpy, setCollectionProgressMock } = vi.hoisted(
-  () => ({
-    useMutationSpy: vi.fn((cfg) => cfg),
-    getQueryDataSpy: vi.fn(),
-    setQueryDataSpy: vi.fn(),
-    setCollectionProgressMock: vi.fn().mockResolvedValue(undefined)
-  })
-)
+const {
+  useMutationSpy,
+  getQueryDataSpy,
+  setQueryDataSpy,
+  invalidateQueriesSpy,
+  setCollectionProgressMock
+} = vi.hoisted(() => ({
+  useMutationSpy: vi.fn((cfg) => cfg),
+  getQueryDataSpy: vi.fn(),
+  setQueryDataSpy: vi.fn(),
+  invalidateQueriesSpy: vi.fn(),
+  setCollectionProgressMock: vi.fn().mockResolvedValue(undefined)
+}))
 
 vi.mock('@pinia/colada', () => ({
   useMutation: useMutationSpy,
-  useQueryCache: () => ({ getQueryData: getQueryDataSpy, setQueryData: setQueryDataSpy })
+  useQueryCache: () => ({
+    getQueryData: getQueryDataSpy,
+    setQueryData: setQueryDataSpy,
+    invalidateQueries: invalidateQueriesSpy
+  })
 }))
 
 vi.mock('@/api/lessons/db', () => ({
@@ -24,6 +33,7 @@ beforeEach(() => {
   useMutationSpy.mockClear()
   getQueryDataSpy.mockReset()
   setQueryDataSpy.mockClear()
+  invalidateQueriesSpy.mockClear()
   setCollectionProgressMock.mockClear()
 })
 
@@ -93,6 +103,17 @@ describe('useSetCollectionProgressMutation', () => {
       onSettled(undefined, undefined, { collection_id: 3, lesson_id: 17, position_seconds: 42 })
 
       expect(setQueryDataSpy).not.toHaveBeenCalled()
+    })
+
+    test('never calls invalidateQueries — patches in place to avoid refetch loops [obligation]', () => {
+      getQueryDataSpy.mockImplementation((key) =>
+        key[0] === 'lesson-collection' ? { id: 3, title: 'Book', last_lesson_id: 1 } : undefined
+      )
+      const { onSettled } = configFrom(useSetCollectionProgressMutation)
+
+      onSettled(undefined, undefined, { collection_id: 3, lesson_id: 17, position_seconds: 42 })
+
+      expect(invalidateQueriesSpy).not.toHaveBeenCalled()
     })
   })
 })
