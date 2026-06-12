@@ -62,6 +62,9 @@ type LessonCollection = {
   // The last chapter the member opened — the dashboard reopens the book here.
   // null/absent until they open the collection for the first time.
   last_lesson_id?: number | null
+  // Audio offset (seconds) within last_lesson_id where the member left off, so the
+  // reader resumes mid-chapter. One resume point per book; defaults to 0.
+  last_position_seconds?: number | null
   created_at?: string
   updated_at?: string
 }
