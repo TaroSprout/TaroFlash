@@ -21,6 +21,7 @@ const {
   playerRef,
   chaptersRef,
   progressMutate,
+  useReaderProgressMock,
   editModalOpenMock,
   routerPushMock,
   emitSfxMock
@@ -37,6 +38,7 @@ const {
   playerRef: { value: {} },
   chaptersRef: { value: [] },
   progressMutate: vi.fn(),
+  useReaderProgressMock: vi.fn(),
   editModalOpenMock: vi.fn(),
   routerPushMock: vi.fn(),
   emitSfxMock: vi.fn()
@@ -63,6 +65,10 @@ vi.mock('@/composables/audio-reader/use-lesson-reader', () => ({
     playClip: playClipMock,
     player: playerRef
   })
+}))
+
+vi.mock('@/composables/audio-reader/use-reader-progress', () => ({
+  useReaderProgress: useReaderProgressMock
 }))
 
 vi.mock('@/composables/use-media-query', () => ({
@@ -203,6 +209,7 @@ beforeEach(() => {
   progressMutate.mockClear()
   editModalOpenMock.mockClear()
   routerPushMock.mockClear()
+  useReaderProgressMock.mockClear()
   openTermMock.mockClear()
   closeTermMock.mockClear()
   playFromHereMock.mockClear()
@@ -211,22 +218,16 @@ beforeEach(() => {
 })
 
 describe('LessonView', () => {
-  describe('progress bookmark', () => {
-    test('calls progress mutate with collection_id and lesson_id on mount when lesson is loaded', async () => {
-      lessonRef.value = { id: 2, title: 'Hiragana Basics' }
+  describe('progress tracking', () => {
+    test('hands the collection id, lesson id, and player to useReaderProgress', async () => {
       mountView()
       await flushPromises()
 
-      expect(progressMutate).toHaveBeenCalledOnce()
-      expect(progressMutate).toHaveBeenCalledWith({ collection_id: 5, lesson_id: 2 })
-    })
-
-    test('does not call mutate when lesson is null on mount', async () => {
-      lessonRef.value = null
-      mountView()
-      await flushPromises()
-
-      expect(progressMutate).not.toHaveBeenCalled()
+      expect(useReaderProgressMock).toHaveBeenCalledOnce()
+      const [collectionArg, lessonArg, playerArg] = useReaderProgressMock.mock.calls[0]
+      expect(collectionArg.value).toBe(5)
+      expect(lessonArg.value).toBe(2)
+      expect(playerArg).toBe(playerRef)
     })
   })
 
