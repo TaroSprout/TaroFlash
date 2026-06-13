@@ -47,6 +47,7 @@ const card_side_attributes = computed(() =>
     <tab-bar
       :tabs="tabs"
       :active="editor.active_side.value"
+      hover_sfx="ui.click_07"
       @update:active="editor.setActiveSide"
     />
     <transition :css="false" mode="out-in" @leave="fadeLeave" @enter="fadeEnter">
