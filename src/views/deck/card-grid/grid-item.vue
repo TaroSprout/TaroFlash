@@ -31,8 +31,22 @@ function onCardClick() {
     return
   }
 
+  // A click that ends a drag-selection of the card's text shouldn't also flip.
+  // A plain click collapses the selection on mousedown, so this only catches
+  // the release of a real selection.
+  const sel = window.getSelection()
+  if (sel && !sel.isCollapsed) return
+
   active_side.value = active_side.value === 'front' ? 'back' : 'front'
   emitSfx(active_side.value === 'back' ? 'ui.transition_up' : 'ui.transition_down')
+}
+
+// Spamming the flip racks up the browser's click counter, whose double/triple
+// clicks word- and line-select the card content. Suppress the default selection
+// on those multi-clicks only — a single click (and a deliberate click-drag to
+// select) keeps `detail === 1`, so manual selection still works.
+function onCardMouseDown(e: MouseEvent) {
+  if (e.detail > 1) e.preventDefault()
 }
 </script>
 
@@ -50,6 +64,7 @@ function onCardClick() {
       size="xl"
       :side="active_side"
       :card_attributes="card_attributes"
+      @mousedown="onCardMouseDown"
       @click="onCardClick"
     />
 
