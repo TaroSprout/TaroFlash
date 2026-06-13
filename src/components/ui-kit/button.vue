@@ -21,9 +21,11 @@ export type ButtonProps = {
   sfx?: SfxOptions
   fullWidth?: boolean
   mobileTooltip?: boolean
+  // Touch-only tap feedback: on coarse pointers the click is deferred a beat to
+  // play the tap (desktop passes straight through). On by default.
   playOnTap?: boolean
-  // With playOnTap, drop the scale/rotate tween so the tap shows only the
-  // bgx-slide sweep + sfx. Defaults to true (the full tap bounce).
+  // With playOnTap, run the full scale/rotate tap bounce. Off by default, so the
+  // tap shows only the quiet bgx-slide sweep + sfx; set true to restore the bounce.
   tapAnimate?: boolean
   // Inert + muted label region. The trailing slot (a split-button caret) stays
   // live, so only the primary action is disabled — not the whole control.
@@ -43,8 +45,8 @@ const {
   sfx = {},
   fullWidth = false,
   mobileTooltip = false,
-  playOnTap = false,
-  tapAnimate = true,
+  playOnTap = true,
+  tapAnimate = false,
   disabled = false,
   clickWhenDisabled = false
 } = defineProps<ButtonProps>()
@@ -52,7 +54,7 @@ const {
 const slots = useSlots()
 const attrs = useAttrs()
 
-const { playing, interceptClick } = usePlayOnTap({ reset: false, animate: tapAnimate })
+const { playing, interceptClick } = usePlayOnTap({ reset: true, animate: tapAnimate })
 
 const merged_sfx = computed<SfxOptions>(() => {
   if (disabled) return {}
@@ -123,6 +125,9 @@ function emitClickSfx() {
         'ui-kit-btn--split': has_trailing,
         'ui-kit-btn--quiet-tap': playOnTap && !tapAnimate,
         'ui-kit-btn--disabled': disabled,
+        // Ghost is transparent at rest; fill it behind the content while the
+        // coarse quiet tap sweeps, so the bgx reads against a surface.
+        'data-[playing=true]:bg-(--theme-primary)': variant === 'ghost' && !disabled,
         'rounded-full!': roundedFull,
         'w-full!': fullWidth
       }
@@ -148,7 +153,11 @@ function emitClickSfx() {
         'group-hover/btn:block group-data-[playing=true]/btn:block':
           !loading && !disabled && fancyHover && variant !== 'ghost',
         'bgx-color-[var(--theme-neutral)]': variant === 'solid',
-        'bgx-color-[var(--theme-on-neutral)]': inverted
+        'bgx-color-[var(--theme-on-neutral)]': inverted,
+        // Ghost has no surface, so only the coarse quiet tap sweeps it (the
+        // theme-primary fill is added to the button root, behind the content).
+        'group-data-[playing=true]/btn:block bgx-color-[var(--theme-neutral)]':
+          !loading && !disabled && variant === 'ghost'
       }"
     >
       <ui-icon v-if="loading" src="loading-dots" class="h-12 w-12 text-brown-100" />
@@ -164,6 +173,10 @@ function emitClickSfx() {
 /* Base button styles */
 .ui-kit-btn {
   position: relative;
+
+  /* Composed from the per-size x/y so the menu can reach each axis; icon-only
+     overrides --btn-padding directly with a single square value. */
+  --btn-padding: var(--btn-padding-y) var(--btn-padding-x);
 
   background-color: var(--btn-bg-color);
   color: var(--btn-text-color);
@@ -279,7 +292,8 @@ function emitClickSfx() {
   --btn-font-size--line-height: var(--text-xl--line-height);
   --btn-border-radius: 22.5px;
   --btn-gap: 10px;
-  --btn-padding: 14px 24px;
+  --btn-padding-y: 14px;
+  --btn-padding-x: 24px;
   --btn-height: 50px;
   --icon-size: 18px;
 
@@ -293,7 +307,8 @@ function emitClickSfx() {
   --btn-font-size--line-height: var(--text-xl--line-height);
   --btn-border-radius: 19px;
   --btn-gap: 6px;
-  --btn-padding: 10px 20px;
+  --btn-padding-y: 10px;
+  --btn-padding-x: 20px;
   --btn-height: 45px;
   --icon-size: 20px;
 
@@ -307,7 +322,8 @@ function emitClickSfx() {
   --btn-font-size--line-height: var(--text-lg--line-height);
   --btn-border-radius: 18px;
   --btn-gap: 8px;
-  --btn-padding: 6px 14px;
+  --btn-padding-y: 6px;
+  --btn-padding-x: 14px;
   --btn-height: 40px;
   --icon-size: 18px;
   --btn-height: 40px;
@@ -322,7 +338,8 @@ function emitClickSfx() {
   --btn-font-size--line-height: var(--text-base--line-height);
   --btn-border-radius: 13px;
   --btn-gap: 3px;
-  --btn-padding: 4px 12px;
+  --btn-padding-y: 4px;
+  --btn-padding-x: 12px;
   --icon-size: 16px;
   --btn-height: 30px;
 

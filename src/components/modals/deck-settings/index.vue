@@ -10,7 +10,6 @@ import {
   useDeckDangerActions,
   deckDangerActionsKey
 } from '@/composables/deck/use-deck-danger-actions'
-import { useSessionRef } from '@/composables/use-session-ref'
 import { useMatchMedia } from '@/composables/use-media-query'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
@@ -58,7 +57,7 @@ const tab_sheet = useTemplateRef('tab_sheet')
 // floating preview drop on a narrow viewport, never on a short one.
 const is_mobile = useMatchMedia('w<md')
 
-const active_tab = useSessionRef<ActiveTab | null>('deck-settings.active-tab', null)
+const active_tab = ref<ActiveTab | null>(null)
 const tab_outlet = ref<HTMLElement>()
 
 if (initial_tab) active_tab.value = initial_tab
@@ -82,10 +81,7 @@ const sidebar_active = computed({
   set: (v) => (active_tab.value = v as ActiveTab)
 })
 
-const active_header = computed(() => ({
-  title: t(`deck.settings-modal.header.${displayed_tab.value}.title`),
-  description: t(`deck.settings-modal.header.${displayed_tab.value}.description`)
-}))
+const header_title = computed(() => t(`deck.settings-modal.header.${displayed_tab.value}.title`))
 
 const visible_side = computed(() =>
   displayed_tab.value === 'design' ? editor.active_side.value : 'cover'
@@ -138,6 +134,12 @@ function onTabEnter(el: Element, done: () => void) {
 watch(has_sidebar, (visible) => {
   if (!visible && active_tab.value === 'danger-zone') active_tab.value = null
 })
+
+// Leaving a tab (back to the index) resets the designer side to cover — assign
+// directly rather than via setActiveSide so it doesn't fire the slide sfx.
+watch(active_tab, (tab) => {
+  if (tab === null) editor.active_side.value = 'cover'
+})
 </script>
 
 <template>
@@ -157,14 +159,11 @@ watch(has_sidebar, (visible) => {
     <template #header-content>
       <div
         data-testid="deck-settings__header"
-        class="w-full flex flex-col max-md:items-center max-md:text-center"
+        class="w-full flex flex-col max-md:items-center max-md:text-center pointer-coarse:pt-4"
       >
         <h1 data-testid="deck-settings__header-title" class="text-5xl text-white">
-          {{ active_header.title }}
+          {{ header_title }}
         </h1>
-        <p data-testid="deck-settings__header-description" class="text-white/80">
-          {{ active_header.description }}
-        </p>
       </div>
     </template>
 

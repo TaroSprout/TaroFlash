@@ -153,8 +153,6 @@ async function onSave() {
       <ui-dropdown-button
         data-testid="add-card-panel__deck"
         class="justify-self-center"
-        data-theme="brown-100"
-        data-theme-dark="stone-700"
         menu-theme="brown-100"
         menu-theme-dark="stone-700"
         variant="ghost"

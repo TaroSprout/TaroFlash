@@ -224,13 +224,6 @@ const font_size = computed(() => {
   display: none;
 }
 
-/* Empty card (no image, no text) shows the placeholder backdrop edge-to-edge. */
-.card-face[data-mode='view'][data-image='false'][data-text='false'],
-.card-face[data-mode='view'][data-image='false']:has(.ql-blank) {
-  padding: 0;
-  background-color: var(--color-purple-400);
-}
-
 /* ----- Editor: hovering an image reveals a replaceable dropzone frame ------ */
 /* The image keeps its padded region in above/below (with or without text), so
    the dashed frame sits just outside it. Behind layout uses floating corner
@@ -262,6 +255,44 @@ const font_size = computed(() => {
   .card-face[data-mode='edit'][data-image='true']:not([data-layout='behind'])
   .card-face__image-region {
   outline-color: var(--color-blue-650);
+}
+
+/* ----- Editor: dragging a replacement over a behind-layout image ----------- */
+/* Behind images are full-bleed with floating corner controls, so there's no
+   padded region to frame. While a file is dragged over it, pull the image in to
+   gain padding and frame the whole face with the dashed drop affordance — the
+   same cue the padded layouts show. */
+.card-face[data-mode='edit'][data-layout='behind'][data-image='true'] .card-face__image-region {
+  transition:
+    inset 0.15s ease,
+    border-radius 0.15s ease;
+}
+
+.card-container--edit[data-dragging]
+  .card-face[data-mode='edit'][data-layout='behind'][data-image='true']
+  .card-face__image-region {
+  inset: var(--face-padding);
+
+  border-radius: var(--inner-radius);
+}
+
+.card-container--edit[data-dragging]
+  .card-face[data-mode='edit'][data-layout='behind'][data-image='true'] {
+  outline: 3px dashed var(--color-blue-500);
+  outline-offset: -3px;
+  transition: outline-color 0.15s ease;
+}
+
+[data-theme='dark']
+  .card-container--edit[data-dragging]
+  .card-face[data-mode='edit'][data-layout='behind'][data-image='true'] {
+  outline-color: var(--color-blue-650);
+}
+
+/* Behind the translucent loading scrim the placeholder would read through on an
+   empty card — hide it while an upload/removal is in flight. */
+.card-container[data-loading] .text-editor__placeholder {
+  display: none;
 }
 
 .card-face__text-editor {

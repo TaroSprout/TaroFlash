@@ -21,7 +21,8 @@ const CardStub = defineComponent({
           'data-size': props.size,
           'data-card-class': attrs.class,
           'data-card-scale': attrs.style?.['--card-scale'],
-          onClick: attrs.onClick
+          onClick: attrs.onClick,
+          onMousedown: attrs.onMousedown
         },
         slots.default?.()
       )
@@ -185,5 +186,73 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     const card = wrapper.find('[data-testid="card-stub"]')
     expect(card.attributes('data-card-class')).toContain('grid-item__card--scaled')
     expect(card.attributes('data-card-scale')).toBe('0.6')
+  })
+
+  // ── selection guard (non-collapsed selection) [obligation] ─────────────────
+
+  test('onCardClick does NOT flip when window.getSelection() is non-collapsed [obligation]', async () => {
+    // A click that ends a text-drag should not also flip the card.
+    const origGetSelection = window.getSelection
+    window.getSelection = () => ({ isCollapsed: false })
+
+    const { wrapper } = mountGridItem({ props: { side: 'front' } })
+    await wrapper.find('[data-testid="card-stub"]').trigger('click')
+
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('front')
+    expect(mockEmitSfx).not.toHaveBeenCalled()
+
+    window.getSelection = origGetSelection
+  })
+
+  test('onCardClick DOES flip when window.getSelection() is collapsed [obligation]', async () => {
+    const origGetSelection = window.getSelection
+    window.getSelection = () => ({ isCollapsed: true })
+
+    const { wrapper } = mountGridItem({ props: { side: 'front' } })
+    await wrapper.find('[data-testid="card-stub"]').trigger('click')
+
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('back')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.transition_up')
+
+    window.getSelection = origGetSelection
+  })
+
+  test('onCardClick DOES flip when window.getSelection() returns null [obligation]', async () => {
+    const origGetSelection = window.getSelection
+    window.getSelection = () => null
+
+    const { wrapper } = mountGridItem({ props: { side: 'front' } })
+    await wrapper.find('[data-testid="card-stub"]').trigger('click')
+
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('back')
+
+    window.getSelection = origGetSelection
+  })
+
+  // ── onCardMouseDown / multi-click prevention [obligation] ──────────────────
+
+  test('onCardMouseDown calls preventDefault when detail > 1 [obligation]', async () => {
+    const { wrapper } = mountGridItem()
+    const card = wrapper.find('[data-testid="card-stub"]')
+    let prevented = false
+    // Dispatch a real mousedown with detail=2 (double-click counter)
+    const event = new MouseEvent('mousedown', { bubbles: true, cancelable: true, detail: 2 })
+    vi.spyOn(event, 'preventDefault').mockImplementation(() => {
+      prevented = true
+    })
+    card.element.dispatchEvent(event)
+    expect(prevented).toBe(true)
+  })
+
+  test('onCardMouseDown does NOT call preventDefault when detail === 1 [obligation]', () => {
+    const { wrapper } = mountGridItem()
+    const card = wrapper.find('[data-testid="card-stub"]')
+    let prevented = false
+    const event = new MouseEvent('mousedown', { bubbles: true, cancelable: true, detail: 1 })
+    vi.spyOn(event, 'preventDefault').mockImplementation(() => {
+      prevented = true
+    })
+    card.element.dispatchEvent(event)
+    expect(prevented).toBe(false)
   })
 })

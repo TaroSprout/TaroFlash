@@ -46,6 +46,7 @@ const {
   hovered,
   active,
   covered,
+  pending,
   has_image,
   image_path,
   can_upload,
@@ -126,6 +127,7 @@ function onAddClick() {
     :sfx="card_sfx"
     :data-active="active || undefined"
     :data-dragging="dragging || undefined"
+    :data-loading="pending || undefined"
     :class="{ 'pointer-events-none': disabled }"
     @pointerenter="onCardPointerEnter"
     @pointerleave="onCardPointerLeave"
@@ -135,6 +137,14 @@ function onAddClick() {
     @drop="onDrop"
   >
     <input ref="fileInput" type="file" :accept="accept" class="sr-only" @change="onFileChange" />
+
+    <div
+      v-if="pending"
+      data-testid="card-face-uploader__loading"
+      class="absolute inset-0 z-30 flex items-center justify-center rounded-(--face-radius) bg-white/70 dark:bg-stone-700/70"
+    >
+      <ui-icon src="loading-dots" class="size-12 text-brown-500 dark:text-brown-100" />
+    </div>
 
     <ui-tooltip
       v-if="!has_image && can_upload && !disabled && !dragging"

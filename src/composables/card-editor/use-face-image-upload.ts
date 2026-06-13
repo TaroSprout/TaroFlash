@@ -14,6 +14,7 @@ import { useCardImageGate } from './use-card-image-gate'
 import { useImageDropzone } from './use-image-dropzone'
 import { useToast } from '@/composables/toast'
 import { emitSfx } from '@/sfx/bus'
+import { collapseFaceImage, revealFaceImage } from '@/utils/animations/face-image'
 
 // Card images render small but are the app's highest-volume asset, so cap them
 // well below the bucket's 10 MiB backstop. Exported so the uploader can render
@@ -55,6 +56,8 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
 
   const hovered = ref(false)
   const hover_suppressed = ref(false)
+  const pending = ref(false)
+  let reveal_pending = false
   let suppress_timer: ReturnType<typeof setTimeout> | undefined
 
   const {
@@ -103,24 +106,54 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
     if (!can_upload.value) return
 
     suppressHover()
+    pending.value = true
 
     try {
       await setFaceImage(toValue(card).id!, side, file)
-      emitSfx('ui.music_plink_ok', { blocking: true })
     } catch {
       toast.error(t('toast.error.card-image-upload-failed'))
+      pending.value = false
+      return
     }
+
+    emitSfx('ui.music_plink_ok', { blocking: true })
+    reveal_pending = true
+    pending.value = false
   }
 
-  /** Remove this face's image. */
+  /** The currently rendered image element for this face, across layouts. */
+  function faceImageEl() {
+    return rootEl()?.querySelector<HTMLElement>(
+      '[data-testid="face-image-dropzone__image"], [data-testid="card-face__image"]'
+    )
+  }
+
+  /** Scale-in the image once the new face has rendered. */
+  function revealUploadedImage() {
+    const img = faceImageEl()
+    if (img) revealFaceImage(img)
+  }
+
+  /**
+   * Remove this face's image. Clicks snap; the image scales down before the
+   * deletion runs, and the trash sfx plays once the removal lands.
+   */
   async function onRemove() {
-    emitSfx('ui.trash_crumple_short')
+    emitSfx('ui.snappy_button_5')
     clearError()
+
+    const img = faceImageEl()
+    if (img) await collapseFaceImage(img)
+
+    pending.value = true
 
     try {
       await setFaceImage(toValue(card).id!, side, null)
+      emitSfx('ui.trash_crumple_short')
     } catch {
       toast.error(t('toast.error.card-image-delete-failed'))
+    } finally {
+      pending.value = false
     }
   }
 
@@ -170,6 +203,20 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
     if (now && !was && can_upload.value) emitSfx('ui.music_plink_mid')
   })
 
+  // The upload resolves before the deck refetch propagates the new path to the
+  // prop, so the reveal can't run off the upload itself — flag the intent and
+  // animate when the path lands in the DOM. `flush: 'post'` runs after the
+  // render so the freshly-mounted <img> is queryable.
+  watch(
+    image_path,
+    (path) => {
+      if (!reveal_pending || !path) return
+      reveal_pending = false
+      revealUploadedImage()
+    },
+    { flush: 'post' }
+  )
+
   // Only listen for outside clicks while an error is actually showing.
   watch(file_error, (err) => {
     if (err) document.addEventListener('pointerdown', onDocumentPointerDown)
@@ -189,6 +236,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
     hovered,
     active,
     covered,
+    pending,
     has_image,
     image_path,
     can_upload,

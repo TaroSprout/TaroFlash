@@ -165,7 +165,7 @@ describe('card-overlay animations', () => {
       fadeScaleEnter(el, done)
 
       expect(mockSet).toHaveBeenCalledWith(el, {
-        clearProps: 'position,top,left,width,transform'
+        clearProps: 'position,top,left,width,transform,overflow'
       })
     })
   })
@@ -183,6 +183,7 @@ describe('card-overlay animations', () => {
         top: 0,
         left: 0,
         width: '100%',
+        overflow: 'hidden',
         y: -100
       })
     })

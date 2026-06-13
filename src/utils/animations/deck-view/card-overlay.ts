@@ -55,7 +55,7 @@ const ORIGIN = 'top center'
 // the absolute positioning and compensation a prior leave left behind — it
 // must rejoin flow to define the page height again.
 export function fadeScaleEnter(el: Element, done: () => void) {
-  gsap.set(el, { clearProps: 'position,top,left,width,transform' })
+  gsap.set(el, { clearProps: 'position,top,left,width,transform,overflow' })
   gsap.fromTo(
     el,
     { opacity: 0, scale: SCALE, transformOrigin: ORIGIN },
@@ -65,9 +65,18 @@ export function fadeScaleEnter(el: Element, done: () => void) {
 
 // Leaving grid drops out of flow (so the entering pane owns the height) and
 // shrinks + fades in place — compensated so the rows under the user's eyes
-// stay put through the scroll jump.
+// stay put through the scroll jump. Clip overflow while absolute: the grid's
+// `h-full` resolves against the stack's clip min-height, so its own
+// `overflow-y-auto` would otherwise flash a scrollbar and shift the content.
 export function fadeScaleLeave(el: Element, vp: ModeSwitchViewport, done: () => void) {
-  gsap.set(el, { position: 'absolute', top: 0, left: 0, width: '100%', y: scrollCompensation(vp) })
+  gsap.set(el, {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    overflow: 'hidden',
+    y: scrollCompensation(vp)
+  })
   gsap.to(el, {
     opacity: 0,
     scale: SCALE,

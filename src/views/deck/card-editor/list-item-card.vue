@@ -6,6 +6,7 @@ import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
 import type { CardWithClientId } from '@/composables/card-editor/virtual-card-list'
 import textEditor from '@/components/card/text-editor.vue'
 import { emitSfx } from '@/sfx/bus'
+import { useWindowRefocusGuard } from '@/composables/use-window-refocus-guard'
 import { expandListItemIn } from '@/utils/animations/list-item'
 
 type ListItemCardProps = {
@@ -29,6 +30,8 @@ const save_failed = ref(false)
 
 const { selection, updateCard, card_attributes, claimFocus } = inject(cardEditorKey)!
 const { is_selecting } = selection
+
+const { flagWindowBlur, consumeWindowRefocus } = useWindowRefocusGuard()
 
 // A card staged by the toolbar's "new card" intent claims its one-shot signal
 // the moment its row mounts: land the user in the front editor ready to type,
@@ -76,6 +79,13 @@ function withinAnyCard(node: EventTarget | null) {
 function onFocusIn(e: FocusEvent) {
   if (!(e.target as HTMLElement | null)?.isContentEditable) return
 
+  // The browser restoring focus after the window comes back isn't a user
+  // action — stay silent, but still track that we hold focus again.
+  if (consumeWindowRefocus()) {
+    focused.value = true
+    return
+  }
+
   emitSfx(withinAnyCard(e.relatedTarget) ? 'ui.click_04' : 'ui.slide_up')
   focused.value = true
 }
@@ -86,7 +96,13 @@ function onFocusOut(e: FocusEvent) {
   focused.value = list_item_card.value?.contains(e.relatedTarget as Node | null) ?? false
 
   const left_editor = (e.target as HTMLElement | null)?.isContentEditable ?? false
-  if (left_editor && !withinAnyCard(e.relatedTarget)) emitSfx('ui.card_drop')
+  if (!left_editor) return
+
+  // A window blur (switching apps) blurs the editor without the user choosing
+  // to — flag the round-trip so the matching refocus stays silent, no drop.
+  if (!document.hasFocus()) return flagWindowBlur()
+
+  if (!withinAnyCard(e.relatedTarget)) emitSfx('ui.card_drop')
 }
 
 function hasFocusWithin() {
