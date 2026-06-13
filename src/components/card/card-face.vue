@@ -85,7 +85,7 @@ const font_size = computed(() => {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--face-image-padding);
+  gap: calc(var(--face-image-padding) * 1.5);
 
   width: 100%;
   height: 100%;
@@ -136,9 +136,25 @@ const font_size = computed(() => {
   border-radius: inherit;
 }
 
+/* Clip the text to the region box so long content can't spill past the card
+   edges. Only the text is clipped — image-region controls (remove button, etc.)
+   intentionally poke out and stay unclipped above. */
 .card-face__text-region {
   flex: 0 0 auto;
   min-height: 0;
+
+  overflow: hidden;
+}
+
+/* In above/below, the image shrinks as the text grows — but never below half
+   the face. Past that the text region is capped at half and its overflow clips
+   (see overflow: hidden above). */
+.card-face[data-image='true']:not([data-layout='behind']) .card-face__image-region {
+  min-height: 50%;
+}
+
+.card-face[data-image='true']:not([data-layout='behind']) .card-face__text-region {
+  max-height: 50%;
 }
 
 /* behind: image fills the face, text floats on top of it */
@@ -165,13 +181,16 @@ const font_size = computed(() => {
   flex: 1 1 auto;
 }
 
-/* ----- Full-bleed: an image with no text fills the face in every layout ---- */
-.card-face[data-image='true'][data-text='false'] {
+/* ----- Full-bleed: a behind-layout image with no text fills the face ------- */
+/* Only behind goes edge-to-edge. Above/below keep their padded image region in
+   both modes: in view the image fills the padded face (see below), in edit the
+   empty text region stays clickable so text can be typed back in. */
+.card-face[data-image='true'][data-text='false'][data-layout='behind'] {
   padding: 0;
   gap: 0;
 }
 
-.card-face[data-image='true'][data-text='false'] .card-face__image-region {
+.card-face[data-image='true'][data-text='false'][data-layout='behind'] .card-face__image-region {
   position: absolute;
   inset: 0;
   flex: none;
@@ -179,7 +198,29 @@ const font_size = computed(() => {
   border-radius: var(--face-radius);
 }
 
-.card-face[data-image='true'][data-text='false'] .card-face__text-region {
+/* View only: drop the empty text region so nothing covers the image. In edit it
+   stays (filling the face) so a click anywhere off the image controls focuses
+   the editor to type — the corners dropzone backdrop is click-through. */
+.card-face[data-mode='view'][data-image='true'][data-text='false'][data-layout='behind']
+  .card-face__text-region {
+  display: none;
+}
+
+/* Over a full-bleed image the placeholder would just clutter the picture — the
+   text cursor already signals you can click to type. */
+.card-face[data-mode='edit'][data-image='true'][data-text='false'][data-layout='behind']
+  .text-editor__placeholder {
+  display: none;
+}
+
+/* View, above/below, no text: drop the empty text region so the gap below the
+   image collapses and the padded image fills the face symmetrically. (In edit
+   the region is kept so it stays clickable.) */
+.card-face[data-mode='view'][data-image='true'][data-text='false']:is(
+    [data-layout='above'],
+    [data-layout='below']
+  )
+  .card-face__text-region {
   display: none;
 }
 
@@ -191,23 +232,17 @@ const font_size = computed(() => {
 }
 
 /* ----- Editor: hovering an image reveals a replaceable dropzone frame ------ */
-/* The image region gets a dashed frame on hover/drag for above/below and the
-   full-bleed no-text case. Behind layout uses floating corner controls over the
-   text instead, so it's excluded here. */
+/* The image keeps its padded region in above/below (with or without text), so
+   the dashed frame sits just outside it. Behind layout uses floating corner
+   controls over the text instead, so it's excluded here. */
 .card-face[data-mode='edit'][data-image='true']:not([data-layout='behind'])
   .card-face__image-region {
   outline: 3px dashed transparent;
-  outline-offset: -3px;
+  outline-offset: 4px;
   transition:
     inset 0.15s ease,
     outline-color 0.15s ease,
     border-radius 0.15s ease;
-}
-
-/* above/below: the image stays put; draw the dashed frame just outside it. */
-.card-face[data-mode='edit'][data-image='true'][data-text='true']:not([data-layout='behind'])
-  .card-face__image-region {
-  outline-offset: 4px;
 }
 
 .card-container--edit[data-active]
@@ -227,17 +262,6 @@ const font_size = computed(() => {
   .card-face[data-mode='edit'][data-image='true']:not([data-layout='behind'])
   .card-face__image-region {
   outline-color: var(--color-blue-650);
-}
-
-/* Full-bleed (no text): the image is absolutely positioned and fills the face,
-   so there's no room outside it — inset it on hover and draw the frame in the
-   revealed gap instead. */
-.card-container--edit[data-active]
-  .card-face[data-mode='edit'][data-image='true'][data-text='false']:not([data-layout='behind'])
-  .card-face__image-region {
-  inset: var(--face-image-padding);
-
-  border-radius: calc(var(--face-radius) - var(--face-image-padding));
 }
 
 .card-face__text-editor {

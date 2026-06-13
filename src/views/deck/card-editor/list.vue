@@ -4,6 +4,7 @@ import { inject, useTemplateRef, computed, ref, watchEffect, onMounted, onBefore
 import { useI18n } from 'vue-i18n'
 import { useWindowVirtualizer } from '@tanstack/vue-virtual'
 import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
+import { usePinScrollWhileTyping } from '@/composables/use-pin-scroll-while-typing'
 
 const { t } = useI18n()
 
@@ -16,6 +17,8 @@ const { all_cards } = list
 
 const list_el = useTemplateRef<HTMLElement>('list_el')
 const scroll_margin = ref(0)
+
+usePinScrollWhileTyping(() => list_el.value)
 
 const virtualizer = useWindowVirtualizer(
   computed(() => ({

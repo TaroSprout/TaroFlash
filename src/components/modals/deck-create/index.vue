@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { provide } from 'vue'
+import { computed, provide, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import DeckDesignPreview from '@/components/deck/deck-design-preview.vue'
 import CoverDesigner from '@/components/deck/cover-designer/index.vue'
 import { useDeckEditor, deckEditorKey } from '@/composables/deck-editor'
 import { randomCoverConfig } from '@/utils/cover'
+import { emitSfx } from '@/sfx/bus'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiInput from '@/components/ui-kit/input.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
@@ -23,11 +24,25 @@ const router = useRouter()
 const editor = useDeckEditor({ cover_config: randomCoverConfig() } as Deck)
 provide(deckEditorKey, editor)
 
+const title_error = ref<string>()
+
+const has_title = computed(() => !!editor.settings.title?.trim())
+
 async function onSave() {
+  if (!has_title.value) {
+    title_error.value = t('deck.create-modal.title-required')
+    emitSfx('ui.etc_woodblock_stuck')
+    return
+  }
+
   const saved = await editor.saveDeck()
   if (!saved) return
   close(true)
   router.push({ name: 'deck', params: { id: saved.id } })
+}
+
+function onTitleInput() {
+  title_error.value = undefined
 }
 </script>
 
@@ -55,7 +70,9 @@ async function onSave() {
             :placeholder="t('deck.title-placeholder')"
             text-align="center"
             size="lg"
+            :error="title_error"
             v-model:value="editor.settings.title"
+            @input="onTitleInput"
           />
           <ui-input
             :placeholder="t('deck.description-placeholder')"
@@ -84,6 +101,8 @@ async function onSave() {
             icon-left="add"
             size="lg"
             full-width
+            :disabled="!has_title"
+            click-when-disabled
             @click="onSave"
           >
             {{ t('deck.create-modal.submit') }}

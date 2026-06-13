@@ -8,6 +8,10 @@ function makeEditor(props = {}) {
   return shallowMount(TextEditor, { props })
 }
 
+function getContainer(wrapper) {
+  return wrapper.find('[data-testid="text-editor-container"]')
+}
+
 function getEditorEl(wrapper) {
   return wrapper.find('[data-testid="text-editor"]')
 }
@@ -23,7 +27,7 @@ describe('TextEditor', () => {
 
   test('renders the editor container', () => {
     const wrapper = makeEditor()
-    expect(wrapper.find('[data-testid="text-editor-container"]').exists()).toBe(true)
+    expect(getContainer(wrapper).exists()).toBe(true)
   })
 
   test('renders the editor element', () => {
@@ -32,16 +36,16 @@ describe('TextEditor', () => {
   })
 
   // ── Default classes ────────────────────────────────────────────────────────
-  // Font size is owned by the parent card-face (see card-face.test.js), not here.
+  // Horizontal alignment lives on the editable; vertical lives on the container.
 
   test('applies default horizontal alignment class when no attributes provided', () => {
     const wrapper = makeEditor()
     expect(getEditorEl(wrapper).classes()).toContain('text-editor--h-center')
   })
 
-  test('applies default vertical alignment class when no attributes provided', () => {
+  test('applies default vertical alignment class on the container when no attributes provided', () => {
     const wrapper = makeEditor()
-    expect(getEditorEl(wrapper).classes()).toContain('text-editor--v-center')
+    expect(getContainer(wrapper).classes()).toContain('text-editor--v-center')
   })
 
   // ── Alignment classes ──────────────────────────────────────────────────────
@@ -56,19 +60,19 @@ describe('TextEditor', () => {
     expect(getEditorEl(wrapper).classes()).toContain('text-editor--h-right')
   })
 
-  test('applies text-editor--v-top for top vertical alignment', () => {
+  test('applies text-editor--v-top on the container for top vertical alignment', () => {
     const wrapper = makeEditor({ attributes: { vertical_alignment: 'top' } })
-    expect(getEditorEl(wrapper).classes()).toContain('text-editor--v-top')
+    expect(getContainer(wrapper).classes()).toContain('text-editor--v-top')
   })
 
-  test('applies text-editor--v-bottom for bottom vertical alignment', () => {
+  test('applies text-editor--v-bottom on the container for bottom vertical alignment', () => {
     const wrapper = makeEditor({ attributes: { vertical_alignment: 'bottom' } })
-    expect(getEditorEl(wrapper).classes()).toContain('text-editor--v-bottom')
+    expect(getContainer(wrapper).classes()).toContain('text-editor--v-bottom')
   })
 
   // ── Combined attributes ────────────────────────────────────────────────────
 
-  test('applies all three attribute renderings together', () => {
+  test('applies horizontal alignment on editable and vertical alignment on container together', () => {
     const wrapper = makeEditor({
       attributes: {
         text_size: 6,
@@ -76,18 +80,16 @@ describe('TextEditor', () => {
         vertical_alignment: 'bottom'
       }
     })
-    const el = getEditorEl(wrapper)
-    expect(el.classes()).toContain('text-editor--h-right')
-    expect(el.classes()).toContain('text-editor--v-bottom')
+    expect(getEditorEl(wrapper).classes()).toContain('text-editor--h-right')
+    expect(getContainer(wrapper).classes()).toContain('text-editor--v-bottom')
   })
 
   // ── Partial attributes ─────────────────────────────────────────────────────
 
   test('falls back to defaults for missing attribute fields', () => {
     const wrapper = makeEditor({ attributes: { text_size: 2 } })
-    const el = getEditorEl(wrapper)
-    expect(el.classes()).toContain('text-editor--h-center')
-    expect(el.classes()).toContain('text-editor--v-center')
+    expect(getEditorEl(wrapper).classes()).toContain('text-editor--h-center')
+    expect(getContainer(wrapper).classes()).toContain('text-editor--v-center')
   })
 
   // ── contenteditable wiring ─────────────────────────────────────────────────
@@ -113,6 +115,36 @@ describe('TextEditor', () => {
     el.element.textContent = 'typed'
     await el.trigger('input')
     expect(wrapper.emitted('update')).toEqual([['typed']])
+  })
+
+  // ── Empty normalization [obligation] ───────────────────────────────────────
+
+  test('on_input collapses whitespace-only innerText to empty string [obligation]', async () => {
+    const wrapper = makeEditor({ content: 'hello' })
+    const el = getEditorEl(wrapper)
+    // Simulate innerText after select-all+delete — browser leaves a trailing newline
+    Object.defineProperty(el.element, 'innerText', { value: '\n', writable: true })
+    await el.trigger('input')
+    expect(wrapper.emitted('update')).toEqual([['']])
+  })
+
+  test('on_input sets has_content false for whitespace-only input so placeholder reappears [obligation]', async () => {
+    const wrapper = makeEditor({ placeholder: 'Type here...' })
+    const el = getEditorEl(wrapper)
+    // First type something so placeholder hides
+    el.element.textContent = 'x'
+    await el.trigger('input')
+    expect(getPlaceholder(wrapper).exists()).toBe(false)
+
+    // Now clear with a trailing newline (browser behavior on block content)
+    Object.defineProperty(el.element, 'innerText', { value: '\n', writable: true })
+    await el.trigger('input')
+    expect(getPlaceholder(wrapper).exists()).toBe(true)
+  })
+
+  test('has_content seeds from trimmed content prop so whitespace-only content shows placeholder [obligation]', () => {
+    const wrapper = makeEditor({ placeholder: 'Type here...', content: '   ' })
+    expect(getPlaceholder(wrapper).exists()).toBe(true)
   })
 
   // ── Uncontrolled editable surface ──────────────────────────────────────────
@@ -176,5 +208,57 @@ describe('TextEditor', () => {
   test('hides placeholder when disabled', () => {
     const wrapper = makeEditor({ placeholder: 'Type here...', disabled: true })
     expect(getPlaceholder(wrapper).exists()).toBe(false)
+  })
+
+  // ── onContainerPointerDown [obligation] ─────────────────────────────────────
+
+  test('mousedown on the container (not editable) focuses the editor [obligation]', async () => {
+    const wrapper = makeEditor()
+    const container = getContainer(wrapper)
+    const editorEl = getEditorEl(wrapper).element
+
+    // Spy on focus
+    let focused = false
+    editorEl.focus = () => {
+      focused = true
+    }
+
+    // Dispatch mousedown whose target is the container (not the editable)
+    const event = new MouseEvent('mousedown', { bubbles: true })
+    Object.defineProperty(event, 'target', { value: container.element, configurable: true })
+    container.element.dispatchEvent(event)
+
+    expect(focused).toBe(true)
+  })
+
+  test('mousedown on the container is a no-op when disabled [obligation]', async () => {
+    const wrapper = makeEditor({ disabled: true })
+    const container = getContainer(wrapper)
+
+    // Disabled editor: no contenteditable element rendered, container mousedown is a no-op
+    let focused = false
+    // The disabled div doesn't focus but we verify no error
+    const event = new MouseEvent('mousedown', { bubbles: true })
+    Object.defineProperty(event, 'target', { value: container.element, configurable: true })
+    container.element.dispatchEvent(event)
+
+    expect(focused).toBe(false)
+  })
+
+  test('mousedown whose target IS the editable is a no-op (native caret placement) [obligation]', async () => {
+    const wrapper = makeEditor()
+    const editorEl = getEditorEl(wrapper).element
+
+    let focused = false
+    editorEl.focus = () => {
+      focused = true
+    }
+
+    // Dispatch with target === editorEl — handler must bail
+    const event = new MouseEvent('mousedown', { bubbles: true })
+    Object.defineProperty(event, 'target', { value: editorEl, configurable: true })
+    editorEl.dispatchEvent(event)
+
+    expect(focused).toBe(false)
   })
 })

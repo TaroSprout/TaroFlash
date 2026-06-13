@@ -37,6 +37,12 @@ const card_ref = ref<InstanceType<typeof Card> | null>(null)
 const card_offset = ref<number>(0)
 
 const is_dragging = ref(false)
+// Guards against rapid key/click spam re-triggering an action (and replaying
+// its sfx) mid-animation. For a flip it covers only the outgoing face's
+// rotate-out (cleared on `flip-out-complete`) so the card is re-flippable the
+// instant the new face shows; for a fling it stays true until this card
+// unmounts on advance.
+const is_animating = ref(false)
 
 const passVisible = computed(() => card_offset.value > SWIPE_DISTANCE_THRESHOLD)
 const failVisible = computed(() => card_offset.value < -SWIPE_DISTANCE_THRESHOLD)
@@ -70,23 +76,24 @@ onMounted(() => {
 
 /** Triggers the fling animation for a given grade. Called by the parent via template ref. */
 function rate(grade: Grade) {
-  if (side === 'cover') return
+  if (side === 'cover' || is_animating.value) return
 
   const el = card_ref.value?.$el as HTMLElement | null
   if (!el) return
   flingCard(el, grade === Rating.Good ? 1 : -1)
 }
 
-/** Flips the card face unless a drag just ended (prevents accidental flips on release). */
+/**
+ * Flips the card face. No-ops while a drag just ended (prevents accidental
+ * flips on release) or while the outgoing face is still rotating out, so
+ * spamming space mid-flip can't replay the flip sfx.
+ */
 function triggerCardFlip() {
-  if (is_dragging.value) return
+  if (is_dragging.value || is_animating.value) return
 
-  if (side === 'cover') {
-    emit('started')
-    return
-  }
-
-  emit('side-changed')
+  is_animating.value = true
+  if (side === 'cover') emit('started')
+  else emit('side-changed')
 }
 
 /**
@@ -96,6 +103,7 @@ function triggerCardFlip() {
 function flingCard(el: HTMLElement, direction: number) {
   if (side === 'cover') return
 
+  is_animating.value = true
   const targetX = direction * (window.innerWidth + el.getBoundingClientRect().width)
   const rating = direction > 0 ? Rating.Good : Rating.Again
 
@@ -105,6 +113,10 @@ function flingCard(el: HTMLElement, direction: number) {
 
   emitSfx(rating === Rating.Good ? 'ui.music_plink_ok' : 'ui.music_plink_locancel')
 
+  // Leave is_animating true: after `reviewed` the parent plays the incoming
+  // card's intro flip before advancing. This instance stays mounted (and so
+  // its shortcuts stay live) through that window, so the flag keeps spam from
+  // re-flinging until the next card is keyed in fresh.
   const onTransitionEnd = () => {
     el.removeEventListener('transitionend', onTransitionEnd)
     card_offset.value = 0
@@ -131,7 +143,7 @@ function handleDrag(el: HTMLElement, dx: number) {
  * Flings if the drag exceeded the distance threshold, otherwise snaps back.
  */
 function commitSwipe(el: HTMLElement, dx: number) {
-  if (side === 'cover') return
+  if (side === 'cover' || is_animating.value) return
 
   if (Math.abs(dx) > SWIPE_DISTANCE_THRESHOLD) flingCard(el, Math.sign(dx))
   else snapBack(el)
@@ -167,6 +179,7 @@ function toSwipeZone(offset: number) {
       :side="side"
       :cover_config="deck_context.cover_config"
       :card_attributes="deck_context.card_attributes"
+      @flip-out-complete="is_animating = false"
       @mouseup="triggerCardFlip"
     >
       <div class="absolute inset-0 overflow-hidden rounded-(--face-radius)">

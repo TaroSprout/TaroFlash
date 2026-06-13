@@ -20,6 +20,7 @@ type CardProps = Partial<CardBase> & {
 
 const emit = defineEmits<{
   (e: 'flip-complete'): void
+  (e: 'flip-out-complete'): void
 }>()
 
 const {
@@ -68,7 +69,10 @@ function onLeave(el: Element, done: () => void) {
     scale: 0.95,
     duration: 0.12,
     ease: 'expo.in',
-    onComplete: done
+    onComplete: () => {
+      done()
+      emit('flip-out-complete')
+    }
   })
 }
 </script>

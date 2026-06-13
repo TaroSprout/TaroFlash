@@ -477,5 +477,59 @@ describe('UiButton', () => {
       // emitSfx not called because onCaptureClick returns early before emitClickSfx
       expect(mockEmitSfx).not.toHaveBeenCalled()
     })
+
+    // ── clickWhenDisabled [obligation] ─────────────────────────────────────
+
+    // The capture handler decides whether a disabled button's click reaches the
+    // bubble-phase @click handler: it lets it propagate when clickWhenDisabled is
+    // set, and stops propagation (+ preventDefault) when it isn't. Assert that
+    // contract directly on the dispatched event.
+    test('clickWhenDisabled=true with disabled=true lets the click propagate to the handler [obligation]', async () => {
+      const wrapper = shallowMount(UiButton, {
+        props: { disabled: true, clickWhenDisabled: true },
+        global: { stubs: { UiTooltip: UiTooltipSlotStub }, directives: { sfx: {} } }
+      })
+      const event = new MouseEvent('click', { bubbles: true, cancelable: true })
+      const stopSpy = vi.spyOn(event, 'stopImmediatePropagation')
+      const preventSpy = vi.spyOn(event, 'preventDefault')
+
+      wrapper.find('[data-testid="ui-kit-button"]').element.dispatchEvent(event)
+      await wrapper.vm.$nextTick()
+
+      expect(stopSpy).not.toHaveBeenCalled()
+      expect(preventSpy).not.toHaveBeenCalled()
+    })
+
+    test('disabled=true without clickWhenDisabled swallows the click (stops propagation) [obligation]', async () => {
+      const wrapper = shallowMount(UiButton, {
+        props: { disabled: true, clickWhenDisabled: false },
+        global: { stubs: { UiTooltip: UiTooltipSlotStub }, directives: { sfx: {} } }
+      })
+      const event = new MouseEvent('click', { bubbles: true, cancelable: true })
+      const stopSpy = vi.spyOn(event, 'stopImmediatePropagation')
+      const preventSpy = vi.spyOn(event, 'preventDefault')
+
+      wrapper.find('[data-testid="ui-kit-button"]').element.dispatchEvent(event)
+      await wrapper.vm.$nextTick()
+
+      expect(stopSpy).toHaveBeenCalled()
+      expect(preventSpy).toHaveBeenCalled()
+    })
+
+    test('clickWhenDisabled suppresses sfx even when clicks are allowed through [obligation]', async () => {
+      mockEmitSfx.mockClear()
+      const wrapper = shallowMount(UiButton, {
+        props: { disabled: true, clickWhenDisabled: true, sfx: { click: 'ui.select' } },
+        attrs: { onClick: vi.fn() },
+        global: { stubs: { UiTooltip: UiTooltipSlotStub }, directives: { sfx: {} } }
+      })
+      wrapper
+        .find('[data-testid="ui-kit-button"]')
+        .element.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      await wrapper.vm.$nextTick()
+      // merged_sfx returns {} when disabled, so emitClickSfx is never invoked
+      // (onCaptureClick returns early at the clickWhenDisabled guard, skipping interceptClick)
+      expect(mockEmitSfx).not.toHaveBeenCalled()
+    })
   })
 })

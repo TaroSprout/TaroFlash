@@ -14,12 +14,25 @@ const { mockRegister } = vi.hoisted(() => ({
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 
+// Captures shortcut handlers by combo so tests can invoke them directly.
+const { capturedShortcuts, mockShortcutRegister } = vi.hoisted(() => {
+  const capturedShortcuts = {}
+  const mockShortcutRegister = vi.fn(({ combo, handler }) => {
+    capturedShortcuts[combo] = handler
+  })
+  return { capturedShortcuts, mockShortcutRegister }
+})
+
 vi.mock('@/composables/use-gestures', () => ({
   useGestures: vi.fn(() => ({ register: mockRegister }))
 }))
 
 vi.mock('@/composables/use-shortcuts', () => ({
-  useShortcuts: vi.fn(() => ({ register: vi.fn(), dispose: vi.fn(), clearScope: vi.fn() }))
+  useShortcuts: vi.fn(() => ({
+    register: mockShortcutRegister,
+    dispose: vi.fn(),
+    clearScope: vi.fn()
+  }))
 }))
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
@@ -30,6 +43,7 @@ vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 // not available in browser mode.
 
 const CardStub = defineComponent({
+  name: 'Card',
   inheritAttrs: false,
   setup(_props, { slots }) {
     const attrs = useAttrs()
@@ -71,7 +85,10 @@ describe('StudyCard', () => {
 
   beforeEach(() => {
     mockRegister.mockClear()
+    mockShortcutRegister.mockClear()
     mockEmitSfx.mockClear()
+    // Clear captured shortcut handlers between tests
+    for (const key of Object.keys(capturedShortcuts)) delete capturedShortcuts[key]
     options = makeOptions()
   })
 
@@ -426,5 +443,151 @@ describe('StudyCard', () => {
     // After the snap-back transition (which sets style.transform = ''), the element
     // should have its transform cleared
     expect(el.style.transform).toBe('')
+  })
+
+  // ── Animation lock [obligation] ────────────────────────────────────────────
+
+  test('triggerCardFlip sets is_animating and emits started on cover side [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'cover', options })
+    await flushPromises()
+
+    await wrapper.find('[data-testid="study-card"]').trigger('mouseup')
+
+    expect(wrapper.emitted('started')).toHaveLength(1)
+  })
+
+  test('triggerCardFlip emits side-changed on front side [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'front', options })
+    await flushPromises()
+
+    await wrapper.find('[data-testid="study-card"]').trigger('mouseup')
+
+    expect(wrapper.emitted('side-changed')).toHaveLength(1)
+  })
+
+  test('second mouseup while is_animating is a no-op — side-changed emitted only once [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'front', options })
+    await flushPromises()
+
+    // First flip sets is_animating = true
+    await wrapper.find('[data-testid="study-card"]').trigger('mouseup')
+    expect(wrapper.emitted('side-changed')).toHaveLength(1)
+
+    // Second mouseup while animating must be blocked
+    await wrapper.find('[data-testid="study-card"]').trigger('mouseup')
+    expect(wrapper.emitted('side-changed')).toHaveLength(1)
+  })
+
+  test('flip-out-complete event on Card releases is_animating so next flip works [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'front', options })
+    await flushPromises()
+
+    // First flip
+    await wrapper.find('[data-testid="study-card"]').trigger('mouseup')
+    expect(wrapper.emitted('side-changed')).toHaveLength(1)
+
+    // Simulate the card emitting flip-out-complete (the outgoing face rotated out)
+    wrapper.findComponent({ name: 'Card' }).vm.$emit('flip-out-complete')
+    await wrapper.vm.$nextTick()
+
+    // is_animating should be false now — next flip should go through
+    await wrapper.find('[data-testid="study-card"]').trigger('mouseup')
+    expect(wrapper.emitted('side-changed')).toHaveLength(2)
+  })
+
+  test('space shortcut is a no-op while is_animating is true [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'front', options })
+    await flushPromises()
+
+    // Trigger first flip (sets is_animating = true)
+    await wrapper.find('[data-testid="study-card"]').trigger('mouseup')
+    expect(wrapper.emitted('side-changed')).toHaveLength(1)
+
+    // Invoke space shortcut handler while animating — must be a no-op
+    capturedShortcuts['space']?.()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.emitted('side-changed')).toHaveLength(1)
+  })
+
+  test('arrowright shortcut is a no-op while is_animating is true [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', options })
+    await flushPromises()
+
+    // Start a fling to set is_animating = true
+    wrapper.vm.rate(Rating.Good)
+    await flushPromises()
+
+    const sfxCallsBefore = mockEmitSfx.mock.calls.length
+
+    // Invoke arrowright shortcut while fling animation in flight
+    capturedShortcuts['arrowright']?.()
+    await flushPromises()
+
+    // No additional sfx replay
+    expect(mockEmitSfx.mock.calls.length).toBe(sfxCallsBefore)
+  })
+
+  test('arrowleft shortcut is a no-op while is_animating is true [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', options })
+    await flushPromises()
+
+    // Start a fling to set is_animating = true
+    wrapper.vm.rate(Rating.Good)
+    await flushPromises()
+
+    const sfxCallsBefore = mockEmitSfx.mock.calls.length
+
+    // Invoke arrowleft shortcut while fling animation in flight
+    capturedShortcuts['arrowleft']?.()
+    await flushPromises()
+
+    expect(mockEmitSfx.mock.calls.length).toBe(sfxCallsBefore)
+  })
+
+  test('rate() is a no-op while is_animating is true — no reviewed emitted [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', options })
+    await flushPromises()
+
+    // First rate() sets is_animating = true
+    wrapper.vm.rate(Rating.Good)
+    await flushPromises()
+
+    // Simulate transitionend to emit reviewed once
+    const cardEl = wrapper.find('[data-testid="study-card"]').element
+    cardEl.dispatchEvent(new Event('transitionend'))
+    await flushPromises()
+
+    expect(wrapper.emitted('reviewed')).toHaveLength(1)
+
+    // Calling rate() again while is_animating is still true (stays true after reviewed)
+    wrapper.vm.rate(Rating.Good)
+    await flushPromises()
+
+    // reviewed must still be length 1
+    expect(wrapper.emitted('reviewed')).toHaveLength(1)
+  })
+
+  test('fling lock persists through reviewed emit — is_animating stays true [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', options })
+    await flushPromises()
+
+    wrapper.vm.rate(Rating.Good)
+    await flushPromises()
+
+    // Emit transitionend so reviewed fires
+    const cardEl = wrapper.find('[data-testid="study-card"]').element
+    cardEl.dispatchEvent(new Event('transitionend'))
+    await flushPromises()
+
+    expect(wrapper.emitted('reviewed')).toHaveLength(1)
+
+    // Even after reviewed, is_animating should still block rate()
+    const sfxCallsBefore = mockEmitSfx.mock.calls.length
+    wrapper.vm.rate(Rating.Good)
+    await flushPromises()
+
+    expect(wrapper.emitted('reviewed')).toHaveLength(1)
+    expect(mockEmitSfx.mock.calls.length).toBe(sfxCallsBefore)
   })
 })
