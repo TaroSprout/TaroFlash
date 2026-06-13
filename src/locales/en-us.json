@@ -407,6 +407,7 @@
   "deck.settings-modal.study.section.limits-description": "Cap how many cards you'll see in a single day.",
   "deck-view.hero.study": "Study",
   "deck-view.hero.cards-label": "Cards",
+  "deck-view.hero.no-cards-due": "No cards due",
   "deck-view.mode-view.search": "Search",
   "deck-view.mode-view.new-card": "New Card",
   "deck-view.page-settings.trigger": "Page settings",

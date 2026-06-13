@@ -20,6 +20,7 @@ const editor = inject(cardEditorKey, null)
 const shell = inject(deckViewShellKey, null)
 
 const is_editing = computed(() => shell?.mode.value === 'edit')
+const has_due_cards = computed(() => (deck.due_count ?? 0) > 0)
 const edit_options = computed<DropdownOption[]>(() => [
   { label: t('deck-view.actions.select-cards'), value: 'select', icon: 'data-check' },
   {
@@ -51,9 +52,10 @@ function onEditOption(option: DropdownOption) {
       data-theme-dark="blue-650"
       full-width
       size="xl"
+      :disabled="!has_due_cards"
       @click="onStudyClicked"
     >
-      <div class="text-brown-100">
+      <div v-if="has_due_cards" class="text-brown-100">
         {{ t('deck-view.hero.study') }}
         <span
           class="bg-brown-100 dark:text-blue-650 text-blue-500 px-1 py-0.5 -rotate-5 rounded-1.5"
@@ -61,6 +63,9 @@ function onEditOption(option: DropdownOption) {
           {{ deck.due_count }}
         </span>
         {{ t('deck-view.hero.cards-label') }}
+      </div>
+      <div v-else class="text-brown-100">
+        {{ t('deck-view.hero.no-cards-due') }}
       </div>
     </ui-button>
 
