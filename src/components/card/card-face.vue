@@ -146,6 +146,17 @@ const font_size = computed(() => {
   overflow: hidden;
 }
 
+/* In above/below, the image shrinks as the text grows — but never below half
+   the face. Past that the text region is capped at half and its overflow clips
+   (see overflow: hidden above). */
+.card-face[data-image='true']:not([data-layout='behind']) .card-face__image-region {
+  min-height: 50%;
+}
+
+.card-face[data-image='true']:not([data-layout='behind']) .card-face__text-region {
+  max-height: 50%;
+}
+
 /* behind: image fills the face, text floats on top of it */
 .card-face[data-layout='behind'] .card-face__image-region {
   position: absolute;
