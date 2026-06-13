@@ -15,7 +15,7 @@ export function useCollectionEditModal() {
   const modal = useModal()
 
   function open(collection_id: number) {
-    emitSfx('ui.alert_clicks_wooden')
+    emitSfx('ui.snappy_button_3')
     const result = modal.open<CollectionEditResponse>(CollectionEdit, {
       props: { collection_id },
       backdrop: true,

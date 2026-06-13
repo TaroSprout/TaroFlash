@@ -15,7 +15,7 @@ export function useCollectionCreateModal() {
   const modal = useModal()
 
   function open() {
-    emitSfx('ui.alert_clicks_wooden')
+    emitSfx('ui.snappy_button_3')
     const result = modal.open<CollectionCreateResponse>(CollectionCreate, {
       backdrop: true,
       mode: 'mobile-sheet'
