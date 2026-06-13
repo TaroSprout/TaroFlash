@@ -1,14 +1,31 @@
 <script lang="ts" setup>
 import Card from '@/components/card/index.vue'
 import UiRadio from '@/components/ui-kit/radio.vue'
-import GridItemMenu from './grid-item-menu.vue'
+import UiDropdownButton, {
+  type DropdownOption
+} from '@/components/ui-kit/dropdown-button/index.vue'
 import { emitSfx } from '@/sfx/bus'
-import { inject, ref } from 'vue'
+import { computed, inject, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
+
+const { t } = useI18n()
 
 const { actions, selection } = inject(cardEditorKey)!
 const { onDeleteCards, onMoveCards, onSelectCard } = actions
 const { is_selecting } = selection
+
+const menu_options = computed<DropdownOption[]>(() => [
+  { label: t('deck-view.item-options.select'), value: 'select', icon: 'select-object' },
+  { label: t('deck-view.item-options.move'), value: 'move', icon: 'move-item' },
+  { label: t('deck-view.item-options.delete'), value: 'delete', icon: 'delete' }
+])
+
+function onMenuSelect(option: DropdownOption) {
+  if (option.value === 'select') onSelectCard(card.id!)
+  else if (option.value === 'move') onMoveCards(card.id!)
+  else if (option.value === 'delete') onDeleteCards(card.id!)
+}
 
 const {
   card,
@@ -72,11 +89,17 @@ function onCardMouseDown(e: MouseEvent) {
       <ui-radio :checked="selected" />
     </div>
 
-    <grid-item-menu
+    <ui-dropdown-button
       v-if="!is_selecting"
-      @select="onSelectCard(card.id!)"
-      @move="onMoveCards(card.id!)"
-      @delete="onDeleteCards(card.id!)"
+      trigger-only
+      trigger-icon="more"
+      trigger-theme="brown-300"
+      trigger-theme-dark="stone-900"
+      menu-theme-dark="stone-900"
+      position="bottom-start"
+      class="absolute -top-1 -left-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto data-[active=true]:opacity-100 data-[active=true]:pointer-events-auto"
+      :options="menu_options"
+      @select="onMenuSelect"
     />
   </div>
 </template>

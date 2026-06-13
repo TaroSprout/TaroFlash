@@ -21,6 +21,8 @@ type DropdownButtonProps = Pick<
   openOnTrigger?: boolean
   hideTrigger?: boolean
   shadow?: boolean
+  // Render only the trigger button — no primary action label alongside it.
+  triggerOnly?: boolean
   // Disable only the primary action — the caret trigger stays live so the menu
   // can still be opened (e.g. "already added, but add to another deck").
   primaryDisabled?: boolean
@@ -51,6 +53,7 @@ const {
   openOnTrigger = false,
   hideTrigger = false,
   shadow = false,
+  triggerOnly = false,
   primaryDisabled = false,
   menuTheme = 'brown-300',
   menuThemeDark,
@@ -152,14 +155,27 @@ function onMenuSelect(option: DropdownOption) {
     :gap="gap"
     :shadow="shadow"
     :use_arrow="false"
-    match_reference_width
+    :match_reference_width="!triggerOnly"
     data-testid="dropdown-button"
     v-bind="popover_attrs"
+    :data-active="popover_open"
     :class="{ 'z-100': popover_open }"
     @close="close"
   >
     <template #trigger>
       <ui-button
+        v-if="triggerOnly"
+        icon-only
+        :icon-left="triggerIcon"
+        :size="size"
+        :data-theme="triggerTheme"
+        :data-theme-dark="triggerThemeDark"
+        :data-active="popover_open"
+        data-testid="dropdown-button__button"
+        @click="toggle"
+      />
+      <ui-button
+        v-else
         v-bind="button_attrs"
         :size="size"
         :variant="variant"
