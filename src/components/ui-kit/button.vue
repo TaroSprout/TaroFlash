@@ -167,6 +167,10 @@ function emitClickSfx() {
 .ui-kit-btn {
   position: relative;
 
+  /* Composed from the per-size x/y so the menu can reach each axis; icon-only
+     overrides --btn-padding directly with a single square value. */
+  --btn-padding: var(--btn-padding-y) var(--btn-padding-x);
+
   background-color: var(--btn-bg-color);
   color: var(--btn-text-color);
   font-size: var(--btn-font-size);
@@ -281,7 +285,8 @@ function emitClickSfx() {
   --btn-font-size--line-height: var(--text-xl--line-height);
   --btn-border-radius: 22.5px;
   --btn-gap: 10px;
-  --btn-padding: 14px 24px;
+  --btn-padding-y: 14px;
+  --btn-padding-x: 24px;
   --btn-height: 50px;
   --icon-size: 18px;
 
@@ -295,7 +300,8 @@ function emitClickSfx() {
   --btn-font-size--line-height: var(--text-xl--line-height);
   --btn-border-radius: 19px;
   --btn-gap: 6px;
-  --btn-padding: 10px 20px;
+  --btn-padding-y: 10px;
+  --btn-padding-x: 20px;
   --btn-height: 45px;
   --icon-size: 20px;
 
@@ -309,7 +315,8 @@ function emitClickSfx() {
   --btn-font-size--line-height: var(--text-lg--line-height);
   --btn-border-radius: 18px;
   --btn-gap: 8px;
-  --btn-padding: 6px 14px;
+  --btn-padding-y: 6px;
+  --btn-padding-x: 14px;
   --btn-height: 40px;
   --icon-size: 18px;
   --btn-height: 40px;
@@ -324,7 +331,8 @@ function emitClickSfx() {
   --btn-font-size--line-height: var(--text-base--line-height);
   --btn-border-radius: 13px;
   --btn-gap: 3px;
-  --btn-padding: 4px 12px;
+  --btn-padding-y: 4px;
+  --btn-padding-x: 12px;
   --icon-size: 16px;
   --btn-height: 30px;
 
