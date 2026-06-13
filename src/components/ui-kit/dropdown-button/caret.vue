@@ -58,7 +58,7 @@ function onLeave(el: Element, done: () => void) {
         class="relative z-1 flex aspect-square h-full cursor-pointer items-center justify-center rounded-[calc(var(--btn-border-radius)-8px)] pointer-coarse:rounded-(--btn-border-radius) transition-[scale] duration-120 ease-[ease] hover:scale-110"
         :class="surface"
         data-testid="dropdown-button__trigger"
-        v-sfx.hover="'ui.click_07'"
+        v-sfx.hover="'ui.click_04'"
         @click.stop="emit('toggle')"
         @keydown.enter.space.stop.prevent="emit('toggle')"
       >

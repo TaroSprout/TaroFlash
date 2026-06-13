@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { type ButtonProps } from '../button.vue'
+import { usePlayOnTap } from '@/composables/use-play-on-tap'
 import { emitSfx } from '@/sfx/bus'
 import type { DropdownOption } from './types'
 
@@ -19,15 +21,43 @@ const emit = defineEmits<{
   (e: 'select', option: DropdownOption): void
 }>()
 
+// Always-quiet tap (no bounce variant), so animate is hard-off; it just holds
+// `playing` for the duration so the bgx sweep can run off `[data-playing]`.
+const { interceptClick } = usePlayOnTap({ animate: false, reset: true })
+
+// Which option is mid-tap, so only its row shows the sweep.
+const playing_value = ref<DropdownOption['value'] | null>(null)
+
+function emitSelect(option: DropdownOption) {
+  emit('select', option)
+}
+
+// Fine-pointer click handler: the coarse path is intercepted before this fires,
+// so it owns the select chime.
 function onSelect(option: DropdownOption) {
   emitSfx('ui.select')
-  emit('select', option)
+  emitSelect(option)
+}
+
+// Mirror ui-button: on coarse the capture intercept plays the quiet tap then
+// fires the select; on fine it bails and the bubble `@click` selects immediately.
+function onOptionTap(option: DropdownOption, e: MouseEvent) {
+  interceptClick(e, {
+    // Coarse only (interceptClick bails on fine): acknowledge the tap right
+    // away with the snappy chime, before the quiet sweep runs. The select chime
+    // is skipped here so the tap isn't double-sounded.
+    beforePlay: () => {
+      emitSfx('ui.snappy_button_5')
+      playing_value.value = option.value
+    },
+    onAfter: () => emitSelect(option)
+  })
 }
 </script>
 
 <template>
   <div
-    class="flex flex-col overflow-hidden rounded-(--btn-border-radius) bg-(--theme-primary) py-2 text-(length:--btn-font-size) leading-(--btn-font-size--line-height) text-(--theme-on-primary)"
+    class="flex flex-col overflow-hidden rounded-(--btn-border-radius) bg-(--theme-primary) p-1.5 text-(length:--btn-font-size) leading-(--btn-font-size--line-height) text-(--theme-on-primary)"
     :class="`ui-kit-btn-tokens--${size}`"
     :data-theme="menuTheme"
     :data-theme-dark="menuThemeDark"
@@ -37,12 +67,23 @@ function onSelect(option: DropdownOption) {
       v-for="option in options"
       :key="option.value"
       type="button"
-      class="flex w-full cursor-pointer items-center gap-(--btn-gap) p-(--btn-padding) text-start whitespace-nowrap hover:bg-[color-mix(in_srgb,var(--theme-on-primary)_14%,transparent)]"
+      class="group/option relative flex w-full cursor-pointer items-center gap-(--btn-gap) overflow-hidden rounded-[calc(var(--btn-border-radius)-6px)] py-(--btn-padding-y) px-[calc(var(--btn-padding-x)-6px)] text-start whitespace-nowrap"
+      :data-playing="playing_value === option.value || null"
       data-testid="dropdown-button__option"
+      v-sfx.hover="'ui.click_04'"
+      @click.capture="onOptionTap(option, $event)"
       @click="onSelect(option)"
     >
-      <ui-icon v-if="option.icon" :src="option.icon" class="size-(--icon-size,20px) shrink-0" />
-      <span>{{ option.label }}</span>
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute inset-0 hidden bgx-diagonal-stripes bgx-color-[var(--theme-neutral)] animation-safe:bgx-slide group-hover/option:block group-data-[playing=true]/option:block"
+      ></div>
+      <ui-icon
+        v-if="option.icon"
+        :src="option.icon"
+        class="relative size-(--icon-size,20px) shrink-0"
+      />
+      <span class="relative">{{ option.label }}</span>
     </button>
   </div>
 </template>
