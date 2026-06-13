@@ -105,6 +105,10 @@ defineExpose({ focus })
       v-if="!has_content && !disabled"
       data-testid="text-editor__placeholder"
       class="text-editor__placeholder"
+      :class="[
+        `text-editor__placeholder--h-${horizontal_alignment}`,
+        `text-editor__placeholder--v-${vertical_alignment}`
+      ]"
     >
       {{ placeholder }}
     </span>
@@ -162,15 +166,45 @@ defineExpose({ focus })
   justify-content: flex-end;
 }
 
+/* Mirror the editor's alignment so the hint sits where typed text will land.
+   Horizontal maps to the main axis (justify-content + text-align), vertical to
+   the cross axis (align-items). */
 .text-editor__placeholder {
   position: absolute;
   inset: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
   pointer-events: none;
   color: var(--color-brown-300);
+  /* Match the editor so the hint's line box fits a content-height region
+     (otherwise the glyphs overflow it and clip). */
+  line-height: 1.2;
+}
+
+.text-editor__placeholder--h-left {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.text-editor__placeholder--h-center {
+  justify-content: center;
+  text-align: center;
+}
+
+.text-editor__placeholder--h-right {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.text-editor__placeholder--v-top {
+  align-items: flex-start;
+}
+
+.text-editor__placeholder--v-center {
+  align-items: center;
+}
+
+.text-editor__placeholder--v-bottom {
+  align-items: flex-end;
 }
 
 .text-editor {
