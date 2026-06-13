@@ -58,6 +58,7 @@ const is_mobile = useMatchMedia('w<md')
 
 const active_tab = ref<ActiveTab | null>(null)
 const tab_outlet = ref<HTMLElement>()
+const is_saving = ref(false)
 
 if (initial_tab) active_tab.value = initial_tab
 if (initial_side) editor.setActiveSide(initial_side)
@@ -107,7 +108,9 @@ async function onSave() {
     emitSfx('ui.etc_woodblock_stuck')
     return
   }
+  is_saving.value = true
   const saved = await editor.saveDeck()
+  is_saving.value = false
   if (saved) close(true)
 }
 
@@ -182,7 +185,7 @@ watch(active_tab, (tab) => {
       v-if="!is_mobile"
       ref="deck_aside"
       data-testid="deck-settings__aside"
-      :deck="deck"
+      :loading="is_saving"
       class="w-78.5 shrink-0 self-end pt-70"
       @save="onSave"
     />

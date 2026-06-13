@@ -8,10 +8,10 @@ import { deckEditorKey } from '@/composables/deck-editor'
 import { emitSfx } from '@/sfx/bus'
 
 type DeckAsideProps = {
-  deck?: Deck
+  loading?: boolean
 }
 
-const { deck } = defineProps<DeckAsideProps>()
+const { loading } = defineProps<DeckAsideProps>()
 
 const { t } = useI18n()
 const { settings, is_dirty } = inject(deckEditorKey)!
@@ -64,7 +64,9 @@ watch(
       data-theme-dark="blue-650"
       size="lg"
       full-width
+      :loading="loading"
       :disabled="!is_dirty"
+      :sfx="{ click: 'ui.snappy_button_2' }"
       click-when-disabled
       @click="is_dirty ? emit('save') : emitSfx('ui.digi_powerdown')"
     >
