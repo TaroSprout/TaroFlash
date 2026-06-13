@@ -12,7 +12,6 @@ import {
   deckDangerActionsKey
 } from '@/composables/deck/use-deck-danger-actions'
 import { useMatchMedia } from '@/composables/use-media-query'
-import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTagButton from '@/components/ui-kit/tag-button.vue'
 import Card from '@/components/card/index.vue'
@@ -104,7 +103,10 @@ function onPreviewSide(side: CardSide) {
 }
 
 async function onSave() {
-  if (deck_aside.value && !deck_aside.value.validate()) return
+  if (deck_aside.value && !deck_aside.value.validate()) {
+    emitSfx('ui.etc_woodblock_stuck')
+    return
+  }
   const saved = await editor.saveDeck()
   if (saved) close(true)
 }
@@ -204,6 +206,25 @@ watch(active_tab, (tab) => {
         </ui-tag-button>
       </transition>
 
+      <transition
+        :css="false"
+        @enter="(el, done) => slideFadeRightEnter(el, done)"
+        @leave="(el, done) => slideFadeRightLeave(el, done)"
+      >
+        <ui-tag-button
+          v-if="editor.is_dirty.value"
+          size="lg"
+          icon="check"
+          data-testid="deck-settings__save-button"
+          data-theme="blue-500"
+          data-theme-dark="blue-650"
+          class="pointer-events-auto absolute! -right-(--sheet-px) bottom-5 drop-shadow-xs"
+          @click="onSave"
+        >
+          {{ t('deck.settings-modal.submit-edit') }}
+        </ui-tag-button>
+      </transition>
+
       <div
         v-if="!is_mobile"
         data-testid="deck-settings__floating-preview"
@@ -235,17 +256,6 @@ watch(active_tab, (tab) => {
       </div>
     </template>
 
-    <template #footer>
-      <ui-button
-        v-if="editor.is_dirty.value"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
-        size="xl"
-        full-width
-        @click="onSave"
-      >
-        {{ t('deck.settings-modal.submit-edit') }}
-      </ui-button>
-    </template>
+    <template #footer />
   </tab-sheet>
 </template>

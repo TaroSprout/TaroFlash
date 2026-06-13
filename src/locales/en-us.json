@@ -346,7 +346,7 @@
   "deck.settings-modal.back-label": "Back",
   "deck.settings-modal.preview.front-fallback": "Front",
   "deck.settings-modal.preview.back-fallback": "Back",
-  "deck.settings-modal.submit-edit": "Save",
+  "deck.settings-modal.submit-edit": "Save changes",
   "deck.create-modal.title": "New Deck",
   "deck.create-modal.cover-heading": "Cover",
   "deck.create-modal.details-heading": "Details",
