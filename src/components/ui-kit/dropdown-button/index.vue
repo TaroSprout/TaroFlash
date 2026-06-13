@@ -71,7 +71,16 @@ const popover_open = ref(false)
 // Theme/class/layout attrs ride the popover container (its non-teleported
 // content inherits the theme), while event handlers — the consumer's primary
 // @click — land on the inner button so they fire only from the label region.
-const popover_attrs = computed(() => filter_attrs((key) => !key.startsWith('on')))
+// With no consumer `data-theme`, the trigger falls back to the neutral surface
+// rather than a theme-primary fill; a supplied `data-theme` still themes it.
+const popover_attrs = computed(() => {
+  const result = filter_attrs((key) => !key.startsWith('on'))
+  if (result['data-theme'] === undefined) {
+    result['data-theme'] = 'brown-100'
+    result['data-theme-dark'] = 'stone-700'
+  }
+  return result
+})
 // `onClick` is handled through `onButtonClick` instead of forwarded, so the inner
 // button never receives both it and the trigger handler as a merged array — which
 // its play-on-tap intercept can't invoke (it expects a single onClick function).
