@@ -184,6 +184,7 @@ watch(active_tab, (tab) => {
       data-testid="deck-settings__aside"
       :deck="deck"
       class="w-78.5 shrink-0 self-end pt-70"
+      @save="onSave"
     />
 
     <template #overlay>
@@ -203,25 +204,6 @@ watch(active_tab, (tab) => {
         >
           <ui-icon src="arrow-back" class="w-4 h-4" />
           <span>{{ t('deck.settings-modal.back-label') }}</span>
-        </ui-tag-button>
-      </transition>
-
-      <transition
-        :css="false"
-        @enter="(el, done) => slideFadeRightEnter(el, done)"
-        @leave="(el, done) => slideFadeRightLeave(el, done)"
-      >
-        <ui-tag-button
-          v-if="editor.is_dirty.value"
-          size="lg"
-          icon="check"
-          data-testid="deck-settings__save-button"
-          data-theme="blue-500"
-          data-theme-dark="blue-650"
-          class="pointer-events-auto absolute! -right-(--sheet-px) bottom-5 drop-shadow-xs"
-          @click="onSave"
-        >
-          {{ t('deck.settings-modal.submit-edit') }}
         </ui-tag-button>
       </transition>
 

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, inject, ref, watch } from 'vue'
+import { inject, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiInput from '@/components/ui-kit/input.vue'
 import UiTextarea from '@/components/ui-kit/textarea.vue'
+import UiButton from '@/components/ui-kit/button.vue'
 import { deckEditorKey } from '@/composables/deck-editor'
 
 type DeckAsideProps = {
@@ -11,21 +12,12 @@ type DeckAsideProps = {
 
 const { deck } = defineProps<DeckAsideProps>()
 
-const { t, locale } = useI18n()
-const { settings } = inject(deckEditorKey)!
+const { t } = useI18n()
+const { settings, is_dirty } = inject(deckEditorKey)!
 
 const title_error = ref<string>()
 
-const owner = computed(
-  () => deck?.member_display_name || t('deck.settings-modal.aside.owner-fallback')
-)
-
-const created_at = computed(() => {
-  if (!deck?.created_at) return t('deck.settings-modal.aside.date-fallback')
-  const d = new Date(deck.created_at)
-  if (Number.isNaN(d.getTime())) return t('deck.settings-modal.aside.date-fallback')
-  return new Intl.DateTimeFormat(locale.value, { month: 'short', year: 'numeric' }).format(d)
-})
+const emit = defineEmits<{ save: [] }>()
 
 /** Returns true if valid; sets error state and returns false otherwise. */
 function validate(): boolean {
@@ -65,13 +57,16 @@ watch(
       />
     </div>
 
-    <div
-      data-testid="deck-aside__meta"
-      class="flex items-center justify-center gap-2 text-sm text-brown-500 dark:text-brown-300"
+    <ui-button
+      data-testid="deck-aside__save-button"
+      data-theme="blue-500"
+      data-theme-dark="blue-650"
+      size="lg"
+      full-width
+      :disabled="!is_dirty"
+      @click="emit('save')"
     >
-      <span data-testid="deck-aside__owner">{{ owner }}</span>
-      <span aria-hidden="true">·</span>
-      <span data-testid="deck-aside__created-at">{{ created_at }}</span>
-    </div>
+      {{ t('deck.settings-modal.submit-edit') }}
+    </ui-button>
   </aside>
 </template>
