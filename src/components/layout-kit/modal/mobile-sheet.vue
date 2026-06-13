@@ -92,7 +92,7 @@ provide(mobileSheetOverlayKey, overlay_root)
 
     <div
       data-testid="mobile-sheet-container"
-      class="flex overflow-hidden w-full h-full rounded-t-8 rounded-b-8 mobile-modal:rounded-b-none shadow-lg border-brown-100 dark:border-grey-900 pointer-coarse:border-t pointer-coarse:border-l mobile-modal:pointer-coarse:border-r"
+      class="flex overflow-hidden w-full h-full rounded-t-8 rounded-b-8 mobile-modal:rounded-b-none shadow-lg border-brown-100 dark:border-grey-900 border-t border-l mobile-modal:border-r"
     >
       <slot name="sidebar"></slot>
 

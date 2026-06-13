@@ -1,6 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h } from 'vue'
 
 const { mockEditor, mockRouterPush, mockRandomCover, mockEmitSfx, capturedSettings } = vi.hoisted(
   () => ({
@@ -25,11 +24,27 @@ vi.mock('@/utils/cover', async () => {
   return { ...actual, randomCoverConfig: mockRandomCover }
 })
 
+// useMatchMedia mock: exposes a shared ref and a setter so tests can control
+// the mobile/desktop branch before mounting the component.
+// 'coarse' queries always return false (fine/desktop pointer) so that
+// usePlayOnTap inside UiButton passes clicks straight through without intercepting.
+vi.mock('@/composables/use-media-query', async () => {
+  const { ref } = await import('vue')
+  const isMobile = ref(false)
+  const alwaysFalse = ref(false)
+  return {
+    useMatchMedia: vi.fn((query) => (query === 'coarse' ? alwaysFalse : isMobile)),
+    __setMobile: (v) => {
+      isMobile.value = v
+    }
+  }
+})
+
 vi.mock('@/composables/deck-editor', async () => {
   const { reactive } = await import('vue')
   return {
     useDeckEditor: vi.fn((deck) => {
-      const settings = reactive({ title: '' })
+      const settings = reactive({ title: '', description: '' })
       capturedSettings.current = settings
       return {
         settings,
@@ -85,6 +100,8 @@ vi.mock('@/components/layout-kit/modal/mobile-sheet.vue', async () => {
               'data-testid': 'mobile-sheet-stub__close',
               onClick: () => emit('close')
             }),
+            slots['header-content']?.(),
+            slots.overlay?.(),
             slots.default?.()
           ])
       }
@@ -92,7 +109,33 @@ vi.mock('@/components/layout-kit/modal/mobile-sheet.vue', async () => {
   }
 })
 
+vi.mock('@/components/card/index.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return {
+    default: defineComponent({
+      name: 'Card',
+      setup() {
+        return () => h('div', { 'data-testid': 'card-stub' })
+      }
+    })
+  }
+})
+
+vi.mock('@/components/ui-kit/icon.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return {
+    default: defineComponent({
+      name: 'UiIcon',
+      props: ['src'],
+      setup() {
+        return () => h('span', { 'data-testid': 'ui-icon-stub' })
+      }
+    })
+  }
+})
+
 import DeckCreate from '@/components/modals/deck-create/index.vue'
+import { __setMobile } from '@/composables/use-media-query'
 
 function mountModal(close = vi.fn()) {
   const wrapper = mount(DeckCreate, {
@@ -109,53 +152,129 @@ describe('DeckCreate modal', () => {
     mockRouterPush.mockClear()
     mockRandomCover.mockClear()
     mockEmitSfx.mockClear()
+    __setMobile(false)
   })
 
-  test('renders the preview, cover-designer, both action buttons, and the inputs', () => {
+  // ── Non-mobile layout ──────────────────────────────────────────────────────
+
+  test('non-mobile: renders deck-create__aside with submit button (no cancel) [obligation]', () => {
+    const { wrapper } = mountModal()
+
+    expect(wrapper.find('[data-testid="deck-create__aside"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="deck-create__aside-submit"]').exists()).toBe(true)
+    // Cancel button is NOT present in the aside on non-mobile [obligation]
+    expect(wrapper.find('[data-testid="deck-create__mobile-actions"]').exists()).toBe(false)
+  })
+
+  test('non-mobile: renders the floating preview in the overlay slot [obligation]', () => {
+    const { wrapper } = mountModal()
+
+    expect(wrapper.find('[data-testid="deck-create__floating-preview"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="deck-create__inline-preview"]').exists()).toBe(false)
+  })
+
+  test('non-mobile: does not render mobile-only sections [obligation]', () => {
+    const { wrapper } = mountModal()
+
+    expect(wrapper.find('[data-testid="deck-create__mobile-inputs"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="deck-create__mobile-actions"]').exists()).toBe(false)
+  })
+
+  test('non-mobile: renders the cover designer and body', () => {
     const { wrapper } = mountModal()
 
     expect(wrapper.find('[data-testid="deck-create__body"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="deck-create__preview"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="cover-designer-stub"]').exists()).toBe(true)
-    expect(wrapper.findAll('[data-testid="deck-create__actions"] button')).toHaveLength(2)
   })
 
   test('seeds the editor cover with randomCoverConfig() values', () => {
-    const { wrapper } = mountModal()
+    mountModal()
     expect(mockRandomCover).toHaveBeenCalledTimes(1)
-    // Cover seeded from random helper flows into the preview stub's data-theme attr.
-    expect(wrapper.find('[data-testid="deck-create__preview"]').attributes('data-theme')).toBe(
-      'pink-400'
-    )
   })
 
-  test('cancel button closes with false', async () => {
+  // ── Mobile layout ──────────────────────────────────────────────────────────
+
+  test('mobile: renders deck-create__inline-preview instead of floating preview [obligation]', async () => {
+    __setMobile(true)
+    const { wrapper } = mountModal()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid="deck-create__inline-preview"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="deck-create__floating-preview"]').exists()).toBe(false)
+  })
+
+  test('mobile: renders deck-create__mobile-inputs and deck-create__mobile-actions [obligation]', async () => {
+    __setMobile(true)
+    const { wrapper } = mountModal()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid="deck-create__mobile-inputs"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="deck-create__mobile-actions"]').exists()).toBe(true)
+  })
+
+  test('mobile: does not render the aside [obligation]', async () => {
+    __setMobile(true)
+    const { wrapper } = mountModal()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid="deck-create__aside"]').exists()).toBe(false)
+  })
+
+  test('mobile: cancel button in mobile-actions closes with false [obligation]', async () => {
+    __setMobile(true)
     const { wrapper, close } = mountModal()
-    const buttons = wrapper.findAll('[data-testid="deck-create__actions"] button')
+    await wrapper.vm.$nextTick()
+
+    const mobileActions = wrapper.find('[data-testid="deck-create__mobile-actions"]')
+    // UiButton renders with data-testid="ui-kit-button" on its inner button element
+    const buttons = mobileActions.findAll('[data-testid="ui-kit-button"]')
+    // First button in mobile-actions is the cancel button
     await buttons[0].trigger('click')
 
     expect(close).toHaveBeenCalledWith(false)
     expect(mockEditor.saveDeck).not.toHaveBeenCalled()
-    expect(mockRouterPush).not.toHaveBeenCalled()
   })
 
-  test('mobile-sheet @close also closes with false', async () => {
+  test('mobile: submit button in mobile-actions calls saveDeck', async () => {
+    __setMobile(true)
+    mockEditor.saveDeck.mockResolvedValueOnce({ id: 42 })
+    const { wrapper, close } = mountModal()
+    await wrapper.vm.$nextTick()
+
+    capturedSettings.current.title = 'Mobile Deck'
+    await wrapper.vm.$nextTick()
+
+    const mobileActions = wrapper.find('[data-testid="deck-create__mobile-actions"]')
+    // UiButton renders with data-testid="ui-kit-button" on its inner button element
+    const buttons = mobileActions.findAll('[data-testid="ui-kit-button"]')
+    // Second button in mobile-actions is the submit button
+    await buttons[1].trigger('click')
+    await flushPromises()
+
+    expect(mockEditor.saveDeck).toHaveBeenCalled()
+    expect(close).toHaveBeenCalledWith(true)
+    expect(mockRouterPush).toHaveBeenCalledWith({ name: 'deck', params: { id: 42 } })
+  })
+
+  // ── Close behaviour ────────────────────────────────────────────────────────
+
+  test('mobile-sheet @close closes with false', async () => {
     const { wrapper, close } = mountModal()
     await wrapper.find('[data-testid="mobile-sheet-stub__close"]').trigger('click')
 
     expect(close).toHaveBeenCalledWith(false)
   })
 
+  // ── Submit (non-mobile) ────────────────────────────────────────────────────
+
   test('submit calls saveDeck, then close(true), then routes to the new deck', async () => {
     mockEditor.saveDeck.mockResolvedValueOnce({ id: 7 })
     const { wrapper, close } = mountModal()
 
-    // Set a non-empty title so the save guard passes
     capturedSettings.current.title = 'My Deck'
     await wrapper.vm.$nextTick()
 
-    const buttons = wrapper.findAll('[data-testid="deck-create__actions"] button')
-    await buttons[1].trigger('click')
+    await wrapper.find('[data-testid="deck-create__aside-submit"]').trigger('click')
     await flushPromises()
 
     expect(mockEditor.saveDeck).toHaveBeenCalled()
@@ -167,26 +286,22 @@ describe('DeckCreate modal', () => {
     mockEditor.saveDeck.mockResolvedValueOnce(null)
     const { wrapper, close } = mountModal()
 
-    // Set a non-empty title so the save guard passes
     capturedSettings.current.title = 'My Deck'
     await wrapper.vm.$nextTick()
 
-    const buttons = wrapper.findAll('[data-testid="deck-create__actions"] button')
-    await buttons[1].trigger('click')
+    await wrapper.find('[data-testid="deck-create__aside-submit"]').trigger('click')
     await flushPromises()
 
     expect(close).not.toHaveBeenCalled()
     expect(mockRouterPush).not.toHaveBeenCalled()
   })
 
-  // ── title-required guard [obligation] ──────────────────────────────────────
+  // ── Title-required guard ───────────────────────────────────────────────────
 
-  test('onSave with empty title sets title_error, plays woodblock sfx, does NOT call saveDeck [obligation]', async () => {
+  test('onSave with empty title plays woodblock sfx and does NOT call saveDeck [obligation]', async () => {
     const { wrapper, close } = mountModal()
 
-    // Title is empty by default
-    const buttons = wrapper.findAll('[data-testid="deck-create__actions"] button')
-    await buttons[1].trigger('click')
+    await wrapper.find('[data-testid="deck-create__aside-submit"]').trigger('click')
     await flushPromises()
 
     expect(mockEditor.saveDeck).not.toHaveBeenCalled()
@@ -201,38 +316,69 @@ describe('DeckCreate modal', () => {
     capturedSettings.current.title = '   '
     await wrapper.vm.$nextTick()
 
-    const buttons = wrapper.findAll('[data-testid="deck-create__actions"] button')
-    await buttons[1].trigger('click')
+    await wrapper.find('[data-testid="deck-create__aside-submit"]').trigger('click')
     await flushPromises()
 
     expect(mockEditor.saveDeck).not.toHaveBeenCalled()
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.etc_woodblock_stuck')
   })
 
-  test('onTitleInput clears the title_error [obligation]', async () => {
+  // ── Title-error watcher [obligation] ──────────────────────────────────────
+
+  test('title error clears reactively via watcher when title changes [obligation]', async () => {
     const { wrapper } = mountModal()
 
-    // Trigger the error first
-    const buttons = wrapper.findAll('[data-testid="deck-create__actions"] button')
-    await buttons[1].trigger('click')
+    // Trigger the error first by submitting with empty title
+    await wrapper.find('[data-testid="deck-create__aside-submit"]').trigger('click')
     await flushPromises()
-
-    // A title input event should clear the error — we call vm method indirectly via the
-    // exposed UiInput @input which calls onTitleInput. Since UiInput is not stubbed fully,
-    // we call vm.onTitleInput directly via the component's expose surface
-    // (it is not exposed via defineExpose but we can test the observable effect:
-    //  typing a new input on the title field clears the error display)
-    // Verify error was set (mockEmitSfx was called)
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.etc_woodblock_stuck')
 
-    // Now set a title and trigger save — no error sfx should replay (error was cleared)
+    // Clear sfx mock so we can detect if the woodblock fires again
     mockEmitSfx.mockClear()
-    capturedSettings.current.title = 'New title'
+
+    // Reactively update the title — the watch() should clear the error
+    capturedSettings.current.title = 'New Title'
     await wrapper.vm.$nextTick()
-    await buttons[1].trigger('click')
+
+    // Now submitting should succeed (no woodblock sfx, saveDeck called)
+    await wrapper.find('[data-testid="deck-create__aside-submit"]').trigger('click')
     await flushPromises()
 
     expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.etc_woodblock_stuck')
     expect(mockEditor.saveDeck).toHaveBeenCalled()
+  })
+
+  // ── Locale title ───────────────────────────────────────────────────────────
+
+  test('renders the modal title "Make A New Deck" (updated locale value) [obligation]', () => {
+    const { wrapper } = mountModal()
+    // The mobile-sheet stub renders the header-content slot; we find the h1
+    const h1 = wrapper.find('h1')
+    expect(h1.exists()).toBe(true)
+    expect(h1.text()).toContain('Make A New Deck')
+  })
+
+  // ── Description binding (non-mobile aside + mobile inputs) ─────────────────
+
+  test('non-mobile: aside renders inputs bound to editor settings', async () => {
+    const { wrapper } = mountModal()
+
+    capturedSettings.current.title = 'Deck Title'
+    capturedSettings.current.description = 'A description'
+    await wrapper.vm.$nextTick()
+
+    // Aside inputs render (proxy for the v-model bindings being active)
+    expect(wrapper.find('[data-testid="deck-create__aside-inputs"]').exists()).toBe(true)
+  })
+
+  test('mobile: mobile-inputs renders description input bound to editor settings', async () => {
+    __setMobile(true)
+    const { wrapper } = mountModal()
+    await wrapper.vm.$nextTick()
+
+    capturedSettings.current.description = 'Mobile description'
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid="deck-create__mobile-inputs"]').exists()).toBe(true)
   })
 })

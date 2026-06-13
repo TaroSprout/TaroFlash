@@ -350,7 +350,7 @@
   "deck.settings-modal.unsaved-alert.message": "You have unsaved changes. Exit anyway?",
   "deck.settings-modal.unsaved-alert.confirm": "Exit",
   "deck.settings-modal.unsaved-alert.cancel": "Keep editing",
-  "deck.create-modal.title": "New Deck",
+  "deck.create-modal.title": "Make A New Deck",
   "deck.create-modal.cover-heading": "Cover",
   "deck.create-modal.details-heading": "Details",
   "deck.create-modal.submit": "Create Deck",
