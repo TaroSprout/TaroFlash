@@ -3,15 +3,12 @@ import { computed, ref, useAttrs } from 'vue'
 import type { Placement } from '@floating-ui/vue'
 import UiButton, { type ButtonProps } from '../button.vue'
 import UiPopover from '@/components/ui-kit/popover.vue'
-import UiIcon from '@/components/ui-kit/icon.vue'
+import DropdownCaret from './caret.vue'
+import DropdownMenu from './menu.vue'
 import { emitSfx } from '@/sfx/bus'
-import { flipEnter, flipLeave } from '@/utils/animations/flip'
+import type { DropdownOption } from './types'
 
-export type DropdownOption = {
-  label: string
-  value: string | number
-  icon?: string
-}
+export type { DropdownOption } from './types'
 
 type DropdownButtonProps = Pick<
   ButtonProps,
@@ -27,8 +24,6 @@ type DropdownButtonProps = Pick<
   // Disable only the primary action — the caret trigger stays live so the menu
   // can still be opened (e.g. "already added, but add to another deck").
   primaryDisabled?: boolean
-  // The menu is teleported, so it can't inherit a `data-theme` ancestor — it
-  // takes its theme explicitly.
   menuTheme?: Theme
   menuThemeDark?: Theme
   triggerTheme?: Theme
@@ -105,15 +100,6 @@ const trigger_style = computed(() =>
     : undefined
 )
 
-// The caret normally contrasts against the main button via theme-secondary. A
-// `triggerTheme` re-bases the caret to its own palette, so it reads as that
-// palette's primary surface instead (matching how the menu maps its theme).
-const trigger_surface = computed(() =>
-  triggerTheme
-    ? 'bg-(--theme-primary) text-(--theme-on-primary)'
-    : 'bg-(--theme-secondary) text-(--theme-on-secondary)'
-)
-
 function filter_attrs(keep: (key: string) => boolean) {
   const result: Record<string, unknown> = {}
   for (const key in attrs) {
@@ -146,20 +132,11 @@ function onButtonClick(e: MouseEvent) {
   else consumer?.(e)
 }
 
-function onCaretEnter(el: Element, done: () => void) {
-  flipEnter(el, 'x', done)
-}
-
-function onCaretLeave(el: Element, done: () => void) {
-  flipLeave(el, 'x', done)
-}
-
 function close() {
   popover_open.value = false
 }
 
-function onSelect(option: DropdownOption) {
-  emitSfx('ui.select')
+function onMenuSelect(option: DropdownOption) {
   emit('select', option)
   close()
 }
@@ -196,58 +173,24 @@ function onSelect(option: DropdownOption) {
       >
         <slot></slot>
         <template #trailing>
-          <div
+          <dropdown-caret
             v-if="show_trigger"
-            :data-theme="triggerTheme"
-            :data-theme-dark="triggerThemeDark"
-            class="flex h-full p-2 pointer-coarse:p-0"
-            data-testid="dropdown-button__trigger-wrap"
-          >
-            <transition mode="out-in" @enter="onCaretEnter" @leave="onCaretLeave">
-              <span
-                :key="String(popover_open)"
-                role="button"
-                tabindex="0"
-                aria-haspopup="menu"
-                :aria-expanded="popover_open"
-                :data-active="popover_open"
-                class="relative z-1 flex aspect-square h-full cursor-pointer items-center justify-center rounded-[calc(var(--btn-border-radius)-8px)] pointer-coarse:rounded-(--btn-border-radius) transition-[scale] duration-120 ease-[ease] hover:scale-110"
-                :class="trigger_surface"
-                data-testid="dropdown-button__trigger"
-                v-sfx.hover="'ui.click_07'"
-                @click.stop="toggle"
-                @keydown.enter.space.stop.prevent="toggle"
-              >
-                <ui-icon
-                  :src="triggerIcon"
-                  class="size-[calc(var(--icon-size,20px)-6px)]"
-                  :class="{ 'rotate-180': popover_open }"
-                />
-              </span>
-            </transition>
-          </div>
+            :open="popover_open"
+            :icon="triggerIcon"
+            :trigger-theme="triggerTheme"
+            :trigger-theme-dark="triggerThemeDark"
+            @toggle="toggle"
+          />
         </template>
       </ui-button>
     </template>
 
-    <div
-      class="flex flex-col overflow-hidden rounded-(--btn-border-radius) bg-(--theme-primary) py-2 text-(length:--btn-font-size) leading-(--btn-font-size--line-height) text-(--theme-on-primary)"
-      :class="`ui-kit-btn-tokens--${size}`"
-      :data-theme="menuTheme"
-      :data-theme-dark="menuThemeDark"
-      data-testid="dropdown-button__menu"
-    >
-      <button
-        v-for="option in options"
-        :key="option.value"
-        type="button"
-        class="flex w-full cursor-pointer items-center gap-(--btn-gap) p-(--btn-padding) text-start whitespace-nowrap hover:bg-[color-mix(in_srgb,var(--theme-on-primary)_14%,transparent)]"
-        data-testid="dropdown-button__option"
-        @click="onSelect(option)"
-      >
-        <ui-icon v-if="option.icon" :src="option.icon" class="size-(--icon-size,20px) shrink-0" />
-        <span>{{ option.label }}</span>
-      </button>
-    </div>
+    <dropdown-menu
+      :options="options"
+      :size="size"
+      :menu-theme="menuTheme"
+      :menu-theme-dark="menuThemeDark"
+      @select="onMenuSelect"
+    />
   </ui-popover>
 </template>
