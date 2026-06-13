@@ -62,6 +62,8 @@ const value = defineModel<string>('value')
 
 .ui-kit-input-container--lg .ui-kit-input {
   border-radius: var(--radius-5_5);
+  font-size: var(--text-lg);
+  line-height: var(--text-lg--line-height);
   padding: 16px 24px;
 }
 

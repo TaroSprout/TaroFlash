@@ -51,7 +51,7 @@ function onThemeSelect(option: DeckTheme) {
       >
         <div
           v-if="isSelected(option)"
-          class="absolute -top-2 -right-2 bg-white p-0.5 rounded-full flex items-center justify-center"
+          class="absolute -top-2 -right-2 bg-white p-1.5 size-6.5 rounded-full flex items-center justify-center"
         >
           <ui-icon src="check" class="text-(--theme-primary)" />
         </div>

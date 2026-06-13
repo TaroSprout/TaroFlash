@@ -1,3 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24">
-  <path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z" fill="currentColor" />
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="Check-Thick--Streamline-Flex">
+  <desc>
+    Check Thick Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="check-thick--check-form-validation-checkmark-success-add-addition-1-tick">
+    <path id="Union" fill="currentColor" fill-rule="evenodd" d="M13.1572 1C12.309 0.0650233 10.8635 -0.00536358 9.92853 0.842791 8.40034 2.22906 7.20652 3.51648 6.19107 5.10144c-0.44741 0.69834 -0.84788 1.43521 -1.22433 2.23825l-0.79012 -0.81482c-0.87879 -0.90625 -2.32585 -0.92851 -3.232097 -0.04972C0.0382736 7.35394 0.0160113 8.801 0.894799 9.70725L4.14154 13.0554c0.55207 0.5694 1.3598 0.8118 2.13416 0.6407 0.77436 -0.1711 1.40467 -0.7314 1.6654 -1.4804 0.73631 -2.1151 1.36704 -3.50545 2.0991 -4.64816 0.7231 -1.1286 1.6063 -2.11109 2.9598 -3.33888 0.9349 -0.84816 1.0053 -2.29367 0.1572 -3.22866l-0.3704 0.33594L13.1572 1Z" clip-rule="evenodd" stroke-width="1"></path>
+  </g>
 </svg>
