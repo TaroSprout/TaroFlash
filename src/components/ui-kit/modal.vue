@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { onUnmounted, watchEffect, computed, useTemplateRef } from 'vue'
-import { useModal, request_close_handlers, type ModalMode } from '@/composables/modal'
+import {
+  useModal,
+  request_close_handlers,
+  resolveModalAfterEnter,
+  type ModalMode
+} from '@/composables/modal'
 import { useMatchMedia, type BreakpointKey } from '@/composables/use-media-query'
 import { useScrollLock } from '@/composables/use-scroll-lock'
 import { useShortcuts } from '@/composables/use-shortcuts'
@@ -77,6 +82,11 @@ function onEnter(el: Element, done: () => void) {
   })
 }
 
+function onAfterEnter(el: Element) {
+  const id = (el as HTMLElement).dataset.modalId
+  if (id) resolveModalAfterEnter(id)
+}
+
 function onLeave(el: Element, done: () => void) {
   const config = getModeConfig(el)
   const html_el = el as HTMLElement
@@ -112,6 +122,7 @@ function onLeave(el: Element, done: () => void) {
     :css="false"
     @before-enter="onBeforeEnter"
     @enter="onEnter"
+    @after-enter="onAfterEnter"
     @leave="onLeave"
     data-testid="ui-kit-modal-container"
     :data-modal-mode="modal_stack.at(-1)?.mode ?? DEFAULT_MODE"
@@ -122,6 +133,7 @@ function onLeave(el: Element, done: () => void) {
     <div
       v-for="modal in modal_stack"
       :key="modal.id"
+      :data-modal-id="modal.id"
       data-testid="ui-kit-modal"
       class="absolute inset-0 flex justify-center pointer-events-none"
       :class="MODAL_MODE_CONFIG[modal.mode].containerClass"

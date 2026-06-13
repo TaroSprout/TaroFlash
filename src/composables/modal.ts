@@ -13,6 +13,26 @@ export const MODAL_ID_KEY: InjectionKey<string> = Symbol('modalId')
 /** Handlers registered via useModalRequestClose, keyed by modal id. */
 const request_close_handlers = new Map<string, () => void>()
 
+const after_enter_resolvers = new Map<string, () => void>()
+
+/**
+ * Returns a promise that resolves once this modal's enter animation completes.
+ * Must be called during component setup (uses inject internally).
+ */
+export function useModalAfterEnter(): Promise<void> {
+  const id = inject(MODAL_ID_KEY)
+  if (!id) return Promise.resolve()
+  return new Promise<void>((resolve) => {
+    after_enter_resolvers.set(id, resolve)
+  })
+}
+
+/** Called by modal.vue after the enter transition for the given modal id completes. */
+export function resolveModalAfterEnter(id: string) {
+  after_enter_resolvers.get(id)?.()
+  after_enter_resolvers.delete(id)
+}
+
 /**
  * Call this inside any component that lives inside a modal to register a handler
  * that runs when the backdrop is clicked or esc is pressed.

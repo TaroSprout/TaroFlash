@@ -13,7 +13,7 @@ import {
 } from '@/composables/deck/use-deck-danger-actions'
 import { useMatchMedia } from '@/composables/use-media-query'
 import { useAlert } from '@/composables/alert'
-import { useModalRequestClose } from '@/composables/modal'
+import { useModalAfterEnter, useModalRequestClose } from '@/composables/modal'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTagButton from '@/components/ui-kit/tag-button.vue'
 import Card from '@/components/card/index.vue'
@@ -54,6 +54,7 @@ provide(deckDangerActionsKey, danger)
 
 const alert = useAlert()
 useModalRequestClose(() => onClose())
+const after_enter = useModalAfterEnter()
 
 const deck_aside = useTemplateRef('deck_aside')
 // Layout modes — single source of truth for all layout-conditional rendering.
@@ -73,7 +74,6 @@ const sheet_px = computed(() => {
 })
 
 if (initial_tab) active_tab.value = initial_tab
-if (initial_side) editor.setActiveSide(initial_side)
 
 const tabs = computed(() => [
   { value: 'design', icon: 'paint-brush', label: t('deck.settings-modal.tab.design') },
@@ -98,7 +98,7 @@ const visible_side = computed(() =>
 
 const tab_component = computed(() => TAB_COMPONENTS[displayed_tab.value])
 
-onMounted(() => {
+onMounted(async () => {
   const idle = window.requestIdleCallback ?? ((cb: IdleRequestCallback) => setTimeout(cb, 200))
   idle(() => {
     import('./tab-design/index.vue')
@@ -106,6 +106,11 @@ onMounted(() => {
     import('./tab-danger-zone/index.vue')
     import('./tab-index/index.vue')
   })
+
+  if (initial_side) {
+    await after_enter
+    editor.setActiveSide(initial_side)
+  }
 })
 
 function onPreviewSide(side: CardSide) {
