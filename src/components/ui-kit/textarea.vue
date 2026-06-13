@@ -108,7 +108,7 @@ const at_limit = computed(() => max_chars !== undefined && char_count.value >= m
   text-align: right;
   font-size: var(--text-xs);
   line-height: var(--text-xs--line-height);
-  color: var(--color-brown-500);
+  color: var(--color-brown-500) !important;
   margin-top: 4px;
 }
 

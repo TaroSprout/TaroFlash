@@ -172,7 +172,7 @@ watch(active_tab, (tab) => {
     data-testid="deck-settings-container"
     data-theme="green-500"
     data-theme-dark="green-800"
-    :class="is_desktop_fine ? 'w-full! w-248!' : 'w-full! max-w-205.5'"
+    :class="is_desktop_fine ? 'w-248!' : 'w-full! max-w-205.5'"
     :sheet_px="sheet_px"
     :tabs="tabs"
     :pattern_config="{ pattern: 'endless-clouds' }"
@@ -184,7 +184,7 @@ watch(active_tab, (tab) => {
     <template #header-content>
       <div
         data-testid="deck-settings__header"
-        class="w-full flex flex-col max-md:items-center max-md:text-center pointer-coarse:pt-4"
+        class="w-full flex flex-col max-md:items-center max-md:text-center"
       >
         <h1 data-testid="deck-settings__header-title" class="text-5xl text-white">
           {{ header_title }}
