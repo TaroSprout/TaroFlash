@@ -31,6 +31,13 @@ const surface = computed(() =>
     : 'bg-(--theme-secondary) text-(--theme-on-secondary)'
 )
 
+// Only re-base dark when a triggerTheme is set: a lone light override would
+// otherwise stay light in dark mode. With no triggerTheme the caret inherits
+// the surrounding theme in both modes, so leave dark unset.
+const trigger_theme_dark = computed(
+  () => triggerThemeDark ?? (triggerTheme ? 'stone-900' : undefined)
+)
+
 function onEnter(el: Element, done: () => void) {
   flipEnter(el, 'x', done)
 }
@@ -43,7 +50,7 @@ function onLeave(el: Element, done: () => void) {
 <template>
   <div
     :data-theme="triggerTheme"
-    :data-theme-dark="triggerThemeDark"
+    :data-theme-dark="trigger_theme_dark"
     class="flex h-full p-2 pointer-coarse:p-0"
     data-testid="dropdown-button__trigger-wrap"
   >

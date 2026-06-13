@@ -15,7 +15,12 @@ type DropdownMenuProps = {
   menuThemeDark?: Theme
 }
 
-const { options, size, menuTheme = 'brown-300', menuThemeDark } = defineProps<DropdownMenuProps>()
+const {
+  options,
+  size,
+  menuTheme = 'brown-300',
+  menuThemeDark = 'stone-700'
+} = defineProps<DropdownMenuProps>()
 
 const emit = defineEmits<{
   (e: 'select', option: DropdownOption): void
