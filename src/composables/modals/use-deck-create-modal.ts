@@ -15,7 +15,7 @@ export function useDeckCreateModal() {
       backdrop: true,
       mode: 'mobile-sheet'
     })
-    result.response.then(() => emitSfx('ui.pop_up_close'))
+    result.response.then(() => emitSfx('ui.snappy_button_5'))
     return result
   }
 
