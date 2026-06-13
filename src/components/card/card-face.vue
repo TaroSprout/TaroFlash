@@ -296,6 +296,12 @@ const font_size = computed(() => {
   outline-color: var(--color-blue-650);
 }
 
+/* Behind the translucent loading scrim the placeholder would read through on an
+   empty card — hide it while an upload/removal is in flight. */
+.card-container[data-loading] .text-editor__placeholder {
+  display: none;
+}
+
 .card-face__text-editor {
   color: var(--card-text-color);
 }

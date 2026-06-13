@@ -127,6 +127,7 @@ function onAddClick() {
     :sfx="card_sfx"
     :data-active="active || undefined"
     :data-dragging="dragging || undefined"
+    :data-loading="pending || undefined"
     :class="{ 'pointer-events-none': disabled }"
     @pointerenter="onCardPointerEnter"
     @pointerleave="onCardPointerLeave"
