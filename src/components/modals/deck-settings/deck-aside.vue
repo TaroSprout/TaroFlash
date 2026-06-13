@@ -5,6 +5,7 @@ import UiInput from '@/components/ui-kit/input.vue'
 import UiTextarea from '@/components/ui-kit/textarea.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { deckEditorKey } from '@/composables/deck-editor'
+import { emitSfx } from '@/sfx/bus'
 
 type DeckAsideProps = {
   deck?: Deck
@@ -64,7 +65,8 @@ watch(
       size="lg"
       full-width
       :disabled="!is_dirty"
-      @click="emit('save')"
+      click-when-disabled
+      @click="is_dirty ? emit('save') : emitSfx('ui.digi_powerdown')"
     >
       {{ t('deck.settings-modal.submit-edit') }}
     </ui-button>
