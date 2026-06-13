@@ -1,8 +1,7 @@
-import { computed, reactive, type InjectionKey } from 'vue'
+import { computed, reactive, ref, type InjectionKey } from 'vue'
 import { useDeleteDeckMutation } from '@/api/decks'
 import { useResetDeckReviewsMutation } from '@/api/reviews'
 import { useDeckActions } from '@/composables/deck/use-deck-actions'
-import { useSessionRef } from '@/composables/use-session-ref'
 import { DECK_SETTINGS_DEFAULTS, DECK_CONFIG_DEFAULTS } from '@/utils/deck/defaults'
 import { buildDeckPayload, hasDeckChanges } from '@/utils/deck/payload'
 import { emitSfx } from '@/sfx/bus'
@@ -34,7 +33,7 @@ export function useDeckEditor(deck?: Deck) {
     back: deck?.card_attributes?.back ?? {}
   })
 
-  const active_side = useSessionRef<CardSide>('deck-settings.active-side', 'cover')
+  const active_side = ref<CardSide>('cover')
 
   const initial_payload = buildDeckPayload({ settings, config, cover, card_attributes })
   const is_dirty = computed(() =>

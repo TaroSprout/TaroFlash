@@ -10,7 +10,6 @@ import {
   useDeckDangerActions,
   deckDangerActionsKey
 } from '@/composables/deck/use-deck-danger-actions'
-import { useSessionRef } from '@/composables/use-session-ref'
 import { useMatchMedia } from '@/composables/use-media-query'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
@@ -58,7 +57,7 @@ const tab_sheet = useTemplateRef('tab_sheet')
 // floating preview drop on a narrow viewport, never on a short one.
 const is_mobile = useMatchMedia('w<md')
 
-const active_tab = useSessionRef<ActiveTab | null>('deck-settings.active-tab', null)
+const active_tab = ref<ActiveTab | null>(null)
 const tab_outlet = ref<HTMLElement>()
 
 if (initial_tab) active_tab.value = initial_tab
