@@ -1,14 +1,28 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 
+const stateListeners = new Set()
+
 const mockCtx = {
   state: 'running',
-  resume: vi.fn()
+  resume: vi.fn(),
+  addEventListener: vi.fn((type, handler) => {
+    if (type === 'statechange') stateListeners.add(handler)
+  }),
+  removeEventListener: vi.fn((type, handler) => {
+    if (type === 'statechange') stateListeners.delete(handler)
+  })
 }
+
+function fireStateChange() {
+  for (const handler of stateListeners) handler()
+}
+
+let currentCtx = mockCtx
 
 vi.mock('howler', () => ({
   Howler: {
     get ctx() {
-      return mockCtx
+      return currentCtx
     }
   }
 }))
@@ -35,6 +49,8 @@ describe('installAudioLifecycle', () => {
 
   beforeEach(async () => {
     vi.resetModules()
+    stateListeners.clear()
+    currentCtx = mockCtx
     mockCtx.state = 'running'
     mockCtx.resume = vi.fn().mockResolvedValue(undefined)
   })
@@ -98,6 +114,47 @@ describe('installAudioLifecycle', () => {
     await flushMicrotasks()
 
     expect(mockCtx.resume).toHaveBeenCalledTimes(1)
+  })
+
+  test('resumes interrupted context when tab becomes visible', async () => {
+    mockCtx.state = 'interrupted'
+    mockCtx.resume.mockImplementation(async () => {
+      mockCtx.state = 'running'
+    })
+
+    const installAudioLifecycle = await loadLifecycle()
+    teardown = installAudioLifecycle()
+
+    fireVisibility('visible')
+    await flushMicrotasks()
+
+    expect(mockCtx.resume).toHaveBeenCalledTimes(1)
+  })
+
+  test('resumes context when it fires statechange away from running', async () => {
+    mockCtx.state = 'suspended'
+    mockCtx.resume.mockImplementation(async () => {
+      mockCtx.state = 'running'
+    })
+
+    const installAudioLifecycle = await loadLifecycle()
+    teardown = installAudioLifecycle()
+
+    fireStateChange()
+    await flushMicrotasks()
+
+    expect(mockCtx.resume).toHaveBeenCalledTimes(1)
+  })
+
+  test('ignores statechange when context is already running', async () => {
+    mockCtx.state = 'running'
+    const installAudioLifecycle = await loadLifecycle()
+    teardown = installAudioLifecycle()
+
+    fireStateChange()
+    await flushMicrotasks()
+
+    expect(mockCtx.resume).not.toHaveBeenCalled()
   })
 
   test('skips resume when context already running', async () => {
@@ -183,6 +240,7 @@ describe('installAudioLifecycle', () => {
     fireVisibility('visible')
     window.dispatchEvent(new Event('pageshow'))
     window.dispatchEvent(new Event('focus'))
+    fireStateChange()
     await flushMicrotasks()
 
     expect(mockCtx.resume).not.toHaveBeenCalled()
@@ -205,11 +263,7 @@ describe('installAudioLifecycle', () => {
   })
 
   test('handles missing AudioContext gracefully', async () => {
-    const originalCtx = mockCtx.state
-    Object.defineProperty(mockCtx, 'state', {
-      configurable: true,
-      get: () => undefined
-    })
+    currentCtx = null
 
     const installAudioLifecycle = await loadLifecycle()
     teardown = installAudioLifecycle()
@@ -218,11 +272,5 @@ describe('installAudioLifecycle', () => {
     await flushMicrotasks()
 
     expect(mockCtx.resume).not.toHaveBeenCalled()
-
-    Object.defineProperty(mockCtx, 'state', {
-      configurable: true,
-      writable: true,
-      value: originalCtx
-    })
   })
 })

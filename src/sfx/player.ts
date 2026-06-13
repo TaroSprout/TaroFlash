@@ -30,6 +30,15 @@ const DEFAULT_CATEGORY_VOLUME = 1
 const DEBOUNCE_DELAY = 10
 const QUEUE_TIMEOUT = 10
 
+// Howler suspends the AudioContext after 30s of silence to save power, then
+// relies on _autoResume() to revive it. On iOS that desyncs badly: locking the
+// phone or backgrounding the tab also interrupts the audio session (WebKit's
+// 'interrupted' ctx state), and Howler's internal state machine wedges so every
+// later play() is silently dropped — while the audio-reader's HTMLAudioElement
+// keeps working on its own audio session. SFX are tiny and infrequent, so the
+// power saving isn't worth the silence; lifecycle.ts owns resume instead.
+Howler.autoSuspend = false
+
 class AudioPlayer {
   loaded_sounds = new Map<string, Howl>()
   initialized = false

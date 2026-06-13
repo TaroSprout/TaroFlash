@@ -31,18 +31,19 @@ export function installAudioLifecycle(): () => void {
   if (installed || typeof window === 'undefined') return () => {}
   installed = true
 
+  // Resume whenever the context isn't running — this covers both 'suspended'
+  // and WebKit's non-standard 'interrupted' state (iOS device lock / app
+  // switch), which the page never reaches via a plain 'suspended' check.
   const tryResume = async () => {
     const ctx = Howler.ctx
-    if (!ctx) return
-    if (ctx.state === 'suspended') {
-      try {
-        await ctx.resume()
-      } catch {
-        armGestureRetry()
-        return
-      }
+    if (!ctx || ctx.state === 'running') return
+    try {
+      await ctx.resume()
+    } catch {
+      armGestureRetry()
+      return
     }
-    if (ctx.state !== 'running') armGestureRetry()
+    if (Howler.ctx?.state !== 'running') armGestureRetry()
   }
 
   const gestureResume = async () => {
@@ -75,14 +76,22 @@ export function installAudioLifecycle(): () => void {
     if (document.visibilityState === 'visible') void tryResume()
   }
 
+  // The context fires statechange the moment iOS interrupts it — a more direct
+  // signal than waiting for the page to become visible again.
+  const onStateChange = () => {
+    if (Howler.ctx && Howler.ctx.state !== 'running') void tryResume()
+  }
+
   document.addEventListener('visibilitychange', onVisibility)
   window.addEventListener('pageshow', tryResume)
   window.addEventListener('focus', tryResume)
+  Howler.ctx?.addEventListener('statechange', onStateChange)
 
   return () => {
     document.removeEventListener('visibilitychange', onVisibility)
     window.removeEventListener('pageshow', tryResume)
     window.removeEventListener('focus', tryResume)
+    Howler.ctx?.removeEventListener('statechange', onStateChange)
     removeGestureListeners()
     installed = false
     gestureArmed = false
