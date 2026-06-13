@@ -4,6 +4,8 @@ import { mount } from '@vue/test-utils'
 import {
   useModal,
   useModalRequestClose,
+  useModalAfterEnter,
+  resolveModalAfterEnter,
   request_close_handlers,
   MODAL_ID_KEY
 } from '@/composables/modal'
@@ -241,5 +243,92 @@ describe('useModalRequestClose', () => {
     wrapper.unmount()
 
     expect(request_close_handlers.has('my-modal')).toBe(false)
+  })
+})
+
+// ── useModalAfterEnter / resolveModalAfterEnter ───────────────────────────────
+
+describe('useModalAfterEnter', () => {
+  function mountWithId(id) {
+    let result
+    const app = mount(
+      defineComponent({
+        setup() {
+          result = useModalAfterEnter()
+          return () => h('div')
+        }
+      }),
+      { global: { provide: { [MODAL_ID_KEY]: id } } }
+    )
+    return { result, app }
+  }
+
+  test('returns an already-resolved promise when called outside a modal context (no injected id) [obligation]', async () => {
+    // Mount without providing MODAL_ID_KEY
+    let result
+    mount(
+      defineComponent({
+        setup() {
+          result = useModalAfterEnter()
+          return () => h('div')
+        }
+      })
+    )
+
+    // The returned promise must resolve immediately without any external trigger
+    let resolved = false
+    result.then(() => {
+      resolved = true
+    })
+    await Promise.resolve()
+    expect(resolved).toBe(true)
+  })
+
+  test('returns a pending promise when called inside a modal context (id is injected) [obligation]', async () => {
+    const { result } = mountWithId('modal-abc')
+
+    let resolved = false
+    result.then(() => {
+      resolved = true
+    })
+    // Flush microtasks — should NOT have resolved yet
+    await Promise.resolve()
+    expect(resolved).toBe(false)
+  })
+
+  test('resolveModalAfterEnter resolves the promise registered for the matching id [obligation]', async () => {
+    const { result } = mountWithId('modal-xyz')
+
+    let resolved = false
+    result.then(() => {
+      resolved = true
+    })
+
+    resolveModalAfterEnter('modal-xyz')
+    await Promise.resolve()
+    expect(resolved).toBe(true)
+  })
+
+  test('resolveModalAfterEnter does not resolve promises for other ids', async () => {
+    const { result } = mountWithId('modal-aaa')
+
+    let resolved = false
+    result.then(() => {
+      resolved = true
+    })
+
+    resolveModalAfterEnter('modal-bbb')
+    await Promise.resolve()
+    expect(resolved).toBe(false)
+  })
+
+  test('resolveModalAfterEnter cleans up the entry after resolving so it does not linger', async () => {
+    const { result } = mountWithId('modal-cleanup')
+
+    resolveModalAfterEnter('modal-cleanup')
+    await result
+
+    // Calling again should be a no-op (no error and no lingering state)
+    expect(() => resolveModalAfterEnter('modal-cleanup')).not.toThrow()
   })
 })

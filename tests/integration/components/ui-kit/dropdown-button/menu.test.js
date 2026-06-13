@@ -109,8 +109,8 @@ describe('DropdownMenu', () => {
 
   // ── fine-pointer select path ──────────────────────────────────────────────
   // useMatchMedia returns false (fine pointer), so interceptClick bails inside
-  // onOptionTap and the bubble @click fires onSelect — which plays ui.select
-  // and emits 'select'.
+  // onOptionTap and the bubble @click fires emit('select') directly — no sound
+  // is played on the fine-pointer path.
 
   describe('select (fine pointer)', () => {
     test('clicking an option emits select with the option object', async () => {
@@ -120,10 +120,10 @@ describe('DropdownMenu', () => {
       expect(wrapper.emitted('select')[0][0]).toEqual(SAMPLE_OPTIONS[0])
     })
 
-    test('clicking an option calls emitSfx("ui.select")', async () => {
+    test('fine-pointer click does NOT call emitSfx [obligation]', async () => {
       const wrapper = mountMenu()
       await wrapper.findAll('[data-testid="dropdown-button__option"]')[0].trigger('click')
-      expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
+      expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.select')
     })
 
     test('clicking the second option emits select with the correct option', async () => {
@@ -132,8 +132,8 @@ describe('DropdownMenu', () => {
       expect(wrapper.emitted('select')[0][0]).toEqual(SAMPLE_OPTIONS[1])
     })
 
-    // Coarse path (snappy chime + emitSelect without ui.select) routes through
-    // usePlayOnTap's interceptClick which bails on fine pointers — cannot drive
-    // a real coarse pointer event in the headless Chromium runner. Deferred.
+    // Coarse path (snappy chime only) routes through usePlayOnTap's interceptClick
+    // which bails on fine pointers — cannot drive a real coarse pointer event in
+    // the headless Chromium runner. Deferred.
   })
 })

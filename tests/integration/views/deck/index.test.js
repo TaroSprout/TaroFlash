@@ -45,6 +45,11 @@ const ScrollBarStub = defineComponent({
     h('div', { 'data-testid': 'scroll-bar-stub', 'data-target': props.target })
 })
 
+const CardGridSkeletonStub = defineComponent({
+  name: 'CardGridSkeleton',
+  setup: () => () => h('div', { 'data-testid': 'card-grid-skeleton-stub' })
+})
+
 function makeShell(mode = 'view') {
   return { mode: ref(mode), is_view: ref(mode === 'view') }
 }
@@ -71,7 +76,8 @@ function mount({ deck = { id: 1, name: 'Test' }, mode = 'view', editorOpts = {} 
         DeckHero: DeckHeroStub,
         ModeToolbar: ModeToolbarStub,
         ModeStack: ModeStackStub,
-        ScrollBar: ScrollBarStub
+        ScrollBar: ScrollBarStub,
+        CardGridSkeleton: CardGridSkeletonStub
       }
     }
   })
@@ -100,10 +106,22 @@ describe('DeckView (views/deck/index.vue)', () => {
     expect(wrapper.find('[data-testid="mode-stack-stub"]').exists()).toBe(false)
   })
 
-  test('renders the mode-stack while loading even with no cards yet', () => {
+  test('shows card-grid-skeleton when loading with no cards yet [obligation]', () => {
     const wrapper = mount({ editorOpts: { cards: [], isLoading: true } })
     expect(wrapper.find('[data-testid="deck-view__empty"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="card-grid-skeleton-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="mode-stack-stub"]').exists()).toBe(false)
+  })
+
+  test('hides card-grid-skeleton once cards arrive (loading still true) [obligation]', () => {
+    const wrapper = mount({ editorOpts: { cards: [{ id: 1 }], isLoading: true } })
+    expect(wrapper.find('[data-testid="card-grid-skeleton-stub"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="mode-stack-stub"]').exists()).toBe(true)
+  })
+
+  test('hides card-grid-skeleton when loading is false even with no cards', () => {
+    const wrapper = mount({ editorOpts: { cards: [], isLoading: false } })
+    expect(wrapper.find('[data-testid="card-grid-skeleton-stub"]').exists()).toBe(false)
   })
 
   test('renders the mode-stack when cards are loaded', () => {

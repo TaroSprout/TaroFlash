@@ -8,8 +8,27 @@ import { setSidebar, setBelowMd, resetResponsive } from '../../../../helpers/res
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockAlertWarn, mockToastSuccess, mockToastError, mockEditor, mockRouterPush } = vi.hoisted(
-  () => ({
+const {
+  mockAlertWarn,
+  mockToastSuccess,
+  mockToastError,
+  mockEditor,
+  mockRouterPush,
+  afterEnterControls
+} = vi.hoisted(() => {
+  // afterEnterControls holds a resolve fn that tests can call to simulate the
+  // modal enter animation completing. Reset before each test.
+  let _resolve = null
+  const afterEnterControls = {
+    resolve: () => _resolve?.(),
+    reset: () => {
+      _resolve = null
+    },
+    _setResolve: (fn) => {
+      _resolve = fn
+    }
+  }
+  return {
     mockAlertWarn: vi.fn(),
     mockToastSuccess: vi.fn(),
     mockToastError: vi.fn(),
@@ -18,9 +37,10 @@ const { mockAlertWarn, mockToastSuccess, mockToastError, mockEditor, mockRouterP
       deleteDeck: vi.fn().mockResolvedValue(true),
       saveDeck: vi.fn().mockResolvedValue(true)
     },
-    mockRouterPush: vi.fn()
-  })
-)
+    mockRouterPush: vi.fn(),
+    afterEnterControls
+  }
+})
 
 vi.mock('@/composables/alert', () => ({
   useAlert: () => ({ warn: mockAlertWarn })
@@ -47,6 +67,17 @@ vi.mock('gsap', () => ({
     set: vi.fn(),
     killTweensOf: vi.fn()
   }
+}))
+
+// Mock useModalAfterEnter so tests control when the enter promise resolves.
+// useModalRequestClose is kept as a no-op (the close path is tested via the
+// alert warn mock — not via the modal close hook).
+vi.mock('@/composables/modal', () => ({
+  useModalAfterEnter: () =>
+    new Promise((resolve) => {
+      afterEnterControls._setResolve(resolve)
+    }),
+  useModalRequestClose: () => {}
 }))
 
 vi.mock('@/composables/deck-editor', async () => {
@@ -259,6 +290,7 @@ beforeEach(() => {
   mockEditor.saveDeck.mockReset().mockResolvedValue(true)
   // Reset the mocked editor's active_side back to cover between tests
   if (mockEditor.editor) mockEditor.editor.active_side.value = 'cover'
+  afterEnterControls.reset()
   resetResponsive()
 })
 
@@ -559,23 +591,42 @@ describe('DeckSettings — initial_tab / initial_side override [obligation]', ()
     )
   })
 
-  test('initial_side calls editor.setActiveSide with the provided side [obligation]', () => {
+  test('initial_side is NOT applied synchronously during setup [obligation]', () => {
+    // The bug we fixed: flip and modal-open were simultaneous because setActiveSide
+    // was called synchronously. The new contract is: setActiveSide is deferred until
+    // after the enter animation resolves (await after_enter).
     const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
     makeWrapper({ initial_tab: 'design', initial_side: 'front' })
+    expect(setActiveSide).not.toHaveBeenCalled()
+    setActiveSide.mockRestore()
+  })
+
+  test('initial_side=front: setActiveSide is called after the enter promise resolves [obligation]', async () => {
+    const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
+    makeWrapper({ initial_tab: 'design', initial_side: 'front' })
+    // Not called yet — waiting for enter animation
+    expect(setActiveSide).not.toHaveBeenCalled()
+    // Simulate the modal enter completing
+    afterEnterControls.resolve()
+    await flushPromises()
     expect(setActiveSide).toHaveBeenCalledWith('front')
     setActiveSide.mockRestore()
   })
 
-  test('initial_side=back calls editor.setActiveSide("back") [obligation]', () => {
+  test('initial_side=back: setActiveSide("back") is called after enter resolves [obligation]', async () => {
     const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
     makeWrapper({ initial_tab: 'design', initial_side: 'back' })
+    afterEnterControls.resolve()
+    await flushPromises()
     expect(setActiveSide).toHaveBeenCalledWith('back')
     setActiveSide.mockRestore()
   })
 
-  test('omitting initial_side does not call editor.setActiveSide', () => {
+  test('omitting initial_side does not call editor.setActiveSide (even after enter) [obligation]', async () => {
     const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
     makeWrapper({ initial_tab: 'design' })
+    afterEnterControls.resolve()
+    await flushPromises()
     expect(setActiveSide).not.toHaveBeenCalled()
     setActiveSide.mockRestore()
   })
