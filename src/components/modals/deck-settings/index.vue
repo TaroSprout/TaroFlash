@@ -82,10 +82,7 @@ const sidebar_active = computed({
   set: (v) => (active_tab.value = v as ActiveTab)
 })
 
-const active_header = computed(() => ({
-  title: t(`deck.settings-modal.header.${displayed_tab.value}.title`),
-  description: t(`deck.settings-modal.header.${displayed_tab.value}.description`)
-}))
+const header_title = computed(() => t(`deck.settings-modal.header.${displayed_tab.value}.title`))
 
 const visible_side = computed(() =>
   displayed_tab.value === 'design' ? editor.active_side.value : 'cover'
@@ -157,14 +154,11 @@ watch(has_sidebar, (visible) => {
     <template #header-content>
       <div
         data-testid="deck-settings__header"
-        class="w-full flex flex-col max-md:items-center max-md:text-center"
+        class="w-full flex flex-col max-md:items-center max-md:text-center pointer-coarse:pt-4"
       >
         <h1 data-testid="deck-settings__header-title" class="text-5xl text-white">
-          {{ active_header.title }}
+          {{ header_title }}
         </h1>
-        <p data-testid="deck-settings__header-description" class="text-white/80">
-          {{ active_header.description }}
-        </p>
       </div>
     </template>
 
