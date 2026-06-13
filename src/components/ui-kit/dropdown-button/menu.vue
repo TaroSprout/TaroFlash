@@ -33,29 +33,15 @@ const { interceptClick } = usePlayOnTap({ animate: false, reset: true })
 // Which option is mid-tap, so only its row shows the sweep.
 const playing_value = ref<DropdownOption['value'] | null>(null)
 
-function emitSelect(option: DropdownOption) {
-  emit('select', option)
-}
-
-// Fine-pointer click handler: the coarse path is intercepted before this fires,
-// so it owns the select chime.
-function onSelect(option: DropdownOption) {
-  emitSfx('ui.select')
-  emitSelect(option)
-}
-
 // Mirror ui-button: on coarse the capture intercept plays the quiet tap then
 // fires the select; on fine it bails and the bubble `@click` selects immediately.
 function onOptionTap(option: DropdownOption, e: MouseEvent) {
   interceptClick(e, {
-    // Coarse only (interceptClick bails on fine): acknowledge the tap right
-    // away with the snappy chime, before the quiet sweep runs. The select chime
-    // is skipped here so the tap isn't double-sounded.
     beforePlay: () => {
       emitSfx('ui.snappy_button_5')
       playing_value.value = option.value
     },
-    onAfter: () => emitSelect(option)
+    onAfter: () => emit('select', option)
   })
 }
 </script>
@@ -77,7 +63,7 @@ function onOptionTap(option: DropdownOption, e: MouseEvent) {
       data-testid="dropdown-button__option"
       v-sfx.hover="'ui.click_04'"
       @click.capture="onOptionTap(option, $event)"
-      @click="onSelect(option)"
+      @click="emit('select', option)"
     >
       <div
         aria-hidden="true"
