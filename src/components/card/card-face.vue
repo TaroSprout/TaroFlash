@@ -206,11 +206,6 @@ const font_size = computed(() => {
   display: none;
 }
 
-.card-face[data-mode='edit'][data-image='true'][data-text='false'][data-layout='behind']
-  .card-face__text-region {
-  cursor: text;
-}
-
 /* Over a full-bleed image the placeholder would just clutter the picture — the
    text cursor already signals you can click to type. */
 .card-face[data-mode='edit'][data-image='true'][data-text='false'][data-layout='behind']

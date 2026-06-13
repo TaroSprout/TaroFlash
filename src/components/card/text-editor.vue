@@ -21,11 +21,11 @@ const has_content = ref(Boolean(content?.trim()))
 
 // Font size is owned by the parent card-face and inherited via the cascade — see
 // SIZE_LEVEL_PX there. This surface only renders text and its alignment.
-const editor_classes = computed(() => [
-  'text-editor',
-  `text-editor--h-${attributes?.horizontal_alignment ?? 'center'}`,
-  `text-editor--v-${attributes?.vertical_alignment ?? 'center'}`
-])
+// Horizontal alignment lives on the editable (text-align); vertical lives on the
+// filling container (flex justify) so the editable can be content-height and
+// keep an empty caret centered instead of pinned to the top.
+const horizontal_alignment = computed(() => attributes?.horizontal_alignment ?? 'center')
+const vertical_alignment = computed(() => attributes?.vertical_alignment ?? 'center')
 
 // The editable surface is uncontrolled: seed it from `content` once, then let
 // the browser own the DOM. We never re-sync from the prop afterwards — `content`
@@ -50,12 +50,43 @@ function focus() {
   text_editor.value?.focus()
 }
 
+// The editable is only as tall as its content (so its empty caret stays
+// centered), so a click in the surrounding container won't land on it. Forward
+// those clicks: focus the editable and drop the caret at the end. Clicks on the
+// editable itself fall through to native caret placement.
+function onContainerPointerDown(event: MouseEvent) {
+  const editor = text_editor.value
+  if (disabled || !editor || event.target === editor) return
+
+  event.preventDefault()
+  editor.focus()
+
+  const selection = window.getSelection()
+  if (!selection) return
+
+  const range = document.createRange()
+  range.selectNodeContents(editor)
+  range.collapse(false)
+  selection.removeAllRanges()
+  selection.addRange(range)
+}
+
 defineExpose({ focus })
 </script>
 
 <template>
-  <div data-testid="text-editor-container" class="relative">
-    <div v-if="disabled" data-testid="text-editor" contenteditable="false" :class="editor_classes">
+  <div
+    data-testid="text-editor-container"
+    class="text-editor-container relative"
+    :class="`text-editor--v-${vertical_alignment}`"
+    @mousedown="onContainerPointerDown"
+  >
+    <div
+      v-if="disabled"
+      data-testid="text-editor"
+      contenteditable="false"
+      :class="['text-editor', `text-editor--h-${horizontal_alignment}`]"
+    >
       {{ content }}
     </div>
 
@@ -64,7 +95,7 @@ defineExpose({ focus })
       data-testid="text-editor"
       ref="text-editor"
       contenteditable="plaintext-only"
-      :class="editor_classes"
+      :class="['text-editor', `text-editor--h-${horizontal_alignment}`]"
       @input="on_input"
       @focus="emit('focus')"
       @blur="emit('blur')"
@@ -81,16 +112,31 @@ defineExpose({ focus })
 </template>
 
 <style>
-.text-editor,
+/* The container fills the region and vertically positions the editable, which
+   sizes to its content — so an empty editor's caret centers with the text
+   instead of pinning to the top. */
 .text-editor-container {
   width: 100%;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* When editable, the whole filling container reads as a text target (clicks
+   anywhere focus the editor via onContainerPointerDown), not just the
+   content-height editable line. */
+.text-editor-container:has([contenteditable='plaintext-only']) {
+  cursor: text;
+}
+
+.text-editor {
+  width: 100%;
   outline: none;
   white-space: pre-wrap;
   overflow-wrap: break-word;
 }
 
-/* Horizontal alignment */
+/* Horizontal alignment — on the editable */
 .text-editor--h-left {
   text-align: left;
 }
@@ -103,22 +149,16 @@ defineExpose({ focus })
   text-align: right;
 }
 
-/* Vertical alignment */
+/* Vertical alignment — on the container */
 .text-editor--v-top {
-  display: flex;
-  flex-direction: column;
   justify-content: flex-start;
 }
 
 .text-editor--v-center {
-  display: flex;
-  flex-direction: column;
   justify-content: center;
 }
 
 .text-editor--v-bottom {
-  display: flex;
-  flex-direction: column;
   justify-content: flex-end;
 }
 
