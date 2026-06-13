@@ -72,7 +72,7 @@ const value = defineModel<string>('value')
 }
 
 .ui-kit-input {
-  background-color: var(--color-brown-100);
+  background-color: var(--color-input);
   border-radius: var(--radius-4);
   width: 100%;
   padding: 12px 16px;
@@ -105,7 +105,18 @@ const value = defineModel<string>('value')
 .ui-kit-input input::-webkit-autofill,
 .ui-kit-input input::-webkit-autofill:hover,
 .ui-kit-input input::-webkit-autofill:focus {
-  box-shadow: 0 0 0px 1000px var(--color-brown-100) inset;
+  box-shadow: 0 0 0px 1000px var(--color-input) inset;
+}
+
+:where([data-theme='dark'], [data-theme='dark'] *) .ui-kit-input-container span {
+  color: var(--color-brown-100);
+}
+:where([data-theme='dark'], [data-theme='dark'] *) .ui-kit-input input {
+  border-bottom-color: var(--color-brown-300);
+  color: var(--color-brown-100);
+}
+:where([data-theme='dark'], [data-theme='dark'] *) .ui-kit-input input::placeholder {
+  color: var(--color-brown-300);
 }
 
 .ui-kit-input-container--text-left input {

@@ -70,7 +70,7 @@ const at_limit = computed(() => max_chars !== undefined && char_count.value >= m
 }
 
 .ui-kit-textarea {
-  background-color: var(--color-brown-100);
+  background-color: var(--color-input);
   border-radius: var(--radius-4);
   width: 100%;
   padding: 12px 16px;
@@ -110,6 +110,19 @@ const at_limit = computed(() => max_chars !== undefined && char_count.value >= m
   line-height: var(--text-xs--line-height);
   color: var(--color-brown-500);
   margin-top: 4px;
+}
+
+:where([data-theme='dark'], [data-theme='dark'] *) .ui-kit-textarea-container span {
+  color: var(--color-brown-100);
+}
+:where([data-theme='dark'], [data-theme='dark'] *) .ui-kit-textarea textarea {
+  color: var(--color-brown-100);
+}
+:where([data-theme='dark'], [data-theme='dark'] *) .ui-kit-textarea textarea::placeholder {
+  color: var(--color-brown-300);
+}
+:where([data-theme='dark'], [data-theme='dark'] *) .ui-kit-textarea-char-count {
+  color: var(--color-brown-500);
 }
 
 .ui-kit-textarea-char-count--limit {
