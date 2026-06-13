@@ -13,7 +13,9 @@ type SideTab = { value: CardSide; label: string }
 const { t } = useI18n()
 const editor = inject(deckEditorKey)!
 
-const is_mobile = useMatchMedia('w<md | h<sm')
+// Width-only: the inline preview replaces the width-gated floating preview, so
+// a short-but-wide viewport must not show both.
+const is_mobile = useMatchMedia('w<md')
 
 const tabs = computed<SideTab[]>(() => [
   { value: 'cover', label: t('deck.settings-modal.design.designer-tabs.cover') },
