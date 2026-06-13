@@ -28,6 +28,9 @@ export type ButtonProps = {
   // Inert + muted label region. The trailing slot (a split-button caret) stays
   // live, so only the primary action is disabled — not the whole control.
   disabled?: boolean
+  // Keep the muted disabled styling but still let clicks reach the handler —
+  // used to surface a validation error when the user clicks a blocked action.
+  clickWhenDisabled?: boolean
 }
 
 const {
@@ -42,7 +45,8 @@ const {
   mobileTooltip = false,
   playOnTap = false,
   tapAnimate = true,
-  disabled = false
+  disabled = false,
+  clickWhenDisabled = false
 } = defineProps<ButtonProps>()
 
 const slots = useSlots()
@@ -69,6 +73,9 @@ function onCaptureClick(e: MouseEvent) {
   const in_trailing = !!(e.target as HTMLElement).closest?.('.btn-trailing')
 
   if (disabled && !in_trailing) {
+    // clickWhenDisabled lets the click bubble to the handler; we still skip the
+    // tap animation/sfx below since the button reads as disabled.
+    if (clickWhenDisabled) return
     e.stopImmediatePropagation()
     e.preventDefault()
     return
