@@ -3,7 +3,6 @@ import { computed, provide } from 'vue'
 import mobileSheet, { type MobileSheetProps } from './mobile-sheet.vue'
 import { SHEET_SIDEBAR_BG } from './sheet-surface'
 import { activeTabKey } from './tab-sheet-context'
-import { useShortcuts } from '@/composables/use-shortcuts'
 import { useMatchMedia } from '@/composables/use-media-query'
 import { emitSfx } from '@/sfx/bus'
 import type { NamespacedAudioKey } from '@/sfx/config'
@@ -23,6 +22,7 @@ export type TabSheetProps = MobileSheetProps & {
   tabs?: Tab[]
   parts?: TabSheetParts
   sidebar_query?: string
+  sheet_px?: string
   hover_sfx?: NamespacedAudioKey | ''
   select_sfx?: NamespacedAudioKey | ''
   reselect_sfx?: NamespacedAudioKey | ''
@@ -37,6 +37,7 @@ const {
   surface = 'standard',
   header_border = 'wave',
   sidebar_query = 'w>=lg & fine',
+  sheet_px,
   hover_sfx = 'ui.click_07',
   select_sfx = 'ui.select',
   reselect_sfx = 'ui.digi_powerdown'
@@ -90,34 +91,6 @@ function selectOption(value: string) {
   active.value = value
   emit('select', value)
 }
-
-function focusTabAt(index: number) {
-  const target = tabs?.[index]
-  if (!target) return
-  selectOption(target.value)
-  document.getElementById(tabId(target.value))?.focus()
-}
-
-function activeIndex() {
-  return (tabs ?? []).findIndex((t) => t.value === active.value)
-}
-
-function step(delta: number) {
-  const len = tabs?.length ?? 0
-  if (!len) return
-  focusTabAt((activeIndex() + delta + len) % len)
-}
-
-const shortcuts = useShortcuts('tab-sheet')
-
-shortcuts.register([
-  { combo: 'arrowright', handler: () => step(1) },
-  { combo: 'arrowdown', handler: () => step(1) },
-  { combo: 'arrowleft', handler: () => step(-1) },
-  { combo: 'arrowup', handler: () => step(-1) },
-  { combo: 'home', handler: () => focusTabAt(0) },
-  { combo: 'end', handler: () => focusTabAt((tabs?.length ?? 1) - 1) }
-])
 </script>
 
 <template>
@@ -127,6 +100,7 @@ shortcuts.register([
     :show_close_button="sheet_close_button"
     :surface="surface"
     :header_border="header_border"
+    :sheet_px="sheet_px"
     @close="emit('close')"
   >
     <template v-if="$slots.overlay" #overlay><slot name="overlay"></slot></template>

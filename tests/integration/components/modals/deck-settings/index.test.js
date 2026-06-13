@@ -87,13 +87,18 @@ vi.mock('@/components/modals/deck-settings/deck-aside.vue', async () => {
   return {
     default: defineComponent({
       name: 'DeckAside',
-      props: ['deck'],
-      setup(props) {
+      props: ['loading'],
+      emits: ['save'],
+      setup(props, { emit, expose }) {
+        expose({ validate: () => true })
         return () =>
-          h('div', {
-            'data-testid': 'deck-aside-stub',
-            'data-deck-id': props.deck?.id ?? ''
-          })
+          h('div', { 'data-testid': 'deck-aside-stub' }, [
+            h(
+              'button',
+              { 'data-testid': 'deck-aside-save-btn', onClick: () => emit('save') },
+              'save'
+            )
+          ])
       }
     })
   }
@@ -210,13 +215,14 @@ const DeckPreviewStub = defineComponent({
 
 const DeckAsideStub = defineComponent({
   name: 'DeckAside',
-  props: ['deck'],
-  setup(props) {
+  props: ['loading'],
+  emits: ['save'],
+  setup(_props, { emit, expose }) {
+    expose({ validate: () => true })
     return () =>
-      h('div', {
-        'data-testid': 'deck-aside-stub',
-        'data-deck-id': props.deck?.id ?? ''
-      })
+      h('div', { 'data-testid': 'deck-aside-stub' }, [
+        h('button', { 'data-testid': 'deck-aside-save-btn', onClick: () => emit('save') }, 'save')
+      ])
   }
 })
 
@@ -257,28 +263,22 @@ beforeEach(() => {
 })
 
 describe('DeckSettings — save button visibility (driven by editor.is_dirty)', () => {
-  test('hides the save button when the editor is not dirty', () => {
-    mockEditor.editor.is_dirty.value = false
+  test('renders the DeckAside with a save button', () => {
     const { wrapper } = makeWrapper()
-
-    const footer = wrapper.find('[data-testid="tab-sheet__footer"]')
-    expect(footer.find('[data-testid="ui-button"]').exists()).toBe(false)
-  })
-
-  test('shows the save button when the editor reports a dirty state', () => {
-    mockEditor.editor.is_dirty.value = true
-    const { wrapper } = makeWrapper()
-
-    const footer = wrapper.find('[data-testid="tab-sheet__footer"]')
-    expect(footer.find('[data-testid="ui-button"]').exists()).toBe(true)
+    expect(
+      wrapper
+        .find('[data-testid="deck-settings__aside"] [data-testid="deck-aside-save-btn"]')
+        .exists()
+    ).toBe(true)
   })
 
   test('clicking the save button calls editor.saveDeck and closes on success', async () => {
-    mockEditor.editor.is_dirty.value = true
     mockEditor.saveDeck.mockResolvedValue(true)
     const { wrapper, close } = makeWrapper()
 
-    await wrapper.find('[data-testid="ui-button"]').trigger('click')
+    await wrapper
+      .find('[data-testid="deck-settings__aside"] [data-testid="deck-aside-save-btn"]')
+      .trigger('click')
     await flushPromises()
 
     expect(mockEditor.saveDeck).toHaveBeenCalledTimes(1)
@@ -288,7 +288,6 @@ describe('DeckSettings — save button visibility (driven by editor.is_dirty)', 
 
 describe('DeckSettings — header copy is tab-driven', () => {
   const cases = [
-    { tab: 'general', title: 'Details & Settings' },
     { tab: 'design', title: 'Card Designer' },
     { tab: 'study', title: 'Study Preferences' },
     { tab: 'danger-zone', title: 'Danger Zone' }
@@ -304,27 +303,24 @@ describe('DeckSettings — header copy is tab-driven', () => {
 })
 
 describe('DeckSettings — aside wiring', () => {
-  test('renders the DeckAside with the deck prop forwarded', () => {
+  test('renders the DeckAside', () => {
     const { wrapper } = makeWrapper()
 
     const aside = wrapper.find('[data-testid="deck-settings__aside"]')
     expect(aside.exists()).toBe(true)
-    expect(aside.attributes('data-deck-id')).toBe('1')
   })
 })
 
 describe('DeckSettings — null active_tab tracks sidebar visibility', () => {
   // The default tab must be the strict inverse of whether TabSheet shows its
-  // sidebar ('w>=lg & fine'): sidebar visible -> general, hidden -> index.
-  test('null active_tab renders the general header when the sidebar is visible', async () => {
+  // sidebar ('w>=lg & fine'): sidebar visible -> design, hidden -> index.
+  test('null active_tab renders the design header when the sidebar is visible', async () => {
     setSidebar(true)
     // No initial_tab → active_tab starts null (plain ref)
     const { wrapper } = makeWrapper()
     // has_sidebar arrives from TabSheet via a template ref — one render late.
     await nextTick()
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe(
-      'Details & Settings'
-    )
+    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Card Designer')
     expect(wrapper.find('[data-testid="deck-settings__back-button"]').exists()).toBe(false)
   })
 
@@ -347,18 +343,6 @@ describe('DeckSettings — null active_tab tracks sidebar visibility', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Deck Settings')
-  })
-
-  test('explicit general tab persists when the sidebar hides (no auto-collapse to index)', async () => {
-    setSidebar(true)
-    const { wrapper } = makeWrapper({ initial_tab: 'general' })
-
-    setSidebar(false)
-    await flushPromises()
-
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe(
-      'Details & Settings'
-    )
   })
 })
 
@@ -404,7 +388,7 @@ const nextFrame = () => new Promise((r) => requestAnimationFrame(r))
 describe('DeckSettings — tab transition hooks', () => {
   test('swapping tabs on desktop completes through requestAnimationFrame', async () => {
     setBelowMd(false)
-    const { wrapper } = makeWrapper({ initial_tab: 'general' })
+    const { wrapper } = makeWrapper({ initial_tab: 'study' })
 
     mockEditor.editor.is_dirty.value = false
     // Drive the tab swap via the sheet's update:active emit so the
@@ -419,7 +403,7 @@ describe('DeckSettings — tab transition hooks', () => {
 
   test('swapping tabs below md routes through the mobile height tween', async () => {
     setBelowMd(true)
-    const { wrapper } = makeWrapper({ initial_tab: 'general' })
+    const { wrapper } = makeWrapper({ initial_tab: 'study' })
 
     await wrapper.find('[data-testid="tab-sheet__select-design"]').trigger('click')
     await flushPromises()
@@ -445,7 +429,7 @@ describe('DeckSettings — overlay actions', () => {
   test('floating preview click is a no-op when not on the design tab', async () => {
     setBelowMd(false)
     const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
-    const { wrapper } = makeWrapper({ initial_tab: 'general' })
+    const { wrapper } = makeWrapper({ initial_tab: 'study' })
 
     await wrapper.find('[data-testid="deck-preview-stub"]').trigger('click')
 

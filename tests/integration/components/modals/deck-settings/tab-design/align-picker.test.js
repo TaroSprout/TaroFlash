@@ -84,4 +84,22 @@ describe('AlignPicker', () => {
     await wrapper.find('[data-testid="align-picker__cell-left-top"]').trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.digi_powerdown')
   })
+
+  test('selecting center/center from a non-default state writes undefined to both models [obligation]', async () => {
+    const { wrapper, getHorizontal, getVertical } = makePicker({
+      horizontal: 'left',
+      vertical: 'top'
+    })
+    await wrapper.find('[data-testid="align-picker__cell-center-center"]').trigger('click')
+    expect(getHorizontal()).toBeUndefined()
+    expect(getVertical()).toBeUndefined()
+  })
+
+  test('center/center cell becomes active when models are set to undefined [obligation]', async () => {
+    const { wrapper } = makePicker({ horizontal: 'left', vertical: 'top' })
+    await wrapper.find('[data-testid="align-picker__cell-center-center"]').trigger('click')
+    expect(
+      wrapper.find('[data-testid="align-picker__cell-center-center"]').attributes('data-active')
+    ).toBe('true')
+  })
 })

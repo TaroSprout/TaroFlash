@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { buildTagButtonMask, outsetSideFor, type NotchSide } from '@/utils/tag-button/mask'
+import UiIcon from '@/components/ui-kit/icon.vue'
 
 type TagButtonProps = {
   notchSide?: NotchSide
@@ -9,6 +10,8 @@ type TagButtonProps = {
   apexRadius?: number
   cornerRadius?: number
   fancyHover?: boolean
+  size?: 'base' | 'lg'
+  icon?: string
 }
 
 const {
@@ -17,7 +20,9 @@ const {
   outsetDepth = 10,
   apexRadius = 3,
   cornerRadius = 4,
-  fancyHover = true
+  fancyHover = true,
+  size = 'base',
+  icon
 } = defineProps<TagButtonProps>()
 
 const mask = computed(() =>
@@ -37,9 +42,11 @@ const padding = computed(() => {
     <button
       data-testid="ui-kit-tag-button"
       type="button"
-      class="group/tag-btn relative bg-(--theme-primary) text-(--theme-on-primary) py-2 w-max cursor-pointer inline-flex items-center gap-1.5 text-sm"
+      :class="size === 'lg' ? 'py-2.5 text-xl gap-2' : 'py-2 text-sm gap-1.5'"
+      class="group/tag-btn relative bg-(--theme-primary) text-(--theme-on-primary) w-max cursor-pointer inline-flex items-center"
       :style="{ mask, WebkitMask: mask, ...padding }"
     >
+      <ui-icon v-if="icon" :src="icon" :class="size === 'lg' ? 'w-5 h-5' : 'w-4 h-4'" />
       <slot></slot>
       <div
         v-if="fancyHover"

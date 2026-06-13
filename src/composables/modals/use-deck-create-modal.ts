@@ -10,12 +10,12 @@ export function useDeckCreateModal() {
   const modal = useModal()
 
   function open() {
-    emitSfx('ui.alert_clicks_wooden')
+    emitSfx('ui.snappy_button_3')
     const result = modal.open<DeckCreateResponse>(DeckCreate, {
       backdrop: true,
       mode: 'mobile-sheet'
     })
-    result.response.then(() => emitSfx('ui.pop_up_close'))
+    result.response.then(() => emitSfx('ui.snappy_button_5'))
     return result
   }
 

@@ -67,8 +67,8 @@ describe('TabIndex', () => {
     expect(wrapper.find('[data-testid="tab-index__nav-group--study"]').exists()).toBe(true)
 
     const cards = wrapper.findAll('[data-testid="tab-index__nav-card"]')
-    expect(cards).toHaveLength(3)
-    expect(cards.map((c) => c.attributes('data-value'))).toEqual(['general', 'design', 'study'])
+    expect(cards).toHaveLength(2)
+    expect(cards.map((c) => c.attributes('data-value'))).toEqual(['design', 'study'])
   })
 
   test('emits navigate with the clicked entry value', async () => {
@@ -80,7 +80,7 @@ describe('TabIndex', () => {
 
   test('plays the select sfx as a blocking sound on nav click', async () => {
     const { wrapper } = makeTab()
-    await wrapper.find('[data-testid="tab-index__nav-card"][data-value="general"]').trigger('click')
+    await wrapper.find('[data-testid="tab-index__nav-card"][data-value="design"]').trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.select', { blocking: true })
   })
 

@@ -26,13 +26,18 @@ export function useAlert() {
   }
 
   function _openAlert(type: AlertType, args?: AlertArgs) {
-    const { backdrop, openAudio, ...props } = args ?? {}
+    const {
+      backdrop,
+      openAudio = 'ui.etc_woodblock_stuck',
+      cancelAudio = 'ui.digi_powerdown',
+      ...props
+    } = args ?? {}
 
-    emitSfx(openAudio ?? 'ui.etc_woodblock_stuck')
+    emitSfx(openAudio)
 
     return modal.open(alert, {
       backdrop: backdrop ?? true,
-      props: { type, ...props }
+      props: { type, cancelAudio, ...props }
     })
   }
 

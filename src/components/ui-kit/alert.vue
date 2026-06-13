@@ -1,6 +1,6 @@
 <script lang="ts" setup>
+import { computed, onMounted, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { computed } from 'vue'
 import { type NamespacedAudioKey } from '@/sfx/config'
 import { emitSfx } from '@/sfx/bus'
 import { type ModalCloseFn } from '@/composables/modal'
@@ -20,13 +20,13 @@ const { cancelLabel, confirmLabel, close, cancelAudio, confirmAudio } = definePr
 
 const { t } = useI18n()
 
-const cancelText = computed(() => {
-  return cancelLabel ?? t('ui-kit.alert.cancel')
-})
+const cancel_btn = useTemplateRef('cancel_btn')
+const confirm_btn = useTemplateRef('confirm_btn')
 
-const confirmText = computed(() => {
-  return confirmLabel ?? t('ui-kit.alert.continue')
-})
+const cancelText = computed(() => cancelLabel ?? t('ui-kit.alert.cancel'))
+const confirmText = computed(() => confirmLabel ?? t('ui-kit.alert.continue'))
+
+onMounted(() => cancel_btn.value?.focus())
 
 function onCancel() {
   if (cancelAudio) emitSfx(cancelAudio)
@@ -36,6 +36,13 @@ function onCancel() {
 function onConfirm() {
   if (confirmAudio) emitSfx(confirmAudio)
   close(true)
+}
+
+function onKeydown(e: KeyboardEvent) {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+  e.preventDefault()
+  if (document.activeElement === cancel_btn.value) confirm_btn.value?.focus()
+  else cancel_btn.value?.focus()
 }
 </script>
 
@@ -58,8 +65,10 @@ function onConfirm() {
       <div
         data-testid="ui-kit-alert__actions"
         class="border-brown-300 divide-brown-300 flex w-full divide-x border-t"
+        @keydown="onKeydown"
       >
         <button
+          ref="cancel_btn"
           data-testid="ui-kit-alert__cancel"
           class="ui-kit-alert__cancel group"
           @click="onCancel"
@@ -73,6 +82,7 @@ function onConfirm() {
 
         <button
           v-if="confirmLabel"
+          ref="confirm_btn"
           data-testid="ui-kit-alert__confirm"
           class="ui-kit-alert__confirm group"
           @click="onConfirm"

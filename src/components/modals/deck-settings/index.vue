@@ -3,6 +3,7 @@ import { computed, defineAsyncComponent, onMounted, provide, ref, useTemplateRef
 import { useI18n } from 'vue-i18n'
 import DeckAside from './deck-aside.vue'
 import { emitSfx } from '@/sfx/bus'
+import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import { slideFadeRightEnter, slideFadeRightLeave } from '@/utils/animations/slide-fade-right'
 import { tabHeightEnter, tabHeightLeave } from '@/utils/animations/tab-height'
 import { useDeckEditor, deckEditorKey } from '@/composables/deck-editor'
@@ -11,14 +12,15 @@ import {
   deckDangerActionsKey
 } from '@/composables/deck/use-deck-danger-actions'
 import { useMatchMedia } from '@/composables/use-media-query'
-import UiButton from '@/components/ui-kit/button.vue'
+import { useAlert } from '@/composables/alert'
+import { useModalRequestClose } from '@/composables/modal'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTagButton from '@/components/ui-kit/tag-button.vue'
 import Card from '@/components/card/index.vue'
 import TabSheet from '@/components/layout-kit/modal/tab-sheet.vue'
 
 export type DeckSettingsResponse = boolean
-export type ActiveTab = 'general' | 'design' | 'study' | 'danger-zone'
+export type ActiveTab = 'design' | 'study' | 'danger-zone'
 
 const { deck, close, initial_tab, initial_side } = defineProps<{
   deck: Deck
@@ -28,7 +30,6 @@ const { deck, close, initial_tab, initial_side } = defineProps<{
 }>()
 
 const TabDesign = defineAsyncComponent(() => import('./tab-design/index.vue'))
-const TabGeneral = defineAsyncComponent(() => import('./tab-general/index.vue'))
 const TabStudy = defineAsyncComponent(() => import('./tab-study/index.vue'))
 const TabDangerZone = defineAsyncComponent(() => import('./tab-danger-zone/index.vue'))
 const TabIndex = defineAsyncComponent(() => import('./tab-index/index.vue'))
@@ -39,7 +40,6 @@ const DeckDesignPreview = defineAsyncComponent(
 const TAB_COMPONENTS = {
   index: TabIndex,
   design: TabDesign,
-  general: TabGeneral,
   study: TabStudy,
   'danger-zone': TabDangerZone
 }
@@ -52,32 +52,41 @@ provide(deckEditorKey, editor)
 const danger = useDeckDangerActions(editor, deck, close)
 provide(deckDangerActionsKey, danger)
 
-const tab_sheet = useTemplateRef('tab_sheet')
-// Width-only: matches the template's `max-md:` layout switch. The aside +
-// floating preview drop on a narrow viewport, never on a short one.
+const alert = useAlert()
+useModalRequestClose(() => onClose())
+
+const deck_aside = useTemplateRef('deck_aside')
+// Layout modes — single source of truth for all layout-conditional rendering.
+// is_mobile:       w < md  → no aside, no floating preview, height-animated tab transitions
+// is_desktop_fine: w >= lg & fine pointer → sidebar + floating preview, wider modal
+// Everything else (tablet, coarse desktop) uses the intermediate/tablet layout.
 const is_mobile = useMatchMedia('w<md')
+const is_desktop_fine = useMatchMedia('w>=lg & fine')
 
 const active_tab = ref<ActiveTab | null>(null)
 const tab_outlet = ref<HTMLElement>()
+const is_saving = ref(false)
+
+const sheet_px = computed(() => {
+  if (is_mobile.value || is_desktop_fine.value) return '2rem'
+  return '4.5rem'
+})
 
 if (initial_tab) active_tab.value = initial_tab
 if (initial_side) editor.setActiveSide(initial_side)
 
 const tabs = computed(() => [
-  { value: 'general', icon: 'tag-chevron', label: t('deck.settings-modal.tab.general') },
   { value: 'design', icon: 'paint-brush', label: t('deck.settings-modal.tab.design') },
   { value: 'study', icon: 'school-cap', label: t('deck.settings-modal.tab.study') },
   { value: 'danger-zone', icon: 'delete', label: t('deck.settings-modal.tab.danger-zone') }
 ])
 
-// Sourced from TabSheet (the one owner of sidebar visibility), so the default
-// tab stays a strict inverse of the sidebar instead of a re-derived condition.
-const has_sidebar = computed(() => tab_sheet.value?.has_sidebar ?? false)
-
-const displayed_tab = computed(() => active_tab.value ?? (has_sidebar.value ? 'general' : 'index'))
+const displayed_tab = computed(
+  () => active_tab.value ?? (is_desktop_fine.value ? 'design' : 'index')
+)
 
 const sidebar_active = computed({
-  get: () => active_tab.value ?? 'general',
+  get: () => active_tab.value ?? 'design',
   set: (v) => (active_tab.value = v as ActiveTab)
 })
 
@@ -93,7 +102,6 @@ onMounted(() => {
   const idle = window.requestIdleCallback ?? ((cb: IdleRequestCallback) => setTimeout(cb, 200))
   idle(() => {
     import('./tab-design/index.vue')
-    import('./tab-general/index.vue')
     import('./tab-study/index.vue')
     import('./tab-danger-zone/index.vue')
     import('./tab-index/index.vue')
@@ -106,8 +114,25 @@ function onPreviewSide(side: CardSide) {
 }
 
 async function onSave() {
+  if (deck_aside.value && !deck_aside.value.validate()) {
+    emitSfx('ui.etc_woodblock_stuck')
+    return
+  }
+  is_saving.value = true
   const saved = await editor.saveDeck()
+  is_saving.value = false
   if (saved) close(true)
+}
+
+async function onClose() {
+  if (!editor.is_dirty.value) return close(false)
+  const { response } = alert.warn({
+    title: t('deck.settings-modal.unsaved-alert.title'),
+    message: t('deck.settings-modal.unsaved-alert.message'),
+    confirmLabel: t('deck.settings-modal.unsaved-alert.confirm'),
+    cancelLabel: t('deck.settings-modal.unsaved-alert.cancel')
+  })
+  if (await response) close(false)
 }
 
 function onBack() {
@@ -117,7 +142,7 @@ function onBack() {
 
 function onTabLeave(el: Element, done: () => void) {
   if (!is_mobile.value || !tab_outlet.value) {
-    requestAnimationFrame(done)
+    fadeLeave(el, done)
     return
   }
   tabHeightLeave(tab_outlet.value)(el, done)
@@ -125,13 +150,13 @@ function onTabLeave(el: Element, done: () => void) {
 
 function onTabEnter(el: Element, done: () => void) {
   if (!is_mobile.value || !tab_outlet.value) {
-    requestAnimationFrame(done)
+    fadeEnter(el, done)
     return
   }
   tabHeightEnter(tab_outlet.value)(el, done)
 }
 
-watch(has_sidebar, (visible) => {
+watch(is_desktop_fine, (visible) => {
   if (!visible && active_tab.value === 'danger-zone') active_tab.value = null
 })
 
@@ -144,22 +169,22 @@ watch(active_tab, (tab) => {
 
 <template>
   <tab-sheet
-    ref="tab_sheet"
     data-testid="deck-settings-container"
     data-theme="green-500"
     data-theme-dark="green-800"
-    class="w-full! max-w-205.5 lg:pointer-fine:max-w-none lg:pointer-fine:w-257! md:h-172 max-md:[--sheet-px:2rem]"
+    :class="is_desktop_fine ? 'w-248!' : 'w-full! max-w-205.5'"
+    :sheet_px="sheet_px"
     :tabs="tabs"
     :pattern_config="{ pattern: 'endless-clouds' }"
     :parts="{ content: 'flex gap-14 h-full items-start' }"
     hover_sfx="ui.click_07"
     v-model:active="sidebar_active"
-    @close="close(false)"
+    @close="onClose"
   >
     <template #header-content>
       <div
         data-testid="deck-settings__header"
-        class="w-full flex flex-col max-md:items-center max-md:text-center pointer-coarse:pt-4"
+        class="w-full flex flex-col max-md:items-center max-md:text-center"
       >
         <h1 data-testid="deck-settings__header-title" class="text-5xl text-white">
           {{ header_title }}
@@ -170,7 +195,10 @@ watch(active_tab, (tab) => {
     <div
       ref="tab_outlet"
       data-testid="deck-settings__main"
-      class="relative flex flex-1 flex-col gap-4 w-full min-w-0 max-md:max-w-111 max-md:mx-auto max-md:overflow-hidden"
+      :class="[
+        'relative flex flex-1 flex-col gap-4 w-full min-w-0',
+        is_mobile && 'max-w-111 mx-auto overflow-hidden'
+      ]"
     >
       <transition :css="false" mode="out-in" @leave="onTabLeave" @enter="onTabEnter">
         <component :is="tab_component" :key="displayed_tab" @navigate="active_tab = $event" />
@@ -179,9 +207,11 @@ watch(active_tab, (tab) => {
 
     <deck-aside
       v-if="!is_mobile"
+      ref="deck_aside"
       data-testid="deck-settings__aside"
-      :deck="deck"
-      class="w-78.5 shrink-0 self-end pt-60"
+      :loading="is_saving"
+      class="w-78.5 shrink-0 self-end pt-70"
+      @save="onSave"
     />
 
     <template #overlay>
@@ -191,7 +221,7 @@ watch(active_tab, (tab) => {
         @leave="(el, done) => slideFadeRightLeave(el, done)"
       >
         <ui-tag-button
-          v-if="!has_sidebar && active_tab !== null"
+          v-if="!is_desktop_fine && active_tab !== null"
           data-testid="deck-settings__back-button"
           :aria-label="t('deck.settings-modal.back-button')"
           data-theme="yellow-500"
@@ -216,6 +246,13 @@ watch(active_tab, (tab) => {
             face_classes="bg-white! dark:bg-stone-700!"
           />
 
+          <div
+            data-testid="deck-settings__preview-paperclip"
+            class="absolute -top-8 right-15 -translate-x-1/2 z-10 drop-shadow-2xs"
+          >
+            <ui-icon src="paperclip" class="w-16 h-16 -rotate-186 text-grey-300" />
+          </div>
+
           <deck-design-preview
             :deck_id="deck.id"
             :cover="editor.cover"
@@ -228,17 +265,6 @@ watch(active_tab, (tab) => {
       </div>
     </template>
 
-    <template #footer>
-      <ui-button
-        v-if="editor.is_dirty.value"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
-        size="xl"
-        full-width
-        @click="onSave"
-      >
-        {{ t('deck.settings-modal.submit-edit') }}
-      </ui-button>
-    </template>
+    <template #footer />
   </tab-sheet>
 </template>

@@ -106,4 +106,24 @@ describe('hasDeckChanges', () => {
     const snapshot = buildDeckPayload(state)
     expect(hasDeckChanges(state, snapshot)).toBe(false)
   })
+
+  test('stripNullish: card_attributes front with { prop: undefined } produces the same payload as {}', () => {
+    const with_undef = makeState({ card_attributes: { front: { align_h: undefined }, back: {} } })
+    const without = makeState({ card_attributes: { front: {}, back: {} } })
+    const payload_with = buildDeckPayload(with_undef)
+    const payload_without = buildDeckPayload(without)
+    expect(JSON.stringify(payload_with)).toBe(JSON.stringify(payload_without))
+  })
+
+  test('stripNullish: selecting center/center after non-default state produces payload identical to initial snapshot [obligation]', () => {
+    // Simulate: start with non-center align, then reset to center/center (stored as undefined)
+    const initial = makeState({
+      card_attributes: { front: { align_h: undefined, align_v: undefined }, back: {} }
+    })
+    const after_reset = makeState({
+      card_attributes: { front: { align_h: undefined, align_v: undefined }, back: {} }
+    })
+    const snapshot = buildDeckPayload(initial)
+    expect(hasDeckChanges(after_reset, snapshot)).toBe(false)
+  })
 })

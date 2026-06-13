@@ -24,6 +24,7 @@ export type MobileSheetProps = {
   close_label?: string
   surface?: SheetSurface
   header_border?: SheetHeaderBorder
+  sheet_px?: string
 }
 
 const {
@@ -32,7 +33,8 @@ const {
   show_close_button = true,
   close_label,
   surface = 'standard',
-  header_border = 'wave'
+  header_border = 'wave',
+  sheet_px
 } = defineProps<MobileSheetProps>()
 
 const { t } = useI18n()
@@ -77,7 +79,8 @@ provide(mobileSheetOverlayKey, overlay_root)
 <template>
   <div
     data-testid="mobile-sheet-root"
-    class="relative w-full shrink-0 mobile-modal:mt-auto [--sheet-px:4.5rem] lg:[--sheet-px:2rem]"
+    class="relative w-full shrink-0 mobile-modal:mt-auto pointer-coarse:pt-px [--sheet-px:4.5rem] lg:[--sheet-px:2rem]"
+    :style="sheet_px ? { '--sheet-px': sheet_px } : undefined"
   >
     <div
       ref="overlay_root"
@@ -89,7 +92,7 @@ provide(mobileSheetOverlayKey, overlay_root)
 
     <div
       data-testid="mobile-sheet-container"
-      class="flex overflow-hidden w-full h-full rounded-t-8 rounded-b-8 mobile-modal:rounded-b-none shadow-lg border-brown-100 dark:border-grey-900 pointer-coarse:border-t pointer-coarse:border-l mobile-modal:border-t-0! mobile-modal:border-l-0!"
+      class="flex overflow-hidden w-full h-full rounded-t-8 rounded-b-8 mobile-modal:rounded-b-none shadow-lg border-brown-100 dark:border-grey-900 pointer-coarse:border-t pointer-coarse:border-l mobile-modal:pointer-coarse:border-r"
     >
       <slot name="sidebar"></slot>
 

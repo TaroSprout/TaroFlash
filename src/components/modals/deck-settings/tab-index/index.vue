@@ -8,7 +8,7 @@ import DangerResetButton from '../danger-reset-button.vue'
 import DangerDeleteButton from '../danger-delete-button.vue'
 import { emitSfx } from '@/sfx/bus'
 
-export type TabIndexNavValue = 'general' | 'design' | 'study'
+export type TabIndexNavValue = 'design' | 'study'
 
 const { t } = useI18n()
 
@@ -19,10 +19,7 @@ const nav_groups = computed<NavGroup[]>(() => [
   {
     key: 'appearance',
     heading: t('deck.settings-modal.index.appearance-heading'),
-    entries: [
-      { value: 'general', icon: 'label' },
-      { value: 'design', icon: 'design-services' }
-    ]
+    entries: [{ value: 'design', icon: 'design-services' }]
   },
   {
     key: 'study',

@@ -139,6 +139,9 @@
   --bgx-dot-grid: url('../assets/backgrounds/dot-grid.svg');
 
   /* Shadows */
+  --shadow-2xs: 1.25px 1.25px 0px 0px var(--shadow-color);
+  --drop-shadow-2xs: 1.25px 1.25px 0px var(--shadow-color);
+
   --shadow-xs: 3px 3px 0px 0px var(--shadow-color);
   --drop-shadow-xs: 3px 3px 0px var(--shadow-color);
 
