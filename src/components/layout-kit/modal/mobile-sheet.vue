@@ -24,6 +24,7 @@ export type MobileSheetProps = {
   close_label?: string
   surface?: SheetSurface
   header_border?: SheetHeaderBorder
+  sheet_px?: string
 }
 
 const {
@@ -32,7 +33,8 @@ const {
   show_close_button = true,
   close_label,
   surface = 'standard',
-  header_border = 'wave'
+  header_border = 'wave',
+  sheet_px
 } = defineProps<MobileSheetProps>()
 
 const { t } = useI18n()
@@ -78,6 +80,7 @@ provide(mobileSheetOverlayKey, overlay_root)
   <div
     data-testid="mobile-sheet-root"
     class="relative w-full shrink-0 mobile-modal:mt-auto pointer-coarse:pt-px [--sheet-px:4.5rem] lg:[--sheet-px:2rem]"
+    :style="sheet_px ? { '--sheet-px': sheet_px } : undefined"
   >
     <div
       ref="overlay_root"

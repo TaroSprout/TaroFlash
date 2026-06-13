@@ -55,15 +55,22 @@ provide(deckDangerActionsKey, danger)
 const alert = useAlert()
 useModalRequestClose(() => onClose())
 
-const tab_sheet = useTemplateRef('tab_sheet')
 const deck_aside = useTemplateRef('deck_aside')
-// Width-only: matches the template's `max-md:` layout switch. The aside +
-// floating preview drop on a narrow viewport, never on a short one.
+// Layout modes — single source of truth for all layout-conditional rendering.
+// is_mobile:       w < md  → no aside, no floating preview, height-animated tab transitions
+// is_desktop_fine: w >= lg & fine pointer → sidebar + floating preview, wider modal
+// Everything else (tablet, coarse desktop) uses the intermediate/tablet layout.
 const is_mobile = useMatchMedia('w<md')
+const is_desktop_fine = useMatchMedia('w>=lg & fine')
 
 const active_tab = ref<ActiveTab | null>(null)
 const tab_outlet = ref<HTMLElement>()
 const is_saving = ref(false)
+
+const sheet_px = computed(() => {
+  if (is_mobile.value || is_desktop_fine.value) return '2rem'
+  return '4.5rem'
+})
 
 if (initial_tab) active_tab.value = initial_tab
 if (initial_side) editor.setActiveSide(initial_side)
@@ -74,11 +81,9 @@ const tabs = computed(() => [
   { value: 'danger-zone', icon: 'delete', label: t('deck.settings-modal.tab.danger-zone') }
 ])
 
-// Sourced from TabSheet (the one owner of sidebar visibility), so the default
-// tab stays a strict inverse of the sidebar instead of a re-derived condition.
-const has_sidebar = computed(() => tab_sheet.value?.has_sidebar ?? false)
-
-const displayed_tab = computed(() => active_tab.value ?? (has_sidebar.value ? 'design' : 'index'))
+const displayed_tab = computed(
+  () => active_tab.value ?? (is_desktop_fine.value ? 'design' : 'index')
+)
 
 const sidebar_active = computed({
   get: () => active_tab.value ?? 'design',
@@ -151,7 +156,7 @@ function onTabEnter(el: Element, done: () => void) {
   tabHeightEnter(tab_outlet.value)(el, done)
 }
 
-watch(has_sidebar, (visible) => {
+watch(is_desktop_fine, (visible) => {
   if (!visible && active_tab.value === 'danger-zone') active_tab.value = null
 })
 
@@ -164,11 +169,11 @@ watch(active_tab, (tab) => {
 
 <template>
   <tab-sheet
-    ref="tab_sheet"
     data-testid="deck-settings-container"
     data-theme="green-500"
     data-theme-dark="green-800"
-    class="w-full! max-w-205.5 lg:pointer-fine:max-w-none lg:pointer-fine:w-248! max-md:[--sheet-px:2rem] lg:pointer-coarse:[--sheet-px:4.5rem]"
+    :class="is_desktop_fine ? 'w-full! w-248!' : 'w-full! max-w-205.5'"
+    :sheet_px="sheet_px"
     :tabs="tabs"
     :pattern_config="{ pattern: 'endless-clouds' }"
     :parts="{ content: 'flex gap-14 h-full items-start' }"
@@ -190,7 +195,10 @@ watch(active_tab, (tab) => {
     <div
       ref="tab_outlet"
       data-testid="deck-settings__main"
-      class="relative flex flex-1 flex-col gap-4 w-full min-w-0 max-md:max-w-111 max-md:mx-auto max-md:overflow-hidden"
+      :class="[
+        'relative flex flex-1 flex-col gap-4 w-full min-w-0',
+        is_mobile && 'max-w-111 mx-auto overflow-hidden'
+      ]"
     >
       <transition :css="false" mode="out-in" @leave="onTabLeave" @enter="onTabEnter">
         <component :is="tab_component" :key="displayed_tab" @navigate="active_tab = $event" />
@@ -213,7 +221,7 @@ watch(active_tab, (tab) => {
         @leave="(el, done) => slideFadeRightLeave(el, done)"
       >
         <ui-tag-button
-          v-if="!has_sidebar && active_tab !== null"
+          v-if="!is_desktop_fine && active_tab !== null"
           data-testid="deck-settings__back-button"
           :aria-label="t('deck.settings-modal.back-button')"
           data-theme="yellow-500"

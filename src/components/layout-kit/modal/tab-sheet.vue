@@ -22,6 +22,7 @@ export type TabSheetProps = MobileSheetProps & {
   tabs?: Tab[]
   parts?: TabSheetParts
   sidebar_query?: string
+  sheet_px?: string
   hover_sfx?: NamespacedAudioKey | ''
   select_sfx?: NamespacedAudioKey | ''
   reselect_sfx?: NamespacedAudioKey | ''
@@ -36,6 +37,7 @@ const {
   surface = 'standard',
   header_border = 'wave',
   sidebar_query = 'w>=lg & fine',
+  sheet_px,
   hover_sfx = 'ui.click_07',
   select_sfx = 'ui.select',
   reselect_sfx = 'ui.digi_powerdown'
@@ -98,6 +100,7 @@ function selectOption(value: string) {
     :show_close_button="sheet_close_button"
     :surface="surface"
     :header_border="header_border"
+    :sheet_px="sheet_px"
     @close="emit('close')"
   >
     <template v-if="$slots.overlay" #overlay><slot name="overlay"></slot></template>
