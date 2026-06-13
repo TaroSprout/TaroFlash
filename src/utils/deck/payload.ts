@@ -1,5 +1,11 @@
 import { DECK_SETTINGS_DEFAULTS, DECK_CONFIG_DEFAULTS } from './defaults'
 
+function stripNullish<T extends object>(obj: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined && v !== null)
+  ) as Partial<T>
+}
+
 export type DeckEditorState = {
   settings: { title?: string; description?: string; is_public?: boolean }
   config: DeckConfig
@@ -34,8 +40,8 @@ export function buildDeckPayload(state: DeckEditorState): DeckPayload {
     study_config: { ...DECK_CONFIG_DEFAULTS, ...state.config },
     cover_config: { ...state.cover },
     card_attributes: {
-      front: { ...state.card_attributes.front },
-      back: { ...state.card_attributes.back }
+      front: stripNullish(state.card_attributes.front),
+      back: stripNullish(state.card_attributes.back)
     }
   }
 }
