@@ -224,13 +224,6 @@ const font_size = computed(() => {
   display: none;
 }
 
-/* Empty card (no image, no text) shows the placeholder backdrop edge-to-edge. */
-.card-face[data-mode='view'][data-image='false'][data-text='false'],
-.card-face[data-mode='view'][data-image='false']:has(.ql-blank) {
-  padding: 0;
-  background-color: var(--color-purple-400);
-}
-
 /* ----- Editor: hovering an image reveals a replaceable dropzone frame ------ */
 /* The image keeps its padded region in above/below (with or without text), so
    the dashed frame sits just outside it. Behind layout uses floating corner
