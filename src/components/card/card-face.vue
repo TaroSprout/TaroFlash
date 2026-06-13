@@ -198,7 +198,23 @@ const font_size = computed(() => {
   border-radius: var(--face-radius);
 }
 
-.card-face[data-image='true'][data-text='false'][data-layout='behind'] .card-face__text-region {
+/* View only: drop the empty text region so nothing covers the image. In edit it
+   stays (filling the face) so a click anywhere off the image controls focuses
+   the editor to type — the corners dropzone backdrop is click-through. */
+.card-face[data-mode='view'][data-image='true'][data-text='false'][data-layout='behind']
+  .card-face__text-region {
+  display: none;
+}
+
+.card-face[data-mode='edit'][data-image='true'][data-text='false'][data-layout='behind']
+  .card-face__text-region {
+  cursor: text;
+}
+
+/* Over a full-bleed image the placeholder would just clutter the picture — the
+   text cursor already signals you can click to type. */
+.card-face[data-mode='edit'][data-image='true'][data-text='false'][data-layout='behind']
+  .text-editor__placeholder {
   display: none;
 }
 
