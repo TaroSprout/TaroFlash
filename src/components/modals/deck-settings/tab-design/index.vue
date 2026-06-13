@@ -53,7 +53,7 @@ const card_side_attributes = computed(() =>
     <transition :css="false" mode="out-in" @leave="fadeLeave" @enter="fadeEnter">
       <cover-designer
         v-if="editor.active_side.value === 'cover'"
-        :key="editor.active_side.value"
+        key="cover"
         :config="editor.cover"
       />
       <card-designer v-else :key="editor.active_side.value" :attributes="card_side_attributes" />
