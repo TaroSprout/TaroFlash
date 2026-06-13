@@ -21,9 +21,11 @@ export type ButtonProps = {
   sfx?: SfxOptions
   fullWidth?: boolean
   mobileTooltip?: boolean
+  // Touch-only tap feedback: on coarse pointers the click is deferred a beat to
+  // play the tap (desktop passes straight through). On by default.
   playOnTap?: boolean
-  // With playOnTap, drop the scale/rotate tween so the tap shows only the
-  // bgx-slide sweep + sfx. Defaults to true (the full tap bounce).
+  // With playOnTap, run the full scale/rotate tap bounce. Off by default, so the
+  // tap shows only the quiet bgx-slide sweep + sfx; set true to restore the bounce.
   tapAnimate?: boolean
   // Inert + muted label region. The trailing slot (a split-button caret) stays
   // live, so only the primary action is disabled — not the whole control.
@@ -43,8 +45,8 @@ const {
   sfx = {},
   fullWidth = false,
   mobileTooltip = false,
-  playOnTap = false,
-  tapAnimate = true,
+  playOnTap = true,
+  tapAnimate = false,
   disabled = false,
   clickWhenDisabled = false
 } = defineProps<ButtonProps>()
@@ -52,7 +54,7 @@ const {
 const slots = useSlots()
 const attrs = useAttrs()
 
-const { playing, interceptClick } = usePlayOnTap({ reset: false, animate: tapAnimate })
+const { playing, interceptClick } = usePlayOnTap({ reset: true, animate: tapAnimate })
 
 const merged_sfx = computed<SfxOptions>(() => {
   if (disabled) return {}

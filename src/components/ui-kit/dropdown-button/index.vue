@@ -40,8 +40,11 @@ const {
   fullWidth,
   iconLeft,
   sfx,
-  playOnTap,
-  tapAnimate,
+  // Mirror ui-button's tap defaults: an absent Boolean prop casts to `false`,
+  // which would otherwise forward `:play-on-tap="false"` and suppress the
+  // button's own quiet-tap default. Keep in sync with button.vue.
+  playOnTap = true,
+  tapAnimate = false,
   position = 'bottom-start',
   triggerIcon = 'arrow-drop-down',
   gap = 4,
