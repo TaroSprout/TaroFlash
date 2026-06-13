@@ -182,7 +182,7 @@ function emitClickSfx() {
 /* Disabled mutes + inerts only the primary label region; a split-button's
    trailing caret stays fully live and lit. */
 .ui-kit-btn--disabled {
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .ui-kit-btn--disabled .btn-content {
