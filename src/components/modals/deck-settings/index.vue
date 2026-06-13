@@ -12,6 +12,8 @@ import {
   deckDangerActionsKey
 } from '@/composables/deck/use-deck-danger-actions'
 import { useMatchMedia } from '@/composables/use-media-query'
+import { useAlert } from '@/composables/alert'
+import { useModalRequestClose } from '@/composables/modal'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTagButton from '@/components/ui-kit/tag-button.vue'
 import Card from '@/components/card/index.vue'
@@ -49,6 +51,9 @@ provide(deckEditorKey, editor)
 
 const danger = useDeckDangerActions(editor, deck, close)
 provide(deckDangerActionsKey, danger)
+
+const alert = useAlert()
+useModalRequestClose(() => onClose())
 
 const tab_sheet = useTemplateRef('tab_sheet')
 const deck_aside = useTemplateRef('deck_aside')
@@ -114,6 +119,17 @@ async function onSave() {
   if (saved) close(true)
 }
 
+async function onClose() {
+  if (!editor.is_dirty.value) return close(false)
+  const { response } = alert.warn({
+    title: t('deck.settings-modal.unsaved-alert.title'),
+    message: t('deck.settings-modal.unsaved-alert.message'),
+    confirmLabel: t('deck.settings-modal.unsaved-alert.confirm'),
+    cancelLabel: t('deck.settings-modal.unsaved-alert.cancel')
+  })
+  if (await response) close(false)
+}
+
 function onBack() {
   emitSfx('ui.select')
   active_tab.value = null
@@ -158,7 +174,7 @@ watch(active_tab, (tab) => {
     :parts="{ content: 'flex gap-14 h-full items-start' }"
     hover_sfx="ui.click_07"
     v-model:active="sidebar_active"
-    @close="close(false)"
+    @close="onClose"
   >
     <template #header-content>
       <div
