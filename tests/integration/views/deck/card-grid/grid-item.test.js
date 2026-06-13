@@ -41,10 +41,38 @@ const UiRadioStub = defineComponent({
   }
 })
 
-const GridItemMenuStub = defineComponent({
-  name: 'GridItemMenu',
-  setup() {
-    return () => h('div', { 'data-testid': 'grid-item-menu-stub' })
+const UiDropdownButtonStub = defineComponent({
+  name: 'UiDropdownButton',
+  props: ['options', 'triggerOnly', 'triggerIcon'],
+  emits: ['select'],
+  setup(props, { emit }) {
+    return () =>
+      h('div', { 'data-testid': 'grid-item-menu-stub' }, [
+        h('button', {
+          'data-testid': 'grid-item-menu-stub__select',
+          onClick: () =>
+            emit(
+              'select',
+              (props.options ?? []).find((o) => o.value === 'select') ?? { value: 'select' }
+            )
+        }),
+        h('button', {
+          'data-testid': 'grid-item-menu-stub__move',
+          onClick: () =>
+            emit(
+              'select',
+              (props.options ?? []).find((o) => o.value === 'move') ?? { value: 'move' }
+            )
+        }),
+        h('button', {
+          'data-testid': 'grid-item-menu-stub__delete',
+          onClick: () =>
+            emit(
+              'select',
+              (props.options ?? []).find((o) => o.value === 'delete') ?? { value: 'delete' }
+            )
+        })
+      ])
   }
 })
 
@@ -77,7 +105,7 @@ function mountGridItem({ props = {}, editor } = {}) {
       attachTo: document.body,
       global: {
         provide: { [cardEditorKey]: ed },
-        stubs: { Card: CardStub, UiRadio: UiRadioStub, GridItemMenu: GridItemMenuStub }
+        stubs: { Card: CardStub, UiRadio: UiRadioStub, UiDropdownButton: UiDropdownButtonStub }
       }
     }),
     editor: ed
@@ -153,25 +181,35 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(wrapper.find('[data-testid="grid-item-menu-stub"]').exists()).toBe(false)
   })
 
-  test('grid-item-menu select emit calls onSelectCard with the card id', async () => {
+  test('onMenuSelect: select option routes to onSelectCard with the card id [obligation]', async () => {
     const editor = makeEditor({ is_selecting: false })
     const { wrapper } = mountGridItem({ editor })
-    await wrapper.findComponent(GridItemMenuStub).vm.$emit('select')
+    await wrapper.find('[data-testid="grid-item-menu-stub__select"]').trigger('click')
     expect(editor.actions.onSelectCard).toHaveBeenCalledWith(1)
   })
 
-  test('grid-item-menu move emit calls onMoveCards with the card id', async () => {
+  test('onMenuSelect: move option routes to onMoveCards with the card id [obligation]', async () => {
     const editor = makeEditor({ is_selecting: false })
     const { wrapper } = mountGridItem({ editor })
-    await wrapper.findComponent(GridItemMenuStub).vm.$emit('move')
+    await wrapper.find('[data-testid="grid-item-menu-stub__move"]').trigger('click')
     expect(editor.actions.onMoveCards).toHaveBeenCalledWith(1)
   })
 
-  test('grid-item-menu delete emit calls onDeleteCards with the card id', async () => {
+  test('onMenuSelect: delete option routes to onDeleteCards with the card id [obligation]', async () => {
     const editor = makeEditor({ is_selecting: false })
     const { wrapper } = mountGridItem({ editor })
-    await wrapper.findComponent(GridItemMenuStub).vm.$emit('delete')
+    await wrapper.find('[data-testid="grid-item-menu-stub__delete"]').trigger('click')
     expect(editor.actions.onDeleteCards).toHaveBeenCalledWith(1)
+  })
+
+  test('onMenuSelect: unknown value is a no-op [obligation]', async () => {
+    const editor = makeEditor({ is_selecting: false })
+    const { wrapper } = mountGridItem({ editor })
+    // Emit an unknown option value directly on the UiDropdownButton stub
+    await wrapper.findComponent(UiDropdownButtonStub).vm.$emit('select', { value: 'unknown' })
+    expect(editor.actions.onSelectCard).not.toHaveBeenCalled()
+    expect(editor.actions.onMoveCards).not.toHaveBeenCalled()
+    expect(editor.actions.onDeleteCards).not.toHaveBeenCalled()
   })
 
   // ── scale prop ───────────────────────────────────────────────────────────────

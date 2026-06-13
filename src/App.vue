@@ -11,16 +11,12 @@ import logger from '@/utils/logger'
 import { useThemeStore } from '@/stores/theme'
 import { useMemberStore } from '@/stores/member'
 import { withMemberPreferencesDefaults } from '@/utils/member/preferences'
-import { useRouter } from 'vue-router'
-import { clearStaticLoader } from '@/utils/static-loader'
 import { watch } from 'vue'
 
 const { toasts } = useToast()
 const session = useSessionStore()
 const theme = useThemeStore()
 const member = useMemberStore()
-const router = useRouter()
-
 watch(
   () => member.preferences,
   (prefs) => {
@@ -32,14 +28,6 @@ watch(
   },
   { immediate: true, deep: true }
 )
-
-const removeGuard = router.afterEach((to) => {
-  const isAuthenticated = to.matched.some((r) => r.name === 'authenticated')
-  if (!isAuthenticated) {
-    clearStaticLoader()
-    removeGuard()
-  }
-})
 
 let teardownAudioLifecycle: (() => void) | undefined
 

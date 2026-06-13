@@ -3,8 +3,13 @@ import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import Card from '@/components/card/index.vue'
 
-// Stub GSAP so transition hooks don't error in jsdom
-vi.mock('gsap', () => ({ gsap: { fromTo: vi.fn(), to: vi.fn() } }))
+// Stub GSAP so transition hooks don't error in browser mode
+vi.mock('gsap', () => ({
+  gsap: {
+    fromTo: vi.fn((_el, _from, to) => to?.onComplete?.()),
+    to: vi.fn((_el, opts) => opts?.onComplete?.())
+  }
+}))
 
 // CardFace stub that renders its #image and #editor named slots so slot-
 // forwarding tests can observe what the Card passes through.
@@ -20,11 +25,12 @@ const CardFaceStub = defineComponent({
   }
 })
 
-function mountCard(props = {}, slots = {}) {
+function mountCard(props = {}, slots = {}, extraOpts = {}) {
   return shallowMount(Card, {
     props: { side: 'front', ...props },
     slots,
-    global: { stubs: { CardFace: CardFaceStub }, directives: { sfx: {} } }
+    global: { stubs: { CardFace: CardFaceStub }, directives: { sfx: {} } },
+    ...extraOpts
   })
 }
 
@@ -78,6 +84,23 @@ describe('Card (cover side)', () => {
     // Binding uses `error || undefined` so the attribute is absent when false
     // and present when true; we don't assert a specific value string.
     expect(wrapper.find('[data-testid="card"]').attributes('data-error')).toBeDefined()
+  })
+
+  // ── shimmer prop [obligation] ─────────────────────────────────────────────
+
+  test('renders .card-shimmer overlay when shimmer=true [obligation]', () => {
+    const wrapper = mountCard({ shimmer: true })
+    expect(wrapper.find('.card-shimmer').exists()).toBe(true)
+  })
+
+  test('does not render .card-shimmer overlay when shimmer=false [obligation]', () => {
+    const wrapper = mountCard({ shimmer: false })
+    expect(wrapper.find('.card-shimmer').exists()).toBe(false)
+  })
+
+  test('does not render .card-shimmer when shimmer is omitted (defaults to false) [obligation]', () => {
+    const wrapper = mountCard()
+    expect(wrapper.find('.card-shimmer').exists()).toBe(false)
   })
 })
 

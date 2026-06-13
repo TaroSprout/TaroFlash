@@ -514,12 +514,12 @@ describe('UiDropdownButton', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5', { blocking: true })
   })
 
-  test('selecting an option emits ui.select [obligation]', async () => {
+  test('selecting an option does NOT emit ui.select (removed in menu refactor) [obligation]', async () => {
     const wrapper = mountDropdown()
     await trigger(wrapper).trigger('click')
     mockEmitSfx.mockClear()
     await options(wrapper)[0].trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.select')
   })
 
   // ── primaryDisabled prop [obligation] ─────────────────────────────────────
@@ -562,6 +562,48 @@ describe('UiDropdownButton', () => {
     test('primaryDisabled=false (default): the button is not disabled', () => {
       const wrapper = mountDropdown({ primaryDisabled: false })
       // Caret still works
+      expect(trigger(wrapper).exists()).toBe(true)
+    })
+  })
+
+  // ── triggerOnly prop [obligation] ─────────────────────────────────────────
+  // When triggerOnly=true only the icon button is rendered (no label + caret).
+  // Clicking it opens/closes the menu identical to the caret in normal mode.
+
+  describe('triggerOnly [obligation]', () => {
+    test('triggerOnly=true renders a single icon button, not the label button + caret', () => {
+      const wrapper = mountDropdown({ triggerOnly: true })
+      // The icon-only button carries data-testid="dropdown-button__button"
+      expect(mainButton(wrapper).exists()).toBe(true)
+      // The caret trigger should NOT be present — the whole button IS the trigger
+      expect(trigger(wrapper).exists()).toBe(false)
+    })
+
+    test('triggerOnly=true: clicking the button opens the menu [obligation]', async () => {
+      const wrapper = mountDropdown({ triggerOnly: true })
+      await mainButton(wrapper).trigger('click')
+      expect(menu(wrapper).exists()).toBe(true)
+    })
+
+    test('triggerOnly=true: clicking again closes the menu', async () => {
+      const wrapper = mountDropdown({ triggerOnly: true })
+      await mainButton(wrapper).trigger('click')
+      await mainButton(wrapper).trigger('click')
+      expect(menu(wrapper).exists()).toBe(false)
+    })
+
+    test('triggerOnly=true: selecting an option emits select and closes menu', async () => {
+      const wrapper = mountDropdown({ triggerOnly: true })
+      await mainButton(wrapper).trigger('click')
+      await options(wrapper)[0].trigger('click')
+      expect(wrapper.emitted('select')).toHaveLength(1)
+      expect(wrapper.emitted('select')[0][0]).toEqual(DEFAULT_OPTIONS[0])
+      expect(menu(wrapper).exists()).toBe(false)
+    })
+
+    test('triggerOnly=false (default): label button + caret are both rendered', () => {
+      const wrapper = mountDropdown({ triggerOnly: false })
+      expect(mainButton(wrapper).exists()).toBe(true)
       expect(trigger(wrapper).exists()).toBe(true)
     })
   })

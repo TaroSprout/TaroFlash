@@ -16,6 +16,7 @@ type CardProps = Partial<CardBase> & {
   face_classes?: string
   sfx?: SfxOptions
   error?: boolean
+  shimmer?: boolean
 }
 
 const emit = defineEmits<{
@@ -31,7 +32,8 @@ const {
   card_attributes,
   front_image_path,
   back_image_path,
-  error = false
+  error = false,
+  shimmer = false
 } = defineProps<CardProps>()
 
 const front_image_url = computed(() => {
@@ -87,6 +89,8 @@ function onLeave(el: Element, done: () => void) {
     v-sfx="sfx"
   >
     <slot></slot>
+
+    <div v-if="shimmer" class="card-shimmer" aria-hidden="true" />
 
     <transition mode="out-in" @enter="onEnter" @leave="onLeave">
       <card-cover v-if="side === 'cover'" :cover="cover_config" />
@@ -213,5 +217,34 @@ function onLeave(el: Element, done: () => void) {
   --card-bg-color: var(--color-stone-700);
   --card-text-color: var(--color-brown-100);
   --card-text-color--placeholder: var(--color-brown-500);
+}
+
+.card-shimmer {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--face-radius);
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.card-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.14) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: card-shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes card-shimmer {
+  to {
+    transform: translateX(200%);
+  }
 }
 </style>

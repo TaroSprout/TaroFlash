@@ -14,18 +14,6 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tilt+Neon&display=swap" />
   </head>
   <body class="bg-brown-100 dark:bg-grey-900 h-full">
-    <!-- Static Loader: paints the body to match the Vue loader's background so
-         there's no flash on initial paint. Reads the stored theme preference from
-         localStorage to pick the right color. Cleaned up by clearStaticLoader()
-         in src/utils/static-loader.ts -->
-    <script id="static-loader-script">
-      ;(function () {
-        var t = localStorage.getItem('app-theme')
-        var d = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme:dark)').matches)
-        document.body.style.background = d ? '#1c1c1c' : '#11b7d4'
-      })()
-    </script>
-
     <div id="app" class="flex flex-col md:items-center h-full"></div>
 
     <section
