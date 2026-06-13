@@ -125,6 +125,9 @@ function emitClickSfx() {
         'ui-kit-btn--split': has_trailing,
         'ui-kit-btn--quiet-tap': playOnTap && !tapAnimate,
         'ui-kit-btn--disabled': disabled,
+        // Ghost is transparent at rest; fill it behind the content while the
+        // coarse quiet tap sweeps, so the bgx reads against a surface.
+        'data-[playing=true]:bg-(--theme-primary)': variant === 'ghost' && !disabled,
         'rounded-full!': roundedFull,
         'w-full!': fullWidth
       }
@@ -150,7 +153,11 @@ function emitClickSfx() {
         'group-hover/btn:block group-data-[playing=true]/btn:block':
           !loading && !disabled && fancyHover && variant !== 'ghost',
         'bgx-color-[var(--theme-neutral)]': variant === 'solid',
-        'bgx-color-[var(--theme-on-neutral)]': inverted
+        'bgx-color-[var(--theme-on-neutral)]': inverted,
+        // Ghost has no surface, so only the coarse quiet tap sweeps it (the
+        // theme-primary fill is added to the button root, behind the content).
+        'group-data-[playing=true]/btn:block bgx-color-[var(--theme-neutral)]':
+          !loading && !disabled && variant === 'ghost'
       }"
     >
       <ui-icon v-if="loading" src="loading-dots" class="h-12 w-12 text-brown-100" />
