@@ -91,7 +91,6 @@ function onCardMouseDown(e: MouseEvent) {
 
   transform-origin: top left;
   transform: scale(var(--card-scale));
-  transition: transform 0.05s ease-in-out;
 }
 
 .grid-item.card-outline {
