@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, nextTick, ref } from 'vue'
+import { defineComponent, h, nextTick } from 'vue'
 import DeckSettings from '@/components/modals/deck-settings/index.vue'
 import { useMatchMedia } from '@/composables/use-media-query'
 import { deck as deckFixture } from '../../../../fixtures/deck'
@@ -8,8 +8,8 @@ import { setSidebar, setBelowMd, resetResponsive } from '../../../../helpers/res
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockAlertWarn, mockToastSuccess, mockToastError, mockEditor, mockRouterPush, initialTab } =
-  vi.hoisted(() => ({
+const { mockAlertWarn, mockToastSuccess, mockToastError, mockEditor, mockRouterPush } = vi.hoisted(
+  () => ({
     mockAlertWarn: vi.fn(),
     mockToastSuccess: vi.fn(),
     mockToastError: vi.fn(),
@@ -18,9 +18,9 @@ const { mockAlertWarn, mockToastSuccess, mockToastError, mockEditor, mockRouterP
       deleteDeck: vi.fn().mockResolvedValue(true),
       saveDeck: vi.fn().mockResolvedValue(true)
     },
-    mockRouterPush: vi.fn(),
-    initialTab: { value: 'danger-zone' }
-  }))
+    mockRouterPush: vi.fn()
+  })
+)
 
 vi.mock('@/composables/alert', () => ({
   useAlert: () => ({ warn: mockAlertWarn })
@@ -119,13 +119,6 @@ vi.mock('@/components/modals/deck-settings/tab-danger-zone/index.vue', async () 
     })
   }
 })
-
-vi.mock('@/composables/use-session-ref', () => ({
-  // The deck-settings active tab is driven by `initialTab.value` from the
-  // hoisted block — tests can flip it before mount to render any tab.
-  useSessionRef: (key, initial) =>
-    ref(key === 'deck-settings.active-tab' ? initialTab.value : initial)
-}))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
@@ -241,8 +234,8 @@ function makeWrapper(extraProps = {}) {
         DeckDesignPreview: DeckPreviewStub,
         DeckAside: DeckAsideStub,
         UiButton: UiButtonStub
-      },
-      mocks: { $t: (k) => k }
+      }
+      // $t is supplied by the real i18n plugin from setup-browser.js
     }
   })
   return { wrapper, close }
@@ -258,7 +251,8 @@ beforeEach(() => {
   mockEditor.resetReviews.mockReset().mockResolvedValue(true)
   mockEditor.deleteDeck.mockReset().mockResolvedValue(true)
   mockEditor.saveDeck.mockReset().mockResolvedValue(true)
-  initialTab.value = 'danger-zone'
+  // Reset the mocked editor's active_side back to cover between tests
+  if (mockEditor.editor) mockEditor.editor.active_side.value = 'cover'
   resetResponsive()
 })
 
@@ -294,25 +288,17 @@ describe('DeckSettings — save button visibility (driven by editor.is_dirty)', 
 
 describe('DeckSettings — header copy is tab-driven', () => {
   const cases = [
-    {
-      tab: 'general',
-      title: 'Details & Settings',
-      description: 'Name, description, and visibility.'
-    },
-    { tab: 'design', title: 'Card Designer', description: 'Cover art and card layout.' },
-    { tab: 'study', title: 'Study Preferences', description: 'Pacing and daily limits.' },
-    { tab: 'danger-zone', title: 'Danger Zone', description: 'Delete or reset this deck.' }
+    { tab: 'general', title: 'Details & Settings' },
+    { tab: 'design', title: 'Card Designer' },
+    { tab: 'study', title: 'Study Preferences' },
+    { tab: 'danger-zone', title: 'Danger Zone' }
   ]
 
-  for (const { tab, title, description } of cases) {
-    test(`renders the ${tab} title + description`, () => {
-      initialTab.value = tab
-      const { wrapper } = makeWrapper()
+  for (const { tab, title } of cases) {
+    test(`renders the ${tab} header title`, () => {
+      const { wrapper } = makeWrapper({ initial_tab: tab })
 
       expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe(title)
-      expect(wrapper.find('[data-testid="deck-settings__header-description"]').text()).toBe(
-        description
-      )
     })
   }
 })
@@ -331,8 +317,8 @@ describe('DeckSettings — null active_tab tracks sidebar visibility', () => {
   // The default tab must be the strict inverse of whether TabSheet shows its
   // sidebar ('w>=lg & fine'): sidebar visible -> general, hidden -> index.
   test('null active_tab renders the general header when the sidebar is visible', async () => {
-    initialTab.value = null
     setSidebar(true)
+    // No initial_tab → active_tab starts null (plain ref)
     const { wrapper } = makeWrapper()
     // has_sidebar arrives from TabSheet via a template ref — one render late.
     await nextTick()
@@ -343,16 +329,14 @@ describe('DeckSettings — null active_tab tracks sidebar visibility', () => {
   })
 
   test('null active_tab renders the index header when the sidebar is hidden', () => {
-    initialTab.value = null
     setSidebar(false)
     const { wrapper } = makeWrapper()
     expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Deck Settings')
   })
 
   test('hiding the sidebar with danger-zone selected redirects to the index (null)', async () => {
-    initialTab.value = 'danger-zone'
     setSidebar(true)
-    const { wrapper } = makeWrapper()
+    const { wrapper } = makeWrapper({ initial_tab: 'danger-zone' })
     // Let the sidebar-visible state settle before hiding it, so the watch sees
     // the real true -> false transition (not a no-op false -> false).
     await nextTick()
@@ -366,9 +350,8 @@ describe('DeckSettings — null active_tab tracks sidebar visibility', () => {
   })
 
   test('explicit general tab persists when the sidebar hides (no auto-collapse to index)', async () => {
-    initialTab.value = 'general'
     setSidebar(true)
-    const { wrapper } = makeWrapper()
+    const { wrapper } = makeWrapper({ initial_tab: 'general' })
 
     setSidebar(false)
     await flushPromises()
@@ -420,11 +403,9 @@ const nextFrame = () => new Promise((r) => requestAnimationFrame(r))
 
 describe('DeckSettings — tab transition hooks', () => {
   test('swapping tabs on desktop completes through requestAnimationFrame', async () => {
-    initialTab.value = 'general'
     setBelowMd(false)
-    const { wrapper } = makeWrapper()
+    const { wrapper } = makeWrapper({ initial_tab: 'general' })
 
-    initialTab.value = 'design'
     mockEditor.editor.is_dirty.value = false
     // Drive the tab swap via the sheet's update:active emit so the
     // sidebar_active setter is exercised too.
@@ -437,9 +418,8 @@ describe('DeckSettings — tab transition hooks', () => {
   })
 
   test('swapping tabs below md routes through the mobile height tween', async () => {
-    initialTab.value = 'general'
     setBelowMd(true)
-    const { wrapper } = makeWrapper()
+    const { wrapper } = makeWrapper({ initial_tab: 'general' })
 
     await wrapper.find('[data-testid="tab-sheet__select-design"]').trigger('click')
     await flushPromises()
@@ -452,10 +432,9 @@ describe('DeckSettings — tab transition hooks', () => {
 
 describe('DeckSettings — overlay actions', () => {
   test('floating preview click forwards the new side to editor.setActiveSide on the design tab', async () => {
-    initialTab.value = 'design'
     setBelowMd(false)
     const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
-    const { wrapper } = makeWrapper()
+    const { wrapper } = makeWrapper({ initial_tab: 'design' })
 
     await wrapper.find('[data-testid="deck-preview-stub"]').trigger('click')
 
@@ -464,10 +443,9 @@ describe('DeckSettings — overlay actions', () => {
   })
 
   test('floating preview click is a no-op when not on the design tab', async () => {
-    initialTab.value = 'general'
     setBelowMd(false)
     const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
-    const { wrapper } = makeWrapper()
+    const { wrapper } = makeWrapper({ initial_tab: 'general' })
 
     await wrapper.find('[data-testid="deck-preview-stub"]').trigger('click')
 
@@ -476,9 +454,8 @@ describe('DeckSettings — overlay actions', () => {
   })
 
   test('back button shows and clears active_tab when the sidebar is hidden', async () => {
-    initialTab.value = 'design'
     setSidebar(false)
-    const { wrapper } = makeWrapper()
+    const { wrapper } = makeWrapper({ initial_tab: 'design' })
 
     expect(wrapper.find('[data-testid="deck-settings__back-button"]').exists()).toBe(true)
 
@@ -498,7 +475,7 @@ describe('DeckSettings — overlay actions', () => {
 
   test('mounts under requestIdleCallback fallback (setTimeout) without throwing', async () => {
     const originalIdle = window.requestIdleCallback
-    // @ts-ignore — drop rIC to force the setTimeout fallback path in onMounted
+    // drop rIC to force the setTimeout fallback path in onMounted
     window.requestIdleCallback = undefined
 
     expect(() => makeWrapper()).not.toThrow()
@@ -513,7 +490,6 @@ describe('DeckSettings — overlay actions', () => {
       return 0
     })
     const originalIdle = window.requestIdleCallback
-    // @ts-ignore — intercept the rIC call so the prefetch runs synchronously
     window.requestIdleCallback = idleSpy
 
     makeWrapper()
@@ -526,16 +502,73 @@ describe('DeckSettings — overlay actions', () => {
   })
 })
 
-describe('DeckSettings — initial_tab / initial_side override persisted state [obligation]', () => {
-  test('initial_tab overrides persisted session tab (design wins over general)', () => {
-    // Simulates: user last had "general" persisted, but caller requests "design"
-    initialTab.value = 'general'
+describe('DeckSettings — active_tab is a plain non-persisted ref [obligation]', () => {
+  test('active_tab defaults to null (no initial_tab prop)', () => {
+    setSidebar(false)
+    const { wrapper } = makeWrapper()
+    // With null active_tab and no sidebar, the index tab is displayed
+    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Deck Settings')
+  })
+
+  test('initial_tab prop sets active_tab to that tab on mount [obligation]', () => {
+    const { wrapper } = makeWrapper({ initial_tab: 'study' })
+    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe(
+      'Study Preferences'
+    )
+  })
+
+  test('second mount starts fresh (no cross-mount state leak) [obligation]', () => {
+    // First mount with design tab
+    const { wrapper: w1 } = makeWrapper({ initial_tab: 'design' })
+    expect(w1.find('[data-testid="deck-settings__header-title"]').text()).toBe('Card Designer')
+    w1.unmount()
+
+    // Second mount with no initial_tab: should start at null/index, not design
+    setSidebar(false)
+    const { wrapper: w2 } = makeWrapper()
+    expect(w2.find('[data-testid="deck-settings__header-title"]').text()).toBe('Deck Settings')
+  })
+})
+
+describe('DeckSettings — active_side resets to cover when tab becomes null [obligation]', () => {
+  test('going back (null tab) resets editor.active_side to cover via direct assignment [obligation]', async () => {
+    setSidebar(false)
+    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+
+    // Simulate designer changing active_side to front
+    mockEditor.editor.active_side.value = 'front'
+    expect(mockEditor.editor.active_side.value).toBe('front')
+
+    // Click back → active_tab becomes null
+    await wrapper.find('[data-testid="deck-settings__back-button"]').trigger('click')
+    await flushPromises()
+
+    // The watcher on active_tab should have reset active_side to 'cover'
+    expect(mockEditor.editor.active_side.value).toBe('cover')
+  })
+
+  test('navigating to a non-null tab does not reset active_side [obligation]', async () => {
+    setSidebar(false)
+    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+
+    mockEditor.editor.active_side.value = 'front'
+
+    // Switch to general (non-null tab) via the sheet
+    await wrapper.find('[data-testid="tab-sheet__select-design"]').trigger('click')
+    await flushPromises()
+
+    // Still 'front' — watcher only fires when tab === null
+    expect(mockEditor.editor.active_side.value).toBe('front')
+  })
+})
+
+describe('DeckSettings — initial_tab / initial_side override [obligation]', () => {
+  test('initial_tab prop opens that tab directly (design)', () => {
     const { wrapper } = makeWrapper({ initial_tab: 'design' })
     expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Card Designer')
   })
 
-  test('initial_tab overrides any persisted tab value (study wins over danger-zone)', () => {
-    initialTab.value = 'danger-zone'
+  test('initial_tab prop opens that tab directly (study)', () => {
     const { wrapper } = makeWrapper({ initial_tab: 'study' })
     expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe(
       'Study Preferences'
@@ -544,31 +577,22 @@ describe('DeckSettings — initial_tab / initial_side override persisted state [
 
   test('initial_side calls editor.setActiveSide with the provided side [obligation]', () => {
     const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
-    initialTab.value = 'design'
-    makeWrapper({ initial_side: 'front' })
+    makeWrapper({ initial_tab: 'design', initial_side: 'front' })
     expect(setActiveSide).toHaveBeenCalledWith('front')
     setActiveSide.mockRestore()
   })
 
   test('initial_side=back calls editor.setActiveSide("back") [obligation]', () => {
     const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
-    initialTab.value = 'design'
-    makeWrapper({ initial_side: 'back' })
+    makeWrapper({ initial_tab: 'design', initial_side: 'back' })
     expect(setActiveSide).toHaveBeenCalledWith('back')
     setActiveSide.mockRestore()
   })
 
   test('omitting initial_side does not call editor.setActiveSide', () => {
     const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
-    initialTab.value = 'design'
-    makeWrapper()
+    makeWrapper({ initial_tab: 'design' })
     expect(setActiveSide).not.toHaveBeenCalled()
     setActiveSide.mockRestore()
-  })
-
-  test('omitting initial_tab leaves persisted tab unchanged (danger-zone)', () => {
-    initialTab.value = 'danger-zone'
-    const { wrapper } = makeWrapper()
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Danger Zone')
   })
 })
