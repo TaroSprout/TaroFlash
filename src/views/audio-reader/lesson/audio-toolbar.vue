@@ -176,6 +176,7 @@ function setMode(next: 'expanded' | 'mini') {
           <ui-dropdown-button
             data-testid="audio-toolbar__chapter-select"
             icon-left="browser-content"
+            menu-theme="brown-100"
             variant="ghost"
             open-on-trigger
             hide-trigger
@@ -192,6 +193,7 @@ function setMode(next: 'expanded' | 'mini') {
           <ui-dropdown-button
             data-testid="audio-toolbar__speed-select"
             icon-left="stopwatch"
+            menu-theme="brown-100"
             variant="ghost"
             open-on-trigger
             hide-trigger
