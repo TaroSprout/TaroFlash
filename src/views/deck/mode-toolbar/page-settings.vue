@@ -43,7 +43,7 @@ const size_options: SizeOption[] = [
 ]
 
 function toggle() {
-  emitSfx('ui.select', { blocking: true })
+  emitSfx('ui.snappy_button_5', { blocking: true })
   open.value = !open.value
 }
 
