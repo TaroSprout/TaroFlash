@@ -3,6 +3,7 @@ import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CoverDesigner from '@/components/deck/cover-designer/index.vue'
 import CardDesigner from './card-designer/index.vue'
+import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import TabBar from '@/components/layout-kit/tab-bar.vue'
 import DeckDesignPreview from '@/components/deck/deck-design-preview.vue'
 import { deckEditorKey } from '@/composables/deck-editor'
@@ -48,7 +49,13 @@ const card_side_attributes = computed(() =>
       :active="editor.active_side.value"
       @update:active="editor.setActiveSide"
     />
-    <cover-designer v-if="editor.active_side.value === 'cover'" :config="editor.cover" />
-    <card-designer v-else :attributes="card_side_attributes" />
+    <transition :css="false" mode="out-in" @leave="fadeLeave" @enter="fadeEnter">
+      <cover-designer
+        v-if="editor.active_side.value === 'cover'"
+        :key="editor.active_side.value"
+        :config="editor.cover"
+      />
+      <card-designer v-else :key="editor.active_side.value" :attributes="card_side_attributes" />
+    </transition>
   </div>
 </template>

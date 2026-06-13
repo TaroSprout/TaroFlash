@@ -3,6 +3,7 @@ import { computed, defineAsyncComponent, onMounted, provide, ref, useTemplateRef
 import { useI18n } from 'vue-i18n'
 import DeckAside from './deck-aside.vue'
 import { emitSfx } from '@/sfx/bus'
+import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import { slideFadeRightEnter, slideFadeRightLeave } from '@/utils/animations/slide-fade-right'
 import { tabHeightEnter, tabHeightLeave } from '@/utils/animations/tab-height'
 import { useDeckEditor, deckEditorKey } from '@/composables/deck-editor'
@@ -117,7 +118,7 @@ function onBack() {
 
 function onTabLeave(el: Element, done: () => void) {
   if (!is_mobile.value || !tab_outlet.value) {
-    requestAnimationFrame(done)
+    fadeLeave(el, done)
     return
   }
   tabHeightLeave(tab_outlet.value)(el, done)
@@ -125,7 +126,7 @@ function onTabLeave(el: Element, done: () => void) {
 
 function onTabEnter(el: Element, done: () => void) {
   if (!is_mobile.value || !tab_outlet.value) {
-    requestAnimationFrame(done)
+    fadeEnter(el, done)
     return
   }
   tabHeightEnter(tab_outlet.value)(el, done)
