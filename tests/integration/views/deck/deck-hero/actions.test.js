@@ -162,4 +162,42 @@ describe('deck-hero/actions', () => {
       side: 'front'
     })
   })
+
+  // ── study button disabled state [obligation] ───────────────────────────────
+
+  test('study button is disabled when due_count is 0 [obligation]', () => {
+    const wrapper = mount({ deck: { due_count: 0 } })
+    expect(studyBtn(wrapper).attributes('disabled')).toBeDefined()
+  })
+
+  test('study button is disabled when due_count is undefined [obligation]', () => {
+    const wrapper = mount({ deck: { due_count: undefined } })
+    expect(studyBtn(wrapper).attributes('disabled')).toBeDefined()
+  })
+
+  test('study button shows no-cards-due text when due_count is 0 [obligation]', () => {
+    const wrapper = mount({ deck: { due_count: 0 } })
+    expect(studyBtn(wrapper).text()).toContain('No cards due')
+  })
+
+  test('study button shows no-cards-due text when due_count is undefined [obligation]', () => {
+    const wrapper = mount({ deck: { due_count: undefined } })
+    expect(studyBtn(wrapper).text()).toContain('No cards due')
+  })
+
+  test('study button is enabled when due_count is greater than 0 [obligation]', () => {
+    const wrapper = mount({ deck: { due_count: 5 } })
+    expect(studyBtn(wrapper).attributes('disabled')).toBeUndefined()
+  })
+
+  test('study button shows due count when due_count > 0 [obligation]', () => {
+    const wrapper = mount({ deck: { due_count: 7 } })
+    expect(studyBtn(wrapper).text()).toContain('7')
+  })
+
+  test('clicking the enabled study button starts the session [obligation]', async () => {
+    const wrapper = mount({ deck: { id: 3, due_count: 5 } })
+    await studyBtn(wrapper).trigger('click')
+    expect(mockStartStudy).toHaveBeenCalledWith(expect.objectContaining({ id: 3 }))
+  })
 })
