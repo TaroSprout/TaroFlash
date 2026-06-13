@@ -17,7 +17,7 @@ const emit = defineEmits<{
 }>()
 
 const text_editor = useTemplateRef<HTMLDivElement>('text-editor')
-const has_content = ref(Boolean(content?.length))
+const has_content = ref(Boolean(content?.trim()))
 
 // Font size is owned by the parent card-face and inherited via the cascade — see
 // SIZE_LEVEL_PX there. This surface only renders text and its alignment.
@@ -37,7 +37,11 @@ onMounted(() => {
 })
 
 function on_input(event: Event) {
-  const text = (event.target as HTMLElement).innerText ?? ''
+  // innerText tacks a trailing newline onto block content, so a cleared editor
+  // reads as "\n" not "". Collapse whitespace-only content to empty so the
+  // placeholder (and the card's data-text layout) react on the last deletion.
+  const raw = (event.target as HTMLElement).innerText ?? ''
+  const text = raw.trim() ? raw : ''
   has_content.value = text.length > 0
   emit('update', text)
 }
