@@ -31,6 +31,8 @@ type DropdownButtonProps = Pick<
   // takes its theme explicitly.
   menuTheme?: Theme
   menuThemeDark?: Theme
+  triggerTheme?: Theme
+  triggerThemeDark?: Theme
 }
 
 defineOptions({ inheritAttrs: false })
@@ -53,7 +55,9 @@ const {
   shadow = false,
   primaryDisabled = false,
   menuTheme = 'brown-300',
-  menuThemeDark
+  menuThemeDark,
+  triggerTheme,
+  triggerThemeDark
 } = defineProps<DropdownButtonProps>()
 
 const emit = defineEmits<{
@@ -99,6 +103,15 @@ const trigger_style = computed(() =>
   variant !== 'solid' && popover_open.value
     ? { '--btn-bg-color': 'var(--theme-primary)' }
     : undefined
+)
+
+// The caret normally contrasts against the main button via theme-secondary. A
+// `triggerTheme` re-bases the caret to its own palette, so it reads as that
+// palette's primary surface instead (matching how the menu maps its theme).
+const trigger_surface = computed(() =>
+  triggerTheme
+    ? 'bg-(--theme-primary) text-(--theme-on-primary)'
+    : 'bg-(--theme-secondary) text-(--theme-on-secondary)'
 )
 
 function filter_attrs(keep: (key: string) => boolean) {
@@ -185,6 +198,8 @@ function onSelect(option: DropdownOption) {
         <template #trailing>
           <div
             v-if="show_trigger"
+            :data-theme="triggerTheme"
+            :data-theme-dark="triggerThemeDark"
             class="flex h-full p-2 pointer-coarse:p-0"
             data-testid="dropdown-button__trigger-wrap"
           >
@@ -196,7 +211,8 @@ function onSelect(option: DropdownOption) {
                 aria-haspopup="menu"
                 :aria-expanded="popover_open"
                 :data-active="popover_open"
-                class="relative z-1 flex aspect-square h-full cursor-pointer items-center justify-center rounded-[calc(var(--btn-border-radius)-8px)] pointer-coarse:rounded-(--btn-border-radius) bg-(--theme-secondary) text-(--theme-on-secondary) transition-[scale] duration-120 ease-[ease] hover:scale-110"
+                class="relative z-1 flex aspect-square h-full cursor-pointer items-center justify-center rounded-[calc(var(--btn-border-radius)-8px)] pointer-coarse:rounded-(--btn-border-radius) transition-[scale] duration-120 ease-[ease] hover:scale-110"
+                :class="trigger_surface"
                 data-testid="dropdown-button__trigger"
                 v-sfx.hover="'ui.click_07'"
                 @click.stop="toggle"
