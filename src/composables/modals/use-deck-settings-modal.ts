@@ -29,7 +29,7 @@ export function useDeckSettingsModal() {
       mobile_below_height: 'md',
       props: { deck, initial_tab: options.tab, initial_side: options.side }
     })
-    result.response.then(() => emitSfx('ui.pop_up_close'))
+    result.response.then(() => emitSfx('ui.snappy_button_5'))
     return result
   }
 
