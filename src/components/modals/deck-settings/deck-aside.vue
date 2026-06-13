@@ -2,6 +2,7 @@
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiInput from '@/components/ui-kit/input.vue'
+import UiTextarea from '@/components/ui-kit/textarea.vue'
 import { deckEditorKey } from '@/composables/deck-editor'
 
 type DeckAsideProps = {
@@ -37,8 +38,10 @@ const created_at = computed(() => {
         size="lg"
         v-model:value="settings.title"
       />
-      <ui-input
+      <ui-textarea
         :placeholder="t('deck.description-placeholder')"
+        :max_chars="100"
+        rows="3"
         v-model:value="settings.description"
       />
     </div>
