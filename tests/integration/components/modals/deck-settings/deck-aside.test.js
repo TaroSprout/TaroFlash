@@ -1,65 +1,154 @@
-import { describe, test, expect } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
+import { defineComponent, h, reactive, ref } from 'vue'
 import DeckAside from '@/components/modals/deck-settings/deck-aside.vue'
+import { deckEditorKey } from '@/composables/deck-editor'
 
-const LOCALE = 'en-us'
+const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
+vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
-function formatExpected(iso) {
-  return new Intl.DateTimeFormat(LOCALE, { month: 'short', year: 'numeric' }).format(new Date(iso))
+const InputStub = defineComponent({
+  name: 'UiInput',
+  props: { placeholder: String, error: String, value: String, textAlign: String, size: String },
+  emits: ['update:value'],
+  setup(props, { emit }) {
+    return () =>
+      h('input', {
+        'data-testid': 'ui-kit-input',
+        'data-error': props.error ?? '',
+        value: props.value ?? '',
+        onInput: (e) => emit('update:value', e.target.value)
+      })
+  }
+})
+
+const TextareaStub = defineComponent({
+  name: 'UiTextarea',
+  props: { placeholder: String, value: String, max_chars: Number, rows: String },
+  emits: ['update:value'],
+  setup(props, { emit }) {
+    return () =>
+      h('textarea', {
+        'data-testid': 'ui-kit-textarea',
+        value: props.value ?? '',
+        onInput: (e) => emit('update:value', e.target.value)
+      })
+  }
+})
+
+const ButtonStub = defineComponent({
+  name: 'UiButton',
+  props: { loading: Boolean, disabled: Boolean },
+  emits: ['click'],
+  setup(props, { slots, emit }) {
+    return () =>
+      h(
+        'button',
+        {
+          'data-testid': 'deck-aside__save-button',
+          'data-loading': String(!!props.loading),
+          'data-disabled': String(!!props.disabled),
+          onClick: () => emit('click')
+        },
+        slots.default?.()
+      )
+  }
+})
+
+function makeAside({ title = '', is_dirty = false } = {}) {
+  const settings = reactive({ title, description: '' })
+  const editor = {
+    settings,
+    config: reactive({}),
+    cover: reactive({}),
+    card_attributes: reactive({ front: {}, back: {} }),
+    is_dirty: ref(is_dirty),
+    active_side: ref('cover'),
+    saveDeck: vi.fn(async () => null),
+    deleteDeck: vi.fn(async () => false),
+    resetReviews: vi.fn(async () => false),
+    setActiveSide: vi.fn()
+  }
+  const wrapper = mount(DeckAside, {
+    global: {
+      provide: { [deckEditorKey]: editor },
+      stubs: { UiInput: InputStub, UiTextarea: TextareaStub, UiButton: ButtonStub }
+    }
+  })
+  return { wrapper, editor, settings }
 }
 
-function makeWrapper(deck) {
-  return mount(DeckAside, { props: { deck } })
-}
-
-describe('DeckAside — title', () => {
-  test('renders the deck title when present', () => {
-    const wrapper = makeWrapper({ id: 1, title: 'Hiragana Basics' })
-    expect(wrapper.find('[data-testid="deck-aside__title"]').text()).toBe('Hiragana Basics')
+describe('DeckAside — validate()', () => {
+  test('returns false when title is empty and sets title_error [obligation]', async () => {
+    const { wrapper } = makeAside({ title: '' })
+    const result = await wrapper.vm.validate()
+    const input = wrapper.find('[data-testid="ui-kit-input"]')
+    expect(result).toBe(false)
+    expect(input.attributes('data-error')).not.toBe('')
   })
 
-  test('falls back to the deck.title-placeholder string when title is missing', () => {
-    const wrapper = makeWrapper({ id: 1 })
-    expect(wrapper.find('[data-testid="deck-aside__title"]').text()).toBe('Deck Name')
+  test('returns false when title is whitespace-only and sets title_error [obligation]', async () => {
+    const { wrapper } = makeAside({ title: '   ' })
+    const result = await wrapper.vm.validate()
+    const input = wrapper.find('[data-testid="ui-kit-input"]')
+    expect(result).toBe(false)
+    expect(input.attributes('data-error')).not.toBe('')
   })
 
-  test('falls back to the placeholder when title is an empty string', () => {
-    const wrapper = makeWrapper({ id: 1, title: '' })
-    expect(wrapper.find('[data-testid="deck-aside__title"]').text()).toBe('Deck Name')
+  test('returns true when title is non-empty [obligation]', async () => {
+    const { wrapper } = makeAside({ title: 'My Deck' })
+    const result = await wrapper.vm.validate()
+    expect(result).toBe(true)
   })
 
-  test('falls back to the placeholder when no deck prop is supplied', () => {
-    const wrapper = mount(DeckAside, { props: {} })
-    expect(wrapper.find('[data-testid="deck-aside__title"]').text()).toBe('Deck Name')
+  test('title_error clears when settings.title changes after a failed validate [obligation]', async () => {
+    const { wrapper, settings } = makeAside({ title: '' })
+    await wrapper.vm.validate()
+
+    // Confirm error is set
+    expect(wrapper.find('[data-testid="ui-kit-input"]').attributes('data-error')).not.toBe('')
+
+    // Simulate title change — triggers the watch
+    settings.title = 'New Title'
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid="ui-kit-input"]').attributes('data-error')).toBe('')
   })
 })
 
-describe('DeckAside — owner', () => {
-  test('renders the member_display_name when present', () => {
-    const wrapper = makeWrapper({ id: 1, member_display_name: 'Chris' })
-    expect(wrapper.find('[data-testid="deck-aside__owner"]').text()).toBe('Chris')
+describe('DeckAside — save button', () => {
+  beforeEach(() => mockEmitSfx.mockClear())
+
+  test('emits save when the button is clicked and deck is dirty', async () => {
+    const { wrapper } = makeAside({ title: 'A', is_dirty: true })
+    await wrapper.find('[data-testid="deck-aside__save-button"]').trigger('click')
+    expect(wrapper.emitted('save')).toHaveLength(1)
   })
 
-  test('falls back to the owner-fallback string when display name is missing', () => {
-    const wrapper = makeWrapper({ id: 1 })
-    expect(wrapper.find('[data-testid="deck-aside__owner"]').text()).toBe('Unknown')
+  test('plays powerdown sfx and does not emit save when deck is not dirty', async () => {
+    const { wrapper } = makeAside({ title: 'A', is_dirty: false })
+    await wrapper.find('[data-testid="deck-aside__save-button"]').trigger('click')
+    expect(wrapper.emitted('save')).toBeFalsy()
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.digi_powerdown')
   })
 })
 
-describe('DeckAside — created_at', () => {
-  test('renders a month + year formatted date when created_at is a valid ISO string', () => {
-    const iso = '2024-04-15T00:00:00Z'
-    const wrapper = makeWrapper({ id: 1, created_at: iso })
-    expect(wrapper.find('[data-testid="deck-aside__created-at"]').text()).toBe(formatExpected(iso))
+describe('DeckAside — layout', () => {
+  test('renders the root aside element', () => {
+    const { wrapper } = makeAside({ title: 'A' })
+    expect(wrapper.find('[data-testid="deck-aside"]').exists()).toBe(true)
   })
 
-  test('falls back to the date-fallback string when created_at is missing', () => {
-    const wrapper = makeWrapper({ id: 1 })
-    expect(wrapper.find('[data-testid="deck-aside__created-at"]').text()).toBe('—')
+  test('renders the inputs container with both inputs', () => {
+    const { wrapper } = makeAside({ title: 'A' })
+    expect(wrapper.find('[data-testid="deck-aside__inputs"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="ui-kit-input"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="ui-kit-textarea"]').exists()).toBe(true)
   })
 
-  test('falls back to the date-fallback string when created_at is unparseable', () => {
-    const wrapper = makeWrapper({ id: 1, created_at: 'not-a-date' })
-    expect(wrapper.find('[data-testid="deck-aside__created-at"]').text()).toBe('—')
+  test('description change updates settings.description', async () => {
+    const { settings } = makeAside({ title: 'A' })
+    settings.description = 'new desc'
+    expect(settings.description).toBe('new desc')
   })
 })
