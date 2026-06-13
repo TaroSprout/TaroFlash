@@ -3,6 +3,7 @@ import { computed, onMounted, provide, ref, useTemplateRef } from 'vue'
 import DeckHero from '@/views/deck/deck-hero/index.vue'
 import ModeToolbar from './mode-toolbar/index.vue'
 import ModeStack from './mode-stack.vue'
+import CardGridSkeleton from './card-grid/skeleton.vue'
 import { preloadDeckModes } from './modes'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import { useDeckQuery } from '@/api/decks'
@@ -30,6 +31,9 @@ provide(deckViewShellKey, shell)
 const editor = useCardListController({ deck_id: id.value, shell })
 provide(cardEditorKey, editor)
 
+const is_loading_initial = computed(
+  () => editor.isLoading.value && editor.list.all_cards.value.length === 0
+)
 const is_empty = computed(() => !editor.isLoading.value && editor.list.all_cards.value.length === 0)
 
 onMounted(preloadDeckModes)
@@ -58,6 +62,7 @@ onMounted(preloadDeckModes)
       </div>
 
       <div v-if="is_empty" data-testid="deck-view__empty" class="mt-6" />
+      <card-grid-skeleton v-else-if="is_loading_initial" class="mt-6" />
       <mode-stack v-else class="mt-6" :sticky_header="toolbar" />
     </div>
 
