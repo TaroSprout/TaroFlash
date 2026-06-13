@@ -19,7 +19,7 @@ import Card from '@/components/card/index.vue'
 import TabSheet from '@/components/layout-kit/modal/tab-sheet.vue'
 
 export type DeckSettingsResponse = boolean
-export type ActiveTab = 'general' | 'design' | 'study' | 'danger-zone'
+export type ActiveTab = 'design' | 'study' | 'danger-zone'
 
 const { deck, close, initial_tab, initial_side } = defineProps<{
   deck: Deck
@@ -29,7 +29,6 @@ const { deck, close, initial_tab, initial_side } = defineProps<{
 }>()
 
 const TabDesign = defineAsyncComponent(() => import('./tab-design/index.vue'))
-const TabGeneral = defineAsyncComponent(() => import('./tab-general/index.vue'))
 const TabStudy = defineAsyncComponent(() => import('./tab-study/index.vue'))
 const TabDangerZone = defineAsyncComponent(() => import('./tab-danger-zone/index.vue'))
 const TabIndex = defineAsyncComponent(() => import('./tab-index/index.vue'))
@@ -40,7 +39,6 @@ const DeckDesignPreview = defineAsyncComponent(
 const TAB_COMPONENTS = {
   index: TabIndex,
   design: TabDesign,
-  general: TabGeneral,
   study: TabStudy,
   'danger-zone': TabDangerZone
 }
@@ -65,7 +63,6 @@ if (initial_tab) active_tab.value = initial_tab
 if (initial_side) editor.setActiveSide(initial_side)
 
 const tabs = computed(() => [
-  { value: 'general', icon: 'tag-chevron', label: t('deck.settings-modal.tab.general') },
   { value: 'design', icon: 'paint-brush', label: t('deck.settings-modal.tab.design') },
   { value: 'study', icon: 'school-cap', label: t('deck.settings-modal.tab.study') },
   { value: 'danger-zone', icon: 'delete', label: t('deck.settings-modal.tab.danger-zone') }
@@ -75,10 +72,10 @@ const tabs = computed(() => [
 // tab stays a strict inverse of the sidebar instead of a re-derived condition.
 const has_sidebar = computed(() => tab_sheet.value?.has_sidebar ?? false)
 
-const displayed_tab = computed(() => active_tab.value ?? (has_sidebar.value ? 'general' : 'index'))
+const displayed_tab = computed(() => active_tab.value ?? (has_sidebar.value ? 'design' : 'index'))
 
 const sidebar_active = computed({
-  get: () => active_tab.value ?? 'general',
+  get: () => active_tab.value ?? 'design',
   set: (v) => (active_tab.value = v as ActiveTab)
 })
 
@@ -94,7 +91,6 @@ onMounted(() => {
   const idle = window.requestIdleCallback ?? ((cb: IdleRequestCallback) => setTimeout(cb, 200))
   idle(() => {
     import('./tab-design/index.vue')
-    import('./tab-general/index.vue')
     import('./tab-study/index.vue')
     import('./tab-danger-zone/index.vue')
     import('./tab-index/index.vue')
@@ -149,7 +145,7 @@ watch(active_tab, (tab) => {
     data-testid="deck-settings-container"
     data-theme="green-500"
     data-theme-dark="green-800"
-    class="w-full! max-w-205.5 lg:pointer-fine:max-w-none lg:pointer-fine:w-257! md:h-172 max-md:[--sheet-px:2rem]"
+    class="w-full! max-w-205.5 lg:pointer-fine:max-w-none lg:pointer-fine:w-248! md:h-172 max-md:[--sheet-px:2rem]"
     :tabs="tabs"
     :pattern_config="{ pattern: 'endless-clouds' }"
     :parts="{ content: 'flex gap-14 h-full items-start' }"
@@ -182,7 +178,7 @@ watch(active_tab, (tab) => {
       v-if="!is_mobile"
       data-testid="deck-settings__aside"
       :deck="deck"
-      class="w-78.5 shrink-0 self-end pt-60"
+      class="w-78.5 shrink-0 self-end pt-70"
     />
 
     <template #overlay>

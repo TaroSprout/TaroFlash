@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
+import UiInput from '@/components/ui-kit/input.vue'
+import { deckEditorKey } from '@/composables/deck-editor'
 
 type DeckAsideProps = {
   deck?: Deck
@@ -9,10 +11,7 @@ type DeckAsideProps = {
 const { deck } = defineProps<DeckAsideProps>()
 
 const { t, locale } = useI18n()
-
-const card_count = computed(() => deck?.card_count ?? 0)
-
-const title = computed(() => deck?.title || t('deck.title-placeholder'))
+const { settings } = inject(deckEditorKey)!
 
 const owner = computed(
   () => deck?.member_display_name || t('deck.settings-modal.aside.owner-fallback')
@@ -31,12 +30,18 @@ const created_at = computed(() => {
     data-testid="deck-aside"
     class="h-full flex flex-col justify-between gap-5 text-brown-700 dark:text-brown-100"
   >
-    <h2
-      data-testid="deck-aside__title"
-      class="text-center text-3xl font-semibold leading-tight truncate"
-    >
-      {{ title }}
-    </h2>
+    <div data-testid="deck-aside__inputs" class="flex flex-col gap-2">
+      <ui-input
+        :placeholder="t('deck.title-placeholder')"
+        text-align="center"
+        size="lg"
+        v-model:value="settings.title"
+      />
+      <ui-input
+        :placeholder="t('deck.description-placeholder')"
+        v-model:value="settings.description"
+      />
+    </div>
 
     <div
       data-testid="deck-aside__meta"
