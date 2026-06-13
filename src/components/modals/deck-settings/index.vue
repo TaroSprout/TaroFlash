@@ -213,6 +213,13 @@ watch(active_tab, (tab) => {
             face_classes="bg-white! dark:bg-stone-700!"
           />
 
+          <div
+            data-testid="deck-settings__preview-paperclip"
+            class="absolute -top-8 right-15 -translate-x-1/2 z-10 drop-shadow-2xs"
+          >
+            <ui-icon src="paperclip" class="w-16 h-16 -rotate-186 text-grey-300" />
+          </div>
+
           <deck-design-preview
             :deck_id="deck.id"
             :cover="editor.cover"
