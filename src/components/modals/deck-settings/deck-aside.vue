@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import { computed, inject, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiInput from '@/components/ui-kit/input.vue'
 import UiTextarea from '@/components/ui-kit/textarea.vue'
@@ -14,6 +14,8 @@ const { deck } = defineProps<DeckAsideProps>()
 const { t, locale } = useI18n()
 const { settings } = inject(deckEditorKey)!
 
+const title_error = ref<string>()
+
 const owner = computed(
   () => deck?.member_display_name || t('deck.settings-modal.aside.owner-fallback')
 )
@@ -24,6 +26,22 @@ const created_at = computed(() => {
   if (Number.isNaN(d.getTime())) return t('deck.settings-modal.aside.date-fallback')
   return new Intl.DateTimeFormat(locale.value, { month: 'short', year: 'numeric' }).format(d)
 })
+
+/** Returns true if valid; sets error state and returns false otherwise. */
+function validate(): boolean {
+  if (settings.title?.trim()) return true
+  title_error.value = t('deck.create-modal.title-required')
+  return false
+}
+
+defineExpose({ validate })
+
+watch(
+  () => settings.title,
+  () => {
+    title_error.value = undefined
+  }
+)
 </script>
 
 <template>
@@ -34,6 +52,7 @@ const created_at = computed(() => {
     <div data-testid="deck-aside__inputs" class="flex flex-col gap-2">
       <ui-input
         :placeholder="t('deck.title-placeholder')"
+        :error="title_error"
         text-align="center"
         size="lg"
         v-model:value="settings.title"

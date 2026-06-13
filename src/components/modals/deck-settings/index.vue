@@ -52,6 +52,7 @@ const danger = useDeckDangerActions(editor, deck, close)
 provide(deckDangerActionsKey, danger)
 
 const tab_sheet = useTemplateRef('tab_sheet')
+const deck_aside = useTemplateRef('deck_aside')
 // Width-only: matches the template's `max-md:` layout switch. The aside +
 // floating preview drop on a narrow viewport, never on a short one.
 const is_mobile = useMatchMedia('w<md')
@@ -103,6 +104,7 @@ function onPreviewSide(side: CardSide) {
 }
 
 async function onSave() {
+  if (deck_aside.value && !deck_aside.value.validate()) return
   const saved = await editor.saveDeck()
   if (saved) close(true)
 }
@@ -176,6 +178,7 @@ watch(active_tab, (tab) => {
 
     <deck-aside
       v-if="!is_mobile"
+      ref="deck_aside"
       data-testid="deck-settings__aside"
       :deck="deck"
       class="w-78.5 shrink-0 self-end pt-70"
