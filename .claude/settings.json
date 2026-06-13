@@ -23,8 +23,7 @@
       "Bash(git log:*)",
       "Bash(git fetch:*)",
       "Bash(git worktree:*)"
-    ],
-    "deny": ["Bash(rm -rf *)"]
+    ]
   },
   "hooks": {
     "PreToolUse": [
