@@ -136,9 +136,14 @@ const font_size = computed(() => {
   border-radius: inherit;
 }
 
+/* Clip the text to the region box so long content can't spill past the card
+   edges. Only the text is clipped — image-region controls (remove button, etc.)
+   intentionally poke out and stay unclipped above. */
 .card-face__text-region {
   flex: 0 0 auto;
   min-height: 0;
+
+  overflow: hidden;
 }
 
 /* behind: image fills the face, text floats on top of it */
