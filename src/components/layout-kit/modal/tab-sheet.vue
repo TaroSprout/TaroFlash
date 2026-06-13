@@ -3,7 +3,6 @@ import { computed, provide } from 'vue'
 import mobileSheet, { type MobileSheetProps } from './mobile-sheet.vue'
 import { SHEET_SIDEBAR_BG } from './sheet-surface'
 import { activeTabKey } from './tab-sheet-context'
-import { useShortcuts } from '@/composables/use-shortcuts'
 import { useMatchMedia } from '@/composables/use-media-query'
 import { emitSfx } from '@/sfx/bus'
 import type { NamespacedAudioKey } from '@/sfx/config'
@@ -90,34 +89,6 @@ function selectOption(value: string) {
   active.value = value
   emit('select', value)
 }
-
-function focusTabAt(index: number) {
-  const target = tabs?.[index]
-  if (!target) return
-  selectOption(target.value)
-  document.getElementById(tabId(target.value))?.focus()
-}
-
-function activeIndex() {
-  return (tabs ?? []).findIndex((t) => t.value === active.value)
-}
-
-function step(delta: number) {
-  const len = tabs?.length ?? 0
-  if (!len) return
-  focusTabAt((activeIndex() + delta + len) % len)
-}
-
-const shortcuts = useShortcuts('tab-sheet')
-
-shortcuts.register([
-  { combo: 'arrowright', handler: () => step(1) },
-  { combo: 'arrowdown', handler: () => step(1) },
-  { combo: 'arrowleft', handler: () => step(-1) },
-  { combo: 'arrowup', handler: () => step(-1) },
-  { combo: 'home', handler: () => focusTabAt(0) },
-  { combo: 'end', handler: () => focusTabAt((tabs?.length ?? 1) - 1) }
-])
 </script>
 
 <template>
