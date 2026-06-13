@@ -55,6 +55,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
 
   const hovered = ref(false)
   const hover_suppressed = ref(false)
+  const pending = ref(false)
   let suppress_timer: ReturnType<typeof setTimeout> | undefined
 
   const {
@@ -103,12 +104,15 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
     if (!can_upload.value) return
 
     suppressHover()
+    pending.value = true
 
     try {
       await setFaceImage(toValue(card).id!, side, file)
       emitSfx('ui.music_plink_ok', { blocking: true })
     } catch {
       toast.error(t('toast.error.card-image-upload-failed'))
+    } finally {
+      pending.value = false
     }
   }
 
@@ -116,11 +120,14 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
   async function onRemove() {
     emitSfx('ui.trash_crumple_short')
     clearError()
+    pending.value = true
 
     try {
       await setFaceImage(toValue(card).id!, side, null)
     } catch {
       toast.error(t('toast.error.card-image-delete-failed'))
+    } finally {
+      pending.value = false
     }
   }
 
@@ -189,6 +196,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
     hovered,
     active,
     covered,
+    pending,
     has_image,
     image_path,
     can_upload,
