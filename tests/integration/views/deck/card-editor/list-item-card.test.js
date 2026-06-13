@@ -115,6 +115,9 @@ beforeEach(() => {
   mocks.claimFocusMock.mockReset()
   mocks.claimFocusMock.mockReturnValue(false)
   mocks.gsapFromMock.mockReset()
+  // The runner's window isn't focused, so document.hasFocus() is false and the
+  // window-blur guard would swallow every focusout. Simulate a focused window.
+  vi.spyOn(document, 'hasFocus').mockReturnValue(true)
 })
 
 describe('ListItemCard', () => {

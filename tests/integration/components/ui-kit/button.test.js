@@ -122,7 +122,7 @@ describe('UiButton', () => {
     test('defers the click handler until after the tap animation on coarse pointers', async () => {
       const onClick = vi.fn()
       const wrapper = shallowMount(UiButton, {
-        props: { playOnTap: true },
+        props: { playOnTap: true, tapAnimate: true },
         attrs: { onClick }
       })
 
@@ -146,7 +146,7 @@ describe('UiButton', () => {
 
       const onClick = vi.fn()
       const wrapper = shallowMount(UiButton, {
-        props: { playOnTap: true },
+        props: { playOnTap: true, tapAnimate: true },
         attrs: { onClick }
       })
 

@@ -112,7 +112,11 @@ function mountDropdown(props = {}, { attrs = {}, slots = {} } = {}) {
       stubs: {
         UiButton: UiButtonStub,
         UiPopover: UiPopoverStub,
-        UiIcon: UiIconStub
+        UiIcon: UiIconStub,
+        // Render the extracted caret/menu children so their markup (trigger,
+        // menu, options) is present — shallowMount would otherwise stub them.
+        DropdownCaret: false,
+        DropdownMenu: false
       },
       directives: { sfx: {} }
     }
