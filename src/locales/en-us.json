@@ -357,6 +357,7 @@
   "deck.create-modal.details-heading": "Details",
   "deck.create-modal.submit": "Create Deck",
   "deck.create-modal.cancel": "Cancel",
+  "deck.create-modal.title-required": "Give your deck a name",
   "deck.settings-modal.is-public": "Public Deck",
   "deck.settings-modal.aside.owner-fallback": "Unknown",
   "deck.settings-modal.aside.card-count-label": "Cards",
