@@ -1,23 +1,16 @@
 <script setup lang="ts">
-import { computed, provide, ref, useTemplateRef, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, provide, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import TabProfile from './tab-profile/index.vue'
-import TabSubscription from './tab-subscription/index.vue'
-import TabApp from './tab-app/index.vue'
-import TabDangerZone from './tab-danger-zone/index.vue'
-import TabIndex from './tab-index/index.vue'
 import SettingsAside from './settings-aside.vue'
-import MemberCard from '@/components/member/member-card.vue'
+import { settingsLayoutKey, settingsCloseKey } from '../layout'
 import { emitSfx } from '@/sfx/bus'
-import { slideFadeRightEnter, slideFadeRightLeave } from '@/utils/animations/slide-fade-right'
-import { tabHeightEnter, tabHeightLeave } from '@/utils/animations/tab-height'
 import { useMemberEditor, memberEditorKey } from '@/composables/member/editor'
 import { useMemberDangerActions, memberDangerActionsKey } from '@/composables/member/danger-actions'
+import { useTabModalLayout } from '@/composables/ui/tab-modal-layout'
+import { useTabTransition } from '@/composables/ui/tab-transition'
+import { useAlert } from '@/composables/alert'
 import { useSessionRef } from '@/composables/storage/session-ref'
-import { useMatchMedia } from '@/composables/ui/media-query'
-import UiButton from '@/components/ui-kit/button.vue'
-import UiIcon from '@/components/ui-kit/icon.vue'
-import UiTagButton from '@/components/ui-kit/tag-button.vue'
+import MemberCard from '@/components/member/member-card.vue'
 import TabSheet from '@/components/layout-kit/modal/tab-sheet.vue'
 import type { AppProps, AppEmits } from '@/phone/system/types'
 
@@ -26,11 +19,41 @@ const emit = defineEmits<AppEmits>()
 
 const { t } = useI18n()
 
+const TabProfile = defineAsyncComponent(() => import('./tab-profile/index.vue'))
+const TabSubscription = defineAsyncComponent(() => import('./tab-subscription/index.vue'))
+const TabApp = defineAsyncComponent(() => import('./tab-app/index.vue'))
+const TabDangerZone = defineAsyncComponent(() => import('./tab-danger-zone/index.vue'))
+const TabIndex = defineAsyncComponent(() => import('./tab-index/index.vue'))
+
+const TAB_COMPONENTS = {
+  index: TabIndex,
+  profile: TabProfile,
+  subscription: TabSubscription,
+  app: TabApp,
+  'danger-zone': TabDangerZone
+}
+
 const editor = useMemberEditor()
 provide(memberEditorKey, editor)
 
 const danger = useMemberDangerActions(() => emit('close'))
 provide(memberDangerActionsKey, danger)
+
+const alert = useAlert()
+
+// landscape phone (h<sm) also counts as sheet
+const { layout_mode, sheet_px } = useTabModalLayout({
+  sheet_query: 'w<md | h<sm',
+  desktop_query: 'w>=lg & fine'
+})
+provide(settingsLayoutKey, layout_mode)
+provide(settingsCloseKey, () => emit('close'))
+
+type ActiveTab = 'profile' | 'subscription' | 'app' | 'danger-zone'
+const active_tab = useSessionRef<ActiveTab | null>('settings.active-tab', null)
+
+const tab_outlet = ref<HTMLElement>()
+const { nav_direction, onTabEnter, onTabLeave } = useTabTransition(layout_mode, tab_outlet)
 
 const tabs = computed(() => [
   { value: 'profile', icon: 'id-card', label: t('settings.tab.profile') },
@@ -39,21 +62,9 @@ const tabs = computed(() => [
   { value: 'danger-zone', icon: 'delete', label: t('settings.tab.danger-zone') }
 ])
 
-type ActiveTab = 'profile' | 'subscription' | 'app' | 'danger-zone'
-const active_tab = useSessionRef<ActiveTab | null>('settings.active-tab', null)
-
-const is_mobile = useMatchMedia('w<md | h<sm')
-const tab_sheet = useTemplateRef('tab_sheet')
-
-// Sourced from TabSheet (the one owner of sidebar visibility), so the displayed
-// tab tracks the actual sidebar instead of a re-derived condition that drifts.
-const has_sidebar = computed(() => tab_sheet.value?.has_sidebar ?? false)
-
-watch(has_sidebar, (visible) => {
-  if (!visible && active_tab.value === 'danger-zone') active_tab.value = null
-})
-
-const displayed_tab = computed(() => active_tab.value ?? (has_sidebar.value ? 'profile' : 'index'))
+const displayed_tab = computed(
+  () => active_tab.value ?? (layout_mode.value !== 'sheet' ? 'profile' : 'index')
+)
 
 const sidebar_active = computed({
   get: () => active_tab.value ?? 'profile',
@@ -65,59 +76,60 @@ const active_header = computed(() => ({
   description: t(`settings.header.${displayed_tab.value}.description`)
 }))
 
-async function onSave() {
-  const saved = await editor.saveMember()
-  if (saved) emit('close')
+const tab_component = computed(() => TAB_COMPONENTS[displayed_tab.value])
+
+onMounted(() => {
+  const idle = window.requestIdleCallback ?? ((cb: IdleRequestCallback) => setTimeout(cb, 200))
+  idle(() => {
+    import('./tab-profile/index.vue')
+    import('./tab-subscription/index.vue')
+    import('./tab-app/index.vue')
+    import('./tab-danger-zone/index.vue')
+    import('./tab-index/index.vue')
+  })
+})
+
+async function onClose() {
+  if (!editor.is_dirty.value) return emit('close')
+  const { response } = alert.warn({
+    title: t('settings.unsaved-alert.title'),
+    message: t('settings.unsaved-alert.message'),
+    confirmLabel: t('settings.unsaved-alert.confirm'),
+    cancelLabel: t('settings.unsaved-alert.cancel')
+  })
+  if (await response) emit('close')
+}
+
+function onNavigate(tab: ActiveTab) {
+  nav_direction.value = 'forward'
+  active_tab.value = tab
 }
 
 function onBack() {
-  emitSfx('ui.select')
+  emitSfx('ui.snappy_button_5')
+  nav_direction.value = 'back'
   active_tab.value = null
 }
 
-const tab_outlet = ref<HTMLElement>()
-
-const TAB_COMPONENTS = {
-  index: TabIndex,
-  profile: TabProfile,
-  subscription: TabSubscription,
-  app: TabApp,
-  'danger-zone': TabDangerZone
-}
-
-const tab_component = computed(() => TAB_COMPONENTS[displayed_tab.value])
-
-function onTabLeave(el: Element, done: () => void) {
-  if (!is_mobile.value || !tab_outlet.value) {
-    requestAnimationFrame(done)
-    return
-  }
-  tabHeightLeave(tab_outlet.value)(el, done)
-}
-
-function onTabEnter(el: Element, done: () => void) {
-  if (!is_mobile.value || !tab_outlet.value) {
-    requestAnimationFrame(done)
-    return
-  }
-  tabHeightEnter(tab_outlet.value)(el, done)
-}
+watch(layout_mode, (mode) => {
+  if (mode === 'sheet' && active_tab.value === 'danger-zone') active_tab.value = null
+})
 </script>
 
 <template>
   <tab-sheet
-    ref="tab_sheet"
     data-testid="settings-container"
     data-theme="blue-500"
     data-theme-dark="blue-650"
-    class="w-full! max-w-205.5 lg:pointer-fine:max-w-none lg:pointer-fine:w-250! md:h-167 max-md:[--sheet-px:2rem]"
-    surface="inverted"
+    :data-layout="layout_mode"
+    :class="layout_mode === 'desktop' ? 'w-250!' : 'w-full! max-w-205.5'"
+    :sheet_px="sheet_px"
     :tabs="tabs"
     :pattern_config="{ pattern: 'endless-clouds' }"
     :parts="{ content: 'flex gap-14 h-full items-start' }"
     hover_sfx="ui.click_07"
     v-model:active="sidebar_active"
-    @close="emit('close')"
+    @close="onClose"
   >
     <template #header-content>
       <div
@@ -136,42 +148,26 @@ function onTabEnter(el: Element, done: () => void) {
     <div
       ref="tab_outlet"
       data-testid="settings__main"
-      class="relative flex flex-1 flex-col gap-4 w-full min-w-0 max-md:max-w-111 max-md:mx-auto max-md:overflow-hidden"
+      :class="[
+        'relative flex flex-1 flex-col gap-4 w-full min-w-0',
+        layout_mode === 'sheet' && 'max-w-111 mx-auto overflow-hidden'
+      ]"
     >
       <transition :css="false" mode="out-in" @leave="onTabLeave" @enter="onTabEnter">
-        <component :is="tab_component" :key="displayed_tab" @navigate="active_tab = $event" />
+        <component :is="tab_component" :key="displayed_tab" @navigate="onNavigate" @back="onBack" />
       </transition>
     </div>
 
     <settings-aside
-      v-if="!is_mobile"
+      v-if="layout_mode !== 'sheet'"
       data-testid="settings__aside"
       class="w-96 shrink-0 self-end pt-60"
     />
 
     <template #overlay>
-      <transition
-        :css="false"
-        @enter="(el, done) => slideFadeRightEnter(el, done)"
-        @leave="(el, done) => slideFadeRightLeave(el, done)"
-      >
-        <ui-tag-button
-          v-if="!has_sidebar && active_tab !== null"
-          data-testid="settings__back-button"
-          :aria-label="t('settings.back-button')"
-          data-theme="yellow-500"
-          data-theme-dark="yellow-700"
-          class="pointer-events-auto absolute! left-(--sheet-px) top-29 drop-shadow-xs"
-          @click="onBack"
-        >
-          <ui-icon src="arrow-back" class="w-4 h-4" />
-          <span>{{ t('settings.back-label') }}</span>
-        </ui-tag-button>
-      </transition>
-
       <div
-        v-if="!is_mobile"
-        data-testid="settings__floating-preview"
+        v-if="layout_mode !== 'sheet'"
+        data-testid="settings__pinned-preview"
         class="pointer-events-auto absolute right-(--sheet-px) top-6"
       >
         <member-card
@@ -185,18 +181,6 @@ function onTabEnter(el: Element, done: () => void) {
       </div>
     </template>
 
-    <template #footer>
-      <ui-button
-        v-if="editor.is_dirty.value"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
-        size="xl"
-        full-width
-        :loading="editor.saving.value"
-        @click="onSave"
-      >
-        {{ t('settings.submit-edit') }}
-      </ui-button>
-    </template>
+    <template #footer />
   </tab-sheet>
 </template>

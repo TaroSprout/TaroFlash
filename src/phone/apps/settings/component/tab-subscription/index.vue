@@ -6,6 +6,7 @@ import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import PlanSection from '../billing-settings/plan-section.vue'
 import PaymentMethodsSection from '../billing-settings/payment-methods-section.vue'
 import InvoicesSection from '../billing-settings/invoices-section.vue'
+import SettingsBackButton from '../settings-back-button.vue'
 import { useMemberStore } from '@/stores/member'
 import { useSubscriptionQuery } from '@/api/billing'
 import { useModal } from '@/composables/modal'
@@ -16,6 +17,8 @@ const member_store = useMemberStore()
 const modal = useModal()
 const subscription_query = useSubscriptionQuery()
 
+const emit = defineEmits<{ back: [] }>()
+
 function openUpgradeModal() {
   modal.open(Checkout, { mode: 'mobile-sheet', backdrop: true })
 }
@@ -23,6 +26,8 @@ function openUpgradeModal() {
 
 <template>
   <section-list data-testid="tab-subscription">
+    <settings-back-button @back="emit('back')" />
+
     <labeled-section
       v-if="member_store.plan !== 'paid'"
       data-testid="tab-subscription__free"

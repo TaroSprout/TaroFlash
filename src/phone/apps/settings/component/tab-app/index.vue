@@ -5,18 +5,26 @@ import UiSlider from '@/components/ui-kit/slider.vue'
 import UiToggle from '@/components/ui-kit/toggle.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
+import SettingsBackButton from '../settings-back-button.vue'
+import SettingsSaveButton from '../settings-save-button.vue'
 import { memberEditorKey } from '@/composables/member/editor'
+import { settingsLayoutKey } from '../../layout'
 
 const { t } = useI18n()
 const editor = inject(memberEditorKey)!
+const layout_mode = inject(settingsLayoutKey)!
 
 const interface_volume = ref(50)
 const alerts_volume = ref(50)
 const rewards_volume = ref(50)
+
+const emit = defineEmits<{ back: [] }>()
 </script>
 
 <template>
   <section-list data-testid="tab-app">
+    <settings-back-button @back="emit('back')" />
+
     <labeled-section :label="t('settings.app.section.audio')">
       <div
         data-testid="tab-app__sliders"
@@ -45,5 +53,7 @@ const rewards_volume = ref(50)
         </ui-toggle>
       </div>
     </labeled-section>
+
+    <settings-save-button v-if="layout_mode === 'sheet'" />
   </section-list>
 </template>

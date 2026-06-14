@@ -1,19 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { inject } from 'vue'
+import { useI18n } from 'vue-i18n'
+import UiInput from '@/components/ui-kit/input.vue'
+import UiTextarea from '@/components/ui-kit/textarea.vue'
+import SettingsSaveButton from './settings-save-button.vue'
 import { memberEditorKey } from '@/composables/member/editor'
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const editor = inject(memberEditorKey)!
-
-const joined_on = computed(() => {
-  const raw = editor.created_at.value
-  if (!raw) return t('settings.preview.title-fallback')
-  const d = new Date(raw)
-  if (Number.isNaN(d.getTime())) return t('settings.preview.title-fallback')
-  return new Intl.DateTimeFormat(locale.value, { month: 'short', year: 'numeric' }).format(d)
-})
 </script>
 
 <template>
@@ -21,20 +15,21 @@ const joined_on = computed(() => {
     data-testid="settings-aside"
     class="h-full flex flex-col justify-between gap-5 text-brown-700 dark:text-brown-100"
   >
-    <h2
-      data-testid="settings-aside__title"
-      class="text-center text-3xl font-semibold leading-tight truncate"
-    >
-      {{ editor.settings.display_name || t('settings.preview.title-fallback') }}
-    </h2>
-
-    <div
-      data-testid="settings-aside__meta"
-      class="flex items-center justify-center gap-2 text-sm text-brown-500 dark:text-brown-300"
-    >
-      <span data-testid="settings-aside__plan">{{ editor.plan.value }}</span>
-      <span aria-hidden="true">·</span>
-      <span data-testid="settings-aside__joined-on">{{ joined_on }}</span>
+    <div data-testid="settings-aside__inputs" class="flex flex-col gap-2">
+      <ui-input
+        :placeholder="t('settings.aside.name-placeholder')"
+        text-align="center"
+        size="lg"
+        v-model:value="editor.settings.display_name"
+      />
+      <ui-textarea
+        :placeholder="t('settings.aside.bio-placeholder')"
+        :max_chars="100"
+        rows="3"
+        v-model:value="editor.settings.description"
+      />
     </div>
+
+    <settings-save-button />
   </aside>
 </template>
