@@ -7,7 +7,6 @@ import { useLessonsByCollectionQuery } from '@/api/lessons'
 import { useLessonReader } from '@/composables/audio-reader/use-lesson-reader'
 import { useReaderProgress } from '@/composables/audio-reader/use-reader-progress'
 import { useCollectionEditModal } from '@/composables/modals/use-collection-edit-modal'
-import { useMatchMedia } from '@/composables/use-media-query'
 import { useAnimatedHeight } from '@/composables/use-animated-height'
 import { scrollClearOf } from '@/utils/animations/transcript-scroll'
 import { fadeLeave } from '@/utils/animations/fade'
@@ -21,7 +20,6 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import AudioToolbar from '@/views/audio-reader/lesson/audio-toolbar.vue'
 import TranscriptView from '@/views/audio-reader/transcript/index.vue'
-import TermPopover from '@/views/audio-reader/term-popover/index.vue'
 import TermCard from '@/views/audio-reader/term-popover/term-card.vue'
 
 const { collectionId, lessonId } = defineProps<{ collectionId: string; lessonId: string }>()
@@ -29,7 +27,6 @@ const { collectionId, lessonId } = defineProps<{ collectionId: string; lessonId:
 const { t } = useI18n()
 const router = useRouter()
 const edit_modal = useCollectionEditModal()
-const is_mobile = useMatchMedia('w<sm | h<sm')
 
 const collection_id = computed(() => Number(collectionId))
 const lesson_id = computed(() => Number(lessonId))
@@ -79,11 +76,7 @@ const chapter_of = computed(() => ({
   total: chapters.value.length
 }))
 
-// On a phone the term translation takes over the footer in place of the audio
-// toolbar; on desktop it stays an anchored popover over the transcript.
-const show_term_in_footer = computed(
-  () => is_mobile.value && popover_open.value && !!selection.value
-)
+const show_term_in_footer = computed(() => popover_open.value && !!selection.value)
 
 // Veil the reader until the transcript is loaded and the chapter has been
 // positioned at its resume offset, so the resume seek lands behind the veil and
@@ -297,19 +290,6 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
       </footer>
 
       <scroll-bar class="fixed top-(--nav-height) right-6 bottom-6" target="html" />
-
-      <term-popover
-        v-if="selection && !is_mobile"
-        :open="popover_open"
-        :rect="selection.rect"
-        :term="selection.term"
-        :sentence="selection.sentence"
-        :target_lang="target_lang"
-        :existing_decks="selected_term_decks"
-        @close="closeTerm"
-        @play-from-here="playFromHere"
-        @play-word="playClip"
-      />
     </div>
   </section>
 </template>
