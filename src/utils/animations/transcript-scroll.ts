@@ -7,9 +7,10 @@ const ANCHOR_RATIO = 0.4
 const DURATION = 0.6
 
 // Deadzone boundaries for word-level scroll. Words inside this band don't
-// trigger a scroll; words outside snap to the top of the band.
+// trigger a scroll; words outside snap to SCROLL_ANCHOR.
 const DEADZONE_TOP = 0.15
-const DEADZONE_BOTTOM = 0.8
+const DEADZONE_BOTTOM = 0.7
+const SCROLL_ANCHOR = 0.25
 
 // The scroller is the transcript column on desktop, but the whole page (window)
 // on mobile, where the column isn't bounded and the document scrolls instead.
@@ -139,7 +140,7 @@ export function scrollWordIntoDeadzone(scroller: Scroller, el: HTMLElement, anim
   if (el_top_in_vp >= dz_top && el_bottom_in_vp <= dz_bottom) return
 
   const el_top_within = el_rect.top - top + current
-  const target = Math.max(0, Math.min(max, el_top_within - dz_top))
+  const target = Math.max(0, Math.min(max, el_top_within - viewport * SCROLL_ANCHOR))
 
   let state = stateByScroller.get(scroller)
   if (!state) {
