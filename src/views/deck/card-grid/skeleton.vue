@@ -19,7 +19,7 @@ const { card_scale, grid_style } = useCardGrid(grid_size)
   <div data-testid="card-grid-skeleton" class="w-full h-full md:min-h-0 overflow-hidden py-2">
     <div class="grid justify-center gap-4 opacity-30" :style="grid_style">
       <div
-        v-for="n in 20"
+        v-for="n in 40"
         :key="n"
         data-testid="card-grid-skeleton__item"
         class="skeleton-item relative aspect-card w-full"
