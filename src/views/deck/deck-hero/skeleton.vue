@@ -13,7 +13,7 @@ const DEFAULT_COVER: DeckCover = {
     data-testid="deck-hero-skeleton"
     class="flex max-w-full flex-col items-center gap-6 md:flex-row md:items-end xl:w-max xl:flex-col xl:items-start animate-pulse"
   >
-    <card size="lg" side="cover" shimmer :cover_config="DEFAULT_COVER" class="opacity-30" />
+    <card size="lg" side="cover" shimmer :cover_config="DEFAULT_COVER" />
 
     <div
       data-testid="deck-hero-skeleton__details"
