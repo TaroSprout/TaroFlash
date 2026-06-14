@@ -7,16 +7,13 @@ import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import TabBar from '@/components/layout-kit/tab-bar.vue'
 import DeckDesignPreview from '@/components/deck/deck-design-preview.vue'
 import { deckEditorKey } from '@/composables/deck-editor'
-import { useMatchMedia } from '@/composables/use-media-query'
+import { deckSettingsLayoutKey } from '../layout'
 
 type SideTab = { value: CardSide; label: string }
 
 const { t } = useI18n()
 const editor = inject(deckEditorKey)!
-
-// Width-only: the inline preview replaces the width-gated floating preview, so
-// a short-but-wide viewport must not show both.
-const is_mobile = useMatchMedia('w<md')
+const layout_mode = inject(deckSettingsLayoutKey)!
 
 const tabs = computed<SideTab[]>(() => [
   { value: 'cover', label: t('deck.settings-modal.design.designer-tabs.cover') },
@@ -32,7 +29,7 @@ const card_side_attributes = computed(() =>
 <template>
   <div data-testid="tab-design" class="flex flex-col items-center gap-6">
     <div
-      v-if="is_mobile"
+      v-if="layout_mode === 'sheet'"
       data-testid="tab-design__inline-preview"
       class="flex justify-center w-full"
     >

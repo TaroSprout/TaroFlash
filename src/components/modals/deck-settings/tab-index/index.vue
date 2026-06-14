@@ -10,13 +10,13 @@ import DangerResetButton from '../danger-reset-button.vue'
 import DangerDeleteButton from '../danger-delete-button.vue'
 import { emitSfx } from '@/sfx/bus'
 import { deckEditorKey } from '@/composables/deck-editor'
-import { useMatchMedia } from '@/composables/use-media-query'
+import { deckSettingsLayoutKey } from '../layout'
 
 export type TabIndexNavValue = 'design' | 'study'
 
 const { t } = useI18n()
 const { settings } = inject(deckEditorKey)!
-const is_mobile = useMatchMedia('w<md')
+const layout_mode = inject(deckSettingsLayoutKey)!
 
 type NavEntry = { value: TabIndexNavValue; icon: string }
 type NavGroup = { key: string; heading: string; entries: NavEntry[] }
@@ -53,7 +53,7 @@ function onNavigate(value: TabIndexNavValue) {
       :label="group.heading"
     >
       <div
-        v-if="group.key === 'appearance' && is_mobile"
+        v-if="group.key === 'appearance' && layout_mode === 'sheet'"
         data-testid="tab-index__identity-inputs"
         class="flex flex-col gap-2 mb-3"
       >
