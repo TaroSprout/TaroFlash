@@ -305,6 +305,7 @@ watch(
       <div
         v-if="is_mobile && active_tab !== null"
         data-testid="deck-settings__footer"
+        :data-transitioning="is_tab_transitioning || undefined"
         class="px-(--sheet-px) py-4 transition-opacity duration-100"
         :class="is_tab_transitioning ? 'opacity-0' : 'opacity-100'"
       >
