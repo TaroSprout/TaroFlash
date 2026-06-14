@@ -10,6 +10,8 @@ vi.mock('@/composables/ui/media-query', async () => {
 import { setBelowMd, resetResponsive } from '../../../../../helpers/responsive-mock'
 import TabProfile from '@/phone/apps/settings/component/tab-profile/index.vue'
 import { memberEditorKey } from '@/composables/member/editor'
+import { settingsLayoutKey } from '@/phone/apps/settings/layout'
+import { computed } from 'vue'
 
 const InputStub = defineComponent({
   name: 'UiInput',
@@ -76,10 +78,13 @@ function makeEditor() {
   }
 }
 
-function makeTab(editor = makeEditor()) {
+function makeTab(editor = makeEditor(), layout = 'tablet') {
   const wrapper = mount(TabProfile, {
     global: {
-      provide: { [memberEditorKey]: editor },
+      provide: {
+        [memberEditorKey]: editor,
+        [settingsLayoutKey]: computed(() => layout)
+      },
       stubs: {
         UiInput: InputStub,
         MemberCard: MemberCardStub,
@@ -142,13 +147,12 @@ describe('TabProfile', () => {
   })
 
   test('hides the inline member-card preview on desktop', () => {
-    const { wrapper } = makeTab()
+    const { wrapper } = makeTab(makeEditor(), 'desktop')
     expect(wrapper.find('[data-testid="tab-profile__preview"]').exists()).toBe(false)
   })
 
-  test('shows the inline member-card preview on mobile', () => {
-    setBelowMd(true)
-    const { wrapper } = makeTab()
+  test('shows the inline member-card preview on sheet layout', () => {
+    const { wrapper } = makeTab(makeEditor(), 'sheet')
     expect(wrapper.find('[data-testid="tab-profile__preview"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="member-card-stub"]').exists()).toBe(true)
   })

@@ -169,7 +169,7 @@ describe('DeckCreate modal', () => {
   test('non-mobile: renders the floating preview in the overlay slot [obligation]', () => {
     const { wrapper } = mountModal()
 
-    expect(wrapper.find('[data-testid="deck-create__floating-preview"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="deck-create__pinned-preview"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="deck-create__inline-preview"]').exists()).toBe(false)
   })
 
@@ -200,7 +200,7 @@ describe('DeckCreate modal', () => {
     await wrapper.vm.$nextTick()
 
     expect(wrapper.find('[data-testid="deck-create__inline-preview"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="deck-create__floating-preview"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="deck-create__pinned-preview"]').exists()).toBe(false)
   })
 
   test('mobile: renders deck-create__mobile-inputs and deck-create__mobile-actions [obligation]', async () => {
