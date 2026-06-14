@@ -93,7 +93,10 @@ export function useStagedTap(options: StagedTapOptions = {}) {
 
       const phase = tapOpts.triggerAt ?? triggerAt
 
-      if (tapOpts.pressAudio) emitSfx(tapOpts.pressAudio, tapOpts.pressAudioOpts)
+      if (tapOpts.pressAudio)
+        tapOpts.pressAudioOpts
+          ? emitSfx(tapOpts.pressAudio, tapOpts.pressAudioOpts)
+          : emitSfx(tapOpts.pressAudio)
       if (phase === 'press') action?.(e)
 
       playing.value = true
