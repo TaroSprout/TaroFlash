@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onMounted, provide, ref, useTemplateRef, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, provide, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DeckAside from './deck-aside.vue'
-import { deckSettingsLayoutKey, type DeckSettingsLayout } from './layout'
+import { deckSettingsLayoutKey, deckSettingsCloseKey, type DeckSettingsLayout } from './layout'
 import { emitSfx } from '@/sfx/bus'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import { tabSlideEnter, tabSlideLeave } from '@/utils/animations/tab-slide'
@@ -55,7 +55,6 @@ const alert = useAlert()
 useModalRequestClose(() => onClose())
 const after_enter = useModalAfterEnter()
 
-const deck_aside = useTemplateRef('deck_aside')
 // sheet:   w < md          — no aside, no floating preview, slide tab transitions
 // tablet:  md ≤ w < lg     — aside visible, no floating preview
 // desktop: w ≥ lg & fine   — sidebar + floating preview, wider modal
@@ -67,12 +66,12 @@ const layout_mode = computed<DeckSettingsLayout>(() => {
   return 'tablet'
 })
 provide(deckSettingsLayoutKey, layout_mode)
+provide(deckSettingsCloseKey, close)
 
 const active_tab = ref<ActiveTab | null>(null)
 const nav_direction = ref<'forward' | 'back'>('forward')
 const tab_outlet = ref<HTMLElement>()
 const tab_initial_render = ref(true)
-const is_saving = ref(false)
 
 const sheet_px = computed(() => {
   if (layout_mode.value !== 'tablet') return '2rem'
@@ -122,17 +121,6 @@ onMounted(async () => {
 function onPreviewSide(side: CardSide) {
   if (displayed_tab.value !== 'design') return
   editor.setActiveSide(side)
-}
-
-async function onSave() {
-  if (deck_aside.value && !deck_aside.value.validate()) {
-    emitSfx('ui.etc_woodblock_stuck')
-    return
-  }
-  is_saving.value = true
-  const saved = await editor.saveDeck()
-  is_saving.value = false
-  if (saved) close(true)
 }
 
 async function onClose() {
@@ -230,11 +218,8 @@ watch(active_tab, (tab) => {
 
     <deck-aside
       v-if="layout_mode !== 'sheet'"
-      ref="deck_aside"
       data-testid="deck-settings__aside"
-      :loading="is_saving"
       class="w-78.5 shrink-0 self-end pt-70"
-      @save="onSave"
     />
 
     <template #overlay>

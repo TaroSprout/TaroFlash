@@ -12,6 +12,7 @@ import DangerDeleteButton from '../danger-delete-button.vue'
 import { emitSfx } from '@/sfx/bus'
 import { deckEditorKey } from '@/composables/deck-editor'
 import { deckSettingsLayoutKey } from '../layout'
+import DeckSaveButton from '../deck-save-button.vue'
 
 export type TabIndexNavValue = 'design' | 'study'
 
@@ -94,6 +95,8 @@ function onNavigate(value: TabIndexNavValue) {
         </ui-tappable>
       </div>
     </labeled-section>
+
+    <deck-save-button v-if="layout_mode === 'sheet'" />
 
     <labeled-section
       data-testid="tab-index__danger-zone"

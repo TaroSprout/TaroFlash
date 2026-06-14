@@ -7,11 +7,14 @@ import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import CappedSpinboxRow from './capped-spinbox-row.vue'
 import { deckEditorKey } from '@/composables/deck-editor'
+import { deckSettingsLayoutKey } from '../layout'
 import { DAILY_LIMIT_BOUNDS } from '@/utils/deck/defaults'
 import DeckBackButton from '../deck-back-button.vue'
+import DeckSaveButton from '../deck-save-button.vue'
 
 const { t } = useI18n()
 const { deck, config } = inject(deckEditorKey)!
+const layout_mode = inject(deckSettingsLayoutKey)!
 
 const emit = defineEmits<{ back: [] }>()
 </script>
@@ -63,5 +66,6 @@ const emit = defineEmits<{ back: [] }>()
         v-model:value="config.max_new_per_day"
       />
     </labeled-section>
+    <deck-save-button v-if="layout_mode === 'sheet'" />
   </section-list>
 </template>

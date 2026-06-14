@@ -9,6 +9,7 @@ import DeckDesignPreview from '@/components/deck/deck-design-preview.vue'
 import { deckEditorKey } from '@/composables/deck-editor'
 import { deckSettingsLayoutKey } from '../layout'
 import DeckBackButton from '../deck-back-button.vue'
+import DeckSaveButton from '../deck-save-button.vue'
 
 type SideTab = { value: CardSide; label: string }
 
@@ -61,5 +62,6 @@ const card_side_attributes = computed(() =>
       />
       <card-designer v-else :key="editor.active_side.value" :attributes="card_side_attributes" />
     </transition>
+    <deck-save-button v-if="layout_mode === 'sheet'" />
   </div>
 </template>
