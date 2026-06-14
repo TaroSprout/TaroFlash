@@ -162,7 +162,7 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
 
     <aside
       data-testid="lesson-view__sidebar"
-      class="hidden shrink-0 flex-col gap-4 xl:flex xl:sticky xl:top-(--nav-height) xl:max-h-[calc(100dvh-var(--nav-height))] xl:w-56 xl:self-start xl:overflow-y-auto"
+      class="hidden shrink-0 flex-col gap-4 xl:flex xl:sticky xl:top-(--nav-height) xl:h-[calc(100dvh-var(--nav-height))] xl:w-56 xl:self-start"
     >
       <header data-testid="lesson-view__header" class="flex items-center justify-between gap-4">
         <div data-testid="lesson-view__heading" class="flex flex-col gap-1">
@@ -191,7 +191,7 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
 
       <nav
         data-testid="lesson-view__chapters"
-        class="flex gap-2 overflow-x-auto pb-2 xl:flex-col xl:overflow-x-visible xl:pb-0"
+        class="flex flex-1 gap-2 overflow-x-auto pb-2 xl:flex-col xl:overflow-x-visible xl:overflow-y-auto xl:pb-0"
       >
         <button
           v-for="chapter in chapters"
@@ -205,6 +205,14 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
           <span class="line-clamp-1">{{ chapter.title }}</span>
         </button>
       </nav>
+
+      <audio-toolbar
+        data-testid="lesson-view__sidebar-toolbar"
+        :player="player"
+        :chapters="chapters"
+        :current-lesson-id="lesson_id"
+        @select-chapter="goToChapter"
+      />
     </aside>
 
     <div data-testid="lesson-view__reader" class="relative flex flex-1 flex-col xl:min-w-0">
@@ -235,6 +243,7 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
       <footer
         ref="footer_bar"
         data-testid="lesson-view__bar"
+        :class="{ 'xl:hidden': !show_term_in_footer }"
         class="fixed bottom-0 left-0 right-0 z-30 rounded-t-6 bg-brown-300 p-5 pb-2 dark:bg-stone-900 sm:bottom-3 sm:left-auto sm:right-3 sm:w-96 sm:rounded-6 sm:pb-5"
       >
         <div ref="footer_swap" data-testid="lesson-view__footer-swap" class="relative w-full">
@@ -270,6 +279,7 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
               key="toolbar"
               ref="footer_toolbar"
               data-testid="lesson-view__footer-toolbar"
+              class="xl:hidden"
             >
               <audio-toolbar
                 :player="player"
