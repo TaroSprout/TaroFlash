@@ -49,9 +49,10 @@ Symlink `node_modules` so Vite runs without a fresh install:
 ln -s "$(pwd)/node_modules" "../TaroFlash-<slug>/node_modules"
 ```
 
-Copy `.env.local` if it exists (gitignored, so the worktree won't have it):
+Copy gitignored env files if they exist:
 
 ```sh
+[ -f .env ] && cp .env ../TaroFlash-<slug>/.env
 [ -f .env.local ] && cp .env.local ../TaroFlash-<slug>/.env.local
 ```
 
