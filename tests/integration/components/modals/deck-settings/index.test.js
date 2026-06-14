@@ -272,6 +272,21 @@ const DeckPreviewStub = defineComponent({
   }
 })
 
+const DeckPinnedPreviewStub = defineComponent({
+  name: 'DeckPinnedPreview',
+  emits: ['update:side'],
+  setup(_props, { emit }) {
+    return () =>
+      h('div', { 'data-testid': 'deck-pinned-preview-stub' }, [
+        h(
+          'button',
+          { 'data-testid': 'deck-preview-stub', onClick: () => emit('update:side', 'front') },
+          'preview'
+        )
+      ])
+  }
+})
+
 const DeckAsideStub = defineComponent({
   name: 'DeckAside',
   props: ['loading'],
@@ -297,6 +312,7 @@ function makeWrapper(extraProps = {}) {
         TabStudy: TabContentStub,
         TabDangerZone: TabDangerZoneStub,
         DeckDesignPreview: DeckPreviewStub,
+        DeckPinnedPreview: DeckPinnedPreviewStub,
         DeckAside: DeckAsideStub,
         UiButton: UiButtonStub
       }
@@ -398,7 +414,7 @@ describe('DeckSettings — below-md layout collapse', () => {
     const { wrapper } = makeWrapper()
 
     expect(wrapper.find('[data-testid="deck-settings__aside"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="deck-settings__floating-preview"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="deck-settings__pinned-preview"]').exists()).toBe(true)
   })
 
   test('hides the aside when below md', () => {
@@ -412,7 +428,7 @@ describe('DeckSettings — below-md layout collapse', () => {
     setBelowMd(true)
     const { wrapper } = makeWrapper()
 
-    expect(wrapper.find('[data-testid="deck-settings__floating-preview"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="deck-settings__pinned-preview"]').exists()).toBe(false)
   })
 
   test('toggles aside + floating preview reactively when crossing md', async () => {
@@ -425,7 +441,7 @@ describe('DeckSettings — below-md layout collapse', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="deck-settings__aside"]').exists()).toBe(false)
-    expect(wrapper.find('[data-testid="deck-settings__floating-preview"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="deck-settings__pinned-preview"]').exists()).toBe(false)
   })
 })
 

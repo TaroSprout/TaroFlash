@@ -35,10 +35,13 @@ const { t } = useI18n()
 const runtime = createPhoneRuntime({
   openFullApp: (app, controller) => {
     const injection: AppContextInjection = { ...ctx, controller }
+    const opts = app.modal_options
     openModal(app.component, {
       backdrop: true,
-      mode: 'dialog',
-      props: { onClose: () => popModal() },
+      mode: opts?.mode ?? 'dialog',
+      mobile_below_width: opts?.mobile_below_width,
+      mobile_below_height: opts?.mobile_below_height,
+      props: { close: () => popModal() },
       context: { key: APP_CTX_KEY, value: injection }
     })
   }

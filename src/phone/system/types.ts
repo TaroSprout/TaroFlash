@@ -45,11 +45,19 @@ type BaseApp<TController extends AppController = AppController> = {
   controller?: (ctx: AppContext) => TController
 }
 
+export type ViewAppModalOptions = {
+  mode: 'dialog' | 'mobile-sheet'
+  mobile_below_width?: 'sm' | 'md' | 'lg' | 'xl' | '2xl'
+  mobile_below_height?: 'sm' | 'md' | 'lg' | 'xl' | '2xl'
+}
+
 export type ViewApp = BaseApp & {
   type: 'view'
   display: PhoneAppDisplay
   launcher: LauncherConfig
   component: Component
+  // When set, full-display apps open with this mode instead of 'dialog'
+  modal_options?: ViewAppModalOptions
 }
 
 export type WidgetApp = BaseApp & {

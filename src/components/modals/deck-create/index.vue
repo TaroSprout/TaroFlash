@@ -2,17 +2,16 @@
 import { computed, provide, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import DeckDesignPreview from '@/components/deck/deck-design-preview.vue'
 import CoverDesigner from '@/components/deck/cover-designer/index.vue'
+import DeckDesignPreview from '@/components/deck/deck-design-preview.vue'
+import DeckPinnedPreview from '@/components/deck/pinned-preview.vue'
 import { useDeckEditor, deckEditorKey } from '@/composables/deck/editor'
-import { useMatchMedia } from '@/composables/ui/media-query'
+import { useTabModalLayout } from '@/composables/ui/tab-modal-layout'
 import { randomCoverConfig } from '@/utils/cover'
 import { emitSfx } from '@/sfx/bus'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiInput from '@/components/ui-kit/input.vue'
 import UiTextarea from '@/components/ui-kit/textarea.vue'
-import UiIcon from '@/components/ui-kit/icon.vue'
-import Card from '@/components/card/index.vue'
 import MobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
 
 export type DeckCreateResponse = boolean
@@ -27,13 +26,11 @@ const router = useRouter()
 const editor = useDeckEditor({ cover_config: randomCoverConfig() } as Deck)
 provide(deckEditorKey, editor)
 
-const is_mobile = useMatchMedia('w<md')
+const { layout_mode, sheet_px } = useTabModalLayout()
 
 const title_error = ref<string>()
 
 const has_title = computed(() => !!editor.settings.title?.trim())
-
-const sheet_px = computed(() => (is_mobile.value ? '2rem' : '4.5rem'))
 
 async function onSave() {
   if (!has_title.value) {
@@ -72,31 +69,15 @@ watch(
 
     <template #overlay>
       <div
-        v-if="!is_mobile"
-        data-testid="deck-create__floating-preview"
+        v-if="layout_mode !== 'sheet'"
+        data-testid="deck-create__pinned-preview"
         class="pointer-events-auto absolute right-(--sheet-px) top-6"
       >
-        <div class="relative">
-          <card
-            size="xl"
-            class="absolute! -top-2 right-1"
-            face_classes="bg-white! dark:bg-stone-700!"
-          />
-
-          <div
-            data-testid="deck-create__preview-paperclip"
-            class="absolute -top-8 right-15 -translate-x-1/2 z-10 drop-shadow-2xs"
-          >
-            <ui-icon src="paperclip" class="w-16 h-16 -rotate-186 text-grey-300" />
-          </div>
-
-          <deck-design-preview
-            :cover="editor.cover"
-            :card_attributes="editor.card_attributes"
-            side="cover"
-            class="rotate-4 drop-shadow-sm"
-          />
-        </div>
+        <deck-pinned-preview
+          :cover="editor.cover"
+          :card_attributes="editor.card_attributes"
+          side="cover"
+        />
       </div>
     </template>
 
@@ -104,12 +85,12 @@ watch(
       data-testid="deck-create__body"
       :class="[
         'px-(--sheet-px) pb-8 h-full',
-        is_mobile ? 'flex flex-col gap-6' : 'flex gap-14 items-start'
+        layout_mode === 'sheet' ? 'flex flex-col gap-6' : 'flex gap-14 items-start'
       ]"
     >
       <div data-testid="deck-create__main" class="flex-1 flex flex-col gap-4 w-full min-w-0">
         <deck-design-preview
-          v-if="is_mobile"
+          v-if="layout_mode === 'sheet'"
           data-testid="deck-create__inline-preview"
           :cover="editor.cover"
           :card_attributes="editor.card_attributes"
@@ -121,7 +102,7 @@ watch(
       </div>
 
       <aside
-        v-if="!is_mobile"
+        v-if="layout_mode !== 'sheet'"
         data-testid="deck-create__aside"
         class="w-78.5 shrink-0 self-end pt-70 h-full flex flex-col justify-between gap-5 text-brown-700 dark:text-brown-100"
       >
@@ -156,7 +137,7 @@ watch(
         </ui-button>
       </aside>
 
-      <template v-if="is_mobile">
+      <template v-if="layout_mode === 'sheet'">
         <div
           data-testid="deck-create__mobile-inputs"
           class="flex flex-col gap-2 text-brown-700 dark:text-brown-100"

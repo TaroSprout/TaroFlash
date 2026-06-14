@@ -1,15 +1,19 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import UiTappable from '@/components/ui-kit/tappable.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import DangerDeleteAccountButton from '../danger-delete-account-button.vue'
+import SettingsSaveButton from '../settings-save-button.vue'
 import { emitSfx } from '@/sfx/bus'
+import { settingsLayoutKey } from '../../layout'
 
 export type TabIndexNavValue = 'profile' | 'subscription' | 'app'
 
 const { t } = useI18n()
+const layout_mode = inject(settingsLayoutKey)!
 
 type NavEntry = { value: TabIndexNavValue; icon: string }
 type NavGroup = { key: string; heading: string; entries: NavEntry[] }
@@ -35,7 +39,7 @@ const emit = defineEmits<{
 }>()
 
 function onNavigate(value: TabIndexNavValue) {
-  emitSfx('ui.select', { blocking: true })
+  emitSfx('ui.snappy_button_5', { blocking: true })
   emit('navigate', value)
 }
 </script>
@@ -52,22 +56,26 @@ function onNavigate(value: TabIndexNavValue) {
         data-testid="tab-index__nav-list"
         class="flex flex-col rounded-4 bg-input overflow-hidden"
       >
-        <button
+        <ui-tappable
           v-for="entry in group.entries"
           :key="entry.value"
+          as="button"
           type="button"
           data-testid="tab-index__nav-card"
           :data-value="entry.value"
           class="flex items-center gap-3 p-4 text-brown-700 dark:text-brown-100 hover:bg-(--theme-neutral) hover:text-(--theme-on-neutral) cursor-pointer text-left"
+          bgx_color="var(--color-brown-500)"
           v-sfx.hover="'ui.click_07'"
-          @click="onNavigate(entry.value)"
+          @tap="onNavigate(entry.value)"
         >
-          <ui-icon :src="entry.icon" />
+          <ui-icon :src="entry.icon" class="w-6 h-6" />
           <span class="flex-1">{{ t(`settings.tab.${entry.value}`) }}</span>
-          <ui-icon src="chevron-right" />
-        </button>
+          <ui-icon src="chevron-right" class="w-6 h-6" />
+        </ui-tappable>
       </div>
     </labeled-section>
+
+    <settings-save-button v-if="layout_mode === 'sheet'" />
 
     <labeled-section
       data-testid="tab-index__danger-zone"

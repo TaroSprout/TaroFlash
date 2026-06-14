@@ -6,6 +6,11 @@ export default {
   type: 'view',
   display: 'full',
   component,
+  modal_options: {
+    mode: 'mobile-sheet',
+    mobile_below_width: 'md',
+    mobile_below_height: 'md'
+  },
   launcher: {
     icon_src: 'settings',
     hover_icon_src: 'settings-hover',

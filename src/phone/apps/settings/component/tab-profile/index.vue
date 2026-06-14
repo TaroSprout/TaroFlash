@@ -7,19 +7,25 @@ import UiPatternPicker from '@/components/ui-kit/pattern-picker.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import MemberCard from '@/components/member/member-card.vue'
+import SettingsBackButton from '../settings-back-button.vue'
+import SettingsSaveButton from '../settings-save-button.vue'
 import { memberEditorKey } from '@/composables/member/editor'
-import { useMatchMedia } from '@/composables/ui/media-query'
+import { settingsLayoutKey } from '../../layout'
 import { SUPPORTED_THEMES, SUPPORTED_PATTERNS } from '@/utils/cover'
 
 const { t } = useI18n()
 const editor = inject(memberEditorKey)!
-const is_mobile = useMatchMedia('w<md | h<sm')
+const layout_mode = inject(settingsLayoutKey)!
+
+const emit = defineEmits<{ back: [] }>()
 </script>
 
 <template>
   <section-list data-testid="tab-profile">
+    <settings-back-button @back="emit('back')" />
+
     <labeled-section
-      v-if="is_mobile"
+      v-if="layout_mode === 'sheet'"
       data-testid="tab-profile__preview"
       :label="t('settings.profile.section.preview')"
     >
@@ -66,5 +72,7 @@ const is_mobile = useMatchMedia('w<md | h<sm')
         @update:pattern="editor.cover.pattern = $event"
       />
     </div>
+
+    <settings-save-button v-if="layout_mode === 'sheet'" />
   </section-list>
 </template>
