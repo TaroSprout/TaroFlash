@@ -1,12 +1,15 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h, ref, useAttrs } from 'vue'
+import { defineComponent, h, reactive, ref, computed, useAttrs } from 'vue'
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
+vi.mock('@/composables/use-media-query', () => ({ useMatchMedia: () => ({ value: false }) }))
 
 import TabIndex from '@/components/modals/deck-settings/tab-index/index.vue'
+import { deckEditorKey } from '@/composables/deck-editor'
 import { deckDangerActionsKey } from '@/composables/deck/use-deck-danger-actions'
+import { deckSettingsLayoutKey } from '@/components/modals/deck-settings/layout'
 
 const ButtonStub = defineComponent({
   name: 'UiButton',
@@ -38,6 +41,18 @@ const IconStub = defineComponent({
   }
 })
 
+// Renders slot content + forwards attrs; emits tap on click so nav card
+// @tap="onNavigate(entry.value)" fires correctly.
+const UiTappableStub = defineComponent({
+  name: 'UiTappable',
+  inheritAttrs: false,
+  emits: ['tap'],
+  setup(_props, { slots, emit, attrs }) {
+    return () =>
+      h('button', { type: 'button', ...attrs, onClick: () => emit('tap') }, slots.default?.())
+  }
+})
+
 function makeTab() {
   const onDelete = vi.fn()
   const onResetReviews = vi.fn()
@@ -47,10 +62,18 @@ function makeTab() {
     deleting: ref(false),
     resetting_reviews: ref(false)
   }
+  const editor = {
+    settings: reactive({ title: 'My Deck', description: '' }),
+    is_dirty: ref(false)
+  }
   const wrapper = mount(TabIndex, {
     global: {
-      provide: { [deckDangerActionsKey]: danger },
-      stubs: { UiButton: ButtonStub, UiIcon: IconStub },
+      provide: {
+        [deckDangerActionsKey]: danger,
+        [deckEditorKey]: editor,
+        [deckSettingsLayoutKey]: computed(() => 'desktop')
+      },
+      stubs: { UiButton: ButtonStub, UiIcon: IconStub, UiTappable: UiTappableStub },
       mocks: { $t: (k) => k }
     }
   })
@@ -78,10 +101,10 @@ describe('TabIndex', () => {
     expect(wrapper.emitted('navigate')).toEqual([['design']])
   })
 
-  test('plays the select sfx as a blocking sound on nav click', async () => {
+  test('plays snappy_button_5 sfx as a blocking sound on nav click', async () => {
     const { wrapper } = makeTab()
     await wrapper.find('[data-testid="tab-index__nav-card"][data-value="design"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select', { blocking: true })
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5', { blocking: true })
   })
 
   test('renders inlined danger reset + delete buttons', () => {

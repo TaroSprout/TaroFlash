@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onMounted, provide, ref, useTemplateRef, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, provide, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DeckAside from './deck-aside.vue'
+import { deckSettingsLayoutKey, deckSettingsCloseKey, type DeckSettingsLayout } from './layout'
 import { emitSfx } from '@/sfx/bus'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
-import { slideFadeRightEnter, slideFadeRightLeave } from '@/utils/animations/slide-fade-right'
-import { tabHeightEnter, tabHeightLeave } from '@/utils/animations/tab-height'
+import { tabSlideEnter, tabSlideLeave } from '@/utils/animations/tab-slide'
 import { useDeckEditor, deckEditorKey } from '@/composables/deck-editor'
 import {
   useDeckDangerActions,
@@ -15,7 +15,6 @@ import { useMatchMedia } from '@/composables/use-media-query'
 import { useAlert } from '@/composables/alert'
 import { useModalAfterEnter, useModalRequestClose } from '@/composables/modal'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import UiTagButton from '@/components/ui-kit/tag-button.vue'
 import Card from '@/components/card/index.vue'
 import TabSheet from '@/components/layout-kit/modal/tab-sheet.vue'
 
@@ -56,20 +55,26 @@ const alert = useAlert()
 useModalRequestClose(() => onClose())
 const after_enter = useModalAfterEnter()
 
-const deck_aside = useTemplateRef('deck_aside')
-// Layout modes — single source of truth for all layout-conditional rendering.
-// is_mobile:       w < md  → no aside, no floating preview, height-animated tab transitions
-// is_desktop_fine: w >= lg & fine pointer → sidebar + floating preview, wider modal
-// Everything else (tablet, coarse desktop) uses the intermediate/tablet layout.
-const is_mobile = useMatchMedia('w<md')
-const is_desktop_fine = useMatchMedia('w>=lg & fine')
+// sheet:   w < md          — no aside, no floating preview, slide tab transitions
+// tablet:  md ≤ w < lg     — aside visible, no floating preview
+// desktop: w ≥ lg & fine   — sidebar + floating preview, wider modal
+const _is_sheet = useMatchMedia('w<md')
+const _is_desktop = useMatchMedia('w>=lg & fine')
+const layout_mode = computed<DeckSettingsLayout>(() => {
+  if (_is_sheet.value) return 'sheet'
+  if (_is_desktop.value) return 'desktop'
+  return 'tablet'
+})
+provide(deckSettingsLayoutKey, layout_mode)
+provide(deckSettingsCloseKey, close)
 
 const active_tab = ref<ActiveTab | null>(null)
+const nav_direction = ref<'forward' | 'back'>('forward')
 const tab_outlet = ref<HTMLElement>()
-const is_saving = ref(false)
+const tab_initial_render = ref(true)
 
 const sheet_px = computed(() => {
-  if (is_mobile.value || is_desktop_fine.value) return '2rem'
+  if (layout_mode.value !== 'tablet') return '2rem'
   return '4.5rem'
 })
 
@@ -82,7 +87,7 @@ const tabs = computed(() => [
 ])
 
 const displayed_tab = computed(
-  () => active_tab.value ?? (is_desktop_fine.value ? 'design' : 'index')
+  () => active_tab.value ?? (layout_mode.value === 'desktop' ? 'design' : 'index')
 )
 
 const sidebar_active = computed({
@@ -118,17 +123,6 @@ function onPreviewSide(side: CardSide) {
   editor.setActiveSide(side)
 }
 
-async function onSave() {
-  if (deck_aside.value && !deck_aside.value.validate()) {
-    emitSfx('ui.etc_woodblock_stuck')
-    return
-  }
-  is_saving.value = true
-  const saved = await editor.saveDeck()
-  is_saving.value = false
-  if (saved) close(true)
-}
-
 async function onClose() {
   if (!editor.is_dirty.value) return close(false)
   const { response } = alert.warn({
@@ -140,29 +134,40 @@ async function onClose() {
   if (await response) close(false)
 }
 
+function onNavigate(tab: ActiveTab) {
+  nav_direction.value = 'forward'
+  active_tab.value = tab
+}
+
 function onBack() {
-  emitSfx('ui.select')
+  emitSfx('ui.snappy_button_5')
+  nav_direction.value = 'back'
   active_tab.value = null
 }
 
 function onTabLeave(el: Element, done: () => void) {
-  if (!is_mobile.value || !tab_outlet.value) {
-    fadeLeave(el, done)
+  if (layout_mode.value === 'sheet') {
+    tabSlideLeave(nav_direction, tab_outlet.value)(el, done)
     return
   }
-  tabHeightLeave(tab_outlet.value)(el, done)
+  fadeLeave(el, done)
 }
 
 function onTabEnter(el: Element, done: () => void) {
-  if (!is_mobile.value || !tab_outlet.value) {
-    fadeEnter(el, done)
+  if (tab_initial_render.value) {
+    tab_initial_render.value = false
+    done()
     return
   }
-  tabHeightEnter(tab_outlet.value)(el, done)
+  if (layout_mode.value === 'sheet') {
+    tabSlideEnter(nav_direction, tab_outlet.value)(el, done)
+    return
+  }
+  fadeEnter(el, done)
 }
 
-watch(is_desktop_fine, (visible) => {
-  if (!visible && active_tab.value === 'danger-zone') active_tab.value = null
+watch(layout_mode, (mode) => {
+  if (mode !== 'desktop' && active_tab.value === 'danger-zone') active_tab.value = null
 })
 
 // Leaving a tab (back to the index) resets the designer side to cover — assign
@@ -177,7 +182,8 @@ watch(active_tab, (tab) => {
     data-testid="deck-settings-container"
     data-theme="green-500"
     data-theme-dark="green-800"
-    :class="is_desktop_fine ? 'w-248!' : 'w-full! max-w-205.5'"
+    :data-layout="layout_mode"
+    :class="layout_mode === 'desktop' ? 'w-248!' : 'w-full! max-w-205.5'"
     :sheet_px="sheet_px"
     :tabs="tabs"
     :pattern_config="{ pattern: 'endless-clouds' }"
@@ -202,45 +208,23 @@ watch(active_tab, (tab) => {
       data-testid="deck-settings__main"
       :class="[
         'relative flex flex-1 flex-col gap-4 w-full min-w-0',
-        is_mobile && 'max-w-111 mx-auto overflow-hidden'
+        layout_mode === 'sheet' && 'max-w-111 mx-auto overflow-hidden pt-0.5 pl-0.5'
       ]"
     >
       <transition :css="false" mode="out-in" @leave="onTabLeave" @enter="onTabEnter">
-        <component :is="tab_component" :key="displayed_tab" @navigate="active_tab = $event" />
+        <component :is="tab_component" :key="displayed_tab" @navigate="onNavigate" @back="onBack" />
       </transition>
     </div>
 
     <deck-aside
-      v-if="!is_mobile"
-      ref="deck_aside"
+      v-if="layout_mode !== 'sheet'"
       data-testid="deck-settings__aside"
-      :loading="is_saving"
       class="w-78.5 shrink-0 self-end pt-70"
-      @save="onSave"
     />
 
     <template #overlay>
-      <transition
-        :css="false"
-        @enter="(el, done) => slideFadeRightEnter(el, done)"
-        @leave="(el, done) => slideFadeRightLeave(el, done)"
-      >
-        <ui-tag-button
-          v-if="!is_desktop_fine && active_tab !== null"
-          data-testid="deck-settings__back-button"
-          :aria-label="t('deck.settings-modal.back-button')"
-          data-theme="yellow-500"
-          data-theme-dark="yellow-700"
-          class="pointer-events-auto absolute! left-(--sheet-px) top-29 drop-shadow-xs"
-          @click="onBack"
-        >
-          <ui-icon src="arrow-back" class="w-4 h-4" />
-          <span>{{ t('deck.settings-modal.back-label') }}</span>
-        </ui-tag-button>
-      </transition>
-
       <div
-        v-if="!is_mobile"
+        v-if="layout_mode !== 'sheet'"
         data-testid="deck-settings__floating-preview"
         class="pointer-events-auto absolute right-(--sheet-px) top-6"
       >

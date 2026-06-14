@@ -1,14 +1,11 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h, reactive, ref } from 'vue'
+import { defineComponent, h, reactive, ref, computed } from 'vue'
 import TabDesign from '@/components/modals/deck-settings/tab-design/index.vue'
 import { deckEditorKey } from '@/composables/deck-editor'
-import { setBelowMd, resetResponsive } from '../../../../../helpers/responsive-mock'
+import { deckSettingsLayoutKey } from '@/components/modals/deck-settings/layout'
 
-vi.mock('@/composables/use-media-query', async () => {
-  const m = await import('../../../../../helpers/responsive-mock')
-  return m.responsiveMockModule
-})
+vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn() }))
 
 const DeckPreviewStub = defineComponent({
   name: 'DeckDesignPreview',
@@ -62,15 +59,20 @@ function makeEditor(overrides = {}) {
   }
 }
 
-function makeWrapper(editor = makeEditor()) {
+function makeWrapper(editor = makeEditor(), layout_mode = 'desktop') {
   const wrapper = mount(TabDesign, {
     global: {
-      provide: { [deckEditorKey]: editor },
+      provide: {
+        [deckEditorKey]: editor,
+        [deckSettingsLayoutKey]: computed(() => layout_mode)
+      },
       stubs: {
         DeckDesignPreview: DeckPreviewStub,
         TabBar: TabBarStub,
         CoverDesigner: CoverDesignerStub,
-        CardDesigner: CardDesignerStub
+        CardDesigner: CardDesignerStub,
+        DeckBackButton: true,
+        DeckSaveButton: true
       },
       mocks: { $t: (k) => k }
     }
@@ -78,46 +80,35 @@ function makeWrapper(editor = makeEditor()) {
   return { wrapper, editor }
 }
 
-beforeEach(() => {
-  resetResponsive()
-})
-
 describe('TabDesign — inline preview visibility', () => {
-  test('does not render the inline preview above md', () => {
-    setBelowMd(false)
-    const { wrapper } = makeWrapper()
-
+  test('does not render the inline preview on desktop', () => {
+    const { wrapper } = makeWrapper(makeEditor(), 'desktop')
     expect(wrapper.find('[data-testid="tab-design__inline-preview"]').exists()).toBe(false)
   })
 
-  test('renders the inline preview below md', () => {
-    setBelowMd(true)
-    const { wrapper } = makeWrapper()
-
+  test('renders the inline preview on sheet', () => {
+    const { wrapper } = makeWrapper(makeEditor(), 'sheet')
     expect(wrapper.find('[data-testid="tab-design__inline-preview"]').exists()).toBe(true)
   })
 
   test('passes the deck id from editor.settings to the inline preview', () => {
-    setBelowMd(true)
     const editor = makeEditor()
     editor.settings.id = 42
-    const { wrapper } = makeWrapper(editor)
+    const { wrapper } = makeWrapper(editor, 'sheet')
 
     expect(wrapper.find('[data-testid="deck-preview-stub"]').attributes('data-deck-id')).toBe('42')
   })
 
   test('passes the active side from editor to the inline preview', () => {
-    setBelowMd(true)
     const editor = makeEditor()
     editor.active_side.value = 'back'
-    const { wrapper } = makeWrapper(editor)
+    const { wrapper } = makeWrapper(editor, 'sheet')
 
     expect(wrapper.find('[data-testid="deck-preview-stub"]').attributes('data-side')).toBe('back')
   })
 
   test('forwards inline preview update:side to editor.setActiveSide', async () => {
-    setBelowMd(true)
-    const { wrapper, editor } = makeWrapper()
+    const { wrapper, editor } = makeWrapper(makeEditor(), 'sheet')
 
     await wrapper.find('[data-testid="deck-preview-stub"]').trigger('click')
 

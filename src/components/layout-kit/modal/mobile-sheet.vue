@@ -112,7 +112,6 @@ provide(mobileSheetOverlayKey, overlay_root)
             :inverted="showHeader"
             @click="emit('close')"
             play-on-tap
-            :sfx="{ click: 'ui.select' }"
           >
             {{ close_label_text }}
           </ui-button>

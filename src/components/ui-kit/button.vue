@@ -2,8 +2,7 @@
 import { computed, useAttrs, useSlots } from 'vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
-import { usePlayOnTap } from '@/composables/use-play-on-tap'
-import { emitSfx } from '@/sfx/bus'
+import { useStagedTap } from '@/composables/use-staged-tap'
 import type { SfxOptions } from '@/sfx/directive'
 
 defineOptions({ inheritAttrs: false })
@@ -54,7 +53,7 @@ const {
 const slots = useSlots()
 const attrs = useAttrs()
 
-const { playing, interceptClick } = usePlayOnTap({ reset: true, animate: tapAnimate })
+const { playing, tap } = useStagedTap({ animate: tapAnimate ? 'pop' : 'quiet' })
 
 const merged_sfx = computed<SfxOptions>(() => {
   if (disabled) return {}
@@ -87,19 +86,14 @@ function onCaptureClick(e: MouseEvent) {
   const handler = attrs.onClick as ((ev: MouseEvent) => void) | undefined
   if (!handler) return
 
-  interceptClick(e, {
-    beforePlay: emitClickSfx,
-    onAfter: handler
-  })
-}
-
-function emitClickSfx() {
-  const click_sfx = merged_sfx.value.click
-  if (!click_sfx) return
-  emitSfx(click_sfx, {
-    debounce: merged_sfx.value.debounce,
-    blocking: merged_sfx.value.click_blocking
-  })
+  tap(handler, {
+    pressAudio: merged_sfx.value.click,
+    pressAudioOpts: {
+      debounce: merged_sfx.value.debounce,
+      blocking: merged_sfx.value.click_blocking
+    },
+    captureMode: true
+  })(e)
 }
 </script>
 
@@ -374,5 +368,16 @@ function emitClickSfx() {
    still — no scale/rotate on tap. Hover keeps its own nudge. */
 .ui-kit-btn--quiet-tap[data-playing] .btn-icon {
   transform: none;
+}
+
+/* Expanded tap zone on coarse (touch) pointers. The pseudo-element is
+   transparent but occupies the extra hit area outside the visible button. */
+@media (pointer: coarse) {
+  .ui-kit-btn::before {
+    content: '';
+    position: absolute;
+    inset: var(--btn-tap-inset, -8px);
+    border-radius: calc(var(--btn-border-radius) + 8px);
+  }
 }
 </style>

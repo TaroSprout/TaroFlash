@@ -7,14 +7,21 @@ import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import CappedSpinboxRow from './capped-spinbox-row.vue'
 import { deckEditorKey } from '@/composables/deck-editor'
+import { deckSettingsLayoutKey } from '../layout'
 import { DAILY_LIMIT_BOUNDS } from '@/utils/deck/defaults'
+import DeckBackButton from '../deck-back-button.vue'
+import DeckSaveButton from '../deck-save-button.vue'
 
 const { t } = useI18n()
 const { deck, config } = inject(deckEditorKey)!
+const layout_mode = inject(deckSettingsLayoutKey)!
+
+const emit = defineEmits<{ back: [] }>()
 </script>
 
 <template>
   <section-list data-testid="tab-study">
+    <deck-back-button @back="emit('back')" />
     <labeled-section :label="t('deck.settings-modal.study.section.cards-heading')">
       <ui-toggle v-model:checked="config.shuffle">
         <div class="flex items-center gap-2.5">
@@ -59,5 +66,6 @@ const { deck, config } = inject(deckEditorKey)!
         v-model:value="config.max_new_per_day"
       />
     </labeled-section>
+    <deck-save-button v-if="layout_mode === 'sheet'" />
   </section-list>
 </template>

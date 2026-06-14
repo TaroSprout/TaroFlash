@@ -1,8 +1,22 @@
-import { describe, test, expect } from 'vite-plus/test'
-import { shallowMount } from '@vue/test-utils'
+import { describe, test, expect, vi } from 'vite-plus/test'
+import { mount } from '@vue/test-utils'
+import { defineComponent, h } from 'vue'
 import TabBar from '@/components/layout-kit/tab-bar.vue'
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
+vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn(), emitHoverSfx: vi.fn() }))
+vi.mock('@/composables/use-media-query', () => ({ useMatchMedia: () => ({ value: false }) }))
+
+// Renders slot content, forwards attrs, emits tap on click so tab-bar's
+// @tap="emit('update:active', value)" fires correctly.
+const UiTappableStub = defineComponent({
+  name: 'UiTappable',
+  inheritAttrs: false,
+  emits: ['tap'],
+  setup(_props, { slots, emit, attrs }) {
+    return () =>
+      h('button', { type: 'button', ...attrs, onClick: () => emit('tap') }, slots.default?.())
+  }
+})
 
 const TABS = [
   { value: 'cover', label: 'Cover' },
@@ -11,12 +25,11 @@ const TABS = [
 ]
 
 function makeTabBar(props = {}) {
-  return shallowMount(TabBar, {
-    props: { tabs: TABS, active: 'cover', ...props }
+  return mount(TabBar, {
+    props: { tabs: TABS, active: 'cover', ...props },
+    global: { stubs: { UiTappable: UiTappableStub }, directives: { sfx: {} } }
   })
 }
-
-// ── Tests ──────────────────────────────────────────────────────────────────────
 
 describe('TabBar', () => {
   test('renders the container', () => {
@@ -64,8 +77,9 @@ describe('TabBar', () => {
       { value: 1, label: 'One' },
       { value: 2, label: 'Two' }
     ]
-    const wrapper = shallowMount(TabBar, {
-      props: { tabs: numericTabs, active: 2 }
+    const wrapper = mount(TabBar, {
+      props: { tabs: numericTabs, active: 2 },
+      global: { stubs: { UiTappable: UiTappableStub }, directives: { sfx: {} } }
     })
     const tabs = wrapper.findAll('[data-testid="tab-bar__tab"]')
     expect(tabs[1].attributes('data-active')).toBe('true')

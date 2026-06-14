@@ -7,16 +7,17 @@ import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import TabBar from '@/components/layout-kit/tab-bar.vue'
 import DeckDesignPreview from '@/components/deck/deck-design-preview.vue'
 import { deckEditorKey } from '@/composables/deck-editor'
-import { useMatchMedia } from '@/composables/use-media-query'
+import { deckSettingsLayoutKey } from '../layout'
+import DeckBackButton from '../deck-back-button.vue'
+import DeckSaveButton from '../deck-save-button.vue'
 
 type SideTab = { value: CardSide; label: string }
 
 const { t } = useI18n()
 const editor = inject(deckEditorKey)!
+const layout_mode = inject(deckSettingsLayoutKey)!
 
-// Width-only: the inline preview replaces the width-gated floating preview, so
-// a short-but-wide viewport must not show both.
-const is_mobile = useMatchMedia('w<md')
+const emit = defineEmits<{ back: [] }>()
 
 const tabs = computed<SideTab[]>(() => [
   { value: 'cover', label: t('deck.settings-modal.design.designer-tabs.cover') },
@@ -31,8 +32,9 @@ const card_side_attributes = computed(() =>
 
 <template>
   <div data-testid="tab-design" class="flex flex-col items-center gap-6">
+    <deck-back-button @back="emit('back')" />
     <div
-      v-if="is_mobile"
+      v-if="layout_mode === 'sheet'"
       data-testid="tab-design__inline-preview"
       class="flex justify-center w-full"
     >
@@ -47,6 +49,8 @@ const card_side_attributes = computed(() =>
     <tab-bar
       :tabs="tabs"
       :active="editor.active_side.value"
+      :full_width="layout_mode !== 'desktop'"
+      :size="layout_mode !== 'desktop' ? 'base' : 'sm'"
       hover_sfx="ui.click_07"
       @update:active="editor.setActiveSide"
     />
@@ -58,5 +62,6 @@ const card_side_attributes = computed(() =>
       />
       <card-designer v-else :key="editor.active_side.value" :attributes="card_side_attributes" />
     </transition>
+    <deck-save-button v-if="layout_mode === 'sheet'" />
   </div>
 </template>
