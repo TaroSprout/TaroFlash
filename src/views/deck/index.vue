@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, provide, ref, useTemplateRef } from 'vue'
 import DeckHero from '@/views/deck/deck-hero/index.vue'
+import DeckSkeleton from './skeleton.vue'
 import ModeToolbar from './mode-toolbar/index.vue'
 import ModeStack from './mode-stack.vue'
 import CardGridSkeleton from './card-grid/skeleton.vue'
@@ -33,18 +34,22 @@ const is_loading_initial = computed(
 )
 const is_empty = computed(() => !editor.isLoading.value && editor.list.all_cards.value.length === 0)
 
+const show_skeleton = computed(() => !deck.value)
+
 onMounted(preloadDeckModes)
 </script>
 
 <template>
+  <deck-skeleton v-if="show_skeleton" />
+
   <section
+    v-else
     data-testid="deck-view"
     class="flex flex-col xl:flex-row items-center xl:items-start gap-6 md:gap-15"
   >
     <deck-hero
-      v-if="deck"
       class="relative z-30 xl:sticky xl:top-(--nav-height)"
-      :deck="deck"
+      :deck="deck!"
       :image-url="image_url"
     />
 

@@ -50,6 +50,11 @@ const CardGridSkeletonStub = defineComponent({
   setup: () => () => h('div', { 'data-testid': 'card-grid-skeleton-stub' })
 })
 
+const DeckSkeletonStub = defineComponent({
+  name: 'DeckSkeleton',
+  setup: () => () => h('div', { 'data-testid': 'deck-skeleton-stub' })
+})
+
 function makeShell(mode = 'view') {
   return { mode: ref(mode), is_view: ref(mode === 'view') }
 }
@@ -74,6 +79,7 @@ function mount({ deck = { id: 1, name: 'Test' }, mode = 'view', editorOpts = {} 
     global: {
       stubs: {
         DeckHero: DeckHeroStub,
+        DeckSkeleton: DeckSkeletonStub,
         ModeToolbar: ModeToolbarStub,
         ModeStack: ModeStackStub,
         ScrollBar: ScrollBarStub,
@@ -98,6 +104,20 @@ describe('DeckView (views/deck/index.vue)', () => {
   test('omits the deck-hero when the deck query has no data yet', () => {
     const wrapper = mount({ deck: null })
     expect(wrapper.find('[data-testid="deck-hero-stub"]').exists()).toBe(false)
+  })
+
+  // ── DeckSkeleton (top-level v-if) ─────────────────────────────────────────
+
+  test('renders DeckSkeleton when deck query data is null (initial loading) [obligation]', () => {
+    const wrapper = mount({ deck: null })
+    expect(wrapper.find('[data-testid="deck-skeleton-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="deck-view"]').exists()).toBe(false)
+  })
+
+  test('renders real layout (not DeckSkeleton) when deck data is present [obligation]', () => {
+    const wrapper = mount({ deck: { id: 1, name: 'Test' } })
+    expect(wrapper.find('[data-testid="deck-skeleton-stub"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="deck-view"]').exists()).toBe(true)
   })
 
   test('renders the empty placeholder when not loading and no cards', () => {
