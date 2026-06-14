@@ -12,10 +12,7 @@ import { useAlert } from '@/composables/alert'
 import { useSessionRef } from '@/composables/storage/session-ref'
 import MemberCard from '@/components/member/member-card.vue'
 import TabSheet from '@/components/layout-kit/modal/tab-sheet.vue'
-import type { AppProps, AppEmits } from '@/phone/system/types'
-
-defineProps<AppProps>()
-const emit = defineEmits<AppEmits>()
+const { close } = defineProps<{ close: () => void }>()
 
 const { t } = useI18n()
 
@@ -36,7 +33,7 @@ const TAB_COMPONENTS = {
 const editor = useMemberEditor()
 provide(memberEditorKey, editor)
 
-const danger = useMemberDangerActions(() => emit('close'))
+const danger = useMemberDangerActions(close)
 provide(memberDangerActionsKey, danger)
 
 const alert = useAlert()
@@ -47,7 +44,7 @@ const { layout_mode, sheet_px } = useTabModalLayout({
   desktop_query: 'w>=lg & fine'
 })
 provide(settingsLayoutKey, layout_mode)
-provide(settingsCloseKey, () => emit('close'))
+provide(settingsCloseKey, close)
 
 type ActiveTab = 'profile' | 'subscription' | 'app' | 'danger-zone'
 const active_tab = useSessionRef<ActiveTab | null>('settings.active-tab', null)
@@ -87,14 +84,14 @@ onMounted(() => {
 })
 
 async function onClose() {
-  if (!editor.is_dirty.value) return emit('close')
+  if (!editor.is_dirty.value) return close()
   const { response } = alert.warn({
     title: t('settings.unsaved-alert.title'),
     message: t('settings.unsaved-alert.message'),
     confirmLabel: t('settings.unsaved-alert.confirm'),
     cancelLabel: t('settings.unsaved-alert.cancel')
   })
-  if (await response) emit('close')
+  if (await response) close()
 }
 
 function onNavigate(tab: ActiveTab) {
