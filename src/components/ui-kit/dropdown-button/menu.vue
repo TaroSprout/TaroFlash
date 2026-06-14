@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { type ButtonProps } from '../button.vue'
-import { usePlayOnTap } from '@/composables/use-play-on-tap'
+import { useStagedTap } from '@/composables/use-staged-tap'
 import { emitSfx } from '@/sfx/bus'
 import type { DropdownOption } from './types'
 
@@ -26,23 +26,21 @@ const emit = defineEmits<{
   (e: 'select', option: DropdownOption): void
 }>()
 
-// Always-quiet tap (no bounce variant), so animate is hard-off; it just holds
-// `playing` for the duration so the bgx sweep can run off `[data-playing]`.
-const { interceptClick } = usePlayOnTap({ animate: false, reset: true })
+const { tap } = useStagedTap()
 
 // Which option is mid-tap, so only its row shows the sweep.
 const playing_value = ref<DropdownOption['value'] | null>(null)
 
-// Mirror ui-button: on coarse the capture intercept plays the quiet tap then
-// fires the select; on fine it bails and the bubble `@click` selects immediately.
 function onOptionTap(option: DropdownOption, e: MouseEvent) {
-  interceptClick(e, {
-    beforePlay: () => {
-      emitSfx('ui.snappy_button_5')
-      playing_value.value = option.value
+  emitSfx('ui.snappy_button_5')
+  playing_value.value = option.value
+  tap(
+    () => {
+      emit('select', option)
+      playing_value.value = null
     },
-    onAfter: () => emit('select', option)
-  })
+    { captureMode: true }
+  )(e)
 }
 </script>
 

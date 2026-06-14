@@ -8,7 +8,7 @@ import UiDropdownButton, {
 } from '@/components/ui-kit/dropdown-button/index.vue'
 import Scrubber from '@/views/audio-reader/lesson/scrubber.vue'
 import { useLocalRef } from '@/composables/use-local-ref'
-import { usePlayOnTap } from '@/composables/use-play-on-tap'
+import { useStagedTap } from '@/composables/use-staged-tap'
 import { emitSfx } from '@/sfx/bus'
 import type { AudioPlayer } from '@/composables/audio-reader/use-audio-player'
 
@@ -42,11 +42,9 @@ const { t } = useI18n()
 
 const mode = useLocalRef<'expanded' | 'mini'>('audio-reader.toolbar-mode', 'expanded')
 
-const { playing: back_playing, interceptClick: interceptBack } = usePlayOnTap({ yoyo: true })
-const { playing: play_playing, interceptClick: interceptPlay } = usePlayOnTap({ yoyo: true })
-const { playing: forward_playing, interceptClick: interceptForward } = usePlayOnTap({
-  yoyo: true
-})
+const { playing: back_playing, tap: tapBack } = useStagedTap({ animate: 'pop', yoyo: true })
+const { playing: play_playing, tap: tapPlay } = useStagedTap({ animate: 'pop', yoyo: true })
+const { playing: forward_playing, tap: tapForward } = useStagedTap({ animate: 'pop', yoyo: true })
 
 const is_playing = computed(() => player.is_playing.value)
 const chapter_options = computed<DropdownOption[]>(() =>
@@ -76,17 +74,17 @@ function skipForward() {
 // fine — exactly one activation per pointer type.
 function onPlayTap(e: MouseEvent) {
   emitSfx(player.is_playing.value ? 'ui.snappy_button_3' : 'ui.snappy_button_2')
-  interceptPlay(e, { onAfter: toggle })
+  tapPlay(toggle, { captureMode: true })(e)
 }
 
 function onBackTap(e: MouseEvent) {
   emitSfx('ui.snappy_button_5')
-  interceptBack(e, { onAfter: skipBack })
+  tapBack(skipBack, { captureMode: true })(e)
 }
 
 function onForwardTap(e: MouseEvent) {
   emitSfx('ui.snappy_button_5')
-  interceptForward(e, { onAfter: skipForward })
+  tapForward(skipForward, { captureMode: true })(e)
 }
 
 function onChapter(option: DropdownOption) {

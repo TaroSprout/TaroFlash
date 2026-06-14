@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { useAttrs } from 'vue'
 import Card from '@/components/card/index.vue'
-import { usePlayOnTap } from '@/composables/use-play-on-tap'
-import { emitSfx } from '@/sfx/bus'
+import { useStagedTap } from '@/composables/use-staged-tap'
 import type { NamespacedAudioKey } from '@/sfx/config'
 
 type CardSize = InstanceType<typeof Card>['$props']['size']
@@ -20,19 +19,12 @@ const {
 
 const attrs = useAttrs()
 
-const { playing, interceptClick } = usePlayOnTap({ animate: false })
+const { playing, tap } = useStagedTap()
 
 function onCaptureClick(e: MouseEvent) {
   const handler = attrs.onClick as ((ev: MouseEvent) => void) | undefined
-
   if (!handler) return
-
-  interceptClick(e, {
-    beforePlay: () => {
-      if (click_sfx) emitSfx(click_sfx)
-    },
-    onAfter: handler
-  })
+  tap(handler, { pressAudio: click_sfx, captureMode: true })(e)
 }
 </script>
 
