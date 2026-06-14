@@ -71,10 +71,7 @@ const sidebar_active = computed({
   set: (v) => (active_tab.value = v as ActiveTab)
 })
 
-const active_header = computed(() => ({
-  title: t(`settings.header.${displayed_tab.value}.title`),
-  description: t(`settings.header.${displayed_tab.value}.description`)
-}))
+const header_title = computed(() => t(`settings.header.${displayed_tab.value}.title`))
 
 const tab_component = computed(() => TAB_COMPONENTS[displayed_tab.value])
 
@@ -137,11 +134,8 @@ watch(layout_mode, (mode) => {
         class="w-full flex flex-col max-md:items-center max-md:text-center"
       >
         <h1 data-testid="settings__header-title" class="text-5xl text-white">
-          {{ active_header.title }}
+          {{ header_title }}
         </h1>
-        <p data-testid="settings__header-description" class="text-white/80">
-          {{ active_header.description }}
-        </p>
       </div>
     </template>
 
