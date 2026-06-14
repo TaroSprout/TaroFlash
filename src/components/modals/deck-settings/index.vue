@@ -5,7 +5,7 @@ import DeckAside from './deck-aside.vue'
 import { deckSettingsLayoutKey, type DeckSettingsLayout } from './layout'
 import { emitSfx } from '@/sfx/bus'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
-import { tabHeightEnter, tabHeightLeave } from '@/utils/animations/tab-height'
+import { tabSlideEnter, tabSlideLeave } from '@/utils/animations/tab-slide'
 import { useDeckEditor, deckEditorKey } from '@/composables/deck-editor'
 import {
   useDeckDangerActions,
@@ -56,7 +56,7 @@ useModalRequestClose(() => onClose())
 const after_enter = useModalAfterEnter()
 
 const deck_aside = useTemplateRef('deck_aside')
-// sheet:   w < md          — no aside, no floating preview, height-animated tab transitions
+// sheet:   w < md          — no aside, no floating preview, slide tab transitions
 // tablet:  md ≤ w < lg     — aside visible, no floating preview
 // desktop: w ≥ lg & fine   — sidebar + floating preview, wider modal
 const _is_sheet = useMatchMedia('w<md')
@@ -69,7 +69,9 @@ const layout_mode = computed<DeckSettingsLayout>(() => {
 provide(deckSettingsLayoutKey, layout_mode)
 
 const active_tab = ref<ActiveTab | null>(null)
+const nav_direction = ref<'forward' | 'back'>('forward')
 const tab_outlet = ref<HTMLElement>()
+const tab_initial_render = ref(true)
 const is_saving = ref(false)
 
 const sheet_px = computed(() => {
@@ -144,25 +146,38 @@ async function onClose() {
   if (await response) close(false)
 }
 
+function onNavigate(tab: ActiveTab) {
+  nav_direction.value = 'forward'
+  active_tab.value = tab
+}
+
 function onBack() {
   emitSfx('ui.snappy_button_5')
+  nav_direction.value = 'back'
   active_tab.value = null
 }
 
 function onTabLeave(el: Element, done: () => void) {
-  if (layout_mode.value !== 'sheet' || !tab_outlet.value) {
+  if (layout_mode.value === 'desktop') {
     fadeLeave(el, done)
     return
   }
-  tabHeightLeave(tab_outlet.value)(el, done)
+  const wrapper = layout_mode.value === 'sheet' ? tab_outlet.value : undefined
+  tabSlideLeave(nav_direction, wrapper)(el, done)
 }
 
 function onTabEnter(el: Element, done: () => void) {
-  if (layout_mode.value !== 'sheet' || !tab_outlet.value) {
+  if (tab_initial_render.value) {
+    tab_initial_render.value = false
+    done()
+    return
+  }
+  if (layout_mode.value === 'desktop') {
     fadeEnter(el, done)
     return
   }
-  tabHeightEnter(tab_outlet.value)(el, done)
+  const wrapper = layout_mode.value === 'sheet' ? tab_outlet.value : undefined
+  tabSlideEnter(nav_direction, wrapper)(el, done)
 }
 
 watch(layout_mode, (mode) => {
@@ -207,16 +222,12 @@ watch(active_tab, (tab) => {
       data-testid="deck-settings__main"
       :class="[
         'relative flex flex-1 flex-col gap-4 w-full min-w-0',
-        layout_mode === 'sheet' && 'max-w-111 mx-auto overflow-hidden pt-0.5 pl-0.5'
+        layout_mode !== 'desktop' && 'overflow-hidden',
+        layout_mode === 'sheet' && 'max-w-111 mx-auto pt-0.5 pl-0.5'
       ]"
     >
       <transition :css="false" mode="out-in" @leave="onTabLeave" @enter="onTabEnter">
-        <component
-          :is="tab_component"
-          :key="displayed_tab"
-          @navigate="active_tab = $event"
-          @back="onBack"
-        />
+        <component :is="tab_component" :key="displayed_tab" @navigate="onNavigate" @back="onBack" />
       </transition>
     </div>
 
