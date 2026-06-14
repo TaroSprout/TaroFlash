@@ -116,7 +116,10 @@ watch(layout_mode, (mode) => {
     data-theme="blue-500"
     data-theme-dark="blue-650"
     :data-layout="layout_mode"
-    :class="layout_mode === 'desktop' ? 'w-250!' : 'w-full! max-w-205.5'"
+    :class="[
+      layout_mode === 'desktop' ? 'w-250!' : 'w-full! max-w-205.5',
+      layout_mode !== 'sheet' && 'h-150'
+    ]"
     :sheet_px="sheet_px"
     :tabs="tabs"
     :pattern_config="{ pattern: 'endless-clouds' }"
