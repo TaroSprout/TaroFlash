@@ -41,6 +41,11 @@ export default defineConfig({
     }
   },
   plugins: [
+    {
+      name: 'html-title',
+      transformIndexHtml: (html) =>
+        html.replace('%VITE_APP_TITLE%', process.env.VITE_APP_TITLE ?? 'TaroFlash')
+    },
     vue(),
     vueJsx(),
     svgLoader(),
