@@ -375,4 +375,15 @@ function emitClickSfx() {
 .ui-kit-btn--quiet-tap[data-playing] .btn-icon {
   transform: none;
 }
+
+/* Expanded tap zone on coarse (touch) pointers. The pseudo-element is
+   transparent but occupies the extra hit area outside the visible button. */
+@media (pointer: coarse) {
+  .ui-kit-btn::before {
+    content: '';
+    position: absolute;
+    inset: var(--btn-tap-inset, -8px);
+    border-radius: calc(var(--btn-border-radius) + 8px);
+  }
+}
 </style>
