@@ -235,7 +235,7 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
       <footer
         ref="footer_bar"
         data-testid="lesson-view__bar"
-        class="w-full left-0 fixed bottom-0 rounded-t-6 z-30 bg-brown-300 p-5 pb-2 pointer-fine:pb-6 dark:bg-stone-900"
+        class="fixed bottom-0 left-0 right-0 z-30 rounded-t-6 bg-brown-300 p-5 pb-2 dark:bg-stone-900 sm:bottom-3 sm:left-auto sm:right-3 sm:w-96 sm:rounded-6 sm:pb-5"
       >
         <div ref="footer_swap" data-testid="lesson-view__footer-swap" class="relative w-full">
           <transition
