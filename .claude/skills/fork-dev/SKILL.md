@@ -6,6 +6,8 @@ argument-hint: '<description of work>'
 arguments:
   - name: description
     description: A plain-English description of the work this dev server is for (e.g. "add dark mode toggle"). Used to infer the worktree name, branch, and port.
+  - name: --from-master
+    description: Branch the worktree off master instead of the current branch.
 lastUpdated: 2026-06-14T00:00:00Z
 ---
 
@@ -39,9 +41,17 @@ If a worktree at `../TaroFlash-<slug>` already exists, skip creation and jump to
 
 ### Step 3 — Create the worktree
 
+This is always a **new** branch, so use `-b`. Branch from the current branch by default; use `master` only when `--from-master` was passed:
+
 ```sh
-git worktree add ../TaroFlash-<slug> <branch>
+# default — branch from current HEAD
+git worktree add -b <branch> ../TaroFlash-<slug> HEAD
+
+# with --from-master
+git worktree add -b <branch> ../TaroFlash-<slug> master
 ```
+
+Use the bare form (no `-b`) only when reusing an existing branch that was previously checked out somewhere else.
 
 Symlink `node_modules` so Vite runs without a fresh install:
 
@@ -49,11 +59,12 @@ Symlink `node_modules` so Vite runs without a fresh install:
 ln -s "$(pwd)/node_modules" "../TaroFlash-<slug>/node_modules"
 ```
 
-Copy gitignored env files if they exist:
+Copy all gitignored env files that exist — missing env vars cause silent runtime crashes:
 
 ```sh
-[ -f .env ] && cp .env ../TaroFlash-<slug>/.env
-[ -f .env.local ] && cp .env.local ../TaroFlash-<slug>/.env.local
+for f in .env .env.local .env.*.local; do
+  [ -f "$f" ] && cp "$f" "../TaroFlash-<slug>/$f"
+done
 ```
 
 ### Step 4 — Start the dev server
@@ -64,13 +75,13 @@ Run in the background (`run_in_background: true`):
 cd ../TaroFlash-<slug> && VITE_APP_TITLE="[<slug>] TaroFlash" node_modules/.bin/vp dev --port <port> --host 2>&1 | tee /tmp/fork-dev-<slug>.log
 ```
 
-Wait ~3 seconds, then read the log to confirm the actual port Vite bound to:
+Poll for the URL instead of sleeping a fixed amount:
 
 ```sh
-grep -m1 "Local:" /tmp/fork-dev-<slug>.log
+for i in $(seq 15); do grep -m1 "Local:" /tmp/fork-dev-<slug>.log 2>/dev/null && break || sleep 1; done
 ```
 
-Retry once after 2 more seconds if the log isn't ready yet.
+If nothing appears after 15 seconds, read the log and surface the error.
 
 ### Step 5 — Report
 
