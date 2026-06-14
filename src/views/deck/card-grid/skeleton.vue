@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import Card from '@/components/card/index.vue'
 import { useCardGrid } from './use-card-grid'
-import { deckViewShellKey } from '@/composables/deck/view-shell'
-import { inject } from 'vue'
+import { deckViewShellKey, type CardGridSize } from '@/composables/deck/view-shell'
+import { inject, ref } from 'vue'
 
 const DEFAULT_COVER: DeckCover = {
   theme: 'brown-300',
   theme_dark: 'stone-900',
-  pattern: 'diagonal-stripes',
+  pattern: 'diagonal-stripes'
 }
 
-const { grid_size } = inject(deckViewShellKey)!
+const shell = inject(deckViewShellKey, null)
+const grid_size = shell?.grid_size ?? ref<CardGridSize>('base')
 const { card_scale, grid_style } = useCardGrid(grid_size)
 </script>
 
