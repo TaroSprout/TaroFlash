@@ -12,8 +12,14 @@ export type StagedTapPhase = 'press' | 'peak' | 'done'
 export interface StagedTapOptions {
   /** 'quiet' = bgx sweep only (default). 'pop' = scale/rotate tween. */
   animate?: StagedTapAnimate
-  /** Phase at which action fires on coarse. Fine always fires at press. Default: 'peak'. */
+  /** Phase at which action fires on coarse. Default: 'peak'. */
   triggerAt?: StagedTapPhase
+  /**
+   * 'coarse-only' (default): animation only plays on touch; fine pointer fires
+   * action immediately and skips animation. 'always': animation plays on every
+   * pointer type — for decorative pops not tied to real click events.
+   */
+  activeOn?: 'coarse-only' | 'always'
   /** Pop-only: yoyo the tween back to neutral. Default: false. */
   yoyo?: boolean
   /** Pop-only: seconds to hold at peak before yoyo. Default: 0.1. */
@@ -32,6 +38,14 @@ export interface TapCallOptions {
    * On coarse, tap() still intercepts and stops propagation as normal.
    */
   captureMode?: boolean
+  /**
+   * Fires on every call before any coarse/fine check — even when the tap will
+   * bail (fine pointer in captureMode, or already playing). Use for side-effects
+   * that must happen on every touch regardless of animation state (e.g. burst FX).
+   */
+  onTap?: (e: MouseEvent) => void
+  /** Override the composable-level triggerAt for this specific call. */
+  triggerAt?: StagedTapPhase
 }
 
 /**
@@ -48,6 +62,7 @@ export function useStagedTap(options: StagedTapOptions = {}) {
   const {
     animate = 'quiet',
     triggerAt = 'peak',
+    activeOn = 'coarse-only',
     yoyo = false,
     hold = 0.1,
     duration = BUTTON_TAP_DURATION
@@ -57,23 +72,26 @@ export function useStagedTap(options: StagedTapOptions = {}) {
   const is_coarse = useMatchMedia('coarse')
 
   /**
-   * Returns an async click handler. On fine pointers the action fires at once.
-   * On coarse, it plays the tap animation and fires the action at the configured phase.
+   * Returns an async click handler. On fine pointers the action fires at once
+   * (unless captureMode). On coarse, plays the animation and fires the action
+   * at the configured phase.
    */
   function tap(action?: (e: MouseEvent) => void, tapOpts: TapCallOptions = {}) {
     return async (e: MouseEvent) => {
-      if (!is_coarse.value) {
+      tapOpts.onTap?.(e)
+
+      if (activeOn === 'coarse-only' && !is_coarse.value) {
         if (!tapOpts.captureMode) action?.(e)
         return
       }
       if (playing.value) return
 
-      // Prevent the natural @click (e.g. from v-bind="$attrs") from firing the
-      // action a second time after our deferred call at peak.
       if (tapOpts.captureMode) e.stopImmediatePropagation()
 
+      const phase = tapOpts.triggerAt ?? triggerAt
+
       if (tapOpts.pressAudio) emitSfx(tapOpts.pressAudio)
-      if (triggerAt === 'press') action?.(e)
+      if (phase === 'press') action?.(e)
 
       playing.value = true
 
@@ -81,12 +99,12 @@ export function useStagedTap(options: StagedTapOptions = {}) {
         const target = e.currentTarget as HTMLElement
         const { peak, done } = playButtonTap(target, duration, { yoyo, hold })
         await peak
-        if (triggerAt === 'peak') action?.(e)
+        if (phase === 'peak') action?.(e)
         await done
-        if (triggerAt === 'done') action?.(e)
+        if (phase === 'done') action?.(e)
       } else {
         await new Promise<void>((resolve) => setTimeout(resolve, duration * 1000))
-        if (triggerAt !== 'press') action?.(e)
+        if (phase !== 'press') action?.(e)
       }
 
       playing.value = false

@@ -9,7 +9,7 @@ import {
   watch
 } from 'vue'
 import type { ComputedRef, InjectionKey, MaybeRefOrGetter } from 'vue'
-import { usePlayOnTap } from '@/composables/use-play-on-tap'
+import { useStagedTap } from '@/composables/use-staged-tap'
 import { emitSfx } from '@/sfx/bus'
 import { cleanTerm } from '@/utils/transcript'
 import {
@@ -143,11 +143,13 @@ export function useReaderHighlights(
   // Pops the interaction pill on every commit: the yoyo scale/rotate bumps the pill
   // and `tap_active` drives its `data-playing`, which the texture overlay turns into
   // a quick sliding bgx sweep for the same window.
-  const { playing: tap_active, interceptClick: playHighlightTap } = usePlayOnTap({
+  const { playing: tap_active, tap: _tapHighlight } = useStagedTap({
+    animate: 'pop',
     yoyo: true,
     activeOn: 'always',
     duration: 0.1
   })
+  const playHighlightTap = _tapHighlight()
 
   // The word under the pointer (hover) or, while dragging, the focus end of the
   // range. `anchor_index` is the fixed end of a drag — null when not dragging.
@@ -435,9 +437,8 @@ export function useReaderHighlights(
     revealCommitted(range)
   }
 
-  // Fire the tap flag on the pill. usePlayOnTap reads its target from
-  // `currentTarget`, so hand it a minimal event pointing at the (pointer-inert)
-  // pill — there's no real DOM click to forward here.
+  // Fire the tap animation on the pill by passing a minimal synthetic event
+  // pointing at it — there's no real DOM click to forward here.
   function pulseHighlight() {
     const el = hover_el_pool.get(0)
     if (!el) return

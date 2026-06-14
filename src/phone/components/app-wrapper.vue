@@ -3,7 +3,7 @@ import { ref, useAttrs } from 'vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import UiBurst, { type BurstSize } from '@/components/ui-kit/burst.vue'
 import { useMatchMedia } from '@/composables/use-media-query'
-import { usePlayOnTap } from '@/composables/use-play-on-tap'
+import { useStagedTap } from '@/composables/use-staged-tap'
 
 type AppWrapperProps = {
   title: string
@@ -27,7 +27,8 @@ const attrs = useAttrs()
 const is_coarse = useMatchMedia('coarse')
 const burst_id = ref(0)
 
-const { playing, interceptClick } = usePlayOnTap({
+const { playing, tap } = useStagedTap({
+  animate: 'pop',
   yoyo: true,
   duration: tapDuration,
   hold: tapHold
@@ -38,18 +39,14 @@ type ClickHandler = (ev: MouseEvent) => void
 function onCaptureClick(e: MouseEvent) {
   const handler = resolveClickHandler()
 
-  interceptClick(e, {
+  tap(handler, {
+    captureMode: true,
+    triggerAt: instantAction ? 'press' : 'peak',
     onTap: () => {
       emit('tapStart')
       spawnBurst()
-    },
-    beforePlay: () => {
-      if (instantAction) handler?.(e)
-    },
-    onPeak: () => {
-      if (!instantAction) handler?.(e)
     }
-  })
+  })(e)
 }
 
 function resolveClickHandler(): ClickHandler | undefined {
