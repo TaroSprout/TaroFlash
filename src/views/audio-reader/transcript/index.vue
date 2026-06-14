@@ -32,6 +32,8 @@ const emit = defineEmits<{
 }>()
 
 const {
+  hover_lines,
+  setHoverEl,
   tap_active,
   interaction_range,
   selection_preview,
@@ -107,15 +109,17 @@ function commitSelection({
       @pointercancel="onPointerCancel"
     >
       <div
-        ref="hover"
+        v-for="(_, i) in hover_lines"
+        :key="i"
+        :ref="(el) => setHoverEl(el as HTMLElement | null, i)"
         data-testid="transcript-view__hover"
         aria-hidden="true"
         :data-playing="tap_active"
-        class="group/hover pointer-events-none absolute left-0 top-0 -z-10 rounded-2 bg-blue-500 opacity-0 dark:bg-blue-650"
+        class="group/pill pointer-events-none absolute left-0 top-0 -z-10 rounded-2 bg-blue-500 opacity-0 dark:bg-blue-650"
       >
         <div
           data-testid="transcript-view__hover-texture"
-          class="absolute inset-0 hidden rounded-2 bgx-diagonal-stripes animation-safe:bgx-slide bgx-color-[currentColor] group-data-[playing=true]/hover:block"
+          class="absolute inset-0 hidden rounded-2 bgx-diagonal-stripes animation-safe:bgx-slide bgx-color-[currentColor] group-data-[playing=true]/pill:block"
         />
       </div>
       <transcript-segment

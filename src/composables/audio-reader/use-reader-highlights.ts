@@ -1,4 +1,13 @@
-import { computed, onBeforeUnmount, onMounted, ref, toValue, useTemplateRef, watch } from 'vue'
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  toValue,
+  useTemplateRef,
+  watch
+} from 'vue'
 import type { ComputedRef, InjectionKey, MaybeRefOrGetter } from 'vue'
 import { usePlayOnTap } from '@/composables/use-play-on-tap'
 import { emitSfx } from '@/sfx/bus'
@@ -8,7 +17,7 @@ import {
   hideReaderCursor,
   type CursorBox
 } from '@/utils/animations/reader-cursor'
-import { scrollWordIntoDeadzone } from '@/utils/animations/transcript-scroll'
+import { scrollLineIntoView, scrollWordIntoDeadzone } from '@/utils/animations/transcript-scroll'
 import type { CardMatch } from '@/utils/transcript-match'
 
 // How far each highlight bleeds past the text on every side, so it reads as a
@@ -119,7 +128,17 @@ export function useReaderHighlights(
   is_playing: MaybeRefOrGetter<boolean> = false
 ) {
   const content = useTemplateRef<HTMLElement>('content')
-  const hover = useTemplateRef<HTMLElement>('hover')
+
+  // One pill element per visual line of the active selection. The template
+  // renders this many pill divs and hands their refs back via setHoverEl.
+  const hover_lines = ref<CursorBox[]>([])
+  const hover_el_pool = new Map<number, HTMLElement>()
+
+  /** Called by the template's `:ref` callback for each rendered pill. */
+  function setHoverEl(el: HTMLElement | null, i: number) {
+    if (el) hover_el_pool.set(i, el)
+    else hover_el_pool.delete(i)
+  }
 
   // Pops the interaction pill on every commit: the yoyo scale/rotate bumps the pill
   // and `tap_active` drives its `data-playing`, which the texture overlay turns into
@@ -275,25 +294,54 @@ export function useReaderHighlights(
     }
   }
 
-  function rangeBox(range: WordRange): CursorBox | null {
-    const rect = rangeRect(range)
-    return rect ? boxOf(rect) : null
-  }
+  // Group selected words into per-visual-line boxes. Words within LINE_SNAP px
+  // of each other vertically land in the same bucket; each bucket becomes one pill.
+  const LINE_SNAP = 4
 
-  function wordBox(index: number): CursorBox | null {
-    const el = wordBaseEl(index)
-    return el ? boxOf(el.getBoundingClientRect()) : null
-  }
+  function rangeLines(range: WordRange): CursorBox[] {
+    if (!content.value) return []
+    const base = content.value.getBoundingClientRect()
+    type Bucket = { top: number; bottom: number; left: number; right: number }
+    const buckets = new Map<number, Bucket>()
 
-  // Priority: an in-progress drag, then a committed selection (popover open),
-  // then the plain hovered word.
-  function interactionBox(): CursorBox | null {
-    if (anchor_index.value !== null && focus_index.value !== null) {
-      return rangeBox(orderedRange(anchor_index.value, focus_index.value))
+    for (let i = range.lo; i <= range.hi; i++) {
+      const el = wordBaseEl(i)
+      if (!el) continue
+      const r = el.getBoundingClientRect()
+      const key = Math.round(r.top / LINE_SNAP) * LINE_SNAP
+      const b = buckets.get(key)
+      if (b) {
+        b.left = Math.min(b.left, r.left)
+        b.right = Math.max(b.right, r.right)
+        b.top = Math.min(b.top, r.top)
+        b.bottom = Math.max(b.bottom, r.bottom)
+      } else {
+        buckets.set(key, { top: r.top, bottom: r.bottom, left: r.left, right: r.right })
+      }
     }
-    if (committed.value) return rangeBox(committed.value)
-    if (focus_index.value !== null) return wordBox(focus_index.value)
-    return null
+
+    return [...buckets.values()]
+      .sort((a, b) => a.top - b.top)
+      .map((b) => ({
+        left: b.left - base.left - PAD_X,
+        top: b.top - base.top - PAD_Y,
+        width: b.right - b.left + PAD_X * 2,
+        height: b.bottom - b.top + PAD_Y * 2
+      }))
+  }
+
+  // Priority: drag > committed selection > hover. A single hovered word is one
+  // line; a range or committed selection may span multiple.
+  function interactionLines(): CursorBox[] {
+    if (anchor_index.value !== null && focus_index.value !== null) {
+      return rangeLines(orderedRange(anchor_index.value, focus_index.value))
+    }
+    if (committed.value) return rangeLines(committed.value)
+    if (focus_index.value !== null) {
+      const el = wordBaseEl(focus_index.value)
+      return el ? [boxOf(el.getBoundingClientRect())] : []
+    }
+    return []
   }
 
   // The nearest ancestor that actually scrolls — the reader column on desktop.
@@ -343,16 +391,24 @@ export function useReaderHighlights(
     scrollLineIntoView(window, el)
   }
 
-  function positionInteraction() {
-    if (!hover.value) return
+  async function positionInteraction() {
+    const lines = interactionLines()
 
-    const box = interactionBox()
-    if (!box) {
-      hideReaderCursor(hover.value)
-      return
-    }
+    // Hide pills that are about to be removed before Vue unmounts them, so the
+    // fade animation has a chance to run on the still-mounted elements.
+    hover_el_pool.forEach((el, i) => {
+      if (i >= lines.length) hideReaderCursor(el)
+    })
 
-    moveReaderCursor(hover.value, box, { duration: HOVER_DURATION })
+    hover_lines.value = lines
+    if (lines.length === 0) return
+
+    await nextTick()
+
+    lines.forEach((box, i) => {
+      const el = hover_el_pool.get(i)
+      if (el) moveReaderCursor(el, box, { duration: HOVER_DURATION })
+    })
   }
 
   function reposition() {
@@ -383,9 +439,10 @@ export function useReaderHighlights(
   // `currentTarget`, so hand it a minimal event pointing at the (pointer-inert)
   // pill — there's no real DOM click to forward here.
   function pulseHighlight() {
-    if (!hover.value) return
+    const el = hover_el_pool.get(0)
+    if (!el) return
     playHighlightTap({
-      currentTarget: hover.value,
+      currentTarget: el,
       preventDefault() {},
       stopImmediatePropagation() {}
     } as unknown as MouseEvent)
@@ -625,7 +682,8 @@ export function useReaderHighlights(
 
   return {
     content,
-    hover,
+    hover_lines,
+    setHoverEl,
     tap_active,
     interaction_range,
     selection_preview,
