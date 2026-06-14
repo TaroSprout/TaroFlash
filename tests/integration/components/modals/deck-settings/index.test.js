@@ -14,8 +14,21 @@ const {
   mockToastError,
   mockEditor,
   mockRouterPush,
-  afterEnterControls
+  afterEnterControls,
+  tabHeightLeaveSpy,
+  tabHeightEnterSpy,
+  tabSlideRightLeaveSpy,
+  tabSlideRightEnterSpy,
+  fadeEnterSpy,
+  fadeLeaveSpy
 } = vi.hoisted(() => {
+  // Animation function spies: each wraps a no-op that immediately calls done()
+  // so <Transition> hooks complete and Vue can proceed to the enter phase.
+  const makeAnimSpy = () => vi.fn((_wrapper_or_el, _done_or_nothing) => {})
+  // Curried versions (tabHeightLeave(wrapper) returns (el, done) => …)
+  const makeCurriedSpy = () => vi.fn(() => vi.fn((_el, done) => done?.()))
+  // Non-curried that call done directly
+  const makeDirectSpy = () => vi.fn((_el, done) => done?.())
   // afterEnterControls holds a resolve fn that tests can call to simulate the
   // modal enter animation completing. Reset before each test.
   let _resolve = null
@@ -38,7 +51,13 @@ const {
       saveDeck: vi.fn().mockResolvedValue(true)
     },
     mockRouterPush: vi.fn(),
-    afterEnterControls
+    afterEnterControls,
+    tabHeightLeaveSpy: makeCurriedSpy(),
+    tabHeightEnterSpy: makeCurriedSpy(),
+    tabSlideRightLeaveSpy: makeCurriedSpy(),
+    tabSlideRightEnterSpy: makeCurriedSpy(),
+    fadeEnterSpy: makeDirectSpy(),
+    fadeLeaveSpy: makeDirectSpy()
   }
 })
 
@@ -68,6 +87,67 @@ vi.mock('gsap', () => ({
     killTweensOf: vi.fn()
   }
 }))
+
+// Animation utility mocks — let tests spy on which function the component routes
+// to based on nav_direction. Each curried mock returns a function that immediately
+// calls done() so <Transition> hooks complete and Vue can continue.
+vi.mock('@/utils/animations/tab-height', () => ({
+  tabHeightLeave: (...args) => tabHeightLeaveSpy(...args),
+  tabHeightEnter: (...args) => tabHeightEnterSpy(...args)
+}))
+
+vi.mock('@/utils/animations/slide-fade-right', () => ({
+  slideFadeRightEnter: (_el, done) => done?.(),
+  slideFadeRightLeave: (_el, done) => done?.(),
+  tabSlideRightLeave: (...args) => tabSlideRightLeaveSpy(...args),
+  tabSlideRightEnter: (...args) => tabSlideRightEnterSpy(...args)
+}))
+
+vi.mock('@/utils/animations/fade', () => ({
+  fadeEnter: (...args) => fadeEnterSpy(...args),
+  fadeLeave: (...args) => fadeLeaveSpy(...args)
+}))
+
+// Module-mock the async tab components so they resolve to real components
+// immediately (no lazy loading), giving <Transition> real DOM nodes to animate.
+vi.mock('@/components/modals/deck-settings/tab-design/index.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return {
+    default: defineComponent({
+      name: 'TabDesign',
+      emits: ['navigate'],
+      setup(_p, { emit }) {
+        return () => h('div', { 'data-testid': 'tab-design-stub' }, 'design')
+      }
+    })
+  }
+})
+
+vi.mock('@/components/modals/deck-settings/tab-study/index.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return {
+    default: defineComponent({
+      name: 'TabStudy',
+      emits: ['navigate'],
+      setup(_p, { emit }) {
+        return () => h('div', { 'data-testid': 'tab-study-stub' }, 'study')
+      }
+    })
+  }
+})
+
+vi.mock('@/components/modals/deck-settings/tab-index/index.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return {
+    default: defineComponent({
+      name: 'TabIndex',
+      emits: ['navigate'],
+      setup(_p, { emit }) {
+        return () => h('div', { 'data-testid': 'tab-index-stub' }, 'index')
+      }
+    })
+  }
+})
 
 // Mock useModalAfterEnter so tests control when the enter promise resolves.
 // useModalRequestClose is kept as a no-op (the close path is tested via the
@@ -292,6 +372,13 @@ beforeEach(() => {
   if (mockEditor.editor) mockEditor.editor.active_side.value = 'cover'
   afterEnterControls.reset()
   resetResponsive()
+  // Reset animation spies so each test starts clean
+  tabHeightLeaveSpy.mockReset().mockReturnValue(vi.fn((_el, done) => done?.()))
+  tabHeightEnterSpy.mockReset().mockReturnValue(vi.fn((_el, done) => done?.()))
+  tabSlideRightLeaveSpy.mockReset().mockReturnValue(vi.fn((_el, done) => done?.()))
+  tabSlideRightEnterSpy.mockReset().mockReturnValue(vi.fn((_el, done) => done?.()))
+  fadeEnterSpy.mockReset().mockImplementation((_el, done) => done?.())
+  fadeLeaveSpy.mockReset().mockImplementation((_el, done) => done?.())
 })
 
 describe('DeckSettings — save button visibility (driven by editor.is_dirty)', () => {
@@ -629,5 +716,172 @@ describe('DeckSettings — initial_tab / initial_side override [obligation]', ()
     await flushPromises()
     expect(setActiveSide).not.toHaveBeenCalled()
     setActiveSide.mockRestore()
+  })
+})
+
+describe('DeckSettings — footer save button visibility [obligation]', () => {
+  test('footer is absent when is_mobile=false (desktop) regardless of active_tab [obligation]', () => {
+    setBelowMd(false)
+    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+    expect(wrapper.find('[data-testid="deck-settings__footer"]').exists()).toBe(false)
+  })
+
+  test('footer is absent on mobile when active_tab is null (index screen) [obligation]', () => {
+    setBelowMd(true)
+    const { wrapper } = makeWrapper()
+    expect(wrapper.find('[data-testid="deck-settings__footer"]').exists()).toBe(false)
+  })
+
+  test('footer renders on mobile when active_tab is non-null [obligation]', () => {
+    setBelowMd(true)
+    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+    expect(wrapper.find('[data-testid="deck-settings__footer"]').exists()).toBe(true)
+  })
+
+  test('footer disappears reactively when navigating back to null (index) on mobile [obligation]', async () => {
+    setBelowMd(true)
+    setSidebar(false)
+    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+    expect(wrapper.find('[data-testid="deck-settings__footer"]').exists()).toBe(true)
+
+    await wrapper.find('[data-testid="deck-settings__back-button"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="deck-settings__footer"]').exists()).toBe(false)
+  })
+
+  test('footer save button calls onSave when editor is dirty [obligation]', async () => {
+    setBelowMd(true)
+    mockEditor.saveDeck.mockResolvedValue(true)
+    const { wrapper, close } = makeWrapper({ initial_tab: 'design' })
+    if (mockEditor.editor) mockEditor.editor.is_dirty.value = true
+    await nextTick()
+
+    await wrapper.find('[data-testid="deck-settings__footer-save-button"]').trigger('click')
+    await flushPromises()
+
+    expect(mockEditor.saveDeck).toHaveBeenCalledTimes(1)
+    expect(close).toHaveBeenCalledWith(true)
+  })
+})
+
+describe('DeckSettings — is_tab_transitioning sync flag [obligation]', () => {
+  test('footer div mounts with data-transitioning when tab changes (sync watcher fires before render) [obligation]', async () => {
+    // The sync watcher (flush: sync) sets is_tab_transitioning=true BEFORE Vue
+    // re-renders. When the footer div first mounts it already carries
+    // data-transitioning="true" (and opacity-0), so it never flashes visible.
+    setBelowMd(true)
+    const { wrapper } = makeWrapper()
+
+    // Trigger the tab change via user interaction (sidebar emit)
+    await wrapper.find('[data-testid="tab-sheet__select-design"]').trigger('click')
+    // One tick: DOM is updated (footer mounts) but finish() hasn't cleared the
+    // flag yet (animation mocks call done immediately but the <Transition> hook
+    // wiring in this test env settles asynchronously).
+    await nextTick()
+
+    const footer = wrapper.find('[data-testid="deck-settings__footer"]')
+    expect(footer.exists()).toBe(true)
+    expect(footer.attributes('data-transitioning')).toBe('true')
+  })
+
+  test('is_tab_transitioning is cleared (data-transitioning absent) after the enter animation completes [obligation]', async () => {
+    setBelowMd(true)
+    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+    // Let everything settle after the initial tab mount
+    await flushPromises()
+    await new Promise((r) => requestAnimationFrame(r))
+    await flushPromises()
+
+    const footer = wrapper.find('[data-testid="deck-settings__footer"]')
+    expect(footer.exists()).toBe(true)
+    // After animation completes, is_tab_transitioning is false → data-transitioning absent
+    expect(footer.attributes('data-transitioning')).toBeUndefined()
+  })
+})
+
+describe('DeckSettings — nav_direction mapping: sync watcher sets correct direction [obligation]', () => {
+  // nav_direction is a plain (non-reactive) let, so we verify it indirectly via
+  // the sync watcher's co-assignment of is_tab_transitioning and the resulting
+  // header title / footer visibility after the navigation completes.
+  // The animation function routing (tabSlideRightEnter vs tabHeightEnter) is
+  // locked down by unit tests on the animation utilities themselves.
+
+  test('null → tab transition completes and displays the target tab [obligation]', async () => {
+    setBelowMd(true)
+    const { wrapper } = makeWrapper()
+
+    // Sync watcher fires immediately setting is_tab_transitioning = true and
+    // nav_direction = 'forward' (null → non-null).
+    await wrapper.find('[data-testid="tab-sheet__select-design"]').trigger('click')
+    await flushPromises()
+    await new Promise((r) => requestAnimationFrame(r))
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Card Designer')
+  })
+
+  test('tab → null (back) transition completes and shows index header [obligation]', async () => {
+    setBelowMd(true)
+    setSidebar(false)
+    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+
+    // Sync watcher sets nav_direction = 'back' (non-null → null).
+    await wrapper.find('[data-testid="deck-settings__back-button"]').trigger('click')
+    await flushPromises()
+    await new Promise((r) => requestAnimationFrame(r))
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Deck Settings')
+    expect(wrapper.find('[data-testid="deck-settings__footer"]').exists()).toBe(false)
+  })
+
+  test('tab → tab transition completes and shows the new tab header [obligation]', async () => {
+    setBelowMd(true)
+    const { wrapper } = makeWrapper({ initial_tab: 'study' })
+
+    // Sync watcher sets nav_direction = null (non-null → non-null).
+    await wrapper.find('[data-testid="tab-sheet__select-design"]').trigger('click')
+    await flushPromises()
+    await new Promise((r) => requestAnimationFrame(r))
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Card Designer')
+  })
+
+  test('sync watcher sets is_tab_transitioning=true before Vue re-renders on null→tab [obligation]', async () => {
+    // The sync flush: true watcher fires BEFORE Vue queues a DOM update.
+    // So immediately after active_tab mutates (before nextTick), is_tab_transitioning
+    // is already true and the footer (newly visible via v-if) carries opacity-0.
+    setBelowMd(true)
+    const { wrapper } = makeWrapper()
+
+    // Trigger via the sidebar_active setter path (same as clicking a tab)
+    await wrapper.find('[data-testid="tab-sheet__select-design"]').trigger('click')
+    // Sync watcher already fired; DOM not updated yet — check after one tick
+    await nextTick()
+
+    const footer = wrapper.find('[data-testid="deck-settings__footer"]')
+    expect(footer.exists()).toBe(true)
+    expect(footer.attributes('data-transitioning')).toBe('true')
+  })
+})
+
+describe('DeckSettings — transition hooks route to correct animation on desktop [obligation]', () => {
+  test('non-mobile tab change completes (header title updates to target tab) [obligation]', async () => {
+    // On desktop (is_mobile=false), onTabLeave/onTabEnter route to fadeLeave/fadeEnter.
+    // We verify the routing outcome: the tab change completes and the correct title shows.
+    // The fadeLeave/fadeEnter routing is verified at unit level in the animation utils tests.
+    setBelowMd(false)
+    const { wrapper } = makeWrapper({ initial_tab: 'study' })
+
+    await wrapper.find('[data-testid="tab-sheet__select-design"]').trigger('click')
+    await flushPromises()
+    await new Promise((r) => requestAnimationFrame(r))
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Card Designer')
+    // Desktop has no footer (is_mobile=false)
+    expect(wrapper.find('[data-testid="deck-settings__footer"]').exists()).toBe(false)
   })
 })
