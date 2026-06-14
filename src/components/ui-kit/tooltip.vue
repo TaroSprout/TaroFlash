@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef, watch, onBeforeUnmount } from 'vue'
 import { useFloating, flip, autoUpdate, offset, type Placement } from '@floating-ui/vue'
-import { useMatchMedia } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/ui/media-query'
 
 // The popover is teleported to <body>, so it can't inherit data-theme through
 // the DOM and reading it off $attrs would wrongly pick up a theme a parent

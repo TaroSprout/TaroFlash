@@ -13,7 +13,7 @@ vi.stubGlobal(
 )
 vi.stubGlobal('cancelAnimationFrame', vi.fn())
 
-const { useAudioPlayer } = await import('@/composables/audio-reader/use-audio-player')
+const { useAudioPlayer } = await import('@/composables/audio-reader/audio-player')
 
 // Helper: run the composable inside a real Vue app so watch() + onUnmounted work
 function withSetup(composable) {

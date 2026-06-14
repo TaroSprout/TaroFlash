@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
-import { useReaderHighlights } from '@/composables/audio-reader/use-reader-highlights'
+import { useReaderHighlights } from '@/composables/audio-reader/reader-highlights'
 
 const { emitSfxMock } = vi.hoisted(() => ({ emitSfxMock: vi.fn() }))
 

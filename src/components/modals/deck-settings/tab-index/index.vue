@@ -10,7 +10,7 @@ import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import DangerResetButton from '../danger-reset-button.vue'
 import DangerDeleteButton from '../danger-delete-button.vue'
 import { emitSfx } from '@/sfx/bus'
-import { deckEditorKey } from '@/composables/deck-editor'
+import { deckEditorKey } from '@/composables/deck/editor'
 import { deckSettingsLayoutKey } from '../layout'
 import DeckSaveButton from '../deck-save-button.vue'
 

@@ -1,5 +1,5 @@
 import { ref, markRaw, inject, onUnmounted, type InjectionKey } from 'vue'
-import type { BreakpointKey } from './use-media-query'
+import type { BreakpointKey } from './ui/media-query'
 
 export type ModalContext = {
   key: InjectionKey<unknown> | string

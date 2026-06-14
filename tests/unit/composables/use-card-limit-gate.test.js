@@ -35,7 +35,7 @@ vi.mock('@/stores/session', () => ({
   useSessionStore: () => ({ user: null })
 }))
 
-import { useCardLimitGate } from '@/composables/use-card-limit-gate'
+import { useCardLimitGate } from '@/composables/card/limit-gate'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

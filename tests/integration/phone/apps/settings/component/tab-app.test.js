@@ -2,7 +2,7 @@ import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, reactive, useAttrs } from 'vue'
 import TabApp from '@/phone/apps/settings/component/tab-app/index.vue'
-import { memberEditorKey } from '@/composables/member-editor'
+import { memberEditorKey } from '@/composables/member/editor'
 
 const SliderStub = defineComponent({
   name: 'UiSlider',

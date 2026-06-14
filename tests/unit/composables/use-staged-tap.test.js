@@ -17,7 +17,7 @@ const { coarseRef, mockUseMatchMedia, mockPlayButtonTap, mockEmitSfx } = vi.hois
   }
 })
 
-vi.mock('@/composables/use-media-query', () => ({
+vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: mockUseMatchMedia
 }))
 
@@ -30,7 +30,7 @@ vi.mock('@/sfx/bus', () => ({
   emitSfx: mockEmitSfx
 }))
 
-import { useStagedTap } from '@/composables/use-staged-tap'
+import { useStagedTap } from '@/composables/ui/staged-tap'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

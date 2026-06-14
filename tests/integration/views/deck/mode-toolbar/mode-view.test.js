@@ -7,8 +7,8 @@ const { emitSfxMock } = vi.hoisted(() => ({ emitSfxMock: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: emitSfxMock, emitHoverSfx: vi.fn() }))
 
 import ModeView from '@/views/deck/mode-toolbar/mode-view.vue'
-import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
-import { deckViewShellKey } from '@/composables/card-editor/deck-view-shell'
+import { cardEditorKey } from '@/composables/card/list-controller'
+import { deckViewShellKey } from '@/composables/deck/view-shell'
 
 const UiButtonStub = defineComponent({
   name: 'UiButton',

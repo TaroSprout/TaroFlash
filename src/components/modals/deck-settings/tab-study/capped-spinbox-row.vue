@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
-import { useCappedToggle } from '@/composables/use-capped-toggle'
+import { useCappedToggle } from '@/composables/ui/capped-toggle'
 
 type CappedSpinboxRowProps = {
   label: string

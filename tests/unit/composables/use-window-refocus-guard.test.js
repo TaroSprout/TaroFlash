@@ -26,7 +26,7 @@ afterEach(() => {
 // ── Helper: mount a minimal Vue app that calls the composable ─────────────────
 // Returns the composable result and an unmount fn (fires onScopeDispose).
 async function withGuard(composableFn) {
-  const { useWindowRefocusGuard } = await import('@/composables/use-window-refocus-guard')
+  const { useWindowRefocusGuard } = await import('@/composables/ui/window-refocus-guard')
   let result
   const app = createApp({
     setup() {
@@ -81,7 +81,7 @@ describe('useWindowRefocusGuard — core flag semantics', () => {
 describe('useWindowRefocusGuard — module singleton (shared pending flag) [obligation]', () => {
   test('flag set by one instance is consumable by another [obligation]', async () => {
     // Both instances share the same module-scope `pending` flag.
-    const { useWindowRefocusGuard } = await import('@/composables/use-window-refocus-guard')
+    const { useWindowRefocusGuard } = await import('@/composables/ui/window-refocus-guard')
     const apps = []
 
     let guard1, guard2
@@ -130,7 +130,7 @@ describe('useWindowRefocusGuard — window focus listener lifecycle', () => {
   })
 
   test('does NOT add a second listener when a second consumer mounts', async () => {
-    const { useWindowRefocusGuard } = await import('@/composables/use-window-refocus-guard')
+    const { useWindowRefocusGuard } = await import('@/composables/ui/window-refocus-guard')
     const apps = []
 
     const app1 = createApp({
@@ -160,7 +160,7 @@ describe('useWindowRefocusGuard — window focus listener lifecycle', () => {
   })
 
   test('does NOT remove the listener when one of two consumers unmounts', async () => {
-    const { useWindowRefocusGuard } = await import('@/composables/use-window-refocus-guard')
+    const { useWindowRefocusGuard } = await import('@/composables/ui/window-refocus-guard')
 
     const app1 = createApp({
       setup() {

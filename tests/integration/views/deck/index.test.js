@@ -15,11 +15,11 @@ vi.mock('@/api/decks', () => ({
   useDeckQuery: useDeckQueryMock,
   useMemberDeckCountQuery: () => ({ data: { value: 0 }, refresh: vi.fn() })
 }))
-vi.mock('@/composables/card-editor/card-list-controller', () => ({
+vi.mock('@/composables/card/list-controller', () => ({
   cardEditorKey: Symbol('cardEditor'),
   useCardListController: useCardListControllerMock
 }))
-vi.mock('@/composables/card-editor/deck-view-shell', () => ({
+vi.mock('@/composables/deck/view-shell', () => ({
   deckViewShellKey: Symbol('deckViewShell'),
   useDeckViewShell: useDeckViewShellMock
 }))

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui-kit/button.vue'
 import { useI18n } from 'vue-i18n'
-import { useBulkActions } from '@/composables/card-editor/use-bulk-actions'
+import { useBulkActions } from '@/composables/card/bulk-actions'
 
 const { t } = useI18n()
 

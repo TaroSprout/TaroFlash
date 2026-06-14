@@ -2,7 +2,7 @@
 import { inject, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
-import { deckEditorKey } from '@/composables/deck-editor'
+import { deckEditorKey } from '@/composables/deck/editor'
 import { deckSettingsCloseKey } from './layout'
 import { emitSfx } from '@/sfx/bus'
 

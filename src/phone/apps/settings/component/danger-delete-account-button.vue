@@ -2,7 +2,7 @@
 import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
-import { memberDangerActionsKey } from '@/composables/member/use-member-danger-actions'
+import { memberDangerActionsKey } from '@/composables/member/danger-actions'
 
 const { t } = useI18n()
 const { onDeleteAccount, deleting_account } = inject(memberDangerActionsKey)!

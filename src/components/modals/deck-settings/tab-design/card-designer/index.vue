@@ -5,7 +5,7 @@ import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
 import AlignPicker from './align-picker.vue'
 import ImageLayoutPicker from './image-layout-picker.vue'
 import { CARD_ATTRIBUTES_DEFAULTS } from '@/utils/deck/defaults'
-import { useCan } from '@/composables/use-can'
+import { useCan } from '@/composables/can'
 import { emitSfx } from '@/sfx/bus'
 
 type CardDesignerProps = {

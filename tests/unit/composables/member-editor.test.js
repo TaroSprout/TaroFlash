@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { useMemberEditor } from '@/composables/member-editor'
+import { useMemberEditor } from '@/composables/member/editor'
 
 const { mockUpsert, mockIsLoading } = vi.hoisted(() => ({
   mockUpsert: vi.fn().mockResolvedValue(undefined),

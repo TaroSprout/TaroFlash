@@ -2,7 +2,7 @@
 import { inject, onMounted, ref } from 'vue'
 import ViewApp from '@/phone/components/view-app.vue'
 import { type PhoneApp, type AppContextInjection, APP_CTX_KEY } from '@/phone/system/types'
-import { useShortcuts } from '@/composables/use-shortcuts'
+import { useShortcuts } from '@/composables/shortcuts'
 import { emitHoverSfx, emitSfx } from '@/sfx/bus'
 
 const { apps } = defineProps<{

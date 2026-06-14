@@ -15,7 +15,7 @@ vi.mock('@/composables/toast', () => ({ useToast: () => mockToast }))
 vi.mock('vue-router', () => ({ useRouter: () => mockRouter }))
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (k) => k }) }))
 
-import { useMemberDangerActions } from '@/composables/member/use-member-danger-actions'
+import { useMemberDangerActions } from '@/composables/member/danger-actions'
 
 function confirmResponse(value) {
   mockAlert.warn.mockReturnValueOnce({ response: Promise.resolve(value) })

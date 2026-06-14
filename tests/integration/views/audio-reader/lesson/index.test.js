@@ -49,7 +49,7 @@ const {
 const selectionRef = ref(null)
 const popoverOpenRef = ref(false)
 
-vi.mock('@/composables/audio-reader/use-lesson-reader', () => ({
+vi.mock('@/composables/audio-reader/lesson-reader', () => ({
   useLessonReader: () => ({
     lesson: lessonRef,
     paragraphs: paragraphsRef,
@@ -66,11 +66,11 @@ vi.mock('@/composables/audio-reader/use-lesson-reader', () => ({
   })
 }))
 
-vi.mock('@/composables/audio-reader/use-reader-progress', () => ({
+vi.mock('@/composables/audio-reader/reader-progress', () => ({
   useReaderProgress: useReaderProgressMock
 }))
 
-vi.mock('@/composables/use-animated-height', () => ({
+vi.mock('@/composables/ui/animated-height', () => ({
   useAnimatedHeight: vi.fn()
 }))
 
@@ -103,7 +103,7 @@ vi.mock('@/api/lessons', () => ({
   EdgeFunctionError: class EdgeFunctionError extends Error {}
 }))
 
-vi.mock('@/composables/modals/use-collection-edit-modal', () => ({
+vi.mock('@/composables/audio-reader/collection-edit-modal', () => ({
   useCollectionEditModal: () => ({ open: editModalOpenMock })
 }))
 
@@ -159,7 +159,7 @@ const TermCardStub = defineComponent({
 import LessonView from '@/views/audio-reader/lesson/index.vue'
 import AudioToolbar from '@/views/audio-reader/lesson/audio-toolbar.vue'
 import { footerSwapBeforeLeave, footerSwapEnter } from '@/utils/animations/footer-swap'
-import { useAnimatedHeight } from '@/composables/use-animated-height'
+import { useAnimatedHeight } from '@/composables/ui/animated-height'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 

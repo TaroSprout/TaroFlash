@@ -17,8 +17,8 @@ const GridItemStub = defineComponent({
 })
 
 import ScrollGrid from '@/views/deck/card-grid/scroll-grid.vue'
-import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
-import { deckViewShellKey } from '@/composables/card-editor/deck-view-shell'
+import { cardEditorKey } from '@/composables/card/list-controller'
+import { deckViewShellKey } from '@/composables/deck/view-shell'
 
 function makeEditor({
   all_cards = [],

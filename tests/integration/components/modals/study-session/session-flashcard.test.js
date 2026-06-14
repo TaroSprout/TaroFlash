@@ -28,11 +28,11 @@ const { mockSaveReview } = vi.hoisted(() => ({
   mockSaveReview: vi.fn().mockResolvedValue(undefined)
 }))
 
-vi.mock('@/composables/use-gestures', () => ({
+vi.mock('@/composables/ui/gestures', () => ({
   useGestures: vi.fn(() => ({ register: mockRegister }))
 }))
 
-vi.mock('@/composables/use-shortcuts', () => ({
+vi.mock('@/composables/shortcuts', () => ({
   useShortcuts: vi.fn(() => ({
     register: vi.fn(),
     dispose: vi.fn(),

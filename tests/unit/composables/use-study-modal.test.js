@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { flushPromises } from '@vue/test-utils'
-import { useStudyModal } from '@/composables/modals/use-study-modal'
+import { useStudyModal } from '@/composables/study-session/study-modal'
 
 // StudySession and SessionComplete are wrapped with defineAsyncComponent inside
 // the composable, so the component identity doesn't match the raw .vue import.

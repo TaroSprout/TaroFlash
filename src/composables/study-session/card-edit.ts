@@ -1,6 +1,6 @@
 import { ref, watch, type Ref } from 'vue'
 import { useSaveCardMutation } from '@/api/cards'
-import type { StudyCard } from './study-session-core'
+import type { StudyCard } from './session-core'
 
 /**
  * Owns the editing/saving state for the active study card. Mutates the card

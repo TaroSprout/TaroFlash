@@ -3,7 +3,7 @@ import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import { setActivePinia, createPinia } from 'pinia'
 
-vi.mock('@/composables/use-media-query', () => ({
+vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: (query) => ({
     get value() {
       // has_sidebar — 'w>=lg & fine'; visible exactly when not in tablet mode.

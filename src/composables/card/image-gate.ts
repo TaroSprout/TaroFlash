@@ -2,7 +2,7 @@ import { useI18n } from 'vue-i18n'
 import Checkout from '@/components/modals/checkout.vue'
 import { useAlert } from '@/composables/alert'
 import { useModal } from '@/composables/modal'
-import { useCan } from '@/composables/use-can'
+import { useCan } from '@/composables/can'
 
 /**
  * Gate for the paid-only card-image feature. Mirrors

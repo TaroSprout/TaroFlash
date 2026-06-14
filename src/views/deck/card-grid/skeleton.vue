@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Card from '@/components/card/index.vue'
-import { deckViewShellKey, type CardGridSize } from '@/composables/card-editor/deck-view-shell'
+import { deckViewShellKey, type CardGridSize } from '@/composables/deck/view-shell'
 import { computed, inject, type CSSProperties } from 'vue'
 
 const DEFAULT_COVER: DeckCover = {

@@ -29,7 +29,7 @@ vi.mock('@/composables/toast', () => ({
   useToast: () => ({ error: mockToastError })
 }))
 
-vi.mock('@/composables/card-editor/use-card-image-gate', () => ({
+vi.mock('@/composables/card/image-gate', () => ({
   useCardImageGate: () => ({ guardCardImage: mockGuardCardImage })
 }))
 
@@ -38,7 +38,7 @@ let capturedOnFile
 let mockDragging
 let mockFileError
 
-vi.mock('@/composables/card-editor/use-image-dropzone', () => ({
+vi.mock('@/composables/card/image-dropzone', () => ({
   useImageDropzone: vi.fn((opts) => {
     capturedOnFile = opts.onFile
     mockDragging = ref(false)
@@ -62,8 +62,8 @@ vi.mock('@/composables/card-editor/use-image-dropzone', () => ({
 
 // ── Fixture ───────────────────────────────────────────────────────────────────
 
-import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
-import { useFaceImageUpload } from '@/composables/card-editor/use-face-image-upload'
+import { cardEditorKey } from '@/composables/card/list-controller'
+import { useFaceImageUpload } from '@/composables/card/face-image-upload'
 
 function makeCard(overrides = {}) {
   return { id: 1, front_image_path: null, back_image_path: null, ...overrides }

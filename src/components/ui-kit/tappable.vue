@@ -3,7 +3,7 @@ import {
   type StagedTapAnimate,
   type StagedTapPhase,
   useStagedTap
-} from '@/composables/use-staged-tap'
+} from '@/composables/ui/staged-tap'
 import type { NamespacedAudioKey } from '@/sfx/config'
 
 type UiTappableProps = {

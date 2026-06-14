@@ -4,7 +4,7 @@ import { defineComponent, h } from 'vue'
 import TabBar from '@/components/layout-kit/tab-bar.vue'
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn(), emitHoverSfx: vi.fn() }))
-vi.mock('@/composables/use-media-query', () => ({ useMatchMedia: () => ({ value: false }) }))
+vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: () => ({ value: false }) }))
 
 // Renders slot content, forwards attrs, emits tap on click so tab-bar's
 // @tap="emit('update:active', value)" fires correctly.

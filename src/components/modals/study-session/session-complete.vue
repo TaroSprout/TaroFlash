@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useI18n } from 'vue-i18n'
-import type { SecondaryAction } from '@/composables/modals/use-study-modal'
+import type { SecondaryAction } from '@/composables/study-session/study-modal'
 import mobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
 
 const { score, total, secondary_action, close } = defineProps<{

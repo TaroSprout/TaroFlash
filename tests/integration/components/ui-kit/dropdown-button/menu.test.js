@@ -14,7 +14,7 @@ vi.mock('@/sfx/bus', () => ({
 // to return fine (false) so interceptClick always bails and the bubble @click
 // handler (onSelect) fires unimpeded — the fine path is what we can drive in
 // the runner without a real coarse pointer event.
-vi.mock('@/composables/use-media-query', () => ({
+vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: vi.fn(() => ({ value: false }))
 }))
 

@@ -2,7 +2,7 @@
 import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
-import { deckDangerActionsKey } from '@/composables/deck/use-deck-danger-actions'
+import { deckDangerActionsKey } from '@/composables/deck/danger-actions'
 
 const { t } = useI18n()
 const { onResetReviews, resetting_reviews } = inject(deckDangerActionsKey)!

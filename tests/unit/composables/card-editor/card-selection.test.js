@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { card } from '@tests/fixtures/card'
 
-import { useCardSelection } from '@/composables/card-editor/card-selection'
+import { useCardSelection } from '@/composables/card/selection'
 
 function makeSelection(ids = []) {
   return useCardSelection(ids.length)

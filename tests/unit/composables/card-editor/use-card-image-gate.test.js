@@ -6,7 +6,7 @@ const { canUseCardImages, mockWarn, mockModalOpen } = vi.hoisted(() => ({
   mockModalOpen: vi.fn()
 }))
 
-vi.mock('@/composables/use-can', () => ({
+vi.mock('@/composables/can', () => ({
   useCan: () => ({ useCardImages: canUseCardImages })
 }))
 
@@ -26,7 +26,7 @@ vi.mock('vue-i18n', () => ({
   useI18n: () => ({ t: (key) => key })
 }))
 
-import { useCardImageGate } from '@/composables/card-editor/use-card-image-gate'
+import { useCardImageGate } from '@/composables/card/image-gate'
 
 function makeAlertResponse(promise = Promise.resolve(undefined)) {
   return { response: promise }

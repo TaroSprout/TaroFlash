@@ -9,7 +9,7 @@ import {
   watch
 } from 'vue'
 import type { ComputedRef, InjectionKey, MaybeRefOrGetter } from 'vue'
-import { useStagedTap } from '@/composables/use-staged-tap'
+import { useStagedTap } from '@/composables/ui/staged-tap'
 import { emitSfx } from '@/sfx/bus'
 import { cleanTerm } from '@/utils/transcript'
 import {

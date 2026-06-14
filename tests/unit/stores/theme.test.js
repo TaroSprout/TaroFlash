@@ -2,10 +2,10 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { ref } from 'vue'
 import { setActivePinia, createPinia } from 'pinia'
 
-vi.mock('@/composables/use-media-query')
+vi.mock('@/composables/ui/media-query')
 
 import { useThemeStore } from '@/stores/theme'
-import { useMatchMedia } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/ui/media-query'
 
 describe('theme store', () => {
   beforeEach(() => {

@@ -34,7 +34,7 @@ vi.mock('@/composables/use-play-on-tap', () => ({
 // before mounting.
 const localRefStore = vi.hoisted(() => ({ ref: null, next: 'expanded' }))
 
-vi.mock('@/composables/use-local-ref', async () => {
+vi.mock('@/composables/storage/local-ref', async () => {
   const { ref: vRef } = await import('vue')
   return {
     useLocalRef: vi.fn(() => {

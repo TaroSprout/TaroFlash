@@ -19,15 +19,15 @@ vi.mock('@/api/lessons', () => ({
   })
 }))
 
-vi.mock('@/composables/audio-reader/use-open-collection', () => ({
+vi.mock('@/composables/audio-reader/open-collection', () => ({
   useOpenCollection: () => ({ openCollection: openCollectionMock })
 }))
 
-vi.mock('@/composables/modals/use-collection-edit-modal', () => ({
+vi.mock('@/composables/audio-reader/collection-edit-modal', () => ({
   useCollectionEditModal: () => ({ open: editModalOpenMock })
 }))
 
-vi.mock('@/composables/modals/use-collection-create-modal', () => ({
+vi.mock('@/composables/audio-reader/collection-create-modal', () => ({
   useCollectionCreateModal: () => ({ open: createModalOpenMock })
 }))
 

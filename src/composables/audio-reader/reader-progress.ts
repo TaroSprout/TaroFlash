@@ -1,6 +1,6 @@
 import { computed, onUnmounted, ref, toValue, watch, type MaybeRefOrGetter } from 'vue'
 import { useLessonCollectionQuery, useSetCollectionProgressMutation } from '@/api/lessons'
-import type { AudioPlayer } from './use-audio-player'
+import type { AudioPlayer } from './audio-player'
 
 // Save at most once per this many seconds of playback progress.
 const SAVE_INTERVAL_SECONDS = 5

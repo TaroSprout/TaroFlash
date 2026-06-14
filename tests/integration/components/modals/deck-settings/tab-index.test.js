@@ -4,11 +4,11 @@ import { defineComponent, h, reactive, ref, computed, useAttrs } from 'vue'
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
-vi.mock('@/composables/use-media-query', () => ({ useMatchMedia: () => ({ value: false }) }))
+vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: () => ({ value: false }) }))
 
 import TabIndex from '@/components/modals/deck-settings/tab-index/index.vue'
-import { deckEditorKey } from '@/composables/deck-editor'
-import { deckDangerActionsKey } from '@/composables/deck/use-deck-danger-actions'
+import { deckEditorKey } from '@/composables/deck/editor'
+import { deckDangerActionsKey } from '@/composables/deck/danger-actions'
 import { deckSettingsLayoutKey } from '@/components/modals/deck-settings/layout'
 
 const ButtonStub = defineComponent({

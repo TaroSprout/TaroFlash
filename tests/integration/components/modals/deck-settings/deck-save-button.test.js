@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, nextTick, reactive, ref } from 'vue'
 import DeckSaveButton from '@/components/modals/deck-settings/deck-save-button.vue'
-import { deckEditorKey } from '@/composables/deck-editor'
+import { deckEditorKey } from '@/composables/deck/editor'
 import { deckSettingsCloseKey } from '@/components/modals/deck-settings/layout'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────

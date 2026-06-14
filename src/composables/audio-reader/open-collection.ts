@@ -1,6 +1,6 @@
 import { useRouter } from 'vue-router'
 import { resolveCollectionEntryLesson } from '@/api/lessons'
-import { useCollectionEditModal } from '@/composables/modals/use-collection-edit-modal'
+import { useCollectionEditModal } from '@/composables/audio-reader/collection-edit-modal'
 
 /**
  * Open a collection like a book: navigate to the chapter the member left off on

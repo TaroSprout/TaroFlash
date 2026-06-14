@@ -23,11 +23,11 @@ const { capturedShortcuts, mockShortcutRegister } = vi.hoisted(() => {
   return { capturedShortcuts, mockShortcutRegister }
 })
 
-vi.mock('@/composables/use-gestures', () => ({
+vi.mock('@/composables/ui/gestures', () => ({
   useGestures: vi.fn(() => ({ register: mockRegister }))
 }))
 
-vi.mock('@/composables/use-shortcuts', () => ({
+vi.mock('@/composables/shortcuts', () => ({
   useShortcuts: vi.fn(() => ({
     register: mockShortcutRegister,
     dispose: vi.fn(),

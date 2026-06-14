@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
-import { useGestures } from '@/composables/use-gestures'
+import { useGestures } from '@/composables/ui/gestures'
 
 const { theme = 'brown-800' } = defineProps<{
   theme?: Theme

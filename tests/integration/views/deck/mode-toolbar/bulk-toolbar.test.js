@@ -45,7 +45,7 @@ const CardCountStub = defineComponent({
 })
 
 import BulkToolbar from '@/views/deck/mode-toolbar/bulk-toolbar.vue'
-import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
+import { cardEditorKey } from '@/composables/card/list-controller'
 
 function makeEditor({
   selected_count = 0,

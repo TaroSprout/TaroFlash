@@ -1,13 +1,13 @@
 import { computed, ref, type InjectionKey, type Ref } from 'vue'
-import { useInfiniteScroll } from '@/composables/use-infinite-scroll'
+import { useInfiniteScroll } from '@/composables/ui/infinite-scroll'
 import { useCardsInDeckInfiniteQuery } from '@/api/cards'
 import { useDeckQuery } from '@/api/decks'
-import { useVirtualCardList, type CardEntry } from './virtual-card-list'
-import { useCardSelection } from './card-selection'
-import { useCardMutations } from './card-mutations'
-import { useCardActions } from './card-actions'
-import { useCardLimitGate } from '@/composables/use-card-limit-gate'
-import type { DeckViewShell } from './deck-view-shell'
+import { useVirtualCardList, type CardEntry } from './virtual-list'
+import { useCardSelection } from './selection'
+import { useCardMutations } from './mutations'
+import { useCardActions } from './actions'
+import { useCardLimitGate } from '@/composables/card/limit-gate'
+import type { DeckViewShell } from '../deck/view-shell'
 
 export type CardListController = ReturnType<typeof useCardListController>
 

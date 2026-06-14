@@ -26,7 +26,7 @@ const UiButtonStub = defineComponent({
 })
 
 import BulkActions from '@/views/deck/deck-hero/bulk-actions.vue'
-import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
+import { cardEditorKey } from '@/composables/card/list-controller'
 
 function makeEditor({
   selected_count = 0,

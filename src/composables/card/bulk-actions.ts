@@ -1,7 +1,7 @@
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { emitSfx } from '@/sfx/bus'
-import { cardEditorKey } from './card-list-controller'
+import { cardEditorKey } from './list-controller'
 
 /**
  * Reactive labels + handlers shared by the bulk-actions stack and the

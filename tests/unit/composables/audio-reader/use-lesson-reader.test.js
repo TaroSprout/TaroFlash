@@ -33,13 +33,13 @@ vi.mock('@/api/lessons', () => ({
 vi.mock('@/api/cards', () => ({ useMemberCardIndexQuery: cardIndexQueryMock }))
 vi.mock('@/api/decks', () => ({ useMemberDecksQuery: decksQueryMock }))
 vi.mock('@/composables/toast', () => ({ useToast: () => ({ error: toastErrorMock }) }))
-vi.mock('@/composables/audio-reader/use-audio-player', () => ({ useAudioPlayer: audioPlayerMock }))
-vi.mock('@/composables/audio-reader/use-transcript-sync', () => ({
+vi.mock('@/composables/audio-reader/audio-player', () => ({ useAudioPlayer: audioPlayerMock }))
+vi.mock('@/composables/audio-reader/transcript-sync', () => ({
   useTranscriptSync: transcriptSyncMock
 }))
 
 // The transcript utils are pure and left real, so paragraph shaping is tested end to end.
-import { useLessonReader } from '@/composables/audio-reader/use-lesson-reader'
+import { useLessonReader } from '@/composables/audio-reader/lesson-reader'
 
 function makeLesson(overrides = {}) {
   return {

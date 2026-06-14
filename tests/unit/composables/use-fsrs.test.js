@@ -1,6 +1,6 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { Rating } from 'ts-fsrs'
-import { useRatingFormat } from '@/composables/use-fsrs'
+import { useRatingFormat } from '@/composables/fsrs'
 
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({

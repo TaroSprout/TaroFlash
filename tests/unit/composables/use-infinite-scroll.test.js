@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { defineComponent, h, ref, shallowRef } from 'vue'
 import { mount } from '@vue/test-utils'
 
-import { useInfiniteScroll } from '@/composables/use-infinite-scroll'
+import { useInfiniteScroll } from '@/composables/ui/infinite-scroll'
 
 // Captured per-test so we can synthesize intersection events ourselves.
 let capturedCallback

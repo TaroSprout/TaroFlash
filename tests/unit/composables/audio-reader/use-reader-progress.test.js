@@ -11,7 +11,7 @@ vi.mock('@/api/lessons', () => ({
   useSetCollectionProgressMutation: () => ({ mutate: mutateSpy })
 }))
 
-const { useReaderProgress } = await import('@/composables/audio-reader/use-reader-progress')
+const { useReaderProgress } = await import('@/composables/audio-reader/reader-progress')
 
 // Run the composable inside a real app so watch() + onUnmounted fire.
 function withSetup(setup) {

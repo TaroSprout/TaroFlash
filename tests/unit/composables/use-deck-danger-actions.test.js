@@ -21,7 +21,7 @@ vi.mock('vue-router', () => ({
 }))
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (k) => k }) }))
 
-import { useDeckDangerActions } from '@/composables/deck/use-deck-danger-actions'
+import { useDeckDangerActions } from '@/composables/deck/danger-actions'
 
 function makeEditor({ deleteOk = true, resetOk = true } = {}) {
   return {

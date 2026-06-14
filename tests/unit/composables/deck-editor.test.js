@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { useDeckEditor } from '@/composables/deck-editor'
+import { useDeckEditor } from '@/composables/deck/editor'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -33,7 +33,7 @@ vi.mock('@/api/decks', () => ({
   })
 }))
 
-vi.mock('@/composables/deck/use-deck-actions', () => ({
+vi.mock('@/composables/deck/actions', () => ({
   useDeckActions: () => ({
     createDeck: mockCreateDeck,
     updateDeck: mockUpdateDeck

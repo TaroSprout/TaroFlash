@@ -3,7 +3,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useAlert } from '@/composables/alert'
 import { useToast } from '@/composables/toast'
-import type { DeckEditor } from '@/composables/deck-editor'
+import type { DeckEditor } from '@/composables/deck/editor'
 
 export type DeckDangerActions = {
   onDelete: () => Promise<void>

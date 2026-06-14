@@ -8,7 +8,7 @@ vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
 const useCardImagesRef = ref(false)
 
-vi.mock('@/composables/use-can', () => ({
+vi.mock('@/composables/can', () => ({
   useCan: () => ({
     useProFeature: computed(() => false),
     createDeck: computed(() => true),

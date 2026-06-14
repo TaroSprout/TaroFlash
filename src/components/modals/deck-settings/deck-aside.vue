@@ -3,7 +3,7 @@ import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiInput from '@/components/ui-kit/input.vue'
 import UiTextarea from '@/components/ui-kit/textarea.vue'
-import { deckEditorKey } from '@/composables/deck-editor'
+import { deckEditorKey } from '@/composables/deck/editor'
 import DeckSaveButton from './deck-save-button.vue'
 
 const { t } = useI18n()

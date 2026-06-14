@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, nextTick, useAttrs } from 'vue'
-import { useMatchMedia } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/ui/media-query'
 
 const { mockEditor, mockDanger, mockEmitSfx, state } = vi.hoisted(() => ({
   state: { hasSidebar: true },
@@ -23,24 +23,24 @@ const { mockEditor, mockDanger, mockEmitSfx, state } = vi.hoisted(() => ({
   mockEmitSfx: vi.fn()
 }))
 
-vi.mock('@/composables/member-editor', () => ({
+vi.mock('@/composables/member/editor', () => ({
   useMemberEditor: () => mockEditor,
   memberEditorKey: Symbol('memberEditor')
 }))
 
-vi.mock('@/composables/member/use-member-danger-actions', () => ({
+vi.mock('@/composables/member/danger-actions', () => ({
   useMemberDangerActions: vi.fn(() => mockDanger),
   memberDangerActionsKey: Symbol('memberDangerActions')
 }))
 
-vi.mock('@/composables/use-session-ref', async () => {
+vi.mock('@/composables/storage/session-ref', async () => {
   const { ref } = await import('vue')
   return {
     useSessionRef: (_key, initial) => ref(initial)
   }
 })
 
-vi.mock('@/composables/use-media-query', async () => {
+vi.mock('@/composables/ui/media-query', async () => {
   const { ref } = await import('vue')
   return {
     useMatchMedia: (query) => ref(query.includes('&') ? state.hasSidebar : false)

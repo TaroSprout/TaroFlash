@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, inject, nextTick } from 'vue'
 import DeckSettings from '@/components/modals/deck-settings/index.vue'
-import { useMatchMedia } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/ui/media-query'
 import { deckSettingsLayoutKey } from '@/components/modals/deck-settings/layout'
 import { deck as deckFixture } from '../../../../fixtures/deck'
 import { setSidebar, setBelowMd, resetResponsive } from '../../../../helpers/responsive-mock'
@@ -56,7 +56,7 @@ vi.mock('vue-router', () => ({
   useRoute: () => ({ name: 'dashboard', params: {} })
 }))
 
-vi.mock('@/composables/use-media-query', async () => {
+vi.mock('@/composables/ui/media-query', async () => {
   const m = await import('../../../../helpers/responsive-mock')
   return m.responsiveMockModule
 })
@@ -81,7 +81,7 @@ vi.mock('@/composables/modal', () => ({
   useModalRequestClose: () => {}
 }))
 
-vi.mock('@/composables/deck-editor', async () => {
+vi.mock('@/composables/deck/editor', async () => {
   const { reactive, ref: vueRef } = await import('vue')
   const editor = {
     deck: { id: 1 },

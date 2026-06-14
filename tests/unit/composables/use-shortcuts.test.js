@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vite-plus/test'
 import { createApp, effectScope } from 'vue'
 import { setActivePinia, createPinia } from 'pinia'
-import { useShortcuts } from '@/composables/use-shortcuts'
+import { useShortcuts } from '@/composables/shortcuts'
 import { useShortcutStore } from '@/stores/shortcut-store'
 
 function withSetup(setup) {

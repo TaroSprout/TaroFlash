@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { useMatchMedia } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/ui/media-query'
 import storage from '@/utils/storage'
 
 export type ThemeMode = 'light' | 'dark' | 'system'

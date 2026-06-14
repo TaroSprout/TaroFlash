@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
-import { useGestures, _resetGestureState } from '@/composables/use-gestures'
+import { useGestures, _resetGestureState } from '@/composables/ui/gestures'
 
 // jsdom doesn't implement PointerEvent — extend MouseEvent with the fields we need
 if (typeof PointerEvent === 'undefined') {

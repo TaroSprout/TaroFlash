@@ -2,11 +2,11 @@
 import CardFaceUploader from './card-face-uploader.vue'
 import { useI18n } from 'vue-i18n'
 import { inject, onMounted, ref, useTemplateRef } from 'vue'
-import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
-import type { CardWithClientId } from '@/composables/card-editor/virtual-card-list'
+import { cardEditorKey } from '@/composables/card/list-controller'
+import type { CardWithClientId } from '@/composables/card/virtual-list'
 import textEditor from '@/components/card/text-editor.vue'
 import { emitSfx } from '@/sfx/bus'
-import { useWindowRefocusGuard } from '@/composables/use-window-refocus-guard'
+import { useWindowRefocusGuard } from '@/composables/ui/window-refocus-guard'
 import { expandListItemIn } from '@/utils/animations/list-item'
 
 type ListItemCardProps = {

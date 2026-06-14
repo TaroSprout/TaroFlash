@@ -4,7 +4,7 @@ import {
   readerActiveWordKey,
   readerMatchesKey,
   readerSelectionKey
-} from '@/composables/audio-reader/use-reader-highlights'
+} from '@/composables/audio-reader/reader-highlights'
 
 // Leading / trailing whitespace + punctuation — the same edges `cleanTerm`
 // strips when matching, so the underline hugs the term's own characters and

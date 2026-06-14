@@ -6,7 +6,7 @@ import {
   readerActiveWordKey,
   readerSelectionKey,
   readerMatchesKey
-} from '@/composables/audio-reader/use-reader-highlights'
+} from '@/composables/audio-reader/reader-highlights'
 
 function mountWord(props = {}) {
   return shallowMount(TranscriptWord, {

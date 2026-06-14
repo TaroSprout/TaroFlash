@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { useMatchMedia } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/ui/media-query'
 import { BUTTON_TAP_DURATION, playButtonTap } from '@/utils/animations/button-tap'
 import { emitSfx } from '@/sfx/bus'
 import type { PlayOptions } from '@/sfx/player'

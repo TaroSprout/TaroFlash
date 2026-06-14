@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
 import { createApp, ref } from 'vue'
-import { usePinScrollWhileTyping } from '@/composables/use-pin-scroll-while-typing'
+import { usePinScrollWhileTyping } from '@/composables/ui/pin-scroll-while-typing'
 
 // ── Host-app helper ────────────────────────────────────────────────────────────
 // Mounts a minimal Vue app so onMounted / onUnmounted lifecycle hooks run.

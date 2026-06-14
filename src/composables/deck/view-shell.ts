@@ -1,5 +1,5 @@
 import { computed, ref, type InjectionKey } from 'vue'
-import { useLocalRef } from '@/composables/use-local-ref'
+import { useLocalRef } from '@/composables/storage/local-ref'
 import { emitSfx } from '@/sfx/bus'
 
 export type DeckViewShell = ReturnType<typeof useDeckViewShell>

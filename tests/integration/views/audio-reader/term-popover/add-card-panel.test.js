@@ -36,11 +36,11 @@ vi.mock('@/composables/toast', () => ({
   useToast: () => ({ success: successMock, error: errorMock })
 }))
 
-vi.mock('@/composables/use-last-deck', () => ({
+vi.mock('@/composables/last-deck', () => ({
   useLastDeck: () => ({ last_deck_id: { value: null }, setLastDeck: setLastDeckMock })
 }))
 
-vi.mock('@/composables/use-card-limit-gate', () => ({
+vi.mock('@/composables/card/limit-gate', () => ({
   useCardLimitGate: () => ({
     guardAddCards: guardAddCardsMock,
     handleLimitError: handleLimitErrorMock

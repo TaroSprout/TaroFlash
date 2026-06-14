@@ -14,7 +14,7 @@ const TooltipStub = defineComponent({
   }
 })
 
-vi.mock('@/composables/use-media-query', () => ({
+vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: vi.fn(() => ({ value: false }))
 }))
 
