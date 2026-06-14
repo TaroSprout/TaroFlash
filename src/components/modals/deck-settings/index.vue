@@ -7,10 +7,7 @@ import { emitSfx } from '@/sfx/bus'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import { tabSlideEnter, tabSlideLeave } from '@/utils/animations/tab-slide'
 import { useDeckEditor, deckEditorKey } from '@/composables/deck/editor'
-import {
-  useDeckDangerActions,
-  deckDangerActionsKey
-} from '@/composables/deck/danger-actions'
+import { useDeckDangerActions, deckDangerActionsKey } from '@/composables/deck/danger-actions'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { useAlert } from '@/composables/alert'
 import { useModalAfterEnter, useModalRequestClose } from '@/composables/modal'

@@ -83,7 +83,7 @@ function makeCard(overrides = {}) {
   return card.one({ overrides })
 }
 
-function mountModal({ cards = [], current_deck_id = 30, count = undefined, close = vi.fn() } = {}) {
+function mountModal({ cards = [], current_deck_id = 30, count, close = vi.fn() } = {}) {
   const wrapper = shallowMount(MoveCardsModal, {
     props: { cards, current_deck_id, count, close },
     global: {

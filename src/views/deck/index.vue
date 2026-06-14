@@ -7,10 +7,7 @@ import CardGridSkeleton from './card-grid/skeleton.vue'
 import { preloadDeckModes } from './modes'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import { useDeckQuery } from '@/api/decks'
-import {
-  cardEditorKey,
-  useCardListController
-} from '@/composables/card/list-controller'
+import { cardEditorKey, useCardListController } from '@/composables/card/list-controller'
 import { deckViewShellKey, useDeckViewShell } from '@/composables/deck/view-shell'
 
 const { id: deck_id } = defineProps<{

@@ -12,10 +12,7 @@ import { emitSfx } from '@/sfx/bus'
 import { slideFadeRightEnter, slideFadeRightLeave } from '@/utils/animations/slide-fade-right'
 import { tabHeightEnter, tabHeightLeave } from '@/utils/animations/tab-height'
 import { useMemberEditor, memberEditorKey } from '@/composables/member/editor'
-import {
-  useMemberDangerActions,
-  memberDangerActionsKey
-} from '@/composables/member/danger-actions'
+import { useMemberDangerActions, memberDangerActionsKey } from '@/composables/member/danger-actions'
 import { useSessionRef } from '@/composables/storage/session-ref'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import UiButton from '@/components/ui-kit/button.vue'
