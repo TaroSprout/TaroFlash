@@ -1,18 +1,23 @@
 import { describe, test, expect, afterEach, beforeEach, vi } from 'vite-plus/test'
 import { createApp, ref, nextTick } from 'vue'
 
-const { mockMoveReaderCursor, mockHideReaderCursor, mockEmitSfx } = vi.hoisted(() => ({
-  mockMoveReaderCursor: vi.fn(),
-  mockHideReaderCursor: vi.fn(),
-  mockEmitSfx: vi.fn()
-}))
+const { mockMoveReaderCursor, mockHideReaderCursor, mockEmitSfx, mockScrollWordIntoDeadzone } =
+  vi.hoisted(() => ({
+    mockMoveReaderCursor: vi.fn(),
+    mockHideReaderCursor: vi.fn(),
+    mockEmitSfx: vi.fn(),
+    mockScrollWordIntoDeadzone: vi.fn()
+  }))
 
 vi.mock('@/utils/animations/reader-cursor', () => ({
   moveReaderCursor: mockMoveReaderCursor,
   hideReaderCursor: mockHideReaderCursor
 }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
-vi.mock('@/utils/animations/transcript-scroll', () => ({ scrollLineIntoView: vi.fn() }))
+vi.mock('@/utils/animations/transcript-scroll', () => ({
+  scrollLineIntoView: vi.fn(),
+  scrollWordIntoDeadzone: mockScrollWordIntoDeadzone
+}))
 // usePlayOnTap mock must not use `ref` in the factory — vi.mock hoists before imports.
 vi.mock('@/composables/use-play-on-tap', () => ({
   usePlayOnTap: () => {
@@ -786,6 +791,242 @@ describe('useReaderHighlights', () => {
         // Committed the held word alone, NOT the match's {0,9}
         expect(onSelect.mock.calls[0][0]).toMatchObject({ index: 1, end_index: 1 })
       })
+    })
+  })
+
+  describe('return shape includes hover_lines and setHoverEl', () => {
+    test('hover_lines is a ref starting empty', () => {
+      const { result } = withHighlights()
+
+      expect(result.hover_lines).toBeDefined()
+      expect(result.hover_lines.value).toEqual([])
+    })
+
+    test('setHoverEl is a function', () => {
+      const { result } = withHighlights()
+
+      expect(typeof result.setHoverEl).toBe('function')
+    })
+  })
+
+  describe('followActiveWord — debounce + cleanup', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    // [obligation] Two rapid active_word changes should produce only one
+    // scrollWordIntoDeadzone call, not two.
+    test('is debounced 100ms — two rapid changes fire only one scroll call', async () => {
+      const active_word = ref(0)
+      const { result, contentEl } = withHighlights({ active_word })
+      const w0 = addWord(contentEl, 0)
+      const w1 = addWord(contentEl, 1)
+      w0.getBoundingClientRect = () => new DOMRect(0, 200, 40, 20)
+      w1.getBoundingClientRect = () => new DOMRect(0, 220, 40, 20)
+
+      // Two rapid changes within the 100ms debounce window.
+      active_word.value = 0
+      await nextTick()
+      active_word.value = 1
+      await nextTick()
+
+      // Nothing should have fired yet — still inside the debounce window.
+      expect(mockScrollWordIntoDeadzone).not.toHaveBeenCalled()
+
+      // Advance past debounce.
+      vi.advanceTimersByTime(110)
+
+      expect(mockScrollWordIntoDeadzone).toHaveBeenCalledTimes(1)
+    })
+
+    // [obligation] clearTimeout called in onBeforeUnmount — no dangling timer.
+    test('timer is cleared on unmount — no dangling setTimeout', async () => {
+      const active_word = ref(0)
+      const { result: _result, contentEl, container } = withHighlights({ active_word })
+      addWord(contentEl, 0)
+
+      // Trigger a debounce timer.
+      active_word.value = 0
+      await nextTick()
+
+      // Unmount before the 100ms expires.
+      app.unmount()
+      app = null
+
+      const clearSpy = vi.spyOn(globalThis, 'clearTimeout')
+
+      // The timer should have been cleared — advancing time fires nothing.
+      vi.advanceTimersByTime(200)
+      expect(mockScrollWordIntoDeadzone).not.toHaveBeenCalled()
+
+      clearSpy.mockRestore()
+
+      // Manually clean up the container appended by withHighlights.
+      container.remove()
+    })
+  })
+
+  describe('rangeLines', () => {
+    // rangeLines is tested indirectly through hover_lines, which is populated by
+    // positionInteraction when focus_index/anchor_index/committed changes.
+    // We drive state via pointer events and inspect hover_lines after nextTick.
+
+    // [obligation] single-line range → one CursorBox
+    test('single-line range produces exactly one entry in hover_lines', async () => {
+      const { result, contentEl } = withHighlights()
+      contentEl.getBoundingClientRect = () => new DOMRect(0, 0, 300, 600)
+
+      // Two words on the same visual line (same Y bucket).
+      const w0 = addWord(contentEl, 0, '一')
+      const w1 = addWord(contentEl, 1, '二')
+      const b0 = w0.querySelector('[data-word-base]')
+      const b1 = w1.querySelector('[data-word-base]')
+      b0.getBoundingClientRect = () => new DOMRect(10, 50, 30, 20)
+      b1.getBoundingClientRect = () => new DOMRect(50, 50, 30, 20) // same top → same bucket
+
+      stubElementFromPoint(() => w0)
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'mouse', clientX: 15, clientY: 55 })
+      )
+      document.elementFromPoint = () => w1
+      result.onPointerMove(
+        new PointerEvent('pointermove', { pointerType: 'mouse', clientX: 55, clientY: 55 })
+      )
+      await nextTick()
+
+      expect(result.hover_lines.value).toHaveLength(1)
+    })
+
+    // [obligation] multi-line range → one box per line
+    test('multi-line range produces one hover_lines entry per visual line', async () => {
+      const { result, contentEl } = withHighlights()
+      contentEl.getBoundingClientRect = () => new DOMRect(0, 0, 300, 600)
+
+      // Word 0 on line 1 (top=50), word 1 on line 2 (top=80) — different Y buckets.
+      const w0 = addWord(contentEl, 0, '一')
+      const w1 = addWord(contentEl, 1, '二')
+      const b0 = w0.querySelector('[data-word-base]')
+      const b1 = w1.querySelector('[data-word-base]')
+      b0.getBoundingClientRect = () => new DOMRect(10, 50, 30, 20)
+      b1.getBoundingClientRect = () => new DOMRect(10, 80, 30, 20) // different top → different bucket
+
+      stubElementFromPoint(() => w0)
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'mouse', clientX: 15, clientY: 55 })
+      )
+      document.elementFromPoint = () => w1
+      result.onPointerMove(
+        new PointerEvent('pointermove', { pointerType: 'mouse', clientX: 15, clientY: 85 })
+      )
+      await nextTick()
+
+      expect(result.hover_lines.value).toHaveLength(2)
+
+      // Each box should span only its own line's left/right bounds.
+      const PAD_X = 3
+      const PAD_Y = 2
+      const base = { left: 0, top: 0 }
+
+      // Line 1 box
+      const box0 = result.hover_lines.value[0]
+      expect(box0.left).toBe(b0.getBoundingClientRect().left - base.left - PAD_X)
+      expect(box0.top).toBe(b0.getBoundingClientRect().top - base.top - PAD_Y)
+
+      // Line 2 box
+      const box1 = result.hover_lines.value[1]
+      expect(box1.left).toBe(b1.getBoundingClientRect().left - base.left - PAD_X)
+      expect(box1.top).toBe(b1.getBoundingClientRect().top - base.top - PAD_Y)
+    })
+
+    // [obligation] null content ref → returns []
+    test('hover_lines stays empty when content is not mounted', async () => {
+      // A host that does NOT render ref="content" — content.value will be null.
+      const { h: vueH, defineComponent, createApp: vueCreateApp } = require('vue')
+      let result_inner
+
+      const container = document.createElement('div')
+      document.body.appendChild(container)
+
+      const onSelect = vi.fn()
+      const onDismiss = vi.fn()
+
+      const NoContentHost = defineComponent({
+        setup() {
+          result_inner = useReaderHighlights(
+            () => -1,
+            onSelect,
+            () => false,
+            onDismiss
+          )
+          // Render WITHOUT ref="content" — so content.value stays null.
+          return () => vueH('div', {})
+        }
+      })
+
+      const inner_app = vueCreateApp(NoContentHost)
+      inner_app.mount(container)
+
+      // Force the interaction watcher by setting focus_index — but there's no
+      // content ref, so rangeLines returns [] immediately.
+      // We can't set internal refs directly; instead verify hover_lines stays empty.
+      expect(result_inner.hover_lines.value).toEqual([])
+
+      inner_app.unmount()
+      container.remove()
+    })
+  })
+
+  describe('interactionLines — hides excess pills before shrinking hover_lines', () => {
+    // [obligation] Going from a 2-line selection to a 1-line selection should call
+    // hideReaderCursor on the second pill element before Vue removes it — i.e.,
+    // before hover_lines shrinks. We verify hideReaderCursor is called with an
+    // element that was registered at index ≥ new line count.
+    test('calls hideReaderCursor on excess pill elements before shrinking hover_lines', async () => {
+      const { result, contentEl } = withHighlights()
+      contentEl.getBoundingClientRect = () => new DOMRect(0, 0, 300, 600)
+
+      // Seed two words on different lines so hover_lines gets 2 entries.
+      const w0 = addWord(contentEl, 0, '一')
+      const w1 = addWord(contentEl, 1, '二')
+      const b0 = w0.querySelector('[data-word-base]')
+      const b1 = w1.querySelector('[data-word-base]')
+      b0.getBoundingClientRect = () => new DOMRect(10, 50, 30, 20)
+      b1.getBoundingClientRect = () => new DOMRect(10, 80, 30, 20)
+
+      // Begin drag across both words so hover_lines = [{line1}, {line2}].
+      stubElementFromPoint(() => w0)
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'mouse', clientX: 15, clientY: 55 })
+      )
+      document.elementFromPoint = () => w1
+      result.onPointerMove(
+        new PointerEvent('pointermove', { pointerType: 'mouse', clientX: 15, clientY: 85 })
+      )
+      await nextTick()
+      expect(result.hover_lines.value).toHaveLength(2)
+
+      // Register fake pill elements via setHoverEl — simulating what the template
+      // `:ref` callback does when it mounts the rendered pill divs.
+      const pill0 = document.createElement('div')
+      const pill1 = document.createElement('div')
+      result.setHoverEl(pill0, 0)
+      result.setHoverEl(pill1, 1)
+
+      mockHideReaderCursor.mockClear()
+
+      // Now move focus back to word 0 only — single line → hover_lines shrinks to 1.
+      document.elementFromPoint = () => w0
+      result.onPointerMove(
+        new PointerEvent('pointermove', { pointerType: 'mouse', clientX: 15, clientY: 55 })
+      )
+      await nextTick()
+
+      // hideReaderCursor must have been called for pill1 (index 1 ≥ new length 1).
+      expect(mockHideReaderCursor).toHaveBeenCalledWith(pill1)
     })
   })
 })

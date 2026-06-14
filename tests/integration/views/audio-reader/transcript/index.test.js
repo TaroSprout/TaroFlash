@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, afterEach } from 'vite-plus/test'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import TranscriptView from '@/views/audio-reader/transcript/index.vue'
 import { readerActiveWordKey } from '@/composables/audio-reader/use-reader-highlights'
 
@@ -58,8 +58,26 @@ describe('TranscriptView', () => {
   })
 
   describe('highlight layers', () => {
-    test('renders the pointer-driven hover layer', () => {
+    test('no hover pill rendered before any interaction', () => {
       const wrapper = mountView()
+      expect(wrapper.find('[data-testid="transcript-view__hover"]').exists()).toBe(false)
+    })
+
+    test('one hover pill appears after a word is selected', async () => {
+      const wrapper = mountView()
+      const wordEls = wrapper.findAll('[data-testid="transcript-word"]').map((w) => w.element)
+      vi.spyOn(document, 'elementFromPoint').mockImplementation((x) => wordEls[x] ?? null)
+
+      const content = wrapper.find('[data-testid="transcript-view__content"]').element
+      content.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, pointerId: 1, buttons: 1, clientX: 0 })
+      )
+      content.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, pointerId: 1, clientX: 0 })
+      )
+      // positionInteraction is async (hover_lines update + nextTick inside it)
+      await flushPromises()
+
       expect(wrapper.find('[data-testid="transcript-view__hover"]').exists()).toBe(true)
     })
 
