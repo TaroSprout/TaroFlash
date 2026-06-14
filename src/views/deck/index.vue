@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, provide, ref, useTemplateRef } from 'vue'
 import DeckHero from '@/views/deck/deck-hero/index.vue'
+import DeckHeroSkeleton from '@/views/deck/deck-hero/skeleton.vue'
 import ModeToolbar from './mode-toolbar/index.vue'
 import ModeStack from './mode-stack.vue'
 import CardGridSkeleton from './card-grid/skeleton.vue'
@@ -41,8 +42,9 @@ onMounted(preloadDeckModes)
     data-testid="deck-view"
     class="flex flex-col xl:flex-row items-center xl:items-start gap-6 md:gap-15"
   >
+    <deck-hero-skeleton v-if="!deck" class="relative z-30 xl:sticky xl:top-(--nav-height)" />
     <deck-hero
-      v-if="deck"
+      v-else
       class="relative z-30 xl:sticky xl:top-(--nav-height)"
       :deck="deck"
       :image-url="image_url"

@@ -1,16 +1,15 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import DeckHeroSkeleton from './deck-hero/skeleton.vue'
+</script>
 
 <template>
   <section
     data-testid="deck-skeleton"
-    class="flex h-full flex-col xl:flex-row items-center xl:items-start gap-6 md:gap-15 pb-24 animate-pulse"
+    class="flex h-full flex-col xl:flex-row items-center xl:items-start gap-6 md:gap-15 pb-24"
   >
-    <div
-      data-testid="deck-skeleton__overview"
-      class="h-96 w-full xl:w-80 shrink-0 bg-brown-200 dark:bg-grey-800 rounded-xl"
-    ></div>
+    <deck-hero-skeleton class="relative z-30 xl:sticky xl:top-(--nav-height)" />
 
-    <div class="relative flex h-full w-full flex-col items-center gap-4">
+    <div class="relative flex h-full w-full flex-col items-center gap-4 animate-pulse">
       <div
         data-testid="deck-skeleton__tabs"
         class="h-10 w-full max-w-208 bg-brown-300 dark:bg-grey-700 rounded-lg"
