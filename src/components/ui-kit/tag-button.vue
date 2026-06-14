@@ -58,10 +58,6 @@ const padding = computed(() => {
 </template>
 
 <style>
-.ui-tag-button-shell {
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.15));
-}
-
 @media (hover: hover) {
   .ui-tag-button-shell:hover {
     filter: drop-shadow(2px 0 0 var(--theme-primary)) drop-shadow(-2px 0 0 var(--theme-primary))
