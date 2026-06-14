@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, provide, ref, useTemplateRef } from 'vue'
 import DeckHero from '@/views/deck/deck-hero/index.vue'
-import DeckHeroSkeleton from '@/views/deck/deck-hero/skeleton.vue'
+import DeckSkeleton from './skeleton.vue'
 import ModeToolbar from './mode-toolbar/index.vue'
 import ModeStack from './mode-stack.vue'
 import CardGridSkeleton from './card-grid/skeleton.vue'
@@ -34,24 +34,20 @@ const is_loading_initial = computed(
 )
 const is_empty = computed(() => !editor.isLoading.value && editor.list.all_cards.value.length === 0)
 
-const is_dev = import.meta.env.DEV
-const force_skeleton = ref(false)
-const show_skeleton = computed(() => !deck.value || force_skeleton.value)
+const show_skeleton = computed(() => !deck.value)
 
 onMounted(preloadDeckModes)
 </script>
 
 <template>
+  <deck-skeleton v-if="show_skeleton" />
+
   <section
+    v-else
     data-testid="deck-view"
     class="flex flex-col xl:flex-row items-center xl:items-start gap-6 md:gap-15"
   >
-    <deck-hero-skeleton
-      v-if="show_skeleton"
-      class="relative z-30 xl:sticky xl:top-(--nav-height)"
-    />
     <deck-hero
-      v-else
       class="relative z-30 xl:sticky xl:top-(--nav-height)"
       :deck="deck!"
       :image-url="image_url"
@@ -68,19 +64,10 @@ onMounted(preloadDeckModes)
       </div>
 
       <div v-if="is_empty" data-testid="deck-view__empty" class="mt-6" />
-      <card-grid-skeleton v-else-if="is_loading_initial || force_skeleton" class="mt-6" />
+      <card-grid-skeleton v-else-if="is_loading_initial" class="mt-6" />
       <mode-stack v-else class="mt-6" :sticky_header="toolbar" />
     </div>
 
     <scroll-bar class="fixed right-4 top-(--nav-height) bottom-10 z-30" target="html" />
-
-    <button
-      v-if="is_dev && deck"
-      data-testid="deck-view__skeleton-toggle"
-      class="fixed bottom-4 left-4 z-50 rounded-lg bg-black/70 px-3 py-1.5 font-mono text-xs text-white"
-      @click="force_skeleton = !force_skeleton"
-    >
-      {{ force_skeleton ? 'skeleton on' : 'skeleton off' }}
-    </button>
   </section>
 </template>

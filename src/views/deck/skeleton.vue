@@ -2,6 +2,10 @@
 import DeckHeroSkeleton from './deck-hero/skeleton.vue'
 import ModeToolbarSkeleton from './mode-toolbar/skeleton.vue'
 import CardGridSkeleton from './card-grid/skeleton.vue'
+import { onMounted, onUnmounted } from 'vue'
+
+onMounted(() => (document.documentElement.style.overflow = 'hidden'))
+onUnmounted(() => (document.documentElement.style.overflow = ''))
 </script>
 
 <template>
