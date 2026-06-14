@@ -154,7 +154,7 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
         v-if="!ready"
         data-testid="lesson-view__loader"
         :style="{ bottom: `${footer_height}px` }"
-        class="fixed inset-x-0 top-(--nav-height) z-20 flex items-center justify-center bg-brown-100 dark:bg-grey-900"
+        class="fixed inset-x-0 top-(--nav-height) z-20 flex items-center justify-center bg-brown-100 dark:bg-grey-900 sm:!bottom-0"
       >
         <ui-icon src="loading-dots" class="h-16 w-16 text-brown-700 dark:text-brown-100" />
       </div>
