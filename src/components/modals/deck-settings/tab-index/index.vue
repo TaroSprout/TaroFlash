@@ -84,6 +84,7 @@ function onNavigate(value: TabIndexNavValue) {
           data-testid="tab-index__nav-card"
           :data-value="entry.value"
           class="flex items-center gap-3 p-4 text-brown-700 dark:text-brown-100 hover:bg-(--theme-neutral) hover:text-(--theme-on-neutral) cursor-pointer text-left"
+          bgx_color="var(--color-brown-500)"
           v-sfx.hover="'ui.click_07'"
           @tap="onNavigate(entry.value)"
         >

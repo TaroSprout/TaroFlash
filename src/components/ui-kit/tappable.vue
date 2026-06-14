@@ -41,7 +41,7 @@ const handler = tap((e) => emit('tap', e), { pressAudio: press_audio })
     <slot />
     <div
       class="absolute inset-0 rounded-[inherit] bgx-diagonal-stripes animation-safe:group-data-[playing=true]/tappable:bgx-slide pointer-events-none hidden group-data-[playing=true]/tappable:block"
-      :style="{ '--ui-tappable-bgx': bgx_color }"
+      :style="{ '--bgx-fill': bgx_color }"
     />
   </component>
 </template>
