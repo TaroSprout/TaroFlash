@@ -6,6 +6,12 @@ import { gsap } from 'gsap'
 const ANCHOR_RATIO = 0.4
 const DURATION = 0.6
 
+// Deadzone boundaries for word-level scroll. Words inside this band don't
+// trigger a scroll; words outside snap to SCROLL_ANCHOR.
+const DEADZONE_TOP = 0.15
+const DEADZONE_BOTTOM = 0.35
+const SCROLL_ANCHOR = 0.2
+
 // The scroller is the transcript column on desktop, but the whole page (window)
 // on mobile, where the column isn't bounded and the document scrolls instead.
 type Scroller = HTMLElement | Window
@@ -88,6 +94,53 @@ export function scrollLineIntoView(scroller: Scroller, el: HTMLElement, animate 
   const el_top_within = el_rect.top - top + current
   const desired = el_top_within - viewport * ANCHOR_RATIO + el_rect.height / 2
   const target = Math.max(0, Math.min(max, desired))
+
+  let state = stateByScroller.get(scroller)
+  if (!state) {
+    state = { y: current }
+    stateByScroller.set(scroller, state)
+  }
+
+  state.y = current
+  gsap.killTweensOf(state)
+
+  if (!animate) {
+    state.y = target
+    if (isWindow(scroller)) window.scrollTo(0, target)
+    else scroller.scrollTop = target
+    return
+  }
+
+  gsap.to(state, {
+    y: target,
+    duration: DURATION,
+    ease: 'power3.out',
+    onUpdate: () => {
+      if (isWindow(scroller)) window.scrollTo(0, state.y)
+      else scroller.scrollTop = state.y
+    }
+  })
+}
+
+/**
+ * Scroll `scroller` only when `el` has drifted outside the deadzone band
+ * (15%–80% of the viewport). When outside, snaps it to the top of the band.
+ * No-ops when the word is already visible inside the band, so mid-sentence
+ * words don't cause jitter. Same iOS Safari rules as `scrollLineIntoView`.
+ */
+export function scrollWordIntoDeadzone(scroller: Scroller, el: HTMLElement, animate = true) {
+  const el_rect = el.getBoundingClientRect()
+  const { current, viewport, max, top } = metrics(scroller)
+
+  const el_top_in_vp = el_rect.top - top
+  const el_bottom_in_vp = el_rect.bottom - top
+  const dz_top = viewport * DEADZONE_TOP
+  const dz_bottom = viewport * DEADZONE_BOTTOM
+
+  if (el_top_in_vp >= dz_top && el_bottom_in_vp <= dz_bottom) return
+
+  const el_top_within = el_rect.top - top + current
+  const target = Math.max(0, Math.min(max, el_top_within - viewport * SCROLL_ANCHOR))
 
   let state = stateByScroller.get(scroller)
   if (!state) {

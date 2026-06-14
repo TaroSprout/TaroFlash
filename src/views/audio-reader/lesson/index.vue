@@ -7,7 +7,6 @@ import { useLessonsByCollectionQuery } from '@/api/lessons'
 import { useLessonReader } from '@/composables/audio-reader/use-lesson-reader'
 import { useReaderProgress } from '@/composables/audio-reader/use-reader-progress'
 import { useCollectionEditModal } from '@/composables/modals/use-collection-edit-modal'
-import { useMatchMedia } from '@/composables/use-media-query'
 import { useAnimatedHeight } from '@/composables/use-animated-height'
 import { scrollClearOf } from '@/utils/animations/transcript-scroll'
 import { fadeLeave } from '@/utils/animations/fade'
@@ -21,7 +20,6 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import AudioToolbar from '@/views/audio-reader/lesson/audio-toolbar.vue'
 import TranscriptView from '@/views/audio-reader/transcript/index.vue'
-import TermPopover from '@/views/audio-reader/term-popover/index.vue'
 import TermCard from '@/views/audio-reader/term-popover/term-card.vue'
 
 const { collectionId, lessonId } = defineProps<{ collectionId: string; lessonId: string }>()
@@ -29,7 +27,6 @@ const { collectionId, lessonId } = defineProps<{ collectionId: string; lessonId:
 const { t } = useI18n()
 const router = useRouter()
 const edit_modal = useCollectionEditModal()
-const is_mobile = useMatchMedia('w<sm | h<sm')
 
 const collection_id = computed(() => Number(collectionId))
 const lesson_id = computed(() => Number(lessonId))
@@ -79,11 +76,7 @@ const chapter_of = computed(() => ({
   total: chapters.value.length
 }))
 
-// On a phone the term translation takes over the footer in place of the audio
-// toolbar; on desktop it stays an anchored popover over the transcript.
-const show_term_in_footer = computed(
-  () => is_mobile.value && popover_open.value && !!selection.value
-)
+const show_term_in_footer = computed(() => popover_open.value && !!selection.value)
 
 // Veil the reader until the transcript is loaded and the chapter has been
 // positioned at its resume offset, so the resume seek lands behind the veil and
@@ -161,7 +154,7 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
         v-if="!ready"
         data-testid="lesson-view__loader"
         :style="{ bottom: `${footer_height}px` }"
-        class="fixed inset-x-0 top-(--nav-height) z-20 flex items-center justify-center bg-brown-100 dark:bg-grey-900"
+        class="fixed inset-x-0 top-(--nav-height) z-20 flex items-center justify-center bg-brown-100 dark:bg-grey-900 sm:!bottom-0"
       >
         <ui-icon src="loading-dots" class="h-16 w-16 text-brown-700 dark:text-brown-100" />
       </div>
@@ -169,7 +162,7 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
 
     <aside
       data-testid="lesson-view__sidebar"
-      class="hidden shrink-0 flex-col gap-4 xl:flex xl:sticky xl:top-(--nav-height) xl:max-h-[calc(100dvh-var(--nav-height))] xl:w-56 xl:self-start xl:overflow-y-auto"
+      class="hidden shrink-0 flex-col gap-4 xl:flex xl:sticky xl:top-(--nav-height) xl:h-[calc(100dvh-var(--nav-height))] xl:w-56 xl:self-start"
     >
       <header data-testid="lesson-view__header" class="flex items-center justify-between gap-4">
         <div data-testid="lesson-view__heading" class="flex flex-col gap-1">
@@ -198,7 +191,7 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
 
       <nav
         data-testid="lesson-view__chapters"
-        class="flex gap-2 overflow-x-auto pb-2 xl:flex-col xl:overflow-x-visible xl:pb-0"
+        class="flex flex-1 gap-2 overflow-x-auto pb-2 xl:flex-col xl:overflow-x-visible xl:overflow-y-auto xl:pb-0"
       >
         <button
           v-for="chapter in chapters"
@@ -212,6 +205,14 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
           <span class="line-clamp-1">{{ chapter.title }}</span>
         </button>
       </nav>
+
+      <audio-toolbar
+        data-testid="lesson-view__sidebar-toolbar"
+        :player="player"
+        :chapters="chapters"
+        :current-lesson-id="lesson_id"
+        @select-chapter="goToChapter"
+      />
     </aside>
 
     <div data-testid="lesson-view__reader" class="relative flex flex-1 flex-col xl:min-w-0">
@@ -242,7 +243,8 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
       <footer
         ref="footer_bar"
         data-testid="lesson-view__bar"
-        class="w-full left-0 fixed bottom-0 rounded-t-6 z-30 bg-brown-300 p-5 pb-2 pointer-fine:pb-6 dark:bg-stone-900"
+        :class="{ 'xl:hidden': !show_term_in_footer }"
+        class="fixed bottom-0 left-0 right-0 z-30 rounded-t-6 bg-brown-300 p-5 pb-2 dark:bg-stone-900 sm:bottom-3 sm:left-auto sm:right-3 sm:w-96 sm:rounded-6 sm:pb-5"
       >
         <div ref="footer_swap" data-testid="lesson-view__footer-swap" class="relative w-full">
           <transition
@@ -277,6 +279,7 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
               key="toolbar"
               ref="footer_toolbar"
               data-testid="lesson-view__footer-toolbar"
+              class="xl:hidden"
             >
               <audio-toolbar
                 :player="player"
@@ -297,19 +300,6 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
       </footer>
 
       <scroll-bar class="fixed top-(--nav-height) right-6 bottom-6" target="html" />
-
-      <term-popover
-        v-if="selection && !is_mobile"
-        :open="popover_open"
-        :rect="selection.rect"
-        :term="selection.term"
-        :sentence="selection.sentence"
-        :target_lang="target_lang"
-        :existing_decks="selected_term_decks"
-        @close="closeTerm"
-        @play-from-here="playFromHere"
-        @play-word="playClip"
-      />
     </div>
   </section>
 </template>

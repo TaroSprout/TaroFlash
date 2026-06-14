@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import { useReaderHighlights } from '@/composables/audio-reader/use-reader-highlights'
 
@@ -23,10 +23,11 @@ vi.mock('@/utils/animations/reader-cursor', () => ({
   hideReaderCursor: hideMock
 }))
 
-// Mock the scroll animator so following the active sentence is observable as a
+// Mock the scroll animators so following the active word is observable as a
 // call; the real gsap scrolling is exercised in transcript-scroll's own tests.
 vi.mock('@/utils/animations/transcript-scroll', () => ({
-  scrollLineIntoView: scrollMock
+  scrollLineIntoView: scrollMock,
+  scrollWordIntoDeadzone: scrollMock
 }))
 
 // Host wiring the composable's pointer handlers + template refs, with words
@@ -58,7 +59,11 @@ const Host = defineComponent({
         onPointerleave: this.onPointerLeave
       },
       [
-        h('div', { ref: 'hover' }),
+        // Pre-register three pill elements so hover_el_pool is populated and
+        // moveReaderCursor is callable. Enough for single- and multi-line tests.
+        h('div', { ref: (el) => this.setHoverEl(el, 0), 'data-testid': 'hover-pill-0' }),
+        h('div', { ref: (el) => this.setHoverEl(el, 1), 'data-testid': 'hover-pill-1' }),
+        h('div', { ref: (el) => this.setHoverEl(el, 2), 'data-testid': 'hover-pill-2' }),
         h('div', { 'data-testid': 'transcript-segment', 'data-index': '0' }, [
           h(
             'span',
@@ -267,6 +272,8 @@ describe('useReaderHighlights', () => {
 
       moveMock.mockClear()
       await pointer(wrapper, 'pointermove', 2, 0)
+      // positionInteraction is async — awaits a nextTick before calling moveReaderCursor
+      await flushPromises()
 
       expect(moveMock).toHaveBeenCalled()
     })
@@ -318,9 +325,14 @@ describe('useReaderHighlights', () => {
 
   describe('active-word scroll follow', () => {
     test('scrolls the active word into view when active_word changes', async () => {
+      vi.useFakeTimers()
       const wrapper = mountHost()
 
       await wrapper.setProps({ activeWord: 1 })
+      // followActiveWord is debounced 100ms
+      vi.advanceTimersByTime(100)
+      await flushPromises()
+      vi.useRealTimers()
 
       expect(scrollMock).toHaveBeenCalled()
     })

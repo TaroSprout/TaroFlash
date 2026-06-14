@@ -4,7 +4,7 @@ import { defineComponent, h, ref } from 'vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 // Plain-object refs suffice for state the script reads via .value (watch, onMounted).
-// For values that Vue's template auto-unwraps (selection, popover_open, is_mobile)
+// For values that Vue's template auto-unwraps (selection, popover_open)
 // we need real Vue refs — created at module level after imports so the template
 // reactive system sees them as refs and auto-unwraps them correctly.
 
@@ -48,7 +48,6 @@ const {
 // `ref()` is available. The vi.mock factories below close over these variables.
 const selectionRef = ref(null)
 const popoverOpenRef = ref(false)
-const isMobileRef = ref(false)
 
 vi.mock('@/composables/audio-reader/use-lesson-reader', () => ({
   useLessonReader: () => ({
@@ -71,10 +70,6 @@ vi.mock('@/composables/audio-reader/use-reader-progress', () => ({
   useReaderProgress: useReaderProgressMock
 }))
 
-vi.mock('@/composables/use-media-query', () => ({
-  useMatchMedia: () => isMobileRef
-}))
-
 vi.mock('@/composables/use-animated-height', () => ({
   useAnimatedHeight: vi.fn()
 }))
@@ -87,7 +82,8 @@ vi.mock('@/utils/animations/footer-swap', () => ({
 
 vi.mock('@/utils/animations/transcript-scroll', () => ({
   scrollClearOf: vi.fn(),
-  scrollLineIntoView: vi.fn()
+  scrollLineIntoView: vi.fn(),
+  scrollWordIntoDeadzone: vi.fn()
 }))
 
 vi.mock('@/api/lessons', () => ({
@@ -137,15 +133,6 @@ const TranscriptViewStub = defineComponent({
   }
 })
 
-const TermPopoverStub = defineComponent({
-  name: 'TermPopover',
-  props: ['open', 'rect', 'term', 'sentence', 'target_lang'],
-  emits: ['close'],
-  setup() {
-    return () => h('div', { 'data-testid': 'term-popover-stub' })
-  }
-})
-
 const TermCardStub = defineComponent({
   name: 'TermCard',
   props: ['term', 'sentence', 'target_lang', 'show_back'],
@@ -191,7 +178,6 @@ function mountView(props = {}) {
     global: {
       stubs: {
         TranscriptView: TranscriptViewStub,
-        TermPopover: TermPopoverStub,
         TermCard: TermCardStub
       }
     }
@@ -205,7 +191,6 @@ beforeEach(() => {
   chaptersRef.value = []
   selectionRef.value = null
   popoverOpenRef.value = false
-  isMobileRef.value = false
   progressMutate.mockClear()
   editModalOpenMock.mockClear()
   routerPushMock.mockClear()
@@ -306,16 +291,18 @@ describe('LessonView', () => {
     })
   })
 
-  describe('mobile footer — show_term_in_footer [obligation]', () => {
-    test('footer shows toolbar by default (not mobile)', () => {
+  describe('footer — show_term_in_footer [obligation]', () => {
+    test('footer shows toolbar by default (no selection, popover closed)', () => {
       const wrapper = mountView()
 
       expect(wrapper.find('[data-testid="lesson-view__footer-toolbar"]').exists()).toBe(true)
       expect(wrapper.find('[data-testid="lesson-view__footer-term"]').exists()).toBe(false)
     })
 
-    test('footer shows term-card when mobile + popover open + selection set [obligation]', async () => {
-      isMobileRef.value = true
+    // [obligation] show_term_in_footer no longer requires mobile: computed is
+    // `popover_open && !!selection` — on a desktop-width viewport the footer term
+    // card should show when a term is committed.
+    test('footer shows term-card on desktop when popover open and selection set [obligation]', async () => {
       popoverOpenRef.value = true
       selectionRef.value = { term: 'hello', sentence: 'say hello', word_index: 3, rect: {} }
 
@@ -326,8 +313,7 @@ describe('LessonView', () => {
       expect(wrapper.find('[data-testid="lesson-view__footer-toolbar"]').exists()).toBe(false)
     })
 
-    test('footer shows toolbar when mobile but popover is closed [obligation]', async () => {
-      isMobileRef.value = true
+    test('footer shows toolbar when popover is closed even with selection [obligation]', async () => {
       popoverOpenRef.value = false
       selectionRef.value = { term: 'hello', sentence: 'say hello', word_index: 3, rect: {} }
 
@@ -338,8 +324,7 @@ describe('LessonView', () => {
       expect(wrapper.find('[data-testid="lesson-view__footer-term"]').exists()).toBe(false)
     })
 
-    test('footer shows toolbar when mobile + popover open but no selection [obligation]', async () => {
-      isMobileRef.value = true
+    test('footer shows toolbar when popover open but no selection [obligation]', async () => {
       popoverOpenRef.value = true
       selectionRef.value = null
 
@@ -351,7 +336,6 @@ describe('LessonView', () => {
     })
 
     test('term-card in footer receives the selection term and sentence [obligation]', async () => {
-      isMobileRef.value = true
       popoverOpenRef.value = true
       selectionRef.value = {
         term: 'konnichiwa',
@@ -370,7 +354,6 @@ describe('LessonView', () => {
     })
 
     test('term-card back event calls closeTerm [obligation]', async () => {
-      isMobileRef.value = true
       popoverOpenRef.value = true
       selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
 
@@ -382,7 +365,6 @@ describe('LessonView', () => {
     })
 
     test('term-card close event calls closeTerm [obligation]', async () => {
-      isMobileRef.value = true
       popoverOpenRef.value = true
       selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
 
@@ -394,7 +376,6 @@ describe('LessonView', () => {
     })
 
     test('term-card play-from-here event calls playFromHere [obligation]', async () => {
-      isMobileRef.value = true
       popoverOpenRef.value = true
       selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
 
@@ -406,7 +387,6 @@ describe('LessonView', () => {
     })
 
     test('term-card play-word event calls playClip [obligation]', async () => {
-      isMobileRef.value = true
       popoverOpenRef.value = true
       selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
 
@@ -418,43 +398,8 @@ describe('LessonView', () => {
     })
   })
 
-  describe('term-popover — desktop only [obligation]', () => {
-    test('term-popover is rendered on desktop when selection is set [obligation]', async () => {
-      isMobileRef.value = false
-      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
-      popoverOpenRef.value = true
-
-      const wrapper = mountView()
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.findComponent(TermPopoverStub).exists()).toBe(true)
-    })
-
-    test('term-popover is NOT rendered on mobile even when selection is set [obligation]', async () => {
-      isMobileRef.value = true
-      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
-      popoverOpenRef.value = true
-
-      const wrapper = mountView()
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.findComponent(TermPopoverStub).exists()).toBe(false)
-    })
-
-    test('term-popover is NOT rendered when selection is null [obligation]', async () => {
-      isMobileRef.value = false
-      selectionRef.value = null
-
-      const wrapper = mountView()
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.findComponent(TermPopoverStub).exists()).toBe(false)
-    })
-  })
-
   describe('dismissTerm — transcript dismiss event [obligation]', () => {
     test('transcript dismiss event calls closeTerm [obligation]', async () => {
-      isMobileRef.value = true
       popoverOpenRef.value = true
       selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
 
@@ -467,7 +412,6 @@ describe('LessonView', () => {
     })
 
     test('transcript dismiss event emits ui.snappy_button_5 [obligation]', async () => {
-      isMobileRef.value = true
       popoverOpenRef.value = true
       selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
 
@@ -480,7 +424,6 @@ describe('LessonView', () => {
     })
 
     test('closeTerm alone does NOT emit ui.snappy_button_5 [obligation]', async () => {
-      isMobileRef.value = true
       popoverOpenRef.value = true
       selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
 
