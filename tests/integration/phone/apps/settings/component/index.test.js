@@ -3,25 +3,47 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, nextTick, useAttrs } from 'vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 
-const { mockEditor, mockDanger, mockEmitSfx, state } = vi.hoisted(() => ({
-  state: { hasSidebar: true },
-  mockEditor: {
-    settings: { display_name: 'Chris', description: 'hi' },
-    preferences: { accessibility: { left_hand: false } },
-    cover: { theme: 'green-500', theme_dark: 'green-800', pattern: 'bank-note' },
-    email: { value: 'chris@example.com' },
-    created_at: { value: '2026-01-01T00:00:00Z' },
-    plan: { value: 'pro' },
-    is_dirty: { value: false },
-    saving: { value: false },
-    saveMember: vi.fn().mockResolvedValue(true)
-  },
-  mockDanger: {
-    onDeleteAccount: vi.fn(),
-    deleting_account: { value: false }
-  },
-  mockEmitSfx: vi.fn()
-}))
+// ── Hoisted state ─────────────────────────────────────────────────────────────
+
+const { mockEditor, mockDanger, mockEmitSfx, mockAlertWarn, alertResponse, state } = vi.hoisted(
+  () => {
+    // alertResponse holds a resolve fn so tests control whether the user confirms.
+    let _resolve = null
+    const alertResponse = {
+      resolve: (val) => _resolve?.(val),
+      reset: () => {
+        _resolve = null
+      },
+      _setResolve: (fn) => {
+        _resolve = fn
+      }
+    }
+
+    return {
+      state: { isSheet: false, isDesktop: false },
+      mockEditor: {
+        settings: { display_name: 'Chris', description: 'hi' },
+        preferences: { accessibility: { left_hand: false } },
+        cover: { theme: 'green-500', theme_dark: 'green-800', pattern: 'bank-note' },
+        email: { value: 'chris@example.com' },
+        created_at: { value: '2026-01-01T00:00:00Z' },
+        plan: { value: 'pro' },
+        is_dirty: { value: false },
+        saving: { value: false },
+        saveMember: vi.fn().mockResolvedValue(true)
+      },
+      mockDanger: {
+        onDeleteAccount: vi.fn(),
+        deleting_account: { value: false }
+      },
+      mockEmitSfx: vi.fn(),
+      mockAlertWarn: vi.fn(),
+      alertResponse
+    }
+  }
+)
+
+// ── Mocks ─────────────────────────────────────────────────────────────────────
 
 vi.mock('@/composables/member/editor', () => ({
   useMemberEditor: () => mockEditor,
@@ -43,9 +65,17 @@ vi.mock('@/composables/storage/session-ref', async () => {
 vi.mock('@/composables/ui/media-query', async () => {
   const { ref } = await import('vue')
   return {
-    useMatchMedia: (query) => ref(query.includes('&') ? state.hasSidebar : false)
+    // sheet_query contains '|' or 'w<'; desktop_query contains '&'
+    useMatchMedia: (query) => {
+      if (query.includes('&')) return ref(state.isDesktop)
+      return ref(state.isSheet)
+    }
   }
 })
+
+vi.mock('@/composables/alert', () => ({
+  useAlert: () => ({ warn: mockAlertWarn })
+}))
 
 vi.mock('@/phone/apps/settings/component/tab-index/index.vue', async () => {
   const { defineComponent, h } = await import('vue')
@@ -70,15 +100,17 @@ vi.mock('@/phone/apps/settings/component/tab-index/index.vue', async () => {
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
-vi.mock('@/utils/animations/slide-fade-right', () => ({
-  slideFadeRightEnter: vi.fn((_el, done) => done && done()),
-  slideFadeRightLeave: vi.fn((_el, done) => done && done())
+vi.mock('@/utils/animations/fade', () => ({
+  fadeEnter: vi.fn((_el, done) => done?.()),
+  fadeLeave: vi.fn((_el, done) => done?.())
 }))
 
-vi.mock('@/utils/animations/tab-height', () => ({
-  tabHeightEnter: () => (_el, done) => done && done(),
-  tabHeightLeave: () => (_el, done) => done && done()
+vi.mock('@/utils/animations/tab-slide', () => ({
+  tabSlideEnter: vi.fn(() => vi.fn((_el, done) => done?.())),
+  tabSlideLeave: vi.fn(() => vi.fn((_el, done) => done?.()))
 }))
+
+// ── Stubs ─────────────────────────────────────────────────────────────────────
 
 const PassthroughStub = defineComponent({
   name: 'PassthroughStub',
@@ -107,19 +139,17 @@ const TabIndexStub = defineComponent({
 
 const TabSheetStub = defineComponent({
   name: 'TabSheet',
-  props: ['active', 'tabs', 'surface', 'header_border'],
+  props: ['active', 'tabs', 'sheetPx'],
   emits: ['close', 'update:active'],
   inheritAttrs: false,
-  setup(props, { slots, emit, expose }) {
-    // Mirror the real TabSheet: own sidebar visibility and expose it upward.
-    expose({ has_sidebar: useMatchMedia('w>=lg & fine') })
+  setup(props, { slots, emit, attrs }) {
     return () =>
       h(
         'div',
         {
           'data-testid': 'tab-sheet-stub',
           'data-active': props.active,
-          'data-surface': props.surface,
+          'data-layout': attrs['data-layout'],
           'data-tabs': JSON.stringify(props.tabs?.map((t) => t.value) ?? [])
         },
         [
@@ -150,9 +180,11 @@ const TabSheetStub = defineComponent({
 
 import SettingsApp from '@/phone/apps/settings/component/index.vue'
 
-function makeWrapper() {
+// ── Factory ───────────────────────────────────────────────────────────────────
+
+function makeWrapper(closeFn = vi.fn()) {
   return mount(SettingsApp, {
-    props: { close: () => {} },
+    props: { close: closeFn },
     global: {
       stubs: {
         TabSheet: TabSheetStub,
@@ -160,8 +192,11 @@ function makeWrapper() {
         TabProfile: PassthroughStub,
         TabSubscription: PassthroughStub,
         TabSounds: PassthroughStub,
+        TabApp: PassthroughStub,
         TabDangerZone: PassthroughStub,
         SettingsAside: PassthroughStub,
+        SettingsSaveButton: PassthroughStub,
+        SettingsBackButton: PassthroughStub,
         MemberCard: PassthroughStub,
         UiButton: PassthroughStub,
         UiTagButton: PassthroughStub,
@@ -171,30 +206,31 @@ function makeWrapper() {
   })
 }
 
+// ── Reset ─────────────────────────────────────────────────────────────────────
+
 beforeEach(() => {
+  state.isSheet = false
+  state.isDesktop = false
   mockEditor.is_dirty.value = false
   mockEditor.saving.value = false
   mockEditor.saveMember.mockReset().mockResolvedValue(true)
   mockEmitSfx.mockReset()
   mockDanger.onDeleteAccount.mockReset()
-  state.hasSidebar = true
+  mockAlertWarn.mockReset()
+  alertResponse.reset()
 })
 
-describe('settings app — tab routing', () => {
-  test('forwards surface="inverted" to the underlying tab-sheet', () => {
-    const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-surface')).toBe(
-      'inverted'
-    )
-  })
+// ── Tab routing ───────────────────────────────────────────────────────────────
 
+describe('settings app — tab routing', () => {
   test('exposes the four expected tab values', () => {
     const wrapper = makeWrapper()
     const tabs = JSON.parse(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-tabs'))
     expect(tabs).toEqual(['profile', 'subscription', 'app', 'danger-zone'])
   })
 
-  test('defaults the active sidebar tab to "profile"', () => {
+  test('defaults the active sidebar tab to "profile" on non-sheet layout', () => {
+    state.isSheet = false
     const wrapper = makeWrapper()
     expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe('profile')
   })
@@ -206,10 +242,12 @@ describe('settings app — tab routing', () => {
   })
 })
 
+// ── Header copy ───────────────────────────────────────────────────────────────
+
 describe('settings app — header copy follows displayed tab', () => {
-  test('renders default profile header when no tab has been selected', async () => {
+  test('renders default profile header on non-sheet layout', async () => {
+    state.isSheet = false
     const wrapper = makeWrapper()
-    // has_sidebar arrives from TabSheet via a template ref — one render late.
     await nextTick()
     expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('Profile')
   })
@@ -219,93 +257,159 @@ describe('settings app — header copy follows displayed tab', () => {
     await wrapper.find('[data-testid="tab-sheet__select-app"]').trigger('click')
     expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('App')
   })
+
+  test('shows the index header on sheet layout with no tab selected', () => {
+    state.isSheet = true
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('Settings')
+  })
 })
 
-describe('settings app — sidebar visibility (set at mount)', () => {
-  test('renders the floating member-card preview alongside the main column', () => {
-    state.hasSidebar = true
+// ── Layout mode data attribute ────────────────────────────────────────────────
+
+describe('settings app — data-layout attribute', () => {
+  test('sets data-layout="tablet" by default', () => {
+    state.isSheet = false
+    state.isDesktop = false
     const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="settings__floating-preview"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-layout')).toBe('tablet')
   })
 
-  test('shows the back button on mobile once a tab is selected', async () => {
-    state.hasSidebar = false
+  test('sets data-layout="sheet" when sheet query matches', () => {
+    state.isSheet = true
     const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="settings__back-button"]').exists()).toBe(false)
-
-    await wrapper.find('[data-testid="tab-sheet__select-app"]').trigger('click')
-    expect(wrapper.find('[data-testid="settings__back-button"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-layout')).toBe('sheet')
   })
 
-  test('back button click clears the active tab and emits the back sfx', async () => {
-    state.hasSidebar = false
+  test('sets data-layout="desktop" when desktop query matches', () => {
+    state.isSheet = false
+    state.isDesktop = true
     const wrapper = makeWrapper()
-    await wrapper.find('[data-testid="tab-sheet__select-app"]').trigger('click')
+    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-layout')).toBe('desktop')
+  })
+})
 
-    await wrapper.find('[data-testid="settings__back-button"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
-    expect(wrapper.find('[data-testid="settings__back-button"]').exists()).toBe(false)
+// ── Overlay / aside visibility ────────────────────────────────────────────────
+
+describe('settings app — overlay and aside visibility', () => {
+  test('shows the pinned member-card preview on non-sheet layout', () => {
+    state.isSheet = false
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-testid="settings__pinned-preview"]').exists()).toBe(true)
   })
 
-  test('renders the index tab when collapsed below sidebar with no tab selected', () => {
-    state.hasSidebar = false
+  test('hides the pinned member-card preview on sheet layout', () => {
+    state.isSheet = true
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-testid="settings__pinned-preview"]').exists()).toBe(false)
+  })
+
+  test('renders the settings-aside on non-sheet layout', () => {
+    state.isSheet = false
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-testid="settings__aside"]').exists()).toBe(true)
+  })
+
+  test('hides the settings-aside on sheet layout', () => {
+    state.isSheet = true
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-testid="settings__aside"]').exists()).toBe(false)
+  })
+})
+
+// ── Index tab (sheet mobile entry point) ─────────────────────────────────────
+
+describe('settings app — index tab', () => {
+  test('renders the index tab on sheet layout with no tab selected', () => {
+    state.isSheet = true
     const wrapper = makeWrapper()
     expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
   })
 
-  test('navigate emit from the index swaps the active tab', async () => {
-    state.hasSidebar = false
+  test('navigate emit from the index tab swaps the active tab', async () => {
+    state.isSheet = true
     const wrapper = makeWrapper()
     await wrapper.find('[data-testid="tab-index-stub"]').trigger('click')
     expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe('app')
   })
 })
 
-describe('settings app — save footer', () => {
-  test('hides the save button when the editor is not dirty', () => {
-    mockEditor.is_dirty.value = false
+// ── Back navigation ───────────────────────────────────────────────────────────
+
+describe('settings app — back navigation', () => {
+  test('back action clears the active tab', async () => {
     const wrapper = makeWrapper()
-    const footer = wrapper.find('[data-testid="tab-sheet__footer"]')
-    expect(footer.text()).not.toContain('Save changes')
+    await wrapper.find('[data-testid="tab-sheet__select-app"]').trigger('click')
+    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe('app')
+
+    // Trigger onBack via the tab-sheet component's @back passthrough
+    // SettingsBackButton forwards @back, and index.vue listens to @back on <component>
+    // We can trigger onBack programmatically via the component
+    await wrapper.vm.onBack()
+    await nextTick()
+    // After back, active_tab clears → sidebar defaults to 'profile'
+    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe('profile')
   })
 
-  test('shows the save button when the editor is dirty', () => {
-    mockEditor.is_dirty.value = true
+  test('back action emits the snappy_button_5 sfx', async () => {
     const wrapper = makeWrapper()
-    const footer = wrapper.find('[data-testid="tab-sheet__footer"]')
-    expect(footer.text()).toContain('Save changes')
-  })
-
-  test('clicking save calls editor.saveMember and emits close on success', async () => {
-    mockEditor.is_dirty.value = true
-    mockEditor.saveMember.mockResolvedValue(true)
-    const wrapper = makeWrapper()
-
-    const footer = wrapper.find('[data-testid="tab-sheet__footer"]')
-    await footer.find('div').trigger('click')
-    await flushPromises()
-
-    expect(mockEditor.saveMember).toHaveBeenCalledOnce()
-    expect(wrapper.emitted('close')).toBeTruthy()
-  })
-
-  test('does not emit close when saveMember resolves false', async () => {
-    mockEditor.is_dirty.value = true
-    mockEditor.saveMember.mockResolvedValue(false)
-    const wrapper = makeWrapper()
-
-    const footer = wrapper.find('[data-testid="tab-sheet__footer"]')
-    await footer.find('div').trigger('click')
-    await flushPromises()
-
-    expect(wrapper.emitted('close')).toBeFalsy()
+    await wrapper.vm.onBack()
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5')
   })
 })
 
-describe('settings app — close', () => {
-  test('re-emits close from the underlying tab-sheet', async () => {
-    const wrapper = makeWrapper()
+// ── onClose — unsaved-changes guard ──────────────────────────────────────────
+
+describe('settings app — close with unsaved-changes guard [obligation]', () => {
+  test('calls close() immediately when editor is not dirty', async () => {
+    mockEditor.is_dirty.value = false
+    const close = vi.fn()
+    const wrapper = makeWrapper(close)
+
     await wrapper.find('[data-testid="tab-sheet__emit-close"]').trigger('click')
-    expect(wrapper.emitted('close')).toBeTruthy()
+    await flushPromises()
+
+    expect(mockAlertWarn).not.toHaveBeenCalled()
+    expect(close).toHaveBeenCalledOnce()
+  })
+
+  test('shows alert when editor is dirty on close', async () => {
+    mockEditor.is_dirty.value = true
+    let alertResolve
+    mockAlertWarn.mockReturnValue({
+      response: new Promise((r) => (alertResolve = r))
+    })
+
+    const close = vi.fn()
+    const wrapper = makeWrapper(close)
+
+    await wrapper.find('[data-testid="tab-sheet__emit-close"]').trigger('click')
+
+    expect(mockAlertWarn).toHaveBeenCalledOnce()
+    expect(close).not.toHaveBeenCalled()
+
+    // User confirms
+    alertResolve(true)
+    await flushPromises()
+    expect(close).toHaveBeenCalledOnce()
+  })
+
+  test('does NOT call close() when user cancels the alert [obligation]', async () => {
+    mockEditor.is_dirty.value = true
+    let alertResolve
+    mockAlertWarn.mockReturnValue({
+      response: new Promise((r) => (alertResolve = r))
+    })
+
+    const close = vi.fn()
+    const wrapper = makeWrapper(close)
+
+    await wrapper.find('[data-testid="tab-sheet__emit-close"]').trigger('click')
+
+    // User cancels
+    alertResolve(false)
+    await flushPromises()
+
+    expect(close).not.toHaveBeenCalled()
   })
 })
