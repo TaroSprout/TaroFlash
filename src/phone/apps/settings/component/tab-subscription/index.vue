@@ -25,7 +25,7 @@ function openUpgradeModal() {
 </script>
 
 <template>
-  <section-list data-testid="tab-subscription">
+  <section-list data-testid="tab-subscription" class="max-h-full overflow-y-auto">
     <settings-back-button @back="emit('back')" />
 
     <labeled-section

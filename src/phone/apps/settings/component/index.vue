@@ -117,8 +117,8 @@ watch(layout_mode, (mode) => {
     data-theme-dark="blue-650"
     :data-layout="layout_mode"
     :class="[
-      layout_mode === 'desktop' ? 'w-250!' : 'w-full! max-w-205.5',
-      layout_mode !== 'sheet' && 'h-150'
+      layout_mode === 'desktop' ? 'w-255!' : 'w-full! max-w-205.5',
+      layout_mode !== 'sheet' && 'h-170'
     ]"
     :sheet_px="sheet_px"
     :tabs="tabs"
