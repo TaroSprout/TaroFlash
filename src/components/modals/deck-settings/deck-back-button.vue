@@ -19,7 +19,7 @@ const emit = defineEmits<{ back: [] }>()
     data-theme-dark="green-800"
     inverted
     icon-left="arrow-back"
-    class="self-start -mb-4"
+    :class="['self-start', layout_mode === 'sheet' && '-mb-4']"
     @click="emit('back')"
   >
     {{ t('deck.settings-modal.back-label') }}

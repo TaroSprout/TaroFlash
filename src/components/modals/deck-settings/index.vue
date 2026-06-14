@@ -158,12 +158,11 @@ function onBack() {
 }
 
 function onTabLeave(el: Element, done: () => void) {
-  if (layout_mode.value === 'desktop') {
-    fadeLeave(el, done)
+  if (layout_mode.value === 'sheet') {
+    tabSlideLeave(nav_direction, tab_outlet.value)(el, done)
     return
   }
-  const wrapper = layout_mode.value === 'sheet' ? tab_outlet.value : undefined
-  tabSlideLeave(nav_direction, wrapper)(el, done)
+  fadeLeave(el, done)
 }
 
 function onTabEnter(el: Element, done: () => void) {
@@ -172,12 +171,11 @@ function onTabEnter(el: Element, done: () => void) {
     done()
     return
   }
-  if (layout_mode.value === 'desktop') {
-    fadeEnter(el, done)
+  if (layout_mode.value === 'sheet') {
+    tabSlideEnter(nav_direction, tab_outlet.value)(el, done)
     return
   }
-  const wrapper = layout_mode.value === 'sheet' ? tab_outlet.value : undefined
-  tabSlideEnter(nav_direction, wrapper)(el, done)
+  fadeEnter(el, done)
 }
 
 watch(layout_mode, (mode) => {
@@ -222,8 +220,7 @@ watch(active_tab, (tab) => {
       data-testid="deck-settings__main"
       :class="[
         'relative flex flex-1 flex-col gap-4 w-full min-w-0',
-        layout_mode !== 'desktop' && 'overflow-hidden',
-        layout_mode === 'sheet' && 'max-w-111 mx-auto pt-0.5 pl-0.5'
+        layout_mode === 'sheet' && 'max-w-111 mx-auto overflow-hidden pt-0.5 pl-0.5'
       ]"
     >
       <transition :css="false" mode="out-in" @leave="onTabLeave" @enter="onTabEnter">

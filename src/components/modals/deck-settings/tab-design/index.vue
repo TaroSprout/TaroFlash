@@ -48,6 +48,8 @@ const card_side_attributes = computed(() =>
     <tab-bar
       :tabs="tabs"
       :active="editor.active_side.value"
+      :full_width="layout_mode !== 'desktop'"
+      :size="layout_mode !== 'desktop' ? 'base' : 'sm'"
       hover_sfx="ui.click_07"
       @update:active="editor.setActiveSide"
     />
