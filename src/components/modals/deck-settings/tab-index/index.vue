@@ -1,16 +1,22 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import UiInput from '@/components/ui-kit/input.vue'
+import UiTextarea from '@/components/ui-kit/textarea.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import DangerResetButton from '../danger-reset-button.vue'
 import DangerDeleteButton from '../danger-delete-button.vue'
 import { emitSfx } from '@/sfx/bus'
+import { deckEditorKey } from '@/composables/deck-editor'
+import { useMatchMedia } from '@/composables/use-media-query'
 
 export type TabIndexNavValue = 'design' | 'study'
 
 const { t } = useI18n()
+const { settings } = inject(deckEditorKey)!
+const is_mobile = useMatchMedia('w<md')
 
 type NavEntry = { value: TabIndexNavValue; icon: string }
 type NavGroup = { key: string; heading: string; entries: NavEntry[] }
@@ -18,7 +24,7 @@ type NavGroup = { key: string; heading: string; entries: NavEntry[] }
 const nav_groups = computed<NavGroup[]>(() => [
   {
     key: 'appearance',
-    heading: t('deck.settings-modal.index.appearance-heading'),
+    heading: t('deck.settings-modal.index.general-heading'),
     entries: [{ value: 'design', icon: 'design-services' }]
   },
   {
@@ -46,6 +52,25 @@ function onNavigate(value: TabIndexNavValue) {
       :data-testid="`tab-index__nav-group--${group.key}`"
       :label="group.heading"
     >
+      <div
+        v-if="group.key === 'appearance' && is_mobile"
+        data-testid="tab-index__identity-inputs"
+        class="flex flex-col gap-2 mb-3"
+      >
+        <ui-input
+          :placeholder="t('deck.title-placeholder')"
+          text-align="center"
+          size="lg"
+          v-model:value="settings.title"
+        />
+        <ui-textarea
+          :placeholder="t('deck.description-placeholder')"
+          :max_chars="100"
+          rows="3"
+          v-model:value="settings.description"
+        />
+      </div>
+
       <div
         data-testid="tab-index__nav-list"
         class="flex flex-col rounded-4 bg-input overflow-hidden"

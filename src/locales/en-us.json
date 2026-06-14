@@ -339,7 +339,7 @@
   "deck.settings-modal.header.study.title": "Study Preferences",
   "deck.settings-modal.header.danger-zone.title": "Danger Zone",
   "deck.settings-modal.header.index.title": "Deck Settings",
-  "deck.settings-modal.index.appearance-heading": "Appearance",
+  "deck.settings-modal.index.general-heading": "General",
   "deck.settings-modal.index.study-heading": "Study & Review",
   "deck.settings-modal.back-button": "Back to settings menu",
   "deck.settings-modal.back-label": "Back",
