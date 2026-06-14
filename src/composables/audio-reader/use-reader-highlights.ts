@@ -8,7 +8,7 @@ import {
   hideReaderCursor,
   type CursorBox
 } from '@/utils/animations/reader-cursor'
-import { scrollLineIntoView } from '@/utils/animations/transcript-scroll'
+import { scrollWordIntoDeadzone } from '@/utils/animations/transcript-scroll'
 import type { CardMatch } from '@/utils/transcript-match'
 
 // How far each highlight bleeds past the text on every side, so it reads as a
@@ -294,13 +294,6 @@ export function useReaderHighlights(
     return null
   }
 
-  /** The segment (sentence) element the active word sits in, or null for none. */
-  function activeSegmentEl(): HTMLElement | null {
-    const index = toValue(active_word)
-    if (index < 0) return null
-    return (wordEl(index)?.closest('[data-testid="transcript-segment"]') as HTMLElement) ?? null
-  }
-
   // The nearest ancestor that actually scrolls — the reader column on desktop.
   // On mobile the column isn't bounded so nothing overflows; fall back to the
   // window, which is the real scroller there. Requiring real overflow (not just
@@ -316,20 +309,15 @@ export function useReaderHighlights(
     return window
   }
 
-  // Follow the active line down the column, but only when the *sentence* changes
-  // — re-scrolling on every word would jitter mid-sentence.
-  let last_segment_index = -1
-  function followActiveSentence() {
-    const seg = activeSegmentEl()
-    if (!seg) return
-
-    const index = Number(seg.getAttribute('data-index'))
-    if (index === last_segment_index) return
-    last_segment_index = index
-
-    // Animate only while playing; a paused jump (resume seek, scrub) repositions
-    // instantly so no scroll tween runs into the next play tap (iOS Safari lock).
-    scrollLineIntoView(scrollParentOf(content.value), seg, toValue(is_playing))
+  // Follow the active word into the deadzone. Fires on every word change but
+  // no-ops when the word is already in view — cheap rect check, no scroll.
+  // Animates only while playing; paused jumps must be instant (iOS Safari lock).
+  function followActiveWord() {
+    const index = toValue(active_word)
+    if (index < 0) return
+    const el = wordEl(index)
+    if (!el) return
+    scrollWordIntoDeadzone(scrollParentOf(content.value), el, toValue(is_playing))
   }
 
   // Keep a just-committed word clear of the term sheet. Only on mobile — where the
@@ -617,8 +605,8 @@ export function useReaderHighlights(
     focus_index.value = null
   }
 
-  // flush: 'post' so any layout settling lands before we measure the line rect.
-  watch(() => toValue(active_word), followActiveSentence, { flush: 'post' })
+  // flush: 'post' so any layout settling lands before we measure the word rect.
+  watch(() => toValue(active_word), followActiveWord, { flush: 'post' })
   watch([focus_index, anchor_index, committed], positionInteraction, { flush: 'post' })
   watch(
     () => toValue(popover_open),
