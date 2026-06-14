@@ -17,11 +17,6 @@ const FADE_DURATION = 0.12
  */
 export function tabHeightLeave(wrapper: HTMLElement) {
   return (el: Element, done: () => void) => {
-    // Kill any running enter tween so its onComplete can't clear the frozen
-    // height we're about to set. Release to auto first so we capture the
-    // content's natural height rather than a mid-animation value.
-    gsap.killTweensOf(wrapper)
-    wrapper.style.height = ''
     wrapper.style.height = `${wrapper.offsetHeight}px`
     gsap.to(el, { opacity: 0, duration: FADE_DURATION, onComplete: done })
   }
@@ -30,32 +25,22 @@ export function tabHeightLeave(wrapper: HTMLElement) {
 export function tabHeightEnter(wrapper: HTMLElement) {
   return (el: Element, done: () => void) => {
     const html = el as HTMLElement
+    const target = html.scrollHeight
+
     gsap.set(html, { opacity: 0 })
-    gsap.killTweensOf(wrapper)
-
-    requestAnimationFrame(() => {
-      // Frozen height was set by the leave. Temporarily lift it so the entering
-      // element lays out freely, then measure the wrapper (more reliable than
-      // html.scrollHeight for flex children with overflow:visible).
-      const frozen = parseFloat(wrapper.style.height) || wrapper.offsetHeight
-      wrapper.style.height = 'auto'
-      const target = wrapper.offsetHeight
-      wrapper.style.height = `${frozen}px`
-
-      gsap.to(wrapper, {
-        height: target,
-        duration: DURATION,
-        ease: 'power2.out',
-        onComplete: () => {
-          wrapper.style.height = ''
-        }
-      })
-      gsap.to(html, {
-        opacity: 1,
-        duration: FADE_DURATION,
-        delay: DURATION - FADE_DURATION,
-        onComplete: done
-      })
+    gsap.to(wrapper, {
+      height: target,
+      duration: DURATION,
+      ease: 'power2.out',
+      onComplete: () => {
+        wrapper.style.height = ''
+      }
+    })
+    gsap.to(html, {
+      opacity: 1,
+      duration: FADE_DURATION,
+      delay: DURATION - FADE_DURATION,
+      onComplete: done
     })
   }
 }

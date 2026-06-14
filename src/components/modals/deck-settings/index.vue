@@ -4,12 +4,7 @@ import { useI18n } from 'vue-i18n'
 import DeckAside from './deck-aside.vue'
 import { emitSfx } from '@/sfx/bus'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
-import {
-  slideFadeRightEnter,
-  slideFadeRightLeave,
-  tabSlideRightEnter,
-  tabSlideRightLeave
-} from '@/utils/animations/slide-fade-right'
+import { slideFadeRightEnter, slideFadeRightLeave } from '@/utils/animations/slide-fade-right'
 import { tabHeightEnter, tabHeightLeave } from '@/utils/animations/tab-height'
 import { useDeckEditor, deckEditorKey } from '@/composables/deck-editor'
 import {
@@ -19,7 +14,6 @@ import {
 import { useMatchMedia } from '@/composables/use-media-query'
 import { useAlert } from '@/composables/alert'
 import { useModalAfterEnter, useModalRequestClose } from '@/composables/modal'
-import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTagButton from '@/components/ui-kit/tag-button.vue'
 import Card from '@/components/card/index.vue'
@@ -73,8 +67,6 @@ const is_desktop_fine = useMatchMedia('w>=lg & fine')
 const active_tab = ref<ActiveTab | null>(null)
 const tab_outlet = ref<HTMLElement>()
 const is_saving = ref(false)
-const is_tab_transitioning = ref(false)
-let nav_direction: 'forward' | 'back' | null = null
 
 const sheet_px = computed(() => {
   if (is_mobile.value || is_desktop_fine.value) return '2rem'
@@ -158,27 +150,15 @@ function onTabLeave(el: Element, done: () => void) {
     fadeLeave(el, done)
     return
   }
-  if (nav_direction === 'back') {
-    tabSlideRightLeave(tab_outlet.value)(el, done)
-    return
-  }
   tabHeightLeave(tab_outlet.value)(el, done)
 }
 
 function onTabEnter(el: Element, done: () => void) {
-  const finish = () => {
-    is_tab_transitioning.value = false
-    done()
-  }
   if (!is_mobile.value || !tab_outlet.value) {
-    fadeEnter(el, finish)
+    fadeEnter(el, done)
     return
   }
-  if (nav_direction === 'forward') {
-    tabSlideRightEnter(tab_outlet.value)(el, finish)
-    return
-  }
-  tabHeightEnter(tab_outlet.value)(el, finish)
+  tabHeightEnter(tab_outlet.value)(el, done)
 }
 
 watch(is_desktop_fine, (visible) => {
@@ -190,17 +170,6 @@ watch(is_desktop_fine, (visible) => {
 watch(active_tab, (tab) => {
   if (tab === null) editor.active_side.value = 'cover'
 })
-
-// Sync flush ensures the flag is true before Vue re-renders, so the footer
-// button mounts already invisible rather than flashing then fading.
-watch(
-  active_tab,
-  (tab, prev) => {
-    is_tab_transitioning.value = true
-    nav_direction = tab !== null && prev === null ? 'forward' : tab === null ? 'back' : null
-  },
-  { flush: 'sync' }
-)
 </script>
 
 <template>
@@ -301,28 +270,6 @@ watch(
       </div>
     </template>
 
-    <template #footer>
-      <div
-        v-if="is_mobile && active_tab !== null"
-        data-testid="deck-settings__footer"
-        class="px-(--sheet-px) py-4 transition-opacity duration-100"
-        :class="is_tab_transitioning ? 'opacity-0' : 'opacity-100'"
-      >
-        <ui-button
-          data-testid="deck-settings__footer-save-button"
-          data-theme="blue-500"
-          data-theme-dark="blue-650"
-          size="lg"
-          full-width
-          :loading="is_saving"
-          :disabled="!editor.is_dirty.value"
-          :sfx="{ click: 'ui.snappy_button_2' }"
-          click-when-disabled
-          @click="editor.is_dirty.value ? onSave() : emitSfx('ui.digi_powerdown')"
-        >
-          {{ t('deck.settings-modal.submit-edit') }}
-        </ui-button>
-      </div>
-    </template>
+    <template #footer />
   </tab-sheet>
 </template>
