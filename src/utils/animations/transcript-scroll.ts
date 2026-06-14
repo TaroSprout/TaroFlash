@@ -9,8 +9,8 @@ const DURATION = 0.6
 // Deadzone boundaries for word-level scroll. Words inside this band don't
 // trigger a scroll; words outside snap to SCROLL_ANCHOR.
 const DEADZONE_TOP = 0.15
-const DEADZONE_BOTTOM = 0.7
-const SCROLL_ANCHOR = 0.25
+const DEADZONE_BOTTOM = 0.35
+const SCROLL_ANCHOR = 0.2
 
 // The scroller is the transcript column on desktop, but the whole page (window)
 // on mobile, where the column isn't bounded and the document scrolls instead.
