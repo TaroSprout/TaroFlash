@@ -52,19 +52,28 @@ function mountSkeleton(grid_size_val = 'md') {
   })
 }
 
+function mountSkeletonNoProvider() {
+  return shallowMount(CardGridSkeleton, {
+    global: {
+      stubs: { Card: CardStub },
+      directives: { sfx: {} }
+    }
+  })
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('CardGridSkeleton (card-grid/skeleton.vue)', () => {
   // ── item count ─────────────────────────────────────────────────────────────
 
-  test('renders exactly 20 skeleton items [obligation]', () => {
+  test('renders exactly 40 skeleton items [obligation]', () => {
     const wrapper = mountSkeleton()
-    expect(wrapper.findAll('[data-testid="card-grid-skeleton__item"]')).toHaveLength(20)
+    expect(wrapper.findAll('[data-testid="card-grid-skeleton__item"]')).toHaveLength(40)
   })
 
-  test('renders exactly 20 Card stubs (one per item) [obligation]', () => {
+  test('renders exactly 40 Card stubs (one per item) [obligation]', () => {
     const wrapper = mountSkeleton()
-    expect(wrapper.findAll('[data-testid="card-stub"]')).toHaveLength(20)
+    expect(wrapper.findAll('[data-testid="card-stub"]')).toHaveLength(40)
   })
 
   // ── DEFAULT_COVER (brown-300 / stone-900 / diagonal-stripes) [obligation] ─
@@ -135,5 +144,44 @@ describe('CardGridSkeleton (card-grid/skeleton.vue)', () => {
     expect(first.attributes('data-cover-theme')).toBe(DEFAULT_COVER_THEME)
     expect(first.attributes('data-cover-theme-dark')).toBe(DEFAULT_COVER_THEME_DARK)
     expect(first.attributes('data-cover-pattern')).toBe(DEFAULT_COVER_PATTERN)
+  })
+
+  // ── injection-safe fallback ────────────────────────────────────────────────
+
+  test('renders without a provider (injection-safe fallback to "base") [obligation]', () => {
+    // Designed for Suspense fallback: must not throw when no deckViewShellKey provider
+    const wrapper = mountSkeletonNoProvider()
+    expect(wrapper.find('[data-testid="card-grid-skeleton"]').exists()).toBe(true)
+    expect(wrapper.findAll('[data-testid="card-grid-skeleton__item"]')).toHaveLength(40)
+  })
+
+  test('falls back to "base" grid_size when no provider present [obligation]', () => {
+    const wrapper = mountSkeletonNoProvider()
+    // base → XL_CARD_WIDTH * 0.6 = 314 * 0.6 = 188.4px
+    const grid = wrapper.find('.grid')
+    expect(grid.attributes('style')).toContain('grid-template-columns: repeat(auto-fill, 188.4px)')
+  })
+
+  // ── grid_style tracks grid_size ────────────────────────────────────────────
+
+  test('grid style uses 188.4px columns for grid_size="base" [obligation]', () => {
+    const wrapper = mountSkeleton('base')
+    expect(wrapper.find('.grid').attributes('style')).toContain(
+      'grid-template-columns: repeat(auto-fill, 188.4px)'
+    )
+  })
+
+  test('grid style uses 235.5px columns for grid_size="md" [obligation]', () => {
+    const wrapper = mountSkeleton('md')
+    expect(wrapper.find('.grid').attributes('style')).toContain(
+      'grid-template-columns: repeat(auto-fill, 235.5px)'
+    )
+  })
+
+  test('grid style uses 314px columns for grid_size="xl" [obligation]', () => {
+    const wrapper = mountSkeleton('xl')
+    expect(wrapper.find('.grid').attributes('style')).toContain(
+      'grid-template-columns: repeat(auto-fill, 314px)'
+    )
   })
 })
