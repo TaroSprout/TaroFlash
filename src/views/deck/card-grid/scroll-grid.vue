@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import GridItem from './grid-item.vue'
+import { useCardGrid } from './use-card-grid'
 import { cardEditorKey } from '@/composables/card/list-controller'
-import { deckViewShellKey, type CardGridSize } from '@/composables/deck/view-shell'
-import { computed, inject, ref, useTemplateRef, type CSSProperties } from 'vue'
+import { deckViewShellKey } from '@/composables/deck/view-shell'
+import { inject, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -13,23 +14,10 @@ const { grid_size } = inject(deckViewShellKey)!
 const { all_cards } = list
 const { isCardSelected } = selection
 
-// Cards always render at xl and scale uniformly, so one factor drives both the
-// rendered card and its grid column — no per-size visual tuning to keep in sync.
-const XL_CARD_WIDTH = 314
-const CARD_SCALE: Record<CardGridSize, number> = {
-  base: 0.6,
-  md: 0.75,
-  xl: 1
-}
-
 const side = ref<'front' | 'back'>('front')
 const sentinel = useTemplateRef<HTMLElement>('sentinel')
 
-const card_scale = computed(() => CARD_SCALE[grid_size.value])
-
-const grid_style = computed<CSSProperties>(() => ({
-  gridTemplateColumns: `repeat(auto-fill, ${XL_CARD_WIDTH * card_scale.value}px)`
-}))
+const { card_scale, grid_style } = useCardGrid(grid_size)
 
 observeSentinel(sentinel)
 </script>

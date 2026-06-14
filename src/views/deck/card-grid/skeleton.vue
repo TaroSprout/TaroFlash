@@ -1,28 +1,17 @@
 <script setup lang="ts">
 import Card from '@/components/card/index.vue'
-import { deckViewShellKey, type CardGridSize } from '@/composables/deck/view-shell'
-import { computed, inject, type CSSProperties } from 'vue'
+import { useCardGrid } from './use-card-grid'
+import { deckViewShellKey } from '@/composables/deck/view-shell'
+import { inject } from 'vue'
 
 const DEFAULT_COVER: DeckCover = {
   theme: 'brown-300',
   theme_dark: 'stone-900',
-  pattern: 'diagonal-stripes'
+  pattern: 'diagonal-stripes',
 }
 
 const { grid_size } = inject(deckViewShellKey)!
-
-const XL_CARD_WIDTH = 314
-const CARD_SCALE: Record<CardGridSize, number> = {
-  base: 0.6,
-  md: 0.75,
-  xl: 1
-}
-
-const card_scale = computed(() => CARD_SCALE[grid_size.value])
-
-const grid_style = computed<CSSProperties>(() => ({
-  gridTemplateColumns: `repeat(auto-fill, ${XL_CARD_WIDTH * card_scale.value}px)`
-}))
+const { card_scale, grid_style } = useCardGrid(grid_size)
 </script>
 
 <template>
