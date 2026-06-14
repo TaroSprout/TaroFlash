@@ -28,7 +28,7 @@ vi.mock('@/api/decks', async () => {
   }
 })
 
-const { useCan } = await import('@/composables/use-can')
+const { useCan } = await import('@/composables/can')
 
 describe('useCan', () => {
   beforeEach(() => {

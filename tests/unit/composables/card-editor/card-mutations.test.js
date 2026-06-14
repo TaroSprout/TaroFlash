@@ -36,7 +36,7 @@ vi.mock('@/api/cards', () => ({
   })
 }))
 
-import { useCardMutations } from '@/composables/card-editor/card-mutations'
+import { useCardMutations } from '@/composables/card/mutations'
 
 function makeCard(overrides = {}) {
   return card.one({ overrides })

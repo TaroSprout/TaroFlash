@@ -13,7 +13,7 @@ vi.mock('@/api/decks', () => ({
   useUpsertDeckMutation: () => ({ mutate: upsertMock, mutateAsync: upsertMock })
 }))
 
-vi.mock('@/composables/use-can', () => ({
+vi.mock('@/composables/can', () => ({
   useCan: () => ({ createDeck: canCreateDeck })
 }))
 
@@ -33,7 +33,7 @@ vi.mock('vue-i18n', () => ({
   useI18n: () => ({ t: (key) => key })
 }))
 
-import { useDeckActions } from '@/composables/deck/use-deck-actions'
+import { useDeckActions } from '@/composables/deck/actions'
 
 function makeAlertResponse(promise = Promise.resolve(undefined)) {
   return { response: promise }

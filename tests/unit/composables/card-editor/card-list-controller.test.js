@@ -69,7 +69,7 @@ vi.mock('@/composables/modal', () => ({
   useModal: () => ({ open: modalOpenMock })
 }))
 
-vi.mock('@/composables/use-card-limit-gate', () => ({
+vi.mock('@/composables/card/limit-gate', () => ({
   useCardLimitGate: () => ({
     guardAddCards: guardAddCardsMock,
     handleLimitError: handleLimitErrorMock
@@ -78,13 +78,13 @@ vi.mock('@/composables/use-card-limit-gate', () => ({
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: emitSfxMock }))
 
-vi.mock('@/composables/use-infinite-scroll', () => ({
+vi.mock('@/composables/ui/infinite-scroll', () => ({
   useInfiniteScroll: useInfiniteScrollMock
 }))
 
 vi.mock('@/components/modals/move-cards.vue', () => ({ default: {} }))
 
-import { useCardListController } from '@/composables/card-editor/card-list-controller'
+import { useCardListController } from '@/composables/card/list-controller'
 
 function makeCard(overrides = {}) {
   return card.one({ overrides })

@@ -2,7 +2,7 @@ import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, reactive, ref, useAttrs } from 'vue'
 import TabStudy from '@/components/modals/deck-settings/tab-study/index.vue'
-import { deckEditorKey } from '@/composables/deck-editor'
+import { deckEditorKey } from '@/composables/deck/editor'
 
 const ToggleStub = defineComponent({
   name: 'UiToggle',

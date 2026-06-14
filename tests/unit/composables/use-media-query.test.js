@@ -19,7 +19,7 @@ describe('useMatchMedia', () => {
     // Reset module cache so the internal query cache starts fresh each test.
     vi.resetModules()
     window.matchMedia = vi.fn(() => createMockMql(false))
-    ;({ useMatchMedia } = await import('@/composables/use-media-query'))
+    ;({ useMatchMedia } = await import('@/composables/ui/media-query'))
   })
 
   function compiledFor(token) {

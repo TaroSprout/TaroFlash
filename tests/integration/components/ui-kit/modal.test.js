@@ -12,7 +12,7 @@ const { mockRegister, mockDispose, mockClearScope } = vi.hoisted(() => ({
   mockClearScope: vi.fn()
 }))
 
-vi.mock('@/composables/use-shortcuts', () => ({
+vi.mock('@/composables/shortcuts', () => ({
   useShortcuts: vi.fn(() => ({
     register: mockRegister,
     dispose: mockDispose,
@@ -33,7 +33,7 @@ vi.mock('gsap', () => ({
 const mobileBreakpointRef = ref(false)
 const mockUseMobileBreakpoint = vi.fn(() => mobileBreakpointRef)
 
-vi.mock('@/composables/use-media-query', () => ({
+vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: (...args) => mockUseMobileBreakpoint(...args)
 }))
 

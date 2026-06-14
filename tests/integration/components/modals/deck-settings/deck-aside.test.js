@@ -2,7 +2,7 @@ import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, reactive, ref } from 'vue'
 import DeckAside from '@/components/modals/deck-settings/deck-aside.vue'
-import { deckEditorKey } from '@/composables/deck-editor'
+import { deckEditorKey } from '@/composables/deck/editor'
 import { deckSettingsCloseKey } from '@/components/modals/deck-settings/layout'
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn() }))

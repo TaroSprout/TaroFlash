@@ -57,7 +57,7 @@ function FakePointerEvent(type, init) {
 }
 vi.stubGlobal('PointerEvent', FakePointerEvent)
 
-import { useReaderHighlights } from '@/composables/audio-reader/use-reader-highlights'
+import { useReaderHighlights } from '@/composables/audio-reader/reader-highlights'
 
 let app = null
 let originalElementFromPoint = null

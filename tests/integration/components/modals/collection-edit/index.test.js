@@ -43,7 +43,7 @@ vi.mock('@/api/lessons', () => ({
   useDeleteLessonCollectionMutation: () => ({ mutateAsync: deleteCollectionMutateAsync })
 }))
 
-vi.mock('@/composables/modals/use-upload-lesson-modal', () => ({
+vi.mock('@/composables/audio-reader/upload-lesson-modal', () => ({
   useUploadLessonModal: () => ({ open: uploadModalOpenMock })
 }))
 

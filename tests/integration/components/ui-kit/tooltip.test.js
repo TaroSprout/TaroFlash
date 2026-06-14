@@ -12,7 +12,7 @@ vi.mock('@floating-ui/vue', () => ({
   autoUpdate: vi.fn(() => () => {})
 }))
 
-vi.mock('@/composables/use-media-query', () => ({
+vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: vi.fn(() => ({ value: false }))
 }))
 

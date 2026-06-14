@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { ref } from 'vue'
 import { card } from '@tests/fixtures/card'
-import { useVirtualCardList } from '@/composables/card-editor/virtual-card-list'
+import { useVirtualCardList } from '@/composables/card/virtual-list'
 
 function makeCard(overrides = {}) {
   return card.one({ overrides })

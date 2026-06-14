@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { ref } from 'vue'
-import { useTranscriptSync } from '@/composables/audio-reader/use-transcript-sync'
+import { useTranscriptSync } from '@/composables/audio-reader/transcript-sync'
 
 const seg = (start, end, text = '') => ({ start, end, text })
 

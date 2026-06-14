@@ -2,7 +2,7 @@ import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, reactive, ref, computed } from 'vue'
 import TabDesign from '@/components/modals/deck-settings/tab-design/index.vue'
-import { deckEditorKey } from '@/composables/deck-editor'
+import { deckEditorKey } from '@/composables/deck/editor'
 import { deckSettingsLayoutKey } from '@/components/modals/deck-settings/layout'
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn() }))

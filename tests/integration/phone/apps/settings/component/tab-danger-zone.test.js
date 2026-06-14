@@ -2,7 +2,7 @@ import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
 import TabDangerZone from '@/phone/apps/settings/component/tab-danger-zone/index.vue'
-import { memberDangerActionsKey } from '@/composables/member/use-member-danger-actions'
+import { memberDangerActionsKey } from '@/composables/member/danger-actions'
 
 const ButtonStub = defineComponent({
   name: 'UiButton',

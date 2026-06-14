@@ -6,7 +6,7 @@ const { coarseRef, mockEmitSfx } = vi.hoisted(() => ({
   mockEmitSfx: vi.fn()
 }))
 
-vi.mock('@/composables/use-media-query', () => ({
+vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: () => coarseRef
 }))
 

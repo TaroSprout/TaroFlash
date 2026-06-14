@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { computed, ref, nextTick } from 'vue'
-import { useCappedToggle } from '@/composables/use-capped-toggle'
+import { useCappedToggle } from '@/composables/ui/capped-toggle'
 
 function makeModel(initial) {
   const inner = ref(initial)

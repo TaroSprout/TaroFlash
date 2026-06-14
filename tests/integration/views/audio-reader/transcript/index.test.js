@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, afterEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import TranscriptView from '@/views/audio-reader/transcript/index.vue'
-import { readerActiveWordKey } from '@/composables/audio-reader/use-reader-highlights'
+import { readerActiveWordKey } from '@/composables/audio-reader/reader-highlights'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 

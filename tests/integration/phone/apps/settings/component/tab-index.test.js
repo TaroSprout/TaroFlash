@@ -6,7 +6,7 @@ const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
 
 import TabIndex from '@/phone/apps/settings/component/tab-index/index.vue'
-import { memberDangerActionsKey } from '@/composables/member/use-member-danger-actions'
+import { memberDangerActionsKey } from '@/composables/member/danger-actions'
 
 const ButtonStub = defineComponent({
   name: 'UiButton',

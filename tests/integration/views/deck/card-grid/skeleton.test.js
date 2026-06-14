@@ -2,7 +2,7 @@ import { describe, test, expect, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
 import CardGridSkeleton from '@/views/deck/card-grid/skeleton.vue'
-import { deckViewShellKey } from '@/composables/card-editor/deck-view-shell'
+import { deckViewShellKey } from '@/composables/deck/view-shell'
 
 // Stub GSAP so card transition hooks don't error
 vi.mock('gsap', () => ({ gsap: { fromTo: vi.fn(), to: vi.fn() } }))

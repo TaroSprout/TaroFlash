@@ -13,7 +13,7 @@ vi.mock('@/api/decks', () => ({
   useMemberDecksQuery: () => ({ data: decksDataRef })
 }))
 
-vi.mock('@/composables/use-last-deck', async () => {
+vi.mock('@/composables/last-deck', async () => {
   const { ref } = await import('vue')
   return { useLastDeck: () => ({ last_deck_id: ref(lastDeckState.id), setLastDeck: vi.fn() }) }
 })

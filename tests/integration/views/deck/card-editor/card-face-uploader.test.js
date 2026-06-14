@@ -88,7 +88,7 @@ vi.mock('@/sfx/bus', () => ({ emitSfx: mocks.emitSfxMock, emitHoverSfx: vi.fn() 
 
 // The paywall gate's own logic is unit-tested separately; here we drive it to
 // assert how the uploader wires it into the click + drop paths.
-vi.mock('@/composables/card-editor/use-card-image-gate', () => ({
+vi.mock('@/composables/card/image-gate', () => ({
   useCardImageGate: () => ({ guardCardImage: mocks.guardCardImageMock })
 }))
 
@@ -99,7 +99,7 @@ vi.mock('@/utils/animations/button-tap', () => ({
 }))
 
 import CardFaceUploader from '@/views/deck/card-editor/card-face-uploader.vue'
-import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
+import { cardEditorKey } from '@/composables/card/list-controller'
 
 function makeCard(overrides = {}) {
   return { id: 1, deck_id: 10, front_text: 'Q', back_text: 'A', rank: 1000, ...overrides }

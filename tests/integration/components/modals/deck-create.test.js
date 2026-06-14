@@ -28,7 +28,7 @@ vi.mock('@/utils/cover', async () => {
 // the mobile/desktop branch before mounting the component.
 // 'coarse' queries always return false (fine/desktop pointer) so that
 // usePlayOnTap inside UiButton passes clicks straight through without intercepting.
-vi.mock('@/composables/use-media-query', async () => {
+vi.mock('@/composables/ui/media-query', async () => {
   const { ref } = await import('vue')
   const isMobile = ref(false)
   const alwaysFalse = ref(false)
@@ -40,7 +40,7 @@ vi.mock('@/composables/use-media-query', async () => {
   }
 })
 
-vi.mock('@/composables/deck-editor', async () => {
+vi.mock('@/composables/deck/editor', async () => {
   const { reactive } = await import('vue')
   return {
     useDeckEditor: vi.fn((deck) => {
@@ -135,7 +135,7 @@ vi.mock('@/components/ui-kit/icon.vue', async () => {
 })
 
 import DeckCreate from '@/components/modals/deck-create/index.vue'
-import { __setMobile } from '@/composables/use-media-query'
+import { __setMobile } from '@/composables/ui/media-query'
 
 function mountModal(close = vi.fn()) {
   const wrapper = mount(DeckCreate, {

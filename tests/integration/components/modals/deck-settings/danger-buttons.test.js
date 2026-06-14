@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
 import DangerResetButton from '@/components/modals/deck-settings/danger-reset-button.vue'
 import DangerDeleteButton from '@/components/modals/deck-settings/danger-delete-button.vue'
-import { deckDangerActionsKey } from '@/composables/deck/use-deck-danger-actions'
+import { deckDangerActionsKey } from '@/composables/deck/danger-actions'
 
 const ButtonStub = defineComponent({
   name: 'UiButton',

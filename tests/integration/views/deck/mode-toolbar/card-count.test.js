@@ -10,7 +10,7 @@ const UiTagStub = defineComponent({
 })
 
 import CardCount from '@/views/deck/mode-toolbar/card-count.vue'
-import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
+import { cardEditorKey } from '@/composables/card/list-controller'
 
 function makeEditor({ card_count = 0 } = {}) {
   return {

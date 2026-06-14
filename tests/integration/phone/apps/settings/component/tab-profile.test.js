@@ -2,14 +2,14 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, reactive, ref, useAttrs } from 'vue'
 
-vi.mock('@/composables/use-media-query', async () => {
+vi.mock('@/composables/ui/media-query', async () => {
   const m = await import('../../../../../helpers/responsive-mock')
   return m.responsiveMockModule
 })
 
 import { setBelowMd, resetResponsive } from '../../../../../helpers/responsive-mock'
 import TabProfile from '@/phone/apps/settings/component/tab-profile/index.vue'
-import { memberEditorKey } from '@/composables/member-editor'
+import { memberEditorKey } from '@/composables/member/editor'
 
 const InputStub = defineComponent({
   name: 'UiInput',

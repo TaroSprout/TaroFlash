@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { ref } from 'vue'
-import { useNumericInput } from '@/composables/use-numeric-input'
+import { useNumericInput } from '@/composables/ui/numeric-input'
 
 function makeInput() {
   const value = ref(50)

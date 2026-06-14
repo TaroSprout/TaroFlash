@@ -12,7 +12,7 @@ const ChildStub = (name) =>
   })
 
 import DeckHero from '@/views/deck/deck-hero/index.vue'
-import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
+import { cardEditorKey } from '@/composables/card/list-controller'
 
 function makeEditor({ is_selecting = false } = {}) {
   return { selection: { is_selecting: ref(is_selecting) } }

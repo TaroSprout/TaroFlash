@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { ref } from 'vue'
-import { useImageDropzone } from '@/composables/card-editor/use-image-dropzone'
+import { useImageDropzone } from '@/composables/card/image-dropzone'
 
 const MAX_BYTES = 1024
 

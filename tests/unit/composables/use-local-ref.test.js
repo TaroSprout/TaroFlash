@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
 import { nextTick } from 'vue'
 
-import { useLocalRef } from '@/composables/use-local-ref'
+import { useLocalRef } from '@/composables/storage/local-ref'
 
 beforeEach(() => {
   localStorage.clear()

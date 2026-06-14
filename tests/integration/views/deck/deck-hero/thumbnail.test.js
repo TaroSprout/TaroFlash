@@ -6,7 +6,7 @@ const { mockOpenSettings } = vi.hoisted(() => ({
   mockOpenSettings: vi.fn(() => ({ response: Promise.resolve(false) }))
 }))
 
-vi.mock('@/composables/modals/use-deck-settings-modal', () => ({
+vi.mock('@/composables/deck/settings-modal', () => ({
   useDeckSettingsModal: () => ({ open: mockOpenSettings })
 }))
 

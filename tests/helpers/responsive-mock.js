@@ -4,7 +4,7 @@ const has_sidebar = ref(false)
 const is_mobile = ref(false)
 
 /**
- * Shared mock module + setters for `@/composables/use-media-query`.
+ * Shared mock module + setters for `@/composables/ui/media-query`.
  *
  * Refs live at module scope so a `vi.mock` factory that imports this file
  * sees the same instances the test code does. Vitest's per-file module
@@ -17,7 +17,7 @@ const is_mobile = ref(false)
  *   import { responsiveMockModule, setSidebar, setBelowMd, resetResponsive }
  *     from '../../helpers/responsive-mock'
  *
- *   vi.mock('@/composables/use-media-query', async () => {
+ *   vi.mock('@/composables/ui/media-query', async () => {
  *     const m = await import('../../helpers/responsive-mock')
  *     return m.responsiveMockModule
  *   })
