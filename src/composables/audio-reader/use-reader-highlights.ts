@@ -160,6 +160,7 @@ export function useReaderHighlights(
   // would stay armed and eat the next genuine tap (the first action tap).
   let suppress_gesture_click = false
 
+  let follow_timer: ReturnType<typeof setTimeout> | null = null
   let resize_observer: ResizeObserver | null = null
 
   onMounted(() => {
@@ -176,6 +177,7 @@ export function useReaderHighlights(
     window.removeEventListener('click', swallowGestureClick, true)
     window.removeEventListener('pointerdown', disarmGestureClick, true)
     cancelLongPress()
+    if (follow_timer !== null) clearTimeout(follow_timer)
   })
 
   // Once a long-press has armed range-select the finger is extending the range,
@@ -309,15 +311,21 @@ export function useReaderHighlights(
     return window
   }
 
-  // Follow the active word into the deadzone. Fires on every word change but
-  // no-ops when the word is already in view — cheap rect check, no scroll.
-  // Animates only while playing; paused jumps must be instant (iOS Safari lock).
+  // Follow the active word into the deadzone. Debounced so rapid scrubbing
+  // (many words per frame) settles into a single scroll instead of a jittery
+  // chain. 100 ms is short enough to feel responsive during normal playback
+  // (~200–300 ms per word) but swallows bursts from fast scrubs.
+  // Paused jumps must be instant (iOS Safari lock on rAF-driven tweens).
   function followActiveWord() {
-    const index = toValue(active_word)
-    if (index < 0) return
-    const el = wordEl(index)
-    if (!el) return
-    scrollWordIntoDeadzone(scrollParentOf(content.value), el, toValue(is_playing))
+    if (follow_timer !== null) clearTimeout(follow_timer)
+    follow_timer = setTimeout(() => {
+      follow_timer = null
+      const index = toValue(active_word)
+      if (index < 0) return
+      const el = wordEl(index)
+      if (!el) return
+      scrollWordIntoDeadzone(scrollParentOf(content.value), el, toValue(is_playing))
+    }, 100)
   }
 
   // Keep a just-committed word clear of the term sheet. Only on mobile — where the
