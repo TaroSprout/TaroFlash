@@ -86,7 +86,14 @@ function onCaptureClick(e: MouseEvent) {
   const handler = attrs.onClick as ((ev: MouseEvent) => void) | undefined
   if (!handler) return
 
-  tap(handler, { pressAudio: merged_sfx.value.click, captureMode: true })(e)
+  tap(handler, {
+    pressAudio: merged_sfx.value.click,
+    pressAudioOpts: {
+      debounce: merged_sfx.value.debounce,
+      blocking: merged_sfx.value.click_blocking
+    },
+    captureMode: true
+  })(e)
 }
 </script>
 

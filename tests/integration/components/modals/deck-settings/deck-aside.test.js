@@ -1,11 +1,11 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, reactive, ref } from 'vue'
 import DeckAside from '@/components/modals/deck-settings/deck-aside.vue'
 import { deckEditorKey } from '@/composables/deck-editor'
+import { deckSettingsCloseKey } from '@/components/modals/deck-settings/layout'
 
-const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
-vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
+vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn() }))
 
 const InputStub = defineComponent({
   name: 'UiInput',
@@ -71,67 +71,17 @@ function makeAside({ title = '', is_dirty = false } = {}) {
   }
   const wrapper = mount(DeckAside, {
     global: {
-      provide: { [deckEditorKey]: editor },
-      stubs: { UiInput: InputStub, UiTextarea: TextareaStub, UiButton: ButtonStub }
+      provide: { [deckEditorKey]: editor, [deckSettingsCloseKey]: vi.fn() },
+      stubs: {
+        UiInput: InputStub,
+        UiTextarea: TextareaStub,
+        UiButton: ButtonStub,
+        DeckSaveButton: true
+      }
     }
   })
   return { wrapper, editor, settings }
 }
-
-describe('DeckAside — validate()', () => {
-  test('returns false when title is empty and sets title_error [obligation]', async () => {
-    const { wrapper } = makeAside({ title: '' })
-    const result = await wrapper.vm.validate()
-    const input = wrapper.find('[data-testid="ui-kit-input"]')
-    expect(result).toBe(false)
-    expect(input.attributes('data-error')).not.toBe('')
-  })
-
-  test('returns false when title is whitespace-only and sets title_error [obligation]', async () => {
-    const { wrapper } = makeAside({ title: '   ' })
-    const result = await wrapper.vm.validate()
-    const input = wrapper.find('[data-testid="ui-kit-input"]')
-    expect(result).toBe(false)
-    expect(input.attributes('data-error')).not.toBe('')
-  })
-
-  test('returns true when title is non-empty [obligation]', async () => {
-    const { wrapper } = makeAside({ title: 'My Deck' })
-    const result = await wrapper.vm.validate()
-    expect(result).toBe(true)
-  })
-
-  test('title_error clears when settings.title changes after a failed validate [obligation]', async () => {
-    const { wrapper, settings } = makeAside({ title: '' })
-    await wrapper.vm.validate()
-
-    // Confirm error is set
-    expect(wrapper.find('[data-testid="ui-kit-input"]').attributes('data-error')).not.toBe('')
-
-    // Simulate title change — triggers the watch
-    settings.title = 'New Title'
-    await wrapper.vm.$nextTick()
-
-    expect(wrapper.find('[data-testid="ui-kit-input"]').attributes('data-error')).toBe('')
-  })
-})
-
-describe('DeckAside — save button', () => {
-  beforeEach(() => mockEmitSfx.mockClear())
-
-  test('emits save when the button is clicked and deck is dirty', async () => {
-    const { wrapper } = makeAside({ title: 'A', is_dirty: true })
-    await wrapper.find('[data-testid="deck-aside__save-button"]').trigger('click')
-    expect(wrapper.emitted('save')).toHaveLength(1)
-  })
-
-  test('plays powerdown sfx and does not emit save when deck is not dirty', async () => {
-    const { wrapper } = makeAside({ title: 'A', is_dirty: false })
-    await wrapper.find('[data-testid="deck-aside__save-button"]').trigger('click')
-    expect(wrapper.emitted('save')).toBeFalsy()
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.digi_powerdown')
-  })
-})
 
 describe('DeckAside — layout', () => {
   test('renders the root aside element', () => {

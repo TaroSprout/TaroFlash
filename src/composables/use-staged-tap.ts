@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { useMatchMedia } from '@/composables/use-media-query'
 import { BUTTON_TAP_DURATION, playButtonTap } from '@/utils/animations/button-tap'
 import { emitSfx } from '@/sfx/bus'
+import type { PlayOptions } from '@/sfx/player'
 import type { NamespacedAudioKey } from '@/sfx/config'
 
 type SfxKey = NamespacedAudioKey
@@ -31,6 +32,8 @@ export interface StagedTapOptions {
 export interface TapCallOptions {
   /** Plays immediately on coarse press, before animation. */
   pressAudio?: SfxKey
+  /** Options forwarded to emitSfx for pressAudio (debounce, blocking, etc.). */
+  pressAudioOpts?: PlayOptions
   /**
    * Set true when tap() is called from a @click.capture handler that coexists
    * with a natural @click (e.g. via v-bind="$attrs"). On fine pointers tap()
@@ -90,7 +93,7 @@ export function useStagedTap(options: StagedTapOptions = {}) {
 
       const phase = tapOpts.triggerAt ?? triggerAt
 
-      if (tapOpts.pressAudio) emitSfx(tapOpts.pressAudio)
+      if (tapOpts.pressAudio) emitSfx(tapOpts.pressAudio, tapOpts.pressAudioOpts)
       if (phase === 'press') action?.(e)
 
       playing.value = true

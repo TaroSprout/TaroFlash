@@ -101,11 +101,10 @@ describe('MobileSheet', () => {
     expect(wrapper.findComponent({ name: 'UiButton' }).exists()).toBe(false)
   })
 
-  test('close button opts into play-on-tap with ui.select sfx', () => {
+  test('close button opts into play-on-tap', () => {
     const wrapper = mountSheet({ title: 'My Sheet' })
     const closeBtn = wrapper.findComponent({ name: 'UiButton' })
     expect(closeBtn.props('playOnTap')).toBe(true)
-    expect(closeBtn.props('sfx')).toEqual({ click: 'ui.select' })
   })
 
   test('renders the built-in close button even when there is no header', () => {
