@@ -28,7 +28,7 @@ async function onSave() {
     size="lg"
     full-width
     :loading="is_saving"
-    :disabled="!is_dirty.value"
+    :disabled="!is_dirty"
     :sfx="{ click: 'ui.snappy_button_2' }"
     click-when-disabled
     @click="onSave"
