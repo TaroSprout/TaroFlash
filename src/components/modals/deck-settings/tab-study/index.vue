@@ -8,13 +8,17 @@ import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import CappedSpinboxRow from './capped-spinbox-row.vue'
 import { deckEditorKey } from '@/composables/deck-editor'
 import { DAILY_LIMIT_BOUNDS } from '@/utils/deck/defaults'
+import DeckBackButton from '../deck-back-button.vue'
 
 const { t } = useI18n()
 const { deck, config } = inject(deckEditorKey)!
+
+const emit = defineEmits<{ back: [] }>()
 </script>
 
 <template>
   <section-list data-testid="tab-study">
+    <deck-back-button @back="emit('back')" />
     <labeled-section :label="t('deck.settings-modal.study.section.cards-heading')">
       <ui-toggle v-model:checked="config.shuffle">
         <div class="flex items-center gap-2.5">

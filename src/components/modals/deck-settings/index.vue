@@ -5,7 +5,6 @@ import DeckAside from './deck-aside.vue'
 import { deckSettingsLayoutKey, type DeckSettingsLayout } from './layout'
 import { emitSfx } from '@/sfx/bus'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
-import { slideFadeRightEnter, slideFadeRightLeave } from '@/utils/animations/slide-fade-right'
 import { tabHeightEnter, tabHeightLeave } from '@/utils/animations/tab-height'
 import { useDeckEditor, deckEditorKey } from '@/composables/deck-editor'
 import {
@@ -16,7 +15,6 @@ import { useMatchMedia } from '@/composables/use-media-query'
 import { useAlert } from '@/composables/alert'
 import { useModalAfterEnter, useModalRequestClose } from '@/composables/modal'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import UiTagButton from '@/components/ui-kit/tag-button.vue'
 import Card from '@/components/card/index.vue'
 import TabSheet from '@/components/layout-kit/modal/tab-sheet.vue'
 
@@ -213,7 +211,12 @@ watch(active_tab, (tab) => {
       ]"
     >
       <transition :css="false" mode="out-in" @leave="onTabLeave" @enter="onTabEnter">
-        <component :is="tab_component" :key="displayed_tab" @navigate="active_tab = $event" />
+        <component
+          :is="tab_component"
+          :key="displayed_tab"
+          @navigate="active_tab = $event"
+          @back="onBack"
+        />
       </transition>
     </div>
 
@@ -227,25 +230,6 @@ watch(active_tab, (tab) => {
     />
 
     <template #overlay>
-      <transition
-        :css="false"
-        @enter="(el, done) => slideFadeRightEnter(el, done)"
-        @leave="(el, done) => slideFadeRightLeave(el, done)"
-      >
-        <ui-tag-button
-          v-if="layout_mode !== 'desktop' && active_tab !== null"
-          data-testid="deck-settings__back-button"
-          :aria-label="t('deck.settings-modal.back-button')"
-          data-theme="yellow-500"
-          data-theme-dark="yellow-700"
-          class="pointer-events-auto absolute! left-(--sheet-px) top-29 drop-shadow-xs"
-          @click="onBack"
-        >
-          <ui-icon src="arrow-back" class="w-4 h-4" />
-          <span>{{ t('deck.settings-modal.back-label') }}</span>
-        </ui-tag-button>
-      </transition>
-
       <div
         v-if="layout_mode !== 'sheet'"
         data-testid="deck-settings__floating-preview"
