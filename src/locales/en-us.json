@@ -90,8 +90,6 @@
   "settings.unsaved-alert.message": "You have unsaved changes. Discard them?",
   "settings.unsaved-alert.confirm": "Discard",
   "settings.unsaved-alert.cancel": "Keep editing",
-  "settings.aside.name-placeholder": "Member Name",
-  "settings.aside.bio-placeholder": "Bio",
   "settings.tab.profile": "Profile",
   "settings.tab.subscription": "Subscription",
   "settings.tab.app": "App",
