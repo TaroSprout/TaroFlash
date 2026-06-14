@@ -5,8 +5,8 @@ import { useToast } from '@/composables/toast'
 import { useLessonQuery, useLessonAudioUrlQuery } from '@/api/lessons'
 import { useMemberCardIndexQuery } from '@/api/cards'
 import { useMemberDecksQuery } from '@/api/decks'
-import { useAudioPlayer } from './use-audio-player'
-import { useTranscriptSync } from './use-transcript-sync'
+import { useAudioPlayer } from './audio-player'
+import { useTranscriptSync } from './transcript-sync'
 import { groupWordsBySentence } from '@/utils/transcript'
 import {
   buildCardTermMap,

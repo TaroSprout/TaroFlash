@@ -4,7 +4,7 @@ import CardCount from './card-count.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiTag from '@/components/ui-kit/tag.vue'
 import { useI18n } from 'vue-i18n'
-import { useBulkActions } from '@/composables/card-editor/use-bulk-actions'
+import { useBulkActions } from '@/composables/card/bulk-actions'
 
 const { t } = useI18n()
 

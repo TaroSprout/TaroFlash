@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useAttrs } from 'vue'
 import Card from '@/components/card/index.vue'
-import { useStagedTap } from '@/composables/use-staged-tap'
+import { useStagedTap } from '@/composables/ui/staged-tap'
 import type { NamespacedAudioKey } from '@/sfx/config'
 
 type CardSize = InstanceType<typeof Card>['$props']['size']

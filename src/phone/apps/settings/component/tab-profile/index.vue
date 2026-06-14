@@ -7,8 +7,8 @@ import UiPatternPicker from '@/components/ui-kit/pattern-picker.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import MemberCard from '@/components/member/member-card.vue'
-import { memberEditorKey } from '@/composables/member-editor'
-import { useMatchMedia } from '@/composables/use-media-query'
+import { memberEditorKey } from '@/composables/member/editor'
+import { useMatchMedia } from '@/composables/ui/media-query'
 import { SUPPORTED_THEMES, SUPPORTED_PATTERNS } from '@/utils/cover'
 
 const { t } = useI18n()

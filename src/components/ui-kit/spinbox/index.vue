@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import SpinboxButton from './button.vue'
-import { useNumericInput } from '@/composables/use-numeric-input'
+import { useNumericInput } from '@/composables/ui/numeric-input'
 
 type SpinboxProps = {
   min?: number

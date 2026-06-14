@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ReviewInboxItem from './review-inbox-item.vue'
-import { useStudyModal } from '@/composables/modals/use-study-modal'
+import { useStudyModal } from '@/composables/study-session/study-modal'
 
 defineProps<{
   due_decks: Deck[]

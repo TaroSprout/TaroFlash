@@ -7,7 +7,7 @@ import UiDropdownButton, {
 import { emitSfx } from '@/sfx/bus'
 import { computed, inject, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
+import { cardEditorKey } from '@/composables/card/list-controller'
 
 const { t } = useI18n()
 

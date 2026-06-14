@@ -4,7 +4,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import { type PhoneApp, type TransitionPreset } from '@/phone/system/types'
 import { type AppSession } from '@/phone/system/runtime'
 import { computed } from 'vue'
-import { useMatchMedia } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/ui/media-query'
 
 const { apps, transition, active_session } = defineProps<{
   apps: PhoneApp[]

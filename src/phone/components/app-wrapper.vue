@@ -2,8 +2,8 @@
 import { ref, useAttrs } from 'vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import UiBurst, { type BurstSize } from '@/components/ui-kit/burst.vue'
-import { useMatchMedia } from '@/composables/use-media-query'
-import { useStagedTap } from '@/composables/use-staged-tap'
+import { useMatchMedia } from '@/composables/ui/media-query'
+import { useStagedTap } from '@/composables/ui/staged-tap'
 
 type AppWrapperProps = {
   title: string

@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { inject } from 'vue'
-import { memberEditorKey } from '@/composables/member-editor'
+import { memberEditorKey } from '@/composables/member/editor'
 
 const { t, locale } = useI18n()
 const editor = inject(memberEditorKey)!

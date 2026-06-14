@@ -6,12 +6,12 @@ import DeckThumbnail from '@/components/deck/deck-thumbnail.vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
-import { useMatchMedia } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/ui/media-query'
 import ReviewInbox from './review-inbox.vue'
 import AudioReaderSection from './audio-reader-section.vue'
-import { useDeckCreateModal } from '@/composables/modals/use-deck-create-modal'
-import { useDeckActions } from '@/composables/deck/use-deck-actions'
-import { useCan } from '@/composables/use-can'
+import { useDeckCreateModal } from '@/composables/deck/create-modal'
+import { useDeckActions } from '@/composables/deck/actions'
+import { useCan } from '@/composables/can'
 
 const { t } = useI18n()
 const toast = useToast()

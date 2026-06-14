@@ -10,8 +10,8 @@ import { useDeckQuery } from '@/api/decks'
 import {
   cardEditorKey,
   useCardListController
-} from '@/composables/card-editor/card-list-controller'
-import { deckViewShellKey, useDeckViewShell } from '@/composables/card-editor/deck-view-shell'
+} from '@/composables/card/list-controller'
+import { deckViewShellKey, useDeckViewShell } from '@/composables/deck/view-shell'
 
 const { id: deck_id } = defineProps<{
   id: string

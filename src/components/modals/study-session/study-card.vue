@@ -3,9 +3,9 @@ import Card from '@/components/card/index.vue'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { type Grade, Rating, type RecordLog } from 'ts-fsrs'
 import { emitSfx } from '@/sfx/bus'
-import { useGestures } from '@/composables/use-gestures'
-import { useShortcuts } from '@/composables/use-shortcuts'
-import { useRatingFormat } from '@/composables/use-fsrs'
+import { useGestures } from '@/composables/ui/gestures'
+import { useShortcuts } from '@/composables/shortcuts'
+import { useRatingFormat } from '@/composables/fsrs'
 import { useDeckContext } from './deck-context'
 
 defineExpose({ rate })

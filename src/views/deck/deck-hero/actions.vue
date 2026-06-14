@@ -5,10 +5,10 @@ import UiDropdownButton, {
 } from '@/components/ui-kit/dropdown-button/index.vue'
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useStudyModal } from '@/composables/modals/use-study-modal'
-import { useDeckSettingsModal } from '@/composables/modals/use-deck-settings-modal'
-import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
-import { deckViewShellKey } from '@/composables/card-editor/deck-view-shell'
+import { useStudyModal } from '@/composables/study-session/study-modal'
+import { useDeckSettingsModal } from '@/composables/deck/settings-modal'
+import { cardEditorKey } from '@/composables/card/list-controller'
+import { deckViewShellKey } from '@/composables/deck/view-shell'
 
 const { deck } = defineProps<{ deck: Deck }>()
 

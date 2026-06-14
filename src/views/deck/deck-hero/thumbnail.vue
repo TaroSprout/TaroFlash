@@ -2,7 +2,7 @@
 import DeckThumbnail from '@/components/deck/deck-thumbnail.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useI18n } from 'vue-i18n'
-import { useDeckSettingsModal } from '@/composables/modals/use-deck-settings-modal'
+import { useDeckSettingsModal } from '@/composables/deck/settings-modal'
 
 const { deck } = defineProps<{ deck: Deck }>()
 

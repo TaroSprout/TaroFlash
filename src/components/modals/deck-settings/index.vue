@@ -6,12 +6,12 @@ import { deckSettingsLayoutKey, deckSettingsCloseKey, type DeckSettingsLayout } 
 import { emitSfx } from '@/sfx/bus'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import { tabSlideEnter, tabSlideLeave } from '@/utils/animations/tab-slide'
-import { useDeckEditor, deckEditorKey } from '@/composables/deck-editor'
+import { useDeckEditor, deckEditorKey } from '@/composables/deck/editor'
 import {
   useDeckDangerActions,
   deckDangerActionsKey
-} from '@/composables/deck/use-deck-danger-actions'
-import { useMatchMedia } from '@/composables/use-media-query'
+} from '@/composables/deck/danger-actions'
+import { useMatchMedia } from '@/composables/ui/media-query'
 import { useAlert } from '@/composables/alert'
 import { useModalAfterEnter, useModalRequestClose } from '@/composables/modal'
 import UiIcon from '@/components/ui-kit/icon.vue'

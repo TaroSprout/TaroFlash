@@ -2,7 +2,7 @@
 import { computed, useAttrs, useSlots } from 'vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
-import { useStagedTap } from '@/composables/use-staged-tap'
+import { useStagedTap } from '@/composables/ui/staged-tap'
 import type { SfxOptions } from '@/sfx/directive'
 
 defineOptions({ inheritAttrs: false })

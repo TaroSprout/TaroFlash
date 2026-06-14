@@ -5,7 +5,7 @@ import UiSlider from '@/components/ui-kit/slider.vue'
 import UiToggle from '@/components/ui-kit/toggle.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
-import { memberEditorKey } from '@/composables/member-editor'
+import { memberEditorKey } from '@/composables/member/editor'
 
 const { t } = useI18n()
 const editor = inject(memberEditorKey)!

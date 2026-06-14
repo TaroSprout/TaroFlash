@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { type ButtonProps } from '../button.vue'
-import { useStagedTap } from '@/composables/use-staged-tap'
+import { useStagedTap } from '@/composables/ui/staged-tap'
 import { emitSfx } from '@/sfx/bus'
 import type { DropdownOption } from './types'
 

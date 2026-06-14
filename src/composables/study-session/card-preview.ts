@@ -1,5 +1,5 @@
 import { computed, onUnmounted, ref, watch, type ComputedRef } from 'vue'
-import type { StudyCard } from './study-session-core'
+import type { StudyCard } from './session-core'
 
 /**
  * Preview-card animation state for flashcard mode. Owns the progress/opacity

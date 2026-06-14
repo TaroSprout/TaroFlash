@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useMemberDecksQuery } from '@/api/decks'
-import { useLastDeck } from '@/composables/use-last-deck'
+import { useLastDeck } from '@/composables/last-deck'
 import UiDropdownButton, {
   type DropdownOption
 } from '@/components/ui-kit/dropdown-button/index.vue'

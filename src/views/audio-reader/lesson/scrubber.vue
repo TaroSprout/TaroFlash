@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, useTemplateRef } from 'vue'
-import type { AudioPlayer } from '@/composables/audio-reader/use-audio-player'
+import type { AudioPlayer } from '@/composables/audio-reader/audio-player'
 
 type ScrubberProps = {
   player: AudioPlayer

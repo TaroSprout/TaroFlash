@@ -2,7 +2,7 @@ import { useI18n } from 'vue-i18n'
 import { useMemberDeckCountQuery, useUpsertDeckMutation } from '@/api/decks'
 import { useAlert } from '@/composables/alert'
 import { useModal } from '@/composables/modal'
-import { useCan } from '@/composables/use-can'
+import { useCan } from '@/composables/can'
 import Checkout from '@/components/modals/checkout.vue'
 
 export function useDeckActions() {

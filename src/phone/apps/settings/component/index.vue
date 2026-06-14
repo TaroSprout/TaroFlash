@@ -11,13 +11,13 @@ import MemberCard from '@/components/member/member-card.vue'
 import { emitSfx } from '@/sfx/bus'
 import { slideFadeRightEnter, slideFadeRightLeave } from '@/utils/animations/slide-fade-right'
 import { tabHeightEnter, tabHeightLeave } from '@/utils/animations/tab-height'
-import { useMemberEditor, memberEditorKey } from '@/composables/member-editor'
+import { useMemberEditor, memberEditorKey } from '@/composables/member/editor'
 import {
   useMemberDangerActions,
   memberDangerActionsKey
-} from '@/composables/member/use-member-danger-actions'
-import { useSessionRef } from '@/composables/use-session-ref'
-import { useMatchMedia } from '@/composables/use-media-query'
+} from '@/composables/member/danger-actions'
+import { useSessionRef } from '@/composables/storage/session-ref'
+import { useMatchMedia } from '@/composables/ui/media-query'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTagButton from '@/components/ui-kit/tag-button.vue'

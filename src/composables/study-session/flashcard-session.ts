@@ -1,8 +1,8 @@
 import { ref, computed } from 'vue'
 import { type Grade } from 'ts-fsrs'
-import { useStudySessionCore } from './study-session-core'
+import { useStudySessionCore } from './session-core'
 
-export type { StudyCard } from './study-session-core'
+export type { StudyCard } from './session-core'
 
 /**
  * Flashcard-mode composable. Builds on top of useStudySessionCore by adding

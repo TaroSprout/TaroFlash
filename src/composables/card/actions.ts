@@ -5,10 +5,10 @@ import { emitSfx } from '@/sfx/bus'
 import MoveCardsModal from '@/components/modals/move-cards.vue'
 import { resolveDeleteArgs, resolveMoveArgs } from '@/utils/card-editor/selection-payload'
 import type { useDeckQuery } from '@/api/decks'
-import type { CardSelection } from './card-selection'
-import type { VirtualCardList } from './virtual-card-list'
-import type { CardMutations } from './card-mutations'
-import type { DeckViewShell } from './deck-view-shell'
+import type { CardSelection } from './selection'
+import type { VirtualCardList } from './virtual-list'
+import type { CardMutations } from './mutations'
+import type { DeckViewShell } from '../deck/view-shell'
 
 export type CardActions = ReturnType<typeof useCardActions>
 

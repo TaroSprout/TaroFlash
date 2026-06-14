@@ -9,9 +9,9 @@ import {
   type ShallowRef
 } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { cardEditorKey } from './card-list-controller'
-import { useCardImageGate } from './use-card-image-gate'
-import { useImageDropzone } from './use-image-dropzone'
+import { cardEditorKey } from './list-controller'
+import { useCardImageGate } from './image-gate'
+import { useImageDropzone } from './image-dropzone'
 import { useToast } from '@/composables/toast'
 import { emitSfx } from '@/sfx/bus'
 import { collapseFaceImage, revealFaceImage } from '@/utils/animations/face-image'

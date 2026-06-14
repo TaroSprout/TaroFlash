@@ -6,11 +6,11 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import FaceImageDropzone from './face-image-dropzone.vue'
 import UiButton from '@/components/ui-kit/button.vue'
-import { cardEditorKey } from '@/composables/card-editor/card-list-controller'
+import { cardEditorKey } from '@/composables/card/list-controller'
 import {
   CARD_IMAGE_MAX_BYTES,
   useFaceImageUpload
-} from '@/composables/card-editor/use-face-image-upload'
+} from '@/composables/card/face-image-upload'
 import { cardImageUrl } from '@/api/media'
 import { CARD_ATTRIBUTES_DEFAULTS } from '@/utils/deck/defaults'
 import { emitSfx } from '@/sfx/bus'

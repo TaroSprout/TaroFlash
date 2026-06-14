@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, provide } from 'vue'
 import { emitSfx } from '@/sfx/bus'
-import { useShortcuts } from '@/composables/use-shortcuts'
+import { useShortcuts } from '@/composables/shortcuts'
 import { installApps } from '@/phone/system/install-apps'
 import {
   type PhoneApp,
@@ -14,7 +14,7 @@ import { useModal } from '@/composables/modal'
 import phoneSm from '@/phone/components/phone-sm.vue'
 import phoneBase from '@/phone/components/phone-base.vue'
 import { useI18n } from 'vue-i18n'
-import { useMatchMedia } from '@/composables/use-media-query'
+import { useMatchMedia } from '@/composables/ui/media-query'
 import {
   slideDownBlurIn,
   slideUpBlurOut,

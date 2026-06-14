@@ -8,7 +8,7 @@ import {
   readerSelectionKey,
   useReaderHighlights,
   type WordRange
-} from '@/composables/audio-reader/use-reader-highlights'
+} from '@/composables/audio-reader/reader-highlights'
 import TranscriptSegment from './segment.vue'
 import SelectionPreview from './selection-preview.vue'
 

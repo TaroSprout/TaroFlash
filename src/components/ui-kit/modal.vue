@@ -6,9 +6,9 @@ import {
   resolveModalAfterEnter,
   type ModalMode
 } from '@/composables/modal'
-import { useMatchMedia, type BreakpointKey } from '@/composables/use-media-query'
-import { useScrollLock } from '@/composables/use-scroll-lock'
-import { useShortcuts } from '@/composables/use-shortcuts'
+import { useMatchMedia, type BreakpointKey } from '@/composables/ui/media-query'
+import { useScrollLock } from '@/composables/ui/scroll-lock'
+import { useShortcuts } from '@/composables/shortcuts'
 import { MODAL_MODE_CONFIG } from './modal-mode-config'
 import ModalSlot from './modal-slot.vue'
 

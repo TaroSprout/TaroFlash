@@ -1,7 +1,7 @@
 import { computed, reactive, ref, type InjectionKey } from 'vue'
 import { useDeleteDeckMutation } from '@/api/decks'
 import { useResetDeckReviewsMutation } from '@/api/reviews'
-import { useDeckActions } from '@/composables/deck/use-deck-actions'
+import { useDeckActions } from '@/composables/deck/actions'
 import { DECK_SETTINGS_DEFAULTS, DECK_CONFIG_DEFAULTS } from '@/utils/deck/defaults'
 import { buildDeckPayload, hasDeckChanges } from '@/utils/deck/payload'
 import { emitSfx } from '@/sfx/bus'

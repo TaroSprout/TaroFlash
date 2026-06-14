@@ -7,10 +7,10 @@ import UiDropdownButton, {
   type DropdownOption
 } from '@/components/ui-kit/dropdown-button/index.vue'
 import Scrubber from '@/views/audio-reader/lesson/scrubber.vue'
-import { useLocalRef } from '@/composables/use-local-ref'
-import { useStagedTap } from '@/composables/use-staged-tap'
+import { useLocalRef } from '@/composables/storage/local-ref'
+import { useStagedTap } from '@/composables/ui/staged-tap'
 import { emitSfx } from '@/sfx/bus'
-import type { AudioPlayer } from '@/composables/audio-reader/use-audio-player'
+import type { AudioPlayer } from '@/composables/audio-reader/audio-player'
 
 type ToolbarChapter = { id: number; title: string }
 
