@@ -27,15 +27,9 @@ importers:
       '@tanstack/vue-virtual':
         specifier: ^3.13.24
         version: 3.13.24(vue@3.5.32(typescript@5.8.3))
-      '@types/howler':
-        specifier: ^2.2.12
-        version: 2.2.12
       gsap:
         specifier: ^3.15.0
         version: 3.15.0
-      howler:
-        specifier: ^2.2.4
-        version: 2.2.4
       oxc-minify:
         specifier: ^0.125.0
         version: 0.125.0
@@ -1481,9 +1475,6 @@ packages:
   '@types/hast@3.0.4':
     resolution: {integrity: sha512-WPs+bbQw5aCj+x6laNGWLH3wviHtoCv/P3+otBhbOhJgG8qtpdAMlTCxLtsTWA7LH1Oh/bFCHsBn0TPS5m30EQ==}
 
-  '@types/howler@2.2.12':
-    resolution: {integrity: sha512-hy769UICzOSdK0Kn1FBk4gN+lswcj1EKRkmiDtMkUGvFfYJzgaDXmVXkSShS2m89ERAatGIPnTUlp2HhfkVo5g==}
-
   '@types/jsdom@21.1.7':
     resolution: {integrity: sha512-yOriVnggzrnQ3a9OKOCxaVuSug3w3/SbOj5i7VwXWZEyUNl3bLF9V3MfxGbZKuwqJOQyRfqXyROBB1CoZLFWzA==}
 
@@ -2536,9 +2527,6 @@ packages:
 
   hookable@5.5.3:
     resolution: {integrity: sha512-Yc+BQe8SvoXH1643Qez1zqLRmbA5rCL+sSmk6TVos0LWVfNIB7PGncdlId77WzLGSIB5KaWgTaNTs2lNVEI6VQ==}
-
-  howler@2.2.4:
-    resolution: {integrity: sha512-iARIBPgcQrwtEr+tALF+rapJ8qSc+Set2GJQl7xT1MQzWaVkFebdJhR3alVlSiUf5U7nAANKuj3aWpwerocD5w==}
 
   html-encoding-sniffer@4.0.0:
     resolution: {integrity: sha512-Y22oTqIU4uuPgEemfz7NDJz6OeKf12Lsu+QC+s3BVpda64lTiMYCyGwg5ki4vFxkMwQdeZDl2adZoqUgdFuTgQ==}
@@ -4729,8 +4717,6 @@ snapshots:
     dependencies:
       '@types/unist': 3.0.3
 
-  '@types/howler@2.2.12': {}
-
   '@types/jsdom@21.1.7':
     dependencies:
       '@types/node': 22.19.17
@@ -5799,8 +5785,6 @@ snapshots:
       set-cookie-parser: 3.1.0
 
   hookable@5.5.3: {}
-
-  howler@2.2.4: {}
 
   html-encoding-sniffer@4.0.0:
     dependencies:
