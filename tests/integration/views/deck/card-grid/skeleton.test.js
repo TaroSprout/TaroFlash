@@ -1,8 +1,7 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import { defineComponent, h, ref } from 'vue'
+import { defineComponent, h } from 'vue'
 import CardGridSkeleton from '@/views/deck/card-grid/skeleton.vue'
-import { deckViewShellKey } from '@/composables/deck/view-shell'
 
 // Stub GSAP so card transition hooks don't error
 vi.mock('gsap', () => ({ gsap: { fromTo: vi.fn(), to: vi.fn() } }))
@@ -38,22 +37,10 @@ const CardStub = defineComponent({
   }
 })
 
-function makeShell(grid_size_val = 'md') {
-  return { grid_size: ref(grid_size_val) }
-}
-
-function mountSkeleton(grid_size_val = 'md') {
+// skeleton.vue accepts size/shimmer/count as props directly (no injection)
+function mountSkeleton(props = {}) {
   return shallowMount(CardGridSkeleton, {
-    global: {
-      provide: { [deckViewShellKey]: makeShell(grid_size_val) },
-      stubs: { Card: CardStub },
-      directives: { sfx: {} }
-    }
-  })
-}
-
-function mountSkeletonNoProvider() {
-  return shallowMount(CardGridSkeleton, {
+    props,
     global: {
       stubs: { Card: CardStub },
       directives: { sfx: {} }
@@ -64,16 +51,46 @@ function mountSkeletonNoProvider() {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('CardGridSkeleton (card-grid/skeleton.vue)', () => {
-  // ── item count ─────────────────────────────────────────────────────────────
+  // ── default props ──────────────────────────────────────────────────────────
 
-  test('renders exactly 40 skeleton items [obligation]', () => {
+  test('renders 40 skeleton items by default (count=40) [obligation]', () => {
     const wrapper = mountSkeleton()
     expect(wrapper.findAll('[data-testid="card-grid-skeleton__item"]')).toHaveLength(40)
   })
 
-  test('renders exactly 40 Card stubs (one per item) [obligation]', () => {
+  test('renders count=40 Card stubs by default (one per item) [obligation]', () => {
     const wrapper = mountSkeleton()
     expect(wrapper.findAll('[data-testid="card-stub"]')).toHaveLength(40)
+  })
+
+  // ── count prop ─────────────────────────────────────────────────────────────
+
+  test('renders exactly count items when count prop is provided [obligation]', () => {
+    const wrapper = mountSkeleton({ count: 24 })
+    expect(wrapper.findAll('[data-testid="card-grid-skeleton__item"]')).toHaveLength(24)
+  })
+
+  test('renders 1 item when count=1', () => {
+    const wrapper = mountSkeleton({ count: 1 })
+    expect(wrapper.findAll('[data-testid="card-grid-skeleton__item"]')).toHaveLength(1)
+  })
+
+  // ── shimmer prop ───────────────────────────────────────────────────────────
+
+  test('all cards have shimmer=true when shimmer prop is omitted (default true) [obligation]', () => {
+    const wrapper = mountSkeleton()
+    const cards = wrapper.findAllComponents(CardStub)
+    for (const card of cards) {
+      expect(card.props('shimmer')).toBe(true)
+    }
+  })
+
+  test('all cards have shimmer=false when shimmer=false is passed [obligation]', () => {
+    const wrapper = mountSkeleton({ shimmer: false })
+    const cards = wrapper.findAllComponents(CardStub)
+    for (const card of cards) {
+      expect(card.props('shimmer')).toBe(false)
+    }
   })
 
   // ── DEFAULT_COVER (brown-300 / stone-900 / diagonal-stripes) [obligation] ─
@@ -118,15 +135,6 @@ describe('CardGridSkeleton (card-grid/skeleton.vue)', () => {
     }
   })
 
-  test('all cards have shimmer=true', () => {
-    const wrapper = mountSkeleton()
-    // Assert via component props (reliable regardless of attribute coercion)
-    const cards = wrapper.findAllComponents(CardStub)
-    for (const card of cards) {
-      expect(card.props('shimmer')).toBe(true)
-    }
-  })
-
   // ── root element ───────────────────────────────────────────────────────────
 
   test('renders root with data-testid="card-grid-skeleton"', () => {
@@ -134,54 +142,54 @@ describe('CardGridSkeleton (card-grid/skeleton.vue)', () => {
     expect(wrapper.find('[data-testid="card-grid-skeleton"]').exists()).toBe(true)
   })
 
-  // ── no cover_config prop accepted ─────────────────────────────────────────
-  // The skeleton accepts no cover_config prop — it always uses DEFAULT_COVER.
+  // ── size prop drives grid_style columns [obligation] ──────────────────────
+  // XL_CARD_WIDTH=314, CARD_SCALE: base=0.56, md=0.75, xl=1
 
-  test('component accepts no cover_config prop (DEFAULT_COVER is always used) [obligation]', () => {
-    // Verify by mounting without the prop and asserting DEFAULT_COVER is applied
-    const wrapper = mountSkeleton()
-    const first = wrapper.find('[data-testid="card-stub"]')
-    expect(first.attributes('data-cover-theme')).toBe(DEFAULT_COVER_THEME)
-    expect(first.attributes('data-cover-theme-dark')).toBe(DEFAULT_COVER_THEME_DARK)
-    expect(first.attributes('data-cover-pattern')).toBe(DEFAULT_COVER_PATTERN)
-  })
-
-  // ── injection-safe fallback ────────────────────────────────────────────────
-
-  test('renders without a provider (injection-safe fallback to "base") [obligation]', () => {
-    // Designed for Suspense fallback: must not throw when no deckViewShellKey provider
-    const wrapper = mountSkeletonNoProvider()
-    expect(wrapper.find('[data-testid="card-grid-skeleton"]').exists()).toBe(true)
-    expect(wrapper.findAll('[data-testid="card-grid-skeleton__item"]')).toHaveLength(40)
-  })
-
-  test('falls back to "base" grid_size when no provider present [obligation]', () => {
-    const wrapper = mountSkeletonNoProvider()
-    // base → XL_CARD_WIDTH * 0.6 = 314 * 0.6 = 188.4px
-    const grid = wrapper.find('.grid')
-    expect(grid.attributes('style')).toContain('grid-template-columns: repeat(auto-fill, 188.4px)')
-  })
-
-  // ── grid_style tracks grid_size ────────────────────────────────────────────
-
-  test('grid style uses 188.4px columns for grid_size="base" [obligation]', () => {
-    const wrapper = mountSkeleton('base')
+  test('grid style uses 175.84px columns for size="base" [obligation]', () => {
+    const wrapper = mountSkeleton({ size: 'base' })
     expect(wrapper.find('.grid').attributes('style')).toContain(
-      'grid-template-columns: repeat(auto-fill, 188.4px)'
+      'grid-template-columns: repeat(auto-fill, 175.84px)'
     )
   })
 
-  test('grid style uses 235.5px columns for grid_size="md" [obligation]', () => {
-    const wrapper = mountSkeleton('md')
+  test('grid style uses 235.5px columns for size="md" (default) [obligation]', () => {
+    const wrapper = mountSkeleton()
     expect(wrapper.find('.grid').attributes('style')).toContain(
       'grid-template-columns: repeat(auto-fill, 235.5px)'
     )
   })
 
-  test('grid style uses 314px columns for grid_size="xl" [obligation]', () => {
-    const wrapper = mountSkeleton('xl')
+  test('grid style uses 314px columns for size="xl" [obligation]', () => {
+    const wrapper = mountSkeleton({ size: 'xl' })
     expect(wrapper.find('.grid').attributes('style')).toContain(
       'grid-template-columns: repeat(auto-fill, 314px)'
     )
+  })
+
+  // ── size prop drives gap scaling [obligation] ─────────────────────────────
+  // gap = 16 * card_scale: base=8.96px, md=12px, xl=16px
+
+  test('gap is 8.96px for size="base" (16 * 0.56) [obligation]', () => {
+    const wrapper = mountSkeleton({ size: 'base' })
+    expect(wrapper.find('.grid').attributes('style')).toContain('gap: 8.96px')
+  })
+
+  test('gap is 12px for size="md" (16 * 0.75) [obligation]', () => {
+    const wrapper = mountSkeleton()
+    expect(wrapper.find('.grid').attributes('style')).toContain('gap: 12px')
+  })
+
+  test('gap is 16px for size="xl" (16 * 1) [obligation]', () => {
+    const wrapper = mountSkeleton({ size: 'xl' })
+    expect(wrapper.find('.grid').attributes('style')).toContain('gap: 16px')
+  })
+
+  // ── no deckViewShellKey injection needed ──────────────────────────────────
+
+  test('renders without any provider context (no inject dependency) [obligation]', () => {
+    // skeleton.vue reads size from its own prop, not from deckViewShellKey inject
+    const wrapper = mountSkeleton()
+    expect(wrapper.find('[data-testid="card-grid-skeleton"]').exists()).toBe(true)
+    expect(wrapper.findAll('[data-testid="card-grid-skeleton__item"]')).toHaveLength(40)
   })
 })

@@ -50,9 +50,26 @@ const CardGridSkeletonStub = defineComponent({
   setup: () => () => h('div', { 'data-testid': 'card-grid-skeleton-stub' })
 })
 
+const CardGridEmptyStub = defineComponent({
+  name: 'CardGridEmpty',
+  setup: () => () => h('div', { 'data-testid': 'card-grid-empty-stub' })
+})
+
+const ModeToolbarSkeletonStub = defineComponent({
+  name: 'ModeToolbarSkeleton',
+  setup: () => () => h('div', { 'data-testid': 'mode-toolbar-skeleton-stub' })
+})
+
 const DeckSkeletonStub = defineComponent({
   name: 'DeckSkeleton',
   setup: () => () => h('div', { 'data-testid': 'deck-skeleton-stub' })
+})
+
+const DeckHeroStubWithProps = defineComponent({
+  name: 'DeckHero',
+  props: ['deck', 'imageUrl', 'hideActions'],
+  setup: (props) => () =>
+    h('div', { 'data-testid': 'deck-hero-stub', 'data-hide-actions': String(props.hideActions) })
 })
 
 function makeShell(mode = 'view') {
@@ -70,7 +87,12 @@ function makeDeckQuery(deck) {
   return { data: ref(deck) }
 }
 
-function mount({ deck = { id: 1, name: 'Test' }, mode = 'view', editorOpts = {} } = {}) {
+function mount({
+  deck = { id: 1, name: 'Test' },
+  mode = 'view',
+  editorOpts = {},
+  withHideActionsCheck = false
+} = {}) {
   useDeckQueryMock.mockReturnValue(makeDeckQuery(deck))
   useDeckViewShellMock.mockReturnValue(makeShell(mode))
   useCardListControllerMock.mockReturnValue(makeEditor(editorOpts))
@@ -78,12 +100,14 @@ function mount({ deck = { id: 1, name: 'Test' }, mode = 'view', editorOpts = {} 
     props: { id: '1' },
     global: {
       stubs: {
-        DeckHero: DeckHeroStub,
+        DeckHero: withHideActionsCheck ? DeckHeroStubWithProps : DeckHeroStub,
         DeckSkeleton: DeckSkeletonStub,
         ModeToolbar: ModeToolbarStub,
+        ModeToolbarSkeleton: ModeToolbarSkeletonStub,
         ModeStack: ModeStackStub,
         ScrollBar: ScrollBarStub,
-        CardGridSkeleton: CardGridSkeletonStub
+        CardGridSkeleton: CardGridSkeletonStub,
+        CardGridEmpty: CardGridEmptyStub
       }
     }
   })
@@ -203,5 +227,83 @@ describe('DeckView (views/deck/index.vue)', () => {
       expect(bar.exists()).toBe(true)
       expect(bar.attributes('data-target')).toBe('html')
     }
+  })
+
+  // ── toolbar-skeleton swap [obligation] ────────────────────────────────────
+
+  test('shows mode-toolbar-skeleton when view_state is "empty" [obligation]', () => {
+    const wrapper = mount({ editorOpts: { cards: [], isLoading: false } })
+    expect(wrapper.find('[data-testid="mode-toolbar-skeleton-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="mode-toolbar-stub"]').exists()).toBe(false)
+  })
+
+  test('shows mode-toolbar (not skeleton) when view_state is "loading" [obligation]', () => {
+    const wrapper = mount({ editorOpts: { cards: [], isLoading: true } })
+    expect(wrapper.find('[data-testid="mode-toolbar-skeleton-stub"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="mode-toolbar-stub"]').exists()).toBe(true)
+  })
+
+  test('shows mode-toolbar (not skeleton) when view_state is "ready" [obligation]', () => {
+    const wrapper = mount({ editorOpts: { cards: [{ id: 1 }], isLoading: false } })
+    expect(wrapper.find('[data-testid="mode-toolbar-skeleton-stub"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="mode-toolbar-stub"]').exists()).toBe(true)
+  })
+
+  // ── scroll-bar only in ready state [obligation] ────────────────────────────
+
+  test('hides scroll-bar when view_state is "empty" [obligation]', () => {
+    const wrapper = mount({ editorOpts: { cards: [], isLoading: false } })
+    expect(wrapper.find('[data-testid="scroll-bar-stub"]').exists()).toBe(false)
+  })
+
+  test('hides scroll-bar when view_state is "loading" [obligation]', () => {
+    const wrapper = mount({ editorOpts: { cards: [], isLoading: true } })
+    expect(wrapper.find('[data-testid="scroll-bar-stub"]').exists()).toBe(false)
+  })
+
+  // ── deck-hero hide-actions driven by view_state [obligation] ──────────────
+
+  test('passes hideActions=true to deck-hero when view_state is "empty" [obligation]', () => {
+    const wrapper = mount({
+      editorOpts: { cards: [], isLoading: false },
+      withHideActionsCheck: true
+    })
+    const hero = wrapper.find('[data-testid="deck-hero-stub"]')
+    expect(hero.attributes('data-hide-actions')).toBe('true')
+  })
+
+  test('passes hideActions=false to deck-hero when view_state is "ready" [obligation]', () => {
+    const wrapper = mount({
+      editorOpts: { cards: [{ id: 1 }], isLoading: false },
+      withHideActionsCheck: true
+    })
+    const hero = wrapper.find('[data-testid="deck-hero-stub"]')
+    expect(hero.attributes('data-hide-actions')).toBe('false')
+  })
+
+  test('passes hideActions=false to deck-hero when view_state is "loading" [obligation]', () => {
+    const wrapper = mount({
+      editorOpts: { cards: [], isLoading: true },
+      withHideActionsCheck: true
+    })
+    const hero = wrapper.find('[data-testid="deck-hero-stub"]')
+    expect(hero.attributes('data-hide-actions')).toBe('false')
+  })
+
+  // ── card-grid-empty renders when view_state is "empty" [obligation] ─────────
+  // The source adds data-testid="deck-view__empty" directly on the <card-grid-empty>
+  // element; shallowMount passes it through as an attribute on the auto-stub.
+
+  test('renders deck-view__empty (card-grid-empty) when view_state is "empty" [obligation]', () => {
+    const wrapper = mount({ editorOpts: { cards: [], isLoading: false } })
+    expect(wrapper.find('[data-testid="deck-view__empty"]').exists()).toBe(true)
+  })
+
+  test('omits deck-view__empty when view_state is not "empty" [obligation]', () => {
+    const ready = mount({ editorOpts: { cards: [{ id: 1 }] } })
+    expect(ready.find('[data-testid="deck-view__empty"]').exists()).toBe(false)
+
+    const loading = mount({ editorOpts: { cards: [], isLoading: true } })
+    expect(loading.find('[data-testid="deck-view__empty"]').exists()).toBe(false)
   })
 })
