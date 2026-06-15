@@ -3,8 +3,10 @@ import { computed, onMounted, provide, ref, useTemplateRef } from 'vue'
 import DeckHero from '@/views/deck/deck-hero/index.vue'
 import DeckSkeleton from './skeleton.vue'
 import ModeToolbar from './mode-toolbar/index.vue'
+import ModeToolbarSkeleton from './mode-toolbar/skeleton.vue'
 import ModeStack from './mode-stack.vue'
 import CardGridSkeleton from './card-grid/skeleton.vue'
+import CardGridEmpty from './card-grid/empty-state.vue'
 import { preloadDeckModes } from './modes'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import { useDeckQuery } from '@/api/decks'
@@ -51,23 +53,34 @@ onMounted(preloadDeckModes)
       class="relative z-30 xl:sticky xl:top-(--nav-height)"
       :deck="deck!"
       :image-url="image_url"
+      :hide-actions="is_empty"
     />
 
-    <div data-testid="deck-view__main" :data-mode="shell.mode.value" class="relative w-full pb-4">
+    <div
+      data-testid="deck-view__main"
+      :data-mode="shell.mode.value"
+      class="relative w-full"
+      :class="{ 'pb-4': !is_empty }"
+    >
       <div ref="toolbar" data-testid="deck-view__toolbar" class="sticky top-(--nav-height) z-20">
         <div
           data-testid="deck-view__toolbar-backing"
           aria-hidden="true"
           class="absolute inset-x-0 bottom-0 top-[calc(var(--nav-height)*-1)] -z-10 bg-brown-100 dark:bg-grey-900"
         ></div>
-        <mode-toolbar />
+        <mode-toolbar-skeleton v-if="is_empty" />
+        <mode-toolbar v-else />
       </div>
 
-      <div v-if="is_empty" data-testid="deck-view__empty" class="mt-6" />
+      <card-grid-empty v-if="is_empty" data-testid="deck-view__empty" class="mt-6" />
       <card-grid-skeleton v-else-if="is_loading_initial" class="mt-6" />
       <mode-stack v-else class="mt-6" :sticky_header="toolbar" />
     </div>
 
-    <scroll-bar class="fixed right-4 top-(--nav-height) bottom-10 z-30" target="html" />
+    <scroll-bar
+      v-if="!is_empty && !is_loading_initial"
+      class="fixed right-4 top-(--nav-height) bottom-10 z-30"
+      target="html"
+    />
   </section>
 </template>

@@ -1,8 +1,14 @@
 <script setup lang="ts">
 import Card from '@/components/card/index.vue'
 import { useCardGrid } from './use-card-grid'
-import { deckViewShellKey, type CardGridSize } from '@/composables/deck/view-shell'
-import { inject, ref } from 'vue'
+import { type CardGridSize } from '@/composables/deck/view-shell'
+
+type CardGridSkeletonProps = {
+  shimmer?: boolean
+  size?: CardGridSize
+}
+
+const { shimmer = true, size = 'md' } = defineProps<CardGridSkeletonProps>()
 
 const DEFAULT_COVER: DeckCover = {
   theme: 'brown-300',
@@ -10,14 +16,12 @@ const DEFAULT_COVER: DeckCover = {
   pattern: 'diagonal-stripes'
 }
 
-const shell = inject(deckViewShellKey, null)
-const grid_size = shell?.grid_size ?? ref<CardGridSize>('base')
-const { card_scale, grid_style } = useCardGrid(grid_size)
+const { card_scale, grid_style, grid_classes } = useCardGrid(() => size)
 </script>
 
 <template>
   <div data-testid="card-grid-skeleton" class="w-full h-full md:min-h-0 overflow-hidden py-2">
-    <div class="grid justify-center gap-4 opacity-30" :style="grid_style">
+    <div class="opacity-30" :class="grid_classes" :style="grid_style">
       <div
         v-for="n in 40"
         :key="n"
@@ -29,7 +33,7 @@ const { card_scale, grid_style } = useCardGrid(grid_size)
           :style="{ '--card-scale': card_scale }"
           size="xl"
           side="cover"
-          shimmer
+          :shimmer="shimmer"
           :cover_config="DEFAULT_COVER"
         />
       </div>
