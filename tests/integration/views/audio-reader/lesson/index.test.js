@@ -177,6 +177,7 @@ function mountView(props = {}) {
     props: { collectionId: COLLECTION_ID, lessonId: LESSON_ID, ...props },
     global: {
       stubs: {
+        Teleport: true,
         TranscriptView: TranscriptViewStub,
         TermCard: TermCardStub
       }

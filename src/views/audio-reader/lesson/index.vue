@@ -240,64 +240,68 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
         />
       </div>
 
-      <footer
-        ref="footer_bar"
-        data-testid="lesson-view__bar"
-        :class="{ 'xl:hidden': !show_term_in_footer }"
-        class="fixed bottom-0 left-0 right-0 z-30 rounded-t-6 bg-brown-300 p-5 pb-2 dark:bg-stone-900 sm:bottom-3 sm:left-auto sm:right-3 sm:w-96 sm:rounded-6 sm:pb-5"
-      >
-        <div ref="footer_swap" data-testid="lesson-view__footer-swap" class="relative w-full">
-          <transition
-            :css="false"
-            @before-leave="onFooterBeforeLeave"
-            @enter="onFooterEnter"
-            @after-enter="onFooterAfterEnter"
-            @leave="footerSwapLeave"
-          >
-            <div
-              v-if="show_term_in_footer && selection"
-              key="term"
-              ref="footer_term"
-              data-testid="lesson-view__footer-term"
-              class="pb-2"
+      <!-- Mounted at body level + translateZ(0) so iOS standalone pins it to its own
+           compositor layer; without both, fixed elements lag during scroll. -->
+      <teleport to="[app-footer-container]">
+        <footer
+          ref="footer_bar"
+          data-testid="lesson-view__bar"
+          :class="{ 'xl:hidden': !show_term_in_footer }"
+          class="fixed bottom-0 left-0 right-0 z-30 rounded-t-6 bg-brown-300 p-5 pb-2 transform-[translateZ(0)] dark:bg-stone-900 sm:bottom-3 sm:left-auto sm:right-3 sm:w-96 sm:rounded-6 sm:pb-5"
+        >
+          <div ref="footer_swap" data-testid="lesson-view__footer-swap" class="relative w-full">
+            <transition
+              :css="false"
+              @before-leave="onFooterBeforeLeave"
+              @enter="onFooterEnter"
+              @after-enter="onFooterAfterEnter"
+              @leave="footerSwapLeave"
             >
-              <term-card
-                :term="selection.term"
-                :sentence="selection.sentence"
-                :target_lang="target_lang"
-                :existing_decks="selected_term_decks"
-                show_back
-                @back="closeTerm"
-                @close="closeTerm"
-                @play-from-here="playFromHere"
-                @play-word="playClip"
-              />
-            </div>
+              <div
+                v-if="show_term_in_footer && selection"
+                key="term"
+                ref="footer_term"
+                data-testid="lesson-view__footer-term"
+                class="pb-2"
+              >
+                <term-card
+                  :term="selection.term"
+                  :sentence="selection.sentence"
+                  :target_lang="target_lang"
+                  :existing_decks="selected_term_decks"
+                  show_back
+                  @back="closeTerm"
+                  @close="closeTerm"
+                  @play-from-here="playFromHere"
+                  @play-word="playClip"
+                />
+              </div>
 
-            <div
-              v-else
-              key="toolbar"
-              ref="footer_toolbar"
-              data-testid="lesson-view__footer-toolbar"
-              class="xl:hidden"
-            >
-              <audio-toolbar
-                :player="player"
-                :chapters="chapters"
-                :current-lesson-id="lesson_id"
-                @select-chapter="goToChapter"
-              />
-            </div>
-          </transition>
-        </div>
+              <div
+                v-else
+                key="toolbar"
+                ref="footer_toolbar"
+                data-testid="lesson-view__footer-toolbar"
+                class="xl:hidden"
+              >
+                <audio-toolbar
+                  :player="player"
+                  :chapters="chapters"
+                  :current-lesson-id="lesson_id"
+                  @select-chapter="goToChapter"
+                />
+              </div>
+            </transition>
+          </div>
 
-        <audio
-          ref="audio"
-          data-testid="lesson-view__audio"
-          :src="audio_url ?? undefined"
-          class="hidden"
-        />
-      </footer>
+          <audio
+            ref="audio"
+            data-testid="lesson-view__audio"
+            :src="audio_url ?? undefined"
+            class="hidden"
+          />
+        </footer>
+      </teleport>
 
       <scroll-bar class="fixed top-(--nav-height) right-6 bottom-6" target="html" />
     </div>
