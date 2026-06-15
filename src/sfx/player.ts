@@ -1,4 +1,4 @@
-import { Howl, Howler } from 'howler'
+import engine from '@/sfx/engine'
 import { debounce } from '@/utils/debounce'
 import {
   AUDIO_CONFIG,
@@ -15,10 +15,15 @@ export type PlayOptions = {
   blocking?: boolean
 }
 
-// Audio files ship as separate hashed assets; Howler fetches them when
-// setup() runs. The glob captures URL strings only — no binary payload
-// lands in the JS bundle. setup() itself is invoked post-paint from
-// App.vue so audio download never blocks first paint.
+type LoadedSound = {
+  buffer: AudioBuffer
+  volume: number
+}
+
+// Audio files ship as separate hashed assets; setup() fetches and decodes them
+// at runtime. The glob captures URL strings only — no binary payload lands in
+// the JS bundle. setup() itself is invoked post-paint from App.vue so audio
+// download never blocks first paint.
 const AUDIO_FILES = import.meta.glob('@/assets/audio/**/*.{wav,mp3,ogg}', {
   eager: true,
   query: '?url',
@@ -30,17 +35,8 @@ const DEFAULT_CATEGORY_VOLUME = 1
 const DEBOUNCE_DELAY = 10
 const QUEUE_TIMEOUT = 10
 
-// Howler suspends the AudioContext after 30s of silence to save power, then
-// relies on _autoResume() to revive it. On iOS that desyncs badly: locking the
-// phone or backgrounding the tab also interrupts the audio session (WebKit's
-// 'interrupted' ctx state), and Howler's internal state machine wedges so every
-// later play() is silently dropped — while the audio-reader's HTMLAudioElement
-// keeps working on its own audio session. SFX are tiny and infrequent, so the
-// power saving isn't worth the silence; lifecycle.ts owns resume instead.
-Howler.autoSuspend = false
-
 class AudioPlayer {
-  loaded_sounds = new Map<string, Howl>()
+  loaded_sounds = new Map<string, LoadedSound>()
   initialized = false
   unlock_registered = false
   unlocked = false
@@ -50,6 +46,8 @@ class AudioPlayer {
   setup = () => {
     if (this.initialized) return Promise.resolve()
     this.initialized = true
+
+    this._registerUnlock()
 
     const categories = Object.entries(AUDIO_CONFIG)
 
@@ -93,56 +91,37 @@ class AudioPlayer {
       throw new Error(`Sound "${key}" not loaded.`)
     }
 
-    await this._ensureContextRunning()
+    const running = await engine.resume()
 
-    if (Howler.ctx && Howler.ctx.state !== 'running') {
+    if (!running) {
       if (options.blocking) this.blocking = false
       return
     }
 
     return new Promise((resolve) => {
-      // The returned Promise must settle in exactly one of three ways:
-      //   1. 'end'       — Howler's normal completion event.
-      //   2. 'playerror' — Howler failed to decode/play (e.g. autoplay policy).
-      //   3. Timer       — neither of the above fired in time.
+      // The returned Promise must settle in one of two ways:
+      //   1. 'ended'  — the BufferSource finished playing.
+      //   2. Timer    — the safety net: if the context suspends mid-play (tab
+      //                 hides, device locks) `onended` never fires and the
+      //                 promise would hang forever, stalling awaiters of emitSfx.
       //
-      // (3) is the safety net: if the AudioContext suspends mid-play (tab hides
-      // right after play, device locks) Howler never emits 'end' and the
-      // promise would hang forever, stalling any caller that awaits emitSfx().
-      //
-      // Whichever path wins, settle() cancels the other two: clearing the
-      // timer and off()-ing both handlers. The off() calls matter because
-      // Howl.once() only auto-removes a handler when it fires — if the timer
-      // wins, the 'end'/'playerror' subscriptions would otherwise leak,
-      // holding resolve + timer references for the lifetime of the Howl.
+      // Whichever wins, settle() cancels the timer so the loser can't double-fire.
       let settled = false
       const settle = () => {
         if (settled) return
         settled = true
-        sound.off('end', settle)
-        sound.off('playerror', settle)
         clearTimeout(timer)
         if (options.blocking) this.blocking = false
         resolve()
       }
-      const fallbackMs = Math.ceil((sound.duration() || 1) * 1000) + 500
+
+      const volume = options.volume ?? sound.volume
+      const { ended } = engine.play(sound.buffer, volume)
+      const fallbackMs = Math.ceil((sound.buffer.duration || 1) * 1000) + 500
       const timer = setTimeout(settle, fallbackMs)
 
-      sound.once('end', settle)
-      sound.once('playerror', settle)
-      sound.volume(options.volume ?? sound.volume())
-      sound.play()
+      void ended.then(settle)
     })
-  }
-
-  private _ensureContextRunning = async (): Promise<void> => {
-    const ctx = Howler.ctx
-    if (!ctx || ctx.state === 'running') return
-    try {
-      await ctx.resume()
-    } catch {
-      // Suspension recovery needs a user gesture; lifecycle watcher handles it.
-    }
   }
 
   private async _setupAudioCategory(
@@ -156,35 +135,23 @@ class AudioPlayer {
       const categoryVolume = DEFAULT_CATEGORY_VOLUME
       const volume = (cfg.default_volume ?? DEFAULT_VOLUME) * categoryVolume
 
-      return this._createPreloadedHowl(key, cfg, volume).then((sound) => {
-        this.loaded_sounds.set(key, sound)
+      return this._loadSound(key, cfg).then((buffer) => {
+        this.loaded_sounds.set(key, { buffer, volume })
       })
     })
 
     await Promise.all(loads)
   }
 
-  private _createPreloadedHowl(
-    key: NamespacedAudioKey,
-    cfg: AudioProperties,
-    volume: number
-  ): Promise<Howl> {
+  private _loadSound(key: NamespacedAudioKey, cfg: AudioProperties): Promise<AudioBuffer> {
     const audio_name = key.split('.')[1]
     const ext = cfg.ext ?? 'wav'
     const path = `/src/assets/audio/${audio_name}.${ext}`
 
     const url = AUDIO_FILES[path]
 
-    return new Promise((resolve, reject) => {
-      const sound = new Howl({
-        src: [url],
-        preload: cfg.preload ?? true,
-        volume,
-        onload: () => resolve(sound),
-        onloaderror: (_, err) => reject(new Error(`Failed to load audio "${key}": ${String(err)}`))
-      })
-
-      this._registerUnlock(sound)
+    return engine.decode(url).catch((err) => {
+      throw new Error(`Failed to load audio "${key}": ${String(err)}`)
     })
   }
 
@@ -206,11 +173,10 @@ class AudioPlayer {
    * Registers the unlock callback for the audio system.
    * Only registers once.
    */
-  private _registerUnlock = (sound: Howl) => {
-    if (!this.unlock_registered) {
-      this.unlock_registered = true
-      sound.once('unlock', this._onUnlock)
-    }
+  private _registerUnlock = () => {
+    if (this.unlock_registered) return
+    this.unlock_registered = true
+    engine.onUnlock(this._onUnlock)
   }
 }
 

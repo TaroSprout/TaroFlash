@@ -1,31 +1,22 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 
-const stateListeners = new Set()
+let stateChangeCb
+const offStateChange = vi.fn()
 
-const mockCtx = {
-  state: 'running',
-  resume: vi.fn(),
-  addEventListener: vi.fn((type, handler) => {
-    if (type === 'statechange') stateListeners.add(handler)
+const engineMock = {
+  resume: vi.fn().mockResolvedValue(true),
+  unlock: vi.fn(),
+  state: vi.fn(() => 'suspended'),
+  onStateChange: vi.fn((cb) => {
+    stateChangeCb = cb
+    return offStateChange
   }),
-  removeEventListener: vi.fn((type, handler) => {
-    if (type === 'statechange') stateListeners.delete(handler)
-  })
+  play: vi.fn(),
+  decode: vi.fn(),
+  onUnlock: vi.fn()
 }
 
-function fireStateChange() {
-  for (const handler of stateListeners) handler()
-}
-
-let currentCtx = mockCtx
-
-vi.mock('howler', () => ({
-  Howler: {
-    get ctx() {
-      return currentCtx
-    }
-  }
-}))
+vi.mock('@/sfx/engine', () => ({ default: engineMock }))
 
 async function loadLifecycle() {
   const mod = await import('@/sfx/lifecycle')
@@ -47,12 +38,14 @@ function flushMicrotasks() {
 describe('installAudioLifecycle', () => {
   let teardown
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.resetModules()
-    stateListeners.clear()
-    currentCtx = mockCtx
-    mockCtx.state = 'running'
-    mockCtx.resume = vi.fn().mockResolvedValue(undefined)
+    stateChangeCb = undefined
+    offStateChange.mockClear()
+    engineMock.resume.mockReset().mockResolvedValue(true)
+    engineMock.unlock.mockClear()
+    engineMock.state.mockReset().mockReturnValue('suspended')
+    engineMock.onStateChange.mockClear()
   })
 
   afterEach(() => {
@@ -60,217 +53,150 @@ describe('installAudioLifecycle', () => {
     teardown = undefined
   })
 
-  test('resumes suspended context when tab becomes visible', async () => {
-    mockCtx.state = 'suspended'
-    mockCtx.resume.mockImplementation(async () => {
-      mockCtx.state = 'running'
-    })
+  test('resumes opportunistically at install when the context is suspended', async () => {
+    const install = await loadLifecycle()
+    teardown = install()
+    await flushMicrotasks()
 
-    const installAudioLifecycle = await loadLifecycle()
-    teardown = installAudioLifecycle()
+    expect(engineMock.resume).toHaveBeenCalledTimes(1)
+  })
+
+  test('does nothing at install when the context is already running', async () => {
+    engineMock.state.mockReturnValue('running')
+    const install = await loadLifecycle()
+    teardown = install()
+    await flushMicrotasks()
+
+    expect(engineMock.resume).not.toHaveBeenCalled()
+  })
+
+  test('resumes when the tab becomes visible', async () => {
+    const install = await loadLifecycle()
+    teardown = install()
+    await flushMicrotasks()
+    engineMock.resume.mockClear()
 
     fireVisibility('visible')
     await flushMicrotasks()
 
-    expect(mockCtx.resume).toHaveBeenCalledTimes(1)
+    expect(engineMock.resume).toHaveBeenCalledTimes(1)
   })
 
-  test('ignores visibility change when tab hides', async () => {
-    mockCtx.state = 'suspended'
-    const installAudioLifecycle = await loadLifecycle()
-    teardown = installAudioLifecycle()
+  test('ignores the visibility change when the tab hides', async () => {
+    const install = await loadLifecycle()
+    teardown = install()
+    await flushMicrotasks()
+    engineMock.resume.mockClear()
 
     fireVisibility('hidden')
     await flushMicrotasks()
 
-    expect(mockCtx.resume).not.toHaveBeenCalled()
+    expect(engineMock.resume).not.toHaveBeenCalled()
   })
 
-  test('resumes context on pageshow', async () => {
-    mockCtx.state = 'suspended'
-    mockCtx.resume.mockImplementation(async () => {
-      mockCtx.state = 'running'
-    })
-
-    const installAudioLifecycle = await loadLifecycle()
-    teardown = installAudioLifecycle()
+  test('resumes on pageshow', async () => {
+    const install = await loadLifecycle()
+    teardown = install()
+    await flushMicrotasks()
+    engineMock.resume.mockClear()
 
     window.dispatchEvent(new Event('pageshow'))
     await flushMicrotasks()
 
-    expect(mockCtx.resume).toHaveBeenCalledTimes(1)
+    expect(engineMock.resume).toHaveBeenCalledTimes(1)
   })
 
-  test('resumes context on window focus', async () => {
-    mockCtx.state = 'suspended'
-    mockCtx.resume.mockImplementation(async () => {
-      mockCtx.state = 'running'
-    })
-
-    const installAudioLifecycle = await loadLifecycle()
-    teardown = installAudioLifecycle()
+  test('resumes on window focus', async () => {
+    const install = await loadLifecycle()
+    teardown = install()
+    await flushMicrotasks()
+    engineMock.resume.mockClear()
 
     window.dispatchEvent(new Event('focus'))
     await flushMicrotasks()
 
-    expect(mockCtx.resume).toHaveBeenCalledTimes(1)
+    expect(engineMock.resume).toHaveBeenCalledTimes(1)
   })
 
-  test('resumes interrupted context when tab becomes visible', async () => {
-    mockCtx.state = 'interrupted'
-    mockCtx.resume.mockImplementation(async () => {
-      mockCtx.state = 'running'
-    })
+  test('resumes when the engine reports a non-running statechange', async () => {
+    const install = await loadLifecycle()
+    teardown = install()
+    await flushMicrotasks()
+    engineMock.resume.mockClear()
 
-    const installAudioLifecycle = await loadLifecycle()
-    teardown = installAudioLifecycle()
-
-    fireVisibility('visible')
+    stateChangeCb()
     await flushMicrotasks()
 
-    expect(mockCtx.resume).toHaveBeenCalledTimes(1)
+    expect(engineMock.resume).toHaveBeenCalledTimes(1)
   })
 
-  test('resumes context when it fires statechange away from running', async () => {
-    mockCtx.state = 'suspended'
-    mockCtx.resume.mockImplementation(async () => {
-      mockCtx.state = 'running'
-    })
-
-    const installAudioLifecycle = await loadLifecycle()
-    teardown = installAudioLifecycle()
-
-    fireStateChange()
+  test('ignores statechange while the engine is running', async () => {
+    engineMock.state.mockReturnValue('running')
+    const install = await loadLifecycle()
+    teardown = install()
     await flushMicrotasks()
 
-    expect(mockCtx.resume).toHaveBeenCalledTimes(1)
+    stateChangeCb()
+    await flushMicrotasks()
+
+    expect(engineMock.resume).not.toHaveBeenCalled()
   })
 
-  test('ignores statechange when context is already running', async () => {
-    mockCtx.state = 'running'
-    const installAudioLifecycle = await loadLifecycle()
-    teardown = installAudioLifecycle()
-
-    fireStateChange()
+  test('unlocks the engine on the next gesture', async () => {
+    const install = await loadLifecycle()
+    teardown = install()
     await flushMicrotasks()
 
-    expect(mockCtx.resume).not.toHaveBeenCalled()
+    window.dispatchEvent(new Event('click'))
+    await flushMicrotasks()
+
+    expect(engineMock.unlock).toHaveBeenCalledTimes(1)
   })
 
-  test('skips resume when context already running', async () => {
-    mockCtx.state = 'running'
-    const installAudioLifecycle = await loadLifecycle()
-    teardown = installAudioLifecycle()
-
-    fireVisibility('visible')
+  test('the gesture unlock fires only once across event types', async () => {
+    const install = await loadLifecycle()
+    teardown = install()
     await flushMicrotasks()
 
-    expect(mockCtx.resume).not.toHaveBeenCalled()
-  })
-
-  test('arms gesture retry when resume rejects', async () => {
-    mockCtx.state = 'suspended'
-    mockCtx.resume.mockRejectedValueOnce(new Error('needs gesture'))
-
-    const installAudioLifecycle = await loadLifecycle()
-    teardown = installAudioLifecycle()
-
-    fireVisibility('visible')
-    await flushMicrotasks()
-
-    expect(mockCtx.resume).toHaveBeenCalledTimes(1)
-
-    mockCtx.resume.mockResolvedValueOnce(undefined)
-    window.dispatchEvent(new Event('pointerdown'))
-    await flushMicrotasks()
-
-    expect(mockCtx.resume).toHaveBeenCalledTimes(2)
-  })
-
-  test('arms gesture retry when context stays suspended after resume', async () => {
-    mockCtx.state = 'suspended'
-    mockCtx.resume.mockResolvedValue(undefined)
-
-    const installAudioLifecycle = await loadLifecycle()
-    teardown = installAudioLifecycle()
-
-    fireVisibility('visible')
-    await flushMicrotasks()
-
-    expect(mockCtx.resume).toHaveBeenCalledTimes(1)
-
-    mockCtx.resume.mockImplementationOnce(async () => {
-      mockCtx.state = 'running'
-    })
-    window.dispatchEvent(new KeyboardEvent('keydown'))
-    await flushMicrotasks()
-
-    expect(mockCtx.resume).toHaveBeenCalledTimes(2)
-  })
-
-  test('gesture retry listener fires only once across event types', async () => {
-    mockCtx.state = 'suspended'
-    mockCtx.resume.mockResolvedValue(undefined)
-
-    const installAudioLifecycle = await loadLifecycle()
-    teardown = installAudioLifecycle()
-
-    fireVisibility('visible')
-    await flushMicrotasks()
-
-    mockCtx.resume.mockClear()
-    mockCtx.resume.mockResolvedValue(undefined)
-
-    window.dispatchEvent(new Event('pointerdown'))
-    window.dispatchEvent(new KeyboardEvent('keydown'))
     window.dispatchEvent(new Event('touchend'))
+    window.dispatchEvent(new KeyboardEvent('keydown'))
+    window.dispatchEvent(new Event('click'))
     await flushMicrotasks()
 
-    expect(mockCtx.resume).toHaveBeenCalledTimes(1)
+    expect(engineMock.unlock).toHaveBeenCalledTimes(1)
   })
 
-  test('teardown removes listeners', async () => {
-    mockCtx.state = 'suspended'
-    const installAudioLifecycle = await loadLifecycle()
-    teardown = installAudioLifecycle()
+  test('teardown removes every listener', async () => {
+    const install = await loadLifecycle()
+    teardown = install()
+    await flushMicrotasks()
 
     teardown()
     teardown = undefined
+    expect(offStateChange).toHaveBeenCalledTimes(1)
 
+    engineMock.resume.mockClear()
     fireVisibility('visible')
     window.dispatchEvent(new Event('pageshow'))
     window.dispatchEvent(new Event('focus'))
-    fireStateChange()
     await flushMicrotasks()
 
-    expect(mockCtx.resume).not.toHaveBeenCalled()
+    expect(engineMock.resume).not.toHaveBeenCalled()
   })
 
-  test('second install without teardown is a noop', async () => {
-    mockCtx.state = 'suspended'
-    mockCtx.resume.mockResolvedValue(undefined)
+  test('a second install without teardown is a noop', async () => {
+    const install = await loadLifecycle()
+    teardown = install()
+    await flushMicrotasks()
+    engineMock.resume.mockClear()
 
-    const installAudioLifecycle = await loadLifecycle()
-    teardown = installAudioLifecycle()
-    const noopTeardown = installAudioLifecycle()
+    const noopTeardown = install()
 
     fireVisibility('visible')
     await flushMicrotasks()
 
-    expect(mockCtx.resume).toHaveBeenCalledTimes(1)
+    expect(engineMock.resume).toHaveBeenCalledTimes(1)
     expect(typeof noopTeardown).toBe('function')
     noopTeardown()
-  })
-
-  test('handles missing AudioContext gracefully', async () => {
-    currentCtx = null
-
-    const installAudioLifecycle = await loadLifecycle()
-    teardown = installAudioLifecycle()
-
-    fireVisibility('visible')
-    await flushMicrotasks()
-
-    expect(mockCtx.resume).not.toHaveBeenCalled()
   })
 })

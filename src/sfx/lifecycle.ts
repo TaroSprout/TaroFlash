@@ -1,99 +1,99 @@
 /**
- * Keeps Howler's `AudioContext` running across page visibility, focus, and
- * restoration events.
+ * Keeps the SFX AudioContext alive across page visibility, focus, and audio
+ * interruptions.
  *
- * Mobile browsers suspend the AudioContext when the tab hides or the device
- * locks; Chrome does the same after long-idle background tabs. Once
- * suspended, Howler's internal unlock flag doesn't re-fire, so subsequent
- * plays silently hang. This module re-resumes the context when the page
- * comes back, and falls back to the next user gesture on platforms that
- * require one (iOS Safari).
+ * Mobile browsers suspend the context when the tab hides or the device locks;
+ * iOS goes further and drops it into WebKit's non-standard 'interrupted' state
+ * (device lock / app switch / a call), which a plain `resume()` often can't
+ * revive. This module resumes on every wake signal, and arms a one-shot gesture
+ * listener that hands off to `engine.unlock()` — which rebuilds the context
+ * inside the gesture, the only reliable cure for 'interrupted'.
  */
-import { Howler } from 'howler'
+import engine from '@/sfx/engine'
 
 let installed = false
-let gestureArmed = false
+let gesture_armed = false
 
-const GESTURE_EVENTS = ['pointerdown', 'keydown', 'touchend'] as const
+// iOS only treats a *completed* gesture as audio-activating — touchend / click,
+// never touchstart / pointerdown. Listening on pointerdown unlocks on an event
+// iOS ignores, so audio stays muted.
+const GESTURE_EVENTS = ['touchend', 'click', 'keydown'] as const
 
 /**
- * Wires `visibilitychange`, `pageshow`, and `focus` listeners that call
- * `Howler.ctx.resume()`. If the browser refuses to resume without a user
- * gesture, arms a one-shot `pointerdown`/`keydown`/`touchend` listener that
- * retries on the next interaction.
+ * Wires `visibilitychange`, `pageshow`, `focus`, and context `statechange`
+ * listeners that resume the engine, plus a one-shot `touchend`/`click`/`keydown`
+ * listener that unlocks (and, if needed, rebuilds) the context on the next
+ * interaction.
  *
  * Returns a teardown function that removes every listener it registered.
- * Calling `installAudioLifecycle` while already installed is a no-op and
- * returns a no-op teardown — the original teardown remains the only way to
- * uninstall.
+ * Calling `installAudioLifecycle` while already installed is a no-op and returns
+ * a no-op teardown — the original teardown remains the only way to uninstall.
  */
 export function installAudioLifecycle(): () => void {
   if (installed || typeof window === 'undefined') return () => {}
   installed = true
 
-  // Resume whenever the context isn't running — this covers both 'suspended'
-  // and WebKit's non-standard 'interrupted' state (iOS device lock / app
-  // switch), which the page never reaches via a plain 'suspended' check.
-  const tryResume = async () => {
-    const ctx = Howler.ctx
-    if (!ctx || ctx.state === 'running') return
-    try {
-      await ctx.resume()
-    } catch {
-      armGestureRetry()
-      return
-    }
-    if (Howler.ctx?.state !== 'running') armGestureRetry()
+  // Arm the gesture retry up front whenever the context isn't running, then try
+  // an opportunistic resume. Crucially we do NOT gate arming on the resume
+  // result: a browser that blocks autoplay leaves `resume()` pending forever
+  // (it never resolves to tell us it failed), so awaiting it would mean the
+  // gesture listener — the only thing that actually unlocks audio — never gets
+  // armed. The resume is fire-and-forget; the gesture is what we rely on.
+  const recover = () => {
+    if (engine.state() === 'running') return
+    armGestureRetry()
+    void engine.resume()
   }
 
-  const gestureResume = async () => {
+  // Synchronous so the unlock's priming source + resume() fire inside the
+  // gesture — iOS ignores them otherwise. engine.unlock() owns the resume/rebuild
+  // dance; we just hand off the gesture.
+  const gestureRecover = () => {
     removeGestureListeners()
-    gestureArmed = false
-    const ctx = Howler.ctx
-    if (!ctx) return
-    try {
-      await ctx.resume()
-    } catch {
-      // Gesture didn't satisfy the browser; next gesture will rearm.
-    }
+    gesture_armed = false
+    engine.unlock()
   }
 
   const armGestureRetry = () => {
-    if (gestureArmed) return
-    gestureArmed = true
+    if (gesture_armed) return
+    gesture_armed = true
     for (const ev of GESTURE_EVENTS) {
-      window.addEventListener(ev, gestureResume, { once: true, passive: true })
+      window.addEventListener(ev, gestureRecover, { once: true, passive: true })
     }
   }
 
   const removeGestureListeners = () => {
     for (const ev of GESTURE_EVENTS) {
-      window.removeEventListener(ev, gestureResume)
+      window.removeEventListener(ev, gestureRecover)
     }
   }
 
   const onVisibility = () => {
-    if (document.visibilityState === 'visible') void tryResume()
+    if (document.visibilityState === 'visible') recover()
   }
 
-  // The context fires statechange the moment iOS interrupts it — a more direct
+  // statechange fires the moment iOS interrupts the context — a more direct
   // signal than waiting for the page to become visible again.
   const onStateChange = () => {
-    if (Howler.ctx && Howler.ctx.state !== 'running') void tryResume()
+    if (engine.state() !== 'running') recover()
   }
 
   document.addEventListener('visibilitychange', onVisibility)
-  window.addEventListener('pageshow', tryResume)
-  window.addEventListener('focus', tryResume)
-  Howler.ctx?.addEventListener('statechange', onStateChange)
+  window.addEventListener('pageshow', recover)
+  window.addEventListener('focus', recover)
+  const offStateChange = engine.onStateChange(onStateChange)
+
+  // Arm now so the first user gesture unlocks the freshly-created (suspended)
+  // context, the same way Howler's global unlock handler used to.
+  recover()
 
   return () => {
     document.removeEventListener('visibilitychange', onVisibility)
-    window.removeEventListener('pageshow', tryResume)
-    window.removeEventListener('focus', tryResume)
-    Howler.ctx?.removeEventListener('statechange', onStateChange)
+    window.removeEventListener('pageshow', recover)
+    window.removeEventListener('focus', recover)
+    offStateChange()
     removeGestureListeners()
     installed = false
-    gestureArmed = false
+    gesture_armed = false
   }
 }
