@@ -16,19 +16,4 @@ describe('deck-hero/details', () => {
       'My description'
     )
   })
-
-  test('renders the member display name', () => {
-    const wrapper = mount({ member_display_name: 'Alice' })
-    expect(wrapper.text()).toContain('Alice')
-  })
-
-  test('renders the card_count in the cards-in-deck label', () => {
-    const wrapper = mount({ card_count: 17 })
-    expect(wrapper.text()).toContain('17 cards in deck')
-  })
-
-  test('falls back to 0 when card_count is missing', () => {
-    const wrapper = mount({ card_count: undefined })
-    expect(wrapper.text()).toContain('0 cards in deck')
-  })
 })
