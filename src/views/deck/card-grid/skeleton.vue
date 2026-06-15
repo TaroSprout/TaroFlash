@@ -6,9 +6,10 @@ import { type CardGridSize } from '@/composables/deck/view-shell'
 type CardGridSkeletonProps = {
   shimmer?: boolean
   size?: CardGridSize
+  count?: number
 }
 
-const { shimmer = true, size = 'md' } = defineProps<CardGridSkeletonProps>()
+const { shimmer = true, size = 'md', count = 40 } = defineProps<CardGridSkeletonProps>()
 
 const DEFAULT_COVER: DeckCover = {
   theme: 'brown-300',
@@ -23,7 +24,7 @@ const { card_scale, grid_style, grid_classes } = useCardGrid(() => size)
   <div data-testid="card-grid-skeleton" class="w-full h-full md:min-h-0 overflow-hidden py-2">
     <div class="opacity-30" :class="grid_classes" :style="grid_style">
       <div
-        v-for="n in 40"
+        v-for="n in count"
         :key="n"
         data-testid="card-grid-skeleton__item"
         class="skeleton-item relative aspect-card w-full"

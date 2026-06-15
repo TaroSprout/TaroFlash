@@ -19,7 +19,7 @@ const { all_cards } = list
     v-bind="$attrs"
     class="text-grey-500 flex h-50 flex-col items-center justify-center gap-4"
   >
-    <span>{{ t('deck-view.empty-state.no-cards') }}</span>
+    <span>{{ t('deck-view.card-editor.list.empty') }}</span>
     <ui-button data-theme="blue-500" icon-left="add" @click="addCard()">
       {{ t('deck-view.add-card') }}
     </ui-button>

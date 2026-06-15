@@ -198,7 +198,7 @@ describe('DeckView (views/deck/index.vue)', () => {
 
   test('renders the page scroll-bar tracking the document in every mode', () => {
     for (const mode of ['view', 'edit', 'import-export']) {
-      const wrapper = mount({ mode })
+      const wrapper = mount({ mode, editorOpts: { cards: [{ id: 1 }] } })
       const bar = wrapper.find('[data-testid="scroll-bar-stub"]')
       expect(bar.exists()).toBe(true)
       expect(bar.attributes('data-target')).toBe('html')

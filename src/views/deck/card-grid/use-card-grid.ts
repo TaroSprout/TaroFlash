@@ -9,15 +9,15 @@ const CARD_SCALE: Record<CardGridSize, number> = {
   xl: 1
 }
 
+const GRID_CLASSES = ['grid', 'justify-center']
+
 export function useCardGrid(grid_size: MaybeRefOrGetter<CardGridSize>) {
   const card_scale = computed(() => CARD_SCALE[toValue(grid_size)])
-
-  const grid_classes = computed(() => ['grid', 'justify-center'])
 
   const grid_style = computed<CSSProperties>(() => ({
     gap: `${XL_GAP * card_scale.value}px`,
     gridTemplateColumns: `repeat(auto-fill, ${XL_CARD_WIDTH * card_scale.value}px)`
   }))
 
-  return { card_scale, grid_style, grid_classes }
+  return { card_scale, grid_style, grid_classes: GRID_CLASSES }
 }
