@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import UiIcon from '@/components/ui-kit/icon.vue'
-
 defineProps<{ deck: Deck }>()
 </script>
 
@@ -12,15 +10,5 @@ defineProps<{ deck: Deck }>()
     >
       {{ deck.description }}
     </h2>
-
-    <div class="flex items-center gap-2 text-blue-500">
-      <ui-icon src="user" />
-      <h2>{{ deck.member_display_name }}</h2>
-    </div>
-
-    <div class="flex items-center gap-2 text-blue-500">
-      <ui-icon src="teeny-cards" class="w-5 h-5" />
-      <h2>{{ deck.card_count ?? 0 }} cards in deck</h2>
-    </div>
   </div>
 </template>

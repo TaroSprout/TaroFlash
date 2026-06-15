@@ -7,7 +7,13 @@ import { inject } from 'vue'
 import { cardEditorKey } from '@/composables/card/list-controller'
 import { defaultEnter, defaultLeave, bulkEnter, bulkLeave } from '@/utils/animations/actions-swap'
 
-defineProps<{ deck: Deck; imageUrl?: string }>()
+type DeckHeroProps = {
+  deck: Deck
+  imageUrl?: string
+  hideActions?: boolean
+}
+
+const { deck, hideActions = false } = defineProps<DeckHeroProps>()
 
 const editor = inject(cardEditorKey, null)
 const is_selecting = editor?.selection.is_selecting
@@ -21,7 +27,7 @@ const is_selecting = editor?.selection.is_selecting
     <thumbnail :deck="deck" />
     <deck-details :deck="deck" />
 
-    <div data-testid="deck-hero__actions-wrap" class="relative w-full">
+    <div v-if="!hideActions" data-testid="deck-hero__actions-wrap" class="relative w-full">
       <Transition :css="false" @enter="defaultEnter" @leave="defaultLeave">
         <actions v-if="!is_selecting" :deck="deck" />
       </Transition>

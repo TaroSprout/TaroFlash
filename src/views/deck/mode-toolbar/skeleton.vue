@@ -8,7 +8,7 @@ import UiTag from '@/components/ui-kit/tag.vue'
     <template #right>
       <ui-tag
         data-theme="brown-300"
-        data-theme-dark="stone-700"
+        data-theme-dark="stone-900"
         class="bgx-diagonal-stripes bgx-opacity-10"
       >
         <span class="invisible">0 cards</span>

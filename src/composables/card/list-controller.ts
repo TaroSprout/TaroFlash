@@ -7,6 +7,7 @@ import { useCardSelection } from './selection'
 import { useCardMutations } from './mutations'
 import { useCardActions } from './actions'
 import { useCardLimitGate } from '@/composables/card/limit-gate'
+import { emitSfx } from '@/sfx/bus'
 import type { DeckViewShell } from '../deck/view-shell'
 
 export type CardListController = ReturnType<typeof useCardListController>
@@ -15,8 +16,9 @@ export const cardEditorKey = Symbol('cardEditor') as InjectionKey<CardListContro
 
 type Options = {
   deck_id: number
-  // intent actions hand control back to the shell when a flow ends editing
-  shell: Pick<DeckViewShell, 'exitMode'>
+  // intent actions hand control back to the shell: `exitMode` when a flow ends
+  // editing, `setMode` when `newCard` drops the user into edit mode
+  shell: Pick<DeckViewShell, 'exitMode' | 'setMode'>
 }
 
 /**
@@ -108,6 +110,33 @@ export function useCardListController(opts: Options) {
     // `await` here would lose the race — the row mounts and claims focus before
     // the target is set.
     pending_focus_client_id.value = list.addCardAtTop()
+  }
+
+  /**
+   * The editor's "new card" intent: enter edit mode, play the add chime, then
+   * stage a fresh card at the top for immediate typing. Shared by the toolbar
+   * button and the empty-state CTA so the mode-switch + chime + autofocus flow
+   * lives in one place.
+   *
+   * With cards already on screen the mode-stack is mounted, so we await its
+   * edit-pane slide before staging — the new card's focus + scroll-into-view
+   * then read final positions, not a mid-animation transform. On an empty deck
+   * the mode-stack isn't mounted (the view shows the empty state), so nothing
+   * reports the transition settled and awaiting would hang forever; the stack
+   * mounts fresh in edit mode the instant the staged card flips the view out of
+   * its empty state, so we just set the mode and stage synchronously.
+   *
+   * The add chime is `blocking` so it suppresses the `slide_up` that focusing
+   * the new card would fire.
+   */
+  async function newCard() {
+    const stack_mounted = list.all_cards.value.length > 0
+    const entered = opts.shell.setMode('edit')
+
+    if (stack_mounted) await entered
+
+    emitSfx('ui.snappy_button_2', { blocking: true })
+    addCardAtTop()
   }
 
   /**
@@ -221,6 +250,7 @@ export function useCardListController(opts: Options) {
     appendCard,
     prependCard,
     addCardAtTop,
+    newCard,
     claimFocus,
     guardAddCards: limit_gate.guardAddCards,
     handleLimitError: limit_gate.handleLimitError,

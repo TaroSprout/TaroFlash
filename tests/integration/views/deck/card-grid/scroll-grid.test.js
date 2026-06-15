@@ -57,10 +57,10 @@ describe('card-grid/scroll-grid', () => {
 
   // ── grid_size → gridTemplateColumns track width ───────────────────────────
 
-  test('grid style scales the xl track to 0.6 for grid_size="base" [obligation]', () => {
+  test('grid style scales the xl track to 0.56 for grid_size="base" [obligation]', () => {
     const wrapper = mountScrollGrid(makeEditor(), makeShell({ grid_size: 'base' }))
     expect(wrapper.find('[data-testid="card-grid"]').attributes('style')).toContain(
-      'grid-template-columns: repeat(auto-fill, 188.4px)'
+      'grid-template-columns: repeat(auto-fill, 175.84px)'
     )
   })
 
@@ -141,7 +141,7 @@ describe('card-grid/scroll-grid', () => {
       all_cards: [{ id: 1, client_id: 'c1', front_text: 'q', back_text: 'a' }]
     })
     const wrapper = mountScrollGrid(editor, makeShell({ grid_size: 'base' }))
-    expect(wrapper.find('[data-testid="grid-item-stub"]').attributes('data-scale')).toBe('0.6')
+    expect(wrapper.find('[data-testid="grid-item-stub"]').attributes('data-scale')).toBe('0.56')
   })
 
   test('grid-item selected is false when card.id is undefined', () => {

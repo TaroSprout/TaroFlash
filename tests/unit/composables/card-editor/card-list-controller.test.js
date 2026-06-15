@@ -745,6 +745,88 @@ describe('useCardListController', () => {
     })
   })
 
+  // ── newCard — enter edit mode, play chime, stage card ───────────────────────
+
+  describe('newCard', () => {
+    test('calls shell.setMode("edit") in both empty and non-empty cases [obligation]', async () => {
+      const setMode = vi.fn().mockResolvedValue(undefined)
+      const sh = makeShell({ setMode })
+
+      // non-empty path
+      const ctrl = makeController([makeCard({ id: 1 })], [1], undefined, sh)
+      await ctrl.newCard()
+      expect(setMode).toHaveBeenCalledWith('edit')
+    })
+
+    test('with empty cards, addCardAtTop runs even when setMode promise never resolves [obligation]', async () => {
+      // Empty deck — mode-stack is not mounted, so setMode should not be awaited.
+      // Return a never-resolving promise to prove the implementation does NOT await it.
+      const setMode = vi.fn().mockReturnValue(new Promise(() => {}))
+      const sh = makeShell({ setMode })
+      const ctrl = makeController([], [], undefined, sh)
+
+      // newCard must complete (not hang) and stage a card
+      await ctrl.newCard()
+      expect(ctrl.list.all_cards.value).toHaveLength(1)
+      expect(ctrl.list.all_cards.value[0].id).toBeLessThan(0)
+    })
+
+    test('with cards present, awaits setMode before staging (setMode resolves first) [obligation]', async () => {
+      let setModeResolve
+      const setMode = vi.fn().mockReturnValue(new Promise((r) => (setModeResolve = r)))
+      const sh = makeShell({ setMode })
+      const ctrl = makeController([makeCard({ id: 1 })], [1], undefined, sh)
+
+      const promise = ctrl.newCard()
+      // setMode not yet resolved — card should not be staged yet
+      expect(ctrl.list.all_cards.value).toHaveLength(1)
+      expect(ctrl.list.all_cards.value.every((c) => c.id > 0)).toBe(true)
+
+      setModeResolve()
+      await promise
+      // After setMode resolves, the new card is staged at the top
+      expect(ctrl.list.all_cards.value[0].id).toBeLessThan(0)
+    })
+
+    test('emits sfx "ui.snappy_button_2" with blocking:true in both paths [obligation]', async () => {
+      // empty path
+      const setMode = vi.fn().mockReturnValue(new Promise(() => {}))
+      const ctrl = makeController([], [], undefined, makeShell({ setMode }))
+      await ctrl.newCard()
+      expect(emitSfxMock).toHaveBeenCalledWith('ui.snappy_button_2', { blocking: true })
+    })
+
+    test('emits sfx with blocking:true on non-empty deck path too [obligation]', async () => {
+      emitSfxMock.mockReset()
+      const setMode = vi.fn().mockResolvedValue(undefined)
+      const ctrl = makeController([makeCard({ id: 1 })], [1], undefined, makeShell({ setMode }))
+      await ctrl.newCard()
+      expect(emitSfxMock).toHaveBeenCalledWith('ui.snappy_button_2', { blocking: true })
+    })
+
+    test('stages the new card at index 0 when deck is non-empty [obligation]', async () => {
+      const setMode = vi.fn().mockResolvedValue(undefined)
+      const ctrl = makeController(
+        [makeCard({ id: 100 }), makeCard({ id: 200 })],
+        [100, 200],
+        undefined,
+        makeShell({ setMode })
+      )
+      await ctrl.newCard()
+      expect(ctrl.list.all_cards.value[0].id).toBeLessThan(0)
+      expect(ctrl.list.all_cards.value[1].id).toBe(100)
+    })
+
+    test('does not stage a card when guardAddCards blocks (limit reached) [obligation]', async () => {
+      guardAddCardsMock.mockResolvedValue(false)
+      const setMode = vi.fn().mockReturnValue(new Promise(() => {}))
+      const ctrl = makeController([], [], undefined, makeShell({ setMode }))
+      await ctrl.newCard()
+      // setMode is still called (gate check happens inside addCardAtTop)
+      expect(ctrl.list.all_cards.value).toHaveLength(0)
+    })
+  })
+
   // ── shell plumbing — mode and grid_size live on the shell, not the controller
 
   describe('shell plumbing', () => {

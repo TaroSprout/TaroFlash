@@ -3,8 +3,10 @@ import { computed, onMounted, provide, ref, useTemplateRef } from 'vue'
 import DeckHero from '@/views/deck/deck-hero/index.vue'
 import DeckSkeleton from './skeleton.vue'
 import ModeToolbar from './mode-toolbar/index.vue'
+import ModeToolbarSkeleton from './mode-toolbar/skeleton.vue'
 import ModeStack from './mode-stack.vue'
 import CardGridSkeleton from './card-grid/skeleton.vue'
+import CardGridEmpty from './card-grid/empty-state.vue'
 import { preloadDeckModes } from './modes'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import { useDeckQuery } from '@/api/decks'
@@ -29,10 +31,10 @@ provide(deckViewShellKey, shell)
 const editor = useCardListController({ deck_id: id.value, shell })
 provide(cardEditorKey, editor)
 
-const is_loading_initial = computed(
-  () => editor.isLoading.value && editor.list.all_cards.value.length === 0
-)
-const is_empty = computed(() => !editor.isLoading.value && editor.list.all_cards.value.length === 0)
+const view_state = computed<'loading' | 'empty' | 'ready'>(() => {
+  if (editor.list.all_cards.value.length > 0) return 'ready'
+  return editor.isLoading.value ? 'loading' : 'empty'
+})
 
 const show_skeleton = computed(() => !deck.value)
 
@@ -51,23 +53,38 @@ onMounted(preloadDeckModes)
       class="relative z-30 xl:sticky xl:top-(--nav-height)"
       :deck="deck!"
       :image-url="image_url"
+      :hide-actions="view_state === 'empty'"
     />
 
-    <div data-testid="deck-view__main" :data-mode="shell.mode.value" class="relative w-full pb-4">
+    <div
+      data-testid="deck-view__main"
+      :data-mode="shell.mode.value"
+      class="relative w-full"
+      :class="
+        view_state === 'empty'
+          ? 'xl:flex xl:flex-col xl:h-[calc(100dvh-var(--nav-height))]'
+          : 'pb-4'
+      "
+    >
       <div ref="toolbar" data-testid="deck-view__toolbar" class="sticky top-(--nav-height) z-20">
         <div
           data-testid="deck-view__toolbar-backing"
           aria-hidden="true"
           class="absolute inset-x-0 bottom-0 top-[calc(var(--nav-height)*-1)] -z-10 bg-brown-100 dark:bg-grey-900"
         ></div>
-        <mode-toolbar />
+        <mode-toolbar-skeleton v-if="view_state === 'empty'" />
+        <mode-toolbar v-else />
       </div>
 
-      <div v-if="is_empty" data-testid="deck-view__empty" class="mt-6" />
-      <card-grid-skeleton v-else-if="is_loading_initial" class="mt-6" />
+      <card-grid-empty v-if="view_state === 'empty'" data-testid="deck-view__empty" class="mt-6" />
+      <card-grid-skeleton v-else-if="view_state === 'loading'" class="mt-6" />
       <mode-stack v-else class="mt-6" :sticky_header="toolbar" />
     </div>
 
-    <scroll-bar class="fixed right-4 top-(--nav-height) bottom-10 z-30" target="html" />
+    <scroll-bar
+      v-if="view_state === 'ready'"
+      class="fixed right-4 top-(--nav-height) bottom-10 z-30"
+      target="html"
+    />
   </section>
 </template>

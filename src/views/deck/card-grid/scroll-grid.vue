@@ -17,14 +17,14 @@ const { isCardSelected } = selection
 const side = ref<'front' | 'back'>('front')
 const sentinel = useTemplateRef<HTMLElement>('sentinel')
 
-const { card_scale, grid_style } = useCardGrid(grid_size)
+const { card_scale, grid_style, grid_classes } = useCardGrid(grid_size)
 
 observeSentinel(sentinel)
 </script>
 
 <template>
   <div data-testid="card-grid-container" class="w-full h-full md:min-h-0 overflow-y-auto py-2">
-    <div data-testid="card-grid" class="grid justify-center gap-4" :style="grid_style">
+    <div data-testid="card-grid" :class="grid_classes" :style="grid_style">
       <grid-item
         v-for="card in all_cards"
         :key="card.client_id"
