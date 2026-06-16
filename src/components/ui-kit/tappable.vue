@@ -9,7 +9,7 @@ import type { NamespacedAudioKey } from '@/sfx/config'
 type UiTappableProps = {
   as?: string
   animate?: StagedTapAnimate
-  press_audio?: NamespacedAudioKey
+  audio?: NamespacedAudioKey
   triggerAt?: StagedTapPhase
   bgx_color?: string
 }
@@ -17,7 +17,7 @@ type UiTappableProps = {
 const {
   as = 'button',
   animate = 'quiet',
-  press_audio,
+  audio,
   triggerAt,
   bgx_color = 'var(--theme-neutral)'
 } = defineProps<UiTappableProps>()
@@ -28,7 +28,7 @@ const emit = defineEmits<{
 
 const { playing, tap } = useStagedTap({ animate, triggerAt })
 
-const handler = tap((e) => emit('tap', e), { pressAudio: press_audio })
+const handler = tap((e) => emit('tap', e), { audio })
 </script>
 
 <template>

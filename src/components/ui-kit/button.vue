@@ -55,11 +55,15 @@ const attrs = useAttrs()
 
 const { playing, tap } = useStagedTap({ animate: tapAnimate ? 'pop' : 'quiet' })
 
+// Only hover/focus/blur reach v-sfx — press-phase sounds are routed through
+// staged-tap in onCaptureClick so they fire at the correct phase for each pointer.
 const merged_sfx = computed<SfxOptions>(() => {
   if (disabled) return {}
   return {
-    ...sfx,
-    hover: sfx.hover ?? 'ui.click_07'
+    hover: sfx.hover ?? 'ui.click_07',
+    focus: sfx.focus,
+    blur: sfx.blur,
+    debounce: sfx.debounce
   }
 })
 
@@ -87,11 +91,13 @@ function onCaptureClick(e: MouseEvent) {
   if (!handler) return
 
   tap(handler, {
-    pressAudio: merged_sfx.value.click,
-    pressAudioOpts: {
-      debounce: merged_sfx.value.debounce,
-      blocking: merged_sfx.value.click_blocking
+    preAudio: sfx.tap_pre,
+    audio: sfx.press,
+    audioOpts: {
+      debounce: sfx.debounce,
+      blocking: sfx.press_blocking
     },
+    postAudio: sfx.tap_post,
     captureMode: true
   })(e)
 }

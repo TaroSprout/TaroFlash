@@ -133,7 +133,7 @@ watch(
             icon-only
             size="base"
             play-on-tap
-            :sfx="{ click: 'ui.snappy_button_5' }"
+            :sfx="{ press: 'ui.snappy_button_5' }"
             @click="emit('back')"
           >
             {{ t('audio-reader.popover.close-button') }}
@@ -267,7 +267,7 @@ watch(
             full-width
             play-on-tap
             :tap-animate="false"
-            :sfx="{ click: 'ui.snappy_button_3' }"
+            :sfx="{ press: 'ui.snappy_button_3' }"
             @click="emit('play-from-here')"
           >
             {{ t('audio-reader.popover.play-from-here-button') }}

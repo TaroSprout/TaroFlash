@@ -30,10 +30,21 @@ export interface StagedTapOptions {
 }
 
 export interface TapCallOptions {
-  /** Plays immediately on coarse press, before animation. */
-  pressAudio?: SfxKey
-  /** Options forwarded to emitSfx for pressAudio (debounce, blocking, etc.). */
-  pressAudioOpts?: PlayOptions
+  /**
+   * Coarse only — fires at press, before the animation starts. Use for an
+   * "arm" cue that has no fine-pointer equivalent (e.g. a haptic-style tick).
+   */
+  preAudio?: SfxKey
+  /**
+   * All pointers — the primary click-feedback sound.
+   * Fine pointer: fires immediately at capture, before the action.
+   * Coarse pointer: fires at the action phase (peak by default).
+   */
+  audio?: SfxKey
+  /** Options forwarded to emitSfx for the main audio key (blocking, debounce). */
+  audioOpts?: PlayOptions
+  /** Coarse only — fires after the animation completes. */
+  postAudio?: SfxKey
   /**
    * Set true when tap() is called from a @click.capture handler that coexists
    * with a natural @click (e.g. via v-bind="$attrs"). On fine pointers tap()
@@ -56,9 +67,14 @@ export interface TapCallOptions {
  * configured phase so a bgx sweep or pop animation plays first. On fine
  * pointers, the action fires immediately with no animation.
  *
+ * Sound phases:
+ * - preAudio  — coarse only, fires at press before animation (arm/haptic cue)
+ * - audio     — all pointers; fires immediately on fine, at the action phase on coarse
+ * - postAudio — coarse only, fires after animation completes
+ *
  * @example
  * const { playing, tap } = useStagedTap({ animate: 'pop', yoyo: true })
- * const handler = tap((e) => doThing(e), { pressAudio: 'ui.snappy_button_5' })
+ * const handler = tap((e) => doThing(e), { audio: 'ui.snappy_button_5' })
  * // <button @click="handler" :data-playing="playing || null">
  */
 export function useStagedTap(options: StagedTapOptions = {}) {
@@ -75,15 +91,16 @@ export function useStagedTap(options: StagedTapOptions = {}) {
   const is_coarse = useMatchMedia('coarse')
 
   /**
-   * Returns an async click handler. On fine pointers the action fires at once
-   * (unless captureMode). On coarse, plays the animation and fires the action
-   * at the configured phase.
+   * Returns an async click handler. On fine pointers the main audio fires
+   * immediately at capture and the action fires via the natural click. On
+   * coarse, plays the animation and fires the action at the configured phase.
    */
   function tap(action?: (e: MouseEvent) => void, tapOpts: TapCallOptions = {}) {
     return async (e: MouseEvent) => {
       tapOpts.onTap?.(e)
 
       if (activeOn === 'coarse-only' && !is_coarse.value) {
+        if (tapOpts.audio) emitSfx(tapOpts.audio, tapOpts.audioOpts)
         if (!tapOpts.captureMode) action?.(e)
         return
       }
@@ -93,11 +110,11 @@ export function useStagedTap(options: StagedTapOptions = {}) {
 
       const phase = tapOpts.triggerAt ?? triggerAt
 
-      if (tapOpts.pressAudio)
-        tapOpts.pressAudioOpts
-          ? emitSfx(tapOpts.pressAudio, tapOpts.pressAudioOpts)
-          : emitSfx(tapOpts.pressAudio)
-      if (phase === 'press') action?.(e)
+      if (tapOpts.preAudio) emitSfx(tapOpts.preAudio)
+      if (phase === 'press') {
+        if (tapOpts.audio) emitSfx(tapOpts.audio, tapOpts.audioOpts)
+        action?.(e)
+      }
 
       playing.value = true
 
@@ -105,12 +122,20 @@ export function useStagedTap(options: StagedTapOptions = {}) {
         const target = e.currentTarget as HTMLElement
         const { peak, done } = playButtonTap(target, duration, { yoyo, hold })
         await peak
-        if (phase === 'peak') action?.(e)
+        if (phase === 'peak') {
+          if (tapOpts.audio) emitSfx(tapOpts.audio, tapOpts.audioOpts)
+          action?.(e)
+        }
         await done
+        if (tapOpts.postAudio) emitSfx(tapOpts.postAudio)
         if (phase === 'done') action?.(e)
       } else {
         await new Promise<void>((resolve) => setTimeout(resolve, duration * 1000))
-        if (phase !== 'press') action?.(e)
+        if (phase !== 'press') {
+          if (tapOpts.audio) emitSfx(tapOpts.audio, tapOpts.audioOpts)
+          action?.(e)
+        }
+        if (tapOpts.postAudio) emitSfx(tapOpts.postAudio)
       }
 
       playing.value = false

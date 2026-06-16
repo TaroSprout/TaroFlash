@@ -152,7 +152,7 @@ async function onSave() {
         icon-only
         size="base"
         play-on-tap
-        :sfx="{ click: 'ui.snappy_button_5' }"
+        :sfx="{ press: 'ui.snappy_button_5' }"
         @click="emit('cancel')"
       >
         {{ t('audio-reader.add-card-modal.back-button') }}
@@ -211,7 +211,7 @@ async function onSave() {
         :disabled="!can_save || saving"
         play-on-tap
         :tap-animate="false"
-        :sfx="{ click: 'ui.select' }"
+        :sfx="{ press: 'ui.select' }"
         @click="onSave"
       >
         {{ t('audio-reader.add-card-modal.save-button') }}

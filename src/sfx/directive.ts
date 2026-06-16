@@ -1,15 +1,18 @@
-// sfx/directive.ts
 import type { Directive, DirectiveBinding } from 'vue'
 import { emitSfx, emitHoverSfx } from './bus'
 import { type NamespacedAudioKey } from './config'
 
 export type SfxOptions = {
-  click?: NamespacedAudioKey
+  // Routed through staged-tap in button.vue — not handled by this directive.
+  press?: NamespacedAudioKey
+  tap_pre?: NamespacedAudioKey
+  tap_post?: NamespacedAudioKey
+  press_blocking?: boolean
+  // Handled by this directive.
   hover?: NamespacedAudioKey
   focus?: NamespacedAudioKey
   blur?: NamespacedAudioKey
   debounce?: number
-  click_blocking?: boolean
 }
 
 type SfxBindingValue = NamespacedAudioKey | SfxOptions
@@ -58,18 +61,6 @@ function _attach(el: HTMLElement, binding: DirectiveBinding<SfxBindingValue>) {
   const cleanups: Cleanup[] = []
 
   cleanups.push(
-    _add(el, 'click', (e) => {
-      if (!state.cfg.click) return
-      if (state.mods.prevent) e.preventDefault()
-      if (state.mods.stop) e.stopPropagation()
-      emitSfx(state.cfg.click, {
-        debounce: state.cfg.debounce,
-        blocking: state.cfg.click_blocking
-      })
-    })
-  )
-
-  cleanups.push(
     _add(el, 'pointerenter', (e) => {
       if (!state.cfg.hover) return
       if ((e as PointerEvent).pointerType !== 'mouse') return
@@ -105,17 +96,12 @@ function _parseBinding(
   mods: Partial<Record<string, boolean>>
 ): SfxOptions {
   if (typeof binding === 'string') {
-    // binding is an audio key
-    let c: SfxOptions = {}
-
-    // add audio key to all options specified in modifiers
-    if (mods.click) c.click = binding
+    const c: SfxOptions = {}
     if (mods.hover) c.hover = binding
     if (mods.focus) c.focus = binding
     if (mods.blur) c.blur = binding
-
-    return c // return new SfxOptions object
+    return c
   }
 
-  return binding // binding is an SfxOptions object
+  return binding
 }
