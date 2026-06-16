@@ -22,6 +22,7 @@ import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import MobileDock from '@/components/mobile-dock/mobile-dock.vue'
 import { useMobileDock } from '@/components/mobile-dock/use-mobile-dock'
 import AudioToolbar from '@/views/audio-reader/lesson/audio-toolbar.vue'
+import ResumeFollowButton from '@/views/audio-reader/lesson/resume-follow-button.vue'
 import TranscriptView from '@/views/audio-reader/transcript/index.vue'
 import TermCard from '@/views/audio-reader/term-popover/term-card.vue'
 
@@ -94,15 +95,11 @@ const show_term = computed(() => popover_open.value && !!selection.value)
 const show_term_in_dock = computed(() => show_term.value && !is_desktop.value)
 const show_term_in_sidebar = computed(() => show_term.value && is_desktop.value)
 
-// The transcript only drops follow when the page (mobile) scroller is taken over
-// by hand, so this stays false on desktop and the dock control never shows there.
+// The transcript drops follow whenever the member scrolls by hand, so this turns
+// true on both breakpoints — the dock control shows below xl, the floating one at
+// xl+.
 const show_follow_button = computed(() => transcript.value?.following === false)
-
-// Point the control the way back to the playing word — up when it's scrolled
-// above the member, down when it's below.
-const follow_icon = computed(() =>
-  transcript.value?.follow_direction === 'up' ? 'arcade-stick-up' : 'arcade-stick-down'
-)
+const follow_direction = computed(() => transcript.value?.follow_direction ?? 'down')
 
 // Veil the reader until the transcript is loaded and the chapter has been
 // positioned at its resume offset, so the resume seek lands behind the veil and
@@ -299,19 +296,13 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
       <mobile-dock>
         <template #above>
           <transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
-            <ui-button
+            <resume-follow-button
               v-if="show_follow_button"
               data-testid="lesson-view__resume-follow"
-              data-theme="brown-300"
-              :icon-left="follow_icon"
-              icon-only
-              rounded-full
-              size="lg"
-              class="pointer-events-auto shadow-sm"
-              @click="resumeFollow"
-            >
-              {{ t('lesson-view.resume-follow-button') }}
-            </ui-button>
+              :direction="follow_direction"
+              class="pointer-events-auto"
+              @resume="resumeFollow"
+            />
           </transition>
         </template>
 
@@ -363,6 +354,16 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
       />
 
       <scroll-bar class="fixed top-(--nav-height) right-6 bottom-6" target="html" />
+
+      <transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
+        <resume-follow-button
+          v-if="show_follow_button"
+          data-testid="lesson-view__resume-follow-desktop"
+          :direction="follow_direction"
+          class="fixed right-16 bottom-6 z-30 hidden xl:block"
+          @resume="resumeFollow"
+        />
+      </transition>
     </div>
   </section>
 </template>

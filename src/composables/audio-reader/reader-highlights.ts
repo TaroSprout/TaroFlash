@@ -168,9 +168,8 @@ export function useReaderHighlights(
   const touch_point = ref<{ x: number; y: number } | null>(null)
 
   // Whether the active-word follow is live. The member taking the scroll over by
-  // hand (a touch pan on mobile, where the page itself scrolls) switches it off so
-  // their position holds; the host's resume control turns it back on. Desktop —
-  // where a bounded column scrolls, not the window — always follows.
+  // hand (a wheel/trackpad on desktop, a touch pan on mobile) switches it off so
+  // their position holds; the host's resume control turns it back on.
   const following = ref(true)
 
   // Where the playing word sits relative to the member while follow is off: 'up'
@@ -206,6 +205,7 @@ export function useReaderHighlights(
     window.addEventListener('click', swallowGestureClick, true)
     window.addEventListener('pointerdown', disarmGestureClick, true)
     window.addEventListener('scroll', trackFollowDirection, { passive: true })
+    window.addEventListener('wheel', disableFollow, { passive: true })
   })
 
   onBeforeUnmount(() => {
@@ -214,6 +214,7 @@ export function useReaderHighlights(
     window.removeEventListener('click', swallowGestureClick, true)
     window.removeEventListener('pointerdown', disarmGestureClick, true)
     window.removeEventListener('scroll', trackFollowDirection)
+    window.removeEventListener('wheel', disableFollow)
     cancelLongPress()
     if (follow_timer !== null) clearTimeout(follow_timer)
   })
@@ -396,16 +397,14 @@ export function useReaderHighlights(
     }, 100)
   }
 
-  // The member started scrolling by hand: let the follow go and kill the live
-  // tween so it stops fighting them. Mobile only — keyed off the window being the
-  // real scroller; the desktop column keeps following. No-op once already off.
+  // The member started scrolling by hand — a wheel/trackpad on desktop or a touch
+  // pan on mobile: let the follow go and kill the live tween so it stops fighting
+  // them. No-op once already off.
   function disableFollow() {
     if (!following.value) return
-    const scroller = scrollParentOf(content.value)
-    if (scroller !== window) return
 
     following.value = false
-    cancelScroll(scroller)
+    cancelScroll(scrollParentOf(content.value))
     updateFollowDirection()
   }
 
