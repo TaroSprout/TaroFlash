@@ -8,8 +8,9 @@ import { useLessonReader } from '@/composables/audio-reader/lesson-reader'
 import { useReaderProgress } from '@/composables/audio-reader/reader-progress'
 import { useCollectionEditModal } from '@/composables/audio-reader/collection-edit-modal'
 import { useAnimatedHeight } from '@/composables/ui/animated-height'
+import { useMatchMedia } from '@/composables/ui/media-query'
 import { scrollClearOf } from '@/utils/animations/transcript-scroll'
-import { fadeLeave } from '@/utils/animations/fade'
+import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import {
   footerSwapBeforeLeave,
   footerSwapEnter,
@@ -18,6 +19,8 @@ import {
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
+import MobileDock from '@/components/mobile-dock/mobile-dock.vue'
+import { useMobileDock } from '@/components/mobile-dock/use-mobile-dock'
 import AudioToolbar from '@/views/audio-reader/lesson/audio-toolbar.vue'
 import TranscriptView from '@/views/audio-reader/transcript/index.vue'
 import TermCard from '@/views/audio-reader/term-popover/term-card.vue'
@@ -52,7 +55,9 @@ const { restored } = useReaderProgress(collection_id, lesson_id, player)
 
 const { data: lessons_data } = useLessonsByCollectionQuery(collection_id)
 
-const footer_bar = useTemplateRef<HTMLElement>('footer_bar')
+const { el: dock_el } = useMobileDock()
+const is_desktop = useMatchMedia('w>=xl')
+
 const footer_swap = useTemplateRef<HTMLElement>('footer_swap')
 const footer_term = useTemplateRef<HTMLElement>('footer_term')
 const footer_toolbar = useTemplateRef<HTMLElement>('footer_toolbar')
@@ -76,7 +81,12 @@ const chapter_of = computed(() => ({
   total: chapters.value.length
 }))
 
-const show_term_in_footer = computed(() => popover_open.value && !!selection.value)
+const show_term = computed(() => popover_open.value && !!selection.value)
+
+// The term card lives in the mobile dock below xl and in the desktop sidebar at
+// xl+. Gate by viewport so only one term-card mounts — two would double-fetch.
+const show_term_in_dock = computed(() => show_term.value && !is_desktop.value)
+const show_term_in_sidebar = computed(() => show_term.value && is_desktop.value)
 
 // Veil the reader until the transcript is loaded and the chapter has been
 // positioned at its resume offset, so the resume seek lands behind the veil and
@@ -84,11 +94,11 @@ const show_term_in_footer = computed(() => popover_open.value && !!selection.val
 const ready = computed(() => !!lesson.value && restored.value)
 
 onMounted(() => {
-  if (!footer_bar.value) return
+  if (!dock_el.value) return
   footer_resize = new ResizeObserver(() => {
-    if (footer_bar.value) footer_height.value = footer_bar.value.offsetHeight
+    if (dock_el.value) footer_height.value = dock_el.value.offsetHeight
   })
-  footer_resize.observe(footer_bar.value)
+  footer_resize.observe(dock_el.value)
 })
 
 onBeforeUnmount(() => footer_resize?.disconnect())
@@ -124,17 +134,17 @@ function onFooterAfterEnter() {
   swapping = false
 }
 
-// The word was scrolled clear of the footer when the term opened, but the footer
+// The word was scrolled clear of the dock when the term opened, but the dock
 // grows once the definition loads and can re-cover it — lift it back above the
-// settled footer.
+// settled dock.
 function reclearSelection() {
   const sel = selection.value
-  if (!show_term_in_footer.value || !sel || !footer_bar.value) return
+  if (!show_term_in_dock.value || !sel || !dock_el.value) return
 
   const word = document.querySelector<HTMLElement>(`[data-word-index="${sel.word_index}"]`)
   if (!word) return
 
-  scrollClearOf(window, word, footer_bar.value.getBoundingClientRect().top - FOOTER_CLEARANCE)
+  scrollClearOf(window, word, dock_el.value.getBoundingClientRect().top - FOOTER_CLEARANCE)
 }
 
 // Track whichever pane is mounted: the term card swelling as its definition loads,
@@ -162,7 +172,7 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
 
     <aside
       data-testid="lesson-view__sidebar"
-      class="hidden shrink-0 flex-col gap-4 xl:flex xl:sticky xl:top-(--nav-height) xl:h-[calc(100dvh-var(--nav-height))] xl:w-56 xl:self-start"
+      class="hidden shrink-0 flex-col gap-4 xl:flex xl:sticky xl:top-(--nav-height) xl:h-[calc(100dvh-var(--nav-height))] xl:w-80 xl:self-start"
     >
       <header data-testid="lesson-view__header" class="flex items-center justify-between gap-4">
         <div data-testid="lesson-view__heading" class="flex flex-col gap-1">
@@ -189,22 +199,45 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
         </ui-button>
       </header>
 
-      <nav
-        data-testid="lesson-view__chapters"
-        class="flex flex-1 gap-2 overflow-x-auto pb-2 xl:flex-col xl:overflow-x-visible xl:overflow-y-auto xl:pb-0"
-      >
-        <button
-          v-for="chapter in chapters"
-          :key="chapter.id"
-          data-testid="lesson-view__chapter"
-          :data-active="chapter.id === lesson_id"
-          type="button"
-          class="shrink-0 cursor-pointer rounded-7 bg-brown-200 px-4 py-2 text-left text-base text-brown-700 data-[active=true]:bg-blue-500 data-[active=true]:text-white xl:shrink dark:bg-grey-700 dark:text-brown-200 dark:data-[active=true]:bg-blue-650"
-          @click="goToChapter(chapter.id)"
+      <transition :css="false" mode="out-in" @enter="fadeEnter" @leave="fadeLeave">
+        <div
+          v-if="show_term_in_sidebar && selection"
+          key="term"
+          data-testid="lesson-view__sidebar-term"
+          class="flex-1 overflow-y-auto"
         >
-          <span class="line-clamp-1">{{ chapter.title }}</span>
-        </button>
-      </nav>
+          <term-card
+            :term="selection.term"
+            :sentence="selection.sentence"
+            :target_lang="target_lang"
+            :existing_decks="selected_term_decks"
+            show_back
+            @back="closeTerm"
+            @close="closeTerm"
+            @play-from-here="playFromHere"
+            @play-word="playClip"
+          />
+        </div>
+
+        <nav
+          v-else
+          key="chapters"
+          data-testid="lesson-view__chapters"
+          class="flex flex-1 gap-2 overflow-x-auto pb-2 xl:flex-col xl:overflow-x-visible xl:overflow-y-auto xl:pb-0"
+        >
+          <button
+            v-for="chapter in chapters"
+            :key="chapter.id"
+            data-testid="lesson-view__chapter"
+            :data-active="chapter.id === lesson_id"
+            type="button"
+            class="shrink-0 cursor-pointer rounded-7 bg-brown-200 px-4 py-2 text-left text-base text-brown-700 data-[active=true]:bg-blue-500 data-[active=true]:text-white xl:shrink dark:bg-grey-700 dark:text-brown-200 dark:data-[active=true]:bg-blue-650"
+            @click="goToChapter(chapter.id)"
+          >
+            <span class="line-clamp-1">{{ chapter.title }}</span>
+          </button>
+        </nav>
+      </transition>
 
       <audio-toolbar
         data-testid="lesson-view__sidebar-toolbar"
@@ -240,68 +273,53 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
         />
       </div>
 
-      <!-- Mounted at body level + translateZ(0) so iOS standalone pins it to its own
-           compositor layer; without both, fixed elements lag during scroll. -->
-      <teleport to="[app-footer-container]">
-        <footer
-          ref="footer_bar"
-          data-testid="lesson-view__bar"
-          :class="{ 'xl:hidden': !show_term_in_footer }"
-          class="fixed bottom-0 left-0 right-0 z-30 rounded-t-6 bg-brown-300 p-5 pb-2 transform-[translateZ(0)] dark:bg-stone-900 sm:bottom-3 sm:left-auto sm:right-3 sm:w-96 sm:rounded-6 sm:pb-5"
-        >
-          <div ref="footer_swap" data-testid="lesson-view__footer-swap" class="relative w-full">
-            <transition
-              :css="false"
-              @before-leave="onFooterBeforeLeave"
-              @enter="onFooterEnter"
-              @after-enter="onFooterAfterEnter"
-              @leave="footerSwapLeave"
+      <mobile-dock>
+        <div ref="footer_swap" data-testid="lesson-view__dock-swap" class="relative w-full">
+          <transition
+            :css="false"
+            @before-leave="onFooterBeforeLeave"
+            @enter="onFooterEnter"
+            @after-enter="onFooterAfterEnter"
+            @leave="footerSwapLeave"
+          >
+            <div
+              v-if="show_term_in_dock && selection"
+              key="term"
+              ref="footer_term"
+              data-testid="lesson-view__dock-term"
+              class="pb-2"
             >
-              <div
-                v-if="show_term_in_footer && selection"
-                key="term"
-                ref="footer_term"
-                data-testid="lesson-view__footer-term"
-                class="pb-2"
-              >
-                <term-card
-                  :term="selection.term"
-                  :sentence="selection.sentence"
-                  :target_lang="target_lang"
-                  :existing_decks="selected_term_decks"
-                  show_back
-                  @back="closeTerm"
-                  @close="closeTerm"
-                  @play-from-here="playFromHere"
-                  @play-word="playClip"
-                />
-              </div>
+              <term-card
+                :term="selection.term"
+                :sentence="selection.sentence"
+                :target_lang="target_lang"
+                :existing_decks="selected_term_decks"
+                show_back
+                @back="closeTerm"
+                @close="closeTerm"
+                @play-from-here="playFromHere"
+                @play-word="playClip"
+              />
+            </div>
 
-              <div
-                v-else
-                key="toolbar"
-                ref="footer_toolbar"
-                data-testid="lesson-view__footer-toolbar"
-                class="xl:hidden"
-              >
-                <audio-toolbar
-                  :player="player"
-                  :chapters="chapters"
-                  :current-lesson-id="lesson_id"
-                  @select-chapter="goToChapter"
-                />
-              </div>
-            </transition>
-          </div>
+            <div v-else key="toolbar" ref="footer_toolbar" data-testid="lesson-view__dock-toolbar">
+              <audio-toolbar
+                :player="player"
+                :chapters="chapters"
+                :current-lesson-id="lesson_id"
+                @select-chapter="goToChapter"
+              />
+            </div>
+          </transition>
+        </div>
+      </mobile-dock>
 
-          <audio
-            ref="audio"
-            data-testid="lesson-view__audio"
-            :src="audio_url ?? undefined"
-            class="hidden"
-          />
-        </footer>
-      </teleport>
+      <audio
+        ref="audio"
+        data-testid="lesson-view__audio"
+        :src="audio_url ?? undefined"
+        class="hidden"
+      />
 
       <scroll-bar class="fixed top-(--nav-height) right-6 bottom-6" target="html" />
     </div>
