@@ -401,6 +401,20 @@ describe('AddCardPanel', () => {
       expect(errorMock).toHaveBeenCalled()
     })
 
+    test('forwards a provided note prop into mutateAsync [obligation]', async () => {
+      decksDataRef.value = TEST_DECKS
+      const wrapper = mountPanel({ front: 'Dog', back: '犬', note: 'some context' })
+      await flushPromises()
+      await selectDeck(wrapper, TEST_DECKS[0].id)
+
+      await saveButton(wrapper).trigger('click')
+      await flushPromises()
+
+      expect(mutateAsyncMock).toHaveBeenCalledWith(
+        expect.objectContaining({ note: 'some context' })
+      )
+    })
+
     test('persists edits made on the back face before saving', async () => {
       decksDataRef.value = TEST_DECKS
       const wrapper = mountPanel({ front: 'Dog', back: '犬' })

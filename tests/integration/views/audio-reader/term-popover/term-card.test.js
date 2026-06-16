@@ -70,14 +70,15 @@ const AddCardControlStub = {
 // Stub the panel so we can drive its saved/cancel events without real save logic.
 const AddCardPanelStub = {
   name: 'AddCardPanel',
-  props: ['front', 'back', 'deck_id'],
+  props: ['front', 'back', 'note', 'deck_id'],
   emits: ['saved', 'cancel'],
   setup(props) {
     return () =>
       h('div', {
         'data-testid': 'add-card-panel-stub',
         'data-front': props.front,
-        'data-back': props.back
+        'data-back': props.back,
+        'data-note': props.note
       })
   }
 }
@@ -388,6 +389,18 @@ describe('TermCard', () => {
       // Face is restored; panel is gone (same returnToTermCard behaviour as saved)
       expect(wrapper.find('[data-testid="add-card-panel-stub"]').exists()).toBe(false)
       expect(wrapper.find('[data-testid="term-card__face"]').exists()).toBe(true)
+    })
+
+    test('add-card-panel receives description as note from the translation result [obligation]', async () => {
+      mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
+      const wrapper = mountCard({ term: '猫', sentence: 'test' })
+      await flushPromises()
+
+      wrapper.findComponent(AddCardControlStub).vm.$emit('add', 7)
+      await flushPromises()
+
+      const panel = wrapper.find('[data-testid="add-card-panel-stub"]')
+      expect(panel.attributes('data-note')).toBe(TRANSLATION_RESULT.description)
     })
 
     test('onAddCard does nothing when result is null (no translation yet) [obligation]', async () => {

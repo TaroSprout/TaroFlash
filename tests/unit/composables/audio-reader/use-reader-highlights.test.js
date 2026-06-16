@@ -1,13 +1,21 @@
 import { describe, test, expect, afterEach, beforeEach, vi } from 'vite-plus/test'
 import { createApp, ref, nextTick } from 'vue'
 
-const { mockMoveReaderCursor, mockHideReaderCursor, mockEmitSfx, mockScrollWordIntoDeadzone } =
-  vi.hoisted(() => ({
-    mockMoveReaderCursor: vi.fn(),
-    mockHideReaderCursor: vi.fn(),
-    mockEmitSfx: vi.fn(),
-    mockScrollWordIntoDeadzone: vi.fn()
-  }))
+const {
+  mockMoveReaderCursor,
+  mockHideReaderCursor,
+  mockEmitSfx,
+  mockScrollWordIntoDeadzone,
+  mockCancelScroll,
+  mockScrollLineIntoView
+} = vi.hoisted(() => ({
+  mockMoveReaderCursor: vi.fn(),
+  mockHideReaderCursor: vi.fn(),
+  mockEmitSfx: vi.fn(),
+  mockScrollWordIntoDeadzone: vi.fn(),
+  mockCancelScroll: vi.fn(),
+  mockScrollLineIntoView: vi.fn()
+}))
 
 vi.mock('@/utils/animations/reader-cursor', () => ({
   moveReaderCursor: mockMoveReaderCursor,
@@ -15,8 +23,8 @@ vi.mock('@/utils/animations/reader-cursor', () => ({
 }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
 vi.mock('@/utils/animations/transcript-scroll', () => ({
-  cancelScroll: vi.fn(),
-  scrollLineIntoView: vi.fn(),
+  cancelScroll: mockCancelScroll,
+  scrollLineIntoView: mockScrollLineIntoView,
   scrollWordIntoDeadzone: mockScrollWordIntoDeadzone
 }))
 // usePlayOnTap mock must not use `ref` in the factory — vi.mock hoists before imports.
@@ -94,7 +102,12 @@ function stubElementFromPoint(returnFn) {
  * component instance, so words appended to contentEl are reachable via the
  * internal `content.value?.querySelector(...)` calls inside the composable.
  */
-function withHighlights({ active_word = ref(-1), popover_open = ref(false), matchRangeAt } = {}) {
+function withHighlights({
+  active_word = ref(-1),
+  popover_open = ref(false),
+  matchRangeAt,
+  is_playing = ref(false)
+} = {}) {
   const { h: vueH, defineComponent } = require('vue')
   let result
 
@@ -113,7 +126,8 @@ function withHighlights({ active_word = ref(-1), popover_open = ref(false), matc
         onSelect,
         () => popover_open.value,
         onDismiss,
-        matchRangeAt
+        matchRangeAt,
+        () => is_playing.value
       )
       return () =>
         vueH('div', {}, [
@@ -1028,6 +1042,283 @@ describe('useReaderHighlights', () => {
 
       // hideReaderCursor must have been called for pill1 (index 1 ≥ new length 1).
       expect(mockHideReaderCursor).toHaveBeenCalledWith(pill1)
+    })
+  })
+
+  // ── Follow toggle [obligation] ────────────────────────────────────────────────
+
+  describe('follow toggle — following flag', () => {
+    test('following starts true [obligation]', () => {
+      const { result } = withHighlights()
+      expect(result.following.value).toBe(true)
+    })
+
+    describe('with fake timers', () => {
+      beforeEach(() => vi.useFakeTimers())
+      afterEach(() => vi.useRealTimers())
+
+      test('followActiveWord is a no-op while following is false [obligation]', async () => {
+        const active_word = ref(0)
+        const { result, contentEl } = withHighlights({ active_word })
+        addWord(contentEl, 0)
+
+        // Disable follow so the composable gate fires.
+        result.following.value = false
+
+        active_word.value = 0
+        await nextTick()
+        vi.advanceTimersByTime(200)
+
+        expect(mockScrollWordIntoDeadzone).not.toHaveBeenCalled()
+      })
+
+      // A debounced scroll queued *before* following goes false must NOT execute once
+      // the flag flips — the gate is checked at execution time inside the setTimeout.
+      test('a queued follow scroll is aborted when following flips false before timeout fires [obligation]', async () => {
+        const active_word = ref(0)
+        const { result, contentEl } = withHighlights({ active_word })
+        addWord(contentEl, 0)
+
+        // Trigger the debounce — following is still true here.
+        active_word.value = 0
+        await nextTick()
+
+        // Flip following off *before* the 100ms debounce fires.
+        result.following.value = false
+
+        vi.advanceTimersByTime(200)
+
+        // The gate inside the setTimeout must have stopped the scroll.
+        expect(mockScrollWordIntoDeadzone).not.toHaveBeenCalled()
+      })
+    })
+  })
+
+  describe('follow toggle — disableFollow trigger paths', () => {
+    test('touch drift past TAP_SLOP calls disableFollow — sets following false and cancels scroll [obligation]', async () => {
+      const { result, contentEl } = withHighlights()
+      const wordEl = addWord(contentEl, 1)
+      stubElementFromPoint(() => wordEl)
+
+      expect(result.following.value).toBe(true)
+
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'touch', clientX: 10, clientY: 10 })
+      )
+      // Drift well past the 10px slop.
+      result.onPointerMove(
+        new PointerEvent('pointermove', { pointerType: 'touch', clientX: 10, clientY: 50 })
+      )
+      await nextTick()
+
+      expect(result.following.value).toBe(false)
+      expect(mockCancelScroll).toHaveBeenCalledTimes(1)
+    })
+
+    test('onPointerCancel (without range-select armed) calls disableFollow — sets following false [obligation]', async () => {
+      const { result, contentEl } = withHighlights()
+      const wordEl = addWord(contentEl, 2)
+      stubElementFromPoint(() => wordEl)
+
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'touch', clientX: 10, clientY: 10 })
+      )
+      result.onPointerCancel(new PointerEvent('pointercancel', { pointerType: 'touch' }))
+      await nextTick()
+
+      expect(result.following.value).toBe(false)
+    })
+
+    describe('with fake timers', () => {
+      beforeEach(() => vi.useFakeTimers())
+      afterEach(() => vi.useRealTimers())
+
+      test('onPointerCancel during an armed range-select does NOT disable follow [obligation]', async () => {
+        const { result, contentEl } = withHighlights()
+        const wordEl = addWord(contentEl, 2)
+        stubElementFromPoint(() => wordEl)
+
+        result.onPointerDown(
+          new PointerEvent('pointerdown', { pointerType: 'touch', clientX: 10, clientY: 10 })
+        )
+        // Arm range-select (touch_selecting = true).
+        vi.advanceTimersByTime(410)
+        await nextTick()
+
+        // Cancel while range-select is armed — must NOT disable follow.
+        result.onPointerCancel(new PointerEvent('pointercancel', { pointerType: 'touch' }))
+        await nextTick()
+
+        expect(result.following.value).toBe(true)
+      })
+    })
+
+    test('wheel event disables follow [obligation]', async () => {
+      const { result } = withHighlights()
+      expect(result.following.value).toBe(true)
+
+      window.dispatchEvent(new Event('wheel'))
+      await nextTick()
+
+      expect(result.following.value).toBe(false)
+      expect(mockCancelScroll).toHaveBeenCalledTimes(1)
+    })
+
+    test('disableFollow is idempotent — second call while already false is a no-op [obligation]', async () => {
+      const { result, contentEl } = withHighlights()
+      const wordEl = addWord(contentEl, 1)
+      stubElementFromPoint(() => wordEl)
+
+      // First disable via touch drift.
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'touch', clientX: 10, clientY: 10 })
+      )
+      result.onPointerMove(
+        new PointerEvent('pointermove', { pointerType: 'touch', clientX: 10, clientY: 50 })
+      )
+      await nextTick()
+      expect(result.following.value).toBe(false)
+      const cancelCallCount = mockCancelScroll.mock.calls.length
+
+      // Second disable — cancelScroll must NOT be called again.
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'touch', clientX: 10, clientY: 10 })
+      )
+      result.onPointerMove(
+        new PointerEvent('pointermove', { pointerType: 'touch', clientX: 10, clientY: 50 })
+      )
+      await nextTick()
+
+      expect(mockCancelScroll.mock.calls.length).toBe(cancelCallCount)
+    })
+  })
+
+  describe('resumeFollow [obligation]', () => {
+    test('resumeFollow sets following back to true [obligation]', async () => {
+      const { result, contentEl } = withHighlights()
+      const wordEl = addWord(contentEl, 1)
+      stubElementFromPoint(() => wordEl)
+
+      // Disable first via touch drift.
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'touch', clientX: 10, clientY: 10 })
+      )
+      result.onPointerMove(
+        new PointerEvent('pointermove', { pointerType: 'touch', clientX: 10, clientY: 50 })
+      )
+      await nextTick()
+      expect(result.following.value).toBe(false)
+
+      result.resumeFollow()
+
+      expect(result.following.value).toBe(true)
+    })
+
+    test('resumeFollow calls scrollLineIntoView with animate=true when playing [obligation]', async () => {
+      const active_word = ref(0)
+      const is_playing = ref(true)
+      const { result, contentEl } = withHighlights({ active_word, is_playing })
+      addWord(contentEl, 0)
+
+      // Disable follow first.
+      result.following.value = false
+      mockScrollLineIntoView.mockClear()
+
+      result.resumeFollow()
+
+      expect(mockScrollLineIntoView).toHaveBeenCalledTimes(1)
+      // Third arg: animate (true while playing).
+      const [, , animate] = mockScrollLineIntoView.mock.calls[0]
+      expect(animate).toBe(true)
+    })
+
+    test('resumeFollow calls scrollLineIntoView with animate=false when paused [obligation]', async () => {
+      const active_word = ref(0)
+      const is_playing = ref(false)
+      const { result, contentEl } = withHighlights({ active_word, is_playing })
+      addWord(contentEl, 0)
+
+      result.following.value = false
+      mockScrollLineIntoView.mockClear()
+
+      result.resumeFollow()
+
+      expect(mockScrollLineIntoView).toHaveBeenCalledTimes(1)
+      const [, , animate] = mockScrollLineIntoView.mock.calls[0]
+      expect(animate).toBe(false)
+    })
+  })
+
+  describe('follow_direction [obligation]', () => {
+    test('follow_direction is "up" when the active word centre is above the viewport centre [obligation]', async () => {
+      const active_word = ref(0)
+      const { result, contentEl } = withHighlights({ active_word })
+      const word = addWord(contentEl, 0)
+      // Word top=10, bottom=20 → centre=15; viewport centre defaults to
+      // window.innerHeight/2 in jsdom (typically 768/2=384). 15 < 384 → 'up'.
+      word.getBoundingClientRect = () => new DOMRect(0, 10, 40, 10)
+
+      // Disable follow so follow_direction is updated.
+      result.following.value = false
+
+      // Simulate a window scroll event to trigger trackFollowDirection.
+      window.dispatchEvent(new Event('scroll'))
+      await nextTick()
+
+      expect(result.follow_direction.value).toBe('up')
+    })
+
+    test('follow_direction is "down" when the active word centre is below the viewport centre [obligation]', async () => {
+      const active_word = ref(0)
+      const { result, contentEl } = withHighlights({ active_word })
+      const word = addWord(contentEl, 0)
+      // Viewport centre in jsdom ≈ 384. Word top=800, bottom=820 → centre=810 > 384 → 'down'.
+      word.getBoundingClientRect = () => new DOMRect(0, 800, 40, 20)
+
+      result.following.value = false
+
+      window.dispatchEvent(new Event('scroll'))
+      await nextTick()
+
+      expect(result.follow_direction.value).toBe('down')
+    })
+
+    test('scroll event does NOT update follow_direction while following is true [obligation]', async () => {
+      const active_word = ref(0)
+      const { result, contentEl } = withHighlights({ active_word })
+      const word = addWord(contentEl, 0)
+      word.getBoundingClientRect = () => new DOMRect(0, 10, 40, 10)
+
+      // following is true by default — scroll must not change direction.
+      const initial = result.follow_direction.value
+
+      window.dispatchEvent(new Event('scroll'))
+      await nextTick()
+
+      expect(result.follow_direction.value).toBe(initial)
+    })
+
+    test('follow_direction is recomputed when the active word advances while follow is off [obligation]', async () => {
+      const active_word = ref(0)
+      const { result, contentEl } = withHighlights({ active_word })
+      const w0 = addWord(contentEl, 0)
+      const w1 = addWord(contentEl, 1)
+
+      // w0 above centre → 'up'.
+      w0.getBoundingClientRect = () => new DOMRect(0, 10, 40, 10)
+      // w1 below centre → 'down'.
+      w1.getBoundingClientRect = () => new DOMRect(0, 800, 40, 20)
+
+      result.following.value = false
+      window.dispatchEvent(new Event('scroll'))
+      await nextTick()
+      expect(result.follow_direction.value).toBe('up')
+
+      // Advance active_word — watcher fires trackFollowDirection.
+      active_word.value = 1
+      await nextTick()
+
+      expect(result.follow_direction.value).toBe('down')
     })
   })
 })

@@ -81,4 +81,53 @@ describe('insertCardAt', () => {
       })
     ).rejects.toBe(err)
   })
+
+  test('forwards note as p_note when provided [obligation]', async () => {
+    rpcMock.mockResolvedValueOnce({ data: [{ id: 1, rank: 1000 }], error: null })
+
+    await insertCardAt({
+      deck_id: 10,
+      anchor_id: null,
+      side: null,
+      front_text: 'Q',
+      back_text: 'A',
+      note: 'contextual note'
+    })
+
+    const [, args] = rpcMock.mock.calls[0]
+    expect(args.p_note).toBe('contextual note')
+  })
+
+  test('omits p_note (undefined, not null) when note is absent [obligation]', async () => {
+    rpcMock.mockResolvedValueOnce({ data: [{ id: 1, rank: 1000 }], error: null })
+
+    await insertCardAt({
+      deck_id: 10,
+      anchor_id: null,
+      side: null,
+      front_text: 'Q',
+      back_text: 'A'
+    })
+
+    const [, args] = rpcMock.mock.calls[0]
+    // note is absent → params.note ?? undefined → key should not be set at all (or be undefined)
+    expect(args.p_note).toBeUndefined()
+  })
+
+  test('omits p_note (undefined) when note is explicitly null [obligation]', async () => {
+    rpcMock.mockResolvedValueOnce({ data: [{ id: 1, rank: 1000 }], error: null })
+
+    await insertCardAt({
+      deck_id: 10,
+      anchor_id: null,
+      side: null,
+      front_text: 'Q',
+      back_text: 'A',
+      note: null
+    })
+
+    const [, args] = rpcMock.mock.calls[0]
+    // null ?? undefined → undefined
+    expect(args.p_note).toBeUndefined()
+  })
 })

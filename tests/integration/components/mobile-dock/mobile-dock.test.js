@@ -9,6 +9,7 @@ import MobileDock from '@/components/mobile-dock/mobile-dock.vue'
 // mobile-dock teleports its slot into [mobile-dock-content]. Create that target
 // before each test so Teleport has a valid destination.
 let content_target
+let above_target
 const wrappers = []
 
 function mountFill(slots = {}) {
@@ -29,6 +30,11 @@ beforeEach(() => {
   content_target = document.createElement('div')
   content_target.setAttribute('mobile-dock-content', '')
   document.body.appendChild(content_target)
+
+  // Create the above teleport target (rendered by mobile-dock-host).
+  above_target = document.createElement('div')
+  above_target.setAttribute('mobile-dock-above', '')
+  document.body.appendChild(above_target)
 })
 
 afterEach(() => {
@@ -100,6 +106,35 @@ describe('MobileDock', () => {
       expect(para).not.toBeNull()
       // Confirm it lives inside the dock content target, not the wrapper.
       expect(content_target.contains(para)).toBe(true)
+    })
+  })
+
+  describe('above slot [obligation]', () => {
+    test('above slot content is teleported into [mobile-dock-above] when provided [obligation]', () => {
+      const AboveContent = defineComponent({
+        setup() {
+          return () => h('div', { 'data-testid': 'above-slot-content' }, 'above')
+        }
+      })
+
+      mountFill({
+        default: () => h('span', 'default'),
+        above: () => h(AboveContent)
+      })
+
+      const el = document.querySelector('[data-testid="above-slot-content"]')
+      expect(el).not.toBeNull()
+      expect(above_target.contains(el)).toBe(true)
+    })
+
+    test('no above teleport is rendered when the above slot is not provided [obligation]', () => {
+      // Only provide the default slot — backward-compat with existing single-slot docks.
+      mountFill({
+        default: () => h('span', { 'data-testid': 'default-only' }, 'content')
+      })
+
+      // The above target should be empty — no content was teleported into it.
+      expect(above_target.children.length).toBe(0)
     })
   })
 })
