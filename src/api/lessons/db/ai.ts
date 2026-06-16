@@ -6,6 +6,7 @@ export type TranslationResult = {
   reading: string
   pos: string
   description: string
+  difficulty: number
 }
 
 export type TranslateTermArgs = {

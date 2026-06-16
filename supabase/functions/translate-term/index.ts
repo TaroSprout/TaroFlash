@@ -30,6 +30,7 @@ type TranslationResult = {
   reading: string
   pos: string
   description: string
+  difficulty: number
 }
 
 // Structured outputs (Haiku 4.5 supports output_config.format) constrain the
@@ -43,9 +44,10 @@ const RESULT_SCHEMA = {
     translation: { type: 'string' },
     reading: { type: 'string' },
     pos: { type: 'string' },
-    description: { type: 'string' }
+    description: { type: 'string' },
+    difficulty: { type: 'integer' }
   },
-  required: ['translation', 'reading', 'pos', 'description'],
+  required: ['translation', 'reading', 'pos', 'description', 'difficulty'],
   additionalProperties: false
 }
 
@@ -59,7 +61,8 @@ const SYSTEM_PROMPT =
   'translation: a general, reusable definition of the selected text — its most common, generally useful meaning(s), suitable on its own as a flashcard answer studied with no sentence around it. If the selection is only part of a larger word, define the selected characters on their own, not the whole word. ' +
   'reading: phonetic reading of exactly the selection (e.g. pinyin for Chinese, romaji for Japanese); empty string if not applicable. ' +
   'pos: part of speech of the selection as used here (noun, verb, particle, etc.). ' +
-  'description: 1-3 short sentences. If the selection is only part of a larger word in this sentence, begin by naming that larger word (the word itself — do not gloss it). Then call out the specific meaning the selection carries in this sentence, and mention its other common meanings or uses when it has them.'
+  'description: 1-3 short sentences. If the selection is only part of a larger word in this sentence, begin by naming that larger word (the word itself — do not gloss it). Then call out the specific meaning the selection carries in this sentence, and mention its other common meanings or uses when it has them. ' +
+  'difficulty: integer 1-10 rating how advanced this term is for a learner of the target language. 1 = most basic vocabulary taught in the very first lessons; 10 = rare, literary, or highly specialised vocabulary. Base this on how commonly the term appears in everyday language and how early it would typically be introduced in a structured course.'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -91,7 +94,7 @@ Deno.serve(async (req) => {
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 400,
+      max_tokens: 450,
       system: SYSTEM_PROMPT,
       output_config: { format: { type: 'json_schema', schema: RESULT_SCHEMA } },
       messages: [{ role: 'user', content: userPrompt }]
