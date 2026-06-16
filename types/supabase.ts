@@ -698,6 +698,7 @@ export type Database = {
           p_back_text: string
           p_deck_id: number
           p_front_text: string
+          p_note?: string
           p_side: string
         }
         Returns: {
