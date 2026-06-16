@@ -185,6 +185,96 @@ describe('useReaderHighlights', () => {
     })
   })
 
+  describe('mouse drag — fine-pointer ratchet [obligation]', () => {
+    test('onPointerMove emits ui.tap_05 when a new word is entered during active drag', async () => {
+      const { result, contentEl } = withHighlights()
+      const wordEl3 = addWord(contentEl, 3)
+      const wordEl5 = addWord(contentEl, 5)
+
+      stubElementFromPoint(() => wordEl3)
+      // Begin drag to set anchor_index
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'mouse', clientX: 50, clientY: 50 })
+      )
+      mockEmitSfx.mockClear()
+
+      // Move to word 5 — different index → ratchet tick
+      document.elementFromPoint = () => wordEl5
+      result.onPointerMove(
+        new PointerEvent('pointermove', { pointerType: 'mouse', clientX: 100, clientY: 50 })
+      )
+
+      expect(mockEmitSfx).toHaveBeenCalledWith('ui.tap_05')
+    })
+
+    test('onPointerMove does NOT emit ui.tap_05 when pointer stays on the same word', async () => {
+      const { result, contentEl } = withHighlights()
+      const wordEl3 = addWord(contentEl, 3)
+
+      stubElementFromPoint(() => wordEl3)
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'mouse', clientX: 50, clientY: 50 })
+      )
+      mockEmitSfx.mockClear()
+
+      // Move within word 3 — same index → no tick
+      result.onPointerMove(
+        new PointerEvent('pointermove', { pointerType: 'mouse', clientX: 55, clientY: 50 })
+      )
+
+      expect(mockEmitSfx).not.toHaveBeenCalled()
+    })
+
+    test('onPointerMove does NOT emit ui.tap_05 when wordIndexAt returns null (gap)', async () => {
+      const { result, contentEl } = withHighlights()
+      const wordEl3 = addWord(contentEl, 3)
+
+      stubElementFromPoint(() => wordEl3)
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'mouse', clientX: 50, clientY: 50 })
+      )
+      mockEmitSfx.mockClear()
+
+      // Move into a gap (no word element) — null index → no tick
+      document.elementFromPoint = () => contentEl
+      result.onPointerMove(
+        new PointerEvent('pointermove', { pointerType: 'mouse', clientX: 200, clientY: 50 })
+      )
+
+      expect(mockEmitSfx).not.toHaveBeenCalled()
+    })
+
+    test('touch path (extendTouchSelection) emits tap_05 when a word changes but the fine-pointer code path does NOT handle it', async () => {
+      // This is the existing touch ratchet via extendTouchSelection — separate from
+      // the fine-pointer path. Verifies the two paths are distinct: touch goes
+      // through trackTap→extendTouchSelection, not through the fine-pointer branch.
+      const { result, contentEl } = withHighlights()
+      const wordEl1 = addWord(contentEl, 1)
+      const wordEl2 = addWord(contentEl, 2)
+
+      vi.useFakeTimers()
+
+      stubElementFromPoint(() => wordEl1)
+      result.onPointerDown(
+        new PointerEvent('pointerdown', { pointerType: 'touch', clientX: 10, clientY: 10 })
+      )
+      // Arm the long-press range select
+      vi.advanceTimersByTime(410)
+      await nextTick()
+      mockEmitSfx.mockClear()
+
+      // Drag to word 2 via TOUCH pointermove — goes through extendTouchSelection
+      document.elementFromPoint = () => wordEl2
+      result.onPointerMove(
+        new PointerEvent('pointermove', { pointerType: 'touch', clientX: 30, clientY: 10 })
+      )
+
+      expect(mockEmitSfx).toHaveBeenCalledWith('ui.tap_05')
+
+      vi.useRealTimers()
+    })
+  })
+
   describe('mouse drag', () => {
     test('pointerdown on a word sets interaction_range to that word', async () => {
       const { result, contentEl } = withHighlights()
