@@ -22,6 +22,7 @@ import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import MobileDock from '@/components/mobile-dock/mobile-dock.vue'
 import { useMobileDock } from '@/components/mobile-dock/use-mobile-dock'
 import AudioToolbar from '@/views/audio-reader/lesson/audio-toolbar.vue'
+import ResumeFollowButton from '@/views/audio-reader/lesson/resume-follow-button.vue'
 import TranscriptView from '@/views/audio-reader/transcript/index.vue'
 import TermCard from '@/views/audio-reader/term-popover/term-card.vue'
 
@@ -62,6 +63,12 @@ const footer_swap = useTemplateRef<HTMLElement>('footer_swap')
 const footer_term = useTemplateRef<HTMLElement>('footer_term')
 const footer_toolbar = useTemplateRef<HTMLElement>('footer_toolbar')
 
+const transcript = useTemplateRef<{
+  following: boolean
+  follow_direction: 'up' | 'down'
+  resumeFollow: () => void
+}>('transcript')
+
 // Gap to leave between the selected word and the footer's top edge after a reveal.
 const FOOTER_CLEARANCE = 16
 
@@ -88,6 +95,12 @@ const show_term = computed(() => popover_open.value && !!selection.value)
 const show_term_in_dock = computed(() => show_term.value && !is_desktop.value)
 const show_term_in_sidebar = computed(() => show_term.value && is_desktop.value)
 
+// The transcript drops follow whenever the member scrolls by hand, so this turns
+// true on both breakpoints — the dock control shows below xl, the floating one at
+// xl+.
+const show_follow_button = computed(() => transcript.value?.following === false)
+const follow_direction = computed(() => transcript.value?.follow_direction ?? 'down')
+
 // Veil the reader until the transcript is loaded and the chapter has been
 // positioned at its resume offset, so the resume seek lands behind the veil and
 // the reveal shows the reader already at the right spot.
@@ -109,6 +122,12 @@ function goToChapter(id: number) {
 
 function onEdit() {
   edit_modal.open(collection_id.value)
+}
+
+// Rejoin the playing line and re-arm follow — the transcript owns both, so just
+// forward the tap.
+function resumeFollow() {
+  transcript.value?.resumeFollow()
 }
 
 // Tapping outside the term dismisses it with the same cue as its close button.
@@ -263,6 +282,7 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
 
       <div data-testid="lesson-view__transcript" class="px-0 pt-6 pb-2 sm:px-6">
         <transcript-view
+          ref="transcript"
           :paragraphs="paragraphs"
           :matches="matches"
           :active_word="active_word"
@@ -274,6 +294,18 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
       </div>
 
       <mobile-dock>
+        <template #above>
+          <transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
+            <resume-follow-button
+              v-if="show_follow_button"
+              data-testid="lesson-view__resume-follow"
+              :direction="follow_direction"
+              class="pointer-events-auto"
+              @resume="resumeFollow"
+            />
+          </transition>
+        </template>
+
         <div ref="footer_swap" data-testid="lesson-view__dock-swap" class="relative w-full">
           <transition
             :css="false"
@@ -322,6 +354,16 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
       />
 
       <scroll-bar class="fixed top-(--nav-height) right-6 bottom-6" target="html" />
+
+      <transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
+        <resume-follow-button
+          v-if="show_follow_button"
+          data-testid="lesson-view__resume-follow-desktop"
+          :direction="follow_direction"
+          class="fixed right-16 bottom-6 z-30 hidden xl:block"
+          @resume="resumeFollow"
+        />
+      </transition>
     </div>
   </section>
 </template>

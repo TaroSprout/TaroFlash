@@ -351,7 +351,8 @@ describe('AddCardPanel', () => {
         anchor_id: null,
         side: null,
         front_text: 'Dog',
-        back_text: '犬'
+        back_text: '犬',
+        note: null
       })
     })
 
@@ -398,6 +399,20 @@ describe('AddCardPanel', () => {
       expect(wrapper.emitted('saved')).toBeFalsy()
       expect(setLastDeckMock).not.toHaveBeenCalled()
       expect(errorMock).toHaveBeenCalled()
+    })
+
+    test('forwards a provided note prop into mutateAsync [obligation]', async () => {
+      decksDataRef.value = TEST_DECKS
+      const wrapper = mountPanel({ front: 'Dog', back: '犬', note: 'some context' })
+      await flushPromises()
+      await selectDeck(wrapper, TEST_DECKS[0].id)
+
+      await saveButton(wrapper).trigger('click')
+      await flushPromises()
+
+      expect(mutateAsyncMock).toHaveBeenCalledWith(
+        expect.objectContaining({ note: 'some context' })
+      )
     })
 
     test('persists edits made on the back face before saving', async () => {

@@ -45,6 +45,15 @@ function metrics(scroller: Scroller) {
 }
 
 /**
+ * Stop any in-flight scroll tween on `scroller`. Used when the member takes the
+ * scroll over by hand, so the active-word follow lets go instead of fighting them.
+ */
+export function cancelScroll(scroller: Scroller) {
+  const state = stateByScroller.get(scroller)
+  if (state) gsap.killTweensOf(state)
+}
+
+/**
  * Lift `el` clear above `limit_bottom` (a viewport Y, e.g. a fixed footer's top
  * edge) by scrolling `scroller` up just enough. No-op when `el` already sits
  * above the limit. Used to re-clear a selected word after the term footer grows.

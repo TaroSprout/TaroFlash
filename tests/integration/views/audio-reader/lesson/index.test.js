@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, ref } from 'vue'
+import { defineComponent, h, ref, nextTick } from 'vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 // Plain-object refs suffice for state the script reads via .value (watch, onMounted).
@@ -88,6 +88,7 @@ vi.mock('@/utils/animations/footer-swap', () => ({
 }))
 
 vi.mock('@/utils/animations/transcript-scroll', () => ({
+  cancelScroll: vi.fn(),
   scrollClearOf: vi.fn(),
   scrollLineIntoView: vi.fn(),
   scrollWordIntoDeadzone: vi.fn()
@@ -125,11 +126,22 @@ vi.mock('@/sfx/bus', () => ({
 
 // ── Stubs ──────────────────────────────────────────────────────────────────────
 
+// Controllable follow state so tests can simulate the transcript exposing
+// following/follow_direction/resumeFollow (the lesson view reads these via ref="transcript").
+const transcriptFollowing = ref(true)
+const transcriptFollowDirection = ref('down')
+const transcriptResumeMock = vi.fn()
+
 const TranscriptViewStub = defineComponent({
   name: 'TranscriptView',
   props: ['paragraphs', 'active_word', 'popover_open'],
   emits: ['select', 'dismiss'],
-  setup(_props, { emit }) {
+  setup(_props, { emit, expose }) {
+    expose({
+      following: transcriptFollowing,
+      follow_direction: transcriptFollowDirection,
+      resumeFollow: transcriptResumeMock
+    })
     return () =>
       h('div', { 'data-testid': 'transcript-view-stub' }, [
         h('button', {
@@ -163,10 +175,12 @@ const TermCardStub = defineComponent({
 
 // Renders the dock's content inline so its panes are assertable — the real
 // component teleports into the host, which isn't mounted in this view test.
+// Also render the `above` slot inline so the resume-follow button is assertable.
 const MobileDockStub = defineComponent({
   name: 'MobileDock',
   setup(_props, { slots }) {
-    return () => h('div', { 'data-testid': 'mobile-dock-stub' }, slots.default?.())
+    return () =>
+      h('div', { 'data-testid': 'mobile-dock-stub' }, [slots.above?.(), slots.default?.()])
   }
 })
 
@@ -219,6 +233,9 @@ beforeEach(() => {
   playFromHereMock.mockClear()
   playClipMock.mockClear()
   emitSfxMock.mockClear()
+  transcriptFollowing.value = true
+  transcriptFollowDirection.value = 'down'
+  transcriptResumeMock.mockClear()
 })
 
 describe('LessonView', () => {
@@ -484,6 +501,73 @@ describe('LessonView', () => {
 
       // Wired once for the dock term pane and once for the dock toolbar pane
       expect(useAnimatedHeight).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe('follow-button visibility [obligation]', () => {
+    // show_follow_button = transcript.value?.following === false
+    // When transcript.following flips false, the resume button appears.
+    test('resume-follow button is hidden when transcript.following is true [obligation]', async () => {
+      transcriptFollowing.value = true
+      const wrapper = mountView()
+      await nextTick()
+
+      expect(wrapper.find('[data-testid="lesson-view__resume-follow"]').exists()).toBe(false)
+    })
+
+    test('resume-follow button renders in dock when transcript.following is false [obligation]', async () => {
+      transcriptFollowing.value = false
+      const wrapper = mountView()
+      await nextTick()
+
+      expect(wrapper.find('[data-testid="lesson-view__resume-follow"]').exists()).toBe(true)
+    })
+
+    test('resume-follow desktop button renders when transcript.following is false [obligation]', async () => {
+      transcriptFollowing.value = false
+      const wrapper = mountView()
+      await nextTick()
+
+      expect(wrapper.find('[data-testid="lesson-view__resume-follow-desktop"]').exists()).toBe(true)
+    })
+
+    test('resume-follow button is hidden again when transcript.following returns to true [obligation]', async () => {
+      transcriptFollowing.value = false
+      const wrapper = mountView()
+      await nextTick()
+      expect(wrapper.find('[data-testid="lesson-view__resume-follow"]').exists()).toBe(true)
+
+      transcriptFollowing.value = true
+      await nextTick()
+
+      expect(wrapper.find('[data-testid="lesson-view__resume-follow"]').exists()).toBe(false)
+    })
+
+    test('follow_direction prop matches transcript follow_direction [obligation]', async () => {
+      transcriptFollowing.value = false
+      transcriptFollowDirection.value = 'up'
+      const wrapper = mountView()
+      await nextTick()
+
+      // ResumeFollowButton stub is shallowed — find it by name and check its prop.
+      const btn = wrapper.findComponent({ name: 'ResumeFollowButton' })
+      expect(btn.exists()).toBe(true)
+      expect(btn.props('direction')).toBe('up')
+    })
+
+    test('clicking resume-follow button calls transcript.resumeFollow [obligation]', async () => {
+      transcriptFollowing.value = false
+      const wrapper = mountView()
+      await nextTick()
+
+      // shallowMount auto-stubs ResumeFollowButton — emit the Vue event via vm.$emit
+      // so the parent's @resume="resumeFollow" handler fires.
+      const btn = wrapper.findComponent({ name: 'ResumeFollowButton' })
+      expect(btn.exists()).toBe(true)
+      await btn.vm.$emit('resume')
+      await nextTick()
+
+      expect(transcriptResumeMock).toHaveBeenCalledTimes(1)
     })
   })
 })

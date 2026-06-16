@@ -17,7 +17,11 @@ import {
   hideReaderCursor,
   type CursorBox
 } from '@/utils/animations/reader-cursor'
-import { scrollLineIntoView, scrollWordIntoDeadzone } from '@/utils/animations/transcript-scroll'
+import {
+  cancelScroll,
+  scrollLineIntoView,
+  scrollWordIntoDeadzone
+} from '@/utils/animations/transcript-scroll'
 import type { CardMatch } from '@/utils/transcript-match'
 
 // How far each highlight bleeds past the text on every side, so it reads as a
@@ -163,6 +167,16 @@ export function useReaderHighlights(
   // armed touch selection is in flight, so the bubble shows on coarse pointers only.
   const touch_point = ref<{ x: number; y: number } | null>(null)
 
+  // Whether the active-word follow is live. The member taking the scroll over by
+  // hand (a wheel/trackpad on desktop, a touch pan on mobile) switches it off so
+  // their position holds; the host's resume control turns it back on.
+  const following = ref(true)
+
+  // Where the playing word sits relative to the member while follow is off: 'up'
+  // when it's scrolled above them, 'down' when it's below. Lets the resume control
+  // point the way back to it. Only meaningful while `following` is false.
+  const follow_direction = ref<'up' | 'down'>('down')
+
   // A touch in flight: where it landed and which word, held until release decides
   // tap-vs-scroll. Plain (non-reactive) state — it never drives a pill directly.
   // `touch_selecting` flips true once a long-press arms range-select; from there
@@ -190,6 +204,8 @@ export function useReaderHighlights(
     content.value?.addEventListener('touchmove', blockScrollWhileSelecting, { passive: false })
     window.addEventListener('click', swallowGestureClick, true)
     window.addEventListener('pointerdown', disarmGestureClick, true)
+    window.addEventListener('scroll', trackFollowDirection, { passive: true })
+    window.addEventListener('wheel', disableFollow, { passive: true })
   })
 
   onBeforeUnmount(() => {
@@ -197,6 +213,8 @@ export function useReaderHighlights(
     content.value?.removeEventListener('touchmove', blockScrollWhileSelecting)
     window.removeEventListener('click', swallowGestureClick, true)
     window.removeEventListener('pointerdown', disarmGestureClick, true)
+    window.removeEventListener('scroll', trackFollowDirection)
+    window.removeEventListener('wheel', disableFollow)
     cancelLongPress()
     if (follow_timer !== null) clearTimeout(follow_timer)
   })
@@ -367,6 +385,7 @@ export function useReaderHighlights(
   // (~200–300 ms per word) but swallows bursts from fast scrubs.
   // Paused jumps must be instant (iOS Safari lock on rAF-driven tweens).
   function followActiveWord() {
+    if (!following.value) return
     if (follow_timer !== null) clearTimeout(follow_timer)
     follow_timer = setTimeout(() => {
       follow_timer = null
@@ -376,6 +395,51 @@ export function useReaderHighlights(
       if (!el) return
       scrollWordIntoDeadzone(scrollParentOf(content.value), el, toValue(is_playing))
     }, 100)
+  }
+
+  // The member started scrolling by hand — a wheel/trackpad on desktop or a touch
+  // pan on mobile: let the follow go and kill the live tween so it stops fighting
+  // them. No-op once already off.
+  function disableFollow() {
+    if (!following.value) return
+
+    following.value = false
+    cancelScroll(scrollParentOf(content.value))
+    updateFollowDirection()
+  }
+
+  // Point the resume control at the playing word: 'up' when its centre sits above
+  // the viewport's, 'down' otherwise. A no-op while following, since the control is
+  // hidden then. Window-relative — the control only shows on the mobile (page)
+  // scroller.
+  function updateFollowDirection() {
+    const index = toValue(active_word)
+    if (index < 0) return
+    const el = wordEl(index)
+    if (!el) return
+
+    const rect = el.getBoundingClientRect()
+    follow_direction.value = (rect.top + rect.bottom) / 2 < window.innerHeight / 2 ? 'up' : 'down'
+  }
+
+  // The member scrolling by hand (or the word advancing under playback) can flip
+  // which way the playing word lies; keep the arrow current while the control shows.
+  function trackFollowDirection() {
+    if (!following.value) updateFollowDirection()
+  }
+
+  /**
+   * Re-arm active-word following and smoothly scroll the playing word back into
+   * view, so the member who scrolled away can rejoin the read with one tap. Always
+   * animates — this is a deliberate tap, not a paused-state seek, so the smooth
+   * tween is wanted (and welcome) regardless of play state.
+   */
+  function resumeFollow() {
+    following.value = true
+    const index = toValue(active_word)
+    if (index < 0) return
+    const el = wordEl(index)
+    if (el) scrollLineIntoView(scrollParentOf(content.value), el, true)
   }
 
   // Keep a just-committed word clear of the term sheet. Only on mobile — where the
@@ -594,6 +658,7 @@ export function useReaderHighlights(
     if (Math.hypot(event.clientX - tap.x, event.clientY - tap.y) > TAP_SLOP) {
       cancelLongPress()
       tap = null
+      disableFollow()
     }
   }
 
@@ -658,6 +723,11 @@ export function useReaderHighlights(
   // A scroll the browser claims (or any aborted touch) fires pointercancel: drop
   // the pending tap and disarm so nothing commits on the absent release.
   function onPointerCancel() {
+    // The browser only claims a touch it's turning into a scroll — unless a
+    // long-press already armed range-select, in which case it's an aborted
+    // selection, not a pan. So a cancel mid-pan is the member taking the scroll.
+    if (!touch_selecting) disableFollow()
+
     cancelLongPress()
     anchor_index.value = null
     focus_index.value = null
@@ -672,7 +742,14 @@ export function useReaderHighlights(
   }
 
   // flush: 'post' so any layout settling lands before we measure the word rect.
-  watch(() => toValue(active_word), followActiveWord, { flush: 'post' })
+  watch(
+    () => toValue(active_word),
+    () => {
+      followActiveWord()
+      trackFollowDirection()
+    },
+    { flush: 'post' }
+  )
   watch([focus_index, anchor_index, committed], positionInteraction, { flush: 'post' })
   watch(
     () => toValue(popover_open),
@@ -688,6 +765,9 @@ export function useReaderHighlights(
     tap_active,
     interaction_range,
     selection_preview,
+    following,
+    follow_direction,
+    resumeFollow,
     onPointerDown,
     onPointerMove,
     onPointerUp,

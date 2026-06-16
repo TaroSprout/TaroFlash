@@ -1,8 +1,10 @@
-// translate-term: given a selected term and its surrounding sentence, ask Claude
-// for a contextual translation plus reading, part of speech, and a short note.
+// translate-term: given the learner's selected text and its surrounding sentence,
+// ask Claude for a reading/part-of-speech faithful to exactly what was selected, a
+// general translation reusable as a flashcard answer, and a description that
+// situates the selection (the larger word it sits in, its sense here, other uses).
 //
 // Request:  { term: string, sentence: string, target_lang: string }
-// Response: { translation: string, reading: string, pos: string, description: string }
+// Response: { translation, reading, pos, description }  // all strings
 //
 // The Anthropic key never reaches the client — it lives in ANTHROPIC_API_KEY.
 // Admin-only: requireAdmin() runs before any work.
@@ -51,12 +53,13 @@ const RESULT_SCHEMA = {
 // system prompt is far shorter, so cache_control would silently never engage —
 // and call volume is low. Revisit if the prompt grows or volume spikes.
 const SYSTEM_PROMPT =
-  'You are a precise bilingual dictionary for language learners. ' +
-  'Given a term and the sentence it appears in, return its meaning in the requested target language. ' +
-  'translation: the meaning of the term in the target language, as used in this sentence. ' +
-  'reading: phonetic reading of the term in its own language (e.g. pinyin for Chinese, romaji for Japanese); empty string if not applicable. ' +
-  'pos: part of speech (noun, verb, etc.). ' +
-  'description: one short sentence of extra nuance or usage context.'
+  'You are a precise bilingual dictionary for a learner decoding a sentence one selection at a time. ' +
+  'The learner selects an arbitrary span of the sentence — it may be a whole word, a single character that is only part of a word, or several characters. ' +
+  'Treat the selection literally: every field is about exactly what was selected, no more and no less. ' +
+  'translation: a general, reusable definition of the selected text — its most common, generally useful meaning(s), suitable on its own as a flashcard answer studied with no sentence around it. If the selection is only part of a larger word, define the selected characters on their own, not the whole word. ' +
+  'reading: phonetic reading of exactly the selection (e.g. pinyin for Chinese, romaji for Japanese); empty string if not applicable. ' +
+  'pos: part of speech of the selection as used here (noun, verb, particle, etc.). ' +
+  'description: 1-3 short sentences. If the selection is only part of a larger word in this sentence, begin by naming that larger word (the word itself — do not gloss it). Then call out the specific meaning the selection carries in this sentence, and mention its other common meanings or uses when it has them.'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {

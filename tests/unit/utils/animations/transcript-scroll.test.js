@@ -4,7 +4,7 @@ const { toMock, killMock } = vi.hoisted(() => ({ toMock: vi.fn(), killMock: vi.f
 
 vi.mock('gsap', () => ({ gsap: { to: toMock, killTweensOf: killMock } }))
 
-const { scrollLineIntoView, scrollWordIntoDeadzone } =
+const { scrollLineIntoView, scrollWordIntoDeadzone, cancelScroll } =
   await import('@/utils/animations/transcript-scroll')
 
 // A minimal element scroller (not `window`, so it's treated as an HTMLElement).
@@ -132,5 +132,30 @@ describe('scrollWordIntoDeadzone', () => {
 
     // el_top_within = 990 − 0 + 850 = 1840, target = 1840 − 20 = 1820, clamped to max=900.
     expect(scroller.scrollTop).toBe(900)
+  })
+})
+
+describe('cancelScroll', () => {
+  // [obligation] No tween has ever run for this scroller, so there's no per-scroller
+  // state to kill — the WeakMap lookup misses and killTweensOf is never touched.
+  test('is a no-op when the scroller has no tween state', () => {
+    const scroller = makeScroller()
+
+    cancelScroll(scroller)
+
+    expect(killMock).not.toHaveBeenCalled()
+  })
+
+  // [obligation] Once a scroll has tweened (creating the per-scroller proxy state),
+  // cancelScroll kills the live tween so it stops fighting a manual scroll.
+  test('kills the live tween once a scroll has created state for the scroller', () => {
+    const scroller = makeScroller()
+    // animate=true populates stateByScroller and itself calls killTweensOf once.
+    scrollLineIntoView(scroller, makeLine())
+    killMock.mockClear()
+
+    cancelScroll(scroller)
+
+    expect(killMock).toHaveBeenCalledTimes(1)
   })
 })

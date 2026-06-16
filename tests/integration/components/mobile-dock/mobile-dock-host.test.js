@@ -109,4 +109,24 @@ describe('MobileDockHost', () => {
       expect(content?.getAttribute('data-testid')).toBe('mobile-dock-host__content')
     })
   })
+
+  describe('above slot target [obligation]', () => {
+    test('renders the above div with [mobile-dock-above] attribute inside the footer [obligation]', () => {
+      mountHost()
+
+      const above = document.querySelector('[mobile-dock-above]')
+      expect(above).not.toBeNull()
+      expect(above?.getAttribute('data-testid')).toBe('mobile-dock-host__above')
+    })
+
+    test('[mobile-dock-above] is a child of the footer element [obligation]', () => {
+      mountHost()
+
+      const footer = document.querySelector('[data-testid="mobile-dock-host"]')
+      const above = document.querySelector('[mobile-dock-above]')
+      expect(footer).not.toBeNull()
+      expect(above).not.toBeNull()
+      expect(footer?.contains(above)).toBe(true)
+    })
+  })
 })

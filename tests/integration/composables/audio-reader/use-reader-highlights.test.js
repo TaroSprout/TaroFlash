@@ -26,6 +26,7 @@ vi.mock('@/utils/animations/reader-cursor', () => ({
 // Mock the scroll animators so following the active word is observable as a
 // call; the real gsap scrolling is exercised in transcript-scroll's own tests.
 vi.mock('@/utils/animations/transcript-scroll', () => ({
+  cancelScroll: vi.fn(),
   scrollLineIntoView: scrollMock,
   scrollWordIntoDeadzone: scrollMock
 }))

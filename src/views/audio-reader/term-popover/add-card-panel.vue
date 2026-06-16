@@ -17,9 +17,16 @@ type AddCardPanelProps = {
   front: string
   back: string
   deck_id?: number | null
+  // Contextual note carried over from the term popover; saved with the card.
+  note?: string | null
 }
 
-const { front, back, deck_id: initial_deck_id = null } = defineProps<AddCardPanelProps>()
+const {
+  front,
+  back,
+  deck_id: initial_deck_id = null,
+  note = null
+} = defineProps<AddCardPanelProps>()
 
 const emit = defineEmits<{
   (e: 'cancel'): void
@@ -117,7 +124,8 @@ async function onSave() {
       anchor_id: null,
       side: null,
       front_text: front_text.value,
-      back_text: back_text.value
+      back_text: back_text.value,
+      note
     })
     setLastDeck(deck_id.value)
     toast.success(t('audio-reader.add-card-modal.success'))
