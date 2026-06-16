@@ -173,6 +173,11 @@ export function useReaderHighlights(
   // where a bounded column scrolls, not the window — always follows.
   const following = ref(true)
 
+  // Where the playing word sits relative to the member while follow is off: 'up'
+  // when it's scrolled above them, 'down' when it's below. Lets the resume control
+  // point the way back to it. Only meaningful while `following` is false.
+  const follow_direction = ref<'up' | 'down'>('down')
+
   // A touch in flight: where it landed and which word, held until release decides
   // tap-vs-scroll. Plain (non-reactive) state — it never drives a pill directly.
   // `touch_selecting` flips true once a long-press arms range-select; from there
@@ -200,6 +205,7 @@ export function useReaderHighlights(
     content.value?.addEventListener('touchmove', blockScrollWhileSelecting, { passive: false })
     window.addEventListener('click', swallowGestureClick, true)
     window.addEventListener('pointerdown', disarmGestureClick, true)
+    window.addEventListener('scroll', trackFollowDirection, { passive: true })
   })
 
   onBeforeUnmount(() => {
@@ -207,6 +213,7 @@ export function useReaderHighlights(
     content.value?.removeEventListener('touchmove', blockScrollWhileSelecting)
     window.removeEventListener('click', swallowGestureClick, true)
     window.removeEventListener('pointerdown', disarmGestureClick, true)
+    window.removeEventListener('scroll', trackFollowDirection)
     cancelLongPress()
     if (follow_timer !== null) clearTimeout(follow_timer)
   })
@@ -399,6 +406,27 @@ export function useReaderHighlights(
 
     following.value = false
     cancelScroll(scroller)
+    updateFollowDirection()
+  }
+
+  // Point the resume control at the playing word: 'up' when its centre sits above
+  // the viewport's, 'down' otherwise. A no-op while following, since the control is
+  // hidden then. Window-relative — the control only shows on the mobile (page)
+  // scroller.
+  function updateFollowDirection() {
+    const index = toValue(active_word)
+    if (index < 0) return
+    const el = wordEl(index)
+    if (!el) return
+
+    const rect = el.getBoundingClientRect()
+    follow_direction.value = (rect.top + rect.bottom) / 2 < window.innerHeight / 2 ? 'up' : 'down'
+  }
+
+  // The member scrolling by hand (or the word advancing under playback) can flip
+  // which way the playing word lies; keep the arrow current while the control shows.
+  function trackFollowDirection() {
+    if (!following.value) updateFollowDirection()
   }
 
   /**
@@ -715,7 +743,14 @@ export function useReaderHighlights(
   }
 
   // flush: 'post' so any layout settling lands before we measure the word rect.
-  watch(() => toValue(active_word), followActiveWord, { flush: 'post' })
+  watch(
+    () => toValue(active_word),
+    () => {
+      followActiveWord()
+      trackFollowDirection()
+    },
+    { flush: 'post' }
+  )
   watch([focus_index, anchor_index, committed], positionInteraction, { flush: 'post' })
   watch(
     () => toValue(popover_open),
@@ -732,6 +767,7 @@ export function useReaderHighlights(
     interaction_range,
     selection_preview,
     following,
+    follow_direction,
     resumeFollow,
     onPointerDown,
     onPointerMove,

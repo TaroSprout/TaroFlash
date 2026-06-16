@@ -62,7 +62,11 @@ const footer_swap = useTemplateRef<HTMLElement>('footer_swap')
 const footer_term = useTemplateRef<HTMLElement>('footer_term')
 const footer_toolbar = useTemplateRef<HTMLElement>('footer_toolbar')
 
-const transcript = useTemplateRef<{ following: boolean; resumeFollow: () => void }>('transcript')
+const transcript = useTemplateRef<{
+  following: boolean
+  follow_direction: 'up' | 'down'
+  resumeFollow: () => void
+}>('transcript')
 
 // Gap to leave between the selected word and the footer's top edge after a reveal.
 const FOOTER_CLEARANCE = 16
@@ -93,6 +97,12 @@ const show_term_in_sidebar = computed(() => show_term.value && is_desktop.value)
 // The transcript only drops follow when the page (mobile) scroller is taken over
 // by hand, so this stays false on desktop and the dock control never shows there.
 const show_follow_button = computed(() => transcript.value?.following === false)
+
+// Point the control the way back to the playing word — up when it's scrolled
+// above the member, down when it's below.
+const follow_icon = computed(() =>
+  transcript.value?.follow_direction === 'up' ? 'arcade-stick-up' : 'arcade-stick-down'
+)
 
 // Veil the reader until the transcript is loaded and the chapter has been
 // positioned at its resume offset, so the resume seek lands behind the veil and
@@ -293,10 +303,10 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
               v-if="show_follow_button"
               data-testid="lesson-view__resume-follow"
               data-theme="brown-300"
-              icon-left="arrow-circle-up"
+              :icon-left="follow_icon"
               icon-only
               rounded-full
-              size="xl"
+              size="lg"
               class="pointer-events-auto shadow-sm"
               @click="resumeFollow"
             >

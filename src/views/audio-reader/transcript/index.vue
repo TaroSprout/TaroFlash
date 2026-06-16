@@ -38,6 +38,7 @@ const {
   interaction_range,
   selection_preview,
   following,
+  follow_direction,
   resumeFollow,
   onPointerDown,
   onPointerMove,
@@ -55,7 +56,7 @@ const {
 
 // The follow state + resume action surface to the lesson view, which renders the
 // "jump to current line" control in the mobile dock above the transcript.
-defineExpose({ following, resumeFollow })
+defineExpose({ following, follow_direction, resumeFollow })
 
 provide(readerSelectionKey, interaction_range)
 provide(
