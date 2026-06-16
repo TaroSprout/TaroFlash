@@ -635,7 +635,10 @@ export function useReaderHighlights(
     // Mid-drag, ignore gaps (translation gloss, padding) so the range holds its
     // last extent instead of collapsing.
     if (anchor_index.value !== null) {
-      if (index !== null && index !== focus_index.value) focus_index.value = index
+      if (index !== null && index !== focus_index.value) {
+        focus_index.value = index
+        emitSfx('ui.tap_05')
+      }
       return
     }
 
