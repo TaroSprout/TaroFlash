@@ -24,7 +24,7 @@ const { playing, tap } = useStagedTap()
 function onCaptureClick(e: MouseEvent) {
   const handler = attrs.onClick as ((ev: MouseEvent) => void) | undefined
   if (!handler) return
-  tap(handler, { pressAudio: click_sfx, captureMode: true })(e)
+  tap(handler, { audio: click_sfx, captureMode: true })(e)
 }
 </script>
 

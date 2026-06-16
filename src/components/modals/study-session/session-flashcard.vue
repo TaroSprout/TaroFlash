@@ -219,7 +219,7 @@ async function onCardReviewed(grade?: Grade) {
         size="lg"
         inverted
         icon-left="edit"
-        :sfx="{ click: 'ui.pop_window' }"
+        :sfx="{ press: 'ui.pop_window' }"
         @click="startEdit"
       >
         {{ $t('study-session.flashcard.edit-card-button') }}

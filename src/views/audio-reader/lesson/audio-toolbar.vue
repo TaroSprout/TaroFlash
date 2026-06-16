@@ -165,7 +165,7 @@ function setMode(next: 'expanded' | 'mini') {
             variant="ghost"
             icon-only
             play-on-tap
-            :sfx="{ click: 'ui.snappy_button_5' }"
+            :sfx="{ press: 'ui.snappy_button_5' }"
             @click="setMode('mini')"
           />
         </div>
@@ -219,7 +219,7 @@ function setMode(next: 'expanded' | 'mini') {
         variant="ghost"
         icon-only
         play-on-tap
-        :sfx="{ click: 'ui.snappy_button_5' }"
+        :sfx="{ press: 'ui.snappy_button_5' }"
         @click="setMode('expanded')"
       />
 

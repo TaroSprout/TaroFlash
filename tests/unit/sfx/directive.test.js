@@ -85,28 +85,31 @@ describe('vSfx directive', () => {
   })
 
   describe('click', () => {
-    test('still fires sfx on click regardless of pointer type', () => {
+    test('click key is accepted in the object shape without error [obligation]', () => {
+      // The `click` key remains in SfxOptions so button.vue can read it —
+      // v-sfx just no longer handles the click event itself.
+      expect(() => {
+        const el = mountDirective({ click: 'ui.click_07' })
+        unmount(el)
+      }).not.toThrow()
+    })
+
+    test('clicking an element with click key does NOT call emitSfx [obligation]', () => {
       const el = mountDirective({ click: 'ui.click_07' })
 
       el.dispatchEvent(new MouseEvent('click', { bubbles: true }))
 
-      expect(emitSfx).toHaveBeenCalledWith('ui.click_07', {
-        debounce: undefined,
-        blocking: undefined
-      })
+      expect(emitSfx).not.toHaveBeenCalled()
       unmount(el)
     })
 
-    test('forwards click_blocking option as PlayOptions.blocking', () => {
-      const el = mountDirective({ click: 'ui.select', click_blocking: true })
-
-      el.dispatchEvent(new MouseEvent('click', { bubbles: true }))
-
-      expect(emitSfx).toHaveBeenCalledWith('ui.select', {
-        debounce: undefined,
-        blocking: true
-      })
-      unmount(el)
+    test('press_blocking key accepted without error — directive ignores it silently [obligation]', () => {
+      expect(() => {
+        const el = mountDirective({ press: 'ui.click_07', press_blocking: true })
+        el.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        unmount(el)
+      }).not.toThrow()
+      expect(emitSfx).not.toHaveBeenCalled()
     })
   })
 
@@ -169,6 +172,46 @@ describe('vSfx directive', () => {
     })
   })
 
+  describe('focus', () => {
+    test('plays sfx on focus', () => {
+      const el = mountDirective({ focus: 'ui.click_07' })
+
+      el.dispatchEvent(new Event('focus'))
+
+      expect(emitSfx).toHaveBeenCalledWith('ui.click_07', { debounce: undefined })
+      unmount(el)
+    })
+
+    test('does NOT play sfx on focus when no focus key configured', () => {
+      const el = mountDirective({ hover: 'ui.click_07' })
+
+      el.dispatchEvent(new Event('focus'))
+
+      expect(emitSfx).not.toHaveBeenCalled()
+      unmount(el)
+    })
+  })
+
+  describe('blur', () => {
+    test('plays sfx on blur', () => {
+      const el = mountDirective({ blur: 'ui.click_07' })
+
+      el.dispatchEvent(new Event('blur'))
+
+      expect(emitSfx).toHaveBeenCalledWith('ui.click_07', { debounce: undefined })
+      unmount(el)
+    })
+
+    test('does NOT play sfx on blur when no blur key configured', () => {
+      const el = mountDirective({ hover: 'ui.click_07' })
+
+      el.dispatchEvent(new Event('blur'))
+
+      expect(emitSfx).not.toHaveBeenCalled()
+      unmount(el)
+    })
+  })
+
   describe('binding shorthand', () => {
     test('string binding + .hover modifier wires hover sfx', () => {
       const el = mountDirective('ui.click_07', { hover: true })
@@ -185,6 +228,24 @@ describe('vSfx directive', () => {
       el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'touch' }))
 
       expect(emitHoverSfx).not.toHaveBeenCalled()
+      unmount(el)
+    })
+
+    test('string binding + .focus modifier wires focus sfx', () => {
+      const el = mountDirective('ui.click_07', { focus: true })
+
+      el.dispatchEvent(new Event('focus'))
+
+      expect(emitSfx).toHaveBeenCalledWith('ui.click_07', { debounce: undefined })
+      unmount(el)
+    })
+
+    test('string binding + .blur modifier wires blur sfx', () => {
+      const el = mountDirective('ui.click_07', { blur: true })
+
+      el.dispatchEvent(new Event('blur'))
+
+      expect(emitSfx).toHaveBeenCalledWith('ui.click_07', { debounce: undefined })
       unmount(el)
     })
   })
