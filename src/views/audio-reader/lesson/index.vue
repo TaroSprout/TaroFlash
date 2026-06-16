@@ -62,6 +62,8 @@ const footer_swap = useTemplateRef<HTMLElement>('footer_swap')
 const footer_term = useTemplateRef<HTMLElement>('footer_term')
 const footer_toolbar = useTemplateRef<HTMLElement>('footer_toolbar')
 
+const transcript = useTemplateRef<{ following: boolean; resumeFollow: () => void }>('transcript')
+
 // Gap to leave between the selected word and the footer's top edge after a reveal.
 const FOOTER_CLEARANCE = 16
 
@@ -88,6 +90,10 @@ const show_term = computed(() => popover_open.value && !!selection.value)
 const show_term_in_dock = computed(() => show_term.value && !is_desktop.value)
 const show_term_in_sidebar = computed(() => show_term.value && is_desktop.value)
 
+// The transcript only drops follow when the page (mobile) scroller is taken over
+// by hand, so this stays false on desktop and the dock control never shows there.
+const show_follow_button = computed(() => transcript.value?.following === false)
+
 // Veil the reader until the transcript is loaded and the chapter has been
 // positioned at its resume offset, so the resume seek lands behind the veil and
 // the reveal shows the reader already at the right spot.
@@ -109,6 +115,12 @@ function goToChapter(id: number) {
 
 function onEdit() {
   edit_modal.open(collection_id.value)
+}
+
+// Rejoin the playing line and re-arm follow — the transcript owns both, so just
+// forward the tap.
+function resumeFollow() {
+  transcript.value?.resumeFollow()
 }
 
 // Tapping outside the term dismisses it with the same cue as its close button.
@@ -263,6 +275,7 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
 
       <div data-testid="lesson-view__transcript" class="px-0 pt-6 pb-2 sm:px-6">
         <transcript-view
+          ref="transcript"
           :paragraphs="paragraphs"
           :matches="matches"
           :active_word="active_word"
@@ -274,6 +287,24 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
       </div>
 
       <mobile-dock>
+        <template #above>
+          <transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
+            <ui-button
+              v-if="show_follow_button"
+              data-testid="lesson-view__resume-follow"
+              data-theme="brown-300"
+              icon-left="arrow-circle-up"
+              icon-only
+              rounded-full
+              size="xl"
+              class="pointer-events-auto shadow-sm"
+              @click="resumeFollow"
+            >
+              {{ t('lesson-view.resume-follow-button') }}
+            </ui-button>
+          </transition>
+        </template>
+
         <div ref="footer_swap" data-testid="lesson-view__dock-swap" class="relative w-full">
           <transition
             :css="false"
