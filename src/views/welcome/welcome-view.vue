@@ -5,7 +5,7 @@ import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Splash from './splash.vue'
 import UiImage from '@/components/ui-kit/image.vue'
-import AppFooter from '@/components/app-footer.vue'
+import WelcomeFooter from '@/components/welcome-footer.vue'
 
 const { t } = useI18n()
 const session = useSessionStore()
@@ -55,5 +55,5 @@ onMounted(async () => {
     </div>
   </section>
 
-  <app-footer />
+  <welcome-footer />
 </template>
