@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTranslateTermMutation, EdgeFunctionError, type TranslationResult } from '@/api/lessons'
 import UiButton from '@/components/ui-kit/button.vue'
@@ -10,6 +10,39 @@ import AddCardPanel from './add-card-panel.vue'
 import { cardSlideEnter, cardSlideLeave, type SlideDirection } from '@/utils/animations/card-slide'
 
 type AddCardDraft = { front: string; back: string; note: string; deck_id: number | null }
+
+const DIFFICULTY_TIERS = [
+  {
+    max: 2,
+    key: 'audio-reader.popover.difficulty-beginner',
+    theme: 'green-400',
+    theme_dark: 'green-600'
+  },
+  {
+    max: 4,
+    key: 'audio-reader.popover.difficulty-elementary',
+    theme: 'green-400',
+    theme_dark: 'green-600'
+  },
+  {
+    max: 6,
+    key: 'audio-reader.popover.difficulty-intermediate',
+    theme: 'yellow-500',
+    theme_dark: 'yellow-700'
+  },
+  {
+    max: 8,
+    key: 'audio-reader.popover.difficulty-advanced',
+    theme: 'red-500',
+    theme_dark: 'red-600'
+  },
+  {
+    max: 10,
+    key: 'audio-reader.popover.difficulty-expert',
+    theme: 'red-500',
+    theme_dark: 'red-600'
+  }
+]
 
 const {
   term,
@@ -45,6 +78,12 @@ const slide_direction = ref<SlideDirection>('forward')
 // Clip the face strip only while it slides — at rest the buttons' tap animations
 // need to overflow the card.
 const sliding = ref(false)
+
+const difficulty_tier = computed(() => {
+  const d = result.value?.difficulty
+  if (d == null) return null
+  return DIFFICULTY_TIERS.find((t) => d <= t.max) ?? DIFFICULTY_TIERS.at(-1)!
+})
 
 async function fetchTranslation() {
   result.value = null
@@ -211,10 +250,11 @@ watch(
 
           <template #end>
             <ui-tag
-              v-if="result?.pos"
-              data-theme="green-400"
+              v-if="difficulty_tier"
+              :data-theme="difficulty_tier.theme"
+              :data-theme-dark="difficulty_tier.theme_dark"
               class="shrink-0 bgx-diagonal-stripes"
-              >{{ result.pos }}</ui-tag
+              >{{ t(difficulty_tier.key) }}</ui-tag
             >
           </template>
         </ui-divider>

@@ -31,15 +31,16 @@ vi.mock('gsap', () => ({
 const TRANSLATION_RESULT = {
   translation: 'cat',
   reading: 'ねこ',
-  pos: 'noun',
+  difficulty: 3,
   description: 'A small domesticated carnivorous mammal.'
 }
 
-// Slot-rendering stub so the pos tag's text is observable (auto-stubs drop slots).
+// Slot-rendering stub; forwards $attrs so data-theme / data-theme-dark are assertable.
 const UiTagStub = {
   name: 'UiTag',
-  setup(_props, { slots }) {
-    return () => h('span', slots.default?.())
+  inheritAttrs: false,
+  setup(_props, { slots, attrs }) {
+    return () => h('span', { ...attrs }, slots.default?.())
   }
 }
 
@@ -468,6 +469,139 @@ describe('TermCard', () => {
       await flushPromises()
 
       expect(wrapper.find('[data-testid="term-card__play-word"]').exists()).toBe(false)
+    })
+  })
+
+  describe('difficulty_tier tag [obligation]', () => {
+    // Helper to mount and resolve with a specific difficulty score.
+    async function mountWithDifficulty(difficulty) {
+      mutateAsyncMock.mockResolvedValueOnce({ ...TRANSLATION_RESULT, difficulty })
+      const wrapper = mountCard({ term: '猫', sentence: 'test' })
+      await flushPromises()
+      return wrapper
+    }
+
+    test('ui-tag is NOT rendered when result is null (no translation yet) [obligation]', () => {
+      mutateAsyncMock.mockReturnValueOnce(new Promise(() => {}))
+      const wrapper = mountCard({ term: '猫', sentence: 'test' })
+      expect(wrapper.findComponent(UiTagStub).exists()).toBe(false)
+    })
+
+    test('ui-tag is NOT rendered when result has no difficulty field [obligation]', async () => {
+      mutateAsyncMock.mockResolvedValueOnce({
+        translation: 'cat',
+        reading: 'ねこ',
+        description: 'A cat.'
+        // no difficulty key
+      })
+      const wrapper = mountCard({ term: '猫', sentence: 'test' })
+      await flushPromises()
+      expect(wrapper.findComponent(UiTagStub).exists()).toBe(false)
+    })
+
+    test('ui-tag is NOT rendered when difficulty is null [obligation]', async () => {
+      mutateAsyncMock.mockResolvedValueOnce({ ...TRANSLATION_RESULT, difficulty: null })
+      const wrapper = mountCard({ term: '猫', sentence: 'test' })
+      await flushPromises()
+      expect(wrapper.findComponent(UiTagStub).exists()).toBe(false)
+    })
+
+    // Exact tier boundary: score 2 → beginner (max: 2) [obligation]
+    test('score 2 → beginner tier — data-theme green-400, data-theme-dark green-600 [obligation]', async () => {
+      const wrapper = await mountWithDifficulty(2)
+      const tag = wrapper.findComponent(UiTagStub)
+      expect(tag.exists()).toBe(true)
+      expect(tag.attributes('data-theme')).toBe('green-400')
+      expect(tag.attributes('data-theme-dark')).toBe('green-600')
+    })
+
+    // Score 3 → elementary (max: 4) [obligation]
+    test('score 3 → elementary tier — data-theme green-400, data-theme-dark green-600 [obligation]', async () => {
+      const wrapper = await mountWithDifficulty(3)
+      const tag = wrapper.findComponent(UiTagStub)
+      expect(tag.exists()).toBe(true)
+      expect(tag.attributes('data-theme')).toBe('green-400')
+      expect(tag.attributes('data-theme-dark')).toBe('green-600')
+    })
+
+    // Score 1 and score 4 share green theme [obligation]
+    test('score 1 → data-theme green-400, data-theme-dark green-600 (same as score 4) [obligation]', async () => {
+      const wrapper = await mountWithDifficulty(1)
+      const tag = wrapper.findComponent(UiTagStub)
+      expect(tag.attributes('data-theme')).toBe('green-400')
+      expect(tag.attributes('data-theme-dark')).toBe('green-600')
+    })
+
+    test('score 4 → data-theme green-400, data-theme-dark green-600 (same as score 1) [obligation]', async () => {
+      const wrapper = await mountWithDifficulty(4)
+      const tag = wrapper.findComponent(UiTagStub)
+      expect(tag.attributes('data-theme')).toBe('green-400')
+      expect(tag.attributes('data-theme-dark')).toBe('green-600')
+    })
+
+    // Score 6 → intermediate (max: 6) [obligation]
+    test('score 6 → intermediate tier — data-theme yellow-500, data-theme-dark yellow-700 [obligation]', async () => {
+      const wrapper = await mountWithDifficulty(6)
+      const tag = wrapper.findComponent(UiTagStub)
+      expect(tag.exists()).toBe(true)
+      expect(tag.attributes('data-theme')).toBe('yellow-500')
+      expect(tag.attributes('data-theme-dark')).toBe('yellow-700')
+    })
+
+    // Score 8 → advanced (max: 8) [obligation]
+    test('score 8 → advanced tier — data-theme red-500, data-theme-dark red-600 [obligation]', async () => {
+      const wrapper = await mountWithDifficulty(8)
+      const tag = wrapper.findComponent(UiTagStub)
+      expect(tag.exists()).toBe(true)
+      expect(tag.attributes('data-theme')).toBe('red-500')
+      expect(tag.attributes('data-theme-dark')).toBe('red-600')
+    })
+
+    // Score 9 → expert (max: 10) [obligation]
+    test('score 9 → expert tier — data-theme red-500, data-theme-dark red-600 [obligation]', async () => {
+      const wrapper = await mountWithDifficulty(9)
+      const tag = wrapper.findComponent(UiTagStub)
+      expect(tag.exists()).toBe(true)
+      expect(tag.attributes('data-theme')).toBe('red-500')
+      expect(tag.attributes('data-theme-dark')).toBe('red-600')
+    })
+
+    // Score 8 and score 9 share red theme [obligation]
+    test('score 8 and score 9 both produce red-500 / red-600 [obligation]', async () => {
+      const w8 = await mountWithDifficulty(8)
+      const w9 = await mountWithDifficulty(9)
+      expect(w8.findComponent(UiTagStub).attributes('data-theme')).toBe(
+        w9.findComponent(UiTagStub).attributes('data-theme')
+      )
+      expect(w8.findComponent(UiTagStub).attributes('data-theme-dark')).toBe(
+        w9.findComponent(UiTagStub).attributes('data-theme-dark')
+      )
+    })
+
+    // Score 10 → expert (max: 10) [obligation]
+    test('score 10 → expert tier — data-theme red-500, data-theme-dark red-600 [obligation]', async () => {
+      const wrapper = await mountWithDifficulty(10)
+      const tag = wrapper.findComponent(UiTagStub)
+      expect(tag.exists()).toBe(true)
+      expect(tag.attributes('data-theme')).toBe('red-500')
+      expect(tag.attributes('data-theme-dark')).toBe('red-600')
+    })
+
+    // Fallback to last tier (expert) for scores > 10 [obligation]
+    test('score > 10 falls back to expert tier via DIFFICULTY_TIERS.at(-1) [obligation]', async () => {
+      const wrapper = await mountWithDifficulty(15)
+      const tag = wrapper.findComponent(UiTagStub)
+      expect(tag.exists()).toBe(true)
+      expect(tag.attributes('data-theme')).toBe('red-500')
+      expect(tag.attributes('data-theme-dark')).toBe('red-600')
+    })
+
+    // POS tag removed — difficulty_tier renders the difficulty label, not result.pos [obligation]
+    test('renders the translated difficulty label in the tag, not a raw pos string [obligation]', async () => {
+      const wrapper = await mountWithDifficulty(3)
+      const tag = wrapper.findComponent(UiTagStub)
+      // Real i18n is active in browser mode; score 3 → elementary tier → "Elementary".
+      expect(tag.text()).toBe('Elementary')
     })
   })
 })
