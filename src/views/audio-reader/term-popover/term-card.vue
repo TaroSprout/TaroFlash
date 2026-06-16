@@ -9,7 +9,7 @@ import AddCardControl from './add-card-control.vue'
 import AddCardPanel from './add-card-panel.vue'
 import { cardSlideEnter, cardSlideLeave, type SlideDirection } from '@/utils/animations/card-slide'
 
-type AddCardDraft = { front: string; back: string; deck_id: number | null }
+type AddCardDraft = { front: string; back: string; note: string; deck_id: number | null }
 
 const {
   term,
@@ -68,11 +68,11 @@ async function fetchTranslation() {
 function onAddCard(deck_id: number | null) {
   if (!result.value) return
 
-  const { translation, reading } = result.value
+  const { translation, reading, description } = result.value
   const back = reading ? `${translation}\n\n${reading}` : translation
 
   slide_direction.value = 'forward'
-  adding.value = { front: term, back, deck_id }
+  adding.value = { front: term, back, note: description, deck_id }
 }
 
 // Saving and cancelling both reverse the push so the term card slides back in —
@@ -280,6 +280,7 @@ watch(
         key="add"
         :front="adding.front"
         :back="adding.back"
+        :note="adding.note"
         :deck_id="adding.deck_id"
         @cancel="returnToTermCard"
         @saved="returnToTermCard"

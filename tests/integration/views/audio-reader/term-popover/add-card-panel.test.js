@@ -351,7 +351,8 @@ describe('AddCardPanel', () => {
         anchor_id: null,
         side: null,
         front_text: 'Dog',
-        back_text: '犬'
+        back_text: '犬',
+        note: null
       })
     })
 
