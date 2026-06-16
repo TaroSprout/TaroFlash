@@ -8,7 +8,7 @@ import { h } from 'vue'
 const UiButtonStub = {
   name: 'UiButton',
   inheritAttrs: false,
-  props: ['iconLeft', 'iconOnly', 'roundedFull', 'size'],
+  props: ['iconLeft', 'iconOnly', 'roundedFull', 'size', 'sfx'],
   emits: ['click'],
   setup(props, { slots, emit, attrs }) {
     return () =>
@@ -68,6 +68,16 @@ describe('ResumeFollowButton', () => {
 
       expect(wrapper.emitted('resume')).toBeTruthy()
       expect(wrapper.emitted('resume')).toHaveLength(1)
+    })
+  })
+
+  describe('click feedback [obligation]', () => {
+    test('plays the snappy_button_5 sfx on click [obligation]', () => {
+      const wrapper = mountButton()
+
+      expect(wrapper.findComponent(UiButtonStub).props('sfx')).toEqual({
+        click: 'ui.snappy_button_5'
+      })
     })
   })
 })

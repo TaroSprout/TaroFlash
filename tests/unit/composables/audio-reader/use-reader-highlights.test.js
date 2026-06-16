@@ -1232,7 +1232,7 @@ describe('useReaderHighlights', () => {
       expect(animate).toBe(true)
     })
 
-    test('resumeFollow calls scrollLineIntoView with animate=false when paused [obligation]', async () => {
+    test('resumeFollow still animates smoothly when paused [obligation]', async () => {
       const active_word = ref(0)
       const is_playing = ref(false)
       const { result, contentEl } = withHighlights({ active_word, is_playing })
@@ -1244,8 +1244,9 @@ describe('useReaderHighlights', () => {
       result.resumeFollow()
 
       expect(mockScrollLineIntoView).toHaveBeenCalledTimes(1)
+      // The resume tap always smooth-scrolls, regardless of play state.
       const [, , animate] = mockScrollLineIntoView.mock.calls[0]
-      expect(animate).toBe(false)
+      expect(animate).toBe(true)
     })
   })
 

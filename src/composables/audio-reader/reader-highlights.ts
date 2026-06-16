@@ -429,17 +429,17 @@ export function useReaderHighlights(
   }
 
   /**
-   * Re-arm active-word following and snap the playing word back into view, so the
-   * member who scrolled away can rejoin the read with one tap. Animates while
-   * playing and jumps instantly when paused (the iOS Safari rule from
-   * `scrollLineIntoView`).
+   * Re-arm active-word following and smoothly scroll the playing word back into
+   * view, so the member who scrolled away can rejoin the read with one tap. Always
+   * animates — this is a deliberate tap, not a paused-state seek, so the smooth
+   * tween is wanted (and welcome) regardless of play state.
    */
   function resumeFollow() {
     following.value = true
     const index = toValue(active_word)
     if (index < 0) return
     const el = wordEl(index)
-    if (el) scrollLineIntoView(scrollParentOf(content.value), el, toValue(is_playing))
+    if (el) scrollLineIntoView(scrollParentOf(content.value), el, true)
   }
 
   // Keep a just-committed word clear of the term sheet. Only on mobile — where the
