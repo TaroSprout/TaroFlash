@@ -48,6 +48,9 @@ const {
 // `ref()` is available. The vi.mock factories below close over these variables.
 const selectionRef = ref(null)
 const popoverOpenRef = ref(false)
+// Drives `useMatchMedia('w>=xl')` — false = mobile (term in dock), true = desktop
+// (term in sidebar). Defaults mobile; desktop tests flip it.
+const isDesktopRef = ref(false)
 
 vi.mock('@/composables/audio-reader/lesson-reader', () => ({
   useLessonReader: () => ({
@@ -72,6 +75,10 @@ vi.mock('@/composables/audio-reader/reader-progress', () => ({
 
 vi.mock('@/composables/ui/animated-height', () => ({
   useAnimatedHeight: vi.fn()
+}))
+
+vi.mock('@/composables/ui/media-query', () => ({
+  useMatchMedia: () => isDesktopRef
 }))
 
 vi.mock('@/utils/animations/footer-swap', () => ({
@@ -154,6 +161,15 @@ const TermCardStub = defineComponent({
   }
 })
 
+// Renders the dock's content inline so its panes are assertable — the real
+// component teleports into the host, which isn't mounted in this view test.
+const MobileDockStub = defineComponent({
+  name: 'MobileDock',
+  setup(_props, { slots }) {
+    return () => h('div', { 'data-testid': 'mobile-dock-stub' }, slots.default?.())
+  }
+})
+
 // ── Component import (after mocks) ────────────────────────────────────────────
 
 import LessonView from '@/views/audio-reader/lesson/index.vue'
@@ -179,7 +195,8 @@ function mountView(props = {}) {
       stubs: {
         Teleport: true,
         TranscriptView: TranscriptViewStub,
-        TermCard: TermCardStub
+        TermCard: TermCardStub,
+        MobileDock: MobileDockStub
       }
     }
   })
@@ -192,6 +209,7 @@ beforeEach(() => {
   chaptersRef.value = []
   selectionRef.value = null
   popoverOpenRef.value = false
+  isDesktopRef.value = false
   progressMutate.mockClear()
   editModalOpenMock.mockClear()
   routerPushMock.mockClear()
@@ -292,51 +310,70 @@ describe('LessonView', () => {
     })
   })
 
-  describe('footer — show_term_in_footer [obligation]', () => {
-    test('footer shows toolbar by default (no selection, popover closed)', () => {
+  describe('term card placement — dock vs sidebar [obligation]', () => {
+    test('dock shows toolbar by default (no selection, popover closed)', () => {
       const wrapper = mountView()
 
-      expect(wrapper.find('[data-testid="lesson-view__footer-toolbar"]').exists()).toBe(true)
-      expect(wrapper.find('[data-testid="lesson-view__footer-term"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="lesson-view__dock-toolbar"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="lesson-view__dock-term"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="lesson-view__sidebar-term"]').exists()).toBe(false)
     })
 
-    // [obligation] show_term_in_footer no longer requires mobile: computed is
-    // `popover_open && !!selection` — on a desktop-width viewport the footer term
-    // card should show when a term is committed.
-    test('footer shows term-card on desktop when popover open and selection set [obligation]', async () => {
+    // [obligation] Below xl the committed term card lives in the dock; the sidebar
+    // stays on its chapter list.
+    test('dock shows term-card on mobile when popover open and selection set [obligation]', async () => {
+      isDesktopRef.value = false
       popoverOpenRef.value = true
       selectionRef.value = { term: 'hello', sentence: 'say hello', word_index: 3, rect: {} }
 
       const wrapper = mountView()
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('[data-testid="lesson-view__footer-term"]').exists()).toBe(true)
-      expect(wrapper.find('[data-testid="lesson-view__footer-toolbar"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="lesson-view__dock-term"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="lesson-view__dock-toolbar"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="lesson-view__sidebar-term"]').exists()).toBe(false)
     })
 
-    test('footer shows toolbar when popover is closed even with selection [obligation]', async () => {
+    // [obligation] At xl+ the term card moves to the sidebar (replacing the chapter
+    // list) and the dock falls back to its toolbar — only one term-card mounts.
+    test('sidebar shows term-card on desktop when popover open and selection set [obligation]', async () => {
+      isDesktopRef.value = true
+      popoverOpenRef.value = true
+      selectionRef.value = { term: 'hello', sentence: 'say hello', word_index: 3, rect: {} }
+
+      const wrapper = mountView()
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-testid="lesson-view__sidebar-term"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="lesson-view__chapters"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="lesson-view__dock-term"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="lesson-view__dock-toolbar"]').exists()).toBe(true)
+      expect(wrapper.findAllComponents({ name: 'TermCard' })).toHaveLength(1)
+    })
+
+    test('dock shows toolbar when popover is closed even with selection [obligation]', async () => {
       popoverOpenRef.value = false
       selectionRef.value = { term: 'hello', sentence: 'say hello', word_index: 3, rect: {} }
 
       const wrapper = mountView()
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('[data-testid="lesson-view__footer-toolbar"]').exists()).toBe(true)
-      expect(wrapper.find('[data-testid="lesson-view__footer-term"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="lesson-view__dock-toolbar"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="lesson-view__dock-term"]').exists()).toBe(false)
     })
 
-    test('footer shows toolbar when popover open but no selection [obligation]', async () => {
+    test('dock shows toolbar when popover open but no selection [obligation]', async () => {
       popoverOpenRef.value = true
       selectionRef.value = null
 
       const wrapper = mountView()
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('[data-testid="lesson-view__footer-toolbar"]').exists()).toBe(true)
-      expect(wrapper.find('[data-testid="lesson-view__footer-term"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="lesson-view__dock-toolbar"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="lesson-view__dock-term"]').exists()).toBe(false)
     })
 
-    test('term-card in footer receives the selection term and sentence [obligation]', async () => {
+    test('term-card receives the selection term and sentence [obligation]', async () => {
       popoverOpenRef.value = true
       selectionRef.value = {
         term: 'konnichiwa',
@@ -440,12 +477,12 @@ describe('LessonView', () => {
     })
   })
 
-  describe('footer layout', () => {
+  describe('dock layout', () => {
     test('useAnimatedHeight is wired during setup', () => {
       vi.clearAllMocks()
       mountView()
 
-      // Wired once for footer_term and once for footer_toolbar
+      // Wired once for the dock term pane and once for the dock toolbar pane
       expect(useAnimatedHeight).toHaveBeenCalledTimes(2)
     })
   })
