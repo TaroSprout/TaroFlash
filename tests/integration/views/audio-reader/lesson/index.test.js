@@ -88,6 +88,7 @@ vi.mock('@/utils/animations/footer-swap', () => ({
 }))
 
 vi.mock('@/utils/animations/transcript-scroll', () => ({
+  cancelScroll: vi.fn(),
   scrollClearOf: vi.fn(),
   scrollLineIntoView: vi.fn(),
   scrollWordIntoDeadzone: vi.fn()

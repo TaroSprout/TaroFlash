@@ -17,7 +17,11 @@ import {
   hideReaderCursor,
   type CursorBox
 } from '@/utils/animations/reader-cursor'
-import { scrollLineIntoView, scrollWordIntoDeadzone } from '@/utils/animations/transcript-scroll'
+import {
+  cancelScroll,
+  scrollLineIntoView,
+  scrollWordIntoDeadzone
+} from '@/utils/animations/transcript-scroll'
 import type { CardMatch } from '@/utils/transcript-match'
 
 // How far each highlight bleeds past the text on every side, so it reads as a
@@ -162,6 +166,12 @@ export function useReaderHighlights(
   // position — drives the preview bubble that trails the finger. Null whenever no
   // armed touch selection is in flight, so the bubble shows on coarse pointers only.
   const touch_point = ref<{ x: number; y: number } | null>(null)
+
+  // Whether the active-word follow is live. The member taking the scroll over by
+  // hand (a touch pan on mobile, where the page itself scrolls) switches it off so
+  // their position holds; the host's resume control turns it back on. Desktop —
+  // where a bounded column scrolls, not the window — always follows.
+  const following = ref(true)
 
   // A touch in flight: where it landed and which word, held until release decides
   // tap-vs-scroll. Plain (non-reactive) state — it never drives a pill directly.
@@ -367,6 +377,7 @@ export function useReaderHighlights(
   // (~200–300 ms per word) but swallows bursts from fast scrubs.
   // Paused jumps must be instant (iOS Safari lock on rAF-driven tweens).
   function followActiveWord() {
+    if (!following.value) return
     if (follow_timer !== null) clearTimeout(follow_timer)
     follow_timer = setTimeout(() => {
       follow_timer = null
@@ -376,6 +387,32 @@ export function useReaderHighlights(
       if (!el) return
       scrollWordIntoDeadzone(scrollParentOf(content.value), el, toValue(is_playing))
     }, 100)
+  }
+
+  // The member started scrolling by hand: let the follow go and kill the live
+  // tween so it stops fighting them. Mobile only — keyed off the window being the
+  // real scroller; the desktop column keeps following. No-op once already off.
+  function disableFollow() {
+    if (!following.value) return
+    const scroller = scrollParentOf(content.value)
+    if (scroller !== window) return
+
+    following.value = false
+    cancelScroll(scroller)
+  }
+
+  /**
+   * Re-arm active-word following and snap the playing word back into view, so the
+   * member who scrolled away can rejoin the read with one tap. Animates while
+   * playing and jumps instantly when paused (the iOS Safari rule from
+   * `scrollLineIntoView`).
+   */
+  function resumeFollow() {
+    following.value = true
+    const index = toValue(active_word)
+    if (index < 0) return
+    const el = wordEl(index)
+    if (el) scrollLineIntoView(scrollParentOf(content.value), el, toValue(is_playing))
   }
 
   // Keep a just-committed word clear of the term sheet. Only on mobile — where the
@@ -594,6 +631,7 @@ export function useReaderHighlights(
     if (Math.hypot(event.clientX - tap.x, event.clientY - tap.y) > TAP_SLOP) {
       cancelLongPress()
       tap = null
+      disableFollow()
     }
   }
 
@@ -658,6 +696,11 @@ export function useReaderHighlights(
   // A scroll the browser claims (or any aborted touch) fires pointercancel: drop
   // the pending tap and disarm so nothing commits on the absent release.
   function onPointerCancel() {
+    // The browser only claims a touch it's turning into a scroll — unless a
+    // long-press already armed range-select, in which case it's an aborted
+    // selection, not a pan. So a cancel mid-pan is the member taking the scroll.
+    if (!touch_selecting) disableFollow()
+
     cancelLongPress()
     anchor_index.value = null
     focus_index.value = null
@@ -688,6 +731,8 @@ export function useReaderHighlights(
     tap_active,
     interaction_range,
     selection_preview,
+    following,
+    resumeFollow,
     onPointerDown,
     onPointerMove,
     onPointerUp,

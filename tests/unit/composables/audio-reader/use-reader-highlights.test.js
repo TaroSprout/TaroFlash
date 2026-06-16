@@ -15,6 +15,7 @@ vi.mock('@/utils/animations/reader-cursor', () => ({
 }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
 vi.mock('@/utils/animations/transcript-scroll', () => ({
+  cancelScroll: vi.fn(),
   scrollLineIntoView: vi.fn(),
   scrollWordIntoDeadzone: mockScrollWordIntoDeadzone
 }))
