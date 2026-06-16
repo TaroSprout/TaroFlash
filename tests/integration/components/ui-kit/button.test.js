@@ -185,15 +185,21 @@ describe('UiButton', () => {
       expect(onClick).toHaveBeenCalledTimes(1)
     })
 
-    test('emits click sfx at the start of the tap when sfx.click is set', async () => {
+    test('emits press sfx at the start of the tap when sfx.press is set', async () => {
+      vi.useFakeTimers()
       const wrapper = shallowMount(UiButton, {
-        props: { playOnTap: true, sfx: { click: 'ui.select' } },
+        props: { playOnTap: true, sfx: { press: 'ui.select' } },
         attrs: { onClick: vi.fn() }
       })
 
-      await wrapper.find('[data-testid="ui-kit-button"]').trigger('click')
+      wrapper
+        .find('[data-testid="ui-kit-button"]')
+        .element.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      vi.advanceTimersByTime(500)
+      await wrapper.vm.$nextTick()
 
       expect(mockEmitSfx).toHaveBeenCalledWith('ui.select', expect.any(Object))
+      vi.useRealTimers()
     })
 
     test('omits sfx when sfx.click is not set', async () => {
@@ -253,16 +259,17 @@ describe('UiButton', () => {
         expect(gsap.to).not.toHaveBeenCalled()
       })
 
-      test('tapAnimate=false still fires click sfx when sfx.click is set [obligation]', async () => {
+      test('tapAnimate=false still fires press sfx when sfx.press is set [obligation]', async () => {
         mockEmitSfx.mockClear()
         const wrapper = shallowMount(UiButton, {
-          props: { playOnTap: true, tapAnimate: false, sfx: { click: 'ui.select' } },
+          props: { playOnTap: true, tapAnimate: false, sfx: { press: 'ui.select' } },
           attrs: { onClick: vi.fn() }
         })
 
         wrapper
           .find('[data-testid="ui-kit-button"]')
           .element.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        vi.advanceTimersByTime(500)
         await wrapper.vm.$nextTick()
 
         expect(mockEmitSfx).toHaveBeenCalledWith('ui.select', expect.any(Object))

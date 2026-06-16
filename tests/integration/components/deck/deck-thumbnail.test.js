@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { shallowMount } from '@vue/test-utils'
+import { shallowMount, flushPromises } from '@vue/test-utils'
 
 const { coarseRef, mockEmitSfx } = vi.hoisted(() => ({
   coarseRef: { value: true },
@@ -153,7 +153,7 @@ describe('Deck', () => {
       vi.useRealTimers()
     })
 
-    test('emits click_sfx via beforePlay when provided', async () => {
+    test('emits click_sfx when tapped (fires at animation peak)', async () => {
       vi.useFakeTimers()
       const wrapper = shallowMount(Deck, {
         props: { deck: { title: 'X' }, click_sfx: 'ui.select' },
@@ -161,10 +161,10 @@ describe('Deck', () => {
       })
 
       wrapper.find('[data-testid="deck-thumbnail"]').trigger('click')
-      await Promise.resolve()
-
-      expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
       vi.advanceTimersByTime(500)
+      await flushPromises()
+
+      expect(mockEmitSfx).toHaveBeenCalledWith('ui.select', undefined)
       vi.useRealTimers()
     })
 
