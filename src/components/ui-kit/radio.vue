@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import UiIcon from '@/components/ui-kit/icon.vue'
+import { useStagedTap } from '@/composables/ui/staged-tap'
 
 const { checked, theme = 'blue-500' } = defineProps<{
   checked: boolean
@@ -7,6 +8,9 @@ const { checked, theme = 'blue-500' } = defineProps<{
   theme?: Theme
   inverted?: boolean
 }>()
+
+const { playing, tap } = useStagedTap({ triggerAt: 'press' })
+const onCaptureClick = tap(undefined, { audio: 'ui.select' })
 </script>
 
 <template>
@@ -21,7 +25,9 @@ const { checked, theme = 'blue-500' } = defineProps<{
       'bg-(--theme-primary) outline-4': checked && inverted,
       'border-4 border-white bg-(--theme-primary)!': checked && !inverted
     }"
-    v-sfx="{ hover: 'ui.click_07', click: 'ui.select' }"
+    :data-playing="playing || null"
+    v-sfx="{ hover: 'ui.click_07' }"
+    @click.capture="onCaptureClick"
   >
     <ui-icon v-if="checked" class="text-white" src="check" />
     <ui-icon v-if="intermediate" src="minus" />

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import UiRadio from '@/components/ui-kit/radio.vue'
+import { useStagedTap } from '@/composables/ui/staged-tap'
 
 const { theme = 'brown-100' } = defineProps<{
   theme?: Theme
@@ -11,8 +12,10 @@ const emit = defineEmits<{
   (e: 'select'): void
 }>()
 
-function onSelect() {
-  emit('select')
+const { playing, tap } = useStagedTap({ triggerAt: 'press' })
+
+function onCaptureClick(e: MouseEvent) {
+  tap(() => emit('select'), { audio: 'ui.etc_camera_shutter', captureMode: true })(e)
 }
 </script>
 
@@ -25,8 +28,8 @@ function onSelect() {
         'outline-3 outline-blue-500': selected,
         'outline-2 outline-brown-100 hover:outline-blue-500': !selected
       }"
-      @click="onSelect"
-      v-sfx.click="'ui.etc_camera_shutter'"
+      :data-playing="playing || null"
+      @click.capture="onCaptureClick"
     >
       <div
         class="w-full h-full flex gap-4 flex-col items-start bgx-leaf bgx-size-25 rounded-9 px-11 py-5 bgx-opacity-10"

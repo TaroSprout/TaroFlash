@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import SpinboxButton from './button.vue'
 import { useNumericInput } from '@/composables/ui/numeric-input'
+import { useStagedTap } from '@/composables/ui/staged-tap'
 
 type SpinboxProps = {
   min?: number
@@ -51,8 +52,15 @@ function increment() {
   value.value = clamp(value.value + step)
 }
 
-function togglePill() {
-  pill_active.value = !pill_active.value
+const { playing: pill_playing, tap: tapPill } = useStagedTap({ triggerAt: 'press' })
+
+function onCapturePill(e: MouseEvent) {
+  tapPill(
+    () => {
+      pill_active.value = !pill_active.value
+    },
+    { audio: 'ui.select', captureMode: true }
+  )(e)
 }
 </script>
 
@@ -114,8 +122,9 @@ function togglePill() {
       data-testid="ui-kit-spinbox__pill"
       :data-active="pill_active"
       class="inline-flex items-center justify-center bg-input px-3 text-sm cursor-pointer text-brown-700 dark:text-brown-100 transition-colors rounded-4 rounded-l-2 data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary) data-[active=false]:hover:bg-(--theme-primary) data-[active=false]:hover:text-(--theme-on-primary)"
-      v-sfx="{ hover: 'ui.click_07', click: 'ui.select' }"
-      @click="togglePill"
+      :data-playing="pill_playing || null"
+      v-sfx="{ hover: 'ui.click_07' }"
+      @click.capture="onCapturePill"
     >
       {{ pill_label }}
     </button>
