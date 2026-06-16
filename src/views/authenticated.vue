@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import NavBar from '@/components/nav-bar.vue'
 import Phone from '@/phone/phone.vue'
+import MobileDockHost from '@/components/mobile-dock/mobile-dock-host.vue'
 import DashboardSkeleton from '@/views/dashboard/skeleton.vue'
 import DeckSkeleton from '@/views/deck/skeleton.vue'
 </script>
@@ -22,5 +23,7 @@ import DeckSkeleton from '@/views/deck/skeleton.vue'
         </suspense>
       </router-view>
     </main>
+
+    <mobile-dock-host />
   </div>
 </template>
