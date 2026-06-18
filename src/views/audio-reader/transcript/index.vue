@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, provide } from 'vue'
-import type { SentenceWords } from '@/utils/transcript'
+import type { DisplayWord, SentenceWords } from '@/utils/transcript'
 import type { CardMatch } from '@/utils/transcript-match'
 import {
   readerActiveWordKey,
@@ -81,6 +81,31 @@ function paragraphIndexOf(node: Element): number | null {
   return index === null || index === undefined ? null : Number(index)
 }
 
+// When the term appears more than once in the sentence, wrap the selected
+// occurrence in [...] so the translator knows exactly which one was chosen.
+// Walks the preceding words in order to advance a cursor to the right position.
+function markTermInSentence(
+  sentence: string,
+  words: DisplayWord[],
+  word_index: number,
+  term: string
+): string {
+  if (sentence.split(term).length - 1 <= 1) return sentence
+
+  let cursor = 0
+  for (const word of words) {
+    if (word.index >= word_index) break
+    const token = word.display.trim()
+    if (!token) continue
+    const pos = sentence.indexOf(token, cursor)
+    if (pos !== -1) cursor = pos + token.length
+  }
+
+  const hit = sentence.indexOf(term, cursor)
+  if (hit === -1) return sentence
+  return sentence.slice(0, hit) + '[' + term + ']' + sentence.slice(hit + term.length)
+}
+
 // A committed word-range carries its own term + rect + first/last word indices;
 // the surrounding text (translator context) is the whole paragraph the anchor
 // word sits in.
@@ -98,7 +123,9 @@ function commitSelection({
   end_index: number
 }) {
   const index = paragraphIndexOf(anchor)
-  const sentence = (index !== null && paragraphs[index]?.sentence) || term
+  const raw_sentence = (index !== null && paragraphs[index]?.sentence) || term
+  const words = index !== null ? (paragraphs[index]?.words ?? []) : []
+  const sentence = markTermInSentence(raw_sentence, words, word_index, term)
   emit('select', { term, sentence, rect, word_index, word_end_index })
 }
 </script>
