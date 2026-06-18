@@ -281,6 +281,61 @@ describe('TranscriptView', () => {
     })
   })
 
+  describe('sentence marking for repeated terms [obligation]', () => {
+    function tap(wrapper, wordIndex) {
+      const wordEls = wrapper.findAll('[data-testid="transcript-word"]').map((w) => w.element)
+      vi.spyOn(document, 'elementFromPoint').mockImplementation((x) => wordEls[x] ?? null)
+      wordEls[wordIndex].dispatchEvent(
+        new PointerEvent('pointerdown', {
+          bubbles: true,
+          pointerId: 1,
+          buttons: 1,
+          clientX: wordIndex,
+          clientY: 0
+        })
+      )
+      wordEls[wordIndex].dispatchEvent(
+        new PointerEvent('pointerup', {
+          bubbles: true,
+          pointerId: 1,
+          clientX: wordIndex,
+          clientY: 0
+        })
+      )
+      return wrapper.vm.$nextTick()
+    }
+
+    test('marks correct occurrence when selected word is the second of two identical terms', async () => {
+      const wrapper = mount(TranscriptView, {
+        props: {
+          paragraphs: [sentence(0, 'go or go', [word('go ', 0), word('or ', 1), word('go', 2)])],
+          active_word: -1
+        }
+      })
+
+      await tap(wrapper, 2)
+
+      const [payload] = wrapper.emitted('select')[0]
+      expect(payload.sentence).toBe('go or [go]')
+    })
+
+    test('does not mark when term is unambiguous', async () => {
+      const wrapper = mount(TranscriptView, {
+        props: {
+          paragraphs: [
+            sentence(0, 'go or stop', [word('go ', 0), word('or ', 1), word('stop', 2)])
+          ],
+          active_word: -1
+        }
+      })
+
+      await tap(wrapper, 0)
+
+      const [payload] = wrapper.emitted('select')[0]
+      expect(payload.sentence).toBe('go or stop')
+    })
+  })
+
   describe('readerActiveWordKey provide [obligation]', () => {
     test('provides readerActiveWordKey to child words reflecting active_word prop [obligation]', async () => {
       const wrapper = mountView({ active_word: 3 })

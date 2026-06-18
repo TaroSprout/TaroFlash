@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, provide } from 'vue'
 import type { SentenceWords } from '@/utils/transcript'
+import { markTermInSentence } from '@/utils/transcript'
 import type { CardMatch } from '@/utils/transcript-match'
 import {
   readerActiveWordKey,
@@ -98,7 +99,9 @@ function commitSelection({
   end_index: number
 }) {
   const index = paragraphIndexOf(anchor)
-  const sentence = (index !== null && paragraphs[index]?.sentence) || term
+  const raw_sentence = (index !== null && paragraphs[index]?.sentence) || term
+  const words = index !== null ? (paragraphs[index]?.words ?? []) : []
+  const sentence = markTermInSentence(raw_sentence, words, word_index, term)
   emit('select', { term, sentence, rect, word_index, word_end_index })
 }
 </script>

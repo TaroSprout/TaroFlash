@@ -1,5 +1,10 @@
 import { describe, test, expect } from 'vite-plus/test'
-import { groupWordsBySentence, groupSentencesIntoParagraphs, cleanTerm } from '@/utils/transcript'
+import {
+  groupWordsBySentence,
+  groupSentencesIntoParagraphs,
+  cleanTerm,
+  markTermInSentence
+} from '@/utils/transcript'
 
 const seg = (start, end, text) => ({ start, end, text })
 const w = (word, start) => ({ word, start, end: start + 0.3 })
@@ -307,5 +312,39 @@ describe('cleanTerm', () => {
   test('returns empty string for punctuation-only tokens', () => {
     expect(cleanTerm('…')).toBe('')
     expect(cleanTerm('  ')).toBe('')
+  })
+})
+
+describe('markTermInSentence', () => {
+  const w = (display, index) => ({ display, index, start: 0 })
+
+  test('returns sentence unchanged when term appears exactly once', () => {
+    const words = [w('go ', 0), w('or ', 1), w('stop', 2)]
+    expect(markTermInSentence('go or stop', words, 0, 'go')).toBe('go or stop')
+  })
+
+  test('returns sentence unchanged when term does not appear', () => {
+    const words = [w('go ', 0), w('or ', 1), w('stop', 2)]
+    expect(markTermInSentence('go or stop', words, 0, 'run')).toBe('go or stop')
+  })
+
+  test('marks first occurrence when word 0 is selected (first of two identical terms)', () => {
+    const words = [w('go ', 0), w('or ', 1), w('go', 2)]
+    expect(markTermInSentence('go or go', words, 0, 'go')).toBe('[go] or go')
+  })
+
+  test('marks second occurrence when a preceding word advances the cursor past the first', () => {
+    const words = [w('go ', 0), w('or ', 1), w('go', 2)]
+    expect(markTermInSentence('go or go', words, 2, 'go')).toBe('go or [go]')
+  })
+
+  test('CJK/space-less script marks the correct occurrence', () => {
+    const words = [w('今天', 0), w('天气', 1), w('今天', 2), w('很冷', 3)]
+    expect(markTermInSentence('今天天气今天很冷', words, 2, '今天')).toBe('今天天气[今天]很冷')
+  })
+
+  test('returns sentence unchanged when term appears only once even though words have other content', () => {
+    const words = [w('the ', 0), w('quick ', 1), w('fox', 2)]
+    expect(markTermInSentence('the quick fox', words, 1, 'quick')).toBe('the quick fox')
   })
 })

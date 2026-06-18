@@ -95,6 +95,36 @@ export function groupSentencesIntoParagraphs(
 }
 
 /**
+ * When the selected term appears more than once in the sentence, wrap the
+ * selected occurrence in [...] so the translator knows exactly which one
+ * was chosen. Returns the sentence unchanged when the term is unambiguous.
+ *
+ * Walks the words that precede the selection to advance a cursor to the
+ * right position, then marks the nearest occurrence at or after the cursor.
+ */
+export function markTermInSentence(
+  sentence: string,
+  words: DisplayWord[],
+  word_index: number,
+  term: string
+): string {
+  if (sentence.split(term).length - 1 <= 1) return sentence
+
+  let cursor = 0
+  for (const word of words) {
+    if (word.index >= word_index) break
+    const token = word.display.trim()
+    if (!token) continue
+    const pos = sentence.indexOf(token, cursor)
+    if (pos !== -1) cursor = pos + token.length
+  }
+
+  const hit = sentence.indexOf(term, cursor)
+  if (hit === -1) return sentence
+  return sentence.slice(0, hit) + '[' + term + ']' + sentence.slice(hit + term.length)
+}
+
+/**
  * Predicate: a word belongs to segment `i` when its start falls inside the
  * segment's time span. The first segment also claims any words that start
  * before it; the last segment claims any that start after it.
