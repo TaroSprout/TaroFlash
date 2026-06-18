@@ -14,7 +14,7 @@ import { useCreateSetupIntentMutation } from '@/api/billing'
 import { getStripeAppearance, STRIPE_FONTS } from '@/utils/billing/stripe-theme'
 import logger from '@/utils/logger'
 
-export type AddCreditCardResponse = { added: boolean }
+export type AddCreditCardResponse = { added: boolean; paymentMethodId: string | null }
 
 const { close } = defineProps<{
   close: (response?: AddCreditCardResponse) => void
@@ -91,7 +91,9 @@ async function onSubmit() {
 
   if (result.setupIntent?.status === 'succeeded') {
     queryCache.invalidateQueries({ key: ['billing', 'payment-methods'] })
-    close({ added: true })
+    const pm = result.setupIntent.payment_method
+    const paymentMethodId = typeof pm === 'string' ? pm : (pm?.id ?? null)
+    close({ added: true, paymentMethodId })
     return
   }
 
