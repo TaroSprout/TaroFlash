@@ -75,7 +75,7 @@ const region_hover = computed(
 // Behind/full-bleed plays the hover chime card-wide; region scopes it to the
 // image region (see onRegionPointerEnter), so the card stays silent there.
 const card_sfx = computed<SfxOptions | undefined>(() =>
-  has_image.value && dropzone_mode.value === 'corners' ? { hover: 'ui.click_07' } : undefined
+  has_image.value && dropzone_mode.value === 'corners' ? { hover: 'ui.tap_05' } : undefined
 )
 
 const error_message = computed(() => {
@@ -102,7 +102,7 @@ function onCardPointerLeave() {
 // Region mode scopes the hover chime to the image region; behind/full-bleed play
 // it card-wide via the card's own sfx prop.
 function onRegionPointerEnter() {
-  emitSfx('ui.click_07')
+  emitSfx('ui.tap_05')
   onPointerEnter()
 }
 
@@ -156,7 +156,7 @@ function onAddClick() {
       :aria-label="t('deck-view.card-editor.list-item.upload-image-button')"
       class="absolute! top-(--face-padding) right-(--face-padding) z-20 cursor-pointer text-brown-500 transition-[color,opacity] duration-150 hover:text-blue-500 dark:text-brown-100 dark:hover:text-blue-650"
       :class="hovered ? 'opacity-100' : 'opacity-0'"
-      v-sfx="{ hover: 'ui.click_07' }"
+      v-sfx="{ hover: 'ui.tap_05' }"
       @click.stop="onAddClick"
     >
       <span ref="addIcon" class="inline-flex">

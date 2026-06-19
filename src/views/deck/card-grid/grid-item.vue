@@ -72,7 +72,7 @@ function onCardMouseDown(e: MouseEvent) {
     data-testid="grid-item"
     class="grid-item group relative aspect-card w-full touch-manipulation"
     :class="{ 'card-outline pointer-fine:hover:scale-101': is_selecting }"
-    v-sfx.hover="is_selecting ? 'ui.click_07' : undefined"
+    v-sfx.hover="is_selecting ? 'ui.tap_05' : undefined"
   >
     <card
       v-bind="card"
