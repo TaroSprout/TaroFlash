@@ -1,6 +1,6 @@
 import { gsap } from 'gsap'
 
-const DURATION = 0.25
+const DURATION = 0.15
 
 export type CarouselDirection = 'next' | 'prev'
 
