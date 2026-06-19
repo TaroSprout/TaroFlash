@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useMemberDecksQuery } from '@/api/decks'
 import { useToast } from '@/composables/toast'
 import DeckThumbnail from '@/components/deck/deck-thumbnail.vue'
@@ -38,7 +38,13 @@ const due_decks = computed(() => {
 
 const total_due = computed(() => due_decks.value.reduce((sum, d) => sum + (d.due_count ?? 0), 0))
 
+const show_inbox = ref(true)
+
 function onBadgeClick() {
+  show_inbox.value = !show_inbox.value
+}
+
+function onEditClick() {
   phone.value?.openByTitle('Settings')
 }
 
@@ -78,25 +84,28 @@ async function onCreateDeckClicked() {
               class="absolute! -top-1 -right-1 ring-4 ring-(--theme-primary)"
               icon-only
               inverted
+              @click.stop="onEditClick"
             >
               {{ t('member-badge.edit-button') }}
             </ui-button>
           </template>
         </member-badge>
 
-        <div
-          data-testid="dashboard__binder-rings"
-          class="absolute top-[118px] z-10 w-full flex justify-between px-14"
-        >
+        <template v-if="show_inbox">
           <div
-            class="h-8 w-[17px] rounded-full bg-brown-500 ring-3 ring-brown-100 dark:ring-grey-900"
-          />
-          <div
-            class="h-8 w-[17px] rounded-full bg-brown-500 ring-3 ring-brown-100 dark:ring-grey-900"
-          />
-        </div>
+            data-testid="dashboard__binder-rings"
+            class="absolute top-[118px] z-10 w-full flex justify-between px-14"
+          >
+            <div
+              class="h-8 w-[17px] rounded-full bg-brown-500 ring-3 ring-brown-100 dark:ring-grey-900"
+            />
+            <div
+              class="h-8 w-[17px] rounded-full bg-brown-500 ring-3 ring-brown-100 dark:ring-grey-900"
+            />
+          </div>
 
-        <review-inbox :due_decks="due_decks" />
+          <review-inbox :due_decks="due_decks" />
+        </template>
       </div>
 
       <ui-button
