@@ -248,6 +248,8 @@
   "dashboard.deck-filter.due-label": "Due",
   "dashboard.deck-filter.all-label": "All Decks",
   "dashboard.create-deck-button": "Make a New Deck",
+  "review-inbox.cards-due-heading": "{count} card due | {count} cards due",
+  "review-inbox.study-all-button": "Study all",
   "lesson-collections.section.heading": "Audio Reader",
   "lesson-collections.section.new-button": "New Collection",
   "lesson-collections.section.empty-fallback": "No collections yet. Create one to start adding lessons.",
