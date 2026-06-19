@@ -19,7 +19,8 @@ const bindings = computed(() => coverBindings(cover, { fallbackTheme: 'purple-50
     <div
       v-if="cover?.icon"
       data-testid="card-cover__icon"
-      class="w-1/3 h-1/3 [&>svg]:w-full [&>svg]:h-full text-(--theme-accent)"
+      class="[&>svg]:w-full [&>svg]:h-full text-(--theme-accent)"
+      style="width: var(--cover-icon-size); height: var(--cover-icon-size)"
     >
       <ui-icon :src="cover.icon" />
     </div>
