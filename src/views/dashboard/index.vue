@@ -48,6 +48,7 @@ const total_due = computed(() => due_decks.value.reduce((sum, d) => sum + (d.due
 const show_inbox = useLocalRef('dashboard.show_inbox', false)
 
 function onBadgeClick() {
+  if (due_decks.value.length === 0) return
   show_inbox.value = !show_inbox.value
 }
 
