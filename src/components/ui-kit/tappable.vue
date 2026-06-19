@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useAttrs } from 'vue'
 import {
   type StagedTapAnimate,
   type StagedTapPhase,
@@ -27,25 +26,14 @@ const emit = defineEmits<{
   tap: [e: MouseEvent]
 }>()
 
-const attrs = useAttrs()
 const { playing, tap } = useStagedTap({ animate, triggerAt })
 
-function onCaptureClick(e: MouseEvent) {
-  const handler = attrs.onClick as ((ev: MouseEvent) => void) | undefined
-  tap(
-    (ev) => {
-      emit('tap', ev)
-      handler?.(ev)
-    },
-    {
-      preAudio: sfx.tap_pre,
-      audio: sfx.press,
-      audioOpts: { debounce: sfx.debounce, blocking: sfx.press_blocking },
-      postAudio: sfx.tap_post,
-      captureMode: true
-    }
-  )(e)
-}
+const handler = tap((e) => emit('tap', e), {
+  preAudio: sfx.tap_pre,
+  audio: sfx.press,
+  audioOpts: { debounce: sfx.debounce, blocking: sfx.press_blocking },
+  postAudio: sfx.tap_post
+})
 </script>
 
 <template>
@@ -54,7 +42,7 @@ function onCaptureClick(e: MouseEvent) {
     :data-playing="playing || null"
     class="group/tappable relative"
     v-sfx="{ hover: sfx.hover, focus: sfx.focus, blur: sfx.blur, debounce: sfx.debounce }"
-    @click.capture="onCaptureClick"
+    @click="handler"
   >
     <slot />
     <div
