@@ -1,10 +1,10 @@
 <script setup lang="ts" generic="T extends string | number">
 import UiTappable from '@/components/ui-kit/tappable.vue'
+import { TYPE_SFX } from '@/sfx/config'
 
 type TabBarProps<V> = {
   tabs: { value: V; label: string }[]
   active: V
-  hover_sfx?: string
   full_width?: boolean
   size?: 'sm' | 'base'
 }
@@ -29,7 +29,7 @@ const emit = defineEmits<{
     <ui-tappable
       v-for="tab in tabs"
       :key="String(tab.value)"
-      v-sfx="{ hover: tab.value === active ? undefined : hover_sfx }"
+      v-sfx="{ hover: tab.value === active ? undefined : TYPE_SFX }"
       as="button"
       type="button"
       data-testid="tab-bar__tab"

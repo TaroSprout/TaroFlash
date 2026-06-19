@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Card from '@/components/card/index.vue'
+import { TYPE_SFX } from '@/sfx/config'
 
 defineProps<{ deck: Deck }>()
 </script>
@@ -8,7 +9,7 @@ defineProps<{ deck: Deck }>()
   <div
     data-testid="review-inbox-item"
     class="card-outline pointer-fine:hover:scale-101 pointer-fine:hover:z-10 pointer-fine:transition-transform duration-75 relative cursor-pointer touch-manipulation"
-    v-sfx.hover="'ui.tap_05'"
+    v-sfx="{ hover: TYPE_SFX }"
   >
     <card side="cover" size="xs" :cover_config="deck.cover_config" />
     <div

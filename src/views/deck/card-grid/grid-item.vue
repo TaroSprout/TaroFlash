@@ -5,6 +5,7 @@ import UiDropdownButton, {
   type DropdownOption
 } from '@/components/ui-kit/dropdown-button/index.vue'
 import { emitSfx } from '@/sfx/bus'
+import { TYPE_SFX } from '@/sfx/config'
 import { computed, inject, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { cardEditorKey } from '@/composables/card/list-controller'
@@ -72,7 +73,7 @@ function onCardMouseDown(e: MouseEvent) {
     data-testid="grid-item"
     class="grid-item group relative aspect-card w-full touch-manipulation"
     :class="{ 'card-outline pointer-fine:hover:scale-101': is_selecting }"
-    v-sfx.hover="is_selecting ? 'ui.tap_05' : undefined"
+    v-sfx="{ hover: is_selecting ? TYPE_SFX : undefined }"
   >
     <card
       v-bind="card"
