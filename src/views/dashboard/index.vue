@@ -6,6 +6,7 @@ import DeckThumbnail from '@/components/deck/deck-thumbnail.vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
+import UiIcon from '@/components/ui-kit/icon.vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import ReviewInbox from './review-inbox.vue'
 import AudioReaderSection from './audio-reader-section.vue'
@@ -99,19 +100,14 @@ async function onCreateDeckClicked() {
             >
               {{ t('member-badge.edit-button') }}
             </ui-button>
-            <ui-button
+            <button
               v-if="!show_inbox"
               data-testid="member-badge__expand-button"
-              icon-left="carat-down"
-              icon-only
-              inverted
-              size="sm"
-              data-theme="brown-50"
-              class="absolute! bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 ring-4 ring-(--theme-primary)"
+              class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-brown-100 text-(--theme-primary) ring-4 ring-(--theme-primary)"
               @click.stop="onBadgeClick"
             >
-              {{ t('member-badge.expand-inbox-button') }}
-            </ui-button>
+              <ui-icon src="carat-down" class="h-4 w-4" />
+            </button>
           </template>
         </member-badge>
 
