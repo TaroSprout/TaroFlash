@@ -56,7 +56,7 @@ function next() {
     </div>
 
     <div data-testid="review-inbox__body" class="px-5 pt-3 pb-5">
-      <div data-testid="review-inbox__items" class="relative flex justify-center gap-3 py-2">
+      <div data-testid="review-inbox__items" class="relative flex justify-center gap-1 py-2">
         <button
           v-if="has_overflow"
           data-testid="review-inbox__prev-btn"
