@@ -55,6 +55,9 @@ async function navigate(dir: CarouselDirection) {
   const new_offset = dir === 'next' ? (offset.value + 1) % n : (offset.value - 1 + n) % n
   const step_px = (tape_el.value.children[0] as HTMLElement)?.offsetWidth + 4
 
+  const clip = tape_el.value.parentElement as HTMLElement
+  clip.style.width = `${clip.offsetWidth}px`
+
   if (dir === 'next') {
     tape.value = [...tape.value, deckAt(offset.value, VISIBLE_COUNT)]
   } else {
@@ -66,6 +69,7 @@ async function navigate(dir: CarouselDirection) {
 
   offset.value = new_offset
   tape.value = tapeFor(new_offset)
+  clip.style.width = ''
   is_animating.value = false
 }
 
