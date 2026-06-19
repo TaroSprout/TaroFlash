@@ -78,7 +78,7 @@ async function onCreateDeckClicked() {
           <template #description>
             <div
               data-testid="member-badge__cards-due"
-              class="border-t-2 border-brown-100 pt-1 mt-0.5 text-xl text-brown-100"
+              class="border-t-2 border-brown-100 pt-3 mt-0.5 text-xl text-brown-100"
             >
               <span class="bg-brown-100 text-(--theme-primary) px-1 py-0.5 -rotate-5 rounded-1.5">{{
                 total_due
@@ -99,19 +99,32 @@ async function onCreateDeckClicked() {
             >
               {{ t('member-badge.edit-button') }}
             </ui-button>
+            <ui-button
+              v-if="!show_inbox"
+              data-testid="member-badge__expand-button"
+              icon-left="carat-down"
+              icon-only
+              inverted
+              size="sm"
+              data-theme="brown-50"
+              class="absolute! bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 ring-4 ring-(--theme-primary)"
+              @click.stop="onBadgeClick"
+            >
+              {{ t('member-badge.expand-inbox-button') }}
+            </ui-button>
           </template>
         </member-badge>
 
         <template v-if="show_inbox">
           <div
             data-testid="dashboard__binder-rings"
-            class="absolute top-[118px] z-10 w-full flex justify-between px-14"
+            class="absolute top-29.5 z-10 w-full flex justify-between px-14"
           >
             <div
-              class="h-8 w-[17px] rounded-full bg-brown-500 ring-3 ring-brown-100 dark:ring-grey-900"
+              class="h-8 w-4.25 rounded-full bg-brown-500 ring-3 ring-brown-100 dark:ring-grey-900"
             />
             <div
-              class="h-8 w-[17px] rounded-full bg-brown-500 ring-3 ring-brown-100 dark:ring-grey-900"
+              class="h-8 w-4.25 rounded-full bg-brown-500 ring-3 ring-brown-100 dark:ring-grey-900"
             />
           </div>
 
