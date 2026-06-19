@@ -28,12 +28,14 @@ const emit = defineEmits<{
 
 const { playing, tap } = useStagedTap({ animate, triggerAt })
 
-const handler = tap((e) => emit('tap', e), {
-  preAudio: sfx.tap_pre,
-  audio: sfx.press,
-  audioOpts: { debounce: sfx.debounce, blocking: sfx.press_blocking },
-  postAudio: sfx.tap_post
-})
+function onClick(e: MouseEvent) {
+  tap((ev) => emit('tap', ev), {
+    preAudio: sfx.tap_pre,
+    audio: sfx.press,
+    audioOpts: { debounce: sfx.debounce, blocking: sfx.press_blocking },
+    postAudio: sfx.tap_post
+  })(e)
+}
 </script>
 
 <template>
@@ -42,7 +44,7 @@ const handler = tap((e) => emit('tap', e), {
     :data-playing="playing || null"
     class="group/tappable relative"
     v-sfx="{ hover: sfx.hover, focus: sfx.focus, blur: sfx.blur, debounce: sfx.debounce }"
-    @click="handler"
+    @click="onClick"
   >
     <slot />
     <div
