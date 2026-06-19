@@ -1,16 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { memberCoverBindings } from '@/components/member/cover'
 import UiButton from '@/components/ui-kit/button.vue'
 import ReviewInboxItem from './review-inbox-item.vue'
 import { useStudyModal } from '@/composables/study-session/study-modal'
-import {
-  carouselBeforeEnter,
-  carouselEnter,
-  carouselLeave,
-  type CarouselDirection
-} from '@/utils/animations/inbox-carousel'
+import { carouselSlide, type CarouselDirection } from '@/utils/animations/inbox-carousel'
 
 type ReviewInboxProps = {
   due_decks: Deck[]
@@ -28,34 +23,58 @@ const offset = ref(0)
 
 const total_due = computed(() => due_decks.reduce((sum, d) => sum + (d.due_count ?? 0), 0))
 const has_overflow = computed(() => due_decks.length > VISIBLE_COUNT)
-const visible_decks = computed(() => due_decks.slice(offset.value, offset.value + VISIBLE_COUNT))
 
-const direction = ref<CarouselDirection>('next')
+const tape = ref<Deck[]>([])
+const tape_el = ref<HTMLElement | null>(null)
+const is_animating = ref(false)
+
+watch(
+  () => due_decks,
+  (decks) => {
+    tape.value = decks.slice(offset.value, offset.value + VISIBLE_COUNT)
+  },
+  { immediate: true }
+)
 
 function onItemClicked(deck: Deck) {
   study_session.start(deck)
 }
 
+async function navigate(dir: CarouselDirection) {
+  if (is_animating.value || !tape_el.value) return
+  is_animating.value = true
+
+  const new_offset =
+    dir === 'next'
+      ? offset.value + VISIBLE_COUNT < due_decks.length
+        ? offset.value + 1
+        : 0
+      : offset.value > 0
+        ? offset.value - 1
+        : due_decks.length - VISIBLE_COUNT
+
+  const step_px = (tape_el.value.children[0] as HTMLElement)?.offsetWidth + 4
+
+  if (dir === 'next') {
+    tape.value = [...tape.value, due_decks[new_offset + VISIBLE_COUNT - 1]]
+  } else {
+    tape.value = [due_decks[new_offset], ...tape.value]
+  }
+
+  await nextTick()
+  await carouselSlide(tape_el.value, dir, step_px)
+
+  offset.value = new_offset
+  tape.value = due_decks.slice(new_offset, new_offset + VISIBLE_COUNT)
+  is_animating.value = false
+}
+
 function prev() {
-  direction.value = 'prev'
-  offset.value = offset.value > 0 ? offset.value - 1 : due_decks.length - VISIBLE_COUNT
+  navigate('prev')
 }
 
 function next() {
-  direction.value = 'next'
-  offset.value = offset.value + VISIBLE_COUNT < due_decks.length ? offset.value + 1 : 0
-}
-
-function onBeforeEnter(el: Element) {
-  carouselBeforeEnter(direction.value)(el)
-}
-
-function onEnter(el: Element, done: () => void) {
-  carouselEnter(direction.value)(el, done)
-}
-
-function onLeave(el: Element, done: () => void) {
-  carouselLeave(direction.value)(el, done)
+  navigate('next')
 }
 </script>
 
@@ -89,22 +108,16 @@ function onLeave(el: Element, done: () => void) {
           {{ t('review-inbox.prev-button') }}
         </ui-button>
 
-        <transition-group
-          :css="false"
-          tag="div"
-          move-class="inbox-carousel-move"
-          class="relative flex gap-1"
-          @before-enter="onBeforeEnter"
-          @enter="onEnter"
-          @leave="onLeave"
-        >
-          <review-inbox-item
-            v-for="deck in visible_decks"
-            :key="deck.id"
-            :deck="deck"
-            @click="onItemClicked(deck)"
-          />
-        </transition-group>
+        <div class="overflow-hidden py-1.5 -my-1.5 px-1.5 -mx-1.5">
+          <div ref="tape_el" data-testid="review-inbox__tape" class="flex gap-1">
+            <review-inbox-item
+              v-for="deck in tape"
+              :key="deck.id"
+              :deck="deck"
+              @click="onItemClicked(deck)"
+            />
+          </div>
+        </div>
 
         <ui-button
           v-if="has_overflow"
@@ -134,9 +147,3 @@ function onLeave(el: Element, done: () => void) {
     </div>
   </div>
 </template>
-
-<style>
-.inbox-carousel-move {
-  transition: transform 0.25s ease-out;
-}
-</style>
