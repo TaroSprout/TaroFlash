@@ -89,43 +89,45 @@ function next() {
     class="w-full rounded-8 bg-brown-300 dark:bg-stone-900 select-none"
   >
     <div data-testid="review-inbox__body" class="pt-3 pb-5">
-      <div data-testid="review-inbox__items" class="relative flex justify-center py-2">
-        <ui-button
-          v-if="has_overflow"
-          data-testid="review-inbox__prev-btn"
-          icon-left="chevron-left"
-          icon-only
-          data-theme="brown-50"
-          class="absolute! -left-4 top-1/2 -translate-y-1/2 z-20"
-          :sfx="{ press: 'ui.snappy_button_5' }"
-          @click="prev"
-        >
-          {{ t('review-inbox.prev-button') }}
-        </ui-button>
+      <div data-testid="review-inbox__items" class="flex justify-center py-2">
+        <div class="relative">
+          <ui-button
+            v-if="has_overflow"
+            data-testid="review-inbox__prev-btn"
+            icon-left="chevron-left"
+            icon-only
+            data-theme="brown-50"
+            class="absolute! -left-4 top-1/2 -translate-y-1/2 z-20"
+            :sfx="{ press: 'ui.snappy_button_5' }"
+            @click="prev"
+          >
+            {{ t('review-inbox.prev-button') }}
+          </ui-button>
 
-        <div class="overflow-hidden p-3">
-          <div ref="tape_el" data-testid="review-inbox__tape" class="flex gap-1">
-            <review-inbox-item
-              v-for="deck in tape"
-              :key="deck.id"
-              :deck="deck"
-              @click="onItemClicked(deck)"
-            />
+          <div class="overflow-hidden p-3">
+            <div ref="tape_el" data-testid="review-inbox__tape" class="flex gap-1">
+              <review-inbox-item
+                v-for="deck in tape"
+                :key="deck.id"
+                :deck="deck"
+                @click="onItemClicked(deck)"
+              />
+            </div>
           </div>
-        </div>
 
-        <ui-button
-          v-if="has_overflow"
-          data-testid="review-inbox__next-btn"
-          icon-left="chevron-right"
-          icon-only
-          data-theme="brown-50"
-          class="absolute! -right-4 top-1/2 -translate-y-1/2 z-20"
-          :sfx="{ press: 'ui.snappy_button_5' }"
-          @click="next"
-        >
-          {{ t('review-inbox.next-button') }}
-        </ui-button>
+          <ui-button
+            v-if="has_overflow"
+            data-testid="review-inbox__next-btn"
+            icon-left="chevron-right"
+            icon-only
+            data-theme="brown-50"
+            class="absolute! -right-4 top-1/2 -translate-y-1/2 z-20"
+            :sfx="{ press: 'ui.snappy_button_5' }"
+            @click="next"
+          >
+            {{ t('review-inbox.next-button') }}
+          </ui-button>
+        </div>
       </div>
 
       <div data-testid="review-inbox__actions" class="mt-1 px-3">
