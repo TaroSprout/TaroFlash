@@ -47,13 +47,30 @@ export const AUDIO_CONFIG = createAudioConfig({
     music_pizz_duo_hi: {},
     music_pizz_prompt: {},
     tap_03: {},
+    tap_02: {
+      default_volume: 0.1
+    },
     tap_04: {},
     tap_05: {},
     pop_up_close: {},
     snappy_button_2: {},
     snappy_button_3: {},
     snappy_button_5: {},
-    pop_up_pop: {}
+    pop_up_pop: {},
+    type_01: {
+      default_volume: 0.2
+    },
+    clicky_button_4: {}
+  },
+  study: {
+    transition_up: {},
+    transition_down: {},
+    music_plink_ok: {},
+    music_plink_locancel: {},
+    music_plink_mid: {},
+    music_plink_chordyes: {},
+    music_pizz_prompt: {},
+    music_pizz_duo_hi: {}
   }
 })
 

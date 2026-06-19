@@ -54,7 +54,7 @@ export function useStudyModal() {
         ? 'study-more'
         : 'study-all'
 
-    emitSfx('ui.music_pizz_duo_hi')
+    emitSfx('study.music_pizz_duo_hi')
     const result = modal.open<SecondaryAction | undefined>(SessionComplete, {
       backdrop: true,
       mode: 'mobile-sheet',

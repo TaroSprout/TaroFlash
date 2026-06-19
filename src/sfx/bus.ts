@@ -10,7 +10,7 @@ type PolicyState = {
 
 let policy: PolicyState = {
   enabled: true,
-  categories: { ui: true },
+  categories: { ui: true, study: true },
   disable_hover_on_touch: true
 }
 

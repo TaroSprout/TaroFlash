@@ -8,7 +8,7 @@ const emit = defineEmits<{ done: [] }>()
 const { t } = useI18n()
 
 onMounted(() => {
-  emitSfx('ui.music_pizz_prompt')
+  emitSfx('study.music_pizz_prompt')
 })
 </script>
 

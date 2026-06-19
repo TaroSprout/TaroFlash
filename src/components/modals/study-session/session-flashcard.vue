@@ -101,7 +101,7 @@ onMounted(async () => {
 })
 
 function onSideChanged() {
-  emitSfx(is_starting_side.value ? 'ui.transition_up' : 'ui.transition_down')
+  emitSfx(is_starting_side.value ? 'study.transition_up' : 'study.transition_down')
   flipCurrentCard()
 }
 
@@ -127,7 +127,7 @@ function onFinishAnimationDone() {
 }
 
 function onStart() {
-  emitSfx('ui.music_plink_chordyes')
+  emitSfx('study.music_plink_chordyes')
   startSession()
 }
 
