@@ -28,10 +28,19 @@ const tape = ref<Deck[]>([])
 const tape_el = ref<HTMLElement | null>(null)
 const is_animating = ref(false)
 
+function deckAt(base: number, i: number) {
+  const n = due_decks.length
+  return due_decks[(((base + i) % n) + n) % n]
+}
+
+function tapeFor(base: number) {
+  return Array.from({ length: VISIBLE_COUNT }, (_, i) => deckAt(base, i))
+}
+
 watch(
   () => due_decks,
-  (decks) => {
-    tape.value = decks.slice(offset.value, offset.value + VISIBLE_COUNT)
+  () => {
+    tape.value = tapeFor(offset.value)
   },
   { immediate: true }
 )
@@ -44,28 +53,21 @@ async function navigate(dir: CarouselDirection) {
   if (is_animating.value || !tape_el.value) return
   is_animating.value = true
 
-  const new_offset =
-    dir === 'next'
-      ? offset.value + VISIBLE_COUNT < due_decks.length
-        ? offset.value + 1
-        : 0
-      : offset.value > 0
-        ? offset.value - 1
-        : due_decks.length - VISIBLE_COUNT
-
+  const n = due_decks.length
+  const new_offset = dir === 'next' ? (offset.value + 1) % n : (offset.value - 1 + n) % n
   const step_px = (tape_el.value.children[0] as HTMLElement)?.offsetWidth + 4
 
   if (dir === 'next') {
-    tape.value = [...tape.value, due_decks[new_offset + VISIBLE_COUNT - 1]]
+    tape.value = [...tape.value, deckAt(offset.value, VISIBLE_COUNT)]
   } else {
-    tape.value = [due_decks[new_offset], ...tape.value]
+    tape.value = [deckAt(offset.value, -1), ...tape.value]
   }
 
   await nextTick()
   await carouselSlide(tape_el.value, dir, step_px)
 
   offset.value = new_offset
-  tape.value = due_decks.slice(new_offset, new_offset + VISIBLE_COUNT)
+  tape.value = tapeFor(new_offset)
   is_animating.value = false
 }
 
@@ -93,7 +95,7 @@ function next() {
       </h2>
     </div>
 
-    <div data-testid="review-inbox__body" class="px-5 pt-3 pb-5">
+    <div data-testid="review-inbox__body" class="px-3 pt-3 pb-5">
       <div data-testid="review-inbox__items" class="relative flex justify-center py-2">
         <ui-button
           v-if="has_overflow"
@@ -108,7 +110,7 @@ function next() {
           {{ t('review-inbox.prev-button') }}
         </ui-button>
 
-        <div class="overflow-hidden py-1.5 -my-1.5 px-1.5 -mx-1.5">
+        <div class="overflow-hidden py-1.5 -my-1.5">
           <div ref="tape_el" data-testid="review-inbox__tape" class="flex gap-1">
             <review-inbox-item
               v-for="deck in tape"
