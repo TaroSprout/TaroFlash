@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, inject, watch } from 'vue'
 import { useMemberDecksQuery } from '@/api/decks'
 import { useToast } from '@/composables/toast'
 import DeckThumbnail from '@/components/deck/deck-thumbnail.vue'
@@ -13,7 +13,9 @@ import { useDeckCreateModal } from '@/composables/deck/create-modal'
 import { useDeckActions } from '@/composables/deck/actions'
 import { useCan } from '@/composables/can'
 import MemberBadge from '@/components/member/member-badge.vue'
+import MemberCard from '@/components/member/member-card.vue'
 import { useMemberStore } from '@/stores/member'
+import { APP_CTX_KEY, type AppContextInjection } from '@/phone/system/types'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -21,6 +23,7 @@ const router = useRouter()
 const is_md = useMatchMedia('w>=md')
 const can = useCan()
 const member_store = useMemberStore()
+const phone = inject<AppContextInjection>(APP_CTX_KEY)
 
 const deck_create_modal = useDeckCreateModal()
 const deck_actions = useDeckActions()
@@ -33,6 +36,10 @@ watch(decks_error, (err) => {
 const due_decks = computed(() => {
   return decks.value.filter((deck) => (deck.due_count ?? 0) > 0)
 })
+
+function onBadgeClick() {
+  phone?.open('settings')
+}
 
 function onDeckClicked(deck: Deck) {
   router.push({ name: 'deck', params: { id: deck.id } })
@@ -55,6 +62,7 @@ async function onCreateDeckClicked() {
         :display-name="member_store.display_name"
         :description="member_store.description"
         class="max-md:hidden"
+        @click="onBadgeClick"
       />
 
       <ui-button
@@ -67,6 +75,13 @@ async function onCreateDeckClicked() {
       >
         {{ t('dashboard.create-deck-button') }}
       </ui-button>
+
+      <member-card
+        :created-at="member_store.created_at ?? ''"
+        :display-name="member_store.display_name"
+        :card-comment="member_store.description"
+        card-title="Title"
+      />
 
       <review-inbox :due_decks="due_decks" />
     </div>
