@@ -57,22 +57,26 @@ async function onCreateDeckClicked() {
     class="grid grid-cols-[1fr] md:grid-cols-[345px_1fr] gap-x-15.5 pb-12"
   >
     <div data-testid="dashboard__left-column" class="flex flex-col gap-6 self-start">
-      <div data-testid="dashboard__member-section" class="flex flex-col gap-3 max-md:hidden">
+      <div
+        data-testid="dashboard__member-section"
+        class="relative flex flex-col gap-3 max-md:hidden"
+      >
         <member-badge
           :display-name="member_store.display_name"
           :description="member_store.description"
           @click="onBadgeClick"
         />
 
-        <div data-testid="dashboard__binder-rings" class="relative z-10 h-0">
-          <div class="absolute top-0 w-full -translate-y-1/2 flex justify-between px-14">
-            <div
-              class="h-8 w-[17px] rounded-full bg-brown-500 ring-2 ring-brown-100 dark:ring-grey-900"
-            />
-            <div
-              class="h-8 w-[17px] rounded-full bg-brown-500 ring-2 ring-brown-100 dark:ring-grey-900"
-            />
-          </div>
+        <div
+          data-testid="dashboard__binder-rings"
+          class="absolute top-[118px] z-10 w-full flex justify-between px-14"
+        >
+          <div
+            class="h-8 w-[17px] rounded-full bg-brown-500 ring-2 ring-brown-100 dark:ring-grey-900"
+          />
+          <div
+            class="h-8 w-[17px] rounded-full bg-brown-500 ring-2 ring-brown-100 dark:ring-grey-900"
+          />
         </div>
 
         <review-inbox :due_decks="due_decks" />
