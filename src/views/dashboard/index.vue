@@ -64,6 +64,17 @@ async function onCreateDeckClicked() {
           @click="onBadgeClick"
         />
 
+        <div data-testid="dashboard__binder-rings" class="relative z-10 h-0">
+          <div class="absolute top-0 w-full -translate-y-1/2 flex justify-between px-14">
+            <div
+              class="h-8 w-[17px] rounded-full bg-brown-500 ring-2 ring-brown-100 dark:ring-grey-900"
+            />
+            <div
+              class="h-8 w-[17px] rounded-full bg-brown-500 ring-2 ring-brown-100 dark:ring-grey-900"
+            />
+          </div>
+        </div>
+
         <review-inbox :due_decks="due_decks" />
       </div>
 
