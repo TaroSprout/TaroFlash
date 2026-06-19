@@ -61,7 +61,8 @@ function next() {
           data-testid="review-inbox__prev-btn"
           icon-left="chevron-left"
           icon-only
-          class="absolute! -left-7 top-1/2 -translate-y-1/2"
+          data-theme="brown-50"
+          class="absolute! -left-7 top-1/2 -translate-y-1/2 z-20"
           :disabled="!has_prev"
           @click="prev"
         >
@@ -80,7 +81,8 @@ function next() {
           data-testid="review-inbox__next-btn"
           icon-left="chevron-right"
           icon-only
-          class="absolute! -right-7 top-1/2 -translate-y-1/2"
+          data-theme="brown-50"
+          class="absolute! -right-7 top-1/2 -translate-y-1/2 z-20"
           :disabled="!has_next"
           @click="next"
         >
