@@ -81,7 +81,7 @@ function next() {
 <template>
   <div
     data-testid="review-inbox"
-    class="w-full rounded-8 bg-brown-300 dark:bg-stone-900 select-none"
+    class="w-full rounded-8 bg-brown-300 dark:bg-stone-900 select-none overflow-x-hidden"
   >
     <div data-testid="review-inbox__body" class="pt-3 pb-5">
       <div data-testid="review-inbox__items" class="relative flex justify-center py-2">
