@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { memberCoverBindings } from '@/components/member/cover'
 import UiButton from '@/components/ui-kit/button.vue'
 import ReviewInboxItem from './review-inbox-item.vue'
 import { useStudyModal } from '@/composables/study-session/study-modal'
@@ -16,12 +15,9 @@ const { due_decks } = defineProps<ReviewInboxProps>()
 const { t } = useI18n()
 const study_session = useStudyModal()
 
-const header_bindings = computed(() => memberCoverBindings(undefined, { patternOpacity: '0.15' }))
-
 const VISIBLE_COUNT = 3
 const offset = ref(0)
 
-const total_due = computed(() => due_decks.reduce((sum, d) => sum + (d.due_count ?? 0), 0))
 const has_overflow = computed(() => due_decks.length > VISIBLE_COUNT)
 
 const tape = ref<Deck[]>([])
@@ -82,19 +78,6 @@ function next() {
 
 <template>
   <div data-testid="review-inbox" class="w-full rounded-8 bg-brown-300 dark:bg-stone-900">
-    <div
-      data-testid="review-inbox__header"
-      v-bind="header_bindings"
-      class="rounded-t-8 bg-(--theme-primary) px-6 pt-8 pb-10 wave-bottom-[32px]"
-    >
-      <h2
-        data-testid="review-inbox__heading"
-        class="text-3xl text-center font-semibold text-(--theme-on-primary)"
-      >
-        {{ t('review-inbox.cards-due-heading', total_due) }}
-      </h2>
-    </div>
-
     <div data-testid="review-inbox__body" class="pt-3 pb-5">
       <div data-testid="review-inbox__items" class="relative flex justify-center py-2">
         <ui-button

@@ -36,6 +36,8 @@ const due_decks = computed(() => {
   return decks.value.filter((deck) => (deck.due_count ?? 0) > 0)
 })
 
+const total_due = computed(() => due_decks.value.reduce((sum, d) => sum + (d.due_count ?? 0), 0))
+
 function onBadgeClick() {
   phone.value?.openByTitle('Settings')
 }
@@ -66,6 +68,9 @@ async function onCreateDeckClicked() {
           :description="member_store.description"
           @click="onBadgeClick"
         >
+          <template #description>
+            {{ t('review-inbox.cards-due-heading', total_due) }}
+          </template>
           <template #actions>
             <ui-button
               data-testid="member-badge__edit-button"

@@ -12,7 +12,7 @@ type MemberBadgeProps = {
 }
 
 const { displayName, description, cover } = defineProps<MemberBadgeProps>()
-defineSlots<{ actions?: () => any }>()
+defineSlots<{ actions?: () => any; description?: () => any }>()
 
 const { t } = useI18n()
 const attrs = useAttrs()
@@ -49,7 +49,7 @@ function onCaptureClick(e: MouseEvent) {
         {{ displayName || t('member-badge.name-placeholder') }}
       </span>
       <span data-testid="member-badge__description" class="text-sm text-brown-100">
-        {{ description || t('member-badge.description-fallback') }}
+        <slot name="description">{{ description || t('member-badge.description-fallback') }}</slot>
       </span>
     </div>
 
