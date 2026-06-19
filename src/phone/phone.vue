@@ -48,8 +48,6 @@ const runtime = createPhoneRuntime({
   }
 })
 
-registerPhoneOS(runtime.phoneOS)
-
 const ctx: PhoneContext = { ...runtime.phoneOS, t }
 
 provide<AppContextInjection>(APP_CTX_KEY, {
@@ -69,6 +67,7 @@ onMounted(async () => {
 
   apps = await installApps()
   runtime.init(apps, ctx)
+  registerPhoneOS(runtime.phoneOS)
 
   loading.value = false
 })
