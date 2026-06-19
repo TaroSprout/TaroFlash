@@ -33,7 +33,7 @@ function onCaptureClick(e: MouseEvent) {
     style="--badge-radius: 42px; --badge-padding: 14px"
     class="card-outline pointer-fine:hover:scale-101 data-[playing=true]:scale-101 pointer-coarse:data-[playing=true]:scale-105 pointer-fine:transition-transform duration-75 cursor-pointer touch-manipulation flex items-center gap-4 rounded-(--badge-radius) overflow-hidden p-(--badge-padding) bg-(--theme-primary)"
     :data-playing="playing || null"
-    v-sfx.hover="'ui.click_07'"
+    v-sfx.hover="'tap_05'"
     @click.capture="onCaptureClick"
   >
     <div
