@@ -1,21 +1,18 @@
 <script setup lang="ts">
-import { inject, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import ViewApp from '@/phone/components/view-app.vue'
-import { type PhoneApp, type AppContextInjection, APP_CTX_KEY } from '@/phone/system/types'
+import type { PhoneApp } from '@/phone/system/types'
 import { useShortcuts } from '@/composables/shortcuts'
 import { emitHoverSfx, emitSfx } from '@/sfx/bus'
-
-const { apps } = defineProps<{
-  apps: PhoneApp[]
-}>()
+import { usePhoneStore } from '@/phone/store'
 
 const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
 const shortcuts = useShortcuts('phone/app-launcher')
+const store = usePhoneStore()
 
-const phone = inject<AppContextInjection>(APP_CTX_KEY)!
 const active_app = ref(-1)
 
 shortcuts.register([
@@ -38,7 +35,7 @@ shortcuts.register([
   {
     combo: 'enter',
     handler: () => {
-      const app = apps[active_app.value]
+      const app = store.apps[active_app.value]
       if (app) onTapApp(app)
       openApp()
     }
@@ -53,11 +50,11 @@ onMounted(() => {
 
 function focusApp(index: number, emit_hover_sfx = true) {
   if (index < 0) {
-    active_app.value = apps.length - 1 // start from end
+    active_app.value = store.apps.length - 1
   } else if (active_app.value === -1) {
-    active_app.value = 0 // start from beginning
-  } else if (index >= apps.length) {
-    active_app.value = 0 // wrap to beginning
+    active_app.value = 0
+  } else if (index >= store.apps.length) {
+    active_app.value = 0
   } else {
     active_app.value = index
   }
@@ -69,24 +66,19 @@ function focusApp(index: number, emit_hover_sfx = true) {
 }
 
 function openApp(app?: PhoneApp) {
-  const found = app ?? apps[active_app.value]
-  if (!found || !phone) return
+  const found = app ?? store.apps[active_app.value]
+  if (!found || found.type === 'widget') return
 
-  active_app.value = apps.indexOf(found)
-
-  if (found.type === 'widget') return
-
-  phone.open(found.id)
+  active_app.value = store.apps.indexOf(found)
+  store.open(found.id)
 }
 
 function onTapApp(app: PhoneApp) {
   if (app.type === 'view') emitSfx('ui.toggle_on')
 }
 
-// If the hovered app is not the active app,
-// blur the active app and reset the active app index
 function onHoverApp(app: PhoneApp) {
-  const index = apps.indexOf(app)
+  const index = store.apps.indexOf(app)
   if (index === active_app.value) return
 
   const found = _getActiveApp()
@@ -119,7 +111,7 @@ function _getActiveApp() {
     <div
       class="w-full grid grid-cols-[auto_auto_auto] grid-rows-[auto_auto_auto] gap-2 justify-center content-center"
     >
-      <template v-for="app in apps">
+      <template v-for="app in store.apps">
         <view-app
           v-if="app.type === 'view' || app.type === 'trigger'"
           :id="app.id"

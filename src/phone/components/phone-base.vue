@@ -1,25 +1,19 @@
 <script setup lang="ts">
 import AppLauncher from '@/phone/components/app-launcher.vue'
 import UiButton from '@/components/ui-kit/button.vue'
-import { type PhoneApp, type TransitionPreset } from '@/phone/system/types'
-import { type AppSession } from '@/phone/system/runtime'
 import { computed } from 'vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
-
-const { apps, transition, active_session } = defineProps<{
-  apps: PhoneApp[]
-  transition: TransitionPreset
-  active_session: AppSession | null
-}>()
+import { usePhoneStore } from '@/phone/store'
 
 const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
+const store = usePhoneStore()
 const is_mobile = useMatchMedia('coarse')
 
 const app = computed(() => {
-  return active_session?.app.type === 'view' ? active_session.app : null
+  return store.active_app?.type === 'view' ? store.active_app : null
 })
 </script>
 
@@ -37,14 +31,14 @@ const app = computed(() => {
       @click="emit('close')"
     />
 
-    <app-launcher v-if="!app" :apps="apps" @close="emit('close')" />
+    <app-launcher v-if="!app" @close="emit('close')" />
 
     <div
       data-testid="app-viewport"
       class="rounded-[inherit] overflow-hidden absolute inset-0"
       :class="{ 'pointer-events-none': !app }"
     >
-      <transition :name="transition">
+      <transition :name="store.transition">
         <div
           v-if="app?.component"
           data-testid="app-frame"

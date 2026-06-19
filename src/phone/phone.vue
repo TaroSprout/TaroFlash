@@ -1,20 +1,14 @@
 <script setup lang="ts">
-import { onMounted, ref, provide } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { emitSfx } from '@/sfx/bus'
 import { useShortcuts } from '@/composables/shortcuts'
-import { installApps } from '@/phone/system/install-apps'
-import {
-  type PhoneApp,
-  type PhoneContext,
-  type AppContextInjection,
-  APP_CTX_KEY
-} from '@/phone/system/types'
-import { createPhoneRuntime } from '@/phone/system/runtime'
 import { useModal } from '@/composables/modal'
-import phoneSm from '@/phone/components/phone-sm.vue'
-import phoneBase from '@/phone/components/phone-base.vue'
 import { useI18n } from 'vue-i18n'
 import { useMatchMedia } from '@/composables/ui/media-query'
+import { usePhoneStore } from '@/phone/store'
+import { buildPhoneApps } from '@/phone/apps/index'
+import phoneSm from '@/phone/components/phone-sm.vue'
+import phoneBase from '@/phone/components/phone-base.vue'
 import {
   slideDownBlurIn,
   slideUpBlurOut,
@@ -24,50 +18,35 @@ import {
 
 const shortcuts = useShortcuts('phone', { priority: 'background' })
 const { open: openModal, pop: popModal, modal_stack } = useModal()
-const is_pointer_coarse = useMatchMedia('coarse')
-
-const loading = ref(false)
-const open = ref(false)
-let apps: PhoneApp[] = []
-
 const { t } = useI18n()
+const is_pointer_coarse = useMatchMedia('coarse')
+const store = usePhoneStore()
 
-const runtime = createPhoneRuntime({
-  openFullApp: (app, controller) => {
-    const injection: AppContextInjection = { ...ctx, controller }
+const open = ref(false)
+
+watch(
+  () => store.pending_modal,
+  (app) => {
+    if (!app) return
     const opts = app.modal_options
     openModal(app.component, {
       backdrop: true,
       mode: opts?.mode ?? 'dialog',
       mobile_below_width: opts?.mobile_below_width,
       mobile_below_height: opts?.mobile_below_height,
-      props: { close: () => popModal() },
-      context: { key: APP_CTX_KEY, value: injection }
+      props: { close: () => popModal() }
     })
+    store.consumePendingModal()
   }
-})
-
-const ctx: PhoneContext = { ...runtime.phoneOS, t }
-
-provide<AppContextInjection>(APP_CTX_KEY, {
-  ...ctx,
-  get controller() {
-    return runtime.active_session.value?.controller
-  }
-})
+)
 
 shortcuts.register({
   combo: 'esc',
   handler: togglePhone
 })
 
-onMounted(async () => {
-  loading.value = true
-
-  apps = await installApps()
-  runtime.init(apps, ctx)
-
-  loading.value = false
+onMounted(() => {
+  buildPhoneApps(t).forEach((app) => store.registerApp(app))
 })
 
 function togglePhone() {
@@ -79,22 +58,20 @@ function togglePhone() {
 }
 
 function openPhone() {
-  if (loading.value) return
-
   open.value = true
   emitSfx('ui.pop_window')
   document.addEventListener('click', onPageClick)
 }
 
 function closePhone(force = false) {
-  if (force && runtime.active_session.value) {
-    runtime.phoneOS.clear()
+  if (force && store.active_app) {
+    store.clear()
     emitSfx('ui.toggle_off')
     return
   }
 
-  if (runtime.active_session.value) {
-    runtime.phoneOS.close()
+  if (store.active_app) {
+    store.close()
     emitSfx('ui.toggle_off')
     return
   }
@@ -144,24 +121,11 @@ function onClosePhoneSm(el: Element, done: () => void) {
       class="w-full max-w-(--page-width) flex items-center justify-center mx-4 sm:mx-10 relative"
     >
       <transition @enter="onOpenBasePhone" @leave="onCloseBasePhone">
-        <phone-base
-          v-if="open"
-          :apps="apps"
-          :transition="runtime.transition.value"
-          :active_session="runtime.active_session.value"
-          class="z-10"
-          @close="closePhone"
-        />
+        <phone-base v-if="open" class="z-10" @close="closePhone" />
       </transition>
 
       <transition @enter="onOpenPhoneSm" @leave="onClosePhoneSm">
-        <phone-sm
-          v-if="!open"
-          :notification_count="
-            runtime.notifications.value.reduce((sum, n) => sum + (n.count ?? 1), 0)
-          "
-          @open="openPhone"
-        />
+        <phone-sm v-if="!open" @open="openPhone" />
       </transition>
     </div>
   </div>
