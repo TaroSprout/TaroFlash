@@ -60,7 +60,9 @@ async function navigate(dir: CarouselDirection) {
   const step_px = (tape_el.value.children[0] as HTMLElement)?.offsetWidth + 4
 
   const clip = tape_el.value.parentElement as HTMLElement
+  const body = clip.closest('[data-testid="review-inbox__body"]') as HTMLElement
   clip.style.width = `${clip.offsetWidth}px`
+  body.style.overflowX = 'hidden'
 
   if (dir === 'next') {
     tape.value = [...tape.value, deckAt(offset.value, VISIBLE_COUNT)]
@@ -76,6 +78,7 @@ async function navigate(dir: CarouselDirection) {
   carouselReset(tape_el.value)
   await nextTick()
   clip.style.width = ''
+  body.style.overflowX = ''
   is_animating.value = false
 }
 
