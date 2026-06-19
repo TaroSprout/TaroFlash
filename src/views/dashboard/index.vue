@@ -77,6 +77,7 @@ async function onCreateDeckClicked() {
         <member-badge
           :display-name="member_store.display_name"
           :description="member_store.description"
+          class="z-10"
           :sfx="{
             hover: 'ui.tap_05',
             press: due_decks.length > 0 ? 'ui.snappy_button_5' : 'ui.digi_powerdown'
@@ -90,7 +91,7 @@ async function onCreateDeckClicked() {
             >
               <template v-if="due_decks.length > 0">
                 <span
-                  class="inline-flex items-center justify-center bg-brown-100 text-(--theme-primary) px-1 py-0.5 -rotate-5 rounded-1.5 min-w-[1em]"
+                  class="inline-flex items-center justify-center bg-brown-100 text-(--theme-primary) px-1 py-0.5 rounded-1.5 min-w-[1em]"
                   >{{ total_due }}</span
                 >
                 {{ t('dashboard.cards-due.cards-label', total_due) }}
