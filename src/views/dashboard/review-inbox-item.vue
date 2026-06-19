@@ -5,11 +5,15 @@ defineProps<{ deck: Deck }>()
 </script>
 
 <template>
-  <div data-testid="review-inbox-item" class="relative cursor-pointer">
+  <div
+    data-testid="review-inbox-item"
+    class="card-outline pointer-fine:hover:scale-101 pointer-fine:transition-transform duration-75 relative cursor-pointer touch-manipulation"
+    v-sfx.hover="'ui.tap_05'"
+  >
     <card side="cover" size="xs" :cover_config="deck.cover_config" />
     <div
       data-testid="review-inbox-item__due-badge"
-      class="absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full bg-red-500 ring-2 ring-brown-300 flex items-center justify-center text-xs font-semibold text-white"
+      class="absolute -top-1 -right-1 min-w-7 h-7 px-1.5 aspect-square rounded-full bg-red-500 ring-3 ring-brown-300 flex items-center justify-center text-sm font-semibold text-white"
     >
       {{ deck.due_count }}
     </div>
