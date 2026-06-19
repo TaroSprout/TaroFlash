@@ -139,10 +139,11 @@ async function onCreateDeckClicked() {
       </div>
 
       <ui-button
+        v-if="is_md"
         icon-left="add"
         data-theme="blue-500"
         data-theme-dark="blue-650"
-        class="w-full! max-md:hidden"
+        class="w-full!"
         size="xl"
         @click="onCreateDeckClicked"
       >
@@ -169,10 +170,11 @@ async function onCreateDeckClicked() {
         </div>
 
         <ui-button
+          v-if="!is_md"
           icon-left="add"
           data-theme="blue-500"
           data-theme-dark="blue-650"
-          class="w-full! md:hidden"
+          class="w-full!"
           size="xl"
           @click="onCreateDeckClicked"
         >
