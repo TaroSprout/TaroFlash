@@ -90,7 +90,7 @@ async function onCreateDeckClicked() {
             >
               <template v-if="due_decks.length > 0">
                 <span
-                  class="bg-brown-100 text-(--theme-primary) px-1 py-0.5 -rotate-5 rounded-1.5"
+                  class="inline-flex items-center justify-center bg-brown-100 text-(--theme-primary) px-1 py-0.5 -rotate-5 rounded-1.5 min-w-[1em]"
                   >{{ total_due }}</span
                 >
                 {{ t('dashboard.cards-due.cards-label', total_due) }}
@@ -114,7 +114,7 @@ async function onCreateDeckClicked() {
             <button
               v-if="!show_inbox && due_decks.length > 0"
               data-testid="member-badge__expand-button"
-              class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 flex h-5 w-10 cursor-pointer items-center justify-center rounded-full bg-brown-100 text-(--theme-primary) ring-4 ring-(--theme-primary)"
+              class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-20 flex h-5 w-10 cursor-pointer items-center justify-center rounded-full bg-brown-100 text-(--theme-primary) ring-4 ring-(--theme-primary)"
             >
               <ui-icon src="carat-down" class="h-4 w-4" />
             </button>
