@@ -95,7 +95,7 @@ function next() {
       </h2>
     </div>
 
-    <div data-testid="review-inbox__body" class="px-3 pt-3 pb-5">
+    <div data-testid="review-inbox__body" class="pt-3 pb-5">
       <div data-testid="review-inbox__items" class="relative flex justify-center py-2">
         <ui-button
           v-if="has_overflow"
@@ -110,7 +110,7 @@ function next() {
           {{ t('review-inbox.prev-button') }}
         </ui-button>
 
-        <div class="overflow-hidden py-1.5 -my-1.5">
+        <div class="overflow-hidden p-3">
           <div ref="tape_el" data-testid="review-inbox__tape" class="flex gap-1">
             <review-inbox-item
               v-for="deck in tape"
@@ -135,7 +135,7 @@ function next() {
         </ui-button>
       </div>
 
-      <div data-testid="review-inbox__actions" class="mt-4">
+      <div data-testid="review-inbox__actions" class="mt-1 px-3">
         <ui-button
           size="xl"
           icon-left="book-flip-page"
