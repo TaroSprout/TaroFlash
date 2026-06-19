@@ -3,7 +3,6 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { memberCoverBindings } from '@/components/member/cover'
 import UiButton from '@/components/ui-kit/button.vue'
-import UiIcon from '@/components/ui-kit/icon.vue'
 import ReviewInboxItem from './review-inbox-item.vue'
 import { useStudyModal } from '@/composables/study-session/study-modal'
 
@@ -57,15 +56,17 @@ function next() {
 
     <div data-testid="review-inbox__body" class="px-5 pt-3 pb-5">
       <div data-testid="review-inbox__items" class="relative flex justify-center gap-1 py-2">
-        <button
+        <ui-button
           v-if="has_overflow"
           data-testid="review-inbox__prev-btn"
-          class="absolute -left-7 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-brown-100 shadow disabled:opacity-40"
+          icon-left="chevron-left"
+          icon-only
+          class="absolute! -left-7 top-1/2 -translate-y-1/2"
           :disabled="!has_prev"
           @click="prev"
         >
-          <ui-icon src="chevron-left" class="h-4 w-4" />
-        </button>
+          {{ t('review-inbox.prev-button') }}
+        </ui-button>
 
         <review-inbox-item
           v-for="deck in visible_decks"
@@ -74,15 +75,17 @@ function next() {
           @click="onItemClicked(deck)"
         />
 
-        <button
+        <ui-button
           v-if="has_overflow"
           data-testid="review-inbox__next-btn"
-          class="absolute -right-7 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-brown-100 shadow disabled:opacity-40"
+          icon-left="chevron-right"
+          icon-only
+          class="absolute! -right-7 top-1/2 -translate-y-1/2"
           :disabled="!has_next"
           @click="next"
         >
-          <ui-icon src="chevron-right" class="h-4 w-4" />
-        </button>
+          {{ t('review-inbox.next-button') }}
+        </ui-button>
       </div>
 
       <div data-testid="review-inbox__actions" class="mt-4">
