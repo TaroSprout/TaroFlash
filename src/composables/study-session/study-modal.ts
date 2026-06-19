@@ -16,7 +16,7 @@ export function useStudyModal() {
   const modal = useModal()
 
   async function start(deck: Deck, config_override?: Partial<DeckConfig>) {
-    emitSfx('ui.slide_up')
+    emitSfx('ui.snappy_button_3')
     const payload = await _openStudySession(deck, config_override)
     emitSfx('ui.slide_up')
 
