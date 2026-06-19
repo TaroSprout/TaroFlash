@@ -52,7 +52,7 @@ describe('useStudyModal', () => {
     const startPromise = start(DECK)
 
     // sfx fires synchronously before any await
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.slide_up')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_3')
 
     resolveSession(undefined)
     await startPromise
