@@ -83,10 +83,7 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
     }
 
     if (config.shuffle) {
-      const new_cards = filtered.filter((c) => !c.review)
-      const review_cards = filtered.filter((c) => c.review)
-      review_cards.sort(() => Math.random() - 0.5)
-      filtered = [...new_cards, ...review_cards]
+      filtered.sort(() => Math.random() - 0.5)
     }
 
     _cards_in_deck.value = filtered.map(_setupCard)
