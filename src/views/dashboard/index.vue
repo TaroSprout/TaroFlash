@@ -116,7 +116,7 @@ async function onCreateDeckClicked() {
         <div
           v-if="show_inbox"
           data-testid="dashboard__binder-rings"
-          class="absolute top-29.5 z-10 w-full flex justify-between px-14"
+          class="absolute top-29.5 z-10 w-full flex justify-between px-14 pointer-events-none"
         >
           <div
             class="h-8 w-4.25 rounded-full bg-brown-500 ring-3 ring-brown-100 dark:ring-grey-900"
