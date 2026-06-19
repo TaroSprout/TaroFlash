@@ -76,7 +76,10 @@ async function onCreateDeckClicked() {
         <member-badge
           :display-name="member_store.display_name"
           :description="member_store.description"
-          :sfx="{ hover: 'ui.tap_05', press: 'ui.snappy_button_5' }"
+          :sfx="{
+            hover: 'ui.tap_05',
+            press: due_decks.length > 0 ? 'ui.snappy_button_5' : 'ui.digi_powerdown'
+          }"
           @click="onBadgeClick"
         >
           <template #description>
