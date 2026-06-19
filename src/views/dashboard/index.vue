@@ -94,14 +94,14 @@ async function onCreateDeckClicked() {
       </ui-button>
     </div>
 
-    <div data-testid="dashboard__right-column" class="flex flex-col gap-y-11.5">
+    <div data-testid="dashboard__right-column" class="flex flex-col gap-y-5">
       <h1
-        class="text-brown-700 dark:text-brown-300 text-4xl self-end relative text-nowrap w-min after:absolute after:-right-2 after:bottom-0 after:-left-2 after:rounded-1.5 after:h-4 after:-z-1 after:bg-brown-300 dark:after:bg-grey-700"
+        class="text-brown-700 dark:text-brown-300 text-4xl self-start relative text-nowrap w-min after:absolute after:-right-2 after:bottom-0 after:-left-2 after:rounded-1.5 after:h-4 after:-z-1 after:bg-brown-300 dark:after:bg-grey-700"
       >
         {{ t('dashboard.deck-filter.all-label') }}
       </h1>
 
-      <div data-testid="dashboard__main-column" class="flex flex-col gap-y-11.5 self-start">
+      <div data-testid="dashboard__main-column" class="flex flex-col gap-y-20 self-start">
         <div data-testid="dashboard__decks" class="flex gap-x-6.5 gap-y-8 flex-wrap">
           <DeckThumbnail
             v-for="(deck, index) in decks"
