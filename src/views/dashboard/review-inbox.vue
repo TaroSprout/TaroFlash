@@ -6,6 +6,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import ReviewInboxItem from './review-inbox-item.vue'
 import { useStudyModal } from '@/composables/study-session/study-modal'
 import {
+  carouselBeforeEnter,
   carouselEnter,
   carouselLeave,
   type CarouselDirection
@@ -43,6 +44,10 @@ function prev() {
 function next() {
   direction.value = 'next'
   offset.value = offset.value + VISIBLE_COUNT < due_decks.length ? offset.value + 1 : 0
+}
+
+function onBeforeEnter(el: Element) {
+  carouselBeforeEnter(direction.value)(el)
 }
 
 function onEnter(el: Element, done: () => void) {
@@ -89,6 +94,7 @@ function onLeave(el: Element, done: () => void) {
           tag="div"
           move-class="inbox-carousel-move"
           class="relative flex gap-1"
+          @before-enter="onBeforeEnter"
           @enter="onEnter"
           @leave="onLeave"
         >

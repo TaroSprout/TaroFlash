@@ -4,20 +4,16 @@ const DURATION = 0.25
 
 export type CarouselDirection = 'next' | 'prev'
 
-export function carouselEnter(direction: CarouselDirection) {
+export function carouselBeforeEnter(direction: CarouselDirection) {
   const xPercent = direction === 'next' ? 110 : -110
+  return (el: Element) => {
+    gsap.set(el, { xPercent })
+  }
+}
+
+export function carouselEnter(_direction: CarouselDirection) {
   return (el: Element, done: () => void) => {
-    gsap.fromTo(
-      el,
-      { xPercent },
-      {
-        xPercent: 0,
-        duration: DURATION,
-        ease: 'power2.out',
-        clearProps: 'transform',
-        onComplete: done
-      }
-    )
+    gsap.to(el, { xPercent: 0, duration: DURATION, ease: 'power2.out', onComplete: done })
   }
 }
 
