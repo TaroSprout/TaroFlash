@@ -41,15 +41,15 @@ function next() {
 </script>
 
 <template>
-  <div data-testid="review-inbox" class="w-full rounded-5 bg-brown-300">
+  <div data-testid="review-inbox" class="w-full rounded-8 bg-brown-300">
     <div
       data-testid="review-inbox__header"
       v-bind="header_bindings"
-      class="rounded-t-5 bg-(--theme-primary) px-6 pt-5 pb-6 wave-bottom-[8px]"
+      class="rounded-t-8 bg-(--theme-primary) px-6 pt-8 pb-10 wave-bottom-[32px]"
     >
       <h2
         data-testid="review-inbox__heading"
-        class="text-xl font-semibold text-(--theme-on-primary)"
+        class="text-3xl text-center font-semibold text-(--theme-on-primary)"
       >
         {{ t('review-inbox.cards-due-heading', total_due) }}
       </h2>
