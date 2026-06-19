@@ -12,6 +12,7 @@ type MemberBadgeProps = {
 }
 
 const { displayName, description, cover } = defineProps<MemberBadgeProps>()
+defineSlots<{ actions?: () => any }>()
 
 const { t } = useI18n()
 const attrs = useAttrs()
@@ -31,7 +32,7 @@ function onCaptureClick(e: MouseEvent) {
     data-testid="member-badge"
     v-bind="body_bindings"
     style="--badge-radius: 42px; --badge-padding: 14px"
-    class="card-outline pointer-fine:hover:scale-101 data-[playing=true]:scale-101 pointer-coarse:data-[playing=true]:scale-105 pointer-fine:transition-transform duration-75 cursor-pointer touch-manipulation flex items-center gap-4 rounded-(--badge-radius) overflow-hidden p-(--badge-padding) bg-(--theme-primary)"
+    class="card-outline pointer-fine:hover:scale-101 data-[playing=true]:scale-101 pointer-coarse:data-[playing=true]:scale-105 pointer-fine:transition-transform duration-75 cursor-pointer touch-manipulation flex items-center gap-4 rounded-(--badge-radius) relative p-(--badge-padding) bg-(--theme-primary)"
     :data-playing="playing || null"
     v-sfx.hover="'ui.tap_05'"
     @click.capture="onCaptureClick"
@@ -51,5 +52,7 @@ function onCaptureClick(e: MouseEvent) {
         {{ description || t('member-badge.description-fallback') }}
       </span>
     </div>
+
+    <slot name="actions" />
   </div>
 </template>

@@ -65,7 +65,18 @@ async function onCreateDeckClicked() {
           :display-name="member_store.display_name"
           :description="member_store.description"
           @click="onBadgeClick"
-        />
+        >
+          <template #actions>
+            <ui-button
+              data-testid="member-badge__edit-button"
+              icon-left="edit"
+              class="absolute! -top-2.5 -right-2.5 ring-4 ring-brown-100 dark:ring-stone-900"
+              icon-only
+            >
+              {{ t('member-badge.edit-button') }}
+            </ui-button>
+          </template>
+        </member-badge>
 
         <div
           data-testid="dashboard__binder-rings"
