@@ -79,7 +79,10 @@ function next() {
 </script>
 
 <template>
-  <div data-testid="review-inbox" class="w-full rounded-8 bg-brown-300 dark:bg-stone-900">
+  <div
+    data-testid="review-inbox"
+    class="w-full rounded-8 bg-brown-300 dark:bg-stone-900 select-none"
+  >
     <div data-testid="review-inbox__body" class="pt-3 pb-5">
       <div data-testid="review-inbox__items" class="relative flex justify-center py-2">
         <ui-button
