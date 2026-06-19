@@ -165,10 +165,10 @@ describe('useStudyModal', () => {
     vi.advanceTimersByTime(300)
     await flushPromises()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.music_pizz_duo_hi')
+    expect(mockEmitSfx).toHaveBeenCalledWith('study.music_pizz_duo_hi')
     // music sfx fires before the second modal.open call
     const sfxCalls = mockEmitSfx.mock.calls.map((c) => c[0])
-    const musicIdx = sfxCalls.lastIndexOf('ui.music_pizz_duo_hi')
+    const musicIdx = sfxCalls.lastIndexOf('study.music_pizz_duo_hi')
     expect(musicIdx).toBeGreaterThan(-1)
 
     resolveComplete(undefined)
@@ -196,5 +196,86 @@ describe('useStudyModal', () => {
 
     expect(mockEmitSfx.mock.calls.length).toBeGreaterThan(sfxCountBeforeClose)
     expect(mockEmitSfx.mock.calls.at(-1)[0]).toBe('ui.slide_up')
+  })
+
+  test('study-more action recurses — opens StudySession again without study_all_cards', async () => {
+    const sessionPayload = { score: 2, total: 5, remaining_due: 3 }
+    const { result: s1, resolve: resolveS1 } = makeModalResult()
+    const { result: c1, resolve: resolveC1 } = makeModalResult()
+    const { result: s2, resolve: resolveS2 } = makeModalResult()
+    // s1 → c1 (study-more action) → s2 (no payload, exits)
+    mockOpen.mockReturnValueOnce(s1).mockReturnValueOnce(c1).mockReturnValueOnce(s2)
+
+    const { start } = useStudyModal()
+    const startPromise = start(DECK)
+
+    resolveS1(sessionPayload)
+    await flushPromises()
+    vi.advanceTimersByTime(300)
+    await flushPromises()
+
+    resolveC1('study-more')
+    await flushPromises()
+
+    resolveS2(undefined)
+    await startPromise
+
+    // Third open call is the recursive StudySession (study-more, no config_override)
+    expect(mockOpen).toHaveBeenCalledTimes(3)
+    expect(mockOpen.mock.calls[2][1]).toMatchObject({ props: { config_override: undefined } })
+  })
+
+  test('study-again action recurses with study_all_cards: true', async () => {
+    const sessionPayload = { score: 2, total: 5, study_all_used: true }
+    const { result: s1, resolve: resolveS1 } = makeModalResult()
+    const { result: c1, resolve: resolveC1 } = makeModalResult()
+    const { result: s2, resolve: resolveS2 } = makeModalResult()
+    mockOpen.mockReturnValueOnce(s1).mockReturnValueOnce(c1).mockReturnValueOnce(s2)
+
+    const { start } = useStudyModal()
+    const startPromise = start(DECK)
+
+    resolveS1(sessionPayload)
+    await flushPromises()
+    vi.advanceTimersByTime(300)
+    await flushPromises()
+
+    resolveC1('study-again')
+    await flushPromises()
+
+    resolveS2(undefined)
+    await startPromise
+
+    expect(mockOpen).toHaveBeenCalledTimes(3)
+    expect(mockOpen.mock.calls[2][1]).toMatchObject({
+      props: { config_override: { study_all_cards: true } }
+    })
+  })
+
+  test('study-all action recurses with study_all_cards: true', async () => {
+    const sessionPayload = { score: 5, total: 5, remaining_due: 0 }
+    const { result: s1, resolve: resolveS1 } = makeModalResult()
+    const { result: c1, resolve: resolveC1 } = makeModalResult()
+    const { result: s2, resolve: resolveS2 } = makeModalResult()
+    mockOpen.mockReturnValueOnce(s1).mockReturnValueOnce(c1).mockReturnValueOnce(s2)
+
+    const { start } = useStudyModal()
+    const startPromise = start(DECK)
+
+    resolveS1(sessionPayload)
+    await flushPromises()
+    vi.advanceTimersByTime(300)
+    await flushPromises()
+
+    resolveC1('study-all')
+    await flushPromises()
+
+    resolveS2(undefined)
+    await startPromise
+
+    expect(mockOpen).toHaveBeenCalledTimes(3)
+    expect(mockOpen.mock.calls[2][1]).toMatchObject({
+      props: { config_override: { study_all_cards: true } }
+    })
   })
 })

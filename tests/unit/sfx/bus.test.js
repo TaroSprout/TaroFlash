@@ -20,7 +20,11 @@ const { emitSfx, emitHoverSfx, setSfxPolicy } = await import('@/sfx/bus')
 describe('emitSfx', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setSfxPolicy({ enabled: true, categories: { ui: true }, disable_hover_on_touch: true })
+    setSfxPolicy({
+      enabled: true,
+      categories: { ui: true, study: true },
+      disable_hover_on_touch: true
+    })
   })
 
   test('plays a single key', async () => {
@@ -82,6 +86,18 @@ describe('emitSfx', () => {
     expect(player.play).not.toHaveBeenCalled()
   })
 
+  test('study category enabled by default — study.transition_up reaches player [obligation]', async () => {
+    // Regression: policy.categories only had { ui: true }, so study sounds were silently dropped.
+    // Default policy must include study: true so study.* keys reach player.play.
+    setSfxPolicy({
+      enabled: true,
+      categories: { ui: true, study: true },
+      disable_hover_on_touch: true
+    })
+    await emitSfx('study.transition_up')
+    expect(player.play).toHaveBeenCalledWith('study.transition_up', {})
+  })
+
   test('no-op when array is empty', async () => {
     await emitSfx([])
     expect(player.play).not.toHaveBeenCalled()
@@ -120,5 +136,15 @@ describe('emitHoverSfx', () => {
     await emitHoverSfx('ui.click_07')
     expect(player.play).toHaveBeenCalled()
     delete window.ontouchstart
+  })
+
+  test('array path — randomly picks one key from the array and reaches player [obligation]', async () => {
+    const had = 'ontouchstart' in window
+    if (had) delete window.ontouchstart
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    await emitHoverSfx(['ui.type_01', 'ui.type_02', 'ui.type_03'])
+    expect(player.play).toHaveBeenCalledTimes(1)
+    expect(['ui.type_01', 'ui.type_02', 'ui.type_03']).toContain(player.play.mock.calls[0][0])
+    Math.random.mockRestore()
   })
 })

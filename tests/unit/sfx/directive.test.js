@@ -46,6 +46,16 @@ describe('vSfx directive', () => {
       unmount(el)
     })
 
+    test('array hover — passes full array to emitHoverSfx on pointerenter [obligation]', () => {
+      const keys = ['ui.type_01', 'ui.type_02']
+      const el = mountDirective({ hover: keys })
+
+      el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
+
+      expect(emitHoverSfx).toHaveBeenCalledWith(keys, { debounce: undefined })
+      unmount(el)
+    })
+
     test('does NOT play hover sfx when pointerenter pointerType is touch', () => {
       const el = mountDirective({ hover: 'ui.click_07' })
 
