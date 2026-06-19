@@ -2,8 +2,7 @@
 import { computed, useAttrs } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useStagedTap } from '@/composables/ui/staged-tap'
-import { coverBindings } from '@/utils/cover'
-import { withMemberCardCoverDefaults } from '@/utils/member/defaults'
+import { memberCoverBindings } from './cover'
 import UiImage from '@/components/ui-kit/image.vue'
 
 type MemberBadgeProps = {
@@ -18,9 +17,7 @@ const { t } = useI18n()
 const attrs = useAttrs()
 const { playing, tap } = useStagedTap()
 
-const body_bindings = computed(() =>
-  coverBindings(withMemberCardCoverDefaults(cover), { border: false, patternOpacity: '0.1' })
-)
+const body_bindings = computed(() => memberCoverBindings(cover, { patternOpacity: '0.15' }))
 
 function onCaptureClick(e: MouseEvent) {
   const handler = attrs.onClick as ((ev: MouseEvent) => void) | undefined
