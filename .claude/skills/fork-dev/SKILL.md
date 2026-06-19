@@ -168,7 +168,15 @@ This fast-forwards `master`, switches to it, and prunes gone branches.
 git checkout <branch>
 ```
 
-### Step 8 — Reapply changes
+### Step 8 — Merge master into the working branch
+
+```sh
+git merge master --no-edit
+```
+
+If the merge succeeds, note it in the report. If it produces conflicts, surface the conflicted files and stop — do not pop the stash. Tell the user to resolve conflicts and then run `git stash pop` manually.
+
+### Step 9 — Reapply changes
 
 Pop the worktree stash first (these are the real in-progress changes):
 
@@ -176,16 +184,19 @@ Pop the worktree stash first (these are the real in-progress changes):
 git stash pop
 ```
 
+Skip if the worktree was clean (nothing was stashed in Step 2).
+
 If the main workspace was also stashed (Step 5), pop that too and tell the user:
 
 ```sh
 git stash pop   # second pop for main-workspace stash
 ```
 
-### Step 9 — Report
+### Step 10 — Report
 
 ```
 Branch:   <branch>
+Merged:   master (clean)  (or "conflicts — resolve before continuing" if Step 8 failed)
 Stash:    applied  (or "nothing to apply" if worktree was clean)
 gsync:    done
 Server:   killed (port <port>)
