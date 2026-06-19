@@ -69,7 +69,7 @@ async function onCreateDeckClicked() {
 <template>
   <div
     data-testid="dashboard"
-    class="grid grid-cols-[1fr] md:grid-cols-[345px_1fr] gap-x-15.5 pb-12"
+    class="grid grid-cols-[1fr] md:grid-cols-[345px_1fr] gap-x-15.5 gap-y-8 md:gap-y-0 pb-12"
   >
     <div data-testid="dashboard__left-column" class="flex flex-col gap-6 self-start">
       <div data-testid="dashboard__member-section" class="relative flex flex-col gap-3">
