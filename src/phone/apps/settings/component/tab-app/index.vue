@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, ref } from 'vue'
+import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
 import UiToggle from '@/components/ui-kit/toggle.vue'
@@ -14,10 +14,6 @@ const { t } = useI18n()
 const editor = inject(memberEditorKey)!
 const layout_mode = inject(settingsLayoutKey)!
 
-const study_sounds = ref(5)
-const interface_sounds = ref(5)
-const hover_sounds = ref(5)
-
 const emit = defineEmits<{ back: [] }>()
 </script>
 
@@ -31,11 +27,11 @@ const emit = defineEmits<{ back: [] }>()
         class="grid grid-cols-[auto_1fr] items-center gap-y-6 gap-x-8 text-brown-700 dark:text-brown-300 select-none"
       >
         <span>{{ t('settings.app.audio.study-sounds') }}</span>
-        <ui-spinbox v-model:value="study_sounds" :min="1" :max="10" />
+        <ui-spinbox v-model:value="editor.preferences.audio.study_sounds" :min="1" :max="10" />
         <span>{{ t('settings.app.audio.interface-sounds') }}</span>
-        <ui-spinbox v-model:value="interface_sounds" :min="1" :max="10" />
+        <ui-spinbox v-model:value="editor.preferences.audio.interface_sounds" :min="1" :max="10" />
         <span>{{ t('settings.app.audio.hover-sounds') }}</span>
-        <ui-spinbox v-model:value="hover_sounds" :min="1" :max="10" />
+        <ui-spinbox v-model:value="editor.preferences.audio.hover_sounds" :min="1" :max="10" />
       </div>
     </labeled-section>
 

@@ -111,3 +111,11 @@ export const TYPE_SFX: NamespacedAudioKey[] = [
   'ui.type_04',
   'ui.type_05'
 ]
+
+export const HOVER_SFX_SET = new Set<NamespacedAudioKey>(TYPE_SFX)
+
+export const AUDIO_VOLUME_DEFAULTS = {
+  study_sounds: 5,
+  interface_sounds: 5,
+  hover_sounds: 5
+}

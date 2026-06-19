@@ -15,6 +15,11 @@ type MemberPreferences = {
   accessibility?: {
     left_hand?: boolean
   }
+  audio?: {
+    study_sounds?: number
+    interface_sounds?: number
+    hover_sounds?: number
+  }
 }
 
 declare type MemberRole = 'user' | 'moderator' | 'admin'
