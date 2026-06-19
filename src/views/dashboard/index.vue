@@ -70,7 +70,7 @@ async function onCreateDeckClicked() {
             <ui-button
               data-testid="member-badge__edit-button"
               icon-left="edit"
-              class="absolute! -top-2.5 -right-2.5 ring-4 ring-(--theme-primary)"
+              class="absolute! -top-1 -right-1 ring-4 ring-(--theme-primary)"
               icon-only
               inverted
             >
@@ -84,10 +84,10 @@ async function onCreateDeckClicked() {
           class="absolute top-[118px] z-10 w-full flex justify-between px-14"
         >
           <div
-            class="h-8 w-[17px] rounded-full bg-brown-500 ring-2 ring-brown-100 dark:ring-grey-900"
+            class="h-8 w-[17px] rounded-full bg-brown-500 ring-3 ring-brown-100 dark:ring-grey-900"
           />
           <div
-            class="h-8 w-[17px] rounded-full bg-brown-500 ring-2 ring-brown-100 dark:ring-grey-900"
+            class="h-8 w-[17px] rounded-full bg-brown-500 ring-3 ring-brown-100 dark:ring-grey-900"
           />
         </div>
 
