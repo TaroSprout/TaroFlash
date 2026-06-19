@@ -45,7 +45,7 @@ function next() {
     <div
       data-testid="review-inbox__header"
       v-bind="header_bindings"
-      class="relative rounded-t-5 bg-(--theme-primary) px-6 pt-5 pb-10"
+      class="rounded-t-5 bg-(--theme-primary) px-6 pt-5 pb-6 wave-bottom-[8px]"
     >
       <h2
         data-testid="review-inbox__heading"
@@ -53,17 +53,6 @@ function next() {
       >
         {{ t('review-inbox.cards-due-heading', total_due) }}
       </h2>
-      <svg
-        class="absolute bottom-0 left-0 w-full"
-        viewBox="0 0 400 24"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        <path
-          d="M0,24 L0,8 C80,0 120,16 200,8 C280,0 320,16 400,8 L400,24 Z"
-          fill="var(--color-brown-300)"
-        />
-      </svg>
     </div>
 
     <div data-testid="review-inbox__body" class="px-5 pt-3 pb-5">
