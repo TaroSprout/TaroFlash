@@ -39,7 +39,7 @@ const due_decks = computed(() => {
 
 const total_due = computed(() => due_decks.value.reduce((sum, d) => sum + (d.due_count ?? 0), 0))
 
-const show_inbox = ref(true)
+const show_inbox = ref(false)
 
 function onBadgeClick() {
   show_inbox.value = !show_inbox.value
@@ -66,10 +66,7 @@ async function onCreateDeckClicked() {
     class="grid grid-cols-[1fr] md:grid-cols-[345px_1fr] gap-x-15.5 pb-12"
   >
     <div data-testid="dashboard__left-column" class="flex flex-col gap-6 self-start">
-      <div
-        data-testid="dashboard__member-section"
-        class="relative flex flex-col gap-3 max-md:hidden"
-      >
+      <div data-testid="dashboard__member-section" class="relative flex flex-col gap-3">
         <member-badge
           :display-name="member_store.display_name"
           :description="member_store.description"
@@ -103,7 +100,7 @@ async function onCreateDeckClicked() {
             <button
               v-if="!show_inbox"
               data-testid="member-badge__expand-button"
-              class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-brown-100 text-(--theme-primary) ring-4 ring-(--theme-primary)"
+              class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 flex h-5 w-10 cursor-pointer items-center justify-center rounded-full bg-brown-100 text-(--theme-primary) ring-4 ring-(--theme-primary)"
               @click.stop="onBadgeClick"
             >
               <ui-icon src="carat-down" class="h-4 w-4" />
