@@ -151,6 +151,7 @@ function next() {
           data-theme="brown-100"
           data-theme-dark="stone-700"
           class="w-full!"
+          @click="onItemClicked(due_decks[0])"
         >
           {{ t(study_button_key) }}
         </ui-button>
