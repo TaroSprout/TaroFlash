@@ -72,6 +72,7 @@ async function onCreateDeckClicked() {
               icon-left="edit"
               class="absolute! -top-2.5 -right-2.5 ring-4 ring-brown-100 dark:ring-stone-900"
               icon-only
+              inverted
             >
               {{ t('member-badge.edit-button') }}
             </ui-button>
