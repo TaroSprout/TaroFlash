@@ -1,17 +1,21 @@
 <script setup lang="ts">
-defineProps<{
-  deck: Deck
-}>()
+import Card from '@/components/card/index.vue'
+
+defineProps<{ deck: Deck }>()
 </script>
 
 <template>
   <div
-    class="flex items-center gap-x-3.5 w-full bg-green-600 p-2 rounded-4 text-brown-100 cursor-pointer relative"
+    data-testid="review-inbox-item"
+    class="card-outline pointer-fine:hover:scale-101 pointer-fine:hover:z-10 pointer-fine:transition-transform duration-75 relative cursor-pointer touch-manipulation"
+    v-sfx.hover="'ui.tap_05'"
   >
-    <div class="bg-brown-300 h-10 w-10 rounded-10"></div>
-    <h3 class="text-lg">{{ deck.title }}</h3>
-    <div class="absolute right-0 -top-2 px-4 py-1 bg-brown-300 rounded-3 text-brown-700">
-      {{ deck.due_count }} due
+    <card side="cover" size="xs" :cover_config="deck.cover_config" />
+    <div
+      data-testid="review-inbox-item__due-badge"
+      class="absolute -top-1 -right-1 min-w-7 h-7 px-1.5 aspect-square rounded-full bg-red-500 ring-3 ring-brown-300 dark:ring-stone-900 flex items-center justify-center text-sm font-semibold text-white"
+    >
+      {{ deck.due_count }}
     </div>
   </div>
 </template>

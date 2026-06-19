@@ -51,7 +51,9 @@ export const AUDIO_CONFIG = createAudioConfig({
       default_volume: 0.1
     },
     tap_04: {},
-    tap_05: {},
+    tap_05: {
+      default_volume: 0.1
+    },
     pop_up_close: {},
     snappy_button_2: {},
     snappy_button_3: {},

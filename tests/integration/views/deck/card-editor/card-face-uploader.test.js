@@ -618,7 +618,7 @@ describe('CardFaceUploader', () => {
       cardEditor: { card_attributes: ref({ front: { image_layout: 'behind' }, back: {} }) }
     })
     const cardEl = wrapper.findComponent(CardStub)
-    expect(cardEl.props('sfx')).toEqual({ hover: 'ui.click_07' })
+    expect(cardEl.props('sfx')).toEqual({ hover: 'ui.tap_05' })
   })
 
   test('does NOT pass card sfx in region mode (hover sfx is scoped to the image region)', () => {

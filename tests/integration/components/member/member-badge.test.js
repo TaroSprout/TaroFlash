@@ -27,7 +27,7 @@ vi.mock('gsap', () => ({
 import MemberBadge from '@/components/member/member-badge.vue'
 import { MEMBER_CARD_COVER_DEFAULTS } from '@/utils/member/defaults'
 
-// UiImage stub using a render function (browser mode — no template compiler)
+// UiImage stub
 const UiImageStub = defineComponent({
   name: 'UiImage',
   setup() {
@@ -35,11 +35,21 @@ const UiImageStub = defineComponent({
   }
 })
 
+// UiTappable passthrough — renders slot content with forwarded attrs so
+// data-testid attributes inside the badge template remain queryable.
+const UiTappableStub = defineComponent({
+  name: 'UiTappable',
+  inheritAttrs: false,
+  setup(_, { slots, attrs }) {
+    return () => h('div', attrs, slots.default?.())
+  }
+})
+
 function mountBadge(props = {}) {
   return shallowMount(MemberBadge, {
     props,
     global: {
-      stubs: { UiImage: UiImageStub },
+      stubs: { UiImage: UiImageStub, UiTappable: UiTappableStub },
       directives: { sfx: {} }
     }
   })
@@ -138,28 +148,13 @@ describe('MemberBadge', () => {
     })
   })
 
-  // ── click handler ──────────────────────────────────────────────────────────
+  // ── click emission ─────────────────────────────────────────────────────────
 
-  describe('onCaptureClick', () => {
-    test('does not throw when clicked with no onClick attr (early-return branch)', async () => {
+  describe('click event', () => {
+    test('emits click when the tappable fires tap', async () => {
       const wrapper = mountBadge()
-      await expect(
-        wrapper.find('[data-testid="member-badge"]').trigger('click')
-      ).resolves.not.toThrow()
-    })
-
-    test('does not throw when clicked with an onClick attr (handler branch)', async () => {
-      const handler = vi.fn()
-      const wrapper = shallowMount(MemberBadge, {
-        attrs: { onClick: handler },
-        global: {
-          stubs: { UiImage: UiImageStub },
-          directives: { sfx: {} }
-        }
-      })
-      await expect(
-        wrapper.find('[data-testid="member-badge"]').trigger('click')
-      ).resolves.not.toThrow()
+      await wrapper.findComponent({ name: 'UiTappable' }).vm.$emit('tap', new MouseEvent('click'))
+      expect(wrapper.emitted('click')).toHaveLength(1)
     })
   })
 })

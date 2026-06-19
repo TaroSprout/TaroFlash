@@ -4,12 +4,12 @@ import {
   type StagedTapPhase,
   useStagedTap
 } from '@/composables/ui/staged-tap'
-import type { NamespacedAudioKey } from '@/sfx/config'
+import type { SfxOptions } from '@/sfx/directive'
 
 type UiTappableProps = {
   as?: string
   animate?: StagedTapAnimate
-  audio?: NamespacedAudioKey
+  sfx?: SfxOptions
   triggerAt?: StagedTapPhase
   bgx_color?: string
 }
@@ -17,7 +17,7 @@ type UiTappableProps = {
 const {
   as = 'button',
   animate = 'quiet',
-  audio,
+  sfx = {},
   triggerAt,
   bgx_color = 'var(--theme-neutral)'
 } = defineProps<UiTappableProps>()
@@ -28,7 +28,14 @@ const emit = defineEmits<{
 
 const { playing, tap } = useStagedTap({ animate, triggerAt })
 
-const handler = tap((e) => emit('tap', e), { audio })
+function onClick(e: MouseEvent) {
+  tap((ev) => emit('tap', ev), {
+    preAudio: sfx.tap_pre,
+    audio: sfx.press,
+    audioOpts: { debounce: sfx.debounce, blocking: sfx.press_blocking },
+    postAudio: sfx.tap_post
+  })(e)
+}
 </script>
 
 <template>
@@ -36,7 +43,8 @@ const handler = tap((e) => emit('tap', e), { audio })
     :is="as"
     :data-playing="playing || null"
     class="group/tappable relative"
-    @click="handler"
+    v-sfx="{ hover: sfx.hover, focus: sfx.focus, blur: sfx.blur, debounce: sfx.debounce }"
+    @click="onClick"
   >
     <slot />
     <div
