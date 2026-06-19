@@ -9,7 +9,7 @@ export type SfxOptions = {
   tap_post?: NamespacedAudioKey
   press_blocking?: boolean
   // Handled by this directive.
-  hover?: NamespacedAudioKey
+  hover?: NamespacedAudioKey | NamespacedAudioKey[]
   focus?: NamespacedAudioKey
   blur?: NamespacedAudioKey
   debounce?: number

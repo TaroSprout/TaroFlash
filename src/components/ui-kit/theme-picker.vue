@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { emitSfx } from '@/sfx/bus'
+import { TYPE_SFX } from '@/sfx/config'
 import UiIcon from '@/components/ui-kit/icon.vue'
 
 type ThemePickerProps = {
@@ -44,7 +45,7 @@ function onThemeSelect(option: DeckTheme) {
         :data-testid="`theme-picker__option-${option.light}`"
         :data-theme="option.light"
         :data-theme-dark="option.dark"
-        v-sfx.hover="'ui.click_07'"
+        v-sfx="{ hover: TYPE_SFX }"
         class="w-9 shrink-0 aspect-square bg-(--theme-primary) rounded-8 rounded-tr-3 cursor-pointer relative! hover:outline-5 outline-white"
         :class="{ 'outline-5 outline-white': isSelected(option) }"
         @click="onThemeSelect(option)"

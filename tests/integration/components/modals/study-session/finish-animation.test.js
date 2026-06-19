@@ -37,7 +37,7 @@ describe('FinishAnimation', () => {
 
   test('plays sfx on mount', () => {
     makeFinishAnimation()
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.music_pizz_prompt')
+    expect(mockEmitSfx).toHaveBeenCalledWith('study.music_pizz_prompt')
   })
 
   test('emits done when Burst emits done', async () => {

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { buildTagButtonMask, outsetSideFor, type NotchSide } from '@/utils/tag-button/mask'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import { TYPE_SFX } from '@/sfx/config'
 
 type TagButtonProps = {
   notchSide?: NotchSide
@@ -38,7 +39,7 @@ const padding = computed(() => {
 </script>
 
 <template>
-  <span class="ui-tag-button-shell inline-block hover:scale-105" v-sfx.hover="'ui.click_07'">
+  <span class="ui-tag-button-shell inline-block hover:scale-105" v-sfx="{ hover: TYPE_SFX }">
     <button
       data-testid="ui-kit-tag-button"
       type="button"

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { emitSfx } from '@/sfx/bus'
+import { TYPE_SFX } from '@/sfx/config'
 import { coverBindings } from '@/utils/cover'
 
 const PATTERN_SWATCH_SIZE: Record<DeckCoverPattern, string> = {
@@ -51,7 +52,7 @@ function onPatternSelect(p: DeckCoverPattern | undefined) {
         :key="pattern"
         :data-testid="`pattern-picker__option-${pattern}`"
         :data-selected="pattern === selected_pattern || undefined"
-        v-sfx.hover="'ui.click_07'"
+        v-sfx="{ hover: TYPE_SFX }"
         v-bind="swatchBindings(pattern)"
         class="w-14.5 aspect-square rounded-6 rounded-tr-3 rounded-bl-3 cursor-pointer bg-(--theme-primary) hover:ring-4 data-selected:ring-4 ring-white relative"
         @click="onPatternSelect(pattern)"

@@ -129,7 +129,6 @@ watch(layout_mode, (mode) => {
     :tabs="tabs"
     :pattern_config="{ pattern: 'diagonal-stripes', pattern_size: '48px', pattern_opacity: '0.15' }"
     :parts="{ content: 'flex gap-14 h-full items-start' }"
-    hover_sfx="ui.click_07"
     v-model:active="sidebar_active"
     @close="onClose"
   >

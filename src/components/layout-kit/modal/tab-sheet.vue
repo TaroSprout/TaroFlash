@@ -5,7 +5,7 @@ import { SHEET_SIDEBAR_BG } from './sheet-surface'
 import { activeTabKey } from './tab-sheet-context'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { emitSfx } from '@/sfx/bus'
-import type { NamespacedAudioKey } from '@/sfx/config'
+import { TYPE_SFX, type NamespacedAudioKey } from '@/sfx/config'
 import uid from '@/utils/uid'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
@@ -23,7 +23,7 @@ export type TabSheetProps = MobileSheetProps & {
   parts?: TabSheetParts
   sidebar_query?: string
   sheet_px?: string
-  hover_sfx?: NamespacedAudioKey | ''
+  hover_sfx?: NamespacedAudioKey | NamespacedAudioKey[] | ''
   select_sfx?: NamespacedAudioKey | ''
   reselect_sfx?: NamespacedAudioKey | ''
 }
@@ -38,7 +38,7 @@ const {
   header_border = 'wave',
   sidebar_query = 'w>=lg & fine',
   sheet_px,
-  hover_sfx = 'ui.click_07',
+  hover_sfx = TYPE_SFX,
   select_sfx = 'ui.select',
   reselect_sfx = 'ui.digi_powerdown'
 } = defineProps<TabSheetProps>()
@@ -149,7 +149,7 @@ function selectOption(value: string) {
               'text-left py-3 px-4 rounded-4 flex items-center gap-3 cursor-pointer text-brown-700 dark:text-brown-100 data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary) hover:bg-(--theme-neutral) hover:text-(--theme-on-neutral) data-[active=false]:hover:[&_svg]:scale-120 data-[active=false]:hover:[&_svg]:rotate-6 [&_svg]:transition-transform [&_svg]:duration-75 focus:outline-none',
               parts?.tab
             ]"
-            v-sfx.hover="tab.value === active ? '' : hover_sfx"
+            v-sfx="tab.value === active ? {} : { hover: hover_sfx }"
             @click="selectOption(tab.value)"
           >
             <ui-icon v-if="tab.icon" :src="tab.icon" class="w-6 h-6" />
