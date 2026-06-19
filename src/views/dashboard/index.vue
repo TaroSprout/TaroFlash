@@ -142,7 +142,7 @@ async function onCreateDeckClicked() {
         icon-left="add"
         data-theme="blue-500"
         data-theme-dark="blue-650"
-        class="w-full!"
+        class="w-full! max-md:hidden"
         size="xl"
         @click="onCreateDeckClicked"
       >
@@ -167,6 +167,17 @@ async function onCreateDeckClicked() {
             @click="onDeckClicked(deck)"
           />
         </div>
+
+        <ui-button
+          icon-left="add"
+          data-theme="blue-500"
+          data-theme-dark="blue-650"
+          class="w-full! md:hidden"
+          size="xl"
+          @click="onCreateDeckClicked"
+        >
+          {{ t('dashboard.create-deck-button') }}
+        </ui-button>
 
         <audio-reader-section v-if="can.useAudioReader.value" />
       </div>
