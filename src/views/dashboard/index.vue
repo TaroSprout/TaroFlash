@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useMemberDecksQuery } from '@/api/decks'
 import { useToast } from '@/composables/toast'
 import DeckThumbnail from '@/components/deck/deck-thumbnail.vue'
@@ -16,6 +16,7 @@ import { useCan } from '@/composables/can'
 import MemberBadge from '@/components/member/member-badge.vue'
 import { useMemberStore } from '@/stores/member'
 import { usePhoneOS } from '@/phone/system/os'
+import { useLocalRef } from '@/composables/storage/local-ref'
 import {
   inboxSwingBeforeEnter,
   inboxSwingEnter,
@@ -44,7 +45,7 @@ const due_decks = computed(() => {
 
 const total_due = computed(() => due_decks.value.reduce((sum, d) => sum + (d.due_count ?? 0), 0))
 
-const show_inbox = ref(false)
+const show_inbox = useLocalRef('dashboard.show_inbox', false)
 
 function onBadgeClick() {
   show_inbox.value = !show_inbox.value
