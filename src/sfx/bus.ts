@@ -70,10 +70,13 @@ export async function emitSfx(
  * @param opts Options for playing the sound.
  * @returns A promise that resolves when the sound has finished playing.
  */
-export function emitHoverSfx(event: NamespacedAudioKey, opts: PlayOptions = {}) {
+export function emitHoverSfx(
+  event: NamespacedAudioKey | NamespacedAudioKey[],
+  opts: PlayOptions = {}
+) {
   if (policy.disable_hover_on_touch && _isTouchPrimary()) return
 
-  return emitSfx(event, opts)
+  return Array.isArray(event) ? emitSfx(event, opts) : emitSfx(event, opts)
 }
 
 function _isTouchPrimary(): boolean {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { emitSfx } from '@/sfx/bus'
+import { TYPE_SFX } from '@/sfx/config'
 
 type Horizontal = 'left' | 'center' | 'right'
 type Vertical = 'top' | 'center' | 'bottom'
@@ -57,7 +58,7 @@ function onSelect(h: Horizontal, v: Vertical) {
         :data-active="isActive(h, v)"
         class="aspect-square flex items-center justify-center rounded-5 cursor-pointer text-brown-500 dark:text-brown-100 data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary) data-[active=true]:bgx-diagonal-stripes data-[active=true]:bgx-opacity-10 data-[active=false]:hover:bg-(--theme-primary) data-[active=false]:hover:text-(--theme-on-primary) data-[active=false]:hover:bgx-diagonal-stripes data-[active=false]:hover:bgx-opacity-10"
         @click="onSelect(h, v)"
-        v-sfx.hover="'ui.click_07'"
+        v-sfx="{ hover: TYPE_SFX }"
       >
         <ui-icon :src="isActive(h, v) ? ICONS[v][h] : 'dot'" />
       </button>

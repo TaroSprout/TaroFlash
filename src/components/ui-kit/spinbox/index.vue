@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import SpinboxButton from './button.vue'
 import { useNumericInput } from '@/composables/ui/numeric-input'
 import { useStagedTap } from '@/composables/ui/staged-tap'
+import { TYPE_SFX } from '@/sfx/config'
 
 type SpinboxProps = {
   min?: number
@@ -123,7 +124,7 @@ function onCapturePill(e: MouseEvent) {
       :data-active="pill_active"
       class="inline-flex items-center justify-center bg-input px-3 text-sm cursor-pointer text-brown-700 dark:text-brown-100 transition-colors rounded-4 rounded-l-2 data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary) data-[active=false]:hover:bg-(--theme-primary) data-[active=false]:hover:text-(--theme-on-primary)"
       :data-playing="pill_playing || null"
-      v-sfx="{ hover: 'ui.click_07' }"
+      v-sfx="{ hover: TYPE_SFX }"
       @click.capture="onCapturePill"
     >
       {{ pill_label }}

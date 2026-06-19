@@ -145,7 +145,6 @@ watch(active_tab, (tab) => {
     :tabs="tabs"
     :pattern_config="{ pattern: 'endless-clouds' }"
     :parts="{ content: 'flex gap-14 h-full items-start' }"
-    hover_sfx="ui.click_07"
     v-model:active="sidebar_active"
     @close="onClose"
   >

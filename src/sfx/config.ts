@@ -58,7 +58,19 @@ export const AUDIO_CONFIG = createAudioConfig({
     snappy_button_5: {},
     pop_up_pop: {},
     type_01: {
-      default_volume: 0.2
+      default_volume: 0.1
+    },
+    type_02: {
+      default_volume: 0.1
+    },
+    type_03: {
+      default_volume: 0.1
+    },
+    type_04: {
+      default_volume: 0.1
+    },
+    type_05: {
+      default_volume: 0.1
     },
     clicky_button_4: {}
   },
@@ -89,3 +101,11 @@ export type AudioKey = keyof AudioCategory
 export type NamespacedAudioKey = {
   [C in AudioCategoryKey]: `${C}.${keyof AudioConfig[C] & string}`
 }[AudioCategoryKey]
+
+export const TYPE_SFX: NamespacedAudioKey[] = [
+  'ui.type_01',
+  'ui.type_02',
+  'ui.type_03',
+  'ui.type_04',
+  'ui.type_05'
+]

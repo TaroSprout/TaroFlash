@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { emitSfx } from '@/sfx/bus'
+import { TYPE_SFX } from '@/sfx/config'
 
 const checked = defineModel<boolean>('checked')
 </script>
@@ -9,7 +10,7 @@ const checked = defineModel<boolean>('checked')
     data-testid="ui-kit-toggle"
     :data-active="checked"
     class="group/toggle flex cursor-pointer items-center justify-between gap-2"
-    v-sfx.hover="'ui.click_07'"
+    v-sfx="{ hover: TYPE_SFX }"
   >
     <span data-testid="ui-kit-toggle__label" class="text-brown-700 dark:text-brown-100">
       <slot></slot>

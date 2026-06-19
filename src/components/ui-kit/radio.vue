@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { useStagedTap } from '@/composables/ui/staged-tap'
+import { TYPE_SFX } from '@/sfx/config'
 
 const { checked, theme = 'blue-500' } = defineProps<{
   checked: boolean
@@ -26,7 +27,7 @@ const onCaptureClick = tap(undefined, { audio: 'ui.select' })
       'border-4 border-white bg-(--theme-primary)!': checked && !inverted
     }"
     :data-playing="playing || null"
-    v-sfx="{ hover: 'ui.click_07' }"
+    v-sfx="{ hover: TYPE_SFX }"
     @click.capture="onCaptureClick"
   >
     <ui-icon v-if="checked" class="text-white" src="check" />

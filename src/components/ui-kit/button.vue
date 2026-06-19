@@ -4,6 +4,7 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import { useStagedTap } from '@/composables/ui/staged-tap'
 import type { SfxOptions } from '@/sfx/directive'
+import { TYPE_SFX } from '@/sfx/config'
 
 defineOptions({ inheritAttrs: false })
 
@@ -60,7 +61,7 @@ const { playing, tap } = useStagedTap({ animate: tapAnimate ? 'pop' : 'quiet' })
 const merged_sfx = computed<SfxOptions>(() => {
   if (disabled) return {}
   return {
-    hover: sfx.hover ?? 'ui.click_07',
+    hover: sfx.hover ?? TYPE_SFX,
     focus: sfx.focus,
     blur: sfx.blur,
     debounce: sfx.debounce

@@ -8,6 +8,7 @@ import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import DangerDeleteAccountButton from '../danger-delete-account-button.vue'
 import SettingsSaveButton from '../settings-save-button.vue'
 import { emitSfx } from '@/sfx/bus'
+import { TYPE_SFX } from '@/sfx/config'
 import { settingsLayoutKey } from '../../layout'
 
 export type TabIndexNavValue = 'profile' | 'subscription' | 'app'
@@ -65,7 +66,7 @@ function onNavigate(value: TabIndexNavValue) {
           :data-value="entry.value"
           class="flex items-center gap-3 p-4 text-brown-700 dark:text-brown-100 hover:bg-(--theme-neutral) hover:text-(--theme-on-neutral) cursor-pointer text-left"
           bgx_color="var(--color-brown-500)"
-          v-sfx.hover="'ui.click_07'"
+          v-sfx="{ hover: TYPE_SFX }"
           @tap="onNavigate(entry.value)"
         >
           <ui-icon :src="entry.icon" class="w-6 h-6" />

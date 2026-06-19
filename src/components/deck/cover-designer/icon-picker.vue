@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { emitSfx } from '@/sfx/bus'
+import { TYPE_SFX } from '@/sfx/config'
 import UiIcon from '@/components/ui-kit/icon.vue'
 
 const { t } = useI18n()
@@ -38,7 +39,7 @@ function onIconSelect(value: string | undefined) {
         :key="name"
         :data-testid="`icon-picker__option-${name}`"
         :data-selected="name === icon || undefined"
-        v-sfx.hover="'ui.click_07'"
+        v-sfx="{ hover: TYPE_SFX }"
         class="w-14.5 aspect-square rounded-6 cursor-pointer flex items-center justify-center bg-brown-100 dark:bg-stone-700 text-brown-500 dark:text-brown-100 [&_svg]:size-6 data-selected:bg-(--theme-primary) data-selected:text-(--theme-accent) hover:bg-(--theme-primary) hover:text-(--theme-accent) hover:bgx-diagonal-stripes hover:bgx-opacity-10 data-selected:bgx-diagonal-stripes data-selected:bgx-opacity-10 transition-colors duration-75 hover:[&_svg]:scale-120 hover:[&_svg]:rotate-6"
         @click="onIconSelect(name)"
       >
