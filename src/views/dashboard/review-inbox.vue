@@ -24,6 +24,12 @@ const offset = ref(0)
 
 const has_overflow = computed(() => due_decks.length > VISIBLE_COUNT)
 
+const study_button_key = computed(() => {
+  if (due_decks.length === 1) return 'review-inbox.study-button'
+  if (due_decks.length === 2) return 'review-inbox.study-both-button'
+  return 'review-inbox.study-all-button'
+})
+
 const tape = ref<Deck[]>([])
 const tape_el = ref<HTMLElement | null>(null)
 const is_animating = ref(false)
@@ -146,7 +152,7 @@ function next() {
           data-theme-dark="stone-700"
           class="w-full!"
         >
-          {{ t('review-inbox.study-all-button') }}
+          {{ t(study_button_key) }}
         </ui-button>
       </div>
     </div>

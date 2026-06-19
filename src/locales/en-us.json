@@ -255,6 +255,8 @@
   "review-inbox.cards-due-heading": "{count} card due | {count} cards due",
   "review-inbox.next-button": "Next",
   "review-inbox.prev-button": "Previous",
+  "review-inbox.study-button": "Study",
+  "review-inbox.study-both-button": "Study both",
   "review-inbox.study-all-button": "Study all",
   "lesson-collections.section.heading": "Audio Reader",
   "lesson-collections.section.new-button": "New Collection",
