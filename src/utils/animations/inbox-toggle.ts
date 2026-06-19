@@ -3,11 +3,18 @@ import { gsap } from 'gsap'
 const ENTER_DURATION = 0.35
 const LEAVE_DURATION = 0.2
 
+function navButtons(inbox: HTMLElement) {
+  return inbox.querySelectorAll<HTMLElement>(
+    '[data-testid="review-inbox__prev-btn"], [data-testid="review-inbox__next-btn"]'
+  )
+}
+
 export function inboxSwingBeforeEnter(el: Element) {
   const wrapper = el as HTMLElement
   const inbox = wrapper.firstElementChild as HTMLElement
   gsap.set(wrapper, { height: 0, overflow: 'hidden' })
   gsap.set(inbox, { rotateX: -90, opacity: 0, transformOrigin: 'top center' })
+  gsap.set(navButtons(inbox), { opacity: 0 })
 }
 
 export function inboxSwingEnter(el: Element, done: () => void) {
@@ -23,6 +30,7 @@ export function inboxSwingEnter(el: Element, done: () => void) {
     ease: 'back.out(1.6)',
     onComplete: () => {
       gsap.set(wrapper, { height: 'auto', overflow: '' })
+      gsap.to(navButtons(inbox), { opacity: 1, duration: 0.15, ease: 'power2.out' })
       done()
     }
   })
@@ -33,6 +41,7 @@ export function inboxSwingLeave(el: Element, done: () => void) {
   const inbox = wrapper.firstElementChild as HTMLElement
 
   gsap.set(wrapper, { height: wrapper.offsetHeight, overflow: 'hidden' })
+  gsap.set(navButtons(inbox), { opacity: 0 })
   gsap.to(inbox, {
     rotateX: -90,
     opacity: 0,
