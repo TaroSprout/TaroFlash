@@ -43,9 +43,9 @@ const body_bindings = computed(() => memberCoverBindings(cover, { patternOpacity
       <span data-testid="member-badge__name" class="font-semibold text-3xl text-brown-100 truncate">
         {{ displayName || t('member-badge.name-placeholder') }}
       </span>
-      <span data-testid="member-badge__description" class="text-sm text-brown-100">
+      <div data-testid="member-badge__description" class="text-sm text-brown-100">
         <slot name="description">{{ description || t('member-badge.description-fallback') }}</slot>
-      </span>
+      </div>
     </div>
 
     <slot name="actions" />
