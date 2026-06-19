@@ -13,7 +13,6 @@ import { useDeckCreateModal } from '@/composables/deck/create-modal'
 import { useDeckActions } from '@/composables/deck/actions'
 import { useCan } from '@/composables/can'
 import MemberBadge from '@/components/member/member-badge.vue'
-import MemberCard from '@/components/member/member-card.vue'
 import { useMemberStore } from '@/stores/member'
 import { usePhoneOS } from '@/phone/system/os'
 
@@ -75,13 +74,6 @@ async function onCreateDeckClicked() {
       >
         {{ t('dashboard.create-deck-button') }}
       </ui-button>
-
-      <member-card
-        :created-at="member_store.created_at ?? ''"
-        :display-name="member_store.display_name"
-        :card-comment="member_store.description"
-        card-title="Title"
-      />
 
       <review-inbox :due_decks="due_decks" />
     </div>
