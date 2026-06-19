@@ -1,15 +1,16 @@
 <script setup lang="ts">
+import { useAttrs } from 'vue'
 import {
   type StagedTapAnimate,
   type StagedTapPhase,
   useStagedTap
 } from '@/composables/ui/staged-tap'
-import type { NamespacedAudioKey } from '@/sfx/config'
+import type { SfxOptions } from '@/sfx/directive'
 
 type UiTappableProps = {
   as?: string
   animate?: StagedTapAnimate
-  audio?: NamespacedAudioKey
+  sfx?: SfxOptions
   triggerAt?: StagedTapPhase
   bgx_color?: string
 }
@@ -17,7 +18,7 @@ type UiTappableProps = {
 const {
   as = 'button',
   animate = 'quiet',
-  audio,
+  sfx = {},
   triggerAt,
   bgx_color = 'var(--theme-neutral)'
 } = defineProps<UiTappableProps>()
@@ -26,9 +27,25 @@ const emit = defineEmits<{
   tap: [e: MouseEvent]
 }>()
 
+const attrs = useAttrs()
 const { playing, tap } = useStagedTap({ animate, triggerAt })
 
-const handler = tap((e) => emit('tap', e), { ...(audio && { audio }) })
+function onCaptureClick(e: MouseEvent) {
+  const handler = attrs.onClick as ((ev: MouseEvent) => void) | undefined
+  tap(
+    (ev) => {
+      emit('tap', ev)
+      handler?.(ev)
+    },
+    {
+      preAudio: sfx.tap_pre,
+      audio: sfx.press,
+      audioOpts: { debounce: sfx.debounce, blocking: sfx.press_blocking },
+      postAudio: sfx.tap_post,
+      captureMode: true
+    }
+  )(e)
+}
 </script>
 
 <template>
@@ -36,7 +53,8 @@ const handler = tap((e) => emit('tap', e), { ...(audio && { audio }) })
     :is="as"
     :data-playing="playing || null"
     class="group/tappable relative"
-    @click="handler"
+    v-sfx="{ hover: sfx.hover, focus: sfx.focus, blur: sfx.blur, debounce: sfx.debounce }"
+    @click.capture="onCaptureClick"
   >
     <slot />
     <div

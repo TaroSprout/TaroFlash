@@ -4,16 +4,16 @@ import { useI18n } from 'vue-i18n'
 import { memberCoverBindings } from './cover'
 import UiImage from '@/components/ui-kit/image.vue'
 import UiTappable from '@/components/ui-kit/tappable.vue'
-import type { NamespacedAudioKey } from '@/sfx/config'
+import type { SfxOptions } from '@/sfx/directive'
 
 type MemberBadgeProps = {
   displayName?: string
   description?: string
   cover?: DeckCover
-  audio?: NamespacedAudioKey
+  sfx?: SfxOptions
 }
 
-const { displayName, description, cover, audio } = defineProps<MemberBadgeProps>()
+const { displayName, description, cover, sfx } = defineProps<MemberBadgeProps>()
 defineSlots<{ actions?: () => any; description?: () => any }>()
 const emit = defineEmits<{ click: [e: MouseEvent] }>()
 
@@ -25,12 +25,11 @@ const body_bindings = computed(() => memberCoverBindings(cover, { patternOpacity
 <template>
   <ui-tappable
     as="div"
-    :audio="audio"
+    :sfx="sfx"
     data-testid="member-badge"
     v-bind="body_bindings"
     style="--badge-radius: 42px; --badge-padding: 14px"
     class="card-outline pointer-fine:hover:scale-101 data-[playing=true]:scale-101 pointer-coarse:data-[playing=true]:scale-105 pointer-fine:transition-transform duration-75 cursor-pointer touch-manipulation flex items-center gap-4 rounded-(--badge-radius) p-(--badge-padding) bg-(--theme-primary)"
-    v-sfx.hover="'ui.tap_05'"
     @tap="emit('click', $event)"
   >
     <div
