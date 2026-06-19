@@ -107,7 +107,6 @@ async function onCreateDeckClicked() {
               v-if="!show_inbox"
               data-testid="member-badge__expand-button"
               class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 flex h-5 w-10 cursor-pointer items-center justify-center rounded-full bg-brown-100 text-(--theme-primary) ring-4 ring-(--theme-primary)"
-              @click.stop="onBadgeClick"
             >
               <ui-icon src="carat-down" class="h-4 w-4" />
             </button>
