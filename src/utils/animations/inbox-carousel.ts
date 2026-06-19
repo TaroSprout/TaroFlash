@@ -17,6 +17,14 @@ export function carouselSlide(
   const to = direction === 'next' ? -stepPx : 0
   if (direction === 'prev') gsap.set(el, { x: -stepPx })
   return new Promise((resolve) =>
-    gsap.to(el, { x: to, duration: DURATION, ease: 'power2.inOut', onComplete: resolve })
+    gsap.to(el, {
+      x: to,
+      duration: DURATION,
+      ease: 'power2.inOut',
+      onComplete: () => {
+        gsap.set(el, { x: 0 })
+        resolve()
+      }
+    })
   )
 }
