@@ -4,7 +4,11 @@ import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import ReviewInboxItem from './review-inbox-item.vue'
 import { useStudyModal } from '@/composables/study-session/study-modal'
-import { carouselSlide, type CarouselDirection } from '@/utils/animations/inbox-carousel'
+import {
+  carouselReset,
+  carouselSlide,
+  type CarouselDirection
+} from '@/utils/animations/inbox-carousel'
 
 type ReviewInboxProps = {
   due_decks: Deck[]
@@ -69,6 +73,7 @@ async function navigate(dir: CarouselDirection) {
 
   offset.value = new_offset
   tape.value = tapeFor(new_offset)
+  carouselReset(tape_el.value)
   await nextTick()
   clip.style.width = ''
   is_animating.value = false
