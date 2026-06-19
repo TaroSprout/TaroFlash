@@ -38,7 +38,7 @@ const due_decks = computed(() => {
 })
 
 function onBadgeClick() {
-  phone.value?.open('settings')
+  phone.value?.openByTitle('Settings')
 }
 
 function onDeckClicked(deck: Deck) {

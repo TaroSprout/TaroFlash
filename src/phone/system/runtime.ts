@@ -107,6 +107,12 @@ export function createPhoneRuntime({
     active_session.value = null
   }
 
+  function openByTitle(title: string, t: TransitionPreset = 'slide-left') {
+    const session = Object.values(_registry).find((s) => s.app.title === title)
+    if (!session) return
+    return open(session.app.id, t)
+  }
+
   return {
     init,
     active_session,
@@ -114,6 +120,7 @@ export function createPhoneRuntime({
     notifications,
     phoneOS: {
       open,
+      openByTitle,
       close,
       clear
     }
