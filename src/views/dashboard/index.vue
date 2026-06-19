@@ -76,7 +76,12 @@ async function onCreateDeckClicked() {
           @click="onBadgeClick"
         >
           <template #description>
-            {{ t('review-inbox.cards-due-heading', total_due) }}
+            <div
+              data-testid="member-badge__cards-due"
+              class="border-t-2 border-brown-100 pt-1 mt-0.5 text-2xl text-brown-100"
+            >
+              {{ t('review-inbox.cards-due-heading', total_due) }}
+            </div>
           </template>
           <template #actions>
             <ui-button
