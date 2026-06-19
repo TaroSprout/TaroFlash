@@ -28,7 +28,7 @@ const emit = defineEmits<{
 
 const { playing, tap } = useStagedTap({ animate, triggerAt })
 
-const handler = tap((e) => emit('tap', e), { audio })
+const handler = tap((e) => emit('tap', e), { ...(audio && { audio }) })
 </script>
 
 <template>
