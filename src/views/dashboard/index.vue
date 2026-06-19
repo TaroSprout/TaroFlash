@@ -72,6 +72,7 @@ async function onCreateDeckClicked() {
         <member-badge
           :display-name="member_store.display_name"
           :description="member_store.description"
+          audio="ui.snappy_button_5"
           @click="onBadgeClick"
         >
           <template #description>

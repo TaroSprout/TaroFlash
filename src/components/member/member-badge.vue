@@ -1,41 +1,37 @@
 <script setup lang="ts">
-import { computed, useAttrs } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useStagedTap } from '@/composables/ui/staged-tap'
 import { memberCoverBindings } from './cover'
 import UiImage from '@/components/ui-kit/image.vue'
+import UiTappable from '@/components/ui-kit/tappable.vue'
+import type { NamespacedAudioKey } from '@/sfx/config'
 
 type MemberBadgeProps = {
   displayName?: string
   description?: string
   cover?: DeckCover
+  audio?: NamespacedAudioKey
 }
 
-const { displayName, description, cover } = defineProps<MemberBadgeProps>()
+const { displayName, description, cover, audio } = defineProps<MemberBadgeProps>()
 defineSlots<{ actions?: () => any; description?: () => any }>()
+const emit = defineEmits<{ click: [e: MouseEvent] }>()
 
 const { t } = useI18n()
-const attrs = useAttrs()
-const { playing, tap } = useStagedTap()
 
 const body_bindings = computed(() => memberCoverBindings(cover, { patternOpacity: '0.15' }))
-
-function onCaptureClick(e: MouseEvent) {
-  const handler = attrs.onClick as ((ev: MouseEvent) => void) | undefined
-  if (!handler) return
-  tap(handler, { captureMode: true })(e)
-}
 </script>
 
 <template>
-  <div
+  <ui-tappable
+    as="div"
+    :audio="audio"
     data-testid="member-badge"
     v-bind="body_bindings"
     style="--badge-radius: 42px; --badge-padding: 14px"
-    class="card-outline pointer-fine:hover:scale-101 data-[playing=true]:scale-101 pointer-coarse:data-[playing=true]:scale-105 pointer-fine:transition-transform duration-75 cursor-pointer touch-manipulation flex items-center gap-4 rounded-(--badge-radius) relative p-(--badge-padding) bg-(--theme-primary)"
-    :data-playing="playing || null"
+    class="card-outline pointer-fine:hover:scale-101 data-[playing=true]:scale-101 pointer-coarse:data-[playing=true]:scale-105 pointer-fine:transition-transform duration-75 cursor-pointer touch-manipulation flex items-center gap-4 rounded-(--badge-radius) p-(--badge-padding) bg-(--theme-primary)"
     v-sfx.hover="'ui.tap_05'"
-    @click.capture="onCaptureClick"
+    @tap="emit('click', $event)"
   >
     <div
       data-testid="member-badge__avatar"
@@ -54,5 +50,5 @@ function onCaptureClick(e: MouseEvent) {
     </div>
 
     <slot name="actions" />
-  </div>
+  </ui-tappable>
 </template>
