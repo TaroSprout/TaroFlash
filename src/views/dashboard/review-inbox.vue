@@ -41,7 +41,7 @@ function next() {
 </script>
 
 <template>
-  <div data-testid="review-inbox" class="w-full rounded-8 bg-brown-300">
+  <div data-testid="review-inbox" class="w-full rounded-8 bg-brown-300 dark:bg-stone-900">
     <div
       data-testid="review-inbox__header"
       v-bind="header_bindings"
