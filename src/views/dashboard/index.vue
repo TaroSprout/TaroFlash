@@ -16,6 +16,11 @@ import { useCan } from '@/composables/can'
 import MemberBadge from '@/components/member/member-badge.vue'
 import { useMemberStore } from '@/stores/member'
 import { usePhoneOS } from '@/phone/system/os'
+import {
+  inboxSwingBeforeEnter,
+  inboxSwingEnter,
+  inboxSwingLeave
+} from '@/utils/animations/inbox-toggle'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -108,21 +113,29 @@ async function onCreateDeckClicked() {
           </template>
         </member-badge>
 
-        <template v-if="show_inbox">
+        <div
+          v-if="show_inbox"
+          data-testid="dashboard__binder-rings"
+          class="absolute top-29.5 z-10 w-full flex justify-between px-14"
+        >
           <div
-            data-testid="dashboard__binder-rings"
-            class="absolute top-29.5 z-10 w-full flex justify-between px-14"
-          >
-            <div
-              class="h-8 w-4.25 rounded-full bg-brown-500 ring-3 ring-brown-100 dark:ring-grey-900"
-            />
-            <div
-              class="h-8 w-4.25 rounded-full bg-brown-500 ring-3 ring-brown-100 dark:ring-grey-900"
-            />
-          </div>
+            class="h-8 w-4.25 rounded-full bg-brown-500 ring-3 ring-brown-100 dark:ring-grey-900"
+          />
+          <div
+            class="h-8 w-4.25 rounded-full bg-brown-500 ring-3 ring-brown-100 dark:ring-grey-900"
+          />
+        </div>
 
-          <review-inbox :due_decks="due_decks" />
-        </template>
+        <transition
+          :css="false"
+          @before-enter="inboxSwingBeforeEnter"
+          @enter="inboxSwingEnter"
+          @leave="inboxSwingLeave"
+        >
+          <div v-if="show_inbox" style="perspective: 1200px">
+            <review-inbox :due_decks="due_decks" />
+          </div>
+        </transition>
       </div>
 
       <ui-button
