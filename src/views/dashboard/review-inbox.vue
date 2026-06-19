@@ -22,8 +22,6 @@ const offset = ref(0)
 
 const total_due = computed(() => due_decks.reduce((sum, d) => sum + (d.due_count ?? 0), 0))
 const has_overflow = computed(() => due_decks.length > VISIBLE_COUNT)
-const has_prev = computed(() => offset.value > 0)
-const has_next = computed(() => offset.value + VISIBLE_COUNT < due_decks.length)
 const visible_decks = computed(() => due_decks.slice(offset.value, offset.value + VISIBLE_COUNT))
 
 function onItemClicked(deck: Deck) {
@@ -31,11 +29,11 @@ function onItemClicked(deck: Deck) {
 }
 
 function prev() {
-  offset.value = Math.max(0, offset.value - 1)
+  offset.value = offset.value > 0 ? offset.value - 1 : due_decks.length - VISIBLE_COUNT
 }
 
 function next() {
-  offset.value = Math.min(due_decks.length - VISIBLE_COUNT, offset.value + 1)
+  offset.value = offset.value + VISIBLE_COUNT < due_decks.length ? offset.value + 1 : 0
 }
 </script>
 
@@ -62,8 +60,8 @@ function next() {
           icon-left="chevron-left"
           icon-only
           data-theme="brown-50"
-          class="absolute! -left-7 top-1/2 -translate-y-1/2 z-20"
-          :disabled="!has_prev"
+          class="absolute! -left-9 top-1/2 -translate-y-1/2 z-20"
+          :sfx="{ press: 'ui.snappy_button_5' }"
           @click="prev"
         >
           {{ t('review-inbox.prev-button') }}
@@ -82,8 +80,8 @@ function next() {
           icon-left="chevron-right"
           icon-only
           data-theme="brown-50"
-          class="absolute! -right-7 top-1/2 -translate-y-1/2 z-20"
-          :disabled="!has_next"
+          class="absolute! -right-9 top-1/2 -translate-y-1/2 z-20"
+          :sfx="{ press: 'ui.snappy_button_5' }"
           @click="next"
         >
           {{ t('review-inbox.next-button') }}
