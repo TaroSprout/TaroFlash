@@ -205,7 +205,7 @@ function onLeave(el: Element, done: () => void) {
   --face-border-width: 4px;
   --face-radius: 24px;
   --face-padding: 4px;
-  --cover-icon-size: 42%;
+  --cover-icon-size: 60%;
 }
 .card-container--2xs {
   --card-width: 43px;
