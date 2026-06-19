@@ -5,6 +5,11 @@ import { memberCoverBindings } from '@/components/member/cover'
 import UiButton from '@/components/ui-kit/button.vue'
 import ReviewInboxItem from './review-inbox-item.vue'
 import { useStudyModal } from '@/composables/study-session/study-modal'
+import {
+  carouselEnter,
+  carouselLeave,
+  type CarouselDirection
+} from '@/utils/animations/inbox-carousel'
 
 type ReviewInboxProps = {
   due_decks: Deck[]
@@ -24,16 +29,28 @@ const total_due = computed(() => due_decks.reduce((sum, d) => sum + (d.due_count
 const has_overflow = computed(() => due_decks.length > VISIBLE_COUNT)
 const visible_decks = computed(() => due_decks.slice(offset.value, offset.value + VISIBLE_COUNT))
 
+const direction = ref<CarouselDirection>('next')
+
 function onItemClicked(deck: Deck) {
   study_session.start(deck)
 }
 
 function prev() {
+  direction.value = 'prev'
   offset.value = offset.value > 0 ? offset.value - 1 : due_decks.length - VISIBLE_COUNT
 }
 
 function next() {
+  direction.value = 'next'
   offset.value = offset.value + VISIBLE_COUNT < due_decks.length ? offset.value + 1 : 0
+}
+
+function onEnter(el: Element, done: () => void) {
+  carouselEnter(direction.value)(el, done)
+}
+
+function onLeave(el: Element, done: () => void) {
+  carouselLeave(direction.value)(el, done)
 }
 </script>
 
@@ -53,7 +70,7 @@ function next() {
     </div>
 
     <div data-testid="review-inbox__body" class="px-5 pt-3 pb-5">
-      <div data-testid="review-inbox__items" class="relative flex justify-center gap-1 py-2">
+      <div data-testid="review-inbox__items" class="relative flex justify-center py-2">
         <ui-button
           v-if="has_overflow"
           data-testid="review-inbox__prev-btn"
@@ -67,12 +84,21 @@ function next() {
           {{ t('review-inbox.prev-button') }}
         </ui-button>
 
-        <review-inbox-item
-          v-for="deck in visible_decks"
-          :key="deck.id"
-          :deck="deck"
-          @click="onItemClicked(deck)"
-        />
+        <transition-group
+          :css="false"
+          tag="div"
+          move-class="inbox-carousel-move"
+          class="relative flex gap-1"
+          @enter="onEnter"
+          @leave="onLeave"
+        >
+          <review-inbox-item
+            v-for="deck in visible_decks"
+            :key="deck.id"
+            :deck="deck"
+            @click="onItemClicked(deck)"
+          />
+        </transition-group>
 
         <ui-button
           v-if="has_overflow"
@@ -102,3 +128,9 @@ function next() {
     </div>
   </div>
 </template>
+
+<style>
+.inbox-carousel-move {
+  transition: transform 0.25s ease-out;
+}
+</style>
