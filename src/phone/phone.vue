@@ -10,6 +10,7 @@ import {
   APP_CTX_KEY
 } from '@/phone/system/types'
 import { createPhoneRuntime } from '@/phone/system/runtime'
+import { registerPhoneOS } from '@/phone/system/os'
 import { useModal } from '@/composables/modal'
 import phoneSm from '@/phone/components/phone-sm.vue'
 import phoneBase from '@/phone/components/phone-base.vue'
@@ -46,6 +47,8 @@ const runtime = createPhoneRuntime({
     })
   }
 })
+
+registerPhoneOS(runtime.phoneOS)
 
 const ctx: PhoneContext = { ...runtime.phoneOS, t }
 

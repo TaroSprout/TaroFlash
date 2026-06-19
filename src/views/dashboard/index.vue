@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useMemberDecksQuery } from '@/api/decks'
 import { useToast } from '@/composables/toast'
 import DeckThumbnail from '@/components/deck/deck-thumbnail.vue'
@@ -15,7 +15,7 @@ import { useCan } from '@/composables/can'
 import MemberBadge from '@/components/member/member-badge.vue'
 import MemberCard from '@/components/member/member-card.vue'
 import { useMemberStore } from '@/stores/member'
-import { APP_CTX_KEY, type AppContextInjection } from '@/phone/system/types'
+import { usePhoneOS } from '@/phone/system/os'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -23,7 +23,7 @@ const router = useRouter()
 const is_md = useMatchMedia('w>=md')
 const can = useCan()
 const member_store = useMemberStore()
-const phone = inject<AppContextInjection>(APP_CTX_KEY)
+const phone = usePhoneOS()
 
 const deck_create_modal = useDeckCreateModal()
 const deck_actions = useDeckActions()
@@ -38,7 +38,7 @@ const due_decks = computed(() => {
 })
 
 function onBadgeClick() {
-  phone?.open('settings')
+  phone.value?.open('settings')
 }
 
 function onDeckClicked(deck: Deck) {
