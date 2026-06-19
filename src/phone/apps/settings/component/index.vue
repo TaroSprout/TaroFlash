@@ -9,8 +9,10 @@ import { useMemberDangerActions, memberDangerActionsKey } from '@/composables/me
 import { useTabModalLayout } from '@/composables/ui/tab-modal-layout'
 import { useTabTransition } from '@/composables/ui/tab-transition'
 import { useAlert } from '@/composables/alert'
+import { useModalRequestClose } from '@/composables/modal'
 import { useSessionRef } from '@/composables/storage/session-ref'
 import MemberCard from '@/components/member/member-card.vue'
+import UiIcon from '@/components/ui-kit/icon.vue'
 import TabSheet from '@/components/layout-kit/modal/tab-sheet.vue'
 const { close } = defineProps<{ close: () => void }>()
 
@@ -94,6 +96,8 @@ async function onClose() {
   if (await response) close()
 }
 
+useModalRequestClose(onClose)
+
 function onNavigate(tab: ActiveTab) {
   nav_direction.value = 'forward'
   active_tab.value = tab
@@ -115,6 +119,7 @@ watch(layout_mode, (mode) => {
     data-testid="settings-container"
     data-theme="blue-500"
     data-theme-dark="blue-650"
+    surface="inverted"
     :data-layout="layout_mode"
     :class="[
       layout_mode === 'desktop' ? 'w-255!' : 'w-full! max-w-205.5',
@@ -122,7 +127,7 @@ watch(layout_mode, (mode) => {
     ]"
     :sheet_px="sheet_px"
     :tabs="tabs"
-    :pattern_config="{ pattern: 'endless-clouds' }"
+    :pattern_config="{ pattern: 'diagonal-stripes', pattern_size: '48px', pattern_opacity: '0.15' }"
     :parts="{ content: 'flex gap-14 h-full items-start' }"
     hover_sfx="ui.click_07"
     v-model:active="sidebar_active"
@@ -164,14 +169,22 @@ watch(layout_mode, (mode) => {
         data-testid="settings__pinned-preview"
         class="pointer-events-auto absolute right-(--sheet-px) top-6"
       >
-        <member-card
-          :created-at="editor.created_at.value"
-          :display-name="editor.settings.display_name"
-          :card-comment="editor.settings.description"
-          :card-title="t('settings.preview.title-fallback')"
-          :cover="editor.cover"
-          class="rotate-4 drop-shadow-sm"
-        />
+        <div data-testid="settings__pinned-preview-inner" class="relative">
+          <div
+            data-testid="settings__pinned-preview-paperclip"
+            class="absolute -top-8 right-15 -translate-x-1/2 z-10 drop-shadow-2xs"
+          >
+            <ui-icon src="paperclip" class="w-16 h-16 -rotate-186 text-grey-300" />
+          </div>
+          <member-card
+            :created-at="editor.created_at.value"
+            :display-name="editor.settings.display_name"
+            :card-comment="editor.settings.description"
+            :card-title="t('settings.preview.title-fallback')"
+            :cover="editor.cover"
+            class="rotate-4 drop-shadow-sm"
+          />
+        </div>
       </div>
     </template>
 

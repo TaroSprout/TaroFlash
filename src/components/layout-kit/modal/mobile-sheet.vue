@@ -15,6 +15,8 @@ type SheetPatternConfig = {
   theme?: Theme
   theme_dark?: Theme
   pattern?: DeckCoverPattern
+  pattern_size?: string
+  pattern_opacity?: string
 }
 
 export type MobileSheetProps = {
@@ -66,7 +68,11 @@ const header_bindings = computed(() =>
       theme: pattern_config?.theme,
       pattern: pattern_config?.pattern
     },
-    { border: false, patternOpacity: '0.25' }
+    {
+      border: false,
+      patternOpacity: pattern_config?.pattern_opacity ?? '0.25',
+      patternSize: pattern_config?.pattern_size
+    }
   )
 )
 

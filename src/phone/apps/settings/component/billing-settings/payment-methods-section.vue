@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import AddCreditCardModal from './add-credit-card-modal.vue'
+import type { AddCreditCardResponse } from './add-credit-card-modal.vue'
 import {
   usePaymentMethodsQuery,
   useSetDefaultPaymentMethodMutation,
@@ -22,31 +23,41 @@ const detach_mutation = useDetachPaymentMethodMutation()
 
 const payment_methods = computed(() => methods_query.data.value?.paymentMethods ?? [])
 const default_id = computed(() => methods_query.data.value?.defaultPaymentMethodId ?? null)
+const default_card = computed(
+  () =>
+    payment_methods.value.find((m) => m.id === default_id.value) ?? payment_methods.value[0] ?? null
+)
 
 function formatExpiry(month: number, year: number) {
   return `${String(month).padStart(2, '0')}/${String(year).slice(-2)}`
 }
 
-async function onSetDefault(paymentMethodId: string) {
-  try {
-    await set_default_mutation.mutateAsync(paymentMethodId)
-    toast.success(t('settings.subscription.payment-methods.set-default-success'))
-  } catch {
-    toast.error(t('settings.subscription.payment-methods.set-default-error'))
-  }
-}
+async function onChangeCard() {
+  const old_ids = payment_methods.value.map((m) => m.id)
+  const response = await modal.open<AddCreditCardResponse>(AddCreditCardModal, {
+    mode: 'mobile-sheet',
+    backdrop: true
+  }).response
 
-async function onDetach(paymentMethodId: string) {
-  try {
-    await detach_mutation.mutateAsync(paymentMethodId)
-    toast.success(t('settings.subscription.payment-methods.detach-success'))
-  } catch {
-    toast.error(t('settings.subscription.payment-methods.detach-error'))
-  }
-}
+  if (!response?.added) return
 
-function openAddCreditCard() {
-  modal.open(AddCreditCardModal, { mode: 'mobile-sheet', backdrop: true })
+  if (response.paymentMethodId) {
+    try {
+      await set_default_mutation.mutateAsync(response.paymentMethodId)
+    } catch {
+      toast.error(t('settings.subscription.payment-methods.set-default-error'))
+      return
+    }
+
+    const stale_ids = old_ids.filter((id) => id !== response.paymentMethodId)
+    for (const id of stale_ids) {
+      try {
+        await detach_mutation.mutateAsync(id)
+      } catch {
+        toast.error(t('settings.subscription.payment-methods.detach-error'))
+      }
+    }
+  }
 }
 </script>
 
@@ -55,88 +66,51 @@ function openAddCreditCard() {
     data-testid="billing-settings__payment-methods"
     :label="t('settings.subscription.payment-methods.label')"
   >
-    <div class="flex flex-col gap-4">
-      <p
-        v-if="methods_query.isLoading.value"
-        data-testid="billing-settings__payment-methods-loading"
-        class="text-brown-500 dark:text-brown-400"
+    <p
+      v-if="methods_query.isLoading.value"
+      data-testid="billing-settings__payment-methods-loading"
+      class="text-brown-500 dark:text-brown-400"
+    >
+      {{ t('settings.subscription.payment-methods.loading') }}
+    </p>
+
+    <div v-else class="flex items-center gap-4">
+      <div
+        v-if="default_card"
+        data-testid="billing-settings__payment-method-card"
+        class="flex-1 flex flex-col gap-1"
       >
-        {{ t('settings.subscription.payment-methods.loading') }}
-      </p>
-
-      <p
-        v-else-if="payment_methods.length === 0"
-        data-testid="billing-settings__payment-methods-empty"
-        class="text-brown-500 dark:text-brown-400"
-      >
-        {{ t('settings.subscription.payment-methods.empty') }}
-      </p>
-
-      <ul v-else data-testid="billing-settings__payment-methods-list" class="flex flex-col gap-3">
-        <li
-          v-for="method in payment_methods"
-          :key="method.id"
-          :data-testid="`billing-settings__payment-method-${method.id}`"
-          class="flex items-center gap-4 bg-brown-200 dark:bg-grey-700 rounded-4 p-4"
-        >
-          <div class="flex-1 flex flex-col gap-1">
-            <p class="text-brown-700 dark:text-brown-200 text-lg capitalize">
-              {{ method.card?.brand }} •••• {{ method.card?.last4 }}
-            </p>
-            <p v-if="method.card" class="text-sm text-brown-500 dark:text-brown-400">
-              {{
-                t('settings.subscription.payment-methods.expires', {
-                  expiry: formatExpiry(method.card.exp_month, method.card.exp_year)
-                })
-              }}
-            </p>
-          </div>
-
-          <span
-            v-if="method.id === default_id"
-            data-testid="billing-settings__payment-method-default"
-            class="text-sm text-green-700 dark:text-green-400"
-          >
-            {{ t('settings.subscription.payment-methods.default') }}
-          </span>
-          <ui-button
-            v-else
-            :data-testid="`billing-settings__payment-method-make-default-${method.id}`"
-            data-theme="green-400"
-            size="sm"
-            variant="outline"
-            :loading="set_default_mutation.isLoading.value"
-            @click="onSetDefault(method.id)"
-          >
-            {{ t('settings.subscription.payment-methods.make-default') }}
-          </ui-button>
-
-          <ui-button
-            :data-testid="`billing-settings__payment-method-detach-${method.id}`"
-            data-theme="red-500"
-            size="sm"
-            variant="outline"
-            icon-only
-            icon-left="delete"
-            :loading="detach_mutation.isLoading.value"
-            @click="onDetach(method.id)"
-          >
-            {{ t('settings.subscription.payment-methods.detach') }}
-          </ui-button>
-        </li>
-      </ul>
-
-      <div>
-        <ui-button
-          data-testid="billing-settings__payment-methods-add"
-          data-theme="green-400"
-          size="sm"
-          icon-left="add"
-          @click="openAddCreditCard"
-        >
-          {{ t('settings.subscription.payment-methods.add') }}
-        </ui-button>
+        <p class="text-brown-700 dark:text-brown-200 capitalize">
+          {{ default_card.card?.brand }} •••• {{ default_card.card?.last4 }}
+        </p>
+        <p v-if="default_card.card" class="text-sm text-brown-500 dark:text-brown-400">
+          {{
+            t('settings.subscription.payment-methods.expires', {
+              expiry: formatExpiry(default_card.card.exp_month, default_card.card.exp_year)
+            })
+          }}
+        </p>
       </div>
+      <p
+        v-else
+        data-testid="billing-settings__payment-methods-empty"
+        class="flex-1 text-brown-500 dark:text-brown-400"
+      >
+        {{ t('settings.subscription.payment-methods.no-card') }}
+      </p>
+
+      <ui-button
+        data-testid="billing-settings__payment-methods-change"
+        data-theme="brown-300"
+        size="sm"
+        @click="onChangeCard"
+      >
+        {{
+          default_card
+            ? t('settings.subscription.payment-methods.change')
+            : t('settings.subscription.payment-methods.add')
+        }}
+      </ui-button>
     </div>
   </labeled-section>
 </template>

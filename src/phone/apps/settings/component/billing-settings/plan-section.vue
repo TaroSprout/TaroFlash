@@ -7,6 +7,7 @@ import { useCancelSubscriptionMutation, useResumeSubscriptionMutation } from '@/
 import type { useSubscriptionQuery } from '@/api/billing'
 import { useToast } from '@/composables/toast'
 import { formatShortDate } from '@/utils/date'
+import { PLANS } from '@/config/plans'
 
 type SubscriptionQuery = ReturnType<typeof useSubscriptionQuery>
 
@@ -25,13 +26,6 @@ const confirming_cancel = ref(false)
 
 const subscription = computed(() => subscriptionQuery.data.value?.subscription ?? null)
 
-const product_name = computed(() => {
-  const price = subscription.value?.items.data[0]?.price
-  if (!price) return null
-  const product = price.product
-  return typeof product === 'string' ? null : product.name
-})
-
 const price_label = computed(() => {
   const price = subscription.value?.items.data[0]?.price
   if (!price?.unit_amount) return null
@@ -43,19 +37,29 @@ const price_label = computed(() => {
     : t('settings.subscription.plan.price', { amount, currency })
 })
 
-const renewal_label = computed(() => {
-  if (!subscription.value) return null
-  const ts = subscription.value.current_period_end * 1000
-  const formatted = formatShortDate(ts, locale.value)
-  return subscription.value.cancel_at_period_end
-    ? t('settings.subscription.plan.cancels-on', { date: formatted })
-    : t('settings.subscription.plan.renews-on', { date: formatted })
-})
-
 const status_label = computed(() => {
   const status = subscription.value?.status
-  if (!status) return null
+  if (!status || status === 'active') return null
   return t(`settings.subscription.plan.status.${status}`, status)
+})
+
+const upcoming_charge_label = computed(() => {
+  if (!subscription.value || subscription.value.cancel_at_period_end) return null
+  const ts = subscription.value.current_period_end * 1000
+  const date = formatShortDate(ts, locale.value)
+  const upcoming = subscriptionQuery.data.value?.upcoming
+  if (!upcoming) return t('settings.subscription.plan.renews-on', { date })
+  const amount = new Intl.NumberFormat(locale.value, {
+    style: 'currency',
+    currency: upcoming.currency.toUpperCase()
+  }).format(upcoming.amount_due / 100)
+  return t('settings.subscription.plan.upcoming-charge', { amount, date })
+})
+
+const cancel_label = computed(() => {
+  if (!subscription.value?.cancel_at_period_end) return null
+  const ts = subscription.value.current_period_end * 1000
+  return t('settings.subscription.plan.cancels-on', { date: formatShortDate(ts, locale.value) })
 })
 
 async function onCancel() {
@@ -83,16 +87,13 @@ async function onResume() {
     data-testid="billing-settings__plan"
     :label="t('settings.subscription.plan.label')"
   >
-    <div class="grid grid-cols-[200px_1fr] gap-6 items-start">
-      <h2 class="text-brown-700 dark:text-brown-300 text-lg">
-        {{ t('settings.subscription.plan.current') }}
-      </h2>
+    <div class="flex flex-col gap-4">
       <div
         data-testid="billing-settings__plan-details"
-        class="flex flex-col gap-2 text-brown-700 dark:text-brown-300"
+        class="flex flex-col gap-1 text-brown-700 dark:text-brown-300"
       >
         <p data-testid="billing-settings__plan-name" class="text-xl">
-          {{ product_name ?? t('settings.subscription.plan.unknown') }}
+          {{ PLANS.paid.displayName }}
         </p>
         <p
           v-if="price_label"
@@ -109,15 +110,21 @@ async function onResume() {
           {{ status_label }}
         </p>
         <p
-          v-if="renewal_label"
-          data-testid="billing-settings__plan-renewal"
+          v-if="upcoming_charge_label"
+          data-testid="billing-settings__plan-upcoming"
           class="text-sm text-brown-500 dark:text-brown-400"
         >
-          {{ renewal_label }}
+          {{ upcoming_charge_label }}
+        </p>
+        <p
+          v-else-if="cancel_label"
+          data-testid="billing-settings__plan-cancel-date"
+          class="text-sm text-brown-500 dark:text-brown-400"
+        >
+          {{ cancel_label }}
         </p>
       </div>
 
-      <div></div>
       <div data-testid="billing-settings__plan-actions" class="flex flex-wrap gap-3">
         <template v-if="subscription?.cancel_at_period_end">
           <ui-button
@@ -135,8 +142,8 @@ async function onResume() {
           <ui-button
             data-testid="billing-settings__plan-cancel"
             data-theme="red-500"
+            data-theme-dark="red-600"
             size="sm"
-            variant="outline"
             @click="confirming_cancel = true"
           >
             {{ t('settings.subscription.plan.cancel') }}
@@ -163,7 +170,6 @@ async function onResume() {
             data-testid="billing-settings__plan-cancel-abort"
             data-theme="grey-400"
             size="sm"
-            variant="outline"
             @click="confirming_cancel = false"
           >
             {{ t('settings.subscription.plan.cancel-abort') }}

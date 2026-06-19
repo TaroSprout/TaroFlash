@@ -142,6 +142,5 @@ describe('TabSubscription', () => {
     const wrapper = makeTab()
     expect(wrapper.find('[data-testid="plan-section-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="payment-methods-section-stub"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="invoices-section-stub"]').exists()).toBe(true)
   })
 })

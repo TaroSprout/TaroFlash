@@ -13,7 +13,9 @@ export function useDeckCreateModal() {
     emitSfx('ui.snappy_button_3')
     const result = modal.open<DeckCreateResponse>(DeckCreate, {
       backdrop: true,
-      mode: 'mobile-sheet'
+      mode: 'mobile-sheet',
+      mobile_below_width: 'md',
+      mobile_below_height: 'md'
     })
     result.response.then(() => emitSfx('ui.snappy_button_5'))
     return result

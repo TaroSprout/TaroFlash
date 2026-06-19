@@ -5,7 +5,6 @@ import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import PlanSection from '../billing-settings/plan-section.vue'
 import PaymentMethodsSection from '../billing-settings/payment-methods-section.vue'
-import InvoicesSection from '../billing-settings/invoices-section.vue'
 import SettingsBackButton from '../settings-back-button.vue'
 import { useMemberStore } from '@/stores/member'
 import { useSubscriptionQuery } from '@/api/billing'
@@ -33,7 +32,7 @@ function openUpgradeModal() {
       data-testid="tab-subscription__free"
       :label="t('settings.subscription.free.label')"
     >
-      <div class="grid grid-cols-[200px_1fr] gap-6 items-start">
+      <div class="flex flex-col gap-3">
         <h2 class="text-brown-700 dark:text-brown-300 text-lg">
           {{ t('settings.subscription.free.status') }}
         </h2>
@@ -71,7 +70,6 @@ function openUpgradeModal() {
       <template v-else>
         <plan-section :subscription-query="subscription_query" />
         <payment-methods-section />
-        <invoices-section />
       </template>
     </template>
   </section-list>

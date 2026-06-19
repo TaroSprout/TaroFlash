@@ -113,7 +113,9 @@ beforeEach(() => {
   mutationState.detachLoading = false
 })
 
-describe('payment-methods-section — list states', () => {
+// ── Loading / empty states ────────────────────────────────────────────────────
+
+describe('payment-methods-section — loading state', () => {
   test('shows the loading state while the query is pending', async () => {
     queryState.isLoading = true
     const wrapper = await makePaymentMethodsSection()
@@ -121,7 +123,9 @@ describe('payment-methods-section — list states', () => {
       true
     )
   })
+})
 
+describe('payment-methods-section — empty state', () => {
   test('shows the empty state when no cards are returned', async () => {
     queryState.data = { paymentMethods: [], defaultPaymentMethodId: null }
     const wrapper = await makePaymentMethodsSection()
@@ -130,108 +134,183 @@ describe('payment-methods-section — list states', () => {
     )
   })
 
-  test('renders one list item per payment method', async () => {
-    queryState.data = {
-      paymentMethods: [card('pm_1', 'visa', '4242'), card('pm_2', 'mastercard', '5555')],
-      defaultPaymentMethodId: null
-    }
-    const wrapper = await makePaymentMethodsSection()
-    expect(wrapper.find('[data-testid="billing-settings__payment-method-pm_1"]').exists()).toBe(
-      true
-    )
-    expect(wrapper.find('[data-testid="billing-settings__payment-method-pm_2"]').exists()).toBe(
-      true
-    )
-  })
-})
-
-describe('payment-methods-section — default handling', () => {
-  test('marks the default card with a default badge and hides the make-default button', async () => {
-    queryState.data = {
-      paymentMethods: [card('pm_1', 'visa', '4242')],
-      defaultPaymentMethodId: 'pm_1'
-    }
-    const wrapper = await makePaymentMethodsSection()
-    expect(wrapper.find('[data-testid="billing-settings__payment-method-default"]').exists()).toBe(
-      true
-    )
-    expect(
-      wrapper.find('[data-testid="billing-settings__payment-method-make-default-pm_1"]').exists()
-    ).toBe(false)
-  })
-
-  test('clicking make-default calls setDefaultPaymentMethod with the pm id', async () => {
-    setDefaultMutateMock.mockResolvedValue({})
-    queryState.data = {
-      paymentMethods: [card('pm_1', 'visa', '4242'), card('pm_2', 'visa', '1111')],
-      defaultPaymentMethodId: 'pm_1'
-    }
-    const wrapper = await makePaymentMethodsSection()
-    await wrapper
-      .find('[data-testid="billing-settings__payment-method-make-default-pm_2"]')
-      .trigger('click')
-    await flushPromises()
-    expect(setDefaultMutateMock).toHaveBeenCalledWith('pm_2')
-    expect(toastSuccessMock).toHaveBeenCalled()
-  })
-
-  test('toasts an error when make-default mutation rejects', async () => {
-    setDefaultMutateMock.mockRejectedValue(new Error('api'))
-    queryState.data = {
-      paymentMethods: [card('pm_1', 'visa', '4242'), card('pm_2', 'visa', '1111')],
-      defaultPaymentMethodId: 'pm_1'
-    }
-    const wrapper = await makePaymentMethodsSection()
-    await wrapper
-      .find('[data-testid="billing-settings__payment-method-make-default-pm_2"]')
-      .trigger('click')
-    await flushPromises()
-    expect(toastErrorMock).toHaveBeenCalled()
-  })
-})
-
-describe('payment-methods-section — detach', () => {
-  test('clicking detach calls detachPaymentMethod and toasts success', async () => {
-    detachMutateMock.mockResolvedValue({})
-    queryState.data = {
-      paymentMethods: [card('pm_1', 'visa', '4242')],
-      defaultPaymentMethodId: null
-    }
-    const wrapper = await makePaymentMethodsSection()
-    await wrapper
-      .find('[data-testid="billing-settings__payment-method-detach-pm_1"]')
-      .trigger('click')
-    await flushPromises()
-    expect(detachMutateMock).toHaveBeenCalledWith('pm_1')
-    expect(toastSuccessMock).toHaveBeenCalled()
-  })
-
-  test('toasts an error when detach mutation rejects', async () => {
-    detachMutateMock.mockRejectedValue(new Error('api'))
-    queryState.data = {
-      paymentMethods: [card('pm_1', 'visa', '4242')],
-      defaultPaymentMethodId: null
-    }
-    const wrapper = await makePaymentMethodsSection()
-    await wrapper
-      .find('[data-testid="billing-settings__payment-method-detach-pm_1"]')
-      .trigger('click')
-    await flushPromises()
-    expect(toastErrorMock).toHaveBeenCalled()
-  })
-})
-
-describe('payment-methods-section — add card', () => {
-  test('clicking add opens the AddCreditCardModal as a mobile sheet', async () => {
+  test('shows an add button when no card exists', async () => {
     queryState.data = { paymentMethods: [], defaultPaymentMethodId: null }
     const wrapper = await makePaymentMethodsSection()
-    await wrapper.find('[data-testid="billing-settings__payment-methods-add"]').trigger('click')
+    expect(wrapper.find('[data-testid="billing-settings__payment-methods-change"]').exists()).toBe(
+      true
+    )
+  })
+})
+
+// ── default_card ──────────────────────────────────────────────────────────────
+
+describe('payment-methods-section — default_card [obligation]', () => {
+  test('shows the default card when defaultPaymentMethodId matches a PM', async () => {
+    queryState.data = {
+      paymentMethods: [card('pm_1', 'visa', '4242'), card('pm_2', 'mastercard', '5555')],
+      defaultPaymentMethodId: 'pm_1'
+    }
+    const wrapper = await makePaymentMethodsSection()
+    const cardEl = wrapper.find('[data-testid="billing-settings__payment-method-card"]')
+    expect(cardEl.exists()).toBe(true)
+    expect(cardEl.text()).toContain('visa')
+    expect(cardEl.text()).toContain('4242')
+  })
+
+  test('falls back to the first PM when no PM id matches defaultPaymentMethodId', async () => {
+    queryState.data = {
+      paymentMethods: [card('pm_1', 'visa', '4242'), card('pm_2', 'mastercard', '5555')],
+      defaultPaymentMethodId: 'pm_nonexistent'
+    }
+    const wrapper = await makePaymentMethodsSection()
+    const cardEl = wrapper.find('[data-testid="billing-settings__payment-method-card"]')
+    expect(cardEl.exists()).toBe(true)
+    // pm_1 is the first — it should be shown as default
+    expect(cardEl.text()).toContain('visa')
+    expect(cardEl.text()).toContain('4242')
+  })
+
+  test('falls back to the first PM when defaultPaymentMethodId is null', async () => {
+    queryState.data = {
+      paymentMethods: [card('pm_1', 'visa', '4242')],
+      defaultPaymentMethodId: null
+    }
+    const wrapper = await makePaymentMethodsSection()
+    expect(wrapper.find('[data-testid="billing-settings__payment-method-card"]').exists()).toBe(
+      true
+    )
+  })
+
+  test('shows the empty state when payment methods list is empty', async () => {
+    queryState.data = {
+      paymentMethods: [],
+      defaultPaymentMethodId: null
+    }
+    const wrapper = await makePaymentMethodsSection()
+    expect(wrapper.find('[data-testid="billing-settings__payment-methods-empty"]').exists()).toBe(
+      true
+    )
+    expect(wrapper.find('[data-testid="billing-settings__payment-method-card"]').exists()).toBe(
+      false
+    )
+  })
+})
+
+// ── onChangeCard ──────────────────────────────────────────────────────────────
+
+describe('payment-methods-section — onChangeCard [obligation]', () => {
+  test('clicking the change button opens AddCreditCardModal as a mobile sheet', async () => {
+    queryState.data = {
+      paymentMethods: [card('pm_1', 'visa', '4242')],
+      defaultPaymentMethodId: 'pm_1'
+    }
+    modalOpenMock.mockReturnValue({ response: Promise.resolve(null) })
+    const wrapper = await makePaymentMethodsSection()
+    await wrapper.find('[data-testid="billing-settings__payment-methods-change"]').trigger('click')
     expect(modalOpenMock).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'AddCreditCardModal' }),
-      {
-        mode: 'mobile-sheet',
-        backdrop: true
-      }
+      { mode: 'mobile-sheet', backdrop: true }
     )
+  })
+
+  test('does NOT call any mutation when response paymentMethodId is null/falsy', async () => {
+    queryState.data = {
+      paymentMethods: [card('pm_1', 'visa', '4242')],
+      defaultPaymentMethodId: 'pm_1'
+    }
+    modalOpenMock.mockReturnValue({
+      response: Promise.resolve({ added: true, paymentMethodId: null })
+    })
+    const wrapper = await makePaymentMethodsSection()
+    await wrapper.find('[data-testid="billing-settings__payment-methods-change"]').trigger('click')
+    await flushPromises()
+    expect(setDefaultMutateMock).not.toHaveBeenCalled()
+    expect(detachMutateMock).not.toHaveBeenCalled()
+  })
+
+  test('does NOT call any mutation when modal resolves with added:false', async () => {
+    queryState.data = {
+      paymentMethods: [card('pm_1', 'visa', '4242')],
+      defaultPaymentMethodId: 'pm_1'
+    }
+    modalOpenMock.mockReturnValue({
+      response: Promise.resolve({ added: false, paymentMethodId: null })
+    })
+    const wrapper = await makePaymentMethodsSection()
+    await wrapper.find('[data-testid="billing-settings__payment-methods-change"]').trigger('click')
+    await flushPromises()
+    expect(setDefaultMutateMock).not.toHaveBeenCalled()
+    expect(detachMutateMock).not.toHaveBeenCalled()
+  })
+
+  test('calls set_default_mutation with the new PM id, then detaches old PM ids', async () => {
+    queryState.data = {
+      paymentMethods: [card('pm_old_1', 'visa', '4242'), card('pm_old_2', 'mastercard', '5555')],
+      defaultPaymentMethodId: 'pm_old_1'
+    }
+    setDefaultMutateMock.mockResolvedValue({})
+    detachMutateMock.mockResolvedValue({})
+    modalOpenMock.mockReturnValue({
+      response: Promise.resolve({ added: true, paymentMethodId: 'pm_new' })
+    })
+    const wrapper = await makePaymentMethodsSection()
+    await wrapper.find('[data-testid="billing-settings__payment-methods-change"]').trigger('click')
+    await flushPromises()
+
+    expect(setDefaultMutateMock).toHaveBeenCalledWith('pm_new')
+    // Both old PM ids should be detached
+    expect(detachMutateMock).toHaveBeenCalledWith('pm_old_1')
+    expect(detachMutateMock).toHaveBeenCalledWith('pm_old_2')
+  })
+
+  test('if set_default_mutation throws, detach mutations are NOT called', async () => {
+    queryState.data = {
+      paymentMethods: [card('pm_old', 'visa', '4242')],
+      defaultPaymentMethodId: 'pm_old'
+    }
+    setDefaultMutateMock.mockRejectedValue(new Error('network error'))
+    modalOpenMock.mockReturnValue({
+      response: Promise.resolve({ added: true, paymentMethodId: 'pm_new' })
+    })
+    const wrapper = await makePaymentMethodsSection()
+    await wrapper.find('[data-testid="billing-settings__payment-methods-change"]').trigger('click')
+    await flushPromises()
+
+    expect(setDefaultMutateMock).toHaveBeenCalledWith('pm_new')
+    expect(detachMutateMock).not.toHaveBeenCalled()
+  })
+
+  test('shows an error toast when set_default_mutation throws', async () => {
+    queryState.data = {
+      paymentMethods: [card('pm_old', 'visa', '4242')],
+      defaultPaymentMethodId: 'pm_old'
+    }
+    setDefaultMutateMock.mockRejectedValue(new Error('network error'))
+    modalOpenMock.mockReturnValue({
+      response: Promise.resolve({ added: true, paymentMethodId: 'pm_new' })
+    })
+    const wrapper = await makePaymentMethodsSection()
+    await wrapper.find('[data-testid="billing-settings__payment-methods-change"]').trigger('click')
+    await flushPromises()
+
+    expect(toastErrorMock).toHaveBeenCalled()
+  })
+
+  test('shows an error toast when detach_mutation throws [obligation]', async () => {
+    queryState.data = {
+      paymentMethods: [card('pm_old', 'visa', '4242')],
+      defaultPaymentMethodId: 'pm_old'
+    }
+    setDefaultMutateMock.mockResolvedValue({})
+    detachMutateMock.mockRejectedValue(new Error('detach failed'))
+    modalOpenMock.mockReturnValue({
+      response: Promise.resolve({ added: true, paymentMethodId: 'pm_new' })
+    })
+    const wrapper = await makePaymentMethodsSection()
+    await wrapper.find('[data-testid="billing-settings__payment-methods-change"]').trigger('click')
+    await flushPromises()
+
+    expect(toastErrorMock).toHaveBeenCalled()
   })
 })
