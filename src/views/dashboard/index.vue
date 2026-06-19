@@ -84,12 +84,16 @@ async function onCreateDeckClicked() {
               data-testid="member-badge__cards-due"
               class="border-t-2 border-brown-100 pt-3 mt-0.5 text-xl text-brown-100"
             >
-              <span class="bg-brown-100 text-(--theme-primary) px-1 py-0.5 -rotate-5 rounded-1.5">{{
-                total_due
-              }}</span>
-              {{ t('dashboard.cards-due.cards-label', total_due) }}
-              {{ due_decks.length }}
-              {{ t('dashboard.cards-due.decks-label', due_decks.length) }}
+              <template v-if="due_decks.length > 0">
+                <span
+                  class="bg-brown-100 text-(--theme-primary) px-1 py-0.5 -rotate-5 rounded-1.5"
+                  >{{ total_due }}</span
+                >
+                {{ t('dashboard.cards-due.cards-label', total_due) }}
+                {{ due_decks.length }}
+                {{ t('dashboard.cards-due.decks-label', due_decks.length) }}
+              </template>
+              <template v-else>{{ t('review-inbox.empty-label') }}</template>
             </div>
           </template>
           <template #actions>
@@ -104,7 +108,7 @@ async function onCreateDeckClicked() {
               {{ t('member-badge.edit-button') }}
             </ui-button>
             <button
-              v-if="!show_inbox"
+              v-if="!show_inbox && due_decks.length > 0"
               data-testid="member-badge__expand-button"
               class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 flex h-5 w-10 cursor-pointer items-center justify-center rounded-full bg-brown-100 text-(--theme-primary) ring-4 ring-(--theme-primary)"
             >
@@ -114,7 +118,7 @@ async function onCreateDeckClicked() {
         </member-badge>
 
         <div
-          v-if="show_inbox"
+          v-if="show_inbox && due_decks.length > 0"
           data-testid="dashboard__binder-rings"
           class="absolute top-29.5 z-10 w-full flex justify-between px-14 pointer-events-none"
         >
@@ -132,7 +136,7 @@ async function onCreateDeckClicked() {
           @enter="inboxSwingEnter"
           @leave="inboxSwingLeave"
         >
-          <div v-if="show_inbox" style="perspective: 1200px">
+          <div v-if="show_inbox && due_decks.length > 0" style="perspective: 1200px">
             <review-inbox :due_decks="due_decks" />
           </div>
         </transition>
