@@ -29,8 +29,10 @@ function deckAt(base: number, i: number) {
   return due_decks[(((base + i) % n) + n) % n]
 }
 
-function tapeFor(base: number) {
-  return Array.from({ length: VISIBLE_COUNT }, (_, i) => deckAt(base, i))
+function tapeFor(base: number): Deck[] {
+  const count = Math.min(VISIBLE_COUNT, due_decks.length)
+  if (!count) return []
+  return Array.from({ length: count }, (_, i) => deckAt(base, i))
 }
 
 watch(
@@ -46,7 +48,7 @@ function onItemClicked(deck: Deck) {
 }
 
 async function navigate(dir: CarouselDirection) {
-  if (is_animating.value || !tape_el.value) return
+  if (is_animating.value || !tape_el.value || !due_decks.length) return
   is_animating.value = true
 
   const n = due_decks.length
