@@ -69,6 +69,7 @@ async function navigate(dir: CarouselDirection) {
 
   offset.value = new_offset
   tape.value = tapeFor(new_offset)
+  await nextTick()
   clip.style.width = ''
   is_animating.value = false
 }
@@ -102,7 +103,7 @@ function next() {
           {{ t('review-inbox.prev-button') }}
         </ui-button>
 
-        <div class="overflow-hidden p-3 max-w-full">
+        <div class="overflow-hidden p-3">
           <div ref="tape_el" data-testid="review-inbox__tape" class="flex gap-1">
             <review-inbox-item
               v-for="deck in tape"
