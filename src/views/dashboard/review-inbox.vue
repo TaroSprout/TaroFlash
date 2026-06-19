@@ -103,7 +103,7 @@ function next() {
           icon-left="chevron-left"
           icon-only
           data-theme="brown-50"
-          class="absolute! -left-9 top-1/2 -translate-y-1/2 z-20"
+          class="absolute! -left-4 top-1/2 -translate-y-1/2 z-20"
           :sfx="{ press: 'ui.snappy_button_5' }"
           @click="prev"
         >
@@ -127,7 +127,7 @@ function next() {
           icon-left="chevron-right"
           icon-only
           data-theme="brown-50"
-          class="absolute! -right-9 top-1/2 -translate-y-1/2 z-20"
+          class="absolute! -right-4 top-1/2 -translate-y-1/2 z-20"
           :sfx="{ press: 'ui.snappy_button_5' }"
           @click="next"
         >
