@@ -79,4 +79,20 @@ describe('MemberCard', () => {
     const row = wrapper.find('[data-testid="member-card__registration"]').text()
     expect(row).toMatch(/\d{4}|\d{1,2}/)
   })
+
+  test('body never carries a border style — memberCoverBindings enforces border:false [obligation]', () => {
+    const wrapper = mountCard({ cover: { theme: 'red-500', pattern: 'saw' } })
+    const style = wrapper.find('[data-testid="member-card__body"]').attributes('style') ?? ''
+    expect(style).not.toContain('border:')
+  })
+
+  test('still applies cover-derived bindings via memberCoverBindings after extraction refactor [obligation]', () => {
+    const wrapper = mountCard({
+      cover: { theme: 'teal-400', theme_dark: 'teal-800', pattern: 'aztec' }
+    })
+    const body = wrapper.find('[data-testid="member-card__body"]')
+    expect(body.attributes('data-theme')).toBe('teal-400')
+    expect(body.attributes('data-theme-dark')).toBe('teal-800')
+    expect(body.classes()).toContain('bgx-aztec')
+  })
 })

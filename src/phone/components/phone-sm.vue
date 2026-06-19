@@ -1,13 +1,11 @@
 <script setup lang="ts">
-type PhoneSmProps = {
-  notification_count: number
-}
-
-const { notification_count } = defineProps<PhoneSmProps>()
+import { usePhoneStore } from '@/phone/store'
 
 const emit = defineEmits<{
   (e: 'open'): void
 }>()
+
+const store = usePhoneStore()
 </script>
 
 <template>
@@ -17,7 +15,7 @@ const emit = defineEmits<{
     class="absolute top-0 right-0 w-16.25 h-22 bg-brown-300 rounded-4.5 shadow-xs rotate-6 cursor-pointer p-2 pb-1 mt-3 flex flex-col gap-1 items-center scale-75 pointer-events-auto"
   >
     <div
-      v-if="notification_count > 0"
+      v-if="store.notification_count > 0"
       data-testid="notification-badge"
       class="absolute top-0 left-0 w-4 h-4 bg-red-500 outline-4 outline-brown-300 rounded-full"
     ></div>

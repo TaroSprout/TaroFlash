@@ -1,13 +1,11 @@
-import { type PhoneContext } from '@/phone/system/types'
+import type { ComposerTranslation } from 'vue-i18n'
 import { useAlert } from '@/composables/alert'
 import { useSessionStore } from '@/stores/session'
 
-export function createLogoutController(ctx: PhoneContext) {
-  const alert = useAlert()
-  const session = useSessionStore()
-  const { t } = ctx
-
+export function createLogoutController(t: ComposerTranslation) {
   function onTrigger() {
+    const alert = useAlert()
+    const session = useSessionStore()
     const { response } = alert.warn({
       title: t('phone.apps.logout.title'),
       message: t('phone.apps.logout.description'),
@@ -17,9 +15,7 @@ export function createLogoutController(ctx: PhoneContext) {
     })
 
     response.then((result) => {
-      if (result) {
-        session.logout()
-      }
+      if (result) session.logout()
     })
   }
 

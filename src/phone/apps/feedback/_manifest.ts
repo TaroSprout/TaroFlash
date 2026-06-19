@@ -1,6 +1,7 @@
 import type { TriggerApp } from '@/phone/system/types'
 
 export default {
+  id: 'feedback',
   title: 'Feedback',
   type: 'trigger',
   launcher: {
@@ -8,4 +9,4 @@ export default {
     hover_icon_src: 'feedback-hover',
     theme: 'green-400'
   }
-} satisfies Omit<TriggerApp, 'id'>
+} satisfies TriggerApp

@@ -2,6 +2,7 @@ import type { ViewApp } from '@/phone/system/types'
 import component from './component/index.vue'
 
 export default {
+  id: 'settings',
   title: 'Settings',
   type: 'view',
   display: 'full',
@@ -16,4 +17,4 @@ export default {
     hover_icon_src: 'settings-hover',
     theme: 'pink-400'
   }
-} satisfies Omit<ViewApp, 'id'>
+} satisfies ViewApp

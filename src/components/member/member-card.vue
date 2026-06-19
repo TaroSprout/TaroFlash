@@ -2,8 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { isoNow, formatShortDate } from '@/utils/date'
-import { coverBindings } from '@/utils/cover'
-import { withMemberCardCoverDefaults } from '@/utils/member/defaults'
+import { memberCoverBindings } from './cover'
 import UiImage from '@/components/ui-kit/image.vue'
 
 const { t, locale } = useI18n()
@@ -19,7 +18,7 @@ const { createdAt = isoNow(), cover } = defineProps<{
 const created_on = computed(() => formatShortDate(createdAt, locale.value))
 
 const body_bindings = computed(() =>
-  coverBindings(withMemberCardCoverDefaults(cover), { border: false })
+  memberCoverBindings(cover, { patternOpacity: '0.1', patternSize: '120px' })
 )
 </script>
 
