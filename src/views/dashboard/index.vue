@@ -57,12 +57,15 @@ async function onCreateDeckClicked() {
     class="grid grid-cols-[1fr] md:grid-cols-[345px_1fr] gap-x-15.5 pb-12"
   >
     <div data-testid="dashboard__left-column" class="flex flex-col gap-6 self-start">
-      <member-badge
-        :display-name="member_store.display_name"
-        :description="member_store.description"
-        class="max-md:hidden"
-        @click="onBadgeClick"
-      />
+      <div data-testid="dashboard__member-section" class="flex flex-col gap-3 max-md:hidden">
+        <member-badge
+          :display-name="member_store.display_name"
+          :description="member_store.description"
+          @click="onBadgeClick"
+        />
+
+        <review-inbox :due_decks="due_decks" />
+      </div>
 
       <ui-button
         icon-left="add"
@@ -74,8 +77,6 @@ async function onCreateDeckClicked() {
       >
         {{ t('dashboard.create-deck-button') }}
       </ui-button>
-
-      <review-inbox :due_decks="due_decks" />
     </div>
 
     <div data-testid="dashboard__right-column" class="flex flex-col gap-y-11.5">
