@@ -81,7 +81,7 @@ function next() {
 <template>
   <div
     data-testid="review-inbox"
-    class="w-full rounded-8 bg-brown-300 dark:bg-stone-900 select-none overflow-x-hidden"
+    class="w-full rounded-8 bg-brown-300 dark:bg-stone-900 select-none"
   >
     <div data-testid="review-inbox__body" class="pt-3 pb-5">
       <div data-testid="review-inbox__items" class="relative flex justify-center py-2">
@@ -98,7 +98,7 @@ function next() {
           {{ t('review-inbox.prev-button') }}
         </ui-button>
 
-        <div class="overflow-hidden p-3">
+        <div class="overflow-hidden p-3 max-w-full">
           <div ref="tape_el" data-testid="review-inbox__tape" class="flex gap-1">
             <review-inbox-item
               v-for="deck in tape"
