@@ -80,15 +80,11 @@ async function onCreateDeckClicked() {
               data-testid="member-badge__cards-due"
               class="border-t-2 border-brown-100 pt-1 mt-0.5 text-xl text-brown-100"
             >
-              <span
-                class="bg-brown-100 dark:text-blue-650 text-blue-500 px-1 py-0.5 -rotate-5 rounded-1.5"
-                >{{ total_due }}</span
-              >
+              <span class="bg-brown-100 text-(--theme-primary) px-1 py-0.5 -rotate-5 rounded-1.5">{{
+                total_due
+              }}</span>
               {{ t('dashboard.cards-due.cards-label', total_due) }}
-              <span
-                class="bg-brown-100 dark:text-blue-650 text-blue-500 px-1 py-0.5 -rotate-5 rounded-1.5"
-                >{{ due_decks.length }}</span
-              >
+              {{ due_decks.length }}
               {{ t('dashboard.cards-due.decks-label', due_decks.length) }}
             </div>
           </template>
