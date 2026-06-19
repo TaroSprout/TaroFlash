@@ -9,6 +9,7 @@ import { useMemberDangerActions, memberDangerActionsKey } from '@/composables/me
 import { useTabModalLayout } from '@/composables/ui/tab-modal-layout'
 import { useTabTransition } from '@/composables/ui/tab-transition'
 import { useAlert } from '@/composables/alert'
+import { useModalRequestClose } from '@/composables/modal'
 import { useSessionRef } from '@/composables/storage/session-ref'
 import MemberCard from '@/components/member/member-card.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
@@ -95,6 +96,8 @@ async function onClose() {
   if (await response) close()
 }
 
+useModalRequestClose(onClose)
+
 function onNavigate(tab: ActiveTab) {
   nav_direction.value = 'forward'
   active_tab.value = tab
@@ -124,7 +127,7 @@ watch(layout_mode, (mode) => {
     ]"
     :sheet_px="sheet_px"
     :tabs="tabs"
-    :pattern_config="{ pattern: 'endless-clouds' }"
+    :pattern_config="{ pattern: 'diagonal-stripes', pattern_size: '48px', pattern_opacity: '0.15' }"
     :parts="{ content: 'flex gap-14 h-full items-start' }"
     hover_sfx="ui.click_07"
     v-model:active="sidebar_active"
