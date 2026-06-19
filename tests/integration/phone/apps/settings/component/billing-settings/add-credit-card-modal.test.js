@@ -35,9 +35,17 @@ vi.mock('@/utils/logger', () => ({ default: { error: vi.fn() } }))
 const MobileSheetStub = defineComponent({
   name: 'MobileSheet',
   emits: ['close'],
-  setup(_props, { slots }) {
+  setup(_props, { slots, emit }) {
     return () =>
-      h('div', { 'data-testid': 'mobile-sheet-stub' }, [slots.default?.(), slots.footer?.()])
+      h('div', { 'data-testid': 'mobile-sheet-stub' }, [
+        slots.default?.(),
+        slots.footer?.(),
+        h(
+          'button',
+          { 'data-testid': 'mobile-sheet-stub__close', onClick: () => emit('close') },
+          'close'
+        )
+      ])
   }
 })
 
@@ -150,8 +158,10 @@ describe('add-credit-card-modal — load states', () => {
 })
 
 describe('add-credit-card-modal — submit', () => {
-  test('on succeeded SetupIntent, invalidates payment-methods cache and closes with added=true', async () => {
-    mockConfirmSetup.mockResolvedValue({ setupIntent: { status: 'succeeded' } })
+  test('on succeeded SetupIntent with string payment_method, closes with paymentMethodId string [obligation]', async () => {
+    mockConfirmSetup.mockResolvedValue({
+      setupIntent: { status: 'succeeded', payment_method: 'pm_abc123' }
+    })
     const { wrapper, close } = await makeAddCreditCardModal()
     await flushPromises()
     fireReady()
@@ -161,7 +171,40 @@ describe('add-credit-card-modal — submit', () => {
     await flushPromises()
 
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ key: ['billing', 'payment-methods'] })
-    expect(close).toHaveBeenCalledWith({ added: true })
+    expect(close).toHaveBeenCalledWith({ added: true, paymentMethodId: 'pm_abc123' })
+  })
+
+  test('on succeeded SetupIntent with PM-object payment_method, extracts id [obligation]', async () => {
+    mockConfirmSetup.mockResolvedValue({
+      setupIntent: {
+        status: 'succeeded',
+        payment_method: { id: 'pm_obj456', object: 'payment_method' }
+      }
+    })
+    const { wrapper, close } = await makeAddCreditCardModal()
+    await flushPromises()
+    fireReady()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="add-credit-card-modal__submit"]').trigger('click')
+    await flushPromises()
+
+    expect(close).toHaveBeenCalledWith({ added: true, paymentMethodId: 'pm_obj456' })
+  })
+
+  test('on succeeded SetupIntent with null payment_method, closes with paymentMethodId null [obligation]', async () => {
+    mockConfirmSetup.mockResolvedValue({
+      setupIntent: { status: 'succeeded', payment_method: null }
+    })
+    const { wrapper, close } = await makeAddCreditCardModal()
+    await flushPromises()
+    fireReady()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="add-credit-card-modal__submit"]').trigger('click')
+    await flushPromises()
+
+    expect(close).toHaveBeenCalledWith({ added: true, paymentMethodId: null })
   })
 
   test('shows the submit error when confirmSetup returns an error', async () => {
@@ -201,5 +244,16 @@ describe('add-credit-card-modal — cleanup', () => {
     await flushPromises()
     wrapper.unmount()
     expect(mockElementDestroy).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('add-credit-card-modal — sheet close', () => {
+  test('emitting close from mobile-sheet calls close() with no argument [obligation]', async () => {
+    const { wrapper, close } = await makeAddCreditCardModal()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="mobile-sheet-stub__close"]').trigger('click')
+
+    expect(close).toHaveBeenCalledWith()
   })
 })

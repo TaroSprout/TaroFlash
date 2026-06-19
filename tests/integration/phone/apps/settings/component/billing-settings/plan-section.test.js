@@ -53,9 +53,9 @@ const UiButtonStub = defineComponent({
   }
 })
 
-function makeSubscriptionQuery(subscription) {
+function makeSubscriptionQuery(subscription, upcoming = null) {
   return {
-    data: { value: { subscription, upcoming: null } },
+    data: { value: subscription ? { subscription, upcoming } : null },
     isLoading: { value: false },
     error: { value: null }
   }
@@ -84,13 +84,13 @@ const baseSubscription = {
   default_payment_method: null
 }
 
-async function makePlanSection(subscription = baseSubscription) {
+async function makePlanSection(subscription = baseSubscription, upcoming = null) {
   const PlanSection = (
     await import('@/phone/apps/settings/component/billing-settings/plan-section.vue')
   ).default
 
   return shallowMount(PlanSection, {
-    props: { subscriptionQuery: makeSubscriptionQuery(subscription) },
+    props: { subscriptionQuery: makeSubscriptionQuery(subscription, upcoming) },
     global: {
       stubs: {
         LabeledSection: LabeledSectionStub,
@@ -109,10 +109,12 @@ beforeEach(() => {
   mutationState.resumeLoading = false
 })
 
+// ── Plan details ──────────────────────────────────────────────────────────────
+
 describe('plan-section — plan details', () => {
-  test('renders the product name from the subscription price', async () => {
+  test('renders the paid plan displayName (Builder)', async () => {
     const wrapper = await makePlanSection()
-    expect(wrapper.find('[data-testid="billing-settings__plan-name"]').text()).toContain('Pro Plan')
+    expect(wrapper.find('[data-testid="billing-settings__plan-name"]').text()).toBe('Builder')
   })
 
   test('formats the price with currency and interval', async () => {
@@ -123,24 +125,86 @@ describe('plan-section — plan details', () => {
     expect(price.text()).toContain('month')
   })
 
-  test('shows the renewal date when subscription is not set to cancel', async () => {
-    const wrapper = await makePlanSection()
-    const renewal = wrapper.find('[data-testid="billing-settings__plan-renewal"]')
-    expect(renewal.exists()).toBe(true)
-    expect(renewal.text()).toMatch(/Renews/i)
-  })
-
-  test('shows the cancellation date when cancel_at_period_end is true', async () => {
-    const wrapper = await makePlanSection({ ...baseSubscription, cancel_at_period_end: true })
-    const renewal = wrapper.find('[data-testid="billing-settings__plan-renewal"]')
-    expect(renewal.text()).toMatch(/Cancels/i)
-  })
-
-  test('renders a translated status label', async () => {
-    const wrapper = await makePlanSection({ ...baseSubscription, status: 'active' })
-    expect(wrapper.find('[data-testid="billing-settings__plan-status"]').text()).toBe('Active')
+  test('hides the price line when unit_amount is null', async () => {
+    const wrapper = await makePlanSection({
+      ...baseSubscription,
+      items: {
+        data: [
+          { id: 'si_1', price: { ...baseSubscription.items.data[0].price, unit_amount: null } }
+        ]
+      }
+    })
+    expect(wrapper.find('[data-testid="billing-settings__plan-price"]').exists()).toBe(false)
   })
 })
+
+// ── status_label ──────────────────────────────────────────────────────────────
+
+describe('plan-section — status_label [obligation]', () => {
+  test('does NOT show a status badge for active status', async () => {
+    const wrapper = await makePlanSection({ ...baseSubscription, status: 'active' })
+    expect(wrapper.find('[data-testid="billing-settings__plan-status"]').exists()).toBe(false)
+  })
+
+  test('shows a status badge for non-active status (e.g. past_due)', async () => {
+    const wrapper = await makePlanSection({ ...baseSubscription, status: 'past_due' })
+    expect(wrapper.find('[data-testid="billing-settings__plan-status"]').exists()).toBe(true)
+  })
+})
+
+// ── upcoming_charge_label ─────────────────────────────────────────────────────
+
+describe('plan-section — upcoming_charge_label [obligation]', () => {
+  test('returns null (hidden) when subscription is null', async () => {
+    const PlanSection = (
+      await import('@/phone/apps/settings/component/billing-settings/plan-section.vue')
+    ).default
+    const wrapper = shallowMount(PlanSection, {
+      props: { subscriptionQuery: makeSubscriptionQuery(null) },
+      global: { stubs: { LabeledSection: LabeledSectionStub, UiButton: UiButtonStub } }
+    })
+    expect(wrapper.find('[data-testid="billing-settings__plan-upcoming"]').exists()).toBe(false)
+  })
+
+  test('returns null (hidden) when cancel_at_period_end is true', async () => {
+    const wrapper = await makePlanSection({ ...baseSubscription, cancel_at_period_end: true })
+    expect(wrapper.find('[data-testid="billing-settings__plan-upcoming"]').exists()).toBe(false)
+  })
+
+  test('falls back to renews-on i18n key when upcoming is absent/null', async () => {
+    const wrapper = await makePlanSection(baseSubscription, null)
+    const el = wrapper.find('[data-testid="billing-settings__plan-upcoming"]')
+    expect(el.exists()).toBe(true)
+    expect(el.text()).toMatch(/Renews/i)
+  })
+
+  test('uses upcoming-charge i18n key with formatted currency when upcoming exists', async () => {
+    const upcoming = { currency: 'usd', amount_due: 999 }
+    const wrapper = await makePlanSection(baseSubscription, upcoming)
+    const el = wrapper.find('[data-testid="billing-settings__plan-upcoming"]')
+    expect(el.exists()).toBe(true)
+    expect(el.text()).toMatch(/Next charge/i)
+    expect(el.text()).toContain('9.99')
+  })
+})
+
+// ── cancel_label ──────────────────────────────────────────────────────────────
+
+describe('plan-section — cancel_label [obligation]', () => {
+  test('returns null (hidden) when cancel_at_period_end is false', async () => {
+    const wrapper = await makePlanSection({ ...baseSubscription, cancel_at_period_end: false })
+    expect(wrapper.find('[data-testid="billing-settings__plan-cancel-date"]').exists()).toBe(false)
+  })
+
+  test('returns non-null string when cancel_at_period_end is true', async () => {
+    const wrapper = await makePlanSection({ ...baseSubscription, cancel_at_period_end: true })
+    const el = wrapper.find('[data-testid="billing-settings__plan-cancel-date"]')
+    expect(el.exists()).toBe(true)
+    expect(el.text()).toMatch(/Cancels/i)
+  })
+})
+
+// ── Cancel flow (inline confirm) ──────────────────────────────────────────────
 
 describe('plan-section — cancel flow (inline confirm)', () => {
   test('starts collapsed with only the cancel trigger visible', async () => {
@@ -191,6 +255,8 @@ describe('plan-section — cancel flow (inline confirm)', () => {
   })
 })
 
+// ── Resume flow ───────────────────────────────────────────────────────────────
+
 describe('plan-section — resume flow', () => {
   test('shows the resume button when cancel_at_period_end is true', async () => {
     const wrapper = await makePlanSection({ ...baseSubscription, cancel_at_period_end: true })
@@ -213,42 +279,5 @@ describe('plan-section — resume flow', () => {
     await wrapper.find('[data-testid="billing-settings__plan-resume"]').trigger('click')
     await flushPromises()
     expect(toastErrorMock).toHaveBeenCalled()
-  })
-})
-
-describe('plan-section — edge cases', () => {
-  test('falls back to "Unknown plan" when the product is a string id (unexpanded)', async () => {
-    const wrapper = await makePlanSection({
-      ...baseSubscription,
-      items: {
-        data: [
-          {
-            id: 'si_1',
-            price: {
-              ...baseSubscription.items.data[0].price,
-              product: 'prod_1'
-            }
-          }
-        ]
-      }
-    })
-    expect(wrapper.find('[data-testid="billing-settings__plan-name"]').text()).toContain(
-      'Unknown plan'
-    )
-  })
-
-  test('hides the price line when unit_amount is null (free price, edge case)', async () => {
-    const wrapper = await makePlanSection({
-      ...baseSubscription,
-      items: {
-        data: [
-          {
-            id: 'si_1',
-            price: { ...baseSubscription.items.data[0].price, unit_amount: null }
-          }
-        ]
-      }
-    })
-    expect(wrapper.find('[data-testid="billing-settings__plan-price"]').exists()).toBe(false)
   })
 })
