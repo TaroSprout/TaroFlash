@@ -188,24 +188,24 @@ describe('StudyCard', () => {
 
   // ── rate() / fling animation ───────────────────────────────────────────────
 
-  test('rate(Good) plays ui.music_plink_ok sfx', async () => {
+  test('rate(Good) plays study.music_plink_ok sfx', async () => {
     const wrapper = mountStudyCard({ side: 'back', options })
     await flushPromises()
 
     wrapper.vm.rate(Rating.Good)
     await flushPromises()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.music_plink_ok')
+    expect(mockEmitSfx).toHaveBeenCalledWith('study.music_plink_ok')
   })
 
-  test('rate(Again) plays a sfx', async () => {
+  test('rate(Again) plays study.music_plink_locancel sfx', async () => {
     const wrapper = mountStudyCard({ side: 'back', options })
     await flushPromises()
 
     wrapper.vm.rate(Rating.Again)
     await flushPromises()
 
-    expect(mockEmitSfx).toHaveBeenCalled()
+    expect(mockEmitSfx).toHaveBeenCalledWith('study.music_plink_locancel')
   })
 
   test('rate(Good) emits reviewed with Rating.Good after transitionend', async () => {
@@ -255,7 +255,7 @@ describe('StudyCard', () => {
 
   // ── Zone sfx (card_offset crossing ±50) ───────────────────────────────────
 
-  test('ui.music_plink_mid plays when card_offset crosses the +50 threshold', async () => {
+  test('study.music_plink_mid plays when card_offset crosses the +50 threshold', async () => {
     mountStudyCard({ options })
     await flushPromises()
 
@@ -265,8 +265,8 @@ describe('StudyCard', () => {
     callbacks.onMove({ dx: 60, dy: 0 })
     await flushPromises()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.music_plink_mid')
-    const call_count = mockEmitSfx.mock.calls.filter((c) => c[0] === 'ui.music_plink_mid').length
+    expect(mockEmitSfx).toHaveBeenCalledWith('study.music_plink_mid')
+    const call_count = mockEmitSfx.mock.calls.filter((c) => c[0] === 'study.music_plink_mid').length
     expect(call_count).toBe(1)
 
     // Another move within the same zone should NOT trigger the sfx again
@@ -274,12 +274,12 @@ describe('StudyCard', () => {
     await flushPromises()
 
     const call_count_after = mockEmitSfx.mock.calls.filter(
-      (c) => c[0] === 'ui.music_plink_mid'
+      (c) => c[0] === 'study.music_plink_mid'
     ).length
     expect(call_count_after).toBe(1)
   })
 
-  test('ui.music_plink_mid plays when card_offset crosses the -50 threshold', async () => {
+  test('study.music_plink_mid plays when card_offset crosses the -50 threshold', async () => {
     mountStudyCard({ options })
     await flushPromises()
 
@@ -288,7 +288,7 @@ describe('StudyCard', () => {
     callbacks.onMove({ dx: -60, dy: 0 })
     await flushPromises()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.music_plink_mid')
+    expect(mockEmitSfx).toHaveBeenCalledWith('study.music_plink_mid')
   })
 
   // ── cover side: gestures and rate() are no-ops ────────────────────────────
