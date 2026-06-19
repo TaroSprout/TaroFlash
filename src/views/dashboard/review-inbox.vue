@@ -86,7 +86,13 @@ function next() {
       </div>
 
       <div data-testid="review-inbox__actions" class="mt-4">
-        <ui-button size="xl" data-theme-dark="blue-650" class="w-full!">
+        <ui-button
+          size="xl"
+          icon-left="book-flip-page"
+          data-theme="brown-100"
+          data-theme-dark="stone-700"
+          class="w-full!"
+        >
           {{ t('review-inbox.study-all-button') }}
         </ui-button>
       </div>
