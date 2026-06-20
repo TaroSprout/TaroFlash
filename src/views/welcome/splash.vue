@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import LoginDialogue from '@/views/welcome/login-dialog.vue'
 import { useI18n } from 'vue-i18n'
-import UiImage from '@/components/ui-kit/image.vue'
+import UiIcon from '@/components/ui-kit/icon.vue'
 import UiPopover from '@/components/ui-kit/popover.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import PinnedPreview from '@/components/deck/pinned-preview.vue'
@@ -69,9 +69,15 @@ function flipPreviewSide(side: CardSide) {
         data-testid="welcome-hero__nav"
         class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex justify-between items-center relative z-5"
       >
-        <div data-testid="welcome-hero__brand" class="flex items-center gap-2 text-brown-100">
-          <ui-image src="splash-logo" class="h-9" />
-          <span class="text-2xl font-bold">{{ t('app.title') }}</span>
+        <div data-testid="welcome-hero__brand" class="flex items-center gap-1">
+          <ui-icon src="logo" class="size-9 text-brown-100" />
+          <span class="text-3xl text-brown-100">{{ t('app.title') }}</span>
+          <span
+            data-testid="welcome-hero__beta"
+            class="ml-1 rounded-4 bg-pink-400 px-2.5 py-2 text-sm text-brown-100"
+          >
+            {{ t('welcome-view.hero.beta-pill') }}
+          </span>
         </div>
 
         <ui-popover

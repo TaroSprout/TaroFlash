@@ -56,6 +56,7 @@
   "signup-dialog.alert.close": "Close",
   "welcome-view.login-button": "Log In",
   "welcome-view.signup-button": "Make An Account",
+  "welcome-view.hero.beta-pill": "Beta",
   "welcome-view.hero.heading": "A simple learning tool with a thoughtful design",
   "welcome-view.hero.see-more-button": "See More",
   "welcome-view.hero.subheading": "For languages, exams, or anything else worth remembering.",
