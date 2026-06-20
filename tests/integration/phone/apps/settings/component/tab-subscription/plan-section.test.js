@@ -86,7 +86,7 @@ const baseSubscription = {
 
 async function makePlanSection(subscription = baseSubscription, upcoming = null) {
   const PlanSection = (
-    await import('@/phone/apps/settings/component/billing-settings/plan-section.vue')
+    await import('@/phone/apps/settings/component/tab-subscription/plan-section.vue')
   ).default
 
   return shallowMount(PlanSection, {
@@ -157,7 +157,7 @@ describe('plan-section — status_label [obligation]', () => {
 describe('plan-section — upcoming_charge_label [obligation]', () => {
   test('returns null (hidden) when subscription is null', async () => {
     const PlanSection = (
-      await import('@/phone/apps/settings/component/billing-settings/plan-section.vue')
+      await import('@/phone/apps/settings/component/tab-subscription/plan-section.vue')
     ).default
     const wrapper = shallowMount(PlanSection, {
       props: { subscriptionQuery: makeSubscriptionQuery(null) },

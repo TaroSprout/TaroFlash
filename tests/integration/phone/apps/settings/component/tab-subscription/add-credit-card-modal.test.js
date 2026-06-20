@@ -74,7 +74,7 @@ function makeStripe() {
 
 async function makeAddCreditCardModal({ close = vi.fn() } = {}) {
   const AddCreditCardModal = (
-    await import('@/phone/apps/settings/component/billing-settings/add-credit-card-modal.vue')
+    await import('@/phone/apps/settings/component/tab-subscription/add-credit-card-modal.vue')
   ).default
 
   const wrapper = shallowMount(AddCreditCardModal, {

@@ -45,13 +45,13 @@ vi.mock('@/composables/modal', () => ({
   useModal: () => ({ open: modalOpenMock })
 }))
 
-vi.mock('@/phone/apps/settings/component/billing-settings/plan-section.vue', () => ({
+vi.mock('@/phone/apps/settings/component/tab-subscription/plan-section.vue', () => ({
   default: { name: 'PlanSection', render: () => null }
 }))
-vi.mock('@/phone/apps/settings/component/billing-settings/payment-methods-section.vue', () => ({
+vi.mock('@/phone/apps/settings/component/tab-subscription/payment-methods-section.vue', () => ({
   default: { name: 'PaymentMethodsSection', render: () => null }
 }))
-vi.mock('@/phone/apps/settings/component/billing-settings/invoices-section.vue', () => ({
+vi.mock('@/phone/apps/settings/component/tab-subscription/invoices-section.vue', () => ({
   default: { name: 'InvoicesSection', render: () => null }
 }))
 vi.mock('@/components/modals/checkout.vue', () => ({

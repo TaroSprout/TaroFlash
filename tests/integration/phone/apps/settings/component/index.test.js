@@ -255,7 +255,7 @@ describe('settings app — header copy follows displayed tab', () => {
   test('switches header copy when the active tab changes', async () => {
     const wrapper = makeWrapper()
     await wrapper.find('[data-testid="tab-sheet__select-app"]').trigger('click')
-    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('App')
+    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('Preferences')
   })
 
   test('shows the index header on sheet layout with no tab selected', () => {

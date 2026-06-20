@@ -59,7 +59,7 @@ vi.mock('@/composables/toast', () => ({
   useToast: () => ({ success: toastSuccessMock, error: toastErrorMock })
 }))
 
-vi.mock('@/phone/apps/settings/component/billing-settings/add-credit-card-modal.vue', () => ({
+vi.mock('@/phone/apps/settings/component/tab-subscription/add-credit-card-modal.vue', () => ({
   default: { name: 'AddCreditCardModal' }
 }))
 
@@ -84,7 +84,7 @@ const UiButtonStub = defineComponent({
 
 async function makePaymentMethodsSection() {
   const PaymentMethodsSection = (
-    await import('@/phone/apps/settings/component/billing-settings/payment-methods-section.vue')
+    await import('@/phone/apps/settings/component/tab-subscription/payment-methods-section.vue')
   ).default
 
   return shallowMount(PaymentMethodsSection, {
