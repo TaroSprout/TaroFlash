@@ -13,12 +13,13 @@ vi.mock('@/composables/deck/settings-modal', () => ({
 const DeckThumbnailStub = defineComponent({
   name: 'DeckThumbnail',
   inheritAttrs: false,
+  emits: ['press'],
   setup(_p, { slots, emit }) {
     const attrs = useAttrs()
     return () =>
       h(
         'div',
-        { ...attrs, 'data-testid': 'deck-thumbnail-stub', onClick: () => emit('click') },
+        { ...attrs, 'data-testid': 'deck-thumbnail-stub', onClick: () => emit('press') },
         slots.actions?.()
       )
   }

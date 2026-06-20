@@ -8,9 +8,10 @@ import { cardEditorKey } from '@/composables/card/list-controller'
 const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
+  emits: ['press'],
   setup(_p, { slots, emit }) {
     const attrs = useAttrs()
-    return () => h('button', { ...attrs, onClick: () => emit('click') }, slots.default?.())
+    return () => h('button', { ...attrs, onClick: () => emit('press') }, slots.default?.())
   }
 })
 

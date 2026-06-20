@@ -76,7 +76,7 @@ describe('TabIndex', () => {
   test('plays the select sfx as a blocking sound on nav click', async () => {
     const { wrapper } = makeTab()
     await wrapper.find('[data-testid="tab-index__nav-card"][data-value="profile"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5', { blocking: true })
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5', { blocking: true })
   })
 
   test('renders the inlined delete-account button', () => {

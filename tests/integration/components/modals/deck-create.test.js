@@ -307,7 +307,7 @@ describe('DeckCreate modal', () => {
     expect(mockEditor.saveDeck).not.toHaveBeenCalled()
     expect(close).not.toHaveBeenCalled()
     expect(mockRouterPush).not.toHaveBeenCalled()
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.etc_woodblock_stuck')
+    expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
   })
 
   test('onSave with whitespace-only title treats it as empty and blocks save [obligation]', async () => {
@@ -320,7 +320,7 @@ describe('DeckCreate modal', () => {
     await flushPromises()
 
     expect(mockEditor.saveDeck).not.toHaveBeenCalled()
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.etc_woodblock_stuck')
+    expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
   })
 
   // ── Title-error watcher [obligation] ──────────────────────────────────────
@@ -331,7 +331,7 @@ describe('DeckCreate modal', () => {
     // Trigger the error first by submitting with empty title
     await wrapper.find('[data-testid="deck-create__aside-submit"]').trigger('click')
     await flushPromises()
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.etc_woodblock_stuck')
+    expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
 
     // Clear sfx mock so we can detect if the woodblock fires again
     mockEmitSfx.mockClear()
@@ -344,7 +344,7 @@ describe('DeckCreate modal', () => {
     await wrapper.find('[data-testid="deck-create__aside-submit"]').trigger('click')
     await flushPromises()
 
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.etc_woodblock_stuck')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('etc_woodblock_stuck')
     expect(mockEditor.saveDeck).toHaveBeenCalled()
   })
 

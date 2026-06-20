@@ -166,7 +166,7 @@ describe('useLessonReader', () => {
       const term = { term: 'world', sentence: 'Hello world.', rect: new DOMRect() }
 
       reader.openTerm(term)
-      expect(mockEmitSfx).toHaveBeenCalledWith('ui.pop_up_pop')
+      expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_pop')
     })
 
     test('openTerm emits ui.pop_up_pop on re-tap [obligation]', () => {
@@ -178,7 +178,7 @@ describe('useLessonReader', () => {
       reader.openTerm(term)
 
       expect(mockEmitSfx).toHaveBeenCalledTimes(2)
-      expect(mockEmitSfx.mock.calls.every((c) => c[0] === 'ui.pop_up_pop')).toBe(true)
+      expect(mockEmitSfx.mock.calls.every((c) => c[0] === 'pop_up_pop')).toBe(true)
     })
 
     test('openTerm never opens a global modal [obligation]', () => {

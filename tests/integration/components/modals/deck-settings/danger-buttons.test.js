@@ -8,7 +8,7 @@ import { deckDangerActionsKey } from '@/composables/deck/danger-actions'
 const ButtonStub = defineComponent({
   name: 'UiButton',
   props: { loading: { type: Boolean, default: false } },
-  emits: ['click'],
+  emits: ['press'],
   inheritAttrs: false,
   setup(props, { slots, emit }) {
     const attrs = useAttrs()
@@ -20,7 +20,7 @@ const ButtonStub = defineComponent({
           ...attrs,
           'data-loading': String(!!props.loading),
           disabled: props.loading,
-          onClick: (e) => emit('click', e)
+          onClick: (e) => emit('press', e)
         },
         slots.default?.()
       )

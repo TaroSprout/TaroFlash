@@ -46,12 +46,22 @@ const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
   props: ['size', 'variant', 'inverted', 'fullWidth', 'iconLeft', 'sfx', 'style'],
-  setup(props, { slots, attrs }) {
+  emits: ['press'],
+  setup(props, { slots, attrs, emit }) {
     return () =>
-      h('button', { ...attrs, style: props.style, 'data-testid': 'dropdown-button__button' }, [
-        slots.default?.(),
-        slots.trailing?.()
-      ])
+      h(
+        'button',
+        {
+          ...attrs,
+          style: props.style,
+          'data-testid': 'dropdown-button__button',
+          onClick: (e) => {
+            attrs.onClick?.(e)
+            emit('press', e)
+          }
+        },
+        [slots.default?.(), slots.trailing?.()]
+      )
   }
 })
 
@@ -503,7 +513,7 @@ describe('UiDropdownButton', () => {
     const wrapper = mountDropdown()
     mockEmitSfx.mockClear()
     await trigger(wrapper).trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5', { blocking: true })
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5', { blocking: true })
   })
 
   test('clicking the trigger again (close) emits ui.snappy_button_5 [obligation]', async () => {
@@ -511,7 +521,7 @@ describe('UiDropdownButton', () => {
     await trigger(wrapper).trigger('click')
     mockEmitSfx.mockClear()
     await trigger(wrapper).trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5', { blocking: true })
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5', { blocking: true })
   })
 
   test('selecting an option does NOT emit ui.select (removed in menu refactor) [obligation]', async () => {
@@ -519,7 +529,7 @@ describe('UiDropdownButton', () => {
     await trigger(wrapper).trigger('click')
     mockEmitSfx.mockClear()
     await options(wrapper)[0].trigger('click')
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.select')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('select')
   })
 
   // ── primaryDisabled prop [obligation] ─────────────────────────────────────

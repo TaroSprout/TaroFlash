@@ -312,7 +312,7 @@ describe('SpinboxButton', () => {
     const { emitSfx } = await import('@/sfx/bus')
     const wrapper = mount(SpinboxButton, { props: { icon: 'chevron-up' } })
     await wrapper.find('button').trigger('click')
-    expect(emitSfx).toHaveBeenCalledWith('ui.select')
+    expect(emitSfx).toHaveBeenCalledWith('select')
   })
 
   test('disabled button does not emit click', async () => {

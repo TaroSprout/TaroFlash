@@ -140,59 +140,6 @@ describe('useStagedTap — coarse pointer (default triggerAt: peak)', () => {
   })
 })
 
-describe('useStagedTap — captureMode on fine pointer (deck-thumbnail double-fire fix)', () => {
-  test('tap is a complete no-op on fine pointer in captureMode — action never called', async () => {
-    coarseRef.value = false
-    const { tap } = useStagedTap()
-    const action = vi.fn()
-    const e = makeEvent()
-
-    await tap(action, { captureMode: true })(e)
-
-    expect(action).not.toHaveBeenCalled()
-  })
-
-  test('stopImmediatePropagation is NOT called on fine pointer in captureMode', async () => {
-    coarseRef.value = false
-    const { tap } = useStagedTap()
-    const e = makeEvent()
-
-    await tap(vi.fn(), { captureMode: true })(e)
-
-    expect(e.stopImmediatePropagation).not.toHaveBeenCalled()
-  })
-
-  test('no animation plays on fine pointer in captureMode', async () => {
-    coarseRef.value = false
-    const { tap } = useStagedTap()
-
-    await tap(vi.fn(), { captureMode: true })(makeEvent())
-
-    expect(mockPlayButtonTap).not.toHaveBeenCalled()
-  })
-})
-
-describe('useStagedTap — captureMode on coarse pointer', () => {
-  test('stopImmediatePropagation is called on coarse in captureMode', async () => {
-    const { tap } = useStagedTap()
-    const e = makeEvent()
-
-    await tap(vi.fn(), { captureMode: true })(e)
-
-    expect(e.stopImmediatePropagation).toHaveBeenCalled()
-  })
-
-  test('action still fires on coarse in captureMode (after animation)', async () => {
-    const { tap } = useStagedTap()
-    const action = vi.fn()
-    const e = makeEvent()
-
-    await tap(action, { captureMode: true })(e)
-
-    expect(action).toHaveBeenCalledWith(e)
-  })
-})
-
 describe('useStagedTap — double-tap guard', () => {
   test('second call while playing is silently dropped (action not called a second time)', async () => {
     let peakResolve
@@ -264,14 +211,16 @@ describe('useStagedTap — onTap call option', () => {
   test('onTap fires before any coarse/fine check', async () => {
     coarseRef.value = false
     const { tap } = useStagedTap()
-    const onTap = vi.fn()
-    const action = vi.fn()
+    const order = []
+    const onTap = vi.fn(() => order.push('onTap'))
+    const action = vi.fn(() => order.push('action'))
 
-    await tap(action, { captureMode: true, onTap })(makeEvent())
+    await tap(action, { onTap })(makeEvent())
 
-    // captureMode on fine → action must not fire, but onTap must have
+    // onTap must fire regardless of pointer type
     expect(onTap).toHaveBeenCalled()
-    expect(action).not.toHaveBeenCalled()
+    // onTap fires before action
+    expect(order.indexOf('onTap')).toBeLessThan(order.indexOf('action'))
   })
 
   test('onTap fires even when tap is dropped due to playing guard', async () => {
@@ -309,8 +258,8 @@ describe('useStagedTap — audio', () => {
   test('audio fires on fine pointer (core fix — fine pointer now gets audio)', async () => {
     coarseRef.value = false
     const { tap } = useStagedTap()
-    await tap(vi.fn(), { audio: 'ui.snappy_button_5' })(makeEvent())
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5', undefined)
+    await tap(vi.fn(), { audio: 'snappy_button_5' })(makeEvent())
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5', undefined)
   })
 
   test('audio fires at peak on coarse with pop animate', async () => {
@@ -322,49 +271,36 @@ describe('useStagedTap — audio', () => {
     const { tap } = useStagedTap({ animate: 'pop' })
     const action = vi.fn()
 
-    const p = tap(action, { audio: 'ui.snappy_button_5' })(makeEvent())
+    const p = tap(action, { audio: 'snappy_button_5' })(makeEvent())
     // Not yet — waiting for peak
     expect(mockEmitSfx).not.toHaveBeenCalled()
 
     peakResolve()
     await p
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5', undefined)
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5', undefined)
   })
 
   test('audio fires after timer on coarse with quiet animate', async () => {
     vi.useFakeTimers()
     const { tap } = useStagedTap({ animate: 'quiet' })
 
-    const p = tap(vi.fn(), { audio: 'ui.snappy_button_5' })(makeEvent())
+    const p = tap(vi.fn(), { audio: 'snappy_button_5' })(makeEvent())
     // Not yet — timer still pending
     expect(mockEmitSfx).not.toHaveBeenCalled()
 
     vi.advanceTimersByTime(200)
     await p
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5', undefined)
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5', undefined)
     vi.useRealTimers()
   })
 
   test('audio fires at press when triggerAt: "press" on coarse', async () => {
     const { tap } = useStagedTap({ animate: 'pop' })
 
-    const p = tap(vi.fn(), { audio: 'ui.snappy_button_5', triggerAt: 'press' })(makeEvent())
+    const p = tap(vi.fn(), { audio: 'snappy_button_5', triggerAt: 'press' })(makeEvent())
     // At press — synchronously — audio fires
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5', undefined)
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5', undefined)
     await p
-  })
-
-  test('audio + captureMode on fine: audio fires but action does NOT [obligation]', async () => {
-    coarseRef.value = false
-    const { tap } = useStagedTap()
-    const action = vi.fn()
-
-    await tap(action, { audio: 'ui.snappy_button_5', captureMode: true })(makeEvent())
-
-    // Audio fires on fine pointer even in captureMode
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5', undefined)
-    // Action does NOT — the natural @click handles it
-    expect(action).not.toHaveBeenCalled()
   })
 
   test('audio NOT played twice on coarse pop animate with triggerAt peak [obligation]', async () => {
@@ -375,7 +311,7 @@ describe('useStagedTap — audio', () => {
     }))
     const { tap } = useStagedTap({ animate: 'pop' })
 
-    const p = tap(vi.fn(), { audio: 'ui.snappy_button_5' })(makeEvent())
+    const p = tap(vi.fn(), { audio: 'snappy_button_5' })(makeEvent())
     peakResolve()
     await p
 
@@ -387,14 +323,14 @@ describe('useStagedTap — audio', () => {
 describe('useStagedTap — preAudio', () => {
   test('preAudio fires on coarse press before animation [obligation]', async () => {
     const { tap } = useStagedTap()
-    await tap(vi.fn(), { preAudio: 'ui.snappy_button_5' })(makeEvent())
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5')
+    await tap(vi.fn(), { preAudio: 'snappy_button_5' })(makeEvent())
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
   })
 
   test('preAudio does NOT fire on fine pointer [obligation]', async () => {
     coarseRef.value = false
     const { tap } = useStagedTap()
-    await tap(vi.fn(), { preAudio: 'ui.snappy_button_5' })(makeEvent())
+    await tap(vi.fn(), { preAudio: 'snappy_button_5' })(makeEvent())
     expect(mockEmitSfx).not.toHaveBeenCalled()
   })
 })
@@ -408,33 +344,33 @@ describe('useStagedTap — postAudio', () => {
     }))
     const { tap } = useStagedTap({ animate: 'pop' })
 
-    const p = tap(vi.fn(), { postAudio: 'ui.snappy_button_5' })(makeEvent())
+    const p = tap(vi.fn(), { postAudio: 'snappy_button_5' })(makeEvent())
     // After peak, before done — no postAudio yet
     await Promise.resolve()
     expect(mockEmitSfx).not.toHaveBeenCalled()
 
     doneResolve()
     await p
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
   })
 
   test('postAudio fires after timer on coarse quiet animate [obligation]', async () => {
     vi.useFakeTimers()
     const { tap } = useStagedTap({ animate: 'quiet' })
 
-    const p = tap(vi.fn(), { postAudio: 'ui.snappy_button_5' })(makeEvent())
+    const p = tap(vi.fn(), { postAudio: 'snappy_button_5' })(makeEvent())
     expect(mockEmitSfx).not.toHaveBeenCalled()
 
     vi.advanceTimersByTime(200)
     await p
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
     vi.useRealTimers()
   })
 
   test('postAudio does NOT fire on fine pointer [obligation]', async () => {
     coarseRef.value = false
     const { tap } = useStagedTap()
-    await tap(vi.fn(), { postAudio: 'ui.snappy_button_5' })(makeEvent())
+    await tap(vi.fn(), { postAudio: 'snappy_button_5' })(makeEvent())
     expect(mockEmitSfx).not.toHaveBeenCalled()
   })
 })

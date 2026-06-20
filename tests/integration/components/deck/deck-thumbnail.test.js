@@ -156,7 +156,7 @@ describe('Deck', () => {
     test('emits click_sfx when tapped (fires at animation peak)', async () => {
       vi.useFakeTimers()
       const wrapper = shallowMount(Deck, {
-        props: { deck: { title: 'X' }, click_sfx: 'ui.select' },
+        props: { deck: { title: 'X' }, click_sfx: 'select' },
         attrs: { onClick: vi.fn() }
       })
 
@@ -164,7 +164,7 @@ describe('Deck', () => {
       vi.advanceTimersByTime(500)
       await flushPromises()
 
-      expect(mockEmitSfx).toHaveBeenCalledWith('ui.select', undefined)
+      expect(mockEmitSfx).toHaveBeenCalledWith('select', undefined)
       vi.useRealTimers()
     })
 

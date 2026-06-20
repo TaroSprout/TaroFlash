@@ -46,10 +46,10 @@ const LabeledSectionStub = defineComponent({
 const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
-  emits: ['click'],
+  emits: ['press'],
   setup(_props, { slots, emit }) {
     const attrs = useAttrs()
-    return () => h('button', { ...attrs, onClick: () => emit('click') }, slots.default?.())
+    return () => h('button', { ...attrs, onClick: () => emit('press') }, slots.default?.())
   }
 })
 

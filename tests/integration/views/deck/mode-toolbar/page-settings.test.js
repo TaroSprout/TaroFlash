@@ -200,6 +200,6 @@ describe('PageSettings', () => {
     const editor = makeEditor({ grid_size_val: 'md' })
     const { wrapper } = mountPageSettings(editor)
     await wrapper.find('[data-testid="page-settings__card-size-option-md"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.digi_powerdown')
+    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
   })
 })

@@ -126,6 +126,29 @@ vi.mock('@/sfx/bus', () => ({
 
 // ── Stubs ──────────────────────────────────────────────────────────────────────
 
+// ── Stubs ──────────────────────────────────────────────────────────────────────
+
+const UiButtonStub = defineComponent({
+  name: 'UiButton',
+  inheritAttrs: false,
+  props: ['iconLeft', 'iconOnly', 'size', 'sfx'],
+  emits: ['press'],
+  setup(_p, { slots, attrs, emit }) {
+    return () =>
+      h(
+        'button',
+        {
+          ...attrs,
+          onClick: (e) => {
+            attrs.onClick?.(e)
+            emit('press')
+          }
+        },
+        [slots.default?.()]
+      )
+  }
+})
+
 // Controllable follow state so tests can simulate the transcript exposing
 // following/follow_direction/resumeFollow (the lesson view reads these via ref="transcript").
 const transcriptFollowing = ref(true)
@@ -210,7 +233,8 @@ function mountView(props = {}) {
         Teleport: true,
         TranscriptView: TranscriptViewStub,
         TermCard: TermCardStub,
-        MobileDock: MobileDockStub
+        MobileDock: MobileDockStub,
+        UiButton: UiButtonStub
       }
     }
   })
@@ -475,7 +499,7 @@ describe('LessonView', () => {
 
       await wrapper.find('[data-testid="transcript-stub__dismiss"]').trigger('click')
 
-      expect(emitSfxMock).toHaveBeenCalledWith('ui.snappy_button_5')
+      expect(emitSfxMock).toHaveBeenCalledWith('snappy_button_5')
     })
 
     test('closeTerm alone does NOT emit ui.snappy_button_5 [obligation]', async () => {
@@ -490,7 +514,7 @@ describe('LessonView', () => {
 
       // closeTermMock was called but sfx was NOT emitted (sfx only in dismissTerm)
       expect(closeTermMock).toHaveBeenCalledOnce()
-      expect(emitSfxMock).not.toHaveBeenCalledWith('ui.snappy_button_5')
+      expect(emitSfxMock).not.toHaveBeenCalledWith('snappy_button_5')
     })
   })
 

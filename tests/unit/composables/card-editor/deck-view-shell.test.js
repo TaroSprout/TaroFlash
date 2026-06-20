@@ -82,7 +82,7 @@ describe('useDeckViewShell', () => {
   test('setMode plays ui.select chime on a real switch [obligation]', () => {
     const shell = useDeckViewShell()
     shell.setMode('edit')
-    expect(emitSfxMock).toHaveBeenCalledWith('ui.select')
+    expect(emitSfxMock).toHaveBeenCalledWith('select')
   })
 
   test('setMode does NOT play ui.select when already in new_mode [obligation]', () => {

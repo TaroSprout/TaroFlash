@@ -65,7 +65,7 @@ describe('useMemberDangerActions', () => {
       title: 'alert.delete-account.title',
       message: 'alert.delete-account.message',
       confirmLabel: 'alert.delete-account.confirm',
-      confirmAudio: 'ui.trash_crumple_short'
+      confirmAudio: 'trash_crumple_short'
     })
   })
 

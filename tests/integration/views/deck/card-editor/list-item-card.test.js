@@ -187,7 +187,7 @@ describe('ListItemCard', () => {
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
     const contenteditable = wrapper.find('[data-testid="text-editor-stub"]').element
     contenteditable.dispatchEvent(new FocusEvent('focusin', { bubbles: true, relatedTarget: null }))
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.slide_up')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('slide_up')
     wrapper.unmount()
   })
 
@@ -199,7 +199,7 @@ describe('ListItemCard', () => {
     contenteditable.dispatchEvent(
       new FocusEvent('focusin', { bubbles: true, relatedTarget: external })
     )
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.slide_up')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('slide_up')
     external.remove()
     wrapper.unmount()
   })
@@ -213,7 +213,7 @@ describe('ListItemCard', () => {
     second_editor.dispatchEvent(
       new FocusEvent('focusin', { bubbles: true, relatedTarget: first_editor })
     )
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.click_04')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('click_04')
     wrapper.unmount()
   })
 
@@ -224,7 +224,7 @@ describe('ListItemCard', () => {
     contenteditable.dispatchEvent(
       new FocusEvent('focusin', { bubbles: true, relatedTarget: other.editor })
     )
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.click_04')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('click_04')
     other.card.remove()
     wrapper.unmount()
   })
@@ -247,7 +247,7 @@ describe('ListItemCard', () => {
     contenteditable.dispatchEvent(
       new FocusEvent('focusout', { bubbles: true, relatedTarget: null })
     )
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.card_drop')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('card_drop')
     wrapper.unmount()
   })
 
@@ -258,7 +258,7 @@ describe('ListItemCard', () => {
     wrapper.element.appendChild(button)
     button.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: null }))
     // e.target.isContentEditable is false → card_drop guard skipped
-    expect(mocks.emitSfxMock).not.toHaveBeenCalledWith('ui.card_drop')
+    expect(mocks.emitSfxMock).not.toHaveBeenCalledWith('card_drop')
     button.remove()
     wrapper.unmount()
   })
@@ -270,7 +270,7 @@ describe('ListItemCard', () => {
     contenteditable.dispatchEvent(
       new FocusEvent('focusout', { bubbles: true, relatedTarget: other.editor })
     )
-    expect(mocks.emitSfxMock).not.toHaveBeenCalledWith('ui.card_drop')
+    expect(mocks.emitSfxMock).not.toHaveBeenCalledWith('card_drop')
     other.card.remove()
     wrapper.unmount()
   })
@@ -281,7 +281,7 @@ describe('ListItemCard', () => {
     editors[0].element.dispatchEvent(
       new FocusEvent('focusout', { bubbles: true, relatedTarget: editors[1].element })
     )
-    expect(mocks.emitSfxMock).not.toHaveBeenCalledWith('ui.card_drop')
+    expect(mocks.emitSfxMock).not.toHaveBeenCalledWith('card_drop')
     wrapper.unmount()
   })
 
@@ -301,7 +301,7 @@ describe('ListItemCard', () => {
     second_editor.dispatchEvent(
       new FocusEvent('focusin', { bubbles: true, relatedTarget: first_editor })
     )
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.click_04')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('click_04')
     wrapper.unmount()
   })
 
@@ -320,7 +320,7 @@ describe('ListItemCard', () => {
     // verify the side effect: emitSfx slides up again next time focus enters)
     mocks.emitSfxMock.mockReset()
     contenteditable.dispatchEvent(new FocusEvent('focusin', { bubbles: true, relatedTarget: null }))
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.slide_up')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('slide_up')
     wrapper.unmount()
   })
 

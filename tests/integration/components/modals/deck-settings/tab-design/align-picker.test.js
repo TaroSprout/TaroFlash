@@ -76,13 +76,13 @@ describe('AlignPicker', () => {
   test('plays select sfx when changing to a new cell', async () => {
     const { wrapper } = makePicker({ horizontal: 'left', vertical: 'top' })
     await wrapper.find('[data-testid="align-picker__cell-right-bottom"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.etc_camera_shutter')
+    expect(mockEmitSfx).toHaveBeenCalledWith('etc_camera_shutter')
   })
 
   test('plays reselect sfx when clicking the active cell', async () => {
     const { wrapper } = makePicker({ horizontal: 'left', vertical: 'top' })
     await wrapper.find('[data-testid="align-picker__cell-left-top"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.digi_powerdown')
+    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
   })
 
   test('selecting center/center from a non-default state writes undefined to both models [obligation]', async () => {

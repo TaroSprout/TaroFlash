@@ -62,11 +62,11 @@ import TabSubscription from '@/phone/apps/settings/component/tab-subscription/in
 
 const ButtonStub = defineComponent({
   name: 'UiButton',
-  emits: ['click'],
+  emits: ['press'],
   inheritAttrs: false,
   setup(_props, { slots, emit }) {
     const attrs = useAttrs()
-    return () => h('button', { ...attrs, onClick: () => emit('click') }, slots.default?.())
+    return () => h('button', { ...attrs, onClick: () => emit('press') }, slots.default?.())
   }
 })
 

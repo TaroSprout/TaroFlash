@@ -100,13 +100,13 @@ const ReviewInboxStub = defineComponent({
 const DeckThumbnailStub = defineComponent({
   name: 'DeckThumbnail',
   props: ['deck', 'size'],
-  emits: ['click'],
+  emits: ['press'],
   setup(props, { emit }) {
     return () =>
       h('div', {
         'data-testid': 'deck-thumbnail',
         'data-deck-id': props.deck.id,
-        onClick: () => emit('click')
+        onClick: () => emit('press')
       })
   }
 })
@@ -115,7 +115,8 @@ const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
   props: ['iconLeft', 'size', 'iconOnly', 'inverted'],
-  setup(_p, { slots, attrs }) {
+  emits: ['press'],
+  setup(_p, { slots, attrs, emit }) {
     return () =>
       h(
         'button',
@@ -123,7 +124,10 @@ const UiButtonStub = defineComponent({
           'data-testid': attrs['data-testid'] ?? 'ui-button',
           // Forward onClick from attrs so Vue's .stop / .prevent modifiers
           // applied by the parent resolve against the native MouseEvent.
-          onClick: attrs.onClick
+          onClick: (e) => {
+            attrs.onClick?.(e)
+            emit('press')
+          }
         },
         [slots.default?.()]
       )

@@ -10,6 +10,7 @@ import { settingsLayoutKey } from '@/phone/apps/settings/layout'
 const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
+  emits: ['press'],
   setup(_p, { slots, attrs, emit }) {
     return () =>
       h(
@@ -17,7 +18,7 @@ const UiButtonStub = defineComponent({
         {
           ...attrs,
           'data-testid': attrs['data-testid'] ?? 'settings__back-button',
-          onClick: () => emit('click')
+          onClick: () => emit('press')
         },
         slots.default?.()
       )

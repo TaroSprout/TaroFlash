@@ -165,7 +165,7 @@ describe('useFaceImageUpload — onRemove sfx timing [obligation]', () => {
     // Before flushPromises — setFaceImage has not resolved yet
     await nextTick()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
 
     resolveSetFace()
     await flushPromises()
@@ -182,14 +182,14 @@ describe('useFaceImageUpload — onRemove sfx timing [obligation]', () => {
 
     // Not yet — setFaceImage hasn't resolved
     const trashCallsBefore = mockEmitSfx.mock.calls.filter(
-      ([name]) => name === 'ui.trash_crumple_short'
+      ([name]) => name === 'trash_crumple_short'
     ).length
     expect(trashCallsBefore).toBe(0)
 
     resolveSetFace()
     await flushPromises()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.trash_crumple_short')
+    expect(mockEmitSfx).toHaveBeenCalledWith('trash_crumple_short')
     unmount()
   })
 
@@ -200,7 +200,7 @@ describe('useFaceImageUpload — onRemove sfx timing [obligation]', () => {
     await result.onRemove()
     await flushPromises()
 
-    const trashCalls = mockEmitSfx.mock.calls.filter(([name]) => name === 'ui.trash_crumple_short')
+    const trashCalls = mockEmitSfx.mock.calls.filter(([name]) => name === 'trash_crumple_short')
     expect(trashCalls.length).toBe(0)
     unmount()
   })
@@ -290,7 +290,7 @@ describe('useFaceImageUpload — openPicker guard', () => {
     await flushPromises()
 
     // browse() is from the dropzone mock; it should not be called
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.select')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('select')
     unmount()
   })
 
@@ -301,7 +301,7 @@ describe('useFaceImageUpload — openPicker guard', () => {
     await result.openPicker()
     await flushPromises()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
+    expect(mockEmitSfx).toHaveBeenCalledWith('select')
     unmount()
   })
 })
@@ -333,7 +333,7 @@ describe('useFaceImageUpload — onDismissError', () => {
   test('emits ui.snappy_button_5 on dismiss', () => {
     const { result, unmount } = withUpload()
     result.onDismissError()
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
     unmount()
   })
 })
@@ -385,7 +385,7 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
     await onFile(new File(['x'], 'img.png', { type: 'image/png' }))
     await flushPromises()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.music_plink_ok', { blocking: true })
+    expect(mockEmitSfx).toHaveBeenCalledWith('music_plink_ok', { blocking: true })
     unmount()
   })
 
@@ -484,7 +484,7 @@ describe('useFaceImageUpload — dragging watcher (chime on drag enter)', () => 
     mockDragging.value = true
     await nextTick()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.music_plink_mid')
+    expect(mockEmitSfx).toHaveBeenCalledWith('music_plink_mid')
     unmount()
   })
 
@@ -498,7 +498,7 @@ describe('useFaceImageUpload — dragging watcher (chime on drag enter)', () => 
     mockDragging.value = false
     await nextTick()
 
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.music_plink_mid')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('music_plink_mid')
     unmount()
   })
 })

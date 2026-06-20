@@ -5,9 +5,16 @@ import FinishAnimation from '@/components/modals/study-session/finish-animation.
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
+const { mockEmitSfx, mockEmitStudySfx } = vi.hoisted(() => ({
+  mockEmitSfx: vi.fn(),
+  mockEmitStudySfx: vi.fn()
+}))
 
-vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
+vi.mock('@/sfx/bus', () => ({
+  emitSfx: mockEmitSfx,
+  emitStudySfx: mockEmitStudySfx,
+  emitHoverSfx: vi.fn()
+}))
 
 // ── Burst stub ────────────────────────────────────────────────────────────────
 // Immediately emits `done` on mount so tests don't rely on CSS animationend.
@@ -33,11 +40,12 @@ function makeFinishAnimation() {
 describe('FinishAnimation', () => {
   beforeEach(() => {
     mockEmitSfx.mockClear()
+    mockEmitStudySfx.mockClear()
   })
 
   test('plays sfx on mount', () => {
     makeFinishAnimation()
-    expect(mockEmitSfx).toHaveBeenCalledWith('study.music_pizz_prompt')
+    expect(mockEmitStudySfx).toHaveBeenCalledWith('music_pizz_prompt')
   })
 
   test('emits done when Burst emits done', async () => {

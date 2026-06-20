@@ -14,7 +14,7 @@ import { deckSettingsLayoutKey } from '@/components/modals/deck-settings/layout'
 const ButtonStub = defineComponent({
   name: 'UiButton',
   props: { loading: { type: Boolean, default: false } },
-  emits: ['click'],
+  emits: ['press'],
   inheritAttrs: false,
   setup(props, { slots, emit }) {
     const attrs = useAttrs()
@@ -26,7 +26,7 @@ const ButtonStub = defineComponent({
           ...attrs,
           'data-loading': String(!!props.loading),
           disabled: props.loading,
-          onClick: (e) => emit('click', e)
+          onClick: (e) => emit('press', e)
         },
         slots.default?.()
       )
@@ -104,7 +104,7 @@ describe('TabIndex', () => {
   test('plays snappy_button_5 sfx as a blocking sound on nav click', async () => {
     const { wrapper } = makeTab()
     await wrapper.find('[data-testid="tab-index__nav-card"][data-value="design"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5', { blocking: true })
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5', { blocking: true })
   })
 
   test('renders inlined danger reset + delete buttons', () => {

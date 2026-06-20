@@ -11,7 +11,10 @@ const { mockRegister } = vi.hoisted(() => ({
   mockRegister: vi.fn().mockReturnValue(() => {})
 }))
 
-const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
+const { mockEmitSfx, mockEmitStudySfx } = vi.hoisted(() => ({
+  mockEmitSfx: vi.fn(),
+  mockEmitStudySfx: vi.fn()
+}))
 
 const { cardsDataRef, cardsRefetchImpl } = await vi.hoisted(async () => {
   const { shallowRef } = await import('vue')
@@ -43,7 +46,11 @@ vi.mock('@/composables/shortcuts', () => ({
   }))
 }))
 
-vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
+vi.mock('@/sfx/bus', () => ({
+  emitSfx: mockEmitSfx,
+  emitStudySfx: mockEmitStudySfx,
+  emitHoverSfx: vi.fn()
+}))
 
 vi.mock('@/api/cards', () => {
   const passthrough = () => ({ mutate: vi.fn(), mutateAsync: vi.fn().mockResolvedValue(undefined) })
@@ -157,6 +164,7 @@ describe('Session', () => {
   beforeEach(() => {
     mockRegister.mockClear()
     mockEmitSfx.mockClear()
+    mockEmitStudySfx.mockClear()
     cardsDataRef.value = undefined
     cardsRefetchImpl.current = async () => ({
       status: 'success',
@@ -314,7 +322,7 @@ describe('Session', () => {
       await wrapper.find('[data-testid="rating-buttons__good"]').trigger('click')
       await flushPromises()
 
-      expect(mockEmitSfx).toHaveBeenCalled()
+      expect(mockEmitStudySfx).toHaveBeenCalled()
     })
   })
 
@@ -343,7 +351,7 @@ describe('Session', () => {
       await wrapper.find('[data-testid="rating-buttons__again"]').trigger('click')
       await flushPromises()
 
-      expect(mockEmitSfx).toHaveBeenCalled()
+      expect(mockEmitStudySfx).toHaveBeenCalled()
     })
   })
 
@@ -378,7 +386,7 @@ describe('Session', () => {
       await startSession(wrapper)
       await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
 
-      expect(mockEmitSfx).toHaveBeenCalled()
+      expect(mockEmitStudySfx).toHaveBeenCalled()
     })
   })
 

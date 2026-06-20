@@ -69,7 +69,7 @@ describe('DeckSaveButton — not dirty', () => {
 
     await wrapper.find('[data-testid="deck-settings__save-button"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.digi_powerdown')
+    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
   })
 
   test('does not call saveDeck when not dirty', async () => {
@@ -95,7 +95,7 @@ describe('DeckSaveButton — empty title', () => {
 
     await wrapper.find('[data-testid="deck-settings__save-button"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.etc_woodblock_stuck')
+    expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
   })
 
   test('plays etc_woodblock_stuck when title is whitespace-only', async () => {
@@ -103,7 +103,7 @@ describe('DeckSaveButton — empty title', () => {
 
     await wrapper.find('[data-testid="deck-settings__save-button"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.etc_woodblock_stuck')
+    expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
   })
 
   test('does not call saveDeck when title is empty', async () => {
@@ -183,7 +183,7 @@ describe('DeckSaveButton — not dirty plays woodblock only when title is empty 
 
     await wrapper.find('[data-testid="deck-settings__save-button"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.digi_powerdown')
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.etc_woodblock_stuck')
+    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('etc_woodblock_stuck')
   })
 })

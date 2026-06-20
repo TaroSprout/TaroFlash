@@ -3,6 +3,29 @@ import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import MobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
 
+// Default stub: emits press on click so @press="emit('close')" fires through the
+// auto-stub layer without needing real button internals.
+const UiButtonStub = defineComponent({
+  name: 'UiButton',
+  inheritAttrs: false,
+  props: { iconLeft: String, iconOnly: Boolean, inverted: Boolean, playOnTap: Boolean },
+  emits: ['press'],
+  setup(_p, { slots, attrs, emit }) {
+    return () =>
+      h(
+        'button',
+        {
+          ...attrs,
+          onClick: (e) => {
+            attrs.onClick?.(e)
+            emit('press')
+          }
+        },
+        [slots.default?.()]
+      )
+  }
+})
+
 // Render-function stub (no runtime compiler in tests) that exposes the close
 // button's default slot so its label text can be asserted.
 const UiButtonSlotStub = defineComponent({
@@ -13,7 +36,12 @@ const UiButtonSlotStub = defineComponent({
 })
 
 function mountSheet(props = {}, slots = {}, attrs = {}) {
-  return shallowMount(MobileSheet, { props, slots, attrs })
+  return shallowMount(MobileSheet, {
+    props,
+    slots,
+    attrs,
+    global: { stubs: { UiButton: UiButtonStub } }
+  })
 }
 
 describe('MobileSheet', () => {

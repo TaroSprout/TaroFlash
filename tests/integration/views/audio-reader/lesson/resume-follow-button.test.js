@@ -76,7 +76,7 @@ describe('ResumeFollowButton', () => {
       const wrapper = mountButton()
 
       expect(wrapper.findComponent(UiButtonStub).props('sfx')).toEqual({
-        press: 'ui.snappy_button_5'
+        press: 'snappy_button_5'
       })
     })
   })

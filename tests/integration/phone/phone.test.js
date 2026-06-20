@@ -208,7 +208,7 @@ describe('phone.vue — open / close', () => {
     const wrapper = makeWrapper()
     await flushPromises()
     await wrapper.find('[data-testid="phone-sm-stub"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.pop_window')
+    expect(mockEmitSfx).toHaveBeenCalledWith('pop_window')
   })
 
   test('force-close with active_app calls store.clear', async () => {
@@ -220,7 +220,7 @@ describe('phone.vue — open / close', () => {
     await wrapper.find('[data-testid="phone-sm-stub"]').trigger('click')
     wrapper.vm.closePhone(true)
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.toggle_off')
+    expect(mockEmitSfx).toHaveBeenCalledWith('toggle_off')
   })
 
   test('togglePhone opens the phone when it is closed', async () => {

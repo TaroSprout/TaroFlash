@@ -29,13 +29,13 @@ describe('useAlert', () => {
     test('calls emitSfx with the default open audio when openAudio is omitted [obligation]', () => {
       const { warn } = useAlert()
       warn({ title: 'Are you sure?' })
-      expect(mockEmitSfx).toHaveBeenCalledWith('ui.etc_woodblock_stuck')
+      expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
     })
 
     test('calls emitSfx with the provided openAudio when supplied', () => {
       const { warn } = useAlert()
-      warn({ title: 'x', openAudio: 'ui.slide_up' })
-      expect(mockEmitSfx).toHaveBeenCalledWith('ui.slide_up')
+      warn({ title: 'x', openAudio: 'slide_up' })
+      expect(mockEmitSfx).toHaveBeenCalledWith('slide_up')
     })
 
     test('passes default cancelAudio to the alert component when cancelAudio is omitted [obligation]', () => {
@@ -44,18 +44,18 @@ describe('useAlert', () => {
       expect(mockOpen).toHaveBeenCalledWith(
         anyComponent,
         expect.objectContaining({
-          props: expect.objectContaining({ cancelAudio: 'ui.digi_powerdown' })
+          props: expect.objectContaining({ cancelAudio: 'digi_powerdown' })
         })
       )
     })
 
     test('passes provided cancelAudio to the alert component when supplied', () => {
       const { warn } = useAlert()
-      warn({ title: 'x', cancelAudio: 'ui.slide_up' })
+      warn({ title: 'x', cancelAudio: 'slide_up' })
       expect(mockOpen).toHaveBeenCalledWith(
         anyComponent,
         expect.objectContaining({
-          props: expect.objectContaining({ cancelAudio: 'ui.slide_up' })
+          props: expect.objectContaining({ cancelAudio: 'slide_up' })
         })
       )
     })
@@ -92,11 +92,11 @@ describe('useAlert', () => {
     test('works with no args (all defaults)', () => {
       const { warn } = useAlert()
       warn()
-      expect(mockEmitSfx).toHaveBeenCalledWith('ui.etc_woodblock_stuck')
+      expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
       expect(mockOpen).toHaveBeenCalledWith(
         anyComponent,
         expect.objectContaining({
-          props: expect.objectContaining({ cancelAudio: 'ui.digi_powerdown' })
+          props: expect.objectContaining({ cancelAudio: 'digi_powerdown' })
         })
       )
     })
@@ -106,7 +106,7 @@ describe('useAlert', () => {
     test('calls emitSfx with the default open audio when openAudio is omitted [obligation]', () => {
       const { info } = useAlert()
       info({ title: 'FYI' })
-      expect(mockEmitSfx).toHaveBeenCalledWith('ui.etc_woodblock_stuck')
+      expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
     })
 
     test('passes default cancelAudio to the alert component when cancelAudio is omitted [obligation]', () => {
@@ -115,7 +115,7 @@ describe('useAlert', () => {
       expect(mockOpen).toHaveBeenCalledWith(
         anyComponent,
         expect.objectContaining({
-          props: expect.objectContaining({ cancelAudio: 'ui.digi_powerdown' })
+          props: expect.objectContaining({ cancelAudio: 'digi_powerdown' })
         })
       )
     })

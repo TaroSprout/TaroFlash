@@ -132,7 +132,7 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     await wrapper.find('[data-testid="card-stub"]').trigger('click')
 
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('back')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.transition_up')
+    expect(mockEmitSfx).toHaveBeenCalledWith('transition_up')
   })
 
   test('clicking again flips back → front and emits transition_down sfx', async () => {
@@ -144,7 +144,7 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
 
     await card.trigger('click')
     expect(card.attributes('data-side')).toBe('front')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.transition_down')
+    expect(mockEmitSfx).toHaveBeenCalledWith('transition_down')
   })
 
   test('clicking the card during selection calls onSelectCard with the card id and does not flip', async () => {
@@ -250,7 +250,7 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     await wrapper.find('[data-testid="card-stub"]').trigger('click')
 
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('back')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.transition_up')
+    expect(mockEmitSfx).toHaveBeenCalledWith('transition_up')
 
     window.getSelection = origGetSelection
   })
