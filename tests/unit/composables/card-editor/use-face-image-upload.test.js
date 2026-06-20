@@ -378,14 +378,14 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
     unmount()
   })
 
-  test('emits ui.music_plink_ok with blocking:true on successful upload', async () => {
+  test('emits music_plink_ok on successful upload', async () => {
     const setFaceImage = vi.fn().mockResolvedValue(undefined)
     const { onFile, unmount } = withUpload({ setFaceImage })
 
     await onFile(new File(['x'], 'img.png', { type: 'image/png' }))
     await flushPromises()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('music_plink_ok', { blocking: true })
+    expect(mockEmitSfx).toHaveBeenCalledWith('music_plink_ok')
     unmount()
   })
 

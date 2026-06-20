@@ -35,18 +35,19 @@ const UiPopoverStub = defineComponent({
   }
 })
 
-// UiButton forwards click events via attrs so the parent @click handler fires.
+// UiButton emits 'press' on click so parent @press handlers fire.
 const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
-  setup(_p, { slots }) {
+  emits: ['press'],
+  setup(_p, { slots, emit }) {
     const attrs = useAttrs()
     return () =>
       h(
         'button',
         {
           ...attrs,
-          onClick: attrs.onClick
+          onClick: () => emit('press')
         },
         slots.default?.()
       )

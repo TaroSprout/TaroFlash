@@ -80,12 +80,12 @@ const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
   props: ['disabled', 'tapAnimate'],
-  emits: ['click'],
+  emits: ['press'],
   setup(props, { slots, emit, attrs }) {
     return () =>
       h(
         'button',
-        { ...attrs, disabled: props.disabled, onClick: () => !props.disabled && emit('click') },
+        { ...attrs, disabled: props.disabled, onClick: () => !props.disabled && emit('press') },
         slots.default?.()
       )
   }

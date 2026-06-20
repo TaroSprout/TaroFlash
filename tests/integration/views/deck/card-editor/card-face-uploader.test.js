@@ -261,24 +261,22 @@ describe('CardFaceUploader', () => {
 
   // ── Upload success ──────────────────────────────────────────────────────────
 
-  test('uploads a valid dropped file via setFaceImage and plays music_plink_ok with blocking:true', async () => {
+  test('uploads a valid dropped file via setFaceImage and plays music_plink_ok', async () => {
     const wrapper = mount({ card: { id: 5 }, side: 'back' })
     const file = pngFile()
     await dropImage(wrapper, file)
     await flushPromises()
 
     expect(mocks.setFaceImageMock).toHaveBeenCalledWith(5, 'back', file)
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('music_plink_ok', { blocking: true })
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('music_plink_ok')
   })
 
-  test('blocking option is explicitly passed (suppresses overlapping sfx)', async () => {
+  test('plays music_plink_ok on successful drop', async () => {
     const wrapper = mount({ card: { id: 5 } })
     await dropImage(wrapper, pngFile())
     await flushPromises()
 
-    const call = mocks.emitSfxMock.mock.calls.find((c) => c[0] === 'music_plink_ok')
-    expect(call).toBeDefined()
-    expect(call[1]).toEqual({ blocking: true })
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('music_plink_ok')
   })
 
   // ── Upload — temp card gate ────────────────────────────────────────────────

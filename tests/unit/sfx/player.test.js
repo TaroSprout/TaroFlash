@@ -50,7 +50,6 @@ describe('audio_player._play', () => {
     audio_player.loaded_sounds.clear()
     audio_player.unlocked = true
     audio_player.queued_sound = undefined
-    audio_player.blocking = false
     audio_player.volume_settings = { ...BUS_DEFAULTS }
     vi.useRealTimers()
   })
@@ -122,65 +121,6 @@ describe('audio_player._play', () => {
     )
   })
 
-  test('sets the blocking flag synchronously when called with blocking', () => {
-    loadSound('select')
-
-    audio_player.play('select', { blocking: true })
-
-    expect(audio_player.blocking).toBe(true)
-  })
-
-  test('drops a non-blocking sound while the blocking flag is set', async () => {
-    loadSound('select')
-    loadSound('click_07')
-
-    const blocking_promise = audio_player.play('select', { blocking: true })
-    await audio_player.play('click_07')
-    await flush()
-
-    expect(engineMock.play).toHaveBeenCalledTimes(1)
-
-    playbacks[0].end()
-    await blocking_promise
-  })
-
-  test('clears the blocking flag once the blocking sound ends', async () => {
-    loadSound('select')
-
-    const promise = audio_player.play('select', { blocking: true })
-    expect(audio_player.blocking).toBe(true)
-
-    await flush()
-    playbacks[0].end()
-    await promise
-
-    expect(audio_player.blocking).toBe(false)
-  })
-
-  test('allows another blocking sound through while the flag is set (self-bypass)', async () => {
-    loadSound('select')
-    loadSound('click_07')
-
-    const p1 = audio_player.play('select', { blocking: true })
-    const p2 = audio_player.play('click_07', { blocking: true })
-    await flush()
-
-    expect(engineMock.play).toHaveBeenCalledTimes(2)
-
-    playbacks[0].end()
-    playbacks[1].end()
-    await Promise.all([p1, p2])
-  })
-
-  test('clears the blocking flag when the context fails to resume', async () => {
-    engineMock.resume.mockResolvedValue(false)
-    loadSound('select')
-
-    await audio_player.play('select', { blocking: true })
-
-    expect(audio_player.blocking).toBe(false)
-  })
-
   test('passes the volume option through to the engine', async () => {
     const buffer = loadSound('click_04', { volume: 0.5 })
 
@@ -215,7 +155,6 @@ describe('audio_player._getVolumeMultiplier', () => {
     audio_player.loaded_sounds.clear()
     audio_player.unlocked = true
     audio_player.queued_sound = undefined
-    audio_player.blocking = false
     audio_player.volume_settings = { ...BUS_DEFAULTS }
     vi.useRealTimers()
   })
@@ -291,7 +230,6 @@ describe('audio_player.setVolumeConfig', () => {
     audio_player.loaded_sounds.clear()
     audio_player.unlocked = true
     audio_player.queued_sound = undefined
-    audio_player.blocking = false
     audio_player.volume_settings = { ...BUS_DEFAULTS }
     vi.useRealTimers()
   })
@@ -341,7 +279,6 @@ describe('audio_player._onUnlock / _registerUnlock', () => {
     audio_player.loaded_sounds.clear()
     audio_player.unlocked = false
     audio_player.queued_sound = undefined
-    audio_player.blocking = false
     audio_player.volume_settings = { ...BUS_DEFAULTS }
     vi.useRealTimers()
   })

@@ -15,7 +15,7 @@ vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 const UiButtonStub = defineComponent({
   name: 'UiButton',
   props: { loading: Boolean, disabled: Boolean },
-  emits: ['click'],
+  emits: ['press'],
   setup(props, { slots, emit }) {
     return () =>
       h(
@@ -24,7 +24,7 @@ const UiButtonStub = defineComponent({
           'data-testid': 'deck-settings__save-button',
           'data-loading': String(!!props.loading),
           'data-disabled': String(!!props.disabled),
-          onClick: () => emit('click')
+          onClick: () => emit('press')
         },
         slots.default?.()
       )

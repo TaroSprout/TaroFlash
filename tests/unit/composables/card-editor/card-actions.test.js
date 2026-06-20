@@ -98,7 +98,7 @@ describe('useCardActions', () => {
       actions.onSelectCard(7)
       expect(selection.toggleSelectCard).toHaveBeenCalledWith(7)
       expect(selection.enterSelection).toHaveBeenCalledOnce()
-      expect(emitSfxMock).toHaveBeenCalledWith('select', { blocking: true })
+      expect(emitSfxMock).toHaveBeenCalledWith('select')
     })
 
     test('without id, just enters selection mode', () => {
