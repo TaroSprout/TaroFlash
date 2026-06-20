@@ -24,8 +24,7 @@ const alert = useAlert()
 const cancelMutation = useCancelSubscriptionMutation()
 const resumeMutation = useResumeSubscriptionMutation()
 
-const { subscription, price_label, status_label, upcoming_charge_label, cancel_label } =
-  useSubscriptionLabels(subscriptionQuery)
+const { subscription, cost, description } = useSubscriptionLabels(subscriptionQuery)
 
 async function onCancel() {
   const { response } = alert.warn({
@@ -63,30 +62,12 @@ async function onResume() {
       data-theme="blue-500"
       data-theme-dark="blue-650"
       :name="PLANS.paid.displayName"
-      :cost="price_label"
+      :cost="cost"
+      :description="description"
     >
-      <template #meta>
-        <span v-if="status_label" data-testid="billing-settings__plan-status">
-          {{ status_label }}
-        </span>
-        <span
-          v-if="status_label && (upcoming_charge_label || cancel_label)"
-          data-testid="billing-settings__plan-meta-divider"
-          aria-hidden="true"
-          class="text-brown-300"
-        >
-          |
-        </span>
-        <span v-if="upcoming_charge_label" data-testid="billing-settings__plan-upcoming">
-          {{ upcoming_charge_label }}
-        </span>
-        <span v-else-if="cancel_label" data-testid="billing-settings__plan-cancel-date">
-          {{ cancel_label }}
-        </span>
-      </template>
-
-      <template v-if="!subscription?.cancel_at_period_end" #cta>
+      <template #actions>
         <ui-button
+          v-if="!subscription?.cancel_at_period_end"
           data-testid="billing-settings__plan-cancel"
           data-theme="red-500"
           data-theme-dark="red-600"
@@ -96,10 +77,9 @@ async function onResume() {
         >
           {{ t('settings.subscription.plan.cancel') }}
         </ui-button>
-      </template>
 
-      <template v-if="subscription?.cancel_at_period_end" #actions>
         <ui-button
+          v-else
           data-testid="billing-settings__plan-resume"
           data-theme="green-400"
           size="sm"

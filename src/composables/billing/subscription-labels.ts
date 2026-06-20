@@ -6,21 +6,21 @@ import { formatMoney, formatStripeDate } from '@/utils/billing'
 type SubscriptionQuery = ReturnType<typeof useSubscriptionQuery>
 
 /**
- * Decodes the raw Stripe subscription payload into display-ready, reactive
- * i18n labels for the plan pill. Each label is a ComputedRef that re-resolves
- * when the query data or active locale changes; a label is `null` when it
- * shouldn't render — `status_label` is null for an active subscription,
- * `upcoming_charge_label` is null once the plan is set to cancel.
+ * Decodes the raw Stripe subscription payload into the display-ready strings
+ * the plan pill renders: `cost` (formatted price) and `description` (status +
+ * renewal/cancel line, joined). Both are ComputedRefs that re-resolve when the
+ * query data or active locale changes, and are `null` when there's nothing to
+ * show. `subscription` is exposed for callers that branch on cancel state.
  *
  * @example
- * const { subscription, price_label, status_label } = useSubscriptionLabels(query)
+ * const { subscription, cost, description } = useSubscriptionLabels(query)
  */
 export function useSubscriptionLabels(subscriptionQuery: SubscriptionQuery) {
   const { t, locale } = useI18n()
 
   const subscription = computed(() => subscriptionQuery.data.value?.subscription ?? null)
 
-  const price_label = computed(() => {
+  const cost = computed(() => {
     const price = subscription.value?.items.data[0]?.price
     if (!price?.unit_amount) return null
 
@@ -40,10 +40,13 @@ export function useSubscriptionLabels(subscriptionQuery: SubscriptionQuery) {
     return t(`settings.subscription.plan.status.${status}`, status)
   })
 
-  const upcoming_charge_label = computed(() => {
-    if (!subscription.value || subscription.value.cancel_at_period_end) return null
+  const renewal_label = computed(() => {
+    const sub = subscription.value
+    if (!sub) return null
 
-    const date = formatStripeDate(subscription.value.current_period_end, locale.value)
+    const date = formatStripeDate(sub.current_period_end, locale.value)
+    if (sub.cancel_at_period_end) return t('settings.subscription.plan.cancels-on', { date })
+
     const upcoming = subscriptionQuery.data.value?.upcoming
     if (!upcoming) return t('settings.subscription.plan.renews-on', { date })
 
@@ -51,12 +54,9 @@ export function useSubscriptionLabels(subscriptionQuery: SubscriptionQuery) {
     return t('settings.subscription.plan.upcoming-charge', { amount, date })
   })
 
-  const cancel_label = computed(() => {
-    if (!subscription.value?.cancel_at_period_end) return null
+  const description = computed(() =>
+    [status_label.value, renewal_label.value].filter(Boolean).join(' · ')
+  )
 
-    const date = formatStripeDate(subscription.value.current_period_end, locale.value)
-    return t('settings.subscription.plan.cancels-on', { date })
-  })
-
-  return { subscription, price_label, status_label, upcoming_charge_label, cancel_label }
+  return { subscription, cost, description }
 }

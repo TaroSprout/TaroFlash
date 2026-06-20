@@ -25,14 +25,9 @@ function openUpgradeModal() {
       data-theme-dark="green-400"
       :name="PLANS.free.displayName"
       :cost="t('settings.subscription.free.cost')"
+      :description="t('settings.subscription.free.status')"
     >
-      <template #meta>
-        <span data-testid="tab-subscription__free-status">
-          {{ t('settings.subscription.free.status') }}
-        </span>
-      </template>
-
-      <template #cta>
+      <template #actions>
         <ui-button
           data-testid="tab-subscription__upgrade"
           data-theme="yellow-500"

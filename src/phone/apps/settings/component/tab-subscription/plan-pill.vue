@@ -2,13 +2,12 @@
 type PlanPillProps = {
   name: string
   cost?: string | null
+  description?: string | null
 }
 
-const { name, cost = null } = defineProps<PlanPillProps>()
+const { name, cost = null, description = null } = defineProps<PlanPillProps>()
 
 defineSlots<{
-  meta?: () => unknown
-  cta?: () => unknown
   actions?: () => unknown
 }>()
 </script>
@@ -16,11 +15,11 @@ defineSlots<{
 <template>
   <div data-testid="plan-pill" class="relative">
     <div
-      v-if="$slots.cta"
-      data-testid="plan-pill__cta"
+      v-if="$slots.actions"
+      data-testid="plan-pill__actions"
       class="absolute -top-3.5 right-3 z-10 rotate-3"
     >
-      <slot name="cta" />
+      <slot name="actions" />
     </div>
 
     <div
@@ -29,9 +28,9 @@ defineSlots<{
     >
       <div data-testid="plan-pill__primary" class="flex flex-1 flex-col gap-1">
         <p data-testid="plan-pill__name" class="text-lg">{{ name }}</p>
-        <div data-testid="plan-pill__meta" class="flex items-center gap-2 text-sm text-brown-200">
-          <slot name="meta" />
-        </div>
+        <p v-if="description" data-testid="plan-pill__description" class="text-sm text-brown-200">
+          {{ description }}
+        </p>
       </div>
 
       <div
@@ -41,14 +40,6 @@ defineSlots<{
       >
         <p data-testid="plan-pill__cost-value" class="text-lg">{{ cost }}</p>
       </div>
-    </div>
-
-    <div
-      v-if="$slots.actions"
-      data-testid="plan-pill__actions"
-      class="mt-3 flex flex-wrap items-center gap-3"
-    >
-      <slot name="actions" />
     </div>
   </div>
 </template>
