@@ -2,11 +2,18 @@
 type PlanPillProps = {
   name?: string
   cost?: string | null
+  status?: string | null
   description?: string | null
   loading?: boolean
 }
 
-const { name = '', cost = null, description = null, loading = false } = defineProps<PlanPillProps>()
+const {
+  name = '',
+  cost = null,
+  status = null,
+  description = null,
+  loading = false
+} = defineProps<PlanPillProps>()
 
 defineSlots<{
   actions?: () => unknown
@@ -31,9 +38,20 @@ defineSlots<{
       <template v-if="!loading">
         <div data-testid="plan-pill__primary" class="flex flex-1 flex-col">
           <p data-testid="plan-pill__name" class="text-2xl">{{ name }}</p>
-          <p v-if="description" data-testid="plan-pill__description" class="text-brown-200 text-sm">
-            {{ description }}
-          </p>
+          <div
+            v-if="status || description"
+            data-testid="plan-pill__meta"
+            class="flex items-center gap-2 text-brown-200 text-sm"
+          >
+            <span
+              v-if="status"
+              data-testid="plan-pill__status"
+              class="rounded-2 bg-brown-100 px-2 py-0.5 text-(--theme-primary)"
+            >
+              {{ status }}
+            </span>
+            <span v-if="description" data-testid="plan-pill__description">{{ description }}</span>
+          </div>
         </div>
 
         <div

@@ -19,7 +19,7 @@ const { subscriptionQuery } = defineProps<PlanSectionProps>()
 const { t } = useI18n()
 const member_store = useMemberStore()
 
-const { subscription, cost, description } = useSubscriptionLabels(subscriptionQuery)
+const { subscription, cost, status, description } = useSubscriptionLabels(subscriptionQuery)
 
 // Free vs paid is known instantly from client state; the Stripe payload (cost,
 // renewal, actions) is what we wait on — so it drives the skeleton, not the
@@ -36,6 +36,7 @@ const view = computed(() =>
         theme_dark: 'blue-650',
         name: member_store.plan_display_name,
         cost: cost.value,
+        status: status.value,
         description: description.value
       }
     : {
@@ -44,6 +45,7 @@ const view = computed(() =>
         theme_dark: 'green-400',
         name: member_store.plan_display_name,
         cost: t('settings.subscription.free.cost'),
+        status: null,
         description: t('settings.subscription.free.status')
       }
 )
@@ -66,6 +68,7 @@ const view = computed(() =>
       :loading="loading"
       :name="view.name"
       :cost="view.cost"
+      :status="view.status"
       :description="view.description"
     >
       <template #actions>
