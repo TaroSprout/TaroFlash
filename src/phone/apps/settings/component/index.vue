@@ -56,7 +56,7 @@ const { nav_direction, onTabEnter, onTabLeave } = useTabTransition(layout_mode, 
 
 const tabs = computed(() => [
   { value: 'profile', icon: 'id-card', label: t('settings.tab.profile') },
-  { value: 'subscription', icon: 'moon-stars', label: t('settings.tab.subscription') },
+  { value: 'subscription', icon: 'piggy-bank', label: t('settings.tab.subscription') },
   { value: 'app', icon: 'music-note', label: t('settings.tab.app') },
   { value: 'danger-zone', icon: 'delete', label: t('settings.tab.danger-zone') }
 ])

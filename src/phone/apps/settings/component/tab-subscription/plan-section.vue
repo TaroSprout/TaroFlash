@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import UiButton from '@/components/ui-kit/button.vue'
@@ -8,7 +7,7 @@ import { useCancelSubscriptionMutation, useResumeSubscriptionMutation } from '@/
 import type { useSubscriptionQuery } from '@/api/billing'
 import { useToast } from '@/composables/toast'
 import { useAlert } from '@/composables/alert'
-import { formatShortDate } from '@/utils/date'
+import { useSubscriptionLabels } from '@/composables/billing/subscription-labels'
 import { PLANS } from '@/config/plans'
 
 type SubscriptionQuery = ReturnType<typeof useSubscriptionQuery>
@@ -19,49 +18,14 @@ type PlanSectionProps = {
 
 const { subscriptionQuery } = defineProps<PlanSectionProps>()
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const toast = useToast()
 const alert = useAlert()
 const cancelMutation = useCancelSubscriptionMutation()
 const resumeMutation = useResumeSubscriptionMutation()
 
-const subscription = computed(() => subscriptionQuery.data.value?.subscription ?? null)
-
-const price_label = computed(() => {
-  const price = subscription.value?.items.data[0]?.price
-  if (!price?.unit_amount) return null
-  const amount = (price.unit_amount / 100).toFixed(2)
-  const currency = price.currency.toUpperCase()
-  const interval = price.recurring?.interval ?? null
-  return interval
-    ? t('settings.subscription.plan.price-per-interval', { amount, currency, interval })
-    : t('settings.subscription.plan.price', { amount, currency })
-})
-
-const status_label = computed(() => {
-  const status = subscription.value?.status
-  if (!status || status === 'active') return null
-  return t(`settings.subscription.plan.status.${status}`, status)
-})
-
-const upcoming_charge_label = computed(() => {
-  if (!subscription.value || subscription.value.cancel_at_period_end) return null
-  const ts = subscription.value.current_period_end * 1000
-  const date = formatShortDate(ts, locale.value)
-  const upcoming = subscriptionQuery.data.value?.upcoming
-  if (!upcoming) return t('settings.subscription.plan.renews-on', { date })
-  const amount = new Intl.NumberFormat(locale.value, {
-    style: 'currency',
-    currency: upcoming.currency.toUpperCase()
-  }).format(upcoming.amount_due / 100)
-  return t('settings.subscription.plan.upcoming-charge', { amount, date })
-})
-
-const cancel_label = computed(() => {
-  if (!subscription.value?.cancel_at_period_end) return null
-  const ts = subscription.value.current_period_end * 1000
-  return t('settings.subscription.plan.cancels-on', { date: formatShortDate(ts, locale.value) })
-})
+const { subscription, price_label, status_label, upcoming_charge_label, cancel_label } =
+  useSubscriptionLabels(subscriptionQuery)
 
 async function onCancel() {
   const { response } = alert.warn({
