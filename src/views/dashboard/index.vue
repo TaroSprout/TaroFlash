@@ -87,11 +87,11 @@ async function onCreateDeckClicked() {
           <template #description>
             <div
               data-testid="member-badge__cards-due"
-              class="border-t-2 border-brown-100 pt-3 mt-0.5 text-xl text-brown-100"
+              class="border-t-2 border-brown-100 pt-3 mt-0.5 text-lg text-brown-100"
             >
               <template v-if="due_decks.length > 0">
                 <span
-                  class="inline-flex items-center justify-center bg-brown-100 text-(--theme-primary) px-1 py-0.5 rounded-1.5 min-w-[1em]"
+                  class="inline-flex items-center justify-center bg-brown-100 text-(--theme-primary) px-1 rounded-2 min-w-6"
                   >{{ total_due }}</span
                 >
                 {{ t('dashboard.cards-due.cards-label', total_due) }}
