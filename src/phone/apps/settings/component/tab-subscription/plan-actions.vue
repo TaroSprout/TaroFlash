@@ -44,7 +44,7 @@ const { onUpgrade, onCancel, onResume, canceling, resuming } = useSubscriptionAc
   <ui-button
     v-else
     data-testid="billing-settings__plan-resume"
-    data-theme="green-400"
+    data-theme="brown-100"
     size="sm"
     :loading="resuming"
     @press="onResume"
