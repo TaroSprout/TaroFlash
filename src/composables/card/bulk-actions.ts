@@ -28,7 +28,7 @@ export function useBulkActions() {
 
   /** Toggle deck-wide selection; plays the standard select sfx. */
   function onToggleSelectAll() {
-    emitSfx('ui.select')
+    emitSfx('select')
     selection.toggleSelectAll()
   }
 

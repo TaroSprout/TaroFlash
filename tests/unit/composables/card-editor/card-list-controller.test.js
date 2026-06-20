@@ -788,20 +788,20 @@ describe('useCardListController', () => {
       expect(ctrl.list.all_cards.value[0].id).toBeLessThan(0)
     })
 
-    test('emits sfx "ui.snappy_button_2" with blocking:true in both paths [obligation]', async () => {
+    test('emits the add chime in both paths [obligation]', async () => {
       // empty path
       const setMode = vi.fn().mockReturnValue(new Promise(() => {}))
       const ctrl = makeController([], [], undefined, makeShell({ setMode }))
       await ctrl.newCard()
-      expect(emitSfxMock).toHaveBeenCalledWith('ui.snappy_button_2', { blocking: true })
+      expect(emitSfxMock).toHaveBeenCalledWith('snappy_button_2')
     })
 
-    test('emits sfx with blocking:true on non-empty deck path too [obligation]', async () => {
+    test('emits the add chime on non-empty deck path too [obligation]', async () => {
       emitSfxMock.mockReset()
       const setMode = vi.fn().mockResolvedValue(undefined)
       const ctrl = makeController([makeCard({ id: 1 })], [1], undefined, makeShell({ setMode }))
       await ctrl.newCard()
-      expect(emitSfxMock).toHaveBeenCalledWith('ui.snappy_button_2', { blocking: true })
+      expect(emitSfxMock).toHaveBeenCalledWith('snappy_button_2')
     })
 
     test('stages the new card at index 0 when deck is non-empty [obligation]', async () => {

@@ -11,7 +11,7 @@ import { memberDangerActionsKey } from '@/composables/member/danger-actions'
 const ButtonStub = defineComponent({
   name: 'UiButton',
   props: { loading: { type: Boolean, default: false } },
-  emits: ['click'],
+  emits: ['press'],
   inheritAttrs: false,
   setup(props, { slots, emit }) {
     const attrs = useAttrs()
@@ -23,7 +23,7 @@ const ButtonStub = defineComponent({
           ...attrs,
           'data-loading': String(!!props.loading),
           disabled: props.loading,
-          onClick: (e) => emit('click', e)
+          onClick: (e) => emit('press', e)
         },
         slots.default?.()
       )
@@ -73,10 +73,10 @@ describe('TabIndex', () => {
     expect(wrapper.emitted('navigate')).toEqual([['subscription']])
   })
 
-  test('plays the select sfx as a blocking sound on nav click', async () => {
+  test('plays the select sfx on nav click', async () => {
     const { wrapper } = makeTab()
     await wrapper.find('[data-testid="tab-index__nav-card"][data-value="profile"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5', { blocking: true })
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
   })
 
   test('renders the inlined delete-account button', () => {

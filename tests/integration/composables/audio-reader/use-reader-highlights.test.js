@@ -664,7 +664,7 @@ describe('useReaderHighlights', () => {
       await wrapper.vm.$nextTick()
       vi.useRealTimers()
 
-      expect(emitSfxMock).toHaveBeenCalledWith('ui.tap_05')
+      expect(emitSfxMock).toHaveBeenCalledWith('tap_05')
     })
 
     test('each new word the drag adds emits ui.tap_05 [obligation]', async () => {
@@ -689,7 +689,7 @@ describe('useReaderHighlights', () => {
       await wrapper.vm.$nextTick()
       vi.useRealTimers()
 
-      expect(emitSfxMock).toHaveBeenCalledWith('ui.tap_05')
+      expect(emitSfxMock).toHaveBeenCalledWith('tap_05')
     })
 
     test('release does not emit an extra ui.tap_05 [obligation]', async () => {
@@ -716,7 +716,7 @@ describe('useReaderHighlights', () => {
       vi.useRealTimers()
 
       // release should not call tap_05 again
-      expect(emitSfxMock).not.toHaveBeenCalledWith('ui.tap_05')
+      expect(emitSfxMock).not.toHaveBeenCalledWith('tap_05')
     })
   })
 

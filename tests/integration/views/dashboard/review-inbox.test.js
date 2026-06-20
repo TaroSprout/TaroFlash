@@ -37,12 +37,22 @@ const ReviewInboxItemStub = defineComponent({
 
 const UiButtonStub = defineComponent({
   name: 'UiButton',
+  inheritAttrs: false,
   props: ['sfx', 'iconLeft', 'iconOnly', 'size'],
-  setup(_p, { slots, attrs }) {
+  emits: ['press'],
+  setup(_p, { slots, attrs, emit }) {
     return () =>
-      h('button', { 'data-testid': attrs['data-testid'] ?? 'ui-button', onClick: attrs.onClick }, [
-        slots.default?.()
-      ])
+      h(
+        'button',
+        {
+          'data-testid': attrs['data-testid'] ?? 'ui-button',
+          onClick: (e) => {
+            attrs.onClick?.(e)
+            emit('press')
+          }
+        },
+        [slots.default?.()]
+      )
   }
 })
 

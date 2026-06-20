@@ -76,12 +76,12 @@ async function submit() {
     const authError = e as AuthError
 
     if (authError.code === 'user_already_exists') {
-      emitSfx('ui.etc_woodblock_stuck')
+      emitSfx('etc_woodblock_stuck')
       serverErrors.value.email = t('signup-dialog.form-validation.email-already-in-use')
     }
 
     if (e.message === 'Invalid form') {
-      emitSfx('ui.etc_woodblock_stuck')
+      emitSfx('etc_woodblock_stuck')
     }
 
     return false
@@ -106,11 +106,11 @@ defineExpose({ submit, isValid, loading })
         :fancy-hover="false"
         class="w-full!"
         icon-left="google-logo"
-        @click="submitOAuth('google')"
+        @press="submitOAuth('google')"
       >
         {{ t('signup-dialog.google-button') }}
       </ui-button>
-      <!-- <ui-button size="lg" theme="brown" class="w-full!" @click="submitOAuth('apple')">
+      <!-- <ui-button size="lg" theme="brown" class="w-full!" @press="submitOAuth('apple')">
         {{ t('signup-dialog.apple') }}
       </ui-button> -->
     </div>

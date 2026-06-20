@@ -14,12 +14,13 @@ const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
   props: ['disabled'],
+  emits: ['press'],
   setup(props, { slots, emit }) {
     const attrs = useAttrs()
     return () =>
       h(
         'button',
-        { ...attrs, disabled: props.disabled, onClick: () => emit('click') },
+        { ...attrs, disabled: props.disabled, onClick: () => emit('press') },
         slots.default?.()
       )
   }
@@ -109,7 +110,7 @@ describe('deck-hero/bulk-actions', () => {
   test('clicking select-all emits ui.select sfx and calls toggleSelectAll', async () => {
     const { wrapper, editor } = mount()
     await selectAllBtn(wrapper).trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
+    expect(mockEmitSfx).toHaveBeenCalledWith('select')
     expect(editor.selection.toggleSelectAll).toHaveBeenCalledOnce()
   })
 

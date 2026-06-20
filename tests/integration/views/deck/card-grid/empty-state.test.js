@@ -38,11 +38,15 @@ const CardGridSkeletonStub = defineComponent({
 const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
-  setup(_props, { attrs, slots }) {
+  emits: ['press'],
+  setup(_props, { attrs, slots, emit }) {
     return () =>
       h(
         'button',
-        { 'data-testid': attrs['data-testid'] ?? 'ui-button-stub', onClick: attrs.onClick },
+        {
+          'data-testid': attrs['data-testid'] ?? 'ui-button-stub',
+          onClick: () => emit('press')
+        },
         slots.default?.()
       )
   }

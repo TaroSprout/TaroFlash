@@ -35,7 +35,7 @@ export function useMemberDangerActions(close: () => void): MemberDangerActions {
       title: t('alert.delete-account.title'),
       message: t('alert.delete-account.message'),
       confirmLabel: t('alert.delete-account.confirm'),
-      confirmAudio: 'ui.trash_crumple_short'
+      confirmAudio: 'trash_crumple_short'
     }).response
     if (!confirmed) return
 

@@ -80,12 +80,12 @@ const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
   props: ['disabled', 'tapAnimate'],
-  emits: ['click'],
+  emits: ['press'],
   setup(props, { slots, emit, attrs }) {
     return () =>
       h(
         'button',
-        { ...attrs, disabled: props.disabled, onClick: () => !props.disabled && emit('click') },
+        { ...attrs, disabled: props.disabled, onClick: () => !props.disabled && emit('press') },
         slots.default?.()
       )
   }
@@ -225,7 +225,7 @@ describe('AddCardPanel', () => {
       // Start on front; flip to back
       await wrapper.find('[data-testid="add-card-panel__flip-button"]').trigger('click')
 
-      expect(emitSfxMock).toHaveBeenCalledWith('ui.transition_up')
+      expect(emitSfxMock).toHaveBeenCalledWith('transition_up')
     })
 
     test('flipping to front emits ui.transition_down [obligation]', async () => {
@@ -236,7 +236,7 @@ describe('AddCardPanel', () => {
       emitSfxMock.mockClear()
       await wrapper.find('[data-testid="add-card-panel__flip-button"]').trigger('click')
 
-      expect(emitSfxMock).toHaveBeenCalledWith('ui.transition_down')
+      expect(emitSfxMock).toHaveBeenCalledWith('transition_down')
     })
   })
 
@@ -254,7 +254,7 @@ describe('AddCardPanel', () => {
       editable.dispatchEvent(new FocusEvent('focusin', { bubbles: true }))
       await wrapper.vm.$nextTick()
 
-      expect(emitSfxMock).toHaveBeenCalledWith('ui.slide_up')
+      expect(emitSfxMock).toHaveBeenCalledWith('slide_up')
       editable.remove()
     })
 
@@ -270,7 +270,7 @@ describe('AddCardPanel', () => {
       button.dispatchEvent(new FocusEvent('focusin', { bubbles: true }))
       await wrapper.vm.$nextTick()
 
-      expect(emitSfxMock).not.toHaveBeenCalledWith('ui.slide_up')
+      expect(emitSfxMock).not.toHaveBeenCalledWith('slide_up')
       button.remove()
     })
   })

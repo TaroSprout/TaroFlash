@@ -204,7 +204,7 @@ describe('useReaderHighlights', () => {
         new PointerEvent('pointermove', { pointerType: 'mouse', clientX: 100, clientY: 50 })
       )
 
-      expect(mockEmitSfx).toHaveBeenCalledWith('ui.tap_05')
+      expect(mockEmitSfx).toHaveBeenCalledWith('tap_05')
     })
 
     test('onPointerMove does NOT emit ui.tap_05 when pointer stays on the same word', async () => {
@@ -269,7 +269,7 @@ describe('useReaderHighlights', () => {
         new PointerEvent('pointermove', { pointerType: 'touch', clientX: 30, clientY: 10 })
       )
 
-      expect(mockEmitSfx).toHaveBeenCalledWith('ui.tap_05')
+      expect(mockEmitSfx).toHaveBeenCalledWith('tap_05')
 
       vi.useRealTimers()
     })
@@ -535,7 +535,7 @@ describe('useReaderHighlights', () => {
       vi.advanceTimersByTime(410)
       await nextTick()
 
-      expect(mockEmitSfx).toHaveBeenCalledWith('ui.tap_05')
+      expect(mockEmitSfx).toHaveBeenCalledWith('tap_05')
     })
 
     test('drifting past slop before long-press cancels the arm', async () => {
@@ -579,7 +579,7 @@ describe('useReaderHighlights', () => {
       await nextTick()
 
       expect(result.interaction_range.value).toEqual({ lo: 1, hi: 2 })
-      expect(mockEmitSfx).toHaveBeenCalledWith('ui.tap_05')
+      expect(mockEmitSfx).toHaveBeenCalledWith('tap_05')
     })
   })
 

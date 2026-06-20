@@ -17,7 +17,7 @@ const { onDelete, deleting } = inject(deckDangerActionsKey)!
     size="lg"
     full-width
     :loading="deleting"
-    @click="onDelete"
+    @press="onDelete"
   >
     {{ t('deck.settings-modal.danger-zone.delete-button') }}
   </ui-button>

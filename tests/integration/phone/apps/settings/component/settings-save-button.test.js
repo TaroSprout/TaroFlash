@@ -16,7 +16,7 @@ const UiButtonStub = defineComponent({
     disabled: Boolean,
     clickWhenDisabled: Boolean
   },
-  emits: ['click'],
+  emits: ['press'],
   setup(props, { slots, emit }) {
     return () =>
       h(
@@ -26,7 +26,7 @@ const UiButtonStub = defineComponent({
           'data-loading': String(!!props.loading),
           'data-disabled': String(!!props.disabled),
           'data-click-when-disabled': String(!!props.clickWhenDisabled),
-          onClick: () => emit('click')
+          onClick: () => emit('press')
         },
         slots.default?.()
       )

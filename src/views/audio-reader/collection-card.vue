@@ -58,7 +58,7 @@ const { t } = useI18n()
       icon-only
       size="sm"
       class="absolute top-3 right-3 opacity-0 group-hover:opacity-100"
-      @click="emit('edit')"
+      @press="emit('edit')"
     >
       {{ t('lesson-collections.card.edit-button') }}
     </ui-button>

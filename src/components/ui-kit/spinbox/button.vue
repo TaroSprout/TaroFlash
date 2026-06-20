@@ -15,7 +15,7 @@ const emit = defineEmits<{
 }>()
 
 function onClick() {
-  emitSfx('ui.select')
+  emitSfx('select')
   emit('click')
 }
 </script>

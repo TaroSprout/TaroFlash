@@ -34,7 +34,7 @@ const { newCard } = inject(cardEditorKey)!
         data-theme-dark="blue-650"
         size="sm"
         icon-left="add"
-        @click="newCard"
+        @press="newCard"
       >
         {{ t('deck-view.mode-view.new-card') }}
       </ui-button>

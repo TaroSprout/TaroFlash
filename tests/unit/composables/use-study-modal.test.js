@@ -9,10 +9,17 @@ const asyncComponentMatcher = expect.objectContaining({ __asyncLoader: expect.an
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
+const { mockEmitSfx, mockEmitStudySfx } = vi.hoisted(() => ({
+  mockEmitSfx: vi.fn(),
+  mockEmitStudySfx: vi.fn()
+}))
 const { mockOpen } = vi.hoisted(() => ({ mockOpen: vi.fn() }))
 
-vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
+vi.mock('@/sfx/bus', () => ({
+  emitSfx: mockEmitSfx,
+  emitStudySfx: mockEmitStudySfx,
+  emitHoverSfx: vi.fn()
+}))
 
 vi.mock('@/composables/modal', () => ({
   useModal: vi.fn(() => ({ open: mockOpen }))
@@ -36,6 +43,7 @@ const DECK = { id: 1, title: 'Test Deck' }
 describe('useStudyModal', () => {
   beforeEach(() => {
     mockEmitSfx.mockClear()
+    mockEmitStudySfx.mockClear()
     mockOpen.mockReset()
     vi.useFakeTimers({ toFake: ['setTimeout'] })
   })
@@ -52,7 +60,7 @@ describe('useStudyModal', () => {
     const startPromise = start(DECK)
 
     // sfx fires synchronously before any await
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_3')
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_3')
 
     resolveSession(undefined)
     await startPromise
@@ -85,7 +93,7 @@ describe('useStudyModal', () => {
     resolveSession(undefined)
     await startPromise
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.slide_up')
+    expect(mockEmitSfx).toHaveBeenCalledWith('slide_up')
     expect(mockEmitSfx).toHaveBeenCalledTimes(2)
   })
 
@@ -165,10 +173,10 @@ describe('useStudyModal', () => {
     vi.advanceTimersByTime(300)
     await flushPromises()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('study.music_pizz_duo_hi')
+    expect(mockEmitStudySfx).toHaveBeenCalledWith('music_pizz_duo_hi')
     // music sfx fires before the second modal.open call
-    const sfxCalls = mockEmitSfx.mock.calls.map((c) => c[0])
-    const musicIdx = sfxCalls.lastIndexOf('study.music_pizz_duo_hi')
+    const sfxCalls = mockEmitStudySfx.mock.calls.map((c) => c[0])
+    const musicIdx = sfxCalls.lastIndexOf('music_pizz_duo_hi')
     expect(musicIdx).toBeGreaterThan(-1)
 
     resolveComplete(undefined)
@@ -195,7 +203,7 @@ describe('useStudyModal', () => {
     await startPromise
 
     expect(mockEmitSfx.mock.calls.length).toBeGreaterThan(sfxCountBeforeClose)
-    expect(mockEmitSfx.mock.calls.at(-1)[0]).toBe('ui.slide_up')
+    expect(mockEmitSfx.mock.calls.at(-1)[0]).toBe('slide_up')
   })
 
   test('study-more action recurses — opens StudySession again without study_all_cards', async () => {

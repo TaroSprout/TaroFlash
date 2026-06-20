@@ -132,7 +132,7 @@ function resumeFollow() {
 
 // Tapping outside the term dismisses it with the same cue as its close button.
 function dismissTerm() {
-  emitSfx('ui.snappy_button_5')
+  emitSfx('snappy_button_5')
   closeTerm()
 }
 
@@ -212,7 +212,7 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
           icon-left="settings"
           icon-only
           size="lg"
-          @click="onEdit"
+          @press="onEdit"
         >
           {{ t('lesson-view.edit-button') }}
         </ui-button>

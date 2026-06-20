@@ -16,12 +16,12 @@ const modal = useModal()
 
 function openLoginDropdown() {
   login_dropdown_open.value = true
-  emitSfx('ui.slide_up')
+  emitSfx('slide_up')
 }
 
 function closeLoginDropdown() {
   login_dropdown_open.value = false
-  emitSfx('ui.card_drop')
+  emitSfx('card_drop')
 }
 
 function triggerLoginDropdown() {
@@ -33,9 +33,9 @@ function triggerLoginDropdown() {
 }
 
 function openSignup(payment?: boolean) {
-  emitSfx('ui.double_pop_up')
+  emitSfx('double_pop_up')
   const { response } = modal.open(SignupDialog, { backdrop: true, props: { payment } })
-  response.then(() => emitSfx('ui.double_pop_down'))
+  response.then(() => emitSfx('double_pop_down'))
 }
 
 defineExpose({ openSignup })
@@ -84,7 +84,7 @@ defineExpose({ openSignup })
         <ui-button
           size="lg"
           data-theme="blue-500"
-          @click="openSignup"
+          @press="openSignup()"
           class="outline-4! outline-brown-100!"
         >
           {{ t('welcome-view.signup-button') }}

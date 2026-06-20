@@ -63,6 +63,6 @@ describe('UiToggle', () => {
   test('plays the select sfx when the input changes', async () => {
     const { wrapper } = makeToggle({ checked: false })
     await wrapper.find('input[type="checkbox"]').setValue(true)
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
+    expect(mockEmitSfx).toHaveBeenCalledWith('select')
   })
 })

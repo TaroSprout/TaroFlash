@@ -16,7 +16,7 @@ import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import Card from '@/components/card/index.vue'
 import { useStudySessionCardsQuery } from '@/api/cards'
 import { useFlushDeckReviews } from '@/api/reviews'
-import { emitSfx } from '@/sfx/bus'
+import { emitSfx, emitStudySfx } from '@/sfx/bus'
 
 const { deck, config_override } = defineProps<{
   deck: Deck
@@ -101,7 +101,7 @@ onMounted(async () => {
 })
 
 function onSideChanged() {
-  emitSfx(is_starting_side.value ? 'study.transition_up' : 'study.transition_down')
+  emitStudySfx(is_starting_side.value ? 'transition_up' : 'transition_down')
   flipCurrentCard()
 }
 
@@ -127,7 +127,7 @@ function onFinishAnimationDone() {
 }
 
 function onStart() {
-  emitSfx('study.music_plink_chordyes')
+  emitStudySfx('music_plink_chordyes')
   startSession()
 }
 
@@ -140,7 +140,7 @@ async function onCardReviewed(grade?: Grade) {
   if (!active_card.value?.id || mode.value !== 'studying') return
 
   if (next_card.value) {
-    emitSfx('ui.slide_up')
+    emitSfx('slide_up')
     await awaitFlip(config.flip_cards ? 'back' : 'front')
   }
 
@@ -219,8 +219,8 @@ async function onCardReviewed(grade?: Grade) {
         size="lg"
         inverted
         icon-left="edit"
-        :sfx="{ press: 'ui.pop_window' }"
-        @click="startEdit"
+        :sfx="{ press: 'pop_window' }"
+        @press="startEdit"
       >
         {{ $t('study-session.flashcard.edit-card-button') }}
       </ui-button>

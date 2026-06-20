@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Burst from '@/components/ui-kit/burst.vue'
-import { emitSfx } from '@/sfx/bus'
+import { emitStudySfx } from '@/sfx/bus'
 import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -8,7 +8,7 @@ const emit = defineEmits<{ done: [] }>()
 const { t } = useI18n()
 
 onMounted(() => {
-  emitSfx('study.music_pizz_prompt')
+  emitStudySfx('music_pizz_prompt')
 })
 </script>
 

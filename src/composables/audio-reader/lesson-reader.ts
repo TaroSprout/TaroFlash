@@ -96,7 +96,7 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
    * footer in place of the toolbar on mobile).
    */
   function openTerm(next: TermSelection) {
-    emitSfx('ui.pop_up_pop')
+    emitSfx('pop_up_pop')
     player.pause()
 
     selection.value = next

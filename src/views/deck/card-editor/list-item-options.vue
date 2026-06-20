@@ -14,7 +14,7 @@ const { t } = useI18n()
 <template>
   <div class="grid grid-cols-1 gap-2">
     <ui-button
-      @click="emit('move')"
+      @press="emit('move')"
       icon-only
       icon-left="move-item"
       data-theme="brown-100"
@@ -25,7 +25,7 @@ const { t } = useI18n()
     </ui-button>
 
     <ui-button
-      @click="emit('delete')"
+      @press="emit('delete')"
       icon-only
       icon-left="delete"
       data-theme="red-500"

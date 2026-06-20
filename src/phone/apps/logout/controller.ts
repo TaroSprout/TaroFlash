@@ -10,8 +10,8 @@ export function createLogoutController(t: ComposerTranslation) {
       title: t('phone.apps.logout.title'),
       message: t('phone.apps.logout.description'),
       confirmLabel: t('phone.apps.logout.confirm'),
-      cancelAudio: 'ui.digi_powerdown',
-      confirmAudio: 'ui.toggle_off'
+      cancelAudio: 'digi_powerdown',
+      confirmAudio: 'toggle_off'
     })
 
     response.then((result) => {

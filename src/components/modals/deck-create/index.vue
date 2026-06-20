@@ -35,7 +35,7 @@ const has_title = computed(() => !!editor.settings.title?.trim())
 async function onSave() {
   if (!has_title.value) {
     title_error.value = t('deck.create-modal.title-required')
-    emitSfx('ui.etc_woodblock_stuck')
+    emitSfx('etc_woodblock_stuck')
     return
   }
 
@@ -131,7 +131,7 @@ watch(
           full-width
           :disabled="!has_title"
           click-when-disabled
-          @click="onSave"
+          @press="onSave"
         >
           {{ t('deck.create-modal.submit') }}
         </ui-button>
@@ -161,7 +161,7 @@ watch(
             icon-left="close"
             size="lg"
             full-width
-            @click="close(false)"
+            @press="close(false)"
           >
             {{ t('deck.create-modal.cancel') }}
           </ui-button>
@@ -174,7 +174,7 @@ watch(
             full-width
             :disabled="!has_title"
             click-when-disabled
-            @click="onSave"
+            @press="onSave"
           >
             {{ t('deck.create-modal.submit') }}
           </ui-button>

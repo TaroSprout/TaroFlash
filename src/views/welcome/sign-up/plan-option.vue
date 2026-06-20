@@ -14,8 +14,8 @@ const emit = defineEmits<{
 
 const { playing, tap } = useStagedTap({ triggerAt: 'press' })
 
-function onCaptureClick(e: MouseEvent) {
-  tap(() => emit('select'), { audio: 'ui.etc_camera_shutter', captureMode: true })(e)
+function onClick(e: MouseEvent) {
+  tap(() => emit('select'), { audio: 'etc_camera_shutter' })(e)
 }
 </script>
 
@@ -29,7 +29,7 @@ function onCaptureClick(e: MouseEvent) {
         'outline-2 outline-brown-100 hover:outline-blue-500': !selected
       }"
       :data-playing="playing || null"
-      @click.capture="onCaptureClick"
+      @click="onClick"
     >
       <div
         class="w-full h-full flex gap-4 flex-col items-start bgx-leaf bgx-size-25 rounded-9 px-11 py-5 bgx-opacity-10"
@@ -46,7 +46,7 @@ function onCaptureClick(e: MouseEvent) {
         </div>
       </div>
 
-      <ui-radio :checked="selected ?? false" class="absolute! -top-1 -left-1" />
+      <ui-radio :checked="selected ?? false" class="pointer-events-none absolute! -top-1 -left-1" />
     </button>
 
     <h2

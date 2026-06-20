@@ -44,7 +44,7 @@ const size_options: SizeOption[] = [
 ]
 
 function toggle() {
-  emitSfx('ui.snappy_button_5', { blocking: true })
+  emitSfx('snappy_button_5')
   open.value = !open.value
 }
 
@@ -54,11 +54,11 @@ function close() {
 
 function onSelectSize(value: CardGridSize) {
   if (grid_size.value === value) {
-    emitSfx('ui.digi_powerdown')
+    emitSfx('digi_powerdown')
     return
   }
 
-  emitSfx('ui.select')
+  emitSfx('select')
   setGridSize(value)
 }
 </script>
@@ -83,7 +83,7 @@ function onSelectSize(value: CardGridSize) {
         icon-left="page-setting"
         icon-only
         :data-active="open"
-        @click="toggle"
+        @press="toggle"
       >
         {{ t('deck-view.page-settings.trigger') }}
       </ui-button>

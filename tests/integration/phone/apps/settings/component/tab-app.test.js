@@ -5,12 +5,12 @@ import TabApp from '@/phone/apps/settings/component/tab-app/index.vue'
 import { memberEditorKey } from '@/composables/member/editor'
 import { settingsLayoutKey } from '@/phone/apps/settings/layout'
 
-vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn(), emitHoverSfx: vi.fn() }))
-// Break config→player→config circular dep that causes AUDIO_VOLUME_DEFAULTS TDZ error.
+vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn(), emitHoverSfx: vi.fn(), emitStudySfx: vi.fn() }))
+// Break config→player→config circular dep.
 vi.mock('@/sfx/config', () => ({
   TYPE_SFX: [],
-  HOVER_SFX_SET: new Set(),
-  AUDIO_VOLUME_DEFAULTS: { study_sounds: 5, interface_sounds: 5, hover_sounds: 5 }
+  SOUNDS: {},
+  BUS_DEFAULTS: { interface: 5, study: 5, hover: 5 }
 }))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────

@@ -55,12 +55,12 @@ function increment() {
 
 const { playing: pill_playing, tap: tapPill } = useStagedTap({ triggerAt: 'press' })
 
-function onCapturePill(e: MouseEvent) {
+function onPillClick(e: MouseEvent) {
   tapPill(
     () => {
       pill_active.value = !pill_active.value
     },
-    { audio: 'ui.select', captureMode: true }
+    { audio: 'select' }
   )(e)
 }
 </script>
@@ -125,7 +125,7 @@ function onCapturePill(e: MouseEvent) {
       class="inline-flex items-center justify-center bg-input px-3 text-sm cursor-pointer text-brown-700 dark:text-brown-100 transition-colors rounded-4 rounded-l-2 data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary) data-[active=false]:hover:bg-(--theme-primary) data-[active=false]:hover:text-(--theme-on-primary)"
       :data-playing="pill_playing || null"
       v-sfx="{ hover: TYPE_SFX }"
-      @click.capture="onCapturePill"
+      @click="onPillClick"
     >
       {{ pill_label }}
     </button>

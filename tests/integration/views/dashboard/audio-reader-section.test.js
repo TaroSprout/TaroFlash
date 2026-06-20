@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, ref } from 'vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
@@ -37,6 +37,27 @@ vi.mock('@/composables/toast', () => ({
 
 // ── Stubs ──────────────────────────────────────────────────────────────────────
 
+const UiButtonStub = defineComponent({
+  name: 'UiButton',
+  inheritAttrs: false,
+  props: ['iconLeft', 'size', 'sfx'],
+  emits: ['press'],
+  setup(_p, { slots, attrs, emit }) {
+    return () =>
+      h(
+        'button',
+        {
+          'data-testid': attrs['data-testid'] ?? 'ui-button',
+          onClick: (e) => {
+            attrs.onClick?.(e)
+            emit('press')
+          }
+        },
+        [slots.default?.()]
+      )
+  }
+})
+
 const CollectionCardStub = defineComponent({
   name: 'CollectionCard',
   props: ['collection'],
@@ -70,7 +91,7 @@ const COLLECTIONS = [
 function mountSection() {
   return shallowMount(AudioReaderSection, {
     global: {
-      stubs: { CollectionCard: CollectionCardStub }
+      stubs: { CollectionCard: CollectionCardStub, UiButton: UiButtonStub }
     }
   })
 }

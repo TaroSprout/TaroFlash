@@ -29,9 +29,9 @@ async function onSave() {
     full-width
     :loading="is_saving"
     :disabled="!is_dirty"
-    :sfx="{ press: 'ui.snappy_button_2' }"
+    :sfx="{ press: 'snappy_button_2' }"
     click-when-disabled
-    @click="onSave"
+    @press="onSave"
   >
     {{ t('settings.submit-edit') }}
   </ui-button>

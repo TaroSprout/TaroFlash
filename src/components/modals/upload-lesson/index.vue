@@ -119,7 +119,7 @@ function errorKeyFor(error: unknown): string {
           size="lg"
           full-width
           :disabled="is_submitting"
-          @click="close(undefined)"
+          @press="close(undefined)"
         >
           {{ t('audio-reader.upload.cancel-button') }}
         </ui-button>
@@ -132,7 +132,7 @@ function errorKeyFor(error: unknown): string {
           full-width
           :disabled="!can_submit"
           :loading="is_submitting"
-          @click="onSubmit"
+          @press="onSubmit"
         >
           {{ t('audio-reader.upload.submit-button') }}
         </ui-button>

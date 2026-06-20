@@ -354,7 +354,7 @@ describe('settings app — back navigation', () => {
   test('back action emits the snappy_button_5 sfx', async () => {
     const wrapper = makeWrapper()
     await wrapper.vm.onBack()
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
   })
 })
 

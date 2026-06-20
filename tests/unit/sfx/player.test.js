@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 
-// Mirror AUDIO_VOLUME_DEFAULTS without importing from @/sfx/config (circular dep: config→player→config).
-const AUDIO_VOLUME_DEFAULTS = { study_sounds: 5, interface_sounds: 5, hover_sounds: 5 }
+// Bus defaults mirror BUS_DEFAULTS in config.ts (5 → 1.0× multiplier).
+const BUS_DEFAULTS = { interface: 5, study: 5, hover: 5 }
 
 // Each engine.play() returns a controllable handle so tests can fire 'ended'
 // (or never fire it, to exercise the timeout fallback).
@@ -36,9 +36,9 @@ const flush = async () => {
   await Promise.resolve()
 }
 
-function loadSound(key, { volume = 0.5, duration = 0.2 } = {}) {
+function loadSound(key, { volume = 0.5, duration = 0.2, default_bus = 'interface' } = {}) {
   const buffer = { duration }
-  audio_player.loaded_sounds.set(key, { buffer, volume })
+  audio_player.loaded_sounds.set(key, { buffer, base_volume: volume, default_bus })
   return buffer
 }
 
@@ -50,15 +50,14 @@ describe('audio_player._play', () => {
     audio_player.loaded_sounds.clear()
     audio_player.unlocked = true
     audio_player.queued_sound = undefined
-    audio_player.blocking = false
-    audio_player.volume_settings = { ...AUDIO_VOLUME_DEFAULTS }
+    audio_player.volume_settings = { ...BUS_DEFAULTS }
     vi.useRealTimers()
   })
 
   test('plays through the engine when the context is running', async () => {
-    loadSound('ui.click')
+    loadSound('click_04')
 
-    const promise = audio_player.play('ui.click')
+    const promise = audio_player.play('click_04')
     await flush()
     expect(engineMock.play).toHaveBeenCalledTimes(1)
 
@@ -70,18 +69,18 @@ describe('audio_player._play', () => {
 
   test('skips play when the context cannot be resumed', async () => {
     engineMock.resume.mockResolvedValue(false)
-    loadSound('ui.click')
+    loadSound('click_04')
 
-    await audio_player.play('ui.click')
+    await audio_player.play('click_04')
 
     expect(engineMock.resume).toHaveBeenCalledTimes(1)
     expect(engineMock.play).not.toHaveBeenCalled()
   })
 
   test('resolves when the playback ends', async () => {
-    loadSound('ui.click')
+    loadSound('click_04')
 
-    const promise = audio_player.play('ui.click')
+    const promise = audio_player.play('click_04')
     await flush()
     playbacks[0].end()
 
@@ -90,10 +89,10 @@ describe('audio_player._play', () => {
 
   test('resolves via the duration timeout fallback when playback never ends', async () => {
     vi.useFakeTimers()
-    loadSound('ui.click', { duration: 0.1 })
+    loadSound('click_04', { duration: 0.1 })
 
     let settled = false
-    const promise = audio_player.play('ui.click').then(() => {
+    const promise = audio_player.play('click_04').then(() => {
       settled = true
     })
     await vi.advanceTimersByTimeAsync(0)
@@ -108,81 +107,24 @@ describe('audio_player._play', () => {
 
   test('enqueues when the audio system is not yet unlocked', async () => {
     audio_player.unlocked = false
-    loadSound('ui.click')
+    loadSound('click_04')
 
-    await audio_player.play('ui.click')
+    await audio_player.play('click_04')
 
     expect(engineMock.play).not.toHaveBeenCalled()
-    expect(audio_player.queued_sound).toEqual({ key: 'ui.click', options: {} })
+    expect(audio_player.queued_sound).toEqual({ key: 'click_04', options: {} })
   })
 
   test('throws when the sound is not loaded', async () => {
-    await expect(audio_player.play('ui.missing')).rejects.toThrow('Sound "ui.missing" not loaded.')
-  })
-
-  test('sets the blocking flag synchronously when called with blocking', () => {
-    loadSound('ui.select')
-
-    audio_player.play('ui.select', { blocking: true })
-
-    expect(audio_player.blocking).toBe(true)
-  })
-
-  test('drops a non-blocking sound while the blocking flag is set', async () => {
-    loadSound('ui.select')
-    loadSound('ui.click_07')
-
-    const blocking_promise = audio_player.play('ui.select', { blocking: true })
-    await audio_player.play('ui.click_07')
-    await flush()
-
-    expect(engineMock.play).toHaveBeenCalledTimes(1)
-
-    playbacks[0].end()
-    await blocking_promise
-  })
-
-  test('clears the blocking flag once the blocking sound ends', async () => {
-    loadSound('ui.select')
-
-    const promise = audio_player.play('ui.select', { blocking: true })
-    expect(audio_player.blocking).toBe(true)
-
-    await flush()
-    playbacks[0].end()
-    await promise
-
-    expect(audio_player.blocking).toBe(false)
-  })
-
-  test('allows another blocking sound through while the flag is set (self-bypass)', async () => {
-    loadSound('ui.select')
-    loadSound('ui.click_07')
-
-    const p1 = audio_player.play('ui.select', { blocking: true })
-    const p2 = audio_player.play('ui.click_07', { blocking: true })
-    await flush()
-
-    expect(engineMock.play).toHaveBeenCalledTimes(2)
-
-    playbacks[0].end()
-    playbacks[1].end()
-    await Promise.all([p1, p2])
-  })
-
-  test('clears the blocking flag when the context fails to resume', async () => {
-    engineMock.resume.mockResolvedValue(false)
-    loadSound('ui.select')
-
-    await audio_player.play('ui.select', { blocking: true })
-
-    expect(audio_player.blocking).toBe(false)
+    await expect(audio_player.play('missing_sound')).rejects.toThrow(
+      'Sound "missing_sound" not loaded.'
+    )
   })
 
   test('passes the volume option through to the engine', async () => {
-    const buffer = loadSound('ui.click', { volume: 0.5 })
+    const buffer = loadSound('click_04', { volume: 0.5 })
 
-    const promise = audio_player.play('ui.click', { volume: 0.9 })
+    const promise = audio_player.play('click_04', { volume: 0.9 })
     await flush()
 
     expect(engineMock.play).toHaveBeenCalledWith(buffer, 0.9)
@@ -192,12 +134,12 @@ describe('audio_player._play', () => {
   })
 
   test('falls back to the loaded volume when no volume option is given', async () => {
-    const buffer = loadSound('ui.click', { volume: 0.3 })
+    const buffer = loadSound('click_04', { volume: 0.3 })
 
-    const promise = audio_player.play('ui.click')
+    const promise = audio_player.play('click_04')
     await flush()
 
-    // Default setting is 5; multiplier = 5/5 = 1.0, so volume is unchanged
+    // Default interface setting is 5; multiplier = 5/5 = 1.0, so volume is unchanged
     expect(engineMock.play).toHaveBeenCalledWith(buffer, 0.3)
 
     playbacks[0].end()
@@ -213,16 +155,15 @@ describe('audio_player._getVolumeMultiplier', () => {
     audio_player.loaded_sounds.clear()
     audio_player.unlocked = true
     audio_player.queued_sound = undefined
-    audio_player.blocking = false
-    audio_player.volume_settings = { ...AUDIO_VOLUME_DEFAULTS }
+    audio_player.volume_settings = { ...BUS_DEFAULTS }
     vi.useRealTimers()
   })
 
-  test('default setting (5) yields 1.0× multiplier — ui.* key passes sound volume unchanged', async () => {
-    // sound.volume = 0.4; default interface_sounds = 5; multiplier = 5/5 = 1.0
-    const buffer = loadSound('ui.select', { volume: 0.4 })
+  test('default setting (5) yields 1.0× multiplier — interface bus passes sound volume unchanged', async () => {
+    // base_volume = 0.4; default interface = 5; multiplier = 5/5 = 1.0
+    const buffer = loadSound('select', { volume: 0.4 })
 
-    const promise = audio_player.play('ui.select')
+    const promise = audio_player.play('select')
     await flush()
 
     expect(engineMock.play).toHaveBeenCalledWith(buffer, 0.4)
@@ -230,11 +171,11 @@ describe('audio_player._getVolumeMultiplier', () => {
     await promise
   })
 
-  test('hover key (ui.type_01, in HOVER_SFX_SET) routes to hover_sounds setting', async () => {
-    // hover_sounds = 5 → multiplier = 1.0
-    const buffer = loadSound('ui.type_01', { volume: 0.2 })
+  test('type_01 (defaultBus hover) routes to hover bus setting', async () => {
+    // hover = 5 → multiplier = 1.0
+    const buffer = loadSound('type_01', { volume: 0.2, default_bus: 'hover' })
 
-    const promise = audio_player.play('ui.type_01')
+    const promise = audio_player.play('type_01')
     await flush()
 
     expect(engineMock.play).toHaveBeenCalledWith(buffer, 0.2)
@@ -242,11 +183,11 @@ describe('audio_player._getVolumeMultiplier', () => {
     await promise
   })
 
-  test('study.* key routes to study_sounds setting', async () => {
-    // study_sounds = 5 → multiplier = 1.0
-    const buffer = loadSound('study.transition_up', { volume: 0.6 })
+  test('transition_up with bus:study option routes to study bus setting', async () => {
+    // study = 5 → multiplier = 1.0
+    const buffer = loadSound('transition_up', { volume: 0.6 })
 
-    const promise = audio_player.play('study.transition_up')
+    const promise = audio_player.play('transition_up', { bus: 'study' })
     await flush()
 
     expect(engineMock.play).toHaveBeenCalledWith(buffer, 0.6)
@@ -254,12 +195,12 @@ describe('audio_player._getVolumeMultiplier', () => {
     await promise
   })
 
-  test('ui.select uses interface_sounds — not hover_sounds — because it is not in HOVER_SFX_SET', async () => {
-    // Override interface_sounds to 10; multiplier = 10/5 = 2.0
-    audio_player.setVolumeConfig({ study_sounds: 5, interface_sounds: 10, hover_sounds: 5 })
-    const buffer = loadSound('ui.select', { volume: 0.3 })
+  test('select uses interface bus — not hover — because its default_bus is interface', async () => {
+    // Override interface to 10; multiplier = 10/5 = 2.0
+    audio_player.setVolumeConfig({ study: 5, interface: 10, hover: 5 })
+    const buffer = loadSound('select', { volume: 0.3 })
 
-    const promise = audio_player.play('ui.select')
+    const promise = audio_player.play('select')
     await flush()
 
     expect(engineMock.play).toHaveBeenCalledWith(buffer, 0.6)
@@ -267,12 +208,12 @@ describe('audio_player._getVolumeMultiplier', () => {
     await promise
   })
 
-  test('ui.type_01 (TYPE_SFX member) uses hover_sounds, not interface_sounds', async () => {
-    // interface_sounds = 10 (2×), hover_sounds = 5 (1×) — type_01 must use hover_sounds
-    audio_player.setVolumeConfig({ study_sounds: 5, interface_sounds: 10, hover_sounds: 5 })
-    const buffer = loadSound('ui.type_01', { volume: 0.2 })
+  test('type_01 uses hover bus, not interface bus', async () => {
+    // interface = 10 (2×), hover = 5 (1×) — type_01 must use hover
+    audio_player.setVolumeConfig({ study: 5, interface: 10, hover: 5 })
+    const buffer = loadSound('type_01', { volume: 0.2, default_bus: 'hover' })
 
-    const promise = audio_player.play('ui.type_01')
+    const promise = audio_player.play('type_01')
     await flush()
 
     expect(engineMock.play).toHaveBeenCalledWith(buffer, 0.2)
@@ -289,16 +230,15 @@ describe('audio_player.setVolumeConfig', () => {
     audio_player.loaded_sounds.clear()
     audio_player.unlocked = true
     audio_player.queued_sound = undefined
-    audio_player.blocking = false
-    audio_player.volume_settings = { ...AUDIO_VOLUME_DEFAULTS }
+    audio_player.volume_settings = { ...BUS_DEFAULTS }
     vi.useRealTimers()
   })
 
-  test('wires through: interface_sounds=10 doubles ui.select volume', async () => {
-    audio_player.setVolumeConfig({ study_sounds: 5, interface_sounds: 10, hover_sounds: 5 })
-    const buffer = loadSound('ui.select', { volume: 0.3 })
+  test('wires through: interface=10 doubles select volume', async () => {
+    audio_player.setVolumeConfig({ study: 5, interface: 10, hover: 5 })
+    const buffer = loadSound('select', { volume: 0.3 })
 
-    const promise = audio_player.play('ui.select')
+    const promise = audio_player.play('select')
     await flush()
 
     // multiplier = 10/5 = 2.0
@@ -313,14 +253,14 @@ describe('audio_player._enqueue timeout', () => {
     audio_player.loaded_sounds.clear()
     audio_player.unlocked = false
     audio_player.queued_sound = undefined
-    audio_player.volume_settings = { ...AUDIO_VOLUME_DEFAULTS }
+    audio_player.volume_settings = { ...BUS_DEFAULTS }
   })
 
   test('queued sound is cleared after QUEUE_TIMEOUT when not consumed', async () => {
     vi.useFakeTimers()
-    loadSound('ui.click')
+    loadSound('click_04')
 
-    await audio_player.play('ui.click')
+    await audio_player.play('click_04')
     expect(audio_player.queued_sound).toBeDefined()
 
     await vi.advanceTimersByTimeAsync(20)
@@ -339,8 +279,7 @@ describe('audio_player._onUnlock / _registerUnlock', () => {
     audio_player.loaded_sounds.clear()
     audio_player.unlocked = false
     audio_player.queued_sound = undefined
-    audio_player.blocking = false
-    audio_player.volume_settings = { ...AUDIO_VOLUME_DEFAULTS }
+    audio_player.volume_settings = { ...BUS_DEFAULTS }
     vi.useRealTimers()
   })
 
@@ -354,8 +293,8 @@ describe('audio_player._onUnlock / _registerUnlock', () => {
   })
 
   test('_onUnlock sets unlocked = true and plays any queued sound', async () => {
-    loadSound('ui.click')
-    audio_player.queued_sound = { key: 'ui.click', options: {} }
+    loadSound('click_04')
+    audio_player.queued_sound = { key: 'click_04', options: {} }
 
     // Manually fire the unlock callback
     audio_player._onUnlock()
@@ -401,7 +340,7 @@ describe('audio_player.setup', () => {
     expect(audio_player.loaded_sounds.size).toBe(count_after_first)
   })
 
-  test('setup loads sounds from AUDIO_CONFIG into loaded_sounds', async () => {
+  test('setup loads sounds from SOUNDS into loaded_sounds', async () => {
     const fakeBuffer = { duration: 0.5 }
     engineMock.decode.mockResolvedValue(fakeBuffer)
 
@@ -409,8 +348,8 @@ describe('audio_player.setup', () => {
 
     // At minimum, some sounds should be loaded
     expect(audio_player.loaded_sounds.size).toBeGreaterThan(0)
-    // ui.select is a known key in AUDIO_CONFIG
-    expect(audio_player.loaded_sounds.has('ui.select')).toBe(true)
+    // 'select' is a known flat key in SOUNDS
+    expect(audio_player.loaded_sounds.has('select')).toBe(true)
   })
 
   test('setup registers the unlock callback via engine.onUnlock', async () => {

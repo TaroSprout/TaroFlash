@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, useAttrs } from 'vue'
+import { ref } from 'vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import UiBurst, { type BurstSize } from '@/components/ui-kit/burst.vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
@@ -20,10 +20,9 @@ const {
   tapBurst = false,
   instantAction = false
 } = defineProps<AppWrapperProps>()
-const emit = defineEmits<{ (e: 'tapStart'): void }>()
+const emit = defineEmits<{ tapStart: []; press: [e: MouseEvent] }>()
 defineOptions({ inheritAttrs: false })
 
-const attrs = useAttrs()
 const is_coarse = useMatchMedia('coarse')
 const burst_id = ref(0)
 
@@ -34,25 +33,14 @@ const { playing, tap } = useStagedTap({
   hold: tapHold
 })
 
-type ClickHandler = (ev: MouseEvent) => void
-
-function onCaptureClick(e: MouseEvent) {
-  const handler = resolveClickHandler()
-
-  tap(handler, {
-    captureMode: true,
+function onClick(e: MouseEvent) {
+  tap((ev) => emit('press', ev), {
     triggerAt: instantAction ? 'press' : 'peak',
     onTap: () => {
       emit('tapStart')
       spawnBurst()
     }
   })(e)
-}
-
-function resolveClickHandler(): ClickHandler | undefined {
-  const raw = attrs.onClick as ClickHandler | ClickHandler[] | undefined
-  if (!raw) return
-  return Array.isArray(raw) ? (ev) => raw.forEach((fn) => fn(ev)) : raw
 }
 
 function spawnBurst() {
@@ -73,7 +61,7 @@ function spawnBurst() {
         data-testid="phone-app"
         v-bind="$attrs"
         :data-playing="playing || null"
-        @click.capture="onCaptureClick"
+        @click="onClick"
       >
         <slot></slot>
       </ui-tooltip>

@@ -28,7 +28,7 @@ const app = computed(() => {
       icon-only
       data-theme="brown-100"
       :size="is_mobile ? 'lg' : 'base'"
-      @click="emit('close')"
+      @press="emit('close')"
     />
 
     <app-launcher v-if="!app" @close="emit('close')" />

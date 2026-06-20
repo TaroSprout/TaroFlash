@@ -17,7 +17,8 @@ vi.mock('gsap', () => ({
 
 vi.mock('@/sfx/bus', () => ({
   emitSfx: mockEmitSfx,
-  emitHoverSfx: vi.fn()
+  emitHoverSfx: vi.fn(),
+  emitStudySfx: vi.fn()
 }))
 
 import UiButton from '@/components/ui-kit/button.vue'
@@ -188,7 +189,7 @@ describe('UiButton', () => {
     test('emits press sfx at the start of the tap when sfx.press is set', async () => {
       vi.useFakeTimers()
       const wrapper = shallowMount(UiButton, {
-        props: { playOnTap: true, sfx: { press: 'ui.select' } },
+        props: { playOnTap: true, sfx: { press: 'select' } },
         attrs: { onClick: vi.fn() }
       })
 
@@ -198,7 +199,7 @@ describe('UiButton', () => {
       vi.advanceTimersByTime(500)
       await wrapper.vm.$nextTick()
 
-      expect(mockEmitSfx).toHaveBeenCalledWith('ui.select', expect.any(Object))
+      expect(mockEmitSfx).toHaveBeenCalledWith('select', expect.any(Object))
       vi.useRealTimers()
     })
 
@@ -262,7 +263,7 @@ describe('UiButton', () => {
       test('tapAnimate=false still fires press sfx when sfx.press is set [obligation]', async () => {
         mockEmitSfx.mockClear()
         const wrapper = shallowMount(UiButton, {
-          props: { playOnTap: true, tapAnimate: false, sfx: { press: 'ui.select' } },
+          props: { playOnTap: true, tapAnimate: false, sfx: { press: 'select' } },
           attrs: { onClick: vi.fn() }
         })
 
@@ -272,7 +273,7 @@ describe('UiButton', () => {
         vi.advanceTimersByTime(500)
         await wrapper.vm.$nextTick()
 
-        expect(mockEmitSfx).toHaveBeenCalledWith('ui.select', expect.any(Object))
+        expect(mockEmitSfx).toHaveBeenCalledWith('select', expect.any(Object))
       })
 
       test('tapAnimate=true (default) still uses GSAP tween [obligation]', async () => {
@@ -474,7 +475,7 @@ describe('UiButton', () => {
       // prop value passed to UiTooltip (via sfx binding) stays empty.
       // We simply confirm clicking doesn't call emitSfx (the sfx is cleared).
       const wrapper = mountButtonWithSlots(
-        { disabled: true, playOnTap: true, sfx: { click: 'ui.select' } },
+        { disabled: true, playOnTap: true, sfx: { click: 'select' } },
         { default: 'Label' }
       )
       wrapper
@@ -507,26 +508,24 @@ describe('UiButton', () => {
       expect(preventSpy).not.toHaveBeenCalled()
     })
 
-    test('disabled=true without clickWhenDisabled swallows the click (stops propagation) [obligation]', async () => {
+    test('disabled=true without clickWhenDisabled swallows the click (calls preventDefault) [obligation]', async () => {
       const wrapper = shallowMount(UiButton, {
         props: { disabled: true, clickWhenDisabled: false },
         global: { stubs: { UiTooltip: UiTooltipSlotStub }, directives: { sfx: {} } }
       })
       const event = new MouseEvent('click', { bubbles: true, cancelable: true })
-      const stopSpy = vi.spyOn(event, 'stopImmediatePropagation')
       const preventSpy = vi.spyOn(event, 'preventDefault')
 
       wrapper.find('[data-testid="ui-kit-button"]').element.dispatchEvent(event)
       await wrapper.vm.$nextTick()
 
-      expect(stopSpy).toHaveBeenCalled()
       expect(preventSpy).toHaveBeenCalled()
     })
 
     test('clickWhenDisabled suppresses sfx even when clicks are allowed through [obligation]', async () => {
       mockEmitSfx.mockClear()
       const wrapper = shallowMount(UiButton, {
-        props: { disabled: true, clickWhenDisabled: true, sfx: { click: 'ui.select' } },
+        props: { disabled: true, clickWhenDisabled: true, sfx: { click: 'select' } },
         attrs: { onClick: vi.fn() },
         global: { stubs: { UiTooltip: UiTooltipSlotStub }, directives: { sfx: {} } }
       })

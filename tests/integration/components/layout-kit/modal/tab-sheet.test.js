@@ -59,11 +59,20 @@ const MobileSheetStub = defineComponent({
   }
 })
 
+const UiButtonStub = defineComponent({
+  name: 'UiButton',
+  inheritAttrs: false,
+  emits: ['press'],
+  setup(_props, { slots, emit, attrs }) {
+    return () => h('button', { ...attrs, onClick: () => emit('press') }, slots.default?.())
+  }
+})
+
 function mountSheet(props = {}, slots = {}) {
   return shallowMount(TabSheet, {
     props: { tabs, ...props },
     slots,
-    global: { stubs: { MobileSheet: MobileSheetStub } }
+    global: { stubs: { MobileSheet: MobileSheetStub, UiButton: UiButtonStub } }
   })
 }
 

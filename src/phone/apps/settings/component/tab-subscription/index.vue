@@ -42,7 +42,7 @@ function openUpgradeModal() {
             data-theme="green-400"
             size="sm"
             icon-left="moon-stars"
-            @click="openUpgradeModal"
+            @press="openUpgradeModal"
           >
             {{ t('settings.subscription.free.upgrade') }}
           </ui-button>

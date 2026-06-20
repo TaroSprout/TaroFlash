@@ -79,19 +79,19 @@ async function onCreateDeckClicked() {
           :description="member_store.description"
           class="z-10"
           :sfx="{
-            hover: 'ui.tap_05',
-            press: due_decks.length > 0 ? 'ui.snappy_button_5' : 'ui.digi_powerdown'
+            hover: 'tap_05',
+            press: due_decks.length > 0 ? 'snappy_button_5' : 'digi_powerdown'
           }"
           @click="onBadgeClick"
         >
           <template #description>
             <div
               data-testid="member-badge__cards-due"
-              class="border-t-2 border-brown-100 pt-3 mt-0.5 text-xl text-brown-100"
+              class="border-t-2 border-brown-100 pt-3 mt-0.5 text-lg text-brown-100"
             >
               <template v-if="due_decks.length > 0">
                 <span
-                  class="inline-flex items-center justify-center bg-brown-100 text-(--theme-primary) px-1 py-0.5 rounded-1.5 min-w-[1em]"
+                  class="inline-flex items-center justify-center bg-brown-100 text-(--theme-primary) px-1 rounded-2 min-w-6"
                   >{{ total_due }}</span
                 >
                 {{ t('dashboard.cards-due.cards-label', total_due) }}
@@ -154,7 +154,7 @@ async function onCreateDeckClicked() {
         data-theme-dark="blue-650"
         class="w-full!"
         size="xl"
-        @click="onCreateDeckClicked"
+        @press="onCreateDeckClicked"
       >
         {{ t('dashboard.create-deck-button') }}
       </ui-button>
@@ -174,7 +174,7 @@ async function onCreateDeckClicked() {
             :key="index"
             :deck="deck"
             :size="is_md ? 'base' : 'sm'"
-            @click="onDeckClicked(deck)"
+            @press="onDeckClicked(deck)"
           />
         </div>
 
@@ -185,7 +185,7 @@ async function onCreateDeckClicked() {
           data-theme-dark="blue-650"
           class="w-full!"
           size="xl"
-          @click="onCreateDeckClicked"
+          @press="onCreateDeckClicked"
         >
           {{ t('dashboard.create-deck-button') }}
         </ui-button>

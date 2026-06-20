@@ -62,7 +62,7 @@ const UiRadioStub = defineComponent({
 const UiButtonStub = defineComponent({
   name: 'UiButton',
   props: ['disabled', 'iconLeft'],
-  emits: ['click'],
+  emits: ['press'],
   setup(props, { slots, emit }) {
     return () =>
       h(
@@ -70,7 +70,7 @@ const UiButtonStub = defineComponent({
         {
           'data-testid': 'button',
           disabled: props.disabled,
-          onClick: () => emit('click')
+          onClick: () => emit('press')
         },
         slots.default?.()
       )
@@ -189,7 +189,7 @@ describe('MoveCardsModal', () => {
   test('emits sfx on deck click', async () => {
     const { wrapper } = mountModal({ cards: [makeCard()] })
     await wrapper.findAll('[data-testid="list-item"]')[0].trigger('click')
-    expect(emitSfxMock).toHaveBeenCalledWith('ui.etc_camera_shutter')
+    expect(emitSfxMock).toHaveBeenCalledWith('etc_camera_shutter')
   })
 
   test('move button click calls close with the selected deck_id', async () => {

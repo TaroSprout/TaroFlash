@@ -126,8 +126,9 @@ export function useCardListController(opts: Options) {
    * mounts fresh in edit mode the instant the staged card flips the view out of
    * its empty state, so we just set the mode and stage synchronously.
    *
-   * The add chime is `blocking` so it suppresses the `slide_up` that focusing
-   * the new card would fire.
+   * The add chime plays alone: the new row's autofocus is programmatic, which
+   * list-item-card's onFocusIn detects and stays silent for, so the card's own
+   * focus `slide_up` never fires to collide with it.
    */
   async function newCard() {
     const stack_mounted = list.all_cards.value.length > 0
@@ -135,7 +136,7 @@ export function useCardListController(opts: Options) {
 
     if (stack_mounted) await entered
 
-    emitSfx('ui.snappy_button_2', { blocking: true })
+    emitSfx('snappy_button_2')
     addCardAtTop()
   }
 

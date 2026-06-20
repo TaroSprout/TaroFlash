@@ -51,7 +51,7 @@ watch(collections_error, (err) => {
         data-theme-dark="blue-650"
         icon-left="add"
         size="lg"
-        @click="onCreate"
+        @press="onCreate"
       >
         {{ t('lesson-collections.section.new-button') }}
       </ui-button>

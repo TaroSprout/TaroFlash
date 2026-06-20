@@ -64,12 +64,12 @@ describe('ImageLayoutPicker', () => {
   test('plays select sfx when changing to a new option', async () => {
     const { wrapper } = makePicker({ layout: 'above' })
     await wrapper.find(optionTestId('below')).trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
+    expect(mockEmitSfx).toHaveBeenCalledWith('select')
   })
 
   test('plays reselect sfx when clicking the active option', async () => {
     const { wrapper } = makePicker({ layout: 'above' })
     await wrapper.find(optionTestId('above')).trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.digi_powerdown')
+    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
   })
 })

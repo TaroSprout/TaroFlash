@@ -3,9 +3,9 @@ import { useMatchMedia } from '@/composables/ui/media-query'
 import { BUTTON_TAP_DURATION, playButtonTap } from '@/utils/animations/button-tap'
 import { emitSfx } from '@/sfx/bus'
 import type { PlayOptions } from '@/sfx/player'
-import type { NamespacedAudioKey } from '@/sfx/config'
+import type { SoundKey } from '@/sfx/config'
 
-type SfxKey = NamespacedAudioKey
+type SfxKey = SoundKey
 
 export type StagedTapAnimate = 'pop' | 'quiet'
 export type StagedTapPhase = 'press' | 'peak' | 'done'
@@ -37,7 +37,7 @@ export interface TapCallOptions {
   preAudio?: SfxKey
   /**
    * All pointers — the primary click-feedback sound.
-   * Fine pointer: fires immediately at capture, before the action.
+   * Fine pointer: fires immediately, before the action.
    * Coarse pointer: fires at the action phase (peak by default).
    */
   audio?: SfxKey
@@ -46,16 +46,9 @@ export interface TapCallOptions {
   /** Coarse only — fires after the animation completes. */
   postAudio?: SfxKey
   /**
-   * Set true when tap() is called from a @click.capture handler that coexists
-   * with a natural @click (e.g. via v-bind="$attrs"). On fine pointers tap()
-   * becomes a no-op so the natural @click fires the action exactly once.
-   * On coarse, tap() still intercepts and stops propagation as normal.
-   */
-  captureMode?: boolean
-  /**
    * Fires on every call before any coarse/fine check — even when the tap will
-   * bail (fine pointer in captureMode, or already playing). Use for side-effects
-   * that must happen on every touch regardless of animation state (e.g. burst FX).
+   * bail (already playing). Use for side-effects that must happen on every touch
+   * regardless of animation state (e.g. burst FX).
    */
   onTap?: (e: MouseEvent) => void
   /** Override the composable-level triggerAt for this specific call. */
@@ -74,7 +67,7 @@ export interface TapCallOptions {
  *
  * @example
  * const { playing, tap } = useStagedTap({ animate: 'pop', yoyo: true })
- * const handler = tap((e) => doThing(e), { audio: 'ui.snappy_button_5' })
+ * const handler = tap((e) => doThing(e), { audio: 'snappy_button_5' })
  * // <button @click="handler" :data-playing="playing || null">
  */
 export function useStagedTap(options: StagedTapOptions = {}) {
@@ -91,9 +84,9 @@ export function useStagedTap(options: StagedTapOptions = {}) {
   const is_coarse = useMatchMedia('coarse')
 
   /**
-   * Returns an async click handler. On fine pointers the main audio fires
-   * immediately at capture and the action fires via the natural click. On
-   * coarse, plays the animation and fires the action at the configured phase.
+   * Returns an async click handler. On fine pointers the main audio and the
+   * action fire immediately. On coarse, plays the animation and fires the
+   * action at the configured phase.
    */
   function tap(action?: (e: MouseEvent) => void, tapOpts: TapCallOptions = {}) {
     return async (e: MouseEvent) => {
@@ -101,12 +94,10 @@ export function useStagedTap(options: StagedTapOptions = {}) {
 
       if (activeOn === 'coarse-only' && !is_coarse.value) {
         if (tapOpts.audio) emitSfx(tapOpts.audio, tapOpts.audioOpts)
-        if (!tapOpts.captureMode) action?.(e)
+        action?.(e)
         return
       }
       if (playing.value) return
-
-      if (tapOpts.captureMode) e.stopImmediatePropagation()
 
       const phase = tapOpts.triggerAt ?? triggerAt
 

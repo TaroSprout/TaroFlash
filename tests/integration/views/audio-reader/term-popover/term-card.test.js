@@ -48,9 +48,9 @@ const UiTagStub = {
 const UiButtonStub = {
   name: 'UiButton',
   inheritAttrs: false,
-  emits: ['click'],
+  emits: ['press'],
   setup(_props, { slots, emit, attrs }) {
-    return () => h('button', { ...attrs, onClick: () => emit('click') }, slots.default?.())
+    return () => h('button', { ...attrs, onClick: () => emit('press') }, slots.default?.())
   }
 }
 

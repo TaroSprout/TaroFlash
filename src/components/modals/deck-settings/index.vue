@@ -118,7 +118,7 @@ function onNavigate(tab: ActiveTab) {
 }
 
 function onBack() {
-  emitSfx('ui.snappy_button_5')
+  emitSfx('snappy_button_5')
   nav_direction.value = 'back'
   active_tab.value = null
 }

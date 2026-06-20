@@ -123,7 +123,7 @@ describe('DropdownMenu', () => {
     test('fine-pointer click does NOT call emitSfx [obligation]', async () => {
       const wrapper = mountMenu()
       await wrapper.findAll('[data-testid="dropdown-button__option"]')[0].trigger('click')
-      expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.select')
+      expect(mockEmitSfx).not.toHaveBeenCalledWith('select')
     })
 
     test('clicking the second option emits select with the correct option', async () => {

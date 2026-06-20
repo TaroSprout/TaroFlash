@@ -61,6 +61,15 @@ vi.mock('vue-router', () => ({
 
 // ── Stubs ──────────────────────────────────────────────────────────────────────
 
+const UiButtonStub = defineComponent({
+  name: 'UiButton',
+  inheritAttrs: false,
+  emits: ['press'],
+  setup(_p, { slots, attrs, emit }) {
+    return () => h('button', { ...attrs, onClick: () => emit('press') }, slots.default?.())
+  }
+})
+
 const MobileSheetStub = defineComponent({
   name: 'MobileSheet',
   emits: ['close'],
@@ -107,7 +116,7 @@ function mountModal(props = {}) {
   const wrapper = shallowMount(CollectionEditModal, {
     props: { collection_id: 1, close: closeMock, ...props },
     global: {
-      stubs: { MobileSheet: MobileSheetStub, LessonCard: LessonCardStub }
+      stubs: { UiButton: UiButtonStub, MobileSheet: MobileSheetStub, LessonCard: LessonCardStub }
     }
   })
   return { wrapper, closeMock }

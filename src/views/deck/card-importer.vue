@@ -56,7 +56,7 @@ async function onSave() {
           class="p-6 w-full h-200 bg-white outline-1 outline-blue-500 rounded-4 resize-none text-brown-700"
           v-model="raw_text"
         />
-        <ui-button data-theme="blue-500" @click="onImport">{{
+        <ui-button data-theme="blue-500" @press="onImport">{{
           t('deck-view.card-importer.import-button')
         }}</ui-button>
       </div>
@@ -68,7 +68,7 @@ async function onSave() {
             <Card v-bind="card" side="back" size="lg" />
           </div>
         </div>
-        <ui-button data-theme="blue-500" @click="onSave" :disabled="!has_unsaved_changes">{{
+        <ui-button data-theme="blue-500" @press="onSave" :disabled="!has_unsaved_changes">{{
           saving
             ? t('deck-view.card-importer.save-button.saving')
             : t('deck-view.card-importer.save-button.idle')

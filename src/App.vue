@@ -10,7 +10,7 @@ import { onMounted, onBeforeUnmount } from 'vue'
 import logger from '@/utils/logger'
 import { useThemeStore } from '@/stores/theme'
 import { useMemberStore } from '@/stores/member'
-import { withMemberPreferencesDefaults } from '@/utils/member/preferences'
+import { withMemberPreferencesDefaults, toBusVolumes } from '@/utils/member/preferences'
 import { watch } from 'vue'
 
 const { toasts } = useToast()
@@ -25,7 +25,7 @@ watch(
       'data-left-hand',
       String(resolved.accessibility.left_hand)
     )
-    audio_player.setVolumeConfig(resolved.audio)
+    audio_player.setVolumeConfig(toBusVolumes(resolved.audio))
   },
   { immediate: true, deep: true }
 )

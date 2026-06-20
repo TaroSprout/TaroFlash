@@ -92,7 +92,7 @@ describe('useBulkActions', () => {
   test('onToggleSelectAll emits ui.select and calls selection.toggleSelectAll', () => {
     const { result, editor } = setup()
     result.onToggleSelectAll()
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
+    expect(mockEmitSfx).toHaveBeenCalledWith('select')
     expect(editor.selection.toggleSelectAll).toHaveBeenCalledOnce()
   })
 

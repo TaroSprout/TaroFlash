@@ -12,7 +12,7 @@ const { hover_effect = true, appearance = 'ghost', theme = 'purple' } = definePr
 
 function onMouseEnter() {
   if (!hover_effect) return
-  emitHoverSfx('ui.click_04')
+  emitHoverSfx('click_04')
 }
 </script>
 

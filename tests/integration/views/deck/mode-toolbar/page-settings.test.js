@@ -35,18 +35,19 @@ const UiPopoverStub = defineComponent({
   }
 })
 
-// UiButton forwards click events via attrs so the parent @click handler fires.
+// UiButton emits 'press' on click so parent @press handlers fire.
 const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
-  setup(_p, { slots }) {
+  emits: ['press'],
+  setup(_p, { slots, emit }) {
     const attrs = useAttrs()
     return () =>
       h(
         'button',
         {
           ...attrs,
-          onClick: attrs.onClick
+          onClick: () => emit('press')
         },
         slots.default?.()
       )
@@ -200,6 +201,6 @@ describe('PageSettings', () => {
     const editor = makeEditor({ grid_size_val: 'md' })
     const { wrapper } = mountPageSettings(editor)
     await wrapper.find('[data-testid="page-settings__card-size-option-md"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.digi_powerdown')
+    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
   })
 })

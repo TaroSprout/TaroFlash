@@ -61,10 +61,16 @@ async function onUpdate(side: 'front' | 'back', text: string) {
   }
 }
 
+// Autofocusing a freshly-added card is programmatic, not the user landing on
+// it — flag the synchronous focusin so onFocusIn stays silent. The action that
+// added the card owns that sound. queueMicrotask clears the flag after the
+// current turn in case focus() no-ops and focusin never fires.
+let programmatic_focus = false
 function focusEditor() {
-  if (!focused.value) {
-    front_input.value?.focus()
-  }
+  if (focused.value) return
+  programmatic_focus = true
+  front_input.value?.focus()
+  queueMicrotask(() => (programmatic_focus = false))
 }
 
 // Whether a node lives inside any card in the editor (its own card or another).
@@ -86,7 +92,15 @@ function onFocusIn(e: FocusEvent) {
     return
   }
 
-  emitSfx(withinAnyCard(e.relatedTarget) ? 'ui.click_04' : 'ui.slide_up')
+  // Programmatic autofocus (a freshly-added card) isn't a user landing on the
+  // card — stay silent so it doesn't collide with the add action's own sound.
+  if (programmatic_focus) {
+    programmatic_focus = false
+    focused.value = true
+    return
+  }
+
+  emitSfx(withinAnyCard(e.relatedTarget) ? 'click_04' : 'slide_up')
   focused.value = true
 }
 
@@ -102,7 +116,7 @@ function onFocusOut(e: FocusEvent) {
   // to — flag the round-trip so the matching refocus stays silent, no drop.
   if (!document.hasFocus()) return flagWindowBlur()
 
-  if (!withinAnyCard(e.relatedTarget)) emitSfx('ui.card_drop')
+  if (!withinAnyCard(e.relatedTarget)) emitSfx('card_drop')
 }
 
 function hasFocusWithin() {

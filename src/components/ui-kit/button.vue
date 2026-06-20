@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, useAttrs, useSlots } from 'vue'
+import { computed, useSlots } from 'vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import { useStagedTap } from '@/composables/ui/staged-tap'
@@ -51,13 +51,17 @@ const {
   clickWhenDisabled = false
 } = defineProps<ButtonProps>()
 
+// The button owns its action: consumers listen on @press, not native @click, so
+// staged-tap can defer the action a beat on touch without fighting a native
+// click. (That coexistence was the reason for the old capture-phase handler.)
+const emit = defineEmits<{ press: [e: MouseEvent] }>()
+
 const slots = useSlots()
-const attrs = useAttrs()
 
 const { playing, tap } = useStagedTap({ animate: tapAnimate ? 'pop' : 'quiet' })
 
 // Only hover/focus/blur reach v-sfx — press-phase sounds are routed through
-// staged-tap in onCaptureClick so they fire at the correct phase for each pointer.
+// staged-tap in onClick so they fire at the correct phase for each pointer.
 const merged_sfx = computed<SfxOptions>(() => {
   if (disabled) return {}
   return {
@@ -72,34 +76,32 @@ const tooltip_active = computed(() => iconOnly && !!slots.default)
 
 const has_trailing = computed(() => !!slots.trailing)
 
-function onCaptureClick(e: MouseEvent) {
-  // The trailing slot (e.g. a split-button caret) is its own action — a click
-  // there shouldn't fire the main button's tap animation, nor be blocked when
-  // only the primary action is disabled.
-  const in_trailing = !!(e.target as HTMLElement).closest?.('.btn-trailing')
+function onClick(e: MouseEvent) {
+  // The trailing slot (e.g. a split-button caret) owns its own action — clicks
+  // there don't fire the primary press, and aren't blocked when only the primary
+  // action is disabled.
+  if ((e.target as HTMLElement).closest?.('.btn-trailing')) return
 
-  if (disabled && !in_trailing) {
-    // clickWhenDisabled lets the click bubble to the handler; we still skip the
-    // tap animation/sfx below since the button reads as disabled.
-    if (clickWhenDisabled) return
-    e.stopImmediatePropagation()
-    e.preventDefault()
+  if (disabled) {
+    // clickWhenDisabled still surfaces the press (e.g. to flag a validation
+    // error); otherwise a disabled button emits nothing and blocks the default.
+    if (clickWhenDisabled) emit('press', e)
+    else e.preventDefault()
     return
   }
 
-  if (!playOnTap || in_trailing) return
-  const handler = attrs.onClick as ((ev: MouseEvent) => void) | undefined
-  if (!handler) return
+  if (!playOnTap) {
+    emit('press', e)
+    return
+  }
 
-  tap(handler, {
+  tap((ev) => emit('press', ev), {
     preAudio: sfx.tap_pre,
     audio: sfx.press,
     audioOpts: {
-      debounce: sfx.debounce,
-      blocking: sfx.press_blocking
+      debounce: sfx.debounce
     },
-    postAudio: sfx.tap_post,
-    captureMode: true
+    postAudio: sfx.tap_post
   })(e)
 }
 </script>
@@ -116,7 +118,7 @@ function onCaptureClick(e: MouseEvent) {
     v-bind="$attrs"
     :data-playing="playing || null"
     :aria-disabled="disabled || undefined"
-    @click.capture="onCaptureClick"
+    @click="onClick"
     :class="[
       `ui-kit-btn--${size}`,
       `ui-kit-btn--${variant}`,

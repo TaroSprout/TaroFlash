@@ -59,25 +59,25 @@ function togglePhone() {
 
 function openPhone() {
   open.value = true
-  emitSfx('ui.pop_window')
+  emitSfx('pop_window')
   document.addEventListener('click', onPageClick)
 }
 
 function closePhone(force = false) {
   if (force && store.active_app) {
     store.clear()
-    emitSfx('ui.toggle_off')
+    emitSfx('toggle_off')
     return
   }
 
   if (store.active_app) {
     store.close()
-    emitSfx('ui.toggle_off')
+    emitSfx('toggle_off')
     return
   }
 
   open.value = false
-  emitSfx('ui.pop_window')
+  emitSfx('pop_window')
   document.removeEventListener('click', onPageClick)
 }
 

@@ -23,11 +23,11 @@ function isSelected(option: DeckTheme) {
 
 function onThemeSelect(option: DeckTheme) {
   if (isSelected(option)) {
-    emitSfx('ui.digi_powerdown')
+    emitSfx('digi_powerdown')
     return
   }
 
-  emitSfx('ui.toggle_on')
+  emitSfx('toggle_on')
   emit('update:theme', option.light)
   emit('update:theme_dark', option.dark)
 }

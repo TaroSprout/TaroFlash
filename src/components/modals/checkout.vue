@@ -136,7 +136,7 @@ async function onSubmit() {
           size="lg"
           :loading="is_submitting"
           :disabled="!is_ready"
-          @click="onSubmit"
+          @press="onSubmit"
         >
           {{ t('billing.checkout.submit') }}
         </ui-button>

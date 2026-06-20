@@ -8,10 +8,21 @@ import LessonCard from '@/views/audio-reader/lesson-card.vue'
 
 const UiButtonStub = defineComponent({
   name: 'UiButton',
-  emits: ['click'],
+  inheritAttrs: false,
+  emits: ['press'],
   setup(_, { emit, slots, attrs }) {
     return () =>
-      h('button', { ...attrs, onClick: () => emit('click') }, slots.default ? slots.default() : [])
+      h(
+        'button',
+        {
+          ...attrs,
+          onClick: (e) => {
+            attrs.onClick?.(e)
+            emit('press')
+          }
+        },
+        slots.default ? slots.default() : []
+      )
   }
 })
 

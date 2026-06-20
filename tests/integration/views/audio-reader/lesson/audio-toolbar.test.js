@@ -65,8 +65,20 @@ const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
   props: ['size', 'variant', 'inverted', 'fullWidth', 'iconLeft', 'iconOnly', 'sfx', 'playOnTap'],
-  setup(props, { slots, attrs }) {
-    return () => h('button', { ...attrs }, [slots.default?.(), slots.trailing?.()])
+  emits: ['press'],
+  setup(props, { slots, attrs, emit }) {
+    return () =>
+      h(
+        'button',
+        {
+          ...attrs,
+          onClick: (e) => {
+            attrs.onClick?.(e)
+            emit('press')
+          }
+        },
+        [slots.default?.(), slots.trailing?.()]
+      )
   }
 })
 
@@ -335,7 +347,7 @@ describe('AudioToolbar', () => {
     // the click event which is caught by the @click.capture="onBackTap" handler
     await wrapper.find('[data-testid="audio-toolbar__skip-back"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
   })
 
   test('skip-forward click.capture emits ui.snappy_button_5 sfx [obligation]', async () => {
@@ -343,7 +355,7 @@ describe('AudioToolbar', () => {
 
     await wrapper.find('[data-testid="audio-toolbar__skip-forward"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
   })
 
   test('play/pause toggle click.capture emits ui.snappy_button_2 when paused [obligation]', async () => {
@@ -352,7 +364,7 @@ describe('AudioToolbar', () => {
 
     await wrapper.find('[data-testid="audio-toolbar__toggle"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_2')
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_2')
   })
 
   test('play/pause toggle click.capture emits ui.snappy_button_3 when playing [obligation]', async () => {
@@ -361,7 +373,7 @@ describe('AudioToolbar', () => {
 
     await wrapper.find('[data-testid="audio-toolbar__toggle"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.snappy_button_3')
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_3')
   })
 
   // ── Dropdown wiring: chapters ──────────────────────────────────────────────

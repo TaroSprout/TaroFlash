@@ -5,7 +5,7 @@ import { SHEET_SIDEBAR_BG } from './sheet-surface'
 import { activeTabKey } from './tab-sheet-context'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { emitSfx } from '@/sfx/bus'
-import { TYPE_SFX, type NamespacedAudioKey } from '@/sfx/config'
+import { TYPE_SFX, type SoundKey } from '@/sfx/config'
 import uid from '@/utils/uid'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
@@ -23,9 +23,9 @@ export type TabSheetProps = MobileSheetProps & {
   parts?: TabSheetParts
   sidebar_query?: string
   sheet_px?: string
-  hover_sfx?: NamespacedAudioKey | NamespacedAudioKey[] | ''
-  select_sfx?: NamespacedAudioKey | ''
-  reselect_sfx?: NamespacedAudioKey | ''
+  hover_sfx?: SoundKey | SoundKey[] | ''
+  select_sfx?: SoundKey | ''
+  reselect_sfx?: SoundKey | ''
 }
 
 const {
@@ -39,8 +39,8 @@ const {
   sidebar_query = 'w>=lg & fine',
   sheet_px,
   hover_sfx = TYPE_SFX,
-  select_sfx = 'ui.select',
-  reselect_sfx = 'ui.digi_powerdown'
+  select_sfx = 'select',
+  reselect_sfx = 'digi_powerdown'
 } = defineProps<TabSheetProps>()
 
 const emit = defineEmits<{
@@ -125,7 +125,7 @@ function selectOption(value: string) {
           icon-left="close"
           icon-only
           aria-label="Close"
-          @click="emit('close')"
+          @press="emit('close')"
         />
 
         <div

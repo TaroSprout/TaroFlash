@@ -1,9 +1,11 @@
-import { AUDIO_VOLUME_DEFAULTS } from '@/sfx/config'
+import { BUS_DEFAULTS, type Bus } from '@/sfx/config'
 
 export type ResolvedMemberPreferences = {
   accessibility: {
     left_hand: boolean
   }
+  // Persisted audio prefs — one slider per bus, named with the `_sounds` suffix
+  // the settings UI and DB use. `toBusVolumes` maps them onto the player's buses.
   audio: {
     study_sounds: number
     interface_sounds: number
@@ -15,7 +17,11 @@ export const MEMBER_PREFERENCES_DEFAULTS: ResolvedMemberPreferences = {
   accessibility: {
     left_hand: false
   },
-  audio: { ...AUDIO_VOLUME_DEFAULTS }
+  audio: {
+    study_sounds: BUS_DEFAULTS.study,
+    interface_sounds: BUS_DEFAULTS.interface,
+    hover_sounds: BUS_DEFAULTS.hover
+  }
 }
 
 /** Merge a partial preferences blob over defaults, filling any missing namespace/key. */
@@ -33,5 +39,14 @@ export function withMemberPreferencesDefaults(
         partial?.audio?.interface_sounds ?? MEMBER_PREFERENCES_DEFAULTS.audio.interface_sounds,
       hover_sounds: partial?.audio?.hover_sounds ?? MEMBER_PREFERENCES_DEFAULTS.audio.hover_sounds
     }
+  }
+}
+
+/** Map persisted `*_sounds` prefs onto the bus-keyed volumes the player consumes. */
+export function toBusVolumes(audio: ResolvedMemberPreferences['audio']): Record<Bus, number> {
+  return {
+    study: audio.study_sounds,
+    interface: audio.interface_sounds,
+    hover: audio.hover_sounds
   }
 }

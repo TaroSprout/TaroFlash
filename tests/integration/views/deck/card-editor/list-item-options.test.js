@@ -13,12 +13,14 @@ vi.mock('@/sfx/bus', () => ({
 }))
 
 // UiButton stub: forward attrs (including data-testid) onto the rendered button.
+// Map onClick → emit('press') so @press handlers in the parent component fire.
 const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
-  setup(_p, { slots }) {
+  emits: ['press'],
+  setup(_p, { slots, emit }) {
     const attrs = useAttrs()
-    return () => h('button', attrs, slots.default?.())
+    return () => h('button', { ...attrs, onClick: () => emit('press') }, slots.default?.())
   }
 })
 

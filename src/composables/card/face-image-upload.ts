@@ -75,7 +75,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
     maxBytes: CARD_IMAGE_MAX_BYTES,
     fileInput,
     onFile: uploadFile,
-    onError: () => emitSfx('ui.digi_powerdown'),
+    onError: () => emitSfx('digi_powerdown'),
     guard: guardCardImage
   })
 
@@ -116,7 +116,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
       return
     }
 
-    emitSfx('ui.music_plink_ok', { blocking: true })
+    emitSfx('music_plink_ok')
     reveal_pending = true
     pending.value = false
   }
@@ -139,7 +139,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
    * deletion runs, and the trash sfx plays once the removal lands.
    */
   async function onRemove() {
-    emitSfx('ui.snappy_button_5')
+    emitSfx('snappy_button_5')
     clearError()
 
     const img = faceImageEl()
@@ -149,7 +149,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
 
     try {
       await setFaceImage(toValue(card).id!, side, null)
-      emitSfx('ui.trash_crumple_short')
+      emitSfx('trash_crumple_short')
     } catch {
       toast.error(t('toast.error.card-image-delete-failed'))
     } finally {
@@ -164,12 +164,12 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
   async function openPicker() {
     if (!(await guardCardImage())) return
 
-    emitSfx('ui.select')
+    emitSfx('select')
     browse()
   }
 
   function onDismissError() {
-    emitSfx('ui.snappy_button_5')
+    emitSfx('snappy_button_5')
     clearError()
   }
 
@@ -200,7 +200,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
 
   // Chime once when a drag first enters the card (not on every child dragenter).
   watch(dragging, (now, was) => {
-    if (now && !was && can_upload.value) emitSfx('ui.music_plink_mid')
+    if (now && !was && can_upload.value) emitSfx('music_plink_mid')
   })
 
   // The upload resolves before the deck refetch propagates the new path to the

@@ -112,8 +112,8 @@ function next() {
             icon-only
             data-theme="brown-50"
             class="absolute! -left-4 top-1/2 -translate-y-1/2 z-20"
-            :sfx="{ press: 'ui.snappy_button_5' }"
-            @click="prev"
+            :sfx="{ press: 'snappy_button_5' }"
+            @press="prev"
           >
             {{ t('review-inbox.prev-button') }}
           </ui-button>
@@ -136,8 +136,8 @@ function next() {
             icon-only
             data-theme="brown-50"
             class="absolute! -right-4 top-1/2 -translate-y-1/2 z-20"
-            :sfx="{ press: 'ui.snappy_button_5' }"
-            @click="next"
+            :sfx="{ press: 'snappy_button_5' }"
+            @press="next"
           >
             {{ t('review-inbox.next-button') }}
           </ui-button>
@@ -151,7 +151,7 @@ function next() {
           data-theme="brown-100"
           data-theme-dark="stone-700"
           class="w-full!"
-          @click="onItemClicked(due_decks[0])"
+          @press="onItemClicked(due_decks[0])"
         >
           {{ t(study_button_key) }}
         </ui-button>

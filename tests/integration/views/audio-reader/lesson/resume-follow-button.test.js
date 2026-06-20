@@ -9,7 +9,7 @@ const UiButtonStub = {
   name: 'UiButton',
   inheritAttrs: false,
   props: ['iconLeft', 'iconOnly', 'roundedFull', 'size', 'sfx'],
-  emits: ['click'],
+  emits: ['press'],
   setup(props, { slots, emit, attrs }) {
     return () =>
       h(
@@ -18,7 +18,7 @@ const UiButtonStub = {
           ...attrs,
           'data-testid': 'ui-button-stub',
           'data-icon-left': props.iconLeft,
-          onClick: () => emit('click')
+          onClick: () => emit('press')
         },
         slots.default?.()
       )
@@ -76,7 +76,7 @@ describe('ResumeFollowButton', () => {
       const wrapper = mountButton()
 
       expect(wrapper.findComponent(UiButtonStub).props('sfx')).toEqual({
-        press: 'ui.snappy_button_5'
+        press: 'snappy_button_5'
       })
     })
   })

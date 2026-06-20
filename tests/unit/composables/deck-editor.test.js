@@ -427,7 +427,7 @@ describe('useDeckEditor', () => {
       setActiveSide('front')
 
       expect(active_side.value).toBe('front')
-      expect(mockEmitSfx).toHaveBeenCalledWith('ui.slide_up')
+      expect(mockEmitSfx).toHaveBeenCalledWith('slide_up')
     })
 
     test('setActiveSide is a no-op when side is already active', () => {

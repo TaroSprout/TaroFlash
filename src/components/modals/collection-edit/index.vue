@@ -78,7 +78,7 @@ async function onDeleteLesson(lesson: Lesson) {
     title: t('alert.delete-lesson.title'),
     message: t('alert.delete-lesson.message'),
     confirmLabel: t('alert.delete-lesson.confirm'),
-    confirmAudio: 'ui.trash_crumple_short'
+    confirmAudio: 'trash_crumple_short'
   }).response
   if (!confirmed) return
 
@@ -94,7 +94,7 @@ async function onDeleteCollection() {
     title: t('alert.delete-collection.title'),
     message: t('alert.delete-collection.message'),
     confirmLabel: t('alert.delete-collection.confirm'),
-    confirmAudio: 'ui.trash_crumple_short'
+    confirmAudio: 'trash_crumple_short'
   }).response
   if (!confirmed) return
 
@@ -144,7 +144,7 @@ watch(
           data-theme-dark="blue-650"
           icon-left="add"
           size="lg"
-          @click="onUpload"
+          @press="onUpload"
         >
           {{ t('collection-view.new-button') }}
         </ui-button>
@@ -187,7 +187,7 @@ watch(
           icon-left="delete"
           size="lg"
           class="self-start"
-          @click="onDeleteCollection"
+          @press="onDeleteCollection"
         >
           {{ t('collection-edit.danger-zone.delete-button') }}
         </ui-button>

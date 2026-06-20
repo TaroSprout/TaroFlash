@@ -17,11 +17,11 @@ const selected = computed(() => layout.value ?? CARD_ATTRIBUTES_DEFAULTS.image_l
 
 function onSelect(value: CardImageLayout) {
   if (selected.value === value) {
-    emitSfx('ui.digi_powerdown')
+    emitSfx('digi_powerdown')
     return
   }
 
-  emitSfx('ui.select')
+  emitSfx('select')
   layout.value = value
 }
 </script>

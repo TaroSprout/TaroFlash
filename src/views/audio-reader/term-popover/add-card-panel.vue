@@ -96,7 +96,7 @@ const can_save = computed(
 function flip() {
   active_side.value = active_side.value === 'front' ? 'back' : 'front'
   // Match the study-session flip cue: down toward the front (starting side), up away.
-  emitSfx(active_side.value === 'front' ? 'ui.transition_down' : 'ui.transition_up')
+  emitSfx(active_side.value === 'front' ? 'transition_down' : 'transition_up')
 }
 
 function onSelectDeck(option: DropdownOption) {
@@ -105,7 +105,7 @@ function onSelectDeck(option: DropdownOption) {
 
 // Focusing the card editor slides it up, matching the card-editor's focus cue.
 function onCardFocus(e: FocusEvent) {
-  if ((e.target as HTMLElement | null)?.isContentEditable) emitSfx('ui.slide_up')
+  if ((e.target as HTMLElement | null)?.isContentEditable) emitSfx('slide_up')
 }
 
 function onEditActive(value: string) {
@@ -152,8 +152,8 @@ async function onSave() {
         icon-only
         size="base"
         play-on-tap
-        :sfx="{ press: 'ui.snappy_button_5' }"
-        @click="emit('cancel')"
+        :sfx="{ press: 'snappy_button_5' }"
+        @press="emit('cancel')"
       >
         {{ t('audio-reader.add-card-modal.back-button') }}
       </ui-button>
@@ -197,7 +197,7 @@ async function onSave() {
         size="xl"
         full-width
         icon-left="card-flip"
-        @click="flip"
+        @press="flip"
       >
         {{ t('audio-reader.add-card-modal.flip-button') }}
       </ui-button>
@@ -211,8 +211,8 @@ async function onSave() {
         :disabled="!can_save || saving"
         play-on-tap
         :tap-animate="false"
-        :sfx="{ press: 'ui.select' }"
-        @click="onSave"
+        :sfx="{ press: 'select' }"
+        @press="onSave"
       >
         {{ t('audio-reader.add-card-modal.save-button') }}
       </ui-button>

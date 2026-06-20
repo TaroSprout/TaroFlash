@@ -261,24 +261,22 @@ describe('CardFaceUploader', () => {
 
   // ── Upload success ──────────────────────────────────────────────────────────
 
-  test('uploads a valid dropped file via setFaceImage and plays music_plink_ok with blocking:true', async () => {
+  test('uploads a valid dropped file via setFaceImage and plays music_plink_ok', async () => {
     const wrapper = mount({ card: { id: 5 }, side: 'back' })
     const file = pngFile()
     await dropImage(wrapper, file)
     await flushPromises()
 
     expect(mocks.setFaceImageMock).toHaveBeenCalledWith(5, 'back', file)
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.music_plink_ok', { blocking: true })
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('music_plink_ok')
   })
 
-  test('blocking option is explicitly passed (suppresses overlapping sfx)', async () => {
+  test('plays music_plink_ok on successful drop', async () => {
     const wrapper = mount({ card: { id: 5 } })
     await dropImage(wrapper, pngFile())
     await flushPromises()
 
-    const call = mocks.emitSfxMock.mock.calls.find((c) => c[0] === 'ui.music_plink_ok')
-    expect(call).toBeDefined()
-    expect(call[1]).toEqual({ blocking: true })
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('music_plink_ok')
   })
 
   // ── Upload — temp card gate ────────────────────────────────────────────────
@@ -307,7 +305,7 @@ describe('CardFaceUploader', () => {
     await flushPromises()
 
     expect(mocks.setFaceImageMock).not.toHaveBeenCalled()
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.digi_powerdown')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('digi_powerdown')
     expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
   })
 
@@ -317,7 +315,7 @@ describe('CardFaceUploader', () => {
     await flushPromises()
 
     expect(mocks.setFaceImageMock).not.toHaveBeenCalled()
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.digi_powerdown')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('digi_powerdown')
     expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
   })
 
@@ -363,7 +361,7 @@ describe('CardFaceUploader', () => {
     await wrapper.find('[data-testid="card-face-uploader__dismiss-error"]').trigger('click')
 
     expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(false)
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.snappy_button_5')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('snappy_button_5')
   })
 
   test('error has no auto-dismiss: overlay stays up without any user action', async () => {
@@ -392,7 +390,7 @@ describe('CardFaceUploader', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(false)
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.snappy_button_5')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('snappy_button_5')
     wrapper.unmount()
   })
 
@@ -516,7 +514,7 @@ describe('CardFaceUploader', () => {
     const root = wrapper.find('[data-testid="card-root"]')
     await root.trigger('dragenter')
 
-    const midCalls = mocks.emitSfxMock.mock.calls.filter((c) => c[0] === 'ui.music_plink_mid')
+    const midCalls = mocks.emitSfxMock.mock.calls.filter((c) => c[0] === 'music_plink_mid')
     expect(midCalls).toHaveLength(1)
   })
 
@@ -529,7 +527,7 @@ describe('CardFaceUploader', () => {
     await root.trigger('dragenter')
     await root.trigger('dragleave')
 
-    const midCalls = mocks.emitSfxMock.mock.calls.filter((c) => c[0] === 'ui.music_plink_mid')
+    const midCalls = mocks.emitSfxMock.mock.calls.filter((c) => c[0] === 'music_plink_mid')
     expect(midCalls).toHaveLength(1)
   })
 
@@ -538,7 +536,7 @@ describe('CardFaceUploader', () => {
     const root = wrapper.find('[data-testid="card-root"]')
     await root.trigger('dragenter')
 
-    const midCalls = mocks.emitSfxMock.mock.calls.filter((c) => c[0] === 'ui.music_plink_mid')
+    const midCalls = mocks.emitSfxMock.mock.calls.filter((c) => c[0] === 'music_plink_mid')
     expect(midCalls).toHaveLength(0)
   })
 
@@ -550,7 +548,7 @@ describe('CardFaceUploader', () => {
     await flushPromises()
 
     expect(mocks.setFaceImageMock).toHaveBeenCalledWith(5, 'front', null)
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.trash_crumple_short')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('trash_crumple_short')
   })
 
   test('toasts when an upload fails', async () => {
@@ -569,7 +567,7 @@ describe('CardFaceUploader', () => {
     await wrapper.find('[data-testid="card-face-uploader__add"]').trigger('click')
     await flushPromises()
 
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('ui.select')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('select')
   })
 
   // ── Paid-plan gate ────────────────────────────────────────────────────────
@@ -585,7 +583,7 @@ describe('CardFaceUploader', () => {
 
     expect(mocks.guardCardImageMock).toHaveBeenCalled()
     expect(clickSpy).not.toHaveBeenCalled()
-    expect(mocks.emitSfxMock).not.toHaveBeenCalledWith('ui.select')
+    expect(mocks.emitSfxMock).not.toHaveBeenCalledWith('select')
   })
 
   test('dropping a file as a free member runs the gate and does NOT upload', async () => {
@@ -618,7 +616,7 @@ describe('CardFaceUploader', () => {
       cardEditor: { card_attributes: ref({ front: { image_layout: 'behind' }, back: {} }) }
     })
     const cardEl = wrapper.findComponent(CardStub)
-    expect(cardEl.props('sfx')).toEqual({ hover: 'ui.tap_05' })
+    expect(cardEl.props('sfx')).toEqual({ hover: 'tap_05' })
   })
 
   test('does NOT pass card sfx in region mode (hover sfx is scoped to the image region)', () => {

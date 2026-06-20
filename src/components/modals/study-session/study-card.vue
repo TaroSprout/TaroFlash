@@ -2,7 +2,7 @@
 import Card from '@/components/card/index.vue'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { type Grade, Rating, type RecordLog } from 'ts-fsrs'
-import { emitSfx } from '@/sfx/bus'
+import { emitStudySfx } from '@/sfx/bus'
 import { useGestures } from '@/composables/ui/gestures'
 import { useShortcuts } from '@/composables/shortcuts'
 import { useRatingFormat } from '@/composables/fsrs'
@@ -111,7 +111,7 @@ function flingCard(el: HTMLElement, direction: number) {
   el.style.transform = `translateX(${targetX}px) rotate(${direction * 45}deg)`
   emit('drag-progress', 1, FLING_SPEED)
 
-  emitSfx(rating === Rating.Good ? 'study.music_plink_ok' : 'study.music_plink_locancel')
+  emitStudySfx(rating === Rating.Good ? 'music_plink_ok' : 'music_plink_locancel')
 
   // Leave is_animating true: after `reviewed` the parent plays the incoming
   // card's intro flip before advancing. This instance stays mounted (and so
@@ -130,7 +130,7 @@ function flingCard(el: HTMLElement, direction: number) {
 function handleDrag(el: HTMLElement, dx: number) {
   if (side === 'cover') return
 
-  if (toSwipeZone(card_offset.value) !== toSwipeZone(dx)) emitSfx('study.music_plink_mid')
+  if (toSwipeZone(card_offset.value) !== toSwipeZone(dx)) emitStudySfx('music_plink_mid')
 
   is_dragging.value = Math.abs(dx) > FLIP_THRESHOLD // prevents accidental flips on release, but allows for a bit of wiggle room
   card_offset.value = dx
