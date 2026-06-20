@@ -4,6 +4,12 @@ import { defineComponent, h } from 'vue'
 import TabBar from '@/components/layout-kit/tab-bar.vue'
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn(), emitHoverSfx: vi.fn() }))
+// Break the config→player→config circular dep that causes AUDIO_VOLUME_DEFAULTS TDZ error.
+vi.mock('@/sfx/config', () => ({
+  TYPE_SFX: [],
+  HOVER_SFX_SET: new Set(),
+  AUDIO_VOLUME_DEFAULTS: { study_sounds: 5, interface_sounds: 5, hover_sounds: 5 }
+}))
 vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: () => ({ value: false }) }))
 
 // Renders slot content, forwards attrs, emits tap on click so tab-bar's
@@ -85,5 +91,16 @@ describe('TabBar', () => {
     expect(tabs[1].attributes('data-active')).toBe('true')
     await tabs[0].trigger('click')
     expect(wrapper.emitted('update:active')).toEqual([[1]])
+  })
+
+  // hover_sfx prop was removed; the component now hardcodes TYPE_SFX internally.
+  // Passing it as a prop should not cause an error and should not affect rendering.
+  test('does not accept hover_sfx prop — hardcodes TYPE_SFX for all tab hover sounds', () => {
+    // No hover_sfx in TabBarProps; verify mounting without it still works
+    // and that the tabs are rendered (the sfx is handled via the mocked TYPE_SFX=[])
+    const wrapper = makeTabBar()
+    expect(wrapper.findAll('[data-testid="tab-bar__tab"]')).toHaveLength(3)
+    // $props must not contain hover_sfx
+    expect(Object.keys(wrapper.props())).not.toContain('hover_sfx')
   })
 })

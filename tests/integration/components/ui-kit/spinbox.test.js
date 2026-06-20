@@ -299,12 +299,25 @@ describe('UiSpinbox', () => {
   })
 })
 
-// ── Button clickability (regression: captureMode) ──────────────────────────
+// ── Button clickability (regression: captureMode removed) ─────────────────
 
 describe('SpinboxButton', () => {
   test('clicking the button emits click on a fine-pointer device', async () => {
     const wrapper = mount(SpinboxButton, { props: { icon: 'chevron-up' } })
     await wrapper.find('button').trigger('click')
     expect(wrapper.emitted('click')).toHaveLength(1)
+  })
+
+  test('clicking the button calls emitSfx with ui.select', async () => {
+    const { emitSfx } = await import('@/sfx/bus')
+    const wrapper = mount(SpinboxButton, { props: { icon: 'chevron-up' } })
+    await wrapper.find('button').trigger('click')
+    expect(emitSfx).toHaveBeenCalledWith('ui.select')
+  })
+
+  test('disabled button does not emit click', async () => {
+    const wrapper = mount(SpinboxButton, { props: { icon: 'chevron-up', disabled: true } })
+    await wrapper.find('button').trigger('click')
+    expect(wrapper.emitted('click')).toBeUndefined()
   })
 })
