@@ -120,7 +120,7 @@
   "settings.subscription.free.label": "Subscription",
   "settings.subscription.free.status": "Free plan",
   "settings.subscription.free.upgrade": "Upgrade",
-  "settings.subscription.plan.label": "Plan",
+  "settings.subscription.plan.label": "Current Subscription",
   "settings.subscription.plan.current": "Current plan",
   "settings.subscription.plan.unknown": "Unknown plan",
   "settings.subscription.plan.price": "{amount} {currency}",
