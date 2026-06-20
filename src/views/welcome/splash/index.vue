@@ -12,20 +12,16 @@ const { signup, seeMore } = defineProps<SplashProps>()
 </script>
 
 <template>
-  <div data-testid="welcome-hero__wave-backdrop" class="w-full bg-brown-200 dark:bg-grey-800">
+  <div data-testid="welcome-hero__wave-backdrop" class="w-full bg-green-500 dark:bg-grey-800">
     <section
       data-testid="welcome-hero"
-      class="flex flex-col w-full pt-7.5 pb-44 relative bg-green-500 dark:bg-green-800 wave-bottom-[30px] bgx-diagonal-stripes bgx-size-20 bgx-opacity-12 dark:bgx-opacity-5 bg-center overflow-hidden"
+      class="flex flex-col w-full pt-7.5 pb-44 relative bg-brown-300 dark:bg-grey-900 wave-bottom-[30px] bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-brown-500 bg-center overflow-hidden"
     >
-      <div
-        class="absolute pointer-events-none inset-0 bgx-stars bgx-opacity-50 dark:bgx-opacity-20 bg-center -z-1"
-      ></div>
-
       <splash-nav />
 
       <div
         data-testid="welcome-hero__content"
-        class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 pt-32 pb-8 grid grid-cols-1 md:grid-cols-[auto_auto] gap-24 items-center justify-center relative z-3"
+        class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 pt-48 pb-8 grid grid-cols-1 md:grid-cols-[auto_auto] gap-32 items-center justify-center relative z-3"
       >
         <splash-copy :signup="signup" :see-more="seeMore" />
         <splash-preview />

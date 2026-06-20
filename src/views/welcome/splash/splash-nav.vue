@@ -14,8 +14,8 @@ const { t } = useI18n()
     class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex justify-between items-center relative z-5"
   >
     <div data-testid="welcome-hero__brand" class="flex items-center gap-1">
-      <ui-icon src="logo" class="size-9 text-brown-100" />
-      <span class="text-3xl text-brown-100">{{ t('app.title') }}</span>
+      <ui-icon src="logo" class="size-9 text-brown-700 dark:text-brown-100" />
+      <span class="text-3xl text-brown-700 dark:text-brown-100">{{ t('app.title') }}</span>
       <ui-tooltip
         element="span"
         position="bottom"
