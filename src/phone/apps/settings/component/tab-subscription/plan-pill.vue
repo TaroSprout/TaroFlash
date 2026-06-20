@@ -26,7 +26,7 @@ defineSlots<{
     <div
       data-testid="plan-pill__body"
       :data-loading="loading"
-      class="flex items-stretch gap-4 rounded-4 px-5 py-3.5 text-(--theme-on-primary) h-18 data-[loading=false]:bgx-leaf data-[loading=false]:bgx-size-23 data-[loading=false]:bgx-opacity-10 data-[loading=false]:bg-(--theme-primary) data-[loading=true]:bgx-diagonal-stripes data-[loading=true]:bgx-color-brown-500 data-[loading=true]:bg-brown-100 data-[loading=true]:opacity-50 data-[loading=true]:animate-pulse"
+      class="flex items-stretch gap-4 rounded-4 px-5 py-3.5 text-(--theme-on-primary) h-18 data-[loading=false]:bgx-leaf data-[loading=false]:bgx-size-23 data-[loading=false]:bgx-opacity-10 bg-(--theme-primary) data-[loading=true]:bgx-diagonal-stripes data-[loading=true]:shimmer"
     >
       <template v-if="!loading">
         <div data-testid="plan-pill__primary" class="flex flex-1 flex-col">

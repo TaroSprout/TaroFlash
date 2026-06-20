@@ -90,7 +90,7 @@ function onLeave(el: Element, done: () => void) {
   >
     <slot></slot>
 
-    <div v-if="shimmer" class="card-shimmer" aria-hidden="true" />
+    <div v-if="shimmer" class="card-shimmer shimmer" aria-hidden="true" />
 
     <transition mode="out-in" @enter="onEnter" @leave="onLeave">
       <card-cover v-if="side === 'cover'" :cover="cover_config" />
@@ -232,28 +232,7 @@ function onLeave(el: Element, done: () => void) {
   position: absolute;
   inset: 0;
   border-radius: var(--face-radius);
-  overflow: hidden;
   pointer-events: none;
   z-index: 10;
-}
-
-.card-shimmer::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.14) 50%,
-    transparent 100%
-  );
-  transform: translateX(-100%);
-  animation: card-shimmer 1.8s ease-in-out infinite;
-}
-
-@keyframes card-shimmer {
-  to {
-    transform: translateX(200%);
-  }
 }
 </style>
