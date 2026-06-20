@@ -7,6 +7,7 @@ import { deckViewShellKey, type CardGridSize } from '@/composables/deck/view-she
 import { inject, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { emitSfx } from '@/sfx/bus'
+import { TYPE_SFX } from '@/sfx/config'
 
 type SizeOption = {
   value: CardGridSize
@@ -112,7 +113,7 @@ function onSelectSize(value: CardGridSize) {
                 :data-testid="`page-settings__card-size-option-${option.value}`"
                 :data-active="grid_size === option.value"
                 class="flex h-18 w-16 cursor-pointer items-center justify-center rounded-4 outline outline-brown-100 transition-colors hover:bg-brown-500 dark:hover:bg-grey-900 hover:bgx-diagonal-stripes hover:bgx-opacity-10 data-[active=true]:bg-(--theme-primary) data-[active=true]:bgx-diagonal-stripes data-[active=true]:bgx-opacity-10"
-                v-sfx="{ hover: grid_size === option.value ? undefined : 'ui.tap_05' }"
+                v-sfx="{ hover: grid_size === option.value ? undefined : TYPE_SFX }"
                 @click="onSelectSize(option.value)"
               >
                 <span

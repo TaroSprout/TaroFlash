@@ -2,12 +2,23 @@ import engine from '@/sfx/engine'
 import { debounce } from '@/utils/debounce'
 import {
   AUDIO_CONFIG,
+  AUDIO_VOLUME_DEFAULTS,
+  HOVER_SFX_SET,
   type AudioCategoryKey,
   type AudioCategory,
   type AudioKey,
   type NamespacedAudioKey,
   type AudioProperties
 } from '@/sfx/config'
+
+type AudioVolumeSettings = typeof AUDIO_VOLUME_DEFAULTS
+
+// Maps each audio category to the user-facing volume setting that controls it.
+// Add one entry here when a new AudioCategoryKey is introduced.
+const CATEGORY_VOLUME_KEY: Record<AudioCategoryKey, keyof AudioVolumeSettings> = {
+  study: 'study_sounds',
+  ui: 'interface_sounds'
+}
 
 export type PlayOptions = {
   volume?: number
@@ -42,6 +53,17 @@ class AudioPlayer {
   unlocked = false
   queued_sound: { key: NamespacedAudioKey; options: PlayOptions } | undefined
   blocking = false
+  // Inline defaults avoid the player.ts ↔ config.ts circular-init TDZ.
+  // setVolumeConfig (called from App.vue) overwrites this once prefs load.
+  volume_settings: typeof AUDIO_VOLUME_DEFAULTS = {
+    study_sounds: 5,
+    interface_sounds: 5,
+    hover_sounds: 5
+  }
+
+  setVolumeConfig = (settings: typeof AUDIO_VOLUME_DEFAULTS) => {
+    this.volume_settings = settings
+  }
 
   setup = () => {
     if (this.initialized) return Promise.resolve()
@@ -115,7 +137,7 @@ class AudioPlayer {
         resolve()
       }
 
-      const volume = options.volume ?? sound.volume
+      const volume = options.volume ?? sound.volume * this._getVolumeMultiplier(key)
       const { ended } = engine.play(sound.buffer, volume)
       const fallbackMs = Math.ceil((sound.buffer.duration || 1) * 1000) + 500
       const timer = setTimeout(settle, fallbackMs)
@@ -141,6 +163,15 @@ class AudioPlayer {
     })
 
     await Promise.all(loads)
+  }
+
+  // 5 is the default setting, so dividing by 5 yields a 1.0× multiplier at rest —
+  // sounds play at their designed default_volume unchanged.
+  private _getVolumeMultiplier(key: NamespacedAudioKey): number {
+    const setting_key = HOVER_SFX_SET.has(key)
+      ? 'hover_sounds'
+      : CATEGORY_VOLUME_KEY[key.split('.')[0] as AudioCategoryKey]
+    return this.volume_settings[setting_key] / 5
   }
 
   private _loadSound(key: NamespacedAudioKey, cfg: AudioProperties): Promise<AudioBuffer> {

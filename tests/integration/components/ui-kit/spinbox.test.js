@@ -1,6 +1,15 @@
-import { describe, test, expect } from 'vite-plus/test'
-import { shallowMount } from '@vue/test-utils'
+import { describe, test, expect, vi } from 'vite-plus/test'
+import { shallowMount, mount } from '@vue/test-utils'
+
+// ── Hoisted mocks (sfx — break the sfx/config ↔ sfx/player circular init) ────
+
+vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn(), emitHoverSfx: vi.fn() }))
+vi.mock('@/sfx/config', () => ({ TYPE_SFX: [], HOVER_SFX_SET: new Set() }))
+
+// ── Component imports (after mocks) ───────────────────────────────────────────
+
 import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
+import SpinboxButton from '@/components/ui-kit/spinbox/button.vue'
 
 function mountSpinbox(props = {}) {
   return shallowMount(UiSpinbox, { props: { value: 0, ...props } })
@@ -287,5 +296,28 @@ describe('UiSpinbox', () => {
     const wrapper = mountSpinbox({ value: 5 })
     await findIncrement(wrapper).trigger('click')
     expect(wrapper.emitted('update:value')).toEqual([[6]])
+  })
+})
+
+// ── Button clickability (regression: captureMode removed) ─────────────────
+
+describe('SpinboxButton', () => {
+  test('clicking the button emits click on a fine-pointer device', async () => {
+    const wrapper = mount(SpinboxButton, { props: { icon: 'chevron-up' } })
+    await wrapper.find('button').trigger('click')
+    expect(wrapper.emitted('click')).toHaveLength(1)
+  })
+
+  test('clicking the button calls emitSfx with ui.select', async () => {
+    const { emitSfx } = await import('@/sfx/bus')
+    const wrapper = mount(SpinboxButton, { props: { icon: 'chevron-up' } })
+    await wrapper.find('button').trigger('click')
+    expect(emitSfx).toHaveBeenCalledWith('ui.select')
+  })
+
+  test('disabled button does not emit click', async () => {
+    const wrapper = mount(SpinboxButton, { props: { icon: 'chevron-up', disabled: true } })
+    await wrapper.find('button').trigger('click')
+    expect(wrapper.emitted('click')).toBeUndefined()
   })
 })

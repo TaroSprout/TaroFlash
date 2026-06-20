@@ -11,6 +11,7 @@ import { CARD_IMAGE_MAX_BYTES, useFaceImageUpload } from '@/composables/card/fac
 import { cardImageUrl } from '@/api/media'
 import { CARD_ATTRIBUTES_DEFAULTS } from '@/utils/deck/defaults'
 import { emitSfx } from '@/sfx/bus'
+import { TYPE_SFX } from '@/sfx/config'
 import { type SfxOptions } from '@/sfx/directive'
 import { playButtonTap } from '@/utils/animations/button-tap'
 import { bytesToMbLabel } from '@/utils/file-size'
@@ -156,7 +157,7 @@ function onAddClick() {
       :aria-label="t('deck-view.card-editor.list-item.upload-image-button')"
       class="absolute! top-(--face-padding) right-(--face-padding) z-20 cursor-pointer text-brown-500 transition-[color,opacity] duration-150 hover:text-blue-500 dark:text-brown-100 dark:hover:text-blue-650"
       :class="hovered ? 'opacity-100' : 'opacity-0'"
-      v-sfx="{ hover: 'ui.tap_05' }"
+      v-sfx="{ hover: TYPE_SFX }"
       @click.stop="onAddClick"
     >
       <span ref="addIcon" class="inline-flex">

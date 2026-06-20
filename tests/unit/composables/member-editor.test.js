@@ -117,7 +117,10 @@ describe('useMemberEditor', () => {
       id: 'member-1',
       display_name: 'Renamed',
       description: 'new desc',
-      preferences: { accessibility: { left_hand: false } }
+      preferences: {
+        accessibility: { left_hand: false },
+        audio: { study_sounds: 5, interface_sounds: 5, hover_sounds: 5 }
+      }
     })
   })
 

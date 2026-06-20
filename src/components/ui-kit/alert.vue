@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { type NamespacedAudioKey } from '@/sfx/config'
+import { TYPE_SFX, type NamespacedAudioKey } from '@/sfx/config'
 import { emitSfx } from '@/sfx/bus'
 import { type ModalCloseFn } from '@/composables/modal'
 
@@ -72,7 +72,7 @@ function onKeydown(e: KeyboardEvent) {
           data-testid="ui-kit-alert__cancel"
           class="ui-kit-alert__cancel group"
           @click="onCancel"
-          v-sfx.hover="'ui.click_04'"
+          v-sfx="{ hover: TYPE_SFX }"
         >
           {{ cancelText }}
           <div class="hover-effect group-hover:opacity-100! group-focus:opacity-100!">
@@ -86,7 +86,7 @@ function onKeydown(e: KeyboardEvent) {
           data-testid="ui-kit-alert__confirm"
           class="ui-kit-alert__confirm group"
           @click="onConfirm"
-          v-sfx.hover="'ui.click_04'"
+          v-sfx="{ hover: TYPE_SFX }"
         >
           {{ confirmText }}
           <div class="hover-effect group-hover:opacity-100! group-focus:opacity-100!">

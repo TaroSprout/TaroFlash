@@ -119,7 +119,6 @@ watch(layout_mode, (mode) => {
     data-testid="settings-container"
     data-theme="blue-500"
     data-theme-dark="blue-650"
-    surface="inverted"
     :data-layout="layout_mode"
     :class="[
       layout_mode === 'desktop' ? 'w-255!' : 'w-full! max-w-205.5',

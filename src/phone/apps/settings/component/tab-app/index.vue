@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { inject, ref } from 'vue'
+import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import UiSlider from '@/components/ui-kit/slider.vue'
+import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
 import UiToggle from '@/components/ui-kit/toggle.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
@@ -14,10 +14,6 @@ const { t } = useI18n()
 const editor = inject(memberEditorKey)!
 const layout_mode = inject(settingsLayoutKey)!
 
-const interface_volume = ref(50)
-const alerts_volume = ref(50)
-const rewards_volume = ref(50)
-
 const emit = defineEmits<{ back: [] }>()
 </script>
 
@@ -27,15 +23,15 @@ const emit = defineEmits<{ back: [] }>()
 
     <labeled-section :label="t('settings.app.section.audio')">
       <div
-        data-testid="tab-app__sliders"
-        class="grid grid-cols-[auto_1fr] gap-y-8 gap-x-20 text-brown-700 dark:text-brown-300 select-none"
+        data-testid="tab-app__audio"
+        class="grid grid-cols-[auto_1fr] items-center gap-y-6 gap-x-8 text-brown-700 dark:text-brown-300 select-none"
       >
-        <h3>{{ t('settings.app.audio.interface') }}</h3>
-        <ui-slider :label="t('settings.app.audio.interface')" v-model="interface_volume" />
-        <h3>{{ t('settings.app.audio.alerts') }}</h3>
-        <ui-slider :label="t('settings.app.audio.alerts')" v-model="alerts_volume" />
-        <h3>{{ t('settings.app.audio.rewards') }}</h3>
-        <ui-slider :label="t('settings.app.audio.rewards')" v-model="rewards_volume" />
+        <span>{{ t('settings.app.audio.study-sounds') }}</span>
+        <ui-spinbox v-model:value="editor.preferences.audio.study_sounds" :min="1" :max="10" />
+        <span>{{ t('settings.app.audio.interface-sounds') }}</span>
+        <ui-spinbox v-model:value="editor.preferences.audio.interface_sounds" :min="1" :max="10" />
+        <span>{{ t('settings.app.audio.hover-sounds') }}</span>
+        <ui-spinbox v-model:value="editor.preferences.audio.hover_sounds" :min="1" :max="10" />
       </div>
     </labeled-section>
 

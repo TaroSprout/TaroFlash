@@ -25,6 +25,7 @@ watch(
       'data-left-hand',
       String(resolved.accessibility.left_hand)
     )
+    audio_player.setVolumeConfig(resolved.audio)
   },
   { immediate: true, deep: true }
 )

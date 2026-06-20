@@ -4,6 +4,7 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 import { type ButtonProps } from '../button.vue'
 import { useStagedTap } from '@/composables/ui/staged-tap'
 import { emitSfx } from '@/sfx/bus'
+import { TYPE_SFX } from '@/sfx/config'
 import type { DropdownOption } from './types'
 
 type DropdownMenuProps = {
@@ -59,7 +60,7 @@ function onOptionTap(option: DropdownOption, e: MouseEvent) {
       class="group/option relative flex w-full cursor-pointer items-center gap-(--btn-gap) overflow-hidden rounded-[calc(var(--btn-border-radius)-6px)] py-(--btn-padding-y) px-[calc(var(--btn-padding-x)-6px)] text-start whitespace-nowrap"
       :data-playing="playing_value === option.value || null"
       data-testid="dropdown-button__option"
-      v-sfx.hover="'ui.click_04'"
+      v-sfx="{ hover: TYPE_SFX }"
       @click.capture="onOptionTap(option, $event)"
       @click="emit('select', option)"
     >
