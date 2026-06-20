@@ -119,6 +119,7 @@
   "settings.subscription.error": "Couldn't load billing details. Please try again.",
   "settings.subscription.free.label": "Subscription",
   "settings.subscription.free.status": "Free plan",
+  "settings.subscription.free.cost": "Free",
   "settings.subscription.free.upgrade": "Upgrade",
   "settings.subscription.plan.label": "Current Subscription",
   "settings.subscription.plan.current": "Current plan",

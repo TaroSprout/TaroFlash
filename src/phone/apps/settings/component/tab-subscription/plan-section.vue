@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import UiButton from '@/components/ui-kit/button.vue'
+import PlanPill from './plan-pill.vue'
 import { useCancelSubscriptionMutation, useResumeSubscriptionMutation } from '@/api/billing'
 import type { useSubscriptionQuery } from '@/api/billing'
 import { useToast } from '@/composables/toast'
@@ -87,12 +88,33 @@ async function onResume() {
     data-testid="billing-settings__plan"
     :label="t('settings.subscription.plan.label')"
   >
-    <div data-testid="billing-settings__plan-wrap" class="relative">
-      <div
-        v-if="!subscription?.cancel_at_period_end && !confirming_cancel"
-        data-testid="billing-settings__plan-cancel-float"
-        class="absolute -top-3.5 right-3 z-10 rotate-3"
-      >
+    <plan-pill
+      data-theme="blue-500"
+      data-theme-dark="blue-650"
+      :name="PLANS.paid.displayName"
+      :cost="price_label"
+    >
+      <template #meta>
+        <span v-if="status_label" data-testid="billing-settings__plan-status">
+          {{ status_label }}
+        </span>
+        <span
+          v-if="status_label && (upcoming_charge_label || cancel_label)"
+          data-testid="billing-settings__plan-meta-divider"
+          aria-hidden="true"
+          class="text-brown-300"
+        >
+          |
+        </span>
+        <span v-if="upcoming_charge_label" data-testid="billing-settings__plan-upcoming">
+          {{ upcoming_charge_label }}
+        </span>
+        <span v-else-if="cancel_label" data-testid="billing-settings__plan-cancel-date">
+          {{ cancel_label }}
+        </span>
+      </template>
+
+      <template v-if="!subscription?.cancel_at_period_end && !confirming_cancel" #cta>
         <ui-button
           data-testid="billing-settings__plan-cancel"
           data-theme="red-500"
@@ -102,56 +124,9 @@ async function onResume() {
         >
           {{ t('settings.subscription.plan.cancel') }}
         </ui-button>
-      </div>
+      </template>
 
-      <div
-        data-testid="billing-settings__plan-pill"
-        class="flex items-stretch gap-4 rounded-4 border-2 border-blue-650 bg-blue-500 bgx-leaf p-5 text-brown-100"
-      >
-        <div data-testid="billing-settings__plan-primary" class="flex flex-1 flex-col gap-1">
-          <p data-testid="billing-settings__plan-name" class="text-lg">
-            {{ PLANS.paid.displayName }}
-          </p>
-          <div
-            data-testid="billing-settings__plan-meta"
-            class="flex items-center gap-2 text-sm text-brown-200"
-          >
-            <span v-if="status_label" data-testid="billing-settings__plan-status">
-              {{ status_label }}
-            </span>
-            <span
-              v-if="status_label && (upcoming_charge_label || cancel_label)"
-              data-testid="billing-settings__plan-meta-divider"
-              aria-hidden="true"
-              class="text-brown-300"
-            >
-              |
-            </span>
-            <span v-if="upcoming_charge_label" data-testid="billing-settings__plan-upcoming">
-              {{ upcoming_charge_label }}
-            </span>
-            <span v-else-if="cancel_label" data-testid="billing-settings__plan-cancel-date">
-              {{ cancel_label }}
-            </span>
-          </div>
-        </div>
-
-        <div
-          v-if="price_label"
-          data-testid="billing-settings__plan-cost"
-          class="flex flex-col justify-center text-right"
-        >
-          <p data-testid="billing-settings__plan-price" class="text-lg">
-            {{ price_label }}
-          </p>
-        </div>
-      </div>
-
-      <div
-        v-if="subscription?.cancel_at_period_end || confirming_cancel"
-        data-testid="billing-settings__plan-actions"
-        class="mt-3 flex flex-wrap items-center gap-3"
-      >
+      <template v-if="subscription?.cancel_at_period_end || confirming_cancel" #actions>
         <ui-button
           v-if="subscription?.cancel_at_period_end"
           data-testid="billing-settings__plan-resume"
@@ -188,7 +163,7 @@ async function onResume() {
             {{ t('settings.subscription.plan.cancel-abort') }}
           </ui-button>
         </template>
-      </div>
-    </div>
+      </template>
+    </plan-pill>
   </labeled-section>
 </template>

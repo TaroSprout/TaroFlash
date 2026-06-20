@@ -2,8 +2,10 @@
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
+import PlanPill from './plan-pill.vue'
 import { useModal } from '@/composables/modal'
 import Checkout from '@/components/modals/checkout.vue'
+import { PLANS } from '@/config/plans'
 
 const { t } = useI18n()
 const modal = useModal()
@@ -18,21 +20,29 @@ function openUpgradeModal() {
     data-testid="tab-subscription__free"
     :label="t('settings.subscription.free.label')"
   >
-    <div class="flex flex-col gap-3">
-      <h2 class="text-brown-700 dark:text-brown-300 text-lg">
-        {{ t('settings.subscription.free.status') }}
-      </h2>
-      <div>
+    <plan-pill
+      data-theme="green-400"
+      data-theme-dark="green-400"
+      :name="PLANS.free.displayName"
+      :cost="t('settings.subscription.free.cost')"
+    >
+      <template #meta>
+        <span data-testid="tab-subscription__free-status">
+          {{ t('settings.subscription.free.status') }}
+        </span>
+      </template>
+
+      <template #cta>
         <ui-button
           data-testid="tab-subscription__upgrade"
-          data-theme="green-400"
+          data-theme="yellow-500"
           size="sm"
           icon-left="moon-stars"
           @press="openUpgradeModal"
         >
           {{ t('settings.subscription.free.upgrade') }}
         </ui-button>
-      </div>
-    </div>
+      </template>
+    </plan-pill>
   </labeled-section>
 </template>

@@ -53,6 +53,22 @@ const UiButtonStub = defineComponent({
   }
 })
 
+const PlanPillStub = defineComponent({
+  name: 'PlanPill',
+  inheritAttrs: false,
+  props: { name: String, cost: { type: String, default: null } },
+  setup(props, { slots }) {
+    return () =>
+      h('div', { 'data-testid': 'plan-pill' }, [
+        h('p', { 'data-testid': 'plan-pill__name' }, props.name),
+        h('div', { 'data-testid': 'plan-pill__meta' }, slots.meta?.()),
+        props.cost ? h('p', { 'data-testid': 'plan-pill__cost-value' }, props.cost) : null,
+        slots.cta?.(),
+        slots.actions?.()
+      ])
+  }
+})
+
 function makeSubscriptionQuery(subscription, upcoming = null) {
   return {
     data: { value: subscription ? { subscription, upcoming } : null },
@@ -94,7 +110,8 @@ async function makePlanSection(subscription = baseSubscription, upcoming = null)
     global: {
       stubs: {
         LabeledSection: LabeledSectionStub,
-        UiButton: UiButtonStub
+        UiButton: UiButtonStub,
+        PlanPill: PlanPillStub
       }
     }
   })
@@ -114,12 +131,12 @@ beforeEach(() => {
 describe('plan-section — plan details', () => {
   test('renders the paid plan displayName (Builder)', async () => {
     const wrapper = await makePlanSection()
-    expect(wrapper.find('[data-testid="billing-settings__plan-name"]').text()).toBe('Builder')
+    expect(wrapper.find('[data-testid="plan-pill__name"]').text()).toBe('Builder')
   })
 
   test('formats the price with currency and interval', async () => {
     const wrapper = await makePlanSection()
-    const price = wrapper.find('[data-testid="billing-settings__plan-price"]')
+    const price = wrapper.find('[data-testid="plan-pill__cost-value"]')
     expect(price.text()).toContain('10.00')
     expect(price.text()).toContain('USD')
     expect(price.text()).toContain('month')
@@ -134,7 +151,7 @@ describe('plan-section — plan details', () => {
         ]
       }
     })
-    expect(wrapper.find('[data-testid="billing-settings__plan-price"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="plan-pill__cost-value"]').exists()).toBe(false)
   })
 })
 
@@ -161,7 +178,13 @@ describe('plan-section — upcoming_charge_label [obligation]', () => {
     ).default
     const wrapper = shallowMount(PlanSection, {
       props: { subscriptionQuery: makeSubscriptionQuery(null) },
-      global: { stubs: { LabeledSection: LabeledSectionStub, UiButton: UiButtonStub } }
+      global: {
+        stubs: {
+          LabeledSection: LabeledSectionStub,
+          UiButton: UiButtonStub,
+          PlanPill: PlanPillStub
+        }
+      }
     })
     expect(wrapper.find('[data-testid="billing-settings__plan-upcoming"]').exists()).toBe(false)
   })
