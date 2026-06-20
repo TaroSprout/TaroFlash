@@ -1,7 +1,10 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { buildMemberPayload, hasMemberChanges } from '@/utils/member/payload'
 
-const DEFAULT_PREFS = { accessibility: { left_hand: false } }
+const DEFAULT_PREFS = {
+  accessibility: { left_hand: false },
+  audio: { study_sounds: 5, interface_sounds: 5, hover_sounds: 5 }
+}
 
 describe('member/payload', () => {
   describe('buildMemberPayload', () => {

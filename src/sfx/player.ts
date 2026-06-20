@@ -53,7 +53,13 @@ class AudioPlayer {
   unlocked = false
   queued_sound: { key: NamespacedAudioKey; options: PlayOptions } | undefined
   blocking = false
-  volume_settings: typeof AUDIO_VOLUME_DEFAULTS = { ...AUDIO_VOLUME_DEFAULTS }
+  // Inline defaults avoid the player.ts ↔ config.ts circular-init TDZ.
+  // setVolumeConfig (called from App.vue) overwrites this once prefs load.
+  volume_settings: typeof AUDIO_VOLUME_DEFAULTS = {
+    study_sounds: 5,
+    interface_sounds: 5,
+    hover_sounds: 5
+  }
 
   setVolumeConfig = (settings: typeof AUDIO_VOLUME_DEFAULTS) => {
     this.volume_settings = settings
