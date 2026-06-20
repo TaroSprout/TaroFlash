@@ -1,54 +1,25 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import UiButton from '@/components/ui-kit/button.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
-import LabeledSection from '@/components/layout-kit/labeled-section.vue'
+import FreePlanSection from './free-plan-section.vue'
 import PlanSection from './plan-section.vue'
 import PaymentMethodsSection from './payment-methods-section.vue'
 import SettingsBackButton from '../settings-back-button.vue'
 import { useMemberStore } from '@/stores/member'
 import { useSubscriptionQuery } from '@/api/billing'
-import { useModal } from '@/composables/modal'
-import Checkout from '@/components/modals/checkout.vue'
 
 const { t } = useI18n()
 const member_store = useMemberStore()
-const modal = useModal()
 const subscription_query = useSubscriptionQuery()
 
 const emit = defineEmits<{ back: [] }>()
-
-function openUpgradeModal() {
-  modal.open(Checkout, { mode: 'mobile-sheet', backdrop: true })
-}
 </script>
 
 <template>
   <section-list data-testid="tab-subscription" class="max-h-full overflow-y-auto">
     <settings-back-button @back="emit('back')" />
 
-    <labeled-section
-      v-if="member_store.plan !== 'paid'"
-      data-testid="tab-subscription__free"
-      :label="t('settings.subscription.free.label')"
-    >
-      <div class="flex flex-col gap-3">
-        <h2 class="text-brown-700 dark:text-brown-300 text-lg">
-          {{ t('settings.subscription.free.status') }}
-        </h2>
-        <div>
-          <ui-button
-            data-testid="tab-subscription__upgrade"
-            data-theme="green-400"
-            size="sm"
-            icon-left="moon-stars"
-            @press="openUpgradeModal"
-          >
-            {{ t('settings.subscription.free.upgrade') }}
-          </ui-button>
-        </div>
-      </div>
-    </labeled-section>
+    <free-plan-section v-if="member_store.plan !== 'paid'" />
 
     <template v-else>
       <p
