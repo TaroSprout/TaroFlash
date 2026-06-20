@@ -31,10 +31,14 @@ export function useSubscriptionLabels(subscriptionQuery: SubscriptionQuery) {
   })
 
   const status_label = computed(() => {
-    const status = subscription.value?.status
-    if (!status || status === 'active') return null
+    const sub = subscription.value
+    if (!sub) return null
 
-    return t(`settings.subscription.plan.status.${status}`, status)
+    // A soft-cancel keeps Stripe `status: 'active'`, so surface it explicitly.
+    if (sub.cancelAtPeriodEnd) return t('settings.subscription.plan.status.canceling')
+    if (sub.status === 'active') return null
+
+    return t(`settings.subscription.plan.status.${sub.status}`, sub.status)
   })
 
   const renewal_label = computed(() => {
@@ -42,7 +46,7 @@ export function useSubscriptionLabels(subscriptionQuery: SubscriptionQuery) {
     if (!sub) return null
 
     const date = formatStripeDate(sub.currentPeriodEnd, locale.value)
-    if (sub.cancelAtPeriodEnd) return t('settings.subscription.plan.cancels-on', { date })
+    if (sub.cancelAtPeriodEnd) return t('settings.subscription.plan.ends-on', { date })
 
     if (!sub.upcoming) return t('settings.subscription.plan.renews-on', { date })
 
@@ -51,7 +55,7 @@ export function useSubscriptionLabels(subscriptionQuery: SubscriptionQuery) {
   })
 
   const description = computed(() =>
-    [status_label.value, renewal_label.value].filter(Boolean).join(' · ')
+    [status_label.value, renewal_label.value].filter(Boolean).join(' | ')
   )
 
   return { subscription, cost, description }
