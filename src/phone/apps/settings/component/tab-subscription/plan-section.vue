@@ -41,8 +41,8 @@ const view = computed(() =>
       }
     : {
         label: t('settings.subscription.free.label'),
-        theme: 'green-400',
-        theme_dark: 'green-400',
+        theme: 'green-500',
+        theme_dark: 'green-800',
         name: member_store.plan_display_name,
         cost: t('settings.subscription.free.cost'),
         status: null,
