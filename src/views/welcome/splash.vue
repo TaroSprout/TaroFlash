@@ -112,8 +112,8 @@ function flipPreviewSide(side: CardSide) {
             <ui-button
               size="xl"
               data-theme="brown-100"
-              icon-left="expand-more"
-              :sfx="{ press: 'snappy_button_2' }"
+              icon-left="finger-point-down"
+              :sfx="{ press: 'snappy_button_5' }"
               @press="seeMore()"
             >
               {{ t('welcome-view.hero.see-more-button') }}
@@ -124,7 +124,6 @@ function flipPreviewSide(side: CardSide) {
               data-theme="brown-100"
               data-theme-dark="stone-700"
               icon-left="user-sticker-square"
-              :sfx="{ press: 'double_pop_up' }"
               @press="signup()"
             >
               {{ t('welcome-view.signup-button') }}

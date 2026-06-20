@@ -145,7 +145,6 @@ function featureLabel(plan: Plan, feature: PlanFeature) {
             :variant="plan.featured ? 'solid' : 'outline'"
             full-width
             icon-right="arrow-forward"
-            :sfx="{ press: 'double_pop_up' }"
             @press="signup(plan.payment)"
           >
             {{ t(`welcome-view.pricing.${plan.key}.cta`) }}

@@ -25,8 +25,9 @@ onMounted(async () => {
 })
 
 function openSignup(payment?: boolean) {
+  emitSfx('snappy_button_3')
   const { response } = modal.open(SignupDialog, { backdrop: true, props: { payment } })
-  response.then(() => emitSfx('double_pop_down'))
+  response.then(() => emitSfx('snappy_button_5'))
 }
 
 function scrollToContent() {
