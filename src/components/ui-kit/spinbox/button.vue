@@ -17,7 +17,7 @@ const emit = defineEmits<{
 const { playing, tap } = useStagedTap({ triggerAt: 'press' })
 
 function onCaptureClick(e: MouseEvent) {
-  tap(() => emit('click'), { audio: 'ui.select', captureMode: true })(e)
+  tap(() => emit('click'), { audio: 'ui.select' })(e)
 }
 </script>
 
