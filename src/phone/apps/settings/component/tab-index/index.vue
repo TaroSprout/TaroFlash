@@ -40,7 +40,7 @@ const emit = defineEmits<{
 }>()
 
 function onNavigate(value: TabIndexNavValue) {
-  emitSfx('snappy_button_5', { blocking: true })
+  emitSfx('snappy_button_5')
   emit('navigate', value)
 }
 </script>

@@ -10,6 +10,7 @@
  * inside the gesture, the only reliable cure for 'interrupted'.
  */
 import engine from '@/sfx/engine'
+import { trackPointerActivity } from '@/sfx/pointer-activity'
 
 let installed = false
 let gesture_armed = false
@@ -82,6 +83,7 @@ export function installAudioLifecycle(): () => void {
   window.addEventListener('pageshow', recover)
   window.addEventListener('focus', recover)
   const offStateChange = engine.onStateChange(onStateChange)
+  const offPointerActivity = trackPointerActivity()
 
   // Arm now so the first user gesture unlocks the freshly-created (suspended)
   // context, the same way Howler's global unlock handler used to.
@@ -92,6 +94,7 @@ export function installAudioLifecycle(): () => void {
     window.removeEventListener('pageshow', recover)
     window.removeEventListener('focus', recover)
     offStateChange()
+    offPointerActivity()
     removeGestureListeners()
     installed = false
     gesture_armed = false

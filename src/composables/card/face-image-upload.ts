@@ -116,7 +116,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
       return
     }
 
-    emitSfx('music_plink_ok', { blocking: true })
+    emitSfx('music_plink_ok')
     reveal_pending = true
     pending.value = false
   }

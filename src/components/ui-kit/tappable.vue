@@ -32,7 +32,7 @@ function onClick(e: MouseEvent) {
   tap((ev) => emit('tap', ev), {
     preAudio: sfx.tap_pre,
     audio: sfx.press,
-    audioOpts: { debounce: sfx.debounce, blocking: sfx.press_blocking },
+    audioOpts: { debounce: sfx.debounce },
     postAudio: sfx.tap_post
   })(e)
 }

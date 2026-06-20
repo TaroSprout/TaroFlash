@@ -1,6 +1,7 @@
 import logger from '@/utils/logger'
 import { type SoundKey } from './config'
 import player, { type PlayOptions } from './player'
+import { pointerStationaryAfterClick } from './pointer-activity'
 
 /**
  * Plays a sound effect. Pass a single key, or an array of keys to pick one
@@ -24,13 +25,17 @@ export function emitStudySfx(keys: SoundKey | SoundKey[], opts: PlayOptions = {}
 }
 
 /**
- * Plays a sound effect, unless touch is the primary input method (in which case
- * it does nothing). Used for hover feedback that shouldn't fire on tap.
+ * Plays a sound effect, unless it's a spurious hover. Skips when touch is the
+ * primary input, or when the pointer hasn't moved since the last click — i.e.
+ * the UI shifted under a stationary cursor (a panel opened where the mouse was),
+ * firing a `pointerenter` that isn't a real hover and would collide with the
+ * click's own sound. A genuine hover is always preceded by pointer movement.
  *
  * @returns A promise that resolves when the sound has finished playing.
  */
 export function emitHoverSfx(keys: SoundKey | SoundKey[], opts: PlayOptions = {}): Promise<void> {
   if (_isTouchPrimary()) return Promise.resolve()
+  if (pointerStationaryAfterClick()) return Promise.resolve()
   return emitSfx(keys, opts)
 }
 

@@ -5,7 +5,6 @@ import { SOUNDS, type Bus, type SoundDef, type SoundKey } from '@/sfx/config'
 export type PlayOptions = {
   volume?: number
   debounce?: number
-  blocking?: boolean
   // Override the bus this sound is routed through. Falls back to the sound's
   // defaultBus, then 'interface'. Study contexts pass `{ bus: 'study' }`.
   bus?: Bus
@@ -38,7 +37,6 @@ class AudioPlayer {
   unlock_registered = false
   unlocked = false
   queued_sound: { key: SoundKey; options: PlayOptions } | undefined
-  blocking = false
   // Resting setting per bus. setVolumeConfig (called from App.vue) overwrites
   // this once member prefs load. Inline defaults avoid a config.ts init cycle.
   volume_settings: Record<Bus, number> = { interface: 5, study: 5, hover: 5 }
@@ -69,8 +67,6 @@ class AudioPlayer {
   }
 
   play = async (key: SoundKey, options: PlayOptions = {}): Promise<void> => {
-    if (options.blocking) this.blocking = true
-
     return debounce(() => this._play(key, options), {
       delay: options.debounce ?? DEBOUNCE_DELAY,
       key
@@ -88,8 +84,6 @@ class AudioPlayer {
   }
 
   private _play = async (key: SoundKey, options: PlayOptions = {}): Promise<void> => {
-    if (this.blocking && !options.blocking) return
-
     if (!this.unlocked) {
       this._enqueue(key, options)
       return
@@ -103,10 +97,7 @@ class AudioPlayer {
 
     const running = await engine.resume()
 
-    if (!running) {
-      if (options.blocking) this.blocking = false
-      return
-    }
+    if (!running) return
 
     return new Promise((resolve) => {
       // The returned Promise must settle in one of two ways:
@@ -121,7 +112,6 @@ class AudioPlayer {
         if (settled) return
         settled = true
         clearTimeout(timer)
-        if (options.blocking) this.blocking = false
         resolve()
       }
 

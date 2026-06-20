@@ -7,7 +7,6 @@ export type SfxOptions = {
   press?: SoundKey
   tap_pre?: SoundKey
   tap_post?: SoundKey
-  press_blocking?: boolean
   // Handled by this directive.
   hover?: SoundKey | SoundKey[]
   focus?: SoundKey

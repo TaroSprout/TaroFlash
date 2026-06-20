@@ -61,10 +61,16 @@ async function onUpdate(side: 'front' | 'back', text: string) {
   }
 }
 
+// Autofocusing a freshly-added card is programmatic, not the user landing on
+// it — flag the synchronous focusin so onFocusIn stays silent. The action that
+// added the card owns that sound. queueMicrotask clears the flag after the
+// current turn in case focus() no-ops and focusin never fires.
+let programmatic_focus = false
 function focusEditor() {
-  if (!focused.value) {
-    front_input.value?.focus()
-  }
+  if (focused.value) return
+  programmatic_focus = true
+  front_input.value?.focus()
+  queueMicrotask(() => (programmatic_focus = false))
 }
 
 // Whether a node lives inside any card in the editor (its own card or another).
@@ -82,6 +88,14 @@ function onFocusIn(e: FocusEvent) {
   // The browser restoring focus after the window comes back isn't a user
   // action — stay silent, but still track that we hold focus again.
   if (consumeWindowRefocus()) {
+    focused.value = true
+    return
+  }
+
+  // Programmatic autofocus (a freshly-added card) isn't a user landing on the
+  // card — stay silent so it doesn't collide with the add action's own sound.
+  if (programmatic_focus) {
+    programmatic_focus = false
     focused.value = true
     return
   }

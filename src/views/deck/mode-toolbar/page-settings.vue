@@ -44,7 +44,7 @@ const size_options: SizeOption[] = [
 ]
 
 function toggle() {
-  emitSfx('snappy_button_5', { blocking: true })
+  emitSfx('snappy_button_5')
   open.value = !open.value
 }
 

@@ -60,7 +60,14 @@ export const SOUNDS = {
 
 export type SoundKey = keyof typeof SOUNDS
 
-export const TYPE_SFX: SoundKey[] = ['type_01', 'type_02', 'type_03', 'type_04', 'type_05']
+export const TYPE_SFX: SoundKey[] = [
+  'type_01',
+  'type_02',
+  'type_03',
+  'type_04',
+  'type_05',
+  'tap_05'
+]
 
 // Resting volume setting per bus. 5 yields a 1.0× multiplier (see player.ts).
 export const BUS_DEFAULTS: Record<Bus, number> = {

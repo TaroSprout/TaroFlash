@@ -115,7 +115,7 @@ function filter_attrs(keep: (key: string) => boolean) {
 }
 
 function toggle() {
-  emitSfx('snappy_button_5', { blocking: true })
+  emitSfx('snappy_button_5')
   popover_open.value = !popover_open.value
 }
 

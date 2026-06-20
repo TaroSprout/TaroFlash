@@ -99,8 +99,7 @@ function onClick(e: MouseEvent) {
     preAudio: sfx.tap_pre,
     audio: sfx.press,
     audioOpts: {
-      debounce: sfx.debounce,
-      blocking: sfx.press_blocking
+      debounce: sfx.debounce
     },
     postAudio: sfx.tap_post
   })(e)

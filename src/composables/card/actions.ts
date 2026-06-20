@@ -87,7 +87,7 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
   function onSelectCard(id?: number) {
     if (id !== undefined) selection.toggleSelectCard(id)
     selection.enterSelection()
-    emitSfx('select', { blocking: true })
+    emitSfx('select')
   }
 
   /**
