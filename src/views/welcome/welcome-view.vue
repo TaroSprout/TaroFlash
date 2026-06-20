@@ -2,13 +2,18 @@
 import router from '@/router'
 import { useSessionStore } from '@/stores/session'
 import { onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { emitSfx } from '@/sfx/bus'
+import { useModal } from '@/composables/modal'
 import Splash from './splash.vue'
-import UiImage from '@/components/ui-kit/image.vue'
+import FeaturesSection from './features-section.vue'
+import ConfigSection from './config-section.vue'
+import PricingSection from './pricing-section.vue'
+import RoadmapSection from './roadmap-section.vue'
+import SignupDialog from './sign-up/sign-up.vue'
 import WelcomeFooter from '@/components/welcome-footer.vue'
 
-const { t } = useI18n()
 const session = useSessionStore()
+const modal = useModal()
 
 onMounted(async () => {
   const authenticated = await session.restoreSession()
@@ -17,43 +22,18 @@ onMounted(async () => {
     router.push({ name: 'authenticated' })
   }
 })
+
+function openSignup(payment?: boolean) {
+  const { response } = modal.open(SignupDialog, { backdrop: true, props: { payment } })
+  response.then(() => emitSfx('double_pop_down'))
+}
 </script>
 
 <template>
-  <splash />
-  <section class="w-full py-54.5 flex flex-col gap-80">
-    <div class="flex gap-21 justify-center items-center">
-      <div class="flex flex-col gap-3 w-152 text-brown-700 dark:text-brown-100">
-        <h2 class="text-6xl">
-          {{ t('welcome-view.feature.build-decks.heading') }}
-        </h2>
-        <p class="text-lg">
-          {{ t('welcome-view.feature.build-decks.description') }}
-        </p>
-      </div>
-      <ui-image src="deck-example" class="w-100" />
-    </div>
-
-    <div class="flex flex-col gap-6 justify-center items-center">
-      <div class="flex flex-col gap-3 w-152 items-center text-brown-700 dark:text-brown-100">
-        <h2 class="text-6xl">{{ t('welcome-view.feature.study-decks.heading') }}</h2>
-        <p class="text-lg text-center">{{ t('welcome-view.feature.study-decks.description') }}</p>
-      </div>
-      <ui-image src="study-example" class="w-200" />
-    </div>
-  </section>
-
-  <section
-    class="w-full bg-brown-300 dark:bg-grey-800 bgx-bank-note dark:bgx-color-brown-800 dark:bgx-color-brown-300 py-54.5 flex flex-col wave-top-[30px]"
-  >
-    <div class="flex gap-21 justify-center items-center">
-      <ui-image src="phone-example" class="w-60 z-1" />
-      <div class="flex flex-col gap-3 w-152 text-brown-700 dark:text-brown-100">
-        <h2 class="text-6xl">{{ t('welcome-view.feature.design.heading') }}</h2>
-        <p class="text-lg">{{ t('welcome-view.feature.design.description') }}</p>
-      </div>
-    </div>
-  </section>
-
-  <welcome-footer />
+  <splash :signup="openSignup" />
+  <features-section />
+  <config-section />
+  <pricing-section :signup="openSignup" />
+  <roadmap-section />
+  <welcome-footer :signup="openSignup" />
 </template>
