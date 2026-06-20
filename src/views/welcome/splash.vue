@@ -10,9 +10,10 @@ import { emitSfx } from '@/sfx/bus'
 
 type SplashProps = {
   signup: (payment?: boolean) => void
+  seeMore: () => void
 }
 
-const { signup } = defineProps<SplashProps>()
+const { signup, seeMore } = defineProps<SplashProps>()
 
 const { t } = useI18n()
 
@@ -108,6 +109,16 @@ function flipPreviewSide(side: CardSide) {
           <p class="text-lg text-brown-100 max-w-110">{{ t('welcome-view.hero.subheading') }}</p>
 
           <div data-testid="welcome-hero__actions" class="flex items-center gap-4">
+            <ui-button
+              size="xl"
+              data-theme="brown-100"
+              icon-left="expand-more"
+              :sfx="{ press: 'snappy_button_2' }"
+              @press="seeMore()"
+            >
+              {{ t('welcome-view.hero.see-more-button') }}
+            </ui-button>
+
             <ui-button
               size="xl"
               data-theme="brown-100"

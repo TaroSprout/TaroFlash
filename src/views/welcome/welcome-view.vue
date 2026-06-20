@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import router from '@/router'
 import { useSessionStore } from '@/stores/session'
-import { onMounted } from 'vue'
+import { onMounted, useTemplateRef } from 'vue'
 import { emitSfx } from '@/sfx/bus'
 import { useModal } from '@/composables/modal'
 import Splash from './splash.vue'
@@ -14,6 +14,7 @@ import WelcomeFooter from '@/components/welcome-footer.vue'
 
 const session = useSessionStore()
 const modal = useModal()
+const features = useTemplateRef('features')
 
 onMounted(async () => {
   const authenticated = await session.restoreSession()
@@ -27,11 +28,15 @@ function openSignup(payment?: boolean) {
   const { response } = modal.open(SignupDialog, { backdrop: true, props: { payment } })
   response.then(() => emitSfx('double_pop_down'))
 }
+
+function scrollToContent() {
+  features.value?.$el?.scrollIntoView({ behavior: 'smooth' })
+}
 </script>
 
 <template>
-  <splash :signup="openSignup" />
-  <features-section />
+  <splash :signup="openSignup" :see-more="scrollToContent" />
+  <features-section ref="features" />
   <config-section />
   <pricing-section :signup="openSignup" />
   <roadmap-section />
