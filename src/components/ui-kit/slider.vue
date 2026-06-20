@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import { useGestures } from '@/composables/ui/gestures'
 import { emitSfx } from '@/sfx/bus'
+import type { Bus, SoundKey } from '@/sfx/config'
 
 type SliderProps = {
   min?: number
@@ -9,13 +10,15 @@ type SliderProps = {
   step?: number
   label?: string
   ticks?: boolean
+  /** Sound played on each notch while dragging; `bus` routes its volume. */
+  sfx?: { tick?: SoundKey; bus?: Bus }
 }
 
 const MAX_TICKS = 20
 const EDGE_PX = 20
 const EDGE = `${EDGE_PX}px`
 
-const { min = 0, max = 100, step = 1, label, ticks = true } = defineProps<SliderProps>()
+const { min = 0, max = 100, step = 1, label, ticks = true, sfx = {} } = defineProps<SliderProps>()
 
 const value = defineModel<number>({ required: true })
 
@@ -77,7 +80,7 @@ function applyX(client_x: number) {
   if (stepped === value.value) return
 
   value.value = stepped
-  emitSfx('tap_05')
+  emitSfx(sfx.tick ?? 'tap_05', { bus: sfx.bus })
 }
 
 function onKeydown(e: KeyboardEvent) {
@@ -132,14 +135,14 @@ const KEY_DELTAS: Record<string, number> = {
       aria-hidden="true"
       data-testid="ui-kit-slider__tick"
       :data-visible="tick > value"
-      class="absolute top-1/2 size-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-(--theme-secondary) transition-opacity dark:bg-grey-600"
+      class="absolute top-1/2 size-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brown-500 transition-opacity dark:bg-grey-600"
       :class="tick > value ? 'opacity-100' : 'opacity-0'"
       :style="{ left: offsetOf(tick) }"
     ></span>
 
     <div
       data-testid="ui-kit-slider__content"
-      class="pointer-events-none absolute inset-0 flex items-center justify-between px-4 text-base text-(--theme-on-neutral)"
+      class="pointer-events-none absolute inset-0 flex items-center justify-between px-4 text-base text-brown-700"
       :style="{ clipPath: `inset(0 0 0 ${fill_width})` }"
     >
       <span

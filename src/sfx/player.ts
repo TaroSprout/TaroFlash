@@ -40,9 +40,24 @@ class AudioPlayer {
   // Resting setting per bus. setVolumeConfig (called from App.vue) overwrites
   // this once member prefs load. Inline defaults avoid a config.ts init cycle.
   volume_settings: Record<Bus, number> = { interface: 5, study: 5, hover: 5 }
+  // The committed baseline — what the server gave us (or defaults). previewVolumeConfig
+  // can drift volume_settings off this for live UI feedback; resetSettings restores it.
+  committed_volume_settings: Record<Bus, number> = { ...this.volume_settings }
 
+  // Commit a new baseline and apply it (App.vue, on member-pref load/save).
   setVolumeConfig = (settings: Record<Bus, number>) => {
-    this.volume_settings = settings
+    this.committed_volume_settings = { ...settings }
+    this.volume_settings = { ...settings }
+  }
+
+  // Apply settings live without committing — for previewing edits mid-drag.
+  previewVolumeConfig = (settings: Record<Bus, number>) => {
+    this.volume_settings = { ...settings }
+  }
+
+  // Discard any preview and fall back to the committed baseline.
+  resetSettings = () => {
+    this.volume_settings = { ...this.committed_volume_settings }
   }
 
   setup = () => {

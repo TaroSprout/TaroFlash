@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject } from 'vue'
+import { inject, onBeforeUnmount, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiSlider from '@/components/ui-kit/slider.vue'
 import UiToggle from '@/components/ui-kit/toggle.vue'
@@ -9,12 +9,22 @@ import SettingsBackButton from '../settings-back-button.vue'
 import SettingsSaveButton from '../settings-save-button.vue'
 import { memberEditorKey } from '@/composables/member/editor'
 import { settingsLayoutKey } from '../../layout'
+import { toBusVolumes } from '@/utils/member/preferences'
+import audio_player from '@/sfx/player'
+
+const emit = defineEmits<{ back: [] }>()
 
 const { t } = useI18n()
 const editor = inject(memberEditorKey)!
 const layout_mode = inject(settingsLayoutKey)!
 
-const emit = defineEmits<{ back: [] }>()
+onBeforeUnmount(() => audio_player.resetSettings())
+
+watch(
+  () => editor.preferences.audio,
+  (audio) => audio_player.previewVolumeConfig(toBusVolumes(audio)),
+  { deep: true }
+)
 </script>
 
 <template>
@@ -25,21 +35,24 @@ const emit = defineEmits<{ back: [] }>()
       <div data-testid="tab-app__audio" class="flex flex-col gap-3">
         <ui-slider
           v-model="editor.preferences.audio.study_sounds"
-          :min="1"
+          :min="0"
           :max="10"
           :label="t('settings.app.audio.study-sounds')"
+          :sfx="{ bus: 'study' }"
         />
         <ui-slider
           v-model="editor.preferences.audio.interface_sounds"
-          :min="1"
+          :min="0"
           :max="10"
           :label="t('settings.app.audio.interface-sounds')"
+          :sfx="{ bus: 'interface' }"
         />
         <ui-slider
           v-model="editor.preferences.audio.hover_sounds"
-          :min="1"
+          :min="0"
           :max="10"
           :label="t('settings.app.audio.hover-sounds')"
+          :sfx="{ bus: 'hover' }"
         />
       </div>
     </labeled-section>
