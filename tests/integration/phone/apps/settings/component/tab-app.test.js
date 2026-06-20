@@ -1,6 +1,6 @@
-import { describe, test, expect, vi } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { computed, defineComponent, h, reactive, useAttrs } from 'vue'
+import { computed, defineComponent, h, nextTick, reactive, useAttrs } from 'vue'
 import TabApp from '@/phone/apps/settings/component/tab-app/index.vue'
 import { memberEditorKey } from '@/composables/member/editor'
 import { settingsLayoutKey } from '@/phone/apps/settings/layout'
@@ -13,21 +13,33 @@ vi.mock('@/sfx/config', () => ({
   BUS_DEFAULTS: { interface: 5, study: 5, hover: 5 }
 }))
 
+const { mockResetSettings, mockPreviewVolumeConfig } = vi.hoisted(() => ({
+  mockResetSettings: vi.fn(),
+  mockPreviewVolumeConfig: vi.fn()
+}))
+vi.mock('@/sfx/player', () => ({
+  default: {
+    resetSettings: mockResetSettings,
+    previewVolumeConfig: mockPreviewVolumeConfig
+  }
+}))
+
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
-const SpinboxStub = defineComponent({
-  name: 'UiSpinbox',
+const SliderStub = defineComponent({
+  name: 'UiSlider',
   inheritAttrs: false,
-  props: { value: Number, min: Number, max: Number },
-  emits: ['update:value'],
+  props: { modelValue: Number, min: Number, max: Number, sfx: Object, label: String },
+  emits: ['update:modelValue'],
   setup(props, { emit }) {
     const attrs = useAttrs()
     return () =>
       h('div', {
         ...attrs,
-        'data-testid': 'spinbox-stub',
-        'data-value': String(props.value),
-        onClick: () => emit('update:value', (props.value ?? 0) + 1)
+        'data-testid': 'slider-stub',
+        'data-value': String(props.modelValue),
+        'data-bus': props.sfx?.bus ?? '',
+        onClick: () => emit('update:modelValue', (props.modelValue ?? 0) + 1)
       })
   }
 })
@@ -69,6 +81,8 @@ const NullStub = defineComponent({ setup: () => () => h('div') })
 
 // ── Factory ───────────────────────────────────────────────────────────────────
 
+let _wrappers = []
+
 function makeTab({ audio = {}, accessibility = {} } = {}) {
   const editor = {
     preferences: reactive({
@@ -80,7 +94,7 @@ function makeTab({ audio = {}, accessibility = {} } = {}) {
   const wrapper = mount(TabApp, {
     global: {
       stubs: {
-        UiSpinbox: SpinboxStub,
+        UiSlider: SliderStub,
         UiToggle: ToggleStub,
         SectionList: SectionListStub,
         LabeledSection: LabeledSectionStub,
@@ -96,8 +110,16 @@ function makeTab({ audio = {}, accessibility = {} } = {}) {
     }
   })
 
+  _wrappers.push(wrapper)
   return { wrapper, editor }
 }
+
+afterEach(() => {
+  for (const w of _wrappers) w.unmount()
+  _wrappers = []
+  mockResetSettings.mockClear()
+  mockPreviewVolumeConfig.mockClear()
+})
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
@@ -107,43 +129,55 @@ describe('TabApp', () => {
     expect(wrapper.find('[data-testid="tab-app"]').exists()).toBe(true)
   })
 
-  // Replaced UiSlider with UiSpinbox — three spinboxes must render in the audio section
-  test('renders three spinbox controls in the audio section', () => {
+  test('renders three slider controls in the audio section', () => {
     const { wrapper } = makeTab()
     expect(wrapper.find('[data-testid="tab-app__audio"]').exists()).toBe(true)
-    expect(wrapper.findAll('[data-testid="spinbox-stub"]')).toHaveLength(3)
+    expect(wrapper.findAll('[data-testid="slider-stub"]')).toHaveLength(3)
   })
 
-  test('does not render any slider controls (removed in favour of spinboxes)', () => {
-    const { wrapper } = makeTab()
-    expect(wrapper.find('[data-testid="slider-stub"]').exists()).toBe(false)
-  })
-
-  test('spinboxes reflect editor audio values', () => {
+  test('sliders reflect editor audio values', () => {
     const { wrapper } = makeTab({
       audio: { study_sounds: 3, interface_sounds: 7, hover_sounds: 1 }
     })
-    const spinboxes = wrapper.findAll('[data-testid="spinbox-stub"]')
-    expect(spinboxes[0].attributes('data-value')).toBe('3')
-    expect(spinboxes[1].attributes('data-value')).toBe('7')
-    expect(spinboxes[2].attributes('data-value')).toBe('1')
+    const sliders = wrapper.findAll('[data-testid="slider-stub"]')
+    expect(sliders[0].attributes('data-value')).toBe('3')
+    expect(sliders[1].attributes('data-value')).toBe('7')
+    expect(sliders[2].attributes('data-value')).toBe('1')
   })
 
-  test('clicking a spinbox increments the corresponding editor audio value', async () => {
+  test('first slider (study_sounds) routes sfx through study bus', () => {
+    const { wrapper } = makeTab()
+    const sliders = wrapper.findAll('[data-testid="slider-stub"]')
+    expect(sliders[0].attributes('data-bus')).toBe('study')
+  })
+
+  test('second slider (interface_sounds) routes sfx through interface bus', () => {
+    const { wrapper } = makeTab()
+    const sliders = wrapper.findAll('[data-testid="slider-stub"]')
+    expect(sliders[1].attributes('data-bus')).toBe('interface')
+  })
+
+  test('third slider (hover_sounds) routes sfx through hover bus', () => {
+    const { wrapper } = makeTab()
+    const sliders = wrapper.findAll('[data-testid="slider-stub"]')
+    expect(sliders[2].attributes('data-bus')).toBe('hover')
+  })
+
+  test('clicking first slider increments study_sounds on the editor', async () => {
     const { wrapper, editor } = makeTab()
-    await wrapper.findAll('[data-testid="spinbox-stub"]')[0].trigger('click')
+    await wrapper.findAll('[data-testid="slider-stub"]')[0].trigger('click')
     expect(editor.preferences.audio.study_sounds).toBe(6)
   })
 
-  test('second spinbox (interface_sounds) updates independently', async () => {
+  test('clicking second slider increments interface_sounds on the editor', async () => {
     const { wrapper, editor } = makeTab()
-    await wrapper.findAll('[data-testid="spinbox-stub"]')[1].trigger('click')
+    await wrapper.findAll('[data-testid="slider-stub"]')[1].trigger('click')
     expect(editor.preferences.audio.interface_sounds).toBe(6)
   })
 
-  test('third spinbox (hover_sounds) updates independently', async () => {
+  test('clicking third slider increments hover_sounds on the editor', async () => {
     const { wrapper, editor } = makeTab()
-    await wrapper.findAll('[data-testid="spinbox-stub"]')[2].trigger('click')
+    await wrapper.findAll('[data-testid="slider-stub"]')[2].trigger('click')
     expect(editor.preferences.audio.hover_sounds).toBe(6)
   })
 
@@ -158,5 +192,33 @@ describe('TabApp', () => {
     const { wrapper, editor } = makeTab()
     await wrapper.find('[data-testid="toggle-stub"]').trigger('click')
     expect(editor.preferences.accessibility.left_hand).toBe(true)
+  })
+
+  // ── Preview/reset obligation tests ────────────────────────────────────────
+
+  test('changing audio prefs calls previewVolumeConfig with mapped bus volumes [obligation]', async () => {
+    const { editor } = makeTab()
+    editor.preferences.audio.study_sounds = 8
+    await nextTick()
+    await nextTick()
+    expect(mockPreviewVolumeConfig).toHaveBeenCalledWith(expect.objectContaining({ study: 8 }))
+  })
+
+  test('previewVolumeConfig receives all three buses on audio change [obligation]', async () => {
+    const { editor } = makeTab({
+      audio: { study_sounds: 3, interface_sounds: 7, hover_sounds: 1 }
+    })
+    editor.preferences.audio.interface_sounds = 9
+    await nextTick()
+    await nextTick()
+    expect(mockPreviewVolumeConfig).toHaveBeenCalledWith({ study: 3, interface: 9, hover: 1 })
+  })
+
+  test('unmounting the tab calls resetSettings to discard any preview [obligation]', () => {
+    const { wrapper } = makeTab()
+    wrapper.unmount()
+    // remove from _wrappers so afterEach doesn't double-unmount
+    _wrappers = _wrappers.filter((w) => w !== wrapper)
+    expect(mockResetSettings).toHaveBeenCalledTimes(1)
   })
 })

@@ -248,6 +248,85 @@ describe('audio_player.setVolumeConfig', () => {
   })
 })
 
+describe('audio_player.previewVolumeConfig / resetSettings', () => {
+  beforeEach(() => {
+    playbacks.length = 0
+    engineMock.resume.mockReset().mockResolvedValue(true)
+    engineMock.play.mockClear()
+    audio_player.loaded_sounds.clear()
+    audio_player.unlocked = true
+    audio_player.queued_sound = undefined
+    audio_player.volume_settings = { ...BUS_DEFAULTS }
+    audio_player.committed_volume_settings = { ...BUS_DEFAULTS }
+    vi.useRealTimers()
+  })
+
+  test('setVolumeConfig sets both volume_settings and committed_volume_settings [obligation]', () => {
+    const cfg = { study: 3, interface: 7, hover: 2 }
+    audio_player.setVolumeConfig(cfg)
+    expect(audio_player.volume_settings).toEqual(cfg)
+    expect(audio_player.committed_volume_settings).toEqual(cfg)
+  })
+
+  test('previewVolumeConfig sets volume_settings but leaves committed_volume_settings untouched [obligation]', () => {
+    const committed = { study: 5, interface: 5, hover: 5 }
+    audio_player.setVolumeConfig(committed)
+    audio_player.previewVolumeConfig({ study: 2, interface: 2, hover: 2 })
+    expect(audio_player.volume_settings).toEqual({ study: 2, interface: 2, hover: 2 })
+    expect(audio_player.committed_volume_settings).toEqual(committed)
+  })
+
+  test('commit→preview→reset restores the committed value, not the preview [obligation]', () => {
+    const committed = { study: 3, interface: 3, hover: 3 }
+    audio_player.setVolumeConfig(committed)
+    audio_player.previewVolumeConfig({ study: 9, interface: 9, hover: 9 })
+    audio_player.resetSettings()
+    expect(audio_player.volume_settings).toEqual(committed)
+  })
+
+  test('resetSettings uses committed baseline for volume multiplier after preview [obligation]', async () => {
+    // commit interface=2 → multiplier 2/5=0.4; preview interface=10 → 2.0; reset → back to 0.4
+    audio_player.setVolumeConfig({ study: 5, interface: 2, hover: 5 })
+    audio_player.previewVolumeConfig({ study: 5, interface: 10, hover: 5 })
+    audio_player.resetSettings()
+
+    const buffer = loadSound('select', { volume: 0.5 })
+    const promise = audio_player.play('select')
+    await flush()
+    // multiplier = 2/5 = 0.4; volume = 0.5 * 0.4 = 0.2
+    expect(engineMock.play).toHaveBeenCalledWith(buffer, 0.2)
+    playbacks[0].end()
+    await promise
+  })
+
+  test('previewVolumeConfig stores a copy — mutating the caller object does not change player state [obligation]', () => {
+    const cfg = { study: 5, interface: 5, hover: 5 }
+    audio_player.previewVolumeConfig(cfg)
+    cfg.interface = 99
+    expect(audio_player.volume_settings.interface).toBe(5)
+  })
+
+  test('setVolumeConfig stores a copy — mutating the caller object does not change committed baseline [obligation]', () => {
+    const cfg = { study: 5, interface: 5, hover: 5 }
+    audio_player.setVolumeConfig(cfg)
+    cfg.study = 99
+    expect(audio_player.committed_volume_settings.study).toBe(5)
+  })
+
+  test('volume multiplier uses live volume_settings (previewed value) during preview [obligation]', async () => {
+    audio_player.setVolumeConfig({ study: 5, interface: 5, hover: 5 })
+    audio_player.previewVolumeConfig({ study: 5, interface: 10, hover: 5 })
+
+    const buffer = loadSound('select', { volume: 0.5 })
+    const promise = audio_player.play('select')
+    await flush()
+    // multiplier = 10/5 = 2.0; volume = 0.5 * 2.0 = 1.0
+    expect(engineMock.play).toHaveBeenCalledWith(buffer, 1.0)
+    playbacks[0].end()
+    await promise
+  })
+})
+
 describe('audio_player._enqueue timeout', () => {
   beforeEach(() => {
     audio_player.loaded_sounds.clear()
