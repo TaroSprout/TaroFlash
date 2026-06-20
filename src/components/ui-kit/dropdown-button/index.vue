@@ -14,7 +14,7 @@ type DropdownButtonProps = Pick<
   ButtonProps,
   'size' | 'variant' | 'inverted' | 'fullWidth' | 'iconLeft' | 'sfx' | 'playOnTap' | 'tapAnimate'
 > & {
-  options: DropdownOption[]
+  options?: DropdownOption[]
   position?: Placement
   triggerIcon?: string
   gap?: number
@@ -35,7 +35,7 @@ type DropdownButtonProps = Pick<
 defineOptions({ inheritAttrs: false })
 
 const {
-  options,
+  options = [],
   size = 'base',
   variant = 'solid',
   inverted,
@@ -67,6 +67,9 @@ const emit = defineEmits<{
 
 const slots = defineSlots<{
   default(): unknown
+  // Raw dropdown body — replaces the options menu when provided. Receives
+  // `close` so the panel can dismiss the dropdown itself.
+  panel(props: { close: () => void }): unknown
 }>()
 
 const attrs = useAttrs()
@@ -155,7 +158,7 @@ function onMenuSelect(option: DropdownOption) {
     :gap="gap"
     :shadow="shadow"
     :use_arrow="false"
-    :match_reference_width="!triggerOnly"
+    :match_reference_width="!triggerOnly && !$slots.panel"
     data-testid="dropdown-button"
     v-bind="popover_attrs"
     :data-active="popover_open"
@@ -210,6 +213,10 @@ function onMenuSelect(option: DropdownOption) {
       :menu-theme="menuTheme"
       :menu-theme-dark="menuThemeDark"
       @select="onMenuSelect"
-    />
+    >
+      <template v-if="$slots.panel" #default>
+        <slot name="panel" :close="close" />
+      </template>
+    </dropdown-menu>
   </ui-popover>
 </template>
