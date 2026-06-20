@@ -38,61 +38,58 @@ async function onSubmit(): Promise<void> {
 </script>
 
 <template>
-  <div
-    data-testid="login-dialog"
-    class="w-80 bg-brown-300 rounded-l-6 rounded-br-6 rounded-tr-0.5 p-6 shadow-sm overflow-hidden relative"
-  >
-    <div class="flex flex-col items-center gap-6">
-      <ui-button
-        data-testid="login-dialog__google"
-        data-theme="brown-100"
-        size="lg"
-        :fancy-hover="false"
-        class="w-full!"
-        icon-left="google-logo"
-        @press="submitOAuth('google')"
-      >
-        {{ t('login-dialog.google-button') }}
-      </ui-button>
+  <div data-testid="login-dialog" class="w-80 flex flex-col items-center gap-6 p-4">
+    <ui-button
+      data-testid="login-dialog__google"
+      data-theme="brown-100"
+      data-theme-dark="stone-900"
+      size="lg"
+      :fancy-hover="false"
+      class="w-full!"
+      icon-left="google-logo"
+      @press="submitOAuth('google')"
+    >
+      {{ t('login-dialog.google-button') }}
+    </ui-button>
 
-      <ui-divider :label="t('login-dialog.divider-or')" />
+    <ui-divider :label="t('login-dialog.divider-or')" />
 
-      <form class="w-full flex flex-col items-center gap-6" @submit.prevent="onSubmit">
-        <div class="flex flex-col gap-4 w-full">
-          <div data-testid="login-dialog__email">
-            <ui-input
-              type="email"
-              name="email"
-              autocomplete="username"
-              size="lg"
-              v-model="email"
-              :placeholder="t('login-dialog.email-placeholder')"
-            />
-          </div>
-
-          <div data-testid="login-dialog__password">
-            <ui-input
-              type="password"
-              name="password"
-              autocomplete="current-password"
-              size="lg"
-              v-model="password"
-              :placeholder="t('login-dialog.password')"
-            />
-          </div>
+    <form class="w-full flex flex-col items-center gap-6" @submit.prevent="onSubmit">
+      <div class="flex flex-col gap-4 w-full">
+        <div data-testid="login-dialog__email">
+          <ui-input
+            type="email"
+            name="email"
+            autocomplete="username"
+            size="lg"
+            v-model="email"
+            :placeholder="t('login-dialog.email-placeholder')"
+          />
         </div>
 
-        <ui-button
-          data-testid="login-dialog__submit"
-          size="lg"
-          data-theme="blue-500"
-          :loading="loading"
-          class="w-full!"
-          @press="onSubmit"
-        >
-          {{ t('login-dialog.submit-button') }}
-        </ui-button>
-      </form>
-    </div>
+        <div data-testid="login-dialog__password">
+          <ui-input
+            type="password"
+            name="password"
+            autocomplete="current-password"
+            size="lg"
+            v-model="password"
+            :placeholder="t('login-dialog.password')"
+          />
+        </div>
+      </div>
+
+      <ui-button
+        data-testid="login-dialog__submit"
+        size="lg"
+        data-theme="blue-500"
+        data-theme-dark="blue-650"
+        :loading="loading"
+        class="w-full!"
+        @press="onSubmit"
+      >
+        {{ t('login-dialog.submit-button') }}
+      </ui-button>
+    </form>
   </div>
 </template>

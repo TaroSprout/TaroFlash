@@ -9,7 +9,7 @@ import type { SeededUser } from './_fixtures'
  */
 export async function loginAs(page: Page, user: SeededUser) {
   await page.goto('/')
-  await page.getByTestId('welcome-view__login-trigger').click()
+  await page.getByTestId('welcome-hero__login-trigger').click()
   await page.getByTestId('login-dialog__email').locator('input').fill(user.email)
   await page.getByTestId('login-dialog__password').locator('input').fill(user.password)
   await page.getByTestId('login-dialog__submit').click()

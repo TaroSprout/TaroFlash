@@ -617,4 +617,84 @@ describe('UiDropdownButton', () => {
       expect(trigger(wrapper).exists()).toBe(true)
     })
   })
+
+  // ── #panel slot [obligation] ──────────────────────────────────────────────
+  // When a #panel slot is provided, its content renders inside the
+  // dropdown-button__menu container and NO option rows are shown.
+
+  describe('#panel slot [obligation]', () => {
+    function mountDropdownWithPanel(panelContent = 'panel-content', props = {}) {
+      return shallowMount(UiDropdownButton, {
+        props: { ...props },
+        slots: {
+          default: () => 'Trigger Label',
+          panel: () => h('div', { 'data-testid': 'custom-panel' }, panelContent)
+        },
+        global: {
+          stubs: {
+            UiButton: UiButtonStub,
+            UiPopover: UiPopoverStub,
+            UiIcon: UiIconStub,
+            DropdownCaret: false,
+            DropdownMenu: false
+          },
+          directives: { sfx: {} }
+        }
+      })
+    }
+
+    test('with #panel slot: panel content appears inside dropdown-button__menu [obligation]', async () => {
+      const wrapper = mountDropdownWithPanel()
+      await trigger(wrapper).trigger('click')
+      expect(menu(wrapper).exists()).toBe(true)
+      expect(menu(wrapper).find('[data-testid="custom-panel"]').exists()).toBe(true)
+    })
+
+    test('with #panel slot: NO option rows are rendered [obligation]', async () => {
+      const wrapper = mountDropdownWithPanel()
+      await trigger(wrapper).trigger('click')
+      expect(options(wrapper)).toHaveLength(0)
+    })
+
+    test('without #panel slot but with options: option rows still render (fallback preserved) [obligation]', async () => {
+      const wrapper = mountDropdown()
+      await trigger(wrapper).trigger('click')
+      expect(options(wrapper)).toHaveLength(DEFAULT_OPTIONS.length)
+    })
+
+    test('omitting options (no prop, no panel) must not crash [obligation]', () => {
+      expect(() =>
+        shallowMount(UiDropdownButton, {
+          slots: {
+            default: () => 'Label',
+            panel: () => h('div', { 'data-testid': 'custom-panel' }, 'panel')
+          },
+          global: {
+            stubs: {
+              UiButton: UiButtonStub,
+              UiPopover: UiPopoverStub,
+              UiIcon: UiIconStub,
+              DropdownCaret: false,
+              DropdownMenu: false
+            },
+            directives: { sfx: {} }
+          }
+        })
+      ).not.toThrow()
+    })
+
+    test('match_reference_width is false when #panel slot is provided [obligation]', () => {
+      const wrapper = mountDropdownWithPanel()
+      const popover = wrapper.findComponent(UiPopoverStub)
+      // When panel slot is present, match_reference_width should be false so the
+      // panel isn't squished to the trigger width.
+      expect(popover.props('match_reference_width')).toBe(false)
+    })
+
+    test('match_reference_width is true when no #panel slot and not triggerOnly [obligation]', () => {
+      const wrapper = mountDropdown()
+      const popover = wrapper.findComponent(UiPopoverStub)
+      expect(popover.props('match_reference_width')).toBe(true)
+    })
+  })
 })

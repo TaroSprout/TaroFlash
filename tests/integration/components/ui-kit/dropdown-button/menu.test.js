@@ -1,5 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
+import { h } from 'vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
@@ -135,5 +136,41 @@ describe('DropdownMenu', () => {
     // Coarse path (snappy chime only) routes through usePlayOnTap's interceptClick
     // which bails on fine pointers — cannot drive a real coarse pointer event in
     // the headless Chromium runner. Deferred.
+  })
+
+  // ── default slot override (panel slot path) [obligation] ──────────────────
+  // When a #default slot is provided to DropdownMenu (via the parent's #panel
+  // slot bridge), it replaces the option list entirely.
+
+  describe('default slot override [obligation]', () => {
+    function mountMenuWithSlot(slotContent) {
+      return mount(DropdownMenu, {
+        props: { options: SAMPLE_OPTIONS, size: 'md' },
+        slots: { default: slotContent },
+        global: { directives: { sfx: {} } }
+      })
+    }
+
+    test('custom default slot content renders inside dropdown-button__menu [obligation]', () => {
+      const wrapper = mountMenuWithSlot(() =>
+        h('div', { 'data-testid': 'custom-panel-content' }, 'Custom')
+      )
+      expect(wrapper.find('[data-testid="dropdown-button__menu"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="custom-panel-content"]').exists()).toBe(true)
+    })
+
+    test('custom default slot: NO option rows are rendered [obligation]', () => {
+      const wrapper = mountMenuWithSlot(() =>
+        h('div', { 'data-testid': 'custom-panel-content' }, 'Custom')
+      )
+      expect(wrapper.findAll('[data-testid="dropdown-button__option"]')).toHaveLength(0)
+    })
+
+    test('without a default slot, options prop renders option rows (fallback preserved) [obligation]', () => {
+      const wrapper = mountMenu()
+      expect(wrapper.findAll('[data-testid="dropdown-button__option"]')).toHaveLength(
+        SAMPLE_OPTIONS.length
+      )
+    })
   })
 })
