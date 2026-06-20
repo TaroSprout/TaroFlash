@@ -2,33 +2,10 @@
 import LoginDialogue from '@/views/welcome/login-dialog.vue'
 import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import UiPopover from '@/components/ui-kit/popover.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
-import { ref } from 'vue'
-import { emitSfx } from '@/sfx/bus'
+import UiDropdownButton from '@/components/ui-kit/dropdown-button/index.vue'
 
 const { t } = useI18n()
-
-const login_dropdown_open = ref(false)
-
-function openLoginDropdown() {
-  login_dropdown_open.value = true
-  emitSfx('snappy_button_5')
-}
-
-function closeLoginDropdown() {
-  login_dropdown_open.value = false
-  emitSfx('snappy_button_5')
-}
-
-function triggerLoginDropdown() {
-  if (login_dropdown_open.value) {
-    closeLoginDropdown()
-    return
-  }
-
-  openLoginDropdown()
-}
 </script>
 
 <template>
@@ -50,26 +27,19 @@ function triggerLoginDropdown() {
       </ui-tooltip>
     </div>
 
-    <ui-popover
-      :open="login_dropdown_open"
-      :gap="4"
-      :use_arrow="false"
-      :clip="false"
+    <ui-dropdown-button
+      size="lg"
+      data-theme="brown-300"
       position="bottom-end"
-      @close="closeLoginDropdown"
+      open-on-trigger
+      hide-trigger
+      data-testid="welcome-hero__login-trigger"
     >
-      <template #trigger>
-        <button
-          data-testid="welcome-hero__login-trigger"
-          class="bg-brown-100 text-brown-700 px-4 py-2.5 rounded-2.5 text-lg cursor-pointer"
-          :class="{ 'rounded-b-0.5': login_dropdown_open }"
-          @click="triggerLoginDropdown"
-        >
-          {{ t('welcome-view.login-button') }}
-        </button>
-      </template>
+      {{ t('welcome-view.login-button') }}
 
-      <LoginDialogue />
-    </ui-popover>
+      <template #panel>
+        <LoginDialogue />
+      </template>
+    </ui-dropdown-button>
   </nav>
 </template>

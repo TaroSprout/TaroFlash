@@ -23,7 +23,7 @@ const { signup, seeMore } = defineProps<SplashProps>()
 
       <div
         data-testid="welcome-hero__content"
-        class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 mt-16 grid grid-cols-1 md:grid-cols-[400px_auto] gap-16 items-center justify-center relative z-3"
+        class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 pt-32 pb-8 grid grid-cols-1 md:grid-cols-[400px_auto] gap-16 items-center justify-center relative z-3"
       >
         <splash-copy :signup="signup" :see-more="seeMore" />
         <splash-preview />
