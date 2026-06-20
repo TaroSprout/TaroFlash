@@ -12,6 +12,7 @@ import {
 } from '@/api/billing'
 import { useModal } from '@/composables/modal'
 import { useToast } from '@/composables/toast'
+import { formatCardExpiry } from '@/utils/billing'
 
 const { t } = useI18n()
 const modal = useModal()
@@ -27,10 +28,6 @@ const default_card = computed(
   () =>
     payment_methods.value.find((m) => m.id === default_id.value) ?? payment_methods.value[0] ?? null
 )
-
-function formatExpiry(month: number, year: number) {
-  return `${String(month).padStart(2, '0')}/${String(year).slice(-2)}`
-}
 
 async function onChangeCard() {
   const old_ids = payment_methods.value.map((m) => m.id)
@@ -86,7 +83,7 @@ async function onChangeCard() {
         <p v-if="default_card.card" class="text-sm text-brown-500 dark:text-brown-400">
           {{
             t('settings.subscription.payment-methods.expires', {
-              expiry: formatExpiry(default_card.card.exp_month, default_card.card.exp_year)
+              expiry: formatCardExpiry(default_card.card.exp_month, default_card.card.exp_year)
             })
           }}
         </p>

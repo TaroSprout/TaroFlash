@@ -21,6 +21,7 @@ export const useMemberStore = defineStore('member', () => {
   const updated_at = computed(() => member.value?.updated_at)
   const role = computed(() => member.value?.role)
   const plan = computed(() => member.value?.plan)
+  const plan_display_name = computed(() => member.value?.plan_display_name)
   const preferences = computed(() => member.value?.preferences)
 
   const has_member = computed(() => Boolean(id.value))
@@ -36,6 +37,7 @@ export const useMemberStore = defineStore('member', () => {
     updated_at,
     role,
     plan,
+    plan_display_name,
     preferences
   }
 })

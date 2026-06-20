@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onMounted, provide, ref, watch } from 'vue'
+import {
+  computed,
+  defineAsyncComponent,
+  onBeforeUnmount,
+  onMounted,
+  provide,
+  ref,
+  watch
+} from 'vue'
 import { useI18n } from 'vue-i18n'
 import SettingsAside from './settings-aside.vue'
 import { settingsLayoutKey, settingsCloseKey } from '../layout'
@@ -55,9 +63,9 @@ const tab_outlet = ref<HTMLElement>()
 const { nav_direction, onTabEnter, onTabLeave } = useTabTransition(layout_mode, tab_outlet)
 
 const tabs = computed(() => [
-  { value: 'profile', icon: 'id-card', label: t('settings.tab.profile') },
-  { value: 'subscription', icon: 'moon-stars', label: t('settings.tab.subscription') },
-  { value: 'app', icon: 'music-note', label: t('settings.tab.app') },
+  { value: 'profile', icon: 'user-sticker-square', label: t('settings.tab.profile') },
+  { value: 'subscription', icon: 'piggy-bank', label: t('settings.tab.subscription') },
+  { value: 'app', icon: 'screwdriver-wrench', label: t('settings.tab.app') },
   { value: 'danger-zone', icon: 'delete', label: t('settings.tab.danger-zone') }
 ])
 
@@ -73,6 +81,11 @@ const sidebar_active = computed({
 const header_title = computed(() => t(`settings.header.${displayed_tab.value}.title`))
 
 const tab_component = computed(() => TAB_COMPONENTS[displayed_tab.value])
+
+// Open/close sfx live on the modal itself so every callsite (phone launcher,
+// dashboard edit button) sounds identically. Mirrors the deck-settings modal.
+onMounted(() => emitSfx('snappy_button_3'))
+onBeforeUnmount(() => emitSfx('snappy_button_5'))
 
 onMounted(() => {
   const idle = window.requestIdleCallback ?? ((cb: IdleRequestCallback) => setTimeout(cb, 200))

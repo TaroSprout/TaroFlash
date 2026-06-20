@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { formatShortDate } from '@/utils/date'
+import { formatMoney, formatStripeDate } from '@/utils/billing'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import { useInvoicesQuery } from '@/api/billing'
 
@@ -9,17 +9,6 @@ const { t, locale } = useI18n()
 const invoices_query = useInvoicesQuery()
 
 const invoices = computed(() => invoices_query.data.value?.invoices ?? [])
-
-function formatAmount(amount: number, currency: string) {
-  return new Intl.NumberFormat(locale.value, {
-    style: 'currency',
-    currency: currency.toUpperCase()
-  }).format(amount / 100)
-}
-
-function formatDate(ts: number) {
-  return formatShortDate(ts * 1000, locale.value)
-}
 </script>
 
 <template>
@@ -51,11 +40,11 @@ function formatDate(ts: number) {
         class="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 bg-brown-200 dark:bg-grey-700 rounded-3 p-3 text-brown-700 dark:text-brown-200"
       >
         <span class="text-sm text-brown-500 dark:text-brown-400 tabular-nums">
-          {{ formatDate(invoice.created) }}
+          {{ formatStripeDate(invoice.created, locale) }}
         </span>
         <span class="truncate">{{ invoice.number ?? invoice.id }}</span>
         <span class="tabular-nums">{{
-          formatAmount(invoice.amount_paid || invoice.amount_due, invoice.currency)
+          formatMoney(invoice.amount_paid || invoice.amount_due, invoice.currency, locale)
         }}</span>
         <a
           v-if="invoice.hosted_invoice_url"

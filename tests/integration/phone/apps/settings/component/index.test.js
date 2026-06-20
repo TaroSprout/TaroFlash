@@ -255,7 +255,7 @@ describe('settings app — header copy follows displayed tab', () => {
   test('switches header copy when the active tab changes', async () => {
     const wrapper = makeWrapper()
     await wrapper.find('[data-testid="tab-sheet__select-app"]').trigger('click')
-    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('App')
+    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('Preferences')
   })
 
   test('shows the index header on sheet layout with no tab selected', () => {
@@ -411,5 +411,21 @@ describe('settings app — close with unsaved-changes guard [obligation]', () =>
     await flushPromises()
 
     expect(close).not.toHaveBeenCalled()
+  })
+})
+
+// ── Open / close sfx ──────────────────────────────────────────────────────────
+
+describe('settings app — open/close sfx [obligation]', () => {
+  test('emits snappy_button_3 on mount (open sound) [obligation]', () => {
+    makeWrapper()
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_3')
+  })
+
+  test('emits snappy_button_5 on unmount (close sound) [obligation]', () => {
+    const wrapper = makeWrapper()
+    mockEmitSfx.mockReset()
+    wrapper.unmount()
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
   })
 })

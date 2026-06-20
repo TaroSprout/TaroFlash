@@ -73,17 +73,36 @@ Deno.serve(async (req) => {
   try {
     switch (payload.action) {
       case 'get-subscription': {
-        if (!member?.stripe_subscription_id) return json({ subscription: null, upcoming: null })
+        // No Stripe sub = free member. `null` is the whole payload; the FE
+        // reads the member's plan name from the members→plans join instead.
+        if (!member?.stripe_subscription_id) return json(null)
+
         const subscription = await stripe.subscriptions.retrieve(member.stripe_subscription_id, {
-          expand: ['items.data.price.product', 'default_payment_method']
+          expand: ['items.data.price']
         })
+
         let upcoming = null
         try {
           upcoming = await stripe.invoices.retrieveUpcoming({ customer: customerId })
         } catch {
           // No upcoming invoice (e.g. subscription canceled).
         }
-        return json({ subscription, upcoming })
+
+        // Normalize Stripe's nested shape into the flat domain DTO the pill
+        // needs. Money stays in minor units, the date stays a UNIX second —
+        // the FE owns locale-specific currency/date formatting.
+        const price = subscription.items.data[0]?.price
+        return json({
+          priceCents: price?.unit_amount ?? null,
+          currency: price?.currency ?? null,
+          interval: price?.recurring?.interval ?? null,
+          status: subscription.status,
+          currentPeriodEnd: subscription.current_period_end,
+          cancelAtPeriodEnd: subscription.cancel_at_period_end,
+          upcoming: upcoming
+            ? { amountCents: upcoming.amount_due, currency: upcoming.currency }
+            : null
+        })
       }
 
       case 'list-invoices': {

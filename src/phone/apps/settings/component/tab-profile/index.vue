@@ -50,28 +50,30 @@ const emit = defineEmits<{ back: [] }>()
       />
     </labeled-section>
 
-    <div
-      data-testid="tab-profile__design"
-      :data-theme="editor.cover.theme"
-      :data-theme-dark="editor.cover.theme_dark"
-      class="flex flex-col gap-6"
-    >
-      <ui-theme-picker
-        :label="t('settings.profile.theme-label')"
-        :supported_themes="SUPPORTED_THEMES"
-        :theme="editor.cover.theme"
-        :theme_dark="editor.cover.theme_dark"
-        @update:theme="editor.cover.theme = $event"
-        @update:theme_dark="editor.cover.theme_dark = $event"
-      />
+    <labeled-section :label="t('settings.profile.section.appearance')">
+      <div
+        data-testid="tab-profile__design"
+        :data-theme="editor.cover.theme"
+        :data-theme-dark="editor.cover.theme_dark"
+        class="flex flex-col gap-6"
+      >
+        <ui-theme-picker
+          :label="t('settings.profile.theme-label')"
+          :supported_themes="SUPPORTED_THEMES"
+          :theme="editor.cover.theme"
+          :theme_dark="editor.cover.theme_dark"
+          @update:theme="editor.cover.theme = $event"
+          @update:theme_dark="editor.cover.theme_dark = $event"
+        />
 
-      <ui-pattern-picker
-        :label="t('settings.profile.pattern-label')"
-        :supported_patterns="SUPPORTED_PATTERNS"
-        :selected_pattern="editor.cover.pattern"
-        @update:pattern="editor.cover.pattern = $event"
-      />
-    </div>
+        <ui-pattern-picker
+          :label="t('settings.profile.pattern-label')"
+          :supported_patterns="SUPPORTED_PATTERNS"
+          :selected_pattern="editor.cover.pattern"
+          @update:pattern="editor.cover.pattern = $event"
+        />
+      </div>
+    </labeled-section>
 
     <settings-save-button v-if="layout_mode === 'sheet'" />
   </section-list>

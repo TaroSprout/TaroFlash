@@ -1,17 +1,23 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h, useAttrs } from 'vue'
+import { defineComponent, h } from 'vue'
 
-const { memberPlan, subscriptionState, modalOpenMock } = vi.hoisted(() => ({
-  memberPlan: { value: 'free' },
-  subscriptionState: { isLoading: false, error: null },
-  modalOpenMock: vi.fn()
+// ── Hoisted state ─────────────────────────────────────────────────────────────
+
+const { memberState, subscriptionQueryState } = vi.hoisted(() => ({
+  memberState: { plan: 'free', plan_display_name: 'Free' },
+  subscriptionQueryState: { isLoading: false, error: null, data: null }
 }))
+
+// ── Mocks ─────────────────────────────────────────────────────────────────────
 
 vi.mock('@/stores/member', () => ({
   useMemberStore: () => ({
     get plan() {
-      return memberPlan.value
+      return memberState.plan
+    },
+    get plan_display_name() {
+      return memberState.plan_display_name
     }
   })
 }))
@@ -20,18 +26,25 @@ vi.mock('@/api/billing', () => ({
   useSubscriptionQuery: () => ({
     isLoading: {
       get value() {
-        return subscriptionState.isLoading
+        return subscriptionQueryState.isLoading
       }
     },
     error: {
       get value() {
-        return subscriptionState.error
+        return subscriptionQueryState.error
       }
     },
-    data: { value: null }
+    data: {
+      get value() {
+        return subscriptionQueryState.data
+      }
+    }
   }),
   useCancelSubscriptionMutation: () => ({ mutateAsync: vi.fn(), isLoading: { value: false } }),
   useResumeSubscriptionMutation: () => ({ mutateAsync: vi.fn(), isLoading: { value: false } }),
+  useCreateSubscriptionMutation: () => ({ mutateAsync: vi.fn(), isLoading: { value: false } }),
+  useCreateSetupIntentMutation: () => ({ mutateAsync: vi.fn(), isLoading: { value: false } }),
+  useChangePlanMutation: () => ({ mutateAsync: vi.fn(), isLoading: { value: false } }),
   usePaymentMethodsQuery: () => ({
     isLoading: { value: false },
     data: { value: { paymentMethods: [], defaultPaymentMethodId: null } }
@@ -41,106 +54,101 @@ vi.mock('@/api/billing', () => ({
   useInvoicesQuery: () => ({ isLoading: { value: false }, data: { value: { invoices: [] } } })
 }))
 
-vi.mock('@/composables/modal', () => ({
-  useModal: () => ({ open: modalOpenMock })
-}))
-
-vi.mock('@/phone/apps/settings/component/billing-settings/plan-section.vue', () => ({
-  default: { name: 'PlanSection', render: () => null }
-}))
-vi.mock('@/phone/apps/settings/component/billing-settings/payment-methods-section.vue', () => ({
-  default: { name: 'PaymentMethodsSection', render: () => null }
-}))
-vi.mock('@/phone/apps/settings/component/billing-settings/invoices-section.vue', () => ({
-  default: { name: 'InvoicesSection', render: () => null }
-}))
-vi.mock('@/components/modals/checkout.vue', () => ({
-  default: { name: 'Checkout', render: () => null }
-}))
-
-import TabSubscription from '@/phone/apps/settings/component/tab-subscription/index.vue'
-
-const ButtonStub = defineComponent({
-  name: 'UiButton',
-  emits: ['press'],
-  inheritAttrs: false,
-  setup(_props, { slots, emit }) {
-    const attrs = useAttrs()
-    return () => h('button', { ...attrs, onClick: () => emit('press') }, slots.default?.())
+vi.mock('@/composables/billing/subscription-labels', async () => {
+  const { computed } = await import('vue')
+  return {
+    useSubscriptionLabels: () => ({
+      subscription: computed(() => null),
+      cost: computed(() => null),
+      status: computed(() => null),
+      description: computed(() => null)
+    })
   }
 })
 
-const SectionStub = defineComponent({
+// ── Stubs ─────────────────────────────────────────────────────────────────────
+
+const PlanSectionStub = defineComponent({
   name: 'PlanSection',
+  props: ['subscriptionQuery'],
   setup() {
     return () => h('div', { 'data-testid': 'plan-section-stub' })
   }
 })
-const PMStub = defineComponent({
+
+const PaymentMethodsSectionStub = defineComponent({
   name: 'PaymentMethodsSection',
   setup() {
     return () => h('div', { 'data-testid': 'payment-methods-section-stub' })
   }
 })
-const InvStub = defineComponent({
-  name: 'InvoicesSection',
-  setup() {
-    return () => h('div', { 'data-testid': 'invoices-section-stub' })
+
+const SettingsBackButtonStub = defineComponent({
+  name: 'SettingsBackButton',
+  emits: ['back'],
+  setup(_p, { emit }) {
+    return () => h('button', { 'data-testid': 'back-button-stub', onClick: () => emit('back') })
   }
 })
+
+const SectionListStub = defineComponent({
+  name: 'SectionList',
+  inheritAttrs: false,
+  setup(_p, { slots }) {
+    return () => h('div', { 'data-testid': 'section-list-stub' }, slots.default?.())
+  }
+})
+
+import TabSubscription from '@/phone/apps/settings/component/tab-subscription/index.vue'
+
+// ── Factory ───────────────────────────────────────────────────────────────────
 
 function makeTab() {
   return mount(TabSubscription, {
     global: {
       stubs: {
-        UiButton: ButtonStub,
-        PlanSection: SectionStub,
-        PaymentMethodsSection: PMStub,
-        InvoicesSection: InvStub
-      },
-      mocks: { $t: (k) => k }
+        PlanSection: PlanSectionStub,
+        PaymentMethodsSection: PaymentMethodsSectionStub,
+        SettingsBackButton: SettingsBackButtonStub,
+        SectionList: SectionListStub
+      }
     }
   })
 }
 
+// ── Reset ─────────────────────────────────────────────────────────────────────
+
 beforeEach(() => {
-  memberPlan.value = 'free'
-  subscriptionState.isLoading = false
-  subscriptionState.error = null
-  modalOpenMock.mockClear()
+  memberState.plan = 'free'
+  memberState.plan_display_name = 'Free'
+  subscriptionQueryState.isLoading = false
+  subscriptionQueryState.error = null
+  subscriptionQueryState.data = null
 })
 
-describe('TabSubscription', () => {
-  test('renders the upgrade CTA when plan is free', () => {
-    const wrapper = makeTab()
-    expect(wrapper.find('[data-testid="tab-subscription__free"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="tab-subscription__upgrade"]').exists()).toBe(true)
-  })
+// ── Flat structure ────────────────────────────────────────────────────────────
 
-  test('opens the checkout modal when upgrade is clicked', async () => {
-    const wrapper = makeTab()
-    await wrapper.find('[data-testid="tab-subscription__upgrade"]').trigger('click')
-    expect(modalOpenMock).toHaveBeenCalledTimes(1)
-  })
-
-  test('renders loading state on paid plan when query is loading', () => {
-    memberPlan.value = 'paid'
-    subscriptionState.isLoading = true
-    const wrapper = makeTab()
-    expect(wrapper.find('[data-testid="tab-subscription__loading"]').exists()).toBe(true)
-  })
-
-  test('renders error state on paid plan when query errors', () => {
-    memberPlan.value = 'paid'
-    subscriptionState.error = new Error('nope')
-    const wrapper = makeTab()
-    expect(wrapper.find('[data-testid="tab-subscription__error"]').exists()).toBe(true)
-  })
-
-  test('renders billing sections on paid plan when query resolves', () => {
-    memberPlan.value = 'paid'
+describe('TabSubscription — layout', () => {
+  test('always renders plan-section regardless of plan [obligation]', () => {
     const wrapper = makeTab()
     expect(wrapper.find('[data-testid="plan-section-stub"]').exists()).toBe(true)
+  })
+
+  test('hides payment-methods-section for a free member [obligation]', () => {
+    memberState.plan = 'free'
+    const wrapper = makeTab()
+    expect(wrapper.find('[data-testid="payment-methods-section-stub"]').exists()).toBe(false)
+  })
+
+  test('renders payment-methods-section for a paid member [obligation]', () => {
+    memberState.plan = 'paid'
+    const wrapper = makeTab()
     expect(wrapper.find('[data-testid="payment-methods-section-stub"]').exists()).toBe(true)
+  })
+
+  test('emits back when the back button is pressed', async () => {
+    const wrapper = makeTab()
+    await wrapper.find('[data-testid="back-button-stub"]').trigger('click')
+    expect(wrapper.emitted('back')).toBeTruthy()
   })
 })
