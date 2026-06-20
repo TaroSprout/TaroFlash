@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
+import UiSlider from '@/components/ui-kit/slider.vue'
 import UiToggle from '@/components/ui-kit/toggle.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
@@ -22,16 +22,25 @@ const emit = defineEmits<{ back: [] }>()
     <settings-back-button @back="emit('back')" />
 
     <labeled-section :label="t('settings.app.section.audio')">
-      <div
-        data-testid="tab-app__audio"
-        class="grid grid-cols-[auto_1fr] items-center gap-y-6 gap-x-8 text-brown-700 dark:text-brown-300 select-none"
-      >
-        <span>{{ t('settings.app.audio.study-sounds') }}</span>
-        <ui-spinbox v-model:value="editor.preferences.audio.study_sounds" :min="1" :max="10" />
-        <span>{{ t('settings.app.audio.interface-sounds') }}</span>
-        <ui-spinbox v-model:value="editor.preferences.audio.interface_sounds" :min="1" :max="10" />
-        <span>{{ t('settings.app.audio.hover-sounds') }}</span>
-        <ui-spinbox v-model:value="editor.preferences.audio.hover_sounds" :min="1" :max="10" />
+      <div data-testid="tab-app__audio" class="flex flex-col gap-3">
+        <ui-slider
+          v-model="editor.preferences.audio.study_sounds"
+          :min="1"
+          :max="10"
+          :label="t('settings.app.audio.study-sounds')"
+        />
+        <ui-slider
+          v-model="editor.preferences.audio.interface_sounds"
+          :min="1"
+          :max="10"
+          :label="t('settings.app.audio.interface-sounds')"
+        />
+        <ui-slider
+          v-model="editor.preferences.audio.hover_sounds"
+          :min="1"
+          :max="10"
+          :label="t('settings.app.audio.hover-sounds')"
+        />
       </div>
     </labeled-section>
 
