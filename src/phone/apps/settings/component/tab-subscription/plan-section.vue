@@ -3,11 +3,9 @@ import { useI18n } from 'vue-i18n'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import PlanPill from './plan-pill.vue'
-import { useCancelSubscriptionMutation, useResumeSubscriptionMutation } from '@/api/billing'
 import type { useSubscriptionQuery } from '@/api/billing'
-import { useToast } from '@/composables/toast'
-import { useAlert } from '@/composables/alert'
 import { useSubscriptionLabels } from '@/composables/billing/subscription-labels'
+import { useSubscriptionActions } from '@/composables/member/subscription-actions'
 import { PLANS } from '@/config/plans'
 
 type SubscriptionQuery = ReturnType<typeof useSubscriptionQuery>
@@ -19,38 +17,9 @@ type PlanSectionProps = {
 const { subscriptionQuery } = defineProps<PlanSectionProps>()
 
 const { t } = useI18n()
-const toast = useToast()
-const alert = useAlert()
-const cancelMutation = useCancelSubscriptionMutation()
-const resumeMutation = useResumeSubscriptionMutation()
 
 const { subscription, cost, description } = useSubscriptionLabels(subscriptionQuery)
-
-async function onCancel() {
-  const { response } = alert.warn({
-    title: t('settings.subscription.plan.cancel-confirm-title'),
-    message: t('settings.subscription.plan.cancel-confirm'),
-    confirmLabel: t('settings.subscription.plan.cancel-confirm-button'),
-    cancelLabel: t('settings.subscription.plan.cancel-abort')
-  })
-  if (!(await response)) return
-
-  try {
-    await cancelMutation.mutateAsync(true)
-    toast.success(t('settings.subscription.plan.cancel-success'))
-  } catch {
-    toast.error(t('settings.subscription.plan.cancel-error'))
-  }
-}
-
-async function onResume() {
-  try {
-    await resumeMutation.mutateAsync()
-    toast.success(t('settings.subscription.plan.resume-success'))
-  } catch {
-    toast.error(t('settings.subscription.plan.resume-error'))
-  }
-}
+const { onCancel, onResume, canceling, resuming } = useSubscriptionActions()
 </script>
 
 <template>
@@ -72,7 +41,7 @@ async function onResume() {
           data-theme="red-500"
           data-theme-dark="red-600"
           size="sm"
-          :loading="cancelMutation.isLoading.value"
+          :loading="canceling"
           @press="onCancel"
         >
           {{ t('settings.subscription.plan.cancel') }}
@@ -83,7 +52,7 @@ async function onResume() {
           data-testid="billing-settings__plan-resume"
           data-theme="green-400"
           size="sm"
-          :loading="resumeMutation.isLoading.value"
+          :loading="resuming"
           @press="onResume"
         >
           {{ t('settings.subscription.plan.resume') }}
