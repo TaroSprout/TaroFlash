@@ -29,8 +29,9 @@ const { t } = useI18n()
 
     <ui-dropdown-button
       size="lg"
-      data-theme="brown-300"
+      data-theme="brown-100"
       position="bottom-end"
+      icon-left="user-sticker-square"
       open-on-trigger
       hide-trigger
       data-testid="welcome-hero__login-trigger"

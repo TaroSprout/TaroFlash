@@ -35,7 +35,7 @@ const { t } = useI18n()
         size="xl"
         data-theme="brown-100"
         data-theme-dark="stone-700"
-        icon-left="user-sticker-square"
+        icon-left="account-circle-add"
         @press="signup()"
       >
         {{ t('welcome-view.signup-button') }}
