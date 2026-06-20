@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onMounted, provide, ref, watch } from 'vue'
+import {
+  computed,
+  defineAsyncComponent,
+  onBeforeUnmount,
+  onMounted,
+  provide,
+  ref,
+  watch
+} from 'vue'
 import { useI18n } from 'vue-i18n'
 import SettingsAside from './settings-aside.vue'
 import { settingsLayoutKey, settingsCloseKey } from '../layout'
@@ -73,6 +81,11 @@ const sidebar_active = computed({
 const header_title = computed(() => t(`settings.header.${displayed_tab.value}.title`))
 
 const tab_component = computed(() => TAB_COMPONENTS[displayed_tab.value])
+
+// Open/close sfx live on the modal itself so every callsite (phone launcher,
+// dashboard edit button) sounds identically. Mirrors the deck-settings modal.
+onMounted(() => emitSfx('snappy_button_3'))
+onBeforeUnmount(() => emitSfx('snappy_button_5'))
 
 onMounted(() => {
   const idle = window.requestIdleCallback ?? ((cb: IdleRequestCallback) => setTimeout(cb, 200))

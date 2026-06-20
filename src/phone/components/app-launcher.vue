@@ -74,7 +74,9 @@ function openApp(app?: PhoneApp) {
 }
 
 function onTapApp(app: PhoneApp) {
-  if (app.type === 'view') emitSfx('toggle_on')
+  // Full-display apps open as a modal and own their open/close sfx (like the
+  // deck-settings modal); only the in-phone view transition gets toggle_on.
+  if (app.type === 'view' && app.display !== 'full') emitSfx('toggle_on')
 }
 
 function onHoverApp(app: PhoneApp) {
