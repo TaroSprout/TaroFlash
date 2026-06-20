@@ -64,7 +64,7 @@ const view = computed(() =>
       v-else
       :data-theme="view.theme"
       :data-theme-dark="view.theme_dark"
-      :loading="loading"
+      :loading="true"
       :name="view.name"
       :cost="view.cost"
       :description="view.description"
