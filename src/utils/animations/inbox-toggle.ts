@@ -3,10 +3,18 @@ import { gsap } from 'gsap'
 const ENTER_DURATION = 0.35
 const LEAVE_DURATION = 0.2
 
+// The prev/next nav buttons only render when there's more than one page of due
+// cards, so the NodeList is often empty — guard every tween, since GSAP warns
+// when handed a target that matches nothing.
 function navButtons(inbox: HTMLElement) {
   return inbox.querySelectorAll<HTMLElement>(
     '[data-testid="review-inbox__prev-btn"], [data-testid="review-inbox__next-btn"]'
   )
+}
+
+function setNavButtons(inbox: HTMLElement, vars: gsap.TweenVars) {
+  const buttons = navButtons(inbox)
+  if (buttons.length) gsap.set(buttons, vars)
 }
 
 export function inboxSwingBeforeEnter(el: Element) {
@@ -14,7 +22,7 @@ export function inboxSwingBeforeEnter(el: Element) {
   const inbox = wrapper.firstElementChild as HTMLElement
   gsap.set(wrapper, { height: 0, overflow: 'hidden' })
   gsap.set(inbox, { rotateX: -90, opacity: 0, transformOrigin: 'top center' })
-  gsap.set(navButtons(inbox), { opacity: 0 })
+  setNavButtons(inbox, { opacity: 0 })
 }
 
 export function inboxSwingEnter(el: Element, done: () => void) {
@@ -30,7 +38,10 @@ export function inboxSwingEnter(el: Element, done: () => void) {
     ease: 'back.out(1.6)',
     onComplete: () => {
       gsap.set(wrapper, { height: 'auto', overflow: '' })
-      gsap.to(navButtons(inbox), { opacity: 1, duration: 0.15, ease: 'power2.out' })
+      const buttons = navButtons(inbox)
+      if (buttons.length) {
+        gsap.to(buttons, { opacity: 1, duration: 0.15, ease: 'power2.out' })
+      }
       done()
     }
   })
@@ -41,7 +52,7 @@ export function inboxSwingLeave(el: Element, done: () => void) {
   const inbox = wrapper.firstElementChild as HTMLElement
 
   gsap.set(wrapper, { height: wrapper.offsetHeight, overflow: 'hidden' })
-  gsap.set(navButtons(inbox), { opacity: 0 })
+  setNavButtons(inbox, { opacity: 0 })
   gsap.to(inbox, {
     rotateX: -90,
     opacity: 0,
