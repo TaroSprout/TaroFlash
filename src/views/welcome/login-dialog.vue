@@ -42,6 +42,7 @@ async function onSubmit(): Promise<void> {
     <ui-button
       data-testid="login-dialog__google"
       data-theme="brown-100"
+      data-theme-dark="stone-900"
       size="lg"
       :fancy-hover="false"
       class="w-full!"
@@ -82,6 +83,7 @@ async function onSubmit(): Promise<void> {
         data-testid="login-dialog__submit"
         size="lg"
         data-theme="blue-500"
+        data-theme-dark="blue-650"
         :loading="loading"
         class="w-full!"
         @press="onSubmit"

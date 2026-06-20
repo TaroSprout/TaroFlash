@@ -21,7 +21,7 @@ const { t } = useI18n()
         position="bottom"
         data-testid="welcome-hero__beta"
         :text="t('welcome-view.hero.beta-tooltip')"
-        class="ml-1 rounded-3 bg-pink-400 px-2.5 py-0.5 text-lg text-brown-100 cursor-default"
+        class="ml-1 rounded-3 bg-pink-400 dark:bg-pink-700 px-2.5 py-0.5 text-lg text-brown-100 cursor-default"
       >
         {{ t('welcome-view.hero.beta-pill') }}
       </ui-tooltip>
@@ -29,7 +29,8 @@ const { t } = useI18n()
 
     <ui-dropdown-button
       size="lg"
-      data-theme="brown-100"
+      data-theme="brown-300"
+      data-theme-dark="stone-700"
       position="bottom-end"
       icon-left="user-sticker-square"
       open-on-trigger
