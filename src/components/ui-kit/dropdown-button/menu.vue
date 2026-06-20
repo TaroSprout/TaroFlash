@@ -33,15 +33,12 @@ const { tap } = useStagedTap()
 const playing_value = ref<DropdownOption['value'] | null>(null)
 
 function onOptionTap(option: DropdownOption, e: MouseEvent) {
-  emitSfx('ui.snappy_button_5')
+  emitSfx('snappy_button_5')
   playing_value.value = option.value
-  tap(
-    () => {
-      emit('select', option)
-      playing_value.value = null
-    },
-    { captureMode: true }
-  )(e)
+  tap(() => {
+    emit('select', option)
+    playing_value.value = null
+  })(e)
 }
 </script>
 
@@ -61,8 +58,7 @@ function onOptionTap(option: DropdownOption, e: MouseEvent) {
       :data-playing="playing_value === option.value || null"
       data-testid="dropdown-button__option"
       v-sfx="{ hover: TYPE_SFX }"
-      @click.capture="onOptionTap(option, $event)"
-      @click="emit('select', option)"
+      @click="onOptionTap(option, $event)"
     >
       <div
         aria-hidden="true"

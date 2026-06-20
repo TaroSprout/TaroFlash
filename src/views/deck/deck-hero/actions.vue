@@ -52,9 +52,9 @@ function onEditOption(option: DropdownOption) {
       data-theme-dark="blue-650"
       full-width
       size="xl"
-      :sfx="{ press: 'ui.snappy_button_3' }"
+      :sfx="{ press: 'snappy_button_3' }"
       :disabled="!has_due_cards"
-      @click="onStudyClicked"
+      @press="onStudyClicked"
     >
       <div v-if="has_due_cards" class="text-brown-100">
         {{ t('deck-view.hero.study') }}

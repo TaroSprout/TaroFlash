@@ -24,7 +24,7 @@ const {
       full-width
       size="xl"
       icon-left="close"
-      @click="onCancel"
+      @press="onCancel"
     >
       {{ t('deck-view.bulk-actions.cancel') }}
     </ui-button>
@@ -36,7 +36,7 @@ const {
       full-width
       size="xl"
       :icon-left="all_cards_selected ? 'check-box' : 'check-box-outline-blank'"
-      @click="onToggleSelectAll"
+      @press="onToggleSelectAll"
     >
       {{ select_all_label }}
     </ui-button>
@@ -49,7 +49,7 @@ const {
       size="xl"
       icon-left="move-item"
       :disabled="!has_selection"
-      @click="actions.onMoveCards()"
+      @press="actions.onMoveCards()"
     >
       {{ t('deck-view.bulk-actions.move') }}
     </ui-button>
@@ -62,7 +62,7 @@ const {
       size="xl"
       icon-left="delete"
       :disabled="!has_selection"
-      @click="actions.onDeleteCards()"
+      @press="actions.onDeleteCards()"
     >
       {{ t('deck-view.bulk-actions.delete') }}
     </ui-button>

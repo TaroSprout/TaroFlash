@@ -1,21 +1,21 @@
 import type { Directive, DirectiveBinding } from 'vue'
 import { emitSfx, emitHoverSfx } from './bus'
-import { type NamespacedAudioKey } from './config'
+import { type SoundKey } from './config'
 
 export type SfxOptions = {
   // Routed through staged-tap in button.vue — not handled by this directive.
-  press?: NamespacedAudioKey
-  tap_pre?: NamespacedAudioKey
-  tap_post?: NamespacedAudioKey
+  press?: SoundKey
+  tap_pre?: SoundKey
+  tap_post?: SoundKey
   press_blocking?: boolean
   // Handled by this directive.
-  hover?: NamespacedAudioKey | NamespacedAudioKey[]
-  focus?: NamespacedAudioKey
-  blur?: NamespacedAudioKey
+  hover?: SoundKey | SoundKey[]
+  focus?: SoundKey
+  blur?: SoundKey
   debounce?: number
 }
 
-type SfxBindingValue = NamespacedAudioKey | SfxOptions
+type SfxBindingValue = SoundKey | SfxOptions
 
 type Cleanup = () => void
 

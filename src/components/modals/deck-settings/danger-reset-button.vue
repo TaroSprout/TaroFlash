@@ -17,7 +17,7 @@ const { onResetReviews, resetting_reviews } = inject(deckDangerActionsKey)!
     size="lg"
     full-width
     :loading="resetting_reviews"
-    @click="onResetReviews"
+    @press="onResetReviews"
   >
     {{ t('deck.settings-modal.danger-zone.reset-button') }}
   </ui-button>

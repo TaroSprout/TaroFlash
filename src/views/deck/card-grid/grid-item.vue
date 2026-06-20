@@ -56,7 +56,7 @@ function onCardClick() {
   if (sel && !sel.isCollapsed) return
 
   active_side.value = active_side.value === 'front' ? 'back' : 'front'
-  emitSfx(active_side.value === 'back' ? 'ui.transition_up' : 'ui.transition_down')
+  emitSfx(active_side.value === 'back' ? 'transition_up' : 'transition_down')
 }
 
 // Spamming the flip racks up the browser's click counter, whose double/triple

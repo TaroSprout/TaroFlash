@@ -11,15 +11,14 @@ const emit = defineEmits<{
 const { playing: flip_playing, tap: tapFlip } = useStagedTap({ triggerAt: 'press' })
 const { playing: done_playing, tap: tapDone } = useStagedTap({ triggerAt: 'press' })
 
-function onCaptureFlip(e: MouseEvent) {
+function onFlip(e: MouseEvent) {
   tapFlip(() => emit('flip'), {
-    audio: is_starting_side ? 'ui.transition_up' : 'ui.transition_down',
-    captureMode: true
+    audio: is_starting_side ? 'transition_up' : 'transition_down'
   })(e)
 }
 
-function onCaptureDone(e: MouseEvent) {
-  tapDone(() => emit('done'), { audio: 'ui.music_plink_ok', captureMode: true })(e)
+function onDone(e: MouseEvent) {
+  tapDone(() => emit('done'), { audio: 'music_plink_ok' })(e)
 }
 </script>
 
@@ -29,7 +28,7 @@ function onCaptureDone(e: MouseEvent) {
       data-testid="study-card-edit__flip"
       :data-playing="flip_playing || null"
       class="text-brown-700 cursor-pointer rounded-full bg-white px-13 py-4 hover:-translate-0.5 hover:shadow-sm transition-all duration-50"
-      @click.capture="onCaptureFlip"
+      @click="onFlip"
     >
       {{ $t('study.flashcard.edit-footer.flip-button') }}
     </button>
@@ -37,7 +36,7 @@ function onCaptureDone(e: MouseEvent) {
       data-testid="study-card-edit__done"
       :data-playing="done_playing || null"
       class="cursor-pointer rounded-full bg-(--theme-primary) px-13 py-4 text-white hover:-translate-0.5 hover:shadow-sm transition-all duration-50"
-      @click.capture="onCaptureDone"
+      @click="onDone"
     >
       {{ $t('study-session.edit.done') }}
     </button>

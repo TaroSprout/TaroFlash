@@ -46,7 +46,7 @@ const skeleton_size = computed<CardGridSize>(() => (is_compact.value ? 'base' : 
           data-theme="blue-500"
           data-theme-dark="blue-650"
           icon-left="card-add"
-          @click="newCard"
+          @press="newCard"
         >
           {{ t('deck-view.empty-state.create-button') }}
         </ui-button>

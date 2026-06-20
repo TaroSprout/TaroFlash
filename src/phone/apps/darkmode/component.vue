@@ -27,12 +27,12 @@ const title = computed(() => `${active_mode_config.value.label}`)
 
 function cycleMode() {
   cycle()
-  emitSfx('ui.select')
+  emitSfx('select')
 }
 </script>
 
 <template>
-  <widget :theme="theme" :title="title" tap-burst="base" instant-action @click="cycleMode">
+  <widget :theme="theme" :title="title" tap-burst="base" instant-action @press="cycleMode">
     <ui-image v-if="mode === 'system'" src="darkmode-system" />
     <ui-image v-else-if="mode === 'light'" src="darkmode-light" />
     <ui-image v-else src="darkmode-dark" />

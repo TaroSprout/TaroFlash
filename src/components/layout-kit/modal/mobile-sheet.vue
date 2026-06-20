@@ -116,7 +116,7 @@ provide(mobileSheetOverlayKey, overlay_root)
             icon-left="close"
             icon-only
             :inverted="showHeader"
-            @click="emit('close')"
+            @press="emit('close')"
             play-on-tap
           >
             {{ close_label_text }}

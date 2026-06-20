@@ -79,8 +79,8 @@ async function onCreateDeckClicked() {
           :description="member_store.description"
           class="z-10"
           :sfx="{
-            hover: 'ui.tap_05',
-            press: due_decks.length > 0 ? 'ui.snappy_button_5' : 'ui.digi_powerdown'
+            hover: 'tap_05',
+            press: due_decks.length > 0 ? 'snappy_button_5' : 'digi_powerdown'
           }"
           @click="onBadgeClick"
         >
@@ -154,7 +154,7 @@ async function onCreateDeckClicked() {
         data-theme-dark="blue-650"
         class="w-full!"
         size="xl"
-        @click="onCreateDeckClicked"
+        @press="onCreateDeckClicked"
       >
         {{ t('dashboard.create-deck-button') }}
       </ui-button>
@@ -174,7 +174,7 @@ async function onCreateDeckClicked() {
             :key="index"
             :deck="deck"
             :size="is_md ? 'base' : 'sm'"
-            @click="onDeckClicked(deck)"
+            @press="onDeckClicked(deck)"
           />
         </div>
 
@@ -185,7 +185,7 @@ async function onCreateDeckClicked() {
           data-theme-dark="blue-650"
           class="w-full!"
           size="xl"
-          @click="onCreateDeckClicked"
+          @press="onCreateDeckClicked"
         >
           {{ t('dashboard.create-deck-button') }}
         </ui-button>

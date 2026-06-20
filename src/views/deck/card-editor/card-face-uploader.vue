@@ -76,7 +76,7 @@ const region_hover = computed(
 // Behind/full-bleed plays the hover chime card-wide; region scopes it to the
 // image region (see onRegionPointerEnter), so the card stays silent there.
 const card_sfx = computed<SfxOptions | undefined>(() =>
-  has_image.value && dropzone_mode.value === 'corners' ? { hover: 'ui.tap_05' } : undefined
+  has_image.value && dropzone_mode.value === 'corners' ? { hover: 'tap_05' } : undefined
 )
 
 const error_message = computed(() => {
@@ -103,7 +103,7 @@ function onCardPointerLeave() {
 // Region mode scopes the hover chime to the image region; behind/full-bleed play
 // it card-wide via the card's own sfx prop.
 function onRegionPointerEnter() {
-  emitSfx('ui.tap_05')
+  emitSfx('tap_05')
   onPointerEnter()
 }
 

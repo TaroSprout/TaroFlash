@@ -135,7 +135,7 @@ export function useCardListController(opts: Options) {
 
     if (stack_mounted) await entered
 
-    emitSfx('ui.snappy_button_2', { blocking: true })
+    emitSfx('snappy_button_2', { blocking: true })
     addCardAtTop()
   }
 

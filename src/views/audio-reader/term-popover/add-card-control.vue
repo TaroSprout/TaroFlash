@@ -78,7 +78,7 @@ function onSelect(option: DropdownOption) {
     position="bottom-end"
     play-on-tap
     :tap-animate="false"
-    :sfx="{ press: 'ui.select' }"
+    :sfx="{ press: 'select' }"
     :options="deck_options"
     :primary-disabled="already_a_card"
     :aria-disabled="disabled || undefined"

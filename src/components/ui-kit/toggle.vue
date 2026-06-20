@@ -24,7 +24,7 @@ const checked = defineModel<boolean>('checked')
         type="checkbox"
         v-model="checked"
         class="peer sr-only"
-        @change="emitSfx('ui.select')"
+        @change="emitSfx('select')"
       />
       <span
         data-testid="ui-kit-toggle__switch-handle"

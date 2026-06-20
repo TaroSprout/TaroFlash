@@ -1,34 +1,20 @@
 import engine from '@/sfx/engine'
 import { debounce } from '@/utils/debounce'
-import {
-  AUDIO_CONFIG,
-  AUDIO_VOLUME_DEFAULTS,
-  HOVER_SFX_SET,
-  type AudioCategoryKey,
-  type AudioCategory,
-  type AudioKey,
-  type NamespacedAudioKey,
-  type AudioProperties
-} from '@/sfx/config'
-
-type AudioVolumeSettings = typeof AUDIO_VOLUME_DEFAULTS
-
-// Maps each audio category to the user-facing volume setting that controls it.
-// Add one entry here when a new AudioCategoryKey is introduced.
-const CATEGORY_VOLUME_KEY: Record<AudioCategoryKey, keyof AudioVolumeSettings> = {
-  study: 'study_sounds',
-  ui: 'interface_sounds'
-}
+import { SOUNDS, type Bus, type SoundDef, type SoundKey } from '@/sfx/config'
 
 export type PlayOptions = {
   volume?: number
   debounce?: number
   blocking?: boolean
+  // Override the bus this sound is routed through. Falls back to the sound's
+  // defaultBus, then 'interface'. Study contexts pass `{ bus: 'study' }`.
+  bus?: Bus
 }
 
 type LoadedSound = {
   buffer: AudioBuffer
-  volume: number
+  base_volume: number
+  default_bus: Bus
 }
 
 // Audio files ship as separate hashed assets; setup() fetches and decodes them
@@ -42,26 +28,22 @@ const AUDIO_FILES = import.meta.glob('@/assets/audio/**/*.{wav,mp3,ogg}', {
 }) as Record<string, string>
 
 const DEFAULT_VOLUME = 0.5
-const DEFAULT_CATEGORY_VOLUME = 1
+const DEFAULT_BUS: Bus = 'interface'
 const DEBOUNCE_DELAY = 10
 const QUEUE_TIMEOUT = 10
 
 class AudioPlayer {
-  loaded_sounds = new Map<string, LoadedSound>()
+  loaded_sounds = new Map<SoundKey, LoadedSound>()
   initialized = false
   unlock_registered = false
   unlocked = false
-  queued_sound: { key: NamespacedAudioKey; options: PlayOptions } | undefined
+  queued_sound: { key: SoundKey; options: PlayOptions } | undefined
   blocking = false
-  // Inline defaults avoid the player.ts ↔ config.ts circular-init TDZ.
-  // setVolumeConfig (called from App.vue) overwrites this once prefs load.
-  volume_settings: typeof AUDIO_VOLUME_DEFAULTS = {
-    study_sounds: 5,
-    interface_sounds: 5,
-    hover_sounds: 5
-  }
+  // Resting setting per bus. setVolumeConfig (called from App.vue) overwrites
+  // this once member prefs load. Inline defaults avoid a config.ts init cycle.
+  volume_settings: Record<Bus, number> = { interface: 5, study: 5, hover: 5 }
 
-  setVolumeConfig = (settings: typeof AUDIO_VOLUME_DEFAULTS) => {
+  setVolumeConfig = (settings: Record<Bus, number>) => {
     this.volume_settings = settings
   }
 
@@ -71,16 +53,22 @@ class AudioPlayer {
 
     this._registerUnlock()
 
-    const categories = Object.entries(AUDIO_CONFIG)
+    const loads = Object.entries(SOUNDS).map(([name, cfg]) => {
+      const key = name as SoundKey
+      const def: SoundDef = cfg
+      return this._loadSound(key).then((buffer) => {
+        this.loaded_sounds.set(key, {
+          buffer,
+          base_volume: def.default_volume ?? DEFAULT_VOLUME,
+          default_bus: def.defaultBus ?? DEFAULT_BUS
+        })
+      })
+    })
 
-    return Promise.all(
-      categories.map(([name, category]) =>
-        this._setupAudioCategory(name as AudioCategoryKey, category)
-      )
-    )
+    return Promise.all(loads)
   }
 
-  play = async (key: NamespacedAudioKey, options: PlayOptions = {}): Promise<void> => {
+  play = async (key: SoundKey, options: PlayOptions = {}): Promise<void> => {
     if (options.blocking) this.blocking = true
 
     return debounce(() => this._play(key, options), {
@@ -89,7 +77,7 @@ class AudioPlayer {
     })
   }
 
-  private _enqueue = (key: NamespacedAudioKey, options: PlayOptions = {}) => {
+  private _enqueue = (key: SoundKey, options: PlayOptions = {}) => {
     this.queued_sound = { key, options }
 
     setTimeout(() => {
@@ -99,7 +87,7 @@ class AudioPlayer {
     }, QUEUE_TIMEOUT)
   }
 
-  private _play = async (key: NamespacedAudioKey, options: PlayOptions = {}): Promise<void> => {
+  private _play = async (key: SoundKey, options: PlayOptions = {}): Promise<void> => {
     if (this.blocking && !options.blocking) return
 
     if (!this.unlocked) {
@@ -137,7 +125,7 @@ class AudioPlayer {
         resolve()
       }
 
-      const volume = options.volume ?? sound.volume * this._getVolumeMultiplier(key)
+      const volume = options.volume ?? sound.base_volume * this._getVolumeMultiplier(sound, options)
       const { ended } = engine.play(sound.buffer, volume)
       const fallbackMs = Math.ceil((sound.buffer.duration || 1) * 1000) + 500
       const timer = setTimeout(settle, fallbackMs)
@@ -146,38 +134,19 @@ class AudioPlayer {
     })
   }
 
-  private async _setupAudioCategory(
-    category_name: AudioCategoryKey,
-    category: AudioCategory
-  ): Promise<void> {
-    const entries = Object.entries(category)
-
-    const loads = entries.map(([name, cfg]) => {
-      const key: NamespacedAudioKey = `${category_name}.${name as AudioKey}`
-      const categoryVolume = DEFAULT_CATEGORY_VOLUME
-      const volume = (cfg.default_volume ?? DEFAULT_VOLUME) * categoryVolume
-
-      return this._loadSound(key, cfg).then((buffer) => {
-        this.loaded_sounds.set(key, { buffer, volume })
-      })
-    })
-
-    await Promise.all(loads)
+  // Bus is resolved most-specific-first: explicit option, then the sound's own
+  // default, then 'interface' (baked into default_bus). 5 is the resting
+  // setting, so dividing by 5 yields a 1.0× multiplier at rest — sounds play at
+  // their designed volume unchanged.
+  private _getVolumeMultiplier(sound: LoadedSound, options: PlayOptions): number {
+    const bus = options.bus ?? sound.default_bus
+    return this.volume_settings[bus] / 5
   }
 
-  // 5 is the default setting, so dividing by 5 yields a 1.0× multiplier at rest —
-  // sounds play at their designed default_volume unchanged.
-  private _getVolumeMultiplier(key: NamespacedAudioKey): number {
-    const setting_key = HOVER_SFX_SET.has(key)
-      ? 'hover_sounds'
-      : CATEGORY_VOLUME_KEY[key.split('.')[0] as AudioCategoryKey]
-    return this.volume_settings[setting_key] / 5
-  }
-
-  private _loadSound(key: NamespacedAudioKey, cfg: AudioProperties): Promise<AudioBuffer> {
-    const audio_name = key.split('.')[1]
-    const ext = cfg.ext ?? 'wav'
-    const path = `/src/assets/audio/${audio_name}.${ext}`
+  private _loadSound(key: SoundKey): Promise<AudioBuffer> {
+    const def: SoundDef = SOUNDS[key]
+    const ext = def.ext ?? 'wav'
+    const path = `/src/assets/audio/${key}.${ext}`
 
     const url = AUDIO_FILES[path]
 
@@ -213,13 +182,3 @@ class AudioPlayer {
 
 // Export instance as a singleton
 export default new AudioPlayer()
-
-export function createAudioConfig<T extends CreateAudioConfigArguments>(config: T) {
-  return config as {
-    [C in keyof T]: {
-      [K in keyof T[C]]: AudioProperties
-    }
-  }
-}
-
-type CreateAudioConfigArguments = { [category: string]: { [name: string]: AudioProperties } }

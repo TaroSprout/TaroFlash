@@ -69,22 +69,22 @@ function skipForward() {
 }
 
 // The transport buttons are custom markup, so they wire the tap-pop + select
-// chime themselves (button.vue does this internally for kit buttons). The pop
-// only fires on coarse; `onAfter` runs the action there, the bubble @click on
-// fine — exactly one activation per pointer type.
+// chime themselves (button.vue does this internally for kit buttons). staged-tap
+// owns the action: it fires immediately on fine pointers and at the pop's peak
+// on coarse — exactly one activation per pointer type.
 function onPlayTap(e: MouseEvent) {
-  emitSfx(player.is_playing.value ? 'ui.snappy_button_3' : 'ui.snappy_button_2')
-  tapPlay(toggle, { captureMode: true })(e)
+  emitSfx(player.is_playing.value ? 'snappy_button_3' : 'snappy_button_2')
+  tapPlay(toggle)(e)
 }
 
 function onBackTap(e: MouseEvent) {
-  emitSfx('ui.snappy_button_5')
-  tapBack(skipBack, { captureMode: true })(e)
+  emitSfx('snappy_button_5')
+  tapBack(skipBack)(e)
 }
 
 function onForwardTap(e: MouseEvent) {
-  emitSfx('ui.snappy_button_5')
-  tapForward(skipForward, { captureMode: true })(e)
+  emitSfx('snappy_button_5')
+  tapForward(skipForward)(e)
 }
 
 function onChapter(option: DropdownOption) {
@@ -118,8 +118,7 @@ function setMode(next: 'expanded' | 'mini') {
           :aria-label="t('lesson-view.audio.skip-back-button')"
           class="flex size-13 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
           :class="{ [TAP_BGX]: back_playing }"
-          @click.capture="onBackTap"
-          @click="skipBack"
+          @click="onBackTap"
         >
           <ui-icon src="skip-backward-10" class="size-6" />
         </button>
@@ -134,8 +133,7 @@ function setMode(next: 'expanded' | 'mini') {
           "
           class="flex size-18 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
           :class="{ [TAP_BGX]: play_playing }"
-          @click.capture="onPlayTap"
-          @click="toggle"
+          @click="onPlayTap"
         >
           <ui-icon :src="is_playing ? 'pause' : 'play'" class="size-8" />
         </button>
@@ -148,8 +146,7 @@ function setMode(next: 'expanded' | 'mini') {
           :aria-label="t('lesson-view.audio.skip-forward-button')"
           class="flex size-13 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
           :class="{ [TAP_BGX]: forward_playing }"
-          @click.capture="onForwardTap"
-          @click="skipForward"
+          @click="onForwardTap"
         >
           <ui-icon src="skip-forward-10" class="size-6" />
         </button>
@@ -165,8 +162,8 @@ function setMode(next: 'expanded' | 'mini') {
             variant="ghost"
             icon-only
             play-on-tap
-            :sfx="{ press: 'ui.snappy_button_5' }"
-            @click="setMode('mini')"
+            :sfx="{ press: 'snappy_button_5' }"
+            @press="setMode('mini')"
           />
         </div>
 
@@ -219,8 +216,8 @@ function setMode(next: 'expanded' | 'mini') {
         variant="ghost"
         icon-only
         play-on-tap
-        :sfx="{ press: 'ui.snappy_button_5' }"
-        @click="setMode('expanded')"
+        :sfx="{ press: 'snappy_button_5' }"
+        @press="setMode('expanded')"
       />
 
       <button
@@ -231,8 +228,7 @@ function setMode(next: 'expanded' | 'mini') {
         :aria-label="t('lesson-view.audio.skip-back-button')"
         class="flex size-13 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
         :class="{ [TAP_BGX]: back_playing }"
-        @click.capture="onBackTap"
-        @click="skipBack"
+        @click="onBackTap"
       >
         <ui-icon src="skip-backward-10" class="size-6" />
       </button>
@@ -247,8 +243,7 @@ function setMode(next: 'expanded' | 'mini') {
         "
         class="flex size-18 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
         :class="{ [TAP_BGX]: play_playing }"
-        @click.capture="onPlayTap"
-        @click="toggle"
+        @click="onPlayTap"
       >
         <ui-icon :src="is_playing ? 'pause' : 'play'" class="size-8" />
       </button>
@@ -261,8 +256,7 @@ function setMode(next: 'expanded' | 'mini') {
         :aria-label="t('lesson-view.audio.skip-forward-button')"
         class="flex size-13 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
         :class="{ [TAP_BGX]: forward_playing }"
-        @click.capture="onForwardTap"
-        @click="skipForward"
+        @click="onForwardTap"
       >
         <ui-icon src="skip-forward-10" class="size-6" />
       </button>

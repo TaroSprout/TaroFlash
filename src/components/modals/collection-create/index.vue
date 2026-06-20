@@ -66,7 +66,7 @@ async function onSubmit() {
           size="lg"
           full-width
           :disabled="create.isLoading.value"
-          @click="close(undefined)"
+          @press="close(undefined)"
         >
           {{ t('lesson-collections.create.cancel-button') }}
         </ui-button>
@@ -78,7 +78,7 @@ async function onSubmit() {
           size="lg"
           full-width
           :disabled="!can_submit || create.isLoading.value"
-          @click="onSubmit"
+          @press="onSubmit"
         >
           {{ t('lesson-collections.create.submit-button') }}
         </ui-button>

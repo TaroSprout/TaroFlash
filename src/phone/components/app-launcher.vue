@@ -74,7 +74,7 @@ function openApp(app?: PhoneApp) {
 }
 
 function onTapApp(app: PhoneApp) {
-  if (app.type === 'view') emitSfx('ui.toggle_on')
+  if (app.type === 'view') emitSfx('toggle_on')
 }
 
 function onHoverApp(app: PhoneApp) {
@@ -89,7 +89,7 @@ function onHoverApp(app: PhoneApp) {
 }
 
 function _playHoverSfx() {
-  emitHoverSfx('ui.pop_drip_mid')
+  emitHoverSfx('pop_drip_mid')
 }
 
 function _getActiveApp() {
@@ -117,7 +117,7 @@ function _getActiveApp() {
           :id="app.id"
           :key="app.id"
           :app="app"
-          @click="openApp(app)"
+          @press="openApp(app)"
           @tap-start="onTapApp(app)"
           @mouseenter="onHoverApp(app)"
         />
@@ -126,7 +126,7 @@ function _getActiveApp() {
           v-else-if="app.type === 'widget'"
           :is="app.component"
           @mouseenter="onHoverApp(app)"
-          @click="openApp(app)"
+          @press="openApp(app)"
         />
       </template>
     </div>

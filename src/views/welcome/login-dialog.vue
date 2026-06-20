@@ -50,7 +50,7 @@ async function onSubmit(): Promise<void> {
         :fancy-hover="false"
         class="w-full!"
         icon-left="google-logo"
-        @click="submitOAuth('google')"
+        @press="submitOAuth('google')"
       >
         {{ t('login-dialog.google-button') }}
       </ui-button>
@@ -88,7 +88,7 @@ async function onSubmit(): Promise<void> {
           data-theme="blue-500"
           :loading="loading"
           class="w-full!"
-          @click="onSubmit"
+          @press="onSubmit"
         >
           {{ t('login-dialog.submit-button') }}
         </ui-button>

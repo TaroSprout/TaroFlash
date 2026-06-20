@@ -1,6 +1,6 @@
 import { defineAsyncComponent } from 'vue'
 import { useModal } from '@/composables/modal'
-import { emitSfx } from '@/sfx/bus'
+import { emitSfx, emitStudySfx } from '@/sfx/bus'
 import type { StudySessionResponse } from '@/components/modals/study-session/index.vue'
 
 const StudySession = defineAsyncComponent(
@@ -16,13 +16,13 @@ export function useStudyModal() {
   const modal = useModal()
 
   async function start(deck: Deck, config_override?: Partial<DeckConfig>) {
-    emitSfx('ui.snappy_button_3')
+    emitSfx('snappy_button_3')
     const payload = await _openStudySession(deck, config_override)
-    emitSfx('ui.slide_up')
+    emitSfx('slide_up')
 
     if (payload) {
       const action = await _openSessionComplete(payload, deck.cover_config?.theme)
-      emitSfx('ui.slide_up')
+      emitSfx('slide_up')
 
       if (action === 'study-more') {
         await start(deck)
@@ -54,7 +54,7 @@ export function useStudyModal() {
         ? 'study-more'
         : 'study-all'
 
-    emitSfx('study.music_pizz_duo_hi')
+    emitStudySfx('music_pizz_duo_hi')
     const result = modal.open<SecondaryAction | undefined>(SessionComplete, {
       backdrop: true,
       mode: 'mobile-sheet',

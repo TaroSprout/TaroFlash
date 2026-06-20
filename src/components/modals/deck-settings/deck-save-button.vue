@@ -14,11 +14,11 @@ const is_saving = ref(false)
 
 async function onSave() {
   if (!is_dirty.value) {
-    emitSfx('ui.digi_powerdown')
+    emitSfx('digi_powerdown')
     return
   }
   if (!settings.title?.trim()) {
-    emitSfx('ui.etc_woodblock_stuck')
+    emitSfx('etc_woodblock_stuck')
     return
   }
   is_saving.value = true
@@ -37,9 +37,9 @@ async function onSave() {
     full-width
     :loading="is_saving"
     :disabled="!is_dirty"
-    :sfx="{ press: 'ui.snappy_button_2' }"
+    :sfx="{ press: 'snappy_button_2' }"
     click-when-disabled
-    @click="onSave"
+    @press="onSave"
   >
     {{ t('deck.settings-modal.submit-edit') }}
   </ui-button>

@@ -53,7 +53,7 @@ const secondary_label = computed(() => t(`study-session.complete.${secondary_act
           data-theme="blue-500"
           full-width
           size="xl"
-          @click="close()"
+          @press="close()"
           >{{ t('study-session.complete.close') }}</ui-button
         >
         <ui-button
@@ -61,7 +61,7 @@ const secondary_label = computed(() => t(`study-session.complete.${secondary_act
           data-theme="blue-500"
           full-width
           size="xl"
-          @click="close(secondary_action)"
+          @press="close(secondary_action)"
           >{{ secondary_label }}</ui-button
         >
       </div>

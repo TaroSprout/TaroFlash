@@ -21,7 +21,7 @@ const { selected_count, onCancel } = useBulkActions()
         size="sm"
         icon-left="close"
         icon-only
-        @click="onCancel"
+        @press="onCancel"
       >
         {{ t('deck-view.bulk-toolbar.cancel') }}
       </ui-button>

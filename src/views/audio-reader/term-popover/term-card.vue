@@ -172,8 +172,8 @@ watch(
             icon-only
             size="base"
             play-on-tap
-            :sfx="{ press: 'ui.snappy_button_5' }"
-            @click="emit('back')"
+            :sfx="{ press: 'snappy_button_5' }"
+            @press="emit('back')"
           >
             {{ t('audio-reader.popover.close-button') }}
           </ui-button>
@@ -203,7 +203,7 @@ watch(
               icon-left="play"
               icon-only
               size="sm"
-              @click="emit('play-word')"
+              @press="emit('play-word')"
             >
               {{ t('audio-reader.popover.play-word-button') }}
             </ui-button>
@@ -219,7 +219,7 @@ watch(
               icon-left="close"
               icon-only
               size="sm"
-              @click="emit('close')"
+              @press="emit('close')"
             >
               {{ t('audio-reader.popover.close-button') }}
             </ui-button>
@@ -307,8 +307,8 @@ watch(
             full-width
             play-on-tap
             :tap-animate="false"
-            :sfx="{ press: 'ui.snappy_button_3' }"
-            @click="emit('play-from-here')"
+            :sfx="{ press: 'snappy_button_3' }"
+            @press="emit('play-from-here')"
           >
             {{ t('audio-reader.popover.play-from-here-button') }}
           </ui-button>

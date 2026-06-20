@@ -132,7 +132,7 @@ async function onResume() {
             data-theme="green-400"
             size="sm"
             :loading="resumeMutation.isLoading.value"
-            @click="onResume"
+            @press="onResume"
           >
             {{ t('settings.subscription.plan.resume') }}
           </ui-button>
@@ -144,7 +144,7 @@ async function onResume() {
             data-theme="red-500"
             data-theme-dark="red-600"
             size="sm"
-            @click="confirming_cancel = true"
+            @press="confirming_cancel = true"
           >
             {{ t('settings.subscription.plan.cancel') }}
           </ui-button>
@@ -162,7 +162,7 @@ async function onResume() {
             data-theme="red-500"
             size="sm"
             :loading="cancelMutation.isLoading.value"
-            @click="onCancel"
+            @press="onCancel"
           >
             {{ t('settings.subscription.plan.cancel-confirm-button') }}
           </ui-button>
@@ -170,7 +170,7 @@ async function onResume() {
             data-testid="billing-settings__plan-cancel-abort"
             data-theme="grey-400"
             size="sm"
-            @click="confirming_cancel = false"
+            @press="confirming_cancel = false"
           >
             {{ t('settings.subscription.plan.cancel-abort') }}
           </ui-button>

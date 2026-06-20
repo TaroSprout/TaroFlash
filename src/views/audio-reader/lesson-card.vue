@@ -115,7 +115,7 @@ const error_label = computed(
       icon-left="play"
       size="sm"
       full-width
-      @click="emit('retry')"
+      @press="emit('retry')"
     >
       {{ t('audio-reader.lesson-card.retry-button') }}
     </ui-button>
@@ -127,7 +127,7 @@ const error_label = computed(
       icon-only
       size="sm"
       class="absolute top-3 right-3 opacity-0 group-hover:opacity-100"
-      @click="emit('delete')"
+      @press="emit('delete')"
     >
       {{ t('audio-reader.lesson-card.delete-button') }}
     </ui-button>

@@ -86,7 +86,7 @@ function onFocusIn(e: FocusEvent) {
     return
   }
 
-  emitSfx(withinAnyCard(e.relatedTarget) ? 'ui.click_04' : 'ui.slide_up')
+  emitSfx(withinAnyCard(e.relatedTarget) ? 'click_04' : 'slide_up')
   focused.value = true
 }
 
@@ -102,7 +102,7 @@ function onFocusOut(e: FocusEvent) {
   // to — flag the round-trip so the matching refocus stays silent, no drop.
   if (!document.hasFocus()) return flagWindowBlur()
 
-  if (!withinAnyCard(e.relatedTarget)) emitSfx('ui.card_drop')
+  if (!withinAnyCard(e.relatedTarget)) emitSfx('card_drop')
 }
 
 function hasFocusWithin() {

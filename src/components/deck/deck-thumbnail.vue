@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { useAttrs } from 'vue'
 import Card from '@/components/card/index.vue'
 import { useStagedTap } from '@/composables/ui/staged-tap'
-import { TYPE_SFX, type NamespacedAudioKey } from '@/sfx/config'
+import { TYPE_SFX, type SoundKey } from '@/sfx/config'
 
 type CardSize = InstanceType<typeof Card>['$props']['size']
 
@@ -14,17 +13,15 @@ const {
   deck?: Deck
   size?: CardSize
   hide_title?: boolean
-  click_sfx?: NamespacedAudioKey
+  click_sfx?: SoundKey
 }>()
 
-const attrs = useAttrs()
+const emit = defineEmits<{ press: [e: MouseEvent] }>()
 
 const { playing, tap } = useStagedTap()
 
-function onCaptureClick(e: MouseEvent) {
-  const handler = attrs.onClick as ((ev: MouseEvent) => void) | undefined
-  if (!handler) return
-  tap(handler, { audio: click_sfx, captureMode: true })(e)
+function onClick(e: MouseEvent) {
+  tap((ev) => emit('press', ev), { audio: click_sfx })(e)
 }
 </script>
 
@@ -34,7 +31,7 @@ function onCaptureClick(e: MouseEvent) {
     class="card-outline pointer-fine:hover:scale-101 data-[playing=true]:scale-101 pointer-coarse:data-[playing=true]:scale-105 pointer-fine:transition-transform duration-75 relative cursor-pointer h-min touch-manipulation"
     :data-playing="playing || null"
     v-sfx="{ hover: TYPE_SFX }"
-    @click.capture="onCaptureClick"
+    @click="onClick"
   >
     <card side="cover" :size="size" :cover_config="deck?.cover_config" />
 

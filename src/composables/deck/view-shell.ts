@@ -43,7 +43,7 @@ export function useDeckViewShell() {
   function setMode(new_mode: CardEditorMode): Promise<void> {
     if (mode.value === new_mode) return Promise.resolve()
 
-    emitSfx('ui.select')
+    emitSfx('select')
 
     const settled = new Promise<void>((resolve) => settle_waiters.add(resolve))
     mode.value = new_mode

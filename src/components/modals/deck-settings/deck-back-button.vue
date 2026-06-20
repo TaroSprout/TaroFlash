@@ -20,7 +20,7 @@ const emit = defineEmits<{ back: [] }>()
     inverted
     icon-left="arrow-back"
     :class="['self-start', layout_mode === 'sheet' && '-mb-4']"
-    @click="emit('back')"
+    @press="emit('back')"
   >
     {{ t('deck.settings-modal.back-label') }}
   </ui-button>

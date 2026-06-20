@@ -44,7 +44,7 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
       title: t('alert.delete-card.title', { count }),
       message: t('alert.delete-card.message', { count }),
       confirmLabel: t('alert.delete-card.confirm'),
-      confirmAudio: 'ui.trash_crumple_short'
+      confirmAudio: 'trash_crumple_short'
     })
     return response
   }
@@ -87,7 +87,7 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
   function onSelectCard(id?: number) {
     if (id !== undefined) selection.toggleSelectCard(id)
     selection.enterSelection()
-    emitSfx('ui.select', { blocking: true })
+    emitSfx('select', { blocking: true })
   }
 
   /**
@@ -96,13 +96,13 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
    * they dismissed the modal.
    */
   function openMoveModal(cards: Card[], count: number) {
-    emitSfx('ui.double_pop_up')
+    emitSfx('double_pop_up')
 
     const { response } = modal.open<{ deck_id: number }>(MoveCardsModal, {
       backdrop: true,
       props: { cards, count, current_deck_id: deck_id }
     })
-    response.then(() => emitSfx('ui.double_pop_down'))
+    response.then(() => emitSfx('double_pop_down'))
 
     return response
   }
@@ -137,14 +137,14 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
 
   /** Exit the current mode: drop selection, return to view mode. */
   function onCancel() {
-    emitSfx('ui.card_drop')
+    emitSfx('card_drop')
     shell.exitMode()
     selection.exitSelection()
   }
 
   /** Exit selection mode only (keeps the current editor mode). */
   function onCancelSelection() {
-    emitSfx('ui.digi_powerdown')
+    emitSfx('digi_powerdown')
     selection.exitSelection()
   }
 

@@ -39,13 +39,13 @@ function onTabClick(index: number) {
     storage.set(storageKey, index.toString())
   }
 
-  emitSfx('ui.etc_camera_shutter')
+  emitSfx('etc_camera_shutter')
   emit('update:activeTab', index)
 }
 
 function onHover(index: number) {
   if (active_tab.value === index) return
-  emitHoverSfx('ui.click_04')
+  emitHoverSfx('click_04')
 }
 </script>
 

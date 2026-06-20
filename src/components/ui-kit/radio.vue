@@ -11,7 +11,7 @@ const { checked, theme = 'blue-500' } = defineProps<{
 }>()
 
 const { playing, tap } = useStagedTap({ triggerAt: 'press' })
-const onCaptureClick = tap(undefined, { audio: 'ui.select' })
+const onClick = tap(undefined, { audio: 'select' })
 </script>
 
 <template>
@@ -28,7 +28,7 @@ const onCaptureClick = tap(undefined, { audio: 'ui.select' })
     }"
     :data-playing="playing || null"
     v-sfx="{ hover: TYPE_SFX }"
-    @click.capture="onCaptureClick"
+    @click="onClick"
   >
     <ui-icon v-if="checked" class="text-white" src="check" />
     <ui-icon v-if="intermediate" src="minus" />

@@ -17,12 +17,12 @@ const { t } = useI18n()
 
 const { playing, tap } = useStagedTap({ triggerAt: 'press' })
 
-function onCaptureOption(e: MouseEvent, value: TranscriptScript) {
+function onOption(e: MouseEvent, value: TranscriptScript) {
   tap(
     () => {
       script.value = value
     },
-    { audio: 'ui.select', captureMode: true }
+    { audio: 'select' }
   )(e)
 }
 </script>
@@ -44,7 +44,7 @@ function onCaptureOption(e: MouseEvent, value: TranscriptScript) {
         class="flex-1 cursor-pointer rounded-4 px-3 py-2 text-sm transition-colors data-[active=false]:text-brown-600 data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary) data-[active=false]:hover:bg-(--theme-primary)/10 dark:data-[active=false]:text-grey-300"
         :data-playing="playing || null"
         v-sfx="{ hover: TYPE_SFX }"
-        @click.capture="(e) => onCaptureOption(e, option.value)"
+        @click="(e) => onOption(e, option.value)"
       >
         {{ t(option.label) }}
       </button>

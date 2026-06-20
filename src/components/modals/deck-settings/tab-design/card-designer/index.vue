@@ -24,7 +24,7 @@ const text_size = computed({
       : CARD_ATTRIBUTES_DEFAULTS.text_size,
   set: (value: number) => {
     attributes.text_size = value
-    emitSfx('ui.select')
+    emitSfx('select')
   }
 })
 </script>

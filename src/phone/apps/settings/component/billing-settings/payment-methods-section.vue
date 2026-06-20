@@ -103,7 +103,7 @@ async function onChangeCard() {
         data-testid="billing-settings__payment-methods-change"
         data-theme="brown-300"
         size="sm"
-        @click="onChangeCard"
+        @press="onChangeCard"
       >
         {{
           default_card

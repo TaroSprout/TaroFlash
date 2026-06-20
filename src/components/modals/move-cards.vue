@@ -43,7 +43,7 @@ async function onMove() {
 }
 
 function onClick(deck_id?: number) {
-  emitSfx('ui.etc_camera_shutter')
+  emitSfx('etc_camera_shutter')
 
   if (deck_id === selected_deck_id.value) {
     selected_deck_id.value = undefined
@@ -97,7 +97,7 @@ function onClick(deck_id?: number) {
         data-testid="move-cards__cancel"
         data-theme="grey-400"
         icon-left="close"
-        @click="close(false)"
+        @press="close(false)"
         class="ring-brown-300 ring-7"
       >
         {{ t('move-cards-modal.cancel') }}
@@ -107,7 +107,7 @@ function onClick(deck_id?: number) {
         data-testid="move-cards__move"
         data-theme="blue-500"
         icon-left="arrow-forward"
-        @click="onMove"
+        @press="onMove"
         :disabled="!selected_deck_id"
         class="ring-brown-300 ring-7"
       >

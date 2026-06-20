@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { TYPE_SFX, type NamespacedAudioKey } from '@/sfx/config'
+import { TYPE_SFX, type SoundKey } from '@/sfx/config'
 import { emitSfx } from '@/sfx/bus'
 import { type ModalCloseFn } from '@/composables/modal'
 
@@ -13,8 +13,8 @@ const { cancelLabel, confirmLabel, close, cancelAudio, confirmAudio } = definePr
   message?: string
   title?: string
   type?: AlertType
-  cancelAudio?: NamespacedAudioKey
-  confirmAudio?: NamespacedAudioKey
+  cancelAudio?: SoundKey
+  confirmAudio?: SoundKey
   close: ModalCloseFn<boolean>
 }>()
 

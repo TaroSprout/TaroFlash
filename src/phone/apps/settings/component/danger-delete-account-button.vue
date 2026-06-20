@@ -17,7 +17,7 @@ const { onDeleteAccount, deleting_account } = inject(memberDangerActionsKey)!
     size="lg"
     full-width
     :loading="deleting_account"
-    @click="onDeleteAccount"
+    @press="onDeleteAccount"
   >
     {{ t('settings.danger-zone.delete-account-button') }}
   </ui-button>

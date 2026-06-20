@@ -49,10 +49,10 @@ async function onSubmit() {
       <signup-form ref="form" />
 
       <div data-testid="actions" class="w-full flex justify-center gap-2.5 col-start-2">
-        <ui-button size="lg" data-theme="brown-100" :fancy-hover="false" @click="close()">{{
+        <ui-button size="lg" data-theme="brown-100" :fancy-hover="false" @press="close()">{{
           t('signup-dialog.cancel')
         }}</ui-button>
-        <ui-button size="lg" data-theme="blue-500" :loading="form?.loading" @click="onSubmit">{{
+        <ui-button size="lg" data-theme="blue-500" :loading="form?.loading" @press="onSubmit">{{
           t('signup-dialog.submit-button')
         }}</ui-button>
       </div>

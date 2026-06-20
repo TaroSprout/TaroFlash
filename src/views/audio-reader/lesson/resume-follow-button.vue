@@ -20,7 +20,7 @@ const icon = computed(() => (direction === 'up' ? 'arcade-stick-up' : 'arcade-st
     rounded-full
     size="lg"
     class="shadow-sm"
-    :sfx="{ press: 'ui.snappy_button_5' }"
-    @click="emit('resume')"
+    :sfx="{ press: 'snappy_button_5' }"
+    @press="emit('resume')"
   />
 </template>

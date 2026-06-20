@@ -115,7 +115,7 @@ function filter_attrs(keep: (key: string) => boolean) {
 }
 
 function toggle() {
-  emitSfx('ui.snappy_button_5', { blocking: true })
+  emitSfx('snappy_button_5', { blocking: true })
   popover_open.value = !popover_open.value
 }
 
@@ -172,7 +172,7 @@ function onMenuSelect(option: DropdownOption) {
         :data-theme-dark="triggerThemeDark"
         :data-active="popover_open"
         data-testid="dropdown-button__button"
-        @click="toggle"
+        @press="toggle"
       />
       <ui-button
         v-else
@@ -188,7 +188,7 @@ function onMenuSelect(option: DropdownOption) {
         :disabled="primaryDisabled"
         :style="trigger_style"
         data-testid="dropdown-button__button"
-        @click="onButtonClick"
+        @press="onButtonClick"
       >
         <slot></slot>
         <template #trailing>
