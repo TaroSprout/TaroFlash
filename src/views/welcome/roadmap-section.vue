@@ -24,8 +24,8 @@ const items: RoadmapItem[] = [
 </script>
 
 <template>
-  <section data-testid="welcome-roadmap" class="w-full bg-brown-100 dark:bg-grey-900 py-30 px-7.5">
-    <div class="max-w-180 mx-auto flex flex-col gap-14">
+  <section data-testid="welcome-roadmap" class="w-full bg-brown-100 dark:bg-grey-900 py-30">
+    <div class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex flex-col gap-14">
       <section-header
         :eyebrow="t('welcome-view.roadmap.eyebrow')"
         :heading="t('welcome-view.roadmap.heading')"

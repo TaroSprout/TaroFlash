@@ -25,9 +25,9 @@ const swatches = [
 <template>
   <section
     data-testid="welcome-config"
-    class="w-full bg-brown-100 dark:bg-grey-900 py-30 px-7.5 bgx-dot-grid bgx-size-18 bgx-opacity-6"
+    class="w-full bg-brown-100 dark:bg-grey-900 py-30 bgx-dot-grid bgx-size-18 bgx-opacity-6"
   >
-    <div class="max-w-(--page-width) mx-auto flex flex-col gap-16">
+    <div class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex flex-col gap-16">
       <section-header
         :eyebrow="t('welcome-view.config.eyebrow')"
         :heading="t('welcome-view.config.heading')"

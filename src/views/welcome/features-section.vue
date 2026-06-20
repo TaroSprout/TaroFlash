@@ -22,8 +22,8 @@ const features: Feature[] = [
 </script>
 
 <template>
-  <section data-testid="welcome-features" class="w-full bg-brown-200 dark:bg-grey-800 py-30 px-7.5">
-    <div class="max-w-(--page-width) mx-auto flex flex-col gap-14">
+  <section data-testid="welcome-features" class="w-full bg-brown-200 dark:bg-grey-800 py-30">
+    <div class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex flex-col gap-14">
       <section-header
         :eyebrow="t('welcome-view.features.eyebrow')"
         :heading="t('welcome-view.features.heading')"

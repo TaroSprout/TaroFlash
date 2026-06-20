@@ -67,8 +67,8 @@ function featureLabel(plan: Plan, feature: PlanFeature) {
 </script>
 
 <template>
-  <section data-testid="welcome-pricing" class="w-full bg-brown-200 dark:bg-grey-800 py-30 px-7.5">
-    <div class="max-w-200 mx-auto flex flex-col gap-14">
+  <section data-testid="welcome-pricing" class="w-full bg-brown-200 dark:bg-grey-800 py-30">
+    <div class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex flex-col gap-14">
       <section-header
         :eyebrow="t('welcome-view.pricing.eyebrow')"
         :heading="t('welcome-view.pricing.heading')"

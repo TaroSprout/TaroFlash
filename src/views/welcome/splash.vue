@@ -20,10 +20,10 @@ const login_dropdown_open = ref(false)
 const preview_side = ref<CardSide>('cover')
 
 const preview_cover: DeckCover = {
-  theme: 'blue-500',
-  theme_dark: 'blue-650',
-  pattern: 'wave',
-  icon: 'book'
+  theme: 'red-500',
+  theme_dark: 'red-600',
+  pattern: 'endless-clouds',
+  icon: 'piggy-bank'
 }
 
 const preview_attributes: DeckCardAttributes = {
@@ -49,13 +49,18 @@ function triggerLoginDropdown() {
 
   openLoginDropdown()
 }
+
+function flipPreviewSide(side: CardSide) {
+  preview_side.value = side
+  emitSfx('slide_up')
+}
 </script>
 
 <template>
   <div data-testid="welcome-hero__wave-backdrop" class="w-full bg-brown-200 dark:bg-grey-800">
     <section
       data-testid="welcome-hero"
-      class="flex flex-col w-full px-7.5 pt-7.5 pb-44 relative bg-green-400 wave-bottom-[30px] bgx-diagonal-stripes bgx-size-20 bgx-opacity-12 bg-center overflow-hidden"
+      class="flex flex-col w-full pt-7.5 pb-44 relative bg-green-400 wave-bottom-[30px] bgx-diagonal-stripes bgx-size-20 bgx-opacity-12 bg-center overflow-hidden"
     >
       <div class="absolute pointer-events-none inset-0 bg-(image:--bgx-stars) bg-center -z-1"></div>
 
@@ -66,7 +71,7 @@ function triggerLoginDropdown() {
 
       <nav
         data-testid="welcome-hero__nav"
-        class="w-full max-w-(--page-width) mx-auto flex justify-between items-center relative z-5"
+        class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex justify-between items-center relative z-5"
       >
         <div data-testid="welcome-hero__brand" class="flex items-center gap-2 text-brown-100">
           <ui-image src="splash-logo" class="h-9" />
@@ -98,7 +103,7 @@ function triggerLoginDropdown() {
 
       <div
         data-testid="welcome-hero__content"
-        class="w-full max-w-(--page-width) mx-auto mt-16 grid grid-cols-1 md:grid-cols-2 gap-16 items-center relative z-3"
+        class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 mt-16 grid grid-cols-1 md:grid-cols-[400px_auto] gap-16 items-center justify-center relative z-3"
       >
         <div data-testid="welcome-hero__copy" class="flex flex-col items-start gap-7">
           <h1 class="text-7xl text-brown-100 font-bold leading-none">
@@ -112,32 +117,15 @@ function triggerLoginDropdown() {
           <div data-testid="welcome-hero__actions" class="flex items-center gap-4">
             <ui-button
               size="xl"
-              data-theme="orange-700"
-              icon-right="arrow-forward"
-              class="outline-4! outline-brown-100!"
+              data-theme="brown-100"
+              data-theme-dark="stone-700"
+              icon-left="user-sticker-square"
               :sfx="{ press: 'double_pop_up' }"
               @press="signup()"
             >
               {{ t('welcome-view.signup-button') }}
             </ui-button>
-
-            <button
-              data-testid="welcome-hero__login-link"
-              class="text-brown-100 text-base underline underline-offset-4 cursor-pointer"
-              @click="triggerLoginDropdown"
-            >
-              {{ t('welcome-view.hero.login-link') }}
-            </button>
           </div>
-
-          <ul
-            data-testid="welcome-hero__trust"
-            class="flex flex-wrap gap-x-6 gap-y-2 text-brown-100 text-base"
-          >
-            <li>✿ {{ t('welcome-view.hero.trust-no-ads') }}</li>
-            <li>✿ {{ t('welcome-view.hero.trust-made-with-care') }}</li>
-            <li>✿ {{ t('welcome-view.hero.trust-portable') }}</li>
-          </ul>
         </div>
 
         <div data-testid="welcome-hero__preview" class="flex justify-center md:justify-end pr-4">
@@ -145,7 +133,7 @@ function triggerLoginDropdown() {
             :cover="preview_cover"
             :card_attributes="preview_attributes"
             :side="preview_side"
-            @update:side="preview_side = $event"
+            @update:side="flipPreviewSide"
           />
         </div>
       </div>
