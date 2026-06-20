@@ -1,11 +1,6 @@
 import { supabase } from '@/supabase-client'
 import logger from '@/utils/logger'
-import type {
-  StripeInvoice,
-  StripePaymentMethod,
-  StripeSubscription,
-  StripeUpcomingInvoice
-} from '../stripe'
+import type { StripeInvoice, StripePaymentMethod, StripeSubscription } from '../stripe'
 
 export type CreateSubscriptionArgs = { planId: string }
 export type CreateSubscriptionResult = {
@@ -49,13 +44,21 @@ async function manage<T>(body: ManagePayload): Promise<T> {
   return data
 }
 
-export type GetSubscriptionResult = {
-  subscription: StripeSubscription | null
-  upcoming: StripeUpcomingInvoice
+// Normalized subscription view returned by the edge function — flat domain
+// fields, no raw Stripe shapes. `null` for free members. Money is in minor
+// units and `currentPeriodEnd` is a UNIX second; the FE formats both.
+export type SubscriptionView = {
+  priceCents: number | null
+  currency: string | null
+  interval: 'day' | 'week' | 'month' | 'year' | null
+  status: string
+  currentPeriodEnd: number
+  cancelAtPeriodEnd: boolean
+  upcoming: { amountCents: number; currency: string } | null
 }
 
 export function getSubscription() {
-  return manage<GetSubscriptionResult>({ action: 'get-subscription' })
+  return manage<SubscriptionView | null>({ action: 'get-subscription' })
 }
 
 export function listInvoices(limit?: number) {

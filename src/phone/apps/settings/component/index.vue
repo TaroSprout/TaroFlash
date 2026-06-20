@@ -55,9 +55,9 @@ const tab_outlet = ref<HTMLElement>()
 const { nav_direction, onTabEnter, onTabLeave } = useTabTransition(layout_mode, tab_outlet)
 
 const tabs = computed(() => [
-  { value: 'profile', icon: 'id-card', label: t('settings.tab.profile') },
+  { value: 'profile', icon: 'user-sticker-square', label: t('settings.tab.profile') },
   { value: 'subscription', icon: 'piggy-bank', label: t('settings.tab.subscription') },
-  { value: 'app', icon: 'music-note', label: t('settings.tab.app') },
+  { value: 'app', icon: 'screwdriver-wrench', label: t('settings.tab.app') },
   { value: 'danger-zone', icon: 'delete', label: t('settings.tab.danger-zone') }
 ])
 

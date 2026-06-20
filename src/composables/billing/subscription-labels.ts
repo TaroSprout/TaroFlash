@@ -18,19 +18,16 @@ type SubscriptionQuery = ReturnType<typeof useSubscriptionQuery>
 export function useSubscriptionLabels(subscriptionQuery: SubscriptionQuery) {
   const { t, locale } = useI18n()
 
-  const subscription = computed(() => subscriptionQuery.data.value?.subscription ?? null)
+  const subscription = computed(() => subscriptionQuery.data.value ?? null)
 
   const cost = computed(() => {
-    const price = subscription.value?.items.data[0]?.price
-    if (!price?.unit_amount) return null
+    const sub = subscription.value
+    if (!sub?.priceCents || !sub.currency) return null
 
-    const amount = (price.unit_amount / 100).toFixed(2)
-    const currency = price.currency.toUpperCase()
-    const interval = price.recurring?.interval ?? null
-
-    return interval
-      ? t('settings.subscription.plan.price-per-interval', { amount, currency, interval })
-      : t('settings.subscription.plan.price', { amount, currency })
+    const amount = formatMoney(sub.priceCents, sub.currency, locale.value)
+    return sub.interval
+      ? t('settings.subscription.plan.price-per-interval', { amount, interval: sub.interval })
+      : amount
   })
 
   const status_label = computed(() => {
@@ -44,13 +41,12 @@ export function useSubscriptionLabels(subscriptionQuery: SubscriptionQuery) {
     const sub = subscription.value
     if (!sub) return null
 
-    const date = formatStripeDate(sub.current_period_end, locale.value)
-    if (sub.cancel_at_period_end) return t('settings.subscription.plan.cancels-on', { date })
+    const date = formatStripeDate(sub.currentPeriodEnd, locale.value)
+    if (sub.cancelAtPeriodEnd) return t('settings.subscription.plan.cancels-on', { date })
 
-    const upcoming = subscriptionQuery.data.value?.upcoming
-    if (!upcoming) return t('settings.subscription.plan.renews-on', { date })
+    if (!sub.upcoming) return t('settings.subscription.plan.renews-on', { date })
 
-    const amount = formatMoney(upcoming.amount_due, upcoming.currency, locale.value)
+    const amount = formatMoney(sub.upcoming.amountCents, sub.upcoming.currency, locale.value)
     return t('settings.subscription.plan.upcoming-charge', { amount, date })
   })
 

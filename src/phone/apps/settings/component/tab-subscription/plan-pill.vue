@@ -1,12 +1,12 @@
 <script setup lang="ts">
 type PlanPillProps = {
-  name: string
+  name?: string
   cost?: string | null
   description?: string | null
   loading?: boolean
 }
 
-const { name, cost = null, description = null, loading = false } = defineProps<PlanPillProps>()
+const { name = '', cost = null, description = null, loading = false } = defineProps<PlanPillProps>()
 
 defineSlots<{
   actions?: () => unknown

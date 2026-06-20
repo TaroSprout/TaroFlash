@@ -7,7 +7,6 @@ import PlanActions from './plan-actions.vue'
 import type { useSubscriptionQuery } from '@/api/billing'
 import { useMemberStore } from '@/stores/member'
 import { useSubscriptionLabels } from '@/composables/billing/subscription-labels'
-import { PLANS } from '@/config/plans'
 
 type SubscriptionQuery = ReturnType<typeof useSubscriptionQuery>
 
@@ -35,7 +34,7 @@ const view = computed(() =>
         label: t('settings.subscription.plan.label'),
         theme: 'blue-500',
         theme_dark: 'blue-650',
-        name: PLANS.paid.displayName,
+        name: member_store.plan_display_name,
         cost: cost.value,
         description: description.value
       }
@@ -43,7 +42,7 @@ const view = computed(() =>
         label: t('settings.subscription.free.label'),
         theme: 'green-400',
         theme_dark: 'green-400',
-        name: PLANS.free.displayName,
+        name: member_store.plan_display_name,
         cost: t('settings.subscription.free.cost'),
         description: t('settings.subscription.free.status')
       }
@@ -64,7 +63,7 @@ const view = computed(() =>
       v-else
       :data-theme="view.theme"
       :data-theme-dark="view.theme_dark"
-      :loading="true"
+      :loading="loading"
       :name="view.name"
       :cost="view.cost"
       :description="view.description"

@@ -5,7 +5,7 @@ import type { useSubscriptionQuery } from '@/api/billing'
 import { useSubscriptionActions } from '@/composables/member/subscription-actions'
 
 type SubscriptionQuery = ReturnType<typeof useSubscriptionQuery>
-type Subscription = NonNullable<SubscriptionQuery['data']['value']>['subscription']
+type Subscription = SubscriptionQuery['data']['value']
 
 type PlanActionsProps = {
   subscription: Subscription
@@ -30,7 +30,7 @@ const { onUpgrade, onCancel, onResume, canceling, resuming } = useSubscriptionAc
   </ui-button>
 
   <ui-button
-    v-else-if="!subscription.cancel_at_period_end"
+    v-else-if="!subscription.cancelAtPeriodEnd"
     data-testid="billing-settings__plan-cancel"
     data-theme="red-500"
     data-theme-dark="red-600"

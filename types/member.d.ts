@@ -8,6 +8,7 @@ type Member = {
   updated_at?: string
   role?: MemberRole
   plan?: MemberPlan
+  plan_display_name?: string
   preferences?: MemberPreferences
 }
 
