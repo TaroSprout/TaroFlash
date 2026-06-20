@@ -64,11 +64,6 @@ function flipPreviewSide(side: CardSide) {
     >
       <div class="absolute pointer-events-none inset-0 bg-(image:--bgx-stars) bg-center -z-1"></div>
 
-      <div data-testid="stationary" class="absolute inset-0 pointer-events-none drop-shadow-sm">
-        <ui-image src="splash-top-left" class="absolute top-0 left-0" />
-        <ui-image src="splash-bottom-right" class="absolute bottom-0 right-0" />
-      </div>
-
       <nav
         data-testid="welcome-hero__nav"
         class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex justify-between items-center relative z-5"
