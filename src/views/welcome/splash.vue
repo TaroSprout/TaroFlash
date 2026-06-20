@@ -35,12 +35,12 @@ const preview_attributes: DeckCardAttributes = {
 
 function openLoginDropdown() {
   login_dropdown_open.value = true
-  emitSfx('slide_up')
+  emitSfx('snappy_button_5')
 }
 
 function closeLoginDropdown() {
   login_dropdown_open.value = false
-  emitSfx('card_drop')
+  emitSfx('snappy_button_5')
 }
 
 function triggerLoginDropdown() {
