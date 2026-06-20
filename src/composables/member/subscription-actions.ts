@@ -2,22 +2,30 @@ import { useI18n } from 'vue-i18n'
 import { useCancelSubscriptionMutation, useResumeSubscriptionMutation } from '@/api/billing'
 import { useAlert } from '@/composables/alert'
 import { useToast } from '@/composables/toast'
+import { useModal } from '@/composables/modal'
+import Checkout from '@/components/modals/checkout.vue'
 
 /**
- * Subscription lifecycle orchestrators for the billing plan section. Owns the
- * cancel/resume billing mutations and surfaces their loading state, plus the
- * cancel confirm-alert and the success/error toasts. `onCancel` is a no-op when
- * the member dismisses the confirm-alert.
+ * Subscription lifecycle orchestrators for the billing plan section: upgrade a
+ * free member (opens checkout), cancel at period end (confirm-alert + mutation),
+ * and resume a canceling plan. Owns the cancel/resume billing mutations and
+ * surfaces their loading state, plus the toasts. `onCancel` is a no-op when the
+ * member dismisses the confirm-alert.
  *
  * @example
- * const { onCancel, onResume, canceling, resuming } = useSubscriptionActions()
+ * const { onUpgrade, onCancel, onResume, canceling, resuming } = useSubscriptionActions()
  */
 export function useSubscriptionActions() {
   const { t } = useI18n()
   const alert = useAlert()
   const toast = useToast()
+  const modal = useModal()
   const cancelMutation = useCancelSubscriptionMutation()
   const resumeMutation = useResumeSubscriptionMutation()
+
+  function onUpgrade() {
+    modal.open(Checkout, { mode: 'mobile-sheet', backdrop: true })
+  }
 
   async function onCancel() {
     const { response } = alert.warn({
@@ -46,6 +54,7 @@ export function useSubscriptionActions() {
   }
 
   return {
+    onUpgrade,
     onCancel,
     onResume,
     canceling: cancelMutation.isLoading,

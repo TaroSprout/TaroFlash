@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import SectionList from '@/components/layout-kit/section-list.vue'
-import FreePlanSection from './free-plan-section.vue'
 import PlanSection from './plan-section.vue'
 import PaymentMethodsSection from './payment-methods-section.vue'
 import SettingsBackButton from '../settings-back-button.vue'
@@ -19,7 +18,7 @@ const emit = defineEmits<{ back: [] }>()
   <section-list data-testid="tab-subscription" class="max-h-full overflow-y-auto">
     <settings-back-button @back="emit('back')" />
 
-    <free-plan-section v-if="member_store.plan !== 'paid'" />
+    <plan-section v-if="member_store.plan !== 'paid'" :subscription-query="subscription_query" />
 
     <template v-else>
       <p

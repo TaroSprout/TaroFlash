@@ -24,11 +24,11 @@ defineSlots<{
 
     <div
       data-testid="plan-pill__body"
-      class="flex items-stretch gap-4 rounded-4 bg-(--theme-primary) bgx-leaf p-5 text-(--theme-on-primary)"
+      class="flex items-stretch gap-4 rounded-4 bg-(--theme-primary) bgx-leaf bgx-size-23 bgx-opacity-10 p-5 text-(--theme-on-primary)"
     >
       <div data-testid="plan-pill__primary" class="flex flex-1 flex-col gap-1">
-        <p data-testid="plan-pill__name" class="text-lg">{{ name }}</p>
-        <p v-if="description" data-testid="plan-pill__description" class="text-sm text-brown-200">
+        <p data-testid="plan-pill__name" class="text-2xl">{{ name }}</p>
+        <p v-if="description" data-testid="plan-pill__description" class="text-brown-200">
           {{ description }}
         </p>
       </div>
