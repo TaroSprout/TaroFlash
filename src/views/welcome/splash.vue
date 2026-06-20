@@ -107,9 +107,7 @@ function flipPreviewSide(side: CardSide) {
       >
         <div data-testid="welcome-hero__copy" class="flex flex-col items-start gap-7">
           <h1 class="text-7xl text-brown-100 font-bold leading-none">
-            {{ t('welcome-view.hero.heading-lead') }}
-            <span class="text-orange-700">{{ t('welcome-view.hero.heading-accent') }}</span
-            >.
+            {{ t('welcome-view.hero.heading') }}
           </h1>
 
           <p class="text-lg text-brown-100 max-w-110">{{ t('welcome-view.hero.subheading') }}</p>
