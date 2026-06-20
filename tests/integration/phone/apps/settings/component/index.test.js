@@ -413,3 +413,19 @@ describe('settings app — close with unsaved-changes guard [obligation]', () =>
     expect(close).not.toHaveBeenCalled()
   })
 })
+
+// ── Open / close sfx ──────────────────────────────────────────────────────────
+
+describe('settings app — open/close sfx [obligation]', () => {
+  test('emits snappy_button_3 on mount (open sound) [obligation]', () => {
+    makeWrapper()
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_3')
+  })
+
+  test('emits snappy_button_5 on unmount (close sound) [obligation]', () => {
+    const wrapper = makeWrapper()
+    mockEmitSfx.mockReset()
+    wrapper.unmount()
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+  })
+})
