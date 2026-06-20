@@ -5,10 +5,10 @@ import { onMounted, useTemplateRef } from 'vue'
 import { emitSfx } from '@/sfx/bus'
 import { useModal } from '@/composables/modal'
 import Splash from './splash.vue'
-import FeaturesSection from './features-section.vue'
-import ConfigSection from './config-section.vue'
-import PricingSection from './pricing-section.vue'
-import RoadmapSection from './roadmap-section.vue'
+import SectionFeatures from './section-features.vue'
+import SectionConfig from './section-config.vue'
+import SectionPricing from './section-pricing.vue'
+import SectionRoadmap from './section-roadmap.vue'
 import SignupDialog from './sign-up/sign-up.vue'
 import WelcomeFooter from '@/components/welcome-footer.vue'
 
@@ -37,9 +37,9 @@ function scrollToContent() {
 
 <template>
   <splash :signup="openSignup" :see-more="scrollToContent" />
-  <features-section ref="features" />
-  <config-section />
-  <pricing-section :signup="openSignup" />
-  <roadmap-section />
+  <section-features ref="features" />
+  <section-config />
+  <section-pricing :signup="openSignup" />
+  <section-roadmap />
   <welcome-footer />
 </template>
