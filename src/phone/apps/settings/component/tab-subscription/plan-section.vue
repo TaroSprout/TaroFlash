@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import UiButton from '@/components/ui-kit/button.vue'
@@ -7,6 +7,7 @@ import PlanPill from './plan-pill.vue'
 import { useCancelSubscriptionMutation, useResumeSubscriptionMutation } from '@/api/billing'
 import type { useSubscriptionQuery } from '@/api/billing'
 import { useToast } from '@/composables/toast'
+import { useAlert } from '@/composables/alert'
 import { formatShortDate } from '@/utils/date'
 import { PLANS } from '@/config/plans'
 
@@ -20,10 +21,9 @@ const { subscriptionQuery } = defineProps<PlanSectionProps>()
 
 const { t, locale } = useI18n()
 const toast = useToast()
+const alert = useAlert()
 const cancelMutation = useCancelSubscriptionMutation()
 const resumeMutation = useResumeSubscriptionMutation()
-
-const confirming_cancel = ref(false)
 
 const subscription = computed(() => subscriptionQuery.data.value?.subscription ?? null)
 
@@ -64,9 +64,16 @@ const cancel_label = computed(() => {
 })
 
 async function onCancel() {
+  const { response } = alert.warn({
+    title: t('settings.subscription.plan.cancel-confirm-title'),
+    message: t('settings.subscription.plan.cancel-confirm'),
+    confirmLabel: t('settings.subscription.plan.cancel-confirm-button'),
+    cancelLabel: t('settings.subscription.plan.cancel-abort')
+  })
+  if (!(await response)) return
+
   try {
     await cancelMutation.mutateAsync(true)
-    confirming_cancel.value = false
     toast.success(t('settings.subscription.plan.cancel-success'))
   } catch {
     toast.error(t('settings.subscription.plan.cancel-error'))
@@ -114,21 +121,21 @@ async function onResume() {
         </span>
       </template>
 
-      <template v-if="!subscription?.cancel_at_period_end && !confirming_cancel" #cta>
+      <template v-if="!subscription?.cancel_at_period_end" #cta>
         <ui-button
           data-testid="billing-settings__plan-cancel"
           data-theme="red-500"
           data-theme-dark="red-600"
           size="sm"
-          @press="confirming_cancel = true"
+          :loading="cancelMutation.isLoading.value"
+          @press="onCancel"
         >
           {{ t('settings.subscription.plan.cancel') }}
         </ui-button>
       </template>
 
-      <template v-if="subscription?.cancel_at_period_end || confirming_cancel" #actions>
+      <template v-if="subscription?.cancel_at_period_end" #actions>
         <ui-button
-          v-if="subscription?.cancel_at_period_end"
           data-testid="billing-settings__plan-resume"
           data-theme="green-400"
           size="sm"
@@ -137,32 +144,6 @@ async function onResume() {
         >
           {{ t('settings.subscription.plan.resume') }}
         </ui-button>
-
-        <template v-else>
-          <p
-            data-testid="billing-settings__plan-cancel-prompt"
-            class="w-full text-sm text-brown-700 dark:text-brown-300"
-          >
-            {{ t('settings.subscription.plan.cancel-confirm') }}
-          </p>
-          <ui-button
-            data-testid="billing-settings__plan-cancel-confirm"
-            data-theme="red-500"
-            size="sm"
-            :loading="cancelMutation.isLoading.value"
-            @press="onCancel"
-          >
-            {{ t('settings.subscription.plan.cancel-confirm-button') }}
-          </ui-button>
-          <ui-button
-            data-testid="billing-settings__plan-cancel-abort"
-            data-theme="grey-400"
-            size="sm"
-            @press="confirming_cancel = false"
-          >
-            {{ t('settings.subscription.plan.cancel-abort') }}
-          </ui-button>
-        </template>
       </template>
     </plan-pill>
   </labeled-section>

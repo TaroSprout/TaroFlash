@@ -137,6 +137,7 @@
   "settings.subscription.plan.status.incomplete": "Incomplete",
   "settings.subscription.plan.status.incomplete_expired": "Expired",
   "settings.subscription.plan.cancel": "Cancel subscription",
+  "settings.subscription.plan.cancel-confirm-title": "Cancel subscription?",
   "settings.subscription.plan.cancel-confirm": "Your plan will stay active until the end of the current period.",
   "settings.subscription.plan.cancel-confirm-button": "Confirm cancel",
   "settings.subscription.plan.cancel-abort": "Keep plan",
