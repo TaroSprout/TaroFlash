@@ -35,5 +35,5 @@ function openSignup(payment?: boolean) {
   <config-section />
   <pricing-section :signup="openSignup" />
   <roadmap-section />
-  <welcome-footer :signup="openSignup" />
+  <welcome-footer />
 </template>

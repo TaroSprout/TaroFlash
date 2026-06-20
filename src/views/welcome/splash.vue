@@ -52,101 +52,103 @@ function triggerLoginDropdown() {
 </script>
 
 <template>
-  <section
-    data-testid="welcome-hero"
-    class="flex flex-col w-full px-7.5 pt-7.5 pb-35 relative bg-green-400 wave-bottom-[30px] bgx-diagonal-stripes bgx-size-20 bgx-opacity-12 bg-center overflow-hidden"
-  >
-    <div class="absolute pointer-events-none inset-0 bg-(image:--bgx-stars) bg-center -z-1"></div>
-
-    <div data-testid="stationary" class="absolute inset-0 pointer-events-none drop-shadow-sm">
-      <ui-image src="splash-top-left" class="absolute top-0 left-0" />
-      <ui-image src="splash-bottom-right" class="absolute bottom-0 right-0" />
-    </div>
-
-    <nav
-      data-testid="welcome-hero__nav"
-      class="w-full max-w-(--page-width) mx-auto flex justify-between items-center relative z-5"
+  <div data-testid="welcome-hero__wave-backdrop" class="w-full bg-brown-200 dark:bg-grey-800">
+    <section
+      data-testid="welcome-hero"
+      class="flex flex-col w-full px-7.5 pt-7.5 pb-44 relative bg-green-400 wave-bottom-[30px] bgx-diagonal-stripes bgx-size-20 bgx-opacity-12 bg-center overflow-hidden"
     >
-      <div data-testid="welcome-hero__brand" class="flex items-center gap-2 text-brown-100">
-        <ui-image src="splash-logo" class="h-9" />
-        <span class="text-2xl font-bold">{{ t('app.title') }}</span>
+      <div class="absolute pointer-events-none inset-0 bg-(image:--bgx-stars) bg-center -z-1"></div>
+
+      <div data-testid="stationary" class="absolute inset-0 pointer-events-none drop-shadow-sm">
+        <ui-image src="splash-top-left" class="absolute top-0 left-0" />
+        <ui-image src="splash-bottom-right" class="absolute bottom-0 right-0" />
       </div>
 
-      <ui-popover
-        :open="login_dropdown_open"
-        :gap="4"
-        :use_arrow="false"
-        :clip="false"
-        position="bottom-end"
-        @close="closeLoginDropdown"
+      <nav
+        data-testid="welcome-hero__nav"
+        class="w-full max-w-(--page-width) mx-auto flex justify-between items-center relative z-5"
       >
-        <template #trigger>
-          <button
-            data-testid="welcome-hero__login-trigger"
-            class="bg-brown-300 text-brown-700 px-4 py-2.5 rounded-2.5 text-lg cursor-pointer"
-            :class="{ 'rounded-b-0.5': login_dropdown_open }"
-            @click="triggerLoginDropdown"
-          >
-            {{ t('welcome-view.login-button') }}
-          </button>
-        </template>
-
-        <LoginDialogue />
-      </ui-popover>
-    </nav>
-
-    <div
-      data-testid="welcome-hero__content"
-      class="w-full max-w-(--page-width) mx-auto mt-16 grid grid-cols-1 md:grid-cols-2 gap-16 items-center relative z-3"
-    >
-      <div data-testid="welcome-hero__copy" class="flex flex-col items-start gap-7">
-        <h1 class="text-7xl text-brown-100 font-bold leading-none">
-          {{ t('welcome-view.hero.heading-lead') }}
-          <span class="text-orange-700">{{ t('welcome-view.hero.heading-accent') }}</span
-          >.
-        </h1>
-
-        <p class="text-lg text-brown-100 max-w-110">{{ t('welcome-view.hero.subheading') }}</p>
-
-        <div data-testid="welcome-hero__actions" class="flex items-center gap-4">
-          <ui-button
-            size="xl"
-            data-theme="orange-700"
-            icon-right="arrow-forward"
-            class="outline-4! outline-brown-100!"
-            :sfx="{ press: 'double_pop_up' }"
-            @press="signup()"
-          >
-            {{ t('welcome-view.signup-button') }}
-          </ui-button>
-
-          <button
-            data-testid="welcome-hero__login-link"
-            class="text-brown-100 text-base underline underline-offset-4 cursor-pointer"
-            @click="triggerLoginDropdown"
-          >
-            {{ t('welcome-view.hero.login-link') }}
-          </button>
+        <div data-testid="welcome-hero__brand" class="flex items-center gap-2 text-brown-100">
+          <ui-image src="splash-logo" class="h-9" />
+          <span class="text-2xl font-bold">{{ t('app.title') }}</span>
         </div>
 
-        <ul
-          data-testid="welcome-hero__trust"
-          class="flex flex-wrap gap-x-6 gap-y-2 text-brown-100 text-base"
+        <ui-popover
+          :open="login_dropdown_open"
+          :gap="4"
+          :use_arrow="false"
+          :clip="false"
+          position="bottom-end"
+          @close="closeLoginDropdown"
         >
-          <li>✿ {{ t('welcome-view.hero.trust-no-ads') }}</li>
-          <li>✿ {{ t('welcome-view.hero.trust-made-with-care') }}</li>
-          <li>✿ {{ t('welcome-view.hero.trust-portable') }}</li>
-        </ul>
-      </div>
+          <template #trigger>
+            <button
+              data-testid="welcome-hero__login-trigger"
+              class="bg-brown-300 text-brown-700 px-4 py-2.5 rounded-2.5 text-lg cursor-pointer"
+              :class="{ 'rounded-b-0.5': login_dropdown_open }"
+              @click="triggerLoginDropdown"
+            >
+              {{ t('welcome-view.login-button') }}
+            </button>
+          </template>
 
-      <div data-testid="welcome-hero__preview" class="flex justify-center md:justify-end pr-4">
-        <pinned-preview
-          :cover="preview_cover"
-          :card_attributes="preview_attributes"
-          :side="preview_side"
-          @update:side="preview_side = $event"
-        />
+          <LoginDialogue />
+        </ui-popover>
+      </nav>
+
+      <div
+        data-testid="welcome-hero__content"
+        class="w-full max-w-(--page-width) mx-auto mt-16 grid grid-cols-1 md:grid-cols-2 gap-16 items-center relative z-3"
+      >
+        <div data-testid="welcome-hero__copy" class="flex flex-col items-start gap-7">
+          <h1 class="text-7xl text-brown-100 font-bold leading-none">
+            {{ t('welcome-view.hero.heading-lead') }}
+            <span class="text-orange-700">{{ t('welcome-view.hero.heading-accent') }}</span
+            >.
+          </h1>
+
+          <p class="text-lg text-brown-100 max-w-110">{{ t('welcome-view.hero.subheading') }}</p>
+
+          <div data-testid="welcome-hero__actions" class="flex items-center gap-4">
+            <ui-button
+              size="xl"
+              data-theme="orange-700"
+              icon-right="arrow-forward"
+              class="outline-4! outline-brown-100!"
+              :sfx="{ press: 'double_pop_up' }"
+              @press="signup()"
+            >
+              {{ t('welcome-view.signup-button') }}
+            </ui-button>
+
+            <button
+              data-testid="welcome-hero__login-link"
+              class="text-brown-100 text-base underline underline-offset-4 cursor-pointer"
+              @click="triggerLoginDropdown"
+            >
+              {{ t('welcome-view.hero.login-link') }}
+            </button>
+          </div>
+
+          <ul
+            data-testid="welcome-hero__trust"
+            class="flex flex-wrap gap-x-6 gap-y-2 text-brown-100 text-base"
+          >
+            <li>✿ {{ t('welcome-view.hero.trust-no-ads') }}</li>
+            <li>✿ {{ t('welcome-view.hero.trust-made-with-care') }}</li>
+            <li>✿ {{ t('welcome-view.hero.trust-portable') }}</li>
+          </ul>
+        </div>
+
+        <div data-testid="welcome-hero__preview" class="flex justify-center md:justify-end pr-4">
+          <pinned-preview
+            :cover="preview_cover"
+            :card_attributes="preview_attributes"
+            :side="preview_side"
+            @update:side="preview_side = $event"
+          />
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
+  </div>
 </template>
