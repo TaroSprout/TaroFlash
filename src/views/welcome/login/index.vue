@@ -4,23 +4,18 @@ import UiDropdownButton from '@/components/ui-kit/dropdown-button/index.vue'
 import { useLoginActions } from '@/composables/auth/use-login-actions'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { useToast } from '@/composables/toast'
 
 const { t } = useI18n()
 const router = useRouter()
-const toast = useToast()
 
 const auth = useLoginActions()
 
 async function onSubmit() {
   const result = await auth.submit()
 
-  if (result === 'success') {
-    router.push({ name: 'authenticated' })
-    return
-  }
-
-  toast.error(auth.errorMessage)
+  // 'invalid' shows inline field errors; 'error' shows the backend message
+  // above the submit button — both keep the dialog open.
+  if (result === 'success') router.push({ name: 'authenticated' })
 }
 </script>
 
@@ -44,7 +39,11 @@ async function onSubmit() {
       <login-form
         v-model:email="auth.email"
         v-model:password="auth.password"
+        :errors="auth.errors"
         :loading="auth.loading"
+        :all-filled="auth.all_filled"
+        :submit-error="auth.submitError"
+        @vue:mounted="auth.reset"
         @submit="onSubmit"
         @oauth="auth.submitOAuth"
       />

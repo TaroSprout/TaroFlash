@@ -9,6 +9,7 @@ import {
   type SignupEmailOptions,
   type SignupOAuthOptions,
   type SignupOutcome,
+  type LoginOutcome,
   type OAuthProvider
 } from '@/api/session'
 import { useRouter } from 'vue-router'
@@ -42,8 +43,8 @@ export const useSessionStore = defineStore('sessionStore', () => {
     }
   }
 
-  async function login(email: string, password: string): Promise<void> {
-    await supaLogin(email, password)
+  function login(email: string, password: string): Promise<LoginOutcome> {
+    return supaLogin(email, password)
   }
 
   async function logout(): Promise<void> {

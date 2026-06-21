@@ -4,8 +4,19 @@ import UiButton from '@/components/ui-kit/button.vue'
 import UiDivider from '@/components/ui-kit/divider.vue'
 import { useI18n } from 'vue-i18n'
 import type { OAuthProvider } from '@/api/session'
+import type { LoginFieldErrors } from '@/composables/auth/use-login-actions'
 
-const { loading = false } = defineProps<{ loading?: boolean }>()
+const {
+  errors = {},
+  loading = false,
+  allFilled = false,
+  submitError = ''
+} = defineProps<{
+  errors?: LoginFieldErrors
+  loading?: boolean
+  allFilled?: boolean
+  submitError?: string
+}>()
 
 const email = defineModel<string>('email', { required: true })
 const password = defineModel<string>('password', { required: true })
@@ -38,9 +49,11 @@ const { t } = useI18n()
             type="email"
             name="email"
             data-theme="brown-50"
+            data-theme-dark="stone-900"
             autocomplete="username"
             size="lg"
             v-model="email"
+            :error="errors.email"
             :placeholder="t('login-dialog.email-placeholder')"
           />
         </div>
@@ -50,25 +63,39 @@ const { t } = useI18n()
             type="password"
             name="password"
             data-theme="brown-50"
+            data-theme-dark="stone-900"
             autocomplete="current-password"
             size="lg"
             v-model="password"
+            :error="errors.password"
             :placeholder="t('login-dialog.password')"
           />
         </div>
       </div>
 
-      <ui-button
-        data-testid="login-dialog__submit"
-        size="lg"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
-        :loading="loading"
-        class="w-full!"
-        @press="emit('submit')"
-      >
-        {{ t('login-dialog.submit-button') }}
-      </ui-button>
+      <div data-testid="login-dialog__footer" class="w-full flex flex-col items-center gap-2">
+        <p
+          v-if="submitError"
+          data-testid="login-dialog__error"
+          class="text-base text-red-500 dark:text-red-400 text-center"
+        >
+          {{ submitError }}
+        </p>
+
+        <ui-button
+          data-testid="login-dialog__submit"
+          size="lg"
+          data-theme="blue-500"
+          data-theme-dark="blue-650"
+          :loading="loading"
+          :disabled="!allFilled"
+          click-when-disabled
+          class="w-full!"
+          @press="emit('submit')"
+        >
+          {{ t('login-dialog.submit-button') }}
+        </ui-button>
+      </div>
     </form>
   </div>
 </template>
