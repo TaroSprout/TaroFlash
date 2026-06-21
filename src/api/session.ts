@@ -1,9 +1,12 @@
 import { supabase } from '@/supabase-client'
 import type { Session } from '@supabase/supabase-js'
+import logger from '@/utils/logger'
 
 export type SignupEmailOptions = {
   display_name?: string
 }
+
+export type SignupOutcome = 'success' | 'email-taken' | 'error'
 
 export type SignupOAuthOptions = {
   redirectTo?: string
@@ -52,20 +55,25 @@ export async function signupEmail(
   email: string,
   password: string,
   opts?: SignupEmailOptions
-): Promise<Session | null> {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: opts
-    }
-  })
+): Promise<SignupOutcome> {
+  try {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: opts
+      }
+    })
 
-  if (error) {
-    throw error
+    if (!error) return 'success'
+    if (error.code === 'user_already_exists') return 'email-taken'
+
+    logger.error(`Signup failed: ${error.message}`)
+    return 'error'
+  } catch (e: any) {
+    logger.error(`Signup failed: ${e.message}`)
+    return 'error'
   }
-
-  return data?.session
 }
 
 function prefersFullRedirect(): boolean {

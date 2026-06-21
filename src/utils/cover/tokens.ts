@@ -18,7 +18,8 @@ export const SUPPORTED_PATTERNS: DeckCoverPattern[] = [
   'wave',
   'bank-note',
   'aztec',
-  'endless-clouds'
+  'endless-clouds',
+  'leaf'
 ]
 
 export const SUPPORTED_ICONS: string[] = [
@@ -41,5 +42,6 @@ export const PATTERN_TOKENS: Record<DeckCoverPattern, PatternToken> = {
   wave: { size: '120px', opacity: '0.7' },
   'bank-note': { size: '138px', opacity: '0.15' },
   aztec: { size: '60px', opacity: '0.15' },
-  'endless-clouds': { size: '120px', opacity: '0.6' }
+  'endless-clouds': { size: '120px', opacity: '0.6' },
+  leaf: { size: '100px', opacity: '0.1' }
 }

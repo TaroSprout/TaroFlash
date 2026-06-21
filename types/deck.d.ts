@@ -54,6 +54,7 @@ type DeckCoverPattern =
   | 'bank-note'
   | 'aztec'
   | 'endless-clouds'
+  | 'leaf'
 
 type DeckCover = {
   theme?: Theme

@@ -75,10 +75,10 @@ describe('logout', () => {
 })
 
 describe('signupEmail', () => {
-  test('passes display_name through options.data', async () => {
+  test('passes display_name through options.data and resolves "success"', async () => {
     const session = { user: { id: 'u1' } }
     mocks.signUp.mockResolvedValueOnce({ data: { session }, error: null })
-    await expect(signupEmail('e@x.com', 'pw', { display_name: 'Alice' })).resolves.toEqual(session)
+    await expect(signupEmail('e@x.com', 'pw', { display_name: 'Alice' })).resolves.toBe('success')
     expect(mocks.signUp).toHaveBeenCalledWith({
       email: 'e@x.com',
       password: 'pw',
@@ -86,10 +86,22 @@ describe('signupEmail', () => {
     })
   })
 
-  test('throws the raw error from supabase', async () => {
-    const err = { message: 'dup', status: 422 }
-    mocks.signUp.mockResolvedValueOnce({ data: null, error: err })
-    await expect(signupEmail('e@x.com', 'pw')).rejects.toBe(err)
+  test('maps the user_already_exists error to "email-taken"', async () => {
+    mocks.signUp.mockResolvedValueOnce({
+      data: null,
+      error: { code: 'user_already_exists', message: 'dup' }
+    })
+    await expect(signupEmail('e@x.com', 'pw')).resolves.toBe('email-taken')
+  })
+
+  test('maps any other supabase error to "error"', async () => {
+    mocks.signUp.mockResolvedValueOnce({ data: null, error: { message: 'boom', status: 500 } })
+    await expect(signupEmail('e@x.com', 'pw')).resolves.toBe('error')
+  })
+
+  test('returns "error" when supabase.auth.signUp throws [obligation]', async () => {
+    mocks.signUp.mockRejectedValueOnce(new Error('network failure'))
+    await expect(signupEmail('e@x.com', 'pw')).resolves.toBe('error')
   })
 })
 
