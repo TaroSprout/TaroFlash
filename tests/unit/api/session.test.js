@@ -98,6 +98,11 @@ describe('signupEmail', () => {
     mocks.signUp.mockResolvedValueOnce({ data: null, error: { message: 'boom', status: 500 } })
     await expect(signupEmail('e@x.com', 'pw')).resolves.toBe('error')
   })
+
+  test('returns "error" when supabase.auth.signUp throws [obligation]', async () => {
+    mocks.signUp.mockRejectedValueOnce(new Error('network failure'))
+    await expect(signupEmail('e@x.com', 'pw')).resolves.toBe('error')
+  })
 })
 
 describe('signInOAuth', () => {
