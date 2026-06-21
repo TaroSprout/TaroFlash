@@ -2,6 +2,7 @@
 import SplashNav from './splash-nav.vue'
 import SplashCopy from './splash-copy.vue'
 import SplashPreview from './splash-preview.vue'
+import SplashActions from './splash-actions.vue'
 
 type SplashProps = {
   signup: (payment?: boolean) => void
@@ -21,10 +22,15 @@ const { signup, seeMore } = defineProps<SplashProps>()
 
       <div
         data-testid="welcome-hero__content"
-        class="w-full max-w-250 mx-auto px-4 sm:px-16 grow grid grid-cols-1 md:grid-cols-[auto_auto] gap-12 items-center content-center justify-between relative z-3"
+        class="w-full max-w-250 mx-auto px-4 sm:px-16 grow grid grid-cols-1 lg:grid-cols-[auto_auto] lg:grid-rows-2 gap-4 lg:gap-x-12 lg:gap-y-7 items-center content-center justify-between max-lg:justify-items-center relative z-3"
       >
-        <splash-copy :signup="signup" :see-more="seeMore" />
-        <splash-preview />
+        <splash-copy class="order-1 lg:col-start-1 lg:row-start-1 lg:self-end" />
+        <splash-preview class="order-2 lg:col-start-2 lg:row-start-1 lg:row-span-2" />
+        <splash-actions
+          :signup="signup"
+          :see-more="seeMore"
+          class="order-3 lg:col-start-1 lg:row-start-2 lg:self-start"
+        />
       </div>
     </section>
   </div>

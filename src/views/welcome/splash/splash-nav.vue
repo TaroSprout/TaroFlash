@@ -10,7 +10,7 @@ const { t } = useI18n()
 <template>
   <nav
     data-testid="welcome-hero__nav"
-    class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex justify-between items-center relative z-5"
+    class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 max-lg:hidden flex justify-between items-center relative z-5"
   >
     <div data-testid="welcome-hero__brand" class="flex items-center gap-1">
       <ui-icon src="logo" class="size-9 text-brown-700 dark:text-brown-100" />

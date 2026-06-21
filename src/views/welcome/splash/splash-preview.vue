@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import PinnedPreview from '@/components/deck/pinned-preview.vue'
+import DeckDesignPreview from '@/components/deck/deck-design-preview.vue'
 import { ref } from 'vue'
+import { useMatchMedia } from '@/composables/ui/media-query'
 import { emitSfx } from '@/sfx/bus'
+
+const is_below_lg = useMatchMedia('w<lg')
 
 const preview_side = ref<CardSide>('cover')
 
@@ -9,7 +13,7 @@ const preview_cover: DeckCover = {
   theme: 'red-500',
   theme_dark: 'red-600',
   pattern: 'endless-clouds',
-  icon: 'piggy-bank'
+  icon: 'logo'
 }
 
 const preview_attributes: DeckCardAttributes = {
@@ -25,7 +29,15 @@ function flipPreviewSide(side: CardSide) {
 
 <template>
   <div data-testid="welcome-hero__preview" class="flex justify-center md:justify-end pr-4">
+    <deck-design-preview
+      v-if="is_below_lg"
+      :cover="preview_cover"
+      :card_attributes="preview_attributes"
+      :side="preview_side"
+      @update:side="flipPreviewSide"
+    />
     <pinned-preview
+      v-else
       :cover="preview_cover"
       :card_attributes="preview_attributes"
       :side="preview_side"
