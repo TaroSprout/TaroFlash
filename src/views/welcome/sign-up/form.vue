@@ -24,6 +24,7 @@ const { t } = useI18n()
       <ui-button
         size="xl"
         data-theme="brown-100"
+        data-theme-dark="stone-700"
         :fancy-hover="false"
         class="w-full!"
         icon-left="google-logo"

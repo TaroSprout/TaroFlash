@@ -69,6 +69,7 @@ async function onSubmit() {
           size="xl"
           full-width
           data-theme="brown-100"
+          data-theme-dark="stone-700"
           :fancy-hover="false"
           @press="close()"
         >
@@ -78,6 +79,7 @@ async function onSubmit() {
           size="xl"
           full-width
           data-theme="blue-500"
+          data-theme-dark="blue-650"
           :loading="auth.loading"
           :disabled="!auth.all_filled"
           click-when-disabled

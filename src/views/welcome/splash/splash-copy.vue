@@ -14,12 +14,15 @@ const { t } = useI18n()
 
 <template>
   <div data-testid="welcome-hero__copy" class="flex flex-col items-start gap-7">
-    <div data-testid="welcome-hero__copy-text" class="flex flex-col gap-2 max-w-80">
-      <h1 class="text-7xl text-brown-700 dark:text-brown-100 font-bold">
+    <div
+      data-testid="welcome-hero__copy-text"
+      class="flex flex-col gap-2 max-w-80 text-brown-700 dark:text-brown-100"
+    >
+      <h1 class="text-7xl font-bold">
         {{ t('welcome-view.hero.heading') }}
       </h1>
 
-      <p class="text-lg text-brown-700">{{ t('welcome-view.hero.subheading') }}</p>
+      <p class="text-lg">{{ t('welcome-view.hero.subheading') }}</p>
     </div>
 
     <div data-testid="welcome-hero__actions" class="flex items-center gap-4">
