@@ -1,0 +1,83 @@
+<script setup lang="ts">
+import MobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
+import UiButton from '@/components/ui-kit/button.vue'
+import SignupForm from './form.vue'
+import { useAuthActions } from './use-auth-actions'
+import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
+import { useAlert } from '@/composables/alert'
+
+const { close } = defineProps<{
+  close: (response?: boolean) => void
+}>()
+
+const { t } = useI18n()
+const router = useRouter()
+const alert = useAlert()
+
+const auth = useAuthActions()
+
+async function onSubmit() {
+  const result = await auth.submit()
+
+  if (result === 'success') {
+    router.push('/dashboard')
+    close(true)
+    return
+  }
+
+  // 'invalid' shows inline field errors; only a genuine request failure alerts.
+  if (result === 'error') {
+    alert.warn({
+      title: t('signup-dialog.alert.error-title'),
+      message: t('signup-dialog.alert.error-message'),
+      cancelLabel: t('signup-dialog.alert.close')
+    })
+  }
+}
+</script>
+
+<template>
+  <mobile-sheet
+    data-testid="signup-container"
+    data-theme="blue-500"
+    data-theme-dark="blue-650"
+    class="sm:w-130"
+    :title="t('signup-dialog.heading')"
+    :pattern_config="{
+      pattern: 'leaf',
+      pattern_opacity: '0.1'
+    }"
+    @close="close()"
+  >
+    <div
+      data-testid="signup__body"
+      class="flex flex-col gap-8 py-8 px-6 sm:px-15 items-center relative"
+    >
+      <signup-form :auth="auth" />
+
+      <div data-testid="signup__actions" class="w-full flex justify-center gap-2.5">
+        <ui-button
+          size="xl"
+          full-width
+          data-theme="brown-100"
+          :fancy-hover="false"
+          @press="close()"
+        >
+          {{ t('signup-dialog.cancel') }}
+        </ui-button>
+        <ui-button
+          size="xl"
+          full-width
+          data-theme="blue-500"
+          :loading="auth.loading"
+          :disabled="!auth.all_filled"
+          click-when-disabled
+          @press="onSubmit"
+        >
+          {{ t('signup-dialog.submit-button') }}
+        </ui-button>
+      </div>
+    </div>
+  </mobile-sheet>
+</template>
