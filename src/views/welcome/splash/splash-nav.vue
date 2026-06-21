@@ -31,6 +31,8 @@ const { t } = useI18n()
       size="lg"
       data-theme="brown-300"
       data-theme-dark="stone-700"
+      menu-theme="brown-200"
+      shadow
       position="bottom-end"
       icon-left="user-sticker-square"
       open-on-trigger

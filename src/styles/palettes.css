@@ -568,7 +568,7 @@
   --theme-accent: var(--color-brown-500);
   --theme-on-accent: var(--color-brown-100);
 
-  --theme-neutral: var(--color-brown-300);
+  --theme-neutral: var(--color-brown-500);
   --theme-on-neutral: var(--color-brown-700);
 }
 
