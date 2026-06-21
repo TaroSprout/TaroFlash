@@ -58,4 +58,23 @@ describe('SectionHeader', () => {
     const wrapper = mountHeader({ eyebrow: 'E', heading: 'H', subtitle: '' })
     expect(wrapper.find('[data-testid="welcome-section-header__subtitle"]').exists()).toBe(false)
   })
+
+  // ── Eyebrow conditional rendering [obligation] ────────────────────────────
+
+  test('renders eyebrow element when eyebrow prop is provided [obligation]', () => {
+    const wrapper = mountHeader({ eyebrow: 'Features', heading: 'Big Title' })
+    const eyebrow = wrapper.find('[data-testid="welcome-section-header__eyebrow"]')
+    expect(eyebrow.exists()).toBe(true)
+    expect(eyebrow.text()).toBe('Features')
+  })
+
+  test('does NOT render eyebrow element when eyebrow prop is omitted [obligation]', () => {
+    const wrapper = mountHeader({ heading: 'Big Title' })
+    expect(wrapper.find('[data-testid="welcome-section-header__eyebrow"]').exists()).toBe(false)
+  })
+
+  test('does NOT render eyebrow element when eyebrow is empty string [obligation]', () => {
+    const wrapper = mountHeader({ eyebrow: '', heading: 'Big Title' })
+    expect(wrapper.find('[data-testid="welcome-section-header__eyebrow"]').exists()).toBe(false)
+  })
 })

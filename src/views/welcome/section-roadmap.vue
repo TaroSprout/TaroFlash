@@ -13,6 +13,7 @@ const { t } = useI18n()
 
 const items: RoadmapItem[] = [
   { key: 'create-study', done: true },
+  { key: 'dark-mode', done: true },
   { key: 'card-audio', done: false },
   { key: 'community', done: false },
   { key: 'audio-reader', done: false },

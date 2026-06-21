@@ -82,10 +82,10 @@ describe('SectionRoadmap', () => {
 
   // ── Item count ────────────────────────────────────────────────────────────
 
-  test('renders 8 roadmap items', () => {
+  test('renders 9 roadmap items', () => {
     const wrapper = mountRoadmap()
     const items = wrapper.findAll('[data-testid^="welcome-roadmap__item-"]')
-    expect(items).toHaveLength(8)
+    expect(items).toHaveLength(9)
   })
 
   test('renders each item by key', () => {

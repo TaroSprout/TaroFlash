@@ -65,13 +65,6 @@ const SectionFeaturesStub = defineComponent({
   }
 })
 
-const SectionConfigStub = defineComponent({
-  name: 'SectionConfig',
-  setup() {
-    return () => h('div', { 'data-testid': 'section-config' })
-  }
-})
-
 const SectionPricingStub = defineComponent({
   name: 'SectionPricing',
   props: ['signup'],
@@ -125,7 +118,6 @@ function mountWelcome({ modalResponse = Promise.resolve(undefined) } = {}) {
       stubs: {
         Splash: SplashStub,
         SectionFeatures: SectionFeaturesStub,
-        SectionConfig: SectionConfigStub,
         SectionPricing: SectionPricingStub,
         SectionRoadmap: SectionRoadmapStub,
         WelcomeFooter: WelcomeFooterStub,
@@ -226,7 +218,6 @@ describe('WelcomeIndex', () => {
         stubs: {
           Splash: SplashStub,
           SectionFeatures: SectionFeaturesStub,
-          SectionConfig: SectionConfigStub,
           SectionPricing: SectionPricingStub,
           SectionRoadmap: SectionRoadmapStub,
           WelcomeFooter: WelcomeFooterStub,

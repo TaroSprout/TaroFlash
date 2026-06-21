@@ -5,8 +5,7 @@ import { onMounted, useTemplateRef } from 'vue'
 import { useSignupModal } from './signup/signup-modal'
 import { provideWelcomeLayout } from './welcome-layout'
 import Splash from './splash/index.vue'
-import SectionFeatures from './section-features.vue'
-import SectionConfig from './section-config.vue'
+import SectionFeatures from './section-features/index.vue'
 import SectionPricing from './section-pricing.vue'
 import SectionRoadmap from './section-roadmap.vue'
 import WelcomeFooter from '@/components/welcome-footer.vue'
@@ -33,7 +32,6 @@ function scrollToContent() {
 <template>
   <splash :signup="openSignup" :see-more="scrollToContent" />
   <section-features ref="features" />
-  <section-config />
   <section-pricing :signup="openSignup" />
   <section-roadmap />
   <welcome-footer />
