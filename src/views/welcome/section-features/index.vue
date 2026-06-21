@@ -13,9 +13,9 @@ const { t } = useI18n()
 
 const features: Feature[] = [
   { key: 'experience', icon: 'paint-brush', accent: 'var(--color-purple-500)' },
-  { key: 'mobile', icon: 'apps', accent: 'var(--color-blue-500)' },
-  { key: 'scheduling', icon: 'schedule', accent: 'var(--color-pink-500)' },
-  { key: 'portable', icon: 'list', accent: 'var(--color-orange-700)' }
+  { key: 'mobile', icon: 'mobile-phone', accent: 'var(--color-blue-500)' },
+  { key: 'scheduling', icon: 'clock', accent: 'var(--color-pink-500)' },
+  { key: 'upcoming', icon: 'shooting-star', accent: 'var(--color-yellow-700)' }
 ]
 </script>
 
