@@ -14,7 +14,8 @@ export function useSignupModal() {
     const result = modal.open<boolean>(SignupDialog, {
       backdrop: true,
       mode: 'mobile-sheet',
-      mobile_below_width: 'md',
+      mobile_below_width: 'sm',
+      mobile_below_height: 'md',
       props: { payment }
     })
     result.response.then(() => emitSfx('snappy_button_5'))

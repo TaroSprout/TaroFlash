@@ -18,7 +18,7 @@ const height = useWelcomeHeight()
 </script>
 
 <template>
-  <div data-testid="welcome-hero__actions" class="flex items-center gap-2 lg:gap-4">
+  <div data-testid="welcome-hero__actions" class="flex items-center gap-2">
     <ui-button
       v-if="width === 'desktop' || height === 'tall'"
       size="xl"
@@ -32,7 +32,7 @@ const height = useWelcomeHeight()
     </ui-button>
 
     <ui-button
-      v-if="height === 'short'"
+      v-if="height === 'short' && width !== 'desktop'"
       size="xl"
       data-theme="brown-100"
       data-theme-dark="stone-700"

@@ -3,15 +3,16 @@ import LoginDialogue from '@/views/welcome/login/index.vue'
 import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
-import { useWelcomeHeight } from '../welcome-layout'
+import { useWelcomeHeight, useWelcomeWidth } from '../welcome-layout'
 
 const { t } = useI18n()
 const height = useWelcomeHeight()
+const width = useWelcomeWidth()
 </script>
 
 <template>
   <nav
-    v-if="height !== 'short'"
+    v-if="height !== 'short' || width === 'desktop'"
     data-testid="welcome-hero__nav"
     class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex justify-between items-center relative z-5"
   >

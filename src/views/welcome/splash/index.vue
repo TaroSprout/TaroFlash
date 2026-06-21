@@ -18,7 +18,7 @@ const height = useWelcomeHeight()
   <div data-testid="welcome-hero__wave-backdrop" class="w-full bg-green-500 dark:bg-grey-800">
     <section
       data-testid="welcome-hero"
-      class="flex flex-col w-full h-[90vh] min-h-160 py-7.5 max-h-250 relative bg-brown-300 dark:bg-grey-900 wave-bottom-[30px] bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-brown-500 bg-center overflow-hidden"
+      class="flex flex-col w-full h-[95lvh] min-h-160 py-7.5 max-lg:pb-10 max-h-250 relative bg-brown-300 dark:bg-grey-900 wave-bottom-[30px] bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-brown-500 bg-center overflow-hidden"
     >
       <splash-nav />
 
