@@ -103,10 +103,10 @@ describe('useAuthActions', () => {
       expect(mockSignupEmail).not.toHaveBeenCalled()
     })
 
-    test('emits etc_woodblock_stuck sfx on validation failure [obligation]', async () => {
+    test('emits digi_powerdown sfx on validation failure [obligation]', async () => {
       const auth = useAuthActions()
       await auth.submit()
-      expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+      expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
     })
 
     test('sets tried_submit so errors populate [obligation]', async () => {
