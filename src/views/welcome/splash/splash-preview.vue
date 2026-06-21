@@ -28,7 +28,7 @@ function flipPreviewSide(side: CardSide) {
 </script>
 
 <template>
-  <div data-testid="welcome-hero__preview" class="flex justify-center md:justify-end pr-4">
+  <div data-testid="welcome-hero__preview" class="flex justify-center md:justify-end">
     <deck-design-preview
       v-if="is_below_lg"
       :cover="preview_cover"

@@ -2,6 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useLoginModal } from '../login/login-modal'
+import { useWelcomeWidth, useWelcomeHeight } from '../welcome-layout'
 
 type SplashActionsProps = {
   signup: (payment?: boolean) => void
@@ -12,16 +13,18 @@ const { signup, seeMore } = defineProps<SplashActionsProps>()
 
 const { t } = useI18n()
 const { open: openLogin } = useLoginModal()
+const width = useWelcomeWidth()
+const height = useWelcomeHeight()
 </script>
 
 <template>
   <div data-testid="welcome-hero__actions" class="flex items-center gap-2 lg:gap-4">
     <ui-button
+      v-if="width === 'desktop' || height === 'tall'"
       size="xl"
       data-theme="brown-100"
       data-theme-dark="stone-700"
       icon-left="arrow-down"
-      class="max-lg:hidden!"
       :sfx="{ press: 'snappy_button_5' }"
       @press="seeMore()"
     >
@@ -29,11 +32,11 @@ const { open: openLogin } = useLoginModal()
     </ui-button>
 
     <ui-button
+      v-if="height === 'short'"
       size="xl"
       data-theme="brown-100"
       data-theme-dark="stone-700"
       icon-left="user-sticker-square"
-      class="lg:hidden!"
       data-testid="welcome-hero__login"
       @press="openLogin()"
     >
@@ -47,8 +50,11 @@ const { open: openLogin } = useLoginModal()
       icon-left="account-circle-add"
       @press="signup()"
     >
-      <span class="lg:hidden">{{ t('welcome-view.signup-button-short') }}</span>
-      <span class="max-lg:hidden">{{ t('welcome-view.signup-button') }}</span>
+      {{
+        width === 'desktop'
+          ? t('welcome-view.signup-button')
+          : t('welcome-view.signup-button-short')
+      }}
     </ui-button>
   </div>
 </template>
