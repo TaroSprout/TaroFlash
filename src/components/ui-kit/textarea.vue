@@ -23,6 +23,8 @@ const at_limit = computed(() => max_chars !== undefined && char_count.value >= m
 <template>
   <ui-tooltip
     element="label"
+    data-theme="brown-100"
+    data-theme-dark="stone-700"
     data-testid="ui-kit-textarea-container"
     class="ui-kit-textarea-container"
     :text="error"
@@ -40,6 +42,7 @@ const at_limit = computed(() => max_chars !== undefined && char_count.value >= m
     <div data-testid="ui-kit-textarea" class="ui-kit-textarea">
       <textarea
         v-bind="$attrs"
+        v-sfx.focus="'type_05'"
         :placeholder="placeholder"
         :maxlength="max_chars"
         v-model="value"
@@ -70,13 +73,17 @@ const at_limit = computed(() => max_chars !== undefined && char_count.value >= m
 }
 
 .ui-kit-textarea {
-  background-color: var(--color-input);
+  background-color: var(--theme-primary);
   border-radius: var(--radius-4);
   width: 100%;
   padding: 12px 16px;
   outline: 1px solid transparent;
-  transition: outline-color 100ms ease-in-out;
+  transition: outline-color 60ms ease-in-out;
   position: relative;
+}
+
+.ui-kit-textarea:focus-within {
+  outline-color: var(--color-blue-500);
 }
 
 .ui-kit-textarea-container--error .ui-kit-textarea {
@@ -86,7 +93,7 @@ const at_limit = computed(() => max_chars !== undefined && char_count.value >= m
 .ui-kit-textarea textarea {
   outline: none;
   background: transparent;
-  color: var(--color-brown-700);
+  color: var(--theme-on-primary);
   font-size: var(--text-lg);
   line-height: var(--text-lg--line-height);
   width: 100%;
@@ -100,7 +107,7 @@ const at_limit = computed(() => max_chars !== undefined && char_count.value >= m
 }
 
 .ui-kit-textarea textarea::placeholder {
-  color: var(--color-brown-500);
+  color: var(--theme-neutral);
 }
 
 .ui-kit-textarea-char-count {
@@ -114,12 +121,6 @@ const at_limit = computed(() => max_chars !== undefined && char_count.value >= m
 
 :where([data-theme='dark'], [data-theme='dark'] *) .ui-kit-textarea-container span {
   color: var(--color-brown-100);
-}
-:where([data-theme='dark'], [data-theme='dark'] *) .ui-kit-textarea textarea {
-  color: var(--color-brown-100);
-}
-:where([data-theme='dark'], [data-theme='dark'] *) .ui-kit-textarea textarea::placeholder {
-  color: var(--color-brown-300);
 }
 :where([data-theme='dark'], [data-theme='dark'] *) .ui-kit-textarea-char-count {
   color: var(--color-brown-500);

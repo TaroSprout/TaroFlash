@@ -55,7 +55,8 @@ export const SOUNDS = {
   type_03: { default_volume: 0.1, defaultBus: 'hover' },
   type_04: { default_volume: 0.1, defaultBus: 'hover' },
   type_05: { default_volume: 0.1, defaultBus: 'hover' },
-  clicky_button_4: {}
+  clicky_button_4: {},
+  slide_left: {}
 } satisfies Record<string, SoundDef>
 
 export type SoundKey = keyof typeof SOUNDS
