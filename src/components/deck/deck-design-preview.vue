@@ -2,16 +2,18 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Card from '@/components/card/index.vue'
-import { useCardsInDeckInfiniteQuery } from '@/api/cards'
 
 type DeckPreviewProps = {
-  deck_id?: number
   cover: DeckCover
   card_attributes: DeckCardAttributes
   side: CardSide
+  front_text?: string
+  back_text?: string
 }
 
-const { deck_id, side } = defineProps<DeckPreviewProps>()
+const SIDE_ORDER: CardSide[] = ['cover', 'front', 'back']
+
+const { side, front_text, back_text } = defineProps<DeckPreviewProps>()
 
 const emit = defineEmits<{
   (e: 'update:side', value: CardSide): void
@@ -19,26 +21,14 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-const cards_query = useCardsInDeckInfiniteQuery(() => deck_id)
-const first_card = computed(() => cards_query.data.value?.pages?.[0]?.[0])
-
-const sides = computed(() => [
-  { value: 'cover' as const, label: t('deck.settings-modal.design.designer-tabs.cover') },
-  { value: 'front' as const, label: t('deck.settings-modal.design.designer-tabs.front') },
-  { value: 'back' as const, label: t('deck.settings-modal.design.designer-tabs.back') }
-])
-
 const preview_text = computed(() => {
-  if (side === 'front') {
-    return first_card.value?.front_text || t('deck.settings-modal.preview.front-fallback')
-  }
-  return first_card.value?.back_text || t('deck.settings-modal.preview.back-fallback')
+  if (side === 'front') return front_text || t('deck.settings-modal.preview.front-fallback')
+  return back_text || t('deck.settings-modal.preview.back-fallback')
 })
 
 function cycleSide() {
-  const index = sides.value.findIndex((s) => s.value === side)
-  const next = sides.value[(index + 1) % sides.value.length].value
-  emit('update:side', next)
+  const index = SIDE_ORDER.indexOf(side)
+  emit('update:side', SIDE_ORDER[(index + 1) % SIDE_ORDER.length])
 }
 </script>
 

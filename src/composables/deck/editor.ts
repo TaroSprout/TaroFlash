@@ -1,5 +1,6 @@
 import { computed, reactive, ref, type InjectionKey } from 'vue'
 import { useDeleteDeckMutation } from '@/api/decks'
+import { useCardsInDeckInfiniteQuery } from '@/api/cards'
 import { useResetDeckReviewsMutation } from '@/api/reviews'
 import { useDeckActions } from '@/composables/deck/actions'
 import { DECK_SETTINGS_DEFAULTS, DECK_CONFIG_DEFAULTS } from '@/utils/deck/defaults'
@@ -34,6 +35,13 @@ export function useDeckEditor(deck?: Deck) {
   })
 
   const active_side = ref<CardSide>('cover')
+
+  // The design preview shows the deck's first card. Disabled for unsaved decks
+  // (no id), so deck-create just falls back to placeholder text.
+  const cards_query = useCardsInDeckInfiniteQuery(() => settings.id)
+  const first_card = computed(() => cards_query.data.value?.pages?.[0]?.[0])
+  const preview_front_text = computed(() => first_card.value?.front_text)
+  const preview_back_text = computed(() => first_card.value?.back_text)
 
   const initial_payload = buildDeckPayload({ settings, config, cover, card_attributes })
   const is_dirty = computed(() =>
@@ -91,6 +99,8 @@ export function useDeckEditor(deck?: Deck) {
     cover,
     card_attributes,
     active_side,
+    preview_front_text,
+    preview_back_text,
     is_dirty,
     deleting: delete_mutation.isLoading,
     resetting_reviews: reset_reviews_mutation.isLoading,
