@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h, useAttrs } from 'vue'
+import { defineComponent, h } from 'vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
@@ -19,16 +19,6 @@ vi.mock('vue-i18n', () => ({
 
 // ── Stubs ──────────────────────────────────────────────────────────────────────
 
-// UiTooltip wraps the label element; stub it so slot content renders in the tree.
-const UiTooltipStub = defineComponent({
-  name: 'UiTooltip',
-  inheritAttrs: false,
-  setup(_p, { slots }) {
-    const attrs = useAttrs()
-    return () => h('label', { ...attrs }, slots.default?.())
-  }
-})
-
 // UiInput stub — renders a real <input> so v-model and events work.
 const UiInputStub = defineComponent({
   name: 'UiInput',
@@ -39,7 +29,6 @@ const UiInputStub = defineComponent({
     return () =>
       h('input', {
         ...attrs,
-        'data-testid': attrs['data-testid'] ?? 'ui-input-stub',
         type: props.type ?? 'text',
         placeholder: props.placeholder,
         value: props.modelValue ?? '',
@@ -48,7 +37,6 @@ const UiInputStub = defineComponent({
   }
 })
 
-// UiDivider stub
 const UiDividerStub = defineComponent({
   name: 'UiDivider',
   setup() {
@@ -56,7 +44,6 @@ const UiDividerStub = defineComponent({
   }
 })
 
-// UiButton stub
 const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
@@ -76,31 +63,22 @@ const UiButtonStub = defineComponent({
 
 import SignupForm from '@/views/welcome/signup/form.vue'
 
-// ── Auth mock ──────────────────────────────────────────────────────────────────
-
-function makeAuth(overrides = {}) {
-  return {
-    username: '',
-    email: '',
-    password: '',
-    confirm_password: '',
-    errors: {},
-    submitOAuth: mockSubmitOAuth,
-    ...overrides
-  }
-}
-
 // ── Mount helper ───────────────────────────────────────────────────────────────
 
-function mountForm(authOverrides = {}) {
+function mountForm({ errors = {}, modelValues = {} } = {}) {
   return mount(SignupForm, {
-    props: { auth: makeAuth(authOverrides) },
+    props: {
+      errors,
+      username: modelValues.username ?? '',
+      email: modelValues.email ?? '',
+      password: modelValues.password ?? '',
+      confirmPassword: modelValues.confirmPassword ?? ''
+    },
     global: {
       stubs: {
         UiInput: UiInputStub,
         UiDivider: UiDividerStub,
-        UiButton: UiButtonStub,
-        UiTooltip: UiTooltipStub
+        UiButton: UiButtonStub
       },
       directives: { sfx: {} }
     }
@@ -110,10 +88,6 @@ function mountForm(authOverrides = {}) {
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
 describe('SignupForm (signup/form.vue)', () => {
-  beforeEach(() => {
-    mockSubmitOAuth.mockReset()
-  })
-
   // ── Structure ──────────────────────────────────────────────────────────────
 
   test('renders the sign-up form wrapper', () => {
@@ -144,18 +118,16 @@ describe('SignupForm (signup/form.vue)', () => {
     const wrapper = mountForm()
     const hiddenBtn = wrapper.find('button[type="submit"]')
     expect(hiddenBtn.exists()).toBe(true)
-    // It must be screen-reader hidden so it doesn't appear as a second submit action.
     expect(hiddenBtn.attributes('aria-hidden')).toBe('true')
   })
 
   // ── OAuth button ───────────────────────────────────────────────────────────
 
-  test('pressing the Google button calls auth.submitOAuth with "google"', async () => {
+  test('pressing the Google button emits "oauth" with "google"', async () => {
     const wrapper = mountForm()
-    // The google button is the UiButton inside social-auth section
     const googleBtn = wrapper.find('[data-testid="social-auth"] [data-testid="ui-button-stub"]')
     await googleBtn.trigger('click')
-    expect(mockSubmitOAuth).toHaveBeenCalledWith('google')
+    expect(wrapper.emitted('oauth')).toEqual([['google']])
   })
 
   // ── field inputs ───────────────────────────────────────────────────────────
@@ -163,29 +135,28 @@ describe('SignupForm (signup/form.vue)', () => {
   test('renders four input fields inside the email-auth form', () => {
     const wrapper = mountForm()
     const form = wrapper.find('[data-testid="email-auth"]')
-    // 4 UiInput stubs render as <input> elements
     expect(form.findAll('input').length).toBe(4)
   })
 
-  test('passes auth.errors.username to the username input', () => {
+  test('passes errors.username to the username input via error prop', () => {
     const wrapper = mountForm({ errors: { username: 'Required' } })
     const inputs = wrapper.findAllComponents({ name: 'UiInput' })
     expect(inputs[0].props('error')).toBe('Required')
   })
 
-  test('passes auth.errors.email to the email input', () => {
+  test('passes errors.email to the email input via error prop', () => {
     const wrapper = mountForm({ errors: { email: 'Invalid email' } })
     const inputs = wrapper.findAllComponents({ name: 'UiInput' })
     expect(inputs[1].props('error')).toBe('Invalid email')
   })
 
-  test('passes auth.errors.password to the password input', () => {
+  test('passes errors.password to the password input via error prop', () => {
     const wrapper = mountForm({ errors: { password: 'Too short' } })
     const inputs = wrapper.findAllComponents({ name: 'UiInput' })
     expect(inputs[2].props('error')).toBe('Too short')
   })
 
-  test('passes auth.errors.confirm_password to the confirm-password input', () => {
+  test('passes errors.confirm_password to the confirm-password input via error prop', () => {
     const wrapper = mountForm({ errors: { confirm_password: 'Mismatch' } })
     const inputs = wrapper.findAllComponents({ name: 'UiInput' })
     expect(inputs[3].props('error')).toBe('Mismatch')

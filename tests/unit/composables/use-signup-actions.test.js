@@ -122,6 +122,8 @@ describe('useSignupActions', () => {
       auth.email = 'not-an-email'
       auth.password = 'password1'
       auth.confirm_password = 'password1'
+      // Flush watchers so they don't clear the errors that validate() sets next.
+      await nextTick()
       const result = await auth.submit()
       expect(result).toBe('invalid')
       expect(auth.errors.email).toBeDefined()
@@ -133,6 +135,7 @@ describe('useSignupActions', () => {
       auth.email = 'alice@example.com'
       auth.password = 'password1'
       auth.confirm_password = 'different1'
+      await nextTick()
       const result = await auth.submit()
       expect(result).toBe('invalid')
       expect(auth.errors.confirm_password).toBeDefined()
@@ -144,6 +147,7 @@ describe('useSignupActions', () => {
       auth.email = 'alice@example.com'
       auth.password = 'short'
       auth.confirm_password = 'short'
+      await nextTick()
       const result = await auth.submit()
       expect(result).toBe('invalid')
       expect(auth.errors.password).toBeDefined()
@@ -229,6 +233,49 @@ describe('useSignupActions', () => {
       fillValidFields(auth)
       await auth.submit()
       expect(mockEmitSfx).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── clear-on-type [obligation] ────────────────────────────────────────────
+
+  describe('clear-on-type', () => {
+    test('typing in email clears errors.email including backend email-taken message [obligation]', async () => {
+      mockSignupEmail.mockResolvedValueOnce('email-taken')
+      const auth = useSignupActions()
+      fillValidFields(auth)
+      await auth.submit()
+      await nextTick()
+      // email error is now set from email-taken
+      expect(auth.errors.email).toBeDefined()
+
+      // Typing in email clears it
+      auth.email = 'new@example.com'
+      await nextTick()
+      expect(auth.errors.email).toBeUndefined()
+    })
+
+    test('typing in username clears errors.username only', async () => {
+      const auth = useSignupActions()
+      await auth.submit() // all fields empty → username error set
+      await nextTick()
+      expect(auth.errors.username).toBeDefined()
+
+      auth.username = 'Bob'
+      await nextTick()
+      expect(auth.errors.username).toBeUndefined()
+    })
+
+    test('clearing one field does not clear other fields errors [obligation]', async () => {
+      const auth = useSignupActions()
+      await auth.submit()
+      await nextTick()
+      expect(auth.errors.email).toBeDefined()
+
+      // Typing in username clears username error but not email error
+      auth.username = 'Bob'
+      await nextTick()
+      expect(auth.errors.username).toBeUndefined()
+      expect(auth.errors.email).toBeDefined()
     })
   })
 

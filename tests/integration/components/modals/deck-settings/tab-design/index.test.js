@@ -9,13 +9,12 @@ vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn() }))
 
 const DeckPreviewStub = defineComponent({
   name: 'DeckDesignPreview',
-  props: ['deck_id', 'cover', 'card_attributes', 'side'],
+  props: ['cover', 'card_attributes', 'side', 'front_text', 'back_text'],
   emits: ['update:side'],
   setup(props, { emit }) {
     return () =>
       h('div', {
         'data-testid': 'deck-preview-stub',
-        'data-deck-id': props.deck_id ?? '',
         'data-side': props.side,
         onClick: () => emit('update:side', 'front')
       })
@@ -54,6 +53,8 @@ function makeEditor(overrides = {}) {
     cover: reactive({}),
     card_attributes: reactive({ front: {}, back: {} }),
     active_side: ref('cover'),
+    preview_front_text: ref(undefined),
+    preview_back_text: ref(undefined),
     setActiveSide: vi.fn(),
     ...overrides
   }
@@ -91,12 +92,13 @@ describe('TabDesign — inline preview visibility', () => {
     expect(wrapper.find('[data-testid="tab-design__inline-preview"]').exists()).toBe(true)
   })
 
-  test('passes the deck id from editor.settings to the inline preview', () => {
+  test('passes the active side from editor.settings to the inline preview', () => {
     const editor = makeEditor()
     editor.settings.id = 42
     const { wrapper } = makeWrapper(editor, 'sheet')
 
-    expect(wrapper.find('[data-testid="deck-preview-stub"]').attributes('data-deck-id')).toBe('42')
+    // Preview renders with the current active side (cover by default)
+    expect(wrapper.find('[data-testid="deck-preview-stub"]').attributes('data-side')).toBe('cover')
   })
 
   test('passes the active side from editor to the inline preview', () => {

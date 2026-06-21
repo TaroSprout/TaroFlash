@@ -17,11 +17,11 @@ vi.mock('@/composables/modal', () => ({
   useModal: vi.fn(() => ({ open: mockOpen }))
 }))
 
-// SignupDialog is wrapped in defineAsyncComponent inside the composable —
+// LoginSheet is wrapped in defineAsyncComponent inside the composable —
 // assert on the async component wrapper shape rather than the raw .vue import.
 const asyncComponentMatcher = expect.objectContaining({ __asyncLoader: expect.any(Function) })
 
-import { useSignupModal } from '@/views/welcome/signup/signup-modal'
+import { useLoginModal } from '@/views/welcome/login/login-modal'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -42,21 +42,34 @@ beforeEach(() => {
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
-describe('useSignupModal', () => {
+describe('useLoginModal', () => {
   test('emits snappy_button_3 immediately on open [obligation]', () => {
     const { result } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
-    useSignupModal().open()
+    useLoginModal().open()
 
     expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_3')
+  })
+
+  test('emits snappy_button_5 when the modal response resolves [obligation]', async () => {
+    const { result, resolve } = makeModalResult()
+    mockOpen.mockReturnValueOnce(result)
+
+    useLoginModal().open()
+    mockEmitSfx.mockClear()
+
+    resolve(undefined)
+    await flushPromises()
+
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
   })
 
   test('emits snappy_button_3 before snappy_button_5 (ordering) [obligation]', async () => {
     const { result, resolve } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
-    useSignupModal().open()
+    useLoginModal().open()
     resolve(undefined)
     await flushPromises()
 
@@ -68,7 +81,7 @@ describe('useSignupModal', () => {
     const { result } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
-    useSignupModal().open()
+    useLoginModal().open()
 
     expect(mockOpen).toHaveBeenCalledWith(
       asyncComponentMatcher,
@@ -76,15 +89,15 @@ describe('useSignupModal', () => {
     )
   })
 
-  test('opens modal with mobile_below_width sm [obligation]', () => {
+  test('opens modal with mobile_below_width md [obligation]', () => {
     const { result } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
-    useSignupModal().open()
+    useLoginModal().open()
 
     expect(mockOpen).toHaveBeenCalledWith(
       asyncComponentMatcher,
-      expect.objectContaining({ mobile_below_width: 'sm' })
+      expect.objectContaining({ mobile_below_width: 'md' })
     )
   })
 
@@ -92,7 +105,7 @@ describe('useSignupModal', () => {
     const { result } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
-    useSignupModal().open()
+    useLoginModal().open()
 
     expect(mockOpen).toHaveBeenCalledWith(
       asyncComponentMatcher,
@@ -100,48 +113,11 @@ describe('useSignupModal', () => {
     )
   })
 
-  test('passes payment prop through to the modal [obligation]', () => {
-    const { result } = makeModalResult()
-    mockOpen.mockReturnValueOnce(result)
-
-    useSignupModal().open(true)
-
-    expect(mockOpen).toHaveBeenCalledWith(
-      asyncComponentMatcher,
-      expect.objectContaining({ props: { payment: true } })
-    )
-  })
-
-  test('passes undefined payment when called without argument', () => {
-    const { result } = makeModalResult()
-    mockOpen.mockReturnValueOnce(result)
-
-    useSignupModal().open()
-
-    expect(mockOpen).toHaveBeenCalledWith(
-      asyncComponentMatcher,
-      expect.objectContaining({ props: { payment: undefined } })
-    )
-  })
-
-  test('emits snappy_button_5 when the modal response resolves [obligation]', async () => {
-    const { result, resolve } = makeModalResult()
-    mockOpen.mockReturnValueOnce(result)
-
-    useSignupModal().open()
-    mockEmitSfx.mockClear()
-
-    resolve(undefined)
-    await flushPromises()
-
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
-  })
-
   test('returns the modal result from open', () => {
     const { result } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
-    const returned = useSignupModal().open()
+    const returned = useLoginModal().open()
 
     expect(returned).toBe(result)
   })
