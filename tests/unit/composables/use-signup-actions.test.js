@@ -23,7 +23,7 @@ vi.mock('@/stores/session', () => ({
   useSessionStore: () => ({ signupEmail: mockSignupEmail, signInOAuth: mockSignInOAuth })
 }))
 
-import { useAuthActions } from '@/views/welcome/sign-up/use-auth-actions'
+import { useSignupActions } from '@/composables/auth/use-signup-actions'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -45,30 +45,30 @@ beforeEach(() => {
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
-describe('useAuthActions', () => {
+describe('useSignupActions', () => {
   // ── all_filled ────────────────────────────────────────────────────────────
 
   describe('all_filled', () => {
     test('is false when all fields are empty [obligation]', () => {
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       expect(auth.all_filled).toBe(false)
     })
 
     test('is false when only some fields are filled [obligation]', () => {
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       auth.username = 'Alice'
       auth.email = 'alice@example.com'
       expect(auth.all_filled).toBe(false)
     })
 
     test('is true only when all four fields are non-empty [obligation]', () => {
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       fillValidFields(auth)
       expect(auth.all_filled).toBe(true)
     })
 
     test('is false when username is only whitespace [obligation]', () => {
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       auth.username = '   '
       auth.email = 'alice@example.com'
       auth.password = 'password1'
@@ -81,12 +81,12 @@ describe('useAuthActions', () => {
 
   describe('errors before first submit', () => {
     test('errors are empty before any submit attempt [obligation]', () => {
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       expect(Object.keys(auth.errors)).toHaveLength(0)
     })
 
     test('errors populate after the first submit attempt [obligation]', async () => {
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       await auth.submit()
       await nextTick()
       expect(Object.keys(auth.errors).length).toBeGreaterThan(0)
@@ -97,53 +97,57 @@ describe('useAuthActions', () => {
 
   describe('submit() — validation failure', () => {
     test('returns "invalid" without calling the store when fields are empty [obligation]', async () => {
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       const result = await auth.submit()
       expect(result).toBe('invalid')
       expect(mockSignupEmail).not.toHaveBeenCalled()
     })
 
     test('emits digi_powerdown sfx on validation failure [obligation]', async () => {
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       await auth.submit()
       expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
     })
 
     test('sets tried_submit so errors populate [obligation]', async () => {
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       await auth.submit()
       await nextTick()
       expect(auth.errors.username).toBeDefined()
     })
 
     test('returns "invalid" when email format is invalid', async () => {
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       auth.username = 'Alice'
       auth.email = 'not-an-email'
       auth.password = 'password1'
       auth.confirm_password = 'password1'
+      // Flush watchers so they don't clear the errors that validate() sets next.
+      await nextTick()
       const result = await auth.submit()
       expect(result).toBe('invalid')
       expect(auth.errors.email).toBeDefined()
     })
 
     test('returns "invalid" when passwords do not match', async () => {
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       auth.username = 'Alice'
       auth.email = 'alice@example.com'
       auth.password = 'password1'
       auth.confirm_password = 'different1'
+      await nextTick()
       const result = await auth.submit()
       expect(result).toBe('invalid')
       expect(auth.errors.confirm_password).toBeDefined()
     })
 
     test('returns "invalid" when password is too short', async () => {
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       auth.username = 'Alice'
       auth.email = 'alice@example.com'
       auth.password = 'short'
       auth.confirm_password = 'short'
+      await nextTick()
       const result = await auth.submit()
       expect(result).toBe('invalid')
       expect(auth.errors.password).toBeDefined()
@@ -155,7 +159,7 @@ describe('useAuthActions', () => {
   describe('submit() — success', () => {
     test('returns "success" when store outcome is "success" [obligation]', async () => {
       mockSignupEmail.mockResolvedValueOnce('success')
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       fillValidFields(auth)
       const result = await auth.submit()
       expect(result).toBe('success')
@@ -163,7 +167,7 @@ describe('useAuthActions', () => {
 
     test('calls the store with trimmed email and display_name', async () => {
       mockSignupEmail.mockResolvedValueOnce('success')
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       auth.username = '  Alice  '
       auth.email = '  alice@example.com  '
       auth.password = 'password1'
@@ -176,7 +180,7 @@ describe('useAuthActions', () => {
 
     test('does not emit sfx on success', async () => {
       mockSignupEmail.mockResolvedValueOnce('success')
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       fillValidFields(auth)
       await auth.submit()
       expect(mockEmitSfx).not.toHaveBeenCalled()
@@ -188,7 +192,7 @@ describe('useAuthActions', () => {
   describe('submit() — email taken', () => {
     test('returns "invalid" when store outcome is "email-taken" [obligation]', async () => {
       mockSignupEmail.mockResolvedValueOnce('email-taken')
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       fillValidFields(auth)
       const result = await auth.submit()
       expect(result).toBe('invalid')
@@ -196,7 +200,7 @@ describe('useAuthActions', () => {
 
     test('sets inline email error when email is taken [obligation]', async () => {
       mockSignupEmail.mockResolvedValueOnce('email-taken')
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       fillValidFields(auth)
       await auth.submit()
       await nextTick()
@@ -205,7 +209,7 @@ describe('useAuthActions', () => {
 
     test('emits etc_woodblock_stuck sfx when email is taken [obligation]', async () => {
       mockSignupEmail.mockResolvedValueOnce('email-taken')
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       fillValidFields(auth)
       await auth.submit()
       expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
@@ -217,7 +221,7 @@ describe('useAuthActions', () => {
   describe('submit() — error', () => {
     test('returns "error" when store outcome is "error" [obligation]', async () => {
       mockSignupEmail.mockResolvedValueOnce('error')
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       fillValidFields(auth)
       const result = await auth.submit()
       expect(result).toBe('error')
@@ -225,10 +229,53 @@ describe('useAuthActions', () => {
 
     test('does NOT emit sfx on store error [obligation]', async () => {
       mockSignupEmail.mockResolvedValueOnce('error')
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       fillValidFields(auth)
       await auth.submit()
       expect(mockEmitSfx).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── clear-on-type [obligation] ────────────────────────────────────────────
+
+  describe('clear-on-type', () => {
+    test('typing in email clears errors.email including backend email-taken message [obligation]', async () => {
+      mockSignupEmail.mockResolvedValueOnce('email-taken')
+      const auth = useSignupActions()
+      fillValidFields(auth)
+      await auth.submit()
+      await nextTick()
+      // email error is now set from email-taken
+      expect(auth.errors.email).toBeDefined()
+
+      // Typing in email clears it
+      auth.email = 'new@example.com'
+      await nextTick()
+      expect(auth.errors.email).toBeUndefined()
+    })
+
+    test('typing in username clears errors.username only', async () => {
+      const auth = useSignupActions()
+      await auth.submit() // all fields empty → username error set
+      await nextTick()
+      expect(auth.errors.username).toBeDefined()
+
+      auth.username = 'Bob'
+      await nextTick()
+      expect(auth.errors.username).toBeUndefined()
+    })
+
+    test('clearing one field does not clear other fields errors [obligation]', async () => {
+      const auth = useSignupActions()
+      await auth.submit()
+      await nextTick()
+      expect(auth.errors.email).toBeDefined()
+
+      // Typing in username clears username error but not email error
+      auth.username = 'Bob'
+      await nextTick()
+      expect(auth.errors.username).toBeUndefined()
+      expect(auth.errors.email).toBeDefined()
     })
   })
 
@@ -237,7 +284,7 @@ describe('useAuthActions', () => {
   describe('submitOAuth', () => {
     test('delegates to session.signInOAuth with provider and dashboard redirect', () => {
       mockSignInOAuth.mockResolvedValueOnce(undefined)
-      const auth = useAuthActions()
+      const auth = useSignupActions()
       auth.submitOAuth('google')
       expect(mockSignInOAuth).toHaveBeenCalledWith('google', { redirectTo: '/dashboard' })
     })

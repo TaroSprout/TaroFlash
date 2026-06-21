@@ -49,16 +49,47 @@ describe('getSession', () => {
 })
 
 describe('login', () => {
-  test('returns the session on success', async () => {
-    const session = { user: { id: 'u1' } }
-    mocks.signInWithPassword.mockResolvedValueOnce({ data: { session }, error: null })
-    await expect(login('e@x.com', 'pw')).resolves.toEqual(session)
+  test('returns "success" when signInWithPassword succeeds [obligation]', async () => {
+    mocks.signInWithPassword.mockResolvedValueOnce({ data: { session: {} }, error: null })
+    await expect(login('e@x.com', 'pw')).resolves.toBe('success')
     expect(mocks.signInWithPassword).toHaveBeenCalledWith({ email: 'e@x.com', password: 'pw' })
   })
 
-  test('throws when supabase returns an error', async () => {
-    mocks.signInWithPassword.mockResolvedValueOnce({ data: null, error: { message: 'bad creds' } })
-    await expect(login('e@x.com', 'pw')).rejects.toThrow('bad creds')
+  test('returns "invalid-credentials" for invalid_credentials error code [obligation]', async () => {
+    mocks.signInWithPassword.mockResolvedValueOnce({
+      data: null,
+      error: { code: 'invalid_credentials', message: 'bad', status: 400 }
+    })
+    await expect(login('e@x.com', 'pw')).resolves.toBe('invalid-credentials')
+  })
+
+  test('returns "email-not-confirmed" for email_not_confirmed error code [obligation]', async () => {
+    mocks.signInWithPassword.mockResolvedValueOnce({
+      data: null,
+      error: { code: 'email_not_confirmed', message: 'confirm', status: 400 }
+    })
+    await expect(login('e@x.com', 'pw')).resolves.toBe('email-not-confirmed')
+  })
+
+  test('returns "rate-limited" when status is 429 [obligation]', async () => {
+    mocks.signInWithPassword.mockResolvedValueOnce({
+      data: null,
+      error: { code: 'over_request_rate_limit', message: 'slow down', status: 429 }
+    })
+    await expect(login('e@x.com', 'pw')).resolves.toBe('rate-limited')
+  })
+
+  test('returns "error" for any other error [obligation]', async () => {
+    mocks.signInWithPassword.mockResolvedValueOnce({
+      data: null,
+      error: { code: 'server_error', message: 'boom', status: 500 }
+    })
+    await expect(login('e@x.com', 'pw')).resolves.toBe('error')
+  })
+
+  test('returns "error" when signInWithPassword throws [obligation]', async () => {
+    mocks.signInWithPassword.mockRejectedValueOnce(new Error('network failure'))
+    await expect(login('e@x.com', 'pw')).resolves.toBe('error')
   })
 })
 

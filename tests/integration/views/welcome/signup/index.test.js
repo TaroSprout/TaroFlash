@@ -25,9 +25,9 @@ vi.mock('vue-i18n', () => ({
   useI18n: () => ({ t: (key) => key })
 }))
 
-// Mock useAuthActions — returns a reactive-like object with submit and state.
-vi.mock('@/views/welcome/sign-up/use-auth-actions', () => ({
-  useAuthActions: () => ({
+// Mock useSignupActions — returns a reactive-like object with submit and state.
+vi.mock('@/composables/auth/use-signup-actions', () => ({
+  useSignupActions: () => ({
     submit: mocks.authSubmit,
     get loading() {
       return mocks.authLoading
@@ -94,7 +94,7 @@ const SignupFormStub = defineComponent({
 
 // ── Import ─────────────────────────────────────────────────────────────────────
 
-import SignupDialog from '@/views/welcome/sign-up/index.vue'
+import SignupDialog from '@/views/welcome/signup/index.vue'
 
 // ── Mount helper ───────────────────────────────────────────────────────────────
 
@@ -113,7 +113,7 @@ function mountSignupDialog({ close = vi.fn() } = {}) {
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
-describe('SignupDialog (sign-up/index.vue)', () => {
+describe('SignupDialog (signup/index.vue)', () => {
   beforeEach(() => {
     mocks.push.mockReset()
     mocks.alertWarn.mockReset()

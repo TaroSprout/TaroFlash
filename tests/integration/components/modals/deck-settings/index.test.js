@@ -92,6 +92,8 @@ vi.mock('@/composables/deck/editor', async () => {
     cover_image_preview: vueRef(undefined),
     cover_image_loading: vueRef(false),
     active_side: vueRef('cover'),
+    preview_front_text: vueRef(undefined),
+    preview_back_text: vueRef(undefined),
     is_dirty: vueRef(false),
     deleting: vueRef(false),
     resetting_reviews: vueRef(false),

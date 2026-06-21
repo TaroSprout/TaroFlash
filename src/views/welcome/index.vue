@@ -2,7 +2,8 @@
 import router from '@/router'
 import { useSessionStore } from '@/stores/session'
 import { onMounted, useTemplateRef } from 'vue'
-import { useSignupModal } from './sign-up/signup-modal'
+import { useSignupModal } from './signup/signup-modal'
+import { provideWelcomeLayout } from './welcome-layout'
 import Splash from './splash/index.vue'
 import SectionFeatures from './section-features.vue'
 import SectionConfig from './section-config.vue'
@@ -13,6 +14,8 @@ import WelcomeFooter from '@/components/welcome-footer.vue'
 const session = useSessionStore()
 const { open: openSignup } = useSignupModal()
 const features = useTemplateRef('features')
+
+provideWelcomeLayout()
 
 onMounted(async () => {
   const authenticated = await session.restoreSession()

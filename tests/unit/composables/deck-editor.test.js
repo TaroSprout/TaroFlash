@@ -25,6 +25,12 @@ const { mockEmitSfx } = vi.hoisted(() => ({
   mockEmitSfx: vi.fn()
 }))
 
+// useCardsInDeckInfiniteQuery is called inside useDeckEditor to power the
+// design preview. Stub it so unit tests don't need Pinia Colada / getActivePinia.
+vi.mock('@/api/cards', () => ({
+  useCardsInDeckInfiniteQuery: () => ({ data: { value: undefined } })
+}))
+
 vi.mock('@/api/decks', () => ({
   useDeleteDeckMutation: () => ({
     mutate: mockDeleteDeck,
@@ -410,6 +416,16 @@ describe('useDeckEditor', () => {
     test('exposes the mutation isLoading ref as `resetting_reviews`', () => {
       const { resetting_reviews } = useDeckEditor(makeDeck({ id: 1 }))
       expect(resetting_reviews).toBe(mockResetReviewsIsLoading)
+    })
+  })
+
+  // ── preview_front_text / preview_back_text ─────────────────────────────────
+
+  describe('preview_front_text / preview_back_text', () => {
+    test('are undefined when the query returns no data (unsaved deck) [obligation]', () => {
+      const { preview_front_text, preview_back_text } = useDeckEditor()
+      expect(preview_front_text.value).toBeUndefined()
+      expect(preview_back_text.value).toBeUndefined()
     })
   })
 

@@ -8,6 +8,13 @@ export type SignupEmailOptions = {
 
 export type SignupOutcome = 'success' | 'email-taken' | 'error'
 
+export type LoginOutcome =
+  | 'success'
+  | 'invalid-credentials'
+  | 'email-not-confirmed'
+  | 'rate-limited'
+  | 'error'
+
 export type SignupOAuthOptions = {
   redirectTo?: string
   skipBrowserRedirect?: boolean
@@ -30,17 +37,24 @@ export async function getSession(): Promise<Session | null> {
   return data?.session
 }
 
-export async function login(email: string, password: string): Promise<Session | null> {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password
-  })
+export async function login(email: string, password: string): Promise<LoginOutcome> {
+  try {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-  if (error) {
-    throw new Error(error.message)
+    if (!error) return 'success'
+
+    // Supabase folds "no such user" into invalid_credentials to prevent account
+    // enumeration, so this single code covers both wrong-password and no-account.
+    if (error.code === 'invalid_credentials') return 'invalid-credentials'
+    if (error.code === 'email_not_confirmed') return 'email-not-confirmed'
+    if (error.status === 429) return 'rate-limited'
+
+    logger.error(`Login failed: ${error.message}`)
+    return 'error'
+  } catch (e: any) {
+    logger.error(`Login failed: ${e.message}`)
+    return 'error'
   }
-
-  return data?.session
 }
 
 export async function logout(): Promise<void> {

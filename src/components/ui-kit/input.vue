@@ -27,6 +27,7 @@ const value = defineModel<string>('value')
     :visible="!!error"
     :suppress="!error"
     theme="red-500"
+    theme_dark="red-600"
     position="top-end"
     :gap="-14"
     :class="[

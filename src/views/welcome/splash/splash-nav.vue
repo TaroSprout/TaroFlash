@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import LoginDialogue from '@/views/welcome/login-dialog.vue'
+import LoginDialogue from '@/views/welcome/login/index.vue'
 import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
-import UiDropdownButton from '@/components/ui-kit/dropdown-button/index.vue'
+import { useWelcomeHeight, useWelcomeWidth } from '../welcome-layout'
 
 const { t } = useI18n()
+const height = useWelcomeHeight()
+const width = useWelcomeWidth()
 </script>
 
 <template>
   <nav
+    v-if="height !== 'short' || width === 'desktop'"
     data-testid="welcome-hero__nav"
     class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex justify-between items-center relative z-5"
   >
@@ -27,23 +30,6 @@ const { t } = useI18n()
       </ui-tooltip>
     </div>
 
-    <ui-dropdown-button
-      size="lg"
-      data-theme="brown-300"
-      data-theme-dark="stone-700"
-      menu-theme="brown-200"
-      shadow
-      position="bottom-end"
-      icon-left="user-sticker-square"
-      open-on-trigger
-      hide-trigger
-      data-testid="welcome-hero__login-trigger"
-    >
-      {{ t('welcome-view.login-button') }}
-
-      <template #panel>
-        <LoginDialogue />
-      </template>
-    </ui-dropdown-button>
+    <LoginDialogue />
   </nav>
 </template>

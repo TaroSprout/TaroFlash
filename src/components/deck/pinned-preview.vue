@@ -4,13 +4,15 @@ import Card from '@/components/card/index.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 
 type DeckPinnedPreviewProps = {
-  deck_id?: number
   cover: DeckCover
   card_attributes: DeckCardAttributes
   side: CardSide
+  front_text?: string
+  back_text?: string
 }
 
-const { deck_id, cover, card_attributes, side } = defineProps<DeckPinnedPreviewProps>()
+const { cover, card_attributes, side, front_text, back_text } =
+  defineProps<DeckPinnedPreviewProps>()
 
 const emit = defineEmits<{
   'update:side': [value: CardSide]
@@ -35,10 +37,11 @@ const emit = defineEmits<{
 
     <deck-design-preview
       data-testid="deck-pinned-preview__preview"
-      :deck_id="deck_id"
       :cover="cover"
       :card_attributes="card_attributes"
       :side="side"
+      :front_text="front_text"
+      :back_text="back_text"
       class="rotate-4 drop-shadow-sm"
       @update:side="emit('update:side', $event)"
     />

@@ -39,10 +39,11 @@ const card_side_attributes = computed(() =>
       class="flex justify-center w-full"
     >
       <deck-design-preview
-        :deck_id="editor.settings.id"
         :cover="editor.cover"
         :card_attributes="editor.card_attributes"
         :side="editor.active_side.value"
+        :front_text="editor.preview_front_text.value"
+        :back_text="editor.preview_back_text.value"
         @update:side="editor.setActiveSide"
       />
     </div>

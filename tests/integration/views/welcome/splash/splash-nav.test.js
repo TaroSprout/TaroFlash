@@ -1,6 +1,7 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, ref, computed } from 'vue'
+import { welcomeHeightKey } from '@/views/welcome/welcome-layout'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
@@ -30,24 +31,10 @@ const UiTooltipStub = defineComponent({
   }
 })
 
-// Capture what slots were provided to UiDropdownButton so we can assert on
-// the #panel slot having LoginDialogue content.
-let capturedPanel = null
-
 const LoginDialogueStub = defineComponent({
   name: 'LoginDialogue',
   setup() {
     return () => h('div', { 'data-testid': 'login-dialogue' })
-  }
-})
-
-const UiDropdownButtonStub = defineComponent({
-  name: 'UiDropdownButton',
-  inheritAttrs: false,
-  props: ['size', 'position', 'openOnTrigger', 'hideTrigger', 'iconLeft'],
-  setup(_props, { slots, attrs }) {
-    capturedPanel = slots.panel
-    return () => h('div', { ...attrs }, [slots.default?.(), slots.panel?.()])
   }
 })
 
@@ -57,14 +44,15 @@ import SplashNav from '@/views/welcome/splash/splash-nav.vue'
 
 // ── Mount helper ───────────────────────────────────────────────────────────────
 
-function mountSplashNav() {
-  capturedPanel = null
+function mountSplashNav({ height = 'tall' } = {}) {
   return shallowMount(SplashNav, {
     global: {
+      provide: {
+        [welcomeHeightKey]: computed(() => height)
+      },
       stubs: {
         UiIcon: UiIconStub,
         UiTooltip: UiTooltipStub,
-        UiDropdownButton: UiDropdownButtonStub,
         LoginDialogue: LoginDialogueStub
       }
     }
@@ -74,12 +62,19 @@ function mountSplashNav() {
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
 describe('SplashNav', () => {
-  // ── Structure ──────────────────────────────────────────────────────────────
+  // ── Responsive visibility [obligation] ─────────────────────────────────────
 
-  test('renders the nav container', () => {
-    const wrapper = mountSplashNav()
+  test('renders the nav when height is "tall" [obligation]', () => {
+    const wrapper = mountSplashNav({ height: 'tall' })
     expect(wrapper.find('[data-testid="welcome-hero__nav"]').exists()).toBe(true)
   })
+
+  test('does NOT render the nav when height is "short" [obligation]', () => {
+    const wrapper = mountSplashNav({ height: 'short' })
+    expect(wrapper.find('[data-testid="welcome-hero__nav"]').exists()).toBe(false)
+  })
+
+  // ── Structure (when visible) ────────────────────────────────────────────────
 
   test('renders the brand section', () => {
     const wrapper = mountSplashNav()
@@ -91,32 +86,11 @@ describe('SplashNav', () => {
     expect(wrapper.find('[data-testid="welcome-hero__beta"]').exists()).toBe(true)
   })
 
-  // ── Login trigger [obligation] ─────────────────────────────────────────────
+  // ── Login component [obligation] ──────────────────────────────────────────
 
-  test('login trigger has data-testid="welcome-hero__login-trigger" [obligation]', () => {
+  test('renders the LoginDialogue component in the nav [obligation]', () => {
     const wrapper = mountSplashNav()
-    expect(wrapper.find('[data-testid="welcome-hero__login-trigger"]').exists()).toBe(true)
-  })
-
-  test('login trigger is a ui-dropdown-button [obligation]', () => {
-    const wrapper = mountSplashNav()
-    // The element with welcome-hero__login-trigger testid should be the dropdown button
-    const trigger = wrapper.find('[data-testid="welcome-hero__login-trigger"]')
-    expect(trigger.attributes('data-testid')).toBe('welcome-hero__login-trigger')
-    // Confirm UiDropdownButton stub rendered it
-    expect(wrapper.findComponent(UiDropdownButtonStub).exists()).toBe(true)
-  })
-
-  test('login trigger dropdown hosts LoginDialogue in its #panel slot [obligation]', () => {
-    const wrapper = mountSplashNav()
-    // The panel slot content (LoginDialogue) should be rendered inside the dropdown
-    expect(wrapper.find('[data-testid="login-dialogue"]').exists()).toBe(true)
-  })
-
-  test('#panel slot is provided to UiDropdownButton (not just default slot) [obligation]', () => {
-    mountSplashNav()
-    // capturedPanel is set by the stub to the panel slot function
-    expect(capturedPanel).not.toBeNull()
-    expect(typeof capturedPanel).toBe('function')
+    // LoginDialogue is a stub — its data-testid from the stub confirms it renders
+    expect(wrapper.findComponent(LoginDialogueStub).exists()).toBe(true)
   })
 })

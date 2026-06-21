@@ -1,17 +1,8 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import { defineComponent, h, ref } from 'vue'
+import { defineComponent, h } from 'vue'
 
-const { cardsQueryMock, emitSfxMock } = vi.hoisted(() => ({
-  cardsQueryMock: vi.fn(),
-  emitSfxMock: vi.fn()
-}))
-
-vi.mock('@/api/cards', () => ({
-  useCardsInDeckInfiniteQuery: cardsQueryMock
-}))
-
-vi.mock('@/sfx/bus', () => ({ emitSfx: emitSfxMock }))
+vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn() }))
 
 import DeckPreview from '@/components/deck/deck-design-preview.vue'
 
@@ -19,7 +10,7 @@ const CardStub = defineComponent({
   name: 'Card',
   props: ['side', 'front_text', 'back_text', 'cover_config', 'card_attributes', 'face_classes'],
   emits: ['click'],
-  setup(props, { emit, attrs }) {
+  setup(props, { emit }) {
     return () =>
       h('div', {
         'data-testid': 'card-stub',
@@ -32,7 +23,6 @@ const CardStub = defineComponent({
 })
 
 const baseProps = {
-  deck_id: 42,
   cover: { theme: 'blue-500' },
   card_attributes: { front: {}, back: {} },
   side: 'cover'
@@ -45,11 +35,12 @@ function mountPreview(props = {}) {
   })
 }
 
-describe('DeckPreview', () => {
+describe('DeckPreview (presentational)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    cardsQueryMock.mockReturnValue({ data: ref({ pages: [[]] }) })
   })
+
+  // ── Structure ────────────────────────────────────────────────────────────────
 
   test('renders the preview container with a single card stub', () => {
     const wrapper = mountPreview()
@@ -62,60 +53,67 @@ describe('DeckPreview', () => {
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('front')
   })
 
-  test('uses the first card front_text when side is front and a card exists', () => {
-    cardsQueryMock.mockReturnValue({
-      data: ref({ pages: [[{ front_text: 'hello front', back_text: 'hello back' }]] })
-    })
-    const wrapper = mountPreview({ side: 'front' })
+  // ── preview_text — front side [obligation] ──────────────────────────────────
+
+  test('uses front_text prop when side is front [obligation]', () => {
+    const wrapper = mountPreview({ side: 'front', front_text: 'hello front' })
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-front')).toBe('hello front')
   })
 
-  test('uses the first card back_text when side is back', () => {
-    cardsQueryMock.mockReturnValue({
-      data: ref({ pages: [[{ front_text: 'hello front', back_text: 'hello back' }]] })
-    })
-    const wrapper = mountPreview({ side: 'back' })
+  test('falls back to locale placeholder when front_text is absent and side is front [obligation]', () => {
+    const wrapper = mountPreview({ side: 'front' })
+    // The real locale resolves to "Front" (deck.settings-modal.preview.front-fallback)
+    const frontAttr = wrapper.find('[data-testid="card-stub"]').attributes('data-front')
+    expect(frontAttr).not.toBe('')
+    // Not empty — the component shows a non-blank fallback string
+    expect(frontAttr?.length).toBeGreaterThan(0)
+  })
+
+  // ── preview_text — back side [obligation] ───────────────────────────────────
+
+  test('uses back_text prop when side is back [obligation]', () => {
+    const wrapper = mountPreview({ side: 'back', back_text: 'hello back' })
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-back')).toBe('hello back')
   })
 
-  test('falls back to translated placeholder when first card has no text', () => {
-    cardsQueryMock.mockReturnValue({ data: ref({ pages: [[{}]] }) })
-    const wrapper = mountPreview({ side: 'front' })
-    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-front')).not.toBe('')
+  test('falls back to locale placeholder when back_text is absent and side is back [obligation]', () => {
+    const wrapper = mountPreview({ side: 'back' })
+    // The real locale resolves to "Back" (deck.settings-modal.preview.back-fallback)
+    const backAttr = wrapper.find('[data-testid="card-stub"]').attributes('data-back')
+    expect(backAttr).not.toBe('')
+    expect(backAttr?.length).toBeGreaterThan(0)
   })
 
+  // ── cover side — no text ─────────────────────────────────────────────────────
+
   test('does not pass front/back text on the cover side', () => {
-    cardsQueryMock.mockReturnValue({
-      data: ref({ pages: [[{ front_text: 'hello front', back_text: 'hello back' }]] })
+    const wrapper = mountPreview({
+      side: 'cover',
+      front_text: 'hello front',
+      back_text: 'hello back'
     })
-    const wrapper = mountPreview({ side: 'cover' })
     const card = wrapper.find('[data-testid="card-stub"]')
     expect(card.attributes('data-front')).toBe('')
     expect(card.attributes('data-back')).toBe('')
   })
 
-  test('clicking the card cycles cover → front', async () => {
+  // ── cycleSide via @update:side [obligation] ──────────────────────────────────
+
+  test('clicking the card emits update:side cycling cover → front [obligation]', async () => {
     const wrapper = mountPreview({ side: 'cover' })
     await wrapper.find('[data-testid="card-stub"]').trigger('click')
     expect(wrapper.emitted('update:side')).toEqual([['front']])
   })
 
-  test('clicking cycles front → back', async () => {
+  test('clicking cycles front → back [obligation]', async () => {
     const wrapper = mountPreview({ side: 'front' })
     await wrapper.find('[data-testid="card-stub"]').trigger('click')
     expect(wrapper.emitted('update:side')).toEqual([['back']])
   })
 
-  test('clicking cycles back → cover (wraps around)', async () => {
+  test('clicking cycles back → cover (wraps around) [obligation]', async () => {
     const wrapper = mountPreview({ side: 'back' })
     await wrapper.find('[data-testid="card-stub"]').trigger('click')
     expect(wrapper.emitted('update:side')).toEqual([['cover']])
-  })
-
-  test('queries cards using the supplied deck_id', () => {
-    mountPreview({ deck_id: 99 })
-    // The composable receives a getter; invoke it to confirm the deck_id flows through.
-    const getter = cardsQueryMock.mock.calls[0][0]
-    expect(getter()).toBe(99)
   })
 })

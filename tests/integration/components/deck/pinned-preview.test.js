@@ -8,14 +8,15 @@ import PinnedPreview from '@/components/deck/pinned-preview.vue'
 // Stub for DeckDesignPreview — captures props and can emit update:side.
 const DeckDesignPreviewStub = defineComponent({
   name: 'DeckDesignPreview',
-  props: ['deck_id', 'cover', 'card_attributes', 'side'],
+  props: ['front_text', 'back_text', 'cover', 'card_attributes', 'side'],
   emits: ['update:side'],
   setup(props, { emit }) {
     return () =>
       h('div', {
         'data-testid': 'deck-pinned-preview__preview',
         'data-side': props.side,
-        'data-deck-id': props.deck_id ?? '',
+        'data-front-text': props.front_text ?? '',
+        'data-back-text': props.back_text ?? '',
         onClick: () => emit('update:side', 'back')
       })
   }
@@ -82,17 +83,27 @@ describe('PinnedPreview — props forwarding', () => {
     ).toBe('back')
   })
 
-  test('forwards deck_id to DeckDesignPreview when provided', () => {
-    const wrapper = makeWrapper({ deck_id: 42 })
+  test('forwards front_text to DeckDesignPreview when provided', () => {
+    const wrapper = makeWrapper({ front_text: 'Hello front' })
     expect(
-      wrapper.find('[data-testid="deck-pinned-preview__preview"]').attributes('data-deck-id')
-    ).toBe('42')
+      wrapper.find('[data-testid="deck-pinned-preview__preview"]').attributes('data-front-text')
+    ).toBe('Hello front')
   })
 
-  test('forwards undefined deck_id when not provided', () => {
+  test('forwards back_text to DeckDesignPreview when provided', () => {
+    const wrapper = makeWrapper({ back_text: 'Hello back' })
+    expect(
+      wrapper.find('[data-testid="deck-pinned-preview__preview"]').attributes('data-back-text')
+    ).toBe('Hello back')
+  })
+
+  test('forwards empty strings when front_text/back_text not provided', () => {
     const wrapper = makeWrapper()
     expect(
-      wrapper.find('[data-testid="deck-pinned-preview__preview"]').attributes('data-deck-id')
+      wrapper.find('[data-testid="deck-pinned-preview__preview"]').attributes('data-front-text')
+    ).toBe('')
+    expect(
+      wrapper.find('[data-testid="deck-pinned-preview__preview"]').attributes('data-back-text')
     ).toBe('')
   })
 })

@@ -2,7 +2,7 @@
 import MobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import SignupForm from './form.vue'
-import { useAuthActions } from './use-auth-actions'
+import { useSignupActions } from '@/composables/auth/use-signup-actions'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useAlert } from '@/composables/alert'
@@ -15,7 +15,7 @@ const { t } = useI18n()
 const router = useRouter()
 const alert = useAlert()
 
-const auth = useAuthActions()
+const auth = useSignupActions()
 
 async function onSubmit() {
   const result = await auth.submit()
@@ -54,13 +54,22 @@ async function onSubmit() {
       data-testid="signup__body"
       class="flex flex-col gap-8 py-8 px-6 sm:px-15 items-center relative"
     >
-      <signup-form :auth="auth" @submit="onSubmit" />
+      <signup-form
+        v-model:username="auth.username"
+        v-model:email="auth.email"
+        v-model:password="auth.password"
+        v-model:confirm-password="auth.confirm_password"
+        :errors="auth.errors"
+        @submit="onSubmit"
+        @oauth="auth.submitOAuth"
+      />
 
       <div data-testid="signup__actions" class="w-full flex justify-center gap-2.5">
         <ui-button
           size="xl"
           full-width
           data-theme="brown-100"
+          data-theme-dark="stone-700"
           :fancy-hover="false"
           @press="close()"
         >
@@ -70,6 +79,7 @@ async function onSubmit() {
           size="xl"
           full-width
           data-theme="blue-500"
+          data-theme-dark="blue-650"
           :loading="auth.loading"
           :disabled="!auth.all_filled"
           click-when-disabled
