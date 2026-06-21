@@ -22,7 +22,7 @@ const UiIconStub = defineComponent({
 
 // ── Import ─────────────────────────────────────────────────────────────────────
 
-import SectionFeatures from '@/views/welcome/section-features.vue'
+import SectionFeatures from '@/views/welcome/section-features/index.vue'
 
 // ── Mount helper ───────────────────────────────────────────────────────────────
 
