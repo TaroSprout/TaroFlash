@@ -25,8 +25,10 @@ const features: Feature[] = [
   <section data-testid="welcome-features" class="w-full bg-green-500 dark:bg-grey-800 py-30">
     <div class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex flex-col gap-14">
       <section-header
-        :eyebrow="t('welcome-view.features.eyebrow')"
+        data-theme="green-500"
+        data-theme-dark="green-600"
         :heading="t('welcome-view.features.heading')"
+        :subtitle="t('welcome-view.features.subtitle')"
       />
 
       <ul
