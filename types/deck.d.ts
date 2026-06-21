@@ -55,6 +55,7 @@ type DeckCoverPattern =
   | 'aztec'
   | 'endless-clouds'
   | 'leaf'
+  | 'squiggle'
 
 type DeckCover = {
   theme?: Theme

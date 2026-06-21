@@ -10,6 +10,11 @@
 @import '@/styles/shimmer.css';
 @import '@/styles/outline-utils.css';
 
+/* `bgx-<pattern>` cover classes are built at runtime (src/utils/cover/bindings.ts),
+   so Tailwind never sees them in source and would tree-shake the utilities.
+   Safelist every cover pattern so the masks resolve. */
+@source inline("bgx-{diagonal-stripes,saw,wave,bank-note,aztec,endless-clouds,leaf,squiggle}");
+
 @theme {
   --*: initial;
   --spacing: 4px;
@@ -138,6 +143,7 @@
   --bgx-stars: url('../assets/backgrounds/stars.svg');
   --bgx-leaf: url('../assets/backgrounds/leaf.svg');
   --bgx-dot-grid: url('../assets/backgrounds/dot-grid.svg');
+  --bgx-squiggle: url('../assets/backgrounds/squiggle.svg');
 
   /* Shadows */
   --shadow-2xs: 1.25px 1.25px 0px 0px var(--shadow-color);
