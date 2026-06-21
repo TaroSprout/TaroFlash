@@ -19,6 +19,8 @@ const value = defineModel<string>('value')
 <template>
   <ui-tooltip
     element="label"
+    data-theme="brown-100"
+    data-theme-dark="stone-700"
     data-testid="ui-kit-input-container"
     class="ui-kit-input-container"
     :text="error"
@@ -37,6 +39,7 @@ const value = defineModel<string>('value')
     <div data-testid="ui-kit-input" class="ui-kit-input">
       <input
         v-bind="$attrs"
+        v-sfx.focus="'type_05'"
         :placeholder="placeholder"
         v-model="value"
         @input="emit('input', value)"
@@ -72,15 +75,19 @@ const value = defineModel<string>('value')
 }
 
 .ui-kit-input {
-  background-color: var(--color-input);
+  background-color: var(--theme-primary);
   border-radius: var(--radius-4);
   width: 100%;
   padding: 12px 16px;
   outline: 1px solid transparent;
-  transition: outline-color 100ms ease-in-out;
+  transition: outline-color 60ms ease-in-out;
 
   width: 100%;
   position: relative;
+}
+
+.ui-kit-input:focus-within {
+  outline-color: var(--color-blue-500);
 }
 
 .ui-kit-input-container--error .ui-kit-input {
@@ -88,16 +95,16 @@ const value = defineModel<string>('value')
 }
 
 .ui-kit-input input {
-  border-bottom: 1px dashed var(--color-brown-700);
+  border-bottom: 1px dashed var(--theme-neutral);
   outline: none;
   background: transparent;
-  color: var(--color-brown-700);
+  color: var(--theme-on-primary);
 
   width: 100%;
   min-width: 0;
 }
 .ui-kit-input input::placeholder {
-  color: var(--color-brown-500);
+  color: var(--theme-neutral);
 }
 .ui-kit-input input:autofill,
 .ui-kit-input input:autofill:hover,
@@ -105,18 +112,11 @@ const value = defineModel<string>('value')
 .ui-kit-input input::-webkit-autofill,
 .ui-kit-input input::-webkit-autofill:hover,
 .ui-kit-input input::-webkit-autofill:focus {
-  box-shadow: 0 0 0px 1000px var(--color-input) inset;
+  box-shadow: 0 0 0px 1000px var(--theme-primary) inset;
 }
 
 :where([data-theme='dark'], [data-theme='dark'] *) .ui-kit-input-container span {
   color: var(--color-brown-100);
-}
-:where([data-theme='dark'], [data-theme='dark'] *) .ui-kit-input input {
-  border-bottom-color: var(--color-brown-300);
-  color: var(--color-brown-100);
-}
-:where([data-theme='dark'], [data-theme='dark'] *) .ui-kit-input input::placeholder {
-  color: var(--color-brown-300);
 }
 
 .ui-kit-input-container--text-left input {

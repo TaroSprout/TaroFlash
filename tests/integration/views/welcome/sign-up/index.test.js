@@ -83,8 +83,12 @@ const UiButtonStub = defineComponent({
 const SignupFormStub = defineComponent({
   name: 'SignupForm',
   props: ['auth'],
-  setup() {
-    return () => h('div', { 'data-testid': 'signup-form-stub' })
+  emits: ['submit'],
+  setup(_props, { emit }) {
+    return () =>
+      h('div', { 'data-testid': 'signup-form-stub' }, [
+        h('button', { 'data-testid': 'signup-form-stub__submit', onClick: () => emit('submit') })
+      ])
   }
 })
 
@@ -212,6 +216,18 @@ describe('SignupDialog (sign-up/index.vue)', () => {
 
     expect(close).not.toHaveBeenCalled()
     expect(mocks.alertWarn).not.toHaveBeenCalled()
+  })
+
+  // ── form @submit wiring ────────────────────────────────────────────────────
+
+  test('form submit event triggers onSubmit (calls auth.submit) [obligation]', async () => {
+    mocks.authSubmit.mockResolvedValueOnce('invalid')
+    const wrapper = mountSignupDialog()
+
+    await wrapper.find('[data-testid="signup-form-stub__submit"]').trigger('click')
+    await flushPromises()
+
+    expect(mocks.authSubmit).toHaveBeenCalled()
   })
 
   // ── Cancel button ──────────────────────────────────────────────────────────

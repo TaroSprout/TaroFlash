@@ -1,7 +1,8 @@
-import { describe, test, expect, vi } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 import UiTextarea from '@/components/ui-kit/textarea.vue'
+import { vSfx } from '@/sfx/directive'
 
 // UiTooltip uses @floating-ui/vue and Teleport; stub it so the slot content
 // (the textarea markup) renders in the wrapper tree.
@@ -18,10 +19,29 @@ vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: vi.fn(() => ({ value: false }))
 }))
 
+const { mockEmitSfx } = vi.hoisted(() => ({
+  mockEmitSfx: vi.fn()
+}))
+
+vi.mock('@/sfx/bus', () => ({
+  emitSfx: mockEmitSfx,
+  emitHoverSfx: vi.fn()
+}))
+
 function mountTextarea(props = {}) {
   return mount(UiTextarea, {
     props,
     global: { stubs: { UiTooltip: TooltipStub } }
+  })
+}
+
+function mountTextareaWithSfx(props = {}) {
+  return mount(UiTextarea, {
+    props,
+    global: {
+      stubs: { UiTooltip: TooltipStub },
+      directives: { sfx: vSfx }
+    }
   })
 }
 
@@ -123,5 +143,17 @@ describe('UiTextarea — label', () => {
     spans.forEach((s) => {
       expect(s.text()).not.toBe('Description')
     })
+  })
+})
+
+describe('UiTextarea — sfx', () => {
+  beforeEach(() => {
+    mockEmitSfx.mockReset()
+  })
+
+  test('plays type_05 sfx when the <textarea> receives focus [obligation]', async () => {
+    const wrapper = mountTextareaWithSfx()
+    await wrapper.find('textarea').trigger('focus')
+    expect(mockEmitSfx).toHaveBeenCalledWith('type_05', expect.anything())
   })
 })

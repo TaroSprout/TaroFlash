@@ -351,6 +351,10 @@ function onClick(e: MouseEvent) {
   }
 }
 
+.ui-kit-btn:focus-visible {
+  --btn-outline-width: 2px;
+}
+
 @media (hover: hover) {
   .ui-kit-btn:hover {
     --btn-outline-width: 2px;

@@ -41,10 +41,9 @@ async function onSubmit(): Promise<void> {
   <div data-testid="login-dialog" class="w-80 flex flex-col items-center gap-6 p-4">
     <ui-button
       data-testid="login-dialog__google"
-      data-theme="brown-100"
+      data-theme="brown-50"
       data-theme-dark="stone-900"
       size="lg"
-      :fancy-hover="false"
       class="w-full!"
       icon-left="google-logo"
       @press="submitOAuth('google')"
@@ -60,6 +59,7 @@ async function onSubmit(): Promise<void> {
           <ui-input
             type="email"
             name="email"
+            data-theme="brown-50"
             autocomplete="username"
             size="lg"
             v-model="email"
@@ -71,6 +71,7 @@ async function onSubmit(): Promise<void> {
           <ui-input
             type="password"
             name="password"
+            data-theme="brown-50"
             autocomplete="current-password"
             size="lg"
             v-model="password"

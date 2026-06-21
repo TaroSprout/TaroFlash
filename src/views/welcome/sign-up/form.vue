@@ -7,6 +7,8 @@ import type { AuthActions } from './use-auth-actions'
 
 const { auth } = defineProps<{ auth: AuthActions }>()
 
+const emit = defineEmits<{ submit: [] }>()
+
 const { t } = useI18n()
 </script>
 
@@ -30,7 +32,7 @@ const { t } = useI18n()
 
     <ui-divider :label="t('signup-dialog.divider-or')" />
 
-    <form data-testid="email-auth" class="flex flex-col gap-4.5">
+    <form data-testid="email-auth" class="flex flex-col gap-4.5" @submit.prevent="emit('submit')">
       <ui-input
         size="lg"
         :placeholder="t('signup-dialog.form.username-placeholder')"
@@ -64,6 +66,7 @@ const { t } = useI18n()
         v-model="auth.confirm_password"
         :error="auth.errors.confirm_password"
       />
+      <button type="submit" class="sr-only" tabindex="-1" aria-hidden="true"></button>
     </form>
   </div>
 </template>
