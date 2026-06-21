@@ -6,6 +6,8 @@ import { emitSfx } from '@/sfx/bus'
 
 type FieldName = 'username' | 'email' | 'password' | 'confirm_password'
 
+export type SignupFieldErrors = Partial<Record<FieldName, string>>
+
 export type SubmitResult = 'success' | 'invalid' | 'error'
 
 function isEmail(s: string) {
@@ -20,7 +22,7 @@ function isEmail(s: string) {
  * inline field errors, `'error'` signals a genuine request failure the caller
  * should surface (e.g. an alert), `'success'` means the account was created.
  */
-export function useAuthActions() {
+export function useSignupActions() {
   const session = useSessionStore()
   const { t } = useI18n()
 
@@ -30,10 +32,10 @@ export function useAuthActions() {
   const confirm_password = ref('')
   const tried_submit = ref(false)
   const loading = ref(false)
-  const serverErrors = ref<Partial<Record<FieldName, string>>>({})
+  const serverErrors = ref<SignupFieldErrors>({})
 
   const clientErrors = computed(() => {
-    const e: Partial<Record<FieldName, string>> = {}
+    const e: SignupFieldErrors = {}
 
     if (tried_submit.value && !username.value.trim())
       e.username = t('signup-dialog.form-validation.username-required')
@@ -116,4 +118,4 @@ export function useAuthActions() {
   })
 }
 
-export type AuthActions = ReturnType<typeof useAuthActions>
+export type SignupActions = ReturnType<typeof useSignupActions>

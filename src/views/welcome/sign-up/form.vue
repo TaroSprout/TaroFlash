@@ -3,11 +3,17 @@ import UiInput from '@/components/ui-kit/input.vue'
 import UiDivider from '@/components/ui-kit/divider.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useI18n } from 'vue-i18n'
-import type { AuthActions } from './use-auth-actions'
+import type { OAuthProvider } from '@/api/session'
+import type { SignupFieldErrors } from '@/composables/auth/use-signup-actions'
 
-const { auth } = defineProps<{ auth: AuthActions }>()
+const { errors = {} } = defineProps<{ errors?: SignupFieldErrors }>()
 
-const emit = defineEmits<{ submit: [] }>()
+const username = defineModel<string>('username', { required: true })
+const email = defineModel<string>('email', { required: true })
+const password = defineModel<string>('password', { required: true })
+const confirm_password = defineModel<string>('confirmPassword', { required: true })
+
+const emit = defineEmits<{ submit: []; oauth: [provider: OAuthProvider] }>()
 
 const { t } = useI18n()
 </script>
@@ -21,7 +27,7 @@ const { t } = useI18n()
         :fancy-hover="false"
         class="w-full!"
         icon-left="google-logo"
-        @press="auth.submitOAuth('google')"
+        @press="emit('oauth', 'google')"
       >
         {{ t('signup-dialog.google-button') }}
       </ui-button>
@@ -36,8 +42,8 @@ const { t } = useI18n()
       <ui-input
         size="lg"
         :placeholder="t('signup-dialog.form.username-placeholder')"
-        v-model="auth.username"
-        :error="auth.errors.username"
+        v-model="username"
+        :error="errors.username"
       />
       <ui-input
         size="lg"
@@ -45,8 +51,8 @@ const { t } = useI18n()
         name="email"
         autocomplete="username"
         :placeholder="t('signup-dialog.form.email-placeholder')"
-        v-model="auth.email"
-        :error="auth.errors.email"
+        v-model="email"
+        :error="errors.email"
       />
       <ui-input
         size="lg"
@@ -54,8 +60,8 @@ const { t } = useI18n()
         name="password"
         autocomplete="new-password"
         :placeholder="t('signup-dialog.form.password-placeholder')"
-        v-model="auth.password"
-        :error="auth.errors.password"
+        v-model="password"
+        :error="errors.password"
       />
       <ui-input
         size="lg"
@@ -63,8 +69,8 @@ const { t } = useI18n()
         name="confirm-password"
         autocomplete="new-password"
         :placeholder="t('signup-dialog.form.confirm-password-placeholder')"
-        v-model="auth.confirm_password"
-        :error="auth.errors.confirm_password"
+        v-model="confirm_password"
+        :error="errors.confirm_password"
       />
       <button type="submit" class="sr-only" tabindex="-1" aria-hidden="true"></button>
     </form>

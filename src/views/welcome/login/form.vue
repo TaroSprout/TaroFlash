@@ -1,40 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useI18n } from 'vue-i18n'
 import UiInput from '@/components/ui-kit/input.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiDivider from '@/components/ui-kit/divider.vue'
-import { useSessionStore } from '@/stores/session'
+import { useI18n } from 'vue-i18n'
 import type { OAuthProvider } from '@/api/session'
-import { useRouter } from 'vue-router'
-import { useToast } from '@/composables/toast'
 
-const router = useRouter()
-const toast = useToast()
+const { loading = false } = defineProps<{ loading?: boolean }>()
+
+const email = defineModel<string>('email', { required: true })
+const password = defineModel<string>('password', { required: true })
+
+const emit = defineEmits<{ submit: []; oauth: [provider: OAuthProvider] }>()
 
 const { t } = useI18n()
-const session = useSessionStore()
-
-const email = ref('')
-const password = ref('')
-const loading = ref(false)
-
-function submitOAuth(provider: OAuthProvider) {
-  session.signInOAuth(provider)
-}
-
-async function onSubmit(): Promise<void> {
-  try {
-    loading.value = true
-
-    await session.login(email.value, password.value)
-    router.push({ name: 'authenticated' })
-  } catch (e: any) {
-    toast.error(e.message)
-  } finally {
-    loading.value = false
-  }
-}
 </script>
 
 <template>
@@ -46,15 +24,15 @@ async function onSubmit(): Promise<void> {
       size="lg"
       class="w-full!"
       icon-left="google-logo"
-      @press="submitOAuth('google')"
+      @press="emit('oauth', 'google')"
     >
       {{ t('login-dialog.google-button') }}
     </ui-button>
 
     <ui-divider :label="t('login-dialog.divider-or')" />
 
-    <form class="w-full flex flex-col items-center gap-6" @submit.prevent="onSubmit">
-      <div class="flex flex-col gap-4 w-full">
+    <form class="w-full flex flex-col items-center gap-6" @submit.prevent="emit('submit')">
+      <div data-testid="login-dialog__fields" class="flex flex-col gap-4 w-full">
         <div data-testid="login-dialog__email">
           <ui-input
             type="email"
@@ -87,7 +65,7 @@ async function onSubmit(): Promise<void> {
         data-theme-dark="blue-650"
         :loading="loading"
         class="w-full!"
-        @press="onSubmit"
+        @press="emit('submit')"
       >
         {{ t('login-dialog.submit-button') }}
       </ui-button>

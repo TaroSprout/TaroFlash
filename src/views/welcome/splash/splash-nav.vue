@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import LoginDialogue from '@/views/welcome/login-dialog.vue'
+import LoginDialogue from '@/views/welcome/login/index.vue'
 import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
-import UiDropdownButton from '@/components/ui-kit/dropdown-button/index.vue'
 
 const { t } = useI18n()
 </script>
@@ -27,23 +26,6 @@ const { t } = useI18n()
       </ui-tooltip>
     </div>
 
-    <ui-dropdown-button
-      size="lg"
-      data-theme="brown-300"
-      data-theme-dark="stone-700"
-      menu-theme="brown-200"
-      shadow
-      position="bottom-end"
-      icon-left="user-sticker-square"
-      open-on-trigger
-      hide-trigger
-      data-testid="welcome-hero__login-trigger"
-    >
-      {{ t('welcome-view.login-button') }}
-
-      <template #panel>
-        <LoginDialogue />
-      </template>
-    </ui-dropdown-button>
+    <LoginDialogue />
   </nav>
 </template>
