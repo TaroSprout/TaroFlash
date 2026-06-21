@@ -166,7 +166,7 @@
   --theme-accent: var(--color-yellow-500);
   --theme-on-accent: var(--color-brown-700);
 
-  --theme-neutral: var(--color-brown-300);
+  --theme-neutral: var(--color-brown-200);
   --theme-on-neutral: var(--color-green-600);
 }
 
