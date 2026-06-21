@@ -8,6 +8,7 @@ import {
   signInOAuth as supaSignInOAuth,
   type SignupEmailOptions,
   type SignupOAuthOptions,
+  type SignupOutcome,
   type OAuthProvider
 } from '@/api/session'
 import { useRouter } from 'vue-router'
@@ -51,12 +52,12 @@ export const useSessionStore = defineStore('sessionStore', () => {
     router.push({ name: 'welcome' })
   }
 
-  async function signupEmail(
+  function signupEmail(
     email: string,
     password: string,
     opts?: SignupEmailOptions
-  ): Promise<void> {
-    await supaSignupEmail(email, password, opts)
+  ): Promise<SignupOutcome> {
+    return supaSignupEmail(email, password, opts)
   }
 
   async function signInOAuth(provider: OAuthProvider, options?: SignupOAuthOptions): Promise<void> {
