@@ -54,7 +54,7 @@ async function onSubmit() {
       data-testid="signup__body"
       class="flex flex-col gap-8 py-8 px-6 sm:px-15 items-center relative"
     >
-      <signup-form :auth="auth" />
+      <signup-form :auth="auth" @submit="onSubmit" />
 
       <div data-testid="signup__actions" class="w-full flex justify-center gap-2.5">
         <ui-button

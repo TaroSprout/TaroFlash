@@ -72,7 +72,7 @@ export function useAuthActions() {
     tried_submit.value = true
 
     if (!isValid.value) {
-      emitSfx('etc_woodblock_stuck')
+      emitSfx('digi_powerdown')
       return 'invalid'
     }
 
