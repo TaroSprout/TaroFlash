@@ -10,7 +10,8 @@ const PATTERN_SWATCH_SIZE: Record<DeckCoverPattern, string> = {
   wave: '78px',
   'bank-note': '90px',
   aztec: '39px',
-  'endless-clouds': '78px'
+  'endless-clouds': '78px',
+  leaf: '65px'
 }
 
 type PatternPickerProps = {
