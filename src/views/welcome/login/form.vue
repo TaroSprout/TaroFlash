@@ -27,7 +27,10 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <div data-testid="login-dialog" class="w-80 flex flex-col items-center gap-6 p-4">
+  <div
+    data-testid="login-dialog"
+    class="w-full max-md:max-w-100 md:w-80 flex flex-col items-center gap-6 p-4"
+  >
     <ui-button
       data-testid="login-dialog__google"
       data-theme="brown-50"

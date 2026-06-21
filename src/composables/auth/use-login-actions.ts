@@ -29,8 +29,8 @@ function isEmail(s: string) {
  * the login/OAuth calls so the dialog stays presentational.
  *
  * Errors clear as the user recovers: typing in a field clears that field's error
- * plus the global backend message, and `reset()` wipes everything when the dialog
- * is reopened.
+ * plus the global backend message. The dialog mounts a fresh instance each time
+ * it opens, so reopening always starts clean.
  *
  * `submit()` returns a `SubmitResult`: `'invalid'` keeps the dialog open with
  * inline field errors, `'error'` means the backend rejected the login and
@@ -87,12 +87,6 @@ export function useLoginActions() {
     return session.signInOAuth(provider)
   }
 
-  /** Clear all errors — used when the dialog is reopened so it starts fresh. */
-  function reset() {
-    errors.value = {}
-    submitError.value = ''
-  }
-
   // Typing in a field clears its own error and the global backend message, so a
   // user correcting one input never stares at a stale error on the other.
   function clearOnInput(field: FieldName) {
@@ -117,8 +111,7 @@ export function useLoginActions() {
     all_filled,
     submitError,
     submit,
-    submitOAuth,
-    reset
+    submitOAuth
   })
 }
 

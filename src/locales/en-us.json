@@ -12,6 +12,7 @@
   "phone.apps.logout.description": "Are you sure you want to logout?",
   "phone.apps.logout.confirm": "Logout",
   "inventory-modal.title": "Inventory",
+  "login-dialog.heading": "Welcome Back",
   "login-dialog.email-placeholder": "Email",
   "login-dialog.password": "Password",
   "login-dialog.submit-button": "Let's Go!",
