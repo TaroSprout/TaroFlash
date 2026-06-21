@@ -94,7 +94,7 @@ const SignupFormStub = defineComponent({
 
 // ── Import ─────────────────────────────────────────────────────────────────────
 
-import SignupDialog from '@/views/welcome/sign-up/index.vue'
+import SignupDialog from '@/views/welcome/signup/index.vue'
 
 // ── Mount helper ───────────────────────────────────────────────────────────────
 
@@ -113,7 +113,7 @@ function mountSignupDialog({ close = vi.fn() } = {}) {
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
-describe('SignupDialog (sign-up/index.vue)', () => {
+describe('SignupDialog (signup/index.vue)', () => {
   beforeEach(() => {
     mocks.push.mockReset()
     mocks.alertWarn.mockReset()

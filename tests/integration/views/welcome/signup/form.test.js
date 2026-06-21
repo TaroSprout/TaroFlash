@@ -74,7 +74,7 @@ const UiButtonStub = defineComponent({
 
 // ── Import ─────────────────────────────────────────────────────────────────────
 
-import SignupForm from '@/views/welcome/sign-up/form.vue'
+import SignupForm from '@/views/welcome/signup/form.vue'
 
 // ── Auth mock ──────────────────────────────────────────────────────────────────
 
@@ -109,7 +109,7 @@ function mountForm(authOverrides = {}) {
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
-describe('SignupForm (sign-up/form.vue)', () => {
+describe('SignupForm (signup/form.vue)', () => {
   beforeEach(() => {
     mockSubmitOAuth.mockReset()
   })
@@ -118,7 +118,7 @@ describe('SignupForm (sign-up/form.vue)', () => {
 
   test('renders the sign-up form wrapper', () => {
     const wrapper = mountForm()
-    expect(wrapper.find('[data-testid="sign-up__form"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="signup__form"]').exists()).toBe(true)
   })
 
   test('renders the social auth section', () => {

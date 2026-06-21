@@ -21,7 +21,7 @@ vi.mock('@/composables/modal', () => ({
 // assert on the async component wrapper shape rather than the raw .vue import.
 const asyncComponentMatcher = expect.objectContaining({ __asyncLoader: expect.any(Function) })
 
-import { useSignupModal } from '@/views/welcome/sign-up/signup-modal'
+import { useSignupModal } from '@/views/welcome/signup/signup-modal'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 

@@ -2,7 +2,7 @@
 import router from '@/router'
 import { useSessionStore } from '@/stores/session'
 import { onMounted, useTemplateRef } from 'vue'
-import { useSignupModal } from './sign-up/signup-modal'
+import { useSignupModal } from './signup/signup-modal'
 import Splash from './splash/index.vue'
 import SectionFeatures from './section-features.vue'
 import SectionConfig from './section-config.vue'
