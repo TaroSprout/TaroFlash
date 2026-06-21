@@ -64,6 +64,7 @@
   "signup-dialog.alert.close": "Close",
   "welcome-view.login-button": "Log In",
   "welcome-view.signup-button": "Make An Account",
+  "welcome-view.signup-button-short": "Sign Up",
   "welcome-view.hero.beta-pill": "Beta",
   "welcome-view.hero.beta-tooltip": "See the roadmap below for future updates!",
   "welcome-view.hero.heading": "TaroFlash",
