@@ -6,17 +6,21 @@ import { defineComponent, h } from 'vue'
 
 const SectionHeaderStub = defineComponent({
   name: 'SectionHeader',
-  props: ['eyebrow', 'heading'],
+  props: ['heading', 'subtitle'],
   setup(props) {
-    return () => h('div', { 'data-testid': 'section-header' }, props.heading)
+    return () => h('div', { 'data-testid': 'section-header', 'data-heading': props.heading })
   }
 })
 
-const UiIconStub = defineComponent({
-  name: 'UiIcon',
-  props: ['src'],
+const FeatureCardStub = defineComponent({
+  name: 'FeatureCard',
+  props: ['feature_key', 'icon', 'accent', 'accent_dark'],
   setup(props) {
-    return () => h('span', { 'data-testid': 'ui-icon', 'data-src': props.src })
+    return () =>
+      h('div', {
+        'data-testid': `feature-card-stub`,
+        'data-feature-key': props.feature_key
+      })
   }
 })
 
@@ -31,7 +35,7 @@ function mountFeatures() {
     global: {
       stubs: {
         SectionHeader: SectionHeaderStub,
-        UiIcon: UiIconStub
+        FeatureCard: FeatureCardStub
       }
     }
   })
@@ -52,54 +56,62 @@ describe('SectionFeatures', () => {
     expect(wrapper.find('[data-testid="section-header"]').exists()).toBe(true)
   })
 
-  test('renders the features grid', () => {
+  test('section header receives resolved heading text', () => {
     const wrapper = mountFeatures()
-    expect(wrapper.find('[data-testid="welcome-features__grid"]').exists()).toBe(true)
+    const header = wrapper.find('[data-testid="section-header"]')
+    expect(header.attributes('data-heading')).toBe('A Flashcard App At Heart')
   })
 
-  // ── Feature cards ──────────────────────────────────────────────────────────
-
-  test('renders all 6 feature cards', () => {
+  test('section header is rendered without eyebrow prop [obligation]', () => {
     const wrapper = mountFeatures()
-    const keys = ['editor', 'study', 'cards', 'scheduling', 'portable', 'mobile']
-    for (const key of keys) {
-      expect(wrapper.find(`[data-testid="welcome-features__card-${key}"]`).exists()).toBe(true)
-    }
+    const headerComponent = wrapper.findComponent({ name: 'SectionHeader' })
+    expect(headerComponent.props('eyebrow')).toBeUndefined()
   })
 
-  test('editor card renders its heading', () => {
+  // ── Feature card list ──────────────────────────────────────────────────────
+
+  test('renders the feature card row list [obligation]', () => {
     const wrapper = mountFeatures()
-    const card = wrapper.find('[data-testid="welcome-features__card-editor"]')
-    expect(card.text()).toContain('A simple, flexible editor')
+    expect(wrapper.find('[data-testid="welcome-features__row"]').exists()).toBe(true)
   })
 
-  test('study card renders its heading', () => {
+  test('renders exactly 4 feature cards [obligation]', () => {
     const wrapper = mountFeatures()
-    const card = wrapper.find('[data-testid="welcome-features__card-study"]')
-    expect(card.text()).toContain('Calm study sessions')
+    const items = wrapper.findAll('[data-testid^="welcome-features__card-"]')
+    expect(items).toHaveLength(4)
   })
 
-  test('cards card renders its heading', () => {
+  test('renders experience card with correct testid [obligation]', () => {
     const wrapper = mountFeatures()
-    const card = wrapper.find('[data-testid="welcome-features__card-cards"]')
-    expect(card.text()).toContain('Cards that feel like cards')
+    expect(wrapper.find('[data-testid="welcome-features__card-experience"]').exists()).toBe(true)
   })
 
-  test('scheduling card renders its heading', () => {
+  test('renders mobile card with correct testid [obligation]', () => {
     const wrapper = mountFeatures()
-    const card = wrapper.find('[data-testid="welcome-features__card-scheduling"]')
-    expect(card.text()).toContain('Spaced repetition, quietly')
+    expect(wrapper.find('[data-testid="welcome-features__card-mobile"]').exists()).toBe(true)
   })
 
-  test('portable card renders its heading', () => {
+  test('renders scheduling card with correct testid [obligation]', () => {
     const wrapper = mountFeatures()
-    const card = wrapper.find('[data-testid="welcome-features__card-portable"]')
-    expect(card.text()).toContain('Yours, and portable')
+    expect(wrapper.find('[data-testid="welcome-features__card-scheduling"]').exists()).toBe(true)
   })
 
-  test('mobile card renders its heading', () => {
+  test('renders upcoming card with correct testid [obligation]', () => {
     const wrapper = mountFeatures()
-    const card = wrapper.find('[data-testid="welcome-features__card-mobile"]')
-    expect(card.text()).toContain('Made for on the go')
+    expect(wrapper.find('[data-testid="welcome-features__card-upcoming"]').exists()).toBe(true)
+  })
+
+  test('does NOT render old portable card [obligation]', () => {
+    const wrapper = mountFeatures()
+    expect(wrapper.find('[data-testid="welcome-features__card-portable"]').exists()).toBe(false)
+  })
+
+  test('renders cards in correct order: experience, mobile, scheduling, upcoming [obligation]', () => {
+    const wrapper = mountFeatures()
+    const items = wrapper.findAll('[data-testid^="welcome-features__card-"]')
+    expect(items[0].attributes('data-testid')).toBe('welcome-features__card-experience')
+    expect(items[1].attributes('data-testid')).toBe('welcome-features__card-mobile')
+    expect(items[2].attributes('data-testid')).toBe('welcome-features__card-scheduling')
+    expect(items[3].attributes('data-testid')).toBe('welcome-features__card-upcoming')
   })
 })
