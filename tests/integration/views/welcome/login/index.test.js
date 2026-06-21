@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { nextTick } from 'vue'
-import { shallowMount, flushPromises } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 
@@ -58,7 +58,7 @@ const UiDividerStub = defineComponent({
 
 // ── Import ─────────────────────────────────────────────────────────────────────
 
-import LoginDialog from '@/views/welcome/login-dialog.vue'
+import LoginDialog from '@/views/welcome/login/index.vue'
 import { useSessionStore } from '@/stores/session'
 
 // ── Mount helper ───────────────────────────────────────────────────────────────
@@ -66,7 +66,7 @@ import { useSessionStore } from '@/stores/session'
 function mountLoginDialog() {
   const pinia = createTestingPinia({ createSpy: vi.fn, stubActions: true })
 
-  const wrapper = shallowMount(LoginDialog, {
+  const wrapper = mount(LoginDialog, {
     global: {
       plugins: [pinia],
       stubs: {

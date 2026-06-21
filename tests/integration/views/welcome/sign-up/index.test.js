@@ -25,9 +25,9 @@ vi.mock('vue-i18n', () => ({
   useI18n: () => ({ t: (key) => key })
 }))
 
-// Mock useAuthActions — returns a reactive-like object with submit and state.
-vi.mock('@/views/welcome/sign-up/use-auth-actions', () => ({
-  useAuthActions: () => ({
+// Mock useSignupActions — returns a reactive-like object with submit and state.
+vi.mock('@/composables/auth/use-signup-actions', () => ({
+  useSignupActions: () => ({
     submit: mocks.authSubmit,
     get loading() {
       return mocks.authLoading
