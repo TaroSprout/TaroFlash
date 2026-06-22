@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { createFeatureReveal } from '@/utils/animations/welcome/feature-reveal'
 import SectionHeader from '../section-header.vue'
+import CommunityCallout from './community-callout.vue'
 import FeatureCard from './feature-card.vue'
 
 type Feature = {
@@ -111,6 +112,8 @@ onBeforeUnmount(() => reveal?.kill())
           />
         </li>
       </ul>
+
+      <community-callout />
     </div>
   </section>
 </template>
