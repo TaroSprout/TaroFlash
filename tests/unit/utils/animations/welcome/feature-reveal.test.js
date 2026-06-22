@@ -32,7 +32,7 @@ describe('createFeatureReveal', () => {
   })
 
   test('creates a ScrollTrigger spanning the central viewport band', () => {
-    createFeatureReveal(trigger, 3, vi.fn())
+    createFeatureReveal(trigger, [0, 1, 2], vi.fn())
     const config = lastConfig()
     expect(config.trigger).toBe(trigger)
     expect(config.start).toBe('top 60%')
@@ -44,65 +44,69 @@ describe('createFeatureReveal', () => {
   })
 
   test('returns the created ScrollTrigger so the caller can kill it', () => {
-    const handle = createFeatureReveal(trigger, 3, vi.fn())
+    const handle = createFeatureReveal(trigger, [0, 1, 2], vi.fn())
     expect(handle).toBe(mockCreate.mock.results.at(-1).value)
     expect(handle.kill).toBeTypeOf('function')
   })
 
-  test('onEnter flips every card to "front", once each, in index order', () => {
-    const reveal = vi.fn()
-    createFeatureReveal(trigger, 3, reveal)
+  // [obligation] onEnter fires setActive(index, true) for each index in order
+  test('onEnter calls setActive(index, true) for each index in array order [obligation]', () => {
+    const setActive = vi.fn()
+    createFeatureReveal(trigger, [0, 1, 2], setActive)
 
     lastConfig().onEnter()
 
-    expect(reveal.mock.calls).toEqual([
-      [0, 'front'],
-      [1, 'front'],
-      [2, 'front']
+    expect(setActive.mock.calls).toEqual([
+      [0, true],
+      [1, true],
+      [2, true]
     ])
   })
 
-  test('onEnterBack flips every card to "front" when re-entering the band from below', () => {
-    const reveal = vi.fn()
-    createFeatureReveal(trigger, 3, reveal)
+  // [obligation] onEnterBack fires active=true when re-entering from below
+  test('onEnterBack calls setActive(index, true) for each index [obligation]', () => {
+    const setActive = vi.fn()
+    createFeatureReveal(trigger, [0, 1, 2], setActive)
 
     lastConfig().onEnterBack()
 
-    expect(reveal.mock.calls).toEqual([
-      [0, 'front'],
-      [1, 'front'],
-      [2, 'front']
+    expect(setActive.mock.calls).toEqual([
+      [0, true],
+      [1, true],
+      [2, true]
     ])
   })
 
-  test('onLeave flips every card back to "cover" when leaving the band above', () => {
-    const reveal = vi.fn()
-    createFeatureReveal(trigger, 3, reveal)
+  // [obligation] onLeave fires active=false when leaving the band above
+  test('onLeave calls setActive(index, false) for each index [obligation]', () => {
+    const setActive = vi.fn()
+    createFeatureReveal(trigger, [0, 1, 2], setActive)
 
     lastConfig().onLeave()
 
-    expect(reveal.mock.calls).toEqual([
-      [0, 'cover'],
-      [1, 'cover'],
-      [2, 'cover']
+    expect(setActive.mock.calls).toEqual([
+      [0, false],
+      [1, false],
+      [2, false]
     ])
   })
 
-  test('onLeaveBack flips every card back to "cover", once each', () => {
-    const reveal = vi.fn()
-    createFeatureReveal(trigger, 3, reveal)
+  // [obligation] onLeaveBack fires active=false when scrolling back past the top
+  test('onLeaveBack calls setActive(index, false) for each index [obligation]', () => {
+    const setActive = vi.fn()
+    createFeatureReveal(trigger, [0, 1, 2], setActive)
 
     lastConfig().onLeaveBack()
 
-    expect(reveal.mock.calls).toEqual([
-      [0, 'cover'],
-      [1, 'cover'],
-      [2, 'cover']
+    expect(setActive.mock.calls).toEqual([
+      [0, false],
+      [1, false],
+      [2, false]
     ])
   })
 
-  test('staggers each flip on an increasing delay', () => {
-    createFeatureReveal(trigger, 3, vi.fn())
+  test('staggers each callback on an increasing delay', () => {
+    createFeatureReveal(trigger, [0, 1, 2], vi.fn())
 
     lastConfig().onEnter()
 
@@ -111,5 +115,20 @@ describe('createFeatureReveal', () => {
     expect(delays[0]).toBe(0)
     expect(delays[1]).toBeGreaterThan(delays[0])
     expect(delays[2]).toBeGreaterThan(delays[1])
+  })
+
+  // [obligation] only the passed indices fire — a subset triggers only those cards
+  test('only the passed indices fire, in array order [obligation]', () => {
+    const setActive = vi.fn()
+    // Only indices [1, 3] — a subset of a 4-card row (tablet grid row)
+    createFeatureReveal(trigger, [1, 3], setActive)
+
+    lastConfig().onEnter()
+
+    expect(setActive.mock.calls).toEqual([
+      [1, true],
+      [3, true]
+    ])
+    expect(setActive).toHaveBeenCalledTimes(2)
   })
 })

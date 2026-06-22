@@ -60,8 +60,19 @@ const SplashStub = defineComponent({
 
 const SectionFeaturesStub = defineComponent({
   name: 'SectionFeatures',
-  setup() {
-    return () => h('div', { 'data-testid': 'section-features' })
+  props: ['seeRoadmap'],
+  setup(props) {
+    return () =>
+      h('div', { 'data-testid': 'section-features' }, [
+        h(
+          'button',
+          {
+            'data-testid': 'section-features__roadmap-trigger',
+            onClick: () => props.seeRoadmap?.()
+          },
+          'See Roadmap'
+        )
+      ])
   }
 })
 
@@ -198,6 +209,35 @@ describe('WelcomeIndex', () => {
 
     await wrapper.find('[data-testid="splash__see-more"]').trigger('click')
     expect(scrollIntoViewSpy).toHaveBeenCalledWith({ behavior: 'smooth' })
+  })
+
+  // ── scrollToRoadmap wiring [obligation] ────────────────────────────────────
+
+  test('passes scrollToRoadmap as seeRoadmap to SectionFeatures [obligation]', async () => {
+    const wrapper = mountWelcome()
+
+    // The roadmap section's scrollIntoView should be called when the
+    // seeRoadmap callback received by SectionFeatures is invoked.
+    const roadmapEl = wrapper.find('[data-testid="section-roadmap"]').element
+    const scrollIntoViewSpy = vi.fn()
+    roadmapEl.scrollIntoView = scrollIntoViewSpy
+
+    await wrapper.find('[data-testid="section-features__roadmap-trigger"]').trigger('click')
+    expect(scrollIntoViewSpy).toHaveBeenCalledWith({ behavior: 'smooth' })
+  })
+
+  test('scrollToRoadmap does not call scrollIntoView on the features section [obligation]', async () => {
+    const wrapper = mountWelcome()
+
+    const featuresEl = wrapper.find('[data-testid="section-features"]').element
+    const featuresSpy = vi.fn()
+    featuresEl.scrollIntoView = featuresSpy
+
+    const roadmapEl = wrapper.find('[data-testid="section-roadmap"]').element
+    roadmapEl.scrollIntoView = vi.fn()
+
+    await wrapper.find('[data-testid="section-features__roadmap-trigger"]').trigger('click')
+    expect(featuresSpy).not.toHaveBeenCalled()
   })
 
   // ── onMounted redirect when already authenticated ──────────────────────────
