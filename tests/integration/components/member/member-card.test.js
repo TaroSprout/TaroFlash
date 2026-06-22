@@ -38,7 +38,7 @@ describe('MemberCard', () => {
     const body = wrapper.find('[data-testid="member-card__body"]')
     expect(body.attributes('data-theme')).toBe('red-500')
     expect(body.attributes('data-theme-dark')).toBe('red-700')
-    expect(body.classes()).toContain('bgx-wave')
+    expect(body.classes()).toContain('pattern-mask')
   })
 
   test('falls back to MEMBER_CARD_COVER_DEFAULTS when cover omitted', () => {
@@ -46,7 +46,7 @@ describe('MemberCard', () => {
     const body = wrapper.find('[data-testid="member-card__body"]')
     expect(body.attributes('data-theme')).toBe(MEMBER_CARD_COVER_DEFAULTS.theme)
     expect(body.attributes('data-theme-dark')).toBe(MEMBER_CARD_COVER_DEFAULTS.theme_dark)
-    expect(body.classes()).toContain(`bgx-${MEMBER_CARD_COVER_DEFAULTS.pattern}`)
+    expect(body.classes()).toContain('pattern-mask')
   })
 
   test('renders displayName when provided', () => {
@@ -93,6 +93,6 @@ describe('MemberCard', () => {
     const body = wrapper.find('[data-testid="member-card__body"]')
     expect(body.attributes('data-theme')).toBe('teal-400')
     expect(body.attributes('data-theme-dark')).toBe('teal-800')
-    expect(body.classes()).toContain('bgx-aztec')
+    expect(body.classes()).toContain('pattern-mask')
   })
 })

@@ -131,7 +131,7 @@ describe('MemberBadge', () => {
 
     test('applies pattern class from cover config', () => {
       const wrapper = mountBadge({ cover: { theme: 'blue-700', pattern: 'wave' } })
-      expect(wrapper.find('[data-testid="member-badge"]').classes()).toContain('bgx-wave')
+      expect(wrapper.find('[data-testid="member-badge"]').classes()).toContain('pattern-mask')
     })
 
     test('falls back to MEMBER_CARD_COVER_DEFAULTS theme when cover is omitted', () => {

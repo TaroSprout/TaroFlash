@@ -14,9 +14,18 @@ const UiIconStub = defineComponent({
 
 const CardStub = defineComponent({
   name: 'Card',
-  props: ['size'],
-  setup(_props, { slots }) {
-    return () => h('div', { 'data-testid': 'card-stub' }, slots.front?.())
+  props: ['size', 'side', 'cover_config'],
+  setup(props, { slots }) {
+    return () =>
+      h(
+        'div',
+        {
+          'data-testid': 'card-stub',
+          'data-side': props.side,
+          'data-cover-pattern': props.cover_config?.pattern
+        },
+        slots.front?.()
+      )
   }
 })
 
@@ -112,5 +121,26 @@ describe('FeatureCard', () => {
     const wrapper = mountFeatureCard({ icon: 'paint-brush' })
     const icon = wrapper.find('[data-testid="feature-card__icon"]')
     expect(icon.attributes('data-src')).toBe('paint-brush')
+  })
+
+  // ── side / cover forwarding ──────────────────────────────────────────────────
+
+  test('defaults the card side to "front" when side prop is omitted [obligation]', () => {
+    const wrapper = mountFeatureCard()
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('front')
+  })
+
+  test('forwards the side prop to the card [obligation]', () => {
+    const wrapper = mountFeatureCard({ side: 'cover' })
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('cover')
+  })
+
+  test('forwards the cover config to the card as cover_config [obligation]', () => {
+    const wrapper = mountFeatureCard({
+      cover: { theme: 'purple-500', pattern: 'diagonal-stripes' }
+    })
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-cover-pattern')).toBe(
+      'diagonal-stripes'
+    )
   })
 })
