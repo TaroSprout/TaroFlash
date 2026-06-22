@@ -31,12 +31,15 @@ describe('createFeatureReveal', () => {
     expect(mockRegisterPlugin).toHaveBeenCalled()
   })
 
-  test('creates a ScrollTrigger on the given trigger, firing at top center', () => {
+  test('creates a ScrollTrigger spanning the central viewport band', () => {
     createFeatureReveal(trigger, 3, vi.fn())
     const config = lastConfig()
     expect(config.trigger).toBe(trigger)
-    expect(config.start).toBe('top center')
+    expect(config.start).toBe('top 60%')
+    expect(config.end).toBe('bottom 25%')
     expect(typeof config.onEnter).toBe('function')
+    expect(typeof config.onLeave).toBe('function')
+    expect(typeof config.onEnterBack).toBe('function')
     expect(typeof config.onLeaveBack).toBe('function')
   })
 
@@ -56,6 +59,32 @@ describe('createFeatureReveal', () => {
       [0, 'front'],
       [1, 'front'],
       [2, 'front']
+    ])
+  })
+
+  test('onEnterBack flips every card to "front" when re-entering the band from below', () => {
+    const reveal = vi.fn()
+    createFeatureReveal(trigger, 3, reveal)
+
+    lastConfig().onEnterBack()
+
+    expect(reveal.mock.calls).toEqual([
+      [0, 'front'],
+      [1, 'front'],
+      [2, 'front']
+    ])
+  })
+
+  test('onLeave flips every card back to "cover" when leaving the band above', () => {
+    const reveal = vi.fn()
+    createFeatureReveal(trigger, 3, reveal)
+
+    lastConfig().onLeave()
+
+    expect(reveal.mock.calls).toEqual([
+      [0, 'cover'],
+      [1, 'cover'],
+      [2, 'cover']
     ])
   })
 
