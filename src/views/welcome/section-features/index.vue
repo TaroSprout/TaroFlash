@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { createFeatureReveal } from '@/utils/animations/welcome/feature-reveal'
+import { createStackReveal } from '@/utils/animations/welcome/stack-reveal'
 import { useWelcomeWidth } from '../welcome-layout'
 import SectionHeader from '../section-header.vue'
 import CommunityCallout from './community-callout.vue'
@@ -73,25 +74,30 @@ const features: Feature[] = [
 // Tablet renders the cards as a 2-column grid; desktop as one row.
 const TABLET_COLUMNS = 2
 
-// Desktop and tablet start covered and flip on scroll; mobile shows fronts
-// directly (its reveal is handled later).
-const sides = ref<CardSide[]>(features.map(() => (width.value === 'mobile' ? 'front' : 'cover')))
+// Every card starts on its cover and flips to front when its trigger fires.
+const sides = ref<CardSide[]>(features.map(() => 'cover'))
+
+// Mobile: index of the active card — the one lifted to the top of the deck and
+// flipped to front. Only one at a time; -1 before the first trigger and once
+// scrolled past the last, so the ends of the section show the resting stack.
+const activeIndex = ref(-1)
 
 const row = useTemplateRef<HTMLElement>('row')
 
-let reveals: ScrollTrigger[] = []
+let teardowns: (() => void)[] = []
 
 // Desktop: single justified row that scroll-flips. Tablet: a 2×2 grid so four
-// cards never break to an awkward 3+1. Mobile: a single stacked column.
+// cards never break to an awkward 3+1. Mobile: an overlapped column that reveals
+// on scroll (overlap + reveal are in <style>, keyed off data-stack/data-reveal).
 const row_layout = computed(() => {
-  if (width.value === 'desktop') return 'flex flex-wrap items-stretch justify-center'
-  if (width.value === 'tablet') return 'grid grid-cols-[auto_auto] justify-center'
+  if (width.value === 'desktop') return 'flex flex-wrap items-stretch justify-center gap-2'
+  if (width.value === 'tablet') return 'grid grid-cols-[auto_auto] justify-center gap-2'
   return 'flex flex-col items-center'
 })
 
 onMounted(buildReveals)
 
-onBeforeUnmount(() => reveals.forEach((reveal) => reveal.kill()))
+onBeforeUnmount(teardownAll)
 
 function setSide(index: number, side: CardSide) {
   sides.value[index] = side
@@ -113,26 +119,63 @@ function revealGroups(): { trigger: Element; indices: number[] }[] {
   return groups
 }
 
+function teardownAll() {
+  teardowns.forEach((teardown) => teardown())
+  teardowns = []
+}
+
+// Mobile: cards sit in a static overlapped deck. Scrolling cycles which card is
+// active; the active card lifts to the top of the z-stack (CSS, data-active) and
+// flips to front while every other card rests on its cover. A trailing trigger
+// past the last card clears the active state so the deck resets at the bottom.
+function revealStack(): () => void {
+  if (!row.value) return () => {}
+
+  const items = [...row.value.children] as HTMLElement[]
+  row.value.style.setProperty('--card-h', `${items[0].offsetHeight}px`)
+  activeIndex.value = -1
+  sides.value = features.map(() => 'cover')
+
+  function reachCard(index: number, entering: boolean) {
+    const next = entering ? index : index - 1
+    activeIndex.value = next
+    sides.value = features.map((_, i) => (i === next ? 'front' : 'cover'))
+  }
+
+  const teardownReveal = createStackReveal(row.value, features.length + 1, reachCard)
+
+  return () => {
+    teardownReveal()
+    row.value?.style.removeProperty('--card-h')
+  }
+}
+
 function buildReveals() {
-  reveals.forEach((reveal) => reveal.kill())
-  reveals = []
+  teardownAll()
+  if (!row.value) return
 
   if (width.value === 'mobile') {
-    sides.value = features.map(() => 'front')
+    teardowns = [revealStack()]
     return
   }
 
   sides.value = features.map(() => 'cover')
-  reveals = revealGroups().map(({ trigger, indices }) =>
-    createFeatureReveal(trigger, indices, setSide)
-  )
+  teardowns = revealGroups().map(({ trigger, indices }) => {
+    const reveal = createFeatureReveal(trigger, indices, (index, active) =>
+      setSide(index, active ? 'front' : 'cover')
+    )
+    return () => reveal.kill()
+  })
 }
 
 watch(width, buildReveals, { flush: 'post' })
 </script>
 
 <template>
-  <section data-testid="welcome-features" class="w-full bg-brown-100 dark:bg-grey-900 py-32">
+  <section
+    data-testid="welcome-features"
+    class="w-full bg-brown-100 dark:bg-grey-900 py-12 sm:py-32"
+  >
     <div class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex flex-col gap-14">
       <section-header
         data-theme="brown-100"
@@ -141,11 +184,17 @@ watch(width, buildReveals, { flush: 'post' })
         :subtitle="t('welcome-view.features.subtitle')"
       />
 
-      <ul ref="row" data-testid="welcome-features__row" class="gap-2" :class="row_layout">
+      <ul
+        ref="row"
+        data-testid="welcome-features__row"
+        :class="row_layout"
+        :data-stack="width === 'mobile' || undefined"
+      >
         <li
           v-for="(feature, index) in features"
           :key="feature.key"
           :data-testid="`welcome-features__card-${feature.key}`"
+          :data-active="index === activeIndex"
         >
           <feature-card
             :feature_key="feature.key"
@@ -162,3 +211,25 @@ watch(width, buildReveals, { flush: 'post' })
     </div>
   </section>
 </template>
+
+<style scoped>
+/* Mobile: overlap the cards into a deck, each peeking --stack-peek above the next
+ * (--card-h is measured and set on the row in JS). The active card "comes forward"
+ * via a plain 2D scale, not a 3D translateZ: a 3D transform on the li (which isn't
+ * preserve-3d) flattens then re-projects the card's own flip, which both clips the
+ * flip and stutters on mobile. A scale reads almost identically, stays 2D, and
+ * lets the flip render in the card's own perspective. z-index carries paint order. */
+[data-stack] > li {
+  transition: transform 0.4s ease;
+  transform: scale(1);
+}
+
+[data-stack] > li:not(:first-child) {
+  margin-top: calc(var(--stack-peek, 50px) - var(--card-h, 0px));
+}
+
+[data-stack] > li[data-active='true'] {
+  z-index: 10;
+  transform: scale(var(--stack-lift, 1.08));
+}
+</style>
