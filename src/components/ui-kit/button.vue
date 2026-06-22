@@ -340,7 +340,7 @@ function onClick(e: MouseEvent) {
   --btn-font-size: var(--text-base);
   --btn-font-size--line-height: var(--text-base--line-height);
   --btn-border-radius: 13px;
-  --btn-gap: 3px;
+  --btn-gap: 8px;
   --btn-padding-y: 4px;
   --btn-padding-x: 12px;
   --icon-size: 16px;
