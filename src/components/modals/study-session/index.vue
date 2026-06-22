@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SessionFlashcard from './session-flashcard.vue'
+import SessionFlashcard from './session-flashcard/index.vue'
 import { computed, useTemplateRef } from 'vue'
 import mobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
 import { provideDeckContext } from './deck-context'

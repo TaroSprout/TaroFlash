@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Card from '@/components/card/index.vue'
-import { useDeckContext } from './deck-context'
+import { useDeckContext } from '../deck-context'
 
 const deck_context = useDeckContext()
 </script>

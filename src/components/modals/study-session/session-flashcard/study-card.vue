@@ -6,7 +6,7 @@ import { emitStudySfx } from '@/sfx/bus'
 import { useGestures } from '@/composables/ui/gestures'
 import { useShortcuts } from '@/composables/shortcuts'
 import { useRatingFormat } from '@/composables/fsrs'
-import { useDeckContext } from './deck-context'
+import { useDeckContext } from '../deck-context'
 
 defineExpose({ rate })
 
