@@ -7,8 +7,19 @@ const { saveReviewMock } = vi.hoisted(() => ({
   saveReviewMock: vi.fn().mockResolvedValue(undefined)
 }))
 
+const { mockEmitSfx, mockEmitStudySfx } = vi.hoisted(() => ({
+  mockEmitSfx: vi.fn(),
+  mockEmitStudySfx: vi.fn()
+}))
+
 vi.mock('@/api/reviews', () => ({
   useSaveReviewMutation: () => ({ mutate: saveReviewMock, mutateAsync: saveReviewMock })
+}))
+
+vi.mock('@/sfx/bus', () => ({
+  emitSfx: mockEmitSfx,
+  emitStudySfx: mockEmitStudySfx,
+  emitHoverSfx: vi.fn()
 }))
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -33,6 +44,8 @@ function makeDueTodayCard(overrides = {}) {
 describe('useFlashcardSession', () => {
   beforeEach(() => {
     saveReviewMock.mockClear()
+    mockEmitSfx.mockClear()
+    mockEmitStudySfx.mockClear()
   })
 
   // ── setCards filtering ─────────────────────────────────────────────────────
@@ -333,6 +346,17 @@ describe('useFlashcardSession', () => {
     expect(session.current_card_side.value).toBe('back')
   })
 
+  // ── startSession sfx [obligation] ─────────────────────────────────────────
+
+  test('startSession emits music_plink_chordyes sfx [obligation]', () => {
+    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    session.setCards([makeDueCard({ review: null })])
+
+    session.startSession()
+
+    expect(mockEmitStudySfx).toHaveBeenCalledWith('music_plink_chordyes')
+  })
+
   // ── flipCurrentCard ────────────────────────────────────────────────────────
 
   test('flipCurrentCard toggles from front to back', () => {
@@ -354,6 +378,33 @@ describe('useFlashcardSession', () => {
     session.flipCurrentCard()
 
     expect(session.current_card_side.value).toBe('front')
+  })
+
+  // ── flipCurrentCard sfx [obligation] ──────────────────────────────────────
+  // Emits transition_up when on the starting side (front → back), transition_down
+  // when on the non-starting side (back → front). SFX is computed BEFORE the toggle.
+
+  test('flipCurrentCard emits transition_up when on starting side (front) [obligation]', () => {
+    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    session.setCards([makeDueCard({ review: null })])
+    session.startSession() // sets to 'front' — the starting side
+
+    mockEmitStudySfx.mockClear()
+    session.flipCurrentCard()
+
+    expect(mockEmitStudySfx).toHaveBeenCalledWith('transition_up')
+  })
+
+  test('flipCurrentCard emits transition_down when NOT on starting side (back) [obligation]', () => {
+    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    session.setCards([makeDueCard({ review: null })])
+    session.startSession() // 'front'
+    session.flipCurrentCard() // now on 'back' — NOT starting side
+
+    mockEmitStudySfx.mockClear()
+    session.flipCurrentCard()
+
+    expect(mockEmitStudySfx).toHaveBeenCalledWith('transition_down')
   })
 
   // ── is_starting_side ───────────────────────────────────────────────────────
