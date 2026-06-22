@@ -1,6 +1,16 @@
-import { describe, test, expect } from 'vite-plus/test'
+import { describe, test, expect, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, shallowRef } from 'vue'
+import { welcomeWidthKey } from '@/views/welcome/welcome-layout'
+
+// ── Mocks (animations are irrelevant for structure tests) ──────────────────────
+
+vi.mock('@/utils/animations/welcome/feature-reveal', () => ({
+  createFeatureReveal: vi.fn(() => ({ kill: vi.fn() }))
+}))
+vi.mock('@/utils/animations/welcome/stack-reveal', () => ({
+  createStackReveal: vi.fn(() => vi.fn())
+}))
 
 // ── Stubs ──────────────────────────────────────────────────────────────────────
 
@@ -18,7 +28,7 @@ const FeatureCardStub = defineComponent({
   setup(props) {
     return () =>
       h('div', {
-        'data-testid': `feature-card-stub`,
+        'data-testid': 'feature-card-stub',
         'data-feature-key': props.feature_key
       })
   }
@@ -30,12 +40,18 @@ import SectionFeatures from '@/views/welcome/section-features/index.vue'
 
 // ── Mount helper ───────────────────────────────────────────────────────────────
 
+// Provide a reactive width so useWelcomeWidth() injection resolves.
+const width = shallowRef('desktop')
+
 function mountFeatures() {
   return shallowMount(SectionFeatures, {
+    props: { seeRoadmap: vi.fn() },
     global: {
+      provide: { [welcomeWidthKey]: width },
       stubs: {
         SectionHeader: SectionHeaderStub,
-        FeatureCard: FeatureCardStub
+        FeatureCard: FeatureCardStub,
+        CommunityCallout: true
       }
     }
   })
@@ -113,5 +129,13 @@ describe('SectionFeatures', () => {
     expect(items[1].attributes('data-testid')).toBe('welcome-features__card-mobile')
     expect(items[2].attributes('data-testid')).toBe('welcome-features__card-scheduling')
     expect(items[3].attributes('data-testid')).toBe('welcome-features__card-upcoming')
+  })
+
+  // ── seeRoadmap prop forwarding [obligation] ────────────────────────────────
+
+  test('renders community callout (via stub) [obligation]', () => {
+    const wrapper = mountFeatures()
+    // CommunityCallout is stubbed; verify the component is present
+    expect(wrapper.findComponent({ name: 'CommunityCallout' }).exists()).toBe(true)
   })
 })

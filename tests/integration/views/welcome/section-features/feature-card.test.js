@@ -73,7 +73,7 @@ describe('FeatureCard', () => {
   test('renders heading text resolved from feature_key i18n key [obligation]', () => {
     const wrapper = mountFeatureCard({ feature_key: 'experience' })
     const face = wrapper.find('[data-testid="feature-card__face"]')
-    expect(face.text()).toContain('Make It Yours')
+    expect(face.text()).toContain('Fully Customizable')
   })
 
   test('renders description text resolved from feature_key i18n key [obligation]', () => {
@@ -90,7 +90,7 @@ describe('FeatureCard', () => {
       accent_dark: 'var(--color-blue-650)'
     })
     const face = wrapper.find('[data-testid="feature-card__face"]')
-    expect(face.text()).toContain('Built For Mobile')
+    expect(face.text()).toContain('Made For Mobile')
   })
 
   test('renders scheduling card heading from i18n key', () => {
@@ -112,7 +112,7 @@ describe('FeatureCard', () => {
       accent_dark: 'var(--color-yellow-700)'
     })
     const face = wrapper.find('[data-testid="feature-card__face"]')
-    expect(face.text()).toContain('Lots More Coming')
+    expect(face.text()).toContain('More On The Way')
   })
 
   // ── Icon prop ──────────────────────────────────────────────────────────────

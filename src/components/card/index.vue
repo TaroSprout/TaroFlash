@@ -139,7 +139,6 @@ function onLeave(el: Element, done: () => void) {
 <style>
 .card-container {
   perspective: 600px;
-  transform-style: preserve-3d;
 
   --min-element-height: 80px;
   --face-image-padding: calc(var(--face-padding) / 2);
