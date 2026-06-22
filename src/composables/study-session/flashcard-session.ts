@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { type Grade } from 'ts-fsrs'
 import { useStudySessionCore } from './session-core'
+import { emitStudySfx } from '@/sfx/bus'
 
 export type { StudyCard } from './session-core'
 
@@ -34,10 +35,12 @@ export function useFlashcardSession(_config?: Partial<DeckConfig>) {
    * Sets current_card_side to the starting side for the deck config.
    */
   function startSession() {
+    emitStudySfx('music_plink_chordyes')
     current_card_side.value = starting_side.value
   }
 
   function flipCurrentCard() {
+    emitStudySfx(is_starting_side.value ? 'transition_up' : 'transition_down')
     current_card_side.value = current_card_side.value === 'front' ? 'back' : 'front'
   }
 
