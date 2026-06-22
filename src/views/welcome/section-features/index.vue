@@ -33,9 +33,14 @@ const features: Feature[] = [
   {
     key: 'mobile',
     icon: 'mobile-phone',
-    accent: 'var(--color-blue-500)',
-    accent_dark: 'var(--color-blue-650)',
-    cover: { theme: 'blue-500', theme_dark: 'blue-650', pattern: 'squiggle', icon: 'mobile-phone' }
+    accent: 'var(--color-green-500)',
+    accent_dark: 'var(--color-green-800)',
+    cover: {
+      theme: 'green-500',
+      theme_dark: 'green-800',
+      pattern: 'squiggle',
+      icon: 'mobile-phone'
+    }
   },
   {
     key: 'scheduling',
@@ -77,10 +82,10 @@ onBeforeUnmount(() => reveal?.kill())
 </script>
 
 <template>
-  <section data-testid="welcome-features" class="w-full bg-green-500 dark:bg-green-800 py-30">
+  <section data-testid="welcome-features" class="w-full bg-brown-100 dark:bg-grey-900 py-30">
     <div class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex flex-col gap-14">
       <section-header
-        data-theme="green-500"
+        data-theme="brown-100"
         data-theme-dark="green-800"
         :heading="t('welcome-view.features.heading')"
         :subtitle="t('welcome-view.features.subtitle')"
