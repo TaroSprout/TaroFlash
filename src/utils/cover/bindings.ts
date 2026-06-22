@@ -1,12 +1,15 @@
-import { BORDER_SIZE_PX, PATTERN_TOKENS } from './tokens'
+import { COVER_PATTERNS } from './patterns'
+import { BORDER_SIZE_PX } from './tokens'
 
 export type CoverBindingsOptions = {
   fallbackTheme?: Theme
   pattern?: boolean
   border?: boolean
-  /** Flat opacity override. Falls back to `PATTERN_TOKENS[pattern].opacity`. */
+  /** Flat opacity override (both modes unless `patternOpacityDark` is set). Falls back to `COVER_PATTERNS[pattern].opacity`. */
   patternOpacity?: string
-  /** Flat tile-size override (any CSS length). Falls back to `PATTERN_TOKENS[pattern].size`. */
+  /** Dark-mode opacity override. Falls back to `patternOpacity`, then `COVER_PATTERNS[pattern].opacityDark`. */
+  patternOpacityDark?: string
+  /** Flat tile-size override (any CSS length). Falls back to `COVER_PATTERNS[pattern].size`. */
   patternSize?: string
 }
 
@@ -26,7 +29,7 @@ export function coverBindings(
   return {
     'data-theme': config?.theme ?? fallbackTheme,
     'data-theme-dark': config?.theme_dark,
-    class: pattern && config?.pattern ? [`bgx-${config.pattern}`] : [],
+    class: pattern && config?.pattern ? ['pattern-mask'] : [],
     style: {
       ...(pattern && config?.pattern ? buildPatternStyle(config.pattern, options) : {}),
       ...(border && config ? buildBorderStyle() : {})
@@ -38,11 +41,13 @@ function buildPatternStyle(
   pattern: DeckCoverPattern,
   options: CoverBindingsOptions
 ): Record<string, string> {
-  const token = PATTERN_TOKENS[pattern]
+  const token = COVER_PATTERNS[pattern]
 
   return {
+    '--bgx-image': `var(--bgx-${pattern})`,
     '--bgx-fill': 'var(--theme-neutral)',
-    '--bgx-opacity': options.patternOpacity ?? token.opacity,
+    '--bgx-opacity-light': options.patternOpacity ?? token.opacity,
+    '--bgx-opacity-dark': options.patternOpacityDark ?? options.patternOpacity ?? token.opacityDark,
     '--bgx-size': options.patternSize ?? token.size
   }
 }

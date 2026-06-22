@@ -1,4 +1,5 @@
-import { SUPPORTED_ICONS, SUPPORTED_PATTERNS, SUPPORTED_THEMES } from './tokens'
+import { SUPPORTED_PATTERNS } from './patterns'
+import { SUPPORTED_ICONS, SUPPORTED_THEMES } from './tokens'
 
 function pick<T>(items: readonly T[]): T {
   return items[Math.floor(Math.random() * items.length)]

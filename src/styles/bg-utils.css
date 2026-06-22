@@ -37,6 +37,55 @@
   }
 }
 
+/* Cover painter. Same mask as `bgx-*` but the image is supplied at runtime via
+   inline `--bgx-image: var(--bgx-<pattern>)` (src/utils/cover/bindings.ts),
+   so the class is a single static literal — no per-pattern utility to scan.
+   Named outside the `bgx-*` namespace to avoid colliding with it.
+
+   Opacity is per-mode: bindings sets `--bgx-opacity-light` / `--bgx-opacity-dark`
+   inline, and the active value is chosen by selector here — NOT set inline —
+   so the dark rule below (higher specificity, same author origin) can win. */
+@utility pattern-mask {
+  --bgx-size: auto;
+  --bgx-fill: var(--color-brown-100);
+  --bgx-opacity: var(--bgx-opacity-light, 0.2);
+
+  --bgx-x: 50%;
+  --bgx-y: 50%;
+
+  position: relative;
+  isolation: isolate;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    border-radius: inherit;
+    clip-path: inset(0 round inherit);
+
+    background-color: var(--bgx-fill);
+    opacity: var(--bgx-opacity);
+
+    -webkit-mask-image: var(--bgx-image);
+    mask-image: var(--bgx-image);
+
+    -webkit-mask-repeat: repeat;
+    mask-repeat: repeat;
+
+    -webkit-mask-position: var(--bgx-x) var(--bgx-y);
+    mask-position: var(--bgx-x) var(--bgx-y);
+
+    -webkit-mask-size: var(--bgx-size);
+    mask-size: var(--bgx-size);
+  }
+}
+
+[data-theme='dark'] .pattern-mask {
+  --bgx-opacity: var(--bgx-opacity-dark, var(--bgx-opacity-light, 0.2));
+}
+
 @utility bgx-color-* {
   --bgx-fill: --value(--color-*, [*]);
 }

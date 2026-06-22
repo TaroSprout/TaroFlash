@@ -10,11 +10,6 @@
 @import '@/styles/shimmer.css';
 @import '@/styles/outline-utils.css';
 
-/* `bgx-<pattern>` cover classes are built at runtime (src/utils/cover/bindings.ts),
-   so Tailwind never sees them in source and would tree-shake the utilities.
-   Safelist every cover pattern so the masks resolve. */
-@source inline("bgx-{diagonal-stripes,saw,wave,bank-note,aztec,endless-clouds,leaf,squiggle}");
-
 @theme {
   --*: initial;
   --spacing: 4px;
@@ -134,17 +129,6 @@
   --radius-31: --spacing(31); /* 124px */
   --radius-full: 9999px;
 
-  --bgx-diagonal-stripes: url('../assets/backgrounds/diagonal-stripes.svg');
-  --bgx-saw: url('../assets/backgrounds/saw.svg');
-  --bgx-wave: url('../assets/backgrounds/wave.svg');
-  --bgx-bank-note: url('../assets/backgrounds/bank-note.svg');
-  --bgx-aztec: url('../assets/backgrounds/aztec.svg');
-  --bgx-endless-clouds: url('../assets/backgrounds/endless-clouds.svg');
-  --bgx-stars: url('../assets/backgrounds/stars.svg');
-  --bgx-leaf: url('../assets/backgrounds/leaf.svg');
-  --bgx-dot-grid: url('../assets/backgrounds/dot-grid.svg');
-  --bgx-squiggle: url('../assets/backgrounds/squiggle.svg');
-
   /* Shadows */
   --shadow-2xs: 1.25px 1.25px 0px 0px var(--shadow-color);
   --drop-shadow-2xs: 1.25px 1.25px 0px var(--shadow-color);
@@ -229,6 +213,25 @@
 
   --text-8xl: 60px;
   --text-8xl--line-height: 100%;
+}
+
+/* Background-pattern images. Declared after the `--*: initial` reset above so it
+   doesn't wipe them. `static` forces every var to be emitted even when no
+   `bgx-<name>` literal is scanned — covers reference these at runtime via
+   `var(--bgx-<pattern>)` (src/utils/cover/bindings.ts), so they must always
+   exist. The vars stay theme-namespaced, so the decorative `bgx-*` utility
+   (src/styles/bg-utils.css) keeps resolving them too. */
+@theme static {
+  --bgx-diagonal-stripes: url('../assets/backgrounds/diagonal-stripes.svg');
+  --bgx-saw: url('../assets/backgrounds/saw.svg');
+  --bgx-wave: url('../assets/backgrounds/wave.svg');
+  --bgx-bank-note: url('../assets/backgrounds/bank-note.svg');
+  --bgx-aztec: url('../assets/backgrounds/aztec.svg');
+  --bgx-endless-clouds: url('../assets/backgrounds/endless-clouds.svg');
+  --bgx-stars: url('../assets/backgrounds/stars.svg');
+  --bgx-leaf: url('../assets/backgrounds/leaf.svg');
+  --bgx-dot-grid: url('../assets/backgrounds/dot-grid.svg');
+  --bgx-squiggle: url('../assets/backgrounds/squiggle.svg');
 }
 
 @layer base {
