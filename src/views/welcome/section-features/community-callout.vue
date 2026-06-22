@@ -16,7 +16,7 @@ const { t } = useI18n()
   <div
     data-testid="community-callout"
     data-theme="green-500"
-    class="community-callout relative isolate flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10 px-8 py-10 sm:px-12 mx-auto"
+    class="community-callout relative isolate flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10 px-8 py-10 sm:px-12 mx-auto mt-16"
   >
     <svg width="0" height="0" class="absolute" aria-hidden="true">
       <filter id="community-callout-wobble">
