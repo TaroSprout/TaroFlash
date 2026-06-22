@@ -8,15 +8,29 @@ type FeatureCardProps = {
   icon: string
   accent: string
   accent_dark: string
+  cover: DeckCover
+  side?: CardSide
 }
 
-const { feature_key, icon, accent, accent_dark } = defineProps<FeatureCardProps>()
+const {
+  feature_key,
+  icon,
+  accent,
+  accent_dark,
+  cover,
+  side = 'front'
+} = defineProps<FeatureCardProps>()
 
 const { t } = useI18n()
 </script>
 
 <template>
-  <card size="lg" :style="{ '--accent': accent, '--accent-dark': accent_dark }">
+  <card
+    size="lg"
+    :side="side"
+    :cover_config="cover"
+    :style="{ '--accent': accent, '--accent-dark': accent_dark }"
+  >
     <template #front>
       <div
         data-testid="feature-card__face"

@@ -2,17 +2,7 @@
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { emitSfx } from '@/sfx/bus'
 import { TYPE_SFX } from '@/sfx/config'
-import { coverBindings } from '@/utils/cover'
-
-const PATTERN_SWATCH_SIZE: Record<DeckCoverPattern, string> = {
-  'diagonal-stripes': '45px',
-  saw: '39px',
-  wave: '78px',
-  'bank-note': '90px',
-  aztec: '39px',
-  'endless-clouds': '78px',
-  leaf: '65px'
-}
+import { COVER_PATTERNS, coverBindings } from '@/utils/cover'
 
 type PatternPickerProps = {
   label: string
@@ -27,7 +17,7 @@ const emit = defineEmits<{
 }>()
 
 function swatchBindings(p: DeckCoverPattern) {
-  return coverBindings({ pattern: p }, { border: false, patternSize: PATTERN_SWATCH_SIZE[p] })
+  return coverBindings({ pattern: p }, { border: false, patternSize: COVER_PATTERNS[p].swatch })
 }
 
 function onPatternSelect(p: DeckCoverPattern | undefined) {

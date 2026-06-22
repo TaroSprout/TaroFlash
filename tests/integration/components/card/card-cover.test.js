@@ -31,20 +31,22 @@ describe('CardCover', () => {
   })
 
   test.each([
-    ['diagonal-stripes', 'bgx-diagonal-stripes'],
-    ['wave', 'bgx-wave'],
-    ['saw', 'bgx-saw'],
-    ['bank-note', 'bgx-bank-note'],
-    ['aztec', 'bgx-aztec'],
-    ['endless-clouds', 'bgx-endless-clouds']
-  ])('pattern "%s" applies class "%s"', (pattern, expectedClass) => {
+    ['diagonal-stripes', 'var(--bgx-diagonal-stripes)'],
+    ['wave', 'var(--bgx-wave)'],
+    ['saw', 'var(--bgx-saw)'],
+    ['bank-note', 'var(--bgx-bank-note)'],
+    ['aztec', 'var(--bgx-aztec)'],
+    ['endless-clouds', 'var(--bgx-endless-clouds)']
+  ])('pattern "%s" applies pattern-mask and points --bgx-image at %s', (pattern, expectedImage) => {
     const wrapper = mountCover({ pattern })
-    expect(wrapper.find('[data-testid="card-cover"]').classes()).toContain(expectedClass)
+    const el = wrapper.find('[data-testid="card-cover"]')
+    expect(el.classes()).toContain('pattern-mask')
+    expect(el.attributes('style')).toContain(`--bgx-image: ${expectedImage}`)
   })
 
   test('applies no pattern class when pattern is unset', () => {
     const wrapper = mountCover({ theme: 'blue-500' })
     const classes = wrapper.find('[data-testid="card-cover"]').classes()
-    expect(classes.some((c) => c.startsWith('bgx-'))).toBe(false)
+    expect(classes).not.toContain('pattern-mask')
   })
 })

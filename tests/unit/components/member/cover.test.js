@@ -12,12 +12,22 @@ describe('memberCoverBindings', () => {
     const result = memberCoverBindings()
     expect(result['data-theme']).toBe(MEMBER_CARD_COVER_DEFAULTS.theme)
     expect(result['data-theme-dark']).toBe(MEMBER_CARD_COVER_DEFAULTS.theme_dark)
-    expect(result.class).toContain(`bgx-${MEMBER_CARD_COVER_DEFAULTS.pattern}`)
+    expect(result.class).toContain('pattern-mask')
   })
 
-  test('merges caller overrides — patternOpacity override is applied [obligation]', () => {
+  test('merges caller overrides — patternOpacity override applies to both modes [obligation]', () => {
     const result = memberCoverBindings(undefined, { patternOpacity: '0.42' })
-    expect(result.style['--bgx-opacity']).toBe('0.42')
+    expect(result.style['--bgx-opacity-light']).toBe('0.42')
+    expect(result.style['--bgx-opacity-dark']).toBe('0.42')
+  })
+
+  test('merges caller overrides — patternOpacityDark overrides only dark mode [obligation]', () => {
+    const result = memberCoverBindings(undefined, {
+      patternOpacity: '0.42',
+      patternOpacityDark: '0.12'
+    })
+    expect(result.style['--bgx-opacity-light']).toBe('0.42')
+    expect(result.style['--bgx-opacity-dark']).toBe('0.12')
   })
 
   test('merges caller overrides — patternSize override is applied [obligation]', () => {
@@ -39,12 +49,13 @@ describe('memberCoverBindings', () => {
     const result = memberCoverBindings({ theme: 'purple-500' })
     expect(result['data-theme']).toBe('purple-500')
     // pattern defaults to MEMBER_CARD_COVER_DEFAULTS.pattern
-    expect(result.class).toContain(`bgx-${MEMBER_CARD_COVER_DEFAULTS.pattern}`)
+    expect(result.class).toContain('pattern-mask')
   })
 
   test('emits pattern bindings from the cover config', () => {
     const result = memberCoverBindings({ theme: 'teal-400', pattern: 'wave' })
-    expect(result.class).toContain('bgx-wave')
+    expect(result.class).toContain('pattern-mask')
+    expect(result.style['--bgx-image']).toBe('var(--bgx-wave)')
     expect(result.style['--bgx-fill']).toBe('var(--theme-neutral)')
   })
 })
