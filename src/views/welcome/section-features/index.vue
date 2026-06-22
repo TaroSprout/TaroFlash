@@ -15,6 +15,12 @@ type Feature = {
   cover: DeckCover
 }
 
+type SectionFeaturesProps = {
+  seeRoadmap: () => void
+}
+
+const { seeRoadmap } = defineProps<SectionFeaturesProps>()
+
 const { t } = useI18n()
 const is_desktop = useMatchMedia('w>=md')
 
@@ -84,7 +90,7 @@ onBeforeUnmount(() => reveal?.kill())
 
 <template>
   <section data-testid="welcome-features" class="w-full bg-brown-100 dark:bg-grey-900 py-30">
-    <div class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex flex-col gap-14">
+    <div class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex flex-col gap-32">
       <section-header
         data-theme="brown-100"
         data-theme-dark="green-800"
@@ -113,7 +119,7 @@ onBeforeUnmount(() => reveal?.kill())
         </li>
       </ul>
 
-      <community-callout />
+      <community-callout :see-roadmap="seeRoadmap" />
     </div>
   </section>
 </template>

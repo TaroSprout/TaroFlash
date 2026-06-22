@@ -33,6 +33,7 @@ import SectionFeatures from '@/views/welcome/section-features/index.vue'
 function mountFeatures() {
   return shallowMount(SectionFeatures, {
     attachTo: document.body,
+    props: { seeRoadmap: vi.fn() },
     global: { stubs: { SectionHeader: true, FeatureCard: FeatureCardStub } }
   })
 }

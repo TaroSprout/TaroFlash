@@ -13,6 +13,7 @@ import WelcomeFooter from '@/components/welcome-footer.vue'
 const session = useSessionStore()
 const { open: openSignup } = useSignupModal()
 const features = useTemplateRef('features')
+const roadmap = useTemplateRef('roadmap')
 
 provideWelcomeLayout()
 
@@ -27,12 +28,16 @@ onMounted(async () => {
 function scrollToContent() {
   features.value?.$el?.scrollIntoView({ behavior: 'smooth' })
 }
+
+function scrollToRoadmap() {
+  roadmap.value?.$el?.scrollIntoView({ behavior: 'smooth' })
+}
 </script>
 
 <template>
   <splash :signup="openSignup" :see-more="scrollToContent" />
-  <section-features ref="features" />
+  <section-features ref="features" :see-roadmap="scrollToRoadmap" />
   <section-pricing :signup="openSignup" />
-  <section-roadmap />
+  <section-roadmap ref="roadmap" />
   <welcome-footer />
 </template>
