@@ -171,9 +171,11 @@ function onMenuSelect(option: DropdownOption) {
         icon-only
         :icon-left="triggerIcon"
         :size="size"
+        :variant="variant"
         :data-theme="triggerTheme"
         :data-theme-dark="triggerThemeDark"
         :data-active="popover_open"
+        :style="trigger_style"
         data-testid="dropdown-button__button"
         @press="toggle"
       />

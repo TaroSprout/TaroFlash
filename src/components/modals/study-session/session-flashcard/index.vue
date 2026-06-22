@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SessionCounter from './session-counter.vue'
+import SessionHeader from './session-header.vue'
 import CardStage from './card-stage.vue'
 import StudyEditFooter from './study-edit-footer.vue'
 import RatingButtons from './rating-buttons.vue'
@@ -10,7 +10,7 @@ import { useCardEdit } from '@/composables/study-session/card-edit'
 import { useSessionCards } from '@/composables/study-session/session-cards'
 import { useModalRequestClose } from '@/composables/modal'
 import { type Grade } from 'ts-fsrs'
-import { useTemplateRef } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { useFlushDeckReviews } from '@/api/reviews'
 
 const { deck, config_override } = defineProps<{
@@ -72,6 +72,8 @@ const { loading } = useSessionCards({
 const stage = useTemplateRef('stage')
 const flushDeckReviews = useFlushDeckReviews()
 
+const can_edit = computed(() => !loading.value && !editing.value && !is_cover.value)
+
 /** Called by the shell's close button and by the modal backdrop / esc handler. */
 function requestClose() {
   if (is_cover.value || reviewed_count.value === 0) {
@@ -111,15 +113,17 @@ async function onCardReviewed(grade?: Grade) {
   <div
     data-testid="study-session__body"
     :data-theme="deck.cover_config?.theme ?? 'purple-500'"
-    class="w-full flex flex-col items-center justify-between gap-4 self-center pb-8"
+    class="w-full flex flex-col items-center justify-between gap-4 self-center pb-8 px-8"
     :class="{ 'opacity-0 pointer-events-none': mode !== 'studying' }"
   >
-    <session-counter
+    <session-header
       :editing="editing"
       :saving="saving"
       :current_index="current_index"
       :total="cards.length"
       :is_cover="is_cover"
+      :can_edit="can_edit"
+      @edit="startEdit"
     />
 
     <card-stage
@@ -131,13 +135,11 @@ async function onCardReviewed(grade?: Grade) {
       :next_card="next_card"
       :next_card_side="next_card_side"
       :preview_style="preview_style"
-      :is_cover="is_cover"
       @started="startSession"
       @side-changed="flipCurrentCard"
       @reviewed="onCardReviewed"
       @drag-progress="onDragProgress"
       @next-flipped="onNextCardFlipped"
-      @edit-start="startEdit"
       @edit-update="onEditUpdate"
     />
 
