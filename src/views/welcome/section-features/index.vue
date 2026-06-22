@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useMatchMedia } from '@/composables/ui/media-query'
 import { createFeatureReveal } from '@/utils/animations/welcome/feature-reveal'
+import { useWelcomeWidth } from '../welcome-layout'
 import SectionHeader from '../section-header.vue'
 import CommunityCallout from './community-callout.vue'
 import FeatureCard from './feature-card.vue'
@@ -22,7 +22,7 @@ type SectionFeaturesProps = {
 const { seeRoadmap } = defineProps<SectionFeaturesProps>()
 
 const { t } = useI18n()
-const is_desktop = useMatchMedia('w>=md')
+const width = useWelcomeWidth()
 
 const features: Feature[] = [
   {
@@ -70,27 +70,70 @@ const features: Feature[] = [
   }
 ]
 
-// Desktop reveals each card cover→front on scroll; mobile shows the front
+// Tablet renders the cards as a 2-column grid; desktop as one row.
+const TABLET_COLUMNS = 2
+
+// Desktop and tablet start covered and flip on scroll; mobile shows fronts
 // directly (its reveal is handled later).
-const sides = ref<CardSide[]>(features.map(() => (is_desktop.value ? 'cover' : 'front')))
+const sides = ref<CardSide[]>(features.map(() => (width.value === 'mobile' ? 'front' : 'cover')))
 
 const row = useTemplateRef<HTMLElement>('row')
 
-let reveal: ScrollTrigger | undefined
+let reveals: ScrollTrigger[] = []
 
-onMounted(() => {
-  if (!is_desktop.value || !row.value) return
-  reveal = createFeatureReveal(row.value, features.length, (index, side) => {
-    sides.value[index] = side
-  })
+// Desktop: single justified row that scroll-flips. Tablet: a 2×2 grid so four
+// cards never break to an awkward 3+1. Mobile: a single stacked column.
+const row_layout = computed(() => {
+  if (width.value === 'desktop') return 'flex flex-wrap items-stretch justify-center'
+  if (width.value === 'tablet') return 'grid grid-cols-[auto_auto] justify-center'
+  return 'flex flex-col items-center'
 })
 
-onBeforeUnmount(() => reveal?.kill())
+onMounted(buildReveals)
+
+onBeforeUnmount(() => reveals.forEach((reveal) => reveal.kill()))
+
+function setSide(index: number, side: CardSide) {
+  sides.value[index] = side
+}
+
+// Pair each ScrollTrigger's controlled card indices with the element whose scroll
+// position gates them: desktop flips the whole row off the <ul>; tablet flips
+// each grid row off its leading <li>, so both cards in a row flip together.
+function revealGroups(): { trigger: Element; indices: number[] }[] {
+  if (!row.value) return []
+  if (width.value === 'desktop') return [{ trigger: row.value, indices: features.map((_, i) => i) }]
+
+  const items = [...row.value.children] as HTMLElement[]
+  const groups: { trigger: Element; indices: number[] }[] = []
+  for (let start = 0; start < items.length; start += TABLET_COLUMNS) {
+    const indices = items.slice(start, start + TABLET_COLUMNS).map((_, offset) => start + offset)
+    groups.push({ trigger: items[start], indices })
+  }
+  return groups
+}
+
+function buildReveals() {
+  reveals.forEach((reveal) => reveal.kill())
+  reveals = []
+
+  if (width.value === 'mobile') {
+    sides.value = features.map(() => 'front')
+    return
+  }
+
+  sides.value = features.map(() => 'cover')
+  reveals = revealGroups().map(({ trigger, indices }) =>
+    createFeatureReveal(trigger, indices, setSide)
+  )
+}
+
+watch(width, buildReveals, { flush: 'post' })
 </script>
 
 <template>
-  <section data-testid="welcome-features" class="w-full bg-brown-100 dark:bg-grey-900 py-30">
-    <div class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex flex-col gap-32">
+  <section data-testid="welcome-features" class="w-full bg-brown-100 dark:bg-grey-900 py-32">
+    <div class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex flex-col gap-14">
       <section-header
         data-theme="brown-100"
         data-theme-dark="green-800"
@@ -98,11 +141,7 @@ onBeforeUnmount(() => reveal?.kill())
         :subtitle="t('welcome-view.features.subtitle')"
       />
 
-      <ul
-        ref="row"
-        data-testid="welcome-features__row"
-        class="flex flex-wrap items-stretch justify-center gap-2"
-      >
+      <ul ref="row" data-testid="welcome-features__row" class="gap-2" :class="row_layout">
         <li
           v-for="(feature, index) in features"
           :key="feature.key"

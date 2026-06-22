@@ -15,19 +15,21 @@ const BAND_TOP = '25%'
 const BAND_BOTTOM = '60%'
 
 /**
- * Flip the feature cards in a staggered sequence as `trigger` passes through the
- * central band of the viewport: cover→front on entry, front→cover on exit, in
- * either scroll direction. `setSide` is called per card on a GSAP-scheduled
- * timeline; the actual flip is the card's own transition reacting to the change.
+ * Flip a set of feature cards in a staggered sequence as `trigger` passes through
+ * the central band of the viewport: cover→front on entry, front→cover on exit, in
+ * either scroll direction. `indices` are the card indices this trigger controls
+ * (the whole row on desktop, or one grid row on tablet); they flip in array
+ * order. `setSide` is called per card on a GSAP-scheduled timeline; the actual
+ * flip is the card's own transition reacting to the change.
  *
  * Returns the ScrollTrigger so the caller can `kill()` it on unmount.
  */
 export function createFeatureReveal(
   trigger: Element,
-  count: number,
+  indices: number[],
   setSide: (index: number, side: CardSide) => void
 ): ScrollTrigger {
-  const flip = (side: CardSide) => stagger(count, (index) => setSide(index, side))
+  const flip = (side: CardSide) => stagger(indices, (index) => setSide(index, side))
 
   return ScrollTrigger.create({
     trigger,
@@ -40,9 +42,9 @@ export function createFeatureReveal(
   })
 }
 
-/** Run `apply(index)` for each card, spaced by the flip stagger. */
-function stagger(count: number, apply: (index: number) => void) {
-  for (let index = 0; index < count; index++) {
-    gsap.delayedCall(index * FEATURE_FLIP_STAGGER, () => apply(index))
-  }
+/** Run `apply(index)` for each controlled card, spaced by the flip stagger. */
+function stagger(indices: number[], apply: (index: number) => void) {
+  indices.forEach((index, order) => {
+    gsap.delayedCall(order * FEATURE_FLIP_STAGGER, () => apply(index))
+  })
 }
