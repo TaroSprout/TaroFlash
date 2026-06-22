@@ -52,7 +52,7 @@ const features: Feature[] = [
     cover: {
       theme: 'yellow-500',
       theme_dark: 'yellow-700',
-      pattern: 'endless-clouds',
+      pattern: 'bank-note',
       icon: 'shooting-star'
     }
   }
