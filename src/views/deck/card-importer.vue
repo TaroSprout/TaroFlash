@@ -5,7 +5,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import Card from '@/components/card/index.vue'
 import { useBulkInsertCardsInDeckMutation } from '@/api/cards'
 import { useToast } from '@/composables/toast'
-import { cardEditorKey } from '@/composables/card/list-controller'
+import { cardEditorKey } from '@/views/deck/composables'
 
 const { t } = useI18n()
 const toast = useToast()

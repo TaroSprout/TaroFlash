@@ -4,10 +4,11 @@ import CardStage from './card-stage.vue'
 import StudyEditFooter from './study-edit-footer.vue'
 import RatingButtons from './rating-buttons.vue'
 import FinishAnimation from './finish-animation.vue'
-import { useFlashcardSession } from '@/composables/study-session/flashcard-session'
-import { useCardPreview } from '@/composables/study-session/card-preview'
-import { useCardEdit } from '@/composables/study-session/card-edit'
-import { useSessionCards } from '@/composables/study-session/session-cards'
+import { useFlashcardSession } from '@/components/study-session/composables/flashcard-session'
+import { useCardPreview } from '@/components/study-session/composables/card-preview'
+import { useCardEdit } from '@/components/study-session/composables/card-edit'
+import { useActiveCardActions } from '@/components/study-session/composables/card-actions'
+import { useSessionCards } from '@/components/study-session/composables/session-cards'
 import { useModalRequestClose } from '@/composables/modal'
 import { type Grade } from 'ts-fsrs'
 import { computed, useTemplateRef } from 'vue'
@@ -48,7 +49,8 @@ const {
   reviewCard,
   setCards,
   startSession,
-  flipCurrentCard
+  flipCurrentCard,
+  dropCard
 } = useFlashcardSession({ ...deck.study_config, ...config_override })
 
 const { next_card_side, preview_style, onDragProgress, onNextCardFlipped, awaitFlip } =
@@ -60,7 +62,13 @@ const {
   start: startEdit,
   stop: stopEdit,
   update: onEditUpdate
-} = useCardEdit(active_card)
+} = useCardEdit(active_card, () => deck.id)
+
+const { onMove, onDelete } = useActiveCardActions({
+  active_card,
+  deck_id: () => deck.id,
+  onRemoved: dropCard
+})
 
 const { loading } = useSessionCards({
   deckId: () => deck.id,
@@ -124,6 +132,8 @@ async function onCardReviewed(grade?: Grade) {
       :is_cover="is_cover"
       :can_edit="can_edit"
       @edit="startEdit"
+      @move="onMove"
+      @delete="onDelete"
     />
 
     <card-stage

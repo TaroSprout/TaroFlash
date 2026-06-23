@@ -4,7 +4,7 @@ import DeckDetails from './details.vue'
 import Actions from './actions.vue'
 import BulkActions from './bulk-actions.vue'
 import { inject } from 'vue'
-import { cardEditorKey } from '@/composables/card/list-controller'
+import { cardEditorKey } from '@/views/deck/composables'
 import { defaultEnter, defaultLeave, bulkEnter, bulkLeave } from '@/utils/animations/actions-swap'
 
 type DeckHeroProps = {

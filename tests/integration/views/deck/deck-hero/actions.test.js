@@ -5,7 +5,7 @@ import { defineComponent, h, ref, useAttrs } from 'vue'
 const { mockStartStudy } = vi.hoisted(() => ({ mockStartStudy: vi.fn() }))
 const { mockOpenDeckSettings } = vi.hoisted(() => ({ mockOpenDeckSettings: vi.fn() }))
 
-vi.mock('@/composables/study-session/study-modal', () => ({
+vi.mock('@/components/study-session/composables/study-modal', () => ({
   useStudyModal: () => ({ start: mockStartStudy })
 }))
 
@@ -49,8 +49,8 @@ const UiDropdownButtonStub = defineComponent({
 })
 
 import Actions from '@/views/deck/deck-hero/actions.vue'
-import { cardEditorKey } from '@/composables/card/list-controller'
-import { deckViewShellKey } from '@/composables/deck/view-shell'
+import { cardEditorKey } from '@/views/deck/composables/list-controller'
+import { deckViewShellKey } from '@/views/deck/composables/view-shell'
 
 function makeEditor({ onSelectCard = vi.fn() } = {}) {
   return {

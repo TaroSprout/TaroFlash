@@ -1,6 +1,5 @@
 import {
   computed,
-  inject,
   onBeforeUnmount,
   ref,
   toValue,
@@ -9,7 +8,7 @@ import {
   type ShallowRef
 } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { cardEditorKey } from './list-controller'
+import { useCardMutations } from './mutations'
 import { useCardImageGate } from './image-gate'
 import { useImageDropzone } from './image-dropzone'
 import { useToast } from '@/composables/toast'
@@ -52,7 +51,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
   const { t } = useI18n()
   const toast = useToast()
   const { guardCardImage } = useCardImageGate()
-  const { setFaceImage } = inject(cardEditorKey)!
+  const mutations = useCardMutations(() => toValue(card).deck_id)
 
   const hovered = ref(false)
   const hover_suppressed = ref(false)
@@ -109,7 +108,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
     pending.value = true
 
     try {
-      await setFaceImage(toValue(card).id!, side, file)
+      await mutations.setCardImage(toValue(card).id!, side, file)
     } catch {
       toast.error(t('toast.error.card-image-upload-failed'))
       pending.value = false
@@ -148,7 +147,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
     pending.value = true
 
     try {
-      await setFaceImage(toValue(card).id!, side, null)
+      await mutations.deleteCardImage(toValue(card).id!, side)
       emitSfx('trash_crumple_short')
     } catch {
       toast.error(t('toast.error.card-image-delete-failed'))

@@ -95,6 +95,24 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
     }
   }
 
+  /**
+   * Remove a card from the session entirely — used when it's deleted or
+   * moved out of the deck mid-session. Drops it from both the raw pool and
+   * the processed queue; when it was the active card, advances to the next
+   * unreviewed card (or completes the session if none remain).
+   */
+  function dropCard(card_id: number) {
+    const was_active = active_card.value?.id === card_id
+
+    _raw_cards.value = _raw_cards.value.filter((c) => c.id !== card_id)
+    _cards_in_deck.value = _cards_in_deck.value.filter((c) => c.id !== card_id)
+
+    if (!was_active) return
+
+    active_card.value = cards.value.find((c) => c.state === 'unreviewed')
+    if (!active_card.value) mode.value = 'completed'
+  }
+
   function reviewCard(grade?: Grade) {
     if (!active_card.value) return
 
@@ -160,6 +178,7 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
     config,
     setCards,
     updateConfig,
-    reviewCard
+    reviewCard,
+    dropCard
   }
 }

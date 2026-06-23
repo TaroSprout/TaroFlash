@@ -4,7 +4,7 @@ import { nextTick } from 'vue'
 const { emitSfxMock } = vi.hoisted(() => ({ emitSfxMock: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: emitSfxMock }))
 
-import { useDeckViewShell } from '@/composables/deck/view-shell'
+import { useDeckViewShell } from '@/views/deck/composables/view-shell'
 
 // useLocalRef reads/writes localStorage — reset between tests so state
 // from one test doesn't bleed into the next.

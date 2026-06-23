@@ -41,7 +41,7 @@ vi.mock('@/api/cards', () => {
 })
 
 import CardImporter from '@/views/deck/card-importer.vue'
-import { cardEditorKey } from '@/composables/card/list-controller'
+import { cardEditorKey } from '@/views/deck/composables/list-controller'
 
 const UiButtonStub = defineComponent({
   name: 'UiButton',

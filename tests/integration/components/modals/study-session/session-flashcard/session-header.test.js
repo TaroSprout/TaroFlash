@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
-import SessionHeader from '@/components/modals/study-session/session-flashcard/session-header.vue'
+import SessionHeader from '@/components/study-session/session-flashcard/session-header.vue'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
@@ -27,6 +27,22 @@ const DropdownButtonStub = defineComponent({
             onClick: () => emit('select', { value: 'edit', label: 'Edit' })
           },
           'Edit'
+        ),
+        h(
+          'button',
+          {
+            'data-testid': 'dropdown-select-move',
+            onClick: () => emit('select', { value: 'move', label: 'Move' })
+          },
+          'Move'
+        ),
+        h(
+          'button',
+          {
+            'data-testid': 'dropdown-select-delete',
+            onClick: () => emit('select', { value: 'delete', label: 'Delete' })
+          },
+          'Delete'
         )
       ])
   }
@@ -79,6 +95,26 @@ describe('SessionHeader', () => {
     await wrapper.find('[data-testid="dropdown-select-edit"]').trigger('click')
 
     expect(wrapper.emitted('edit')).toHaveLength(1)
+  })
+
+  // ── move option emits move event [obligation] ─────────────────────────────
+
+  test('selecting move option emits "move" event [obligation]', async () => {
+    const wrapper = mountHeader({ can_edit: true })
+
+    await wrapper.find('[data-testid="dropdown-select-move"]').trigger('click')
+
+    expect(wrapper.emitted('move')).toHaveLength(1)
+  })
+
+  // ── delete option emits delete event [obligation] ─────────────────────────
+
+  test('selecting delete option emits "delete" event [obligation]', async () => {
+    const wrapper = mountHeader({ can_edit: true })
+
+    await wrapper.find('[data-testid="dropdown-select-delete"]').trigger('click')
+
+    expect(wrapper.emitted('delete')).toHaveLength(1)
   })
 
   // ── session-counter is always rendered ────────────────────────────────────

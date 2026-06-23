@@ -69,7 +69,7 @@ const LabeledSectionStub = defineComponent({
 })
 
 import PageSettings from '@/views/deck/mode-toolbar/page-settings.vue'
-import { deckViewShellKey } from '@/composables/deck/view-shell'
+import { deckViewShellKey } from '@/views/deck/composables/view-shell'
 
 function makeEditor({ grid_size_val = 'md' } = {}) {
   const grid_size = ref(grid_size_val)

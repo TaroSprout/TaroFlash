@@ -8,8 +8,8 @@ vi.mock('vue-i18n', () => ({
 }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
-import { useBulkActions } from '@/composables/card/bulk-actions'
-import { cardEditorKey } from '@/composables/card/list-controller'
+import { useBulkActions } from '@/views/deck/composables/bulk-actions'
+import { cardEditorKey } from '@/views/deck/composables/list-controller'
 
 function makeEditor({
   selected_count = 0,

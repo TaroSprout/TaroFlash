@@ -3,12 +3,10 @@ import { useInfiniteScroll } from '@/composables/ui/infinite-scroll'
 import { useCardsInDeckInfiniteQuery } from '@/api/cards'
 import { useDeckQuery } from '@/api/decks'
 import { useVirtualCardList, type CardEntry } from './virtual-list'
-import { useCardSelection } from './selection'
-import { useCardMutations } from './mutations'
 import { useCardActions } from './actions'
-import { useCardLimitGate } from '@/composables/card/limit-gate'
+import { useCardSelection, useCardMutations, useCardLimitGate } from '@/composables/card'
 import { emitSfx } from '@/sfx/bus'
-import type { DeckViewShell } from '../deck/view-shell'
+import type { DeckViewShell } from './view-shell'
 
 export type CardListController = ReturnType<typeof useCardListController>
 
@@ -222,26 +220,6 @@ export function useCardListController(opts: Options) {
     return withSaving(() => mutations.saveCard(card, values))
   }
 
-  /** Upload and attach an image to one face of a card, toggling `saving`. */
-  function setCardImage(card_id: number, side: 'front' | 'back', file: File) {
-    return withSaving(() => mutations.setCardImage(card_id, side, file))
-  }
-
-  /** Remove the image from one face of a card, toggling `saving`. */
-  function deleteCardImage(card_id: number, side: 'front' | 'back') {
-    return withSaving(() => mutations.deleteCardImage(card_id, side))
-  }
-
-  /**
-   * Apply one face's pending image change, routing on the value: a `File`
-   * sets it, `null` removes it, `undefined` is a no-op. Centralizes the
-   * File/null/undefined → RPC mapping so callers don't branch on it.
-   */
-  function setFaceImage(card_id: number, side: 'front' | 'back', change: File | null | undefined) {
-    if (change === undefined) return Promise.resolve()
-    return change === null ? deleteCardImage(card_id, side) : setCardImage(card_id, side, change)
-  }
-
   return {
     list,
     selection,
@@ -257,9 +235,6 @@ export function useCardListController(opts: Options) {
     handleLimitError: limit_gate.handleLimitError,
     saving,
     updateCard,
-    setCardImage,
-    deleteCardImage,
-    setFaceImage,
     card_attributes,
     card_count,
     deck_id: opts.deck_id,

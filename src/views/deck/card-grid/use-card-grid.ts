@@ -1,4 +1,4 @@
-import { type CardGridSize } from '@/composables/deck/view-shell'
+import { type CardGridSize } from '@/views/deck/composables/view-shell'
 import { computed, toValue, type CSSProperties, type MaybeRefOrGetter } from 'vue'
 
 const XL_CARD_WIDTH = 314

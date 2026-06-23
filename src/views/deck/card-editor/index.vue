@@ -3,7 +3,7 @@ import List from './list.vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import { inject } from 'vue'
-import { cardEditorKey } from '@/composables/card/list-controller'
+import { cardEditorKey } from '@/views/deck/composables'
 
 defineOptions({ inheritAttrs: false })
 

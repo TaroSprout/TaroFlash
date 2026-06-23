@@ -3,11 +3,10 @@ import ItemOptions from './list-item-options.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiRadio from '@/components/ui-kit/radio.vue'
-import { cardEditorKey } from '@/composables/card/list-controller'
+import { cardEditorKey, type CardWithClientId } from '@/views/deck/composables'
 import { inject, computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ListItemCard from './list-item-card.vue'
-import type { CardWithClientId } from '@/composables/card/virtual-list'
 
 type ListItemProps = {
   index: number

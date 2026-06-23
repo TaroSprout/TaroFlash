@@ -1,5 +1,5 @@
-import type { CardSelection } from '@/composables/card/selection'
-import type { VirtualCardList } from '@/composables/card/virtual-list'
+import type { CardSelection } from '@/composables/card'
+import type { VirtualCardList } from '@/views/deck/composables'
 
 export type DeleteArgs = { except_ids: number[] } | { cards: Card[] }
 

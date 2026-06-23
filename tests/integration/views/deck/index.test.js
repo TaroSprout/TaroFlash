@@ -13,13 +13,14 @@ const { useDeckQueryMock, useCardListControllerMock, useDeckViewShellMock } = vi
 // mock must expose it too, or ESM linking of the graph fails.
 vi.mock('@/api/decks', () => ({
   useDeckQuery: useDeckQueryMock,
-  useMemberDeckCountQuery: () => ({ data: { value: 0 }, refresh: vi.fn() })
+  useMemberDeckCountQuery: () => ({ data: { value: 0 }, refresh: vi.fn() }),
+  useMemberDecksQuery: () => ({ data: { value: [] }, refresh: vi.fn() })
 }))
-vi.mock('@/composables/card/list-controller', () => ({
+vi.mock('@/views/deck/composables/list-controller', () => ({
   cardEditorKey: Symbol('cardEditor'),
   useCardListController: useCardListControllerMock
 }))
-vi.mock('@/composables/deck/view-shell', () => ({
+vi.mock('@/views/deck/composables/view-shell', () => ({
   deckViewShellKey: Symbol('deckViewShell'),
   useDeckViewShell: useDeckViewShellMock
 }))

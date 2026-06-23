@@ -1,13 +1,11 @@
 import { defineAsyncComponent } from 'vue'
 import { useModal } from '@/composables/modal'
 import { emitSfx, emitStudySfx } from '@/sfx/bus'
-import type { StudySessionResponse } from '@/components/modals/study-session/index.vue'
+import type { StudySessionResponse } from '@/components/study-session/index.vue'
 
-const StudySession = defineAsyncComponent(
-  () => import('@/components/modals/study-session/index.vue')
-)
+const StudySession = defineAsyncComponent(() => import('@/components/study-session/index.vue'))
 const SessionComplete = defineAsyncComponent(
-  () => import('@/components/modals/study-session/session-complete.vue')
+  () => import('@/components/study-session/session-complete.vue')
 )
 
 export type SecondaryAction = 'study-more' | 'study-all' | 'study-again'

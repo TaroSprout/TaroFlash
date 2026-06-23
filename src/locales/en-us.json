@@ -300,6 +300,8 @@
   "study-session.complete.study-again-button": "Study again",
   "study-session.complete.close": "Close",
   "study-session.flashcard.menu.edit": "Edit card",
+  "study-session.flashcard.menu.move": "Move card",
+  "study-session.flashcard.menu.delete": "Delete card",
   "study-session.edit.front-placeholder": "Front",
   "study-session.edit.back-placeholder": "Back",
   "study-session.edit.done": "Done",

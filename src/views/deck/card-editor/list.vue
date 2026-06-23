@@ -3,7 +3,7 @@ import ListItem from './list-item.vue'
 import { inject, useTemplateRef, computed, ref, watchEffect, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useWindowVirtualizer } from '@tanstack/vue-virtual'
-import { cardEditorKey } from '@/composables/card/list-controller'
+import { cardEditorKey } from '@/views/deck/composables'
 import { usePinScrollWhileTyping } from '@/composables/ui/pin-scroll-while-typing'
 
 const { t } = useI18n()

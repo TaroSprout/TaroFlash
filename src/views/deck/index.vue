@@ -10,8 +10,8 @@ import CardGridEmpty from './card-grid/empty-state.vue'
 import { preloadDeckModes } from './modes'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import { useDeckQuery } from '@/api/decks'
-import { cardEditorKey, useCardListController } from '@/composables/card/list-controller'
-import { deckViewShellKey, useDeckViewShell } from '@/composables/deck/view-shell'
+import { cardEditorKey, useCardListController } from '@/views/deck/composables'
+import { deckViewShellKey, useDeckViewShell } from '@/views/deck/composables/view-shell'
 
 const { id: deck_id } = defineProps<{
   id: string

@@ -34,7 +34,7 @@ vi.mock('@/views/deck/modes.ts', async () => {
 })
 
 import ModeStack from '@/views/deck/mode-stack.vue'
-import { deckViewShellKey } from '@/composables/deck/view-shell'
+import { deckViewShellKey } from '@/views/deck/composables/view-shell'
 import { slideOverlayUp } from '@/utils/animations/deck-view/card-overlay'
 
 function makeShell(mode = 'view') {

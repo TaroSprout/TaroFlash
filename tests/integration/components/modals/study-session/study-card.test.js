@@ -3,8 +3,8 @@ import { mount, shallowMount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 import { FSRS, generatorParameters, createEmptyCard, Rating } from 'ts-fsrs'
 import { ref } from 'vue'
-import StudyCard from '@/components/modals/study-session/session-flashcard/study-card.vue'
-import { DeckContextKey } from '@/components/modals/study-session/deck-context'
+import StudyCard from '@/components/study-session/session-flashcard/study-card.vue'
+import { DeckContextKey } from '@/components/study-session/deck-context'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 

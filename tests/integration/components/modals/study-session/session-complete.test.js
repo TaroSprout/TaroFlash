@@ -1,6 +1,6 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import SessionComplete from '@/components/modals/study-session/session-complete.vue'
+import SessionComplete from '@/components/study-session/session-complete.vue'
 
 function makeSessionComplete(score, total, close = () => {}) {
   return mount(SessionComplete, {

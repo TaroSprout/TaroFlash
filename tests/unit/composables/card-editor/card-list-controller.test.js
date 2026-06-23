@@ -84,7 +84,7 @@ vi.mock('@/composables/ui/infinite-scroll', () => ({
 
 vi.mock('@/components/modals/move-cards.vue', () => ({ default: {} }))
 
-import { useCardListController } from '@/composables/card/list-controller'
+import { useCardListController } from '@/views/deck/composables/list-controller'
 
 function makeCard(overrides = {}) {
   return card.one({ overrides })
@@ -492,75 +492,6 @@ describe('useCardListController', () => {
       const temp_id = all_cards.value[0].id
       await expect(updateCard(temp_id, { front_text: 'X' })).rejects.toThrow('boom')
       expect(saving.value).toBe(false)
-    })
-  })
-
-  // ── image writes — routed through the mutation layer, toggling saving ──────
-
-  describe('setCardImage / deleteCardImage', () => {
-    test('setCardImage forwards card_id, side, file and the deck_id', async () => {
-      const { setCardImage } = makeController([makeCard({ id: 42 })])
-      const file = new File(['x'], 'a.png', { type: 'image/png' })
-      await setCardImage(42, 'front', file)
-      expect(setCardImageMock).toHaveBeenCalledWith({
-        card_id: 42,
-        deck_id: 10,
-        file,
-        side: 'front'
-      })
-    })
-
-    test('deleteCardImage forwards card_id, side and the deck_id', async () => {
-      const { deleteCardImage } = makeController([makeCard({ id: 42 })])
-      await deleteCardImage(42, 'back')
-      expect(deleteCardImageMock).toHaveBeenCalledWith({ card_id: 42, deck_id: 10, side: 'back' })
-    })
-
-    test('toggles saving around the image upload', async () => {
-      let resolveSet
-      setCardImageMock.mockReturnValueOnce(new Promise((r) => (resolveSet = r)))
-      const { setCardImage, saving } = makeController([makeCard({ id: 42 })])
-      const promise = setCardImage(42, 'front', new File(['x'], 'a.png'))
-      expect(saving.value).toBe(true)
-      resolveSet()
-      await promise
-      expect(saving.value).toBe(false)
-    })
-
-    test('resets saving even if the image upload rejects', async () => {
-      setCardImageMock.mockRejectedValueOnce(new Error('boom'))
-      const { setCardImage, saving } = makeController([makeCard({ id: 42 })])
-      await expect(setCardImage(42, 'front', new File(['x'], 'a.png'))).rejects.toThrow('boom')
-      expect(saving.value).toBe(false)
-    })
-  })
-
-  describe('setFaceImage', () => {
-    test('routes a File to the set-image mutation', async () => {
-      const { setFaceImage } = makeController([makeCard({ id: 42 })])
-      const file = new File(['x'], 'a.png', { type: 'image/png' })
-      await setFaceImage(42, 'front', file)
-      expect(setCardImageMock).toHaveBeenCalledWith({
-        card_id: 42,
-        deck_id: 10,
-        file,
-        side: 'front'
-      })
-      expect(deleteCardImageMock).not.toHaveBeenCalled()
-    })
-
-    test('routes null to the delete-image mutation', async () => {
-      const { setFaceImage } = makeController([makeCard({ id: 42 })])
-      await setFaceImage(42, 'back', null)
-      expect(deleteCardImageMock).toHaveBeenCalledWith({ card_id: 42, deck_id: 10, side: 'back' })
-      expect(setCardImageMock).not.toHaveBeenCalled()
-    })
-
-    test('is a no-op for undefined (untouched face)', async () => {
-      const { setFaceImage } = makeController([makeCard({ id: 42 })])
-      await setFaceImage(42, 'front', undefined)
-      expect(setCardImageMock).not.toHaveBeenCalled()
-      expect(deleteCardImageMock).not.toHaveBeenCalled()
     })
   })
 

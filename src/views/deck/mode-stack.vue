@@ -13,7 +13,7 @@ import {
   cancelOverlayAnimation,
   type ModeSwitchViewport
 } from '@/utils/animations/deck-view/card-overlay'
-import { deckViewShellKey } from '@/composables/deck/view-shell'
+import { deckViewShellKey } from '@/views/deck/composables/view-shell'
 
 type ModeStackProps = {
   sticky_header?: HTMLElement | null

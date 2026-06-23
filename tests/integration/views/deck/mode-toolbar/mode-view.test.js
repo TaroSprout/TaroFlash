@@ -3,7 +3,7 @@ import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 
 import ModeView from '@/views/deck/mode-toolbar/mode-view.vue'
-import { cardEditorKey } from '@/composables/card/list-controller'
+import { cardEditorKey } from '@/views/deck/composables/list-controller'
 
 const UiButtonStub = defineComponent({
   name: 'UiButton',

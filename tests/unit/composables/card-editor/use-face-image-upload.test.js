@@ -33,6 +33,24 @@ vi.mock('@/composables/card/image-gate', () => ({
   useCardImageGate: () => ({ guardCardImage: mockGuardCardImage })
 }))
 
+// ── useCardMutations mock ─────────────────────────────────────────────────────
+
+const { mockSetCardImage, mockDeleteCardImage } = vi.hoisted(() => ({
+  mockSetCardImage: vi.fn().mockResolvedValue(undefined),
+  mockDeleteCardImage: vi.fn().mockResolvedValue(undefined)
+}))
+
+vi.mock('@/composables/card/mutations', () => ({
+  useCardMutations: () => ({
+    setCardImage: mockSetCardImage,
+    deleteCardImage: mockDeleteCardImage,
+    saveCard: vi.fn(),
+    insertCard: vi.fn(),
+    deleteCards: vi.fn(),
+    moveCards: vi.fn()
+  })
+}))
+
 // Capture the onFile callback so tests can invoke uploadFile directly.
 let capturedOnFile
 let mockDragging
@@ -62,17 +80,15 @@ vi.mock('@/composables/card/image-dropzone', () => ({
 
 // ── Fixture ───────────────────────────────────────────────────────────────────
 
-import { cardEditorKey } from '@/composables/card/list-controller'
 import { useFaceImageUpload } from '@/composables/card/face-image-upload'
 
 function makeCard(overrides = {}) {
-  return { id: 1, front_image_path: null, back_image_path: null, ...overrides }
+  return { id: 1, deck_id: 10, front_image_path: null, back_image_path: null, ...overrides }
 }
 
-// Mount the composable inside a Vue app that provides cardEditorKey.
-// Returns { result, cardRef, mockSetFaceImage, onFile, unmount }.
-function withUpload({ card = makeCard(), side = 'front', setFaceImage } = {}) {
-  const mockSetFaceImage = setFaceImage ?? vi.fn().mockResolvedValue(undefined)
+// Mount the composable inside a Vue app (needs i18n for toast strings).
+// Returns { result, cardRef, onFile, unmount }.
+function withUpload({ card = makeCard(), side = 'front' } = {}) {
   const cardRef = ref(card)
   const fileInput = ref(null)
   const rootEl = () => undefined
@@ -85,15 +101,10 @@ function withUpload({ card = makeCard(), side = 'front', setFaceImage } = {}) {
     }
   })
   app.use(i18n)
-  app.provide(cardEditorKey, {
-    setFaceImage: mockSetFaceImage,
-    // minimal stub — other keys not used by this composable
-    onSelectCard: vi.fn()
-  })
   app.mount(document.createElement('div'))
 
   // capturedOnFile is populated by the useImageDropzone mock on mount
-  return { result, cardRef, mockSetFaceImage, onFile: capturedOnFile, unmount: () => app.unmount() }
+  return { result, cardRef, onFile: capturedOnFile, unmount: () => app.unmount() }
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -104,6 +115,8 @@ beforeEach(() => {
   mockRevealFaceImage.mockClear()
   mockCollapseFaceImage.mockClear()
   mockGuardCardImage.mockReset().mockResolvedValue(true)
+  mockSetCardImage.mockReset().mockResolvedValue(undefined)
+  mockDeleteCardImage.mockReset().mockResolvedValue(undefined)
 })
 
 describe('useFaceImageUpload — pending flag [obligation]', () => {
@@ -113,14 +126,14 @@ describe('useFaceImageUpload — pending flag [obligation]', () => {
     unmount()
   })
 
-  test('pending is true while setFaceImage is in flight [obligation]', async () => {
+  test('pending is true while deleteCardImage is in flight [obligation]', async () => {
     let resolve
-    const setFaceImage = vi.fn(() => new Promise((r) => (resolve = r)))
-    const { result, unmount } = withUpload({ setFaceImage })
+    mockDeleteCardImage.mockImplementationOnce(() => new Promise((r) => (resolve = r)))
+    const { result, unmount } = withUpload()
 
     // Kick off an upload directly by calling the internal upload path via onRemove
-    // (which calls setFaceImage after the collapse animation)
-    const removePromise = result.onRemove()
+    // (which calls deleteCardImage after the collapse animation)
+    result.onRemove()
     await flushPromises() // let the collapse animation resolve
 
     expect(result.pending.value).toBe(true)
@@ -132,9 +145,8 @@ describe('useFaceImageUpload — pending flag [obligation]', () => {
     unmount()
   })
 
-  test('pending is false after setFaceImage resolves successfully [obligation]', async () => {
-    const setFaceImage = vi.fn().mockResolvedValue(undefined)
-    const { result, unmount } = withUpload({ setFaceImage })
+  test('pending is false after deleteCardImage resolves successfully [obligation]', async () => {
+    const { result, unmount } = withUpload()
 
     await result.onRemove()
     await flushPromises()
@@ -143,9 +155,9 @@ describe('useFaceImageUpload — pending flag [obligation]', () => {
     unmount()
   })
 
-  test('pending is false after setFaceImage rejects (error path) [obligation]', async () => {
-    const setFaceImage = vi.fn().mockRejectedValue(new Error('server error'))
-    const { result, unmount } = withUpload({ setFaceImage })
+  test('pending is false after deleteCardImage rejects (error path) [obligation]', async () => {
+    mockDeleteCardImage.mockRejectedValueOnce(new Error('server error'))
+    const { result, unmount } = withUpload()
 
     await result.onRemove()
     await flushPromises()
@@ -157,45 +169,45 @@ describe('useFaceImageUpload — pending flag [obligation]', () => {
 
 describe('useFaceImageUpload — onRemove sfx timing [obligation]', () => {
   test('emits ui.snappy_button_5 immediately (before the await) [obligation]', async () => {
-    let resolveSetFace
-    const setFaceImage = vi.fn(() => new Promise((r) => (resolveSetFace = r)))
-    const { result, unmount } = withUpload({ setFaceImage })
+    let resolveDeleteCard
+    mockDeleteCardImage.mockImplementationOnce(() => new Promise((r) => (resolveDeleteCard = r)))
+    const { result, unmount } = withUpload()
 
-    const removePromise = result.onRemove()
-    // Before flushPromises — setFaceImage has not resolved yet
+    result.onRemove()
+    // Before flushPromises — deleteCardImage has not resolved yet
     await nextTick()
 
     expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
 
-    resolveSetFace()
+    resolveDeleteCard()
     await flushPromises()
     unmount()
   })
 
-  test('emits ui.trash_crumple_short only after setFaceImage resolves [obligation]', async () => {
-    let resolveSetFace
-    const setFaceImage = vi.fn(() => new Promise((r) => (resolveSetFace = r)))
-    const { result, unmount } = withUpload({ setFaceImage })
+  test('emits ui.trash_crumple_short only after deleteCardImage resolves [obligation]', async () => {
+    let resolveDeleteCard
+    mockDeleteCardImage.mockImplementationOnce(() => new Promise((r) => (resolveDeleteCard = r)))
+    const { result, unmount } = withUpload()
 
-    const removePromise = result.onRemove()
-    await flushPromises() // collapse animation resolves; setFaceImage is in flight
+    result.onRemove()
+    await flushPromises() // collapse animation resolves; deleteCardImage is in flight
 
-    // Not yet — setFaceImage hasn't resolved
+    // Not yet — deleteCardImage hasn't resolved
     const trashCallsBefore = mockEmitSfx.mock.calls.filter(
       ([name]) => name === 'trash_crumple_short'
     ).length
     expect(trashCallsBefore).toBe(0)
 
-    resolveSetFace()
+    resolveDeleteCard()
     await flushPromises()
 
     expect(mockEmitSfx).toHaveBeenCalledWith('trash_crumple_short')
     unmount()
   })
 
-  test('does NOT emit ui.trash_crumple_short when setFaceImage rejects [obligation]', async () => {
-    const setFaceImage = vi.fn().mockRejectedValue(new Error('delete failed'))
-    const { result, unmount } = withUpload({ setFaceImage })
+  test('does NOT emit ui.trash_crumple_short when deleteCardImage rejects [obligation]', async () => {
+    mockDeleteCardImage.mockRejectedValueOnce(new Error('delete failed'))
+    const { result, unmount } = withUpload()
 
     await result.onRemove()
     await flushPromises()
@@ -264,15 +276,10 @@ describe('useFaceImageUpload — can_upload', () => {
 describe('useFaceImageUpload — reveal via image_path watcher [obligation]', () => {
   test('revealFaceImage does NOT fire on upload resolution directly [obligation]', async () => {
     // The reveal fires from a flush:post watcher on image_path, not from the upload promise.
-    const setFaceImage = vi.fn().mockResolvedValue(undefined)
-    const { result, unmount } = withUpload({ setFaceImage })
+    // onRemove calls deleteCardImage (not setCardImage), so reveal_pending is NOT set —
+    // revealFaceImage must NOT be called.
+    const { result, unmount } = withUpload()
 
-    // Normally uploadFile is called via the dropzone onFile callback.
-    // We cannot call it directly (it's internal), so we use onRemove as the
-    // proxy — its finally block resets pending. For the reveal path we rely on
-    // the fact that revealFaceImage is only called from the watcher, not the
-    // upload promise. After the remove (which calls setFaceImage(null)) there is
-    // no pending reveal_pending flag, so revealFaceImage must NOT be called.
     await result.onRemove()
     await flushPromises()
 
@@ -339,13 +346,13 @@ describe('useFaceImageUpload — onDismissError', () => {
 })
 
 describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', () => {
-  test('pending is true while setFaceImage is in flight during upload [obligation]', async () => {
+  test('pending is true while setCardImage is in flight during upload [obligation]', async () => {
     let resolveUpload
-    const setFaceImage = vi.fn(() => new Promise((r) => (resolveUpload = r)))
-    const { result, onFile, unmount } = withUpload({ setFaceImage })
+    mockSetCardImage.mockImplementationOnce(() => new Promise((r) => (resolveUpload = r)))
+    const { result, onFile, unmount } = withUpload()
 
     // Trigger upload via the captured dropzone onFile callback
-    const uploadPromise = onFile(new File(['x'], 'img.png', { type: 'image/png' }))
+    onFile(new File(['x'], 'img.png', { type: 'image/png' }))
     await nextTick()
 
     expect(result.pending.value).toBe(true)
@@ -357,8 +364,7 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
   })
 
   test('pending is false after upload resolves successfully [obligation]', async () => {
-    const setFaceImage = vi.fn().mockResolvedValue(undefined)
-    const { result, onFile, unmount } = withUpload({ setFaceImage })
+    const { result, onFile, unmount } = withUpload()
 
     await onFile(new File(['x'], 'img.png', { type: 'image/png' }))
     await flushPromises()
@@ -368,8 +374,8 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
   })
 
   test('pending is false after upload error (catch path) [obligation]', async () => {
-    const setFaceImage = vi.fn().mockRejectedValue(new Error('upload failed'))
-    const { result, onFile, unmount } = withUpload({ setFaceImage })
+    mockSetCardImage.mockRejectedValueOnce(new Error('upload failed'))
+    const { result, onFile, unmount } = withUpload()
 
     await onFile(new File(['x'], 'img.png', { type: 'image/png' }))
     await flushPromises()
@@ -379,8 +385,7 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
   })
 
   test('emits music_plink_ok on successful upload', async () => {
-    const setFaceImage = vi.fn().mockResolvedValue(undefined)
-    const { onFile, unmount } = withUpload({ setFaceImage })
+    const { onFile, unmount } = withUpload()
 
     await onFile(new File(['x'], 'img.png', { type: 'image/png' }))
     await flushPromises()
@@ -390,8 +395,8 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
   })
 
   test('shows toast error and clears pending on upload failure', async () => {
-    const setFaceImage = vi.fn().mockRejectedValue(new Error('upload error'))
-    const { result, onFile, unmount } = withUpload({ setFaceImage })
+    mockSetCardImage.mockRejectedValueOnce(new Error('upload error'))
+    const { result, onFile, unmount } = withUpload()
 
     await onFile(new File(['x'], 'img.png', { type: 'image/png' }))
     await flushPromises()
@@ -402,16 +407,12 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
   })
 
   test('uploadFile is a no-op when can_upload is false (temp card)', async () => {
-    const setFaceImage = vi.fn().mockResolvedValue(undefined)
-    const { result, onFile, unmount } = withUpload({
-      card: makeCard({ id: 0 }),
-      setFaceImage
-    })
+    const { result, onFile, unmount } = withUpload({ card: makeCard({ id: 0 }) })
 
     await onFile(new File(['x'], 'img.png', { type: 'image/png' }))
     await flushPromises()
 
-    expect(setFaceImage).not.toHaveBeenCalled()
+    expect(mockSetCardImage).not.toHaveBeenCalled()
     expect(result.pending.value).toBe(false)
     unmount()
   })
@@ -421,8 +422,7 @@ describe('useFaceImageUpload — image_path watcher sets reveal_pending [obligat
   test('revealFaceImage is called when image_path changes after a successful upload [obligation]', async () => {
     // The reveal fires from the flush:post watcher on image_path when reveal_pending is set.
     // After a successful upload, reveal_pending=true; then when image_path changes, reveal fires.
-    const setFaceImage = vi.fn().mockResolvedValue(undefined)
-    const { onFile, cardRef, unmount } = withUpload({ card: makeCard({ id: 1 }), setFaceImage })
+    const { onFile, cardRef, unmount } = withUpload({ card: makeCard({ id: 1 }) })
 
     // Upload sets reveal_pending=true
     await onFile(new File(['x'], 'img.png', { type: 'image/png' }))

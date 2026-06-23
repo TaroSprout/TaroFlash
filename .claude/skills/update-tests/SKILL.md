@@ -7,7 +7,7 @@ arguments:
     type: string
     description: Optional context to help understand the changes
 argument-hint: '[additional-context]'
-lastUpdated: 2026-06-12T00:00:00Z
+lastUpdated: 2026-06-23T00:00:00Z
 ---
 
 The main thread runs **only** the obligation-mining step below. The subagent has none of this conversation in its context, so the cross-cutting tests that depend on it must be discovered here and passed in explicitly. Everything mechanical (scoped per-file coverage of touched files, diff, type selection, writing, validation, re-measure, report) happens inside the subagent. The subagent measures coverage **only for touched files** and targets ~90% lines each — it does not run the full suite or baseline against master.
@@ -59,8 +59,24 @@ The subagent works from a cold diff and can mis-scope or over-claim. Cross-check
 
 1. **Scope completeness.** Run `git diff master...HEAD --name-only -- src/ supabase/` and `git status --short -- src/` yourself, and compare against the report's coverage table. A file the subagent claims "wasn't in the diff" but that actually appears here is a **missed obligation, not a scope decision** — this is the most common and most damaging failure. Every changed source file must be accounted for (covered, or an explicit justified deferral).
 2. **Obligations.** Every Step-A obligation must appear under "Obligations satisfied" with a ✅. Any ❌ or silent omission is a gap to close.
-3. **No collateral breakage.** The branch's own source changes can have broken existing test files the subagent never ran (it scopes to "touched files" and may not realise an untouched test exercises touched source). Run the mirror test files for the touched source once — `vp test --no-coverage <files>` — and confirm green. A composable that gained a new query dependency, for instance, throws `getActivePinia()` in every pre-existing test until its harness mocks the new hook.
+3. **No collateral breakage.** The branch's own source changes can have broken existing test files the subagent never ran (it scopes to "touched files" and may not realise an untouched test exercises touched source). A composable that gained a new query dependency, for instance, throws `getActivePinia()` in every pre-existing test until its harness mocks the new hook; a barrel that now re-exports a heavier module makes every partial `vi.mock` of that barrel's transitive deps fail the ESM named-export check.
 4. **Coverage floor.** Touched files should be ~90% lines; note any genuine deferrals.
+
+### Mandatory final gate — run the FULL suite
+
+Before you commit, run the **entire** suite, not just the touched/mirror files:
+
+```
+vp test --no-coverage
+```
+
+This is non-negotiable. The subagent only ever runs touched-file scope, so collateral breakage in **untouched** test files is invisible to it — and that is the single most common reason these PRs fail CI (it happens on nearly every move/barrel/mock-shape change). The mirror-file check in item 3 is necessary but **not sufficient**: a file-move or barrel-widening refactor breaks tests that don't mirror any touched source at all (e.g. a sibling feature whose `vi.mock('@/some/barrel')` is now missing a newly-transitive export). Only a full run catches those.
+
+If the full suite is red:
+
+- Fix the failures yourself when they're mechanical (repoint a moved import, add the missing export to a `vi.mock` factory, mock the barrel the source now imports instead of the old deep path). These are review fixes, not new authoring — keep them in the test commit.
+- Re-dispatch the subagent only if the failures reveal a genuine missing-coverage gap, not just a broken harness.
+- Do **not** commit until `vp test --no-coverage` is fully green. A green touched-file scope with a red full suite is a failed run.
 
 ### Decide
 

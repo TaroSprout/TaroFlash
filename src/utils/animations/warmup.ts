@@ -32,8 +32,8 @@ export function warmupAnimations() {
   })
 
   scheduleIdle(() => {
-    void import('@/components/modals/study-session/index.vue')
-    void import('@/components/modals/study-session/session-complete.vue')
+    void import('@/components/study-session/index.vue')
+    void import('@/components/study-session/session-complete.vue')
     void import('@/components/modals/deck-settings/index.vue')
   })
 }

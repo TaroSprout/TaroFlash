@@ -1,6 +1,6 @@
 ---
 name: prepare-pr
-description: Prepare a branch for PR by committing any pending work, rewriting commit messages into release-notes-friendly Conventional Commits, renaming the branch if it no longer fits the changes, drafting a PR title and body, and opening the GitHub "create PR" page pre-filled. Bundles all branch work — committed AND uncommitted (staged + unstaged) — into the PR by default. Pass `--split` to additionally analyse whether the work should be split into a stack of smaller PRs. Use when a feature branch is code-complete and ready for review.
+description: Prepare a branch for PR by committing any pending work, rewriting commit messages into release-notes-friendly Conventional Commits, renaming the branch if it no longer fits the changes, running a lint gate, drafting a PR title and body, then creating the PR directly (not a draft) and watching CI. Bundles all branch work — committed AND uncommitted (staged + unstaged) — into the PR by default. Pass `--split` to additionally analyse whether the work should be split into a stack of smaller PRs. Use when a feature branch is code-complete and ready for review.
 allowed-tools: Read, Edit, Write, Bash, Glob, Grep
 argument-hint: '[--split] [--no-watch]'
 arguments:
@@ -8,7 +8,7 @@ arguments:
     description: Analyse the branch and propose splitting unrelated/oversized work into a stack of smaller PRs.
   - name: --no-watch
     description: Skip the post-create CI watch + coverage check (Step 12).
-lastUpdated: 2026-04-25T00:00:00Z
+lastUpdated: 2026-06-23T00:00:00Z
 ---
 
 ## Args
@@ -26,8 +26,9 @@ Output:
 2. Branch commits grouped into one PR by default, or (with `--split`) into a stack of smaller PRs.
 3. Commits renamed to **Conventional Commits** (see style guide below).
 4. Branches renamed if slug no longer fit.
-5. Branches pushed (force-with-lease if rewritten, fresh push if new).
-6. Each PR submitted via `gh pr create` — created directly (no browser) for multi-PR plans, opened pre-filled in browser for single PR.
+5. Working tree lint-clean (lint gate run, issues fixed) before any push.
+6. Branches pushed (force-with-lease if rewritten, fresh push if new).
+7. Each PR **created directly** via `gh pr create` — no browser, never a draft — for both single and multi-PR plans, then its CI watched.
 
 History may be published — **user pre-authorised force-push on this branch** — don't block on upstream. Still surface actions before doing them.
 
@@ -265,7 +266,26 @@ Show old → new, wait for approval, rename:
 git branch -m <old-name> <new-name>
 ```
 
-### Step 8 — Push branches
+### Step 8 — Lint + type-check gate (before any push)
+
+Run the linter **and** the type-checker on the working tree and fix everything they flag **before** pushing — these are the cheapest CI failures to catch locally, and the most annoying to discover after the PR is already open.
+
+```sh
+vp lint
+pnpm type-check
+```
+
+- **Type-check uses `pnpm type-check` (vue-tsc), not `vp`.** CI runs `pnpm type-check`, and vue-tsc is stricter than `vp check`'s type pass — a `vp`-clean tree can still fail CI on types. Use the same command CI uses so the gate actually matches it.
+- If both clean → continue to the push.
+- If they report errors → fix them. Most lint hits are mechanical (unused import left by a refactor, `prefer-const`, missing return); `vp lint --fix` / `vp fmt` handle the auto-fixable ones. Type errors after a refactor are usually moved/renamed symbols or a changed signature — chase them to the changed call sites.
+- Re-run both until clean. Commit the fixes onto the relevant branch with a `fix(<scope>):` or `chore(<scope>):` Conventional Commit (or amend into the commit that introduced the issue if it hasn't been pushed yet and belongs there) so the fix rides with the work it corrects.
+- Pre-existing lint warnings unrelated to this branch's diff aren't a blocker — don't expand scope chasing them. Errors (lint or type), and warnings in code this branch touched, must be resolved.
+
+Run this once for the whole working tree on a single-PR run; for `--split` runs, gate each carved branch before its own push (a fix may belong to only one of them).
+
+Do not push until both `vp lint` and `pnpm type-check` are clean.
+
+### Step 9 — Push branches
 
 User pre-authorised force-push here.
 
@@ -283,7 +303,7 @@ Push stacked in order — parents before children — so GitHub resolves base re
 
 If `--force-with-lease` rejected on any branch, stop and surface output. Remote has commits you don't have locally. Don't escalate to `--force` without explicit confirmation.
 
-### Step 9 — Draft PR title and body (per PR)
+### Step 10 — Draft PR title and body (per PR)
 
 **Title** — one line, release-notes friendly. Derive from:
 
@@ -327,41 +347,29 @@ If `.github/pull_request_template.md` exists, use its structure and fill section
 
 Keep body tight. One short paragraph + handful of bullets beats wall of text.
 
-### Step 10 — Submit or open each PR
+### Step 11 — Create each PR
 
-Behaviour depends on PR count:
-
-**Multiple PRs → create each directly, no browser.** Spawning N create-PR tabs in stack annoying; stacked reviews also need parent PR numbers resolved before stacked children reference them.
+**Create the PR directly — never as a draft, never via the `--web` pre-filled form.** The user wants the PR opened immediately and CI watched, not a form left for them to submit. This is the same for single-PR and multi-PR runs.
 
 ```sh
 gh pr create \
   --base <base-branch> \
-  --title "<title from Step 9>" \
-  --body "<body from Step 9>"
+  --title "<title from Step 10>" \
+  --body "<body from Step 10>"
 ```
 
-Run parents before children. Capture URL each invocation prints — needed for Step 11 report and for substituting `#N` refs into stacked-child bodies before their own create call.
+- Do **not** pass `--draft` and do **not** pass `--web`.
+- `<base-branch>` is `master` for the root (or only) PR and the parent PR's branch name for stacked PRs.
+- Run parents before children. Capture the URL each invocation prints — needed for the Step 13 report and for substituting `#N` refs into stacked-child bodies before their own create call.
+- The PR number is available the moment `gh pr create` returns (`gh pr view --json number,url`), so Step 12 can start watching CI right away — no waiting on a human to submit.
 
-**Single PR → open pre-filled create page in browser.**
-
-```sh
-gh pr create --web \
-  --base master \
-  --title "<title from Step 9>" \
-  --body "<body from Step 9>"
-```
-
-`--web` opens GitHub "create pull request" form with fields pre-filled. User click "Create pull request" when satisfied.
-
-`<base-branch>` is `master` for root PR and parent PR's branch name for stacked.
-
-If `gh` unavailable or auth failed in Step 1: skip these and print each PR's title, body, base as fenced blocks so user can create manually.
+If `gh` is unavailable or auth failed in Step 1: skip this and print each PR's title, body, base as fenced blocks so the user can create manually, then note the CI watch was skipped.
 
 ### Step 12 — Watch CI and coverage (skip with `--no-watch`)
 
 After each PR is created, block on its CI run, diagnose failures, and inspect the coverage report. Skip this step entirely if invoked with `--no-watch`. For `--split` runs with multiple PRs, run this step per PR sequentially (parents first) so failures on one don't get masked by noise from the next.
 
-Single-PR runs opened with `gh pr create --web` may not have a PR number yet at this point — wait for the user to submit, then resolve the PR via `gh pr view --json number,url` (poll up to 2 min) before proceeding. If still unresolved, skip with a deferred-item note.
+Because Step 11 creates every PR directly, the PR number is already available — resolve it with `gh pr view --json number,url` and start watching immediately. No waiting on a human to submit a form.
 
 #### 12a — Wait for checks to settle
 
@@ -388,7 +396,7 @@ For each failing check:
 4. Apply the fix:
    - **Minor (≤ ~20 lines, mechanical)** — fix directly, commit with a `fix(<scope>):` Conventional Commit (or `test(<scope>):` if the fix is the test itself), push, and wait for re-run. Examples: missed import, wrong type annotation, formatter drift, test expecting old i18n string, missing `data-testid`, race fixed by replacing a sleep with an event-driven wait.
    - **Non-minor** — propose the fix to the user and wait for explicit go-ahead before editing. Examples: behavioural test failures that suggest the branch changed semantics, schema/migration errors, anything touching auth/billing/RLS, structural rework of a flake (rewriting the test, not the source under test).
-5. For flake fixes specifically: identify the root cause (timing, shared state, ordering, env drift) before patching. Re-running until green is not a fix. If the root cause requires changes outside this branch's scope, fix it anyway and call it out in the Step 11 report — fixing a flake here saves every subsequent PR.
+5. For flake fixes specifically: identify the root cause (timing, shared state, ordering, env drift) before patching. Re-running until green is not a fix. If the root cause requires changes outside this branch's scope, fix it anyway and call it out in the Step 13 report — fixing a flake here saves every subsequent PR.
 6. After fixing, return to 12a and re-watch. If a check keeps failing after one fix attempt, stop, summarise the failure, and ask the user how to proceed rather than firing more guesses.
 
 Never disable, mark `it.skip`, or comment out a failing test to make CI green. Treat the test as authoritative.
@@ -417,9 +425,9 @@ Stop Step 12 and hand back to the user if:
 
 "This test is flaky / red on master" is **not** an automatic reason to stop — default to fixing (see 12b step 3). Defer (don't stop) only when the root-cause fix would be a big lift outside this PR's scope; in that case log it under Deferred items and continue.
 
-Record what happened in the Step 11 report (CI status, fixes applied, coverage delta) so the user can see at a glance what was done after the PR opened.
+Record what happened in the Step 13 report (CI status, fixes applied, coverage delta) so the user can see at a glance what was done after the PR opened.
 
-### Step 11 — Report
+### Step 13 — Report
 
 Output summary per PR:
 
@@ -435,8 +443,7 @@ PR 2: <branch>   (base: <parent-branch>) [stacked]
 
 Line under header:
 
-- **Multiple-PR runs**: URL returned by each `gh pr create` (e.g. `https://github.com/org/repo/pull/123`).
-- **Single-PR runs**: `Draft opened in browser — submit when ready.`
+- URL returned by each `gh pr create` (e.g. `https://github.com/org/repo/pull/123`) — same for single and multi-PR runs, since every PR is now created directly.
 
 If anything skipped (split declined, rename declined, gh unavailable, push blocked), list under **Deferred items** so not forgotten.
 

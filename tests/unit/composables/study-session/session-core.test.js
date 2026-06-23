@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { Rating } from 'ts-fsrs'
-import { useStudySessionCore } from '@/composables/study-session/session-core'
+import { useStudySessionCore } from '@/components/study-session/composables/session-core'
 import { card } from '../../../fixtures/card'
 
 const { saveReviewMock } = vi.hoisted(() => ({
@@ -355,5 +355,77 @@ describe('session-core — computed stats', () => {
     session.setCards([makeNotDueCard()])
 
     expect(session.remaining_due_count.value).toBe(0)
+  })
+})
+
+// ── dropCard [obligation] ─────────────────────────────────────────────────────
+
+describe('session-core — dropCard [obligation]', () => {
+  test('removing the active card advances active_card to the next unreviewed card [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const [c1, c2, c3] = [makeNewCard(), makeNewCard(), makeNewCard()]
+    session.setCards([c1, c2, c3])
+
+    expect(session.active_card.value?.id).toBe(c1.id)
+
+    session.dropCard(c1.id)
+
+    expect(session.active_card.value?.id).toBe(c2.id)
+  })
+
+  test('dropping the active card removes it from cards [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const [c1, c2] = [makeNewCard(), makeNewCard()]
+    session.setCards([c1, c2])
+
+    session.dropCard(c1.id)
+
+    expect(session.cards.value.find((c) => c.id === c1.id)).toBeUndefined()
+    expect(session.cards.value).toHaveLength(1)
+  })
+
+  test('dropping the active card also removes it from the due pool (remaining_due_count decreases) [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: false })
+    const [c1, c2] = [makeReviewCard(), makeReviewCard()]
+    session.setCards([c1, c2])
+
+    expect(session.remaining_due_count.value).toBe(2)
+
+    session.dropCard(c1.id)
+
+    expect(session.remaining_due_count.value).toBe(1)
+  })
+
+  test('removing the last remaining card sets mode to completed [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const c1 = makeNewCard()
+    session.setCards([c1])
+
+    session.dropCard(c1.id)
+
+    expect(session.mode.value).toBe('completed')
+  })
+
+  test('removing a non-active card leaves active_card unchanged [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const [c1, c2, c3] = [makeNewCard(), makeNewCard(), makeNewCard()]
+    session.setCards([c1, c2, c3])
+
+    expect(session.active_card.value?.id).toBe(c1.id)
+
+    session.dropCard(c3.id)
+
+    // Active card must stay at c1 — only c3 was removed
+    expect(session.active_card.value?.id).toBe(c1.id)
+  })
+
+  test('removing a non-active card removes it from cards but leaves the rest', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const [c1, c2, c3] = [makeNewCard(), makeNewCard(), makeNewCard()]
+    session.setCards([c1, c2, c3])
+
+    session.dropCard(c2.id)
+
+    expect(session.cards.value.map((c) => c.id)).toEqual([c1.id, c3.id])
   })
 })

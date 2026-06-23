@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
-import SessionCounter from '@/components/modals/study-session/session-flashcard/session-counter.vue'
+import SessionCounter from '@/components/study-session/session-flashcard/session-counter.vue'
 
 // ── UiIcon stub ───────────────────────────────────────────────────────────────
 

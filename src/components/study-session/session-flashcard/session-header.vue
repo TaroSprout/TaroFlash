@@ -19,16 +19,22 @@ const { can_edit } = defineProps<SessionHeaderProps>()
 
 const emit = defineEmits<{
   (e: 'edit'): void
+  (e: 'move'): void
+  (e: 'delete'): void
 }>()
 
 const { t } = useI18n()
 
 const menu_options = computed<DropdownOption[]>(() => [
-  { label: t('study-session.flashcard.menu.edit'), value: 'edit', icon: 'edit' }
+  { label: t('study-session.flashcard.menu.edit'), value: 'edit', icon: 'edit' },
+  { label: t('study-session.flashcard.menu.move'), value: 'move', icon: 'move-item' },
+  { label: t('study-session.flashcard.menu.delete'), value: 'delete', icon: 'delete' }
 ])
 
 function onSelect(option: DropdownOption) {
   if (option.value === 'edit') emit('edit')
+  if (option.value === 'move') emit('move')
+  if (option.value === 'delete') emit('delete')
 }
 </script>
 
