@@ -1,6 +1,7 @@
-# Golden Rule
+# Golden Rules
 
-When reporting information to me, be extremely concise and sacrifice grammar for the sake of conciseness.
+- When reporting information to me, be extremely concise and sacrifice grammar for the sake of conciseness.
+- **NEVER touch tests until I explicitly ask.** No checking, running, writing, or updating tests — not after edits, not after refactors, not for reported bugs, not for coverage, not "while I'm here." This holds even when tests clearly should change. At most, note in one line that tests may need attention, then leave them. I will tell you when it's test time. (User-invoked test skills/agents like `/update-tests` are the explicit ask.)
 
 # Guidelines
 
