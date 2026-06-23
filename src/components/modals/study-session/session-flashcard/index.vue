@@ -60,7 +60,7 @@ const {
   start: startEdit,
   stop: stopEdit,
   update: onEditUpdate
-} = useCardEdit(active_card)
+} = useCardEdit(active_card, () => deck.id)
 
 const { loading } = useSessionCards({
   deckId: () => deck.id,

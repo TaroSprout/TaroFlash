@@ -1,16 +1,21 @@
-import { ref, watch, type Ref } from 'vue'
-import { useSaveCardMutation } from '@/api/cards'
+import { ref, watch, type MaybeRefOrGetter, type Ref } from 'vue'
+import { useCardMutations } from '@/composables/card'
 import type { StudyCard } from './session-core'
 
 /**
- * Owns the editing/saving state for the active study card. Mutates the card
- * in place via the debounced save mutation so the FSRS queue and rendered
- * card stay in sync without a second data path.
+ * Owns the editing/saving UI state for the active study card. Card writes go
+ * through the card domain's `useCardMutations` seam so the FSRS queue and
+ * rendered card stay in sync without a second persistence path.
+ *
+ * @param deck_id - Reactive id of the deck under study, forwarded to the seam.
  */
-export function useCardEdit(active_card: Ref<StudyCard | undefined>) {
+export function useCardEdit(
+  active_card: Ref<StudyCard | undefined>,
+  deck_id: MaybeRefOrGetter<number | undefined>
+) {
   const editing = ref(false)
   const saving = ref(false)
-  const save_mutation = useSaveCardMutation()
+  const mutations = useCardMutations(deck_id)
 
   watch(
     () => active_card.value?.id,
@@ -32,7 +37,7 @@ export function useCardEdit(active_card: Ref<StudyCard | undefined>) {
     const card = active_card.value
     if (!card) return
     saving.value = true
-    await save_mutation.mutateAsync({ card, values: { [`${side}_text`]: text } })
+    await mutations.saveCard(card, { [`${side}_text`]: text })
     saving.value = false
   }
 
