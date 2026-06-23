@@ -3,7 +3,7 @@ import { mount, shallowMount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 import { FSRS, generatorParameters, createEmptyCard, Rating } from 'ts-fsrs'
 import { ref } from 'vue'
-import StudyCard from '@/components/modals/study-session/study-card.vue'
+import StudyCard from '@/components/modals/study-session/session-flashcard/study-card.vue'
 import { DeckContextKey } from '@/components/modals/study-session/deck-context'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
@@ -150,48 +150,81 @@ describe('StudyCard', () => {
     expect(failLabel.classes()).not.toContain('review-label--visible')
   })
 
-  // ── onCardClick ────────────────────────────────────────────────────────────
+  // ── Tap gesture → flip (regression: flip now driven by onEnd, not mouseup) ──
+  // The @mouseup DOM handler was removed. Flip is triggered by the gesture
+  // pipeline's onEnd when |dx| < FLIP_THRESHOLD and |dy| < FLIP_THRESHOLD.
 
-  test('mouseup emits side-changed when not dragging (front side)', async () => {
+  test('tap gesture (onEnd ~0 dx/dy) on front side emits side-changed [obligation]', async () => {
     const wrapper = mountStudyCard({ side: 'front', options })
     await flushPromises()
 
-    await wrapper.find('[data-testid="study-card"]').trigger('mouseup')
+    const { callbacks } = getCallbacks()
+    callbacks.onEnd({ dx: 0, dy: 0 })
+    await flushPromises()
 
     expect(wrapper.emitted('side-changed')).toHaveLength(1)
   })
 
-  test('mouseup emits side-changed when not dragging (back side)', async () => {
+  test('tap gesture (onEnd ~0 dx/dy) on back side emits side-changed [obligation]', async () => {
     const wrapper = mountStudyCard({ side: 'back', options })
     await flushPromises()
 
-    await wrapper.find('[data-testid="study-card"]').trigger('mouseup')
+    const { callbacks } = getCallbacks()
+    callbacks.onEnd({ dx: 0, dy: 0 })
+    await flushPromises()
 
     expect(wrapper.emitted('side-changed')).toHaveLength(1)
   })
 
-  test('mouseup does not emit side-changed while dragging', async () => {
-    const wrapper = mountStudyCard({ side: 'front', options })
-    await flushPromises()
-
-    // is_dragging requires Math.abs(dx) > FLIP_THRESHOLD (10), so use dx=20
-    const { callbacks } = getCallbacks()
-    callbacks.onMove({ dx: 20, dy: 0 })
-    await flushPromises()
-
-    await wrapper.find('[data-testid="study-card"]').trigger('mouseup')
-
-    expect(wrapper.emitted('side-changed')).toBeFalsy()
-  })
-
-  test('mouseup on cover side emits "started" instead of side-changed', async () => {
+  test('tap gesture on cover side emits "started" not side-changed [obligation]', async () => {
     const wrapper = mountStudyCard({ side: 'cover', options })
     await flushPromises()
 
-    await wrapper.find('[data-testid="study-card"]').trigger('mouseup')
+    const { callbacks } = getCallbacks()
+    callbacks.onEnd({ dx: 0, dy: 0 })
+    await flushPromises()
 
     expect(wrapper.emitted('started')).toHaveLength(1)
     expect(wrapper.emitted('side-changed')).toBeFalsy()
+  })
+
+  test('long horizontal swipe (|dx| > 50) on back side flings and does NOT flip [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    callbacks.onEnd({ dx: 80, dy: 0 })
+    await flushPromises()
+
+    // fling emits reviewed (after transitionend), not side-changed
+    expect(wrapper.emitted('side-changed')).toBeFalsy()
+  })
+
+  test('long horizontal swipe emits reviewed after transitionend [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    callbacks.onEnd({ dx: 80, dy: 0 })
+    await flushPromises()
+
+    const cardEl = wrapper.find('[data-testid="study-card"]').element
+    cardEl.dispatchEvent(new Event('transitionend'))
+    await flushPromises()
+
+    expect(wrapper.emitted('reviewed')).toHaveLength(1)
+  })
+
+  test('medium drag (|dx| between 10 and 50) snaps back and does NOT flip [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'front', options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    callbacks.onEnd({ dx: 30, dy: 0 })
+    await flushPromises()
+
+    expect(wrapper.emitted('side-changed')).toBeFalsy()
+    expect(wrapper.emitted('reviewed')).toBeFalsy()
   })
 
   // ── rate() / fling animation ───────────────────────────────────────────────
@@ -454,52 +487,64 @@ describe('StudyCard', () => {
   })
 
   // ── Animation lock [obligation] ────────────────────────────────────────────
+  // triggerCardFlip guards only on is_animating (is_dragging guard was removed).
+  // Flip is driven from the gesture onEnd tap pipeline.
 
-  test('triggerCardFlip sets is_animating and emits started on cover side [obligation]', async () => {
+  test('triggerCardFlip (via tap) sets is_animating and emits started on cover side [obligation]', async () => {
     const wrapper = mountStudyCard({ side: 'cover', options })
     await flushPromises()
 
-    await wrapper.find('[data-testid="study-card"]').trigger('mouseup')
+    const { callbacks } = getCallbacks()
+    callbacks.onEnd({ dx: 0, dy: 0 })
+    await flushPromises()
 
     expect(wrapper.emitted('started')).toHaveLength(1)
   })
 
-  test('triggerCardFlip emits side-changed on front side [obligation]', async () => {
+  test('triggerCardFlip (via tap) emits side-changed on front side [obligation]', async () => {
     const wrapper = mountStudyCard({ side: 'front', options })
     await flushPromises()
 
-    await wrapper.find('[data-testid="study-card"]').trigger('mouseup')
+    const { callbacks } = getCallbacks()
+    callbacks.onEnd({ dx: 0, dy: 0 })
+    await flushPromises()
 
     expect(wrapper.emitted('side-changed')).toHaveLength(1)
   })
 
-  test('second mouseup while is_animating is a no-op — side-changed emitted only once [obligation]', async () => {
+  test('second tap while is_animating is a no-op — side-changed emitted only once [obligation]', async () => {
     const wrapper = mountStudyCard({ side: 'front', options })
     await flushPromises()
 
-    // First flip sets is_animating = true
-    await wrapper.find('[data-testid="study-card"]').trigger('mouseup')
+    const { callbacks } = getCallbacks()
+    // First tap sets is_animating = true
+    callbacks.onEnd({ dx: 0, dy: 0 })
+    await flushPromises()
     expect(wrapper.emitted('side-changed')).toHaveLength(1)
 
-    // Second mouseup while animating must be blocked
-    await wrapper.find('[data-testid="study-card"]').trigger('mouseup')
+    // Second tap while animating must be blocked
+    callbacks.onEnd({ dx: 0, dy: 0 })
+    await flushPromises()
     expect(wrapper.emitted('side-changed')).toHaveLength(1)
   })
 
-  test('flip-out-complete event on Card releases is_animating so next flip works [obligation]', async () => {
+  test('flip-out-complete event on Card releases is_animating so next tap flip works [obligation]', async () => {
     const wrapper = mountStudyCard({ side: 'front', options })
     await flushPromises()
 
-    // First flip
-    await wrapper.find('[data-testid="study-card"]').trigger('mouseup')
+    const { callbacks } = getCallbacks()
+    // First tap
+    callbacks.onEnd({ dx: 0, dy: 0 })
+    await flushPromises()
     expect(wrapper.emitted('side-changed')).toHaveLength(1)
 
     // Simulate the card emitting flip-out-complete (the outgoing face rotated out)
     wrapper.findComponent({ name: 'Card' }).vm.$emit('flip-out-complete')
     await wrapper.vm.$nextTick()
 
-    // is_animating should be false now — next flip should go through
-    await wrapper.find('[data-testid="study-card"]').trigger('mouseup')
+    // is_animating should be false now — next tap should go through
+    callbacks.onEnd({ dx: 0, dy: 0 })
+    await flushPromises()
     expect(wrapper.emitted('side-changed')).toHaveLength(2)
   })
 
@@ -507,8 +552,10 @@ describe('StudyCard', () => {
     const wrapper = mountStudyCard({ side: 'front', options })
     await flushPromises()
 
-    // Trigger first flip (sets is_animating = true)
-    await wrapper.find('[data-testid="study-card"]').trigger('mouseup')
+    const { callbacks } = getCallbacks()
+    // Trigger first flip via tap (sets is_animating = true)
+    callbacks.onEnd({ dx: 0, dy: 0 })
+    await flushPromises()
     expect(wrapper.emitted('side-changed')).toHaveLength(1)
 
     // Invoke space shortcut handler while animating — must be a no-op
@@ -597,5 +644,53 @@ describe('StudyCard', () => {
 
     expect(wrapper.emitted('reviewed')).toHaveLength(1)
     expect(mockEmitSfx.mock.calls.length).toBe(sfxCallsBefore)
+  })
+
+  // ── swipe() via keyboard shortcuts (arrowright/arrowleft) ─────────────────
+
+  test('arrowright shortcut calls swipe and flings card right when not animating [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', options })
+    await flushPromises()
+
+    capturedShortcuts['arrowright']?.()
+    await flushPromises()
+
+    // fling applies transform and eventually emits reviewed after transitionend
+    const { el } = getCallbacks()
+    expect(el.style.transform).toContain('translateX')
+  })
+
+  test('arrowleft shortcut calls swipe and flings card left when not animating [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', options })
+    await flushPromises()
+
+    capturedShortcuts['arrowleft']?.()
+    await flushPromises()
+
+    const { el } = getCallbacks()
+    expect(el.style.transform).toContain('translateX')
+  })
+
+  test('arrowright shortcut is a no-op on cover side [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'cover', options })
+    await flushPromises()
+
+    capturedShortcuts['arrowright']?.()
+    await flushPromises()
+
+    expect(wrapper.emitted('reviewed')).toBeFalsy()
+  })
+
+  // ── onStart clears transition ──────────────────────────────────────────────
+
+  test('gesture onStart sets element transition to none', async () => {
+    mountStudyCard({ options })
+    await flushPromises()
+
+    const { el, callbacks } = getCallbacks()
+    el.style.transition = 'transform 0.25s ease-out'
+    callbacks.onStart()
+
+    expect(el.style.transition).toBe('none')
   })
 })

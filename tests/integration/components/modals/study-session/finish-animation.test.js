@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, onMounted } from 'vue'
-import FinishAnimation from '@/components/modals/study-session/finish-animation.vue'
+import FinishAnimation from '@/components/modals/study-session/session-flashcard/finish-animation.vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 

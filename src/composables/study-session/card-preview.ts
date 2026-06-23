@@ -1,5 +1,6 @@
 import { computed, onUnmounted, ref, watch, type ComputedRef } from 'vue'
 import type { StudyCard } from './session-core'
+import { emitSfx } from '@/sfx/bus'
 
 /**
  * Preview-card animation state for flashcard mode. Owns the progress/opacity
@@ -40,7 +41,13 @@ export function useCardPreview(next_card: ComputedRef<StudyCard | undefined>) {
     resolveFlip = null
   }
 
+  /**
+   * Plays the incoming preview card's intro flip to `side` and resolves once it
+   * settles. Also fires the `slide_up` cue, since every advance to a next card
+   * runs through here.
+   */
   function awaitFlip(side: 'front' | 'back') {
+    emitSfx('slide_up')
     next_card_side.value = side
     return new Promise<void>((resolve) => {
       resolveFlip = resolve

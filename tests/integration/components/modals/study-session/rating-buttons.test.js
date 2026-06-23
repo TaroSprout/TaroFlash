@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { Rating } from 'ts-fsrs'
-import RatingButtons from '@/components/modals/study-session/rating-buttons.vue'
+import RatingButtons from '@/components/modals/study-session/session-flashcard/rating-buttons.vue'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

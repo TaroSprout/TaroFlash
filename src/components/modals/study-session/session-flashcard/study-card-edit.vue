@@ -2,7 +2,7 @@
 import Card from '@/components/card/index.vue'
 import TextEditor from '@/components/card/text-editor.vue'
 import { computed } from 'vue'
-import { useDeckContext } from './deck-context'
+import { useDeckContext } from '../deck-context'
 
 type CardSide = 'front' | 'back'
 

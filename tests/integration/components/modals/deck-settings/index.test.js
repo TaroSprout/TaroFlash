@@ -352,7 +352,7 @@ describe('DeckSettings — save button (DeckAside renders DeckSaveButton interna
 
 describe('DeckSettings — header copy is tab-driven', () => {
   const cases = [
-    { tab: 'design', title: 'Card Designer' },
+    { tab: 'design', title: 'Appearance' },
     { tab: 'study', title: 'Study Preferences' },
     { tab: 'danger-zone', title: 'Danger Zone' }
   ]
@@ -384,7 +384,7 @@ describe('DeckSettings — null active_tab tracks sidebar visibility', () => {
     const { wrapper } = makeWrapper()
     // has_sidebar arrives from TabSheet via a template ref — one render late.
     await nextTick()
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Card Designer')
+    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Appearance')
     expect(wrapper.find('[data-testid="deck-settings__back-button"]').exists()).toBe(false)
   })
 
@@ -462,7 +462,7 @@ describe('DeckSettings — tab transition hooks', () => {
     await nextFrame()
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Card Designer')
+    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Appearance')
   })
 
   test('swapping tabs below md routes through the mobile height tween', async () => {
@@ -474,7 +474,7 @@ describe('DeckSettings — tab transition hooks', () => {
     await nextFrame()
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Card Designer')
+    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Appearance')
   })
 })
 
@@ -568,7 +568,7 @@ describe('DeckSettings — active_tab is a plain non-persisted ref [obligation]'
   test('second mount starts fresh (no cross-mount state leak) [obligation]', () => {
     // First mount with design tab
     const { wrapper: w1 } = makeWrapper({ initial_tab: 'design' })
-    expect(w1.find('[data-testid="deck-settings__header-title"]').text()).toBe('Card Designer')
+    expect(w1.find('[data-testid="deck-settings__header-title"]').text()).toBe('Appearance')
     w1.unmount()
 
     // Second mount with no initial_tab: should start at null/index, not design
@@ -613,7 +613,7 @@ describe('DeckSettings — active_side resets to cover when tab becomes null [ob
 describe('DeckSettings — initial_tab / initial_side override [obligation]', () => {
   test('initial_tab prop opens that tab directly (design)', () => {
     const { wrapper } = makeWrapper({ initial_tab: 'design' })
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Card Designer')
+    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Appearance')
   })
 
   test('initial_tab prop opens that tab directly (study)', () => {
@@ -726,6 +726,6 @@ describe('DeckSettings — tab_initial_render fast-path [obligation]', () => {
     await flushPromises()
 
     // Component is visible — onTabEnter called done() via the fast-path
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Card Designer')
+    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Appearance')
   })
 })

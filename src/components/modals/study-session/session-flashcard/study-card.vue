@@ -6,7 +6,7 @@ import { emitStudySfx } from '@/sfx/bus'
 import { useGestures } from '@/composables/ui/gestures'
 import { useShortcuts } from '@/composables/shortcuts'
 import { useRatingFormat } from '@/composables/fsrs'
-import { useDeckContext } from './deck-context'
+import { useDeckContext } from '../deck-context'
 
 defineExpose({ rate })
 
@@ -59,18 +59,12 @@ onMounted(() => {
       el.style.transition = 'none'
     },
     onMove: ({ dx }) => handleDrag(el, dx),
-    onEnd: ({ dx }) => commitSwipe(el, dx),
+    onEnd: (result) => endDrag(el, result),
     onCancel: () => snapBack(el)
   })
 
-  shortcuts.register({
-    combo: 'arrowright',
-    handler: () => commitSwipe(el, SWIPE_DISTANCE_THRESHOLD + 1)
-  })
-  shortcuts.register({
-    combo: 'arrowleft',
-    handler: () => commitSwipe(el, -(SWIPE_DISTANCE_THRESHOLD + 1))
-  })
+  shortcuts.register({ combo: 'arrowright', handler: () => swipe(el, 1) })
+  shortcuts.register({ combo: 'arrowleft', handler: () => swipe(el, -1) })
   shortcuts.register({ combo: 'space', handler: () => triggerCardFlip() })
 })
 
@@ -84,12 +78,11 @@ function rate(grade: Grade) {
 }
 
 /**
- * Flips the card face. No-ops while a drag just ended (prevents accidental
- * flips on release) or while the outgoing face is still rotating out, so
- * spamming space mid-flip can't replay the flip sfx.
+ * Flips the card face. No-ops while the outgoing face is still rotating out,
+ * so spamming space mid-flip can't replay the flip sfx.
  */
 function triggerCardFlip() {
-  if (is_dragging.value || is_animating.value) return
+  if (is_animating.value) return
 
   is_animating.value = true
   if (side === 'cover') emit('started')
@@ -132,21 +125,43 @@ function handleDrag(el: HTMLElement, dx: number) {
 
   if (toSwipeZone(card_offset.value) !== toSwipeZone(dx)) emitStudySfx('music_plink_mid')
 
-  is_dragging.value = Math.abs(dx) > FLIP_THRESHOLD // prevents accidental flips on release, but allows for a bit of wiggle room
+  is_dragging.value = Math.abs(dx) > FLIP_THRESHOLD // drives the grab cursor, with a bit of wiggle room before it engages
   card_offset.value = dx
   el.style.transform = `translateX(${dx}px) rotate(${dx / 10}deg)`
   emit('drag-progress', Math.min(Math.abs(dx) / FULL_REVEAL_DISTANCE, 1), 0)
 }
 
 /**
- * Decides whether to fling or snap back at the end of a drag.
- * Flings if the drag exceeded the distance threshold, otherwise snaps back.
+ * Routes a finished pointer gesture. A tap (barely any movement) flips the
+ * card; a long horizontal swipe flings it; anything in between snaps back.
+ * Driving the flip from the pointer pipeline — rather than a DOM `mouseup` —
+ * avoids relying on synthetic mouse events, which touch browsers suppress once
+ * the gesture has called `preventDefault`/`setPointerCapture` (the cause of the
+ * mobile "tap twice to flip" bug).
  */
-function commitSwipe(el: HTMLElement, dx: number) {
-  if (side === 'cover' || is_animating.value) return
+function endDrag(el: HTMLElement, { dx, dy }: { dx: number; dy: number }) {
+  if (is_animating.value) return
+
+  if (isTap(dx, dy)) {
+    triggerCardFlip()
+    return
+  }
+
+  if (side === 'cover') return
 
   if (Math.abs(dx) > SWIPE_DISTANCE_THRESHOLD) flingCard(el, Math.sign(dx))
   else snapBack(el)
+}
+
+/** A gesture that barely moved in either axis — a tap, not a drag. */
+function isTap(dx: number, dy: number) {
+  return Math.abs(dx) < FLIP_THRESHOLD && Math.abs(dy) < FLIP_THRESHOLD
+}
+
+/** Flings the card in a direction (keyboard shortcut entry point). */
+function swipe(el: HTMLElement, direction: number) {
+  if (side === 'cover' || is_animating.value) return
+  flingCard(el, direction)
 }
 
 /** Animates the card back to its resting position and clears drag state. */
@@ -180,7 +195,6 @@ function toSwipeZone(offset: number) {
       :cover_config="deck_context.cover_config"
       :card_attributes="deck_context.card_attributes"
       @flip-out-complete="is_animating = false"
-      @mouseup="triggerCardFlip"
     >
       <div class="absolute inset-0 overflow-hidden rounded-(--face-radius)">
         <div

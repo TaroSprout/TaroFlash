@@ -616,6 +616,19 @@ describe('UiDropdownButton', () => {
       expect(mainButton(wrapper).exists()).toBe(true)
       expect(trigger(wrapper).exists()).toBe(true)
     })
+
+    test('triggerOnly=true forwards variant="ghost" to the trigger button [obligation]', () => {
+      // The trigger-only button must forward `variant` so callers can use ghost/outline styles.
+      // Backward-compatible: defaults to "solid" when variant is not passed.
+      const wrapper = mountDropdown({ triggerOnly: true, variant: 'ghost' })
+      // UiButtonStub declares variant as a prop — findComponent gives us the prop value.
+      expect(wrapper.findComponent({ name: 'UiButton' }).props('variant')).toBe('ghost')
+    })
+
+    test('triggerOnly=true defaults to variant="solid" when variant is not passed [obligation]', () => {
+      const wrapper = mountDropdown({ triggerOnly: true })
+      expect(wrapper.findComponent({ name: 'UiButton' }).props('variant')).toBe('solid')
+    })
   })
 
   // ── #panel slot [obligation] ──────────────────────────────────────────────
