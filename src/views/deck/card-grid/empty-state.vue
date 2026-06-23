@@ -6,7 +6,7 @@ import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { type CardGridSize } from '@/composables/deck/view-shell'
-import { cardEditorKey } from '@/composables/card/list-controller'
+import { cardEditorKey } from '@/composables/card'
 
 const { t } = useI18n()
 

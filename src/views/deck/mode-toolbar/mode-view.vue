@@ -5,7 +5,7 @@ import PageSettings from './page-settings.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useI18n } from 'vue-i18n'
 import { inject } from 'vue'
-import { cardEditorKey } from '@/composables/card/list-controller'
+import { cardEditorKey } from '@/composables/card'
 
 const { t } = useI18n()
 
