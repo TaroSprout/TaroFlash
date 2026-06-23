@@ -40,7 +40,7 @@ vi.mock('@/composables/last-deck', () => ({
   useLastDeck: () => ({ last_deck_id: { value: null }, setLastDeck: setLastDeckMock })
 }))
 
-vi.mock('@/composables/card/limit-gate', () => ({
+vi.mock('@/composables/card', () => ({
   useCardLimitGate: () => ({
     guardAddCards: guardAddCardsMock,
     handleLimitError: handleLimitErrorMock

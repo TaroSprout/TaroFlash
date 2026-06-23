@@ -1,0 +1,158 @@
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { ref, nextTick } from 'vue'
+import { useCardEdit } from '@/components/study-session/composables/card-edit'
+
+// ── Hoisted mocks ─────────────────────────────────────────────────────────────
+
+const { saveCardMock } = vi.hoisted(() => ({
+  saveCardMock: vi.fn().mockResolvedValue(undefined)
+}))
+
+vi.mock('@/composables/card/mutations', () => ({
+  useCardMutations: () => ({
+    saveCard: saveCardMock,
+    insertCard: vi.fn(),
+    deleteCards: vi.fn(),
+    moveCards: vi.fn(),
+    setCardImage: vi.fn(),
+    deleteCardImage: vi.fn()
+  })
+}))
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function makeCard(overrides = {}) {
+  return { id: 1, deck_id: 10, front_text: 'Q', back_text: 'A', ...overrides }
+}
+
+function makeSetup({ card = makeCard(), deck_id = () => 10 } = {}) {
+  const active_card = ref(card ? { ...card, state: 'unreviewed', preview: undefined } : undefined)
+  const result = useCardEdit(active_card, deck_id)
+  return { result, active_card }
+}
+
+beforeEach(() => {
+  saveCardMock.mockReset().mockResolvedValue(undefined)
+})
+
+// ── editing flag ──────────────────────────────────────────────────────────────
+
+describe('useCardEdit — editing flag', () => {
+  test('editing is false initially', () => {
+    const { result } = makeSetup()
+    expect(result.editing.value).toBe(false)
+  })
+
+  test('start() sets editing to true when active card exists', () => {
+    const { result } = makeSetup()
+    result.start()
+    expect(result.editing.value).toBe(true)
+  })
+
+  test('start() is a no-op when active_card is undefined', () => {
+    const active_card = ref(undefined)
+    const result = useCardEdit(active_card, () => 10)
+    result.start()
+    expect(result.editing.value).toBe(false)
+  })
+
+  test('stop() sets editing to false', () => {
+    const { result } = makeSetup()
+    result.start()
+    result.stop()
+    expect(result.editing.value).toBe(false)
+  })
+})
+
+// ── editing resets on card change ─────────────────────────────────────────────
+
+describe('useCardEdit — editing resets when active card id changes [obligation]', () => {
+  test('editing resets to false when active_card.id changes [obligation]', async () => {
+    const { result, active_card } = makeSetup()
+    result.start()
+    expect(result.editing.value).toBe(true)
+
+    // Swap to a different card (id changes)
+    active_card.value = { ...makeCard({ id: 2 }), state: 'unreviewed', preview: undefined }
+    await nextTick()
+
+    expect(result.editing.value).toBe(false)
+  })
+
+  test('editing stays true if card content changes but id stays the same', async () => {
+    const { result, active_card } = makeSetup()
+    result.start()
+
+    active_card.value = {
+      ...makeCard({ id: 1, front_text: 'Updated' }),
+      state: 'unreviewed',
+      preview: undefined
+    }
+    await nextTick()
+
+    expect(result.editing.value).toBe(true)
+  })
+})
+
+// ── saving flag ───────────────────────────────────────────────────────────────
+
+describe('useCardEdit — saving flag [obligation]', () => {
+  test('saving is false initially', () => {
+    const { result } = makeSetup()
+    expect(result.saving.value).toBe(false)
+  })
+
+  test('saving is true during the await [obligation]', async () => {
+    let resolve
+    saveCardMock.mockImplementationOnce(() => new Promise((r) => (resolve = r)))
+    const { result } = makeSetup()
+
+    const updatePromise = result.update('front', 'New text')
+    expect(result.saving.value).toBe(true)
+
+    resolve()
+    await updatePromise
+    expect(result.saving.value).toBe(false)
+  })
+
+  test('saving is false after update resolves [obligation]', async () => {
+    const { result } = makeSetup()
+    await result.update('front', 'New text')
+    expect(result.saving.value).toBe(false)
+  })
+})
+
+// ── update() routes through useCardMutations.saveCard ─────────────────────────
+
+describe('useCardEdit — update() calls saveCard [obligation]', () => {
+  test('update(front, text) calls saveCard with front_text [obligation]', async () => {
+    const card = makeCard({ id: 42 })
+    const { result } = makeSetup({ card, deck_id: () => 10 })
+
+    await result.update('front', 'Hello')
+
+    expect(saveCardMock).toHaveBeenCalledWith(expect.objectContaining({ id: 42 }), {
+      front_text: 'Hello'
+    })
+  })
+
+  test('update(back, text) calls saveCard with back_text [obligation]', async () => {
+    const card = makeCard({ id: 42 })
+    const { result } = makeSetup({ card })
+
+    await result.update('back', 'World')
+
+    expect(saveCardMock).toHaveBeenCalledWith(expect.objectContaining({ id: 42 }), {
+      back_text: 'World'
+    })
+  })
+
+  test('update() is a no-op when active_card is undefined', async () => {
+    const active_card = ref(undefined)
+    const result = useCardEdit(active_card, () => 10)
+
+    await result.update('front', 'noop')
+
+    expect(saveCardMock).not.toHaveBeenCalled()
+  })
+})

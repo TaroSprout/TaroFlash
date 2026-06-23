@@ -77,7 +77,8 @@ const UiTooltipStub = defineComponent({
 })
 
 const mocks = vi.hoisted(() => ({
-  setFaceImageMock: vi.fn(),
+  setCardImageMock: vi.fn(),
+  deleteCardImageMock: vi.fn(),
   toastErrorMock: vi.fn(),
   emitSfxMock: vi.fn(),
   guardCardImageMock: vi.fn()
@@ -92,6 +93,18 @@ vi.mock('@/composables/card/image-gate', () => ({
   useCardImageGate: () => ({ guardCardImage: mocks.guardCardImageMock })
 }))
 
+// Mock useCardMutations so image upload/remove routes to the new seam.
+vi.mock('@/composables/card/mutations', () => ({
+  useCardMutations: () => ({
+    setCardImage: mocks.setCardImageMock,
+    deleteCardImage: mocks.deleteCardImageMock,
+    saveCard: vi.fn(),
+    insertCard: vi.fn(),
+    deleteCards: vi.fn(),
+    moveCards: vi.fn()
+  })
+}))
+
 // playButtonTap touches a DOM element via GSAP — stub it out entirely
 vi.mock('@/utils/animations/button-tap', () => ({
   BUTTON_TAP_DURATION: 0.1,
@@ -99,7 +112,7 @@ vi.mock('@/utils/animations/button-tap', () => ({
 }))
 
 import CardFaceUploader from '@/views/deck/card-editor/card-face-uploader.vue'
-import { cardEditorKey } from '@/composables/card/list-controller'
+import { cardEditorKey } from '@/views/deck/composables/list-controller'
 
 function makeCard(overrides = {}) {
   return { id: 1, deck_id: 10, front_text: 'Q', back_text: 'A', rank: 1000, ...overrides }
@@ -137,7 +150,6 @@ function mount(props = {}) {
       directives: { sfx: {} },
       provide: {
         [cardEditorKey]: {
-          setFaceImage: mocks.setFaceImageMock,
           card_attributes: ref({ front: {}, back: {} }),
           ...cardEditor
         }
@@ -148,8 +160,8 @@ function mount(props = {}) {
 }
 
 beforeEach(() => {
-  mocks.setFaceImageMock.mockReset()
-  mocks.setFaceImageMock.mockResolvedValue(undefined)
+  mocks.setCardImageMock.mockReset().mockResolvedValue(undefined)
+  mocks.deleteCardImageMock.mockReset().mockResolvedValue(undefined)
   mocks.toastErrorMock.mockReset()
   mocks.emitSfxMock.mockReset()
   mocks.guardCardImageMock.mockReset()
@@ -261,13 +273,13 @@ describe('CardFaceUploader', () => {
 
   // ── Upload success ──────────────────────────────────────────────────────────
 
-  test('uploads a valid dropped file via setFaceImage and plays music_plink_ok', async () => {
+  test('uploads a valid dropped file via setCardImage and plays music_plink_ok', async () => {
     const wrapper = mount({ card: { id: 5 }, side: 'back' })
     const file = pngFile()
     await dropImage(wrapper, file)
     await flushPromises()
 
-    expect(mocks.setFaceImageMock).toHaveBeenCalledWith(5, 'back', file)
+    expect(mocks.setCardImageMock).toHaveBeenCalledWith(5, 'back', file)
     expect(mocks.emitSfxMock).toHaveBeenCalledWith('music_plink_ok')
   })
 
@@ -286,7 +298,7 @@ describe('CardFaceUploader', () => {
     await dropImage(wrapper, pngFile())
     await flushPromises()
 
-    expect(mocks.setFaceImageMock).not.toHaveBeenCalled()
+    expect(mocks.setCardImageMock).not.toHaveBeenCalled()
   })
 
   test('does not upload on a negative-id temp card', async () => {
@@ -294,27 +306,27 @@ describe('CardFaceUploader', () => {
     await dropImage(wrapper, pngFile())
     await flushPromises()
 
-    expect(mocks.setFaceImageMock).not.toHaveBeenCalled()
+    expect(mocks.setCardImageMock).not.toHaveBeenCalled()
   })
 
   // ── Invalid file ─────────────────────────────────────────────────────────────
 
-  test('invalid type: does not call setFaceImage, plays digi_powerdown, shows error overlay', async () => {
+  test('invalid type: does not call setCardImage, plays digi_powerdown, shows error overlay', async () => {
     const wrapper = mount({ card: { id: 5 } })
     await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
     await flushPromises()
 
-    expect(mocks.setFaceImageMock).not.toHaveBeenCalled()
+    expect(mocks.setCardImageMock).not.toHaveBeenCalled()
     expect(mocks.emitSfxMock).toHaveBeenCalledWith('digi_powerdown')
     expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
   })
 
-  test('oversized file: does not call setFaceImage, plays digi_powerdown, shows error overlay', async () => {
+  test('oversized file: does not call setCardImage, plays digi_powerdown, shows error overlay', async () => {
     const wrapper = mount({ card: { id: 5 } })
     await dropImage(wrapper, oversizeFile())
     await flushPromises()
 
-    expect(mocks.setFaceImageMock).not.toHaveBeenCalled()
+    expect(mocks.setCardImageMock).not.toHaveBeenCalled()
     expect(mocks.emitSfxMock).toHaveBeenCalledWith('digi_powerdown')
     expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
   })
@@ -542,17 +554,17 @@ describe('CardFaceUploader', () => {
 
   // ── Remove button ─────────────────────────────────────────────────────────
 
-  test('remove button calls setFaceImage(id, side, null) and plays trash_crumple_short', async () => {
+  test('remove button calls deleteCardImage(id, side) and plays trash_crumple_short', async () => {
     const wrapper = mount({ card: { id: 5, front_image_path: 'cards/f.png' } })
     await wrapper.find('[data-testid="face-image-dropzone__remove"]').trigger('click')
     await flushPromises()
 
-    expect(mocks.setFaceImageMock).toHaveBeenCalledWith(5, 'front', null)
+    expect(mocks.deleteCardImageMock).toHaveBeenCalledWith(5, 'front')
     expect(mocks.emitSfxMock).toHaveBeenCalledWith('trash_crumple_short')
   })
 
   test('toasts when an upload fails', async () => {
-    mocks.setFaceImageMock.mockRejectedValueOnce(new Error('boom'))
+    mocks.setCardImageMock.mockRejectedValueOnce(new Error('boom'))
     const wrapper = mount({ card: { id: 5 } })
     await dropImage(wrapper, pngFile())
     await flushPromises()
@@ -594,7 +606,7 @@ describe('CardFaceUploader', () => {
     await flushPromises()
 
     expect(mocks.guardCardImageMock).toHaveBeenCalled()
-    expect(mocks.setFaceImageMock).not.toHaveBeenCalled()
+    expect(mocks.setCardImageMock).not.toHaveBeenCalled()
   })
 
   test('a blocked free-member drop of an invalid file shows no error overlay (gate runs first)', async () => {
@@ -604,7 +616,7 @@ describe('CardFaceUploader', () => {
     await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
     await flushPromises()
 
-    expect(mocks.setFaceImageMock).not.toHaveBeenCalled()
+    expect(mocks.setCardImageMock).not.toHaveBeenCalled()
     expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(false)
   })
 

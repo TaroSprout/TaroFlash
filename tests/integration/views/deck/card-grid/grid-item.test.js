@@ -77,7 +77,7 @@ const UiDropdownButtonStub = defineComponent({
 })
 
 import GridItem from '@/views/deck/card-grid/grid-item.vue'
-import { cardEditorKey } from '@/composables/card/list-controller'
+import { cardEditorKey } from '@/views/deck/composables/list-controller'
 
 function makeEditor({ is_selecting = false } = {}) {
   return {

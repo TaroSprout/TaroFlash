@@ -16,7 +16,7 @@ vi.mock('@/composables/modal', () => ({ useModal: () => ({ open: modalOpenMock }
 vi.mock('@/sfx/bus', () => ({ emitSfx: emitSfxMock }))
 vi.mock('@/components/modals/move-cards.vue', () => ({ default: {} }))
 
-import { useCardActions } from '@/composables/card/actions'
+import { useCardActions } from '@/views/deck/composables/actions'
 
 function makeCard(overrides = {}) {
   return card.one({ overrides })

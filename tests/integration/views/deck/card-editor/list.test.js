@@ -6,7 +6,7 @@ const { useWindowVirtualizerMock } = vi.hoisted(() => ({ useWindowVirtualizerMoc
 vi.mock('@tanstack/vue-virtual', () => ({ useWindowVirtualizer: useWindowVirtualizerMock }))
 
 import List from '@/views/deck/card-editor/list.vue'
-import { cardEditorKey } from '@/composables/card/list-controller'
+import { cardEditorKey } from '@/views/deck/composables/list-controller'
 
 const ROW_PITCH = 407
 

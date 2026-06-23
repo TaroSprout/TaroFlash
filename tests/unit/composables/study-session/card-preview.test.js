@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { createApp, nextTick, ref } from 'vue'
-import { useCardPreview } from '@/composables/study-session/card-preview'
+import { useCardPreview } from '@/components/study-session/composables/card-preview'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 

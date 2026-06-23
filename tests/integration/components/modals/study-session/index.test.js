@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
-import StudySession from '@/components/modals/study-session/index.vue'
+import StudySession from '@/components/study-session/index.vue'
 import { deck } from '../../../../fixtures/deck'
 
 // Minimal MobileSheet stub that surfaces named slots so we can assert on them

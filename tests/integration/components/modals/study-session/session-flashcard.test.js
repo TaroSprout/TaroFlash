@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, watch, h, useAttrs, onMounted, getCurrentInstance } from 'vue'
-import Session from '@/components/modals/study-session/session-flashcard/index.vue'
+import Session from '@/components/study-session/session-flashcard/index.vue'
 import { card } from '../../../../fixtures/card'
 import { deck } from '../../../../fixtures/deck'
 
@@ -64,6 +64,7 @@ vi.mock('@/api/cards', () => {
     useUpsertCardMutation: passthrough,
     useInsertCardAtMutation: passthrough,
     useDeleteCardsMutation: passthrough,
+    useDeleteCardsInDeckMutation: passthrough,
     useSetCardImageMutation: passthrough,
     useDeleteCardImageMutation: passthrough,
     useUpsertCardsMutation: passthrough,

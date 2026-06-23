@@ -1,8 +1,8 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
-import CardStage from '@/components/modals/study-session/session-flashcard/card-stage.vue'
-import { DeckContextKey } from '@/components/modals/study-session/deck-context'
+import CardStage from '@/components/study-session/session-flashcard/card-stage.vue'
+import { DeckContextKey } from '@/components/study-session/deck-context'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 

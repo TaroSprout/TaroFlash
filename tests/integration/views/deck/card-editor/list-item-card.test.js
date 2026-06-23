@@ -53,7 +53,7 @@ vi.mock('@/utils/animations/list-item', () => ({
 
 import ListItemCard from '@/views/deck/card-editor/list-item-card.vue'
 import textEditor from '@/components/card/text-editor.vue'
-import { cardEditorKey } from '@/composables/card/list-controller'
+import { cardEditorKey } from '@/views/deck/composables/list-controller'
 
 function makeCard(overrides = {}) {
   return {
