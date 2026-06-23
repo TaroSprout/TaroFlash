@@ -6,7 +6,7 @@ import StudyCardSkeleton from './study-card-skeleton.vue'
 import { computed, useTemplateRef, type StyleValue } from 'vue'
 import { type Grade } from 'ts-fsrs'
 import { useDeckContext } from '../deck-context'
-import { type StudyCard as StudyCardType } from '@/composables/study-session/flashcard-session'
+import { type StudyCard as StudyCardType } from '@/components/study-session/composables/flashcard-session'
 
 type CardStageProps = {
   loading: boolean

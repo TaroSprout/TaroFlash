@@ -5,7 +5,7 @@ import UiDropdownButton, {
 } from '@/components/ui-kit/dropdown-button/index.vue'
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useStudyModal } from '@/composables/study-session/study-modal'
+import { useStudyModal } from '@/components/study-session/composables/study-modal'
 import { useDeckSettingsModal } from '@/composables/deck/settings-modal'
 import { cardEditorKey } from '@/views/deck/composables'
 import { deckViewShellKey } from '@/views/deck/composables/view-shell'
