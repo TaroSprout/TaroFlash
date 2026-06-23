@@ -1,9 +1,6 @@
-import { useI18n } from 'vue-i18n'
-import { useAlert } from '@/composables/alert'
-import { useModal } from '@/composables/modal'
 import { emitSfx } from '@/sfx/bus'
-import MoveCardsModal from '@/components/modals/move-cards.vue'
 import { resolveDeleteArgs, resolveMoveArgs } from '@/utils/card-editor/selection-payload'
+import { useCardPrompts } from './prompts'
 import type { useDeckQuery } from '@/api/decks'
 import type { CardSelection } from './selection'
 import type { VirtualCardList } from './virtual-list'
@@ -34,20 +31,7 @@ type Args = {
  * actions.onDeleteCards(card_id)
  */
 export function useCardActions({ list, selection, mutations, deck_query, deck_id, shell }: Args) {
-  const { t } = useI18n()
-  const modal = useModal()
-  const alert = useAlert()
-
-  /** Show the delete-N-cards confirm alert. Resolves to the user's choice. */
-  function confirmDelete(count: number) {
-    const { response } = alert.warn({
-      title: t('alert.delete-card.title', { count }),
-      message: t('alert.delete-card.message', { count }),
-      confirmLabel: t('alert.delete-card.confirm'),
-      confirmAudio: 'trash_crumple_short'
-    })
-    return response
-  }
+  const { confirmDelete, openMoveModal } = useCardPrompts()
 
   /** Cleanup applied after any successful delete: drop selection, refetch. */
   async function afterDelete() {
@@ -91,23 +75,6 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
   }
 
   /**
-   * Open the move-cards modal with the given cards, paired with the open /
-   * close sfx. Returns the user's chosen destination deck or `undefined` if
-   * they dismissed the modal.
-   */
-  function openMoveModal(cards: Card[], count: number) {
-    emitSfx('double_pop_up')
-
-    const { response } = modal.open<{ deck_id: number }>(MoveCardsModal, {
-      backdrop: true,
-      props: { cards, count, current_deck_id: deck_id }
-    })
-    response.then(() => emitSfx('double_pop_down'))
-
-    return response
-  }
-
-  /**
    * Open the move-cards modal for the current selection plus an optional
    * additional card. On confirm, runs the move mutation against the chosen
    * destination deck. Select-all mode routes through the deck-wide BE path
@@ -117,7 +84,7 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
     const resolved = resolveMoveArgs(selection, list, deck_id, additional_card_id)
     if (!resolved) return
 
-    const target = await openMoveModal(resolved.preview_cards, resolved.count)
+    const target = await openMoveModal(resolved.preview_cards, resolved.count, deck_id)
     if (!target) return
 
     const vars =

@@ -14,6 +14,7 @@ export {
   type CardEntry
 } from './virtual-list'
 export { useCardActions, type CardActions } from './actions'
+export { useCardPrompts } from './prompts'
 export { useBulkActions } from './bulk-actions'
 export { useFaceImageUpload, CARD_IMAGE_MAX_BYTES } from './face-image-upload'
 export { useImageDropzone, type ImageFileError } from './image-dropzone'
