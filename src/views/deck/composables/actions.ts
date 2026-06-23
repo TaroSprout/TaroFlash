@@ -1,11 +1,9 @@
 import { emitSfx } from '@/sfx/bus'
 import { resolveDeleteArgs, resolveMoveArgs } from '@/utils/card-editor/selection-payload'
-import { useCardPrompts } from './prompts'
+import { useCardPrompts, type CardSelection, type CardMutations } from '@/composables/card'
 import type { useDeckQuery } from '@/api/decks'
-import type { CardSelection } from './selection'
 import type { VirtualCardList } from './virtual-list'
-import type { CardMutations } from './mutations'
-import type { DeckViewShell } from '../deck/view-shell'
+import type { DeckViewShell } from './view-shell'
 
 export type CardActions = ReturnType<typeof useCardActions>
 

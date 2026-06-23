@@ -8,7 +8,7 @@ import { emitSfx } from '@/sfx/bus'
 import { TYPE_SFX } from '@/sfx/config'
 import { computed, inject, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { cardEditorKey } from '@/composables/card'
+import { cardEditorKey } from '@/views/deck/composables'
 
 const { t } = useI18n()
 

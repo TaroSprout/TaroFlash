@@ -3,12 +3,10 @@ import { useInfiniteScroll } from '@/composables/ui/infinite-scroll'
 import { useCardsInDeckInfiniteQuery } from '@/api/cards'
 import { useDeckQuery } from '@/api/decks'
 import { useVirtualCardList, type CardEntry } from './virtual-list'
-import { useCardSelection } from './selection'
-import { useCardMutations } from './mutations'
 import { useCardActions } from './actions'
-import { useCardLimitGate } from '@/composables/card/limit-gate'
+import { useCardSelection, useCardMutations, useCardLimitGate } from '@/composables/card'
 import { emitSfx } from '@/sfx/bus'
-import type { DeckViewShell } from '../deck/view-shell'
+import type { DeckViewShell } from './view-shell'
 
 export type CardListController = ReturnType<typeof useCardListController>
 

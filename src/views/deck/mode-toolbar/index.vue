@@ -2,7 +2,7 @@
 import ModeView from './mode-view.vue'
 import BulkToolbar from './bulk-toolbar.vue'
 import { computed, inject } from 'vue'
-import { cardEditorKey } from '@/composables/card'
+import { cardEditorKey } from '@/views/deck/composables'
 import { toolbarEnter, toolbarLeave } from '@/utils/animations/toolbar-swap'
 
 const { selection } = inject(cardEditorKey)!

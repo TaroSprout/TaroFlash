@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Card from '@/components/card/index.vue'
 import { useCardGrid } from './use-card-grid'
-import { type CardGridSize } from '@/composables/deck/view-shell'
+import { type CardGridSize } from '@/views/deck/composables/view-shell'
 
 type CardGridSkeletonProps = {
   shimmer?: boolean

@@ -7,8 +7,8 @@ import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useStudyModal } from '@/composables/study-session/study-modal'
 import { useDeckSettingsModal } from '@/composables/deck/settings-modal'
-import { cardEditorKey } from '@/composables/card'
-import { deckViewShellKey } from '@/composables/deck/view-shell'
+import { cardEditorKey } from '@/views/deck/composables'
+import { deckViewShellKey } from '@/views/deck/composables/view-shell'
 
 const { deck } = defineProps<{ deck: Deck }>()
 

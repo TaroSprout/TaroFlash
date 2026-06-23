@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import GridItem from './grid-item.vue'
 import { useCardGrid } from './use-card-grid'
-import { cardEditorKey } from '@/composables/card'
-import { deckViewShellKey } from '@/composables/deck/view-shell'
+import { cardEditorKey } from '@/views/deck/composables'
+import { deckViewShellKey } from '@/views/deck/composables/view-shell'
 import { inject, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 

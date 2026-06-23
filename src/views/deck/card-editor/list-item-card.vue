@@ -2,7 +2,7 @@
 import CardFaceUploader from './card-face-uploader.vue'
 import { useI18n } from 'vue-i18n'
 import { inject, onMounted, ref, useTemplateRef } from 'vue'
-import { cardEditorKey, type CardWithClientId } from '@/composables/card'
+import { cardEditorKey, type CardWithClientId } from '@/views/deck/composables'
 import textEditor from '@/components/card/text-editor.vue'
 import { emitSfx } from '@/sfx/bus'
 import { useWindowRefocusGuard } from '@/composables/ui/window-refocus-guard'
