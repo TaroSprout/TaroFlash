@@ -13,6 +13,7 @@ import { useModalRequestClose } from '@/composables/modal'
 import { type Grade } from 'ts-fsrs'
 import { computed, useTemplateRef } from 'vue'
 import { useFlushDeckReviews } from '@/api/reviews'
+import type { CardReviewResult } from '@/components/study-session/composables/session-core'
 
 const { deck, config_override } = defineProps<{
   deck: Deck
@@ -21,13 +22,7 @@ const { deck, config_override } = defineProps<{
 
 const emit = defineEmits<{
   (e: 'closed'): void
-  (
-    e: 'finished',
-    score: number,
-    total: number,
-    remaining_due: number,
-    study_all_used: boolean
-  ): void
+  (e: 'finished', results: CardReviewResult[], remaining_due: number, study_all_used: boolean): void
 }>()
 
 defineExpose({ requestClose })
@@ -36,10 +31,10 @@ useModalRequestClose(requestClose)
 const {
   mode,
   cards,
+  results,
   current_card_side,
   current_index,
   active_card,
-  num_correct,
   reviewed_count,
   remaining_due_count,
   is_starting_side,
@@ -94,13 +89,7 @@ function requestClose() {
 
 function onFinishAnimationDone() {
   if (deck.id) flushDeckReviews(deck.id)
-  emit(
-    'finished',
-    num_correct.value,
-    cards.value.length,
-    remaining_due_count.value,
-    config.study_all_cards
-  )
+  emit('finished', results.value, remaining_due_count.value, config.study_all_cards)
 }
 
 /** Triggers the fling animation on the card stage; reviewed event follows. */

@@ -3,10 +3,10 @@ import SessionFlashcard from './session-flashcard/index.vue'
 import { computed, useTemplateRef } from 'vue'
 import mobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
 import { provideDeckContext } from './deck-context'
+import type { CardReviewResult } from './composables/session-core'
 
 export type StudySessionResponse = {
-  score: number
-  total: number
+  results: CardReviewResult[]
   remaining_due: number
   study_all_used: boolean
 }
@@ -39,12 +39,11 @@ function onCloseButtonClicked() {
 }
 
 function onSessionFinished(
-  score: number,
-  total: number,
+  results: CardReviewResult[],
   remaining_due: number,
   study_all_used: boolean
 ) {
-  close({ score, total, remaining_due, study_all_used })
+  close({ results, remaining_due, study_all_used })
 }
 </script>
 

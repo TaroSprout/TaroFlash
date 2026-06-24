@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/tes
 import { flushPromises } from '@vue/test-utils'
 import { useStudyModal } from '@/components/study-session/composables/study-modal'
 
-// StudySession and SessionComplete are wrapped with defineAsyncComponent inside
+// StudySession and SessionSummary are wrapped with defineAsyncComponent inside
 // the composable, so the component identity doesn't match the raw .vue import.
 // We assert on the wrapper object shape instead.
 const asyncComponentMatcher = expect.objectContaining({ __asyncLoader: expect.any(Function) })
@@ -97,7 +97,7 @@ describe('useStudyModal', () => {
     expect(mockEmitSfx).toHaveBeenCalledTimes(2)
   })
 
-  test('does not open SessionComplete when session returns no payload', async () => {
+  test('does not open the session summary when session returns no payload', async () => {
     const { result: sessionResult, resolve: resolveSession } = makeModalResult()
     mockOpen.mockReturnValueOnce(sessionResult)
 
@@ -110,7 +110,7 @@ describe('useStudyModal', () => {
     expect(mockOpen).toHaveBeenCalledTimes(1)
   })
 
-  test('waits 300ms before opening SessionComplete', async () => {
+  test('waits 300ms before opening the session summary', async () => {
     const sessionPayload = { score: 3, total: 5 }
     const { result: sessionResult, resolve: resolveSession } = makeModalResult()
     const { result: completeResult, resolve: resolveComplete } = makeModalResult()
@@ -122,7 +122,7 @@ describe('useStudyModal', () => {
     resolveSession(sessionPayload)
     await flushPromises() // let composable reach the setTimeout
 
-    // SessionComplete should not open before 300ms
+    // the session summary should not open before 300ms
     vi.advanceTimersByTime(299)
     await flushPromises()
     expect(mockOpen).toHaveBeenCalledTimes(1)
@@ -135,8 +135,11 @@ describe('useStudyModal', () => {
     await startPromise
   })
 
-  test('opens SessionComplete with score and total from session payload', async () => {
-    const sessionPayload = { score: 3, total: 5 }
+  test('opens the session summary with results from the session payload', async () => {
+    const results = [
+      { card_id: 1, is_new: false, before_interval: 1, after_interval: 5, lapses: 0, passed: true }
+    ]
+    const sessionPayload = { results, remaining_due: 0, study_all_used: false }
     const { result: sessionResult, resolve: resolveSession } = makeModalResult()
     const { result: completeResult, resolve: resolveComplete } = makeModalResult()
     mockOpen.mockReturnValueOnce(sessionResult).mockReturnValueOnce(completeResult)
@@ -152,14 +155,14 @@ describe('useStudyModal', () => {
     expect(mockOpen).toHaveBeenNthCalledWith(2, asyncComponentMatcher, {
       backdrop: true,
       mode: 'mobile-sheet',
-      props: { score: 3, total: 5, secondary_action: 'study-all', theme: undefined }
+      props: { results, secondary_action: 'study-all', theme: undefined }
     })
 
     resolveComplete(undefined)
     await startPromise
   })
 
-  test('plays music_pizz_duo_hi sfx before opening SessionComplete', async () => {
+  test('plays music_pizz_duo_hi sfx before opening the session summary', async () => {
     const sessionPayload = { score: 4, total: 4 }
     const { result: sessionResult, resolve: resolveSession } = makeModalResult()
     const { result: completeResult, resolve: resolveComplete } = makeModalResult()
@@ -183,7 +186,7 @@ describe('useStudyModal', () => {
     await startPromise
   })
 
-  test('plays final slide_up sfx after SessionComplete closes', async () => {
+  test('plays final slide_up sfx after the session summary closes', async () => {
     const sessionPayload = { score: 2, total: 3 }
     const { result: sessionResult, resolve: resolveSession } = makeModalResult()
     const { result: completeResult, resolve: resolveComplete } = makeModalResult()
