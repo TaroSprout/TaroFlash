@@ -138,6 +138,39 @@ describe('DropdownMenu', () => {
     // the headless Chromium runner. Deferred.
   })
 
+  // ── disabled options [obligation] ─────────────────────────────────────────
+
+  describe('disabled options [obligation]', () => {
+    test('clicking a disabled option does NOT emit select [obligation]', async () => {
+      const wrapper = mountMenu({
+        options: [
+          { value: 'copy', label: 'Copy', disabled: true },
+          { value: 'delete', label: 'Delete' }
+        ]
+      })
+      await wrapper.findAll('[data-testid="dropdown-button__option"]')[0].trigger('click')
+      expect(wrapper.emitted('select')).toBeFalsy()
+    })
+
+    test('clicking an enabled option emits select with that option [obligation]', async () => {
+      const enabled_option = { value: 'delete', label: 'Delete' }
+      const wrapper = mountMenu({
+        options: [{ value: 'copy', label: 'Copy', disabled: true }, enabled_option]
+      })
+      await wrapper.findAll('[data-testid="dropdown-button__option"]')[1].trigger('click')
+      expect(wrapper.emitted('select')).toHaveLength(1)
+      expect(wrapper.emitted('select')[0][0]).toEqual(enabled_option)
+    })
+
+    test('disabled option button has disabled attribute set', () => {
+      const wrapper = mountMenu({
+        options: [{ value: 'copy', label: 'Copy', disabled: true }]
+      })
+      const btn = wrapper.find('[data-testid="dropdown-button__option"]')
+      expect(btn.attributes('disabled')).toBeDefined()
+    })
+  })
+
   // ── default slot override (panel slot path) [obligation] ──────────────────
   // When a #default slot is provided to DropdownMenu (via the parent's #panel
   // slot bridge), it replaces the option list entirely.

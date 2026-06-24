@@ -1,107 +1,163 @@
-import { describe, test, expect, vi } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import StudySession from '@/components/study-session/index.vue'
 import { deck } from '../../../../fixtures/deck'
 
-// Minimal MobileSheet stub that surfaces named slots so we can assert on them
-// and emit the `close` event from tests. Uses a render function because the
-// runtime template compiler isn't available in browser mode.
-const MobileSheetStub = defineComponent({
-  name: 'MobileSheet',
-  emits: ['close'],
-  setup(_props, { slots }) {
+// ── Hoisted mocks ──────────────────────────────────────────────────────────────
+
+const { mockEmitSfx, mockEmitStudySfx } = vi.hoisted(() => ({
+  mockEmitSfx: vi.fn(),
+  mockEmitStudySfx: vi.fn()
+}))
+
+vi.mock('@/sfx/bus', () => ({
+  emitSfx: mockEmitSfx,
+  emitStudySfx: mockEmitStudySfx,
+  emitHoverSfx: vi.fn()
+}))
+
+// Pane animation hooks — call done() immediately so transitions don't hang.
+vi.mock('@/utils/animations/session-pane', () => ({
+  sessionPaneLeave: vi.fn((_el, done) => done()),
+  sessionPaneEnter: vi.fn((_el, done) => done())
+}))
+
+// ── Stubs ─────────────────────────────────────────────────────────────────────
+
+const FlashcardStub = defineComponent({
+  name: 'SessionFlashcard',
+  emits: ['closed', 'finished'],
+  setup(_props, { expose }) {
+    expose({})
+    return () => h('div', { 'data-testid': 'session-flashcard-stub' })
+  }
+})
+
+const SummaryStub = defineComponent({
+  name: 'SessionSummary',
+  emits: ['action'],
+  props: ['results', 'secondary_action'],
+  setup(props, { emit }) {
     return () =>
-      h('div', { 'data-testid': 'mobile-sheet-stub' }, [
-        slots['header-content']?.(),
-        slots.default?.()
+      h('div', { 'data-testid': 'session-summary-stub', 'data-action': props.secondary_action }, [
+        h('button', { 'data-testid': 'summary-action-btn', onClick: () => emit('action') })
       ])
   }
 })
 
-// SessionFlashcard stub — exposes requestClose and can relay `closed`/`finished`
-// so we can verify index.vue wires them to the `close` prop.
-function makeFlashcardStub({ hasRequestClose = true } = {}) {
-  const requestClose = vi.fn()
-  const component = defineComponent({
-    name: 'SessionFlashcard',
-    emits: ['closed', 'finished'],
-    setup(_props, { expose }) {
-      expose(hasRequestClose ? { requestClose } : {})
-      return () => h('div', { 'data-testid': 'session-flashcard-stub' })
-    }
-  })
-  component.__requestClose = requestClose
-  return component
-}
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-function makeWrapper({ close = vi.fn(), flashcardStub = makeFlashcardStub() } = {}) {
+function makeWrapper({ close = vi.fn() } = {}) {
   const deck_data = deck.one({ overrides: { id: 1, title: 'My Deck' } })
   return {
     close,
+    deck_data,
     wrapper: shallowMount(StudySession, {
       props: { deck: deck_data, close },
       global: {
-        stubs: { mobileSheet: MobileSheetStub, SessionFlashcard: flashcardStub }
+        stubs: {
+          SessionFlashcard: FlashcardStub,
+          SessionSummary: SummaryStub
+        }
       }
     })
   }
 }
 
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
 describe('StudySession (index.vue)', () => {
-  test('renders the deck title in header-content slot', () => {
-    const { wrapper } = makeWrapper()
-    expect(wrapper.findComponent(MobileSheetStub).text()).toContain('My Deck')
+  beforeEach(() => {
+    mockEmitSfx.mockClear()
+    mockEmitStudySfx.mockClear()
   })
 
-  test('renders session-flashcard in body slot', () => {
+  // ── Initial phase: studying ────────────────────────────────────────────────
+
+  test('renders session-flashcard in studying phase', () => {
     const { wrapper } = makeWrapper()
     expect(wrapper.find('[data-testid="session-flashcard-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="session-summary-stub"]').exists()).toBe(false)
   })
 
-  test('mobile-sheet close event delegates to mode.requestClose when available', async () => {
-    const flashcardStub = makeFlashcardStub()
-    const { wrapper, close } = makeWrapper({ flashcardStub })
+  // ── onClosed: plays sfx then calls close() [obligation] ───────────────────
 
-    await wrapper.findComponent(MobileSheetStub).vm.$emit('close')
-
-    expect(flashcardStub.__requestClose).toHaveBeenCalledOnce()
-    expect(close).not.toHaveBeenCalled()
-  })
-
-  test('mobile-sheet close event falls back to close() when mode has no requestClose', async () => {
-    const { wrapper, close } = makeWrapper({
-      flashcardStub: makeFlashcardStub({ hasRequestClose: false })
-    })
-
-    await wrapper.findComponent(MobileSheetStub).vm.$emit('close')
-
-    expect(close).toHaveBeenCalledOnce()
-    expect(close).toHaveBeenCalledWith()
-  })
-
-  test('session-flashcard `closed` event calls close prop with no args', async () => {
+  test('@closed plays snappy_button_5 sfx then calls close() [obligation]', async () => {
     const { wrapper, close } = makeWrapper()
 
     await wrapper.findComponent({ name: 'SessionFlashcard' }).vm.$emit('closed')
 
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
     expect(close).toHaveBeenCalledOnce()
     expect(close).toHaveBeenCalledWith()
   })
 
-  test('session-flashcard `finished` event calls close with {results, remaining_due, study_all_used}', async () => {
+  // ── onSessionFinished: switches to summary phase [obligation] ──────────────
+
+  test('@finished switches phase to summary [obligation]', async () => {
+    const { wrapper } = makeWrapper()
+
+    await wrapper.findComponent({ name: 'SessionFlashcard' }).vm.$emit('finished', [], 0, false)
+
+    expect(wrapper.find('[data-testid="session-summary-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="session-flashcard-stub"]').exists()).toBe(false)
+  })
+
+  // ── secondary_action logic [obligation] ────────────────────────────────────
+
+  test('study_all_used=true → secondary_action is "study-again" [obligation]', async () => {
+    const { wrapper } = makeWrapper()
+
+    await wrapper
+      .findComponent({ name: 'SessionFlashcard' })
+      .vm.$emit('finished', [], 0, true /* study_all_used */)
+
+    const summary = wrapper.find('[data-testid="session-summary-stub"]')
+    expect(summary.attributes('data-action')).toBe('study-again')
+  })
+
+  test('study_all_used=false, remaining_due>0 → secondary_action is "study-more" [obligation]', async () => {
+    const { wrapper } = makeWrapper()
+
+    await wrapper
+      .findComponent({ name: 'SessionFlashcard' })
+      .vm.$emit('finished', [], 5 /* remaining_due */, false)
+
+    const summary = wrapper.find('[data-testid="session-summary-stub"]')
+    expect(summary.attributes('data-action')).toBe('study-more')
+  })
+
+  test('study_all_used=false, remaining_due=0 → secondary_action is "study-all" [obligation]', async () => {
+    const { wrapper } = makeWrapper()
+
+    await wrapper
+      .findComponent({ name: 'SessionFlashcard' })
+      .vm.$emit('finished', [], 0 /* remaining_due */, false)
+
+    const summary = wrapper.find('[data-testid="session-summary-stub"]')
+    expect(summary.attributes('data-action')).toBe('study-all')
+  })
+
+  // ── Summary @action forwards to close [obligation] ─────────────────────────
+
+  test('summary @action event calls close() [obligation]', async () => {
     const { wrapper, close } = makeWrapper()
 
-    const results = [
-      { card_id: 1, is_new: false, before_interval: 3, after_interval: 7, lapses: 0, passed: true }
-    ]
-    await wrapper.findComponent({ name: 'SessionFlashcard' }).vm.$emit('finished', results, 2, true)
+    await wrapper.findComponent({ name: 'SessionFlashcard' }).vm.$emit('finished', [], 0, false)
 
-    expect(close).toHaveBeenCalledOnce()
-    expect(close).toHaveBeenCalledWith({
-      results,
-      remaining_due: 2,
-      study_all_used: true
-    })
+    await wrapper.findComponent({ name: 'SessionSummary' }).vm.$emit('action', 'study-all')
+
+    expect(close).toHaveBeenCalledWith('study-all')
+  })
+
+  // ── emitStudySfx on finished ───────────────────────────────────────────────
+
+  test('@finished plays music_pizz_duo_hi sfx', async () => {
+    const { wrapper } = makeWrapper()
+
+    await wrapper.findComponent({ name: 'SessionFlashcard' }).vm.$emit('finished', [], 0, false)
+
+    expect(mockEmitStudySfx).toHaveBeenCalledWith('music_pizz_duo_hi')
   })
 })

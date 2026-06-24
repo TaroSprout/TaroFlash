@@ -202,12 +202,13 @@ describe('aggregateSession — timeline drops all empty buckets [obligation]', (
 })
 
 // ── leech detection — all three conditions required (AND) ──────────────────────
+// LEECH_THRESHOLD was raised from 8 → 24. Tests cover the new boundary exactly.
 
 describe('aggregateSession — leech detection [obligation]', () => {
-  test('lapses >= 8 + failed + front_text → leech', () => {
+  test('lapses >= 24 + failed + front_text → leech [obligation]', () => {
     const result = makeResult({
       passed: false,
-      lapses: 8,
+      lapses: 24,
       front_text: 'Some question'
     })
 
@@ -215,53 +216,53 @@ describe('aggregateSession — leech detection [obligation]', () => {
 
     expect(data.leeches).toHaveLength(1)
     expect(data.leeches[0].front_text).toBe('Some question')
-    expect(data.leeches[0].lapses).toBe(8)
+    expect(data.leeches[0].lapses).toBe(24)
   })
 
-  test('lapses 7 (below threshold) → NOT a leech', () => {
+  test('lapses 23 (one below threshold) → NOT a leech [obligation]', () => {
     const result = makeResult({
       passed: false,
-      lapses: 7,
+      lapses: 23,
       front_text: 'Some question'
     })
 
     expect(aggregateSession([result]).leeches).toHaveLength(0)
   })
 
-  test('lapses >= 8 + passed → NOT a leech', () => {
+  test('lapses >= 24 + passed → NOT a leech [obligation]', () => {
     const result = makeResult({
       passed: true,
-      lapses: 8,
+      lapses: 24,
       front_text: 'Some question'
     })
 
     expect(aggregateSession([result]).leeches).toHaveLength(0)
   })
 
-  test('lapses >= 8 + failed + empty front_text → NOT a leech', () => {
+  test('lapses >= 24 + failed + empty front_text → NOT a leech [obligation]', () => {
     const result = makeResult({
       passed: false,
-      lapses: 8,
+      lapses: 24,
       front_text: ''
     })
 
     expect(aggregateSession([result]).leeches).toHaveLength(0)
   })
 
-  test('lapses >= 8 + failed + undefined front_text → NOT a leech', () => {
+  test('lapses >= 24 + failed + undefined front_text → NOT a leech [obligation]', () => {
     const result = makeResult({
       passed: false,
-      lapses: 8,
+      lapses: 24,
       front_text: undefined
     })
 
     expect(aggregateSession([result]).leeches).toHaveLength(0)
   })
 
-  test('lapses 9 + failed + front_text → leech (above threshold)', () => {
+  test('lapses 25 + failed + front_text → leech (above threshold) [obligation]', () => {
     const result = makeResult({
       passed: false,
-      lapses: 9,
+      lapses: 25,
       front_text: 'Hard card'
     })
 
