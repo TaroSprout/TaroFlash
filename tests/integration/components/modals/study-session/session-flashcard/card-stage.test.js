@@ -49,13 +49,6 @@ const StudyCardEditStub = defineComponent({
   }
 })
 
-const StudyCardSkeletonStub = defineComponent({
-  name: 'StudyCardSkeleton',
-  setup() {
-    return () => h('div', { 'data-testid': 'study-card-skeleton' })
-  }
-})
-
 const CardStub = defineComponent({
   name: 'Card',
   props: ['side', 'card_attributes'],
@@ -89,7 +82,6 @@ function mountCardStage(props = {}) {
       stubs: {
         StudyCard: StudyCardStub,
         StudyCardEdit: StudyCardEditStub,
-        StudyCardSkeleton: StudyCardSkeletonStub,
         Card: CardStub
       }
     }
@@ -105,11 +97,11 @@ describe('CardStage', () => {
 
   // ── card_view computed [obligation] ────────────────────────────────────────
 
-  test('shows skeleton when loading=true [obligation]', async () => {
+  test('renders nothing in the stage while loading [obligation]', async () => {
     const wrapper = mountCardStage({ loading: true })
 
-    expect(wrapper.find('[data-testid="study-card-skeleton"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="study-card-stub"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="study-card-edit-stub"]').exists()).toBe(false)
   })
 
   test('shows edit view when editing=true (and not loading) [obligation]', async () => {
@@ -131,10 +123,9 @@ describe('CardStage', () => {
     })
 
     expect(wrapper.find('[data-testid="study-card-stub"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="study-card-skeleton"]').exists()).toBe(false)
   })
 
-  test('shows skeleton instead of edit when loading overrides editing [obligation]', async () => {
+  test('renders nothing when loading overrides editing [obligation]', async () => {
     // loading takes precedence over editing
     const wrapper = mountCardStage({
       loading: true,
@@ -142,8 +133,8 @@ describe('CardStage', () => {
       active_card: makeCard()
     })
 
-    expect(wrapper.find('[data-testid="study-card-skeleton"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="study-card-edit-stub"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="study-card-stub"]').exists()).toBe(false)
   })
 
   // ── preview card ───────────────────────────────────────────────────────────

@@ -179,7 +179,7 @@ describe('Session', () => {
   // ── Loading behavior ───────────────────────────────────────────────────────
 
   describe('loading behavior', () => {
-    test('while loading, shows skeleton card without study-card', async () => {
+    test('while loading, the study-card is not yet rendered', async () => {
       // Leave cards_query.data undefined to keep the session in loading mode.
       cardsDataRef.value = undefined
       const deck_data = deck.one({
@@ -191,9 +191,8 @@ describe('Session', () => {
         global: { stubs: { Card: CardStub } }
       })
 
-      // study-card is not yet rendered; plain card skeleton should be shown
+      // The stage is empty while loading; the cover card rises in once data lands.
       expect(wrapper.find('[data-testid="study-card"]').exists()).toBe(false)
-      expect(wrapper.find('[data-testid="study-card-skeleton"]').exists()).toBe(true)
     })
 
     test('after loading, study-card is shown', async () => {
