@@ -107,58 +107,60 @@ async function onCardReviewed(grade?: Grade) {
 </script>
 
 <template>
-  <div
-    data-testid="study-session__body"
-    :data-theme="deck.cover_config?.theme ?? 'purple-500'"
-    class="w-full flex flex-col items-center justify-between gap-4 self-center pb-8 px-8"
-    :class="{ 'opacity-0 pointer-events-none': mode !== 'studying' }"
-  >
-    <session-header
-      :editing="editing"
-      :saving="saving"
-      :current_index="current_index"
-      :total="cards.length"
-      :is_cover="is_cover"
-      :can_edit="can_edit"
-      @edit="startEdit"
-      @move="onMove"
-      @delete="onDelete"
-    />
+  <div data-testid="session-flashcard" class="relative w-full">
+    <div
+      data-testid="study-session__body"
+      :data-theme="deck.cover_config?.theme ?? 'purple-500'"
+      class="w-full flex flex-col items-center justify-between gap-4 self-center pb-8 px-(--session-padding)"
+      :class="{ 'opacity-0 pointer-events-none': mode !== 'studying' }"
+    >
+      <session-header
+        :editing="editing"
+        :saving="saving"
+        :current_index="current_index"
+        :total="cards.length"
+        :is_cover="is_cover"
+        :can_edit="can_edit"
+        @edit="startEdit"
+        @move="onMove"
+        @delete="onDelete"
+      />
 
-    <card-stage
-      ref="stage"
-      :loading="loading"
-      :editing="editing"
-      :active_card="active_card"
-      :current_card_side="current_card_side"
-      :next_card="next_card"
-      :next_card_side="next_card_side"
-      :preview_style="preview_style"
-      @started="startSession"
-      @side-changed="flipCurrentCard"
-      @reviewed="onCardReviewed"
-      @drag-progress="onDragProgress"
-      @next-flipped="onNextCardFlipped"
-      @edit-update="onEditUpdate"
-    />
+      <card-stage
+        ref="stage"
+        :loading="loading"
+        :editing="editing"
+        :active_card="active_card"
+        :current_card_side="current_card_side"
+        :next_card="next_card"
+        :next_card_side="next_card_side"
+        :preview_style="preview_style"
+        @started="startSession"
+        @side-changed="flipCurrentCard"
+        @reviewed="onCardReviewed"
+        @drag-progress="onDragProgress"
+        @next-flipped="onNextCardFlipped"
+        @edit-update="onEditUpdate"
+      />
 
-    <rating-buttons
-      v-if="!editing"
-      class="z-10 mt-4"
-      :options="active_card?.preview"
-      :side="current_card_side"
-      @started="startSession"
-      @rated="onRated"
-      @revealed="flipCurrentCard"
-    />
+      <rating-buttons
+        v-if="!editing"
+        class="z-10 mt-4"
+        :options="active_card?.preview"
+        :side="current_card_side"
+        @started="startSession"
+        @rated="onRated"
+        @revealed="flipCurrentCard"
+      />
 
-    <study-edit-footer
-      v-else
-      :is_starting_side="is_starting_side"
-      @flip="flipCurrentCard"
-      @done="stopEdit"
-    />
+      <study-edit-footer
+        v-else
+        :is_starting_side="is_starting_side"
+        @flip="flipCurrentCard"
+        @done="stopEdit"
+      />
+    </div>
+
+    <finish-animation v-if="mode === 'completed'" @done="onFinishAnimationDone" />
   </div>
-
-  <finish-animation v-if="mode === 'completed'" @done="onFinishAnimationDone" />
 </template>
