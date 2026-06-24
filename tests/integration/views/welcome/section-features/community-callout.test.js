@@ -1,8 +1,18 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, useAttrs } from 'vue'
 
 // ── Stubs ──────────────────────────────────────────────────────────────────────
+
+// Stub UiWobbleBox — forwards attrs (including data-testid) to a div and renders slot.
+const UiWobbleBoxStub = defineComponent({
+  name: 'UiWobbleBox',
+  inheritAttrs: false,
+  setup(_props, { slots }) {
+    const attrs = useAttrs()
+    return () => h('div', attrs, slots.default?.())
+  }
+})
 
 // Stub UiButton to expose the @press handler via a data-testid button element.
 const UiButtonStub = defineComponent({
@@ -41,7 +51,11 @@ function mountCallout({ seeRoadmap = vi.fn() } = {}) {
   return shallowMount(CommunityCallout, {
     props: { seeRoadmap },
     global: {
-      stubs: { UiButton: UiButtonStub, UiImage: UiImageStub }
+      stubs: {
+        UiWobbleBox: UiWobbleBoxStub,
+        UiButton: UiButtonStub,
+        UiImage: UiImageStub
+      }
     }
   })
 }
