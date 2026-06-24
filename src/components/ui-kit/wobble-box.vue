@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // imports
 import { useId } from 'vue'
+import { useMatchMedia } from '@/composables/ui/media-query'
 
 // defines
 const { seed = 7 } = defineProps<{
@@ -14,15 +15,20 @@ defineSlots<{ default: () => unknown }>()
 // Filter ids must be unique per instance, or multiple boxes on one page
 // reference the same <filter> and the later ones render unfiltered.
 const filter_id = useId()
+
+// The SVG displacement filter exhausts iOS Safari's GPU filter buffer and
+// crashes the tab. On coarse pointers we drop the filter entirely and let the
+// uneven border-radius carry the hand-drawn blob shape on its own.
+const is_coarse = useMatchMedia('coarse')
 </script>
 
 <template>
   <div
     data-testid="ui-kit-wobble-box"
     class="wobble-box relative isolate"
-    :style="{ '--wobble-filter': `url('#${filter_id}')` }"
+    :style="{ '--wobble-filter': is_coarse ? 'none' : `url('#${filter_id}')` }"
   >
-    <svg width="0" height="0" class="absolute" aria-hidden="true">
+    <svg v-if="!is_coarse" width="0" height="0" class="absolute" aria-hidden="true">
       <filter :id="filter_id">
         <feTurbulence
           type="fractalNoise"
