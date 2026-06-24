@@ -4,7 +4,6 @@ import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiBarChart from '@/components/ui-kit/charts/bar-chart.vue'
 import type { SummaryData } from './aggregate'
-import { timelineCaption } from './captions'
 
 const { summary } = defineProps<{ summary: SummaryData }>()
 
@@ -17,13 +16,6 @@ const bars = computed(() =>
     label: t(`session-summary.timeline.bucket.${bucket.key}`)
   }))
 )
-
-const caption = computed(() => {
-  const result = timelineCaption(summary)
-  const when_key = result.params?.whenKey
-  const params = when_key ? { when: t(`session-summary.timeline.bucket.${when_key}`) } : {}
-  return { key: result.key, params }
-})
 </script>
 
 <template>
@@ -39,9 +31,5 @@ const caption = computed(() => {
     </div>
 
     <ui-bar-chart :bars="bars" bar-class="bg-(--theme-primary)" />
-
-    <p class="text-base text-brown-500 dark:text-grey-400">
-      {{ t(caption.key, caption.params) }}
-    </p>
   </div>
 </template>

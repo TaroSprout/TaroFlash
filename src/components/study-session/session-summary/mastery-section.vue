@@ -4,25 +4,22 @@ import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiStackedBar from '@/components/ui-kit/charts/stacked-bar.vue'
 import { BAND_ORDER, type MaturityBand, type SummaryData } from './aggregate'
-import { masteryCaption } from './captions'
 
 const { summary } = defineProps<{ summary: SummaryData }>()
 
 const { t } = useI18n()
 
 const BAND_BG: Record<MaturityBand, string> = {
-  forming: 'bg-(--theme-primary)/30',
-  familiar: 'bg-(--theme-primary)/55',
-  strong: 'bg-(--theme-primary)/80',
-  mastered: 'bg-(--theme-primary)'
+  forming: 'bg-green-400',
+  familiar: 'bg-green-500',
+  strong: 'bg-green-600',
+  mastered: 'bg-green-800'
 }
 
 const rows = computed(() => [
   { label: t('session-summary.reinforced.before-label'), counts: summary.mastery_before },
   { label: t('session-summary.reinforced.after-label'), counts: summary.mastery_after }
 ])
-
-const caption = computed(() => masteryCaption(summary))
 
 function segmentsFor(counts: Record<MaturityBand, number>) {
   return BAND_ORDER.map((band) => ({ key: band, value: counts[band], colorClass: BAND_BG[band] }))
@@ -66,9 +63,5 @@ function segmentsFor(counts: Record<MaturityBand, number>) {
         {{ t(`session-summary.reinforced.band.${band}`) }}
       </li>
     </ul>
-
-    <p class="text-base text-brown-500 dark:text-grey-400">
-      {{ t(caption.key, caption.params ?? {}) }}
-    </p>
   </div>
 </template>

@@ -10,7 +10,7 @@ import type { CardReviewResult } from '@/components/study-session/composables/se
  */
 
 export type MaturityBand = 'forming' | 'familiar' | 'strong' | 'mastered'
-export type TimelineKey = '1d' | '3d' | '1w' | '2w' | '1m'
+export type TimelineKey = '1d' | '3d' | '1w' | '2w' | '1mo' | '3mo' | '6mo' | 'max'
 
 export type SummaryData = {
   score: number
@@ -24,9 +24,24 @@ export type SummaryData = {
 }
 
 export const BAND_ORDER: MaturityBand[] = ['forming', 'familiar', 'strong', 'mastered']
-export const TIMELINE_ORDER: TimelineKey[] = ['1d', '3d', '1w', '2w', '1m']
 
 const LEECH_THRESHOLD = 8
+
+/**
+ * Ordered, log-spaced return-interval bins — the single source of truth for
+ * timeline bucketing. `max_days` is the inclusive upper bound; the final bin
+ * is open-ended. SRS intervals grow exponentially, so the bins do too.
+ */
+const TIMELINE_BINS: { key: TimelineKey; max_days: number }[] = [
+  { key: '1d', max_days: 1 },
+  { key: '3d', max_days: 3 },
+  { key: '1w', max_days: 7 },
+  { key: '2w', max_days: 14 },
+  { key: '1mo', max_days: 30 },
+  { key: '3mo', max_days: 90 },
+  { key: '6mo', max_days: 180 },
+  { key: 'max', max_days: Infinity }
+]
 
 function bandFor(interval_days: number): MaturityBand {
   if (interval_days < 7) return 'forming'
@@ -35,28 +50,28 @@ function bandFor(interval_days: number): MaturityBand {
   return 'mastered'
 }
 
-function timelineFor(interval_days: number): TimelineKey {
-  if (interval_days <= 1) return '1d'
-  if (interval_days <= 3) return '3d'
-  if (interval_days <= 7) return '1w'
-  if (interval_days <= 14) return '2w'
-  return '1m'
+function binFor(interval_days: number): TimelineKey {
+  return (TIMELINE_BINS.find((bin) => interval_days <= bin.max_days) ?? TIMELINE_BINS.at(-1)!).key
 }
 
 function emptyBands(): Record<MaturityBand, number> {
   return { forming: 0, familiar: 0, strong: 0, mastered: 0 }
 }
 
+/**
+ * Build the timeline buckets in bin order, dropping every empty bucket so the
+ * chart only shows intervals that actually occurred this session.
+ */
+function buildTimeline(counts: Map<TimelineKey, number>): SummaryData['timeline'] {
+  return TIMELINE_BINS.map((bin) => ({ key: bin.key, count: counts.get(bin.key) ?? 0 })).filter(
+    (bucket) => bucket.count > 0
+  )
+}
+
 export function aggregateSession(results: CardReviewResult[]): SummaryData {
   const mastery_before = emptyBands()
   const mastery_after = emptyBands()
-  const timeline_counts: Record<TimelineKey, number> = {
-    '1d': 0,
-    '3d': 0,
-    '1w': 0,
-    '2w': 0,
-    '1m': 0
-  }
+  const timeline_counts = new Map<TimelineKey, number>()
   const leeches: SummaryData['leeches'] = []
 
   let score = 0
@@ -65,7 +80,9 @@ export function aggregateSession(results: CardReviewResult[]): SummaryData {
 
   for (const result of results) {
     if (result.passed) score++
-    timeline_counts[timelineFor(result.after_interval)]++
+
+    const bin = binFor(result.after_interval)
+    timeline_counts.set(bin, (timeline_counts.get(bin) ?? 0) + 1)
 
     if (result.is_new) {
       new_count++
@@ -91,7 +108,7 @@ export function aggregateSession(results: CardReviewResult[]): SummaryData {
     reinforced_count,
     mastery_before,
     mastery_after,
-    timeline: TIMELINE_ORDER.map((key) => ({ key, count: timeline_counts[key] })),
+    timeline: buildTimeline(timeline_counts),
     leeches
   }
 }
