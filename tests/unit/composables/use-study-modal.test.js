@@ -97,7 +97,7 @@ describe('useStudyModal', () => {
     expect(mockEmitSfx).toHaveBeenCalledTimes(2)
   })
 
-  test('does not open SessionComplete when session returns no payload', async () => {
+  test('does not open the session summary when session returns no payload', async () => {
     const { result: sessionResult, resolve: resolveSession } = makeModalResult()
     mockOpen.mockReturnValueOnce(sessionResult)
 
@@ -110,7 +110,7 @@ describe('useStudyModal', () => {
     expect(mockOpen).toHaveBeenCalledTimes(1)
   })
 
-  test('waits 300ms before opening SessionComplete', async () => {
+  test('waits 300ms before opening the session summary', async () => {
     const sessionPayload = { score: 3, total: 5 }
     const { result: sessionResult, resolve: resolveSession } = makeModalResult()
     const { result: completeResult, resolve: resolveComplete } = makeModalResult()
@@ -122,7 +122,7 @@ describe('useStudyModal', () => {
     resolveSession(sessionPayload)
     await flushPromises() // let composable reach the setTimeout
 
-    // SessionComplete should not open before 300ms
+    // the session summary should not open before 300ms
     vi.advanceTimersByTime(299)
     await flushPromises()
     expect(mockOpen).toHaveBeenCalledTimes(1)
@@ -162,7 +162,7 @@ describe('useStudyModal', () => {
     await startPromise
   })
 
-  test('plays music_pizz_duo_hi sfx before opening SessionComplete', async () => {
+  test('plays music_pizz_duo_hi sfx before opening the session summary', async () => {
     const sessionPayload = { score: 4, total: 4 }
     const { result: sessionResult, resolve: resolveSession } = makeModalResult()
     const { result: completeResult, resolve: resolveComplete } = makeModalResult()
@@ -186,7 +186,7 @@ describe('useStudyModal', () => {
     await startPromise
   })
 
-  test('plays final slide_up sfx after SessionComplete closes', async () => {
+  test('plays final slide_up sfx after the session summary closes', async () => {
     const sessionPayload = { score: 2, total: 3 }
     const { result: sessionResult, resolve: resolveSession } = makeModalResult()
     const { result: completeResult, resolve: resolveComplete } = makeModalResult()

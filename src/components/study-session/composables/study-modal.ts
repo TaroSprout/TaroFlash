@@ -19,7 +19,7 @@ export function useStudyModal() {
     emitSfx('slide_up')
 
     if (payload) {
-      const action = await _openSessionComplete(payload, deck.cover_config?.theme)
+      const action = await _openSessionSummary(payload, deck.cover_config?.theme)
       emitSfx('slide_up')
 
       if (action === 'study-more') {
@@ -40,7 +40,7 @@ export function useStudyModal() {
     return result.response
   }
 
-  async function _openSessionComplete(
+  async function _openSessionSummary(
     { results, remaining_due, study_all_used }: StudySessionResponse,
     theme?: Theme
   ) {
