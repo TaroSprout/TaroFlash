@@ -14,6 +14,21 @@ export type StudyCard = Card & { preview?: RecordLog; state: ReviewState }
 
 type ReviewState = 'failed' | 'passed' | 'unreviewed'
 
+/**
+ * Per-card snapshot captured at the moment of review, before the card's FSRS
+ * state is overwritten. This is the raw material the post-session summary
+ * aggregates — the "before" interval is lost otherwise.
+ */
+export type CardReviewResult = {
+  card_id: number
+  front_text?: string
+  is_new: boolean
+  before_interval: number
+  after_interval: number
+  lapses: number
+  passed: boolean
+}
+
 export type StudySessionCore = ReturnType<typeof useStudySessionCore>
 
 /**
@@ -40,6 +55,7 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
 
   const mode = ref<'studying' | 'completed'>('studying')
   const active_card = shallowRef<StudyCard | undefined>(undefined)
+  const results = shallowRef<CardReviewResult[]>([])
 
   const cards = computed(() => {
     return _cards_in_deck.value
@@ -61,6 +77,7 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
 
   function setCards(raw: Card[]) {
     _raw_cards.value = raw
+    results.value = []
     _processCards()
   }
 
@@ -126,6 +143,18 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
       const review = card.review ?? (createEmptyCard(new Date()) as Review)
       const item = _FSRS_INSTANCE.next(review, new Date(), grade)
 
+      if (card.id) {
+        results.value.push({
+          card_id: card.id,
+          front_text: card.front_text,
+          is_new: (review.reps ?? 0) === 0,
+          before_interval: review.scheduled_days ?? 0,
+          after_interval: item.card.scheduled_days ?? 0,
+          lapses: item.card.lapses ?? 0,
+          passed: grade !== Rating.Again
+        })
+      }
+
       card.review = item.card
       _markCurrentCardStudied(grade)
 
@@ -170,6 +199,7 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
   return {
     mode,
     active_card,
+    results,
     cards,
     num_correct,
     reviewed_count,

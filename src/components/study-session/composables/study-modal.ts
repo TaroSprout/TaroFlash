@@ -4,8 +4,8 @@ import { emitSfx, emitStudySfx } from '@/sfx/bus'
 import type { StudySessionResponse } from '@/components/study-session/index.vue'
 
 const StudySession = defineAsyncComponent(() => import('@/components/study-session/index.vue'))
-const SessionComplete = defineAsyncComponent(
-  () => import('@/components/study-session/session-complete.vue')
+const SessionSummary = defineAsyncComponent(
+  () => import('@/components/study-session/session-summary/index.vue')
 )
 
 export type SecondaryAction = 'study-more' | 'study-all' | 'study-again'
@@ -41,7 +41,7 @@ export function useStudyModal() {
   }
 
   async function _openSessionComplete(
-    { score, total, remaining_due, study_all_used }: StudySessionResponse,
+    { results, remaining_due, study_all_used }: StudySessionResponse,
     theme?: Theme
   ) {
     await new Promise((resolve) => setTimeout(resolve, 300))
@@ -53,10 +53,10 @@ export function useStudyModal() {
         : 'study-all'
 
     emitStudySfx('music_pizz_duo_hi')
-    const result = modal.open<SecondaryAction | undefined>(SessionComplete, {
+    const result = modal.open<SecondaryAction | undefined>(SessionSummary, {
       backdrop: true,
       mode: 'mobile-sheet',
-      props: { score, total, secondary_action, theme }
+      props: { results, secondary_action, theme }
     })
 
     return result.response
