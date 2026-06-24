@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import Card from '@/components/card/index.vue'
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import type { gsap } from 'gsap'
 import { type Grade, Rating, type RecordLog } from 'ts-fsrs'
 import { emitStudySfx } from '@/sfx/bus'
 import { useGestures } from '@/composables/ui/gestures'
 import { useShortcuts } from '@/composables/shortcuts'
 import { useRatingFormat } from '@/composables/fsrs'
+import { revealCoverCard } from '@/utils/animations/session-intro'
 import { useDeckContext } from '../deck-context'
 
 defineExpose({ rate })
@@ -36,6 +38,11 @@ const FULL_REVEAL_DISTANCE = 150
 const card_ref = ref<InstanceType<typeof Card> | null>(null)
 const card_offset = ref<number>(0)
 
+// The cover card starts hidden in markup so it never flashes before its
+// rise-in runs; the reveal tween's inline opacity overrides this class.
+const cover_intro = ref(side === 'cover')
+let cover_tween: gsap.core.Tween | undefined
+
 const is_dragging = ref(false)
 // Guards against rapid key/click spam re-triggering an action (and replaying
 // its sfx) mid-animation. For a flip it covers only the outgoing face's
@@ -54,6 +61,9 @@ onMounted(() => {
   const el = card_ref.value?.$el as HTMLElement | null
   if (!el) return
 
+  // First card mounts on the cover; rise it in alongside the modal's pop.
+  if (side === 'cover') cover_tween = revealCoverCard(el)
+
   register(el, {
     onStart: () => {
       el.style.transition = 'none'
@@ -67,6 +77,10 @@ onMounted(() => {
   shortcuts.register({ combo: 'arrowleft', handler: () => swipe(el, -1) })
   shortcuts.register({ combo: 'space', handler: () => triggerCardFlip() })
 })
+
+// Closing the modal mid-rise must cancel the tween — otherwise its delayed
+// onStart fires (a stray sfx) and a stale tween can outlive the element.
+onUnmounted(() => cover_tween?.kill())
 
 /** Triggers the fling animation for a given grade. Called by the parent via template ref. */
 function rate(grade: Grade) {
@@ -188,7 +202,7 @@ function toSwipeZone(offset: number) {
       ref="card_ref"
       data-testid="study-card"
       class="z-10"
-      :class="is_dragging ? 'cursor-grabbing' : 'cursor-grab'"
+      :class="[is_dragging ? 'cursor-grabbing' : 'cursor-grab', { 'opacity-0': cover_intro }]"
       size="xl"
       v-bind="card"
       :side="side"

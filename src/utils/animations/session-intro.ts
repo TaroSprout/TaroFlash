@@ -1,7 +1,12 @@
 import { gsap } from 'gsap'
+import { emitSfx } from '@/sfx/bus'
 
 const SETTLE_DURATION = 0.4
 const COVER_SCALE = 1.25
+const COVER_CARD_RISE = 60
+const COVER_CARD_DURATION = 0.1
+// Hold the card hidden until the modal's pop-in (~0.13s) has settled.
+const COVER_CARD_DELAY = 0.15
 
 /** Vertical gap between the title's header slot and the progress bar's centre. */
 function offsetToProgress(title: HTMLElement, progress: HTMLElement) {
@@ -25,6 +30,31 @@ export function placeTitleOnProgress(title: HTMLElement, progress: HTMLElement) 
  * On session start, slide the title back up into the header and fade the
  * progress bar in where the title was sitting.
  */
+/**
+ * Slide-and-fade the deck-cover preview card in once the modal's pop-in has
+ * settled. The caller keeps the card hidden via a markup class the whole time;
+ * this tween's inline opacity (left in place — only `transform` is cleared)
+ * overrides that class once the rise runs, so there's never a frame that
+ * depends on gsap's render timing. Returns the tween so the caller can kill it
+ * if the modal closes mid-rise.
+ */
+export function revealCoverCard(el: HTMLElement) {
+  return gsap.fromTo(
+    el,
+    { y: COVER_CARD_RISE, opacity: 0 },
+    {
+      y: 0,
+      opacity: 1,
+      duration: COVER_CARD_DURATION,
+      delay: COVER_CARD_DELAY,
+      ease: 'power2.out',
+      overwrite: 'auto',
+      clearProps: 'transform',
+      onStart: () => emitSfx('slide_up')
+    }
+  )
+}
+
 export function settleStudyingChrome(title: HTMLElement, progress: HTMLElement) {
   gsap.to(title, {
     y: 0,
