@@ -3,7 +3,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import UiDropdownButton, {
   type DropdownOption
 } from '@/components/ui-kit/dropdown-button/index.vue'
-import { computed } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 type SessionHeaderProps = {
@@ -13,6 +13,9 @@ type SessionHeaderProps = {
 }
 
 const { can_edit } = defineProps<SessionHeaderProps>()
+
+const title_el = useTemplateRef('title')
+defineExpose({ title_el })
 
 const emit = defineEmits<{
   (e: 'stop'): void
@@ -24,9 +27,24 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const menu_options = computed<DropdownOption[]>(() => [
-  { label: t('study-session.flashcard.menu.edit'), value: 'edit', icon: 'edit' },
-  { label: t('study-session.flashcard.menu.move'), value: 'move', icon: 'move-item' },
-  { label: t('study-session.flashcard.menu.delete'), value: 'delete', icon: 'delete' }
+  {
+    label: t('study-session.flashcard.menu.edit'),
+    value: 'edit',
+    icon: 'edit',
+    disabled: !can_edit
+  },
+  {
+    label: t('study-session.flashcard.menu.move'),
+    value: 'move',
+    icon: 'move-item',
+    disabled: !can_edit
+  },
+  {
+    label: t('study-session.flashcard.menu.delete'),
+    value: 'delete',
+    icon: 'delete',
+    disabled: !can_edit
+  }
 ])
 
 function onSelect(option: DropdownOption) {
@@ -66,6 +84,7 @@ function onSelect(option: DropdownOption) {
     </ui-button>
 
     <h1
+      ref="title"
       data-testid="session-header__title"
       class="truncate text-center text-3xl font-bold text-brown-700"
     >
@@ -73,7 +92,6 @@ function onSelect(option: DropdownOption) {
     </h1>
 
     <ui-dropdown-button
-      v-if="can_edit"
       data-testid="session-header__menu"
       class="justify-self-end"
       trigger-only
@@ -86,6 +104,5 @@ function onSelect(option: DropdownOption) {
       :options="menu_options"
       @select="onSelect"
     />
-    <span v-else data-testid="session-header__menu-spacer" aria-hidden="true" />
   </header>
 </template>

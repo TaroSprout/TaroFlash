@@ -1,23 +1,25 @@
 <script setup lang="ts">
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiProgressBar from '@/components/ui-kit/progress-bar.vue'
-import { computed } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 
 type SessionProgressProps = {
   editing: boolean
   saving: boolean
   current_index: number
   total: number
-  is_cover: boolean
 }
 
 const { current_index, total } = defineProps<SessionProgressProps>()
+
+const root = useTemplateRef('root')
+defineExpose({ root })
 
 const position = computed(() => Math.min(current_index + 1, total))
 </script>
 
 <template>
-  <div data-testid="study-session__progress" class="w-full" :class="{ invisible: is_cover }">
+  <div ref="root" data-testid="study-session__progress" class="w-full">
     <div
       v-if="editing"
       data-testid="study-session__save-status"

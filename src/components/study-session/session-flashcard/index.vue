@@ -10,6 +10,7 @@ import { useCardPreview } from '@/components/study-session/composables/card-prev
 import { useCardEdit } from '@/components/study-session/composables/card-edit'
 import { useActiveCardActions } from '@/components/study-session/composables/card-actions'
 import { useSessionCards } from '@/components/study-session/composables/session-cards'
+import { useCoverIntro } from './use-cover-intro'
 import { useModalRequestClose } from '@/composables/modal'
 import { type Grade } from 'ts-fsrs'
 import { computed, useTemplateRef } from 'vue'
@@ -74,7 +75,15 @@ const { loading } = useSessionCards({
 })
 
 const stage = useTemplateRef('stage')
+const header = useTemplateRef('header')
+const progress = useTemplateRef('progress')
 const flushDeckReviews = useFlushDeckReviews()
+
+useCoverIntro({
+  isCover: () => is_cover.value,
+  title: () => header.value?.title_el,
+  progress: () => progress.value?.root
+})
 
 const can_edit = computed(() => !loading.value && !editing.value && !is_cover.value)
 
@@ -116,6 +125,7 @@ async function onCardReviewed(grade?: Grade) {
       :class="{ 'opacity-0 pointer-events-none': mode !== 'studying' }"
     >
       <session-header
+        ref="header"
         :title="deck.title"
         :can_edit="can_edit"
         :is_cover="is_cover"
@@ -130,11 +140,11 @@ async function onCardReviewed(grade?: Grade) {
         class="flex-1 min-h-0 w-full max-w-117 flex flex-col items-center justify-between"
       >
         <session-progress
+          ref="progress"
           :editing="editing"
           :saving="saving"
           :current_index="current_index"
           :total="cards.length"
-          :is_cover="is_cover"
         />
 
         <card-stage
