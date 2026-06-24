@@ -24,7 +24,7 @@ export function useStudyModal() {
   function _openStudySession(deck: Deck, config_override?: Partial<DeckConfig>) {
     const result = modal.open<SecondaryAction | undefined>(StudySession, {
       backdrop: true,
-      mode: 'mobile-sheet',
+      mode: 'dialog',
       props: { deck, config_override }
     })
 

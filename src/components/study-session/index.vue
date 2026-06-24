@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import SessionFlashcard from './session-flashcard/index.vue'
 import SessionSummary from './session-summary/index.vue'
-import { computed, ref, useTemplateRef } from 'vue'
-import mobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
-import { useI18n } from 'vue-i18n'
+import { computed, ref } from 'vue'
 import { emitStudySfx } from '@/sfx/bus'
 import { provideDeckContext } from './deck-context'
 import { sessionPaneEnter, sessionPaneLeave } from '@/utils/animations/session-pane'
@@ -18,8 +16,6 @@ const { deck, close, config_override } = defineProps<{
   config_override?: Partial<DeckConfig>
 }>()
 
-const { t } = useI18n()
-
 provideDeckContext(
   computed(() => ({
     cover_config: deck.cover_config,
@@ -27,28 +23,9 @@ provideDeckContext(
   }))
 )
 
-// When additional study modes are added, swap SessionFlashcard for a computed
-// that maps deck.study_config?.study_mode to the appropriate mode component.
-const mode_ref = useTemplateRef<InstanceType<typeof SessionFlashcard>>('mode')
-const outlet = ref<HTMLElement>()
-
 const phase = ref<Phase>('studying')
 const results = ref<CardReviewResult[]>([])
 const secondary_action = ref<SecondaryAction>('study-all')
-
-const header_title = computed(() =>
-  phase.value === 'summary' ? t('session-summary.heading') : deck?.title
-)
-
-function onCloseButtonClicked() {
-  if (phase.value === 'studying' && mode_ref.value?.requestClose) {
-    // The mode component decides how to handle the close request.
-    mode_ref.value.requestClose()
-    return
-  }
-
-  close()
-}
 
 function onSessionFinished(
   session_results: CardReviewResult[],
@@ -67,35 +44,28 @@ function onSessionFinished(
 }
 
 function onPaneLeave(el: Element, done: () => void) {
-  sessionPaneLeave(outlet.value)(el, done)
+  sessionPaneLeave(el, done)
 }
 
 function onPaneEnter(el: Element, done: () => void) {
   if (phase.value !== 'summary') return done()
-  sessionPaneEnter(outlet.value)(el, done)
+  sessionPaneEnter(el, done)
 }
 </script>
 
 <template>
-  <mobile-sheet
+  <div
     data-testid="study-session"
-    class="sm:max-w-170!"
     :data-theme="deck?.cover_config?.theme ?? 'purple-500'"
-    @close="onCloseButtonClicked"
+    class="relative w-full max-w-170 h-170 overflow-hidden rounded-8 bg-brown-300 shadow-lg bgx-dot-grid bgx-size-15 bgx-opacity-25 bgx-color-brown-500"
   >
-    <template #header-content>
-      <h1 data-testid="study-session__title" class="text-5xl text-white">{{ header_title }}</h1>
-    </template>
-
     <div
-      ref="outlet"
       data-testid="study-session__outlet"
-      class="relative w-full overflow-hidden [--session-padding:2rem]"
+      class="relative w-full h-full overflow-hidden [--session-padding:2rem]"
     >
       <transition :css="false" mode="out-in" @leave="onPaneLeave" @enter="onPaneEnter">
         <session-flashcard
           v-if="phase === 'studying'"
-          ref="mode"
           key="studying"
           :deck="deck"
           :config_override="config_override"
@@ -111,5 +81,5 @@ function onPaneEnter(el: Element, done: () => void) {
         />
       </transition>
     </div>
-  </mobile-sheet>
+  </div>
 </template>

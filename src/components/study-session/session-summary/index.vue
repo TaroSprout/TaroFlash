@@ -26,10 +26,10 @@ const secondary_label = computed(() => t(`session-summary.${secondary_action}-bu
 </script>
 
 <template>
-  <div data-testid="session-summary" class="flex flex-col w-full">
+  <div data-testid="session-summary" class="h-full w-full flex flex-col p-(--session-padding)">
     <div
       data-testid="session-summary__body"
-      class="flex flex-col gap-6 px-(--session-padding) py-6"
+      class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-6"
     >
       <p data-testid="session-summary__score" class="text-base text-brown-500 dark:text-grey-400">
         {{ t('session-summary.score-label', { recalled: summary.score, total: summary.total }) }}
@@ -41,10 +41,7 @@ const secondary_label = computed(() => t(`session-summary.${secondary_action}-bu
       <leech-section v-if="summary.leeches.length > 0" :leeches="summary.leeches" />
     </div>
 
-    <div
-      data-testid="session-summary__actions"
-      class="w-full px-(--session-padding) pb-6 flex gap-2 items-center"
-    >
+    <div data-testid="session-summary__actions" class="w-full pt-6 flex gap-2 items-center">
       <ui-button
         data-testid="session-summary__close"
         data-theme="blue-500"

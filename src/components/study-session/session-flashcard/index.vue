@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SessionHeader from './session-header.vue'
+import SessionProgress from './session-progress.vue'
 import CardStage from './card-stage.vue'
 import StudyEditFooter from './study-edit-footer.vue'
 import RatingButtons from './rating-buttons.vue'
@@ -107,58 +108,69 @@ async function onCardReviewed(grade?: Grade) {
 </script>
 
 <template>
-  <div data-testid="session-flashcard" class="relative w-full">
+  <div data-testid="session-flashcard" class="relative h-full w-full">
     <div
-      data-testid="study-session__body"
+      data-testid="study-session__main"
       :data-theme="deck.cover_config?.theme ?? 'purple-500'"
-      class="w-full flex flex-col items-center justify-between gap-4 self-center pb-8 px-(--session-padding)"
+      class="h-full flex flex-col items-center gap-8 p-(--session-padding)"
       :class="{ 'opacity-0 pointer-events-none': mode !== 'studying' }"
     >
       <session-header
-        :editing="editing"
-        :saving="saving"
-        :current_index="current_index"
-        :total="cards.length"
-        :is_cover="is_cover"
+        :title="deck.title"
         :can_edit="can_edit"
+        :is_cover="is_cover"
+        @stop="requestClose"
         @edit="startEdit"
         @move="onMove"
         @delete="onDelete"
       />
 
-      <card-stage
-        ref="stage"
-        :loading="loading"
-        :editing="editing"
-        :active_card="active_card"
-        :current_card_side="current_card_side"
-        :next_card="next_card"
-        :next_card_side="next_card_side"
-        :preview_style="preview_style"
-        @started="startSession"
-        @side-changed="flipCurrentCard"
-        @reviewed="onCardReviewed"
-        @drag-progress="onDragProgress"
-        @next-flipped="onNextCardFlipped"
-        @edit-update="onEditUpdate"
-      />
+      <div
+        data-testid="study-session__body"
+        class="flex-1 min-h-0 w-full max-w-117 flex flex-col items-center justify-between"
+      >
+        <session-progress
+          :editing="editing"
+          :saving="saving"
+          :current_index="current_index"
+          :total="cards.length"
+          :is_cover="is_cover"
+        />
 
-      <rating-buttons
-        v-if="!editing"
-        class="z-10 mt-4"
-        :options="active_card?.preview"
-        :side="current_card_side"
-        @started="startSession"
-        @rated="onRated"
-        @revealed="flipCurrentCard"
-      />
+        <card-stage
+          ref="stage"
+          :loading="loading"
+          :editing="editing"
+          :active_card="active_card"
+          :current_card_side="current_card_side"
+          :next_card="next_card"
+          :next_card_side="next_card_side"
+          :preview_style="preview_style"
+          @started="startSession"
+          @side-changed="flipCurrentCard"
+          @reviewed="onCardReviewed"
+          @drag-progress="onDragProgress"
+          @next-flipped="onNextCardFlipped"
+          @edit-update="onEditUpdate"
+        />
 
-      <study-edit-footer
-        v-else
-        :is_starting_side="is_starting_side"
-        @flip="flipCurrentCard"
-        @done="stopEdit"
-      />
+        <rating-buttons
+          v-if="!editing"
+          class="z-10 w-full"
+          :options="active_card?.preview"
+          :side="current_card_side"
+          @started="startSession"
+          @rated="onRated"
+          @revealed="flipCurrentCard"
+        />
+
+        <study-edit-footer
+          v-else
+          :is_starting_side="is_starting_side"
+          @flip="flipCurrentCard"
+          @done="stopEdit"
+        />
+      </div>
     </div>
 
     <finish-animation v-if="mode === 'completed'" @done="onFinishAnimationDone" />

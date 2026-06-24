@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { type Grade, Rating, type RecordLog } from 'ts-fsrs'
 import { useI18n } from 'vue-i18n'
-import UiTooltip from '@/components/ui-kit/tooltip.vue'
-import { useRatingFormat } from '@/composables/fsrs'
+import UiButton from '@/components/ui-kit/button.vue'
 
 const { t } = useI18n()
-const { getRatingTimeFormat } = useRatingFormat()
 
-const { options, side } = defineProps<{
+const { side } = defineProps<{
   options?: RecordLog
   side: CardSide
 }>()
@@ -24,49 +22,55 @@ function onRatingClicked(grade: Grade) {
 </script>
 
 <template>
-  <div data-testid="rating-buttons" class="flex justify-center gap-2 text-2xl">
-    <template v-if="side === 'back'">
-      <ui-tooltip
-        :text="getRatingTimeFormat(Rating.Again, options, 'short')"
-        element="button"
-        :gap="-12"
+  <div data-testid="rating-buttons" class="w-full">
+    <div v-if="side === 'back'" class="grid w-full grid-cols-2 gap-2">
+      <ui-button
         data-testid="rating-buttons__again"
-        class="text-brown-700 cursor-pointer rounded-full bg-white px-13 py-4 hover:-translate-0.5 hover:shadow-sm transition-all duration-50"
-        static_on_mobile
-        @click="onRatingClicked(Rating.Again)"
+        data-theme="brown-100"
+        size="xl"
+        icon-left="close"
+        full-width
+        class="max-w-78.5"
+        @press="onRatingClicked(Rating.Again)"
       >
         {{ t('study.flashcard.rating.fail-button') }}
-      </ui-tooltip>
+      </ui-button>
 
-      <ui-tooltip
-        :text="getRatingTimeFormat(Rating.Good, options, 'short')"
-        element="button"
-        :gap="-12"
+      <ui-button
         data-testid="rating-buttons__good"
-        class="cursor-pointer rounded-full bg-(--theme-primary) px-13 py-4 text-white hover:-translate-0.5 hover:shadow-sm transition-all duration-50"
-        static_on_mobile
-        @click="onRatingClicked(Rating.Good)"
+        data-theme="blue-500"
+        size="xl"
+        icon-left="check"
+        full-width
+        class="max-w-78.5"
+        @press="onRatingClicked(Rating.Good)"
       >
         {{ t('study.flashcard.rating.pass-button') }}
-      </ui-tooltip>
-    </template>
+      </ui-button>
+    </div>
 
-    <button
+    <ui-button
       v-else-if="side === 'front'"
       data-testid="rating-buttons__show"
-      class="cursor-pointer rounded-full bg-(--theme-primary) px-13 py-4 text-white hover:-translate-0.5 hover:shadow-sm transition-all duration-50"
-      @click="$emit('revealed')"
+      data-theme="blue-500"
+      size="xl"
+      full-width
+      class="mx-auto max-w-78.5"
+      @press="emit('revealed')"
     >
       {{ t('study.flashcard.rating.flip-button') }}
-    </button>
+    </ui-button>
 
-    <button
-      v-else-if="side === 'cover'"
+    <ui-button
+      v-else
       data-testid="rating-buttons__start"
-      class="cursor-pointer rounded-full bg-(--theme-primary) px-13 py-4 text-white hover:-translate-0.5 hover:shadow-sm transition-all duration-50"
-      @click="$emit('started')"
+      data-theme="blue-500"
+      size="xl"
+      full-width
+      class="mx-auto max-w-78.5"
+      @press="emit('started')"
     >
       {{ t('study.flashcard.start-button') }}
-    </button>
+    </ui-button>
   </div>
 </template>
