@@ -12,7 +12,6 @@ export function useStudyModal() {
   async function start(deck: Deck, config_override?: Partial<DeckConfig>) {
     emitSfx('snappy_button_3')
     const action = await _openStudySession(deck, config_override)
-    emitSfx('slide_up')
 
     if (action === 'study-more') {
       await start(deck)
@@ -24,7 +23,7 @@ export function useStudyModal() {
   function _openStudySession(deck: Deck, config_override?: Partial<DeckConfig>) {
     const result = modal.open<SecondaryAction | undefined>(StudySession, {
       backdrop: true,
-      mode: 'dialog',
+      mode: 'popup',
       props: { deck, config_override }
     })
 

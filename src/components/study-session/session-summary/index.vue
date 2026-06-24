@@ -47,6 +47,7 @@ const secondary_label = computed(() => t(`session-summary.${secondary_action}-bu
         data-theme="blue-500"
         full-width
         size="xl"
+        :sfx="{ press: 'slide_up' }"
         @press="emit('action')"
       >
         {{ t('session-summary.close') }}
@@ -56,6 +57,7 @@ const secondary_label = computed(() => t(`session-summary.${secondary_action}-bu
         data-theme="blue-500"
         full-width
         size="xl"
+        :sfx="{ press: 'slide_up' }"
         @press="emit('action', secondary_action)"
       >
         {{ secondary_label }}

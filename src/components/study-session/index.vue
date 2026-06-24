@@ -2,7 +2,7 @@
 import SessionFlashcard from './session-flashcard/index.vue'
 import SessionSummary from './session-summary/index.vue'
 import { computed, ref } from 'vue'
-import { emitStudySfx } from '@/sfx/bus'
+import { emitSfx, emitStudySfx } from '@/sfx/bus'
 import { provideDeckContext } from './deck-context'
 import { sessionPaneEnter, sessionPaneLeave } from '@/utils/animations/session-pane'
 import type { CardReviewResult } from './composables/session-core'
@@ -43,6 +43,12 @@ function onSessionFinished(
   phase.value = 'summary'
 }
 
+/** Early close (close button / backdrop / esc before any review). */
+function onClosed() {
+  emitSfx('snappy_button_5')
+  close()
+}
+
 function onPaneLeave(el: Element, done: () => void) {
   sessionPaneLeave(el, done)
 }
@@ -69,7 +75,7 @@ function onPaneEnter(el: Element, done: () => void) {
           key="studying"
           :deck="deck"
           :config_override="config_override"
-          @closed="close()"
+          @closed="onClosed"
           @finished="onSessionFinished"
         />
         <session-summary
