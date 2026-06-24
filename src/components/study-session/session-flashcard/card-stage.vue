@@ -2,9 +2,10 @@
 import Card from '@/components/card/index.vue'
 import StudyCard from './study-card.vue'
 import StudyCardEdit from './study-card-edit.vue'
-import StudyCardSkeleton from './study-card-skeleton.vue'
-import { computed, useTemplateRef, type StyleValue } from 'vue'
+import { computed, onUnmounted, useTemplateRef, type StyleValue } from 'vue'
+import type { gsap } from 'gsap'
 import { type Grade } from 'ts-fsrs'
+import { coverCardBeforeEnter, coverCardEnter } from '@/utils/animations/session-intro'
 import { useDeckContext } from '../deck-context'
 import { type StudyCard as StudyCardType } from '@/components/study-session/composables/flashcard-session'
 
@@ -35,8 +36,10 @@ defineExpose({ rate })
 const deck_context = useDeckContext()
 const study_card_ref = useTemplateRef('study-card')
 
-const card_view = computed<'skeleton' | 'edit' | 'read'>(() => {
-  if (loading) return 'skeleton'
+// While loading nothing renders in the stage — the cover card rises in (via the
+// transition) once data lands. No separate skeleton: it's just the cover card.
+const card_view = computed<'loading' | 'edit' | 'read'>(() => {
+  if (loading) return 'loading'
   if (editing) return 'edit'
   return 'read'
 })
@@ -45,6 +48,30 @@ const card_view = computed<'skeleton' | 'edit' | 'read'>(() => {
 function rate(grade: Grade) {
   study_card_ref.value?.rate(grade)
 }
+
+// Only the cover card rises in (the modal-open intro). Subsequent cards mount
+// on their starting side, so their enter is a no-op; the before-enter runs
+// before Vue paints the element, which is what keeps the rise flash-free.
+let cover_tween: gsap.core.Tween | undefined
+
+function onCardBeforeEnter(el: Element) {
+  if (current_card_side === 'cover') coverCardBeforeEnter(el as HTMLElement)
+}
+
+function onCardEnter(el: Element, done: () => void) {
+  if (current_card_side !== 'cover') return done()
+  cover_tween = coverCardEnter(el as HTMLElement, done)
+}
+
+// A leave fires when a card is replaced mid-rise; a modal close instead tears
+// the subtree down with no leave hook — so kill the rise tween on unmount too,
+// or a spam close leaves it running (stray slide_up + work on a detached node).
+function onCardLeave(_el: Element, done: () => void) {
+  cover_tween?.kill()
+  done()
+}
+
+onUnmounted(() => cover_tween?.kill())
 </script>
 
 <template>
@@ -66,24 +93,33 @@ function rate(grade: Grade) {
       />
     </div>
 
-    <study-card
-      v-if="card_view === 'read'"
-      ref="study-card"
-      :key="active_card?.id"
-      :card="active_card"
-      :side="current_card_side"
-      :options="active_card?.preview"
-      @started="emit('started')"
-      @side-changed="emit('side-changed')"
-      @reviewed="(grade) => emit('reviewed', grade)"
-      @drag-progress="(progress, duration) => emit('drag-progress', progress, duration)"
-    />
+    <transition
+      :css="false"
+      appear
+      @before-enter="onCardBeforeEnter"
+      @before-appear="onCardBeforeEnter"
+      @enter="onCardEnter"
+      @appear="onCardEnter"
+      @leave="onCardLeave"
+    >
+      <study-card
+        v-if="card_view === 'read'"
+        ref="study-card"
+        :key="active_card?.id"
+        :card="active_card"
+        :side="current_card_side"
+        :options="active_card?.preview"
+        @started="emit('started')"
+        @side-changed="emit('side-changed')"
+        @reviewed="(grade) => emit('reviewed', grade)"
+        @drag-progress="(progress, duration) => emit('drag-progress', progress, duration)"
+      />
+    </transition>
     <study-card-edit
-      v-else-if="card_view === 'edit' && active_card"
+      v-if="card_view === 'edit' && active_card"
       :card="active_card"
       :side="current_card_side === 'back' ? 'back' : 'front'"
       @update="(side, text) => emit('edit-update', side, text)"
     />
-    <study-card-skeleton v-else />
   </div>
 </template>

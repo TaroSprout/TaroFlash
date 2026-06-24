@@ -179,7 +179,7 @@ describe('Session', () => {
   // ── Loading behavior ───────────────────────────────────────────────────────
 
   describe('loading behavior', () => {
-    test('while loading, shows skeleton card without study-card', async () => {
+    test('while loading, the study-card is not yet rendered', async () => {
       // Leave cards_query.data undefined to keep the session in loading mode.
       cardsDataRef.value = undefined
       const deck_data = deck.one({
@@ -191,9 +191,8 @@ describe('Session', () => {
         global: { stubs: { Card: CardStub } }
       })
 
-      // study-card is not yet rendered; plain card skeleton should be shown
+      // The stage is empty while loading; the cover card rises in once data lands.
       expect(wrapper.find('[data-testid="study-card"]').exists()).toBe(false)
-      expect(wrapper.find('[data-testid="study-card-skeleton"]').exists()).toBe(true)
     })
 
     test('after loading, study-card is shown', async () => {
@@ -238,16 +237,16 @@ describe('Session', () => {
   // ── Counter display ────────────────────────────────────────────────────────
 
   describe('counter', () => {
-    test('shows 1/N initially after loading', async () => {
+    test('shows 0/N initially after loading (no card reviewed yet)', async () => {
       const wrapper = makeSession(3)
       await waitForLoad(wrapper)
 
-      const counter = wrapper.find('[data-testid="study-session__counter"]')
-      expect(counter.text()).toContain('1')
+      const counter = wrapper.find('[data-testid="ui-kit-progress-bar__label"]')
+      expect(counter.text()).toContain('0')
       expect(counter.text()).toContain('3')
     })
 
-    test('counter advances to 2/N after reviewing first card via Good button click + transitionend', async () => {
+    test('counter advances to 1/N after reviewing first card via Good button click + transitionend', async () => {
       const wrapper = makeSession(3)
       await waitForLoad(wrapper)
 
@@ -264,7 +263,7 @@ describe('Session', () => {
       fireTransitionEnd(wrapper)
       await flushPromises()
 
-      expect(wrapper.find('[data-testid="study-session__counter"]').text()).toContain('2')
+      expect(wrapper.find('[data-testid="ui-kit-progress-bar__label"]').text()).toContain('1')
     })
   })
 
@@ -296,7 +295,7 @@ describe('Session', () => {
       fireTransitionEnd(wrapper)
       await flushPromises()
 
-      expect(wrapper.find('[data-testid="study-session__counter"]').text()).toContain('2')
+      expect(wrapper.find('[data-testid="ui-kit-progress-bar__label"]').text()).toContain('1')
     })
 
     test('after Good fling, updateReviewByCardId was called', async () => {
@@ -340,7 +339,7 @@ describe('Session', () => {
       fireTransitionEnd(wrapper)
       await flushPromises()
 
-      expect(wrapper.find('[data-testid="study-session__counter"]').text()).toContain('2')
+      expect(wrapper.find('[data-testid="ui-kit-progress-bar__label"]').text()).toContain('1')
     })
 
     test('Again fling plays a sfx', async () => {
@@ -409,7 +408,7 @@ describe('Session', () => {
       fireTransitionEnd(wrapper)
       await flushPromises()
 
-      expect(wrapper.find('[data-testid="study-session__counter"]').text()).toContain('2')
+      expect(wrapper.find('[data-testid="ui-kit-progress-bar__label"]').text()).toContain('1')
     })
 
     test('swipe-left gesture (onEnd dx < -50) → transitionend → counter advances', async () => {
@@ -427,7 +426,7 @@ describe('Session', () => {
       fireTransitionEnd(wrapper)
       await flushPromises()
 
-      expect(wrapper.find('[data-testid="study-session__counter"]').text()).toContain('2')
+      expect(wrapper.find('[data-testid="ui-kit-progress-bar__label"]').text()).toContain('1')
     })
   })
 

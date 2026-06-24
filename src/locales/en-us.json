@@ -286,6 +286,8 @@
   "study.flashcard.start-button": "Start",
   "study.idle.next-session-cta": "Study again {time}",
   "study-session.modal.title": "Studying {deck}",
+  "study-session.close-button": "Close",
+  "study-session.stop-button": "Stop",
   "study-session.finish.text": "Finished!",
   "session-summary.heading": "Session complete",
   "session-summary.score-label": "{recalled} of {total} recalled",

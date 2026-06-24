@@ -25,7 +25,9 @@ export type SummaryData = {
 
 export const BAND_ORDER: MaturityBand[] = ['forming', 'familiar', 'strong', 'mastered']
 
-const LEECH_THRESHOLD = 8
+// Hanzi routinely take many lapses before sticking; 8 flags too aggressively.
+// Bumped to 24 so only genuinely stubborn cards surface. TODO: expose in settings.
+const LEECH_THRESHOLD = 24
 
 /**
  * Ordered, log-spaced return-interval bins — the single source of truth for

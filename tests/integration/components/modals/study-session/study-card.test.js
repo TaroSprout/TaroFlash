@@ -365,11 +365,14 @@ describe('StudyCard', () => {
     await flushPromises()
 
     const { el, callbacks } = getCallbacks()
+    // The cover card carries its own rise-in entrance transform; capture it so
+    // we assert the drag adds nothing, rather than expecting an empty transform.
+    const before = el.style.transform
     callbacks.onMove({ dx: 80, dy: 0 })
     await flushPromises()
 
-    // No transform applied when cover mode ignores drag
-    expect(el.style.transform).toBe('')
+    // Drag is ignored on the cover — onMove leaves the transform unchanged.
+    expect(el.style.transform).toBe(before)
   })
 
   // ── snapBack on cancel ─────────────────────────────────────────────────────

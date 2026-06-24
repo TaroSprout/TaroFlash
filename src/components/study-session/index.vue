@@ -1,19 +1,18 @@
 <script setup lang="ts">
 import SessionFlashcard from './session-flashcard/index.vue'
-import { computed, useTemplateRef } from 'vue'
-import mobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
+import SessionSummary from './session-summary/index.vue'
+import { computed, ref } from 'vue'
+import { emitSfx, emitStudySfx } from '@/sfx/bus'
 import { provideDeckContext } from './deck-context'
+import { sessionPaneEnter, sessionPaneLeave } from '@/utils/animations/session-pane'
 import type { CardReviewResult } from './composables/session-core'
+import type { SecondaryAction } from './composables/study-modal'
 
-export type StudySessionResponse = {
-  results: CardReviewResult[]
-  remaining_due: number
-  study_all_used: boolean
-}
+type Phase = 'studying' | 'summary'
 
 const { deck, close, config_override } = defineProps<{
   deck: Deck
-  close: (response?: StudySessionResponse) => void
+  close: (response?: SecondaryAction) => void
   config_override?: Partial<DeckConfig>
 }>()
 
@@ -24,46 +23,69 @@ provideDeckContext(
   }))
 )
 
-// When additional study modes are added, swap this for a computed that
-// maps deck.study_config?.study_mode to the appropriate mode component.
-const mode_ref = useTemplateRef<InstanceType<typeof SessionFlashcard>>('mode')
-
-function onCloseButtonClicked() {
-  if (mode_ref.value?.requestClose) {
-    // The mode component will decide how to handle the close request.
-    mode_ref.value.requestClose()
-    return
-  }
-
-  close()
-}
+const phase = ref<Phase>('studying')
+const results = ref<CardReviewResult[]>([])
+const secondary_action = ref<SecondaryAction>('study-all')
 
 function onSessionFinished(
-  results: CardReviewResult[],
+  session_results: CardReviewResult[],
   remaining_due: number,
   study_all_used: boolean
 ) {
-  close({ results, remaining_due, study_all_used })
+  results.value = session_results
+  secondary_action.value = study_all_used
+    ? 'study-again'
+    : remaining_due > 0
+      ? 'study-more'
+      : 'study-all'
+
+  emitStudySfx('music_pizz_duo_hi')
+  phase.value = 'summary'
+}
+
+/** Early close (close button / backdrop / esc before any review). */
+function onClosed() {
+  emitSfx('snappy_button_5')
+  close()
+}
+
+function onPaneLeave(el: Element, done: () => void) {
+  sessionPaneLeave(el, done)
+}
+
+function onPaneEnter(el: Element, done: () => void) {
+  if (phase.value !== 'summary') return done()
+  sessionPaneEnter(el, done)
 }
 </script>
 
 <template>
-  <mobile-sheet
+  <div
     data-testid="study-session"
-    class="sm:max-w-170!"
     :data-theme="deck?.cover_config?.theme ?? 'purple-500'"
-    @close="onCloseButtonClicked"
+    class="relative w-full max-w-170 h-170 overflow-hidden rounded-8 bg-brown-300 shadow-lg bgx-dot-grid bgx-size-15 bgx-opacity-25 bgx-color-brown-500"
   >
-    <template #header-content>
-      <h1 class="text-5xl text-white">{{ deck?.title }}</h1>
-    </template>
-
-    <session-flashcard
-      ref="mode"
-      :deck="deck"
-      :config_override="config_override"
-      @closed="close"
-      @finished="onSessionFinished"
-    />
-  </mobile-sheet>
+    <div
+      data-testid="study-session__outlet"
+      class="relative w-full h-full overflow-hidden [--session-padding:2rem]"
+    >
+      <transition :css="false" mode="out-in" @leave="onPaneLeave" @enter="onPaneEnter">
+        <session-flashcard
+          v-if="phase === 'studying'"
+          key="studying"
+          :deck="deck"
+          :config_override="config_override"
+          @closed="onClosed"
+          @finished="onSessionFinished"
+        />
+        <session-summary
+          v-else
+          key="summary"
+          :results="results"
+          :secondary_action="secondary_action"
+          @action="close"
+        />
+      </transition>
+    </div>
+  </div>
 </template>

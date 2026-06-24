@@ -1,23 +1,24 @@
 <script setup lang="ts">
-import SessionCounter from './session-counter.vue'
+import UiButton from '@/components/ui-kit/button.vue'
 import UiDropdownButton, {
   type DropdownOption
 } from '@/components/ui-kit/dropdown-button/index.vue'
-import { computed } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 type SessionHeaderProps = {
-  editing: boolean
-  saving: boolean
-  current_index: number
-  total: number
-  is_cover: boolean
+  title?: string
   can_edit: boolean
+  is_cover: boolean
 }
 
 const { can_edit } = defineProps<SessionHeaderProps>()
 
+const title_el = useTemplateRef('title')
+defineExpose({ title_el })
+
 const emit = defineEmits<{
+  (e: 'stop'): void
   (e: 'edit'): void
   (e: 'move'): void
   (e: 'delete'): void
@@ -26,9 +27,24 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const menu_options = computed<DropdownOption[]>(() => [
-  { label: t('study-session.flashcard.menu.edit'), value: 'edit', icon: 'edit' },
-  { label: t('study-session.flashcard.menu.move'), value: 'move', icon: 'move-item' },
-  { label: t('study-session.flashcard.menu.delete'), value: 'delete', icon: 'delete' }
+  {
+    label: t('study-session.flashcard.menu.edit'),
+    value: 'edit',
+    icon: 'edit',
+    disabled: !can_edit
+  },
+  {
+    label: t('study-session.flashcard.menu.move'),
+    value: 'move',
+    icon: 'move-item',
+    disabled: !can_edit
+  },
+  {
+    label: t('study-session.flashcard.menu.delete'),
+    value: 'delete',
+    icon: 'delete',
+    disabled: !can_edit
+  }
 ])
 
 function onSelect(option: DropdownOption) {
@@ -41,25 +57,48 @@ function onSelect(option: DropdownOption) {
 <template>
   <header
     data-testid="session-header"
-    class="w-full grid items-center justify-items-center grid-cols-[40px_1fr_40px] gap-2"
+    class="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2"
   >
-    <session-counter
-      :editing="editing"
-      :saving="saving"
-      :current_index="current_index"
-      :total="total"
-      :is_cover="is_cover"
-      class="col-start-2"
-    />
+    <ui-button
+      v-if="is_cover"
+      data-testid="session-header__close"
+      data-theme="brown-100"
+      icon-left="close"
+      icon-only
+      rounded-full
+      class="justify-self-start"
+      @press="emit('stop')"
+    >
+      {{ t('study-session.close-button') }}
+    </ui-button>
+    <ui-button
+      v-else
+      data-testid="session-header__stop"
+      data-theme="brown-100"
+      icon-left="stop"
+      rounded-full
+      class="justify-self-start"
+      @press="emit('stop')"
+    >
+      {{ t('study-session.stop-button') }}
+    </ui-button>
+
+    <h1
+      ref="title"
+      data-testid="session-header__title"
+      class="truncate text-center text-3xl font-bold text-brown-700"
+    >
+      {{ title }}
+    </h1>
 
     <ui-dropdown-button
-      v-if="can_edit"
       data-testid="session-header__menu"
+      class="justify-self-end"
       trigger-only
-      trigger-icon="screwdriver-wrench"
+      trigger-icon="edit"
+      variant="ghost"
       position="bottom-end"
-      trigger-theme="brown-200"
-      trigger-theme-dark="stone-700"
+      trigger-theme="brown-100"
       menu-theme="brown-100"
       menu-theme-dark="stone-700"
       :options="menu_options"

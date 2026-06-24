@@ -36,6 +36,8 @@ const { tap } = useStagedTap()
 const playing_value = ref<DropdownOption['value'] | null>(null)
 
 function onOptionTap(option: DropdownOption, e: MouseEvent) {
+  if (option.disabled) return
+
   emitSfx('snappy_button_5')
   playing_value.value = option.value
   tap(() => {
@@ -58,10 +60,11 @@ function onOptionTap(option: DropdownOption, e: MouseEvent) {
         v-for="option in options"
         :key="option.value"
         type="button"
-        class="group/option relative flex w-full cursor-pointer items-center gap-(--btn-gap) overflow-hidden rounded-[calc(var(--btn-border-radius)-6px)] py-(--btn-padding-y) px-[calc(var(--btn-padding-x)-6px)] text-start whitespace-nowrap"
+        :disabled="option.disabled"
+        class="group/option relative flex w-full cursor-pointer items-center gap-(--btn-gap) overflow-hidden rounded-[calc(var(--btn-border-radius)-6px)] py-(--btn-padding-y) px-[calc(var(--btn-padding-x)-6px)] text-start whitespace-nowrap disabled:cursor-default disabled:opacity-40"
         :data-playing="playing_value === option.value || null"
         data-testid="dropdown-button__option"
-        v-sfx="{ hover: TYPE_SFX }"
+        v-sfx="option.disabled ? {} : { hover: TYPE_SFX }"
         @click="onOptionTap(option, $event)"
       >
         <div

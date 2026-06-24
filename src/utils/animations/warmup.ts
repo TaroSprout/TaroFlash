@@ -10,6 +10,7 @@ const scheduleIdle: IdleCallback =
 export function warmupAnimations() {
   gsap.to({ _: 0 }, { _: 1, duration: 0, ease: 'expo.out' })
   gsap.to({ _: 0 }, { _: 1, duration: 0, ease: 'back.out(1.7)' })
+  gsap.to({ _: 0 }, { _: 1, duration: 0, ease: 'power2.out' })
 
   const el = document.createElement('div')
   el.setAttribute('aria-hidden', 'true')
@@ -33,7 +34,6 @@ export function warmupAnimations() {
 
   scheduleIdle(() => {
     void import('@/components/study-session/index.vue')
-    void import('@/components/study-session/session-summary/index.vue')
     void import('@/components/modals/deck-settings/index.vue')
   })
 }

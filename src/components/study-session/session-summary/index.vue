@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import mobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import MasterySection from './mastery-section.vue'
 import NewCardsSection from './new-cards-section.vue'
@@ -11,11 +10,13 @@ import { aggregateSession } from './aggregate'
 import type { CardReviewResult } from '@/components/study-session/composables/session-core'
 import type { SecondaryAction } from '@/components/study-session/composables/study-modal'
 
-const { results, secondary_action, theme, close } = defineProps<{
+const { results, secondary_action } = defineProps<{
   results: CardReviewResult[]
   secondary_action: SecondaryAction
-  theme?: Theme
-  close: (action?: SecondaryAction) => void
+}>()
+
+const emit = defineEmits<{
+  (e: 'action', action?: SecondaryAction): void
 }>()
 
 const { t } = useI18n()
@@ -25,14 +26,11 @@ const secondary_label = computed(() => t(`session-summary.${secondary_action}-bu
 </script>
 
 <template>
-  <mobile-sheet :data-theme="theme ?? 'purple-500'" class="sm:max-w-130!" @close="close()">
-    <template #header-content>
-      <h1 data-testid="session-summary__heading" class="text-5xl text-white">
-        {{ t('session-summary.heading') }}
-      </h1>
-    </template>
-
-    <div data-testid="session-summary__body" class="flex flex-col gap-6 p-6">
+  <div data-testid="session-summary" class="h-full w-full flex flex-col p-(--session-padding)">
+    <div
+      data-testid="session-summary__body"
+      class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-6"
+    >
       <p data-testid="session-summary__score" class="text-base text-brown-500 dark:text-grey-400">
         {{ t('session-summary.score-label', { recalled: summary.score, total: summary.total }) }}
       </p>
@@ -43,27 +41,27 @@ const secondary_label = computed(() => t(`session-summary.${secondary_action}-bu
       <leech-section v-if="summary.leeches.length > 0" :leeches="summary.leeches" />
     </div>
 
-    <template #footer>
-      <div class="w-full p-4 flex gap-2 items-center">
-        <ui-button
-          data-testid="session-summary__close"
-          data-theme="blue-500"
-          full-width
-          size="xl"
-          @press="close()"
-        >
-          {{ t('session-summary.close') }}
-        </ui-button>
-        <ui-button
-          data-testid="session-summary__secondary"
-          data-theme="blue-500"
-          full-width
-          size="xl"
-          @press="close(secondary_action)"
-        >
-          {{ secondary_label }}
-        </ui-button>
-      </div>
-    </template>
-  </mobile-sheet>
+    <div data-testid="session-summary__actions" class="w-full pt-6 flex gap-2 items-center">
+      <ui-button
+        data-testid="session-summary__close"
+        data-theme="blue-500"
+        full-width
+        size="xl"
+        :sfx="{ press: 'slide_up' }"
+        @press="emit('action')"
+      >
+        {{ t('session-summary.close') }}
+      </ui-button>
+      <ui-button
+        data-testid="session-summary__secondary"
+        data-theme="blue-500"
+        full-width
+        size="xl"
+        :sfx="{ press: 'slide_up' }"
+        @press="emit('action', secondary_action)"
+      >
+        {{ secondary_label }}
+      </ui-button>
+    </div>
+  </div>
 </template>

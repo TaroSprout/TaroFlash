@@ -5,19 +5,15 @@ import SessionHeader from '@/components/study-session/session-flashcard/session-
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
-const SessionCounterStub = defineComponent({
-  name: 'SessionCounter',
-  props: ['editing', 'saving', 'current_index', 'total', 'is_cover'],
-  setup() {
-    return () => h('div', { 'data-testid': 'session-counter-stub' })
-  }
-})
+// Captures the options prop so tests can inspect disabled flags.
+let capturedOptions = []
 
 const DropdownButtonStub = defineComponent({
   name: 'UiDropdownButton',
   emits: ['select'],
   props: ['options'],
   setup(props, { emit }) {
+    capturedOptions = props.options ?? []
     return () =>
       h('div', { 'data-testid': 'session-header__menu' }, [
         h(
@@ -50,20 +46,16 @@ const DropdownButtonStub = defineComponent({
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function mountHeader(props) {
+function mountHeader(props = {}) {
+  capturedOptions = []
   return mount(SessionHeader, {
     props: {
-      editing: false,
-      saving: false,
-      current_index: 0,
-      total: 3,
       is_cover: false,
       can_edit: true,
       ...props
     },
     global: {
       stubs: {
-        SessionCounter: SessionCounterStub,
         UiDropdownButton: DropdownButtonStub
       }
     }
@@ -73,61 +65,82 @@ function mountHeader(props) {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('SessionHeader', () => {
-  // ── can_edit controls menu visibility [obligation] ─────────────────────────
+  // ── is_cover: close vs stop button [obligation] ────────────────────────────
 
-  test('renders menu dropdown when can_edit is true [obligation]', () => {
+  test('renders close button when is_cover is true [obligation]', () => {
+    const wrapper = mountHeader({ is_cover: true })
+    expect(wrapper.find('[data-testid="session-header__close"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="session-header__stop"]').exists()).toBe(false)
+  })
+
+  test('renders stop button when is_cover is false [obligation]', () => {
+    const wrapper = mountHeader({ is_cover: false })
+    expect(wrapper.find('[data-testid="session-header__stop"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="session-header__close"]').exists()).toBe(false)
+  })
+
+  test('close button (is_cover=true) emits "stop" on press [obligation]', async () => {
+    const wrapper = mountHeader({ is_cover: true })
+    await wrapper.find('[data-testid="session-header__close"]').trigger('click')
+    expect(wrapper.emitted('stop')).toHaveLength(1)
+  })
+
+  test('stop button (is_cover=false) emits "stop" on press [obligation]', async () => {
+    const wrapper = mountHeader({ is_cover: false })
+    await wrapper.find('[data-testid="session-header__stop"]').trigger('click')
+    expect(wrapper.emitted('stop')).toHaveLength(1)
+  })
+
+  // ── edit menu is ALWAYS rendered [obligation] ──────────────────────────────
+
+  test('edit menu is always rendered when can_edit is true [obligation]', () => {
     const wrapper = mountHeader({ can_edit: true })
-
     expect(wrapper.find('[data-testid="session-header__menu"]').exists()).toBe(true)
   })
 
-  test('does NOT render menu dropdown when can_edit is false [obligation]', () => {
+  test('edit menu is always rendered when can_edit is false [obligation]', () => {
     const wrapper = mountHeader({ can_edit: false })
-
-    expect(wrapper.find('[data-testid="session-header__menu"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="session-header__menu"]').exists()).toBe(true)
   })
 
-  // ── edit option emits edit event [obligation] ──────────────────────────────
+  // ── menu options carry disabled: !can_edit [obligation] ───────────────────
 
-  test('selecting edit option emits "edit" event [obligation]', async () => {
+  test('all three options have disabled=false when can_edit is true [obligation]', () => {
+    mountHeader({ can_edit: true })
+    expect(capturedOptions).toHaveLength(3)
+    expect(capturedOptions.every((o) => o.disabled === false)).toBe(true)
+  })
+
+  test('all three options have disabled=true when can_edit is false [obligation]', () => {
+    mountHeader({ can_edit: false })
+    expect(capturedOptions).toHaveLength(3)
+    expect(capturedOptions.every((o) => o.disabled === true)).toBe(true)
+  })
+
+  // ── menu option events ─────────────────────────────────────────────────────
+
+  test('selecting edit option emits "edit" event', async () => {
     const wrapper = mountHeader({ can_edit: true })
-
     await wrapper.find('[data-testid="dropdown-select-edit"]').trigger('click')
-
     expect(wrapper.emitted('edit')).toHaveLength(1)
   })
 
-  // ── move option emits move event [obligation] ─────────────────────────────
-
-  test('selecting move option emits "move" event [obligation]', async () => {
+  test('selecting move option emits "move" event', async () => {
     const wrapper = mountHeader({ can_edit: true })
-
     await wrapper.find('[data-testid="dropdown-select-move"]').trigger('click')
-
     expect(wrapper.emitted('move')).toHaveLength(1)
   })
 
-  // ── delete option emits delete event [obligation] ─────────────────────────
-
-  test('selecting delete option emits "delete" event [obligation]', async () => {
+  test('selecting delete option emits "delete" event', async () => {
     const wrapper = mountHeader({ can_edit: true })
-
     await wrapper.find('[data-testid="dropdown-select-delete"]').trigger('click')
-
     expect(wrapper.emitted('delete')).toHaveLength(1)
   })
 
-  // ── session-counter is always rendered ────────────────────────────────────
+  // ── title renders ──────────────────────────────────────────────────────────
 
-  test('always renders session-counter', () => {
-    const wrapper = mountHeader({ can_edit: false })
-
-    expect(wrapper.find('[data-testid="session-counter-stub"]').exists()).toBe(true)
-  })
-
-  test('passes is_cover to session-counter', () => {
-    const wrapper = mountHeader({ is_cover: true })
-
-    expect(wrapper.findComponent(SessionCounterStub).props('is_cover')).toBe(true)
+  test('renders title text in header', () => {
+    const wrapper = mountHeader({ title: 'My Deck' })
+    expect(wrapper.find('[data-testid="session-header__title"]').text()).toBe('My Deck')
   })
 })

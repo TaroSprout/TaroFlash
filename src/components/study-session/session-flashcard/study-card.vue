@@ -250,4 +250,26 @@ function toSwipeZone(offset: number) {
   transform: scale(100%);
   opacity: 1;
 }
+
+/* Cover-card entrance. The static `opacity: 0` hides the card the instant the
+   class is in the markup — it does NOT depend on the animation's backwards-fill
+   being sampled on the first frame (which a freshly-inserted element skips,
+   painting its resting state once → the flash). The animation then RESTORES
+   opacity (it outranks the static value while running/filling) and slides it up
+   after the delay; the JS animationend handler drops the class once done. */
+.cover-card-rise {
+  opacity: 0;
+  animation: cover-card-rise 0.1s 0.15s ease-out both;
+}
+
+@keyframes cover-card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 </style>

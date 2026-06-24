@@ -44,11 +44,12 @@ describe('warmupAnimations', () => {
   test('runs gsap priming tweens for the eases used by modal animations', () => {
     warmupAnimations()
 
-    expect(mockGsapTo).toHaveBeenCalledTimes(2)
+    expect(mockGsapTo).toHaveBeenCalledTimes(3)
 
     const eases = mockGsapTo.mock.calls.map((c) => c[1]?.ease)
     expect(eases).toContain('expo.out')
     expect(eases).toContain('back.out(1.7)')
+    expect(eases).toContain('power2.out')
   })
 
   test('mounts a hidden backdrop-filter probe element', () => {
