@@ -143,7 +143,7 @@ async function onCardReviewed(grade?: Grade) {
           ref="progress"
           :editing="editing"
           :saving="saving"
-          :current_index="current_index"
+          :reviewed="current_index"
           :total="cards.length"
         />
 

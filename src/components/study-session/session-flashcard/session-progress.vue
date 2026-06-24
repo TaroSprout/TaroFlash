@@ -1,21 +1,19 @@
 <script setup lang="ts">
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiProgressBar from '@/components/ui-kit/progress-bar.vue'
-import { computed, useTemplateRef } from 'vue'
+import { useTemplateRef } from 'vue'
 
 type SessionProgressProps = {
   editing: boolean
   saving: boolean
-  current_index: number
+  reviewed: number
   total: number
 }
 
-const { current_index, total } = defineProps<SessionProgressProps>()
+const { reviewed, total } = defineProps<SessionProgressProps>()
 
 const root = useTemplateRef('root')
 defineExpose({ root })
-
-const position = computed(() => Math.min(current_index + 1, total))
 </script>
 
 <template>
@@ -34,9 +32,9 @@ const position = computed(() => Math.min(current_index + 1, total))
     <ui-progress-bar
       v-else
       data-theme="blue-500"
-      :value="position"
+      :value="reviewed"
       :max="total"
-      :label="`${position}/${total}`"
+      :label="`${reviewed}/${total}`"
     />
   </div>
 </template>
