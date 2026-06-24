@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/tes
 import { flushPromises } from '@vue/test-utils'
 import { useStudyModal } from '@/components/study-session/composables/study-modal'
 
-// StudySession and SessionComplete are wrapped with defineAsyncComponent inside
+// StudySession and SessionSummary are wrapped with defineAsyncComponent inside
 // the composable, so the component identity doesn't match the raw .vue import.
 // We assert on the wrapper object shape instead.
 const asyncComponentMatcher = expect.objectContaining({ __asyncLoader: expect.any(Function) })
@@ -135,8 +135,11 @@ describe('useStudyModal', () => {
     await startPromise
   })
 
-  test('opens SessionComplete with score and total from session payload', async () => {
-    const sessionPayload = { score: 3, total: 5 }
+  test('opens the session summary with results from the session payload', async () => {
+    const results = [
+      { card_id: 1, is_new: false, before_interval: 1, after_interval: 5, lapses: 0, passed: true }
+    ]
+    const sessionPayload = { results, remaining_due: 0, study_all_used: false }
     const { result: sessionResult, resolve: resolveSession } = makeModalResult()
     const { result: completeResult, resolve: resolveComplete } = makeModalResult()
     mockOpen.mockReturnValueOnce(sessionResult).mockReturnValueOnce(completeResult)
@@ -152,7 +155,7 @@ describe('useStudyModal', () => {
     expect(mockOpen).toHaveBeenNthCalledWith(2, asyncComponentMatcher, {
       backdrop: true,
       mode: 'mobile-sheet',
-      props: { score: 3, total: 5, secondary_action: 'study-all', theme: undefined }
+      props: { results, secondary_action: 'study-all', theme: undefined }
     })
 
     resolveComplete(undefined)

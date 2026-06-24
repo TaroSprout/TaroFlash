@@ -89,15 +89,17 @@ describe('StudySession (index.vue)', () => {
     expect(close).toHaveBeenCalledWith()
   })
 
-  test('session-flashcard `finished` event calls close with {score, total, remaining_due, study_all_used}', async () => {
+  test('session-flashcard `finished` event calls close with {results, remaining_due, study_all_used}', async () => {
     const { wrapper, close } = makeWrapper()
 
-    await wrapper.findComponent({ name: 'SessionFlashcard' }).vm.$emit('finished', 3, 5, 2, true)
+    const results = [
+      { card_id: 1, is_new: false, before_interval: 3, after_interval: 7, lapses: 0, passed: true }
+    ]
+    await wrapper.findComponent({ name: 'SessionFlashcard' }).vm.$emit('finished', results, 2, true)
 
     expect(close).toHaveBeenCalledOnce()
     expect(close).toHaveBeenCalledWith({
-      score: 3,
-      total: 5,
+      results,
       remaining_due: 2,
       study_all_used: true
     })

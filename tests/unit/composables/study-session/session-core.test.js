@@ -288,6 +288,125 @@ describe('session-core — reviewCard (with grade)', () => {
   })
 })
 
+// ── results — obligation tests ────────────────────────────────────────────────
+
+describe('session-core — results (CardReviewResult capture)', () => {
+  test('reviewCard(grade) captures before_interval BEFORE overwriting card state [obligation]', () => {
+    // The central invariant: the before-interval must be the PRIOR scheduled_days,
+    // captured at the moment of review, before FSRS overwrites card.review.
+    const prior_scheduled_days = 10
+    const session = useStudySessionCore({ study_all_cards: true })
+    const c = card.one({
+      traits: 'with_due_review',
+      overrides: {
+        review: {
+          due: new Date(Date.now() - 1000).toISOString(),
+          reps: 3,
+          scheduled_days: prior_scheduled_days,
+          lapses: 0,
+          stability: 1.5,
+          ease: 2.5,
+          interval: 10,
+          learning_steps: 0,
+          state: 2,
+          last_review: new Date(Date.now() - prior_scheduled_days * 86400000).toISOString()
+        }
+      }
+    })
+    session.setCards([c])
+
+    session.reviewCard(Rating.Good)
+
+    const result = session.results.value[0]
+    expect(result).toBeDefined()
+    expect(result.before_interval).toBe(prior_scheduled_days)
+    expect(result.after_interval).not.toBe(prior_scheduled_days)
+  })
+
+  test('is_new is true for a card with no prior review (reps=0) [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const c = makeNewCard({ id: 1, deck_id: 1 })
+    session.setCards([c])
+
+    session.reviewCard(Rating.Good)
+
+    expect(session.results.value[0].is_new).toBe(true)
+  })
+
+  test('is_new is false when card has prior reviews (reps > 0) [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const c = makeReviewCard({ id: 1, deck_id: 1 })
+    session.setCards([c])
+
+    session.reviewCard(Rating.Good)
+
+    expect(session.results.value[0].is_new).toBe(false)
+  })
+
+  test('reviewCard() with no grade (auto-pass) does NOT push a result [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const c = makeNewCard({ id: 1 })
+    session.setCards([c])
+
+    session.reviewCard()
+
+    expect(session.results.value).toHaveLength(0)
+  })
+
+  test('reviewCard(grade) pushes exactly one result per graded review [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const [c1, c2] = [makeNewCard({ id: 1, deck_id: 1 }), makeNewCard({ id: 2, deck_id: 1 })]
+    session.setCards([c1, c2])
+
+    session.reviewCard(Rating.Good)
+    session.reviewCard(Rating.Again)
+
+    expect(session.results.value).toHaveLength(2)
+  })
+
+  test('setCards clears results from a previous session [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const [c1, c2] = [makeNewCard({ id: 1, deck_id: 1 }), makeNewCard({ id: 2, deck_id: 1 })]
+    session.setCards([c1])
+    session.reviewCard(Rating.Good)
+    expect(session.results.value).toHaveLength(1)
+
+    // Start a new session — results must reset
+    session.setCards([c2])
+    expect(session.results.value).toHaveLength(0)
+  })
+
+  test('passed = true for grade Hard [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const c = makeNewCard({ id: 1, deck_id: 1 })
+    session.setCards([c])
+
+    session.reviewCard(Rating.Hard)
+
+    expect(session.results.value[0].passed).toBe(true)
+  })
+
+  test('passed = true for grade Easy [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const c = makeNewCard({ id: 1, deck_id: 1 })
+    session.setCards([c])
+
+    session.reviewCard(Rating.Easy)
+
+    expect(session.results.value[0].passed).toBe(true)
+  })
+
+  test('passed = false for grade Again [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const [c1, c2] = [makeNewCard({ id: 1, deck_id: 1 }), makeNewCard({ id: 2, deck_id: 1 })]
+    session.setCards([c1, c2])
+
+    session.reviewCard(Rating.Again)
+
+    expect(session.results.value[0].passed).toBe(false)
+  })
+})
+
 // ── Computed stats ────────────────────────────────────────────────────────────
 
 describe('session-core — computed stats', () => {

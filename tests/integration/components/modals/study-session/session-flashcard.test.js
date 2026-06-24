@@ -434,7 +434,7 @@ describe('Session', () => {
   // ── Session completion ─────────────────────────────────────────────────────
 
   describe('session completion', () => {
-    test('with 1 card: finished event is emitted with (1, 1) after Good review', async () => {
+    test('with 1 card: finished emits one passed result after Good review', async () => {
       const wrapper = makeSession(1)
       await waitForLoad(wrapper)
 
@@ -447,11 +447,15 @@ describe('Session', () => {
       await flushPromises()
 
       expect(wrapper.emitted('finished')).toHaveLength(1)
-      // [score, total, remaining_due, study_all_used]
-      expect(wrapper.emitted('finished')[0]).toEqual([1, 1, 0, true])
+      // [results, remaining_due, study_all_used]
+      const [results, remaining_due, study_all_used] = wrapper.emitted('finished')[0]
+      expect(results).toHaveLength(1)
+      expect(results[0].passed).toBe(true)
+      expect(remaining_due).toBe(0)
+      expect(study_all_used).toBe(true)
     })
 
-    test('Again rating counts as score 0 in finished event', async () => {
+    test('Again rating yields a failed result', async () => {
       const wrapper = makeSession(1)
       await waitForLoad(wrapper)
 
@@ -464,12 +468,12 @@ describe('Session', () => {
       await flushPromises()
 
       expect(wrapper.emitted('finished')).toHaveLength(1)
-      const [score, total] = wrapper.emitted('finished')[0]
-      expect(score).toBe(0)
-      expect(total).toBe(1)
+      const [results] = wrapper.emitted('finished')[0]
+      expect(results).toHaveLength(1)
+      expect(results[0].passed).toBe(false)
     })
 
-    test('mixed ratings: score counts only Good-rated cards', async () => {
+    test('mixed ratings: only Good-rated cards are marked passed', async () => {
       const wrapper = makeSession(2)
       await waitForLoad(wrapper)
 
@@ -489,9 +493,9 @@ describe('Session', () => {
       await flushPromises()
 
       expect(wrapper.emitted('finished')).toHaveLength(1)
-      const [score, total] = wrapper.emitted('finished')[0]
-      expect(score).toBe(1)
-      expect(total).toBe(2)
+      const [results] = wrapper.emitted('finished')[0]
+      expect(results).toHaveLength(2)
+      expect(results.filter((result) => result.passed)).toHaveLength(1)
     })
   })
 
@@ -648,7 +652,7 @@ describe('Session', () => {
     // requestClose during an active session no longer emits 'finished' directly —
     // it flips mode to 'completed' so the finish animation gets to play, and the
     // animation's @done handler is the single emitter of 'finished'.
-    test('early close with 1 review of 2 cards: total reports cards.length, not reviewed_count', async () => {
+    test('early close after 1 review of 2 cards: results holds only the reviewed card', async () => {
       const wrapper = makeSession(2)
       await waitForLoad(wrapper)
 
@@ -662,8 +666,9 @@ describe('Session', () => {
       wrapper.vm.requestClose()
       await flushPromises()
 
-      const [, total] = wrapper.emitted('finished')[0]
-      expect(total).toBe(2)
+      const [results] = wrapper.emitted('finished')[0]
+      expect(results).toHaveLength(1)
+      expect(results[0].passed).toBe(true)
     })
   })
 
