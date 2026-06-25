@@ -529,6 +529,7 @@
   "deck-view.mobile-footer.new-card": "New card",
   "deck-view.actions.study-all": "Study <span>all</span> cards",
   "deck-view.actions.edit-cards": "Edit Cards",
+  "deck-view.actions.edit-cards-short": "Edit",
   "deck-view.actions.stop-editing": "Stop Editing",
   "deck-view.actions.select-cards": "Select Cards",
   "deck-view.actions.edit-card-appearance": "Edit Card Appearance",

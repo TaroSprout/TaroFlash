@@ -25,6 +25,15 @@ const is_mobile = useMatchMedia('w<md')
 
 const is_editing = computed(() => shell?.mode.value === 'edit')
 const has_due_cards = computed(() => (deck.due_count ?? 0) > 0)
+
+// The horizontal mobile layout is tight, so the edit action drops to a one-word
+// label there. Editing mode only happens at md+, where the full label shows.
+const edit_label = computed(() => {
+  if (is_editing.value) return t('deck-view.actions.stop-editing')
+  return is_mobile.value
+    ? t('deck-view.actions.edit-cards-short')
+    : t('deck-view.actions.edit-cards')
+})
 const edit_options = computed<DropdownOption[]>(() => [
   { label: t('deck-view.actions.select-cards'), value: 'select', icon: 'data-check' },
   {
@@ -83,7 +92,7 @@ function onEditOption(option: DropdownOption) {
       </ui-button>
     </div>
 
-    <div data-testid="deck-hero__edit-action" class="flex-1 min-w-0">
+    <div data-testid="deck-hero__edit-action" class="shrink-0 md:w-full">
       <ui-dropdown-button
         data-testid="overview-panel__settings-button"
         :options="edit_options"
@@ -96,7 +105,7 @@ function onEditOption(option: DropdownOption) {
         @click="onToggleEditCards"
         @select="onEditOption"
       >
-        {{ is_editing ? t('deck-view.actions.stop-editing') : t('deck-view.actions.edit-cards') }}
+        {{ edit_label }}
       </ui-dropdown-button>
     </div>
   </div>
