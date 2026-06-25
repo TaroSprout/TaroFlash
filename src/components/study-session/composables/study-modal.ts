@@ -10,7 +10,7 @@ export function useStudyModal() {
   const modal = useModal()
 
   async function start(deck: Deck, config_override?: Partial<DeckConfig>) {
-    emitSfx('snappy_button_3')
+    emitSfx('generic_notification_9')
     const action = await _openStudySession(deck, config_override)
 
     if (action === 'study-more') {
