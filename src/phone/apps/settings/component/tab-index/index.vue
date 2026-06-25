@@ -55,7 +55,7 @@ function onNavigate(value: TabIndexNavValue) {
     >
       <div
         data-testid="tab-index__nav-list"
-        class="flex flex-col rounded-4 bg-input overflow-hidden"
+        class="flex flex-col rounded-4 bg-input dark:bg-stone-700 overflow-hidden"
       >
         <ui-tappable
           v-for="entry in group.entries"
