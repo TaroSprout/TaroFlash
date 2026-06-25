@@ -71,7 +71,7 @@ onMounted(preloadDeckModes)
       :class="
         view_state === 'empty'
           ? 'xl:flex xl:flex-col xl:h-[calc(100dvh-var(--nav-height))]'
-          : 'pb-4'
+          : 'pb-[calc(1rem+var(--mobile-dock-height,0px))]'
       "
     >
       <div
