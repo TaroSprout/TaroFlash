@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // imports
-import { computed } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import Card from '@/components/card/index.vue'
 import ImageUploader from '@/components/card/image-uploader.vue'
 import TextEditor from '@/components/card/text-editor.vue'
@@ -49,11 +49,17 @@ const attributes = computed(() => card_attributes[side])
 // The text-editor is uncontrolled, so it only seeds `content` on mount — keying
 // it by card + side remounts it whenever either changes (flip, prev/next).
 const editor_key = computed(() => `${card_key ?? card?.id}-${side}`)
+
+// Surface the image uploader's controls so a host (the mobile editor's menu)
+// can drive add/remove for the current face. Null when there's no image layer.
+const uploader = useTemplateRef('uploader')
+defineExpose({ uploader })
 </script>
 
 <template>
   <image-uploader
     v-if="with_images && card"
+    ref="uploader"
     :card="card"
     :side="side"
     :card_attributes="card_attributes"

@@ -1,4 +1,4 @@
-import { computed, ref, type InjectionKey } from 'vue'
+import { computed, ref, shallowRef, type InjectionKey } from 'vue'
 import { emitSfx } from '@/sfx/bus'
 import type { CardListController } from '@/views/deck/composables'
 
@@ -7,6 +7,10 @@ export type MobileCardEditor = ReturnType<typeof useMobileCardEditor>
 export const mobileCardEditorKey = Symbol('mobileCardEditor') as InjectionKey<MobileCardEditor>
 
 type CardSide = 'front' | 'back'
+
+// Add/remove image handlers for the active face, registered by the stage (which
+// owns the uploader) and consumed by the header menu.
+export type ImageControls = { openPicker: () => void; onRemove: () => void }
 
 /**
  * Drives the deck view's focused single-card editor — the mobile-only surface
@@ -27,11 +31,18 @@ export function useMobileCardEditor(controller: CardListController) {
   const open = ref(false)
   const cursor_client_id = ref<string | null>(null)
   const side = ref<CardSide>('front')
+  const image_controls = shallowRef<ImageControls | null>(null)
 
   const index = computed(() => cards.value.findIndex((c) => c.client_id === cursor_client_id.value))
   const current = computed(() => (index.value >= 0 ? cards.value[index.value] : undefined))
   const has_prev = computed(() => index.value > 0)
   const has_next = computed(() => index.value >= 0 && index.value < cards.value.length - 1)
+
+  const has_image = computed(() => {
+    const card = current.value
+    if (!card) return false
+    return side.value === 'front' ? !!card.front_image_path : !!card.back_image_path
+  })
 
   /** Open the editor focused on `client_id`, or the first card when omitted. */
   function open_at(client_id?: string) {
@@ -120,6 +131,8 @@ export function useMobileCardEditor(controller: CardListController) {
     index,
     has_prev,
     has_next,
+    has_image,
+    image_controls,
     card_attributes: controller.card_attributes,
     saving: controller.saving,
     open_at,

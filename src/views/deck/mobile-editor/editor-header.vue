@@ -9,17 +9,40 @@ import { mobileCardEditorKey } from './use-mobile-card-editor'
 
 const { t } = useI18n()
 
-const { index, cards, saving, close, moveCard, deleteCard } = inject(mobileCardEditorKey)!
+const { index, cards, saving, has_image, image_controls, close, moveCard, deleteCard } =
+  inject(mobileCardEditorKey)!
 
 const position = computed(() => ({ index: index.value + 1, total: cards.value.length }))
 
-const menu_options = computed<DropdownOption[]>(() => [
-  { label: t('deck-view.mobile-editor.move-card'), value: 'move', icon: 'move-item' },
-  { label: t('deck-view.mobile-editor.delete-card'), value: 'delete', icon: 'delete' }
-])
+const menu_options = computed<DropdownOption[]>(() => {
+  const image: DropdownOption[] = !image_controls.value
+    ? []
+    : has_image.value
+      ? [
+          {
+            label: t('deck-view.mobile-editor.replace-image'),
+            value: 'image-add',
+            icon: 'add-image'
+          },
+          {
+            label: t('deck-view.mobile-editor.remove-image'),
+            value: 'image-remove',
+            icon: 'remove-image'
+          }
+        ]
+      : [{ label: t('deck-view.mobile-editor.add-image'), value: 'image-add', icon: 'add-image' }]
+
+  return [
+    ...image,
+    { label: t('deck-view.mobile-editor.move-card'), value: 'move', icon: 'move-item' },
+    { label: t('deck-view.mobile-editor.delete-card'), value: 'delete', icon: 'delete' }
+  ]
+})
 
 function onMenuSelect(option: DropdownOption) {
-  if (option.value === 'move') moveCard()
+  if (option.value === 'image-add') image_controls.value?.openPicker()
+  else if (option.value === 'image-remove') image_controls.value?.onRemove()
+  else if (option.value === 'move') moveCard()
   else if (option.value === 'delete') deleteCard()
 }
 </script>
@@ -56,7 +79,7 @@ function onMenuSelect(option: DropdownOption) {
       <ui-dropdown-button
         data-testid="mobile-card-editor__menu"
         trigger-only
-        trigger-icon="edit"
+        trigger-icon="pencil"
         variant="ghost"
         position="bottom-end"
         trigger-theme="brown-100"

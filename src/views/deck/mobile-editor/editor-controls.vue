@@ -35,6 +35,7 @@ const { has_prev, has_next, flip, prev, next } = inject(mobileCardEditorKey)!
       icon-left="card-flip"
       full-width
       size="xl"
+      :sfx="{ tap_pre: 'snappy_button_5' }"
       @press="flip"
     >
       {{ t('deck-view.mobile-editor.flip-button') }}

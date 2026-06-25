@@ -14,6 +14,7 @@ import { TYPE_SFX } from '@/sfx/config'
 import { type SfxOptions } from '@/sfx/directive'
 import { playButtonTap } from '@/utils/animations/button-tap'
 import { bytesToMbLabel } from '@/utils/file-size'
+import { useMatchMedia } from '@/composables/ui/media-query'
 
 type ImageUploaderProps = {
   card: Card
@@ -62,10 +63,17 @@ const {
   onPointerLeave
 } = useFaceImageUpload({
   card: () => card,
-  side,
+  side: () => side,
   fileInput,
   rootEl: () => cardRef.value?.$el as HTMLElement | undefined
 })
+
+// Touch can't hover, so the hover-reveal add button is unreachable — and its
+// invisible hit area would otherwise swallow taps meant for the editor. Coarse
+// pointers add/replace images through the card menu instead.
+const is_coarse = useMatchMedia('coarse')
+
+defineExpose({ openPicker, onRemove })
 
 const layout = computed(
   () => card_attributes[side]?.image_layout ?? CARD_ATTRIBUTES_DEFAULTS.image_layout
@@ -152,7 +160,7 @@ function onAddClick() {
     </div>
 
     <ui-tooltip
-      v-if="!has_image && can_upload && !disabled && !dragging"
+      v-if="!has_image && can_upload && !disabled && !dragging && !is_coarse"
       element="button"
       type="button"
       :text="t('deck-view.card-editor.list-item.upload-image-button')"
