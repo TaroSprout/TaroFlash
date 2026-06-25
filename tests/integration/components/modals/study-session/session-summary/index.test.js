@@ -1,198 +1,164 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
+import { defineComponent, h, ref, computed } from 'vue'
 import SessionSummary from '@/components/study-session/session-summary/index.vue'
+import { studyViewportKey } from '@/components/study-session/viewport-context'
+import { deck } from '../../../../../fixtures/deck'
+
+// ── Stubs ─────────────────────────────────────────────────────────────────────
+
+// Stub session-header to control @stop emission and check show_menu/title
+const SessionHeaderStub = defineComponent({
+  name: 'SessionHeader',
+  props: ['title', 'is_cover', 'show_menu'],
+  emits: ['stop'],
+  setup(props, { emit }) {
+    return () =>
+      h(
+        'div',
+        { 'data-testid': 'session-header-stub', 'data-show-menu': String(props.show_menu) },
+        [h('button', { 'data-testid': 'header-stop-btn', onClick: () => emit('stop') }, 'X')]
+      )
+  }
+})
+
+// Stub stat-tile so we don't need to provide viewport for it
+const StatTileStub = defineComponent({
+  name: 'StatTile',
+  props: ['summary'],
+  setup() {
+    return () => h('div', { 'data-testid': 'stat-tile-stub' })
+  }
+})
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
-/**
- * Build a minimal CardReviewResult. Only the fields aggregateSession uses
- * are required; everything else defaults to a safe value.
- */
 function makeResult(overrides = {}) {
   return {
     card_id: 1,
     front_text: 'What is Vue?',
     is_new: false,
-    before_interval: 0,
-    after_interval: 1,
+    before_interval: 10,
+    after_interval: 20,
     lapses: 0,
     passed: true,
     ...overrides
   }
 }
 
-/** Mount SessionSummary with full required props. */
-function mountSummary({ results = [], secondary_action = 'study-more' } = {}) {
+function makeDeck(overrides = {}) {
+  return deck.one({ overrides: { title: 'My Test Deck', ...overrides } })
+}
+
+function mountSummary({ results = [], deck_data = makeDeck() } = {}) {
   return mount(SessionSummary, {
-    props: { results, secondary_action }
+    props: { deck: deck_data, results },
+    global: {
+      stubs: {
+        SessionHeader: SessionHeaderStub,
+        StatTile: StatTileStub
+      },
+      provide: {
+        // Provide the viewport injection so useStudyViewport() doesn't throw
+        [studyViewportKey]: computed(() => 'desktop')
+      }
+    }
   })
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('SessionSummary (index.vue)', () => {
-  // ── Score line ──────────────────────────────────────────────────────────────
+  // ── Structure ───────────────────────────────────────────────────────────────
 
-  describe('score line', () => {
-    test('shows passed count in score line', () => {
-      const results = [
-        makeResult({ card_id: 1, passed: true }),
-        makeResult({ card_id: 2, passed: false }),
-        makeResult({ card_id: 3, passed: true })
-      ]
-      const wrapper = mountSummary({ results })
-      const text = wrapper.find('[data-testid="session-summary__score"]').text()
-      expect(text).toContain('2')
-    })
-
-    test('shows total in score line', () => {
-      const results = [makeResult({ card_id: 1 }), makeResult({ card_id: 2 })]
-      const wrapper = mountSummary({ results })
-      const text = wrapper.find('[data-testid="session-summary__score"]').text()
-      expect(text).toContain('2')
-    })
-
-    test('score line renders when results is empty', () => {
-      const wrapper = mountSummary({ results: [] })
-      expect(wrapper.find('[data-testid="session-summary__score"]').exists()).toBe(true)
-    })
+  test('renders session-summary root', () => {
+    const wrapper = mountSummary()
+    expect(wrapper.find('[data-testid="session-summary"]').exists()).toBe(true)
   })
 
-  // ── Section visibility ──────────────────────────────────────────────────────
-
-  describe('mastery-section visibility', () => {
-    test('renders mastery section when reinforced (non-new) cards exist', () => {
-      const results = [makeResult({ is_new: false, before_interval: 5, after_interval: 10 })]
-      const wrapper = mountSummary({ results })
-      expect(wrapper.find('[data-testid="session-summary__mastery"]').exists()).toBe(true)
-    })
-
-    test('hides mastery section when all cards are new', () => {
-      const results = [makeResult({ is_new: true })]
-      const wrapper = mountSummary({ results })
-      expect(wrapper.find('[data-testid="session-summary__mastery"]').exists()).toBe(false)
-    })
-
-    test('hides mastery section when results is empty', () => {
-      const wrapper = mountSummary({ results: [] })
-      expect(wrapper.find('[data-testid="session-summary__mastery"]').exists()).toBe(false)
-    })
+  test('renders session-summary__hero section', () => {
+    const wrapper = mountSummary()
+    expect(wrapper.find('[data-testid="session-summary__hero"]').exists()).toBe(true)
   })
 
-  describe('new-cards-section visibility', () => {
-    test('renders new-cards section when new cards exist', () => {
-      const results = [makeResult({ is_new: true })]
-      const wrapper = mountSummary({ results })
-      expect(wrapper.find('[data-testid="session-summary__new"]').exists()).toBe(true)
-    })
-
-    test('hides new-cards section when no new cards', () => {
-      const results = [makeResult({ is_new: false })]
-      const wrapper = mountSummary({ results })
-      expect(wrapper.find('[data-testid="session-summary__new"]').exists()).toBe(false)
-    })
-
-    test('hides new-cards section when results is empty', () => {
-      const wrapper = mountSummary({ results: [] })
-      expect(wrapper.find('[data-testid="session-summary__new"]').exists()).toBe(false)
-    })
+  test('renders session-summary__icon', () => {
+    const wrapper = mountSummary()
+    expect(wrapper.find('[data-testid="session-summary__icon"]').exists()).toBe(true)
   })
 
-  describe('timeline-section visibility', () => {
-    test('renders timeline section when there is at least one result', () => {
-      const results = [makeResult()]
-      const wrapper = mountSummary({ results })
-      expect(wrapper.find('[data-testid="session-summary__timeline"]').exists()).toBe(true)
-    })
-
-    test('hides timeline section when results is empty', () => {
-      const wrapper = mountSummary({ results: [] })
-      expect(wrapper.find('[data-testid="session-summary__timeline"]').exists()).toBe(false)
-    })
+  test('renders session-summary__title', () => {
+    const wrapper = mountSummary()
+    expect(wrapper.find('[data-testid="session-summary__title"]').exists()).toBe(true)
   })
 
-  describe('leech-section visibility', () => {
-    test('renders leech section when a card has !passed && lapses >= 24 && front_text', () => {
-      const results = [
-        makeResult({ card_id: 99, front_text: 'Hard card', lapses: 24, passed: false })
-      ]
-      const wrapper = mountSummary({ results })
-      expect(wrapper.find('[data-testid="session-summary__leech"]').exists()).toBe(true)
-    })
+  // ── Header: deck title + show_menu=false [obligation] ─────────────────────
 
-    test('hides leech section when lapses < 24', () => {
-      const results = [makeResult({ lapses: 23, passed: false, front_text: 'Card' })]
-      const wrapper = mountSummary({ results })
-      expect(wrapper.find('[data-testid="session-summary__leech"]').exists()).toBe(false)
-    })
-
-    test('hides leech section when passed is true even with high lapses', () => {
-      const results = [makeResult({ lapses: 24, passed: true, front_text: 'Card' })]
-      const wrapper = mountSummary({ results })
-      expect(wrapper.find('[data-testid="session-summary__leech"]').exists()).toBe(false)
-    })
-
-    test('hides leech section when front_text is missing', () => {
-      const results = [makeResult({ lapses: 24, passed: false, front_text: undefined })]
-      const wrapper = mountSummary({ results })
-      expect(wrapper.find('[data-testid="session-summary__leech"]').exists()).toBe(false)
-    })
-
-    test('hides leech section when results is empty', () => {
-      const wrapper = mountSummary({ results: [] })
-      expect(wrapper.find('[data-testid="session-summary__leech"]').exists()).toBe(false)
-    })
+  test('session-header receives deck title [obligation]', () => {
+    const wrapper = mountSummary({ deck_data: makeDeck({ title: 'Kanji N3' }) })
+    const header = wrapper.find('[data-testid="session-header-stub"]')
+    // The stub forwards props — title is passed as a DOM attr in the stub
+    expect(wrapper.findComponent({ name: 'SessionHeader' }).props('title')).toBe('Kanji N3')
   })
 
-  // ── Close button — emits action with no payload [obligation] ────────────────
-
-  describe('close button', () => {
-    test('pressing close button emits "action" with no argument [obligation]', async () => {
-      const wrapper = mountSummary()
-      await wrapper.find('[data-testid="session-summary__close"]').trigger('click')
-      expect(wrapper.emitted('action')).toHaveLength(1)
-      expect(wrapper.emitted('action')[0][0]).toBeUndefined()
-    })
+  test('session-header receives show_menu=false [obligation]', () => {
+    const wrapper = mountSummary()
+    const header = wrapper.find('[data-testid="session-header-stub"]')
+    expect(header.attributes('data-show-menu')).toBe('false')
   })
 
-  // ── Secondary button — emits action with secondary_action payload [obligation]
+  // ── Header X → emits close [obligation] ───────────────────────────────────
 
-  describe('secondary button', () => {
-    test('pressing secondary button emits "action" with secondary_action value [obligation]', async () => {
-      const wrapper = mountSummary({ secondary_action: 'study-more' })
-      await wrapper.find('[data-testid="session-summary__secondary"]').trigger('click')
-      expect(wrapper.emitted('action')).toHaveLength(1)
-      expect(wrapper.emitted('action')[0][0]).toBe('study-more')
-    })
-
-    test('study-more label text', () => {
-      const wrapper = mountSummary({ secondary_action: 'study-more' })
-      expect(wrapper.find('[data-testid="session-summary__secondary"]').text()).toBe('Study more')
-    })
-
-    test('study-all label text', () => {
-      const wrapper = mountSummary({ secondary_action: 'study-all' })
-      expect(wrapper.find('[data-testid="session-summary__secondary"]').text()).toBe('Study all')
-    })
-
-    test('study-again label text', () => {
-      const wrapper = mountSummary({ secondary_action: 'study-again' })
-      expect(wrapper.find('[data-testid="session-summary__secondary"]').text()).toBe('Study again')
-    })
+  test('header @stop (X button) emits close [obligation]', async () => {
+    const wrapper = mountSummary()
+    await wrapper.find('[data-testid="header-stop-btn"]').trigger('click')
+    expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
-  // ── Mixed results ───────────────────────────────────────────────────────────
+  // ── Score blurb: recalled/total pill spans [obligation] ──────────────────
 
-  test('renders all sections when results include new, reinforced, and leech cards', () => {
+  test('score-recalled span shows correct passed count [obligation]', () => {
     const results = [
-      makeResult({ card_id: 1, is_new: true }),
-      makeResult({ card_id: 2, is_new: false, before_interval: 5, after_interval: 10 }),
-      makeResult({ card_id: 3, front_text: 'Leech card', lapses: 24, passed: false })
+      makeResult({ card_id: 1, passed: true }),
+      makeResult({ card_id: 2, passed: false }),
+      makeResult({ card_id: 3, passed: true })
     ]
     const wrapper = mountSummary({ results })
-    expect(wrapper.find('[data-testid="session-summary__new"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="session-summary__mastery"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="session-summary__timeline"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="session-summary__leech"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="session-summary__score-recalled"]').text()).toBe('2')
+  })
+
+  test('score-total span shows total count [obligation]', () => {
+    const results = [makeResult({ card_id: 1 }), makeResult({ card_id: 2 })]
+    const wrapper = mountSummary({ results })
+    expect(wrapper.find('[data-testid="session-summary__score-total"]').text()).toBe('2')
+  })
+
+  test('score-recalled renders with 0 when no results', () => {
+    const wrapper = mountSummary({ results: [] })
+    expect(wrapper.find('[data-testid="session-summary__score-recalled"]').text()).toBe('0')
+    expect(wrapper.find('[data-testid="session-summary__score-total"]').text()).toBe('0')
+  })
+
+  // ── Stat tile rendered [obligation] ───────────────────────────────────────
+
+  test('renders the stat-tile stub [obligation]', () => {
+    const wrapper = mountSummary()
+    expect(wrapper.find('[data-testid="stat-tile-stub"]').exists()).toBe(true)
+  })
+
+  // ── Footer close button emits close [obligation] ──────────────────────────
+
+  test('close button emits close event [obligation]', async () => {
+    const wrapper = mountSummary()
+    await wrapper.find('[data-testid="session-summary__close"]').trigger('click')
+    expect(wrapper.emitted('close')).toHaveLength(1)
+  })
+
+  test('both header X and footer close button emit close independently', async () => {
+    const wrapper = mountSummary()
+
+    await wrapper.find('[data-testid="header-stop-btn"]').trigger('click')
+    await wrapper.find('[data-testid="session-summary__close"]').trigger('click')
+
+    expect(wrapper.emitted('close')).toHaveLength(2)
   })
 })
