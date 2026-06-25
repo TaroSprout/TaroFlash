@@ -25,7 +25,7 @@ const placeholder = computed(() =>
       :card_key="current.client_id"
       :card_attributes="card_attributes"
       :placeholder="placeholder"
-      size="lg"
+      size="xl"
       input_testid="mobile-card-editor__input"
       @update="update"
     ></face-editor>
