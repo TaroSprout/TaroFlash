@@ -28,7 +28,7 @@ const nav_groups = computed<NavGroup[]>(() => [
   {
     key: 'appearance',
     heading: t('deck.settings-modal.index.general-heading'),
-    entries: [{ value: 'design', icon: 'design-services' }]
+    entries: [{ value: 'design', icon: 'paint-brush' }]
   },
   {
     key: 'study',

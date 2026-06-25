@@ -24,14 +24,14 @@ const nav_groups = computed<NavGroup[]>(() => [
     key: 'account',
     heading: t('settings.index.account-heading'),
     entries: [
-      { value: 'profile', icon: 'id-card' },
-      { value: 'subscription', icon: 'moon-stars' }
+      { value: 'profile', icon: 'user-sticker-square' },
+      { value: 'subscription', icon: 'piggy-bank' }
     ]
   },
   {
     key: 'app',
     heading: t('settings.index.app-heading'),
-    entries: [{ value: 'app', icon: 'music-note' }]
+    entries: [{ value: 'app', icon: 'screwdriver-wrench' }]
   }
 ])
 
