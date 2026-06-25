@@ -74,7 +74,11 @@ onMounted(preloadDeckModes)
           : 'pb-4'
       "
     >
-      <div ref="toolbar" data-testid="deck-view__toolbar" class="sticky top-(--nav-height) z-20">
+      <div
+        ref="toolbar"
+        data-testid="deck-view__toolbar"
+        class="sticky top-(--nav-height) z-20 max-md:hidden"
+      >
         <div
           data-testid="deck-view__toolbar-backing"
           aria-hidden="true"
