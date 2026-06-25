@@ -38,8 +38,32 @@ const position = computed(() => ({ index: index.value + 1, total: cards.value.le
 <template>
   <div
     data-testid="mobile-card-editor"
-    class="flex w-full flex-col items-center gap-4 px-(--dock-px) pt-(--dock-pt) pb-(--dock-pb)"
+    class="flex w-full flex-col gap-4 px-(--dock-px) pt-(--dock-pt) pb-(--dock-pb)"
   >
+    <header
+      data-testid="mobile-card-editor__header"
+      class="grid w-full grid-cols-[1fr_auto_1fr] items-center text-base text-brown-500 dark:text-brown-100"
+    >
+      <ui-button
+        data-testid="mobile-card-editor__done"
+        icon-only
+        icon-left="close"
+        data-theme="brown-200"
+        class="justify-self-start"
+        @press="close"
+      >
+        {{ t('deck-view.mobile-editor.done-button') }}
+      </ui-button>
+
+      <span data-testid="mobile-card-editor__position" class="justify-self-center">
+        {{ t('deck-view.mobile-editor.position', position) }}
+      </span>
+
+      <span v-if="saving" data-testid="mobile-card-editor__saving" class="justify-self-end">
+        {{ t('deck-view.mobile-editor.saving') }}
+      </span>
+    </header>
+
     <div data-testid="mobile-card-editor__stage" class="flex w-full justify-center">
       <face-editor
         v-if="current"
@@ -90,29 +114,6 @@ const position = computed(() => ({ index: index.value + 1, total: cards.value.le
         @press="next"
       >
         {{ t('deck-view.mobile-editor.next-button') }}
-      </ui-button>
-    </div>
-
-    <div
-      data-testid="mobile-card-editor__status"
-      class="flex w-full items-center justify-between text-base text-brown-500 dark:text-brown-100"
-    >
-      <span data-testid="mobile-card-editor__position">
-        {{ t('deck-view.mobile-editor.position', position) }}
-      </span>
-
-      <span v-if="saving" data-testid="mobile-card-editor__saving">
-        {{ t('deck-view.mobile-editor.saving') }}
-      </span>
-
-      <ui-button
-        data-testid="mobile-card-editor__done"
-        icon-left="check"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
-        @press="close"
-      >
-        {{ t('deck-view.mobile-editor.done-button') }}
       </ui-button>
     </div>
   </div>
