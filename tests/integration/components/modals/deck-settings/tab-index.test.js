@@ -53,7 +53,7 @@ const UiTappableStub = defineComponent({
   }
 })
 
-function makeTab() {
+function makeTab(layout = 'desktop') {
   const onDelete = vi.fn()
   const onResetReviews = vi.fn()
   const danger = {
@@ -71,7 +71,7 @@ function makeTab() {
       provide: {
         [deckDangerActionsKey]: danger,
         [deckEditorKey]: editor,
-        [deckSettingsLayoutKey]: computed(() => 'desktop')
+        [deckSettingsLayoutKey]: computed(() => layout)
       },
       stubs: { UiButton: ButtonStub, UiIcon: IconStub, UiTappable: UiTappableStub },
       mocks: { $t: (k) => k }
@@ -83,8 +83,8 @@ function makeTab() {
 describe('TabIndex', () => {
   beforeEach(() => mockEmitSfx.mockClear())
 
-  test('renders both nav groups with all three nav cards', () => {
-    const { wrapper } = makeTab()
+  test('renders both nav groups with two nav cards on desktop (design + study)', () => {
+    const { wrapper } = makeTab('desktop')
     expect(wrapper.find('[data-testid="tab-index"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="tab-index__nav-group--appearance"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="tab-index__nav-group--study"]').exists()).toBe(true)
@@ -94,15 +94,51 @@ describe('TabIndex', () => {
     expect(cards.map((c) => c.attributes('data-value'))).toEqual(['design', 'study'])
   })
 
+  test('appearance group lists only "design" in tablet mode', () => {
+    const { wrapper } = makeTab('tablet')
+    const appearanceCards = wrapper
+      .find('[data-testid="tab-index__nav-group--appearance"]')
+      .findAll('[data-testid="tab-index__nav-card"]')
+    expect(appearanceCards).toHaveLength(1)
+    expect(appearanceCards[0].attributes('data-value')).toBe('design')
+  })
+
+  test('appearance group lists "details" and "design" in sheet mode [obligation]', () => {
+    const { wrapper } = makeTab('sheet')
+    const appearanceCards = wrapper
+      .find('[data-testid="tab-index__nav-group--appearance"]')
+      .findAll('[data-testid="tab-index__nav-card"]')
+    expect(appearanceCards).toHaveLength(2)
+    expect(appearanceCards[0].attributes('data-value')).toBe('details')
+    expect(appearanceCards[1].attributes('data-value')).toBe('design')
+  })
+
+  test('"details" nav entry absent in tablet/desktop (sheet-only) [obligation]', () => {
+    const { wrapper: tabletWrapper } = makeTab('tablet')
+    expect(
+      tabletWrapper.find('[data-testid="tab-index__nav-card"][data-value="details"]').exists()
+    ).toBe(false)
+    const { wrapper: desktopWrapper } = makeTab('desktop')
+    expect(
+      desktopWrapper.find('[data-testid="tab-index__nav-card"][data-value="details"]').exists()
+    ).toBe(false)
+  })
+
   test('emits navigate with the clicked entry value', async () => {
-    const { wrapper } = makeTab()
+    const { wrapper } = makeTab('desktop')
     const designCard = wrapper.find('[data-testid="tab-index__nav-card"][data-value="design"]')
     await designCard.trigger('click')
     expect(wrapper.emitted('navigate')).toEqual([['design']])
   })
 
+  test('emits navigate("details") when details card clicked in sheet mode [obligation]', async () => {
+    const { wrapper } = makeTab('sheet')
+    await wrapper.find('[data-testid="tab-index__nav-card"][data-value="details"]').trigger('click')
+    expect(wrapper.emitted('navigate')).toEqual([['details']])
+  })
+
   test('plays snappy_button_5 sfx on nav click', async () => {
-    const { wrapper } = makeTab()
+    const { wrapper } = makeTab('desktop')
     await wrapper.find('[data-testid="tab-index__nav-card"][data-value="design"]').trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
   })

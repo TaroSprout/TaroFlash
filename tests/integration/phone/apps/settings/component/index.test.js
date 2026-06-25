@@ -1,7 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, nextTick, useAttrs } from 'vue'
-import { useMatchMedia } from '@/composables/ui/media-query'
 
 // ── Hoisted state ─────────────────────────────────────────────────────────────
 
@@ -223,10 +222,10 @@ beforeEach(() => {
 // ── Tab routing ───────────────────────────────────────────────────────────────
 
 describe('settings app — tab routing', () => {
-  test('exposes the four expected tab values', () => {
+  test('exposes the four expected tab values in the correct order', () => {
     const wrapper = makeWrapper()
     const tabs = JSON.parse(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-tabs'))
-    expect(tabs).toEqual(['profile', 'subscription', 'app', 'danger-zone'])
+    expect(tabs).toEqual(['profile', 'app', 'subscription', 'danger-zone'])
   })
 
   test('defaults the active sidebar tab to "profile" on non-sheet layout', () => {
@@ -245,8 +244,17 @@ describe('settings app — tab routing', () => {
 // ── Header copy ───────────────────────────────────────────────────────────────
 
 describe('settings app — header copy follows displayed tab', () => {
-  test('renders default profile header on non-sheet layout', async () => {
+  test('renders index header on tablet layout (no tab selected) [obligation]', async () => {
     state.isSheet = false
+    state.isDesktop = false
+    const wrapper = makeWrapper()
+    await nextTick()
+    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('Settings')
+  })
+
+  test('renders profile header on desktop layout (no tab selected) [obligation]', async () => {
+    state.isSheet = false
+    state.isDesktop = true
     const wrapper = makeWrapper()
     await nextTick()
     expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('Profile')
@@ -317,6 +325,56 @@ describe('settings app — overlay and aside visibility', () => {
   })
 })
 
+// ── active_tab defaults (obligation) ─────────────────────────────────────────
+
+describe('settings app — active_tab is plain ref, not session-persisted [obligation]', () => {
+  test('active_tab defaults to null on every mount (sheet mode shows index tab) [obligation]', () => {
+    state.isSheet = true
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
+  })
+
+  test('active_tab defaults to null on every mount (tablet mode shows index tab) [obligation]', () => {
+    state.isSheet = false
+    state.isDesktop = false
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
+  })
+
+  test('onBack returns to index (sheet mode) [obligation]', async () => {
+    state.isSheet = true
+    const wrapper = makeWrapper()
+    await wrapper.find('[data-testid="tab-index-stub"]').trigger('click')
+    await wrapper.vm.onBack()
+    await nextTick()
+    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
+  })
+})
+
+// ── displayed_tab resolution (obligation) ────────────────────────────────────
+
+describe('settings app — displayed_tab resolves correctly per layout [obligation]', () => {
+  test('resolves to "index" on sheet layout with no active tab [obligation]', () => {
+    state.isSheet = true
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('Settings')
+  })
+
+  test('resolves to "index" on tablet layout with no active tab [obligation]', () => {
+    state.isSheet = false
+    state.isDesktop = false
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('Settings')
+  })
+
+  test('resolves to "profile" only on desktop layout with no active tab [obligation]', () => {
+    state.isSheet = false
+    state.isDesktop = true
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('Profile')
+  })
+})
+
 // ── Index tab (sheet mobile entry point) ─────────────────────────────────────
 
 describe('settings app — index tab', () => {
@@ -337,17 +395,13 @@ describe('settings app — index tab', () => {
 // ── Back navigation ───────────────────────────────────────────────────────────
 
 describe('settings app — back navigation', () => {
-  test('back action clears the active tab', async () => {
+  test('back action clears the active tab (sidebar defaults to profile)', async () => {
     const wrapper = makeWrapper()
     await wrapper.find('[data-testid="tab-sheet__select-app"]').trigger('click')
     expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe('app')
 
-    // Trigger onBack via the tab-sheet component's @back passthrough
-    // SettingsBackButton forwards @back, and index.vue listens to @back on <component>
-    // We can trigger onBack programmatically via the component
     await wrapper.vm.onBack()
     await nextTick()
-    // After back, active_tab clears → sidebar defaults to 'profile'
     expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe('profile')
   })
 

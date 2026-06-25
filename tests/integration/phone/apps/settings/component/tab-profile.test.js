@@ -7,7 +7,7 @@ vi.mock('@/composables/ui/media-query', async () => {
   return m.responsiveMockModule
 })
 
-import { setBelowMd, resetResponsive } from '../../../../../helpers/responsive-mock'
+import { resetResponsive } from '../../../../../helpers/responsive-mock'
 import TabProfile from '@/phone/apps/settings/component/tab-profile/index.vue'
 import { memberEditorKey } from '@/composables/member/editor'
 import { settingsLayoutKey } from '@/phone/apps/settings/layout'
@@ -29,12 +29,14 @@ const InputStub = defineComponent({
   }
 })
 
-const MemberCardStub = defineComponent({
-  name: 'MemberCard',
+const MemberBadgeStub = defineComponent({
+  name: 'MemberBadge',
   inheritAttrs: false,
   setup() {
     const attrs = useAttrs()
-    return () => h('div', { ...attrs, 'data-testid': 'member-card-stub' })
+    // Preserve the outer data-testid (tab-profile__preview) from the source template
+    // and add data-stub so tests can also assert the rendered component is member-badge.
+    return () => h('div', { ...attrs, 'data-stub': 'member-badge' })
   }
 })
 
@@ -87,7 +89,7 @@ function makeTab(editor = makeEditor(), layout = 'tablet') {
       },
       stubs: {
         UiInput: InputStub,
-        MemberCard: MemberCardStub,
+        MemberBadge: MemberBadgeStub,
         UiThemePicker: ThemePickerStub,
         UiPatternPicker: PatternPickerStub
       },
@@ -146,14 +148,20 @@ describe('TabProfile', () => {
     expect(editor.cover.pattern).toBe('wave')
   })
 
-  test('hides the inline member-card preview on desktop', () => {
+  test('hides the inline member-badge preview on desktop', () => {
     const { wrapper } = makeTab(makeEditor(), 'desktop')
     expect(wrapper.find('[data-testid="tab-profile__preview"]').exists()).toBe(false)
   })
 
-  test('shows the inline member-card preview on sheet layout', () => {
+  test('hides the inline member-badge preview on tablet', () => {
+    const { wrapper } = makeTab(makeEditor(), 'tablet')
+    expect(wrapper.find('[data-testid="tab-profile__preview"]').exists()).toBe(false)
+  })
+
+  test('shows member-badge (not member-card) preview on sheet layout [obligation]', () => {
     const { wrapper } = makeTab(makeEditor(), 'sheet')
-    expect(wrapper.find('[data-testid="tab-profile__preview"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="member-card-stub"]').exists()).toBe(true)
+    const preview = wrapper.find('[data-testid="tab-profile__preview"]')
+    expect(preview.exists()).toBe(true)
+    expect(preview.attributes('data-stub')).toBe('member-badge')
   })
 })
