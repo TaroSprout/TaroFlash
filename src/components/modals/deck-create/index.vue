@@ -106,7 +106,7 @@ watch(
       <aside
         v-if="layout_mode !== 'sheet'"
         data-testid="deck-create__aside"
-        class="w-78.5 shrink-0 self-end pt-70 h-full flex flex-col justify-between gap-5 text-brown-700 dark:text-brown-100"
+        class="w-78.5 shrink-0 self-end pt-66 h-full flex flex-col justify-between gap-5 text-brown-700 dark:text-brown-100"
       >
         <div data-testid="deck-create__aside-inputs" class="flex flex-col gap-2">
           <ui-input

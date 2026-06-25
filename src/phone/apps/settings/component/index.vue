@@ -171,7 +171,8 @@ watch(layout_mode, (mode) => {
     <settings-aside
       v-if="layout_mode !== 'sheet'"
       data-testid="settings__aside"
-      class="w-96 shrink-0 self-end pt-60"
+      class="w-96 shrink-0 self-end"
+      :class="layout_mode === 'tablet' ? 'pt-56' : 'pt-60'"
     />
 
     <template #overlay>

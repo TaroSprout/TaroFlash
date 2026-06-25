@@ -176,7 +176,8 @@ watch(active_tab, (tab) => {
     <deck-aside
       v-if="layout_mode !== 'sheet'"
       data-testid="deck-settings__aside"
-      class="w-78.5 shrink-0 self-end pt-70"
+      class="w-78.5 shrink-0 self-end"
+      :class="layout_mode === 'tablet' ? 'pt-66' : 'pt-70'"
     />
 
     <template #overlay>
