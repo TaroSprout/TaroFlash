@@ -88,9 +88,13 @@ onMounted(preloadDeckModes)
         <mode-toolbar v-else />
       </div>
 
-      <card-grid-empty v-if="view_state === 'empty'" data-testid="deck-view__empty" class="mt-6" />
-      <card-grid-skeleton v-else-if="view_state === 'loading'" class="mt-6" />
-      <mode-stack v-else class="mt-6" :sticky_header="toolbar" />
+      <card-grid-empty
+        v-if="view_state === 'empty'"
+        data-testid="deck-view__empty"
+        class="md:mt-6"
+      />
+      <card-grid-skeleton v-else-if="view_state === 'loading'" class="md:mt-6" />
+      <mode-stack v-else class="md:mt-6" :sticky_header="toolbar" />
     </div>
 
     <scroll-bar

@@ -16,8 +16,8 @@ onUnmounted(() => (document.documentElement.style.overflow = ''))
     <deck-hero-skeleton class="relative z-30 xl:sticky xl:top-(--nav-height)" />
 
     <div class="relative w-full pb-4">
-      <mode-toolbar-skeleton />
-      <card-grid-skeleton class="mt-6" />
+      <mode-toolbar-skeleton class="max-md:hidden" />
+      <card-grid-skeleton class="md:mt-6" />
     </div>
   </section>
 </template>
