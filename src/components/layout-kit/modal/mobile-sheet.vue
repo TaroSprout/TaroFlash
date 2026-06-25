@@ -110,7 +110,7 @@ provide(mobileSheetOverlayKey, overlay_root)
         <div
           v-if="show_builtin_close"
           data-testid="mobile-sheet__close-slot"
-          class="absolute top-0 p-4 left-0 z-20 mobile-modal:left-auto mobile-modal:right-0 mobile-modal:left-hand:left-0 mobile-modal:left-hand:right-auto"
+          class="absolute top-0 p-4 left-0 z-20"
         >
           <ui-button
             icon-left="close"

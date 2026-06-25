@@ -1,12 +1,13 @@
 import type { Component } from 'vue'
+import type { BreakpointKey } from '@/composables/ui/media-query'
 
 export type TransitionPreset = 'slide-left' | 'slide-right' | 'pop-up' | 'pop-down' | 'none'
 export type PhoneAppDisplay = 'full' | 'panel'
 
 export type ViewAppModalOptions = {
   mode: 'dialog' | 'mobile-sheet'
-  mobile_below_width?: 'sm' | 'md' | 'lg' | 'xl' | '2xl'
-  mobile_below_height?: 'sm' | 'md' | 'lg' | 'xl' | '2xl'
+  mobile_below_width?: BreakpointKey
+  mobile_below_height?: BreakpointKey
 }
 
 type LauncherConfig = {

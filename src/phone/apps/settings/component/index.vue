@@ -18,7 +18,6 @@ import { useTabModalLayout } from '@/composables/ui/tab-modal-layout'
 import { useTabTransition } from '@/composables/ui/tab-transition'
 import { useAlert } from '@/composables/alert'
 import { useModalRequestClose } from '@/composables/modal'
-import { useSessionRef } from '@/composables/storage/session-ref'
 import MemberCard from '@/components/member/member-card.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import TabSheet from '@/components/layout-kit/modal/tab-sheet.vue'
@@ -35,8 +34,8 @@ const TabIndex = defineAsyncComponent(() => import('./tab-index/index.vue'))
 const TAB_COMPONENTS = {
   index: TabIndex,
   profile: TabProfile,
-  subscription: TabSubscription,
   app: TabApp,
+  subscription: TabSubscription,
   'danger-zone': TabDangerZone
 }
 
@@ -50,27 +49,27 @@ const alert = useAlert()
 
 // landscape phone (h<sm) also counts as sheet
 const { layout_mode, sheet_px } = useTabModalLayout({
-  sheet_query: 'w<md | h<sm',
+  sheet_query: 'w<mlg | h<sm',
   desktop_query: 'w>=lg & fine'
 })
 provide(settingsLayoutKey, layout_mode)
 provide(settingsCloseKey, close)
 
 type ActiveTab = 'profile' | 'subscription' | 'app' | 'danger-zone'
-const active_tab = useSessionRef<ActiveTab | null>('settings.active-tab', null)
+const active_tab = ref<ActiveTab | null>(null)
 
 const tab_outlet = ref<HTMLElement>()
 const { nav_direction, onTabEnter, onTabLeave } = useTabTransition(layout_mode, tab_outlet)
 
 const tabs = computed(() => [
   { value: 'profile', icon: 'user-sticker-square', label: t('settings.tab.profile') },
-  { value: 'subscription', icon: 'piggy-bank', label: t('settings.tab.subscription') },
   { value: 'app', icon: 'screwdriver-wrench', label: t('settings.tab.app') },
+  { value: 'subscription', icon: 'piggy-bank', label: t('settings.tab.subscription') },
   { value: 'danger-zone', icon: 'delete', label: t('settings.tab.danger-zone') }
 ])
 
 const displayed_tab = computed(
-  () => active_tab.value ?? (layout_mode.value !== 'sheet' ? 'profile' : 'index')
+  () => active_tab.value ?? (layout_mode.value === 'desktop' ? 'profile' : 'index')
 )
 
 const sidebar_active = computed({
@@ -81,6 +80,15 @@ const sidebar_active = computed({
 const header_title = computed(() => t(`settings.header.${displayed_tab.value}.title`))
 
 const tab_component = computed(() => TAB_COMPONENTS[displayed_tab.value])
+
+// Sheet mode goes full-bleed so the animated tab outlet doesn't clip outlines/
+// rings — each tab self-pads via --settings-padding instead. Tablet/desktop keep
+// the container padding so the aside column stays inset.
+const tab_content_class = computed(() =>
+  layout_mode.value === 'sheet'
+    ? 'flex gap-14 h-full items-start'
+    : 'px-(--sheet-px) pb-8 pt-0 flex gap-14 h-full items-start'
+)
 
 // Open/close sfx live on the modal itself so every callsite (phone launcher,
 // dashboard edit button) sounds identically. Mirrors the deck-settings modal.
@@ -123,7 +131,7 @@ function onBack() {
 }
 
 watch(layout_mode, (mode) => {
-  if (mode === 'sheet' && active_tab.value === 'danger-zone') active_tab.value = null
+  if (mode !== 'desktop' && active_tab.value === 'danger-zone') active_tab.value = null
 })
 </script>
 
@@ -134,20 +142,24 @@ watch(layout_mode, (mode) => {
     data-theme-dark="blue-650"
     :data-layout="layout_mode"
     :class="[
-      layout_mode === 'desktop' ? 'w-255!' : 'w-full! max-w-205.5',
-      layout_mode !== 'sheet' && 'h-170'
+      layout_mode === 'desktop' ? 'w-255!' : 'w-full! max-w-224',
+      layout_mode !== 'sheet' && 'h-170',
+      layout_mode === 'sheet' ? '[--settings-padding:var(--sheet-px)]' : '[--settings-padding:0px]'
     ]"
     :sheet_px="sheet_px"
     :tabs="tabs"
     :pattern_config="{ pattern: 'diagonal-stripes', pattern_size: '48px', pattern_opacity: '0.15' }"
-    :parts="{ content: 'flex gap-14 h-full items-start' }"
+    :parts="{ content: tab_content_class }"
     v-model:active="sidebar_active"
     @close="onClose"
   >
     <template #header-content>
       <div
         data-testid="settings__header"
-        class="w-full flex flex-col max-md:items-center max-md:text-center"
+        class="w-full flex flex-col"
+        :class="
+          layout_mode === 'sheet' ? 'items-center text-center' : layout_mode === 'tablet' && 'pt-4'
+        "
       >
         <h1 data-testid="settings__header-title" class="text-5xl text-white">
           {{ header_title }}
@@ -160,7 +172,7 @@ watch(layout_mode, (mode) => {
       data-testid="settings__main"
       :class="[
         'relative flex flex-1 flex-col gap-4 w-full min-w-0',
-        layout_mode === 'sheet' && 'max-w-111 mx-auto overflow-hidden'
+        layout_mode === 'sheet' && 'max-w-111 mx-auto overflow-hidden pt-0.5'
       ]"
     >
       <transition :css="false" mode="out-in" @leave="onTabLeave" @enter="onTabEnter">
@@ -171,7 +183,8 @@ watch(layout_mode, (mode) => {
     <settings-aside
       v-if="layout_mode !== 'sheet'"
       data-testid="settings__aside"
-      class="w-96 shrink-0 self-end pt-60"
+      class="w-96 shrink-0 self-end"
+      :class="layout_mode === 'tablet' ? 'pt-56' : 'pt-60'"
     />
 
     <template #overlay>

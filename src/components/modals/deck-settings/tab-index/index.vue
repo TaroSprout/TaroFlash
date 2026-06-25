@@ -2,8 +2,6 @@
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import UiInput from '@/components/ui-kit/input.vue'
-import UiTextarea from '@/components/ui-kit/textarea.vue'
 import UiTappable from '@/components/ui-kit/tappable.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
@@ -11,14 +9,12 @@ import DangerResetButton from '../danger-reset-button.vue'
 import DangerDeleteButton from '../danger-delete-button.vue'
 import { emitSfx } from '@/sfx/bus'
 import { TYPE_SFX } from '@/sfx/config'
-import { deckEditorKey } from '@/composables/deck/editor'
 import { deckSettingsLayoutKey } from '../layout'
 import DeckSaveButton from '../deck-save-button.vue'
 
-export type TabIndexNavValue = 'design' | 'study'
+export type TabIndexNavValue = 'details' | 'design' | 'study'
 
 const { t } = useI18n()
-const { settings } = inject(deckEditorKey)!
 const layout_mode = inject(deckSettingsLayoutKey)!
 
 type NavEntry = { value: TabIndexNavValue; icon: string }
@@ -28,7 +24,13 @@ const nav_groups = computed<NavGroup[]>(() => [
   {
     key: 'appearance',
     heading: t('deck.settings-modal.index.general-heading'),
-    entries: [{ value: 'design', icon: 'design-services' }]
+    entries:
+      layout_mode.value === 'sheet'
+        ? [
+            { value: 'details', icon: 'text-field' },
+            { value: 'design', icon: 'paint-brush' }
+          ]
+        : [{ value: 'design', icon: 'paint-brush' }]
   },
   {
     key: 'study',
@@ -48,7 +50,10 @@ function onNavigate(value: TabIndexNavValue) {
 </script>
 
 <template>
-  <section-list data-testid="tab-index">
+  <section-list
+    data-testid="tab-index"
+    class="px-(--deck-settings-padding) pb-(--deck-settings-padding)"
+  >
     <labeled-section
       v-for="group in nav_groups"
       :key="group.key"
@@ -56,27 +61,8 @@ function onNavigate(value: TabIndexNavValue) {
       :label="group.heading"
     >
       <div
-        v-if="group.key === 'appearance' && layout_mode === 'sheet'"
-        data-testid="tab-index__identity-inputs"
-        class="flex flex-col gap-2 mb-3"
-      >
-        <ui-input
-          :placeholder="t('deck.title-placeholder')"
-          text-align="center"
-          size="lg"
-          v-model:value="settings.title"
-        />
-        <ui-textarea
-          :placeholder="t('deck.description-placeholder')"
-          :max_chars="100"
-          rows="3"
-          v-model:value="settings.description"
-        />
-      </div>
-
-      <div
         data-testid="tab-index__nav-list"
-        class="flex flex-col rounded-4 bg-input overflow-hidden"
+        class="flex flex-col rounded-4 bg-input dark:bg-stone-700 overflow-hidden"
       >
         <ui-tappable
           v-for="entry in group.entries"
@@ -92,7 +78,7 @@ function onNavigate(value: TabIndexNavValue) {
         >
           <ui-icon :src="entry.icon" class="w-6 h-6" />
           <span class="flex-1">{{ t(`deck.settings-modal.tab.${entry.value}`) }}</span>
-          <ui-icon src="chevron-right" class="w-6 h-6" />
+          <ui-icon src="line-arrow-right" class="size-4" />
         </ui-tappable>
       </div>
     </labeled-section>

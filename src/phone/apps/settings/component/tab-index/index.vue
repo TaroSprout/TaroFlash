@@ -24,14 +24,14 @@ const nav_groups = computed<NavGroup[]>(() => [
     key: 'account',
     heading: t('settings.index.account-heading'),
     entries: [
-      { value: 'profile', icon: 'id-card' },
-      { value: 'subscription', icon: 'moon-stars' }
+      { value: 'profile', icon: 'user-sticker-square' },
+      { value: 'subscription', icon: 'piggy-bank' }
     ]
   },
   {
     key: 'app',
     heading: t('settings.index.app-heading'),
-    entries: [{ value: 'app', icon: 'music-note' }]
+    entries: [{ value: 'app', icon: 'screwdriver-wrench' }]
   }
 ])
 
@@ -46,7 +46,7 @@ function onNavigate(value: TabIndexNavValue) {
 </script>
 
 <template>
-  <section-list data-testid="tab-index">
+  <section-list data-testid="tab-index" class="px-(--settings-padding) pb-(--settings-padding)">
     <labeled-section
       v-for="group in nav_groups"
       :key="group.key"
@@ -55,7 +55,7 @@ function onNavigate(value: TabIndexNavValue) {
     >
       <div
         data-testid="tab-index__nav-list"
-        class="flex flex-col rounded-4 bg-input overflow-hidden"
+        class="flex flex-col rounded-4 bg-input dark:bg-stone-700 overflow-hidden"
       >
         <ui-tappable
           v-for="entry in group.entries"
@@ -71,7 +71,7 @@ function onNavigate(value: TabIndexNavValue) {
         >
           <ui-icon :src="entry.icon" class="w-6 h-6" />
           <span class="flex-1">{{ t(`settings.tab.${entry.value}`) }}</span>
-          <ui-icon src="chevron-right" class="w-6 h-6" />
+          <ui-icon src="line-arrow-right" class="size-4" />
         </ui-tappable>
       </div>
     </labeled-section>

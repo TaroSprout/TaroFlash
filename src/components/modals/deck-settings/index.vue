@@ -14,7 +14,7 @@ import DeckPinnedPreview from '@/components/deck/pinned-preview.vue'
 import TabSheet from '@/components/layout-kit/modal/tab-sheet.vue'
 
 export type DeckSettingsResponse = boolean
-export type ActiveTab = 'design' | 'study' | 'danger-zone'
+export type ActiveTab = 'details' | 'design' | 'study' | 'danger-zone'
 
 const { deck, close, initial_tab, initial_side } = defineProps<{
   deck: Deck
@@ -23,6 +23,7 @@ const { deck, close, initial_tab, initial_side } = defineProps<{
   initial_side?: CardSide
 }>()
 
+const TabDetails = defineAsyncComponent(() => import('./tab-details/index.vue'))
 const TabDesign = defineAsyncComponent(() => import('./tab-design/index.vue'))
 const TabStudy = defineAsyncComponent(() => import('./tab-study/index.vue'))
 const TabDangerZone = defineAsyncComponent(() => import('./tab-danger-zone/index.vue'))
@@ -30,6 +31,7 @@ const TabIndex = defineAsyncComponent(() => import('./tab-index/index.vue'))
 
 const TAB_COMPONENTS = {
   index: TabIndex,
+  details: TabDetails,
   design: TabDesign,
   study: TabStudy,
   'danger-zone': TabDangerZone
@@ -81,9 +83,19 @@ const visible_side = computed(() =>
 
 const tab_component = computed(() => TAB_COMPONENTS[displayed_tab.value])
 
+// Sheet mode goes full-bleed so the animated tab outlet doesn't clip outlines/
+// rings — each tab self-pads via --deck-settings-padding instead. Tablet/desktop
+// keep the container padding so the aside column stays inset.
+const tab_content_class = computed(() =>
+  layout_mode.value === 'sheet'
+    ? 'flex gap-14 h-full items-start'
+    : 'px-(--sheet-px) pb-8 pt-0 flex gap-14 h-full items-start'
+)
+
 onMounted(async () => {
   const idle = window.requestIdleCallback ?? ((cb: IdleRequestCallback) => setTimeout(cb, 200))
   idle(() => {
+    import('./tab-details/index.vue')
     import('./tab-design/index.vue')
     import('./tab-study/index.vue')
     import('./tab-danger-zone/index.vue')
@@ -140,11 +152,16 @@ watch(active_tab, (tab) => {
     data-theme="green-500"
     data-theme-dark="green-800"
     :data-layout="layout_mode"
-    :class="layout_mode === 'desktop' ? 'w-248!' : 'w-full! max-w-205.5'"
+    :class="[
+      layout_mode === 'desktop' ? 'w-248!' : 'w-full! max-w-205.5',
+      layout_mode === 'sheet'
+        ? '[--deck-settings-padding:var(--sheet-px)]'
+        : '[--deck-settings-padding:0px]'
+    ]"
     :sheet_px="sheet_px"
     :tabs="tabs"
     :pattern_config="{ pattern: 'endless-clouds' }"
-    :parts="{ content: 'flex gap-14 h-full items-start' }"
+    :parts="{ content: tab_content_class }"
     v-model:active="sidebar_active"
     @close="onClose"
   >
@@ -152,6 +169,7 @@ watch(active_tab, (tab) => {
       <div
         data-testid="deck-settings__header"
         class="w-full flex flex-col max-md:items-center max-md:text-center"
+        :class="layout_mode === 'tablet' && 'pt-4'"
       >
         <h1 data-testid="deck-settings__header-title" class="text-5xl text-white">
           {{ header_title }}
@@ -164,7 +182,7 @@ watch(active_tab, (tab) => {
       data-testid="deck-settings__main"
       :class="[
         'relative flex flex-1 flex-col gap-4 w-full min-w-0',
-        layout_mode === 'sheet' && 'max-w-111 mx-auto overflow-hidden pt-0.5 pl-0.5'
+        layout_mode === 'sheet' && 'max-w-111 mx-auto overflow-hidden pt-0.5'
       ]"
     >
       <transition :css="false" mode="out-in" @leave="onTabLeave" @enter="onTabEnter">
@@ -175,7 +193,8 @@ watch(active_tab, (tab) => {
     <deck-aside
       v-if="layout_mode !== 'sheet'"
       data-testid="deck-settings__aside"
-      class="w-78.5 shrink-0 self-end pt-70"
+      class="w-78.5 shrink-0 self-end"
+      :class="layout_mode === 'tablet' ? 'pt-66' : 'pt-70'"
     />
 
     <template #overlay>

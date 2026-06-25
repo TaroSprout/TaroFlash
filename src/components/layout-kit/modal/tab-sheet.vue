@@ -163,7 +163,7 @@ function selectOption(value: string) {
       :id="tab_panel_id"
       data-testid="tab-sheet__content"
       role="tabpanel"
-      :class="['px-(--sheet-px) pb-8 pt-0', parts?.content]"
+      :class="parts?.content"
     >
       <slot></slot>
     </div>

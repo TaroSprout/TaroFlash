@@ -9,7 +9,10 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <section-list data-testid="tab-danger-zone">
+  <section-list
+    data-testid="tab-danger-zone"
+    class="px-(--deck-settings-padding) pb-(--deck-settings-padding)"
+  >
     <labeled-section
       :label="t('deck.settings-modal.danger-zone.section.reset-heading')"
       :description="t('deck.settings-modal.danger-zone.section.reset-description')"

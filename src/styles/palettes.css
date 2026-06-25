@@ -72,8 +72,8 @@
   --theme-accent: var(--color-pink-700);
   --theme-on-accent: var(--color-brown-100);
 
-  --theme-neutral: var(--color-brown-100);
-  --theme-on-neutral: var(--color-grey-900);
+  --theme-neutral: var(--color-stone-700);
+  --theme-on-neutral: var(--color-brown-100);
 }
 
 [data-theme='blue-400'],
@@ -136,8 +136,8 @@
   --theme-accent: var(--color-orange-700);
   --theme-on-accent: var(--color-brown-700);
 
-  --theme-neutral: var(--color-brown-300);
-  --theme-on-neutral: var(--color-green-800);
+  --theme-neutral: var(--color-stone-700);
+  --theme-on-neutral: var(--color-brown-100);
 }
 
 [data-theme='green-600'],

@@ -64,7 +64,9 @@ watch(
     @close="close(false)"
   >
     <template #header-content>
-      <h1 class="text-5xl text-white w-full">{{ t('deck.create-modal.title') }}</h1>
+      <h1 class="text-5xl text-white w-full" :class="layout_mode !== 'sheet' && 'pt-4'">
+        {{ t('deck.create-modal.title') }}
+      </h1>
     </template>
 
     <template #overlay>
@@ -104,7 +106,7 @@ watch(
       <aside
         v-if="layout_mode !== 'sheet'"
         data-testid="deck-create__aside"
-        class="w-78.5 shrink-0 self-end pt-70 h-full flex flex-col justify-between gap-5 text-brown-700 dark:text-brown-100"
+        class="w-78.5 shrink-0 self-end pt-66 h-full flex flex-col justify-between gap-5 text-brown-700 dark:text-brown-100"
       >
         <div data-testid="deck-create__aside-inputs" class="flex flex-col gap-2">
           <ui-input

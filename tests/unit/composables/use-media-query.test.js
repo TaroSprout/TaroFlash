@@ -54,6 +54,21 @@ describe('useMatchMedia', () => {
       expect(compiledFor('w<md')).toMatch(/^not all and \(min-width:/)
     })
 
+    test('w<mlg compiles to the L3 max-width form (not all and min-width) [obligation]', () => {
+      expect(compiledFor('w<mlg')).toMatch(/^not all and \(min-width:/)
+    })
+
+    test('w>=mlg compiles to a bare min-width form [obligation]', () => {
+      const q = compiledFor('w>=mlg')
+      expect(q).toMatch(/^\(min-width:/)
+      expect(q).not.toContain('not all')
+    })
+
+    test('mlg is accepted as a valid breakpoint token (no throw) [obligation]', () => {
+      expect(() => compiledFor('w<mlg')).not.toThrow()
+      expect(() => compiledFor('w>=mlg')).not.toThrow()
+    })
+
     test('height at-or-above uses a bare min-height', () => {
       const q = compiledFor('h>=lg')
       expect(q).toContain('(min-height:')

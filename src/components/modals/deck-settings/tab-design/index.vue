@@ -31,7 +31,10 @@ const card_side_attributes = computed(() =>
 </script>
 
 <template>
-  <div data-testid="tab-design" class="flex flex-col items-center gap-6">
+  <div
+    data-testid="tab-design"
+    class="flex flex-col items-center gap-6 px-(--deck-settings-padding) pb-(--deck-settings-padding)"
+  >
     <deck-back-button @back="emit('back')" />
     <div
       v-if="layout_mode === 'sheet'"
