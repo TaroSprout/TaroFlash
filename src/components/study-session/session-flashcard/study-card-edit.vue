@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import Card from '@/components/card/index.vue'
-import TextEditor from '@/components/card/text-editor.vue'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import CardEditFace from '@/components/card/edit-face.vue'
 import { useDeckContext } from '../deck-context'
 
 type CardSide = 'front' | 'back'
@@ -15,40 +15,27 @@ const emit = defineEmits<{
   (e: 'update', side: CardSide, text: string): void
 }>()
 
+const { t } = useI18n()
 const deck_context = useDeckContext()
 
-const attributes = computed(() =>
-  side === 'front'
-    ? deck_context.value.card_attributes?.front
-    : deck_context.value.card_attributes?.back
+const card_attributes = computed(
+  () => deck_context.value.card_attributes ?? { front: {}, back: {} }
 )
-
-const text = computed(() => (side === 'front' ? card?.front_text : card?.back_text))
+const placeholder = computed(() =>
+  side === 'front'
+    ? t('study-session.edit.front-placeholder')
+    : t('study-session.edit.back-placeholder')
+)
 </script>
 
 <template>
-  <card
+  <card-edit-face
     data-testid="study-card-edit"
-    size="xl"
-    mode="edit"
+    input_testid="study-card-edit__input"
+    :card="card"
     :side="side"
-    v-bind="card"
-    :card_attributes="deck_context.card_attributes"
-  >
-    <template #editor>
-      <text-editor
-        :key="`${card?.id}-${side}`"
-        data-testid="study-card-edit__input"
-        :content="text"
-        :attributes="attributes"
-        :placeholder="
-          side === 'front'
-            ? $t('study-session.edit.front-placeholder')
-            : $t('study-session.edit.back-placeholder')
-        "
-        class="w-full h-full"
-        @update="emit('update', side, $event)"
-      />
-    </template>
-  </card>
+    :card_attributes="card_attributes"
+    :placeholder="placeholder"
+    @update="(s, text) => emit('update', s, text)"
+  />
 </template>
