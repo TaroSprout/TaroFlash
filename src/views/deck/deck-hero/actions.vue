@@ -9,6 +9,8 @@ import { useStudyModal } from '@/components/study-session/composables/study-moda
 import { useDeckSettingsModal } from '@/composables/deck/settings-modal'
 import { cardEditorKey } from '@/views/deck/composables'
 import { deckViewShellKey } from '@/views/deck/composables/view-shell'
+import { mobileCardEditorKey } from '@/views/deck/mobile-editor/use-mobile-card-editor'
+import { useMatchMedia } from '@/composables/ui/media-query'
 
 const { deck } = defineProps<{ deck: Deck }>()
 
@@ -18,6 +20,8 @@ const deck_settings = useDeckSettingsModal()
 
 const editor = inject(cardEditorKey, null)
 const shell = inject(deckViewShellKey, null)
+const mobile_editor = inject(mobileCardEditorKey, null)
+const is_mobile = useMatchMedia('w<md')
 
 const is_editing = computed(() => shell?.mode.value === 'edit')
 const has_due_cards = computed(() => (deck.due_count ?? 0) > 0)
@@ -35,6 +39,13 @@ function onStudyClicked() {
 }
 
 function onToggleEditCards() {
+  // Below md there's no list editor — the edit button opens the focused dock
+  // editor on the first card instead of toggling the desktop edit mode.
+  if (is_mobile.value) {
+    mobile_editor?.open_at()
+    return
+  }
+
   shell?.toggleMode('edit')
 }
 

@@ -8,13 +8,18 @@ import { emitSfx } from '@/sfx/bus'
 import { TYPE_SFX } from '@/sfx/config'
 import { computed, inject, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { cardEditorKey } from '@/views/deck/composables'
+import { cardEditorKey, type CardWithClientId } from '@/views/deck/composables'
+import { mobileCardEditorKey } from '@/views/deck/mobile-editor/use-mobile-card-editor'
+import { useMatchMedia } from '@/composables/ui/media-query'
 
 const { t } = useI18n()
 
 const { actions, selection } = inject(cardEditorKey)!
 const { onDeleteCards, onMoveCards, onSelectCard } = actions
 const { is_selecting } = selection
+
+const mobile_editor = inject(mobileCardEditorKey, null)
+const is_mobile = useMatchMedia('w<md')
 
 const menu_options = computed<DropdownOption[]>(() => [
   { label: t('deck-view.item-options.select'), value: 'select', icon: 'select-object' },
@@ -33,7 +38,7 @@ const {
   side,
   scale = 1
 } = defineProps<{
-  card: Card
+  card: CardWithClientId
   side: 'front' | 'back'
   selected: boolean
   card_attributes?: DeckCardAttributes
@@ -46,6 +51,13 @@ const active_side = ref(side)
 function onCardClick() {
   if (is_selecting.value) {
     onSelectCard(card.id!)
+    return
+  }
+
+  // Below md the grid is read-only — a tap opens the focused dock editor on
+  // this card instead of flipping it in place.
+  if (is_mobile.value) {
+    mobile_editor?.open_at(card.client_id)
     return
   }
 

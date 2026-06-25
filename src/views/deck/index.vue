@@ -9,9 +9,12 @@ import CardGridSkeleton from './card-grid/skeleton.vue'
 import CardGridEmpty from './card-grid/empty-state.vue'
 import { preloadDeckModes } from './modes'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
+import DeckMobileEditor from './mobile-editor/index.vue'
 import { useDeckQuery } from '@/api/decks'
 import { cardEditorKey, useCardListController } from '@/views/deck/composables'
 import { deckViewShellKey, useDeckViewShell } from '@/views/deck/composables/view-shell'
+import { mobileCardEditorKey, useMobileCardEditor } from './mobile-editor/use-mobile-card-editor'
+import { useMatchMedia } from '@/composables/ui/media-query'
 
 const { id: deck_id } = defineProps<{
   id: string
@@ -30,6 +33,11 @@ provide(deckViewShellKey, shell)
 
 const editor = useCardListController({ deck_id: id.value, shell })
 provide(cardEditorKey, editor)
+
+const mobile_editor = useMobileCardEditor(editor)
+provide(mobileCardEditorKey, mobile_editor)
+
+const is_mobile = useMatchMedia('w<md')
 
 const view_state = computed<'loading' | 'empty' | 'ready'>(() => {
   if (editor.list.all_cards.value.length > 0) return 'ready'
@@ -86,5 +94,7 @@ onMounted(preloadDeckModes)
       class="fixed right-4 top-(--nav-height) bottom-10 z-30"
       target="html"
     />
+
+    <deck-mobile-editor v-if="is_mobile" />
   </section>
 </template>

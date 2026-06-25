@@ -13,6 +13,11 @@ type CardEditFaceProps = {
   side: CardSide
   card_attributes: DeckCardAttributes
   placeholder: string
+  // Stable identity for the editor remount key. Defaults to the card id, but a
+  // host cycling through temp cards passes the client_id so a temp→real id
+  // promotion mid-typing doesn't remount the editor and drop the caret.
+  card_key?: string | number
+  size?: CardSize
   input_testid?: string
   with_images?: boolean
   disabled?: boolean
@@ -25,6 +30,8 @@ const {
   side,
   card_attributes,
   placeholder,
+  card_key,
+  size = 'xl',
   input_testid = 'card-edit-face__input',
   with_images = false,
   disabled = false,
@@ -41,15 +48,16 @@ const attributes = computed(() => card_attributes[side])
 
 // The text-editor is uncontrolled, so it only seeds `content` on mount — keying
 // it by card + side remounts it whenever either changes (flip, prev/next).
-const editor_key = computed(() => `${card?.id}-${side}`)
+const editor_key = computed(() => `${card_key ?? card?.id}-${side}`)
 </script>
 
 <template>
   <card-face-uploader
-    v-if="with_images"
+    v-if="with_images && card"
     :card="card"
     :side="side"
     :card_attributes="card_attributes"
+    :size="size"
     :disabled="disabled"
     :error="error"
   >
@@ -67,7 +75,14 @@ const editor_key = computed(() => `${card?.id}-${side}`)
     </template>
   </card-face-uploader>
 
-  <card v-else size="xl" mode="edit" :side="side" v-bind="card" :card_attributes="card_attributes">
+  <card
+    v-else
+    :size="size"
+    mode="edit"
+    :side="side"
+    v-bind="card"
+    :card_attributes="card_attributes"
+  >
     <template #editor>
       <text-editor
         :key="editor_key"
