@@ -172,7 +172,7 @@ watch(layout_mode, (mode) => {
       data-testid="settings__main"
       :class="[
         'relative flex flex-1 flex-col gap-4 w-full min-w-0',
-        layout_mode === 'sheet' && 'max-w-111 mx-auto overflow-hidden'
+        layout_mode === 'sheet' && 'max-w-111 mx-auto overflow-hidden pt-0.5'
       ]"
     >
       <transition :css="false" mode="out-in" @leave="onTabLeave" @enter="onTabEnter">

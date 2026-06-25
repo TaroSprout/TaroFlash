@@ -11,7 +11,10 @@ const emit = defineEmits<{ back: [] }>()
 </script>
 
 <template>
-  <section-list data-testid="tab-danger-zone" class="p-(--settings-padding)">
+  <section-list
+    data-testid="tab-danger-zone"
+    class="px-(--settings-padding) pb-(--settings-padding)"
+  >
     <settings-back-button @back="emit('back')" />
 
     <labeled-section

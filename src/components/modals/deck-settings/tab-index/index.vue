@@ -48,7 +48,10 @@ function onNavigate(value: TabIndexNavValue) {
 </script>
 
 <template>
-  <section-list data-testid="tab-index" class="p-(--deck-settings-padding)">
+  <section-list
+    data-testid="tab-index"
+    class="px-(--deck-settings-padding) pb-(--deck-settings-padding)"
+  >
     <labeled-section
       v-for="group in nav_groups"
       :key="group.key"
