@@ -34,7 +34,7 @@ const fill_width = computed(() => {
     <div
       v-if="label"
       data-testid="ui-kit-progress-bar__label"
-      class="pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-bold text-brown-700 transition-[clip-path] duration-300 ease-out"
+      class="pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-bold text-brown-700 dark:text-brown-100 transition-[clip-path] duration-300 ease-out"
       :style="{ clipPath: `inset(0 0 0 ${fill_width})` }"
     >
       {{ label }}

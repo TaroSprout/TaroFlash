@@ -65,11 +65,11 @@ function onPaneEnter(el: Element, done: () => void) {
   <div
     data-testid="study-session"
     :data-theme="deck?.cover_config?.theme ?? 'purple-500'"
-    class="relative w-full max-w-160 overflow-hidden bg-brown-300 bgx-dot-grid bgx-size-15 bgx-opacity-25 bgx-color-brown-500"
+    class="relative w-full max-w-160 overflow-hidden bg-brown-300 dark:bg-grey-800 bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-brown-500"
     :class="
       viewport === 'mobile'
         ? 'h-full outline-1 outline-brown-100'
-        : 'h-160 rounded-8 shadow-lg border-t border-l border-brown-100'
+        : 'h-160 rounded-8 shadow-lg border-t border-l border-brown-100 dark:border-grey-900'
     "
   >
     <div

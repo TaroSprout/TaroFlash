@@ -27,6 +27,7 @@ function onRatingClicked(grade: Grade) {
       <ui-button
         data-testid="rating-buttons__again"
         data-theme="brown-100"
+        data-theme-dark="stone-700"
         size="xl"
         icon-left="close"
         full-width
@@ -39,6 +40,7 @@ function onRatingClicked(grade: Grade) {
       <ui-button
         data-testid="rating-buttons__good"
         data-theme="blue-500"
+        data-theme-dark="blue-650"
         size="xl"
         icon-left="check"
         full-width
@@ -53,6 +55,7 @@ function onRatingClicked(grade: Grade) {
       v-else-if="side === 'front'"
       data-testid="rating-buttons__show"
       data-theme="blue-500"
+      data-theme-dark="blue-650"
       size="xl"
       full-width
       class="mx-auto max-w-78.5"
@@ -65,6 +68,7 @@ function onRatingClicked(grade: Grade) {
       v-else
       data-testid="rating-buttons__start"
       data-theme="blue-500"
+      data-theme-dark="blue-650"
       size="xl"
       full-width
       class="mx-auto max-w-78.5"
