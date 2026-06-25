@@ -43,7 +43,7 @@ describe('useStudyModal', () => {
     mockOpen.mockReset()
   })
 
-  test('plays snappy_button_3 sfx synchronously when starting', async () => {
+  test('plays generic_notification_9 sfx synchronously when starting', async () => {
     const { result, resolve } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
@@ -51,7 +51,7 @@ describe('useStudyModal', () => {
     const startPromise = start(DECK)
 
     // sfx fires synchronously before any await
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_3')
+    expect(mockEmitSfx).toHaveBeenCalledWith('generic_notification_9')
 
     resolve(undefined)
     await startPromise
