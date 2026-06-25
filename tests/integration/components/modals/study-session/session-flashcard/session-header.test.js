@@ -137,6 +137,24 @@ describe('SessionHeader', () => {
     expect(wrapper.emitted('delete')).toHaveLength(1)
   })
 
+  // ── show_menu=false suppresses the menu regardless of can_edit [obligation] ─
+
+  test('show_menu=false hides dropdown menu even when can_edit is true [obligation]', () => {
+    const wrapper = mountHeader({ show_menu: false, can_edit: true })
+    expect(wrapper.find('[data-testid="session-header__menu"]').exists()).toBe(false)
+  })
+
+  test('show_menu=false hides dropdown menu when can_edit is false [obligation]', () => {
+    const wrapper = mountHeader({ show_menu: false, can_edit: false })
+    expect(wrapper.find('[data-testid="session-header__menu"]').exists()).toBe(false)
+  })
+
+  test('show_menu=true (default) still renders dropdown menu when can_edit is true [obligation]', () => {
+    // Default: show_menu defaults to true
+    const wrapper = mountHeader({ show_menu: true, can_edit: true })
+    expect(wrapper.find('[data-testid="session-header__menu"]').exists()).toBe(true)
+  })
+
   // ── title renders ──────────────────────────────────────────────────────────
 
   test('renders title text in header', () => {

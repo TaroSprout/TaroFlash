@@ -8,11 +8,12 @@ import { useI18n } from 'vue-i18n'
 
 type SessionHeaderProps = {
   title?: string
-  can_edit: boolean
-  is_cover: boolean
+  can_edit?: boolean
+  is_cover?: boolean
+  show_menu?: boolean
 }
 
-const { can_edit } = defineProps<SessionHeaderProps>()
+const { can_edit = false, show_menu = true } = defineProps<SessionHeaderProps>()
 
 const title_el = useTemplateRef('title')
 defineExpose({ title_el })
@@ -94,6 +95,7 @@ function onSelect(option: DropdownOption) {
     </h1>
 
     <ui-dropdown-button
+      v-if="show_menu"
       data-testid="session-header__menu"
       class="justify-self-end"
       trigger-only

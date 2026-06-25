@@ -27,21 +27,9 @@ const viewport = provideStudyViewport()
 
 const phase = ref<Phase>('studying')
 const results = ref<CardReviewResult[]>([])
-const secondary_action = ref<SecondaryAction>('study-all')
 
-function onSessionFinished(
-  session_results: CardReviewResult[],
-  remaining_due: number,
-  study_all_used: boolean
-) {
+function onSessionFinished(session_results: CardReviewResult[]) {
   results.value = session_results
-  secondary_action.value = study_all_used
-    ? 'study-again'
-    : remaining_due > 0
-      ? 'study-more'
-      : 'study-all'
-
-  emitStudySfx('music_pizz_duo_hi')
   phase.value = 'summary'
 }
 
@@ -57,26 +45,22 @@ function onPaneLeave(el: Element, done: () => void) {
 
 function onPaneEnter(el: Element, done: () => void) {
   if (phase.value !== 'summary') return done()
-  sessionPaneEnter(el, done)
+  sessionPaneEnter(el, done, () => emitStudySfx('music_pizz_duo_hi'))
 }
 </script>
 
 <template>
   <div
     data-testid="study-session"
-    :data-theme="deck?.cover_config?.theme ?? 'purple-500'"
     class="relative w-full max-w-160 overflow-hidden bg-brown-300 dark:bg-grey-800 bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-brown-500"
     :class="
       viewport === 'mobile'
-        ? 'h-full outline-1 outline-brown-100'
-        : 'h-160 rounded-8 shadow-lg border-t border-l border-brown-100 dark:border-grey-900'
+        ? 'h-full outline-1 outline-brown-100 [--session-padding:1.5rem]'
+        : 'h-160 rounded-8 shadow-lg border-t border-l border-brown-100 dark:border-grey-900 [--session-padding:2rem]'
     "
   >
-    <div
-      data-testid="study-session__outlet"
-      class="relative w-full h-full overflow-hidden [--session-padding:2rem]"
-    >
-      <transition :css="false" mode="out-in" @leave="onPaneLeave" @enter="onPaneEnter">
+    <div data-testid="study-session__outlet" class="relative w-full h-full overflow-hidden">
+      <transition :css="false" @leave="onPaneLeave" @enter="onPaneEnter">
         <session-flashcard
           v-if="phase === 'studying'"
           key="studying"
@@ -88,9 +72,10 @@ function onPaneEnter(el: Element, done: () => void) {
         <session-summary
           v-else
           key="summary"
+          class="absolute inset-0 z-10"
+          :deck="deck"
           :results="results"
-          :secondary_action="secondary_action"
-          @action="close"
+          @close="onClosed"
         />
       </transition>
     </div>

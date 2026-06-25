@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
-import { defineComponent, watch, h, useAttrs, onMounted, getCurrentInstance } from 'vue'
+import { defineComponent, watch, h, useAttrs } from 'vue'
 import Session from '@/components/study-session/session-flashcard/index.vue'
 import { card } from '../../../../fixtures/card'
 import { deck } from '../../../../fixtures/deck'
@@ -101,18 +101,6 @@ const CardStub = defineComponent({
   }
 })
 
-// ── FinishAnimation stub ──────────────────────────────────────────────────────
-// Emits `done` immediately on mount so that the `finished` event flows through
-// without relying on CSS animationend (which jsdom never fires).
-
-const FinishAnimationStub = defineComponent({
-  emits: ['done'],
-  setup(_props, { emit }) {
-    onMounted(() => emit('done'))
-    return () => h('div')
-  }
-})
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function makeSession(cardCount = 2, deckOverrides = {}) {
@@ -128,7 +116,7 @@ function makeSession(cardCount = 2, deckOverrides = {}) {
   return mount(Session, {
     props: { deck: deck_data },
     attachTo: document.body,
-    global: { stubs: { Card: CardStub, FinishAnimation: FinishAnimationStub } }
+    global: { stubs: { Card: CardStub } }
   })
 }
 
@@ -205,8 +193,8 @@ describe('Session', () => {
     // Regression: after the prior session's useFlushDeckReviews invalidation,
     // the cards cache often holds [] (everything was capped/done). If the
     // session seeds from that stale snapshot before refetch resolves, the
-    // queue is empty and finish-animation fires immediately. The mount path
-    // must await a fresh fetch and seed from its resolved state.
+    // queue is empty and the watcher fires finishSession() immediately. The
+    // mount path must await a fresh fetch and seed from its resolved state.
     test('forces a fresh fetch on mount and ignores stale cached data', async () => {
       // Simulate stale cache: empty array, as happens after the prior session's
       // post-flush refetch returned 0 (caps consumed).
@@ -225,7 +213,7 @@ describe('Session', () => {
       const wrapper = mount(Session, {
         props: { deck: deck_data },
         attachTo: document.body,
-        global: { stubs: { Card: CardStub, FinishAnimation: FinishAnimationStub } }
+        global: { stubs: { Card: CardStub } }
       })
       await flushPromises()
 
@@ -630,7 +618,7 @@ describe('Session', () => {
       expect(wrapper.emitted('finished')).toBeFalsy()
     })
 
-    test('requestClose after reviewing a card routes through finish-animation and emits "finished"', async () => {
+    test('requestClose after reviewing a card routes through the watcher and emits "finished"', async () => {
       const wrapper = makeSession(2)
       await waitForLoad(wrapper)
 
@@ -648,9 +636,8 @@ describe('Session', () => {
       expect(wrapper.emitted('closed')).toBeFalsy()
     })
 
-    // requestClose during an active session no longer emits 'finished' directly —
-    // it flips mode to 'completed' so the finish animation gets to play, and the
-    // animation's @done handler is the single emitter of 'finished'.
+    // requestClose flips mode to 'completed'; the watch(mode) watcher fires
+    // finishSession() which emits 'finished' — no animation callback involved.
     test('early close after 1 review of 2 cards: results holds only the reviewed card', async () => {
       const wrapper = makeSession(2)
       await waitForLoad(wrapper)

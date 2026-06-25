@@ -1,31 +1,34 @@
 import { gsap } from 'gsap'
 
-const ENTER_DURATION = 0.25
+const ENTER_DURATION = 0.2
+const ENTER_DELAY = 0.25
 const LEAVE_DURATION = 0.15
-const SLIDE_X = 48
 
 /**
- * Out-in transition between the study-session phases (flashcard → summary),
- * mirroring the deck-settings tab slide: the leaving pane fades out, then the
- * entering pane slides in from the right and fades in.
+ * Transition between the study-session phases (flashcard → summary). The
+ * outgoing flashcard pane is already empty by the time the session completes
+ * (the last card swiped out), so the summary simply pops in on top: the
+ * leaving pane fades while the entering pane scales up and fades in.
  *
  * The modal is a fixed size and both panes fill it (`h-full`), so there's no
- * height to animate — just opacity and a short horizontal slide.
+ * height to animate — just opacity and a scale.
  */
 export function sessionPaneLeave(el: Element, done: () => void) {
   gsap.to(el, { opacity: 0, duration: LEAVE_DURATION, onComplete: done })
 }
 
-export function sessionPaneEnter(el: Element, done: () => void) {
+export function sessionPaneEnter(el: Element, done: () => void, onStart?: () => void) {
   gsap.fromTo(
     el,
-    { x: SLIDE_X, opacity: 0 },
+    { scale: 0.9, opacity: 0 },
     {
-      x: 0,
+      scale: 1,
       opacity: 1,
       duration: ENTER_DURATION,
-      ease: 'power2.out',
+      delay: ENTER_DELAY,
+      ease: 'back.out(1.6)',
       clearProps: 'transform',
+      onStart,
       onComplete: done
     }
   )

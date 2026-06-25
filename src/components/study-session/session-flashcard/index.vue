@@ -4,7 +4,6 @@ import SessionProgress from './session-progress.vue'
 import CardStage from './card-stage.vue'
 import StudyEditFooter from './study-edit-footer.vue'
 import RatingButtons from './rating-buttons.vue'
-import FinishAnimation from './finish-animation.vue'
 import { useFlashcardSession } from '@/components/study-session/composables/flashcard-session'
 import { useCardPreview } from '@/components/study-session/composables/card-preview'
 import { useCardEdit } from '@/components/study-session/composables/card-edit'
@@ -13,7 +12,7 @@ import { useSessionCards } from '@/components/study-session/composables/session-
 import { useCoverIntro } from './use-cover-intro'
 import { useModalRequestClose } from '@/composables/modal'
 import { type Grade } from 'ts-fsrs'
-import { computed, useTemplateRef } from 'vue'
+import { computed, useTemplateRef, watch } from 'vue'
 import { useFlushDeckReviews } from '@/api/reviews'
 import type { CardReviewResult } from '@/components/study-session/composables/session-core'
 
@@ -97,7 +96,12 @@ function requestClose() {
   mode.value = 'completed'
 }
 
-function onFinishAnimationDone() {
+/**
+ * Session is over — flush the queued reviews and hand the results up so the
+ * shell can pop the summary in. Fires for every path that ends the session
+ * (last card reviewed, stop button, last card dropped, empty queue).
+ */
+function finishSession() {
   if (deck.id) flushDeckReviews(deck.id)
   emit('finished', results.value, remaining_due_count.value, config.study_all_cards)
 }
@@ -114,13 +118,16 @@ async function onCardReviewed(grade?: Grade) {
 
   reviewCard(grade)
 }
+
+watch(mode, (m) => {
+  if (m === 'completed') finishSession()
+})
 </script>
 
 <template>
   <div data-testid="session-flashcard" class="relative h-full w-full">
     <div
       data-testid="study-session__main"
-      :data-theme="deck.cover_config?.theme ?? 'purple-500'"
       class="h-full flex flex-col items-center gap-8 p-(--session-padding)"
       :class="{ 'opacity-0 pointer-events-none': mode !== 'studying' }"
     >
@@ -182,7 +189,5 @@ async function onCardReviewed(grade?: Grade) {
         />
       </div>
     </div>
-
-    <finish-animation v-if="mode === 'completed'" @done="onFinishAnimationDone" />
   </div>
 </template>

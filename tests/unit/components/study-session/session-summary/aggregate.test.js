@@ -21,32 +21,15 @@ function makeResult(overrides = {}) {
 // ── Empty results ─────────────────────────────────────────────────────────────
 
 describe('aggregateSession — empty results', () => {
-  test('empty results yields score=0, total=0, timeline=[] [obligation]', () => {
+  test('returns zero for all counts', () => {
     const data = aggregateSession([])
 
     expect(data.score).toBe(0)
     expect(data.total).toBe(0)
-    expect(data.timeline).toEqual([])
-  })
-
-  test('empty results yields zero new_count and reinforced_count', () => {
-    const data = aggregateSession([])
-
     expect(data.new_count).toBe(0)
-    expect(data.reinforced_count).toBe(0)
-  })
-
-  test('empty results yields all-zero mastery bands', () => {
-    const data = aggregateSession([])
-
-    expect(data.mastery_before).toEqual({ forming: 0, familiar: 0, strong: 0, mastered: 0 })
-    expect(data.mastery_after).toEqual({ forming: 0, familiar: 0, strong: 0, mastered: 0 })
-  })
-
-  test('empty results yields no leeches', () => {
-    const data = aggregateSession([])
-
-    expect(data.leeches).toEqual([])
+    expect(data.leveled_up_count).toBe(0)
+    expect(data.leveled_down_count).toBe(0)
+    expect(data.stuck_count).toBe(0)
   })
 })
 
@@ -76,196 +59,230 @@ describe('aggregateSession — score / total [obligation]', () => {
   })
 })
 
-// ── is_new / new_count / reinforced_count ─────────────────────────────────────
+// ── is_new / new_count ────────────────────────────────────────────────────────
 
-describe('aggregateSession — new vs reinforced [obligation]', () => {
-  test('new cards counted in new_count, excluded from mastery bands', () => {
-    const new_card = makeResult({ is_new: true, before_interval: 0, after_interval: 1 })
+describe('aggregateSession — new_count [obligation]', () => {
+  test('new_count = results where is_new is true [obligation]', () => {
+    const results = [
+      makeResult({ is_new: true }),
+      makeResult({ is_new: true }),
+      makeResult({ is_new: false })
+    ]
 
-    const data = aggregateSession([new_card])
+    const data = aggregateSession(results)
+
+    expect(data.new_count).toBe(2)
+  })
+
+  test('new cards are excluded from leveled_up_count [obligation]', () => {
+    // New card from forming→familiar boundary; must NOT count as leveled up
+    const result = makeResult({ is_new: true, before_interval: 1, after_interval: 10 })
+
+    const data = aggregateSession([result])
 
     expect(data.new_count).toBe(1)
-    expect(data.reinforced_count).toBe(0)
-    // mastery bands must stay at zero — new cards don't populate them
-    expect(data.mastery_before).toEqual({ forming: 0, familiar: 0, strong: 0, mastered: 0 })
-    expect(data.mastery_after).toEqual({ forming: 0, familiar: 0, strong: 0, mastered: 0 })
+    expect(data.leveled_up_count).toBe(0)
   })
 
-  test('reinforced cards populate mastery bands and reinforced_count', () => {
-    const reinforced = makeResult({
-      is_new: false,
-      before_interval: 5,
-      after_interval: 10
-    })
+  test('new cards are excluded from leveled_down_count [obligation]', () => {
+    const result = makeResult({ is_new: true, before_interval: 10, after_interval: 1 })
 
-    const data = aggregateSession([reinforced])
-
-    expect(data.reinforced_count).toBe(1)
-    expect(data.new_count).toBe(0)
-    expect(data.mastery_before.forming).toBe(1)
-    expect(data.mastery_after.familiar).toBe(1)
-  })
-
-  test('mix of new and reinforced — each counted separately', () => {
-    const results = [
-      makeResult({ is_new: true, before_interval: 0, after_interval: 3 }),
-      makeResult({ is_new: false, before_interval: 10, after_interval: 20 }),
-      makeResult({ is_new: false, before_interval: 30, after_interval: 60 })
-    ]
-
-    const data = aggregateSession(results)
+    const data = aggregateSession([result])
 
     expect(data.new_count).toBe(1)
-    expect(data.reinforced_count).toBe(2)
+    expect(data.leveled_down_count).toBe(0)
   })
 })
 
-// ── bandFor boundary thresholds ────────────────────────────────────────────────
+// ── maturity bands ────────────────────────────────────────────────────────────
 
-describe('aggregateSession — mastery band thresholds (boundary-exact) [obligation]', () => {
-  function bandAfter(after_interval) {
-    const data = aggregateSession([makeResult({ is_new: false, after_interval })])
-    const { forming, familiar, strong, mastered } = data.mastery_after
-    if (forming === 1) return 'forming'
-    if (familiar === 1) return 'familiar'
-    if (strong === 1) return 'strong'
-    if (mastered === 1) return 'mastered'
-  }
+describe('aggregateSession — maturity band thresholds [obligation]', () => {
+  // forming < 7d, familiar 7–29d, strong 30–89d, mastered >=90d
 
-  test('interval 6 → forming (below threshold)', () => {
-    expect(bandAfter(6)).toBe('forming')
+  test('interval 6 is forming (below 7 threshold)', () => {
+    // before=forming, after=forming → no level change
+    const data = aggregateSession([
+      makeResult({ is_new: false, before_interval: 3, after_interval: 6 })
+    ])
+    expect(data.leveled_up_count).toBe(0)
+    expect(data.leveled_down_count).toBe(0)
   })
 
-  test('interval 7 → familiar (first day of familiar)', () => {
-    expect(bandAfter(7)).toBe('familiar')
+  test('interval 7 enters familiar band', () => {
+    // before=forming(3d), after=familiar(7d) → leveled up
+    const data = aggregateSession([
+      makeResult({ is_new: false, before_interval: 3, after_interval: 7 })
+    ])
+    expect(data.leveled_up_count).toBe(1)
   })
 
-  test('interval 29 → familiar (last day of familiar)', () => {
-    expect(bandAfter(29)).toBe('familiar')
+  test('interval 30 enters strong band', () => {
+    // before=familiar(10d), after=strong(30d) → leveled up
+    const data = aggregateSession([
+      makeResult({ is_new: false, before_interval: 10, after_interval: 30 })
+    ])
+    expect(data.leveled_up_count).toBe(1)
   })
 
-  test('interval 30 → strong (first day of strong)', () => {
-    expect(bandAfter(30)).toBe('strong')
-  })
-
-  test('interval 89 → strong (last day of strong)', () => {
-    expect(bandAfter(89)).toBe('strong')
-  })
-
-  test('interval 90 → mastered (first day of mastered)', () => {
-    expect(bandAfter(90)).toBe('mastered')
+  test('interval 90 enters mastered band', () => {
+    // before=strong(31d), after=mastered(90d) → leveled up
+    const data = aggregateSession([
+      makeResult({ is_new: false, before_interval: 31, after_interval: 90 })
+    ])
+    expect(data.leveled_up_count).toBe(1)
   })
 })
 
-// ── timeline — no empty buckets ───────────────────────────────────────────────
+// ── leveled_up_count ──────────────────────────────────────────────────────────
 
-describe('aggregateSession — timeline drops all empty buckets [obligation]', () => {
-  test('timeline contains only buckets with count > 0', () => {
-    // Results that land in 1w and 1mo only — 2w bucket must not appear
+describe('aggregateSession — leveled_up_count [obligation]', () => {
+  test('leveled_up when after band > before band [obligation]', () => {
+    // forming(4d) → familiar(8d)
+    const result = makeResult({ is_new: false, before_interval: 4, after_interval: 8 })
+
+    const data = aggregateSession([result])
+
+    expect(data.leveled_up_count).toBe(1)
+    expect(data.leveled_down_count).toBe(0)
+  })
+
+  test('within-band improvement does NOT count as leveled up [obligation]', () => {
+    // familiar(9d) → familiar(21d) — same band, maintenance only
+    const result = makeResult({ is_new: false, before_interval: 9, after_interval: 21 })
+
+    const data = aggregateSession([result])
+
+    expect(data.leveled_up_count).toBe(0)
+    expect(data.leveled_down_count).toBe(0)
+  })
+
+  test('counts multiple level-ups across multiple results', () => {
     const results = [
-      makeResult({ after_interval: 7 }), // 1w
-      makeResult({ after_interval: 30 }) // 1mo
+      makeResult({ is_new: false, before_interval: 4, after_interval: 8 }), // forming→familiar
+      makeResult({ is_new: false, before_interval: 10, after_interval: 35 }) // familiar→strong
     ]
 
     const data = aggregateSession(results)
 
-    const keys = data.timeline.map((b) => b.key)
-    expect(keys).toContain('1w')
-    expect(keys).toContain('1mo')
-    expect(keys).not.toContain('2w')
-  })
-
-  test('empty results → timeline is []', () => {
-    expect(aggregateSession([]).timeline).toEqual([])
-  })
-
-  test('timeline preserves bin order (1d before 1mo)', () => {
-    const results = [
-      makeResult({ after_interval: 30 }), // 1mo
-      makeResult({ after_interval: 1 }) // 1d
-    ]
-
-    const data = aggregateSession(results)
-
-    const keys = data.timeline.map((b) => b.key)
-    expect(keys.indexOf('1d')).toBeLessThan(keys.indexOf('1mo'))
-  })
-
-  test('multiple results in same bucket sum the count', () => {
-    const results = [makeResult({ after_interval: 1 }), makeResult({ after_interval: 1 })]
-
-    const data = aggregateSession(results)
-
-    const bucket_1d = data.timeline.find((b) => b.key === '1d')
-    expect(bucket_1d?.count).toBe(2)
+    expect(data.leveled_up_count).toBe(2)
   })
 })
 
-// ── leech detection — all three conditions required (AND) ──────────────────────
-// LEECH_THRESHOLD was raised from 8 → 24. Tests cover the new boundary exactly.
+// ── leveled_down_count ────────────────────────────────────────────────────────
 
-describe('aggregateSession — leech detection [obligation]', () => {
-  test('lapses >= 24 + failed + front_text → leech [obligation]', () => {
+describe('aggregateSession — leveled_down_count [obligation]', () => {
+  test('leveled_down when after band < before band [obligation]', () => {
+    // familiar(10d) → forming(3d)
     const result = makeResult({
-      passed: false,
-      lapses: 24,
-      front_text: 'Some question'
+      is_new: false,
+      before_interval: 10,
+      after_interval: 3,
+      passed: false
     })
 
     const data = aggregateSession([result])
 
-    expect(data.leeches).toHaveLength(1)
-    expect(data.leeches[0].front_text).toBe('Some question')
-    expect(data.leeches[0].lapses).toBe(24)
+    expect(data.leveled_down_count).toBe(1)
+    expect(data.leveled_up_count).toBe(0)
   })
 
-  test('lapses 23 (one below threshold) → NOT a leech [obligation]', () => {
+  test('within-band decline does NOT count as leveled down [obligation]', () => {
+    // familiar(21d) → familiar(9d) — same band
     const result = makeResult({
+      is_new: false,
+      before_interval: 21,
+      after_interval: 9,
+      passed: false
+    })
+
+    const data = aggregateSession([result])
+
+    expect(data.leveled_down_count).toBe(0)
+    expect(data.leveled_up_count).toBe(0)
+  })
+
+  test('EDGE: failed card already in forming that drops to smaller forming interval is NOT weakened [obligation]', () => {
+    // before=4d (forming), after=1d (still forming) — no lower band exists
+    const result = makeResult({
+      is_new: false,
+      before_interval: 4,
+      after_interval: 1,
+      passed: false
+    })
+
+    const data = aggregateSession([result])
+
+    expect(data.leveled_down_count).toBe(0)
+  })
+})
+
+// ── stuck_count ───────────────────────────────────────────────────────────────
+
+describe('aggregateSession — stuck_count [obligation]', () => {
+  test('!passed && lapses >= 24 → stuck [obligation]', () => {
+    const result = makeResult({ passed: false, lapses: 24 })
+
+    const data = aggregateSession([result])
+
+    expect(data.stuck_count).toBe(1)
+  })
+
+  test('lapses 23 (one below threshold) → NOT stuck [obligation]', () => {
+    const result = makeResult({ passed: false, lapses: 23 })
+
+    const data = aggregateSession([result])
+
+    expect(data.stuck_count).toBe(0)
+  })
+
+  test('passed with lapses >= 24 → NOT stuck [obligation]', () => {
+    const result = makeResult({ passed: true, lapses: 24 })
+
+    const data = aggregateSession([result])
+
+    expect(data.stuck_count).toBe(0)
+  })
+
+  test('EDGE: failed card in forming drops to smaller forming interval — also stuck when lapses >= 24 [obligation]', () => {
+    // This card is stuck (lapses >= 24) AND before/after both forming
+    // leveled_down_count stays 0, but stuck_count is 1 — not mutually exclusive
+    const result = makeResult({
+      is_new: false,
+      before_interval: 4,
+      after_interval: 1,
       passed: false,
-      lapses: 23,
-      front_text: 'Some question'
+      lapses: 24
     })
 
-    expect(aggregateSession([result]).leeches).toHaveLength(0)
+    const data = aggregateSession([result])
+
+    expect(data.stuck_count).toBe(1)
+    expect(data.leveled_down_count).toBe(0)
   })
 
-  test('lapses >= 24 + passed → NOT a leech [obligation]', () => {
+  test('EDGE: card that both drops a band AND is stuck — both counts fire [obligation]', () => {
+    // familiar(10d) → forming(1d), lapses=24 → leveled_down AND stuck
     const result = makeResult({
-      passed: true,
-      lapses: 24,
-      front_text: 'Some question'
-    })
-
-    expect(aggregateSession([result]).leeches).toHaveLength(0)
-  })
-
-  test('lapses >= 24 + failed + empty front_text → NOT a leech [obligation]', () => {
-    const result = makeResult({
+      is_new: false,
+      before_interval: 10,
+      after_interval: 1,
       passed: false,
-      lapses: 24,
-      front_text: ''
+      lapses: 24
     })
 
-    expect(aggregateSession([result]).leeches).toHaveLength(0)
+    const data = aggregateSession([result])
+
+    expect(data.leveled_down_count).toBe(1)
+    expect(data.stuck_count).toBe(1)
   })
 
-  test('lapses >= 24 + failed + undefined front_text → NOT a leech [obligation]', () => {
-    const result = makeResult({
-      passed: false,
-      lapses: 24,
-      front_text: undefined
-    })
+  test('new cards with lapses >= 24 that failed are still stuck [obligation]', () => {
+    // new cards are excluded from leveled counts but stuck_count fires before the is_new continue
+    const result = makeResult({ is_new: true, passed: false, lapses: 24 })
 
-    expect(aggregateSession([result]).leeches).toHaveLength(0)
-  })
+    const data = aggregateSession([result])
 
-  test('lapses 25 + failed + front_text → leech (above threshold) [obligation]', () => {
-    const result = makeResult({
-      passed: false,
-      lapses: 25,
-      front_text: 'Hard card'
-    })
-
-    expect(aggregateSession([result]).leeches).toHaveLength(1)
+    expect(data.stuck_count).toBe(1)
+    expect(data.leveled_down_count).toBe(0)
   })
 })
