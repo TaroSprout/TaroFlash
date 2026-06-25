@@ -71,7 +71,7 @@ function onNavigate(value: TabIndexNavValue) {
         >
           <ui-icon :src="entry.icon" class="w-6 h-6" />
           <span class="flex-1">{{ t(`settings.tab.${entry.value}`) }}</span>
-          <ui-icon src="chevron-right" class="w-6 h-6" />
+          <ui-icon src="line-arrow-right" class="size-4" />
         </ui-tappable>
       </div>
     </labeled-section>
