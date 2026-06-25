@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { emitSfx } from '@/sfx/bus'
@@ -73,11 +73,6 @@ const FOOTER_CLEARANCE = 16
 // content-driven height animation stands down and only tracks the baseline.
 let swapping = false
 
-// Live footer height, so the loading veil can stop at the footer's top edge and
-// centre the spinner in the reading area rather than behind the toolbar.
-const footer_height = ref(0)
-let footer_resize: ResizeObserver | null = null
-
 const chapters = computed(() => lessons_data.value ?? [])
 const current_index = computed(() => chapters.value.findIndex((c) => c.id === lesson_id.value))
 const chapter_of = computed(() => ({
@@ -102,16 +97,6 @@ const follow_direction = computed(() => transcript.value?.follow_direction ?? 'd
 // positioned at its resume offset, so the resume seek lands behind the veil and
 // the reveal shows the reader already at the right spot.
 const ready = computed(() => !!lesson.value && restored.value)
-
-onMounted(() => {
-  if (!dock_el.value) return
-  footer_resize = new ResizeObserver(() => {
-    if (dock_el.value) footer_height.value = dock_el.value.offsetHeight
-  })
-  footer_resize.observe(dock_el.value)
-})
-
-onBeforeUnmount(() => footer_resize?.disconnect())
 
 function goToChapter(id: number) {
   router.push({ name: 'lesson', params: { collectionId: collection_id.value, lessonId: id } })
@@ -172,8 +157,7 @@ useAnimatedHeight(footer_swap_el, footer_toolbar, () => !swapping)
       <div
         v-if="!ready"
         data-testid="lesson-view__loader"
-        :style="{ bottom: `${footer_height}px` }"
-        class="fixed inset-x-0 top-(--nav-height) z-20 flex items-center justify-center bg-brown-100 dark:bg-grey-900 sm:!bottom-0"
+        class="fixed inset-x-0 top-(--nav-height) bottom-[var(--mobile-dock-height,0px)] z-20 flex items-center justify-center bg-brown-100 dark:bg-grey-900 sm:!bottom-0"
       >
         <ui-icon src="loading-dots" class="h-16 w-16 text-brown-700 dark:text-brown-100" />
       </div>
