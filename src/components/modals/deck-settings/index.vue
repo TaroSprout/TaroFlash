@@ -14,7 +14,7 @@ import DeckPinnedPreview from '@/components/deck/pinned-preview.vue'
 import TabSheet from '@/components/layout-kit/modal/tab-sheet.vue'
 
 export type DeckSettingsResponse = boolean
-export type ActiveTab = 'design' | 'study' | 'danger-zone'
+export type ActiveTab = 'details' | 'design' | 'study' | 'danger-zone'
 
 const { deck, close, initial_tab, initial_side } = defineProps<{
   deck: Deck
@@ -23,6 +23,7 @@ const { deck, close, initial_tab, initial_side } = defineProps<{
   initial_side?: CardSide
 }>()
 
+const TabDetails = defineAsyncComponent(() => import('./tab-details/index.vue'))
 const TabDesign = defineAsyncComponent(() => import('./tab-design/index.vue'))
 const TabStudy = defineAsyncComponent(() => import('./tab-study/index.vue'))
 const TabDangerZone = defineAsyncComponent(() => import('./tab-danger-zone/index.vue'))
@@ -30,6 +31,7 @@ const TabIndex = defineAsyncComponent(() => import('./tab-index/index.vue'))
 
 const TAB_COMPONENTS = {
   index: TabIndex,
+  details: TabDetails,
   design: TabDesign,
   study: TabStudy,
   'danger-zone': TabDangerZone
@@ -93,6 +95,7 @@ const tab_content_class = computed(() =>
 onMounted(async () => {
   const idle = window.requestIdleCallback ?? ((cb: IdleRequestCallback) => setTimeout(cb, 200))
   idle(() => {
+    import('./tab-details/index.vue')
     import('./tab-design/index.vue')
     import('./tab-study/index.vue')
     import('./tab-danger-zone/index.vue')
