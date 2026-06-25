@@ -27,10 +27,12 @@ function onRatingClicked(grade: Grade) {
       <ui-button
         data-testid="rating-buttons__again"
         data-theme="brown-100"
+        data-theme-dark="stone-700"
         size="xl"
         icon-left="close"
         full-width
         class="max-w-78.5"
+        :sfx="{ tap_pre: 'snappy_button_5' }"
         @press="onRatingClicked(Rating.Again)"
       >
         {{ t('study.flashcard.rating.fail-button') }}
@@ -39,10 +41,12 @@ function onRatingClicked(grade: Grade) {
       <ui-button
         data-testid="rating-buttons__good"
         data-theme="blue-500"
+        data-theme-dark="blue-650"
         size="xl"
         icon-left="check"
         full-width
         class="max-w-78.5"
+        :sfx="{ tap_pre: 'snappy_button_5' }"
         @press="onRatingClicked(Rating.Good)"
       >
         {{ t('study.flashcard.rating.pass-button') }}
@@ -53,9 +57,11 @@ function onRatingClicked(grade: Grade) {
       v-else-if="side === 'front'"
       data-testid="rating-buttons__show"
       data-theme="blue-500"
+      data-theme-dark="blue-650"
       size="xl"
       full-width
       class="mx-auto max-w-78.5"
+      :sfx="{ tap_pre: 'snappy_button_5' }"
       @press="emit('revealed')"
     >
       {{ t('study.flashcard.rating.flip-button') }}
@@ -65,9 +71,11 @@ function onRatingClicked(grade: Grade) {
       v-else
       data-testid="rating-buttons__start"
       data-theme="blue-500"
+      data-theme-dark="blue-650"
       size="xl"
       full-width
       class="mx-auto max-w-78.5"
+      :sfx="{ tap_pre: 'snappy_button_5' }"
       @press="emit('started')"
     >
       {{ t('study.flashcard.start-button') }}

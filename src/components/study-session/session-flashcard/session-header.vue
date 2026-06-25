@@ -63,6 +63,7 @@ function onSelect(option: DropdownOption) {
       v-if="is_cover"
       data-testid="session-header__close"
       data-theme="brown-100"
+      data-theme-dark="stone-700"
       icon-left="close"
       icon-only
       rounded-full
@@ -75,6 +76,7 @@ function onSelect(option: DropdownOption) {
       v-else
       data-testid="session-header__stop"
       data-theme="brown-100"
+      data-theme-dark="stone-700"
       icon-left="stop"
       rounded-full
       class="justify-self-start"
@@ -86,7 +88,7 @@ function onSelect(option: DropdownOption) {
     <h1
       ref="title"
       data-testid="session-header__title"
-      class="truncate text-center text-3xl font-bold text-brown-700"
+      class="truncate text-center text-3xl font-bold text-brown-700 dark:text-brown-100"
     >
       {{ title }}
     </h1>
@@ -99,6 +101,7 @@ function onSelect(option: DropdownOption) {
       variant="ghost"
       position="bottom-end"
       trigger-theme="brown-100"
+      trigger-theme-dark="stone-700"
       menu-theme="brown-100"
       menu-theme-dark="stone-700"
       :options="menu_options"
