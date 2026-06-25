@@ -2,66 +2,94 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
-import MasterySection from './mastery-section.vue'
-import NewCardsSection from './new-cards-section.vue'
-import TimelineSection from './timeline-section.vue'
-import LeechSection from './leech-section.vue'
+import UiIcon from '@/components/ui-kit/icon.vue'
+import SessionHeader from '../session-flashcard/session-header.vue'
+import StatTile from './stat-tile.vue'
 import { aggregateSession } from './aggregate'
 import type { CardReviewResult } from '@/components/study-session/composables/session-core'
-import type { SecondaryAction } from '@/components/study-session/composables/study-modal'
 
-const { results, secondary_action } = defineProps<{
+const { deck, results } = defineProps<{
+  deck: Deck
   results: CardReviewResult[]
-  secondary_action: SecondaryAction
 }>()
 
 const emit = defineEmits<{
-  (e: 'action', action?: SecondaryAction): void
+  (e: 'close'): void
 }>()
 
 const { t } = useI18n()
 
 const summary = computed(() => aggregateSession(results))
-const secondary_label = computed(() => t(`session-summary.${secondary_action}-button`))
 </script>
 
 <template>
-  <div data-testid="session-summary" class="h-full w-full flex flex-col p-(--session-padding)">
+  <div
+    data-testid="session-summary"
+    class="h-full w-full flex flex-col gap-6 p-(--session-padding)"
+  >
+    <session-header :title="deck.title" is_cover :show_menu="false" @stop="emit('close')" />
+
     <div
       data-testid="session-summary__body"
-      class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-6"
+      class="flex-1 min-h-0 flex flex-col items-center gap-6"
     >
-      <p data-testid="session-summary__score" class="text-base text-brown-500 dark:text-grey-400">
-        {{ t('session-summary.score-label', { recalled: summary.score, total: summary.total }) }}
-      </p>
-
-      <mastery-section v-if="summary.reinforced_count > 0" :summary="summary" />
-      <new-cards-section v-if="summary.new_count > 0" :count="summary.new_count" />
-      <timeline-section v-if="summary.total > 0" :summary="summary" />
-      <leech-section v-if="summary.leeches.length > 0" :leeches="summary.leeches" />
-    </div>
-
-    <div data-testid="session-summary__actions" class="w-full pt-6 flex gap-2 items-center">
-      <ui-button
-        data-testid="session-summary__close"
-        data-theme="blue-500"
-        full-width
-        size="xl"
-        :sfx="{ press: 'slide_up' }"
-        @press="emit('action')"
+      <section
+        data-testid="session-summary__hero"
+        class="flex flex-1 flex-col items-center justify-center gap-6"
       >
-        {{ t('session-summary.close') }}
-      </ui-button>
-      <ui-button
-        data-testid="session-summary__secondary"
-        data-theme="blue-500"
-        full-width
-        size="xl"
-        :sfx="{ press: 'slide_up' }"
-        @press="emit('action', secondary_action)"
-      >
-        {{ secondary_label }}
-      </ui-button>
+        <ui-icon
+          data-testid="session-summary__icon"
+          src="award"
+          class="size-30 text-brown-700 dark:text-brown-100"
+        />
+
+        <div data-testid="session-summary__intro" class="flex flex-col items-center gap-2">
+          <h2
+            data-testid="session-summary__title"
+            class="text-center text-3xl font-bold text-brown-700 dark:text-brown-100"
+          >
+            {{ t('session-summary.title') }}
+          </h2>
+
+          <i18n-t
+            keypath="session-summary.blurb"
+            tag="p"
+            data-testid="session-summary__score"
+            class="text-center text-base text-brown-700 dark:text-brown-100"
+          >
+            <template #recalled>
+              <span
+                data-testid="session-summary__score-recalled"
+                class="inline-flex min-w-6 items-center justify-center rounded-2 bg-brown-100 dark:bg-stone-700 px-1 text-brown-700 dark:text-brown-100"
+                >{{ summary.score }}</span
+              >
+            </template>
+            <template #total>
+              <span
+                data-testid="session-summary__score-total"
+                class="inline-flex min-w-6 items-center justify-center rounded-2 bg-brown-100 dark:bg-stone-700 px-1 text-brown-700 dark:text-brown-100"
+                >{{ summary.total }}</span
+              >
+            </template>
+          </i18n-t>
+        </div>
+      </section>
+
+      <section data-testid="session-summary__footer" class="w-full flex flex-col gap-4">
+        <stat-tile :summary="summary" />
+
+        <ui-button
+          data-testid="session-summary__close"
+          data-theme="brown-100"
+          data-theme-dark="stone-700"
+          full-width
+          size="xl"
+          :sfx="{ press: 'slide_up' }"
+          @press="emit('close')"
+        >
+          {{ t('session-summary.close-button') }}
+        </ui-button>
+      </section>
     </div>
   </div>
 </template>
