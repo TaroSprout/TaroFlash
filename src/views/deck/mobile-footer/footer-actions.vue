@@ -8,7 +8,7 @@ const { t } = useI18n()
 <template>
   <div
     data-testid="deck-footer-actions"
-    class="flex w-full items-center gap-2 px-(--dock-px) py-(--dock-py)"
+    class="flex w-full items-center gap-2 px-(--dock-px) pt-(--dock-pt) pb-(--dock-pb)"
   >
     <ui-button
       data-testid="deck-footer-actions__search"

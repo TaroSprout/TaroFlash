@@ -38,7 +38,7 @@ const position = computed(() => ({ index: index.value + 1, total: cards.value.le
 <template>
   <div
     data-testid="mobile-card-editor"
-    class="flex w-full flex-col items-center gap-4 px-(--dock-px) py-(--dock-py)"
+    class="flex w-full flex-col items-center gap-4 px-(--dock-px) pt-(--dock-pt) pb-(--dock-pb)"
   >
     <div data-testid="mobile-card-editor__stage" class="flex w-full justify-center">
       <face-editor

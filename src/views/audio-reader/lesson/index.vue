@@ -307,7 +307,7 @@ useAnimatedHeight(footer_swap_el, footer_toolbar, () => !swapping)
             key="term"
             ref="footer_term"
             data-testid="lesson-view__dock-term"
-            class="px-(--dock-px) py-(--dock-py)"
+            class="px-(--dock-px) pt-(--dock-pt) pb-(--dock-pb)"
           >
             <term-card
               :term="selection.term"
@@ -327,7 +327,7 @@ useAnimatedHeight(footer_swap_el, footer_toolbar, () => !swapping)
             key="toolbar"
             ref="footer_toolbar"
             data-testid="lesson-view__dock-toolbar"
-            class="px-(--dock-px) py-(--dock-py)"
+            class="px-(--dock-px) pt-(--dock-pt) pb-(--dock-pb)"
           >
             <audio-toolbar
               :player="player"
