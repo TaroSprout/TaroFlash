@@ -142,7 +142,7 @@ const KEY_DELTAS: Record<string, number> = {
 
     <div
       data-testid="ui-kit-slider__content"
-      class="pointer-events-none absolute inset-0 flex items-center justify-between px-4 text-base text-brown-700"
+      class="pointer-events-none absolute inset-0 flex items-center justify-between px-4 text-brown-700 dark:text-brown-100"
       :style="{ clipPath: `inset(0 0 0 ${fill_width})` }"
     >
       <span

@@ -18,7 +18,6 @@ import { useTabModalLayout } from '@/composables/ui/tab-modal-layout'
 import { useTabTransition } from '@/composables/ui/tab-transition'
 import { useAlert } from '@/composables/alert'
 import { useModalRequestClose } from '@/composables/modal'
-import { useSessionRef } from '@/composables/storage/session-ref'
 import MemberCard from '@/components/member/member-card.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import TabSheet from '@/components/layout-kit/modal/tab-sheet.vue'
@@ -35,8 +34,8 @@ const TabIndex = defineAsyncComponent(() => import('./tab-index/index.vue'))
 const TAB_COMPONENTS = {
   index: TabIndex,
   profile: TabProfile,
-  subscription: TabSubscription,
   app: TabApp,
+  subscription: TabSubscription,
   'danger-zone': TabDangerZone
 }
 
@@ -57,20 +56,20 @@ provide(settingsLayoutKey, layout_mode)
 provide(settingsCloseKey, close)
 
 type ActiveTab = 'profile' | 'subscription' | 'app' | 'danger-zone'
-const active_tab = useSessionRef<ActiveTab | null>('settings.active-tab', null)
+const active_tab = ref<ActiveTab | null>(null)
 
 const tab_outlet = ref<HTMLElement>()
 const { nav_direction, onTabEnter, onTabLeave } = useTabTransition(layout_mode, tab_outlet)
 
 const tabs = computed(() => [
   { value: 'profile', icon: 'user-sticker-square', label: t('settings.tab.profile') },
-  { value: 'subscription', icon: 'piggy-bank', label: t('settings.tab.subscription') },
   { value: 'app', icon: 'screwdriver-wrench', label: t('settings.tab.app') },
+  { value: 'subscription', icon: 'piggy-bank', label: t('settings.tab.subscription') },
   { value: 'danger-zone', icon: 'delete', label: t('settings.tab.danger-zone') }
 ])
 
 const displayed_tab = computed(
-  () => active_tab.value ?? (layout_mode.value !== 'sheet' ? 'profile' : 'index')
+  () => active_tab.value ?? (layout_mode.value === 'desktop' ? 'profile' : 'index')
 )
 
 const sidebar_active = computed({
@@ -123,7 +122,7 @@ function onBack() {
 }
 
 watch(layout_mode, (mode) => {
-  if (mode === 'sheet' && active_tab.value === 'danger-zone') active_tab.value = null
+  if (mode !== 'desktop' && active_tab.value === 'danger-zone') active_tab.value = null
 })
 </script>
 
