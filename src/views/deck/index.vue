@@ -9,7 +9,7 @@ import CardGridSkeleton from './card-grid/skeleton.vue'
 import CardGridEmpty from './card-grid/empty-state.vue'
 import { preloadDeckModes } from './modes'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
-import DeckMobileEditor from './mobile-editor/index.vue'
+import DeckMobileFooter from './mobile-footer/index.vue'
 import { useDeckQuery } from '@/api/decks'
 import { cardEditorKey, useCardListController } from '@/views/deck/composables'
 import { deckViewShellKey, useDeckViewShell } from '@/views/deck/composables/view-shell'
@@ -95,6 +95,6 @@ onMounted(preloadDeckModes)
       target="html"
     />
 
-    <deck-mobile-editor v-if="is_mobile" />
+    <deck-mobile-footer v-if="is_mobile" />
   </section>
 </template>
