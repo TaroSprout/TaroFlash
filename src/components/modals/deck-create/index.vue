@@ -64,7 +64,9 @@ watch(
     @close="close(false)"
   >
     <template #header-content>
-      <h1 class="text-5xl text-white w-full">{{ t('deck.create-modal.title') }}</h1>
+      <h1 class="text-5xl text-white w-full" :class="layout_mode !== 'sheet' && 'pt-4'">
+        {{ t('deck.create-modal.title') }}
+      </h1>
     </template>
 
     <template #overlay>

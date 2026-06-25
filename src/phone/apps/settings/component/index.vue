@@ -147,6 +147,7 @@ watch(layout_mode, (mode) => {
       <div
         data-testid="settings__header"
         class="w-full flex flex-col max-md:items-center max-md:text-center"
+        :class="layout_mode === 'tablet' && 'pt-4'"
       >
         <h1 data-testid="settings__header-title" class="text-5xl text-white">
           {{ header_title }}

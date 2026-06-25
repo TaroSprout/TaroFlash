@@ -150,7 +150,7 @@
   "settings.title": "Settings",
   "settings.submit-edit": "Save changes",
   "settings.back-button": "Back",
-  "settings.back-label": "Settings",
+  "settings.back-label": "Back",
   "settings.unsaved-alert.title": "Unsaved changes",
   "settings.unsaved-alert.message": "You have unsaved changes. Discard them?",
   "settings.unsaved-alert.confirm": "Discard",

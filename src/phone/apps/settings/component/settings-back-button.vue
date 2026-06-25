@@ -16,7 +16,7 @@ const emit = defineEmits<{ back: [] }>()
     data-testid="settings__back-button"
     :aria-label="t('settings.back-button')"
     data-theme="blue-600"
-    data-theme-dark="blue-800"
+    data-theme-dark="blue-650"
     inverted
     icon-left="arrow-back"
     :class="['self-start', layout_mode === 'sheet' && '-mb-4']"
