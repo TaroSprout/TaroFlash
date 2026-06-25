@@ -6,7 +6,7 @@ import UiThemePicker from '@/components/ui-kit/theme-picker.vue'
 import UiPatternPicker from '@/components/ui-kit/pattern-picker.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
-import MemberCard from '@/components/member/member-card.vue'
+import MemberBadge from '@/components/member/member-badge.vue'
 import SettingsBackButton from '../settings-back-button.vue'
 import SettingsSaveButton from '../settings-save-button.vue'
 import { memberEditorKey } from '@/composables/member/editor'
@@ -29,13 +29,10 @@ const emit = defineEmits<{ back: [] }>()
       data-testid="tab-profile__preview"
       :label="t('settings.profile.section.preview')"
     >
-      <member-card
-        :created-at="editor.created_at.value"
+      <member-badge
         :display-name="editor.settings.display_name"
-        :card-comment="editor.settings.description"
-        :card-title="t('settings.preview.title-fallback')"
+        :description="editor.settings.description"
         :cover="editor.cover"
-        class="mx-auto"
       />
     </labeled-section>
 
