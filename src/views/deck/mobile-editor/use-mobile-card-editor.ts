@@ -41,10 +41,12 @@ export function useMobileCardEditor(controller: CardListController) {
     cursor_client_id.value = target
     side.value = 'front'
     open.value = true
+    emitSfx('snappy_button_3')
   }
 
   function close() {
     open.value = false
+    emitSfx('snappy_button_5')
   }
 
   function flip() {

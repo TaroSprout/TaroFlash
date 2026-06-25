@@ -10,7 +10,6 @@ import { mobileCardEditorKey } from './use-mobile-card-editor'
 const { t } = useI18n()
 
 const {
-  open,
   side,
   current,
   index,
@@ -38,9 +37,8 @@ const position = computed(() => ({ index: index.value + 1, total: cards.value.le
 
 <template>
   <div
-    v-if="open"
     data-testid="mobile-card-editor"
-    class="flex w-full flex-col items-center gap-4 px-(--dock-px)"
+    class="flex w-full flex-col items-center gap-4 px-(--dock-px) py-(--dock-py)"
   >
     <div data-testid="mobile-card-editor__stage" class="flex w-full justify-center">
       <face-editor
@@ -112,7 +110,6 @@ const position = computed(() => ({ index: index.value + 1, total: cards.value.le
         icon-left="check"
         data-theme="blue-500"
         data-theme-dark="blue-650"
-        :sfx="{ press: 'music_plink_ok' }"
         @press="close"
       >
         {{ t('deck-view.mobile-editor.done-button') }}
