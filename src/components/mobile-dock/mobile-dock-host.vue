@@ -15,12 +15,12 @@ onMounted(() => (el.value = bar.value))
       v-show="fills > 0"
       ref="bar"
       data-testid="mobile-dock-host"
-      class="fixed bottom-0 left-0 right-0 z-30 rounded-t-6 bg-brown-300 p-5 pb-2 transform-[translateZ(0)] dark:bg-stone-900 sm:bottom-3 sm:left-auto sm:right-3 sm:w-96 sm:rounded-6 sm:pb-5 xl:hidden"
+      class="fixed bottom-0 left-0 right-0 z-30 rounded-t-6 bg-brown-300 py-5 pb-2 transform-[translateZ(0)] dark:bg-stone-900 sm:bottom-3 sm:left-auto sm:right-3 sm:w-96 sm:rounded-6 sm:pb-5 xl:hidden [--dock-px:1.25rem]"
     >
       <div
         mobile-dock-above
         data-testid="mobile-dock-host__above"
-        class="pointer-events-none absolute inset-x-0 bottom-full flex justify-end px-5 pb-3"
+        class="pointer-events-none absolute inset-x-0 bottom-full flex justify-end px-(--dock-px) pb-3"
       ></div>
 
       <div

@@ -37,7 +37,11 @@ const position = computed(() => ({ index: index.value + 1, total: cards.value.le
 </script>
 
 <template>
-  <div v-if="open" data-testid="mobile-card-editor" class="flex w-full flex-col items-center gap-4">
+  <div
+    v-if="open"
+    data-testid="mobile-card-editor"
+    class="flex w-full flex-col items-center gap-4 px-(--dock-px)"
+  >
     <div data-testid="mobile-card-editor__stage" class="flex w-full justify-center">
       <face-editor
         v-if="current"

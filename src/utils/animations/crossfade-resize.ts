@@ -1,65 +1,80 @@
 import { gsap } from 'gsap'
 
-const DURATION = 0.24
+const HEIGHT_DURATION = 0.2
+const FADE_DURATION = 0.15
+
+// Pin a pane on top of its sibling so the two can crossfade in the same slot
+// without either dictating the wrapper's layout height.
+function pin(node: HTMLElement) {
+  node.style.position = 'absolute'
+  node.style.left = '0'
+  node.style.right = '0'
+  node.style.top = '0'
+}
+
+function unpin(node: HTMLElement) {
+  node.style.position = ''
+  node.style.left = ''
+  node.style.right = ''
+  node.style.top = ''
+}
 
 /**
- * Crossfade + height-resize between two arbitrary-height blocks, for a
- * `<Transition :css="false">` whose single child swaps. The outgoing child is
- * pinned absolute so the two overlap (crossfade), while the wrapper tweens from
- * the old child's height to the new one's (smooth resize).
+ * Crossfade two arbitrary-height panes in the same slot while smoothly animating
+ * their shared wrapper's height between the two sizes. Backs the layout-kit
+ * `<crossfade-resize>` component; used for footer pane swaps (deck editor ⇄
+ * actions, audio toolbar ⇄ term card).
  *
- * Wire all three to one `<Transition>`; the wrapper must be `relative` +
- * `overflow-hidden` so the pinned child overlaps and the height tween clips.
+ * Wire all three hooks on a single-child `<Transition>` (no `mode` — leave and
+ * enter overlap) whose direct parent is `wrapper`. The wrapper must be
+ * `relative` so the pinned panes stack. Because the footer is anchored at the
+ * bottom of the viewport, growing the wrapper pushes its top edge upward.
+ *
+ * Overflow is clipped only for the duration of the tween — at rest the wrapper
+ * lets content (e.g. the scrubber thumb that sits proud of its track) bleed past
+ * its edges.
+ *
+ * Flow:
+ * - before-leave: freeze the wrapper at its current height so it can't collapse
+ *   when both panes pin absolute, and clip overflow for the tween.
+ * - leave: pin the outgoing pane and fade it out.
+ * - enter: pin the incoming pane, tween the wrapper to its natural height, fade
+ *   it in, then release the wrapper back to `auto` and unclip.
  */
-
-/** Hide the incoming child, pin the outgoing one, and lock the wrapper to the
- *  outgoing height so `enter` has a stable height to tween from. */
-export function crossfadeResizeBeforeEnter(el: Element) {
-  const node = el as HTMLElement
-  const wrapper = node.parentElement
-  const leaving = wrapper
-    ? (Array.from(wrapper.children).find((child) => child !== node) as HTMLElement | undefined)
-    : undefined
-
-  const from = leaving?.offsetHeight ?? wrapper?.offsetHeight ?? 0
-
-  gsap.set(node, { opacity: 0 })
-
-  // Pin the outgoing child now (not just in `leave`) so it leaves the flow the
-  // instant the incoming child mounts — no single-frame vertical stacking.
-  if (leaving) {
-    leaving.style.position = 'absolute'
-    leaving.style.inset = '0'
+export function crossfadeResizeBeforeLeave(wrapper: HTMLElement) {
+  return () => {
+    wrapper.style.height = `${wrapper.offsetHeight}px`
+    wrapper.style.overflow = 'hidden'
   }
-
-  if (wrapper) wrapper.style.height = `${from}px`
 }
 
-/** Fade the incoming child in while the wrapper resizes to its height. */
-export function crossfadeResizeEnter(el: Element, done: () => void) {
-  const node = el as HTMLElement
-  const wrapper = node.parentElement as HTMLElement | null
-
-  gsap.to(node, { opacity: 1, duration: DURATION, ease: 'power1.out', clearProps: 'opacity' })
-
-  if (!wrapper) return done()
-
-  gsap.to(wrapper, {
-    height: node.offsetHeight,
-    duration: DURATION,
-    ease: 'power2.inOut',
-    onComplete: () => {
-      wrapper.style.height = ''
-      done()
-    }
-  })
-}
-
-/** Fade the outgoing child out; it's already pinned absolute by `beforeEnter`. */
 export function crossfadeResizeLeave(el: Element, done: () => void) {
   const node = el as HTMLElement
-  node.style.position = 'absolute'
-  node.style.inset = '0'
+  pin(node)
+  gsap.to(node, { opacity: 0, duration: FADE_DURATION, ease: 'power1.out', onComplete: done })
+}
 
-  gsap.to(node, { opacity: 0, duration: DURATION, ease: 'power1.out', onComplete: done })
+export function crossfadeResizeEnter(wrapper: HTMLElement) {
+  return (el: Element, done: () => void) => {
+    const node = el as HTMLElement
+    pin(node)
+    const target = node.scrollHeight
+
+    gsap.set(node, { opacity: 0 })
+    // `done` fires from the height tween (the longer of the two) so the swap isn't
+    // reported complete until the wrapper is released back to `auto` and unpinned —
+    // any content-driven height animation waits for that before taking over.
+    gsap.to(wrapper, {
+      height: target,
+      duration: HEIGHT_DURATION,
+      ease: 'power2.out',
+      onComplete: () => {
+        wrapper.style.height = ''
+        wrapper.style.overflow = ''
+        unpin(node)
+        done()
+      }
+    })
+    gsap.to(node, { opacity: 1, duration: FADE_DURATION, ease: 'power1.out' })
+  }
 }

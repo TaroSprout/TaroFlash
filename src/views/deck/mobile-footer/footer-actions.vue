@@ -6,7 +6,7 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <div data-testid="deck-footer-actions" class="flex w-full items-center gap-2">
+  <div data-testid="deck-footer-actions" class="flex w-full items-center gap-2 px-(--dock-px)">
     <ui-button
       data-testid="deck-footer-actions__search"
       icon-only
