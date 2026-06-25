@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import CardFaceUploader from './card-face-uploader.vue'
+import CardFaceUploader from '@/components/card/card-face-uploader.vue'
 import { useI18n } from 'vue-i18n'
 import { inject, onMounted, ref, useTemplateRef } from 'vue'
 import { cardEditorKey, type CardWithClientId } from '@/views/deck/composables'
@@ -138,6 +138,7 @@ defineExpose({ focusEditor, hasFocusWithin })
       :data-id="card.id"
       :card="card"
       side="front"
+      :card_attributes="card_attributes"
       :disabled="is_selecting"
       :error="save_failed"
     >
@@ -158,6 +159,7 @@ defineExpose({ focusEditor, hasFocusWithin })
       :data-id="card.id"
       :card="card"
       side="back"
+      :card_attributes="card_attributes"
       :disabled="is_selecting"
       :error="save_failed"
     >

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, useTemplateRef, type ComponentPublicInstance } from 'vue'
+import { computed, useTemplateRef, type ComponentPublicInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Card from '@/components/card/index.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
@@ -7,7 +7,6 @@ import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import FaceImageDropzone from './face-image-dropzone.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { CARD_IMAGE_MAX_BYTES, useFaceImageUpload } from '@/composables/card'
-import { cardEditorKey } from '@/views/deck/composables'
 import { cardImageUrl } from '@/api/media'
 import { CARD_ATTRIBUTES_DEFAULTS } from '@/utils/deck/defaults'
 import { emitSfx } from '@/sfx/bus'
@@ -19,14 +18,20 @@ import { bytesToMbLabel } from '@/utils/file-size'
 type CardFaceUploaderProps = {
   card: Card
   side: 'front' | 'back'
+  card_attributes: DeckCardAttributes
   disabled?: boolean
   error?: boolean
 }
 
-const { card, side, disabled = false, error = false } = defineProps<CardFaceUploaderProps>()
+const {
+  card,
+  side,
+  card_attributes,
+  disabled = false,
+  error = false
+} = defineProps<CardFaceUploaderProps>()
 
 const { t } = useI18n()
-const { card_attributes } = inject(cardEditorKey)!
 
 const addIcon = useTemplateRef<HTMLElement>('addIcon')
 const cardRef = useTemplateRef<ComponentPublicInstance>('cardRef')
@@ -61,7 +66,7 @@ const {
 })
 
 const layout = computed(
-  () => card_attributes.value[side]?.image_layout ?? CARD_ATTRIBUTES_DEFAULTS.image_layout
+  () => card_attributes[side]?.image_layout ?? CARD_ATTRIBUTES_DEFAULTS.image_layout
 )
 // Behind keeps the image full-bleed under the text, so its controls float in the
 // corners; above/below give the image its own region to scope the dropzone to.
