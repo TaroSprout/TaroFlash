@@ -87,16 +87,17 @@ function makeCard(overrides = {}) {
 }
 
 // Mount the composable inside a Vue app (needs i18n for toast strings).
-// Returns { result, cardRef, onFile, unmount }.
+// Returns { result, cardRef, sideRef, onFile, unmount }.
 function withUpload({ card = makeCard(), side = 'front' } = {}) {
   const cardRef = ref(card)
+  const sideRef = ref(side)
   const fileInput = ref(null)
   const rootEl = () => undefined
 
   let result
   const app = createApp({
     setup() {
-      result = useFaceImageUpload({ card: cardRef, side, fileInput, rootEl })
+      result = useFaceImageUpload({ card: cardRef, side: sideRef, fileInput, rootEl })
       return () => null
     }
   })
@@ -104,7 +105,7 @@ function withUpload({ card = makeCard(), side = 'front' } = {}) {
   app.mount(document.createElement('div'))
 
   // capturedOnFile is populated by the useImageDropzone mock on mount
-  return { result, cardRef, onFile: capturedOnFile, unmount: () => app.unmount() }
+  return { result, cardRef, sideRef, onFile: capturedOnFile, unmount: () => app.unmount() }
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -499,6 +500,34 @@ describe('useFaceImageUpload — dragging watcher (chime on drag enter)', () => 
     await nextTick()
 
     expect(mockEmitSfx).not.toHaveBeenCalledWith('music_plink_mid')
+    unmount()
+  })
+})
+
+describe('useFaceImageUpload — reactive side [obligation]', () => {
+  test('image_path re-derives when side ref changes from front to back [obligation]', async () => {
+    const card = makeCard({ front_image_path: 'img/front.jpg', back_image_path: 'img/back.jpg' })
+    const { result, sideRef, unmount } = withUpload({ card, side: 'front' })
+
+    expect(result.image_path.value).toBe('img/front.jpg')
+
+    sideRef.value = 'back'
+    await nextTick()
+
+    expect(result.image_path.value).toBe('img/back.jpg')
+    unmount()
+  })
+
+  test('has_image updates when side changes to a side without an image [obligation]', async () => {
+    const card = makeCard({ front_image_path: 'img/front.jpg', back_image_path: null })
+    const { result, sideRef, unmount } = withUpload({ card, side: 'front' })
+
+    expect(result.has_image.value).toBe(true)
+
+    sideRef.value = 'back'
+    await nextTick()
+
+    expect(result.has_image.value).toBe(false)
     unmount()
   })
 })

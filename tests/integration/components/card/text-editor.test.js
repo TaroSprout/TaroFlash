@@ -212,7 +212,7 @@ describe('TextEditor', () => {
 
   // ── onContainerPointerDown [obligation] ─────────────────────────────────────
 
-  test('mousedown on the container (not editable) focuses the editor [obligation]', async () => {
+  test('pointerdown on the container (not editable) focuses the editor [obligation]', async () => {
     const wrapper = makeEditor()
     const container = getContainer(wrapper)
     const editorEl = getEditorEl(wrapper).element
@@ -223,29 +223,29 @@ describe('TextEditor', () => {
       focused = true
     }
 
-    // Dispatch mousedown whose target is the container (not the editable)
-    const event = new MouseEvent('mousedown', { bubbles: true })
+    // Dispatch pointerdown whose target is the container (not the editable)
+    const event = new PointerEvent('pointerdown', { bubbles: true, cancelable: true })
     Object.defineProperty(event, 'target', { value: container.element, configurable: true })
     container.element.dispatchEvent(event)
 
     expect(focused).toBe(true)
   })
 
-  test('mousedown on the container is a no-op when disabled [obligation]', async () => {
+  test('pointerdown on the container is a no-op when disabled [obligation]', async () => {
     const wrapper = makeEditor({ disabled: true })
     const container = getContainer(wrapper)
 
-    // Disabled editor: no contenteditable element rendered, container mousedown is a no-op
+    // Disabled editor: no contenteditable element rendered, container pointerdown is a no-op
     let focused = false
     // The disabled div doesn't focus but we verify no error
-    const event = new MouseEvent('mousedown', { bubbles: true })
+    const event = new PointerEvent('pointerdown', { bubbles: true, cancelable: true })
     Object.defineProperty(event, 'target', { value: container.element, configurable: true })
     container.element.dispatchEvent(event)
 
     expect(focused).toBe(false)
   })
 
-  test('mousedown whose target IS the editable is a no-op (native caret placement) [obligation]', async () => {
+  test('pointerdown whose target IS the editable is a no-op (native caret placement) [obligation]', async () => {
     const wrapper = makeEditor()
     const editorEl = getEditorEl(wrapper).element
 
@@ -255,7 +255,7 @@ describe('TextEditor', () => {
     }
 
     // Dispatch with target === editorEl — handler must bail
-    const event = new MouseEvent('mousedown', { bubbles: true })
+    const event = new PointerEvent('pointerdown', { bubbles: true, cancelable: true })
     Object.defineProperty(event, 'target', { value: editorEl, configurable: true })
     editorEl.dispatchEvent(event)
 

@@ -171,6 +171,24 @@ describe('DropdownMenu', () => {
     })
   })
 
+  // ── menuClass prop [obligation] ───────────────────────────────────────────
+
+  describe('menuClass prop [obligation]', () => {
+    test('menuClass is applied to the dropdown-button__menu root element [obligation]', () => {
+      const wrapper = mountMenu({ menuClass: 'ring-2 ring-blue-500' })
+      const menu = wrapper.find('[data-testid="dropdown-button__menu"]')
+      expect(menu.classes()).toContain('ring-2')
+      expect(menu.classes()).toContain('ring-blue-500')
+    })
+
+    test('menuClass is absent when not provided [obligation]', () => {
+      const wrapper = mountMenu()
+      const menu = wrapper.find('[data-testid="dropdown-button__menu"]')
+      // Still has the size class from the prop
+      expect(menu.classes().join(' ')).toContain('ui-kit-btn-tokens')
+    })
+  })
+
   // ── default slot override (panel slot path) [obligation] ──────────────────
   // When a #default slot is provided to DropdownMenu (via the parent's #panel
   // slot bridge), it replaces the option list entirely.

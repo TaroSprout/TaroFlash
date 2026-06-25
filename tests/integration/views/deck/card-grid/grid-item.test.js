@@ -3,8 +3,10 @@ import { mount } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
+const { mockUseMatchMedia } = vi.hoisted(() => ({ mockUseMatchMedia: vi.fn() }))
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
+vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: mockUseMatchMedia }))
 
 const CardStub = defineComponent({
   name: 'Card',
@@ -78,6 +80,7 @@ const UiDropdownButtonStub = defineComponent({
 
 import GridItem from '@/views/deck/card-grid/grid-item.vue'
 import { cardEditorKey } from '@/views/deck/composables/list-controller'
+import { mobileCardEditorKey } from '@/views/deck/mobile-editor/use-mobile-card-editor'
 
 function makeEditor({ is_selecting = false } = {}) {
   return {
@@ -92,29 +95,39 @@ function makeEditor({ is_selecting = false } = {}) {
   }
 }
 
-function mountGridItem({ props = {}, editor } = {}) {
+function makeMobileEditor() {
+  return { open_at: vi.fn() }
+}
+
+function mountGridItem({ props = {}, editor, mobile_editor, is_mobile = false } = {}) {
   const ed = editor ?? makeEditor()
+  const is_mobile_ref = ref(is_mobile)
+  mockUseMatchMedia.mockReturnValue(is_mobile_ref)
+  const provide = { [cardEditorKey]: ed }
+  if (mobile_editor !== undefined) provide[mobileCardEditorKey] = mobile_editor
   return {
     wrapper: mount(GridItem, {
       props: {
-        card: { id: 1, front_text: 'q', back_text: 'a' },
+        card: { id: 1, client_id: 'c1', front_text: 'q', back_text: 'a' },
         side: 'front',
         selected: false,
         ...props
       },
       attachTo: document.body,
       global: {
-        provide: { [cardEditorKey]: ed },
+        provide,
         stubs: { Card: CardStub, UiRadio: UiRadioStub, UiDropdownButton: UiDropdownButtonStub }
       }
     }),
-    editor: ed
+    editor: ed,
+    is_mobile_ref
   }
 }
 
 describe('GridItem (card-grid/grid-item.vue)', () => {
   beforeEach(() => {
     mockEmitSfx.mockClear()
+    mockUseMatchMedia.mockReturnValue(ref(false))
   })
 
   test('renders root with data-testid="grid-item"', () => {
@@ -292,5 +305,55 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     })
     card.element.dispatchEvent(event)
     expect(prevented).toBe(false)
+  })
+
+  // ── mobile tap behavior [obligation] ──────────────────────────────────────
+
+  test('below md a tap calls mobile_editor.open_at(card.client_id) instead of flipping [obligation]', async () => {
+    const mobile_editor = makeMobileEditor()
+    const { wrapper } = mountGridItem({ is_mobile: true, mobile_editor })
+    const card = wrapper.find('[data-testid="card-stub"]')
+    const side_before = card.attributes('data-side')
+
+    await card.trigger('click')
+
+    expect(mobile_editor.open_at).toHaveBeenCalledWith('c1')
+    // Side must not change — the editor opened instead of flipping
+    expect(card.attributes('data-side')).toBe(side_before)
+    expect(mockEmitSfx).not.toHaveBeenCalled()
+  })
+
+  test('below md a tap is a no-op when no mobile_editor is provided [obligation]', async () => {
+    const { wrapper } = mountGridItem({ is_mobile: true })
+    const card = wrapper.find('[data-testid="card-stub"]')
+    const side_before = card.attributes('data-side')
+
+    await card.trigger('click')
+
+    // No crash, no flip
+    expect(card.attributes('data-side')).toBe(side_before)
+  })
+
+  test('below md a tap while selecting still calls onSelectCard [obligation]', async () => {
+    const editor = makeEditor({ is_selecting: true })
+    const mobile_editor = makeMobileEditor()
+    const { wrapper } = mountGridItem({ is_mobile: true, editor, mobile_editor })
+
+    await wrapper.find('[data-testid="card-stub"]').trigger('click')
+
+    // Selection takes priority over mobile editor
+    expect(editor.actions.onSelectCard).toHaveBeenCalledWith(1)
+    expect(mobile_editor.open_at).not.toHaveBeenCalled()
+  })
+
+  test('at md+ a click flips the card (not the mobile editor) [obligation]', async () => {
+    const mobile_editor = makeMobileEditor()
+    const { wrapper } = mountGridItem({ is_mobile: false, mobile_editor })
+    const card = wrapper.find('[data-testid="card-stub"]')
+
+    await card.trigger('click')
+
+    expect(mobile_editor.open_at).not.toHaveBeenCalled()
+    expect(card.attributes('data-side')).toBe('back')
   })
 })

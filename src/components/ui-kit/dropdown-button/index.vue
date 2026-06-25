@@ -28,6 +28,7 @@ type DropdownButtonProps = Pick<
   primaryDisabled?: boolean
   menuTheme?: Theme
   menuThemeDark?: Theme
+  menuClass?: string
   triggerTheme?: Theme
   triggerThemeDark?: Theme
 }
@@ -57,6 +58,7 @@ const {
   primaryDisabled = false,
   menuTheme = 'brown-300',
   menuThemeDark,
+  menuClass,
   triggerTheme,
   triggerThemeDark
 } = defineProps<DropdownButtonProps>()
@@ -214,6 +216,7 @@ function onMenuSelect(option: DropdownOption) {
       :size="size"
       :menu-theme="menuTheme"
       :menu-theme-dark="menuThemeDark"
+      :menu-class="menuClass"
       @select="onMenuSelect"
     >
       <template v-if="$slots.panel" #default>

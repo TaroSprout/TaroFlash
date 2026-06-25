@@ -20,8 +20,10 @@ function unpin(node: HTMLElement) {
 }
 
 /**
- * Crossfade two footer panes (audio toolbar ⇄ term card) while smoothly
- * animating the footer's height between their two sizes.
+ * Crossfade two arbitrary-height panes in the same slot while smoothly animating
+ * their shared wrapper's height between the two sizes. Backs the layout-kit
+ * `<crossfade-resize>` component; used for footer pane swaps (deck editor ⇄
+ * actions, audio toolbar ⇄ term card).
  *
  * Wire all three hooks on a single-child `<Transition>` (no `mode` — leave and
  * enter overlap) whose direct parent is `wrapper`. The wrapper must be
@@ -39,20 +41,20 @@ function unpin(node: HTMLElement) {
  * - enter: pin the incoming pane, tween the wrapper to its natural height, fade
  *   it in, then release the wrapper back to `auto` and unclip.
  */
-export function footerSwapBeforeLeave(wrapper: HTMLElement) {
+export function crossfadeResizeBeforeLeave(wrapper: HTMLElement) {
   return () => {
     wrapper.style.height = `${wrapper.offsetHeight}px`
     wrapper.style.overflow = 'hidden'
   }
 }
 
-export function footerSwapLeave(el: Element, done: () => void) {
+export function crossfadeResizeLeave(el: Element, done: () => void) {
   const node = el as HTMLElement
   pin(node)
   gsap.to(node, { opacity: 0, duration: FADE_DURATION, ease: 'power1.out', onComplete: done })
 }
 
-export function footerSwapEnter(wrapper: HTMLElement) {
+export function crossfadeResizeEnter(wrapper: HTMLElement) {
   return (el: Element, done: () => void) => {
     const node = el as HTMLElement
     pin(node)

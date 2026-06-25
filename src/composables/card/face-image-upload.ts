@@ -26,7 +26,7 @@ const SUPPRESS_HOVER_MS = 1000
 
 type UseFaceImageUploadOptions = {
   card: MaybeRefOrGetter<Card>
-  side: 'front' | 'back'
+  side: MaybeRefOrGetter<'front' | 'back'>
   fileInput: Readonly<ShallowRef<HTMLInputElement | null>>
   /** The uploader root element, used to dismiss a lingering error on outside click. */
   rootEl: () => HTMLElement | undefined
@@ -79,7 +79,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
   })
 
   const image_path = computed(() =>
-    side === 'front' ? toValue(card).front_image_path : toValue(card).back_image_path
+    toValue(side) === 'front' ? toValue(card).front_image_path : toValue(card).back_image_path
   )
   const has_image = computed(() => !!image_path.value)
   // Image writes go through insert-backed RPCs that need a persisted row; temp
@@ -108,7 +108,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
     pending.value = true
 
     try {
-      await mutations.setCardImage(toValue(card).id!, side, file)
+      await mutations.setCardImage(toValue(card).id!, toValue(side), file)
     } catch {
       toast.error(t('toast.error.card-image-upload-failed'))
       pending.value = false
@@ -123,7 +123,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
   /** The currently rendered image element for this face, across layouts. */
   function faceImageEl() {
     return rootEl()?.querySelector<HTMLElement>(
-      '[data-testid="face-image-dropzone__image"], [data-testid="card-face__image"]'
+      '[data-testid="image-dropzone__image"], [data-testid="card-face__image"]'
     )
   }
 
@@ -147,7 +147,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
     pending.value = true
 
     try {
-      await mutations.deleteCardImage(toValue(card).id!, side)
+      await mutations.deleteCardImage(toValue(card).id!, toValue(side))
       emitSfx('trash_crumple_short')
     } catch {
       toast.error(t('toast.error.card-image-delete-failed'))

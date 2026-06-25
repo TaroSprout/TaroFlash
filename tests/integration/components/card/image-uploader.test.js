@@ -8,7 +8,7 @@ import { defineComponent, h, ref, useAttrs } from 'vue'
 const CardStub = defineComponent({
   name: 'Card',
   inheritAttrs: false,
-  props: ['side', 'mode', 'size', 'error', 'sfx', 'cardAttributes'],
+  props: ['side', 'mode', 'size', 'error', 'sfx', 'card_attributes'],
   setup(_props, { slots }) {
     const attrs = useAttrs()
     return () =>
@@ -20,27 +20,27 @@ const CardStub = defineComponent({
   }
 })
 
-// FaceImageDropzone stub: surfaces the controls it owns as testid'd buttons and
+// ImageDropzone stub: surfaces the controls it owns as testid'd buttons and
 // re-emits, so the uploader's wiring (remove/browse/dismiss) can be asserted.
-const FaceImageDropzoneStub = defineComponent({
-  name: 'FaceImageDropzone',
+const ImageDropzoneStub = defineComponent({
+  name: 'ImageDropzone',
   inheritAttrs: false,
   props: ['mode', 'image', 'active', 'disabled', 'error'],
   emits: ['browse', 'remove', 'dismiss-error'],
   setup(props, { emit }) {
     return () =>
-      h('div', { 'data-testid': 'face-image-dropzone', 'data-mode': props.mode }, [
+      h('div', { 'data-testid': 'image-dropzone', 'data-mode': props.mode }, [
         h('button', {
-          'data-testid': 'face-image-dropzone__remove',
+          'data-testid': 'image-dropzone__remove',
           onClick: () => emit('remove')
         }),
         h('button', {
-          'data-testid': 'face-image-dropzone__scrim',
+          'data-testid': 'image-dropzone__scrim',
           onClick: () => emit('browse')
         }),
         props.error
           ? h('button', {
-              'data-testid': 'face-image-dropzone__error',
+              'data-testid': 'image-dropzone__error',
               onClick: () => emit('browse')
             })
           : null
@@ -81,9 +81,12 @@ const mocks = vi.hoisted(() => ({
   deleteCardImageMock: vi.fn(),
   toastErrorMock: vi.fn(),
   emitSfxMock: vi.fn(),
-  guardCardImageMock: vi.fn()
+  guardCardImageMock: vi.fn(),
+  mockUseMatchMedia: vi.fn()
 }))
 
+vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: mocks.mockUseMatchMedia }))
+vi.mock('@/api/media', () => ({ cardImageUrl: (p) => `https://cdn/${p}` }))
 vi.mock('@/composables/toast', () => ({ useToast: () => ({ error: mocks.toastErrorMock }) }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mocks.emitSfxMock, emitHoverSfx: vi.fn() }))
 
@@ -111,8 +114,7 @@ vi.mock('@/utils/animations/button-tap', () => ({
   playButtonTap: vi.fn()
 }))
 
-import CardFaceUploader from '@/views/deck/card-editor/card-face-uploader.vue'
-import { cardEditorKey } from '@/views/deck/composables/list-controller'
+import ImageUploader from '@/components/card/image-uploader.vue'
 
 function makeCard(overrides = {}) {
   return { id: 1, deck_id: 10, front_text: 'Q', back_text: 'A', rank: 1000, ...overrides }
@@ -136,30 +138,30 @@ function dropImage(wrapper, file) {
 let _wrapper
 
 function mount(props = {}) {
-  const { card, cardEditor, ...rest } = props
-  _wrapper = shallowMount(CardFaceUploader, {
-    props: { side: 'front', card: makeCard(card), ...rest },
+  const { card, ...rest } = props
+  _wrapper = shallowMount(ImageUploader, {
+    props: {
+      side: 'front',
+      card: makeCard(card),
+      card_attributes: { front: {}, back: {} },
+      ...rest
+    },
     global: {
       stubs: {
         Card: CardStub,
         UiButton: UiButtonStub,
         UiIcon: UiIconStub,
         UiTooltip: UiTooltipStub,
-        FaceImageDropzone: FaceImageDropzoneStub
+        ImageDropzone: ImageDropzoneStub
       },
-      directives: { sfx: {} },
-      provide: {
-        [cardEditorKey]: {
-          card_attributes: ref({ front: {}, back: {} }),
-          ...cardEditor
-        }
-      }
+      directives: { sfx: {} }
     }
   })
   return _wrapper
 }
 
 beforeEach(() => {
+  mocks.mockUseMatchMedia.mockReturnValue(ref(false))
   mocks.setCardImageMock.mockReset().mockResolvedValue(undefined)
   mocks.deleteCardImageMock.mockReset().mockResolvedValue(undefined)
   mocks.toastErrorMock.mockReset()
@@ -176,49 +178,84 @@ afterEach(() => {
   _wrapper?.unmount()
 })
 
-describe('CardFaceUploader', () => {
+describe('ImageUploader', () => {
+  // ── card_attributes as prop [obligation] ──────────────────────────────────
+
+  test('accepts card_attributes as a plain object prop [obligation]', () => {
+    const card_attributes = { front: { image_layout: 'above' }, back: {} }
+    const wrapper = mount({ card: { id: 5 }, card_attributes })
+    expect(wrapper.find('[data-testid="card-root"]').exists()).toBe(true)
+  })
+
+  test('forwards card_attributes to the Card component [obligation]', () => {
+    const card_attributes = { front: { image_layout: 'behind' }, back: {} }
+    const wrapper = mount({ card: { id: 5 }, card_attributes })
+    const card = wrapper.findComponent(CardStub)
+    expect(card.props('card_attributes')).toEqual(card_attributes)
+  })
+
+  // ── Coarse pointer gates add button [obligation] ──────────────────────────
+
+  test('hides add button when pointer is coarse [obligation]', () => {
+    mocks.mockUseMatchMedia.mockReturnValue(ref(true))
+    const wrapper = mount({ card: { id: 5 } })
+    expect(wrapper.find('[data-testid="image-uploader__add"]').exists()).toBe(false)
+  })
+
+  // ── defineExpose: openPicker and onRemove [obligation] ───────────────────
+
+  test('exposes openPicker via defineExpose [obligation]', () => {
+    const wrapper = mount({ card: { id: 5 } })
+    expect(typeof wrapper.vm.openPicker).toBe('function')
+  })
+
+  test('exposes onRemove via defineExpose [obligation]', () => {
+    const wrapper = mount({ card: { id: 5 } })
+    expect(typeof wrapper.vm.onRemove).toBe('function')
+  })
+
   // ── Empty face ──────────────────────────────────────────────────────────────
 
   test('shows the add-image button on an empty, persisted face', () => {
     const wrapper = mount({ card: { id: 5 } })
-    expect(wrapper.find('[data-testid="card-face-uploader__add"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="card-face-uploader__scrim"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="image-uploader__add"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="image-uploader__scrim"]').exists()).toBe(false)
   })
 
   test('hides the add-image button on a temp card (id <= 0)', () => {
     const wrapper = mount({ card: { id: 0 } })
-    expect(wrapper.find('[data-testid="card-face-uploader__add"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="image-uploader__add"]').exists()).toBe(false)
   })
 
   test('hides the add-image button on a negative-id temp card', () => {
     const wrapper = mount({ card: { id: -1 } })
-    expect(wrapper.find('[data-testid="card-face-uploader__add"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="image-uploader__add"]').exists()).toBe(false)
   })
 
   test('hides add control and the image dropzone when disabled (selection mode)', () => {
     const wrapper = mount({ card: { id: 5, front_image_path: 'cards/f.png' }, disabled: true })
-    expect(wrapper.find('[data-testid="card-face-uploader__add"]').exists()).toBe(false)
-    expect(wrapper.find('[data-testid="face-image-dropzone"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="image-uploader__add"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="image-dropzone"]').exists()).toBe(false)
   })
 
   // ── Image face ────────────────────────────────────────────────────────────────
 
   test('renders the region dropzone on a face that has an image', () => {
     const wrapper = mount({ card: { front_image_path: 'cards/f.png' } })
-    const dropzone = wrapper.find('[data-testid="face-image-dropzone"]')
+    const dropzone = wrapper.find('[data-testid="image-dropzone"]')
     expect(dropzone.exists()).toBe(true)
     expect(dropzone.attributes('data-mode')).toBe('region')
-    expect(wrapper.find('[data-testid="face-image-dropzone__remove"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="face-image-dropzone__scrim"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="card-face-uploader__add"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="image-dropzone__remove"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="image-dropzone__scrim"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="image-uploader__add"]').exists()).toBe(false)
   })
 
   test('renders the corners dropzone for a behind-layout image', () => {
     const wrapper = mount({
       card: { front_image_path: 'cards/f.png' },
-      cardEditor: { card_attributes: ref({ front: { image_layout: 'behind' }, back: {} }) }
+      card_attributes: { front: { image_layout: 'behind' }, back: {} }
     })
-    const dropzone = wrapper.find('[data-testid="face-image-dropzone"]')
+    const dropzone = wrapper.find('[data-testid="image-dropzone"]')
     expect(dropzone.exists()).toBe(true)
     expect(dropzone.attributes('data-mode')).toBe('corners')
   })
@@ -238,7 +275,7 @@ describe('CardFaceUploader', () => {
   test('card-root pointerenter DOES set data-active in behind mode (full-bleed, card-wide hover)', async () => {
     const wrapper = mount({
       card: { front_image_path: 'cards/f.png' },
-      cardEditor: { card_attributes: ref({ front: { image_layout: 'behind' }, back: {} }) }
+      card_attributes: { front: { image_layout: 'behind' }, back: {} }
     })
     const root = wrapper.find('[data-testid="card-root"]')
     expect(root.attributes('data-active')).toBeUndefined()
@@ -267,7 +304,7 @@ describe('CardFaceUploader', () => {
     const root = wrapper.find('[data-testid="card-root"]')
     await root.trigger('dragenter')
     expect(root.attributes('data-active')).toBe('true')
-    expect(wrapper.find('[data-testid="card-face-uploader__empty-overlay"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="image-uploader__empty-overlay"]').exists()).toBe(true)
     expect(root.attributes('data-dragging')).toBe('true')
   })
 
@@ -318,7 +355,7 @@ describe('CardFaceUploader', () => {
 
     expect(mocks.setCardImageMock).not.toHaveBeenCalled()
     expect(mocks.emitSfxMock).toHaveBeenCalledWith('digi_powerdown')
-    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="image-uploader__error"]').exists()).toBe(true)
   })
 
   test('oversized file: does not call setCardImage, plays digi_powerdown, shows error overlay', async () => {
@@ -328,7 +365,7 @@ describe('CardFaceUploader', () => {
 
     expect(mocks.setCardImageMock).not.toHaveBeenCalled()
     expect(mocks.emitSfxMock).toHaveBeenCalledWith('digi_powerdown')
-    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="image-uploader__error"]').exists()).toBe(true)
   })
 
   // ── Error overlay persistence ─────────────────────────────────────────────
@@ -338,7 +375,7 @@ describe('CardFaceUploader', () => {
     const input = wrapper.find('input[type="file"]').element
     const clickSpy = vi.spyOn(input, 'click').mockImplementation(() => {})
 
-    await wrapper.find('[data-testid="card-face-uploader__add"]').trigger('click')
+    await wrapper.find('[data-testid="image-uploader__add"]').trigger('click')
     await flushPromises()
 
     expect(clickSpy).toHaveBeenCalled()
@@ -351,7 +388,7 @@ describe('CardFaceUploader', () => {
     const input = wrapper.find('input[type="file"]').element
     const clickSpy = vi.spyOn(input, 'click').mockImplementation(() => {})
 
-    await wrapper.find('[data-testid="card-face-uploader__error"]').trigger('click')
+    await wrapper.find('[data-testid="image-uploader__error"]').trigger('click')
 
     expect(clickSpy).toHaveBeenCalled()
   })
@@ -361,18 +398,18 @@ describe('CardFaceUploader', () => {
     await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="card-face-uploader__dismiss-error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="image-uploader__dismiss-error"]').exists()).toBe(true)
   })
 
   test('clicking Dismiss hides the error overlay', async () => {
     const wrapper = mount({ card: { id: 5 } })
     await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
     await flushPromises()
-    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="image-uploader__error"]').exists()).toBe(true)
 
-    await wrapper.find('[data-testid="card-face-uploader__dismiss-error"]').trigger('click')
+    await wrapper.find('[data-testid="image-uploader__dismiss-error"]').trigger('click')
 
-    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="image-uploader__error"]').exists()).toBe(false)
     expect(mocks.emitSfxMock).toHaveBeenCalledWith('snappy_button_5')
   })
 
@@ -381,13 +418,13 @@ describe('CardFaceUploader', () => {
     const wrapper = mount({ card: { id: 5 } })
     await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
     await flushPromises()
-    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="image-uploader__error"]').exists()).toBe(true)
 
     // Advance past the 1 s hover-suppression timer — error must still be shown
     vi.advanceTimersByTime(2000)
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="image-uploader__error"]').exists()).toBe(true)
     vi.useRealTimers()
   })
 
@@ -395,13 +432,13 @@ describe('CardFaceUploader', () => {
     const wrapper = mount({ card: { id: 5 } })
     await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
     await flushPromises()
-    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="image-uploader__error"]').exists()).toBe(true)
 
     // Dispatch a pointerdown on body (outside the card root)
     document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="image-uploader__error"]').exists()).toBe(false)
     expect(mocks.emitSfxMock).toHaveBeenCalledWith('snappy_button_5')
     wrapper.unmount()
   })
@@ -410,14 +447,14 @@ describe('CardFaceUploader', () => {
     const wrapper = mount({ card: { id: 5 } })
     await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
     await flushPromises()
-    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="image-uploader__error"]').exists()).toBe(true)
 
     // Dispatch pointerdown on the card root element itself (which is inside)
     const root = wrapper.find('[data-testid="card-root"]').element
     root.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="image-uploader__error"]').exists()).toBe(true)
     wrapper.unmount()
   })
 
@@ -426,12 +463,12 @@ describe('CardFaceUploader', () => {
     const wrapper = mount({ card: { id: 5, front_image_path: 'cards/f.png' } })
     await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
     await flushPromises()
-    expect(wrapper.find('[data-testid="face-image-dropzone__error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="image-dropzone__error"]').exists()).toBe(true)
 
-    await wrapper.find('[data-testid="face-image-dropzone__remove"]').trigger('click')
+    await wrapper.find('[data-testid="image-dropzone__remove"]').trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="face-image-dropzone__error"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="image-dropzone__error"]').exists()).toBe(false)
   })
 
   // ── data-active stays truthy while error is showing ───────────────────────
@@ -448,7 +485,7 @@ describe('CardFaceUploader', () => {
     await flushPromises()
 
     // Error is up — card must stay active so the image keeps its padded frame
-    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="image-uploader__error"]').exists()).toBe(true)
     expect(root.attributes('data-active')).toBe('true')
   })
 
@@ -456,7 +493,7 @@ describe('CardFaceUploader', () => {
 
   test('editor is interactive on an idle empty face', () => {
     const wrapper = mount({ card: { id: 5 } })
-    const editor = wrapper.find('[data-testid="card-face-uploader__editor"]')
+    const editor = wrapper.find('[data-testid="image-uploader__editor"]')
     expect(editor.exists()).toBe(true)
     expect(editor.attributes('inert')).toBeUndefined()
   })
@@ -464,18 +501,14 @@ describe('CardFaceUploader', () => {
   test('editor becomes inert while a file is dragged over the card', async () => {
     const wrapper = mount({ card: { id: 5 } })
     await wrapper.find('[data-testid="card-root"]').trigger('dragenter')
-    expect(
-      wrapper.find('[data-testid="card-face-uploader__editor"]').attributes('inert')
-    ).toBeDefined()
+    expect(wrapper.find('[data-testid="image-uploader__editor"]').attributes('inert')).toBeDefined()
   })
 
   test('editor becomes inert while the error overlay covers it (no typing behind the scrim)', async () => {
     const wrapper = mount({ card: { id: 5 } })
     await dropImage(wrapper, new File(['x'], 'a.txt', { type: 'text/plain' }))
     await flushPromises()
-    expect(
-      wrapper.find('[data-testid="card-face-uploader__editor"]').attributes('inert')
-    ).toBeDefined()
+    expect(wrapper.find('[data-testid="image-uploader__editor"]').attributes('inert')).toBeDefined()
   })
 
   // ── Hover suppression after successful drop ───────────────────────────────
@@ -556,7 +589,7 @@ describe('CardFaceUploader', () => {
 
   test('remove button calls deleteCardImage(id, side) and plays trash_crumple_short', async () => {
     const wrapper = mount({ card: { id: 5, front_image_path: 'cards/f.png' } })
-    await wrapper.find('[data-testid="face-image-dropzone__remove"]').trigger('click')
+    await wrapper.find('[data-testid="image-dropzone__remove"]').trigger('click')
     await flushPromises()
 
     expect(mocks.deleteCardImageMock).toHaveBeenCalledWith(5, 'front')
@@ -576,7 +609,7 @@ describe('CardFaceUploader', () => {
 
   test('clicking the add-image button plays ui.select', async () => {
     const wrapper = mount({ card: { id: 5 } })
-    await wrapper.find('[data-testid="card-face-uploader__add"]').trigger('click')
+    await wrapper.find('[data-testid="image-uploader__add"]').trigger('click')
     await flushPromises()
 
     expect(mocks.emitSfxMock).toHaveBeenCalledWith('select')
@@ -590,7 +623,7 @@ describe('CardFaceUploader', () => {
     const input = wrapper.find('input[type="file"]').element
     const clickSpy = vi.spyOn(input, 'click').mockImplementation(() => {})
 
-    await wrapper.find('[data-testid="card-face-uploader__add"]').trigger('click')
+    await wrapper.find('[data-testid="image-uploader__add"]').trigger('click')
     await flushPromises()
 
     expect(mocks.guardCardImageMock).toHaveBeenCalled()
@@ -617,7 +650,7 @@ describe('CardFaceUploader', () => {
     await flushPromises()
 
     expect(mocks.setCardImageMock).not.toHaveBeenCalled()
-    expect(wrapper.find('[data-testid="card-face-uploader__error"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="image-uploader__error"]').exists()).toBe(false)
   })
 
   // ── sfx prop on the Card ──────────────────────────────────────────────────
@@ -625,7 +658,7 @@ describe('CardFaceUploader', () => {
   test('passes the hover sfx to Card for a behind-layout image (full-bleed, card-wide hover)', () => {
     const wrapper = mount({
       card: { front_image_path: 'cards/f.png' },
-      cardEditor: { card_attributes: ref({ front: { image_layout: 'behind' }, back: {} }) }
+      card_attributes: { front: { image_layout: 'behind' }, back: {} }
     })
     const cardEl = wrapper.findComponent(CardStub)
     expect(cardEl.props('sfx')).toEqual({ hover: 'tap_05' })

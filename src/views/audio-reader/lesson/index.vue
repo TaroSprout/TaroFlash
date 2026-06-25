@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { emitSfx } from '@/sfx/bus'
@@ -11,14 +11,10 @@ import { useAnimatedHeight } from '@/composables/ui/animated-height'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { scrollClearOf } from '@/utils/animations/transcript-scroll'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
-import {
-  footerSwapBeforeLeave,
-  footerSwapEnter,
-  footerSwapLeave
-} from '@/utils/animations/footer-swap'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
+import CrossfadeResize from '@/components/layout-kit/crossfade-resize.vue'
 import MobileDock from '@/components/mobile-dock/mobile-dock.vue'
 import { useMobileDock } from '@/components/mobile-dock/use-mobile-dock'
 import AudioToolbar from '@/views/audio-reader/lesson/audio-toolbar.vue'
@@ -59,7 +55,8 @@ const { data: lessons_data } = useLessonsByCollectionQuery(collection_id)
 const { el: dock_el } = useMobileDock()
 const is_desktop = useMatchMedia('w>=xl')
 
-const footer_swap = useTemplateRef<HTMLElement>('footer_swap')
+const footer_swap = useTemplateRef<{ $el: HTMLElement }>('footer_swap')
+const footer_swap_el = computed(() => footer_swap.value?.$el ?? null)
 const footer_term = useTemplateRef<HTMLElement>('footer_term')
 const footer_toolbar = useTemplateRef<HTMLElement>('footer_toolbar')
 
@@ -75,11 +72,6 @@ const FOOTER_CLEARANCE = 16
 // True while the toolbar ⇄ term crossfade owns the footer height, so the
 // content-driven height animation stands down and only tracks the baseline.
 let swapping = false
-
-// Live footer height, so the loading veil can stop at the footer's top edge and
-// centre the spinner in the reading area rather than behind the toolbar.
-const footer_height = ref(0)
-let footer_resize: ResizeObserver | null = null
 
 const chapters = computed(() => lessons_data.value ?? [])
 const current_index = computed(() => chapters.value.findIndex((c) => c.id === lesson_id.value))
@@ -106,16 +98,6 @@ const follow_direction = computed(() => transcript.value?.follow_direction ?? 'd
 // the reveal shows the reader already at the right spot.
 const ready = computed(() => !!lesson.value && restored.value)
 
-onMounted(() => {
-  if (!dock_el.value) return
-  footer_resize = new ResizeObserver(() => {
-    if (dock_el.value) footer_height.value = dock_el.value.offsetHeight
-  })
-  footer_resize.observe(dock_el.value)
-})
-
-onBeforeUnmount(() => footer_resize?.disconnect())
-
 function goToChapter(id: number) {
   router.push({ name: 'lesson', params: { collectionId: collection_id.value, lessonId: id } })
 }
@@ -136,23 +118,6 @@ function dismissTerm() {
   closeTerm()
 }
 
-// Freeze the footer height before the outgoing pane pins absolute, then tween it
-// to the incoming pane's height as the two crossfade.
-function onFooterBeforeLeave() {
-  swapping = true
-  if (footer_swap.value) footerSwapBeforeLeave(footer_swap.value)()
-}
-
-function onFooterEnter(el: Element, done: () => void) {
-  swapping = true
-  if (footer_swap.value) footerSwapEnter(footer_swap.value)(el, done)
-  else done()
-}
-
-function onFooterAfterEnter() {
-  swapping = false
-}
-
 // The word was scrolled clear of the dock when the term opened, but the dock
 // grows once the definition loads and can re-cover it — lift it back above the
 // settled dock.
@@ -166,11 +131,21 @@ function reclearSelection() {
   scrollClearOf(window, word, dock_el.value.getBoundingClientRect().top - FOOTER_CLEARANCE)
 }
 
+// The crossfade owns the footer height while a pane swap is in flight, so the
+// content-driven height animation stands down between swap-start and swap-end.
+function onSwapStart() {
+  swapping = true
+}
+
+function onSwapEnd() {
+  swapping = false
+}
+
 // Track whichever pane is mounted: the term card swelling as its definition loads,
 // and the toolbar growing/shrinking between its mini and expanded modes. The
 // crossfade between the two panes owns the height while `swapping`.
-useAnimatedHeight(footer_swap, footer_term, () => !swapping, reclearSelection)
-useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
+useAnimatedHeight(footer_swap_el, footer_term, () => !swapping, reclearSelection)
+useAnimatedHeight(footer_swap_el, footer_toolbar, () => !swapping)
 </script>
 
 <template>
@@ -182,8 +157,7 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
       <div
         v-if="!ready"
         data-testid="lesson-view__loader"
-        :style="{ bottom: `${footer_height}px` }"
-        class="fixed inset-x-0 top-(--nav-height) z-20 flex items-center justify-center bg-brown-100 dark:bg-grey-900 sm:!bottom-0"
+        class="fixed inset-x-0 top-(--nav-height) bottom-[var(--mobile-dock-height,0px)] z-20 flex items-center justify-center bg-brown-100 dark:bg-grey-900 sm:!bottom-0"
       >
         <ui-icon src="loading-dots" class="h-16 w-16 text-brown-700 dark:text-brown-100" />
       </div>
@@ -306,44 +280,47 @@ useAnimatedHeight(footer_swap, footer_toolbar, () => !swapping)
           </transition>
         </template>
 
-        <div ref="footer_swap" data-testid="lesson-view__dock-swap" class="relative w-full">
-          <transition
-            :css="false"
-            @before-leave="onFooterBeforeLeave"
-            @enter="onFooterEnter"
-            @after-enter="onFooterAfterEnter"
-            @leave="footerSwapLeave"
+        <crossfade-resize
+          ref="footer_swap"
+          data-testid="lesson-view__dock-swap"
+          @swap-start="onSwapStart"
+          @swap-end="onSwapEnd"
+        >
+          <div
+            v-if="show_term_in_dock && selection"
+            key="term"
+            ref="footer_term"
+            data-testid="lesson-view__dock-term"
+            class="px-(--dock-px) pt-(--dock-pt) pb-(--dock-pb)"
           >
-            <div
-              v-if="show_term_in_dock && selection"
-              key="term"
-              ref="footer_term"
-              data-testid="lesson-view__dock-term"
-              class="pb-2"
-            >
-              <term-card
-                :term="selection.term"
-                :sentence="selection.sentence"
-                :target_lang="target_lang"
-                :existing_decks="selected_term_decks"
-                show_back
-                @back="closeTerm"
-                @close="closeTerm"
-                @play-from-here="playFromHere"
-                @play-word="playClip"
-              />
-            </div>
+            <term-card
+              :term="selection.term"
+              :sentence="selection.sentence"
+              :target_lang="target_lang"
+              :existing_decks="selected_term_decks"
+              show_back
+              @back="closeTerm"
+              @close="closeTerm"
+              @play-from-here="playFromHere"
+              @play-word="playClip"
+            />
+          </div>
 
-            <div v-else key="toolbar" ref="footer_toolbar" data-testid="lesson-view__dock-toolbar">
-              <audio-toolbar
-                :player="player"
-                :chapters="chapters"
-                :current-lesson-id="lesson_id"
-                @select-chapter="goToChapter"
-              />
-            </div>
-          </transition>
-        </div>
+          <div
+            v-else
+            key="toolbar"
+            ref="footer_toolbar"
+            data-testid="lesson-view__dock-toolbar"
+            class="px-(--dock-px) pt-(--dock-pt) pb-(--dock-pb)"
+          >
+            <audio-toolbar
+              :player="player"
+              :chapters="chapters"
+              :current-lesson-id="lesson_id"
+              @select-chapter="goToChapter"
+            />
+          </div>
+        </crossfade-resize>
       </mobile-dock>
 
       <audio

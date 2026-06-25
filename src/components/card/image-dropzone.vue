@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 
-type FaceImageDropzoneProps = {
+type ImageDropzoneProps = {
   mode: 'region' | 'corners'
   image?: string
   active?: boolean
@@ -12,13 +12,7 @@ type FaceImageDropzoneProps = {
   error?: string
 }
 
-const {
-  mode,
-  image,
-  active = false,
-  disabled = false,
-  error
-} = defineProps<FaceImageDropzoneProps>()
+const { mode, image, active = false, disabled = false, error } = defineProps<ImageDropzoneProps>()
 
 const emit = defineEmits<{
   (e: 'browse'): void
@@ -39,21 +33,21 @@ const remove_position = computed(() =>
 
 <template>
   <div
-    data-testid="face-image-dropzone"
+    data-testid="image-dropzone"
     :data-mode="mode"
     :data-active="active || undefined"
-    class="face-image-dropzone"
+    class="image-dropzone"
   >
     <img
       v-if="mode === 'region' && image"
-      data-testid="face-image-dropzone__image"
+      data-testid="image-dropzone__image"
       :src="image"
-      class="face-image-dropzone__image h-full w-full object-cover"
+      class="image-dropzone__image h-full w-full object-cover"
     />
 
     <ui-button
       v-if="!disabled"
-      data-testid="face-image-dropzone__remove"
+      data-testid="image-dropzone__remove"
       icon-only
       icon-left="remove-image"
       data-theme="red-500"
@@ -69,7 +63,7 @@ const remove_position = computed(() =>
 
     <ui-button
       v-if="mode === 'corners' && !disabled"
-      data-testid="face-image-dropzone__replace"
+      data-testid="image-dropzone__replace"
       icon-only
       icon-left="add-image"
       data-theme="blue-500"
@@ -84,8 +78,8 @@ const remove_position = computed(() =>
     <button
       v-if="mode === 'region' && !disabled && !error"
       type="button"
-      data-testid="face-image-dropzone__scrim"
-      class="face-image-dropzone__overlay face-image-dropzone__overlay--inset"
+      data-testid="image-dropzone__scrim"
+      class="image-dropzone__overlay image-dropzone__overlay--inset"
       @click.stop="emit('browse')"
     >
       <ui-icon src="add-image" class="size-12" />
@@ -94,16 +88,16 @@ const remove_position = computed(() =>
 
     <div
       v-if="error"
-      data-testid="face-image-dropzone__error"
+      data-testid="image-dropzone__error"
       data-error
-      class="face-image-dropzone__overlay face-image-dropzone__overlay--inset"
+      class="image-dropzone__overlay image-dropzone__overlay--inset"
       @mousedown.stop
       @click.stop="emit('browse')"
     >
       <ui-icon src="close" class="size-12" />
       <p class="text-base">{{ error }}</p>
       <ui-button
-        data-testid="face-image-dropzone__dismiss-error"
+        data-testid="image-dropzone__dismiss-error"
         size="sm"
         data-theme="red-500"
         @click.stop="emit('dismiss-error')"
@@ -117,7 +111,7 @@ const remove_position = computed(() =>
 <style>
 /* Inherit the image region's radius so the image + scrim stay rounded without an
    overflow:hidden wrapper (which would clip the poked-out remove button). */
-.face-image-dropzone[data-mode='region'] {
+.image-dropzone[data-mode='region'] {
   position: relative;
   width: 100%;
   height: 100%;
@@ -125,13 +119,13 @@ const remove_position = computed(() =>
   border-radius: inherit;
 }
 
-.face-image-dropzone__image {
+.image-dropzone__image {
   border-radius: inherit;
 }
 
 /* Corners mode overlays the whole face above the text so its controls sit on
    top of a behind-layout image; the backdrop itself stays click-through. */
-.face-image-dropzone[data-mode='corners'] {
+.image-dropzone[data-mode='corners'] {
   position: absolute;
   inset: 0;
   z-index: 20;
@@ -140,7 +134,7 @@ const remove_position = computed(() =>
   border-radius: var(--face-radius);
 }
 
-.face-image-dropzone__overlay {
+.image-dropzone__overlay {
   position: absolute;
   inset: 0;
   z-index: 10;
@@ -159,7 +153,7 @@ const remove_position = computed(() =>
     border-color 0.15s ease;
 }
 
-.face-image-dropzone__overlay--inset {
+.image-dropzone__overlay--inset {
   background-color: color-mix(in srgb, var(--color-white) 85%, transparent);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
@@ -169,17 +163,17 @@ const remove_position = computed(() =>
   opacity: 0;
 }
 
-[data-theme='dark'] .face-image-dropzone__overlay--inset {
+[data-theme='dark'] .image-dropzone__overlay--inset {
   background-color: color-mix(in srgb, var(--color-stone-700) 85%, transparent);
   color: var(--color-brown-100);
 }
 
-.face-image-dropzone[data-active] .face-image-dropzone__overlay--inset {
+.image-dropzone[data-active] .image-dropzone__overlay--inset {
   pointer-events: auto;
   opacity: 1;
 }
 
-.face-image-dropzone__overlay[data-error] {
+.image-dropzone__overlay[data-error] {
   pointer-events: auto;
   color: var(--color-red-500);
   opacity: 1;
@@ -187,13 +181,13 @@ const remove_position = computed(() =>
 
 /* Dragging a file over an image turns the replace scrim blue, matching the
    empty-card drop affordance. */
-.card-container--edit[data-dragging] .face-image-dropzone__overlay:not([data-error]) {
+.card-container--edit[data-dragging] .image-dropzone__overlay:not([data-error]) {
   color: var(--color-blue-500);
 }
 
 [data-theme='dark']
   .card-container--edit[data-dragging]
-  .face-image-dropzone__overlay:not([data-error]) {
+  .image-dropzone__overlay:not([data-error]) {
   color: var(--color-blue-650);
 }
 </style>

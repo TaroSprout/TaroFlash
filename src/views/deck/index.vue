@@ -9,9 +9,12 @@ import CardGridSkeleton from './card-grid/skeleton.vue'
 import CardGridEmpty from './card-grid/empty-state.vue'
 import { preloadDeckModes } from './modes'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
+import DeckMobileFooter from './mobile-footer/index.vue'
 import { useDeckQuery } from '@/api/decks'
 import { cardEditorKey, useCardListController } from '@/views/deck/composables'
 import { deckViewShellKey, useDeckViewShell } from '@/views/deck/composables/view-shell'
+import { mobileCardEditorKey, useMobileCardEditor } from './mobile-editor/use-mobile-card-editor'
+import { useMatchMedia } from '@/composables/ui/media-query'
 
 const { id: deck_id } = defineProps<{
   id: string
@@ -30,6 +33,11 @@ provide(deckViewShellKey, shell)
 
 const editor = useCardListController({ deck_id: id.value, shell })
 provide(cardEditorKey, editor)
+
+const mobile_editor = useMobileCardEditor(editor)
+provide(mobileCardEditorKey, mobile_editor)
+
+const is_mobile = useMatchMedia('w<md')
 
 const view_state = computed<'loading' | 'empty' | 'ready'>(() => {
   if (editor.list.all_cards.value.length > 0) return 'ready'
@@ -63,10 +71,14 @@ onMounted(preloadDeckModes)
       :class="
         view_state === 'empty'
           ? 'xl:flex xl:flex-col xl:h-[calc(100dvh-var(--nav-height))]'
-          : 'pb-4'
+          : 'pb-[calc(1rem+var(--mobile-dock-height,0px))]'
       "
     >
-      <div ref="toolbar" data-testid="deck-view__toolbar" class="sticky top-(--nav-height) z-20">
+      <div
+        ref="toolbar"
+        data-testid="deck-view__toolbar"
+        class="sticky top-(--nav-height) z-20 max-md:hidden"
+      >
         <div
           data-testid="deck-view__toolbar-backing"
           aria-hidden="true"
@@ -76,9 +88,13 @@ onMounted(preloadDeckModes)
         <mode-toolbar v-else />
       </div>
 
-      <card-grid-empty v-if="view_state === 'empty'" data-testid="deck-view__empty" class="mt-6" />
-      <card-grid-skeleton v-else-if="view_state === 'loading'" class="mt-6" />
-      <mode-stack v-else class="mt-6" :sticky_header="toolbar" />
+      <card-grid-empty
+        v-if="view_state === 'empty'"
+        data-testid="deck-view__empty"
+        class="md:mt-6"
+      />
+      <card-grid-skeleton v-else-if="view_state === 'loading'" class="md:mt-6" />
+      <mode-stack v-else class="md:mt-6" :sticky_header="toolbar" />
     </div>
 
     <scroll-bar
@@ -86,5 +102,7 @@ onMounted(preloadDeckModes)
       class="fixed right-4 top-(--nav-height) bottom-10 z-30"
       target="html"
     />
+
+    <deck-mobile-footer v-if="is_mobile" />
   </section>
 </template>

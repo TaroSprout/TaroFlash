@@ -81,12 +81,6 @@ vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: () => isDesktopRef
 }))
 
-vi.mock('@/utils/animations/footer-swap', () => ({
-  footerSwapBeforeLeave: vi.fn(() => vi.fn()),
-  footerSwapEnter: vi.fn(() => vi.fn((_el, done) => done?.())),
-  footerSwapLeave: vi.fn((_el, done) => done?.())
-}))
-
 vi.mock('@/utils/animations/transcript-scroll', () => ({
   cancelScroll: vi.fn(),
   scrollClearOf: vi.fn(),
@@ -207,11 +201,19 @@ const MobileDockStub = defineComponent({
   }
 })
 
+// Passthrough — render the active pane directly (no crossfade transition) so the
+// dock-placement assertions see exactly one pane at a time.
+const CrossfadeResizeStub = defineComponent({
+  name: 'CrossfadeResize',
+  setup(_props, { slots }) {
+    return () => h('div', { 'data-testid': 'crossfade-resize-stub' }, slots.default?.())
+  }
+})
+
 // ── Component import (after mocks) ────────────────────────────────────────────
 
 import LessonView from '@/views/audio-reader/lesson/index.vue'
 import AudioToolbar from '@/views/audio-reader/lesson/audio-toolbar.vue'
-import { footerSwapBeforeLeave, footerSwapEnter } from '@/utils/animations/footer-swap'
 import { useAnimatedHeight } from '@/composables/ui/animated-height'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -234,6 +236,7 @@ function mountView(props = {}) {
         TranscriptView: TranscriptViewStub,
         TermCard: TermCardStub,
         MobileDock: MobileDockStub,
+        CrossfadeResize: CrossfadeResizeStub,
         UiButton: UiButtonStub
       }
     }

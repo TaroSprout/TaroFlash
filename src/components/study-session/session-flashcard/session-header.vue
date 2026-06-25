@@ -99,7 +99,7 @@ function onSelect(option: DropdownOption) {
       data-testid="session-header__menu"
       class="justify-self-end"
       trigger-only
-      trigger-icon="edit"
+      trigger-icon="pencil"
       variant="ghost"
       position="bottom-end"
       trigger-theme="brown-100"

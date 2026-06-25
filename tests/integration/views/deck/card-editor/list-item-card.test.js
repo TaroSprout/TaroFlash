@@ -2,11 +2,11 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
 
-// Stub CardFaceUploader so its editor slot renders under shallowMount.
+// Stub ImageUploader so its editor slot renders under shallowMount.
 // Forward attrs so `data-testid="front-input"` / `back-input` make it through,
 // and declare `error` so the save-failure tests can read the forwarded prop.
-const CardFaceUploaderStub = defineComponent({
-  name: 'CardFaceUploader',
+const ImageUploaderStub = defineComponent({
+  name: 'ImageUploader',
   inheritAttrs: false,
   props: {
     card: { type: Object, required: true },
@@ -86,7 +86,7 @@ function mount(props = {}) {
       card: makeCard(rest.card)
     },
     global: {
-      stubs: { CardFaceUploader: CardFaceUploaderStub },
+      stubs: { ImageUploader: ImageUploaderStub },
       provide: makeProvide({ is_selecting })
     }
   })
@@ -102,7 +102,7 @@ function mountWithFocusStubs(props = {}) {
       card: makeCard(props.card)
     },
     global: {
-      stubs: { CardFaceUploader: CardFaceUploaderStub, TextEditor: TextEditorStub },
+      stubs: { ImageUploader: ImageUploaderStub, TextEditor: TextEditorStub },
       provide: makeProvide()
     }
   })
@@ -131,7 +131,7 @@ describe('ListItemCard', () => {
 
   test('forwards is_selecting to both uploaders as the disabled prop', () => {
     const wrapper = mount({ is_selecting: ref(true), card: { id: 42 } })
-    const uploaders = wrapper.findAllComponents(CardFaceUploaderStub)
+    const uploaders = wrapper.findAllComponents(ImageUploaderStub)
     expect(uploaders[0].props('disabled')).toBe(true)
     expect(uploaders[1].props('disabled')).toBe(true)
   })
@@ -340,7 +340,7 @@ describe('ListItemCard', () => {
       attachTo: document.body,
       props: { card: makeCard({ id: 77, client_id: 'c77' }) },
       global: {
-        stubs: { CardFaceUploader: CardFaceUploaderStub, TextEditor: TextEditorStub },
+        stubs: { ImageUploader: ImageUploaderStub, TextEditor: TextEditorStub },
         provide: makeProvide()
       }
     })
@@ -352,7 +352,7 @@ describe('ListItemCard', () => {
 
   test('starts with error=false on both faces', () => {
     const wrapper = mount({ card: { id: 42 } })
-    const uploaders = wrapper.findAllComponents(CardFaceUploaderStub)
+    const uploaders = wrapper.findAllComponents(ImageUploaderStub)
     expect(uploaders[0].props('error')).toBe(false)
     expect(uploaders[1].props('error')).toBe(false)
   })
@@ -362,7 +362,7 @@ describe('ListItemCard', () => {
     const wrapper = mount({ card: { id: 42 } })
     await wrapper.findAllComponents(textEditor)[0].vm.$emit('update', 'X')
     await flushPromises()
-    const uploaders = wrapper.findAllComponents(CardFaceUploaderStub)
+    const uploaders = wrapper.findAllComponents(ImageUploaderStub)
     expect(uploaders[0].props('error')).toBe(true)
     expect(uploaders[1].props('error')).toBe(true)
   })
@@ -372,10 +372,10 @@ describe('ListItemCard', () => {
     const wrapper = mount({ card: { id: 42 } })
     await wrapper.findAllComponents(textEditor)[0].vm.$emit('update', 'X')
     await flushPromises()
-    expect(wrapper.findAllComponents(CardFaceUploaderStub)[0].props('error')).toBe(true)
+    expect(wrapper.findAllComponents(ImageUploaderStub)[0].props('error')).toBe(true)
 
     await wrapper.findAllComponents(textEditor)[0].vm.$emit('update', 'XY')
     await flushPromises()
-    expect(wrapper.findAllComponents(CardFaceUploaderStub)[0].props('error')).toBe(false)
+    expect(wrapper.findAllComponents(ImageUploaderStub)[0].props('error')).toBe(false)
   })
 })

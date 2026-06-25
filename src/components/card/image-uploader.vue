@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import { computed, inject, useTemplateRef, type ComponentPublicInstance } from 'vue'
+import { computed, useTemplateRef, type ComponentPublicInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Card from '@/components/card/index.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
-import FaceImageDropzone from './face-image-dropzone.vue'
+import ImageDropzone from './image-dropzone.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { CARD_IMAGE_MAX_BYTES, useFaceImageUpload } from '@/composables/card'
-import { cardEditorKey } from '@/views/deck/composables'
 import { cardImageUrl } from '@/api/media'
 import { CARD_ATTRIBUTES_DEFAULTS } from '@/utils/deck/defaults'
 import { emitSfx } from '@/sfx/bus'
@@ -15,18 +14,27 @@ import { TYPE_SFX } from '@/sfx/config'
 import { type SfxOptions } from '@/sfx/directive'
 import { playButtonTap } from '@/utils/animations/button-tap'
 import { bytesToMbLabel } from '@/utils/file-size'
+import { useMatchMedia } from '@/composables/ui/media-query'
 
-type CardFaceUploaderProps = {
+type ImageUploaderProps = {
   card: Card
   side: 'front' | 'back'
+  card_attributes: DeckCardAttributes
+  size?: CardSize
   disabled?: boolean
   error?: boolean
 }
 
-const { card, side, disabled = false, error = false } = defineProps<CardFaceUploaderProps>()
+const {
+  card,
+  side,
+  card_attributes,
+  size = 'xl',
+  disabled = false,
+  error = false
+} = defineProps<ImageUploaderProps>()
 
 const { t } = useI18n()
-const { card_attributes } = inject(cardEditorKey)!
 
 const addIcon = useTemplateRef<HTMLElement>('addIcon')
 const cardRef = useTemplateRef<ComponentPublicInstance>('cardRef')
@@ -55,13 +63,20 @@ const {
   onPointerLeave
 } = useFaceImageUpload({
   card: () => card,
-  side,
+  side: () => side,
   fileInput,
   rootEl: () => cardRef.value?.$el as HTMLElement | undefined
 })
 
+// Touch can't hover, so the hover-reveal add button is unreachable — and its
+// invisible hit area would otherwise swallow taps meant for the editor. Coarse
+// pointers add/replace images through the card menu instead.
+const is_coarse = useMatchMedia('coarse')
+
+defineExpose({ openPicker, onRemove })
+
 const layout = computed(
-  () => card_attributes.value[side]?.image_layout ?? CARD_ATTRIBUTES_DEFAULTS.image_layout
+  () => card_attributes[side]?.image_layout ?? CARD_ATTRIBUTES_DEFAULTS.image_layout
 )
 // Behind keeps the image full-bleed under the text, so its controls float in the
 // corners; above/below give the image its own region to scope the dropzone to.
@@ -117,7 +132,7 @@ function onAddClick() {
   <card
     ref="cardRef"
     mode="edit"
-    size="xl"
+    :size="size"
     :side="side"
     v-bind="card"
     :card_attributes="card_attributes"
@@ -138,14 +153,14 @@ function onAddClick() {
 
     <div
       v-if="pending"
-      data-testid="card-face-uploader__loading"
+      data-testid="image-uploader__loading"
       class="absolute inset-0 z-30 flex items-center justify-center rounded-(--face-radius) bg-white/70 dark:bg-stone-700/70"
     >
       <ui-icon src="loading-dots" class="size-12 text-brown-500 dark:text-brown-100" />
     </div>
 
     <ui-tooltip
-      v-if="!has_image && can_upload && !disabled && !dragging"
+      v-if="!has_image && can_upload && !disabled && !dragging && !is_coarse"
       element="button"
       type="button"
       :text="t('deck-view.card-editor.list-item.upload-image-button')"
@@ -153,7 +168,7 @@ function onAddClick() {
       :gap="4"
       theme="blue-500"
       theme-dark="blue-650"
-      data-testid="card-face-uploader__add"
+      data-testid="image-uploader__add"
       :aria-label="t('deck-view.card-editor.list-item.upload-image-button')"
       class="absolute! top-(--face-padding) right-(--face-padding) z-20 cursor-pointer text-brown-500 transition-[color,opacity] duration-150 hover:text-blue-500 dark:text-brown-100 dark:hover:text-blue-650"
       :class="hovered ? 'opacity-100' : 'opacity-0'"
@@ -168,8 +183,8 @@ function onAddClick() {
     <button
       v-if="!has_image && can_upload && dragging && !file_error"
       type="button"
-      data-testid="card-face-uploader__empty-overlay"
-      class="card-face-uploader__overlay card-face-uploader__overlay--full"
+      data-testid="image-uploader__empty-overlay"
+      class="image-uploader__overlay image-uploader__overlay--full"
       @click.stop="openPicker"
     >
       <ui-icon src="add-image" class="size-12" />
@@ -177,16 +192,16 @@ function onAddClick() {
 
     <div
       v-if="!has_image && file_error"
-      data-testid="card-face-uploader__error"
+      data-testid="image-uploader__error"
       data-error
-      class="card-face-uploader__overlay card-face-uploader__overlay--full"
+      class="image-uploader__overlay image-uploader__overlay--full"
       @mousedown.stop
       @click.stop="openPicker"
     >
       <ui-icon src="close" class="size-12" />
       <p class="text-base">{{ error_message }}</p>
       <ui-button
-        data-testid="card-face-uploader__dismiss-error"
+        data-testid="image-uploader__dismiss-error"
         size="sm"
         data-theme="red-500"
         @click.stop="onDismissError"
@@ -195,7 +210,7 @@ function onAddClick() {
       </ui-button>
     </div>
 
-    <face-image-dropzone
+    <image-dropzone
       v-if="has_image && !disabled && dropzone_mode === 'corners'"
       mode="corners"
       :active="active"
@@ -207,7 +222,7 @@ function onAddClick() {
     />
 
     <template v-if="has_image && !disabled && dropzone_mode === 'region'" #image>
-      <face-image-dropzone
+      <image-dropzone
         mode="region"
         :image="image_url"
         :active="active"
@@ -222,11 +237,7 @@ function onAddClick() {
     </template>
 
     <template #editor>
-      <div
-        data-testid="card-face-uploader__editor"
-        :inert="covered || undefined"
-        class="h-full w-full"
-      >
+      <div data-testid="image-uploader__editor" :inert="covered || undefined" class="h-full w-full">
         <slot name="editor" />
       </div>
     </template>
@@ -234,7 +245,7 @@ function onAddClick() {
 </template>
 
 <style>
-.card-face-uploader__overlay {
+.image-uploader__overlay {
   position: absolute;
   z-index: 10;
   display: flex;
@@ -253,11 +264,11 @@ function onAddClick() {
     border-color 0.15s ease;
 }
 
-.card-face-uploader__overlay[data-error] {
+.image-uploader__overlay[data-error] {
   color: var(--color-red-500);
 }
 
-.card-face-uploader__overlay--full {
+.image-uploader__overlay--full {
   inset: 0;
   border: 3px dashed var(--color-blue-500);
   border-radius: var(--face-radius);
@@ -266,16 +277,16 @@ function onAddClick() {
   color: var(--color-blue-500);
 }
 
-[data-theme='dark'] .card-face-uploader__overlay--full {
+[data-theme='dark'] .image-uploader__overlay--full {
   background-color: var(--color-stone-700);
 }
 
-[data-theme='dark'] .card-face-uploader__overlay--full:not([data-error]) {
+[data-theme='dark'] .image-uploader__overlay--full:not([data-error]) {
   border-color: var(--color-blue-650);
   color: var(--color-blue-650);
 }
 
-.card-face-uploader__overlay--full[data-error] {
+.image-uploader__overlay--full[data-error] {
   border-color: var(--color-red-500);
 }
 </style>

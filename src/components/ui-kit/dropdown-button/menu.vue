@@ -14,13 +14,16 @@ type DropdownMenuProps = {
   // takes its theme explicitly.
   menuTheme?: Theme
   menuThemeDark?: Theme
+  // Extra classes for the menu panel (e.g. an outline), merged onto the root.
+  menuClass?: string
 }
 
 const {
   options = [],
   size,
   menuTheme = 'brown-300',
-  menuThemeDark = 'stone-700'
+  menuThemeDark = 'stone-700',
+  menuClass
 } = defineProps<DropdownMenuProps>()
 
 const emit = defineEmits<{
@@ -50,7 +53,7 @@ function onOptionTap(option: DropdownOption, e: MouseEvent) {
 <template>
   <div
     class="flex flex-col overflow-hidden rounded-(--btn-border-radius) bg-(--theme-primary) p-1.5 text-(length:--btn-font-size) leading-(--btn-font-size--line-height) text-(--theme-on-primary)"
-    :class="`ui-kit-btn-tokens--${size}`"
+    :class="[`ui-kit-btn-tokens--${size}`, menuClass]"
     :data-theme="menuTheme"
     :data-theme-dark="menuThemeDark"
     data-testid="dropdown-button__menu"

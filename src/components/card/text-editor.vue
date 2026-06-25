@@ -53,8 +53,9 @@ function focus() {
 // The editable is only as tall as its content (so its empty caret stays
 // centered), so a click in the surrounding container won't land on it. Forward
 // those clicks: focus the editable and drop the caret at the end. Clicks on the
-// editable itself fall through to native caret placement.
-function onContainerPointerDown(event: MouseEvent) {
+// editable itself fall through to native caret placement. Uses `pointerdown` so
+// it fires for touch too — `mousedown` only arrives (late) after a tap on mobile.
+function onContainerPointerDown(event: PointerEvent) {
   const editor = text_editor.value
   if (disabled || !editor || event.target === editor) return
 
@@ -79,7 +80,7 @@ defineExpose({ focus })
     data-testid="text-editor-container"
     class="text-editor-container relative"
     :class="`text-editor--v-${vertical_alignment}`"
-    @mousedown="onContainerPointerDown"
+    @pointerdown="onContainerPointerDown"
   >
     <div
       v-if="disabled"
