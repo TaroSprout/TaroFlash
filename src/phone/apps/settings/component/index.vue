@@ -49,7 +49,7 @@ const alert = useAlert()
 
 // landscape phone (h<sm) also counts as sheet
 const { layout_mode, sheet_px } = useTabModalLayout({
-  sheet_query: 'w<md | h<sm',
+  sheet_query: 'w<mlg | h<sm',
   desktop_query: 'w>=lg & fine'
 })
 provide(settingsLayoutKey, layout_mode)
@@ -133,7 +133,7 @@ watch(layout_mode, (mode) => {
     data-theme-dark="blue-650"
     :data-layout="layout_mode"
     :class="[
-      layout_mode === 'desktop' ? 'w-255!' : 'w-full! max-w-205.5',
+      layout_mode === 'desktop' ? 'w-255!' : 'w-full! max-w-224',
       layout_mode !== 'sheet' && 'h-170'
     ]"
     :sheet_px="sheet_px"

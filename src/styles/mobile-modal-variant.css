@@ -19,11 +19,28 @@
       @slot;
     }
   }
-  /* width < md (52rem): thresholds md/lg/xl/2xl go mobile */
+  /* width < md (52rem): thresholds md/mlg/lg/xl/2xl go mobile */
   @media (width < 52rem) {
     &:where(
       [data-mobile-below-width='md'],
       [data-mobile-below-width='md'] *,
+      [data-mobile-below-width='mlg'],
+      [data-mobile-below-width='mlg'] *,
+      [data-mobile-below-width='lg'],
+      [data-mobile-below-width='lg'] *,
+      [data-mobile-below-width='xl'],
+      [data-mobile-below-width='xl'] *,
+      [data-mobile-below-width='2xl'],
+      [data-mobile-below-width='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  /* width < mlg (58rem): thresholds mlg/lg/xl/2xl */
+  @media (width < 58rem) {
+    &:where(
+      [data-mobile-below-width='mlg'],
+      [data-mobile-below-width='mlg'] *,
       [data-mobile-below-width='lg'],
       [data-mobile-below-width='lg'] *,
       [data-mobile-below-width='xl'],
@@ -75,6 +92,22 @@
     &:where(
       [data-mobile-below-height='md'],
       [data-mobile-below-height='md'] *,
+      [data-mobile-below-height='mlg'],
+      [data-mobile-below-height='mlg'] *,
+      [data-mobile-below-height='lg'],
+      [data-mobile-below-height='lg'] *,
+      [data-mobile-below-height='xl'],
+      [data-mobile-below-height='xl'] *,
+      [data-mobile-below-height='2xl'],
+      [data-mobile-below-height='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  @media (height < 58rem) {
+    &:where(
+      [data-mobile-below-height='mlg'],
+      [data-mobile-below-height='mlg'] *,
       [data-mobile-below-height='lg'],
       [data-mobile-below-height='lg'] *,
       [data-mobile-below-height='xl'],
