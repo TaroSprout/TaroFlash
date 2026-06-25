@@ -15,7 +15,7 @@ const emit = defineEmits<{ back: [] }>()
 <template>
   <section-list
     data-testid="tab-subscription"
-    class="max-h-full overflow-y-auto px-(--settings-padding) pb-(--settings-padding)"
+    class="px-(--settings-padding) pb-(--settings-padding)"
   >
     <settings-back-button @back="emit('back')" />
 
