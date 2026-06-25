@@ -4,6 +4,7 @@ import { defineComponent, h, ref, useAttrs } from 'vue'
 
 const { mockStartStudy } = vi.hoisted(() => ({ mockStartStudy: vi.fn() }))
 const { mockOpenDeckSettings } = vi.hoisted(() => ({ mockOpenDeckSettings: vi.fn() }))
+const { mockUseMatchMedia } = vi.hoisted(() => ({ mockUseMatchMedia: vi.fn() }))
 
 vi.mock('@/components/study-session/composables/study-modal', () => ({
   useStudyModal: () => ({ start: mockStartStudy })
@@ -12,6 +13,8 @@ vi.mock('@/components/study-session/composables/study-modal', () => ({
 vi.mock('@/composables/deck/settings-modal', () => ({
   useDeckSettingsModal: () => ({ open: mockOpenDeckSettings })
 }))
+
+vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: mockUseMatchMedia }))
 
 const UiButtonStub = defineComponent({
   name: 'UiButton',
@@ -51,6 +54,7 @@ const UiDropdownButtonStub = defineComponent({
 import Actions from '@/views/deck/deck-hero/actions.vue'
 import { cardEditorKey } from '@/views/deck/composables/list-controller'
 import { deckViewShellKey } from '@/views/deck/composables/view-shell'
+import { mobileCardEditorKey } from '@/views/deck/mobile-editor/use-mobile-card-editor'
 
 function makeEditor({ onSelectCard = vi.fn() } = {}) {
   return {
@@ -62,10 +66,16 @@ function makeShell({ mode = 'view', toggleMode = vi.fn() } = {}) {
   return { mode: ref(mode), toggleMode }
 }
 
-function mount({ deck = {}, editor, shell } = {}) {
+function makeMobileEditor() {
+  return { open_at: vi.fn() }
+}
+
+function mount({ deck = {}, editor, shell, mobile_editor, is_mobile = false } = {}) {
+  mockUseMatchMedia.mockReturnValue(ref(is_mobile))
   const provide = {}
   if (editor !== undefined) provide[cardEditorKey] = editor
   if (shell !== undefined) provide[deckViewShellKey] = shell
+  if (mobile_editor !== undefined) provide[mobileCardEditorKey] = mobile_editor
   return shallowMount(Actions, {
     props: { deck: { id: 1, title: 'd', card_count: 10, due_count: 3, ...deck } },
     global: {
@@ -86,6 +96,7 @@ describe('deck-hero/actions', () => {
   beforeEach(() => {
     mockStartStudy.mockClear()
     mockOpenDeckSettings.mockClear()
+    mockUseMatchMedia.mockReturnValue(ref(false))
   })
 
   test('clicking study button starts a study session for the deck', async () => {
@@ -200,5 +211,53 @@ describe('deck-hero/actions', () => {
     const wrapper = mount({ deck: { id: 3, due_count: 5 } })
     await studyBtn(wrapper).trigger('click')
     expect(mockStartStudy).toHaveBeenCalledWith(expect.objectContaining({ id: 3 }))
+  })
+
+  // ── mobile edit behavior [obligation] ─────────────────────────────────────
+
+  test('below md shows the short edit label when not editing [obligation]', () => {
+    const wrapper = mount({ shell: makeShell({ mode: 'view' }), is_mobile: true })
+    expect(editBtn(wrapper).text()).toContain('Edit')
+    // Must NOT contain the full "Edit Cards" string (which contains "Cards")
+    expect(editBtn(wrapper).text()).not.toContain('Cards')
+  })
+
+  test('below md shows stop-editing label when editing [obligation]', () => {
+    const wrapper = mount({ shell: makeShell({ mode: 'edit' }), is_mobile: true })
+    expect(editBtn(wrapper).text()).toContain('Stop Editing')
+  })
+
+  test('below md clicking edit opens mobile_editor.open_at() instead of toggleMode [obligation]', async () => {
+    const toggleMode = vi.fn()
+    const mobile_editor = makeMobileEditor()
+    const wrapper = mount({
+      shell: makeShell({ mode: 'view', toggleMode }),
+      mobile_editor,
+      is_mobile: true
+    })
+    await editBtn(wrapper).trigger('click')
+    expect(mobile_editor.open_at).toHaveBeenCalledWith()
+    expect(toggleMode).not.toHaveBeenCalled()
+  })
+
+  test('below md clicking edit is a no-op when no mobile_editor is provided [obligation]', async () => {
+    const toggleMode = vi.fn()
+    const wrapper = mount({ shell: makeShell({ mode: 'view', toggleMode }), is_mobile: true })
+    await editBtn(wrapper).trigger('click')
+    // mobile_editor is null, so open_at is not called; toggleMode also not called
+    expect(toggleMode).not.toHaveBeenCalled()
+  })
+
+  test('at md+ clicking edit calls toggleMode even when mobile_editor is provided [obligation]', async () => {
+    const toggleMode = vi.fn()
+    const mobile_editor = makeMobileEditor()
+    const wrapper = mount({
+      shell: makeShell({ mode: 'view', toggleMode }),
+      mobile_editor,
+      is_mobile: false
+    })
+    await editBtn(wrapper).trigger('click')
+    expect(toggleMode).toHaveBeenCalledWith('edit')
+    expect(mobile_editor.open_at).not.toHaveBeenCalled()
   })
 })

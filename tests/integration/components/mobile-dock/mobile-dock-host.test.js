@@ -129,4 +129,39 @@ describe('MobileDockHost', () => {
       expect(footer?.contains(above)).toBe(true)
     })
   })
+
+  describe('--mobile-dock-height CSS property [obligation]', () => {
+    test('publishes --mobile-dock-height = 0px on mount when fills is 0 [obligation]', () => {
+      const { fills } = useMobileDock()
+      fills.value = 0
+
+      mountHost()
+
+      expect(document.documentElement.style.getPropertyValue('--mobile-dock-height')).toBe('0px')
+    })
+
+    test('removes --mobile-dock-height from :root on unmount [obligation]', async () => {
+      const wrapper = mountHost()
+
+      wrapper.unmount()
+      // Pop it off the list so afterEach doesn't double-unmount
+      wrappers.splice(wrappers.indexOf(wrapper), 1)
+
+      expect(document.documentElement.style.getPropertyValue('--mobile-dock-height')).toBe('')
+    })
+
+    test('updates --mobile-dock-height when fills changes to > 0 [obligation]', async () => {
+      const { fills } = useMobileDock()
+      fills.value = 0
+
+      mountHost()
+      expect(document.documentElement.style.getPropertyValue('--mobile-dock-height')).toBe('0px')
+
+      fills.value = 1
+      await nextTick()
+      // offsetHeight is 0 in jsdom (no layout), so height stays 0px — but the
+      // property is set (not removed). Just verify the property exists.
+      expect(document.documentElement.style.getPropertyValue('--mobile-dock-height')).not.toBe('')
+    })
+  })
 })
