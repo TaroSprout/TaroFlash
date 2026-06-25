@@ -4,6 +4,9 @@ import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FaceEditor from '@/components/card/face-editor.vue'
 import UiButton from '@/components/ui-kit/button.vue'
+import UiDropdownButton, {
+  type DropdownOption
+} from '@/components/ui-kit/dropdown-button/index.vue'
 import { mobileCardEditorKey } from './use-mobile-card-editor'
 
 // composables + state
@@ -22,7 +25,9 @@ const {
   prev,
   next,
   close,
-  update
+  update,
+  moveCard,
+  deleteCard
 } = inject(mobileCardEditorKey)!
 
 // computed
@@ -33,6 +38,17 @@ const placeholder = computed(() =>
 )
 
 const position = computed(() => ({ index: index.value + 1, total: cards.value.length }))
+
+const menu_options = computed<DropdownOption[]>(() => [
+  { label: t('deck-view.mobile-editor.move-card'), value: 'move', icon: 'move-item' },
+  { label: t('deck-view.mobile-editor.delete-card'), value: 'delete', icon: 'delete' }
+])
+
+// functions
+function onMenuSelect(option: DropdownOption) {
+  if (option.value === 'move') moveCard()
+  else if (option.value === 'delete') deleteCard()
+}
 </script>
 
 <template>
@@ -59,9 +75,28 @@ const position = computed(() => ({ index: index.value + 1, total: cards.value.le
         {{ t('deck-view.mobile-editor.position', position) }}
       </span>
 
-      <span v-if="saving" data-testid="mobile-card-editor__saving" class="justify-self-end">
-        {{ t('deck-view.mobile-editor.saving') }}
-      </span>
+      <div
+        data-testid="mobile-card-editor__header-end"
+        class="flex items-center gap-2 justify-self-end"
+      >
+        <span v-if="saving" data-testid="mobile-card-editor__saving">
+          {{ t('deck-view.mobile-editor.saving') }}
+        </span>
+
+        <ui-dropdown-button
+          data-testid="mobile-card-editor__menu"
+          trigger-only
+          trigger-icon="edit"
+          variant="ghost"
+          position="bottom-end"
+          trigger-theme="brown-200"
+          trigger-theme-dark="stone-700"
+          menu-theme="brown-100"
+          menu-theme-dark="stone-700"
+          :options="menu_options"
+          @select="onMenuSelect"
+        />
+      </div>
     </header>
 
     <div data-testid="mobile-card-editor__stage" class="flex w-full justify-center">
@@ -87,7 +122,9 @@ const position = computed(() => ({ index: index.value + 1, total: cards.value.le
         data-testid="mobile-card-editor__prev"
         icon-only
         icon-left="chevron-left"
-        data-theme="brown-200"
+        data-theme="brown-100"
+        data-theme-dark="stone-700"
+        size="xl"
         :disabled="!has_prev"
         :sfx="{ press: 'transition_down' }"
         @press="prev"
@@ -97,8 +134,11 @@ const position = computed(() => ({ index: index.value + 1, total: cards.value.le
 
       <ui-button
         data-testid="mobile-card-editor__flip"
+        data-theme="blue-500"
+        data-theme-dark="blue-650"
         icon-left="card-flip"
-        data-theme="brown-200"
+        full-width
+        size="xl"
         @press="flip"
       >
         {{ t('deck-view.mobile-editor.flip-button') }}
@@ -108,7 +148,9 @@ const position = computed(() => ({ index: index.value + 1, total: cards.value.le
         data-testid="mobile-card-editor__next"
         icon-only
         icon-left="chevron-right"
-        data-theme="brown-200"
+        data-theme="brown-100"
+        data-theme-dark="stone-700"
+        size="xl"
         :disabled="!has_next"
         :sfx="{ press: 'transition_up' }"
         @press="next"

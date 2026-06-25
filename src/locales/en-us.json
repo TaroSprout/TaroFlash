@@ -522,6 +522,8 @@
   "deck-view.mobile-editor.prev-button": "Previous card",
   "deck-view.mobile-editor.next-button": "Next card",
   "deck-view.mobile-editor.done-button": "Done",
+  "deck-view.mobile-editor.move-card": "Move card",
+  "deck-view.mobile-editor.delete-card": "Delete card",
   "deck-view.mobile-editor.position": "{index} / {total}",
   "deck-view.mobile-editor.saving": "Saving…",
   "deck-view.mobile-footer.search": "Search",

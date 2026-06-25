@@ -82,6 +82,36 @@ export function useMobileCardEditor(controller: CardListController) {
     return controller.updateCard(card.id!, { [`${edited_side}_text`]: text })
   }
 
+  // After a move/delete removes the current card, land on whatever now sits at
+  // its old slot (or the new last card); close once the deck is empty. No-op
+  // when the card is still there — the user dismissed the confirm/move modal.
+  function reconcileCursor(prev_index: number) {
+    if (current.value) return
+    if (!cards.value.length) return close()
+
+    const landing = cards.value[Math.min(prev_index, cards.value.length - 1)]
+    cursor_client_id.value = landing.client_id
+    side.value = 'front'
+  }
+
+  async function moveCard() {
+    const card = current.value
+    if (!card) return
+
+    const at = index.value
+    await controller.actions.onMoveCards(card.id!)
+    reconcileCursor(at)
+  }
+
+  async function deleteCard() {
+    const card = current.value
+    if (!card) return
+
+    const at = index.value
+    await controller.actions.onDeleteCards(card.id!)
+    reconcileCursor(at)
+  }
+
   return {
     open,
     side,
@@ -97,6 +127,8 @@ export function useMobileCardEditor(controller: CardListController) {
     flip,
     prev,
     next,
-    update
+    update,
+    moveCard,
+    deleteCard
   }
 }
