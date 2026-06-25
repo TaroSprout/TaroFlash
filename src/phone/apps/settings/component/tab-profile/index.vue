@@ -24,17 +24,13 @@ const emit = defineEmits<{ back: [] }>()
   <section-list data-testid="tab-profile">
     <settings-back-button @back="emit('back')" />
 
-    <labeled-section
+    <member-badge
       v-if="layout_mode === 'sheet'"
       data-testid="tab-profile__preview"
-      :label="t('settings.profile.section.preview')"
-    >
-      <member-badge
-        :display-name="editor.settings.display_name"
-        :description="editor.settings.description"
-        :cover="editor.cover"
-      />
-    </labeled-section>
+      :display-name="editor.settings.display_name"
+      :description="editor.settings.description"
+      :cover="editor.cover"
+    />
 
     <labeled-section :label="t('settings.profile.section.about-you')">
       <ui-input
