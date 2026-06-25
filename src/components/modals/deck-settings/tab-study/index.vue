@@ -20,7 +20,7 @@ const emit = defineEmits<{ back: [] }>()
 </script>
 
 <template>
-  <section-list data-testid="tab-study">
+  <section-list data-testid="tab-study" class="p-(--deck-settings-padding)">
     <deck-back-button @back="emit('back')" />
     <labeled-section :label="t('deck.settings-modal.study.section.cards-heading')">
       <ui-toggle v-model:checked="config.shuffle">

@@ -81,6 +81,15 @@ const visible_side = computed(() =>
 
 const tab_component = computed(() => TAB_COMPONENTS[displayed_tab.value])
 
+// Sheet mode goes full-bleed so the animated tab outlet doesn't clip outlines/
+// rings — each tab self-pads via --deck-settings-padding instead. Tablet/desktop
+// keep the container padding so the aside column stays inset.
+const tab_content_class = computed(() =>
+  layout_mode.value === 'sheet'
+    ? 'flex gap-14 h-full items-start'
+    : 'px-(--sheet-px) pb-8 pt-0 flex gap-14 h-full items-start'
+)
+
 onMounted(async () => {
   const idle = window.requestIdleCallback ?? ((cb: IdleRequestCallback) => setTimeout(cb, 200))
   idle(() => {
@@ -140,11 +149,16 @@ watch(active_tab, (tab) => {
     data-theme="green-500"
     data-theme-dark="green-800"
     :data-layout="layout_mode"
-    :class="layout_mode === 'desktop' ? 'w-248!' : 'w-full! max-w-205.5'"
+    :class="[
+      layout_mode === 'desktop' ? 'w-248!' : 'w-full! max-w-205.5',
+      layout_mode === 'sheet'
+        ? '[--deck-settings-padding:var(--sheet-px)]'
+        : '[--deck-settings-padding:0px]'
+    ]"
     :sheet_px="sheet_px"
     :tabs="tabs"
     :pattern_config="{ pattern: 'endless-clouds' }"
-    :parts="{ content: 'flex gap-14 h-full items-start' }"
+    :parts="{ content: tab_content_class }"
     v-model:active="sidebar_active"
     @close="onClose"
   >
@@ -165,7 +179,7 @@ watch(active_tab, (tab) => {
       data-testid="deck-settings__main"
       :class="[
         'relative flex flex-1 flex-col gap-4 w-full min-w-0',
-        layout_mode === 'sheet' && 'max-w-111 mx-auto overflow-hidden pt-0.5 pl-0.5'
+        layout_mode === 'sheet' && 'max-w-111 mx-auto overflow-hidden'
       ]"
     >
       <transition :css="false" mode="out-in" @leave="onTabLeave" @enter="onTabEnter">

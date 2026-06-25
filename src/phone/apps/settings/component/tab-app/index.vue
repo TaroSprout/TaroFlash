@@ -13,7 +13,7 @@ const layout_mode = inject(settingsLayoutKey)!
 </script>
 
 <template>
-  <section-list data-testid="tab-app">
+  <section-list data-testid="tab-app" class="p-(--settings-padding)">
     <settings-back-button @back="emit('back')" />
 
     <audio-section />

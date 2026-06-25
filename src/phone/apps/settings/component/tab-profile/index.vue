@@ -21,7 +21,7 @@ const emit = defineEmits<{ back: [] }>()
 </script>
 
 <template>
-  <section-list data-testid="tab-profile">
+  <section-list data-testid="tab-profile" class="p-(--settings-padding)">
     <settings-back-button @back="emit('back')" />
 
     <member-badge

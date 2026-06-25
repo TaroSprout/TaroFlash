@@ -81,6 +81,15 @@ const header_title = computed(() => t(`settings.header.${displayed_tab.value}.ti
 
 const tab_component = computed(() => TAB_COMPONENTS[displayed_tab.value])
 
+// Sheet mode goes full-bleed so the animated tab outlet doesn't clip outlines/
+// rings — each tab self-pads via --settings-padding instead. Tablet/desktop keep
+// the container padding so the aside column stays inset.
+const tab_content_class = computed(() =>
+  layout_mode.value === 'sheet'
+    ? 'flex gap-14 h-full items-start'
+    : 'px-(--sheet-px) pb-8 pt-0 flex gap-14 h-full items-start'
+)
+
 // Open/close sfx live on the modal itself so every callsite (phone launcher,
 // dashboard edit button) sounds identically. Mirrors the deck-settings modal.
 onMounted(() => emitSfx('snappy_button_3'))
@@ -134,12 +143,13 @@ watch(layout_mode, (mode) => {
     :data-layout="layout_mode"
     :class="[
       layout_mode === 'desktop' ? 'w-255!' : 'w-full! max-w-224',
-      layout_mode !== 'sheet' && 'h-170'
+      layout_mode !== 'sheet' && 'h-170',
+      layout_mode === 'sheet' ? '[--settings-padding:var(--sheet-px)]' : '[--settings-padding:0px]'
     ]"
     :sheet_px="sheet_px"
     :tabs="tabs"
     :pattern_config="{ pattern: 'diagonal-stripes', pattern_size: '48px', pattern_opacity: '0.15' }"
-    :parts="{ content: 'flex gap-14 h-full items-start' }"
+    :parts="{ content: tab_content_class }"
     v-model:active="sidebar_active"
     @close="onClose"
   >

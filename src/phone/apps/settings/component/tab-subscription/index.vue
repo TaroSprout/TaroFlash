@@ -13,7 +13,10 @@ const emit = defineEmits<{ back: [] }>()
 </script>
 
 <template>
-  <section-list data-testid="tab-subscription" class="max-h-full overflow-y-auto">
+  <section-list
+    data-testid="tab-subscription"
+    class="max-h-full overflow-y-auto p-(--settings-padding)"
+  >
     <settings-back-button @back="emit('back')" />
 
     <plan-section :subscription-query="subscription_query" />
