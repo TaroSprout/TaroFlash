@@ -56,44 +56,48 @@ function onEditOption(option: DropdownOption) {
 </script>
 
 <template>
-  <div data-testid="deck-hero__actions" class="w-full flex flex-col gap-2">
-    <ui-button
-      data-testid="overview-panel__study-button"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
-      full-width
-      size="xl"
-      :sfx="{ press: 'snappy_button_3' }"
-      :disabled="!has_due_cards"
-      @press="onStudyClicked"
-    >
-      <div v-if="has_due_cards" class="text-brown-100">
-        {{ t('deck-view.hero.study') }}
-        <span
-          class="bg-brown-100 dark:text-blue-650 text-blue-500 px-1 py-0.5 -rotate-5 rounded-1.5"
-        >
-          {{ deck.due_count }}
-        </span>
-        {{ t('deck-view.hero.cards-label') }}
-      </div>
-      <div v-else class="text-brown-100">
-        {{ t('deck-view.hero.no-cards-due') }}
-      </div>
-    </ui-button>
+  <div data-testid="deck-hero__actions" class="w-full flex flex-row md:flex-col gap-2">
+    <div data-testid="deck-hero__study-action" class="flex-1 min-w-0">
+      <ui-button
+        data-testid="overview-panel__study-button"
+        data-theme="blue-500"
+        data-theme-dark="blue-650"
+        full-width
+        size="xl"
+        :sfx="{ press: 'snappy_button_3' }"
+        :disabled="!has_due_cards"
+        @press="onStudyClicked"
+      >
+        <div v-if="has_due_cards" class="text-brown-100">
+          {{ t('deck-view.hero.study') }}
+          <span
+            class="bg-brown-100 dark:text-blue-650 text-blue-500 px-1 py-0.5 -rotate-5 rounded-1.5"
+          >
+            {{ deck.due_count }}
+          </span>
+          {{ t('deck-view.hero.cards-label') }}
+        </div>
+        <div v-else class="text-brown-100">
+          {{ t('deck-view.hero.no-cards-due') }}
+        </div>
+      </ui-button>
+    </div>
 
-    <ui-dropdown-button
-      data-testid="overview-panel__settings-button"
-      :options="edit_options"
-      :icon-left="is_editing ? 'stop' : 'edit'"
-      :data-theme="is_editing ? 'yellow-500' : 'brown-300'"
-      :data-theme-dark="is_editing ? 'yellow-700' : 'stone-700'"
-      trigger-theme="brown-200"
-      full-width
-      size="xl"
-      @click="onToggleEditCards"
-      @select="onEditOption"
-    >
-      {{ is_editing ? t('deck-view.actions.stop-editing') : t('deck-view.actions.edit-cards') }}
-    </ui-dropdown-button>
+    <div data-testid="deck-hero__edit-action" class="flex-1 min-w-0">
+      <ui-dropdown-button
+        data-testid="overview-panel__settings-button"
+        :options="edit_options"
+        :icon-left="is_editing ? 'stop' : 'edit'"
+        :data-theme="is_editing ? 'yellow-500' : 'brown-300'"
+        :data-theme-dark="is_editing ? 'yellow-700' : 'stone-700'"
+        trigger-theme="brown-200"
+        full-width
+        size="xl"
+        @click="onToggleEditCards"
+        @select="onEditOption"
+      >
+        {{ is_editing ? t('deck-view.actions.stop-editing') : t('deck-view.actions.edit-cards') }}
+      </ui-dropdown-button>
+    </div>
   </div>
 </template>
