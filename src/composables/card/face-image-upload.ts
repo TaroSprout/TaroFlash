@@ -123,7 +123,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
   /** The currently rendered image element for this face, across layouts. */
   function faceImageEl() {
     return rootEl()?.querySelector<HTMLElement>(
-      '[data-testid="face-image-dropzone__image"], [data-testid="card-face__image"]'
+      '[data-testid="image-dropzone__image"], [data-testid="card-face__image"]'
     )
   }
 

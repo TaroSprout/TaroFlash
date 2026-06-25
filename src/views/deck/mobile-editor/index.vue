@@ -3,7 +3,7 @@
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import MobileDock from '@/components/mobile-dock/mobile-dock.vue'
-import CardEditFace from '@/components/card/edit-face.vue'
+import FaceEditor from '@/components/card/face-editor.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { mobileCardEditorKey } from './use-mobile-card-editor'
 
@@ -41,7 +41,7 @@ const position = computed(() => ({ index: index.value + 1, total: cards.value.le
   <mobile-dock v-if="open">
     <div data-testid="mobile-card-editor" class="flex w-full flex-col items-center gap-4">
       <div data-testid="mobile-card-editor__stage" class="flex w-full justify-center">
-        <card-edit-face
+        <face-editor
           v-if="current"
           with_images
           :card="current"
@@ -52,7 +52,7 @@ const position = computed(() => ({ index: index.value + 1, total: cards.value.le
           size="lg"
           input_testid="mobile-card-editor__input"
           @update="update"
-        />
+        ></face-editor>
       </div>
 
       <div

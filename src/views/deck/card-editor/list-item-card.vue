@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import CardFaceUploader from '@/components/card/card-face-uploader.vue'
+import ImageUploader from '@/components/card/image-uploader.vue'
 import { useI18n } from 'vue-i18n'
 import { inject, onMounted, ref, useTemplateRef } from 'vue'
 import { cardEditorKey, type CardWithClientId } from '@/views/deck/composables'
@@ -133,7 +133,7 @@ defineExpose({ focusEditor, hasFocusWithin })
     @focusin="onFocusIn"
     @focusout="onFocusOut"
   >
-    <card-face-uploader
+    <image-uploader
       data-testid="front-input"
       :data-id="card.id"
       :card="card"
@@ -152,9 +152,9 @@ defineExpose({ focusEditor, hasFocusWithin })
           @update="onUpdate('front', $event)"
         />
       </template>
-    </card-face-uploader>
+    </image-uploader>
 
-    <card-face-uploader
+    <image-uploader
       data-testid="back-input"
       :data-id="card.id"
       :card="card"
@@ -173,6 +173,6 @@ defineExpose({ focusEditor, hasFocusWithin })
           @update="onUpdate('back', $event)"
         />
       </template>
-    </card-face-uploader>
+    </image-uploader>
   </div>
 </template>

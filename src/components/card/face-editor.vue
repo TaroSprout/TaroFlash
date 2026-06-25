@@ -2,13 +2,13 @@
 // imports
 import { computed } from 'vue'
 import Card from '@/components/card/index.vue'
-import CardFaceUploader from '@/components/card/card-face-uploader.vue'
+import ImageUploader from '@/components/card/image-uploader.vue'
 import TextEditor from '@/components/card/text-editor.vue'
 
 // types
 type CardSide = 'front' | 'back'
 
-type CardEditFaceProps = {
+type FaceEditorProps = {
   card?: Card
   side: CardSide
   card_attributes: DeckCardAttributes
@@ -32,11 +32,11 @@ const {
   placeholder,
   card_key,
   size = 'xl',
-  input_testid = 'card-edit-face__input',
+  input_testid = 'face-editor__input',
   with_images = false,
   disabled = false,
   error = false
-} = defineProps<CardEditFaceProps>()
+} = defineProps<FaceEditorProps>()
 
 const emit = defineEmits<{
   (e: 'update', side: CardSide, text: string): void
@@ -52,7 +52,7 @@ const editor_key = computed(() => `${card_key ?? card?.id}-${side}`)
 </script>
 
 <template>
-  <card-face-uploader
+  <image-uploader
     v-if="with_images && card"
     :card="card"
     :side="side"
@@ -73,7 +73,7 @@ const editor_key = computed(() => `${card_key ?? card?.id}-${side}`)
         @update="emit('update', side, $event)"
       />
     </template>
-  </card-face-uploader>
+  </image-uploader>
 
   <card
     v-else

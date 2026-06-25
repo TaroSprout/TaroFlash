@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import CardEditFace from '@/components/card/edit-face.vue'
+import FaceEditor from '@/components/card/face-editor.vue'
 import { useDeckContext } from '../deck-context'
 
 type CardSide = 'front' | 'back'
@@ -29,7 +29,7 @@ const placeholder = computed(() =>
 </script>
 
 <template>
-  <card-edit-face
+  <face-editor
     data-testid="study-card-edit"
     input_testid="study-card-edit__input"
     :card="card"
