@@ -32,6 +32,7 @@ function onRatingClicked(grade: Grade) {
         icon-left="close"
         full-width
         class="max-w-78.5"
+        :sfx="{ tap_pre: 'snappy_button_5' }"
         @press="onRatingClicked(Rating.Again)"
       >
         {{ t('study.flashcard.rating.fail-button') }}
@@ -45,6 +46,7 @@ function onRatingClicked(grade: Grade) {
         icon-left="check"
         full-width
         class="max-w-78.5"
+        :sfx="{ tap_pre: 'snappy_button_5' }"
         @press="onRatingClicked(Rating.Good)"
       >
         {{ t('study.flashcard.rating.pass-button') }}
@@ -59,6 +61,7 @@ function onRatingClicked(grade: Grade) {
       size="xl"
       full-width
       class="mx-auto max-w-78.5"
+      :sfx="{ tap_pre: 'snappy_button_5' }"
       @press="emit('revealed')"
     >
       {{ t('study.flashcard.rating.flip-button') }}
@@ -72,6 +75,7 @@ function onRatingClicked(grade: Grade) {
       size="xl"
       full-width
       class="mx-auto max-w-78.5"
+      :sfx="{ tap_pre: 'snappy_button_5' }"
       @press="emit('started')"
     >
       {{ t('study.flashcard.start-button') }}
