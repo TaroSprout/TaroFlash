@@ -15,6 +15,8 @@ type ListItemProps = {
 
 const { card, index } = defineProps<ListItemProps>()
 
+const emit = defineEmits<{ reorderPointerdown: [event: PointerEvent] }>()
+
 const { t } = useI18n()
 const { selection, actions, appendCard, prependCard } = inject(cardEditorKey)!
 const { is_selecting, isCardSelected } = selection
@@ -63,8 +65,9 @@ function onClick(e: MouseEvent) {
   >
     <button
       data-testid="card-list-item__reorder"
-      class="hidden h-12 w-12 cursor-grab items-center justify-center rounded-full bg-brown-300 text-lg text-brown-700 sm:flex group-focus-within/listitem:bg-brown-100 row-span-2 dark:bg-stone-700 dark:text-brown-100 dark:group-focus-within/listitem:bg-stone-900"
+      class="hidden h-12 w-12 cursor-grab touch-none items-center justify-center rounded-full bg-brown-300 text-lg text-brown-700 sm:flex group-focus-within/listitem:bg-brown-100 row-span-2 dark:bg-stone-700 dark:text-brown-100 dark:group-focus-within/listitem:bg-stone-900"
       @click.stop
+      @pointerdown="emit('reorderPointerdown', $event)"
     >
       <ui-icon
         src="reorder"

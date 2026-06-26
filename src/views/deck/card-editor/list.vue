@@ -2,9 +2,11 @@
 import ListItem from './list-item.vue'
 import { inject, useTemplateRef, computed, ref, watchEffect, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useWindowVirtualizer } from '@tanstack/vue-virtual'
+import { useWindowVirtualizer, defaultRangeExtractor } from '@tanstack/vue-virtual'
 import { cardEditorKey } from '@/views/deck/composables'
 import { usePinScrollWhileTyping } from '@/composables/ui/pin-scroll-while-typing'
+import { useMatchMedia } from '@/composables/ui/media-query'
+import { useReorderDrag } from './use-reorder-drag'
 
 const { t } = useI18n()
 
@@ -12,13 +14,22 @@ const ROW_PITCH = 407
 const LOAD_MORE_THRESHOLD = 5
 const OVERSCAN = 3
 
-const { list, hasNextPage, isLoading, loadNextPage } = inject(cardEditorKey)!
+const { list, selection, reorderCard, hasNextPage, isLoading, loadNextPage } =
+  inject(cardEditorKey)!
 const { all_cards } = list
 
 const list_el = useTemplateRef<HTMLElement>('list_el')
 const scroll_margin = ref(0)
+const is_above_md = useMatchMedia('w>=md')
 
 usePinScrollWhileTyping(() => list_el.value)
+
+const reorder = useReorderDrag({
+  pitch: ROW_PITCH,
+  count: () => all_cards.value.length,
+  enabled: () => is_above_md.value && !selection.is_selecting.value,
+  onReorder: reorderCard
+})
 
 const virtualizer = useWindowVirtualizer(
   computed(() => ({
@@ -26,7 +37,15 @@ const virtualizer = useWindowVirtualizer(
     estimateSize: () => ROW_PITCH,
     overscan: OVERSCAN,
     scrollMargin: scroll_margin.value,
-    getItemKey: (i: number) => all_cards.value[i].client_id
+    getItemKey: (i: number) => all_cards.value[i].client_id,
+    // Keep the dragged row in the rendered range even after auto-scroll carries
+    // its slot out of the overscan window — otherwise it unmounts mid-drag.
+    rangeExtractor: (range) => {
+      const indexes = defaultRangeExtractor(range)
+      const dragging = reorder.dragging_index.value
+      if (dragging === null || indexes.includes(dragging)) return indexes
+      return [...indexes, dragging].sort((a, b) => a - b)
+    }
   }))
 )
 
@@ -80,13 +99,30 @@ watchEffect(() => {
         v-for="vrow in virtualizer.getVirtualItems()"
         :key="vrow.key as number"
         data-testid="card-list__row"
-        class="absolute top-0 left-0 w-full flex justify-center hover:z-10 focus-within:z-10"
+        class="absolute top-0 left-0 w-full"
+        :class="
+          vrow.index === reorder.dragging_index.value ? 'z-20' : 'hover:z-10 focus-within:z-10'
+        "
         :style="{
           height: `${vrow.size}px`,
           transform: `translateY(${vrow.start - scroll_margin}px)`
         }"
       >
-        <list-item :index="vrow.index" :card="all_cards[vrow.index]" />
+        <div
+          data-testid="card-list__row-inner"
+          class="flex justify-center will-change-transform"
+          :class="{
+            'transition-transform duration-150 ease-out': reorder.shouldTransition(vrow.index),
+            'cursor-grabbing': vrow.index === reorder.dragging_index.value
+          }"
+          :style="{ transform: `translateY(${reorder.dragOffset(vrow.index)}px)` }"
+        >
+          <list-item
+            :index="vrow.index"
+            :card="all_cards[vrow.index]"
+            @reorder-pointerdown="reorder.start(vrow.index, $event)"
+          />
+        </div>
       </div>
     </div>
 
