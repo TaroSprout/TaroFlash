@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import { defineComponent, h, ref, useAttrs } from 'vue'
+import { defineComponent, h, nextTick, ref, useAttrs } from 'vue'
 
 // Stub UiButton to render its default slot so label text is inspectable,
 // and forward attrs (including data-testid) for querying.
@@ -57,9 +57,9 @@ function makeProvide({ is_selecting = ref(false) } = {}) {
   }
 }
 
-function mount({ card, index = 0, is_selecting } = {}) {
+function mount({ card, index = 0, is_selecting, dragging } = {}) {
   return shallowMount(ListItem, {
-    props: { card: makeCard(card), index },
+    props: { card: makeCard(card), index, dragging },
     global: {
       stubs: { UiButton: UiButtonStub },
       provide: makeProvide({ is_selecting })
@@ -147,6 +147,34 @@ describe('ListItem', () => {
     expect(wrapper.findComponent(ItemOptions).exists()).toBe(false)
   })
 
+  // ── Drag handle — data-dragging attribute and reorderPointerdown emit ────────
+
+  // [obligation] data-dragging reflects the dragging prop on the row root
+  test('data-dragging is "true" when dragging prop is true [obligation]', () => {
+    const wrapper = mount({ dragging: true })
+    expect(wrapper.find('[data-testid="card-list-item"]').attributes('data-dragging')).toBe('true')
+  })
+
+  test('data-dragging is "false" when dragging prop is false (default)', () => {
+    const wrapper = mount({ dragging: false })
+    expect(wrapper.find('[data-testid="card-list-item"]').attributes('data-dragging')).toBe('false')
+  })
+
+  test('data-dragging is "false" when dragging prop is not set', () => {
+    const wrapper = mount()
+    expect(wrapper.find('[data-testid="card-list-item"]').attributes('data-dragging')).toBe('false')
+  })
+
+  test('reorder handle pointerdown emits reorderPointerdown with the event', async () => {
+    const wrapper = mount({ card: { id: 5 } })
+    const event = new PointerEvent('pointerdown', { button: 0, bubbles: true })
+    wrapper.find('[data-testid="card-list-item__reorder"]').element.dispatchEvent(event)
+    await nextTick()
+    const emitted = wrapper.emitted('reorderPointerdown')
+    expect(emitted).toBeTruthy()
+    expect(emitted[0][0]).toBe(event)
+  })
+
   // ── onClick — selection mode vs normal mode ───────────────────────────────
 
   test('mousedown in selection mode calls onSelectCard with the card id', async () => {
@@ -160,5 +188,19 @@ describe('ListItem', () => {
     const wrapper = mount({ card: { id: 3 }, is_selecting: ref(true) })
     const radio = wrapper.findComponent({ name: 'UiRadio' })
     expect(radio.props('checked')).toBe(true)
+  })
+
+  // ── onClick — normal mode branches ───────────────────────────────────────
+
+  // Dispatching mousedown on the reorder button exercises the 'button' branch of onClick:
+  // onClick detects e.target.closest('button'), calls preventDefault, and returns early.
+  test('mousedown on a button child calls preventDefault and does not propagate to onSelectCard', async () => {
+    const wrapper = mount()
+    const btn = wrapper.find('[data-testid="card-list-item__reorder"]')
+    const event = new MouseEvent('mousedown', { bubbles: true })
+    const preventDefaultSpy = vi.spyOn(event, 'preventDefault')
+    btn.element.dispatchEvent(event)
+    expect(preventDefaultSpy).toHaveBeenCalled()
+    expect(mocks.onSelectCardMock).not.toHaveBeenCalled()
   })
 })

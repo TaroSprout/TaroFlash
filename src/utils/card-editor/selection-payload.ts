@@ -5,6 +5,33 @@ export type DeleteArgs = { except_ids: number[] } | { cards: Card[] }
 
 export type MoveArgs = { card_ids: number[] } | { source_deck_id: number; except_ids: number[] }
 
+export type ReorderAnchor = { anchor_id: number; side: 'before' | 'after' }
+
+/**
+ * Resolve the `move_card` anchor for a drag-reorder. `without` is the rendered
+ * card list with the dragged card already removed; `to` is the array index the
+ * dragged card should land at. Picks the nearest *persisted* neighbour to
+ * anchor against — temps (negative placeholder ids) can't anchor a server move.
+ *
+ * Walks left from the drop slot for a card to land `after`; if none (dropping
+ * at the very top, or only temps to the left) walks right for a card to land
+ * `before`. Returns `null` when no persisted neighbour exists — e.g. the deck
+ * holds a single persisted card, so there is nothing to reorder against.
+ */
+export function resolveReorderAnchor(without: Card[], to: number): ReorderAnchor | null {
+  for (let i = to - 1; i >= 0; i--) {
+    const id = without[i]?.id
+    if (id !== undefined && id > 0) return { anchor_id: id, side: 'after' }
+  }
+
+  for (let i = to; i < without.length; i++) {
+    const id = without[i]?.id
+    if (id !== undefined && id > 0) return { anchor_id: id, side: 'before' }
+  }
+
+  return null
+}
+
 /**
  * Loaded persisted cards covered by the current selection, with `review`
  * stripped so the result is safe to spread into write payloads.

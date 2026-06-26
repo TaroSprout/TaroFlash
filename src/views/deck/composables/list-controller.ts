@@ -5,6 +5,7 @@ import { useDeckQuery } from '@/api/decks'
 import { useVirtualCardList, type CardEntry } from './virtual-list'
 import { useCardActions } from './actions'
 import { useCardSelection, useCardMutations, useCardLimitGate } from '@/composables/card'
+import { resolveReorderAnchor } from '@/utils/card-editor/selection-payload'
 import { emitSfx } from '@/sfx/bus'
 import type { DeckViewShell } from './view-shell'
 
@@ -149,6 +150,29 @@ export function useCardListController(opts: Options) {
     return true
   }
 
+  /**
+   * Reposition a persisted card within the deck by drag index. `from`/`to` are
+   * indices into `list.all_cards`. Resolves the nearest persisted neighbour at
+   * the drop slot into a `move_card` anchor + side and fires the mutation, which
+   * optimistically reorders the cache synchronously (so the dropped row settles
+   * without a refetch) and reconciles on settle. Failures roll back in the
+   * mutation, so the floating promise is intentionally swallowed here.
+   *
+   * No-op when the dragged row is a temp (not yet persisted) or no persisted
+   * neighbour exists to anchor against.
+   */
+  function reorderCard(from: number, to: number) {
+    const cards = list.all_cards.value
+    const dragged = cards[from]
+    if (!dragged?.id || dragged.id < 0) return
+
+    const without = cards.filter((_, i) => i !== from)
+    const anchor = resolveReorderAnchor(without, to)
+    if (!anchor) return
+
+    mutations.reorderCard({ card_id: dragged.id, deck_id: opts.deck_id, ...anchor }).catch(() => {})
+  }
+
   const actions = useCardActions({
     list,
     selection,
@@ -230,6 +254,7 @@ export function useCardListController(opts: Options) {
     prependCard,
     addCardAtTop,
     newCard,
+    reorderCard,
     claimFocus,
     guardAddCards: limit_gate.guardAddCards,
     handleLimitError: limit_gate.handleLimitError,

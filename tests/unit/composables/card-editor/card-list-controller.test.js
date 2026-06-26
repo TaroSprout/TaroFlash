@@ -10,6 +10,7 @@ const {
   deleteCardsMock,
   deleteCardsInDeckMock,
   moveCardsMock,
+  reorderCardMock,
   setCardImageMock,
   deleteCardImageMock,
   modalOpenMock,
@@ -26,6 +27,7 @@ const {
   deleteCardsMock: vi.fn(),
   deleteCardsInDeckMock: vi.fn(),
   moveCardsMock: vi.fn(),
+  reorderCardMock: vi.fn(),
   setCardImageMock: vi.fn(),
   deleteCardImageMock: vi.fn(),
   modalOpenMock: vi.fn(),
@@ -46,6 +48,7 @@ vi.mock('@/api/cards', () => ({
     mutateAsync: deleteCardsInDeckMock
   }),
   useMoveCardsToDeckMutation: () => ({ mutate: moveCardsMock, mutateAsync: moveCardsMock }),
+  useMoveCardMutation: () => ({ mutate: reorderCardMock, mutateAsync: reorderCardMock }),
   useSetCardImageMutation: () => ({ mutate: setCardImageMock, mutateAsync: setCardImageMock }),
   useDeleteCardImageMutation: () => ({
     mutate: deleteCardImageMock,
@@ -158,6 +161,8 @@ describe('useCardListController', () => {
     deleteCardsInDeckMock.mockResolvedValue(0)
     moveCardsMock.mockReset()
     moveCardsMock.mockResolvedValue(undefined)
+    reorderCardMock.mockReset()
+    reorderCardMock.mockResolvedValue(9999)
     setCardImageMock.mockReset()
     setCardImageMock.mockResolvedValue(undefined)
     deleteCardImageMock.mockReset()
@@ -755,6 +760,46 @@ describe('useCardListController', () => {
       await ctrl.newCard()
       // setMode is still called (gate check happens inside addCardAtTop)
       expect(ctrl.list.all_cards.value).toHaveLength(0)
+    })
+  })
+
+  // ── reorderCard — moves a persisted card to a new slot ───────────────────────
+
+  describe('reorderCard', () => {
+    // [obligation] no-op when dragged card is a temp (id < 0)
+    test('is a no-op when the dragged card is a temp (id < 0)', () => {
+      const { all_cards, addCard, reorderCard } = makeController([makeCard({ id: 100 })])
+      addCard()
+      const temp_idx = all_cards.value.findIndex((c) => c.id < 0)
+      reorderCard(temp_idx, 1)
+      expect(reorderCardMock).not.toHaveBeenCalled()
+    })
+
+    // [obligation] no-op when no persisted anchor resolves
+    test('is a no-op when no persisted anchor can be resolved at the drop slot', () => {
+      // Only one persisted card; if we drag it, without = [], so resolveReorderAnchor returns null
+      const { reorderCard } = makeController([makeCard({ id: 1 })])
+      reorderCard(0, 0)
+      expect(reorderCardMock).not.toHaveBeenCalled()
+    })
+
+    test('calls the reorder mutation with card_id, deck_id, and the resolved anchor', () => {
+      const ctrl = makeController([makeCard({ id: 1 }), makeCard({ id: 2 }), makeCard({ id: 3 })])
+      ctrl.reorderCard(2, 0)
+      // Without card at idx 2 (id=3): [id=1, id=2]. to=0 → walks right for 'before' → anchor_id=1
+      expect(reorderCardMock).toHaveBeenCalledWith({
+        card_id: 3,
+        deck_id: 10,
+        anchor_id: 1,
+        side: 'before'
+      })
+    })
+
+    test('swallows rejection from the mutation (floating promise)', async () => {
+      reorderCardMock.mockRejectedValueOnce(new Error('network'))
+      const ctrl = makeController([makeCard({ id: 1 }), makeCard({ id: 2 })])
+      // Should not throw
+      expect(() => ctrl.reorderCard(1, 0)).not.toThrow()
     })
   })
 

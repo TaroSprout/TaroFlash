@@ -8,6 +8,7 @@ const {
   deleteCardsMock,
   deleteCardsInDeckMock,
   moveCardsMock,
+  reorderCardMock,
   setCardImageMock,
   deleteCardImageMock
 } = vi.hoisted(() => ({
@@ -16,6 +17,7 @@ const {
   deleteCardsMock: vi.fn(),
   deleteCardsInDeckMock: vi.fn(),
   moveCardsMock: vi.fn(),
+  reorderCardMock: vi.fn(),
   setCardImageMock: vi.fn(),
   deleteCardImageMock: vi.fn()
 }))
@@ -29,6 +31,7 @@ vi.mock('@/api/cards', () => ({
     mutateAsync: deleteCardsInDeckMock
   }),
   useMoveCardsToDeckMutation: () => ({ mutate: moveCardsMock, mutateAsync: moveCardsMock }),
+  useMoveCardMutation: () => ({ mutate: reorderCardMock, mutateAsync: reorderCardMock }),
   useSetCardImageMutation: () => ({ mutate: setCardImageMock, mutateAsync: setCardImageMock }),
   useDeleteCardImageMutation: () => ({
     mutate: deleteCardImageMock,
@@ -57,6 +60,8 @@ beforeEach(() => {
   deleteCardsInDeckMock.mockResolvedValue(0)
   moveCardsMock.mockReset()
   moveCardsMock.mockResolvedValue(undefined)
+  reorderCardMock.mockReset()
+  reorderCardMock.mockResolvedValue(9999)
   setCardImageMock.mockReset()
   setCardImageMock.mockResolvedValue(undefined)
   deleteCardImageMock.mockReset()
@@ -160,6 +165,22 @@ describe('useCardMutations', () => {
       const m = makeMutations(10)
       await m.deleteCardImage(42, 'back')
       expect(deleteCardImageMock).toHaveBeenCalledWith({ card_id: 42, deck_id: 10, side: 'back' })
+    })
+  })
+
+  describe('reorderCard', () => {
+    test('forwards all params to useMoveCardMutation.mutateAsync', async () => {
+      const m = makeMutations(10)
+      const params = { card_id: 7, deck_id: 10, anchor_id: 3, side: 'after' }
+      await m.reorderCard(params)
+      expect(reorderCardMock).toHaveBeenCalledWith(params)
+    })
+
+    test('returns the resolved value from the mutation', async () => {
+      reorderCardMock.mockResolvedValueOnce(1234)
+      const m = makeMutations(10)
+      const result = await m.reorderCard({ card_id: 7, deck_id: 10, anchor_id: 3, side: 'after' })
+      expect(result).toBe(1234)
     })
   })
 })

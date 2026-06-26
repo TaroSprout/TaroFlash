@@ -20,3 +20,24 @@ export function expandListItemIn(el: HTMLElement) {
     clearProps: 'all'
   })
 }
+
+const LIFT_SCALE = 1.03
+
+/**
+ * Pickup pop for a reorder drag: a quick scale up with a little overshoot that
+ * settles to a held, slightly-lifted scale (the row reads as "picked up" for
+ * the whole drag). Pair with `dropListItem` on release. Animates `scale` only —
+ * no clearProps — so it composes with the row's reactive drag transform
+ * (translate) and the held scale persists until the drop.
+ */
+export function liftListItem(el: HTMLElement) {
+  gsap
+    .timeline()
+    .to(el, { scale: LIFT_SCALE * 1.02, duration: 0.09, ease: 'power2.out' })
+    .to(el, { scale: LIFT_SCALE, duration: 0.12, ease: 'back.out(3)' })
+}
+
+/** Settle a lifted row back to rest on drop, then clear the inline scale. */
+export function dropListItem(el: HTMLElement) {
+  gsap.to(el, { scale: 1, duration: 0.15, ease: 'power2.out', clearProps: 'scale' })
+}
