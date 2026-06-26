@@ -69,6 +69,7 @@ vi.mock('@/api/cards', () => {
     useDeleteCardImageMutation: passthrough,
     useUpsertCardsMutation: passthrough,
     useMoveCardsToDeckMutation: passthrough,
+    useMoveCardMutation: passthrough,
     useMemberCardCountQuery: () => ({ data: { value: 0 }, refetch: vi.fn(), refresh: vi.fn() })
   }
 })

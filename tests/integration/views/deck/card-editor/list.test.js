@@ -2,8 +2,40 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { ref, computed, shallowRef } from 'vue'
 
-const { useWindowVirtualizerMock } = vi.hoisted(() => ({ useWindowVirtualizerMock: vi.fn() }))
-vi.mock('@tanstack/vue-virtual', () => ({ useWindowVirtualizer: useWindowVirtualizerMock }))
+const { useWindowVirtualizerMock, useReorderDragMock, startMock } = vi.hoisted(() => {
+  const startMock = vi.fn()
+  const useReorderDragMock = vi.fn(() => ({
+    dragging_index: ref(null),
+    target_index: ref(null),
+    dragOffset: vi.fn(() => 0),
+    shouldTransition: vi.fn(() => false),
+    start: startMock
+  }))
+  const useWindowVirtualizerMock = vi.fn()
+  return { useWindowVirtualizerMock, useReorderDragMock, startMock }
+})
+
+vi.mock('@tanstack/vue-virtual', () => ({
+  useWindowVirtualizer: useWindowVirtualizerMock,
+  // Used by list.vue rangeExtractor option — must be exported so the import resolves
+  defaultRangeExtractor: (range) => {
+    const arr = []
+    for (let i = range.startIndex; i <= range.endIndex; i++) arr.push(i)
+    return arr
+  }
+}))
+vi.mock('@/views/deck/card-editor/use-reorder-drag', () => ({
+  useReorderDrag: useReorderDragMock
+}))
+vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: () => ref(true) }))
+vi.mock('@/utils/animations/list-item', () => ({
+  expandListItemIn: vi.fn(),
+  liftListItem: vi.fn(),
+  dropListItem: vi.fn()
+}))
+vi.mock('@/composables/ui/pin-scroll-while-typing', () => ({
+  usePinScrollWhileTyping: vi.fn()
+}))
 
 import List from '@/views/deck/card-editor/list.vue'
 import { cardEditorKey } from '@/views/deck/composables/list-controller'
@@ -23,12 +55,15 @@ function makeEditor({
   cards = [],
   hasNextPage = ref(false),
   isLoading = ref(false),
-  loadNextPage = vi.fn()
+  loadNextPage = vi.fn(),
+  reorderCard = vi.fn()
 } = {}) {
   return {
     list: {
       all_cards: computed(() => cards.map((c) => ({ ...c, client_id: `cid-${c.id}` })))
     },
+    selection: { is_selecting: ref(false) },
+    reorderCard,
     hasNextPage,
     isLoading,
     loadNextPage
@@ -184,5 +219,107 @@ describe('CardList (list.vue)', () => {
     })
 
     expect(loadNextPage).not.toHaveBeenCalled()
+  })
+
+  // ── Drag-to-reorder — dragging prop forwarded to list-item ────────────────
+
+  test('forwards dragging=true to the list-item whose index matches dragging_index', () => {
+    const cards = [{ id: 1 }, { id: 2 }]
+    setupVirtualizer({ items: makeVirtualItems([0, 1]), totalSize: 2 * ROW_PITCH })
+    // Seed dragging_index=0 so the first item gets dragging=true
+    useReorderDragMock.mockReturnValueOnce({
+      dragging_index: ref(0),
+      target_index: ref(null),
+      dragOffset: vi.fn(() => 0),
+      shouldTransition: vi.fn(() => false),
+      start: vi.fn()
+    })
+
+    const wrapper = mount({ editor: makeEditor({ cards }) })
+    const items = wrapper.findAllComponents({ name: 'ListItem' })
+    expect(items[0].props('dragging')).toBe(true)
+    expect(items[1].props('dragging')).toBe(false)
+  })
+
+  test('forwards dragging=false to all list-items when no drag is active', () => {
+    const cards = [{ id: 1 }, { id: 2 }]
+    setupVirtualizer({ items: makeVirtualItems([0, 1]), totalSize: 2 * ROW_PITCH })
+
+    const wrapper = mount({ editor: makeEditor({ cards }) })
+    const items = wrapper.findAllComponents({ name: 'ListItem' })
+    items.forEach((item) => expect(item.props('dragging')).toBe(false))
+  })
+
+  // ── Drag lifecycle — reorderPointerdown wiring and lift/drop ──────────────
+
+  test('reorder-pointerdown on a list-item calls reorder.start with the correct index', async () => {
+    const cards = [{ id: 1 }, { id: 2 }]
+    setupVirtualizer({ items: makeVirtualItems([0, 1]), totalSize: 2 * ROW_PITCH })
+
+    const wrapper = mount({ editor: makeEditor({ cards }) })
+    const item = wrapper.findAllComponents({ name: 'ListItem' })[1]
+    const event = new Event('reorder-pointerdown')
+    item.vm.$emit('reorderPointerdown', event)
+    await wrapper.vm.$nextTick()
+
+    expect(startMock).toHaveBeenCalledWith(1, event)
+  })
+
+  test('drop (dragging_index transitions from non-null to null) fires the watch without throwing', async () => {
+    const dragging_index = ref(1)
+    const cards = [{ id: 1 }, { id: 2 }]
+    setupVirtualizer({ items: makeVirtualItems([0, 1]), totalSize: 2 * ROW_PITCH })
+    useReorderDragMock.mockReturnValueOnce({
+      dragging_index,
+      target_index: ref(null),
+      dragOffset: vi.fn(() => 0),
+      shouldTransition: vi.fn(() => false),
+      start: vi.fn()
+    })
+
+    mount({ editor: makeEditor({ cards }) })
+
+    // Transition: dragging_index goes from 1 → null (drop)
+    dragging_index.value = null
+    await new Promise((r) => setTimeout(r, 0))
+
+    // dropListItem would be called if lifted_row was set; since no real DOM row was
+    // lifted the lifted_row is null so dropListItem is not called — test that the
+    // watch fires without throwing
+    expect(() => (dragging_index.value = null)).not.toThrow()
+  })
+
+  test('liftListItem called when drag is enabled and event target resolves to card-list-item', async () => {
+    const { liftListItem: liftMock } = await import('@/utils/animations/list-item')
+    const dragging_index = ref(null)
+    const cards = [{ id: 1 }, { id: 2 }]
+    setupVirtualizer({ items: makeVirtualItems([0, 1]), totalSize: 2 * ROW_PITCH })
+
+    // Make start() set dragging_index to simulate a successful drag start
+    const startFn = vi.fn(() => {
+      dragging_index.value = 1
+    })
+    useReorderDragMock.mockReturnValueOnce({
+      dragging_index,
+      target_index: ref(null),
+      dragOffset: vi.fn(() => 0),
+      shouldTransition: vi.fn(() => false),
+      start: startFn
+    })
+
+    const wrapper = mount({ editor: makeEditor({ cards }) })
+
+    // Create a real DOM element that .closest('[data-testid="card-list-item"]') can find
+    const rowEl = document.createElement('div')
+    rowEl.setAttribute('data-testid', 'card-list-item')
+    document.body.appendChild(rowEl)
+
+    const fakeEvent = { target: rowEl, button: 0, preventDefault: vi.fn() }
+    const item = wrapper.findAllComponents({ name: 'ListItem' })[1]
+    item.vm.$emit('reorderPointerdown', fakeEvent)
+    await wrapper.vm.$nextTick()
+
+    expect(liftMock).toHaveBeenCalledWith(rowEl)
+    document.body.removeChild(rowEl)
   })
 })

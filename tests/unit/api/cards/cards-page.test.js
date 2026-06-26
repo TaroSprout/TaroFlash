@@ -2,9 +2,10 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 
 const { fromMock, rangeMock, orderMock, eqMock, selectMock } = vi.hoisted(() => {
   const rangeMock = vi.fn()
-  const orderMock = vi.fn(() => ({ range: rangeMock }))
+  // order() returns { order, range } so two sequential .order() calls chain correctly
+  const orderMock = vi.fn(() => ({ order: orderMock, range: rangeMock }))
   const eqMock = vi.fn(() => ({ order: orderMock }))
-  const selectMock = vi.fn(() => ({ eq: eqMock, order: orderMock }))
+  const selectMock = vi.fn(() => ({ eq: eqMock }))
   const fromMock = vi.fn(() => ({ select: selectMock }))
   return { fromMock, rangeMock, orderMock, eqMock, selectMock }
 })
@@ -33,6 +34,15 @@ describe('fetchCardsPageByDeckId', () => {
     expect(selectMock).toHaveBeenCalledWith('*, review:reviews(*)')
     expect(eqMock).toHaveBeenCalledWith('deck_id', 10)
     expect(orderMock).toHaveBeenCalledWith('rank', { ascending: true })
+  })
+
+  // [obligation] both .order() calls in sequence — rank primary, id tiebreak
+  test('applies id as secondary sort key after rank so duplicate ranks paginate deterministically', async () => {
+    rangeMock.mockResolvedValueOnce({ data: [], error: null })
+    await fetchCardsPageByDeckId({ deck_id: 10, offset: 0, limit: 50 })
+    const calls = orderMock.mock.calls
+    expect(calls[0]).toEqual(['rank', { ascending: true }])
+    expect(calls[1]).toEqual(['id', { ascending: true }])
   })
 
   test('translates offset+limit into a Postgrest inclusive range', async () => {
