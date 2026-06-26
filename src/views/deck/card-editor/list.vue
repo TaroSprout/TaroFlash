@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import ListItem from './list-item.vue'
-import { inject, useTemplateRef, computed, ref, watchEffect, onMounted, onBeforeUnmount } from 'vue'
+import {
+  inject,
+  useTemplateRef,
+  computed,
+  ref,
+  watch,
+  watchEffect,
+  onMounted,
+  onBeforeUnmount
+} from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useWindowVirtualizer, defaultRangeExtractor } from '@tanstack/vue-virtual'
 import { cardEditorKey } from '@/views/deck/composables'
 import { usePinScrollWhileTyping } from '@/composables/ui/pin-scroll-while-typing'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { useReorderDrag } from './use-reorder-drag'
+import { liftListItem, dropListItem } from '@/utils/animations/list-item'
 
 const { t } = useI18n()
 
@@ -28,6 +38,7 @@ const reorder = useReorderDrag({
   pitch: ROW_PITCH,
   count: () => all_cards.value.length,
   enabled: () => is_above_md.value && !selection.is_selecting.value,
+  topInset: () => sticky_toolbar?.getBoundingClientRect().bottom ?? 0,
   onReorder: reorderCard
 })
 
@@ -60,10 +71,27 @@ function measureScrollMargin() {
   scroll_margin.value = container.getBoundingClientRect().top + window.scrollY
 }
 
+// Start a drag and, when it actually begins (gated to md+ / not selecting),
+// lift the grabbed row. The element is held so the matching drop can settle it
+// back — the drop fires from a window pointerup, not a DOM event on the row.
+function onReorderStart(index: number, event: PointerEvent) {
+  reorder.start(index, event)
+  if (reorder.dragging_index.value === null) return
+
+  lifted_row = (event.target as HTMLElement).closest<HTMLElement>('[data-testid="card-list-item"]')
+  if (lifted_row) liftListItem(lifted_row)
+}
+
 let resize_observer: ResizeObserver | undefined
+// The sticky toolbar (md+) covers the top of the list; its viewport-space
+// bottom is the inset where drag auto-scroll-up should start.
+let sticky_toolbar: HTMLElement | null = null
+// The row lifted on pickup, held so the drop can settle it back to rest.
+let lifted_row: HTMLElement | null = null
 
 onMounted(() => {
   measureScrollMargin()
+  sticky_toolbar = document.querySelector('[data-testid="deck-view__toolbar"]')
   resize_observer = new ResizeObserver(measureScrollMargin)
   resize_observer.observe(document.body)
 })
@@ -82,6 +110,17 @@ watchEffect(() => {
     loadNextPage()
   }
 })
+
+// Settle the lifted row back to rest the moment the drag ends (engine clears
+// dragging_index on the window pointerup).
+watch(
+  () => reorder.dragging_index.value,
+  (current, previous) => {
+    if (current !== null || previous === null || !lifted_row) return
+    dropListItem(lifted_row)
+    lifted_row = null
+  }
+)
 </script>
 
 <template>
@@ -120,7 +159,8 @@ watchEffect(() => {
           <list-item
             :index="vrow.index"
             :card="all_cards[vrow.index]"
-            @reorder-pointerdown="reorder.start(vrow.index, $event)"
+            :dragging="vrow.index === reorder.dragging_index.value"
+            @reorder-pointerdown="onReorderStart(vrow.index, $event)"
           />
         </div>
       </div>

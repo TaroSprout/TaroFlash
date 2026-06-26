@@ -7,13 +7,15 @@ import { cardEditorKey, type CardWithClientId } from '@/views/deck/composables'
 import { inject, computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ListItemCard from './list-item-card.vue'
+import { TYPE_SFX } from '@/sfx/config'
 
 type ListItemProps = {
   index: number
   card: CardWithClientId
+  dragging?: boolean
 }
 
-const { card, index } = defineProps<ListItemProps>()
+const { card, index, dragging = false } = defineProps<ListItemProps>()
 
 const emit = defineEmits<{ reorderPointerdown: [event: PointerEvent] }>()
 
@@ -55,7 +57,8 @@ function onClick(e: MouseEvent) {
   <div
     data-testid="card-list-item"
     :data-id="card.id"
-    class="group/listitem relative grid w-full grid-cols-1 sm:grid-cols-[1fr_auto_1fr] sm:gap-x-6 place-items-center rounded-6 bg-transparent p-0 sm:p-6 transition-colors duration-100 ease-in-out hover:not-focus-within:bg-brown-200 dark:hover:not-focus-within:bg-stone-900"
+    :data-dragging="dragging"
+    class="group/listitem relative grid w-full grid-cols-1 sm:grid-cols-[1fr_auto_1fr] sm:gap-x-6 place-items-center rounded-6 bg-transparent p-0 sm:p-6 transition-[color,background-color,box-shadow] duration-150 ease-in-out hover:not-focus-within:bg-brown-200 dark:hover:not-focus-within:bg-stone-900 data-[dragging=true]:not-focus-within:bg-brown-200 dark:data-[dragging=true]:not-focus-within:bg-stone-900 data-[dragging=true]:shadow-sm"
     :class="{
       'cursor-pointer': is_selecting,
       'focus-within:bg-brown-300 hover:focus-within:bg-brown-300 dark:focus-within:bg-blue-650 dark:hover:focus-within:bg-blue-650':
@@ -66,15 +69,22 @@ function onClick(e: MouseEvent) {
     <button
       data-testid="card-list-item__reorder"
       class="hidden h-12 w-12 cursor-grab touch-none items-center justify-center rounded-full bg-brown-300 text-lg text-brown-700 sm:flex group-focus-within/listitem:bg-brown-100 row-span-2 dark:bg-stone-700 dark:text-brown-100 dark:group-focus-within/listitem:bg-stone-900"
+      v-sfx="dragging ? {} : { hover: TYPE_SFX }"
       @click.stop
       @pointerdown="emit('reorderPointerdown', $event)"
     >
       <ui-icon
         src="reorder"
         class="hidden"
-        :class="{ 'group-hover/listitem:block': !is_selecting }"
+        :class="{
+          'group-hover/listitem:block group-data-[dragging=true]/listitem:block': !is_selecting
+        }"
       />
-      <span :class="{ 'group-hover/listitem:hidden': !is_selecting }">
+      <span
+        :class="{
+          'group-hover/listitem:hidden group-data-[dragging=true]/listitem:hidden': !is_selecting
+        }"
+      >
         {{ index + 1 }}
       </span>
     </button>
@@ -83,7 +93,7 @@ function onClick(e: MouseEvent) {
 
     <item-options
       v-if="!is_selecting"
-      class="hidden sm:grid opacity-0 pointer-events-none transition-opacity duration-100 ease-in-out group-hover/listitem:opacity-100 group-hover/listitem:pointer-events-auto group-focus-within/listitem:opacity-100 group-focus-within/listitem:pointer-events-auto row-span-2"
+      class="hidden sm:grid opacity-0 pointer-events-none transition-opacity duration-100 ease-in-out group-hover/listitem:opacity-100 group-hover/listitem:pointer-events-auto group-data-[dragging=true]/listitem:opacity-0! group-data-[dragging=true]/listitem:pointer-events-none! group-focus-within/listitem:opacity-100 group-focus-within/listitem:pointer-events-auto row-span-2"
       @move="onMoveCards(card.id!)"
       @delete="onDeleteCards(card.id!)"
     />
@@ -97,7 +107,7 @@ function onClick(e: MouseEvent) {
       data-theme="brown-100"
       data-theme-dark="grey-900"
       size="sm"
-      class="absolute! z-1 top-0 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-100 ease-in-out group-hover/listitem:opacity-100 group-hover/listitem:pointer-events-auto group-focus-within/listitem:opacity-100 group-focus-within/listitem:pointer-events-auto *:[.btn-icon]:text-brown-500"
+      class="absolute! z-1 top-0 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-100 ease-in-out group-hover/listitem:opacity-100 group-hover/listitem:pointer-events-auto group-data-[dragging=true]/listitem:opacity-0! group-data-[dragging=true]/listitem:pointer-events-none! group-focus-within/listitem:opacity-100 group-focus-within/listitem:pointer-events-auto *:[.btn-icon]:text-brown-500"
       @click.stop="prependCard(card.id!)"
     >
       {{ t('deck-view.card-editor.list-item.add-above') }}
@@ -110,7 +120,7 @@ function onClick(e: MouseEvent) {
       data-theme="brown-100"
       data-theme-dark="grey-900"
       size="sm"
-      class="absolute! z-1 bottom-0 translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-100 ease-in-out group-hover/listitem:opacity-100 group-hover/listitem:pointer-events-auto group-focus-within/listitem:opacity-100 group-focus-within/listitem:pointer-events-auto *:[.btn-icon]:text-brown-500"
+      class="absolute! z-1 bottom-0 translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-100 ease-in-out group-hover/listitem:opacity-100 group-hover/listitem:pointer-events-auto group-data-[dragging=true]/listitem:opacity-0! group-data-[dragging=true]/listitem:pointer-events-none! group-focus-within/listitem:opacity-100 group-focus-within/listitem:pointer-events-auto *:[.btn-icon]:text-brown-500"
       @click.stop="appendCard(card.id!)"
     >
       {{ t('deck-view.card-editor.list-item.add-below') }}
