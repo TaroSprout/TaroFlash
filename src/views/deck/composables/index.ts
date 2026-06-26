@@ -4,6 +4,7 @@
 // selection, prompts, gates, image upload) import from `@/composables/card`.
 
 export { useCardListController, cardEditorKey, type CardListController } from './list-controller'
+export { useCardSearch, cardSearchKey, type CardSearch } from './card-search'
 export { useCardActions, type CardActions } from './actions'
 export { useBulkActions } from './bulk-actions'
 export {

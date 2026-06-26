@@ -2,6 +2,7 @@
 import toolbarBase from './toolbar-base.vue'
 import CardCount from './card-count.vue'
 import PageSettings from './page-settings.vue'
+import SearchBar from '@/views/deck/search-bar.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useI18n } from 'vue-i18n'
 import { inject } from 'vue'
@@ -15,16 +16,7 @@ const { newCard } = inject(cardEditorKey)!
 <template>
   <toolbar-base>
     <template #left>
-      <ui-button
-        data-testid="mode-view__search-button"
-        data-theme="brown-300"
-        data-theme-dark="stone-700"
-        size="sm"
-        icon-left="search"
-        icon-only
-      >
-        {{ t('deck-view.mode-view.search') }}
-      </ui-button>
+      <search-bar size="sm" data-theme="brown-300" data-theme-dark="stone-700" />
 
       <page-settings />
 
