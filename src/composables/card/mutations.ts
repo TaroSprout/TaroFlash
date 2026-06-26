@@ -4,11 +4,13 @@ import {
   useDeleteCardsMutation,
   useDeleteCardsInDeckMutation,
   useInsertCardAtMutation,
+  useMoveCardMutation,
   useMoveCardsToDeckMutation,
   useSaveCardMutation,
   useSetCardImageMutation,
   type InsertCardAtParams,
-  type MoveCardsToDeckVars
+  type MoveCardsToDeckVars,
+  type UseMoveCardMutationParams
 } from '@/api/cards'
 
 export type CardMutations = ReturnType<typeof useCardMutations>
@@ -32,6 +34,7 @@ export function useCardMutations(deck_id: MaybeRefOrGetter<number | undefined>) 
   const delete_mutation = useDeleteCardsMutation()
   const delete_in_deck_mutation = useDeleteCardsInDeckMutation()
   const move_mutation = useMoveCardsToDeckMutation()
+  const reorder_mutation = useMoveCardMutation()
   const set_image_mutation = useSetCardImageMutation()
   const delete_image_mutation = useDeleteCardImageMutation()
 
@@ -73,6 +76,11 @@ export function useCardMutations(deck_id: MaybeRefOrGetter<number | undefined>) 
     await move_mutation.mutateAsync(vars)
   }
 
+  /** Reposition one card within its deck, relative to an anchor card. */
+  function reorderCard(params: UseMoveCardMutationParams): Promise<number> {
+    return reorder_mutation.mutateAsync(params)
+  }
+
   /** Upload and attach an image to one face of a card. */
   function setCardImage(card_id: number, side: 'front' | 'back', file: File): Promise<unknown> {
     return set_image_mutation.mutateAsync({ card_id, deck_id: toValue(deck_id)!, file, side })
@@ -83,5 +91,13 @@ export function useCardMutations(deck_id: MaybeRefOrGetter<number | undefined>) 
     return delete_image_mutation.mutateAsync({ card_id, deck_id: toValue(deck_id)!, side })
   }
 
-  return { insertCard, saveCard, deleteCards, moveCards, setCardImage, deleteCardImage }
+  return {
+    insertCard,
+    saveCard,
+    deleteCards,
+    moveCards,
+    reorderCard,
+    setCardImage,
+    deleteCardImage
+  }
 }
