@@ -163,7 +163,7 @@ function onClick(e: MouseEvent) {
           !loading && !disabled && variant === 'ghost'
       }"
     >
-      <ui-icon v-if="loading" src="loading-dots" class="h-12 w-12 text-brown-100" />
+      <ui-icon v-if="loading" src="loading-dots" class="h-12 w-12 text-(--btn-text-color)" />
     </div>
 
     <template v-if="tooltip_active" #tooltip>
