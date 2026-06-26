@@ -100,6 +100,7 @@ function onEditOption(option: DropdownOption) {
         :data-theme="is_editing ? 'yellow-500' : 'brown-300'"
         :data-theme-dark="is_editing ? 'yellow-700' : 'stone-700'"
         trigger-theme="brown-200"
+        menu-class="dark:outline-1 dark:outline-grey-900"
         full-width
         size="xl"
         @click="onToggleEditCards"

@@ -11,7 +11,12 @@ import { preloadDeckModes } from './modes'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import DeckMobileFooter from './mobile-footer/index.vue'
 import { useDeckQuery } from '@/api/decks'
-import { cardEditorKey, useCardListController } from '@/views/deck/composables'
+import {
+  cardEditorKey,
+  cardSearchKey,
+  useCardListController,
+  useCardSearch
+} from '@/views/deck/composables'
 import { deckViewShellKey, useDeckViewShell } from '@/views/deck/composables/view-shell'
 import { mobileCardEditorKey, useMobileCardEditor } from './mobile-editor/use-mobile-card-editor'
 import { useMatchMedia } from '@/composables/ui/media-query'
@@ -33,6 +38,9 @@ provide(deckViewShellKey, shell)
 
 const editor = useCardListController({ deck_id: id.value, shell })
 provide(cardEditorKey, editor)
+
+const search = useCardSearch(id.value, editor.list.all_cards)
+provide(cardSearchKey, search)
 
 const mobile_editor = useMobileCardEditor(editor)
 provide(mobileCardEditorKey, mobile_editor)
