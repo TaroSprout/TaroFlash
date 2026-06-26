@@ -17,6 +17,7 @@ export async function fetchCardsPageByDeckId({
     .select('*, review:reviews(*)')
     .eq('deck_id', deck_id)
     .order('rank', { ascending: true })
+    .order('id', { ascending: true })
     .range(offset, offset + limit - 1)
 
   if (error) {
