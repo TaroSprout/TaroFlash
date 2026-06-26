@@ -3,6 +3,7 @@ import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 
 import ModeView from '@/views/deck/mode-toolbar/mode-view.vue'
+import SearchBar from '@/views/deck/search-bar.vue'
 import { cardEditorKey } from '@/views/deck/composables/list-controller'
 
 const UiButtonStub = defineComponent({
@@ -47,6 +48,12 @@ describe('mode-toolbar/mode-view', () => {
   test('renders the add-card button', () => {
     const wrapper = mount()
     expect(wrapper.find('[data-testid="mode-view__add-card-button"]').exists()).toBe(true)
+  })
+
+  // SearchBar replaced the old static search icon button in this PR.
+  test('renders SearchBar in the toolbar left slot [obligation]', () => {
+    const wrapper = mount()
+    expect(wrapper.findComponent(SearchBar).exists()).toBe(true)
   })
 
   // The new-card orchestration (setMode → chime → addCardAtTop) lives in the
