@@ -235,6 +235,14 @@ export function useReorderDrag(opts: ReorderDragOptions) {
     autoScroll()
   }
 
+  // Once a drag is live, swallow touch-scroll so the page doesn't pan under the
+  // finger — the engine drives any needed scroll via `autoScroll`. Non-passive
+  // so `preventDefault` actually cancels the scroll. Only attached for the drag
+  // duration, so normal touch scrolling is untouched the rest of the time.
+  function preventTouchScroll(event: TouchEvent) {
+    event.preventDefault()
+  }
+
   function stopTracking() {
     if (raf) cancelAnimationFrame(raf)
     raf = 0
@@ -242,6 +250,7 @@ export function useReorderDrag(opts: ReorderDragOptions) {
     window.removeEventListener('pointermove', onMove)
     window.removeEventListener('pointerup', onEnd)
     window.removeEventListener('pointercancel', onEnd)
+    window.removeEventListener('touchmove', preventTouchScroll)
   }
 
   function reset() {

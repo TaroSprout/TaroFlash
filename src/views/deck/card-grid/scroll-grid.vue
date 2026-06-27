@@ -21,6 +21,10 @@ import { liftListItem, dropListItem } from '@/utils/animations/list-item'
 type VisibleItem = { index: number; card: CardWithClientId; x: number; y: number }
 
 const OVERSCAN = 2
+// Touch picks a card up on a press-and-hold (like iOS), so a plain swipe still
+// scrolls the page; a small finger move within the window aborts the hold.
+const HOLD_MS = 200
+const HOLD_TOLERANCE = 8
 
 const { t } = useI18n()
 
@@ -109,6 +113,13 @@ let sticky_toolbar: HTMLElement | null = null
 // drop fires from a window pointerup, not a DOM event on the card.
 let lifted_card: HTMLElement | null = null
 
+// Pending touch press-and-hold: the timer, where the finger landed, and the
+// card + event it would pick up if the hold completes without moving away.
+let hold_timer = 0
+let hold_origin = { x: 0, y: 0 }
+let hold_index = -1
+let hold_event: PointerEvent | null = null
+
 // Measure the container, not the grid itself: during a mode-swap the grid pane
 // is transformed (it scales + drops out of flow), which would corrupt its own
 // rect. The parent stays in flow, so its width and document offset stay true.
@@ -119,21 +130,71 @@ function measureLayout() {
   scroll_margin.value = container.getBoundingClientRect().top + window.scrollY
 }
 
-// The live `translate` for the card at `index`: its resting slot plus the
-// reorder engine's drag/gap-shift offset.
-function itemTransform(item: VisibleItem) {
-  const offset = reorder.dragOffset(item.index)
-  return `translate(${item.x + offset.x}px, ${item.y + offset.y}px)`
+// The drag/gap-shift offset (px) the reorder engine wants applied to the card at
+// `index`, on top of its resting slot position. Empty until a drag is live.
+function dragTransform(index: number) {
+  const offset = reorder.dragOffset(index)
+  return `translate(${offset.x}px, ${offset.y}px)`
 }
 
-// Start a drag and, when it actually begins (gated to rearrange mode), lift the
+// Idle iOS-style jiggle: vary phase and tempo per card off its index so the grid
+// shimmers organically instead of beating in unison.
+function jiggleStyle(index: number) {
+  return {
+    '--jiggle-delay': `${-(index % 11) * 53}ms`,
+    '--jiggle-duration': `${320 + (index % 5) * 22}ms`
+  }
+}
+
+// Begin a drag and, once it actually starts (gated to rearrange mode), lift the
 // grabbed card. The element is held so the matching drop can settle it back.
-function onItemPointerdown(index: number, event: PointerEvent) {
+function beginDrag(index: number, event: PointerEvent) {
   reorder.start(index, event)
   if (reorder.dragging_index.value === null) return
 
   lifted_card = (event.target as HTMLElement).closest<HTMLElement>('[data-testid="grid-item"]')
   if (lifted_card) liftListItem(lifted_card)
+}
+
+// Mouse picks up immediately; touch waits out a press-and-hold so a plain swipe
+// still scrolls the grid. The hold aborts the moment the finger drifts.
+function onItemPointerdown(index: number, event: PointerEvent) {
+  if (!is_rearranging.value || is_active.value) return
+
+  if (event.pointerType === 'mouse') {
+    beginDrag(index, event)
+    return
+  }
+
+  hold_index = index
+  hold_event = event
+  hold_origin = { x: event.clientX, y: event.clientY }
+  hold_timer = window.setTimeout(onHoldElapsed, HOLD_MS)
+  window.addEventListener('pointermove', onHoldMove)
+  window.addEventListener('pointerup', cancelHold)
+  window.addEventListener('pointercancel', cancelHold)
+}
+
+function onHoldMove(event: PointerEvent) {
+  const moved = Math.hypot(event.clientX - hold_origin.x, event.clientY - hold_origin.y)
+  if (moved > HOLD_TOLERANCE) cancelHold()
+}
+
+function onHoldElapsed() {
+  const index = hold_index
+  const event = hold_event
+  cancelHold()
+  if (event) beginDrag(index, event)
+}
+
+function cancelHold() {
+  if (hold_timer) clearTimeout(hold_timer)
+  hold_timer = 0
+  hold_event = null
+  hold_index = -1
+  window.removeEventListener('pointermove', onHoldMove)
+  window.removeEventListener('pointerup', cancelHold)
+  window.removeEventListener('pointercancel', cancelHold)
 }
 
 onMounted(() => {
@@ -143,7 +204,10 @@ onMounted(() => {
   resize_observer.observe(document.body)
 })
 
-onBeforeUnmount(() => resize_observer?.disconnect())
+onBeforeUnmount(() => {
+  resize_observer?.disconnect()
+  cancelHold()
+})
 
 observeSentinel(sentinel)
 
@@ -189,25 +253,34 @@ watch(
         v-for="item in visible_items"
         :key="item.card.client_id"
         data-testid="card-grid__item"
-        class="absolute top-0 left-0 will-change-transform"
+        class="absolute top-0 left-0"
         :class="{
-          'touch-none': is_rearranging,
-          'z-20 cursor-grabbing': item.index === reorder.dragging_index.value,
-          'cursor-grab': is_rearranging && item.index !== reorder.dragging_index.value,
-          'transition-transform duration-150 ease-out': reorder.shouldTransition(item.index)
+          'z-30': item.index === reorder.dragging_index.value,
+          'cursor-grabbing': item.index === reorder.dragging_index.value,
+          'cursor-grab': is_rearranging && item.index !== reorder.dragging_index.value
         }"
-        :style="{ width: `${cell_width}px`, transform: itemTransform(item) }"
+        :style="{ width: `${cell_width}px`, transform: `translate(${item.x}px, ${item.y}px)` }"
         @pointerdown="onItemPointerdown(item.index, $event)"
       >
-        <grid-item
-          :card="item.card"
-          :side="side"
-          :scale="card_scale"
-          :card_attributes="card_attributes"
-          :rearranging="is_rearranging"
-          :dragging="item.index === reorder.dragging_index.value"
-          :selected="item.card.id !== undefined ? isCardSelected(item.card.id) : false"
-        />
+        <div
+          data-testid="card-grid__item-inner"
+          class="will-change-transform"
+          :class="{
+            'transition-transform duration-150 ease-out': reorder.shouldTransition(item.index)
+          }"
+          :style="{ transform: dragTransform(item.index) }"
+        >
+          <grid-item
+            :card="item.card"
+            :side="side"
+            :scale="card_scale"
+            :card_attributes="card_attributes"
+            :rearranging="is_rearranging"
+            :dragging="item.index === reorder.dragging_index.value"
+            :style="jiggleStyle(item.index)"
+            :selected="item.card.id !== undefined ? isCardSelected(item.card.id) : false"
+          />
+        </div>
       </div>
     </div>
 

@@ -41,7 +41,7 @@ const edit_options = computed<DropdownOption[]>(() => [
       ? t('deck-view.actions.stop-rearranging')
       : t('deck-view.actions.rearrange-cards'),
     value: 'rearrange',
-    icon: 'reorder'
+    icon: 'rearrange'
   },
   {
     label: t('deck-view.actions.edit-card-appearance'),

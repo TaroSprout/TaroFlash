@@ -91,8 +91,11 @@ function onCardMouseDown(e: MouseEvent) {
   <div
     data-testid="grid-item"
     class="grid-item group relative aspect-card w-full touch-manipulation"
-    :class="{ 'card-outline pointer-fine:hover:scale-101': is_selecting }"
-    v-sfx="{ hover: is_selecting ? TYPE_SFX : undefined }"
+    :class="{
+      'card-outline pointer-fine:hover:scale-101': is_selecting,
+      jiggle: rearranging && !dragging
+    }"
+    v-sfx="{ hover: is_selecting || rearranging ? TYPE_SFX : undefined }"
   >
     <card
       v-bind="card"
@@ -146,5 +149,31 @@ function onCardMouseDown(e: MouseEvent) {
 
 :global(.dark) .grid-item.card-outline {
   --outline-color: var(--color-purple-700);
+}
+
+/* iOS-style "edit mode" jiggle. Phase + tempo are set per card via the
+   --jiggle-* vars so the grid doesn't beat in unison. The dragged card opts out
+   (its lift owns the transform). */
+@keyframes grid-item-jiggle {
+  0% {
+    transform: rotate(-1.4deg);
+  }
+  50% {
+    transform: rotate(1.4deg);
+  }
+  100% {
+    transform: rotate(-1.4deg);
+  }
+}
+
+.grid-item.jiggle {
+  animation: grid-item-jiggle var(--jiggle-duration, 0.34s) ease-in-out infinite;
+  animation-delay: var(--jiggle-delay, 0s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grid-item.jiggle {
+    animation: none;
+  }
 }
 </style>
