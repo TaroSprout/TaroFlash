@@ -542,6 +542,8 @@
   "deck-view.actions.edit-cards-short": "Edit",
   "deck-view.actions.stop-editing": "Stop Editing",
   "deck-view.actions.select-cards": "Select Cards",
+  "deck-view.actions.rearrange-cards": "Rearrange Cards",
+  "deck-view.actions.stop-rearranging": "Stop Rearranging",
   "deck-view.actions.edit-card-appearance": "Edit Card Appearance",
   "deck-view.add-card": "Add Card",
   "deck-view.no-cards": "No Cards",

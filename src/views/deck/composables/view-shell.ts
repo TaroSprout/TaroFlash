@@ -26,6 +26,10 @@ export function useDeckViewShell() {
   const mode = ref<CardEditorMode>('view')
   const grid_size = useLocalRef<CardGridSize>('deck-grid-size', 'md')
 
+  // Drag-to-reorder toggle for the base grid. Lives here (not in the card
+  // controller) because it's a view-pane interaction state, like `grid_size`.
+  const is_rearranging = ref(false)
+
   // Resolvers waiting on the in-flight mode transition; drained by
   // `notifyModeSettled` when the mode-stack reports an entering pane settled.
   const settle_waiters = new Set<() => void>()
@@ -44,6 +48,9 @@ export function useDeckViewShell() {
     if (mode.value === new_mode) return Promise.resolve()
 
     emitSfx('select')
+
+    // Reordering only applies to the base grid; leaving the view drops it.
+    if (new_mode !== 'view') is_rearranging.value = false
 
     const settled = new Promise<void>((resolve) => settle_waiters.add(resolve))
     mode.value = new_mode
@@ -75,14 +82,23 @@ export function useDeckViewShell() {
     grid_size.value = size
   }
 
+  /** Flip drag-to-reorder on the base grid; turning it on returns to the view. */
+  function toggleRearrange() {
+    is_rearranging.value = !is_rearranging.value
+    emitSfx(is_rearranging.value ? 'generic_button_15' : 'slide_left')
+    if (is_rearranging.value) mode.value = 'view'
+  }
+
   return {
     mode,
     is_view,
     grid_size,
+    is_rearranging,
     setMode,
     notifyModeSettled,
     toggleMode,
     exitMode,
-    setGridSize
+    setGridSize,
+    toggleRearrange
   }
 }

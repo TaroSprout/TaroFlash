@@ -36,7 +36,8 @@ function onMenuSelect(option: DropdownOption) {
 const {
   card,
   side,
-  scale = 1
+  scale = 1,
+  rearranging = false
 } = defineProps<{
   card: CardWithClientId
   side: 'front' | 'back'
@@ -44,11 +45,17 @@ const {
   card_attributes?: DeckCardAttributes
   // render an xl card uniformly scaled by `scale` into a fixed grid cell
   scale?: number
+  // the grid is in drag-to-reorder mode: the card is a drag handle, not tappable
+  rearranging?: boolean
+  // this card is the one currently being dragged — pop it with a lift shadow
+  dragging?: boolean
 }>()
 
 const active_side = ref(side)
 
 function onCardClick() {
+  if (rearranging) return
+
   if (is_selecting.value) {
     onSelectCard(card.id!)
     return
@@ -89,7 +96,11 @@ function onCardMouseDown(e: MouseEvent) {
   >
     <card
       v-bind="card"
-      class="cursor-pointer grid-item__card--scaled"
+      class="grid-item__card--scaled"
+      :class="[
+        rearranging ? 'cursor-grab pointer-events-none select-none' : 'cursor-pointer',
+        dragging && 'drop-shadow-lg'
+      ]"
       :style="{ '--card-scale': scale }"
       size="xl"
       :side="active_side"
@@ -103,7 +114,7 @@ function onCardMouseDown(e: MouseEvent) {
     </div>
 
     <ui-dropdown-button
-      v-if="!is_selecting"
+      v-if="!is_selecting && !rearranging"
       trigger-only
       trigger-icon="more"
       trigger-theme="brown-300"

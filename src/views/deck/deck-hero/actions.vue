@@ -37,6 +37,13 @@ const edit_label = computed(() => {
 const edit_options = computed<DropdownOption[]>(() => [
   { label: t('deck-view.actions.select-cards'), value: 'select', icon: 'data-check' },
   {
+    label: shell?.is_rearranging.value
+      ? t('deck-view.actions.stop-rearranging')
+      : t('deck-view.actions.rearrange-cards'),
+    value: 'rearrange',
+    icon: 'reorder'
+  },
+  {
     label: t('deck-view.actions.edit-card-appearance'),
     value: 'appearance',
     icon: 'align-horizontal-frame'
@@ -60,6 +67,7 @@ function onToggleEditCards() {
 
 function onEditOption(option: DropdownOption) {
   if (option.value === 'select') editor?.actions.onSelectCard()
+  else if (option.value === 'rearrange') shell?.toggleRearrange()
   else if (option.value === 'appearance') deck_settings.open(deck, { tab: 'design', side: 'front' })
 }
 </script>

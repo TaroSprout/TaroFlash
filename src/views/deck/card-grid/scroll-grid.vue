@@ -14,7 +14,9 @@ import {
   watch
 } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useWindowVirtualizer } from '@tanstack/vue-virtual'
+import { useWindowVirtualizer, defaultRangeExtractor } from '@tanstack/vue-virtual'
+import { useReorderDrag } from '@/views/deck/card-editor/use-reorder-drag'
+import { liftListItem, dropListItem } from '@/utils/animations/list-item'
 
 type VisibleItem = { index: number; card: CardWithClientId; x: number; y: number }
 
@@ -22,9 +24,9 @@ const OVERSCAN = 2
 
 const { t } = useI18n()
 
-const { selection, card_attributes, hasNextPage, isLoading, observeSentinel } =
+const { selection, card_attributes, reorderCard, hasNextPage, isLoading, observeSentinel } =
   inject(cardEditorKey)!
-const { grid_size, is_view } = inject(deckViewShellKey)!
+const { grid_size, is_view, is_rearranging } = inject(deckViewShellKey)!
 const { is_active, displayed_cards, no_results } = inject(cardSearchKey)!
 const { isCardSelected } = selection
 
@@ -34,24 +36,55 @@ const sentinel = useTemplateRef<HTMLElement>('sentinel')
 const container_width = ref(0)
 const scroll_margin = ref(0)
 
-const { card_scale, cell_width, columns, row_count, row_pitch, itemPosition } = useCardGrid(
+const { card_scale, cell_width, gap, columns, row_count, row_pitch, itemPosition } = useCardGrid(
   grid_size,
   container_width,
   () => displayed_cards.value.length
 )
+
+// Reordering shares the editor list's engine — same sounds, same gap-shift feel.
+// Only the geometry differs: a card's ideal slot is read in 2-D (column + row),
+// and a gap-shift is the px gap to the neighbouring cell, so a card wrapping a
+// row edge animates to the next row for free.
+const reorder = useReorderDrag({
+  count: () => displayed_cards.value.length,
+  enabled: () => is_rearranging.value && !is_active.value,
+  topInset: () => sticky_toolbar?.getBoundingClientRect().bottom ?? 0,
+  onReorder: reorderCard,
+  geometry: {
+    idealIndex: (from, dx, dy) => {
+      const cols = columns.value
+      const col = (from % cols) + dx / (cell_width.value + gap.value)
+      const row = Math.floor(from / cols) + dy / row_pitch.value
+      return row * cols + Math.min(cols - 1, Math.max(0, col))
+    },
+    position: itemPosition
+  }
+})
 
 const virtualizer = useWindowVirtualizer(
   computed(() => ({
     count: row_count.value,
     estimateSize: () => row_pitch.value,
     overscan: OVERSCAN,
-    scrollMargin: scroll_margin.value
+    scrollMargin: scroll_margin.value,
+    // Keep the dragged card's row rendered even after auto-scroll carries it out
+    // of the overscan window — otherwise the card unmounts mid-drag.
+    rangeExtractor: (range) => {
+      const rows = defaultRangeExtractor(range)
+      const dragging = reorder.dragging_index.value
+      if (dragging === null) return rows
+
+      const row = Math.floor(dragging / columns.value)
+      if (rows.includes(row)) return rows
+      return [...rows, row].sort((a, b) => a - b)
+    }
   }))
 )
 
 // Flatten the virtualizer's visible rows into individual positioned cards, so
-// each card is laid out (and later dragged) on its own. The per-card transform
-// is the seam a drag-to-reorder layer adds its live offset on top of.
+// each card is laid out (and dragged) on its own. The per-card transform is the
+// seam the reorder engine's live offset is added on top of.
 const visible_items = computed(() => {
   const cols = columns.value
   const total = displayed_cards.value.length
@@ -69,6 +102,12 @@ const visible_items = computed(() => {
 })
 
 let resize_observer: ResizeObserver | undefined
+// The sticky toolbar (md+) covers the top of the grid; its viewport-space
+// bottom is the inset where drag auto-scroll-up should start.
+let sticky_toolbar: HTMLElement | null = null
+// The card lifted on pickup, held so the matching drop can settle it back — the
+// drop fires from a window pointerup, not a DOM event on the card.
+let lifted_card: HTMLElement | null = null
 
 // Measure the container, not the grid itself: during a mode-swap the grid pane
 // is transformed (it scales + drops out of flow), which would corrupt its own
@@ -80,8 +119,26 @@ function measureLayout() {
   scroll_margin.value = container.getBoundingClientRect().top + window.scrollY
 }
 
+// The live `translate` for the card at `index`: its resting slot plus the
+// reorder engine's drag/gap-shift offset.
+function itemTransform(item: VisibleItem) {
+  const offset = reorder.dragOffset(item.index)
+  return `translate(${item.x + offset.x}px, ${item.y + offset.y}px)`
+}
+
+// Start a drag and, when it actually begins (gated to rearrange mode), lift the
+// grabbed card. The element is held so the matching drop can settle it back.
+function onItemPointerdown(index: number, event: PointerEvent) {
+  reorder.start(index, event)
+  if (reorder.dragging_index.value === null) return
+
+  lifted_card = (event.target as HTMLElement).closest<HTMLElement>('[data-testid="grid-item"]')
+  if (lifted_card) liftListItem(lifted_card)
+}
+
 onMounted(() => {
   measureLayout()
+  sticky_toolbar = document.querySelector('[data-testid="deck-view__toolbar"]')
   resize_observer = new ResizeObserver(measureLayout)
   resize_observer.observe(document.body)
 })
@@ -99,6 +156,17 @@ watch(is_view, (showing) => {
 // Column count and row pitch shift with viewport width and the size toggle;
 // remeasure so total size and row offsets stay exact.
 watch([columns, row_pitch], () => virtualizer.value.measure())
+
+// Settle the lifted card back to rest the moment the drag ends (engine clears
+// dragging_index on the window pointerup).
+watch(
+  () => reorder.dragging_index.value,
+  (current, previous) => {
+    if (current !== null || previous === null || !lifted_card) return
+    dropListItem(lifted_card)
+    lifted_card = null
+  }
+)
 </script>
 
 <template>
@@ -121,14 +189,23 @@ watch([columns, row_pitch], () => virtualizer.value.measure())
         v-for="item in visible_items"
         :key="item.card.client_id"
         data-testid="card-grid__item"
-        class="absolute top-0 left-0"
-        :style="{ width: `${cell_width}px`, transform: `translate(${item.x}px, ${item.y}px)` }"
+        class="absolute top-0 left-0 will-change-transform"
+        :class="{
+          'touch-none': is_rearranging,
+          'z-20 cursor-grabbing': item.index === reorder.dragging_index.value,
+          'cursor-grab': is_rearranging && item.index !== reorder.dragging_index.value,
+          'transition-transform duration-150 ease-out': reorder.shouldTransition(item.index)
+        }"
+        :style="{ width: `${cell_width}px`, transform: itemTransform(item) }"
+        @pointerdown="onItemPointerdown(item.index, $event)"
       >
         <grid-item
           :card="item.card"
           :side="side"
           :scale="card_scale"
           :card_attributes="card_attributes"
+          :rearranging="is_rearranging"
+          :dragging="item.index === reorder.dragging_index.value"
           :selected="item.card.id !== undefined ? isCardSelected(item.card.id) : false"
         />
       </div>
