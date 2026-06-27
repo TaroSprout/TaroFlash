@@ -610,6 +610,76 @@ describe('useReorderDrag — max_scroll_y runaway guard [obligation]', () => {
   })
 })
 
+// ── maxScroll option tracks content loaded mid-drag [obligation] ──────────────
+// Regression: auto-scroll used to clamp to the scrollHeight captured at pickup,
+// so when infinite-scroll loaded more rows mid-drag the page stopped scrolling
+// at the old bottom. The `maxScroll` getter is re-read each frame from a
+// transform-immune source (the virtualizer total size) so it grows with content.
+
+describe('useReorderDrag — maxScroll option [obligation]', () => {
+  test('clamps to the live maxScroll getter and resumes when it grows [obligation]', () => {
+    // Captured fallback would pin at scrollHeight - clientHeight = 700 - 600 = 100.
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 700
+    })
+    Object.defineProperty(document.documentElement, 'clientHeight', {
+      configurable: true,
+      value: 600
+    })
+
+    // Real scrolling so the target can climb past the captured ceiling.
+    let scrollY = 0
+    const scrollYSpy = vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scrollY)
+    const scrollToSpy = vi.spyOn(window, 'scrollTo').mockImplementation((_x, y) => {
+      scrollY = y
+    })
+
+    const frames = []
+    const rafSpy = vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((cb) => {
+      frames.push(cb)
+      return frames.length
+    })
+
+    let max = 500
+    const setup = withSetup(() =>
+      useReorderDrag({
+        pitch: PITCH,
+        count: () => 100,
+        enabled: () => true,
+        onReorder: vi.fn(),
+        maxScroll: () => max
+      })
+    )
+    app = setup.app
+    setup.result.start(1, pointerEvent('pointerdown', { button: 0, clientY: 400 }))
+    const near_bottom = Math.max(window.innerHeight - 50, 400)
+    moveTo(near_bottom)
+
+    // Drive frames until it settles at the initial getter ceiling.
+    for (let i = 0; i < 80 && scrollY < max; i++) frames.shift()?.(i * 16)
+    expect(scrollY).toBeGreaterThan(100) // blew past the stale captured fallback
+    expect(scrollY).toBeLessThanOrEqual(500) // clamped to the live getter
+
+    // Content loads → getter grows → auto-scroll resumes past the old ceiling.
+    max = 5000
+    for (let i = 0; i < 40; i++) frames.shift()?.(2000 + i * 16)
+    expect(scrollY).toBeGreaterThan(500)
+
+    rafSpy.mockRestore()
+    scrollToSpy.mockRestore()
+    scrollYSpy.mockRestore()
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 0
+    })
+    Object.defineProperty(document.documentElement, 'clientHeight', {
+      configurable: true,
+      value: 0
+    })
+  })
+})
+
 // ── touch-scroll suppression [obligation] ─────────────────────────────────────
 
 describe('useReorderDrag — touch-scroll suppression [obligation]', () => {

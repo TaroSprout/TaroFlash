@@ -54,6 +54,9 @@ const reorder = useReorderDrag({
   count: () => displayed_cards.value.length,
   enabled: () => is_rearranging.value && !is_active.value,
   topInset: () => sticky_toolbar?.getBoundingClientRect().bottom ?? 0,
+  // Clean, transform-immune scroll bound that grows as infinite-scroll loads
+  // more rows mid-drag, so auto-scroll past the sentinel keeps going.
+  maxScroll: () => scroll_margin.value + virtualizer.value.getTotalSize() - window.innerHeight,
   onReorder: reorderCard,
   geometry: {
     idealIndex: (from, dx, dy) => {

@@ -59,6 +59,12 @@ export type ReorderDragOptions = {
   // Full layout strategy — supply for a grid (or any non-uniform layout). Takes
   // precedence over `pitch`.
   geometry?: ReorderGeometry
+  // Max page scrollY auto-scroll may reach, re-read each frame. Supply a
+  // transform-immune source (e.g. the virtualizer's total size) so it tracks
+  // content that loads in mid-drag — reading the live `scrollHeight` instead
+  // would be polluted by the dragged row's own transform. Falls back to the
+  // scrollHeight captured at pickup when omitted.
+  maxScroll?: () => number
 }
 
 export type ReorderDrag = ReturnType<typeof useReorderDrag>
@@ -226,7 +232,8 @@ export function useReorderDrag(opts: ReorderDragOptions) {
       const held = now - edge_since
       let tier = EDGE_RAMP[0]
       for (const t of EDGE_RAMP) if (held >= t.afterMs) tier = t
-      const target = Math.min(max_scroll_y, Math.max(0, window.scrollY + dir * tier.speed))
+      const limit = opts.maxScroll ? Math.max(0, opts.maxScroll()) : max_scroll_y
+      const target = Math.min(limit, Math.max(0, window.scrollY + dir * tier.speed))
       window.scrollTo(start_scroll_x, target)
       updateDelta()
       raf = requestAnimationFrame(step)

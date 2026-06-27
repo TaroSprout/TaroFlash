@@ -39,6 +39,9 @@ const reorder = useReorderDrag({
   count: () => all_cards.value.length,
   enabled: () => is_above_md.value && !selection.is_selecting.value,
   topInset: () => sticky_toolbar?.getBoundingClientRect().bottom ?? 0,
+  // Clean, transform-immune scroll bound that grows as infinite-scroll loads
+  // more rows mid-drag, so auto-scroll past the load threshold keeps going.
+  maxScroll: () => scroll_margin.value + virtualizer.value.getTotalSize() - window.innerHeight,
   onReorder: reorderCard
 })
 
