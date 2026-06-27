@@ -43,7 +43,6 @@ function onActionsLeave(el: Element, done: () => void) {
           icon-left="stop"
           data-theme="yellow-500"
           data-theme-dark="yellow-700"
-          variant="ghost"
           full-width
           size="lg"
           @press="shell.toggleRearrange()"
