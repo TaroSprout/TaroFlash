@@ -20,11 +20,29 @@ const EDGE_RAMP: EdgeTier[] = [
 // (and double-firing the crossing tick).
 const HYSTERESIS = 0.15
 
+const ZERO: ReorderOffset = { x: 0, y: 0 }
+
+export type ReorderOffset = { x: number; y: number }
+
+/**
+ * Layout strategy that adapts the engine to a list or a grid. The engine itself
+ * is geometry-blind: it tracks the pointer, steps a target slot with hysteresis,
+ * auto-scrolls at the edges, and plays the sfx — everything that should never
+ * drift between the list and the grid. Only this mapping differs between them.
+ */
+export type ReorderGeometry = {
+  // Continuous ideal slot index for the dragged row given its origin index and
+  // the pointer delta (px) from pickup. Whole-number results map to a slot; the
+  // engine steps the live target toward this with hysteresis.
+  idealIndex: (from: number, dx: number, dy: number) => number
+  // Resting (x, y) px position of slot `index`. The engine derives gap-shift
+  // offsets from the difference between neighbouring slots — so a card wrapping
+  // at a grid-row edge animates to the next row for free, with no grid-specific
+  // code in the engine.
+  position: (index: number) => ReorderOffset
+}
+
 export type ReorderDragOptions = {
-  // Fixed row pitch in px — the vertical distance between adjacent rows. The
-  // engine is geometry-light because the list is uniform: target slot and gap
-  // offsets are pure arithmetic off this pitch, no per-row measurement.
-  pitch: number
   count: () => number
   enabled: () => boolean
   // Px of fixed chrome (e.g. a sticky toolbar) covering the top of the list.
@@ -35,38 +53,69 @@ export type ReorderDragOptions = {
   // to reorder the rendered list synchronously (optimistic cache write), so the
   // engine can drop its drag state in the same tick without a snap-back.
   onReorder: (from: number, to: number) => void
+  // Fixed row pitch in px for the 1-D vertical-list case — a convenience that
+  // builds a vertical `geometry`. Ignored when `geometry` is supplied.
+  pitch?: number
+  // Full layout strategy — supply for a grid (or any non-uniform layout). Takes
+  // precedence over `pitch`.
+  geometry?: ReorderGeometry
 }
 
 export type ReorderDrag = ReturnType<typeof useReorderDrag>
 
+/** Vertical fixed-pitch geometry — the 1-D list case. */
+function verticalGeometry(pitch: number): ReorderGeometry {
+  return {
+    idealIndex: (from, _dx, dy) => from + dy / pitch,
+    position: (index) => ({ x: 0, y: index * pitch })
+  }
+}
+
 /**
- * Pointer-driven drag-to-reorder engine for a fixed-pitch vertical list.
+ * Pointer-driven drag-to-reorder engine for a uniform list or grid.
  *
  * Designed to coexist with a virtualizer: it never moves or clones DOM. The
  * caller renders rows as usual and applies `dragOffset(index)` as an extra
- * `translateY` on each row. The dragged row follows the pointer 1:1; the rows
- * it passes shift by one pitch to open a gap. The caller is responsible for
- * keeping the dragged row mounted (e.g. via the virtualizer's `rangeExtractor`)
- * so it survives auto-scroll out of the overscan window.
+ * `translate` on each row. The dragged row follows the pointer 1:1; the rows it
+ * passes shift by one slot to open a gap. The caller is responsible for keeping
+ * the dragged row mounted (e.g. via the virtualizer's `rangeExtractor`) so it
+ * survives auto-scroll out of the overscan window.
  *
  * Lifecycle: bind `start(index, event)` to a handle's `pointerdown`. The engine
  * attaches window-level move/up listeners for the drag duration and tears them
  * down on drop, cancel, or unmount.
  *
  * @example
+ * // 1-D list
  * const reorder = useReorderDrag({
  *   pitch: ROW_PITCH,
  *   count: () => all_cards.value.length,
  *   enabled: () => is_above_md.value,
  *   onReorder: (from, to) => editor.reorderCard(from, to)
  * })
+ *
+ * @example
+ * // 2-D grid
+ * const reorder = useReorderDrag({
+ *   geometry: { idealIndex, position },
+ *   count: () => cards.value.length,
+ *   enabled: () => is_rearranging.value,
+ *   onReorder: editor.reorderCard
+ * })
  */
-export function useReorderDrag({ pitch, count, enabled, topInset, onReorder }: ReorderDragOptions) {
-  const from_index = ref<number | null>(null)
-  const delta = ref(0)
+export function useReorderDrag(opts: ReorderDragOptions) {
+  const { count, enabled, topInset, onReorder } = opts
+  const geometry = opts.geometry ?? verticalGeometry(opts.pitch ?? 0)
 
+  const from_index = ref<number | null>(null)
+  const delta_x = ref(0)
+  const delta_y = ref(0)
+
+  let start_client_x = 0
   let start_client_y = 0
+  let start_scroll_x = 0
   let start_scroll_y = 0
+  let pointer_x = 0
   let pointer_y = 0
   let raf = 0
 
@@ -79,20 +128,31 @@ export function useReorderDrag({ pitch, count, enabled, topInset, onReorder }: R
   // updated by `updateTarget` as the drag translate changes.
   const target_index = ref<number | null>(null)
 
+  // (x, y) px vector from slot `b`'s resting spot to slot `a`'s — i.e. the
+  // offset a card resting at `b` must travel to sit where `a` rests. On a grid
+  // this naturally wraps: the step from a row's first slot to the previous row's
+  // last carries the card up a row and across, not off the edge.
+  function slotDelta(a: number, b: number): ReorderOffset {
+    const pa = geometry.position(a)
+    const pb = geometry.position(b)
+    return { x: pa.x - pb.x, y: pa.y - pb.y }
+  }
+
   /**
-   * Extra `translateY` (px) the caller should apply to the row at `index`:
-   * the live pointer offset for the dragged row, ±pitch for rows the drag has
-   * passed (opening the gap), 0 otherwise.
+   * Extra `translate` (px) the caller should apply to the row at `index`: the
+   * live pointer offset for the dragged row, a one-slot shift for rows the drag
+   * has passed (opening the gap), 0 otherwise. The shift is the geometric gap to
+   * the neighbouring slot, so a grid card wrapping a row edge slides correctly.
    */
-  function dragOffset(index: number): number {
+  function dragOffset(index: number): ReorderOffset {
     const from = from_index.value
     const to = target_index.value
-    if (from === null || to === null) return 0
+    if (from === null || to === null) return ZERO
 
-    if (index === from) return delta.value
-    if (from < to && index > from && index <= to) return -pitch
-    if (to < from && index >= to && index < from) return pitch
-    return 0
+    if (index === from) return { x: delta_x.value, y: delta_y.value }
+    if (from < to && index > from && index <= to) return slotDelta(index - 1, index)
+    if (to < from && index >= to && index < from) return slotDelta(index + 1, index)
+    return ZERO
   }
 
   /**
@@ -106,7 +166,8 @@ export function useReorderDrag({ pitch, count, enabled, topInset, onReorder }: R
   }
 
   function updateDelta() {
-    delta.value = pointer_y - start_client_y + (window.scrollY - start_scroll_y)
+    delta_x.value = pointer_x - start_client_x + (window.scrollX - start_scroll_x)
+    delta_y.value = pointer_y - start_client_y + (window.scrollY - start_scroll_y)
     updateTarget()
   }
 
@@ -117,7 +178,7 @@ export function useReorderDrag({ pitch, count, enabled, topInset, onReorder }: R
     if (from_index.value === null) return
 
     const last = count() - 1
-    const ideal = from_index.value + delta.value / pitch
+    const ideal = geometry.idealIndex(from_index.value, delta_x.value, delta_y.value)
     let next = target_index.value ?? from_index.value
 
     while (ideal - next > 0.5 + HYSTERESIS && next < last) next++
@@ -168,6 +229,7 @@ export function useReorderDrag({ pitch, count, enabled, topInset, onReorder }: R
   }
 
   function onMove(event: PointerEvent) {
+    pointer_x = event.clientX
     pointer_y = event.clientY
     updateDelta()
     autoScroll()
@@ -185,7 +247,8 @@ export function useReorderDrag({ pitch, count, enabled, topInset, onReorder }: R
   function reset() {
     from_index.value = null
     target_index.value = null
-    delta.value = 0
+    delta_x.value = 0
+    delta_y.value = 0
   }
 
   function onEnd() {
@@ -210,10 +273,14 @@ export function useReorderDrag({ pitch, count, enabled, topInset, onReorder }: R
 
     from_index.value = index
     target_index.value = index
+    start_client_x = event.clientX
     start_client_y = event.clientY
+    start_scroll_x = window.scrollX
     start_scroll_y = window.scrollY
+    pointer_x = event.clientX
     pointer_y = event.clientY
-    delta.value = 0
+    delta_x.value = 0
+    delta_y.value = 0
     edge_dir = 0
 
     emitSfx('generic_button_15')

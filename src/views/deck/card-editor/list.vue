@@ -154,7 +154,9 @@ watch(
             'transition-transform duration-150 ease-out': reorder.shouldTransition(vrow.index),
             'cursor-grabbing': vrow.index === reorder.dragging_index.value
           }"
-          :style="{ transform: `translateY(${reorder.dragOffset(vrow.index)}px)` }"
+          :style="{
+            transform: `translate(${reorder.dragOffset(vrow.index).x}px, ${reorder.dragOffset(vrow.index).y}px)`
+          }"
         >
           <list-item
             :index="vrow.index"
