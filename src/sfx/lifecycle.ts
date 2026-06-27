@@ -55,17 +55,21 @@ export function installAudioLifecycle(): () => void {
     engine.unlock()
   }
 
+  // Capture phase, not bubble: handlers like the dropdown caret's `@click.stop`
+  // swallow propagation before the event reaches `window` in the bubble phase,
+  // so a bubble-phase listener would miss those gestures and leave audio locked.
+  // Capture runs window→target first, ahead of any descendant's stopPropagation.
   const armGestureRetry = () => {
     if (gesture_armed) return
     gesture_armed = true
     for (const ev of GESTURE_EVENTS) {
-      window.addEventListener(ev, gestureRecover, { once: true, passive: true })
+      window.addEventListener(ev, gestureRecover, { once: true, passive: true, capture: true })
     }
   }
 
   const removeGestureListeners = () => {
     for (const ev of GESTURE_EVENTS) {
-      window.removeEventListener(ev, gestureRecover)
+      window.removeEventListener(ev, gestureRecover, { capture: true })
     }
   }
 
