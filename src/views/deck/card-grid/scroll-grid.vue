@@ -3,9 +3,18 @@ import GridItem from './grid-item.vue'
 import { useCardGrid } from './use-card-grid'
 import { cardEditorKey, cardSearchKey, type CardWithClientId } from '@/views/deck/composables'
 import { deckViewShellKey } from '@/views/deck/composables/view-shell'
-import { computed, inject, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
+import {
+  computed,
+  inject,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  useTemplateRef,
+  watch
+} from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useVirtualizer } from '@tanstack/vue-virtual'
+import { useWindowVirtualizer } from '@tanstack/vue-virtual'
 
 type VisibleItem = { index: number; card: CardWithClientId; x: number; y: number }
 
@@ -15,14 +24,15 @@ const { t } = useI18n()
 
 const { selection, card_attributes, hasNextPage, isLoading, observeSentinel } =
   inject(cardEditorKey)!
-const { grid_size } = inject(deckViewShellKey)!
+const { grid_size, is_view } = inject(deckViewShellKey)!
 const { is_active, displayed_cards, no_results } = inject(cardSearchKey)!
 const { isCardSelected } = selection
 
 const side = ref<'front' | 'back'>('front')
-const scroll_el = useTemplateRef<HTMLElement>('scroll_el')
+const grid_el = useTemplateRef<HTMLElement>('grid_el')
 const sentinel = useTemplateRef<HTMLElement>('sentinel')
 const container_width = ref(0)
+const scroll_margin = ref(0)
 
 const { card_scale, cell_width, columns, row_count, row_pitch, itemPosition } = useCardGrid(
   grid_size,
@@ -30,12 +40,12 @@ const { card_scale, cell_width, columns, row_count, row_pitch, itemPosition } = 
   () => displayed_cards.value.length
 )
 
-const virtualizer = useVirtualizer(
+const virtualizer = useWindowVirtualizer(
   computed(() => ({
     count: row_count.value,
-    getScrollElement: () => scroll_el.value,
     estimateSize: () => row_pitch.value,
-    overscan: OVERSCAN
+    overscan: OVERSCAN,
+    scrollMargin: scroll_margin.value
   }))
 )
 
@@ -60,19 +70,31 @@ const visible_items = computed(() => {
 
 let resize_observer: ResizeObserver | undefined
 
-function measureWidth() {
-  container_width.value = scroll_el.value?.clientWidth ?? 0
+// Measure the container, not the grid itself: during a mode-swap the grid pane
+// is transformed (it scales + drops out of flow), which would corrupt its own
+// rect. The parent stays in flow, so its width and document offset stay true.
+function measureLayout() {
+  const container = grid_el.value?.parentElement
+  if (!container) return
+  container_width.value = container.clientWidth
+  scroll_margin.value = container.getBoundingClientRect().top + window.scrollY
 }
 
 onMounted(() => {
-  measureWidth()
-  resize_observer = new ResizeObserver(measureWidth)
-  if (scroll_el.value) resize_observer.observe(scroll_el.value)
+  measureLayout()
+  resize_observer = new ResizeObserver(measureLayout)
+  resize_observer.observe(document.body)
 })
 
 onBeforeUnmount(() => resize_observer?.disconnect())
 
 observeSentinel(sentinel)
+
+// The grid is kept mounted via v-show, so its offset is stale when it un-hides
+// on leaving edit mode — remeasure once it's back in flow.
+watch(is_view, (showing) => {
+  if (showing) nextTick(measureLayout)
+})
 
 // Column count and row pitch shift with viewport width and the size toggle;
 // remeasure so total size and row offsets stay exact.
@@ -80,11 +102,7 @@ watch([columns, row_pitch], () => virtualizer.value.measure())
 </script>
 
 <template>
-  <div
-    ref="scroll_el"
-    data-testid="card-grid-container"
-    class="w-full h-full md:min-h-0 overflow-y-auto py-2"
-  >
+  <div ref="grid_el" data-testid="card-grid-container" class="w-full py-2">
     <p
       v-if="no_results"
       data-testid="card-grid__no-results"
