@@ -79,7 +79,7 @@ function onActionsLeave(el: Element, done: () => void) {
           data-testid="deck-footer-actions__edit-menu"
           class="pointer-events-auto"
           trigger-only
-          trigger-icon="edit"
+          trigger-icon="pencil"
           trigger-theme="brown-200"
           trigger-theme-dark="stone-700"
           menu-theme="brown-200"
