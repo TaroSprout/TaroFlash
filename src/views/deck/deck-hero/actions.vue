@@ -1,84 +1,31 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui-kit/button.vue'
-import UiDropdownButton, {
-  type DropdownOption
-} from '@/components/ui-kit/dropdown-button/index.vue'
-import { computed, inject } from 'vue'
+import UiDropdownButton from '@/components/ui-kit/dropdown-button/index.vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useStudyModal } from '@/components/study-session/composables/study-modal'
-import { useDeckSettingsModal } from '@/composables/deck/settings-modal'
-import { cardEditorKey } from '@/views/deck/composables'
-import { deckViewShellKey } from '@/views/deck/composables/view-shell'
-import { mobileCardEditorKey } from '@/views/deck/mobile-editor/use-mobile-card-editor'
+import { useCardEditMenu } from '@/views/deck/composables'
 import { useMatchMedia } from '@/composables/ui/media-query'
 
 const { deck } = defineProps<{ deck: Deck }>()
 
 const { t } = useI18n()
 const study_session = useStudyModal()
-const deck_settings = useDeckSettingsModal()
-
-const editor = inject(cardEditorKey, null)
-const shell = inject(deckViewShellKey, null)
-const mobile_editor = inject(mobileCardEditorKey, null)
+const menu = useCardEditMenu()
 const is_mobile = useMatchMedia('w<md')
 
-const is_editing = computed(() => shell?.mode.value === 'edit')
-const is_rearranging = computed(() => !!shell?.is_rearranging.value)
 // Either mode turns the button into a yellow "stop …" toggle.
-const is_active_mode = computed(() => is_editing.value || is_rearranging.value)
+const is_active_mode = computed(() => menu.is_editing.value || menu.is_rearranging.value)
 const has_due_cards = computed(() => (deck.due_count ?? 0) > 0)
 
-// The horizontal mobile layout is tight, so the edit action drops to a one-word
-// label there. Editing mode only happens at md+, where the full label shows.
 const edit_label = computed(() => {
-  if (is_editing.value) return t('deck-view.actions.stop-editing')
-  if (is_rearranging.value) return t('deck-view.actions.stop-rearranging')
-  return is_mobile.value
-    ? t('deck-view.actions.edit-cards-short')
-    : t('deck-view.actions.edit-cards')
+  if (menu.is_editing.value) return t('deck-view.actions.stop-editing')
+  if (menu.is_rearranging.value) return t('deck-view.actions.stop-rearranging')
+  return t('deck-view.actions.edit-cards')
 })
-const edit_options = computed<DropdownOption[]>(() => [
-  { label: t('deck-view.actions.select-cards'), value: 'select', icon: 'data-check' },
-  {
-    label: shell?.is_rearranging.value
-      ? t('deck-view.actions.stop-rearranging')
-      : t('deck-view.actions.rearrange-cards'),
-    value: 'rearrange',
-    icon: 'rearrange'
-  },
-  {
-    label: t('deck-view.actions.edit-card-appearance'),
-    value: 'appearance',
-    icon: 'align-horizontal-frame'
-  }
-])
 
 function onStudyClicked() {
   study_session.start(deck)
-}
-
-function onPrimaryClick() {
-  // Whichever mode is live, the button is its "stop" toggle first.
-  if (is_rearranging.value) {
-    shell?.toggleRearrange()
-    return
-  }
-
-  // Below md there's no list editor — the edit button opens the focused dock
-  // editor on the first card instead of toggling the desktop edit mode.
-  if (is_mobile.value) {
-    mobile_editor?.open_at()
-    return
-  }
-
-  shell?.toggleMode('edit')
-}
-
-function onEditOption(option: DropdownOption) {
-  if (option.value === 'select') editor?.actions.onSelectCard()
-  else if (option.value === 'rearrange') shell?.toggleRearrange()
-  else if (option.value === 'appearance') deck_settings.open(deck, { tab: 'design', side: 'front' })
 }
 </script>
 
@@ -110,10 +57,10 @@ function onEditOption(option: DropdownOption) {
       </ui-button>
     </div>
 
-    <div data-testid="deck-hero__edit-action" class="shrink-0 md:w-full">
+    <div v-if="!is_mobile" data-testid="deck-hero__edit-action" class="shrink-0 md:w-full">
       <ui-dropdown-button
         data-testid="overview-panel__settings-button"
-        :options="edit_options"
+        :options="menu.options.value"
         :icon-left="is_active_mode ? 'stop' : 'edit'"
         :data-theme="is_active_mode ? 'yellow-500' : 'brown-300'"
         :data-theme-dark="is_active_mode ? 'yellow-700' : 'stone-700'"
@@ -121,8 +68,8 @@ function onEditOption(option: DropdownOption) {
         menu-class="dark:outline-1 dark:outline-grey-900"
         full-width
         size="xl"
-        @click="onPrimaryClick"
-        @select="onEditOption"
+        @click="menu.primaryAction"
+        @select="menu.onSelect"
       >
         {{ edit_label }}
       </ui-dropdown-button>

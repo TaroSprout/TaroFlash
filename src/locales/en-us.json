@@ -535,7 +535,6 @@
   "deck-view.mobile-editor.position": "{index} / {total}",
   "deck-view.mobile-editor.saving": "Saving…",
   "deck-view.mobile-footer.search": "Search",
-  "deck-view.mobile-footer.view-options": "View options",
   "deck-view.mobile-footer.new-card": "New card",
   "deck-view.actions.study-all": "Study <span>all</span> cards",
   "deck-view.actions.edit-cards": "Edit Cards",
