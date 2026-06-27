@@ -119,6 +119,12 @@ export function useReorderDrag(opts: ReorderDragOptions) {
   let pointer_y = 0
   let raf = 0
 
+  // Max page scrollY, captured at pickup before the dragged row's transform can
+  // pollute it. A translated row counts toward scrollable overflow in some
+  // browsers, so reading the live scrollHeight mid-drag would let auto-scroll
+  // chase its own tail forever off the end of the content.
+  let max_scroll_y = 0
+
   // Direction of the current continuous edge dwell (-1 up / +1 down / 0 none)
   // and the rAF timestamp it began at, used to ramp the scroll speed.
   let edge_dir = 0
@@ -220,7 +226,8 @@ export function useReorderDrag(opts: ReorderDragOptions) {
       const held = now - edge_since
       let tier = EDGE_RAMP[0]
       for (const t of EDGE_RAMP) if (held >= t.afterMs) tier = t
-      window.scrollBy(0, dir * tier.speed)
+      const target = Math.min(max_scroll_y, Math.max(0, window.scrollY + dir * tier.speed))
+      window.scrollTo(start_scroll_x, target)
       updateDelta()
       raf = requestAnimationFrame(step)
     }
@@ -291,6 +298,10 @@ export function useReorderDrag(opts: ReorderDragOptions) {
     delta_x.value = 0
     delta_y.value = 0
     edge_dir = 0
+    max_scroll_y = Math.max(
+      0,
+      document.documentElement.scrollHeight - document.documentElement.clientHeight
+    )
 
     emitSfx('generic_button_15')
     document.body.style.userSelect = 'none'

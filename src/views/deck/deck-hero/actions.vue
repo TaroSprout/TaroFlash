@@ -24,12 +24,16 @@ const mobile_editor = inject(mobileCardEditorKey, null)
 const is_mobile = useMatchMedia('w<md')
 
 const is_editing = computed(() => shell?.mode.value === 'edit')
+const is_rearranging = computed(() => !!shell?.is_rearranging.value)
+// Either mode turns the button into a yellow "stop …" toggle.
+const is_active_mode = computed(() => is_editing.value || is_rearranging.value)
 const has_due_cards = computed(() => (deck.due_count ?? 0) > 0)
 
 // The horizontal mobile layout is tight, so the edit action drops to a one-word
 // label there. Editing mode only happens at md+, where the full label shows.
 const edit_label = computed(() => {
   if (is_editing.value) return t('deck-view.actions.stop-editing')
+  if (is_rearranging.value) return t('deck-view.actions.stop-rearranging')
   return is_mobile.value
     ? t('deck-view.actions.edit-cards-short')
     : t('deck-view.actions.edit-cards')
@@ -54,7 +58,13 @@ function onStudyClicked() {
   study_session.start(deck)
 }
 
-function onToggleEditCards() {
+function onPrimaryClick() {
+  // Whichever mode is live, the button is its "stop" toggle first.
+  if (is_rearranging.value) {
+    shell?.toggleRearrange()
+    return
+  }
+
   // Below md there's no list editor — the edit button opens the focused dock
   // editor on the first card instead of toggling the desktop edit mode.
   if (is_mobile.value) {
@@ -104,14 +114,14 @@ function onEditOption(option: DropdownOption) {
       <ui-dropdown-button
         data-testid="overview-panel__settings-button"
         :options="edit_options"
-        :icon-left="is_editing ? 'stop' : 'edit'"
-        :data-theme="is_editing ? 'yellow-500' : 'brown-300'"
-        :data-theme-dark="is_editing ? 'yellow-700' : 'stone-700'"
+        :icon-left="is_active_mode ? 'stop' : 'edit'"
+        :data-theme="is_active_mode ? 'yellow-500' : 'brown-300'"
+        :data-theme-dark="is_active_mode ? 'yellow-700' : 'stone-700'"
         trigger-theme="brown-200"
         menu-class="dark:outline-1 dark:outline-grey-900"
         full-width
         size="xl"
-        @click="onToggleEditCards"
+        @click="onPrimaryClick"
         @select="onEditOption"
       >
         {{ edit_label }}

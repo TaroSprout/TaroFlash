@@ -4,11 +4,13 @@ import SearchBar from '@/views/deck/search-bar.vue'
 import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { cardSearchKey } from '@/views/deck/composables'
+import { deckViewShellKey } from '@/views/deck/composables/view-shell'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 
 const { t } = useI18n()
 
 const { is_searching } = inject(cardSearchKey)!
+const shell = inject(deckViewShellKey)!
 
 function onActionsEnter(el: Element, done: () => void) {
   fadeEnter(el, done)
@@ -35,6 +37,22 @@ function onActionsLeave(el: Element, done: () => void) {
         <div aria-hidden="true" class="aspect-square h-full"></div>
 
         <ui-button
+          v-if="shell.is_rearranging.value"
+          data-testid="deck-footer-actions__stop-rearranging"
+          class="pointer-events-auto"
+          icon-left="stop"
+          data-theme="yellow-500"
+          data-theme-dark="yellow-700"
+          variant="ghost"
+          full-width
+          size="lg"
+          @press="shell.toggleRearrange()"
+        >
+          {{ t('deck-view.actions.stop-rearranging') }}
+        </ui-button>
+
+        <ui-button
+          v-else
           data-testid="deck-footer-actions__new-card"
           class="pointer-events-auto"
           icon-left="add"

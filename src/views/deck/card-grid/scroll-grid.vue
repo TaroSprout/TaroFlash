@@ -141,8 +141,8 @@ function dragTransform(index: number) {
 // shimmers organically instead of beating in unison.
 function jiggleStyle(index: number) {
   return {
-    '--jiggle-delay': `${-(index % 11) * 53}ms`,
-    '--jiggle-duration': `${320 + (index % 5) * 22}ms`
+    '--jiggle-delay': `${-(index % 11) * 47}ms`,
+    '--jiggle-duration': `${240 + (index % 5) * 16}ms`
   }
 }
 
@@ -234,7 +234,12 @@ watch(
 </script>
 
 <template>
-  <div ref="grid_el" data-testid="card-grid-container" class="w-full py-2">
+  <div
+    ref="grid_el"
+    data-testid="card-grid-container"
+    class="w-full py-2"
+    :class="{ 'rearrange-no-select': is_rearranging }"
+  >
     <p
       v-if="no_results"
       data-testid="card-grid__no-results"
@@ -294,3 +299,14 @@ watch(
     </div>
   </div>
 </template>
+
+<style scoped>
+/* In rearrange mode a press-and-hold must not start a text selection or the iOS
+   callout. user-select / touch-callout inherit, so suppressing them on the
+   container covers every card inside. */
+.rearrange-no-select {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+</style>

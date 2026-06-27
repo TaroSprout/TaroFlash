@@ -167,7 +167,7 @@ function onCardMouseDown(e: MouseEvent) {
 }
 
 .grid-item.jiggle {
-  animation: grid-item-jiggle var(--jiggle-duration, 0.34s) ease-in-out infinite;
+  animation: grid-item-jiggle var(--jiggle-duration, 0.26s) ease-in-out infinite;
   animation-delay: var(--jiggle-delay, 0s);
 }
 
