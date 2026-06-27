@@ -53,8 +53,9 @@ export function useCardGrid(
 
   /**
    * Absolute (x, y) px offset of the card at `index` within the virtual
-   * viewport. Per-row centering mirrors the grid's `justify-center`, so the
-   * trailing partial row stays centered among its own items. This is the seam a
+   * viewport. The whole grid is centered on a full row's width, so every row —
+   * including the trailing partial one — shares the same left edge and fills
+   * left-to-right (mirrors the grid's `justify-center`). This is the seam a
    * future drag-to-reorder layer adds its live offset on top of.
    */
   function itemPosition(index: number): GridItemPosition {
@@ -62,9 +63,8 @@ export function useCardGrid(
     const row = Math.floor(index / cols)
     const col = index % cols
 
-    const items_in_row = Math.min(cols, toValue(item_count) - row * cols)
-    const row_width = items_in_row * cell_width.value + (items_in_row - 1) * gap.value
-    const offset_x = Math.max(0, (toValue(container_width) - row_width) / 2)
+    const full_row_width = cols * cell_width.value + (cols - 1) * gap.value
+    const offset_x = Math.max(0, (toValue(container_width) - full_row_width) / 2)
 
     return { x: offset_x + col * (cell_width.value + gap.value), y: row * row_pitch.value }
   }
