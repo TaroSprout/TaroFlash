@@ -65,7 +65,7 @@ function onActionsLeave(el: Element, done: () => void) {
           v-else
           data-testid="deck-footer-actions__new-card"
           class="pointer-events-auto"
-          icon-left="add"
+          icon-left="card-add"
           data-theme="brown-100"
           data-theme-dark="stone-700"
           variant="ghost"
