@@ -25,19 +25,26 @@ function makeEditor({
   card_attributes = ref({ front: {}, back: {} }),
   hasNextPage = false,
   isLoading = false,
-  observeSentinel = vi.fn()
+  observeSentinel = vi.fn(),
+  reorderCard = vi.fn()
 } = {}) {
   return {
     selection: { isCardSelected: vi.fn().mockReturnValue(false) },
     card_attributes,
     hasNextPage: ref(hasNextPage),
     isLoading: ref(isLoading),
-    observeSentinel
+    observeSentinel,
+    reorderCard
   }
 }
 
-function makeShell({ grid_size = 'md' } = {}) {
-  return { grid_size: ref(grid_size) }
+function makeShell({ grid_size = 'md', is_rearranging = false } = {}) {
+  return {
+    grid_size: ref(grid_size),
+    is_view: ref(true),
+    is_rearranging: ref(is_rearranging),
+    toggleRearrange: vi.fn()
+  }
 }
 
 function makeSearch({ is_active = false, displayed_cards = [], no_results = false } = {}) {
@@ -66,28 +73,10 @@ describe('card-grid/scroll-grid', () => {
     localStorage.clear()
   })
 
-  // ── grid_size → gridTemplateColumns track width ───────────────────────────
-
-  test('grid style scales the xl track to 0.56 for grid_size="base" [obligation]', () => {
-    const wrapper = mountScrollGrid(makeEditor(), makeShell({ grid_size: 'base' }))
-    expect(wrapper.find('[data-testid="card-grid"]').attributes('style')).toContain(
-      'grid-template-columns: repeat(auto-fill, 175.84px)'
-    )
-  })
-
-  test('grid style scales the xl track to 0.75 for grid_size="md" [obligation]', () => {
-    const wrapper = mountScrollGrid(makeEditor(), makeShell({ grid_size: 'md' }))
-    expect(wrapper.find('[data-testid="card-grid"]').attributes('style')).toContain(
-      'grid-template-columns: repeat(auto-fill, 235.5px)'
-    )
-  })
-
-  test('grid style uses the full xl track width for grid_size="xl" [obligation]', () => {
-    const wrapper = mountScrollGrid(makeEditor(), makeShell({ grid_size: 'xl' }))
-    expect(wrapper.find('[data-testid="card-grid"]').attributes('style')).toContain(
-      'grid-template-columns: repeat(auto-fill, 314px)'
-    )
-  })
+  // ── grid_size → virtualizer-driven height ────────────────────────────────
+  // The grid switched to @tanstack/vue-virtual absolute positioning;
+  // gridTemplateColumns is no longer applied — the card-grid div carries
+  // only a height from the virtualizer's total size.
 
   test('renders the grid container', () => {
     const wrapper = mountScrollGrid()
