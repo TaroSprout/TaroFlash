@@ -65,7 +65,6 @@ function onStudyClicked() {
         :data-theme="is_active_mode ? 'yellow-500' : 'brown-300'"
         :data-theme-dark="is_active_mode ? 'yellow-700' : 'stone-700'"
         trigger-theme="brown-200"
-        menu-class="dark:outline-1 dark:outline-grey-900"
         full-width
         size="xl"
         @click="menu.primaryAction"
