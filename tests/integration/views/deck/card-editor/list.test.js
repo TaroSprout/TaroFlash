@@ -7,7 +7,7 @@ const { useWindowVirtualizerMock, useReorderDragMock, startMock } = vi.hoisted((
   const useReorderDragMock = vi.fn(() => ({
     dragging_index: ref(null),
     target_index: ref(null),
-    dragOffset: vi.fn(() => 0),
+    dragOffset: vi.fn(() => ({ x: 0, y: 0 })),
     shouldTransition: vi.fn(() => false),
     start: startMock
   }))
@@ -230,7 +230,7 @@ describe('CardList (list.vue)', () => {
     useReorderDragMock.mockReturnValueOnce({
       dragging_index: ref(0),
       target_index: ref(null),
-      dragOffset: vi.fn(() => 0),
+      dragOffset: vi.fn(() => ({ x: 0, y: 0 })),
       shouldTransition: vi.fn(() => false),
       start: vi.fn()
     })
@@ -272,7 +272,7 @@ describe('CardList (list.vue)', () => {
     useReorderDragMock.mockReturnValueOnce({
       dragging_index,
       target_index: ref(null),
-      dragOffset: vi.fn(() => 0),
+      dragOffset: vi.fn(() => ({ x: 0, y: 0 })),
       shouldTransition: vi.fn(() => false),
       start: vi.fn()
     })
@@ -302,7 +302,7 @@ describe('CardList (list.vue)', () => {
     useReorderDragMock.mockReturnValueOnce({
       dragging_index,
       target_index: ref(null),
-      dragOffset: vi.fn(() => 0),
+      dragOffset: vi.fn(() => ({ x: 0, y: 0 })),
       shouldTransition: vi.fn(() => false),
       start: startFn
     })

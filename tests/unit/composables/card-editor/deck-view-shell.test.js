@@ -160,6 +160,73 @@ describe('useDeckViewShell', () => {
     expect(result).toBeInstanceOf(Promise)
   })
 
+  // ── is_rearranging / toggleRearrange ──────────────────────────────────────
+
+  test('is_rearranging starts false', () => {
+    const shell = useDeckViewShell()
+    expect(shell.is_rearranging.value).toBe(false)
+  })
+
+  test('toggleRearrange flips is_rearranging from false to true [obligation]', () => {
+    const shell = useDeckViewShell()
+    shell.toggleRearrange()
+    expect(shell.is_rearranging.value).toBe(true)
+  })
+
+  test('toggleRearrange flips is_rearranging from true back to false [obligation]', () => {
+    const shell = useDeckViewShell()
+    shell.toggleRearrange()
+    shell.toggleRearrange()
+    expect(shell.is_rearranging.value).toBe(false)
+  })
+
+  test('toggleRearrange turning ON forces mode to view [obligation]', () => {
+    const shell = useDeckViewShell()
+    shell.setMode('edit')
+    expect(shell.mode.value).toBe('edit')
+
+    shell.toggleRearrange() // turning on
+    expect(shell.is_rearranging.value).toBe(true)
+    expect(shell.mode.value).toBe('view') // forced back to view
+  })
+
+  test('toggleRearrange turning OFF does not force a mode change', () => {
+    const shell = useDeckViewShell()
+    shell.toggleRearrange() // on → mode forced to view
+    shell.toggleRearrange() // off
+    expect(shell.mode.value).toBe('view') // still view (no mode side-effect)
+  })
+
+  test('toggleRearrange emits generic_button_15 when turning ON', () => {
+    const shell = useDeckViewShell()
+    shell.toggleRearrange()
+    expect(emitSfxMock).toHaveBeenCalledWith('generic_button_15')
+  })
+
+  test('toggleRearrange emits pop_up_close when turning OFF', () => {
+    const shell = useDeckViewShell()
+    shell.toggleRearrange() // on
+    emitSfxMock.mockClear()
+    shell.toggleRearrange() // off
+    expect(emitSfxMock).toHaveBeenCalledWith('pop_up_close')
+  })
+
+  test('setMode(<non-view>) clears is_rearranging [obligation]', () => {
+    const shell = useDeckViewShell()
+    shell.toggleRearrange() // turn on rearranging
+    expect(shell.is_rearranging.value).toBe(true)
+
+    shell.setMode('edit') // leaving view must drop rearranging
+    expect(shell.is_rearranging.value).toBe(false)
+  })
+
+  test('setMode(view) does not clear is_rearranging (already view)', () => {
+    const shell = useDeckViewShell()
+    shell.toggleRearrange() // turn on while in view
+    shell.setMode('view') // no-op (already view) → is_rearranging untouched
+    expect(shell.is_rearranging.value).toBe(true)
+  })
+
   // ── setGridSize ────────────────────────────────────────────────────────────
 
   test('setGridSize changes grid_size', () => {

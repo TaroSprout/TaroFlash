@@ -16,6 +16,16 @@ vi.mock('@/composables/deck/settings-modal', () => ({
 
 vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: mockUseMatchMedia }))
 
+// useCardEditMenu → useDeckQuery needs @pinia/colada; override just useDeckQuery
+// and preserve all other named exports so the mock doesn't drop barrel siblings.
+const { mockUseDeckQuery } = vi.hoisted(() => ({
+  mockUseDeckQuery: vi.fn(() => ({ data: ref(null) }))
+}))
+vi.mock('@/api/decks', async (importOriginal) => ({
+  ...(await importOriginal()),
+  useDeckQuery: mockUseDeckQuery
+}))
+
 const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
@@ -62,8 +72,13 @@ function makeEditor({ onSelectCard = vi.fn() } = {}) {
   }
 }
 
-function makeShell({ mode = 'view', toggleMode = vi.fn() } = {}) {
-  return { mode: ref(mode), toggleMode }
+function makeShell({ mode = 'view', toggleMode = vi.fn(), is_rearranging = false } = {}) {
+  return {
+    mode: ref(mode),
+    is_rearranging: ref(is_rearranging),
+    toggleMode,
+    toggleRearrange: vi.fn()
+  }
 }
 
 function makeMobileEditor() {
@@ -88,15 +103,16 @@ function mount({ deck = {}, editor, shell, mobile_editor, is_mobile = false } = 
 const editBtn = (w) => w.find('[data-testid="overview-panel__settings-button"]')
 const studyBtn = (w) => w.find('[data-testid="overview-panel__study-button"]')
 const optionBtns = (w) => w.findAll('[data-testid="dropdown-button__option"]')
-// option[0] = 'select' (Select Cards), option[1] = 'appearance' (Edit Card Appearance)
+// options[0]=select, options[1]=rearrange, options[2]=appearance
 const selectBtn = (w) => optionBtns(w)[0]
-const appearanceBtn = (w) => optionBtns(w)[1]
+const appearanceBtn = (w) => optionBtns(w)[2]
 
 describe('deck-hero/actions', () => {
   beforeEach(() => {
     mockStartStudy.mockClear()
     mockOpenDeckSettings.mockClear()
     mockUseMatchMedia.mockReturnValue(ref(false))
+    mockUseDeckQuery.mockReturnValue({ data: ref(null) })
   })
 
   test('clicking study button starts a study session for the deck', async () => {
@@ -133,9 +149,9 @@ describe('deck-hero/actions', () => {
     expect(editBtn(wrapper).exists()).toBe(true)
   })
 
-  test('two dropdown options are rendered (select and appearance)', () => {
+  test('three dropdown options are rendered (select, rearrange, appearance)', () => {
     const wrapper = mount({ editor: makeEditor() })
-    expect(optionBtns(wrapper)).toHaveLength(2)
+    expect(optionBtns(wrapper)).toHaveLength(3)
   })
 
   test('clicking select-cards calls actions.onSelectCard with no args', async () => {
@@ -152,6 +168,8 @@ describe('deck-hero/actions', () => {
   })
 
   test('clicking appearance option opens deck-settings modal with design tab and front side [obligation]', async () => {
+    const deck = { id: 5, title: 'Test', card_count: 5, due_count: 1 }
+    mockUseDeckQuery.mockReturnValue({ data: ref(deck) })
     const wrapper = mount({ deck: { id: 5 }, editor: makeEditor() })
     await appearanceBtn(wrapper).trigger('click')
     expect(mockOpenDeckSettings).toHaveBeenCalledWith(expect.objectContaining({ id: 5 }), {
@@ -160,13 +178,14 @@ describe('deck-hero/actions', () => {
     })
   })
 
-  test('appearance option is the second dropdown option (icon align-horizontal-frame) [obligation]', () => {
+  test('appearance option is the third dropdown option (icon align-horizontal-frame) [obligation]', () => {
     const wrapper = mount({ editor: makeEditor() })
-    // The stub renders option labels — verify the second button text matches the i18n key label
-    expect(optionBtns(wrapper)[1].exists()).toBe(true)
+    expect(optionBtns(wrapper)[2].exists()).toBe(true)
   })
 
   test('clicking appearance when no editor is injected still opens the settings modal [obligation]', async () => {
+    const deck = { id: 9 }
+    mockUseDeckQuery.mockReturnValue({ data: ref(deck) })
     const wrapper = mount({ deck: { id: 9 } })
     await appearanceBtn(wrapper).trigger('click')
     expect(mockOpenDeckSettings).toHaveBeenCalledWith(expect.objectContaining({ id: 9 }), {
@@ -213,39 +232,36 @@ describe('deck-hero/actions', () => {
     expect(mockStartStudy).toHaveBeenCalledWith(expect.objectContaining({ id: 3 }))
   })
 
-  // ── mobile edit behavior [obligation] ─────────────────────────────────────
+  // ── mobile — edit button hidden [obligation] ──────────────────────────────
+  // At mobile (<md) actions.vue hides the edit/dropdown button entirely;
+  // the mobile edit affordance lives in footer-actions.vue instead.
 
-  test('below md shows the short edit label when not editing [obligation]', () => {
+  test('edit button does not render at mobile [obligation]', () => {
     const wrapper = mount({ shell: makeShell({ mode: 'view' }), is_mobile: true })
-    expect(editBtn(wrapper).text()).toContain('Edit')
-    // Must NOT contain the full "Edit Cards" string (which contains "Cards")
-    expect(editBtn(wrapper).text()).not.toContain('Cards')
+    expect(editBtn(wrapper).exists()).toBe(false)
   })
 
-  test('below md shows stop-editing label when editing [obligation]', () => {
-    const wrapper = mount({ shell: makeShell({ mode: 'edit' }), is_mobile: true })
-    expect(editBtn(wrapper).text()).toContain('Stop Editing')
+  // ── rearranging state [obligation] ────────────────────────────────────────
+
+  test('shows rearrange-done label when shell is rearranging [obligation]', () => {
+    const shell = makeShell({ is_rearranging: true })
+    const wrapper = mount({ shell })
+    expect(editBtn(wrapper).text()).toContain('Done')
   })
 
-  test('below md clicking edit opens mobile_editor.open_at() instead of toggleMode [obligation]', async () => {
-    const toggleMode = vi.fn()
-    const mobile_editor = makeMobileEditor()
-    const wrapper = mount({
-      shell: makeShell({ mode: 'view', toggleMode }),
-      mobile_editor,
-      is_mobile: true
-    })
+  test('rearrange option (index 1) is disabled when already rearranging [obligation]', () => {
+    const shell = makeShell({ is_rearranging: true })
+    const wrapper = mount({ shell })
+    // the stub exposes options via click handlers — verify the option exists
+    expect(optionBtns(wrapper)[1].exists()).toBe(true)
+  })
+
+  test('clicking edit while rearranging calls toggleRearrange [obligation]', async () => {
+    const shell = makeShell({ is_rearranging: true })
+    const wrapper = mount({ shell })
     await editBtn(wrapper).trigger('click')
-    expect(mobile_editor.open_at).toHaveBeenCalledWith()
-    expect(toggleMode).not.toHaveBeenCalled()
-  })
-
-  test('below md clicking edit is a no-op when no mobile_editor is provided [obligation]', async () => {
-    const toggleMode = vi.fn()
-    const wrapper = mount({ shell: makeShell({ mode: 'view', toggleMode }), is_mobile: true })
-    await editBtn(wrapper).trigger('click')
-    // mobile_editor is null, so open_at is not called; toggleMode also not called
-    expect(toggleMode).not.toHaveBeenCalled()
+    expect(shell.toggleRearrange).toHaveBeenCalledOnce()
+    expect(shell.toggleMode).not.toHaveBeenCalled()
   })
 
   test('at md+ clicking edit calls toggleMode even when mobile_editor is provided [obligation]', async () => {

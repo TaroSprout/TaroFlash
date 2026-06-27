@@ -275,8 +275,11 @@ describe('useReorderDrag — onReorder callback', () => {
 // ── dragOffset ────────────────────────────────────────────────────────────────
 
 describe('useReorderDrag — dragOffset(index)', () => {
-  // [obligation] returns live delta for the dragged row, ±pitch for passed rows, 0 otherwise
-  test('dragged row returns the current delta [obligation]', () => {
+  // dragOffset now returns {x, y} (ReorderOffset) rather than a bare number.
+  // The vertical pitch geometry yields x=0 for all shifts; only y carries the delta.
+
+  // [obligation] dragged row returns the live pointer delta as {x, y}
+  test('dragged row returns the current delta as {x, y} [obligation]', () => {
     const setup = withSetup(() =>
       useReorderDrag({ pitch: PITCH, count: () => 3, enabled: () => true, onReorder: vi.fn() })
     )
@@ -286,10 +289,12 @@ describe('useReorderDrag — dragOffset(index)', () => {
     result.start(1, pointerEvent('pointerdown', { button: 0, clientY: 0 }))
     moveTo(66)
 
-    expect(result.dragOffset(1)).toBe(66)
+    // delta_x=0 (no horizontal pointer movement), delta_y=66
+    expect(result.dragOffset(1)).toEqual({ x: 0, y: 66 })
   })
 
-  test('row shifted by a downward drag returns -pitch [obligation]', () => {
+  // [obligation] from < to: every card in (from, to] shifts by {x:0, y:-pitch} (toward the gap)
+  test('row shifted by a downward drag (from<to) returns {x:0, y:-pitch} [obligation]', () => {
     const setup = withSetup(() =>
       useReorderDrag({ pitch: PITCH, count: () => 3, enabled: () => true, onReorder: vi.fn() })
     )
@@ -297,12 +302,13 @@ describe('useReorderDrag — dragOffset(index)', () => {
     const { result } = setup
 
     result.start(0, pointerEvent('pointerdown', { button: 0, clientY: 0 }))
-    moveTo(66) // target → 1: row at index 1 shifts up
+    moveTo(66) // target → 1: row at index 1 is in (0,1] → shifts toward from=0 (upward)
 
-    expect(result.dragOffset(1)).toBe(-PITCH)
+    expect(result.dragOffset(1)).toEqual({ x: 0, y: -PITCH })
   })
 
-  test('row shifted by an upward drag returns +pitch [obligation]', () => {
+  // [obligation] to < from: every card in [to, from) shifts by {x:0, y:+pitch} (toward the gap)
+  test('row shifted by an upward drag (to<from) returns {x:0, y:+pitch} [obligation]', () => {
     const setup = withSetup(() =>
       useReorderDrag({ pitch: PITCH, count: () => 3, enabled: () => true, onReorder: vi.fn() })
     )
@@ -313,10 +319,27 @@ describe('useReorderDrag — dragOffset(index)', () => {
     result.start(2, pointerEvent('pointerdown', { button: 0, clientY: 0 }))
     moveTo(-66) // delta=-66, ideal=2-0.66=1.34, crosses back to 1
 
-    expect(result.dragOffset(1)).toBe(PITCH)
+    expect(result.dragOffset(1)).toEqual({ x: 0, y: PITCH })
   })
 
-  test('returns 0 for rows not in the drag window', () => {
+  test('all cards in (from, to] shift when dragging downward across multiple slots', () => {
+    const setup = withSetup(() =>
+      useReorderDrag({ pitch: PITCH, count: () => 5, enabled: () => true, onReorder: vi.fn() })
+    )
+    app = setup.app
+    const { result } = setup
+
+    result.start(0, pointerEvent('pointerdown', { button: 0, clientY: 0 }))
+    // ideal=2.0 (200/100): 2-0>0.65→1, 2-1>0.65→2, 2-2=0 NOT>0.65 → target=2
+    // range (from=0, to=2] = indices 1 and 2; index 3 is outside
+    moveTo(200)
+
+    expect(result.dragOffset(1)).toEqual({ x: 0, y: -PITCH })
+    expect(result.dragOffset(2)).toEqual({ x: 0, y: -PITCH })
+    expect(result.dragOffset(3)).toEqual({ x: 0, y: 0 }) // outside range
+  })
+
+  test('returns {x:0,y:0} for rows not in the drag window', () => {
     const setup = withSetup(() =>
       useReorderDrag({ pitch: PITCH, count: () => 5, enabled: () => true, onReorder: vi.fn() })
     )
@@ -326,21 +349,21 @@ describe('useReorderDrag — dragOffset(index)', () => {
     result.start(1, pointerEvent('pointerdown', { button: 0, clientY: 0 }))
     moveTo(66) // target → 2
 
-    expect(result.dragOffset(0)).toBe(0)
-    expect(result.dragOffset(3)).toBe(0)
-    expect(result.dragOffset(4)).toBe(0)
+    expect(result.dragOffset(0)).toEqual({ x: 0, y: 0 })
+    expect(result.dragOffset(3)).toEqual({ x: 0, y: 0 })
+    expect(result.dragOffset(4)).toEqual({ x: 0, y: 0 })
   })
 
-  test('returns 0 for all rows when no drag is active', () => {
+  test('returns {x:0,y:0} for all rows when no drag is active', () => {
     const setup = withSetup(() =>
       useReorderDrag({ pitch: PITCH, count: () => 3, enabled: () => true, onReorder: vi.fn() })
     )
     app = setup.app
     const { result } = setup
 
-    expect(result.dragOffset(0)).toBe(0)
-    expect(result.dragOffset(1)).toBe(0)
-    expect(result.dragOffset(2)).toBe(0)
+    expect(result.dragOffset(0)).toEqual({ x: 0, y: 0 })
+    expect(result.dragOffset(1)).toEqual({ x: 0, y: 0 })
+    expect(result.dragOffset(2)).toEqual({ x: 0, y: 0 })
   })
 })
 
@@ -414,12 +437,25 @@ describe('useReorderDrag — state reset on drop', () => {
 })
 
 // ── autoScroll / edgeDirection — edge zone scroll behaviour ──────────────────
+// The engine uses window.scrollTo(x, absoluteTarget) not scrollBy(dx, dy).
+// Target = clamp(scrollY + dir*speed, 0, max_scroll_y).
 
 describe('useReorderDrag — autoScroll and edgeDirection', () => {
   let rafSpy
-  let scrollBySpy
+  let scrollToSpy
 
   beforeEach(() => {
+    // Give jsdom a scrollable content area so max_scroll_y > 0.
+    // scrollHeight - clientHeight = 10000 - 600 = 9400 → max_scroll_y = 9400.
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 10000
+    })
+    Object.defineProperty(document.documentElement, 'clientHeight', {
+      configurable: true,
+      value: 600
+    })
+
     // Fire the RAF callback exactly once to avoid the infinite step() loop.
     let fired = false
     rafSpy = vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((cb) => {
@@ -429,15 +465,24 @@ describe('useReorderDrag — autoScroll and edgeDirection', () => {
       }
       return 1
     })
-    scrollBySpy = vi.spyOn(window, 'scrollBy').mockImplementation(() => {})
+    scrollToSpy = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
   })
 
   afterEach(() => {
     rafSpy.mockRestore()
-    scrollBySpy.mockRestore()
+    scrollToSpy.mockRestore()
+    // Restore jsdom defaults
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 0
+    })
+    Object.defineProperty(document.documentElement, 'clientHeight', {
+      configurable: true,
+      value: 0
+    })
   })
 
-  test('scrolls up when pointer is in the top edge zone during a drag', () => {
+  test('scrolls toward position 0 (top) when pointer is in the top edge zone', () => {
     const setup = withSetup(() =>
       useReorderDrag({ pitch: PITCH, count: () => 3, enabled: () => true, onReorder: vi.fn() })
     )
@@ -448,12 +493,11 @@ describe('useReorderDrag — autoScroll and edgeDirection', () => {
     result.start(1, pointerEvent('pointerdown', { button: 0, clientY: 400 }))
     moveTo(0)
 
-    expect(scrollBySpy).toHaveBeenCalledWith(0, expect.any(Number))
-    const [, dy] = scrollBySpy.mock.calls[0]
-    expect(dy).toBeLessThan(0)
+    // dir=-1, target = max(0, scrollY-16) = max(0, 0-16) = 0 (clamped at top)
+    expect(scrollToSpy).toHaveBeenCalledWith(0, 0)
   })
 
-  test('scrolls down when pointer is near the bottom edge', () => {
+  test('scrolls to a positive position when pointer is near the bottom edge', () => {
     const setup = withSetup(() =>
       useReorderDrag({ pitch: PITCH, count: () => 3, enabled: () => true, onReorder: vi.fn() })
     )
@@ -461,16 +505,16 @@ describe('useReorderDrag — autoScroll and edgeDirection', () => {
     const { result } = setup
 
     result.start(1, pointerEvent('pointerdown', { button: 0, clientY: 400 }))
-    // Move to near bottom: window.innerHeight - EDGE_ZONE + 10 would be inside bottom zone
     const near_bottom = Math.max(window.innerHeight - 50, 400)
     moveTo(near_bottom)
 
-    expect(scrollBySpy).toHaveBeenCalledWith(0, expect.any(Number))
-    const [, dy] = scrollBySpy.mock.calls[0]
-    expect(dy).toBeGreaterThan(0)
+    // dir=+1, target = min(9400, 0+16) = 16 > 0
+    expect(scrollToSpy).toHaveBeenCalledWith(0, expect.any(Number))
+    const [, y] = scrollToSpy.mock.calls[0]
+    expect(y).toBeGreaterThan(0)
   })
 
-  test('does not scroll when pointer is in the middle of the viewport', () => {
+  test('does not call scrollTo when pointer is in the middle of the viewport', () => {
     const setup = withSetup(() =>
       useReorderDrag({ pitch: PITCH, count: () => 3, enabled: () => true, onReorder: vi.fn() })
     )
@@ -478,19 +522,19 @@ describe('useReorderDrag — autoScroll and edgeDirection', () => {
     const { result } = setup
 
     result.start(1, pointerEvent('pointerdown', { button: 0, clientY: 400 }))
-    // middle of viewport: not in any edge zone (above 90 from top, above 90 from bottom)
     moveTo(Math.floor(window.innerHeight / 2))
 
-    expect(scrollBySpy).not.toHaveBeenCalled()
+    expect(scrollToSpy).not.toHaveBeenCalled()
   })
 
   test('ramps scroll speed up the longer the pointer dwells in the edge', () => {
     // Queue rAF callbacks so we can run frames at chosen timestamps and watch
-    // the dwell-based speed tiers (afterMs 0 / 450 / 2000) escalate.
+    // the dwell-based speed tiers (afterMs 0=16 / 450=36 / 2000=64) escalate.
     const frames = []
     rafSpy.mockImplementation((cb) => frames.push(cb))
     const runFrame = (t) => frames.shift()?.(t)
-    const lastSpeed = () => Math.abs(scrollBySpy.mock.calls.at(-1)[1])
+    // scrollTo(x, absoluteTarget) — target increases as speed tier escalates
+    const lastPos = () => scrollToSpy.mock.calls.at(-1)[1]
 
     const setup = withSetup(() =>
       useReorderDrag({ pitch: PITCH, count: () => 10, enabled: () => true, onReorder: vi.fn() })
@@ -498,16 +542,271 @@ describe('useReorderDrag — autoScroll and edgeDirection', () => {
     app = setup.app
 
     setup.result.start(1, pointerEvent('pointerdown', { button: 0, clientY: 400 }))
-    moveTo(0) // top edge → schedules the first frame; dwell clock starts at t=0
+    const near_bottom = Math.max(window.innerHeight - 50, 400)
+    moveTo(near_bottom) // bottom edge → schedules the first frame; dwell clock starts at t=0
 
-    runFrame(0)
-    const tier0 = lastSpeed()
-    runFrame(500) // past the 450ms tier
-    const tier1 = lastSpeed()
-    runFrame(2500) // past the 2000ms tier
-    const tier2 = lastSpeed()
+    runFrame(0) // tier 0 (speed=16) → scrollTo(0, 16)
+    const tier0 = lastPos()
+    runFrame(500) // past the 450ms tier (speed=36)
+    const tier1 = lastPos()
+    runFrame(2500) // past the 2000ms tier (speed=64)
+    const tier2 = lastPos()
 
     expect(tier1).toBeGreaterThan(tier0)
     expect(tier2).toBeGreaterThan(tier1)
+  })
+})
+
+// ── max_scroll_y capture and clamp [obligation] ───────────────────────────────
+
+describe('useReorderDrag — max_scroll_y runaway guard [obligation]', () => {
+  test('auto-scroll target is clamped to max_scroll_y captured at drag start [obligation]', () => {
+    // max_scroll_y = scrollHeight - clientHeight = 800 - 600 = 200
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 800
+    })
+    Object.defineProperty(document.documentElement, 'clientHeight', {
+      configurable: true,
+      value: 600
+    })
+
+    const frames = []
+    const rafSpy = vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((cb) => {
+      frames.push(cb)
+      return frames.length
+    })
+    const scrollToSpy = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+
+    const setup = withSetup(() =>
+      useReorderDrag({ pitch: PITCH, count: () => 10, enabled: () => true, onReorder: vi.fn() })
+    )
+    app = setup.app
+    setup.result.start(1, pointerEvent('pointerdown', { button: 0, clientY: 400 }))
+    // Trigger bottom-edge auto-scroll
+    const near_bottom = Math.max(window.innerHeight - 50, 400)
+    moveTo(near_bottom)
+
+    // Run two frames to accumulate scrollTo calls
+    frames.shift()?.(0)
+    frames.shift()?.(50)
+
+    // Every scrollTo call must have second arg ≤ max_scroll_y = 200
+    expect(scrollToSpy).toHaveBeenCalled()
+    scrollToSpy.mock.calls.forEach(([, y]) => {
+      expect(y).toBeLessThanOrEqual(200)
+    })
+
+    rafSpy.mockRestore()
+    scrollToSpy.mockRestore()
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 0
+    })
+    Object.defineProperty(document.documentElement, 'clientHeight', {
+      configurable: true,
+      value: 0
+    })
+  })
+})
+
+// ── maxScroll option tracks content loaded mid-drag [obligation] ──────────────
+// Regression: auto-scroll used to clamp to the scrollHeight captured at pickup,
+// so when infinite-scroll loaded more rows mid-drag the page stopped scrolling
+// at the old bottom. The `maxScroll` getter is re-read each frame from a
+// transform-immune source (the virtualizer total size) so it grows with content.
+
+describe('useReorderDrag — maxScroll option [obligation]', () => {
+  test('clamps to the live maxScroll getter and resumes when it grows [obligation]', () => {
+    // Captured fallback would pin at scrollHeight - clientHeight = 700 - 600 = 100.
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 700
+    })
+    Object.defineProperty(document.documentElement, 'clientHeight', {
+      configurable: true,
+      value: 600
+    })
+
+    // Real scrolling so the target can climb past the captured ceiling.
+    let scrollY = 0
+    const scrollYSpy = vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scrollY)
+    const scrollToSpy = vi.spyOn(window, 'scrollTo').mockImplementation((_x, y) => {
+      scrollY = y
+    })
+
+    const frames = []
+    const rafSpy = vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((cb) => {
+      frames.push(cb)
+      return frames.length
+    })
+
+    let max = 500
+    const setup = withSetup(() =>
+      useReorderDrag({
+        pitch: PITCH,
+        count: () => 100,
+        enabled: () => true,
+        onReorder: vi.fn(),
+        maxScroll: () => max
+      })
+    )
+    app = setup.app
+    setup.result.start(1, pointerEvent('pointerdown', { button: 0, clientY: 400 }))
+    const near_bottom = Math.max(window.innerHeight - 50, 400)
+    moveTo(near_bottom)
+
+    // Drive frames until it settles at the initial getter ceiling.
+    for (let i = 0; i < 80 && scrollY < max; i++) frames.shift()?.(i * 16)
+    expect(scrollY).toBeGreaterThan(100) // blew past the stale captured fallback
+    expect(scrollY).toBeLessThanOrEqual(500) // clamped to the live getter
+
+    // Content loads → getter grows → auto-scroll resumes past the old ceiling.
+    max = 5000
+    for (let i = 0; i < 40; i++) frames.shift()?.(2000 + i * 16)
+    expect(scrollY).toBeGreaterThan(500)
+
+    rafSpy.mockRestore()
+    scrollToSpy.mockRestore()
+    scrollYSpy.mockRestore()
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 0
+    })
+    Object.defineProperty(document.documentElement, 'clientHeight', {
+      configurable: true,
+      value: 0
+    })
+  })
+})
+
+// ── touch-scroll suppression [obligation] ─────────────────────────────────────
+
+describe('useReorderDrag — touch-scroll suppression [obligation]', () => {
+  test('start() attaches a non-passive touchmove listener; stopTracking() removes it [obligation]', () => {
+    const addEventSpy = vi.spyOn(window, 'addEventListener')
+    const removeEventSpy = vi.spyOn(window, 'removeEventListener')
+
+    const setup = withSetup(() =>
+      useReorderDrag({ pitch: PITCH, count: () => 3, enabled: () => true, onReorder: vi.fn() })
+    )
+    app = setup.app
+
+    // Clear spy history accumulated during withSetup / app.mount
+    addEventSpy.mockClear()
+    removeEventSpy.mockClear()
+
+    setup.result.start(1, pointerEvent('pointerdown', { button: 0, clientY: 0 }))
+
+    // touchmove must have been added with { passive: false }
+    const touchmoveAdd = addEventSpy.mock.calls.find(([type]) => type === 'touchmove')
+    expect(touchmoveAdd).toBeDefined()
+    expect(touchmoveAdd[2]).toEqual({ passive: false })
+
+    // Drop the drag → stopTracking() runs → listener must be removed
+    pointerUp()
+
+    const touchmoveRemove = removeEventSpy.mock.calls.find(([type]) => type === 'touchmove')
+    expect(touchmoveRemove).toBeDefined()
+
+    addEventSpy.mockRestore()
+    removeEventSpy.mockRestore()
+  })
+})
+
+// ── 2-D geometry [obligation] ─────────────────────────────────────────────────
+
+describe('useReorderDrag — 2-D grid geometry [obligation]', () => {
+  const COLUMNS = 3
+  const CELL_PITCH = 100
+  const ROW_PITCH = 120
+
+  // A minimal 3-column grid geometry: uniform cells, no clamping at row edges.
+  function makeGridGeometry() {
+    return {
+      idealIndex: (from, dx, dy) => {
+        const row = Math.floor(from / COLUMNS) + dy / ROW_PITCH
+        const col = (from % COLUMNS) + dx / CELL_PITCH
+        return row * COLUMNS + Math.min(COLUMNS - 1, Math.max(0, col))
+      },
+      position: (index) => ({
+        x: (index % COLUMNS) * CELL_PITCH,
+        y: Math.floor(index / COLUMNS) * ROW_PITCH
+      })
+    }
+  }
+
+  let result
+
+  beforeEach(() => {
+    const setup = withSetup(() =>
+      useReorderDrag({
+        geometry: makeGridGeometry(),
+        count: () => 9, // 3 rows × 3 columns
+        enabled: () => true,
+        onReorder: vi.fn()
+      })
+    )
+    app = setup.app
+    result = setup.result
+    emitSfxMock.mockClear()
+  })
+
+  test('geometry: horizontal delta of one cell-pitch maps ideal to from+1 [obligation]', () => {
+    const geo = makeGridGeometry()
+    // from=0, dx=CELL_PITCH, dy=0 → col = 0+1 = 1, row = 0 → ideal = 1 ≈ from+1
+    expect(geo.idealIndex(0, CELL_PITCH, 0)).toBeCloseTo(1)
+  })
+
+  test('geometry: vertical delta of one row-pitch maps ideal to from+columns [obligation]', () => {
+    const geo = makeGridGeometry()
+    // from=0, dx=0, dy=ROW_PITCH → col = 0, row = 0+1 = 1 → ideal = 3 = from+columns
+    expect(geo.idealIndex(0, 0, ROW_PITCH)).toBeCloseTo(COLUMNS)
+  })
+
+  test('horizontal drag advances target_index by 1 column through the engine [obligation]', () => {
+    result.start(0, pointerEvent('pointerdown', { button: 0, clientY: 0 }))
+    // dx = 0.66 * CELL_PITCH → ideal = 0.66 > 0.65 threshold → target flips to 1
+    window.dispatchEvent(
+      new PointerEvent('pointermove', {
+        bubbles: true,
+        clientX: Math.round(0.66 * CELL_PITCH),
+        clientY: 0
+      })
+    )
+    expect(result.target_index.value).toBe(1)
+  })
+
+  test('vertical drag advances target_index by at least columns through the engine [obligation]', () => {
+    result.start(0, pointerEvent('pointerdown', { button: 0, clientY: 0 }))
+    // dy = 1.66 * ROW_PITCH → ideal = 1.66*3 = 4.98 → target advances to at least 3
+    window.dispatchEvent(
+      new PointerEvent('pointermove', {
+        bubbles: true,
+        clientX: 0,
+        clientY: Math.round(1.66 * ROW_PITCH)
+      })
+    )
+    expect(result.target_index.value).toBeGreaterThanOrEqual(COLUMNS)
+  })
+
+  test('gap-shift for card at a row-start wraps to previous row last slot: +x, -y [obligation]', () => {
+    // Drag from index 0 down so target reaches ≥ COLUMNS (3).
+    result.start(0, pointerEvent('pointerdown', { button: 0, clientY: 0 }))
+    window.dispatchEvent(
+      new PointerEvent('pointermove', {
+        bubbles: true,
+        clientX: 0,
+        clientY: Math.round(1.66 * ROW_PITCH)
+      })
+    )
+    // target ≥ 3. Index 3 is the first slot of row 1.
+    // dragOffset(3) = slotDelta(2, 3) = position(2) - position(3)
+    //   position(2) = {x: 2*100, y: 0}   (row 0, col 2 — end of prev row)
+    //   position(3) = {x: 0,     y: 120} (row 1, col 0)
+    //   slotDelta   = {x: +200,  y: -120} → positive x, negative y
+    const offset = result.dragOffset(3)
+    expect(offset.x).toBeGreaterThan(0) // slides right toward end of prev row
+    expect(offset.y).toBeLessThan(0) // slides up into the previous row
   })
 })

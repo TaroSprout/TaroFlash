@@ -14,11 +14,31 @@ vi.mock('@/utils/animations/fade', () => ({
   fadeLeave: mockFadeLeave
 }))
 
+// useCardEditMenu → useDeckQuery needs @pinia/colada; override just useDeckQuery
+// and preserve all other named exports so the mock doesn't drop barrel siblings.
+const { mockUseDeckQuery } = vi.hoisted(() => ({
+  mockUseDeckQuery: vi.fn(() => ({ data: ref(null) }))
+}))
+vi.mock('@/api/decks', async (importOriginal) => ({
+  ...(await importOriginal()),
+  useDeckQuery: mockUseDeckQuery
+}))
+
+// useCardEditMenu → useMatchMedia
+const { mockUseMatchMedia } = vi.hoisted(() => ({ mockUseMatchMedia: vi.fn() }))
+vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: mockUseMatchMedia }))
+
+// useCardEditMenu → useDeckSettingsModal
+vi.mock('@/composables/deck/settings-modal', () => ({
+  useDeckSettingsModal: () => ({ open: vi.fn() })
+}))
+
 // ── Imports ───────────────────────────────────────────────────────────────────
 
 import FooterActions from '@/views/deck/mobile-footer/footer-actions.vue'
 import SearchBar from '@/views/deck/search-bar.vue'
 import { cardSearchKey } from '@/views/deck/composables/card-search'
+import { deckViewShellKey } from '@/views/deck/composables/view-shell'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -45,12 +65,23 @@ function makeSearch({ is_searching = false } = {}) {
   return { is_searching: ref(is_searching) }
 }
 
-function mountFooterActions(search = makeSearch()) {
+function makeShell({ is_rearranging = false } = {}) {
+  return {
+    is_rearranging: ref(is_rearranging),
+    toggleRearrange: vi.fn()
+  }
+}
+
+function mountFooterActions(search = makeSearch(), shell = makeShell()) {
+  mockUseMatchMedia.mockReturnValue(ref(false))
   return shallowMount(FooterActions, {
     global: {
       // Use the real <Transition> so @enter/@leave JS hooks fire
       stubs: { Transition: false, UiButton: UiButtonStub },
-      provide: { [cardSearchKey]: search }
+      provide: {
+        [cardSearchKey]: search,
+        [deckViewShellKey]: shell
+      }
     }
   })
 }
@@ -60,6 +91,7 @@ function mountFooterActions(search = makeSearch()) {
 describe('mobile-footer/footer-actions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUseDeckQuery.mockReturnValue({ data: ref(null) })
   })
 
   test('renders the footer actions container', () => {
@@ -79,17 +111,37 @@ describe('mobile-footer/footer-actions', () => {
   })
 
   // Action buttons are hidden while search is open
-  test('shows rest-actions (new-card, view-options) when not searching [obligation]', () => {
+  test('shows rest-actions (new-card, edit-menu) when not searching [obligation]', () => {
     const wrapper = mountFooterActions(makeSearch({ is_searching: false }))
     expect(wrapper.find('[data-testid="deck-footer-actions__rest"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="deck-footer-actions__new-card"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="deck-footer-actions__view-options"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="deck-footer-actions__edit-menu"]').exists()).toBe(true)
   })
 
   test('hides rest-actions when searching is active [obligation]', () => {
     const wrapper = mountFooterActions(makeSearch({ is_searching: true }))
     expect(wrapper.find('[data-testid="deck-footer-actions__rest"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="deck-footer-actions__new-card"]').exists()).toBe(false)
+  })
+
+  // ── is_rearranging toggle ─────────────────────────────────────────────────
+
+  test('shows stop-rearranging button when shell.is_rearranging is true [obligation]', () => {
+    const shell = makeShell({ is_rearranging: true })
+    const wrapper = mountFooterActions(makeSearch(), shell)
+    expect(wrapper.find('[data-testid="deck-footer-actions__stop-rearranging"]').exists()).toBe(
+      true
+    )
+    expect(wrapper.find('[data-testid="deck-footer-actions__new-card"]').exists()).toBe(false)
+  })
+
+  test('shows new-card button when shell.is_rearranging is false [obligation]', () => {
+    const shell = makeShell({ is_rearranging: false })
+    const wrapper = mountFooterActions(makeSearch(), shell)
+    expect(wrapper.find('[data-testid="deck-footer-actions__new-card"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="deck-footer-actions__stop-rearranging"]').exists()).toBe(
+      false
+    )
   })
 
   // Reactive toggle

@@ -36,7 +36,8 @@ function onMenuSelect(option: DropdownOption) {
 const {
   card,
   side,
-  scale = 1
+  scale = 1,
+  rearranging = false
 } = defineProps<{
   card: CardWithClientId
   side: 'front' | 'back'
@@ -44,11 +45,17 @@ const {
   card_attributes?: DeckCardAttributes
   // render an xl card uniformly scaled by `scale` into a fixed grid cell
   scale?: number
+  // the grid is in drag-to-reorder mode: the card is a drag handle, not tappable
+  rearranging?: boolean
+  // this card is the one currently being dragged — pop it with a lift shadow
+  dragging?: boolean
 }>()
 
 const active_side = ref(side)
 
 function onCardClick() {
+  if (rearranging) return
+
   if (is_selecting.value) {
     onSelectCard(card.id!)
     return
@@ -84,12 +91,19 @@ function onCardMouseDown(e: MouseEvent) {
   <div
     data-testid="grid-item"
     class="grid-item group relative aspect-card w-full touch-manipulation"
-    :class="{ 'card-outline pointer-fine:hover:scale-101': is_selecting }"
-    v-sfx="{ hover: is_selecting ? TYPE_SFX : undefined }"
+    :class="{
+      'card-outline pointer-fine:hover:scale-101': is_selecting,
+      jiggle: rearranging && !dragging
+    }"
+    v-sfx="{ hover: is_selecting || rearranging ? TYPE_SFX : undefined }"
   >
     <card
       v-bind="card"
-      class="cursor-pointer grid-item__card--scaled"
+      class="grid-item__card--scaled"
+      :class="[
+        rearranging ? 'cursor-grab pointer-events-none select-none' : 'cursor-pointer',
+        dragging && 'drop-shadow-lg'
+      ]"
       :style="{ '--card-scale': scale }"
       size="xl"
       :side="active_side"
@@ -103,7 +117,7 @@ function onCardMouseDown(e: MouseEvent) {
     </div>
 
     <ui-dropdown-button
-      v-if="!is_selecting"
+      v-if="!is_selecting && !rearranging"
       trigger-only
       trigger-icon="more"
       trigger-theme="brown-300"
@@ -135,5 +149,31 @@ function onCardMouseDown(e: MouseEvent) {
 
 :global(.dark) .grid-item.card-outline {
   --outline-color: var(--color-purple-700);
+}
+
+/* iOS-style "edit mode" jiggle. Phase + tempo are set per card via the
+   --jiggle-* vars so the grid doesn't beat in unison. The dragged card opts out
+   (its lift owns the transform). */
+@keyframes grid-item-jiggle {
+  0% {
+    transform: rotate(-1.4deg);
+  }
+  50% {
+    transform: rotate(1.4deg);
+  }
+  100% {
+    transform: rotate(-1.4deg);
+  }
+}
+
+.grid-item.jiggle {
+  animation: grid-item-jiggle var(--jiggle-duration, 0.26s) ease-in-out infinite;
+  animation-delay: var(--jiggle-delay, 0s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grid-item.jiggle {
+    animation: none;
+  }
 }
 </style>

@@ -16,6 +16,7 @@ type DropdownButtonProps = Pick<
 > & {
   options?: DropdownOption[]
   position?: Placement
+  fallbackPlacements?: Placement[]
   triggerIcon?: string
   gap?: number
   openOnTrigger?: boolean
@@ -49,6 +50,7 @@ const {
   playOnTap = true,
   tapAnimate = false,
   position = 'bottom-start',
+  fallbackPlacements = ['bottom-start', 'bottom-end', 'top-start', 'top-end'],
   triggerIcon = 'arrow-drop-down',
   gap = 4,
   openOnTrigger = false,
@@ -58,7 +60,7 @@ const {
   primaryDisabled = false,
   menuTheme = 'brown-300',
   menuThemeDark,
-  menuClass,
+  menuClass = 'outline-1 outline-brown-100 dark:outline-grey-900',
   triggerTheme,
   triggerThemeDark
 } = defineProps<DropdownButtonProps>()
@@ -157,6 +159,7 @@ function onMenuSelect(option: DropdownOption) {
   <ui-popover
     :open="popover_open"
     :position="position"
+    :fallback_placements="fallbackPlacements"
     :gap="gap"
     :shadow="shadow"
     :use_arrow="false"
