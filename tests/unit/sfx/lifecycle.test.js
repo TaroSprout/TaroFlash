@@ -153,6 +153,31 @@ describe('installAudioLifecycle', () => {
     expect(engineMock.unlock).toHaveBeenCalledTimes(1)
   })
 
+  test('gesture unlock fires even when a bubble-phase stopPropagation blocks the event [obligation]', async () => {
+    // Regression guard: the lifecycle listener must be in CAPTURE phase so that a
+    // descendant's @click.stop (bubble-phase stopPropagation) cannot swallow the
+    // event before window sees it. Capture runs window→target, ahead of any
+    // descendant stopPropagation call.
+    const install = await loadLifecycle()
+    teardown = install()
+    await flushMicrotasks()
+
+    // Simulate a descendant with @click.stop (e.g. the dropdown caret)
+    const el = document.createElement('button')
+    document.body.appendChild(el)
+    el.addEventListener('click', (e) => e.stopPropagation()) // bubble-phase, blocks window
+
+    // Dispatch a bubbling click from the child element. A bubble-phase window
+    // listener would never receive this (stopPropagation blocks it), but a
+    // capture-phase listener fires before stopPropagation has any effect.
+    el.dispatchEvent(new Event('click', { bubbles: true }))
+    await flushMicrotasks()
+
+    expect(engineMock.unlock).toHaveBeenCalledTimes(1)
+
+    document.body.removeChild(el)
+  })
+
   test('the gesture unlock fires only once across event types', async () => {
     const install = await loadLifecycle()
     teardown = install()

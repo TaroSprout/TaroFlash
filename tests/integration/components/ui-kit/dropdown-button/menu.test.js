@@ -121,10 +121,12 @@ describe('DropdownMenu', () => {
       expect(wrapper.emitted('select')[0][0]).toEqual(SAMPLE_OPTIONS[0])
     })
 
-    test('fine-pointer click does NOT call emitSfx [obligation]', async () => {
+    test('fine-pointer click does NOT call emitSfx at all [obligation]', async () => {
       const wrapper = mountMenu()
       await wrapper.findAll('[data-testid="dropdown-button__option"]')[0].trigger('click')
-      expect(mockEmitSfx).not.toHaveBeenCalledWith('select')
+      // menu.vue removed the hard-coded emitSfx('snappy_button_5') call — option-select
+      // sounds now come from the callsite. Assert no sfx is played by the menu itself.
+      expect(mockEmitSfx).not.toHaveBeenCalled()
     })
 
     test('clicking the second option emits select with the correct option', async () => {
