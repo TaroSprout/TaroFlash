@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { type ButtonProps } from '../button.vue'
 import { useStagedTap } from '@/composables/ui/staged-tap'
-import { emitSfx } from '@/sfx/bus'
 import { TYPE_SFX } from '@/sfx/config'
 import type { DropdownOption } from './types'
 
@@ -41,7 +40,6 @@ const playing_value = ref<DropdownOption['value'] | null>(null)
 function onOptionTap(option: DropdownOption, e: MouseEvent) {
   if (option.disabled) return
 
-  emitSfx('snappy_button_5')
   playing_value.value = option.value
   tap(() => {
     emit('select', option)
