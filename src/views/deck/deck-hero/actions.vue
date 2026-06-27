@@ -20,7 +20,7 @@ const has_due_cards = computed(() => (deck.due_count ?? 0) > 0)
 
 const edit_label = computed(() => {
   if (menu.is_editing.value) return t('deck-view.actions.stop-editing')
-  if (menu.is_rearranging.value) return t('deck-view.actions.stop-rearranging')
+  if (menu.is_rearranging.value) return t('deck-view.actions.reorder-done')
   return t('deck-view.actions.edit-cards')
 })
 

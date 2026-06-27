@@ -36,7 +36,7 @@ export function useCardEditMenu() {
   const options = computed<DropdownOption[]>(() => [
     { label: t('deck-view.actions.select-cards'), value: 'select', icon: 'data-check' },
     {
-      label: t('deck-view.actions.rearrange-cards'),
+      label: t('deck-view.actions.reorder-cards'),
       value: 'rearrange',
       icon: 'rearrange',
       disabled: is_rearranging.value

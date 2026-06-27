@@ -58,7 +58,7 @@ function onActionsLeave(el: Element, done: () => void) {
           size="lg"
           @press="shell.toggleRearrange()"
         >
-          {{ t('deck-view.actions.stop-rearranging') }}
+          {{ t('deck-view.actions.reorder-done') }}
         </ui-button>
 
         <ui-button
