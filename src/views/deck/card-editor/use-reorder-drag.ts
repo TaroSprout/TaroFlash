@@ -308,6 +308,7 @@ export function useReorderDrag(opts: ReorderDragOptions) {
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onEnd)
     window.addEventListener('pointercancel', onEnd)
+    window.addEventListener('touchmove', preventTouchScroll, { passive: false })
   }
 
   onBeforeUnmount(stopTracking)
