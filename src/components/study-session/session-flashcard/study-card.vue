@@ -243,6 +243,7 @@ function toSwipeZone(offset: number) {
           class="review-label bg-pink-400"
           :class="{ 'review-label--visible': failVisible }"
         >
+          <ui-icon src="dislike" class="size-14" />
           {{ $t('study.flashcard.rating.fail-feedback') }}
           <p class="text-sm">{{ getRatingTimeFormat(Rating.Again, options) }}</p>
         </div>
@@ -257,6 +258,7 @@ function toSwipeZone(offset: number) {
             <p class="text-sm">{{ getRatingTimeFormat(drag_rating, options) }}</p>
           </template>
           <template v-else>
+            <ui-icon src="like" class="size-14" />
             {{ $t('study.flashcard.rating.pass-feedback') }}
             <p class="text-sm">{{ getRatingTimeFormat(Rating.Good, options) }}</p>
           </template>
