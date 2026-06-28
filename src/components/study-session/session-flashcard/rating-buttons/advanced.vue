@@ -6,11 +6,10 @@ import UiButton from '@/components/ui-kit/button.vue'
 import UiButtonGroup, { type ButtonGroupOption } from '@/components/ui-kit/button-group.vue'
 
 type AdvancedRatingButtonsProps = {
-  side: CardSide
   primed_grade?: Grade | null
 }
 
-const { side, primed_grade } = defineProps<AdvancedRatingButtonsProps>()
+const { primed_grade } = defineProps<AdvancedRatingButtonsProps>()
 
 const { t } = useI18n()
 
@@ -31,47 +30,43 @@ const success_options = computed<ButtonGroupOption[]>(() => [
 </script>
 
 <template>
-  <div
-    data-testid="rating-buttons__advanced"
-    class="flex w-full flex-col-reverse gap-2 sm:grid sm:grid-cols-4"
-  >
-    <ui-button
-      v-if="side === 'front'"
-      data-testid="rating-buttons__show"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
-      size="xl"
-      full-width
-      class="sm:col-span-4"
-      :sfx="{ tap_pre: 'snappy_button_5' }"
-      @press="emit('revealed')"
-    >
-      {{ t('study.flashcard.rating.flip-button') }}
-    </ui-button>
-    <ui-button
-      v-else
-      data-testid="rating-buttons__again"
-      data-theme="red-500"
-      data-theme-dark="red-600"
-      size="xl"
-      icon-left="dislike"
-      full-width
-      :active="primed_grade === Rating.Again"
-      :sfx="{ tap_pre: 'snappy_button_5' }"
-      @press="emit('rated', Rating.Again)"
-    >
-      {{ t('study.flashcard.rating.again-button') }}
-    </ui-button>
-
+  <div data-testid="rating-buttons__advanced" class="flex w-full flex-col gap-2">
     <ui-button-group
       data-testid="rating-buttons__success-group"
       data-theme="brown-100"
       data-theme-dark="stone-700"
-      :class="side === 'front' ? 'invisible sm:hidden' : 'sm:col-span-3'"
       :options="success_options"
       :active_value="primed_grade ?? undefined"
       :sfx="{ tap_pre: 'snappy_button_5' }"
       @press="emit('rated', $event as Grade)"
     />
+
+    <div data-testid="rating-buttons__action-row" class="grid grid-cols-2 gap-2">
+      <ui-button
+        data-testid="rating-buttons__again"
+        data-theme="red-500"
+        data-theme-dark="red-600"
+        size="xl"
+        icon-left="dislike"
+        full-width
+        :active="primed_grade === Rating.Again"
+        :sfx="{ tap_pre: 'snappy_button_5' }"
+        @press="emit('rated', Rating.Again)"
+      >
+        {{ t('study.flashcard.rating.again-button') }}
+      </ui-button>
+
+      <ui-button
+        data-testid="rating-buttons__show"
+        data-theme="blue-500"
+        data-theme-dark="blue-650"
+        size="xl"
+        full-width
+        :sfx="{ tap_pre: 'snappy_button_5' }"
+        @press="emit('revealed')"
+      >
+        {{ t('study.flashcard.rating.flip-button') }}
+      </ui-button>
+    </div>
   </div>
 </template>

@@ -25,46 +25,38 @@ const emit = defineEmits<{
 
 <template>
   <div data-testid="rating-buttons" class="w-full">
+    <!-- Cover: start button centred in a container sized to match the 2-row layout
+         (2 × 50px xl buttons + 8px gap-2 = 108px) so there's no height jump. -->
+    <div
+      v-if="side === 'cover'"
+      data-testid="rating-buttons__start-container"
+      class="flex h-[108px] w-full items-center"
+    >
+      <ui-button
+        data-testid="rating-buttons__start"
+        data-theme="blue-500"
+        data-theme-dark="blue-650"
+        size="xl"
+        full-width
+        :sfx="{ tap_pre: 'snappy_button_5' }"
+        @press="emit('started')"
+      >
+        {{ t('study.flashcard.start-button') }}
+      </ui-button>
+    </div>
+
     <advanced-rating-buttons
-      v-if="show_all_ratings && side !== 'cover'"
-      :side="side"
+      v-else-if="show_all_ratings"
       :primed_grade="primed_grade"
       @rated="emit('rated', $event)"
       @revealed="emit('revealed')"
     />
 
     <simple-rating-buttons
-      v-else-if="side === 'back'"
+      v-else
       :primed_grade="primed_grade"
       @rated="emit('rated', $event)"
+      @revealed="emit('revealed')"
     />
-
-    <ui-button
-      v-else-if="side === 'front'"
-      data-testid="rating-buttons__show"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
-      size="xl"
-      full-width
-      class="mx-auto max-w-78.5"
-      :sfx="{ tap_pre: 'snappy_button_5' }"
-      @press="emit('revealed')"
-    >
-      {{ t('study.flashcard.rating.flip-button') }}
-    </ui-button>
-
-    <ui-button
-      v-else
-      data-testid="rating-buttons__start"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
-      size="xl"
-      full-width
-      class="mx-auto max-w-78.5"
-      :sfx="{ tap_pre: 'snappy_button_5' }"
-      @press="emit('started')"
-    >
-      {{ t('study.flashcard.start-button') }}
-    </ui-button>
   </div>
 </template>
