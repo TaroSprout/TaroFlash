@@ -99,8 +99,9 @@ function commitSelection({
   end_index: number
 }) {
   const index = paragraphIndexOf(anchor)
-  const raw_sentence = (index !== null && paragraphs[index]?.sentence) || term
-  const words = index !== null ? (paragraphs[index]?.words ?? []) : []
+  const paragraph = index !== null ? paragraphs.find((p) => p.index === index) : undefined
+  const raw_sentence = paragraph?.sentence || term
+  const words = paragraph?.words ?? []
   const sentence = markTermInSentence(raw_sentence, words, word_index, term)
   emit('select', { term, sentence, rect, word_index, word_end_index })
 }
