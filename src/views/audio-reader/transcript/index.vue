@@ -148,13 +148,16 @@ function commitSelection({
         />
       </div>
       <template v-for="paragraph in paragraphs" :key="paragraph.index">
-        <h2
+        <div
           v-if="chapter_headings.get(paragraph.index)"
           data-testid="transcript-view__chapter-heading"
-          class="text-center text-xl font-medium text-brown-500 dark:text-brown-400 mt-32 first:mt-0"
+          class="mt-32 flex flex-col items-center gap-3 first:mt-0"
         >
-          {{ chapter_headings.get(paragraph.index) }}
-        </h2>
+          <h2 class="text-xl font-medium text-brown-500 dark:text-brown-400">
+            {{ chapter_headings.get(paragraph.index) }}
+          </h2>
+          <hr class="w-16 border-brown-300 dark:border-brown-600" />
+        </div>
         <transcript-segment :group="paragraph" :index="paragraph.index" />
       </template>
     </div>
