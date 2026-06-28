@@ -68,15 +68,44 @@ const LabeledSectionStub = defineComponent({
   }
 })
 
+// UiSelectField stub that renders the current value and emits update:modelValue
+const UiSelectFieldStub = defineComponent({
+  name: 'UiSelectField',
+  inheritAttrs: false,
+  props: { modelValue: { type: String, default: '' }, options: { type: Array, default: () => [] } },
+  emits: ['update:modelValue'],
+  setup(props, { emit }) {
+    const attrs = useAttrs()
+    return () =>
+      h(
+        'div',
+        {
+          'data-testid': attrs['data-testid'] ?? 'ui-select-field-stub',
+          'data-value': props.modelValue
+        },
+        [
+          h('button', {
+            'data-testid': 'ui-select-field-stub__select',
+            onClick: (e) => emit('update:modelValue', e.target.dataset.option)
+          })
+        ]
+      )
+  }
+})
+
 import PageSettings from '@/views/deck/mode-toolbar/page-settings.vue'
 import { deckViewShellKey } from '@/views/deck/composables/view-shell'
 
-function makeEditor({ grid_size_val = 'md' } = {}) {
+function makeEditor({ grid_size_val = 'md', sort_by_val = 'default' } = {}) {
   const grid_size = ref(grid_size_val)
+  const sort_by = ref(sort_by_val)
   const setGridSize = vi.fn((size) => {
     grid_size.value = size
   })
-  return { grid_size, setGridSize }
+  const setSortBy = vi.fn((key) => {
+    sort_by.value = key
+  })
+  return { grid_size, setGridSize, sort_by, setSortBy }
 }
 
 function mountPageSettings(editor = makeEditor()) {
@@ -88,7 +117,8 @@ function mountPageSettings(editor = makeEditor()) {
           UiPopover: UiPopoverStub,
           UiButton: UiButtonStub,
           SectionList: SectionListStub,
-          LabeledSection: LabeledSectionStub
+          LabeledSection: LabeledSectionStub,
+          UiSelectField: UiSelectFieldStub
         }
       }
     }),
@@ -202,5 +232,46 @@ describe('PageSettings', () => {
     const { wrapper } = mountPageSettings(editor)
     await wrapper.find('[data-testid="page-settings__card-size-option-md"]').trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+  })
+
+  // ── Sort select field ─────────────────────────────────────────────────────
+
+  test('renders the sort select field with current sort_by value', () => {
+    const editor = makeEditor({ sort_by_val: 'default' })
+    const { wrapper } = mountPageSettings(editor)
+    const sortField = wrapper.find('[data-testid="page-settings__sort"]')
+    expect(sortField.exists()).toBe(true)
+    expect(sortField.attributes('data-value')).toBe('default')
+  })
+
+  test('sort select reflects sort_by reactively', async () => {
+    const editor = makeEditor({ sort_by_val: 'default' })
+    const { wrapper } = mountPageSettings(editor)
+    editor.sort_by.value = 'difficulty'
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-testid="page-settings__sort"]').attributes('data-value')).toBe(
+      'difficulty'
+    )
+  })
+
+  test('update:modelValue on sort field calls setSortBy with the new key', async () => {
+    const editor = makeEditor({ sort_by_val: 'default' })
+    const { wrapper } = mountPageSettings(editor)
+    // Trigger update:modelValue directly on the stub component
+    const sortField = wrapper.findComponent({ name: 'UiSelectField' })
+    await sortField.vm.$emit('update:modelValue', 'difficulty')
+    expect(editor.setSortBy).toHaveBeenCalledWith('difficulty')
+  })
+
+  // ── Popover close handler ─────────────────────────────────────────────────
+
+  test('popover close event sets open to false (covers the close() handler)', async () => {
+    const { wrapper } = mountPageSettings()
+    // Open the popover first
+    await wrapper.find('[data-testid="page-settings__trigger"]').trigger('click')
+    expect(wrapper.find('[data-testid="page-settings"]').attributes('data-open')).toBe('true')
+    // Emit close from the popover stub — triggers the component's close() function
+    await wrapper.findComponent({ name: 'UiPopover' }).vm.$emit('close')
+    expect(wrapper.find('[data-testid="page-settings"]').attributes('data-open')).toBe('false')
   })
 })

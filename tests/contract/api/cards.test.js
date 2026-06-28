@@ -5,8 +5,8 @@ import {
   insertCardAt,
   bulkInsertCardsInDeck,
   fetchCardsPageByDeckId,
+  fetchCardsInDeck,
   fetchMemberCardCount,
-  searchCardsInDeck,
   moveCard,
   deleteCards,
   deleteCardsInDeck,
@@ -106,8 +106,28 @@ describe('fetchMemberCardCount (contract)', () => {
   })
 })
 
-describe('searchCardsInDeck (contract)', () => {
-  test('matches case-insensitive ILIKE on front and back text', async () => {
+describe('fetchCardsInDeck (contract)', () => {
+  test('returns cards in default rank order when sort_by="default" and query=null', async () => {
+    await bulkInsertCardsInDeck({
+      deck_id: deck.id,
+      cards: [
+        { front_text: 'A', back_text: 'a' },
+        { front_text: 'B', back_text: 'b' }
+      ]
+    })
+    const result = await fetchCardsInDeck({
+      deck_id: deck.id,
+      sort_by: 'default',
+      query: null,
+      offset: 0,
+      limit: 50
+    })
+    expect(result).toHaveLength(2)
+    expect(result[0]).toHaveProperty('front_text')
+    expect(result[0]).toHaveProperty('review')
+  })
+
+  test('filters by query with ilike when query is a non-null string [obligation]', async () => {
     await bulkInsertCardsInDeck({
       deck_id: deck.id,
       cards: [
@@ -115,9 +135,48 @@ describe('searchCardsInDeck (contract)', () => {
         { front_text: 'goodbye', back_text: 'farewell' }
       ]
     })
-    const hits = await searchCardsInDeck(deck.id, 'WORLD')
-    expect(hits).toHaveLength(1)
-    expect(hits[0].front_text).toBe('Hello world')
+    const result = await fetchCardsInDeck({
+      deck_id: deck.id,
+      sort_by: 'default',
+      query: 'WORLD',
+      offset: 0,
+      limit: 50
+    })
+    expect(result).toHaveLength(1)
+    expect(result[0].front_text).toBe('Hello world')
+  })
+
+  test('returns all cards when query is null — no spurious ilike fires [obligation]', async () => {
+    await bulkInsertCardsInDeck({
+      deck_id: deck.id,
+      cards: [
+        { front_text: 'one', back_text: '' },
+        { front_text: 'two', back_text: '' }
+      ]
+    })
+    const result = await fetchCardsInDeck({
+      deck_id: deck.id,
+      sort_by: 'default',
+      query: null,
+      offset: 0,
+      limit: 50
+    })
+    expect(result).toHaveLength(2)
+  })
+
+  test('respects offset and limit for pagination', async () => {
+    await bulkInsertCardsInDeck({
+      deck_id: deck.id,
+      cards: Array.from({ length: 5 }, (_, i) => ({ front_text: `F${i}`, back_text: '' }))
+    })
+    const page = await fetchCardsInDeck({
+      deck_id: deck.id,
+      sort_by: 'default',
+      query: null,
+      offset: 2,
+      limit: 2
+    })
+    expect(page).toHaveLength(2)
   })
 })
 

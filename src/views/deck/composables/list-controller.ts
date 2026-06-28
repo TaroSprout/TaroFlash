@@ -17,7 +17,8 @@ type Options = {
   deck_id: number
   // intent actions hand control back to the shell: `exitMode` when a flow ends
   // editing, `setMode` when `newCard` drops the user into edit mode
-  shell: Pick<DeckViewShell, 'exitMode' | 'setMode'>
+  shell: Pick<DeckViewShell, 'exitMode' | 'setMode' | 'sort_by'>
+  search_query: Ref<string>
 }
 
 /**
@@ -46,7 +47,11 @@ type Options = {
  * provide(cardEditorKey, editor)
  */
 export function useCardListController(opts: Options) {
-  const cards_query = useCardsInDeckInfiniteQuery(() => opts.deck_id)
+  const cards_query = useCardsInDeckInfiniteQuery(
+    () => opts.deck_id,
+    opts.shell.sort_by,
+    opts.search_query
+  )
   const deck_query = useDeckQuery(() => opts.deck_id)
 
   const card_count = computed(() => deck_query.data.value?.card_count ?? 0)

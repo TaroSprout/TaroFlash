@@ -36,10 +36,15 @@ const deck = deck_query.data
 const shell = useDeckViewShell()
 provide(deckViewShellKey, shell)
 
-const editor = useCardListController({ deck_id: id.value, shell })
+// query text is owned here so it can be fed into the list controller (for the
+// RPC) and into useCardSearch (so the search bar can read/write it) without
+// either composable depending on the other.
+const search_query = ref<string>('')
+
+const editor = useCardListController({ deck_id: id.value, shell, search_query })
 provide(cardEditorKey, editor)
 
-const search = useCardSearch(id.value, editor.list.all_cards)
+const search = useCardSearch(search_query, editor.list.all_cards, editor.isLoading)
 provide(cardSearchKey, search)
 
 const mobile_editor = useMobileCardEditor(editor)

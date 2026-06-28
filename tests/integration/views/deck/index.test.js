@@ -1,14 +1,20 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import { defineComponent, h, ref, computed } from 'vue'
+import { defineComponent, h, ref, computed, isRef } from 'vue'
 
-const { useDeckQueryMock, useCardListControllerMock, useDeckViewShellMock, useCardSearchMock } =
-  vi.hoisted(() => ({
-    useDeckQueryMock: vi.fn(),
-    useCardListControllerMock: vi.fn(),
-    useDeckViewShellMock: vi.fn(),
-    useCardSearchMock: vi.fn()
-  }))
+const {
+  useDeckQueryMock,
+  useCardListControllerMock,
+  useDeckViewShellMock,
+  useCardSearchMock,
+  useCardSortMock
+} = vi.hoisted(() => ({
+  useDeckQueryMock: vi.fn(),
+  useCardListControllerMock: vi.fn(),
+  useDeckViewShellMock: vi.fn(),
+  useCardSearchMock: vi.fn(),
+  useCardSortMock: vi.fn()
+}))
 
 // card-face-uploader (reached statically via mode-stack → list-item-card) now
 // imports useCan, which pulls useMemberDeckCountQuery from this barrel — so the
@@ -29,6 +35,9 @@ vi.mock('@/views/deck/composables/view-shell', () => ({
 vi.mock('@/views/deck/composables/card-search', () => ({
   cardSearchKey: Symbol('cardSearch'),
   useCardSearch: useCardSearchMock
+}))
+vi.mock('@/views/deck/composables/card-sort', () => ({
+  useCardSort: useCardSortMock
 }))
 
 import DeckView from '@/views/deck/index.vue'
@@ -117,6 +126,11 @@ function mount({
   useDeckQueryMock.mockReturnValue(makeDeckQuery(deck))
   useDeckViewShellMock.mockReturnValue(makeShell(mode))
   useCardListControllerMock.mockReturnValue(makeEditor(editorOpts))
+  useCardSortMock.mockReturnValue({
+    is_active: ref(false),
+    displayed_cards: ref([]),
+    is_loading: ref(false)
+  })
   useCardSearchMock.mockReturnValue(makeSearch())
   return shallowMount(DeckView, {
     props: { id: '1' },
@@ -140,6 +154,7 @@ describe('DeckView (views/deck/index.vue)', () => {
     useDeckQueryMock.mockReset()
     useCardListControllerMock.mockReset()
     useDeckViewShellMock.mockReset()
+    useCardSortMock.mockReset()
     useCardSearchMock.mockReset()
   })
 
@@ -331,12 +346,14 @@ describe('DeckView (views/deck/index.vue)', () => {
   })
 
   // ── useCardSearch wiring [obligation] ─────────────────────────────────────
-  // The search composable is instantiated with the deck id and the editor's
-  // all_cards ref, then provided via cardSearchKey.
+  // The search composable receives a shared query ref, the editor's all_cards,
+  // and the editor's isLoading — no deck_id (filtering is now server-side).
 
-  test('calls useCardSearch with the deck id from props [obligation]', () => {
-    // mount helper always passes props.id = '1', so id.value = Number('1') = 1
+  test('calls useCardSearch with a ref, all_cards, and isLoading [obligation]', () => {
     mount()
-    expect(useCardSearchMock).toHaveBeenCalledWith(1, expect.anything())
+    const [query_ref, all_cards, is_querying] = useCardSearchMock.mock.calls[0]
+    expect(isRef(query_ref)).toBe(true)
+    expect(isRef(all_cards)).toBe(true)
+    expect(isRef(is_querying)).toBe(true)
   })
 })

@@ -181,7 +181,10 @@ describe('useMoveCardMutation — onError()', () => {
 
     onError(new Error('timeout'), { deck_id: 10 }, { snapshot })
 
-    expect(setQueryDataSpy).toHaveBeenCalledWith(['cards', 10, 'pages', 50], snapshot)
+    expect(setQueryDataSpy).toHaveBeenCalledWith(
+      ['cards', 10, 'pages', 50, 'default', ''],
+      snapshot
+    )
   })
 
   test('does not call setQueryData when context.snapshot is undefined (deck was not cached)', () => {

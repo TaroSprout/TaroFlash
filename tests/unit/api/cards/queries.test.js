@@ -1,138 +1,35 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 
-const {
-  useQuerySpy,
-  useInfiniteQuerySpy,
-  fetchCardsPageByDeckIdMock,
-  searchCardsInDeckMock,
-  fetchMemberCardCountMock
-} = vi.hoisted(() => ({
+// useSearchCardsInDeckQuery (search-in-deck.ts) and the original
+// useCardsInDeckInfiniteQuery tests were removed in the fsrs-card-filter
+// branch: search-in-deck.ts was deleted and the infinite-query tests migrated
+// to tests/unit/api/cards/queries/cards-page.test.js which covers the new
+// sort_by / search_query API. This file retains only the useMemberCardCountQuery
+// tests that have no other home.
+
+const { useQuerySpy, fetchMemberCardCountMock } = vi.hoisted(() => ({
   useQuerySpy: vi.fn((cfg) => cfg),
-  useInfiniteQuerySpy: vi.fn((cfg) => cfg),
-  fetchCardsPageByDeckIdMock: vi.fn(),
-  searchCardsInDeckMock: vi.fn(),
   fetchMemberCardCountMock: vi.fn()
 }))
 
 vi.mock('@pinia/colada', () => ({
-  useQuery: useQuerySpy,
-  useInfiniteQuery: useInfiniteQuerySpy
+  useQuery: useQuerySpy
 }))
 
 vi.mock('@/api/cards/db', () => ({
-  fetchCardsPageByDeckId: fetchCardsPageByDeckIdMock,
-  searchCardsInDeck: searchCardsInDeckMock,
   fetchMemberCardCount: fetchMemberCardCountMock
 }))
 
-import { useCardsInDeckInfiniteQuery, CARDS_PAGE_SIZE } from '@/api/cards/queries/cards-page'
-import { useSearchCardsInDeckQuery } from '@/api/cards/queries/search-in-deck'
 import { useMemberCardCountQuery } from '@/api/cards/queries/member-card-count'
 
 beforeEach(() => {
   useQuerySpy.mockClear()
-  useInfiniteQuerySpy.mockClear()
 })
 
 function configFrom(hook) {
   hook()
   return useQuerySpy.mock.calls.at(-1)[0]
 }
-
-function infiniteConfigFrom(hook) {
-  hook()
-  return useInfiniteQuerySpy.mock.calls.at(-1)[0]
-}
-
-describe('useCardsInDeckInfiniteQuery', () => {
-  test('uses ["cards", deck_id, "pages", page_size] — nests under the deck cards prefix', () => {
-    const { key } = infiniteConfigFrom(() => useCardsInDeckInfiniteQuery(10))
-    expect(key()).toEqual(['cards', 10, 'pages', CARDS_PAGE_SIZE])
-  })
-
-  test('starts at offset 0', () => {
-    const { initialPageParam } = infiniteConfigFrom(() => useCardsInDeckInfiniteQuery(10))
-    expect(initialPageParam).toBe(0)
-  })
-
-  test('query fetches the page using the current pageParam as offset', async () => {
-    fetchCardsPageByDeckIdMock.mockResolvedValueOnce([])
-    const { query } = infiniteConfigFrom(() => useCardsInDeckInfiniteQuery(10))
-    await query({ pageParam: 100 })
-    expect(fetchCardsPageByDeckIdMock).toHaveBeenCalledWith({
-      deck_id: 10,
-      offset: 100,
-      limit: CARDS_PAGE_SIZE
-    })
-  })
-
-  test('getNextPageParam returns the running total of loaded rows when the last page is full', () => {
-    const { getNextPageParam } = infiniteConfigFrom(() => useCardsInDeckInfiniteQuery(10, 2))
-    const lastPage = [{}, {}]
-    const allPages = [
-      [{}, {}],
-      [{}, {}]
-    ]
-    expect(getNextPageParam(lastPage, allPages)).toBe(4)
-  })
-
-  test('getNextPageParam returns null when the last page is short — there is no more to fetch', () => {
-    const { getNextPageParam } = infiniteConfigFrom(() => useCardsInDeckInfiniteQuery(10, 50))
-    expect(getNextPageParam([{}], [[{}]])).toBeNull()
-  })
-
-  test('enabled is false when deck_id is undefined — avoids a bogus fetch with id=0', () => {
-    const { enabled } = infiniteConfigFrom(() => useCardsInDeckInfiniteQuery(() => undefined))
-    expect(enabled()).toBe(false)
-  })
-
-  test('enabled flips to true once a real deck id is provided', () => {
-    let id
-    const { enabled } = infiniteConfigFrom(() => useCardsInDeckInfiniteQuery(() => id))
-    expect(enabled()).toBe(false)
-    id = 10
-    expect(enabled()).toBe(true)
-  })
-
-  test('key falls back to ["cards", 0, "pages", N] when deck_id is undefined', () => {
-    const { key } = infiniteConfigFrom(() => useCardsInDeckInfiniteQuery(() => undefined))
-    expect(key()).toEqual(['cards', 0, 'pages', CARDS_PAGE_SIZE])
-  })
-})
-
-describe('useSearchCardsInDeckQuery', () => {
-  test('key nests under the deck\'s cards prefix — ["cards", deck_id, "search", query]', () => {
-    const { key } = configFrom(() => useSearchCardsInDeckQuery(10, 'foo'))
-    expect(key()).toEqual(['cards', 10, 'search', 'foo'])
-  })
-
-  test('nested shape means invalidating ["cards", deck_id] also invalidates the search (prefix match)', () => {
-    // Pure documentation via assertion — the nesting is what makes this work in production.
-    const { key } = configFrom(() => useSearchCardsInDeckQuery(10, 'foo'))
-    expect(key()[0]).toBe('cards')
-    expect(key()[1]).toBe(10)
-  })
-
-  test('enabled is false when the query string is empty — avoids fetching for no-op searches', () => {
-    const { enabled } = configFrom(() => useSearchCardsInDeckQuery(10, ''))
-    expect(enabled()).toBe(false)
-  })
-
-  test('enabled is true once the query string has content', () => {
-    let q = ''
-    const { enabled } = configFrom(() => useSearchCardsInDeckQuery(10, () => q))
-    expect(enabled()).toBe(false)
-    q = 'foo'
-    expect(enabled()).toBe(true)
-  })
-
-  test('query delegates to searchCardsInDeck with the current deck id and query string', async () => {
-    searchCardsInDeckMock.mockResolvedValueOnce([])
-    const { query } = configFrom(() => useSearchCardsInDeckQuery(10, 'foo'))
-    await query()
-    expect(searchCardsInDeckMock).toHaveBeenCalledWith(10, 'foo')
-  })
-})
 
 describe('useMemberCardCountQuery', () => {
   test('uses ["cards", "count", opts] — sits under the cards prefix so card mutations invalidate it', () => {

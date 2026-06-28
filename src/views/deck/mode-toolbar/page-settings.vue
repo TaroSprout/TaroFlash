@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui-kit/button.vue'
 import UiPopover from '@/components/ui-kit/popover.vue'
+import UiSelectField from '@/components/ui-kit/select-field.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
-import { deckViewShellKey, type CardGridSize } from '@/views/deck/composables/view-shell'
+import {
+  deckViewShellKey,
+  type CardGridSize,
+  type CardSortKey
+} from '@/views/deck/composables/view-shell'
 import { inject, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { emitSfx } from '@/sfx/bus'
@@ -18,7 +23,7 @@ type SizeOption = {
 
 const { t } = useI18n()
 
-const { grid_size, setGridSize } = inject(deckViewShellKey)!
+const { grid_size, setGridSize, sort_by, setSortBy } = inject(deckViewShellKey)!
 
 const open = ref(false)
 
@@ -41,6 +46,11 @@ const size_options: SizeOption[] = [
     preview: '52px',
     radius: '12px'
   }
+]
+
+const sort_options = [
+  { value: 'default' as CardSortKey, label: t('deck-view.page-settings.sort-default') },
+  { value: 'difficulty' as CardSortKey, label: t('deck-view.page-settings.sort-difficulty') }
 ]
 
 function toggle() {
@@ -69,7 +79,7 @@ function onSelectSize(value: CardGridSize) {
     position="bottom"
     :gap="4"
     :transition_duration="0"
-    shadow
+    :use_arrow="false"
     teleport
     data-testid="page-settings"
     @close="close"
@@ -89,15 +99,11 @@ function onSelectSize(value: CardGridSize) {
       </ui-button>
     </template>
 
-    <template #arrow>
-      <div class="size-full rotate-45 rounded-1 bg-brown-300 dark:bg-stone-700"></div>
-    </template>
-
     <div
       data-testid="page-settings__panel"
       data-theme="blue-500"
       data-theme-dark="blue-650"
-      class="rounded-7 bg-brown-300 p-4 dark:bg-stone-700"
+      class="rounded-7 bg-brown-300 p-4 dark:bg-stone-700 outline-1 outline-brown-100 dark:outline-grey-900"
     >
       <section-list>
         <labeled-section :label="t('deck-view.page-settings.card-size-label')">
@@ -130,6 +136,18 @@ function onSelectSize(value: CardGridSize) {
               </span>
             </template>
           </div>
+        </labeled-section>
+
+        <labeled-section :label="t('deck-view.page-settings.sort-label')">
+          <ui-select-field
+            data-testid="page-settings__sort"
+            data-theme="brown-200"
+            data-theme-dark="stone-900"
+            menu-theme-dark="stone-900"
+            :options="sort_options"
+            :model-value="sort_by"
+            @update:model-value="setSortBy"
+          />
         </labeled-section>
       </section-list>
     </div>
