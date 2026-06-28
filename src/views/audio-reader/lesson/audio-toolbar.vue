@@ -205,7 +205,11 @@ function setMode(next: 'expanded' | 'mini') {
             :options="chapter_options"
             @select="onChapter"
           >
-            {{ current_chapter_label }}
+            <span
+              data-testid="audio-toolbar__chapter-label"
+              class="block max-w-[8rem] truncate sm:max-w-[14rem]"
+              >{{ current_chapter_label }}</span
+            >
           </ui-dropdown-button>
         </div>
 
