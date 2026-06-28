@@ -100,6 +100,120 @@ describe('StudyCard', () => {
     options = makeOptions()
   })
 
+  // ── Fling direction per grade [obligation] ────────────────────────────────
+
+  test('rate(Again) flings card left (direction -1) [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', options })
+    await flushPromises()
+
+    wrapper.vm.rate(Rating.Again)
+    await flushPromises()
+
+    const { el } = getCallbacks()
+    // A left fling applies a negative translateX
+    expect(el.style.transform).toMatch(/translateX\(-/)
+  })
+
+  test('rate(Hard) flings card right (direction +1) [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', options })
+    await flushPromises()
+
+    wrapper.vm.rate(Rating.Hard)
+    await flushPromises()
+
+    const { el } = getCallbacks()
+    // A right fling applies a positive translateX
+    expect(el.style.transform).toMatch(/translateX\(\d/)
+  })
+
+  test('rate(Easy) flings card right (direction +1) [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', options })
+    await flushPromises()
+
+    wrapper.vm.rate(Rating.Easy)
+    await flushPromises()
+
+    const { el } = getCallbacks()
+    expect(el.style.transform).toMatch(/translateX\(\d/)
+  })
+
+  // ── Grade passthrough: Hard/Easy [obligation] ─────────────────────────────
+
+  test('rate(Hard) emits reviewed with Rating.Hard — not Rating.Good [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', options })
+    await flushPromises()
+
+    wrapper.vm.rate(Rating.Hard)
+    await flushPromises()
+
+    const cardEl = wrapper.find('[data-testid="study-card"]').element
+    cardEl.dispatchEvent(new Event('transitionend'))
+    await flushPromises()
+
+    expect(wrapper.emitted('reviewed')).toHaveLength(1)
+    expect(wrapper.emitted('reviewed')[0][0]).toBe(Rating.Hard)
+  })
+
+  test('rate(Easy) emits reviewed with Rating.Easy — not Rating.Good [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', options })
+    await flushPromises()
+
+    wrapper.vm.rate(Rating.Easy)
+    await flushPromises()
+
+    const cardEl = wrapper.find('[data-testid="study-card"]').element
+    cardEl.dispatchEvent(new Event('transitionend'))
+    await flushPromises()
+
+    expect(wrapper.emitted('reviewed')).toHaveLength(1)
+    expect(wrapper.emitted('reviewed')[0][0]).toBe(Rating.Easy)
+  })
+
+  test('rate(Hard) plays ok sfx (not locancel) [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', options })
+    await flushPromises()
+
+    wrapper.vm.rate(Rating.Hard)
+    await flushPromises()
+
+    expect(mockEmitStudySfx).toHaveBeenCalledWith('music_plink_ok')
+    expect(mockEmitStudySfx).not.toHaveBeenCalledWith('music_plink_locancel')
+  })
+
+  // ── Swipe fallback grade (drag path, no explicit grade) [obligation] ────────
+
+  test('swipe right (onEnd dx > 50) derives Rating.Good and emits it [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    callbacks.onEnd({ dx: 80, dy: 0 })
+    await flushPromises()
+
+    const cardEl = wrapper.find('[data-testid="study-card"]').element
+    cardEl.dispatchEvent(new Event('transitionend'))
+    await flushPromises()
+
+    expect(wrapper.emitted('reviewed')).toHaveLength(1)
+    expect(wrapper.emitted('reviewed')[0][0]).toBe(Rating.Good)
+  })
+
+  test('swipe left (onEnd dx < -50) derives Rating.Again and emits it [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    callbacks.onEnd({ dx: -80, dy: 0 })
+    await flushPromises()
+
+    const cardEl = wrapper.find('[data-testid="study-card"]').element
+    cardEl.dispatchEvent(new Event('transitionend'))
+    await flushPromises()
+
+    expect(wrapper.emitted('reviewed')).toHaveLength(1)
+    expect(wrapper.emitted('reviewed')[0][0]).toBe(Rating.Again)
+  })
+
   // ── Review labels ──────────────────────────────────────────────────────────
 
   test('pass label gets review-label--visible class when dragged right past threshold', async () => {

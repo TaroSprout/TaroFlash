@@ -25,6 +25,10 @@ describe('deck defaults', () => {
     })
   })
 
+  test('DECK_CONFIG_DEFAULTS.show_all_ratings defaults to true [obligation]', () => {
+    expect(DECK_CONFIG_DEFAULTS.show_all_ratings).toBe(true)
+  })
+
   test('CARD_ATTRIBUTES_DEFAULTS exposes text_size default', () => {
     expect(CARD_ATTRIBUTES_DEFAULTS.text_size).toBe(4)
   })
@@ -68,6 +72,11 @@ describe('deck defaults', () => {
       const result = withDeckConfigDefaults({ shuffle: undefined, is_spaced: undefined })
       expect(result.shuffle).toBe(false)
       expect(result.is_spaced).toBe(true)
+    })
+
+    test('withDeckConfigDefaults({}) returns show_all_ratings: true [obligation]', () => {
+      const result = withDeckConfigDefaults({})
+      expect(result.show_all_ratings).toBe(true)
     })
   })
 })
