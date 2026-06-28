@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue'
-import {
-  readerActiveWordKey,
-  readerMatchesKey,
-  readerSelectionKey
-} from '@/composables/audio-reader/reader-highlights'
+import { readerMatchesKey, readerSelectionKey } from '@/composables/audio-reader/reader-highlights'
 
 // Leading / trailing whitespace + punctuation — the same edges `cleanTerm`
 // strips when matching, so the underline hugs the term's own characters and
@@ -19,15 +15,12 @@ const { display, index, reading } = defineProps<{
 }>()
 
 const selection = inject(readerSelectionKey, null)
-const active_word = inject(readerActiveWordKey, null)
 const matches = inject(readerMatchesKey, null)
 
 const selected = computed(() => {
   const range = selection?.value
   return !!range && index >= range.lo && index <= range.hi
 })
-
-const playing = computed(() => active_word?.value === index)
 
 // The card match this word sits in (carries the owning deck's theme), or null.
 // The member already has a card for a matched word — marked with a marker-style
@@ -53,14 +46,6 @@ const trail = computed(() =>
   match.value && index === match.value.hi ? (display.match(TRAILING_EDGE)?.[0] ?? '') : ''
 )
 const core = computed(() => display.slice(lead.value.length, display.length - trail.value.length))
-
-// Selection wins over the audio cue: a selected word sits on the blue pill and
-// needs white text to stay legible, even while it's the word being read.
-const text_color = computed(() => {
-  if (selected.value) return 'text-white'
-  if (playing.value) return 'text-blue-500 dark:text-blue-650'
-  return ''
-})
 </script>
 
 <template>
@@ -69,12 +54,10 @@ const text_color = computed(() => {
     :data-word-index="index"
     :data-word-text="display"
     :data-active="selected"
-    :data-playing="playing"
     :data-highlight="matched"
     :data-theme="matched ? highlight_theme : undefined"
     :data-theme-dark="matched ? highlight_theme_dark : undefined"
-    class="group/word cursor-pointer transition-colors duration-700 ease-out data-[playing=true]:duration-100 data-[active=true]:duration-100"
-    :class="text_color"
+    class="group/word cursor-pointer transition-colors duration-700 ease-out data-[playing=true]:duration-100 data-[active=true]:duration-100 data-[active=true]:text-white not-data-[active=true]:data-[playing=true]:text-blue-500 dark:not-data-[active=true]:data-[playing=true]:text-blue-650"
     ><span
       data-word-base
       class="inline-block origin-center leading-none transition-transform duration-700 ease-out group-data-[playing=true]/word:scale-115 group-data-[playing=true]/word:duration-100"

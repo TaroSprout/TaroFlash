@@ -198,7 +198,14 @@ export function useReaderHighlights(
   let follow_timer: ReturnType<typeof setTimeout> | null = null
   let resize_observer: ResizeObserver | null = null
 
+  // The word element currently flagged as playing. The active-word cue is painted
+  // imperatively — one attribute toggle on the outgoing and incoming word — rather
+  // than having all (thousands of) word components subscribe to `active_word` and
+  // re-render together on every playhead tick.
+  let active_el: HTMLElement | null = null
+
   onMounted(() => {
+    paintActiveWord()
     resize_observer = new ResizeObserver(reposition)
     if (content.value) resize_observer.observe(content.value)
     content.value?.addEventListener('touchmove', blockScrollWhileSelecting, { passive: false })
@@ -253,6 +260,17 @@ export function useReaderHighlights(
   /** Locate a word's element within the content by its stable index attribute. */
   function wordEl(index: number): HTMLElement | null {
     return content.value?.querySelector(`[data-word-index="${index}"]`) ?? null
+  }
+
+  // Move the `data-playing` flag from the previous active word to the current one
+  // (CSS keys the blue tint + scale off it). A no-op when neither moved.
+  function paintActiveWord() {
+    const next = wordEl(toValue(active_word))
+    if (next === active_el) return
+
+    active_el?.removeAttribute('data-playing')
+    next?.setAttribute('data-playing', 'true')
+    active_el = next
   }
 
   /** The word index at viewport point (x, y), or null when none is there. */
@@ -748,6 +766,7 @@ export function useReaderHighlights(
   watch(
     () => toValue(active_word),
     () => {
+      paintActiveWord()
       followActiveWord()
       trackFollowDirection()
     },
