@@ -20,6 +20,9 @@ export type StartLessonArgs = {
   title: string
   audio_path: string
   script: TranscriptScript
+  // Ordered transcription slices for a long upload. Empty/omitted for a short
+  // file — the server then transcribes audio_path as a single chunk.
+  chunks?: LessonChunk[]
 }
 
 // The edge functions return a JSON body `{ code }` on failure (e.g.

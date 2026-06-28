@@ -8,8 +8,9 @@ function ok(translations: string[]): Response {
   })
 }
 
-// Replace global fetch with a responder that sees each batch's sentence count
-// (parsed from the prompt) and its 0-based call index, then restore afterwards.
+// Replace global fetch with a responder that sees each batch's TARGET sentence
+// count (parsed from the prompt — the read-only context lines around the batch
+// don't count) and its 0-based call index, then restore afterwards.
 async function withFetch(
   responder: (sentenceCount: number, callIndex: number) => Response,
   run: () => Promise<void>
@@ -19,7 +20,7 @@ async function withFetch(
   globalThis.fetch = ((_url: string | URL | Request, init?: RequestInit) => {
     const body = JSON.parse(init!.body as string)
     const prompt = body.messages[0].content as string
-    const count = Number(prompt.match(/Sentences \((\d+)\)/)?.[1] ?? 0)
+    const count = Number(prompt.match(/TARGET \((\d+)/)?.[1] ?? 0)
     return Promise.resolve(responder(count, call++))
   }) as typeof fetch
   try {

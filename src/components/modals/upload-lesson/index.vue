@@ -4,15 +4,18 @@ import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiInput from '@/components/ui-kit/input.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import UiProgressBar from '@/components/ui-kit/progress-bar.vue'
 import MobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
 import ScriptSelect from './script-select.vue'
 import { useStartLessonMutation, EdgeFunctionError } from '@/api/lessons'
+import type { LessonUploadProgress } from '@/api/lessons'
 
 export type UploadLessonResponse = Lesson | undefined
 
-// Whisper's per-file cap (also the bucket's file_size_limit). Validated here so
-// an over-cap file fails instantly instead of after an upload round-trip.
-const MAX_BYTES = 26214400
+// A generous sanity cap on the SOURCE file: long audio is fine (it's chunked),
+// but ffmpeg.wasm decodes the original in memory, so a huge file would OOM the
+// tab. This is NOT Whisper's old 25 MiB cap — the client compresses + slices.
+const MAX_BYTES = 524288000
 
 const { collection_id, close } = defineProps<{
   collection_id: number
@@ -27,8 +30,28 @@ const file = ref<File | null>(null)
 const script = ref<TranscriptScript>('original')
 const error_key = ref<string | null>(null)
 const is_submitting = ref(false)
+const progress = ref<LessonUploadProgress | null>(null)
 
 const can_submit = computed(() => title.value.trim().length > 0 && file.value !== null)
+
+// One monotonic 0–100 bar across the stages: transcode (the long one) dominates,
+// then slicing, then upload. Only 'uploading' reads as such; the preprocessing
+// stages collapse into a single "Processing audio…".
+const progress_value = computed(() => {
+  const p = progress.value
+  if (!p) return 0
+  const r = p.ratio ?? 0
+  if (p.stage === 'loading') return 3
+  if (p.stage === 'transcoding') return 5 + r * 55
+  if (p.stage === 'slicing') return 60 + r * 15
+  return 75 + r * 25
+})
+
+const progress_label = computed(() =>
+  progress.value?.stage === 'uploading'
+    ? t('audio-reader.upload.progress-uploading')
+    : t('audio-reader.upload.progress-processing')
+)
 
 function onFileChange(event: Event) {
   error_key.value = null
@@ -49,20 +72,24 @@ async function onSubmit() {
 
   error_key.value = null
   is_submitting.value = true
+  progress.value = { stage: 'loading' }
   try {
     // Returns once the lesson row exists in `processing`; transcription runs in
-    // the background and the collection view polls it to completion.
+    // the background and the collection view polls it to completion. Preprocessing
+    // (transcode + slice) and upload happen here, reported through onProgress.
     const lesson = await start.mutateAsync({
       collection_id,
       title: title.value.trim(),
       file: file.value,
-      script: script.value
+      script: script.value,
+      onProgress: (p) => (progress.value = p)
     })
     close(lesson)
   } catch (error) {
     error_key.value = errorKeyFor(error)
   } finally {
     is_submitting.value = false
+    progress.value = null
   }
 }
 
@@ -111,6 +138,16 @@ function errorKeyFor(error: unknown): string {
       >
         {{ t(error_key) }}
       </p>
+
+      <div v-if="is_submitting" data-testid="upload-lesson__progress" class="flex flex-col gap-2">
+        <ui-progress-bar :value="progress_value" :label="progress_label" />
+        <p
+          data-testid="upload-lesson__progress-hint"
+          class="text-sm text-brown-600 dark:text-grey-300"
+        >
+          {{ t('audio-reader.upload.progress-hint') }}
+        </p>
+      </div>
 
       <div data-testid="upload-lesson__actions" class="flex gap-3">
         <ui-button

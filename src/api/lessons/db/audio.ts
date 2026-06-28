@@ -8,13 +8,21 @@ const BUCKET = 'audio-lessons'
 // listening session; the reader re-mints if it expires.
 export const SIGNED_URL_TTL_SECONDS = 60 * 60
 
-export async function uploadLessonAudio(path: string, file: File): Promise<void> {
+export async function uploadLessonAudio(path: string, file: File | Blob): Promise<void> {
   const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true })
 
   if (error) {
     logger.error(`Error uploading audio: ${error.message}`)
     throw new Error(error.message)
   }
+}
+
+// Remove several objects at once (best-effort orphan cleanup when a start fails
+// after some chunks already uploaded). A single remove call takes all paths.
+export async function deleteLessonAudioPaths(paths: string[]): Promise<void> {
+  if (paths.length === 0) return
+  const { error } = await supabase.storage.from(BUCKET).remove(paths)
+  if (error) logger.error(`Error deleting audio: ${error.message}`)
 }
 
 export async function getLessonAudioSignedUrl(path: string): Promise<string> {

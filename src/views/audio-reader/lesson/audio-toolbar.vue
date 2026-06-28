@@ -17,6 +17,10 @@ type ToolbarChapter = { id: number; title: string }
 type AudioToolbarProps = {
   player: AudioPlayer
   chapters: ToolbarChapter[]
+  // The current lesson's internal chapters. When the lesson is split into two or
+  // more, the chapter selector lists THESE (seeking within the one audio file)
+  // instead of the collection's lessons (which route to a new page).
+  lessonChapters?: TranscriptChapter[]
   currentLessonId: number
 }
 
@@ -32,10 +36,11 @@ const SPEED_OPTIONS: DropdownOption[] = [
   { label: '2x', value: 2 }
 ]
 
-const { player, chapters, currentLessonId } = defineProps<AudioToolbarProps>()
+const { player, chapters, lessonChapters = [], currentLessonId } = defineProps<AudioToolbarProps>()
 
 const emit = defineEmits<{
   (e: 'select-chapter', id: number): void
+  (e: 'seek', start: number): void
 }>()
 
 const { t } = useI18n()
@@ -47,11 +52,28 @@ const { playing: play_playing, tap: tapPlay } = useStagedTap({ animate: 'pop', y
 const { playing: forward_playing, tap: tapForward } = useStagedTap({ animate: 'pop', yoyo: true })
 
 const is_playing = computed(() => player.is_playing.value)
+
+// Internal chapters take over the selector when the lesson has a real split.
+const use_lesson_chapters = computed(() => lessonChapters.length > 1)
+
+// The active internal chapter is the last one whose start has been reached.
+const active_lesson_chapter = computed(() => {
+  let index = 0
+  lessonChapters.forEach((chapter, i) => {
+    if (chapter.start <= player.current_time.value + 0.001) index = i
+  })
+  return index
+})
+
 const chapter_options = computed<DropdownOption[]>(() =>
-  chapters.map((chapter) => ({ label: chapter.title, value: chapter.id }))
+  use_lesson_chapters.value
+    ? lessonChapters.map((chapter) => ({ label: chapter.title, value: chapter.start }))
+    : chapters.map((chapter) => ({ label: chapter.title, value: chapter.id }))
 )
-const current_chapter_label = computed(
-  () => chapters.find((chapter) => chapter.id === currentLessonId)?.title ?? ''
+const current_chapter_label = computed(() =>
+  use_lesson_chapters.value
+    ? (lessonChapters[active_lesson_chapter.value]?.title ?? '')
+    : (chapters.find((chapter) => chapter.id === currentLessonId)?.title ?? '')
 )
 const current_speed_label = computed(() => `${player.playback_rate.value}x`)
 
@@ -88,7 +110,10 @@ function onForwardTap(e: MouseEvent) {
 }
 
 function onChapter(option: DropdownOption) {
-  emit('select-chapter', Number(option.value))
+  // Internal chapters carry a start time to seek to; collection lessons carry an
+  // id to route to.
+  if (use_lesson_chapters.value) emit('seek', Number(option.value))
+  else emit('select-chapter', Number(option.value))
 }
 
 function onSpeed(option: DropdownOption) {
@@ -180,7 +205,11 @@ function setMode(next: 'expanded' | 'mini') {
             :options="chapter_options"
             @select="onChapter"
           >
-            {{ current_chapter_label }}
+            <span
+              data-testid="audio-toolbar__chapter-label"
+              class="block max-w-[8rem] truncate sm:max-w-[14rem]"
+              >{{ current_chapter_label }}</span
+            >
           </ui-dropdown-button>
         </div>
 

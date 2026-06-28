@@ -80,8 +80,14 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
     if (el) current_time.value = el.currentTime
   }
 
+  // The rAF tick is the smooth, per-frame updater while playing, but it stalls
+  // under heavy main-thread load (a long task, a scroll/animation frame burst),
+  // leaving the transcript cursor lagging the audio until something snaps it back.
+  // `timeupdate` fires from the media pipeline itself (~4 Hz, independent of rAF),
+  // so syncing here too — playing or not — is a backstop that lets the cursor
+  // self-heal instead of needing a manual seek.
   function onTimeUpdate() {
-    if (el && !is_playing.value) current_time.value = el.currentTime
+    if (el) current_time.value = el.currentTime
   }
 
   // Background tabs freeze rAF, so the tick loop stalls and `current_time` drifts

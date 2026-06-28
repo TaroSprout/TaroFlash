@@ -347,11 +347,12 @@ describe('TranscriptView', () => {
       expect(words[3].attributes('data-playing')).toBe('true')
     })
 
-    test('words that are not the active word have data-playing=false [obligation]', async () => {
+    test('words that are not the active word have data-playing absent [obligation]', async () => {
       const wrapper = mountView({ active_word: 3 })
       const words = wrapper.findAll('[data-testid="transcript-word"]')
-      // word 0 is not the active word
-      expect(words[0].attributes('data-playing')).toBe('false')
+      // word 0 is not the active word — paintActiveWord removes the attribute entirely
+      // (rather than setting it to 'false'), so non-active words carry no data-playing attr
+      expect(words[0].attributes('data-playing')).toBeUndefined()
     })
   })
 })

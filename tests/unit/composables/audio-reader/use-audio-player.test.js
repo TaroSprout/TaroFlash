@@ -559,7 +559,7 @@ describe('useAudioPlayer', () => {
       expect(result.current_time.value).toBe(30)
     })
 
-    test('does NOT update current_time from timeupdate while playing (rAF handles it)', async () => {
+    test('updates current_time from timeupdate while playing (backstop for a stalled rAF)', async () => {
       const target = ref(null)
       const [result, a] = withSetup(() => useAudioPlayer(target))
       app = a
@@ -572,8 +572,9 @@ describe('useAudioPlayer', () => {
       result.seek(0) // reset current_time to 0
       el.currentTime = 99
       el._emit('timeupdate')
-      // timeupdate is ignored while playing; current_time stays 0
-      expect(result.current_time.value).toBe(0)
+      // timeupdate syncs even while playing, so a starved rAF (which would
+      // otherwise freeze the transcript cursor mid-playback) self-heals.
+      expect(result.current_time.value).toBe(99)
     })
   })
 
