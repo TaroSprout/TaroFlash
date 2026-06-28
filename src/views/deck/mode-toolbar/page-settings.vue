@@ -79,7 +79,7 @@ function onSelectSize(value: CardGridSize) {
     position="bottom"
     :gap="4"
     :transition_duration="0"
-    shadow
+    :use_arrow="false"
     teleport
     data-testid="page-settings"
     @close="close"
@@ -99,15 +99,11 @@ function onSelectSize(value: CardGridSize) {
       </ui-button>
     </template>
 
-    <template #arrow>
-      <div class="size-full rotate-45 rounded-1 bg-brown-300 dark:bg-stone-700"></div>
-    </template>
-
     <div
       data-testid="page-settings__panel"
       data-theme="blue-500"
       data-theme-dark="blue-650"
-      class="rounded-7 bg-brown-300 p-4 dark:bg-stone-700"
+      class="rounded-7 bg-brown-300 p-4 dark:bg-stone-700 outline-1 outline-brown-100 dark:outline-grey-900"
     >
       <section-list>
         <labeled-section :label="t('deck-view.page-settings.card-size-label')">
