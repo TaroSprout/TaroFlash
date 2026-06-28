@@ -2,6 +2,7 @@
 import UiPopover from '@/components/ui-kit/popover.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { computed, ref } from 'vue'
+import { emitSfx } from '@/sfx/bus'
 import { TYPE_SFX } from '@/sfx/config'
 
 defineOptions({ inheritAttrs: false })
@@ -34,6 +35,7 @@ const open = ref(false)
 const current_label = computed(() => options.find((o) => o.value === modelValue)?.label ?? '')
 
 function toggle() {
+  emitSfx('snappy_button_5')
   open.value = !open.value
 }
 
@@ -91,7 +93,7 @@ function select(value: T) {
           :data-active="option.value === modelValue"
           data-testid="ui-select-field__option"
           class="group/opt relative flex w-full cursor-pointer items-center overflow-hidden rounded-3 px-3 py-2 text-base text-start whitespace-nowrap transition-colors data-[active=true]:font-medium"
-          v-sfx="{ hover: option.value === modelValue ? undefined : TYPE_SFX }"
+          v-sfx="{ hover: TYPE_SFX }"
           @click="select(option.value)"
         >
           <div
