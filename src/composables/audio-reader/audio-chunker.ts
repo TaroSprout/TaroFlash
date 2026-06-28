@@ -58,7 +58,7 @@ const ENCODE_ARGS = ['-ac', '1', '-ar', '16000', '-b:a', '48k']
 // desyncs the word highlight after a skip; a CBR file seeks byte-accurately and
 // shares the timeline the word timings were measured on. Channels and sample rate
 // are left at the source's (no -ac/-ar).
-const PLAYBACK_ARGS = ['-c:a', 'libmp3lame', '-b:a', '128k']
+const PLAYBACK_ARGS = ['-c:a', 'libmp3lame', '-b:a', '64k']
 
 export type AudioChunk = { blob: Blob; offset: number }
 
