@@ -64,6 +64,10 @@ async function handleStart(
   if (!collection_id || !title || !audio_path) return jsonError('missing_fields', 400)
 
   const script = isTargetScript(body.script) ? body.script : 'original'
+  // The chunk manifest is built client-side (ffmpeg.wasm). An empty/absent one
+  // means a short file: create_pending_lesson synthesises a single chunk pointing
+  // at audio_path, so the worker's loop is uniform either way.
+  const chunks = Array.isArray(body.chunks) ? body.chunks : []
 
   // Create the pending row under the caller's JWT so RLS applies and the
   // set_member_id trigger stamps member_id. The INSERT (status='processing',
@@ -75,7 +79,8 @@ async function handleStart(
       p_title: title,
       p_audio_path: audio_path,
       p_script: script,
-      p_lang: body.lang ?? null
+      p_lang: body.lang ?? null,
+      p_chunks: chunks
     })
     .single<{ id: number }>()
 
