@@ -39,6 +39,10 @@ const BUCKET = 'audio-lessons'
 const TRANSLATE_SEG_BATCH = 80
 const TRANSLITERATE_SEG_BATCH = 30
 
+// Segments either side of a translate slice handed to the translator as read-only
+// context, so a sentence at the slice boundary isn't translated context-starved.
+const TRANSLATE_CONTEXT_SEG = 5
+
 type Segment = { start: number; end: number; text: string; translation?: string }
 type Word = { word: string; start: number; end: number; reading?: string }
 type Chapter = { title: string; start: number }
@@ -207,9 +211,15 @@ async function runTranslate(admin: SupabaseClient, lesson: LessonRow): Promise<v
   const end = Math.min(cursor + TRANSLATE_SEG_BATCH, t.segments.length)
 
   const slice = t.segments.slice(cursor, end)
+  // Neighbour segments just outside this slice, passed as read-only context so a
+  // sentence at the slice edge is still translated with its surroundings in view.
+  const lead = t.segments.slice(Math.max(0, cursor - TRANSLATE_CONTEXT_SEG), cursor)
+  const tail = t.segments.slice(end, end + TRANSLATE_CONTEXT_SEG)
   const translations = await translateSentences(
     slice.map((s) => s.text),
-    TARGET_LANG
+    TARGET_LANG,
+    lead.map((s) => s.text),
+    tail.map((s) => s.text)
   )
   const segments = translations
     ? t.segments.map((seg, i) =>
