@@ -2,13 +2,19 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref, computed } from 'vue'
 
-const { useDeckQueryMock, useCardListControllerMock, useDeckViewShellMock, useCardSearchMock } =
-  vi.hoisted(() => ({
-    useDeckQueryMock: vi.fn(),
-    useCardListControllerMock: vi.fn(),
-    useDeckViewShellMock: vi.fn(),
-    useCardSearchMock: vi.fn()
-  }))
+const {
+  useDeckQueryMock,
+  useCardListControllerMock,
+  useDeckViewShellMock,
+  useCardSearchMock,
+  useCardSortMock
+} = vi.hoisted(() => ({
+  useDeckQueryMock: vi.fn(),
+  useCardListControllerMock: vi.fn(),
+  useDeckViewShellMock: vi.fn(),
+  useCardSearchMock: vi.fn(),
+  useCardSortMock: vi.fn()
+}))
 
 // card-face-uploader (reached statically via mode-stack → list-item-card) now
 // imports useCan, which pulls useMemberDeckCountQuery from this barrel — so the
@@ -29,6 +35,9 @@ vi.mock('@/views/deck/composables/view-shell', () => ({
 vi.mock('@/views/deck/composables/card-search', () => ({
   cardSearchKey: Symbol('cardSearch'),
   useCardSearch: useCardSearchMock
+}))
+vi.mock('@/views/deck/composables/card-sort', () => ({
+  useCardSort: useCardSortMock
 }))
 
 import DeckView from '@/views/deck/index.vue'
@@ -117,6 +126,11 @@ function mount({
   useDeckQueryMock.mockReturnValue(makeDeckQuery(deck))
   useDeckViewShellMock.mockReturnValue(makeShell(mode))
   useCardListControllerMock.mockReturnValue(makeEditor(editorOpts))
+  useCardSortMock.mockReturnValue({
+    is_active: ref(false),
+    displayed_cards: ref([]),
+    is_loading: ref(false)
+  })
   useCardSearchMock.mockReturnValue(makeSearch())
   return shallowMount(DeckView, {
     props: { id: '1' },
@@ -140,6 +154,7 @@ describe('DeckView (views/deck/index.vue)', () => {
     useDeckQueryMock.mockReset()
     useCardListControllerMock.mockReset()
     useDeckViewShellMock.mockReset()
+    useCardSortMock.mockReset()
     useCardSearchMock.mockReset()
   })
 

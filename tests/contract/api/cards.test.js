@@ -12,7 +12,8 @@ import {
   deleteCardsInDeck,
   upsertCard,
   upsertCards,
-  moveCardsToDeck
+  moveCardsToDeck,
+  fetchAllCardsInDeck
 } from '@/api/cards/db'
 
 let session
@@ -206,5 +207,43 @@ describe('moveCardsToDeck (contract)', () => {
       limit: 1000
     })
     expect(inTarget.map((c) => c.id)).toContain(card.id)
+  })
+})
+
+describe('fetchAllCardsInDeck (contract)', () => {
+  test('returns all cards in the deck with their review rows joined', async () => {
+    await bulkInsertCardsInDeck({
+      deck_id: deck.id,
+      cards: [
+        { front_text: 'A', back_text: 'a' },
+        { front_text: 'B', back_text: 'b' }
+      ]
+    })
+    const result = await fetchAllCardsInDeck(deck.id)
+    expect(result.length).toBe(2)
+    // Each row must carry the joined review field (null when no review exists)
+    expect(result[0]).toHaveProperty('review')
+    expect(result[0]).toHaveProperty('front_text')
+    expect(result[0]).toHaveProperty('back_text')
+  })
+
+  test('returns an empty array for a deck with no cards', async () => {
+    const result = await fetchAllCardsInDeck(deck.id)
+    expect(result).toEqual([])
+  })
+
+  test('only returns cards belonging to the requested deck', async () => {
+    const other = await createDeck(session.client, session.userId, { title: 'Other' })
+    await bulkInsertCardsInDeck({
+      deck_id: deck.id,
+      cards: [{ front_text: 'mine', back_text: '' }]
+    })
+    await bulkInsertCardsInDeck({
+      deck_id: other.id,
+      cards: [{ front_text: 'theirs', back_text: '' }]
+    })
+    const result = await fetchAllCardsInDeck(deck.id)
+    expect(result.every((c) => c.deck_id === deck.id)).toBe(true)
+    expect(result).toHaveLength(1)
   })
 })

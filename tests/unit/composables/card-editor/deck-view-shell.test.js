@@ -243,4 +243,86 @@ describe('useDeckViewShell', () => {
     const shell2 = useDeckViewShell()
     expect(shell2.grid_size.value).toBe('base')
   })
+
+  // ── sort_by / setSortBy ────────────────────────────────────────────────────
+
+  test('sort_by starts as default [obligation]', () => {
+    const shell = useDeckViewShell()
+    expect(shell.sort_by.value).toBe('default')
+  })
+
+  test('sort_by is non-persistent — each fresh call initializes to default regardless of prior state [obligation]', async () => {
+    const shell1 = useDeckViewShell()
+    shell1.setSortBy('difficulty')
+    await nextTick()
+
+    // A new instance must start at default, not pick up the previous value
+    const shell2 = useDeckViewShell()
+    expect(shell2.sort_by.value).toBe('default')
+  })
+
+  test('setSortBy changes sort_by to the given key', () => {
+    const shell = useDeckViewShell()
+    shell.setSortBy('difficulty')
+    expect(shell.sort_by.value).toBe('difficulty')
+  })
+
+  test('setSortBy is a no-op when called with the current value — sort_by does not mutate [obligation]', () => {
+    const shell = useDeckViewShell()
+    shell.setSortBy('difficulty')
+    const before = shell.sort_by.value
+
+    // Should not trigger reactivity or side-effects
+    shell.setSortBy('difficulty')
+    expect(shell.sort_by.value).toBe(before)
+  })
+
+  test('setSortBy no-op does not mutate is_rearranging [obligation]', () => {
+    const shell = useDeckViewShell()
+    shell.toggleRearrange() // turn on
+    expect(shell.is_rearranging.value).toBe(true)
+
+    // Calling setSortBy with the current value (default) while rearranging — must not touch is_rearranging
+    shell.setSortBy('default')
+    expect(shell.is_rearranging.value).toBe(true)
+  })
+
+  test('setSortBy to a non-default key clears is_rearranging [obligation]', () => {
+    const shell = useDeckViewShell()
+    shell.toggleRearrange() // is_rearranging = true, sort_by is already 'default'
+    // Now switch to a real sort key
+    shell.setSortBy('difficulty')
+    expect(shell.is_rearranging.value).toBe(false)
+  })
+
+  test('setSortBy back to default does not clear is_rearranging', () => {
+    const shell = useDeckViewShell()
+    shell.setSortBy('difficulty')
+    // Manually put is_rearranging on to verify default doesn't clear it
+    shell.is_rearranging.value = true
+    shell.setSortBy('default')
+    expect(shell.is_rearranging.value).toBe(true)
+  })
+
+  test('toggleRearrange turning ON resets sort_by to default [obligation]', () => {
+    const shell = useDeckViewShell()
+    shell.setSortBy('difficulty')
+    expect(shell.sort_by.value).toBe('difficulty')
+
+    shell.toggleRearrange() // turning on
+    expect(shell.is_rearranging.value).toBe(true)
+    expect(shell.sort_by.value).toBe('default')
+  })
+
+  test('toggleRearrange turning OFF does not change sort_by', () => {
+    const shell = useDeckViewShell()
+    shell.toggleRearrange() // on — resets sort to default
+    shell.setSortBy('difficulty') // manually set after turning on (edge case)
+    // But toggleRearrange is now off (rearranging=false)... actually we need to toggle again
+    // Let's test a clean toggle off cycle
+    const shell2 = useDeckViewShell()
+    shell2.toggleRearrange() // on → sort=default, rearranging=true
+    shell2.toggleRearrange() // off → rearranging=false, sort stays default
+    expect(shell2.sort_by.value).toBe('default')
+  })
 })
