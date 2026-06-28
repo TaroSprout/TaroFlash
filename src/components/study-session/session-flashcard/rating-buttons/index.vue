@@ -25,8 +25,10 @@ const emit = defineEmits<{
 <template>
   <div data-testid="rating-buttons" class="w-full">
     <advanced-rating-buttons
-      v-if="side === 'back' && show_all_ratings"
+      v-if="show_all_ratings && side !== 'cover'"
+      :side="side"
       @rated="emit('rated', $event)"
+      @revealed="emit('revealed')"
     />
 
     <simple-rating-buttons v-else-if="side === 'back'" @rated="emit('rated', $event)" />
