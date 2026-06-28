@@ -32,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "branch=$(git branch --show-current 2>/dev/null) || exit 0; [ \"$branch\" = \"master\" ] && echo 'On master — cut a branch before editing (see CLAUDE.md branch/PR workflow)' >&2 && exit 2; exit 0"
+            "command": "fp=$(jq -r '.tool_input.file_path // empty'); dir=$( [ -n \"$fp\" ] && dirname \"$fp\" || pwd ); branch=$(git -C \"$dir\" branch --show-current 2>/dev/null) || exit 0; [ \"$branch\" = \"master\" ] && echo 'On master — cut a branch before editing (see CLAUDE.md branch/PR workflow)' >&2 && exit 2; exit 0"
           }
         ]
       }
