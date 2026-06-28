@@ -23,11 +23,16 @@ export type StartLessonVars = {
 }
 
 /**
- * Preprocess the audio (transcode to a compact mono MP3, slicing a long file into
- * overlapping chunks), upload the full file plus any chunks, and kick off async
- * transcription. Returns as soon as the `processing` lesson row exists — a
- * background worker transcribes chunk-by-chunk and the collection view polls the
- * row. Slicing client-side is what lets an arbitrary-length file be transcribed.
+ * Preprocess the audio (transcode a compact mono MP3 for transcription, slicing a
+ * long file into overlapping chunks), upload the untouched original for playback
+ * plus the compact transcription sources, and kick off async transcription.
+ * Returns as soon as the `processing` lesson row exists — a background worker
+ * transcribes chunk-by-chunk and the collection view polls the row. Slicing
+ * client-side is what lets an arbitrary-length file be transcribed.
+ *
+ * Playback and transcription use DIFFERENT assets: `audio_path` is the original
+ * file (true fidelity — the 16 kHz mono encode is unlistenable), while every
+ * entry in the chunk manifest points at the compact encode Whisper wants.
  */
 export function useStartLessonMutation() {
   const queryCache = useQueryCache()
@@ -45,25 +50,33 @@ export function useStartLessonMutation() {
       const { chunkAudio } = await import('@/composables/audio-reader/audio-chunker')
       const { full, ext, chunks } = await chunkAudio(file, onProgress)
 
+      // Transcription sources: the overlapping slices for a long file, or the whole
+      // compact MP3 as a single chunk for a short one. Never the original — it may
+      // be stereo/hi-fi and blow Whisper's 25 MiB per-call cap.
+      const sources = chunks.length ? chunks : [{ blob: full, offset: 0 }]
+
       const base = `${useMemberStore().id}/${uid()}`
-      const audio_path = `${base}.${ext}`
-      const chunkPaths = chunks.map((_, i) => `${base}.chunk${i}.${ext}`)
+      // Keep the original's extension so Storage gets the right content-type and
+      // the player picks a matching decoder; fall back to mp3 if it's missing.
+      const dot = file.name.lastIndexOf('.')
+      const orig_ext = dot === -1 ? 'mp3' : file.name.slice(dot + 1).toLowerCase()
+      const audio_path = `${base}.${orig_ext}`
       const uploaded: string[] = []
 
       try {
-        // Full file first — it's the playback asset and the single-chunk source.
+        // Original first — it's the playback asset, stored untouched.
         onProgress?.({ stage: 'uploading', ratio: 0 })
-        await uploadLessonAudio(audio_path, full)
+        await uploadLessonAudio(audio_path, file)
         uploaded.push(audio_path)
 
-        for (let i = 0; i < chunks.length; i++) {
-          await uploadLessonAudio(chunkPaths[i], chunks[i].blob)
-          uploaded.push(chunkPaths[i])
-          onProgress?.({ stage: 'uploading', ratio: (i + 1) / chunks.length })
+        const manifest: LessonChunk[] = []
+        for (let i = 0; i < sources.length; i++) {
+          const path = `${base}.chunk${i}.${ext}`
+          await uploadLessonAudio(path, sources[i].blob)
+          uploaded.push(path)
+          manifest.push({ path, offset: sources[i].offset })
+          onProgress?.({ stage: 'uploading', ratio: (i + 1) / sources.length })
         }
-
-        // Empty manifest for a short file → the RPC transcribes audio_path whole.
-        const manifest = chunks.map((chunk, i) => ({ path: chunkPaths[i], offset: chunk.offset }))
 
         return await startLessonTranscription({
           collection_id,
