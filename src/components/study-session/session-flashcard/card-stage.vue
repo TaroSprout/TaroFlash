@@ -35,6 +35,7 @@ const emit = defineEmits<{
   (e: 'side-changed'): void
   (e: 'reviewed', grade: Grade | undefined): void
   (e: 'drag-progress', progress: number, duration: number): void
+  (e: 'drag-rating', grade: Grade | null): void
   (e: 'next-flipped'): void
   (e: 'edit-update', side: 'front' | 'back', text: string): void
 }>()
@@ -122,6 +123,7 @@ onUnmounted(() => cover_tween?.kill())
         @side-changed="emit('side-changed')"
         @reviewed="(grade) => emit('reviewed', grade)"
         @drag-progress="(progress, duration) => emit('drag-progress', progress, duration)"
+        @drag-rating="(grade) => emit('drag-rating', grade)"
       />
     </transition>
     <study-card-edit

@@ -12,7 +12,7 @@ import { useSessionCards } from '@/components/study-session/composables/session-
 import { useCoverIntro } from './use-cover-intro'
 import { useModalRequestClose } from '@/composables/modal'
 import { type Grade } from 'ts-fsrs'
-import { computed, useTemplateRef, watch } from 'vue'
+import { computed, ref, useTemplateRef, watch } from 'vue'
 import { useFlushDeckReviews } from '@/api/reviews'
 import { useUpsertDeckMutation } from '@/api/decks'
 import { emitSfx } from '@/sfx/bus'
@@ -79,6 +79,7 @@ const { loading } = useSessionCards({
 const stage = useTemplateRef('stage')
 const header = useTemplateRef('header')
 const progress = useTemplateRef('progress')
+const primed_grade = ref<Grade | null>(null)
 const flushDeckReviews = useFlushDeckReviews()
 const upsert_deck = useUpsertDeckMutation()
 
@@ -186,6 +187,7 @@ watch(mode, (m) => {
           @side-changed="flipCurrentCard"
           @reviewed="onCardReviewed"
           @drag-progress="onDragProgress"
+          @drag-rating="(grade) => (primed_grade = grade)"
           @next-flipped="onNextCardFlipped"
           @edit-update="onEditUpdate"
         />
@@ -196,6 +198,7 @@ watch(mode, (m) => {
           :options="active_card?.preview"
           :side="current_card_side"
           :show_all_ratings="config.show_all_ratings"
+          :primed_grade="primed_grade"
           @started="startSession"
           @rated="onRated"
           @revealed="flipCurrentCard"

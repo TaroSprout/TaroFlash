@@ -9,9 +9,10 @@ type RatingButtonsProps = {
   options?: RecordLog
   side: CardSide
   show_all_ratings?: boolean
+  primed_grade?: Grade | null
 }
 
-const { side, show_all_ratings = false } = defineProps<RatingButtonsProps>()
+const { side, show_all_ratings = false, primed_grade } = defineProps<RatingButtonsProps>()
 
 const { t } = useI18n()
 
@@ -27,11 +28,16 @@ const emit = defineEmits<{
     <advanced-rating-buttons
       v-if="show_all_ratings && side !== 'cover'"
       :side="side"
+      :primed_grade="primed_grade"
       @rated="emit('rated', $event)"
       @revealed="emit('revealed')"
     />
 
-    <simple-rating-buttons v-else-if="side === 'back'" @rated="emit('rated', $event)" />
+    <simple-rating-buttons
+      v-else-if="side === 'back'"
+      :primed_grade="primed_grade"
+      @rated="emit('rated', $event)"
+    />
 
     <ui-button
       v-else-if="side === 'front'"

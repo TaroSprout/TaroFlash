@@ -7,9 +7,10 @@ import UiButtonGroup, { type ButtonGroupOption } from '@/components/ui-kit/butto
 
 type AdvancedRatingButtonsProps = {
   side: CardSide
+  primed_grade?: Grade | null
 }
 
-const { side } = defineProps<AdvancedRatingButtonsProps>()
+const { side, primed_grade } = defineProps<AdvancedRatingButtonsProps>()
 
 const { t } = useI18n()
 
@@ -55,6 +56,7 @@ const success_options = computed<ButtonGroupOption[]>(() => [
       size="xl"
       icon-left="dislike"
       full-width
+      :active="primed_grade === Rating.Again"
       :sfx="{ tap_pre: 'snappy_button_5' }"
       @press="emit('rated', Rating.Again)"
     >
@@ -67,6 +69,7 @@ const success_options = computed<ButtonGroupOption[]>(() => [
       data-theme-dark="stone-700"
       :class="side === 'front' ? 'invisible sm:hidden' : 'sm:col-span-3'"
       :options="success_options"
+      :active_value="primed_grade ?? undefined"
       :sfx="{ tap_pre: 'snappy_button_5' }"
       @press="emit('rated', $event as Grade)"
     />

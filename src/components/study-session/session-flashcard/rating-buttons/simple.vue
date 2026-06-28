@@ -3,6 +3,12 @@ import { type Grade, Rating } from 'ts-fsrs'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 
+type SimpleRatingButtonsProps = {
+  primed_grade?: Grade | null
+}
+
+const { primed_grade } = defineProps<SimpleRatingButtonsProps>()
+
 const { t } = useI18n()
 
 const emit = defineEmits<{ (e: 'rated', grade: Grade): void }>()
@@ -18,6 +24,7 @@ const emit = defineEmits<{ (e: 'rated', grade: Grade): void }>()
       icon-left="dislike"
       full-width
       class="max-w-78.5"
+      :active="primed_grade === Rating.Again"
       :sfx="{ tap_pre: 'snappy_button_5' }"
       @press="emit('rated', Rating.Again)"
     >
@@ -32,6 +39,7 @@ const emit = defineEmits<{ (e: 'rated', grade: Grade): void }>()
       icon-left="like"
       full-width
       class="max-w-78.5"
+      :active="primed_grade === Rating.Good"
       :sfx="{ tap_pre: 'snappy_button_5' }"
       @press="emit('rated', Rating.Good)"
     >

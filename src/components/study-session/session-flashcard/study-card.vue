@@ -34,6 +34,7 @@ const emit = defineEmits<{
   (e: 'side-changed'): void
   (e: 'reviewed', grade: Grade | undefined): void
   (e: 'drag-progress', progress: number, duration: number): void
+  (e: 'drag-rating', grade: Grade | null): void
 }>()
 
 const { getRatingTimeFormat } = useRatingFormat()
@@ -49,6 +50,7 @@ const FULL_REVEAL_DISTANCE = 150
 const card_ref = ref<InstanceType<typeof Card> | null>(null)
 const card_offset = ref<number>(0)
 const drag_rating = ref<Grade>(Rating.Good)
+const primed_grade = ref<Grade | null>(null)
 
 const is_dragging = ref(false)
 // Guards against rapid key/click spam re-triggering an action (and replaying
@@ -161,6 +163,17 @@ function handleDrag(el: HTMLElement, dx: number, dy: number) {
   } else {
     drag_rating.value = Rating.Good
   }
+
+  const new_primed =
+    dx > SWIPE_DISTANCE_THRESHOLD
+      ? drag_rating.value
+      : dx < -SWIPE_DISTANCE_THRESHOLD
+        ? Rating.Again
+        : null
+  if (new_primed !== primed_grade.value) {
+    primed_grade.value = new_primed
+    emit('drag-rating', new_primed)
+  }
 }
 
 /**
@@ -203,6 +216,10 @@ function snapBack(el: HTMLElement) {
   el.style.transform = ''
   card_offset.value = 0
   drag_rating.value = Rating.Good
+  if (primed_grade.value !== null) {
+    primed_grade.value = null
+    emit('drag-rating', null)
+  }
   emit('drag-progress', 0, SNAP_BACK_SPEED)
 
   setTimeout(() => {
