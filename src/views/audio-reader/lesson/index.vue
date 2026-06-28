@@ -87,6 +87,33 @@ const chapter_of = computed(() => ({
 const lesson_chapters = computed(() => lesson.value?.transcript?.chapters ?? [])
 const has_lesson_chapters = computed(() => lesson_chapters.value.length > 1)
 
+// The last chapter whose start time the playhead has reached.
+const active_chapter_index = computed(() => {
+  const chapters = lesson_chapters.value
+  if (chapters.length <= 1) return 0
+  const time = player.current_time.value
+  let idx = 0
+  for (let i = 0; i < chapters.length; i++) {
+    if (chapters[i].start <= time + 0.001) idx = i
+  }
+  return idx
+})
+
+// Mount only the current chapter's paragraphs plus one buffer chapter on each
+// side. Keeps DOM size bounded for long audiobooks (a 4-hour book with 10-min
+// chapters has ~24 chapters; we mount at most 3 at a time). Falls back to the
+// full list when the lesson has no internal chapters.
+const windowed_paragraphs = computed(() => {
+  if (!has_lesson_chapters.value) return paragraphs.value
+  const chapters = lesson_chapters.value
+  const ci = active_chapter_index.value
+  const lo = Math.max(0, ci - 1)
+  const hi = Math.min(chapters.length - 1, ci + 1)
+  const start_time = chapters[lo].start
+  const end_time = chapters[hi + 1]?.start ?? Infinity
+  return paragraphs.value.filter((p) => p.start >= start_time && p.start < end_time)
+})
+
 const show_term = computed(() => popover_open.value && !!selection.value)
 
 // The term card lives in the mobile dock below xl and in the desktop sidebar at
@@ -283,7 +310,8 @@ useAnimatedHeight(footer_swap_el, footer_toolbar, () => !swapping)
       <div data-testid="lesson-view__transcript" class="px-0 pt-6 pb-2 sm:px-6">
         <transcript-view
           ref="transcript"
-          :paragraphs="paragraphs"
+          :paragraphs="windowed_paragraphs"
+          :chapters="lesson_chapters"
           :matches="matches"
           :active_word="active_word"
           :popover_open="popover_open"
