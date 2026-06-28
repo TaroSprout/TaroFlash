@@ -178,6 +178,7 @@ watch(mode, (m) => {
           :editing="editing"
           :active_card="active_card"
           :current_card_side="current_card_side"
+          :show_all_ratings="config.show_all_ratings"
           :next_card="next_card"
           :next_card_side="next_card_side"
           :preview_style="preview_style"
