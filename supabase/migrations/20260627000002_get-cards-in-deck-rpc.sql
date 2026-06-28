@@ -40,7 +40,7 @@ BEGIN
     cwi.back_image_bucket,
     cwi.back_image_path,
     -- Return NULL (not an all-null object) when no review row exists.
-    CASE WHEN r.id IS NOT NULL THEN to_json(r.*) END AS review
+    CASE WHEN r.id IS NOT NULL THEN to_jsonb(r.*) END AS review
   FROM public.cards_with_images cwi
   LEFT JOIN public.reviews r ON r.card_id = cwi.id
   WHERE cwi.deck_id = p_deck_id
