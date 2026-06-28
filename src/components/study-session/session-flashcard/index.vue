@@ -16,6 +16,7 @@ import { computed, useTemplateRef, watch } from 'vue'
 import { useFlushDeckReviews } from '@/api/reviews'
 import { useUpsertDeckMutation } from '@/api/decks'
 import { emitSfx } from '@/sfx/bus'
+import { withDeckConfigDefaults } from '@/utils/deck/defaults'
 import type { CardReviewResult } from '@/components/study-session/composables/session-core'
 
 const { deck, config_override } = defineProps<{
@@ -114,7 +115,10 @@ function toggleRatings() {
   config.show_all_ratings = !config.show_all_ratings
   upsert_deck.mutate({
     ...deck,
-    study_config: { ...deck.study_config, show_all_ratings: config.show_all_ratings }
+    study_config: withDeckConfigDefaults({
+      ...deck.study_config,
+      show_all_ratings: config.show_all_ratings
+    })
   })
 }
 
