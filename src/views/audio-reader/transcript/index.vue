@@ -151,7 +151,7 @@ function commitSelection({
         <h2
           v-if="chapter_headings.get(paragraph.index)"
           data-testid="transcript-view__chapter-heading"
-          class="text-xl font-medium text-brown-500 dark:text-brown-400 -mb-3 mt-4 first:mt-0"
+          class="text-center text-xl font-medium text-brown-500 dark:text-brown-400 mt-16 first:mt-0"
         >
           {{ chapter_headings.get(paragraph.index) }}
         </h2>
