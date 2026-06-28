@@ -145,7 +145,7 @@ function onSelectSize(value: CardGridSize) {
         <labeled-section :label="t('deck-view.page-settings.sort-label')">
           <ui-select-field
             data-testid="page-settings__sort"
-            data-theme="brown-100"
+            data-theme="brown-200"
             :options="sort_options"
             :model-value="sort_by"
             @update:model-value="setSortBy"

@@ -15,7 +15,7 @@ type SelectOption = {
 const {
   options,
   modelValue,
-  menuTheme = 'brown-300',
+  menuTheme = 'brown-200',
   menuThemeDark = 'stone-700',
   menuClass
 } = defineProps<{
@@ -40,6 +40,7 @@ function toggle() {
 }
 
 function select(value: T) {
+  emitSfx('snappy_button_5')
   emit('update:modelValue', value)
   open.value = false
 }
@@ -48,7 +49,7 @@ function select(value: T) {
 <template>
   <div
     data-testid="ui-select-field"
-    data-theme="brown-300"
+    data-theme="brown-200"
     data-theme-dark="stone-700"
     v-bind="$attrs"
   >
