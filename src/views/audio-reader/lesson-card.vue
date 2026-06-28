@@ -7,6 +7,7 @@ import { formatShortDate } from '@/utils/date'
 
 const PHASE_KEYS: Record<LessonPhase, string> = {
   transcribing: 'audio-reader.lesson-card.phase-transcribing',
+  chaptering: 'audio-reader.lesson-card.phase-chaptering',
   translating: 'audio-reader.lesson-card.phase-translating',
   transliterating: 'audio-reader.lesson-card.phase-transliterating'
 }

@@ -347,6 +347,7 @@
   "audio-reader.lesson-card.retry-button": "Retry",
   "audio-reader.lesson-card.processing-fallback": "Processing…",
   "audio-reader.lesson-card.phase-transcribing": "Transcribing…",
+  "audio-reader.lesson-card.phase-chaptering": "Finding chapters…",
   "audio-reader.lesson-card.phase-translating": "Translating…",
   "audio-reader.lesson-card.phase-transliterating": "Adding readings…",
   "audio-reader.lesson-error.timeout": "Transcription timed out. Try again.",
