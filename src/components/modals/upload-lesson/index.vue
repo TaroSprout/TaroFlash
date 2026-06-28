@@ -15,7 +15,7 @@ export type UploadLessonResponse = Lesson | undefined
 // A generous sanity cap on the SOURCE file: long audio is fine (it's chunked),
 // but ffmpeg.wasm decodes the original in memory, so a huge file would OOM the
 // tab. This is NOT Whisper's old 25 MiB cap — the client compresses + slices.
-const MAX_BYTES = 524288000
+const MAX_BYTES = 629145600
 
 const { collection_id, close } = defineProps<{
   collection_id: number
