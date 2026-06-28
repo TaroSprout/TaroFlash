@@ -6,12 +6,11 @@
 
 import { requestStructured } from './anthropic.ts'
 
-const MODEL = 'claude-haiku-4-5'
-
-// Each segment line is trimmed to its opening words: a chapter boundary hinges on
-// how a segment STARTS, not its full body, and trimming keeps a long book's
-// prompt to a sane size.
-const SNIPPET_CHARS = 120
+// Chaptering is a long-context reasoning task — hold the whole arc of the book in
+// mind and decide where it turns — so it runs on Sonnet, not the Haiku the
+// per-batch enrichers use. The full transcript fits easily in the standard 200k
+// window (even a 2-hour book is only ~40k tokens).
+const MODEL = 'claude-sonnet-4-6'
 
 // The model returns the segment index each chapter starts on (chosen from the
 // indices we hand it), which we map back to that segment's audio start time. The
@@ -55,9 +54,7 @@ export async function detectChapters(
 ): Promise<Chapter[] | null> {
   if (segments.length === 0) return null
 
-  const numbered = segments
-    .map((s, i) => `${i}\t[${formatClock(s.start)}] ${s.text.slice(0, SNIPPET_CHARS)}`)
-    .join('\n')
+  const numbered = segments.map((s, i) => `${i}\t[${formatClock(s.start)}] ${s.text}`).join('\n')
   const prompt =
     `Segments (${segments.length}), one per line as "index<TAB>[mm:ss] text":\n` + numbered
 
