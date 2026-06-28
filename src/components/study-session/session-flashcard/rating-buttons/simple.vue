@@ -15,7 +15,7 @@ const emit = defineEmits<{ (e: 'rated', grade: Grade): void }>()
       data-theme="red-500"
       data-theme-dark="red-600"
       size="xl"
-      icon-left="close"
+      icon-left="dislike"
       full-width
       class="max-w-78.5"
       :sfx="{ tap_pre: 'snappy_button_5' }"
@@ -29,7 +29,7 @@ const emit = defineEmits<{ (e: 'rated', grade: Grade): void }>()
       data-theme="blue-500"
       data-theme-dark="blue-650"
       size="xl"
-      icon-left="check"
+      icon-left="like"
       full-width
       class="max-w-78.5"
       :sfx="{ tap_pre: 'snappy_button_5' }"
