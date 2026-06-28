@@ -19,7 +19,7 @@ const emit = defineEmits<{
 
 <template>
   <div data-testid="rating-buttons__simple" class="flex w-full flex-col gap-2">
-    <div data-testid="rating-buttons__review-row" class="grid grid-cols-2 gap-2">
+    <div data-testid="rating-buttons__review-row" class="grid grid-cols-2 gap-1.5">
       <ui-button
         data-testid="rating-buttons__again"
         data-theme="red-500"
@@ -51,9 +51,10 @@ const emit = defineEmits<{
 
     <ui-button
       data-testid="rating-buttons__show"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
+      data-theme="brown-100"
+      data-theme-dark="stone-700"
       size="xl"
+      icon-left="card-flip"
       full-width
       :sfx="{ tap_pre: 'snappy_button_5' }"
       @press="emit('revealed')"

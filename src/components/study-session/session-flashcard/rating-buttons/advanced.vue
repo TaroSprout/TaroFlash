@@ -41,7 +41,7 @@ const success_options = computed<ButtonGroupOption[]>(() => [
       @press="emit('rated', $event as Grade)"
     />
 
-    <div data-testid="rating-buttons__action-row" class="grid grid-cols-2 gap-2">
+    <div data-testid="rating-buttons__action-row" class="grid grid-cols-2 gap-1.5">
       <ui-button
         data-testid="rating-buttons__again"
         data-theme="red-500"
@@ -58,9 +58,10 @@ const success_options = computed<ButtonGroupOption[]>(() => [
 
       <ui-button
         data-testid="rating-buttons__show"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
+        data-theme="brown-100"
+        data-theme-dark="stone-700"
         size="xl"
+        icon-left="card-flip"
         full-width
         :sfx="{ tap_pre: 'snappy_button_5' }"
         @press="emit('revealed')"
