@@ -156,7 +156,7 @@ function commitSelection({
           <h2 class="text-xl font-medium text-brown-500 dark:text-brown-400">
             {{ chapter_headings.get(paragraph.index) }}
           </h2>
-          <hr class="w-16 border-brown-300 dark:border-brown-600" />
+          <hr class="w-16 border-brown-700 dark:border-brown-700" />
         </div>
         <transcript-segment :group="paragraph" :index="paragraph.index" />
       </template>
