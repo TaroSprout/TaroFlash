@@ -28,7 +28,7 @@ export const deckViewShellKey = Symbol('deckViewShell') as InjectionKey<DeckView
 export function useDeckViewShell() {
   const mode = ref<CardEditorMode>('view')
   const grid_size = useLocalRef<CardGridSize>('deck-grid-size', 'md')
-  const sort_by = useLocalRef<CardSortKey>('deck-sort-by', 'default')
+  const sort_by = ref<CardSortKey>('default')
 
   // Drag-to-reorder toggle for the base grid. Lives here (not in the card
   // controller) because it's a view-pane interaction state, like `grid_size`.

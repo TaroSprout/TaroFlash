@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui-kit/button.vue'
 import UiPopover from '@/components/ui-kit/popover.vue'
+import UiSelectField from '@/components/ui-kit/select-field.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import {
@@ -18,11 +19,6 @@ type SizeOption = {
   label_key: string
   preview: string
   radius: string
-}
-
-type SortOption = {
-  value: CardSortKey
-  label_key: string
 }
 
 const { t } = useI18n()
@@ -52,9 +48,9 @@ const size_options: SizeOption[] = [
   }
 ]
 
-const sort_options: SortOption[] = [
-  { value: 'default', label_key: 'deck-view.page-settings.sort-default' },
-  { value: 'difficulty', label_key: 'deck-view.page-settings.sort-difficulty' }
+const sort_options = [
+  { value: 'default' as CardSortKey, label: t('deck-view.page-settings.sort-default') },
+  { value: 'difficulty' as CardSortKey, label: t('deck-view.page-settings.sort-difficulty') }
 ]
 
 function toggle() {
@@ -74,16 +70,6 @@ function onSelectSize(value: CardGridSize) {
 
   emitSfx('select')
   setGridSize(value)
-}
-
-function onSelectSort(value: CardSortKey) {
-  if (sort_by.value === value) {
-    emitSfx('digi_powerdown')
-    return
-  }
-
-  emitSfx('select')
-  setSortBy(value)
 }
 </script>
 
@@ -157,22 +143,12 @@ function onSelectSort(value: CardSortKey) {
         </labeled-section>
 
         <labeled-section :label="t('deck-view.page-settings.sort-label')">
-          <div data-testid="page-settings__sort" class="flex flex-col gap-1.5">
-            <button
-              v-for="option in sort_options"
-              :key="option.value"
-              type="button"
-              role="radio"
-              :aria-checked="sort_by === option.value"
-              :data-testid="`page-settings__sort-option-${option.value}`"
-              :data-active="sort_by === option.value"
-              class="flex w-full cursor-pointer items-center rounded-4 px-3 py-2 text-base text-brown-700 outline outline-brown-100 transition-colors hover:bg-brown-500 hover:bgx-diagonal-stripes hover:bgx-opacity-10 dark:text-brown-100 dark:hover:bg-grey-900 data-[active=true]:bg-(--theme-primary) data-[active=true]:bgx-diagonal-stripes data-[active=true]:bgx-opacity-10 data-[active=true]:text-white"
-              v-sfx="{ hover: sort_by === option.value ? undefined : TYPE_SFX }"
-              @click="onSelectSort(option.value)"
-            >
-              {{ t(option.label_key) }}
-            </button>
-          </div>
+          <ui-select-field
+            data-testid="page-settings__sort"
+            :options="sort_options"
+            :model-value="sort_by"
+            @update:model-value="setSortBy"
+          />
         </labeled-section>
       </section-list>
     </div>
