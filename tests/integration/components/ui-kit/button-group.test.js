@@ -19,8 +19,9 @@ import UiButtonGroup from '@/components/ui-kit/button-group.vue'
 const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
+  props: { active: { type: Boolean, default: false } },
   emits: ['press'],
-  setup(_props, { emit, slots }) {
+  setup(props, { emit, slots }) {
     const attrs = useAttrs()
     return () =>
       h(
@@ -28,6 +29,7 @@ const UiButtonStub = defineComponent({
         {
           ...attrs,
           'data-testid': 'ui-button-group__button',
+          'data-active': props.active ? 'true' : null,
           onClick: () => emit('press')
         },
         slots.default?.()
@@ -155,6 +157,36 @@ describe('UiButtonGroup', () => {
     const wrapper = mountGroup({ options: DOUBLE, size: 'sm' })
     for (const btn of getButtons(wrapper)) {
       expect(styleOf(btn)).toContain('--btn-padding-x: 8px')
+    }
+  })
+
+  // ── active_value prop [obligation] ────────────────────────────────────────
+
+  test('button matching active_value has data-active="true" [obligation]', () => {
+    const wrapper = mountGroup({ options: DOUBLE, active_value: 'a' })
+    const buttons = getButtons(wrapper)
+    expect(buttons[0].attributes('data-active')).toBe('true')
+    expect(buttons[1].attributes('data-active')).toBeUndefined()
+  })
+
+  test('no active_value — no button has data-active [obligation]', () => {
+    const wrapper = mountGroup({ options: DOUBLE })
+    for (const btn of getButtons(wrapper)) {
+      expect(btn.attributes('data-active')).toBeUndefined()
+    }
+  })
+
+  test('active_value matching second option marks second button active [obligation]', () => {
+    const wrapper = mountGroup({ options: DOUBLE, active_value: 'b' })
+    const buttons = getButtons(wrapper)
+    expect(buttons[0].attributes('data-active')).toBeUndefined()
+    expect(buttons[1].attributes('data-active')).toBe('true')
+  })
+
+  test('active_value with no match leaves all buttons inactive [obligation]', () => {
+    const wrapper = mountGroup({ options: DOUBLE, active_value: 'z' })
+    for (const btn of getButtons(wrapper)) {
+      expect(btn.attributes('data-active')).toBeUndefined()
     }
   })
 

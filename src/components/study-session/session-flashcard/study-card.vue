@@ -1,20 +1,31 @@
 <script setup lang="ts">
 import Card from '@/components/card/index.vue'
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import UiIcon from '@/components/ui-kit/icon.vue'
+import { computed, onMounted, ref } from 'vue'
 import { type Grade, Rating, type RecordLog } from 'ts-fsrs'
 import { emitStudySfx } from '@/sfx/bus'
 import { useGestures } from '@/composables/ui/gestures'
 import { useShortcuts } from '@/composables/shortcuts'
 import { useRatingFormat } from '@/composables/fsrs'
+import { useI18n } from 'vue-i18n'
 import { useDeckContext } from '../deck-context'
+
+const DRAG_RATING_CONFIG = {
+  [Rating.Hard]: { icon: 'smiley-worried', label_key: 'study.flashcard.drag-rating.hard-label' },
+  [Rating.Good]: { icon: 'smiley-happy', label_key: 'study.flashcard.drag-rating.good-label' },
+  [Rating.Easy]: { icon: 'smiley-very-happy', label_key: 'study.flashcard.drag-rating.easy-label' }
+} as const
 
 defineExpose({ rate })
 
-const { card, side, options } = defineProps<{
+type StudyCardProps = {
   card?: Card
   side: CardSide
   options?: RecordLog
-}>()
+  show_all_ratings?: boolean
+}
+
+const { card, side, options, show_all_ratings } = defineProps<StudyCardProps>()
 
 const deck_context = useDeckContext()
 
@@ -23,18 +34,23 @@ const emit = defineEmits<{
   (e: 'side-changed'): void
   (e: 'reviewed', grade: Grade | undefined): void
   (e: 'drag-progress', progress: number, duration: number): void
+  (e: 'drag-rating', grade: Grade | null): void
 }>()
 
 const { getRatingTimeFormat } = useRatingFormat()
+const { t } = useI18n()
 
 const FLIP_THRESHOLD = 10
 const SWIPE_DISTANCE_THRESHOLD = 50
+const VERTICAL_RATING_THRESHOLD = 50
 const FLING_SPEED = 0.25
 const SNAP_BACK_SPEED = 0.15
 const FULL_REVEAL_DISTANCE = 150
 
 const card_ref = ref<InstanceType<typeof Card> | null>(null)
 const card_offset = ref<number>(0)
+const drag_rating = ref<Grade>(Rating.Good)
+const primed_grade = ref<Grade | null>(null)
 
 const is_dragging = ref(false)
 // Guards against rapid key/click spam re-triggering an action (and replaying
@@ -44,11 +60,16 @@ const is_dragging = ref(false)
 // unmounts on advance.
 const is_animating = ref(false)
 
-const passVisible = computed(() => card_offset.value > SWIPE_DISTANCE_THRESHOLD)
-const failVisible = computed(() => card_offset.value < -SWIPE_DISTANCE_THRESHOLD)
-
 const { register } = useGestures()
 const shortcuts = useShortcuts('study-card')
+
+const passVisible = computed(() => card_offset.value > SWIPE_DISTANCE_THRESHOLD)
+const failVisible = computed(() => card_offset.value < -SWIPE_DISTANCE_THRESHOLD)
+const drag_rating_config = computed(
+  () =>
+    DRAG_RATING_CONFIG[drag_rating.value as keyof typeof DRAG_RATING_CONFIG] ??
+    DRAG_RATING_CONFIG[Rating.Good]
+)
 
 onMounted(() => {
   const el = card_ref.value?.$el as HTMLElement | null
@@ -58,7 +79,7 @@ onMounted(() => {
     onStart: () => {
       el.style.transition = 'none'
     },
-    onMove: ({ dx }) => handleDrag(el, dx),
+    onMove: ({ dx, dy }) => handleDrag(el, dx, dy),
     onEnd: (result) => endDrag(el, result),
     onCancel: () => snapBack(el)
   })
@@ -123,15 +144,36 @@ function flingCard(
 }
 
 /** Tracks the card position and tilt while the user is dragging. */
-function handleDrag(el: HTMLElement, dx: number) {
+function handleDrag(el: HTMLElement, dx: number, dy: number) {
   if (side === 'cover') return
 
   if (toSwipeZone(card_offset.value) !== toSwipeZone(dx)) emitStudySfx('music_plink_mid')
 
-  is_dragging.value = Math.abs(dx) > FLIP_THRESHOLD // drives the grab cursor, with a bit of wiggle room before it engages
+  is_dragging.value = Math.abs(dx) > FLIP_THRESHOLD
   card_offset.value = dx
   el.style.transform = `translateX(${dx}px) rotate(${dx / 10}deg)`
   emit('drag-progress', Math.min(Math.abs(dx) / FULL_REVEAL_DISTANCE, 1), 0)
+
+  if (show_all_ratings && dx > SWIPE_DISTANCE_THRESHOLD) {
+    const new_rating = toDragRating(dy)
+    if (new_rating !== drag_rating.value) {
+      emitStudySfx('music_plink_mid')
+      drag_rating.value = new_rating
+    }
+  } else {
+    drag_rating.value = Rating.Good
+  }
+
+  const new_primed =
+    dx > SWIPE_DISTANCE_THRESHOLD
+      ? drag_rating.value
+      : dx < -SWIPE_DISTANCE_THRESHOLD
+        ? Rating.Again
+        : null
+  if (new_primed !== primed_grade.value) {
+    primed_grade.value = new_primed
+    emit('drag-rating', new_primed)
+  }
 }
 
 /**
@@ -152,7 +194,8 @@ function endDrag(el: HTMLElement, { dx, dy }: { dx: number; dy: number }) {
 
   if (side === 'cover') return
 
-  if (Math.abs(dx) > SWIPE_DISTANCE_THRESHOLD) flingCard(el, Math.sign(dx))
+  if (Math.abs(dx) > SWIPE_DISTANCE_THRESHOLD)
+    flingCard(el, Math.sign(dx), Math.sign(dx) > 0 ? drag_rating.value : undefined)
   else snapBack(el)
 }
 
@@ -172,11 +215,23 @@ function snapBack(el: HTMLElement) {
   el.style.transition = `transform ${SNAP_BACK_SPEED}s ease-out`
   el.style.transform = ''
   card_offset.value = 0
+  drag_rating.value = Rating.Good
+  if (primed_grade.value !== null) {
+    primed_grade.value = null
+    emit('drag-rating', null)
+  }
   emit('drag-progress', 0, SNAP_BACK_SPEED)
 
   setTimeout(() => {
     is_dragging.value = false
   }, SNAP_BACK_SPEED * 1000)
+}
+
+/** Maps vertical drag offset to a rating when past the right threshold. */
+function toDragRating(dy: number): Grade {
+  if (dy < -VERTICAL_RATING_THRESHOLD) return Rating.Easy
+  if (dy > VERTICAL_RATING_THRESHOLD) return Rating.Hard
+  return Rating.Good
 }
 
 /** Maps a drag offset to a swipe zone: 1 (pass), -1 (fail), 0 (neutral). */
@@ -205,6 +260,7 @@ function toSwipeZone(offset: number) {
           class="review-label bg-pink-400"
           :class="{ 'review-label--visible': failVisible }"
         >
+          <ui-icon src="dislike" class="size-14" />
           {{ $t('study.flashcard.rating.fail-feedback') }}
           <p class="text-sm">{{ getRatingTimeFormat(Rating.Again, options) }}</p>
         </div>
@@ -213,8 +269,16 @@ function toSwipeZone(offset: number) {
           class="review-label bg-green-400"
           :class="{ 'review-label--visible': passVisible }"
         >
-          {{ $t('study.flashcard.rating.pass-feedback') }}
-          <p class="text-sm">{{ getRatingTimeFormat(Rating.Good, options) }}</p>
+          <template v-if="show_all_ratings">
+            <ui-icon :src="drag_rating_config.icon" class="size-14" />
+            {{ t(drag_rating_config.label_key) }}
+            <p class="text-sm">{{ getRatingTimeFormat(drag_rating, options) }}</p>
+          </template>
+          <template v-else>
+            <ui-icon src="like" class="size-14" />
+            {{ $t('study.flashcard.rating.pass-feedback') }}
+            <p class="text-sm">{{ getRatingTimeFormat(Rating.Good, options) }}</p>
+          </template>
         </div>
       </div>
     </card>

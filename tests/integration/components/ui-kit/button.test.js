@@ -132,7 +132,7 @@ describe('UiButton', () => {
       expect(onClick).toHaveBeenCalledTimes(1)
     })
 
-    test('toggles data-playing while the tap is in flight', async () => {
+    test('toggles data-active while the tap is in flight', async () => {
       let resolveTween
       const { gsap } = await import('gsap')
       gsap.to.mockImplementationOnce(
@@ -153,7 +153,7 @@ describe('UiButton', () => {
 
       await wrapper.find('[data-testid="ui-kit-button"]').trigger('click')
 
-      expect(wrapper.find('[data-testid="ui-kit-button"]').attributes('data-playing')).toBe('true')
+      expect(wrapper.find('[data-testid="ui-kit-button"]').attributes('data-active')).toBe('true')
 
       resolveTween()
     })
@@ -222,7 +222,7 @@ describe('UiButton', () => {
         vi.useRealTimers()
       })
 
-      test('tapAnimate=false still toggles data-playing on a coarse tap [obligation]', async () => {
+      test('tapAnimate=false still toggles data-active on a coarse tap [obligation]', async () => {
         const { gsap } = await import('gsap')
         gsap.to.mockClear()
 
@@ -237,9 +237,7 @@ describe('UiButton', () => {
           .element.dispatchEvent(new MouseEvent('click', { bubbles: true }))
         await wrapper.vm.$nextTick()
 
-        expect(wrapper.find('[data-testid="ui-kit-button"]').attributes('data-playing')).toBe(
-          'true'
-        )
+        expect(wrapper.find('[data-testid="ui-kit-button"]').attributes('data-active')).toBe('true')
       })
 
       test('tapAnimate=false does NOT invoke the GSAP tween [obligation]', async () => {
@@ -289,6 +287,52 @@ describe('UiButton', () => {
 
         expect(gsap.to).toHaveBeenCalled()
       })
+    })
+  })
+
+  // ── active prop [obligation] ───────────────────────────────────────────────
+
+  describe('active prop', () => {
+    test('active=true sets data-active="true" on the root element [obligation]', () => {
+      const wrapper = mountButton({ active: true })
+      expect(wrapper.find('[data-testid="ui-kit-button"]').attributes('data-active')).toBe('true')
+    })
+
+    test('active=false leaves data-active unset [obligation]', () => {
+      const wrapper = mountButton({ active: false })
+      expect(
+        wrapper.find('[data-testid="ui-kit-button"]').attributes('data-active')
+      ).toBeUndefined()
+    })
+
+    test('active=true and playing both set data-active="true" (not duplicated) [obligation]', async () => {
+      let resolveTween
+      const { gsap } = await import('gsap')
+      gsap.to.mockImplementationOnce(
+        (_el, opts) =>
+          new Promise((resolve) => {
+            resolveTween = () => {
+              opts.onComplete()
+              resolve()
+            }
+          })
+      )
+
+      coarseRef.value = true
+      const wrapper = shallowMount(UiButton, {
+        props: { active: true, playOnTap: true, tapAnimate: true },
+        attrs: { onClick: vi.fn() }
+      })
+
+      await wrapper.find('[data-testid="ui-kit-button"]').trigger('click')
+
+      // Both active (prop) and playing (state) are true — single data-active="true"
+      const el = wrapper.find('[data-testid="ui-kit-button"]')
+      expect(el.attributes('data-active')).toBe('true')
+      // attributes() returns a flat object — duplicate attrs would merge; just
+      // verify the single attribute has the right value.
+
+      resolveTween()
     })
   })
 

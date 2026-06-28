@@ -810,4 +810,229 @@ describe('StudyCard', () => {
 
     expect(el.style.transition).toBe('none')
   })
+
+  // ── toDragRating boundary values [obligation] ──────────────────────────────
+  // toDragRating uses exclusive comparison (< / >), so dy === ±50 must stay Good.
+
+  test('toDragRating: dy === -50 returns Good (exclusive boundary, not Easy) [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', show_all_ratings: true, options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    // Enter the right zone with dy exactly at -VERTICAL_RATING_THRESHOLD (-50)
+    callbacks.onMove({ dx: 100, dy: -50 })
+    await flushPromises()
+
+    // primed_grade transitions from null → Good (not Easy); drag-rating emits Good
+    const events = wrapper.emitted('drag-rating')
+    expect(events).toBeTruthy()
+    expect(events[events.length - 1][0]).toBe(Rating.Good)
+  })
+
+  test('toDragRating: dy === +50 returns Good (exclusive boundary, not Hard) [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', show_all_ratings: true, options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    callbacks.onMove({ dx: 100, dy: 50 })
+    await flushPromises()
+
+    const events = wrapper.emitted('drag-rating')
+    expect(events).toBeTruthy()
+    expect(events[events.length - 1][0]).toBe(Rating.Good)
+  })
+
+  test('toDragRating: dy < -50 returns Easy [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', show_all_ratings: true, options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    // First move to enter right zone as Good
+    callbacks.onMove({ dx: 100, dy: 0 })
+    await flushPromises()
+    // Then move dy past Easy threshold
+    callbacks.onMove({ dx: 100, dy: -51 })
+    await flushPromises()
+
+    const events = wrapper.emitted('drag-rating')
+    expect(events[events.length - 1][0]).toBe(Rating.Easy)
+  })
+
+  test('toDragRating: dy > +50 returns Hard [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', show_all_ratings: true, options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    callbacks.onMove({ dx: 100, dy: 0 })
+    await flushPromises()
+    callbacks.onMove({ dx: 100, dy: 51 })
+    await flushPromises()
+
+    const events = wrapper.emitted('drag-rating')
+    expect(events[events.length - 1][0]).toBe(Rating.Hard)
+  })
+
+  // ── drag_rating resets to Good when leaving the right zone [obligation] ────
+
+  test('drag_rating resets to Good when dx drops back below SWIPE_DISTANCE_THRESHOLD [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', show_all_ratings: true, options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    // Enter right zone with Hard rating
+    callbacks.onMove({ dx: 100, dy: 51 })
+    await flushPromises()
+
+    // Verify Hard is primed
+    let events = wrapper.emitted('drag-rating')
+    expect(events[events.length - 1][0]).toBe(Rating.Hard)
+
+    // Return dx below threshold (neutral zone) — drag_rating must reset to Good
+    callbacks.onMove({ dx: 30, dy: 51 })
+    await flushPromises()
+
+    // primed_grade is now null (neutral zone), drag-rating emits null
+    events = wrapper.emitted('drag-rating')
+    expect(events[events.length - 1][0]).toBeNull()
+
+    // Re-enter the right zone at dy=0 (Good range); drag_rating is Good (reset confirmed)
+    callbacks.onMove({ dx: 100, dy: 0 })
+    await flushPromises()
+
+    events = wrapper.emitted('drag-rating')
+    expect(events[events.length - 1][0]).toBe(Rating.Good)
+  })
+
+  // ── drag_rating resets to Good on snapBack [obligation] ───────────────────
+
+  test('drag_rating resets to Good on snapBack (onCancel) [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', show_all_ratings: true, options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    // Set drag_rating to Hard
+    callbacks.onMove({ dx: 100, dy: 51 })
+    await flushPromises()
+
+    // snapBack via onCancel
+    callbacks.onCancel()
+    await flushPromises()
+
+    // snap-back emits drag-rating(null) to signal primed reset
+    let events = wrapper.emitted('drag-rating')
+    expect(events[events.length - 1][0]).toBeNull()
+
+    // Re-enter the right zone with neutral dy — should emit Good (drag_rating was reset)
+    callbacks.onMove({ dx: 100, dy: 0 })
+    await flushPromises()
+
+    events = wrapper.emitted('drag-rating')
+    expect(events[events.length - 1][0]).toBe(Rating.Good)
+  })
+
+  // ── primed_grade emits drag-rating on zone transitions [obligation] ────────
+
+  test('primed_grade emits drag-rating with current rating when entering right zone [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    callbacks.onMove({ dx: 100, dy: 0 })
+    await flushPromises()
+
+    const events = wrapper.emitted('drag-rating')
+    expect(events).toBeTruthy()
+    expect(events[0][0]).toBe(Rating.Good)
+  })
+
+  test('primed_grade emits Rating.Again when entering left zone [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    callbacks.onMove({ dx: -100, dy: 0 })
+    await flushPromises()
+
+    const events = wrapper.emitted('drag-rating')
+    expect(events).toBeTruthy()
+    expect(events[0][0]).toBe(Rating.Again)
+  })
+
+  test('primed_grade emits null when returning to neutral from right zone [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    // Enter right zone
+    callbacks.onMove({ dx: 100, dy: 0 })
+    await flushPromises()
+    // Return to neutral
+    callbacks.onMove({ dx: 20, dy: 0 })
+    await flushPromises()
+
+    const events = wrapper.emitted('drag-rating')
+    expect(events[events.length - 1][0]).toBeNull()
+  })
+
+  test('primed_grade emits new drag-rating when drag_rating changes within the right zone [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', show_all_ratings: true, options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    // Enter right zone as Good
+    callbacks.onMove({ dx: 100, dy: 0 })
+    await flushPromises()
+    const after_good = wrapper.emitted('drag-rating').length
+
+    // Change dy to Easy range inside the right zone
+    callbacks.onMove({ dx: 100, dy: -51 })
+    await flushPromises()
+
+    const events = wrapper.emitted('drag-rating')
+    expect(events.length).toBeGreaterThan(after_good)
+    expect(events[events.length - 1][0]).toBe(Rating.Easy)
+  })
+
+  // ── endDrag grade selection with show_all_ratings [obligation] ────────────
+
+  test('endDrag passes drag_rating.value (not always Good) when show_all_ratings=true [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', show_all_ratings: true, options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    // Enter right zone with Hard rating
+    callbacks.onMove({ dx: 100, dy: 51 })
+    await flushPromises()
+
+    // Fling right — should pass drag_rating.value (Hard)
+    callbacks.onEnd({ dx: 100, dy: 51 })
+    await flushPromises()
+
+    const cardEl = wrapper.find('[data-testid="study-card"]').element
+    cardEl.dispatchEvent(new Event('transitionend'))
+    await flushPromises()
+
+    expect(wrapper.emitted('reviewed')).toHaveLength(1)
+    expect(wrapper.emitted('reviewed')[0][0]).toBe(Rating.Hard)
+  })
+
+  test('endDrag always uses Rating.Good for right flings when show_all_ratings=false [obligation]', async () => {
+    const wrapper = mountStudyCard({ side: 'back', show_all_ratings: false, options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    // Even with dy in Hard range, drag_rating stays Good (show_all_ratings=false)
+    callbacks.onMove({ dx: 100, dy: 51 })
+    await flushPromises()
+
+    callbacks.onEnd({ dx: 100, dy: 51 })
+    await flushPromises()
+
+    const cardEl = wrapper.find('[data-testid="study-card"]').element
+    cardEl.dispatchEvent(new Event('transitionend'))
+    await flushPromises()
+
+    expect(wrapper.emitted('reviewed')).toHaveLength(1)
+    expect(wrapper.emitted('reviewed')[0][0]).toBe(Rating.Good)
+  })
 })

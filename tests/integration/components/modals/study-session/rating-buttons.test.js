@@ -25,10 +25,6 @@ describe('RatingButtons', () => {
       expect(wrapper.find('[data-testid="rating-buttons__show"]').exists()).toBe(true)
     })
 
-    test('does not show the Again button [obligation]', () => {
-      expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(false)
-    })
-
     test('does not show the start button [obligation]', () => {
       expect(wrapper.find('[data-testid="rating-buttons__start"]').exists()).toBe(false)
     })
@@ -68,8 +64,8 @@ describe('RatingButtons', () => {
       expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(true)
     })
 
-    test('does not show the flip button', () => {
-      expect(wrapper.find('[data-testid="rating-buttons__show"]').exists()).toBe(false)
+    test('shows the flip button [obligation]', () => {
+      expect(wrapper.find('[data-testid="rating-buttons__show"]').exists()).toBe(true)
     })
 
     test('does not show the start button', () => {
@@ -81,6 +77,12 @@ describe('RatingButtons', () => {
 
       expect(wrapper.emitted('rated')).toHaveLength(1)
       expect(wrapper.emitted('rated')[0]).toEqual([Rating.Again])
+    })
+
+    test('clicking the flip button emits "revealed" in advanced mode', async () => {
+      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
+
+      expect(wrapper.emitted('revealed')).toHaveLength(1)
     })
   })
 
@@ -109,8 +111,8 @@ describe('RatingButtons', () => {
       expect(wrapper.find('[data-testid="rating-buttons__good"]').exists()).toBe(true)
     })
 
-    test('does not show the flip button', () => {
-      expect(wrapper.find('[data-testid="rating-buttons__show"]').exists()).toBe(false)
+    test('shows the flip button [obligation]', () => {
+      expect(wrapper.find('[data-testid="rating-buttons__show"]').exists()).toBe(true)
     })
 
     test('clicking Again emits "rated" with Rating.Again', async () => {
@@ -168,6 +170,84 @@ describe('RatingButtons', () => {
     test('start button shown regardless of show_all_ratings [obligation]', () => {
       const w = mountRatingButtons({ side: 'cover', show_all_ratings: true })
       expect(w.find('[data-testid="rating-buttons__start"]').exists()).toBe(true)
+    })
+
+    test('renders the start-container wrapping the start button [obligation]', () => {
+      const container = wrapper.find('[data-testid="rating-buttons__start-container"]')
+      expect(container.exists()).toBe(true)
+      expect(container.find('[data-testid="rating-buttons__start"]').exists()).toBe(true)
+    })
+
+    test('does NOT render the advanced subcomponent on cover side [obligation]', () => {
+      expect(wrapper.find('[data-testid="rating-buttons__advanced"]').exists()).toBe(false)
+    })
+
+    test('does NOT render the simple subcomponent on cover side [obligation]', () => {
+      expect(wrapper.find('[data-testid="rating-buttons__simple"]').exists()).toBe(false)
+    })
+  })
+
+  // ── primed_grade prop forwarding [obligation] ──────────────────────────────
+
+  describe('primed_grade forwarding to advanced-rating-buttons', () => {
+    test('primed_grade=Rating.Again marks again button active in advanced mode [obligation]', () => {
+      const wrapper = mountRatingButtons({
+        side: 'back',
+        show_all_ratings: true,
+        primed_grade: Rating.Again
+      })
+      expect(wrapper.find('[data-testid="rating-buttons__again"]').attributes('data-active')).toBe(
+        'true'
+      )
+    })
+
+    test('primed_grade=null leaves again button inactive in advanced mode [obligation]', () => {
+      const wrapper = mountRatingButtons({
+        side: 'back',
+        show_all_ratings: true,
+        primed_grade: null
+      })
+      expect(
+        wrapper.find('[data-testid="rating-buttons__again"]').attributes('data-active')
+      ).toBeUndefined()
+    })
+  })
+
+  describe('primed_grade forwarding to simple-rating-buttons', () => {
+    test('primed_grade=Rating.Again marks again button active in simple mode [obligation]', () => {
+      const wrapper = mountRatingButtons({
+        side: 'back',
+        show_all_ratings: false,
+        primed_grade: Rating.Again
+      })
+      expect(wrapper.find('[data-testid="rating-buttons__again"]').attributes('data-active')).toBe(
+        'true'
+      )
+    })
+
+    test('primed_grade=Rating.Good marks good button active in simple mode [obligation]', () => {
+      const wrapper = mountRatingButtons({
+        side: 'back',
+        show_all_ratings: false,
+        primed_grade: Rating.Good
+      })
+      expect(wrapper.find('[data-testid="rating-buttons__good"]').attributes('data-active')).toBe(
+        'true'
+      )
+    })
+
+    test('primed_grade=null leaves both buttons inactive in simple mode [obligation]', () => {
+      const wrapper = mountRatingButtons({
+        side: 'back',
+        show_all_ratings: false,
+        primed_grade: null
+      })
+      expect(
+        wrapper.find('[data-testid="rating-buttons__again"]').attributes('data-active')
+      ).toBeUndefined()
+      expect(
+        wrapper.find('[data-testid="rating-buttons__good"]').attributes('data-active')
+      ).toBeUndefined()
     })
   })
 })

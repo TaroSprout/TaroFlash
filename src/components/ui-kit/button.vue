@@ -17,6 +17,7 @@ export type ButtonProps = {
   iconRight?: string
   iconLeft?: string
   fancyHover?: boolean
+  active?: boolean
   loading?: boolean
   sfx?: SfxOptions
   fullWidth?: boolean
@@ -42,6 +43,7 @@ const {
   iconRight,
   iconLeft,
   fancyHover = true,
+  active = false,
   sfx = {},
   fullWidth = false,
   mobileTooltip = false,
@@ -116,7 +118,7 @@ function onClick(e: MouseEvent) {
     class="ui-kit-btn group/btn"
     v-sfx="merged_sfx"
     v-bind="$attrs"
-    :data-playing="playing || null"
+    :data-active="playing || active || null"
     :aria-disabled="disabled || undefined"
     @click="onClick"
     :class="[
@@ -130,7 +132,7 @@ function onClick(e: MouseEvent) {
         'ui-kit-btn--disabled': disabled,
         // Ghost is transparent at rest; fill it behind the content while the
         // coarse quiet tap sweeps, so the bgx reads against a surface.
-        'data-[playing=true]:bg-(--theme-primary)': variant === 'ghost' && !disabled,
+        'data-[active=true]:bg-(--theme-primary)': variant === 'ghost' && !disabled,
         'rounded-full!': roundedFull,
         'w-full!': fullWidth
       }
@@ -153,13 +155,13 @@ function onClick(e: MouseEvent) {
       :class="{
         'bg-(--theme-primary) flex items-center justify-center': loading,
         hidden: !loading,
-        'group-hover/btn:block group-data-[playing=true]/btn:block':
+        'group-hover/btn:block group-data-[active=true]/btn:block':
           !loading && !disabled && fancyHover && variant !== 'ghost',
         'bgx-color-[var(--theme-neutral)]': variant === 'solid',
         'bgx-color-[var(--theme-on-neutral)]': inverted,
         // Ghost has no surface, so only the coarse quiet tap sweeps it (the
         // theme-primary fill is added to the button root, behind the content).
-        'group-data-[playing=true]/btn:block bgx-color-[var(--theme-neutral)]':
+        'group-data-[active=true]/btn:block bgx-color-[var(--theme-neutral)]':
           !loading && !disabled && variant === 'ghost'
       }"
     >
@@ -367,19 +369,19 @@ function onClick(e: MouseEvent) {
   }
 }
 
-.ui-kit-btn[data-playing] {
+.ui-kit-btn[data-active] {
   --btn-outline-width: 2px;
 }
-.ui-kit-btn[data-playing] .btn-icon.btn-icon--left {
+.ui-kit-btn[data-active] .btn-icon.btn-icon--left {
   transform: scale(1.3) rotate(-5deg);
 }
-.ui-kit-btn[data-playing] .btn-icon.btn-icon--right {
+.ui-kit-btn[data-active] .btn-icon.btn-icon--right {
   transform: scale(1.3) rotate(5deg);
 }
 
-/* Quiet tap: the bgx sweep still plays via [data-playing], but the icon holds
+/* Quiet tap: the bgx sweep still plays via [data-active], but the icon holds
    still — no scale/rotate on tap. Hover keeps its own nudge. */
-.ui-kit-btn--quiet-tap[data-playing] .btn-icon {
+.ui-kit-btn--quiet-tap[data-active] .btn-icon {
   transform: none;
 }
 

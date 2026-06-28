@@ -17,16 +17,25 @@ type CardStageProps = {
   next_card?: StudyCardType
   next_card_side: CardSide
   preview_style: StyleValue
+  show_all_ratings?: boolean
 }
 
-const { loading, editing, active_card, current_card_side, next_card, next_card_side } =
-  defineProps<CardStageProps>()
+const {
+  loading,
+  editing,
+  active_card,
+  current_card_side,
+  next_card,
+  next_card_side,
+  show_all_ratings
+} = defineProps<CardStageProps>()
 
 const emit = defineEmits<{
   (e: 'started'): void
   (e: 'side-changed'): void
   (e: 'reviewed', grade: Grade | undefined): void
   (e: 'drag-progress', progress: number, duration: number): void
+  (e: 'drag-rating', grade: Grade | null): void
   (e: 'next-flipped'): void
   (e: 'edit-update', side: 'front' | 'back', text: string): void
 }>()
@@ -109,10 +118,12 @@ onUnmounted(() => cover_tween?.kill())
         :card="active_card"
         :side="current_card_side"
         :options="active_card?.preview"
+        :show_all_ratings="show_all_ratings"
         @started="emit('started')"
         @side-changed="emit('side-changed')"
         @reviewed="(grade) => emit('reviewed', grade)"
         @drag-progress="(progress, duration) => emit('drag-progress', progress, duration)"
+        @drag-rating="(grade) => emit('drag-rating', grade)"
       />
     </transition>
     <study-card-edit

@@ -56,7 +56,7 @@ function onPaneEnter(el: Element, done: () => void) {
     :class="
       viewport === 'mobile'
         ? 'h-full outline-1 outline-brown-100 [--session-padding:1.5rem]'
-        : 'h-160 rounded-8 shadow-lg border-t border-l border-brown-100 dark:border-grey-900 [--session-padding:2rem]'
+        : 'h-170 rounded-8 shadow-lg border-t border-l border-brown-100 dark:border-grey-900 [--session-padding:2rem]'
     "
   >
     <div data-testid="study-session__outlet" class="relative w-full h-full overflow-hidden">
