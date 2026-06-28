@@ -110,6 +110,13 @@ class AudioPlayer {
       throw new Error(`Sound "${key}" not loaded.`)
     }
 
+    // A muted bus (volume 0) has nothing to play. Bail before resuming the
+    // audio context — resume() steals media-session focus and pauses the
+    // user's background music, even for a silent buffer.
+    const volume = options.volume ?? sound.base_volume * this._getVolumeMultiplier(sound, options)
+
+    if (volume <= 0) return
+
     const running = await engine.resume()
 
     if (!running) return
@@ -130,7 +137,6 @@ class AudioPlayer {
         resolve()
       }
 
-      const volume = options.volume ?? sound.base_volume * this._getVolumeMultiplier(sound, options)
       const { ended } = engine.play(sound.buffer, volume)
       const fallbackMs = Math.ceil((sound.buffer.duration || 1) * 1000) + 500
       const timer = setTimeout(settle, fallbackMs)
