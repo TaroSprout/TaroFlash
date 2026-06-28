@@ -36,7 +36,7 @@ export function emitStudySfx(keys: SoundKey | SoundKey[], opts: PlayOptions = {}
 export function emitHoverSfx(keys: SoundKey | SoundKey[], opts: PlayOptions = {}): Promise<void> {
   if (_isTouchPrimary()) return Promise.resolve()
   if (pointerStationaryAfterClick()) return Promise.resolve()
-  return emitSfx(keys, opts)
+  return emitSfx(keys, { ...opts, bus: 'hover' })
 }
 
 function _pick(keys: SoundKey | SoundKey[]): SoundKey | undefined {
