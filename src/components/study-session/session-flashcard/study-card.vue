@@ -74,7 +74,7 @@ function rate(grade: Grade) {
 
   const el = card_ref.value?.$el as HTMLElement | null
   if (!el) return
-  flingCard(el, grade === Rating.Good ? 1 : -1)
+  flingCard(el, grade === Rating.Again ? -1 : 1, grade)
 }
 
 /**
@@ -93,18 +93,21 @@ function triggerCardFlip() {
  * Animates the card off-screen in the given direction, then emits `reviewed`.
  * Resets transform state once the CSS transition ends.
  */
-function flingCard(el: HTMLElement, direction: number) {
+function flingCard(
+  el: HTMLElement,
+  direction: number,
+  grade: Grade = direction > 0 ? Rating.Good : Rating.Again
+) {
   if (side === 'cover') return
 
   is_animating.value = true
   const targetX = direction * (window.innerWidth + el.getBoundingClientRect().width)
-  const rating = direction > 0 ? Rating.Good : Rating.Again
 
   el.style.transition = `transform ${FLING_SPEED}s ease-out`
   el.style.transform = `translateX(${targetX}px) rotate(${direction * 45}deg)`
   emit('drag-progress', 1, FLING_SPEED)
 
-  emitStudySfx(rating === Rating.Good ? 'music_plink_ok' : 'music_plink_locancel')
+  emitStudySfx(grade === Rating.Again ? 'music_plink_locancel' : 'music_plink_ok')
 
   // Leave is_animating true: after `reviewed` the parent plays the incoming
   // card's intro flip before advancing. This instance stays mounted (and so
@@ -113,7 +116,7 @@ function flingCard(el: HTMLElement, direction: number) {
   const onTransitionEnd = () => {
     el.removeEventListener('transitionend', onTransitionEnd)
     card_offset.value = 0
-    emit('reviewed', rating)
+    emit('reviewed', grade)
   }
 
   el.addEventListener('transitionend', onTransitionEnd)

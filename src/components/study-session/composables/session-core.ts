@@ -88,6 +88,7 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
     config.max_reviews_per_day = updates.max_reviews_per_day ?? config.max_reviews_per_day
     config.max_new_per_day = updates.max_new_per_day ?? config.max_new_per_day
     config.flip_cards = updates.flip_cards ?? config.flip_cards
+    config.show_all_ratings = updates.show_all_ratings ?? config.show_all_ratings
 
     if (_raw_cards.value.length) _processCards()
   }

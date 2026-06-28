@@ -2,6 +2,7 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, watch, h, useAttrs } from 'vue'
 import Session from '@/components/study-session/session-flashcard/index.vue'
+import SessionHeader from '@/components/study-session/session-flashcard/session-header.vue'
 import { card } from '../../../../fixtures/card'
 import { deck } from '../../../../fixtures/deck'
 
@@ -75,10 +76,15 @@ vi.mock('@/api/cards', () => {
 })
 
 const { mockFlushDeckReviews } = vi.hoisted(() => ({ mockFlushDeckReviews: vi.fn() }))
+const { mockUpsertDeck } = vi.hoisted(() => ({ mockUpsertDeck: vi.fn() }))
 
 vi.mock('@/api/reviews', () => ({
   useSaveReviewMutation: () => ({ mutate: mockSaveReview, mutateAsync: mockSaveReview }),
   useFlushDeckReviews: () => mockFlushDeckReviews
+}))
+
+vi.mock('@/api/decks/mutations/upsert', () => ({
+  useUpsertDeckMutation: () => ({ mutate: mockUpsertDeck, mutateAsync: mockUpsertDeck })
 }))
 
 // ── Card stub ─────────────────────────────────────────────────────────────────
@@ -110,7 +116,7 @@ function makeSession(cardCount = 2, deckOverrides = {}) {
   const deck_data = deck.one({
     overrides: {
       id: 1,
-      study_config: { study_all_cards: true, retry_failed_cards: false },
+      study_config: { study_all_cards: true, retry_failed_cards: false, show_all_ratings: false },
       ...deckOverrides
     }
   })
@@ -163,6 +169,7 @@ describe('Session', () => {
     })
     mockSaveReview.mockClear()
     mockFlushDeckReviews.mockClear()
+    mockUpsertDeck.mockClear()
   })
 
   // ── Loading behavior ───────────────────────────────────────────────────────
@@ -656,6 +663,47 @@ describe('Session', () => {
       const [results] = wrapper.emitted('finished')[0]
       expect(results).toHaveLength(1)
       expect(results[0].passed).toBe(true)
+    })
+  })
+
+  // ── toggleRatings: header toggle-ratings → config + upsert ───────────────
+
+  describe('toggleRatings', () => {
+    test('toggling ratings flips show_all_ratings and calls upsert_deck', async () => {
+      const wrapper = makeSession(2)
+      await waitForLoad(wrapper)
+
+      // Default: show_all_ratings=false → simple mode visible
+      expect(wrapper.find('[data-testid="rating-buttons__simple"]').exists()).toBe(false)
+
+      // Trigger toggle-ratings from the SessionHeader component
+      wrapper.findComponent(SessionHeader).vm.$emit('toggle-ratings')
+      await flushPromises()
+
+      // upsert_deck.mutate should have been called with the new value
+      expect(mockUpsertDeck).toHaveBeenCalledOnce()
+      expect(mockUpsertDeck).toHaveBeenCalledWith(
+        expect.objectContaining({
+          study_config: expect.objectContaining({ show_all_ratings: true })
+        })
+      )
+    })
+
+    test('toggling ratings twice restores original value', async () => {
+      const wrapper = makeSession(2)
+      await waitForLoad(wrapper)
+
+      const header = wrapper.findComponent(SessionHeader)
+      header.vm.$emit('toggle-ratings')
+      await flushPromises()
+      header.vm.$emit('toggle-ratings')
+      await flushPromises()
+
+      // Second call: show_all_ratings flipped back to false
+      const calls = mockUpsertDeck.mock.calls
+      expect(calls[1][0]).toMatchObject({
+        study_config: expect.objectContaining({ show_all_ratings: false })
+      })
     })
   })
 

@@ -39,6 +39,14 @@ const DropdownButtonStub = defineComponent({
             onClick: () => emit('select', { value: 'delete', label: 'Delete' })
           },
           'Delete'
+        ),
+        h(
+          'button',
+          {
+            'data-testid': 'dropdown-select-toggle-ratings',
+            onClick: () => emit('select', { value: 'toggle-ratings', label: 'Toggle Ratings' })
+          },
+          'Toggle Ratings'
         )
       ])
   }
@@ -105,16 +113,23 @@ describe('SessionHeader', () => {
 
   // ── menu options carry disabled: !can_edit [obligation] ───────────────────
 
-  test('all three options have disabled=false when can_edit is true [obligation]', () => {
+  test('menu now has four options (edit, move, delete, toggle-ratings) [obligation]', () => {
     mountHeader({ can_edit: true })
-    expect(capturedOptions).toHaveLength(3)
-    expect(capturedOptions.every((o) => o.disabled === false)).toBe(true)
+    expect(capturedOptions).toHaveLength(4)
   })
 
-  test('all three options have disabled=true when can_edit is false [obligation]', () => {
+  test('edit/move/delete options have disabled=false when can_edit is true [obligation]', () => {
+    mountHeader({ can_edit: true })
+    const action_options = capturedOptions.filter((o) => o.value !== 'toggle-ratings')
+    expect(action_options).toHaveLength(3)
+    expect(action_options.every((o) => o.disabled === false)).toBe(true)
+  })
+
+  test('edit/move/delete options have disabled=true when can_edit is false [obligation]', () => {
     mountHeader({ can_edit: false })
-    expect(capturedOptions).toHaveLength(3)
-    expect(capturedOptions.every((o) => o.disabled === true)).toBe(true)
+    const action_options = capturedOptions.filter((o) => o.value !== 'toggle-ratings')
+    expect(action_options).toHaveLength(3)
+    expect(action_options.every((o) => o.disabled === true)).toBe(true)
   })
 
   // ── menu option events ─────────────────────────────────────────────────────
@@ -160,5 +175,27 @@ describe('SessionHeader', () => {
   test('renders title text in header', () => {
     const wrapper = mountHeader({ title: 'My Deck' })
     expect(wrapper.find('[data-testid="session-header__title"]').text()).toBe('My Deck')
+  })
+
+  // ── toggle-ratings menu copy [obligation] ─────────────────────────────────
+
+  test('show_all_ratings=true → toggle-ratings option label is "Simple Ratings" [obligation]', () => {
+    mountHeader({ show_all_ratings: true })
+    const toggle_option = capturedOptions.find((o) => o.value === 'toggle-ratings')
+    expect(toggle_option).toBeDefined()
+    expect(toggle_option.label).toBe('Simple Ratings')
+  })
+
+  test('show_all_ratings=false → toggle-ratings option label is "Advanced Ratings" [obligation]', () => {
+    mountHeader({ show_all_ratings: false })
+    const toggle_option = capturedOptions.find((o) => o.value === 'toggle-ratings')
+    expect(toggle_option).toBeDefined()
+    expect(toggle_option.label).toBe('Advanced Ratings')
+  })
+
+  test('selecting the toggle-ratings option emits "toggle-ratings" event [obligation]', async () => {
+    const wrapper = mountHeader({ can_edit: true })
+    await wrapper.find('[data-testid="dropdown-select-toggle-ratings"]').trigger('click')
+    expect(wrapper.emitted('toggle-ratings')).toHaveLength(1)
   })
 })

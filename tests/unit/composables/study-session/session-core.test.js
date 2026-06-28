@@ -166,6 +166,15 @@ describe('session-core — updateConfig', () => {
     session.updateConfig({ study_all_cards: true })
     expect(session.cards.value).toHaveLength(0)
   })
+
+  test('updateConfig({ show_all_ratings: false }) updates config on a session started with show_all_ratings: true [obligation]', () => {
+    const session = useStudySessionCore({ show_all_ratings: true })
+    expect(session.config.show_all_ratings).toBe(true)
+
+    session.updateConfig({ show_all_ratings: false })
+
+    expect(session.config.show_all_ratings).toBe(false)
+  })
 })
 
 // ── reviewCard — no-grade (pass-through) ─────────────────────────────────────
