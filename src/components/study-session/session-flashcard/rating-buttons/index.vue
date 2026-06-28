@@ -1,57 +1,35 @@
 <script setup lang="ts">
-import { type Grade, Rating, type RecordLog } from 'ts-fsrs'
+import { type Grade, type RecordLog } from 'ts-fsrs'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
+import SimpleRatingButtons from './simple.vue'
+import AdvancedRatingButtons from './advanced.vue'
 
-const { t } = useI18n()
-
-const { side } = defineProps<{
+type RatingButtonsProps = {
   options?: RecordLog
   side: CardSide
-}>()
+  show_all_ratings?: boolean
+}
+
+const { side, show_all_ratings = false } = defineProps<RatingButtonsProps>()
+
+const { t } = useI18n()
 
 const emit = defineEmits<{
   (e: 'revealed'): void
   (e: 'started'): void
   (e: 'rated', grade: Grade): void
 }>()
-
-function onRatingClicked(grade: Grade) {
-  emit('rated', grade)
-}
 </script>
 
 <template>
   <div data-testid="rating-buttons" class="w-full">
-    <div v-if="side === 'back'" class="grid w-full grid-cols-2 gap-2">
-      <ui-button
-        data-testid="rating-buttons__again"
-        data-theme="brown-100"
-        data-theme-dark="stone-700"
-        size="xl"
-        icon-left="close"
-        full-width
-        class="max-w-78.5"
-        :sfx="{ tap_pre: 'snappy_button_5' }"
-        @press="onRatingClicked(Rating.Again)"
-      >
-        {{ t('study.flashcard.rating.fail-button') }}
-      </ui-button>
+    <advanced-rating-buttons
+      v-if="side === 'back' && show_all_ratings"
+      @rated="emit('rated', $event)"
+    />
 
-      <ui-button
-        data-testid="rating-buttons__good"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
-        size="xl"
-        icon-left="check"
-        full-width
-        class="max-w-78.5"
-        :sfx="{ tap_pre: 'snappy_button_5' }"
-        @press="onRatingClicked(Rating.Good)"
-      >
-        {{ t('study.flashcard.rating.pass-button') }}
-      </ui-button>
-    </div>
+    <simple-rating-buttons v-else-if="side === 'back'" @rated="emit('rated', $event)" />
 
     <ui-button
       v-else-if="side === 'front'"

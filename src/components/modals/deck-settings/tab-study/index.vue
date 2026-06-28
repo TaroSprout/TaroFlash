@@ -6,6 +6,7 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import CappedSpinboxRow from './capped-spinbox-row.vue'
+import ReviewRatingsToggle from './review-ratings-toggle.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { deckSettingsLayoutKey } from '../layout'
 import { DAILY_LIMIT_BOUNDS } from '@/utils/deck/defaults'
@@ -25,6 +26,14 @@ const emit = defineEmits<{ back: [] }>()
     class="px-(--deck-settings-padding) pb-(--deck-settings-padding)"
   >
     <deck-back-button @back="emit('back')" />
+
+    <labeled-section
+      :label="t('deck.settings-modal.study.review-ratings.label')"
+      :description="t('deck.settings-modal.study.review-ratings.description')"
+    >
+      <review-ratings-toggle v-model:value="config.show_all_ratings" />
+    </labeled-section>
+
     <labeled-section :label="t('deck.settings-modal.study.section.cards-heading')">
       <ui-toggle v-model:checked="config.shuffle">
         <div class="flex items-center gap-2.5">

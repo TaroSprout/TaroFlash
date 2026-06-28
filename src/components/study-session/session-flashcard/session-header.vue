@@ -5,15 +5,21 @@ import UiDropdownButton, {
 } from '@/components/ui-kit/dropdown-button/index.vue'
 import { computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { DECK_CONFIG_DEFAULTS } from '@/utils/deck/defaults'
 
 type SessionHeaderProps = {
   title?: string
   can_edit?: boolean
   is_cover?: boolean
   show_menu?: boolean
+  show_all_ratings?: boolean
 }
 
-const { can_edit = false, show_menu = true } = defineProps<SessionHeaderProps>()
+const {
+  can_edit = false,
+  show_menu = true,
+  show_all_ratings = DECK_CONFIG_DEFAULTS.show_all_ratings
+} = defineProps<SessionHeaderProps>()
 
 const title_el = useTemplateRef('title')
 defineExpose({ title_el })
@@ -23,6 +29,7 @@ const emit = defineEmits<{
   (e: 'edit'): void
   (e: 'move'): void
   (e: 'delete'): void
+  (e: 'toggle-ratings'): void
 }>()
 
 const { t } = useI18n()
@@ -45,10 +52,20 @@ const menu_options = computed<DropdownOption[]>(() => [
     value: 'delete',
     icon: 'delete',
     disabled: !can_edit
+  },
+  {
+    label: t(
+      show_all_ratings
+        ? 'study-session.flashcard.menu.enable-simple-ratings'
+        : 'study-session.flashcard.menu.disable-simple-ratings'
+    ),
+    value: 'toggle-ratings',
+    icon: 'half-star'
   }
 ])
 
 function onSelect(option: DropdownOption) {
+  if (option.value === 'toggle-ratings') emit('toggle-ratings')
   if (option.value === 'edit') emit('edit')
   if (option.value === 'move') emit('move')
   if (option.value === 'delete') emit('delete')

@@ -3,7 +3,7 @@ import SessionHeader from './session-header.vue'
 import SessionProgress from './session-progress.vue'
 import CardStage from './card-stage.vue'
 import StudyEditFooter from './study-edit-footer.vue'
-import RatingButtons from './rating-buttons.vue'
+import RatingButtons from './rating-buttons/index.vue'
 import { useFlashcardSession } from '@/components/study-session/composables/flashcard-session'
 import { useCardPreview } from '@/components/study-session/composables/card-preview'
 import { useCardEdit } from '@/components/study-session/composables/card-edit'
@@ -14,6 +14,8 @@ import { useModalRequestClose } from '@/composables/modal'
 import { type Grade } from 'ts-fsrs'
 import { computed, useTemplateRef, watch } from 'vue'
 import { useFlushDeckReviews } from '@/api/reviews'
+import { useUpsertDeckMutation } from '@/api/decks'
+import { emitSfx } from '@/sfx/bus'
 import type { CardReviewResult } from '@/components/study-session/composables/session-core'
 
 const { deck, config_override } = defineProps<{
@@ -77,6 +79,7 @@ const stage = useTemplateRef('stage')
 const header = useTemplateRef('header')
 const progress = useTemplateRef('progress')
 const flushDeckReviews = useFlushDeckReviews()
+const upsert_deck = useUpsertDeckMutation()
 
 useCoverIntro({
   isCover: () => is_cover.value,
@@ -104,6 +107,15 @@ function requestClose() {
 function finishSession() {
   if (deck.id) flushDeckReviews(deck.id)
   emit('finished', results.value, remaining_due_count.value, config.study_all_cards)
+}
+
+function toggleRatings() {
+  emitSfx('snappy_button_5')
+  config.show_all_ratings = !config.show_all_ratings
+  upsert_deck.mutate({
+    ...deck,
+    study_config: { ...deck.study_config, show_all_ratings: config.show_all_ratings }
+  })
 }
 
 /** Triggers the fling animation on the card stage; reviewed event follows. */
@@ -136,15 +148,17 @@ watch(mode, (m) => {
         :title="deck.title"
         :can_edit="can_edit"
         :is_cover="is_cover"
+        :show_all_ratings="config.show_all_ratings"
         @stop="requestClose"
         @edit="startEdit"
         @move="onMove"
         @delete="onDelete"
+        @toggle-ratings="toggleRatings"
       />
 
       <div
         data-testid="study-session__body"
-        class="flex-1 min-h-0 w-full max-w-117 flex flex-col items-center justify-between"
+        class="flex-1 min-h-0 w-full max-w-130 flex flex-col items-center justify-between"
       >
         <session-progress
           ref="progress"
@@ -176,6 +190,7 @@ watch(mode, (m) => {
           class="z-10 w-full"
           :options="active_card?.preview"
           :side="current_card_side"
+          :show_all_ratings="config.show_all_ratings"
           @started="startSession"
           @rated="onRated"
           @revealed="flipCurrentCard"
