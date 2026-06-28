@@ -1,12 +1,21 @@
 // One-phase-per-invocation worker for async lesson transcription. The DB chain
-// trigger (see migration 20260606000003) fires this once per phase via pg_net:
-// each call runs EXACTLY ONE step (transcribe | translate | transliterate),
-// persists its result, and advances `phase` — and that write fires the next
-// call. The final step settles the row to 'ready'; any thrown error settles it
-// to 'failed' with a machine-readable code.
+// trigger (see migrations 20260606000003 + 20260627000000) fires this once per
+// step via pg_net: each call runs EXACTLY ONE unit of work, persists its result,
+// and advances a state-machine pointer — and that write fires the next call. The
+// final step settles the row to 'ready'; any thrown error settles it to 'failed'
+// with a machine-readable code.
 //
-// Because every call returns after a single step, no isolate ever carries the
-// whole pipeline's wall-clock (so we need no EdgeRuntime.waitUntil), and a row
+// The phase order is:
+//   transcribing (looped over the audio chunks) -> chaptering -> translating
+//   -> transliterating -> ready
+//
+// 'transcribing' is itself a LOOP: long audio is split client-side into ordered,
+// overlapping chunks, and each invocation transcribes the chunk at `chunk_cursor`,
+// stitches it onto the running transcript by its time offset, and advances the
+// cursor (which re-fires the chain). Only the LAST chunk advances `phase`.
+//
+// Because every call returns after a single chunk/step, no isolate ever carries
+// the whole pipeline's wall-clock (so we need no EdgeRuntime.waitUntil), and a row
 // can only ever be 'processing' between two short, self-contained invocations —
 // where the stall reaper can still rescue it if one is hard-killed.
 
@@ -14,6 +23,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { transcribeAudioFile, TranscribeError } from './transcribe.ts'
 import { translateSentences } from '../_shared/transcription/translate.ts'
 import { readSentences } from '../_shared/transcription/transliterate.ts'
+import { detectChapters } from '../_shared/transcription/chapter.ts'
 import { type TargetScript } from '../_shared/transcription/script.ts'
 
 // Interlinear translations are English-only in admin v1 (matches the term
@@ -23,11 +33,15 @@ const BUCKET = 'audio-lessons'
 
 type Segment = { start: number; end: number; text: string; translation?: string }
 type Word = { word: string; start: number; end: number; reading?: string }
-type Transcript = { text: string; segments: Segment[]; words: Word[] }
+type Chapter = { title: string; start: number }
+type Transcript = { text: string; segments: Segment[]; words: Word[]; chapters?: Chapter[] }
+
+// One audio slice in the lesson's chunk manifest (see migration 20260627000000).
+type Chunk = { path: string; offset: number }
 
 // The slice of the lesson row a phase needs. `transcript` accumulates across
-// phases: transcribe writes the skeleton, translate fills segment translations,
-// transliterate fills word readings.
+// phases: transcribe stitches the skeleton chunk by chunk, chaptering adds
+// chapters, translate fills segment translations, transliterate fills readings.
 type LessonRow = {
   id: number
   status: string
@@ -36,6 +50,8 @@ type LessonRow = {
   script: TargetScript
   lang: string | null
   transcript: Transcript
+  chunks: Chunk[] | null
+  chunk_cursor: number | null
 }
 
 // Service-role client for the internal `process` step. It bypasses RLS because
@@ -56,6 +72,7 @@ export async function processLessonPhase(admin: SupabaseClient, lessonId: number
 
   try {
     if (lesson.phase === 'transcribing') return await runTranscribe(admin, lesson)
+    if (lesson.phase === 'chaptering') return await runChapter(admin, lesson)
     if (lesson.phase === 'translating') return await runTranslate(admin, lesson)
     if (lesson.phase === 'transliterating') return await runTransliterate(admin, lesson)
   } catch (error) {
@@ -68,7 +85,7 @@ export async function processLessonPhase(admin: SupabaseClient, lessonId: number
 async function loadLesson(admin: SupabaseClient, id: number): Promise<LessonRow | null> {
   const { data, error } = await admin
     .from('lessons')
-    .select('id, status, phase, audio_path, script, lang, transcript')
+    .select('id, status, phase, audio_path, script, lang, transcript, chunks, chunk_cursor')
     .eq('id', id)
     .single<LessonRow>()
 
@@ -79,20 +96,95 @@ async function loadLesson(admin: SupabaseClient, id: number): Promise<LessonRow 
   return data
 }
 
-// Phase 1 — Whisper. Writes the transcript skeleton (no translations/readings
-// yet) and the detected language, then advances to translating.
+// Phase 1 — Whisper, ONE chunk per invocation. Transcribes the chunk at
+// `chunk_cursor`, shifts its local timestamps by the chunk's offset, stitches it
+// onto the running transcript (dropping the overlap re-transcribed from the
+// previous chunk), and either advances the cursor (more chunks left, re-firing
+// the chain) or, on the last chunk, advances `phase` to chaptering.
 async function runTranscribe(admin: SupabaseClient, lesson: LessonRow): Promise<void> {
-  const file = await downloadAudio(admin, lesson.audio_path)
+  const chunks = lesson.chunks?.length ? lesson.chunks : [{ path: lesson.audio_path, offset: 0 }]
+  const cursor = lesson.chunk_cursor ?? 0
+  const chunk = chunks[cursor] ?? chunks[chunks.length - 1]
+
+  const file = await downloadAudio(admin, chunk.path)
   const result = await transcribeAudioFile(file, lesson.script)
 
+  const offset = chunk.offset ?? 0
+  const incoming = {
+    segments: result.segments.map((s) => ({
+      start: s.start + offset,
+      end: s.end + offset,
+      text: s.text
+    })),
+    words: result.words.map((w) => ({ word: w.word, start: w.start + offset, end: w.end + offset }))
+  }
+
+  const stitched = appendChunk(normalizeTranscript(lesson.transcript), incoming)
+  const isLast = cursor >= chunks.length - 1
+
+  // Keep the FIRST chunk's detected language — it's the most representative and
+  // a later chunk could mis-detect on a short or music-only slice.
   await update(admin, lesson.id, {
-    phase: 'translating',
-    lang: result.lang ?? null,
-    transcript: { text: result.text, segments: result.segments, words: result.words }
+    transcript: stitched,
+    lang: lesson.lang ?? result.lang ?? null,
+    // Last chunk advances the phase; earlier chunks advance the cursor. Exactly
+    // one of these changes per write, so the trigger fires exactly once.
+    ...(isLast ? { phase: 'chaptering' } : { chunk_cursor: cursor + 1 })
   })
 }
 
-// Phase 2 — translate the stored segments in place, then advance to
+// Phase 2 — split the stitched transcript into titled chapters, then advance to
+// translating. Best-effort: a failure (or a single-chapter result) just leaves
+// the lesson with no in-reader chapter list rather than failing it.
+async function runChapter(admin: SupabaseClient, lesson: LessonRow): Promise<void> {
+  const t = normalizeTranscript(lesson.transcript)
+  const chapters = await detectChapters(t.segments.map((s) => ({ start: s.start, text: s.text })))
+
+  await update(admin, lesson.id, {
+    phase: 'translating',
+    transcript: { ...t, chapters: chapters ?? [] }
+  })
+}
+
+// A lesson's transcript starts as `{}` (empty jsonb) and grows; coerce whatever
+// is stored into the full shape so the stitch/append logic never guards nulls.
+function normalizeTranscript(t: Partial<Transcript> | null | undefined): Transcript {
+  return {
+    text: t?.text ?? '',
+    segments: t?.segments ?? [],
+    words: t?.words ?? [],
+    chapters: t?.chapters
+  }
+}
+
+// Append one already-offset chunk onto the running transcript, dropping the lead
+// that overlaps what we already have. Chunks overlap by design (so no word is cut
+// at a window edge), so the new chunk re-transcribes the tail of the previous
+// one; we keep only segments/words that start at or after the last accepted end.
+// The boundary is data-driven (the previous content's own end time), so it's
+// robust to the exact overlap and to Whisper's segment boundaries not aligning.
+function appendChunk(
+  acc: Transcript,
+  incoming: { segments: Segment[]; words: Word[] }
+): Transcript {
+  const segBoundary = acc.segments.at(-1)?.end ?? -Infinity
+  const wordBoundary = acc.words.at(-1)?.end ?? -Infinity
+
+  const segments = acc.segments.concat(incoming.segments.filter((s) => s.start >= segBoundary))
+  const words = acc.words.concat(incoming.words.filter((w) => w.start >= wordBoundary))
+
+  return {
+    ...acc,
+    text: segments
+      .map((s) => s.text)
+      .join(' ')
+      .trim(),
+    segments,
+    words
+  }
+}
+
+// Phase 3 — translate the stored segments in place, then advance to
 // transliterating. Best-effort: failure leaves the segments untranslated.
 async function runTranslate(admin: SupabaseClient, lesson: LessonRow): Promise<void> {
   const segments = await translateSegments(lesson.transcript.segments ?? [])
@@ -103,7 +195,7 @@ async function runTranslate(admin: SupabaseClient, lesson: LessonRow): Promise<v
   })
 }
 
-// Phase 3 — read the stored words in place, then settle the row to 'ready'.
+// Phase 4 — read the stored words in place, then settle the row to 'ready'.
 // Best-effort: failure leaves words unread rather than failing the lesson.
 async function runTransliterate(admin: SupabaseClient, lesson: LessonRow): Promise<void> {
   const t = lesson.transcript
