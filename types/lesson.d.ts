@@ -19,10 +19,35 @@ type TranscriptWord = {
   reading?: string
 }
 
+// A chapter boundary detected over the finished transcript: a title plus the
+// audio offset (seconds) where it begins. Derived in the 'chaptering' phase, so
+// absent on lessons that predate chaptering or were too short to split.
+type TranscriptChapter = {
+  title: string
+  // Audio offset (seconds) of the chapter's first segment.
+  start: number
+}
+
 type LessonTranscript = {
   text: string
   segments: TranscriptSegment[]
   words?: TranscriptWord[]
+  // Auto-detected chapters spanning the whole audio, in playback order. The
+  // reader renders these as an in-lesson jump-list; empty/absent for a single
+  // unchaptered lesson.
+  chapters?: TranscriptChapter[]
+}
+
+// One Whisper-sized slice of the source audio. A long upload is split client-side
+// into overlapping windows; the worker transcribes them in order and stitches the
+// results back with `offset`. A short file is a single chunk pointing at
+// audio_path itself.
+type LessonChunk = {
+  // Storage path of the chunk object in the audio-lessons bucket.
+  path: string
+  // Start time (seconds) of this chunk within the original audio — added to the
+  // chunk's local timestamps when stitching.
+  offset: number
 }
 
 // Lifecycle of the background transcription job. A lesson row exists from upload
@@ -31,7 +56,9 @@ type LessonTranscript = {
 type LessonStatus = 'processing' | 'ready' | 'failed'
 
 // The worker's current step while processing, surfaced as a progress label.
-type LessonPhase = 'transcribing' | 'translating' | 'transliterating'
+// 'transcribing' loops over the audio chunks before advancing; 'chaptering'
+// splits the finished transcript into chapters.
+type LessonPhase = 'transcribing' | 'chaptering' | 'translating' | 'transliterating'
 
 type Lesson = {
   id: number
@@ -46,6 +73,13 @@ type Lesson = {
   position: number
   // The step in flight while status is 'processing'; null/absent once settled.
   phase?: LessonPhase | null
+  // Whisper-sized slices of the audio, in playback order. The worker transcribes
+  // them one per invocation and stitches by offset. A short lesson has a single
+  // chunk pointing at audio_path.
+  chunks?: LessonChunk[]
+  // Index of the next chunk the 'transcribing' phase will process. Advancing it
+  // (like advancing phase) re-fires the processing chain.
+  chunk_cursor?: number
   // Machine-readable failure reason when status is 'failed'.
   error_code?: string | null
   // Script the transcript was converted to; a retry reproduces it.
