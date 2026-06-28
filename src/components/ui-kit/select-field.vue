@@ -4,14 +4,25 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 import { computed, ref } from 'vue'
 import { TYPE_SFX } from '@/sfx/config'
 
+defineOptions({ inheritAttrs: false })
+
 type SelectOption = {
   value: T
   label: string
 }
 
-const { options, modelValue } = defineProps<{
+const {
+  options,
+  modelValue,
+  menuTheme = 'brown-300',
+  menuThemeDark = 'stone-700',
+  menuClass
+} = defineProps<{
   options: SelectOption[]
   modelValue: T
+  menuTheme?: Theme
+  menuThemeDark?: Theme
+  menuClass?: string
 }>()
 
 const emit = defineEmits<{
@@ -33,54 +44,63 @@ function select(value: T) {
 </script>
 
 <template>
-  <ui-popover
-    :open="open"
-    position="bottom-start"
-    :gap="4"
-    :transition_duration="0"
-    :use_arrow="false"
-    match_reference_width
+  <div
     data-testid="ui-select-field"
-    @close="open = false"
+    data-theme="brown-300"
+    data-theme-dark="stone-700"
+    v-bind="$attrs"
   >
-    <template #trigger>
-      <button
-        type="button"
-        data-testid="ui-select-field__trigger"
-        :data-active="open"
-        class="flex w-full cursor-pointer items-center justify-between gap-2 rounded-4 px-3 py-2 text-base outline outline-brown-100 transition-colors hover:bg-brown-500 hover:bgx-diagonal-stripes hover:bgx-opacity-10 dark:hover:bg-grey-900 data-[active=true]:bg-(--theme-primary) data-[active=true]:bgx-diagonal-stripes data-[active=true]:bgx-opacity-10 data-[active=true]:text-white"
-        v-sfx="{ hover: TYPE_SFX }"
-        @click="toggle"
-      >
-        <span>{{ current_label }}</span>
-        <ui-icon
-          src="arrow-drop-down"
-          class="size-5 shrink-0 transition-transform"
-          :class="open ? 'rotate-180' : ''"
-        />
-      </button>
-    </template>
-
-    <div
-      data-testid="ui-select-field__menu"
-      class="flex flex-col overflow-hidden rounded-4 bg-brown-300 p-1.5 outline outline-brown-100 dark:bg-stone-700"
+    <ui-popover
+      :open="open"
+      position="bottom-start"
+      :gap="4"
+      :transition_duration="0"
+      :use_arrow="false"
+      match_reference_width
+      @close="open = false"
     >
-      <button
-        v-for="option in options"
-        :key="option.value"
-        type="button"
-        :data-active="option.value === modelValue"
-        data-testid="ui-select-field__option"
-        class="group/opt relative flex w-full cursor-pointer items-center overflow-hidden rounded-3 px-3 py-2 text-base text-start whitespace-nowrap text-brown-700 transition-colors dark:text-brown-100 data-[active=true]:font-medium data-[active=true]:text-(--theme-primary)"
-        v-sfx="{ hover: option.value === modelValue ? undefined : TYPE_SFX }"
-        @click="select(option.value)"
+      <template #trigger>
+        <button
+          type="button"
+          data-testid="ui-select-field__trigger"
+          :data-active="open"
+          class="flex w-full cursor-pointer items-center justify-between gap-2 rounded-4 px-3 py-2 text-base text-(--theme-on-primary) transition-colors bg-(--theme-primary) hover:bgx-diagonal-stripes hover:bgx-opacity-10"
+          v-sfx="{ hover: TYPE_SFX }"
+          @click="toggle"
+        >
+          <span>{{ current_label }}</span>
+          <ui-icon
+            src="arrow-drop-down"
+            class="size-5 shrink-0 transition-transform"
+            :class="open ? 'rotate-180' : ''"
+          />
+        </button>
+      </template>
+
+      <div
+        data-testid="ui-select-field__menu"
+        :data-theme="menuTheme"
+        :data-theme-dark="menuThemeDark"
+        class="flex flex-col overflow-hidden rounded-4 bg-(--theme-primary) p-1.5 text-(--theme-on-primary)"
+        :class="menuClass"
       >
-        <div
-          aria-hidden="true"
-          class="pointer-events-none absolute inset-0 hidden bgx-diagonal-stripes bgx-color-[var(--theme-neutral)] animation-safe:bgx-slide group-hover/opt:block"
-        ></div>
-        <span class="relative">{{ option.label }}</span>
-      </button>
-    </div>
-  </ui-popover>
+        <button
+          v-for="option in options"
+          :key="option.value"
+          type="button"
+          :data-active="option.value === modelValue"
+          data-testid="ui-select-field__option"
+          class="group/opt relative flex w-full cursor-pointer items-center overflow-hidden rounded-3 px-3 py-2 text-base text-start whitespace-nowrap transition-colors data-[active=true]:font-medium"
+          v-sfx="{ hover: option.value === modelValue ? undefined : TYPE_SFX }"
+          @click="select(option.value)"
+        >
+          <div
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-0 hidden bgx-diagonal-stripes bgx-color-[var(--theme-neutral)] animation-safe:bgx-slide group-hover/opt:block"
+          ></div>
+          <span class="relative">{{ option.label }}</span>
+        </button>
+      </div>
+    </ui-popover>
+  </div>
 </template>
