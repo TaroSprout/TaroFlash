@@ -38,7 +38,7 @@ function onStudyClicked() {
         data-theme-dark="blue-650"
         full-width
         size="xl"
-        :sfx="{ press: 'snappy_button_3' }"
+        :sfx="{ tap_pre: 'snappy_button_3' }"
         :disabled="!has_due_cards"
         @press="onStudyClicked"
       >

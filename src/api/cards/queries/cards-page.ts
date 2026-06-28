@@ -1,36 +1,42 @@
 import { useInfiniteQuery } from '@pinia/colada'
 import { toValue, type MaybeRefOrGetter } from 'vue'
-import { fetchCardsPageByDeckId } from '../db'
+import { fetchCardsInDeck } from '../db'
 
 export const CARDS_PAGE_SIZE = 50
 
 /**
- * Exact cache key for the deck's paginated cards query. Shared with mutations
- * that optimistically patch the cache (e.g. `useSaveCardMutation`) so the key
- * shape stays in one place and the two can't drift.
+ * Cache key for the deck's paginated cards query. Includes sort_by and query
+ * so Pinia Colada gives separate cache entries per active filter state, and
+ * mutations can target the default view by passing the `'default'`/`''` pair.
  */
 export function cardsInDeckQueryKey(
   deck_id: number | undefined,
+  sort_by: string = 'default',
+  query: string = '',
   page_size: number = CARDS_PAGE_SIZE
 ) {
-  return ['cards', deck_id ?? 0, 'pages', page_size]
+  return ['cards', deck_id ?? 0, 'pages', page_size, sort_by, query]
 }
 
 export function useCardsInDeckInfiniteQuery(
   deck_id: MaybeRefOrGetter<number | undefined>,
+  sort_by: MaybeRefOrGetter<string> = 'default',
+  search_query: MaybeRefOrGetter<string> = '',
   page_size: number = CARDS_PAGE_SIZE
 ) {
   return useInfiniteQuery({
-    key: () => cardsInDeckQueryKey(toValue(deck_id), page_size),
+    key: () =>
+      cardsInDeckQueryKey(toValue(deck_id), toValue(sort_by), toValue(search_query), page_size),
     initialPageParam: 0,
     query: ({ pageParam }) =>
-      fetchCardsPageByDeckId({
+      fetchCardsInDeck({
         deck_id: toValue(deck_id) as number,
+        sort_by: toValue(sort_by),
+        query: toValue(search_query) || null,
         offset: pageParam as number,
         limit: page_size
       }),
     getNextPageParam: (lastPage, allPages) => {
-      // Short page → no more rows on the server.
       if (lastPage.length < page_size) return null
       return allPages.reduce((sum, page) => sum + page.length, 0)
     },

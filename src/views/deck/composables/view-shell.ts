@@ -7,6 +7,9 @@ export type DeckViewShell = ReturnType<typeof useDeckViewShell>
 /** Card render size for the deck grid — Small / Base / Full in the toolbar. */
 export type CardGridSize = 'base' | 'md' | 'xl'
 
+/** How the base grid orders cards. `default` is the deck's own rank order. */
+export type CardSortKey = 'default' | 'difficulty'
+
 export const deckViewShellKey = Symbol('deckViewShell') as InjectionKey<DeckViewShell>
 
 /**
@@ -25,6 +28,7 @@ export const deckViewShellKey = Symbol('deckViewShell') as InjectionKey<DeckView
 export function useDeckViewShell() {
   const mode = ref<CardEditorMode>('view')
   const grid_size = useLocalRef<CardGridSize>('deck-grid-size', 'md')
+  const sort_by = ref<CardSortKey>('default')
 
   // Drag-to-reorder toggle for the base grid. Lives here (not in the card
   // controller) because it's a view-pane interaction state, like `grid_size`.
@@ -82,23 +86,38 @@ export function useDeckViewShell() {
     grid_size.value = size
   }
 
+  /**
+   * Set how the base grid orders cards. A non-default sort reorders the whole
+   * deck, which can't coexist with drag-to-reorder, so it drops rearrange mode.
+   */
+  function setSortBy(key: CardSortKey) {
+    if (sort_by.value === key) return
+    sort_by.value = key
+    if (key !== 'default') is_rearranging.value = false
+  }
+
   /** Flip drag-to-reorder on the base grid; turning it on returns to the view. */
   function toggleRearrange() {
     is_rearranging.value = !is_rearranging.value
     emitSfx(is_rearranging.value ? 'generic_button_15' : 'pop_up_close')
-    if (is_rearranging.value) mode.value = 'view'
+    if (is_rearranging.value) {
+      mode.value = 'view'
+      sort_by.value = 'default'
+    }
   }
 
   return {
     mode,
     is_view,
     grid_size,
+    sort_by,
     is_rearranging,
     setMode,
     notifyModeSettled,
     toggleMode,
     exitMode,
     setGridSize,
+    setSortBy,
     toggleRearrange
   }
 }

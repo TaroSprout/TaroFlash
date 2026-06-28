@@ -23,6 +23,7 @@ vi.mock('@/api/cards', () => {
       mutate: bulkInsertMock,
       mutateAsync: bulkInsertMock
     }),
+    useAllCardsInDeckQuery: noop_query,
     useCardsInDeckInfiniteQuery: noop_query,
     useDeleteCardImageMutation: noop_mutation,
     useDeleteCardsInDeckMutation: noop_mutation,
@@ -32,7 +33,6 @@ vi.mock('@/api/cards', () => {
     useMoveCardMutation: noop_mutation,
     useMoveCardsToDeckMutation: noop_mutation,
     useSaveCardMutation: noop_mutation,
-    useSearchCardsInDeckQuery: noop_query,
     useSetCardImageMutation: noop_mutation,
     useStudySessionCardsQuery: noop_query,
     useUpsertCardMutation: noop_mutation,
