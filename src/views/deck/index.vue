@@ -15,7 +15,8 @@ import {
   cardEditorKey,
   cardSearchKey,
   useCardListController,
-  useCardSearch
+  useCardSearch,
+  useCardSort
 } from '@/views/deck/composables'
 import { deckViewShellKey, useDeckViewShell } from '@/views/deck/composables/view-shell'
 import { mobileCardEditorKey, useMobileCardEditor } from './mobile-editor/use-mobile-card-editor'
@@ -39,7 +40,11 @@ provide(deckViewShellKey, shell)
 const editor = useCardListController({ deck_id: id.value, shell })
 provide(cardEditorKey, editor)
 
-const search = useCardSearch(id.value, editor.list.all_cards)
+// Sort reorders the whole deck and feeds search as its idle list, so search
+// composes on top of whatever order is active.
+const sort = useCardSort(id.value, editor.list.all_cards, shell.sort_by)
+
+const search = useCardSearch(id.value, sort.displayed_cards)
 provide(cardSearchKey, search)
 
 const mobile_editor = useMobileCardEditor(editor)

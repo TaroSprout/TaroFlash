@@ -3,7 +3,11 @@ import UiButton from '@/components/ui-kit/button.vue'
 import UiPopover from '@/components/ui-kit/popover.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
-import { deckViewShellKey, type CardGridSize } from '@/views/deck/composables/view-shell'
+import {
+  deckViewShellKey,
+  type CardGridSize,
+  type CardSortKey
+} from '@/views/deck/composables/view-shell'
 import { inject, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { emitSfx } from '@/sfx/bus'
@@ -16,9 +20,14 @@ type SizeOption = {
   radius: string
 }
 
+type SortOption = {
+  value: CardSortKey
+  label_key: string
+}
+
 const { t } = useI18n()
 
-const { grid_size, setGridSize } = inject(deckViewShellKey)!
+const { grid_size, setGridSize, sort_by, setSortBy } = inject(deckViewShellKey)!
 
 const open = ref(false)
 
@@ -43,6 +52,11 @@ const size_options: SizeOption[] = [
   }
 ]
 
+const sort_options: SortOption[] = [
+  { value: 'default', label_key: 'deck-view.page-settings.sort-default' },
+  { value: 'difficulty', label_key: 'deck-view.page-settings.sort-difficulty' }
+]
+
 function toggle() {
   emitSfx('snappy_button_5')
   open.value = !open.value
@@ -60,6 +74,16 @@ function onSelectSize(value: CardGridSize) {
 
   emitSfx('select')
   setGridSize(value)
+}
+
+function onSelectSort(value: CardSortKey) {
+  if (sort_by.value === value) {
+    emitSfx('digi_powerdown')
+    return
+  }
+
+  emitSfx('select')
+  setSortBy(value)
 }
 </script>
 
@@ -129,6 +153,25 @@ function onSelectSize(value: CardGridSize) {
                 {{ t(option.label_key) }}
               </span>
             </template>
+          </div>
+        </labeled-section>
+
+        <labeled-section :label="t('deck-view.page-settings.sort-label')">
+          <div data-testid="page-settings__sort" class="flex flex-col gap-1.5">
+            <button
+              v-for="option in sort_options"
+              :key="option.value"
+              type="button"
+              role="radio"
+              :aria-checked="sort_by === option.value"
+              :data-testid="`page-settings__sort-option-${option.value}`"
+              :data-active="sort_by === option.value"
+              class="flex w-full cursor-pointer items-center rounded-4 px-3 py-2 text-base text-brown-700 outline outline-brown-100 transition-colors hover:bg-brown-500 hover:bgx-diagonal-stripes hover:bgx-opacity-10 dark:text-brown-100 dark:hover:bg-grey-900 data-[active=true]:bg-(--theme-primary) data-[active=true]:bgx-diagonal-stripes data-[active=true]:bgx-opacity-10 data-[active=true]:text-white"
+              v-sfx="{ hover: sort_by === option.value ? undefined : TYPE_SFX }"
+              @click="onSelectSort(option.value)"
+            >
+              {{ t(option.label_key) }}
+            </button>
           </div>
         </labeled-section>
       </section-list>
