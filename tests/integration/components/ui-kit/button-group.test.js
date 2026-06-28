@@ -130,10 +130,10 @@ describe('UiButtonGroup', () => {
 
   // ── Padding-x override [obligation] ───────────────────────────────────────
 
-  test('xl size sets --btn-padding-x to 20px on every button [obligation]', () => {
+  test('xl size sets --btn-padding-x to 18px on every button [obligation]', () => {
     const wrapper = mountGroup({ options: TRIPLE, size: 'xl' })
     for (const btn of getButtons(wrapper)) {
-      expect(styleOf(btn)).toContain('--btn-padding-x: 20px')
+      expect(styleOf(btn)).toContain('--btn-padding-x: 18px')
     }
   })
 

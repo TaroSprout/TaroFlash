@@ -179,18 +179,18 @@ describe('SessionHeader', () => {
 
   // ── toggle-ratings menu copy [obligation] ─────────────────────────────────
 
-  test('show_all_ratings=true → toggle-ratings option label is "Enable Simple Ratings" [obligation]', () => {
+  test('show_all_ratings=true → toggle-ratings option label is "Simple Ratings" [obligation]', () => {
     mountHeader({ show_all_ratings: true })
     const toggle_option = capturedOptions.find((o) => o.value === 'toggle-ratings')
     expect(toggle_option).toBeDefined()
-    expect(toggle_option.label).toBe('Enable Simple Ratings')
+    expect(toggle_option.label).toBe('Simple Ratings')
   })
 
-  test('show_all_ratings=false → toggle-ratings option label is "Disable Simple Ratings" [obligation]', () => {
+  test('show_all_ratings=false → toggle-ratings option label is "Advanced Ratings" [obligation]', () => {
     mountHeader({ show_all_ratings: false })
     const toggle_option = capturedOptions.find((o) => o.value === 'toggle-ratings')
     expect(toggle_option).toBeDefined()
-    expect(toggle_option.label).toBe('Disable Simple Ratings')
+    expect(toggle_option.label).toBe('Advanced Ratings')
   })
 
   test('selecting the toggle-ratings option emits "toggle-ratings" event [obligation]', async () => {
