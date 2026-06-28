@@ -9,7 +9,11 @@ const { group, index } = defineProps<{
 </script>
 
 <template>
-  <div data-testid="transcript-segment" :data-index="index">
+  <div
+    data-testid="transcript-segment"
+    :data-index="index"
+    class="[content-visibility:auto] [contain-intrinsic-size:auto_12rem]"
+  >
     <span data-testid="transcript-segment__source"
       ><transcript-word
         v-for="word in group.words"
