@@ -40,7 +40,7 @@ function toggle() {
 }
 
 function select(value: T) {
-  emitSfx('snappy_button_5')
+  emitSfx('generic_button_15')
   emit('update:modelValue', value)
   open.value = false
 }
