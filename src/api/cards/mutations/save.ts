@@ -1,7 +1,6 @@
-import { setInfiniteQueryData, useMutation, useQueryCache } from '@pinia/colada'
+import { useMutation, useQueryCache } from '@pinia/colada'
 import { debounce } from '@/utils/debounce'
 import { saveCard } from '../db'
-import { cardsInDeckQueryKey } from '../queries/cards-page'
 import { invalidateCardIndex } from './_invalidate'
 
 type QueryCache = ReturnType<typeof useQueryCache>
@@ -12,24 +11,23 @@ type SaveCardVars = {
 }
 
 /**
- * Optimistically merge `values` into the matching card inside the deck's cached
- * pages, in place of a refetch. Keeps the read model (view mode + the next
- * save's merge base) in lockstep with the edit without a network round-trip.
- * No-op when the deck isn't cached or the card lives on an unloaded page.
+ * Optimistically merge `values` into the matching card across ALL of the deck's
+ * cached views (default sort, any active filter, any active sort). Uses a key
+ * prefix so the patch lands regardless of which sort_by / query is currently
+ * active in the cache.
  */
 function patchCardInDeckCache(queryCache: QueryCache, card: Card, values: Partial<Card>) {
   if (card.deck_id === undefined || card.id === undefined) return
 
-  const key = cardsInDeckQueryKey(card.deck_id)
-  if (!queryCache.getQueryData(key)) return
-
-  // Each page is a `Card[]`, so the page-item type is `Card[]`.
-  setInfiniteQueryData<Card[]>(queryCache, key, (old) => ({
-    pages: (old?.pages ?? []).map((page) =>
-      page.map((c) => (c.id === card.id ? { ...c, ...values } : c))
-    ),
-    pageParams: old?.pageParams ?? []
-  }))
+  queryCache.setQueriesData<{ pages: Card[][]; pageParams: unknown[] }>(
+    { key: ['cards', card.deck_id, 'pages'] },
+    (old) => ({
+      pages: (old?.pages ?? []).map((page) =>
+        page.map((c) => (c.id === card.id ? { ...c, ...values } : c))
+      ),
+      pageParams: old?.pageParams ?? []
+    })
+  )
 }
 
 /**

@@ -14,4 +14,3 @@ export {
   type CardWithClientId,
   type CardEntry
 } from './virtual-list'
-export { useCardSort, type CardSort } from './card-sort'

@@ -15,8 +15,7 @@ import {
   cardEditorKey,
   cardSearchKey,
   useCardListController,
-  useCardSearch,
-  useCardSort
+  useCardSearch
 } from '@/views/deck/composables'
 import { deckViewShellKey, useDeckViewShell } from '@/views/deck/composables/view-shell'
 import { mobileCardEditorKey, useMobileCardEditor } from './mobile-editor/use-mobile-card-editor'
@@ -37,14 +36,15 @@ const deck = deck_query.data
 const shell = useDeckViewShell()
 provide(deckViewShellKey, shell)
 
-const editor = useCardListController({ deck_id: id.value, shell })
+// query text is owned here so it can be fed into the list controller (for the
+// RPC) and into useCardSearch (so the search bar can read/write it) without
+// either composable depending on the other.
+const search_query = ref<string>('')
+
+const editor = useCardListController({ deck_id: id.value, shell, search_query })
 provide(cardEditorKey, editor)
 
-// Sort reorders the whole deck and feeds search as its idle list, so search
-// composes on top of whatever order is active.
-const sort = useCardSort(id.value, editor.list.all_cards, shell.sort_by)
-
-const search = useCardSearch(id.value, sort.displayed_cards)
+const search = useCardSearch(search_query, editor.list.all_cards, editor.isLoading)
 provide(cardSearchKey, search)
 
 const mobile_editor = useMobileCardEditor(editor)
