@@ -33,7 +33,6 @@ vi.mock('@/api/cards', () => {
     useMoveCardMutation: noop_mutation,
     useMoveCardsToDeckMutation: noop_mutation,
     useSaveCardMutation: noop_mutation,
-    useSearchCardsInDeckQuery: noop_query,
     useSetCardImageMutation: noop_mutation,
     useStudySessionCardsQuery: noop_query,
     useUpsertCardMutation: noop_mutation,

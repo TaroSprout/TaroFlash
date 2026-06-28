@@ -4,12 +4,11 @@ const {
   useMutationSpy,
   saveCardMock,
   debounceMock,
-  setInfiniteQueryDataMock,
-  getQueryDataMock,
+  setQueriesDataMock,
   invalidateSpy,
   queryCache
 } = vi.hoisted(() => {
-  const getQueryDataMock = vi.fn()
+  const setQueriesDataMock = vi.fn()
   const invalidateSpy = vi.fn()
   return {
     useMutationSpy: vi.fn((cfg) => cfg),
@@ -17,17 +16,15 @@ const {
     // Call the debounced fn immediately so the mutation resolves synchronously
     // in tests. We still assert on the debounce call shape.
     debounceMock: vi.fn((fn) => fn()),
-    setInfiniteQueryDataMock: vi.fn(),
-    getQueryDataMock,
+    setQueriesDataMock,
     invalidateSpy,
-    queryCache: { getQueryData: getQueryDataMock, invalidateQueries: invalidateSpy }
+    queryCache: { setQueriesData: setQueriesDataMock, invalidateQueries: invalidateSpy }
   }
 })
 
 vi.mock('@pinia/colada', () => ({
   useMutation: useMutationSpy,
-  useQueryCache: () => queryCache,
-  setInfiniteQueryData: setInfiniteQueryDataMock
+  useQueryCache: () => queryCache
 }))
 
 vi.mock('@/api/cards/db', () => ({
@@ -38,10 +35,6 @@ vi.mock('@/utils/debounce', () => ({
   debounce: debounceMock
 }))
 
-vi.mock('@/api/cards/queries/cards-page', () => ({
-  cardsInDeckQueryKey: (deck_id) => ['cards', deck_id, 'pages', 50]
-}))
-
 import { useSaveCardMutation } from '@/api/cards/mutations/save'
 
 beforeEach(() => {
@@ -50,9 +43,7 @@ beforeEach(() => {
   saveCardMock.mockResolvedValue(undefined)
   debounceMock.mockClear()
   debounceMock.mockImplementation((fn) => fn())
-  setInfiniteQueryDataMock.mockClear()
-  getQueryDataMock.mockReset()
-  getQueryDataMock.mockReturnValue({ pages: [], pageParams: [] })
+  setQueriesDataMock.mockClear()
   invalidateSpy.mockClear()
 })
 
@@ -93,9 +84,19 @@ describe('useSaveCardMutation', () => {
 
   // ── Optimistic cache patch ────────────────────────────────────────────────
 
-  test('onMutate merges values into the matching cached card, leaving siblings and the other side intact', () => {
+  test('onMutate calls setQueriesData with the deck prefix key so all sort/filter variants are patched', () => {
     const { onMutate } = configFrom()
-    getQueryDataMock.mockReturnValue({
+    onMutate({ card: { id: 5, deck_id: 10 }, values: { front_text: 'F1' } })
+    const [filter] = setQueriesDataMock.mock.calls[0]
+    expect(filter).toEqual({ key: ['cards', 10, 'pages'] })
+  })
+
+  test('onMutate updater merges values into the matching card, leaving siblings intact', () => {
+    const { onMutate } = configFrom()
+    onMutate({ card: { id: 5, deck_id: 10 }, values: { front_text: 'F1' } })
+
+    const [, updater] = setQueriesDataMock.mock.calls[0]
+    const old = {
       pages: [
         [
           { id: 5, deck_id: 10, front_text: 'F0', back_text: 'B0' },
@@ -103,25 +104,19 @@ describe('useSaveCardMutation', () => {
         ]
       ],
       pageParams: [0]
-    })
-
-    onMutate({ card: { id: 5, deck_id: 10 }, values: { front_text: 'F1' } })
-
-    const [, key, updater] = setInfiniteQueryDataMock.mock.calls[0]
-    expect(key).toEqual(['cards', 10, 'pages', 50])
-
-    const next = updater(getQueryDataMock.mock.results[0].value)
+    }
+    const next = updater(old)
     expect(next.pages[0][0]).toEqual({ id: 5, deck_id: 10, front_text: 'F1', back_text: 'B0' })
     expect(next.pages[0][1]).toEqual({ id: 6, deck_id: 10, front_text: 'X', back_text: 'Y' })
   })
 
-  test('onMutate is a no-op when the deck is not cached', () => {
+  test('onMutate updater handles undefined old value gracefully (empty pages)', () => {
     const { onMutate } = configFrom()
-    getQueryDataMock.mockReturnValue(undefined)
-
     onMutate({ card: { id: 5, deck_id: 10 }, values: { front_text: 'F1' } })
-
-    expect(setInfiniteQueryDataMock).not.toHaveBeenCalled()
+    const [, updater] = setQueriesDataMock.mock.calls[0]
+    const result = updater(undefined)
+    expect(result.pages).toEqual([])
+    expect(result.pageParams).toEqual([])
   })
 
   test('onMutate is a no-op when the card has no deck_id (unpromoted temp)', () => {
@@ -129,6 +124,14 @@ describe('useSaveCardMutation', () => {
 
     onMutate({ card: { id: -1 }, values: { front_text: 'F1' } })
 
-    expect(setInfiniteQueryDataMock).not.toHaveBeenCalled()
+    expect(setQueriesDataMock).not.toHaveBeenCalled()
+  })
+
+  test('onMutate is a no-op when the card has no id', () => {
+    const { onMutate } = configFrom()
+
+    onMutate({ card: { deck_id: 10 }, values: { front_text: 'F1' } })
+
+    expect(setQueriesDataMock).not.toHaveBeenCalled()
   })
 })

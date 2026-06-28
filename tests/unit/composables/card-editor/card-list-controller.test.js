@@ -109,9 +109,14 @@ function makeDeckQuery(card_count = 0) {
   }
 }
 
-// Returns a minimal shell stub that satisfies the controller's `exitMode` requirement.
+// Returns a minimal shell stub that satisfies the controller's `exitMode`, `setMode`,
+// and `sort_by` requirements. sort_by is a ref because the source reads it reactively.
 function makeShell(overrides = {}) {
-  return { exitMode: overrides.exitMode ?? vi.fn(), setMode: overrides.setMode ?? vi.fn() }
+  return {
+    exitMode: overrides.exitMode ?? vi.fn(),
+    setMode: overrides.setMode ?? vi.fn(),
+    sort_by: overrides.sort_by ?? ref('default')
+  }
 }
 
 // Returns the controller with `deck_query` attached so refetch + reactive
@@ -127,7 +132,7 @@ function makeController(persisted = [], ids = persisted.map((c) => c.id), deck_q
   const sh = shell ?? makeShell()
   cardsInfiniteQueryMock.mockReturnValueOnce(makeCardsQuery(persisted))
   deckQueryMock.mockReturnValue(dq)
-  const controller = useCardListController({ deck_id: 10, shell: sh })
+  const controller = useCardListController({ deck_id: 10, shell: sh, search_query: ref('') })
   return {
     ...controller,
     ...controller.list,
@@ -824,7 +829,7 @@ describe('useCardListController', () => {
       cards_query.isLoading.value = false
       cardsInfiniteQueryMock.mockReturnValueOnce(cards_query)
       deckQueryMock.mockReturnValue(makeDeckQuery())
-      const ctrl = useCardListController({ deck_id: 10 })
+      const ctrl = useCardListController({ deck_id: 10, shell: makeShell(), search_query: ref('') })
       expect(ctrl.hasNextPage.value).toBe(true)
       expect(ctrl.isLoading.value).toBe(false)
     })
@@ -833,7 +838,7 @@ describe('useCardListController', () => {
       const cards_query = makeCardsQuery([])
       cardsInfiniteQueryMock.mockReturnValueOnce(cards_query)
       deckQueryMock.mockReturnValue(makeDeckQuery())
-      const ctrl = useCardListController({ deck_id: 10 })
+      const ctrl = useCardListController({ deck_id: 10, shell: makeShell(), search_query: ref('') })
       const sentinel = { value: null }
       ctrl.observeSentinel(sentinel)
       expect(useInfiniteScrollMock).toHaveBeenCalledOnce()
@@ -849,7 +854,7 @@ describe('useCardListController', () => {
       cards_query.isLoading.value = false
       cardsInfiniteQueryMock.mockReturnValueOnce(cards_query)
       deckQueryMock.mockReturnValue(makeDeckQuery())
-      const ctrl = useCardListController({ deck_id: 10 })
+      const ctrl = useCardListController({ deck_id: 10, shell: makeShell(), search_query: ref('') })
       ctrl.observeSentinel({ value: null })
       const [, , options] = useInfiniteScrollMock.mock.calls[0]
       expect(options.enabled()).toBe(true)

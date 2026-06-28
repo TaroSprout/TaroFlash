@@ -3,16 +3,11 @@ import { ref } from 'vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { mockEmitSfx, mockUseSearchCardsInDeckQuery } = vi.hoisted(() => ({
-  mockEmitSfx: vi.fn(),
-  mockUseSearchCardsInDeckQuery: vi.fn()
+const { mockEmitSfx } = vi.hoisted(() => ({
+  mockEmitSfx: vi.fn()
 }))
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
-
-vi.mock('@/api/cards', () => ({
-  useSearchCardsInDeckQuery: mockUseSearchCardsInDeckQuery
-}))
 
 // ── Imports ───────────────────────────────────────────────────────────────────
 
@@ -20,16 +15,12 @@ import { useCardSearch } from '@/views/deck/composables/card-search'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function makeSearchQuery({ data = [], isLoading = false } = {}) {
-  return {
-    data: ref(data),
-    isLoading: ref(isLoading)
-  }
-}
-
-function makeCardSearch({ all_cards = [], searchQuery = {} } = {}) {
-  mockUseSearchCardsInDeckQuery.mockReturnValue(makeSearchQuery(searchQuery))
-  return useCardSearch(1, ref(all_cards))
+function makeCardSearch({ query_val = '', all_cards = [], is_querying = false } = {}) {
+  const query_ref = ref(query_val)
+  const all_cards_ref = ref(all_cards)
+  const is_querying_ref = ref(is_querying)
+  const search = useCardSearch(query_ref, all_cards_ref, is_querying_ref)
+  return { search, query_ref, all_cards_ref, is_querying_ref }
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -37,162 +28,191 @@ function makeCardSearch({ all_cards = [], searchQuery = {} } = {}) {
 describe('useCardSearch', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // Default: return an empty search query
-    mockUseSearchCardsInDeckQuery.mockReturnValue(makeSearchQuery())
   })
 
   // ── is_active ──────────────────────────────────────────────────────────────
 
   describe('is_active', () => {
     test('is false when is_searching is false even if query has text [obligation]', () => {
-      const search = makeCardSearch()
-      search.query.value = 'hello'
+      const { search, query_ref } = makeCardSearch()
+      query_ref.value = 'hello'
       expect(search.is_active.value).toBe(false)
     })
 
     test('is false when is_searching is true but query is empty [obligation]', () => {
-      const search = makeCardSearch()
+      const { search } = makeCardSearch()
       search.is_searching.value = true
-      search.query.value = ''
       expect(search.is_active.value).toBe(false)
     })
 
     test('is false when is_searching is true but query is whitespace only [obligation]', () => {
-      const search = makeCardSearch()
+      const { search, query_ref } = makeCardSearch()
       search.is_searching.value = true
-      search.query.value = '   '
+      query_ref.value = '   '
       expect(search.is_active.value).toBe(false)
     })
 
     test('is true when is_searching is true AND query has non-empty trimmed value [obligation]', () => {
-      const search = makeCardSearch()
+      const { search, query_ref } = makeCardSearch()
       search.is_searching.value = true
-      search.query.value = 'hello'
+      query_ref.value = 'hello'
       expect(search.is_active.value).toBe(true)
     })
 
     test('is true when query has leading/trailing spaces but non-empty trimmed content', () => {
-      const search = makeCardSearch()
+      const { search, query_ref } = makeCardSearch()
       search.is_searching.value = true
-      search.query.value = '  hi  '
+      query_ref.value = '  hi  '
       expect(search.is_active.value).toBe(true)
     })
   })
 
-  // ── displayed_cards ────────────────────────────────────────────────────────
+  // ── displayed_cards — direct alias of all_cards ────────────────────────────
 
   describe('displayed_cards', () => {
-    test('returns all_cards when not active [obligation]', () => {
+    test('is the same reference as all_cards_ref, not a computed copy [obligation]', () => {
+      const cards = [{ id: 1, client_id: 'c1' }]
+      const { search, all_cards_ref } = makeCardSearch({ all_cards: cards })
+      expect(search.displayed_cards).toBe(all_cards_ref)
+    })
+
+    test('reflects all_cards reactively when all_cards_ref changes [obligation]', () => {
+      const { search, all_cards_ref } = makeCardSearch({ all_cards: [{ id: 1, client_id: 'c1' }] })
+      all_cards_ref.value = [
+        { id: 2, client_id: 'c2' },
+        { id: 3, client_id: 'c3' }
+      ]
+      expect(search.displayed_cards.value).toHaveLength(2)
+      expect(search.displayed_cards.value[0].id).toBe(2)
+    })
+
+    test('returns all_cards when not searching', () => {
       const cards = [
         { id: 1, client_id: 'c1' },
         { id: 2, client_id: 'c2' }
       ]
-      const search = makeCardSearch({ all_cards: cards })
-      expect(search.displayed_cards.value).toStrictEqual(cards)
+      const { search } = makeCardSearch({ all_cards: cards })
+      expect(search.displayed_cards.value).toEqual(cards)
     })
 
-    test('returns search results when active [obligation]', () => {
-      const all_cards = [{ id: 1, client_id: 'c1' }]
-      const search = makeCardSearch({
-        all_cards,
-        searchQuery: { data: [{ id: 99, front_text: 'result' }] }
-      })
+    test('still returns all_cards when is_active is true (filtering is server-side)', () => {
+      const cards = [{ id: 99, client_id: 'c99' }]
+      const { search, query_ref } = makeCardSearch({ all_cards: cards })
       search.is_searching.value = true
-      search.query.value = 'res'
-      expect(search.displayed_cards.value).not.toBe(all_cards)
-      expect(search.displayed_cards.value).toHaveLength(1)
-      expect(search.displayed_cards.value[0].id).toBe(99)
-    })
-
-    test('search results are tagged with client_id = String(card.id) [obligation]', () => {
-      const search = makeCardSearch({
-        searchQuery: {
-          data: [
-            { id: 42, front_text: 'foo' },
-            { id: 7, front_text: 'bar' }
-          ]
-        }
-      })
-      search.is_searching.value = true
-      search.query.value = 'foo'
-      const cards = search.displayed_cards.value
-      expect(cards[0].client_id).toBe('42')
-      expect(cards[1].client_id).toBe('7')
-    })
-
-    test('client_id uses String() conversion so id=0 maps to "0"', () => {
-      const search = makeCardSearch({
-        searchQuery: { data: [{ id: 0, front_text: 'zero' }] }
-      })
-      search.is_searching.value = true
-      search.query.value = 'zero'
-      expect(search.displayed_cards.value[0].client_id).toBe('0')
-    })
-
-    test('returns all_cards when is_searching is true but query is empty', () => {
-      const cards = [{ id: 1, client_id: 'c1' }]
-      const search = makeCardSearch({
-        all_cards: cards,
-        searchQuery: { data: [{ id: 99 }] }
-      })
-      search.is_searching.value = true
-      search.query.value = ''
-      expect(search.displayed_cards.value).toStrictEqual(cards)
-    })
-  })
-
-  // ── no_results ─────────────────────────────────────────────────────────────
-
-  describe('no_results', () => {
-    test('is false when not active [obligation]', () => {
-      const search = makeCardSearch({ searchQuery: { data: [] } })
-      expect(search.no_results.value).toBe(false)
-    })
-
-    test('is false when active but still loading [obligation]', () => {
-      const search = makeCardSearch({ searchQuery: { data: [], isLoading: true } })
-      search.is_searching.value = true
-      search.query.value = 'q'
-      expect(search.no_results.value).toBe(false)
-    })
-
-    test('is false when active, not loading, but results exist [obligation]', () => {
-      const search = makeCardSearch({
-        searchQuery: { data: [{ id: 1 }], isLoading: false }
-      })
-      search.is_searching.value = true
-      search.query.value = 'q'
-      expect(search.no_results.value).toBe(false)
-    })
-
-    test('is true ONLY when active AND not loading AND results are empty [obligation]', () => {
-      const search = makeCardSearch({ searchQuery: { data: [], isLoading: false } })
-      search.is_searching.value = true
-      search.query.value = 'noresult'
-      expect(search.no_results.value).toBe(true)
+      query_ref.value = 'something'
+      expect(search.displayed_cards.value).toEqual(cards)
     })
   })
 
   // ── is_loading ─────────────────────────────────────────────────────────────
 
   describe('is_loading', () => {
-    test('is false when not active even if query is loading [obligation]', () => {
-      const search = makeCardSearch({ searchQuery: { isLoading: true } })
+    test('is false when is_active is false even if is_querying is true [obligation]', () => {
+      const { search } = makeCardSearch({ is_querying: true })
+      // is_searching is false → is_active = false
       expect(search.is_loading.value).toBe(false)
     })
 
-    test('is false when active but query is not loading [obligation]', () => {
-      const search = makeCardSearch({ searchQuery: { isLoading: false } })
+    test('is false when search bar is open but query is empty (is_active = false) [obligation]', () => {
+      const { search } = makeCardSearch({ is_querying: true })
       search.is_searching.value = true
-      search.query.value = 'q'
+      // query is '' → is_active = false
       expect(search.is_loading.value).toBe(false)
     })
 
-    test('is true when active AND query is loading [obligation]', () => {
-      const search = makeCardSearch({ searchQuery: { isLoading: true } })
+    test('is false when is_active is true but is_querying is false [obligation]', () => {
+      const { search, query_ref } = makeCardSearch({ is_querying: false })
       search.is_searching.value = true
-      search.query.value = 'q'
+      query_ref.value = 'q'
+      expect(search.is_loading.value).toBe(false)
+    })
+
+    test('is true ONLY when BOTH is_active AND is_querying are true [obligation]', () => {
+      const { search, query_ref } = makeCardSearch({ is_querying: true })
+      search.is_searching.value = true
+      query_ref.value = 'q'
       expect(search.is_loading.value).toBe(true)
+    })
+
+    test('tracks is_querying_ref reactively', () => {
+      const { search, query_ref, is_querying_ref } = makeCardSearch({ is_querying: false })
+      search.is_searching.value = true
+      query_ref.value = 'q'
+      expect(search.is_loading.value).toBe(false)
+
+      is_querying_ref.value = true
+      expect(search.is_loading.value).toBe(true)
+
+      is_querying_ref.value = false
+      expect(search.is_loading.value).toBe(false)
+    })
+  })
+
+  // ── no_results ─────────────────────────────────────────────────────────────
+
+  describe('no_results', () => {
+    test('is false when not active (is_searching=false) [obligation]', () => {
+      const { search } = makeCardSearch({ all_cards: [] })
+      expect(search.no_results.value).toBe(false)
+    })
+
+    test('is false when active but still loading [obligation]', () => {
+      const { search, query_ref } = makeCardSearch({ is_querying: true, all_cards: [] })
+      search.is_searching.value = true
+      query_ref.value = 'q'
+      // is_loading = true, so no_results = false
+      expect(search.no_results.value).toBe(false)
+    })
+
+    test('is false when active and not loading but all_cards has entries [obligation]', () => {
+      const { search, query_ref } = makeCardSearch({
+        is_querying: false,
+        all_cards: [{ id: 1, client_id: 'c1' }]
+      })
+      search.is_searching.value = true
+      query_ref.value = 'q'
+      expect(search.no_results.value).toBe(false)
+    })
+
+    test('is true ONLY when is_active AND !is_loading AND all_cards.length === 0 [obligation]', () => {
+      const { search, query_ref } = makeCardSearch({ is_querying: false, all_cards: [] })
+      search.is_searching.value = true
+      query_ref.value = 'noresult'
+      expect(search.no_results.value).toBe(true)
+    })
+
+    test('transitions from true to false when a new card appears in all_cards', () => {
+      const { search, query_ref, all_cards_ref } = makeCardSearch({
+        is_querying: false,
+        all_cards: []
+      })
+      search.is_searching.value = true
+      query_ref.value = 'q'
+      expect(search.no_results.value).toBe(true)
+
+      all_cards_ref.value = [{ id: 1, client_id: 'c1' }]
+      expect(search.no_results.value).toBe(false)
+    })
+  })
+
+  // ── query alias — shared ref contract ─────────────────────────────────────
+
+  describe('query alias', () => {
+    test('search.query is the same ref object as query_ref passed in [obligation]', () => {
+      const { search, query_ref } = makeCardSearch()
+      expect(search.query).toBe(query_ref)
+    })
+
+    test('writing search.query.value updates query_ref.value', () => {
+      const { search, query_ref } = makeCardSearch()
+      search.query.value = 'typed text'
+      expect(query_ref.value).toBe('typed text')
+    })
+
+    test('writing query_ref.value is visible via search.query.value', () => {
+      const { search, query_ref } = makeCardSearch()
+      query_ref.value = 'from outside'
+      expect(search.query.value).toBe('from outside')
     })
   })
 
@@ -200,13 +220,13 @@ describe('useCardSearch', () => {
 
   describe('open()', () => {
     test('sets is_searching to true [obligation]', () => {
-      const search = makeCardSearch()
+      const { search } = makeCardSearch()
       search.open()
       expect(search.is_searching.value).toBe(true)
     })
 
     test('emits generic_button_15 sfx [obligation]', () => {
-      const search = makeCardSearch()
+      const { search } = makeCardSearch()
       search.open()
       expect(mockEmitSfx).toHaveBeenCalledWith('generic_button_15')
     })
@@ -214,29 +234,35 @@ describe('useCardSearch', () => {
 
   describe('close()', () => {
     test('sets is_searching to false [obligation]', () => {
-      const search = makeCardSearch()
+      const { search } = makeCardSearch()
       search.is_searching.value = true
       search.close()
       expect(search.is_searching.value).toBe(false)
     })
 
-    test('clears query to empty string [obligation]', () => {
-      const search = makeCardSearch()
-      search.query.value = 'previous text'
+    test('writes empty string back to the shared query_ref — NOT a local copy [obligation]', () => {
+      const { search, query_ref } = makeCardSearch({ query_val: 'previous text' })
+      search.close()
+      // The shared ref must be cleared, not just a local copy
+      expect(query_ref.value).toBe('')
+    })
+
+    test('search.query.value (the alias) also reads as empty after close [obligation]', () => {
+      const { search } = makeCardSearch({ query_val: 'text' })
       search.close()
       expect(search.query.value).toBe('')
     })
 
     test('emits slide_left sfx [obligation]', () => {
-      const search = makeCardSearch()
+      const { search } = makeCardSearch()
       search.close()
       expect(mockEmitSfx).toHaveBeenCalledWith('slide_left')
     })
   })
 
   describe('toggle()', () => {
-    test('calls open() when is_searching is false [obligation]', () => {
-      const search = makeCardSearch()
+    test('calls open() when is_searching is false', () => {
+      const { search } = makeCardSearch()
       search.is_searching.value = false
       search.toggle()
       expect(search.is_searching.value).toBe(true)
@@ -244,32 +270,12 @@ describe('useCardSearch', () => {
     })
 
     test('calls close() when is_searching is true [obligation]', () => {
-      const search = makeCardSearch()
+      const { search, query_ref } = makeCardSearch({ query_val: 'something' })
       search.is_searching.value = true
-      search.query.value = 'something'
       search.toggle()
       expect(search.is_searching.value).toBe(false)
-      expect(search.query.value).toBe('')
+      expect(query_ref.value).toBe('')
       expect(mockEmitSfx).toHaveBeenCalledWith('slide_left')
     })
-  })
-
-  // ── useSearchCardsInDeckQuery wiring ───────────────────────────────────────
-
-  test('passes deck_id and trimmed query ref to useSearchCardsInDeckQuery', () => {
-    const search = makeCardSearch()
-    expect(mockUseSearchCardsInDeckQuery).toHaveBeenCalledWith(1, expect.anything())
-  })
-
-  test('no_results uses data length, treating undefined as 0', () => {
-    // data is undefined (query not yet resolved)
-    mockUseSearchCardsInDeckQuery.mockReturnValue({
-      data: ref(undefined),
-      isLoading: ref(false)
-    })
-    const search = useCardSearch(1, ref([]))
-    search.is_searching.value = true
-    search.query.value = 'q'
-    expect(search.no_results.value).toBe(true)
   })
 })
