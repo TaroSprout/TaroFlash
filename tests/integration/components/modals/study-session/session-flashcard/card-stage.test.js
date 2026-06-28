@@ -28,15 +28,32 @@ vi.mock('@/sfx/bus', () => ({
   emitHoverSfx: vi.fn()
 }))
 
+const { mockCoverCardBeforeEnter, mockCoverCardEnter } = vi.hoisted(() => ({
+  mockCoverCardBeforeEnter: vi.fn(),
+  mockCoverCardEnter: vi.fn((_el, done) => {
+    done()
+    return { kill: vi.fn() }
+  })
+}))
+
+vi.mock('@/utils/animations/session-intro', () => ({
+  coverCardBeforeEnter: mockCoverCardBeforeEnter,
+  coverCardEnter: mockCoverCardEnter
+}))
+
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
 const StudyCardStub = defineComponent({
   name: 'StudyCard',
-  props: ['card', 'side', 'options'],
-  emits: ['started', 'side-changed', 'reviewed', 'drag-progress'],
-  setup(_props, { expose, emit }) {
+  props: ['card', 'side', 'options', 'show_all_ratings'],
+  emits: ['started', 'side-changed', 'reviewed', 'drag-progress', 'drag-rating'],
+  setup(props, { expose, emit }) {
     expose({ rate: vi.fn() })
-    return () => h('div', { 'data-testid': 'study-card-stub' })
+    return () =>
+      h('div', {
+        'data-testid': 'study-card-stub',
+        'data-show-all-ratings': props.show_all_ratings ?? null
+      })
   }
 })
 
@@ -203,6 +220,36 @@ describe('CardStage', () => {
 
     expect(wrapper.emitted('drag-progress')).toHaveLength(1)
     expect(wrapper.emitted('drag-progress')[0]).toEqual([0.5, 0])
+  })
+
+  test('forwards drag-rating event from study-card [obligation]', async () => {
+    const wrapper = mountCardStage({ loading: false, active_card: makeCard() })
+    const { Rating } = await import('ts-fsrs')
+
+    wrapper.findComponent(StudyCardStub).vm.$emit('drag-rating', Rating.Good)
+
+    expect(wrapper.emitted('drag-rating')).toHaveLength(1)
+    expect(wrapper.emitted('drag-rating')[0][0]).toBe(Rating.Good)
+  })
+
+  test('forwards drag-rating null from study-card [obligation]', async () => {
+    const wrapper = mountCardStage({ loading: false, active_card: makeCard() })
+
+    wrapper.findComponent(StudyCardStub).vm.$emit('drag-rating', null)
+
+    expect(wrapper.emitted('drag-rating')).toHaveLength(1)
+    expect(wrapper.emitted('drag-rating')[0][0]).toBeNull()
+  })
+
+  test('forwards show_all_ratings prop to study-card [obligation]', async () => {
+    const wrapper = mountCardStage({
+      loading: false,
+      active_card: makeCard(),
+      show_all_ratings: true
+    })
+
+    const stub = wrapper.findComponent(StudyCardStub)
+    expect(stub.props('show_all_ratings')).toBe(true)
   })
 
   test('forwards next-flipped from preview card', async () => {

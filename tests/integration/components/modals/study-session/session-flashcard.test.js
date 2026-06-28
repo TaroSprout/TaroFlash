@@ -358,19 +358,21 @@ describe('Session', () => {
       const wrapper = makeSession(2)
       await waitForLoad(wrapper)
 
-      // Initially in cover mode — start button visible, flip button not
+      // Initially in cover mode — start button visible, rating buttons not
       expect(wrapper.find('[data-testid="rating-buttons__start"]').exists()).toBe(true)
-      expect(wrapper.find('[data-testid="rating-buttons__show"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(false)
 
       await startSession(wrapper)
 
-      // After starting — flip button visible, rating buttons not
+      // After starting (side=front, show_all_ratings=false) — simple layout:
+      // flip button + again + good are all visible
       expect(wrapper.find('[data-testid="rating-buttons__show"]').exists()).toBe(true)
-      expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="rating-buttons__good"]').exists()).toBe(true)
 
       await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
 
-      expect(wrapper.find('[data-testid="rating-buttons__show"]').exists()).toBe(false)
+      // After flipping to back — same simple layout still shown
       expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(true)
       expect(wrapper.find('[data-testid="rating-buttons__good"]').exists()).toBe(true)
     })
