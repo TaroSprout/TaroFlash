@@ -18,6 +18,7 @@ import CrossfadeResize from '@/components/layout-kit/crossfade-resize.vue'
 import MobileDock from '@/components/mobile-dock/mobile-dock.vue'
 import { useMobileDock } from '@/components/mobile-dock/use-mobile-dock'
 import AudioToolbar from '@/views/audio-reader/lesson/audio-toolbar.vue'
+import ChapterList from '@/views/audio-reader/lesson/chapter-list.vue'
 import ResumeFollowButton from '@/views/audio-reader/lesson/resume-follow-button.vue'
 import TranscriptView from '@/views/audio-reader/transcript/index.vue'
 import TermCard from '@/views/audio-reader/term-popover/term-card.vue'
@@ -80,6 +81,12 @@ const chapter_of = computed(() => ({
   total: chapters.value.length
 }))
 
+// The current lesson's auto-detected internal chapters (one long file split into
+// sections). When present they drive seek-based navigation; the collection-lesson
+// nav stays the fallback for multi-lesson books with no internal split.
+const lesson_chapters = computed(() => lesson.value?.transcript?.chapters ?? [])
+const has_lesson_chapters = computed(() => lesson_chapters.value.length > 1)
+
 const show_term = computed(() => popover_open.value && !!selection.value)
 
 // The term card lives in the mobile dock below xl and in the desktop sidebar at
@@ -100,6 +107,13 @@ const ready = computed(() => !!lesson.value && restored.value)
 
 function goToChapter(id: number) {
   router.push({ name: 'lesson', params: { collectionId: collection_id.value, lessonId: id } })
+}
+
+// Jump to an internal chapter by seeking the current audio and playing from there
+// — the click is a user gesture, so iOS honours the seek + play.
+function seekToChapter(start: number) {
+  player.seek(start)
+  player.play()
 }
 
 function onEdit() {
@@ -212,6 +226,16 @@ useAnimatedHeight(footer_swap_el, footer_toolbar, () => !swapping)
           />
         </div>
 
+        <chapter-list
+          v-else-if="has_lesson_chapters"
+          key="lesson-chapters"
+          data-testid="lesson-view__lesson-chapters"
+          class="flex-1"
+          :chapters="lesson_chapters"
+          :current-time="player.current_time.value"
+          @seek="seekToChapter"
+        />
+
         <nav
           v-else
           key="chapters"
@@ -236,8 +260,10 @@ useAnimatedHeight(footer_swap_el, footer_toolbar, () => !swapping)
         data-testid="lesson-view__sidebar-toolbar"
         :player="player"
         :chapters="chapters"
+        :lesson-chapters="lesson_chapters"
         :current-lesson-id="lesson_id"
         @select-chapter="goToChapter"
+        @seek="seekToChapter"
       />
     </aside>
 
@@ -316,8 +342,10 @@ useAnimatedHeight(footer_swap_el, footer_toolbar, () => !swapping)
             <audio-toolbar
               :player="player"
               :chapters="chapters"
+              :lesson-chapters="lesson_chapters"
               :current-lesson-id="lesson_id"
               @select-chapter="goToChapter"
+              @seek="seekToChapter"
             />
           </div>
         </crossfade-resize>
