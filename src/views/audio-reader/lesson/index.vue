@@ -311,6 +311,7 @@ useAnimatedHeight(footer_swap_el, footer_toolbar, () => !swapping)
         <transcript-view
           ref="transcript"
           :paragraphs="windowed_paragraphs"
+          :chapters="lesson_chapters"
           :matches="matches"
           :active_word="active_word"
           :popover_open="popover_open"

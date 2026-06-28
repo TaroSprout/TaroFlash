@@ -13,19 +13,23 @@ import {
 import TranscriptSegment from './segment.vue'
 import SelectionPreview from './selection-preview.vue'
 
-const {
-  paragraphs,
-  matches = new Map(),
-  active_word,
-  popover_open = false,
-  is_playing = false
-} = defineProps<{
+type TranscriptViewProps = {
   paragraphs: SentenceWords[]
+  chapters?: TranscriptChapter[]
   matches?: Map<number, CardMatch>
   active_word: number
   popover_open?: boolean
   is_playing?: boolean
-}>()
+}
+
+const {
+  paragraphs,
+  chapters = [],
+  matches = new Map(),
+  active_word,
+  popover_open = false,
+  is_playing = false
+} = defineProps<TranscriptViewProps>()
 
 const emit = defineEmits<{
   (e: 'select', selection: TermSelection): void
@@ -68,6 +72,16 @@ provide(
   readerMatchesKey,
   computed(() => matches)
 )
+
+// Maps paragraph.index → chapter title for the first paragraph of each chapter.
+const chapter_headings = computed(() => {
+  const map = new Map<number, string>()
+  for (const chapter of chapters) {
+    const first = paragraphs.find((p) => p.start >= chapter.start)
+    if (first) map.set(first.index, chapter.title)
+  }
+  return map
+})
 
 // A tap/click on a word inside a card match selects the whole matched phrase;
 // null for an unmatched word, so the caller falls back to single-word select.
@@ -133,12 +147,16 @@ function commitSelection({
           class="absolute inset-0 hidden rounded-2 bgx-diagonal-stripes animation-safe:bgx-slide bgx-color-[currentColor] group-data-[playing=true]/pill:block"
         />
       </div>
-      <transcript-segment
-        v-for="paragraph in paragraphs"
-        :key="paragraph.index"
-        :group="paragraph"
-        :index="paragraph.index"
-      />
+      <template v-for="paragraph in paragraphs" :key="paragraph.index">
+        <h2
+          v-if="chapter_headings.get(paragraph.index)"
+          data-testid="transcript-view__chapter-heading"
+          class="text-xl font-medium text-brown-500 dark:text-brown-400 -mb-3 mt-4 first:mt-0"
+        >
+          {{ chapter_headings.get(paragraph.index) }}
+        </h2>
+        <transcript-segment :group="paragraph" :index="paragraph.index" />
+      </template>
     </div>
 
     <selection-preview :preview="selection_preview" />
