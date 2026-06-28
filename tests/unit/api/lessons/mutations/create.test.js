@@ -4,24 +4,40 @@ const {
   useMutationSpy,
   invalidateSpy,
   uploadLessonAudioMock,
-  deleteLessonAudioMock,
-  startLessonTranscriptionMock
-} = vi.hoisted(() => ({
-  useMutationSpy: vi.fn((cfg) => cfg),
-  invalidateSpy: vi.fn(),
-  uploadLessonAudioMock: vi.fn().mockResolvedValue(undefined),
-  deleteLessonAudioMock: vi.fn().mockResolvedValue(undefined),
-  startLessonTranscriptionMock: vi.fn()
-}))
+  deleteLessonAudioPathsMock,
+  startLessonTranscriptionMock,
+  chunkAudioMock,
+  playbackBlob,
+  fullBlob
+} = vi.hoisted(() => {
+  const playbackBlob = new Blob(['playback'], { type: 'audio/mpeg' })
+  const fullBlob = new Blob(['full'], { type: 'audio/mpeg' })
+  return {
+    useMutationSpy: vi.fn((cfg) => cfg),
+    invalidateSpy: vi.fn(),
+    uploadLessonAudioMock: vi.fn().mockResolvedValue(undefined),
+    deleteLessonAudioPathsMock: vi.fn().mockResolvedValue(undefined),
+    startLessonTranscriptionMock: vi.fn(),
+    chunkAudioMock: vi
+      .fn()
+      .mockResolvedValue({ playback: playbackBlob, full: fullBlob, ext: 'mp3', chunks: [] }),
+    playbackBlob,
+    fullBlob
+  }
+})
 
 vi.mock('@pinia/colada', () => ({
   useMutation: useMutationSpy,
   useQueryCache: () => ({ invalidateQueries: invalidateSpy })
 }))
 
+vi.mock('@/composables/audio-reader/audio-chunker', () => ({
+  chunkAudio: chunkAudioMock
+}))
+
 vi.mock('@/api/lessons/db/audio', () => ({
   uploadLessonAudio: uploadLessonAudioMock,
-  deleteLessonAudio: deleteLessonAudioMock
+  deleteLessonAudioPaths: deleteLessonAudioPathsMock
 }))
 
 vi.mock('@/api/lessons/db/ai', () => ({
@@ -41,8 +57,9 @@ beforeEach(() => {
   invalidateSpy.mockClear()
   uploadLessonAudioMock.mockClear()
   uploadLessonAudioMock.mockResolvedValue(undefined)
-  deleteLessonAudioMock.mockClear()
+  deleteLessonAudioPathsMock.mockClear()
   startLessonTranscriptionMock.mockReset()
+  chunkAudioMock.mockClear()
 })
 
 function configFrom(hook) {
@@ -62,7 +79,12 @@ describe('useStartLessonMutation', () => {
       const { mutation } = configFrom(useStartLessonMutation)
       await mutation(vars)
 
-      expect(uploadLessonAudioMock).toHaveBeenCalledWith('member-uuid-1/fixed-uid.mp3', file)
+      // First upload is the playback blob (CBR transcode), not the raw source file
+      expect(uploadLessonAudioMock).toHaveBeenNthCalledWith(
+        1,
+        'member-uuid-1/fixed-uid.mp3',
+        playbackBlob
+      )
     })
 
     test('starts transcription after upload with the path and script', async () => {
@@ -77,12 +99,15 @@ describe('useStartLessonMutation', () => {
       await mutation(vars)
 
       expect(callOrder).toEqual(['upload', 'start'])
-      expect(startLessonTranscriptionMock).toHaveBeenCalledWith({
-        collection_id: 7,
-        title: 'My Lesson',
-        audio_path: 'member-uuid-1/fixed-uid.mp3',
-        script: 'simplified'
-      })
+      expect(startLessonTranscriptionMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          collection_id: 7,
+          title: 'My Lesson',
+          audio_path: 'member-uuid-1/fixed-uid.mp3',
+          script: 'simplified',
+          chunks: expect.any(Array)
+        })
+      )
     })
 
     test("defaults script to 'original' when omitted", async () => {
@@ -105,14 +130,20 @@ describe('useStartLessonMutation', () => {
       expect(result).toEqual(lesson)
     })
 
-    test('builds the storage path from the file extension', async () => {
+    test("uses the transcode extension, not the source file's", async () => {
+      // chunkAudio always returns ext: 'mp3' (the transcoded format), regardless of
+      // the source file's extension — a .wav source still produces a .mp3 audio_path.
       const wavFile = new File(['audio'], 'lesson.wav', { type: 'audio/wav' })
       startLessonTranscriptionMock.mockResolvedValueOnce(lesson)
 
       const { mutation } = configFrom(useStartLessonMutation)
       await mutation({ collection_id: 7, title: 'My Lesson', file: wavFile })
 
-      expect(uploadLessonAudioMock).toHaveBeenCalledWith('member-uuid-1/fixed-uid.wav', wavFile)
+      expect(uploadLessonAudioMock).toHaveBeenNthCalledWith(
+        1,
+        'member-uuid-1/fixed-uid.mp3',
+        playbackBlob
+      )
     })
   })
 
@@ -124,7 +155,9 @@ describe('useStartLessonMutation', () => {
       const { mutation } = configFrom(useStartLessonMutation)
       await expect(mutation(vars)).rejects.toBe(startError)
 
-      expect(deleteLessonAudioMock).toHaveBeenCalledWith('member-uuid-1/fixed-uid.mp3')
+      expect(deleteLessonAudioPathsMock).toHaveBeenCalledWith(
+        expect.arrayContaining(['member-uuid-1/fixed-uid.mp3'])
+      )
     })
 
     test('does not start or delete when the upload itself fails', async () => {
@@ -134,7 +167,11 @@ describe('useStartLessonMutation', () => {
       await expect(mutation(vars)).rejects.toThrow('upload failed')
 
       expect(startLessonTranscriptionMock).not.toHaveBeenCalled()
-      expect(deleteLessonAudioMock).not.toHaveBeenCalled()
+      // uploaded is empty when the first upload throws, so no real paths passed to delete
+      const hasNonEmptyPaths = deleteLessonAudioPathsMock.mock.calls.some(
+        ([paths]) => paths.length > 0
+      )
+      expect(hasNonEmptyPaths).toBe(false)
     })
   })
 
