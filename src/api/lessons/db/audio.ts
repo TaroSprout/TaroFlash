@@ -1,3 +1,4 @@
+import * as tus from 'tus-js-client'
 import { supabase } from '@/supabase-client'
 import logger from '@/utils/logger'
 
@@ -8,13 +9,51 @@ const BUCKET = 'audio-lessons'
 // listening session; the reader re-mints if it expires.
 export const SIGNED_URL_TTL_SECONDS = 60 * 60
 
-export async function uploadLessonAudio(path: string, file: File | Blob): Promise<void> {
-  const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true })
+// Supabase Storage routes through Cloudflare, which rejects single request bodies
+// over 100 MB. Audio playback files for long books can far exceed that, so all
+// uploads use TUS (resumable, chunked) rather than the standard POST endpoint.
+// 6 MiB is the Supabase-recommended TUS chunk size.
+const TUS_CHUNK_BYTES = 6 * 1024 * 1024
 
-  if (error) {
-    logger.error(`Error uploading audio: ${error.message}`)
-    throw new Error(error.message)
-  }
+export async function uploadLessonAudio(path: string, file: File | Blob): Promise<void> {
+  const {
+    data: { session }
+  } = await supabase.auth.getSession()
+
+  if (!session) throw new Error('Not authenticated')
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
+
+  return new Promise<void>((resolve, reject) => {
+    const upload = new tus.Upload(file, {
+      endpoint: `${supabaseUrl}/storage/v1/upload/resumable`,
+      retryDelays: [0, 3_000, 5_000, 10_000, 20_000],
+      headers: {
+        authorization: `Bearer ${session.access_token}`,
+        'x-upsert': 'true'
+      },
+      uploadDataDuringCreation: true,
+      removeFingerprintOnSuccess: true,
+      metadata: {
+        bucketName: BUCKET,
+        objectName: path,
+        contentType: file.type
+      },
+      chunkSize: TUS_CHUNK_BYTES,
+      onError(err) {
+        logger.error(`Error uploading audio: ${err.message}`)
+        reject(err)
+      },
+      onSuccess() {
+        resolve()
+      }
+    })
+
+    upload.findPreviousUploads().then((previous) => {
+      if (previous.length) upload.resumeFromPreviousUpload(previous[0])
+      upload.start()
+    })
+  })
 }
 
 // Remove several objects at once (best-effort orphan cleanup when a start fails
