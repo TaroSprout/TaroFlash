@@ -109,9 +109,17 @@ async function handleRetry(
 
   if (error || !lesson) return jsonError('not_found', 404)
 
-  // Reset to the start of the chain; the UPDATE re-fires the chain trigger. The
-  // audio + script are still on the row, so the worker reloads everything.
-  const reset = { status: 'processing', phase: 'transcribing', error_code: null }
+  // Reset to the very start of the chain; the UPDATE re-fires the chain trigger.
+  // The chunk manifest + script stay on the row, but the transcript and cursor
+  // MUST be cleared — transcription stitches by appending, so resuming on a
+  // partial transcript would duplicate content.
+  const reset = {
+    status: 'processing',
+    phase: 'transcribing',
+    chunk_cursor: 0,
+    transcript: {},
+    error_code: null
+  }
   const { error: updateError } = await admin
     .from('lessons')
     .update({ ...reset, updated_at: new Date().toISOString() })
