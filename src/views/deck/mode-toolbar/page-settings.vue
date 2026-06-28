@@ -142,6 +142,8 @@ function onSelectSize(value: CardGridSize) {
           <ui-select-field
             data-testid="page-settings__sort"
             data-theme="brown-200"
+            data-theme-dark="stone-900"
+            menu-theme-dark="stone-900"
             :options="sort_options"
             :model-value="sort_by"
             @update:model-value="setSortBy"

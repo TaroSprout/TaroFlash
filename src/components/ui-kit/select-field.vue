@@ -17,7 +17,7 @@ const {
   modelValue,
   menuTheme = 'brown-200',
   menuThemeDark = 'stone-700',
-  menuClass
+  menuClass = 'outline-1 outline-brown-100 dark:outline-grey-900'
 } = defineProps<{
   options: SelectOption[]
   modelValue: T
