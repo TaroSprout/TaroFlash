@@ -27,7 +27,7 @@ const RADIUS: Record<NonNullable<ButtonProps['size']>, string> = {
 }
 
 const PADDING_X: Record<NonNullable<ButtonProps['size']>, string> = {
-  xl: '20px',
+  xl: '18px',
   lg: '16px',
   base: '10px',
   sm: '8px'

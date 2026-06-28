@@ -162,7 +162,7 @@ watch(mode, (m) => {
 
       <div
         data-testid="study-session__body"
-        class="flex-1 min-h-0 w-full max-w-130 flex flex-col items-center justify-between"
+        class="flex-1 min-h-0 w-full max-w-117 flex flex-col items-center justify-between"
       >
         <session-progress
           ref="progress"
