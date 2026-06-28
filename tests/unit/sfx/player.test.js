@@ -145,6 +145,54 @@ describe('audio_player._play', () => {
     playbacks[0].end()
     await promise
   })
+
+  test('returns early before engine.resume when hover bus is muted to 0 [obligation]', async () => {
+    // Regression: hover sounds on TYPE_SFX (e.g. tap_05) have default_bus 'interface',
+    // so WITHOUT the bus: 'hover' force they would use interface volume instead of hover.
+    // This gate must fire for hover-routed sounds when hover volume = 0.
+    audio_player.volume_settings = { ...BUS_DEFAULTS, hover: 0 }
+    loadSound('tap_05', { volume: 0.1, default_bus: 'hover' })
+
+    await audio_player.play('tap_05', { bus: 'hover' })
+
+    expect(engineMock.resume).not.toHaveBeenCalled()
+    expect(engineMock.play).not.toHaveBeenCalled()
+  })
+
+  test('returns early before engine.resume when options.volume is explicitly 0 [obligation]', async () => {
+    loadSound('click_04', { volume: 0.3, default_bus: 'interface' })
+
+    await audio_player.play('click_04', { volume: 0 })
+
+    expect(engineMock.resume).not.toHaveBeenCalled()
+    expect(engineMock.play).not.toHaveBeenCalled()
+  })
+
+  test('returns early before engine.resume for any bus muted to 0 — interface bus [obligation]', async () => {
+    // The volume gate is bus-agnostic: a muted interface bus also silences sounds.
+    audio_player.volume_settings = { ...BUS_DEFAULTS, interface: 0 }
+    loadSound('select', { volume: 0.3, default_bus: 'interface' })
+
+    await audio_player.play('select')
+
+    expect(engineMock.resume).not.toHaveBeenCalled()
+    expect(engineMock.play).not.toHaveBeenCalled()
+  })
+
+  test('resumes and plays with volume = base_volume × (bus_setting / 5) for non-zero bus [obligation]', async () => {
+    audio_player.volume_settings = { ...BUS_DEFAULTS, hover: 2 }
+    const buffer = loadSound('type_01', { volume: 0.4, default_bus: 'hover' })
+
+    const promise = audio_player.play('type_01', { bus: 'hover' })
+    await flush()
+
+    // multiplier = 2/5 = 0.4; resolved volume = 0.4 × 0.4 = 0.16
+    expect(engineMock.resume).toHaveBeenCalledTimes(1)
+    expect(engineMock.play).toHaveBeenCalledWith(buffer, 0.4 * (2 / 5))
+
+    playbacks[0].end()
+    await promise
+  })
 })
 
 describe('audio_player._getVolumeMultiplier', () => {
