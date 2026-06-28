@@ -45,16 +45,29 @@ const OVERLAP_SEC = 5
 
 const OUTPUT_EXT = 'mp3'
 const OUTPUT_MIME = 'audio/mpeg'
-// Mono, 16 kHz (Whisper's internal rate), constant 48 kbps — ~7 MB for a 40-min
-// book. CBR matters: it lets us recover duration from output size (see below).
+
+// Transcription encode: mono, 16 kHz (Whisper's internal rate), constant 48 kbps —
+// ~7 MB for a 40-min book. CBR matters here too: it lets us recover duration from
+// output size (see below), and it's what the chunks are sliced from.
 const OUTPUT_BITRATE_BPS = 48_000
 const ENCODE_ARGS = ['-ac', '1', '-ar', '16000', '-b:a', '48k']
+
+// Playback encode: a constant-bitrate copy at ~source quality, kept SEPARATE from
+// the transcription encode. CBR is the whole point — a VBR source seeks only as
+// precisely as its ~100-point Xing TOC (tens of seconds off on a long file), which
+// desyncs the word highlight after a skip; a CBR file seeks byte-accurately and
+// shares the timeline the word timings were measured on. Channels and sample rate
+// are left at the source's (no -ac/-ar).
+const PLAYBACK_ARGS = ['-c:a', 'libmp3lame', '-b:a', '128k']
 
 export type AudioChunk = { blob: Blob; offset: number }
 
 export type ChunkedAudio = {
-  // Compact mono MP3 of the whole audio: the lesson's stored audio_path (playback,
-  // and the single transcription input when `chunks` is empty).
+  // CBR MP3 at ~source quality: the lesson's stored audio_path, used only for
+  // playback (byte-accurate seeking, unlike a VBR source).
+  playback: Blob
+  // Compact mono 16 kHz MP3 of the whole audio: the single transcription input when
+  // `chunks` is empty (a short file), and what `chunks` are sliced from.
   full: Blob
   ext: string
   // Ordered transcription slices. Empty when `full` is short enough to transcribe
@@ -118,37 +131,40 @@ export async function chunkAudio(
 
   const inputName = `input${extname(file.name)}`
   const fullName = `full.${OUTPUT_EXT}`
+  const playbackName = `playback.${OUTPUT_EXT}`
   await ffmpeg.writeFile(inputName, await fetchFile(file))
 
-  const { blob: full, duration: logDuration } = await transcodeFull(
-    ffmpeg,
-    inputName,
-    fullName,
-    onProgress
-  )
+  const {
+    full,
+    playback,
+    duration: logDuration
+  } = await transcode(ffmpeg, inputName, fullName, playbackName, onProgress)
   // ffmpeg's decoded duration is authoritative. If its log somehow didn't surface
-  // one, recover it from the output size — the encode is constant-bitrate, so
-  // bytes map directly to seconds (no metadata needed, unlike a media element,
+  // one, recover it from the COMPACT output size — that encode is constant-bitrate,
+  // so bytes map directly to seconds (no metadata needed, unlike a media element,
   // which reports Infinity for many MP3s).
   const duration = Number.isFinite(logDuration) ? logDuration : durationFromSize(full.size)
   const chunks = await sliceWindows(ffmpeg, fullName, duration, onProgress)
 
   await ffmpeg.deleteFile(inputName).catch(() => {})
   await ffmpeg.deleteFile(fullName).catch(() => {})
+  await ffmpeg.deleteFile(playbackName).catch(() => {})
 
-  return { full, ext: OUTPUT_EXT, chunks }
+  return { playback, full, ext: OUTPUT_EXT, chunks }
 }
 
-// Transcode the whole input to the compact MP3, forwarding ffmpeg's progress as
-// the 'transcoding' ratio and capturing the true duration from its log — the
-// media element reports `Infinity` for many MP3s (VBR / no Xing header), so
-// ffmpeg's own decode is the reliable source for the slicing decision.
-async function transcodeFull(
+// Decode the input ONCE and encode both outputs in a single pass — the CBR
+// playback copy and the compact 16 kHz transcription master — forwarding ffmpeg's
+// progress as the 'transcoding' ratio and capturing the true duration from its log
+// (a media element reports `Infinity` for many MP3s — VBR / no Xing header — so
+// ffmpeg's own decode is the reliable source for the slicing decision).
+async function transcode(
   ffmpeg: FFmpeg,
   inputName: string,
   fullName: string,
+  playbackName: string,
   onProgress?: (progress: ChunkProgress) => void
-): Promise<{ blob: Blob; duration: number }> {
+): Promise<{ full: Blob; playback: Blob; duration: number }> {
   onProgress?.({ stage: 'transcoding', ratio: 0 })
   const onTick = ({ progress }: { progress: number }) =>
     onProgress?.({ stage: 'transcoding', ratio: clamp01(progress) })
@@ -163,14 +179,28 @@ async function transcodeFull(
   ffmpeg.on('progress', onTick)
   ffmpeg.on('log', onLog)
   try {
-    await ffmpeg.exec(['-i', inputName, ...ENCODE_ARGS, '-f', OUTPUT_EXT, fullName])
+    await ffmpeg.exec([
+      '-i',
+      inputName,
+      ...PLAYBACK_ARGS,
+      playbackName,
+      ...ENCODE_ARGS,
+      '-f',
+      OUTPUT_EXT,
+      fullName
+    ])
   } finally {
     ffmpeg.off('progress', onTick)
     ffmpeg.off('log', onLog)
   }
 
-  const data = await ffmpeg.readFile(fullName)
-  return { blob: new Blob([data], { type: OUTPUT_MIME }), duration }
+  const fullData = await ffmpeg.readFile(fullName)
+  const playbackData = await ffmpeg.readFile(playbackName)
+  return {
+    full: new Blob([fullData], { type: OUTPUT_MIME }),
+    playback: new Blob([playbackData], { type: OUTPUT_MIME }),
+    duration
+  }
 }
 
 // Slice the compact MP3 into overlapping windows. Returns [] when the audio fits

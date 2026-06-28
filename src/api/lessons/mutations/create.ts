@@ -23,16 +23,17 @@ export type StartLessonVars = {
 }
 
 /**
- * Preprocess the audio (transcode a compact mono MP3 for transcription, slicing a
- * long file into overlapping chunks), upload the untouched original for playback
- * plus the compact transcription sources, and kick off async transcription.
- * Returns as soon as the `processing` lesson row exists — a background worker
- * transcribes chunk-by-chunk and the collection view polls the row. Slicing
- * client-side is what lets an arbitrary-length file be transcribed.
+ * Preprocess the audio into two encodes — a CBR playback copy (byte-accurate
+ * seeking) and a compact 16 kHz mono master sliced into overlapping transcription
+ * chunks — upload both, and kick off async transcription. Returns as soon as the
+ * `processing` lesson row exists — a background worker transcribes chunk-by-chunk
+ * and the collection view polls the row. Slicing client-side is what lets an
+ * arbitrary-length file be transcribed.
  *
- * Playback and transcription use DIFFERENT assets: `audio_path` is the original
- * file (true fidelity — the 16 kHz mono encode is unlistenable), while every
- * entry in the chunk manifest points at the compact encode Whisper wants.
+ * Playback and transcription use DIFFERENT assets: `audio_path` is the CBR
+ * playback copy (a VBR source seeks too coarsely and desyncs the highlight after a
+ * skip, and the 16 kHz encode is unlistenable), while every entry in the chunk
+ * manifest points at the compact encode Whisper wants.
  */
 export function useStartLessonMutation() {
   const queryCache = useQueryCache()
@@ -48,7 +49,7 @@ export function useStartLessonMutation() {
       // Lazy-load the chunker so ffmpeg.wasm (a heavy bundle) only enters the app
       // on an actual upload, not on every page that touches the lessons API.
       const { chunkAudio } = await import('@/composables/audio-reader/audio-chunker')
-      const { full, ext, chunks } = await chunkAudio(file, onProgress)
+      const { playback, full, ext, chunks } = await chunkAudio(file, onProgress)
 
       // Transcription sources: the overlapping slices for a long file, or the whole
       // compact MP3 as a single chunk for a short one. Never the original — it may
@@ -56,17 +57,13 @@ export function useStartLessonMutation() {
       const sources = chunks.length ? chunks : [{ blob: full, offset: 0 }]
 
       const base = `${useMemberStore().id}/${uid()}`
-      // Keep the original's extension so Storage gets the right content-type and
-      // the player picks a matching decoder; fall back to mp3 if it's missing.
-      const dot = file.name.lastIndexOf('.')
-      const orig_ext = dot === -1 ? 'mp3' : file.name.slice(dot + 1).toLowerCase()
-      const audio_path = `${base}.${orig_ext}`
+      const audio_path = `${base}.${ext}`
       const uploaded: string[] = []
 
       try {
-        // Original first — it's the playback asset, stored untouched.
+        // Playback copy first — the CBR transcode that seeks accurately.
         onProgress?.({ stage: 'uploading', ratio: 0 })
-        await uploadLessonAudio(audio_path, file)
+        await uploadLessonAudio(audio_path, playback)
         uploaded.push(audio_path)
 
         const manifest: LessonChunk[] = []
