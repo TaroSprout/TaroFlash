@@ -819,6 +819,7 @@ export function useReaderHighlights(
     hover_lines,
     setHoverEl,
     tap_active,
+    interaction_range,
     selection_preview,
     following,
     follow_direction,
