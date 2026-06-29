@@ -178,7 +178,7 @@ function reclearSelection() {
   const word = document.querySelector<HTMLElement>(`[data-word-index="${sel.word_index}"]`)
   if (!word) return
 
-  scrollClearOf(window, word, dock_el.value.getBoundingClientRect().top - FOOTER_CLEARANCE)
+  scrollClearOf(window, word, dock_el.value.getBoundingClientRect().top - FOOTER_CLEARANCE, false)
 }
 
 // The crossfade owns the footer height while a pane swap is in flight, so the

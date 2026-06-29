@@ -494,7 +494,9 @@ export function useReaderHighlights(
     if (!el) return
     if (el.getBoundingClientRect().bottom <= window.innerHeight * SHEET_COVER_RATIO) return
 
-    scrollLineIntoView(window, el)
+    // Jump instantly — opening a term always pauses the audio, so a rAF-driven
+    // window.scrollTo tween would starve rAF on iOS Safari for 600ms.
+    scrollLineIntoView(window, el, false)
   }
 
   async function positionInteraction() {
