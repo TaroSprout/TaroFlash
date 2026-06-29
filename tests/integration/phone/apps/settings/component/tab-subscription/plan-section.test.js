@@ -91,6 +91,13 @@ const PlanActionsStub = defineComponent({
   }
 })
 
+const PaidFeaturesStub = defineComponent({
+  name: 'PaidFeatures',
+  setup() {
+    return () => h('div', { 'data-testid': 'paid-features-stub' })
+  }
+})
+
 // ── Factory ───────────────────────────────────────────────────────────────────
 
 const baseSubscription = {
@@ -125,7 +132,8 @@ async function makePlanSection(queryOverride = {}) {
       stubs: {
         LabeledSection: LabeledSectionStub,
         PlanPill: PlanPillStub,
-        PlanActions: PlanActionsStub
+        PlanActions: PlanActionsStub,
+        PaidFeatures: PaidFeaturesStub
       }
     }
   })
@@ -156,7 +164,8 @@ describe('plan-section — free vs paid identity', () => {
         stubs: {
           LabeledSection: LabeledSectionStub,
           PlanPill: PlanPillStub,
-          PlanActions: PlanActionsStub
+          PlanActions: PlanActionsStub,
+          PaidFeatures: PaidFeaturesStub
         }
       }
     })
@@ -180,7 +189,8 @@ describe('plan-section — free vs paid identity', () => {
         stubs: {
           LabeledSection: LabeledSectionStub,
           PlanPill: PlanPillStub,
-          PlanActions: PlanActionsStub
+          PlanActions: PlanActionsStub,
+          PaidFeatures: PaidFeaturesStub
         }
       }
     })
@@ -205,7 +215,8 @@ describe('plan-section — free vs paid identity', () => {
         stubs: {
           LabeledSection: LabeledSectionStub,
           PlanPill: PlanPillStub,
-          PlanActions: PlanActionsStub
+          PlanActions: PlanActionsStub,
+          PaidFeatures: PaidFeaturesStub
         }
       }
     })
@@ -230,7 +241,8 @@ describe('plan-section — error state', () => {
         stubs: {
           LabeledSection: LabeledSectionStub,
           PlanPill: PlanPillStub,
-          PlanActions: PlanActionsStub
+          PlanActions: PlanActionsStub,
+          PaidFeatures: PaidFeaturesStub
         }
       }
     })
@@ -252,7 +264,8 @@ describe('plan-section — error state', () => {
         stubs: {
           LabeledSection: LabeledSectionStub,
           PlanPill: PlanPillStub,
-          PlanActions: PlanActionsStub
+          PlanActions: PlanActionsStub,
+          PaidFeatures: PaidFeaturesStub
         }
       }
     })
@@ -277,7 +290,8 @@ describe('plan-section — plan name', () => {
         stubs: {
           LabeledSection: LabeledSectionStub,
           PlanPill: PlanPillStub,
-          PlanActions: PlanActionsStub
+          PlanActions: PlanActionsStub,
+          PaidFeatures: PaidFeaturesStub
         }
       }
     })
@@ -297,7 +311,8 @@ describe('plan-section — plan name', () => {
         stubs: {
           LabeledSection: LabeledSectionStub,
           PlanPill: PlanPillStub,
-          PlanActions: PlanActionsStub
+          PlanActions: PlanActionsStub,
+          PaidFeatures: PaidFeaturesStub
         }
       }
     })
@@ -319,7 +334,8 @@ describe('plan-section — cost display', () => {
         stubs: {
           LabeledSection: LabeledSectionStub,
           PlanPill: PlanPillStub,
-          PlanActions: PlanActionsStub
+          PlanActions: PlanActionsStub,
+          PaidFeatures: PaidFeaturesStub
         }
       }
     })
@@ -339,7 +355,8 @@ describe('plan-section — cost display', () => {
         stubs: {
           LabeledSection: LabeledSectionStub,
           PlanPill: PlanPillStub,
-          PlanActions: PlanActionsStub
+          PlanActions: PlanActionsStub,
+          PaidFeatures: PaidFeaturesStub
         }
       }
     })
@@ -361,7 +378,8 @@ describe('plan-section — status badge', () => {
         stubs: {
           LabeledSection: LabeledSectionStub,
           PlanPill: PlanPillStub,
-          PlanActions: PlanActionsStub
+          PlanActions: PlanActionsStub,
+          PaidFeatures: PaidFeaturesStub
         }
       }
     })
@@ -382,7 +400,8 @@ describe('plan-section — status badge', () => {
         stubs: {
           LabeledSection: LabeledSectionStub,
           PlanPill: PlanPillStub,
-          PlanActions: PlanActionsStub
+          PlanActions: PlanActionsStub,
+          PaidFeatures: PaidFeaturesStub
         }
       }
     })
@@ -402,7 +421,8 @@ describe('plan-section — status badge', () => {
         stubs: {
           LabeledSection: LabeledSectionStub,
           PlanPill: PlanPillStub,
-          PlanActions: PlanActionsStub
+          PlanActions: PlanActionsStub,
+          PaidFeatures: PaidFeaturesStub
         }
       }
     })
@@ -424,7 +444,8 @@ describe('plan-section — plan-actions slot', () => {
         stubs: {
           LabeledSection: LabeledSectionStub,
           PlanPill: PlanPillStub,
-          PlanActions: PlanActionsStub
+          PlanActions: PlanActionsStub,
+          PaidFeatures: PaidFeaturesStub
         }
       }
     })
@@ -433,7 +454,7 @@ describe('plan-section — plan-actions slot', () => {
     )
   })
 
-  test('passes null subscription to plan-actions when free', async () => {
+  test('free-plan pill receives no #actions slot (plan-actions not rendered) [obligation]', async () => {
     memberState.plan = 'free'
     const PlanSection = (
       await import('@/phone/apps/settings/component/tab-subscription/plan-section.vue')
@@ -445,12 +466,79 @@ describe('plan-section — plan-actions slot', () => {
         stubs: {
           LabeledSection: LabeledSectionStub,
           PlanPill: PlanPillStub,
-          PlanActions: PlanActionsStub
+          PlanActions: PlanActionsStub,
+          PaidFeatures: PaidFeaturesStub
         }
       }
     })
-    expect(wrapper.find('[data-testid="plan-actions-stub"]').attributes('data-has-sub')).toBe(
-      'false'
-    )
+    // For free members, v-if="is_paid" on the #actions template means
+    // PlanActions is never mounted
+    expect(wrapper.find('[data-testid="plan-actions-stub"]').exists()).toBe(false)
+  })
+})
+
+// ── PaidFeatures visibility [obligation] ──────────────────────────────────────
+
+describe('plan-section — paid-features visibility [obligation]', () => {
+  test('paid-features renders for free member with no error [obligation]', async () => {
+    memberState.plan = 'free'
+    const PlanSection = (
+      await import('@/phone/apps/settings/component/tab-subscription/plan-section.vue')
+    ).default
+    const wrapper = shallowMount(PlanSection, {
+      props: { subscriptionQuery: makeSubscriptionQuery(null) },
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        stubs: {
+          LabeledSection: LabeledSectionStub,
+          PlanPill: PlanPillStub,
+          PlanActions: PlanActionsStub,
+          PaidFeatures: PaidFeaturesStub
+        }
+      }
+    })
+    expect(wrapper.find('[data-testid="paid-features-stub"]').exists()).toBe(true)
+  })
+
+  test('paid-features is suppressed for paid member [obligation]', async () => {
+    memberState.plan = 'paid'
+    const PlanSection = (
+      await import('@/phone/apps/settings/component/tab-subscription/plan-section.vue')
+    ).default
+    const wrapper = shallowMount(PlanSection, {
+      props: { subscriptionQuery: makeSubscriptionQuery(baseSubscription) },
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        stubs: {
+          LabeledSection: LabeledSectionStub,
+          PlanPill: PlanPillStub,
+          PlanActions: PlanActionsStub,
+          PaidFeatures: PaidFeaturesStub
+        }
+      }
+    })
+    expect(wrapper.find('[data-testid="paid-features-stub"]').exists()).toBe(false)
+  })
+
+  test('paid-features is suppressed when errored (paid+error shows error view) [obligation]', async () => {
+    memberState.plan = 'paid'
+    const PlanSection = (
+      await import('@/phone/apps/settings/component/tab-subscription/plan-section.vue')
+    ).default
+    const wrapper = shallowMount(PlanSection, {
+      props: {
+        subscriptionQuery: makeSubscriptionQuery(null, { error: new Error('boom') })
+      },
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        stubs: {
+          LabeledSection: LabeledSectionStub,
+          PlanPill: PlanPillStub,
+          PlanActions: PlanActionsStub,
+          PaidFeatures: PaidFeaturesStub
+        }
+      }
+    })
+    expect(wrapper.find('[data-testid="paid-features-stub"]').exists()).toBe(false)
   })
 })

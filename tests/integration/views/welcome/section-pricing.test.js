@@ -153,4 +153,61 @@ describe('SectionPricing', () => {
     const freePlan = wrapper.find('[data-testid="welcome-pricing__plan-free"]')
     expect(freePlan.attributes('data-featured')).toBeUndefined()
   })
+
+  // ── featureLabel — count interpolation [obligation] ────────────────────────
+
+  test('featureLabel interpolates count for decks feature (count = PLANS.free.deckLimit) [obligation]', () => {
+    const wrapper = mountPricing()
+    const freePlan = wrapper.find('[data-testid="welcome-pricing__plan-free"]')
+    // "Up to {count} decks" with count=5 → "Up to 5 decks"
+    expect(freePlan.text()).toContain(`Up to ${PLANS.free.deckLimit} decks`)
+  })
+
+  test('featureLabel interpolates count for cards feature (count = PLANS.free.cardsPerDeckLimit) [obligation]', () => {
+    const wrapper = mountPricing()
+    const freePlan = wrapper.find('[data-testid="welcome-pricing__plan-free"]')
+    // "Up to {count} cards per deck" with count=200 → "Up to 200 cards per deck"
+    expect(freePlan.text()).toContain(`Up to ${PLANS.free.cardsPerDeckLimit} cards per deck`)
+  })
+
+  test('featureLabel omits count arg when feature.count is null (deck-images) [obligation]', () => {
+    const wrapper = mountPricing()
+    const freePlan = wrapper.find('[data-testid="welcome-pricing__plan-free"]')
+    // deck-images has no count — renders plain "Upload images to decks"
+    expect(freePlan.text()).toContain('Upload images to decks')
+  })
+
+  // ── ok === false rendering [obligation] ────────────────────────────────────
+
+  test('feature with ok === false has data-ok="false" attribute [obligation]', () => {
+    const wrapper = mountPricing()
+    const freePlan = wrapper.find('[data-testid="welcome-pricing__plan-free"]')
+    // no-card-images has ok: false
+    expect(freePlan.find('[data-ok="false"]').exists()).toBe(true)
+  })
+
+  test('feature with ok === false does not render a checkmark UiIcon [obligation]', () => {
+    const wrapper = mountPricing()
+    const freePlan = wrapper.find('[data-testid="welcome-pricing__plan-free"]')
+    const notOkItem = freePlan.find('[data-ok="false"]')
+    // UiIcon (checkmark) must NOT be present inside a not-ok feature item
+    expect(notOkItem.findComponent({ name: 'UiIcon' }).exists()).toBe(false)
+  })
+
+  test('features without ok === false still render a checkmark UiIcon [obligation]', () => {
+    const wrapper = mountPricing()
+    const freePlan = wrapper.find('[data-testid="welcome-pricing__plan-free"]')
+    // Items without data-ok="false" have a checkmark
+    const okItems = freePlan.findAll('li:not([data-ok="false"])')
+    for (const item of okItems) {
+      expect(item.findComponent({ name: 'UiIcon' }).exists()).toBe(true)
+    }
+  })
+
+  test('full plan paid features all have checkmark icons (no ok:false in paid features)', () => {
+    const wrapper = mountPricing()
+    const fullPlan = wrapper.find('[data-testid="welcome-pricing__plan-full"]')
+    // All paid features have ok !== false
+    expect(fullPlan.find('[data-ok="false"]').exists()).toBe(false)
+  })
 })
