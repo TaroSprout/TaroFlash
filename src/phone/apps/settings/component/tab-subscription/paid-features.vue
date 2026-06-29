@@ -22,7 +22,7 @@ const price = `$${PLANS.paid.monthlyPriceUsd} / mo`
       @tap="onUpgrade"
     >
       <div data-testid="paid-features__upgrade" class="absolute -bottom-2 -right-2 z-10 rotate-2">
-        <ui-button data-theme="yellow-500" icon-left="triangle-eye">
+        <ui-button data-theme="yellow-500" icon-left="triangle-eye" @press="onUpgrade">
           {{ t('settings.subscription.free.upgrade') }}
         </ui-button>
       </div>
