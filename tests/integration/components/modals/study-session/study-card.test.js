@@ -1,10 +1,9 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
-import { mount, shallowMount, flushPromises } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 import { FSRS, generatorParameters, createEmptyCard, Rating } from 'ts-fsrs'
-import { ref } from 'vue'
 import StudyCard from '@/components/study-session/session-flashcard/study-card.vue'
-import { DeckContextKey } from '@/components/study-session/deck-context'
+import { useProvideDeckContext } from '@/components/study-session/deck-context'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -52,6 +51,13 @@ vi.mock('@/sfx/bus', () => ({
 const CardStub = defineComponent({
   name: 'Card',
   inheritAttrs: false,
+  // Declare Card's relevant props so findComponent().props('cover_config') resolves.
+  props: {
+    cover_config: { default: undefined },
+    card_attributes: { default: undefined },
+    side: { type: String }
+  },
+  emits: ['flip-out-complete'],
   setup(_props, { slots }) {
     const attrs = useAttrs()
     return () => h('div', attrs, slots.default?.())
@@ -70,6 +76,26 @@ function makeOptions() {
 function mountStudyCard(props = {}) {
   return mount(StudyCard, {
     props: { side: 'front', ...props },
+    attachTo: document.body,
+    global: { stubs: { Card: CardStub } }
+  })
+}
+
+/**
+ * Mounts StudyCard inside a parent that provides a DeckContext so tests can
+ * verify the cover/attributes resolution without importing the private injection
+ * key. The `decks` array is passed to `useProvideDeckContext`.
+ */
+function mountStudyCardWithDeckContext(decks, card_data, extra_props = {}) {
+  const Wrapper = defineComponent({
+    setup() {
+      useProvideDeckContext(() => decks)
+    },
+    render() {
+      return h(StudyCard, { card: card_data, side: 'front', ...extra_props })
+    }
+  })
+  return mount(Wrapper, {
     attachTo: document.body,
     global: { stubs: { Card: CardStub } }
   })
@@ -460,18 +486,36 @@ describe('StudyCard', () => {
 
   // ── cover_config forwarding ────────────────────────────────────────────────
 
-  test('forwards injected cover_config to the Card component', () => {
+  test('forwards cover_config from deck context for the card deck_id [obligation]', async () => {
     const cover_config = { bg_color: 'blue-500', pattern: 'stars' }
-    const wrapper = shallowMount(StudyCard, {
-      props: { side: 'front' },
-      global: { provide: { [DeckContextKey]: ref({ cover_config }) } }
-    })
+    const card_data = { id: 1, deck_id: 42 }
+    const deck = { id: 42, cover_config, card_attributes: null }
+
+    const wrapper = mountStudyCardWithDeckContext([deck], card_data)
+    await flushPromises()
+
     expect(wrapper.findComponent({ name: 'Card' }).props('cover_config')).toEqual(cover_config)
   })
 
-  test('forwards undefined when no deck context is provided', () => {
-    const wrapper = shallowMount(StudyCard, { props: { side: 'front' } })
+  test('cover_config is undefined when no deck context is provided', async () => {
+    const wrapper = mountStudyCard({ side: 'front' })
+    await flushPromises()
+
     expect(wrapper.findComponent({ name: 'Card' }).props('cover_config')).toBeUndefined()
+  })
+
+  test('cover_override prop takes precedence over deck context cover_config [obligation]', async () => {
+    const deck_cover = { bg_color: 'red-500', pattern: 'none' }
+    const override_cover = { bg_color: 'blue-500', pattern: 'stars' }
+    const card_data = { id: 1, deck_id: 42 }
+    const deck = { id: 42, cover_config: deck_cover }
+
+    const wrapper = mountStudyCardWithDeckContext([deck], card_data, {
+      cover_override: override_cover
+    })
+    await flushPromises()
+
+    expect(wrapper.findComponent({ name: 'Card' }).props('cover_config')).toEqual(override_cover)
   })
 
   test('drag does not move card when side is cover', async () => {

@@ -1,6 +1,6 @@
-import { describe, test, expect, vi } from 'vite-plus/test'
+import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h, ref, computed } from 'vue'
+import { defineComponent, h, computed } from 'vue'
 import SessionSummary from '@/components/study-session/session-summary/index.vue'
 import { studyViewportKey } from '@/components/study-session/viewport-context'
 import { deck } from '../../../../../fixtures/deck'
@@ -52,7 +52,7 @@ function makeDeck(overrides = {}) {
 
 function mountSummary({ results = [], deck_data = makeDeck() } = {}) {
   return mount(SessionSummary, {
-    props: { deck: deck_data, results },
+    props: { title: deck_data.title, results },
     global: {
       stubs: {
         SessionHeader: SessionHeaderStub,
@@ -95,8 +95,7 @@ describe('SessionSummary (index.vue)', () => {
 
   test('session-header receives deck title [obligation]', () => {
     const wrapper = mountSummary({ deck_data: makeDeck({ title: 'Kanji N3' }) })
-    const header = wrapper.find('[data-testid="session-header-stub"]')
-    // The stub forwards props — title is passed as a DOM attr in the stub
+    // The stub forwards props — title is passed through to SessionHeader
     expect(wrapper.findComponent({ name: 'SessionHeader' }).props('title')).toBe('Kanji N3')
   })
 

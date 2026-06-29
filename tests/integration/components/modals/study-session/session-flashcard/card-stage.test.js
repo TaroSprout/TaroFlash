@@ -1,10 +1,15 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { mount, shallowMount } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
 import CardStage from '@/components/study-session/session-flashcard/card-stage.vue'
-import { DeckContextKey } from '@/components/study-session/deck-context'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
+
+// Deck context is an inject seam; these tests don't exercise the cover carousel,
+// so a single-cover (idle) context keeps it inert.
+vi.mock('@/components/study-session/deck-context', () => ({
+  useDeckContext: () => ref({ appearanceFor: () => ({}), covers: [] })
+}))
 
 const { mockRegister } = vi.hoisted(() => ({
   mockRegister: vi.fn().mockReturnValue(() => {})
@@ -45,10 +50,12 @@ vi.mock('@/utils/animations/session-intro', () => ({
 
 const StudyCardStub = defineComponent({
   name: 'StudyCard',
-  props: ['card', 'side', 'options', 'show_all_ratings'],
+  props: ['card', 'side', 'options', 'show_all_ratings', 'cover_override'],
   emits: ['started', 'side-changed', 'reviewed', 'drag-progress', 'drag-rating'],
-  setup(props, { expose, emit }) {
-    expose({ rate: vi.fn() })
+  setup(props, { expose }) {
+    // useCoverCarousel reads the active card's element via el(); expose it so the
+    // carousel's watcher doesn't blow up resolving the (idle) card element.
+    expose({ rate: vi.fn(), el: () => undefined })
     return () =>
       h('div', {
         'data-testid': 'study-card-stub',
@@ -68,7 +75,7 @@ const StudyCardEditStub = defineComponent({
 
 const CardStub = defineComponent({
   name: 'Card',
-  props: ['side', 'card_attributes'],
+  props: ['side', 'card_attributes', 'cover_config'],
   emits: ['flip-complete'],
   setup() {
     return () => h('div', { 'data-testid': 'card-stub' })
@@ -93,9 +100,6 @@ function mountCardStage(props = {}) {
     },
     attachTo: document.body,
     global: {
-      provide: {
-        [DeckContextKey]: ref({ cover_config: undefined, card_attributes: undefined })
-      },
       stubs: {
         StudyCard: StudyCardStub,
         StudyCardEdit: StudyCardEditStub,
