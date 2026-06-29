@@ -14,9 +14,16 @@ type UiButtonGroupProps = {
   size?: ButtonProps['size']
   sfx?: SfxOptions
   active_value?: ButtonGroupOption['value']
+  icon_only?: boolean
 }
 
-const { options, size = 'xl', sfx = {}, active_value } = defineProps<UiButtonGroupProps>()
+const {
+  options,
+  size = 'xl',
+  sfx = {},
+  active_value,
+  icon_only = false
+} = defineProps<UiButtonGroupProps>()
 
 const emit = defineEmits<{ (e: 'press', value: string | number): void }>()
 
@@ -54,6 +61,7 @@ function styleFor(index: number) {
       :key="option.value"
       :size="size"
       :icon-left="option.icon"
+      :icon-only="icon_only"
       :sfx="sfx"
       :active="option.value === active_value"
       data-testid="ui-button-group__button"
@@ -68,5 +76,9 @@ function styleFor(index: number) {
 <style>
 .ui-button-group > * {
   flex: 1;
+}
+
+.ui-button-group .ui-kit-btn--icon-only {
+  aspect-ratio: unset;
 }
 </style>

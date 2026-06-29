@@ -1,8 +1,6 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { computed } from 'vue'
 import StatTile from '@/components/study-session/session-summary/stat-tile.vue'
-import { studyViewportKey } from '@/components/study-session/viewport-context'
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -18,45 +16,91 @@ function makeSummary(overrides = {}) {
   }
 }
 
-function mountTile(summary, viewport = 'desktop') {
-  return mount(StatTile, {
-    props: { summary },
-    global: {
-      provide: {
-        [studyViewportKey]: computed(() => viewport)
-      }
-    }
-  })
+function mountTile(summary) {
+  return mount(StatTile, { props: { summary } })
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('StatTile', () => {
-  // ── Stat values rendered correctly [obligation] ───────────────────────────
+  // ── Hidden when all counts are zero [obligation] ──────────────────────────
 
-  test('renders new_count in tile-value-new [obligation]', () => {
-    const wrapper = mountTile(makeSummary({ new_count: 5 }))
-    expect(wrapper.find('[data-testid="session-summary__tile-value-new"]').text()).toBe('5')
+  test('tile is not rendered when all counts are 0 [obligation]', () => {
+    const wrapper = mountTile(makeSummary())
+    expect(wrapper.find('[data-testid="session-summary__tile"]').exists()).toBe(false)
   })
 
-  test('renders leveled_up_count in tile-value-strengthened [obligation]', () => {
-    const wrapper = mountTile(makeSummary({ leveled_up_count: 3 }))
-    expect(wrapper.find('[data-testid="session-summary__tile-value-strengthened"]').text()).toBe(
-      '3'
+  // ── Only non-zero stats render [obligation] ───────────────────────────────
+
+  test('only rows with non-zero counts are rendered [obligation]', () => {
+    const wrapper = mountTile(makeSummary({ new_count: 3, leveled_up_count: 0 }))
+    expect(wrapper.find('[data-testid="session-summary__tile-stat-new"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="session-summary__tile-stat-strengthened"]').exists()).toBe(
+      false
     )
   })
 
-  test('renders leveled_down_count in tile-value-weakened [obligation]', () => {
+  // ── Stat label text embeds count [obligation] ─────────────────────────────
+
+  test('new_count label embeds count in text [obligation]', () => {
+    const wrapper = mountTile(makeSummary({ new_count: 5 }))
+    expect(wrapper.find('[data-testid="session-summary__tile-value-new"]').text()).toBe(
+      '5 New Cards'
+    )
+  })
+
+  test('leveled_up_count label embeds count in text [obligation]', () => {
+    const wrapper = mountTile(makeSummary({ leveled_up_count: 3 }))
+    expect(wrapper.find('[data-testid="session-summary__tile-value-strengthened"]').text()).toBe(
+      '3 Cards Strengthened'
+    )
+  })
+
+  test('leveled_down_count label embeds count in text [obligation]', () => {
     const wrapper = mountTile(makeSummary({ leveled_down_count: 2 }))
-    expect(wrapper.find('[data-testid="session-summary__tile-value-weakened"]').text()).toBe('2')
+    expect(wrapper.find('[data-testid="session-summary__tile-value-weakened"]').text()).toBe(
+      '2 Cards Weakened'
+    )
   })
 
-  test('renders stuck_count in tile-value-stuck [obligation]', () => {
+  test('stuck_count label embeds count in text [obligation]', () => {
+    const wrapper = mountTile(makeSummary({ stuck_count: 4 }))
+    expect(wrapper.find('[data-testid="session-summary__tile-value-stuck"]').text()).toBe(
+      '4 Cards Stuck'
+    )
+  })
+
+  // ── Pluralization [obligation] ────────────────────────────────────────────
+
+  test('value=1 uses singular form [obligation]', () => {
+    const wrapper = mountTile(makeSummary({ new_count: 1 }))
+    expect(wrapper.find('[data-testid="session-summary__tile-value-new"]').text()).toBe(
+      '1 New Card'
+    )
+  })
+
+  test('value>1 uses plural form [obligation]', () => {
+    const wrapper = mountTile(makeSummary({ new_count: 3 }))
+    expect(wrapper.find('[data-testid="session-summary__tile-value-new"]').text()).toBe(
+      '3 New Cards'
+    )
+  })
+
+  test('stuck_count=1 uses singular form [obligation]', () => {
     const wrapper = mountTile(makeSummary({ stuck_count: 1 }))
-    expect(wrapper.find('[data-testid="session-summary__tile-value-stuck"]').text()).toBe('1')
+    expect(wrapper.find('[data-testid="session-summary__tile-value-stuck"]').text()).toBe(
+      '1 Card Stuck'
+    )
   })
 
-  test('renders all four stat rows', () => {
+  // ── Renders tile when any stat is non-zero ────────────────────────────────
+
+  test('tile renders when at least one count is non-zero', () => {
+    const wrapper = mountTile(makeSummary({ new_count: 1 }))
+    expect(wrapper.find('[data-testid="session-summary__tile"]').exists()).toBe(true)
+  })
+
+  test('renders all four stat rows when all counts are non-zero', () => {
     const wrapper = mountTile(
       makeSummary({ new_count: 1, leveled_up_count: 2, leveled_down_count: 3, stuck_count: 4 })
     )
@@ -66,40 +110,5 @@ describe('StatTile', () => {
     )
     expect(wrapper.find('[data-testid="session-summary__tile-stat-weakened"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="session-summary__tile-stat-stuck"]').exists()).toBe(true)
-  })
-
-  test('zero counts render as "0"', () => {
-    const wrapper = mountTile(makeSummary())
-    expect(wrapper.find('[data-testid="session-summary__tile-value-new"]').text()).toBe('0')
-    expect(wrapper.find('[data-testid="session-summary__tile-value-strengthened"]').text()).toBe(
-      '0'
-    )
-    expect(wrapper.find('[data-testid="session-summary__tile-value-weakened"]').text()).toBe('0')
-    expect(wrapper.find('[data-testid="session-summary__tile-value-stuck"]').text()).toBe('0')
-  })
-
-  // ── Viewport layout switching [obligation] ────────────────────────────────
-
-  test('desktop viewport renders the tile container [obligation]', () => {
-    const wrapper = mountTile(makeSummary(), 'desktop')
-    expect(wrapper.find('[data-testid="session-summary__tile"]').exists()).toBe(true)
-  })
-
-  test('mobile viewport renders the tile container [obligation]', () => {
-    const wrapper = mountTile(makeSummary(), 'mobile')
-    expect(wrapper.find('[data-testid="session-summary__tile"]').exists()).toBe(true)
-  })
-
-  test('mobile viewport renders all four stat rows', () => {
-    const wrapper = mountTile(
-      makeSummary({ new_count: 2, leveled_up_count: 1, leveled_down_count: 0, stuck_count: 3 }),
-      'mobile'
-    )
-    expect(wrapper.find('[data-testid="session-summary__tile-value-new"]').text()).toBe('2')
-    expect(wrapper.find('[data-testid="session-summary__tile-value-strengthened"]').text()).toBe(
-      '1'
-    )
-    expect(wrapper.find('[data-testid="session-summary__tile-value-weakened"]').text()).toBe('0')
-    expect(wrapper.find('[data-testid="session-summary__tile-value-stuck"]').text()).toBe('3')
   })
 })

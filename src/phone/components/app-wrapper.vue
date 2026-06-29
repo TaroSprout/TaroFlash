@@ -60,7 +60,7 @@ function spawnBurst() {
         element="button"
         data-testid="phone-app"
         v-bind="$attrs"
-        :data-playing="playing || null"
+        :data-active="playing || null"
         @click="onClick"
       >
         <slot></slot>

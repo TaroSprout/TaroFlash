@@ -1,12 +1,17 @@
 import { describe, test, expect, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
+import { ref } from 'vue'
 import { Rating } from 'ts-fsrs'
 import RatingButtons from '@/components/study-session/session-flashcard/rating-buttons/index.vue'
+import { PrimedGradeKey } from '@/components/study-session/session-flashcard/primed-grade-context'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function mountRatingButtons(props) {
-  return mount(RatingButtons, { props })
+function mountRatingButtons({ primed_grade = null, ...props } = {}) {
+  return mount(RatingButtons, {
+    props,
+    global: { provide: { [PrimedGradeKey]: ref(primed_grade) } }
+  })
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -21,25 +26,8 @@ describe('RatingButtons', () => {
       wrapper = mountRatingButtons({ side: 'front' })
     })
 
-    test('shows the flip button [obligation]', () => {
-      expect(wrapper.find('[data-testid="rating-buttons__show"]').exists()).toBe(true)
-    })
-
     test('does not show the start button [obligation]', () => {
       expect(wrapper.find('[data-testid="rating-buttons__start"]').exists()).toBe(false)
-    })
-
-    test('clicking the flip button emits "revealed"', async () => {
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
-
-      expect(wrapper.emitted('revealed')).toHaveLength(1)
-    })
-
-    test('flip button shown regardless of show_all_ratings [obligation]', () => {
-      const w = mountRatingButtons({ side: 'front', show_all_ratings: true })
-      expect(w.find('[data-testid="rating-buttons__show"]').exists()).toBe(true)
-      const w2 = mountRatingButtons({ side: 'front', show_all_ratings: false })
-      expect(w2.find('[data-testid="rating-buttons__show"]').exists()).toBe(true)
     })
   })
 
@@ -64,10 +52,6 @@ describe('RatingButtons', () => {
       expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(true)
     })
 
-    test('shows the flip button [obligation]', () => {
-      expect(wrapper.find('[data-testid="rating-buttons__show"]').exists()).toBe(true)
-    })
-
     test('does not show the start button', () => {
       expect(wrapper.find('[data-testid="rating-buttons__start"]').exists()).toBe(false)
     })
@@ -77,12 +61,6 @@ describe('RatingButtons', () => {
 
       expect(wrapper.emitted('rated')).toHaveLength(1)
       expect(wrapper.emitted('rated')[0]).toEqual([Rating.Again])
-    })
-
-    test('clicking the flip button emits "revealed" in advanced mode', async () => {
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
-
-      expect(wrapper.emitted('revealed')).toHaveLength(1)
     })
   })
 
@@ -109,10 +87,6 @@ describe('RatingButtons', () => {
 
     test('shows the Good button', () => {
       expect(wrapper.find('[data-testid="rating-buttons__good"]').exists()).toBe(true)
-    })
-
-    test('shows the flip button [obligation]', () => {
-      expect(wrapper.find('[data-testid="rating-buttons__show"]').exists()).toBe(true)
     })
 
     test('clicking Again emits "rated" with Rating.Again', async () => {
@@ -153,10 +127,6 @@ describe('RatingButtons', () => {
       expect(wrapper.find('[data-testid="rating-buttons__start"]').exists()).toBe(true)
     })
 
-    test('does not show the flip button [obligation]', () => {
-      expect(wrapper.find('[data-testid="rating-buttons__show"]').exists()).toBe(false)
-    })
-
     test('does not show the Again button [obligation]', () => {
       expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(false)
     })
@@ -170,12 +140,6 @@ describe('RatingButtons', () => {
     test('start button shown regardless of show_all_ratings [obligation]', () => {
       const w = mountRatingButtons({ side: 'cover', show_all_ratings: true })
       expect(w.find('[data-testid="rating-buttons__start"]').exists()).toBe(true)
-    })
-
-    test('renders the start-container wrapping the start button [obligation]', () => {
-      const container = wrapper.find('[data-testid="rating-buttons__start-container"]')
-      expect(container.exists()).toBe(true)
-      expect(container.find('[data-testid="rating-buttons__start"]').exists()).toBe(true)
     })
 
     test('does NOT render the advanced subcomponent on cover side [obligation]', () => {

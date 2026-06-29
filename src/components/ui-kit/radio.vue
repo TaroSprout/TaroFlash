@@ -26,7 +26,7 @@ const onClick = tap(undefined, { audio: 'select' })
       'bg-(--theme-primary) outline-4': checked && inverted,
       'border-4 border-white bg-(--theme-primary)!': checked && !inverted
     }"
-    :data-playing="playing || null"
+    :data-active="playing || null"
     v-sfx="{ hover: TYPE_SFX }"
     @click="onClick"
   >

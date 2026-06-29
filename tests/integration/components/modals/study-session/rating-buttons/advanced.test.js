@@ -1,28 +1,27 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
+import { ref } from 'vue'
 import { Rating } from 'ts-fsrs'
 import AdvancedRatingButtons from '@/components/study-session/session-flashcard/rating-buttons/advanced.vue'
+import { PrimedGradeKey } from '@/components/study-session/session-flashcard/primed-grade-context'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function mountAdvanced(props = {}) {
-  return mount(AdvancedRatingButtons, { props })
+function mountAdvanced({ primed_grade = null } = {}) {
+  return mount(AdvancedRatingButtons, {
+    global: { provide: { [PrimedGradeKey]: ref(primed_grade) } }
+  })
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('AdvancedRatingButtons', () => {
   // ── Unconditional rendering [obligation] ───────────────────────────────────
-  // No side prop, no visibility conditionals — both rows always present.
+  // Single flex row: fail button (left, shrink-0) + button group (flex-1).
 
   test('renders the success button group unconditionally [obligation]', () => {
     const wrapper = mountAdvanced()
     expect(wrapper.find('[data-testid="rating-buttons__success-group"]').exists()).toBe(true)
-  })
-
-  test('renders the action row unconditionally [obligation]', () => {
-    const wrapper = mountAdvanced()
-    expect(wrapper.find('[data-testid="rating-buttons__action-row"]').exists()).toBe(true)
   })
 
   test('renders the again button unconditionally [obligation]', () => {
@@ -30,9 +29,11 @@ describe('AdvancedRatingButtons', () => {
     expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(true)
   })
 
-  test('renders the flip (show) button unconditionally [obligation]', () => {
+  test('again button and success group are siblings in the advanced container [obligation]', () => {
     const wrapper = mountAdvanced()
-    expect(wrapper.find('[data-testid="rating-buttons__show"]').exists()).toBe(true)
+    const container = wrapper.find('[data-testid="rating-buttons__advanced"]')
+    expect(container.find('[data-testid="rating-buttons__again"]').exists()).toBe(true)
+    expect(container.find('[data-testid="rating-buttons__success-group"]').exists()).toBe(true)
   })
 
   // ── primed_grade → again button active [obligation] ───────────────────────
@@ -96,11 +97,5 @@ describe('AdvancedRatingButtons', () => {
     await group_buttons[0].trigger('click')
     expect(wrapper.emitted('rated')).toHaveLength(1)
     expect(wrapper.emitted('rated')[0][0]).toBe(Rating.Hard)
-  })
-
-  test('pressing the flip button emits revealed [obligation]', async () => {
-    const wrapper = mountAdvanced()
-    await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
-    expect(wrapper.emitted('revealed')).toHaveLength(1)
   })
 })

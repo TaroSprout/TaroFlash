@@ -28,7 +28,7 @@ function onClick(e: MouseEvent) {
         'outline-3 outline-blue-500': selected,
         'outline-2 outline-brown-100 hover:outline-blue-500': !selected
       }"
-      :data-playing="playing || null"
+      :data-active="playing || null"
       @click="onClick"
     >
       <div
