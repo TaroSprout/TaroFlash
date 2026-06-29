@@ -192,7 +192,7 @@ useAnimatedHeight(footer_swap_el, footer_toolbar, () => !swapping)
 <template>
   <section
     data-testid="lesson-view"
-    class="flex min-h-[calc(100dvh-var(--nav-height))] flex-col gap-6 xl:flex-row"
+    class="flex min-h-[calc(100dvh-var(--nav-height))] flex-col gap-6 xl:flex-row px-(--page-px) pt-(--page-pt)"
   >
     <transition :css="false" @leave="fadeLeave">
       <div

@@ -68,7 +68,7 @@ onMounted(preloadDeckModes)
   <section
     v-else
     data-testid="deck-view"
-    class="flex flex-col xl:flex-row items-center xl:items-start gap-6 md:gap-15"
+    class="flex flex-col xl:flex-row items-center xl:items-start gap-6 md:gap-15 px-(--page-px) pt-(--page-pt)"
   >
     <deck-hero
       class="relative z-30 xl:sticky xl:top-(--nav-height)"
