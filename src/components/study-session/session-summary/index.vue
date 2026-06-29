@@ -75,7 +75,10 @@ const summary = computed(() => aggregateSession(results))
         </div>
       </section>
 
-      <section data-testid="session-summary__footer" class="w-full flex flex-col gap-4">
+      <section
+        data-testid="session-summary__footer"
+        class="w-full max-w-95 mx-auto flex flex-col gap-4"
+      >
         <stat-tile :summary="summary" />
 
         <ui-button

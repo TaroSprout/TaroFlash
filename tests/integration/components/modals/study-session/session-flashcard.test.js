@@ -249,7 +249,6 @@ describe('Session', () => {
       await startSession(wrapper)
 
       // Flip to back to show rating buttons
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
 
       // Click Good
       await wrapper.find('[data-testid="rating-buttons__good"]').trigger('click')
@@ -271,7 +270,6 @@ describe('Session', () => {
       await waitForLoad(wrapper)
 
       await startSession(wrapper)
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
       await wrapper.find('[data-testid="rating-buttons__good"]').trigger('click')
       await flushPromises()
 
@@ -284,7 +282,6 @@ describe('Session', () => {
       await waitForLoad(wrapper)
 
       await startSession(wrapper)
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
       await wrapper.find('[data-testid="rating-buttons__good"]').trigger('click')
       await flushPromises()
 
@@ -299,7 +296,6 @@ describe('Session', () => {
       await waitForLoad(wrapper)
 
       await startSession(wrapper)
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
       await wrapper.find('[data-testid="rating-buttons__good"]').trigger('click')
       await flushPromises()
 
@@ -314,7 +310,6 @@ describe('Session', () => {
       await waitForLoad(wrapper)
 
       await startSession(wrapper)
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
       await wrapper.find('[data-testid="rating-buttons__good"]').trigger('click')
       await flushPromises()
 
@@ -328,7 +323,6 @@ describe('Session', () => {
       await waitForLoad(wrapper)
 
       await startSession(wrapper)
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
       await wrapper.find('[data-testid="rating-buttons__again"]').trigger('click')
       await flushPromises()
 
@@ -343,7 +337,6 @@ describe('Session', () => {
       await waitForLoad(wrapper)
 
       await startSession(wrapper)
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
       await wrapper.find('[data-testid="rating-buttons__again"]').trigger('click')
       await flushPromises()
 
@@ -351,40 +344,25 @@ describe('Session', () => {
     })
   })
 
-  // ── Reveal button → side flip ──────────────────────────────────────────────
+  // ── Rating buttons visible immediately after start ────────────────────────
 
-  describe('flip button interaction', () => {
-    test('clicking flip button shows Again and Good rating buttons', async () => {
+  describe('rating button availability', () => {
+    test('cover side shows start button, not rating buttons', async () => {
       const wrapper = makeSession(2)
       await waitForLoad(wrapper)
 
-      // Initially in cover mode — start button visible, rating buttons not
       expect(wrapper.find('[data-testid="rating-buttons__start"]').exists()).toBe(true)
       expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(false)
-
-      await startSession(wrapper)
-
-      // After starting (side=front, show_all_ratings=false) — simple layout:
-      // flip button + again + good are all visible
-      expect(wrapper.find('[data-testid="rating-buttons__show"]').exists()).toBe(true)
-      expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(true)
-      expect(wrapper.find('[data-testid="rating-buttons__good"]').exists()).toBe(true)
-
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
-
-      // After flipping to back — same simple layout still shown
-      expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(true)
-      expect(wrapper.find('[data-testid="rating-buttons__good"]').exists()).toBe(true)
     })
 
-    test('flipping to back plays a sfx', async () => {
+    test('after startSession, again and good buttons are immediately visible', async () => {
       const wrapper = makeSession(2)
       await waitForLoad(wrapper)
 
       await startSession(wrapper)
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
 
-      expect(mockEmitStudySfx).toHaveBeenCalled()
+      expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="rating-buttons__good"]').exists()).toBe(true)
     })
   })
 
@@ -436,7 +414,6 @@ describe('Session', () => {
       await waitForLoad(wrapper)
 
       await startSession(wrapper)
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
       await wrapper.find('[data-testid="rating-buttons__good"]').trigger('click')
       await flushPromises()
 
@@ -457,7 +434,6 @@ describe('Session', () => {
       await waitForLoad(wrapper)
 
       await startSession(wrapper)
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
       await wrapper.find('[data-testid="rating-buttons__again"]').trigger('click')
       await flushPromises()
 
@@ -476,14 +452,12 @@ describe('Session', () => {
 
       // First card: Good
       await startSession(wrapper)
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
       await wrapper.find('[data-testid="rating-buttons__good"]').trigger('click')
       await flushPromises()
       fireTransitionEnd(wrapper)
       await flushPromises()
 
       // Second card starts at 'front' after first card review — no start needed
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
       await wrapper.find('[data-testid="rating-buttons__again"]').trigger('click')
       await flushPromises()
       fireTransitionEnd(wrapper)
@@ -574,7 +548,6 @@ describe('Session', () => {
       await waitForLoad(wrapper)
       await startSession(wrapper)
 
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
       await wrapper.find('[data-testid="rating-buttons__good"]').trigger('click')
       await flushPromises()
       fireTransitionEnd(wrapper)
@@ -633,7 +606,6 @@ describe('Session', () => {
       await waitForLoad(wrapper)
 
       await startSession(wrapper)
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
       await wrapper.find('[data-testid="rating-buttons__good"]').trigger('click')
       await flushPromises()
       fireTransitionEnd(wrapper)
@@ -653,7 +625,6 @@ describe('Session', () => {
       await waitForLoad(wrapper)
 
       await startSession(wrapper)
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
       await wrapper.find('[data-testid="rating-buttons__good"]').trigger('click')
       await flushPromises()
       fireTransitionEnd(wrapper)
@@ -717,7 +688,6 @@ describe('Session', () => {
       await waitForLoad(wrapper)
 
       await startSession(wrapper)
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
       await wrapper.find('[data-testid="rating-buttons__good"]').trigger('click')
       await flushPromises()
       fireTransitionEnd(wrapper)
@@ -732,7 +702,6 @@ describe('Session', () => {
       await waitForLoad(wrapper)
 
       await startSession(wrapper)
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
       await wrapper.find('[data-testid="rating-buttons__good"]').trigger('click')
       await flushPromises()
       fireTransitionEnd(wrapper)
@@ -747,7 +716,6 @@ describe('Session', () => {
       await waitForLoad(wrapper)
 
       await startSession(wrapper)
-      await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
       await wrapper.find('[data-testid="rating-buttons__good"]').trigger('click')
       await flushPromises()
       fireTransitionEnd(wrapper)

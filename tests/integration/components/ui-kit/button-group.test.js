@@ -19,7 +19,10 @@ import UiButtonGroup from '@/components/ui-kit/button-group.vue'
 const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
-  props: { active: { type: Boolean, default: false } },
+  props: {
+    active: { type: Boolean, default: false },
+    iconOnly: { type: Boolean, default: false }
+  },
   emits: ['press'],
   setup(props, { emit, slots }) {
     const attrs = useAttrs()
@@ -30,6 +33,7 @@ const UiButtonStub = defineComponent({
           ...attrs,
           'data-testid': 'ui-button-group__button',
           'data-active': props.active ? 'true' : null,
+          'data-icon-only': props.iconOnly ? 'true' : null,
           onClick: () => emit('press')
         },
         slots.default?.()
@@ -203,5 +207,28 @@ describe('UiButtonGroup', () => {
     const wrapper = mountGroup({ options: DOUBLE })
     await getButtons(wrapper)[1].trigger('click')
     expect(wrapper.emitted('press')[0][0]).toBe('b')
+  })
+
+  // ── icon_only prop [obligation] ────────────────────────────────────────────
+
+  test('icon_only=true passes icon-only to every button [obligation]', () => {
+    const wrapper = mountGroup({ options: TRIPLE, icon_only: true })
+    for (const btn of getButtons(wrapper)) {
+      expect(btn.attributes('data-icon-only')).toBe('true')
+    }
+  })
+
+  test('icon_only=false (default) does not set icon-only on buttons [obligation]', () => {
+    const wrapper = mountGroup({ options: TRIPLE, icon_only: false })
+    for (const btn of getButtons(wrapper)) {
+      expect(btn.attributes('data-icon-only')).toBeUndefined()
+    }
+  })
+
+  test('icon_only defaults to false — buttons render with label text [obligation]', () => {
+    const wrapper = mountGroup({ options: DOUBLE })
+    const buttons = getButtons(wrapper)
+    expect(buttons[0].text()).toBe('A')
+    expect(buttons[1].text()).toBe('B')
   })
 })
