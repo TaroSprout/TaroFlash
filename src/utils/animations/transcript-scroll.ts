@@ -57,8 +57,16 @@ export function cancelScroll(scroller: Scroller) {
  * Lift `el` clear above `limit_bottom` (a viewport Y, e.g. a fixed footer's top
  * edge) by scrolling `scroller` up just enough. No-op when `el` already sits
  * above the limit. Used to re-clear a selected word after the term footer grows.
+ *
+ * Pass `animate = false` to jump instantly — same iOS Safari rAF-starvation
+ * caveat as `scrollLineIntoView` applies here.
  */
-export function scrollClearOf(scroller: Scroller, el: HTMLElement, limit_bottom: number) {
+export function scrollClearOf(
+  scroller: Scroller,
+  el: HTMLElement,
+  limit_bottom: number,
+  animate = true
+) {
   const overshoot = el.getBoundingClientRect().bottom - limit_bottom
   if (overshoot <= 0) return
 
@@ -73,6 +81,14 @@ export function scrollClearOf(scroller: Scroller, el: HTMLElement, limit_bottom:
 
   state.y = current
   gsap.killTweensOf(state)
+
+  if (!animate) {
+    state.y = target
+    if (isWindow(scroller)) window.scrollTo(0, target)
+    else scroller.scrollTop = target
+    return
+  }
+
   gsap.to(state, {
     y: target,
     duration: DURATION,

@@ -1,7 +1,6 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import TranscriptSegment from '@/views/audio-reader/transcript/segment.vue'
-import TranscriptWord from '@/views/audio-reader/transcript/word.vue'
 
 const word = (display, index, start = index) => ({ display, start, index })
 
@@ -30,32 +29,32 @@ describe('TranscriptSegment', () => {
       expect(wrapper.find('[data-testid="transcript-segment"]').attributes('data-index')).toBe('3')
     })
 
-    test('renders one TranscriptWord per word in the group', () => {
+    test('renders one word element per word in the group', () => {
       const wrapper = mountSegment()
-      expect(wrapper.findAllComponents(TranscriptWord)).toHaveLength(2)
+      expect(wrapper.findAll('[data-testid="transcript-word"]')).toHaveLength(2)
     })
 
-    test('passes each word display through to TranscriptWord', () => {
+    test('passes each word display through via data-word-text', () => {
       const wrapper = mountSegment()
-      const words = wrapper.findAllComponents(TranscriptWord)
-      expect(words[0].props('display')).toBe('Hello ')
-      expect(words[1].props('display')).toBe('world')
+      const words = wrapper.findAll('[data-testid="transcript-word"]')
+      expect(words[0].attributes('data-word-text')).toBe('Hello ')
+      expect(words[1].attributes('data-word-text')).toBe('world')
     })
 
-    test('passes each word reading through to TranscriptWord', () => {
+    test('passes each word reading through to the rt annotation', () => {
       const wrapper = mountSegment({
         group: group([{ display: '猫', start: 0, index: 0, reading: 'ねこ' }])
       })
-      expect(wrapper.findAllComponents(TranscriptWord)[0].props('reading')).toBe('ねこ')
+      expect(wrapper.find('[data-testid="transcript-word__reading"]').text()).toBe('ねこ')
     })
   })
 
   describe('word identity', () => {
-    test('passes each word global index through to TranscriptWord', () => {
+    test('passes each word global index through via data-word-index', () => {
       const wrapper = mountSegment({ group: group([word('is ', 4), word('here.', 5)]) })
-      const words = wrapper.findAllComponents(TranscriptWord)
-      expect(words[0].props('index')).toBe(4)
-      expect(words[1].props('index')).toBe(5)
+      const words = wrapper.findAll('[data-testid="transcript-word"]')
+      expect(words[0].attributes('data-word-index')).toBe('4')
+      expect(words[1].attributes('data-word-index')).toBe('5')
     })
   })
 

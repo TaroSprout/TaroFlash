@@ -61,13 +61,15 @@ export function crossfadeResizeEnter(wrapper: HTMLElement) {
     const target = node.scrollHeight
 
     gsap.set(node, { opacity: 0 })
-    // `done` fires from the height tween (the longer of the two) so the swap isn't
-    // reported complete until the wrapper is released back to `auto` and unpinned —
-    // any content-driven height animation waits for that before taking over.
-    gsap.to(wrapper, {
-      height: target,
-      duration: HEIGHT_DURATION,
-      ease: 'power2.out',
+    // Snap wrapper to the new height in a single frame rather than tweening it.
+    // Animating `height` forces a layout recalculation on every rAF tick — with
+    // a large transcript in the DOM this was 12+ forced layouts over 200ms. The
+    // opacity fade below runs on the compositor and covers the snap visually.
+    gsap.set(wrapper, { height: target })
+    gsap.to(node, {
+      opacity: 1,
+      duration: FADE_DURATION,
+      ease: 'power1.out',
       onComplete: () => {
         wrapper.style.height = ''
         wrapper.style.overflow = ''
@@ -75,6 +77,5 @@ export function crossfadeResizeEnter(wrapper: HTMLElement) {
         done()
       }
     })
-    gsap.to(node, { opacity: 1, duration: FADE_DURATION, ease: 'power1.out' })
   }
 }

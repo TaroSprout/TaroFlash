@@ -1,4 +1,4 @@
-import { computed, ref, toValue, useTemplateRef, watch } from 'vue'
+import { computed, ref, shallowRef, toValue, useTemplateRef, watch } from 'vue'
 import type { MaybeRefOrGetter } from 'vue'
 import { emitSfx } from '@/sfx/bus'
 import { useToast } from '@/composables/toast'
@@ -56,8 +56,46 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
   const { data: decks } = useMemberDecksQuery()
 
   const flat_words = computed(() => paragraphs.value.flatMap((p) => p.words))
-  const matches = computed(() =>
-    matchesByWord(matchCardsInWords(flat_words.value, card_terms.value).map(themeMatch))
+
+  // Word scan: only re-runs when card_index changes (not on every deck refetch).
+  // matchCardsInWords is O(words × MAX_SPAN_WORDS) — expensive on large lessons.
+  const raw_matches = computed(() => matchCardsInWords(flat_words.value, card_terms.value))
+
+  // Theme application: re-runs when decks changes, but only over the ~N matched
+  // words — O(matches × decks) instead of O(words × MAX_SPAN_WORDS). Pinia
+  // Colada refetches decks each time add-card-control mounts (every tap), so
+  // separating these two computeds keeps per-tap cost proportional to match count,
+  // not total word count.
+  const themed_matches = computed(() => raw_matches.value.map(themeMatch))
+
+  // Stable shallowRef: only emits a new Map when the match content actually
+  // changes. Guards against same-content refetch arrays producing a new Map
+  // reference that would retrigger paintMatchedWords on the full transcript.
+  const matches = shallowRef<Map<number, CardMatch>>(new Map())
+  watch(
+    () => matchesByWord(themed_matches.value),
+    (next) => {
+      const prev = matches.value
+      if (prev.size === next.size) {
+        let same = true
+        for (const [k, v] of next) {
+          const p = prev.get(k)
+          if (
+            !p ||
+            p.lo !== v.lo ||
+            p.hi !== v.hi ||
+            p.theme !== v.theme ||
+            p.theme_dark !== v.theme_dark
+          ) {
+            same = false
+            break
+          }
+        }
+        if (same) return
+      }
+      matches.value = next
+    },
+    { immediate: true }
   )
 
   const audio_path = computed(() => lesson.value?.audio_path)
@@ -140,6 +178,7 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
 
   return {
     lesson,
+    words,
     paragraphs,
     matches,
     audio_url,

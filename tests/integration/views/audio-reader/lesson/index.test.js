@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, ref, nextTick } from 'vue'
 
@@ -263,6 +263,13 @@ beforeEach(() => {
   transcriptFollowing.value = true
   transcriptFollowDirection.value = 'down'
   transcriptResumeMock.mockClear()
+  // Fire rAF callbacks synchronously so show_term_in_dock_deferred flips
+  // in the same tick as nextTick() — avoids the one-frame lag in tests.
+  vi.stubGlobal('requestAnimationFrame', (cb) => cb())
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
 })
 
 describe('LessonView', () => {
@@ -367,11 +374,11 @@ describe('LessonView', () => {
     // stays on its chapter list.
     test('dock shows term-card on mobile when popover open and selection set [obligation]', async () => {
       isDesktopRef.value = false
-      popoverOpenRef.value = true
-      selectionRef.value = { term: 'hello', sentence: 'say hello', word_index: 3, rect: {} }
-
       const wrapper = mountView()
-      await wrapper.vm.$nextTick()
+      // Set state after mount so the watch fires and the deferred rAF executes.
+      selectionRef.value = { term: 'hello', sentence: 'say hello', word_index: 3, rect: {} }
+      popoverOpenRef.value = true
+      await nextTick()
 
       expect(wrapper.find('[data-testid="lesson-view__dock-term"]').exists()).toBe(true)
       expect(wrapper.find('[data-testid="lesson-view__dock-toolbar"]').exists()).toBe(false)
@@ -418,16 +425,15 @@ describe('LessonView', () => {
     })
 
     test('term-card receives the selection term and sentence [obligation]', async () => {
-      popoverOpenRef.value = true
+      const wrapper = mountView()
       selectionRef.value = {
         term: 'konnichiwa',
         sentence: 'konnichiwa world',
         word_index: 0,
         rect: {}
       }
-
-      const wrapper = mountView()
-      await wrapper.vm.$nextTick()
+      popoverOpenRef.value = true
+      await nextTick()
 
       const termCard = wrapper.findComponent({ name: 'TermCard' })
       expect(termCard.exists()).toBe(true)
@@ -436,44 +442,40 @@ describe('LessonView', () => {
     })
 
     test('term-card back event calls closeTerm [obligation]', async () => {
-      popoverOpenRef.value = true
-      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
-
       const wrapper = mountView()
-      await wrapper.vm.$nextTick()
+      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
+      popoverOpenRef.value = true
+      await nextTick()
 
       await wrapper.find('[data-testid="term-card-stub__back"]').trigger('click')
       expect(closeTermMock).toHaveBeenCalledOnce()
     })
 
     test('term-card close event calls closeTerm [obligation]', async () => {
-      popoverOpenRef.value = true
-      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
-
       const wrapper = mountView()
-      await wrapper.vm.$nextTick()
+      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
+      popoverOpenRef.value = true
+      await nextTick()
 
       await wrapper.find('[data-testid="term-card-stub__close"]').trigger('click')
       expect(closeTermMock).toHaveBeenCalledOnce()
     })
 
     test('term-card play-from-here event calls playFromHere [obligation]', async () => {
-      popoverOpenRef.value = true
-      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
-
       const wrapper = mountView()
-      await wrapper.vm.$nextTick()
+      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
+      popoverOpenRef.value = true
+      await nextTick()
 
       await wrapper.find('[data-testid="term-card-stub__play-from-here"]').trigger('click')
       expect(playFromHereMock).toHaveBeenCalledOnce()
     })
 
     test('term-card play-word event calls playClip [obligation]', async () => {
-      popoverOpenRef.value = true
-      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
-
       const wrapper = mountView()
-      await wrapper.vm.$nextTick()
+      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
+      popoverOpenRef.value = true
+      await nextTick()
 
       await wrapper.find('[data-testid="term-card-stub__play-word"]').trigger('click')
       expect(playClipMock).toHaveBeenCalledOnce()
@@ -506,11 +508,10 @@ describe('LessonView', () => {
     })
 
     test('closeTerm alone does NOT emit ui.snappy_button_5 [obligation]', async () => {
-      popoverOpenRef.value = true
-      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
-
       const wrapper = mountView()
-      await wrapper.vm.$nextTick()
+      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
+      popoverOpenRef.value = true
+      await nextTick()
 
       // Trigger close via term-card's close event (not dismiss)
       await wrapper.find('[data-testid="term-card-stub__close"]').trigger('click')

@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, toValue, type MaybeRef } from 'vue'
 
 // Intra-lesson chapter navigation: the auto-detected chapters of THIS lesson's
 // audio (transcript.chapters), each jumping playback to its start by seeking the
 // single audio element — distinct from the collection-lesson nav, which routes.
 
+// Accept a Ref so the parent doesn't need to unwrap current_time in its template
+// — passing a Ref by reference keeps the parent out of the 60fps subscription.
 const { chapters, currentTime } = defineProps<{
   chapters: TranscriptChapter[]
-  currentTime: number
+  currentTime: MaybeRef<number>
 }>()
 
 const emit = defineEmits<{
@@ -16,9 +18,10 @@ const emit = defineEmits<{
 
 // The active chapter is the last one whose start time has been reached.
 const active_index = computed(() => {
+  const t = toValue(currentTime)
   let index = 0
   chapters.forEach((chapter, i) => {
-    if (chapter.start <= currentTime + 0.001) index = i
+    if (chapter.start <= t + 0.001) index = i
   })
   return index
 })

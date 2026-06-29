@@ -112,17 +112,13 @@ describe('crossfadeResizeEnter [obligation]', () => {
     expect(mockGsapSet).toHaveBeenCalledWith(el, { opacity: 0 })
   })
 
-  test('tweens wrapper height to the incoming el scrollHeight [obligation]', () => {
+  test('snaps wrapper height to the incoming el scrollHeight via gsap.set [obligation]', () => {
     const wrapper = makeEl()
     const el = makeEl({ scrollHeight: 200 })
     const done = vi.fn()
     crossfadeResizeEnter(wrapper)(el, done)
 
-    const heightCall = mockGsapTo.mock.calls.find(
-      ([target, opts]) => target === wrapper && opts?.height !== undefined
-    )
-    expect(heightCall).toBeDefined()
-    expect(heightCall[1].height).toBe(200)
+    expect(mockGsapSet).toHaveBeenCalledWith(wrapper, { height: 200 })
   })
 
   test('tweens el opacity to 1 separately [obligation]', () => {
@@ -137,15 +133,16 @@ describe('crossfadeResizeEnter [obligation]', () => {
     expect(fadeInCall).toBeDefined()
   })
 
-  test('onComplete of height tween clears wrapper height and overflow [obligation]', () => {
-    // Make only the wrapper height tween call onComplete
-    mockGsapTo.mockImplementation((target, opts) => {
-      if (target === wrapper) opts?.onComplete?.()
-    })
-
+  test('onComplete of opacity tween clears wrapper height and overflow [obligation]', () => {
+    // onComplete now lives on the gsap.to(node, { opacity: 1 }) call, not the wrapper
     const wrapper = makeEl()
     const el = makeEl()
     const done = vi.fn()
+
+    mockGsapTo.mockImplementation((target, opts) => {
+      if (target === el) opts?.onComplete?.()
+    })
+
     crossfadeResizeEnter(wrapper)(el, done)
 
     expect(wrapper.style.height).toBe('')
@@ -158,7 +155,7 @@ describe('crossfadeResizeEnter [obligation]', () => {
     const done = vi.fn()
 
     mockGsapTo.mockImplementation((target, opts) => {
-      if (target === wrapper) opts?.onComplete?.()
+      if (target === el) opts?.onComplete?.()
     })
 
     crossfadeResizeEnter(wrapper)(el, done)
@@ -172,7 +169,7 @@ describe('crossfadeResizeEnter [obligation]', () => {
     const done = vi.fn()
 
     mockGsapTo.mockImplementation((target, opts) => {
-      if (target === wrapper) opts?.onComplete?.()
+      if (target === el) opts?.onComplete?.()
     })
 
     crossfadeResizeEnter(wrapper)(el, done)
@@ -186,9 +183,9 @@ describe('crossfadeResizeEnter [obligation]', () => {
     const el = makeEl()
     const done = vi.fn()
 
-    // Simulate onComplete running
+    // Simulate onComplete running (lives on the node opacity tween)
     mockGsapTo.mockImplementation((target, opts) => {
-      if (target === wrapper) opts?.onComplete?.()
+      if (target === el) opts?.onComplete?.()
     })
 
     crossfadeResizeEnter(wrapper)(el, done)

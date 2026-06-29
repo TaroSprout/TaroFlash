@@ -204,6 +204,12 @@ export function useReaderHighlights(
   // re-render together on every playhead tick.
   let active_el: HTMLElement | null = null
 
+  // The current selection range painted onto word elements. Managed imperatively
+  // like `active_el` so Vue never re-renders word components when the range
+  // changes — painting `data-active` via setAttribute avoids scheduling re-renders
+  // for every word in the transcript (can be hundreds) on each tap.
+  let painted_range: WordRange | null = null
+
   onMounted(() => {
     paintActiveWord()
     resize_observer = new ResizeObserver(reposition)
@@ -271,6 +277,22 @@ export function useReaderHighlights(
     active_el?.removeAttribute('data-playing')
     next?.setAttribute('data-playing', 'true')
     active_el = next
+  }
+
+  // Apply data-active to the words in `range`, clearing the previous range first.
+  // Same imperative strategy as paintActiveWord — no Vue reactivity involved.
+  function paintWords(range: WordRange | null) {
+    if (painted_range) {
+      for (let i = painted_range.lo; i <= painted_range.hi; i++) {
+        wordEl(i)?.removeAttribute('data-active')
+      }
+    }
+    painted_range = range
+    if (range) {
+      for (let i = range.lo; i <= range.hi; i++) {
+        wordEl(i)?.setAttribute('data-active', 'true')
+      }
+    }
   }
 
   /** The word index at viewport point (x, y), or null when none is there. */
@@ -472,7 +494,9 @@ export function useReaderHighlights(
     if (!el) return
     if (el.getBoundingClientRect().bottom <= window.innerHeight * SHEET_COVER_RATIO) return
 
-    scrollLineIntoView(window, el)
+    // Jump instantly — opening a term always pauses the audio, so a rAF-driven
+    // window.scrollTo tween would starve rAF on iOS Safari for 600ms.
+    scrollLineIntoView(window, el, false)
   }
 
   async function positionInteraction() {
@@ -772,11 +796,21 @@ export function useReaderHighlights(
     },
     { flush: 'post' }
   )
-  watch([focus_index, anchor_index, committed], positionInteraction, { flush: 'post' })
+  watch(
+    [focus_index, anchor_index, committed],
+    () => {
+      paintWords(interaction_range.value)
+      positionInteraction()
+    },
+    { flush: 'post' }
+  )
   watch(
     () => toValue(popover_open),
     (open) => {
-      if (!open) committed.value = null
+      if (!open) {
+        committed.value = null
+        paintWords(null)
+      }
     }
   )
 

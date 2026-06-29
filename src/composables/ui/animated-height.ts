@@ -36,26 +36,14 @@ export function useAnimatedHeight(
     if (!el) return
 
     gsap.killTweensOf(el)
-    // Pin the content to the bottom while the height tweens: the clip then eats
-    // into the top and reveals downward, so a bottom-anchored panel (the footer)
-    // keeps its trailing element — e.g. the play button — still as it grows.
-    el.style.overflow = 'hidden'
-    el.style.display = 'flex'
-    el.style.flexDirection = 'column'
-    el.style.justifyContent = 'flex-end'
-    el.style.height = `${last}px`
-    gsap.to(el, {
-      height: target,
-      duration: DURATION,
-      ease: 'power2.out',
-      onComplete: () => {
-        el.style.height = ''
-        el.style.overflow = ''
-        el.style.display = ''
-        el.style.flexDirection = ''
-        el.style.justifyContent = ''
-        onSettled?.()
-      }
+    // Snap to the new height instantly rather than tweening. Animating `height`
+    // forces a layout recalculation on every rAF tick — with a large transcript
+    // DOM this caused multi-frame jank every time the term card grew. A single
+    // instant size change is one layout pass instead of twelve.
+    el.style.height = `${target}px`
+    requestAnimationFrame(() => {
+      el.style.height = ''
+      onSettled?.()
     })
   }
 
