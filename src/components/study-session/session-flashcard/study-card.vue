@@ -16,16 +16,17 @@ const DRAG_RATING_CONFIG = {
   [Rating.Easy]: { icon: 'smiley-very-happy', label_key: 'study.flashcard.rating.easy-button' }
 } as const
 
-defineExpose({ rate })
+defineExpose({ rate, el: () => card_ref.value?.$el as HTMLElement | undefined })
 
 type StudyCardProps = {
   card?: Card
   side: CardSide
   options?: RecordLog
   show_all_ratings?: boolean
+  cover_override?: DeckCover
 }
 
-const { card, side, options, show_all_ratings } = defineProps<StudyCardProps>()
+const { card, side, options, show_all_ratings, cover_override } = defineProps<StudyCardProps>()
 
 const deck_context = useDeckContext()
 
@@ -62,6 +63,8 @@ const is_animating = ref(false)
 
 const { register } = useGestures()
 const shortcuts = useShortcuts('study-card')
+
+const appearance = computed(() => deck_context.value.appearanceFor(card?.deck_id))
 
 const passVisible = computed(() => card_offset.value > SWIPE_DISTANCE_THRESHOLD)
 const failVisible = computed(() => card_offset.value < -SWIPE_DISTANCE_THRESHOLD)
@@ -262,8 +265,8 @@ function toSwipeZone(offset: number) {
       size="xl"
       v-bind="card"
       :side="side"
-      :cover_config="deck_context.cover_config"
-      :card_attributes="deck_context.card_attributes"
+      :cover_config="cover_override ?? appearance.cover_config"
+      :card_attributes="appearance.card_attributes"
       @flip-out-complete="is_animating = false"
     >
       <div class="absolute inset-0 overflow-hidden rounded-(--face-radius)">

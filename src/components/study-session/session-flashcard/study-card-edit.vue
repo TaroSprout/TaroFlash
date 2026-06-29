@@ -19,7 +19,7 @@ const { t } = useI18n()
 const deck_context = useDeckContext()
 
 const card_attributes = computed(
-  () => deck_context.value.card_attributes ?? { front: {}, back: {} }
+  () => deck_context.value.appearanceFor(card?.deck_id).card_attributes ?? { front: {}, back: {} }
 )
 const placeholder = computed(() =>
   side === 'front'

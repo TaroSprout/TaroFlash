@@ -56,7 +56,7 @@ vi.mock('@/sfx/bus', () => ({
 vi.mock('@/api/cards', () => {
   const passthrough = () => ({ mutate: vi.fn(), mutateAsync: vi.fn().mockResolvedValue(undefined) })
   return {
-    useStudySessionCardsQuery: () => ({
+    useMultiDeckStudyCardsQuery: () => ({
       data: cardsDataRef,
       refetch: vi.fn((...args) => cardsRefetchImpl.current(...args)),
       refresh: vi.fn()
@@ -121,7 +121,26 @@ function makeSession(cardCount = 2, deckOverrides = {}) {
     }
   })
   return mount(Session, {
-    props: { deck: deck_data },
+    props: { decks: [deck_data], title: deck_data.title },
+    attachTo: document.body,
+    global: { stubs: { Card: CardStub } }
+  })
+}
+
+/** Creates a session with multiple decks for multi-deck obligation tests. */
+function makeMultiDeckSession(cardCount = 2, deckIds = [1, 2]) {
+  const cards_data = card.many(cardCount)
+  cardsDataRef.value = cards_data
+  const decks = deckIds.map((id) =>
+    deck.one({
+      overrides: {
+        id,
+        study_config: { study_all_cards: true, retry_failed_cards: false, show_all_ratings: false }
+      }
+    })
+  )
+  return mount(Session, {
+    props: { decks, title: 'Multiple Decks' },
     attachTo: document.body,
     global: { stubs: { Card: CardStub } }
   })
@@ -182,7 +201,7 @@ describe('Session', () => {
         overrides: { id: 1, study_config: { study_all_cards: true, retry_failed_cards: false } }
       })
       const wrapper = mount(Session, {
-        props: { deck: deck_data },
+        props: { decks: [deck_data], title: deck_data.title },
         attachTo: document.body,
         global: { stubs: { Card: CardStub } }
       })
@@ -219,7 +238,7 @@ describe('Session', () => {
         overrides: { id: 1, study_config: { study_all_cards: false, retry_failed_cards: false } }
       })
       const wrapper = mount(Session, {
-        props: { deck: deck_data },
+        props: { decks: [deck_data], title: deck_data.title },
         attachTo: document.body,
         global: { stubs: { Card: CardStub } }
       })
@@ -560,14 +579,11 @@ describe('Session', () => {
     })
   })
 
-  // ── No deck id ─────────────────────────────────────────────────────────────
+  // ── No decks / empty deck list ─────────────────────────────────────────────
 
-  test('emits closed immediately if deck has no id', async () => {
-    const deck_data = deck.one({
-      overrides: { id: null, study_config: { study_all_cards: true, retry_failed_cards: false } }
-    })
+  test('emits closed immediately if decks array is empty [obligation]', async () => {
     const wrapper = mount(Session, {
-      props: { deck: deck_data },
+      props: { decks: [], title: '' },
       attachTo: document.body,
       global: { stubs: { Card: CardStub } }
     })
@@ -751,6 +767,72 @@ describe('Session', () => {
 
       expect(wrapper.emitted('closed')).toHaveLength(1)
       expect(mockFlushDeckReviews).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── Multi-deck obligations ─────────────────────────────────────────────────
+
+  describe('multi-deck: finishSession flushes all decks [obligation]', () => {
+    test('flushDeckReviews is called for every deck in the session on natural completion', async () => {
+      const wrapper = makeMultiDeckSession(1, [10, 20])
+      await waitForLoad(wrapper)
+
+      await startSession(wrapper)
+      await wrapper.find('[data-testid="rating-buttons__good"]').trigger('click')
+      await flushPromises()
+      fireTransitionEnd(wrapper)
+      await flushPromises()
+
+      expect(mockFlushDeckReviews).toHaveBeenCalledTimes(2)
+      expect(mockFlushDeckReviews).toHaveBeenCalledWith(10)
+      expect(mockFlushDeckReviews).toHaveBeenCalledWith(20)
+    })
+
+    test('flushDeckReviews is called for every deck when requestClose after ≥1 review', async () => {
+      const wrapper = makeMultiDeckSession(2, [10, 20])
+      await waitForLoad(wrapper)
+
+      await startSession(wrapper)
+      await wrapper.find('[data-testid="rating-buttons__good"]').trigger('click')
+      await flushPromises()
+      fireTransitionEnd(wrapper)
+      await flushPromises()
+
+      wrapper.vm.requestClose()
+      await flushPromises()
+
+      expect(mockFlushDeckReviews).toHaveBeenCalledTimes(2)
+      expect(mockFlushDeckReviews).toHaveBeenCalledWith(10)
+      expect(mockFlushDeckReviews).toHaveBeenCalledWith(20)
+    })
+  })
+
+  describe('multi-deck: toggleRatings upserts all decks [obligation]', () => {
+    test('toggling ratings calls upsert_deck.mutate once per deck in the session', async () => {
+      const wrapper = makeMultiDeckSession(2, [10, 20])
+      await waitForLoad(wrapper)
+
+      wrapper.findComponent(SessionHeader).vm.$emit('toggle-ratings')
+      await flushPromises()
+
+      expect(mockUpsertDeck).toHaveBeenCalledTimes(2)
+      const call_ids = mockUpsertDeck.mock.calls.map((c) => c[0].id)
+      expect(call_ids).toContain(10)
+      expect(call_ids).toContain(20)
+    })
+
+    test('each upsert carries the updated show_all_ratings value for that deck', async () => {
+      const wrapper = makeMultiDeckSession(2, [10, 20])
+      await waitForLoad(wrapper)
+
+      wrapper.findComponent(SessionHeader).vm.$emit('toggle-ratings')
+      await flushPromises()
+
+      for (const call of mockUpsertDeck.mock.calls) {
+        expect(call[0]).toMatchObject({
+          study_config: expect.objectContaining({ show_all_ratings: true })
+        })
+      }
     })
   })
 })
