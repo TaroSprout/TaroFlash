@@ -17,12 +17,7 @@ function mountSimple({ primed_grade = null } = {}) {
 
 describe('SimpleRatingButtons', () => {
   // ── Unconditional rendering [obligation] ───────────────────────────────────
-  // No side prop, no visibility conditionals — both rows always present.
-
-  test('renders the review row unconditionally [obligation]', () => {
-    const wrapper = mountSimple()
-    expect(wrapper.find('[data-testid="rating-buttons__review-row"]').exists()).toBe(true)
-  })
+  // Single grid row with again + good buttons.
 
   test('renders the again button unconditionally [obligation]', () => {
     const wrapper = mountSimple()
@@ -34,9 +29,11 @@ describe('SimpleRatingButtons', () => {
     expect(wrapper.find('[data-testid="rating-buttons__good"]').exists()).toBe(true)
   })
 
-  test('renders the flip (show) button unconditionally [obligation]', () => {
+  test('again and good buttons are siblings in the simple grid container [obligation]', () => {
     const wrapper = mountSimple()
-    expect(wrapper.find('[data-testid="rating-buttons__show"]').exists()).toBe(true)
+    const container = wrapper.find('[data-testid="rating-buttons__simple"]')
+    expect(container.find('[data-testid="rating-buttons__again"]').exists()).toBe(true)
+    expect(container.find('[data-testid="rating-buttons__good"]').exists()).toBe(true)
   })
 
   // ── primed_grade → again button active [obligation] ───────────────────────
@@ -93,11 +90,5 @@ describe('SimpleRatingButtons', () => {
     const wrapper = mountSimple()
     await wrapper.find('[data-testid="rating-buttons__good"]').trigger('click')
     expect(wrapper.emitted('rated')?.[0]).toEqual([Rating.Good])
-  })
-
-  test('pressing the flip button emits revealed [obligation]', async () => {
-    const wrapper = mountSimple()
-    await wrapper.find('[data-testid="rating-buttons__show"]').trigger('click')
-    expect(wrapper.emitted('revealed')).toHaveLength(1)
   })
 })
