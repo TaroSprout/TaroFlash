@@ -27,10 +27,10 @@ onMounted(() => {
       class="flex w-full max-w-(--page-width) items-center max-sm:justify-center gap-4 sm:px-(--page-px) relative"
     >
       <back-button class="absolute! left-4" />
-      <RouterLink to="/dashboard" class="flex items-center gap-1 text-4xl text-brown-100">
+      <div class="flex items-center gap-1 text-4xl text-brown-100">
         <ui-icon src="logo" class="h-9" />
         <div>{{ t('app.title') }}</div>
-      </RouterLink>
+      </div>
     </div>
   </nav>
 </template>

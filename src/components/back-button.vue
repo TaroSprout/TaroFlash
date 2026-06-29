@@ -20,6 +20,7 @@ const visible = computed(() => router.currentRoute.value.name !== 'dashboard')
     icon-left="arrow-left"
     :size="is_mobile ? 'base' : 'sm'"
     icon-only
+    :sfx="{ tap_pre: 'snappy_button_5', press: 'slide_left' }"
     @press="router.go(-1)"
   >
   </ui-button>
