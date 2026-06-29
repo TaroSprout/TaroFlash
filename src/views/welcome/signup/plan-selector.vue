@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import PlanOption from './plan-option.vue'
+import { PLANS } from '@/config/plans'
+import type { PlanFeature } from '@/config/plans'
 
 defineProps<{
   selected_plan: MemberPlan
@@ -12,6 +13,12 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+function featureLabel(planId: MemberPlan, feature: PlanFeature) {
+  const key = `plans.${planId}.features.${feature.key}`
+  if (feature.count == null) return t(key)
+  return t(key, { count: feature.count })
+}
 </script>
 
 <template>
@@ -28,39 +35,35 @@ const { t } = useI18n()
       <plan-option
         :selected="selected_plan === 'free'"
         @select="emit('select', 'free')"
-        :name="t('signup-dialog.plan-free')"
+        :name="PLANS.free.displayName"
         class="text-brown-500"
       >
         <template #header>
           <h2 class="text-4xl">{{ t('signup-dialog.plan-free.price') }}</h2>
         </template>
 
-        <p>{{ t('signup-dialog.free-plan.deck-limit') }}</p>
-        <p>{{ t('signup-dialog.free-plan.card-limit') }}</p>
-        <p>{{ t('signup-dialog.free-plan.deck-image-upload') }}</p>
-        <p>{{ t('signup-dialog.free-plan.future-features-note') }}</p>
+        <p v-for="feature in PLANS.free.features" :key="feature.key">
+          {{ featureLabel('free', feature) }}
+        </p>
       </plan-option>
 
       <plan-option
         :selected="selected_plan === 'paid'"
         @select="emit('select', 'paid')"
         theme="blue-500"
-        :name="t('signup-dialog.plan-paid')"
+        :name="PLANS.paid.displayName"
         class="text-brown-100"
       >
         <template #header>
           <h2
             class="text-4xl *:[span]:text-lg"
-            v-html="t('signup-dialog.plan-paid.price', { price: 8 })"
+            v-html="t('signup-dialog.plan-paid.price', { price: PLANS.paid.monthlyPriceUsd })"
           ></h2>
         </template>
 
-        <p>{{ t('signup-dialog.paid-plan.unlimited-decks') }}</p>
-        <p>{{ t('signup-dialog.paid-plan.unlimited-cards') }}</p>
-        <p>{{ t('signup-dialog.paid-plan.deck-image-upload') }}</p>
-        <p>{{ t('signup-dialog.paid-plan.card-image-upload') }}</p>
-        <p>{{ t('signup-dialog.paid-plan.future-features-note') }}</p>
-        <p>{{ t('signup-dialog.paid-plan.cancel-anytime') }}</p>
+        <p v-for="feature in PLANS.paid.features" :key="feature.key">
+          {{ featureLabel('paid', feature) }}
+        </p>
       </plan-option>
     </div>
   </div>

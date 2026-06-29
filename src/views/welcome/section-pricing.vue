@@ -1,24 +1,19 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { PLANS } from '@/config/plans'
+import { PLANS, type PlanFeature } from '@/config/plans'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiImage from '@/components/ui-kit/image.vue'
 import SectionHeader from './section-header.vue'
 
-type PlanFeature = {
-  key: string
-  ok: boolean
-  count?: number | null
-}
-
 type Plan = {
   key: 'free' | 'full'
+  planId: MemberPlan
   theme: string
   accent: string
   featured: boolean
   payment: boolean
-  features: PlanFeature[]
+  price: string
 }
 
 type PricingProps = {
@@ -32,35 +27,26 @@ const { t } = useI18n()
 const plans: Plan[] = [
   {
     key: 'free',
+    planId: 'free',
     theme: 'brown-700',
     accent: 'var(--color-brown-500)',
     featured: false,
     payment: false,
-    features: [
-      { key: 'decks', ok: true, count: PLANS.free.deckLimit },
-      { key: 'cards', ok: true, count: PLANS.free.cardsPerDeckLimit },
-      { key: 'deck-images', ok: true },
-      { key: 'no-card-images', ok: false }
-    ]
+    price: '$0'
   },
   {
     key: 'full',
+    planId: 'paid',
     theme: 'blue-500',
     accent: 'var(--color-blue-500)',
     featured: true,
     payment: true,
-    features: [
-      { key: 'decks', ok: true },
-      { key: 'cards', ok: true },
-      { key: 'deck-images', ok: true },
-      { key: 'card-images', ok: true },
-      { key: 'cancel', ok: true }
-    ]
+    price: `$${PLANS.paid.monthlyPriceUsd}`
   }
 ]
 
-function featureLabel(plan: Plan, feature: PlanFeature) {
-  const key = `welcome-view.pricing.${plan.key}.${feature.key}`
+function featureLabel(planId: MemberPlan, feature: PlanFeature) {
+  const key = `plans.${planId}.features.${feature.key}`
   if (feature.count == null) return t(key)
   return t(key, { count: feature.count })
 }
@@ -102,7 +88,7 @@ function featureLabel(plan: Plan, feature: PlanFeature) {
 
           <div class="flex flex-col gap-1">
             <p class="text-base uppercase tracking-widest text-(--accent)">
-              {{ t(`welcome-view.pricing.${plan.key}.name`) }}
+              {{ PLANS[plan.planId].displayName }}
             </p>
             <h3 class="text-2xl text-brown-700 dark:text-brown-100">
               {{ t(`welcome-view.pricing.${plan.key}.tagline`) }}
@@ -111,7 +97,7 @@ function featureLabel(plan: Plan, feature: PlanFeature) {
 
           <div class="flex items-baseline gap-1.5 border-b border-dashed border-brown-300 pb-4">
             <span class="text-6xl text-brown-700 dark:text-brown-100">
-              {{ t(`welcome-view.pricing.${plan.key}.price`) }}
+              {{ plan.price }}
             </span>
             <span class="text-base text-brown-500">
               {{ t(`welcome-view.pricing.${plan.key}.price-detail`) }}
@@ -120,7 +106,7 @@ function featureLabel(plan: Plan, feature: PlanFeature) {
 
           <ul class="flex flex-col gap-3 flex-1">
             <li
-              v-for="feature in plan.features"
+              v-for="feature in PLANS[plan.planId].features"
               :key="feature.key"
               class="flex items-start gap-3 text-base text-brown-700 dark:text-brown-100"
             >
@@ -128,14 +114,16 @@ function featureLabel(plan: Plan, feature: PlanFeature) {
                 aria-hidden="true"
                 class="flex shrink-0 items-center justify-center size-5.5 rounded-full mt-0.5"
                 :class="
-                  feature.ok
+                  feature.ok !== false
                     ? 'bg-(--accent) text-brown-100'
                     : 'border-2 border-dashed border-brown-300'
                 "
               >
-                <ui-icon v-if="feature.ok" src="check" class="size-3" />
+                <ui-icon v-if="feature.ok !== false" src="check" class="size-3" />
               </span>
-              <span :class="{ 'opacity-55': !feature.ok }">{{ featureLabel(plan, feature) }}</span>
+              <span :class="{ 'opacity-55': feature.ok === false }">{{
+                featureLabel(plan.planId, feature)
+              }}</span>
             </li>
           </ul>
 
