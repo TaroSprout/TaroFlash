@@ -3,7 +3,7 @@
 <template>
   <div
     data-testid="dashboard-skeleton"
-    class="grid grid-cols-[1fr] md:grid-cols-[345px_1fr] md:grid-rows-[auto_1fr] gap-x-15.5 gap-y-6 md:gap-y-11.5 h-full pb-12 animate-pulse"
+    class="grid grid-cols-[1fr] md:grid-cols-[345px_1fr] md:grid-rows-[auto_1fr] gap-x-15.5 gap-y-6 md:gap-y-11.5 h-full px-(--page-px) pt-(--page-pt) pb-12 animate-pulse"
   >
     <div
       data-testid="dashboard-skeleton__create-button"

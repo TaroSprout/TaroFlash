@@ -1,37 +1,30 @@
 <script setup lang="ts">
 import Card from '@/components/card/index.vue'
-import { useStagedTap } from '@/composables/ui/staged-tap'
-import { TYPE_SFX, type SoundKey } from '@/sfx/config'
+import UiTappable from '@/components/ui-kit/tappable.vue'
+import { TYPE_SFX } from '@/sfx/config'
+import type { SfxOptions } from '@/sfx/directive'
 
 type CardSize = InstanceType<typeof Card>['$props']['size']
 
-const {
-  deck,
-  size = 'base',
-  click_sfx
-} = defineProps<{
+type DeckThumbnailProps = {
   deck?: Deck
   size?: CardSize
   hide_title?: boolean
-  click_sfx?: SoundKey
-}>()
+  sfx?: SfxOptions
+}
+
+const { deck, size = 'base', sfx } = defineProps<DeckThumbnailProps>()
 
 const emit = defineEmits<{ press: [e: MouseEvent] }>()
-
-const { playing, tap } = useStagedTap()
-
-function onClick(e: MouseEvent) {
-  tap((ev) => emit('press', ev), { audio: click_sfx })(e)
-}
 </script>
 
 <template>
-  <div
+  <ui-tappable
+    as="div"
     data-testid="deck-thumbnail"
     class="card-outline pointer-fine:hover:scale-101 data-[active=true]:scale-101 pointer-coarse:data-[active=true]:scale-105 pointer-fine:transition-transform duration-75 relative cursor-pointer h-min touch-manipulation"
-    :data-active="playing || null"
-    v-sfx="{ hover: TYPE_SFX }"
-    @click="onClick"
+    :sfx="{ hover: TYPE_SFX, ...sfx }"
+    @tap="emit('press', $event)"
   >
     <card side="cover" :size="size" :cover_config="deck?.cover_config" />
 
@@ -42,5 +35,5 @@ function onClick(e: MouseEvent) {
       <slot name="actions"></slot>
       <h2 class="text-xl text-center text-brown-700 dark:text-brown-100">{{ deck?.title }}</h2>
     </div>
-  </div>
+  </ui-tappable>
 </template>

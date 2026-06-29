@@ -1,9 +1,12 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { shallowMount, flushPromises } from '@vue/test-utils'
+import { shallowMount } from '@vue/test-utils'
+import { defineComponent, h, useAttrs } from 'vue'
+import { TYPE_SFX } from '@/sfx/config'
 
-const { coarseRef, mockEmitSfx } = vi.hoisted(() => ({
-  coarseRef: { value: true },
-  mockEmitSfx: vi.fn()
+// ── Hoisted mocks ──────────────────────────────────────────────────────────────
+
+const { coarseRef } = vi.hoisted(() => ({
+  coarseRef: { value: true }
 }))
 
 vi.mock('@/composables/ui/media-query', () => ({
@@ -11,33 +14,65 @@ vi.mock('@/composables/ui/media-query', () => ({
 }))
 
 vi.mock('@/sfx/bus', () => ({
-  emitSfx: mockEmitSfx,
+  emitSfx: vi.fn(),
   emitHoverSfx: vi.fn()
 }))
 
-// Stub GSAP — pulled in transitively via Card
+// GSAP pulled in transitively via Card
 vi.mock('gsap', () => ({ gsap: { fromTo: vi.fn(), to: vi.fn() } }))
 
-import Deck from '@/components/deck/deck-thumbnail.vue'
+// ── Stubs ──────────────────────────────────────────────────────────────────────
 
-function makeDeck(deck = {}, extraProps = {}) {
-  return shallowMount(Deck, {
-    props: { deck: { title: 'Test Deck', ...deck }, ...extraProps }
+// UiTappable stub — renders slot content and forwards attrs so `data-testid`
+// lands on the DOM and child components (Card) are visible to findComponent.
+const UiTappableStub = defineComponent({
+  name: 'UiTappable',
+  inheritAttrs: false,
+  props: ['sfx', 'as', 'animate', 'triggerAt'],
+  emits: ['tap'],
+  setup(props, { slots, emit }) {
+    const attrs = useAttrs()
+    return () =>
+      h(
+        'div',
+        {
+          ...attrs,
+          onClick: (e) => emit('tap', e)
+        },
+        slots.default?.()
+      )
+  }
+})
+
+// ── Imports ───────────────────────────────────────────────────────────────────
+
+import DeckThumbnail from '@/components/deck/deck-thumbnail.vue'
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function mount(props = {}) {
+  return shallowMount(DeckThumbnail, {
+    props,
+    global: { stubs: { UiTappable: UiTappableStub } }
   })
 }
 
-describe('Deck', () => {
-  // ── Root element ──────────────────────────────────────────────────────────────
+function mountWithDeck(deckOverrides = {}, extraProps = {}) {
+  return mount({ deck: { title: 'Test Deck', ...deckOverrides }, ...extraProps })
+}
 
-  test('renders the deck element', () => {
-    const wrapper = makeDeck()
+// ── Root element ───────────────────────────────────────────────────────────────
+
+describe('DeckThumbnail', () => {
+  test('renders the root element with testid', () => {
+    const wrapper = mountWithDeck()
     expect(wrapper.find('[data-testid="deck-thumbnail"]').exists()).toBe(true)
   })
 
-  // ── Card component with cover side ────────────────────────────────────────────
+  // ── Card component ───────────────────────────────────────────────────────────
 
   test('renders a Card component with side=cover', () => {
-    const wrapper = makeDeck()
+    const wrapper = mountWithDeck()
     const card = wrapper.findComponent({ name: 'Card' })
     expect(card.exists()).toBe(true)
     expect(card.props('side')).toBe('cover')
@@ -45,156 +80,97 @@ describe('Deck', () => {
 
   test('passes deck.cover_config to the Card component', () => {
     const cover_config = { bg_color: 'blue-500', pattern: 'stars' }
-    const wrapper = makeDeck({ cover_config })
+    const wrapper = mountWithDeck({ cover_config })
     expect(wrapper.findComponent({ name: 'Card' }).props('cover_config')).toEqual(cover_config)
   })
 
   test('passes undefined cover_config when deck has none', () => {
-    const wrapper = makeDeck({})
+    const wrapper = mountWithDeck({})
     expect(wrapper.findComponent({ name: 'Card' }).props('cover_config')).toBeUndefined()
   })
 
   // ── Size prop ─────────────────────────────────────────────────────────────────
 
   test('defaults to base size', () => {
-    const wrapper = makeDeck()
+    const wrapper = mountWithDeck()
     expect(wrapper.findComponent({ name: 'Card' }).props('size')).toBe('base')
   })
 
   test('forwards size prop to Card', () => {
-    const wrapper = makeDeck({}, { size: 'xl' })
+    const wrapper = mount({ deck: { title: 'X' }, size: 'xl' })
     expect(wrapper.findComponent({ name: 'Card' }).props('size')).toBe('xl')
   })
 
-  // ── Title ─────────────────────────────────────────────────────────────────────
+  // ── Title ────────────────────────────────────────────────────────────────────
 
   test('shows deck title by default', () => {
-    const wrapper = makeDeck({ title: 'My Deck' })
+    const wrapper = mountWithDeck({ title: 'My Deck' })
     expect(wrapper.text()).toContain('My Deck')
   })
 
   test('hides title when hide_title is true', () => {
-    const wrapper = makeDeck({ title: 'My Deck' }, { hide_title: true })
+    const wrapper = mount({ deck: { title: 'My Deck' }, hide_title: true })
     expect(wrapper.text()).not.toContain('My Deck')
   })
 
   // ── Optional deck prop ────────────────────────────────────────────────────────
 
   test('renders without crashing when deck prop is not provided', () => {
-    const wrapper = shallowMount(Deck, { props: {} })
+    const wrapper = mount({})
     expect(wrapper.find('[data-testid="deck-thumbnail"]').exists()).toBe(true)
   })
 
   test('passes undefined cover_config to Card when deck is not provided', () => {
-    const wrapper = shallowMount(Deck, { props: {} })
+    const wrapper = mount({})
     expect(wrapper.findComponent({ name: 'Card' }).props('cover_config')).toBeUndefined()
   })
 
   test('shows empty title when deck is not provided', () => {
-    const wrapper = shallowMount(Deck, { props: {} })
+    const wrapper = mount({})
     expect(wrapper.text()).toBe('')
   })
 
   // ── actions slot ──────────────────────────────────────────────────────────────
 
   test('renders the actions slot above the title', () => {
-    const wrapper = shallowMount(Deck, {
+    const wrapper = shallowMount(DeckThumbnail, {
       props: { deck: { title: 'My Deck' } },
-      slots: { actions: '<button data-testid="thumbnail-action">act</button>' }
+      slots: { actions: '<button data-testid="thumbnail-action">act</button>' },
+      global: { stubs: { UiTappable: UiTappableStub } }
     })
     expect(wrapper.find('[data-testid="thumbnail-action"]').exists()).toBe(true)
   })
 
-  test('emits click when the root wrapper is clicked', async () => {
-    const wrapper = makeDeck()
+  // ── press event ───────────────────────────────────────────────────────────────
+
+  test('emits press when the tappable is tapped', async () => {
+    const wrapper = mountWithDeck()
     await wrapper.find('[data-testid="deck-thumbnail"]').trigger('click')
-    expect(wrapper.emitted('click')).toBeTruthy()
-    expect(wrapper.emitted('click')).toHaveLength(1)
+    expect(wrapper.emitted('press')).toBeTruthy()
+    expect(wrapper.emitted('press')).toHaveLength(1)
   })
 
-  // ── play-on-tap ────────────────────────────────────────────────────────────
+  // ── sfx prop spread (obligation 7) ───────────────────────────────────────────
 
-  describe('play-on-tap', () => {
-    beforeEach(() => {
-      coarseRef.value = true
-      mockEmitSfx.mockClear()
+  describe('sfx prop — default + override [obligation]', () => {
+    test('passes { hover: TYPE_SFX } to UiTappable when sfx prop is omitted', () => {
+      const wrapper = mountWithDeck()
+      const sfx = wrapper.findComponent(UiTappableStub).props('sfx')
+      expect(sfx).toEqual({ hover: TYPE_SFX })
     })
 
-    test('invokes the parent click handler after the hold completes on coarse pointers', async () => {
-      vi.useFakeTimers()
-      const onClick = vi.fn()
-      const wrapper = shallowMount(Deck, {
-        props: { deck: { title: 'X' } },
-        attrs: { onClick }
-      })
-
-      const click = wrapper.find('[data-testid="deck-thumbnail"]').trigger('click')
-
-      // Hold matches usePlayOnTap default — non-animate path uses setTimeout.
-      vi.advanceTimersByTime(500)
-      await click
-      vi.useRealTimers()
-
-      expect(onClick).toHaveBeenCalledTimes(1)
+    test('merges caller sfx over the default so both hover and custom key are present', () => {
+      const wrapper = mount({ deck: { title: 'X' }, sfx: { press: 'card_drop' } })
+      const sfx = wrapper.findComponent(UiTappableStub).props('sfx')
+      expect(sfx.hover).toEqual(TYPE_SFX)
+      expect(sfx.press).toBe('card_drop')
     })
 
-    test('data-active flips on while the hold is in flight', async () => {
-      vi.useFakeTimers()
-      const wrapper = shallowMount(Deck, {
-        props: { deck: { title: 'X' } },
-        attrs: { onClick: vi.fn() }
-      })
-
-      wrapper.find('[data-testid="deck-thumbnail"]').trigger('click')
-      await Promise.resolve() // let intercept run up to the await
-
-      expect(wrapper.find('[data-testid="deck-thumbnail"]').attributes('data-active')).toBe('true')
-      vi.advanceTimersByTime(500)
-      vi.useRealTimers()
-    })
-
-    test('emits click_sfx when tapped (fires at animation peak)', async () => {
-      vi.useFakeTimers()
-      const wrapper = shallowMount(Deck, {
-        props: { deck: { title: 'X' }, click_sfx: 'select' },
-        attrs: { onClick: vi.fn() }
-      })
-
-      wrapper.find('[data-testid="deck-thumbnail"]').trigger('click')
-      vi.advanceTimersByTime(500)
-      await flushPromises()
-
-      expect(mockEmitSfx).toHaveBeenCalledWith('select', undefined)
-      vi.useRealTimers()
-    })
-
-    test('does not emit click_sfx when prop is absent', async () => {
-      vi.useFakeTimers()
-      const wrapper = shallowMount(Deck, {
-        props: { deck: { title: 'X' } },
-        attrs: { onClick: vi.fn() }
-      })
-
-      wrapper.find('[data-testid="deck-thumbnail"]').trigger('click')
-      await Promise.resolve()
-
-      expect(mockEmitSfx).not.toHaveBeenCalled()
-      vi.advanceTimersByTime(500)
-      vi.useRealTimers()
-    })
-
-    test('does not intercept on pointer:fine — click goes through immediately', async () => {
-      coarseRef.value = false
-      const onClick = vi.fn()
-      const wrapper = shallowMount(Deck, {
-        props: { deck: { title: 'X' } },
-        attrs: { onClick }
-      })
-
-      await wrapper.find('[data-testid="deck-thumbnail"]').trigger('click')
-
-      expect(onClick).toHaveBeenCalledTimes(1)
-      expect(mockEmitSfx).not.toHaveBeenCalled()
+    test('caller-supplied hover overrides the TYPE_SFX default', () => {
+      const custom_hover = ['click_04']
+      const wrapper = mount({ deck: { title: 'X' }, sfx: { hover: custom_hover } })
+      const sfx = wrapper.findComponent(UiTappableStub).props('sfx')
+      expect(sfx.hover).toEqual(custom_hover)
     })
   })
 })

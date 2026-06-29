@@ -2,25 +2,35 @@
 import NavBar from '@/components/nav-bar.vue'
 import Phone from '@/phone/phone.vue'
 import MobileDockHost from '@/components/mobile-dock/mobile-dock-host.vue'
-import DashboardSkeleton from '@/views/dashboard/skeleton.vue'
-import DeckSkeleton from '@/views/deck/skeleton.vue'
+import RouteSkeleton from '@/components/route-skeleton.vue'
+import { useRouteTransition } from '@/composables/ui/route-transition'
+
+const { show_skeleton_overlay, onSuspensePending, onSuspenseResolve, onLeave, onEnter } =
+  useRouteTransition()
 </script>
 
 <template>
-  <div class="flex flex-col min-h-dvh w-full shrink-0 md:items-center">
+  <div
+    class="flex flex-col min-h-dvh w-full shrink-0 md:items-center [--page-px:1rem] sm:[--page-px:4rem] [--page-pt:1.5rem]"
+  >
     <nav-bar />
     <phone />
 
-    <main class="w-full max-w-(--page-width) px-4 sm:px-16">
+    <main class="relative overflow-clip w-full max-w-(--page-width)">
       <router-view v-slot="{ Component, route }">
-        <suspense>
-          <component :is="Component" />
-          <template #fallback>
-            <dashboard-skeleton v-if="route.name === 'dashboard'" />
-            <deck-skeleton v-else-if="route.name === 'deck'" />
-            <div v-else data-testid="route-skeleton" class="h-full w-full animate-pulse"></div>
-          </template>
-        </suspense>
+        <transition :css="false" @leave="onLeave" @enter="onEnter">
+          <div :key="route.name as string" data-testid="route-container" class="relative">
+            <suspense @pending="onSuspensePending" @resolve="onSuspenseResolve">
+              <component :is="Component" :class="{ invisible: show_skeleton_overlay }" />
+              <template #fallback>
+                <route-skeleton :name="route.name" />
+              </template>
+            </suspense>
+            <div v-if="show_skeleton_overlay" class="absolute inset-0">
+              <route-skeleton :name="route.name" />
+            </div>
+          </div>
+        </transition>
       </router-view>
     </main>
 

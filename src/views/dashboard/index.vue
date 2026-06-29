@@ -70,7 +70,7 @@ async function onCreateDeckClicked() {
 <template>
   <div
     data-testid="dashboard"
-    class="grid grid-cols-[1fr] md:grid-cols-[345px_1fr] gap-x-15.5 gap-y-8 md:gap-y-0 pb-12"
+    class="grid grid-cols-[1fr] md:grid-cols-[345px_1fr] gap-x-15.5 gap-y-8 md:gap-y-0 px-(--page-px) pt-(--page-pt) pb-12"
   >
     <div data-testid="dashboard__left-column" class="flex flex-col gap-6 self-start">
       <div data-testid="dashboard__member-section" class="relative flex flex-col gap-3">
@@ -168,6 +168,7 @@ async function onCreateDeckClicked() {
             :key="index"
             :deck="deck"
             :size="is_md ? 'base' : 'sm'"
+            :sfx="{ press: 'snappy_button_5' }"
             @press="onDeckClicked(deck)"
           />
         </div>
