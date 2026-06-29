@@ -11,7 +11,7 @@ const { group, index } = defineProps<{
   <div
     data-testid="transcript-segment"
     :data-index="index"
-    class="[content-visibility:auto] [contain-intrinsic-size:auto_12rem]"
+    class="[content-visibility:auto] [contain-intrinsic-size:auto_12rem] [contain:layout]"
   >
     <span data-testid="transcript-segment__source"
       ><ruby

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { emitSfx } from '@/sfx/bus'
@@ -109,10 +109,15 @@ const active_chapter_index = computed(() => {
 })
 
 // Mount only the current chapter's paragraphs plus one buffer chapter on each
-// side. Keeps DOM size bounded for long audiobooks (a 4-hour book with 10-min
-// chapters has ~24 chapters; we mount at most 3 at a time). Falls back to the
-// full list when the lesson has no internal chapters.
-const windowed_paragraphs = computed(() => {
+// side for smooth scrolling. Falls back to the full list when the lesson has no
+// internal chapters.
+//
+// The filter always returns a new array reference, so we stabilize via a
+// shallowRef that only propagates when the paragraph set actually changes. Without
+// this, transcript-view re-renders on every word boundary (~5x/sec during
+// playback) because active_chapter_index is dirty → raw_windowed runs filter →
+// new reference → new prop → re-render, even when the chapter hasn't changed.
+const raw_windowed = computed(() => {
   if (!has_lesson_chapters.value) return paragraphs.value
   const chapters = lesson_chapters.value
   const ci = active_chapter_index.value
@@ -121,6 +126,15 @@ const windowed_paragraphs = computed(() => {
   const start_time = chapters[lo].start
   const end_time = chapters[hi + 1]?.start ?? Infinity
   return paragraphs.value.filter((p) => p.start >= start_time && p.start < end_time)
+})
+
+const windowed_paragraphs = shallowRef(raw_windowed.value)
+
+watch(raw_windowed, (next) => {
+  const prev = windowed_paragraphs.value
+  if (next === prev) return
+  if (next.length === prev.length && next.every((p, i) => p === prev[i])) return
+  windowed_paragraphs.value = next
 })
 
 const show_term = computed(() => popover_open.value && !!selection.value)
