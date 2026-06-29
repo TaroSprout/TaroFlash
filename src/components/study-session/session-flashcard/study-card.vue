@@ -11,9 +11,9 @@ import { useI18n } from 'vue-i18n'
 import { useDeckContext } from '../deck-context'
 
 const DRAG_RATING_CONFIG = {
-  [Rating.Hard]: { icon: 'smiley-worried', label_key: 'study.flashcard.drag-rating.hard-label' },
-  [Rating.Good]: { icon: 'smiley-happy', label_key: 'study.flashcard.drag-rating.good-label' },
-  [Rating.Easy]: { icon: 'smiley-very-happy', label_key: 'study.flashcard.drag-rating.easy-label' }
+  [Rating.Hard]: { icon: 'smiley-worried', label_key: 'study.flashcard.rating.hard-button' },
+  [Rating.Good]: { icon: 'smiley-happy', label_key: 'study.flashcard.rating.good-button' },
+  [Rating.Easy]: { icon: 'smiley-very-happy', label_key: 'study.flashcard.rating.easy-button' }
 } as const
 
 defineExpose({ rate })
@@ -66,9 +66,7 @@ const shortcuts = useShortcuts('study-card')
 const passVisible = computed(() => card_offset.value > SWIPE_DISTANCE_THRESHOLD)
 const failVisible = computed(() => card_offset.value < -SWIPE_DISTANCE_THRESHOLD)
 const drag_rating_config = computed(
-  () =>
-    DRAG_RATING_CONFIG[drag_rating.value as keyof typeof DRAG_RATING_CONFIG] ??
-    DRAG_RATING_CONFIG[Rating.Good]
+  () => DRAG_RATING_CONFIG[drag_rating.value as keyof typeof DRAG_RATING_CONFIG]
 )
 
 onMounted(() => {
@@ -154,6 +152,11 @@ function handleDrag(el: HTMLElement, dx: number, dy: number) {
   el.style.transform = `translateX(${dx}px) rotate(${dx / 10}deg)`
   emit('drag-progress', Math.min(Math.abs(dx) / FULL_REVEAL_DISTANCE, 1), 0)
 
+  updateDragRating(dx, dy)
+}
+
+/** Updates drag_rating from vertical position and emits primed_grade when the zone or rating changes. */
+function updateDragRating(dx: number, dy: number) {
   if (show_all_ratings && dx > SWIPE_DISTANCE_THRESHOLD) {
     const new_rating = toDragRating(dy)
     if (new_rating !== drag_rating.value) {
@@ -222,9 +225,13 @@ function snapBack(el: HTMLElement) {
   }
   emit('drag-progress', 0, SNAP_BACK_SPEED)
 
-  setTimeout(() => {
-    is_dragging.value = false
-  }, SNAP_BACK_SPEED * 1000)
+  el.addEventListener(
+    'transitionend',
+    () => {
+      is_dragging.value = false
+    },
+    { once: true }
+  )
 }
 
 /** Maps vertical drag offset to a rating when past the right threshold. */
