@@ -1,3 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor">
-  <path d="M531-271 358-444q-8-8-11.5-16.82t-3.5-19q0-10.18 3.5-19.18t11.5-17l173-173q4.95-5 11.07-8 6.11-3 12.38-3 13.55 0 24.05 9.65T589-666v372q0 14.7-10.6 24.35Q567.8-260 554-260q-4 0-23-11Z"/>
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="Triangle-Arrow-Left-Large-1--Streamline-Flex">
+  <desc>
+    Triangle Arrow Left Large 1 Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="triangle-arrow-left-large-1--arrow-keyboard-left-large-head">
+    <path id="Union" fill="currentColor" fill-rule="evenodd" d="M5.96564 0.726569c1.04873 -0.57931 2.28848 0.000585 2.5721 1.139341 0.19137 0.76835 0.3783 1.74803 0.49292 2.88156H11.75c1.2426 0 2.25 1.00736 2.25 2.25s-1.0074 2.25 -2.25 2.25H9.03116c-0.11457 1.13563 -0.30177 2.11713 -0.49342 2.88653 -0.28362 1.1388 -1.52337 1.7187 -2.5721 1.1394C3.53116 11.9286 1.42555 9.61801 0.332137 8.05146c-0.443029 -0.63473 -0.443029 -1.46824 0 -2.10297C1.42555 4.38194 3.53116 2.07135 5.96564 0.726569Z" clip-rule="evenodd" stroke-width="1"></path>
+  </g>
 </svg>

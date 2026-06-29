@@ -20,13 +20,13 @@ const onEnter = routeSlideEnter(going_to_dashboard)
 </script>
 
 <template>
-  <div class="flex flex-col min-h-dvh w-full shrink-0 md:items-center">
+  <div
+    class="flex flex-col min-h-dvh w-full shrink-0 md:items-center [--page-px:1rem] sm:[--page-px:4rem] [--page-pt:1.5rem]"
+  >
     <nav-bar />
     <phone />
 
-    <main
-      class="relative [overflow:clip] w-full max-w-(--page-width) [--page-px:1rem] sm:[--page-px:4rem] [--page-pt:1.5rem]"
-    >
+    <main class="relative overflow-clip w-full max-w-(--page-width)">
       <router-view v-slot="{ Component, route }">
         <transition :css="false" @leave="onLeave" @enter="onEnter">
           <suspense :key="route.name">
