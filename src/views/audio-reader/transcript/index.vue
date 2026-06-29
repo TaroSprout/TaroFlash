@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import { computed, provide, watch } from 'vue'
+import { provide, watch } from 'vue'
 import type { SentenceWords } from '@/utils/transcript'
 import { markTermInSentence } from '@/utils/transcript'
 import type { CardMatch } from '@/utils/transcript-match'
-import {
-  readerActiveWordKey,
-  useReaderHighlights,
-  type WordRange
-} from '@/composables/audio-reader/reader-highlights'
+import { useReaderHighlights, type WordRange } from '@/composables/audio-reader/reader-highlights'
 import TranscriptSegment from './segment.vue'
 import SelectionPreview from './selection-preview.vue'
 
@@ -60,11 +56,6 @@ const {
 // The follow state + resume action surface to the lesson view, which renders the
 // "jump to current line" control in the mobile dock above the transcript.
 defineExpose({ following, follow_direction, resumeFollow })
-
-provide(
-  readerActiveWordKey,
-  computed(() => active_word)
-)
 
 // Leading / trailing punctuation edges — strip these from the first/last word of
 // a match so the underline hugs the term's own characters and never bridges a

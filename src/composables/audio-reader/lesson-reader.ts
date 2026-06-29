@@ -1,4 +1,4 @@
-import { computed, ref, toValue, useTemplateRef, watch } from 'vue'
+import { computed, ref, shallowRef, toValue, useTemplateRef, watch } from 'vue'
 import type { MaybeRefOrGetter } from 'vue'
 import { emitSfx } from '@/sfx/bus'
 import { useToast } from '@/composables/toast'
@@ -56,8 +56,36 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
   const { data: decks } = useMemberDecksQuery()
 
   const flat_words = computed(() => paragraphs.value.flatMap((p) => p.words))
-  const matches = computed(() =>
-    matchesByWord(matchCardsInWords(flat_words.value, card_terms.value).map(themeMatch))
+
+  // Stable shallowRef: only emits a new Map when the match content actually
+  // changes. Pinia Colada's stale-while-revalidate hands decks/card_index a new
+  // array reference on every background fetch even when nothing changed — without
+  // this guard each refetch would trigger paintMatchedWords on the full transcript.
+  const matches = shallowRef<Map<number, CardMatch>>(new Map())
+  watch(
+    () => matchesByWord(matchCardsInWords(flat_words.value, card_terms.value).map(themeMatch)),
+    (next) => {
+      const prev = matches.value
+      if (prev.size === next.size) {
+        let same = true
+        for (const [k, v] of next) {
+          const p = prev.get(k)
+          if (
+            !p ||
+            p.lo !== v.lo ||
+            p.hi !== v.hi ||
+            p.theme !== v.theme ||
+            p.theme_dark !== v.theme_dark
+          ) {
+            same = false
+            break
+          }
+        }
+        if (same) return
+      }
+      matches.value = next
+    },
+    { immediate: true }
   )
 
   const audio_path = computed(() => lesson.value?.audio_path)
