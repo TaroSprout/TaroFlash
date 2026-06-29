@@ -123,7 +123,7 @@ function onPillClick(e: MouseEvent) {
       data-testid="ui-kit-spinbox__pill"
       :data-active="pill_active"
       class="inline-flex items-center justify-center bg-input px-3 text-sm cursor-pointer text-brown-700 dark:text-brown-100 transition-colors rounded-4 rounded-l-2 data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary) data-[active=false]:hover:bg-(--theme-primary) data-[active=false]:hover:text-(--theme-on-primary)"
-      :data-playing="pill_playing || null"
+      :data-active="pill_playing || null"
       v-sfx="{ hover: TYPE_SFX }"
       @click="onPillClick"
     >

@@ -28,8 +28,8 @@ function onClick(e: MouseEvent) {
 <template>
   <div
     data-testid="deck-thumbnail"
-    class="card-outline pointer-fine:hover:scale-101 data-[playing=true]:scale-101 pointer-coarse:data-[playing=true]:scale-105 pointer-fine:transition-transform duration-75 relative cursor-pointer h-min touch-manipulation"
-    :data-playing="playing || null"
+    class="card-outline pointer-fine:hover:scale-101 data-[active=true]:scale-101 pointer-coarse:data-[active=true]:scale-105 pointer-fine:transition-transform duration-75 relative cursor-pointer h-min touch-manipulation"
+    :data-active="playing || null"
     v-sfx="{ hover: TYPE_SFX }"
     @click="onClick"
   >
