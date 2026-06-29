@@ -6,7 +6,6 @@ import type { CardMatch } from '@/utils/transcript-match'
 import {
   readerActiveWordKey,
   readerMatchesKey,
-  readerSelectionKey,
   useReaderHighlights,
   type WordRange
 } from '@/composables/audio-reader/reader-highlights'
@@ -40,7 +39,6 @@ const {
   hover_lines,
   setHoverEl,
   tap_active,
-  interaction_range,
   selection_preview,
   following,
   follow_direction,
@@ -63,7 +61,6 @@ const {
 // "jump to current line" control in the mobile dock above the transcript.
 defineExpose({ following, follow_direction, resumeFollow })
 
-provide(readerSelectionKey, interaction_range)
 provide(
   readerActiveWordKey,
   computed(() => active_word)

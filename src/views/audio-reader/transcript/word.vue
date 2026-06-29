@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue'
-import { readerMatchesKey, readerSelectionKey } from '@/composables/audio-reader/reader-highlights'
+import { readerMatchesKey } from '@/composables/audio-reader/reader-highlights'
 
 // Leading / trailing whitespace + punctuation — the same edges `cleanTerm`
 // strips when matching, so the underline hugs the term's own characters and
@@ -14,13 +14,7 @@ const { display, index, reading } = defineProps<{
   reading?: string
 }>()
 
-const selection = inject(readerSelectionKey, null)
 const matches = inject(readerMatchesKey, null)
-
-const selected = computed(() => {
-  const range = selection?.value
-  return !!range && index >= range.lo && index <= range.hi
-})
 
 // The card match this word sits in (carries the owning deck's theme), or null.
 // The member already has a card for a matched word — marked with a marker-style
@@ -53,7 +47,6 @@ const core = computed(() => display.slice(lead.value.length, display.length - tr
     data-testid="transcript-word"
     :data-word-index="index"
     :data-word-text="display"
-    :data-active="selected"
     :data-highlight="matched"
     :data-theme="matched ? highlight_theme : undefined"
     :data-theme-dark="matched ? highlight_theme_dark : undefined"
