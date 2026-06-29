@@ -1,12 +1,17 @@
 import { describe, test, expect, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
+import { ref } from 'vue'
 import { Rating } from 'ts-fsrs'
 import RatingButtons from '@/components/study-session/session-flashcard/rating-buttons/index.vue'
+import { PrimedGradeKey } from '@/components/study-session/session-flashcard/primed-grade-context'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function mountRatingButtons(props) {
-  return mount(RatingButtons, { props })
+function mountRatingButtons({ primed_grade = null, ...props } = {}) {
+  return mount(RatingButtons, {
+    props,
+    global: { provide: { [PrimedGradeKey]: ref(primed_grade) } }
+  })
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────

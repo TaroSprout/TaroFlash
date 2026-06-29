@@ -138,7 +138,7 @@ describe('Deck', () => {
       expect(onClick).toHaveBeenCalledTimes(1)
     })
 
-    test('data-playing flips on while the hold is in flight', async () => {
+    test('data-active flips on while the hold is in flight', async () => {
       vi.useFakeTimers()
       const wrapper = shallowMount(Deck, {
         props: { deck: { title: 'X' } },
@@ -148,7 +148,7 @@ describe('Deck', () => {
       wrapper.find('[data-testid="deck-thumbnail"]').trigger('click')
       await Promise.resolve() // let intercept run up to the await
 
-      expect(wrapper.find('[data-testid="deck-thumbnail"]').attributes('data-playing')).toBe('true')
+      expect(wrapper.find('[data-testid="deck-thumbnail"]').attributes('data-active')).toBe('true')
       vi.advanceTimersByTime(500)
       vi.useRealTimers()
     })

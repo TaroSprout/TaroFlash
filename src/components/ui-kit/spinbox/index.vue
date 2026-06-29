@@ -121,9 +121,8 @@ function onPillClick(e: MouseEvent) {
       v-if="pill_label"
       type="button"
       data-testid="ui-kit-spinbox__pill"
-      :data-active="pill_active"
+      :data-active="pill_active || pill_playing || null"
       class="inline-flex items-center justify-center bg-input px-3 text-sm cursor-pointer text-brown-700 dark:text-brown-100 transition-colors rounded-4 rounded-l-2 data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary) data-[active=false]:hover:bg-(--theme-primary) data-[active=false]:hover:text-(--theme-on-primary)"
-      :data-active="pill_playing || null"
       v-sfx="{ hover: TYPE_SFX }"
       @click="onPillClick"
     >
