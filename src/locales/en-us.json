@@ -289,6 +289,7 @@
   "study.flashcard.start-button": "Start",
   "study.idle.next-session-cta": "Study again {time}",
   "study-session.modal.title": "Studying {deck}",
+  "study-session.multiple-decks-title": "Multiple Decks",
   "study-session.close-button": "Close",
   "study-session.stop-button": "Stop",
   "session-summary.title": "Cards Cleared!",

@@ -2,8 +2,9 @@
 import SessionFlashcard from './session-flashcard/index.vue'
 import SessionSummary from './session-summary/index.vue'
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { emitSfx, emitStudySfx } from '@/sfx/bus'
-import { provideDeckContext } from './deck-context'
+import { useProvideDeckContext } from './deck-context'
 import { provideStudyViewport } from './viewport-context'
 import { sessionPaneEnter, sessionPaneLeave } from '@/utils/animations/session-pane'
 import type { CardReviewResult } from './composables/session-core'
@@ -11,18 +12,19 @@ import type { SecondaryAction } from './composables/study-modal'
 
 type Phase = 'studying' | 'summary'
 
-const { deck, close, config_override } = defineProps<{
-  deck: Deck
+const { decks, close, config_override } = defineProps<{
+  decks: Deck[]
   close: (response?: SecondaryAction) => void
   config_override?: Partial<DeckConfig>
 }>()
 
-provideDeckContext(
-  computed(() => ({
-    cover_config: deck.cover_config,
-    card_attributes: deck.card_attributes
-  }))
+const { t } = useI18n()
+
+const title = computed(() =>
+  decks.length === 1 ? (decks[0]?.title ?? '') : t('study-session.multiple-decks-title')
 )
+
+useProvideDeckContext(() => decks)
 const viewport = provideStudyViewport()
 
 const phase = ref<Phase>('studying')
@@ -64,7 +66,8 @@ function onPaneEnter(el: Element, done: () => void) {
         <session-flashcard
           v-if="phase === 'studying'"
           key="studying"
-          :deck="deck"
+          :decks="decks"
+          :title="title"
           :config_override="config_override"
           @closed="onClosed"
           @finished="onSessionFinished"
@@ -73,7 +76,7 @@ function onPaneEnter(el: Element, done: () => void) {
           v-else
           key="summary"
           class="absolute inset-0 z-10"
-          :deck="deck"
+          :title="title"
           :results="results"
           @close="onClosed"
         />

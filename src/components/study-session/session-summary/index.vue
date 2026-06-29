@@ -8,8 +8,8 @@ import StatTile from './stat-tile.vue'
 import { aggregateSession } from './aggregate'
 import type { CardReviewResult } from '@/components/study-session/composables/session-core'
 
-const { deck, results } = defineProps<{
-  deck: Deck
+const { results } = defineProps<{
+  title: string
   results: CardReviewResult[]
 }>()
 
@@ -27,7 +27,7 @@ const summary = computed(() => aggregateSession(results))
     data-testid="session-summary"
     class="h-full w-full flex flex-col gap-6 p-(--session-padding)"
   >
-    <session-header :title="deck.title" is_cover :show_menu="false" @stop="emit('close')" />
+    <session-header :title="title" is_cover :show_menu="false" @stop="emit('close')" />
 
     <div
       data-testid="session-summary__body"

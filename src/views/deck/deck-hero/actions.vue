@@ -25,7 +25,7 @@ const edit_label = computed(() => {
 })
 
 function onStudyClicked() {
-  study_session.start(deck)
+  study_session.start([deck])
 }
 </script>
 
