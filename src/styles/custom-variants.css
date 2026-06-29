@@ -13,7 +13,7 @@
 }
 
 @custom-variant tap {
-  &:where(:focus-visible, [data-playing='true'], [data-active='true']) {
+  &:where(:focus-visible, [data-active='true']) {
     @slot;
   }
   @media (hover: hover) {

@@ -25,6 +25,6 @@
   }
 }
 
-.card-outline[data-playing='true'] {
+.card-outline[data-active='true'] {
   filter: var(--outline-filter);
 }

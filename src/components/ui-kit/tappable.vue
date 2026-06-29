@@ -41,7 +41,7 @@ function onClick(e: MouseEvent) {
 <template>
   <component
     :is="as"
-    :data-playing="playing || null"
+    :data-active="playing || null"
     class="group/tappable relative"
     v-sfx="{ hover: sfx.hover, focus: sfx.focus, blur: sfx.blur, debounce: sfx.debounce }"
     @click="onClick"

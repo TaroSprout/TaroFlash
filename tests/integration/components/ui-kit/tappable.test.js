@@ -111,14 +111,14 @@ describe('UiTappable — sfx.press read at click time [obligation]', () => {
   })
 })
 
-describe('UiTappable — data-playing state', () => {
-  test('data-playing attribute is absent when not animating', () => {
+describe('UiTappable — data-active state', () => {
+  test('data-active attribute is absent when not animating', () => {
     coarseRef.value = false
     const wrapper = mountTappable()
-    expect(wrapper.attributes('data-playing')).toBeUndefined()
+    expect(wrapper.attributes('data-active')).toBeUndefined()
   })
 
-  test('data-playing is set to "true" during coarse animation', async () => {
+  test('data-active is set to "true" during coarse animation', async () => {
     coarseRef.value = true
     let resolvePeak
     mockPlayButtonTap.mockReturnValue({
@@ -129,7 +129,7 @@ describe('UiTappable — data-playing state', () => {
     const p = wrapper.trigger('click')
     // Give a microtask tick so playing ref updates
     await Promise.resolve()
-    expect(wrapper.attributes('data-playing')).toBe('true')
+    expect(wrapper.attributes('data-active')).toBe('true')
     resolvePeak()
     await p
     await flushPromises()

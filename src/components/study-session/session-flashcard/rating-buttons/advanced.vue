@@ -4,12 +4,9 @@ import { type Grade, Rating } from 'ts-fsrs'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiButtonGroup, { type ButtonGroupOption } from '@/components/ui-kit/button-group.vue'
+import { usePrimedGrade } from '../primed-grade-context'
 
-type AdvancedRatingButtonsProps = {
-  primed_grade?: Grade | null
-}
-
-const { primed_grade } = defineProps<AdvancedRatingButtonsProps>()
+const primed_grade = usePrimedGrade()
 
 const { t } = useI18n()
 
