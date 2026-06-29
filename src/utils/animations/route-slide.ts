@@ -1,7 +1,7 @@
 import { gsap } from 'gsap'
 import type { Ref } from 'vue'
 
-const DURATION = 0.3
+const DURATION = 0.2
 const EASE = 'power2.inOut'
 
 // Leave and enter are always paired on a real navigation; a Suspense resolve

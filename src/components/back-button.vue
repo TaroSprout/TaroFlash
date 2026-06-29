@@ -4,8 +4,6 @@ import UiButton from '@/components/ui-kit/button.vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { computed } from 'vue'
 
-defineSlots<{ default?(): unknown }>()
-
 const router = useRouter()
 
 const is_mobile = useMatchMedia('w<sm')

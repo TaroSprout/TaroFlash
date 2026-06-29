@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { onMounted, useTemplateRef } from 'vue'
-import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import BackButton from '@/components/back-button.vue'
