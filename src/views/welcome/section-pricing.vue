@@ -108,6 +108,7 @@ function featureLabel(planId: MemberPlan, feature: PlanFeature) {
             <li
               v-for="feature in PLANS[plan.planId].features"
               :key="feature.key"
+              :data-ok="feature.ok !== false ? undefined : 'false'"
               class="flex items-start gap-3 text-base text-brown-700 dark:text-brown-100"
             >
               <span

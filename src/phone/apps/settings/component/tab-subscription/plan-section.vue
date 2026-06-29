@@ -72,7 +72,7 @@ const view = computed(() =>
       :status="view.status"
       :description="view.description"
     >
-      <template #actions>
+      <template v-if="is_paid" #actions>
         <plan-actions :subscription="subscription" />
       </template>
     </plan-pill>
