@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, useTemplateRef } from 'vue'
+import { computed, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { emitSfx } from '@/sfx/bus'
@@ -34,6 +34,7 @@ const lesson_id = computed(() => Number(lessonId))
 
 const {
   lesson,
+  words,
   paragraphs,
   matches,
   audio_url,
@@ -74,6 +75,12 @@ const FOOTER_CLEARANCE = 16
 // content-driven height animation stands down and only tracks the baseline.
 let swapping = false
 
+// Deferred mirror of show_term_in_dock — flips true one rAF after the real flag
+// so the tap frame has zero component-mounting work. Mounting term-card (buttons,
+// composables, event listeners) synchronously on tap drops a frame on mobile.
+const show_term_in_dock_deferred = ref(false)
+let term_dock_raf: ReturnType<typeof requestAnimationFrame> | null = null
+
 const chapters = computed(() => lessons_data.value ?? [])
 const current_index = computed(() => chapters.value.findIndex((c) => c.id === lesson_id.value))
 const chapter_of = computed(() => ({
@@ -87,11 +94,13 @@ const chapter_of = computed(() => ({
 const lesson_chapters = computed(() => lesson.value?.transcript?.chapters ?? [])
 const has_lesson_chapters = computed(() => lesson_chapters.value.length > 1)
 
-// The last chapter whose start time the playhead has reached.
+// The last chapter whose start time the active word has reached. Derived from
+// active_word (word-boundary frequency) rather than player.current_time (60fps)
+// so lesson/index.vue does not re-render on every animation frame.
 const active_chapter_index = computed(() => {
   const chapters = lesson_chapters.value
   if (chapters.length <= 1) return 0
-  const time = player.current_time.value
+  const time = words.value[active_word.value]?.start ?? 0
   let idx = 0
   for (let i = 0; i < chapters.length; i++) {
     if (chapters[i].start <= time + 0.001) idx = i
@@ -187,6 +196,26 @@ function onSwapEnd() {
 // crossfade between the two panes owns the height while `swapping`.
 useAnimatedHeight(footer_swap_el, footer_term, () => !swapping, reclearSelection)
 useAnimatedHeight(footer_swap_el, footer_toolbar, () => !swapping)
+
+watch(show_term_in_dock, (v) => {
+  if (v) {
+    if (term_dock_raf !== null) return
+    term_dock_raf = requestAnimationFrame(() => {
+      term_dock_raf = null
+      show_term_in_dock_deferred.value = true
+    })
+  } else {
+    if (term_dock_raf !== null) {
+      cancelAnimationFrame(term_dock_raf)
+      term_dock_raf = null
+    }
+    show_term_in_dock_deferred.value = false
+  }
+})
+
+onBeforeUnmount(() => {
+  if (term_dock_raf !== null) cancelAnimationFrame(term_dock_raf)
+})
 </script>
 
 <template>
@@ -259,7 +288,7 @@ useAnimatedHeight(footer_swap_el, footer_toolbar, () => !swapping)
           data-testid="lesson-view__lesson-chapters"
           class="flex-1"
           :chapters="lesson_chapters"
-          :current-time="player.current_time.value"
+          :current-time="player.current_time"
           @seek="seekToChapter"
         />
 
@@ -341,7 +370,7 @@ useAnimatedHeight(footer_swap_el, footer_toolbar, () => !swapping)
           @swap-end="onSwapEnd"
         >
           <div
-            v-if="show_term_in_dock && selection"
+            v-if="show_term_in_dock_deferred && selection"
             key="term"
             ref="footer_term"
             data-testid="lesson-view__dock-term"

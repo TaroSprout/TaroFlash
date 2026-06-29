@@ -168,6 +168,7 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
 
   return {
     lesson,
+    words,
     paragraphs,
     matches,
     audio_url,
