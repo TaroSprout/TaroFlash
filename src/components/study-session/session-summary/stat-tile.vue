@@ -32,15 +32,9 @@ const stats = computed(() =>
       :data-testid="`session-summary__tile-stat-${stat.key}`"
       class="flex flex-row items-center gap-3 border-(--theme-on-primary)/20 px-2 py-3 not-first:border-t"
     >
-      <div class="flex flex-row items-center gap-2">
-        <ui-icon :src="stat.icon" class="size-6" />
-        <span>{{ t(`session-summary.tile.${stat.key}-label`) }}</span>
-      </div>
-      <span
-        :data-testid="`session-summary__tile-value-${stat.key}`"
-        class="ml-auto text-xl font-bold"
-      >
-        {{ stat.value }}
+      <ui-icon :src="stat.icon" class="size-6" />
+      <span :data-testid="`session-summary__tile-value-${stat.key}`">
+        {{ t(`session-summary.tile.${stat.key}-label`, stat.value) }}
       </span>
     </div>
   </div>
