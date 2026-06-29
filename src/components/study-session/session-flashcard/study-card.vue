@@ -269,7 +269,7 @@ function toSwipeZone(offset: number) {
       <div class="absolute inset-0 overflow-hidden rounded-(--face-radius)">
         <div
           data-testid="review-label--fail"
-          class="review-label bg-pink-400"
+          class="review-label review-label--fail"
           :class="{ 'review-label--visible': failVisible }"
         >
           <ui-icon src="dislike" class="size-14" />
@@ -278,7 +278,7 @@ function toSwipeZone(offset: number) {
         </div>
         <div
           data-testid="review-label--pass"
-          class="review-label bg-green-400"
+          class="review-label review-label--pass"
           :class="{ 'review-label--visible': passVisible }"
         >
           <template v-if="show_all_ratings">
@@ -309,10 +309,10 @@ function toSwipeZone(offset: number) {
   align-items: center;
   justify-content: center;
 
-  color: var(--color-white);
   font-size: var(--text-3xl);
   line-height: var(--text-3xl--line-height);
 
+  backdrop-filter: blur(12px);
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;
@@ -323,6 +323,14 @@ function toSwipeZone(offset: number) {
   transition:
     transform var(--duration) linear,
     opacity var(--duration) linear;
+}
+
+.review-label--fail {
+  color: var(--color-red-500);
+}
+
+.review-label--pass {
+  color: var(--color-blue-500);
 }
 
 .review-label--visible {
