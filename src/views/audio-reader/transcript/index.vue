@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { provide, watch } from 'vue'
+import { nextTick, provide, watch } from 'vue'
 import type { SentenceWords } from '@/utils/transcript'
 import { markTermInSentence } from '@/utils/transcript'
 import type { CardMatch } from '@/utils/transcript-match'
 import { useReaderHighlights, type WordRange } from '@/composables/audio-reader/reader-highlights'
+import { useSegmentWindow } from '@/composables/audio-reader/segment-window'
 import TranscriptSegment from './segment.vue'
 import SelectionPreview from './selection-preview.vue'
 
@@ -56,6 +57,16 @@ const {
 // The follow state + resume action surface to the lesson view, which renders the
 // "jump to current line" control in the mobile dock above the transcript.
 defineExpose({ following, follow_direction, resumeFollow })
+
+const seg_window = useSegmentWindow()
+
+// When a segment remounts its word elements return to the DOM. Re-run
+// paintMatchedWords so their data-highlight attributes are restored.
+watch(
+  () => seg_window.mounted.size,
+  () => nextTick(() => paintMatchedWords(matches)),
+  { flush: 'post' }
+)
 
 // Leading / trailing punctuation edges — strip these from the first/last word of
 // a match so the underline hugs the term's own characters and never bridges a
@@ -203,7 +214,20 @@ watch(() => matches, paintMatchedWords, { immediate: true, flush: 'post' })
           </h2>
           <hr class="w-16 border-brown-700 dark:border-brown-700" />
         </div>
-        <transcript-segment :group="paragraph" :index="paragraph.index" />
+        <div :ref="(el) => seg_window.registerEl(paragraph.index, el as HTMLElement | null)">
+          <transcript-segment
+            v-if="seg_window.mounted.has(paragraph.index)"
+            :group="paragraph"
+            :index="paragraph.index"
+          />
+          <div
+            v-else
+            data-testid="transcript-segment"
+            :data-index="paragraph.index"
+            :style="seg_window.placeholderStyle(paragraph.index)"
+            aria-hidden="true"
+          />
+        </div>
       </template>
     </div>
 
