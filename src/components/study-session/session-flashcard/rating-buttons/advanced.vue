@@ -21,7 +21,7 @@ const success_options = computed<ButtonGroupOption[]>(() => [
   {
     value: Rating.Hard,
     label: t('study.flashcard.rating.hard-button'),
-    icon: 'smiley-worried'
+    icon: 'smiley-unhappy'
   },
   { value: Rating.Good, label: t('study.flashcard.rating.good-button'), icon: 'smiley-happy' },
   { value: Rating.Easy, label: t('study.flashcard.rating.easy-button'), icon: 'smiley-very-happy' }
