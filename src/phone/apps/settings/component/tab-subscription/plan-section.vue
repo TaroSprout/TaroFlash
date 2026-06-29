@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import PlanPill from './plan-pill.vue'
 import PlanActions from './plan-actions.vue'
+import PaidFeatures from './paid-features.vue'
 import type { useSubscriptionQuery } from '@/api/billing'
 import { useMemberStore } from '@/stores/member'
 import { useSubscriptionLabels } from '@/composables/billing/subscription-labels'
@@ -71,9 +72,11 @@ const view = computed(() =>
       :status="view.status"
       :description="view.description"
     >
-      <template #actions>
+      <template v-if="is_paid" #actions>
         <plan-actions :subscription="subscription" />
       </template>
     </plan-pill>
+
+    <paid-features v-if="!is_paid && !errored" />
   </labeled-section>
 </template>

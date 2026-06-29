@@ -20,8 +20,9 @@ import { emitSfx } from '@/sfx/bus'
 import { withDeckConfigDefaults } from '@/utils/deck/defaults'
 import type { CardReviewResult } from '@/components/study-session/composables/session-core'
 
-const { deck, config_override } = defineProps<{
-  deck: Deck
+const { decks, config_override } = defineProps<{
+  decks: Deck[]
+  title: string
   config_override?: Partial<DeckConfig>
 }>()
 
@@ -51,7 +52,7 @@ const {
   startSession,
   flipCurrentCard,
   dropCard
-} = useFlashcardSession({ ...deck.study_config, ...config_override })
+} = useFlashcardSession({ ...decks[0]?.study_config, ...config_override })
 
 const { next_card_side, preview_style, onDragProgress, onNextCardFlipped, awaitFlip } =
   useCardPreview(next_card)
@@ -62,16 +63,16 @@ const {
   start: startEdit,
   stop: stopEdit,
   update: onEditUpdate
-} = useCardEdit(active_card, () => deck.id)
+} = useCardEdit(active_card, () => active_card.value?.deck_id)
 
 const { onMove, onDelete } = useActiveCardActions({
   active_card,
-  deck_id: () => deck.id,
+  deck_id: () => active_card.value?.deck_id,
   onRemoved: dropCard
 })
 
 const { loading } = useSessionCards({
-  deckId: () => deck.id,
+  deckIds: () => decks.map((deck) => deck.id),
   studyAllCards: () => !!config.study_all_cards,
   seed: setCards,
   onMissingDeck: () => emit('closed')
@@ -109,20 +110,21 @@ function requestClose() {
  * (last card reviewed, stop button, last card dropped, empty queue).
  */
 function finishSession() {
-  if (deck.id) flushDeckReviews(deck.id)
+  for (const deck of decks) flushDeckReviews(deck.id)
   emit('finished', results.value, remaining_due_count.value, config.study_all_cards)
 }
 
 function toggleRatings() {
   emitSfx('snappy_button_5')
   config.show_all_ratings = !config.show_all_ratings
-  upsert_deck.mutate({
-    ...deck,
-    study_config: withDeckConfigDefaults({
-      ...deck.study_config,
-      show_all_ratings: config.show_all_ratings
+  for (const deck of decks)
+    upsert_deck.mutate({
+      ...deck,
+      study_config: withDeckConfigDefaults({
+        ...deck.study_config,
+        show_all_ratings: config.show_all_ratings
+      })
     })
-  })
 }
 
 /** Triggers the fling animation on the card stage; reviewed event follows. */
@@ -152,7 +154,7 @@ watch(mode, (m) => {
     >
       <session-header
         ref="header"
-        :title="deck.title"
+        :title="title"
         :can_edit="can_edit"
         :is_cover="is_cover"
         :show_all_ratings="config.show_all_ratings"

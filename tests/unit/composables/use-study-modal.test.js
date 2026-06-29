@@ -34,6 +34,9 @@ function makeModalResult() {
 }
 
 const DECK = { id: 1, title: 'Test Deck' }
+const DECK2 = { id: 2, title: 'Second Deck' }
+const DECKS = [DECK]
+const MULTI_DECKS = [DECK, DECK2]
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
@@ -48,7 +51,7 @@ describe('useStudyModal', () => {
     mockOpen.mockReturnValueOnce(result)
 
     const { start } = useStudyModal()
-    const startPromise = start(DECK)
+    const startPromise = start(DECKS)
 
     // sfx fires synchronously before any await
     expect(mockEmitSfx).toHaveBeenCalledWith('generic_notification_9')
@@ -57,18 +60,34 @@ describe('useStudyModal', () => {
     await startPromise
   })
 
-  test('opens a single StudySession popup modal with deck + config_override', async () => {
+  test('opens a StudySession popup modal with decks array + config_override [obligation]', async () => {
     const { result, resolve } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
     const { start } = useStudyModal()
-    const startPromise = start(DECK)
+    const startPromise = start(DECKS)
 
     expect(mockOpen).toHaveBeenCalledWith(asyncComponentMatcher, {
       backdrop: true,
       mode: 'popup',
-      props: { deck: DECK, config_override: undefined }
+      props: { decks: DECKS, config_override: undefined }
     })
+
+    resolve(undefined)
+    await startPromise
+  })
+
+  test('passes multiple decks to the modal [obligation]', async () => {
+    const { result, resolve } = makeModalResult()
+    mockOpen.mockReturnValueOnce(result)
+
+    const { start } = useStudyModal()
+    const startPromise = start(MULTI_DECKS)
+
+    expect(mockOpen).toHaveBeenCalledWith(
+      asyncComponentMatcher,
+      expect.objectContaining({ props: { decks: MULTI_DECKS, config_override: undefined } })
+    )
 
     resolve(undefined)
     await startPromise
@@ -79,7 +98,7 @@ describe('useStudyModal', () => {
     mockOpen.mockReturnValueOnce(result)
 
     const { start } = useStudyModal()
-    const startPromise = start(DECK)
+    const startPromise = start(DECKS)
 
     resolve(undefined)
     await startPromise
@@ -93,7 +112,7 @@ describe('useStudyModal', () => {
     mockOpen.mockReturnValueOnce(open1).mockReturnValueOnce(open2)
 
     const { start } = useStudyModal()
-    const startPromise = start(DECK)
+    const startPromise = start(DECKS)
 
     resolve1('study-more')
     await flushPromises()
@@ -111,7 +130,7 @@ describe('useStudyModal', () => {
     mockOpen.mockReturnValueOnce(open1).mockReturnValueOnce(open2)
 
     const { start } = useStudyModal()
-    const startPromise = start(DECK)
+    const startPromise = start(DECKS)
 
     resolve1('study-again')
     await flushPromises()
@@ -131,7 +150,7 @@ describe('useStudyModal', () => {
     mockOpen.mockReturnValueOnce(open1).mockReturnValueOnce(open2)
 
     const { start } = useStudyModal()
-    const startPromise = start(DECK)
+    const startPromise = start(DECKS)
 
     resolve1('study-all')
     await flushPromises()
@@ -142,6 +161,25 @@ describe('useStudyModal', () => {
     expect(mockOpen).toHaveBeenCalledTimes(2)
     expect(mockOpen.mock.calls[1][1]).toMatchObject({
       props: { config_override: { study_all_cards: true } }
+    })
+  })
+
+  test('study-more recursion preserves all decks [obligation]', async () => {
+    const { result: open1, resolve: resolve1 } = makeModalResult()
+    const { result: open2, resolve: resolve2 } = makeModalResult()
+    mockOpen.mockReturnValueOnce(open1).mockReturnValueOnce(open2)
+
+    const { start } = useStudyModal()
+    const startPromise = start(MULTI_DECKS)
+
+    resolve1('study-more')
+    await flushPromises()
+
+    resolve2(undefined)
+    await startPromise
+
+    expect(mockOpen.mock.calls[1][1]).toMatchObject({
+      props: { decks: MULTI_DECKS, config_override: undefined }
     })
   })
 })

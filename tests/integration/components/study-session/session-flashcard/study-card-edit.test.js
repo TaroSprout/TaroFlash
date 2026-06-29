@@ -1,7 +1,13 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import { defineComponent, h, ref, useAttrs } from 'vue'
-import { DeckContextKey } from '@/components/study-session/deck-context'
+import { defineComponent, h, ref } from 'vue'
+
+// Deck context resolves a card's appearance by deck_id. Mock the seam so each
+// test controls what appearanceFor() returns for the card under test.
+const { mockAppearanceFor } = vi.hoisted(() => ({ mockAppearanceFor: vi.fn(() => ({})) }))
+vi.mock('@/components/study-session/deck-context', () => ({
+  useDeckContext: () => ref({ appearanceFor: mockAppearanceFor, covers: [] })
+}))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
@@ -29,12 +35,12 @@ function makeCard(overrides = {}) {
   return { id: 1, front_text: 'q', back_text: 'a', deck_id: 1, ...overrides }
 }
 
-function mountStudyCardEdit({ props = {}, deck_context = {} } = {}) {
+function mountStudyCardEdit({ props = {}, card_attributes } = {}) {
+  mockAppearanceFor.mockReturnValue(card_attributes ? { card_attributes } : {})
   return shallowMount(StudyCardEdit, {
     props: { side: 'front', ...props },
     global: {
-      stubs: { FaceEditor: FaceEditorStub },
-      provide: { [DeckContextKey]: ref(deck_context) }
+      stubs: { FaceEditor: FaceEditorStub }
     }
   })
 }
@@ -92,13 +98,13 @@ describe('StudyCardEdit', () => {
 
   test('passes card_attributes from deck context to face-editor', () => {
     const card_attributes = { front: { horizontal_alignment: 'left' }, back: {} }
-    const wrapper = mountStudyCardEdit({ deck_context: { card_attributes } })
+    const wrapper = mountStudyCardEdit({ card_attributes })
     const stub = wrapper.findComponent(FaceEditorStub)
     expect(stub.props('card_attributes')).toEqual(card_attributes)
   })
 
   test('falls back to empty front/back attributes when deck context has none', () => {
-    const wrapper = mountStudyCardEdit({ deck_context: {} })
+    const wrapper = mountStudyCardEdit({})
     const stub = wrapper.findComponent(FaceEditorStub)
     expect(stub.props('card_attributes')).toEqual({ front: {}, back: {} })
   })
@@ -107,7 +113,7 @@ describe('StudyCardEdit', () => {
 
   test('re-emits update event from face-editor with side and text', async () => {
     const wrapper = mountStudyCardEdit({ props: { side: 'front' } })
-    await wrapper.findComponent(FaceEditorStub).vm.$emit('update', 'front', 'new text')
+    wrapper.findComponent(FaceEditorStub).vm.$emit('update', 'front', 'new text')
     expect(wrapper.emitted('update')).toEqual([['front', 'new text']])
   })
 })

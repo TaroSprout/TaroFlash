@@ -1,16 +1,18 @@
 import { onMounted, ref } from 'vue'
-import { useStudySessionCardsQuery } from '@/api/cards'
+import { useMultiDeckStudyCardsQuery } from '@/api/cards'
 
 type UseSessionCardsOptions = {
-  deckId: () => number | undefined
+  deckIds: () => number[]
   studyAllCards: () => boolean
   seed: (cards: Card[]) => void
   onMissingDeck: () => void
 }
 
 /**
- * Bootstraps the session's card queue. Forces a fresh fetch on mount and seeds
- * the queue only from its resolved state, then clears `loading`.
+ * Bootstraps the session's card queue across one or more decks. Forces a fresh
+ * fetch on mount and seeds the queue only from its resolved state, then clears
+ * `loading`. A single-deck session is just a one-element `deckIds`; the merged
+ * queue arrives deck-by-deck so an unshuffled session studies decks in order.
  *
  * Pinia Colada exposes the cached value synchronously while a background
  * refetch runs, and after the prior session's review flush the cache often
@@ -20,16 +22,16 @@ type UseSessionCardsOptions = {
  * the queue is populated from server truth.
  */
 export function useSessionCards({
-  deckId,
+  deckIds,
   studyAllCards,
   seed,
   onMissingDeck
 }: UseSessionCardsOptions) {
   const loading = ref(true)
-  const query = useStudySessionCardsQuery(() => deckId()!, studyAllCards)
+  const query = useMultiDeckStudyCardsQuery(deckIds, studyAllCards)
 
   onMounted(async () => {
-    if (!deckId()) {
+    if (!deckIds().length) {
       onMissingDeck()
       return
     }

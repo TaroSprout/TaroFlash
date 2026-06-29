@@ -42,7 +42,7 @@ vi.mock('@/composables/ui/media-query', () => ({
 const FlashcardStub = defineComponent({
   name: 'SessionFlashcard',
   emits: ['closed', 'finished'],
-  props: ['deck', 'config_override'],
+  props: ['decks', 'title', 'config_override'],
   setup(_props, { expose }) {
     expose({})
     return () => h('div', { 'data-testid': 'session-flashcard-stub' })
@@ -52,7 +52,7 @@ const FlashcardStub = defineComponent({
 const SummaryStub = defineComponent({
   name: 'SessionSummary',
   emits: ['close'],
-  props: ['results', 'deck'],
+  props: ['results', 'title'],
   setup(_props, { emit }) {
     return () =>
       h('div', { 'data-testid': 'session-summary-stub' }, [
@@ -63,13 +63,15 @@ const SummaryStub = defineComponent({
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function makeWrapper({ close = vi.fn() } = {}) {
+function makeWrapper({ close = vi.fn(), decks_override } = {}) {
   const deck_data = deck.one({ overrides: { id: 1, title: 'My Deck' } })
+  const decks = decks_override ?? [deck_data]
   return {
     close,
     deck_data,
+    decks,
     wrapper: mount(StudySession, {
-      props: { deck: deck_data, close },
+      props: { decks, close },
       global: {
         stubs: {
           SessionFlashcard: FlashcardStub,
@@ -168,5 +170,30 @@ describe('StudySession (index.vue)', () => {
     // during the onSessionFinished handler — it lives in the enter-hook onStart.
     expect(wrapper.find('[data-testid="session-summary-stub"]').exists()).toBe(true)
     expect(mockEmitStudySfx).not.toHaveBeenCalledWith('music_pizz_duo_hi')
+  })
+
+  // ── Title computation: single deck vs multi-deck [obligation] ─────────────
+
+  test('title equals the deck title when exactly one deck is passed [obligation]', () => {
+    const deck1 = deck.one({ overrides: { id: 1, title: 'My Deck' } })
+    const { wrapper } = makeWrapper({ decks_override: [deck1] })
+
+    const flashcard = wrapper.findComponent({ name: 'SessionFlashcard' })
+    expect(flashcard.props('title')).toBe('My Deck')
+  })
+
+  test('title is the multiple-decks i18n key when more than one deck passed [obligation]', () => {
+    const deck1 = deck.one({ overrides: { id: 1, title: 'Deck One' } })
+    const deck2 = deck.one({ overrides: { id: 2, title: 'Deck Two' } })
+    const { wrapper } = makeWrapper({ decks_override: [deck1, deck2] })
+
+    const flashcard = wrapper.findComponent({ name: 'SessionFlashcard' })
+    // The i18n key 'study-session.multiple-decks-title' renders as "Multiple Decks"
+    // in the test setup; we just verify it's not one of the individual deck titles.
+    const title = flashcard.props('title')
+    expect(title).not.toBe('Deck One')
+    expect(title).not.toBe('Deck Two')
+    expect(typeof title).toBe('string')
+    expect(title.length).toBeGreaterThan(0)
   })
 })

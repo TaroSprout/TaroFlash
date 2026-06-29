@@ -54,7 +54,11 @@ watch(
 )
 
 function onItemClicked(deck: Deck) {
-  study_session.start(deck)
+  study_session.start([deck])
+}
+
+function onStudyAll() {
+  study_session.start(due_decks)
 }
 
 async function navigate(dir: CarouselDirection) {
@@ -151,7 +155,7 @@ function next() {
           data-theme="brown-100"
           data-theme-dark="stone-700"
           class="w-full!"
-          @press="onItemClicked(due_decks[0])"
+          @press="onStudyAll"
         >
           {{ t(study_button_key) }}
         </ui-button>

@@ -118,7 +118,7 @@ describe('deck-hero/actions', () => {
   test('clicking study button starts a study session for the deck', async () => {
     const wrapper = mount({ deck: { id: 7 } })
     await studyBtn(wrapper).trigger('click')
-    expect(mockStartStudy).toHaveBeenCalledWith(expect.objectContaining({ id: 7 }))
+    expect(mockStartStudy).toHaveBeenCalledWith([expect.objectContaining({ id: 7 })])
   })
 
   test('renders the deck due_count inside the study button', () => {
@@ -229,7 +229,7 @@ describe('deck-hero/actions', () => {
   test('clicking the enabled study button starts the session [obligation]', async () => {
     const wrapper = mount({ deck: { id: 3, due_count: 5 } })
     await studyBtn(wrapper).trigger('click')
-    expect(mockStartStudy).toHaveBeenCalledWith(expect.objectContaining({ id: 3 }))
+    expect(mockStartStudy).toHaveBeenCalledWith([expect.objectContaining({ id: 3 })])
   })
 
   // ── mobile — edit button hidden [obligation] ──────────────────────────────

@@ -23,7 +23,7 @@ const { onUpgrade, onCancel, onResume, canceling, resuming } = useSubscriptionAc
     data-testid="tab-subscription__upgrade"
     data-theme="yellow-500"
     size="sm"
-    icon-left="moon-stars"
+    icon-left="triangle-eye"
     @press="onUpgrade"
   >
     {{ t('settings.subscription.free.upgrade') }}

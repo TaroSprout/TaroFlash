@@ -10,7 +10,7 @@ const { refetchImpl } = vi.hoisted(() => ({
 }))
 
 vi.mock('@/api/cards', () => ({
-  useStudySessionCardsQuery: vi.fn(() => ({
+  useMultiDeckStudyCardsQuery: vi.fn(() => ({
     data: { value: undefined },
     refetch: (...args) => refetchImpl.current(...args),
     refresh: vi.fn()
@@ -50,15 +50,15 @@ describe('useSessionCards', () => {
     unmount?.()
   })
 
-  // ── Missing deck id ────────────────────────────────────────────────────────
+  // ── Empty deck ids ─────────────────────────────────────────────────────────
 
-  test('calls onMissingDeck and bails when deckId() returns undefined [obligation]', async () => {
+  test('calls onMissingDeck and bails when deckIds() is empty [obligation]', async () => {
     const seed = vi.fn()
     const onMissingDeck = vi.fn()
 
     const setup = withSetup(() =>
       useSessionCards({
-        deckId: () => undefined,
+        deckIds: () => [],
         studyAllCards: () => false,
         seed,
         onMissingDeck
@@ -73,10 +73,10 @@ describe('useSessionCards', () => {
     expect(refetchImpl.current).not.toHaveBeenCalled()
   })
 
-  test('loading stays true when deckId() is falsy [obligation]', async () => {
+  test('loading stays true when deckIds() is empty [obligation]', async () => {
     const setup = withSetup(() =>
       useSessionCards({
-        deckId: () => null,
+        deckIds: () => [],
         studyAllCards: () => false,
         seed: vi.fn(),
         onMissingDeck: vi.fn()
@@ -87,6 +87,22 @@ describe('useSessionCards', () => {
     await nextTick()
 
     expect(setup.result.loading.value).toBe(true)
+  })
+
+  test('does NOT fire the query (refetch) when deckIds() is empty [obligation]', async () => {
+    const setup = withSetup(() =>
+      useSessionCards({
+        deckIds: () => [],
+        studyAllCards: () => false,
+        seed: vi.fn(),
+        onMissingDeck: vi.fn()
+      })
+    )
+    unmount = setup.unmount
+
+    await nextTick()
+
+    expect(refetchImpl.current).not.toHaveBeenCalled()
   })
 
   // ── Successful load ────────────────────────────────────────────────────────
@@ -100,7 +116,7 @@ describe('useSessionCards', () => {
 
     const setup = withSetup(() =>
       useSessionCards({
-        deckId: () => 42,
+        deckIds: () => [42],
         studyAllCards: () => true,
         seed,
         onMissingDeck
@@ -124,7 +140,7 @@ describe('useSessionCards', () => {
 
     const setup = withSetup(() =>
       useSessionCards({
-        deckId: () => 1,
+        deckIds: () => [1],
         studyAllCards: () => false,
         seed,
         onMissingDeck: vi.fn()
@@ -139,6 +155,29 @@ describe('useSessionCards', () => {
     expect(setup.result.loading.value).toBe(false)
   })
 
+  test('works with multiple deck ids — passes deckIds getter to the query', async () => {
+    const cards = card.many(5)
+    refetchImpl.current = vi.fn().mockResolvedValue({ status: 'success', data: cards, error: null })
+
+    const seed = vi.fn()
+
+    const setup = withSetup(() =>
+      useSessionCards({
+        deckIds: () => [1, 2, 3],
+        studyAllCards: () => false,
+        seed,
+        onMissingDeck: vi.fn()
+      })
+    )
+    unmount = setup.unmount
+
+    await new Promise((r) => setTimeout(r, 0))
+    await nextTick()
+
+    expect(seed).toHaveBeenCalledWith(cards)
+    expect(setup.result.loading.value).toBe(false)
+  })
+
   // ── Non-success refetch ────────────────────────────────────────────────────
 
   test('leaves loading true and does NOT seed when refetch returns non-success [obligation]', async () => {
@@ -148,7 +187,7 @@ describe('useSessionCards', () => {
 
     const setup = withSetup(() =>
       useSessionCards({
-        deckId: () => 1,
+        deckIds: () => [1],
         studyAllCards: () => false,
         seed,
         onMissingDeck: vi.fn()
@@ -170,7 +209,7 @@ describe('useSessionCards', () => {
 
     const setup = withSetup(() =>
       useSessionCards({
-        deckId: () => 1,
+        deckIds: () => [1],
         studyAllCards: () => false,
         seed,
         onMissingDeck: vi.fn()
@@ -192,7 +231,7 @@ describe('useSessionCards', () => {
 
     const setup = withSetup(() =>
       useSessionCards({
-        deckId: () => 1,
+        deckIds: () => [1],
         studyAllCards: () => false,
         seed: vi.fn(),
         onMissingDeck: vi.fn()

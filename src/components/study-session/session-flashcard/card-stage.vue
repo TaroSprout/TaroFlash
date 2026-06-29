@@ -7,6 +7,7 @@ import type { gsap } from 'gsap'
 import { type Grade } from 'ts-fsrs'
 import { coverCardBeforeEnter, coverCardEnter } from '@/utils/animations/session-intro'
 import { useDeckContext } from '../deck-context'
+import { useCoverCarousel } from '@/components/study-session/composables/cover-carousel'
 import { type StudyCard as StudyCardType } from '@/components/study-session/composables/flashcard-session'
 
 type CardStageProps = {
@@ -44,6 +45,14 @@ defineExpose({ rate })
 
 const deck_context = useDeckContext()
 const study_card_ref = useTemplateRef('study-card')
+
+const { current_cover } = useCoverCarousel(
+  () => deck_context.value.covers,
+  () => current_card_side === 'cover',
+  () => study_card_ref.value?.el()
+)
+
+const preview_appearance = computed(() => deck_context.value.appearanceFor(next_card?.deck_id))
 
 // While loading nothing renders in the stage — the cover card rises in (via the
 // transition) once data lands. No separate skeleton: it's just the cover card.
@@ -96,8 +105,8 @@ onUnmounted(() => cover_tween?.kill())
         size="xl"
         :side="next_card_side"
         v-bind="next_card"
-        :cover_config="deck_context.cover_config"
-        :card_attributes="deck_context.card_attributes"
+        :cover_config="preview_appearance.cover_config"
+        :card_attributes="preview_appearance.card_attributes"
         @flip-complete="emit('next-flipped')"
       />
     </div>
@@ -119,6 +128,7 @@ onUnmounted(() => cover_tween?.kill())
         :side="current_card_side"
         :options="active_card?.preview"
         :show_all_ratings="show_all_ratings"
+        :cover_override="current_cover"
         @started="emit('started')"
         @side-changed="emit('side-changed')"
         @reviewed="(grade) => emit('reviewed', grade)"

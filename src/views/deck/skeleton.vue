@@ -11,7 +11,7 @@ onUnmounted(() => (document.documentElement.style.overflow = ''))
 <template>
   <section
     data-testid="deck-skeleton"
-    class="flex h-full flex-col xl:flex-row items-center xl:items-start gap-6 md:gap-15 pb-24"
+    class="flex h-full flex-col xl:flex-row items-center xl:items-start gap-6 md:gap-15 px-(--page-px) pt-(--page-pt) pb-24"
   >
     <deck-hero-skeleton class="relative z-30 xl:sticky xl:top-(--nav-height)" />
 

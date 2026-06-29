@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, nextTick } from 'vue'
+import { defineComponent, h } from 'vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -178,16 +178,16 @@ describe('ReviewInbox — overflow nav buttons', () => {
 })
 
 describe('ReviewInbox — clicking an item starts study session', () => {
-  test('clicking a deck item calls study_session.start with that deck', async () => {
+  test('clicking a deck item calls study_session.start with just that deck', async () => {
     const wrapper = mountInbox(THREE_DECKS)
     await wrapper.findAll('[data-testid="review-inbox-item"]')[0].trigger('click')
-    expect(studyStartMock).toHaveBeenCalledWith(THREE_DECKS[0])
+    expect(studyStartMock).toHaveBeenCalledWith([THREE_DECKS[0]])
   })
 
-  test('clicking the study button calls study_session.start with the first deck', async () => {
+  test('clicking the study button calls study_session.start with every due deck', async () => {
     const wrapper = mountInbox(THREE_DECKS)
     await wrapper.find('[data-testid="review-inbox__actions"] button').trigger('click')
-    expect(studyStartMock).toHaveBeenCalledWith(THREE_DECKS[0])
+    expect(studyStartMock).toHaveBeenCalledWith(THREE_DECKS)
   })
 })
 
