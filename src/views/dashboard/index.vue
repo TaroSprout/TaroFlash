@@ -168,6 +168,7 @@ async function onCreateDeckClicked() {
             :key="index"
             :deck="deck"
             :size="is_md ? 'base' : 'sm'"
+            :sfx="{ press: 'snappy_button_5' }"
             @press="onDeckClicked(deck)"
           />
         </div>
