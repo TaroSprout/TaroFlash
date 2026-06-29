@@ -202,7 +202,6 @@ watch(mode, (m) => {
           :show_all_ratings="config.show_all_ratings"
           @started="startSession"
           @rated="onRated"
-          @revealed="flipCurrentCard"
         />
 
         <study-edit-footer

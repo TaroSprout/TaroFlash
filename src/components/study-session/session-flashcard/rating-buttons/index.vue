@@ -16,43 +16,28 @@ const { side, show_all_ratings = false } = defineProps<RatingButtonsProps>()
 const { t } = useI18n()
 
 const emit = defineEmits<{
-  (e: 'revealed'): void
   (e: 'started'): void
   (e: 'rated', grade: import('ts-fsrs').Grade): void
 }>()
-
-// 2 × 50px (xl button height) + 8px (gap-2) — matches the two-row layout height
-// so the cover start button doesn't cause a layout jump when the session begins.
-const COVER_HEIGHT = '108px'
 </script>
 
 <template>
   <div data-testid="rating-buttons" class="w-full">
-    <div
+    <ui-button
       v-if="side === 'cover'"
-      data-testid="rating-buttons__start-container"
-      class="flex w-full items-center"
-      :style="{ height: COVER_HEIGHT }"
+      data-testid="rating-buttons__start"
+      data-theme="blue-500"
+      data-theme-dark="blue-650"
+      size="xl"
+      full-width
+      :sfx="{ tap_pre: 'snappy_button_5' }"
+      @press="emit('started')"
     >
-      <ui-button
-        data-testid="rating-buttons__start"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
-        size="xl"
-        full-width
-        :sfx="{ tap_pre: 'snappy_button_5' }"
-        @press="emit('started')"
-      >
-        {{ t('study.flashcard.start-button') }}
-      </ui-button>
-    </div>
+      {{ t('study.flashcard.start-button') }}
+    </ui-button>
 
-    <advanced-rating-buttons
-      v-else-if="show_all_ratings"
-      @rated="emit('rated', $event)"
-      @revealed="emit('revealed')"
-    />
+    <advanced-rating-buttons v-else-if="show_all_ratings" @rated="emit('rated', $event)" />
 
-    <simple-rating-buttons v-else @rated="emit('rated', $event)" @revealed="emit('revealed')" />
+    <simple-rating-buttons v-else @rated="emit('rated', $event)" />
   </div>
 </template>
