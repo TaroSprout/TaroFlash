@@ -119,6 +119,11 @@ function flingCard(
 ) {
   if (side === 'cover') return
 
+  if (primed_grade.value !== null) {
+    primed_grade.value = null
+    emit('drag-rating', null)
+  }
+
   is_animating.value = true
   const targetX = direction * (window.innerWidth + el.getBoundingClientRect().width)
 
