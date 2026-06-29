@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, provide, watch } from 'vue'
+import { computed, nextTick, watch } from 'vue'
 import type { SentenceWords } from '@/utils/transcript'
 import { markTermInSentence } from '@/utils/transcript'
 import type { CardMatch } from '@/utils/transcript-match'
