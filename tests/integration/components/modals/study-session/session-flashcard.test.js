@@ -217,6 +217,31 @@ describe('Session', () => {
       expect(wrapper.find('[data-testid="study-card"]').exists()).toBe(true)
     })
 
+    test('while loading, the start button is disabled so the cards fetch cannot be skipped [obligation]', () => {
+      cardsDataRef.value = undefined
+      const deck_data = deck.one({
+        overrides: { id: 1, study_config: { study_all_cards: true, retry_failed_cards: false } }
+      })
+      const wrapper = mount(Session, {
+        props: { decks: [deck_data], title: deck_data.title },
+        attachTo: document.body,
+        global: { stubs: { Card: CardStub } }
+      })
+
+      expect(
+        wrapper.find('[data-testid="rating-buttons__start"]').attributes('aria-disabled')
+      ).toBe('true')
+    })
+
+    test('after loading, the start button is no longer disabled [obligation]', async () => {
+      const wrapper = makeSession(2)
+      await waitForLoad(wrapper)
+
+      expect(
+        wrapper.find('[data-testid="rating-buttons__start"]').attributes('aria-disabled')
+      ).toBeUndefined()
+    })
+
     // Regression: after the prior session's useFlushDeckReviews invalidation,
     // the cards cache often holds [] (everything was capped/done). If the
     // session seeds from that stale snapshot before refetch resolves, the
@@ -382,6 +407,35 @@ describe('Session', () => {
 
       expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(true)
       expect(wrapper.find('[data-testid="rating-buttons__good"]').exists()).toBe(true)
+    })
+  })
+
+  // ── is_cover wiring into session-progress [obligation] ─────────────────────
+
+  describe('is_cover wiring into session-progress', () => {
+    test('cover side: studying-count label is visible, progress bar is faded but still mounted [obligation]', async () => {
+      const wrapper = makeSession(2)
+      await waitForLoad(wrapper)
+
+      const label = wrapper.find('[data-testid="study-session__studying-count"]')
+      const bar = wrapper.find('[data-testid="ui-kit-progress-bar"]')
+
+      expect(label.classes()).toContain('opacity-100')
+      expect(bar.exists()).toBe(true)
+      expect(bar.classes()).toContain('opacity-0')
+    })
+
+    test('after startSession: progress bar is visible, studying-count label is faded but still mounted [obligation]', async () => {
+      const wrapper = makeSession(2)
+      await waitForLoad(wrapper)
+      await startSession(wrapper)
+
+      const label = wrapper.find('[data-testid="study-session__studying-count"]')
+      const bar = wrapper.find('[data-testid="ui-kit-progress-bar"]')
+
+      expect(bar.classes()).toContain('opacity-100')
+      expect(label.exists()).toBe(true)
+      expect(label.classes()).toContain('opacity-0')
     })
   })
 

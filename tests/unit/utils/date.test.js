@@ -99,10 +99,11 @@ describe('toRelative', () => {
     expect(toRelative(inNinetySeconds, { locale: 'en-US' })).toBe('in 2 minutes')
   })
 
-  test('falls back to "in 0 seconds" when the diff is under a second', () => {
-    // Below 1s, no unit threshold is met so the formatter returns the
-    // zero-seconds string rather than throwing or returning an empty value.
-    const almostNow = new Date('2026-03-15T12:00:00.500Z')
+  test('falls back to "in 0 seconds" when the diff rounds to zero', () => {
+    // Below 0.5s, the rounded seconds value is 0 so no unit's rounded
+    // candidate reaches 1 and the formatter falls back to the zero-seconds
+    // string rather than throwing or returning an empty value.
+    const almostNow = new Date('2026-03-15T12:00:00.499Z')
     expect(toRelative(almostNow, { locale: 'en-US' })).toBe('in 0 seconds')
   })
 
@@ -127,5 +128,28 @@ describe('toRelative', () => {
     expect(toRelative(iso, { locale: 'en-US' })).toBe(expected)
     expect(toRelative(date, { locale: 'en-US' })).toBe(expected)
     expect(toRelative(ms, { locale: 'en-US' })).toBe(expected)
+  })
+
+  test('rounds the candidate unit before picking it, so ~6.9 days and 7.0 days both land on "in 1 week"', () => {
+    // Regression: old code picked the unit from a raw threshold then rounded
+    // separately, so 6.9 days (just under the 7-day/week threshold) stayed in
+    // "days" and rounded up to "7 days", while 7.0 days crossed the threshold
+    // and became "1 week" — same real duration, two different unit buckets.
+    const sixPointNineDays = new Date(Date.now() + 6.9 * 86_400 * 1000)
+    const sevenDays = new Date(Date.now() + 7 * 86_400 * 1000)
+
+    expect(toRelative(sixPointNineDays, { locale: 'en-US' })).toBe('in 1 week')
+    expect(toRelative(sevenDays, { locale: 'en-US' })).toBe('in 1 week')
+  })
+
+  test('rounds the candidate unit before picking it, so 27-29 days and 30 days both land on "in 1 month"', () => {
+    // Regression: 27-29 days rounded to "4 weeks" under the old threshold
+    // logic, while 30 days crossed into "1 month" — splitting durations that
+    // should round to the same bucket.
+    const twentyEightDays = new Date(Date.now() + 28 * 86_400 * 1000)
+    const thirtyDays = new Date(Date.now() + 30 * 86_400 * 1000)
+
+    expect(toRelative(twentyEightDays, { locale: 'en-US' })).toBe('in 1 month')
+    expect(toRelative(thirtyDays, { locale: 'en-US' })).toBe('in 1 month')
   })
 })
