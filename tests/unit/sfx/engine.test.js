@@ -355,7 +355,7 @@ describe('onStateChange()', () => {
 // ─── play() ──────────────────────────────────────────────────────────────────
 
 describe('play()', () => {
-  test('is a no-op returning a resolved `ended` when context is not running [obligation]', async () => {
+  test('resolves without starting playback when context is not running [obligation]', async () => {
     const contexts = []
     installCtor(makeCtorWithContexts(contexts, ['suspended', 'suspended']))
     const engine = await loadFreshEngine()
@@ -369,12 +369,13 @@ describe('play()', () => {
     const fake_buffer = { duration: 0.5 }
     const result = engine.play(fake_buffer, 1.0)
 
-    await expect(result.ended).resolves.toBeUndefined()
+    // play() is now async and returns Promise<void> (no longer { ended })
+    await expect(result).resolves.toBeUndefined()
     // play() itself must NOT create a BufferSource when context isn't running
     expect(fresh.createBufferSource.mock.calls.length).toBe(calls_before)
   })
 
-  test('wires BufferSource→GainNode(volume)→destination, calls start(), resolves ended on onended [obligation]', async () => {
+  test('wires BufferSource→GainNode(volume)→destination, calls start(), resolves on onended [obligation]', async () => {
     const contexts = []
     installCtor(makeCtorWithContexts(contexts, ['running']))
     const engine = await loadFreshEngine()
@@ -382,7 +383,9 @@ describe('play()', () => {
     engine.unlock() // creates context[0] which is already running (no rebuild)
 
     const fake_buffer = { duration: 0.3 }
-    const { ended } = engine.play(fake_buffer, 0.75)
+    // play() is now async — flush the `await resume()` microtask before asserting
+    const played = engine.play(fake_buffer, 0.75)
+    await Promise.resolve()
 
     const ctx = contexts[0]
     expect(ctx.createBufferSource).toHaveBeenCalledTimes(1)
@@ -395,9 +398,9 @@ describe('play()', () => {
     expect(gain_node.gain.value).toBe(0.75)
     expect(source.start).toHaveBeenCalledTimes(1)
 
-    // Resolve the ended promise by triggering onended
+    // Resolve by triggering onended; played settles when the inner Promise resolves
     let resolved = false
-    const done = ended.then(() => {
+    const done = played.then(() => {
       resolved = true
     })
 
@@ -407,6 +410,32 @@ describe('play()', () => {
     expect(resolved).toBe(true)
     expect(source.disconnect).toHaveBeenCalled()
     expect(gain_node.disconnect).toHaveBeenCalled()
+  })
+
+  test('disconnects both source and gain via the fallback timer when onended never fires [obligation]', async () => {
+    vi.useFakeTimers()
+    const contexts = []
+    installCtor(makeCtorWithContexts(contexts, ['running']))
+    const engine = await loadFreshEngine()
+    engine.unlock()
+
+    const fake_buffer = { duration: 0.5 }
+    const played = engine.play(fake_buffer, 0.75)
+
+    // Flush the await resume() microtask — advanceByTime(0) also drains microtasks
+    await vi.advanceTimersByTimeAsync(0)
+
+    const ctx = contexts[0]
+    const source = ctx.createBufferSource.mock.results[0].value
+    const gain_node = ctx.createGain.mock.results[0].value
+
+    // Don't fire onended; advance past fallback (Math.ceil(0.5*1000)+500 = 1000ms)
+    await vi.advanceTimersByTimeAsync(1000)
+    await played
+
+    expect(source.disconnect).toHaveBeenCalled()
+    expect(gain_node.disconnect).toHaveBeenCalled()
+    vi.useRealTimers()
   })
 })
 
@@ -508,6 +537,149 @@ describe('decode()', () => {
     const engine = await loadFreshEngine()
 
     await expect(engine.decode('/sound.wav')).rejects.toThrow('Web Audio is unavailable')
+  })
+})
+
+// ─── notifyState() — recovery cycle ──────────────────────────────────────────
+
+describe('notifyState() recovery cycle [obligation]', () => {
+  test('unlock listener fires twice across running→suspended→running', async () => {
+    // Both suspended: unlock() creates ctx[0] (ensureContext) + ctx[1] (rebuild)
+    const contexts = []
+    installCtor(makeCtorWithContexts(contexts, ['suspended', 'suspended']))
+    const engine = await loadFreshEngine()
+
+    engine.unlock()
+
+    const cb = vi.fn()
+    engine.onUnlock(cb)
+
+    const current = contexts[1] // the fresh context; notifyState is attached here
+
+    current._setState('running') // notifyState → markUnlocked → cb fires (1)
+    expect(cb).toHaveBeenCalledTimes(1)
+
+    current._setState('suspended') // notifyState → unlocked = false (latch reset)
+    expect(cb).toHaveBeenCalledTimes(1)
+
+    current._setState('running') // notifyState → markUnlocked (latch was reset) → cb fires (2)
+    expect(cb).toHaveBeenCalledTimes(2)
+  })
+
+  test('cb registered while already unlocked still fires on the next recovery cycle [obligation]', async () => {
+    const contexts = []
+    installCtor(makeCtorWithContexts(contexts, ['suspended', 'suspended']))
+    const engine = await loadFreshEngine()
+
+    engine.unlock()
+    const current = contexts[1]
+
+    // Drive the context to running to set the unlocked latch
+    current._setState('running')
+    expect(engine.isUnlocked()).toBe(true)
+
+    // Register cb while already unlocked — fires immediately AND stays in unlock_listeners
+    const cb = vi.fn()
+    engine.onUnlock(cb)
+    expect(cb).toHaveBeenCalledTimes(1)
+
+    // Suspension resets the latch
+    current._setState('suspended')
+
+    // Next running transition re-fires cb because it is still in unlock_listeners
+    current._setState('running')
+    expect(cb).toHaveBeenCalledTimes(2)
+  })
+})
+
+// ─── isUnlocked() ────────────────────────────────────────────────────────────
+
+describe('isUnlocked() [obligation]', () => {
+  test('returns false before context reaches running', async () => {
+    const contexts = []
+    installCtor(makeCtorWithContexts(contexts, ['suspended', 'suspended']))
+    const engine = await loadFreshEngine()
+
+    engine.unlock() // both contexts suspended — never calls markUnlocked
+    expect(engine.isUnlocked()).toBe(false)
+  })
+
+  test('returns true after context reaches running', async () => {
+    const contexts = []
+    installCtor(makeCtorWithContexts(contexts, ['suspended', 'suspended']))
+    const engine = await loadFreshEngine()
+
+    engine.unlock()
+    contexts[1]._setState('running')
+    expect(engine.isUnlocked()).toBe(true)
+  })
+
+  test('returns false after suspend, true again after the next running transition', async () => {
+    const contexts = []
+    installCtor(makeCtorWithContexts(contexts, ['suspended', 'suspended']))
+    const engine = await loadFreshEngine()
+
+    engine.unlock()
+    const ctx = contexts[1]
+
+    ctx._setState('running')
+    expect(engine.isUnlocked()).toBe(true)
+
+    ctx._setState('suspended')
+    expect(engine.isUnlocked()).toBe(false)
+
+    ctx._setState('running')
+    expect(engine.isUnlocked()).toBe(true)
+  })
+})
+
+// ─── resume() timeout & clearTimeout ─────────────────────────────────────────
+
+describe('resume() — timeout & clearTimeout [obligation]', () => {
+  test('returns false and does not hang when context.resume() never settles', async () => {
+    vi.useFakeTimers()
+    const contexts = []
+    function NeverSettlingCtor() {
+      const ctx = makeFakeContext('suspended')
+      ctx.resume = vi.fn(() => new Promise(() => {})) // never resolves or rejects
+      contexts.push(ctx)
+      return ctx
+    }
+    installCtor(NeverSettlingCtor)
+    const engine = await loadFreshEngine()
+
+    const promise = engine.resume()
+
+    // Just before the 2000ms threshold: still pending
+    await vi.advanceTimersByTimeAsync(1999)
+
+    // At 2000ms: timeout fires, race rejects, catch() returns false
+    await vi.advanceTimersByTimeAsync(1)
+    const result = await promise
+
+    expect(result).toBe(false)
+    vi.useRealTimers()
+  })
+
+  test('clears the timeout when context.resume() settles before RESUME_TIMEOUT_MS', async () => {
+    const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout')
+    const contexts = []
+    function QuickResumeCtor() {
+      const ctx = makeFakeContext('suspended')
+      ctx.resume = vi.fn(async () => {
+        ctx._state = 'running'
+      })
+      contexts.push(ctx)
+      return ctx
+    }
+    installCtor(QuickResumeCtor)
+    const engine = await loadFreshEngine()
+
+    await engine.resume()
+
+    // context.resume().finally(() => clearTimeout(id)) must have run
+    expect(clearTimeoutSpy).toHaveBeenCalled()
+    clearTimeoutSpy.mockRestore()
   })
 })
 
