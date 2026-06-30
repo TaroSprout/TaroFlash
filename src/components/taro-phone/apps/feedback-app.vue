@@ -9,6 +9,7 @@ const { t } = useI18n()
   <app-shell
     :title="t('phone.apps.feedback.title')"
     data-theme="green-400"
+    data-theme-dark="green-500"
     icon-src="feedback"
     hover-icon-src="feedback-hover"
   />

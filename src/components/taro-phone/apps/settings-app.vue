@@ -16,7 +16,8 @@ function onPress() {
 <template>
   <app-shell
     :title="t('phone.apps.settings.title')"
-    data-theme="blue-400"
+    data-theme="pink-500"
+    data-theme-dark="pink-600"
     icon-src="settings"
     hover-icon-src="settings-hover"
     @press="onPress"
