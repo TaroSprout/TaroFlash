@@ -12,7 +12,8 @@
  */
 
 type AudioContextCtor = new () => AudioContext
-type Playback = { ended: Promise<void> }
+
+const RESUME_TIMEOUT_MS = 2000
 
 let ctx: AudioContext | undefined
 let unlocked = false
@@ -29,16 +30,22 @@ function resolveCtor(): AudioContextCtor | undefined {
   return win.AudioContext ?? win.webkitAudioContext
 }
 
-// The context fires statechange on every transition; the first 'running' is also
-// the unlock signal, since a suspended context can never reach it without a gesture.
+// The context fires statechange on every transition. 'running' fires the unlock
+// signal. Any non-running state resets the latch so the next 'running' transition
+// re-fires unlock_listeners — allowing queued sounds to retry after recovery.
 function notifyState(): void {
-  if (ctx?.state === 'running') markUnlocked()
+  if (ctx?.state === 'running') {
+    markUnlocked()
+  } else {
+    unlocked = false
+  }
   state_listeners.forEach((cb) => cb())
 }
 
-// Unlock is a one-shot edge fired when the context first reaches 'running' —
-// either via the statechange event or the synchronous check in unlock() when a
-// fresh context is born running. It gates all playback.
+// Fires whenever the context transitions to 'running' — either via statechange
+// or the synchronous check in unlock() when a fresh context is born running.
+// notifyState() resets `unlocked` on every non-running transition, so this fires
+// again on each recovery, re-draining any queued sounds.
 function markUnlocked(): void {
   if (unlocked) return
   unlocked = true
@@ -83,25 +90,39 @@ async function decode(url: string): Promise<AudioBuffer> {
   return context.decodeAudioData(data)
 }
 
-function play(buffer: AudioBuffer, volume: number): Playback {
-  if (!ctx || ctx.state !== 'running') return { ended: Promise.resolve() }
+// Resumes the context if needed, starts the buffer, and returns a promise that
+// settles when the sound ends. The fallback timer ensures settlement even when
+// the context suspends mid-play and onended never fires.
+async function play(buffer: AudioBuffer, volume: number): Promise<void> {
+  const running = await resume()
+  if (!running) return
 
-  const source = ctx.createBufferSource()
+  const context = ctx
+  if (!context) return
+
+  const source = context.createBufferSource()
   source.buffer = buffer
-  const gain = ctx.createGain()
+  const gain = context.createGain()
   gain.gain.value = volume
-  source.connect(gain).connect(ctx.destination)
+  source.connect(gain).connect(context.destination)
 
-  const ended = new Promise<void>((resolve) => {
-    source.onended = () => {
+  return new Promise((resolve) => {
+    let settled = false
+    const settle = () => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
       source.disconnect()
       gain.disconnect()
       resolve()
     }
-  })
 
-  source.start()
-  return { ended }
+    source.onended = settle
+    const fallbackMs = Math.ceil((buffer.duration || 1) * 1000) + 500
+    const timer = setTimeout(settle, fallbackMs)
+
+    source.start()
+  })
 }
 
 // Wake a suspended context and report whether it ended up running. Used to gate
@@ -112,7 +133,13 @@ async function resume(): Promise<boolean> {
   if (context.state === 'running') return true
 
   try {
-    await context.resume()
+    let id: ReturnType<typeof setTimeout>
+    await Promise.race([
+      context.resume().finally(() => clearTimeout(id)),
+      new Promise<never>((_, reject) => {
+        id = setTimeout(() => reject(new Error('timeout')), RESUME_TIMEOUT_MS)
+      })
+    ])
   } catch {
     return false
   }
@@ -153,12 +180,13 @@ function onStateChange(cb: () => void): () => void {
   return () => state_listeners.delete(cb)
 }
 
+function isUnlocked(): boolean {
+  return unlocked
+}
+
 function onUnlock(cb: () => void): () => void {
-  if (unlocked) {
-    cb()
-    return () => {}
-  }
   unlock_listeners.add(cb)
+  if (unlocked) cb()
   return () => unlock_listeners.delete(cb)
 }
 
@@ -166,5 +194,4 @@ function state(): AudioContextState | undefined {
   return ctx?.state
 }
 
-export type { Playback }
-export default { decode, play, resume, unlock, onStateChange, onUnlock, state }
+export default { decode, play, resume, unlock, onStateChange, onUnlock, isUnlocked, state }

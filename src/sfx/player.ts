@@ -1,6 +1,6 @@
 import engine from '@/sfx/engine'
 import { debounce } from '@/utils/debounce'
-import { SOUNDS, type Bus, type SoundDef, type SoundKey } from '@/sfx/config'
+import { BUS_DEFAULTS, SOUNDS, type Bus, type SoundDef, type SoundKey } from '@/sfx/config'
 
 export type PlayOptions = {
   volume?: number
@@ -34,15 +34,13 @@ const QUEUE_TIMEOUT = 10
 class AudioPlayer {
   loaded_sounds = new Map<SoundKey, LoadedSound>()
   initialized = false
-  unlock_registered = false
-  unlocked = false
   queued_sound: { key: SoundKey; options: PlayOptions } | undefined
   // Resting setting per bus. setVolumeConfig (called from App.vue) overwrites
-  // this once member prefs load. Inline defaults avoid a config.ts init cycle.
-  volume_settings: Record<Bus, number> = { interface: 5, study: 5, hover: 5 }
+  // this once member prefs load.
+  volume_settings: Record<Bus, number> = { ...BUS_DEFAULTS }
   // The committed baseline — what the server gave us (or defaults). previewVolumeConfig
   // can drift volume_settings off this for live UI feedback; resetSettings restores it.
-  committed_volume_settings: Record<Bus, number> = { ...this.volume_settings }
+  committed_volume_settings: Record<Bus, number> = { ...BUS_DEFAULTS }
 
   // Commit a new baseline and apply it (App.vue, on member-pref load/save).
   setVolumeConfig = (settings: Record<Bus, number>) => {
@@ -64,7 +62,7 @@ class AudioPlayer {
     if (this.initialized) return Promise.resolve()
     this.initialized = true
 
-    this._registerUnlock()
+    engine.onUnlock(this._onUnlock)
 
     const loads = Object.entries(SOUNDS).map(([name, cfg]) => {
       const key = name as SoundKey
@@ -99,50 +97,20 @@ class AudioPlayer {
   }
 
   private _play = async (key: SoundKey, options: PlayOptions = {}): Promise<void> => {
-    if (!this.unlocked) {
+    if (!engine.isUnlocked()) {
       this._enqueue(key, options)
       return
     }
 
     const sound = this.loaded_sounds.get(key)
+    if (!sound) throw new Error(`Sound "${key}" not loaded.`)
 
-    if (!sound) {
-      throw new Error(`Sound "${key}" not loaded.`)
-    }
-
-    // A muted bus (volume 0) has nothing to play. Bail before resuming the
-    // audio context — resume() steals media-session focus and pauses the
-    // user's background music, even for a silent buffer.
+    // Bail before touching the context — resume() steals media-session focus
+    // and pauses background music even for a silent buffer.
     const volume = options.volume ?? sound.base_volume * this._getVolumeMultiplier(sound, options)
-
     if (volume <= 0) return
 
-    const running = await engine.resume()
-
-    if (!running) return
-
-    return new Promise((resolve) => {
-      // The returned Promise must settle in one of two ways:
-      //   1. 'ended'  — the BufferSource finished playing.
-      //   2. Timer    — the safety net: if the context suspends mid-play (tab
-      //                 hides, device locks) `onended` never fires and the
-      //                 promise would hang forever, stalling awaiters of emitSfx.
-      //
-      // Whichever wins, settle() cancels the timer so the loser can't double-fire.
-      let settled = false
-      const settle = () => {
-        if (settled) return
-        settled = true
-        clearTimeout(timer)
-        resolve()
-      }
-
-      const { ended } = engine.play(sound.buffer, volume)
-      const fallbackMs = Math.ceil((sound.buffer.duration || 1) * 1000) + 500
-      const timer = setTimeout(settle, fallbackMs)
-
-      void ended.then(settle)
-    })
+    return engine.play(sound.buffer, volume)
   }
 
   // Bus is resolved most-specific-first: explicit option, then the sound's own
@@ -158,36 +126,21 @@ class AudioPlayer {
     const def: SoundDef = SOUNDS[key]
     const ext = def.ext ?? 'wav'
     const path = `/src/assets/audio/${key}.${ext}`
-
     const url = AUDIO_FILES[path]
+
+    if (!url) throw new Error(`Audio file not found for "${key}" (expected ${path})`)
 
     return engine.decode(url).catch((err) => {
       throw new Error(`Failed to load audio "${key}": ${String(err)}`)
     })
   }
 
-  /**
-   * Callback for when the audio system is unlocked.
-   * Plays any queued sound.
-   */
   private _onUnlock = () => {
-    this.unlocked = true
-
     if (this.queued_sound) {
       const { key, options } = this.queued_sound
-      this.play(key, options)
       this.queued_sound = undefined
+      void this._play(key, options)
     }
-  }
-
-  /**
-   * Registers the unlock callback for the audio system.
-   * Only registers once.
-   */
-  private _registerUnlock = () => {
-    if (this.unlock_registered) return
-    this.unlock_registered = true
-    engine.onUnlock(this._onUnlock)
   }
 }
 
