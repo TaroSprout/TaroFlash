@@ -49,13 +49,11 @@ const RELATIVE_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
 export function toRelative(input: DateInput, options: RelativeOptions = {}): string {
   const { style = 'long', locale } = options
   const diffSeconds = (toDate(input).getTime() - Date.now()) / 1000
-  const absSeconds = Math.abs(diffSeconds)
   const formatter = new Intl.RelativeTimeFormat(locale, { style })
 
   for (const [unit, perUnit] of RELATIVE_UNITS) {
-    if (absSeconds >= perUnit) {
-      return formatter.format(Math.round(diffSeconds / perUnit), unit)
-    }
+    const rounded = Math.round(diffSeconds / perUnit)
+    if (Math.abs(rounded) >= 1) return formatter.format(rounded, unit)
   }
 
   return formatter.format(0, 'second')
