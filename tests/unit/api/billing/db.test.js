@@ -30,27 +30,31 @@ beforeEach(() => {
 })
 
 describe('createSubscription', () => {
-  test('invokes create-subscription edge function with the planId body', async () => {
+  test('invokes create-subscription edge function with the planId + returnUrl body', async () => {
     mocks.invokeMock.mockResolvedValueOnce({
-      data: { clientSecret: 'pi_x', subscriptionId: 'sub_1' },
+      data: { clientSecret: 'cs_x' },
       error: null
     })
-    const result = await createSubscription({ planId: 'paid' })
+    const result = await createSubscription({ planId: 'paid', returnUrl: 'https://app.test' })
     expect(mocks.invokeMock).toHaveBeenCalledWith('create-subscription', {
-      body: { planId: 'paid' }
+      body: { planId: 'paid', returnUrl: 'https://app.test' }
     })
-    expect(result).toEqual({ clientSecret: 'pi_x', subscriptionId: 'sub_1' })
+    expect(result).toEqual({ clientSecret: 'cs_x' })
   })
 
   test('throws when the function returns no clientSecret', async () => {
     mocks.invokeMock.mockResolvedValueOnce({ data: {}, error: null })
-    await expect(createSubscription({ planId: 'paid' })).rejects.toThrow()
+    await expect(
+      createSubscription({ planId: 'paid', returnUrl: 'https://app.test' })
+    ).rejects.toThrow()
   })
 
   test('throws when the edge function returns an error', async () => {
     const err = new Error('boom')
     mocks.invokeMock.mockResolvedValueOnce({ data: null, error: err })
-    await expect(createSubscription({ planId: 'paid' })).rejects.toBe(err)
+    await expect(
+      createSubscription({ planId: 'paid', returnUrl: 'https://app.test' })
+    ).rejects.toBe(err)
   })
 })
 
@@ -106,10 +110,10 @@ describe('manage-subscription wrappers', () => {
     })
   })
 
-  test('createSetupIntent dispatches with action=create-setup-intent', async () => {
-    await createSetupIntent()
+  test('createSetupIntent dispatches with action=create-setup-intent and the returnUrl', async () => {
+    await createSetupIntent('https://app.test')
     expect(mocks.invokeMock).toHaveBeenCalledWith('manage-subscription', {
-      body: { action: 'create-setup-intent' }
+      body: { action: 'create-setup-intent', returnUrl: 'https://app.test' }
     })
   })
 

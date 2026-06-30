@@ -5,8 +5,7 @@ const { useMutationSpy, useQueryCacheSpy, createSubscriptionMock, manageMocks } 
     useMutationSpy: vi.fn((cfg) => cfg),
     useQueryCacheSpy: vi.fn(() => ({ invalidateQueries: vi.fn() })),
     createSubscriptionMock: vi.fn().mockResolvedValue({
-      clientSecret: 'pi_secret_x',
-      subscriptionId: 'sub_1'
+      clientSecret: 'cs_secret_x'
     }),
     manageMocks: {
       changePlan: vi.fn().mockResolvedValue({ subscription: { id: 'sub_1' } }),
@@ -49,16 +48,19 @@ function configFrom(hook) {
 }
 
 describe('useCreateSubscriptionMutation', () => {
-  test('delegates to createSubscription with the caller args', async () => {
+  test('delegates to createSubscription with the caller args, including returnUrl', async () => {
     const { mutation } = configFrom(useCreateSubscriptionMutation)
-    await mutation({ planId: 'paid' })
-    expect(createSubscriptionMock).toHaveBeenCalledWith({ planId: 'paid' })
+    await mutation({ planId: 'paid', returnUrl: 'https://app.test' })
+    expect(createSubscriptionMock).toHaveBeenCalledWith({
+      planId: 'paid',
+      returnUrl: 'https://app.test'
+    })
   })
 
   test('returns whatever createSubscription resolved with', async () => {
     const { mutation } = configFrom(useCreateSubscriptionMutation)
-    const result = await mutation({ planId: 'paid' })
-    expect(result).toEqual({ clientSecret: 'pi_secret_x', subscriptionId: 'sub_1' })
+    const result = await mutation({ planId: 'paid', returnUrl: 'https://app.test' })
+    expect(result).toEqual({ clientSecret: 'cs_secret_x' })
   })
 })
 
@@ -103,9 +105,19 @@ describe('useDetachPaymentMethodMutation', () => {
 })
 
 describe('useCreateSetupIntentMutation', () => {
-  test('delegates to createSetupIntent', async () => {
+  test('delegates to createSetupIntent with the returnUrl', async () => {
     const { mutation } = configFrom(useCreateSetupIntentMutation)
-    await mutation()
-    expect(manageMocks.createSetupIntent).toHaveBeenCalled()
+    await mutation('https://app.test')
+    expect(manageMocks.createSetupIntent).toHaveBeenCalledWith('https://app.test')
+  })
+
+  test('onSettled invalidates the payment-methods query', () => {
+    const invalidateQueries = vi.fn()
+    useQueryCacheSpy.mockReturnValueOnce({ invalidateQueries })
+    const { onSettled } = configFrom(useCreateSetupIntentMutation)
+
+    onSettled()
+
+    expect(invalidateQueries).toHaveBeenCalledWith({ key: ['billing', 'payment-methods'] })
   })
 })

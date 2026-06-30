@@ -5,7 +5,8 @@ import { defineComponent, h, useAttrs } from 'vue'
 const {
   mockCreateSetupIntent,
   mockInvalidateQueries,
-  mockConfirmSetup,
+  mockLoadActions,
+  mockConfirm,
   mockElementMount,
   mockElementDestroy,
   elementHandlers,
@@ -13,7 +14,8 @@ const {
 } = vi.hoisted(() => ({
   mockCreateSetupIntent: vi.fn(),
   mockInvalidateQueries: vi.fn(),
-  mockConfirmSetup: vi.fn(),
+  mockLoadActions: vi.fn(),
+  mockConfirm: vi.fn(),
   mockElementMount: vi.fn(),
   mockElementDestroy: vi.fn(),
   elementHandlers: new Map(),
@@ -65,11 +67,11 @@ function makeStripe() {
     mount: mockElementMount,
     destroy: mockElementDestroy
   }
-  const fakeElements = { create: vi.fn(() => fakePaymentElement) }
-  return {
-    elements: vi.fn(() => fakeElements),
-    confirmSetup: mockConfirmSetup
+  const fakeCheckout = {
+    createPaymentElement: vi.fn(() => fakePaymentElement),
+    loadActions: mockLoadActions
   }
+  return { initCheckoutElementsSdk: vi.fn(() => fakeCheckout) }
 }
 
 async function makeAddCreditCardModal({ close = vi.fn() } = {}) {
@@ -95,9 +97,11 @@ function fireReady() {
 
 beforeEach(() => {
   mockCreateSetupIntent.mockReset()
-  mockCreateSetupIntent.mockResolvedValue({ clientSecret: 'seti_secret_x' })
+  mockCreateSetupIntent.mockResolvedValue({ clientSecret: 'cs_secret_x' })
   mockInvalidateQueries.mockReset()
-  mockConfirmSetup.mockReset()
+  mockLoadActions.mockReset()
+  mockLoadActions.mockResolvedValue({ type: 'success', actions: { confirm: mockConfirm } })
+  mockConfirm.mockReset()
   mockElementMount.mockReset()
   mockElementDestroy.mockReset()
   elementHandlers.clear()
@@ -120,7 +124,14 @@ describe('add-credit-card-modal — load states', () => {
     await flushPromises()
   })
 
-  test('mounts the Payment Element once SetupIntent + Stripe resolve', async () => {
+  test('[obligation] requests the setup-intent Checkout Session with returnUrl = window.location.origin', async () => {
+    await makeAddCreditCardModal()
+    await flushPromises()
+
+    expect(mockCreateSetupIntent).toHaveBeenCalledWith(window.location.origin)
+  })
+
+  test('mounts the Payment Element once the Checkout Session + Stripe resolve', async () => {
     const { wrapper } = await makeAddCreditCardModal()
     await flushPromises()
     expect(wrapper.find('[data-testid="add-credit-card-modal__payment-element"]').exists()).toBe(
@@ -158,9 +169,10 @@ describe('add-credit-card-modal — load states', () => {
 })
 
 describe('add-credit-card-modal — submit', () => {
-  test('on succeeded SetupIntent with string payment_method, closes with paymentMethodId string [obligation]', async () => {
-    mockConfirmSetup.mockResolvedValue({
-      setupIntent: { status: 'succeeded', payment_method: 'pm_abc123' }
+  test('[obligation] on a saved payment method, closes with the first saved payment method id', async () => {
+    mockConfirm.mockResolvedValue({
+      type: 'success',
+      session: { status: { type: 'complete' }, savedPaymentMethods: [{ id: 'pm_abc123' }] }
     })
     const { wrapper, close } = await makeAddCreditCardModal()
     await flushPromises()
@@ -174,27 +186,10 @@ describe('add-credit-card-modal — submit', () => {
     expect(close).toHaveBeenCalledWith({ added: true, paymentMethodId: 'pm_abc123' })
   })
 
-  test('on succeeded SetupIntent with PM-object payment_method, extracts id [obligation]', async () => {
-    mockConfirmSetup.mockResolvedValue({
-      setupIntent: {
-        status: 'succeeded',
-        payment_method: { id: 'pm_obj456', object: 'payment_method' }
-      }
-    })
-    const { wrapper, close } = await makeAddCreditCardModal()
-    await flushPromises()
-    fireReady()
-    await flushPromises()
-
-    await wrapper.find('[data-testid="add-credit-card-modal__submit"]').trigger('click')
-    await flushPromises()
-
-    expect(close).toHaveBeenCalledWith({ added: true, paymentMethodId: 'pm_obj456' })
-  })
-
-  test('on succeeded SetupIntent with null payment_method, closes with paymentMethodId null [obligation]', async () => {
-    mockConfirmSetup.mockResolvedValue({
-      setupIntent: { status: 'succeeded', payment_method: null }
+  test('[obligation] closes with paymentMethodId null when savedPaymentMethods is empty', async () => {
+    mockConfirm.mockResolvedValue({
+      type: 'success',
+      session: { status: { type: 'complete' }, savedPaymentMethods: [] }
     })
     const { wrapper, close } = await makeAddCreditCardModal()
     await flushPromises()
@@ -207,8 +202,42 @@ describe('add-credit-card-modal — submit', () => {
     expect(close).toHaveBeenCalledWith({ added: true, paymentMethodId: null })
   })
 
-  test('shows the submit error when confirmSetup returns an error', async () => {
-    mockConfirmSetup.mockResolvedValue({ error: { message: 'Your card was declined.' } })
+  test('[obligation] closes with paymentMethodId null when savedPaymentMethods is absent', async () => {
+    mockConfirm.mockResolvedValue({
+      type: 'success',
+      session: { status: { type: 'complete' } }
+    })
+    const { wrapper, close } = await makeAddCreditCardModal()
+    await flushPromises()
+    fireReady()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="add-credit-card-modal__submit"]').trigger('click')
+    await flushPromises()
+
+    expect(close).toHaveBeenCalledWith({ added: true, paymentMethodId: null })
+  })
+
+  test('confirm() is called with only { redirect: "if_required" } — no returnUrl', async () => {
+    mockConfirm.mockResolvedValue({
+      type: 'success',
+      session: { status: { type: 'complete' }, savedPaymentMethods: [] }
+    })
+    const { wrapper } = await makeAddCreditCardModal()
+    await flushPromises()
+    fireReady()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="add-credit-card-modal__submit"]').trigger('click')
+    await flushPromises()
+
+    expect(mockConfirm).toHaveBeenCalledWith({ redirect: 'if_required' })
+    const [args] = mockConfirm.mock.calls[0]
+    expect('returnUrl' in args).toBe(false)
+  })
+
+  test('shows the submit error when confirm() returns an error', async () => {
+    mockConfirm.mockResolvedValue({ type: 'error', error: { message: 'Your card was declined.' } })
     const { wrapper, close } = await makeAddCreditCardModal()
     await flushPromises()
     fireReady()
@@ -223,8 +252,8 @@ describe('add-credit-card-modal — submit', () => {
     expect(close).not.toHaveBeenCalled()
   })
 
-  test('falls back to a generic submit error when setupIntent status is non-success', async () => {
-    mockConfirmSetup.mockResolvedValue({ setupIntent: { status: 'requires_action' } })
+  test('falls back to a generic submit error when the session is not complete', async () => {
+    mockConfirm.mockResolvedValue({ type: 'success', session: { status: { type: 'open' } } })
     const { wrapper, close } = await makeAddCreditCardModal()
     await flushPromises()
     fireReady()

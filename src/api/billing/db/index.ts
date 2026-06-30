@@ -2,11 +2,8 @@ import { supabase } from '@/supabase-client'
 import logger from '@/utils/logger'
 import type { StripeInvoice, StripePaymentMethod, StripeSubscription } from '../stripe'
 
-export type CreateSubscriptionArgs = { planId: string }
-export type CreateSubscriptionResult = {
-  clientSecret: string
-  subscriptionId: string
-}
+export type CreateSubscriptionArgs = { planId: string; returnUrl: string }
+export type CreateSubscriptionResult = { clientSecret: string }
 
 export async function createSubscription(
   args: CreateSubscriptionArgs
@@ -30,7 +27,7 @@ type ManagePayload =
   | { action: 'list-payment-methods' }
   | { action: 'set-default-payment-method'; paymentMethodId: string }
   | { action: 'detach-payment-method'; paymentMethodId: string }
-  | { action: 'create-setup-intent' }
+  | { action: 'create-setup-intent'; returnUrl: string }
   | { action: 'change-plan'; planId: string }
   | { action: 'cancel'; atPeriodEnd: boolean }
   | { action: 'resume' }
@@ -86,8 +83,8 @@ export function detachPaymentMethod(paymentMethodId: string) {
   })
 }
 
-export function createSetupIntent() {
-  return manage<{ clientSecret: string }>({ action: 'create-setup-intent' })
+export function createSetupIntent(returnUrl: string) {
+  return manage<{ clientSecret: string }>({ action: 'create-setup-intent', returnUrl })
 }
 
 export function changePlan(planId: string) {

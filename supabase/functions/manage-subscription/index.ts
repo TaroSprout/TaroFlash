@@ -5,12 +5,7 @@
 // Plan changes use proration_behavior: 'always_invoice' — diff charged now.
 
 import Stripe from 'npm:stripe@20'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
-  apiVersion: '2024-06-20',
-  httpClient: Stripe.createFetchHttpClient()
-})
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -23,10 +18,26 @@ type Payload =
   | { action: 'list-payment-methods' }
   | { action: 'set-default-payment-method'; paymentMethodId: string }
   | { action: 'detach-payment-method'; paymentMethodId: string }
-  | { action: 'create-setup-intent' }
+  | { action: 'create-setup-intent'; returnUrl: string }
   | { action: 'change-plan'; planId: string }
   | { action: 'cancel'; atPeriodEnd: boolean }
   | { action: 'resume' }
+
+export type StripeLike = Pick<
+  Stripe,
+  'subscriptions' | 'invoices' | 'paymentMethods' | 'customers' | 'checkout'
+>
+
+export type AuthedUser = { id: string }
+
+export type Deps = {
+  stripe: StripeLike
+  // Resolves the Authorization header to the caller, or null if invalid.
+  getUser: (authHeader: string) => Promise<AuthedUser | null>
+  // Caller-scoped client (RLS applies) to read the member's Stripe ids.
+  getUserClient: (authHeader: string) => SupabaseClient
+  admin: SupabaseClient
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -39,28 +50,20 @@ function err(message: string, status = 400) {
   return new Response(message, { status, headers: cors })
 }
 
-Deno.serve(async (req) => {
+export async function handler(req: Request, deps: Deps): Promise<Response> {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
   if (req.method !== 'POST') return err('Method Not Allowed', 405)
 
   const authHeader = req.headers.get('Authorization')
   if (!authHeader) return err('Unauthorized', 401)
 
-  const userClient = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_ANON_KEY')!,
-    { global: { headers: { Authorization: authHeader } } }
-  )
-
-  const {
-    data: { user },
-    error: authError
-  } = await userClient.auth.getUser()
-  if (authError || !user) return err('Unauthorized', 401)
+  const user = await deps.getUser(authHeader)
+  if (!user) return err('Unauthorized', 401)
 
   const payload = (await req.json().catch(() => null)) as Payload | null
   if (!payload?.action) return err('Missing action')
 
+  const userClient = deps.getUserClient(authHeader)
   const { data: member } = await userClient
     .from('members')
     .select('stripe_customer_id, stripe_subscription_id')
@@ -69,6 +72,8 @@ Deno.serve(async (req) => {
 
   const customerId = member?.stripe_customer_id
   if (!customerId) return err('No Stripe customer for this member')
+
+  const { stripe, admin } = deps
 
   try {
     switch (payload.action) {
@@ -83,7 +88,7 @@ Deno.serve(async (req) => {
 
         let upcoming = null
         try {
-          upcoming = await stripe.invoices.retrieveUpcoming({ customer: customerId })
+          upcoming = await stripe.invoices.createPreview({ customer: customerId })
         } catch {
           // No upcoming invoice (e.g. subscription canceled).
         }
@@ -91,13 +96,17 @@ Deno.serve(async (req) => {
         // Normalize Stripe's nested shape into the flat domain DTO the pill
         // needs. Money stays in minor units, the date stays a UNIX second —
         // the FE owns locale-specific currency/date formatting.
-        const price = subscription.items.data[0]?.price
+        //
+        // current_period_end moved off the top-level Subscription object onto
+        // each subscription item as of API version 2026-03-25.dahlia.
+        const item = subscription.items.data[0]
+        const price = item?.price
         return json({
           priceCents: price?.unit_amount ?? null,
           currency: price?.currency ?? null,
           interval: price?.recurring?.interval ?? null,
           status: subscription.status,
-          currentPeriodEnd: subscription.current_period_end,
+          currentPeriodEnd: item?.current_period_end ?? null,
           cancelAtPeriodEnd: subscription.cancel_at_period_end,
           upcoming: upcoming
             ? { amountCents: upcoming.amount_due, currency: upcoming.currency }
@@ -136,21 +145,22 @@ Deno.serve(async (req) => {
       }
 
       case 'create-setup-intent': {
-        const intent = await stripe.setupIntents.create({
+        if (!payload.returnUrl) return err('Missing returnUrl')
+
+        // ui_mode: 'elements' is a preview feature not yet in this SDK
+        // version's published types — see create-subscription/index.ts.
+        const session = await stripe.checkout.sessions.create({
+          mode: 'setup',
+          ui_mode: 'elements',
           customer: customerId,
-          usage: 'off_session',
-          payment_method_types: ['card']
-        })
-        return json({ clientSecret: intent.client_secret })
+          return_url: payload.returnUrl
+        } as unknown as Stripe.Checkout.SessionCreateParams)
+        return json({ clientSecret: session.client_secret })
       }
 
       case 'change-plan': {
         if (!member?.stripe_subscription_id) return err('No active subscription')
 
-        const admin = createClient(
-          Deno.env.get('SUPABASE_URL')!,
-          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-        )
         const { data: plan } = await admin
           .from('plans')
           .select('stripe_price_id')
@@ -197,4 +207,40 @@ Deno.serve(async (req) => {
     console.error(e)
     return err(e instanceof Error ? e.message : 'Stripe error', 500)
   }
-})
+}
+
+if (import.meta.main) {
+  const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
+    // Preview version — not yet in this SDK's LatestApiVersion type.
+    apiVersion: '2026-03-25.dahlia' as Stripe.LatestApiVersion,
+    httpClient: Stripe.createFetchHttpClient()
+  })
+
+  const admin = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  )
+
+  Deno.serve((req) =>
+    handler(req, {
+      stripe,
+      admin,
+      getUserClient: (authHeader) =>
+        createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+          global: { headers: { Authorization: authHeader } }
+        }),
+      getUser: async (authHeader) => {
+        const userClient = createClient(
+          Deno.env.get('SUPABASE_URL')!,
+          Deno.env.get('SUPABASE_ANON_KEY')!,
+          { global: { headers: { Authorization: authHeader } } }
+        )
+        const {
+          data: { user },
+          error: authError
+        } = await userClient.auth.getUser()
+        return authError || !user ? null : user
+      }
+    })
+  )
+}
