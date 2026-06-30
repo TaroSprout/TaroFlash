@@ -95,11 +95,14 @@ async function play(buffer: AudioBuffer, volume: number): Promise<void> {
   const running = await resume()
   if (!running) return
 
-  const source = ctx!.createBufferSource()
+  const context = ctx
+  if (!context) return
+
+  const source = context.createBufferSource()
   source.buffer = buffer
-  const gain = ctx!.createGain()
+  const gain = context.createGain()
   gain.gain.value = volume
-  source.connect(gain).connect(ctx!.destination)
+  source.connect(gain).connect(context.destination)
 
   return new Promise((resolve) => {
     let settled = false
