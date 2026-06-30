@@ -8,7 +8,7 @@ import Stripe from 'npm:stripe@20'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
-  apiVersion: '2024-06-20',
+  apiVersion: '2026-03-25.dahlia',
   httpClient: Stripe.createFetchHttpClient()
 })
 
@@ -23,7 +23,7 @@ type Payload =
   | { action: 'list-payment-methods' }
   | { action: 'set-default-payment-method'; paymentMethodId: string }
   | { action: 'detach-payment-method'; paymentMethodId: string }
-  | { action: 'create-setup-intent' }
+  | { action: 'create-setup-intent'; returnUrl: string }
   | { action: 'change-plan'; planId: string }
   | { action: 'cancel'; atPeriodEnd: boolean }
   | { action: 'resume' }
@@ -91,13 +91,14 @@ Deno.serve(async (req) => {
         // Normalize Stripe's nested shape into the flat domain DTO the pill
         // needs. Money stays in minor units, the date stays a UNIX second —
         // the FE owns locale-specific currency/date formatting.
-        const price = subscription.items.data[0]?.price
+        const item = subscription.items.data[0]
+        const price = item?.price
         return json({
           priceCents: price?.unit_amount ?? null,
           currency: price?.currency ?? null,
           interval: price?.recurring?.interval ?? null,
           status: subscription.status,
-          currentPeriodEnd: subscription.current_period_end,
+          currentPeriodEnd: item?.current_period_end ?? null,
           cancelAtPeriodEnd: subscription.cancel_at_period_end,
           upcoming: upcoming
             ? { amountCents: upcoming.amount_due, currency: upcoming.currency }
@@ -136,12 +137,13 @@ Deno.serve(async (req) => {
       }
 
       case 'create-setup-intent': {
-        const intent = await stripe.setupIntents.create({
+        const session = await stripe.checkout.sessions.create({
+          mode: 'setup',
+          ui_mode: 'elements',
           customer: customerId,
-          usage: 'off_session',
-          payment_method_types: ['card']
+          return_url: payload.returnUrl
         })
-        return json({ clientSecret: intent.client_secret })
+        return json({ clientSecret: session.client_secret })
       }
 
       case 'change-plan': {

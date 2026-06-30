@@ -1,18 +1,10 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useQueryCache } from '@pinia/colada'
-import {
-  loadStripe,
-  type Stripe,
-  type StripeElements,
-  type StripePaymentElement
-} from '@stripe/stripe-js'
 import mobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useCreateSubscriptionMutation } from '@/api/billing'
-import { getStripeAppearance, STRIPE_FONTS } from '@/utils/billing/stripe-theme'
-import logger from '@/utils/logger'
+import { useCheckoutElements } from '@/composables/billing/use-checkout-elements'
 
 export type CheckoutResponse = { upgraded: boolean }
 
@@ -24,78 +16,25 @@ const { t } = useI18n()
 const queryCache = useQueryCache()
 const { mutateAsync: createSubscription } = useCreateSubscriptionMutation()
 
-const container_ref = useTemplateRef<HTMLDivElement>('container')
-
-const is_loading = ref(true)
-const is_submitting = ref(false)
-const is_ready = ref(false)
-const load_error = ref(false)
-const submit_error = ref<string | null>(null)
-
-let stripe: Stripe | null = null
-let elements: StripeElements | null = null
-let payment_element: StripePaymentElement | null = null
-
-onMounted(async () => {
-  try {
-    const [subscription, stripeInstance] = await Promise.all([
-      createSubscription({ planId: 'paid' }),
-      loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
-    ])
-    if (!stripeInstance) throw new Error('Stripe.js failed to load')
-    stripe = stripeInstance
-
-    elements = stripe.elements({
-      clientSecret: subscription.clientSecret,
-      appearance: getStripeAppearance(),
-      fonts: STRIPE_FONTS
-    })
-
-    payment_element = elements.create('payment', { layout: 'tabs' })
-    payment_element.on('ready', () => {
-      is_ready.value = true
-    })
-
-    if (container_ref.value) payment_element.mount(container_ref.value)
-  } catch (err) {
-    logger.error((err as Error).message)
-    load_error.value = true
-  } finally {
-    is_loading.value = false
-  }
-})
-
-onBeforeUnmount(() => {
-  payment_element?.destroy()
-})
-
-async function onSubmit() {
-  if (!stripe || !elements) return
-  is_submitting.value = true
-  submit_error.value = null
-
-  const result = await stripe.confirmPayment({
-    elements,
-    confirmParams: {
-      return_url: window.location.origin
-    },
-    redirect: 'if_required'
+const { container_ref, is_loading, is_submitting, is_ready, load_error, submit_error, confirm } =
+  useCheckoutElements({
+    publicKey: import.meta.env.VITE_STRIPE_PUBLIC_KEY,
+    genericErrorMessage: t('billing.checkout.submit-error'),
+    getClientSecret: async () => {
+      const { clientSecret } = await createSubscription({
+        planId: 'paid',
+        returnUrl: window.location.origin
+      })
+      return clientSecret
+    }
   })
 
-  if (result.error) {
-    submit_error.value = result.error.message ?? t('billing.checkout.submit-error')
-    is_submitting.value = false
-    return
-  }
+async function onSubmit() {
+  const outcome = await confirm()
+  if (outcome.status !== 'success') return
 
-  if (result.paymentIntent?.status === 'succeeded') {
-    queryCache.invalidateQueries({ key: ['member'] })
-    close({ upgraded: true })
-    return
-  }
-
-  submit_error.value = t('billing.checkout.submit-error')
-  is_submitting.value = false
+  queryCache.invalidateQueries({ key: ['member'] })
+  close({ upgraded: true })
 }
 </script>
 

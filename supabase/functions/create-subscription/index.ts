@@ -1,16 +1,15 @@
-// Creates an incomplete subscription + PaymentIntent for the caller's plan.
+// Creates a Checkout Session (subscription mode, embedded UI) for the
+// caller's plan.
 //
-// Used with Stripe Elements (Payment Element). The client gets back the
-// PaymentIntent's client_secret and runs `stripe.confirmPayment()` with a
-// Payment Element mounted in our own UI. That's the opposite of Embedded
-// Checkout (which returned a *Session* client_secret and mounted Stripe's
-// pre-built UI). We chose Elements to own the appearance layer.
+// The client mounts our own Payment Element against the Session's
+// client_secret and calls `checkout.confirm()` — appearance stays ours,
+// Stripe owns creating the underlying Subscription + PaymentIntent.
 
 import Stripe from 'npm:stripe@20'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
-  apiVersion: '2024-06-20',
+  apiVersion: '2026-03-25.dahlia',
   httpClient: Stripe.createFetchHttpClient()
 })
 
@@ -52,9 +51,12 @@ Deno.serve(async (req) => {
   )
 
   try {
-    const { planId } = await req.json().catch(() => ({}))
+    const { planId, returnUrl } = await req.json().catch(() => ({}))
     if (!planId) {
       return new Response('Missing planId', { status: 400, headers: cors })
+    }
+    if (!returnUrl) {
+      return new Response('Missing returnUrl', { status: 400, headers: cors })
     }
 
     // Client sends plan id, server resolves to Stripe price id via plans.
@@ -94,39 +96,29 @@ Deno.serve(async (req) => {
       await admin.from('members').update({ stripe_customer_id: customerId }).eq('id', user.id)
     }
 
-    // Create the subscription in "incomplete" state. Stripe generates a
-    // PaymentIntent for the first invoice; we expand it so we can read the
-    // client_secret without a second round-trip.
-    //
-    // `default_incomplete` means the subscription exists but has no active
-    // payment yet — completing the PaymentIntent on the frontend activates
-    // it, at which point the webhook fires `customer.subscription.updated`.
-    const subscription = await stripe.subscriptions.create({
+    // Checkout Session in subscription mode still creates a real Subscription
+    // object underneath — completing the embedded Payment Element activates
+    // it, at which point the webhook fires `customer.subscription.updated`,
+    // same as before.
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      ui_mode: 'elements',
       customer: customerId,
-      items: [{ price: plan.stripe_price_id }],
-      payment_behavior: 'default_incomplete',
-      payment_settings: {
-        save_default_payment_method: 'on_subscription'
-      },
-      expand: ['latest_invoice.payment_intent'],
-      metadata: { member_id: user.id }
+      line_items: [{ price: plan.stripe_price_id, quantity: 1 }],
+      subscription_data: { metadata: { member_id: user.id } },
+      return_url: returnUrl
     })
 
-    const paymentIntent = subscription.latest_invoice?.payment_intent
-    if (!paymentIntent || typeof paymentIntent !== 'object') {
-      return new Response('No PaymentIntent on subscription', {
+    if (!session.client_secret) {
+      return new Response('No client_secret on Checkout Session', {
         status: 500,
         headers: cors
       })
     }
 
-    return new Response(
-      JSON.stringify({
-        clientSecret: paymentIntent.client_secret,
-        subscriptionId: subscription.id
-      }),
-      { headers: { ...cors, 'Content-Type': 'application/json' } }
-    )
+    return new Response(JSON.stringify({ clientSecret: session.client_secret }), {
+      headers: { ...cors, 'Content-Type': 'application/json' }
+    })
   } catch (err) {
     console.error(err)
     return new Response('Error creating subscription', { status: 500, headers: cors })
