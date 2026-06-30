@@ -73,7 +73,7 @@ function _getApps() {
     </div>
 
     <div
-      class="w-full grid grid-cols-[auto_auto_auto] grid-rows-[auto_auto_auto] gap-2 justify-center content-center"
+      class="w-full grid grid-cols-[auto_auto_auto] grid-rows-[auto_auto_auto] gap-x-1 gap-y-3 justify-center content-center"
     >
       <settings-app />
       <darkmode-app />
