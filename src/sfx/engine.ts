@@ -13,6 +13,8 @@
 
 type AudioContextCtor = new () => AudioContext
 
+const RESUME_TIMEOUT_MS = 2000
+
 let ctx: AudioContext | undefined
 let unlocked = false
 
@@ -131,7 +133,12 @@ async function resume(): Promise<boolean> {
   if (context.state === 'running') return true
 
   try {
-    await context.resume()
+    await Promise.race([
+      context.resume(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), RESUME_TIMEOUT_MS)
+      )
+    ])
   } catch {
     return false
   }
