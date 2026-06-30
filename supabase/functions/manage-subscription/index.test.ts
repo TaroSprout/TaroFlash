@@ -66,7 +66,7 @@ function makeDeps(opts: FakeOpts = {}) {
       }
     },
     invoices: {
-      retrieveUpcoming: () =>
+      createPreview: () =>
         opts.upcoming === undefined
           ? Promise.reject(new Error('no upcoming'))
           : Promise.resolve(opts.upcoming),
@@ -181,7 +181,7 @@ Deno.test('get-subscription includes the upcoming invoice when one exists', asyn
   assertEquals(body.upcoming, { amountCents: 500, currency: 'usd' })
 })
 
-Deno.test('get-subscription sets upcoming to null when retrieveUpcoming rejects', async () => {
+Deno.test('get-subscription sets upcoming to null when createPreview rejects', async () => {
   const { deps } = makeDeps()
   const res = await handler(req({ action: 'get-subscription' }), deps)
 

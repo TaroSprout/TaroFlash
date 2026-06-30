@@ -94,6 +94,10 @@ export async function handler(req: Request, deps: Deps): Promise<Response> {
     // object underneath — completing the embedded Payment Element activates
     // it, at which point the webhook fires `customer.subscription.updated`,
     // same as before.
+    //
+    // ui_mode: 'elements' is a preview feature (Stripe-Version 2026-03-25.dahlia)
+    // not yet reflected in this SDK version's published types — cast past the
+    // stable-only UiMode union until stripe-node catches up.
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       ui_mode: 'elements',
@@ -101,7 +105,7 @@ export async function handler(req: Request, deps: Deps): Promise<Response> {
       line_items: [{ price: plan.stripe_price_id, quantity: 1 }],
       subscription_data: { metadata: { member_id: user.id } },
       return_url: returnUrl
-    })
+    } as unknown as Stripe.Checkout.SessionCreateParams)
 
     if (!session.client_secret) {
       return new Response('No client_secret on Checkout Session', {
@@ -121,7 +125,9 @@ export async function handler(req: Request, deps: Deps): Promise<Response> {
 
 if (import.meta.main) {
   const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
-    apiVersion: '2026-03-25.dahlia',
+    // Preview version (see ui_mode note below) — not yet in this SDK's
+    // LatestApiVersion type.
+    apiVersion: '2026-03-25.dahlia' as Stripe.LatestApiVersion,
     httpClient: Stripe.createFetchHttpClient()
   })
 

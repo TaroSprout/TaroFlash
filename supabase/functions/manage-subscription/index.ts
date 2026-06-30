@@ -88,7 +88,7 @@ export async function handler(req: Request, deps: Deps): Promise<Response> {
 
         let upcoming = null
         try {
-          upcoming = await stripe.invoices.retrieveUpcoming({ customer: customerId })
+          upcoming = await stripe.invoices.createPreview({ customer: customerId })
         } catch {
           // No upcoming invoice (e.g. subscription canceled).
         }
@@ -147,12 +147,14 @@ export async function handler(req: Request, deps: Deps): Promise<Response> {
       case 'create-setup-intent': {
         if (!payload.returnUrl) return err('Missing returnUrl')
 
+        // ui_mode: 'elements' is a preview feature not yet in this SDK
+        // version's published types — see create-subscription/index.ts.
         const session = await stripe.checkout.sessions.create({
           mode: 'setup',
           ui_mode: 'elements',
           customer: customerId,
           return_url: payload.returnUrl
-        })
+        } as unknown as Stripe.Checkout.SessionCreateParams)
         return json({ clientSecret: session.client_secret })
       }
 
@@ -209,7 +211,8 @@ export async function handler(req: Request, deps: Deps): Promise<Response> {
 
 if (import.meta.main) {
   const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
-    apiVersion: '2026-03-25.dahlia',
+    // Preview version — not yet in this SDK's LatestApiVersion type.
+    apiVersion: '2026-03-25.dahlia' as Stripe.LatestApiVersion,
     httpClient: Stripe.createFetchHttpClient()
   })
 
