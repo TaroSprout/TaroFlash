@@ -4,7 +4,7 @@ export const SUPPORTED_THEMES: DeckTheme[] = [
   { light: 'purple-500', dark: 'purple-700' },
   { light: 'pink-500', dark: 'pink-700' },
   { light: 'red-500', dark: 'red-600' },
-  { light: 'orange-700', dark: 'orange-700' },
+  { light: 'orange-500', dark: 'orange-700' },
   { light: 'yellow-500', dark: 'yellow-700' }
 ]
 

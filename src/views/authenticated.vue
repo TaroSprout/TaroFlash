@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import NavBar from '@/components/nav-bar.vue'
-import Phone from '@/phone/phone.vue'
+import TaroPhone from '@/components/taro-phone/index.vue'
 import MobileDockHost from '@/components/mobile-dock/mobile-dock-host.vue'
 import RouteSkeleton from '@/components/route-skeleton.vue'
 import { useRouteTransition } from '@/composables/ui/route-transition'
@@ -14,7 +14,7 @@ const { show_skeleton_overlay, onSuspensePending, onSuspenseResolve, onLeave, on
     class="flex flex-col min-h-dvh w-full shrink-0 md:items-center [--page-px:1rem] sm:[--page-px:4rem] [--page-pt:1.5rem]"
   >
     <nav-bar />
-    <phone />
+    <taro-phone />
 
     <main class="relative overflow-clip w-full max-w-(--page-width)">
       <router-view v-slot="{ Component, route }">
