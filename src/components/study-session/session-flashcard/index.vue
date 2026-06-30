@@ -192,6 +192,7 @@ watch(mode, (m) => {
           :options="active_card?.preview"
           :side="current_card_side"
           :show_all_ratings="config.show_all_ratings"
+          :loading="loading"
           @started="startSession"
           @rated="onRated"
         />
