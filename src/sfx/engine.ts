@@ -12,7 +12,6 @@
  */
 
 type AudioContextCtor = new () => AudioContext
-type Playback = { ended: Promise<void> }
 
 let ctx: AudioContext | undefined
 let unlocked = false
@@ -89,25 +88,36 @@ async function decode(url: string): Promise<AudioBuffer> {
   return context.decodeAudioData(data)
 }
 
-function play(buffer: AudioBuffer, volume: number): Playback {
-  if (!ctx || ctx.state !== 'running') return { ended: Promise.resolve() }
+// Resumes the context if needed, starts the buffer, and returns a promise that
+// settles when the sound ends. The fallback timer ensures settlement even when
+// the context suspends mid-play and onended never fires.
+async function play(buffer: AudioBuffer, volume: number): Promise<void> {
+  const running = await resume()
+  if (!running) return
 
-  const source = ctx.createBufferSource()
+  const source = ctx!.createBufferSource()
   source.buffer = buffer
-  const gain = ctx.createGain()
+  const gain = ctx!.createGain()
   gain.gain.value = volume
-  source.connect(gain).connect(ctx.destination)
+  source.connect(gain).connect(ctx!.destination)
 
-  const ended = new Promise<void>((resolve) => {
-    source.onended = () => {
+  return new Promise((resolve) => {
+    let settled = false
+    const settle = () => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
       source.disconnect()
       gain.disconnect()
       resolve()
     }
-  })
 
-  source.start()
-  return { ended }
+    source.onended = settle
+    const fallbackMs = Math.ceil((buffer.duration || 1) * 1000) + 500
+    const timer = setTimeout(settle, fallbackMs)
+
+    source.start()
+  })
 }
 
 // Wake a suspended context and report whether it ended up running. Used to gate
@@ -176,5 +186,4 @@ function state(): AudioContextState | undefined {
   return ctx?.state
 }
 
-export type { Playback }
 export default { decode, play, resume, unlock, onStateChange, onUnlock, isUnlocked, state }

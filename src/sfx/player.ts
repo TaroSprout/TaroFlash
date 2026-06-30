@@ -103,44 +103,14 @@ class AudioPlayer {
     }
 
     const sound = this.loaded_sounds.get(key)
+    if (!sound) throw new Error(`Sound "${key}" not loaded.`)
 
-    if (!sound) {
-      throw new Error(`Sound "${key}" not loaded.`)
-    }
-
-    // A muted bus (volume 0) has nothing to play. Bail before resuming the
-    // audio context — resume() steals media-session focus and pauses the
-    // user's background music, even for a silent buffer.
+    // Bail before touching the context — resume() steals media-session focus
+    // and pauses background music even for a silent buffer.
     const volume = options.volume ?? sound.base_volume * this._getVolumeMultiplier(sound, options)
-
     if (volume <= 0) return
 
-    const running = await engine.resume()
-
-    if (!running) return
-
-    return new Promise((resolve) => {
-      // The returned Promise must settle in one of two ways:
-      //   1. 'ended'  — the BufferSource finished playing.
-      //   2. Timer    — the safety net: if the context suspends mid-play (tab
-      //                 hides, device locks) `onended` never fires and the
-      //                 promise would hang forever, stalling awaiters of emitSfx.
-      //
-      // Whichever wins, settle() cancels the timer so the loser can't double-fire.
-      let settled = false
-      const settle = () => {
-        if (settled) return
-        settled = true
-        clearTimeout(timer)
-        resolve()
-      }
-
-      const { ended } = engine.play(sound.buffer, volume)
-      const fallbackMs = Math.ceil((sound.buffer.duration || 1) * 1000) + 500
-      const timer = setTimeout(settle, fallbackMs)
-
-      void ended.then(settle)
-    })
+    return engine.play(sound.buffer, volume)
   }
 
   // Bus is resolved most-specific-first: explicit option, then the sound's own
