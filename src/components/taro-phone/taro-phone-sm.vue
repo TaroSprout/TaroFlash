@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { usePhoneStore } from '@/phone/store'
+import { useTaroPhoneStore } from '@/stores/taro-phone'
 
 const emit = defineEmits<{
   (e: 'open'): void
 }>()
 
-const store = usePhoneStore()
+const store = useTaroPhoneStore()
 </script>
 
 <template>

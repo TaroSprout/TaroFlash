@@ -10,7 +10,7 @@ import {
 } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SettingsAside from './settings-aside.vue'
-import { settingsLayoutKey, settingsCloseKey } from '../layout'
+import { settingsLayoutKey, settingsCloseKey } from './layout'
 import { emitSfx } from '@/sfx/bus'
 import { useMemberEditor, memberEditorKey } from '@/composables/member/editor'
 import { useMemberDangerActions, memberDangerActionsKey } from '@/composables/member/danger-actions'

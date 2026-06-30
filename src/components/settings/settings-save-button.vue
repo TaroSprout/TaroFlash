@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import { memberEditorKey } from '@/composables/member/editor'
-import { settingsCloseKey } from '../layout'
+import { settingsCloseKey } from './layout'
 import { inject } from 'vue'
 
 const { t } = useI18n()

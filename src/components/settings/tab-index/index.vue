@@ -9,7 +9,7 @@ import DangerDeleteAccountButton from '../danger-delete-account-button.vue'
 import SettingsSaveButton from '../settings-save-button.vue'
 import { emitSfx } from '@/sfx/bus'
 import { TYPE_SFX } from '@/sfx/config'
-import { settingsLayoutKey } from '../../layout'
+import { settingsLayoutKey } from '../layout'
 
 export type TabIndexNavValue = 'profile' | 'subscription' | 'app'
 

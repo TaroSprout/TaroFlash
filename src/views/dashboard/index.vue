@@ -15,7 +15,7 @@ import { useDeckActions } from '@/composables/deck/actions'
 import { useCan } from '@/composables/can'
 import MemberBadge from '@/components/member/member-badge.vue'
 import { useMemberStore } from '@/stores/member'
-import { usePhoneStore } from '@/phone/store'
+import { useSettingsModal } from '@/composables/settings/use-settings-modal'
 import { useLocalRef } from '@/composables/storage/local-ref'
 import {
   inboxSwingBeforeEnter,
@@ -29,7 +29,7 @@ const router = useRouter()
 const is_md = useMatchMedia('w>=md')
 const can = useCan()
 const member_store = useMemberStore()
-const phone = usePhoneStore()
+const settingsModal = useSettingsModal()
 
 const deck_create_modal = useDeckCreateModal()
 const deck_actions = useDeckActions()
@@ -53,7 +53,7 @@ function onBadgeClick() {
 }
 
 function onEditClick() {
-  phone.open('settings')
+  settingsModal.open()
 }
 
 function onDeckClicked(deck: Deck) {

@@ -5,7 +5,7 @@ import AudioSection from './audio-section.vue'
 import AccessibilitySection from './accessibility-section.vue'
 import SettingsBackButton from '../settings-back-button.vue'
 import SettingsSaveButton from '../settings-save-button.vue'
-import { settingsLayoutKey } from '../../layout'
+import { settingsLayoutKey } from '../layout'
 
 const emit = defineEmits<{ back: [] }>()
 

@@ -10,7 +10,7 @@ import MemberBadge from '@/components/member/member-badge.vue'
 import SettingsBackButton from '../settings-back-button.vue'
 import SettingsSaveButton from '../settings-save-button.vue'
 import { memberEditorKey } from '@/composables/member/editor'
-import { settingsLayoutKey } from '../../layout'
+import { settingsLayoutKey } from '../layout'
 import { SUPPORTED_THEMES, SUPPORTED_PATTERNS } from '@/utils/cover'
 
 const { t } = useI18n()

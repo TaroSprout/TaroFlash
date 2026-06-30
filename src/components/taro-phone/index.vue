@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
-import { emitSfx } from '@/sfx/bus'
 import { useShortcuts } from '@/composables/shortcuts'
 import { useModal } from '@/composables/modal'
-import { useI18n } from 'vue-i18n'
 import { useMatchMedia } from '@/composables/ui/media-query'
-import { usePhoneStore } from '@/phone/store'
-import { buildPhoneApps } from '@/phone/apps/index'
-import phoneSm from '@/phone/components/phone-sm.vue'
-import phoneBase from '@/phone/components/phone-base.vue'
+import { useTaroPhoneStore } from '@/stores/taro-phone'
+import { emitSfx } from '@/sfx/bus'
+import TaroPhoneSm from '@/components/taro-phone/taro-phone-sm.vue'
+import TaroPhoneBase from '@/components/taro-phone/taro-phone-base.vue'
 import {
   slideDownBlurIn,
   slideUpBlurOut,
@@ -16,41 +13,18 @@ import {
   slideDownBlurOut
 } from '@/utils/animations/phone'
 
-const shortcuts = useShortcuts('phone', { priority: 'background' })
-const { open: openModal, pop: popModal, modal_stack } = useModal()
-const { t } = useI18n()
+const shortcuts = useShortcuts('taro-phone', { priority: 'background' })
+const { modal_stack } = useModal()
 const is_pointer_coarse = useMatchMedia('coarse')
-const store = usePhoneStore()
-
-const open = ref(false)
-
-watch(
-  () => store.pending_modal,
-  (app) => {
-    if (!app) return
-    const opts = app.modal_options
-    openModal(app.component, {
-      backdrop: true,
-      mode: opts?.mode ?? 'dialog',
-      mobile_below_width: opts?.mobile_below_width,
-      mobile_below_height: opts?.mobile_below_height,
-      props: { close: () => popModal() }
-    })
-    store.consumePendingModal()
-  }
-)
+const store = useTaroPhoneStore()
 
 shortcuts.register({
   combo: 'esc',
   handler: togglePhone
 })
 
-onMounted(() => {
-  buildPhoneApps(t).forEach((app) => store.registerApp(app))
-})
-
 function togglePhone() {
-  if (open.value) {
+  if (store.is_open) {
     closePhone()
   } else {
     openPhone()
@@ -58,32 +32,20 @@ function togglePhone() {
 }
 
 function openPhone() {
-  open.value = true
+  store.open()
   emitSfx('pop_window')
   document.addEventListener('click', onPageClick)
 }
 
-function closePhone(force = false) {
-  if (force && store.active_app) {
-    store.clear()
-    emitSfx('toggle_off')
-    return
-  }
-
-  if (store.active_app) {
-    store.close()
-    emitSfx('toggle_off')
-    return
-  }
-
-  open.value = false
+function closePhone() {
+  store.close()
   emitSfx('pop_window')
   document.removeEventListener('click', onPageClick)
 }
 
 function onPageClick(e: Event) {
   if (!isInsidePhone(e) && modal_stack.value.length === 0) {
-    closePhone(true)
+    closePhone()
   }
 }
 
@@ -121,11 +83,11 @@ function onClosePhoneSm(el: Element, done: () => void) {
       class="w-full max-w-(--page-width) flex items-center justify-center mx-4 sm:mx-10 relative"
     >
       <transition @enter="onOpenBasePhone" @leave="onCloseBasePhone">
-        <phone-base v-if="open" class="z-10" @close="closePhone" />
+        <taro-phone-base v-if="store.is_open" class="z-10" @close="closePhone" />
       </transition>
 
       <transition @enter="onOpenPhoneSm" @leave="onClosePhoneSm">
-        <phone-sm v-if="!open" @open="openPhone" />
+        <taro-phone-sm v-if="!store.is_open" @open="openPhone" />
       </transition>
     </div>
   </div>
