@@ -76,29 +76,35 @@ export function useCheckoutElements(options: UseCheckoutElementsOptions) {
     is_submitting.value = true
     submit_error.value = null
 
-    const loadActionsResult = await checkout.loadActions()
-    if (loadActionsResult.type === 'error') {
-      submit_error.value = loadActionsResult.error.message ?? options.genericErrorMessage
-      is_submitting.value = false
-      return { status: 'error', message: submit_error.value }
-    }
+    try {
+      const loadActionsResult = await checkout.loadActions()
+      if (loadActionsResult.type === 'error') {
+        submit_error.value = loadActionsResult.error.message ?? options.genericErrorMessage
+        return { status: 'error', message: submit_error.value }
+      }
 
-    // return_url is already set when the Checkout Session was created
-    // server-side — Stripe rejects passing it again here.
-    const result = await loadActionsResult.actions.confirm({ redirect: 'if_required' })
-    is_submitting.value = false
+      // return_url is already set when the Checkout Session was created
+      // server-side — Stripe rejects passing it again here.
+      const result = await loadActionsResult.actions.confirm({ redirect: 'if_required' })
 
-    if (result.type === 'error') {
-      submit_error.value = result.error.message ?? options.genericErrorMessage
-      return { status: 'error', message: submit_error.value }
-    }
+      if (result.type === 'error') {
+        submit_error.value = result.error.message ?? options.genericErrorMessage
+        return { status: 'error', message: submit_error.value }
+      }
 
-    if (result.session.status.type !== 'complete') {
+      if (result.session.status.type !== 'complete') {
+        submit_error.value = options.genericErrorMessage
+        return { status: 'error', message: submit_error.value }
+      }
+
+      return { status: 'success', session: result.session }
+    } catch (err) {
+      logger.error((err as Error).message)
       submit_error.value = options.genericErrorMessage
       return { status: 'error', message: submit_error.value }
+    } finally {
+      is_submitting.value = false
     }
-
-    return { status: 'success', session: result.session }
   }
 
   return { container_ref, is_loading, is_submitting, is_ready, load_error, submit_error, confirm }
