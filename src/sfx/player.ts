@@ -1,6 +1,6 @@
 import engine from '@/sfx/engine'
 import { debounce } from '@/utils/debounce'
-import { SOUNDS, type Bus, type SoundDef, type SoundKey } from '@/sfx/config'
+import { BUS_DEFAULTS, SOUNDS, type Bus, type SoundDef, type SoundKey } from '@/sfx/config'
 
 export type PlayOptions = {
   volume?: number
@@ -36,11 +36,11 @@ class AudioPlayer {
   initialized = false
   queued_sound: { key: SoundKey; options: PlayOptions } | undefined
   // Resting setting per bus. setVolumeConfig (called from App.vue) overwrites
-  // this once member prefs load. Inline defaults avoid a config.ts init cycle.
-  volume_settings: Record<Bus, number> = { interface: 5, study: 5, hover: 5 }
+  // this once member prefs load.
+  volume_settings: Record<Bus, number> = { ...BUS_DEFAULTS }
   // The committed baseline — what the server gave us (or defaults). previewVolumeConfig
   // can drift volume_settings off this for live UI feedback; resetSettings restores it.
-  committed_volume_settings: Record<Bus, number> = { ...this.volume_settings }
+  committed_volume_settings: Record<Bus, number> = { ...BUS_DEFAULTS }
 
   // Commit a new baseline and apply it (App.vue, on member-pref load/save).
   setVolumeConfig = (settings: Record<Bus, number>) => {
@@ -126,8 +126,9 @@ class AudioPlayer {
     const def: SoundDef = SOUNDS[key]
     const ext = def.ext ?? 'wav'
     const path = `/src/assets/audio/${key}.${ext}`
-
     const url = AUDIO_FILES[path]
+
+    if (!url) throw new Error(`Audio file not found for "${key}" (expected ${path})`)
 
     return engine.decode(url).catch((err) => {
       throw new Error(`Failed to load audio "${key}": ${String(err)}`)
@@ -137,8 +138,8 @@ class AudioPlayer {
   private _onUnlock = () => {
     if (this.queued_sound) {
       const { key, options } = this.queued_sound
-      this.play(key, options)
       this.queued_sound = undefined
+      void this._play(key, options)
     }
   }
 }

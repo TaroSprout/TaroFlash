@@ -177,11 +177,8 @@ function isUnlocked(): boolean {
 }
 
 function onUnlock(cb: () => void): () => void {
-  if (unlocked) {
-    cb()
-    return () => {}
-  }
   unlock_listeners.add(cb)
+  if (unlocked) cb()
   return () => unlock_listeners.delete(cb)
 }
 
