@@ -7,26 +7,23 @@ import { defineComponent, h, useAttrs } from 'vue'
 const {
   mockCreateSubscription,
   mockInvalidateQueries,
-  mockConfirmPayment,
+  mockLoadActions,
+  mockConfirm,
   mockElementMount,
   mockElementDestroy,
   elementHandlers,
-  mockLoadStripe,
-  stripeInstance
+  mockLoadStripe
 } = vi.hoisted(() => {
   const handlers = new Map()
   return {
-    mockCreateSubscription: vi.fn().mockResolvedValue({
-      clientSecret: 'pi_secret_x',
-      subscriptionId: 'sub_1'
-    }),
+    mockCreateSubscription: vi.fn().mockResolvedValue({ clientSecret: 'cs_secret_x' }),
     mockInvalidateQueries: vi.fn(),
-    mockConfirmPayment: vi.fn(),
+    mockLoadActions: vi.fn(),
+    mockConfirm: vi.fn(),
     mockElementMount: vi.fn(),
     mockElementDestroy: vi.fn(),
     elementHandlers: handlers,
-    mockLoadStripe: vi.fn(),
-    stripeInstance: null
+    mockLoadStripe: vi.fn()
   }
 })
 
@@ -53,9 +50,17 @@ vi.mock('@/utils/logger', () => ({
 const MobileSheetStub = defineComponent({
   name: 'MobileSheet',
   emits: ['close'],
-  setup(_props, { slots }) {
+  setup(_props, { slots, emit }) {
     return () =>
-      h('div', { 'data-testid': 'mobile-sheet-stub' }, [slots.default?.(), slots.footer?.()])
+      h('div', { 'data-testid': 'mobile-sheet-stub' }, [
+        slots.default?.(),
+        slots.footer?.(),
+        h(
+          'button',
+          { 'data-testid': 'mobile-sheet-stub__close', onClick: () => emit('close') },
+          'close'
+        )
+      ])
   }
 })
 
@@ -69,7 +74,7 @@ const UiButtonStub = defineComponent({
   }
 })
 
-// ── Fake Stripe SDK (configurable per test) ────────────────────────────────────
+// ── Fake Stripe Checkout Elements SDK (configurable per test) ──────────────────
 
 function makeStripe() {
   const fakePaymentElement = {
@@ -77,12 +82,12 @@ function makeStripe() {
     mount: mockElementMount,
     destroy: mockElementDestroy
   }
-  const fakeElements = {
-    create: vi.fn(() => fakePaymentElement)
+  const fakeCheckout = {
+    createPaymentElement: vi.fn(() => fakePaymentElement),
+    loadActions: mockLoadActions
   }
   return {
-    elements: vi.fn(() => fakeElements),
-    confirmPayment: mockConfirmPayment
+    initCheckoutElementsSdk: vi.fn(() => fakeCheckout)
   }
 }
 
@@ -112,12 +117,11 @@ function fireReady() {
 
 beforeEach(() => {
   mockCreateSubscription.mockReset()
-  mockCreateSubscription.mockResolvedValue({
-    clientSecret: 'pi_secret_x',
-    subscriptionId: 'sub_1'
-  })
+  mockCreateSubscription.mockResolvedValue({ clientSecret: 'cs_secret_x' })
   mockInvalidateQueries.mockReset()
-  mockConfirmPayment.mockReset()
+  mockLoadActions.mockReset()
+  mockLoadActions.mockResolvedValue({ type: 'success', actions: { confirm: mockConfirm } })
+  mockConfirm.mockReset()
   mockElementMount.mockReset()
   mockElementDestroy.mockReset()
   elementHandlers.clear()
@@ -142,6 +146,16 @@ describe('checkout modal', () => {
 
     resolveStripe(makeStripe())
     await flushPromises()
+  })
+
+  test('[obligation] requests the Checkout Session with planId "paid" and returnUrl = window.location.origin', async () => {
+    await makeCheckout()
+    await flushPromises()
+
+    expect(mockCreateSubscription).toHaveBeenCalledWith({
+      planId: 'paid',
+      returnUrl: window.location.origin
+    })
   })
 
   test('mounts the Payment Element once Stripe resolves', async () => {
@@ -182,9 +196,10 @@ describe('checkout modal', () => {
     expect(wrapper.find('[data-testid="checkout__error"]').exists()).toBe(true)
   })
 
-  test('on successful payment, invalidates member cache and closes the modal', async () => {
-    mockConfirmPayment.mockResolvedValue({
-      paymentIntent: { status: 'succeeded' }
+  test('on successful confirm, invalidates member cache and closes the modal', async () => {
+    mockConfirm.mockResolvedValue({
+      type: 'success',
+      session: { status: { type: 'complete' } }
     })
     const { wrapper, close } = await makeCheckout()
     await flushPromises()
@@ -198,8 +213,27 @@ describe('checkout modal', () => {
     expect(close).toHaveBeenCalledWith({ upgraded: true })
   })
 
-  test('shows the submit error when confirmPayment returns an error', async () => {
-    mockConfirmPayment.mockResolvedValue({
+  test('[obligation] confirm() is called with only { redirect: "if_required" } — no returnUrl', async () => {
+    mockConfirm.mockResolvedValue({
+      type: 'success',
+      session: { status: { type: 'complete' } }
+    })
+    const { wrapper } = await makeCheckout()
+    await flushPromises()
+    fireReady()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="checkout__submit"]').trigger('click')
+    await flushPromises()
+
+    expect(mockConfirm).toHaveBeenCalledWith({ redirect: 'if_required' })
+    const [args] = mockConfirm.mock.calls[0]
+    expect('returnUrl' in args).toBe(false)
+  })
+
+  test('shows the submit error when confirm() returns an error', async () => {
+    mockConfirm.mockResolvedValue({
+      type: 'error',
       error: { message: 'Your card was declined.' }
     })
     const { wrapper, close } = await makeCheckout()
@@ -216,9 +250,24 @@ describe('checkout modal', () => {
     expect(close).not.toHaveBeenCalled()
   })
 
-  test('falls back to a generic submit error when paymentIntent status is non-success', async () => {
-    mockConfirmPayment.mockResolvedValue({
-      paymentIntent: { status: 'requires_action' }
+  test('shows the submit error when loadActions() returns an error', async () => {
+    mockLoadActions.mockResolvedValue({ type: 'error', error: { message: 'Could not load.' } })
+    const { wrapper, close } = await makeCheckout()
+    await flushPromises()
+    fireReady()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="checkout__submit"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="checkout__submit-error"]').text()).toBe('Could not load.')
+    expect(close).not.toHaveBeenCalled()
+  })
+
+  test('[obligation] treats a success-typed result with a non-complete session as an error, not success', async () => {
+    mockConfirm.mockResolvedValue({
+      type: 'success',
+      session: { status: { type: 'open' } }
     })
     const { wrapper, close } = await makeCheckout()
     await flushPromises()
@@ -238,5 +287,14 @@ describe('checkout modal', () => {
 
     wrapper.unmount()
     expect(mockElementDestroy).toHaveBeenCalledTimes(1)
+  })
+
+  test('emitting close from mobile-sheet calls close() with no argument', async () => {
+    const { wrapper, close } = await makeCheckout()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="mobile-sheet-stub__close"]').trigger('click')
+
+    expect(close).toHaveBeenCalledWith()
   })
 })
