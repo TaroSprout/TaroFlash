@@ -34,8 +34,6 @@ const QUEUE_TIMEOUT = 10
 class AudioPlayer {
   loaded_sounds = new Map<SoundKey, LoadedSound>()
   initialized = false
-  unlock_registered = false
-  unlocked = false
   queued_sound: { key: SoundKey; options: PlayOptions } | undefined
   // Resting setting per bus. setVolumeConfig (called from App.vue) overwrites
   // this once member prefs load. Inline defaults avoid a config.ts init cycle.
@@ -64,7 +62,7 @@ class AudioPlayer {
     if (this.initialized) return Promise.resolve()
     this.initialized = true
 
-    this._registerUnlock()
+    engine.onUnlock(this._onUnlock)
 
     const loads = Object.entries(SOUNDS).map(([name, cfg]) => {
       const key = name as SoundKey
@@ -99,7 +97,7 @@ class AudioPlayer {
   }
 
   private _play = async (key: SoundKey, options: PlayOptions = {}): Promise<void> => {
-    if (!this.unlocked) {
+    if (!engine.isUnlocked()) {
       this._enqueue(key, options)
       return
     }
@@ -166,28 +164,12 @@ class AudioPlayer {
     })
   }
 
-  /**
-   * Callback for when the audio system is unlocked.
-   * Plays any queued sound.
-   */
   private _onUnlock = () => {
-    this.unlocked = true
-
     if (this.queued_sound) {
       const { key, options } = this.queued_sound
       this.play(key, options)
       this.queued_sound = undefined
     }
-  }
-
-  /**
-   * Registers the unlock callback for the audio system.
-   * Only registers once.
-   */
-  private _registerUnlock = () => {
-    if (this.unlock_registered) return
-    this.unlock_registered = true
-    engine.onUnlock(this._onUnlock)
   }
 }
 

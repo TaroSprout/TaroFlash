@@ -29,16 +29,22 @@ function resolveCtor(): AudioContextCtor | undefined {
   return win.AudioContext ?? win.webkitAudioContext
 }
 
-// The context fires statechange on every transition; the first 'running' is also
-// the unlock signal, since a suspended context can never reach it without a gesture.
+// The context fires statechange on every transition. 'running' fires the unlock
+// signal. Any non-running state resets the latch so the next 'running' transition
+// re-fires unlock_listeners — allowing queued sounds to retry after recovery.
 function notifyState(): void {
-  if (ctx?.state === 'running') markUnlocked()
+  if (ctx?.state === 'running') {
+    markUnlocked()
+  } else {
+    unlocked = false
+  }
   state_listeners.forEach((cb) => cb())
 }
 
-// Unlock is a one-shot edge fired when the context first reaches 'running' —
-// either via the statechange event or the synchronous check in unlock() when a
-// fresh context is born running. It gates all playback.
+// Fires whenever the context transitions to 'running' — either via statechange
+// or the synchronous check in unlock() when a fresh context is born running.
+// notifyState() resets `unlocked` on every non-running transition, so this fires
+// again on each recovery, re-draining any queued sounds.
 function markUnlocked(): void {
   if (unlocked) return
   unlocked = true
@@ -153,6 +159,10 @@ function onStateChange(cb: () => void): () => void {
   return () => state_listeners.delete(cb)
 }
 
+function isUnlocked(): boolean {
+  return unlocked
+}
+
 function onUnlock(cb: () => void): () => void {
   if (unlocked) {
     cb()
@@ -167,4 +177,4 @@ function state(): AudioContextState | undefined {
 }
 
 export type { Playback }
-export default { decode, play, resume, unlock, onStateChange, onUnlock, state }
+export default { decode, play, resume, unlock, onStateChange, onUnlock, isUnlocked, state }
