@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h, ref, computed } from 'vue'
+import { defineComponent, h, computed } from 'vue'
 import SettingsBackButton from '@/components/settings/settings-back-button.vue'
 import { settingsLayoutKey } from '@/components/settings/layout'
 

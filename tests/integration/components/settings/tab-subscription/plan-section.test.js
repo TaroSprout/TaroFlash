@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import { computed, defineComponent, h, useAttrs } from 'vue'
+import { defineComponent, h, useAttrs } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 
 // ── Hoisted state ─────────────────────────────────────────────────────────────
@@ -116,26 +116,6 @@ function makeSubscriptionQuery(data = null, { isLoading = false, error = null } 
     isLoading: { value: isLoading },
     error: { value: error }
   }
-}
-
-async function makePlanSection(queryOverride = {}) {
-  const PlanSection = (await import('@/components/settings/tab-subscription/plan-section.vue'))
-    .default
-
-  const query = makeSubscriptionQuery(...Object.values(queryOverride))
-
-  return shallowMount(PlanSection, {
-    props: { subscriptionQuery: query },
-    global: {
-      plugins: [createTestingPinia({ createSpy: vi.fn })],
-      stubs: {
-        LabeledSection: LabeledSectionStub,
-        PlanPill: PlanPillStub,
-        PlanActions: PlanActionsStub,
-        PaidFeatures: PaidFeaturesStub
-      }
-    }
-  })
 }
 
 // ── Reset ─────────────────────────────────────────────────────────────────────

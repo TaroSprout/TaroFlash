@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
+import { describe, test, expect, vi, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { computed, defineComponent, h, nextTick, reactive, useAttrs } from 'vue'
 import TabApp from '@/components/settings/tab-app/index.vue'
