@@ -133,11 +133,12 @@ async function resume(): Promise<boolean> {
   if (context.state === 'running') return true
 
   try {
+    let id: ReturnType<typeof setTimeout>
     await Promise.race([
-      context.resume(),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('timeout')), RESUME_TIMEOUT_MS)
-      )
+      context.resume().finally(() => clearTimeout(id)),
+      new Promise<never>((_, reject) => {
+        id = setTimeout(() => reject(new Error('timeout')), RESUME_TIMEOUT_MS)
+      })
     ])
   } catch {
     return false
