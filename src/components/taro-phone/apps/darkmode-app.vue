@@ -19,7 +19,7 @@ const { cycle } = theme_store
 
 const modes = computed<{ [key in ThemeMode]: ModeConfig }>(() => ({
   system: { labelKey: 'phone.apps.darkmode.mode-system', theme: 'purple-500' },
-  light: { labelKey: 'phone.apps.darkmode.mode-light', theme: 'yellow-600' },
+  light: { labelKey: 'phone.apps.darkmode.mode-light', theme: 'orange-500' },
   dark: { labelKey: 'phone.apps.darkmode.mode-dark', theme: 'blue-650' }
 }))
 
@@ -35,7 +35,7 @@ function cycleMode() {
 
 <template>
   <app-shell
-    :theme="theme"
+    :data-theme="theme"
     :title="title"
     :tap-hold="0"
     :tap-duration="0.2"

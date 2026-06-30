@@ -5,6 +5,7 @@ import { emitHoverSfx } from '@/sfx/bus'
 import SettingsApp from '@/components/taro-phone/apps/settings-app.vue'
 import DarkmodeApp from '@/components/taro-phone/apps/darkmode-app.vue'
 import LogoutApp from '@/components/taro-phone/apps/logout-app.vue'
+import FeedbackApp from '@/components/taro-phone/apps/feedback-app.vue'
 
 const { t } = useI18n()
 const shortcuts = useShortcuts('phone/app-launcher')
@@ -76,6 +77,7 @@ function _getApps() {
     >
       <settings-app />
       <darkmode-app />
+      <feedback-app />
       <logout-app />
     </div>
   </div>

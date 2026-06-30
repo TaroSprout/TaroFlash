@@ -8,7 +8,6 @@ import { useStagedTap } from '@/composables/ui/staged-tap'
 
 type AppShellProps = {
   title: string
-  theme: Theme
   iconSrc?: string
   hoverIconSrc?: string
   tapHold?: number
@@ -17,7 +16,6 @@ type AppShellProps = {
 }
 const {
   title,
-  theme,
   iconSrc,
   hoverIconSrc,
   tapHold = 0.1,
@@ -57,7 +55,6 @@ function spawnBurst() {
       <ui-tooltip
         :text="title"
         position="bottom"
-        :data-theme="theme"
         :gap="is_coarse ? -16 : -5"
         element="button"
         data-testid="phone-app"

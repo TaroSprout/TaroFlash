@@ -393,7 +393,7 @@
   --theme-primary: var(--color-orange-700);
   --theme-on-primary: var(--color-brown-100);
 
-  --theme-secondary: var(--color-yellow-600);
+  --theme-secondary: var(--color-orange-500);
   --theme-on-secondary: var(--color-brown-100);
 
   --theme-accent: var(--color-purple-700);
@@ -403,6 +403,21 @@
   --theme-on-neutral: var(--color-orange-700);
 }
 
+[data-theme='orange-500'],
+[data-theme='dark'] [data-theme-dark='orange-500'] {
+  --theme-primary: var(--color-orange-500);
+  --theme-on-primary: var(--color-brown-100);
+
+  --theme-secondary: var(--color-yellow-500);
+  --theme-on-secondary: var(--color-brown-700);
+
+  --theme-accent: var(--color-yellow-400);
+  --theme-on-accent: var(--color-brown-100);
+
+  --theme-neutral: var(--color-brown-100);
+  --theme-on-neutral: var(--color-brown-700);
+}
+
 /* ─── YELLOW ───────────────────────────────────────────────────────── */
 
 [data-theme='yellow-700'],
@@ -410,25 +425,10 @@
   --theme-primary: var(--color-yellow-700);
   --theme-on-primary: var(--color-brown-100);
 
-  --theme-secondary: var(--color-yellow-600);
+  --theme-secondary: var(--color-orange-500);
   --theme-on-secondary: var(--color-brown-100);
 
   --theme-accent: var(--color-purple-700);
-  --theme-on-accent: var(--color-brown-100);
-
-  --theme-neutral: var(--color-brown-100);
-  --theme-on-neutral: var(--color-brown-700);
-}
-
-[data-theme='yellow-600'],
-[data-theme='dark'] [data-theme-dark='yellow-600'] {
-  --theme-primary: var(--color-yellow-600);
-  --theme-on-primary: var(--color-brown-100);
-
-  --theme-secondary: var(--color-yellow-500);
-  --theme-on-secondary: var(--color-brown-700);
-
-  --theme-accent: var(--color-yellow-400);
   --theme-on-accent: var(--color-brown-100);
 
   --theme-neutral: var(--color-brown-100);

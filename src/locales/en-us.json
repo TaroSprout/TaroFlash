@@ -10,6 +10,7 @@
   "app.footer.description": "TaroFlash is an SRS flashcard app with deck management, rich card editing, and spaced-repetition scheduling.",
   "phone.launcher.title": "TaroPhone",
   "phone.apps.settings.title": "Settings",
+  "phone.apps.feedback.title": "Feedback",
   "phone.apps.darkmode.mode-system": "System",
   "phone.apps.darkmode.mode-light": "Lightmode",
   "phone.apps.darkmode.mode-dark": "Darkmode",

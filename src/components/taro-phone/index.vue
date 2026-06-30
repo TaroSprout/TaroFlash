@@ -34,16 +34,22 @@ function togglePhone() {
 function openPhone() {
   store.open()
   emitSfx('pop_window')
-  document.addEventListener('click', onPageClick)
+  document.addEventListener('pointerdown', onPageClick)
 }
 
 function closePhone() {
   store.close()
   emitSfx('pop_window')
-  document.removeEventListener('click', onPageClick)
+  document.removeEventListener('pointerdown', onPageClick)
 }
 
+// Listens on pointerdown (not click) so outside-detection runs before any
+// click handler in the interaction — e.g. a modal's own close button — has a
+// chance to mutate modal_stack/is_open first, which would otherwise race
+// against this check.
 function onPageClick(e: Event) {
+  if (!store.is_open) return
+
   if (!isInsidePhone(e) && modal_stack.value.length === 0) {
     closePhone()
   }
