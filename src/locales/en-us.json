@@ -301,6 +301,7 @@
   "study-session.edit.done": "Done",
   "study-session.flashcard.saving": "Saving…",
   "study-session.flashcard.saved": "Saved",
+  "study-session.flashcard.studying-count": "Studying {count} Card | Studying {count} Cards",
   "study.settings.study-all-toggle": "Study all cards",
   "study.settings.shuffle-toggle": "Shuffle",
   "study.settings.flip-toggle": "Flip cards",
