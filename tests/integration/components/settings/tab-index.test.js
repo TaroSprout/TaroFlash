@@ -5,7 +5,7 @@ import { defineComponent, h, ref, useAttrs } from 'vue'
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
 
-import TabIndex from '@/phone/apps/settings/component/tab-index/index.vue'
+import TabIndex from '@/components/settings/tab-index/index.vue'
 import { memberDangerActionsKey } from '@/composables/member/danger-actions'
 
 const ButtonStub = defineComponent({

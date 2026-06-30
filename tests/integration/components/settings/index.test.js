@@ -76,7 +76,7 @@ vi.mock('@/composables/alert', () => ({
   useAlert: () => ({ warn: mockAlertWarn })
 }))
 
-vi.mock('@/phone/apps/settings/component/tab-index/index.vue', async () => {
+vi.mock('@/components/settings/tab-index/index.vue', async () => {
   const { defineComponent, h } = await import('vue')
   return {
     default: defineComponent({
@@ -177,7 +177,7 @@ const TabSheetStub = defineComponent({
   }
 })
 
-import SettingsApp from '@/phone/apps/settings/component/index.vue'
+import SettingsApp from '@/components/settings/index.vue'
 
 // ── Factory ───────────────────────────────────────────────────────────────────
 

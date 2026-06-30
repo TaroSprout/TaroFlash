@@ -9,13 +9,13 @@ const {
   routerPushMock,
   guardCreateDeckMock,
   deckCreateModalOpenMock,
-  phoneOpenMock,
+  settingsModalOpenMock,
   toastErrorMock
 } = vi.hoisted(() => ({
   routerPushMock: vi.fn(),
   guardCreateDeckMock: vi.fn(() => Promise.resolve(true)),
   deckCreateModalOpenMock: vi.fn(),
-  phoneOpenMock: vi.fn(),
+  settingsModalOpenMock: vi.fn(),
   toastErrorMock: vi.fn()
 }))
 
@@ -55,8 +55,8 @@ vi.mock('@/composables/storage/local-ref', () => ({
   useLocalRef: (_key, _default) => localShowInboxRef
 }))
 
-vi.mock('@/phone/store', () => ({
-  usePhoneStore: () => ({ open: phoneOpenMock })
+vi.mock('@/composables/settings/use-settings-modal', () => ({
+  useSettingsModal: () => ({ open: settingsModalOpenMock })
 }))
 
 vi.mock('@/composables/ui/media-query', () => ({
@@ -265,10 +265,10 @@ describe('DashboardIndex — review inbox visibility', () => {
 })
 
 describe('DashboardIndex — edit button opens settings', () => {
-  test('clicking edit button calls phone.open("settings")', async () => {
+  test('clicking edit button calls settingsModal.open()', async () => {
     const wrapper = mountDashboard()
     await wrapper.find('[data-testid="member-badge__edit-button"]').trigger('click')
-    expect(phoneOpenMock).toHaveBeenCalledWith('settings')
+    expect(settingsModalOpenMock).toHaveBeenCalledOnce()
   })
 })
 

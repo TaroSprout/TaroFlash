@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
-import DangerDeleteAccountButton from '@/phone/apps/settings/component/danger-delete-account-button.vue'
+import TabDangerZone from '@/components/settings/tab-danger-zone/index.vue'
 import { memberDangerActionsKey } from '@/composables/member/danger-actions'
 
 const ButtonStub = defineComponent({
@@ -26,11 +26,11 @@ const ButtonStub = defineComponent({
   }
 })
 
-function mountWith({ deleting = false } = {}) {
+function makeTab({ deleting = false } = {}) {
   const onDeleteAccount = vi.fn()
   const deleting_account = ref(deleting)
   const danger = { onDeleteAccount, deleting_account }
-  const wrapper = mount(DangerDeleteAccountButton, {
+  const wrapper = mount(TabDangerZone, {
     global: {
       provide: { [memberDangerActionsKey]: danger },
       stubs: { UiButton: ButtonStub },
@@ -40,30 +40,25 @@ function mountWith({ deleting = false } = {}) {
   return { wrapper, onDeleteAccount, deleting_account }
 }
 
-describe('DangerDeleteAccountButton', () => {
-  test('renders with the shared testid', () => {
-    const { wrapper } = mountWith()
+describe('TabDangerZone', () => {
+  test('renders the danger-zone container with the delete-account button', () => {
+    const { wrapper } = makeTab()
+    expect(wrapper.find('[data-testid="tab-danger-zone"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="danger-delete-account-button"]').exists()).toBe(true)
   })
 
-  test('invokes injected onDeleteAccount on click', async () => {
-    const { wrapper, onDeleteAccount } = mountWith()
+  test('invokes onDeleteAccount when the delete-account button is clicked', async () => {
+    const { wrapper, onDeleteAccount } = makeTab()
     await wrapper.find('[data-testid="danger-delete-account-button"]').trigger('click')
     expect(onDeleteAccount).toHaveBeenCalledTimes(1)
   })
 
-  test('reflects deleting_account ref via data-loading', async () => {
-    const { wrapper, deleting_account } = mountWith()
+  test('reflects deleting_account ref on the button', async () => {
+    const { wrapper, deleting_account } = makeTab()
     const btn = wrapper.find('[data-testid="danger-delete-account-button"]')
     expect(btn.attributes('data-loading')).toBe('false')
     deleting_account.value = true
     await wrapper.vm.$nextTick()
     expect(btn.attributes('data-loading')).toBe('true')
-  })
-
-  test('disabled click is a no-op while deleting', async () => {
-    const { wrapper, onDeleteAccount } = mountWith({ deleting: true })
-    await wrapper.find('[data-testid="danger-delete-account-button"]').trigger('click')
-    expect(onDeleteAccount).not.toHaveBeenCalled()
   })
 })

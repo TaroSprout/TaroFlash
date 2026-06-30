@@ -1,9 +1,9 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
-import SettingsAside from '@/phone/apps/settings/component/settings-aside.vue'
+import SettingsAside from '@/components/settings/settings-aside.vue'
 import { memberEditorKey } from '@/composables/member/editor'
-import { settingsCloseKey } from '@/phone/apps/settings/layout'
+import { settingsCloseKey } from '@/components/settings/layout'
 
 function makeEditor() {
   return {

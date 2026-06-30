@@ -1,9 +1,9 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
-import SettingsSaveButton from '@/phone/apps/settings/component/settings-save-button.vue'
+import SettingsSaveButton from '@/components/settings/settings-save-button.vue'
 import { memberEditorKey } from '@/composables/member/editor'
-import { settingsCloseKey } from '@/phone/apps/settings/layout'
+import { settingsCloseKey } from '@/components/settings/layout'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 

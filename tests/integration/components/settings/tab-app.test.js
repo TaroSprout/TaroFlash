@@ -1,9 +1,9 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { computed, defineComponent, h, nextTick, reactive, useAttrs } from 'vue'
-import TabApp from '@/phone/apps/settings/component/tab-app/index.vue'
+import TabApp from '@/components/settings/tab-app/index.vue'
 import { memberEditorKey } from '@/composables/member/editor'
-import { settingsLayoutKey } from '@/phone/apps/settings/layout'
+import { settingsLayoutKey } from '@/components/settings/layout'
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn(), emitHoverSfx: vi.fn(), emitStudySfx: vi.fn() }))
 // Break config→player→config circular dep.

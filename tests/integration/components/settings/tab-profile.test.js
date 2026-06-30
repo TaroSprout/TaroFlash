@@ -3,14 +3,14 @@ import { mount } from '@vue/test-utils'
 import { defineComponent, h, reactive, ref, useAttrs } from 'vue'
 
 vi.mock('@/composables/ui/media-query', async () => {
-  const m = await import('../../../../../helpers/responsive-mock')
+  const m = await import('../../../helpers/responsive-mock')
   return m.responsiveMockModule
 })
 
-import { resetResponsive } from '../../../../../helpers/responsive-mock'
-import TabProfile from '@/phone/apps/settings/component/tab-profile/index.vue'
+import { resetResponsive } from '../../../helpers/responsive-mock'
+import TabProfile from '@/components/settings/tab-profile/index.vue'
 import { memberEditorKey } from '@/composables/member/editor'
-import { settingsLayoutKey } from '@/phone/apps/settings/layout'
+import { settingsLayoutKey } from '@/components/settings/layout'
 import { computed } from 'vue'
 
 const InputStub = defineComponent({
