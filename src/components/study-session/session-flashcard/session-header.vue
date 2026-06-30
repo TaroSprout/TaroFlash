@@ -3,7 +3,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import UiDropdownButton, {
   type DropdownOption
 } from '@/components/ui-kit/dropdown-button/index.vue'
-import { computed, useTemplateRef } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { DECK_CONFIG_DEFAULTS } from '@/utils/deck/defaults'
 
@@ -20,9 +20,6 @@ const {
   show_menu = true,
   show_all_ratings = DECK_CONFIG_DEFAULTS.show_all_ratings
 } = defineProps<SessionHeaderProps>()
-
-const title_el = useTemplateRef('title')
-defineExpose({ title_el })
 
 const emit = defineEmits<{
   (e: 'stop'): void
@@ -104,7 +101,6 @@ function onSelect(option: DropdownOption) {
     </ui-button>
 
     <h1
-      ref="title"
       data-testid="session-header__title"
       class="truncate text-center text-3xl font-bold text-brown-700 dark:text-brown-100"
     >

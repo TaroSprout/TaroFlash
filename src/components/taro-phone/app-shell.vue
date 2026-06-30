@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import UiBurst from '@/components/ui-kit/burst.vue'
 import UiImage from '@/components/ui-kit/image.vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
@@ -51,16 +50,12 @@ function spawnBurst() {
 
 <template>
   <div data-testid="app-shell-container" class="flex flex-col items-center gap-0.5">
-    <div class="relative">
-      <ui-tooltip
-        :text="title"
-        position="bottom"
-        :gap="is_coarse ? -16 : -5"
-        element="button"
+    <div>
+      <button
         data-testid="phone-app"
         v-bind="$attrs"
         :data-active="playing || null"
-        class="rounded-6 pointer-fine:rounded-5.5 w-16.5 pointer-fine:w-15 aspect-square cursor-pointer hover:scale-110 focus:scale-110 transition-transform duration-50 flex items-center justify-center text-white group outline-none bg-(--theme-primary) tap:bgx-diagonal-stripes animation-safe:tap:bgx-slide"
+        class="rounded-6 pointer-fine:rounded-6 size-16.5 cursor-pointer hover:scale-110 focus:scale-110 transition-transform duration-50 flex items-center justify-center text-white group outline-none bg-(--theme-primary) tap:bgx-diagonal-stripes animation-safe:tap:bgx-slide p-0.5"
         @click="onClick"
       >
         <slot>
@@ -78,7 +73,7 @@ function spawnBurst() {
             class="hidden group-hover:block group-focus:block group-data-[playing=true]:block pointer-events-none"
           />
         </slot>
-      </ui-tooltip>
+      </button>
       <ui-burst
         v-if="burst_id"
         :key="burst_id"

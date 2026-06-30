@@ -9,7 +9,6 @@ import { useCardPreview } from '@/components/study-session/composables/card-prev
 import { useCardEdit } from '@/components/study-session/composables/card-edit'
 import { useActiveCardActions } from '@/components/study-session/composables/card-actions'
 import { useSessionCards } from '@/components/study-session/composables/session-cards'
-import { useCoverIntro } from './use-cover-intro'
 import { useModalRequestClose } from '@/composables/modal'
 import { type Grade } from 'ts-fsrs'
 import { computed, ref, useTemplateRef, watch } from 'vue'
@@ -79,18 +78,10 @@ const { loading } = useSessionCards({
 })
 
 const stage = useTemplateRef('stage')
-const header = useTemplateRef('header')
-const progress = useTemplateRef('progress')
 const primed_grade = ref<Grade | null>(null)
 providePrimedGrade(primed_grade)
 const flushDeckReviews = useFlushDeckReviews()
 const upsert_deck = useUpsertDeckMutation()
-
-useCoverIntro({
-  isCover: () => is_cover.value,
-  title: () => header.value?.title_el,
-  progress: () => progress.value?.root
-})
 
 const can_edit = computed(() => !loading.value && !editing.value && !is_cover.value)
 
@@ -153,7 +144,6 @@ watch(mode, (m) => {
       :class="{ 'opacity-0 pointer-events-none': mode !== 'studying' }"
     >
       <session-header
-        ref="header"
         :title="title"
         :can_edit="can_edit"
         :is_cover="is_cover"
@@ -170,9 +160,9 @@ watch(mode, (m) => {
         class="flex-1 min-h-0 w-full max-w-117 flex flex-col items-center justify-between"
       >
         <session-progress
-          ref="progress"
           :editing="editing"
           :saving="saving"
+          :is_cover="is_cover"
           :reviewed="current_index"
           :total="cards.length"
         />
@@ -202,6 +192,7 @@ watch(mode, (m) => {
           :options="active_card?.preview"
           :side="current_card_side"
           :show_all_ratings="config.show_all_ratings"
+          :loading="loading"
           @started="startSession"
           @rated="onRated"
         />

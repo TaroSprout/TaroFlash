@@ -151,6 +151,40 @@ describe('RatingButtons', () => {
     })
   })
 
+  // ── side: 'cover' + loading prop [obligation] ───────────────────────────────
+
+  describe('when side is "cover" and loading is true', () => {
+    test('clicking the start button does NOT emit "started" while loading [obligation]', async () => {
+      const wrapper = mountRatingButtons({ side: 'cover', loading: true })
+      await wrapper.find('[data-testid="rating-buttons__start"]').trigger('click')
+
+      expect(wrapper.emitted('started')).toBeUndefined()
+    })
+
+    test('the start button is disabled while loading [obligation]', () => {
+      const wrapper = mountRatingButtons({ side: 'cover', loading: true })
+      expect(
+        wrapper.find('[data-testid="rating-buttons__start"]').attributes('aria-disabled')
+      ).toBe('true')
+    })
+  })
+
+  describe('when side is "cover" and loading is false', () => {
+    test('clicking the start button emits "started" when not loading [obligation]', async () => {
+      const wrapper = mountRatingButtons({ side: 'cover', loading: false })
+      await wrapper.find('[data-testid="rating-buttons__start"]').trigger('click')
+
+      expect(wrapper.emitted('started')).toHaveLength(1)
+    })
+
+    test('the start button is not disabled when not loading [obligation]', () => {
+      const wrapper = mountRatingButtons({ side: 'cover', loading: false })
+      expect(
+        wrapper.find('[data-testid="rating-buttons__start"]').attributes('aria-disabled')
+      ).toBeUndefined()
+    })
+  })
+
   // ── primed_grade prop forwarding [obligation] ──────────────────────────────
 
   describe('primed_grade forwarding to advanced-rating-buttons', () => {

@@ -9,9 +9,10 @@ type RatingButtonsProps = {
   options?: RecordLog
   side: CardSide
   show_all_ratings?: boolean
+  loading?: boolean
 }
 
-const { side, show_all_ratings = false } = defineProps<RatingButtonsProps>()
+const { side, show_all_ratings = false, loading = false } = defineProps<RatingButtonsProps>()
 
 const { t } = useI18n()
 
@@ -30,6 +31,8 @@ const emit = defineEmits<{
       data-theme-dark="blue-650"
       size="xl"
       full-width
+      :loading="loading"
+      :disabled="loading"
       :sfx="{ tap_pre: 'snappy_button_5' }"
       @press="emit('started')"
     >
