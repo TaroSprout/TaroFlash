@@ -11,7 +11,7 @@ import { emitSfx } from '@/sfx/bus'
 import { TYPE_SFX } from '@/sfx/config'
 import { settingsLayoutKey } from '../layout'
 
-export type TabIndexNavValue = 'profile' | 'subscription' | 'app'
+export type TabIndexNavValue = 'profile' | 'subscription' | 'app' | 'review-preferences'
 
 const { t } = useI18n()
 const layout_mode = inject(settingsLayoutKey)!
@@ -31,7 +31,10 @@ const nav_groups = computed<NavGroup[]>(() => [
   {
     key: 'app',
     heading: t('settings.index.app-heading'),
-    entries: [{ value: 'app', icon: 'screwdriver-wrench' }]
+    entries: [
+      { value: 'app', icon: 'screwdriver-wrench' },
+      { value: 'review-preferences', icon: 'card-deck' }
+    ]
   }
 ])
 
