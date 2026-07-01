@@ -8,3 +8,7 @@ export const settingsLayoutKey: InjectionKey<ComputedRef<SettingsLayout>> =
 
 export type SettingsClose = () => void
 export const settingsCloseKey: InjectionKey<SettingsClose> = Symbol('settings-close')
+
+/** Lets a descendant dial the settings modal back/forward when it opens a modal on top of it. */
+export type SettingsRecede = { recede: () => void; restore: () => void }
+export const settingsRecedeKey: InjectionKey<SettingsRecede> = Symbol('settings-recede')

@@ -23,8 +23,9 @@ export function useSubscriptionActions() {
   const cancelMutation = useCancelSubscriptionMutation()
   const resumeMutation = useResumeSubscriptionMutation()
 
-  function onUpgrade() {
-    modal.open(Checkout, { mode: 'mobile-sheet', backdrop: true })
+  async function onUpgrade() {
+    const { response } = modal.open(Checkout, { mode: 'mobile-sheet', backdrop: true })
+    await response
   }
 
   async function onCancel() {

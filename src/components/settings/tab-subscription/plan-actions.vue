@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import type { useSubscriptionQuery } from '@/api/billing'
-import { useSubscriptionActions } from '@/composables/member/subscription-actions'
+import { useUpgradeClick } from './use-upgrade-click'
 
 type SubscriptionQuery = ReturnType<typeof useSubscriptionQuery>
 type Subscription = SubscriptionQuery['data']['value']
@@ -14,7 +14,7 @@ type PlanActionsProps = {
 const { subscription } = defineProps<PlanActionsProps>()
 
 const { t } = useI18n()
-const { onUpgrade, onCancel, onResume, canceling, resuming } = useSubscriptionActions()
+const { onUpgradeClick, onCancel, onResume, canceling, resuming } = useUpgradeClick()
 </script>
 
 <template>
@@ -24,7 +24,7 @@ const { onUpgrade, onCancel, onResume, canceling, resuming } = useSubscriptionAc
     data-theme="yellow-500"
     size="sm"
     icon-left="triangle-eye"
-    @press="onUpgrade"
+    @press="onUpgradeClick"
   >
     {{ t('settings.subscription.free.upgrade') }}
   </ui-button>
