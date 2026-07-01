@@ -28,6 +28,9 @@ const { t } = useI18n()
 const TabProfile = defineAsyncComponent(() => import('./tab-profile/index.vue'))
 const TabSubscription = defineAsyncComponent(() => import('./tab-subscription/index.vue'))
 const TabApp = defineAsyncComponent(() => import('./tab-app/index.vue'))
+const TabReviewPreferences = defineAsyncComponent(
+  () => import('./tab-review-preferences/index.vue')
+)
 const TabDangerZone = defineAsyncComponent(() => import('./tab-danger-zone/index.vue'))
 const TabIndex = defineAsyncComponent(() => import('./tab-index/index.vue'))
 
@@ -35,6 +38,7 @@ const TAB_COMPONENTS = {
   index: TabIndex,
   profile: TabProfile,
   app: TabApp,
+  'review-preferences': TabReviewPreferences,
   subscription: TabSubscription,
   'danger-zone': TabDangerZone
 }
@@ -55,7 +59,7 @@ const { layout_mode, sheet_px } = useTabModalLayout({
 provide(settingsLayoutKey, layout_mode)
 provide(settingsCloseKey, close)
 
-type ActiveTab = 'profile' | 'subscription' | 'app' | 'danger-zone'
+type ActiveTab = 'profile' | 'subscription' | 'app' | 'review-preferences' | 'danger-zone'
 const active_tab = ref<ActiveTab | null>(null)
 
 const tab_outlet = ref<HTMLElement>()
@@ -64,6 +68,11 @@ const { nav_direction, onTabEnter, onTabLeave } = useTabTransition(layout_mode, 
 const tabs = computed(() => [
   { value: 'profile', icon: 'user-sticker-square', label: t('settings.tab.profile') },
   { value: 'app', icon: 'screwdriver-wrench', label: t('settings.tab.app') },
+  {
+    value: 'review-preferences',
+    icon: 'card-deck',
+    label: t('settings.tab.review-preferences')
+  },
   { value: 'subscription', icon: 'piggy-bank', label: t('settings.tab.subscription') },
   { value: 'danger-zone', icon: 'delete', label: t('settings.tab.danger-zone') }
 ])
@@ -101,6 +110,7 @@ onMounted(() => {
     import('./tab-profile/index.vue')
     import('./tab-subscription/index.vue')
     import('./tab-app/index.vue')
+    import('./tab-review-preferences/index.vue')
     import('./tab-danger-zone/index.vue')
     import('./tab-index/index.vue')
   })
@@ -142,7 +152,7 @@ watch(layout_mode, (mode) => {
     data-theme-dark="blue-650"
     :data-layout="layout_mode"
     :class="[
-      layout_mode === 'desktop' ? 'w-255!' : 'w-full! max-w-224',
+      layout_mode === 'desktop' ? 'w-262!' : 'w-full! max-w-224',
       layout_mode !== 'sheet' && 'h-170',
       layout_mode === 'sheet' ? '[--settings-padding:var(--sheet-px)]' : '[--settings-padding:0px]'
     ]"
