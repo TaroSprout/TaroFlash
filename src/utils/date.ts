@@ -68,6 +68,7 @@ function toRelativeAtUnit(
   const diffSeconds = (toDate(input).getTime() - Date.now()) / 1000
   const perUnit = RELATIVE_UNITS.find(([u]) => u === unit)![1]
   const formatter = new Intl.RelativeTimeFormat(locale, { style })
+  if (!Number.isFinite(diffSeconds)) return formatter.format(0, 'second')
   return formatter.format(Math.round(diffSeconds / perUnit), unit)
 }
 

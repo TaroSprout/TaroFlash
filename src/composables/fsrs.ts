@@ -12,7 +12,7 @@ export function useRatingFormat() {
     options?: RecordLog,
     style: 'long' | 'short' = 'long'
   ) {
-    if (!options) return ''
+    if (!options?.[grade].card.due) return ''
 
     const dates = GRADES.map((g) => options[g].card.due)
     const labels = toRelativeDistinct(dates, { style, locale: locale.value })
