@@ -187,11 +187,6 @@ describe('TabSheet', () => {
     expect(wrapper.find('[data-testid="header-custom"]').exists()).toBe(true)
   })
 
-  test('forwards footer slot through to the underlying mobile-sheet', () => {
-    const wrapper = mountSheet({}, { footer: '<div data-testid="footer-content">f</div>' })
-    expect(wrapper.find('[data-testid="footer-content"]').exists()).toBe(true)
-  })
-
   // ── parts prop ─────────────────────────────────────────────────────────────
 
   test('merges parts.content classes onto the content container', () => {

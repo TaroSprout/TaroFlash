@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, nextTick, useAttrs } from 'vue'
+import { defineComponent, h, inject, nextTick, useAttrs } from 'vue'
+import { settingsRecedeKey } from '@/components/settings/layout'
 
 // ── Hoisted state ─────────────────────────────────────────────────────────────
 
@@ -109,6 +110,17 @@ vi.mock('@/utils/animations/tab-slide', () => ({
   tabSlideLeave: vi.fn(() => vi.fn((_el, done) => done?.()))
 }))
 
+const { mockRecedeModal, mockRestoreModal } = vi.hoisted(() => ({
+  mockRecedeModal: vi.fn(),
+  mockRestoreModal: vi.fn()
+}))
+
+vi.mock('@/utils/animations/modal', async (importOriginal) => ({
+  ...(await importOriginal()),
+  recedeModal: mockRecedeModal,
+  restoreModal: mockRestoreModal
+}))
+
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
 const PassthroughStub = defineComponent({
@@ -169,6 +181,14 @@ const TabSheetStub = defineComponent({
             },
             'app'
           ),
+          h(
+            'button',
+            {
+              'data-testid': 'tab-sheet__select-subscription',
+              onClick: () => emit('update:active', 'subscription')
+            },
+            'subscription'
+          ),
           h('div', { 'data-testid': 'tab-sheet__content' }, slots.default?.()),
           h('div', { 'data-testid': 'tab-sheet__overlay' }, slots.overlay?.()),
           h('div', { 'data-testid': 'tab-sheet__footer' }, slots.footer?.())
@@ -178,6 +198,18 @@ const TabSheetStub = defineComponent({
 })
 
 import SettingsApp from '@/components/settings/index.vue'
+
+const InjectRecedeStub = defineComponent({
+  name: 'InjectRecedeStub',
+  setup() {
+    const recede = inject(settingsRecedeKey)
+    return () =>
+      h('div', [
+        h('button', { 'data-testid': 'recede-trigger', onClick: () => recede?.recede() }),
+        h('button', { 'data-testid': 'restore-trigger', onClick: () => recede?.restore() })
+      ])
+  }
+})
 
 // ── Factory ───────────────────────────────────────────────────────────────────
 
@@ -481,5 +513,55 @@ describe('settings app — open/close sfx [obligation]', () => {
     mockEmitSfx.mockReset()
     wrapper.unmount()
     expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+  })
+})
+
+// ── Recede/restore provide wiring ───────────────────────────────────────────────
+
+describe('settings app — recede/restore choreography [obligation]', () => {
+  function makeWrapperWithRecedeInjector(closeFn = vi.fn()) {
+    return mount(SettingsApp, {
+      props: { close: closeFn },
+      global: {
+        stubs: {
+          TabSheet: TabSheetStub,
+          TabIndex: TabIndexStub,
+          TabProfile: PassthroughStub,
+          TabSubscription: InjectRecedeStub,
+          TabSounds: PassthroughStub,
+          TabApp: PassthroughStub,
+          TabDangerZone: PassthroughStub,
+          SettingsAside: PassthroughStub,
+          SettingsSaveButton: PassthroughStub,
+          SettingsBackButton: PassthroughStub,
+          MemberCard: PassthroughStub,
+          UiButton: PassthroughStub,
+          UiTagButton: PassthroughStub,
+          UiIcon: PassthroughStub
+        }
+      }
+    })
+  }
+
+  test('provides recede() calling recedeModal on the tab-sheet root element', async () => {
+    mockRecedeModal.mockClear()
+    const wrapper = makeWrapperWithRecedeInjector()
+    await wrapper.find('[data-testid="tab-sheet__select-subscription"]').trigger('click')
+    await flushPromises()
+
+    await wrapper.find('[data-testid="recede-trigger"]').trigger('click')
+
+    expect(mockRecedeModal).toHaveBeenCalledOnce()
+  })
+
+  test('provides restore() calling restoreModal on the tab-sheet root element', async () => {
+    mockRestoreModal.mockClear()
+    const wrapper = makeWrapperWithRecedeInjector()
+    await wrapper.find('[data-testid="tab-sheet__select-subscription"]').trigger('click')
+    await flushPromises()
+
+    await wrapper.find('[data-testid="restore-trigger"]').trigger('click')
+
+    expect(mockRestoreModal).toHaveBeenCalledOnce()
   })
 })

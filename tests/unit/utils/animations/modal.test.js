@@ -13,7 +13,9 @@ import {
   slideUpFromEdge,
   slideDownToEdge,
   springScaleIn,
-  scaleFadeOut
+  scaleFadeOut,
+  recedeModal,
+  restoreModal
 } from '@/utils/animations/modal'
 
 const el = document.createElement('div')
@@ -175,6 +177,54 @@ describe('modal animations', () => {
       scaleFadeOut(el, done)
 
       expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ onComplete: done }))
+    })
+  })
+
+  describe('recedeModal', () => {
+    test('[obligation] seeds filter to brightness(1) blur(0px) before tweening', () => {
+      recedeModal(el)
+
+      expect(mockSet).toHaveBeenCalledWith(el, { filter: 'brightness(1) blur(0px)' })
+    })
+
+    test('[obligation] seeding happens before the tween is issued', () => {
+      recedeModal(el)
+
+      const setOrder = mockSet.mock.invocationCallOrder[0]
+      const toOrder = mockTo.mock.invocationCallOrder[0]
+      expect(setOrder).toBeLessThan(toOrder)
+    })
+
+    test('tweens scale down and dims/blurs via filter', () => {
+      recedeModal(el)
+
+      expect(mockTo).toHaveBeenCalledWith(
+        el,
+        expect.objectContaining({ scale: 0.9, filter: 'brightness(0.8) blur(2px)' })
+      )
+    })
+
+    test('disables pointer events while receded', () => {
+      recedeModal(el)
+
+      expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ pointerEvents: 'none' }))
+    })
+  })
+
+  describe('restoreModal', () => {
+    test('[obligation] seeds pointerEvents to auto before tweening', () => {
+      restoreModal(el)
+
+      expect(mockSet).toHaveBeenCalledWith(el, { pointerEvents: 'auto' })
+    })
+
+    test('tweens scale and filter back to full prominence', () => {
+      restoreModal(el)
+
+      expect(mockTo).toHaveBeenCalledWith(
+        el,
+        expect.objectContaining({ scale: 1, filter: 'brightness(1) blur(0px)' })
+      )
     })
   })
 })
