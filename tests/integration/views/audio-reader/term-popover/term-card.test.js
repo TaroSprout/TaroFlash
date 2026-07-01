@@ -344,7 +344,7 @@ describe('TermCard', () => {
       expect(panel.attributes('data-back')).toBe('cat')
     })
 
-    test('panel saved slides back to term card and does NOT emit close [obligation]', async () => {
+    test('panel saved emits close and does NOT slide back to the term face [obligation]', async () => {
       mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
       await flushPromises()
@@ -354,10 +354,10 @@ describe('TermCard', () => {
       wrapper.findComponent(AddCardPanelStub).vm.$emit('saved')
       await flushPromises()
 
-      // Panel unmounts (term face restored), but close is NOT emitted
-      expect(wrapper.find('[data-testid="add-card-panel-stub"]').exists()).toBe(false)
-      expect(wrapper.find('[data-testid="term-card__face"]').exists()).toBe(true)
-      expect(wrapper.emitted('close')).toBeFalsy()
+      // Saved closes the whole popover instead of reversing the push — the
+      // panel is NOT swapped back for the term face.
+      expect(wrapper.emitted('close')).toHaveLength(1)
+      expect(wrapper.find('[data-testid="term-card__face"]').exists()).toBe(false)
     })
 
     test('panel cancel slides back to term card and does NOT emit close [obligation]', async () => {

@@ -1340,6 +1340,70 @@ describe('useReaderHighlights', () => {
     })
   })
 
+  describe('disableFollow — idle auto-resume timer [obligation]', () => {
+    beforeEach(() => vi.useFakeTimers())
+    afterEach(() => vi.useRealTimers())
+
+    test('re-arms following after FOLLOW_RESUME_IDLE_MS with no manual resume tap [obligation]', async () => {
+      const { result } = withHighlights()
+      expect(result.following.value).toBe(true)
+
+      window.dispatchEvent(new Event('wheel'))
+      await nextTick()
+      expect(result.following.value).toBe(false)
+
+      vi.advanceTimersByTime(5000)
+      await nextTick()
+
+      expect(result.following.value).toBe(true)
+    })
+
+    test('a second disableFollow call before the timer fires restarts the idle window [obligation]', async () => {
+      const { result } = withHighlights()
+
+      window.dispatchEvent(new Event('wheel'))
+      await nextTick()
+      expect(result.following.value).toBe(false)
+
+      // Most of the window elapses, then the member scrolls again — this must
+      // restart the countdown rather than let the original timer fire.
+      vi.advanceTimersByTime(4000)
+      window.dispatchEvent(new Event('wheel'))
+      await nextTick()
+
+      // Advancing to the original 5000ms mark (1000ms more) must NOT fire yet —
+      // the restarted timer needs its own full 5000ms from the second call.
+      vi.advanceTimersByTime(1000)
+      await nextTick()
+      expect(result.following.value).toBe(false)
+
+      // The restarted timer completes 4000ms later (5000ms after the second call).
+      vi.advanceTimersByTime(4000)
+      await nextTick()
+      expect(result.following.value).toBe(true)
+    })
+
+    test('calling resumeFollow manually cancels the pending auto re-arm [obligation]', async () => {
+      const { result } = withHighlights()
+
+      window.dispatchEvent(new Event('wheel'))
+      await nextTick()
+      expect(result.following.value).toBe(false)
+
+      result.resumeFollow()
+      expect(result.following.value).toBe(true)
+
+      // Force following back off directly (bypassing disableFollow) so that if
+      // the cancelled timer still fired, it would flip it back on and reveal
+      // the bug. Advancing past the original window must cause no change.
+      result.following.value = false
+      vi.advanceTimersByTime(5000)
+      await nextTick()
+
+      expect(result.following.value).toBe(false)
+    })
+  })
+
   describe('follow_direction [obligation]', () => {
     test('follow_direction is "up" when the active word centre is above the viewport centre [obligation]', async () => {
       const active_word = ref(0)
