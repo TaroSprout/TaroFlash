@@ -1,21 +1,29 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import type { CheckoutStatus } from './use-checkout'
 
 type PaymentStatusProps = {
-  is_loading: boolean
-  load_error: boolean
+  status: CheckoutStatus
 }
 
-const { is_loading, load_error } = defineProps<PaymentStatusProps>()
+const { status } = defineProps<PaymentStatusProps>()
 
 const { t } = useI18n()
 </script>
 
 <template>
-  <p v-if="is_loading" data-testid="checkout__loading" class="text-brown-700 py-10 text-center">
+  <p
+    v-if="status === 'loading'"
+    data-testid="checkout__loading"
+    class="text-brown-700 py-10 text-center"
+  >
     {{ t('billing.checkout.loading') }}
   </p>
-  <p v-else-if="load_error" data-testid="checkout__error" class="py-10 text-center text-red-500">
+  <p
+    v-else-if="status === 'error'"
+    data-testid="checkout__error"
+    class="py-10 text-center text-red-500"
+  >
     {{ t('billing.checkout.error') }}
   </p>
 </template>

@@ -1,17 +1,14 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
+import type { CheckoutStatus } from './use-checkout'
 
 type CheckoutFooterProps = {
-  is_loading: boolean
-  load_error: boolean
-  is_success: boolean
-  is_submitting: boolean
+  status: CheckoutStatus
   is_ready: boolean
 }
 
-const { is_loading, load_error, is_success, is_submitting, is_ready } =
-  defineProps<CheckoutFooterProps>()
+const { status, is_ready } = defineProps<CheckoutFooterProps>()
 
 const emit = defineEmits<{
   (e: 'submit'): void
@@ -22,21 +19,24 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <div v-if="!is_loading && !load_error" data-testid="checkout__footer" class="px-6 pb-6 pt-2">
+  <div
+    data-testid="checkout__footer"
+    class="shrink-0 px-(--checkout-padding) pb-(--checkout-padding) pt-2"
+  >
     <ui-button
-      v-if="!is_success"
+      v-if="status === 'form' || status === 'confirming'"
       data-testid="checkout__submit"
       data-theme="green-400"
       full-width
       size="lg"
-      :loading="is_submitting"
+      :loading="status === 'confirming'"
       :disabled="!is_ready"
       @press="emit('submit')"
     >
       {{ t('billing.checkout.submit') }}
     </ui-button>
     <ui-button
-      v-else
+      v-else-if="status === 'success'"
       data-testid="checkout__success-close"
       data-theme="green-400"
       full-width

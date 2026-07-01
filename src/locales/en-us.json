@@ -423,6 +423,7 @@
   "billing.checkout.success-heading": "You're upgraded",
   "billing.checkout.success-message": "Your plan is active. Enjoy the extra features.",
   "billing.checkout.success-close": "Done",
+  "billing.checkout.close-label": "Close",
   "shop.category.power-ups": "Power Ups",
   "shop.category.stationary": "Stationary",
   "shop.category.stickers": "Stickers",

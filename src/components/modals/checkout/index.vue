@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import mobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
 import CrossfadeResize from '@/components/layout-kit/crossfade-resize.vue'
+import UiButton from '@/components/ui-kit/button.vue'
 import PaymentStatus from './payment-status.vue'
 import SuccessView from './success-view.vue'
 import CheckoutFooter from './checkout-footer.vue'
@@ -14,35 +14,44 @@ const { close } = defineProps<{
 }>()
 
 const { t } = useI18n()
-const {
-  is_loading,
-  is_submitting,
-  is_ready,
-  load_error,
-  submit_error,
-  is_success,
-  onSubmit,
-  onDone
-} = useCheckout(close)
+const { status, is_ready, submit_error, onSubmit, onDone } = useCheckout(close)
 </script>
 
 <template>
-  <mobile-sheet
+  <div
     data-testid="checkout"
-    class="sm:max-w-150! sm:h-150"
-    :title="t('billing.checkout.title')"
-    sheet_px="4.5rem"
-    data-theme="green-400"
-    @close="close()"
+    class="h-160 w-150 relative flex flex-col justify-between overflow-hidden rounded-8 bg-brown-100 shadow-lg py-6 dark:bg-grey-800"
   >
-    <crossfade-resize data-testid="checkout__body-swap">
+    <header
+      data-testid="checkout__header"
+      class="w-full shrink-0 grid grid-cols-[1fr_auto_1fr] px-6"
+    >
+      <ui-button
+        data-testid="checkout__close"
+        data-theme="brown-300"
+        data-theme-dark="stone-700"
+        icon-left="close"
+        icon-only
+        rounded-full
+        class="justify-self-start"
+        @press="close()"
+      >
+        {{ t('billing.checkout.close-label') }}
+      </ui-button>
+
+      <h1 data-testid="checkout__title" class="text-4xl text-brown-700 dark:text-brown-100">
+        {{ t('billing.checkout.title') }}
+      </h1>
+    </header>
+
+    <crossfade-resize data-testid="checkout__body-swap" class="px-16">
       <div
-        v-if="!is_success"
+        v-if="status !== 'success'"
         key="form"
         data-testid="checkout__body"
-        class="overflow-y-auto max-h-[65dvh] px-(--sheet-px) pb-2 flex flex-col gap-4"
+        class="flex flex-col gap-4"
       >
-        <payment-status :is_loading="is_loading" :load_error="load_error" />
+        <payment-status :status="status" />
         <div ref="container" data-testid="checkout__payment-element"></div>
         <p v-if="submit_error" data-testid="checkout__submit-error" class="text-sm text-red-500">
           {{ submit_error }}
@@ -53,13 +62,11 @@ const {
     </crossfade-resize>
 
     <checkout-footer
-      :is_loading="is_loading"
-      :load_error="load_error"
-      :is_success="is_success"
-      :is_submitting="is_submitting"
+      class="px-16"
+      :status="status"
       :is_ready="is_ready"
       @submit="onSubmit"
       @done="onDone"
     />
-  </mobile-sheet>
+  </div>
 </template>

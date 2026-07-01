@@ -24,7 +24,7 @@ export function useSubscriptionActions() {
   const resumeMutation = useResumeSubscriptionMutation()
 
   async function onUpgrade() {
-    const { response } = modal.open(Checkout, { mode: 'mobile-sheet', backdrop: true })
+    const { response } = modal.open(Checkout, { mode: 'popup', backdrop: true })
     await response
   }
 
