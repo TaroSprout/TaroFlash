@@ -571,6 +571,54 @@ describe('useFlashcardSession', () => {
     expect(session.next_card.value?.id).toBe(cards[2].id)
   })
 
+  // ── dropCard [obligation] ──────────────────────────────────────────────────
+  // Deleting/moving a card mid-session must reset the next active card back to
+  // its starting side — otherwise a flipped card left the next card back-side-up.
+
+  test('dropCard resets current_card_side to the starting side when a card remains [obligation]', () => {
+    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const cards = [makeDueCard({ review: null }), makeDueCard({ review: null })]
+    session.setCards(cards)
+    session.startSession() // 'front'
+    session.flipCurrentCard() // now 'back'
+
+    session.dropCard(cards[0].id)
+
+    expect(session.mode.value).toBe('studying')
+    expect(session.active_card.value).toBeDefined()
+    expect(session.current_card_side.value).toBe('front')
+  })
+
+  test('dropCard resets to "back" as the starting side when flip_cards is true [obligation]', () => {
+    const session = useFlashcardSession({
+      study_all_cards: true,
+      retry_failed_cards: false,
+      flip_cards: true
+    })
+    const cards = [makeDueCard({ review: null }), makeDueCard({ review: null })]
+    session.setCards(cards)
+    session.startSession() // 'back' — starting side when flipped
+    session.flipCurrentCard() // now 'front'
+
+    session.dropCard(cards[0].id)
+
+    expect(session.current_card_side.value).toBe('back')
+  })
+
+  test('dropCard does not force a side change when no cards remain [obligation]', () => {
+    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const cards = [makeDueCard({ review: null })]
+    session.setCards(cards)
+    session.startSession() // 'front'
+    session.flipCurrentCard() // now 'back'
+
+    session.dropCard(cards[0].id)
+
+    expect(session.mode.value).toBe('completed')
+    expect(session.active_card.value).toBeUndefined()
+    expect(session.current_card_side.value).toBe('back')
+  })
+
   // ── is_cover ───────────────────────────────────────────────────────────────
 
   test('is_cover is true before startSession', () => {

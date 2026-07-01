@@ -131,6 +131,21 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
     if (!active_card.value) mode.value = 'completed'
   }
 
+  /**
+   * Patches a card's fields in the local session queue (and active_card, if
+   * it's the one showing). The session keeps its own copy of cards separate
+   * from the deck-list query cache, so an edit made mid-session needs its own
+   * patch path rather than relying on cache invalidation.
+   */
+  function updateCard(card_id: number, values: Partial<Card>) {
+    _cards_in_deck.value = _cards_in_deck.value.map((c) =>
+      c.id === card_id ? { ...c, ...values } : c
+    )
+    if (active_card.value?.id === card_id) {
+      active_card.value = { ...active_card.value, ...values }
+    }
+  }
+
   function reviewCard(grade?: Grade) {
     if (!active_card.value) return
 
@@ -210,6 +225,7 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
     setCards,
     updateConfig,
     reviewCard,
-    dropCard
+    dropCard,
+    updateCard
   }
 }

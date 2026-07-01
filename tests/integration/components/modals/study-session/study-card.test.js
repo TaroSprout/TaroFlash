@@ -328,6 +328,84 @@ describe('StudyCard', () => {
     expect(wrapper.emitted('side-changed')).toBeFalsy()
   })
 
+  // ── Tap release of a text selection must not flip [obligation] ─────────────
+  // Mirrors the same guard in grid-item.vue's onCardClick.
+
+  test('tap that releases a non-collapsed selection does NOT flip [obligation]', async () => {
+    const origGetSelection = window.getSelection
+    window.getSelection = () => ({ isCollapsed: false })
+
+    const wrapper = mountStudyCard({ side: 'front', options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    callbacks.onEnd({ dx: 0, dy: 0 })
+    await flushPromises()
+
+    expect(wrapper.emitted('side-changed')).toBeFalsy()
+    expect(wrapper.emitted('started')).toBeFalsy()
+
+    window.getSelection = origGetSelection
+  })
+
+  test('plain tap with a collapsed selection still flips [obligation]', async () => {
+    const origGetSelection = window.getSelection
+    window.getSelection = () => ({ isCollapsed: true })
+
+    const wrapper = mountStudyCard({ side: 'front', options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    callbacks.onEnd({ dx: 0, dy: 0 })
+    await flushPromises()
+
+    expect(wrapper.emitted('side-changed')).toHaveLength(1)
+
+    window.getSelection = origGetSelection
+  })
+
+  test('plain tap with no selection (getSelection returns null) still flips [obligation]', async () => {
+    const origGetSelection = window.getSelection
+    window.getSelection = () => null
+
+    const wrapper = mountStudyCard({ side: 'front', options })
+    await flushPromises()
+
+    const { callbacks } = getCallbacks()
+    callbacks.onEnd({ dx: 0, dy: 0 })
+    await flushPromises()
+
+    expect(wrapper.emitted('side-changed')).toHaveLength(1)
+
+    window.getSelection = origGetSelection
+  })
+
+  // ── onCardMouseDown suppresses multi-click selection [obligation] ──────────
+
+  test('onCardMouseDown calls preventDefault on a multi-click (detail > 1) [obligation]', async () => {
+    mountStudyCard({ side: 'front', options })
+    await flushPromises()
+
+    const { el } = getCallbacks()
+    const event = new MouseEvent('mousedown', { detail: 2, bubbles: true })
+    const preventDefaultSpy = vi.spyOn(event, 'preventDefault')
+    el.dispatchEvent(event)
+
+    expect(preventDefaultSpy).toHaveBeenCalled()
+  })
+
+  test('onCardMouseDown does NOT call preventDefault on a single click (detail === 1) [obligation]', async () => {
+    mountStudyCard({ side: 'front', options })
+    await flushPromises()
+
+    const { el } = getCallbacks()
+    const event = new MouseEvent('mousedown', { detail: 1, bubbles: true })
+    const preventDefaultSpy = vi.spyOn(event, 'preventDefault')
+    el.dispatchEvent(event)
+
+    expect(preventDefaultSpy).not.toHaveBeenCalled()
+  })
+
   test('long horizontal swipe (|dx| > 50) on back side flings and does NOT flip [obligation]', async () => {
     const wrapper = mountStudyCard({ side: 'back', options })
     await flushPromises()

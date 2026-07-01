@@ -58,3 +58,30 @@ export function toRelative(input: DateInput, options: RelativeOptions = {}): str
 
   return formatter.format(0, 'second')
 }
+
+function toRelativeAtUnit(
+  input: DateInput,
+  unit: Intl.RelativeTimeFormatUnit,
+  options: RelativeOptions = {}
+): string {
+  const { style = 'long', locale } = options
+  const diffSeconds = (toDate(input).getTime() - Date.now()) / 1000
+  const perUnit = RELATIVE_UNITS.find(([u]) => u === unit)![1]
+  const formatter = new Intl.RelativeTimeFormat(locale, { style })
+  if (!Number.isFinite(diffSeconds)) return formatter.format(0, 'second')
+  return formatter.format(Math.round(diffSeconds / perUnit), unit)
+}
+
+/**
+ * Formats a batch of dates that are displayed together (e.g. one per FSRS
+ * rating). Any dates that would otherwise render identical text collapse to
+ * day-level granularity instead, so "1 week" / "1 week" becomes "8 days" /
+ * "9 days".
+ */
+export function toRelativeDistinct(inputs: DateInput[], options: RelativeOptions = {}): string[] {
+  const labels = inputs.map((d) => toRelative(d, options))
+  return labels.map((label, i) => {
+    const collides = labels.some((other, j) => j !== i && other === label)
+    return collides ? toRelativeAtUnit(inputs[i]!, 'day', options) : label
+  })
+}

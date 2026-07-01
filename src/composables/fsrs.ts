@@ -1,6 +1,8 @@
-import { type Grade, type RecordLog } from 'ts-fsrs'
+import { Rating, type Grade, type RecordLog } from 'ts-fsrs'
 import { useI18n } from 'vue-i18n'
-import { toRelative } from '@/utils/date'
+import { toRelativeDistinct } from '@/utils/date'
+
+const GRADES: Grade[] = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy]
 
 export function useRatingFormat() {
   const { t, locale } = useI18n()
@@ -10,10 +12,11 @@ export function useRatingFormat() {
     options?: RecordLog,
     style: 'long' | 'short' = 'long'
   ) {
-    const date = options?.[grade].card.due
-    if (!date) return ''
+    if (!options?.[grade].card.due) return ''
 
-    const timeString = toRelative(date, { style, locale: locale.value })
+    const dates = GRADES.map((g) => options[g].card.due)
+    const labels = toRelativeDistinct(dates, { style, locale: locale.value })
+    const timeString = labels[GRADES.indexOf(grade)]
     return t('study.idle.next-session-cta', { time: timeString })
   }
 

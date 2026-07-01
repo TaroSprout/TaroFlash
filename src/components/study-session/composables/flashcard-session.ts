@@ -44,6 +44,13 @@ export function useFlashcardSession(_config?: Partial<DeckConfig>) {
     current_card_side.value = current_card_side.value === 'front' ? 'back' : 'front'
   }
 
+  function dropCard(card_id: number) {
+    core.dropCard(card_id)
+    if (core.mode.value === 'studying' && core.active_card.value) {
+      current_card_side.value = starting_side.value
+    }
+  }
+
   function reviewCard(grade?: Grade) {
     const promise = core.reviewCard(grade)
     // Reset to the starting side for the incoming card.
@@ -63,6 +70,7 @@ export function useFlashcardSession(_config?: Partial<DeckConfig>) {
     is_cover,
     startSession,
     flipCurrentCard,
-    reviewCard
+    reviewCard,
+    dropCard
   }
 }
