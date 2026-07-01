@@ -12,6 +12,14 @@ const { mockEmitSfx, mockEmitStudySfx } = vi.hoisted(() => ({
   mockEmitStudySfx: vi.fn()
 }))
 
+const { mockMemberStore } = vi.hoisted(() => ({
+  mockMemberStore: {
+    preferences: {
+      study: { show_all_ratings: true, desired_retention: 90 }
+    }
+  }
+}))
+
 vi.mock('@/api/reviews', () => ({
   useSaveReviewMutation: () => ({ mutate: saveReviewMock, mutateAsync: saveReviewMock })
 }))
@@ -20,6 +28,10 @@ vi.mock('@/sfx/bus', () => ({
   emitSfx: mockEmitSfx,
   emitStudySfx: mockEmitStudySfx,
   emitHoverSfx: vi.fn()
+}))
+
+vi.mock('@/stores/member', () => ({
+  useMemberStore: () => mockMemberStore
 }))
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

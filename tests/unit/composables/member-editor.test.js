@@ -37,7 +37,12 @@ beforeEach(() => {
     description: 'hello',
     email: 'chris@example.com',
     created_at: '2026-01-01T00:00:00Z',
-    plan: 'pro'
+    plan: 'pro',
+    preferences: {
+      accessibility: { left_hand: false },
+      audio: { study_sounds: 5, interface_sounds: 5, hover_sounds: 5 },
+      study: { show_all_ratings: true, desired_retention: 90 }
+    }
   })
 })
 
@@ -63,6 +68,16 @@ describe('useMemberEditor', () => {
     expect(editor.email.value).toBe('')
     expect(editor.created_at.value).toBe('')
     expect(editor.plan.value).toBe('free')
+  })
+
+  test('seeds preferences verbatim from the store (already resolved upstream) [obligation]', () => {
+    mockMember.preferences = {
+      accessibility: { left_hand: true },
+      audio: { study_sounds: 1, interface_sounds: 2, hover_sounds: 3 },
+      study: { show_all_ratings: false, desired_retention: 75 }
+    }
+    const editor = useMemberEditor()
+    expect(editor.preferences).toEqual(mockMember.preferences)
   })
 
   test('seeds cover from MEMBER_CARD_COVER_DEFAULTS', () => {
@@ -119,7 +134,8 @@ describe('useMemberEditor', () => {
       description: 'new desc',
       preferences: {
         accessibility: { left_hand: false },
-        audio: { study_sounds: 5, interface_sounds: 5, hover_sounds: 5 }
+        audio: { study_sounds: 5, interface_sounds: 5, hover_sounds: 5 },
+        study: { show_all_ratings: true, desired_retention: 90 }
       }
     })
   })

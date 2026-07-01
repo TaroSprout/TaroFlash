@@ -6,14 +6,15 @@ const mocks = vi.hoisted(() => ({
   selectMock: vi.fn(),
   eqMock: vi.fn(),
   singleMock: vi.fn(),
-  upsertMock: vi.fn()
+  updateMock: vi.fn(),
+  updateEqMock: vi.fn()
 }))
 
 vi.mock('@/supabase-client', () => ({
   supabase: {
     from: () => ({
       select: mocks.selectMock,
-      upsert: mocks.upsertMock
+      update: mocks.updateMock
     })
   }
 }))
@@ -46,7 +47,9 @@ const baseMemberRow = {
 
 beforeEach(() => {
   mocks.selectMock.mockReset()
-  mocks.upsertMock.mockReset()
+  mocks.updateMock.mockReset()
+  mocks.updateEqMock.mockReset()
+  mocks.updateMock.mockReturnValue({ eq: mocks.updateEqMock })
 })
 
 // ── fetchMemberById ───────────────────────────────────────────────────────────
@@ -87,15 +90,29 @@ describe('fetchMemberById', () => {
 // ── upsertMember ──────────────────────────────────────────────────────────────
 
 describe('upsertMember', () => {
-  test('calls upsert with the member payload', async () => {
-    mocks.upsertMock.mockResolvedValue({ error: null })
+  test('calls update with the payload (id omitted from the SET) scoped by .eq("id", id) [obligation]', async () => {
+    mocks.updateEqMock.mockResolvedValue({ error: null })
     await upsertMember(baseMemberRow)
-    expect(mocks.upsertMock).toHaveBeenCalledWith(baseMemberRow, { onConflict: 'id' })
+
+    const { id, ...updates } = baseMemberRow
+    expect(mocks.updateMock).toHaveBeenCalledWith(updates)
+    expect(mocks.updateMock.mock.calls[0][0]).not.toHaveProperty('id')
+    expect(mocks.updateEqMock).toHaveBeenCalledWith('id', id)
   })
 
-  test('throws when upsert returns an error', async () => {
+  test('never calls .upsert() — a partial payload would violate NOT NULL constraints [obligation]', async () => {
+    mocks.updateEqMock.mockResolvedValue({ error: null })
+    await upsertMember({ id: 'user-1', preferences: { study: { show_all_ratings: true } } })
+
+    expect(mocks.updateMock).toHaveBeenCalledWith({
+      preferences: { study: { show_all_ratings: true } }
+    })
+    expect(mocks.updateEqMock).toHaveBeenCalledWith('id', 'user-1')
+  })
+
+  test('throws when update returns an error', async () => {
     const err = { message: 'constraint violation' }
-    mocks.upsertMock.mockResolvedValue({ error: err })
+    mocks.updateEqMock.mockResolvedValue({ error: err })
     await expect(upsertMember(baseMemberRow)).rejects.toBe(err)
   })
 })

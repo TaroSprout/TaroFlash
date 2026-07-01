@@ -9,6 +9,15 @@ const { saveReviewMock } = vi.hoisted(() => ({
   saveReviewMock: vi.fn().mockResolvedValue(undefined)
 }))
 
+const { mockMemberStore, generatorParametersMock } = vi.hoisted(() => ({
+  mockMemberStore: {
+    preferences: {
+      study: { show_all_ratings: true, desired_retention: 90 }
+    }
+  },
+  generatorParametersMock: vi.fn()
+}))
+
 vi.mock('@/api/reviews', () => ({
   useSaveReviewMutation: () => ({
     mutate: vi.fn(),
@@ -16,8 +25,26 @@ vi.mock('@/api/reviews', () => ({
   })
 }))
 
+vi.mock('@/stores/member', () => ({
+  useMemberStore: () => mockMemberStore
+}))
+
+vi.mock('ts-fsrs', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    generatorParameters: (...args) => {
+      generatorParametersMock(...args)
+      return actual.generatorParameters(...args)
+    }
+  }
+})
+
 beforeEach(() => {
   saveReviewMock.mockReset().mockResolvedValue(undefined)
+  generatorParametersMock.mockClear()
+  mockMemberStore.preferences.study.show_all_ratings = true
+  mockMemberStore.preferences.study.desired_retention = 90
   sessionStorage.clear()
 })
 
@@ -169,14 +196,30 @@ describe('session-core — updateConfig', () => {
     session.updateConfig({ study_all_cards: true })
     expect(session.cards.value).toHaveLength(0)
   })
+})
 
-  test('updateConfig({ show_all_ratings: false }) updates config on a session started with show_all_ratings: true [obligation]', () => {
-    const session = useStudySessionCore({ show_all_ratings: true })
-    expect(session.config.show_all_ratings).toBe(true)
+// ── show_all_ratings + desired_retention: member-wide, seeded from the store ─
 
-    session.updateConfig({ show_all_ratings: false })
+describe('session-core — member preference seeding [obligation]', () => {
+  test('show_all_ratings seeds from member_store.preferences.study.show_all_ratings [obligation]', () => {
+    mockMemberStore.preferences.study.show_all_ratings = false
+    const session = useStudySessionCore()
+    expect(session.show_all_ratings.value).toBe(false)
+  })
 
-    expect(session.config.show_all_ratings).toBe(false)
+  test('show_all_ratings is a local ref, toggling it does not write back to the store [obligation]', () => {
+    mockMemberStore.preferences.study.show_all_ratings = true
+    const session = useStudySessionCore()
+    session.show_all_ratings.value = false
+    expect(mockMemberStore.preferences.study.show_all_ratings).toBe(true)
+  })
+
+  test('FSRS is seeded with request_retention = desired_retention / 100 [obligation]', () => {
+    mockMemberStore.preferences.study.desired_retention = 82
+    useStudySessionCore()
+    expect(generatorParametersMock).toHaveBeenCalledWith(
+      expect.objectContaining({ request_retention: 0.82 })
+    )
   })
 })
 

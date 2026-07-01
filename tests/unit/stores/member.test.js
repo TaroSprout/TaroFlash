@@ -99,4 +99,42 @@ describe('useMemberStore', () => {
     expect(store.plan).toBeUndefined()
     expect(store.has_member).toBe(true)
   })
+
+  // ── preferences always resolved [obligation] ───────────────────────────────
+
+  test('preferences resolves to full defaults when the member query has no data yet [obligation]', () => {
+    sessionUser.value = { id: 'user-1' }
+    memberRef.value = null
+
+    const store = useMemberStore()
+
+    expect(store.preferences).toEqual({
+      accessibility: { left_hand: false },
+      audio: {
+        study_sounds: expect.any(Number),
+        interface_sounds: expect.any(Number),
+        hover_sounds: expect.any(Number)
+      },
+      study: { show_all_ratings: true, desired_retention: 90 }
+    })
+  })
+
+  test('preferences resolves to full defaults when member.preferences is null [obligation]', () => {
+    sessionUser.value = { id: 'user-1' }
+    memberRef.value = { id: 'user-1', preferences: null }
+
+    const store = useMemberStore()
+
+    expect(store.preferences.study).toEqual({ show_all_ratings: true, desired_retention: 90 })
+  })
+
+  test('preferences merges a partial payload with defaults, never dropping a field [obligation]', () => {
+    sessionUser.value = { id: 'user-1' }
+    memberRef.value = { id: 'user-1', preferences: { study: { show_all_ratings: false } } }
+
+    const store = useMemberStore()
+
+    expect(store.preferences.study).toEqual({ show_all_ratings: false, desired_retention: 90 })
+    expect(store.preferences.accessibility).toEqual({ left_hand: false })
+  })
 })

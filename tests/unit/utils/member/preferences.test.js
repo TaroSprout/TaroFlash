@@ -1,7 +1,8 @@
 import { describe, test, expect } from 'vite-plus/test'
 import {
   MEMBER_PREFERENCES_DEFAULTS,
-  withMemberPreferencesDefaults
+  withMemberPreferencesDefaults,
+  toBusVolumes
 } from '@/utils/member/preferences'
 
 describe('MEMBER_PREFERENCES_DEFAULTS', () => {
@@ -15,6 +16,23 @@ describe('MEMBER_PREFERENCES_DEFAULTS', () => {
 
   test('accessibility defaults to left_hand = false', () => {
     expect(MEMBER_PREFERENCES_DEFAULTS.accessibility.left_hand).toBe(false)
+  })
+
+  test('study defaults to show_all_ratings=true, desired_retention=90 [obligation]', () => {
+    expect(MEMBER_PREFERENCES_DEFAULTS.study).toEqual({
+      show_all_ratings: true,
+      desired_retention: 90
+    })
+  })
+})
+
+describe('toBusVolumes', () => {
+  test('maps *_sounds fields onto the bus-keyed shape the player consumes', () => {
+    expect(toBusVolumes({ study_sounds: 1, interface_sounds: 2, hover_sounds: 3 })).toEqual({
+      study: 1,
+      interface: 2,
+      hover: 3
+    })
   })
 })
 
@@ -73,6 +91,23 @@ describe('withMemberPreferencesDefaults', () => {
   test('accessibility.left_hand is preserved from partial', () => {
     const result = withMemberPreferencesDefaults({ accessibility: { left_hand: true } })
     expect(result.accessibility.left_hand).toBe(true)
+  })
+
+  // ── study namespace [obligation] ──────────────────────────────────────────
+
+  test('partial prefs with no study key → study defaults to show_all_ratings=true, desired_retention=90 [obligation]', () => {
+    const result = withMemberPreferencesDefaults({ accessibility: { left_hand: true } })
+    expect(result.study).toEqual({ show_all_ratings: true, desired_retention: 90 })
+  })
+
+  test('partial prefs with study.show_all_ratings=false is preserved, desired_retention still defaults [obligation]', () => {
+    const result = withMemberPreferencesDefaults({ study: { show_all_ratings: false } })
+    expect(result.study).toEqual({ show_all_ratings: false, desired_retention: 90 })
+  })
+
+  test('partial prefs with study.desired_retention=75 is preserved, show_all_ratings still defaults [obligation]', () => {
+    const result = withMemberPreferencesDefaults({ study: { desired_retention: 75 } })
+    expect(result.study).toEqual({ show_all_ratings: true, desired_retention: 75 })
   })
 
   test('does not mutate MEMBER_PREFERENCES_DEFAULTS', () => {
