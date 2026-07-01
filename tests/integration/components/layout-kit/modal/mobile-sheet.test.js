@@ -166,16 +166,11 @@ describe('MobileSheet', () => {
     expect(override.findComponent({ name: 'UiButton' }).text()).toContain('Cancel')
   })
 
-  // ── default + footer slots ─────────────────────────────────────────────────
+  // ── default slot ───────────────────────────────────────────────────────────
 
   test('renders default slot content into body', () => {
     const wrapper = mountSheet({}, { default: '<p data-testid="body-content">Body</p>' })
     expect(wrapper.find('[data-testid="body-content"]').exists()).toBe(true)
-  })
-
-  test('renders footer slot content', () => {
-    const wrapper = mountSheet({}, { footer: '<p data-testid="footer-content">Footer</p>' })
-    expect(wrapper.find('[data-testid="footer-content"]').exists()).toBe(true)
   })
 
   // ── overflow + mobile-modal variant utilities ─────────────────────────────

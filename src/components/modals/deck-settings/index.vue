@@ -213,7 +213,5 @@ watch(active_tab, (tab) => {
         />
       </div>
     </template>
-
-    <template #footer />
   </tab-sheet>
 </template>

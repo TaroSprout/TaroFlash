@@ -6,11 +6,12 @@ import {
   onMounted,
   provide,
   ref,
+  useTemplateRef,
   watch
 } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SettingsAside from './settings-aside.vue'
-import { settingsLayoutKey, settingsCloseKey } from './layout'
+import { settingsLayoutKey, settingsCloseKey, settingsRecedeKey } from './layout'
 import { emitSfx } from '@/sfx/bus'
 import { useMemberEditor, memberEditorKey } from '@/composables/member/editor'
 import { useMemberDangerActions, memberDangerActionsKey } from '@/composables/member/danger-actions'
@@ -18,6 +19,7 @@ import { useTabModalLayout } from '@/composables/ui/tab-modal-layout'
 import { useTabTransition } from '@/composables/ui/tab-transition'
 import { useAlert } from '@/composables/alert'
 import { useModalRequestClose } from '@/composables/modal'
+import { recedeModal, restoreModal } from '@/utils/animations/modal'
 import MemberCard from '@/components/member/member-card.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import TabSheet from '@/components/layout-kit/modal/tab-sheet.vue'
@@ -58,6 +60,12 @@ const { layout_mode, sheet_px } = useTabModalLayout({
 })
 provide(settingsLayoutKey, layout_mode)
 provide(settingsCloseKey, close)
+
+const settings_root = useTemplateRef<{ $el: HTMLElement }>('settings_root')
+provide(settingsRecedeKey, {
+  recede: () => settings_root.value?.$el && recedeModal(settings_root.value.$el),
+  restore: () => settings_root.value?.$el && restoreModal(settings_root.value.$el)
+})
 
 type ActiveTab = 'profile' | 'subscription' | 'app' | 'review-preferences' | 'danger-zone'
 const active_tab = ref<ActiveTab | null>(null)
@@ -147,6 +155,7 @@ watch(layout_mode, (mode) => {
 
 <template>
   <tab-sheet
+    ref="settings_root"
     data-testid="settings-container"
     data-theme="blue-500"
     data-theme-dark="blue-650"
@@ -221,7 +230,5 @@ watch(layout_mode, (mode) => {
         </div>
       </div>
     </template>
-
-    <template #footer />
   </tab-sheet>
 </template>

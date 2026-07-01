@@ -21,7 +21,7 @@ vi.mock('vue-i18n', () => ({
   useI18n: () => ({ t: (key) => key })
 }))
 
-vi.mock('@/components/modals/checkout.vue', () => ({ default: {} }))
+vi.mock('@/components/modals/checkout/index.vue', () => ({ default: {} }))
 
 // Member store sources plan from the member query data — use a reactive ref so
 // tests can control the plan by setting memberDataRef.value.

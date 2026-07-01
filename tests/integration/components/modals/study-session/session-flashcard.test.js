@@ -102,7 +102,11 @@ vi.mock('@/api/reviews', () => ({
 }))
 
 vi.mock('@/api/members', () => ({
-  useUpsertMemberMutation: () => ({ mutate: mockUpsertMember, mutateAsync: mockUpsertMember })
+  useUpsertMemberMutation: () => ({ mutate: mockUpsertMember, mutateAsync: mockUpsertMember }),
+  useCurrentMemberQuery: () => ({
+    data: { value: null },
+    refetch: () => Promise.resolve({ data: null })
+  })
 }))
 
 vi.mock('@/stores/member', () => ({

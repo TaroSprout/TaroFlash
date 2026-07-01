@@ -48,7 +48,7 @@ vi.mock('@/composables/modal', () => ({
   useModal: () => ({ open: modalOpenMock })
 }))
 
-vi.mock('@/components/modals/checkout.vue', () => ({
+vi.mock('@/components/modals/checkout/index.vue', () => ({
   default: { name: 'Checkout' }
 }))
 
@@ -91,13 +91,14 @@ beforeEach(() => {
 // ── onUpgrade ─────────────────────────────────────────────────────────────────
 
 describe('useSubscriptionActions — onUpgrade', () => {
-  test('opens the Checkout modal [obligation]', () => {
+  test('opens the Checkout modal [obligation]', async () => {
+    modalOpenMock.mockReturnValue({ response: Promise.resolve() })
     const { onUpgrade } = withSetup(() => useSubscriptionActions())
-    onUpgrade()
+    await onUpgrade()
     expect(modalOpenMock).toHaveBeenCalledOnce()
     expect(modalOpenMock).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Checkout' }),
-      expect.objectContaining({ mode: 'mobile-sheet' })
+      expect.objectContaining({ mode: 'popup', backdrop: true })
     )
   })
 })

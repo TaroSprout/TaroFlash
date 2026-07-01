@@ -54,3 +54,28 @@ export function springScaleIn(el: Element, done: () => void) {
 export function scaleFadeOut(el: Element, done: () => void) {
   gsap.to(el, { scale: 0.8, opacity: 0, duration: 0.2, ease: 'expo.out', onComplete: done })
 }
+
+const RECEDE_DURATION = 0.4
+
+/** Dials back a modal that a new modal just opened on top of, as if a shadow fell over it. */
+export function recedeModal(el: Element) {
+  gsap.set(el, { filter: 'brightness(1) blur(0px)' })
+  gsap.to(el, {
+    scale: 0.9,
+    filter: 'brightness(0.8) blur(2px)',
+    duration: RECEDE_DURATION,
+    ease: 'expo.out',
+    pointerEvents: 'none'
+  })
+}
+
+/** Restores a modal to full prominence once the modal above it has closed. */
+export function restoreModal(el: Element) {
+  gsap.set(el, { pointerEvents: 'auto' })
+  gsap.to(el, {
+    scale: 1,
+    filter: 'brightness(1) blur(0px)',
+    duration: RECEDE_DURATION,
+    ease: 'expo.out'
+  })
+}

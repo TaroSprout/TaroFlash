@@ -47,7 +47,6 @@ const slots = defineSlots<{
   header(): any
   'header-content'(): any
   default(): any
-  footer(): any
 }>()
 
 const emit = defineEmits<{
@@ -141,10 +140,6 @@ provide(mobileSheetOverlayKey, overlay_root)
 
         <div data-testid="mobile-sheet__body" class="h-full">
           <slot></slot>
-        </div>
-
-        <div v-if="$slots.footer" data-testid="mobile-sheet__footer" class="shrink-0">
-          <slot name="footer"></slot>
         </div>
       </div>
     </div>

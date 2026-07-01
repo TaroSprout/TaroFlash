@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { PLANS } from '@/config/plans'
-import { useSubscriptionActions } from '@/composables/member/subscription-actions'
+import { useUpgradeClick } from './use-upgrade-click'
 import UiTappable from '@/components/ui-kit/tappable.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 
 const { t } = useI18n()
-const { onUpgrade } = useSubscriptionActions()
+const { onUpgradeClick } = useUpgradeClick()
 
 const upgrade_features = PLANS.paid.features.filter((f) => f.upgradeHighlight)
 
@@ -18,11 +18,11 @@ const price = `$${PLANS.paid.monthlyPriceUsd} / mo`
     <ui-tappable
       data-testid="paid-features__body"
       data-theme="brown-100"
-      class="card-outline w-full flex flex-col gap-3 rounded-4 px-5 py-4 text-(--theme-on-primary) bg-(--theme-primary) bgx-leaf bgx-size-23 bgx-opacity-3 bgx-color-brown-700 pointer-fine:hover:scale-101 data-[active=true]:scale-101 pointer-coarse:data-[active=true]:scale-105 pointer-fine:transition-transform duration-75 cursor-pointer touch-manipulation"
-      @tap="onUpgrade"
+      class="card-outline w-full flex flex-col gap-3 rounded-4 px-5 py-4 text-(--theme-on-primary) bg-(--theme-primary) pointer-fine:hover:scale-101 data-[active=true]:scale-101 pointer-coarse:data-[active=true]:scale-105 pointer-fine:transition-transform duration-75 cursor-pointer touch-manipulation"
+      @tap="onUpgradeClick"
     >
       <div data-testid="paid-features__upgrade" class="absolute -bottom-2 -right-2 z-10 rotate-2">
-        <ui-button data-theme="yellow-500" icon-left="triangle-eye" @press="onUpgrade">
+        <ui-button data-theme="yellow-500" icon-left="triangle-eye" @press="onUpgradeClick">
           {{ t('settings.subscription.free.upgrade') }}
         </ui-button>
       </div>

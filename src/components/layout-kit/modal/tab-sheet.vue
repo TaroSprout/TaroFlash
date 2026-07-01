@@ -55,7 +55,6 @@ defineSlots<{
   header(): any
   'header-content'(): any
   default(): any
-  footer(): any
 }>()
 
 const active = defineModel<string>('active', { default: '' })
@@ -108,8 +107,6 @@ function selectOption(value: string) {
     <template v-if="$slots['header-content']" #header-content>
       <slot name="header-content"></slot>
     </template>
-    <template v-if="$slots.footer" #footer><slot name="footer"></slot></template>
-
     <template v-if="has_tabs" #sidebar>
       <div
         data-testid="tab-sheet__sidebar"
