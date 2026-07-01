@@ -5,16 +5,31 @@ import { card } from '../../../fixtures/card'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { refetchImpl } = vi.hoisted(() => ({
-  refetchImpl: { current: vi.fn() }
-}))
+const { refetchImpl, restoreRefetchImpl, cardsByIdsQueryMock, readPersistedSessionMock } =
+  vi.hoisted(() => ({
+    refetchImpl: { current: vi.fn() },
+    restoreRefetchImpl: { current: vi.fn() },
+    cardsByIdsQueryMock: vi.fn(),
+    readPersistedSessionMock: vi.fn(() => undefined)
+  }))
 
 vi.mock('@/api/cards', () => ({
   useMultiDeckStudyCardsQuery: vi.fn(() => ({
     data: { value: undefined },
     refetch: (...args) => refetchImpl.current(...args),
     refresh: vi.fn()
-  }))
+  })),
+  useCardsByIdsQuery: (...args) => {
+    cardsByIdsQueryMock(...args)
+    return {
+      data: { value: undefined },
+      refetch: (...args2) => restoreRefetchImpl.current(...args2)
+    }
+  }
+}))
+
+vi.mock('@/components/study-session/composables/session-persistence', () => ({
+  readPersistedSession: (...args) => readPersistedSessionMock(...args)
 }))
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -43,6 +58,9 @@ describe('useSessionCards', () => {
 
   beforeEach(() => {
     refetchImpl.current = vi.fn()
+    restoreRefetchImpl.current = vi.fn()
+    cardsByIdsQueryMock.mockClear()
+    readPersistedSessionMock.mockReset().mockReturnValue(undefined)
     unmount = null
   })
 
@@ -240,6 +258,186 @@ describe('useSessionCards', () => {
     unmount = setup.unmount
 
     // Immediately after mount (but before the async onMounted callback resolves)
+    expect(setup.result.loading.value).toBe(true)
+  })
+
+  // ── Restore path (refresh-resume) [obligation] ────────────────────────────
+
+  test('fetches only the unreviewed remainder by id — not the full card_ids list [obligation]', async () => {
+    const persisted = {
+      deck_ids: [1],
+      card_ids: [10, 11, 12, 13],
+      results: [
+        { card_id: 10, passed: true },
+        { card_id: 12, passed: false }
+      ],
+      mode: 'studying'
+    }
+    readPersistedSessionMock.mockReturnValue(persisted)
+    restoreRefetchImpl.current = vi.fn().mockResolvedValue({ status: 'success', data: [] })
+
+    const setup = withSetup(() =>
+      useSessionCards({
+        deckIds: () => [1],
+        studyAllCards: () => false,
+        seed: vi.fn(),
+        restore: vi.fn(),
+        onMissingDeck: vi.fn()
+      })
+    )
+    unmount = setup.unmount
+
+    await new Promise((r) => setTimeout(r, 0))
+    await nextTick()
+
+    // useCardsByIdsQuery is called with a ref — assert on the value passed through.
+    const passed_ref = cardsByIdsQueryMock.mock.calls[0][0]
+    expect(passed_ref.value).toEqual([11, 13])
+  })
+
+  test('does NOT call the fresh due-cards query when a persisted session exists [obligation]', async () => {
+    readPersistedSessionMock.mockReturnValue({
+      deck_ids: [1],
+      card_ids: [10],
+      results: [],
+      mode: 'studying'
+    })
+    restoreRefetchImpl.current = vi.fn().mockResolvedValue({ status: 'success', data: [] })
+
+    const setup = withSetup(() =>
+      useSessionCards({
+        deckIds: () => [1],
+        studyAllCards: () => false,
+        seed: vi.fn(),
+        restore: vi.fn(),
+        onMissingDeck: vi.fn()
+      })
+    )
+    unmount = setup.unmount
+
+    await new Promise((r) => setTimeout(r, 0))
+    await nextTick()
+
+    expect(refetchImpl.current).not.toHaveBeenCalled()
+  })
+
+  test('calls restore with the fetched remainder and the persisted snapshot on success [obligation]', async () => {
+    const persisted = {
+      deck_ids: [1],
+      card_ids: [10, 11],
+      results: [],
+      mode: 'studying'
+    }
+    readPersistedSessionMock.mockReturnValue(persisted)
+    const remainder_cards = card.many(2)
+    restoreRefetchImpl.current = vi
+      .fn()
+      .mockResolvedValue({ status: 'success', data: remainder_cards })
+
+    const restore = vi.fn()
+    const setup = withSetup(() =>
+      useSessionCards({
+        deckIds: () => [1],
+        studyAllCards: () => false,
+        seed: vi.fn(),
+        restore,
+        onMissingDeck: vi.fn()
+      })
+    )
+    unmount = setup.unmount
+
+    await new Promise((r) => setTimeout(r, 0))
+    await nextTick()
+
+    expect(restore).toHaveBeenCalledWith(remainder_cards, persisted)
+    expect(setup.result.loading.value).toBe(false)
+  })
+
+  test('calls restore with an empty array when the remainder fetch succeeds with null data', async () => {
+    const persisted = {
+      deck_ids: [1],
+      card_ids: [10],
+      results: [],
+      mode: 'studying'
+    }
+    readPersistedSessionMock.mockReturnValue(persisted)
+    restoreRefetchImpl.current = vi.fn().mockResolvedValue({ status: 'success', data: null })
+
+    const restore = vi.fn()
+    const setup = withSetup(() =>
+      useSessionCards({
+        deckIds: () => [1],
+        studyAllCards: () => false,
+        seed: vi.fn(),
+        restore,
+        onMissingDeck: vi.fn()
+      })
+    )
+    unmount = setup.unmount
+
+    await new Promise((r) => setTimeout(r, 0))
+    await nextTick()
+
+    expect(restore).toHaveBeenCalledWith([], persisted)
+    expect(setup.result.loading.value).toBe(false)
+  })
+
+  test('calls restore with an empty array (skipping the fetch) when every persisted card was already reviewed [obligation]', async () => {
+    const persisted = {
+      deck_ids: [1],
+      card_ids: [10, 11],
+      results: [
+        { card_id: 10, passed: true },
+        { card_id: 11, passed: true }
+      ],
+      mode: 'completed'
+    }
+    readPersistedSessionMock.mockReturnValue(persisted)
+
+    const restore = vi.fn()
+    const setup = withSetup(() =>
+      useSessionCards({
+        deckIds: () => [1],
+        studyAllCards: () => false,
+        seed: vi.fn(),
+        restore,
+        onMissingDeck: vi.fn()
+      })
+    )
+    unmount = setup.unmount
+
+    await nextTick()
+
+    expect(restore).toHaveBeenCalledWith([], persisted)
+    expect(restoreRefetchImpl.current).not.toHaveBeenCalled()
+    expect(setup.result.loading.value).toBe(false)
+  })
+
+  test('does NOT call restore or clear loading when the remainder fetch does not succeed [obligation]', async () => {
+    readPersistedSessionMock.mockReturnValue({
+      deck_ids: [1],
+      card_ids: [10],
+      results: [],
+      mode: 'studying'
+    })
+    restoreRefetchImpl.current = vi.fn().mockResolvedValue({ status: 'error', data: null })
+
+    const restore = vi.fn()
+    const setup = withSetup(() =>
+      useSessionCards({
+        deckIds: () => [1],
+        studyAllCards: () => false,
+        seed: vi.fn(),
+        restore,
+        onMissingDeck: vi.fn()
+      })
+    )
+    unmount = setup.unmount
+
+    await new Promise((r) => setTimeout(r, 0))
+    await nextTick()
+
+    expect(restore).not.toHaveBeenCalled()
     expect(setup.result.loading.value).toBe(true)
   })
 })

@@ -32,6 +32,18 @@ vi.mock('@/utils/animations/session-pane', () => ({
   sessionPaneEnter: mockSessionPaneEnter
 }))
 
+const { mockClearPersistedSession } = vi.hoisted(() => ({
+  mockClearPersistedSession: vi.fn()
+}))
+
+vi.mock('@/components/study-session/composables/session-persistence', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    clearPersistedSession: mockClearPersistedSession
+  }
+})
+
 // Mock viewport so provideStudyViewport() doesn't hit real matchMedia
 vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: vi.fn(() => ({ value: false }))
@@ -100,6 +112,7 @@ describe('StudySession (index.vue)', () => {
     mockEmitStudySfx.mockClear()
     mockSessionPaneEnter.mockClear()
     mockSessionPaneLeave.mockClear()
+    mockClearPersistedSession.mockClear()
   })
 
   // ── Initial phase: studying ────────────────────────────────────────────────
@@ -120,6 +133,14 @@ describe('StudySession (index.vue)', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
     expect(close).toHaveBeenCalledOnce()
     expect(close).toHaveBeenCalledWith()
+  })
+
+  test('@closed clears the persisted session snapshot [obligation]', async () => {
+    const { wrapper } = makeWrapper()
+
+    await wrapper.findComponent({ name: 'SessionFlashcard' }).vm.$emit('closed')
+
+    expect(mockClearPersistedSession).toHaveBeenCalledOnce()
   })
 
   // ── onSessionFinished: switches to summary phase [obligation] ──────────────

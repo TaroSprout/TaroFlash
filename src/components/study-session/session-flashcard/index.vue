@@ -48,11 +48,18 @@ const {
   is_cover,
   reviewCard,
   setCards,
+  restoreCards,
+  setSessionMeta,
   startSession,
   flipCurrentCard,
   dropCard,
   updateCard
 } = useFlashcardSession({ ...decks[0]?.study_config, ...config_override })
+
+setSessionMeta(
+  decks.map((deck) => deck.id),
+  config_override
+)
 
 const { next_card_side, preview_style, onDragProgress, onNextCardFlipped, awaitFlip } =
   useCardPreview(next_card)
@@ -75,6 +82,7 @@ const { loading } = useSessionCards({
   deckIds: () => decks.map((deck) => deck.id),
   studyAllCards: () => !!config.study_all_cards,
   seed: setCards,
+  restore: onRestore,
   onMissingDeck: () => emit('closed')
 })
 
@@ -117,6 +125,15 @@ function toggleRatings() {
         show_all_ratings: config.show_all_ratings
       })
     })
+}
+
+/**
+ * A refresh-restore should drop the user straight back into the card they
+ * were on, not back at the cover screen requiring another Start click.
+ */
+function onRestore(...restoreArgs: Parameters<typeof restoreCards>) {
+  restoreCards(...restoreArgs)
+  if (mode.value === 'studying') startSession({ silent: true })
 }
 
 /** Triggers the fling animation on the card stage; reviewed event follows. */

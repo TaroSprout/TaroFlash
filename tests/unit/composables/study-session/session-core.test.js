@@ -1,6 +1,8 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { nextTick } from 'vue'
 import { Rating } from 'ts-fsrs'
 import { useStudySessionCore } from '@/components/study-session/composables/session-core'
+import { readPersistedSession } from '@/components/study-session/composables/session-persistence'
 import { card } from '../../../fixtures/card'
 
 const { saveReviewMock } = vi.hoisted(() => ({
@@ -16,6 +18,7 @@ vi.mock('@/api/reviews', () => ({
 
 beforeEach(() => {
   saveReviewMock.mockReset().mockResolvedValue(undefined)
+  sessionStorage.clear()
 })
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -615,5 +618,278 @@ describe('session-core — updateCard [obligation]', () => {
     session.updateCard(c2.id, { front_text: 'Updated front' })
 
     expect(session.active_card.value).toBe(active_before)
+  })
+})
+
+// ── Persistence [obligation] ─────────────────────────────────────────────────
+
+describe('session-core — persistence [obligation]', () => {
+  test('setCards persists card_ids into sessionStorage [obligation]', async () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const [c1, c2] = [makeNewCard(), makeNewCard()]
+    session.setCards([c1, c2])
+    await nextTick()
+
+    const persisted = readPersistedSession()
+    expect(persisted?.card_ids).toEqual([c1.id, c2.id])
+    expect(persisted?.results).toEqual([])
+  })
+
+  test('setSessionMeta records deck_ids and config_override into the next persisted snapshot [obligation]', async () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    session.setSessionMeta([1, 2], { shuffle: true })
+    session.setCards([makeNewCard()])
+    await nextTick()
+
+    const persisted = readPersistedSession()
+    expect(persisted?.deck_ids).toEqual([1, 2])
+    expect(persisted?.config_override).toEqual({ shuffle: true })
+  })
+
+  test('reviewCard(grade) updates the persisted results and card_ids, not just the initial seed [obligation]', async () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const [c1, c2] = [makeNewCard({ id: 1, deck_id: 1 }), makeNewCard({ id: 2, deck_id: 1 })]
+    session.setCards([c1, c2])
+    await nextTick()
+    expect(readPersistedSession()?.results).toEqual([])
+
+    session.reviewCard(Rating.Good)
+    await nextTick()
+
+    const persisted = readPersistedSession()
+    expect(persisted?.results).toHaveLength(1)
+    expect(persisted?.results?.[0].card_id).toBe(c1.id)
+  })
+
+  test('reviewCard() with no grade also persists the resulting completed mode [obligation]', async () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    session.setCards([makeNewCard()])
+    await nextTick()
+
+    session.reviewCard()
+    await nextTick()
+
+    expect(readPersistedSession()?.mode).toBe('completed')
+  })
+
+  test('persisted results only carry CardReviewResult fields, no full card data [obligation]', async () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    session.setCards([makeNewCard({ id: 1, deck_id: 1 })])
+    await nextTick()
+
+    session.reviewCard(Rating.Good)
+    await nextTick()
+
+    const [result] = readPersistedSession()?.results ?? []
+    expect(Object.keys(result).sort()).toEqual(
+      [
+        'card_id',
+        'front_text',
+        'is_new',
+        'before_interval',
+        'after_interval',
+        'lapses',
+        'passed'
+      ].sort()
+    )
+  })
+
+  test('dropCard on a non-active card persists the updated card_ids [obligation]', async () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const [c1, c2, c3] = [makeNewCard(), makeNewCard(), makeNewCard()]
+    session.setCards([c1, c2, c3])
+    await nextTick()
+
+    session.dropCard(c3.id)
+    await nextTick()
+
+    expect(readPersistedSession()?.card_ids).toEqual([c1.id, c2.id])
+  })
+
+  test('dropCard on the active card persists the updated card_ids [obligation]', async () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const [c1, c2] = [makeNewCard(), makeNewCard()]
+    session.setCards([c1, c2])
+    await nextTick()
+
+    session.dropCard(c1.id)
+    await nextTick()
+
+    expect(readPersistedSession()?.card_ids).toEqual([c2.id])
+  })
+})
+
+// ── restoreCards [obligation] ────────────────────────────────────────────────
+
+describe('session-core — restoreCards [obligation]', () => {
+  test('rebuilds _cards_in_deck in the original persisted.card_ids order, not fetch order [obligation]', () => {
+    const [c1, c2, c3] = [makeNewCard(), makeNewCard(), makeNewCard()]
+    const persisted = {
+      deck_ids: [1],
+      card_ids: [c3.id, c1.id, c2.id],
+      results: [],
+      mode: 'studying'
+    }
+
+    const session = useStudySessionCore({ study_all_cards: true })
+    session.restoreCards([c1, c2, c3], persisted)
+
+    expect(session.cards.value.map((c) => c.id)).toEqual([c3.id, c1.id, c2.id])
+  })
+
+  test('excludes a raw card that is not present in persisted.card_ids (locked-queue guarantee) [obligation]', () => {
+    const [c1, c2, extra] = [makeNewCard(), makeNewCard(), makeNewCard()]
+    const persisted = {
+      deck_ids: [1],
+      card_ids: [c1.id, c2.id],
+      results: [],
+      mode: 'studying'
+    }
+
+    const session = useStudySessionCore({ study_all_cards: true })
+    session.restoreCards([c1, c2, extra], persisted)
+
+    expect(session.cards.value.map((c) => c.id)).toEqual([c1.id, c2.id])
+    expect(session.cards.value.find((c) => c.id === extra.id)).toBeUndefined()
+  })
+
+  test('silently drops a persisted card_id with no matching fetched card [obligation]', () => {
+    const c1 = makeNewCard()
+    const persisted = {
+      deck_ids: [1],
+      card_ids: [c1.id, 999999],
+      results: [],
+      mode: 'studying'
+    }
+
+    const session = useStudySessionCore({ study_all_cards: true })
+    expect(() => session.restoreCards([c1], persisted)).not.toThrow()
+
+    expect(session.cards.value.map((c) => c.id)).toEqual([c1.id])
+  })
+
+  test('rebuilds an already-reviewed (passed) card as a minimal state-only stub, never re-fetched [obligation]', () => {
+    const [c1, c2] = [makeNewCard(), makeNewCard()]
+    const persisted = {
+      deck_ids: [1],
+      card_ids: [c1.id, c2.id],
+      results: [
+        {
+          card_id: c1.id,
+          front_text: 'Reviewed front',
+          is_new: true,
+          before_interval: 0,
+          after_interval: 1,
+          lapses: 0,
+          passed: true
+        }
+      ],
+      mode: 'studying'
+    }
+
+    const session = useStudySessionCore({ study_all_cards: true })
+    // raw only contains the unreviewed remainder — c1 must NOT need to be fetched
+    session.restoreCards([c2], persisted)
+
+    const restored_c1 = session.cards.value.find((c) => c.id === c1.id)
+    expect(restored_c1).toEqual({ id: c1.id, front_text: 'Reviewed front', state: 'passed' })
+  })
+
+  test('rebuilds an already-reviewed (failed) card with state="failed" [obligation]', () => {
+    const c1 = makeNewCard()
+    const persisted = {
+      deck_ids: [1],
+      card_ids: [c1.id],
+      results: [
+        {
+          card_id: c1.id,
+          front_text: 'Reviewed front',
+          is_new: true,
+          before_interval: 0,
+          after_interval: 1,
+          lapses: 1,
+          passed: false
+        }
+      ],
+      mode: 'studying'
+    }
+
+    const session = useStudySessionCore({ study_all_cards: true })
+    session.restoreCards([], persisted)
+
+    expect(session.cards.value.find((c) => c.id === c1.id)?.state).toBe('failed')
+  })
+
+  test('active_card lands on the first persisted.card_ids entry whose state resolves to unreviewed [obligation]', () => {
+    const [c1, c2, c3] = [makeNewCard(), makeNewCard(), makeNewCard()]
+    const persisted = {
+      deck_ids: [1],
+      card_ids: [c1.id, c2.id, c3.id],
+      results: [
+        {
+          card_id: c1.id,
+          front_text: 'Reviewed front',
+          is_new: true,
+          before_interval: 0,
+          after_interval: 1,
+          lapses: 0,
+          passed: true
+        }
+      ],
+      mode: 'studying'
+    }
+
+    const session = useStudySessionCore({ study_all_cards: true })
+    session.restoreCards([c2, c3], persisted)
+
+    expect(session.active_card.value?.id).toBe(c2.id)
+  })
+
+  test('mode resolves to completed when persisted.mode is "studying" but no unreviewed card remains [obligation]', () => {
+    const persisted = {
+      deck_ids: [1],
+      card_ids: [999999],
+      results: [],
+      mode: 'studying'
+    }
+
+    const session = useStudySessionCore({ study_all_cards: true })
+    // The only persisted id has no matching fetched card — dropped, leaving no unreviewed card.
+    session.restoreCards([], persisted)
+
+    expect(session.mode.value).toBe('completed')
+    expect(session.active_card.value).toBeUndefined()
+  })
+
+  test('mode stays completed when persisted.mode is "completed", regardless of active_card [obligation]', () => {
+    const c1 = makeNewCard()
+    const persisted = {
+      deck_ids: [1],
+      card_ids: [c1.id],
+      results: [],
+      mode: 'completed'
+    }
+
+    const session = useStudySessionCore({ study_all_cards: true })
+    session.restoreCards([c1], persisted)
+
+    expect(session.mode.value).toBe('completed')
+    expect(session.active_card.value?.id).toBe(c1.id)
+  })
+
+  test('restoreCards persists the rebuilt snapshot [obligation]', async () => {
+    const c1 = makeNewCard()
+    const persisted = {
+      deck_ids: [7],
+      card_ids: [c1.id],
+      results: [],
+      mode: 'studying'
+    }
+
+    const session = useStudySessionCore({ study_all_cards: true })
+    session.restoreCards([c1], persisted)
+    await nextTick()
+
+    expect(readPersistedSession()?.card_ids).toEqual([c1.id])
   })
 })

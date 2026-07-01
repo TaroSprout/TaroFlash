@@ -33,9 +33,11 @@ export function useFlashcardSession(_config?: Partial<DeckConfig>) {
   /**
    * Transitions from the cover into the active session.
    * Sets current_card_side to the starting side for the deck config.
+   * `silent` skips the start jingle — used when a refresh-restore drops the
+   * user back into an already-started session rather than a deliberate tap.
    */
-  function startSession() {
-    emitStudySfx('music_plink_chordyes')
+  function startSession({ silent = false }: { silent?: boolean } = {}) {
+    if (!silent) emitStudySfx('music_plink_chordyes')
     current_card_side.value = starting_side.value
   }
 

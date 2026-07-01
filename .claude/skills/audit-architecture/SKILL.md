@@ -1,6 +1,6 @@
 ---
 name: audit-architecture
-description: Run a full architecture audit (separation of concerns, reusability, naming, theming tokens, locale paths, default centralization, prop drilling vs provide/inject, ui-kit domain neutrality, layout-kit usage, stale tests, dead code). Default scope is the current branch's diff vs master. Use `--global` to expand to the entire `src/` tree. Optional `--context "<note>"` feeds extra heuristics. Trigger on `/audit-architecture`, "audit architecture", "audit this branch", "review for smells", or after a multi-step refactor when the user wants a structural sanity check.
+description: Run a full architecture audit (separation of concerns, reusability, naming, theming tokens, locale paths, default centralization, prop drilling vs provide/inject, ui-kit domain neutrality, layout-kit usage, stale tests, dead code). Always builds an end-to-end picture of the implemented architecture first and weighs it against at least one genuinely different alternative — this comparison is the primary output, not an afterthought. Default scope is the current branch's diff vs master. Use `--global` to expand to the entire `src/` tree. Optional `--context "<note>"` feeds extra heuristics. Trigger on `/audit-architecture`, "audit architecture", "audit this branch", "review for smells", or after a multi-step refactor when the user wants a structural sanity check.
 allowed-tools: Read, Bash, Glob, Grep
 argument-hint: '[--global] [--context "<note>"]'
 arguments:
@@ -13,7 +13,10 @@ lastUpdated: 2026-05-10T00:00:00Z
 
 ## What this skill produces
 
-A **dense, scannable** punch list. The user should be able to read the whole report in under a minute.
+Two things, in order:
+
+1. **An architecture verdict.** Before any line-item findings: state the end-to-end architecture actually implemented in scope (data flow, ownership, state shape, where logic lives), name at least one genuinely different architecture that could solve the same problem, and say plainly whether the current approach is the right one or whether the alternative should replace it. This is not optional and not a formality — it's the #1 thing this skill exists to produce. A report that skips straight to line-item findings without this verdict is an incomplete run.
+2. A **dense, scannable** punch list of smells within the chosen architecture. The user should be able to read the whole report in under a minute.
 
 Format: one line per finding. Skip empty audit areas entirely. End with a 3–5 item priority list. Do **not** apply fixes — wait for the user to pick.
 
@@ -39,6 +42,17 @@ If neither is provided, default scope is the branch diff. If a global scan finds
 ## Audit areas
 
 Walk these in order. Each has its own checks; bundle the findings under one heading per area.
+
+### 0. End-to-end architecture & alternatives (mandatory, always first)
+
+Before looking for smells, understand and judge the shape of the thing as a whole:
+
+- Trace the full flow in scope: where state lives, who owns it, how data moves (props/emit, provide/inject, composable, store, API round-trip), and where business logic sits relative to presentation.
+- Name the architecture pattern actually in use (e.g. "prop-drilled editor object", "composable-owned reactive state read via inject", "flat per-field props + defineModel", "store-backed global state").
+- Deliberately generate at least one materially different alternative that could serve the same requirement — not a variant of the same pattern (renaming, minor restructuring) but a different shape (e.g. provide/inject instead of prop drilling, a Pinia store instead of a page-local composable, RPC-computed state instead of client-derived, colocated component instead of a shared registry). Pull from patterns already used elsewhere in this codebase before inventing new ones.
+- Weigh both on: this codebase's existing conventions (`.claude/rules/`), blast radius of switching, and whether the current approach was a deliberate choice recorded in `project_*` memory/PR history or looks like default-path drift.
+- Conclude explicitly: keep current architecture, or switch to the alternative — and why. "No strong opinion, both are fine" is a valid conclusion only after the alternative was genuinely considered, not a default to avoid the work.
+- This verdict is prose, not one-line findings — give it the space it needs (aim for a tight paragraph, not an essay).
 
 ### 1. Separation of concerns
 
@@ -119,23 +133,29 @@ Walk these in order. Each has its own checks; bundle the findings under one head
 
 2. **Read the rules.** Load every file under `.claude/rules/` so the audit's heuristics match the project's current conventions. Don't audit against generic Vue best practices when a project rule says otherwise.
 
-3. **Walk the audit areas in order.** For each area, run the checks above and write findings to a buffer. Don't intersperse findings from different areas — the report is grouped.
+3. **Build the architecture verdict first (area 0).** Do this before scanning for line-item smells — it needs the whole-picture read, not a file-by-file pass. Write the verdict as prose per area 0 above.
 
-4. **Apply context bias.** If `--context` was passed, drop or down-weight findings the note tells you to ignore, and surface the note at the top of the report so the user sees how it shaped the output.
+4. **Walk the remaining audit areas in order.** For each area, run the checks above and write findings to a buffer. Don't intersperse findings from different areas — the report is grouped.
 
-5. **Render the report.** One line per finding. Skip empty audit areas (no "0 findings" placeholder). End with 3–5 priority items.
+5. **Apply context bias.** If `--context` was passed, drop or down-weight findings the note tells you to ignore, and surface the note at the top of the report so the user sees how it shaped the output.
 
-6. **Stop.** Do **not** edit code. Wait for the user to say "fix #N" or "do the high-severity ones" before touching files.
+6. **Render the report.** Architecture verdict first, then one line per finding. Skip empty audit areas (no "0 findings" placeholder). End with 3–5 priority items.
+
+7. **Stop.** Do **not** edit code. Wait for the user to say "fix #N" or "do the high-severity ones" before touching files.
 
 ## Report shape
 
-Header lines (no preamble), then one heading per area with findings, then a short priority list. Skip any heading that has no findings.
+Header lines (no preamble), then the architecture verdict, then one heading per area with findings, then a short priority list. Skip any heading that has no findings.
 
 ```markdown
 # Audit — `refactor-foo` (branch diff)
 
 Context: focus on ui-kit primitives
 Files in scope: 12
+
+## Architecture
+
+Current: `tab-study` composable owns a reactive `settings` object and passes it down 3 levels as a prop; leaves mutate `props.settings[key]` directly. Alternative considered: `provide()` the composable at `deck-settings/index.vue` and `inject()` in each tab — same pattern already used in `card-designer/`. Verdict: switch. The prop-drilled version predates the provide/inject convention this codebase settled on elsewhere; keeping it just means two competing patterns for the same problem.
 
 ## SoC
 

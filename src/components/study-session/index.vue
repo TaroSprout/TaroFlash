@@ -7,6 +7,7 @@ import { emitSfx, emitStudySfx } from '@/sfx/bus'
 import { useProvideDeckContext } from './deck-context'
 import { provideStudyViewport } from './viewport-context'
 import { sessionPaneEnter, sessionPaneLeave } from '@/utils/animations/session-pane'
+import { clearPersistedSession } from './composables/session-persistence'
 import type { CardReviewResult } from './composables/session-core'
 import type { SecondaryAction } from './composables/study-modal'
 
@@ -38,6 +39,7 @@ function onSessionFinished(session_results: CardReviewResult[]) {
 /** Early close (close button / backdrop / esc before any review). */
 function onClosed() {
   emitSfx('snappy_button_5')
+  clearPersistedSession()
   close()
 }
 
