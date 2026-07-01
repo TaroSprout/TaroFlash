@@ -3,7 +3,6 @@ import { useUpsertMemberMutation } from '@/api/members'
 import { useMemberStore } from '@/stores/member'
 import { MEMBER_CARD_COVER_DEFAULTS } from '@/utils/member/defaults'
 import { buildMemberPayload, hasMemberChanges } from '@/utils/member/payload'
-import { withMemberPreferencesDefaults } from '@/utils/member/preferences'
 
 /**
  * Reactive state + mutations for editing the current member's profile.
@@ -20,7 +19,7 @@ export function useMemberEditor() {
     description: member_store.description
   })
 
-  const preferences = reactive(withMemberPreferencesDefaults(member_store.preferences))
+  const preferences = reactive({ ...member_store.preferences })
 
   const cover = reactive<DeckCover>({ ...MEMBER_CARD_COVER_DEFAULTS })
 
