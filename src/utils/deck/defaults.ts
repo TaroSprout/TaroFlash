@@ -17,8 +17,7 @@ export const DECK_CONFIG_DEFAULTS: Required<DeckConfig> = {
   max_new_per_day: null,
   flip_cards: false,
   is_spaced: true,
-  auto_play: false,
-  show_all_ratings: true
+  auto_play: false
 }
 
 export const CARD_ATTRIBUTES_DEFAULTS: Required<

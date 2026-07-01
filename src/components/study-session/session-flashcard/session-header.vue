@@ -5,7 +5,7 @@ import UiDropdownButton, {
 } from '@/components/ui-kit/dropdown-button/index.vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { DECK_CONFIG_DEFAULTS } from '@/utils/deck/defaults'
+import { MEMBER_PREFERENCES_DEFAULTS } from '@/utils/member/preferences'
 
 type SessionHeaderProps = {
   title?: string
@@ -18,7 +18,7 @@ type SessionHeaderProps = {
 const {
   can_edit = false,
   show_menu = true,
-  show_all_ratings = DECK_CONFIG_DEFAULTS.show_all_ratings
+  show_all_ratings = MEMBER_PREFERENCES_DEFAULTS.study.show_all_ratings
 } = defineProps<SessionHeaderProps>()
 
 const emit = defineEmits<{

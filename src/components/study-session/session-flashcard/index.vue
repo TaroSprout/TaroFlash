@@ -14,9 +14,9 @@ import { type Grade } from 'ts-fsrs'
 import { computed, ref, useTemplateRef, watch } from 'vue'
 import { providePrimedGrade } from './primed-grade-context'
 import { useFlushDeckReviews } from '@/api/reviews'
-import { useUpsertDeckMutation } from '@/api/decks'
+import { useUpsertMemberMutation } from '@/api/members'
+import { useMemberStore } from '@/stores/member'
 import { emitSfx } from '@/sfx/bus'
-import { withDeckConfigDefaults } from '@/utils/deck/defaults'
 import type { CardReviewResult } from '@/components/study-session/composables/session-core'
 
 const { decks, config_override } = defineProps<{
@@ -44,6 +44,7 @@ const {
   remaining_due_count,
   is_starting_side,
   config,
+  show_all_ratings,
   next_card,
   is_cover,
   reviewCard,
@@ -90,7 +91,8 @@ const stage = useTemplateRef('stage')
 const primed_grade = ref<Grade | null>(null)
 providePrimedGrade(primed_grade)
 const flushDeckReviews = useFlushDeckReviews()
-const upsert_deck = useUpsertDeckMutation()
+const member_store = useMemberStore()
+const upsert_member = useUpsertMemberMutation()
 
 const can_edit = computed(() => !loading.value && !editing.value && !is_cover.value)
 
@@ -116,15 +118,16 @@ function finishSession() {
 
 function toggleRatings() {
   emitSfx('snappy_button_5')
-  config.show_all_ratings = !config.show_all_ratings
-  for (const deck of decks)
-    upsert_deck.mutate({
-      ...deck,
-      study_config: withDeckConfigDefaults({
-        ...deck.study_config,
-        show_all_ratings: config.show_all_ratings
-      })
-    })
+  show_all_ratings.value = !show_all_ratings.value
+
+  if (!member_store.id) return
+  upsert_member.mutate({
+    id: member_store.id,
+    preferences: {
+      ...member_store.preferences,
+      study: { ...member_store.preferences.study, show_all_ratings: show_all_ratings.value }
+    }
+  })
 }
 
 /**
@@ -165,7 +168,7 @@ watch(mode, (m) => {
         :title="title"
         :can_edit="can_edit"
         :is_cover="is_cover"
-        :show_all_ratings="config.show_all_ratings"
+        :show_all_ratings="show_all_ratings"
         @stop="requestClose"
         @edit="startEdit"
         @move="onMove"
@@ -191,7 +194,7 @@ watch(mode, (m) => {
           :editing="editing"
           :active_card="active_card"
           :current_card_side="current_card_side"
-          :show_all_ratings="config.show_all_ratings"
+          :show_all_ratings="show_all_ratings"
           :next_card="next_card"
           :next_card_side="next_card_side"
           :preview_style="preview_style"
@@ -209,7 +212,7 @@ watch(mode, (m) => {
           class="z-10 w-full"
           :options="active_card?.preview"
           :side="current_card_side"
-          :show_all_ratings="config.show_all_ratings"
+          :show_all_ratings="show_all_ratings"
           :loading="loading"
           @started="startSession"
           @rated="onRated"
