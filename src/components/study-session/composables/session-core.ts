@@ -9,7 +9,7 @@ import {
 } from 'ts-fsrs'
 import { useSaveReviewMutation } from '@/api/reviews'
 import { withDeckConfigDefaults } from '@/utils/deck/defaults'
-import { writePersistedSession, type PersistedSession } from './session-persistence'
+import { usePersistedSession, type PersistedSession } from './session-persistence'
 
 export type StudyCard = Card & { preview?: RecordLog; state: ReviewState }
 
@@ -55,6 +55,7 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
   const _config_override = shallowRef<Partial<DeckConfig> | undefined>(undefined)
 
   const save_review_mutation = useSaveReviewMutation()
+  const persisted_session = usePersistedSession()
 
   const mode = ref<'studying' | 'completed'>('studying')
   const active_card = shallowRef<StudyCard | undefined>(undefined)
@@ -124,7 +125,8 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
     })
 
     active_card.value = cards.value.find((c) => c.state === 'unreviewed')
-    mode.value = persisted.mode === 'studying' && !active_card.value ? 'completed' : persisted.mode
+    mode.value = persisted.mode
+    if (mode.value === 'studying' && !active_card.value) mode.value = 'completed'
     _has_seeded = true
     _persist()
   }
@@ -275,13 +277,13 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
    */
   function _persist() {
     if (!_has_seeded) return
-    writePersistedSession({
+    persisted_session.value = {
       deck_ids: _deck_ids.value,
       config_override: _config_override.value,
       card_ids: _cards_in_deck.value.map((c) => c.id),
       results: results.value,
       mode: mode.value
-    })
+    }
   }
 
   return {

@@ -133,7 +133,7 @@ function toggleRatings() {
  */
 function onRestore(...restoreArgs: Parameters<typeof restoreCards>) {
   restoreCards(...restoreArgs)
-  if (mode.value === 'studying') startSession()
+  if (mode.value === 'studying') startSession({ silent: true })
 }
 
 /** Triggers the fling animation on the card stage; reviewed event follows. */

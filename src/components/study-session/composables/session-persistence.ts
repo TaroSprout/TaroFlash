@@ -1,3 +1,4 @@
+import { useSessionRef } from '@/composables/storage/session-ref'
 import type { CardReviewResult } from './session-core'
 
 const STORAGE_KEY = 'study-session'
@@ -13,21 +14,16 @@ export type PersistedSession = {
 /**
  * Session-local (tab-scoped) snapshot used to resume a study session across a
  * page refresh. Only ids + review results are stored — display text and FSRS
- * preview data are re-fetched, not duplicated.
+ * preview data are re-fetched, not duplicated. Backed by `useSessionRef` so
+ * assigning `.value` handles the JSON serialization/parsing.
  */
-export function readPersistedSession(): PersistedSession | undefined {
-  const raw = sessionStorage.getItem(STORAGE_KEY)
-  if (!raw) return undefined
-
-  try {
-    return JSON.parse(raw) as PersistedSession
-  } catch {
-    return undefined
-  }
+export function usePersistedSession() {
+  return useSessionRef<PersistedSession | undefined>(STORAGE_KEY, undefined)
 }
 
-export function writePersistedSession(session: PersistedSession) {
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session))
+/** One-shot read, for call sites that don't need a live reactive ref. */
+export function readPersistedSession(): PersistedSession | undefined {
+  return usePersistedSession().value
 }
 
 export function clearPersistedSession() {
