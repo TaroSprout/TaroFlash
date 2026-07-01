@@ -64,17 +64,52 @@ describe('useRatingFormat', () => {
 
   test('selects the due date corresponding to the given grade', () => {
     const { getRatingTimeFormat } = useRatingFormat()
+    // getRatingTimeFormat resolves all 4 grades together, so the RecordLog
+    // stub must carry a due date for every grade (mirrors the real ts-fsrs
+    // RecordLog shape) — not just the two grades under test. Each grade gets
+    // a distinct due date so none of them collide and force day-granularity.
     const good_due = new Date(Date.now() + 1000 * 60 * 60 * 24)
     const again_due = new Date(Date.now() + 1000 * 60) // +1 minute
     const options = {
       [Rating.Again]: { card: { due: again_due } },
-      [Rating.Good]: { card: { due: good_due } }
+      [Rating.Hard]: { card: { due: new Date(Date.now() + 1000 * 60 * 60 * 2) } }, // +2 hours
+      [Rating.Good]: { card: { due: good_due } },
+      [Rating.Easy]: { card: { due: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3) } } // +3 days
     }
 
     const good_result = getRatingTimeFormat(Rating.Good, options)
     const again_result = getRatingTimeFormat(Rating.Again, options)
 
     expect(good_result).toMatch(/day|hour/)
+    expect(again_result).toMatch(/minute|second/)
+  })
+
+  // ── toRelativeDistinct wiring [obligation] ─────────────────────────────────
+  // getRatingTimeFormat now resolves all 4 grades together via toRelativeDistinct
+  // before picking the requested one, so two grades whose due dates collide at
+  // week-level never render identical preview text.
+
+  test('returns distinct strings for two grades whose due dates collide at week-level [obligation]', () => {
+    const { getRatingTimeFormat } = useRatingFormat()
+    const day = 24 * 60 * 60 * 1000
+    // 7.6 and 8.6 days out both naturally round to "in 1 week" — only these two collide.
+    const good_due = new Date(Date.now() + 7.6 * day)
+    const easy_due = new Date(Date.now() + 8.6 * day)
+    const options = {
+      [Rating.Again]: { card: { due: new Date(Date.now() + 1000 * 60) } }, // +1 minute, distinct
+      [Rating.Hard]: { card: { due: new Date(Date.now() + 2 * day) } }, // +2 days, distinct
+      [Rating.Good]: { card: { due: good_due } },
+      [Rating.Easy]: { card: { due: easy_due } }
+    }
+
+    const good_result = getRatingTimeFormat(Rating.Good, options)
+    const easy_result = getRatingTimeFormat(Rating.Easy, options)
+    const again_result = getRatingTimeFormat(Rating.Again, options)
+
+    expect(good_result).not.toBe(easy_result)
+    expect(good_result).toMatch(/day/)
+    expect(easy_result).toMatch(/day/)
+    // Non-colliding grade keeps its natural sub-day unit.
     expect(again_result).toMatch(/minute|second/)
   })
 })

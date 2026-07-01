@@ -1,5 +1,11 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
-import { isoNow, localDayStart, formatShortDate, toRelative } from '@/utils/date'
+import {
+  isoNow,
+  localDayStart,
+  formatShortDate,
+  toRelative,
+  toRelativeDistinct
+} from '@/utils/date'
 
 describe('isoNow', () => {
   afterEach(() => {
@@ -151,5 +157,45 @@ describe('toRelative', () => {
 
     expect(toRelative(twentyEightDays, { locale: 'en-US' })).toBe('in 1 month')
     expect(toRelative(thirtyDays, { locale: 'en-US' })).toBe('in 1 month')
+  })
+})
+
+// ── toRelativeDistinct [obligation] ─────────────────────────────────────────
+
+describe('toRelativeDistinct [obligation]', () => {
+  const day = 86_400 * 1000
+
+  test('demotes two colliding dates to distinct day-level labels [obligation]', () => {
+    // 7.6 and 8.6 days out both naturally round to "in 1 week".
+    const a = new Date(Date.now() + 7.6 * day)
+    const b = new Date(Date.now() + 8.6 * day)
+
+    const [labelA, labelB] = toRelativeDistinct([a, b], { locale: 'en-US' })
+
+    expect(labelA).not.toBe(labelB)
+    expect(labelA).toBe('in 8 days')
+    expect(labelB).toBe('in 9 days')
+  })
+
+  test('leaves non-colliding dates at their natural unit, including sub-day granularity [obligation]', () => {
+    const inTwoMinutes = new Date(Date.now() + 2 * 60 * 1000)
+    const inThreeHours = new Date(Date.now() + 3 * 60 * 60 * 1000)
+
+    const [labelA, labelB] = toRelativeDistinct([inTwoMinutes, inThreeHours], { locale: 'en-US' })
+
+    expect(labelA).toBe('in 2 minutes')
+    expect(labelB).toBe('in 3 hours')
+  })
+
+  test('only demotes the colliding pair when a third date is distinct [obligation]', () => {
+    const a = new Date(Date.now() + 7.6 * day)
+    const b = new Date(Date.now() + 8.6 * day)
+    const distinct = new Date(Date.now() + 2 * 60 * 1000) // in 2 minutes, no collision
+
+    const [labelA, labelB, labelC] = toRelativeDistinct([a, b, distinct], { locale: 'en-US' })
+
+    expect(labelA).toBe('in 8 days')
+    expect(labelB).toBe('in 9 days')
+    expect(labelC).toBe('in 2 minutes')
   })
 })

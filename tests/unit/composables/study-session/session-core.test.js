@@ -557,3 +557,63 @@ describe('session-core — dropCard [obligation]', () => {
     expect(session.cards.value.map((c) => c.id)).toEqual([c1.id, c3.id])
   })
 })
+
+// ── updateCard [obligation] ─────────────────────────────────────────────────────
+
+describe('session-core — updateCard [obligation]', () => {
+  test('patches the matching card in cards [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const [c1, c2] = [makeNewCard(), makeNewCard()]
+    session.setCards([c1, c2])
+
+    session.updateCard(c1.id, { front_text: 'Updated front' })
+
+    expect(session.cards.value.find((c) => c.id === c1.id)?.front_text).toBe('Updated front')
+  })
+
+  test('reassigns the cards array reference (shallowRef immutability) [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const [c1, c2] = [makeNewCard(), makeNewCard()]
+    session.setCards([c1, c2])
+    const before = session.cards.value
+
+    session.updateCard(c1.id, { front_text: 'Updated front' })
+
+    expect(session.cards.value).not.toBe(before)
+  })
+
+  test('leaves non-matching cards untouched (value and reference) [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const [c1, c2] = [makeNewCard(), makeNewCard()]
+    session.setCards([c1, c2])
+    const c2_before = session.cards.value.find((c) => c.id === c2.id)
+
+    session.updateCard(c1.id, { front_text: 'Updated front' })
+
+    const c2_after = session.cards.value.find((c) => c.id === c2.id)
+    expect(c2_after).toBe(c2_before)
+  })
+
+  test('patches active_card when the patched card is the active one [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const [c1, c2] = [makeNewCard(), makeNewCard()]
+    session.setCards([c1, c2])
+
+    expect(session.active_card.value?.id).toBe(c1.id)
+
+    session.updateCard(c1.id, { front_text: 'Updated front' })
+
+    expect(session.active_card.value?.front_text).toBe('Updated front')
+  })
+
+  test('does not touch active_card when the patched card is not the active one [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    const [c1, c2] = [makeNewCard(), makeNewCard()]
+    session.setCards([c1, c2])
+    const active_before = session.active_card.value
+
+    session.updateCard(c2.id, { front_text: 'Updated front' })
+
+    expect(session.active_card.value).toBe(active_before)
+  })
+})

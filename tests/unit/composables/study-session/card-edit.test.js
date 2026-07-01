@@ -25,10 +25,10 @@ function makeCard(overrides = {}) {
   return { id: 1, deck_id: 10, front_text: 'Q', back_text: 'A', ...overrides }
 }
 
-function makeSetup({ card = makeCard(), deck_id = () => 10 } = {}) {
+function makeSetup({ card = makeCard(), deck_id = () => 10, updateCard = vi.fn() } = {}) {
   const active_card = ref(card ? { ...card, state: 'unreviewed', preview: undefined } : undefined)
-  const result = useCardEdit(active_card, deck_id)
-  return { result, active_card }
+  const result = useCardEdit(active_card, deck_id, updateCard)
+  return { result, active_card, updateCard }
 }
 
 beforeEach(() => {
@@ -51,7 +51,7 @@ describe('useCardEdit — editing flag', () => {
 
   test('start() is a no-op when active_card is undefined', () => {
     const active_card = ref(undefined)
-    const result = useCardEdit(active_card, () => 10)
+    const result = useCardEdit(active_card, () => 10, vi.fn())
     result.start()
     expect(result.editing.value).toBe(false)
   })
@@ -149,10 +149,41 @@ describe('useCardEdit — update() calls saveCard [obligation]', () => {
 
   test('update() is a no-op when active_card is undefined', async () => {
     const active_card = ref(undefined)
-    const result = useCardEdit(active_card, () => 10)
+    const result = useCardEdit(active_card, () => 10, vi.fn())
 
     await result.update('front', 'noop')
 
     expect(saveCardMock).not.toHaveBeenCalled()
+  })
+
+  test('update() is a no-op when active_card has no id [obligation]', async () => {
+    const { result, updateCard } = makeSetup({ card: { ...makeCard(), id: undefined } })
+
+    await result.update('front', 'noop')
+
+    expect(saveCardMock).not.toHaveBeenCalled()
+    expect(updateCard).not.toHaveBeenCalled()
+  })
+})
+
+// ── update() patches the session's own card copy via updateCard ───────────────
+
+describe('useCardEdit — update() patches the session card via updateCard [obligation]', () => {
+  test('calls updateCard with the card id and patched values after saveCard resolves [obligation]', async () => {
+    const card = makeCard({ id: 42 })
+    const { result, updateCard } = makeSetup({ card })
+
+    await result.update('front', 'Hello')
+
+    expect(updateCard).toHaveBeenCalledWith(42, { front_text: 'Hello' })
+  })
+
+  test('calls updateCard with back_text values [obligation]', async () => {
+    const card = makeCard({ id: 42 })
+    const { result, updateCard } = makeSetup({ card })
+
+    await result.update('back', 'World')
+
+    expect(updateCard).toHaveBeenCalledWith(42, { back_text: 'World' })
   })
 })
