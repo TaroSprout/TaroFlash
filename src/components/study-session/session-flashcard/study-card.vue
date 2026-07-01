@@ -84,6 +84,7 @@ onMounted(() => {
     onEnd: (result) => endDrag(el, result),
     onCancel: () => snapBack(el)
   })
+  el.addEventListener('mousedown', onCardMouseDown)
 
   shortcuts.register({ combo: 'arrowright', handler: () => swipe(el, 1) })
   shortcuts.register({ combo: 'arrowleft', handler: () => swipe(el, -1) })
@@ -199,6 +200,12 @@ function endDrag(el: HTMLElement, { dx, dy }: { dx: number; dy: number }) {
   if (is_animating.value) return
 
   if (isTap(dx, dy)) {
+    // A tap that ends a drag-selection of the card's text shouldn't also flip.
+    // A plain tap collapses the selection on mousedown, so this only catches
+    // the release of a real selection.
+    const sel = window.getSelection()
+    if (sel && !sel.isCollapsed) return
+
     triggerCardFlip()
     return
   }
@@ -213,6 +220,14 @@ function endDrag(el: HTMLElement, { dx, dy }: { dx: number; dy: number }) {
 /** A gesture that barely moved in either axis — a tap, not a drag. */
 function isTap(dx: number, dy: number) {
   return Math.abs(dx) < FLIP_THRESHOLD && Math.abs(dy) < FLIP_THRESHOLD
+}
+
+// Spamming the flip racks up the browser's click counter, whose double/triple
+// clicks word- and line-select the card content. Suppress the default selection
+// on those multi-clicks only — a single click (and a deliberate click-drag to
+// select) keeps `detail === 1`, so manual selection still works.
+function onCardMouseDown(e: MouseEvent) {
+  if (e.detail > 1) e.preventDefault()
 }
 
 /** Flings the card in a direction (keyboard shortcut entry point). */
