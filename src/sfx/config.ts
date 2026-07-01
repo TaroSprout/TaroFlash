@@ -59,7 +59,8 @@ export const SOUNDS = {
   slide_left: {},
   wooden_chime_ring: {},
   generic_notification_9: {},
-  generic_button_15: {}
+  generic_button_15: {},
+  success_1: {}
 } satisfies Record<string, SoundDef>
 
 export type SoundKey = keyof typeof SOUNDS

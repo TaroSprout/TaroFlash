@@ -4,6 +4,7 @@ import { useQueryCache } from '@pinia/colada'
 import { useCreateSubscriptionMutation } from '@/api/billing'
 import { useCurrentMemberQuery } from '@/api/members'
 import { useCheckoutElements } from '@/composables/billing/use-checkout-elements'
+import { useModalRequestClose } from '@/composables/modal'
 import { emitSfx } from '@/sfx/bus'
 
 export type CheckoutResponse = { upgraded: boolean }
@@ -11,6 +12,7 @@ export type CheckoutStatus = 'loading' | 'error' | 'form' | 'confirming' | 'succ
 
 const SYNC_MAX_ATTEMPTS = 8
 const SYNC_INTERVAL_MS = 750
+const SUCCESS_DISPLAY_MS = 1400
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -20,8 +22,9 @@ function wait(ms: number) {
  * Owns the checkout modal's Stripe Elements session and open/close chimes.
  * Collapses every loading/error/success signal into a single `status`, so
  * the UI branches on one value instead of combining several booleans.
- * `onSubmit` confirms the payment and flips to the success view once the
- * member's plan has synced; `onDone` closes the modal reporting the upgrade.
+ * `onSubmit` confirms the payment, waits for the member's plan to sync, then
+ * flashes a success message and auto-closes reporting the upgrade. Closing
+ * via backdrop/esc is suppressed while a submission is in flight.
  */
 export function useCheckout(close: (response?: CheckoutResponse) => void) {
   const { t } = useI18n()
@@ -56,6 +59,11 @@ export function useCheckout(close: (response?: CheckoutResponse) => void) {
   onMounted(() => emitSfx('wooden_chime_ring'))
   onBeforeUnmount(() => emitSfx('pop_up_close'))
 
+  useModalRequestClose(() => {
+    if (status.value === 'confirming') return
+    close()
+  })
+
   // The member row flips to the paid plan only once the Stripe webhook syncs
   // it — that can lag a few seconds behind `confirm()` resolving. Poll rather
   // than trusting the first refetch, so we don't show success against stale
@@ -77,9 +85,9 @@ export function useCheckout(close: (response?: CheckoutResponse) => void) {
     queryCache.invalidateQueries({ key: ['billing'] })
     is_confirming.value = false
     is_success.value = true
-  }
 
-  function onDone() {
+    emitSfx('success_1')
+    await wait(SUCCESS_DISPLAY_MS)
     close({ upgraded: true })
   }
 
@@ -87,7 +95,6 @@ export function useCheckout(close: (response?: CheckoutResponse) => void) {
     status,
     is_ready,
     submit_error,
-    onSubmit,
-    onDone
+    onSubmit
   }
 }

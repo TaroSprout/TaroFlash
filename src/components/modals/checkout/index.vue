@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import CrossfadeResize from '@/components/layout-kit/crossfade-resize.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import PaymentStatus from './payment-status.vue'
 import SuccessView from './success-view.vue'
 import CheckoutFooter from './checkout-footer.vue'
 import { useCheckout, type CheckoutResponse } from './use-checkout'
+import { fadeLeave } from '@/utils/animations/fade'
+import { springScaleIn } from '@/utils/animations/modal'
 
 export type { CheckoutResponse }
 
@@ -14,15 +15,25 @@ const { close } = defineProps<{
 }>()
 
 const { t } = useI18n()
-const { status, is_ready, submit_error, onSubmit, onDone } = useCheckout(close)
+const { status, is_ready, submit_error, onSubmit } = useCheckout(close)
+
+function onLeave(el: Element, done: () => void) {
+  fadeLeave(el, done)
+}
+
+function onEnter(el: Element, done: () => void) {
+  springScaleIn(el, done)
+}
 </script>
 
 <template>
   <div
     data-testid="checkout"
-    class="h-160 w-150 relative flex flex-col justify-between overflow-hidden rounded-8 bg-brown-100 shadow-lg py-6 dark:bg-grey-800"
+    class="h-160 w-150 relative flex flex-col overflow-hidden rounded-8 bg-brown-100 shadow-lg py-6 dark:bg-grey-800"
+    :class="status === 'success' ? 'justify-center' : 'justify-between'"
   >
     <header
+      v-if="status !== 'success'"
       data-testid="checkout__header"
       class="w-full shrink-0 grid grid-cols-[1fr_auto_1fr] px-6"
     >
@@ -34,6 +45,7 @@ const { status, is_ready, submit_error, onSubmit, onDone } = useCheckout(close)
         icon-only
         rounded-full
         class="justify-self-start"
+        :disabled="status === 'confirming'"
         @press="close()"
       >
         {{ t('billing.checkout.close-label') }}
@@ -44,12 +56,12 @@ const { status, is_ready, submit_error, onSubmit, onDone } = useCheckout(close)
       </h1>
     </header>
 
-    <crossfade-resize data-testid="checkout__body-swap" class="px-16">
+    <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
       <div
         v-if="status !== 'success'"
         key="form"
         data-testid="checkout__body"
-        class="flex flex-col gap-4"
+        class="flex flex-col gap-4 px-16"
       >
         <payment-status :status="status" />
         <div ref="container" data-testid="checkout__payment-element"></div>
@@ -59,14 +71,14 @@ const { status, is_ready, submit_error, onSubmit, onDone } = useCheckout(close)
       </div>
 
       <success-view v-else key="success" />
-    </crossfade-resize>
+    </transition>
 
     <checkout-footer
+      v-if="status !== 'success'"
       class="px-16"
       :status="status"
       :is_ready="is_ready"
       @submit="onSubmit"
-      @done="onDone"
     />
   </div>
 </template>

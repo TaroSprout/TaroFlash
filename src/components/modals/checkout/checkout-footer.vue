@@ -12,7 +12,6 @@ const { status, is_ready } = defineProps<CheckoutFooterProps>()
 
 const emit = defineEmits<{
   (e: 'submit'): void
-  (e: 'done'): void
 }>()
 
 const { t } = useI18n()
@@ -24,26 +23,15 @@ const { t } = useI18n()
     class="shrink-0 px-(--checkout-padding) pb-(--checkout-padding) pt-2"
   >
     <ui-button
-      v-if="status === 'form' || status === 'confirming'"
       data-testid="checkout__submit"
       data-theme="green-400"
       full-width
       size="lg"
-      :loading="status === 'confirming'"
-      :disabled="!is_ready"
+      :loading="status === 'loading' || status === 'confirming'"
+      :disabled="!is_ready || status === 'error'"
       @press="emit('submit')"
     >
       {{ t('billing.checkout.submit') }}
-    </ui-button>
-    <ui-button
-      v-else-if="status === 'success'"
-      data-testid="checkout__success-close"
-      data-theme="green-400"
-      full-width
-      size="lg"
-      @press="emit('done')"
-    >
-      {{ t('billing.checkout.success-close') }}
     </ui-button>
   </div>
 </template>
