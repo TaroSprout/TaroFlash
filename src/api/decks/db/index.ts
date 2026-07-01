@@ -32,6 +32,26 @@ export async function fetchDeck(id: number): Promise<Deck> {
   return data as Deck
 }
 
+/**
+ * Fetches decks by explicit id — used to reopen a study session's decks after
+ * a page refresh, when only the deck ids survive in sessionStorage.
+ */
+export async function fetchDecksByIds(ids: number[]): Promise<Deck[]> {
+  if (!ids.length) return []
+
+  const { data, error } = await supabase
+    .rpc('decks_with_stats', { p_today_start: localDayStart() })
+    .select('*')
+    .in('id', ids)
+
+  if (error) {
+    logger.error(error.message)
+    throw error
+  }
+
+  return data ?? []
+}
+
 export async function fetchMemberDeckCount(): Promise<number> {
   const { count, error } = await supabase
     .from('decks')
