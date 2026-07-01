@@ -61,8 +61,13 @@ describe('TabIndex', () => {
     expect(wrapper.find('[data-testid="tab-index__nav-group--app"]').exists()).toBe(true)
 
     const cards = wrapper.findAll('[data-testid="tab-index__nav-card"]')
-    expect(cards).toHaveLength(3)
-    expect(cards.map((c) => c.attributes('data-value'))).toEqual(['profile', 'subscription', 'app'])
+    expect(cards).toHaveLength(4)
+    expect(cards.map((c) => c.attributes('data-value'))).toEqual([
+      'profile',
+      'subscription',
+      'app',
+      'review-preferences'
+    ])
   })
 
   test('emits navigate with the clicked entry value', async () => {

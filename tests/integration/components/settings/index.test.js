@@ -222,10 +222,10 @@ beforeEach(() => {
 // ── Tab routing ───────────────────────────────────────────────────────────────
 
 describe('settings app — tab routing', () => {
-  test('exposes the four expected tab values in the correct order', () => {
+  test('exposes the five expected tab values in the correct order', () => {
     const wrapper = makeWrapper()
     const tabs = JSON.parse(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-tabs'))
-    expect(tabs).toEqual(['profile', 'app', 'subscription', 'danger-zone'])
+    expect(tabs).toEqual(['profile', 'app', 'review-preferences', 'subscription', 'danger-zone'])
   })
 
   test('defaults the active sidebar tab to "profile" on non-sheet layout', () => {
@@ -263,7 +263,7 @@ describe('settings app — header copy follows displayed tab', () => {
   test('switches header copy when the active tab changes', async () => {
     const wrapper = makeWrapper()
     await wrapper.find('[data-testid="tab-sheet__select-app"]').trigger('click')
-    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('Preferences')
+    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('App Preferences')
   })
 
   test('shows the index header on sheet layout with no tab selected', () => {

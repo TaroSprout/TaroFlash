@@ -45,7 +45,6 @@ type DeckConfig = {
   flip_cards?: boolean
   is_spaced?: boolean
   auto_play?: boolean
-  show_all_ratings?: boolean
 }
 
 type DeckCoverPattern =

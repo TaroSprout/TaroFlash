@@ -21,6 +21,10 @@ type MemberPreferences = {
     interface_sounds?: number
     hover_sounds?: number
   }
+  study?: {
+    show_all_ratings?: boolean
+    desired_retention?: number
+  }
 }
 
 declare type MemberRole = 'user' | 'moderator' | 'admin'

@@ -84,15 +84,29 @@ vi.mock('@/api/cards', () => {
 })
 
 const { mockFlushDeckReviews } = vi.hoisted(() => ({ mockFlushDeckReviews: vi.fn() }))
-const { mockUpsertDeck } = vi.hoisted(() => ({ mockUpsertDeck: vi.fn() }))
+const { mockUpsertMember } = vi.hoisted(() => ({ mockUpsertMember: vi.fn() }))
+const { mockMemberStore } = vi.hoisted(() => ({
+  mockMemberStore: {
+    id: 'member-1',
+    preferences: {
+      study: { show_all_ratings: false, desired_retention: 90 },
+      audio: { study_sounds: 5, interface_sounds: 5, hover_sounds: 5 },
+      accessibility: { left_hand: false }
+    }
+  }
+}))
 
 vi.mock('@/api/reviews', () => ({
   useSaveReviewMutation: () => ({ mutate: mockSaveReview, mutateAsync: mockSaveReview }),
   useFlushDeckReviews: () => mockFlushDeckReviews
 }))
 
-vi.mock('@/api/decks/mutations/upsert', () => ({
-  useUpsertDeckMutation: () => ({ mutate: mockUpsertDeck, mutateAsync: mockUpsertDeck })
+vi.mock('@/api/members', () => ({
+  useUpsertMemberMutation: () => ({ mutate: mockUpsertMember, mutateAsync: mockUpsertMember })
+}))
+
+vi.mock('@/stores/member', () => ({
+  useMemberStore: () => mockMemberStore
 }))
 
 // ── Card stub ─────────────────────────────────────────────────────────────────
@@ -200,7 +214,8 @@ describe('Session', () => {
     })
     mockSaveReview.mockClear()
     mockFlushDeckReviews.mockClear()
-    mockUpsertDeck.mockClear()
+    mockUpsertMember.mockClear()
+    mockMemberStore.preferences.study.show_all_ratings = false
   })
 
   // ── Loading behavior ───────────────────────────────────────────────────────
@@ -773,27 +788,36 @@ describe('Session', () => {
     })
   })
 
-  // ── toggleRatings: header toggle-ratings → config + upsert ───────────────
+  // ── toggleRatings: header toggle-ratings → member-wide upsert [obligation] ─
 
   describe('toggleRatings', () => {
-    test('toggling ratings flips show_all_ratings and calls upsert_deck', async () => {
+    test('toggling ratings flips the header show_all_ratings prop', async () => {
       const wrapper = makeSession(2)
       await waitForLoad(wrapper)
 
-      // Default: show_all_ratings=false → simple mode visible
-      expect(wrapper.find('[data-testid="rating-buttons__simple"]').exists()).toBe(false)
+      expect(wrapper.findComponent(SessionHeader).props('show_all_ratings')).toBe(false)
 
-      // Trigger toggle-ratings from the SessionHeader component
       wrapper.findComponent(SessionHeader).vm.$emit('toggle-ratings')
       await flushPromises()
 
-      // upsert_deck.mutate should have been called with the new value
-      expect(mockUpsertDeck).toHaveBeenCalledOnce()
-      expect(mockUpsertDeck).toHaveBeenCalledWith(
-        expect.objectContaining({
-          study_config: expect.objectContaining({ show_all_ratings: true })
+      expect(wrapper.findComponent(SessionHeader).props('show_all_ratings')).toBe(true)
+    })
+
+    test('toggling ratings calls useUpsertMemberMutation with exactly { id, preferences } [obligation]', async () => {
+      const wrapper = makeSession(2)
+      await waitForLoad(wrapper)
+
+      wrapper.findComponent(SessionHeader).vm.$emit('toggle-ratings')
+      await flushPromises()
+
+      expect(mockUpsertMember).toHaveBeenCalledOnce()
+      expect(mockUpsertMember).toHaveBeenCalledWith({
+        id: 'member-1',
+        preferences: expect.objectContaining({
+          study: expect.objectContaining({ show_all_ratings: true })
         })
-      )
+      })
+      expect(Object.keys(mockUpsertMember.mock.calls[0][0])).toEqual(['id', 'preferences'])
     })
 
     test('toggling ratings twice restores original value', async () => {
@@ -806,11 +830,22 @@ describe('Session', () => {
       header.vm.$emit('toggle-ratings')
       await flushPromises()
 
-      // Second call: show_all_ratings flipped back to false
-      const calls = mockUpsertDeck.mock.calls
+      const calls = mockUpsertMember.mock.calls
       expect(calls[1][0]).toMatchObject({
-        study_config: expect.objectContaining({ show_all_ratings: false })
+        preferences: { study: expect.objectContaining({ show_all_ratings: false }) }
       })
+    })
+
+    test('toggleRatings is a no-op when the member store has no id', async () => {
+      mockMemberStore.id = undefined
+      const wrapper = makeSession(2)
+      await waitForLoad(wrapper)
+
+      wrapper.findComponent(SessionHeader).vm.$emit('toggle-ratings')
+      await flushPromises()
+
+      expect(mockUpsertMember).not.toHaveBeenCalled()
+      mockMemberStore.id = 'member-1'
     })
   })
 
@@ -925,32 +960,15 @@ describe('Session', () => {
     })
   })
 
-  describe('multi-deck: toggleRatings upserts all decks [obligation]', () => {
-    test('toggling ratings calls upsert_deck.mutate once per deck in the session', async () => {
+  describe('multi-deck: toggleRatings upserts the member once, not per deck [obligation]', () => {
+    test('toggling ratings on a multi-deck session calls useUpsertMemberMutation exactly once', async () => {
       const wrapper = makeMultiDeckSession(2, [10, 20])
       await waitForLoad(wrapper)
 
       wrapper.findComponent(SessionHeader).vm.$emit('toggle-ratings')
       await flushPromises()
 
-      expect(mockUpsertDeck).toHaveBeenCalledTimes(2)
-      const call_ids = mockUpsertDeck.mock.calls.map((c) => c[0].id)
-      expect(call_ids).toContain(10)
-      expect(call_ids).toContain(20)
-    })
-
-    test('each upsert carries the updated show_all_ratings value for that deck', async () => {
-      const wrapper = makeMultiDeckSession(2, [10, 20])
-      await waitForLoad(wrapper)
-
-      wrapper.findComponent(SessionHeader).vm.$emit('toggle-ratings')
-      await flushPromises()
-
-      for (const call of mockUpsertDeck.mock.calls) {
-        expect(call[0]).toMatchObject({
-          study_config: expect.objectContaining({ show_all_ratings: true })
-        })
-      }
+      expect(mockUpsertMember).toHaveBeenCalledOnce()
     })
   })
 })

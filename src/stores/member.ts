@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed } from 'vue'
 import { useCurrentMemberQuery } from '@/api/members'
+import { withMemberPreferencesDefaults } from '@/utils/member/preferences'
 import { useSessionStore } from './session'
 
 export const useMemberStore = defineStore('member', () => {
@@ -22,7 +23,7 @@ export const useMemberStore = defineStore('member', () => {
   const role = computed(() => member.value?.role)
   const plan = computed(() => member.value?.plan)
   const plan_display_name = computed(() => member.value?.plan_display_name)
-  const preferences = computed(() => member.value?.preferences)
+  const preferences = computed(() => withMemberPreferencesDefaults(member.value?.preferences))
 
   const has_member = computed(() => Boolean(id.value))
 

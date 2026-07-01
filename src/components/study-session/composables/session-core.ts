@@ -9,6 +9,7 @@ import {
 } from 'ts-fsrs'
 import { useSaveReviewMutation } from '@/api/reviews'
 import { withDeckConfigDefaults } from '@/utils/deck/defaults'
+import { useMemberStore } from '@/stores/member'
 import { usePersistedSession, type PersistedSession } from './session-persistence'
 
 export type StudyCard = Card & { preview?: RecordLog; state: ReviewState }
@@ -40,10 +41,18 @@ export type StudySessionCore = ReturnType<typeof useStudySessionCore>
  * Future study modes (matching pairs, cloze, etc.) build on top of this core.
  */
 export function useStudySessionCore(_config?: Partial<DeckConfig>) {
+  const member_store = useMemberStore()
+
+  // Ratings mode is a member-wide preference, not per-deck — seeded once here,
+  // toggled locally for instant feedback, and persisted by the caller.
+  const show_all_ratings = ref(member_store.preferences.study.show_all_ratings)
+
   const _PARAMS = generatorParameters({
     enable_fuzz: true,
     learning_steps: [],
-    relearning_steps: []
+    relearning_steps: [],
+    // desired_retention is stored as a whole-number percent (e.g. 90 = 90%).
+    request_retention: member_store.preferences.study.desired_retention / 100
   })
 
   const config = reactive<Required<DeckConfig>>(withDeckConfigDefaults(_config))
@@ -138,7 +147,6 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
     config.max_reviews_per_day = updates.max_reviews_per_day ?? config.max_reviews_per_day
     config.max_new_per_day = updates.max_new_per_day ?? config.max_new_per_day
     config.flip_cards = updates.flip_cards ?? config.flip_cards
-    config.show_all_ratings = updates.show_all_ratings ?? config.show_all_ratings
 
     if (_raw_cards.value.length) _processCards()
   }
@@ -296,6 +304,7 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
     remaining_due_count,
     current_index,
     config,
+    show_all_ratings,
     setSessionMeta,
     setCards,
     restoreCards,

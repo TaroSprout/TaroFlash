@@ -11,6 +11,11 @@ export type ResolvedMemberPreferences = {
     interface_sounds: number
     hover_sounds: number
   }
+  study: {
+    show_all_ratings: boolean
+    // Whole-number percent (e.g. 90 = 90%), not yet wired into the FSRS engine.
+    desired_retention: number
+  }
 }
 
 export const MEMBER_PREFERENCES_DEFAULTS: ResolvedMemberPreferences = {
@@ -21,6 +26,10 @@ export const MEMBER_PREFERENCES_DEFAULTS: ResolvedMemberPreferences = {
     study_sounds: BUS_DEFAULTS.study,
     interface_sounds: BUS_DEFAULTS.interface,
     hover_sounds: BUS_DEFAULTS.hover
+  },
+  study: {
+    show_all_ratings: true,
+    desired_retention: 90
   }
 }
 
@@ -38,6 +47,12 @@ export function withMemberPreferencesDefaults(
       interface_sounds:
         partial?.audio?.interface_sounds ?? MEMBER_PREFERENCES_DEFAULTS.audio.interface_sounds,
       hover_sounds: partial?.audio?.hover_sounds ?? MEMBER_PREFERENCES_DEFAULTS.audio.hover_sounds
+    },
+    study: {
+      show_all_ratings:
+        partial?.study?.show_all_ratings ?? MEMBER_PREFERENCES_DEFAULTS.study.show_all_ratings,
+      desired_retention:
+        partial?.study?.desired_retention ?? MEMBER_PREFERENCES_DEFAULTS.study.desired_retention
     }
   }
 }
