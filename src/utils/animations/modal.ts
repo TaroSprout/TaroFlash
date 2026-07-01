@@ -59,10 +59,10 @@ const RECEDE_DURATION = 0.4
 
 /** Dials back a modal that a new modal just opened on top of, as if a shadow fell over it. */
 export function recedeModal(el: Element) {
-  gsap.set(el, { filter: 'brightness(1)' })
+  gsap.set(el, { filter: 'brightness(1) blur(0px)' })
   gsap.to(el, {
     scale: 0.9,
-    filter: 'brightness(0.8)',
+    filter: 'brightness(0.8) blur(2px)',
     duration: RECEDE_DURATION,
     ease: 'expo.out',
     pointerEvents: 'none'
@@ -72,5 +72,10 @@ export function recedeModal(el: Element) {
 /** Restores a modal to full prominence once the modal above it has closed. */
 export function restoreModal(el: Element) {
   gsap.set(el, { pointerEvents: 'auto' })
-  gsap.to(el, { scale: 1, filter: 'brightness(1)', duration: RECEDE_DURATION, ease: 'expo.out' })
+  gsap.to(el, {
+    scale: 1,
+    filter: 'brightness(1) blur(0px)',
+    duration: RECEDE_DURATION,
+    ease: 'expo.out'
+  })
 }
