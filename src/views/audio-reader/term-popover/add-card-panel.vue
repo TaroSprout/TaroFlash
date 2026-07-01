@@ -165,8 +165,10 @@ async function onSave() {
         menu-theme-dark="stone-700"
         variant="ghost"
         size="base"
+        position="bottom"
         open-on-trigger
         hide-trigger
+        icon-right="carat-down"
         :options="deck_options"
         @select="onSelectDeck"
       >

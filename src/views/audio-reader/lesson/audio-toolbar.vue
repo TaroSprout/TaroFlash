@@ -65,10 +65,15 @@ const active_lesson_chapter = computed(() => {
   return index
 })
 
+// Numbered so a chapter's position in the lesson is legible at a glance,
+// independent of its (often non-Latin) title.
 const chapter_options = computed<DropdownOption[]>(() =>
   use_lesson_chapters.value
-    ? lessonChapters.map((chapter) => ({ label: chapter.title, value: chapter.start }))
-    : chapters.map((chapter) => ({ label: chapter.title, value: chapter.id }))
+    ? lessonChapters.map((chapter, i) => ({
+        label: `${i + 1}. ${chapter.title}`,
+        value: chapter.start
+      }))
+    : chapters.map((chapter, i) => ({ label: `${i + 1}. ${chapter.title}`, value: chapter.id }))
 )
 const current_chapter_label = computed(() =>
   use_lesson_chapters.value
@@ -197,11 +202,12 @@ function setMode(next: 'expanded' | 'mini') {
             data-testid="audio-toolbar__chapter-select"
             icon-left="browser-content"
             menu-theme="brown-100"
+            menu-class="border-1 border-brown-300 dark:border-grey-900"
             variant="ghost"
             open-on-trigger
             hide-trigger
             shadow
-            position="top-start"
+            position="top"
             :options="chapter_options"
             @select="onChapter"
           >

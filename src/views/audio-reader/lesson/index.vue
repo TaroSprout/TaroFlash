@@ -176,6 +176,13 @@ function resumeFollow() {
   transcript.value?.resumeFollow()
 }
 
+// Seeking to the term's start should rejoin the live scroll too, in case the
+// member had scrolled away before playing from here.
+function onPlayFromHere() {
+  transcript.value?.resumeFollow()
+  playFromHere()
+}
+
 // Tapping outside the term dismisses it with the same cue as its close button.
 function dismissTerm() {
   emitSfx('snappy_button_5')
@@ -291,7 +298,7 @@ onBeforeUnmount(() => {
             show_back
             @back="closeTerm"
             @close="closeTerm"
-            @play-from-here="playFromHere"
+            @play-from-here="onPlayFromHere"
             @play-word="playClip"
           />
         </div>
@@ -398,7 +405,7 @@ onBeforeUnmount(() => {
               show_back
               @back="closeTerm"
               @close="closeTerm"
-              @play-from-here="playFromHere"
+              @play-from-here="onPlayFromHere"
               @play-word="playClip"
             />
           </div>

@@ -114,8 +114,8 @@ function onAddCard(deck_id: number | null) {
   adding.value = { front: term, back, note: description, deck_id }
 }
 
-// Saving and cancelling both reverse the push so the term card slides back in —
-// a saved card is confirmed by its own toast, so the term stays open to add more.
+// Cancelling reverses the push so the term card slides back in. Saving closes
+// the whole popover instead — the card is confirmed by its own toast.
 function returnToTermCard() {
   slide_direction.value = 'back'
   adding.value = null
@@ -323,7 +323,7 @@ watch(
         :note="adding.note"
         :deck_id="adding.deck_id"
         @cancel="returnToTermCard"
-        @saved="returnToTermCard"
+        @saved="emit('close')"
       />
     </transition>
   </div>

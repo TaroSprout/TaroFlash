@@ -43,6 +43,10 @@ const TAP_SLOP = 10
 // ~500ms native long-press so it feels responsive without firing on a quick tap.
 const LONG_PRESS_MS = 400
 
+// How long follow stays off after the member scrolls by hand before it re-arms
+// itself, so a brief detour to re-read a line doesn't require a manual resume.
+const FOLLOW_RESUME_IDLE_MS = 5000
+
 // On mobile the term sheet rises over roughly the bottom half of the viewport, so a
 // word committed past this fraction of the screen risks being buried by it. Such a
 // word is eased up into view before the sheet covers it.
@@ -196,6 +200,7 @@ export function useReaderHighlights(
   let suppress_gesture_click = false
 
   let follow_timer: ReturnType<typeof setTimeout> | null = null
+  let follow_resume_timer: ReturnType<typeof setTimeout> | null = null
   let resize_observer: ResizeObserver | null = null
 
   // The word element currently flagged as playing. The active-word cue is painted
@@ -230,6 +235,7 @@ export function useReaderHighlights(
     window.removeEventListener('wheel', disableFollow)
     cancelLongPress()
     if (follow_timer !== null) clearTimeout(follow_timer)
+    if (follow_resume_timer !== null) clearTimeout(follow_resume_timer)
   })
 
   // Once a long-press has armed range-select the finger is extending the range,
@@ -439,13 +445,19 @@ export function useReaderHighlights(
 
   // The member started scrolling by hand — a wheel/trackpad on desktop or a touch
   // pan on mobile: let the follow go and kill the live tween so it stops fighting
-  // them. No-op once already off.
+  // them. Re-arms itself after an idle spell even without a manual resume tap.
   function disableFollow() {
-    if (!following.value) return
+    if (following.value) {
+      following.value = false
+      cancelScroll(scrollParentOf(content.value))
+      updateFollowDirection()
+    }
 
-    following.value = false
-    cancelScroll(scrollParentOf(content.value))
-    updateFollowDirection()
+    if (follow_resume_timer !== null) clearTimeout(follow_resume_timer)
+    follow_resume_timer = setTimeout(() => {
+      follow_resume_timer = null
+      resumeFollow()
+    }, FOLLOW_RESUME_IDLE_MS)
   }
 
   // Point the resume control at the playing word: 'up' when its centre sits above
@@ -475,6 +487,11 @@ export function useReaderHighlights(
    * tween is wanted (and welcome) regardless of play state.
    */
   function resumeFollow() {
+    if (follow_resume_timer !== null) {
+      clearTimeout(follow_resume_timer)
+      follow_resume_timer = null
+    }
+
     following.value = true
     const index = toValue(active_word)
     if (index < 0) return
