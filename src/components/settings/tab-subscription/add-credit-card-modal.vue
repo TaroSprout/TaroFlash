@@ -72,24 +72,22 @@ async function onSubmit() {
       </p>
     </div>
 
-    <template #footer>
-      <div
-        v-if="!is_loading && !load_error"
-        data-testid="add-credit-card-modal__footer"
-        class="px-6 pb-6 pt-2"
+    <div
+      v-if="!is_loading && !load_error"
+      data-testid="add-credit-card-modal__footer"
+      class="px-6 pb-6 pt-2"
+    >
+      <ui-button
+        data-testid="add-credit-card-modal__submit"
+        data-theme="green-400"
+        full-width
+        size="lg"
+        :loading="is_submitting"
+        :disabled="!is_ready"
+        @press="onSubmit"
       >
-        <ui-button
-          data-testid="add-credit-card-modal__submit"
-          data-theme="green-400"
-          full-width
-          size="lg"
-          :loading="is_submitting"
-          :disabled="!is_ready"
-          @press="onSubmit"
-        >
-          {{ t('settings.subscription.add-credit-card.submit') }}
-        </ui-button>
-      </div>
-    </template>
+        {{ t('settings.subscription.add-credit-card.submit') }}
+      </ui-button>
+    </div>
   </mobile-sheet>
 </template>

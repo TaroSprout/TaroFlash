@@ -230,7 +230,5 @@ watch(layout_mode, (mode) => {
         </div>
       </div>
     </template>
-
-    <template #footer />
   </tab-sheet>
 </template>
