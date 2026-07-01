@@ -9,6 +9,7 @@ import {
 } from 'ts-fsrs'
 import { useSaveReviewMutation } from '@/api/reviews'
 import { withDeckConfigDefaults } from '@/utils/deck/defaults'
+import { writePersistedSession, type PersistedSession } from './session-persistence'
 
 export type StudyCard = Card & { preview?: RecordLog; state: ReviewState }
 
@@ -50,12 +51,16 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
   const _FSRS_INSTANCE: FSRS = new FSRS(_PARAMS)
   const _raw_cards = shallowRef<Card[]>([])
   const _cards_in_deck = shallowRef<StudyCard[]>([])
+  const _deck_ids = shallowRef<number[]>([])
+  const _config_override = shallowRef<Partial<DeckConfig> | undefined>(undefined)
 
   const save_review_mutation = useSaveReviewMutation()
 
   const mode = ref<'studying' | 'completed'>('studying')
   const active_card = shallowRef<StudyCard | undefined>(undefined)
   const results = shallowRef<CardReviewResult[]>([])
+
+  let _has_seeded = false
 
   const cards = computed(() => {
     return _cards_in_deck.value
@@ -75,10 +80,53 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
     return cards.value.findIndex((c) => c.id === active_card.value!.id)
   })
 
+  /**
+   * Records which decks/config this session belongs to, so a refresh-resume
+   * knows what to reopen the modal with. Doesn't touch the card queue —
+   * call once, up front, alongside setCards()/restoreCards().
+   */
+  function setSessionMeta(deck_ids: number[], config_override?: Partial<DeckConfig>) {
+    _deck_ids.value = deck_ids
+    _config_override.value = config_override
+  }
+
   function setCards(raw: Card[]) {
     _raw_cards.value = raw
     results.value = []
     _processCards()
+    _has_seeded = true
+    _persist()
+  }
+
+  /**
+   * Rebuilds the session from a sessionStorage snapshot after a refresh.
+   * `raw` is only the still-unreviewed remainder, fetched by id so newly-due
+   * cards can't leak into the locked queue; already-reviewed cards are
+   * rebuilt from `persisted.results` alone (they're never shown again).
+   */
+  function restoreCards(raw: Card[], persisted: PersistedSession) {
+    const reviewed_by_id = new Map(persisted.results.map((r) => [r.card_id, r]))
+    const fetched_by_id = new Map(raw.map((c) => [c.id, c]))
+
+    _raw_cards.value = raw
+    results.value = persisted.results
+
+    _cards_in_deck.value = persisted.card_ids.flatMap((id): StudyCard[] => {
+      const reviewed = reviewed_by_id.get(id)
+      if (reviewed) {
+        return [
+          { id, front_text: reviewed.front_text, state: reviewed.passed ? 'passed' : 'failed' }
+        ]
+      }
+
+      const card = fetched_by_id.get(id)
+      return card ? [_setupCard(card)] : []
+    })
+
+    active_card.value = cards.value.find((c) => c.state === 'unreviewed')
+    mode.value = persisted.mode === 'studying' && !active_card.value ? 'completed' : persisted.mode
+    _has_seeded = true
+    _persist()
   }
 
   function updateConfig(updates: Partial<DeckConfig>) {
@@ -125,10 +173,14 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
     _raw_cards.value = _raw_cards.value.filter((c) => c.id !== card_id)
     _cards_in_deck.value = _cards_in_deck.value.filter((c) => c.id !== card_id)
 
-    if (!was_active) return
+    if (!was_active) {
+      _persist()
+      return
+    }
 
     active_card.value = cards.value.find((c) => c.state === 'unreviewed')
     if (!active_card.value) mode.value = 'completed'
+    _persist()
   }
 
   /**
@@ -176,6 +228,7 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
 
       active_card.value = cards.value.find((c) => c.state === 'unreviewed')
       if (!active_card.value) mode.value = 'completed'
+      _persist()
 
       if (card.id && card.deck_id !== undefined) {
         return save_review_mutation.mutateAsync({
@@ -189,6 +242,7 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
       card.state = 'passed'
       active_card.value = cards.value.find((c) => c.state === 'unreviewed')
       if (!active_card.value) mode.value = 'completed'
+      _persist()
     }
   }
 
@@ -212,6 +266,24 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
     return due.getTime() <= Date.now()
   }
 
+  /**
+   * `results` and `_cards_in_deck` are shallowRefs mutated in place
+   * (`.push()`, direct property writes) for performance — a `watch()` on them
+   * would never fire, since shallow refs only react to `.value` reassignment.
+   * So persistence is an explicit call at every state-changing call site
+   * instead of a reactive side effect.
+   */
+  function _persist() {
+    if (!_has_seeded) return
+    writePersistedSession({
+      deck_ids: _deck_ids.value,
+      config_override: _config_override.value,
+      card_ids: _cards_in_deck.value.map((c) => c.id),
+      results: results.value,
+      mode: mode.value
+    })
+  }
+
   return {
     mode,
     active_card,
@@ -222,7 +294,9 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
     remaining_due_count,
     current_index,
     config,
+    setSessionMeta,
     setCards,
+    restoreCards,
     updateConfig,
     reviewCard,
     dropCard,
