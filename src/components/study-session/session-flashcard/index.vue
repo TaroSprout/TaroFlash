@@ -50,7 +50,8 @@ const {
   setCards,
   startSession,
   flipCurrentCard,
-  dropCard
+  dropCard,
+  updateCard
 } = useFlashcardSession({ ...decks[0]?.study_config, ...config_override })
 
 const { next_card_side, preview_style, onDragProgress, onNextCardFlipped, awaitFlip } =
@@ -62,7 +63,7 @@ const {
   start: startEdit,
   stop: stopEdit,
   update: onEditUpdate
-} = useCardEdit(active_card, () => active_card.value?.deck_id)
+} = useCardEdit(active_card, () => active_card.value?.deck_id, updateCard)
 
 const { onMove, onDelete } = useActiveCardActions({
   active_card,

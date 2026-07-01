@@ -5,13 +5,17 @@ import type { StudyCard } from './session-core'
 /**
  * Owns the editing/saving UI state for the active study card. Card writes go
  * through the card domain's `useCardMutations` seam so the FSRS queue and
- * rendered card stay in sync without a second persistence path.
+ * rendered card stay in sync without a second persistence path. The saved
+ * text is also patched into the session's own card copy via `updateCard` —
+ * the query-cache patch from `useCardMutations` only touches the deck-list
+ * cache, which the session doesn't read from once seeded.
  *
  * @param deck_id - Reactive id of the deck under study, forwarded to the seam.
  */
 export function useCardEdit(
   active_card: Ref<StudyCard | undefined>,
-  deck_id: MaybeRefOrGetter<number | undefined>
+  deck_id: MaybeRefOrGetter<number | undefined>,
+  updateCard: (card_id: number, values: Partial<Card>) => void
 ) {
   const editing = ref(false)
   const saving = ref(false)
@@ -35,9 +39,11 @@ export function useCardEdit(
 
   async function update(side: 'front' | 'back', text: string) {
     const card = active_card.value
-    if (!card) return
+    if (!card?.id) return
     saving.value = true
-    await mutations.saveCard(card, { [`${side}_text`]: text })
+    const values = { [`${side}_text`]: text }
+    await mutations.saveCard(card, values)
+    updateCard(card.id, values)
     saving.value = false
   }
 
