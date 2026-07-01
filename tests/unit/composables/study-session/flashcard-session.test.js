@@ -357,6 +357,24 @@ describe('useFlashcardSession', () => {
     expect(mockEmitStudySfx).toHaveBeenCalledWith('music_plink_chordyes')
   })
 
+  test('startSession({ silent: true }) does NOT emit the start sfx [obligation]', () => {
+    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    session.setCards([makeDueCard({ review: null })])
+
+    session.startSession({ silent: true })
+
+    expect(mockEmitStudySfx).not.toHaveBeenCalledWith('music_plink_chordyes')
+  })
+
+  test('startSession({ silent: true }) still sets current_card_side [obligation]', () => {
+    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    session.setCards([makeDueCard({ review: null })])
+
+    session.startSession({ silent: true })
+
+    expect(session.current_card_side.value).toBe('front')
+  })
+
   // ── flipCurrentCard ────────────────────────────────────────────────────────
 
   test('flipCurrentCard toggles from front to back', () => {

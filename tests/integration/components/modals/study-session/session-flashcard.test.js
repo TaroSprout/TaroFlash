@@ -53,6 +53,10 @@ vi.mock('@/sfx/bus', () => ({
   emitHoverSfx: vi.fn()
 }))
 
+const { cardsByIdsRefetchImpl } = vi.hoisted(() => ({
+  cardsByIdsRefetchImpl: { current: async () => ({ status: 'success', data: [], error: null }) }
+}))
+
 vi.mock('@/api/cards', () => {
   const passthrough = () => ({ mutate: vi.fn(), mutateAsync: vi.fn().mockResolvedValue(undefined) })
   return {
@@ -60,6 +64,10 @@ vi.mock('@/api/cards', () => {
       data: cardsDataRef,
       refetch: vi.fn((...args) => cardsRefetchImpl.current(...args)),
       refresh: vi.fn()
+    }),
+    useCardsByIdsQuery: () => ({
+      data: { value: undefined },
+      refetch: vi.fn((...args) => cardsByIdsRefetchImpl.current(...args))
     }),
     useSaveCardMutation: passthrough,
     useUpsertCardMutation: passthrough,
@@ -177,6 +185,10 @@ function fireTransitionEnd(wrapper) {
 
 describe('Session', () => {
   beforeEach(() => {
+    // A prior test's reviewCard()/dropCard() writes a persisted-session snapshot
+    // to sessionStorage; without clearing it, the next mount's useSessionCards
+    // sees a stale snapshot and takes the restore path instead of a fresh seed.
+    sessionStorage.clear()
     mockRegister.mockClear()
     mockEmitSfx.mockClear()
     mockEmitStudySfx.mockClear()
@@ -630,6 +642,58 @@ describe('Session', () => {
       expect(preview.exists()).toBe(true)
       expect(preview.element.style.opacity).toBe('0')
       expect(preview.element.style.transform).toContain('scale(0.9)')
+    })
+  })
+
+  // ── Refresh-resume wiring [obligation] ─────────────────────────────────────
+
+  describe('refresh-resume wiring', () => {
+    test('setSessionMeta records the session deck ids into the persisted snapshot [obligation]', async () => {
+      const wrapper = makeSession(2, { id: 7 })
+      await waitForLoad(wrapper)
+      await startSession(wrapper)
+
+      const persisted = JSON.parse(sessionStorage.getItem('study-session'))
+      expect(persisted.deck_ids).toEqual([7])
+    })
+
+    test('restoring a persisted in-progress session skips the cover screen and does not play the start sfx [obligation]', async () => {
+      const deck_data = deck.one({
+        overrides: {
+          id: 1,
+          study_config: {
+            study_all_cards: true,
+            retry_failed_cards: false,
+            show_all_ratings: false
+          }
+        }
+      })
+      const remainder_card = card.one({ overrides: { id: 101 } })
+      sessionStorage.setItem(
+        'study-session',
+        JSON.stringify({
+          deck_ids: [1],
+          card_ids: [101],
+          results: [],
+          mode: 'studying'
+        })
+      )
+      cardsByIdsRefetchImpl.current = async () => ({
+        status: 'success',
+        data: [remainder_card],
+        error: null
+      })
+
+      const wrapper = mount(Session, {
+        props: { decks: [deck_data], title: deck_data.title },
+        attachTo: document.body,
+        global: { stubs: { Card: CardStub } }
+      })
+      await flushPromises()
+
+      expect(wrapper.find('[data-testid="rating-buttons__start"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(true)
+      expect(mockEmitStudySfx).not.toHaveBeenCalledWith('music_plink_chordyes')
     })
   })
 

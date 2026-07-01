@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vite-plus/test'
 import { signInAsTestUser } from '../setup.js'
-import { fetchMemberDecks, fetchDeck, fetchMemberDeckCount } from '@/api/decks/db'
+import { fetchMemberDecks, fetchDeck, fetchMemberDeckCount, fetchDecksByIds } from '@/api/decks/db'
 
 let session
 let displayName
@@ -80,5 +80,23 @@ describe('fetchMemberDeckCount (contract)', () => {
     await insertDeck()
     await insertDeck({ title: 'Second' })
     expect(await fetchMemberDeckCount()).toBe(2)
+  })
+})
+
+describe('fetchDecksByIds (contract)', () => {
+  test('returns an empty array for an empty id list', async () => {
+    expect(await fetchDecksByIds([])).toEqual([])
+  })
+
+  test('returns the decks matching the given ids, with stats columns populated', async () => {
+    const a = await insertDeck({ title: 'A' })
+    const b = await insertDeck({ title: 'B' })
+    await insertDeck({ title: 'Not requested' })
+
+    const decks = await fetchDecksByIds([a.id, b.id])
+
+    const byId = (x, y) => x - y
+    expect(decks.map((d) => d.id).sort(byId)).toEqual([a.id, b.id].sort(byId))
+    expect(decks[0]).toHaveProperty('card_count')
   })
 })

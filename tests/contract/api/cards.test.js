@@ -6,6 +6,7 @@ import {
   bulkInsertCardsInDeck,
   fetchCardsPageByDeckId,
   fetchCardsInDeck,
+  fetchCardsByIds,
   fetchMemberCardCount,
   moveCard,
   deleteCards,
@@ -265,5 +266,29 @@ describe('moveCardsToDeck (contract)', () => {
       limit: 1000
     })
     expect(inTarget.map((c) => c.id)).toContain(card.id)
+  })
+})
+
+describe('fetchCardsByIds (contract)', () => {
+  test('returns an empty array for an empty id list', async () => {
+    expect(await fetchCardsByIds([])).toEqual([])
+  })
+
+  test('returns cards matching the given ids, with review embedded, ignoring due-ness', async () => {
+    const cards = await bulkInsertCardsInDeck({
+      deck_id: deck.id,
+      cards: [
+        { front_text: 'F1', back_text: 'B1' },
+        { front_text: 'F2', back_text: 'B2' },
+        { front_text: 'F3', back_text: 'B3' }
+      ]
+    })
+    const [first, second] = cards
+
+    const result = await fetchCardsByIds([first.id, second.id])
+
+    const byId = (x, y) => x - y
+    expect(result.map((c) => c.id).sort(byId)).toEqual([first.id, second.id].sort(byId))
+    expect(result[0]).toHaveProperty('review')
   })
 })
