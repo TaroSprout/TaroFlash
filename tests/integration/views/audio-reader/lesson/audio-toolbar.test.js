@@ -378,7 +378,7 @@ describe('AudioToolbar', () => {
 
   // ── Dropdown wiring: chapters ──────────────────────────────────────────────
 
-  test('chapter options use bare title (no number prefix) [obligation]', () => {
+  test('collection-level chapter options are numbered with a 1-based prefix [obligation]', () => {
     const wrapper = mountToolbar({
       chapters: [
         { id: 10, title: 'Intro' },
@@ -389,8 +389,23 @@ describe('AudioToolbar', () => {
     const chapterDropdown = wrapper.find('[data-testid="audio-toolbar__chapter-select"]')
     const options = chapterDropdown.findAll('[data-testid="dropdown-button__option"]')
 
-    expect(options[0].text()).toBe('Intro')
-    expect(options[1].text()).toBe('Part Two')
+    expect(options[0].text()).toBe('1. Intro')
+    expect(options[1].text()).toBe('2. Part Two')
+  })
+
+  test('internal lesson-chapter options are numbered with a 1-based prefix [obligation]', () => {
+    const wrapper = mountToolbar({
+      lessonChapters: [
+        { start: 0, title: 'Warm-up' },
+        { start: 30, title: 'Vocabulary' }
+      ]
+    })
+
+    const chapterDropdown = wrapper.find('[data-testid="audio-toolbar__chapter-select"]')
+    const options = chapterDropdown.findAll('[data-testid="dropdown-button__option"]')
+
+    expect(options[0].text()).toBe('1. Warm-up')
+    expect(options[1].text()).toBe('2. Vocabulary')
   })
 
   test('current chapter label is the bare chapter title (no number prefix) [obligation]', () => {
@@ -402,10 +417,11 @@ describe('AudioToolbar', () => {
       currentLessonId: 10
     })
 
-    const chapterDropdown = wrapper.find('[data-testid="audio-toolbar__chapter-select"]')
-    // The default slot of the chapter dropdown renders current_chapter_label
-    expect(chapterDropdown.text()).toContain('Intro')
-    expect(chapterDropdown.text()).not.toMatch(/\d+\.\s/)
+    // Scoped to the label span (not the whole dropdown, which also renders the
+    // numbered options list) — the current-chapter label itself stays bare.
+    const label = wrapper.find('[data-testid="audio-toolbar__chapter-label"]')
+    expect(label.text()).toBe('Intro')
+    expect(label.text()).not.toMatch(/\d+\.\s/)
   })
 
   test('selecting a chapter option emits select-chapter with Number(value) [obligation]', async () => {

@@ -45,7 +45,7 @@ vi.mock('@floating-ui/vue', () => ({
 const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
-  props: ['size', 'variant', 'inverted', 'fullWidth', 'iconLeft', 'sfx', 'style'],
+  props: ['size', 'variant', 'inverted', 'fullWidth', 'iconLeft', 'iconRight', 'sfx', 'style'],
   emits: ['press'],
   setup(props, { slots, attrs, emit }) {
     return () =>
@@ -505,6 +505,13 @@ describe('UiDropdownButton', () => {
     const wrapper = mountDropdown({ shadow: false })
     const popover = wrapper.findComponent(UiPopoverStub)
     expect(popover.props('shadow')).toBe(false)
+  })
+
+  // ── iconRight forwarding [obligation] ─────────────────────────────────────
+
+  test('iconRight prop forwards to the inner UiButton [obligation]', () => {
+    const wrapper = mountDropdown({ iconRight: 'carat-down' })
+    expect(wrapper.findComponent(UiButtonStub).props('iconRight')).toBe('carat-down')
   })
 
   // ── sfx emissions [obligation] ────────────────────────────────────────────

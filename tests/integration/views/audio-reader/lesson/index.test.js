@@ -471,6 +471,18 @@ describe('LessonView', () => {
       expect(playFromHereMock).toHaveBeenCalledOnce()
     })
 
+    test('term-card play-from-here event also resumes transcript follow [obligation]', async () => {
+      const wrapper = mountView()
+      selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
+      popoverOpenRef.value = true
+      await nextTick()
+
+      await wrapper.find('[data-testid="term-card-stub__play-from-here"]').trigger('click')
+
+      expect(transcriptResumeMock).toHaveBeenCalledOnce()
+      expect(playFromHereMock).toHaveBeenCalledOnce()
+    })
+
     test('term-card play-word event calls playClip [obligation]', async () => {
       const wrapper = mountView()
       selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }

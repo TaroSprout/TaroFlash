@@ -12,7 +12,15 @@ export type { DropdownOption } from './types'
 
 type DropdownButtonProps = Pick<
   ButtonProps,
-  'size' | 'variant' | 'inverted' | 'fullWidth' | 'iconLeft' | 'sfx' | 'playOnTap' | 'tapAnimate'
+  | 'size'
+  | 'variant'
+  | 'inverted'
+  | 'fullWidth'
+  | 'iconLeft'
+  | 'iconRight'
+  | 'sfx'
+  | 'playOnTap'
+  | 'tapAnimate'
 > & {
   options?: DropdownOption[]
   position?: Placement
@@ -43,6 +51,7 @@ const {
   inverted,
   fullWidth,
   iconLeft,
+  iconRight,
   sfx,
   // Mirror ui-button's tap defaults: an absent Boolean prop casts to `false`,
   // which would otherwise forward `:play-on-tap="false"` and suppress the
@@ -192,6 +201,7 @@ function onMenuSelect(option: DropdownOption) {
         :inverted="inverted"
         :full-width="fullWidth"
         :icon-left="iconLeft"
+        :icon-right="iconRight"
         :sfx="sfx"
         :play-on-tap="playOnTap"
         :tap-animate="tapAnimate"

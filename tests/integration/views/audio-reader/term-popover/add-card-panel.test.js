@@ -106,7 +106,7 @@ const CardFaceFieldStub = defineComponent({
 const UiDropdownButtonStub = defineComponent({
   name: 'UiDropdownButton',
   inheritAttrs: false,
-  props: ['options'],
+  props: ['options', 'position', 'iconRight'],
   emits: ['select'],
   setup(props, { slots, emit, attrs }) {
     return () =>
@@ -299,6 +299,18 @@ describe('AddCardPanel', () => {
       const dropdown = wrapper.findComponent(UiDropdownButtonStub)
       const options = dropdown.props('options')
       expect(options.every((o) => o.value !== 1)).toBe(true)
+    })
+
+    test('deck dropdown opens centered below the trigger (position="bottom") [obligation]', () => {
+      const wrapper = mountPanel()
+      const dropdown = wrapper.findComponent(UiDropdownButtonStub)
+      expect(dropdown.props('position')).toBe('bottom')
+    })
+
+    test('deck dropdown shows a caret-down trailing icon [obligation]', () => {
+      const wrapper = mountPanel()
+      const dropdown = wrapper.findComponent(UiDropdownButtonStub)
+      expect(dropdown.props('iconRight')).toBe('carat-down')
     })
   })
 
