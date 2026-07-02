@@ -17,9 +17,7 @@ const { createdAt = isoNow(), cover } = defineProps<{
 
 const created_on = computed(() => formatShortDate(createdAt, locale.value))
 
-const body_bindings = computed(() =>
-  memberCoverBindings(cover, { patternOpacity: '0.1', patternSize: '120px' })
-)
+const body_bindings = computed(() => memberCoverBindings(cover))
 </script>
 
 <template>
