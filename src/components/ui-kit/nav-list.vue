@@ -33,7 +33,7 @@ function onNavigate(value: string) {
       data-testid="nav-list__card"
       :data-value="entry.value"
       :class="GROUPED_LIST_ITEM_CLASS"
-      class="text-(--theme-on-primary) hover:bg-(--theme-neutral) hover:text-(--theme-on-neutral) cursor-pointer text-left"
+      class="text-(--theme-on-primary) cursor-pointer text-left"
       bgx_color="var(--theme-neutral)"
       active_on_hover
       :sfx="{ hover: TYPE_SFX }"
