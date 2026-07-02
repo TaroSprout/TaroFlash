@@ -2,6 +2,7 @@
 import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiInput from '@/components/ui-kit/input.vue'
+import UiTextarea from '@/components/ui-kit/textarea.vue'
 import UiThemePicker from '@/components/ui-kit/theme-picker.vue'
 import UiPatternPicker from '@/components/ui-kit/pattern-picker.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
@@ -37,8 +38,10 @@ const emit = defineEmits<{ back: [] }>()
         :placeholder="t('settings.profile.member-name-placeholder')"
         v-model:value="editor.settings.display_name"
       />
-      <ui-input
+      <ui-textarea
         :placeholder="t('settings.profile.description-placeholder')"
+        :max_chars="100"
+        rows="3"
         v-model:value="editor.settings.description"
       />
     </labeled-section>

@@ -19,7 +19,7 @@ const emit = defineEmits<{ click: [e: MouseEvent] }>()
 
 const { t } = useI18n()
 
-const body_bindings = computed(() => memberCoverBindings(cover, { patternOpacity: '0.15' }))
+const body_bindings = computed(() => memberCoverBindings(cover))
 </script>
 
 <template>

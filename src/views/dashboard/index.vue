@@ -77,6 +77,7 @@ async function onCreateDeckClicked() {
         <member-badge
           :display-name="member_store.display_name"
           :description="member_store.description"
+          :cover="member_store.cover"
           class="z-10"
           :sfx="{
             hover: 'tap_05',

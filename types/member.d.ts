@@ -10,6 +10,7 @@ type Member = {
   plan?: MemberPlan
   plan_display_name?: string
   preferences?: MemberPreferences
+  cover_config?: DeckCover
 }
 
 type MemberPreferences = {

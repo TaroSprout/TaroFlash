@@ -25,16 +25,16 @@ const body_bindings = computed(() =>
 <template>
   <div
     data-testid="member-card"
-    class="bg-brown-300 dark:bg-stone-900 rounded-8 border-brown-300 dark:border-stone-900 flex w-89 flex-col overflow-hidden border-8"
+    class="bg-brown-300 dark:bg-stone-900 rounded-8 border-brown-300 dark:border-stone-900 flex w-89 flex-col overflow-hidden border-8 shadow-[-1px_-1px_0_0_var(--color-brown-100)] dark:shadow-[-1px_-1px_0_0_var(--color-grey-900)]"
   >
-    <div data-testid="member-card__header" class="flex items-center justify-center px-9 pt-6 pb-2">
-      <h1 class="text-brown-700 dark:text-brown-100 text-5xl">{{ t('member-card.heading') }}</h1>
+    <div data-testid="member-card__header" class="flex items-center justify-center px-9 pt-4 pb-1">
+      <h1 class="text-brown-700 dark:text-brown-100 text-5xl">{{ displayName }}</h1>
     </div>
 
     <div
       data-testid="member-card__body"
       v-bind="body_bindings"
-      class="wave-top-[40px] flex h-full flex-col items-center gap-4.5 bg-(--theme-primary) px-8 pt-9 pb-3"
+      class="wave-top-[40px] flex h-full flex-col items-center gap-4 bg-(--theme-primary) px-8 pt-9 pb-3"
     >
       <div data-testid="member-card__avatar" class="flex h-full flex-col justify-center">
         <div
@@ -46,35 +46,18 @@ const body_bindings = computed(() =>
 
       <div
         data-testid="member-card__comment"
-        class="bg-brown-300 dark:bg-stone-900 text-brown-700 dark:text-brown-100 ring-brown-300 dark:ring-stone-900 rounded-2 w-full ring-8"
+        class="bg-brown-300 dark:bg-stone-900 rounded-4 w-full px-2 py-3"
       >
-        {{ cardComment || t('member-card.description-fallback') }}
-      </div>
-
-      <div data-testid="member-card__fields" class="flex w-full flex-col gap-2">
-        <div data-testid="member-card__name-field" class="flex flex-col">
-          <p class="pb-1 text-xl text-brown-700 dark:text-brown-100">
-            {{ displayName || t('member-card.field.name-placeholder') }}
-          </p>
-          <div class="bg-brown-300 dark:bg-stone-900 h-px w-full"></div>
-          <p class="text-sm text-brown-100 dark:text-grey-900">
-            {{ t('member-card.field.member-label') }}
-          </p>
-        </div>
-        <div data-testid="member-card__title-field" class="flex flex-col">
-          <p class="pb-1 text-xl text-brown-700 dark:text-brown-100">
-            {{ cardTitle || t('member-card.field.title-placeholder') }}
-          </p>
-          <div class="bg-brown-300 dark:bg-stone-900 h-px w-full"></div>
-          <p class="text-sm text-brown-100 dark:text-grey-900">
-            {{ t('member-card.field.title-label') }}
-          </p>
-        </div>
+        <p
+          class="text-brown-700 dark:text-brown-100 flex h-[3lh] items-center justify-center text-center"
+        >
+          <q>{{ cardComment || t('member-card.description-fallback') }}</q>
+        </p>
       </div>
 
       <div
         data-testid="member-card__registration"
-        class="align-center flex w-full justify-between text-sm font-semibold text-brown-700 dark:text-brown-100"
+        class="align-center flex w-full justify-between text-sm font-semibold text-brown-100 mt-2"
       >
         <p>{{ t('member-card.field.registration-label', { date: created_on }) }}</p>
         <p aria-hidden="true">&lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt;</p>
