@@ -13,7 +13,8 @@ const { mockMember } = vi.hoisted(() => ({
     description: 'hello',
     email: 'chris@example.com',
     created_at: '2026-01-01T00:00:00Z',
-    plan: 'pro'
+    plan: 'pro',
+    cover: { theme: 'green-500', theme_dark: 'green-800', pattern: 'bank-note' }
   }
 }))
 
@@ -42,7 +43,8 @@ beforeEach(() => {
       accessibility: { left_hand: false },
       audio: { study_sounds: 5, interface_sounds: 5, hover_sounds: 5 },
       study: { show_all_ratings: true, desired_retention: 90 }
-    }
+    },
+    cover: { theme: 'green-500', theme_dark: 'green-800', pattern: 'bank-note' }
   })
 })
 
@@ -80,13 +82,19 @@ describe('useMemberEditor', () => {
     expect(editor.preferences).toEqual(mockMember.preferences)
   })
 
-  test('seeds cover from MEMBER_CARD_COVER_DEFAULTS', () => {
+  test('seeds cover from member_store.cover (persisted value) [obligation]', () => {
     const editor = useMemberEditor()
     expect(editor.cover).toEqual({
       theme: 'green-500',
       theme_dark: 'green-800',
       pattern: 'bank-note'
     })
+  })
+
+  test('reopening with a previously-saved cover seeds that cover, not hardcoded defaults [obligation]', () => {
+    mockMember.cover = { theme: 'red-500', theme_dark: 'red-700', pattern: 'wave' }
+    const editor = useMemberEditor()
+    expect(editor.cover).toEqual({ theme: 'red-500', theme_dark: 'red-700', pattern: 'wave' })
   })
 
   test('is_dirty is false when nothing has changed', () => {
@@ -103,6 +111,24 @@ describe('useMemberEditor', () => {
   test('is_dirty flips to true when description changes', () => {
     const editor = useMemberEditor()
     editor.settings.description = 'changed'
+    expect(editor.is_dirty.value).toBe(true)
+  })
+
+  test('is_dirty flips to true when only cover.theme changes, settings/preferences untouched [obligation]', () => {
+    const editor = useMemberEditor()
+    editor.cover.theme = 'red-500'
+    expect(editor.is_dirty.value).toBe(true)
+  })
+
+  test('is_dirty flips to true when only cover.theme_dark changes [obligation]', () => {
+    const editor = useMemberEditor()
+    editor.cover.theme_dark = 'red-700'
+    expect(editor.is_dirty.value).toBe(true)
+  })
+
+  test('is_dirty flips to true when only cover.pattern changes [obligation]', () => {
+    const editor = useMemberEditor()
+    editor.cover.pattern = 'wave'
     expect(editor.is_dirty.value).toBe(true)
   })
 
@@ -136,8 +162,22 @@ describe('useMemberEditor', () => {
         accessibility: { left_hand: false },
         audio: { study_sounds: 5, interface_sounds: 5, hover_sounds: 5 },
         study: { show_all_ratings: true, desired_retention: 90 }
-      }
+      },
+      cover_config: { theme: 'green-500', theme_dark: 'green-800', pattern: 'bank-note' }
     })
+  })
+
+  test('saveMember includes cover_config in the upsert payload when only cover changed [obligation]', async () => {
+    const editor = useMemberEditor()
+    editor.cover.theme = 'red-500'
+    const result = await editor.saveMember()
+    expect(result).toBe(true)
+    expect(mockUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'member-1',
+        cover_config: { theme: 'red-500', theme_dark: 'green-800', pattern: 'bank-note' }
+      })
+    )
   })
 
   test('saveMember returns false when the mutation throws', async () => {

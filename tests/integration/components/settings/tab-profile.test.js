@@ -124,10 +124,10 @@ describe('TabProfile', () => {
     expect(editor.settings.display_name).toBe('Nina')
   })
 
-  test('typing into the bio input updates editor.settings.description', async () => {
+  test('typing into the bio textarea updates editor.settings.description', async () => {
     const { wrapper, editor } = makeTab()
-    const input = wrapper.findAll('input')[1]
-    await input.setValue('New bio')
+    const textarea = wrapper.find('textarea')
+    await textarea.setValue('New bio')
     expect(editor.settings.description).toBe('New bio')
   })
 

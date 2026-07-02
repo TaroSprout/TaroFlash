@@ -49,14 +49,14 @@ describe('MemberCard', () => {
     expect(body.classes()).toContain('pattern-mask')
   })
 
-  test('renders displayName when provided', () => {
+  test('renders displayName in the header', () => {
     const wrapper = mountCard({ displayName: 'Nina' })
-    expect(wrapper.find('[data-testid="member-card__name-field"]').text()).toContain('Nina')
+    expect(wrapper.find('[data-testid="member-card__header"]').text()).toContain('Nina')
   })
 
-  test('falls back to name-placeholder when displayName omitted', () => {
+  test('header is empty when displayName omitted', () => {
     const wrapper = mountCard()
-    expect(wrapper.find('[data-testid="member-card__name-field"]').text()).toContain('Member Name')
+    expect(wrapper.find('[data-testid="member-card__header"]').text()).toBe('')
   })
 
   test('renders cardComment when provided', () => {
@@ -67,11 +67,6 @@ describe('MemberCard', () => {
   test('falls back to description-fallback when cardComment omitted', () => {
     const wrapper = mountCard()
     expect(wrapper.find('[data-testid="member-card__comment"]').text().length).toBeGreaterThan(0)
-  })
-
-  test('renders cardTitle in the title field', () => {
-    const wrapper = mountCard({ cardTitle: 'Sensei' })
-    expect(wrapper.find('[data-testid="member-card__title-field"]').text()).toContain('Sensei')
   })
 
   test('renders the formatted registration date in the registration row', () => {

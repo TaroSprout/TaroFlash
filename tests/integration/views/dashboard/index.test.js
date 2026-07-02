@@ -32,7 +32,11 @@ vi.mock('@/api/decks', () => ({
 }))
 
 vi.mock('@/stores/member', () => ({
-  useMemberStore: () => ({ display_name: 'Test User', description: 'Learner' })
+  useMemberStore: () => ({
+    display_name: 'Test User',
+    description: 'Learner',
+    cover: { theme: 'green-500', theme_dark: 'green-800', pattern: 'bank-note' }
+  })
 }))
 
 vi.mock('vue-router', () => ({
@@ -77,14 +81,19 @@ vi.mock('@/utils/animations/inbox-toggle', () => ({
 
 const MemberBadgeStub = defineComponent({
   name: 'MemberBadge',
-  props: ['displayName', 'description', 'sfx'],
+  props: ['displayName', 'description', 'sfx', 'cover'],
   emits: ['click'],
-  setup(_p, { emit, slots }) {
+  setup(props, { emit, slots }) {
     return () =>
-      h('div', { 'data-testid': 'member-badge', onClick: () => emit('click') }, [
-        slots.description?.(),
-        slots.actions?.()
-      ])
+      h(
+        'div',
+        {
+          'data-testid': 'member-badge',
+          'data-cover-theme': props.cover?.theme,
+          onClick: () => emit('click')
+        },
+        [slots.description?.(), slots.actions?.()]
+      )
   }
 })
 
@@ -185,6 +194,15 @@ beforeEach(() => {
   vi.clearAllMocks()
   guardCreateDeckMock.mockReturnValue(Promise.resolve(true))
   toastErrorMock.mockReset()
+})
+
+describe('DashboardIndex — member-badge cover wiring [obligation]', () => {
+  test('forwards member_store.cover to the member-badge cover prop', () => {
+    const wrapper = mountDashboard()
+    expect(wrapper.find('[data-testid="member-badge"]').attributes('data-cover-theme')).toBe(
+      'green-500'
+    )
+  })
 })
 
 describe('DashboardIndex — deck list', () => {
