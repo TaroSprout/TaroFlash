@@ -192,10 +192,17 @@ export async function signInOAuth(
 
 /** Links a Google identity to the currently signed-in user. Requires `enable_manual_linking`. */
 export async function linkGoogleIdentity(): Promise<void> {
-  return runOAuthFlow(
+  await runOAuthFlow(
     (opts) => supabase.auth.linkIdentity({ provider: 'google', options: opts }),
     'popup-closed'
   )
+
+  // The popup closing only means the linking tab is done — it doesn't guarantee
+  // this tab's client has picked up the new identity (no 'SIGNED_IN'-style event
+  // fires for linking). Force a resync so the caller sees it immediately instead
+  // of only after a page reload.
+  const { error } = await supabase.auth.refreshSession()
+  if (error) throw error
 }
 
 export async function unlinkGoogleIdentity(): Promise<void> {
