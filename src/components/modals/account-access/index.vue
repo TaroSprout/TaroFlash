@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/dialog-card.vue'
+import DialogCardHeader from '@/components/layout-kit/dialog-card/dialog-card-header.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import AccountAccessMenu, { type AccountAccessPage } from './account-access-menu.vue'
 import EmailSection from './email-section.vue'
@@ -48,6 +49,34 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
     :title="title"
     @close="close()"
   >
+    <template #header>
+      <dialog-card-header data-testid="account-access-modal__header" :title="title">
+        <template #start>
+          <ui-button
+            v-if="page === 'menu'"
+            data-testid="dialog-card__close"
+            icon-left="close"
+            icon-only
+            rounded-full
+            @press="close()"
+          >
+            {{ t('dialog-card.close-label') }}
+          </ui-button>
+
+          <ui-button
+            v-else
+            data-testid="account-access-modal__back"
+            icon-left="arrow-back"
+            icon-only
+            rounded-full
+            @press="page = 'menu'"
+          >
+            {{ t('account-access-modal.back-label') }}
+          </ui-button>
+        </template>
+      </dialog-card-header>
+    </template>
+
     <div
       data-testid="account-access-modal__body"
       class="flex flex-col items-center gap-18 px-(--dialog-px)"
@@ -61,17 +90,6 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
       </p>
 
       <div class="w-full max-w-100 flex flex-col gap-4">
-        <ui-button
-          v-if="page !== 'menu'"
-          data-testid="account-access-modal__back"
-          icon-left="arrow-back"
-          size="sm"
-          class="self-start"
-          @press="page = 'menu'"
-        >
-          {{ t('account-access-modal.back-label') }}
-        </ui-button>
-
         <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
           <account-access-menu v-if="page === 'menu'" key="menu" @navigate="(p) => (page = p)" />
           <email-section v-else-if="page === 'email'" key="email" />
