@@ -39,6 +39,9 @@ const grid_el = useTemplateRef<HTMLElement>('grid_el')
 const sentinel = useTemplateRef<HTMLElement>('sentinel')
 const container_width = ref(0)
 const scroll_margin = ref(0)
+// container_width starts at 0, so columns/row_count fall back to a single tall
+// column for one frame — gate the rendered height on this so that never paints.
+const measured = ref(false)
 
 const { card_scale, cell_width, gap, columns, row_count, row_pitch, itemPosition } = useCardGrid(
   grid_size,
@@ -131,6 +134,7 @@ function measureLayout() {
   if (!container) return
   container_width.value = container.clientWidth
   scroll_margin.value = container.getBoundingClientRect().top + window.scrollY
+  measured.value = true
 }
 
 // The drag/gap-shift offset (px) the reorder engine wants applied to the card at
@@ -255,7 +259,7 @@ watch(
       v-else
       data-testid="card-grid"
       class="relative w-full"
-      :style="{ height: `${virtualizer.getTotalSize()}px` }"
+      :style="{ height: measured ? `${virtualizer.getTotalSize()}px` : '0px' }"
     >
       <div
         v-for="item in visible_items"
