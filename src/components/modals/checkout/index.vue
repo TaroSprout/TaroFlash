@@ -46,7 +46,7 @@ function onEnter(el: Element, done: () => void) {
       <header
         v-if="status !== 'success'"
         data-testid="checkout__header"
-        class="w-full shrink-0 grid grid-cols-[1fr_auto_1fr] px-6"
+        class="w-full shrink-0 grid grid-cols-[1fr_auto_1fr] px-6 pointer-coarse:px-4"
       >
         <ui-button
           data-testid="checkout__close"
@@ -72,7 +72,7 @@ function onEnter(el: Element, done: () => void) {
           v-if="status !== 'success'"
           key="form"
           data-testid="checkout__body"
-          class="flex flex-col gap-4 px-16"
+          class="flex flex-col gap-4 px-16 pointer-coarse:px-4"
         >
           <payment-status :status="status" />
           <div ref="container" data-testid="checkout__payment-element"></div>
@@ -83,7 +83,7 @@ function onEnter(el: Element, done: () => void) {
 
       <checkout-footer
         v-if="status !== 'success'"
-        class="px-16"
+        class="px-16 pointer-coarse:px-4"
         :status="status"
         :is_ready="is_ready"
         @submit="onSubmit"
@@ -93,7 +93,8 @@ function onEnter(el: Element, done: () => void) {
     <scroll-bar
       v-if="is_mobile"
       target="[data-testid='checkout__scroll-area']"
-      class="absolute right-8 top-6 bottom-6 pointer-fine:block!"
+      min-width="sm"
+      class="absolute right-8 top-6 bottom-6"
     />
   </div>
 </template>
