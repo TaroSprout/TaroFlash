@@ -27,8 +27,8 @@ function withAlpha(hex: string, percent: number): string {
  * so the Stripe form always matches the surrounding modal chrome.
  */
 export function getStripeAppearance(is_dark: boolean): Appearance {
-  const green600 = token('--color-green-600')
   const red600 = token('--color-red-600')
+  const accent = token(is_dark ? '--color-blue-650' : '--color-blue-500')
 
   const background = token(is_dark ? '--color-grey-800' : '--color-brown-50')
   const surface = token(is_dark ? '--color-grey-700' : '--color-brown-100')
@@ -40,32 +40,24 @@ export function getStripeAppearance(is_dark: boolean): Appearance {
   return {
     theme: 'flat',
     labels: 'floating',
+    inputs: 'condensed',
     variables: {
-      colorPrimary: green600,
+      colorPrimary: accent,
       colorBackground: background,
       colorText: text,
       colorDanger: red600,
       colorTextPlaceholder: placeholder,
       fontFamily: FONT_FAMILY,
-      fontSizeBase: '14px',
-      // "condensed" inputs — Stripe's appearance API has no dedicated input-
-      // density flag, and spacingUnit alone doesn't shrink input padding, so
-      // the actual height reduction happens via explicit rules below.
-      spacingUnit: '2px',
-      gridRowSpacing: '8px',
-      gridColumnSpacing: '8px',
-      tabSpacing: '8px',
       borderRadius: '8px'
     },
     rules: {
       '.Input': {
         border: `1px solid ${border}`,
-        boxShadow: 'none',
-        padding: '8px 10px'
+        boxShadow: 'none'
       },
       '.Input:focus': {
-        border: `1px solid ${green600}`,
-        boxShadow: `0 0 0 3px ${withAlpha(green600, 25)}`
+        border: `1px solid ${accent}`,
+        boxShadow: `0 0 0 3px ${withAlpha(accent, 25)}`
       },
       '.Label': {
         color: text,
@@ -73,15 +65,22 @@ export function getStripeAppearance(is_dark: boolean): Appearance {
       },
       '.Tab': {
         border: `1px solid ${border}`,
-        backgroundColor: background,
-        padding: '8px 10px'
+        backgroundColor: background
       },
       '.Tab:hover': {
         backgroundColor: surfaceHover
       },
       '.Tab--selected': {
-        borderColor: green600,
+        borderColor: accent,
         backgroundColor: surface
+      },
+      // Selected-tab label/icon default to a primary-tinted color that reads
+      // low-contrast against the surface — pin them back to the base text color.
+      '.TabLabel--selected': {
+        color: text
+      },
+      '.TabIcon--selected': {
+        color: text
       }
     }
   }
