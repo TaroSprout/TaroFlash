@@ -29,7 +29,7 @@ function onEnter(el: Element, done: () => void) {
           :label="t('account-access-modal.email.current-label')"
           v-model="current_email"
           type="email"
-          size="sm"
+          size="lg"
           disabled
           data-testid="account-access-modal__email-current-input"
         />
@@ -37,7 +37,7 @@ function onEnter(el: Element, done: () => void) {
           :label="t('account-access-modal.email.new-label')"
           v-model="email"
           type="email"
-          size="sm"
+          size="lg"
           :error="error"
           data-testid="account-access-modal__email-input"
         />
