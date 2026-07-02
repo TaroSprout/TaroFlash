@@ -32,48 +32,47 @@ function onEnter(el: Element, done: () => void) {
 <template>
   <div
     data-testid="checkout"
-    class="relative flex flex-col gap-4 overflow-hidden bg-brown-100 py-6 dark:bg-grey-800"
-    :class="[
-      is_mobile ? 'h-full w-full rounded-none' : 'h-160 w-150 rounded-8 shadow-lg',
-      status === 'success' ? 'justify-center' : 'justify-between'
-    ]"
+    class="relative flex flex-col overflow-hidden bg-brown-100 py-6 dark:bg-grey-800"
+    :class="is_mobile ? 'h-full w-full rounded-none' : 'h-160 w-150 rounded-8 shadow-lg'"
   >
-    <header
-      v-if="status !== 'success'"
-      data-testid="checkout__header"
-      class="w-full shrink-0 grid grid-cols-[1fr_auto_1fr] px-6"
+    <div
+      data-testid="checkout__scroll-area"
+      class="flex min-h-0 flex-1 flex-col gap-4"
+      :class="[
+        status === 'success' ? 'justify-center' : 'justify-between',
+        is_mobile ? 'overflow-y-auto scroll-hidden' : ''
+      ]"
     >
-      <ui-button
-        data-testid="checkout__close"
-        data-theme="brown-300"
-        data-theme-dark="stone-700"
-        icon-left="close"
-        icon-only
-        rounded-full
-        class="justify-self-start"
-        :disabled="status === 'confirming'"
-        @press="close()"
-      >
-        {{ t('billing.checkout.close-label') }}
-      </ui-button>
-
-      <h1 data-testid="checkout__title" class="text-4xl text-brown-700 dark:text-brown-100">
-        {{ t('billing.checkout.title') }}
-      </h1>
-    </header>
-
-    <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
-      <div
+      <header
         v-if="status !== 'success'"
-        key="form"
-        data-testid="checkout__body-wrap"
-        class="relative flex flex-col"
-        :class="is_mobile ? 'min-h-0 flex-1' : ''"
+        data-testid="checkout__header"
+        class="w-full shrink-0 grid grid-cols-[1fr_auto_1fr] px-6"
       >
+        <ui-button
+          data-testid="checkout__close"
+          data-theme="brown-300"
+          data-theme-dark="stone-700"
+          icon-left="close"
+          icon-only
+          rounded-full
+          class="justify-self-start"
+          :disabled="status === 'confirming'"
+          @press="close()"
+        >
+          {{ t('billing.checkout.close-label') }}
+        </ui-button>
+
+        <h1 data-testid="checkout__title" class="text-4xl text-brown-700 dark:text-brown-100">
+          {{ t('billing.checkout.title') }}
+        </h1>
+      </header>
+
+      <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
         <div
+          v-if="status !== 'success'"
+          key="form"
           data-testid="checkout__body"
           class="flex flex-col gap-4 px-16"
-          :class="is_mobile ? 'h-full overflow-y-auto scroll-hidden' : ''"
         >
           <payment-status :status="status" />
           <div ref="container" data-testid="checkout__payment-element"></div>
@@ -82,22 +81,22 @@ function onEnter(el: Element, done: () => void) {
           </p>
         </div>
 
-        <scroll-bar
-          v-if="is_mobile"
-          target="[data-testid='checkout__body']"
-          class="absolute right-1 top-0 bottom-0 pointer-fine:block!"
-        />
-      </div>
+        <success-view v-else key="success" />
+      </transition>
 
-      <success-view v-else key="success" />
-    </transition>
+      <checkout-footer
+        v-if="status !== 'success'"
+        class="px-16"
+        :status="status"
+        :is_ready="is_ready"
+        @submit="onSubmit"
+      />
+    </div>
 
-    <checkout-footer
-      v-if="status !== 'success'"
-      class="px-16"
-      :status="status"
-      :is_ready="is_ready"
-      @submit="onSubmit"
+    <scroll-bar
+      v-if="is_mobile"
+      target="[data-testid='checkout__scroll-area']"
+      class="absolute right-8 top-6 bottom-6 pointer-fine:block!"
     />
   </div>
 </template>
