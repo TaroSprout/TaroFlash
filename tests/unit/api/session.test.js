@@ -2,10 +2,16 @@ import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/tes
 
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
+  getUser: vi.fn(),
   signInWithPassword: vi.fn(),
   signOut: vi.fn(),
   signUp: vi.fn(),
   signInWithOAuth: vi.fn(),
+  linkIdentity: vi.fn(),
+  unlinkIdentity: vi.fn(),
+  getUserIdentities: vi.fn(),
+  refreshSession: vi.fn(),
+  updateUser: vi.fn(),
   onAuthStateChange: vi.fn()
 }))
 
@@ -13,16 +19,33 @@ vi.mock('@/supabase-client', () => ({
   supabase: {
     auth: {
       getSession: mocks.getSession,
+      getUser: mocks.getUser,
       signInWithPassword: mocks.signInWithPassword,
       signOut: mocks.signOut,
       signUp: mocks.signUp,
       signInWithOAuth: mocks.signInWithOAuth,
+      linkIdentity: mocks.linkIdentity,
+      unlinkIdentity: mocks.unlinkIdentity,
+      getUserIdentities: mocks.getUserIdentities,
+      refreshSession: mocks.refreshSession,
+      updateUser: mocks.updateUser,
       onAuthStateChange: mocks.onAuthStateChange
     }
   }
 }))
 
-import { getSession, login, logout, signupEmail, signInOAuth } from '@/api/session'
+import {
+  getSession,
+  getUser,
+  login,
+  logout,
+  signupEmail,
+  signInOAuth,
+  linkGoogleIdentity,
+  unlinkGoogleIdentity,
+  updateEmail,
+  updatePassword
+} from '@/api/session'
 
 beforeEach(() => {
   Object.values(mocks).forEach((m) => m.mockReset())
@@ -45,6 +68,24 @@ describe('getSession', () => {
   test('throws when supabase returns an error', async () => {
     mocks.getSession.mockResolvedValueOnce({ data: null, error: { message: 'nope' } })
     await expect(getSession()).rejects.toThrow('nope')
+  })
+})
+
+describe('getUser', () => {
+  test('returns the user on success', async () => {
+    const user = { id: 'u1' }
+    mocks.getUser.mockResolvedValueOnce({ data: { user }, error: null })
+    await expect(getUser()).resolves.toEqual(user)
+  })
+
+  test('returns null when no user is present', async () => {
+    mocks.getUser.mockResolvedValueOnce({ data: { user: null }, error: null })
+    await expect(getUser()).resolves.toBeNull()
+  })
+
+  test('throws when supabase returns an error', async () => {
+    mocks.getUser.mockResolvedValueOnce({ data: null, error: { message: 'nope' } })
+    await expect(getUser()).rejects.toThrow('nope')
   })
 })
 
@@ -219,7 +260,7 @@ describe('signInOAuth', () => {
       })
       expect(openSpy).toHaveBeenCalledWith(
         'https://auth.x/login',
-        'googleAuth',
+        'oauthFlow',
         expect.stringContaining('width=500')
       )
     })
@@ -343,5 +384,185 @@ describe('signInOAuth', () => {
       mocks.signInWithOAuth.mockResolvedValueOnce({ data: {}, error: null })
       await expect(signInOAuth('google')).rejects.toThrow('No URL returned')
     })
+  })
+})
+
+describe('linkGoogleIdentity', () => {
+  let openSpy
+
+  beforeEach(() => {
+    openSpy = vi.fn()
+    vi.stubGlobal('open', openSpy)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.useRealTimers()
+  })
+
+  test('passes options through to linkIdentity and opens the shared oauthFlow popup', async () => {
+    mocks.linkIdentity.mockResolvedValueOnce({ data: { url: 'https://auth.x/link' }, error: null })
+    mocks.refreshSession.mockResolvedValueOnce({ error: null })
+    const popup = { closed: false }
+    openSpy.mockReturnValue(popup)
+
+    const promise = linkGoogleIdentity()
+    await Promise.resolve()
+    popup.closed = true
+    await promise
+
+    expect(mocks.linkIdentity).toHaveBeenCalledWith({
+      provider: 'google',
+      options: expect.objectContaining({ skipBrowserRedirect: true })
+    })
+    expect(openSpy).toHaveBeenCalledWith(
+      'https://auth.x/link',
+      'oauthFlow',
+      expect.stringContaining('width=500')
+    )
+  })
+
+  test('[obligation] resolves via popup.closed polling, not onAuthStateChange', async () => {
+    mocks.linkIdentity.mockResolvedValueOnce({ data: { url: 'https://auth.x/link' }, error: null })
+    mocks.refreshSession.mockResolvedValueOnce({ error: null })
+    const popup = { closed: false }
+    openSpy.mockReturnValue(popup)
+
+    const promise = linkGoogleIdentity()
+    await Promise.resolve()
+
+    let settled = false
+    promise.then(() => (settled = true))
+    await Promise.resolve()
+    expect(settled).toBe(false)
+    expect(mocks.onAuthStateChange).not.toHaveBeenCalled()
+
+    popup.closed = true
+    await promise
+
+    expect(settled).toBe(true)
+  })
+
+  test('[obligation] calls refreshSession after the popup closes, before resolving', async () => {
+    mocks.linkIdentity.mockResolvedValueOnce({ data: { url: 'https://auth.x/link' }, error: null })
+    mocks.refreshSession.mockResolvedValueOnce({ error: null })
+    const popup = { closed: false }
+    openSpy.mockReturnValue(popup)
+
+    const promise = linkGoogleIdentity()
+    await Promise.resolve()
+    expect(mocks.refreshSession).not.toHaveBeenCalled()
+
+    popup.closed = true
+    await promise
+
+    expect(mocks.refreshSession).toHaveBeenCalledOnce()
+  })
+
+  test('throws when refreshSession errors after the popup closes', async () => {
+    mocks.linkIdentity.mockResolvedValueOnce({ data: { url: 'https://auth.x/link' }, error: null })
+    mocks.refreshSession.mockResolvedValueOnce({ error: { message: 'stale' } })
+    const popup = { closed: false }
+    openSpy.mockReturnValue(popup)
+
+    const promise = linkGoogleIdentity()
+    await Promise.resolve()
+    popup.closed = true
+
+    await expect(promise).rejects.toThrow('stale')
+  })
+
+  test('throws when linkIdentity returns an error', async () => {
+    mocks.linkIdentity.mockResolvedValueOnce({ data: null, error: new Error('link failed') })
+    await expect(linkGoogleIdentity()).rejects.toThrow('link failed')
+  })
+})
+
+describe('unlinkGoogleIdentity', () => {
+  test('unlinks the identity with provider "google"', async () => {
+    const googleIdentity = { provider: 'google', identity_id: 'g1' }
+    mocks.getUserIdentities.mockResolvedValueOnce({
+      data: { identities: [{ provider: 'email' }, googleIdentity] },
+      error: null
+    })
+    mocks.unlinkIdentity.mockResolvedValueOnce({ error: null })
+
+    await unlinkGoogleIdentity()
+
+    expect(mocks.unlinkIdentity).toHaveBeenCalledWith(googleIdentity)
+  })
+
+  test('is a no-op when no google identity is present', async () => {
+    mocks.getUserIdentities.mockResolvedValueOnce({
+      data: { identities: [{ provider: 'email' }] },
+      error: null
+    })
+
+    await unlinkGoogleIdentity()
+
+    expect(mocks.unlinkIdentity).not.toHaveBeenCalled()
+  })
+
+  test('throws when getUserIdentities errors', async () => {
+    mocks.getUserIdentities.mockResolvedValueOnce({ data: null, error: { message: 'boom' } })
+    await expect(unlinkGoogleIdentity()).rejects.toThrow('boom')
+  })
+
+  test('throws when unlinkIdentity errors', async () => {
+    mocks.getUserIdentities.mockResolvedValueOnce({
+      data: { identities: [{ provider: 'google' }] },
+      error: null
+    })
+    mocks.unlinkIdentity.mockResolvedValueOnce({
+      error: { message: 'cannot unlink last identity' }
+    })
+
+    await expect(unlinkGoogleIdentity()).rejects.toThrow('cannot unlink last identity')
+  })
+})
+
+describe('updateEmail', () => {
+  test('returns "success" when updateUser succeeds', async () => {
+    mocks.updateUser.mockResolvedValueOnce({ error: null })
+    await expect(updateEmail('new@x.com')).resolves.toBe('success')
+    expect(mocks.updateUser).toHaveBeenCalledWith({ email: 'new@x.com' })
+  })
+
+  test('maps the email_exists error to "email-taken"', async () => {
+    mocks.updateUser.mockResolvedValueOnce({ error: { code: 'email_exists', message: 'taken' } })
+    await expect(updateEmail('new@x.com')).resolves.toBe('email-taken')
+  })
+
+  test('maps any other error to "error"', async () => {
+    mocks.updateUser.mockResolvedValueOnce({ error: { code: 'server_error', message: 'boom' } })
+    await expect(updateEmail('new@x.com')).resolves.toBe('error')
+  })
+
+  test('returns "error" when updateUser throws', async () => {
+    mocks.updateUser.mockRejectedValueOnce(new Error('network failure'))
+    await expect(updateEmail('new@x.com')).resolves.toBe('error')
+  })
+})
+
+describe('updatePassword', () => {
+  test('returns "success" when updateUser succeeds', async () => {
+    mocks.updateUser.mockResolvedValueOnce({ error: null })
+    await expect(updatePassword('hunter22')).resolves.toBe('success')
+    expect(mocks.updateUser).toHaveBeenCalledWith({ password: 'hunter22' })
+  })
+
+  test('maps the weak_password error to "weak-password"', async () => {
+    mocks.updateUser.mockResolvedValueOnce({ error: { code: 'weak_password', message: 'weak' } })
+    await expect(updatePassword('weak')).resolves.toBe('weak-password')
+  })
+
+  test('maps any other error to "error"', async () => {
+    mocks.updateUser.mockResolvedValueOnce({ error: { code: 'server_error', message: 'boom' } })
+    await expect(updatePassword('hunter22')).resolves.toBe('error')
+  })
+
+  test('returns "error" when updateUser throws', async () => {
+    mocks.updateUser.mockRejectedValueOnce(new Error('network failure'))
+    await expect(updatePassword('hunter22')).resolves.toBe('error')
   })
 })

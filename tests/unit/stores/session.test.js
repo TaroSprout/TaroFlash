@@ -3,22 +3,43 @@ import { setActivePinia, createPinia } from 'pinia'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { mockGetSession, mockLogin, mockLogout, mockSignupEmail, mockSignInOAuth, mockPush } =
-  vi.hoisted(() => ({
-    mockGetSession: vi.fn(),
-    mockLogin: vi.fn(),
-    mockLogout: vi.fn(),
-    mockSignupEmail: vi.fn(),
-    mockSignInOAuth: vi.fn(),
-    mockPush: vi.fn()
-  }))
+const {
+  mockGetSession,
+  mockGetUser,
+  mockLogin,
+  mockLogout,
+  mockSignupEmail,
+  mockSignInOAuth,
+  mockUpdateEmail,
+  mockUpdatePassword,
+  mockLinkGoogleIdentity,
+  mockUnlinkGoogleIdentity,
+  mockPush
+} = vi.hoisted(() => ({
+  mockGetSession: vi.fn(),
+  mockGetUser: vi.fn(),
+  mockLogin: vi.fn(),
+  mockLogout: vi.fn(),
+  mockSignupEmail: vi.fn(),
+  mockSignInOAuth: vi.fn(),
+  mockUpdateEmail: vi.fn(),
+  mockUpdatePassword: vi.fn(),
+  mockLinkGoogleIdentity: vi.fn(),
+  mockUnlinkGoogleIdentity: vi.fn(),
+  mockPush: vi.fn()
+}))
 
 vi.mock('@/api/session', () => ({
   getSession: mockGetSession,
+  getUser: mockGetUser,
   login: mockLogin,
   logout: mockLogout,
   signupEmail: mockSignupEmail,
-  signInOAuth: mockSignInOAuth
+  signInOAuth: mockSignInOAuth,
+  updateEmail: mockUpdateEmail,
+  updatePassword: mockUpdatePassword,
+  linkGoogleIdentity: mockLinkGoogleIdentity,
+  unlinkGoogleIdentity: mockUnlinkGoogleIdentity
 }))
 
 vi.mock('vue-router', () => ({
@@ -32,10 +53,15 @@ import { useSessionStore } from '@/stores/session'
 beforeEach(() => {
   setActivePinia(createPinia())
   mockGetSession.mockReset()
+  mockGetUser.mockReset()
   mockLogin.mockReset()
   mockLogout.mockReset()
   mockSignupEmail.mockReset()
   mockSignInOAuth.mockReset()
+  mockUpdateEmail.mockReset()
+  mockUpdatePassword.mockReset()
+  mockLinkGoogleIdentity.mockReset()
+  mockUnlinkGoogleIdentity.mockReset()
   mockPush.mockReset()
 })
 
@@ -182,6 +208,100 @@ describe('useSessionStore', () => {
       const store = useSessionStore()
       await store.signInOAuth('google')
       expect(mockPush).toHaveBeenCalledWith({ name: 'dashboard' })
+    })
+  })
+
+  // ── identities ─────────────────────────────────────────────────────────────
+
+  describe('hasGoogleIdentity / hasPasswordIdentity', () => {
+    test('are both false when there is no user', () => {
+      const store = useSessionStore()
+      expect(store.hasGoogleIdentity).toBe(false)
+      expect(store.hasPasswordIdentity).toBe(false)
+    })
+
+    test('reflect the identities on the current user', async () => {
+      const user = {
+        id: 'u1',
+        aud: 'authenticated',
+        identities: [{ provider: 'email' }, { provider: 'google' }]
+      }
+      mockGetSession.mockResolvedValueOnce({ user })
+      const store = useSessionStore()
+      await store.restoreSession()
+
+      expect(store.hasGoogleIdentity).toBe(true)
+      expect(store.hasPasswordIdentity).toBe(true)
+    })
+
+    test('[obligation] update reactively when the underlying user identities change, without recomputing the store', async () => {
+      const store = useSessionStore()
+      expect(store.hasGoogleIdentity).toBe(false)
+
+      mockGetUser.mockResolvedValueOnce({
+        id: 'u1',
+        aud: 'authenticated',
+        identities: [{ provider: 'google' }]
+      })
+      await store.linkGoogleIdentity()
+
+      expect(store.hasGoogleIdentity).toBe(true)
+    })
+  })
+
+  // ── updateEmail ────────────────────────────────────────────────────────────
+
+  describe('updateEmail', () => {
+    test('delegates to api updateEmail and returns the outcome', async () => {
+      mockUpdateEmail.mockResolvedValueOnce('success')
+      const store = useSessionStore()
+      const result = await store.updateEmail('new@example.com')
+      expect(result).toBe('success')
+      expect(mockUpdateEmail).toHaveBeenCalledWith('new@example.com')
+    })
+  })
+
+  // ── updatePassword ─────────────────────────────────────────────────────────
+
+  describe('updatePassword', () => {
+    test('delegates to api updatePassword and returns the outcome', async () => {
+      mockUpdatePassword.mockResolvedValueOnce('success')
+      const store = useSessionStore()
+      const result = await store.updatePassword('hunter22')
+      expect(result).toBe('success')
+      expect(mockUpdatePassword).toHaveBeenCalledWith('hunter22')
+    })
+  })
+
+  // ── linkGoogleIdentity / unlinkGoogleIdentity ─────────────────────────────
+
+  describe('linkGoogleIdentity', () => {
+    test('[obligation] refreshes the user via getUser (not getSession) after linking', async () => {
+      mockLinkGoogleIdentity.mockResolvedValueOnce(undefined)
+      mockGetUser.mockResolvedValueOnce({ id: 'u1', aud: 'authenticated' })
+      const store = useSessionStore()
+
+      await store.linkGoogleIdentity()
+
+      expect(mockLinkGoogleIdentity).toHaveBeenCalledOnce()
+      expect(mockGetUser).toHaveBeenCalledOnce()
+      expect(mockGetSession).not.toHaveBeenCalled()
+      expect(store.user).toEqual({ id: 'u1', aud: 'authenticated' })
+    })
+  })
+
+  describe('unlinkGoogleIdentity', () => {
+    test('[obligation] refreshes the user via getUser (not getSession) after unlinking', async () => {
+      mockUnlinkGoogleIdentity.mockResolvedValueOnce(undefined)
+      mockGetUser.mockResolvedValueOnce({ id: 'u1', aud: 'authenticated', identities: [] })
+      const store = useSessionStore()
+
+      await store.unlinkGoogleIdentity()
+
+      expect(mockUnlinkGoogleIdentity).toHaveBeenCalledOnce()
+      expect(mockGetUser).toHaveBeenCalledOnce()
+      expect(mockGetSession).not.toHaveBeenCalled()
+      expect(store.hasGoogleIdentity).toBe(false)
     })
   })
 
