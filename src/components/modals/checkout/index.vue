@@ -32,7 +32,7 @@ function onEnter(el: Element, done: () => void) {
 <template>
   <div
     data-testid="checkout"
-    class="relative flex flex-col overflow-hidden bg-brown-100 py-6 dark:bg-grey-800"
+    class="relative flex flex-col gap-4 overflow-hidden bg-brown-100 py-6 dark:bg-grey-800"
     :class="[
       is_mobile ? 'h-full w-full rounded-none' : 'h-160 w-150 rounded-8 shadow-lg',
       status === 'success' ? 'justify-center' : 'justify-between'
