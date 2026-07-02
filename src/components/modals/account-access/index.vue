@@ -1,13 +1,18 @@
 <script setup lang="ts">
+import { onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/dialog-card.vue'
 import EmailSection from './email-section.vue'
 import PasswordSection from './password-section.vue'
 import GoogleSection from './google-section.vue'
+import { emitSfx } from '@/sfx/bus'
 
 defineProps<{ close: () => void }>()
 
 const { t } = useI18n()
+
+onMounted(() => emitSfx('wooden_chime_ring'))
+onBeforeUnmount(() => emitSfx('pop_up_close'))
 </script>
 
 <template>

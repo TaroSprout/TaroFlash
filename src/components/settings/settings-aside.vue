@@ -4,12 +4,12 @@ import GroupedList from '@/components/layout-kit/grouped-list.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { useMemberStore } from '@/stores/member'
-import { useAccountAccessModal } from '@/composables/settings/use-account-access-modal'
+import { useAccountAccessClick } from './use-account-access-click'
 import SettingsSaveButton from './settings-save-button.vue'
 
 const { t } = useI18n()
 const member_store = useMemberStore()
-const account_access_modal = useAccountAccessModal()
+const { onAccountAccessClick } = useAccountAccessClick()
 </script>
 
 <template>
@@ -35,7 +35,7 @@ const account_access_modal = useAccountAccessModal()
           data-theme="blue-500"
           icon-left="pencil"
           icon-only
-          @press="account_access_modal.open()"
+          @press="onAccountAccessClick"
         >
           {{ t('settings.aside.edit-account-button') }}
         </ui-button>
