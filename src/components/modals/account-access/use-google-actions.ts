@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSessionStore } from '@/stores/session'
 import { useAlert } from '@/composables/alert'
@@ -48,8 +48,12 @@ export function useGoogleActions() {
 
   return {
     loading,
-    hasGoogleIdentity: session.hasGoogleIdentity,
-    hasPasswordIdentity: session.hasPasswordIdentity,
+    // Wrapped in computed() rather than passed as the store's plain unwrapped
+    // boolean — a bare `session.hasGoogleIdentity` here is only read once, at
+    // composable-call time, and never updates again once copied into this
+    // returned object.
+    hasGoogleIdentity: computed(() => session.hasGoogleIdentity),
+    hasPasswordIdentity: computed(() => session.hasPasswordIdentity),
     onConnect,
     onDisconnect
   }

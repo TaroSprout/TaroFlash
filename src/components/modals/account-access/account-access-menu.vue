@@ -30,7 +30,7 @@ function onNavigate(value: string) {
 }
 
 function onGooglePress() {
-  return hasGoogleIdentity ? onDisconnect() : onConnect()
+  return hasGoogleIdentity.value ? onDisconnect() : onConnect()
 }
 </script>
 
