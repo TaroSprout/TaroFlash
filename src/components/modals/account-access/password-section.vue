@@ -23,7 +23,7 @@ function onEnter(el: Element, done: () => void) {
     <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
       <div v-if="!success" key="form" class="flex items-start gap-2">
         <ui-input
-          v-model="password"
+          v-model:value="password"
           type="password"
           autocomplete="new-password"
           size="sm"
@@ -33,7 +33,7 @@ function onEnter(el: Element, done: () => void) {
           data-testid="account-access-modal__password-input"
         />
         <ui-input
-          v-model="confirm_password"
+          v-model:value="confirm_password"
           type="password"
           autocomplete="new-password"
           size="sm"

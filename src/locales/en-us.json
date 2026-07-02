@@ -250,7 +250,7 @@
   "account-access-modal.back-label": "Back",
   "account-access-modal.menu.update-email-label": "Update email",
   "account-access-modal.menu.change-password-label": "Change password",
-  "account-access-modal.email.heading": "Email",
+  "account-access-modal.email.heading": "Update Email",
   "account-access-modal.email.current-label": "Current email",
   "account-access-modal.email.new-label": "New email",
   "account-access-modal.email.submit-button": "Save",

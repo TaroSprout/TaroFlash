@@ -26,16 +26,18 @@ function onEnter(el: Element, done: () => void) {
     <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
       <div v-if="!pending" key="form" class="flex flex-col gap-4">
         <ui-input
+          data-theme="brown-50"
           :label="t('account-access-modal.email.current-label')"
-          v-model="current_email"
+          v-model:value="current_email"
           type="email"
           size="lg"
           disabled
           data-testid="account-access-modal__email-current-input"
         />
         <ui-input
+          data-theme="brown-50"
           :label="t('account-access-modal.email.new-label')"
-          v-model="email"
+          v-model:value="email"
           type="email"
           size="lg"
           :error="error"
