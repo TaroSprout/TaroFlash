@@ -1,6 +1,6 @@
 import { describe, test, expect, afterEach } from 'vite-plus/test'
 import { createApp, ref } from 'vue'
-import { activeTabKey, useTabActive } from '@/components/layout-kit/modal/tab-sheet-context'
+import { activeTabKey, useTabActive } from '@/components/layout-kit/sheet/tab-sheet-context'
 
 let app
 

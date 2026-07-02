@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import MobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
+import MobileSheet from '@/components/layout-kit/sheet/mobile-sheet.vue'
 import LoginDialog from './dialog.vue'
 import { useI18n } from 'vue-i18n'
 

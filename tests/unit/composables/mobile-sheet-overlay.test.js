@@ -3,7 +3,7 @@ import { createApp, ref } from 'vue'
 import {
   mobileSheetOverlayKey,
   useMobileSheetOverlay
-} from '@/components/layout-kit/modal/mobile-sheet-overlay'
+} from '@/components/layout-kit/sheet/mobile-sheet-overlay'
 
 let app
 

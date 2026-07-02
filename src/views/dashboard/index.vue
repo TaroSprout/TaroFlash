@@ -163,7 +163,7 @@ async function onCreateDeckClicked() {
 
     <div data-testid="dashboard__right-column" class="flex flex-col gap-y-5">
       <div data-testid="dashboard__main-column" class="flex flex-col gap-y-20 self-start">
-        <div data-testid="dashboard__decks" class="flex gap-x-6.5 gap-y-8 flex-wrap">
+        <div data-testid="dashboard__decks" class="flex gap-x-3 gap-y-8 flex-wrap">
           <DeckThumbnail
             v-for="(deck, index) in decks"
             :key="index"

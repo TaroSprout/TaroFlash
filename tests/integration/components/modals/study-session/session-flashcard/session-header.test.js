@@ -174,7 +174,15 @@ describe('SessionHeader', () => {
 
   test('renders title text in header', () => {
     const wrapper = mountHeader({ title: 'My Deck' })
-    expect(wrapper.find('[data-testid="session-header__title"]').text()).toBe('My Deck')
+    expect(wrapper.find('[data-testid="dialog-card-header__title"]').text()).toBe('My Deck')
+  })
+
+  // ── dialog-card-header padded=false [obligation] ───────────────────────────
+
+  test('renders dialog-card-header with padded=false so it does not double the parent inset [obligation]', () => {
+    const wrapper = mountHeader()
+    const header = wrapper.find('[data-testid="session-header"]')
+    expect(header.classes()).not.toContain('px-(--dialog-px)')
   })
 
   // ── toggle-ratings menu copy [obligation] ─────────────────────────────────

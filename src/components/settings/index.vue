@@ -28,7 +28,7 @@ import { useModalRequestClose } from '@/composables/modal'
 import { recedeModal, restoreModal } from '@/utils/animations/modal'
 import MemberCard from '@/components/member/member-card.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import TabSheet from '@/components/layout-kit/modal/tab-sheet.vue'
+import TabSheet from '@/components/layout-kit/sheet/tab-sheet.vue'
 const { close } = defineProps<{ close: () => void }>()
 
 const { t } = useI18n()

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DialogCardHeader from '@/components/layout-kit/dialog-card/dialog-card-header.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiDropdownButton, {
   type DropdownOption
@@ -70,57 +71,47 @@ function onSelect(option: DropdownOption) {
 </script>
 
 <template>
-  <header
-    data-testid="session-header"
-    class="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2"
-  >
-    <ui-button
-      v-if="is_cover"
-      data-testid="session-header__close"
-      data-theme="brown-100"
-      data-theme-dark="stone-700"
-      icon-left="close"
-      icon-only
-      rounded-full
-      class="justify-self-start"
-      @press="emit('stop')"
-    >
-      {{ t('study-session.close-button') }}
-    </ui-button>
-    <ui-button
-      v-else
-      data-testid="session-header__stop"
-      data-theme="brown-100"
-      data-theme-dark="stone-700"
-      icon-left="stop"
-      rounded-full
-      class="justify-self-start"
-      @press="emit('stop')"
-    >
-      {{ t('study-session.stop-button') }}
-    </ui-button>
+  <dialog-card-header data-testid="session-header" :title="title" :padded="false">
+    <template #start>
+      <ui-button
+        v-if="is_cover"
+        data-testid="session-header__close"
+        data-theme="brown-100"
+        data-theme-dark="stone-700"
+        icon-left="close"
+        icon-only
+        rounded-full
+        @press="emit('stop')"
+      >
+        {{ t('study-session.close-button') }}
+      </ui-button>
+      <ui-button
+        v-else
+        data-testid="session-header__stop"
+        data-theme="brown-100"
+        data-theme-dark="stone-700"
+        icon-left="stop"
+        rounded-full
+        @press="emit('stop')"
+      >
+        {{ t('study-session.stop-button') }}
+      </ui-button>
+    </template>
 
-    <h1
-      data-testid="session-header__title"
-      class="truncate text-center text-3xl font-bold text-brown-700 dark:text-brown-100"
-    >
-      {{ title }}
-    </h1>
-
-    <ui-dropdown-button
-      v-if="show_menu"
-      data-testid="session-header__menu"
-      class="justify-self-end"
-      trigger-only
-      trigger-icon="pencil"
-      variant="ghost"
-      position="bottom-end"
-      trigger-theme="brown-100"
-      trigger-theme-dark="stone-700"
-      menu-theme="brown-100"
-      menu-theme-dark="stone-700"
-      :options="menu_options"
-      @select="onSelect"
-    />
-  </header>
+    <template v-if="show_menu" #end>
+      <ui-dropdown-button
+        data-testid="session-header__menu"
+        trigger-only
+        trigger-icon="pencil"
+        variant="ghost"
+        position="bottom-end"
+        trigger-theme="brown-100"
+        trigger-theme-dark="stone-700"
+        menu-theme="brown-100"
+        menu-theme-dark="stone-700"
+        :options="menu_options"
+        @select="onSelect"
+      />
+    </template>
+  </dialog-card-header>
 </template>

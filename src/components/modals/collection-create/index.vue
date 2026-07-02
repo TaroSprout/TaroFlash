@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiInput from '@/components/ui-kit/input.vue'
-import MobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
+import MobileSheet from '@/components/layout-kit/sheet/mobile-sheet.vue'
 import { useCreateLessonCollectionMutation } from '@/api/lessons'
 
 export type CollectionCreateResponse = LessonCollection | undefined

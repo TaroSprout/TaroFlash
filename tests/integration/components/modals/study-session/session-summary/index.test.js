@@ -2,7 +2,7 @@ import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, computed } from 'vue'
 import SessionSummary from '@/components/study-session/session-summary/index.vue'
-import { studyViewportKey } from '@/components/study-session/viewport-context'
+import { dialogCardViewportKey } from '@/components/layout-kit/dialog-card/dialog-card-viewport'
 import { deck } from '../../../../../fixtures/deck'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
@@ -59,8 +59,8 @@ function mountSummary({ results = [], deck_data = makeDeck() } = {}) {
         StatTile: StatTileStub
       },
       provide: {
-        // Provide the viewport injection so useStudyViewport() doesn't throw
-        [studyViewportKey]: computed(() => 'desktop')
+        // Provide the viewport injection so useDialogCardViewport() doesn't throw
+        [dialogCardViewportKey]: computed(() => 'desktop')
       }
     }
   })

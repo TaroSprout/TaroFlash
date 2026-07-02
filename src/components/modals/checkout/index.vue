@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import DialogCard from '@/components/layout-kit/dialog-card/dialog-card.vue'
+import DialogCardHeader from '@/components/layout-kit/dialog-card/dialog-card-header.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import PaymentStatus from './payment-status.vue'
@@ -8,7 +10,6 @@ import CheckoutFooter from './checkout-footer.vue'
 import { useCheckout, type CheckoutResponse } from './use-checkout'
 import { fadeLeave } from '@/utils/animations/fade'
 import { springScaleIn } from '@/utils/animations/modal'
-import { useMatchMedia } from '@/composables/ui/media-query'
 
 export type { CheckoutResponse }
 
@@ -18,7 +19,6 @@ const { close } = defineProps<{
 
 const { t } = useI18n()
 const { status, is_ready, onSubmit } = useCheckout(close)
-const is_mobile = useMatchMedia('w<sm | h<sm')
 
 function onLeave(el: Element, done: () => void) {
   fadeLeave(el, done)
@@ -30,73 +30,72 @@ function onEnter(el: Element, done: () => void) {
 </script>
 
 <template>
-  <div
+  <dialog-card
     data-testid="checkout"
-    :data-full-bleed="is_mobile"
-    class="relative flex flex-col overflow-hidden bg-brown-100 py-6 dark:bg-grey-800"
-    :class="is_mobile ? 'h-full w-full rounded-none' : 'h-160 w-150 rounded-8 shadow-lg'"
+    class="h-160 w-150 bg-brown-100 py-6 dark:bg-grey-800"
+    data-theme="brown-300"
+    data-theme-dark="stone-700"
+    :show_close_button="false"
+    @close="close()"
   >
-    <div
-      data-testid="checkout__scroll-area"
-      :data-full-bleed="is_mobile"
-      class="flex min-h-0 flex-1 flex-col gap-4"
-      :class="[
-        status === 'success' ? 'justify-center' : 'justify-between',
-        is_mobile ? 'overflow-y-auto scroll-hidden' : ''
-      ]"
-    >
-      <header
-        v-if="status !== 'success'"
-        data-testid="checkout__header"
-        class="w-full shrink-0 grid grid-cols-[1fr_auto_1fr] px-6 pointer-coarse:px-4"
+    <template #default="{ viewport }">
+      <div
+        data-testid="checkout__scroll-area"
+        :data-full-bleed="viewport === 'mobile'"
+        class="flex min-h-0 flex-1 flex-col gap-4"
+        :class="[
+          status === 'success' ? 'justify-center' : 'justify-between',
+          viewport === 'mobile' ? 'overflow-y-auto scroll-hidden' : ''
+        ]"
       >
-        <ui-button
-          data-testid="checkout__close"
-          data-theme="brown-300"
-          data-theme-dark="stone-700"
-          icon-left="close"
-          icon-only
-          rounded-full
-          class="justify-self-start"
-          :disabled="status === 'confirming'"
-          @press="close()"
-        >
-          {{ t('billing.checkout.close-label') }}
-        </ui-button>
-
-        <h1 data-testid="checkout__title" class="text-4xl text-brown-700 dark:text-brown-100">
-          {{ t('billing.checkout.title') }}
-        </h1>
-      </header>
-
-      <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
-        <div
+        <dialog-card-header
           v-if="status !== 'success'"
-          key="form"
-          data-testid="checkout__body"
-          class="flex flex-col gap-4 px-16 pointer-coarse:px-4"
+          data-testid="checkout__header"
+          :title="t('billing.checkout.title')"
         >
-          <payment-status :status="status" />
-          <div ref="container" data-testid="checkout__payment-element"></div>
-        </div>
+          <template #start>
+            <ui-button
+              data-testid="checkout__close"
+              icon-left="close"
+              icon-only
+              rounded-full
+              :disabled="status === 'confirming'"
+              @press="close()"
+            >
+              {{ t('billing.checkout.close-label') }}
+            </ui-button>
+          </template>
+        </dialog-card-header>
 
-        <success-view v-else key="success" />
-      </transition>
+        <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
+          <div
+            v-if="status !== 'success'"
+            key="form"
+            data-testid="checkout__body"
+            class="flex flex-col gap-4 px-(--dialog-px)"
+          >
+            <payment-status :status="status" />
+            <div ref="container" data-testid="checkout__payment-element"></div>
+          </div>
 
-      <checkout-footer
-        v-if="status !== 'success'"
-        class="px-16 pointer-coarse:px-4"
-        :status="status"
-        :is_ready="is_ready"
-        @submit="onSubmit"
+          <success-view v-else key="success" />
+        </transition>
+
+        <checkout-footer
+          v-if="status !== 'success'"
+          class="px-(--dialog-px)"
+          :status="status"
+          :is_ready="is_ready"
+          @submit="onSubmit"
+        />
+      </div>
+
+      <scroll-bar
+        v-if="viewport === 'mobile'"
+        target="[data-testid='checkout__scroll-area']"
+        min-width="sm"
+        class="absolute right-8 top-6 bottom-6"
       />
-    </div>
-
-    <scroll-bar
-      v-if="is_mobile"
-      target="[data-testid='checkout__scroll-area']"
-      min-width="sm"
-      class="absolute right-8 top-6 bottom-6"
-    />
-  </div>
+    </template>
+  </dialog-card>
 </template>

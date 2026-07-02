@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { useQueryCache } from '@pinia/colada'
-import mobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
+import mobileSheet from '@/components/layout-kit/sheet/mobile-sheet.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useCreateSetupIntentMutation } from '@/api/billing'
 import { useCheckoutElements } from '@/composables/billing/use-checkout-elements'

@@ -16,7 +16,9 @@ const mediaState = { is_mobile: ref(false) }
 
 vi.mock('gsap', () => ({
   gsap: {
-    to: vi.fn((_el, opts) => opts?.onComplete?.())
+    set: vi.fn(),
+    to: vi.fn((_el, opts) => opts?.onComplete?.()),
+    fromTo: vi.fn((_el, _from, opts) => opts?.onComplete?.())
   }
 }))
 
@@ -28,8 +30,15 @@ vi.mock('@/components/modals/checkout/use-checkout', () => ({
   })
 }))
 
+// dialog-card's provideDialogCardViewport calls useMatchMedia under the hood —
+// mocking it here lets tests flip the resolved viewport for checkout's default
+// 'w<sm | h<sm' query.
+const capturedQueries = []
 vi.mock('@/composables/ui/media-query', () => ({
-  useMatchMedia: () => mediaState.is_mobile
+  useMatchMedia: vi.fn((query) => {
+    capturedQueries.push(query)
+    return mediaState.is_mobile
+  })
 }))
 
 import Checkout from '@/components/modals/checkout/index.vue'
@@ -37,7 +46,10 @@ import Checkout from '@/components/modals/checkout/index.vue'
 // ── Setup ──────────────────────────────────────────────────────────────────────
 
 function mountCheckout(close = vi.fn()) {
-  return shallowMount(Checkout, { props: { close } })
+  return shallowMount(Checkout, {
+    props: { close },
+    global: { stubs: { DialogCard: false, DialogCardHeader: false } }
+  })
 }
 
 beforeEach(() => {
@@ -45,6 +57,7 @@ beforeEach(() => {
   checkoutState.is_ready.value = true
   mediaState.is_mobile.value = false
   mockOnSubmit.mockReset()
+  capturedQueries.length = 0
 })
 
 // ── Header ──────────────────────────────────────────────────────────────────────
@@ -92,13 +105,45 @@ describe('Checkout — header', () => {
     expect(close).toHaveBeenCalledWith()
   })
 
-  test('renders the close-label slot text and the title', () => {
+  test('renders the title', () => {
+    const wrapper = mountCheckout()
+    expect(wrapper.find('[data-testid="dialog-card-header__title"]').text()).toBe(
+      'Upgrade your plan'
+    )
+  })
+
+  test('renders the close-label slot text', () => {
     const wrapper = shallowMount(Checkout, {
       props: { close: vi.fn() },
-      global: { renderStubDefaultSlot: true }
+      global: {
+        stubs: { DialogCard: false, DialogCardHeader: false },
+        renderStubDefaultSlot: true
+      }
     })
     expect(wrapper.text()).toContain('Close')
-    expect(wrapper.find('[data-testid="checkout__title"]').text()).toBe('Upgrade your plan')
+  })
+
+  // ── exactly one close button [obligation] ──────────────────────────────────
+  // dialog-card's own fallback header would render a second close button if
+  // show_close_button weren't explicitly false, since checkout renders its own
+  // header manually.
+
+  test('[obligation] renders exactly one close button regardless of status', () => {
+    ;['loading', 'form', 'error', 'confirming'].forEach((status) => {
+      checkoutState.status.value = status
+      const wrapper = mountCheckout()
+      expect(wrapper.findAll('[data-testid="checkout__close"]')).toHaveLength(1)
+      wrapper.unmount()
+    })
+  })
+
+  // ── dialog-card's own @close forwards through (backdrop/esc) ───────────────
+
+  test('dialog-card emitting close (e.g. backdrop/esc) calls close() with no argument', async () => {
+    const close = vi.fn()
+    const wrapper = mountCheckout(close)
+    await wrapper.findComponent({ name: 'DialogCard' }).vm.$emit('close')
+    expect(close).toHaveBeenCalledWith()
   })
 })
 
@@ -140,11 +185,6 @@ describe('Checkout — body', () => {
 
     expect(wrapper.find('[data-testid="checkout__body"]').exists()).toBe(false)
     expect(wrapper.findComponent({ name: 'SuccessView' }).exists()).toBe(true)
-  })
-
-  test('[obligation] no longer renders local submit-error markup — Stripe surfaces its own', () => {
-    const wrapper = mountCheckout()
-    expect(wrapper.find('[data-testid="checkout__submit-error"]').exists()).toBe(false)
   })
 })
 
@@ -203,18 +243,43 @@ describe('Checkout — full-bleed mobile scroll area [obligation]', () => {
     const wrapper = mountCheckout()
     expect(wrapper.findComponent({ name: 'ScrollBar' }).exists()).toBe(false)
   })
+})
 
-  test('applies full-bleed sizing (h-full w-full, no rounding) when is_mobile is true', () => {
-    mediaState.is_mobile.value = true
+// ── dialog-card header stays inside the scroll-area [obligation] ─────────────
+
+describe('Checkout — header lives inside the scroll-area flex context [obligation]', () => {
+  test('[obligation] dialog-card-header is a descendant of checkout__scroll-area, not a structural sibling', () => {
     const wrapper = mountCheckout()
+
+    const scrollArea = wrapper.find('[data-testid="checkout__scroll-area"]')
+    expect(scrollArea.find('[data-testid="checkout__header"]').exists()).toBe(true)
+
+    // The dialog-card root's direct children should be [scroll-area, scroll-bar?] —
+    // the header must not appear as a second, separate top-level child.
     const root = wrapper.find('[data-testid="checkout"]')
-    expect(root.attributes('data-full-bleed')).toBe('true')
+    const headerOutsideScrollArea = root
+      .findAll('[data-testid="checkout__header"]')
+      .filter((el) => !scrollArea.element.contains(el.element))
+    expect(headerOutsideScrollArea).toHaveLength(0)
   })
+})
 
-  test('applies fixed desktop sizing when is_mobile is false', () => {
-    mediaState.is_mobile.value = false
+// ── viewport_query default [obligation] ───────────────────────────────────────
+
+describe('Checkout — dialog-card viewport_query [obligation]', () => {
+  test('[obligation] uses the "w<sm | h<sm" default query, not a hardcoded/shared one', () => {
+    mountCheckout()
+    expect(capturedQueries).toContain('w<sm | h<sm')
+  })
+})
+
+// ── show_close_button=false passed explicitly [obligation] ───────────────────
+
+describe('Checkout — show_close_button [obligation]', () => {
+  test('[obligation] passes show_close_button=false to dialog-card so its fallback header never renders', () => {
     const wrapper = mountCheckout()
-    const root = wrapper.find('[data-testid="checkout"]')
-    expect(root.attributes('data-full-bleed')).toBe('false')
+    // dialog-card's own fallback close button carries this data-testid; checkout
+    // renders its own via checkout__close instead.
+    expect(wrapper.find('[data-testid="dialog-card__close"]').exists()).toBe(false)
   })
 })

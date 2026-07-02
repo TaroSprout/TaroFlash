@@ -87,7 +87,7 @@ vi.mock('@/components/deck/cover-designer/index.vue', async () => {
   }
 })
 
-vi.mock('@/components/layout-kit/modal/mobile-sheet.vue', async () => {
+vi.mock('@/components/layout-kit/sheet/mobile-sheet.vue', async () => {
   const { defineComponent, h } = await import('vue')
   return {
     default: defineComponent({
