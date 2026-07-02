@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import MobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
+import MobileSheet from '@/components/layout-kit/sheet/mobile-sheet.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import SignupForm from './form.vue'
 import { useSignupActions } from '@/composables/auth/use-signup-actions'

@@ -11,7 +11,7 @@ import { useTabTransition } from '@/composables/ui/tab-transition'
 import { useAlert } from '@/composables/alert'
 import { useModalAfterEnter, useModalRequestClose } from '@/composables/modal'
 import DeckPinnedPreview from '@/components/deck/pinned-preview.vue'
-import TabSheet from '@/components/layout-kit/modal/tab-sheet.vue'
+import TabSheet from '@/components/layout-kit/sheet/tab-sheet.vue'
 
 export type DeckSettingsResponse = boolean
 export type ActiveTab = 'details' | 'design' | 'study' | 'danger-zone'

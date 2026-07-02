@@ -12,7 +12,7 @@ import {
 import { useToast } from '@/composables/toast'
 import { useAlert } from '@/composables/alert'
 import { useUploadLessonModal } from '@/composables/audio-reader/upload-lesson-modal'
-import MobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
+import MobileSheet from '@/components/layout-kit/sheet/mobile-sheet.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import LessonCard from '@/views/audio-reader/lesson-card.vue'
 
