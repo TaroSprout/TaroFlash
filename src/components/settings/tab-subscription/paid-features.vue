@@ -19,6 +19,7 @@ const price = `$${PLANS.paid.monthlyPriceUsd} / mo`
     <ui-tappable
       data-testid="paid-features__body"
       data-theme="brown-100"
+      data-theme-dark="stone-700"
       :sfx="{ hover: TYPE_SFX }"
       class="card-outline w-full flex flex-col gap-3 rounded-4 px-5 py-4 text-(--theme-on-primary) bg-(--theme-primary) pointer-fine:hover:scale-101 data-[active=true]:scale-101 pointer-coarse:data-[active=true]:scale-105 pointer-fine:transition-transform duration-75 cursor-pointer touch-manipulation"
       @tap="onUpgradeClick"
@@ -26,6 +27,7 @@ const price = `$${PLANS.paid.monthlyPriceUsd} / mo`
       <div data-testid="paid-features__upgrade" class="absolute -bottom-2 -right-2 z-10 rotate-2">
         <ui-button
           data-theme="yellow-500"
+          data-theme-dark="yellow-700"
           icon-left="triangle-eye"
           class="pointer-events-none"
           tabindex="-1"
