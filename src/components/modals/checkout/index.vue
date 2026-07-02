@@ -73,7 +73,7 @@ function onEnter(el: Element, done: () => void) {
         <div
           data-testid="checkout__body"
           class="flex flex-col gap-4 px-16"
-          :class="is_mobile ? 'h-full overflow-y-auto' : ''"
+          :class="is_mobile ? 'h-full overflow-y-auto scroll-hidden' : ''"
         >
           <payment-status :status="status" />
           <div ref="container" data-testid="checkout__payment-element"></div>
@@ -85,7 +85,7 @@ function onEnter(el: Element, done: () => void) {
         <scroll-bar
           v-if="is_mobile"
           target="[data-testid='checkout__body']"
-          class="absolute right-1 top-0 bottom-0"
+          class="absolute right-1 top-0 bottom-0 pointer-fine:block!"
         />
       </div>
 
