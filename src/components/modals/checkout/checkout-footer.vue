@@ -24,7 +24,8 @@ const { t } = useI18n()
   >
     <ui-button
       data-testid="checkout__submit"
-      data-theme="green-400"
+      data-theme="blue-500"
+      data-theme-dark="blue-650"
       full-width
       size="lg"
       :loading="status === 'loading' || status === 'confirming'"

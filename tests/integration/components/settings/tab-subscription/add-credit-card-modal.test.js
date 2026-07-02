@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
+import { createTestingPinia } from '@pinia/testing'
 
 const {
   mockCreateSetupIntent,
@@ -82,6 +83,7 @@ async function makeAddCreditCardModal({ close = vi.fn() } = {}) {
   const wrapper = shallowMount(AddCreditCardModal, {
     props: { close },
     global: {
+      plugins: [createTestingPinia({ createSpy: vi.fn })],
       stubs: {
         MobileSheet: MobileSheetStub,
         UiButton: UiButtonStub
@@ -236,7 +238,7 @@ describe('add-credit-card-modal — submit', () => {
     expect('returnUrl' in args).toBe(false)
   })
 
-  test('shows the submit error when confirm() returns an error', async () => {
+  test('[obligation] does not close and renders no local error markup when confirm() returns an error', async () => {
     mockConfirm.mockResolvedValue({ type: 'error', error: { message: 'Your card was declined.' } })
     const { wrapper, close } = await makeAddCreditCardModal()
     await flushPromises()
@@ -246,13 +248,11 @@ describe('add-credit-card-modal — submit', () => {
     await wrapper.find('[data-testid="add-credit-card-modal__submit"]').trigger('click')
     await flushPromises()
 
-    const err = wrapper.find('[data-testid="add-credit-card-modal__submit-error"]')
-    expect(err.exists()).toBe(true)
-    expect(err.text()).toBe('Your card was declined.')
+    expect(wrapper.find('[data-testid="add-credit-card-modal__submit-error"]').exists()).toBe(false)
     expect(close).not.toHaveBeenCalled()
   })
 
-  test('falls back to a generic submit error when the session is not complete', async () => {
+  test('does not close when the session is not complete', async () => {
     mockConfirm.mockResolvedValue({ type: 'success', session: { status: { type: 'open' } } })
     const { wrapper, close } = await makeAddCreditCardModal()
     await flushPromises()
@@ -262,7 +262,6 @@ describe('add-credit-card-modal — submit', () => {
     await wrapper.find('[data-testid="add-credit-card-modal__submit"]').trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="add-credit-card-modal__submit-error"]').exists()).toBe(true)
     expect(close).not.toHaveBeenCalled()
   })
 })

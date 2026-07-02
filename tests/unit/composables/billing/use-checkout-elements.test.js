@@ -6,8 +6,15 @@ const { mockLoadStripe } = vi.hoisted(() => ({ mockLoadStripe: vi.fn() }))
 
 vi.mock('@stripe/stripe-js', () => ({ loadStripe: mockLoadStripe }))
 vi.mock('@/utils/logger', () => ({ default: { error: vi.fn() } }))
+vi.mock('@/stores/theme', async () => {
+  const { ref } = await import('vue')
+  const is_dark = ref(false)
+  return { useThemeStore: () => ({ is_dark }) }
+})
 
 import { useCheckoutElements } from '@/composables/billing/use-checkout-elements'
+import { useThemeStore } from '@/stores/theme'
+import { getStripeAppearance, STRIPE_FONTS } from '@/utils/billing/stripe-theme'
 
 let app
 
@@ -40,10 +47,15 @@ function makePaymentElement() {
   }
 }
 
-function makeCheckoutSdk({ paymentElement = makePaymentElement(), loadActions } = {}) {
+function makeCheckoutSdk({
+  paymentElement = makePaymentElement(),
+  loadActions,
+  changeAppearance
+} = {}) {
   return {
     createPaymentElement: vi.fn(() => paymentElement),
-    loadActions: loadActions ?? vi.fn()
+    loadActions: loadActions ?? vi.fn(),
+    changeAppearance: changeAppearance ?? vi.fn()
   }
 }
 
@@ -62,6 +74,7 @@ function baseOptions(overrides = {}) {
 
 beforeEach(() => {
   mockLoadStripe.mockReset()
+  useThemeStore().is_dark.value = false
 })
 
 describe('useCheckoutElements — mount lifecycle', () => {
@@ -82,6 +95,15 @@ describe('useCheckoutElements — mount lifecycle', () => {
 
     paymentElement.fireReady()
     expect(result.is_ready.value).toBe(true)
+  })
+
+  test('[obligation] does not return a submit_error field — Stripe surfaces inline errors itself', async () => {
+    mockLoadStripe.mockResolvedValue(makeStripe())
+
+    const result = withSetup(baseOptions())
+    await flushPromises()
+
+    expect('submit_error' in result).toBe(false)
   })
 
   test('initCheckoutElementsSdk is called with the resolved client secret', async () => {
@@ -200,7 +222,6 @@ describe('useCheckoutElements — confirm()', () => {
     const outcome = await result.confirm()
 
     expect(outcome).toEqual({ status: 'error', message: 'Something went wrong.' })
-    expect(result.submit_error.value).toBe('Something went wrong.')
   })
 
   test('surfaces the error and resets is_submitting when loadActions() returns type error', async () => {
@@ -214,7 +235,6 @@ describe('useCheckoutElements — confirm()', () => {
 
     expect(outcome).toEqual({ status: 'error', message: 'Could not load actions.' })
     expect(result.is_submitting.value).toBe(false)
-    expect(result.submit_error.value).toBe('Could not load actions.')
   })
 
   test('surfaces the error and resets is_submitting when actions.confirm() returns type error', async () => {
@@ -248,5 +268,36 @@ describe('useCheckoutElements — confirm()', () => {
     const outcome = await result.confirm()
 
     expect(outcome).toEqual({ status: 'error', message: 'Something went wrong.' })
+  })
+})
+
+describe('useCheckoutElements — dark-mode reactivity', () => {
+  test('[obligation] initializes the Checkout SDK with the light appearance when is_dark starts false', async () => {
+    const stripe = makeStripe()
+    mockLoadStripe.mockResolvedValue(stripe)
+
+    withSetup(baseOptions())
+    await flushPromises()
+
+    expect(stripe.initCheckoutElementsSdk).toHaveBeenCalledWith(
+      expect.objectContaining({
+        elementsOptions: { appearance: getStripeAppearance(false), fonts: STRIPE_FONTS }
+      })
+    )
+  })
+
+  test('[obligation] calls checkout.changeAppearance when is_dark toggles after mount, not just at init', async () => {
+    const changeAppearance = vi.fn()
+    const checkout = makeCheckoutSdk({ changeAppearance })
+    mockLoadStripe.mockResolvedValue(makeStripe({ checkout }))
+
+    withSetup(baseOptions())
+    await flushPromises()
+    expect(changeAppearance).not.toHaveBeenCalled()
+
+    useThemeStore().is_dark.value = true
+    await flushPromises()
+
+    expect(changeAppearance).toHaveBeenCalledWith(getStripeAppearance(true))
   })
 })

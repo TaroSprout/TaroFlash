@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, inject, nextTick, useAttrs } from 'vue'
-import { settingsRecedeKey } from '@/components/settings/layout'
+import { settingsRecedeKey, SETTINGS_SHEET_BREAKPOINTS } from '@/components/settings/layout'
 
 // ── Hoisted state ─────────────────────────────────────────────────────────────
 
@@ -20,7 +20,7 @@ const { mockEditor, mockDanger, mockEmitSfx, mockAlertWarn, alertResponse, state
     }
 
     return {
-      state: { isSheet: false, isDesktop: false },
+      state: { isSheet: false, isDesktop: false, isPinned: false },
       mockEditor: {
         settings: { display_name: 'Chris', description: 'hi' },
         preferences: { accessibility: { left_hand: false } },
@@ -65,9 +65,16 @@ vi.mock('@/composables/storage/session-ref', async () => {
 vi.mock('@/composables/ui/media-query', async () => {
   const { ref } = await import('vue')
   return {
-    // sheet_query contains '|' or 'w<'; desktop_query contains '&'
+    // sheet_query (useTabModalLayout, 'w<mlg | h<sm') and the settings-only
+    // pin check (SETTINGS_SHEET_BREAKPOINTS, 'w<mlg | h<md') are distinct
+    // queries on purpose — they resolve from separate state fields so a test
+    // can pin the recede/restore animation while layout_mode stays desktop/tablet.
     useMatchMedia: (query) => {
       if (query.includes('&')) return ref(state.isDesktop)
+      if (
+        query === `w<${SETTINGS_SHEET_BREAKPOINTS.width} | h<${SETTINGS_SHEET_BREAKPOINTS.height}`
+      )
+        return ref(state.isPinned)
       return ref(state.isSheet)
     }
   }
@@ -242,6 +249,7 @@ function makeWrapper(closeFn = vi.fn()) {
 beforeEach(() => {
   state.isSheet = false
   state.isDesktop = false
+  state.isPinned = false
   mockEditor.is_dirty.value = false
   mockEditor.saving.value = false
   mockEditor.saveMember.mockReset().mockResolvedValue(true)
@@ -563,5 +571,35 @@ describe('settings app — recede/restore choreography [obligation]', () => {
     await wrapper.find('[data-testid="restore-trigger"]').trigger('click')
 
     expect(mockRestoreModal).toHaveBeenCalledOnce()
+  })
+
+  test("[obligation] uses SETTINGS_SHEET_BREAKPOINTS pin check, not layout_mode's own sheet_query — recedes with is_pinned true even while layout_mode resolves tablet/desktop", async () => {
+    // sheet_query ('w<mlg | h<sm') resolves false here so layout_mode is tablet/desktop,
+    // but the narrower SETTINGS_SHEET_BREAKPOINTS pin query still resolves true.
+    state.isSheet = false
+    state.isDesktop = false
+    state.isPinned = true
+    mockRecedeModal.mockClear()
+
+    const wrapper = makeWrapperWithRecedeInjector()
+    await wrapper.find('[data-testid="tab-sheet__select-subscription"]').trigger('click')
+    await flushPromises()
+    await wrapper.find('[data-testid="recede-trigger"]').trigger('click')
+
+    expect(mockRecedeModal).toHaveBeenCalledWith(expect.anything(), true)
+  })
+
+  test('[obligation] recedes with is_pinned false when below the narrower SETTINGS_SHEET_BREAKPOINTS threshold', async () => {
+    state.isSheet = false
+    state.isDesktop = false
+    state.isPinned = false
+    mockRecedeModal.mockClear()
+
+    const wrapper = makeWrapperWithRecedeInjector()
+    await wrapper.find('[data-testid="tab-sheet__select-subscription"]').trigger('click')
+    await flushPromises()
+    await wrapper.find('[data-testid="recede-trigger"]').trigger('click')
+
+    expect(mockRecedeModal).toHaveBeenCalledWith(expect.anything(), false)
   })
 })

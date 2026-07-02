@@ -16,7 +16,7 @@ const { t } = useI18n()
 const queryCache = useQueryCache()
 const { mutateAsync: createSetupIntent } = useCreateSetupIntentMutation()
 
-const { container_ref, is_loading, is_submitting, is_ready, load_error, submit_error, confirm } =
+const { container_ref, is_loading, is_submitting, is_ready, load_error, confirm } =
   useCheckoutElements({
     publicKey: import.meta.env.VITE_STRIPE_PUBLIC_KEY,
     genericErrorMessage: t('settings.subscription.add-credit-card.submit-error'),
@@ -63,13 +63,6 @@ async function onSubmit() {
         {{ t('settings.subscription.add-credit-card.error') }}
       </p>
       <div ref="container" data-testid="add-credit-card-modal__payment-element"></div>
-      <p
-        v-if="submit_error"
-        data-testid="add-credit-card-modal__submit-error"
-        class="text-sm text-red-500"
-      >
-        {{ submit_error }}
-      </p>
     </div>
 
     <div

@@ -1,4 +1,5 @@
-import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
+import { onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import {
   loadStripe,
   type Stripe,
@@ -7,6 +8,7 @@ import {
   type StripePaymentElement
 } from '@stripe/stripe-js'
 import { getStripeAppearance, STRIPE_FONTS } from '@/utils/billing/stripe-theme'
+import { useThemeStore } from '@/stores/theme'
 import logger from '@/utils/logger'
 
 type UseCheckoutElementsOptions = {
@@ -28,12 +30,12 @@ export type ConfirmOutcome =
  */
 export function useCheckoutElements(options: UseCheckoutElementsOptions) {
   const container_ref = useTemplateRef<HTMLDivElement>('container')
+  const { is_dark } = storeToRefs(useThemeStore())
 
   const is_loading = ref(true)
   const is_submitting = ref(false)
   const is_ready = ref(false)
   const load_error = ref(false)
-  const submit_error = ref<string | null>(null)
 
   let stripe: Stripe | null = null
   let checkout: StripeCheckoutElementsSdk | null = null
@@ -50,7 +52,7 @@ export function useCheckoutElements(options: UseCheckoutElementsOptions) {
 
       checkout = stripe.initCheckoutElementsSdk({
         clientSecret,
-        elementsOptions: { appearance: getStripeAppearance(), fonts: STRIPE_FONTS }
+        elementsOptions: { appearance: getStripeAppearance(is_dark.value), fonts: STRIPE_FONTS }
       })
 
       payment_element = checkout.createPaymentElement({ layout: 'tabs' })
@@ -71,16 +73,19 @@ export function useCheckoutElements(options: UseCheckoutElementsOptions) {
     payment_element?.destroy()
   })
 
+  watch(is_dark, (dark) => checkout?.changeAppearance(getStripeAppearance(dark)))
+
   async function confirm(): Promise<ConfirmOutcome> {
     if (!checkout) return { status: 'error', message: options.genericErrorMessage }
     is_submitting.value = true
-    submit_error.value = null
 
     try {
       const loadActionsResult = await checkout.loadActions()
       if (loadActionsResult.type === 'error') {
-        submit_error.value = loadActionsResult.error.message ?? options.genericErrorMessage
-        return { status: 'error', message: submit_error.value }
+        return {
+          status: 'error',
+          message: loadActionsResult.error.message ?? options.genericErrorMessage
+        }
       }
 
       // return_url is already set when the Checkout Session was created
@@ -88,24 +93,21 @@ export function useCheckoutElements(options: UseCheckoutElementsOptions) {
       const result = await loadActionsResult.actions.confirm({ redirect: 'if_required' })
 
       if (result.type === 'error') {
-        submit_error.value = result.error.message ?? options.genericErrorMessage
-        return { status: 'error', message: submit_error.value }
+        return { status: 'error', message: result.error.message ?? options.genericErrorMessage }
       }
 
       if (result.session.status.type !== 'complete') {
-        submit_error.value = options.genericErrorMessage
-        return { status: 'error', message: submit_error.value }
+        return { status: 'error', message: options.genericErrorMessage }
       }
 
       return { status: 'success', session: result.session }
     } catch (err) {
       logger.error((err as Error).message)
-      submit_error.value = options.genericErrorMessage
-      return { status: 'error', message: submit_error.value }
+      return { status: 'error', message: options.genericErrorMessage }
     } finally {
       is_submitting.value = false
     }
   }
 
-  return { container_ref, is_loading, is_submitting, is_ready, load_error, submit_error, confirm }
+  return { container_ref, is_loading, is_submitting, is_ready, load_error, confirm }
 }

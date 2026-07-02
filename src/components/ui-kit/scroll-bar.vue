@@ -1,9 +1,19 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue'
 
-const { target } = defineProps<{
+type UiScrollBarProps = {
   target?: string | HTMLElement
-}>()
+  // Viewport width above which the bar can show on a fine pointer. Page-level
+  // scroll-bars stay 'md' (avoid a custom bar on a narrow desktop window);
+  // container-local ones can drop to 'sm' to match their own mobile breakpoint.
+  minWidth?: 'sm' | 'md'
+}
+
+const { target, minWidth = 'md' } = defineProps<UiScrollBarProps>()
+
+const visibilityClass = computed(() =>
+  minWidth === 'sm' ? 'hidden pointer-fine:block' : 'hidden pointer-fine:md:block'
+)
 
 const thumbEl = shallowRef<HTMLElement | null>(null)
 
@@ -183,11 +193,15 @@ function isPageTarget(el: HTMLElement) {
   <div
     v-show="visible"
     ref="scrollBarRef"
-    class="ui-kit-scroll-bar hidden pointer-fine:md:block"
+    data-testid="ui-kit-scroll-bar"
+    :data-min-width="minWidth"
+    class="ui-kit-scroll-bar"
+    :class="visibilityClass"
     @pointerdown.prevent="onTrackPointerDown"
   >
     <div
       ref="thumbEl"
+      data-testid="ui-kit-scroll-bar__thumb"
       class="ui-kit-scroll-bar__thumb hover:bgx-diagonal-stripes"
       :style="thumbStyle"
       @pointerdown.stop.prevent="onThumbPointerDown"

@@ -56,12 +56,18 @@ export function scaleFadeOut(el: Element, done: () => void) {
 }
 
 const RECEDE_DURATION = 0.4
+const RECEDE_SCALE = 0.9
+const RECEDE_TRANSLATE_Y = '60px'
 
-/** Dials back a modal that a new modal just opened on top of, as if a shadow fell over it. */
-export function recedeModal(el: Element) {
+/**
+ * Dials back a modal that a new modal just opened on top of, as if a shadow fell over it.
+ * Pinned-to-bottom sheets (tablet/sheet mode) nudge down instead of scaling, since scaling
+ * a bottom-anchored modal reads as shrinking off-anchor rather than receding.
+ */
+export function recedeModal(el: Element, is_pinned: boolean) {
   gsap.set(el, { filter: 'brightness(1) blur(0px)' })
   gsap.to(el, {
-    scale: 0.9,
+    ...(is_pinned ? { translateY: RECEDE_TRANSLATE_Y } : { scale: RECEDE_SCALE }),
     filter: 'brightness(0.8) blur(2px)',
     duration: RECEDE_DURATION,
     ease: 'expo.out',
@@ -70,10 +76,10 @@ export function recedeModal(el: Element) {
 }
 
 /** Restores a modal to full prominence once the modal above it has closed. */
-export function restoreModal(el: Element) {
+export function restoreModal(el: Element, is_pinned: boolean) {
   gsap.set(el, { pointerEvents: 'auto' })
   gsap.to(el, {
-    scale: 1,
+    ...(is_pinned ? { translateY: 0 } : { scale: 1 }),
     filter: 'brightness(1) blur(0px)',
     duration: RECEDE_DURATION,
     ease: 'expo.out'

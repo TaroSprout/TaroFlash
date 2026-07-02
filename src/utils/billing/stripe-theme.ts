@@ -21,51 +21,66 @@ function withAlpha(hex: string, percent: number): string {
   return `#${clean}${alpha}`
 }
 
-export function getStripeAppearance(): Appearance {
-  const green600 = token('--color-green-600')
-  const brown50 = token('--color-brown-50')
-  const brown100 = token('--color-brown-100')
-  const brown200 = token('--color-brown-200')
-  const brown300 = token('--color-brown-300')
-  const brown500 = token('--color-brown-500')
-  const brown700 = token('--color-brown-700')
-  const red600 = token('--color-red-600')
+/**
+ * Builds the shared Payment Element appearance, in either light or dark
+ * palette. `is_dark` should mirror the app's own `useThemeStore().is_dark`
+ * so the Stripe form always matches the surrounding modal chrome.
+ */
+export function getStripeAppearance(is_dark: boolean): Appearance {
+  const danger = token(is_dark ? '--color-red-600' : '--color-red-500')
+  const accent = token(is_dark ? '--color-blue-650' : '--color-blue-500')
+
+  const background = token(is_dark ? '--color-grey-800' : '--color-brown-50')
+  const surface = token(is_dark ? '--color-grey-700' : '--color-brown-100')
+  const surfaceHover = token(is_dark ? '--color-grey-900' : '--color-brown-200')
+  const border = token(is_dark ? '--color-grey-700' : '--color-brown-300')
+  const text = token(is_dark ? '--color-grey-300' : '--color-brown-700')
+  const placeholder = token(is_dark ? '--color-grey-500' : '--color-brown-500')
 
   return {
-    theme: 'stripe',
+    theme: 'flat',
+    labels: 'above',
+    inputs: 'condensed',
     variables: {
-      colorPrimary: green600,
-      colorBackground: brown50,
-      colorText: brown700,
-      colorDanger: red600,
-      colorTextPlaceholder: brown500,
+      colorPrimary: accent,
+      colorBackground: background,
+      colorText: text,
+      colorDanger: danger,
+      colorTextPlaceholder: placeholder,
       fontFamily: FONT_FAMILY,
-      spacingUnit: '4px',
       borderRadius: '8px'
     },
     rules: {
       '.Input': {
-        border: `1px solid ${brown300}`,
+        border: `1px solid ${border}`,
         boxShadow: 'none'
       },
       '.Input:focus': {
-        border: `1px solid ${green600}`,
-        boxShadow: `0 0 0 3px ${withAlpha(green600, 25)}`
+        border: `1px solid ${accent}`,
+        boxShadow: `0 0 0 3px ${withAlpha(accent, 25)}`
       },
       '.Label': {
-        color: brown700,
+        color: text,
         fontWeight: '500'
       },
       '.Tab': {
-        border: `1px solid ${brown300}`,
-        backgroundColor: brown50
+        border: `1px solid ${border}`,
+        backgroundColor: background
       },
       '.Tab:hover': {
-        backgroundColor: brown200
+        backgroundColor: surfaceHover
       },
       '.Tab--selected': {
-        borderColor: green600,
-        backgroundColor: brown100
+        borderColor: accent,
+        backgroundColor: surface
+      },
+      // Selected-tab label/icon default to a primary-tinted color that reads
+      // low-contrast against the surface — pin them back to the base text color.
+      '.TabLabel--selected': {
+        color: text
+      },
+      '.TabIcon--selected': {
+        color: text
       }
     }
   }
