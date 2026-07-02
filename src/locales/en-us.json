@@ -251,6 +251,8 @@
   "account-access-modal.menu.update-email-label": "Update email",
   "account-access-modal.menu.change-password-label": "Change password",
   "account-access-modal.email.heading": "Email",
+  "account-access-modal.email.current-label": "Current email",
+  "account-access-modal.email.new-label": "New email",
   "account-access-modal.email.submit-button": "Save",
   "account-access-modal.email.pending-message": "Check both your old and new inbox to confirm the change.",
   "account-access-modal.email.validation-required": "Email is required",

@@ -19,7 +19,8 @@ export function useEmailActions() {
   const session = useSessionStore()
   const { t } = useI18n()
 
-  const email = ref(session.user?.email ?? '')
+  const current_email = ref(session.user?.email ?? '')
+  const email = ref('')
   const loading = ref(false)
   const error = ref('')
   const pending = ref(false)
@@ -58,5 +59,5 @@ export function useEmailActions() {
 
   watch(email, () => (error.value = ''))
 
-  return { email, loading, error, pending, submit }
+  return { current_email, email, loading, error, pending, submit }
 }

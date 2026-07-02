@@ -80,7 +80,7 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
 
     <div
       data-testid="account-access-modal__body"
-      class="flex flex-col items-center gap-18 px-(--dialog-px)"
+      class="flex flex-1 flex-col items-center gap-18 px-(--dialog-px)"
     >
       <p
         v-if="page === 'menu'"
@@ -90,7 +90,7 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
         {{ t('account-access-modal.description') }}
       </p>
 
-      <div class="w-full max-w-100 flex flex-col gap-4">
+      <div class="w-full max-w-100 flex flex-1 flex-col gap-4">
         <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
           <account-access-menu v-if="page === 'menu'" key="menu" @navigate="(p) => (page = p)" />
           <email-section v-else-if="page === 'email'" key="email" />
