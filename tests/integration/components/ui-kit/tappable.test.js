@@ -3,10 +3,12 @@ import { mount, flushPromises } from '@vue/test-utils'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockEmitSfx, mockEmitHoverSfx, coarseRef, mockPlayButtonTap } = vi.hoisted(() => {
+const { mockEmitSfx, mockEmitHoverSfx, coarseRef, fineRef, mockPlayButtonTap } = vi.hoisted(() => {
   const coarseRef = { value: true }
+  const fineRef = { value: false }
   return {
     coarseRef,
+    fineRef,
     mockEmitSfx: vi.fn(),
     mockEmitHoverSfx: vi.fn(),
     mockPlayButtonTap: vi.fn(() => ({ peak: Promise.resolve(), done: Promise.resolve() }))
@@ -19,7 +21,7 @@ vi.mock('@/sfx/bus', () => ({
 }))
 
 vi.mock('@/composables/ui/media-query', () => ({
-  useMatchMedia: () => coarseRef
+  useMatchMedia: (query) => (query === 'fine' ? fineRef : coarseRef)
 }))
 
 vi.mock('@/utils/animations/button-tap', () => ({
@@ -45,6 +47,7 @@ function mountTappable(props = {}) {
 beforeEach(() => {
   vi.clearAllMocks()
   coarseRef.value = true
+  fineRef.value = false
   mockPlayButtonTap.mockReturnValue({ peak: Promise.resolve(), done: Promise.resolve() })
 })
 
@@ -133,5 +136,37 @@ describe('UiTappable — data-active state', () => {
     resolvePeak()
     await p
     await flushPromises()
+  })
+})
+
+describe('UiTappable — active_on_hover [obligation]', () => {
+  test('hover does not set data-active when active_on_hover is unset (default off)', async () => {
+    fineRef.value = true
+    const wrapper = mountTappable()
+    await wrapper.trigger('pointerenter')
+    expect(wrapper.attributes('data-active')).toBeUndefined()
+  })
+
+  test('hover sets data-active to "true" when active_on_hover is set on a fine pointer', async () => {
+    fineRef.value = true
+    const wrapper = mountTappable({ active_on_hover: true })
+    await wrapper.trigger('pointerenter')
+    expect(wrapper.attributes('data-active')).toBe('true')
+  })
+
+  test('pointerleave clears the hover-driven data-active', async () => {
+    fineRef.value = true
+    const wrapper = mountTappable({ active_on_hover: true })
+    await wrapper.trigger('pointerenter')
+    expect(wrapper.attributes('data-active')).toBe('true')
+    await wrapper.trigger('pointerleave')
+    expect(wrapper.attributes('data-active')).toBeUndefined()
+  })
+
+  test('hover does not set data-active on a coarse pointer even when active_on_hover is set', async () => {
+    fineRef.value = false
+    const wrapper = mountTappable({ active_on_hover: true })
+    await wrapper.trigger('pointerenter')
+    expect(wrapper.attributes('data-active')).toBeUndefined()
   })
 })

@@ -56,4 +56,27 @@ describe('NavList', () => {
     await wrapper.find('[data-testid="nav-list__card"][data-value="profile"]').trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
   })
+
+  test("opts every row into tappable's hover-active state [obligation]", () => {
+    const TappableStub = defineComponent({
+      name: 'UiTappable',
+      props: { active_on_hover: { type: Boolean, default: false } },
+      setup(props, { slots, attrs }) {
+        return () =>
+          h(
+            'button',
+            { ...attrs, 'data-active-on-hover': props.active_on_hover },
+            slots.default?.()
+          )
+      }
+    })
+    const wrapper = mount(NavList, {
+      props: { entries: ENTRIES },
+      global: { stubs: { UiIcon: IconStub, UiTappable: TappableStub }, directives: { sfx: {} } }
+    })
+
+    const cards = wrapper.findAll('[data-testid="nav-list__card"]')
+    expect(cards).toHaveLength(2)
+    cards.forEach((card) => expect(card.attributes('data-active-on-hover')).toBe('true'))
+  })
 })
