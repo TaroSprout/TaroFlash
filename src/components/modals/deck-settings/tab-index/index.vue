@@ -1,14 +1,11 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import UiIcon from '@/components/ui-kit/icon.vue'
-import UiTappable from '@/components/ui-kit/tappable.vue'
+import UiNavList from '@/components/ui-kit/nav-list.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import DangerResetButton from '../danger-reset-button.vue'
 import DangerDeleteButton from '../danger-delete-button.vue'
-import { emitSfx } from '@/sfx/bus'
-import { TYPE_SFX } from '@/sfx/config'
 import { deckSettingsLayoutKey } from '../layout'
 import DeckSaveButton from '../deck-save-button.vue'
 
@@ -43,9 +40,8 @@ const emit = defineEmits<{
   navigate: [value: TabIndexNavValue]
 }>()
 
-function onNavigate(value: TabIndexNavValue) {
-  emitSfx('snappy_button_5')
-  emit('navigate', value)
+function onNavigate(value: string) {
+  emit('navigate', value as TabIndexNavValue)
 }
 </script>
 
@@ -60,27 +56,16 @@ function onNavigate(value: TabIndexNavValue) {
       :data-testid="`tab-index__nav-group--${group.key}`"
       :label="group.heading"
     >
-      <div
-        data-testid="tab-index__nav-list"
-        class="flex flex-col rounded-4 bg-input dark:bg-stone-700 overflow-hidden"
-      >
-        <ui-tappable
-          v-for="entry in group.entries"
-          :key="entry.value"
-          as="button"
-          type="button"
-          data-testid="tab-index__nav-card"
-          :data-value="entry.value"
-          class="flex items-center gap-3 p-4 text-brown-700 dark:text-brown-100 hover:bg-(--theme-neutral) hover:text-(--theme-on-neutral) cursor-pointer text-left"
-          bgx_color="var(--color-brown-500)"
-          v-sfx="{ hover: TYPE_SFX }"
-          @tap="onNavigate(entry.value)"
-        >
-          <ui-icon :src="entry.icon" class="w-6 h-6" />
-          <span class="flex-1">{{ t(`deck.settings-modal.tab.${entry.value}`) }}</span>
-          <ui-icon src="line-arrow-right" class="size-4" />
-        </ui-tappable>
-      </div>
+      <ui-nav-list
+        :entries="
+          group.entries.map((entry) => ({
+            value: entry.value,
+            icon: entry.icon,
+            label: t(`deck.settings-modal.tab.${entry.value}`)
+          }))
+        "
+        @navigate="onNavigate"
+      />
     </labeled-section>
 
     <deck-save-button v-if="layout_mode === 'sheet'" />

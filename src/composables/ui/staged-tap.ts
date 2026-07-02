@@ -68,7 +68,7 @@ export interface TapCallOptions {
  * @example
  * const { playing, tap } = useStagedTap({ animate: 'pop', yoyo: true })
  * const handler = tap((e) => doThing(e), { audio: 'snappy_button_5' })
- * // <button @click="handler" :data-playing="playing || null">
+ * // <button @click="handler" :data-active="playing || null">
  */
 export function useStagedTap(options: StagedTapOptions = {}) {
   const {
