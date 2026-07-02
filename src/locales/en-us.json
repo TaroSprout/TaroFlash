@@ -243,6 +243,8 @@
   "settings.aside.email-label": "Email",
   "settings.aside.plan-label": "Plan",
   "settings.aside.joined-on-label": "Joined",
+  "settings.aside.edit-email-button": "Edit email",
+  "settings.aside.edit-password-button": "Edit password",
   "settings.preview.title-fallback": "Member",
   "alert.delete-account.title": "Delete your account?",
   "alert.delete-account.message": "This permanently removes your account, decks, and reviews. This cannot be undone.",
