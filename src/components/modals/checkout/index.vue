@@ -17,7 +17,7 @@ const { close } = defineProps<{
 
 const { t } = useI18n()
 const { status, is_ready, submit_error, onSubmit } = useCheckout(close)
-const is_mobile = useMatchMedia('w<sm')
+const is_mobile = useMatchMedia('w<sm | h<sm')
 
 function onLeave(el: Element, done: () => void) {
   fadeLeave(el, done)
