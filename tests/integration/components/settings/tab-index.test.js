@@ -45,7 +45,8 @@ function makeTab() {
     global: {
       provide: { [memberDangerActionsKey]: danger },
       stubs: { UiButton: ButtonStub, UiIcon: IconStub },
-      mocks: { $t: (k) => k }
+      mocks: { $t: (k) => k },
+      directives: { sfx: {} }
     }
   })
   return { wrapper, onDeleteAccount }
@@ -54,13 +55,13 @@ function makeTab() {
 describe('TabIndex', () => {
   beforeEach(() => mockEmitSfx.mockClear())
 
-  test('renders both nav groups with all three nav cards', () => {
+  test('renders both nav groups with all four nav cards, labeled from settings.tab.*', () => {
     const { wrapper } = makeTab()
     expect(wrapper.find('[data-testid="tab-index"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="tab-index__nav-group--account"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="tab-index__nav-group--app"]').exists()).toBe(true)
 
-    const cards = wrapper.findAll('[data-testid="tab-index__nav-card"]')
+    const cards = wrapper.findAll('[data-testid="nav-list__card"]')
     expect(cards).toHaveLength(4)
     expect(cards.map((c) => c.attributes('data-value'))).toEqual([
       'profile',
@@ -68,20 +69,16 @@ describe('TabIndex', () => {
       'app',
       'review-preferences'
     ])
+    expect(cards[0].text()).toContain('Profile')
+    expect(cards[1].text()).toContain('Subscription')
+    expect(cards[2].text()).toContain('App Preferences')
+    expect(cards[3].text()).toContain('Review Preferences')
   })
 
   test('emits navigate with the clicked entry value', async () => {
     const { wrapper } = makeTab()
-    await wrapper
-      .find('[data-testid="tab-index__nav-card"][data-value="subscription"]')
-      .trigger('click')
+    await wrapper.find('[data-testid="nav-list__card"][data-value="subscription"]').trigger('click')
     expect(wrapper.emitted('navigate')).toEqual([['subscription']])
-  })
-
-  test('plays the select sfx on nav click', async () => {
-    const { wrapper } = makeTab()
-    await wrapper.find('[data-testid="tab-index__nav-card"][data-value="profile"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
   })
 
   test('renders the inlined delete-account button', () => {
