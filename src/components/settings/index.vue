@@ -11,7 +11,13 @@ import {
 } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SettingsAside from './settings-aside.vue'
-import { settingsLayoutKey, settingsCloseKey, settingsRecedeKey } from './layout'
+import {
+  settingsLayoutKey,
+  settingsCloseKey,
+  settingsRecedeKey,
+  SETTINGS_SHEET_BREAKPOINTS
+} from './layout'
+import { useMatchMedia } from '@/composables/ui/media-query'
 import { emitSfx } from '@/sfx/bus'
 import { useMemberEditor, memberEditorKey } from '@/composables/member/editor'
 import { useMemberDangerActions, memberDangerActionsKey } from '@/composables/member/danger-actions'
@@ -61,10 +67,17 @@ const { layout_mode, sheet_px } = useTabModalLayout({
 provide(settingsLayoutKey, layout_mode)
 provide(settingsCloseKey, close)
 
+// Mirrors the mobile-sheet primitive's own bottom-pin check (same breakpoint keys
+// passed to modal.open in useSettingsModal) so recede/restore can't drift from it —
+// layout_mode has a looser height threshold and stays desktop/tablet past this point.
+const is_pinned = useMatchMedia(
+  `w<${SETTINGS_SHEET_BREAKPOINTS.width} | h<${SETTINGS_SHEET_BREAKPOINTS.height}`
+)
+
 const settings_root = useTemplateRef<{ $el: HTMLElement }>('settings_root')
 provide(settingsRecedeKey, {
-  recede: () => settings_root.value?.$el && recedeModal(settings_root.value.$el),
-  restore: () => settings_root.value?.$el && restoreModal(settings_root.value.$el)
+  recede: () => settings_root.value?.$el && recedeModal(settings_root.value.$el, is_pinned.value),
+  restore: () => settings_root.value?.$el && restoreModal(settings_root.value.$el, is_pinned.value)
 })
 
 type ActiveTab = 'profile' | 'subscription' | 'app' | 'review-preferences' | 'danger-zone'
