@@ -39,7 +39,7 @@ defineExpose({ viewport })
 <template>
   <div
     data-testid="dialog-card"
-    class="relative flex flex-col overflow-hidden [--dialog-px:1.5rem] sm:[--dialog-px:2rem]"
+    class="relative flex flex-col gap-4 overflow-hidden [--dialog-px:1.5rem] sm:[--dialog-px:2rem]"
     :class="viewport === 'mobile' ? 'h-full! w-full! rounded-none!' : 'rounded-8 shadow-lg'"
     :style="dialog_px ? { '--dialog-px': dialog_px } : undefined"
   >
@@ -63,6 +63,8 @@ defineExpose({ viewport })
       </dialog-card-header>
     </slot>
 
-    <slot :viewport="viewport"></slot>
+    <div data-testid="dialog-card__content" class="flex min-h-0 flex-1 flex-col">
+      <slot :viewport="viewport"></slot>
+    </div>
   </div>
 </template>

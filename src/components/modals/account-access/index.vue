@@ -24,7 +24,7 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
     :title="t('account-access-modal.title')"
     @close="close()"
   >
-    <div data-testid="account-access-modal__body" class="flex flex-col gap-6 px-(--dialog-px) pt-4">
+    <div data-testid="account-access-modal__body" class="flex flex-col gap-6 px-(--dialog-px)">
       <email-section />
       <password-section />
       <google-section />
