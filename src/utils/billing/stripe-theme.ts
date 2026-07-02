@@ -21,31 +21,40 @@ function withAlpha(hex: string, percent: number): string {
   return `#${clean}${alpha}`
 }
 
-export function getStripeAppearance(): Appearance {
+/**
+ * Builds the shared Payment Element appearance, in either light or dark
+ * palette. `is_dark` should mirror the app's own `useThemeStore().is_dark`
+ * so the Stripe form always matches the surrounding modal chrome.
+ */
+export function getStripeAppearance(is_dark: boolean): Appearance {
   const green600 = token('--color-green-600')
-  const brown50 = token('--color-brown-50')
-  const brown100 = token('--color-brown-100')
-  const brown200 = token('--color-brown-200')
-  const brown300 = token('--color-brown-300')
-  const brown500 = token('--color-brown-500')
-  const brown700 = token('--color-brown-700')
   const red600 = token('--color-red-600')
 
+  const background = token(is_dark ? '--color-grey-800' : '--color-brown-50')
+  const surface = token(is_dark ? '--color-grey-700' : '--color-brown-100')
+  const surfaceHover = token(is_dark ? '--color-grey-900' : '--color-brown-200')
+  const border = token(is_dark ? '--color-grey-700' : '--color-brown-300')
+  const text = token(is_dark ? '--color-grey-300' : '--color-brown-700')
+  const placeholder = token(is_dark ? '--color-grey-500' : '--color-brown-500')
+
   return {
-    theme: 'stripe',
+    theme: 'flat',
+    labels: 'floating',
     variables: {
       colorPrimary: green600,
-      colorBackground: brown50,
-      colorText: brown700,
+      colorBackground: background,
+      colorText: text,
       colorDanger: red600,
-      colorTextPlaceholder: brown500,
+      colorTextPlaceholder: placeholder,
       fontFamily: FONT_FAMILY,
-      spacingUnit: '4px',
+      // "condensed" inputs — Stripe's appearance API has no dedicated input-
+      // density flag, so this is expressed as tighter spacing/radius instead.
+      spacingUnit: '2px',
       borderRadius: '8px'
     },
     rules: {
       '.Input': {
-        border: `1px solid ${brown300}`,
+        border: `1px solid ${border}`,
         boxShadow: 'none'
       },
       '.Input:focus': {
@@ -53,19 +62,19 @@ export function getStripeAppearance(): Appearance {
         boxShadow: `0 0 0 3px ${withAlpha(green600, 25)}`
       },
       '.Label': {
-        color: brown700,
+        color: text,
         fontWeight: '500'
       },
       '.Tab': {
-        border: `1px solid ${brown300}`,
-        backgroundColor: brown50
+        border: `1px solid ${border}`,
+        backgroundColor: background
       },
       '.Tab:hover': {
-        backgroundColor: brown200
+        backgroundColor: surfaceHover
       },
       '.Tab--selected': {
         borderColor: green600,
-        backgroundColor: brown100
+        backgroundColor: surface
       }
     }
   }

@@ -1,4 +1,5 @@
-import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
+import { onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import {
   loadStripe,
   type Stripe,
@@ -7,6 +8,7 @@ import {
   type StripePaymentElement
 } from '@stripe/stripe-js'
 import { getStripeAppearance, STRIPE_FONTS } from '@/utils/billing/stripe-theme'
+import { useThemeStore } from '@/stores/theme'
 import logger from '@/utils/logger'
 
 type UseCheckoutElementsOptions = {
@@ -28,6 +30,7 @@ export type ConfirmOutcome =
  */
 export function useCheckoutElements(options: UseCheckoutElementsOptions) {
   const container_ref = useTemplateRef<HTMLDivElement>('container')
+  const { is_dark } = storeToRefs(useThemeStore())
 
   const is_loading = ref(true)
   const is_submitting = ref(false)
@@ -50,7 +53,7 @@ export function useCheckoutElements(options: UseCheckoutElementsOptions) {
 
       checkout = stripe.initCheckoutElementsSdk({
         clientSecret,
-        elementsOptions: { appearance: getStripeAppearance(), fonts: STRIPE_FONTS }
+        elementsOptions: { appearance: getStripeAppearance(is_dark.value), fonts: STRIPE_FONTS }
       })
 
       payment_element = checkout.createPaymentElement({ layout: 'tabs' })
@@ -70,6 +73,8 @@ export function useCheckoutElements(options: UseCheckoutElementsOptions) {
   onBeforeUnmount(() => {
     payment_element?.destroy()
   })
+
+  watch(is_dark, (dark) => checkout?.changeAppearance(getStripeAppearance(dark)))
 
   async function confirm(): Promise<ConfirmOutcome> {
     if (!checkout) return { status: 'error', message: options.genericErrorMessage }
