@@ -34,7 +34,7 @@ const body_bindings = computed(() => memberCoverBindings(cover))
   >
     <div
       data-testid="member-badge__avatar"
-      class="bg-brown-300 dark:bg-stone-900 rounded-[calc(var(--badge-radius)-var(--badge-padding)+6px)] border-brown-300 dark:border-stone-900 h-25 w-25 overflow-hidden shrink-0 border-4"
+      class="bg-brown-200 dark:bg-stone-900 rounded-[calc(var(--badge-radius)-var(--badge-padding)+6px)] border-brown-200 dark:border-stone-900 h-25 w-25 overflow-hidden shrink-0 border-4"
     >
       <ui-image src="_default" class="h-full w-full" />
     </div>
