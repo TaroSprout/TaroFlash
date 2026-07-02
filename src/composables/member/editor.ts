@@ -1,15 +1,12 @@
 import { computed, reactive, type InjectionKey } from 'vue'
 import { useUpsertMemberMutation } from '@/api/members'
 import { useMemberStore } from '@/stores/member'
-import { MEMBER_CARD_COVER_DEFAULTS } from '@/utils/member/defaults'
 import { buildMemberPayload, hasMemberChanges } from '@/utils/member/payload'
 
 /**
  * Reactive state + mutations for editing the current member's profile.
  * Owns the in-flight `settings` object that the settings tabs bind into,
- * plus a `cover` object the member-card preview consumes. `cover` is
- * client-only today (no member.cover_config column yet) — seeded from
- * MEMBER_CARD_COVER_DEFAULTS each session. Mirrors `useDeckEditor`.
+ * plus a `cover` object the member-card preview consumes. Mirrors `useDeckEditor`.
  */
 export function useMemberEditor() {
   const member_store = useMemberStore()
@@ -21,14 +18,16 @@ export function useMemberEditor() {
 
   const preferences = reactive({ ...member_store.preferences })
 
-  const cover = reactive<DeckCover>({ ...MEMBER_CARD_COVER_DEFAULTS })
+  const cover = reactive<DeckCover>({ ...member_store.cover })
 
   const email = computed(() => member_store.email ?? '')
   const created_at = computed(() => member_store.created_at ?? '')
   const plan = computed(() => member_store.plan ?? 'free')
 
-  const initial_payload = buildMemberPayload({ settings, preferences })
-  const is_dirty = computed(() => hasMemberChanges({ settings, preferences }, initial_payload))
+  const initial_payload = buildMemberPayload({ settings, preferences, cover })
+  const is_dirty = computed(() =>
+    hasMemberChanges({ settings, preferences, cover }, initial_payload)
+  )
 
   const upsert_mutation = useUpsertMemberMutation()
 
@@ -40,7 +39,7 @@ export function useMemberEditor() {
     try {
       await upsert_mutation.mutateAsync({
         id: member_store.id,
-        ...buildMemberPayload({ settings, preferences })
+        ...buildMemberPayload({ settings, preferences, cover })
       })
       return true
     } catch {

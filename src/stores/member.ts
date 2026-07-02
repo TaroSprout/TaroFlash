@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { computed } from 'vue'
 import { useCurrentMemberQuery } from '@/api/members'
 import { withMemberPreferencesDefaults } from '@/utils/member/preferences'
+import { withMemberCardCoverDefaults } from '@/utils/member/defaults'
 import { useSessionStore } from './session'
 
 export const useMemberStore = defineStore('member', () => {
@@ -24,6 +25,7 @@ export const useMemberStore = defineStore('member', () => {
   const plan = computed(() => member.value?.plan)
   const plan_display_name = computed(() => member.value?.plan_display_name)
   const preferences = computed(() => withMemberPreferencesDefaults(member.value?.preferences))
+  const cover = computed(() => withMemberCardCoverDefaults(member.value?.cover_config))
 
   const has_member = computed(() => Boolean(id.value))
 
@@ -39,6 +41,7 @@ export const useMemberStore = defineStore('member', () => {
     role,
     plan,
     plan_display_name,
-    preferences
+    preferences,
+    cover
   }
 })
