@@ -1,4 +1,4 @@
-import { reactive, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSessionStore } from '@/stores/session'
 
@@ -77,5 +77,8 @@ export function usePasswordActions() {
   watch(password, () => clearOnInput('password'))
   watch(confirm_password, () => clearOnInput('confirm_password'))
 
-  return reactive({ password, confirm_password, loading, errors, success, submit })
+  // Plain object of refs, not reactive() — a consumer destructuring this
+  // (`const { password } = usePasswordActions()`) needs the actual Ref object
+  // to stay reactive; reactive() would unwrap it to a frozen snapshot value.
+  return { password, confirm_password, loading, errors, success, submit }
 }
