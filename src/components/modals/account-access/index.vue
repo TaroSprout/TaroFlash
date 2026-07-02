@@ -42,13 +42,16 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
 <template>
   <dialog-card
     data-testid="account-access-modal"
-    class="size-140 bg-brown-200 py-6 dark:bg-grey-800"
+    class="w-140 h-110 bg-brown-200 py-6 dark:bg-grey-800"
     data-theme="brown-50"
     data-theme-dark="stone-700"
     :title="title"
     @close="close()"
   >
-    <div data-testid="account-access-modal__body" class="flex flex-col gap-8 px-(--dialog-px)">
+    <div
+      data-testid="account-access-modal__body"
+      class="flex flex-col items-center gap-18 px-(--dialog-px)"
+    >
       <p
         v-if="page === 'menu'"
         data-testid="account-access-modal__description"
@@ -57,7 +60,7 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
         {{ t('account-access-modal.description') }}
       </p>
 
-      <div class="flex flex-col gap-4">
+      <div class="w-full max-w-100 flex flex-col gap-4">
         <ui-button
           v-if="page !== 'menu'"
           data-testid="account-access-modal__back"

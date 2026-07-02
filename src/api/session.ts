@@ -1,5 +1,5 @@
 import { supabase } from '@/supabase-client'
-import type { Session } from '@supabase/supabase-js'
+import type { Session, User } from '@supabase/supabase-js'
 import logger from '@/utils/logger'
 
 export type SignupEmailOptions = {
@@ -35,6 +35,19 @@ export async function getSession(): Promise<Session | null> {
   }
 
   return data?.session
+}
+
+// Unlike getSession(), this revalidates against the server rather than reading
+// the cached session — needed after linking/unlinking an identity, since that
+// doesn't rewrite the cached session's `identities` array.
+export async function getUser(): Promise<User | null> {
+  const { data, error } = await supabase.auth.getUser()
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return data?.user
 }
 
 export async function login(email: string, password: string): Promise<LoginOutcome> {

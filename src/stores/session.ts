@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import type { User } from '@supabase/supabase-js'
 import {
   getSession,
+  getUser,
   login as supaLogin,
   logout as supaLogout,
   signupEmail as supaSignupEmail,
@@ -99,8 +100,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
   }
 
   async function refreshUser(): Promise<void> {
-    const session = await getSession()
-    user.value = session?.user
+    user.value = (await getUser()) ?? undefined
   }
 
   function reset() {
