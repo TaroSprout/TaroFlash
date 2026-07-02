@@ -7,6 +7,7 @@ import CheckoutFooter from './checkout-footer.vue'
 import { useCheckout, type CheckoutResponse } from './use-checkout'
 import { fadeLeave } from '@/utils/animations/fade'
 import { springScaleIn } from '@/utils/animations/modal'
+import { useMatchMedia } from '@/composables/ui/media-query'
 
 export type { CheckoutResponse }
 
@@ -16,6 +17,7 @@ const { close } = defineProps<{
 
 const { t } = useI18n()
 const { status, is_ready, submit_error, onSubmit } = useCheckout(close)
+const is_mobile = useMatchMedia('w<sm')
 
 function onLeave(el: Element, done: () => void) {
   fadeLeave(el, done)
@@ -29,8 +31,11 @@ function onEnter(el: Element, done: () => void) {
 <template>
   <div
     data-testid="checkout"
-    class="h-160 w-150 relative flex flex-col overflow-hidden rounded-8 bg-brown-100 shadow-lg py-6 dark:bg-grey-800"
-    :class="status === 'success' ? 'justify-center' : 'justify-between'"
+    class="relative flex flex-col overflow-hidden bg-brown-100 py-6 dark:bg-grey-800"
+    :class="[
+      is_mobile ? 'h-full w-full rounded-none' : 'h-160 w-150 rounded-8 shadow-lg',
+      status === 'success' ? 'justify-center' : 'justify-between'
+    ]"
   >
     <header
       v-if="status !== 'success'"
