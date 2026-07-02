@@ -36,7 +36,6 @@ export function useCheckoutElements(options: UseCheckoutElementsOptions) {
   const is_submitting = ref(false)
   const is_ready = ref(false)
   const load_error = ref(false)
-  const submit_error = ref<string | null>(null)
 
   let stripe: Stripe | null = null
   let checkout: StripeCheckoutElementsSdk | null = null
@@ -79,13 +78,14 @@ export function useCheckoutElements(options: UseCheckoutElementsOptions) {
   async function confirm(): Promise<ConfirmOutcome> {
     if (!checkout) return { status: 'error', message: options.genericErrorMessage }
     is_submitting.value = true
-    submit_error.value = null
 
     try {
       const loadActionsResult = await checkout.loadActions()
       if (loadActionsResult.type === 'error') {
-        submit_error.value = loadActionsResult.error.message ?? options.genericErrorMessage
-        return { status: 'error', message: submit_error.value }
+        return {
+          status: 'error',
+          message: loadActionsResult.error.message ?? options.genericErrorMessage
+        }
       }
 
       // return_url is already set when the Checkout Session was created
@@ -93,24 +93,21 @@ export function useCheckoutElements(options: UseCheckoutElementsOptions) {
       const result = await loadActionsResult.actions.confirm({ redirect: 'if_required' })
 
       if (result.type === 'error') {
-        submit_error.value = result.error.message ?? options.genericErrorMessage
-        return { status: 'error', message: submit_error.value }
+        return { status: 'error', message: result.error.message ?? options.genericErrorMessage }
       }
 
       if (result.session.status.type !== 'complete') {
-        submit_error.value = options.genericErrorMessage
-        return { status: 'error', message: submit_error.value }
+        return { status: 'error', message: options.genericErrorMessage }
       }
 
       return { status: 'success', session: result.session }
     } catch (err) {
       logger.error((err as Error).message)
-      submit_error.value = options.genericErrorMessage
-      return { status: 'error', message: submit_error.value }
+      return { status: 'error', message: options.genericErrorMessage }
     } finally {
       is_submitting.value = false
     }
   }
 
-  return { container_ref, is_loading, is_submitting, is_ready, load_error, submit_error, confirm }
+  return { container_ref, is_loading, is_submitting, is_ready, load_error, confirm }
 }

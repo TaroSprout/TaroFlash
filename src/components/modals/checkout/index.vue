@@ -17,7 +17,7 @@ const { close } = defineProps<{
 }>()
 
 const { t } = useI18n()
-const { status, is_ready, submit_error, onSubmit } = useCheckout(close)
+const { status, is_ready, onSubmit } = useCheckout(close)
 const is_mobile = useMatchMedia('w<sm | h<sm')
 
 function onLeave(el: Element, done: () => void) {
@@ -76,9 +76,6 @@ function onEnter(el: Element, done: () => void) {
         >
           <payment-status :status="status" />
           <div ref="container" data-testid="checkout__payment-element"></div>
-          <p v-if="submit_error" data-testid="checkout__submit-error" class="text-sm text-red-500">
-            {{ submit_error }}
-          </p>
         </div>
 
         <success-view v-else key="success" />

@@ -35,18 +35,17 @@ export function useCheckout(close: (response?: CheckoutResponse) => void) {
   const is_success = ref(false)
   const is_confirming = ref(false)
 
-  const { is_loading, is_submitting, is_ready, load_error, submit_error, confirm } =
-    useCheckoutElements({
-      publicKey: import.meta.env.VITE_STRIPE_PUBLIC_KEY,
-      genericErrorMessage: t('billing.checkout.submit-error'),
-      getClientSecret: async () => {
-        const { clientSecret } = await createSubscription({
-          planId: 'paid',
-          returnUrl: window.location.origin
-        })
-        return clientSecret
-      }
-    })
+  const { is_loading, is_submitting, is_ready, load_error, confirm } = useCheckoutElements({
+    publicKey: import.meta.env.VITE_STRIPE_PUBLIC_KEY,
+    genericErrorMessage: t('billing.checkout.submit-error'),
+    getClientSecret: async () => {
+      const { clientSecret } = await createSubscription({
+        planId: 'paid',
+        returnUrl: window.location.origin
+      })
+      return clientSecret
+    }
+  })
 
   const status = computed<CheckoutStatus>(() => {
     if (is_success.value) return 'success'
@@ -94,7 +93,6 @@ export function useCheckout(close: (response?: CheckoutResponse) => void) {
   return {
     status,
     is_ready,
-    submit_error,
     onSubmit
   }
 }
