@@ -47,15 +47,21 @@ export function getStripeAppearance(is_dark: boolean): Appearance {
       colorDanger: red600,
       colorTextPlaceholder: placeholder,
       fontFamily: FONT_FAMILY,
+      fontSizeBase: '14px',
       // "condensed" inputs — Stripe's appearance API has no dedicated input-
-      // density flag, so this is expressed as tighter spacing/radius instead.
+      // density flag, and spacingUnit alone doesn't shrink input padding, so
+      // the actual height reduction happens via explicit rules below.
       spacingUnit: '2px',
+      gridRowSpacing: '8px',
+      gridColumnSpacing: '8px',
+      tabSpacing: '8px',
       borderRadius: '8px'
     },
     rules: {
       '.Input': {
         border: `1px solid ${border}`,
-        boxShadow: 'none'
+        boxShadow: 'none',
+        padding: '8px 10px'
       },
       '.Input:focus': {
         border: `1px solid ${green600}`,
@@ -67,7 +73,8 @@ export function getStripeAppearance(is_dark: boolean): Appearance {
       },
       '.Tab': {
         border: `1px solid ${border}`,
-        backgroundColor: background
+        backgroundColor: background,
+        padding: '8px 10px'
       },
       '.Tab:hover': {
         backgroundColor: surfaceHover
