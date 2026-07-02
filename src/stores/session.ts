@@ -6,7 +6,6 @@ import {
   logout as supaLogout,
   signupEmail as supaSignupEmail,
   signInOAuth as supaSignInOAuth,
-  signOutOtherDevices as supaSignOutOtherDevices,
   updateEmail as supaUpdateEmail,
   updatePassword as supaUpdatePassword,
   linkGoogleIdentity as supaLinkGoogleIdentity,
@@ -99,10 +98,6 @@ export const useSessionStore = defineStore('sessionStore', () => {
     await refreshUser()
   }
 
-  function signOutOtherDevices(): Promise<void> {
-    return supaSignOutOtherDevices()
-  }
-
   async function refreshUser(): Promise<void> {
     const session = await getSession()
     user.value = session?.user
@@ -135,7 +130,6 @@ export const useSessionStore = defineStore('sessionStore', () => {
     updatePassword,
     linkGoogleIdentity,
     unlinkGoogleIdentity,
-    signOutOtherDevices,
     startLoading,
     stopLoading
   }

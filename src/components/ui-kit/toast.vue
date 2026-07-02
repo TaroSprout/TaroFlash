@@ -24,7 +24,7 @@ const color = computed(() => {
     case 'error':
       return 'bg-red-500'
     default:
-      return 'bg-pink'
+      return 'bg-blue-500'
   }
 })
 

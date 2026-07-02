@@ -65,14 +65,6 @@ export async function logout(): Promise<void> {
   }
 }
 
-export async function signOutOtherDevices(): Promise<void> {
-  const { error } = await supabase.auth.signOut({ scope: 'others' })
-
-  if (error) {
-    throw new Error(error.message)
-  }
-}
-
 export async function signupEmail(
   email: string,
   password: string,
