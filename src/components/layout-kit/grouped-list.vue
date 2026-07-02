@@ -20,7 +20,9 @@ defineSlots<{
 <template>
   <div
     data-testid="grouped-list"
-    class="relative flex flex-col rounded-4 bg-brown-100 dark:bg-stone-700"
+    data-theme="brown-100"
+    data-theme-dark="stone-700"
+    class="relative flex flex-col rounded-4 bg-(--theme-primary)"
     :class="dividers ? 'divide-y divide-brown-300 dark:divide-stone-600' : ''"
   >
     <slot></slot>
