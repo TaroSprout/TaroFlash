@@ -2,15 +2,22 @@ import { defineStore } from 'pinia'
 import type { User } from '@supabase/supabase-js'
 import {
   getSession,
+  getUser,
   login as supaLogin,
   logout as supaLogout,
   signupEmail as supaSignupEmail,
   signInOAuth as supaSignInOAuth,
+  updateEmail as supaUpdateEmail,
+  updatePassword as supaUpdatePassword,
+  linkGoogleIdentity as supaLinkGoogleIdentity,
+  unlinkGoogleIdentity as supaUnlinkGoogleIdentity,
   type SignupEmailOptions,
   type SignupOAuthOptions,
   type SignupOutcome,
   type LoginOutcome,
-  type OAuthProvider
+  type OAuthProvider,
+  type UpdateEmailOutcome,
+  type UpdatePasswordOutcome
 } from '@/api/session'
 import { useRouter } from 'vue-router'
 import { computed, ref } from 'vue'
@@ -24,6 +31,9 @@ export const useSessionStore = defineStore('sessionStore', () => {
 
   const authenticated = computed(() => Boolean(user.value?.aud === 'authenticated'))
   const isLoading = computed(() => loading_count.value > 0)
+  const identities = computed(() => user.value?.identities ?? [])
+  const hasPasswordIdentity = computed(() => identities.value.some((i) => i.provider === 'email'))
+  const hasGoogleIdentity = computed(() => identities.value.some((i) => i.provider === 'google'))
 
   async function restoreSession(): Promise<boolean> {
     startLoading()
@@ -71,6 +81,28 @@ export const useSessionStore = defineStore('sessionStore', () => {
     router.push({ name: 'dashboard' })
   }
 
+  function updateEmail(email: string): Promise<UpdateEmailOutcome> {
+    return supaUpdateEmail(email)
+  }
+
+  function updatePassword(password: string): Promise<UpdatePasswordOutcome> {
+    return supaUpdatePassword(password)
+  }
+
+  async function linkGoogleIdentity(): Promise<void> {
+    await supaLinkGoogleIdentity()
+    await refreshUser()
+  }
+
+  async function unlinkGoogleIdentity(): Promise<void> {
+    await supaUnlinkGoogleIdentity()
+    await refreshUser()
+  }
+
+  async function refreshUser(): Promise<void> {
+    user.value = (await getUser()) ?? undefined
+  }
+
   function reset() {
     user.value = undefined
   }
@@ -87,11 +119,17 @@ export const useSessionStore = defineStore('sessionStore', () => {
     user,
     authenticated,
     isLoading,
+    hasPasswordIdentity,
+    hasGoogleIdentity,
     login,
     restoreSession,
     logout,
     signupEmail,
     signInOAuth,
+    updateEmail,
+    updatePassword,
+    linkGoogleIdentity,
+    unlinkGoogleIdentity,
     startLoading,
     stopLoading
   }

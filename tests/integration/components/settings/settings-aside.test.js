@@ -1,6 +1,25 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
+
+const { memberState } = vi.hoisted(() => ({ memberState: { email: 'chris@example.com' } }))
+
+vi.mock('@/stores/member', () => ({
+  useMemberStore: () => ({
+    get email() {
+      return memberState.email
+    }
+  })
+}))
+
+const { mockOnAccountAccessClick } = vi.hoisted(() => ({
+  mockOnAccountAccessClick: vi.fn()
+}))
+
+vi.mock('@/components/settings/use-account-access-click', () => ({
+  useAccountAccessClick: () => ({ onAccountAccessClick: mockOnAccountAccessClick })
+}))
+
 import SettingsAside from '@/components/settings/settings-aside.vue'
 import { memberEditorKey } from '@/composables/member/editor'
 import { settingsCloseKey } from '@/components/settings/layout'
@@ -38,5 +57,19 @@ describe('SettingsAside', () => {
   test('renders the save button', () => {
     const { wrapper } = makeWrapper()
     expect(wrapper.find('[data-testid="settings__save-button"]').exists()).toBe(true)
+  })
+
+  test('renders the member store email in the account-info row', () => {
+    const { wrapper } = makeWrapper()
+    expect(wrapper.find('[data-testid="settings-aside__email-row"]').text()).toContain(
+      memberState.email
+    )
+  })
+
+  test('pressing the edit-account button invokes onAccountAccessClick', async () => {
+    mockOnAccountAccessClick.mockClear()
+    const { wrapper } = makeWrapper()
+    await wrapper.find('[data-testid="settings-aside__edit-account-button"]').trigger('click')
+    expect(mockOnAccountAccessClick).toHaveBeenCalledOnce()
   })
 })

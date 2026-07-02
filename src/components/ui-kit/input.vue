@@ -107,6 +107,9 @@ const value = defineModel<string>('value')
 .ui-kit-input input::placeholder {
   color: var(--theme-neutral);
 }
+.ui-kit-input input:disabled {
+  color: var(--color-brown-500);
+}
 .ui-kit-input input:autofill,
 .ui-kit-input input:autofill:hover,
 .ui-kit-input input:autofill:focus,

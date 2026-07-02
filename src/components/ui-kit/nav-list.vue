@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import UiIcon from './icon.vue'
 import UiTappable from './tappable.vue'
-import GroupedList from '@/components/layout-kit/grouped-list.vue'
+import GroupedList, { GROUPED_LIST_ITEM_CLASS } from '@/components/layout-kit/grouped-list.vue'
 import { emitSfx } from '@/sfx/bus'
 import { TYPE_SFX } from '@/sfx/config'
 
@@ -32,8 +32,9 @@ function onNavigate(value: string) {
       type="button"
       data-testid="nav-list__card"
       :data-value="entry.value"
-      class="flex items-center gap-3 p-4 text-brown-700 dark:text-brown-100 hover:bg-(--theme-neutral) hover:text-(--theme-on-neutral) cursor-pointer text-left"
-      bgx_color="var(--color-brown-500)"
+      :class="GROUPED_LIST_ITEM_CLASS"
+      class="text-(--theme-on-primary) cursor-pointer text-left"
+      bgx_color="var(--theme-neutral)"
       active_on_hover
       :sfx="{ hover: TYPE_SFX }"
       @tap="onNavigate(entry.value)"
