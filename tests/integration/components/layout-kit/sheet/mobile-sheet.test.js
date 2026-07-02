@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
-import MobileSheet from '@/components/layout-kit/modal/mobile-sheet.vue'
+import MobileSheet from '@/components/layout-kit/sheet/mobile-sheet.vue'
 
 // Default stub: emits press on click so @press="emit('close')" fires through the
 // auto-stub layer without needing real button internals.

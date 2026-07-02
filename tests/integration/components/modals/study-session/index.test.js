@@ -44,9 +44,19 @@ vi.mock('@/components/study-session/composables/session-persistence', async (imp
   }
 })
 
-// Mock viewport so provideStudyViewport() doesn't hit real matchMedia
+// Mock viewport so provideDialogCardViewport() doesn't hit real matchMedia.
+// mediaState is mutable so individual tests can flip mobile/desktop, and
+// capturedQueries records what query string dialog-card actually forwarded.
+const { mediaState, capturedQueries } = vi.hoisted(() => ({
+  mediaState: { is_mobile: { value: false } },
+  capturedQueries: []
+}))
+
 vi.mock('@/composables/ui/media-query', () => ({
-  useMatchMedia: vi.fn(() => ({ value: false }))
+  useMatchMedia: vi.fn((query) => {
+    capturedQueries.push(query)
+    return mediaState.is_mobile
+  })
 }))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
@@ -95,7 +105,8 @@ function makeWrapper({ close = vi.fn(), decks_override } = {}) {
   }
 }
 
-const nextFrame = () => new Promise((r) => requestAnimationFrame(r))
+// Vue Transition JS hooks use 2x rAF even with :css="false".
+const nextFrame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
 
 async function finishSession(wrapper, results = []) {
   await wrapper.findComponent({ name: 'SessionFlashcard' }).vm.$emit('finished', results)
@@ -113,6 +124,8 @@ describe('StudySession (index.vue)', () => {
     mockSessionPaneEnter.mockClear()
     mockSessionPaneLeave.mockClear()
     mockClearPersistedSession.mockClear()
+    mediaState.is_mobile.value = false
+    capturedQueries.length = 0
   })
 
   // ── Initial phase: studying ────────────────────────────────────────────────
@@ -216,5 +229,39 @@ describe('StudySession (index.vue)', () => {
     expect(title).not.toBe('Deck Two')
     expect(typeof title).toBe('string')
     expect(title.length).toBeGreaterThan(0)
+  })
+
+  // ── dialog-card viewport_query [obligation] ────────────────────────────────
+
+  test('[obligation] passes viewport_query="w<sm" — explicit, distinct from dialog-card default', () => {
+    makeWrapper()
+    expect(capturedQueries).toContain('w<sm')
+    expect(capturedQueries).not.toContain('w<sm | h<sm')
+  })
+
+  // ── root sizing: fluid w-full/max-w-160 always, h-170 desktop-only [obligation] ─
+
+  test('[obligation] root carries w-full and max-w-160 on desktop', () => {
+    mediaState.is_mobile.value = false
+    const { wrapper } = makeWrapper()
+    const classes = wrapper.find('[data-testid="study-session"]').classes()
+    expect(classes).toContain('w-full')
+    expect(classes).toContain('max-w-160')
+    expect(classes).toContain('h-170')
+  })
+
+  test('[obligation] root carries w-full and max-w-160 on mobile too (fluid, capped)', () => {
+    mediaState.is_mobile.value = true
+    const { wrapper } = makeWrapper()
+    const classes = wrapper.find('[data-testid="study-session"]').classes()
+    expect(classes).toContain('w-full')
+    expect(classes).toContain('max-w-160')
+  })
+
+  test('[obligation] mobile viewport overrides h-170 via h-full! so height stays fluid', () => {
+    mediaState.is_mobile.value = true
+    const { wrapper } = makeWrapper()
+    const classes = wrapper.find('[data-testid="study-session"]').classes()
+    expect(classes).toContain('h-full!')
   })
 })

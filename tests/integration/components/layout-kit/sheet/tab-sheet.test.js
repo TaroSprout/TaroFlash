@@ -17,7 +17,7 @@ function setBelowLg(v) {
   globalThis.__isTablet = v
 }
 
-import TabSheet from '@/components/layout-kit/modal/tab-sheet.vue'
+import TabSheet from '@/components/layout-kit/sheet/tab-sheet.vue'
 
 const tabs = [
   { value: 'one', label: 'One', icon: 'card-deck' },
