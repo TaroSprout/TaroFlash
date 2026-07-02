@@ -182,30 +182,37 @@ describe('modal animations', () => {
 
   describe('recedeModal', () => {
     test('[obligation] seeds filter to brightness(1) blur(0px) before tweening', () => {
-      recedeModal(el)
+      recedeModal(el, false)
 
       expect(mockSet).toHaveBeenCalledWith(el, { filter: 'brightness(1) blur(0px)' })
     })
 
     test('[obligation] seeding happens before the tween is issued', () => {
-      recedeModal(el)
+      recedeModal(el, false)
 
       const setOrder = mockSet.mock.invocationCallOrder[0]
       const toOrder = mockTo.mock.invocationCallOrder[0]
       expect(setOrder).toBeLessThan(toOrder)
     })
 
-    test('tweens scale down and dims/blurs via filter', () => {
-      recedeModal(el)
+    test('[obligation] tweens scale down (not translateY) and dims/blurs via filter when not pinned', () => {
+      recedeModal(el, false)
 
-      expect(mockTo).toHaveBeenCalledWith(
-        el,
-        expect.objectContaining({ scale: 0.9, filter: 'brightness(0.8) blur(2px)' })
-      )
+      const [, vars] = mockTo.mock.calls[0]
+      expect(vars).toMatchObject({ scale: 0.9, filter: 'brightness(0.8) blur(2px)' })
+      expect(vars).not.toHaveProperty('translateY')
+    })
+
+    test('[obligation] tweens translateY (not scale) and still dims/blurs via filter when pinned', () => {
+      recedeModal(el, true)
+
+      const [, vars] = mockTo.mock.calls[0]
+      expect(vars).toMatchObject({ translateY: '60px', filter: 'brightness(0.8) blur(2px)' })
+      expect(vars).not.toHaveProperty('scale')
     })
 
     test('disables pointer events while receded', () => {
-      recedeModal(el)
+      recedeModal(el, false)
 
       expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ pointerEvents: 'none' }))
     })
@@ -213,18 +220,25 @@ describe('modal animations', () => {
 
   describe('restoreModal', () => {
     test('[obligation] seeds pointerEvents to auto before tweening', () => {
-      restoreModal(el)
+      restoreModal(el, false)
 
       expect(mockSet).toHaveBeenCalledWith(el, { pointerEvents: 'auto' })
     })
 
-    test('tweens scale and filter back to full prominence', () => {
-      restoreModal(el)
+    test('[obligation] tweens scale (not translateY) back to full prominence when not pinned', () => {
+      restoreModal(el, false)
 
-      expect(mockTo).toHaveBeenCalledWith(
-        el,
-        expect.objectContaining({ scale: 1, filter: 'brightness(1) blur(0px)' })
-      )
+      const [, vars] = mockTo.mock.calls[0]
+      expect(vars).toMatchObject({ scale: 1, filter: 'brightness(1) blur(0px)' })
+      expect(vars).not.toHaveProperty('translateY')
+    })
+
+    test('[obligation] tweens translateY (not scale) back to full prominence when pinned', () => {
+      restoreModal(el, true)
+
+      const [, vars] = mockTo.mock.calls[0]
+      expect(vars).toMatchObject({ translateY: 0, filter: 'brightness(1) blur(0px)' })
+      expect(vars).not.toHaveProperty('scale')
     })
   })
 })

@@ -193,12 +193,15 @@ function isPageTarget(el: HTMLElement) {
   <div
     v-show="visible"
     ref="scrollBarRef"
+    data-testid="ui-kit-scroll-bar"
+    :data-min-width="minWidth"
     class="ui-kit-scroll-bar"
     :class="visibilityClass"
     @pointerdown.prevent="onTrackPointerDown"
   >
     <div
       ref="thumbEl"
+      data-testid="ui-kit-scroll-bar__thumb"
       class="ui-kit-scroll-bar__thumb hover:bgx-diagonal-stripes"
       :style="thumbStyle"
       @pointerdown.stop.prevent="onThumbPointerDown"

@@ -23,8 +23,7 @@ const {
     is_loading: { value: false },
     is_submitting: { value: false },
     is_ready: { value: true },
-    load_error: { value: false },
-    submit_error: { value: null }
+    load_error: { value: false }
   }
 }))
 
@@ -86,7 +85,6 @@ beforeEach(() => {
   elementsState.is_submitting.value = false
   elementsState.is_ready.value = true
   elementsState.load_error.value = false
-  elementsState.submit_error.value = null
   request_close_handlers.clear()
 })
 

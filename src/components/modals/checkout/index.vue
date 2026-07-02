@@ -32,11 +32,13 @@ function onEnter(el: Element, done: () => void) {
 <template>
   <div
     data-testid="checkout"
+    :data-full-bleed="is_mobile"
     class="relative flex flex-col overflow-hidden bg-brown-100 py-6 dark:bg-grey-800"
     :class="is_mobile ? 'h-full w-full rounded-none' : 'h-160 w-150 rounded-8 shadow-lg'"
   >
     <div
       data-testid="checkout__scroll-area"
+      :data-full-bleed="is_mobile"
       class="flex min-h-0 flex-1 flex-col gap-4"
       :class="[
         status === 'success' ? 'justify-center' : 'justify-between',

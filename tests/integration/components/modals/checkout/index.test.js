@@ -10,9 +10,9 @@ import { ref } from 'vue'
 const mockOnSubmit = vi.fn()
 const checkoutState = {
   status: ref('form'),
-  is_ready: ref(true),
-  submit_error: ref(null)
+  is_ready: ref(true)
 }
+const mediaState = { is_mobile: ref(false) }
 
 vi.mock('gsap', () => ({
   gsap: {
@@ -24,9 +24,12 @@ vi.mock('@/components/modals/checkout/use-checkout', () => ({
   useCheckout: () => ({
     status: checkoutState.status,
     is_ready: checkoutState.is_ready,
-    submit_error: checkoutState.submit_error,
     onSubmit: mockOnSubmit
   })
+}))
+
+vi.mock('@/composables/ui/media-query', () => ({
+  useMatchMedia: () => mediaState.is_mobile
 }))
 
 import Checkout from '@/components/modals/checkout/index.vue'
@@ -40,7 +43,7 @@ function mountCheckout(close = vi.fn()) {
 beforeEach(() => {
   checkoutState.status.value = 'form'
   checkoutState.is_ready.value = true
-  checkoutState.submit_error.value = null
+  mediaState.is_mobile.value = false
   mockOnSubmit.mockReset()
 })
 
@@ -139,12 +142,9 @@ describe('Checkout — body', () => {
     expect(wrapper.findComponent({ name: 'SuccessView' }).exists()).toBe(true)
   })
 
-  test('surfaces a submit_error message', () => {
-    checkoutState.submit_error.value = 'Your card was declined.'
+  test('[obligation] no longer renders local submit-error markup — Stripe surfaces its own', () => {
     const wrapper = mountCheckout()
-    expect(wrapper.find('[data-testid="checkout__submit-error"]').text()).toBe(
-      'Your card was declined.'
-    )
+    expect(wrapper.find('[data-testid="checkout__submit-error"]').exists()).toBe(false)
   })
 })
 
@@ -160,5 +160,61 @@ describe('Checkout — body/success transition', () => {
 
     expect(wrapper.find('[data-testid="checkout__body"]').exists()).toBe(false)
     expect(wrapper.findComponent({ name: 'SuccessView' }).exists()).toBe(true)
+  })
+})
+
+// ── Full-bleed mobile scroll area [obligation] ────────────────────────────────
+
+describe('Checkout — full-bleed mobile scroll area [obligation]', () => {
+  test('[obligation] checkout__scroll-area is the overflow container in full-bleed mode', () => {
+    mediaState.is_mobile.value = true
+    const wrapper = mountCheckout()
+
+    const scrollArea = wrapper.find('[data-testid="checkout__scroll-area"]')
+    expect(scrollArea.attributes('data-full-bleed')).toBe('true')
+  })
+
+  test('[obligation] checkout__scroll-area is not the overflow container outside full-bleed mode', () => {
+    mediaState.is_mobile.value = false
+    const wrapper = mountCheckout()
+
+    const scrollArea = wrapper.find('[data-testid="checkout__scroll-area"]')
+    expect(scrollArea.attributes('data-full-bleed')).toBe('false')
+  })
+
+  test('[obligation] scroll-area wraps header, body, and footer together, not just the body', () => {
+    mediaState.is_mobile.value = true
+    const wrapper = mountCheckout()
+
+    const scrollArea = wrapper.find('[data-testid="checkout__scroll-area"]')
+    expect(scrollArea.find('[data-testid="checkout__header"]').exists()).toBe(true)
+    expect(scrollArea.find('[data-testid="checkout__body"]').exists()).toBe(true)
+    expect(scrollArea.findComponent({ name: 'CheckoutFooter' }).exists()).toBe(true)
+  })
+
+  test('renders the ui-kit scroll-bar targeting the scroll-area only in full-bleed mode', () => {
+    mediaState.is_mobile.value = true
+    const wrapper = mountCheckout()
+    expect(wrapper.findComponent({ name: 'ScrollBar' }).exists()).toBe(true)
+  })
+
+  test('does not render the ui-kit scroll-bar outside full-bleed mode', () => {
+    mediaState.is_mobile.value = false
+    const wrapper = mountCheckout()
+    expect(wrapper.findComponent({ name: 'ScrollBar' }).exists()).toBe(false)
+  })
+
+  test('applies full-bleed sizing (h-full w-full, no rounding) when is_mobile is true', () => {
+    mediaState.is_mobile.value = true
+    const wrapper = mountCheckout()
+    const root = wrapper.find('[data-testid="checkout"]')
+    expect(root.attributes('data-full-bleed')).toBe('true')
+  })
+
+  test('applies fixed desktop sizing when is_mobile is false', () => {
+    mediaState.is_mobile.value = false
+    const wrapper = mountCheckout()
+    const root = wrapper.find('[data-testid="checkout"]')
+    expect(root.attributes('data-full-bleed')).toBe('false')
   })
 })

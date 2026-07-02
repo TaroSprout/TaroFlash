@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import { defineComponent, h, ref } from 'vue'
+import { defineComponent, h, nextTick, ref } from 'vue'
 
 const GridItemStub = defineComponent({
   name: 'GridItem',
@@ -82,6 +82,28 @@ describe('card-grid/scroll-grid', () => {
     const wrapper = mountScrollGrid()
     expect(wrapper.find('[data-testid="card-grid-container"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="card-grid"]').exists()).toBe(true)
+  })
+
+  test('[obligation] the initial synchronous render is height 0px, not an inflated single-column fallback', async () => {
+    const search = makeSearch({
+      displayed_cards: [
+        { id: 1, client_id: 'c1', front_text: 'q1', back_text: 'a1' },
+        { id: 2, client_id: 'c2', front_text: 'q2', back_text: 'a2' },
+        { id: 3, client_id: 'c3', front_text: 'q3', back_text: 'a3' }
+      ]
+    })
+    const wrapper = mountScrollGrid(makeEditor(), makeShell(), search)
+
+    // measureLayout() runs in onMounted, but its reactive DOM patch is flushed
+    // on the next microtask — inspect before that flush to catch the true
+    // first-paint state.
+    expect(wrapper.find('[data-testid="card-grid"]').attributes('style')).toContain('height: 0px')
+
+    await nextTick()
+
+    expect(wrapper.find('[data-testid="card-grid"]').attributes('style')).not.toContain(
+      'height: 0px'
+    )
   })
 
   // ── displayed_cards (from cardSearchKey) drives the grid ─────────────────

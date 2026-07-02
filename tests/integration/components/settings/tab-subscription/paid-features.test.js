@@ -152,9 +152,22 @@ describe('paid-features — upgrade actions [obligation]', () => {
     expect(mockOnUpgrade).toHaveBeenCalledOnce()
   })
 
-  test('pressing the upgrade UiButton (@press) calls onUpgrade [obligation]', async () => {
+  test('[obligation] the nested upgrade pill has no click/press handler of its own — it is inert', async () => {
     const wrapper = mountPaidFeatures()
     await wrapper.find('[data-testid="upgrade-button"]').trigger('click')
-    expect(mockOnUpgrade).toHaveBeenCalledOnce()
+    expect(mockOnUpgrade).not.toHaveBeenCalled()
+  })
+
+  test('[obligation] the nested upgrade pill is marked inert (tabindex -1, aria-hidden)', () => {
+    const wrapper = mountPaidFeatures()
+    const pill = wrapper.find('[data-testid="upgrade-button"]')
+    expect(pill.attributes('tabindex')).toBe('-1')
+    expect(pill.attributes('aria-hidden')).toBe('true')
+  })
+
+  test('[obligation] tapping the card body calls onUpgrade exactly once, not twice via the nested pill', async () => {
+    const wrapper = mountPaidFeatures()
+    await wrapper.findComponent({ name: 'UiTappable' }).vm.$emit('tap')
+    expect(mockOnUpgrade).toHaveBeenCalledTimes(1)
   })
 })
