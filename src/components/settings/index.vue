@@ -174,8 +174,8 @@ watch(layout_mode, (mode) => {
     data-theme-dark="blue-650"
     :data-layout="layout_mode"
     :class="[
-      layout_mode === 'desktop' ? 'w-262!' : 'w-full! max-w-224',
-      layout_mode !== 'sheet' && 'h-170',
+      layout_mode === 'desktop' ? 'w-270!' : 'w-full! max-w-224',
+      layout_mode !== 'sheet' && 'h-182',
       layout_mode === 'sheet' ? '[--settings-padding:var(--sheet-px)]' : '[--settings-padding:0px]'
     ]"
     :sheet_px="sheet_px"
@@ -215,7 +215,7 @@ watch(layout_mode, (mode) => {
     <settings-aside
       v-if="layout_mode !== 'sheet'"
       data-testid="settings__aside"
-      class="w-96 shrink-0 self-end"
+      class="w-90 shrink-0 self-end"
       :class="layout_mode === 'tablet' ? 'pt-56' : 'pt-60'"
     />
 
