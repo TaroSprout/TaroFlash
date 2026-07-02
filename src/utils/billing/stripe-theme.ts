@@ -27,7 +27,7 @@ function withAlpha(hex: string, percent: number): string {
  * so the Stripe form always matches the surrounding modal chrome.
  */
 export function getStripeAppearance(is_dark: boolean): Appearance {
-  const red600 = token('--color-red-600')
+  const danger = token(is_dark ? '--color-red-600' : '--color-red-500')
   const accent = token(is_dark ? '--color-blue-650' : '--color-blue-500')
 
   const background = token(is_dark ? '--color-grey-800' : '--color-brown-50')
@@ -39,13 +39,13 @@ export function getStripeAppearance(is_dark: boolean): Appearance {
 
   return {
     theme: 'flat',
-    labels: 'floating',
+    labels: 'above',
     inputs: 'condensed',
     variables: {
       colorPrimary: accent,
       colorBackground: background,
       colorText: text,
-      colorDanger: red600,
+      colorDanger: danger,
       colorTextPlaceholder: placeholder,
       fontFamily: FONT_FAMILY,
       borderRadius: '8px'
