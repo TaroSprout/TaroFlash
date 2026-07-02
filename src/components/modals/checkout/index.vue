@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
+import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import PaymentStatus from './payment-status.vue'
 import SuccessView from './success-view.vue'
 import CheckoutFooter from './checkout-footer.vue'
@@ -65,14 +66,27 @@ function onEnter(el: Element, done: () => void) {
       <div
         v-if="status !== 'success'"
         key="form"
-        data-testid="checkout__body"
-        class="flex flex-col gap-4 px-16"
+        data-testid="checkout__body-wrap"
+        class="relative flex flex-col"
+        :class="is_mobile ? 'min-h-0 flex-1' : ''"
       >
-        <payment-status :status="status" />
-        <div ref="container" data-testid="checkout__payment-element"></div>
-        <p v-if="submit_error" data-testid="checkout__submit-error" class="text-sm text-red-500">
-          {{ submit_error }}
-        </p>
+        <div
+          data-testid="checkout__body"
+          class="flex flex-col gap-4 px-16"
+          :class="is_mobile ? 'h-full overflow-y-auto' : ''"
+        >
+          <payment-status :status="status" />
+          <div ref="container" data-testid="checkout__payment-element"></div>
+          <p v-if="submit_error" data-testid="checkout__submit-error" class="text-sm text-red-500">
+            {{ submit_error }}
+          </p>
+        </div>
+
+        <scroll-bar
+          v-if="is_mobile"
+          target="[data-testid='checkout__body']"
+          class="absolute right-1 top-0 bottom-0"
+        />
       </div>
 
       <success-view v-else key="success" />
