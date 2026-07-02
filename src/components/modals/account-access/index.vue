@@ -42,29 +42,39 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
 <template>
   <dialog-card
     data-testid="account-access-modal"
-    class="size-140 bg-brown-200 py-6 dark:bg-grey-800 gap-16"
+    class="size-140 bg-brown-200 py-6 dark:bg-grey-800"
     data-theme="brown-50"
     data-theme-dark="stone-700"
     :title="title"
     @close="close()"
   >
-    <div data-testid="account-access-modal__body" class="flex flex-col gap-4 px-16">
-      <ui-button
-        v-if="page !== 'menu'"
-        data-testid="account-access-modal__back"
-        icon-left="arrow-back"
-        size="sm"
-        class="self-start"
-        @press="page = 'menu'"
+    <div data-testid="account-access-modal__body" class="flex flex-col gap-8 px-(--dialog-px)">
+      <p
+        v-if="page === 'menu'"
+        data-testid="account-access-modal__description"
+        class="text-center text-brown-500 dark:text-brown-300"
       >
-        {{ t('account-access-modal.back-label') }}
-      </ui-button>
+        {{ t('account-access-modal.description') }}
+      </p>
 
-      <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
-        <account-access-menu v-if="page === 'menu'" key="menu" @navigate="(p) => (page = p)" />
-        <email-section v-else-if="page === 'email'" key="email" />
-        <password-section v-else key="password" />
-      </transition>
+      <div class="flex flex-col gap-4">
+        <ui-button
+          v-if="page !== 'menu'"
+          data-testid="account-access-modal__back"
+          icon-left="arrow-back"
+          size="sm"
+          class="self-start"
+          @press="page = 'menu'"
+        >
+          {{ t('account-access-modal.back-label') }}
+        </ui-button>
+
+        <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
+          <account-access-menu v-if="page === 'menu'" key="menu" @navigate="(p) => (page = p)" />
+          <email-section v-else-if="page === 'email'" key="email" />
+          <password-section v-else key="password" />
+        </transition>
+      </div>
     </div>
   </dialog-card>
 </template>

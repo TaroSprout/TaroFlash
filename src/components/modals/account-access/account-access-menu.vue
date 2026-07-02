@@ -36,10 +36,6 @@ function onGooglePress() {
 
 <template>
   <div data-testid="account-access-modal__menu" class="flex flex-col gap-4">
-    <p data-testid="account-access-modal__description" class="text-brown-500 dark:text-brown-300">
-      {{ t('account-access-modal.description') }}
-    </p>
-
     <ui-nav-list data-theme="brown-50" :entries="entries" @navigate="onNavigate" />
 
     <ui-button
