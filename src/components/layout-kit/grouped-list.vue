@@ -22,10 +22,15 @@ defineSlots<{
     data-testid="grouped-list"
     data-theme="brown-100"
     data-theme-dark="stone-700"
-    class="relative flex flex-col rounded-4 bg-(--theme-primary)"
-    :class="dividers ? 'divide-y divide-brown-300 dark:divide-stone-600' : ''"
+    class="relative flex flex-col"
   >
-    <slot></slot>
+    <div
+      data-testid="grouped-list__content"
+      class="flex flex-col rounded-4 overflow-hidden bg-(--theme-primary)"
+      :class="dividers ? 'divide-y divide-brown-300 dark:divide-stone-600' : ''"
+    >
+      <slot></slot>
+    </div>
 
     <div
       v-if="$slots.overlay"
