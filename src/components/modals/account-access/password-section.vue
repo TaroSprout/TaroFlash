@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import UiIcon from '@/components/ui-kit/icon.vue'
 import UiInput from '@/components/ui-kit/input.vue'
 import UiButton from '@/components/ui-kit/button.vue'
-import { useSessionStore } from '@/stores/session'
 import { usePasswordActions } from './use-password-actions'
 import { fadeLeave } from '@/utils/animations/fade'
 import { springScaleIn } from '@/utils/animations/modal'
 
 const { t } = useI18n()
-const session = useSessionStore()
 const { password, confirm_password, loading, errors, success, submit } = usePasswordActions()
 
 function onLeave(el: Element, done: () => void) {
@@ -23,15 +20,6 @@ function onEnter(el: Element, done: () => void) {
 
 <template>
   <div data-testid="account-access-modal__password-section" class="flex flex-col gap-2">
-    <span class="flex items-center gap-2 text-brown-700 dark:text-brown-100">
-      <ui-icon src="keyhole" class="size-5" />
-      {{
-        session.hasPasswordIdentity
-          ? t('account-access-modal.password.heading-change')
-          : t('account-access-modal.password.heading-set')
-      }}
-    </span>
-
     <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
       <div v-if="!success" key="form" class="flex items-start gap-2">
         <ui-input

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import UiIcon from '@/components/ui-kit/icon.vue'
 import UiInput from '@/components/ui-kit/input.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useEmailActions } from './use-email-actions'
@@ -21,11 +20,6 @@ function onEnter(el: Element, done: () => void) {
 
 <template>
   <div data-testid="account-access-modal__email-section" class="flex flex-col gap-2">
-    <span class="flex items-center gap-2 text-brown-700 dark:text-brown-100">
-      <ui-icon src="mail-envelope" class="size-5" />
-      {{ t('account-access-modal.email.heading') }}
-    </span>
-
     <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
       <div v-if="!pending" key="form" class="flex items-start gap-2">
         <ui-input
