@@ -48,7 +48,7 @@ function onClick(e: MouseEvent) {
   >
     <slot />
     <div
-      class="absolute inset-0 rounded-[inherit] bgx-diagonal-stripes animation-safe:group-data-[playing=true]/tappable:bgx-slide pointer-events-none hidden group-data-[playing=true]/tappable:block"
+      class="absolute inset-0 rounded-[inherit] bgx-diagonal-stripes animation-safe:group-data-[active=true]/tappable:bgx-slide pointer-events-none hidden group-data-[active=true]/tappable:block"
       :style="{ '--bgx-fill': bgx_color }"
     />
   </component>

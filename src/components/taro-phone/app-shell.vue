@@ -64,13 +64,13 @@ function spawnBurst() {
             :src="iconSrc"
             class="pointer-events-none"
             :class="{
-              'group-hover:hidden group-focus:hidden group-data-[playing=true]:hidden': hoverIconSrc
+              'group-hover:hidden group-focus:hidden group-data-[active=true]:hidden': hoverIconSrc
             }"
           />
           <ui-image
             v-if="hoverIconSrc"
             :src="hoverIconSrc"
-            class="hidden group-hover:block group-focus:block group-data-[playing=true]:block pointer-events-none"
+            class="hidden group-hover:block group-focus:block group-data-[active=true]:block pointer-events-none"
           />
         </slot>
       </button>
