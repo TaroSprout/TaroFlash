@@ -69,6 +69,7 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
             icon-left="arrow-back"
             icon-only
             rounded-full
+            :sfx="{ press: 'snappy_button_5' }"
             @press="page = 'menu'"
           >
             {{ t('account-access-modal.back-label') }}
