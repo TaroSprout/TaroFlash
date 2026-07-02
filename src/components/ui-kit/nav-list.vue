@@ -34,7 +34,8 @@ function onNavigate(value: string) {
       :data-value="entry.value"
       class="flex items-center gap-3 p-4 text-brown-700 dark:text-brown-100 hover:bg-(--theme-neutral) hover:text-(--theme-on-neutral) cursor-pointer text-left"
       bgx_color="var(--color-brown-500)"
-      v-sfx="{ hover: TYPE_SFX }"
+      active_on_hover
+      :sfx="{ hover: TYPE_SFX }"
       @tap="onNavigate(entry.value)"
     >
       <ui-icon :src="entry.icon" class="w-6 h-6" />

@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import {
   type StagedTapAnimate,
   type StagedTapPhase,
   useStagedTap
 } from '@/composables/ui/staged-tap'
+import { useMatchMedia } from '@/composables/ui/media-query'
 import type { SfxOptions } from '@/sfx/directive'
 
 type UiTappableProps = {
@@ -12,6 +14,7 @@ type UiTappableProps = {
   sfx?: SfxOptions
   triggerAt?: StagedTapPhase
   bgx_color?: string
+  active_on_hover?: boolean
 }
 
 const {
@@ -19,7 +22,8 @@ const {
   animate = 'quiet',
   sfx = {},
   triggerAt,
-  bgx_color = 'var(--theme-neutral)'
+  bgx_color = 'var(--theme-neutral)',
+  active_on_hover = false
 } = defineProps<UiTappableProps>()
 
 const emit = defineEmits<{
@@ -27,6 +31,8 @@ const emit = defineEmits<{
 }>()
 
 const { playing, tap } = useStagedTap({ animate, triggerAt })
+const is_fine = useMatchMedia('fine')
+const hovering = ref(false)
 
 function onClick(e: MouseEvent) {
   tap((ev) => emit('tap', ev), {
@@ -36,14 +42,24 @@ function onClick(e: MouseEvent) {
     postAudio: sfx.tap_post
   })(e)
 }
+
+function onPointerEnter() {
+  if (active_on_hover && is_fine.value) hovering.value = true
+}
+
+function onPointerLeave() {
+  hovering.value = false
+}
 </script>
 
 <template>
   <component
     :is="as"
-    :data-active="playing || null"
+    :data-active="playing || hovering || null"
     class="group/tappable relative"
     v-sfx="{ hover: sfx.hover, focus: sfx.focus, blur: sfx.blur, debounce: sfx.debounce }"
+    @pointerenter="onPointerEnter"
+    @pointerleave="onPointerLeave"
     @click="onClick"
   >
     <slot />
