@@ -77,7 +77,7 @@ function onPillClick(e: MouseEvent) {
 
     <div
       data-testid="ui-kit-spinbox"
-      class="inline-flex items-center bg-input rounded-4 p-1 gap-0.5"
+      class="inline-flex items-center bg-(--theme-neutral) rounded-4 p-1 gap-0.5"
       :class="pill_label && 'rounded-r-2'"
     >
       <spinbox-button
