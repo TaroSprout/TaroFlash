@@ -59,9 +59,8 @@ provide(memberDangerActionsKey, danger)
 
 const alert = useAlert()
 
-// landscape phone (h<sm) also counts as sheet
 const { layout_mode, sheet_px } = useTabModalLayout({
-  sheet_query: 'w<mlg | h<sm',
+  sheet_query: 'w<mlg',
   desktop_query: 'w>=lg & fine'
 })
 provide(settingsLayoutKey, layout_mode)
@@ -69,7 +68,7 @@ provide(settingsCloseKey, close)
 
 // Mirrors the mobile-sheet primitive's own bottom-pin check (same breakpoint keys
 // passed to modal.open in useSettingsModal) so recede/restore can't drift from it —
-// layout_mode has a looser height threshold and stays desktop/tablet past this point.
+// layout_mode is width-only and stays desktop/tablet regardless of height.
 const is_pinned = useMatchMedia(
   `w<${SETTINGS_SHEET_BREAKPOINTS.width} | h<${SETTINGS_SHEET_BREAKPOINTS.height}`
 )
