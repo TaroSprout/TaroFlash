@@ -71,9 +71,14 @@ const chapter_options = computed<DropdownOption[]>(() =>
   use_lesson_chapters.value
     ? lessonChapters.map((chapter, i) => ({
         label: `${i + 1}. ${chapter.title}`,
-        value: chapter.start
+        value: chapter.start,
+        selected: i === active_lesson_chapter.value
       }))
-    : chapters.map((chapter, i) => ({ label: `${i + 1}. ${chapter.title}`, value: chapter.id }))
+    : chapters.map((chapter, i) => ({
+        label: `${i + 1}. ${chapter.title}`,
+        value: chapter.id,
+        selected: chapter.id === currentLessonId
+      }))
 )
 const current_chapter_label = computed(() =>
   use_lesson_chapters.value

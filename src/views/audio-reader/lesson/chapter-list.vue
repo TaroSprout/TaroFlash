@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, toValue, type MaybeRef } from 'vue'
+import { formatDuration } from '@/utils/audio-reader/duration'
 
 // Intra-lesson chapter navigation: the auto-detected chapters of THIS lesson's
 // audio (transcript.chapters), each jumping playback to its start by seeking the
@@ -25,13 +26,6 @@ const active_index = computed(() => {
   })
   return index
 })
-
-function formatClock(seconds: number): string {
-  const total = Math.max(0, Math.floor(seconds))
-  const m = Math.floor(total / 60)
-  const s = total % 60
-  return `${m}:${s.toString().padStart(2, '0')}`
-}
 </script>
 
 <template>
@@ -49,7 +43,7 @@ function formatClock(seconds: number): string {
       @click="emit('seek', chapter.start)"
     >
       <span data-testid="chapter-list__time" class="shrink-0 text-base tabular-nums opacity-70">
-        {{ formatClock(chapter.start) }}
+        {{ formatDuration(chapter.start) }}
       </span>
       <span data-testid="chapter-list__title" class="line-clamp-1 text-base">
         {{ chapter.title }}
