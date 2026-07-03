@@ -12,9 +12,11 @@ import { useAlert } from '@/composables/alert'
 import { useModalAfterEnter, useModalRequestClose } from '@/composables/modal'
 import DeckPinnedPreview from '@/components/deck/pinned-preview.vue'
 import TabSheet from '@/components/layout-kit/sheet/tab-sheet.vue'
+import UiIcon from '@/components/ui-kit/icon.vue'
+import { TAB_META, type TabValue } from './tabs'
 
 export type DeckSettingsResponse = boolean
-export type ActiveTab = 'details' | 'design' | 'study' | 'danger-zone'
+export type ActiveTab = TabValue
 
 const { deck, close, initial_tab, initial_side } = defineProps<{
   deck: Deck
@@ -60,11 +62,15 @@ const { nav_direction, onTabEnter, onTabLeave } = useTabTransition(layout_mode, 
 
 if (initial_tab) active_tab.value = initial_tab
 
-const tabs = computed(() => [
-  { value: 'design', icon: 'paint-brush', label: t('deck.settings-modal.tab.design') },
-  { value: 'study', icon: 'school-cap', label: t('deck.settings-modal.tab.study') },
-  { value: 'danger-zone', icon: 'delete', label: t('deck.settings-modal.tab.danger-zone') }
-])
+const DESKTOP_TABS: TabValue[] = ['design', 'study', 'danger-zone']
+
+const tabs = computed(() =>
+  DESKTOP_TABS.map((value) => ({
+    value,
+    icon: TAB_META[value].icon,
+    label: t(TAB_META[value].labelKey)
+  }))
+)
 
 const displayed_tab = computed(
   () => active_tab.value ?? (layout_mode.value === 'desktop' ? 'design' : 'index')
@@ -75,7 +81,12 @@ const sidebar_active = computed({
   set: (v) => (active_tab.value = v as ActiveTab)
 })
 
-const header_title = computed(() => t(`deck.settings-modal.header.${displayed_tab.value}.title`))
+const header_meta = computed(() =>
+  displayed_tab.value !== 'index' ? TAB_META[displayed_tab.value] : null
+)
+const header_title = computed(() =>
+  header_meta.value ? t(header_meta.value.labelKey) : t('deck.settings-modal.header.index.title')
+)
 
 const visible_side = computed(() =>
   displayed_tab.value === 'design' ? editor.active_side.value : 'cover'
@@ -153,7 +164,7 @@ watch(active_tab, (tab) => {
     data-theme-dark="green-800"
     :data-layout="layout_mode"
     :class="[
-      layout_mode === 'desktop' ? 'w-248!' : 'w-full! max-w-205.5',
+      layout_mode === 'desktop' ? 'w-236!' : 'w-full! max-w-205.5',
       layout_mode === 'sheet'
         ? '[--deck-settings-padding:var(--sheet-px)]'
         : '[--deck-settings-padding:0px]'
@@ -171,7 +182,16 @@ watch(active_tab, (tab) => {
         class="w-full flex flex-col max-md:items-center max-md:text-center"
         :class="layout_mode === 'tablet' && 'pt-4'"
       >
-        <h1 data-testid="deck-settings__header-title" class="text-5xl text-white">
+        <h1
+          data-testid="deck-settings__header-title"
+          class="flex items-center gap-3 text-5xl text-white"
+        >
+          <ui-icon
+            v-if="header_meta"
+            data-testid="deck-settings__header-icon"
+            :src="header_meta.icon"
+            class="size-9 shrink-0"
+          />
           {{ header_title }}
         </h1>
       </div>

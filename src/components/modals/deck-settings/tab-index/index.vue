@@ -8,31 +8,25 @@ import DangerResetButton from '../danger-reset-button.vue'
 import DangerDeleteButton from '../danger-delete-button.vue'
 import { deckSettingsLayoutKey } from '../layout'
 import DeckSaveButton from '../deck-save-button.vue'
+import { TAB_META, type TabValue } from '../tabs'
 
-export type TabIndexNavValue = 'details' | 'design' | 'study'
+export type TabIndexNavValue = Exclude<TabValue, 'danger-zone'>
 
 const { t } = useI18n()
 const layout_mode = inject(deckSettingsLayoutKey)!
 
-type NavEntry = { value: TabIndexNavValue; icon: string }
-type NavGroup = { key: string; heading: string; entries: NavEntry[] }
+type NavGroup = { key: string; heading: string; entries: TabIndexNavValue[] }
 
 const nav_groups = computed<NavGroup[]>(() => [
   {
     key: 'appearance',
     heading: t('deck.settings-modal.index.general-heading'),
-    entries:
-      layout_mode.value === 'sheet'
-        ? [
-            { value: 'details', icon: 'text-field' },
-            { value: 'design', icon: 'paint-brush' }
-          ]
-        : [{ value: 'design', icon: 'paint-brush' }]
+    entries: layout_mode.value === 'sheet' ? ['details', 'design'] : ['design']
   },
   {
     key: 'study',
     heading: t('deck.settings-modal.index.study-heading'),
-    entries: [{ value: 'study', icon: 'school-cap' }]
+    entries: ['study']
   }
 ])
 
@@ -58,10 +52,10 @@ function onNavigate(value: string) {
     >
       <ui-nav-list
         :entries="
-          group.entries.map((entry) => ({
-            value: entry.value,
-            icon: entry.icon,
-            label: t(`deck.settings-modal.tab.${entry.value}`)
+          group.entries.map((value) => ({
+            value,
+            icon: TAB_META[value].icon,
+            label: t(TAB_META[value].labelKey)
           }))
         "
         @navigate="onNavigate"
@@ -72,7 +66,7 @@ function onNavigate(value: string) {
 
     <labeled-section
       data-testid="tab-index__danger-zone"
-      :label="t('deck.settings-modal.header.danger-zone.title')"
+      :label="t(TAB_META['danger-zone'].labelKey)"
     >
       <div data-testid="tab-index__danger-actions" class="flex flex-col gap-2">
         <danger-reset-button />
