@@ -8,7 +8,7 @@ import {
   useTemplateRef,
   watch
 } from 'vue'
-import type { ComputedRef, InjectionKey, MaybeRefOrGetter } from 'vue'
+import type { ComputedRef, InjectionKey, MaybeRefOrGetter, Ref } from 'vue'
 import { useStagedTap } from '@/composables/ui/staged-tap'
 import { emitSfx } from '@/sfx/bus'
 import { cleanTerm } from '@/utils/transcript'
@@ -65,6 +65,12 @@ type ReaderSelection = {
 }
 
 export type WordRange = { lo: number; hi: number }
+
+// Minimal shape of the window virtualizer this composable needs — just enough
+// to scroll an unmounted row into view before locating its word.
+type WordVirtualizer = Ref<{
+  scrollToIndex: (index: number, options?: { align?: 'start' | 'center' | 'end' | 'auto' }) => void
+}>
 
 // The live selection range (drag, standing selection, or hover) shared down to the
 // words so each can tint itself when it falls under the blue interaction pill.
@@ -123,6 +129,10 @@ export const readerMatchesKey = Symbol('readerMatches') as InjectionKey<
  * @param is_playing - whether the audio is playing; the active-line follow
  *   animates while it's true and jumps instantly otherwise (a resume seek or a
  *   scrub mustn't leave a scroll tween running — it locks up iOS Safari).
+ * @param virtualizer - the transcript's window virtualizer, used to bring the
+ *   active word's row into the DOM when a seek/resume lands outside the
+ *   currently rendered range.
+ * @param rowIndexOfWord - resolves a word index to its virtualizer row index.
  * @example
  * const { onPointerDown, onPointerMove, onPointerUp, onPointerLeave, onPointerCancel } =
  *   useReaderHighlights(() => active_word, commitSelection, () => popover_open, dismiss)
@@ -133,7 +143,9 @@ export function useReaderHighlights(
   popover_open: MaybeRefOrGetter<boolean>,
   onDismiss: () => void,
   matchRangeAt: (index: number) => WordRange | null = () => null,
-  is_playing: MaybeRefOrGetter<boolean> = false
+  is_playing: MaybeRefOrGetter<boolean> = false,
+  virtualizer: WordVirtualizer,
+  rowIndexOfWord: (word_index: number) => number
 ) {
   const content = useTemplateRef<HTMLElement>('content')
 
@@ -276,8 +288,8 @@ export function useReaderHighlights(
 
   // Move the `data-playing` flag from the previous active word to the current one
   // (CSS keys the blue tint + scale off it). A no-op when neither moved.
-  function paintActiveWord() {
-    const next = wordEl(toValue(active_word))
+  async function paintActiveWord() {
+    const next = await ensureWordMounted(toValue(active_word))
     if (next === active_el) return
 
     active_el?.removeAttribute('data-playing')
@@ -410,19 +422,16 @@ export function useReaderHighlights(
     return []
   }
 
-  // The nearest ancestor that actually scrolls — the reader column on desktop.
-  // On mobile the column isn't bounded so nothing overflows; fall back to the
-  // window, which is the real scroller there. Requiring real overflow (not just
-  // an `overflow-y: auto` style) is what makes that fallback kick in.
-  function scrollParentOf(el: HTMLElement | null): HTMLElement | Window {
-    let node = el?.parentElement ?? null
-    while (node) {
-      const overflow_y = getComputedStyle(node).overflowY
-      const scrollable = overflow_y === 'auto' || overflow_y === 'scroll'
-      if (scrollable && node.scrollHeight > node.clientHeight) return node
-      node = node.parentElement
-    }
-    return window
+  // The active word is audio-driven and can legitimately sit outside the
+  // currently virtualized range (after a seek, a scrub, or a resumed lesson).
+  // Every other word lookup in this file targets a word the member is
+  // currently touching on screen, so it's already mounted and doesn't need this.
+  async function ensureWordMounted(index: number): Promise<HTMLElement | null> {
+    const existing = wordEl(index)
+    if (existing) return existing
+    virtualizer.value.scrollToIndex(rowIndexOfWord(index), { align: 'center' })
+    await nextTick()
+    return wordEl(index)
   }
 
   // Follow the active word into the deadzone. Debounced so rapid scrubbing
@@ -433,13 +442,13 @@ export function useReaderHighlights(
   function followActiveWord() {
     if (!following.value) return
     if (follow_timer !== null) clearTimeout(follow_timer)
-    follow_timer = setTimeout(() => {
+    follow_timer = setTimeout(async () => {
       follow_timer = null
       const index = toValue(active_word)
       if (index < 0) return
-      const el = wordEl(index)
+      const el = await ensureWordMounted(index)
       if (!el) return
-      scrollWordIntoDeadzone(scrollParentOf(content.value), el, toValue(is_playing))
+      scrollWordIntoDeadzone(el, toValue(is_playing))
     }, 100)
   }
 
@@ -449,7 +458,7 @@ export function useReaderHighlights(
   function disableFollow() {
     if (following.value) {
       following.value = false
-      cancelScroll(scrollParentOf(content.value))
+      cancelScroll()
       updateFollowDirection()
     }
 
@@ -486,7 +495,7 @@ export function useReaderHighlights(
    * animates — this is a deliberate tap, not a paused-state seek, so the smooth
    * tween is wanted (and welcome) regardless of play state.
    */
-  function resumeFollow() {
+  async function resumeFollow() {
     if (follow_resume_timer !== null) {
       clearTimeout(follow_resume_timer)
       follow_resume_timer = null
@@ -495,25 +504,21 @@ export function useReaderHighlights(
     following.value = true
     const index = toValue(active_word)
     if (index < 0) return
-    const el = wordEl(index)
-    if (el) scrollLineIntoView(scrollParentOf(content.value), el, true)
+    const el = await ensureWordMounted(index)
+    if (el) scrollLineIntoView(el, true)
   }
 
-  // Keep a just-committed word clear of the term sheet. Only on mobile — where the
-  // page itself scrolls and the sheet rises from the bottom — and only when the
-  // word sits low enough to be covered; otherwise leave the view put. Desktop
-  // scrolls the bounded column and anchors a popover that flips clear on its own.
+  // Keep a just-committed word clear of the term sheet, on mobile where the
+  // page itself scrolls and the sheet rises from the bottom, and only when the
+  // word sits low enough to be covered; otherwise leave the view put.
   function revealCommitted(range: WordRange) {
-    const scroller = scrollParentOf(content.value)
-    if (scroller !== window) return
-
     const el = wordEl(range.lo)
     if (!el) return
     if (el.getBoundingClientRect().bottom <= window.innerHeight * SHEET_COVER_RATIO) return
 
     // Jump instantly — opening a term always pauses the audio, so a rAF-driven
     // window.scrollTo tween would starve rAF on iOS Safari for 600ms.
-    scrollLineIntoView(window, el, false)
+    scrollLineIntoView(el, false)
   }
 
   async function positionInteraction() {

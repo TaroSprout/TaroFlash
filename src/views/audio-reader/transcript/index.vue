@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useWindowVirtualizer } from '@tanstack/vue-virtual'
 import type { SentenceWords } from '@/utils/transcript'
 import { markTermInSentence } from '@/utils/transcript'
 import type { CardMatch } from '@/utils/transcript-match'
@@ -16,6 +17,8 @@ type TranscriptViewProps = {
   is_playing?: boolean
 }
 
+type TranscriptRow = { paragraph: SentenceWords; chapter_title?: string }
+
 const {
   paragraphs,
   chapters = [],
@@ -29,6 +32,61 @@ const emit = defineEmits<{
   (e: 'select', selection: TermSelection): void
   (e: 'dismiss'): void
 }>()
+
+// Leading / trailing punctuation edges — strip these from the first/last word of
+// a match so the underline hugs the term's own characters and never bridges a
+// comma or bracket to a neighbouring card.
+const LEADING_EDGE = /^[\p{P}\s]+/u
+const TRAILING_EDGE = /[\p{P}\s]+$/u
+
+// Estimated row height before it's actually measured — deliberately generous
+// since an undershoot causes more visible re-layout than an overshoot. Real
+// height is corrected per-row via virtualizer.measureElement once mounted.
+const BASE_ROW_HEIGHT = 170
+const TRANSLATION_EXTRA = 40
+const HEADING_EXTRA = 170
+const OVERSCAN = 5
+
+const scroll_margin = ref(0)
+
+// One row per paragraph; a row also carries its chapter's heading title when
+// it's the first paragraph of that chapter, so the heading's height is part of
+// the virtualized item instead of a sibling flow element.
+const rows = computed<TranscriptRow[]>(() => {
+  const heading_at = new Map<number, string>()
+  for (const chapter of chapters) {
+    const first = paragraphs.find((p) => p.start >= chapter.start)
+    if (first) heading_at.set(first.index, chapter.title)
+  }
+  return paragraphs.map((paragraph) => ({
+    paragraph,
+    chapter_title: heading_at.get(paragraph.index)
+  }))
+})
+
+// word index -> row index, so the audio-driven active word (which may be
+// unmounted after a seek) can be resolved to a row for scrollToIndex.
+const word_row_index = computed(() => {
+  const map = new Map<number, number>()
+  rows.value.forEach((row, i) => {
+    for (const word of row.paragraph.words) map.set(word.index, i)
+  })
+  return map
+})
+
+const virtualizer = useWindowVirtualizer(
+  computed(() => ({
+    count: rows.value.length,
+    estimateSize: (i: number) => estimateRowSize(rows.value[i]),
+    overscan: OVERSCAN,
+    scrollMargin: scroll_margin.value,
+    getItemKey: (i: number) => rows.value[i].paragraph.index
+  }))
+)
+
+function rowIndexOfWord(word_index: number): number {
+  return word_row_index.value.get(word_index) ?? 0
+}
 
 const {
   content,
@@ -50,18 +108,38 @@ const {
   () => popover_open,
   () => emit('dismiss'),
   matchRangeAt,
-  () => is_playing
+  () => is_playing,
+  virtualizer,
+  rowIndexOfWord
 )
 
 // The follow state + resume action surface to the lesson view, which renders the
 // "jump to current line" control in the mobile dock above the transcript.
 defineExpose({ following, follow_direction, resumeFollow })
 
-// Leading / trailing punctuation edges — strip these from the first/last word of
-// a match so the underline hugs the term's own characters and never bridges a
-// comma or bracket to a neighbouring card.
-const LEADING_EDGE = /^[\p{P}\s]+/u
-const TRAILING_EDGE = /[\p{P}\s]+$/u
+let resize_observer: ResizeObserver | undefined
+
+onMounted(() => {
+  measureScrollMargin()
+  resize_observer = new ResizeObserver(measureScrollMargin)
+  resize_observer.observe(document.body)
+})
+
+onBeforeUnmount(() => resize_observer?.disconnect())
+
+function estimateRowSize(row: TranscriptRow): number {
+  let size = BASE_ROW_HEIGHT
+  if (row.paragraph.translation) size += TRANSLATION_EXTRA
+  if (row.chapter_title) size += HEADING_EXTRA
+  return size
+}
+
+// The transcript always scrolls the page itself, so its document offset is
+// what maps page scroll onto row positions.
+function measureScrollMargin() {
+  if (!content.value) return
+  scroll_margin.value = content.value.getBoundingClientRect().top + window.scrollY
+}
 
 // Paint card-match highlights onto word elements imperatively rather than via
 // reactive inject. With large transcripts (1000+ words) the inject chain caused
@@ -116,16 +194,6 @@ function paintMatchedWords(m: Map<number, CardMatch>) {
   }
 }
 
-// Maps paragraph.index → chapter title for the first paragraph of each chapter.
-const chapter_headings = computed(() => {
-  const map = new Map<number, string>()
-  for (const chapter of chapters) {
-    const first = paragraphs.find((p) => p.start >= chapter.start)
-    if (first) map.set(first.index, chapter.title)
-  }
-  return map
-})
-
 // A tap/click on a word inside a card match selects the whole matched phrase;
 // null for an unmatched word, so the caller falls back to single-word select.
 function matchRangeAt(index: number): WordRange | null {
@@ -164,6 +232,16 @@ function commitSelection({
 }
 
 watch(() => matches, paintMatchedWords, { immediate: true, flush: 'post' })
+
+// Newly-mounted rows (scrolled into view) need their matches painted too — the
+// watch above only fires when the `matches` map itself changes.
+watch(
+  () => virtualizer.value.getVirtualItems(),
+  () => paintMatchedWords(matches),
+  {
+    flush: 'post'
+  }
+)
 </script>
 
 <template>
@@ -171,7 +249,8 @@ watch(() => matches, paintMatchedWords, { immediate: true, flush: 'post' })
     <div
       ref="content"
       data-testid="transcript-view__content"
-      class="relative isolate flex select-none flex-col gap-7 text-4xl leading-[2.5] text-brown-700 dark:text-brown-200"
+      class="relative isolate select-none text-4xl leading-[2.5] text-brown-700 dark:text-brown-200"
+      :style="{ height: `${virtualizer.getTotalSize()}px` }"
       @pointerdown="onPointerDown"
       @pointermove="onPointerMove"
       @pointerup="onPointerUp"
@@ -192,19 +271,33 @@ watch(() => matches, paintMatchedWords, { immediate: true, flush: 'post' })
           class="absolute inset-0 hidden rounded-2 bgx-diagonal-stripes animation-safe:bgx-slide bgx-color-[currentColor] group-data-[playing=true]/pill:block"
         />
       </div>
-      <template v-for="paragraph in paragraphs" :key="paragraph.index">
+
+      <div
+        v-for="vrow in virtualizer.getVirtualItems()"
+        :key="vrow.key as number"
+        :data-index="vrow.index"
+        :ref="(el) => virtualizer.measureElement(el as Element)"
+        data-testid="transcript-view__row"
+        class="absolute top-0 left-0 w-full pb-7"
+        :style="{ transform: `translateY(${vrow.start - scroll_margin}px)` }"
+      >
         <div
-          v-if="chapter_headings.get(paragraph.index)"
+          v-if="rows[vrow.index].chapter_title"
           data-testid="transcript-view__chapter-heading"
-          class="mt-32 flex flex-col items-center gap-3 first:mt-0"
+          class="flex flex-col items-center gap-3"
+          :class="vrow.index === 0 ? 'mt-0' : 'mt-32'"
         >
           <h2 class="text-xl font-medium text-brown-500 dark:text-brown-400">
-            {{ chapter_headings.get(paragraph.index) }}
+            {{ rows[vrow.index].chapter_title }}
           </h2>
           <hr class="w-16 border-brown-700 dark:border-brown-700" />
         </div>
-        <transcript-segment :group="paragraph" :index="paragraph.index" />
-      </template>
+
+        <transcript-segment
+          :group="rows[vrow.index].paragraph"
+          :index="rows[vrow.index].paragraph.index"
+        />
+      </div>
     </div>
 
     <selection-preview :preview="selection_preview" />

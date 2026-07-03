@@ -12,80 +12,36 @@ const DEADZONE_TOP = 0.15
 const DEADZONE_BOTTOM = 0.35
 const SCROLL_ANCHOR = 0.2
 
-// The scroller is the transcript column on desktop, but the whole page (window)
-// on mobile, where the column isn't bounded and the document scrolls instead.
-type Scroller = HTMLElement | Window
+// The transcript always scrolls the page itself — there's no bounded internal
+// column on any breakpoint. One proxy tween is enough; a fresh call retargets
+// it (and animates from the real current scroll position) instead of fighting
+// a stale one.
+const state = { y: 0 }
 
-// Per-scroller state so a new call retargets the live tween (and animates from
-// the real current scroll position) instead of fighting a stale one.
-const stateByScroller = new WeakMap<Scroller, { y: number }>()
-
-function isWindow(scroller: Scroller): scroller is Window {
-  return scroller === window
-}
-
-// Current scroll offset, viewport height, and max scroll — read from the element
-// or from the document when the page itself is the scroller.
-function metrics(scroller: Scroller) {
-  if (isWindow(scroller)) {
-    const doc = document.documentElement
-    return {
-      current: window.scrollY,
-      viewport: window.innerHeight,
-      max: doc.scrollHeight - doc.clientHeight,
-      top: 0
-    }
-  }
+function metrics() {
+  const doc = document.documentElement
   return {
-    current: scroller.scrollTop,
-    viewport: scroller.clientHeight,
-    max: scroller.scrollHeight - scroller.clientHeight,
-    top: scroller.getBoundingClientRect().top
+    current: window.scrollY,
+    viewport: window.innerHeight,
+    max: doc.scrollHeight - doc.clientHeight
   }
 }
 
 /**
- * Stop any in-flight scroll tween on `scroller`. Used when the member takes the
- * scroll over by hand, so the active-word follow lets go instead of fighting them.
+ * Stop any in-flight scroll tween. Used when the member takes the scroll over
+ * by hand, so the active-word follow lets go instead of fighting them.
  */
-export function cancelScroll(scroller: Scroller) {
-  const state = stateByScroller.get(scroller)
-  if (state) gsap.killTweensOf(state)
+export function cancelScroll() {
+  gsap.killTweensOf(state)
 }
 
-/**
- * Lift `el` clear above `limit_bottom` (a viewport Y, e.g. a fixed footer's top
- * edge) by scrolling `scroller` up just enough. No-op when `el` already sits
- * above the limit. Used to re-clear a selected word after the term footer grows.
- *
- * Pass `animate = false` to jump instantly — same iOS Safari rAF-starvation
- * caveat as `scrollLineIntoView` applies here.
- */
-export function scrollClearOf(
-  scroller: Scroller,
-  el: HTMLElement,
-  limit_bottom: number,
-  animate = true
-) {
-  const overshoot = el.getBoundingClientRect().bottom - limit_bottom
-  if (overshoot <= 0) return
-
-  const { current, max } = metrics(scroller)
-  const target = Math.max(0, Math.min(max, current + overshoot))
-
-  let state = stateByScroller.get(scroller)
-  if (!state) {
-    state = { y: current }
-    stateByScroller.set(scroller, state)
-  }
-
+function runTween(target: number, current: number, animate: boolean) {
   state.y = current
   gsap.killTweensOf(state)
 
   if (!animate) {
     state.y = target
-    if (isWindow(scroller)) window.scrollTo(0, target)
-    else scroller.scrollTop = target
+    window.scrollTo(0, target)
     return
   }
 
@@ -93,17 +49,30 @@ export function scrollClearOf(
     y: target,
     duration: DURATION,
     ease: 'power3.out',
-    onUpdate: () => {
-      if (isWindow(scroller)) window.scrollTo(0, state.y)
-      else scroller.scrollTop = state.y
-    }
+    onUpdate: () => window.scrollTo(0, state.y)
   })
 }
 
 /**
- * Scroll `scroller` so `el` rests ~40% down the viewport, clamped to the
+ * Lift `el` clear above `limit_bottom` (a viewport Y, e.g. a fixed footer's top
+ * edge) by scrolling the page up just enough. No-op when `el` already sits
+ * above the limit. Used to re-clear a selected word after the term footer grows.
+ *
+ * Pass `animate = false` to jump instantly — same iOS Safari rAF-starvation
+ * caveat as `scrollLineIntoView` applies here.
+ */
+export function scrollClearOf(el: HTMLElement, limit_bottom: number, animate = true) {
+  const overshoot = el.getBoundingClientRect().bottom - limit_bottom
+  if (overshoot <= 0) return
+
+  const { current, max } = metrics()
+  const target = Math.max(0, Math.min(max, current + overshoot))
+  runTween(target, current, animate)
+}
+
+/**
+ * Scroll the page so `el` rests ~40% down the viewport, clamped to the
  * scrollable range. Used to follow the active transcript line as audio plays.
- * `scroller` is the transcript column on desktop and the window on mobile.
  * ScrollToPlugin isn't registered, so we tween a proxy and write the scroll
  * offset in onUpdate.
  *
@@ -112,84 +81,34 @@ export function scrollClearOf(
  * paused-state repositioning — a resume seek, a scrub, a skip — must jump rather
  * than tween, or the audio tick and page lock up the moment playback starts.
  */
-export function scrollLineIntoView(scroller: Scroller, el: HTMLElement, animate = true) {
+export function scrollLineIntoView(el: HTMLElement, animate = true) {
   const el_rect = el.getBoundingClientRect()
-  const { current, viewport, max, top } = metrics(scroller)
+  const { current, viewport, max } = metrics()
 
-  const el_top_within = el_rect.top - top + current
+  const el_top_within = el_rect.top + current
   const desired = el_top_within - viewport * ANCHOR_RATIO + el_rect.height / 2
   const target = Math.max(0, Math.min(max, desired))
-
-  let state = stateByScroller.get(scroller)
-  if (!state) {
-    state = { y: current }
-    stateByScroller.set(scroller, state)
-  }
-
-  state.y = current
-  gsap.killTweensOf(state)
-
-  if (!animate) {
-    state.y = target
-    if (isWindow(scroller)) window.scrollTo(0, target)
-    else scroller.scrollTop = target
-    return
-  }
-
-  gsap.to(state, {
-    y: target,
-    duration: DURATION,
-    ease: 'power3.out',
-    onUpdate: () => {
-      if (isWindow(scroller)) window.scrollTo(0, state.y)
-      else scroller.scrollTop = state.y
-    }
-  })
+  runTween(target, current, animate)
 }
 
 /**
- * Scroll `scroller` only when `el` has drifted outside the deadzone band
- * (15%–80% of the viewport). When outside, snaps it to the top of the band.
+ * Scroll the page only when `el` has drifted outside the deadzone band
+ * (15%–35% of the viewport). When outside, snaps it to the top of the band.
  * No-ops when the word is already visible inside the band, so mid-sentence
  * words don't cause jitter. Same iOS Safari rules as `scrollLineIntoView`.
  */
-export function scrollWordIntoDeadzone(scroller: Scroller, el: HTMLElement, animate = true) {
+export function scrollWordIntoDeadzone(el: HTMLElement, animate = true) {
   const el_rect = el.getBoundingClientRect()
-  const { current, viewport, max, top } = metrics(scroller)
+  const { current, viewport, max } = metrics()
 
-  const el_top_in_vp = el_rect.top - top
-  const el_bottom_in_vp = el_rect.bottom - top
+  const el_top_in_vp = el_rect.top
+  const el_bottom_in_vp = el_rect.bottom
   const dz_top = viewport * DEADZONE_TOP
   const dz_bottom = viewport * DEADZONE_BOTTOM
 
   if (el_top_in_vp >= dz_top && el_bottom_in_vp <= dz_bottom) return
 
-  const el_top_within = el_rect.top - top + current
+  const el_top_within = el_rect.top + current
   const target = Math.max(0, Math.min(max, el_top_within - viewport * SCROLL_ANCHOR))
-
-  let state = stateByScroller.get(scroller)
-  if (!state) {
-    state = { y: current }
-    stateByScroller.set(scroller, state)
-  }
-
-  state.y = current
-  gsap.killTweensOf(state)
-
-  if (!animate) {
-    state.y = target
-    if (isWindow(scroller)) window.scrollTo(0, target)
-    else scroller.scrollTop = target
-    return
-  }
-
-  gsap.to(state, {
-    y: target,
-    duration: DURATION,
-    ease: 'power3.out',
-    onUpdate: () => {
-      if (isWindow(scroller)) window.scrollTo(0, state.y)
-      else scroller.scrollTop = state.y
-    }
-  })
+  runTween(target, current, animate)
 }
