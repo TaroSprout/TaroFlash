@@ -117,6 +117,12 @@ function withHighlights({
   const onSelect = vi.fn()
   const onDismiss = vi.fn()
 
+  // A minimal stand-in for the transcript's window virtualizer — real tests add
+  // their words directly to contentEl, so ensureWordMounted's fast (already
+  // mounted) path always wins and scrollToIndex is never actually exercised.
+  const virtualizer = { value: { scrollToIndex: vi.fn() } }
+  const rowIndexOfWord = (index) => index
+
   const HostComponent = defineComponent({
     setup() {
       // matchRangeAt left undefined → the composable's own `() => null` default
@@ -127,6 +133,8 @@ function withHighlights({
         () => popover_open.value,
         onDismiss,
         matchRangeAt,
+        virtualizer,
+        rowIndexOfWord,
         () => is_playing.value
       )
       return () =>
@@ -942,8 +950,10 @@ describe('useReaderHighlights', () => {
       // Nothing should have fired yet — still inside the debounce window.
       expect(mockScrollWordIntoDeadzone).not.toHaveBeenCalled()
 
-      // Advance past debounce.
+      // Advance past debounce. The fired callback awaits ensureWordMounted (a
+      // microtask) before scrolling, so let that settle before asserting.
       vi.advanceTimersByTime(110)
+      await nextTick()
 
       expect(mockScrollWordIntoDeadzone).toHaveBeenCalledTimes(1)
     })
@@ -1065,7 +1075,10 @@ describe('useReaderHighlights', () => {
             () => -1,
             onSelect,
             () => false,
-            onDismiss
+            onDismiss,
+            undefined,
+            { value: { scrollToIndex: vi.fn() } },
+            (index) => index
           )
           // Render WITHOUT ref="content" — so content.value stays null.
           return () => vueH('div', {})
@@ -1314,11 +1327,11 @@ describe('useReaderHighlights', () => {
       result.following.value = false
       mockScrollLineIntoView.mockClear()
 
-      result.resumeFollow()
+      await result.resumeFollow()
 
       expect(mockScrollLineIntoView).toHaveBeenCalledTimes(1)
-      // Third arg: animate (true while playing).
-      const [, , animate] = mockScrollLineIntoView.mock.calls[0]
+      // Second arg: animate (true while playing).
+      const [, animate] = mockScrollLineIntoView.mock.calls[0]
       expect(animate).toBe(true)
     })
 
@@ -1331,11 +1344,11 @@ describe('useReaderHighlights', () => {
       result.following.value = false
       mockScrollLineIntoView.mockClear()
 
-      result.resumeFollow()
+      await result.resumeFollow()
 
       expect(mockScrollLineIntoView).toHaveBeenCalledTimes(1)
       // The resume tap always smooth-scrolls, regardless of play state.
-      const [, , animate] = mockScrollLineIntoView.mock.calls[0]
+      const [, animate] = mockScrollLineIntoView.mock.calls[0]
       expect(animate).toBe(true)
     })
   })
@@ -1344,8 +1357,9 @@ describe('useReaderHighlights', () => {
     beforeEach(() => vi.useFakeTimers())
     afterEach(() => vi.useRealTimers())
 
-    test('re-arms following after FOLLOW_RESUME_IDLE_MS with no manual resume tap [obligation]', async () => {
-      const { result } = withHighlights()
+    test('re-arms following after FOLLOW_RESUME_IDLE_MS while playing, with no manual resume tap [obligation]', async () => {
+      const is_playing = ref(true)
+      const { result } = withHighlights({ is_playing })
       expect(result.following.value).toBe(true)
 
       window.dispatchEvent(new Event('wheel'))
@@ -1358,8 +1372,46 @@ describe('useReaderHighlights', () => {
       expect(result.following.value).toBe(true)
     })
 
+    // [obligation] Paused, the active word isn't advancing — there's nothing to
+    // fall behind, so the idle timer must not yank the view back (e.g. away from
+    // a term popover the member scrolled to read).
+    test('does NOT re-arm following after the idle window while paused [obligation]', async () => {
+      const is_playing = ref(false)
+      const { result } = withHighlights({ is_playing })
+
+      window.dispatchEvent(new Event('wheel'))
+      await nextTick()
+      expect(result.following.value).toBe(false)
+
+      vi.advanceTimersByTime(5000)
+      await nextTick()
+
+      expect(result.following.value).toBe(false)
+    })
+
+    // [obligation] A paused lapse leaves no timer pending; play starting later
+    // must re-arm one rather than leaving follow off forever.
+    test('re-arms once play starts after an idle window lapsed while paused [obligation]', async () => {
+      const is_playing = ref(false)
+      const { result } = withHighlights({ is_playing })
+
+      window.dispatchEvent(new Event('wheel'))
+      await nextTick()
+      vi.advanceTimersByTime(5000)
+      await nextTick()
+      expect(result.following.value).toBe(false)
+
+      is_playing.value = true
+      await nextTick()
+      vi.advanceTimersByTime(5000)
+      await nextTick()
+
+      expect(result.following.value).toBe(true)
+    })
+
     test('a second disableFollow call before the timer fires restarts the idle window [obligation]', async () => {
-      const { result } = withHighlights()
+      const is_playing = ref(true)
+      const { result } = withHighlights({ is_playing })
 
       window.dispatchEvent(new Event('wheel'))
       await nextTick()
@@ -1384,7 +1436,8 @@ describe('useReaderHighlights', () => {
     })
 
     test('calling resumeFollow manually cancels the pending auto re-arm [obligation]', async () => {
-      const { result } = withHighlights()
+      const is_playing = ref(true)
+      const { result } = withHighlights({ is_playing })
 
       window.dispatchEvent(new Event('wheel'))
       await nextTick()
