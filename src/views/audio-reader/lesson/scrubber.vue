@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, useTemplateRef } from 'vue'
 import type { AudioPlayer } from '@/composables/audio-reader/audio-player'
+import { formatDuration } from '@/utils/audio-reader/duration'
 
 type ScrubberProps = {
   player: AudioPlayer
@@ -20,22 +21,14 @@ const progress = computed(() => {
   const total = player.duration.value
   return total > 0 ? (player.current_time.value / total) * 100 : 0
 })
-const current_label = computed(() => formatTime(player.current_time.value))
-const duration_label = computed(() => formatTime(player.duration.value))
+const current_label = computed(() => formatDuration(player.current_time.value))
+const duration_label = computed(() => formatDuration(player.duration.value))
 // Reach the thumb's center, not the progress point, so the thumb always
 // overlaps the fill's rounded cap — no seam between the two rounded shapes.
 const fill_width = computed(() => {
   const center_offset = THUMB_SIZE / 2 - (progress.value / 100) * THUMB_SIZE
   return `calc(${progress.value}% + ${center_offset}px)`
 })
-
-function formatTime(seconds: number) {
-  if (!Number.isFinite(seconds) || seconds < 0) return '0:00'
-
-  const mins = Math.floor(seconds / 60)
-  const secs = Math.floor(seconds % 60)
-  return `${mins}:${secs.toString().padStart(2, '0')}`
-}
 
 function seekToClientX(client_x: number) {
   const el = track.value

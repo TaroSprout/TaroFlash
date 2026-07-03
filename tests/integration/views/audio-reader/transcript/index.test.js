@@ -1,7 +1,6 @@
 import { describe, test, expect, vi, afterEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import TranscriptView from '@/views/audio-reader/transcript/index.vue'
-import { readerActiveWordKey } from '@/composables/audio-reader/reader-highlights'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -339,6 +338,9 @@ describe('TranscriptView', () => {
   describe('readerActiveWordKey provide [obligation]', () => {
     test('provides readerActiveWordKey to child words reflecting active_word prop [obligation]', async () => {
       const wrapper = mountView({ active_word: 3 })
+      // paintActiveWord awaits ensureWordMounted (a microtask, even when the
+      // word is already mounted) — let it settle before inspecting the DOM.
+      await flushPromises()
       // The provided value is a ComputedRef<number>. We can inspect it via
       // the component's provides (internal). Drive it via a child word instead:
       // a word at index 3 should have data-playing=true when active_word=3.
@@ -349,6 +351,7 @@ describe('TranscriptView', () => {
 
     test('words that are not the active word have data-playing absent [obligation]', async () => {
       const wrapper = mountView({ active_word: 3 })
+      await flushPromises()
       const words = wrapper.findAll('[data-testid="transcript-word"]')
       // word 0 is not the active word — paintActiveWord removes the attribute entirely
       // (rather than setting it to 'false'), so non-active words carry no data-playing attr

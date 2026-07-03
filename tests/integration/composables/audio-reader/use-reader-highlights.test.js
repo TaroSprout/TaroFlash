@@ -45,7 +45,13 @@ const Host = defineComponent({
       () => props.activeWord,
       props.onSelect,
       () => props.open,
-      props.onDismiss
+      props.onDismiss,
+      undefined,
+      // A minimal stand-in for the transcript's window virtualizer — the host's
+      // words are always already in the DOM, so ensureWordMounted's fast path
+      // wins and scrollToIndex is never actually exercised here.
+      { value: { scrollToIndex: vi.fn() } },
+      (index) => index
     )
   },
   render() {

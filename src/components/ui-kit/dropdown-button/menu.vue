@@ -63,7 +63,7 @@ function onOptionTap(option: DropdownOption, e: MouseEvent) {
         type="button"
         :disabled="option.disabled"
         class="group/option relative flex w-full cursor-pointer items-center gap-(--btn-gap) overflow-hidden rounded-[calc(var(--btn-border-radius)-6px)] py-(--btn-padding-y) px-[calc(var(--btn-padding-x)-6px)] text-start whitespace-nowrap disabled:cursor-default disabled:opacity-40"
-        :data-active="playing_value === option.value || null"
+        :data-active="playing_value === option.value || option.selected || null"
         data-testid="dropdown-button__option"
         v-sfx="option.disabled ? {} : { hover: TYPE_SFX }"
         @click="onOptionTap(option, $event)"
