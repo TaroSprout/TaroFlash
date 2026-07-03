@@ -54,7 +54,7 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'vite.config.*'
 
-  lint-and-test:
+  lint:
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -74,19 +74,35 @@ jobs:
       - name: Run type-check
         run: pnpm type-check
 
+  test:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-node
+
       - name: Install Playwright Chromium
         run: pnpm exec playwright install chromium
 
-      - name: Run tests
-        run: pnpm exec vp test run --coverage --reporter=blob --reporter=default --project Unit --project Integration
-
-      - name: Rename blob to avoid collision with contract blob
-        run: mv .vitest-reports/blob.json .vitest-reports/blob-unit.json
+      - name: Run tests (shard ${{ matrix.shard }}/3)
+        run: pnpm exec vp test run --coverage --reporter=blob --reporter=default --project Unit --project Integration --shard=${{ matrix.shard }}/3
 
       - name: Upload blob report
         uses: actions/upload-artifact@v4
         with:
-          name: blob-unit-integration
+          name: blob-unit-integration-${{ matrix.shard }}
           path: .vitest-reports/
           retention-days: 30
           include-hidden-files: true
@@ -184,10 +200,11 @@ jobs:
           include-hidden-files: true
 
   coverage-report:
-    needs: [changes, lint-and-test, test-contract]
+    needs: [changes, lint, test, test-contract]
     if: |
       always() &&
-      needs.lint-and-test.result == 'success' &&
+      needs.lint.result == 'success' &&
+      needs.test.result == 'success' &&
       (needs.test-contract.result == 'success' || needs.test-contract.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
@@ -201,11 +218,12 @@ jobs:
 
       - uses: ./.github/actions/setup-node
 
-      - name: Download unit/integration blob
+      - name: Download unit/integration blobs (all shards)
         uses: actions/download-artifact@v4
         with:
-          name: blob-unit-integration
+          pattern: blob-unit-integration-*
           path: .vitest-reports/
+          merge-multiple: true
 
       - name: Download contract blob (this run)
         if: needs.test-contract.result == 'success'

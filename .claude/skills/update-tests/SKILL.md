@@ -67,8 +67,10 @@ The subagent works from a cold diff and can mis-scope or over-claim. Cross-check
 Before you commit, run the **entire** suite, not just the touched/mirror files:
 
 ```
-vp test --no-coverage
+pnpm test:fast
 ```
+
+(Unit + Integration, no coverage — the fast full-suite runner. Never add `--coverage` here; this gate only needs pass/fail, not instrumentation.)
 
 This is non-negotiable. The subagent only ever runs touched-file scope, so collateral breakage in **untouched** test files is invisible to it — and that is the single most common reason these PRs fail CI (it happens on nearly every move/barrel/mock-shape change). The mirror-file check in item 3 is necessary but **not sufficient**: a file-move or barrel-widening refactor breaks tests that don't mirror any touched source at all (e.g. a sibling feature whose `vi.mock('@/some/barrel')` is now missing a newly-transitive export). Only a full run catches those.
 
@@ -76,7 +78,7 @@ If the full suite is red:
 
 - Fix the failures yourself when they're mechanical (repoint a moved import, add the missing export to a `vi.mock` factory, mock the barrel the source now imports instead of the old deep path). These are review fixes, not new authoring — keep them in the test commit.
 - Re-dispatch the subagent only if the failures reveal a genuine missing-coverage gap, not just a broken harness.
-- Do **not** commit until `vp test --no-coverage` is fully green. A green touched-file scope with a red full suite is a failed run.
+- Do **not** commit until `pnpm test:fast` is fully green. A green touched-file scope with a red full suite is a failed run.
 
 ### Decide
 
