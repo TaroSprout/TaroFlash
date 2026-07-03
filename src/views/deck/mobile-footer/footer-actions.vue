@@ -27,6 +27,18 @@ const edit_options = computed<DropdownOption[]>(() => [
     class="flex w-full items-center gap-2 px-(--dock-px) pt-(--dock-pt) pb-(--dock-pb)"
   >
     <ui-button
+      data-testid="deck-footer-actions__page-settings"
+      icon-only
+      icon-left="page-setting"
+      data-theme="brown-200"
+      data-theme-dark="stone-700"
+      size="lg"
+      @press="shell.openPageSettings()"
+    >
+      {{ t('deck-view.page-settings.trigger') }}
+    </ui-button>
+
+    <ui-button
       v-if="shell.is_rearranging.value"
       data-testid="deck-footer-actions__stop-rearranging"
       icon-left="stop"

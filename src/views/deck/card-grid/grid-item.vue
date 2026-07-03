@@ -6,7 +6,7 @@ import UiDropdownButton, {
 } from '@/components/ui-kit/dropdown-button/index.vue'
 import { emitSfx } from '@/sfx/bus'
 import { TYPE_SFX } from '@/sfx/config'
-import { computed, inject, ref } from 'vue'
+import { computed, inject, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { cardEditorKey, type CardWithClientId } from '@/views/deck/composables'
 import { mobileCardEditorKey } from '@/views/deck/mobile-editor/use-mobile-card-editor'
@@ -85,6 +85,13 @@ function onCardClick() {
 function onCardMouseDown(e: MouseEvent) {
   if (e.detail > 1) e.preventDefault()
 }
+
+// The grid's default face is a live setting — resync even a card the user
+// flipped by hand back to the new default.
+watch(
+  () => side,
+  (new_side) => (active_side.value = new_side)
+)
 </script>
 
 <template>
