@@ -106,6 +106,8 @@ function onLeave(el: Element, done: () => void) {
 
 <template>
   <div
+    data-theme="brown-100"
+    data-theme-dark="stone-700"
     ref="container"
     data-testid="deck-search-bar"
     :data-expanded="is_searching"
