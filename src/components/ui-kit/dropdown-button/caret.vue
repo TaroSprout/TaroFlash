@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import { type ButtonProps } from '../button.vue'
 import { flipEnter, flipLeave } from '@/utils/animations/flip'
 import { TYPE_SFX } from '@/sfx/config'
 
 type DropdownCaretProps = {
   open: boolean
   icon?: string
+  size?: NonNullable<ButtonProps['size']>
   // Re-bases just the caret to its own palette; see `surface` below.
   triggerTheme?: Theme
   triggerThemeDark?: Theme
@@ -15,6 +17,7 @@ type DropdownCaretProps = {
 const {
   open,
   icon = 'arrow-drop-down',
+  size = 'base',
   triggerTheme,
   triggerThemeDark
 } = defineProps<DropdownCaretProps>()
@@ -39,6 +42,16 @@ const trigger_theme_dark = computed(
   () => triggerThemeDark ?? (triggerTheme ? 'stone-900' : undefined)
 )
 
+// Own inset scale, distinct from --btn-padding-y (a button's label padding) —
+// this is the caret's circular hit-area inset, so it gets its own token.
+const TRIGGER_PADDING: Record<NonNullable<ButtonProps['size']>, string> = {
+  sm: '4px',
+  base: '4px',
+  lg: '8px',
+  xl: '8px'
+}
+const trigger_padding = computed(() => TRIGGER_PADDING[size])
+
 function onEnter(el: Element, done: () => void) {
   flipEnter(el, 'x', done)
 }
@@ -52,7 +65,11 @@ function onLeave(el: Element, done: () => void) {
   <div
     :data-theme="triggerTheme"
     :data-theme-dark="trigger_theme_dark"
-    class="flex h-full p-2 pointer-coarse:p-0"
+    :style="{ '--btn-trigger-padding': trigger_padding }"
+    :class="[
+      `ui-kit-btn-tokens--${size}`,
+      'flex h-full p-(--btn-trigger-padding) pointer-coarse:p-0'
+    ]"
     data-testid="dropdown-button__trigger-wrap"
   >
     <transition mode="out-in" @enter="onEnter" @leave="onLeave">
@@ -63,7 +80,7 @@ function onLeave(el: Element, done: () => void) {
         aria-haspopup="menu"
         :aria-expanded="open"
         :data-active="open"
-        class="relative z-1 flex aspect-square h-full cursor-pointer items-center justify-center rounded-[calc(var(--btn-border-radius)-8px)] pointer-coarse:rounded-(--btn-border-radius) transition-[scale] duration-120 ease-[ease] hover:scale-110"
+        class="relative z-1 flex aspect-square h-full cursor-pointer items-center justify-center rounded-[calc(var(--btn-border-radius)-var(--btn-trigger-padding))] pointer-coarse:rounded-(--btn-border-radius) transition-[scale] duration-120 ease-[ease] hover:scale-110"
         :class="surface"
         data-testid="dropdown-button__trigger"
         v-sfx="{ hover: TYPE_SFX }"

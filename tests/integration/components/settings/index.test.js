@@ -169,7 +169,8 @@ const TabSheetStub = defineComponent({
           'data-testid': 'tab-sheet-stub',
           'data-active': props.active,
           'data-layout': attrs['data-layout'],
-          'data-tabs': JSON.stringify(props.tabs?.map((t) => t.value) ?? [])
+          'data-tabs': JSON.stringify(props.tabs?.map((t) => t.value) ?? []),
+          'data-tab-icons': JSON.stringify(props.tabs ?? [])
         },
         [
           h('div', { 'data-testid': 'tab-sheet__header' }, slots['header-content']?.()),
@@ -196,6 +197,16 @@ const TabSheetStub = defineComponent({
               onClick: () => emit('update:active', 'subscription')
             },
             'subscription'
+          ),
+          ...(props.tabs ?? []).map((tab) =>
+            h(
+              'button',
+              {
+                'data-testid': `tab-sheet__select-${tab.value}`,
+                onClick: () => emit('update:active', tab.value)
+              },
+              tab.value
+            )
           ),
           h('div', { 'data-testid': 'tab-sheet__content' }, slots.default?.()),
           h('div', { 'data-testid': 'tab-sheet__overlay' }, slots.overlay?.()),
@@ -305,7 +316,7 @@ describe('settings app — header copy follows displayed tab', () => {
   test('switches header copy when the active tab changes', async () => {
     const wrapper = makeWrapper()
     await wrapper.find('[data-testid="tab-sheet__select-app"]').trigger('click')
-    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('App Preferences')
+    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('App Settings')
   })
 
   test('shows the index header on sheet layout with no tab selected', () => {
@@ -313,6 +324,42 @@ describe('settings app — header copy follows displayed tab', () => {
     const wrapper = makeWrapper()
     expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('Settings')
   })
+})
+
+// ── Header icon mirrors the tab-bar icon (TAB_META drift regression) ────────────
+
+describe('settings app — header icon matches the tab-bar icon per tab [obligation]', () => {
+  test('shows no header icon when no tab is active (index)', () => {
+    state.isSheet = false
+    state.isDesktop = false
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-testid="settings__header-icon"]').exists()).toBe(false)
+  })
+
+  test.each([
+    ['profile', 'user-sticker-square'],
+    ['app', 'screwdriver-wrench'],
+    ['review-preferences', 'card-deck'],
+    ['subscription', 'piggy-bank'],
+    ['danger-zone', 'delete']
+  ])(
+    'tab "%s" — header icon equals tab-bar icon (%s) [obligation]',
+    async (value, expected_icon) => {
+      state.isDesktop = true
+      const wrapper = makeWrapper()
+
+      const tab_bar_entries = JSON.parse(
+        wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-tab-icons')
+      )
+      const tab_bar_icon = tab_bar_entries.find((t) => t.value === value)?.icon
+      expect(tab_bar_icon).toBe(expected_icon)
+
+      await wrapper.find(`[data-testid="tab-sheet__select-${value}"]`).trigger('click')
+
+      const header_icon = wrapper.find('[data-testid="settings__header-icon"]').attributes('src')
+      expect(header_icon).toBe(tab_bar_icon)
+    }
+  )
 })
 
 // ── Layout mode data attribute ────────────────────────────────────────────────

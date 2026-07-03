@@ -162,33 +162,43 @@ vi.mock('@/components/modals/deck-settings/tab-danger-zone/index.vue', async () 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
 const TabSheetStub = defineComponent({
+  props: ['tabs'],
   emits: ['close', 'update:active'],
-  setup(_props, { slots, emit, expose }) {
+  setup(props, { slots, emit, expose }) {
     // Mirror the real TabSheet: own sidebar visibility and expose it upward.
     expose({ has_sidebar: useMatchMedia('w>=lg & fine') })
     return () =>
-      h('div', { 'data-testid': 'tab-sheet' }, [
-        h('div', { 'data-testid': 'tab-sheet__header-content' }, slots['header-content']?.()),
-        h(
-          'button',
-          {
-            'data-testid': 'tab-sheet__close-emit',
-            onClick: () => emit('close')
-          },
-          'close'
-        ),
-        h(
-          'button',
-          {
-            'data-testid': 'tab-sheet__select-design',
-            onClick: () => emit('update:active', 'design')
-          },
-          'design'
-        ),
-        slots.default?.(),
-        slots.overlay?.(),
-        h('div', { 'data-testid': 'tab-sheet__footer' }, slots.footer?.())
-      ])
+      h(
+        'div',
+        {
+          'data-testid': 'tab-sheet',
+          'data-tab-icons': JSON.stringify(props.tabs ?? [])
+        },
+        [
+          h('div', { 'data-testid': 'tab-sheet__header-content' }, slots['header-content']?.()),
+          h(
+            'button',
+            {
+              'data-testid': 'tab-sheet__close-emit',
+              onClick: () => emit('close')
+            },
+            'close'
+          ),
+          ...(props.tabs ?? []).map((tab) =>
+            h(
+              'button',
+              {
+                'data-testid': `tab-sheet__select-${tab.value}`,
+                onClick: () => emit('update:active', tab.value)
+              },
+              tab.value
+            )
+          ),
+          slots.default?.(),
+          slots.overlay?.(),
+          h('div', { 'data-testid': 'tab-sheet__footer' }, slots.footer?.())
+        ]
+      )
   }
 })
 
@@ -196,6 +206,14 @@ const UiButtonStub = defineComponent({
   name: 'UiButton',
   setup(_props, { slots, attrs }) {
     return () => h('button', { 'data-testid': 'ui-button', ...attrs }, slots.default?.())
+  }
+})
+
+const UiIconStub = defineComponent({
+  name: 'UiIcon',
+  props: ['src'],
+  setup(props, { attrs }) {
+    return () => h('div', { ...attrs, 'data-icon-src': props.src })
   }
 })
 
@@ -316,7 +334,8 @@ function makeWrapper(extraProps = {}) {
         DeckDesignPreview: DeckPreviewStub,
         DeckPinnedPreview: DeckPinnedPreviewStub,
         DeckAside: DeckAsideStub,
-        UiButton: UiButtonStub
+        UiButton: UiButtonStub,
+        UiIcon: UiIconStub
       }
       // $t is supplied by the real i18n plugin from setup-browser.js
     }
@@ -353,7 +372,7 @@ describe('DeckSettings — save button (DeckAside renders DeckSaveButton interna
 describe('DeckSettings — header copy is tab-driven', () => {
   const cases = [
     { tab: 'design', title: 'Appearance' },
-    { tab: 'study', title: 'Study Preferences' },
+    { tab: 'study', title: 'Study Settings' },
     { tab: 'danger-zone', title: 'Danger Zone' }
   ]
 
@@ -364,6 +383,40 @@ describe('DeckSettings — header copy is tab-driven', () => {
       expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe(title)
     })
   }
+})
+
+describe('DeckSettings — header icon matches the tab-bar icon per tab [obligation]', () => {
+  test('shows no header icon when no tab is active (index, tablet layout)', () => {
+    const { wrapper } = makeWrapper()
+    expect(wrapper.find('[data-testid="deck-settings__header-icon"]').exists()).toBe(false)
+  })
+
+  test.each([
+    ['design', 'paint-brush'],
+    ['study', 'card-deck'],
+    ['danger-zone', 'delete']
+  ])('tab "%s" — header icon equals tab-bar icon (%s) [obligation]', (tab, expected_icon) => {
+    const { wrapper } = makeWrapper({ initial_tab: tab })
+
+    const tab_bar_entries = JSON.parse(
+      wrapper.find('[data-tab-icons]').attributes('data-tab-icons')
+    )
+    const tab_bar_icon = tab_bar_entries.find((t) => t.value === tab)?.icon
+    expect(tab_bar_icon).toBe(expected_icon)
+
+    const header_icon = wrapper
+      .find('[data-testid="deck-settings__header-icon"]')
+      .attributes('data-icon-src')
+    expect(header_icon).toBe(tab_bar_icon)
+  })
+
+  test('desktop tab bar excludes "details" but includes design/study/danger-zone [obligation]', () => {
+    const { wrapper } = makeWrapper()
+    const tab_bar_entries = JSON.parse(
+      wrapper.find('[data-tab-icons]').attributes('data-tab-icons')
+    )
+    expect(tab_bar_entries.map((t) => t.value)).toEqual(['design', 'study', 'danger-zone'])
+  })
 })
 
 describe('DeckSettings — aside wiring', () => {
@@ -561,7 +614,7 @@ describe('DeckSettings — active_tab is a plain non-persisted ref [obligation]'
   test('initial_tab prop sets active_tab to that tab on mount [obligation]', () => {
     const { wrapper } = makeWrapper({ initial_tab: 'study' })
     expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe(
-      'Study Preferences'
+      'Study Settings'
     )
   })
 
@@ -619,7 +672,7 @@ describe('DeckSettings — initial_tab / initial_side override [obligation]', ()
   test('initial_tab prop opens that tab directly (study)', () => {
     const { wrapper } = makeWrapper({ initial_tab: 'study' })
     expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe(
-      'Study Preferences'
+      'Study Settings'
     )
   })
 
@@ -674,7 +727,7 @@ describe('DeckSettings — onNavigate sets direction forward and activates tab',
     await flushPromises()
 
     expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe(
-      'Study Preferences'
+      'Study Settings'
     )
   })
 })

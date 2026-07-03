@@ -71,8 +71,8 @@ describe('TabIndex', () => {
     ])
     expect(cards[0].text()).toContain('Profile')
     expect(cards[1].text()).toContain('Subscription')
-    expect(cards[2].text()).toContain('App Preferences')
-    expect(cards[3].text()).toContain('Review Preferences')
+    expect(cards[2].text()).toContain('App Settings')
+    expect(cards[3].text()).toContain('Study Settings')
   })
 
   test('emits navigate with the clicked entry value', async () => {

@@ -15,6 +15,9 @@ export type ResolvedMemberPreferences = {
     show_all_ratings: boolean
     // Whole-number percent (e.g. 90 = 90%), not yet wired into the FSRS engine.
     desired_retention: number
+    // ts-fsrs step-duration strings (e.g. ['1m', '10m']); empty array disables the phase.
+    learning_steps: string[]
+    relearning_steps: string[]
   }
 }
 
@@ -29,7 +32,9 @@ export const MEMBER_PREFERENCES_DEFAULTS: ResolvedMemberPreferences = {
   },
   study: {
     show_all_ratings: true,
-    desired_retention: 90
+    desired_retention: 90,
+    learning_steps: ['1m', '10m'],
+    relearning_steps: ['10m']
   }
 }
 
@@ -52,7 +57,11 @@ export function withMemberPreferencesDefaults(
       show_all_ratings:
         partial?.study?.show_all_ratings ?? MEMBER_PREFERENCES_DEFAULTS.study.show_all_ratings,
       desired_retention:
-        partial?.study?.desired_retention ?? MEMBER_PREFERENCES_DEFAULTS.study.desired_retention
+        partial?.study?.desired_retention ?? MEMBER_PREFERENCES_DEFAULTS.study.desired_retention,
+      learning_steps:
+        partial?.study?.learning_steps ?? MEMBER_PREFERENCES_DEFAULTS.study.learning_steps,
+      relearning_steps:
+        partial?.study?.relearning_steps ?? MEMBER_PREFERENCES_DEFAULTS.study.relearning_steps
     }
   }
 }

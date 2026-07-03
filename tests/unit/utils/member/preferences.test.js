@@ -21,8 +21,15 @@ describe('MEMBER_PREFERENCES_DEFAULTS', () => {
   test('study defaults to show_all_ratings=true, desired_retention=90 [obligation]', () => {
     expect(MEMBER_PREFERENCES_DEFAULTS.study).toEqual({
       show_all_ratings: true,
-      desired_retention: 90
+      desired_retention: 90,
+      learning_steps: ['1m', '10m'],
+      relearning_steps: ['10m']
     })
+  })
+
+  test('learning_steps/relearning_steps default to ts-fsrs library defaults, not empty arrays [obligation]', () => {
+    expect(MEMBER_PREFERENCES_DEFAULTS.study.learning_steps).toEqual(['1m', '10m'])
+    expect(MEMBER_PREFERENCES_DEFAULTS.study.relearning_steps).toEqual(['10m'])
   })
 })
 
@@ -46,11 +53,15 @@ describe('withMemberPreferencesDefaults', () => {
   test('returns all defaults when called with null', () => {
     const result = withMemberPreferencesDefaults(null)
     expect(result.audio).toEqual({ study_sounds: 5, interface_sounds: 5, hover_sounds: 5 })
+    expect(result.study.learning_steps).toEqual(['1m', '10m'])
+    expect(result.study.relearning_steps).toEqual(['10m'])
   })
 
   test('returns all defaults when called with undefined', () => {
     const result = withMemberPreferencesDefaults(undefined)
     expect(result.audio).toEqual({ study_sounds: 5, interface_sounds: 5, hover_sounds: 5 })
+    expect(result.study.learning_steps).toEqual(['1m', '10m'])
+    expect(result.study.relearning_steps).toEqual(['10m'])
   })
 
   // [obligation] partial prefs with no `audio` key → all three audio fields default to 5
@@ -97,17 +108,46 @@ describe('withMemberPreferencesDefaults', () => {
 
   test('partial prefs with no study key → study defaults to show_all_ratings=true, desired_retention=90 [obligation]', () => {
     const result = withMemberPreferencesDefaults({ accessibility: { left_hand: true } })
-    expect(result.study).toEqual({ show_all_ratings: true, desired_retention: 90 })
+    expect(result.study).toEqual({
+      show_all_ratings: true,
+      desired_retention: 90,
+      learning_steps: ['1m', '10m'],
+      relearning_steps: ['10m']
+    })
   })
 
   test('partial prefs with study.show_all_ratings=false is preserved, desired_retention still defaults [obligation]', () => {
     const result = withMemberPreferencesDefaults({ study: { show_all_ratings: false } })
-    expect(result.study).toEqual({ show_all_ratings: false, desired_retention: 90 })
+    expect(result.study).toEqual({
+      show_all_ratings: false,
+      desired_retention: 90,
+      learning_steps: ['1m', '10m'],
+      relearning_steps: ['10m']
+    })
   })
 
   test('partial prefs with study.desired_retention=75 is preserved, show_all_ratings still defaults [obligation]', () => {
     const result = withMemberPreferencesDefaults({ study: { desired_retention: 75 } })
-    expect(result.study).toEqual({ show_all_ratings: true, desired_retention: 75 })
+    expect(result.study).toEqual({
+      show_all_ratings: true,
+      desired_retention: 75,
+      learning_steps: ['1m', '10m'],
+      relearning_steps: ['10m']
+    })
+  })
+
+  test('partial prefs supplying only desired_retention still defaults learning_steps/relearning_steps [obligation]', () => {
+    const result = withMemberPreferencesDefaults({ study: { desired_retention: 80 } })
+    expect(result.study.learning_steps).toEqual(['1m', '10m'])
+    expect(result.study.relearning_steps).toEqual(['10m'])
+  })
+
+  test('partial prefs can override learning_steps/relearning_steps independently [obligation]', () => {
+    const result = withMemberPreferencesDefaults({
+      study: { learning_steps: ['1m', '10m', '1d'], relearning_steps: [] }
+    })
+    expect(result.study.learning_steps).toEqual(['1m', '10m', '1d'])
+    expect(result.study.relearning_steps).toEqual([])
   })
 
   test('does not mutate MEMBER_PREFERENCES_DEFAULTS', () => {

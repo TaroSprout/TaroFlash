@@ -68,9 +68,9 @@ const LabeledSectionStub = defineComponent({
   }
 })
 
-// UiSelectField stub that renders the current value and emits update:modelValue
-const UiSelectFieldStub = defineComponent({
-  name: 'UiSelectField',
+// UiSelectMenu stub that renders the current value and emits update:modelValue
+const UiSelectMenuStub = defineComponent({
+  name: 'UiSelectMenu',
   inheritAttrs: false,
   props: { modelValue: { type: String, default: '' }, options: { type: Array, default: () => [] } },
   emits: ['update:modelValue'],
@@ -80,12 +80,12 @@ const UiSelectFieldStub = defineComponent({
       h(
         'div',
         {
-          'data-testid': attrs['data-testid'] ?? 'ui-select-field-stub',
+          'data-testid': attrs['data-testid'] ?? 'ui-select-menu-stub',
           'data-value': props.modelValue
         },
         [
           h('button', {
-            'data-testid': 'ui-select-field-stub__select',
+            'data-testid': 'ui-select-menu-stub__select',
             onClick: (e) => emit('update:modelValue', e.target.dataset.option)
           })
         ]
@@ -118,7 +118,7 @@ function mountPageSettings(editor = makeEditor()) {
           UiButton: UiButtonStub,
           SectionList: SectionListStub,
           LabeledSection: LabeledSectionStub,
-          UiSelectField: UiSelectFieldStub
+          UiSelectMenu: UiSelectMenuStub
         }
       }
     }),
@@ -258,7 +258,7 @@ describe('PageSettings', () => {
     const editor = makeEditor({ sort_by_val: 'default' })
     const { wrapper } = mountPageSettings(editor)
     // Trigger update:modelValue directly on the stub component
-    const sortField = wrapper.findComponent({ name: 'UiSelectField' })
+    const sortField = wrapper.findComponent({ name: 'UiSelectMenu' })
     await sortField.vm.$emit('update:modelValue', 'difficulty')
     expect(editor.setSortBy).toHaveBeenCalledWith('difficulty')
   })

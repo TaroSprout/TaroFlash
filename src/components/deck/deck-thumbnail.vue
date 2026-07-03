@@ -22,7 +22,7 @@ const emit = defineEmits<{ press: [e: MouseEvent] }>()
   <ui-tappable
     as="div"
     data-testid="deck-thumbnail"
-    class="card-outline pointer-fine:hover:scale-101 data-[active=true]:scale-101 pointer-coarse:data-[active=true]:scale-105 pointer-fine:transition-transform duration-75 relative cursor-pointer h-min touch-manipulation"
+    class="card-outline pointer-fine:hover:scale-101 data-[tap-active=true]:scale-101 pointer-coarse:data-[tap-active=true]:scale-105 pointer-fine:transition-transform duration-75 relative cursor-pointer h-min touch-manipulation"
     :sfx="{ hover: TYPE_SFX, ...sfx }"
     @tap="emit('press', $event)"
   >

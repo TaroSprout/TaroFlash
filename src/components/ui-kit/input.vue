@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 
-const { textAlign = 'left', size = 'base' } = defineProps<{
+const { textAlign = 'left', size = 'lg' } = defineProps<{
   label?: string
   placeholder?: string
   textAlign?: 'left' | 'center' | 'right'

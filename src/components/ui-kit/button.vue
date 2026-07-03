@@ -323,8 +323,8 @@ function onClick(e: MouseEvent) {
 }
 .ui-kit-btn.ui-kit-btn--base,
 .ui-kit-btn-tokens--base {
-  --btn-font-size: var(--text-lg);
-  --btn-font-size--line-height: var(--text-lg--line-height);
+  --btn-font-size: var(--text-base);
+  --btn-font-size--line-height: var(--text-base--line-height);
   --btn-border-radius: 18px;
   --btn-gap: 8px;
   --btn-padding-y: 6px;

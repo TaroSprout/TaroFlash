@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui-kit/button.vue'
 import UiPopover from '@/components/ui-kit/popover.vue'
-import UiSelectField from '@/components/ui-kit/select-field.vue'
+import UiSelectMenu from '@/components/ui-kit/select-menu.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import {
@@ -139,9 +139,8 @@ function onSelectSize(value: CardGridSize) {
         </labeled-section>
 
         <labeled-section :label="t('deck-view.page-settings.sort-label')">
-          <ui-select-field
+          <ui-select-menu
             data-testid="page-settings__sort"
-            data-theme="brown-200"
             data-theme-dark="stone-900"
             menu-theme-dark="stone-900"
             :options="sort_options"

@@ -20,6 +20,7 @@ import {
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { emitSfx } from '@/sfx/bus'
 import { useMemberEditor, memberEditorKey } from '@/composables/member/editor'
+import { TAB_META, type TabValue } from './tabs'
 import { useMemberDangerActions, memberDangerActionsKey } from '@/composables/member/danger-actions'
 import { useTabModalLayout } from '@/composables/ui/tab-modal-layout'
 import { useTabTransition } from '@/composables/ui/tab-transition'
@@ -79,23 +80,19 @@ provide(settingsRecedeKey, {
   restore: () => settings_root.value?.$el && restoreModal(settings_root.value.$el, is_pinned.value)
 })
 
-type ActiveTab = 'profile' | 'subscription' | 'app' | 'review-preferences' | 'danger-zone'
+type ActiveTab = TabValue
 const active_tab = ref<ActiveTab | null>(null)
 
 const tab_outlet = ref<HTMLElement>()
 const { nav_direction, onTabEnter, onTabLeave } = useTabTransition(layout_mode, tab_outlet)
 
-const tabs = computed(() => [
-  { value: 'profile', icon: 'user-sticker-square', label: t('settings.tab.profile') },
-  { value: 'app', icon: 'screwdriver-wrench', label: t('settings.tab.app') },
-  {
-    value: 'review-preferences',
-    icon: 'card-deck',
-    label: t('settings.tab.review-preferences')
-  },
-  { value: 'subscription', icon: 'piggy-bank', label: t('settings.tab.subscription') },
-  { value: 'danger-zone', icon: 'delete', label: t('settings.tab.danger-zone') }
-])
+const tabs = computed(() =>
+  (Object.keys(TAB_META) as TabValue[]).map((value) => ({
+    value,
+    icon: TAB_META[value].icon,
+    label: t(TAB_META[value].labelKey)
+  }))
+)
 
 const displayed_tab = computed(
   () => active_tab.value ?? (layout_mode.value === 'desktop' ? 'profile' : 'index')
@@ -106,7 +103,12 @@ const sidebar_active = computed({
   set: (v) => (active_tab.value = v as ActiveTab)
 })
 
-const header_title = computed(() => t(`settings.header.${displayed_tab.value}.title`))
+const header_meta = computed(() =>
+  displayed_tab.value !== 'index' ? TAB_META[displayed_tab.value] : null
+)
+const header_title = computed(() =>
+  header_meta.value ? t(header_meta.value.labelKey) : t('settings.header.index.title')
+)
 
 const tab_component = computed(() => TAB_COMPONENTS[displayed_tab.value])
 
@@ -173,8 +175,8 @@ watch(layout_mode, (mode) => {
     data-theme-dark="blue-650"
     :data-layout="layout_mode"
     :class="[
-      layout_mode === 'desktop' ? 'w-270!' : 'w-full! max-w-224',
-      layout_mode !== 'sheet' && 'h-182',
+      layout_mode === 'desktop' ? 'w-248!' : 'w-full! max-w-224',
+      layout_mode !== 'sheet' && 'h-186',
       layout_mode === 'sheet' ? '[--settings-padding:var(--sheet-px)]' : '[--settings-padding:0px]'
     ]"
     :sheet_px="sheet_px"
@@ -192,7 +194,16 @@ watch(layout_mode, (mode) => {
           layout_mode === 'sheet' ? 'items-center text-center' : layout_mode === 'tablet' && 'pt-4'
         "
       >
-        <h1 data-testid="settings__header-title" class="text-5xl text-white">
+        <h1
+          data-testid="settings__header-title"
+          class="flex items-center gap-3 text-5xl text-white"
+        >
+          <ui-icon
+            v-if="header_meta"
+            data-testid="settings__header-icon"
+            :src="header_meta.icon"
+            class="size-9 shrink-0"
+          />
           {{ header_title }}
         </h1>
       </div>

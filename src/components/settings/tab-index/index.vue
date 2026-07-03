@@ -7,31 +7,25 @@ import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import DangerDeleteAccountButton from '../danger-delete-account-button.vue'
 import SettingsSaveButton from '../settings-save-button.vue'
 import { settingsLayoutKey } from '../layout'
+import { TAB_META, type TabValue } from '../tabs'
 
-export type TabIndexNavValue = 'profile' | 'subscription' | 'app' | 'review-preferences'
+export type TabIndexNavValue = Exclude<TabValue, 'danger-zone'>
 
 const { t } = useI18n()
 const layout_mode = inject(settingsLayoutKey)!
 
-type NavEntry = { value: TabIndexNavValue; icon: string }
-type NavGroup = { key: string; heading: string; entries: NavEntry[] }
+type NavGroup = { key: string; heading: string; entries: TabIndexNavValue[] }
 
 const nav_groups = computed<NavGroup[]>(() => [
   {
     key: 'account',
     heading: t('settings.index.account-heading'),
-    entries: [
-      { value: 'profile', icon: 'user-sticker-square' },
-      { value: 'subscription', icon: 'piggy-bank' }
-    ]
+    entries: ['profile', 'subscription']
   },
   {
     key: 'app',
     heading: t('settings.index.app-heading'),
-    entries: [
-      { value: 'app', icon: 'screwdriver-wrench' },
-      { value: 'review-preferences', icon: 'card-deck' }
-    ]
+    entries: ['app', 'review-preferences']
   }
 ])
 
@@ -54,10 +48,10 @@ function onNavigate(value: string) {
     >
       <ui-nav-list
         :entries="
-          group.entries.map((entry) => ({
-            value: entry.value,
-            icon: entry.icon,
-            label: t(`settings.tab.${entry.value}`)
+          group.entries.map((value) => ({
+            value,
+            icon: TAB_META[value].icon,
+            label: t(TAB_META[value].labelKey)
           }))
         "
         @navigate="onNavigate"
@@ -68,7 +62,7 @@ function onNavigate(value: string) {
 
     <labeled-section
       data-testid="tab-index__danger-zone"
-      :label="t('settings.header.danger-zone.title')"
+      :label="t(TAB_META['danger-zone'].labelKey)"
     >
       <div data-testid="tab-index__danger-actions" class="flex flex-col gap-2">
         <danger-delete-account-button />

@@ -16,7 +16,8 @@ const {
   suppress = false,
   static_on_mobile = false,
   theme = 'white',
-  theme_dark = 'brown-100'
+  theme_dark = 'brown-100',
+  max_chars = 32
 } = defineProps<{
   text?: string
   position?: Placement
@@ -28,6 +29,9 @@ const {
   static_on_mobile?: boolean
   theme?: string
   theme_dark?: string
+  // Wraps the tooltip body at roughly this many characters per line, using
+  // `ch` units so it scales with the font instead of a fixed pixel width.
+  max_chars?: number
 }>()
 
 const triggerRef = useTemplateRef<HTMLElement>('ui-tooltip-trigger')
@@ -42,6 +46,10 @@ const is_coarse_pointer = useMatchMedia('coarse')
 const should_show = computed(
   () => !suppress && (visible || is_active.value || (static_on_mobile && is_coarse_pointer.value))
 )
+
+// Rough heuristic — good enough to tell whether `text` will wrap onto more
+// than one line at `max_chars`, so we can give wrapped tooltips extra breathing room.
+const is_multiline = computed(() => (text?.length ?? 0) > max_chars)
 
 const { floatingStyles, update } = useFloating(triggerRef, popoverRef, {
   placement: position,
@@ -102,8 +110,10 @@ function onPointerLeave(e: PointerEvent) {
         data-testid="ui-tooltip"
         :data-theme="theme"
         :data-theme-dark="theme_dark"
-        :style="floatingStyles"
-        class="ui-tooltip ui-tooltip--visible bg-(--theme-primary) text-(--theme-on-primary) rounded-full py-1.5 px-2 text-sm pointer-events-none z-100 select-none"
+        :data-multiline="is_multiline"
+        :style="{ ...floatingStyles, maxWidth: `${max_chars}ch` }"
+        class="ui-tooltip ui-tooltip--visible bg-(--theme-primary) text-(--theme-on-primary) rounded-4 text-sm text-center pointer-events-none z-100 select-none"
+        :class="is_multiline ? 'py-3 px-3' : 'py-1.5 px-2'"
       >
         <slot name="tooltip">{{ text }}</slot>
       </div>

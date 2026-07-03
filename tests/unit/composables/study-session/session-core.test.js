@@ -12,7 +12,12 @@ const { saveReviewMock } = vi.hoisted(() => ({
 const { mockMemberStore, generatorParametersMock } = vi.hoisted(() => ({
   mockMemberStore: {
     preferences: {
-      study: { show_all_ratings: true, desired_retention: 90 }
+      study: {
+        show_all_ratings: true,
+        desired_retention: 90,
+        learning_steps: ['1m', '10m'],
+        relearning_steps: ['10m']
+      }
     }
   },
   generatorParametersMock: vi.fn()
@@ -45,6 +50,8 @@ beforeEach(() => {
   generatorParametersMock.mockClear()
   mockMemberStore.preferences.study.show_all_ratings = true
   mockMemberStore.preferences.study.desired_retention = 90
+  mockMemberStore.preferences.study.learning_steps = ['1m', '10m']
+  mockMemberStore.preferences.study.relearning_steps = ['10m']
   sessionStorage.clear()
 })
 
@@ -219,6 +226,20 @@ describe('session-core — member preference seeding [obligation]', () => {
     useStudySessionCore()
     expect(generatorParametersMock).toHaveBeenCalledWith(
       expect.objectContaining({ request_retention: 0.82 })
+    )
+  })
+
+  test('FSRS is seeded with learning_steps/relearning_steps from member_store.preferences.study, not hardcoded to [] [obligation]', () => {
+    // Regression guard: this was previously hardcoded to `[]` for both fields,
+    // silently disabling learning/relearning steps regardless of member prefs.
+    mockMemberStore.preferences.study.learning_steps = ['1m', '10m', '1d']
+    mockMemberStore.preferences.study.relearning_steps = ['1m', '10m']
+    useStudySessionCore()
+    expect(generatorParametersMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        learning_steps: ['1m', '10m', '1d'],
+        relearning_steps: ['1m', '10m']
+      })
     )
   })
 })

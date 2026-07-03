@@ -21,7 +21,7 @@ const price = `$${PLANS.paid.monthlyPriceUsd} / mo`
       data-theme="brown-100"
       data-theme-dark="stone-700"
       :sfx="{ hover: TYPE_SFX }"
-      class="card-outline w-full flex flex-col gap-3 rounded-4 px-5 py-4 text-(--theme-on-primary) bg-(--theme-primary) pointer-fine:hover:scale-101 data-[active=true]:scale-101 pointer-coarse:data-[active=true]:scale-105 pointer-fine:transition-transform duration-75 cursor-pointer touch-manipulation"
+      class="card-outline w-full flex flex-col gap-3 rounded-4 px-5 py-4 text-(--theme-on-primary) bg-(--theme-primary) pointer-fine:hover:scale-101 data-[tap-active=true]:scale-101 pointer-coarse:data-[tap-active=true]:scale-105 pointer-fine:transition-transform duration-75 cursor-pointer touch-manipulation"
       @tap="onUpgradeClick"
     >
       <div data-testid="paid-features__upgrade" class="absolute -bottom-2 -right-2 z-10 rotate-2">

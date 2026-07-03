@@ -116,6 +116,16 @@ describe('UiOptionGroup', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
   })
 
+  // ── Regression: data-active fallthrough must not collide with tappable's
+  // own data-tap-active hover/press indicator [obligation] ────────────────
+
+  test('a selected-but-idle option does not carry data-tap-active=true [obligation]', () => {
+    const wrapper = mountOptionGroup({ value: 'simple' })
+    const opts = getOptions(wrapper)
+    expect(opts[0].attributes('data-active')).toBe('true')
+    expect(opts[0].attributes('data-tap-active')).toBeUndefined()
+  })
+
   // ── Size variants ─────────────────────────────────────────────────────────
 
   test('defaults to size=sm', () => {
