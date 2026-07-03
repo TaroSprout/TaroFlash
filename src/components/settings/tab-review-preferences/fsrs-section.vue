@@ -3,6 +3,8 @@ import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
 import UiSelectMenu from '@/components/ui-kit/select-menu.vue'
+import UiTooltip from '@/components/ui-kit/tooltip.vue'
+import UiIcon from '@/components/ui-kit/icon.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import { memberEditorKey } from '@/composables/member/editor'
 
@@ -87,12 +89,15 @@ const relearning_steps_key = computed<RelearningStepsKey>({
         data-testid="tab-review-preferences__fsrs-retention"
         class="flex items-center justify-between gap-4"
       >
-        <span
+        <ui-tooltip
+          element="span"
+          :text="t('settings.review-preferences.fsrs.desired-retention-tooltip')"
           data-testid="tab-review-preferences__fsrs-retention-label"
-          class="text-brown-700 dark:text-brown-100"
+          class="flex cursor-help items-center gap-1 text-brown-700 dark:text-brown-100"
         >
           {{ t('settings.review-preferences.fsrs.desired-retention-label') }}
-        </span>
+          <ui-icon src="dot" class="size-4 shrink-0 text-brown-500 dark:text-brown-300" />
+        </ui-tooltip>
 
         <ui-spinbox
           v-model:value="editor.preferences.study.desired_retention"
@@ -105,12 +110,15 @@ const relearning_steps_key = computed<RelearningStepsKey>({
         data-testid="tab-review-preferences__fsrs-learning-steps"
         class="flex items-center justify-between gap-4"
       >
-        <span
+        <ui-tooltip
+          element="span"
+          :text="t('settings.review-preferences.fsrs.learning-steps-tooltip')"
           data-testid="tab-review-preferences__fsrs-learning-steps-label"
-          class="text-brown-700 dark:text-brown-100"
+          class="flex cursor-help items-center gap-1 text-brown-700 dark:text-brown-100"
         >
           {{ t('settings.review-preferences.fsrs.learning-steps-label') }}
-        </span>
+          <ui-icon src="dot" class="size-4 shrink-0 text-brown-500 dark:text-brown-300" />
+        </ui-tooltip>
 
         <ui-select-menu
           data-theme="brown-100"
@@ -127,12 +135,15 @@ const relearning_steps_key = computed<RelearningStepsKey>({
         data-testid="tab-review-preferences__fsrs-relearning-steps"
         class="flex items-center justify-between gap-4"
       >
-        <span
+        <ui-tooltip
+          element="span"
+          :text="t('settings.review-preferences.fsrs.relearning-steps-tooltip')"
           data-testid="tab-review-preferences__fsrs-relearning-steps-label"
-          class="text-brown-700 dark:text-brown-100"
+          class="flex cursor-help items-center gap-1 text-brown-700 dark:text-brown-100"
         >
           {{ t('settings.review-preferences.fsrs.relearning-steps-label') }}
-        </span>
+          <ui-icon src="dot" class="size-4 shrink-0 text-brown-500 dark:text-brown-300" />
+        </ui-tooltip>
 
         <ui-select-menu
           data-theme="brown-100"
