@@ -93,10 +93,10 @@ const relearning_steps_key = computed<RelearningStepsKey>({
           element="span"
           :text="t('settings.review-preferences.fsrs.desired-retention-tooltip')"
           data-testid="tab-review-preferences__fsrs-retention-label"
-          class="flex cursor-help items-center gap-1 text-brown-700 dark:text-brown-100"
+          class="flex cursor-pointer items-center gap-1 text-brown-700 dark:text-brown-100"
         >
           {{ t('settings.review-preferences.fsrs.desired-retention-label') }}
-          <ui-icon src="dot" class="size-4 shrink-0 text-brown-500 dark:text-brown-300" />
+          <ui-icon src="info-circle" class="size-4 shrink-0 text-brown-500 dark:text-brown-300" />
         </ui-tooltip>
 
         <ui-spinbox
@@ -114,10 +114,10 @@ const relearning_steps_key = computed<RelearningStepsKey>({
           element="span"
           :text="t('settings.review-preferences.fsrs.learning-steps-tooltip')"
           data-testid="tab-review-preferences__fsrs-learning-steps-label"
-          class="flex cursor-help items-center gap-1 text-brown-700 dark:text-brown-100"
+          class="flex cursor-pointer items-center gap-1 text-brown-700 dark:text-brown-100"
         >
           {{ t('settings.review-preferences.fsrs.learning-steps-label') }}
-          <ui-icon src="dot" class="size-4 shrink-0 text-brown-500 dark:text-brown-300" />
+          <ui-icon src="info-circle" class="size-4 shrink-0 text-brown-500 dark:text-brown-300" />
         </ui-tooltip>
 
         <ui-select-menu
@@ -139,10 +139,10 @@ const relearning_steps_key = computed<RelearningStepsKey>({
           element="span"
           :text="t('settings.review-preferences.fsrs.relearning-steps-tooltip')"
           data-testid="tab-review-preferences__fsrs-relearning-steps-label"
-          class="flex cursor-help items-center gap-1 text-brown-700 dark:text-brown-100"
+          class="flex cursor-pointer items-center gap-1 text-brown-700 dark:text-brown-100"
         >
           {{ t('settings.review-preferences.fsrs.relearning-steps-label') }}
-          <ui-icon src="dot" class="size-4 shrink-0 text-brown-500 dark:text-brown-300" />
+          <ui-icon src="info-circle" class="size-4 shrink-0 text-brown-500 dark:text-brown-300" />
         </ui-tooltip>
 
         <ui-select-menu
