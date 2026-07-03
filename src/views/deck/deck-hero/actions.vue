@@ -30,7 +30,7 @@ function onStudyClicked() {
 </script>
 
 <template>
-  <div data-testid="deck-hero__actions" class="w-full flex flex-row md:flex-col gap-2">
+  <div data-testid="deck-hero__actions" class="w-full flex flex-row xl:flex-col gap-2">
     <div data-testid="deck-hero__study-action" class="flex-1 min-w-0">
       <ui-button
         data-testid="overview-panel__study-button"
@@ -57,7 +57,7 @@ function onStudyClicked() {
       </ui-button>
     </div>
 
-    <div v-if="!is_mobile" data-testid="deck-hero__edit-action" class="shrink-0 md:w-full">
+    <div v-if="!is_mobile" data-testid="deck-hero__edit-action" class="shrink-0 xl:w-full">
       <ui-dropdown-button
         data-testid="overview-panel__settings-button"
         :options="menu.options.value"

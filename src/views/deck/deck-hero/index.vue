@@ -25,16 +25,22 @@ const is_selecting = editor?.selection.is_selecting
     class="flex max-w-full flex-col items-center gap-6 md:flex-row md:items-end xl:w-max xl:flex-col xl:items-start"
   >
     <thumbnail :deck="deck" />
-    <deck-details :deck="deck" />
 
-    <div v-if="!hideActions" data-testid="deck-hero__actions-wrap" class="relative w-full">
-      <Transition :css="false" @enter="defaultEnter" @leave="defaultLeave">
-        <actions v-if="!is_selecting" :deck="deck" />
-      </Transition>
+    <div
+      data-testid="deck-hero__details-wrap"
+      class="flex w-full flex-col gap-6 md:min-w-0 md:flex-1 xl:flex-none"
+    >
+      <deck-details :deck="deck" />
 
-      <Transition :css="false" @enter="bulkEnter" @leave="bulkLeave">
-        <bulk-actions v-if="is_selecting" class="absolute inset-0" />
-      </Transition>
+      <div v-if="!hideActions" data-testid="deck-hero__actions-wrap" class="relative w-full">
+        <Transition :css="false" @enter="defaultEnter" @leave="defaultLeave">
+          <actions v-if="!is_selecting" :deck="deck" />
+        </Transition>
+
+        <Transition :css="false" @enter="bulkEnter" @leave="bulkLeave">
+          <bulk-actions v-if="is_selecting" class="absolute inset-0" />
+        </Transition>
+      </div>
     </div>
   </div>
 </template>
