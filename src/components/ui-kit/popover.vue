@@ -209,7 +209,11 @@ watch(
   display: block;
 }
 
-.ui-kit-popover--shadow {
+/* Applied per-piece (arrow here, the slotted panel applies its own) rather
+   than on `.ui-kit-popover` itself — a `filter` on that shared box creates a
+   rendering layer clipped to its own bounds, cutting off the arrow, which is
+   deliberately positioned to poke out past that edge. */
+.ui-kit-popover--shadow .ui-kit-popover__arrow-default {
   filter: drop-shadow(var(--drop-shadow-sm));
 }
 
