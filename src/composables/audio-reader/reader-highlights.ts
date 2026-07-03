@@ -126,9 +126,6 @@ export const readerMatchesKey = Symbol('readerMatches') as InjectionKey<
  * @param matchRangeAt - resolves the card-match range covering a word, or null
  *   when none. A tap/click on a matched word selects the whole matched phrase;
  *   a drag (or long-press range select) still commits exactly what was swept.
- * @param is_playing - whether the audio is playing; the active-line follow
- *   animates while it's true and jumps instantly otherwise (a resume seek or a
- *   scrub mustn't leave a scroll tween running — it locks up iOS Safari).
  * @param virtualizer - the transcript's window virtualizer, used to bring the
  *   active word's row into the DOM when a seek/resume lands outside the
  *   currently rendered range.
@@ -143,7 +140,6 @@ export function useReaderHighlights(
   popover_open: MaybeRefOrGetter<boolean>,
   onDismiss: () => void,
   matchRangeAt: (index: number) => WordRange | null = () => null,
-  is_playing: MaybeRefOrGetter<boolean> = false,
   virtualizer: WordVirtualizer,
   rowIndexOfWord: (word_index: number) => number
 ) {
@@ -438,7 +434,6 @@ export function useReaderHighlights(
   // (many words per frame) settles into a single scroll instead of a jittery
   // chain. 100 ms is short enough to feel responsive during normal playback
   // (~200–300 ms per word) but swallows bursts from fast scrubs.
-  // Paused jumps must be instant (iOS Safari lock on rAF-driven tweens).
   function followActiveWord() {
     if (!following.value) return
     if (follow_timer !== null) clearTimeout(follow_timer)
@@ -448,7 +443,7 @@ export function useReaderHighlights(
       if (index < 0) return
       const el = await ensureWordMounted(index)
       if (!el) return
-      scrollWordIntoDeadzone(el, toValue(is_playing))
+      scrollWordIntoDeadzone(el)
     }, 100)
   }
 
@@ -516,9 +511,7 @@ export function useReaderHighlights(
     if (!el) return
     if (el.getBoundingClientRect().bottom <= window.innerHeight * SHEET_COVER_RATIO) return
 
-    // Jump instantly — opening a term always pauses the audio, so a rAF-driven
-    // window.scrollTo tween would starve rAF on iOS Safari for 600ms.
-    scrollLineIntoView(el, false)
+    scrollLineIntoView(el)
   }
 
   async function positionInteraction() {

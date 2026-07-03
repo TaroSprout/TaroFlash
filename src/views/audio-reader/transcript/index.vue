@@ -14,7 +14,6 @@ type TranscriptViewProps = {
   matches?: Map<number, CardMatch>
   active_word: number
   popover_open?: boolean
-  is_playing?: boolean
 }
 
 type TranscriptRow = { paragraph: SentenceWords; chapter_title?: string }
@@ -24,8 +23,7 @@ const {
   chapters = [],
   matches = new Map(),
   active_word,
-  popover_open = false,
-  is_playing = false
+  popover_open = false
 } = defineProps<TranscriptViewProps>()
 
 const emit = defineEmits<{
@@ -108,7 +106,6 @@ const {
   () => popover_open,
   () => emit('dismiss'),
   matchRangeAt,
-  () => is_playing,
   virtualizer,
   rowIndexOfWord
 )
