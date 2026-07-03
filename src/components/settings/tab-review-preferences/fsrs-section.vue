@@ -113,6 +113,10 @@ const relearning_steps_key = computed<RelearningStepsKey>({
         </span>
 
         <ui-select-field
+          data-theme="brown-100"
+          data-theme-dark="stone-700"
+          menu-theme="brown-100"
+          menu-theme-dark="stone-700"
           v-model="learning_steps_key"
           :options="learning_steps_options"
           class="w-32"
@@ -131,6 +135,10 @@ const relearning_steps_key = computed<RelearningStepsKey>({
         </span>
 
         <ui-select-field
+          data-theme="brown-100"
+          data-theme-dark="stone-700"
+          menu-theme="brown-100"
+          menu-theme-dark="stone-700"
           v-model="relearning_steps_key"
           :options="relearning_steps_options"
           class="w-32"

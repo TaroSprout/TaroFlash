@@ -33,8 +33,8 @@ export const MEMBER_PREFERENCES_DEFAULTS: ResolvedMemberPreferences = {
   study: {
     show_all_ratings: true,
     desired_retention: 90,
-    learning_steps: [],
-    relearning_steps: []
+    learning_steps: ['1m', '10m'],
+    relearning_steps: ['10m']
   }
 }
 
