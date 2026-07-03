@@ -1,13 +1,12 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
-import { shallowMount } from '@vue/test-utils'
-import { defineComponent, h, ref, useAttrs } from 'vue'
+import { flushPromises, shallowMount } from '@vue/test-utils'
+import { defineComponent, h, nextTick, ref, useAttrs } from 'vue'
 
-const { mockStartStudy } = vi.hoisted(() => ({ mockStartStudy: vi.fn() }))
 const { mockOpenDeckSettings } = vi.hoisted(() => ({ mockOpenDeckSettings: vi.fn() }))
 const { mockUseMatchMedia } = vi.hoisted(() => ({ mockUseMatchMedia: vi.fn() }))
-
-vi.mock('@/components/study-session/composables/study-modal', () => ({
-  useStudyModal: () => ({ start: mockStartStudy })
+const { mockFadeEnter, mockFadeLeave } = vi.hoisted(() => ({
+  mockFadeEnter: vi.fn((_el, done) => done?.()),
+  mockFadeLeave: vi.fn((_el, done) => done?.())
 }))
 
 vi.mock('@/composables/deck/settings-modal', () => ({
@@ -15,6 +14,11 @@ vi.mock('@/composables/deck/settings-modal', () => ({
 }))
 
 vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: mockUseMatchMedia }))
+
+vi.mock('@/utils/animations/fade', () => ({
+  fadeEnter: mockFadeEnter,
+  fadeLeave: mockFadeLeave
+}))
 
 // useCardEditMenu → useDeckQuery needs @pinia/colada; override just useDeckQuery
 // and preserve all other named exports so the mock doesn't drop barrel siblings.
@@ -25,16 +29,6 @@ vi.mock('@/api/decks', async (importOriginal) => ({
   ...(await importOriginal()),
   useDeckQuery: mockUseDeckQuery
 }))
-
-const UiButtonStub = defineComponent({
-  name: 'UiButton',
-  inheritAttrs: false,
-  emits: ['press'],
-  setup(_p, { slots, emit }) {
-    const attrs = useAttrs()
-    return () => h('button', { ...attrs, onClick: () => emit('press') }, slots.default?.())
-  }
-})
 
 const UiDropdownButtonStub = defineComponent({
   name: 'UiDropdownButton',
@@ -61,8 +55,28 @@ const UiDropdownButtonStub = defineComponent({
   }
 })
 
+const StudyButtonStub = defineComponent({
+  name: 'StudyButton',
+  props: ['deck'],
+  setup: (props) => () =>
+    h('div', { 'data-testid': 'study-button-stub', 'data-deck-id': props.deck?.id })
+})
+
+const SearchBarStub = defineComponent({
+  name: 'SearchBar',
+  setup: () => () => h('div', { 'data-testid': 'search-bar-stub' })
+})
+
+// Wait for Vue Transition JS hooks
+async function flushTransition() {
+  await nextTick()
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+  await flushPromises()
+}
+
 import Actions from '@/views/deck/deck-hero/actions.vue'
 import { cardEditorKey } from '@/views/deck/composables/list-controller'
+import { cardSearchKey } from '@/views/deck/composables/card-search'
 import { deckViewShellKey } from '@/views/deck/composables/view-shell'
 import { mobileCardEditorKey } from '@/views/deck/mobile-editor/use-mobile-card-editor'
 
@@ -85,23 +99,39 @@ function makeMobileEditor() {
   return { open_at: vi.fn() }
 }
 
-function mount({ deck = {}, editor, shell, mobile_editor, is_mobile = false } = {}) {
+function makeSearch({ is_searching = false } = {}) {
+  return { is_searching: ref(is_searching) }
+}
+
+function mount({
+  deck = {},
+  editor,
+  shell,
+  mobile_editor,
+  search = makeSearch(),
+  is_mobile = false
+} = {}) {
   mockUseMatchMedia.mockReturnValue(ref(is_mobile))
-  const provide = {}
+  const provide = { [cardSearchKey]: search }
   if (editor !== undefined) provide[cardEditorKey] = editor
   if (shell !== undefined) provide[deckViewShellKey] = shell
   if (mobile_editor !== undefined) provide[mobileCardEditorKey] = mobile_editor
   return shallowMount(Actions, {
     props: { deck: { id: 1, title: 'd', card_count: 10, due_count: 3, ...deck } },
     global: {
-      stubs: { UiButton: UiButtonStub, UiDropdownButton: UiDropdownButtonStub },
+      stubs: {
+        UiDropdownButton: UiDropdownButtonStub,
+        StudyButton: StudyButtonStub,
+        SearchBar: SearchBarStub,
+        Transition: false
+      },
       provide
     }
   })
 }
 
 const editBtn = (w) => w.find('[data-testid="overview-panel__settings-button"]')
-const studyBtn = (w) => w.find('[data-testid="overview-panel__study-button"]')
+const studyBtn = (w) => w.find('[data-testid="study-button-stub"]')
 const optionBtns = (w) => w.findAll('[data-testid="dropdown-button__option"]')
 // options[0]=select, options[1]=rearrange, options[2]=appearance
 const selectBtn = (w) => optionBtns(w)[0]
@@ -109,22 +139,58 @@ const appearanceBtn = (w) => optionBtns(w)[2]
 
 describe('deck-hero/actions', () => {
   beforeEach(() => {
-    mockStartStudy.mockClear()
     mockOpenDeckSettings.mockClear()
     mockUseMatchMedia.mockReturnValue(ref(false))
     mockUseDeckQuery.mockReturnValue({ data: ref(null) })
   })
 
-  test('clicking study button starts a study session for the deck', async () => {
-    const wrapper = mount({ deck: { id: 7 } })
-    await studyBtn(wrapper).trigger('click')
-    expect(mockStartStudy).toHaveBeenCalledWith([expect.objectContaining({ id: 7 })])
+  // ── layout: desktop vs mobile ───────────────────────────────────────────────
+
+  test('renders study-button directly (no search-bar) above mobile', () => {
+    const wrapper = mount({ is_mobile: false })
+    expect(wrapper.find('[data-testid="deck-hero__study-action"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="search-bar-stub"]').exists()).toBe(false)
+    expect(studyBtn(wrapper).exists()).toBe(true)
   })
 
-  test('renders the deck due_count inside the study button', () => {
-    const wrapper = mount({ deck: { due_count: 12 } })
-    expect(studyBtn(wrapper).text()).toContain('12')
+  test('renders the search-bar and study-button together on mobile [obligation]', () => {
+    const wrapper = mount({ is_mobile: true })
+    expect(wrapper.find('[data-testid="deck-hero__mobile-actions"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="search-bar-stub"]').exists()).toBe(true)
+    expect(studyBtn(wrapper).exists()).toBe(true)
   })
+
+  test('passes the deck prop through to study-button', () => {
+    const wrapper = mount({ deck: { id: 42 } })
+    expect(studyBtn(wrapper).attributes('data-deck-id')).toBe('42')
+  })
+
+  // ── mobile: search hides the rest-actions ───────────────────────────────────
+
+  test('mobile rest-actions (study button) hide while searching [obligation]', () => {
+    const wrapper = mount({ is_mobile: true, search: makeSearch({ is_searching: true }) })
+    expect(wrapper.find('[data-testid="deck-hero__mobile-actions-rest"]').exists()).toBe(false)
+    expect(studyBtn(wrapper).exists()).toBe(false)
+  })
+
+  test('mobile rest-actions show when not searching [obligation]', () => {
+    const wrapper = mount({ is_mobile: true, search: makeSearch({ is_searching: false }) })
+    expect(wrapper.find('[data-testid="deck-hero__mobile-actions-rest"]').exists()).toBe(true)
+    expect(studyBtn(wrapper).exists()).toBe(true)
+  })
+
+  test('mobile rest-actions reappear when is_searching flips back to false', async () => {
+    const search = makeSearch({ is_searching: true })
+    const wrapper = mount({ is_mobile: true, search })
+    expect(wrapper.find('[data-testid="deck-hero__mobile-actions-rest"]').exists()).toBe(false)
+
+    search.is_searching.value = false
+    await flushTransition()
+
+    expect(wrapper.find('[data-testid="deck-hero__mobile-actions-rest"]').exists()).toBe(true)
+  })
+
+  // ── edit-action (desktop only, dropdown) ─────────────────────────────────
 
   test('shows "Edit Cards" when shell mode is view', () => {
     const wrapper = mount({ shell: makeShell({ mode: 'view' }) })
@@ -194,44 +260,6 @@ describe('deck-hero/actions', () => {
     })
   })
 
-  // ── study button disabled state [obligation] ───────────────────────────────
-
-  test('study button is disabled when due_count is 0 [obligation]', () => {
-    const wrapper = mount({ deck: { due_count: 0 } })
-    expect(studyBtn(wrapper).attributes('disabled')).toBeDefined()
-  })
-
-  test('study button is disabled when due_count is undefined [obligation]', () => {
-    const wrapper = mount({ deck: { due_count: undefined } })
-    expect(studyBtn(wrapper).attributes('disabled')).toBeDefined()
-  })
-
-  test('study button shows no-cards-due text when due_count is 0 [obligation]', () => {
-    const wrapper = mount({ deck: { due_count: 0 } })
-    expect(studyBtn(wrapper).text()).toContain('No cards due')
-  })
-
-  test('study button shows no-cards-due text when due_count is undefined [obligation]', () => {
-    const wrapper = mount({ deck: { due_count: undefined } })
-    expect(studyBtn(wrapper).text()).toContain('No cards due')
-  })
-
-  test('study button is enabled when due_count is greater than 0 [obligation]', () => {
-    const wrapper = mount({ deck: { due_count: 5 } })
-    expect(studyBtn(wrapper).attributes('disabled')).toBeUndefined()
-  })
-
-  test('study button shows due count when due_count > 0 [obligation]', () => {
-    const wrapper = mount({ deck: { due_count: 7 } })
-    expect(studyBtn(wrapper).text()).toContain('7')
-  })
-
-  test('clicking the enabled study button starts the session [obligation]', async () => {
-    const wrapper = mount({ deck: { id: 3, due_count: 5 } })
-    await studyBtn(wrapper).trigger('click')
-    expect(mockStartStudy).toHaveBeenCalledWith([expect.objectContaining({ id: 3 })])
-  })
-
   // ── mobile — edit button hidden [obligation] ──────────────────────────────
   // At mobile (<md) actions.vue hides the edit/dropdown button entirely;
   // the mobile edit affordance lives in footer-actions.vue instead.
@@ -252,7 +280,6 @@ describe('deck-hero/actions', () => {
   test('rearrange option (index 1) is disabled when already rearranging [obligation]', () => {
     const shell = makeShell({ is_rearranging: true })
     const wrapper = mount({ shell })
-    // the stub exposes options via click handlers — verify the option exists
     expect(optionBtns(wrapper)[1].exists()).toBe(true)
   })
 

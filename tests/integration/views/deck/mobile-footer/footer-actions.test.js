@@ -1,18 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { flushPromises, shallowMount } from '@vue/test-utils'
-import { defineComponent, h, nextTick, ref } from 'vue'
-
-// ── Hoisted mocks ──────────────────────────────────────────────────────────────
-
-const { mockFadeEnter, mockFadeLeave } = vi.hoisted(() => ({
-  mockFadeEnter: vi.fn((_el, done) => done?.()),
-  mockFadeLeave: vi.fn((_el, done) => done?.())
-}))
-
-vi.mock('@/utils/animations/fade', () => ({
-  fadeEnter: mockFadeEnter,
-  fadeLeave: mockFadeLeave
-}))
+import { shallowMount } from '@vue/test-utils'
+import { defineComponent, h, ref } from 'vue'
 
 // useCardEditMenu → useDeckQuery needs @pinia/colada; override just useDeckQuery
 // and preserve all other named exports so the mock doesn't drop barrel siblings.
@@ -36,52 +24,37 @@ vi.mock('@/composables/deck/settings-modal', () => ({
 // ── Imports ───────────────────────────────────────────────────────────────────
 
 import FooterActions from '@/views/deck/mobile-footer/footer-actions.vue'
-import SearchBar from '@/views/deck/search-bar.vue'
-import { cardSearchKey } from '@/views/deck/composables/card-search'
 import { deckViewShellKey } from '@/views/deck/composables/view-shell'
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-// Vue Transition JS hooks fire after 2 rAF callbacks even with :css="false"
-async function flushTransition() {
-  await nextTick()
-  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
-  await flushPromises()
-}
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
-// Renders slot content so template lines inside <ui-button> are covered
+// Renders slot content + attrs (including @press wiring via emit) so template
+// lines inside <ui-button> are covered.
 const UiButtonStub = defineComponent({
   name: 'UiButton',
-  setup(_p, { slots, attrs }) {
-    return () => h('div', { ...attrs }, slots.default?.())
+  inheritAttrs: false,
+  emits: ['press'],
+  setup(_p, { slots, attrs, emit }) {
+    return () => h('button', { ...attrs, onClick: () => emit('press') }, slots.default?.())
   }
 })
 
 // ── Factory ───────────────────────────────────────────────────────────────────
 
-function makeSearch({ is_searching = false } = {}) {
-  return { is_searching: ref(is_searching) }
-}
-
 function makeShell({ is_rearranging = false } = {}) {
   return {
     is_rearranging: ref(is_rearranging),
-    toggleRearrange: vi.fn()
+    toggleRearrange: vi.fn(),
+    openPageSettings: vi.fn()
   }
 }
 
-function mountFooterActions(search = makeSearch(), shell = makeShell()) {
+function mountFooterActions(shell = makeShell()) {
   mockUseMatchMedia.mockReturnValue(ref(false))
   return shallowMount(FooterActions, {
     global: {
-      // Use the real <Transition> so @enter/@leave JS hooks fire
-      stubs: { Transition: false, UiButton: UiButtonStub },
-      provide: {
-        [cardSearchKey]: search,
-        [deckViewShellKey]: shell
-      }
+      stubs: { UiButton: UiButtonStub },
+      provide: { [deckViewShellKey]: shell }
     }
   })
 }
@@ -99,36 +72,25 @@ describe('mobile-footer/footer-actions', () => {
     expect(wrapper.find('[data-testid="deck-footer-actions"]').exists()).toBe(true)
   })
 
-  // SearchBar is always present regardless of search state
-  test('always renders SearchBar [obligation]', () => {
-    const wrapper = mountFooterActions(makeSearch({ is_searching: false }))
-    expect(wrapper.findComponent(SearchBar).exists()).toBe(true)
+  // ── page-settings trigger ──────────────────────────────────────────────────
+
+  test('always renders the page-settings trigger button', () => {
+    const wrapper = mountFooterActions()
+    expect(wrapper.find('[data-testid="deck-footer-actions__page-settings"]').exists()).toBe(true)
   })
 
-  test('SearchBar is still rendered while searching', () => {
-    const wrapper = mountFooterActions(makeSearch({ is_searching: true }))
-    expect(wrapper.findComponent(SearchBar).exists()).toBe(true)
-  })
-
-  // Action buttons are hidden while search is open
-  test('shows rest-actions (new-card, edit-menu) when not searching [obligation]', () => {
-    const wrapper = mountFooterActions(makeSearch({ is_searching: false }))
-    expect(wrapper.find('[data-testid="deck-footer-actions__rest"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="deck-footer-actions__new-card"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="deck-footer-actions__edit-menu"]').exists()).toBe(true)
-  })
-
-  test('hides rest-actions when searching is active [obligation]', () => {
-    const wrapper = mountFooterActions(makeSearch({ is_searching: true }))
-    expect(wrapper.find('[data-testid="deck-footer-actions__rest"]').exists()).toBe(false)
-    expect(wrapper.find('[data-testid="deck-footer-actions__new-card"]').exists()).toBe(false)
+  test('pressing the page-settings trigger calls shell.openPageSettings [obligation]', async () => {
+    const shell = makeShell()
+    const wrapper = mountFooterActions(shell)
+    await wrapper.find('[data-testid="deck-footer-actions__page-settings"]').trigger('click')
+    expect(shell.openPageSettings).toHaveBeenCalledOnce()
   })
 
   // ── is_rearranging toggle ─────────────────────────────────────────────────
 
   test('shows stop-rearranging button when shell.is_rearranging is true [obligation]', () => {
     const shell = makeShell({ is_rearranging: true })
-    const wrapper = mountFooterActions(makeSearch(), shell)
+    const wrapper = mountFooterActions(shell)
     expect(wrapper.find('[data-testid="deck-footer-actions__stop-rearranging"]').exists()).toBe(
       true
     )
@@ -137,51 +99,24 @@ describe('mobile-footer/footer-actions', () => {
 
   test('shows new-card button when shell.is_rearranging is false [obligation]', () => {
     const shell = makeShell({ is_rearranging: false })
-    const wrapper = mountFooterActions(makeSearch(), shell)
+    const wrapper = mountFooterActions(shell)
     expect(wrapper.find('[data-testid="deck-footer-actions__new-card"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="deck-footer-actions__stop-rearranging"]').exists()).toBe(
       false
     )
   })
 
-  // Reactive toggle
-  test('rest-actions appear when is_searching flips from true to false', async () => {
-    const search = makeSearch({ is_searching: true })
-    const wrapper = mountFooterActions(search)
-    expect(wrapper.find('[data-testid="deck-footer-actions__rest"]').exists()).toBe(false)
-
-    search.is_searching.value = false
-    await wrapper.vm.$nextTick()
-    expect(wrapper.find('[data-testid="deck-footer-actions__rest"]').exists()).toBe(true)
+  test('pressing stop-rearranging calls shell.toggleRearrange', async () => {
+    const shell = makeShell({ is_rearranging: true })
+    const wrapper = mountFooterActions(shell)
+    await wrapper.find('[data-testid="deck-footer-actions__stop-rearranging"]').trigger('click')
+    expect(shell.toggleRearrange).toHaveBeenCalledOnce()
   })
 
-  test('rest-actions hide when is_searching flips from false to true', async () => {
-    const search = makeSearch({ is_searching: false })
-    const wrapper = mountFooterActions(search)
-    expect(wrapper.find('[data-testid="deck-footer-actions__rest"]').exists()).toBe(true)
+  // ── edit menu ───────────────────────────────────────────────────────────────
 
-    search.is_searching.value = true
-    await wrapper.vm.$nextTick()
-    expect(wrapper.find('[data-testid="deck-footer-actions__rest"]').exists()).toBe(false)
-  })
-
-  // ── Transition JS hooks (onActionsEnter / onActionsLeave) ──────────────────
-
-  test('rest-actions enter transition calls fadeEnter [obligation]', async () => {
-    const search = makeSearch({ is_searching: true })
-    mountFooterActions(search)
-    // Flip to false → rest-actions div enters the DOM → onActionsEnter fires
-    search.is_searching.value = false
-    await flushTransition()
-    expect(mockFadeEnter).toHaveBeenCalled()
-  })
-
-  test('rest-actions leave transition calls fadeLeave [obligation]', async () => {
-    const search = makeSearch({ is_searching: false })
-    mountFooterActions(search)
-    // Flip to true → rest-actions div leaves the DOM → onActionsLeave fires
-    search.is_searching.value = true
-    await flushTransition()
-    expect(mockFadeLeave).toHaveBeenCalled()
+  test('renders the edit-menu dropdown', () => {
+    const wrapper = mountFooterActions()
+    expect(wrapper.find('[data-testid="deck-footer-actions__edit-menu"]').exists()).toBe(true)
   })
 })

@@ -244,6 +244,36 @@ describe('useDeckViewShell', () => {
     expect(shell2.grid_size.value).toBe('base')
   })
 
+  // ── grid_face / setGridFace [obligation] ──────────────────────────────────
+
+  test('grid_face defaults to front [obligation]', () => {
+    const shell = useDeckViewShell()
+    expect(shell.grid_face.value).toBe('front')
+  })
+
+  test('setGridFace changes grid_face [obligation]', () => {
+    const shell = useDeckViewShell()
+    shell.setGridFace('back')
+    expect(shell.grid_face.value).toBe('back')
+  })
+
+  test('setGridFace persists across shell instances via localStorage [obligation]', async () => {
+    const shell1 = useDeckViewShell()
+    shell1.setGridFace('back')
+    await nextTick()
+
+    const shell2 = useDeckViewShell()
+    expect(shell2.grid_face.value).toBe('back')
+  })
+
+  test('setGridFace and setGridSize are independent settings [obligation]', () => {
+    const shell = useDeckViewShell()
+    shell.setGridFace('back')
+    shell.setGridSize('xl')
+    expect(shell.grid_face.value).toBe('back')
+    expect(shell.grid_size.value).toBe('xl')
+  })
+
   // ── sort_by / setSortBy ────────────────────────────────────────────────────
 
   test('sort_by starts as default [obligation]', () => {
@@ -324,5 +354,46 @@ describe('useDeckViewShell', () => {
     shell2.toggleRearrange() // on → sort=default, rearranging=true
     shell2.toggleRearrange() // off → rearranging=false, sort stays default
     expect(shell2.sort_by.value).toBe('default')
+  })
+
+  // ── is_page_settings_open / open+closePageSettings [obligation] ───────────
+
+  test('is_page_settings_open starts false [obligation]', () => {
+    const shell = useDeckViewShell()
+    expect(shell.is_page_settings_open.value).toBe(false)
+  })
+
+  test('openPageSettings sets is_page_settings_open to true [obligation]', () => {
+    const shell = useDeckViewShell()
+    shell.openPageSettings()
+    expect(shell.is_page_settings_open.value).toBe(true)
+  })
+
+  test('closePageSettings sets is_page_settings_open to false [obligation]', () => {
+    const shell = useDeckViewShell()
+    shell.openPageSettings()
+    shell.closePageSettings()
+    expect(shell.is_page_settings_open.value).toBe(false)
+  })
+
+  test('openPageSettings emits snappy_button_5 [obligation]', () => {
+    const shell = useDeckViewShell()
+    shell.openPageSettings()
+    expect(emitSfxMock).toHaveBeenCalledWith('snappy_button_5')
+  })
+
+  test('closePageSettings emits snappy_button_5 [obligation]', () => {
+    const shell = useDeckViewShell()
+    shell.closePageSettings()
+    expect(emitSfxMock).toHaveBeenCalledWith('snappy_button_5')
+  })
+
+  test("is_page_settings_open is shared state — one shell instance reflects another's toggle [obligation]", () => {
+    // Regression context: the same flag is read by both the desktop toolbar
+    // popover and the mobile-footer panel, so it must be a single ref per
+    // shell instance rather than re-derived independently by each caller.
+    const shell = useDeckViewShell()
+    shell.openPageSettings()
+    expect(shell.is_page_settings_open.value).toBe(true)
   })
 })

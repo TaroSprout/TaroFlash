@@ -2,15 +2,35 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 
 // ── Hoisted GSAP mock ─────────────────────────────────────────────────────────
 
-const { mockGsapTo, mockGsapSet } = vi.hoisted(() => ({
-  mockGsapTo: vi.fn(),
-  mockGsapSet: vi.fn()
-}))
+const { mockGsapTo, mockGsapSet, mockGsapTimeline, makeTimelineStub } = vi.hoisted(() => {
+  const mockGsapTo = vi.fn()
+  const mockGsapSet = vi.fn()
+
+  // Timeline stub records .to() calls and fires the given onComplete once
+  // both are queued — tests trigger it manually via `timeline._complete()`.
+  function makeTimelineStub(opts) {
+    const calls = []
+    const timeline = {
+      calls,
+      to(target, tweenOpts, position) {
+        calls.push([target, tweenOpts, position])
+        return timeline
+      },
+      _complete: () => opts?.onComplete?.()
+    }
+    return timeline
+  }
+
+  const mockGsapTimeline = vi.fn(makeTimelineStub)
+
+  return { mockGsapTo, mockGsapSet, mockGsapTimeline, makeTimelineStub }
+})
 
 vi.mock('gsap', () => ({
   gsap: {
     to: mockGsapTo,
-    set: mockGsapSet
+    set: mockGsapSet,
+    timeline: mockGsapTimeline
   }
 }))
 
@@ -36,8 +56,10 @@ function makeEl(overrides = {}) {
 beforeEach(() => {
   mockGsapTo.mockReset()
   mockGsapSet.mockReset()
+  mockGsapTimeline.mockReset()
   // Default: gsap.to immediately calls onComplete
   mockGsapTo.mockImplementation((_el, opts) => opts?.onComplete?.())
+  mockGsapTimeline.mockImplementation(makeTimelineStub)
 })
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -191,5 +213,64 @@ describe('crossfadeResizeEnter [obligation]', () => {
     crossfadeResizeEnter(wrapper)(el, done)
 
     expect(wrapper.style.overflow).toBe('')
+  })
+
+  // ── animate_height=true branch [obligation] ────────────────────────────────
+
+  test('defaults animate_height to false — uses gsap.set snap, not a timeline', () => {
+    const wrapper = makeEl()
+    const el = makeEl({ scrollHeight: 200 })
+    const done = vi.fn()
+
+    crossfadeResizeEnter(wrapper)(el, done)
+
+    expect(mockGsapSet).toHaveBeenCalledWith(wrapper, { height: 200 })
+    expect(mockGsapTimeline).not.toHaveBeenCalled()
+  })
+
+  test('animate_height=true uses a single gsap.timeline instead of gsap.set for height [obligation]', () => {
+    const wrapper = makeEl()
+    const el = makeEl({ scrollHeight: 200 })
+    const done = vi.fn()
+
+    crossfadeResizeEnter(wrapper, true)(el, done)
+
+    expect(mockGsapTimeline).toHaveBeenCalledOnce()
+    expect(mockGsapSet).not.toHaveBeenCalledWith(wrapper, { height: 200 })
+  })
+
+  test('animate_height=true tweens both wrapper height and el opacity on the same timeline at position 0 [obligation]', () => {
+    const wrapper = makeEl()
+    const el = makeEl({ scrollHeight: 200 })
+    const done = vi.fn()
+
+    crossfadeResizeEnter(wrapper, true)(el, done)
+
+    const timeline = mockGsapTimeline.mock.results[0].value
+    const heightCall = timeline.calls.find(([target]) => target === wrapper)
+    const opacityCall = timeline.calls.find(([target]) => target === el)
+
+    expect(heightCall).toEqual([wrapper, expect.objectContaining({ height: 200 }), 0])
+    expect(opacityCall).toEqual([el, expect.objectContaining({ opacity: 1 }), 0])
+  })
+
+  test('animate_height=true releases the wrapper and calls done only when the timeline completes [obligation]', () => {
+    const wrapper = makeEl()
+    const el = makeEl({ scrollHeight: 200 })
+    const done = vi.fn()
+
+    crossfadeResizeEnter(wrapper, true)(el, done)
+    const timeline = mockGsapTimeline.mock.results[0].value
+
+    // Before the timeline completes, cleanup must not have run yet.
+    expect(done).not.toHaveBeenCalled()
+    expect(wrapper.style.height).not.toBe('')
+
+    timeline._complete()
+
+    expect(wrapper.style.height).toBe('')
+    expect(wrapper.style.overflow).toBe('')
+    expect(el.style.position).toBe('')
+    expect(done).toHaveBeenCalledTimes(1)
   })
 })

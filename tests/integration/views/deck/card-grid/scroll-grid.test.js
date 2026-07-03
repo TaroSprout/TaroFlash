@@ -10,6 +10,7 @@ const GridItemStub = defineComponent({
       h('div', {
         'data-testid': 'grid-item-stub',
         'data-card-id': props.card?.id,
+        'data-side': props.side,
         'data-scale': String(props.scale),
         'data-selected': String(props.selected)
       })
@@ -38,9 +39,10 @@ function makeEditor({
   }
 }
 
-function makeShell({ grid_size = 'md', is_rearranging = false } = {}) {
+function makeShell({ grid_size = 'md', grid_face = 'front', is_rearranging = false } = {}) {
   return {
     grid_size: ref(grid_size),
+    grid_face: ref(grid_face),
     is_view: ref(true),
     is_rearranging: ref(is_rearranging),
     toggleRearrange: vi.fn()
@@ -119,6 +121,28 @@ describe('card-grid/scroll-grid', () => {
     const wrapper = mountScrollGrid(makeEditor(), makeShell(), search)
     const items = wrapper.findAll('[data-testid="grid-item-stub"]')
     expect(items).toHaveLength(3)
+  })
+
+  test('passes shell.grid_face as the side prop to its grid-items [obligation]', () => {
+    const search = makeSearch({
+      displayed_cards: [{ id: 1, client_id: 'c1', front_text: 'q', back_text: 'a' }]
+    })
+    const wrapper = mountScrollGrid(makeEditor(), makeShell({ grid_face: 'back' }), search)
+    expect(wrapper.find('[data-testid="grid-item-stub"]').attributes('data-side')).toBe('back')
+  })
+
+  test('grid-item side updates reactively when shell.grid_face changes [obligation]', async () => {
+    const search = makeSearch({
+      displayed_cards: [{ id: 1, client_id: 'c1', front_text: 'q', back_text: 'a' }]
+    })
+    const shell = makeShell({ grid_face: 'front' })
+    const wrapper = mountScrollGrid(makeEditor(), shell, search)
+    expect(wrapper.find('[data-testid="grid-item-stub"]').attributes('data-side')).toBe('front')
+
+    shell.grid_face.value = 'back'
+    await nextTick()
+
+    expect(wrapper.find('[data-testid="grid-item-stub"]').attributes('data-side')).toBe('back')
   })
 
   test('passes a scale to its grid-items [obligation]', () => {

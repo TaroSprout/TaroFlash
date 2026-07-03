@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { flushPromises, shallowMount } from '@vue/test-utils'
 import { defineComponent, h, nextTick, ref, useAttrs } from 'vue'
 
@@ -11,14 +11,11 @@ async function flushTransition() {
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { mockEmitSfx, mockOpen, mockClose, mockExpandSearchInput, mockCollapseSearchInput } =
-  vi.hoisted(() => ({
-    mockEmitSfx: vi.fn(),
-    mockOpen: vi.fn(),
-    mockClose: vi.fn(),
-    mockExpandSearchInput: vi.fn((_el, _w, done) => done?.()),
-    mockCollapseSearchInput: vi.fn((_el, done) => done?.())
-  }))
+const { mockEmitSfx, mockExpandSearchInput, mockCollapseSearchInput } = vi.hoisted(() => ({
+  mockEmitSfx: vi.fn(),
+  mockExpandSearchInput: vi.fn((_el, _w, done) => done?.()),
+  mockCollapseSearchInput: vi.fn((_el, done) => done?.())
+}))
 
 vi.mock('@/sfx/bus', () => ({
   emitSfx: mockEmitSfx,
@@ -41,7 +38,7 @@ import { cardSearchKey } from '@/views/deck/composables/card-search'
 const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
-  props: ['size', 'variant', 'loading', 'iconLeft', 'iconOnly'],
+  props: ['size', 'variant', 'loading', 'iconLeft', 'iconOnly', 'playOnTap'],
   emits: ['press'],
   setup(props, { slots, emit }) {
     const attrs = useAttrs()
@@ -53,6 +50,7 @@ const UiButtonStub = defineComponent({
           'data-icon-left': props.iconLeft,
           'data-variant': props.variant,
           'data-loading': String(props.loading),
+          'data-play-on-tap': String(props.playOnTap),
           onClick: () => emit('press')
         },
         slots.default?.()
@@ -127,11 +125,18 @@ describe('search-bar', () => {
 
   // ── button icon tri-state ──────────────────────────────────────────────────
 
-  test('button icon is "search" when field has no text [obligation]', async () => {
-    const wrapper = mountSearchBar(makeSearch({ is_searching: true, query_value: '' }))
-    // draft is empty so has_text=false → icon is "search"
+  test('button icon is "search" when not searching', () => {
+    const wrapper = mountSearchBar(makeSearch({ is_searching: false }))
     const btn = wrapper.find('[data-testid="deck-search-bar__button"]')
     expect(btn.attributes('data-icon-left')).toBe('search')
+  })
+
+  test('button icon is "close" when searching with an empty draft [obligation]', () => {
+    // Regression: an empty-but-open field used to keep showing "search" and did
+    // nothing useful on click. It must show "close" as soon as is_searching is true.
+    const wrapper = mountSearchBar(makeSearch({ is_searching: true, query_value: '' }))
+    const btn = wrapper.find('[data-testid="deck-search-bar__button"]')
+    expect(btn.attributes('data-icon-left')).toBe('close')
   })
 
   test('button icon is "close" when field has text [obligation]', async () => {
@@ -166,14 +171,14 @@ describe('search-bar', () => {
     expect(search.open).toHaveBeenCalledOnce()
   })
 
-  test('pressing button when open with no text calls submit() (sets query to empty) [obligation]', async () => {
+  test('pressing button when open with no text calls close(), not submit() [obligation]', async () => {
+    // Regression: an empty-but-open field used to fall through to the old
+    // no-op submit(); it must call close() via onClose so the bar collapses.
     const search = makeSearch({ is_searching: true, query_value: '' })
     const wrapper = mountSearchBar(search)
-    // draft is empty → submit path → sets query.value = draft.trim() = ''
     await wrapper.find('[data-testid="deck-search-bar__button"]').trigger('click')
-    expect(search.query.value).toBe('')
+    expect(search.close).toHaveBeenCalledOnce()
     expect(search.open).not.toHaveBeenCalled()
-    expect(mockEmitSfx).not.toHaveBeenCalled()
   })
 
   test('pressing button when open with text calls clear() [obligation]', async () => {
@@ -280,6 +285,16 @@ describe('search-bar', () => {
     container.element.dispatchEvent(focusout)
     await wrapper.vm.$nextTick()
     expect(search.close).not.toHaveBeenCalled()
+  })
+
+  // ── toggle button disables the tap animation ──────────────────────────────
+
+  test('toggle button has play-on-tap disabled so its press fires synchronously [obligation]', () => {
+    // Regression: the tap animation deferred onButton()/open() via a macrotask,
+    // breaking iOS's requirement that .focus() run synchronously in the gesture.
+    const wrapper = mountSearchBar(makeSearch({ is_searching: false }))
+    const btn = wrapper.find('[data-testid="deck-search-bar__button"]')
+    expect(btn.attributes('data-play-on-tap')).toBe('false')
   })
 
   // ── loading state ──────────────────────────────────────────────────────────

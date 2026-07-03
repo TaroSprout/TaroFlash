@@ -1,8 +1,20 @@
-import { describe, test, expect, beforeEach, afterEach } from 'vite-plus/test'
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { nextTick } from 'vue'
+import { nextTick, ref } from 'vue'
 import { useMobileDock } from '@/components/mobile-dock/use-mobile-dock'
 import MobileDockHost from '@/components/mobile-dock/mobile-dock-host.vue'
+
+// The real useKeyboardOpen reads window.visualViewport, which is unreliable
+// (and may or may not exist) across browser-mode runs — mock it so keyboard
+// state is deterministic and directly controllable per test. `vi.mock` is
+// hoisted above this file's imports, but its factory only runs lazily (on the
+// component's first import of the module), by which point `mockIsKeyboardOpen`
+// below is already initialized — so a plain closure reference works here
+// without needing `vi.hoisted`.
+const mockIsKeyboardOpen = ref(false)
+vi.mock('@/composables/ui/keyboard', () => ({
+  useKeyboardOpen: () => ({ is_open: mockIsKeyboardOpen })
+}))
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -24,6 +36,7 @@ beforeEach(() => {
   const { el, fills } = useMobileDock()
   el.value = null
   fills.value = 0
+  mockIsKeyboardOpen.value = false
 
   // Create the teleport target for mobile-dock-host.
   container = document.createElement('div')
@@ -97,6 +110,34 @@ describe('MobileDockHost', () => {
       await nextTick()
 
       expect(footer.style.display).toBe('none')
+    })
+
+    // ── keyboard-open hides the dock [obligation] ──────────────────────────
+
+    test('footer hides while the on-screen keyboard is open, even with fills > 0 [obligation]', () => {
+      const { fills } = useMobileDock()
+      fills.value = 1
+      mockIsKeyboardOpen.value = true
+
+      mountHost()
+
+      const footer = document.querySelector('[data-testid="mobile-dock-host"]')
+      expect(footer.style.display).toBe('none')
+    })
+
+    test('footer reappears once the keyboard closes again [obligation]', async () => {
+      const { fills } = useMobileDock()
+      fills.value = 1
+      mockIsKeyboardOpen.value = true
+
+      mountHost()
+      const footer = document.querySelector('[data-testid="mobile-dock-host"]')
+      expect(footer.style.display).toBe('none')
+
+      mockIsKeyboardOpen.value = false
+      await nextTick()
+
+      expect(footer.style.display).not.toBe('none')
     })
   })
 
@@ -173,6 +214,18 @@ describe('MobileDockHost', () => {
       // offsetHeight is 0 in jsdom (no layout), so height stays 0px — but the
       // property is set (not removed). Just verify the property exists.
       expect(document.documentElement.style.getPropertyValue('--mobile-dock-height')).not.toBe('')
+    })
+
+    test('publishes --mobile-dock-height = 0px while the keyboard is open, even with fills > 0 [obligation]', async () => {
+      const { fills } = useMobileDock()
+      fills.value = 1
+
+      mountHost()
+
+      mockIsKeyboardOpen.value = true
+      await nextTick()
+
+      expect(document.documentElement.style.getPropertyValue('--mobile-dock-height')).toBe('0px')
     })
   })
 })

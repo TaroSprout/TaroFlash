@@ -1,17 +1,24 @@
-import { describe, test, expect, vi } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 import UiButton from '@/components/ui-kit/button.vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { mockCurrentRoute, mockGo } = vi.hoisted(() => ({
+const { mockCurrentRoute, mockGo, mockPush, mockHistoryState } = vi.hoisted(() => ({
   mockCurrentRoute: { value: { name: 'dashboard' } },
-  mockGo: vi.fn()
+  mockGo: vi.fn(),
+  mockPush: vi.fn(),
+  mockHistoryState: { back: '/dashboard' }
 }))
 
 vi.mock('vue-router', () => ({
-  useRouter: () => ({ currentRoute: mockCurrentRoute, go: mockGo })
+  useRouter: () => ({
+    currentRoute: mockCurrentRoute,
+    go: mockGo,
+    push: mockPush,
+    options: { history: { state: mockHistoryState } }
+  })
 }))
 
 vi.mock('@/composables/ui/media-query', () => ({
@@ -73,9 +80,24 @@ describe('back-button — visibility [obligation]', () => {
 // ── Press handler ─────────────────────────────────────────────────────────────
 
 describe('back-button — press handler', () => {
-  test('calls router.go(-1) when the button emits press', async () => {
+  beforeEach(() => {
+    mockGo.mockClear()
+    mockPush.mockClear()
+  })
+
+  test('calls router.go(-1) when there is a router-tracked previous entry', async () => {
+    mockHistoryState.back = '/dashboard'
     const wrapper = mount('deck')
     await wrapper.findComponent(UiButtonStub).trigger('click')
     expect(mockGo).toHaveBeenCalledWith(-1)
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  test('falls back to the dashboard route when history.state.back is falsy [obligation]', async () => {
+    mockHistoryState.back = null
+    const wrapper = mount('deck')
+    await wrapper.findComponent(UiButtonStub).trigger('click')
+    expect(mockPush).toHaveBeenCalledWith({ name: 'dashboard' })
+    expect(mockGo).not.toHaveBeenCalled()
   })
 })
