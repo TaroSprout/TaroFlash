@@ -10,6 +10,7 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vp preview",
     "test": "vp test run --coverage",
+    "test:fast": "vp test run --project Unit --project Integration",
     "test:watch": "vp test",
     "test:ui": "vp test --ui --coverage",
     "build-only": "vp build",
