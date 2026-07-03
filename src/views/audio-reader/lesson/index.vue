@@ -357,7 +357,10 @@ onBeforeUnmount(() => {
         </h1>
       </header>
 
-      <div data-testid="lesson-view__transcript" class="px-0 pt-6 pb-2 sm:px-6">
+      <div
+        data-testid="lesson-view__transcript"
+        class="px-0 pt-6 pb-2 contain-[layout_style] sm:px-6"
+      >
         <transcript-view
           ref="transcript"
           :paragraphs="windowed_paragraphs"
