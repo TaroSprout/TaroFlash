@@ -5,7 +5,8 @@ import {
   generatorParameters,
   Rating,
   type Grade,
-  type RecordLog
+  type RecordLog,
+  type Steps
 } from 'ts-fsrs'
 import { useSaveReviewMutation } from '@/api/reviews'
 import { withDeckConfigDefaults } from '@/utils/deck/defaults'
@@ -49,8 +50,8 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
 
   const _PARAMS = generatorParameters({
     enable_fuzz: true,
-    learning_steps: [],
-    relearning_steps: [],
+    learning_steps: member_store.preferences.study.learning_steps as Steps,
+    relearning_steps: member_store.preferences.study.relearning_steps as Steps,
     // desired_retention is stored as a whole-number percent (e.g. 90 = 90%).
     request_retention: member_store.preferences.study.desired_retention / 100
   })
