@@ -28,3 +28,9 @@
     @slot;
   }
 }
+
+@custom-variant standalone {
+  &:where([data-standalone='true'] *, [data-standalone='true']) {
+    @slot;
+  }
+}

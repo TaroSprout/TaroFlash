@@ -38,6 +38,13 @@ const scheduleIdle =
     : (cb: () => void) => setTimeout(cb, 0)
 
 onMounted(() => {
+  // navigator.standalone is iOS Safari's legacy fallback — display-mode alone misses
+  // older iOS versions that never adopted the media-feature check.
+  const is_standalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as any).standalone === true
+  document.documentElement.setAttribute('data-standalone', String(is_standalone))
+
   try {
     theme.load()
     session.startLoading()
