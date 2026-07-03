@@ -82,7 +82,13 @@ describe('TabIndex', () => {
     expect(cards).toHaveLength(2)
     expect(cards.map((c) => c.attributes('data-value'))).toEqual(['design', 'study'])
     expect(cards[0].text()).toContain('Appearance')
-    expect(cards[1].text()).toContain('Study Preferences')
+    expect(cards[1].text()).toContain('Study Settings')
+  })
+
+  test('study nav entry renders the card-deck icon (matches member-settings study icon) [obligation]', () => {
+    const { wrapper } = makeTab('desktop')
+    const studyCard = wrapper.find('[data-testid="nav-list__card"][data-value="study"]')
+    expect(studyCard.find('[data-testid="ui-icon"]').attributes('data-src')).toBe('card-deck')
   })
 
   test('appearance group lists only "design" in tablet mode', () => {
