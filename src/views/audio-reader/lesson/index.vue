@@ -324,6 +324,7 @@ onBeforeUnmount(() => {
           :matches="matches"
           :active_word="active_word"
           :popover_open="popover_open"
+          :is_playing="player.is_playing.value"
           @select="openTerm"
           @dismiss="dismissTerm"
         />

@@ -130,6 +130,10 @@ export const readerMatchesKey = Symbol('readerMatches') as InjectionKey<
  *   active word's row into the DOM when a seek/resume lands outside the
  *   currently rendered range.
  * @param rowIndexOfWord - resolves a word index to its virtualizer row index.
+ * @param is_playing - whether the audio is playing; gates the idle auto-resume
+ *   timer, which only makes sense while the active word is advancing. Paused,
+ *   there's nothing to fall behind, so a manual scroll (e.g. to read a term
+ *   popover) stays put instead of snapping back a few seconds later.
  * @example
  * const { onPointerDown, onPointerMove, onPointerUp, onPointerLeave, onPointerCancel } =
  *   useReaderHighlights(() => active_word, commitSelection, () => popover_open, dismiss)
@@ -141,7 +145,8 @@ export function useReaderHighlights(
   onDismiss: () => void,
   matchRangeAt: (index: number) => WordRange | null = () => null,
   virtualizer: WordVirtualizer,
-  rowIndexOfWord: (word_index: number) => number
+  rowIndexOfWord: (word_index: number) => number,
+  is_playing: MaybeRefOrGetter<boolean> = false
 ) {
   const content = useTemplateRef<HTMLElement>('content')
 
@@ -439,17 +444,35 @@ export function useReaderHighlights(
     if (follow_timer !== null) clearTimeout(follow_timer)
     follow_timer = setTimeout(async () => {
       follow_timer = null
+      // Re-check: a manual scroll can turn follow off during this debounce (or
+      // during the mount await below) — a scroll issued after that must not
+      // fight the member's own, still-in-flight one.
+      if (!following.value) return
       const index = toValue(active_word)
       if (index < 0) return
       const el = await ensureWordMounted(index)
-      if (!el) return
+      if (!el || !following.value) return
       scrollWordIntoDeadzone(el)
     }, 100)
   }
 
+  // Idle-resume only fires while playing — paused, the active word isn't
+  // advancing, so there's nothing to fall behind and auto-resuming would just
+  // yank the view out from under a member reading something (e.g. a term
+  // popover) at the scrolled-away position. A lapse while paused leaves no
+  // timer pending; the watcher below re-arms one if play starts before the
+  // member manually resumes or scrolls again.
+  function armFollowResumeTimer() {
+    if (follow_resume_timer !== null) clearTimeout(follow_resume_timer)
+    follow_resume_timer = setTimeout(() => {
+      follow_resume_timer = null
+      if (toValue(is_playing)) resumeFollow()
+    }, FOLLOW_RESUME_IDLE_MS)
+  }
+
   // The member started scrolling by hand — a wheel/trackpad on desktop or a touch
   // pan on mobile: let the follow go and kill the live tween so it stops fighting
-  // them. Re-arms itself after an idle spell even without a manual resume tap.
+  // them.
   function disableFollow() {
     if (following.value) {
       following.value = false
@@ -457,11 +480,12 @@ export function useReaderHighlights(
       updateFollowDirection()
     }
 
-    if (follow_resume_timer !== null) clearTimeout(follow_resume_timer)
-    follow_resume_timer = setTimeout(() => {
-      follow_resume_timer = null
-      resumeFollow()
-    }, FOLLOW_RESUME_IDLE_MS)
+    if (follow_timer !== null) {
+      clearTimeout(follow_timer)
+      follow_timer = null
+    }
+
+    armFollowResumeTimer()
   }
 
   // Point the resume control at the playing word: 'up' when its centre sits above
@@ -826,6 +850,14 @@ export function useReaderHighlights(
         committed.value = null
         paintWords(null)
       }
+    }
+  )
+  // Play resuming after the idle timer already lapsed while paused (no-op'd)
+  // leaves follow off with nothing scheduled to bring it back — re-arm.
+  watch(
+    () => toValue(is_playing),
+    (playing) => {
+      if (playing && !following.value && follow_resume_timer === null) armFollowResumeTimer()
     }
   )
 

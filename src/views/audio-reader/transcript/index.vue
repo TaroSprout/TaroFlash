@@ -14,6 +14,7 @@ type TranscriptViewProps = {
   matches?: Map<number, CardMatch>
   active_word: number
   popover_open?: boolean
+  is_playing?: boolean
 }
 
 type TranscriptRow = { paragraph: SentenceWords; chapter_title?: string }
@@ -23,7 +24,8 @@ const {
   chapters = [],
   matches = new Map(),
   active_word,
-  popover_open = false
+  popover_open = false,
+  is_playing = false
 } = defineProps<TranscriptViewProps>()
 
 const emit = defineEmits<{
@@ -107,7 +109,8 @@ const {
   () => emit('dismiss'),
   matchRangeAt,
   virtualizer,
-  rowIndexOfWord
+  rowIndexOfWord,
+  () => is_playing
 )
 
 // The follow state + resume action surface to the lesson view, which renders the
