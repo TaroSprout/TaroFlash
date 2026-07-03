@@ -114,14 +114,14 @@ describe('UiTappable — sfx.press read at click time [obligation]', () => {
   })
 })
 
-describe('UiTappable — data-active state', () => {
-  test('data-active attribute is absent when not animating', () => {
+describe('UiTappable — data-tap-active state', () => {
+  test('data-tap-active attribute is absent when not animating', () => {
     coarseRef.value = false
     const wrapper = mountTappable()
-    expect(wrapper.attributes('data-active')).toBeUndefined()
+    expect(wrapper.attributes('data-tap-active')).toBeUndefined()
   })
 
-  test('data-active is set to "true" during coarse animation', async () => {
+  test('data-tap-active is set to "true" during coarse animation', async () => {
     coarseRef.value = true
     let resolvePeak
     mockPlayButtonTap.mockReturnValue({
@@ -132,7 +132,7 @@ describe('UiTappable — data-active state', () => {
     const p = wrapper.trigger('click')
     // Give a microtask tick so playing ref updates
     await Promise.resolve()
-    expect(wrapper.attributes('data-active')).toBe('true')
+    expect(wrapper.attributes('data-tap-active')).toBe('true')
     resolvePeak()
     await p
     await flushPromises()
@@ -140,33 +140,33 @@ describe('UiTappable — data-active state', () => {
 })
 
 describe('UiTappable — active_on_hover [obligation]', () => {
-  test('hover does not set data-active when active_on_hover is unset (default off)', async () => {
+  test('hover does not set data-tap-active when active_on_hover is unset (default off)', async () => {
     fineRef.value = true
     const wrapper = mountTappable()
     await wrapper.trigger('pointerenter')
-    expect(wrapper.attributes('data-active')).toBeUndefined()
+    expect(wrapper.attributes('data-tap-active')).toBeUndefined()
   })
 
-  test('hover sets data-active to "true" when active_on_hover is set on a fine pointer', async () => {
+  test('hover sets data-tap-active to "true" when active_on_hover is set on a fine pointer', async () => {
     fineRef.value = true
     const wrapper = mountTappable({ active_on_hover: true })
     await wrapper.trigger('pointerenter')
-    expect(wrapper.attributes('data-active')).toBe('true')
+    expect(wrapper.attributes('data-tap-active')).toBe('true')
   })
 
-  test('pointerleave clears the hover-driven data-active', async () => {
+  test('pointerleave clears the hover-driven data-tap-active', async () => {
     fineRef.value = true
     const wrapper = mountTappable({ active_on_hover: true })
     await wrapper.trigger('pointerenter')
-    expect(wrapper.attributes('data-active')).toBe('true')
+    expect(wrapper.attributes('data-tap-active')).toBe('true')
     await wrapper.trigger('pointerleave')
-    expect(wrapper.attributes('data-active')).toBeUndefined()
+    expect(wrapper.attributes('data-tap-active')).toBeUndefined()
   })
 
-  test('hover does not set data-active on a coarse pointer even when active_on_hover is set', async () => {
+  test('hover does not set data-tap-active on a coarse pointer even when active_on_hover is set', async () => {
     fineRef.value = false
     const wrapper = mountTappable({ active_on_hover: true })
     await wrapper.trigger('pointerenter')
-    expect(wrapper.attributes('data-active')).toBeUndefined()
+    expect(wrapper.attributes('data-tap-active')).toBeUndefined()
   })
 })

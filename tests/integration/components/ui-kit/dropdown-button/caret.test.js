@@ -74,6 +74,38 @@ describe('DropdownCaret', () => {
     })
   })
 
+  // ── size → trigger padding ───────────────────────────────────────────────
+
+  describe('size', () => {
+    test('defaults to size=base with a 4px trigger padding', () => {
+      const wrapper = mountCaret()
+      const wrap = wrapper.find('[data-testid="dropdown-button__trigger-wrap"]')
+      expect(wrap.classes()).toContain('ui-kit-btn-tokens--base')
+      expect(wrap.attributes('style')).toContain('--btn-trigger-padding: 4px')
+    })
+
+    test('size=sm sets a 4px trigger padding', () => {
+      const wrapper = mountCaret({ size: 'sm' })
+      const wrap = wrapper.find('[data-testid="dropdown-button__trigger-wrap"]')
+      expect(wrap.classes()).toContain('ui-kit-btn-tokens--sm')
+      expect(wrap.attributes('style')).toContain('--btn-trigger-padding: 4px')
+    })
+
+    test('size=lg sets an 8px trigger padding', () => {
+      const wrapper = mountCaret({ size: 'lg' })
+      const wrap = wrapper.find('[data-testid="dropdown-button__trigger-wrap"]')
+      expect(wrap.classes()).toContain('ui-kit-btn-tokens--lg')
+      expect(wrap.attributes('style')).toContain('--btn-trigger-padding: 8px')
+    })
+
+    test('size=xl sets an 8px trigger padding', () => {
+      const wrapper = mountCaret({ size: 'xl' })
+      const wrap = wrapper.find('[data-testid="dropdown-button__trigger-wrap"]')
+      expect(wrap.classes()).toContain('ui-kit-btn-tokens--xl')
+      expect(wrap.attributes('style')).toContain('--btn-trigger-padding: 8px')
+    })
+  })
+
   // ── toggle emit ───────────────────────────────────────────────────────────
 
   describe('toggle emit', () => {
@@ -122,6 +154,7 @@ describe('DropdownCaret', () => {
       expect(
         wrapper.find('[data-testid="dropdown-button__trigger"]').attributes('data-active')
       ).toBe('true')
+      wrapper.unmount()
     })
   })
 })

@@ -149,4 +149,56 @@ describe('UiTooltip', () => {
       wrapper.unmount()
     })
   })
+
+  describe('max_chars / is_multiline [obligation]', () => {
+    test('max_chars defaults to 32 and sets maxWidth to 32ch [obligation]', async () => {
+      const wrapper = mountTooltip({ text: 'short' })
+      await dispatchPointer(wrapper, 'pointerenter', 'mouse')
+
+      const popover = document.body.querySelector('[data-testid="ui-tooltip"]')
+      expect(popover.style.maxWidth).toBe('32ch')
+      wrapper.unmount()
+    })
+
+    test('data-multiline is "false" when text.length <= max_chars [obligation]', async () => {
+      const wrapper = mountTooltip({ text: 'short text' })
+      await dispatchPointer(wrapper, 'pointerenter', 'mouse')
+
+      const popover = document.body.querySelector('[data-testid="ui-tooltip"]')
+      expect(popover.getAttribute('data-multiline')).toBe('false')
+      wrapper.unmount()
+    })
+
+    test('data-multiline is "true" when text.length > max_chars [obligation]', async () => {
+      const long_text = 'a'.repeat(40)
+      const wrapper = mountTooltip({ text: long_text })
+      await dispatchPointer(wrapper, 'pointerenter', 'mouse')
+
+      const popover = document.body.querySelector('[data-testid="ui-tooltip"]')
+      expect(popover.getAttribute('data-multiline')).toBe('true')
+      wrapper.unmount()
+    })
+
+    test('a custom max_chars is respected for both maxWidth and the multiline threshold [obligation]', async () => {
+      const text = 'a'.repeat(10)
+      const wrapper = mountTooltip({ text, max_chars: 8 })
+      await dispatchPointer(wrapper, 'pointerenter', 'mouse')
+
+      const popover = document.body.querySelector('[data-testid="ui-tooltip"]')
+      expect(popover.style.maxWidth).toBe('8ch')
+      // text.length (10) > max_chars (8) → multiline
+      expect(popover.getAttribute('data-multiline')).toBe('true')
+      wrapper.unmount()
+    })
+
+    test('a custom max_chars that exceeds text.length resolves data-multiline to "false" [obligation]', async () => {
+      const text = 'a'.repeat(10)
+      const wrapper = mountTooltip({ text, max_chars: 20 })
+      await dispatchPointer(wrapper, 'pointerenter', 'mouse')
+
+      const popover = document.body.querySelector('[data-testid="ui-tooltip"]')
+      expect(popover.getAttribute('data-multiline')).toBe('false')
+      wrapper.unmount()
+    })
+  })
 })
