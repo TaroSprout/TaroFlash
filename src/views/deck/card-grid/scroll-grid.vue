@@ -30,11 +30,10 @@ const { t } = useI18n()
 
 const { selection, card_attributes, reorderCard, hasNextPage, isLoading, observeSentinel } =
   inject(cardEditorKey)!
-const { grid_size, is_view, is_rearranging } = inject(deckViewShellKey)!
+const { grid_size, grid_face, is_view, is_rearranging } = inject(deckViewShellKey)!
 const { is_active, displayed_cards, no_results } = inject(cardSearchKey)!
 const { isCardSelected } = selection
 
-const side = ref<'front' | 'back'>('front')
 const grid_el = useTemplateRef<HTMLElement>('grid_el')
 const sentinel = useTemplateRef<HTMLElement>('sentinel')
 const container_width = ref(0)
@@ -284,7 +283,7 @@ watch(
         >
           <grid-item
             :card="item.card"
-            :side="side"
+            :side="grid_face"
             :scale="card_scale"
             :card_attributes="card_attributes"
             :rearranging="is_rearranging"

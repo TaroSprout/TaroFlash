@@ -6,12 +6,9 @@ import { usePinScrollWhileTyping } from '@/composables/ui/pin-scroll-while-typin
 // Mounts a minimal Vue app so onMounted / onUnmounted lifecycle hooks run.
 
 function withSetup(composable) {
-  let result
-  let app
-
-  app = createApp({
+  const app = createApp({
     setup() {
-      result = composable()
+      composable()
       return () => null
     }
   })
@@ -56,6 +53,12 @@ function fireWheel() {
 
 function fireTouchMove() {
   window.dispatchEvent(new TouchEvent('touchmove', { bubbles: true }))
+}
+
+function makeInput() {
+  const el = document.createElement('input')
+  document.body.appendChild(el)
+  return el
 }
 
 function fireFocusOut(target) {
@@ -147,6 +150,22 @@ describe('usePinScrollWhileTyping', () => {
     fireScroll()
 
     expect(scrollToSpy).not.toHaveBeenCalled()
+  })
+
+  test('beforeinput from a plain <input> inside the container arms the anchor [obligation]', () => {
+    window.scrollY = 220
+    const input = makeInput()
+    container.appendChild(input)
+    const containerRef = ref(container)
+    ;({ unmount } = withSetup(() => usePinScrollWhileTyping(containerRef)))
+
+    fireBeforeInput(input)
+
+    window.scrollY = 260
+    fireScroll()
+
+    expect(scrollToSpy).toHaveBeenCalledWith(0, 220)
+    input.remove()
   })
 
   test('beforeinput from a non-contenteditable element does not arm the anchor [obligation]', () => {

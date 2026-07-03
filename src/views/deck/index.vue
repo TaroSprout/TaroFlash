@@ -54,6 +54,7 @@ const is_mobile = useMatchMedia('w<md')
 
 const view_state = computed<'loading' | 'empty' | 'ready'>(() => {
   if (editor.list.all_cards.value.length > 0) return 'ready'
+  if (search.is_active.value) return 'ready'
   return editor.isLoading.value ? 'loading' : 'empty'
 })
 

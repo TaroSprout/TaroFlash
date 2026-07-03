@@ -28,11 +28,16 @@ export const deckViewShellKey = Symbol('deckViewShell') as InjectionKey<DeckView
 export function useDeckViewShell() {
   const mode = ref<CardEditorMode>('view')
   const grid_size = useLocalRef<CardGridSize>('deck-grid-size', 'md')
+  const grid_face = useLocalRef<Exclude<CardSide, 'cover'>>('deck-grid-face', 'front')
   const sort_by = ref<CardSortKey>('default')
 
   // Drag-to-reorder toggle for the base grid. Lives here (not in the card
   // controller) because it's a view-pane interaction state, like `grid_size`.
   const is_rearranging = ref(false)
+
+  // Shared so the same trigger/panel pairing works as a desktop popover
+  // (mode-toolbar) or a full mobile-dock swap (mobile-footer).
+  const is_page_settings_open = ref(false)
 
   // Resolvers waiting on the in-flight mode transition; drained by
   // `notifyModeSettled` when the mode-stack reports an entering pane settled.
@@ -86,6 +91,11 @@ export function useDeckViewShell() {
     grid_size.value = size
   }
 
+  /** Set which face the deck grid renders by default (front / back). */
+  function setGridFace(face: Exclude<CardSide, 'cover'>) {
+    grid_face.value = face
+  }
+
   /**
    * Set how the base grid orders cards. A non-default sort reorders the whole
    * deck, which can't coexist with drag-to-reorder, so it drops rearrange mode.
@@ -106,18 +116,33 @@ export function useDeckViewShell() {
     }
   }
 
+  function openPageSettings() {
+    emitSfx('snappy_button_5')
+    is_page_settings_open.value = true
+  }
+
+  function closePageSettings() {
+    emitSfx('snappy_button_5')
+    is_page_settings_open.value = false
+  }
+
   return {
     mode,
     is_view,
     grid_size,
+    grid_face,
     sort_by,
     is_rearranging,
+    is_page_settings_open,
     setMode,
     notifyModeSettled,
     toggleMode,
     exitMode,
     setGridSize,
+    setGridFace,
     setSortBy,
-    toggleRearrange
+    toggleRearrange,
+    openPageSettings,
+    closePageSettings
   }
 }

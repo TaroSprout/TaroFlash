@@ -47,6 +47,14 @@ describe('deck-hero/index', () => {
     expect(wrapper.find('[data-testid="deckdetails-stub"]').exists()).toBe(true)
   })
 
+  test('details and actions-wrap are grouped inside deck-hero__details-wrap', () => {
+    const wrapper = mount({ editor: makeEditor() })
+    const detailsWrap = wrapper.find('[data-testid="deck-hero__details-wrap"]')
+    expect(detailsWrap.exists()).toBe(true)
+    expect(detailsWrap.find('[data-testid="deckdetails-stub"]').exists()).toBe(true)
+    expect(detailsWrap.find('[data-testid="deck-hero__actions-wrap"]').exists()).toBe(true)
+  })
+
   test('renders default actions and hides bulk-actions when not selecting', () => {
     const wrapper = mount({ editor: makeEditor({ is_selecting: false }) })
     expect(wrapper.find('[data-testid="actions-stub"]').exists()).toBe(true)

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue'
 import { useMobileDock } from './use-mobile-dock'
+import { useKeyboardOpen } from '@/composables/ui/keyboard'
 
 const { el, fills } = useMobileDock()
+const { is_open: is_keyboard_open } = useKeyboardOpen()
 
 const bar = useTemplateRef<HTMLElement>('bar')
 
@@ -11,7 +13,8 @@ let observer: ResizeObserver | null = null
 // Publish the dock's live height to :root so any view can pad its content clear
 // of the bar. 0 while the dock is empty/hidden so layouts collapse the gap.
 function publishHeight() {
-  const height = fills.value > 0 ? (bar.value?.offsetHeight ?? 0) : 0
+  const visible = fills.value > 0 && !is_keyboard_open.value
+  const height = visible ? (bar.value?.offsetHeight ?? 0) : 0
   document.documentElement.style.setProperty('--mobile-dock-height', `${height}px`)
 }
 
@@ -23,8 +26,8 @@ onMounted(() => {
 })
 
 // RO covers content + show/hide size changes; the post-flush watch guarantees a
-// measure once the DOM reflects a fills toggle.
-watch(fills, publishHeight, { flush: 'post' })
+// measure once the DOM reflects a fills/keyboard toggle.
+watch([fills, is_keyboard_open], publishHeight, { flush: 'post' })
 
 onBeforeUnmount(() => {
   observer?.disconnect()
@@ -34,7 +37,7 @@ onBeforeUnmount(() => {
 
 <template>
   <footer
-    v-show="fills > 0"
+    v-show="fills > 0 && !is_keyboard_open"
     ref="bar"
     data-testid="mobile-dock-host"
     class="fixed bottom-0 left-0 z-30 w-full rounded-t-6 bg-brown-300 contain-[layout_style] transform-[translateZ(0)] dark:bg-stone-900 sm:bottom-3 sm:left-auto sm:right-3 sm:w-96 sm:rounded-6 xl:hidden [--dock-px:1.25rem] [--dock-pt:1rem] [--dock-pb:0.5rem] standalone:max-sm:[--dock-pb:3rem] ring-1 ring-brown-100 dark:ring-grey-900"

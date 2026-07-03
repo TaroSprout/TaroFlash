@@ -1,88 +1,40 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui-kit/button.vue'
 import UiPopover from '@/components/ui-kit/popover.vue'
-import UiSelectMenu from '@/components/ui-kit/select-menu.vue'
-import SectionList from '@/components/layout-kit/section-list.vue'
-import LabeledSection from '@/components/layout-kit/labeled-section.vue'
-import {
-  deckViewShellKey,
-  type CardGridSize,
-  type CardSortKey
-} from '@/views/deck/composables/view-shell'
-import { inject, ref } from 'vue'
+import PageSettingsPanel from './page-settings-panel.vue'
+import { deckViewShellKey } from '@/views/deck/composables/view-shell'
+import { useMatchMedia } from '@/composables/ui/media-query'
+import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { emitSfx } from '@/sfx/bus'
-import { TYPE_SFX } from '@/sfx/config'
-
-type SizeOption = {
-  value: CardGridSize
-  label_key: string
-  preview: string
-  radius: string
-}
 
 const { t } = useI18n()
 
-const { grid_size, setGridSize, sort_by, setSortBy } = inject(deckViewShellKey)!
+const { is_page_settings_open, openPageSettings, closePageSettings } = inject(deckViewShellKey)!
+const is_mobile = useMatchMedia('w<md')
 
-const open = ref(false)
-
-const size_options: SizeOption[] = [
-  {
-    value: 'base',
-    label_key: 'deck-view.page-settings.card-size-small',
-    preview: '32px',
-    radius: '8px'
-  },
-  {
-    value: 'md',
-    label_key: 'deck-view.page-settings.card-size-base',
-    preview: '40px',
-    radius: '10px'
-  },
-  {
-    value: 'xl',
-    label_key: 'deck-view.page-settings.card-size-full',
-    preview: '52px',
-    radius: '12px'
-  }
-]
-
-const sort_options = [
-  { value: 'default' as CardSortKey, label: t('deck-view.page-settings.sort-default') },
-  { value: 'difficulty' as CardSortKey, label: t('deck-view.page-settings.sort-difficulty') }
-]
+// Below md the mode-toolbar (and this popover) is only CSS-hidden, not
+// unmounted — the mobile footer's own panel drives `is_page_settings_open`
+// there instead. Gating `open` on `!is_mobile` keeps this popover's
+// outside-click listener from ever attaching on mobile, which would otherwise
+// treat every tap inside the footer panel as a click outside and close it.
+const desktop_open = computed(() => is_page_settings_open.value && !is_mobile.value)
 
 function toggle() {
-  emitSfx('snappy_button_5')
-  open.value = !open.value
-}
-
-function close() {
-  open.value = false
-}
-
-function onSelectSize(value: CardGridSize) {
-  if (grid_size.value === value) {
-    emitSfx('digi_powerdown')
-    return
-  }
-
-  emitSfx('select')
-  setGridSize(value)
+  if (is_page_settings_open.value) closePageSettings()
+  else openPageSettings()
 }
 </script>
 
 <template>
   <ui-popover
-    :open="open"
+    :open="desktop_open"
     position="bottom"
     :gap="4"
     :transition_duration="0"
-    :use_arrow="false"
+    shadow
     teleport
     data-testid="page-settings"
-    @close="close"
+    @close="closePageSettings"
   >
     <template #trigger>
       <ui-button
@@ -92,7 +44,7 @@ function onSelectSize(value: CardGridSize) {
         size="sm"
         icon-left="page-setting"
         icon-only
-        :data-active="open"
+        :data-active="desktop_open"
         @press="toggle"
       >
         {{ t('deck-view.page-settings.trigger') }}
@@ -101,54 +53,15 @@ function onSelectSize(value: CardGridSize) {
 
     <div
       data-testid="page-settings__panel"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
-      class="rounded-7 bg-brown-300 p-4 dark:bg-stone-700 outline-1 outline-brown-100 dark:outline-grey-900"
+      class="rounded-7 bg-brown-300 p-4 dark:bg-stone-900 filter-[drop-shadow(var(--drop-shadow-sm))_drop-shadow(-1px_-1px_0_var(--color-brown-100))] dark:filter-[drop-shadow(var(--drop-shadow-sm))_drop-shadow(-1px_-1px_0_var(--color-grey-900))]"
     >
-      <section-list>
-        <labeled-section :label="t('deck-view.page-settings.card-size-label')">
-          <div
-            data-testid="page-settings__card-size"
-            class="grid grid-flow-col grid-rows-[1fr_auto] items-center justify-items-center gap-x-2.5 gap-y-2"
-          >
-            <template v-for="option in size_options" :key="option.value">
-              <button
-                type="button"
-                role="radio"
-                :aria-checked="grid_size === option.value"
-                :data-testid="`page-settings__card-size-option-${option.value}`"
-                :data-active="grid_size === option.value"
-                class="flex h-18 w-16 cursor-pointer items-center justify-center rounded-4 outline outline-brown-100 transition-colors hover:bg-brown-500 dark:hover:bg-grey-900 hover:bgx-diagonal-stripes hover:bgx-opacity-10 data-[active=true]:bg-(--theme-primary) data-[active=true]:bgx-diagonal-stripes data-[active=true]:bgx-opacity-10"
-                v-sfx="{ hover: grid_size === option.value ? undefined : TYPE_SFX }"
-                @click="onSelectSize(option.value)"
-              >
-                <span
-                  class="aspect-card bg-white dark:bg-grey-700"
-                  :style="{ height: option.preview, borderRadius: option.radius }"
-                ></span>
-              </button>
-
-              <span
-                :data-testid="`page-settings__card-size-label-${option.value}`"
-                class="text-sm text-brown-700 dark:text-brown-100"
-              >
-                {{ t(option.label_key) }}
-              </span>
-            </template>
-          </div>
-        </labeled-section>
-
-        <labeled-section :label="t('deck-view.page-settings.sort-label')">
-          <ui-select-menu
-            data-testid="page-settings__sort"
-            data-theme-dark="stone-900"
-            menu-theme-dark="stone-900"
-            :options="sort_options"
-            :model-value="sort_by"
-            @update:model-value="setSortBy"
-          />
-        </labeled-section>
-      </section-list>
+      <page-settings-panel />
     </div>
+
+    <template #arrow>
+      <div
+        class="ui-kit-popover__arrow-default [--popover-arrow-color:var(--color-brown-300)] dark:[--popover-arrow-color:var(--color-stone-900)]"
+      />
+    </template>
   </ui-popover>
 </template>

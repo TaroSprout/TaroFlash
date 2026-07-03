@@ -103,11 +103,11 @@ function makeDeckQuery(deck) {
   return { data: ref(deck) }
 }
 
-function makeSearch() {
+function makeSearch({ is_active = false } = {}) {
   return {
     is_searching: ref(false),
     query: ref(''),
-    is_active: ref(false),
+    is_active: ref(is_active),
     is_loading: ref(false),
     displayed_cards: ref([]),
     no_results: ref(false),
@@ -121,6 +121,7 @@ function mount({
   deck = { id: 1, name: 'Test' },
   mode = 'view',
   editorOpts = {},
+  searchOpts = {},
   withHideActionsCheck = false
 } = {}) {
   useDeckQueryMock.mockReturnValue(makeDeckQuery(deck))
@@ -131,7 +132,7 @@ function mount({
     displayed_cards: ref([]),
     is_loading: ref(false)
   })
-  useCardSearchMock.mockReturnValue(makeSearch())
+  useCardSearchMock.mockReturnValue(makeSearch(searchOpts))
   return shallowMount(DeckView, {
     props: { id: '1' },
     global: {
@@ -343,6 +344,31 @@ describe('DeckView (views/deck/index.vue)', () => {
 
     const loading = mount({ editorOpts: { cards: [], isLoading: true } })
     expect(loading.find('[data-testid="deck-view__empty"]').exists()).toBe(false)
+  })
+
+  // ── view_state stays "ready" for a zero-result search [obligation] ────────
+  // Regression: a zero-result search used to fall back to the full empty-deck
+  // layout (hiding the hero, reflowing the page) instead of letting the grid
+  // show its own inline no-results message.
+
+  test('view_state stays "ready" when search.is_active is true even with zero cards [obligation]', () => {
+    const wrapper = mount({
+      editorOpts: { cards: [], isLoading: false },
+      searchOpts: { is_active: true }
+    })
+    expect(wrapper.find('[data-testid="deck-view__empty"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="mode-toolbar-skeleton-stub"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="mode-toolbar-stub"]').exists()).toBe(true)
+  })
+
+  test('an active zero-result search does not hide deck-hero actions [obligation]', () => {
+    const wrapper = mount({
+      editorOpts: { cards: [], isLoading: false },
+      searchOpts: { is_active: true },
+      withHideActionsCheck: true
+    })
+    const hero = wrapper.find('[data-testid="deck-hero-stub"]')
+    expect(hero.attributes('data-hide-actions')).toBe('false')
   })
 
   // ── useCardSearch wiring [obligation] ─────────────────────────────────────

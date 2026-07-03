@@ -140,6 +140,33 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('back')
   })
 
+  test('active_side re-syncs when the side prop changes [obligation]', async () => {
+    // Regression: active_side was only seeded once via ref(side), so changing
+    // the deck default in Page Settings required a full page refresh to show.
+    const { wrapper } = mountGridItem({ props: { side: 'front' } })
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('front')
+
+    await wrapper.setProps({ side: 'back' })
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('back')
+  })
+
+  test('active_side re-syncs to the new side prop even after a manual flip [obligation]', async () => {
+    const { wrapper } = mountGridItem({ props: { side: 'front' } })
+    const card = wrapper.find('[data-testid="card-stub"]')
+
+    // Manually flip back to 'front' so local state (front) matches the OLD
+    // prop value — this is what forces the assertion below through the watch
+    // rather than a coincidental match from the flip itself.
+    await card.trigger('click')
+    await card.trigger('click')
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('front')
+
+    // Deck default changes to 'back' — without the watch, active_side (a ref
+    // seeded once) would stay 'front' regardless of this prop update.
+    await wrapper.setProps({ side: 'back' })
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('back')
+  })
+
   test('clicking the card flips front → back and emits transition_up sfx when not selecting', async () => {
     const { wrapper } = mountGridItem({ props: { side: 'front' } })
     await wrapper.find('[data-testid="card-stub"]').trigger('click')

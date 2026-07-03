@@ -2,14 +2,16 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
 
-const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
+const { mockUseMatchMedia } = vi.hoisted(() => ({
+  mockUseMatchMedia: vi.fn()
+}))
 
-vi.mock('@/sfx/bus', () => ({
-  emitSfx: mockEmitSfx
+vi.mock('@/composables/ui/media-query', () => ({
+  useMatchMedia: mockUseMatchMedia
 }))
 
 // Stub UiPopover so we control open/close behavior without real floating UI or
-// Teleport. The stub renders the trigger and default slots, and exposes a
+// Teleport. The stub renders the trigger/default/arrow slots, and exposes a
 // `data-open` attribute so tests can inspect open state via the prop. It also
 // emits the "close" event when a test triggers it.
 const UiPopoverStub = defineComponent({
@@ -17,7 +19,7 @@ const UiPopoverStub = defineComponent({
   inheritAttrs: false,
   props: ['open', 'position', 'gap', 'transition_duration', 'shadow', 'teleport'],
   emits: ['close'],
-  setup(props, { slots, emit }) {
+  setup(props, { slots }) {
     const attrs = useAttrs()
     return () =>
       h(
@@ -54,224 +56,113 @@ const UiButtonStub = defineComponent({
   }
 })
 
-const SectionListStub = defineComponent({
-  name: 'SectionList',
-  setup(_p, { slots }) {
-    return () => h('div', { 'data-testid': 'section-list-stub' }, slots.default?.())
-  }
-})
-
-const LabeledSectionStub = defineComponent({
-  name: 'LabeledSection',
-  setup(_p, { slots }) {
-    return () => h('div', { 'data-testid': 'labeled-section-stub' }, slots.default?.())
-  }
-})
-
-// UiSelectMenu stub that renders the current value and emits update:modelValue
-const UiSelectMenuStub = defineComponent({
-  name: 'UiSelectMenu',
-  inheritAttrs: false,
-  props: { modelValue: { type: String, default: '' }, options: { type: Array, default: () => [] } },
-  emits: ['update:modelValue'],
-  setup(props, { emit }) {
-    const attrs = useAttrs()
-    return () =>
-      h(
-        'div',
-        {
-          'data-testid': attrs['data-testid'] ?? 'ui-select-menu-stub',
-          'data-value': props.modelValue
-        },
-        [
-          h('button', {
-            'data-testid': 'ui-select-menu-stub__select',
-            onClick: (e) => emit('update:modelValue', e.target.dataset.option)
-          })
-        ]
-      )
-  }
+const PageSettingsPanelStub = defineComponent({
+  name: 'PageSettingsPanel',
+  setup: () => () => h('div', { 'data-testid': 'page-settings-panel-stub' })
 })
 
 import PageSettings from '@/views/deck/mode-toolbar/page-settings.vue'
 import { deckViewShellKey } from '@/views/deck/composables/view-shell'
 
-function makeEditor({ grid_size_val = 'md', sort_by_val = 'default' } = {}) {
-  const grid_size = ref(grid_size_val)
-  const sort_by = ref(sort_by_val)
-  const setGridSize = vi.fn((size) => {
-    grid_size.value = size
+function makeShell({ is_open = false } = {}) {
+  const is_page_settings_open = ref(is_open)
+  const openPageSettings = vi.fn(() => {
+    is_page_settings_open.value = true
   })
-  const setSortBy = vi.fn((key) => {
-    sort_by.value = key
+  const closePageSettings = vi.fn(() => {
+    is_page_settings_open.value = false
   })
-  return { grid_size, setGridSize, sort_by, setSortBy }
+  return { is_page_settings_open, openPageSettings, closePageSettings }
 }
 
-function mountPageSettings(editor = makeEditor()) {
+function mountPageSettings(shell = makeShell(), { is_mobile = false } = {}) {
+  mockUseMatchMedia.mockReturnValue(ref(is_mobile))
   return {
     wrapper: shallowMount(PageSettings, {
       global: {
-        provide: { [deckViewShellKey]: editor },
+        provide: { [deckViewShellKey]: shell },
         stubs: {
           UiPopover: UiPopoverStub,
           UiButton: UiButtonStub,
-          SectionList: SectionListStub,
-          LabeledSection: LabeledSectionStub,
-          UiSelectMenu: UiSelectMenuStub
+          PageSettingsPanel: PageSettingsPanelStub
         }
       }
     }),
-    editor
+    shell
   }
 }
 
-describe('PageSettings', () => {
+describe('PageSettings (mode-toolbar)', () => {
   beforeEach(() => {
-    mockEmitSfx.mockClear()
+    mockUseMatchMedia.mockReset()
   })
 
   // ── Trigger toggle ────────────────────────────────────────────────────────
 
-  test('clicking the trigger opens the popover', async () => {
-    const { wrapper } = mountPageSettings()
+  test('clicking the trigger opens the shared page settings state', async () => {
+    const { wrapper, shell } = mountPageSettings()
     const trigger = wrapper.find('[data-testid="page-settings__trigger"]')
     await trigger.trigger('click')
+    expect(shell.openPageSettings).toHaveBeenCalledOnce()
     expect(wrapper.find('[data-testid="page-settings"]').attributes('data-open')).toBe('true')
   })
 
-  test('clicking the trigger again closes the popover', async () => {
-    const { wrapper } = mountPageSettings()
+  test('clicking the trigger again closes it', async () => {
+    const { wrapper, shell } = mountPageSettings()
     const trigger = wrapper.find('[data-testid="page-settings__trigger"]')
     await trigger.trigger('click')
     await trigger.trigger('click')
+    expect(shell.closePageSettings).toHaveBeenCalledOnce()
     expect(wrapper.find('[data-testid="page-settings"]').attributes('data-open')).toBe('false')
   })
 
-  // ── Size options mapping ──────────────────────────────────────────────────
+  // ── desktop_open gating [obligation] ───────────────────────────────────────
+  // Regression: the desktop popover is only CSS-hidden below `md`, still
+  // mounted — so its own `open` prop must be false on mobile even when the
+  // shared is_page_settings_open flag is true (set by the mobile footer's
+  // panel), or its outside-click listener treats footer taps as "click outside".
 
-  test('renders three card size options: base, md, xl [obligation]', () => {
-    const { wrapper } = mountPageSettings()
-    expect(wrapper.find('[data-testid="page-settings__card-size-option-base"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="page-settings__card-size-option-md"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="page-settings__card-size-option-xl"]').exists()).toBe(true)
+  test('desktop_open is false on mobile even when is_page_settings_open is true [obligation]', () => {
+    const shell = makeShell({ is_open: true })
+    const { wrapper } = mountPageSettings(shell, { is_mobile: true })
+    expect(wrapper.find('[data-testid="page-settings"]').attributes('data-open')).toBe('false')
   })
 
-  test('Dense option maps to size base [obligation]', () => {
-    const { wrapper } = mountPageSettings()
-    const label = wrapper.find('[data-testid="page-settings__card-size-label-base"]')
-    expect(label.text()).toBe('Dense')
+  test('desktop_open is true above mobile when is_page_settings_open is true [obligation]', () => {
+    const shell = makeShell({ is_open: true })
+    const { wrapper } = mountPageSettings(shell, { is_mobile: false })
+    expect(wrapper.find('[data-testid="page-settings"]').attributes('data-open')).toBe('true')
   })
 
-  test('Balanced option maps to size md [obligation]', () => {
-    const { wrapper } = mountPageSettings()
-    const label = wrapper.find('[data-testid="page-settings__card-size-label-md"]')
-    expect(label.text()).toBe('Balanced')
+  test('desktop_open is false above mobile when is_page_settings_open is false', () => {
+    const shell = makeShell({ is_open: false })
+    const { wrapper } = mountPageSettings(shell, { is_mobile: false })
+    expect(wrapper.find('[data-testid="page-settings"]').attributes('data-open')).toBe('false')
   })
 
-  test('Full option maps to size xl [obligation]', () => {
-    const { wrapper } = mountPageSettings()
-    const label = wrapper.find('[data-testid="page-settings__card-size-label-xl"]')
-    expect(label.text()).toBe('Full')
-  })
+  // ── data-active on trigger tracks desktop_open ─────────────────────────────
 
-  // ── Active state ──────────────────────────────────────────────────────────
-
-  test('option matching grid_size has data-active="true" [obligation]', () => {
-    const { wrapper } = mountPageSettings(makeEditor({ grid_size_val: 'md' }))
-    expect(
-      wrapper.find('[data-testid="page-settings__card-size-option-md"]').attributes('data-active')
-    ).toBe('true')
-    expect(
-      wrapper.find('[data-testid="page-settings__card-size-option-base"]').attributes('data-active')
-    ).toBe('false')
-    expect(
-      wrapper.find('[data-testid="page-settings__card-size-option-xl"]').attributes('data-active')
-    ).toBe('false')
-  })
-
-  test('active option tracks the current grid_size reactively', async () => {
-    const editor = makeEditor({ grid_size_val: 'base' })
-    const { wrapper } = mountPageSettings(editor)
-    expect(
-      wrapper.find('[data-testid="page-settings__card-size-option-base"]').attributes('data-active')
-    ).toBe('true')
-
-    editor.grid_size.value = 'xl'
-    await wrapper.vm.$nextTick()
-    expect(
-      wrapper.find('[data-testid="page-settings__card-size-option-xl"]').attributes('data-active')
-    ).toBe('true')
-    expect(
-      wrapper.find('[data-testid="page-settings__card-size-option-base"]').attributes('data-active')
-    ).toBe('false')
-  })
-
-  // ── Clicking a non-active option ──────────────────────────────────────────
-
-  test('clicking a non-active option calls setGridSize with that option value [obligation]', async () => {
-    const editor = makeEditor({ grid_size_val: 'md' })
-    const { wrapper } = mountPageSettings(editor)
-    await wrapper.find('[data-testid="page-settings__card-size-option-xl"]').trigger('click')
-    expect(editor.setGridSize).toHaveBeenCalledWith('xl')
-    expect(editor.grid_size.value).toBe('xl')
-  })
-
-  // ── Active re-select (no-op / powerdown) ─────────────────────────────────
-
-  test('clicking the already-active option does NOT call setGridSize [obligation]', async () => {
-    const editor = makeEditor({ grid_size_val: 'md' })
-    const { wrapper } = mountPageSettings(editor)
-    await wrapper.find('[data-testid="page-settings__card-size-option-md"]').trigger('click')
-    expect(editor.setGridSize).not.toHaveBeenCalled()
-    expect(editor.grid_size.value).toBe('md')
-  })
-
-  test('clicking the already-active option plays powerdown sfx', async () => {
-    const editor = makeEditor({ grid_size_val: 'md' })
-    const { wrapper } = mountPageSettings(editor)
-    await wrapper.find('[data-testid="page-settings__card-size-option-md"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
-  })
-
-  // ── Sort select field ─────────────────────────────────────────────────────
-
-  test('renders the sort select field with current sort_by value', () => {
-    const editor = makeEditor({ sort_by_val: 'default' })
-    const { wrapper } = mountPageSettings(editor)
-    const sortField = wrapper.find('[data-testid="page-settings__sort"]')
-    expect(sortField.exists()).toBe(true)
-    expect(sortField.attributes('data-value')).toBe('default')
-  })
-
-  test('sort select reflects sort_by reactively', async () => {
-    const editor = makeEditor({ sort_by_val: 'default' })
-    const { wrapper } = mountPageSettings(editor)
-    editor.sort_by.value = 'difficulty'
-    await wrapper.vm.$nextTick()
-    expect(wrapper.find('[data-testid="page-settings__sort"]').attributes('data-value')).toBe(
-      'difficulty'
+  test('trigger data-active reflects desktop_open, not raw is_page_settings_open [obligation]', () => {
+    const shell = makeShell({ is_open: true })
+    const { wrapper } = mountPageSettings(shell, { is_mobile: true })
+    expect(wrapper.find('[data-testid="page-settings__trigger"]').attributes('data-active')).toBe(
+      'false'
     )
   })
 
-  test('update:modelValue on sort field calls setSortBy with the new key', async () => {
-    const editor = makeEditor({ sort_by_val: 'default' })
-    const { wrapper } = mountPageSettings(editor)
-    // Trigger update:modelValue directly on the stub component
-    const sortField = wrapper.findComponent({ name: 'UiSelectMenu' })
-    await sortField.vm.$emit('update:modelValue', 'difficulty')
-    expect(editor.setSortBy).toHaveBeenCalledWith('difficulty')
+  // ── Panel content delegation ────────────────────────────────────────────────
+
+  test('renders page-settings-panel inside the popover', () => {
+    const { wrapper } = mountPageSettings()
+    expect(wrapper.find('[data-testid="page-settings-panel-stub"]').exists()).toBe(true)
   })
 
   // ── Popover close handler ─────────────────────────────────────────────────
 
-  test('popover close event sets open to false (covers the close() handler)', async () => {
-    const { wrapper } = mountPageSettings()
-    // Open the popover first
+  test('popover close event calls closePageSettings (covers the close handler)', async () => {
+    const { wrapper, shell } = mountPageSettings()
     await wrapper.find('[data-testid="page-settings__trigger"]').trigger('click')
-    expect(wrapper.find('[data-testid="page-settings"]').attributes('data-open')).toBe('true')
-    // Emit close from the popover stub — triggers the component's close() function
     await wrapper.findComponent({ name: 'UiPopover' }).vm.$emit('close')
-    expect(wrapper.find('[data-testid="page-settings"]').attributes('data-open')).toBe('false')
+    expect(shell.closePageSettings).toHaveBeenCalledOnce()
   })
 })

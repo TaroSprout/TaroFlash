@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, afterEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { h, nextTick, ref } from 'vue'
+import { gsap } from 'gsap'
 import CrossfadeResize from '@/components/layout-kit/crossfade-resize.vue'
 
 // ── GSAP mock ─────────────────────────────────────────────────────────────────
@@ -10,7 +11,16 @@ import CrossfadeResize from '@/components/layout-kit/crossfade-resize.vue'
 vi.mock('gsap', () => ({
   gsap: {
     to: vi.fn((_el, opts) => opts?.onComplete?.()),
-    set: vi.fn()
+    set: vi.fn(),
+    // .to() is chainable; onComplete fires once both tweens are queued so the
+    // timeline-driven (animateHeight) path completes synchronously like `to`.
+    timeline: vi.fn((opts) => {
+      const timeline = {
+        to: () => timeline
+      }
+      opts?.onComplete?.()
+      return timeline
+    })
   }
 }))
 
@@ -22,10 +32,11 @@ vi.mock('gsap', () => ({
 // change — triggering before-leave / after-enter hooks.
 const mounted_wrappers = []
 
-function makeCrossfadeWrapper() {
+function makeCrossfadeWrapper(props = {}) {
   const slot_key = ref('a')
 
   const cr = mount(CrossfadeResize, {
+    props,
     slots: {
       default: () =>
         h('div', { key: slot_key.value, 'data-testid': `pane-${slot_key.value}` }, slot_key.value)
@@ -88,5 +99,36 @@ describe('CrossfadeResize', () => {
 
     expect(cr.emitted('swap-start')).toBeTruthy()
     expect(cr.emitted('swap-end')).toBeTruthy()
+  })
+
+  // ── animateHeight prop [obligation] ────────────────────────────────────────
+
+  test('animateHeight defaults to true — tweens height via gsap.timeline [obligation]', async () => {
+    const { slot_key } = makeCrossfadeWrapper()
+
+    slot_key.value = 'b'
+    await nextTick()
+    await nextTick()
+    await flushPromises()
+
+    expect(gsap.timeline).toHaveBeenCalled()
+  })
+
+  test('animateHeight=false snaps height via gsap.set instead of a timeline [obligation]', async () => {
+    const { slot_key } = makeCrossfadeWrapper({ animateHeight: false })
+
+    gsap.timeline.mockClear()
+    gsap.set.mockClear()
+
+    slot_key.value = 'b'
+    await nextTick()
+    await nextTick()
+    await flushPromises()
+
+    expect(gsap.timeline).not.toHaveBeenCalled()
+    expect(gsap.set).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ height: expect.any(Number) })
+    )
   })
 })

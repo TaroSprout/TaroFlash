@@ -6,6 +6,15 @@ import {
   crossfadeResizeLeave
 } from '@/utils/animations/crossfade-resize'
 
+type CrossfadeResizeProps = {
+  // Snaps the wrapper's height instead of tweening it — set false only for
+  // panes with heavy DOM (a long transcript); see the perf note in
+  // `crossfadeResizeEnter`.
+  animateHeight?: boolean
+}
+
+const { animateHeight = true } = defineProps<CrossfadeResizeProps>()
+
 const emit = defineEmits<{
   (e: 'swap-start'): void
   (e: 'swap-end'): void
@@ -22,7 +31,7 @@ function onBeforeLeave() {
 }
 
 function onEnter(el: Element, done: () => void) {
-  if (wrapper.value) crossfadeResizeEnter(wrapper.value)(el, done)
+  if (wrapper.value) crossfadeResizeEnter(wrapper.value, animateHeight)(el, done)
   else done()
 }
 
