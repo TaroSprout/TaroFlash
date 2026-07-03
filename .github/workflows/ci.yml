@@ -99,9 +99,6 @@ jobs:
       - name: Run tests (shard ${{ matrix.shard }}/3)
         run: pnpm exec vp test run --coverage --reporter=blob --reporter=default --project Unit --project Integration --shard=${{ matrix.shard }}/3
 
-      - name: Rename blob to avoid collision with contract blob
-        run: mv .vitest-reports/blob.json .vitest-reports/blob-unit-${{ matrix.shard }}.json
-
       - name: Upload blob report
         uses: actions/upload-artifact@v4
         with:
