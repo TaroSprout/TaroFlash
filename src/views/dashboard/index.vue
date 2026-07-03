@@ -15,7 +15,6 @@ import { useDeckActions } from '@/composables/deck/actions'
 import { useCan } from '@/composables/can'
 import MemberBadge from '@/components/member/member-badge.vue'
 import { useMemberStore } from '@/stores/member'
-import { useSettingsModal } from '@/composables/settings/use-settings-modal'
 import { useLocalRef } from '@/composables/storage/local-ref'
 import {
   inboxSwingBeforeEnter,
@@ -29,7 +28,6 @@ const router = useRouter()
 const is_md = useMatchMedia('w>=md')
 const can = useCan()
 const member_store = useMemberStore()
-const settingsModal = useSettingsModal()
 
 const deck_create_modal = useDeckCreateModal()
 const deck_actions = useDeckActions()
@@ -50,10 +48,6 @@ const show_inbox = useLocalRef('dashboard.show_inbox', false)
 function onBadgeClick() {
   if (due_decks.value.length === 0) return
   show_inbox.value = !show_inbox.value
-}
-
-function onEditClick() {
-  settingsModal.open()
 }
 
 function onDeckClicked(deck: Deck) {
@@ -103,16 +97,6 @@ async function onCreateDeckClicked() {
             </div>
           </template>
           <template #actions>
-            <ui-button
-              data-testid="member-badge__edit-button"
-              icon-left="edit"
-              class="absolute! -top-1 -right-1 ring-4 ring-(--theme-primary)"
-              icon-only
-              inverted
-              @click.stop="onEditClick"
-            >
-              {{ t('member-badge.edit-button') }}
-            </ui-button>
             <button
               v-if="!show_inbox && due_decks.length > 0"
               data-testid="member-badge__expand-button"

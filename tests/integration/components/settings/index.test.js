@@ -2,6 +2,7 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, inject, nextTick, useAttrs } from 'vue'
 import { settingsRecedeKey, SETTINGS_SHEET_BREAKPOINTS } from '@/components/settings/layout'
+import { useMatchMedia } from '@/composables/ui/media-query'
 
 // ── Hoisted state ─────────────────────────────────────────────────────────────
 
@@ -65,18 +66,18 @@ vi.mock('@/composables/storage/session-ref', async () => {
 vi.mock('@/composables/ui/media-query', async () => {
   const { ref } = await import('vue')
   return {
-    // sheet_query (useTabModalLayout, 'w<mlg | h<sm') and the settings-only
+    // sheet_query (useTabModalLayout, width-only 'w<mlg') and the settings-only
     // pin check (SETTINGS_SHEET_BREAKPOINTS, 'w<mlg | h<md') are distinct
     // queries on purpose — they resolve from separate state fields so a test
     // can pin the recede/restore animation while layout_mode stays desktop/tablet.
-    useMatchMedia: (query) => {
+    useMatchMedia: vi.fn((query) => {
       if (query.includes('&')) return ref(state.isDesktop)
       if (
         query === `w<${SETTINGS_SHEET_BREAKPOINTS.width} | h<${SETTINGS_SHEET_BREAKPOINTS.height}`
       )
         return ref(state.isPinned)
       return ref(state.isSheet)
-    }
+    })
   }
 })
 
@@ -250,6 +251,7 @@ beforeEach(() => {
   state.isSheet = false
   state.isDesktop = false
   state.isPinned = false
+  useMatchMedia.mockClear()
   mockEditor.is_dirty.value = false
   mockEditor.saving.value = false
   mockEditor.saveMember.mockReset().mockResolvedValue(true)
@@ -334,6 +336,29 @@ describe('settings app — data-layout attribute', () => {
     state.isDesktop = true
     const wrapper = makeWrapper()
     expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-layout')).toBe('desktop')
+  })
+
+  test('passes a width-only sheet_query to useTabModalLayout, with no height clause folded in [obligation]', () => {
+    makeWrapper()
+    const sheet_query_calls = useMatchMedia.mock.calls
+      .map((call) => call[0])
+      .filter((query) => !query.includes('&') && !query.includes(SETTINGS_SHEET_BREAKPOINTS.height))
+    expect(sheet_query_calls).toContain('w<mlg')
+  })
+
+  test('layout_mode stays "tablet"/"desktop" on a short-but-wide viewport — width band alone drives the mode, height is never folded into sheet_query [obligation]', () => {
+    // Regression guard: sheet_query used to be 'w<mlg | h<sm', so a viewport with
+    // width in the tablet/desktop band but a short height incorrectly matched the
+    // sheet query. Now sheet_query is width-only ('w<mlg'), so the mocked
+    // useMatchMedia never receives a height-driven sheet condition — state.isSheet
+    // is only ever toggled by a real width breakpoint, never by height alone.
+    state.isSheet = false
+    state.isDesktop = false
+    const wrapper = makeWrapper()
+
+    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-layout')).toBe('tablet')
+    const sheet_query_calls = useMatchMedia.mock.calls.map((call) => call[0])
+    expect(sheet_query_calls).not.toContain('w<mlg | h<sm')
   })
 })
 
@@ -574,7 +599,7 @@ describe('settings app — recede/restore choreography [obligation]', () => {
   })
 
   test("[obligation] uses SETTINGS_SHEET_BREAKPOINTS pin check, not layout_mode's own sheet_query — recedes with is_pinned true even while layout_mode resolves tablet/desktop", async () => {
-    // sheet_query ('w<mlg | h<sm') resolves false here so layout_mode is tablet/desktop,
+    // sheet_query ('w<mlg') resolves false here so layout_mode is tablet/desktop,
     // but the narrower SETTINGS_SHEET_BREAKPOINTS pin query still resolves true.
     state.isSheet = false
     state.isDesktop = false

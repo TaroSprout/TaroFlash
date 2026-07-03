@@ -5,19 +5,14 @@ import { defineComponent, h, ref } from 'vue'
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 // Only functions/fn refs go in vi.hoisted — Vue ref() is not available there.
 
-const {
-  routerPushMock,
-  guardCreateDeckMock,
-  deckCreateModalOpenMock,
-  settingsModalOpenMock,
-  toastErrorMock
-} = vi.hoisted(() => ({
-  routerPushMock: vi.fn(),
-  guardCreateDeckMock: vi.fn(() => Promise.resolve(true)),
-  deckCreateModalOpenMock: vi.fn(),
-  settingsModalOpenMock: vi.fn(),
-  toastErrorMock: vi.fn()
-}))
+const { routerPushMock, guardCreateDeckMock, deckCreateModalOpenMock, toastErrorMock } = vi.hoisted(
+  () => ({
+    routerPushMock: vi.fn(),
+    guardCreateDeckMock: vi.fn(() => Promise.resolve(true)),
+    deckCreateModalOpenMock: vi.fn(),
+    toastErrorMock: vi.fn()
+  })
+)
 
 // Reactive state shared between mock factories and tests. Created at module
 // level (not inside vi.hoisted) so Vue's ref() is available.
@@ -57,10 +52,6 @@ vi.mock('@/composables/can', () => ({
 
 vi.mock('@/composables/storage/local-ref', () => ({
   useLocalRef: (_key, _default) => localShowInboxRef
-}))
-
-vi.mock('@/composables/settings/use-settings-modal', () => ({
-  useSettingsModal: () => ({ open: settingsModalOpenMock })
 }))
 
 vi.mock('@/composables/ui/media-query', () => ({
@@ -279,14 +270,6 @@ describe('DashboardIndex — review inbox visibility', () => {
     localShowInboxRef.value = true
     const wrapper = mountDashboard()
     expect(wrapper.find('[data-testid="review-inbox"]').exists()).toBe(false)
-  })
-})
-
-describe('DashboardIndex — edit button opens settings', () => {
-  test('clicking edit button calls settingsModal.open()', async () => {
-    const wrapper = mountDashboard()
-    await wrapper.find('[data-testid="member-badge__edit-button"]').trigger('click')
-    expect(settingsModalOpenMock).toHaveBeenCalledOnce()
   })
 })
 
