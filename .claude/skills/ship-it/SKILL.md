@@ -44,15 +44,17 @@ Skip if the working tree is already clean (`git status --short` empty).
 git checkout --detach HEAD
 ```
 
-**Create the worktree**, symlink `node_modules`, copy gitignored env files (same mechanics as `fork-dev` Step 3, minus starting a dev server):
+**Create the worktree** and copy gitignored env files, then give it its own real `node_modules`:
 
 ```sh
 git worktree add ../TaroFlash-ship-<slug> <current_branch>
-ln -s "$(pwd)/node_modules" "../TaroFlash-ship-<slug>/node_modules"
 for f in .env .env.local .env.*.local; do
   [ -f "$f" ] && cp "$f" "../TaroFlash-ship-<slug>/$f"
 done
+(cd ../TaroFlash-ship-<slug> && CI=true vp install)
 ```
+
+Do **not** symlink `node_modules` from the main workspace here (unlike `fork-dev`, which is fine to symlink since it only starts a dev server). A symlinked `node_modules` pointing at a different project root breaks Vite's browser-mode coverage instrumentation: every Integration-project test errors with `TypeError: Failed to fetch dynamically imported module: .../@vitest/coverage-v8/browser?import`. Piped through `tail`, this is invisible and just looks like `test:fast` hanging — a `ps` CPU-time check (near-zero growth over minutes) is what actually reveals it. `CI=true` skips pnpm's interactive "remove modules dir" prompt (`ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY` otherwise). One-time cost per worktree; matches what CI itself does (a fresh install, never a symlink).
 
 **Reapply the stash inside the worktree**:
 
