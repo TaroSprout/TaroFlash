@@ -6,9 +6,10 @@ import { debounce } from '@/utils/debounce'
 import { emitSfx } from '@/sfx/bus'
 import { cardSearchKey } from '@/views/deck/composables'
 import { expandSearchInput, collapseSearchInput } from '@/utils/animations/deck-view/search-field'
+import { usePinScrollWhileTyping } from '@/composables/ui/pin-scroll-while-typing'
 
 type SearchBarProps = {
-  size?: 'sm' | 'lg'
+  size?: 'sm' | 'lg' | 'xl'
   // Resting button variant; the field always switches to ghost once expanded.
   variant?: 'solid' | 'outline' | 'ghost'
   // Target width of the revealed input, in px (ignored when `fill`).
@@ -31,14 +32,21 @@ const { is_searching, is_loading, query, open, close } = inject(cardSearchKey)!
 const container = useTemplateRef<HTMLElement>('container')
 const input = useTemplateRef<HTMLInputElement>('input')
 
+usePinScrollWhileTyping(container)
+
 const draft = ref('')
 
 const has_text = computed(() => draft.value.trim().length > 0)
 
+const button_label = computed(() => {
+  if (!is_searching.value) return t('deck-view.search-bar.open')
+  return t(has_text.value ? 'deck-view.search-bar.clear' : 'deck-view.search-bar.close')
+})
+
 function onButton() {
   if (!is_searching.value) open()
   else if (has_text.value) clear()
-  else submit()
+  else onClose()
 }
 
 // Live as you type, debounced so each keystroke doesn't refetch.
@@ -127,11 +135,12 @@ function onLeave(el: Element, done: () => void) {
       :size="size"
       :variant="is_searching ? 'ghost' : variant"
       :loading="is_loading"
-      :icon-left="has_text ? 'close' : 'search'"
+      :icon-left="is_searching ? 'close' : 'search'"
+      :play-on-tap="false"
       icon-only
       @press="onButton"
     >
-      {{ t(has_text ? 'deck-view.search-bar.clear' : 'deck-view.search-bar.open') }}
+      {{ button_label }}
     </ui-button>
   </div>
 </template>
