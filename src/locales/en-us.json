@@ -230,7 +230,7 @@
   "settings.app.accessibility.left-hand-label": "Left-hand mode",
   "settings.app.accessibility.left-hand-description": "Move the close button to the left on mobile sheets.",
   "settings.review-preferences.ratings.label": "Review Ratings",
-  "settings.review-preferences.ratings.description": "Choose how many rating options appear after flipping a card.",
+  "settings.review-preferences.ratings.description": "Simple keeps it to pass/fail. Advanced unlocks FSRS's full rating scale, which schedules more precisely.",
   "settings.review-preferences.ratings.simple": "Simple",
   "settings.review-preferences.ratings.advanced": "Advanced",
   "settings.review-preferences.fsrs.section-heading": "Scheduling Algorithm",
