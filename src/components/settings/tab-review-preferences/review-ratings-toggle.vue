@@ -22,7 +22,6 @@ function onSelect(value: string) {
 <template>
   <ui-option-group
     data-testid="review-ratings-toggle"
-    data-theme="brown-100"
     :options="options"
     :value="active"
     @update:value="onSelect"
