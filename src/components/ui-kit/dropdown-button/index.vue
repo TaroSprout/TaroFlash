@@ -216,6 +216,7 @@ function onMenuSelect(option: DropdownOption) {
             v-if="show_trigger"
             :open="popover_open"
             :icon="triggerIcon"
+            :size="size"
             :trigger-theme="triggerTheme"
             :trigger-theme-dark="triggerThemeDark"
             @toggle="toggle"

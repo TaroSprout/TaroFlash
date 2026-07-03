@@ -2,7 +2,7 @@
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
-import UiSelectField from '@/components/ui-kit/select-field.vue'
+import UiSelectMenu from '@/components/ui-kit/select-menu.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import { memberEditorKey } from '@/composables/member/editor'
 
@@ -112,7 +112,7 @@ const relearning_steps_key = computed<RelearningStepsKey>({
           {{ t('settings.review-preferences.fsrs.learning-steps-label') }}
         </span>
 
-        <ui-select-field
+        <ui-select-menu
           data-theme="brown-100"
           data-theme-dark="stone-700"
           menu-theme="brown-100"
@@ -134,7 +134,7 @@ const relearning_steps_key = computed<RelearningStepsKey>({
           {{ t('settings.review-preferences.fsrs.relearning-steps-label') }}
         </span>
 
-        <ui-select-field
+        <ui-select-menu
           data-theme="brown-100"
           data-theme-dark="stone-700"
           menu-theme="brown-100"
