@@ -3,11 +3,12 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 import { useStagedTap } from '@/composables/ui/staged-tap'
 import { TYPE_SFX } from '@/sfx/config'
 
-const { checked, theme = 'blue-500' } = defineProps<{
+const { checked, active = false } = defineProps<{
   checked: boolean
   intermediate?: boolean
-  theme?: Theme
-  inverted?: boolean
+  // externally forced active state — lets a caller mirror a hover/focus that
+  // lands elsewhere in the DOM (eg. pointer-events-none over the radio itself)
+  active?: boolean
 }>()
 
 const { playing, tap } = useStagedTap({ triggerAt: 'press' })
@@ -17,16 +18,13 @@ const onClick = tap(undefined, { audio: 'select' })
 <template>
   <div
     data-testid="ui-kit-radio"
-    :data-theme="theme"
-    class="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-all duration-50"
+    class="relative flex size-10 cursor-pointer items-center justify-center rounded-full transition-all duration-50 p-2.5 border-4 border-white dark:border-stone-900"
     :class="{
-      'border-none bg-(--theme-primary) outline-4 outline-white hover:scale-110': inverted,
-      'border-2 border-(--theme-primary) bg-white hover:border-4 hover:border-white hover:bg-(--theme-primary)':
-        !inverted,
-      'bg-(--theme-primary) outline-4': checked && inverted,
-      'border-4 border-white bg-(--theme-primary)!': checked && !inverted
+      'bg-(--theme-primary)! border-none': checked,
+      'bg-white dark:bg-stone-900 hover:bg-(--theme-primary) data-[active=true]:bg-(--theme-primary)':
+        !checked
     }"
-    :data-active="playing || null"
+    :data-active="playing || active || null"
     v-sfx="{ hover: TYPE_SFX }"
     @click="onClick"
   >
