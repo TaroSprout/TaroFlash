@@ -175,6 +175,46 @@ function onClick(e: MouseEvent) {
 </template>
 
 <style>
+/* Registers the padding/gap/icon-size custom properties as typed lengths so
+   Safari resolves them before its intrinsic-size (grid/flex auto-track)
+   measurement pass instead of only after final layout — without this, an
+   icon-only button's measured width can come out narrower than its painted
+   width, letting it visually overflow a grid `auto` column sized from that
+   measurement. `--btn-padding` allows 1+ lengths since icon-only buttons
+   override it to a single value where non-icon-only buttons use the x/y pair.
+   `--btn-height` is deliberately NOT registered — this file's own
+   `height: var(--btn-height, max-content)` relies on the property being
+   genuinely unset when no size class applies; an `initial-value` would make
+   it always "set" and silently break that fallback. (dropdown-button/
+   caret.vue's `var(--icon-size, 20px)` looked like the same risk, but it
+   always applies its own `ui-kit-btn-tokens--*` class locally, so --icon-size
+   is never actually left unset there — safe to register.) */
+@property --btn-padding {
+  syntax: '<length>+';
+  inherits: true;
+  initial-value: 0px;
+}
+@property --btn-padding-x {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+@property --btn-padding-y {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+@property --btn-gap {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+@property --icon-size {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 16px;
+}
+
 /* Base button styles */
 .ui-kit-btn {
   position: relative;
@@ -279,6 +319,13 @@ function onClick(e: MouseEvent) {
 .ui-kit-btn.ui-kit-btn--icon-only {
   --btn-padding: 8px;
   --btn-border-radius: var(--radius-4);
+  /* Width should equal --btn-height (a square button) — expressed as an
+     explicit value rather than relying on `aspect-ratio` to transfer size
+     onto `width: max-content`. Safari's grid/flex auto-track intrinsic-size
+     measurement doesn't apply that transfer (even though its final layout
+     paint does), so a track sized from the un-transferred measurement comes
+     out too narrow and the button visually overflows it. */
+  width: var(--btn-height);
   aspect-ratio: 1/1;
 }
 
@@ -331,7 +378,6 @@ function onClick(e: MouseEvent) {
   --btn-padding-x: 14px;
   --btn-height: 40px;
   --icon-size: 18px;
-  --btn-height: 40px;
 
   &.ui-kit-btn--icon-only {
     --btn-padding: 8px;

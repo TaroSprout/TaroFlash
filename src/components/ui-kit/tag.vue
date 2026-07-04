@@ -57,14 +57,14 @@ const mask = computed(() => {
 <template>
   <span
     data-testid="ui-kit-tag"
-    class="bg-(--theme-primary) rounded-1 w-max"
+    class="bg-(--theme-primary) rounded-1 w-max shrink-0"
     :class="[
       notchSide === 'right' ? 'pl-4 pr-5' : 'pl-5 pr-4',
-      fillHeight ? 'h-full flex items-center' : 'py-1'
+      fillHeight ? 'self-stretch flex items-center' : 'py-1'
     ]"
     :style="{ mask, WebkitMask: mask }"
   >
-    <p class="text-(--theme-on-primary)">
+    <p class="text-(--theme-on-primary) whitespace-nowrap">
       <slot></slot>
     </p>
   </span>

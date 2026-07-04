@@ -14,6 +14,7 @@ const { card_count } = inject(cardEditorKey)!
     data-testid="card-count"
     data-theme="green-400"
     data-theme-dark="green-800"
+    fill-height
     class="bgx-diagonal-stripes bgx-opacity-10"
   >
     {{ t('deck-view.card-count.label', card_count) }}
