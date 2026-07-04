@@ -143,45 +143,45 @@ describe('CardGridSkeleton (card-grid/skeleton.vue)', () => {
   })
 
   // ── size prop drives grid_style columns [obligation] ──────────────────────
-  // XL_CARD_WIDTH=314, CARD_SCALE: base=0.56, md=0.75, xl=1
+  // XL_CARD_WIDTH=260, CARD_SCALE: base=0.65, md=0.85, xl=1
 
-  test('grid style uses 175.84px columns for size="base" [obligation]', () => {
+  test('grid style uses 169px columns for size="base" [obligation]', () => {
     const wrapper = mountSkeleton({ size: 'base' })
     expect(wrapper.find('.grid').attributes('style')).toContain(
-      'grid-template-columns: repeat(auto-fill, 175.84px)'
+      'grid-template-columns: repeat(auto-fill, 169px)'
     )
   })
 
-  test('grid style uses 235.5px columns for size="md" (default) [obligation]', () => {
+  test('grid style uses 221px columns for size="md" (default) [obligation]', () => {
     const wrapper = mountSkeleton()
     expect(wrapper.find('.grid').attributes('style')).toContain(
-      'grid-template-columns: repeat(auto-fill, 235.5px)'
+      'grid-template-columns: repeat(auto-fill, 221px)'
     )
   })
 
-  test('grid style uses 314px columns for size="xl" [obligation]', () => {
+  test('grid style uses 260px columns for size="xl" [obligation]', () => {
     const wrapper = mountSkeleton({ size: 'xl' })
     expect(wrapper.find('.grid').attributes('style')).toContain(
-      'grid-template-columns: repeat(auto-fill, 314px)'
+      'grid-template-columns: repeat(auto-fill, 260px)'
     )
   })
 
   // ── size prop drives gap scaling [obligation] ─────────────────────────────
-  // gap = 16 * card_scale: base=8.96px, md=12px, xl=16px
+  // gap = 8 * card_scale: base=5.2px, md=6.8px, xl=8px
 
-  test('gap is 8.96px for size="base" (16 * 0.56) [obligation]', () => {
+  test('gap is 5.2px for size="base" (8 * 0.65) [obligation]', () => {
     const wrapper = mountSkeleton({ size: 'base' })
-    expect(wrapper.find('.grid').attributes('style')).toContain('gap: 8.96px')
+    expect(wrapper.find('.grid').attributes('style')).toContain('gap: 5.2px')
   })
 
-  test('gap is 12px for size="md" (16 * 0.75) [obligation]', () => {
+  test('gap is 6.8px for size="md" (8 * 0.85) [obligation]', () => {
     const wrapper = mountSkeleton()
-    expect(wrapper.find('.grid').attributes('style')).toContain('gap: 12px')
+    expect(wrapper.find('.grid').attributes('style')).toContain('gap: 6.8px')
   })
 
-  test('gap is 16px for size="xl" (16 * 1) [obligation]', () => {
+  test('gap is 8px for size="xl" (8 * 1) [obligation]', () => {
     const wrapper = mountSkeleton({ size: 'xl' })
-    expect(wrapper.find('.grid').attributes('style')).toContain('gap: 16px')
+    expect(wrapper.find('.grid').attributes('style')).toContain('gap: 8px')
   })
 
   // ── no deckViewShellKey injection needed ──────────────────────────────────
