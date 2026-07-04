@@ -33,12 +33,13 @@ const CardStub = defineComponent({
 
 const UiRadioStub = defineComponent({
   name: 'UiRadio',
-  props: ['checked'],
+  props: ['checked', 'active'],
   setup(props) {
     return () =>
       h('button', {
         'data-testid': 'ui-radio-stub',
-        'data-checked': String(props.checked)
+        'data-checked': String(props.checked),
+        'data-active': String(!!props.active)
       })
   }
 })
@@ -210,6 +211,20 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(wrapper.find('[data-testid="ui-radio-stub"]').exists()).toBe(false)
   })
 
+  test('mirrors hover onto the radio active prop [obligation]', async () => {
+    const editor = makeEditor({ is_selecting: true })
+    const { wrapper } = mountGridItem({ editor })
+    const root = wrapper.find('[data-testid="grid-item"]')
+
+    expect(wrapper.find('[data-testid="ui-radio-stub"]').attributes('data-active')).toBe('false')
+
+    await root.trigger('mouseenter')
+    expect(wrapper.find('[data-testid="ui-radio-stub"]').attributes('data-active')).toBe('true')
+
+    await root.trigger('mouseleave')
+    expect(wrapper.find('[data-testid="ui-radio-stub"]').attributes('data-active')).toBe('false')
+  })
+
   test('renders the grid-item-menu when not selecting', () => {
     const { wrapper } = mountGridItem()
     expect(wrapper.find('[data-testid="grid-item-menu-stub"]').exists()).toBe(true)
@@ -254,9 +269,9 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
 
   // ── scale prop ───────────────────────────────────────────────────────────────
 
-  test('renders Card at size="xl" [obligation]', () => {
+  test('renders Card at size="lg" [obligation]', () => {
     const { wrapper } = mountGridItem()
-    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('xl')
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('lg')
   })
 
   test('applies the scale prop as --card-scale on the scaled Card [obligation]', () => {

@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
-import { effectScope } from 'vue'
+import { effectScope, nextTick } from 'vue'
 
 function createMockVisualViewport(height) {
   const handlers = new Set()
@@ -23,6 +23,7 @@ describe('useKeyboardOpen', () => {
   beforeEach(async () => {
     vi.resetModules()
     vi.useFakeTimers()
+    global.__matchMedia.matches = false
     viewport = createMockVisualViewport(800)
     Object.defineProperty(window, 'visualViewport', {
       value: viewport,
@@ -41,12 +42,22 @@ describe('useKeyboardOpen', () => {
     viewport._fire()
   }
 
+  function firePointerChange() {
+    global.__matchMedia.listeners.forEach((listener) => listener())
+  }
+
+  function setCoarse(is_coarse) {
+    global.__matchMedia.matches = is_coarse
+    firePointerChange()
+  }
+
   test('is_open starts false when the viewport has not shrunk', () => {
     const { is_open } = useKeyboardOpen()
     expect(is_open.value).toBe(false)
   })
 
-  test('is_open becomes true once the viewport shrinks past the threshold from its running max [obligation]', () => {
+  test('is_open becomes true once the viewport shrinks past the threshold from its running max [obligation]', async () => {
+    setCoarse(true)
     const { is_open } = useKeyboardOpen()
 
     resize(500)
@@ -56,6 +67,7 @@ describe('useKeyboardOpen', () => {
   })
 
   test('a burst of resize events debounces to a single settle after ~120ms [obligation]', () => {
+    setCoarse(true)
     const { is_open } = useKeyboardOpen()
 
     resize(700)
@@ -72,6 +84,7 @@ describe('useKeyboardOpen', () => {
   })
 
   test('running max keeps growing so a later, larger viewport height raises the baseline [obligation]', () => {
+    setCoarse(true)
     const { is_open } = useKeyboardOpen()
 
     // Viewport grows (e.g. mobile Safari toolbar hides) — new running max.
@@ -87,10 +100,34 @@ describe('useKeyboardOpen', () => {
   })
 
   test('a shrink within the threshold does not open', () => {
+    setCoarse(true)
     const { is_open } = useKeyboardOpen()
 
     resize(750)
     vi.advanceTimersByTime(120)
+
+    expect(is_open.value).toBe(false)
+  })
+
+  test('a fine pointer (desktop) shrinking the viewport does not set is_open true [obligation]', () => {
+    const { is_open } = useKeyboardOpen()
+
+    resize(500)
+    vi.advanceTimersByTime(120)
+
+    expect(is_open.value).toBe(false)
+  })
+
+  test('re-evaluates on a pointer-type change without a new resize event [obligation]', async () => {
+    setCoarse(true)
+    const { is_open } = useKeyboardOpen()
+
+    resize(500)
+    vi.advanceTimersByTime(120)
+    expect(is_open.value).toBe(true)
+
+    setCoarse(false)
+    await nextTick()
 
     expect(is_open.value).toBe(false)
   })

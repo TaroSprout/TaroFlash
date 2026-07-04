@@ -33,13 +33,20 @@ vi.mock('@/api/decks', async (importOriginal) => ({
 const UiDropdownButtonStub = defineComponent({
   name: 'UiDropdownButton',
   inheritAttrs: false,
-  props: { options: { type: Array, default: () => [] } },
+  props: {
+    options: { type: Array, default: () => [] },
+    disabled: { type: Boolean, default: false }
+  },
   emits: ['click', 'select'],
   setup(props, { slots, emit }) {
     const attrs = useAttrs()
     return () =>
       h('div', null, [
-        h('button', { ...attrs, onClick: () => emit('click') }, slots.default?.()),
+        h(
+          'button',
+          { ...attrs, disabled: props.disabled, onClick: () => emit('click') },
+          slots.default?.()
+        ),
         ...props.options.map((option) =>
           h(
             'button',
@@ -57,9 +64,13 @@ const UiDropdownButtonStub = defineComponent({
 
 const StudyButtonStub = defineComponent({
   name: 'StudyButton',
-  props: ['deck'],
+  props: ['deck', 'disabled'],
   setup: (props) => () =>
-    h('div', { 'data-testid': 'study-button-stub', 'data-deck-id': props.deck?.id })
+    h('div', {
+      'data-testid': 'study-button-stub',
+      'data-deck-id': props.deck?.id,
+      'data-disabled': String(!!props.disabled)
+    })
 })
 
 const SearchBarStub = defineComponent({
@@ -109,7 +120,8 @@ function mount({
   shell,
   mobile_editor,
   search = makeSearch(),
-  is_mobile = false
+  is_mobile = false,
+  isSelecting = false
 } = {}) {
   mockUseMatchMedia.mockReturnValue(ref(is_mobile))
   const provide = { [cardSearchKey]: search }
@@ -117,7 +129,7 @@ function mount({
   if (shell !== undefined) provide[deckViewShellKey] = shell
   if (mobile_editor !== undefined) provide[mobileCardEditorKey] = mobile_editor
   return shallowMount(Actions, {
-    props: { deck: { id: 1, title: 'd', card_count: 10, due_count: 3, ...deck } },
+    props: { deck: { id: 1, title: 'd', card_count: 10, due_count: 3, ...deck }, isSelecting },
     global: {
       stubs: {
         UiDropdownButton: UiDropdownButtonStub,
@@ -302,5 +314,34 @@ describe('deck-hero/actions', () => {
     await editBtn(wrapper).trigger('click')
     expect(toggleMode).toHaveBeenCalledWith('edit')
     expect(mobile_editor.open_at).not.toHaveBeenCalled()
+  })
+
+  // ── isSelecting disables study + edit-cards [obligation] ────────────────────
+  // Regression guard: the desktop (v-else) study-button branch never received
+  // the :disabled binding at all — only the mobile branch did.
+
+  test('disables the study button on mobile while isSelecting [obligation]', () => {
+    const wrapper = mount({ is_mobile: true, isSelecting: true })
+    expect(studyBtn(wrapper).attributes('data-disabled')).toBe('true')
+  })
+
+  test('disables the study button on desktop while isSelecting [obligation]', () => {
+    const wrapper = mount({ is_mobile: false, isSelecting: true })
+    expect(studyBtn(wrapper).attributes('data-disabled')).toBe('true')
+  })
+
+  test('does not disable the study button when not isSelecting', () => {
+    const wrapper = mount({ is_mobile: false, isSelecting: false })
+    expect(studyBtn(wrapper).attributes('data-disabled')).toBe('false')
+  })
+
+  test('disables the edit-cards dropdown while isSelecting [obligation]', () => {
+    const wrapper = mount({ isSelecting: true })
+    expect(editBtn(wrapper).attributes('disabled')).toBeDefined()
+  })
+
+  test('does not disable the edit-cards dropdown when not isSelecting', () => {
+    const wrapper = mount({ isSelecting: false })
+    expect(editBtn(wrapper).attributes('disabled')).toBeUndefined()
   })
 })

@@ -101,11 +101,6 @@ describe('useBulkActions', () => {
     expect(result.onCancel).toBe(editor.actions.onCancelSelection)
   })
 
-  test('selected_count exposes selection.selected_count', () => {
-    const { result } = setup({ selected_count: 7 })
-    expect(result.selected_count.value).toBe(7)
-  })
-
   test('all_cards_selected exposes selection.all_cards_selected', () => {
     const { result } = setup({ all_cards_selected: true })
     expect(result.all_cards_selected.value).toBe(true)
