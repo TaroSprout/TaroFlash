@@ -4,17 +4,25 @@ export const GROUPED_LIST_ITEM_CLASS = 'flex items-center gap-3 p-4'
 </script>
 
 <script setup lang="ts">
+import { useAttrs } from 'vue'
+
 type GroupedListProps = {
   dividers?: boolean
+  // Scrolls internally within the rounded chrome background instead of
+  // clipping content; pair with a sibling `<scroll-bar>` targeting the
+  // `__content` testid below (native scrollbar is suppressed).
+  scrollable?: boolean
 }
 
-const { dividers = false } = defineProps<GroupedListProps>()
+const { dividers = false, scrollable = false } = defineProps<GroupedListProps>()
 
 defineSlots<{
   default(): any
   /** Absolutely positioned over the list; content must opt in with pointer-events-auto. */
   overlay?(): any
 }>()
+
+const attrs = useAttrs()
 </script>
 
 <template>
@@ -25,9 +33,14 @@ defineSlots<{
     class="relative flex flex-col"
   >
     <div
-      data-testid="grouped-list__content"
-      class="flex flex-col rounded-4 overflow-hidden bg-(--theme-primary)"
-      :class="dividers ? 'divide-y divide-brown-300 dark:divide-stone-600' : ''"
+      :data-testid="
+        attrs['data-testid'] ? `${attrs['data-testid']}__content` : 'grouped-list__content'
+      "
+      class="flex min-h-0 flex-1 flex-col rounded-4 bg-(--theme-primary)"
+      :class="[
+        dividers ? 'divide-y divide-brown-300 dark:divide-stone-600' : '',
+        scrollable ? 'overflow-y-auto scroll-hidden' : 'overflow-hidden'
+      ]"
     >
       <slot></slot>
     </div>

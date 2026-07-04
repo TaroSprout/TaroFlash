@@ -56,7 +56,7 @@ function onPointerLeave() {
   <component
     :is="as"
     :data-tap-active="playing || hovering || null"
-    class="group/tappable relative"
+    class="group/tappable relative isolate"
     v-sfx="{ hover: sfx.hover, focus: sfx.focus, blur: sfx.blur, debounce: sfx.debounce }"
     @pointerenter="onPointerEnter"
     @pointerleave="onPointerLeave"
@@ -64,7 +64,7 @@ function onPointerLeave() {
   >
     <slot />
     <div
-      class="absolute inset-0 rounded-[inherit] bgx-diagonal-stripes animation-safe:group-data-[tap-active=true]/tappable:bgx-slide pointer-events-none hidden group-data-[tap-active=true]/tappable:block"
+      class="absolute inset-0 -z-10 rounded-[inherit] bgx-diagonal-stripes animation-safe:group-data-[tap-active=true]/tappable:bgx-slide pointer-events-none hidden group-data-[tap-active=true]/tappable:block"
       :style="{ '--bgx-fill': bgx_color }"
     />
   </component>

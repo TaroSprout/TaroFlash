@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { useStagedTap } from '@/composables/ui/staged-tap'
-import { TYPE_SFX } from '@/sfx/config'
 
 const { checked, active = false } = defineProps<{
   checked: boolean
@@ -25,7 +24,6 @@ const onClick = tap(undefined, { audio: 'select' })
         !checked
     }"
     :data-active="playing || active || null"
-    v-sfx="{ hover: TYPE_SFX }"
     @click="onClick"
   >
     <ui-icon v-if="checked" class="text-white" src="check" />
