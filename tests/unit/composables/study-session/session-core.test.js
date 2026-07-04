@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { nextTick } from 'vue'
 import { Rating } from 'ts-fsrs'
 import { useStudySessionCore } from '@/components/study-session/composables/session-core'
@@ -780,6 +780,91 @@ describe('session-core — persistence [obligation]', () => {
     await nextTick()
 
     expect(readPersistedSession()?.card_ids).toEqual([c2.id])
+  })
+})
+
+// ── active_card_preview [obligation] ─────────────────────────────────────────
+// Previews used to be precomputed in bulk for the whole queue at session
+// start, so a card reached late in a long session showed FSRS due-dates
+// already in the past. active_card_preview computes lazily against `now`
+// whenever active_card changes identity, so late-session cards never show a
+// stale/negative preview.
+
+describe('session-core — active_card_preview [obligation]', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  test('is undefined when there is no active card [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    expect(session.active_card_preview.value).toBeUndefined()
+  })
+
+  test('is defined once a card is active [obligation]', () => {
+    const session = useStudySessionCore({ study_all_cards: true })
+    session.setCards([makeNewCard()])
+
+    expect(session.active_card_preview.value).toBeDefined()
+    expect(session.active_card_preview.value?.[Rating.Good].card.due).toBeInstanceOf(Date)
+  })
+
+  test('recomputes against the current time after reviewCard() advances to the next card, even once wall-clock time has moved on [obligation]', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'))
+
+    const session = useStudySessionCore({ study_all_cards: true })
+    const [c1, c2] = [makeNewCard(), makeNewCard()]
+    session.setCards([c1, c2])
+
+    // Simulate a long session: a lot of wall-clock time passes before the
+    // user gets to the second card.
+    vi.setSystemTime(new Date('2026-01-05T00:00:00.000Z'))
+    session.reviewCard(Rating.Good)
+    expect(session.active_card.value?.id).toBe(c2.id)
+
+    const preview = session.active_card_preview.value
+    expect(preview).toBeDefined()
+    // The regression this guards: previews computed once at session start
+    // (against the old `now`) would show due-dates already in the past by
+    // the time a late card became active. Recomputing fresh keeps every
+    // grade's due date in the future relative to the current (advanced) time.
+    for (const grade of [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy]) {
+      expect(preview[grade].card.due.getTime()).toBeGreaterThan(Date.now())
+    }
+  })
+
+  test('recomputes fresh when setCards seeds a new active card [obligation]', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'))
+
+    const session = useStudySessionCore({ study_all_cards: true })
+    session.setCards([makeNewCard()])
+    const first_preview = session.active_card_preview.value
+
+    vi.setSystemTime(new Date('2026-01-10T00:00:00.000Z'))
+    session.setCards([makeNewCard()])
+    const second_preview = session.active_card_preview.value
+
+    expect(second_preview?.[Rating.Good].card.due.getTime()).not.toBe(
+      first_preview?.[Rating.Good].card.due.getTime()
+    )
+  })
+
+  test('recomputes fresh when restoreCards seeds a new active card [obligation]', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'))
+
+    const c1 = makeNewCard()
+    const persisted = { deck_ids: [1], card_ids: [c1.id], results: [], mode: 'studying' }
+
+    const session = useStudySessionCore({ study_all_cards: true })
+
+    vi.setSystemTime(new Date('2026-02-01T00:00:00.000Z'))
+    session.restoreCards([c1], persisted)
+
+    const preview = session.active_card_preview.value
+    expect(preview).toBeDefined()
+    expect(preview?.[Rating.Good].card.due.getTime()).toBeGreaterThan(Date.now())
   })
 })
 

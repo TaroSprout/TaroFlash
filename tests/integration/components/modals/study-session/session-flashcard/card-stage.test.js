@@ -85,7 +85,7 @@ const CardStub = defineComponent({
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function makeCard(id = 1) {
-  return { id, front: 'Q', back: 'A', state: 'unreviewed', preview: null }
+  return { id, front: 'Q', back: 'A', state: 'unreviewed' }
 }
 
 function mountCardStage(props = {}) {
@@ -114,6 +114,8 @@ function mountCardStage(props = {}) {
 describe('CardStage', () => {
   beforeEach(() => {
     mockRegister.mockClear()
+    mockCoverCardBeforeEnter.mockClear()
+    mockCoverCardEnter.mockClear()
   })
 
   // ── card_view computed [obligation] ────────────────────────────────────────
@@ -187,6 +189,27 @@ describe('CardStage', () => {
     })
 
     expect(wrapper.find('[data-testid="study-card__preview"]').exists()).toBe(false)
+  })
+
+  // ── active_card_preview forwarding [obligation] ───────────────────────────
+  // CardStage forwards active_card_preview (not active_card.preview, which no
+  // longer exists) to the active StudyCard's `options` prop.
+
+  test('forwards active_card_preview prop as options on the active study-card [obligation]', async () => {
+    const preview = { some: 'record-log' }
+    const wrapper = mountCardStage({
+      loading: false,
+      active_card: makeCard(),
+      active_card_preview: preview
+    })
+
+    expect(wrapper.findComponent(StudyCardStub).props('options')).toEqual(preview)
+  })
+
+  test('options is undefined on the active study-card when active_card_preview is not passed [obligation]', async () => {
+    const wrapper = mountCardStage({ loading: false, active_card: makeCard() })
+
+    expect(wrapper.findComponent(StudyCardStub).props('options')).toBeUndefined()
   })
 
   // ── event forwarding ───────────────────────────────────────────────────────

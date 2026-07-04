@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 import { FSRS, generatorParameters, createEmptyCard, Rating } from 'ts-fsrs'
@@ -71,6 +71,16 @@ function makeOptions() {
   return fsrs.repeat(createEmptyCard(new Date()), new Date())
 }
 
+/** Builds a RecordLog-shaped options object with every grade due at the same date. */
+function makeOptionsWithDue(due) {
+  return {
+    [Rating.Again]: { card: { due } },
+    [Rating.Hard]: { card: { due } },
+    [Rating.Good]: { card: { due } },
+    [Rating.Easy]: { card: { due } }
+  }
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function mountStudyCard(props = {}) {
@@ -124,6 +134,10 @@ describe('StudyCard', () => {
     // Clear captured shortcut handlers between tests
     for (const key of Object.keys(capturedShortcuts)) delete capturedShortcuts[key]
     options = makeOptions()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   // ── Fling direction per grade [obligation] ────────────────────────────────
@@ -1136,6 +1150,36 @@ describe('StudyCard', () => {
 
     expect(wrapper.emitted('reviewed')).toHaveLength(1)
     expect(wrapper.emitted('reviewed')[0][0]).toBe(Rating.Hard)
+  })
+
+  // ── rating_time_labels memoization [obligation] ───────────────────────────
+  // rating_time_labels is a computed keyed off `options` alone — it should not
+  // recompute (and drift, eventually going negative) on unrelated re-renders
+  // like drag state changes or wall-clock time passing.
+
+  test('rating_time_labels stays frozen across unrelated re-renders while options is unchanged [obligation]', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'))
+
+    const due = new Date(Date.now() + 1000 * 60 * 60) // +1 hour
+    const opts = makeOptionsWithDue(due)
+
+    const wrapper = mountStudyCard({ side: 'back', options: opts })
+    await flushPromises()
+
+    const before = wrapper.find('[data-testid="review-label--fail"] p').text()
+
+    // Advance wall-clock time significantly and trigger unrelated reactivity
+    // (a drag move) without changing the `options` prop.
+    vi.setSystemTime(new Date('2026-01-01T05:00:00.000Z'))
+    const { callbacks } = getCallbacks()
+    callbacks.onMove({ dx: 20, dy: 0 })
+    await flushPromises()
+
+    const after = wrapper.find('[data-testid="review-label--fail"] p').text()
+
+    expect(after).toBe(before)
+    expect(after).not.toMatch(/-|ago/)
   })
 
   test('endDrag always uses Rating.Good for right flings when show_all_ratings=false [obligation]', async () => {

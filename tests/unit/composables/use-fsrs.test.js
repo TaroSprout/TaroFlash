@@ -112,4 +112,37 @@ describe('useRatingFormat', () => {
     // Non-colliding grade keeps its natural sub-day unit.
     expect(again_result).toMatch(/minute|second/)
   })
+
+  // ── Rating.Again is isolated from the Hard/Good/Easy collision group [obligation] ──
+  // Again previews the short learning-step interval and always formats via a
+  // plain `toRelative` call, independent of whatever granularity bump the
+  // pass grades force on each other.
+
+  test('Again keeps its own hour-level label even when Hard/Good/Easy collide and bump to day-granularity [obligation]', () => {
+    const { getRatingTimeFormat } = useRatingFormat()
+    const day = 24 * 60 * 60 * 1000
+    // Hard/Good/Easy all round to "in 1 week" — forces their collision group
+    // to day-granularity. Again sits a few hours out, unrelated to the group.
+    const options = {
+      [Rating.Again]: { card: { due: new Date(Date.now() + 1000 * 60 * 60 * 3) } }, // +3 hours
+      [Rating.Hard]: { card: { due: new Date(Date.now() + 7.2 * day) } },
+      [Rating.Good]: { card: { due: new Date(Date.now() + 7.6 * day) } },
+      [Rating.Easy]: { card: { due: new Date(Date.now() + 8.6 * day) } }
+    }
+
+    const again_result = getRatingTimeFormat(Rating.Again, options)
+    const hard_result = getRatingTimeFormat(Rating.Hard, options)
+    const good_result = getRatingTimeFormat(Rating.Good, options)
+    const easy_result = getRatingTimeFormat(Rating.Easy, options)
+
+    // Again never gets bumped to day-granularity by the pass-grade collision.
+    expect(again_result).toMatch(/hour/)
+    expect(again_result).not.toMatch(/day/)
+
+    // Hard/Good/Easy all bump together to day-granularity, and stay distinct.
+    expect(hard_result).toMatch(/day/)
+    expect(good_result).toMatch(/day/)
+    expect(easy_result).toMatch(/day/)
+    expect(new Set([hard_result, good_result, easy_result]).size).toBe(3)
+  })
 })
