@@ -7,7 +7,9 @@ const { cover } = defineProps<{
   cover?: DeckCover
 }>()
 
-const bindings = computed(() => coverBindings(cover, { fallbackTheme: 'purple-500' }))
+const bindings = computed(() =>
+  coverBindings(cover, { fallbackTheme: 'purple-500', border: false })
+)
 </script>
 
 <template>
@@ -33,5 +35,6 @@ const bindings = computed(() => coverBindings(cover, { fallbackTheme: 'purple-50
   height: 100%;
   border-radius: var(--face-radius);
   box-sizing: border-box;
+  border: var(--face-border-width) solid var(--theme-primary);
 }
 </style>
