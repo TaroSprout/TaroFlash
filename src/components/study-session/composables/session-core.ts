@@ -13,7 +13,7 @@ import { withDeckConfigDefaults } from '@/utils/deck/defaults'
 import { useMemberStore } from '@/stores/member'
 import { usePersistedSession, type PersistedSession } from './session-persistence'
 
-export type StudyCard = Card & { preview?: RecordLog; state: ReviewState }
+export type StudyCard = Card & { state: ReviewState }
 
 type ReviewState = 'failed' | 'passed' | 'unreviewed'
 
@@ -89,6 +89,20 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
   const current_index = computed(() => {
     if (!active_card.value) return cards.value.length
     return cards.value.findIndex((c) => c.id === active_card.value!.id)
+  })
+
+  /**
+   * FSRS scheduling preview for the active card only, computed fresh against
+   * `new Date()` whenever `active_card` changes identity. Previews used to be
+   * precomputed in bulk for the whole queue at session start, so a card
+   * reached late in a long session showed due-dates already in the past
+   * (negative "X minutes/seconds" labels). Computing lazily per active card
+   * keeps the "now" baseline close to when the preview is actually shown.
+   */
+  const active_card_preview = computed<RecordLog | undefined>(() => {
+    if (!active_card.value) return undefined
+    const review = active_card.value.review ?? (createEmptyCard(new Date()) as Review)
+    return _FSRS_INSTANCE.repeat(review, new Date())
   })
 
   /**
@@ -259,8 +273,7 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
 
   function _setupCard(card: Card): StudyCard {
     const review = card.review ?? (createEmptyCard(new Date()) as Review)
-    const preview = _FSRS_INSTANCE.repeat(review, new Date())
-    return { ...card, review, preview, state: 'unreviewed' }
+    return { ...card, review, state: 'unreviewed' }
   }
 
   function _markCurrentCardStudied(grade: Grade) {
@@ -298,6 +311,7 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
   return {
     mode,
     active_card,
+    active_card_preview,
     results,
     cards,
     num_correct,

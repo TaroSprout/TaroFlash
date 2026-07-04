@@ -4,7 +4,7 @@ import StudyCard from './study-card.vue'
 import StudyCardEdit from './study-card-edit.vue'
 import { computed, onUnmounted, useTemplateRef, type StyleValue } from 'vue'
 import type { gsap } from 'gsap'
-import { type Grade } from 'ts-fsrs'
+import { type Grade, type RecordLog } from 'ts-fsrs'
 import { coverCardBeforeEnter, coverCardEnter } from '@/utils/animations/session-intro'
 import { useDeckContext } from '../deck-context'
 import { useCoverCarousel } from '@/components/study-session/composables/cover-carousel'
@@ -14,6 +14,7 @@ type CardStageProps = {
   loading: boolean
   editing: boolean
   active_card?: StudyCardType
+  active_card_preview?: RecordLog
   current_card_side: CardSide
   next_card?: StudyCardType
   next_card_side: CardSide
@@ -25,6 +26,7 @@ const {
   loading,
   editing,
   active_card,
+  active_card_preview,
   current_card_side,
   next_card,
   next_card_side,
@@ -126,7 +128,7 @@ onUnmounted(() => cover_tween?.kill())
         :key="active_card?.id"
         :card="active_card"
         :side="current_card_side"
-        :options="active_card?.preview"
+        :options="active_card_preview"
         :show_all_ratings="show_all_ratings"
         :cover_override="current_cover"
         @started="emit('started')"

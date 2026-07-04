@@ -40,6 +40,7 @@ const {
   current_card_side,
   current_index,
   active_card,
+  active_card_preview,
   reviewed_count,
   remaining_due_count,
   is_starting_side,
@@ -193,6 +194,7 @@ watch(mode, (m) => {
           :loading="loading"
           :editing="editing"
           :active_card="active_card"
+          :active_card_preview="active_card_preview"
           :current_card_side="current_card_side"
           :show_all_ratings="show_all_ratings"
           :next_card="next_card"
@@ -210,7 +212,7 @@ watch(mode, (m) => {
         <rating-buttons
           v-if="!editing"
           class="z-10 w-full"
-          :options="active_card?.preview"
+          :options="active_card_preview"
           :side="current_card_side"
           :show_all_ratings="show_all_ratings"
           :loading="loading"
