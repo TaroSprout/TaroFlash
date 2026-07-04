@@ -12,6 +12,7 @@ type DropdownCaretProps = {
   // Re-bases just the caret to its own palette; see `surface` below.
   triggerTheme?: Theme
   triggerThemeDark?: Theme
+  disabled?: boolean
 }
 
 const {
@@ -19,7 +20,8 @@ const {
   icon = 'arrow-drop-down',
   size = 'base',
   triggerTheme,
-  triggerThemeDark
+  triggerThemeDark,
+  disabled = false
 } = defineProps<DropdownCaretProps>()
 
 const emit = defineEmits<{
@@ -76,16 +78,20 @@ function onLeave(el: Element, done: () => void) {
       <span
         :key="String(open)"
         role="button"
-        tabindex="0"
+        :tabindex="disabled ? -1 : 0"
         aria-haspopup="menu"
         :aria-expanded="open"
+        :aria-disabled="disabled || undefined"
         :data-active="open"
-        class="relative z-1 flex aspect-square h-full cursor-pointer items-center justify-center rounded-[calc(var(--btn-border-radius)-var(--btn-trigger-padding))] pointer-coarse:rounded-(--btn-border-radius) transition-[scale] duration-120 ease-[ease] hover:scale-110"
-        :class="surface"
+        class="relative z-1 flex aspect-square h-full items-center justify-center rounded-[calc(var(--btn-border-radius)-var(--btn-trigger-padding))] pointer-coarse:rounded-(--btn-border-radius) transition-[scale] duration-120 ease-[ease]"
+        :class="[
+          surface,
+          disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:scale-110'
+        ]"
         data-testid="dropdown-button__trigger"
-        v-sfx="{ hover: TYPE_SFX }"
-        @click.stop="emit('toggle')"
-        @keydown.enter.space.stop.prevent="emit('toggle')"
+        v-sfx="{ hover: disabled ? undefined : TYPE_SFX }"
+        @click.stop="!disabled && emit('toggle')"
+        @keydown.enter.space.stop.prevent="!disabled && emit('toggle')"
       >
         <ui-icon
           :src="icon"

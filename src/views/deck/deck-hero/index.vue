@@ -42,7 +42,7 @@ const is_desktop = useMatchMedia('w>=xl')
           <actions
             v-if="!is_desktop || !is_selecting"
             :deck="deck"
-            :disable-study="!!is_selecting"
+            :is-selecting="!!is_selecting"
           />
         </Transition>
 
