@@ -9,7 +9,7 @@ import { expandSearchInput, collapseSearchInput } from '@/utils/animations/deck-
 import { usePinScrollWhileTyping } from '@/composables/ui/pin-scroll-while-typing'
 
 type SearchBarProps = {
-  size?: 'sm' | 'lg' | 'xl'
+  size?: 'sm' | 'base' | 'lg' | 'xl'
   // Resting button variant; the field always switches to ghost once expanded.
   variant?: 'solid' | 'outline' | 'ghost'
   // Target width of the revealed input, in px (ignored when `fill`).
@@ -19,7 +19,7 @@ type SearchBarProps = {
 }
 
 const {
-  size = 'sm',
+  size = 'base',
   variant = 'solid',
   expandedWidth = 208,
   fill = false
@@ -150,7 +150,9 @@ function onLeave(el: Element, done: () => void) {
 <style>
 .search-bar {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
+  width: max-content;
   border-radius: var(--btn-border-radius);
   height: var(--btn-height);
 }
