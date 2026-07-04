@@ -5,6 +5,7 @@ import Actions from './actions.vue'
 import BulkActions from './bulk-actions.vue'
 import { inject } from 'vue'
 import { cardEditorKey } from '@/views/deck/composables'
+import { useMatchMedia } from '@/composables/ui/media-query'
 import { defaultEnter, defaultLeave, bulkEnter, bulkLeave } from '@/utils/animations/actions-swap'
 
 type DeckHeroProps = {
@@ -17,6 +18,7 @@ const { deck, hideActions = false } = defineProps<DeckHeroProps>()
 
 const editor = inject(cardEditorKey, null)
 const is_selecting = editor?.selection.is_selecting
+const is_mobile = useMatchMedia('w<md')
 </script>
 
 <template>
@@ -34,11 +36,11 @@ const is_selecting = editor?.selection.is_selecting
 
       <div v-if="!hideActions" data-testid="deck-hero__actions-wrap" class="relative w-full">
         <Transition :css="false" @enter="defaultEnter" @leave="defaultLeave">
-          <actions v-if="!is_selecting" :deck="deck" />
+          <actions v-if="is_mobile || !is_selecting" :deck="deck" :disable-study="!!is_selecting" />
         </Transition>
 
         <Transition :css="false" @enter="bulkEnter" @leave="bulkLeave">
-          <bulk-actions v-if="is_selecting" class="absolute inset-0" />
+          <bulk-actions v-if="!is_mobile && is_selecting" class="absolute inset-0" />
         </Transition>
       </div>
     </div>

@@ -8,7 +8,12 @@ import { cardSearchKey, useCardEditMenu } from '@/views/deck/composables'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 
-const { deck } = defineProps<{ deck: Deck }>()
+type ActionsProps = {
+  deck: Deck
+  disableStudy?: boolean
+}
+
+const { deck, disableStudy = false } = defineProps<ActionsProps>()
 
 const { t } = useI18n()
 const menu = useCardEditMenu()
@@ -43,7 +48,7 @@ const edit_label = computed(() => {
           <div aria-hidden="true" class="aspect-square h-full"></div>
 
           <div data-testid="deck-hero__study-action" class="pointer-events-auto min-w-0 flex-1">
-            <study-button :deck="deck" />
+            <study-button :deck="deck" :disabled="disableStudy" />
           </div>
         </div>
       </Transition>

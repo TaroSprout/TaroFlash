@@ -4,12 +4,18 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useStudyModal } from '@/components/study-session/composables/study-modal'
 
-const { deck } = defineProps<{ deck: Deck }>()
+type StudyButtonProps = {
+  deck: Deck
+  disabled?: boolean
+}
+
+const { deck, disabled = false } = defineProps<StudyButtonProps>()
 
 const { t } = useI18n()
 const study_session = useStudyModal()
 
 const has_due_cards = computed(() => (deck.due_count ?? 0) > 0)
+const is_disabled = computed(() => disabled || !has_due_cards.value)
 
 function onStudyClicked() {
   study_session.start([deck])
@@ -24,7 +30,7 @@ function onStudyClicked() {
     full-width
     size="xl"
     :sfx="{ tap_pre: 'snappy_button_3' }"
-    :disabled="!has_due_cards"
+    :disabled="is_disabled"
     @press="onStudyClicked"
   >
     <div v-if="has_due_cards" class="text-brown-100">
