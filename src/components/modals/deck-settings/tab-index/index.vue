@@ -58,6 +58,7 @@ function onNavigate(value: string) {
             label: t(TAB_META[value].labelKey)
           }))
         "
+        :sfx="{ press: 'snappy_button_5' }"
         @navigate="onNavigate"
       />
     </labeled-section>

@@ -36,7 +36,12 @@ function onGooglePress() {
 
 <template>
   <div data-testid="account-access-modal__menu" class="flex flex-col gap-4">
-    <ui-nav-list data-theme="brown-50" :entries="entries" @navigate="onNavigate" />
+    <ui-nav-list
+      data-theme="brown-50"
+      :entries="entries"
+      :sfx="{ press: 'snappy_button_5' }"
+      @navigate="onNavigate"
+    />
 
     <ui-button
       data-testid="account-access-modal__google-button"

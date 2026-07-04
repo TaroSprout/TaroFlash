@@ -5,9 +5,16 @@ type TagProps = {
   notchSide?: 'left' | 'right'
   notchDepth?: number
   apexRadius?: number
+  // stretch to the height of a flex sibling instead of sizing to its own text
+  fillHeight?: boolean
 }
 
-const { notchSide = 'right', notchDepth = 10, apexRadius = 2 } = defineProps<TagProps>()
+const {
+  notchSide = 'right',
+  notchDepth = 10,
+  apexRadius = 2,
+  fillHeight = false
+} = defineProps<TagProps>()
 
 const mask = computed(() => {
   const d = notchDepth
@@ -50,8 +57,11 @@ const mask = computed(() => {
 <template>
   <span
     data-testid="ui-kit-tag"
-    class="bg-(--theme-primary) py-1 rounded-1 w-max"
-    :class="notchSide === 'right' ? 'pl-4 pr-5' : 'pl-5 pr-4'"
+    class="bg-(--theme-primary) rounded-1 w-max"
+    :class="[
+      notchSide === 'right' ? 'pl-4 pr-5' : 'pl-5 pr-4',
+      fillHeight ? 'h-full flex items-center' : 'py-1'
+    ]"
     :style="{ mask, WebkitMask: mask }"
   >
     <p class="text-(--theme-on-primary)">
