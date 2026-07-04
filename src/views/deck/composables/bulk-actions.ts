@@ -4,12 +4,13 @@ import { emitSfx } from '@/sfx/bus'
 import { cardEditorKey } from './list-controller'
 
 /**
- * Reactive labels + handlers shared by the bulk-actions stack and the
- * bulk-toolbar. Both surfaces drive the same selection state, so they
- * share the same `select-all` toggling, cancel sfx, and label flipping.
+ * Reactive labels + handlers shared by the bulk-actions stack (deck hero
+ * overlay + mobile dock). Both surfaces drive the same selection state,
+ * so they share the same `select-all` toggling, cancel sfx, and label
+ * flipping.
  *
  * @example
- * const { selected_count, select_all_label, has_selection,
+ * const { select_all_label, has_selection,
  *         onToggleSelectAll, onCancel } = useBulkActions()
  */
 export function useBulkActions() {
@@ -35,7 +36,6 @@ export function useBulkActions() {
   return {
     selection,
     actions,
-    selected_count: selection.selected_count,
     all_cards_selected: selection.all_cards_selected,
     has_selection,
     select_all_label,
