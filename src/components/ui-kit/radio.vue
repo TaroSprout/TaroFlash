@@ -1,17 +1,26 @@
 <script setup lang="ts">
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { useStagedTap } from '@/composables/ui/staged-tap'
+import type { SfxOptions } from '@/sfx/directive'
 
-const { checked, active = false } = defineProps<{
+const {
+  checked,
+  active = false,
+  sfx = {}
+} = defineProps<{
   checked: boolean
   intermediate?: boolean
   // externally forced active state — lets a caller mirror a hover/focus that
   // lands elsewhere in the DOM (eg. pointer-events-none over the radio itself)
   active?: boolean
+  sfx?: SfxOptions
 }>()
 
 const { playing, tap } = useStagedTap({ triggerAt: 'press' })
-const onClick = tap(undefined, { audio: 'select' })
+const onClick = tap(undefined, {
+  audio: sfx.press ?? 'select',
+  audioOpts: { debounce: sfx.debounce }
+})
 </script>
 
 <template>
@@ -24,6 +33,7 @@ const onClick = tap(undefined, { audio: 'select' })
         !checked
     }"
     :data-active="playing || active || null"
+    v-sfx="{ hover: sfx.hover, focus: sfx.focus, blur: sfx.blur, debounce: sfx.debounce }"
     @click="onClick"
   >
     <ui-icon v-if="checked" class="text-white" src="check" />

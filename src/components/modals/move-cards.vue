@@ -119,6 +119,7 @@ function onClick(deck_id?: number) {
               :class="{ 'opacity-20': deck.id === current_deck_id }"
               data-theme="blue-500"
               data-theme-dark="blue-650"
+              :sfx="{ press: 'snappy_button_2' }"
               :checked="deck.id === selected_deck_id || deck.id === current_deck_id"
               :active="deck.id === hovered_deck_id"
               @click.stop="selected_deck_id = deck.id"
