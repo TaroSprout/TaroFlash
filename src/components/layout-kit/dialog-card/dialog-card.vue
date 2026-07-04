@@ -65,8 +65,6 @@ defineExpose({ viewport })
       </dialog-card-header>
     </slot>
 
-    <div data-testid="dialog-card__content" class="flex min-h-0 flex-1 flex-col">
-      <slot :viewport="viewport"></slot>
-    </div>
+    <slot :viewport="viewport"></slot>
   </div>
 </template>
