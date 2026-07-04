@@ -115,7 +115,7 @@ watch(
         dragging && 'drop-shadow-lg'
       ]"
       :style="{ '--card-scale': scale }"
-      size="xl"
+      size="lg"
       :side="active_side"
       :card_attributes="card_attributes"
       @mousedown="onCardMouseDown"
