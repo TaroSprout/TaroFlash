@@ -16,7 +16,7 @@ defineSlots<{
   <header
     data-testid="dialog-card-header"
     class="w-full shrink-0 grid grid-cols-[1fr_auto_1fr] items-center gap-2"
-    :class="padded ? 'px-(--dialog-px)' : ''"
+    :class="padded ? 'px-(--dialog-px) pt-(--dialog-px)' : ''"
   >
     <div data-testid="dialog-card-header__start" class="justify-self-start">
       <slot name="start"></slot>

@@ -32,7 +32,7 @@ function onEnter(el: Element, done: () => void) {
 <template>
   <dialog-card
     data-testid="checkout"
-    class="h-160 w-150 bg-brown-100 py-6 dark:bg-grey-800"
+    class="h-160 w-150 bg-brown-100 pb-6 dark:bg-grey-800"
     data-theme="brown-300"
     data-theme-dark="stone-700"
     :show_close_button="false"
