@@ -67,7 +67,7 @@ function onNavigate(value: string) {
       </template>
     </toolbar-base>
 
-    <ui-nav-list :entries="nav_entries" size="lg" @navigate="onNavigate" />
+    <ui-nav-list data-theme="brown-300" :entries="nav_entries" size="lg" @navigate="onNavigate" />
 
     <ui-button
       data-testid="bulk-actions__delete"

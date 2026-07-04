@@ -18,7 +18,10 @@ const { deck, hideActions = false } = defineProps<DeckHeroProps>()
 
 const editor = inject(cardEditorKey, null)
 const is_selecting = editor?.selection.is_selecting
-const is_mobile = useMatchMedia('w<md')
+// The hero is only sticky from xl up (see deck/index.vue) — below that the
+// bulk-actions overlay has nothing stable to float above, so bulk-select
+// there is handled elsewhere (mobile dock below md, mode-view between).
+const is_desktop = useMatchMedia('w>=xl')
 </script>
 
 <template>
@@ -36,11 +39,15 @@ const is_mobile = useMatchMedia('w<md')
 
       <div v-if="!hideActions" data-testid="deck-hero__actions-wrap" class="relative w-full">
         <Transition :css="false" @enter="defaultEnter" @leave="defaultLeave">
-          <actions v-if="is_mobile || !is_selecting" :deck="deck" :disable-study="!!is_selecting" />
+          <actions
+            v-if="!is_desktop || !is_selecting"
+            :deck="deck"
+            :disable-study="!!is_selecting"
+          />
         </Transition>
 
         <Transition :css="false" @enter="bulkEnter" @leave="bulkLeave">
-          <bulk-actions v-if="!is_mobile && is_selecting" class="absolute inset-0" />
+          <bulk-actions v-if="is_desktop && is_selecting" class="absolute inset-0" />
         </Transition>
       </div>
     </div>
