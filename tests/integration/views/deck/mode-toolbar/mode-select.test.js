@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
-import { mount as vtuMount } from '@vue/test-utils'
+import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
@@ -26,31 +26,35 @@ const UiButtonStub = defineComponent({
   }
 })
 
-const UiNavListStub = defineComponent({
-  name: 'UiNavList',
-  props: ['entries'],
-  emits: ['navigate'],
-  setup(props, { emit }) {
-    return () =>
-      h(
-        'div',
-        { 'data-testid': 'ui-nav-list' },
-        props.entries.map((entry) =>
-          h(
-            'button',
-            {
-              key: entry.value,
-              'data-testid': `nav-entry-${entry.value}`,
-              onClick: () => emit('navigate', entry.value)
-            },
-            entry.label
-          )
-        )
-      )
+const UiTagStub = defineComponent({
+  name: 'UiTag',
+  setup(_p, { slots, attrs }) {
+    return () => h('span', { ...attrs }, slots.default?.())
   }
 })
 
-import BulkActions from '@/views/deck/deck-hero/bulk-actions.vue'
+const ToolbarBaseStub = defineComponent({
+  name: 'ToolbarBase',
+  setup(_p, { slots, attrs }) {
+    return () =>
+      h('div', { 'data-testid': attrs['data-testid'] ?? 'toolbar-base-stub' }, [
+        h('div', { 'data-testid': 'toolbar-left' }, slots.left?.()),
+        h('div', { 'data-testid': 'toolbar-right' }, slots.right?.())
+      ])
+  }
+})
+
+const SearchBarStub = defineComponent({
+  name: 'SearchBar',
+  setup: () => () => h('div', { 'data-testid': 'search-bar-stub' })
+})
+
+const PageSettingsStub = defineComponent({
+  name: 'PageSettings',
+  setup: () => () => h('div', { 'data-testid': 'page-settings-stub' })
+})
+
+import ModeSelect from '@/views/deck/mode-toolbar/mode-select.vue'
 import { cardEditorKey } from '@/views/deck/composables/list-controller'
 
 function makeEditor({
@@ -58,7 +62,6 @@ function makeEditor({
   select_all_mode = false,
   all_cards_selected = false,
   toggleSelectAll = vi.fn(),
-  exitSelection = vi.fn(),
   onCancelSelection = vi.fn(),
   onMoveCards = vi.fn(),
   onDeleteCards = vi.fn()
@@ -68,8 +71,7 @@ function makeEditor({
       selected_count: ref(selected_count),
       all_cards_selected: ref(all_cards_selected),
       select_all_mode: ref(select_all_mode),
-      toggleSelectAll,
-      exitSelection
+      toggleSelectAll
     },
     actions: { onCancelSelection, onMoveCards, onDeleteCards }
   }
@@ -77,9 +79,15 @@ function makeEditor({
 
 function mount(editor = makeEditor()) {
   return {
-    wrapper: vtuMount(BulkActions, {
+    wrapper: shallowMount(ModeSelect, {
       global: {
-        stubs: { UiButton: UiButtonStub, UiNavList: UiNavListStub },
+        stubs: {
+          UiButton: UiButtonStub,
+          UiTag: UiTagStub,
+          ToolbarBase: ToolbarBaseStub,
+          SearchBar: SearchBarStub,
+          PageSettings: PageSettingsStub
+        },
         provide: { [cardEditorKey]: editor }
       }
     }),
@@ -87,44 +95,53 @@ function mount(editor = makeEditor()) {
   }
 }
 
-const cancelBtn = (w) => w.find('[data-testid="bulk-actions__cancel"]')
-const countTag = (w) => w.find('[data-testid="bulk-actions__count"]')
-const selectAllEntry = (w) => w.find('[data-testid="nav-entry-select-all"]')
-const moveEntry = (w) => w.find('[data-testid="nav-entry-move"]')
-const deleteBtn = (w) => w.find('[data-testid="bulk-actions__delete"]')
+const cancelBtn = (w) => w.find('[data-testid="mode-select__cancel-button"]')
+const selectAllBtn = (w) => w.find('[data-testid="mode-select__select-all-button"]')
+const moveBtn = (w) => w.find('[data-testid="mode-select__move-button"]')
+const deleteBtn = (w) => w.find('[data-testid="mode-select__delete-button"]')
+const countTag = (w) => w.find('[data-testid="mode-select__count"]')
 
-describe('deck-hero/bulk-actions', () => {
+describe('mode-toolbar/mode-select', () => {
   beforeEach(() => {
     mockEmitSfx.mockClear()
   })
 
+  test('renders search-bar and page-settings in the left slot', () => {
+    const { wrapper } = mount()
+    expect(wrapper.find('[data-testid="search-bar-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="page-settings-stub"]').exists()).toBe(true)
+  })
+
   test('select-all label shows "Select all" when not everything is selected', () => {
     const { wrapper } = mount(makeEditor({ all_cards_selected: false }))
-    expect(selectAllEntry(wrapper).text()).toBe('Select all')
+    expect(selectAllBtn(wrapper).text()).toBe('Select all')
   })
 
   test('select-all label flips to "Deselect all" when everything is selected', () => {
     const { wrapper } = mount(makeEditor({ all_cards_selected: true }))
-    expect(selectAllEntry(wrapper).text()).toBe('Deselect all')
+    expect(selectAllBtn(wrapper).text()).toBe('Deselect all')
   })
 
-  test('renders the selected count in the count tag', () => {
-    const { wrapper } = mount(makeEditor({ selected_count: 3 }))
-    expect(countTag(wrapper).text()).toContain('3')
+  test('renders the current selected_count in the count tag', () => {
+    const { wrapper } = mount(makeEditor({ selected_count: 5 }))
+    expect(countTag(wrapper).text()).toContain('5')
   })
 
-  test('delete is disabled when nothing is selected', () => {
+  test('move + delete are disabled when nothing is selected', () => {
     const { wrapper } = mount(makeEditor({ selected_count: 0, select_all_mode: false }))
+    expect(moveBtn(wrapper).attributes('disabled')).toBeDefined()
     expect(deleteBtn(wrapper).attributes('disabled')).toBeDefined()
   })
 
-  test('delete is enabled when something is selected', () => {
+  test('move + delete are enabled when something is selected', () => {
     const { wrapper } = mount(makeEditor({ selected_count: 2 }))
+    expect(moveBtn(wrapper).attributes('disabled')).toBeUndefined()
     expect(deleteBtn(wrapper).attributes('disabled')).toBeUndefined()
   })
 
-  test('delete is enabled in select-all mode even when count is zero', () => {
+  test('move + delete are enabled in select-all mode even when count is zero', () => {
     const { wrapper } = mount(makeEditor({ select_all_mode: true, selected_count: 0 }))
+    expect(moveBtn(wrapper).attributes('disabled')).toBeUndefined()
     expect(deleteBtn(wrapper).attributes('disabled')).toBeUndefined()
   })
 
@@ -134,16 +151,16 @@ describe('deck-hero/bulk-actions', () => {
     expect(editor.actions.onCancelSelection).toHaveBeenCalledOnce()
   })
 
-  test('navigating select-all emits ui.select sfx and calls toggleSelectAll', async () => {
+  test('clicking select-all emits ui.select sfx and calls toggleSelectAll', async () => {
     const { wrapper, editor } = mount()
-    await selectAllEntry(wrapper).trigger('click')
+    await selectAllBtn(wrapper).trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('select')
     expect(editor.selection.toggleSelectAll).toHaveBeenCalledOnce()
   })
 
-  test('navigating move calls actions.onMoveCards', async () => {
+  test('clicking move calls actions.onMoveCards', async () => {
     const { wrapper, editor } = mount(makeEditor({ selected_count: 1 }))
-    await moveEntry(wrapper).trigger('click')
+    await moveBtn(wrapper).trigger('click')
     expect(editor.actions.onMoveCards).toHaveBeenCalledOnce()
   })
 

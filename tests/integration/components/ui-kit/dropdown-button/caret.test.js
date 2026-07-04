@@ -126,6 +126,24 @@ describe('DropdownCaret', () => {
       await wrapper.find('[data-testid="dropdown-button__trigger"]').trigger('keydown.space')
       expect(wrapper.emitted('toggle')).toHaveLength(1)
     })
+
+    test('clicking the trigger span does not emit toggle when disabled [obligation]', async () => {
+      const wrapper = mountCaret({ open: false, disabled: true })
+      await wrapper.find('[data-testid="dropdown-button__trigger"]').trigger('click')
+      expect(wrapper.emitted('toggle')).toBeUndefined()
+    })
+
+    test('Enter keydown on the trigger span does not emit toggle when disabled [obligation]', async () => {
+      const wrapper = mountCaret({ open: false, disabled: true })
+      await wrapper.find('[data-testid="dropdown-button__trigger"]').trigger('keydown.enter')
+      expect(wrapper.emitted('toggle')).toBeUndefined()
+    })
+
+    test('Space keydown on the trigger span does not emit toggle when disabled [obligation]', async () => {
+      const wrapper = mountCaret({ open: false, disabled: true })
+      await wrapper.find('[data-testid="dropdown-button__trigger"]').trigger('keydown.space')
+      expect(wrapper.emitted('toggle')).toBeUndefined()
+    })
   })
 
   // ── open state ────────────────────────────────────────────────────────────

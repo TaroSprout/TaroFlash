@@ -22,7 +22,7 @@ const mobile_editor = inject(mobileCardEditorKey, null)
 const is_mobile = useMatchMedia('w<md')
 
 const menu_options = computed<DropdownOption[]>(() => [
-  { label: t('deck-view.item-options.select'), value: 'select', icon: 'select-object' },
+  { label: t('deck-view.item-options.select'), value: 'select', icon: 'data-check' },
   { label: t('deck-view.item-options.move'), value: 'move', icon: 'move-item' },
   { label: t('deck-view.item-options.delete'), value: 'delete', icon: 'delete' }
 ])
@@ -52,6 +52,7 @@ const {
 }>()
 
 const active_side = ref(side)
+const is_hovering = ref(false)
 
 function onCardClick() {
   if (rearranging) return
@@ -99,10 +100,12 @@ watch(
     data-testid="grid-item"
     class="grid-item group relative aspect-card w-full touch-manipulation"
     :class="{
-      'card-outline pointer-fine:hover:scale-101': is_selecting,
+      'pointer-fine:hover:scale-101': is_selecting,
       jiggle: rearranging && !dragging
     }"
     v-sfx="{ hover: is_selecting || rearranging ? TYPE_SFX : undefined }"
+    @mouseenter="is_hovering = true"
+    @mouseleave="is_hovering = false"
   >
     <card
       v-bind="card"
@@ -112,7 +115,7 @@ watch(
         dragging && 'drop-shadow-lg'
       ]"
       :style="{ '--card-scale': scale }"
-      size="xl"
+      size="lg"
       :side="active_side"
       :card_attributes="card_attributes"
       @mousedown="onCardMouseDown"
@@ -120,7 +123,13 @@ watch(
     />
 
     <div v-if="is_selecting" class="absolute -top-1 -right-1 pointer-events-none">
-      <ui-radio :checked="selected" />
+      <ui-radio
+        data-theme="blue-500"
+        data-theme-dark="blue-650"
+        :checked="selected"
+        :active="is_hovering"
+        class="outline-4 outline-brown-100 dark:outline-grey-900"
+      />
     </div>
 
     <ui-dropdown-button
@@ -148,14 +157,6 @@ watch(
 
   transform-origin: top left;
   transform: scale(var(--card-scale));
-}
-
-.grid-item.card-outline {
-  --outline-color: var(--color-purple-500);
-}
-
-:global(.dark) .grid-item.card-outline {
-  --outline-color: var(--color-purple-700);
 }
 
 /* iOS-style "edit mode" jiggle. Phase + tempo are set per card via the

@@ -1,10 +1,19 @@
-import { describe, test, expect } from 'vite-plus/test'
+import { describe, test, expect, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
+
+const { mockUseMatchMedia } = vi.hoisted(() => ({
+  mockUseMatchMedia: vi.fn()
+}))
+
+vi.mock('@/composables/ui/media-query', () => ({
+  useMatchMedia: mockUseMatchMedia
+}))
 
 const ChildStub = (name) =>
   defineComponent({
     name,
+    props: ['isSelecting'],
     inheritAttrs: false,
     setup() {
       return () => h('div', { 'data-testid': `${name.toLowerCase()}-stub` })
@@ -18,7 +27,8 @@ function makeEditor({ is_selecting = false } = {}) {
   return { selection: { is_selecting: ref(is_selecting) } }
 }
 
-function mount({ editor, hideActions } = {}) {
+function mount({ editor, hideActions, is_desktop = true } = {}) {
+  mockUseMatchMedia.mockReturnValue(ref(is_desktop))
   const props = { deck: { id: 1, title: 'd', card_count: 10 } }
   if (hideActions !== undefined) props.hideActions = hideActions
   return shallowMount(DeckHero, {
@@ -71,6 +81,26 @@ describe('deck-hero/index', () => {
     const wrapper = mount()
     expect(wrapper.find('[data-testid="actions-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="bulkactions-stub"]').exists()).toBe(false)
+  })
+
+  // ── bulk-actions overlay gated to true desktop [obligation] ─────────────────
+
+  test('keeps default actions mounted (not swapped) below xl while selecting [obligation]', () => {
+    const wrapper = mount({ editor: makeEditor({ is_selecting: true }), is_desktop: false })
+    expect(wrapper.find('[data-testid="actions-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="bulkactions-stub"]').exists()).toBe(false)
+  })
+
+  test('passes isSelecting through to actions below xl while selecting [obligation]', () => {
+    const wrapper = mount({ editor: makeEditor({ is_selecting: true }), is_desktop: false })
+    const actions = wrapper.findComponent({ name: 'Actions' })
+    expect(actions.props('isSelecting')).toBe(true)
+  })
+
+  test('mounts bulk-actions overlay only at true desktop while selecting [obligation]', () => {
+    const wrapper = mount({ editor: makeEditor({ is_selecting: true }), is_desktop: true })
+    expect(wrapper.find('[data-testid="bulkactions-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="actions-stub"]').exists()).toBe(false)
   })
 
   // ── hideActions prop [obligation] ──────────────────────────────────────────

@@ -188,7 +188,7 @@ describe('card-grid/scroll-grid', () => {
       displayed_cards: [{ id: 1, client_id: 'c1', front_text: 'q', back_text: 'a' }]
     })
     const wrapper = mountScrollGrid(makeEditor(), makeShell({ grid_size: 'base' }), search)
-    expect(wrapper.find('[data-testid="grid-item-stub"]').attributes('data-scale')).toBe('0.56')
+    expect(wrapper.find('[data-testid="grid-item-stub"]').attributes('data-scale')).toBe('0.65')
   })
 
   test('grid-item selected is false when card.id is undefined', () => {

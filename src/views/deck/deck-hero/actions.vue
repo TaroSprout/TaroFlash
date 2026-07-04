@@ -8,7 +8,14 @@ import { cardSearchKey, useCardEditMenu } from '@/views/deck/composables'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 
-const { deck } = defineProps<{ deck: Deck }>()
+type ActionsProps = {
+  deck: Deck
+  // Selection mode disables the study button and the edit-cards dropdown —
+  // neither makes sense while bulk-selecting cards.
+  isSelecting?: boolean
+}
+
+const { deck, isSelecting = false } = defineProps<ActionsProps>()
 
 const { t } = useI18n()
 const menu = useCardEditMenu()
@@ -43,14 +50,14 @@ const edit_label = computed(() => {
           <div aria-hidden="true" class="aspect-square h-full"></div>
 
           <div data-testid="deck-hero__study-action" class="pointer-events-auto min-w-0 flex-1">
-            <study-button :deck="deck" />
+            <study-button :deck="deck" :disabled="isSelecting" />
           </div>
         </div>
       </Transition>
     </div>
 
     <div v-else data-testid="deck-hero__study-action" class="flex-1 min-w-0">
-      <study-button :deck="deck" />
+      <study-button :deck="deck" :disabled="isSelecting" />
     </div>
 
     <div v-if="!is_mobile" data-testid="deck-hero__edit-action" class="shrink-0 xl:w-full">
@@ -63,6 +70,7 @@ const edit_label = computed(() => {
         trigger-theme="brown-200"
         full-width
         size="xl"
+        :disabled="isSelecting"
         @click="menu.primaryAction"
         @select="menu.onSelect"
       >

@@ -14,16 +14,16 @@ describe('UiRadio', () => {
     expect(wrapper.find('[data-testid="ui-kit-radio"]').exists()).toBe(true)
   })
 
-  // ── data-theme ─────────────────────────────────────────────────────────────
+  // ── data-active ────────────────────────────────────────────────────────────
 
-  test('sets data-theme to the theme prop', () => {
-    const wrapper = mountRadio({ checked: false, theme: 'green-400' })
-    expect(wrapper.find('[data-testid="ui-kit-radio"]').attributes('data-theme')).toBe('green-400')
+  test('mirrors the active prop onto data-active [obligation]', () => {
+    const wrapper = mountRadio({ checked: false, active: true })
+    expect(wrapper.find('[data-testid="ui-kit-radio"]').attributes('data-active')).toBe('true')
   })
 
-  test('defaults data-theme to blue-500', () => {
-    const wrapper = mountRadio({ checked: false })
-    expect(wrapper.find('[data-testid="ui-kit-radio"]').attributes('data-theme')).toBe('blue-500')
+  test('data-active is not set when active is false and not being pressed [obligation]', () => {
+    const wrapper = mountRadio({ checked: false, active: false })
+    expect(wrapper.find('[data-testid="ui-kit-radio"]').attributes('data-active')).toBeUndefined()
   })
 
   // ── checked state ──────────────────────────────────────────────────────────
@@ -59,5 +59,14 @@ describe('UiRadio', () => {
     const icons = wrapper.findAllComponents({ name: 'UiIcon' })
     expect(icons.some((c) => c.props('src') === 'check')).toBe(true)
     expect(icons.some((c) => c.props('src') === 'minus')).toBe(true)
+  })
+
+  // ── click ──────────────────────────────────────────────────────────────────
+
+  test('clicking the radio does not throw', async () => {
+    const wrapper = mountRadio({ checked: false })
+    await expect(
+      wrapper.find('[data-testid="ui-kit-radio"]').trigger('click')
+    ).resolves.not.toThrow()
   })
 })

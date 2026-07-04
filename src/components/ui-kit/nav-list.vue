@@ -2,23 +2,31 @@
 import UiIcon from './icon.vue'
 import UiTappable from './tappable.vue'
 import GroupedList, { GROUPED_LIST_ITEM_CLASS } from '@/components/layout-kit/grouped-list.vue'
-import { emitSfx } from '@/sfx/bus'
 import { TYPE_SFX } from '@/sfx/config'
+import type { SfxOptions } from '@/sfx/directive'
 
-export type NavListEntry = { value: string; icon: string; label: string }
+export type NavListEntry = {
+  value: string
+  label: string
+  icon?: string
+  // replaces the trailing chevron; falls back to 'line-arrow-right'
+  trailingIcon?: string
+}
 
 type NavListProps = {
   entries: NavListEntry[]
+  size?: 'base' | 'lg'
+  // press sound is entirely the call site's call — pass `{ press: 'xxx' }`
+  sfx?: SfxOptions
 }
 
-defineProps<NavListProps>()
+const { size = 'base', sfx = {} } = defineProps<NavListProps>()
 
 const emit = defineEmits<{
   navigate: [value: string]
 }>()
 
 function onNavigate(value: string) {
-  emitSfx('snappy_button_5')
   emit('navigate', value)
 }
 </script>
@@ -36,12 +44,15 @@ function onNavigate(value: string) {
       class="text-(--theme-on-primary) cursor-pointer text-left"
       bgx_color="var(--theme-neutral)"
       active_on_hover
-      :sfx="{ hover: TYPE_SFX }"
+      :sfx="{ hover: TYPE_SFX, ...sfx }"
       @tap="onNavigate(entry.value)"
     >
-      <ui-icon :src="entry.icon" class="w-6 h-6" />
-      <span class="flex-1">{{ entry.label }}</span>
-      <ui-icon src="line-arrow-right" class="size-4" />
+      <ui-icon v-if="entry.icon" :src="entry.icon" :class="size === 'lg' ? 'size-7' : 'size-6'" />
+      <span class="flex-1" :class="size === 'lg' ? 'text-lg' : 'text-base'">{{ entry.label }}</span>
+      <ui-icon
+        :src="entry.trailingIcon ?? 'line-arrow-right'"
+        :class="size === 'lg' ? 'size-5' : 'size-4'"
+      />
     </ui-tappable>
   </grouped-list>
 </template>

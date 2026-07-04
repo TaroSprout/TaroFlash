@@ -35,6 +35,9 @@ type DropdownButtonProps = Pick<
   // Disable only the primary action — the caret trigger stays live so the menu
   // can still be opened (e.g. "already added, but add to another deck").
   primaryDisabled?: boolean
+  // Disable the whole control — primary action AND the caret trigger, so the
+  // menu can't be opened either.
+  disabled?: boolean
   menuTheme?: Theme
   menuThemeDark?: Theme
   menuClass?: string
@@ -67,6 +70,7 @@ const {
   shadow = false,
   triggerOnly = false,
   primaryDisabled = false,
+  disabled = false,
   menuTheme = 'brown-300',
   menuThemeDark,
   menuClass = 'outline-1 outline-brown-100 dark:outline-grey-900',
@@ -131,6 +135,7 @@ function filter_attrs(keep: (key: string) => boolean) {
 }
 
 function toggle() {
+  if (disabled) return
   emitSfx('snappy_button_5')
   popover_open.value = !popover_open.value
 }
@@ -189,6 +194,7 @@ function onMenuSelect(option: DropdownOption) {
         :data-theme="triggerTheme"
         :data-theme-dark="triggerThemeDark"
         :data-active="popover_open"
+        :disabled="disabled"
         :style="trigger_style"
         data-testid="dropdown-button__button"
         @press="toggle"
@@ -205,7 +211,7 @@ function onMenuSelect(option: DropdownOption) {
         :sfx="sfx"
         :play-on-tap="playOnTap"
         :tap-animate="tapAnimate"
-        :disabled="primaryDisabled"
+        :disabled="disabled || primaryDisabled"
         :style="trigger_style"
         data-testid="dropdown-button__button"
         @press="onButtonClick"
@@ -219,6 +225,7 @@ function onMenuSelect(option: DropdownOption) {
             :size="size"
             :trigger-theme="triggerTheme"
             :trigger-theme-dark="triggerThemeDark"
+            :disabled="disabled"
             @toggle="toggle"
           />
         </template>

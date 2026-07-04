@@ -6,6 +6,13 @@ import { deckViewShellKey } from '@/views/deck/composables/view-shell'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
+import type { ButtonProps } from '@/components/ui-kit/button.vue'
+
+type PageSettingsProps = {
+  size?: ButtonProps['size']
+}
+
+const { size = 'base' } = defineProps<PageSettingsProps>()
 
 const { t } = useI18n()
 
@@ -41,7 +48,7 @@ function toggle() {
         data-testid="page-settings__trigger"
         data-theme="brown-300"
         data-theme-dark="stone-700"
-        size="sm"
+        :size="size"
         icon-left="page-setting"
         icon-only
         :data-active="desktop_open"
