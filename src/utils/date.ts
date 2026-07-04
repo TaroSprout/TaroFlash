@@ -74,14 +74,17 @@ function toRelativeAtUnit(
 
 /**
  * Formats a batch of dates that are displayed together (e.g. one per FSRS
- * rating). Any dates that would otherwise render identical text collapse to
- * day-level granularity instead, so "1 week" / "1 week" becomes "8 days" /
- * "9 days".
+ * rating). If any two would otherwise render identical text, every date in
+ * the batch collapses to day-level granularity instead, so "1 week" / "1
+ * week" / "9 days" becomes "8 days" / "8 days" / "9 days" — one clash bumps
+ * the whole group, keeping their granularity consistent with each other.
  */
 export function toRelativeDistinct(inputs: DateInput[], options: RelativeOptions = {}): string[] {
   const labels = inputs.map((d) => toRelative(d, options))
-  return labels.map((label, i) => {
-    const collides = labels.some((other, j) => j !== i && other === label)
-    return collides ? toRelativeAtUnit(inputs[i]!, 'day', options) : label
-  })
+  const has_collision = labels.some((label, i) =>
+    labels.some((other, j) => j !== i && other === label)
+  )
+  if (!has_collision) return labels
+
+  return inputs.map((input) => toRelativeAtUnit(input, 'day', options))
 }
