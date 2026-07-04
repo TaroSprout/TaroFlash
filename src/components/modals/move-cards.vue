@@ -10,6 +10,9 @@ import DialogCard from '@/components/layout-kit/dialog-card/dialog-card.vue'
 import GroupedList from '@/components/layout-kit/grouped-list.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import { TYPE_SFX } from '@/sfx/config'
+import { useCardLimitGate } from '@/composables/card/limit-gate'
+import { useMemberStore } from '@/stores/member'
+import { PLANS } from '@/config/plans'
 
 export type MoveCardsModalResponse = {
   deck_id: number
@@ -26,6 +29,7 @@ const { cards, current_deck_id, count, close } = defineProps<MoveCardsModalProps
 
 const { t } = useI18n()
 
+const member = useMemberStore()
 const { data: decks } = useMemberDecksQuery()
 const selected_deck_id = ref<number | undefined>(undefined)
 const hovered_deck_id = ref<number | undefined>(undefined)
@@ -37,8 +41,26 @@ const title = computed(() => {
   return t('move-cards-modal.title', { count: effective_count })
 })
 
+// Authoritative moving count (unlike the title's display-only effective_count,
+// which zeroes out for a single blank placeholder card).
+const moving_count = computed(() => count ?? cards.length)
+const plan_card_limit = computed(() => PLANS[member.plan ?? 'free'].cardsPerDeckLimit)
+
+const target_deck = computed(() => decks.value?.find((deck) => deck.id === selected_deck_id.value))
+const { guardAddCards } = useCardLimitGate(target_deck)
+
+/** True when moving `moving_count` cards here would exceed the plan's per-deck cap. */
+function isDeckFull(deck: Deck) {
+  return (
+    plan_card_limit.value !== null &&
+    (deck.card_count ?? 0) + moving_count.value > plan_card_limit.value
+  )
+}
+
 async function onMove() {
   if (!selected_deck_id.value) return
+  if (!(await guardAddCards(moving_count.value))) return
+
   close({ deck_id: selected_deck_id.value })
 }
 
@@ -60,7 +82,7 @@ function onClick(deck_id?: number) {
     :title="title"
     @close="close(false)"
   >
-    <div data-testid="move-cards__body" class="flex h-full min-h-0 w-130 flex-col">
+    <div data-testid="move-cards__body" class="flex h-full min-h-0 w-full sm:w-130 flex-col">
       <div data-testid="move-cards__deck-list-wrap" class="relative flex min-h-0 flex-1 flex-col">
         <grouped-list
           data-testid="move-cards__deck-list"
@@ -72,7 +94,7 @@ function onClick(deck_id?: number) {
             :key="index"
             data-testid="move-cards__deck-item"
             :class="[
-              deck.id === current_deck_id
+              deck.id === current_deck_id || isDeckFull(deck)
                 ? ' bg-brown-200 dark:bg-stone-900 pointer-events-none text-(--theme-on-primary)/20'
                 : 'cursor-pointer'
             ]"
@@ -85,7 +107,15 @@ function onClick(deck_id?: number) {
           >
             <card size="2xs" :cover_config="deck.cover_config" side="cover" />
             <span class="flex-1">{{ deck.title }}</span>
+            <span
+              v-if="deck.id !== current_deck_id && isDeckFull(deck)"
+              data-testid="move-cards__deck-full-label"
+              class="text-sm"
+            >
+              {{ t('move-cards-modal.deck-full-label') }}
+            </span>
             <ui-radio
+              v-else
               :class="{ 'opacity-20': deck.id === current_deck_id }"
               data-theme="blue-500"
               data-theme-dark="blue-650"
