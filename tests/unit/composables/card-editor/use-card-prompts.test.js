@@ -116,6 +116,18 @@ describe('useCardPrompts — openMoveModal [obligation]', () => {
     )
   })
 
+  test('opens the modal with mode: popup', async () => {
+    modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
+    const { openMoveModal } = useCardPrompts()
+
+    await openMoveModal([makeCard()], 1, 10)
+
+    expect(modalOpenMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ mode: 'popup' })
+    )
+  })
+
   test('emits double_pop_up before the modal opens [obligation]', async () => {
     modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
     const { openMoveModal } = useCardPrompts()

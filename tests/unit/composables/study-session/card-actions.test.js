@@ -4,13 +4,25 @@ import { useActiveCardActions } from '@/components/study-session/composables/car
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { confirmDeleteMock, openMoveModalMock, deleteCardsMock, moveCardsMock } = vi.hoisted(() => ({
+const {
+  confirmDeleteMock,
+  openMoveModalMock,
+  deleteCardsMock,
+  moveCardsMock,
+  handleLimitErrorMock,
+  toastErrorMock
+} = vi.hoisted(() => ({
   confirmDeleteMock: vi.fn(),
   openMoveModalMock: vi.fn(),
   deleteCardsMock: vi.fn().mockResolvedValue(undefined),
-  moveCardsMock: vi.fn().mockResolvedValue(undefined)
+  moveCardsMock: vi.fn().mockResolvedValue(undefined),
+  handleLimitErrorMock: vi.fn(),
+  toastErrorMock: vi.fn()
 }))
 
+vi.mock('vue-i18n', () => ({
+  useI18n: () => ({ t: (key) => key })
+}))
 vi.mock('@/composables/card', () => ({
   useCardMutations: () => ({
     deleteCards: deleteCardsMock,
@@ -25,6 +37,10 @@ vi.mock('@/composables/card', () => ({
     openMoveModal: openMoveModalMock
   })
 }))
+vi.mock('@/composables/card/limit-gate', () => ({
+  useCardLimitGate: () => ({ handleLimitError: handleLimitErrorMock })
+}))
+vi.mock('@/composables/toast', () => ({ useToast: () => ({ error: toastErrorMock }) }))
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -48,6 +64,8 @@ beforeEach(() => {
   openMoveModalMock.mockReset()
   deleteCardsMock.mockReset().mockResolvedValue(undefined)
   moveCardsMock.mockReset().mockResolvedValue(undefined)
+  handleLimitErrorMock.mockReset().mockReturnValue(false)
+  toastErrorMock.mockReset()
 })
 
 // ── onDelete ──────────────────────────────────────────────────────────────────
@@ -178,5 +196,34 @@ describe('useActiveCardActions — onMove', () => {
     await result.onMove()
 
     expect(openMoveModalMock).toHaveBeenCalledWith([expect.objectContaining({ id: 7 })], 1, 10)
+  })
+
+  test('shows a toast when the mutation rejects and the limit gate does not handle it [obligation]', async () => {
+    openMoveModalMock.mockResolvedValueOnce({ deck_id: 99 })
+    moveCardsMock.mockRejectedValueOnce(new Error('boom'))
+    handleLimitErrorMock.mockReturnValue(false)
+    const card = makeCard({ id: 7 })
+    const { result, onRemoved } = makeSetup({ card, deck_id: 10 })
+
+    await result.onMove()
+
+    expect(handleLimitErrorMock).toHaveBeenCalledWith(expect.any(Error))
+    expect(toastErrorMock).toHaveBeenCalledWith('toast.error.move-cards-failed')
+    expect(onRemoved).not.toHaveBeenCalled()
+  })
+
+  test('does not show a toast when the limit gate already handled the rejection [obligation]', async () => {
+    openMoveModalMock.mockResolvedValueOnce({ deck_id: 99 })
+    const limitError = Object.assign(new Error('over limit'), { code: 'PT402' })
+    moveCardsMock.mockRejectedValueOnce(limitError)
+    handleLimitErrorMock.mockReturnValue(true)
+    const card = makeCard({ id: 7 })
+    const { result, onRemoved } = makeSetup({ card, deck_id: 10 })
+
+    await result.onMove()
+
+    expect(handleLimitErrorMock).toHaveBeenCalledWith(limitError)
+    expect(toastErrorMock).not.toHaveBeenCalled()
+    expect(onRemoved).not.toHaveBeenCalled()
   })
 })

@@ -165,6 +165,13 @@ describe('DialogCard', () => {
       const wrapper = mountCard({ title: 'x', close_label: 'Dismiss' })
       expect(wrapper.find('[data-testid="dialog-card__close"]').text()).toBe('Dismiss')
     })
+
+    test('themes the close button with brown-100 / stone-700', () => {
+      const wrapper = mountCard({ title: 'x' })
+      const close = wrapper.find('[data-testid="dialog-card__close"]')
+      expect(close.attributes('data-theme')).toBe('brown-100')
+      expect(close.attributes('data-theme-dark')).toBe('stone-700')
+    })
   })
 
   // ── header slot override ─────────────────────────────────────────────────────

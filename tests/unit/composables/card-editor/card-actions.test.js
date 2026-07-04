@@ -2,11 +2,14 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { ref } from 'vue'
 import { card } from '@tests/fixtures/card'
 
-const { modalOpenMock, alertWarnMock, emitSfxMock } = vi.hoisted(() => ({
-  modalOpenMock: vi.fn(),
-  alertWarnMock: vi.fn(),
-  emitSfxMock: vi.fn()
-}))
+const { modalOpenMock, alertWarnMock, emitSfxMock, handleLimitErrorMock, toastErrorMock } =
+  vi.hoisted(() => ({
+    modalOpenMock: vi.fn(),
+    alertWarnMock: vi.fn(),
+    emitSfxMock: vi.fn(),
+    handleLimitErrorMock: vi.fn(),
+    toastErrorMock: vi.fn()
+  }))
 
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({ t: (key) => key })
@@ -15,6 +18,10 @@ vi.mock('@/composables/alert', () => ({ useAlert: () => ({ warn: alertWarnMock }
 vi.mock('@/composables/modal', () => ({ useModal: () => ({ open: modalOpenMock }) }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: emitSfxMock }))
 vi.mock('@/components/modals/move-cards.vue', () => ({ default: {} }))
+vi.mock('@/composables/card/limit-gate', () => ({
+  useCardLimitGate: () => ({ handleLimitError: handleLimitErrorMock })
+}))
+vi.mock('@/composables/toast', () => ({ useToast: () => ({ error: toastErrorMock }) }))
 
 import { useCardActions } from '@/views/deck/composables/actions'
 
@@ -88,6 +95,8 @@ describe('useCardActions', () => {
     modalOpenMock.mockReset()
     alertWarnMock.mockReset()
     emitSfxMock.mockReset()
+    handleLimitErrorMock.mockReset().mockReturnValue(false)
+    toastErrorMock.mockReset()
   })
 
   // ── onSelectCard ──────────────────────────────────────────────────────────
@@ -293,6 +302,55 @@ describe('useCardActions', () => {
       // count=200 is the full selection; only 2 preview_cards loaded
       expect(options.props.count).toBe(200)
       expect(options.props.cards).toHaveLength(2)
+    })
+
+    test('shows a toast when the mutation rejects and the limit gate does not handle it [obligation]', async () => {
+      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve({ deck_id: 42 }) })
+      handleLimitErrorMock.mockReturnValue(false)
+      const persisted = [makeCard({ id: 7 })]
+      const mutations = makeMutations()
+      mutations.moveCards.mockRejectedValueOnce(new Error('boom'))
+      const { actions } = makeActions({
+        list: makeList({ persisted }),
+        selection: makeSelection(),
+        mutations
+      })
+      await actions.onMoveCards(7)
+      expect(handleLimitErrorMock).toHaveBeenCalledWith(expect.any(Error))
+      expect(toastErrorMock).toHaveBeenCalledWith('toast.error.move-cards-failed')
+    })
+
+    test('does not show a toast when the limit gate already handled the rejection [obligation]', async () => {
+      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve({ deck_id: 42 }) })
+      handleLimitErrorMock.mockReturnValue(true)
+      const persisted = [makeCard({ id: 7 })]
+      const mutations = makeMutations()
+      const limitError = Object.assign(new Error('over limit'), { code: 'PT402' })
+      mutations.moveCards.mockRejectedValueOnce(limitError)
+      const { actions } = makeActions({
+        list: makeList({ persisted }),
+        selection: makeSelection(),
+        mutations
+      })
+      await actions.onMoveCards(7)
+      expect(handleLimitErrorMock).toHaveBeenCalledWith(limitError)
+      expect(toastErrorMock).not.toHaveBeenCalled()
+    })
+
+    test('does not run cleanup (exitSelection/refetch) when the mutation rejects [obligation]', async () => {
+      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve({ deck_id: 42 }) })
+      handleLimitErrorMock.mockReturnValue(false)
+      const persisted = [makeCard({ id: 7 })]
+      const mutations = makeMutations()
+      mutations.moveCards.mockRejectedValueOnce(new Error('boom'))
+      const { actions, selection, deck_query } = makeActions({
+        list: makeList({ persisted }),
+        selection: makeSelection(),
+        mutations
+      })
+      await actions.onMoveCards(7)
+      expect(selection.exitSelection).not.toHaveBeenCalled()
+      expect(deck_query.refetch).not.toHaveBeenCalled()
     })
   })
 

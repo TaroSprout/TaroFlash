@@ -26,25 +26,25 @@ describe('DialogCardHeader', () => {
 
   // ── padded [obligation] ────────────────────────────────────────────────────
 
-  test('[obligation] applies px-(--dialog-px) when padded is omitted (defaults true)', () => {
+  test('[obligation] applies px-(--dialog-px) and pt-(--dialog-px) when padded is omitted (defaults true)', () => {
     const wrapper = mountHeader()
-    expect(wrapper.find('[data-testid="dialog-card-header"]').classes()).toContain(
-      'px-(--dialog-px)'
-    )
+    const classes = wrapper.find('[data-testid="dialog-card-header"]').classes()
+    expect(classes).toContain('px-(--dialog-px)')
+    expect(classes).toContain('pt-(--dialog-px)')
   })
 
-  test('[obligation] applies px-(--dialog-px) when padded is explicitly true', () => {
+  test('[obligation] applies px-(--dialog-px) and pt-(--dialog-px) when padded is explicitly true', () => {
     const wrapper = mountHeader({ padded: true })
-    expect(wrapper.find('[data-testid="dialog-card-header"]').classes()).toContain(
-      'px-(--dialog-px)'
-    )
+    const classes = wrapper.find('[data-testid="dialog-card-header"]').classes()
+    expect(classes).toContain('px-(--dialog-px)')
+    expect(classes).toContain('pt-(--dialog-px)')
   })
 
-  test('[obligation] omits px-(--dialog-px) when padded is false', () => {
+  test('[obligation] omits px-(--dialog-px) and pt-(--dialog-px) when padded is false', () => {
     const wrapper = mountHeader({ padded: false })
-    expect(wrapper.find('[data-testid="dialog-card-header"]').classes()).not.toContain(
-      'px-(--dialog-px)'
-    )
+    const classes = wrapper.find('[data-testid="dialog-card-header"]').classes()
+    expect(classes).not.toContain('px-(--dialog-px)')
+    expect(classes).not.toContain('pt-(--dialog-px)')
   })
 
   // ── slots ───────────────────────────────────────────────────────────────────
