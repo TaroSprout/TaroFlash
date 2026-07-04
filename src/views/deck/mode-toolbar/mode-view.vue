@@ -16,7 +16,7 @@ const { newCard } = inject(cardEditorKey)!
 <template>
   <toolbar-base>
     <template #left>
-      <search-bar size="sm" data-theme="brown-300" data-theme-dark="stone-700" />
+      <search-bar data-theme="brown-300" data-theme-dark="stone-700" />
 
       <page-settings />
 
@@ -24,7 +24,6 @@ const { newCard } = inject(cardEditorKey)!
         data-testid="mode-view__add-card-button"
         data-theme="blue-500"
         data-theme-dark="blue-650"
-        size="sm"
         icon-left="add"
         @press="newCard"
       >
