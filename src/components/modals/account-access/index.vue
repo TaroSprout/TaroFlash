@@ -43,7 +43,7 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
 <template>
   <dialog-card
     data-testid="account-access-modal"
-    class="w-140 h-110 bg-brown-200 py-6 dark:bg-grey-800"
+    class="w-140 h-110 bg-brown-200 dark:bg-grey-800"
     data-theme="brown-50"
     data-theme-dark="stone-700"
     :title="title"

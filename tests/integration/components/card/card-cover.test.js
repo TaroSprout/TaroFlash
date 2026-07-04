@@ -1,7 +1,6 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import CardCover from '@/components/card/card-cover.vue'
-import { BORDER_SIZE_PX } from '@/utils/cover'
 
 function mountCover(cover) {
   return shallowMount(CardCover, { props: { cover } })
@@ -23,11 +22,10 @@ describe('CardCover', () => {
     expect(wrapper.find('[data-testid="card-cover"]').attributes('data-theme')).toBe('green-400')
   })
 
-  test('applies the static themed border style when a config is provided', () => {
+  test('does not apply an inline border style — border is a static CSS rule now', () => {
     const wrapper = mountCover({ theme: 'blue-500' })
     const style = wrapper.find('[data-testid="card-cover"]').attributes('style')
-    expect(style).toContain(`${BORDER_SIZE_PX}px`)
-    expect(style).toContain('var(--theme-primary)')
+    expect(style ?? '').not.toContain('border')
   })
 
   test.each([

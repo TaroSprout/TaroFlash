@@ -1,50 +1,59 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, reactive, ref } from 'vue'
 import { card } from '@tests/fixtures/card'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { mockDecksData, emitSfxMock } = vi.hoisted(() => ({
-  mockDecksData: {
-    data: [
-      { id: 10, title: 'Deck A' },
-      { id: 20, title: 'Deck B' },
-      { id: 30, title: 'Current Deck' }
-    ]
-  },
-  emitSfxMock: vi.fn()
+const { guardAddCardsMock } = vi.hoisted(() => ({
+  guardAddCardsMock: vi.fn()
 }))
+
+const mockDecksData = { data: ref([]) }
+// `reactive` mirrors Pinia's auto-unwrap: `member.plan` reads the ref's value.
+const mockMemberStore = reactive({ plan: ref('free') })
 
 vi.mock('@/api/decks', () => ({
   useMemberDecksQuery: () => mockDecksData
 }))
 
-vi.mock('@/sfx/bus', () => ({
-  emitSfx: emitSfxMock,
-  emitHoverSfx: vi.fn()
+vi.mock('@/stores/member', () => ({
+  useMemberStore: () => mockMemberStore
+}))
+
+vi.mock('@/composables/card/limit-gate', () => ({
+  useCardLimitGate: () => ({ guardAddCards: guardAddCardsMock })
 }))
 
 // ── Component stubs (render functions only — no runtime compiler) ──────────────
 
 const CardStub = defineComponent({
   name: 'CardIndex',
-  props: ['size'],
+  props: ['size', 'coverConfig', 'side'],
   setup() {
     return () => h('div', { 'data-testid': 'card-stub' })
   }
 })
 
-const UiListItemStub = defineComponent({
-  name: 'UiListItem',
-  props: ['disabled', 'appearance'],
-  setup(props, { slots }) {
+// Mirrors the CSS `pointer-events-none` guard the real UiTappable relies on:
+// dispatchEvent bypasses real hit-testing, so this stub reads the same class
+// the production template applies and no-ops the tap the way the browser would.
+const UiTappableStub = defineComponent({
+  name: 'UiTappable',
+  props: ['sfx', 'activeOnHover'],
+  emits: ['tap'],
+  inheritAttrs: false,
+  setup(_props, { slots, emit, attrs }) {
     return () =>
       h(
         'div',
         {
-          'data-testid': 'list-item',
-          'data-disabled': props.disabled ? 'true' : 'false'
+          ...attrs,
+          onClick: (e) => {
+            const class_list = [].concat(attrs.class ?? [])
+            if (class_list.some((c) => String(c).includes('pointer-events-none'))) return
+            emit('tap', e)
+          }
         },
         slots.default?.()
       )
@@ -53,9 +62,15 @@ const UiListItemStub = defineComponent({
 
 const UiRadioStub = defineComponent({
   name: 'UiRadio',
-  props: ['checked'],
-  setup(props) {
-    return () => h('div', { 'data-testid': 'radio', 'data-checked': String(props.checked) })
+  props: ['checked', 'active', 'sfx'],
+  inheritAttrs: false,
+  setup(props, { attrs }) {
+    return () =>
+      h('div', {
+        ...attrs,
+        'data-testid': 'move-cards__deck-radio',
+        'data-checked': String(props.checked)
+      })
   }
 })
 
@@ -63,17 +78,48 @@ const UiButtonStub = defineComponent({
   name: 'UiButton',
   props: ['disabled', 'iconLeft'],
   emits: ['press'],
-  setup(props, { slots, emit }) {
+  inheritAttrs: false,
+  setup(props, { slots, emit, attrs }) {
     return () =>
       h(
         'button',
         {
-          'data-testid': 'button',
+          ...attrs,
           disabled: props.disabled,
           onClick: () => emit('press')
         },
         slots.default?.()
       )
+  }
+})
+
+const DialogCardStub = defineComponent({
+  name: 'DialogCard',
+  props: ['title'],
+  emits: ['close'],
+  setup(props, { slots, emit }) {
+    return () =>
+      h('div', { 'data-testid': 'move-cards' }, [
+        h('span', { class: 'move-cards__title' }, props.title),
+        h('button', { 'data-testid': 'move-cards__dialog-close', onClick: () => emit('close') }),
+        slots.default?.({ viewport: 'desktop' })
+      ])
+  }
+})
+
+const GroupedListStub = defineComponent({
+  name: 'GroupedList',
+  props: ['scrollable', 'dividers'],
+  inheritAttrs: false,
+  setup(_props, { slots, attrs }) {
+    return () => h('div', { ...attrs }, slots.default?.())
+  }
+})
+
+const ScrollBarStub = defineComponent({
+  name: 'ScrollBar',
+  setup() {
+    return () => null
   }
 })
 
@@ -89,9 +135,12 @@ function mountModal({ cards = [], current_deck_id = 30, count, close = vi.fn() }
     global: {
       stubs: {
         Card: CardStub,
-        UiListItem: UiListItemStub,
+        UiTappable: UiTappableStub,
         UiRadio: UiRadioStub,
-        UiButton: UiButtonStub
+        UiButton: UiButtonStub,
+        DialogCard: DialogCardStub,
+        GroupedList: GroupedListStub,
+        ScrollBar: ScrollBarStub
       }
     }
   })
@@ -100,52 +149,50 @@ function mountModal({ cards = [], current_deck_id = 30, count, close = vi.fn() }
 
 describe('MoveCardsModal', () => {
   beforeEach(() => {
-    emitSfxMock.mockReset()
+    guardAddCardsMock.mockReset().mockResolvedValue(true)
+    mockMemberStore.plan = 'free'
+    mockDecksData.data.value = [
+      { id: 10, title: 'Deck A', card_count: 0 },
+      { id: 20, title: 'Deck B', card_count: 0 },
+      { id: 30, title: 'Current Deck', card_count: 0 }
+    ]
   })
 
   // ── Layout ──────────────────────────────────────────────────────────────────
 
-  test('renders the header, deck list, and action buttons', () => {
+  test('renders the deck list and action buttons', () => {
     const cards = [makeCard({ front_text: 'Q', back_text: 'A' })]
     const { wrapper } = mountModal({ cards })
-    expect(wrapper.find('[data-testid="move-cards__header"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="move-cards__deck-list"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="move-cards__actions"]').exists()).toBe(true)
   })
 
-  test('renders one list item per deck from useMemberDecksQuery', () => {
+  test('renders one deck item per deck from useMemberDecksQuery', () => {
     const cards = [makeCard()]
     const { wrapper } = mountModal({ cards })
-    const items = wrapper.findAll('[data-testid="list-item"]')
-    // 3 decks seeded in the mock
+    const items = wrapper.findAll('[data-testid="move-cards__deck-item"]')
     expect(items).toHaveLength(3)
   })
 
-  test('disables list item for the current deck', () => {
+  test('disables the current deck row', () => {
     const cards = [makeCard()]
     const { wrapper } = mountModal({ cards, current_deck_id: 10 })
-    const items = wrapper.findAll('[data-testid="list-item"]')
-    // deck 10 is current — item at index 0 is disabled
-    expect(items[0].attributes('data-disabled')).toBe('true')
-    expect(items[1].attributes('data-disabled')).toBe('false')
+    const items = wrapper.findAll('[data-testid="move-cards__deck-item"]')
+    // deck 10 (index 0) is the current deck
+    expect(items[0].attributes('class')).toContain('pointer-events-none')
+    expect(items[1].attributes('class')).not.toContain('pointer-events-none')
   })
 
-  // ── Title / count obligation ─────────────────────────────────────────────────
+  // ── Title / moving_count obligation ──────────────────────────────────────────
 
-  // [obligation] move-cards modal — count prop overrides cards.length for title display
   test('count prop overrides cards.length for title computation', async () => {
     const preview_cards = [
       makeCard({ front_text: 'Q1', back_text: 'A1' }),
       makeCard({ front_text: 'Q2', back_text: 'A2' }),
       makeCard({ front_text: 'Q3', back_text: 'A3' })
     ]
-    // count=200 but only 3 preview cards: title should say "200" not "3"
     const { wrapper } = mountModal({ cards: preview_cards, count: 200 })
-    const title = wrapper.find('.move-cards__title')
-    // The i18n key uses { count: 200 } → "Move 200 Cards" (plural)
-    // We can't parse i18n exactly in integration, but we assert the count
-    // drives the rendered text (200, not 3)
-    const titleText = title.text()
+    const titleText = wrapper.find('.move-cards__title').text()
     expect(titleText).toContain('200')
     expect(titleText).not.toMatch(/\b3\b/)
   })
@@ -160,44 +207,142 @@ describe('MoveCardsModal', () => {
     expect(titleText).toContain('2')
   })
 
-  // ── Selection and move ───────────────────────────────────────────────────────
+  test('moving_count (guard math) uses count, not cards.length, even with a single blank preview card [obligation]', async () => {
+    // A single blank placeholder card zeroes out the title's effective_count,
+    // but the authoritative moving_count must still drive the limit guard —
+    // resolveMoveArgs' count (200, from select-all mode), not cards.length (1).
+    const blank_preview = [makeCard({ front_text: '', back_text: '' })]
+    const { wrapper } = mountModal({ cards: blank_preview, count: 200 })
+
+    await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+    await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
+    await flushPromises()
+
+    expect(guardAddCardsMock).toHaveBeenCalledWith(200)
+  })
+
+  // ── Guard 1: onMove calls guardAddCards before closing ───────────────────────
+
+  describe('Guard 1 — guardAddCards', () => {
+    test('calls guardAddCards with moving_count against the selected deck [obligation]', async () => {
+      const cards = [makeCard()]
+      const { wrapper } = mountModal({ cards, current_deck_id: 30 })
+      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+      await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
+      await flushPromises()
+      expect(guardAddCardsMock).toHaveBeenCalledWith(1)
+    })
+
+    test('does not close the modal when guardAddCards resolves false [obligation]', async () => {
+      guardAddCardsMock.mockResolvedValue(false)
+      const cards = [makeCard()]
+      const { wrapper, close } = mountModal({ cards, current_deck_id: 30 })
+      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+      await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
+      await flushPromises()
+      expect(close).not.toHaveBeenCalled()
+    })
+
+    test('closes the modal with the selected deck_id when guardAddCards resolves true', async () => {
+      guardAddCardsMock.mockResolvedValue(true)
+      const cards = [makeCard()]
+      const { wrapper, close } = mountModal({ cards, current_deck_id: 30 })
+      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+      await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
+      await flushPromises()
+      expect(close).toHaveBeenCalledWith({ deck_id: 20 })
+    })
+  })
+
+  // ── Guard 2: isDeckFull ───────────────────────────────────────────────────────
+
+  describe('Guard 2 — full deck rows', () => {
+    test('shows the "Full" label instead of a radio for a full deck [obligation]', () => {
+      mockDecksData.data.value = [
+        { id: 10, title: 'Deck A', card_count: 200 },
+        { id: 20, title: 'Deck B', card_count: 0 },
+        { id: 30, title: 'Current Deck', card_count: 0 }
+      ]
+      const cards = [makeCard()]
+      const { wrapper } = mountModal({ cards, current_deck_id: 30 })
+      const items = wrapper.findAll('[data-testid="move-cards__deck-item"]')
+      expect(items[0].find('[data-testid="move-cards__deck-full-label"]').exists()).toBe(true)
+      expect(items[0].find('[data-testid="move-cards__deck-radio"]').exists()).toBe(false)
+    })
+
+    test('clicking a full deck row does not change selected_deck_id [obligation]', async () => {
+      mockDecksData.data.value = [
+        { id: 10, title: 'Deck A', card_count: 200 },
+        { id: 20, title: 'Deck B', card_count: 0 },
+        { id: 30, title: 'Current Deck', card_count: 0 }
+      ]
+      const cards = [makeCard()]
+      const { wrapper } = mountModal({ cards, current_deck_id: 30 })
+      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[0].trigger('click')
+      // Move button stays disabled — no deck got selected via the full row's tap
+      expect(wrapper.find('[data-testid="move-cards__move"]').attributes('disabled')).toBeDefined()
+    })
+
+    test('a non-full deck keeps its radio and is not marked full', () => {
+      mockDecksData.data.value = [
+        { id: 10, title: 'Deck A', card_count: 200 },
+        { id: 20, title: 'Deck B', card_count: 0 },
+        { id: 30, title: 'Current Deck', card_count: 0 }
+      ]
+      const cards = [makeCard()]
+      const { wrapper } = mountModal({ cards, current_deck_id: 30 })
+      const items = wrapper.findAll('[data-testid="move-cards__deck-item"]')
+      expect(items[1].find('[data-testid="move-cards__deck-full-label"]').exists()).toBe(false)
+      expect(items[1].find('[data-testid="move-cards__deck-radio"]').exists()).toBe(true)
+    })
+
+    test('paid plan (null cardsPerDeckLimit) never marks a deck full', () => {
+      mockMemberStore.plan = 'paid'
+      mockDecksData.data.value = [{ id: 10, title: 'Deck A', card_count: 999999 }]
+      const cards = [makeCard()]
+      const { wrapper } = mountModal({ cards, current_deck_id: 30 })
+      const items = wrapper.findAll('[data-testid="move-cards__deck-item"]')
+      expect(items[0].find('[data-testid="move-cards__deck-full-label"]').exists()).toBe(false)
+    })
+
+    test('the current deck row never shows the "Full" label even when its math would flag it full [obligation]', () => {
+      mockDecksData.data.value = [
+        { id: 10, title: 'Deck A', card_count: 0 },
+        { id: 20, title: 'Deck B', card_count: 0 },
+        { id: 30, title: 'Current Deck', card_count: 200 }
+      ]
+      const cards = [makeCard()]
+      const { wrapper } = mountModal({ cards, current_deck_id: 30 })
+      const items = wrapper.findAll('[data-testid="move-cards__deck-item"]')
+      // Current deck is index 2 — stays radio-based disabled treatment, no "Full" label
+      expect(items[2].find('[data-testid="move-cards__deck-full-label"]').exists()).toBe(false)
+      expect(items[2].find('[data-testid="move-cards__deck-radio"]').exists()).toBe(true)
+      expect(items[2].attributes('class')).toContain('pointer-events-none')
+    })
+  })
+
+  // ── Selection ─────────────────────────────────────────────────────────────
 
   test('move button is disabled when no deck is selected', () => {
     const { wrapper } = mountModal({ cards: [makeCard()] })
     expect(wrapper.find('[data-testid="move-cards__move"]').attributes('disabled')).toBeDefined()
   })
 
-  test('clicking a deck list item selects that deck', async () => {
+  test('clicking a deck item selects that deck', async () => {
     const cards = [makeCard()]
     const { wrapper } = mountModal({ cards })
-    const items = wrapper.findAll('[data-testid="list-item"]')
-    // Click deck B (index 1, id=20)
+    const items = wrapper.findAll('[data-testid="move-cards__deck-item"]')
     await items[1].trigger('click')
-    // Move button should become enabled
     expect(wrapper.find('[data-testid="move-cards__move"]').attributes('disabled')).toBeUndefined()
   })
 
   test('clicking the same deck again deselects it', async () => {
     const cards = [makeCard()]
     const { wrapper } = mountModal({ cards })
-    const items = wrapper.findAll('[data-testid="list-item"]')
+    const items = wrapper.findAll('[data-testid="move-cards__deck-item"]')
     await items[1].trigger('click')
     await items[1].trigger('click')
     expect(wrapper.find('[data-testid="move-cards__move"]').attributes('disabled')).toBeDefined()
-  })
-
-  test('emits sfx on deck click', async () => {
-    const { wrapper } = mountModal({ cards: [makeCard()] })
-    await wrapper.findAll('[data-testid="list-item"]')[0].trigger('click')
-    expect(emitSfxMock).toHaveBeenCalledWith('etc_camera_shutter')
-  })
-
-  test('move button click calls close with the selected deck_id', async () => {
-    const cards = [makeCard()]
-    const { wrapper, close } = mountModal({ cards })
-    await wrapper.findAll('[data-testid="list-item"]')[1].trigger('click')
-    await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
-    expect(close).toHaveBeenCalledWith({ deck_id: 20 })
   })
 
   test('move button click is a no-op when no deck is selected', async () => {
@@ -205,13 +350,36 @@ describe('MoveCardsModal', () => {
     await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
     await flushPromises()
     expect(close).not.toHaveBeenCalled()
+    expect(guardAddCardsMock).not.toHaveBeenCalled()
   })
 
   // ── Cancel ──────────────────────────────────────────────────────────────────
 
-  test('cancel button calls close with false', async () => {
+  test('dialog-card close calls close with false', async () => {
     const { wrapper, close } = mountModal({ cards: [makeCard()] })
-    await wrapper.find('[data-testid="move-cards__cancel"]').trigger('click')
+    await wrapper.find('[data-testid="move-cards__dialog-close"]').trigger('click')
     expect(close).toHaveBeenCalledWith(false)
+  })
+
+  // ── Hover + direct radio click ────────────────────────────────────────────────
+
+  test('mouseenter/mouseleave on a deck item mirrors hover onto its radio active prop', async () => {
+    const { wrapper } = mountModal({ cards: [makeCard()] })
+    const items = wrapper.findAll('[data-testid="move-cards__deck-item"]')
+    const radios = wrapper.findAllComponents({ name: 'UiRadio' })
+
+    await items[1].trigger('mouseenter')
+    expect(radios[1].props('active')).toBe(true)
+
+    await items[1].trigger('mouseleave')
+    expect(radios[1].props('active')).toBe(false)
+  })
+
+  test('clicking the radio directly selects its deck', async () => {
+    const cards = [makeCard()]
+    const { wrapper } = mountModal({ cards })
+    const radios = wrapper.findAllComponents({ name: 'UiRadio' })
+    await radios[1].trigger('click')
+    expect(wrapper.find('[data-testid="move-cards__move"]').attributes('disabled')).toBeUndefined()
   })
 })

@@ -36,6 +36,7 @@ export function useCardPrompts() {
 
     const { response } = modal.open<{ deck_id: number }>(MoveCardsModal, {
       backdrop: true,
+      mode: 'popup',
       props: { cards, count, current_deck_id }
     })
     response.then(() => emitSfx('double_pop_down'))

@@ -1,12 +1,29 @@
-import { describe, test, expect } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
+
+const { mockEmitSfx, mockEmitHoverSfx } = vi.hoisted(() => ({
+  mockEmitSfx: vi.fn(),
+  mockEmitHoverSfx: vi.fn()
+}))
+
+vi.mock('@/sfx/bus', () => ({
+  emitSfx: mockEmitSfx,
+  emitHoverSfx: mockEmitHoverSfx
+}))
+
 import UiRadio from '@/components/ui-kit/radio.vue'
+import { vSfx } from '@/sfx/directive'
 
 function mountRadio(props = {}) {
-  return shallowMount(UiRadio, { props })
+  return shallowMount(UiRadio, { props, global: { directives: { sfx: vSfx } } })
 }
 
 describe('UiRadio', () => {
+  beforeEach(() => {
+    mockEmitSfx.mockReset()
+    mockEmitHoverSfx.mockReset()
+  })
+
   // ── Structure ──────────────────────────────────────────────────────────────
 
   test('renders the radio element', () => {
@@ -68,5 +85,34 @@ describe('UiRadio', () => {
     await expect(
       wrapper.find('[data-testid="ui-kit-radio"]').trigger('click')
     ).resolves.not.toThrow()
+  })
+
+  // ── sfx prop ───────────────────────────────────────────────────────────────
+
+  test('plays the "select" press sfx by default [obligation]', async () => {
+    const wrapper = mountRadio({ checked: false })
+    await wrapper.find('[data-testid="ui-kit-radio"]').trigger('click')
+    expect(mockEmitSfx).toHaveBeenCalledWith('select', expect.anything())
+  })
+
+  test('overrides the press sfx via the sfx prop [obligation]', async () => {
+    const wrapper = mountRadio({ checked: false, sfx: { press: 'snappy_button_2' } })
+    await wrapper.find('[data-testid="ui-kit-radio"]').trigger('click')
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_2', expect.anything())
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('select', expect.anything())
+  })
+
+  test('forwards hover sfx to the v-sfx directive [obligation]', () => {
+    const wrapper = mountRadio({ checked: false, sfx: { hover: 'type_05' } })
+    wrapper
+      .find('[data-testid="ui-kit-radio"]')
+      .element.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
+    expect(mockEmitHoverSfx).toHaveBeenCalledWith('type_05', expect.anything())
+  })
+
+  test('forwards focus sfx to the v-sfx directive [obligation]', async () => {
+    const wrapper = mountRadio({ checked: false, sfx: { focus: 'type_05' } })
+    await wrapper.find('[data-testid="ui-kit-radio"]').trigger('focus')
+    expect(mockEmitSfx).toHaveBeenCalledWith('type_05', expect.anything())
   })
 })

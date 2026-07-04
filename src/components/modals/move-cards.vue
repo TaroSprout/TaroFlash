@@ -3,10 +3,16 @@ import { useMemberDecksQuery } from '@/api/decks'
 import { computed, ref } from 'vue'
 import Card from '@/components/card/index.vue'
 import { useI18n } from 'vue-i18n'
-import { emitSfx } from '@/sfx/bus'
-import UiListItem from '@/components/ui-kit/list-item.vue'
 import UiRadio from '@/components/ui-kit/radio.vue'
 import UiButton from '@/components/ui-kit/button.vue'
+import UiTappable from '@/components/ui-kit/tappable.vue'
+import DialogCard from '@/components/layout-kit/dialog-card/dialog-card.vue'
+import GroupedList from '@/components/layout-kit/grouped-list.vue'
+import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
+import { TYPE_SFX } from '@/sfx/config'
+import { useCardLimitGate } from '@/composables/card/limit-gate'
+import { useMemberStore } from '@/stores/member'
+import { PLANS } from '@/config/plans'
 
 export type MoveCardsModalResponse = {
   deck_id: number
@@ -23,28 +29,42 @@ const { cards, current_deck_id, count, close } = defineProps<MoveCardsModalProps
 
 const { t } = useI18n()
 
+const member = useMemberStore()
 const { data: decks } = useMemberDecksQuery()
 const selected_deck_id = ref<number | undefined>(undefined)
+const hovered_deck_id = ref<number | undefined>(undefined)
 
 const title = computed(() => {
   const card = cards[0]
   const effective_count = count ?? (!card.back_text && !card.front_text ? 0 : cards.length)
 
-  return t('move-cards-modal.title', {
-    count: effective_count,
-    front: card.front_text || '-',
-    back: card.back_text || '-'
-  })
+  return t('move-cards-modal.title', { count: effective_count })
 })
+
+// Authoritative moving count (unlike the title's display-only effective_count,
+// which zeroes out for a single blank placeholder card).
+const moving_count = computed(() => count ?? cards.length)
+const plan_card_limit = computed(() => PLANS[member.plan ?? 'free'].cardsPerDeckLimit)
+
+const target_deck = computed(() => decks.value?.find((deck) => deck.id === selected_deck_id.value))
+const { guardAddCards } = useCardLimitGate(target_deck)
+
+/** True when moving `moving_count` cards here would exceed the plan's per-deck cap. */
+function isDeckFull(deck: Deck) {
+  return (
+    plan_card_limit.value !== null &&
+    (deck.card_count ?? 0) + moving_count.value > plan_card_limit.value
+  )
+}
 
 async function onMove() {
   if (!selected_deck_id.value) return
+  if (!(await guardAddCards(moving_count.value))) return
+
   close({ deck_id: selected_deck_id.value })
 }
 
 function onClick(deck_id?: number) {
-  emitSfx('etc_camera_shutter')
-
   if (deck_id === selected_deck_id.value) {
     selected_deck_id.value = undefined
     return
@@ -55,97 +75,81 @@ function onClick(deck_id?: number) {
 </script>
 
 <template>
-  <div data-testid="move-cards-container" class="drop-shadow-md">
-    <div data-testid="move-cards" class="bg-brown-300 rounded-8 overflow-hidden min-w-100">
-      <div
-        data-testid="move-cards__header"
-        class="px-8 py-10 bg-purple-500 wave-bottom-[30px] bgx-endless-clouds flex items-center justify-center"
-      >
-        <h1 class="move-cards__title" v-html="title"></h1>
-      </div>
-
-      <div data-testid="move-cards__deck-list" class="px-8 pt-4 pb-12 flex flex-col">
-        <ui-list-item
-          v-for="(deck, index) in decks"
-          :key="index"
-          :disabled="deck.id === current_deck_id"
-          appearance="fill"
-          class="cursor-pointer"
-          @click="onClick(deck.id)"
+  <dialog-card
+    data-testid="move-cards"
+    class="w-150 h-150 bg-brown-200 dark:bg-stone-900 flex flex-col items-center"
+    viewport_query="w<sm | h<sm"
+    :title="title"
+    @close="close(false)"
+  >
+    <div data-testid="move-cards__body" class="flex h-full min-h-0 w-full sm:w-130 flex-col">
+      <div data-testid="move-cards__deck-list-wrap" class="relative flex min-h-0 flex-1 flex-col">
+        <grouped-list
+          data-testid="move-cards__deck-list"
+          scrollable
+          class="mx-(--dialog-px) my-4 min-h-0 flex-1"
         >
-          <template #before>
-            <card size="2xs" />
-          </template>
-
-          {{ deck.title }}
-
-          <template #after>
+          <ui-tappable
+            v-for="(deck, index) in decks"
+            :key="index"
+            data-testid="move-cards__deck-item"
+            :class="[
+              deck.id === current_deck_id || isDeckFull(deck)
+                ? ' bg-brown-200 dark:bg-stone-900 pointer-events-none text-(--theme-on-primary)/20'
+                : 'cursor-pointer'
+            ]"
+            class="text-(--theme-on-primary) text-left flex items-center gap-3 p-4"
+            active_on_hover
+            :sfx="{ press: 'snappy_button_2', hover: TYPE_SFX }"
+            @tap="onClick(deck.id)"
+            @mouseenter="hovered_deck_id = deck.id"
+            @mouseleave="hovered_deck_id = undefined"
+          >
+            <card size="2xs" :cover_config="deck.cover_config" side="cover" />
+            <span class="flex-1">{{ deck.title }}</span>
+            <span
+              v-if="deck.id !== current_deck_id && isDeckFull(deck)"
+              data-testid="move-cards__deck-full-label"
+              class="text-sm"
+            >
+              {{ t('move-cards-modal.deck-full-label') }}
+            </span>
             <ui-radio
-              :checked="deck.id === selected_deck_id"
+              v-else
+              :class="{ 'opacity-20': deck.id === current_deck_id }"
+              data-theme="blue-500"
+              data-theme-dark="blue-650"
+              :sfx="{ press: 'snappy_button_2' }"
+              :checked="deck.id === selected_deck_id || deck.id === current_deck_id"
+              :active="deck.id === hovered_deck_id"
               @click.stop="selected_deck_id = deck.id"
             />
-          </template>
-        </ui-list-item>
+          </ui-tappable>
+        </grouped-list>
+
+        <scroll-bar
+          target="[data-testid='move-cards__deck-list__content']"
+          min-width="sm"
+          class="absolute right-0 top-4 bottom-4"
+        />
+      </div>
+
+      <div
+        data-testid="move-cards__actions"
+        class="px-(--dialog-px) pb-6 flex w-full justify-end gap-3"
+      >
+        <ui-button
+          data-testid="move-cards__move"
+          data-theme="blue-500"
+          icon-left="move-item"
+          size="xl"
+          full-width
+          @press="onMove"
+          :disabled="!selected_deck_id"
+        >
+          {{ t('move-cards-modal.confirm') }}
+        </ui-button>
       </div>
     </div>
-
-    <div
-      data-testid="move-cards__actions"
-      class="absolute -bottom-3 flex w-full justify-end gap-3 px-8"
-    >
-      <ui-button
-        data-testid="move-cards__cancel"
-        data-theme="grey-400"
-        icon-left="close"
-        @press="close(false)"
-        class="ring-brown-300 ring-7"
-      >
-        {{ t('move-cards-modal.cancel') }}
-      </ui-button>
-
-      <ui-button
-        data-testid="move-cards__move"
-        data-theme="blue-500"
-        icon-left="arrow-forward"
-        @press="onMove"
-        :disabled="!selected_deck_id"
-        class="ring-brown-300 ring-7"
-      >
-        {{ t('move-cards-modal.confirm') }}
-      </ui-button>
-    </div>
-  </div>
+  </dialog-card>
 </template>
-
-<style>
-.move-cards__title {
-  color: var(--color-white);
-  font-size: var(--text-4xl);
-  vertical-align: middle;
-}
-
-.move-cards__title span {
-  background-color: var(--color-white);
-  padding: 4px 6px;
-
-  max-width: 200px;
-  min-width: 20px;
-
-  font-size: var(--text-2xl);
-  vertical-align: inherit;
-  display: inline-block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-
-  color: var(--color-purple-500);
-}
-
-.move-cards__title span:first-child {
-  border-radius: 8px 2px 2px 8px;
-  margin-right: 4px;
-}
-.move-cards__title span:last-child {
-  border-radius: 2px 8px 8px 2px;
-}
-</style>

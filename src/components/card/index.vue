@@ -156,14 +156,14 @@ function onLeave(el: Element, done: () => void) {
 
 .card-container--2xl {
   --card-width: 380px;
-  --face-border-width: 6px;
+  --face-border-width: 16px;
   --face-radius: 70px;
   --face-padding: 42px;
   --cover-icon-size: 30%;
 }
 .card-container--xl {
   --card-width: 314px;
-  --face-border-width: 6px;
+  --face-border-width: 16px;
   --face-radius: 58px;
   --face-padding: 20px;
   --min-element-height: 80px;
@@ -171,14 +171,14 @@ function onLeave(el: Element, done: () => void) {
 }
 .card-container--lg {
   --card-width: 260px;
-  --face-border-width: 6px;
+  --face-border-width: 16px;
   --face-radius: 56px;
   --face-padding: 24px;
   --cover-icon-size: 33%;
 }
 .card-container--md {
   --card-width: 240px;
-  --face-border-width: 4px;
+  --face-border-width: 16px;
   --face-radius: 46px;
   --face-padding: 16px;
   --min-element-height: 80px;
@@ -186,7 +186,7 @@ function onLeave(el: Element, done: () => void) {
 }
 .card-container--base {
   --card-width: 192px;
-  --face-border-width: 4px;
+  --face-border-width: 16px;
   --face-radius: 40px;
   --face-padding: 20px;
   --min-element-height: 80px;
@@ -194,24 +194,24 @@ function onLeave(el: Element, done: () => void) {
 }
 .card-container--sm {
   --card-width: 138px;
-  --face-border-width: 4px;
+  --face-border-width: 16px;
   --face-radius: 32px;
   --face-padding: 6px;
   --cover-icon-size: 38%;
 }
 .card-container--xs {
   --card-width: 102px;
-  --face-border-width: 4px;
+  --face-border-width: 16px;
   --face-radius: 24px;
   --face-padding: 4px;
   --cover-icon-size: 60%;
 }
 .card-container--2xs {
   --card-width: 43px;
-  --face-border-width: 3px;
+  --face-border-width: 6px;
   --face-radius: 14px;
   --face-padding: 2px;
-  --cover-icon-size: 50%;
+  --cover-icon-size: 80%;
 }
 .card-container--3xs {
   --card-width: 28px;
