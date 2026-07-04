@@ -30,10 +30,20 @@ const {
 
     <template #right>
       <ui-button
-        data-testid="mode-select__select-all-button"
+        data-testid="mode-select__cancel-button"
         data-theme="brown-300"
         data-theme-dark="stone-700"
         icon-only
+        icon-left="close"
+        @press="onCancel"
+      >
+        {{ t('deck-view.bulk-actions.cancel') }}
+      </ui-button>
+
+      <ui-button
+        data-testid="mode-select__select-all-button"
+        data-theme="brown-300"
+        data-theme-dark="stone-700"
         :icon-left="all_cards_selected ? 'close-window-remove' : 'data-check'"
         @press="onToggleSelectAll"
       >
@@ -44,7 +54,6 @@ const {
         data-testid="mode-select__move-button"
         data-theme="blue-500"
         data-theme-dark="blue-650"
-        icon-only
         icon-left="move-item"
         :disabled="!has_selection"
         @press="actions.onMoveCards()"
@@ -56,7 +65,6 @@ const {
         data-testid="mode-select__delete-button"
         data-theme="red-500"
         data-theme-dark="red-700"
-        icon-only
         icon-left="delete"
         :disabled="!has_selection"
         @press="actions.onDeleteCards()"
@@ -73,17 +81,6 @@ const {
       >
         {{ t('deck-view.bulk-actions.count', { count: selection.selected_count.value }) }}
       </ui-tag>
-
-      <ui-button
-        data-testid="mode-select__cancel-button"
-        data-theme="brown-300"
-        data-theme-dark="stone-700"
-        icon-only
-        icon-left="close"
-        @press="onCancel"
-      >
-        {{ t('deck-view.bulk-actions.cancel') }}
-      </ui-button>
     </template>
   </toolbar-base>
 </template>

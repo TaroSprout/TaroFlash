@@ -84,10 +84,7 @@ function onLeave(el: Element, done: () => void) {
         :aria-disabled="disabled || undefined"
         :data-active="open"
         class="relative z-1 flex aspect-square h-full items-center justify-center rounded-[calc(var(--btn-border-radius)-var(--btn-trigger-padding))] pointer-coarse:rounded-(--btn-border-radius) transition-[scale] duration-120 ease-[ease]"
-        :class="[
-          surface,
-          disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:scale-110'
-        ]"
+        :class="[surface, disabled ? 'opacity-50' : 'cursor-pointer hover:scale-110']"
         data-testid="dropdown-button__trigger"
         v-sfx="{ hover: disabled ? undefined : TYPE_SFX }"
         @click.stop="!disabled && emit('toggle')"
