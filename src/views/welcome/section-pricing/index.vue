@@ -11,7 +11,7 @@ const { t } = useI18n()
     data-testid="welcome-pricing"
     data-theme="green-500"
     data-theme-dark="green-800"
-    class="w-full bg-green-500 dark:bg-green-800 py-25 sm:py-30 mlg:py-40 wave-top-[30px] bgx-diagonal-stripes bgx-size-24 bgx-opacity-6"
+    class="w-full bg-green-500 dark:bg-green-800 py-25 sm:py-30 mlg:py-40 wave-top-[30px] bgx-bank-note bgx-size-32 bgx-opacity-10"
   >
     <div
       class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex flex-col gap-14 items-center"

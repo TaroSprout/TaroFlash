@@ -1,8 +1,3 @@
-<script lang="ts">
-/** Base shape every grouped-list item builds on — layout only, no interaction/visual state. */
-export const GROUPED_LIST_ITEM_CLASS = 'flex items-center gap-3 p-4'
-</script>
-
 <script setup lang="ts">
 import { useAttrs } from 'vue'
 
