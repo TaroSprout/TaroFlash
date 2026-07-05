@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, useTemplateRef } from 'vue'
+import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/dialog-card.vue'
 import DialogCardHeader from '@/components/layout-kit/dialog-card/dialog-card-header.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import AccountAccessContent, { type AccountAccessContentPage } from './account-access-content.vue'
+import { emitSfx } from '@/sfx/bus'
 
 defineProps<{ close: () => void }>()
 
@@ -12,6 +13,9 @@ const { t } = useI18n()
 
 const page = ref<AccountAccessContentPage>('menu')
 const content = useTemplateRef<{ title: string }>('content')
+
+onMounted(() => emitSfx('wooden_chime_ring'))
+onBeforeUnmount(() => emitSfx('pop_up_close'))
 </script>
 
 <template>

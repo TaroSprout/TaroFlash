@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AccountAccessMenu, { type AccountAccessPage } from './account-access-menu.vue'
 import EmailSection from './email-section.vue'
 import PasswordSection from './password-section.vue'
 import { useSessionStore } from '@/stores/session'
-import { emitSfx } from '@/sfx/bus'
 import { fadeLeave } from '@/utils/animations/fade'
 import { springScaleIn } from '@/utils/animations/modal'
 
@@ -31,9 +30,6 @@ function onLeave(el: Element, done: () => void) {
 function onEnter(el: Element, done: () => void) {
   springScaleIn(el, done)
 }
-
-onMounted(() => emitSfx('wooden_chime_ring'))
-onBeforeUnmount(() => emitSfx('pop_up_close'))
 
 defineExpose({ title })
 </script>
