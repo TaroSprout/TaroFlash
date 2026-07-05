@@ -79,15 +79,6 @@ const PassthroughStub = defineComponent({
   }
 })
 
-const BackButtonStub = defineComponent({
-  name: 'DeckBackButton',
-  emits: ['back'],
-  setup(_p, { emit }) {
-    return () =>
-      h('button', { 'data-testid': 'deck-back-button-stub', onClick: () => emit('back') })
-  }
-})
-
 const SaveButtonStub = defineComponent({
   name: 'DeckSaveButton',
   setup() {
@@ -116,7 +107,6 @@ function makeTab(layout = 'sheet', editor = makeEditor()) {
         UiInput: InputStub,
         UiTextarea: TextareaStub,
         UiButton: ButtonStub,
-        DeckBackButton: BackButtonStub,
         DeckSaveButton: SaveButtonStub,
         SectionList: PassthroughStub
       },
@@ -153,10 +143,10 @@ describe('TabDetails [obligation]', () => {
     expect(editor.settings.description).toBe('New desc')
   })
 
-  test('emits back when back button is clicked [obligation]', async () => {
+  test('does not render a back button (chrome-driven back replaced the inline button) [obligation]', () => {
     const { wrapper } = makeTab('sheet')
-    await wrapper.find('[data-testid="deck-back-button-stub"]').trigger('click')
-    expect(wrapper.emitted('back')).toHaveLength(1)
+    expect(wrapper.find('[data-testid="deck-back-button-stub"]').exists()).toBe(false)
+    expect(wrapper.emitted('back')).toBeUndefined()
   })
 
   test('save button rendered in sheet mode [obligation]', () => {

@@ -1,12 +1,13 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h, ref, useAttrs } from 'vue'
+import { computed, defineComponent, h, ref, useAttrs } from 'vue'
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
 
 import TabIndex from '@/components/settings/tab-index/index.vue'
 import { memberDangerActionsKey } from '@/composables/member/danger-actions'
+import { settingsLayoutKey } from '@/components/settings/layout'
 
 const ButtonStub = defineComponent({
   name: 'UiButton',
@@ -38,13 +39,16 @@ const IconStub = defineComponent({
   }
 })
 
-function makeTab() {
+function makeTab(layout_mode = 'tablet') {
   const onDeleteAccount = vi.fn()
   const danger = { onDeleteAccount, deleting_account: ref(false) }
   const wrapper = mount(TabIndex, {
     global: {
-      provide: { [memberDangerActionsKey]: danger },
-      stubs: { UiButton: ButtonStub, UiIcon: IconStub },
+      provide: {
+        [memberDangerActionsKey]: danger,
+        [settingsLayoutKey]: computed(() => layout_mode)
+      },
+      stubs: { UiButton: ButtonStub, UiIcon: IconStub, SettingsSaveButton: true },
       mocks: { $t: (k) => k },
       directives: { sfx: {} }
     }
@@ -91,5 +95,31 @@ describe('TabIndex', () => {
     const { wrapper, onDeleteAccount } = makeTab()
     await wrapper.find('[data-testid="danger-delete-account-button"]').trigger('click')
     expect(onDeleteAccount).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('TabIndex — account-access nav entry (sheet-only) [obligation]', () => {
+  test('includes account-access in the account group on sheet layout [obligation]', () => {
+    const { wrapper } = makeTab('sheet')
+    const cards = wrapper.findAll('[data-testid="nav-list__card"]')
+    expect(cards.map((c) => c.attributes('data-value'))).toEqual([
+      'profile',
+      'subscription',
+      'account-access',
+      'app',
+      'review-preferences'
+    ])
+  })
+
+  test('omits account-access from the account group on tablet layout [obligation]', () => {
+    const { wrapper } = makeTab('tablet')
+    const cards = wrapper.findAll('[data-testid="nav-list__card"]')
+    expect(cards.map((c) => c.attributes('data-value'))).not.toContain('account-access')
+  })
+
+  test('omits account-access from the account group on desktop layout [obligation]', () => {
+    const { wrapper } = makeTab('desktop')
+    const cards = wrapper.findAll('[data-testid="nav-list__card"]')
+    expect(cards.map((c) => c.attributes('data-value'))).not.toContain('account-access')
   })
 })

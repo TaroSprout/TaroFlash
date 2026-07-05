@@ -83,14 +83,6 @@ const PaymentMethodsSectionStub = defineComponent({
   }
 })
 
-const SettingsBackButtonStub = defineComponent({
-  name: 'SettingsBackButton',
-  emits: ['back'],
-  setup(_p, { emit }) {
-    return () => h('button', { 'data-testid': 'back-button-stub', onClick: () => emit('back') })
-  }
-})
-
 const SectionListStub = defineComponent({
   name: 'SectionList',
   inheritAttrs: false,
@@ -109,7 +101,6 @@ function makeTab() {
       stubs: {
         PlanSection: PlanSectionStub,
         PaymentMethodsSection: PaymentMethodsSectionStub,
-        SettingsBackButton: SettingsBackButtonStub,
         SectionList: SectionListStub
       }
     }
@@ -146,9 +137,9 @@ describe('TabSubscription — layout', () => {
     expect(wrapper.find('[data-testid="payment-methods-section-stub"]').exists()).toBe(true)
   })
 
-  test('emits back when the back button is pressed', async () => {
+  test('does not render an inline back button (chrome-driven back replaced it)', () => {
     const wrapper = makeTab()
-    await wrapper.find('[data-testid="back-button-stub"]').trigger('click')
-    expect(wrapper.emitted('back')).toBeTruthy()
+    expect(wrapper.find('[data-testid="back-button-stub"]').exists()).toBe(false)
+    expect(wrapper.emitted('back')).toBeUndefined()
   })
 })

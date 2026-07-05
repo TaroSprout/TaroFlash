@@ -72,7 +72,6 @@ function makeWrapper(editor = makeEditor(), layout_mode = 'desktop') {
         TabBar: TabBarStub,
         CoverDesigner: CoverDesignerStub,
         CardDesigner: CardDesignerStub,
-        DeckBackButton: true,
         DeckSaveButton: true
       },
       mocks: { $t: (k) => k }

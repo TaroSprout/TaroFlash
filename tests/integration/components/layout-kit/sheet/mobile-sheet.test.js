@@ -135,6 +135,16 @@ describe('MobileSheet', () => {
     expect(closeBtn.props('playOnTap')).toBe(true)
   })
 
+  test('close button icon defaults to "close"', () => {
+    const wrapper = mountSheet({ title: 'My Sheet' })
+    expect(wrapper.findComponent({ name: 'UiButton' }).props('iconLeft')).toBe('close')
+  })
+
+  test('close_icon prop overrides the built-in close button icon', () => {
+    const wrapper = mountSheet({ title: 'My Sheet', close_icon: 'arrow-back' })
+    expect(wrapper.findComponent({ name: 'UiButton' }).props('iconLeft')).toBe('arrow-back')
+  })
+
   test('renders the built-in close button even when there is no header', () => {
     const wrapper = mountSheet()
     expect(wrapper.findComponent({ name: 'UiButton' }).exists()).toBe(true)

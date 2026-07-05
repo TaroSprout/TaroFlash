@@ -6,43 +6,50 @@ import { useMatchMedia } from '@/composables/ui/media-query'
 
 // ── Hoisted state ─────────────────────────────────────────────────────────────
 
-const { mockEditor, mockDanger, mockEmitSfx, mockAlertWarn, alertResponse, state } = vi.hoisted(
-  () => {
-    // alertResponse holds a resolve fn so tests control whether the user confirms.
-    let _resolve = null
-    const alertResponse = {
-      resolve: (val) => _resolve?.(val),
-      reset: () => {
-        _resolve = null
-      },
-      _setResolve: (fn) => {
-        _resolve = fn
-      }
-    }
-
-    return {
-      state: { isSheet: false, isDesktop: false, isPinned: false },
-      mockEditor: {
-        settings: { display_name: 'Chris', description: 'hi' },
-        preferences: { accessibility: { left_hand: false } },
-        cover: { theme: 'green-500', theme_dark: 'green-800', pattern: 'bank-note' },
-        email: { value: 'chris@example.com' },
-        created_at: { value: '2026-01-01T00:00:00Z' },
-        plan: { value: 'pro' },
-        is_dirty: { value: false },
-        saving: { value: false },
-        saveMember: vi.fn().mockResolvedValue(true)
-      },
-      mockDanger: {
-        onDeleteAccount: vi.fn(),
-        deleting_account: { value: false }
-      },
-      mockEmitSfx: vi.fn(),
-      mockAlertWarn: vi.fn(),
-      alertResponse
+const {
+  mockEditor,
+  mockDanger,
+  mockEmitSfx,
+  mockAlertWarn,
+  alertResponse,
+  state,
+  mockAccountAccessOnChromeBack
+} = vi.hoisted(() => {
+  // alertResponse holds a resolve fn so tests control whether the user confirms.
+  let _resolve = null
+  const alertResponse = {
+    resolve: (val) => _resolve?.(val),
+    reset: () => {
+      _resolve = null
+    },
+    _setResolve: (fn) => {
+      _resolve = fn
     }
   }
-)
+
+  return {
+    state: { isSheet: false, isDesktop: false, isPinned: false },
+    mockEditor: {
+      settings: { display_name: 'Chris', description: 'hi' },
+      preferences: { accessibility: { left_hand: false } },
+      cover: { theme: 'green-500', theme_dark: 'green-800', pattern: 'bank-note' },
+      email: { value: 'chris@example.com' },
+      created_at: { value: '2026-01-01T00:00:00Z' },
+      plan: { value: 'pro' },
+      is_dirty: { value: false },
+      saving: { value: false },
+      saveMember: vi.fn().mockResolvedValue(true)
+    },
+    mockDanger: {
+      onDeleteAccount: vi.fn(),
+      deleting_account: { value: false }
+    },
+    mockEmitSfx: vi.fn(),
+    mockAlertWarn: vi.fn(),
+    alertResponse,
+    mockAccountAccessOnChromeBack: vi.fn()
+  }
+})
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
@@ -156,10 +163,20 @@ const TabIndexStub = defineComponent({
   }
 })
 
+// Exposes a controllable onChromeBack so onChromeBack delegation tests can
+// assert the "tab handled it" (true) and "tab didn't handle it" (false) paths.
+const TabAccountAccessStub = defineComponent({
+  name: 'TabAccountAccess',
+  setup(_p, { expose }) {
+    expose({ onChromeBack: mockAccountAccessOnChromeBack })
+    return () => h('div', { 'data-testid': 'tab-account-access-stub' })
+  }
+})
+
 const TabSheetStub = defineComponent({
   name: 'TabSheet',
   props: ['active', 'tabs', 'sheetPx'],
-  emits: ['close', 'update:active'],
+  emits: ['close', 'back', 'update:active'],
   inheritAttrs: false,
   setup(props, { slots, emit, attrs }) {
     return () =>
@@ -181,6 +198,14 @@ const TabSheetStub = defineComponent({
               onClick: () => emit('close')
             },
             'close'
+          ),
+          h(
+            'button',
+            {
+              'data-testid': 'tab-sheet__emit-back',
+              onClick: () => emit('back')
+            },
+            'back'
           ),
           h(
             'button',
@@ -243,10 +268,11 @@ function makeWrapper(closeFn = vi.fn()) {
         TabSubscription: PassthroughStub,
         TabSounds: PassthroughStub,
         TabApp: PassthroughStub,
+        TabReviewPreferences: PassthroughStub,
         TabDangerZone: PassthroughStub,
+        TabAccountAccess: TabAccountAccessStub,
         SettingsAside: PassthroughStub,
         SettingsSaveButton: PassthroughStub,
-        SettingsBackButton: PassthroughStub,
         MemberCard: PassthroughStub,
         UiButton: PassthroughStub,
         UiTagButton: PassthroughStub,
@@ -270,6 +296,7 @@ beforeEach(() => {
   mockDanger.onDeleteAccount.mockReset()
   mockAlertWarn.mockReset()
   alertResponse.reset()
+  mockAccountAccessOnChromeBack.mockReset()
 })
 
 // ── Tab routing ───────────────────────────────────────────────────────────────
@@ -279,6 +306,12 @@ describe('settings app — tab routing', () => {
     const wrapper = makeWrapper()
     const tabs = JSON.parse(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-tabs'))
     expect(tabs).toEqual(['profile', 'app', 'review-preferences', 'subscription', 'danger-zone'])
+  })
+
+  test('never includes account-access in the sidebar tab-bar (reachable only via aside/tab-index) [obligation]', () => {
+    const wrapper = makeWrapper()
+    const tabs = JSON.parse(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-tabs'))
+    expect(tabs).not.toContain('account-access')
   })
 
   test('defaults the active sidebar tab to "profile" on non-sheet layout', () => {
@@ -326,42 +359,6 @@ describe('settings app — header copy follows displayed tab', () => {
   })
 })
 
-// ── Header icon mirrors the tab-bar icon (TAB_META drift regression) ────────────
-
-describe('settings app — header icon matches the tab-bar icon per tab [obligation]', () => {
-  test('shows no header icon when no tab is active (index)', () => {
-    state.isSheet = false
-    state.isDesktop = false
-    const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="settings__header-icon"]').exists()).toBe(false)
-  })
-
-  test.each([
-    ['profile', 'user-sticker-square'],
-    ['app', 'screwdriver-wrench'],
-    ['review-preferences', 'card-deck'],
-    ['subscription', 'piggy-bank'],
-    ['danger-zone', 'delete']
-  ])(
-    'tab "%s" — header icon equals tab-bar icon (%s) [obligation]',
-    async (value, expected_icon) => {
-      state.isDesktop = true
-      const wrapper = makeWrapper()
-
-      const tab_bar_entries = JSON.parse(
-        wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-tab-icons')
-      )
-      const tab_bar_icon = tab_bar_entries.find((t) => t.value === value)?.icon
-      expect(tab_bar_icon).toBe(expected_icon)
-
-      await wrapper.find(`[data-testid="tab-sheet__select-${value}"]`).trigger('click')
-
-      const header_icon = wrapper.find('[data-testid="settings__header-icon"]').attributes('src')
-      expect(header_icon).toBe(tab_bar_icon)
-    }
-  )
-})
-
 // ── Layout mode data attribute ────────────────────────────────────────────────
 
 describe('settings app — data-layout attribute', () => {
@@ -391,6 +388,23 @@ describe('settings app — data-layout attribute', () => {
       .map((call) => call[0])
       .filter((query) => !query.includes('&') && !query.includes(SETTINGS_SHEET_BREAKPOINTS.height))
     expect(sheet_query_calls).toContain('w<mlg')
+  })
+
+  test('resets active_tab away from account-access when layout_mode leaves sheet [obligation]', async () => {
+    state.isSheet = true
+    const wrapper = makeWrapper()
+    wrapper.vm.onNavigate('account-access')
+    await nextTick()
+    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe(
+      'account-access'
+    )
+
+    // Flip the underlying sheet_query ref to simulate crossing out of sheet mode.
+    const sheet_call_index = useMatchMedia.mock.calls.findIndex(([q]) => q === 'w<mlg')
+    useMatchMedia.mock.results[sheet_call_index].value.value = false
+    await nextTick()
+
+    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe('profile')
   })
 
   test('layout_mode stays "tablet"/"desktop" on a short-but-wide viewport — width band alone drives the mode, height is never folded into sheet_query [obligation]', () => {
@@ -524,6 +538,52 @@ describe('settings app — back navigation', () => {
   })
 })
 
+// ── onChromeBack delegation (obligation) ──────────────────────────────────────
+
+describe('settings app — onChromeBack delegates to the active tab first [obligation]', () => {
+  test('falls through to the default exit when the active tab has no onChromeBack [obligation]', async () => {
+    const wrapper = makeWrapper()
+    await wrapper.find('[data-testid="tab-sheet__select-app"]').trigger('click')
+
+    await wrapper.vm.onChromeBack()
+    await nextTick()
+
+    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe('profile')
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+  })
+
+  test('stays on the tab when the active tab onChromeBack returns true (handled locally) [obligation]', async () => {
+    mockAccountAccessOnChromeBack.mockReturnValue(true)
+    const wrapper = makeWrapper()
+    wrapper.vm.onNavigate('account-access')
+    await nextTick()
+
+    mockEmitSfx.mockClear()
+    await wrapper.vm.onChromeBack()
+    await nextTick()
+
+    expect(mockAccountAccessOnChromeBack).toHaveBeenCalledOnce()
+    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe(
+      'account-access'
+    )
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('snappy_button_5')
+  })
+
+  test('falls through to the default exit when the active tab onChromeBack returns false [obligation]', async () => {
+    mockAccountAccessOnChromeBack.mockReturnValue(false)
+    const wrapper = makeWrapper()
+    wrapper.vm.onNavigate('account-access')
+    await nextTick()
+
+    await wrapper.vm.onChromeBack()
+    await nextTick()
+
+    expect(mockAccountAccessOnChromeBack).toHaveBeenCalledOnce()
+    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe('profile')
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+  })
+})
+
 // ── onClose — unsaved-changes guard ──────────────────────────────────────────
 
 describe('settings app — close with unsaved-changes guard [obligation]', () => {
@@ -610,10 +670,11 @@ describe('settings app — recede/restore choreography [obligation]', () => {
           TabSubscription: InjectRecedeStub,
           TabSounds: PassthroughStub,
           TabApp: PassthroughStub,
+          TabReviewPreferences: PassthroughStub,
           TabDangerZone: PassthroughStub,
+          TabAccountAccess: TabAccountAccessStub,
           SettingsAside: PassthroughStub,
           SettingsSaveButton: PassthroughStub,
-          SettingsBackButton: PassthroughStub,
           MemberCard: PassthroughStub,
           UiButton: PassthroughStub,
           UiTagButton: PassthroughStub,

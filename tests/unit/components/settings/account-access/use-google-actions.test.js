@@ -21,7 +21,7 @@ vi.mock('@/api/session', () => ({
 }))
 
 import { useSessionStore } from '@/stores/session'
-import { useGoogleActions } from '@/components/modals/account-access/use-google-actions'
+import { useGoogleActions } from '@/components/settings/account-access/use-google-actions'
 
 function confirmResponse(value) {
   mockAlert.warn.mockReturnValueOnce({ response: Promise.resolve(value) })

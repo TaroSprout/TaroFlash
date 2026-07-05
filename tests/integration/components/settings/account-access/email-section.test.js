@@ -1,6 +1,15 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { mount } from '@vue/test-utils'
-import { defineComponent, h, ref } from 'vue'
+import { mount, flushPromises } from '@vue/test-utils'
+import { defineComponent, h, nextTick, ref } from 'vue'
+
+// Vue Test Utils stubs the built-in <transition> by default (no lifecycle
+// hooks fire). Wait through the real JS-hook cycle — 2x rAF even with
+// `:css="false"` — so onLeave/onEnter run for real against the gsap mock.
+async function flushTransition() {
+  await nextTick()
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+  await flushPromises()
+}
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -12,7 +21,18 @@ vi.mock('@/sfx/directive', () => ({ vSfx: {} }))
 const { coarseRef } = vi.hoisted(() => ({ coarseRef: { value: false } }))
 vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: () => coarseRef }))
 
-vi.mock('gsap', () => ({ gsap: { to: vi.fn((_el, opts) => opts?.onComplete?.()) } }))
+// onComplete resolves on a microtask, not synchronously — a real GSAP tween
+// never completes within the same call stack as the leave hook, and calling
+// done() synchronously during a real (unstubbed) unmount transition crashes
+// Vue's internal removal bookkeeping (`afterLeave` reads a detached parentNode).
+vi.mock('gsap', () => ({
+  gsap: {
+    to: vi.fn((_el, opts) => {
+      Promise.resolve().then(() => opts?.onComplete?.())
+    }),
+    set: vi.fn()
+  }
+}))
 
 const mockEmailActions = {
   current_email: ref('current@example.com'),
@@ -22,11 +42,11 @@ const mockEmailActions = {
   pending: ref(false),
   submit: vi.fn()
 }
-vi.mock('@/components/modals/account-access/use-email-actions', () => ({
+vi.mock('@/components/settings/account-access/use-email-actions', () => ({
   useEmailActions: () => mockEmailActions
 }))
 
-import EmailSection from '@/components/modals/account-access/email-section.vue'
+import EmailSection from '@/components/settings/account-access/email-section.vue'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
@@ -45,7 +65,7 @@ const UiTooltipStub = defineComponent({
 function makeWrapper() {
   return mount(EmailSection, {
     global: {
-      stubs: { UiTooltip: UiTooltipStub },
+      stubs: { UiTooltip: UiTooltipStub, transition: false },
       directives: { sfx: {} }
     }
   })
@@ -99,5 +119,13 @@ describe('EmailSection', () => {
     expect(wrapper.find('[data-testid="account-access-modal__email-current-input"]').exists()).toBe(
       false
     )
+  })
+
+  test('switching from form to pending mid-mount runs the leave/enter transition hooks (gsap-mocked)', async () => {
+    const wrapper = makeWrapper()
+    mockEmailActions.pending.value = true
+    await flushTransition()
+
+    expect(wrapper.find('[data-testid="account-access-modal__email-pending"]').exists()).toBe(true)
   })
 })

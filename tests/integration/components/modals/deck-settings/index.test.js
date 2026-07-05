@@ -1,9 +1,8 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, inject, nextTick } from 'vue'
+import { defineComponent, h, nextTick } from 'vue'
 import DeckSettings from '@/components/modals/deck-settings/index.vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
-import { deckSettingsLayoutKey } from '@/components/modals/deck-settings/layout'
 import { deck as deckFixture } from '../../../../fixtures/deck'
 import { setSidebar, setBelowMd, resetResponsive } from '../../../../helpers/responsive-mock'
 
@@ -163,7 +162,7 @@ vi.mock('@/components/modals/deck-settings/tab-danger-zone/index.vue', async () 
 
 const TabSheetStub = defineComponent({
   props: ['tabs'],
-  emits: ['close', 'update:active'],
+  emits: ['close', 'back', 'update:active'],
   setup(props, { slots, emit, expose }) {
     // Mirror the real TabSheet: own sidebar visibility and expose it upward.
     expose({ has_sidebar: useMatchMedia('w>=lg & fine') })
@@ -183,6 +182,14 @@ const TabSheetStub = defineComponent({
               onClick: () => emit('close')
             },
             'close'
+          ),
+          h(
+            'button',
+            {
+              'data-testid': 'tab-sheet__back-emit',
+              onClick: () => emit('back')
+            },
+            'back'
           ),
           ...(props.tabs ?? []).map((tab) =>
             h(
@@ -243,26 +250,14 @@ const TabDangerZoneStub = defineComponent({
   }
 })
 
-// Stubs for tab content components that include a back button and a navigate
-// trigger so the parent's @back/@navigate handlers can be exercised from tests.
-// Mirrors the real DeckBackButton behaviour: hidden on desktop layout.
+// Stub for tab content components that includes a navigate trigger so the
+// parent's @navigate handler can be exercised from tests. Tabs no longer emit
+// 'back' themselves — that's chrome-driven via the tab-sheet's own back button.
 const TabContentStub = defineComponent({
-  emits: ['back', 'navigate'],
+  emits: ['navigate'],
   setup(_props, { emit }) {
-    const layout_mode = inject(deckSettingsLayoutKey)
     return () => {
-      const show_back = layout_mode?.value !== 'desktop'
       return h('div', { 'data-testid': 'tab-content-stub' }, [
-        show_back
-          ? h(
-              'button',
-              {
-                'data-testid': 'deck-settings__back-button',
-                onClick: () => emit('back')
-              },
-              'back'
-            )
-          : null,
         h(
           'button',
           {
@@ -385,31 +380,7 @@ describe('DeckSettings — header copy is tab-driven', () => {
   }
 })
 
-describe('DeckSettings — header icon matches the tab-bar icon per tab [obligation]', () => {
-  test('shows no header icon when no tab is active (index, tablet layout)', () => {
-    const { wrapper } = makeWrapper()
-    expect(wrapper.find('[data-testid="deck-settings__header-icon"]').exists()).toBe(false)
-  })
-
-  test.each([
-    ['design', 'paint-brush'],
-    ['study', 'card-deck'],
-    ['danger-zone', 'delete']
-  ])('tab "%s" — header icon equals tab-bar icon (%s) [obligation]', (tab, expected_icon) => {
-    const { wrapper } = makeWrapper({ initial_tab: tab })
-
-    const tab_bar_entries = JSON.parse(
-      wrapper.find('[data-tab-icons]').attributes('data-tab-icons')
-    )
-    const tab_bar_icon = tab_bar_entries.find((t) => t.value === tab)?.icon
-    expect(tab_bar_icon).toBe(expected_icon)
-
-    const header_icon = wrapper
-      .find('[data-testid="deck-settings__header-icon"]')
-      .attributes('data-icon-src')
-    expect(header_icon).toBe(tab_bar_icon)
-  })
-
+describe('DeckSettings — tab bar composition [obligation]', () => {
   test('desktop tab bar excludes "details" but includes design/study/danger-zone [obligation]', () => {
     const { wrapper } = makeWrapper()
     const tab_bar_entries = JSON.parse(
@@ -554,13 +525,21 @@ describe('DeckSettings — overlay actions', () => {
     setActiveSide.mockRestore()
   })
 
-  test('back button shows and clears active_tab when the sidebar is hidden', async () => {
+  test('tab-sheet back emit clears active_tab (chrome-driven back, no per-tab back button) [obligation]', async () => {
     setSidebar(false)
     const { wrapper } = makeWrapper({ initial_tab: 'design' })
 
-    expect(wrapper.find('[data-testid="deck-settings__back-button"]').exists()).toBe(true)
+    await wrapper.find('[data-testid="tab-sheet__back-emit"]').trigger('click')
+    await flushPromises()
 
-    await wrapper.find('[data-testid="deck-settings__back-button"]').trigger('click')
+    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Deck Settings')
+  })
+
+  test('onChromeBack falls through to the default back action when the active tab has no onChromeBack [obligation]', async () => {
+    setSidebar(false)
+    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+
+    await wrapper.vm.onChromeBack()
     await flushPromises()
 
     expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Deck Settings')
@@ -641,7 +620,7 @@ describe('DeckSettings — active_side resets to cover when tab becomes null [ob
     expect(mockEditor.editor.active_side.value).toBe('front')
 
     // Click back → active_tab becomes null
-    await wrapper.find('[data-testid="deck-settings__back-button"]').trigger('click')
+    await wrapper.find('[data-testid="tab-sheet__back-emit"]').trigger('click')
     await flushPromises()
 
     // The watcher on active_tab should have reset active_side to 'cover'

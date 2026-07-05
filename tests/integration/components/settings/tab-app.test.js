@@ -98,7 +98,6 @@ function makeTab({ audio = {}, accessibility = {} } = {}) {
         UiToggle: ToggleStub,
         SectionList: SectionListStub,
         LabeledSection: LabeledSectionStub,
-        SettingsBackButton: NullStub,
         SettingsSaveButton: NullStub
       },
       directives: { sfx: {} },
