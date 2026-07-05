@@ -165,6 +165,7 @@
   --duration-100: 100ms;
 
   /* Breakpoints */
+  --breakpoint-xs: 32rem;
   --breakpoint-sm: 40rem;
   --breakpoint-md: 52rem;
   --breakpoint-mlg: 56rem;

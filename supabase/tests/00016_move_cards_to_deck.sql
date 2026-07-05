@@ -134,11 +134,11 @@ SELECT 5004, 'Big' || gs, 'Big' || gs, gs * 1000,
        'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'::uuid
 FROM generate_series(1, 210) AS gs;
 
--- Deck 5006 = free-plan cap target: pre-fill to 200 (the free limit).
+-- Deck 5006 = free-plan cap target: pre-fill to 500 (the free limit).
 INSERT INTO public.cards (deck_id, front_text, back_text, rank, member_id)
 SELECT 5006, 'Cap' || gs, 'Cap' || gs, gs * 1000,
        'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'::uuid
-FROM generate_series(1, 200) AS gs;
+FROM generate_series(1, 500) AS gs;
 
 -- Paid target 5009: pre-fill to 200 cards.
 INSERT INTO public.cards (deck_id, front_text, back_text, rank, member_id)
@@ -146,11 +146,11 @@ SELECT 5009, 'PadFill' || gs, 'PF' || gs, gs * 1000,
        'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'::uuid
 FROM generate_series(1, 200) AS gs;
 
--- Insert-cap deck 5010: fill to exactly 200 cards for cap-test-17.
+-- Insert-cap deck 5010: fill to exactly 500 cards for cap-test-17.
 INSERT INTO public.cards (deck_id, front_text, back_text, rank, member_id)
 SELECT 5010, 'InsertCap' || gs, 'IC' || gs, gs * 1000,
        'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'::uuid
-FROM generate_series(1, 200) AS gs;
+FROM generate_series(1, 500) AS gs;
 
 -- Seed review + review_log for card 9030 (so we can assert they travel with it).
 INSERT INTO public.reviews (card_id, member_id, due, stability, difficulty)
@@ -407,7 +407,7 @@ SELECT lives_ok(
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Test 15: free plan over cap raises PT402
--- Deck 5006 has 200 cards (at free limit). Card 9020 in 5007. Move → cap fires.
+-- Deck 5006 has 500 cards (at free limit). Card 9020 in 5007. Move → cap fires.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 SELECT throws_ok(
@@ -417,7 +417,7 @@ SELECT throws_ok(
      ) $$,
   'PT402',
   'deck_card_limit_exceeded',
-  'free plan: moving 1 card into a full 200-card deck raises PT402 deck_card_limit_exceeded'
+  'free plan: moving 1 card into a full 500-card deck raises PT402 deck_card_limit_exceeded'
 );
 
 
@@ -447,7 +447,7 @@ UPDATE public.members SET plan = 'free'
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Test 17: insert_card_at P0001 retry block does NOT swallow PT402 cap error
--- Deck 5010 has 200 cards (free limit). insert_card_at catches SQLSTATE 'P0001'
+-- Deck 5010 has 500 cards (free limit). insert_card_at catches SQLSTATE 'P0001'
 -- (rank-precision) and retries — but PT402 must propagate, not be caught.
 -- ─────────────────────────────────────────────────────────────────────────────
 

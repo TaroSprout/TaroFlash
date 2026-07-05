@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, reactive, ref } from 'vue'
+import { defineComponent, h, ref } from 'vue'
 import { card } from '@tests/fixtures/card'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
@@ -10,15 +10,21 @@ const { guardAddCardsMock } = vi.hoisted(() => ({
 }))
 
 const mockDecksData = { data: ref([]) }
-// `reactive` mirrors Pinia's auto-unwrap: `member.plan` reads the ref's value.
-const mockMemberStore = reactive({ plan: ref('free') })
+// `cardsPerDeckLimitRef` mirrors usePlanLimits().cardsPerDeckLimit: 200 for
+// free, null (unlimited) for paid — drives useCan().addCards' cap math.
+const cardsPerDeckLimitRef = ref(200)
 
 vi.mock('@/api/decks', () => ({
   useMemberDecksQuery: () => mockDecksData
 }))
 
-vi.mock('@/stores/member', () => ({
-  useMemberStore: () => mockMemberStore
+vi.mock('@/composables/can', () => ({
+  useCan: () => ({
+    addCards: (count, adding = 1) => {
+      const limit = cardsPerDeckLimitRef.value
+      return limit === null || count + adding <= limit
+    }
+  })
 }))
 
 vi.mock('@/composables/card/limit-gate', () => ({
@@ -150,7 +156,7 @@ function mountModal({ cards = [], current_deck_id = 30, count, close = vi.fn() }
 describe('MoveCardsModal', () => {
   beforeEach(() => {
     guardAddCardsMock.mockReset().mockResolvedValue(true)
-    mockMemberStore.plan = 'free'
+    cardsPerDeckLimitRef.value = 200
     mockDecksData.data.value = [
       { id: 10, title: 'Deck A', card_count: 0 },
       { id: 20, title: 'Deck B', card_count: 0 },
@@ -297,7 +303,7 @@ describe('MoveCardsModal', () => {
     })
 
     test('paid plan (null cardsPerDeckLimit) never marks a deck full', () => {
-      mockMemberStore.plan = 'paid'
+      cardsPerDeckLimitRef.value = null
       mockDecksData.data.value = [{ id: 10, title: 'Deck A', card_count: 999999 }]
       const cards = [makeCard()]
       const { wrapper } = mountModal({ cards, current_deck_id: 30 })

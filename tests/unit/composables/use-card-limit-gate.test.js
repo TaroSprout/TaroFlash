@@ -23,16 +23,18 @@ vi.mock('vue-i18n', () => ({
 
 vi.mock('@/components/modals/checkout/index.vue', () => ({ default: {} }))
 
-// Member store sources plan from the member query data — use a reactive ref so
-// tests can control the plan by setting memberDataRef.value.
-const memberDataRef = ref(null)
+// `useCan().addCards` owns the cap comparison now — mock it directly with the
+// same 200-card-per-deck free-tier math the real composable would derive from
+// usePlanLimits, driven by a reactive limit so tests can flip free ⇄ paid.
+const cardsPerDeckLimitRef = ref(200)
 
-vi.mock('@/api/members', () => ({
-  useCurrentMemberQuery: () => ({ data: memberDataRef })
-}))
-
-vi.mock('@/stores/session', () => ({
-  useSessionStore: () => ({ user: null })
+vi.mock('@/composables/can', () => ({
+  useCan: () => ({
+    addCards: (count, adding = 1) => {
+      const limit = cardsPerDeckLimitRef.value
+      return limit === null || count + adding <= limit
+    }
+  })
 }))
 
 import { useCardLimitGate } from '@/composables/card/limit-gate'
@@ -48,12 +50,12 @@ function makeGate(deck_ref = ref(undefined)) {
 }
 
 function makePaidGate() {
-  memberDataRef.value = { plan: 'paid' }
+  cardsPerDeckLimitRef.value = null
   return makeGate(makeDeck(999))
 }
 
 function makeFreeGate(card_count = 0) {
-  memberDataRef.value = { plan: 'free' }
+  cardsPerDeckLimitRef.value = 200
   return makeGate(makeDeck(card_count))
 }
 
@@ -61,7 +63,7 @@ function makeFreeGate(card_count = 0) {
 
 beforeEach(() => {
   setActivePinia(createPinia())
-  memberDataRef.value = null
+  cardsPerDeckLimitRef.value = 200
 
   alertWarnMock.mockReset()
   // Default: user dismisses the alert (confirmed = false)
@@ -111,21 +113,18 @@ describe('guardAddCards', () => {
   })
 
   test('treats card_count as 0 when the deck ref is undefined', async () => {
-    memberDataRef.value = { plan: 'free' }
     const { guardAddCards } = makeGate(ref(undefined))
     // 0 + 200 = 200 = limit → should pass
     expect(await guardAddCards(200)).toBe(true)
   })
 
   test('treats card_count as 0 when the deck card_count is undefined', async () => {
-    memberDataRef.value = { plan: 'free' }
     const deck = ref({ id: 1 }) // no card_count field
     const { guardAddCards } = useCardLimitGate(() => deck.value)
     expect(await guardAddCards(200)).toBe(true)
   })
 
-  test('treats a null/undefined member.plan as the free plan', async () => {
-    memberDataRef.value = null
+  test('delegates the cap comparison to useCan().addCards — a 200-limit deck at 200 rejects', async () => {
     const { guardAddCards } = makeGate(makeDeck(200))
     expect(await guardAddCards()).toBe(false)
   })
@@ -206,7 +205,6 @@ describe('handleLimitError', () => {
 
 describe('reactive deck getter', () => {
   test('card_count is read reactively — updating the deck ref updates the gate', async () => {
-    memberDataRef.value = { plan: 'free' }
     const deck = ref({ id: 1, card_count: 100 })
     const { guardAddCards } = useCardLimitGate(() => deck.value)
 

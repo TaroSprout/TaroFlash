@@ -8,6 +8,7 @@ import PaidFeatures from './paid-features.vue'
 import type { useSubscriptionQuery } from '@/api/billing'
 import { useMemberStore } from '@/stores/member'
 import { useSubscriptionLabels } from '@/composables/billing/subscription-labels'
+import { PLANS } from '@/config/plans'
 
 type SubscriptionQuery = ReturnType<typeof useSubscriptionQuery>
 
@@ -35,7 +36,7 @@ const view = computed(() =>
         label: t('settings.subscription.plan.label'),
         theme: 'blue-500',
         theme_dark: 'blue-650',
-        name: member_store.plan_display_name,
+        name: PLANS[member_store.plan ?? 'free'].displayName,
         cost: cost.value,
         status: status.value,
         description: description.value
@@ -44,7 +45,7 @@ const view = computed(() =>
         label: t('settings.subscription.free.label'),
         theme: 'green-500',
         theme_dark: 'green-800',
-        name: member_store.plan_display_name,
+        name: PLANS[member_store.plan ?? 'free'].displayName,
         cost: t('settings.subscription.free.cost'),
         status: null,
         description: t('settings.subscription.free.status')

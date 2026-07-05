@@ -30,23 +30,21 @@ UPDATE public.members
   WHERE id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 
 -- Seed an inactive plan to test visibility filtering.
-INSERT INTO public.plans (id, display_name, is_active) VALUES
-  ('legacy', 'Legacy', false);
+INSERT INTO public.plans (id, is_active) VALUES
+  ('legacy', false);
 
 
 -- ── Plans table content ───────────────────────────────────────────────────────
 
 -- Test 1: free plan exists and was seeded by the migration
-SELECT is(
-  (SELECT display_name FROM public.plans WHERE id = 'free'),
-  'Free',
+SELECT ok(
+  EXISTS(SELECT 1 FROM public.plans WHERE id = 'free'),
   'plans seeded the free tier'
 );
 
 -- Test 2: paid plan exists and was seeded by the migration
-SELECT is(
-  (SELECT display_name FROM public.plans WHERE id = 'paid'),
-  'Paid',
+SELECT ok(
+  EXISTS(SELECT 1 FROM public.plans WHERE id = 'paid'),
   'plans seeded the paid tier'
 );
 

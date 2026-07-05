@@ -3,6 +3,7 @@ import { useSessionStore } from '@/stores/session'
 import { useMemberStore } from '@/stores/member'
 import { prefetchMemberDecks } from '@/api/decks'
 import { prefetchMemberById } from '@/api/members'
+import { prefetchPlanLimits } from '@/api/plans'
 import WelcomeView from '@/views/welcome/index.vue'
 import AuthenticatedView from '@/views/authenticated.vue'
 import PrivacyPolicyView from '@/views/privacy-policy.vue'
@@ -62,9 +63,10 @@ const router = createRouter({
 
         if (!authenticated) return { name: 'welcome' }
 
-        // Fire member + decks in parallel with the lazy route chunk fetch
-        // so the dashboard / deck view renders against warm cache.
+        // Fire member + decks + plan limits in parallel with the lazy route
+        // chunk fetch so the dashboard / deck view renders against warm cache.
         prefetchMemberDecks()
+        prefetchPlanLimits()
         const id = session.user?.id
         if (id) prefetchMemberById(id)
       },

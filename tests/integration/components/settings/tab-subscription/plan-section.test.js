@@ -2,22 +2,22 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
+import { PLANS } from '@/config/plans'
 
 // ── Hoisted state ─────────────────────────────────────────────────────────────
 
 const { memberState } = vi.hoisted(() => ({
-  memberState: { plan: 'paid', plan_display_name: 'Builder' }
+  memberState: { plan: 'paid' }
 }))
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
+// Display name now comes from PLANS[member.plan].displayName, not a
+// member-store field — the store only needs to expose `plan`.
 vi.mock('@/stores/member', () => ({
   useMemberStore: () => ({
     get plan() {
       return memberState.plan
-    },
-    get plan_display_name() {
-      return memberState.plan_display_name
     }
   })
 }))
@@ -122,7 +122,6 @@ function makeSubscriptionQuery(data = null, { isLoading = false, error = null } 
 
 beforeEach(() => {
   memberState.plan = 'paid'
-  memberState.plan_display_name = 'Builder'
 })
 
 // ── Free vs paid via member_store.plan ────────────────────────────────────────
@@ -130,7 +129,6 @@ beforeEach(() => {
 describe('plan-section — free vs paid identity', () => {
   test('free member sees the free pill (not skeleton) even when query has no data [obligation]', async () => {
     memberState.plan = 'free'
-    memberState.plan_display_name = 'Free'
     const PlanSection = (await import('@/components/settings/tab-subscription/plan-section.vue'))
       .default
     const wrapper = shallowMount(PlanSection, {
@@ -179,7 +177,6 @@ describe('plan-section — free vs paid identity', () => {
 
   test('free member never shows a skeleton regardless of query loading state', async () => {
     memberState.plan = 'free'
-    memberState.plan_display_name = 'Free'
     const PlanSection = (await import('@/components/settings/tab-subscription/plan-section.vue'))
       .default
     const wrapper = shallowMount(PlanSection, {
@@ -248,12 +245,11 @@ describe('plan-section — error state', () => {
   })
 })
 
-// ── Plan name via member_store.plan_display_name ───────────────────────────────
+// ── Plan name via PLANS[member.plan].displayName ───────────────────────────────
 
 describe('plan-section — plan name', () => {
-  test('pill name comes from member_store.plan_display_name for paid [obligation]', async () => {
+  test('pill name comes from PLANS.paid.displayName for a paid member [obligation]', async () => {
     memberState.plan = 'paid'
-    memberState.plan_display_name = 'Builder'
     const PlanSection = (await import('@/components/settings/tab-subscription/plan-section.vue'))
       .default
     const wrapper = shallowMount(PlanSection, {
@@ -268,12 +264,11 @@ describe('plan-section — plan name', () => {
         }
       }
     })
-    expect(wrapper.find('[data-testid="plan-pill__name"]').text()).toBe('Builder')
+    expect(wrapper.find('[data-testid="plan-pill__name"]').text()).toBe(PLANS.paid.displayName)
   })
 
-  test('pill name comes from member_store.plan_display_name for free [obligation]', async () => {
+  test('pill name comes from PLANS.free.displayName for a free member [obligation]', async () => {
     memberState.plan = 'free'
-    memberState.plan_display_name = 'Sprout'
     const PlanSection = (await import('@/components/settings/tab-subscription/plan-section.vue'))
       .default
     const wrapper = shallowMount(PlanSection, {
@@ -288,7 +283,7 @@ describe('plan-section — plan name', () => {
         }
       }
     })
-    expect(wrapper.find('[data-testid="plan-pill__name"]').text()).toBe('Sprout')
+    expect(wrapper.find('[data-testid="plan-pill__name"]').text()).toBe(PLANS.free.displayName)
   })
 })
 

@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 import { useMemberStore } from '@/stores/member'
 import { useMemberDeckCountQuery } from '@/api/decks'
-import { PLANS } from '@/config/plans'
+import { usePlanLimits } from '@/composables/plan-limits'
 
 /**
  * Capability checks for the current member.
@@ -25,11 +25,12 @@ import { PLANS } from '@/config/plans'
 export function useCan() {
   const member = useMemberStore()
   const deckCount = useMemberDeckCountQuery()
+  const { deckLimit, cardsPerDeckLimit } = usePlanLimits()
 
   const useProFeature = computed(() => member.plan === 'paid')
 
   const createDeck = computed(() => {
-    const limit = PLANS[member.plan ?? 'free'].deckLimit
+    const limit = deckLimit.value
     const count = deckCount.data.value ?? 0
     return limit === null || count < limit
   })
@@ -40,5 +41,15 @@ export function useCan() {
   // in the transcribe-audio / translate-term edge functions — this gate is UX.
   const useAudioReader = computed(() => member.role === 'admin')
 
-  return { useProFeature, createDeck, useCardImages, useAudioReader }
+  /**
+   * True when a deck currently at `count` cards has room for `adding` more
+   * under the member's plan cap. Takes params (not a ComputedRef) since the
+   * cap is evaluated per-deck, against a live count the caller supplies.
+   */
+  function addCards(count: number, adding = 1): boolean {
+    const limit = cardsPerDeckLimit.value
+    return limit === null || count + adding <= limit
+  }
+
+  return { useProFeature, createDeck, useCardImages, useAudioReader, addCards }
 }
