@@ -1,11 +1,10 @@
 <script setup lang="ts">
 type SectionHeaderProps = {
-  eyebrow?: string
   heading: string
   subtitle?: string
 }
 
-const { eyebrow, heading, subtitle } = defineProps<SectionHeaderProps>()
+const { heading, subtitle } = defineProps<SectionHeaderProps>()
 </script>
 
 <template>
@@ -15,14 +14,6 @@ const { eyebrow, heading, subtitle } = defineProps<SectionHeaderProps>()
     data-theme="brown-100"
     data-theme-dark="stone-700"
   >
-    <p
-      v-if="eyebrow"
-      data-testid="welcome-section-header__eyebrow"
-      class="text-base uppercase tracking-widest text-(--theme-neutral)"
-    >
-      {{ eyebrow }}
-    </p>
-
     <h2 data-testid="welcome-section-header__heading" class="text-5xl text-(--theme-on-primary)">
       {{ heading }}
     </h2>
