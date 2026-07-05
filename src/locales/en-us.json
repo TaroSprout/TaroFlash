@@ -58,6 +58,7 @@
   "plans.free.features.cards": "Up to {count} cards per deck",
   "plans.free.features.deck-images": "Upload images to decks",
   "plans.free.features.no-card-images": "Images on Cards",
+  "plans.paid.features.all-free-features": "All features from Free Plan",
   "plans.paid.features.no-deck-limit": "No deck limit",
   "plans.paid.features.no-card-limit": "No card limit per Deck",
   "plans.paid.features.deck-images": "Upload images to decks",

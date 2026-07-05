@@ -35,9 +35,9 @@ export const PLANS: Record<MemberPlan, PlanConfig> = {
     cardsPerDeckLimit: null,
     monthlyPriceUsd: 8,
     features: [
+      { key: 'all-free-features' },
       { key: 'no-deck-limit', upgradeHighlight: true },
       { key: 'no-card-limit', upgradeHighlight: true },
-      { key: 'deck-images' },
       { key: 'card-images', upgradeHighlight: true },
       { key: 'review-history', upgradeHighlight: true },
       { key: 'cancel-anytime' }

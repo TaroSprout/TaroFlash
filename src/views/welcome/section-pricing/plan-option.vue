@@ -1,12 +1,22 @@
 <script setup lang="ts">
-defineProps<{
+import { useI18n } from 'vue-i18n'
+import UiIcon from '@/components/ui-kit/icon.vue'
+import type { PlanFeature } from '@/config/plans'
+
+const { planId, name, price, features } = defineProps<{
+  planId: MemberPlan
   name: string
   price: string
+  features: PlanFeature[]
 }>()
 
-defineSlots<{
-  default(): unknown
-}>()
+const { t } = useI18n()
+
+function featureLabel(feature: PlanFeature) {
+  const key = `plans.${planId}.features.${feature.key}`
+  if (feature.count == null) return t(key)
+  return t(key, { count: feature.count })
+}
 </script>
 
 <template>
@@ -14,13 +24,33 @@ defineSlots<{
     data-testid="plan-option"
     class="w-full h-full flex flex-col gap-5 rounded-9 p-12 bg-(--theme-primary) text-(--theme-on-primary)"
   >
-    <div data-testid="plan-option__header" class="flex items-center justify-between gap-10">
+    <div data-testid="plan-option__header" class="flex items-center justify-between gap-24">
       <p data-testid="plan-option__name" class="text-3xl">{{ name }}</p>
       <p data-testid="plan-option__price" class="text-lg *:[span]:text-sm" v-html="price"></p>
     </div>
 
-    <ul data-testid="plan-option__list" class="flex flex-col gap-2 text-start">
-      <slot></slot>
+    <hr data-testid="plan-option__divider" class="w-full border-t border-(--theme-on-primary)" />
+
+    <ul data-testid="plan-option__list" class="flex flex-col gap-3 text-start">
+      <li
+        v-for="feature in features"
+        :key="feature.key"
+        :data-ok="feature.ok !== false ? undefined : 'false'"
+        class="flex items-start gap-3 text-base"
+      >
+        <span
+          aria-hidden="true"
+          class="flex shrink-0 items-center justify-center size-5.5 rounded-full mt-0.5"
+          :class="
+            feature.ok !== false
+              ? 'bg-(--theme-on-primary) text-(--theme-primary)'
+              : 'border-2 border-dashed border-(--theme-on-primary)/50'
+          "
+        >
+          <ui-icon v-if="feature.ok !== false" src="check" class="size-3" />
+        </span>
+        <span :class="{ 'opacity-55': feature.ok === false }">{{ featureLabel(feature) }}</span>
+      </li>
     </ul>
   </div>
 </template>
