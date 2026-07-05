@@ -32,8 +32,6 @@
   "login-dialog.errors.generic": "Something went wrong. Please try again",
   "signup-dialog.heading": "Make An Account",
   "signup-dialog.submit-button": "Sign Up!",
-  "signup-dialog.plan-header": "Choose Your Plan",
-  "signup-dialog.plan-desc": "TaroFlash is designed, built, and maintained by just <span>one person!</span> Choosing a paid plan helps to support the future of the project!",
   "signup-dialog.plan-free.price": "Free",
   "signup-dialog.plan-paid.price": "${price}<span>/month</span>",
   "signup-dialog.google-button": "Continue with Google",

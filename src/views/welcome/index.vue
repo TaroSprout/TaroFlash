@@ -6,7 +6,7 @@ import { useSignupModal } from './signup/signup-modal'
 import { provideWelcomeLayout } from './welcome-layout'
 import Splash from './splash/index.vue'
 import SectionFeatures from './section-features/index.vue'
-import SectionPricing from './section-pricing.vue'
+import SectionPricing from './section-pricing/index.vue'
 import SectionRoadmap from './section-roadmap.vue'
 import WelcomeFooter from '@/components/welcome-footer.vue'
 
@@ -37,7 +37,7 @@ function scrollToRoadmap() {
 <template>
   <splash :signup="openSignup" :see-more="scrollToContent" />
   <section-features ref="features" :see-roadmap="scrollToRoadmap" />
-  <section-pricing :signup="openSignup" />
+  <section-pricing />
   <section-roadmap ref="roadmap" />
   <welcome-footer />
 </template>
