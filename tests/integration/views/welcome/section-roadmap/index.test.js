@@ -20,17 +20,16 @@ const UiIconStub = defineComponent({
   }
 })
 
-const UiImageStub = defineComponent({
-  name: 'UiImage',
-  props: ['src'],
-  setup() {
-    return () => h('img', { 'data-testid': 'ui-image' })
+const GroupedListStub = defineComponent({
+  name: 'GroupedList',
+  setup(_props, { slots, attrs }) {
+    return () => h('div', { ...attrs }, slots.default?.())
   }
 })
 
 // ── Import ─────────────────────────────────────────────────────────────────────
 
-import SectionRoadmap from '@/views/welcome/section-roadmap.vue'
+import SectionRoadmap from '@/views/welcome/section-roadmap/index.vue'
 
 // ── Mount helper ───────────────────────────────────────────────────────────────
 
@@ -40,7 +39,7 @@ function mountRoadmap() {
       stubs: {
         SectionHeader: SectionHeaderStub,
         UiIcon: UiIconStub,
-        UiImage: UiImageStub
+        GroupedList: GroupedListStub
       }
     }
   })
@@ -48,17 +47,20 @@ function mountRoadmap() {
 
 // The roadmap items defined in the source
 const ROADMAP_KEYS = [
-  'create-study',
+  'build-study-decks',
+  'dark-mode',
+  'mobile-support',
+  'import-export',
   'card-audio',
   'community',
-  'audio-reader',
-  'daily-challenges',
-  'metrics-rewards',
-  'shop',
-  'powerups'
+  'challenges',
+  'collect-rewards',
+  'paperclips-shop',
+  'bulk-edit'
 ]
 
-const DONE_KEY = 'create-study'
+const DONE_KEY = 'build-study-decks'
+const UPCOMING_KEY = 'import-export'
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
@@ -75,17 +77,17 @@ describe('SectionRoadmap', () => {
     expect(wrapper.find('[data-testid="section-header"]').exists()).toBe(true)
   })
 
-  test('renders the roadmap list', () => {
+  test('renders the roadmap list inside a grouped-list', () => {
     const wrapper = mountRoadmap()
     expect(wrapper.find('[data-testid="welcome-roadmap__list"]').exists()).toBe(true)
   })
 
   // ── Item count ────────────────────────────────────────────────────────────
 
-  test('renders 9 roadmap items', () => {
+  test('renders 10 roadmap items', () => {
     const wrapper = mountRoadmap()
     const items = wrapper.findAll('[data-testid^="welcome-roadmap__item-"]')
-    expect(items).toHaveLength(9)
+    expect(items).toHaveLength(10)
   })
 
   test('renders each item by key', () => {
@@ -95,7 +97,7 @@ describe('SectionRoadmap', () => {
     }
   })
 
-  // ── Done item (create-study) ───────────────────────────────────────────────
+  // ── Done item ─────────────────────────────────────────────────────────────
 
   test('done item shows the done-label text', () => {
     const wrapper = mountRoadmap()
@@ -109,20 +111,6 @@ describe('SectionRoadmap', () => {
     expect(doneItem.text()).not.toContain('Upcoming')
   })
 
-  // ── Upcoming item (any non-done key) ──────────────────────────────────────
-
-  test('upcoming item shows the upcoming-label text', () => {
-    const wrapper = mountRoadmap()
-    const upcomingItem = wrapper.find('[data-testid="welcome-roadmap__item-card-audio"]')
-    expect(upcomingItem.text()).toContain('Upcoming')
-  })
-
-  test('upcoming item does not show the done-label text', () => {
-    const wrapper = mountRoadmap()
-    const upcomingItem = wrapper.find('[data-testid="welcome-roadmap__item-card-audio"]')
-    expect(upcomingItem.text()).not.toContain('Done')
-  })
-
   test('done item renders a check icon', () => {
     const wrapper = mountRoadmap()
     const doneItem = wrapper.find(`[data-testid="welcome-roadmap__item-${DONE_KEY}"]`)
@@ -131,9 +119,23 @@ describe('SectionRoadmap', () => {
     expect(icon.attributes('data-src')).toBe('check')
   })
 
+  // ── Upcoming item ─────────────────────────────────────────────────────────
+
+  test('upcoming item shows the upcoming-label text', () => {
+    const wrapper = mountRoadmap()
+    const upcomingItem = wrapper.find(`[data-testid="welcome-roadmap__item-${UPCOMING_KEY}"]`)
+    expect(upcomingItem.text()).toContain('Upcoming')
+  })
+
+  test('upcoming item does not show the done-label text', () => {
+    const wrapper = mountRoadmap()
+    const upcomingItem = wrapper.find(`[data-testid="welcome-roadmap__item-${UPCOMING_KEY}"]`)
+    expect(upcomingItem.text()).not.toContain('Done')
+  })
+
   test('upcoming item does not render a check icon', () => {
     const wrapper = mountRoadmap()
-    const upcomingItem = wrapper.find('[data-testid="welcome-roadmap__item-card-audio"]')
+    const upcomingItem = wrapper.find(`[data-testid="welcome-roadmap__item-${UPCOMING_KEY}"]`)
     expect(upcomingItem.find('[data-testid="ui-icon"]').exists()).toBe(false)
   })
 })

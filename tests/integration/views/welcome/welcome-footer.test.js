@@ -3,7 +3,7 @@ import { shallowMount } from '@vue/test-utils'
 
 // ── Import ─────────────────────────────────────────────────────────────────────
 
-import WelcomeFooter from '@/components/welcome-footer.vue'
+import WelcomeFooter from '@/views/welcome/welcome-footer.vue'
 
 // ── Mount helper ───────────────────────────────────────────────────────────────
 
