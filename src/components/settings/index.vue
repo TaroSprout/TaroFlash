@@ -41,6 +41,7 @@ const TabReviewPreferences = defineAsyncComponent(
   () => import('./tab-review-preferences/index.vue')
 )
 const TabDangerZone = defineAsyncComponent(() => import('./tab-danger-zone/index.vue'))
+const TabAccountAccess = defineAsyncComponent(() => import('./tab-account-access/index.vue'))
 const TabIndex = defineAsyncComponent(() => import('./tab-index/index.vue'))
 
 const TAB_COMPONENTS = {
@@ -49,7 +50,8 @@ const TAB_COMPONENTS = {
   app: TabApp,
   'review-preferences': TabReviewPreferences,
   subscription: TabSubscription,
-  'danger-zone': TabDangerZone
+  'danger-zone': TabDangerZone,
+  'account-access': TabAccountAccess
 }
 
 const editor = useMemberEditor()
@@ -86,12 +88,16 @@ const active_tab = ref<ActiveTab | null>(null)
 const tab_outlet = ref<HTMLElement>()
 const { nav_direction, onTabEnter, onTabLeave } = useTabTransition(layout_mode, tab_outlet)
 
+// account-access is reachable via the aside's edit button (tablet/desktop) or the
+// sheet-only tab-index entry — it never appears as a sidebar tab-bar icon itself.
 const tabs = computed(() =>
-  (Object.keys(TAB_META) as TabValue[]).map((value) => ({
-    value,
-    icon: TAB_META[value].icon,
-    label: t(TAB_META[value].labelKey)
-  }))
+  (Object.keys(TAB_META) as TabValue[])
+    .filter((value) => value !== 'account-access')
+    .map((value) => ({
+      value,
+      icon: TAB_META[value].icon,
+      label: t(TAB_META[value].labelKey)
+    }))
 )
 
 const displayed_tab = computed(
@@ -134,6 +140,7 @@ onMounted(() => {
     import('./tab-app/index.vue')
     import('./tab-review-preferences/index.vue')
     import('./tab-danger-zone/index.vue')
+    import('./tab-account-access/index.vue')
     import('./tab-index/index.vue')
   })
 })
@@ -164,6 +171,7 @@ function onBack() {
 
 watch(layout_mode, (mode) => {
   if (mode !== 'desktop' && active_tab.value === 'danger-zone') active_tab.value = null
+  if (mode !== 'sheet' && active_tab.value === 'account-access') active_tab.value = null
 })
 </script>
 
