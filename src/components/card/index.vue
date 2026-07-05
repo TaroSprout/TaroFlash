@@ -193,11 +193,11 @@ function onLeave(el: Element, done: () => void) {
   --cover-icon-size: 33%;
 }
 .card-container--sm {
-  --card-width: 138px;
+  --card-width: 172px;
   --face-border-width: 16px;
   --face-radius: 32px;
-  --face-padding: 6px;
-  --cover-icon-size: 38%;
+  --face-padding: 10px;
+  --cover-icon-size: 40%;
 }
 .card-container--xs {
   --card-width: 102px;
@@ -210,7 +210,7 @@ function onLeave(el: Element, done: () => void) {
   --card-width: 43px;
   --face-border-width: 6px;
   --face-radius: 14px;
-  --face-padding: 2px;
+  --face-padding: 4px;
   --cover-icon-size: 80%;
 }
 .card-container--3xs {

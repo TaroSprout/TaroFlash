@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import Card from '@/components/card/index.vue'
+import { useWelcomeWidth } from '../welcome-layout'
 
 type FeatureCardProps = {
   feature_key: string
@@ -22,11 +24,42 @@ const {
 } = defineProps<FeatureCardProps>()
 
 const { t } = useI18n()
+const width = useWelcomeWidth()
+
+const size = computed<CardSize>(() => {
+  if (width.value === 'desktop') return 'lg'
+  return width.value === 'tablet' ? 'xl' : 'sm'
+})
+
+// Icon/heading/description scale with the card size — xl (tablet) reads
+// biggest since the card itself is largest there, lg (desktop) and sm
+// (mobile) step down from it.
+const FACE_ROWS: Partial<Record<CardSize, string>> = {
+  xl: 'grid-rows-[70px_2.5rem_88px] gap-2',
+  lg: 'grid-rows-[56px_2rem_70px] gap-2',
+  sm: 'grid-rows-[30px_1.5rem_80px] gap-3'
+}
+const ICON_SIZE: Partial<Record<CardSize, string>> = { xl: 'size-12', lg: 'size-10', sm: 'size-8' }
+const HEADING_SIZE: Partial<Record<CardSize, string>> = {
+  xl: 'text-2xl',
+  lg: 'text-2xl',
+  sm: 'text-lg'
+}
+const DESCRIPTION_SIZE: Partial<Record<CardSize, string>> = {
+  xl: 'text-lg',
+  lg: 'text-base',
+  sm: 'text-base'
+}
+
+const face_rows = computed(() => FACE_ROWS[size.value])
+const icon_size = computed(() => ICON_SIZE[size.value])
+const heading_size = computed(() => HEADING_SIZE[size.value])
+const description_size = computed(() => DESCRIPTION_SIZE[size.value])
 </script>
 
 <template>
   <card
-    size="lg"
+    :size="size"
     :side="side"
     :cover_config="cover"
     :style="{ '--accent': accent, '--accent-dark': accent_dark }"
@@ -34,19 +67,22 @@ const { t } = useI18n()
     <template #front>
       <div
         data-testid="feature-card__face"
-        class="grid grid-rows-[56px_2rem_70px] content-center gap-2 size-full rounded-(--face-radius) bg-white dark:bg-stone-700 px-8 text-center"
+        :data-size-tier="size"
+        class="grid content-center size-full rounded-(--face-radius) p-(--face-padding) bg-white dark:bg-stone-700 text-center"
+        :class="face_rows"
       >
         <ui-icon
           data-testid="feature-card__icon"
           :src="icon"
-          class="size-10 justify-self-center text-(--accent) dark:text-(--accent-dark)"
+          class="justify-self-center text-(--accent) dark:text-(--accent-dark)"
+          :class="icon_size"
         />
 
-        <h3 class="text-2xl text-brown-700 dark:text-brown-100">
+        <h3 class="text-brown-700 dark:text-brown-100" :class="heading_size">
           {{ t(`welcome-view.features.${feature_key}.heading`) }}
         </h3>
 
-        <p class="text-base leading-relaxed text-brown-500 dark:text-brown-300">
+        <p class="leading-relaxed text-brown-500 dark:text-brown-300" :class="description_size">
           {{ t(`welcome-view.features.${feature_key}.description`) }}
         </p>
       </div>
