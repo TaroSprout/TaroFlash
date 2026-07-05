@@ -41,6 +41,7 @@ const TabReviewPreferences = defineAsyncComponent(
   () => import('./tab-review-preferences/index.vue')
 )
 const TabDangerZone = defineAsyncComponent(() => import('./tab-danger-zone/index.vue'))
+const TabAccountAccess = defineAsyncComponent(() => import('./tab-account-access/index.vue'))
 const TabIndex = defineAsyncComponent(() => import('./tab-index/index.vue'))
 
 const TAB_COMPONENTS = {
@@ -49,7 +50,8 @@ const TAB_COMPONENTS = {
   app: TabApp,
   'review-preferences': TabReviewPreferences,
   subscription: TabSubscription,
-  'danger-zone': TabDangerZone
+  'danger-zone': TabDangerZone,
+  'account-access': TabAccountAccess
 }
 
 const editor = useMemberEditor()
@@ -86,12 +88,18 @@ const active_tab = ref<ActiveTab | null>(null)
 const tab_outlet = ref<HTMLElement>()
 const { nav_direction, onTabEnter, onTabLeave } = useTabTransition(layout_mode, tab_outlet)
 
+const active_tab_ref = useTemplateRef<{ onChromeBack?: () => boolean }>('active_tab_ref')
+
+// account-access is reachable via the aside's edit button (tablet/desktop) or the
+// sheet-only tab-index entry — it never appears as a sidebar tab-bar icon itself.
 const tabs = computed(() =>
-  (Object.keys(TAB_META) as TabValue[]).map((value) => ({
-    value,
-    icon: TAB_META[value].icon,
-    label: t(TAB_META[value].labelKey)
-  }))
+  (Object.keys(TAB_META) as TabValue[])
+    .filter((value) => value !== 'account-access')
+    .map((value) => ({
+      value,
+      icon: TAB_META[value].icon,
+      label: t(TAB_META[value].labelKey)
+    }))
 )
 
 const displayed_tab = computed(
@@ -134,6 +142,7 @@ onMounted(() => {
     import('./tab-app/index.vue')
     import('./tab-review-preferences/index.vue')
     import('./tab-danger-zone/index.vue')
+    import('./tab-account-access/index.vue')
     import('./tab-index/index.vue')
   })
 })
@@ -162,8 +171,14 @@ function onBack() {
   active_tab.value = null
 }
 
+function onChromeBack() {
+  if (active_tab_ref.value?.onChromeBack?.()) return
+  onBack()
+}
+
 watch(layout_mode, (mode) => {
   if (mode !== 'desktop' && active_tab.value === 'danger-zone') active_tab.value = null
+  if (mode !== 'sheet' && active_tab.value === 'account-access') active_tab.value = null
 })
 </script>
 
@@ -183,8 +198,10 @@ watch(layout_mode, (mode) => {
     :tabs="tabs"
     :pattern_config="{ pattern: 'diagonal-stripes', pattern_size: '48px', pattern_opacity: '0.15' }"
     :parts="{ content: tab_content_class }"
+    :show_back="active_tab !== null"
     v-model:active="sidebar_active"
     @close="onClose"
+    @back="onChromeBack"
   >
     <template #header-content>
       <div
@@ -198,12 +215,6 @@ watch(layout_mode, (mode) => {
           data-testid="settings__header-title"
           class="flex items-center gap-3 text-5xl text-white"
         >
-          <ui-icon
-            v-if="header_meta"
-            data-testid="settings__header-icon"
-            :src="header_meta.icon"
-            class="size-9 shrink-0"
-          />
           {{ header_title }}
         </h1>
       </div>
@@ -218,7 +229,12 @@ watch(layout_mode, (mode) => {
       ]"
     >
       <transition :css="false" mode="out-in" @leave="onTabLeave" @enter="onTabEnter">
-        <component :is="tab_component" :key="displayed_tab" @navigate="onNavigate" @back="onBack" />
+        <component
+          ref="active_tab_ref"
+          :is="tab_component"
+          :key="displayed_tab"
+          @navigate="onNavigate"
+        />
       </transition>
     </div>
 

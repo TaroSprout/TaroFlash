@@ -1,4 +1,10 @@
-export type TabValue = 'profile' | 'subscription' | 'app' | 'review-preferences' | 'danger-zone'
+export type TabValue =
+  | 'profile'
+  | 'subscription'
+  | 'app'
+  | 'review-preferences'
+  | 'danger-zone'
+  | 'account-access'
 
 /**
  * Single source of truth for each tab's icon + label key. Consumed by the tab
@@ -10,5 +16,6 @@ export const TAB_META: Record<TabValue, { icon: string; labelKey: string }> = {
   app: { icon: 'screwdriver-wrench', labelKey: 'settings.tab.app' },
   'review-preferences': { icon: 'card-deck', labelKey: 'settings.tab.review-preferences' },
   subscription: { icon: 'piggy-bank', labelKey: 'settings.tab.subscription' },
-  'danger-zone': { icon: 'delete', labelKey: 'settings.tab.danger-zone' }
+  'danger-zone': { icon: 'delete', labelKey: 'settings.tab.danger-zone' },
+  'account-access': { icon: 'keyhole', labelKey: 'settings.tab.account-access' }
 }

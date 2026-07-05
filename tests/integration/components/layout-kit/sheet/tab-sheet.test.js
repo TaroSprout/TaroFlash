@@ -36,9 +36,12 @@ const MobileSheetStub = defineComponent({
     title: { type: String, default: undefined },
     cover_config: { type: Object, default: undefined },
     surface: { type: String, default: undefined },
-    header_border: { type: String, default: undefined }
+    header_border: { type: String, default: undefined },
+    close_label: { type: String, default: undefined },
+    close_icon: { type: String, default: undefined }
   },
-  setup(props, { slots }) {
+  emits: ['close'],
+  setup(props, { slots, emit }) {
     return () =>
       h(
         'div',
@@ -46,7 +49,10 @@ const MobileSheetStub = defineComponent({
           'data-testid': 'mobile-sheet-stub',
           'data-show-close-button': String(props.show_close_button),
           'data-surface': props.surface,
-          'data-header-border': props.header_border
+          'data-header-border': props.header_border,
+          'data-close-label': props.close_label,
+          'data-close-icon': props.close_icon,
+          onClick: () => emit('close')
         },
         [
           slots.overlay?.(),
@@ -223,6 +229,42 @@ describe('TabSheet', () => {
     const sheet = wrapper.findComponent({ name: 'MobileSheet' })
     sheet.vm.$emit('close')
     expect(wrapper.emitted('close')).toBeTruthy()
+  })
+
+  // ── chrome-driven back mode (show_back) [obligation] ──────────────────────
+
+  test('mobile-sheet close doubles as back when show_back is true and the sidebar is hidden (mobile/tablet) [obligation]', async () => {
+    setBelowLg(true)
+    const wrapper = mountSheet({ show_back: true })
+    const sheet = wrapper.find('[data-testid="mobile-sheet-stub"]')
+
+    expect(sheet.attributes('data-close-icon')).toBe('arrow-back')
+
+    await sheet.trigger('click')
+
+    expect(wrapper.emitted('back')).toBeTruthy()
+    expect(wrapper.emitted('close')).toBeFalsy()
+  })
+
+  test('mobile-sheet close stays a real close on desktop even when show_back is true (sidebar visible) [obligation]', async () => {
+    setBelowLg(false)
+    const wrapper = mountSheet({ show_back: true })
+    const sheet = wrapper.find('[data-testid="mobile-sheet-stub"]')
+
+    expect(sheet.attributes('data-close-icon')).toBe('close')
+
+    await sheet.trigger('click')
+
+    expect(wrapper.emitted('close')).toBeTruthy()
+    expect(wrapper.emitted('back')).toBeFalsy()
+  })
+
+  test('defaults close_icon to "close" (no back label) when show_back is false', () => {
+    setBelowLg(true)
+    const wrapper = mountSheet()
+    const sheet = wrapper.find('[data-testid="mobile-sheet-stub"]')
+    expect(sheet.attributes('data-close-icon')).toBe('close')
+    expect(sheet.attributes('data-close-label')).toBeUndefined()
   })
 
   // ── mobile-sheet close-button fallback (below lg) ─────────────────────────

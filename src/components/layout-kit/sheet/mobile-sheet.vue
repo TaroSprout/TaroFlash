@@ -24,6 +24,7 @@ export type MobileSheetProps = {
   title?: string
   show_close_button?: boolean
   close_label?: string
+  close_icon?: string
   surface?: SheetSurface
   header_border?: SheetHeaderBorder
   sheet_px?: string
@@ -34,6 +35,7 @@ const {
   title,
   show_close_button = true,
   close_label,
+  close_icon = 'close',
   surface = 'standard',
   header_border = 'wave',
   sheet_px
@@ -112,7 +114,7 @@ provide(mobileSheetOverlayKey, overlay_root)
           class="absolute top-0 p-4 left-0 z-20"
         >
           <ui-button
-            icon-left="close"
+            :icon-left="close_icon"
             icon-only
             :inverted="showHeader"
             @press="emit('close')"

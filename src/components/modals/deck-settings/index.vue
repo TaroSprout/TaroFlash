@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onMounted, provide, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, provide, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DeckAside from './deck-aside.vue'
 import { deckSettingsLayoutKey, deckSettingsCloseKey } from './layout'
@@ -12,7 +12,6 @@ import { useAlert } from '@/composables/alert'
 import { useModalAfterEnter, useModalRequestClose } from '@/composables/modal'
 import DeckPinnedPreview from '@/components/deck/pinned-preview.vue'
 import TabSheet from '@/components/layout-kit/sheet/tab-sheet.vue'
-import UiIcon from '@/components/ui-kit/icon.vue'
 import { TAB_META, type TabValue } from './tabs'
 
 export type DeckSettingsResponse = boolean
@@ -59,6 +58,8 @@ const active_tab = ref<ActiveTab | null>(null)
 const tab_outlet = ref<HTMLElement>()
 
 const { nav_direction, onTabEnter, onTabLeave } = useTabTransition(layout_mode, tab_outlet)
+
+const active_tab_ref = useTemplateRef<{ onChromeBack?: () => boolean }>('active_tab_ref')
 
 if (initial_tab) active_tab.value = initial_tab
 
@@ -146,6 +147,11 @@ function onBack() {
   active_tab.value = null
 }
 
+function onChromeBack() {
+  if (active_tab_ref.value?.onChromeBack?.()) return
+  onBack()
+}
+
 watch(layout_mode, (mode) => {
   if (mode !== 'desktop' && active_tab.value === 'danger-zone') active_tab.value = null
 })
@@ -173,8 +179,10 @@ watch(active_tab, (tab) => {
     :tabs="tabs"
     :pattern_config="{ pattern: 'endless-clouds' }"
     :parts="{ content: tab_content_class }"
+    :show_back="active_tab !== null"
     v-model:active="sidebar_active"
     @close="onClose"
+    @back="onChromeBack"
   >
     <template #header-content>
       <div
@@ -186,12 +194,6 @@ watch(active_tab, (tab) => {
           data-testid="deck-settings__header-title"
           class="flex items-center gap-3 text-5xl text-white"
         >
-          <ui-icon
-            v-if="header_meta"
-            data-testid="deck-settings__header-icon"
-            :src="header_meta.icon"
-            class="size-9 shrink-0"
-          />
           {{ header_title }}
         </h1>
       </div>
@@ -206,7 +208,12 @@ watch(active_tab, (tab) => {
       ]"
     >
       <transition :css="false" mode="out-in" @leave="onTabLeave" @enter="onTabEnter">
-        <component :is="tab_component" :key="displayed_tab" @navigate="onNavigate" @back="onBack" />
+        <component
+          ref="active_tab_ref"
+          :is="tab_component"
+          :key="displayed_tab"
+          @navigate="onNavigate"
+        />
       </transition>
     </div>
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, provide } from 'vue'
+import { useI18n } from 'vue-i18n'
 import mobileSheet, { type MobileSheetProps } from './mobile-sheet.vue'
 import { SHEET_SIDEBAR_BG } from './sheet-surface'
 import { activeTabKey } from './tab-sheet-context'
@@ -26,6 +27,7 @@ export type TabSheetProps = MobileSheetProps & {
   hover_sfx?: SoundKey | SoundKey[] | ''
   select_sfx?: SoundKey | ''
   reselect_sfx?: SoundKey | ''
+  show_back?: boolean
 }
 
 const {
@@ -40,11 +42,15 @@ const {
   sheet_px,
   hover_sfx = TYPE_SFX,
   select_sfx = 'select',
-  reselect_sfx = 'digi_powerdown'
+  reselect_sfx = 'digi_powerdown',
+  show_back = false
 } = defineProps<TabSheetProps>()
+
+const { t } = useI18n()
 
 const emit = defineEmits<{
   (e: 'close'): void
+  (e: 'back'): void
   (e: 'select', value: string): void
   (e: 'reselect', value: string): void
 }>()
@@ -73,8 +79,17 @@ const has_sidebar = useMatchMedia(sidebar_query)
 const sheet_close_button = computed(
   () => (!has_tabs.value || !has_sidebar.value) && show_close_button
 )
+// The mobile/tablet close button (no sidebar) doubles as a back button whenever
+// a tab is active — desktop keeps a real close button since it navigates tabs
+// via the sidebar list, not a back stack.
+const back_mode = computed(() => show_back && !has_sidebar.value)
 
 defineExpose({ has_sidebar })
+
+function onMobileSheetClose() {
+  if (back_mode.value) emit('back')
+  else emit('close')
+}
 
 const tab_panel_id = 'tab-sheet__panel'
 const tab_id_prefix = `tab-sheet__tab--${uid()}--`
@@ -97,10 +112,12 @@ function selectOption(value: string) {
     :title="title"
     :pattern_config="pattern_config"
     :show_close_button="sheet_close_button"
+    :close_label="back_mode ? t('tab-sheet.back-label') : undefined"
+    :close_icon="back_mode ? 'arrow-back' : 'close'"
     :surface="surface"
     :header_border="header_border"
     :sheet_px="sheet_px"
-    @close="emit('close')"
+    @close="onMobileSheetClose"
   >
     <template v-if="$slots.overlay" #overlay><slot name="overlay"></slot></template>
     <template v-if="$slots.header" #header><slot name="header"></slot></template>

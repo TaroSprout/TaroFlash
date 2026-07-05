@@ -6,14 +6,11 @@ import UiTextarea from '@/components/ui-kit/textarea.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { deckSettingsLayoutKey } from '../layout'
-import DeckBackButton from '../deck-back-button.vue'
 import DeckSaveButton from '../deck-save-button.vue'
 
 const { t } = useI18n()
 const { settings } = inject(deckEditorKey)!
 const layout_mode = inject(deckSettingsLayoutKey)!
-
-const emit = defineEmits<{ back: [] }>()
 </script>
 
 <template>
@@ -21,8 +18,6 @@ const emit = defineEmits<{ back: [] }>()
     data-testid="tab-details"
     class="px-(--deck-settings-padding) pb-(--deck-settings-padding)"
   >
-    <deck-back-button @back="emit('back')" />
-
     <div data-testid="tab-details__inputs" class="flex flex-col gap-2">
       <ui-input
         :placeholder="t('deck.title-placeholder')"

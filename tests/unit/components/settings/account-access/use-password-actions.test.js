@@ -10,7 +10,7 @@ const { mockSession } = vi.hoisted(() => ({
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (k) => k }) }))
 vi.mock('@/stores/session', () => ({ useSessionStore: () => mockSession }))
 
-import { usePasswordActions } from '@/components/modals/account-access/use-password-actions'
+import { usePasswordActions } from '@/components/settings/account-access/use-password-actions'
 
 beforeEach(() => {
   mockSession.updatePassword.mockReset()

@@ -19,11 +19,11 @@ const mockGoogleActions = {
   onConnect: vi.fn(),
   onDisconnect: vi.fn()
 }
-vi.mock('@/components/modals/account-access/use-google-actions', () => ({
+vi.mock('@/components/settings/account-access/use-google-actions', () => ({
   useGoogleActions: () => mockGoogleActions
 }))
 
-import AccountAccessMenu from '@/components/modals/account-access/account-access-menu.vue'
+import AccountAccessMenu from '@/components/settings/account-access/account-access-menu.vue'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
@@ -135,5 +135,13 @@ describe('AccountAccessMenu', () => {
     expect(wrapper.find('[data-testid="account-access-modal__google-button"]').text()).toContain(
       'Disconnect Google Account'
     )
+  })
+
+  test('forwards the composable loading state to the google button (renders the loading-dots icon)', () => {
+    mockGoogleActions.loading.value = true
+    const wrapper = makeWrapper()
+    const button = wrapper.find('[data-testid="account-access-modal__google-button"]')
+    const icons = button.findAll('[data-testid="ui-kit-icon"]')
+    expect(icons.some((icon) => icon.attributes('alt') === 'loading-dots')).toBe(true)
   })
 })

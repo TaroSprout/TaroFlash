@@ -8,7 +8,6 @@ import TabBar from '@/components/layout-kit/tab-bar.vue'
 import DeckDesignPreview from '@/components/deck/deck-design-preview.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { deckSettingsLayoutKey } from '../layout'
-import DeckBackButton from '../deck-back-button.vue'
 import DeckSaveButton from '../deck-save-button.vue'
 
 type SideTab = { value: CardSide; label: string }
@@ -16,8 +15,6 @@ type SideTab = { value: CardSide; label: string }
 const { t } = useI18n()
 const editor = inject(deckEditorKey)!
 const layout_mode = inject(deckSettingsLayoutKey)!
-
-const emit = defineEmits<{ back: [] }>()
 
 const tabs = computed<SideTab[]>(() => [
   { value: 'cover', label: t('deck.settings-modal.design.designer-tabs.cover') },
@@ -35,7 +32,6 @@ const card_side_attributes = computed(() =>
     data-testid="tab-design"
     class="flex flex-col items-center gap-6 px-(--deck-settings-padding) pb-(--deck-settings-padding)"
   >
-    <deck-back-button @back="emit('back')" />
     <div
       v-if="layout_mode === 'sheet'"
       data-testid="tab-design__inline-preview"

@@ -6,13 +6,6 @@ import { settingsLayoutKey } from '@/components/settings/layout'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
-const NullStub = defineComponent({
-  setup:
-    (_p, { emit }) =>
-    () =>
-      h('div', { onClick: () => emit?.('back') })
-})
-
 const RatingsSectionStub = defineComponent({
   name: 'RatingsSection',
   setup: () => () => h('div', { 'data-testid': 'ratings-section-stub' })
@@ -36,8 +29,7 @@ function makeTab(layout_mode = 'sheet') {
       stubs: {
         RatingsSection: RatingsSectionStub,
         FsrsSection: FsrsSectionStub,
-        SettingsSaveButton: SaveButtonStub,
-        SettingsBackButton: NullStub
+        SettingsSaveButton: SaveButtonStub
       },
       mocks: { $t: (k) => k },
       provide: { [settingsLayoutKey]: computed(() => layout_mode) }
@@ -69,9 +61,8 @@ describe('TabReviewPreferences', () => {
     expect(wrapper.find('[data-testid="settings-save-button-stub"]').exists()).toBe(false)
   })
 
-  test('emits back when the back button fires', async () => {
+  test('does not emit back (chrome-driven back replaced the inline button)', () => {
     const wrapper = makeTab()
-    await wrapper.findComponent(NullStub).trigger('click')
-    expect(wrapper.emitted('back')).toHaveLength(1)
+    expect(wrapper.emitted('back')).toBeUndefined()
   })
 })

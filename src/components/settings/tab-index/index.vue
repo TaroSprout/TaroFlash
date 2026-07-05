@@ -20,7 +20,10 @@ const nav_groups = computed<NavGroup[]>(() => [
   {
     key: 'account',
     heading: t('settings.index.account-heading'),
-    entries: ['profile', 'subscription']
+    entries:
+      layout_mode.value === 'sheet'
+        ? ['profile', 'subscription', 'account-access']
+        : ['profile', 'subscription']
   },
   {
     key: 'app',

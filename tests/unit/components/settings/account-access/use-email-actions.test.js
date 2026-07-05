@@ -10,7 +10,7 @@ const { mockSession } = vi.hoisted(() => ({
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (k) => k }) }))
 vi.mock('@/stores/session', () => ({ useSessionStore: () => mockSession }))
 
-import { useEmailActions } from '@/components/modals/account-access/use-email-actions'
+import { useEmailActions } from '@/components/settings/account-access/use-email-actions'
 
 beforeEach(() => {
   mockSession.user = { email: 'current@example.com' }

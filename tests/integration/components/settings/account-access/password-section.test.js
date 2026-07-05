@@ -1,6 +1,15 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { mount } from '@vue/test-utils'
-import { defineComponent, h, ref } from 'vue'
+import { mount, flushPromises } from '@vue/test-utils'
+import { defineComponent, h, nextTick, ref } from 'vue'
+
+// Vue Test Utils stubs the built-in <transition> by default (no lifecycle
+// hooks fire). Wait through the real JS-hook cycle — 2x rAF even with
+// `:css="false"` — so onLeave/onEnter run for real against the gsap mock.
+async function flushTransition() {
+  await nextTick()
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+  await flushPromises()
+}
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -10,7 +19,18 @@ vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn(), emitS
 const { coarseRef } = vi.hoisted(() => ({ coarseRef: { value: false } }))
 vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: () => coarseRef }))
 
-vi.mock('gsap', () => ({ gsap: { to: vi.fn((_el, opts) => opts?.onComplete?.()) } }))
+// onComplete resolves on a microtask, not synchronously — a real GSAP tween
+// never completes within the same call stack as the leave hook, and calling
+// done() synchronously during a real (unstubbed) unmount transition crashes
+// Vue's internal removal bookkeeping (`afterLeave` reads a detached parentNode).
+vi.mock('gsap', () => ({
+  gsap: {
+    to: vi.fn((_el, opts) => {
+      Promise.resolve().then(() => opts?.onComplete?.())
+    }),
+    set: vi.fn()
+  }
+}))
 
 const mockPasswordActions = {
   password: ref(''),
@@ -20,11 +40,11 @@ const mockPasswordActions = {
   success: ref(false),
   submit: vi.fn()
 }
-vi.mock('@/components/modals/account-access/use-password-actions', () => ({
+vi.mock('@/components/settings/account-access/use-password-actions', () => ({
   usePasswordActions: () => mockPasswordActions
 }))
 
-import PasswordSection from '@/components/modals/account-access/password-section.vue'
+import PasswordSection from '@/components/settings/account-access/password-section.vue'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
@@ -40,7 +60,7 @@ const UiTooltipStub = defineComponent({
 function makeWrapper() {
   return mount(PasswordSection, {
     global: {
-      stubs: { UiTooltip: UiTooltipStub },
+      stubs: { UiTooltip: UiTooltipStub, transition: false },
       directives: { sfx: {} }
     }
   })
@@ -89,6 +109,16 @@ describe('PasswordSection', () => {
     )
     expect(wrapper.find('[data-testid="account-access-modal__password-input"]').exists()).toBe(
       false
+    )
+  })
+
+  test('switching from form to success mid-mount runs the leave/enter transition hooks (gsap-mocked)', async () => {
+    const wrapper = makeWrapper()
+    mockPasswordActions.success.value = true
+    await flushTransition()
+
+    expect(wrapper.find('[data-testid="account-access-modal__password-success"]').exists()).toBe(
+      true
     )
   })
 })
