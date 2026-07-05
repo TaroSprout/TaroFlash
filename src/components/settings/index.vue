@@ -88,6 +88,8 @@ const active_tab = ref<ActiveTab | null>(null)
 const tab_outlet = ref<HTMLElement>()
 const { nav_direction, onTabEnter, onTabLeave } = useTabTransition(layout_mode, tab_outlet)
 
+const active_tab_ref = useTemplateRef<{ onChromeBack?: () => boolean }>('active_tab_ref')
+
 // account-access is reachable via the aside's edit button (tablet/desktop) or the
 // sheet-only tab-index entry — it never appears as a sidebar tab-bar icon itself.
 const tabs = computed(() =>
@@ -169,6 +171,11 @@ function onBack() {
   active_tab.value = null
 }
 
+function onChromeBack() {
+  if (active_tab_ref.value?.onChromeBack?.()) return
+  onBack()
+}
+
 watch(layout_mode, (mode) => {
   if (mode !== 'desktop' && active_tab.value === 'danger-zone') active_tab.value = null
   if (mode !== 'sheet' && active_tab.value === 'account-access') active_tab.value = null
@@ -191,8 +198,10 @@ watch(layout_mode, (mode) => {
     :tabs="tabs"
     :pattern_config="{ pattern: 'diagonal-stripes', pattern_size: '48px', pattern_opacity: '0.15' }"
     :parts="{ content: tab_content_class }"
+    :show_back="active_tab !== null"
     v-model:active="sidebar_active"
     @close="onClose"
+    @back="onChromeBack"
   >
     <template #header-content>
       <div
@@ -226,7 +235,12 @@ watch(layout_mode, (mode) => {
       ]"
     >
       <transition :css="false" mode="out-in" @leave="onTabLeave" @enter="onTabEnter">
-        <component :is="tab_component" :key="displayed_tab" @navigate="onNavigate" @back="onBack" />
+        <component
+          ref="active_tab_ref"
+          :is="tab_component"
+          :key="displayed_tab"
+          @navigate="onNavigate"
+        />
       </transition>
     </div>
 

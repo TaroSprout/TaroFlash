@@ -8,7 +8,6 @@ import UiPatternPicker from '@/components/ui-kit/pattern-picker.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import MemberBadge from '@/components/member/member-badge.vue'
-import SettingsBackButton from '../settings-back-button.vue'
 import SettingsSaveButton from '../settings-save-button.vue'
 import { memberEditorKey } from '@/composables/member/editor'
 import { settingsLayoutKey } from '../layout'
@@ -17,14 +16,10 @@ import { SUPPORTED_THEMES, SUPPORTED_PATTERNS } from '@/utils/cover'
 const { t } = useI18n()
 const editor = inject(memberEditorKey)!
 const layout_mode = inject(settingsLayoutKey)!
-
-const emit = defineEmits<{ back: [] }>()
 </script>
 
 <template>
   <section-list data-testid="tab-profile" class="px-(--settings-padding) pb-(--settings-padding)">
-    <settings-back-button @back="emit('back')" />
-
     <member-badge
       v-if="layout_mode === 'sheet'"
       data-testid="tab-profile__preview"
