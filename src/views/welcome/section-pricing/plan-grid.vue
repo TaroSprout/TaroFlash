@@ -11,7 +11,7 @@ const { t } = useI18n()
     data-testid="plan-grid"
     data-theme="brown-50"
     data-theme-dark="stone-700"
-    class="grid grid-cols-2 gap-3.5"
+    class="grid grid-cols-1 mlg:grid-cols-2 max-mlg:w-full gap-3.5"
   >
     <plan-option
       plan-id="free"

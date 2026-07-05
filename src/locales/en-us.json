@@ -92,6 +92,7 @@
   "welcome-view.features.callout.roadmap-link": "See what’s coming",
   "welcome-view.pricing.heading": "Pay if you can. Play for free if you can't.",
   "welcome-view.pricing.subtitle": "The free plan is genuinely usable. Paid plans help keep the project going.",
+  "welcome-view.pricing.footnote": "TaroFlash is designed, built, and maintained by just <span>one person!</span>\nThank you for being here, whichever plan you're on.",
   "welcome-view.roadmap.heading": "A quiet roadmap.",
   "welcome-view.roadmap.subtitle": "Built slowly, in the open.",
   "welcome-view.roadmap.done-label": "Done",
