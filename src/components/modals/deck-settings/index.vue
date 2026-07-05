@@ -12,7 +12,6 @@ import { useAlert } from '@/composables/alert'
 import { useModalAfterEnter, useModalRequestClose } from '@/composables/modal'
 import DeckPinnedPreview from '@/components/deck/pinned-preview.vue'
 import TabSheet from '@/components/layout-kit/sheet/tab-sheet.vue'
-import UiIcon from '@/components/ui-kit/icon.vue'
 import { TAB_META, type TabValue } from './tabs'
 
 export type DeckSettingsResponse = boolean
@@ -195,12 +194,6 @@ watch(active_tab, (tab) => {
           data-testid="deck-settings__header-title"
           class="flex items-center gap-3 text-5xl text-white"
         >
-          <ui-icon
-            v-if="header_meta"
-            data-testid="deck-settings__header-icon"
-            :src="header_meta.icon"
-            class="size-9 shrink-0"
-          />
           {{ header_title }}
         </h1>
       </div>

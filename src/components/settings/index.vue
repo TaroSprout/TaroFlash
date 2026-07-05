@@ -215,12 +215,6 @@ watch(layout_mode, (mode) => {
           data-testid="settings__header-title"
           class="flex items-center gap-3 text-5xl text-white"
         >
-          <ui-icon
-            v-if="header_meta"
-            data-testid="settings__header-icon"
-            :src="header_meta.icon"
-            class="size-9 shrink-0"
-          />
           {{ header_title }}
         </h1>
       </div>
