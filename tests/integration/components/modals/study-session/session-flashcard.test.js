@@ -113,6 +113,19 @@ vi.mock('@/stores/member', () => ({
   useMemberStore: () => mockMemberStore
 }))
 
+// useCardLimitGate (via useActiveCardActions) calls useCan() unconditionally,
+// which otherwise reaches useMemberDeckCountQuery's real @pinia/colada
+// useQuery — this suite never installs an active Pinia, so stub it flat.
+vi.mock('@/composables/can', () => ({
+  useCan: () => ({
+    useProFeature: { value: false },
+    createDeck: { value: true },
+    useCardImages: { value: false },
+    useAudioReader: { value: false },
+    addCards: () => true
+  })
+}))
+
 // ── Card stub ─────────────────────────────────────────────────────────────────
 // Emits `flip-complete` when `side` changes so that session.vue's onNextCardFlipped
 // resolves the animation-wait promise used to sequence card transitions.

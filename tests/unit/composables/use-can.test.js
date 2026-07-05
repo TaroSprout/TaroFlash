@@ -3,6 +3,8 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 let planRef
 let deckCountRef
 let roleRef
+let deckLimitRef
+let cardsPerDeckLimitRef
 
 vi.mock('@/stores/member', async () => {
   const { ref } = await vi.importActual('vue')
@@ -28,6 +30,15 @@ vi.mock('@/api/decks', async () => {
   }
 })
 
+vi.mock('@/composables/plan-limits', async () => {
+  const { ref } = await vi.importActual('vue')
+  deckLimitRef = ref(5)
+  cardsPerDeckLimitRef = ref(200)
+  return {
+    usePlanLimits: () => ({ deckLimit: deckLimitRef, cardsPerDeckLimit: cardsPerDeckLimitRef })
+  }
+})
+
 const { useCan } = await import('@/composables/can')
 
 describe('useCan', () => {
@@ -35,6 +46,8 @@ describe('useCan', () => {
     planRef.value = null
     deckCountRef.value = 0
     roleRef.value = null
+    deckLimitRef.value = 5
+    cardsPerDeckLimitRef.value = 200
   })
 
   describe('useProFeature', () => {
@@ -62,8 +75,7 @@ describe('useCan', () => {
   })
 
   describe('createDeck', () => {
-    test('allows free user under the limit', () => {
-      planRef.value = 'free'
+    test('allows a user under the deckLimit', () => {
       const can = useCan()
       deckCountRef.value = 0
       expect(can.createDeck.value).toBe(true)
@@ -71,8 +83,7 @@ describe('useCan', () => {
       expect(can.createDeck.value).toBe(true)
     })
 
-    test('blocks free user at the limit', () => {
-      planRef.value = 'free'
+    test('blocks a user at the deckLimit', () => {
       const can = useCan()
       deckCountRef.value = 5
       expect(can.createDeck.value).toBe(false)
@@ -80,8 +91,8 @@ describe('useCan', () => {
       expect(can.createDeck.value).toBe(false)
     })
 
-    test('allows paid user regardless of count', () => {
-      planRef.value = 'paid'
+    test('allows a user regardless of count when deckLimit is null (unlimited)', () => {
+      deckLimitRef.value = null
       const can = useCan()
       deckCountRef.value = 0
       expect(can.createDeck.value).toBe(true)
@@ -89,21 +100,36 @@ describe('useCan', () => {
       expect(can.createDeck.value).toBe(true)
     })
 
-    test('treats unset plan as free', () => {
+    test('reactively updates when deckLimit flips from a number to null', () => {
       const can = useCan()
-      deckCountRef.value = 4
-      expect(can.createDeck.value).toBe(true)
-      deckCountRef.value = 5
-      expect(can.createDeck.value).toBe(false)
-    })
-
-    test('reactively updates when plan flips free → paid', () => {
-      const can = useCan()
-      planRef.value = 'free'
       deckCountRef.value = 10
       expect(can.createDeck.value).toBe(false)
-      planRef.value = 'paid'
+      deckLimitRef.value = null
       expect(can.createDeck.value).toBe(true)
+    })
+  })
+
+  describe('addCards', () => {
+    test('always true when cardsPerDeckLimit is null (unlimited)', () => {
+      cardsPerDeckLimitRef.value = null
+      expect(useCan().addCards(999)).toBe(true)
+    })
+
+    test('true when count + adding is under the limit', () => {
+      expect(useCan().addCards(100, 1)).toBe(true)
+    })
+
+    test('true when count + adding equals the limit exactly (boundary)', () => {
+      expect(useCan().addCards(199, 1)).toBe(true)
+    })
+
+    test('false when count + adding exceeds the limit', () => {
+      expect(useCan().addCards(199, 2)).toBe(false)
+    })
+
+    test('defaults adding to 1 when not supplied', () => {
+      expect(useCan().addCards(200)).toBe(false)
+      expect(useCan().addCards(199)).toBe(true)
     })
   })
 

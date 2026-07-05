@@ -55,8 +55,7 @@ describe('useMemberStore', () => {
       avatar_url: 'https://avatar',
       updated_at: '2026-01-02',
       role: 'admin',
-      plan: 'paid',
-      plan_display_name: 'Builder'
+      plan: 'paid'
     }
 
     const store = useMemberStore()
@@ -70,22 +69,7 @@ describe('useMemberStore', () => {
     expect(store.updated_at).toBe('2026-01-02')
     expect(store.role).toBe('admin')
     expect(store.plan).toBe('paid')
-    expect(store.plan_display_name).toBe('Builder')
     expect(store.has_member).toBe(true)
-  })
-
-  test('exposes plan_display_name projected from the member query [obligation]', () => {
-    sessionUser.value = { id: 'user-1' }
-    memberRef.value = { id: 'user-1', plan: 'paid', plan_display_name: 'Builder' }
-    const store = useMemberStore()
-    expect(store.plan_display_name).toBe('Builder')
-  })
-
-  test('plan_display_name is undefined when member query has no data', () => {
-    sessionUser.value = { id: 'user-1' }
-    memberRef.value = null
-    const store = useMemberStore()
-    expect(store.plan_display_name).toBeUndefined()
   })
 
   test('profile fields stay undefined when the query resolves to null', () => {

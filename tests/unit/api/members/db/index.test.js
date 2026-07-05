@@ -55,29 +55,23 @@ beforeEach(() => {
 // ── fetchMemberById ───────────────────────────────────────────────────────────
 
 describe('fetchMemberById', () => {
-  test('selects with plans(display_name) embed [obligation]', async () => {
-    makeChain({ data: { ...baseMemberRow, plans: { display_name: 'Builder' } }, error: null })
+  test('selects "*" (no plans embed — display_name comes from PLANS config now) [obligation]', async () => {
+    makeChain({ data: baseMemberRow, error: null })
     await fetchMemberById('user-1')
-    expect(mocks.selectMock).toHaveBeenCalledWith('*, plans(display_name)')
+    expect(mocks.selectMock).toHaveBeenCalledWith('*')
   })
 
-  test('flattens plans.display_name to plan_display_name on the result [obligation]', async () => {
-    makeChain({ data: { ...baseMemberRow, plans: { display_name: 'Builder' } }, error: null })
+  test('returns the row as-is, with no plan_display_name projection [obligation]', async () => {
+    makeChain({ data: baseMemberRow, error: null })
     const result = await fetchMemberById('user-1')
-    expect(result).toHaveProperty('plan_display_name', 'Builder')
+    expect(result).toEqual(baseMemberRow)
+    expect(result).not.toHaveProperty('plan_display_name')
   })
 
-  test('returned object has no nested plans property [obligation]', async () => {
-    makeChain({ data: { ...baseMemberRow, plans: { display_name: 'Builder' } }, error: null })
-    const result = await fetchMemberById('user-1')
-    expect(result).not.toHaveProperty('plans')
-  })
-
-  test('handles null plans (free member without plan join) gracefully', async () => {
-    makeChain({ data: { ...baseMemberRow, plans: null }, error: null })
-    const result = await fetchMemberById('user-1')
-    expect(result).toHaveProperty('plan_display_name', undefined)
-    expect(result).not.toHaveProperty('plans')
+  test('scopes the query by id via .eq("id", id)', async () => {
+    const { eq } = makeChain({ data: baseMemberRow, error: null })
+    await fetchMemberById('user-1')
+    expect(eq).toHaveBeenCalledWith('id', 'user-1')
   })
 
   test('returns null on error', async () => {
