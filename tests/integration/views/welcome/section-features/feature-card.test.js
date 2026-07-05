@@ -1,6 +1,7 @@
-import { describe, test, expect } from 'vite-plus/test'
+import { describe, test, expect, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, shallowRef } from 'vue'
+import { welcomeWidthKey } from '@/views/welcome/welcome-layout'
 
 // ── Stubs ──────────────────────────────────────────────────────────────────────
 
@@ -21,6 +22,7 @@ const CardStub = defineComponent({
         'div',
         {
           'data-testid': 'card-stub',
+          'data-size': props.size,
           'data-side': props.side,
           'data-cover-pattern': props.cover_config?.pattern
         },
@@ -35,6 +37,9 @@ import FeatureCard from '@/views/welcome/section-features/feature-card.vue'
 
 // ── Mount helper ───────────────────────────────────────────────────────────────
 
+// width is provided via injection so useWelcomeWidth() resolves; default desktop.
+const width = shallowRef('desktop')
+
 function mountFeatureCard(props = {}) {
   return shallowMount(FeatureCard, {
     props: {
@@ -45,6 +50,7 @@ function mountFeatureCard(props = {}) {
       ...props
     },
     global: {
+      provide: { [welcomeWidthKey]: width },
       stubs: {
         UiIcon: UiIconStub,
         Card: CardStub
@@ -56,6 +62,10 @@ function mountFeatureCard(props = {}) {
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
 describe('FeatureCard', () => {
+  beforeEach(() => {
+    width.value = 'desktop'
+  })
+
   // ── Structure ──────────────────────────────────────────────────────────────
 
   test('renders the card face element [obligation]', () => {
@@ -142,5 +152,47 @@ describe('FeatureCard', () => {
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-cover-pattern')).toBe(
       'diagonal-stripes'
     )
+  })
+
+  // ── size derived from useWelcomeWidth() [obligation] ────────────────────────
+
+  test('passes size="lg" to the card on desktop [obligation]', () => {
+    width.value = 'desktop'
+    const wrapper = mountFeatureCard()
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('lg')
+  })
+
+  test('passes size="xl" to the card on tablet [obligation]', () => {
+    width.value = 'tablet'
+    const wrapper = mountFeatureCard()
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('xl')
+  })
+
+  test('passes size="sm" to the card on mobile [obligation]', () => {
+    width.value = 'mobile'
+    const wrapper = mountFeatureCard()
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('sm')
+  })
+
+  // The face's data-size-tier mirrors the same `size` value that drives the
+  // icon/heading/description lookup maps (FACE_ROWS/ICON_SIZE/HEADING_SIZE/
+  // DESCRIPTION_SIZE) — asserting the attribute proves each width tier picks a
+  // distinct entry without asserting Tailwind class names directly.
+  test('face data-size-tier tracks the width-derived size on desktop [obligation]', () => {
+    width.value = 'desktop'
+    const face = mountFeatureCard().find('[data-testid="feature-card__face"]')
+    expect(face.attributes('data-size-tier')).toBe('lg')
+  })
+
+  test('face data-size-tier tracks the width-derived size on tablet [obligation]', () => {
+    width.value = 'tablet'
+    const face = mountFeatureCard().find('[data-testid="feature-card__face"]')
+    expect(face.attributes('data-size-tier')).toBe('xl')
+  })
+
+  test('face data-size-tier tracks the width-derived size on mobile [obligation]', () => {
+    width.value = 'mobile'
+    const face = mountFeatureCard().find('[data-testid="feature-card__face"]')
+    expect(face.attributes('data-size-tier')).toBe('sm')
   })
 })

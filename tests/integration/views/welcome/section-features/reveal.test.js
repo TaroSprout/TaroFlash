@@ -5,18 +5,13 @@ import { welcomeWidthKey } from '@/views/welcome/welcome-layout'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { mockCreateFeatureReveal, mockCreateStackReveal, mockKill, mockStackTeardown } = vi.hoisted(
-  () => {
-    const mockKill = vi.fn()
-    const mockStackTeardown = vi.fn()
-    return {
-      mockKill,
-      mockStackTeardown,
-      mockCreateFeatureReveal: vi.fn(() => ({ kill: mockKill })),
-      mockCreateStackReveal: vi.fn(() => mockStackTeardown)
-    }
+const { mockCreateFeatureReveal, mockKill } = vi.hoisted(() => {
+  const mockKill = vi.fn()
+  return {
+    mockKill,
+    mockCreateFeatureReveal: vi.fn(() => ({ kill: mockKill }))
   }
-)
+})
 
 // width is provided via injection as a reactive ref so the component's
 // watch(width, ...) has a valid source. Set .value before each mount.
@@ -24,9 +19,6 @@ const width = shallowRef('desktop')
 
 vi.mock('@/utils/animations/welcome/feature-reveal', () => ({
   createFeatureReveal: mockCreateFeatureReveal
-}))
-vi.mock('@/utils/animations/welcome/stack-reveal', () => ({
-  createStackReveal: mockCreateStackReveal
 }))
 
 // ── Stubs ──────────────────────────────────────────────────────────────────────
@@ -71,10 +63,7 @@ describe('SectionFeatures scroll-flip reveal', () => {
     width.value = 'desktop'
     mockCreateFeatureReveal.mockClear()
     mockCreateFeatureReveal.mockImplementation(() => ({ kill: mockKill }))
-    mockCreateStackReveal.mockClear()
-    mockCreateStackReveal.mockImplementation(() => mockStackTeardown)
     mockKill.mockClear()
-    mockStackTeardown.mockClear()
   })
 
   afterEach(() => {
@@ -141,101 +130,63 @@ describe('SectionFeatures scroll-flip reveal', () => {
     expect(secondIndices).toEqual([2, 3])
   })
 
-  // [obligation] mobile: uses createStackReveal, not createFeatureReveal
-  test('uses createStackReveal on mobile and does not call createFeatureReveal [obligation]', () => {
+  // [obligation] mobile now takes the exact same grid-reveal code path as tablet —
+  // no more createStackReveal / deck-stack branch.
+  test('wires two reveal triggers on mobile, one per grid row — same as tablet [obligation]', () => {
     width.value = 'mobile'
     wrapper = mountFeatures()
-    expect(mockCreateFeatureReveal).not.toHaveBeenCalled()
-    expect(mockCreateStackReveal).toHaveBeenCalledTimes(1)
+    expect(mockCreateFeatureReveal).toHaveBeenCalledTimes(2)
+    const firstIndices = mockCreateFeatureReveal.mock.calls[0][1]
+    const secondIndices = mockCreateFeatureReveal.mock.calls[1][1]
+    expect(firstIndices).toEqual([0, 1])
+    expect(secondIndices).toEqual([2, 3])
   })
 
-  // [obligation] mobile: passes features.length + 1 triggers to createStackReveal
-  test('passes features.length + 1 as count to createStackReveal [obligation]', () => {
+  test('mobile and tablet group the same trigger elements (leading li of each row) [obligation]', () => {
+    width.value = 'tablet'
+    wrapper = mountFeatures()
+    const tabletTriggers = mockCreateFeatureReveal.mock.calls.map(([trigger]) => trigger)
+    wrapper.unmount()
+
+    width.value = 'mobile'
+    mockCreateFeatureReveal.mockClear()
+    wrapper = mountFeatures()
+    const mobileTriggers = mockCreateFeatureReveal.mock.calls.map(([trigger]) => trigger)
+
+    expect(mobileTriggers).toHaveLength(tabletTriggers.length)
+    mobileTriggers.forEach((trigger) => expect(trigger).toBeInstanceOf(HTMLElement))
+  })
+
+  // [obligation] setActive on mobile flips the card exactly like desktop/tablet —
+  // no activeIndex / data-active semantics remain.
+  test('setActive(index, true) flips the card to front on mobile [obligation]', async () => {
     width.value = 'mobile'
     wrapper = mountFeatures()
-    const [, count] = mockCreateStackReveal.mock.calls[0]
-    expect(count).toBe(5) // 4 features + 1 trailing deactivation trigger
+    const setActive = mockCreateFeatureReveal.mock.calls[0][2]
+
+    setActive(1, true)
+    await nextTick()
+
+    const sides = wrapper
+      .findAll('[data-testid="feature-card-stub"]')
+      .map((c) => c.attributes('data-side'))
+    expect(sides).toEqual(['cover', 'front', 'cover', 'cover'])
   })
 
-  // [obligation] data-active tracks activeIndex — not a CSS class
-  test('data-active="true" is set only on the card at activeIndex [obligation]', async () => {
-    width.value = 'mobile'
-    wrapper = mountFeatures()
-    const reachCard = mockCreateStackReveal.mock.calls[0][2]
+  // [obligation] the removed deck-stack markup/attrs never appear, on any width
+  test.each(['desktop', 'tablet', 'mobile'])(
+    'renders no data-stack or data-active attributes on %s [obligation]',
+    (w) => {
+      width.value = w
+      wrapper = mountFeatures()
 
-    reachCard(2, true)
-    await nextTick()
-
-    const items = wrapper.findAll('[data-testid^="welcome-features__card-"]')
-    const activeAttrs = items.map((el) => el.attributes('data-active'))
-    expect(activeAttrs[2]).toBe('true')
-    expect(activeAttrs.filter((v) => v === 'true')).toHaveLength(1)
-  })
-
-  // [obligation] mobile: reachCard sets activeIndex = entering ? index : index - 1
-  test('reachCard sets activeIndex to index when entering [obligation]', async () => {
-    width.value = 'mobile'
-    wrapper = mountFeatures()
-    const reachCard = mockCreateStackReveal.mock.calls[0][2]
-
-    reachCard(1, true)
-    await nextTick()
-
-    const items = wrapper.findAll('[data-testid^="welcome-features__card-"]')
-    expect(items[1].attributes('data-active')).toBe('true')
-  })
-
-  test('reachCard sets activeIndex to index - 1 when leaving [obligation]', async () => {
-    width.value = 'mobile'
-    wrapper = mountFeatures()
-    const reachCard = mockCreateStackReveal.mock.calls[0][2]
-
-    reachCard(2, true)
-    await nextTick()
-    reachCard(3, false)
-    await nextTick()
-
-    const items = wrapper.findAll('[data-testid^="welcome-features__card-"]')
-    // leaving trigger 3 → activeIndex = 3 - 1 = 2
-    expect(items[2].attributes('data-active')).toBe('true')
-    expect(items[3].attributes('data-active')).toBe('false')
-  })
-
-  // [obligation] trailing trigger (index = features.length) deactivates all cards
-  test('trailing trigger entering sets activeIndex past last card — no card is front [obligation]', async () => {
-    width.value = 'mobile'
-    wrapper = mountFeatures()
-    const reachCard = mockCreateStackReveal.mock.calls[0][2]
-
-    reachCard(3, true)
-    await nextTick()
-
-    // Trailing trigger (index 4) enters — activeIndex = 4, past last feature (3)
-    reachCard(4, true)
-    await nextTick()
-
-    const items = wrapper.findAll('[data-testid^="welcome-features__card-"]')
-    const fronts = items.filter((el) => el.attributes('data-side') === 'front')
-    expect(fronts).toHaveLength(0)
-    const actives = items.filter((el) => el.attributes('data-active') === 'true')
-    expect(actives).toHaveLength(0)
-  })
-
-  // [obligation] mobile: every non-active card is on cover side
-  test('mobile: only the active card shows front; all others show cover [obligation]', async () => {
-    width.value = 'mobile'
-    wrapper = mountFeatures()
-    const reachCard = mockCreateStackReveal.mock.calls[0][2]
-
-    reachCard(1, true)
-    await nextTick()
-
-    const stubs = wrapper.findAll('[data-testid="feature-card-stub"]')
-    const sides = stubs.map((s) => s.attributes('data-side'))
-    expect(sides[1]).toBe('front')
-    expect(sides.filter((s) => s === 'front')).toHaveLength(1)
-    expect(sides.filter((s) => s === 'cover')).toHaveLength(3)
-  })
+      expect(wrapper.find('[data-testid="welcome-features__row"]').attributes('data-stack')).toBe(
+        undefined
+      )
+      const items = wrapper.findAll('[data-testid^="welcome-features__card-"]')
+      items.forEach((item) => expect(item.attributes('data-active')).toBe(undefined))
+    }
+  )
 
   test('kills the ScrollTrigger on unmount (desktop)', () => {
     wrapper = mountFeatures()
@@ -244,11 +195,11 @@ describe('SectionFeatures scroll-flip reveal', () => {
     expect(mockKill).toHaveBeenCalled()
   })
 
-  test('calls the stack teardown on unmount (mobile)', () => {
+  test('kills the ScrollTrigger on unmount (mobile) [obligation]', () => {
     width.value = 'mobile'
     wrapper = mountFeatures()
     wrapper.unmount()
     wrapper = undefined
-    expect(mockStackTeardown).toHaveBeenCalled()
+    expect(mockKill).toHaveBeenCalled()
   })
 })

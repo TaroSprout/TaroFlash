@@ -8,9 +8,6 @@ import { welcomeWidthKey } from '@/views/welcome/welcome-layout'
 vi.mock('@/utils/animations/welcome/feature-reveal', () => ({
   createFeatureReveal: vi.fn(() => ({ kill: vi.fn() }))
 }))
-vi.mock('@/utils/animations/welcome/stack-reveal', () => ({
-  createStackReveal: vi.fn(() => vi.fn())
-}))
 
 // ── Stubs ──────────────────────────────────────────────────────────────────────
 
@@ -137,5 +134,46 @@ describe('SectionFeatures', () => {
     const wrapper = mountFeatures()
     // CommunityCallout is stubbed; verify the component is present
     expect(wrapper.findComponent({ name: 'CommunityCallout' }).exists()).toBe(true)
+  })
+
+  // ── row layout: mobile now reuses tablet's exact grid classes [obligation] ─
+
+  test('renders the same 2-column grid classes on mobile and tablet [obligation]', () => {
+    width.value = 'tablet'
+    const tablet_classes = mountFeatures().find('[data-testid="welcome-features__row"]').classes()
+
+    width.value = 'mobile'
+    const mobile_classes = mountFeatures().find('[data-testid="welcome-features__row"]').classes()
+
+    expect(mobile_classes).toEqual(tablet_classes)
+    expect(mobile_classes).toEqual(expect.arrayContaining(['grid', 'grid-cols-[auto_auto]']))
+  })
+
+  test('renders a single-row flex layout on desktop, distinct from mobile/tablet [obligation]', () => {
+    width.value = 'desktop'
+    const desktop_classes = mountFeatures().find('[data-testid="welcome-features__row"]').classes()
+    expect(desktop_classes).toEqual(expect.arrayContaining(['flex', 'flex-wrap']))
+    expect(desktop_classes).not.toContain('grid')
+  })
+
+  // ── removed deck-stack markup never appears [obligation] ───────────────────
+
+  test('does not render a data-stack attribute on the row for any width [obligation]', () => {
+    for (const w of ['desktop', 'tablet', 'mobile']) {
+      width.value = w
+      const wrapper = mountFeatures()
+      expect(wrapper.find('[data-testid="welcome-features__row"]').attributes('data-stack')).toBe(
+        undefined
+      )
+    }
+  })
+
+  test('does not render a data-active attribute on any card for any width [obligation]', () => {
+    for (const w of ['desktop', 'tablet', 'mobile']) {
+      width.value = w
+      const wrapper = mountFeatures()
+      const items = wrapper.findAll('[data-testid^="welcome-features__card-"]')
+      items.forEach((item) => expect(item.attributes('data-active')).toBe(undefined))
+    }
   })
 })
