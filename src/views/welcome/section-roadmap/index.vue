@@ -12,15 +12,16 @@ type RoadmapItem = {
 const { t } = useI18n()
 
 const items: RoadmapItem[] = [
-  { key: 'create-study', done: true },
+  { key: 'build-study-decks', done: true },
   { key: 'dark-mode', done: true },
+  { key: 'mobile-support', done: true },
+  { key: 'import-export', done: false },
   { key: 'card-audio', done: false },
   { key: 'community', done: false },
-  { key: 'audio-reader', done: false },
-  { key: 'daily-challenges', done: false },
-  { key: 'metrics-rewards', done: false },
-  { key: 'shop', done: false },
-  { key: 'powerups', done: false }
+  { key: 'challenges', done: false },
+  { key: 'collect-rewards', done: false },
+  { key: 'paperclips-shop', done: false },
+  { key: 'bulk-edit', done: false }
 ]
 </script>
 
