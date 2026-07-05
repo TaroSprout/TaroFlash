@@ -19,7 +19,7 @@ const { heading, subtitle } = defineProps<SectionHeaderProps>()
     <p
       v-if="subtitle"
       data-testid="welcome-section-header__subtitle"
-      class="text-lg text-(--theme-neutral) max-w-160"
+      class="text-lg text-(--theme-on-primary) max-w-160"
     >
       {{ subtitle }}
     </p>
