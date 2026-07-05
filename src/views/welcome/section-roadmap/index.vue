@@ -33,7 +33,7 @@ const items: RoadmapItem[] = [
     class="w-full bg-green-500 dark:bg-green-800 flex justify-center"
   >
     <div
-      class="w-full flex flex-col gap-14 items-center py-30 px-4 sm:px-16 bg-brown-200 wave-top-[30px]"
+      class="w-full flex flex-col gap-14 items-center py-30 px-4 sm:px-16 bg-brown-200 dark:bg-grey-800 wave-top-[30px]"
     >
       <section-header
         :heading="t('welcome-view.roadmap.heading')"
@@ -55,7 +55,9 @@ const items: RoadmapItem[] = [
             aria-hidden="true"
             class="flex shrink-0 items-center justify-center size-8 rounded-full"
             :class="
-              item.done ? 'bg-green-500 text-brown-100' : 'border-3 border-dashed border-brown-500'
+              item.done
+                ? 'bg-green-500 dark:bg-green-800 text-brown-100'
+                : 'border-3 border-dashed border-brown-500'
             "
           >
             <ui-icon v-if="item.done" src="check" class="size-4.5" />
@@ -68,7 +70,10 @@ const items: RoadmapItem[] = [
             {{ t(`welcome-view.roadmap.item.${item.key}`) }}
           </span>
 
-          <span class="text-base" :class="item.done ? 'text-green-600' : 'text-brown-500'">
+          <span
+            class="text-base"
+            :class="item.done ? 'text-green-600 dark:text-green-800' : 'text-brown-500'"
+          >
             {{
               item.done
                 ? t('welcome-view.roadmap.done-label')
