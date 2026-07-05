@@ -36,8 +36,8 @@
       @slot;
     }
   }
-  /* width < mlg (58rem): thresholds mlg/lg/xl/2xl */
-  @media (width < 58rem) {
+  /* width < mlg (56rem): thresholds mlg/lg/xl/2xl */
+  @media (width < 56rem) {
     &:where(
       [data-mobile-below-width='mlg'],
       [data-mobile-below-width='mlg'] *,
@@ -104,7 +104,7 @@
       @slot;
     }
   }
-  @media (height < 58rem) {
+  @media (height < 56rem) {
     &:where(
       [data-mobile-below-height='mlg'],
       [data-mobile-below-height='mlg'] *,
