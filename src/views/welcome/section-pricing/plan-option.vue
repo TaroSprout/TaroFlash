@@ -40,7 +40,7 @@ function featureLabel(feature: PlanFeature) {
       >
         <span
           aria-hidden="true"
-          class="flex shrink-0 items-center justify-center size-5.5 rounded-full mt-0.5"
+          class="flex shrink-0 items-center justify-center size-6 rounded-full"
           :class="
             feature.ok !== false
               ? 'bg-(--theme-on-primary) text-(--theme-primary)'

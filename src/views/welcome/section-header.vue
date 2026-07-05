@@ -11,8 +11,6 @@ const { heading, subtitle } = defineProps<SectionHeaderProps>()
   <header
     data-testid="welcome-section-header"
     class="flex flex-col items-center gap-2.5 text-center"
-    data-theme="brown-100"
-    data-theme-dark="stone-700"
   >
     <h2 data-testid="welcome-section-header__heading" class="text-5xl text-(--theme-on-primary)">
       {{ heading }}

@@ -16,7 +16,8 @@ const { t } = useI18n()
 <template>
   <ui-wobble-box
     data-testid="community-callout"
-    data-theme="green-500"
+    data-theme="blue-500"
+    data-theme-dark="blue-650"
     class="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10 px-8 py-10 sm:px-12 mx-auto mt-16"
   >
     <ui-image
