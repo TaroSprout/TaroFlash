@@ -3,8 +3,7 @@ import { useI18n } from 'vue-i18n'
 import Checkout from '@/components/modals/checkout/index.vue'
 import { useAlert } from '@/composables/alert'
 import { useModal } from '@/composables/modal'
-import { useMemberStore } from '@/stores/member'
-import { PLANS } from '@/config/plans'
+import { useCan } from '@/composables/can'
 
 // SQLSTATE raised by `enforce_deck_card_limit` when a write would push a deck
 // past its plan's `cards_per_deck_limit`. The `PT` class is PostgREST's
@@ -23,13 +22,13 @@ function isCardLimitError(error: unknown): boolean {
 }
 
 /**
- * Gate for the per-deck card cap (free plan: 200 cards/deck, paid: unlimited).
+ * Gate for the per-deck card cap (plan-defined; see `can.addCards`).
  * Mirrors `useCardImageGate` / `useDeckActions.guardCreateDeck`: the FE check is
  * UX only — the real boundary is `enforce_deck_card_limit` in the insert RPCs.
  * Free members who hit the cap get an upgrade alert that opens Checkout.
  *
- * Lives outside `useCan` because the cap is per-deck and contextual: it reads
- * the live `card_count` of the deck passed in, not a single global query.
+ * Lives outside `useCan` because reading the deck's live `card_count` is
+ * per-deck and contextual — `useCan.addCards` only owns the cap comparison.
  *
  * @param deck - The deck being added to. Read reactively so the cap tracks the
  *   deck's live `card_count` as cards are inserted/removed.
@@ -42,7 +41,7 @@ export function useCardLimitGate(deck: MaybeRefOrGetter<Deck | undefined>) {
   const { t } = useI18n()
   const alert = useAlert()
   const modal = useModal()
-  const member = useMemberStore()
+  const can = useCan()
 
   /** Show the upgrade alert and open Checkout on confirm. */
   async function promptUpgrade(): Promise<void> {
@@ -61,9 +60,8 @@ export function useCardLimitGate(deck: MaybeRefOrGetter<Deck | undefined>) {
    * on confirm) and resolves `false` — the caller should abort the insert.
    */
   async function guardAddCards(adding = 1): Promise<boolean> {
-    const limit = PLANS[member.plan ?? 'free'].cardsPerDeckLimit
     const count = toValue(deck)?.card_count ?? 0
-    if (limit === null || count + adding <= limit) return true
+    if (can.addCards(count, adding)) return true
 
     await promptUpgrade()
     return false

@@ -8,9 +8,14 @@ type Member = {
   updated_at?: string
   role?: MemberRole
   plan?: MemberPlan
-  plan_display_name?: string
   preferences?: MemberPreferences
   cover_config?: DeckCover
+}
+
+type PlanLimits = {
+  id: MemberPlan
+  deck_limit: number | null
+  cards_per_deck_limit: number | null
 }
 
 type MemberPreferences = {

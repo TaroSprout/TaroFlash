@@ -57,6 +57,7 @@
   "plans.free.features.decks": "Up to {count} decks",
   "plans.free.features.cards": "Up to {count} cards per deck",
   "plans.free.features.deck-images": "Upload images to decks",
+  "plans.free.features.review-history": "{count} month of review history",
   "plans.free.features.no-card-images": "Images on Cards",
   "plans.paid.features.all-free-features": "All features from Free Plan",
   "plans.paid.features.no-deck-limit": "No deck limit",

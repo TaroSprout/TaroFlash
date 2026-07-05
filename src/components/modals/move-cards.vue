@@ -11,8 +11,7 @@ import GroupedList from '@/components/layout-kit/grouped-list.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import { TYPE_SFX } from '@/sfx/config'
 import { useCardLimitGate } from '@/composables/card/limit-gate'
-import { useMemberStore } from '@/stores/member'
-import { PLANS } from '@/config/plans'
+import { useCan } from '@/composables/can'
 
 export type MoveCardsModalResponse = {
   deck_id: number
@@ -29,7 +28,7 @@ const { cards, current_deck_id, count, close } = defineProps<MoveCardsModalProps
 
 const { t } = useI18n()
 
-const member = useMemberStore()
+const can = useCan()
 const { data: decks } = useMemberDecksQuery()
 const selected_deck_id = ref<number | undefined>(undefined)
 const hovered_deck_id = ref<number | undefined>(undefined)
@@ -44,17 +43,13 @@ const title = computed(() => {
 // Authoritative moving count (unlike the title's display-only effective_count,
 // which zeroes out for a single blank placeholder card).
 const moving_count = computed(() => count ?? cards.length)
-const plan_card_limit = computed(() => PLANS[member.plan ?? 'free'].cardsPerDeckLimit)
 
 const target_deck = computed(() => decks.value?.find((deck) => deck.id === selected_deck_id.value))
 const { guardAddCards } = useCardLimitGate(target_deck)
 
 /** True when moving `moving_count` cards here would exceed the plan's per-deck cap. */
 function isDeckFull(deck: Deck) {
-  return (
-    plan_card_limit.value !== null &&
-    (deck.card_count ?? 0) + moving_count.value > plan_card_limit.value
-  )
+  return !can.addCards(deck.card_count ?? 0, moving_count.value)
 }
 
 async function onMove() {

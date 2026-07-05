@@ -23,7 +23,6 @@ export const useMemberStore = defineStore('member', () => {
   const updated_at = computed(() => member.value?.updated_at)
   const role = computed(() => member.value?.role)
   const plan = computed(() => member.value?.plan)
-  const plan_display_name = computed(() => member.value?.plan_display_name)
   const preferences = computed(() => withMemberPreferencesDefaults(member.value?.preferences))
   const cover = computed(() => withMemberCardCoverDefaults(member.value?.cover_config))
 
@@ -40,7 +39,6 @@ export const useMemberStore = defineStore('member', () => {
     updated_at,
     role,
     plan,
-    plan_display_name,
     preferences,
     cover
   }

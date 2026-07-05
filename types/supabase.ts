@@ -132,38 +132,121 @@ export type Database = {
           }
         ]
       }
+      lesson_collections: {
+        Row: {
+          created_at: string
+          id: number
+          last_lesson_id: number | null
+          last_position_seconds: number
+          member_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          last_lesson_id?: number | null
+          last_position_seconds?: number
+          member_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          last_lesson_id?: number | null
+          last_position_seconds?: number
+          member_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'lesson_collections_last_lesson_id_fkey'
+            columns: ['last_lesson_id']
+            isOneToOne: false
+            referencedRelation: 'lessons'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'lesson_collections_member_id_fkey'
+            columns: ['member_id']
+            isOneToOne: false
+            referencedRelation: 'members'
+            referencedColumns: ['id']
+          }
+        ]
+      }
       lessons: {
         Row: {
           audio_path: string
+          chunk_cursor: number
+          chunks: Json
+          collection_id: number
           created_at: string
+          error_code: string | null
           id: number
           lang: string | null
           member_id: string
+          phase: string | null
+          position: number
+          script: string
+          status: string
           title: string
           transcript: Json
           updated_at: string
         }
         Insert: {
           audio_path: string
+          chunk_cursor?: number
+          chunks?: Json
+          collection_id: number
           created_at?: string
+          error_code?: string | null
           id?: number
           lang?: string | null
           member_id: string
+          phase?: string | null
+          position: number
+          script?: string
+          status?: string
           title: string
           transcript?: Json
           updated_at?: string
         }
         Update: {
           audio_path?: string
+          chunk_cursor?: number
+          chunks?: Json
+          collection_id?: number
           created_at?: string
+          error_code?: string | null
           id?: number
           lang?: string | null
           member_id?: string
+          phase?: string | null
+          position?: number
+          script?: string
+          status?: string
           title?: string
           transcript?: Json
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: 'lessons_collection_id_fkey'
+            columns: ['collection_id']
+            isOneToOne: false
+            referencedRelation: 'lesson_collections'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'lessons_collection_id_fkey'
+            columns: ['collection_id']
+            isOneToOne: false
+            referencedRelation: 'lesson_collections_with_counts'
+            referencedColumns: ['id']
+          },
           {
             foreignKeyName: 'lessons_member_id_fkey'
             columns: ['member_id']
@@ -244,6 +327,7 @@ export type Database = {
       members: {
         Row: {
           avatar_url: string | null
+          cover_config: Json | null
           created_at: string
           description: string | null
           display_name: string
@@ -257,6 +341,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          cover_config?: Json | null
           created_at?: string
           description?: string | null
           display_name: string
@@ -270,6 +355,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          cover_config?: Json | null
           created_at?: string
           description?: string | null
           display_name?: string
@@ -295,7 +381,7 @@ export type Database = {
         Row: {
           cards_per_deck_limit: number | null
           created_at: string
-          display_name: string
+          deck_limit: number | null
           id: string
           is_active: boolean
           stripe_price_id: string | null
@@ -303,7 +389,7 @@ export type Database = {
         Insert: {
           cards_per_deck_limit?: number | null
           created_at?: string
-          display_name: string
+          deck_limit?: number | null
           id: string
           is_active?: boolean
           stripe_price_id?: string | null
@@ -311,7 +397,7 @@ export type Database = {
         Update: {
           cards_per_deck_limit?: number | null
           created_at?: string
-          display_name?: string
+          deck_limit?: number | null
           id?: string
           is_active?: boolean
           stripe_price_id?: string | null
@@ -553,6 +639,54 @@ export type Database = {
           }
         ]
       }
+      lesson_collections_with_counts: {
+        Row: {
+          created_at: string | null
+          id: number | null
+          last_lesson_id: number | null
+          last_position_seconds: number | null
+          lesson_count: number | null
+          member_id: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number | null
+          last_lesson_id?: number | null
+          last_position_seconds?: number | null
+          lesson_count?: never
+          member_id?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number | null
+          last_lesson_id?: number | null
+          last_position_seconds?: number | null
+          lesson_count?: never
+          member_id?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'lesson_collections_last_lesson_id_fkey'
+            columns: ['last_lesson_id']
+            isOneToOne: false
+            referencedRelation: 'lessons'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'lesson_collections_member_id_fkey'
+            columns: ['member_id']
+            isOneToOne: false
+            referencedRelation: 'members'
+            referencedColumns: ['id']
+          }
+        ]
+      }
     }
     Functions: {
       add_or_update_purchase: {
@@ -592,19 +726,29 @@ export type Database = {
         }
         Returns: number
       }
-      create_lesson: {
+      create_pending_lesson: {
         Args: {
           p_audio_path: string
+          p_chunks?: Json
+          p_collection_id: number
           p_lang?: string
+          p_script?: string
           p_title: string
-          p_transcript: Json
         }
         Returns: {
           audio_path: string
+          chunk_cursor: number
+          chunks: Json
+          collection_id: number
           created_at: string
+          error_code: string | null
           id: number
           lang: string | null
           member_id: string
+          phase: string | null
+          position: number
+          script: string
+          status: string
           title: string
           transcript: Json
           updated_at: string
@@ -647,6 +791,37 @@ export type Database = {
         Args: { p_adding: number; p_deck_id: number }
         Returns: undefined
       }
+      find_orphan_storage_objects: {
+        Args: { p_limit?: number; p_older_than?: string }
+        Returns: {
+          bucket: string
+          name: string
+        }[]
+      }
+      get_cards_in_deck: {
+        Args: {
+          p_deck_id: number
+          p_limit?: number
+          p_offset?: number
+          p_query?: string
+          p_sort_by?: string
+        }
+        Returns: {
+          back_image_bucket: string
+          back_image_path: string
+          back_text: string
+          created_at: string
+          deck_id: number
+          front_image_bucket: string
+          front_image_path: string
+          front_text: string
+          id: number
+          member_id: string
+          rank: number
+          review: Json
+          updated_at: string
+        }[]
+      }
       get_member_card_count: {
         Args: {
           p_member_id: string
@@ -656,9 +831,7 @@ export type Database = {
         Returns: number
       }
       get_member_card_index: {
-        Args: {
-          p_member_id: string
-        }
+        Args: { p_member_id: string }
         Returns: {
           deck_ids: number[]
           term: string
@@ -707,6 +880,10 @@ export type Database = {
         }[]
       }
       invoke_cleanup_media: { Args: never; Returns: undefined }
+      invoke_lesson_process: {
+        Args: { p_lesson_id: number }
+        Returns: undefined
+      }
       move_card: {
         Args: { p_anchor_id: number; p_card_id: number; p_side: string }
         Returns: number
@@ -720,6 +897,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      reap_stalled_lessons: { Args: never; Returns: number }
       reindex_deck_ranks: { Args: { p_deck_id: number }; Returns: undefined }
       reserve_card: {
         Args: {
