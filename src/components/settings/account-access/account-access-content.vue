@@ -35,7 +35,7 @@ defineExpose({ title })
 </script>
 
 <template>
-  <div data-testid="account-access-content" class="flex flex-1 flex-col items-center gap-18">
+  <div data-testid="account-access-content" class="flex flex-1 flex-col items-center">
     <p
       v-if="page === 'menu'"
       data-testid="account-access-modal__description"

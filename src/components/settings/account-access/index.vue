@@ -56,6 +56,6 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
       </dialog-card-header>
     </template>
 
-    <account-access-content ref="content" v-model:page="page" class="px-(--dialog-px)" />
+    <account-access-content ref="content" v-model:page="page" class="gap-18 px-(--dialog-px)" />
   </dialog-card>
 </template>

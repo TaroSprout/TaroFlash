@@ -45,6 +45,8 @@ function onGooglePress() {
 
     <ui-button
       data-testid="account-access-modal__google-button"
+      data-theme="brown-50"
+      data-theme-dark="stone-700"
       full-width
       size="lg"
       icon-left="google-logo"
