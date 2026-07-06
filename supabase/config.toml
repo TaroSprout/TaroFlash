@@ -127,7 +127,7 @@ file_size_limit = "500MiB"
 [auth]
 enabled = true
 site_url = "http://localhost:5173"
-additional_redirect_urls = ["http://localhost:5173/auth/callback"]
+additional_redirect_urls = ["http://localhost:5173/auth/callback", "http://localhost:5173/welcome"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # If disabled, the refresh token will never expire.
@@ -164,15 +164,17 @@ otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
-# Use a production-ready SMTP server
+# Local dev uses Mailpit (below) to catch emails instead of a real send.
+# Resend SMTP is wired up on the hosted stage/prod projects via their own
+# Dashboard Auth settings — see supabase/config.toml remotes below.
 # [auth.email.smtp]
 # enabled = true
-# host = "smtp.sendgrid.net"
-# port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
+# host = "smtp.resend.com"
+# port = 465
+# user = "resend"
+# pass = "env(RESEND_API_KEY)"
+# admin_email = "noreply@mail.taro-flash.com"
+# sender_name = "TaroFlash"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

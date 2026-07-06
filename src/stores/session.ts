@@ -3,12 +3,15 @@ import type { User } from '@supabase/supabase-js'
 import {
   getSession,
   getUser,
+  isPasswordRecoveryUrl,
+  waitForPasswordRecovery,
   login as supaLogin,
   logout as supaLogout,
   signupEmail as supaSignupEmail,
   signInOAuth as supaSignInOAuth,
   updateEmail as supaUpdateEmail,
   updatePassword as supaUpdatePassword,
+  requestPasswordReset as supaRequestPasswordReset,
   linkGoogleIdentity as supaLinkGoogleIdentity,
   unlinkGoogleIdentity as supaUnlinkGoogleIdentity,
   type SignupEmailOptions,
@@ -17,7 +20,8 @@ import {
   type LoginOutcome,
   type OAuthProvider,
   type UpdateEmailOutcome,
-  type UpdatePasswordOutcome
+  type UpdatePasswordOutcome,
+  type RequestPasswordResetOutcome
 } from '@/api/session'
 import { useRouter } from 'vue-router'
 import { computed, ref } from 'vue'
@@ -34,6 +38,17 @@ export const useSessionStore = defineStore('sessionStore', () => {
   const identities = computed(() => user.value?.identities ?? [])
   const hasPasswordIdentity = computed(() => identities.value.some((i) => i.provider === 'email'))
   const hasGoogleIdentity = computed(() => identities.value.some((i) => i.provider === 'google'))
+
+  /**
+   * True if this page load is a password-recovery redirect, after awaiting the
+   * session exchange. False both for a normal load and for an expired/reused
+   * recovery link (the exchange times out rather than firing the event).
+   */
+  async function checkPasswordRecovery(): Promise<boolean> {
+    if (!isPasswordRecoveryUrl()) return false
+
+    return waitForPasswordRecovery()
+  }
 
   async function restoreSession(): Promise<boolean> {
     startLoading()
@@ -89,6 +104,10 @@ export const useSessionStore = defineStore('sessionStore', () => {
     return supaUpdatePassword(password)
   }
 
+  function requestPasswordReset(email: string): Promise<RequestPasswordResetOutcome> {
+    return supaRequestPasswordReset(email)
+  }
+
   async function linkGoogleIdentity(): Promise<void> {
     await supaLinkGoogleIdentity()
     await refreshUser()
@@ -122,12 +141,14 @@ export const useSessionStore = defineStore('sessionStore', () => {
     hasPasswordIdentity,
     hasGoogleIdentity,
     login,
+    checkPasswordRecovery,
     restoreSession,
     logout,
     signupEmail,
     signInOAuth,
     updateEmail,
     updatePassword,
+    requestPasswordReset,
     linkGoogleIdentity,
     unlinkGoogleIdentity,
     startLoading,
