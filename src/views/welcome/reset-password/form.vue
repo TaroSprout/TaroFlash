@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import UiInput from '@/components/ui-kit/input.vue'
 import UiButton from '@/components/ui-kit/button.vue'
+import UiIcon from '@/components/ui-kit/icon.vue'
 import { useI18n } from 'vue-i18n'
 import type { PasswordFieldErrors } from '@/utils/password-validation'
 
@@ -20,13 +21,14 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <form
+  <div
     data-testid="reset-password-modal"
-    class="w-full max-md:max-w-100 md:w-80 flex flex-col items-center gap-6 p-4"
-    @submit.prevent="emit('submit')"
+    class="w-full max-w-100 h-full flex flex-1 flex-col items-center gap-2 py-4 pt-10 mx-auto"
   >
-    <div data-testid="reset-password-modal__fields" class="flex flex-col gap-4 w-full">
-      <div data-testid="reset-password-modal__password">
+    <ui-icon src="keyhole" class="size-12 text-brown-700 dark:text-brown-100" />
+
+    <div class="w-full flex flex-col gap-2">
+      <form class="contents" @submit.prevent="emit('submit')">
         <ui-input
           type="password"
           name="password"
@@ -37,10 +39,8 @@ const { t } = useI18n()
           v-model="password"
           :error="errors.password"
           :placeholder="t('reset-password-modal.password-placeholder')"
+          data-testid="reset-password-modal__password-input"
         />
-      </div>
-
-      <div data-testid="reset-password-modal__confirm-password">
         <ui-input
           type="password"
           name="confirm-password"
@@ -51,21 +51,22 @@ const { t } = useI18n()
           v-model="confirmPassword"
           :error="errors.confirm_password"
           :placeholder="t('reset-password-modal.confirm-password-placeholder')"
+          data-testid="reset-password-modal__confirm-password-input"
         />
-      </div>
-    </div>
+        <button type="submit" class="sr-only" tabindex="-1" aria-hidden="true"></button>
+      </form>
 
-    <ui-button
-      data-testid="reset-password-modal__submit"
-      type="button"
-      size="lg"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
-      :loading="loading"
-      class="w-full!"
-      @press="emit('submit')"
-    >
-      {{ t('reset-password-modal.submit-button') }}
-    </ui-button>
-  </form>
+      <ui-button
+        data-testid="reset-password-modal__submit"
+        data-theme="blue-500"
+        data-theme-dark="blue-650"
+        size="lg"
+        full-width
+        :loading="loading"
+        @press="emit('submit')"
+      >
+        {{ t('reset-password-modal.submit-button') }}
+      </ui-button>
+    </div>
+  </div>
 </template>
