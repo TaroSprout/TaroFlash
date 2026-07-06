@@ -172,7 +172,10 @@ function onBack() {
 }
 
 function onChromeBack() {
-  if (active_tab_ref.value?.onChromeBack?.()) return
+  if (active_tab_ref.value?.onChromeBack?.()) {
+    emitSfx('snappy_button_5')
+    return
+  }
   onBack()
 }
 
