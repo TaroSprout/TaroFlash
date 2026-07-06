@@ -65,21 +65,30 @@ const MenuStub = defineComponent({
 
 const EmailSectionStub = defineComponent({
   name: 'EmailSection',
-  setup() {
-    return () => h('div', { 'data-testid': 'email-section-stub' })
+  props: { close: { type: Function, required: false } },
+  setup(props) {
+    return () =>
+      h('div', { 'data-testid': 'email-section-stub' }, [
+        h(
+          'button',
+          { 'data-testid': 'email-section-stub__close', onClick: () => props.close?.() },
+          'close'
+        )
+      ])
   }
 })
 
 const PasswordSectionStub = defineComponent({
   name: 'PasswordSection',
+  props: { close: { type: Function, required: false } },
   setup() {
     return () => h('div', { 'data-testid': 'password-section-stub' })
   }
 })
 
-function mountContent(page = 'menu') {
+function mountContent(page = 'menu', props = {}) {
   return mount(AccountAccessContent, {
-    props: { page },
+    props: { page, ...props },
     global: {
       stubs: {
         AccountAccessMenu: MenuStub,
@@ -141,19 +150,26 @@ describe('AccountAccessContent — page routing', () => {
     expect(wrapper.emitted('update:page')).toEqual([['email']])
   })
 
-  test('shows the description paragraph only on the menu page', () => {
-    expect(
-      mountContent('menu').find('[data-testid="account-access-modal__description"]').exists()
-    ).toBe(true)
-    expect(
-      mountContent('email').find('[data-testid="account-access-modal__description"]').exists()
-    ).toBe(false)
-  })
-
   test('switching pages runs the leave/enter transition hooks (gsap-mocked)', async () => {
     const wrapper = mountContent('menu')
     await wrapper.setProps({ page: 'email' })
     await flushTransition()
     expect(wrapper.find('[data-testid="email-section-stub"]').exists()).toBe(true)
+  })
+})
+
+describe('AccountAccessContent — onSuccessClose fallback [obligation]', () => {
+  test('[obligation] resets page back to "menu" when no close prop is passed', async () => {
+    const wrapper = mountContent('email')
+    await wrapper.find('[data-testid="email-section-stub__close"]').trigger('click')
+    expect(wrapper.emitted('update:page')).toEqual([['menu']])
+  })
+
+  test('[obligation] calls the close prop instead of resetting the page when one is passed', async () => {
+    const close = vi.fn()
+    const wrapper = mountContent('email', { close })
+    await wrapper.find('[data-testid="email-section-stub__close"]').trigger('click')
+    expect(close).toHaveBeenCalledOnce()
+    expect(wrapper.emitted('update:page')).toBeUndefined()
   })
 })

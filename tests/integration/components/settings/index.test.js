@@ -566,7 +566,9 @@ describe('settings app — onChromeBack delegates to the active tab first [oblig
     expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe(
       'account-access'
     )
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('snappy_button_5')
+    // [obligation] regression guard — sound must fire even when a nested tab
+    // handles its own back-navigation, not only when falling through to onBack().
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
   })
 
   test('falls through to the default exit when the active tab onChromeBack returns false [obligation]', async () => {

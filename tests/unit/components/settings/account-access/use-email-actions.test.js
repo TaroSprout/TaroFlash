@@ -9,18 +9,40 @@ const { mockSession } = vi.hoisted(() => ({
 
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (k) => k }) }))
 vi.mock('@/stores/session', () => ({ useSessionStore: () => mockSession }))
+vi.mock('@/stores/member', async () => {
+  const { reactive } = await import('vue')
+  const mockMember = reactive({ email: 'current@example.com' })
+  return { useMemberStore: () => mockMember, __mockMember: mockMember }
+})
 
 import { useEmailActions } from '@/components/settings/account-access/use-email-actions'
+import { __mockMember as mockMember } from '@/stores/member'
 
 beforeEach(() => {
   mockSession.user = { email: 'current@example.com' }
   mockSession.updateEmail.mockReset()
+  mockMember.email = 'current@example.com'
 })
 
 describe('useEmailActions — initial state', () => {
-  test('seeds current_email from the session user email', () => {
+  test('seeds current_email from the member store email', () => {
     const email_actions = useEmailActions()
     expect(email_actions.current_email.value).toBe('current@example.com')
+  })
+
+  test('[obligation] current_email is reactive to changes in the member store, not a static snapshot', () => {
+    const email_actions = useEmailActions()
+    expect(email_actions.current_email.value).toBe('current@example.com')
+
+    mockMember.email = 'updated@example.com'
+
+    expect(email_actions.current_email.value).toBe('updated@example.com')
+  })
+
+  test('falls back to an empty string when the member store has no email yet', () => {
+    mockMember.email = null
+    const email_actions = useEmailActions()
+    expect(email_actions.current_email.value).toBe('')
   })
 })
 
@@ -44,7 +66,8 @@ describe('useEmailActions — validation', () => {
     expect(email_actions.error.value).toBe('account-access-modal.email.validation-invalid')
   })
 
-  test('rejects an unchanged email (new === current)', async () => {
+  test('[obligation] rejects submitting the member store current email as unchanged', async () => {
+    mockMember.email = 'current@example.com'
     const email_actions = useEmailActions()
     email_actions.email.value = 'current@example.com'
     await nextTick()

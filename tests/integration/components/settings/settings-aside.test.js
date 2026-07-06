@@ -72,4 +72,12 @@ describe('SettingsAside', () => {
     await wrapper.find('[data-testid="settings-aside__edit-account-button"]').trigger('click')
     expect(mockOnAccountAccessClick).toHaveBeenCalledOnce()
   })
+
+  test('the edit-account button surfaces its label as a tooltip on focus', async () => {
+    const { wrapper } = makeWrapper()
+    const button = wrapper.find('[data-testid="settings-aside__edit-account-button"]')
+    await button.trigger('focusin')
+    const tooltip = document.body.querySelector('[data-testid="ui-tooltip"]')
+    expect(tooltip?.textContent).toBe('Edit')
+  })
 })
