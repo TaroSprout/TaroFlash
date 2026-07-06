@@ -3,8 +3,9 @@ import { nextTick } from 'vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockSession } = vi.hoisted(() => ({
-  mockSession: { user: { email: 'current@example.com' }, updateEmail: vi.fn() }
+const { mockSession, mockEmitSfx } = vi.hoisted(() => ({
+  mockSession: { user: { email: 'current@example.com' }, updateEmail: vi.fn() },
+  mockEmitSfx: vi.fn()
 }))
 
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (k) => k }) }))
@@ -14,6 +15,7 @@ vi.mock('@/stores/member', async () => {
   const mockMember = reactive({ email: 'current@example.com' })
   return { useMemberStore: () => mockMember, __mockMember: mockMember }
 })
+vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
 import { useEmailActions } from '@/components/settings/account-access/use-email-actions'
 import { __mockMember as mockMember } from '@/stores/member'
@@ -22,6 +24,7 @@ beforeEach(() => {
   mockSession.user = { email: 'current@example.com' }
   mockSession.updateEmail.mockReset()
   mockMember.email = 'current@example.com'
+  mockEmitSfx.mockReset()
 })
 
 describe('useEmailActions — initial state', () => {
@@ -86,6 +89,13 @@ describe('useEmailActions — validation', () => {
     await Promise.resolve()
     expect(email_actions.error.value).toBe('')
   })
+
+  test('[obligation] plays the stuck sfx when client-side validation fails', async () => {
+    const email_actions = useEmailActions()
+    email_actions.email.value = ''
+    await email_actions.submit()
+    expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+  })
 })
 
 describe('useEmailActions — submit', () => {
@@ -99,6 +109,16 @@ describe('useEmailActions — submit', () => {
     expect(result).toBe('success')
     expect(email_actions.pending.value).toBe(true)
     expect(email_actions.current_email.value).toBe('current@example.com')
+  })
+
+  test('[obligation] does not play the stuck sfx on a successful submit', async () => {
+    mockSession.updateEmail.mockResolvedValueOnce('success')
+    const email_actions = useEmailActions()
+    email_actions.email.value = 'new@example.com'
+
+    await email_actions.submit()
+
+    expect(mockEmitSfx).not.toHaveBeenCalled()
   })
 
   test('maps the "email-taken" outcome to an inline field error', async () => {
@@ -120,6 +140,19 @@ describe('useEmailActions — submit', () => {
     const result = await email_actions.submit()
 
     expect(result).toBe('error')
+  })
+
+  test('[obligation] plays the stuck sfx for every non-success server outcome', async () => {
+    for (const outcome of ['email-taken', 'error']) {
+      mockEmitSfx.mockReset()
+      mockSession.updateEmail.mockResolvedValueOnce(outcome)
+      const email_actions = useEmailActions()
+      email_actions.email.value = 'new@example.com'
+
+      await email_actions.submit()
+
+      expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+    }
   })
 
   test('toggles loading around the submit call', async () => {

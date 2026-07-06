@@ -2,6 +2,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSessionStore } from '@/stores/session'
 import { useMemberStore } from '@/stores/member'
+import { emitSfx } from '@/sfx/bus'
 
 export type SubmitResult = 'success' | 'invalid' | 'error'
 
@@ -40,7 +41,10 @@ export function useEmailActions() {
   }
 
   async function submit(): Promise<SubmitResult> {
-    if (!validate()) return 'invalid'
+    if (!validate()) {
+      emitSfx('etc_woodblock_stuck')
+      return 'invalid'
+    }
 
     loading.value = true
     const outcome = await session.updateEmail(email.value.trim())
@@ -50,6 +54,8 @@ export function useEmailActions() {
       pending.value = true
       return 'success'
     }
+
+    emitSfx('etc_woodblock_stuck')
 
     if (outcome === 'email-taken') {
       error.value = t('account-access-modal.email.validation-taken')

@@ -94,9 +94,15 @@ describe('PasswordSection', () => {
     expect(mockPasswordActions.confirm_password.value).toBe('hunter22')
   })
 
-  test('calls submit when the submit button is pressed', async () => {
+  test('calls submit exactly once when the submit button is pressed', async () => {
     const wrapper = makeWrapper()
     await wrapper.find('[data-testid="account-access-modal__password-submit"]').trigger('click')
+    expect(mockPasswordActions.submit).toHaveBeenCalledOnce()
+  })
+
+  test('[obligation] calls submit exactly once when the form is submitted (Enter key)', async () => {
+    const wrapper = makeWrapper()
+    await wrapper.find('form').trigger('submit')
     expect(mockPasswordActions.submit).toHaveBeenCalledOnce()
   })
 

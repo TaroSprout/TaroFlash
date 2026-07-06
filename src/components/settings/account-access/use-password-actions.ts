@@ -1,10 +1,10 @@
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSessionStore } from '@/stores/session'
+import { validatePasswordFields, type PasswordFieldErrors } from '@/utils/password-validation'
+import { emitSfx } from '@/sfx/bus'
 
 type FieldName = 'password' | 'confirm_password'
-
-export type PasswordFieldErrors = Partial<Record<FieldName, string>>
 
 export type SubmitResult = 'success' | 'invalid' | 'error'
 
@@ -26,23 +26,22 @@ export function usePasswordActions() {
   const success = ref(false)
 
   function validate(): boolean {
-    const e: PasswordFieldErrors = {}
-
-    if (!password.value) e.password = t('account-access-modal.password.validation-required')
-    else if (password.value.length < 8)
-      e.password = t('account-access-modal.password.validation-too-short')
-
-    if (!confirm_password.value)
-      e.confirm_password = t('account-access-modal.password.validation-confirm-required')
-    else if (confirm_password.value !== password.value)
-      e.confirm_password = t('account-access-modal.password.validation-mismatch')
+    const e = validatePasswordFields(password.value, confirm_password.value, {
+      required: t('account-access-modal.password.validation-required'),
+      tooShort: t('account-access-modal.password.validation-too-short'),
+      confirmRequired: t('account-access-modal.password.validation-confirm-required'),
+      mismatch: t('account-access-modal.password.validation-mismatch')
+    })
 
     errors.value = e
     return Object.keys(e).length === 0
   }
 
   async function submit(): Promise<SubmitResult> {
-    if (!validate()) return 'invalid'
+    if (!validate()) {
+      emitSfx('etc_woodblock_stuck')
+      return 'invalid'
+    }
 
     loading.value = true
     const outcome = await session.updatePassword(password.value)
@@ -55,10 +54,20 @@ export function usePasswordActions() {
       return 'success'
     }
 
+    emitSfx('etc_woodblock_stuck')
+
     if (outcome === 'weak-password') {
       errors.value = {
         ...errors.value,
         password: t('account-access-modal.password.validation-weak')
+      }
+      return 'invalid'
+    }
+
+    if (outcome === 'same-password') {
+      errors.value = {
+        ...errors.value,
+        password: t('account-access-modal.password.validation-same')
       }
       return 'invalid'
     }

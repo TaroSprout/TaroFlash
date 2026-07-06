@@ -3,6 +3,7 @@ import { useI18n } from 'vue-i18n'
 import { useSessionStore } from '@/stores/session'
 import type { OAuthProvider } from '@/api/session'
 import { emitSfx } from '@/sfx/bus'
+import { validatePasswordFields } from '@/utils/password-validation'
 
 type FieldName = 'username' | 'email' | 'password' | 'confirm_password'
 
@@ -49,14 +50,15 @@ export function useSignupActions() {
     if (!email.value.trim()) e.email = t('signup-dialog.form-validation.email-required')
     else if (!isEmail(email.value)) e.email = t('signup-dialog.form-validation.email-invalid')
 
-    if (!password.value) e.password = t('signup-dialog.form-validation.password-required')
-    else if (password.value.length < 8)
-      e.password = t('signup-dialog.form-validation.password-too-short')
-
-    if (!confirm_password.value)
-      e.confirm_password = t('signup-dialog.form-validation.confirm-password-required')
-    else if (confirm_password.value !== password.value)
-      e.confirm_password = t('signup-dialog.form-validation.confirm-password-mismatch')
+    Object.assign(
+      e,
+      validatePasswordFields(password.value, confirm_password.value, {
+        required: t('signup-dialog.form-validation.password-required'),
+        tooShort: t('signup-dialog.form-validation.password-too-short'),
+        confirmRequired: t('signup-dialog.form-validation.confirm-password-required'),
+        mismatch: t('signup-dialog.form-validation.confirm-password-mismatch')
+      })
+    )
 
     errors.value = e
     return Object.keys(e).length === 0
