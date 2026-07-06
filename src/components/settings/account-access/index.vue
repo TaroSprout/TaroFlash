@@ -21,7 +21,7 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
 <template>
   <dialog-card
     data-testid="account-access-modal"
-    class="w-140 h-110 bg-brown-200 dark:bg-grey-800"
+    class="w-140 h-110 bg-brown-200 dark:bg-grey-800 gap-0!"
     data-theme="brown-50"
     data-theme-dark="stone-700"
     :title="content?.title"
@@ -56,6 +56,11 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
       </dialog-card-header>
     </template>
 
-    <account-access-content ref="content" v-model:page="page" class="gap-18 px-(--dialog-px)" />
+    <account-access-content
+      ref="content"
+      v-model:page="page"
+      :close="close"
+      class="gap-18 px-(--dialog-px)"
+    />
   </dialog-card>
 </template>
