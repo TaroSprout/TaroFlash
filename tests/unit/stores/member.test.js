@@ -45,7 +45,7 @@ describe('useMemberStore', () => {
   })
 
   test('profile fields come from the member query, id stays session-sourced', () => {
-    sessionUser.value = { id: 'user-1' }
+    sessionUser.value = { id: 'user-1', email: 'current@test.com' }
     memberRef.value = {
       id: 'user-1',
       display_name: 'Alice',
@@ -63,13 +63,24 @@ describe('useMemberStore', () => {
     expect(store.id).toBe('user-1')
     expect(store.display_name).toBe('Alice')
     expect(store.description).toBe('hi')
-    expect(store.email).toBe('a@test.com')
+    expect(store.email).toBe('current@test.com')
     expect(store.created_at).toBe('2026-01-01')
     expect(store.avatar_url).toBe('https://avatar')
     expect(store.updated_at).toBe('2026-01-02')
     expect(store.role).toBe('admin')
     expect(store.plan).toBe('paid')
     expect(store.has_member).toBe(true)
+  })
+
+  // ── email sourced from session, not the stale profile row [obligation] ────
+
+  test('email comes from the session, not the (potentially stale) member query row [obligation]', () => {
+    sessionUser.value = { id: 'user-1', email: 'fresh@test.com' }
+    memberRef.value = { id: 'user-1', email: 'stale@test.com' }
+
+    const store = useMemberStore()
+
+    expect(store.email).toBe('fresh@test.com')
   })
 
   test('profile fields stay undefined when the query resolves to null', () => {

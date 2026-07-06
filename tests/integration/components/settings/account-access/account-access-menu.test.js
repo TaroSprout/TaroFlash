@@ -81,6 +81,13 @@ beforeEach(() => {
 })
 
 describe('AccountAccessMenu', () => {
+  test('renders the description paragraph', () => {
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-testid="account-access-modal__description"]').text()).toBe(
+      'Update your email, password, and connected accounts.'
+    )
+  })
+
   test('renders the nav list with email and password entries', () => {
     const wrapper = makeWrapper()
     const cards = wrapper.findAll('[data-testid="nav-list__card"]')

@@ -17,7 +17,10 @@ export const useMemberStore = defineStore('member', () => {
   const id = computed(() => session.user?.id)
   const display_name = computed(() => member.value?.display_name)
   const description = computed(() => member.value?.description)
-  const email = computed(() => member.value?.email)
+  // Sourced from the session, not the member-profile query — the `members`
+  // row's email is only set once at signup and goes stale after an email
+  // change, while the session always reflects the current auth email.
+  const email = computed(() => session.user?.email)
   const created_at = computed(() => member.value?.created_at)
   const avatar_url = computed(() => member.value?.avatar_url)
   const updated_at = computed(() => member.value?.updated_at)

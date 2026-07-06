@@ -10,10 +10,18 @@ import { springScaleIn } from '@/utils/animations/modal'
 
 export type AccountAccessContentPage = 'menu' | AccountAccessPage
 
+const props = defineProps<{ close?: () => void }>()
+
 const { t } = useI18n()
 const session = useSessionStore()
 
 const page = defineModel<AccountAccessContentPage>('page', { default: 'menu' })
+
+// Standalone tab context has no modal to close — fall back to returning to the menu.
+function onSuccessClose() {
+  if (props.close) props.close()
+  else page.value = 'menu'
+}
 
 const title = computed(() => {
   if (page.value === 'menu') return t('account-access-modal.title')
@@ -36,19 +44,11 @@ defineExpose({ title })
 
 <template>
   <div data-testid="account-access-content" class="flex flex-1 flex-col items-center">
-    <p
-      v-if="page === 'menu'"
-      data-testid="account-access-modal__description"
-      class="text-center text-brown-500 dark:text-brown-300"
-    >
-      {{ t('account-access-modal.description') }}
-    </p>
-
     <div class="w-full max-w-100 flex flex-1 flex-col gap-4">
       <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
         <account-access-menu v-if="page === 'menu'" key="menu" @navigate="(p) => (page = p)" />
-        <email-section v-else-if="page === 'email'" key="email" />
-        <password-section v-else key="password" />
+        <email-section v-else-if="page === 'email'" key="email" :close="onSuccessClose" />
+        <password-section v-else key="password" :close="onSuccessClose" />
       </transition>
     </div>
   </div>

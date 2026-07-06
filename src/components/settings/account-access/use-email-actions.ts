@@ -1,6 +1,7 @@
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSessionStore } from '@/stores/session'
+import { useMemberStore } from '@/stores/member'
 
 export type SubmitResult = 'success' | 'invalid' | 'error'
 
@@ -17,16 +18,17 @@ function isEmail(s: string) {
  */
 export function useEmailActions() {
   const session = useSessionStore()
+  const member = useMemberStore()
   const { t } = useI18n()
 
-  const current_email = ref(session.user?.email ?? '')
+  const current_email = computed(() => member.email ?? '')
   const email = ref('')
   const loading = ref(false)
   const error = ref('')
   const pending = ref(false)
 
   function validate(): boolean {
-    const current = session.user?.email
+    const current = member.email
     const next = email.value.trim()
 
     if (!next) error.value = t('account-access-modal.email.validation-required')

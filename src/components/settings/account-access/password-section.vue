@@ -2,9 +2,12 @@
 import { useI18n } from 'vue-i18n'
 import UiInput from '@/components/ui-kit/input.vue'
 import UiButton from '@/components/ui-kit/button.vue'
+import SuccessPanel from './success-panel.vue'
 import { usePasswordActions } from './use-password-actions'
 import { fadeLeave } from '@/utils/animations/fade'
 import { springScaleIn } from '@/utils/animations/modal'
+
+defineProps<{ close: () => void }>()
 
 const { t } = useI18n()
 const { password, confirm_password, loading, errors, success, submit } = usePasswordActions()
@@ -53,14 +56,15 @@ function onEnter(el: Element, done: () => void) {
         </ui-button>
       </div>
 
-      <p
+      <success-panel
         v-else
         key="success"
         data-testid="account-access-modal__password-success"
-        class="text-brown-400 dark:text-brown-300"
-      >
-        {{ t('account-access-modal.password.success-message') }}
-      </p>
+        icon="check"
+        :heading="t('account-access-modal.password.success-heading')"
+        :message="t('account-access-modal.password.success-message')"
+        :close="close"
+      />
     </transition>
   </div>
 </template>
