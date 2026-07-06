@@ -268,6 +268,7 @@
   "account-access-modal.password.validation-confirm-required": "Confirm your password",
   "account-access-modal.password.validation-mismatch": "Passwords do not match",
   "account-access-modal.password.validation-weak": "Choose a stronger password",
+  "account-access-modal.password.validation-same": "New password must be different",
   "account-access-modal.google.connect-account-button": "Connect Google Account",
   "account-access-modal.google.disconnect-account-button": "Disconnect Google Account",
   "account-access-modal.google.connect-error": "Couldn't connect Google. Please try again.",

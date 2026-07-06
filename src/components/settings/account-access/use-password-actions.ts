@@ -2,6 +2,7 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSessionStore } from '@/stores/session'
 import { validatePasswordFields, type PasswordFieldErrors } from '@/utils/password-validation'
+import { emitSfx } from '@/sfx/bus'
 
 type FieldName = 'password' | 'confirm_password'
 
@@ -37,7 +38,10 @@ export function usePasswordActions() {
   }
 
   async function submit(): Promise<SubmitResult> {
-    if (!validate()) return 'invalid'
+    if (!validate()) {
+      emitSfx('etc_woodblock_stuck')
+      return 'invalid'
+    }
 
     loading.value = true
     const outcome = await session.updatePassword(password.value)
@@ -50,10 +54,20 @@ export function usePasswordActions() {
       return 'success'
     }
 
+    emitSfx('etc_woodblock_stuck')
+
     if (outcome === 'weak-password') {
       errors.value = {
         ...errors.value,
         password: t('account-access-modal.password.validation-weak')
+      }
+      return 'invalid'
+    }
+
+    if (outcome === 'same-password') {
+      errors.value = {
+        ...errors.value,
+        password: t('account-access-modal.password.validation-same')
       }
       return 'invalid'
     }

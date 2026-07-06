@@ -233,7 +233,7 @@ export async function updateEmail(email: string): Promise<UpdateEmailOutcome> {
   }
 }
 
-export type UpdatePasswordOutcome = 'success' | 'weak-password' | 'error'
+export type UpdatePasswordOutcome = 'success' | 'weak-password' | 'same-password' | 'error'
 
 export async function updatePassword(password: string): Promise<UpdatePasswordOutcome> {
   try {
@@ -241,6 +241,7 @@ export async function updatePassword(password: string): Promise<UpdatePasswordOu
 
     if (!error) return 'success'
     if (error.code === 'weak_password') return 'weak-password'
+    if (error.code === 'same_password') return 'same-password'
 
     logger.error(`Password update failed: ${error.message}`)
     return 'error'
