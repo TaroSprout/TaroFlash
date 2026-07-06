@@ -21,7 +21,7 @@ onMounted(() => emitSfx('success_1'))
   <div
     class="h-full min-h-75 max-h-80 flex flex-col items-center justify-between pt-4 pb-6 text-center"
   >
-    <ui-icon :src="icon" class="size-12" />
+    <ui-icon :src="icon" class="size-12 text-brown-700 dark:text-brown-100" />
 
     <div class="flex flex-col gap-2">
       <p class="text-xl text-brown-700 dark:text-brown-100">{{ heading }}</p>

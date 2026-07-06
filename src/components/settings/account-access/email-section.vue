@@ -29,7 +29,7 @@ function onEnter(el: Element, done: () => void) {
   >
     <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
       <div v-if="!pending" key="form" class="flex flex-col items-center gap-6">
-        <ui-icon src="mail-envelope" class="size-12" />
+        <ui-icon src="mail-envelope" class="size-12 text-brown-700 dark:text-brown-100" />
         <div class="w-full flex flex-col gap-2">
           <ui-input
             data-theme="brown-50"
