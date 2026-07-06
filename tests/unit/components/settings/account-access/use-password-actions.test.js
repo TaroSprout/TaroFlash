@@ -3,17 +3,20 @@ import { nextTick } from 'vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockSession } = vi.hoisted(() => ({
-  mockSession: { updatePassword: vi.fn() }
+const { mockSession, mockEmitSfx } = vi.hoisted(() => ({
+  mockSession: { updatePassword: vi.fn() },
+  mockEmitSfx: vi.fn()
 }))
 
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (k) => k }) }))
 vi.mock('@/stores/session', () => ({ useSessionStore: () => mockSession }))
+vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
 import { usePasswordActions } from '@/components/settings/account-access/use-password-actions'
 
 beforeEach(() => {
   mockSession.updatePassword.mockReset()
+  mockEmitSfx.mockReset()
 })
 
 describe('usePasswordActions — validation', () => {
@@ -72,6 +75,12 @@ describe('usePasswordActions — validation', () => {
     await Promise.resolve()
     expect(password_actions.errors.value.password).toBeUndefined()
   })
+
+  test('[obligation] plays the stuck sfx when client-side validation fails', async () => {
+    const password_actions = usePasswordActions()
+    await password_actions.submit()
+    expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+  })
 })
 
 describe('usePasswordActions — submit', () => {
@@ -89,6 +98,17 @@ describe('usePasswordActions — submit', () => {
     expect(password_actions.confirm_password.value).toBe('')
   })
 
+  test('[obligation] does not play the stuck sfx on a successful submit', async () => {
+    mockSession.updatePassword.mockResolvedValueOnce('success')
+    const password_actions = usePasswordActions()
+    password_actions.password.value = 'longenough1'
+    password_actions.confirm_password.value = 'longenough1'
+
+    await password_actions.submit()
+
+    expect(mockEmitSfx).not.toHaveBeenCalled()
+  })
+
   test('maps the "weak-password" outcome to an inline error on the password field', async () => {
     mockSession.updatePassword.mockResolvedValueOnce('weak-password')
     const password_actions = usePasswordActions()
@@ -103,6 +123,20 @@ describe('usePasswordActions — submit', () => {
     )
   })
 
+  test('[obligation] maps the "same-password" outcome to an inline error on the password field', async () => {
+    mockSession.updatePassword.mockResolvedValueOnce('same-password')
+    const password_actions = usePasswordActions()
+    password_actions.password.value = 'longenough1'
+    password_actions.confirm_password.value = 'longenough1'
+
+    const result = await password_actions.submit()
+
+    expect(result).toBe('invalid')
+    expect(password_actions.errors.value.password).toBe(
+      'account-access-modal.password.validation-same'
+    )
+  })
+
   test('returns "error" for any other outcome', async () => {
     mockSession.updatePassword.mockResolvedValueOnce('error')
     const password_actions = usePasswordActions()
@@ -112,6 +146,20 @@ describe('usePasswordActions — submit', () => {
     const result = await password_actions.submit()
 
     expect(result).toBe('error')
+  })
+
+  test('[obligation] plays the stuck sfx for every non-success server outcome', async () => {
+    for (const outcome of ['weak-password', 'same-password', 'error']) {
+      mockEmitSfx.mockReset()
+      mockSession.updatePassword.mockResolvedValueOnce(outcome)
+      const password_actions = usePasswordActions()
+      password_actions.password.value = 'longenough1'
+      password_actions.confirm_password.value = 'longenough1'
+
+      await password_actions.submit()
+
+      expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+    }
   })
 
   test('toggles loading around the submit call', async () => {

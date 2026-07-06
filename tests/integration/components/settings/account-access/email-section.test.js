@@ -105,9 +105,15 @@ describe('EmailSection', () => {
     expect(input.element.value).toBe('updated@example.com')
   })
 
-  test('calls submit when the submit button is pressed', async () => {
+  test('calls submit exactly once when the submit button is pressed', async () => {
     const wrapper = makeWrapper()
     await wrapper.find('[data-testid="account-access-modal__email-submit"]').trigger('click')
+    expect(mockEmailActions.submit).toHaveBeenCalledOnce()
+  })
+
+  test('[obligation] calls submit exactly once when the form is submitted (Enter key)', async () => {
+    const wrapper = makeWrapper()
+    await wrapper.find('form').trigger('submit')
     expect(mockEmailActions.submit).toHaveBeenCalledOnce()
   })
 

@@ -556,6 +556,16 @@ describe('updatePassword', () => {
     await expect(updatePassword('weak')).resolves.toBe('weak-password')
   })
 
+  test('maps the same_password error to "same-password"', async () => {
+    mocks.updateUser.mockResolvedValueOnce({
+      error: {
+        code: 'same_password',
+        message: 'New password should be different from the old password.'
+      }
+    })
+    await expect(updatePassword('hunter22')).resolves.toBe('same-password')
+  })
+
   test('maps any other error to "error"', async () => {
     mocks.updateUser.mockResolvedValueOnce({ error: { code: 'server_error', message: 'boom' } })
     await expect(updatePassword('hunter22')).resolves.toBe('error')
