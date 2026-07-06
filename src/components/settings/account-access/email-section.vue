@@ -34,7 +34,7 @@ function onEnter(el: Element, done: () => void) {
           <ui-input
             data-theme="brown-50"
             data-theme-dark="stone-700"
-            v-model:value="current_email"
+            :value="current_email"
             type="email"
             size="lg"
             disabled
