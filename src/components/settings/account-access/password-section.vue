@@ -71,7 +71,7 @@ function onEnter(el: Element, done: () => void) {
         v-else
         key="success"
         data-testid="account-access-modal__password-success"
-        icon="check"
+        icon="party-popper"
         :heading="t('account-access-modal.password.success-heading')"
         :message="t('account-access-modal.password.success-message')"
         :close="close"
