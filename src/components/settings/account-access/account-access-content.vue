@@ -36,14 +36,6 @@ defineExpose({ title })
 
 <template>
   <div data-testid="account-access-content" class="flex flex-1 flex-col items-center">
-    <p
-      v-if="page === 'menu'"
-      data-testid="account-access-modal__description"
-      class="text-center text-brown-500 dark:text-brown-300"
-    >
-      {{ t('account-access-modal.description') }}
-    </p>
-
     <div class="w-full max-w-100 flex flex-1 flex-col gap-4">
       <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
         <account-access-menu v-if="page === 'menu'" key="menu" @navigate="(p) => (page = p)" />
