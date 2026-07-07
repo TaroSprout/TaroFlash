@@ -8,7 +8,7 @@ export type DialogCardProps = {
   title?: string
   show_close_button?: boolean
   close_label?: string
-  viewport_query?: string
+  full_bleed_at?: string
   dialog_px?: string
 }
 
@@ -16,7 +16,7 @@ const {
   title,
   show_close_button = true,
   close_label,
-  viewport_query = 'w<sm | h<sm',
+  full_bleed_at = 'w<sm | h<sm',
   dialog_px
 } = defineProps<DialogCardProps>()
 
@@ -31,7 +31,7 @@ const slots = defineSlots<{
 }>()
 
 const { t } = useI18n()
-const viewport = provideDialogCardViewport(viewport_query)
+const viewport = provideDialogCardViewport(full_bleed_at)
 
 defineExpose({ viewport })
 </script>

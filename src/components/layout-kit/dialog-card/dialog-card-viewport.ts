@@ -6,7 +6,7 @@ export type DialogCardViewport = 'mobile' | 'desktop'
 export const dialogCardViewportKey: InjectionKey<ComputedRef<DialogCardViewport>> =
   Symbol('dialog-card.viewport')
 
-/** Compute and provide the dialog-card's viewport mode from a match-media query string. */
+/** Compute and provide the dialog-card's viewport mode from a full-bleed match-media query string. */
 export function provideDialogCardViewport(query: string) {
   const is_mobile = useMatchMedia(query)
   const viewport = computed<DialogCardViewport>(() => (is_mobile.value ? 'mobile' : 'desktop'))

@@ -73,7 +73,7 @@ function onClick(deck_id?: number) {
   <dialog-card
     data-testid="move-cards"
     class="w-150 h-150 bg-brown-200 dark:bg-stone-900 flex flex-col items-center"
-    viewport_query="w<sm | h<sm"
+    full_bleed_at="w<sm | h<sm"
     :title="title"
     @close="close(false)"
   >

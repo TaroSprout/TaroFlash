@@ -56,7 +56,7 @@ function onPaneEnter(el: Element, done: () => void) {
   <dialog-card
     data-testid="study-session"
     class="h-170 w-full max-w-160 bg-brown-300 dark:bg-grey-800 bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-brown-500"
-    viewport_query="w<sm"
+    full_bleed_at="w<sm"
     :show_close_button="false"
   >
     <template #default="{ viewport }">
