@@ -22,6 +22,7 @@ export function useResetPasswordActions() {
   const confirm_password = ref('')
   const loading = ref(false)
   const errors = ref<PasswordFieldErrors>({})
+  const success = ref(false)
 
   function validate(): boolean {
     const e = validatePasswordFields(password.value, confirm_password.value, {
@@ -45,7 +46,10 @@ export function useResetPasswordActions() {
     const outcome = await session.updatePassword(password.value)
     loading.value = false
 
-    if (outcome === 'success') return 'success'
+    if (outcome === 'success') {
+      success.value = true
+      return 'success'
+    }
 
     emitSfx('etc_woodblock_stuck')
 
@@ -70,5 +74,5 @@ export function useResetPasswordActions() {
   watch(password, () => clearOnInput('password'))
   watch(confirm_password, () => clearOnInput('confirm_password'))
 
-  return { password, confirm_password, loading, errors, submit }
+  return { password, confirm_password, loading, errors, success, submit }
 }
