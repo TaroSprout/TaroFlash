@@ -12,6 +12,7 @@ const { t } = useI18n()
     data-theme="brown-200"
     data-theme-dark="stone-700"
     menu-theme="brown-200"
+    menu-theme-dark="stone-700"
     variant="ghost"
     shadow
     position="bottom-end"
