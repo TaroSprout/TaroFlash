@@ -23,7 +23,7 @@ const { t } = useI18n()
 <template>
   <div
     data-testid="reset-password-modal"
-    class="w-full max-w-100 h-full flex flex-1 flex-col items-center gap-2 py-4 pt-10 mx-auto"
+    class="h-full flex flex-1 flex-col items-center justify-center gap-4 pt-6"
   >
     <ui-icon src="keyhole" class="size-12 text-brown-700 dark:text-brown-100" />
 

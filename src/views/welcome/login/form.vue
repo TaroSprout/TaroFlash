@@ -78,10 +78,9 @@ const { t } = useI18n()
         <ui-button
           data-testid="login-dialog__forgot-password"
           type="button"
-          variant="ghost"
-          size="base"
+          size="sm"
           data-theme="brown-50"
-          data-theme-dark="stone-900"
+          data-theme-dark="stone-700"
           class="self-end!"
           @press="emit('forgot-password')"
         >

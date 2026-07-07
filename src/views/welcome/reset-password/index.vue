@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted } from 'vue'
-import DialogCard from '@/components/layout-kit/dialog-card/dialog-card.vue'
+import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 import ResetPasswordForm from './form.vue'
 import { useResetPasswordActions } from '@/composables/auth/use-reset-password-actions'
 import { useToast } from '@/composables/toast'
@@ -33,7 +33,9 @@ async function onSubmit() {
 <template>
   <dialog-card
     data-testid="reset-password-modal-card"
-    class="w-140 h-110 bg-brown-200 dark:bg-grey-800 gap-0!"
+    class="bg-brown-200 dark:bg-grey-800 gap-0!"
+    size="sm"
+    float_header
     data-theme="brown-50"
     data-theme-dark="stone-700"
     :title="t('reset-password-modal.heading')"
