@@ -18,9 +18,7 @@ onMounted(() => emitSfx('success_1'))
 </script>
 
 <template>
-  <div
-    class="h-full min-h-75 max-h-80 flex flex-col items-center justify-between pt-4 pb-6 text-center"
-  >
+  <div class="h-full flex flex-col items-center justify-center text-center gap-6">
     <ui-icon :src="icon" class="size-12 text-brown-700 dark:text-brown-100" />
 
     <div class="flex flex-col gap-2">
