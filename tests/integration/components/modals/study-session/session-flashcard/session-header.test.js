@@ -1,7 +1,13 @@
-import { describe, test, expect, vi } from 'vite-plus/test'
+import { describe, test, expect, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, nextTick } from 'vue'
 import SessionHeader from '@/components/study-session/session-flashcard/session-header.vue'
+
+// session-header teleports into a placeholder rendered by its ancestor
+// (study-session/index.vue via dialog-card's #header slot). Since teleport
+// content lands outside the mounted wrapper's own DOM subtree, tests query
+// `document.body` directly rather than `wrapper.find`.
+const TARGET_SELECTOR = '[data-testid="study-session__header-target"]'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
@@ -56,12 +62,18 @@ const DropdownButtonStub = defineComponent({
 
 function mountHeader(props = {}) {
   capturedOptions = []
+  const target = document.createElement('div')
+  target.setAttribute('data-testid', 'study-session__header-target')
+  document.body.appendChild(target)
+
   return mount(SessionHeader, {
     props: {
       is_cover: false,
       can_edit: true,
+      teleport_target: TARGET_SELECTOR,
       ...props
     },
+    attachTo: document.body,
     global: {
       stubs: {
         UiDropdownButton: DropdownButtonStub
@@ -70,45 +82,61 @@ function mountHeader(props = {}) {
   })
 }
 
+function findInTarget(selector) {
+  return document.body.querySelector(`${TARGET_SELECTOR} ${selector}`)
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('SessionHeader', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  // ── teleport wiring [obligation] ────────────────────────────────────────────
+
+  test('renders inside the teleport_target element, not in-place [obligation]', () => {
+    mountHeader()
+    expect(findInTarget('[data-testid="session-header"]')).not.toBeNull()
+  })
   // ── is_cover: close vs stop button [obligation] ────────────────────────────
 
   test('renders close button when is_cover is true [obligation]', () => {
-    const wrapper = mountHeader({ is_cover: true })
-    expect(wrapper.find('[data-testid="session-header__close"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="session-header__stop"]').exists()).toBe(false)
+    mountHeader({ is_cover: true })
+    expect(findInTarget('[data-testid="session-header__close"]')).not.toBeNull()
+    expect(findInTarget('[data-testid="session-header__stop"]')).toBeNull()
   })
 
   test('renders stop button when is_cover is false [obligation]', () => {
-    const wrapper = mountHeader({ is_cover: false })
-    expect(wrapper.find('[data-testid="session-header__stop"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="session-header__close"]').exists()).toBe(false)
+    mountHeader({ is_cover: false })
+    expect(findInTarget('[data-testid="session-header__stop"]')).not.toBeNull()
+    expect(findInTarget('[data-testid="session-header__close"]')).toBeNull()
   })
 
   test('close button (is_cover=true) emits "stop" on press [obligation]', async () => {
     const wrapper = mountHeader({ is_cover: true })
-    await wrapper.find('[data-testid="session-header__close"]').trigger('click')
+    findInTarget('[data-testid="session-header__close"]').click()
+    await nextTick()
     expect(wrapper.emitted('stop')).toHaveLength(1)
   })
 
   test('stop button (is_cover=false) emits "stop" on press [obligation]', async () => {
     const wrapper = mountHeader({ is_cover: false })
-    await wrapper.find('[data-testid="session-header__stop"]').trigger('click')
+    findInTarget('[data-testid="session-header__stop"]').click()
+    await nextTick()
     expect(wrapper.emitted('stop')).toHaveLength(1)
   })
 
   // ── edit menu is ALWAYS rendered [obligation] ──────────────────────────────
 
   test('edit menu is always rendered when can_edit is true [obligation]', () => {
-    const wrapper = mountHeader({ can_edit: true })
-    expect(wrapper.find('[data-testid="session-header__menu"]').exists()).toBe(true)
+    mountHeader({ can_edit: true })
+    expect(findInTarget('[data-testid="session-header__menu"]')).not.toBeNull()
   })
 
   test('edit menu is always rendered when can_edit is false [obligation]', () => {
-    const wrapper = mountHeader({ can_edit: false })
-    expect(wrapper.find('[data-testid="session-header__menu"]').exists()).toBe(true)
+    mountHeader({ can_edit: false })
+    expect(findInTarget('[data-testid="session-header__menu"]')).not.toBeNull()
   })
 
   // ── menu options carry disabled: !can_edit [obligation] ───────────────────
@@ -136,53 +164,59 @@ describe('SessionHeader', () => {
 
   test('selecting edit option emits "edit" event', async () => {
     const wrapper = mountHeader({ can_edit: true })
-    await wrapper.find('[data-testid="dropdown-select-edit"]').trigger('click')
+    findInTarget('[data-testid="dropdown-select-edit"]').click()
+    await nextTick()
     expect(wrapper.emitted('edit')).toHaveLength(1)
   })
 
   test('selecting move option emits "move" event', async () => {
     const wrapper = mountHeader({ can_edit: true })
-    await wrapper.find('[data-testid="dropdown-select-move"]').trigger('click')
+    findInTarget('[data-testid="dropdown-select-move"]').click()
+    await nextTick()
     expect(wrapper.emitted('move')).toHaveLength(1)
   })
 
   test('selecting delete option emits "delete" event', async () => {
     const wrapper = mountHeader({ can_edit: true })
-    await wrapper.find('[data-testid="dropdown-select-delete"]').trigger('click')
+    findInTarget('[data-testid="dropdown-select-delete"]').click()
+    await nextTick()
     expect(wrapper.emitted('delete')).toHaveLength(1)
   })
 
   // ── show_menu=false suppresses the menu regardless of can_edit [obligation] ─
 
   test('show_menu=false hides dropdown menu even when can_edit is true [obligation]', () => {
-    const wrapper = mountHeader({ show_menu: false, can_edit: true })
-    expect(wrapper.find('[data-testid="session-header__menu"]').exists()).toBe(false)
+    mountHeader({ show_menu: false, can_edit: true })
+    expect(findInTarget('[data-testid="session-header__menu"]')).toBeNull()
   })
 
   test('show_menu=false hides dropdown menu when can_edit is false [obligation]', () => {
-    const wrapper = mountHeader({ show_menu: false, can_edit: false })
-    expect(wrapper.find('[data-testid="session-header__menu"]').exists()).toBe(false)
+    mountHeader({ show_menu: false, can_edit: false })
+    expect(findInTarget('[data-testid="session-header__menu"]')).toBeNull()
   })
 
   test('show_menu=true (default) still renders dropdown menu when can_edit is true [obligation]', () => {
     // Default: show_menu defaults to true
-    const wrapper = mountHeader({ show_menu: true, can_edit: true })
-    expect(wrapper.find('[data-testid="session-header__menu"]').exists()).toBe(true)
+    mountHeader({ show_menu: true, can_edit: true })
+    expect(findInTarget('[data-testid="session-header__menu"]')).not.toBeNull()
   })
 
   // ── title renders ──────────────────────────────────────────────────────────
 
   test('renders title text in header', () => {
-    const wrapper = mountHeader({ title: 'My Deck' })
-    expect(wrapper.find('[data-testid="dialog-card-header__title"]').text()).toBe('My Deck')
+    mountHeader({ title: 'My Deck' })
+    expect(findInTarget('[data-testid="dialog-card-header__title"]').textContent).toBe('My Deck')
   })
 
-  // ── dialog-card-header padded=false [obligation] ───────────────────────────
+  // ── dialog-card-header padded default (no override) [obligation] ───────────
+  // session-header no longer overrides padded=false — its teleported position
+  // has no ancestor padding wrapper (unlike its old in-place position), so it
+  // relies on dialog-card-header's own default (padded=true).
 
-  test('renders dialog-card-header with padded=false so it does not double the parent inset [obligation]', () => {
-    const wrapper = mountHeader()
-    const header = wrapper.find('[data-testid="session-header"]')
-    expect(header.classes()).not.toContain('px-(--dialog-px)')
+  test('renders dialog-card-header without a padded override, so its own default (true) applies [obligation]', () => {
+    mountHeader()
+    const header = findInTarget('[data-testid="session-header"]')
+    expect(header.classList.contains('px-(--dialog-px)')).toBe(true)
   })
 
   // ── toggle-ratings menu copy [obligation] ─────────────────────────────────
@@ -203,7 +237,8 @@ describe('SessionHeader', () => {
 
   test('selecting the toggle-ratings option emits "toggle-ratings" event [obligation]', async () => {
     const wrapper = mountHeader({ can_edit: true })
-    await wrapper.find('[data-testid="dropdown-select-toggle-ratings"]').trigger('click')
+    findInTarget('[data-testid="dropdown-select-toggle-ratings"]').click()
+    await nextTick()
     expect(wrapper.emitted('toggle-ratings')).toHaveLength(1)
   })
 })

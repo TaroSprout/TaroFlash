@@ -6,6 +6,7 @@
 @import '@/styles/custom-variants.css';
 @import '@/styles/mobile-modal-variant.css';
 @import '@/styles/border-utils.css';
+@import '@/styles/content-grid.css';
 @import '@/styles/bg-utils.css';
 @import '@/styles/shimmer.css';
 @import '@/styles/outline-utils.css';

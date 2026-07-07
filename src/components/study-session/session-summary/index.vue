@@ -24,7 +24,13 @@ const summary = computed(() => aggregateSession(results))
 
 <template>
   <div data-testid="session-summary" class="h-full w-full flex flex-col gap-6 p-(--dialog-px)">
-    <session-header :title="title" is_cover :show_menu="false" @stop="emit('close')" />
+    <session-header
+      teleport_target="[data-testid='study-session__header-target']"
+      :title="title"
+      is_cover
+      :show_menu="false"
+      @stop="emit('close')"
+    />
 
     <div
       data-testid="session-summary__body"

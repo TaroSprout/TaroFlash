@@ -4,9 +4,8 @@ import { useI18n } from 'vue-i18n'
 import AccountAccessMenu, { type AccountAccessPage } from './account-access-menu.vue'
 import EmailSection from './email-section.vue'
 import PasswordSection from './password-section.vue'
+import DialogCardPager from '@/components/layout-kit/dialog-card/dialog-card-pager.vue'
 import { useSessionStore } from '@/stores/session'
-import { fadeLeave } from '@/utils/animations/fade'
-import { springScaleIn } from '@/utils/animations/modal'
 
 export type AccountAccessContentPage = 'menu' | AccountAccessPage
 
@@ -31,25 +30,15 @@ const title = computed(() => {
     : t('account-access-modal.password.heading-set')
 })
 
-function onLeave(el: Element, done: () => void) {
-  fadeLeave(el, done)
-}
-
-function onEnter(el: Element, done: () => void) {
-  springScaleIn(el, done)
-}
-
 defineExpose({ title })
 </script>
 
 <template>
-  <div data-testid="account-access-content" class="flex flex-1 flex-col items-center">
-    <div class="w-full max-w-100 flex flex-1 flex-col gap-4">
-      <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
-        <account-access-menu v-if="page === 'menu'" key="menu" @navigate="(p) => (page = p)" />
-        <email-section v-else-if="page === 'email'" key="email" :close="onSuccessClose" />
-        <password-section v-else key="password" :close="onSuccessClose" />
-      </transition>
-    </div>
+  <div data-testid="account-access-content">
+    <dialog-card-pager mode="out-in">
+      <account-access-menu v-if="page === 'menu'" key="menu" @navigate="(p) => (page = p)" />
+      <email-section v-else-if="page === 'email'" key="email" :close="onSuccessClose" />
+      <password-section v-else key="password" :close="onSuccessClose" />
+    </dialog-card-pager>
   </div>
 </template>
