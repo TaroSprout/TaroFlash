@@ -344,11 +344,19 @@ project_id = "kjxijaowaogiepqteqjk"
 
 [remotes.stage.auth]
 site_url = "https://stage.taro-flash.com"
-additional_redirect_urls = ["https://stage.taro-flash.com"]
+additional_redirect_urls = [
+  "https://stage.taro-flash.com",
+  "https://stage.taro-flash.com/auth/callback",
+  "https://stage.taro-flash.com/welcome"
+]
 
 [remotes.prod]
 project_id = "pwdqswbdiyahmftergyk"
 
 [remotes.prod.auth]
 site_url = "https://taro-flash.com"
-additional_redirect_urls = ["https://taro-flash.com"]
+additional_redirect_urls = [
+  "https://taro-flash.com",
+  "https://taro-flash.com/auth/callback",
+  "https://taro-flash.com/welcome"
+]
