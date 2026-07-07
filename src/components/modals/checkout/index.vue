@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import DialogCard from '@/components/layout-kit/dialog-card/dialog-card.vue'
+import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 import DialogCardPager from '@/components/layout-kit/dialog-card/dialog-card-pager.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import PaymentStatus from './payment-status.vue'

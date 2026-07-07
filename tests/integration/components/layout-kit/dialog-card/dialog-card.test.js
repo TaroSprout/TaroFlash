@@ -39,7 +39,7 @@ const UiButtonStub = defineComponent({
   }
 })
 
-import DialogCard from '@/components/layout-kit/dialog-card/dialog-card.vue'
+import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

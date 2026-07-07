@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
-import DialogCard from '@/components/layout-kit/dialog-card/dialog-card.vue'
+import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import AccountAccessContent, { type AccountAccessContentPage } from './account-access-content.vue'
 import { emitSfx } from '@/sfx/bus'
@@ -22,6 +22,7 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
     data-testid="account-access-modal"
     class="bg-brown-200 dark:bg-grey-800 gap-0!"
     size="sm"
+    float_header
     data-theme="brown-50"
     data-theme-dark="stone-700"
     :title="content?.title"
