@@ -17,7 +17,7 @@ onMounted(() => emitSfx('success_1'))
     data-testid="forgot-password-modal__success"
     class="h-full flex flex-col items-center justify-center gap-4 text-center"
   >
-    <ui-icon src="mail-envelope" class="size-12 text-brown-700 dark:text-brown-100" />
+    <ui-icon src="send" class="size-12 text-brown-700 dark:text-brown-100" />
 
     <div class="flex flex-col gap-2">
       <p class="text-xl text-brown-700 dark:text-brown-100">
