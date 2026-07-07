@@ -21,6 +21,6 @@ defineExpose({ onChromeBack })
     data-testid="tab-account-access"
     class="px-(--settings-padding) pb-(--settings-padding)"
   >
-    <account-access-content v-model:page="page" class="gap-8" />
+    <account-access-content v-model:page="page" />
   </section-list>
 </template>

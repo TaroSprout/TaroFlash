@@ -4,9 +4,9 @@ import SessionSummary from './session-summary/index.vue'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/dialog-card.vue'
+import DialogCardPager from '@/components/layout-kit/dialog-card/dialog-card-pager.vue'
 import { emitSfx, emitStudySfx } from '@/sfx/bus'
 import { useProvideDeckContext } from './deck-context'
-import { sessionPaneEnter, sessionPaneLeave } from '@/utils/animations/session-pane'
 import { clearPersistedSession } from './composables/session-persistence'
 import type { CardReviewResult } from './composables/session-core'
 import type { SecondaryAction } from './composables/study-modal'
@@ -42,53 +42,42 @@ function onClosed() {
   close()
 }
 
-function onPaneLeave(el: Element, done: () => void) {
-  sessionPaneLeave(el, done)
-}
-
-function onPaneEnter(el: Element, done: () => void) {
-  if (phase.value !== 'summary') return done()
-  sessionPaneEnter(el, done, () => emitStudySfx('music_pizz_duo_hi'))
+function onPaneEnterStart() {
+  emitStudySfx('music_pizz_duo_hi')
 }
 </script>
 
 <template>
   <dialog-card
     data-testid="study-session"
-    class="h-170 w-full max-w-160 bg-brown-300 dark:bg-grey-800 bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-brown-500"
-    viewport_query="w<sm"
-    :show_close_button="false"
+    class="bg-brown-300 dark:bg-grey-800 bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-brown-500"
+    size="lg"
   >
-    <template #default="{ viewport }">
-      <div
-        class="w-full h-full"
-        :class="
-          viewport === 'mobile'
-            ? 'outline-1 outline-brown-100'
-            : 'border-t border-l border-brown-100 dark:border-grey-900'
-        "
-      >
-        <div data-testid="study-session__outlet" class="relative w-full h-full overflow-hidden">
-          <transition :css="false" @leave="onPaneLeave" @enter="onPaneEnter">
-            <session-flashcard
-              v-if="phase === 'studying'"
-              key="studying"
-              :decks="decks"
-              :title="title"
-              :config_override="config_override"
-              @closed="onClosed"
-              @finished="onSessionFinished"
-            />
-            <session-summary
-              v-else
-              key="summary"
-              class="absolute inset-0 z-10"
-              :title="title"
-              :results="results"
-              @close="onClosed"
-            />
-          </transition>
-        </div>
+    <template #header>
+      <div data-testid="study-session__header-target"></div>
+    </template>
+
+    <template #default>
+      <div data-testid="study-session__outlet" class="relative w-full h-full">
+        <dialog-card-pager @enter-start="onPaneEnterStart">
+          <session-flashcard
+            v-if="phase === 'studying'"
+            key="studying"
+            :decks="decks"
+            :title="title"
+            :config_override="config_override"
+            @closed="onClosed"
+            @finished="onSessionFinished"
+          />
+          <session-summary
+            v-else
+            key="summary"
+            class="absolute inset-0 z-10"
+            :title="title"
+            :results="results"
+            @close="onClosed"
+          />
+        </dialog-card-pager>
       </div>
     </template>
   </dialog-card>

@@ -166,6 +166,7 @@ watch(mode, (m) => {
       :class="{ 'opacity-0 pointer-events-none': mode !== 'studying' }"
     >
       <session-header
+        teleport_target="[data-testid='study-session__header-target']"
         :title="title"
         :can_edit="can_edit"
         :is_cover="is_cover"

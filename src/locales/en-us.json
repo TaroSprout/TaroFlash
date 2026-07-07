@@ -375,6 +375,7 @@
   "dashboard.create-deck-button": "Make a New Deck",
   "dashboard.cards-due.cards-label": "card due across | cards due across",
   "dialog-card.close-label": "Close",
+  "dialog-card.back-label": "Back",
   "dashboard.cards-due.decks-label": "deck | decks",
   "review-inbox.cards-due-heading": "{count} card due | {count} cards due",
   "review-inbox.empty-label": "Nothing due right now!",

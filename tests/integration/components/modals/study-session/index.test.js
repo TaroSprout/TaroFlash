@@ -231,9 +231,9 @@ describe('StudySession (index.vue)', () => {
     expect(title.length).toBeGreaterThan(0)
   })
 
-  // ── dialog-card viewport_query [obligation] ────────────────────────────────
+  // ── dialog-card size="lg" sources full_bleed_at="w<sm" [obligation] ────────
 
-  test('[obligation] passes viewport_query="w<sm" — explicit, distinct from dialog-card default', () => {
+  test('[obligation] size="lg" resolves full_bleed_at to "w<sm" (not the "md"/"sm" default), since no explicit full_bleed_at is passed', () => {
     makeWrapper()
     expect(capturedQueries).toContain('w<sm')
     expect(capturedQueries).not.toContain('w<sm | h<sm')
@@ -263,5 +263,26 @@ describe('StudySession (index.vue)', () => {
     const { wrapper } = makeWrapper()
     const classes = wrapper.find('[data-testid="study-session"]').classes()
     expect(classes).toContain('h-full!')
+  })
+
+  // ── regression: outlet must not clip the swipe/drag animation [obligation] ─
+  // study-session__outlet used to carry its own overflow-hidden, which clipped
+  // the flashcard swipe/drag animation at the narrower content column instead
+  // of the full card. dialog-card's own root overflow-hidden (clipping at the
+  // true full-card boundary) is now the only clip boundary.
+
+  test('[obligation] study-session__outlet does not carry overflow-hidden', () => {
+    const { wrapper } = makeWrapper()
+    const classes = wrapper.find('[data-testid="study-session__outlet"]').classes()
+    expect(classes).not.toContain('overflow-hidden')
+  })
+
+  // ── header teleport target [obligation] ────────────────────────────────────
+  // session-header teleports itself into study-session__header-target, which
+  // study-session renders via dialog-card's #header slot override.
+
+  test('[obligation] renders a study-session__header-target placeholder via the #header slot', () => {
+    const { wrapper } = makeWrapper()
+    expect(wrapper.find('[data-testid="study-session__header-target"]').exists()).toBe(true)
   })
 })

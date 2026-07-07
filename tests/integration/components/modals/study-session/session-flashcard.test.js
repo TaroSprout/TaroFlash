@@ -216,6 +216,16 @@ function fireTransitionEnd(wrapper) {
 
 describe('Session', () => {
   beforeEach(() => {
+    // session-header teleports into a `[data-testid="study-session__header-target"]`
+    // placeholder normally rendered by its ancestor (study-session/index.vue). This
+    // suite mounts session-flashcard/index.vue in isolation, so provide the target
+    // ourselves — otherwise the teleport has nowhere to resolve to and crashes.
+    if (!document.body.querySelector('[data-testid="study-session__header-target"]')) {
+      const target = document.createElement('div')
+      target.setAttribute('data-testid', 'study-session__header-target')
+      document.body.appendChild(target)
+    }
+
     // A prior test's reviewCard()/dropCard() writes a persisted-session snapshot
     // to sessionStorage; without clearing it, the next mount's useSessionCards
     // sees a stale snapshot and takes the restore path instead of a fresh seed.
