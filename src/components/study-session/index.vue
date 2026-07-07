@@ -52,10 +52,13 @@ function onPaneEnterStart() {
     data-testid="study-session"
     class="bg-brown-300 dark:bg-grey-800 bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-brown-500"
     size="lg"
-    :show_close_button="false"
   >
+    <template #header>
+      <div data-testid="study-session__header-target"></div>
+    </template>
+
     <template #default>
-      <div data-testid="study-session__outlet" class="relative w-full h-full overflow-hidden">
+      <div data-testid="study-session__outlet" class="relative w-full h-full">
         <dialog-card-pager @enter-start="onPaneEnterStart">
           <session-flashcard
             v-if="phase === 'studying'"

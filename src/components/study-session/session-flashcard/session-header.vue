@@ -14,12 +14,14 @@ type SessionHeaderProps = {
   is_cover?: boolean
   show_menu?: boolean
   show_all_ratings?: boolean
+  teleport_target: string
 }
 
 const {
   can_edit = false,
   show_menu = true,
-  show_all_ratings = MEMBER_PREFERENCES_DEFAULTS.study.show_all_ratings
+  show_all_ratings = MEMBER_PREFERENCES_DEFAULTS.study.show_all_ratings,
+  teleport_target
 } = defineProps<SessionHeaderProps>()
 
 const emit = defineEmits<{
@@ -71,47 +73,49 @@ function onSelect(option: DropdownOption) {
 </script>
 
 <template>
-  <dialog-card-header data-testid="session-header" :title="title" :padded="false">
-    <template #start>
-      <ui-button
-        v-if="is_cover"
-        data-testid="session-header__close"
-        data-theme="brown-100"
-        data-theme-dark="stone-700"
-        icon-left="close"
-        icon-only
-        rounded-full
-        @press="emit('stop')"
-      >
-        {{ t('study-session.close-button') }}
-      </ui-button>
-      <ui-button
-        v-else
-        data-testid="session-header__stop"
-        data-theme="brown-100"
-        data-theme-dark="stone-700"
-        icon-left="stop"
-        rounded-full
-        @press="emit('stop')"
-      >
-        {{ t('study-session.stop-button') }}
-      </ui-button>
-    </template>
+  <teleport defer :to="teleport_target">
+    <dialog-card-header data-testid="session-header" :title="title">
+      <template #start>
+        <ui-button
+          v-if="is_cover"
+          data-testid="session-header__close"
+          data-theme="brown-100"
+          data-theme-dark="stone-700"
+          icon-left="close"
+          icon-only
+          rounded-full
+          @press="emit('stop')"
+        >
+          {{ t('study-session.close-button') }}
+        </ui-button>
+        <ui-button
+          v-else
+          data-testid="session-header__stop"
+          data-theme="brown-100"
+          data-theme-dark="stone-700"
+          icon-left="stop"
+          rounded-full
+          @press="emit('stop')"
+        >
+          {{ t('study-session.stop-button') }}
+        </ui-button>
+      </template>
 
-    <template v-if="show_menu" #end>
-      <ui-dropdown-button
-        data-testid="session-header__menu"
-        trigger-only
-        trigger-icon="pencil"
-        variant="ghost"
-        position="bottom-end"
-        trigger-theme="brown-100"
-        trigger-theme-dark="stone-700"
-        menu-theme="brown-100"
-        menu-theme-dark="stone-700"
-        :options="menu_options"
-        @select="onSelect"
-      />
-    </template>
-  </dialog-card-header>
+      <template v-if="show_menu" #end>
+        <ui-dropdown-button
+          data-testid="session-header__menu"
+          trigger-only
+          trigger-icon="pencil"
+          variant="ghost"
+          position="bottom-end"
+          trigger-theme="brown-100"
+          trigger-theme-dark="stone-700"
+          menu-theme="brown-100"
+          menu-theme-dark="stone-700"
+          :options="menu_options"
+          @select="onSelect"
+        />
+      </template>
+    </dialog-card-header>
+  </teleport>
 </template>
