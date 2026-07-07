@@ -128,6 +128,20 @@ describe('AccountAccessContent — title computed [obligation]', () => {
   })
 })
 
+describe('AccountAccessContent — no local max-width/gap constraint [obligation]', () => {
+  test('[obligation] the root carries no max-w class — width is sourced from an ancestor (dialog-card size, or the standalone tab layout)', () => {
+    const wrapper = mountContent('menu')
+    const root = wrapper.find('[data-testid="account-access-content"]')
+    expect(root.classes().some((c) => c.startsWith('max-w'))).toBe(false)
+  })
+
+  test('[obligation] the root carries no gap-* class — the container only ever has one active child at a time via the pager', () => {
+    const wrapper = mountContent('menu')
+    const root = wrapper.find('[data-testid="account-access-content"]')
+    expect(root.classes().some((c) => c.startsWith('gap-'))).toBe(false)
+  })
+})
+
 describe('AccountAccessContent — page routing', () => {
   test('renders the menu by default', () => {
     const wrapper = mountContent('menu')

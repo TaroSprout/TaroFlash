@@ -59,23 +59,23 @@ beforeEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('DialogCard', () => {
-  // ── viewport_query drives its own provide per-instance [obligation] ────────
+  // ── full_bleed_at drives its own provide per-instance [obligation] ─────────
 
-  describe('viewport_query [obligation]', () => {
+  describe('full_bleed_at [obligation]', () => {
     test('defaults to "w<sm | h<sm" when the prop is omitted', () => {
       mountCard()
       expect(capturedQueries).toContain('w<sm | h<sm')
     })
 
-    test('forwards an explicit viewport_query verbatim, not the default', () => {
-      mountCard({ viewport_query: 'w<sm' })
+    test('forwards an explicit full_bleed_at verbatim, not the default', () => {
+      mountCard({ full_bleed_at: 'w<sm' })
       expect(capturedQueries).toContain('w<sm')
       expect(capturedQueries).not.toContain('w<sm | h<sm')
     })
 
-    test('two instances with different viewport_query props resolve independently', () => {
-      const checkout = mountCard({ viewport_query: 'w<sm | h<sm' })
-      const study_session = mountCard({ viewport_query: 'w<sm' })
+    test('two instances with different full_bleed_at props resolve independently', () => {
+      const checkout = mountCard({ full_bleed_at: 'w<sm | h<sm' })
+      const study_session = mountCard({ full_bleed_at: 'w<sm' })
 
       expect(capturedQueries).toEqual(expect.arrayContaining(['w<sm | h<sm', 'w<sm']))
       checkout.unmount()
@@ -84,23 +84,77 @@ describe('DialogCard', () => {
 
     test('exposed viewport is "mobile" when the resolved query matches', () => {
       matchState.value = true
-      const wrapper = mountCard({ viewport_query: 'w<sm' })
+      const wrapper = mountCard({ full_bleed_at: 'w<sm' })
       expect(wrapper.vm.viewport).toBe('mobile')
     })
 
     test('exposed viewport is "desktop" when the resolved query does not match', () => {
       matchState.value = false
-      const wrapper = mountCard({ viewport_query: 'w<sm' })
+      const wrapper = mountCard({ full_bleed_at: 'w<sm' })
       expect(wrapper.vm.viewport).toBe('desktop')
     })
 
     test('default slot receives the same viewport value that is exposed', () => {
       matchState.value = true
       const wrapper = mountCard(
-        { viewport_query: 'w<sm' },
+        { full_bleed_at: 'w<sm' },
         { default: (props) => h('div', { 'data-testid': 'slot-viewport' }, props.viewport) }
       )
       expect(wrapper.find('[data-testid="slot-viewport"]').text()).toBe('mobile')
+    })
+  })
+
+  // ── size prop bundles width/height + full_bleed_at + content_max_width [obligation]
+
+  describe('size [obligation]', () => {
+    test('defaults to "md" — applies w-150 h-160 and a 32.5rem content max width', () => {
+      const wrapper = mountCard()
+      const classes = wrapper.find('[data-testid="dialog-card"]').classes()
+
+      expect(classes).toContain('w-150')
+      expect(classes).toContain('h-160')
+      expect(wrapper.find('[data-testid="dialog-card__body"]').attributes('style')).toContain(
+        '--content-grid-max-width: 32.5rem'
+      )
+    })
+
+    test('size="sm" applies w-140 h-110, full_bleed_at "w<sm | h<sm", and a 25rem content max width', () => {
+      const wrapper = mountCard({ size: 'sm' })
+      const classes = wrapper.find('[data-testid="dialog-card"]').classes()
+
+      expect(classes).toContain('w-140')
+      expect(classes).toContain('h-110')
+      expect(capturedQueries).toContain('w<sm | h<sm')
+      expect(wrapper.find('[data-testid="dialog-card__body"]').attributes('style')).toContain(
+        '--content-grid-max-width: 25rem'
+      )
+    })
+
+    test('size="lg" applies w-full max-w-160 h-170, full_bleed_at "w<sm", and a 35rem content max width', () => {
+      const wrapper = mountCard({ size: 'lg' })
+      const classes = wrapper.find('[data-testid="dialog-card"]').classes()
+
+      expect(classes).toContain('w-full')
+      expect(classes).toContain('max-w-160')
+      expect(classes).toContain('h-170')
+      expect(capturedQueries).toContain('w<sm')
+      expect(capturedQueries).not.toContain('w<sm | h<sm')
+      expect(wrapper.find('[data-testid="dialog-card__body"]').attributes('style')).toContain(
+        '--content-grid-max-width: 35rem'
+      )
+    })
+
+    test('an explicit full_bleed_at wins over the size default', () => {
+      mountCard({ size: 'sm', full_bleed_at: 'w<sm' })
+      expect(capturedQueries).toContain('w<sm')
+      expect(capturedQueries).not.toContain('w<sm | h<sm')
+    })
+
+    test('an explicit content_max_width wins over the size default', () => {
+      const wrapper = mountCard({ size: 'sm', content_max_width: '50rem' })
+      expect(wrapper.find('[data-testid="dialog-card__body"]').attributes('style')).toContain(
+        '--content-grid-max-width: 50rem'
+      )
     })
   })
 
@@ -129,6 +183,29 @@ describe('DialogCard', () => {
       expect(classes).not.toContain('h-full!')
       expect(classes).not.toContain('w-full!')
       expect(classes).not.toContain('rounded-none!')
+    })
+  })
+
+  // ── desktop-only frame chrome [obligation] ──────────────────────────────────
+
+  describe('desktop frame chrome [obligation]', () => {
+    test('applies the border-t/border-l frame classes on desktop', () => {
+      matchState.value = false
+      const wrapper = mountCard()
+      const classes = wrapper.find('[data-testid="dialog-card"]').classes()
+
+      expect(classes).toContain('border-t')
+      expect(classes).toContain('border-l')
+      expect(classes).toContain('border-brown-100')
+    })
+
+    test('drops the frame classes entirely on mobile (full-bleed, no edge to frame)', () => {
+      matchState.value = true
+      const wrapper = mountCard()
+      const classes = wrapper.find('[data-testid="dialog-card"]').classes()
+
+      expect(classes).not.toContain('border-t')
+      expect(classes).not.toContain('border-l')
     })
   })
 
@@ -171,6 +248,55 @@ describe('DialogCard', () => {
       const close = wrapper.find('[data-testid="dialog-card__close"]')
       expect(close.attributes('data-theme')).toBe('brown-100')
       expect(close.attributes('data-theme-dark')).toBe('stone-700')
+    })
+  })
+
+  // ── show_header [obligation] ────────────────────────────────────────────────
+
+  describe('show_header [obligation]', () => {
+    test('hides the whole header (including the close button) when false', () => {
+      const wrapper = mountCard({ title: 'x', show_header: false })
+      expect(wrapper.findComponent({ name: 'DialogCardHeader' }).exists()).toBe(false)
+      expect(wrapper.find('[data-testid="dialog-card__close"]').exists()).toBe(false)
+    })
+
+    test('renders the header by default (show_header omitted)', () => {
+      const wrapper = mountCard({ title: 'x' })
+      expect(wrapper.findComponent({ name: 'DialogCardHeader' }).exists()).toBe(true)
+    })
+  })
+
+  // ── close_disabled [obligation] ─────────────────────────────────────────────
+
+  describe('close_disabled [obligation]', () => {
+    test('disables the built-in close button when true', () => {
+      const wrapper = mountCard({ title: 'x', close_disabled: true })
+      expect(wrapper.find('[data-testid="dialog-card__close"]').attributes('disabled')).toBe('')
+    })
+
+    test('leaves the close button enabled by default', () => {
+      const wrapper = mountCard({ title: 'x' })
+      expect(wrapper.find('[data-testid="dialog-card__close"]').attributes('disabled')).toBe(
+        undefined
+      )
+    })
+  })
+
+  // ── header-start slot [obligation] ──────────────────────────────────────────
+
+  describe('#header-start slot [obligation]', () => {
+    test('falls back to the built-in close button when not overridden', () => {
+      const wrapper = mountCard({ title: 'x' })
+      expect(wrapper.find('[data-testid="dialog-card__close"]').exists()).toBe(true)
+    })
+
+    test('a custom #header-start slot replaces the built-in close button', () => {
+      const wrapper = mountCard(
+        { title: 'x' },
+        { 'header-start': () => h('div', { 'data-testid': 'custom-header-start' }) }
+      )
+      expect(wrapper.find('[data-testid="custom-header-start"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="dialog-card__close"]').exists()).toBe(false)
     })
   })
 
