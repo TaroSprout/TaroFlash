@@ -72,18 +72,15 @@ function onClick(deck_id?: number) {
 <template>
   <dialog-card
     data-testid="move-cards"
-    class="w-150 h-150 bg-brown-200 dark:bg-stone-900 flex flex-col items-center"
+    class="w-150 h-150 bg-brown-200 dark:bg-stone-900"
     full_bleed_at="w<sm | h<sm"
+    content_max_width="32.5rem"
     :title="title"
     @close="close(false)"
   >
-    <div data-testid="move-cards__body" class="flex h-full min-h-0 w-full sm:w-130 flex-col">
+    <div data-testid="move-cards__body" class="flex h-full min-h-0 flex-col">
       <div data-testid="move-cards__deck-list-wrap" class="relative flex min-h-0 flex-1 flex-col">
-        <grouped-list
-          data-testid="move-cards__deck-list"
-          scrollable
-          class="mx-(--dialog-px) my-4 min-h-0 flex-1"
-        >
+        <grouped-list data-testid="move-cards__deck-list" scrollable class="my-4 min-h-0 flex-1">
           <ui-tappable
             v-for="(deck, index) in decks"
             :key="index"
@@ -129,10 +126,7 @@ function onClick(deck_id?: number) {
         />
       </div>
 
-      <div
-        data-testid="move-cards__actions"
-        class="px-(--dialog-px) pb-6 flex w-full justify-end gap-3"
-      >
+      <div data-testid="move-cards__actions" class="pb-6 flex w-full justify-end gap-3">
         <ui-button
           data-testid="move-cards__move"
           data-theme="blue-500"

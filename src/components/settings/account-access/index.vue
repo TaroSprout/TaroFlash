@@ -28,7 +28,11 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
     @close="close()"
   >
     <template #header>
-      <dialog-card-header data-testid="account-access-modal__header" :title="content?.title">
+      <dialog-card-header
+        data-testid="account-access-modal__header"
+        class="full-width"
+        :title="content?.title"
+      >
         <template #start>
           <ui-button
             v-if="page === 'menu'"
@@ -56,11 +60,6 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
       </dialog-card-header>
     </template>
 
-    <account-access-content
-      ref="content"
-      v-model:page="page"
-      :close="close"
-      class="gap-18 px-(--dialog-px)"
-    />
+    <account-access-content ref="content" v-model:page="page" :close="close" class="gap-18" />
   </dialog-card>
 </template>

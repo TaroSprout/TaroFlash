@@ -35,9 +35,30 @@ function onEnter(el: Element, done: () => void) {
     class="h-160 w-150 bg-brown-100 pb-6 dark:bg-grey-800"
     data-theme="brown-300"
     data-theme-dark="stone-700"
-    :show_close_button="false"
     @close="close()"
   >
+    <template #header>
+      <dialog-card-header
+        v-if="status !== 'success'"
+        data-testid="checkout__header"
+        class="full-width"
+        :title="t('billing.checkout.title')"
+      >
+        <template #start>
+          <ui-button
+            data-testid="checkout__close"
+            icon-left="close"
+            icon-only
+            rounded-full
+            :disabled="status === 'confirming'"
+            @press="close()"
+          >
+            {{ t('billing.checkout.close-label') }}
+          </ui-button>
+        </template>
+      </dialog-card-header>
+    </template>
+
     <template #default="{ viewport }">
       <div
         data-testid="checkout__scroll-area"
@@ -48,31 +69,12 @@ function onEnter(el: Element, done: () => void) {
           viewport === 'mobile' ? 'overflow-y-auto scroll-hidden' : ''
         ]"
       >
-        <dialog-card-header
-          v-if="status !== 'success'"
-          data-testid="checkout__header"
-          :title="t('billing.checkout.title')"
-        >
-          <template #start>
-            <ui-button
-              data-testid="checkout__close"
-              icon-left="close"
-              icon-only
-              rounded-full
-              :disabled="status === 'confirming'"
-              @press="close()"
-            >
-              {{ t('billing.checkout.close-label') }}
-            </ui-button>
-          </template>
-        </dialog-card-header>
-
         <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
           <div
             v-if="status !== 'success'"
             key="form"
             data-testid="checkout__body"
-            class="flex flex-col gap-4 px-(--dialog-px)"
+            class="flex flex-col gap-4"
           >
             <payment-status :status="status" />
             <div ref="container" data-testid="checkout__payment-element"></div>
@@ -83,7 +85,6 @@ function onEnter(el: Element, done: () => void) {
 
         <checkout-footer
           v-if="status !== 'success'"
-          class="px-(--dialog-px)"
           :status="status"
           :is_ready="is_ready"
           @submit="onSubmit"
