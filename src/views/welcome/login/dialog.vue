@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import LoginForm from './form.vue'
 import { useLoginActions } from '@/composables/auth/use-login-actions'
+import { useForgotPasswordModal } from '../forgot-password/forgot-password-modal'
 import { useRouter } from 'vue-router'
 
 const { close } = defineProps<{ close?: () => void }>()
 
 const router = useRouter()
+const forgotPasswordModal = useForgotPasswordModal()
 
 const auth = useLoginActions()
 
@@ -19,6 +21,11 @@ async function onSubmit() {
   router.push({ name: 'authenticated' })
   close?.()
 }
+
+function onForgotPassword() {
+  close?.()
+  forgotPasswordModal.open()
+}
 </script>
 
 <template>
@@ -31,5 +38,6 @@ async function onSubmit() {
     :submit-error="auth.submitError"
     @submit="onSubmit"
     @oauth="auth.submitOAuth"
+    @forgot-password="onForgotPassword"
   />
 </template>

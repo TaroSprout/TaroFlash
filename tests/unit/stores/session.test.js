@@ -12,8 +12,11 @@ const {
   mockSignInOAuth,
   mockUpdateEmail,
   mockUpdatePassword,
+  mockRequestPasswordReset,
   mockLinkGoogleIdentity,
   mockUnlinkGoogleIdentity,
+  mockIsPasswordRecoveryUrl,
+  mockWaitForPasswordRecovery,
   mockPush
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn(),
@@ -24,8 +27,11 @@ const {
   mockSignInOAuth: vi.fn(),
   mockUpdateEmail: vi.fn(),
   mockUpdatePassword: vi.fn(),
+  mockRequestPasswordReset: vi.fn(),
   mockLinkGoogleIdentity: vi.fn(),
   mockUnlinkGoogleIdentity: vi.fn(),
+  mockIsPasswordRecoveryUrl: vi.fn(),
+  mockWaitForPasswordRecovery: vi.fn(),
   mockPush: vi.fn()
 }))
 
@@ -38,8 +44,11 @@ vi.mock('@/api/session', () => ({
   signInOAuth: mockSignInOAuth,
   updateEmail: mockUpdateEmail,
   updatePassword: mockUpdatePassword,
+  requestPasswordReset: mockRequestPasswordReset,
   linkGoogleIdentity: mockLinkGoogleIdentity,
-  unlinkGoogleIdentity: mockUnlinkGoogleIdentity
+  unlinkGoogleIdentity: mockUnlinkGoogleIdentity,
+  isPasswordRecoveryUrl: mockIsPasswordRecoveryUrl,
+  waitForPasswordRecovery: mockWaitForPasswordRecovery
 }))
 
 vi.mock('vue-router', () => ({
@@ -60,8 +69,11 @@ beforeEach(() => {
   mockSignInOAuth.mockReset()
   mockUpdateEmail.mockReset()
   mockUpdatePassword.mockReset()
+  mockRequestPasswordReset.mockReset()
   mockLinkGoogleIdentity.mockReset()
   mockUnlinkGoogleIdentity.mockReset()
+  mockIsPasswordRecoveryUrl.mockReset()
+  mockWaitForPasswordRecovery.mockReset()
   mockPush.mockReset()
 })
 
@@ -128,6 +140,41 @@ describe('useSessionStore', () => {
       // Second call should skip the API call
       await store.restoreSession()
       expect(mockGetSession).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── checkPasswordRecovery ──────────────────────────────────────────────────
+
+  describe('checkPasswordRecovery [obligation]', () => {
+    test('short-circuits to false without calling waitForPasswordRecovery when isPasswordRecoveryUrl is false [obligation]', async () => {
+      mockIsPasswordRecoveryUrl.mockReturnValueOnce(false)
+      const store = useSessionStore()
+
+      const result = await store.checkPasswordRecovery()
+
+      expect(result).toBe(false)
+      expect(mockWaitForPasswordRecovery).not.toHaveBeenCalled()
+    })
+
+    test('returns whatever waitForPasswordRecovery resolves when isPasswordRecoveryUrl is true [obligation]', async () => {
+      mockIsPasswordRecoveryUrl.mockReturnValueOnce(true)
+      mockWaitForPasswordRecovery.mockResolvedValueOnce(true)
+      const store = useSessionStore()
+
+      const result = await store.checkPasswordRecovery()
+
+      expect(result).toBe(true)
+      expect(mockWaitForPasswordRecovery).toHaveBeenCalledOnce()
+    })
+
+    test('returns false when isPasswordRecoveryUrl is true but waitForPasswordRecovery resolves false [obligation]', async () => {
+      mockIsPasswordRecoveryUrl.mockReturnValueOnce(true)
+      mockWaitForPasswordRecovery.mockResolvedValueOnce(false)
+      const store = useSessionStore()
+
+      const result = await store.checkPasswordRecovery()
+
+      expect(result).toBe(false)
     })
   })
 
@@ -270,6 +317,18 @@ describe('useSessionStore', () => {
       const result = await store.updatePassword('hunter22')
       expect(result).toBe('success')
       expect(mockUpdatePassword).toHaveBeenCalledWith('hunter22')
+    })
+  })
+
+  // ── requestPasswordReset ──────────────────────────────────────────────────
+
+  describe('requestPasswordReset', () => {
+    test('delegates to api requestPasswordReset and returns the outcome', async () => {
+      mockRequestPasswordReset.mockResolvedValueOnce('success')
+      const store = useSessionStore()
+      const result = await store.requestPasswordReset('user@example.com')
+      expect(result).toBe('success')
+      expect(mockRequestPasswordReset).toHaveBeenCalledWith('user@example.com')
     })
   })
 

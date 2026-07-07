@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCardHeader from './dialog-card-header.vue'
-import { provideDialogCardViewport, type DialogCardViewport } from './dialog-card-viewport'
+import { provideDialogCardViewport, type DialogCardViewport } from './dialog-card-viewport.ts'
 import UiButton from '@/components/ui-kit/button.vue'
 
 export type DialogCardSize = 'sm' | 'md' | 'lg'
@@ -36,6 +36,11 @@ export type DialogCardProps = {
   dialog_px?: string
   content_max_width?: string
   content_breakout_max_width?: string
+  // Takes the header out of flow (absolutely pinned to the top) so the body
+  // fills the card's full height and any centering inside it is relative to
+  // that full height, not the space left over after the header. The header
+  // then visually floats over the top of the body instead of pushing it down.
+  float_header?: boolean
 }
 
 const {
@@ -48,7 +53,8 @@ const {
   full_bleed_at,
   dialog_px,
   content_max_width,
-  content_breakout_max_width
+  content_breakout_max_width,
+  float_header = false
 } = defineProps<DialogCardProps>()
 
 const emit = defineEmits<{
@@ -89,35 +95,40 @@ defineExpose({ viewport })
     ]"
     :style="card_style"
   >
-    <slot name="header">
-      <dialog-card-header
-        v-if="show_header && (title || show_close_button || slots['header-start'])"
-        :title="title"
-        class="full-width"
-      >
-        <template #start>
-          <slot name="header-start">
-            <ui-button
-              v-if="show_close_button"
-              data-testid="dialog-card__close"
-              data-theme="brown-100"
-              data-theme-dark="stone-700"
-              icon-left="close"
-              icon-only
-              rounded-full
-              :disabled="close_disabled"
-              @press="emit('close')"
-            >
-              {{ close_label ?? t('dialog-card.close-label') }}
-            </ui-button>
-          </slot>
-        </template>
+    <div
+      data-testid="dialog-card__header-wrap"
+      :class="float_header ? 'absolute inset-x-0 top-0 z-10' : ''"
+    >
+      <slot name="header">
+        <dialog-card-header
+          v-if="show_header && (title || show_close_button || slots['header-start'])"
+          :title="title"
+          class="full-width"
+        >
+          <template #start>
+            <slot name="header-start">
+              <ui-button
+                v-if="show_close_button"
+                data-testid="dialog-card__close"
+                data-theme="brown-100"
+                data-theme-dark="stone-700"
+                icon-left="close"
+                icon-only
+                rounded-full
+                :disabled="close_disabled"
+                @press="emit('close')"
+              >
+                {{ close_label ?? t('dialog-card.close-label') }}
+              </ui-button>
+            </slot>
+          </template>
 
-        <template v-if="slots['header-end']" #end>
-          <slot name="header-end"></slot>
-        </template>
-      </dialog-card-header>
-    </slot>
+          <template v-if="slots['header-end']" #end>
+            <slot name="header-end"></slot>
+          </template>
+        </dialog-card-header>
+      </slot>
+    </div>
 
     <div
       data-testid="dialog-card__body"

@@ -12,7 +12,8 @@ const mocks = vi.hoisted(() => ({
   getUserIdentities: vi.fn(),
   refreshSession: vi.fn(),
   updateUser: vi.fn(),
-  onAuthStateChange: vi.fn()
+  onAuthStateChange: vi.fn(),
+  resetPasswordForEmail: vi.fn()
 }))
 
 vi.mock('@/supabase-client', () => ({
@@ -29,7 +30,8 @@ vi.mock('@/supabase-client', () => ({
       getUserIdentities: mocks.getUserIdentities,
       refreshSession: mocks.refreshSession,
       updateUser: mocks.updateUser,
-      onAuthStateChange: mocks.onAuthStateChange
+      onAuthStateChange: mocks.onAuthStateChange,
+      resetPasswordForEmail: mocks.resetPasswordForEmail
     }
   }
 }))
@@ -44,7 +46,10 @@ import {
   linkGoogleIdentity,
   unlinkGoogleIdentity,
   updateEmail,
-  updatePassword
+  updatePassword,
+  isPasswordRecoveryUrl,
+  waitForPasswordRecovery,
+  requestPasswordReset
 } from '@/api/session'
 
 beforeEach(() => {
@@ -574,5 +579,130 @@ describe('updatePassword', () => {
   test('returns "error" when updateUser throws', async () => {
     mocks.updateUser.mockRejectedValueOnce(new Error('network failure'))
     await expect(updatePassword('hunter22')).resolves.toBe('error')
+  })
+})
+
+describe('isPasswordRecoveryUrl [obligation]', () => {
+  afterEach(() => {
+    window.location.hash = ''
+  })
+
+  test('returns true when the hash contains type=recovery [obligation]', () => {
+    window.location.hash = '#access_token=abc&type=recovery'
+    expect(isPasswordRecoveryUrl()).toBe(true)
+  })
+
+  test('returns true when the ?type=recovery query param is present [obligation]', () => {
+    vi.stubGlobal('location', { hash: '', search: '?type=recovery' })
+    expect(isPasswordRecoveryUrl()).toBe(true)
+    vi.unstubAllGlobals()
+  })
+
+  test('returns false for a normal page load with no hash/query [obligation]', () => {
+    vi.stubGlobal('location', { hash: '', search: '' })
+    expect(isPasswordRecoveryUrl()).toBe(false)
+    vi.unstubAllGlobals()
+  })
+})
+
+describe('waitForPasswordRecovery [obligation]', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  function captureAuthCallback() {
+    let cb
+    const unsubscribe = vi.fn()
+    mocks.onAuthStateChange.mockImplementationOnce((fn) => {
+      cb = fn
+      return { data: { subscription: { unsubscribe } } }
+    })
+    return { get: () => cb, unsubscribe }
+  }
+
+  test('resolves true when PASSWORD_RECOVERY fires [obligation]', async () => {
+    const cb = captureAuthCallback()
+    const promise = waitForPasswordRecovery()
+
+    cb.get()('PASSWORD_RECOVERY')
+
+    await expect(promise).resolves.toBe(true)
+  })
+
+  test('unsubscribes and clears the timeout when the event fires [obligation]', async () => {
+    vi.useFakeTimers()
+    const clearSpy = vi.spyOn(window, 'clearTimeout')
+    const cb = captureAuthCallback()
+    const promise = waitForPasswordRecovery()
+
+    cb.get()('PASSWORD_RECOVERY')
+    await promise
+
+    expect(cb.unsubscribe).toHaveBeenCalledOnce()
+    expect(clearSpy).toHaveBeenCalled()
+  })
+
+  test('ignores auth events that are not PASSWORD_RECOVERY [obligation]', async () => {
+    const cb = captureAuthCallback()
+    const promise = waitForPasswordRecovery()
+
+    cb.get()('SIGNED_IN')
+
+    let settled = false
+    promise.then(() => (settled = true))
+    await Promise.resolve()
+    expect(settled).toBe(false)
+
+    cb.get()('PASSWORD_RECOVERY')
+    await expect(promise).resolves.toBe(true)
+  })
+
+  test('resolves false after an 8s timeout when the event never fires [obligation]', async () => {
+    vi.useFakeTimers()
+    const cb = captureAuthCallback()
+    const promise = waitForPasswordRecovery()
+
+    vi.advanceTimersByTime(8000)
+
+    await expect(promise).resolves.toBe(false)
+    expect(cb.unsubscribe).toHaveBeenCalledOnce()
+  })
+
+  test('does not resolve before the 8s timeout elapses [obligation]', async () => {
+    vi.useFakeTimers()
+    captureAuthCallback()
+    const promise = waitForPasswordRecovery()
+
+    vi.advanceTimersByTime(7999)
+
+    let settled = false
+    promise.then(() => (settled = true))
+    await Promise.resolve()
+    expect(settled).toBe(false)
+  })
+})
+
+describe('requestPasswordReset [obligation]', () => {
+  test('returns "success" and calls resetPasswordForEmail with the email and a redirect URL [obligation]', async () => {
+    mocks.resetPasswordForEmail.mockResolvedValueOnce({ error: null })
+
+    await expect(requestPasswordReset('e@x.com')).resolves.toBe('success')
+
+    expect(mocks.resetPasswordForEmail).toHaveBeenCalledWith('e@x.com', {
+      redirectTo: expect.any(String)
+    })
+  })
+
+  test('returns "error" when supabase returns an error — no account-existence-specific outcome [obligation]', async () => {
+    mocks.resetPasswordForEmail.mockResolvedValueOnce({
+      error: { message: 'rate limited' }
+    })
+
+    await expect(requestPasswordReset('e@x.com')).resolves.toBe('error')
+  })
+
+  test('returns "error" when resetPasswordForEmail throws [obligation]', async () => {
+    mocks.resetPasswordForEmail.mockRejectedValueOnce(new Error('network failure'))
+    await expect(requestPasswordReset('e@x.com')).resolves.toBe('error')
   })
 })

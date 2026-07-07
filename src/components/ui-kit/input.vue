@@ -105,7 +105,7 @@ const value = defineModel<string>('value')
   min-width: 0;
 }
 .ui-kit-input input::placeholder {
-  color: var(--theme-neutral);
+  color: var(--color-brown-500);
 }
 .ui-kit-input input:disabled {
   color: var(--color-brown-500);

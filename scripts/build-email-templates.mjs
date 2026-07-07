@@ -189,6 +189,13 @@ const TEMPLATES = {
     button: { href: '{{ .ConfirmationURL }}', label: 'Confirm email change' },
     footer: "Didn't request this? You can safely ignore this email."
   },
+  'recovery.html': {
+    title: 'Reset your password',
+    heading: 'Reset your password',
+    message: 'We received a request to reset your password. Click below to choose a new one.',
+    button: { href: '{{ .ConfirmationURL }}', label: 'Reset password' },
+    footer: "Didn't request this? You can safely ignore this email."
+  },
   'password_changed.html': {
     title: 'Your password was changed',
     heading: 'Your password was changed',

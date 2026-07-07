@@ -22,10 +22,25 @@ export type SignupOAuthOptions = {
 
 export type OAuthProvider = 'google'
 
-const AUTH_REDIRECT_URL =
-  import.meta.env.DEV && typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-    ? `http://${window.location.hostname}:5173/auth/callback`
-    : import.meta.env.VITE_AUTH_REDIRECT_URL
+// In dev, requests can come from a LAN hostname (e.g. testing on a phone) rather
+// than localhost — Supabase must redirect back to that same hostname, not the
+// prod URL baked into the env var.
+function buildRedirectUrl(path: string, prodUrl: string): string {
+  if (
+    import.meta.env.DEV &&
+    typeof window !== 'undefined' &&
+    window.location.hostname !== 'localhost'
+  ) {
+    return `http://${window.location.hostname}:5173${path}`
+  }
+  return prodUrl
+}
+
+const AUTH_REDIRECT_URL = buildRedirectUrl('/auth/callback', import.meta.env.VITE_AUTH_REDIRECT_URL)
+const RESET_PASSWORD_REDIRECT_URL = buildRedirectUrl(
+  '/welcome',
+  import.meta.env.VITE_RESET_PASSWORD_REDIRECT_URL
+)
 
 export async function getSession(): Promise<Session | null> {
   const { data, error } = await supabase.auth.getSession()
@@ -48,6 +63,43 @@ export async function getUser(): Promise<User | null> {
   }
 
   return data?.user
+}
+
+// Supabase's recovery link lands the browser back on the site with tokens in
+// the URL hash (implicit flow); the client auto-exchanges them and fires this
+// event once. Checking the URL first means a normal visit never pays for the
+// listener/await this needs.
+export function isPasswordRecoveryUrl(): boolean {
+  return (
+    window.location.hash.includes('type=recovery') ||
+    new URLSearchParams(window.location.search).get('type') === 'recovery'
+  )
+}
+
+const PASSWORD_RECOVERY_TIMEOUT_MS = 8000
+
+// An expired or already-used recovery link still carries `type=recovery` but
+// Supabase never fires the event for it, so this can't just await forever —
+// it resolves false after a timeout and lets the caller fall back to a normal
+// page load instead of hanging with a dangling subscription.
+export function waitForPasswordRecovery(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event !== 'PASSWORD_RECOVERY') return
+      cleanup()
+      resolve(true)
+    })
+
+    const timeout = window.setTimeout(() => {
+      cleanup()
+      resolve(false)
+    }, PASSWORD_RECOVERY_TIMEOUT_MS)
+
+    function cleanup() {
+      sub.subscription.unsubscribe()
+      window.clearTimeout(timeout)
+    }
+  })
 }
 
 export async function login(email: string, password: string): Promise<LoginOutcome> {
@@ -247,6 +299,27 @@ export async function updatePassword(password: string): Promise<UpdatePasswordOu
     return 'error'
   } catch (e: any) {
     logger.error(`Password update failed: ${e.message}`)
+    return 'error'
+  }
+}
+
+export type RequestPasswordResetOutcome = 'success' | 'error'
+
+// Supabase doesn't error for an unknown email (prevents account enumeration),
+// so unlike login/signup there's no keyed outcome map — only real backend
+// failures (rate limit, network) fall through to 'error'.
+export async function requestPasswordReset(email: string): Promise<RequestPasswordResetOutcome> {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: RESET_PASSWORD_REDIRECT_URL
+    })
+
+    if (!error) return 'success'
+
+    logger.error(`Password reset request failed: ${error.message}`)
+    return 'error'
+  } catch (e: any) {
+    logger.error(`Password reset request failed: ${e.message}`)
     return 'error'
   }
 }

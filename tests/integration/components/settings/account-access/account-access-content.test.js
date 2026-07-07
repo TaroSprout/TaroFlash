@@ -65,14 +65,14 @@ const MenuStub = defineComponent({
 
 const EmailSectionStub = defineComponent({
   name: 'EmailSection',
-  props: { close: { type: Function, required: false } },
-  setup(props) {
+  emits: ['pending'],
+  setup(_props, { emit }) {
     return () =>
       h('div', { 'data-testid': 'email-section-stub' }, [
         h(
           'button',
-          { 'data-testid': 'email-section-stub__close', onClick: () => props.close?.() },
-          'close'
+          { 'data-testid': 'email-section-stub__go-pending', onClick: () => emit('pending') },
+          'go pending'
         )
       ])
   }
@@ -80,9 +80,16 @@ const EmailSectionStub = defineComponent({
 
 const PasswordSectionStub = defineComponent({
   name: 'PasswordSection',
-  props: { close: { type: Function, required: false } },
-  setup() {
-    return () => h('div', { 'data-testid': 'password-section-stub' })
+  emits: ['success'],
+  setup(_props, { emit }) {
+    return () =>
+      h('div', { 'data-testid': 'password-section-stub' }, [
+        h(
+          'button',
+          { 'data-testid': 'password-section-stub__go-success', onClick: () => emit('success') },
+          'go success'
+        )
+      ])
   }
 })
 
@@ -93,9 +100,9 @@ function mountContent(page = 'menu', props = {}) {
       stubs: {
         AccountAccessMenu: MenuStub,
         EmailSection: EmailSectionStub,
-        PasswordSection: PasswordSectionStub,
-        transition: false
-      }
+        PasswordSection: PasswordSectionStub
+      },
+      directives: { sfx: {} }
     }
   })
 }
@@ -115,6 +122,11 @@ describe('AccountAccessContent — title computed [obligation]', () => {
     expect(wrapper.vm.title).toBe('Update Email')
   })
 
+  test('title is the email heading when page is "email-success" [obligation]', () => {
+    const wrapper = mountContent('email-success')
+    expect(wrapper.vm.title).toBe('Update Email')
+  })
+
   test('title is the password "set" heading when page is "password" and the member has no password identity [obligation]', () => {
     sessionState.hasPasswordIdentity = false
     const wrapper = mountContent('password')
@@ -124,6 +136,12 @@ describe('AccountAccessContent — title computed [obligation]', () => {
   test('title is the password "change" heading when page is "password" and the member already has a password identity [obligation]', () => {
     sessionState.hasPasswordIdentity = true
     const wrapper = mountContent('password')
+    expect(wrapper.vm.title).toBe('Change password')
+  })
+
+  test('title is the password heading when page is "password-success" [obligation]', () => {
+    sessionState.hasPasswordIdentity = true
+    const wrapper = mountContent('password-success')
     expect(wrapper.vm.title).toBe('Change password')
   })
 })
@@ -142,7 +160,7 @@ describe('AccountAccessContent — no local max-width/gap constraint [obligation
   })
 })
 
-describe('AccountAccessContent — page routing', () => {
+describe('AccountAccessContent — page routing (5 pages) [obligation]', () => {
   test('renders the menu by default', () => {
     const wrapper = mountContent('menu')
     expect(wrapper.find('[data-testid="account-access-menu-stub"]').exists()).toBe(true)
@@ -153,15 +171,39 @@ describe('AccountAccessContent — page routing', () => {
     expect(wrapper.find('[data-testid="email-section-stub"]').exists()).toBe(true)
   })
 
+  test('renders the email-success success panel when page is "email-success" [obligation]', () => {
+    const wrapper = mountContent('email-success')
+    expect(wrapper.find('[data-testid="account-access-modal__email-pending"]').exists()).toBe(true)
+  })
+
   test('renders the password section when page is "password"', () => {
     const wrapper = mountContent('password')
     expect(wrapper.find('[data-testid="password-section-stub"]').exists()).toBe(true)
+  })
+
+  test('renders the password-success success panel when page is "password-success" [obligation]', () => {
+    const wrapper = mountContent('password-success')
+    expect(wrapper.find('[data-testid="account-access-modal__password-success"]').exists()).toBe(
+      true
+    )
   })
 
   test('emits update:page with the navigated page when the menu navigates', async () => {
     const wrapper = mountContent('menu')
     await wrapper.find('[data-testid="navigate-to-email"]').trigger('click')
     expect(wrapper.emitted('update:page')).toEqual([['email']])
+  })
+
+  test('email-section navigates to "email-success" when it emits pending [obligation]', async () => {
+    const wrapper = mountContent('email')
+    await wrapper.find('[data-testid="email-section-stub__go-pending"]').trigger('click')
+    expect(wrapper.emitted('update:page')).toEqual([['email-success']])
+  })
+
+  test('password-section navigates to "password-success" when it emits success [obligation]', async () => {
+    const wrapper = mountContent('password')
+    await wrapper.find('[data-testid="password-section-stub__go-success"]').trigger('click')
+    expect(wrapper.emitted('update:page')).toEqual([['password-success']])
   })
 
   test('switching pages runs the leave/enter transition hooks (gsap-mocked)', async () => {
@@ -172,18 +214,52 @@ describe('AccountAccessContent — page routing', () => {
   })
 })
 
-describe('AccountAccessContent — onSuccessClose fallback [obligation]', () => {
-  test('[obligation] resets page back to "menu" when no close prop is passed', async () => {
-    const wrapper = mountContent('email')
-    await wrapper.find('[data-testid="email-section-stub__close"]').trigger('click')
-    expect(wrapper.emitted('update:page')).toEqual([['menu']])
+describe('AccountAccessContent — onSuccessClose dual behavior [obligation]', () => {
+  describe('email-success page [obligation]', () => {
+    test('resets page back to "menu" when no close prop is passed [obligation]', async () => {
+      const wrapper = mountContent('email-success')
+      await wrapper
+        .find(
+          '[data-testid="account-access-modal__email-pending"] [data-testid="account-access-success-panel__close"]'
+        )
+        .trigger('click')
+      expect(wrapper.emitted('update:page')).toEqual([['menu']])
+    })
+
+    test('calls the close prop instead of resetting the page when one is passed [obligation]', async () => {
+      const close = vi.fn()
+      const wrapper = mountContent('email-success', { close })
+      await wrapper
+        .find(
+          '[data-testid="account-access-modal__email-pending"] [data-testid="account-access-success-panel__close"]'
+        )
+        .trigger('click')
+      expect(close).toHaveBeenCalledOnce()
+      expect(wrapper.emitted('update:page')).toBeUndefined()
+    })
   })
 
-  test('[obligation] calls the close prop instead of resetting the page when one is passed', async () => {
-    const close = vi.fn()
-    const wrapper = mountContent('email', { close })
-    await wrapper.find('[data-testid="email-section-stub__close"]').trigger('click')
-    expect(close).toHaveBeenCalledOnce()
-    expect(wrapper.emitted('update:page')).toBeUndefined()
+  describe('password-success page [obligation]', () => {
+    test('resets page back to "menu" when no close prop is passed [obligation]', async () => {
+      const wrapper = mountContent('password-success')
+      await wrapper
+        .find(
+          '[data-testid="account-access-modal__password-success"] [data-testid="account-access-success-panel__close"]'
+        )
+        .trigger('click')
+      expect(wrapper.emitted('update:page')).toEqual([['menu']])
+    })
+
+    test('calls the close prop instead of resetting the page when one is passed [obligation]', async () => {
+      const close = vi.fn()
+      const wrapper = mountContent('password-success', { close })
+      await wrapper
+        .find(
+          '[data-testid="account-access-modal__password-success"] [data-testid="account-access-success-panel__close"]'
+        )
+        .trigger('click')
+      expect(close).toHaveBeenCalledOnce()
+      expect(wrapper.emitted('update:page')).toBeUndefined()
+    })
   })
 })

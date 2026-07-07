@@ -21,7 +21,7 @@ const {
 const email = defineModel<string>('email', { required: true })
 const password = defineModel<string>('password', { required: true })
 
-const emit = defineEmits<{ submit: []; oauth: [provider: OAuthProvider] }>()
+const emit = defineEmits<{ submit: []; oauth: [provider: OAuthProvider]; 'forgot-password': [] }>()
 
 const { t } = useI18n()
 </script>
@@ -74,6 +74,18 @@ const { t } = useI18n()
             :placeholder="t('login-dialog.password')"
           />
         </div>
+
+        <ui-button
+          data-testid="login-dialog__forgot-password"
+          type="button"
+          size="sm"
+          data-theme="brown-200"
+          data-theme-dark="stone-700"
+          class="self-end!"
+          @press="emit('forgot-password')"
+        >
+          {{ t('login-dialog.forgot-password-link') }}
+        </ui-button>
       </div>
 
       <div data-testid="login-dialog__footer" class="w-full flex flex-col items-center gap-2">

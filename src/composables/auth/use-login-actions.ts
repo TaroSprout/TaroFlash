@@ -3,6 +3,7 @@ import { useI18n } from 'vue-i18n'
 import { useSessionStore } from '@/stores/session'
 import type { LoginOutcome, OAuthProvider } from '@/api/session'
 import { emitSfx } from '@/sfx/bus'
+import { isEmail } from '@/utils/is-email'
 
 type FieldName = 'email' | 'password'
 
@@ -18,10 +19,6 @@ const LOGIN_ERROR_KEYS: Record<Exclude<LoginOutcome, 'success'>, string> = {
   'email-not-confirmed': 'login-dialog.errors.email-not-confirmed',
   'rate-limited': 'login-dialog.errors.rate-limited',
   error: 'login-dialog.errors.generic'
-}
-
-function isEmail(s: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim())
 }
 
 /**

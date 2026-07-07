@@ -1,38 +1,11 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { mount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, nextTick, ref } from 'vue'
-
-// Vue Test Utils stubs the built-in <transition> by default (no lifecycle
-// hooks fire). Wait through the real JS-hook cycle — 2x rAF even with
-// `:css="false"` — so onLeave/onEnter run for real against the gsap mock.
-async function flushTransition() {
-  await nextTick()
-  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
-  await flushPromises()
-}
+import { mount } from '@vue/test-utils'
+import { defineComponent, h, ref } from 'vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn(), emitStudySfx: vi.fn() }))
-
-vi.mock('@/sfx/directive', () => ({ vSfx: {} }))
-
-const { coarseRef } = vi.hoisted(() => ({ coarseRef: { value: false } }))
-vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: () => coarseRef }))
-
-// onComplete resolves on a microtask, not synchronously — a real GSAP tween
-// never completes within the same call stack as the leave hook, and calling
-// done() synchronously during a real (unstubbed) unmount transition crashes
-// Vue's internal removal bookkeeping (`afterLeave` reads a detached parentNode).
-vi.mock('gsap', () => ({
-  gsap: {
-    to: vi.fn((_el, opts) => {
-      Promise.resolve().then(() => opts?.onComplete?.())
-    }),
-    set: vi.fn()
-  }
-}))
 
 const mockEmailActions = {
   current_email: ref('current@example.com'),
@@ -50,9 +23,6 @@ import EmailSection from '@/components/settings/account-access/email-section.vue
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
-// UiTooltip wraps @floating-ui/Teleport; stub renders the label element and
-// forwards attrs/slot so the real <input> underneath is reachable and its
-// v-model:value binding is exercised for real.
 const UiTooltipStub = defineComponent({
   name: 'UiTooltip',
   inheritAttrs: false,
@@ -65,7 +35,7 @@ const UiTooltipStub = defineComponent({
 function makeWrapper() {
   return mount(EmailSection, {
     global: {
-      stubs: { UiTooltip: UiTooltipStub, transition: false },
+      stubs: { UiTooltip: UiTooltipStub },
       directives: { sfx: {} }
     }
   })
@@ -81,13 +51,25 @@ beforeEach(() => {
 })
 
 describe('EmailSection', () => {
-  test('[obligation] renders the composable current_email as the displayed value of the current-email input', () => {
+  // ── Structure ─────────────────────────────────────────────────────────────
+
+  test('renders the email section container — a pure form, always [obligation]', () => {
     const wrapper = makeWrapper()
-    const input = wrapper.find('[data-testid="account-access-modal__email-current-input"] input')
-    expect(input.element.value).toBe('current@example.com')
+    expect(wrapper.find('[data-testid="account-access-modal__email-section"]').exists()).toBe(true)
   })
 
-  test('[obligation] typing into the new-email input advances the composable email ref (not just the DOM value)', async () => {
+  test('renders unchanged when pending flips true — no internal pending panel [obligation]', async () => {
+    const wrapper = makeWrapper()
+    mockEmailActions.pending.value = true
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid="account-access-modal__email-section"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="account-access-modal__email-pending"]').exists()).toBe(false)
+  })
+
+  // ── field wiring ──────────────────────────────────────────────────────────
+
+  test('typing into the new-email input advances the composable email ref (not just the DOM value)', async () => {
     const wrapper = makeWrapper()
     const input = wrapper.find('[data-testid="account-access-modal__email-input"] input')
 
@@ -96,14 +78,7 @@ describe('EmailSection', () => {
     expect(mockEmailActions.email.value).toBe('new@example.com')
   })
 
-  test('reflects the composable current_email when it changes', async () => {
-    const wrapper = makeWrapper()
-    mockEmailActions.current_email.value = 'updated@example.com'
-    await wrapper.vm.$nextTick()
-
-    const input = wrapper.find('[data-testid="account-access-modal__email-current-input"] input')
-    expect(input.element.value).toBe('updated@example.com')
-  })
+  // ── submit wiring ─────────────────────────────────────────────────────────
 
   test('calls submit exactly once when the submit button is pressed', async () => {
     const wrapper = makeWrapper()
@@ -111,27 +86,45 @@ describe('EmailSection', () => {
     expect(mockEmailActions.submit).toHaveBeenCalledOnce()
   })
 
-  test('[obligation] calls submit exactly once when the form is submitted (Enter key)', async () => {
+  test('calls submit exactly once when the form is submitted (Enter key)', async () => {
     const wrapper = makeWrapper()
     await wrapper.find('form').trigger('submit')
     expect(mockEmailActions.submit).toHaveBeenCalledOnce()
   })
 
-  test('shows the pending message instead of the form when pending is true', async () => {
-    mockEmailActions.pending.value = true
-    const wrapper = makeWrapper()
+  // ── errors ────────────────────────────────────────────────────────────────
 
-    expect(wrapper.find('[data-testid="account-access-modal__email-pending"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="account-access-modal__email-current-input"]').exists()).toBe(
-      false
-    )
+  test('passes the composable error to the email input as tooltip text', () => {
+    mockEmailActions.error.value = 'Taken'
+    const wrapper = makeWrapper()
+    const input = wrapper.find('[data-testid="account-access-modal__email-input"]')
+    expect(input.findComponent(UiTooltipStub).props('text')).toBe('Taken')
   })
 
-  test('switching from form to pending mid-mount runs the leave/enter transition hooks (gsap-mocked)', async () => {
-    const wrapper = makeWrapper()
-    mockEmailActions.pending.value = true
-    await flushTransition()
+  // ── emits 'pending' exactly once when pending flips true [obligation] ──────
 
-    expect(wrapper.find('[data-testid="account-access-modal__email-pending"]').exists()).toBe(true)
+  describe('emits "pending" exactly once when pending flips true [obligation]', () => {
+    test('does not emit "pending" while pending is false [obligation]', () => {
+      const wrapper = makeWrapper()
+      expect(wrapper.emitted('pending')).toBeUndefined()
+    })
+
+    test('emits "pending" when pending flips to true [obligation]', async () => {
+      const wrapper = makeWrapper()
+      mockEmailActions.pending.value = true
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.emitted('pending')).toHaveLength(1)
+    })
+
+    test('does not re-emit when pending stays true across another update [obligation]', async () => {
+      const wrapper = makeWrapper()
+      mockEmailActions.pending.value = true
+      await wrapper.vm.$nextTick()
+      mockEmailActions.email.value = 'x@example.com'
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.emitted('pending')).toHaveLength(1)
+    })
   })
 })

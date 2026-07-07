@@ -16,6 +16,7 @@ vi.mock('gsap', () => ({
 }))
 
 import AccountAccessModal from '@/components/settings/account-access/index.vue'
+import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
@@ -109,8 +110,11 @@ describe('AccountAccessModal — chrome (close/back) [obligation]', () => {
   })
 
   test('the dialog-card close event (backdrop/esc dismiss) also calls close() [obligation]', async () => {
+    // DialogCard's SFC filename is index.vue, so its inferred component name
+    // isn't usable for findComponent({ name }) — resolve it by the imported
+    // component reference instead.
     const { wrapper, close } = makeWrapper()
-    const dialogCard = wrapper.findComponent({ name: 'DialogCard' })
+    const dialogCard = wrapper.findComponent(DialogCard)
     dialogCard.vm.$emit('close')
     await wrapper.vm.$nextTick()
     expect(close).toHaveBeenCalledOnce()

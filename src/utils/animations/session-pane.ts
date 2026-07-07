@@ -1,8 +1,8 @@
 import { gsap } from 'gsap'
 
-const ENTER_DURATION = 0.2
-const ENTER_DELAY = 0.25
-const LEAVE_DURATION = 0.15
+const ENTER_DURATION = 0.15
+const ENTER_DELAY = 0.15
+const LEAVE_DURATION = 0.1
 
 /**
  * Transition between the study-session phases (flashcard → summary). The

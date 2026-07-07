@@ -5,12 +5,7 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { emitSfx } from '@/sfx/bus'
 
-defineProps<{
-  icon: string
-  heading: string
-  message: string
-  close: () => void
-}>()
+defineProps<{ close: () => void }>()
 
 const { t } = useI18n()
 
@@ -18,16 +13,23 @@ onMounted(() => emitSfx('success_1'))
 </script>
 
 <template>
-  <div class="h-full flex flex-col items-center justify-center text-center gap-6">
-    <ui-icon :src="icon" class="size-12 text-brown-700 dark:text-brown-100" />
+  <div
+    data-testid="forgot-password-modal__success"
+    class="h-full flex flex-col items-center justify-center gap-4 text-center"
+  >
+    <ui-icon src="send" class="size-12 text-brown-700 dark:text-brown-100" />
 
     <div class="flex flex-col gap-2">
-      <p class="text-xl text-brown-700 dark:text-brown-100">{{ heading }}</p>
-      <p class="text-brown-500 dark:text-brown-300">{{ message }}</p>
+      <p class="text-xl text-brown-700 dark:text-brown-100">
+        {{ t('forgot-password-modal.success-heading') }}
+      </p>
+      <p class="text-brown-500 dark:text-brown-300">
+        {{ t('forgot-password-modal.success-message') }}
+      </p>
     </div>
 
     <ui-button
-      data-testid="account-access-success-panel__close"
+      data-testid="forgot-password-modal__success-close"
       data-theme="brown-50"
       data-theme-dark="stone-700"
       size="xl"

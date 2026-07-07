@@ -107,7 +107,7 @@ const at_limit = computed(() => max_chars !== undefined && char_count.value >= m
 }
 
 .ui-kit-textarea textarea::placeholder {
-  color: var(--theme-neutral);
+  color: var(--color-brown-500);
 }
 
 .ui-kit-textarea-char-count {

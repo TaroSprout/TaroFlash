@@ -3,6 +3,7 @@ import router from '@/router'
 import { useSessionStore } from '@/stores/session'
 import { onMounted, useTemplateRef } from 'vue'
 import { useSignupModal } from './signup/signup-modal'
+import { useResetPasswordModal } from './reset-password/reset-password-modal'
 import { provideWelcomeLayout } from './welcome-layout'
 import Splash from './splash/index.vue'
 import SectionFeatures from './section-features/index.vue'
@@ -12,12 +13,18 @@ import WelcomeFooter from '@/views/welcome/welcome-footer.vue'
 
 const session = useSessionStore()
 const { open: openSignup } = useSignupModal()
+const resetPasswordModal = useResetPasswordModal()
 const features = useTemplateRef('features')
 const roadmap = useTemplateRef('roadmap')
 
 provideWelcomeLayout()
 
 onMounted(async () => {
+  if (await session.checkPasswordRecovery()) {
+    resetPasswordModal.open()
+    return
+  }
+
   const authenticated = await session.restoreSession()
 
   if (authenticated) {

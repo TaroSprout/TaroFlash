@@ -35,7 +35,7 @@ function onGooglePress() {
 </script>
 
 <template>
-  <div data-testid="account-access-modal__menu" class="h-full flex flex-col py-4 gap-14">
+  <div data-testid="account-access-modal__menu" class="h-full flex flex-col justify-center gap-4">
     <p
       data-testid="account-access-modal__description"
       class="text-center text-brown-500 dark:text-brown-300"
@@ -43,31 +43,29 @@ function onGooglePress() {
       {{ t('account-access-modal.description') }}
     </p>
 
-    <div class="flex flex-col gap-4">
-      <ui-nav-list
-        data-theme="brown-50"
-        :entries="entries"
-        :sfx="{ press: 'snappy_button_5' }"
-        @navigate="onNavigate"
-      />
+    <ui-nav-list
+      data-theme="brown-50"
+      :entries="entries"
+      :sfx="{ press: 'snappy_button_5' }"
+      @navigate="onNavigate"
+    />
 
-      <ui-button
-        data-testid="account-access-modal__google-button"
-        data-theme="brown-50"
-        data-theme-dark="stone-700"
-        full-width
-        size="lg"
-        icon-left="google-logo"
-        :loading="loading"
-        :disabled="hasGoogleIdentity && !hasPasswordIdentity"
-        @press="onGooglePress"
-      >
-        {{
-          hasGoogleIdentity
-            ? t('account-access-modal.google.disconnect-account-button')
-            : t('account-access-modal.google.connect-account-button')
-        }}
-      </ui-button>
-    </div>
+    <ui-button
+      data-testid="account-access-modal__google-button"
+      data-theme="brown-50"
+      data-theme-dark="stone-700"
+      full-width
+      size="lg"
+      icon-left="google-logo"
+      :loading="loading"
+      :disabled="hasGoogleIdentity && !hasPasswordIdentity"
+      @press="onGooglePress"
+    >
+      {{
+        hasGoogleIdentity
+          ? t('account-access-modal.google.disconnect-account-button')
+          : t('account-access-modal.google.connect-account-button')
+      }}
+    </ui-button>
   </div>
 </template>
