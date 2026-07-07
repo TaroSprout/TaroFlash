@@ -42,6 +42,7 @@ vi.mock('@/composables/ui/media-query', () => ({
 }))
 
 import Checkout from '@/components/modals/checkout/index.vue'
+import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 
 // ── Setup ──────────────────────────────────────────────────────────────────────
 
@@ -139,9 +140,12 @@ describe('Checkout — header', () => {
   // ── dialog-card's own @close forwards through (backdrop/esc) ───────────────
 
   test('dialog-card emitting close (e.g. backdrop/esc) calls close() with no argument', async () => {
+    // DialogCard's SFC filename is index.vue, so its inferred component name
+    // isn't usable for findComponent({ name }) — resolve it by the imported
+    // component reference instead.
     const close = vi.fn()
     const wrapper = mountCheckout(close)
-    await wrapper.findComponent({ name: 'DialogCard' }).vm.$emit('close')
+    await wrapper.findComponent(DialogCard).vm.$emit('close')
     expect(close).toHaveBeenCalledWith()
   })
 })

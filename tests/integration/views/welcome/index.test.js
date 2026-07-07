@@ -269,4 +269,67 @@ describe('WelcomeIndex', () => {
     await flushPromises()
     expect(mocks.push).toHaveBeenCalledWith({ name: 'authenticated' })
   })
+
+  // ── onMounted — checkPasswordRecovery [obligation] ─────────────────────────
+
+  describe('checkPasswordRecovery [obligation]', () => {
+    test('opens the reset-password modal and skips restoreSession/redirect when it resolves true [obligation]', async () => {
+      const { useSessionStore } = await import('@/stores/session')
+      const pinia = createTestingPinia({ createSpy: vi.fn, stubActions: true })
+      mocks.modalOpen.mockReturnValue({ response: Promise.resolve(undefined) })
+
+      const session = useSessionStore(pinia)
+      session.checkPasswordRecovery.mockResolvedValue(true)
+      session.restoreSession.mockResolvedValue(true)
+
+      shallowMount(WelcomeIndex, {
+        global: {
+          plugins: [pinia],
+          stubs: {
+            Splash: SplashStub,
+            SectionFeatures: SectionFeaturesStub,
+            SectionPricing: SectionPricingStub,
+            SectionRoadmap: SectionRoadmapStub,
+            WelcomeFooter: WelcomeFooterStub,
+            SignupDialog: true
+          }
+        }
+      })
+
+      await flushPromises()
+
+      expect(mocks.modalOpen).toHaveBeenCalled()
+      expect(session.restoreSession).not.toHaveBeenCalled()
+      expect(mocks.push).not.toHaveBeenCalledWith({ name: 'authenticated' })
+    })
+
+    test('runs the normal restoreSession/redirect flow when it resolves false [obligation]', async () => {
+      const { useSessionStore } = await import('@/stores/session')
+      const pinia = createTestingPinia({ createSpy: vi.fn, stubActions: true })
+      mocks.modalOpen.mockReturnValue({ response: Promise.resolve(undefined) })
+
+      const session = useSessionStore(pinia)
+      session.checkPasswordRecovery.mockResolvedValue(false)
+      session.restoreSession.mockResolvedValue(true)
+
+      shallowMount(WelcomeIndex, {
+        global: {
+          plugins: [pinia],
+          stubs: {
+            Splash: SplashStub,
+            SectionFeatures: SectionFeaturesStub,
+            SectionPricing: SectionPricingStub,
+            SectionRoadmap: SectionRoadmapStub,
+            WelcomeFooter: WelcomeFooterStub,
+            SignupDialog: true
+          }
+        }
+      })
+
+      await flushPromises()
+
+      expect(session.restoreSession).toHaveBeenCalledOnce()
+      expect(mocks.push).toHaveBeenCalledWith({ name: 'authenticated' })
+    })
+  })
 })

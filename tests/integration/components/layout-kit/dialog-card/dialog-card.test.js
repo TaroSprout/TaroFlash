@@ -330,6 +330,27 @@ describe('DialogCard', () => {
     })
   })
 
+  // ── float_header [obligation] ───────────────────────────────────────────────
+
+  describe('float_header [obligation]', () => {
+    test('takes the header out of flow (absolute inset-x-0 top-0 z-10) when true [obligation]', () => {
+      const wrapper = mountCard({ title: 'x', float_header: true })
+      const classes = wrapper.find('[data-testid="dialog-card__header-wrap"]').classes()
+
+      expect(classes).toContain('absolute')
+      expect(classes).toContain('inset-x-0')
+      expect(classes).toContain('top-0')
+      expect(classes).toContain('z-10')
+    })
+
+    test('leaves the header in normal flex flow by default (no absolute classes) [obligation]', () => {
+      const wrapper = mountCard({ title: 'x' })
+      const classes = wrapper.find('[data-testid="dialog-card__header-wrap"]').classes()
+
+      expect(classes).not.toContain('absolute')
+    })
+  })
+
   // ── dialog_px prop ─────────────────────────────────────────────────────────────
 
   describe('dialog_px', () => {
