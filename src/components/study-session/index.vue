@@ -4,9 +4,9 @@ import SessionSummary from './session-summary/index.vue'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/dialog-card.vue'
+import DialogCardPager from '@/components/layout-kit/dialog-card/dialog-card-pager.vue'
 import { emitSfx, emitStudySfx } from '@/sfx/bus'
 import { useProvideDeckContext } from './deck-context'
-import { sessionPaneEnter, sessionPaneLeave } from '@/utils/animations/session-pane'
 import { clearPersistedSession } from './composables/session-persistence'
 import type { CardReviewResult } from './composables/session-core'
 import type { SecondaryAction } from './composables/study-modal'
@@ -42,13 +42,8 @@ function onClosed() {
   close()
 }
 
-function onPaneLeave(el: Element, done: () => void) {
-  sessionPaneLeave(el, done)
-}
-
-function onPaneEnter(el: Element, done: () => void) {
-  if (phase.value !== 'summary') return done()
-  sessionPaneEnter(el, done, () => emitStudySfx('music_pizz_duo_hi'))
+function onPaneEnterStart() {
+  emitStudySfx('music_pizz_duo_hi')
 }
 </script>
 
@@ -69,7 +64,7 @@ function onPaneEnter(el: Element, done: () => void) {
         "
       >
         <div data-testid="study-session__outlet" class="relative w-full h-full overflow-hidden">
-          <transition :css="false" @leave="onPaneLeave" @enter="onPaneEnter">
+          <dialog-card-pager @enter-start="onPaneEnterStart">
             <session-flashcard
               v-if="phase === 'studying'"
               key="studying"
@@ -87,7 +82,7 @@ function onPaneEnter(el: Element, done: () => void) {
               :results="results"
               @close="onClosed"
             />
-          </transition>
+          </dialog-card-pager>
         </div>
       </div>
     </template>

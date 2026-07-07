@@ -2,14 +2,13 @@
 import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/dialog-card.vue'
 import DialogCardHeader from '@/components/layout-kit/dialog-card/dialog-card-header.vue'
+import DialogCardPager from '@/components/layout-kit/dialog-card/dialog-card-pager.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import PaymentStatus from './payment-status.vue'
 import SuccessView from './success-view.vue'
 import CheckoutFooter from './checkout-footer.vue'
 import { useCheckout, type CheckoutResponse } from './use-checkout'
-import { fadeLeave } from '@/utils/animations/fade'
-import { springScaleIn } from '@/utils/animations/modal'
 
 export type { CheckoutResponse }
 
@@ -19,14 +18,6 @@ const { close } = defineProps<{
 
 const { t } = useI18n()
 const { status, is_ready, onSubmit } = useCheckout(close)
-
-function onLeave(el: Element, done: () => void) {
-  fadeLeave(el, done)
-}
-
-function onEnter(el: Element, done: () => void) {
-  springScaleIn(el, done)
-}
 </script>
 
 <template>
@@ -69,7 +60,7 @@ function onEnter(el: Element, done: () => void) {
           viewport === 'mobile' ? 'overflow-y-auto scroll-hidden' : ''
         ]"
       >
-        <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
+        <dialog-card-pager mode="out-in">
           <div
             v-if="status !== 'success'"
             key="form"
@@ -81,7 +72,7 @@ function onEnter(el: Element, done: () => void) {
           </div>
 
           <success-view v-else key="success" />
-        </transition>
+        </dialog-card-pager>
 
         <checkout-footer
           v-if="status !== 'success'"

@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { sessionPaneEnter, sessionPaneLeave } from '@/utils/animations/session-pane'
 
+export type DialogCardPagerProps = {
+  mode?: 'in-out' | 'out-in'
+}
+
+const { mode } = defineProps<DialogCardPagerProps>()
+
 const emit = defineEmits<{
   (e: 'enter-start'): void
 }>()
@@ -15,7 +21,7 @@ function onEnter(el: Element, done: () => void) {
 </script>
 
 <template>
-  <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
+  <transition :css="false" :mode="mode" @leave="onLeave" @enter="onEnter">
     <slot></slot>
   </transition>
 </template>
