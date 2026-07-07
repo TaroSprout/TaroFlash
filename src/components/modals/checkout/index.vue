@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/dialog-card.vue'
-import DialogCardHeader from '@/components/layout-kit/dialog-card/dialog-card-header.vue'
 import DialogCardPager from '@/components/layout-kit/dialog-card/dialog-card-pager.vue'
-import UiButton from '@/components/ui-kit/button.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import PaymentStatus from './payment-status.vue'
 import SuccessView from './success-view.vue'
@@ -26,30 +24,12 @@ const { status, is_ready, onSubmit } = useCheckout(close)
     class="h-160 w-150 bg-brown-100 pb-6 dark:bg-grey-800"
     data-theme="brown-300"
     data-theme-dark="stone-700"
+    :title="t('billing.checkout.title')"
+    :show_header="status !== 'success'"
+    :close_label="t('billing.checkout.close-label')"
+    :close_disabled="status === 'confirming'"
     @close="close()"
   >
-    <template #header>
-      <dialog-card-header
-        v-if="status !== 'success'"
-        data-testid="checkout__header"
-        class="full-width"
-        :title="t('billing.checkout.title')"
-      >
-        <template #start>
-          <ui-button
-            data-testid="checkout__close"
-            icon-left="close"
-            icon-only
-            rounded-full
-            :disabled="status === 'confirming'"
-            @press="close()"
-          >
-            {{ t('billing.checkout.close-label') }}
-          </ui-button>
-        </template>
-      </dialog-card-header>
-    </template>
-
     <template #default="{ viewport }">
       <div
         data-testid="checkout__scroll-area"

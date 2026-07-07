@@ -7,8 +7,10 @@ import UiButton from '@/components/ui-kit/button.vue'
 
 export type DialogCardProps = {
   title?: string
+  show_header?: boolean
   show_close_button?: boolean
   close_label?: string
+  close_disabled?: boolean
   full_bleed_at?: string
   dialog_px?: string
   content_max_width?: string
@@ -17,8 +19,10 @@ export type DialogCardProps = {
 
 const {
   title,
+  show_header = true,
   show_close_button = true,
   close_label,
+  close_disabled = false,
   full_bleed_at = 'w<sm | h<sm',
   dialog_px,
   content_max_width,
@@ -31,6 +35,7 @@ const emit = defineEmits<{
 
 const slots = defineSlots<{
   header(): any
+  'header-start'(): any
   'header-end'(): any
   default(props: { viewport: DialogCardViewport }): any
 }>()
@@ -58,19 +63,27 @@ defineExpose({ viewport })
     :style="card_style"
   >
     <slot name="header">
-      <dialog-card-header v-if="title || show_close_button" :title="title" class="full-width">
-        <template v-if="show_close_button" #start>
-          <ui-button
-            data-testid="dialog-card__close"
-            data-theme="brown-100"
-            data-theme-dark="stone-700"
-            icon-left="close"
-            icon-only
-            rounded-full
-            @press="emit('close')"
-          >
-            {{ close_label ?? t('dialog-card.close-label') }}
-          </ui-button>
+      <dialog-card-header
+        v-if="show_header && (title || show_close_button || slots['header-start'])"
+        :title="title"
+        class="full-width"
+      >
+        <template #start>
+          <slot name="header-start">
+            <ui-button
+              v-if="show_close_button"
+              data-testid="dialog-card__close"
+              data-theme="brown-100"
+              data-theme-dark="stone-700"
+              icon-left="close"
+              icon-only
+              rounded-full
+              :disabled="close_disabled"
+              @press="emit('close')"
+            >
+              {{ close_label ?? t('dialog-card.close-label') }}
+            </ui-button>
+          </slot>
         </template>
 
         <template v-if="slots['header-end']" #end>
