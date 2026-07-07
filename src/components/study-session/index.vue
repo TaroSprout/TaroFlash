@@ -50,40 +50,31 @@ function onPaneEnterStart() {
 <template>
   <dialog-card
     data-testid="study-session"
-    class="h-170 w-full max-w-160 bg-brown-300 dark:bg-grey-800 bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-brown-500"
-    full_bleed_at="w<sm"
+    class="bg-brown-300 dark:bg-grey-800 bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-brown-500"
+    size="lg"
     :show_close_button="false"
   >
-    <template #default="{ viewport }">
-      <div
-        class="w-full h-full"
-        :class="
-          viewport === 'mobile'
-            ? 'outline-1 outline-brown-100'
-            : 'border-t border-l border-brown-100 dark:border-grey-900'
-        "
-      >
-        <div data-testid="study-session__outlet" class="relative w-full h-full overflow-hidden">
-          <dialog-card-pager @enter-start="onPaneEnterStart">
-            <session-flashcard
-              v-if="phase === 'studying'"
-              key="studying"
-              :decks="decks"
-              :title="title"
-              :config_override="config_override"
-              @closed="onClosed"
-              @finished="onSessionFinished"
-            />
-            <session-summary
-              v-else
-              key="summary"
-              class="absolute inset-0 z-10"
-              :title="title"
-              :results="results"
-              @close="onClosed"
-            />
-          </dialog-card-pager>
-        </div>
+    <template #default>
+      <div data-testid="study-session__outlet" class="relative w-full h-full overflow-hidden">
+        <dialog-card-pager @enter-start="onPaneEnterStart">
+          <session-flashcard
+            v-if="phase === 'studying'"
+            key="studying"
+            :decks="decks"
+            :title="title"
+            :config_override="config_override"
+            @closed="onClosed"
+            @finished="onSessionFinished"
+          />
+          <session-summary
+            v-else
+            key="summary"
+            class="absolute inset-0 z-10"
+            :title="title"
+            :results="results"
+            @close="onClosed"
+          />
+        </dialog-card-pager>
       </div>
     </template>
   </dialog-card>

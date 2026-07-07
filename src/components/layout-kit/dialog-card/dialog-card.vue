@@ -5,12 +5,33 @@ import DialogCardHeader from './dialog-card-header.vue'
 import { provideDialogCardViewport, type DialogCardViewport } from './dialog-card-viewport'
 import UiButton from '@/components/ui-kit/button.vue'
 
+export type DialogCardSize = 'sm' | 'md' | 'lg'
+
+const SIZE_CLASSES: Record<DialogCardSize, string> = {
+  sm: 'w-140 h-110',
+  md: 'w-150 h-160',
+  lg: 'w-full max-w-160 h-170'
+}
+
+const SIZE_FULL_BLEED_AT: Record<DialogCardSize, string> = {
+  sm: 'w<sm | h<sm',
+  md: 'w<sm | h<sm',
+  lg: 'w<sm'
+}
+
+const SIZE_CONTENT_MAX_WIDTH: Record<DialogCardSize, string> = {
+  sm: '25rem',
+  md: '32.5rem',
+  lg: '35rem'
+}
+
 export type DialogCardProps = {
   title?: string
   show_header?: boolean
   show_close_button?: boolean
   close_label?: string
   close_disabled?: boolean
+  size?: DialogCardSize
   full_bleed_at?: string
   dialog_px?: string
   content_max_width?: string
@@ -23,7 +44,8 @@ const {
   show_close_button = true,
   close_label,
   close_disabled = false,
-  full_bleed_at = 'w<sm | h<sm',
+  size = 'md',
+  full_bleed_at,
   dialog_px,
   content_max_width,
   content_breakout_max_width
@@ -41,12 +63,12 @@ const slots = defineSlots<{
 }>()
 
 const { t } = useI18n()
-const viewport = provideDialogCardViewport(full_bleed_at)
+const viewport = provideDialogCardViewport(full_bleed_at ?? SIZE_FULL_BLEED_AT[size])
 
 const card_style = computed(() => (dialog_px ? { '--dialog-px': dialog_px } : undefined))
 
 const body_style = computed(() => ({
-  ...(content_max_width && { '--content-grid-max-width': content_max_width }),
+  '--content-grid-max-width': content_max_width ?? SIZE_CONTENT_MAX_WIDTH[size],
   ...(content_breakout_max_width && {
     '--content-grid-breakout-max-width': content_breakout_max_width
   })
@@ -59,7 +81,12 @@ defineExpose({ viewport })
   <div
     data-testid="dialog-card"
     class="relative flex flex-col gap-4 overflow-hidden [--dialog-px:1.5rem] sm:[--dialog-px:2rem]"
-    :class="viewport === 'mobile' ? 'h-full! w-full! rounded-none!' : 'rounded-8 shadow-lg'"
+    :class="[
+      SIZE_CLASSES[size],
+      viewport === 'mobile'
+        ? 'h-full! w-full! rounded-none!'
+        : 'rounded-8 shadow-lg border-t border-l border-brown-100 dark:border-grey-900'
+    ]"
     :style="card_style"
   >
     <slot name="header">

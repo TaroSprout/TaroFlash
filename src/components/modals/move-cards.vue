@@ -72,9 +72,8 @@ function onClick(deck_id?: number) {
 <template>
   <dialog-card
     data-testid="move-cards"
-    class="w-150 h-150 bg-brown-200 dark:bg-stone-900"
-    full_bleed_at="w<sm | h<sm"
-    content_max_width="32.5rem"
+    class="bg-brown-200 dark:bg-stone-900"
+    size="md"
     :title="title"
     @close="close(false)"
   >

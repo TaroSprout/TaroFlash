@@ -20,7 +20,8 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
 <template>
   <dialog-card
     data-testid="account-access-modal"
-    class="w-140 h-110 bg-brown-200 dark:bg-grey-800 gap-0!"
+    class="bg-brown-200 dark:bg-grey-800 gap-0!"
+    size="sm"
     data-theme="brown-50"
     data-theme-dark="stone-700"
     :title="content?.title"
@@ -51,6 +52,6 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
       </ui-button>
     </template>
 
-    <account-access-content ref="content" v-model:page="page" :close="close" class="gap-18" />
+    <account-access-content ref="content" v-model:page="page" :close="close" />
   </dialog-card>
 </template>

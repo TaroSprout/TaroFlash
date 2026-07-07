@@ -34,13 +34,11 @@ defineExpose({ title })
 </script>
 
 <template>
-  <div data-testid="account-access-content" class="flex flex-1 flex-col items-center">
-    <div class="w-full max-w-100 flex flex-1 flex-col gap-4">
-      <dialog-card-pager mode="out-in">
-        <account-access-menu v-if="page === 'menu'" key="menu" @navigate="(p) => (page = p)" />
-        <email-section v-else-if="page === 'email'" key="email" :close="onSuccessClose" />
-        <password-section v-else key="password" :close="onSuccessClose" />
-      </dialog-card-pager>
-    </div>
+  <div data-testid="account-access-content">
+    <dialog-card-pager mode="out-in">
+      <account-access-menu v-if="page === 'menu'" key="menu" @navigate="(p) => (page = p)" />
+      <email-section v-else-if="page === 'email'" key="email" :close="onSuccessClose" />
+      <password-section v-else key="password" :close="onSuccessClose" />
+    </dialog-card-pager>
   </div>
 </template>
