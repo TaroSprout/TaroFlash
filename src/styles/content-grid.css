@@ -1,0 +1,52 @@
+/* Named-line CSS grid for width-zoned layouts (content / breakout / full-width)
+   without wrapper divs. Override defaults per instance with the
+   content-grid-px-* / content-grid-max-w-* / content-grid-breakout-max-w-*
+   utilities below. */
+
+@utility content-grid {
+  --content-grid-padding: 0px;
+  --content-grid-max-width: 100%;
+  --content-grid-breakout-max-width: var(--content-grid-max-width);
+  --content-grid-breakout-size: calc(
+    (var(--content-grid-breakout-max-width) - var(--content-grid-max-width)) / 2
+  );
+
+  display: grid;
+  grid-template-columns:
+    [full-width-start] minmax(var(--content-grid-padding), 1fr)
+    [breakout-start] minmax(0, var(--content-grid-breakout-size))
+    [content-start] min(100% - var(--content-grid-padding) * 2, var(--content-grid-max-width))
+    [content-end] minmax(0, var(--content-grid-breakout-size))
+    [breakout-end] minmax(var(--content-grid-padding), 1fr)
+    [full-width-end];
+
+  & > * {
+    grid-column: content;
+  }
+}
+
+@utility content-grid-px-* {
+  --content-grid-padding: --value([length]);
+}
+
+@utility content-grid-max-w-* {
+  --content-grid-max-width: --value([length]);
+}
+
+@utility content-grid-breakout-max-w-* {
+  --content-grid-breakout-max-width: --value([length]);
+}
+
+@utility breakout {
+  grid-column: breakout;
+}
+
+@utility full-width {
+  grid-column: full-width;
+  display: grid;
+  grid-template-columns: inherit;
+
+  & > * {
+    grid-column: content;
+  }
+}
