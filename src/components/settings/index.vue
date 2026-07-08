@@ -122,19 +122,6 @@ const tab_content_class = computed(() =>
 onMounted(() => emitSfx('snappy_button_3'))
 onBeforeUnmount(() => emitSfx('snappy_button_5'))
 
-onMounted(() => {
-  const idle = window.requestIdleCallback ?? ((cb: IdleRequestCallback) => setTimeout(cb, 200))
-  idle(() => {
-    import('./tab-profile/index.vue')
-    import('./tab-subscription/index.vue')
-    import('./tab-app/index.vue')
-    import('./tab-review-preferences/index.vue')
-    import('./tab-danger-zone/index.vue')
-    import('./tab-account-access/index.vue')
-    import('./tab-index/index.vue')
-  })
-})
-
 async function onClose() {
   if (!editor.is_dirty.value) return close()
   const { response } = alert.warn({

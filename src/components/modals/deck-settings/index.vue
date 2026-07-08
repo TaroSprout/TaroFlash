@@ -104,15 +104,6 @@ const tab_content_class = computed(() =>
 )
 
 onMounted(async () => {
-  const idle = window.requestIdleCallback ?? ((cb: IdleRequestCallback) => setTimeout(cb, 200))
-  idle(() => {
-    import('./tab-details/index.vue')
-    import('./tab-design/index.vue')
-    import('./tab-study/index.vue')
-    import('./tab-danger-zone/index.vue')
-    import('./tab-index/index.vue')
-  })
-
   if (initial_side) {
     await after_enter
     editor.setActiveSide(initial_side)

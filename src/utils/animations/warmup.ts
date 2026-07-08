@@ -1,12 +1,5 @@
 import { gsap } from 'gsap'
 
-type IdleCallback = (cb: () => void) => void
-
-const scheduleIdle: IdleCallback =
-  typeof window !== 'undefined' && 'requestIdleCallback' in window
-    ? (cb) => (window as any).requestIdleCallback(cb, { timeout: 2000 })
-    : (cb) => setTimeout(cb, 500)
-
 export function warmupAnimations() {
   gsap.to({ _: 0 }, { _: 1, duration: 0, ease: 'expo.out' })
   gsap.to({ _: 0 }, { _: 1, duration: 0, ease: 'back.out(1.7)' })
@@ -30,10 +23,5 @@ export function warmupAnimations() {
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => el.remove())
-  })
-
-  scheduleIdle(() => {
-    void import('@/components/study-session/index.vue')
-    void import('@/components/modals/deck-settings/index.vue')
   })
 }
