@@ -44,6 +44,8 @@ export function useMemberDangerActions(close: () => void): MemberDangerActions {
       // TODO wire to BE: cascade member rows + auth.users removal via edge function.
       notice.success(t('toast.success.account-deleted'), {
         variant: 'panel',
+        closable: false,
+        actions: [{ label: t('notice.close-label'), onClick: () => {}, closesOnClick: true }],
         onDismiss: () => {
           close()
           router.push({ name: 'welcome' })

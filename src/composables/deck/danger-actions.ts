@@ -48,7 +48,10 @@ export function useDeckDangerActions(
       notice.error(t('toast.error.reset-reviews-failed'), { variant: 'panel' })
       return
     }
-    notice.success(t('toast.success.reset-reviews'), { variant: 'panel' })
+    notice.success(t('toast.success.reset-reviews'), {
+      variant: 'panel',
+      sfx: { open: 'success_3' }
+    })
   }
 
   async function onDelete() {
