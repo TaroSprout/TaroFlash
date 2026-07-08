@@ -11,6 +11,14 @@ import { warmupAnimations } from '@/utils/animations/warmup'
 
 warmupAnimations()
 
+window.addEventListener('vite:preloadError', () => {
+  const reload_key = 'stale-chunk-reload'
+  if (sessionStorage.getItem(reload_key)) return
+
+  sessionStorage.setItem(reload_key, '1')
+  window.location.reload()
+})
+
 const i18n = createI18n({
   locale: 'en-us',
   legacy: false,
@@ -28,3 +36,5 @@ app.use(router)
 app.directive('sfx', vSfx)
 
 app.mount('#app')
+
+sessionStorage.removeItem('stale-chunk-reload')
