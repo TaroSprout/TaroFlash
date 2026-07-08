@@ -8,7 +8,7 @@ const {
   transcriptSyncMock,
   cardIndexQueryMock,
   decksQueryMock,
-  toastErrorMock,
+  noticeErrorMock,
   mockEmitSfx
 } = vi.hoisted(() => ({
   lessonQueryMock: vi.fn(),
@@ -17,7 +17,7 @@ const {
   transcriptSyncMock: vi.fn(),
   cardIndexQueryMock: vi.fn(),
   decksQueryMock: vi.fn(),
-  toastErrorMock: vi.fn(),
+  noticeErrorMock: vi.fn(),
   mockEmitSfx: vi.fn()
 }))
 
@@ -32,7 +32,7 @@ vi.mock('@/api/lessons', () => ({
 // host app doesn't need a Pinia/Colada instance.
 vi.mock('@/api/cards', () => ({ useMemberCardIndexQuery: cardIndexQueryMock }))
 vi.mock('@/api/decks', () => ({ useMemberDecksQuery: decksQueryMock }))
-vi.mock('@/composables/toast', () => ({ useToast: () => ({ error: toastErrorMock }) }))
+vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => ({ error: noticeErrorMock }) }))
 vi.mock('@/composables/audio-reader/audio-player', () => ({ useAudioPlayer: audioPlayerMock }))
 vi.mock('@/composables/audio-reader/transcript-sync', () => ({
   useTranscriptSync: transcriptSyncMock
@@ -94,7 +94,7 @@ describe('useLessonReader', () => {
     transcriptSyncMock.mockReturnValue({ active_index: ref(-1) })
     cardIndexQueryMock.mockReturnValue({ data: ref([]) })
     decksQueryMock.mockReturnValue({ data: ref([]) })
-    toastErrorMock.mockReset()
+    noticeErrorMock.mockReset()
     mockEmitSfx.mockReset()
   })
 
@@ -247,7 +247,7 @@ describe('useLessonReader', () => {
       error.value = new Error('lesson exploded')
       await nextTick()
 
-      expect(toastErrorMock).toHaveBeenCalledWith('lesson exploded')
+      expect(noticeErrorMock).toHaveBeenCalledWith('lesson exploded')
     })
   })
 

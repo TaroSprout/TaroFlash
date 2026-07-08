@@ -12,6 +12,7 @@ import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import { TYPE_SFX } from '@/sfx/config'
 import { useCardLimitGate } from '@/composables/card/limit-gate'
 import { useCan } from '@/composables/can'
+import { useNoticeStore } from '@/stores/notice-store'
 
 export type MoveCardsModalResponse = {
   deck_id: number
@@ -21,10 +22,11 @@ type MoveCardsModalProps = {
   cards: Card[]
   current_deck_id: number
   count?: number
+  move: (deck_id: number) => Promise<void>
   close: (response?: MoveCardsModalResponse | boolean) => void
 }
 
-const { cards, current_deck_id, count, close } = defineProps<MoveCardsModalProps>()
+const { cards, current_deck_id, count, move, close } = defineProps<MoveCardsModalProps>()
 
 const { t } = useI18n()
 
@@ -32,6 +34,7 @@ const can = useCan()
 const { data: decks } = useMemberDecksQuery()
 const selected_deck_id = ref<number | undefined>(undefined)
 const hovered_deck_id = ref<number | undefined>(undefined)
+const moving = ref(false)
 
 const title = computed(() => {
   const card = cards[0]
@@ -45,7 +48,8 @@ const title = computed(() => {
 const moving_count = computed(() => count ?? cards.length)
 
 const target_deck = computed(() => decks.value?.find((deck) => deck.id === selected_deck_id.value))
-const { guardAddCards } = useCardLimitGate(target_deck)
+const { guardAddCards, handleLimitError } = useCardLimitGate(target_deck)
+const notice = useNoticeStore()
 
 /** True when moving `moving_count` cards here would exceed the plan's per-deck cap. */
 function isDeckFull(deck: Deck) {
@@ -56,7 +60,15 @@ async function onMove() {
   if (!selected_deck_id.value) return
   if (!(await guardAddCards(moving_count.value))) return
 
-  close({ deck_id: selected_deck_id.value })
+  moving.value = true
+  try {
+    await move(selected_deck_id.value)
+    close({ deck_id: selected_deck_id.value })
+  } catch (error) {
+    if (!handleLimitError(error)) notice.error(t('toast.error.move-cards-failed'))
+  } finally {
+    moving.value = false
+  }
 }
 
 function onClick(deck_id?: number) {
@@ -132,8 +144,9 @@ function onClick(deck_id?: number) {
           icon-left="move-item"
           size="xl"
           full-width
+          :loading="moving"
           @press="onMove"
-          :disabled="!selected_deck_id"
+          :disabled="!selected_deck_id || moving"
         >
           {{ t('move-cards-modal.confirm') }}
         </ui-button>

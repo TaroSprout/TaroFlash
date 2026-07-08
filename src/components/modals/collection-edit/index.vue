@@ -9,7 +9,7 @@ import {
   useRetryLessonMutation,
   useDeleteLessonCollectionMutation
 } from '@/api/lessons'
-import { useToast } from '@/composables/toast'
+import { useNoticeStore } from '@/stores/notice-store'
 import { useAlert } from '@/composables/alert'
 import { useUploadLessonModal } from '@/composables/audio-reader/upload-lesson-modal'
 import MobileSheet from '@/components/layout-kit/sheet/mobile-sheet.vue'
@@ -28,7 +28,7 @@ const { collection_id, close } = defineProps<{
 
 const { t } = useI18n()
 const router = useRouter()
-const toast = useToast()
+const notice = useNoticeStore()
 const alert = useAlert()
 const upload_modal = useUploadLessonModal()
 const delete_lesson = useDeleteLessonMutation()
@@ -69,7 +69,7 @@ async function onRetry(lesson: Lesson) {
   try {
     await retry_lesson.mutateAsync({ id: lesson.id, collection_id })
   } catch {
-    toast.error(t('collection-view.retry-error'))
+    notice.error(t('collection-view.retry-error'), { variant: 'panel' })
   }
 }
 
@@ -85,7 +85,7 @@ async function onDeleteLesson(lesson: Lesson) {
   try {
     await delete_lesson.mutateAsync({ id: lesson.id, collection_id })
   } catch {
-    toast.error(t('collection-view.delete-error'))
+    notice.error(t('collection-view.delete-error'), { variant: 'panel' })
   }
 }
 
@@ -104,12 +104,12 @@ async function onDeleteCollection() {
     // The book is gone — leave any open chapter route for the dashboard.
     router.push({ name: 'dashboard' })
   } catch {
-    toast.error(t('lesson-collections.section.delete-error'))
+    notice.error(t('lesson-collections.section.delete-error'), { variant: 'panel' })
   }
 }
 
 watch(lessons_error, (err) => {
-  if (err) toast.error(err.message)
+  if (err) notice.error(err.message)
 })
 
 // Start/stop polling as lessons enter/leave the processing state, so a card

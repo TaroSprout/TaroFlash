@@ -7,7 +7,7 @@ import {
   useDetachPaymentMethodMutation
 } from '@/api/billing'
 import { useModal } from '@/composables/modal'
-import { useToast } from '@/composables/toast'
+import { useNoticeStore } from '@/stores/notice-store'
 import { settingsRecedeKey } from '../layout'
 
 /**
@@ -19,7 +19,7 @@ export function useChangeCardClick() {
   const { t } = useI18n()
   const recede = inject(settingsRecedeKey)
   const modal = useModal()
-  const toast = useToast()
+  const notice = useNoticeStore()
 
   const methods_query = usePaymentMethodsQuery()
   const set_default_mutation = useSetDefaultPaymentMethodMutation()
@@ -51,7 +51,9 @@ export function useChangeCardClick() {
       try {
         await set_default_mutation.mutateAsync(response.paymentMethodId)
       } catch {
-        toast.error(t('settings.subscription.payment-methods.set-default-error'))
+        notice.error(t('settings.subscription.payment-methods.set-default-error'), {
+          variant: 'panel'
+        })
         return
       }
 
@@ -60,7 +62,9 @@ export function useChangeCardClick() {
         try {
           await detach_mutation.mutateAsync(id)
         } catch {
-          toast.error(t('settings.subscription.payment-methods.detach-error'))
+          notice.error(t('settings.subscription.payment-methods.detach-error'), {
+            variant: 'panel'
+          })
         }
       }
     }

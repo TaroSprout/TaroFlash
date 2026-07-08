@@ -32,8 +32,8 @@ vi.mock('@/api/cards', () => ({
   useInsertCardAtMutation: () => ({ mutateAsync: mutateAsyncMock })
 }))
 
-vi.mock('@/composables/toast', () => ({
-  useToast: () => ({ success: successMock, error: errorMock })
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => ({ success: successMock, error: errorMock })
 }))
 
 vi.mock('@/composables/last-deck', () => ({

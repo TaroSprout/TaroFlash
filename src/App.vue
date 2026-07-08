@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import { useToast } from '@/composables/toast'
-import UiToast from '@/components/ui-kit/toast.vue'
+import { useNoticeStore } from '@/stores/notice-store'
+import NoticeToast from '@/components/ui-kit/notice/toast.vue'
+import NoticePanel from '@/components/ui-kit/notice/panel.vue'
 import UiModal from '@/components/ui-kit/modal.vue'
+import { springScaleIn } from '@/utils/animations/modal'
+import { noticeToastListLeave } from '@/utils/animations/notice-toast'
 import audio_player from '@/sfx/player'
 import { installAudioLifecycle } from '@/sfx/lifecycle'
 import { useSessionStore } from '@/stores/session'
@@ -13,10 +16,11 @@ import { useMemberStore } from '@/stores/member'
 import { withMemberPreferencesDefaults, toBusVolumes } from '@/utils/member/preferences'
 import { watch } from 'vue'
 
-const { toasts } = useToast()
+const notice = useNoticeStore()
 const session = useSessionStore()
 const theme = useThemeStore()
 const member = useMemberStore()
+
 watch(
   () => member.preferences,
   (prefs) => {
@@ -72,8 +76,29 @@ onBeforeUnmount(() => {
 <template>
   <router-view />
 
-  <teleport to="[toast-container]">
-    <ui-toast v-for="(toast, index) in toasts" :key="index" :toast="toast" />
+  <teleport to="[notice-toast-container]">
+    <transition-group
+      :css="false"
+      move-class="transition-transform duration-200 ease-out"
+      @enter="springScaleIn"
+      @leave="noticeToastListLeave"
+    >
+      <notice-toast
+        v-for="item in notice.toast_notices"
+        :key="item.id"
+        :notice="item"
+        @close="notice.removeNotice"
+      />
+    </transition-group>
+  </teleport>
+
+  <teleport to="[notice-panel-container]">
+    <notice-panel
+      v-for="item in notice.panel_notices"
+      :key="item.id"
+      :notice="item"
+      @close="notice.removeNotice"
+    />
   </teleport>
 
   <teleport to="[data-testid='app-modal-container']">

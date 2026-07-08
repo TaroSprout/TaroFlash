@@ -13,7 +13,7 @@ const { mockRevealFaceImage, mockCollapseFaceImage } = vi.hoisted(() => ({
   mockRevealFaceImage: vi.fn(),
   mockCollapseFaceImage: vi.fn().mockResolvedValue(undefined)
 }))
-const { mockToastError } = vi.hoisted(() => ({ mockToastError: vi.fn() }))
+const { mockNoticeError } = vi.hoisted(() => ({ mockNoticeError: vi.fn() }))
 const { mockGuardCardImage } = vi.hoisted(() => ({
   mockGuardCardImage: vi.fn().mockResolvedValue(true)
 }))
@@ -25,8 +25,8 @@ vi.mock('@/utils/animations/face-image', () => ({
   collapseFaceImage: mockCollapseFaceImage
 }))
 
-vi.mock('@/composables/toast', () => ({
-  useToast: () => ({ error: mockToastError })
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => ({ error: mockNoticeError })
 }))
 
 vi.mock('@/composables/card/image-gate', () => ({
@@ -112,7 +112,7 @@ function withUpload({ card = makeCard(), side = 'front' } = {}) {
 
 beforeEach(() => {
   mockEmitSfx.mockClear()
-  mockToastError.mockClear()
+  mockNoticeError.mockClear()
   mockRevealFaceImage.mockClear()
   mockCollapseFaceImage.mockClear()
   mockGuardCardImage.mockReset().mockResolvedValue(true)
@@ -215,6 +215,27 @@ describe('useFaceImageUpload — onRemove sfx timing [obligation]', () => {
 
     const trashCalls = mockEmitSfx.mock.calls.filter(([name]) => name === 'trash_crumple_short')
     expect(trashCalls.length).toBe(0)
+    unmount()
+  })
+
+  test('delete failure calls notice.error with the delete-failed message [obligation]', async () => {
+    mockDeleteCardImage.mockRejectedValueOnce(new Error('delete failed'))
+    const { result, unmount } = withUpload()
+
+    await result.onRemove()
+    await flushPromises()
+
+    expect(mockNoticeError).toHaveBeenCalledWith('Failed to delete image')
+    unmount()
+  })
+
+  test('successful delete does NOT call notice.error [obligation]', async () => {
+    const { result, unmount } = withUpload()
+
+    await result.onRemove()
+    await flushPromises()
+
+    expect(mockNoticeError).not.toHaveBeenCalled()
     unmount()
   })
 })
@@ -385,24 +406,26 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
     unmount()
   })
 
-  test('emits music_plink_ok on successful upload', async () => {
+  test('emits music_plink_ok and does NOT call notice.error on successful upload [obligation]', async () => {
     const { onFile, unmount } = withUpload()
 
     await onFile(new File(['x'], 'img.png', { type: 'image/png' }))
     await flushPromises()
 
     expect(mockEmitSfx).toHaveBeenCalledWith('music_plink_ok')
+    expect(mockNoticeError).not.toHaveBeenCalled()
     unmount()
   })
 
-  test('shows toast error and clears pending on upload failure', async () => {
+  test('upload failure calls notice.error with the upload-failed message and does not play music_plink_ok [obligation]', async () => {
     mockSetCardImage.mockRejectedValueOnce(new Error('upload error'))
     const { result, onFile, unmount } = withUpload()
 
     await onFile(new File(['x'], 'img.png', { type: 'image/png' }))
     await flushPromises()
 
-    expect(mockToastError).toHaveBeenCalledTimes(1)
+    expect(mockNoticeError).toHaveBeenCalledWith('Failed to upload image')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('music_plink_ok')
     expect(result.pending.value).toBe(false)
     unmount()
   })

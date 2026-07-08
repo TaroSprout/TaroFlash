@@ -31,8 +31,8 @@ vi.mock('@/composables/audio-reader/collection-create-modal', () => ({
   useCollectionCreateModal: () => ({ open: createModalOpenMock })
 }))
 
-vi.mock('@/composables/toast', () => ({
-  useToast: () => ({ success: vi.fn(), error: vi.fn() })
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => ({ success: vi.fn(), error: vi.fn() })
 }))
 
 // ── Stubs ──────────────────────────────────────────────────────────────────────

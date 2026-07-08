@@ -1,10 +1,14 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 
-const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
-vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
+const { mockEmitSfx, mockEmitHoverSfx } = vi.hoisted(() => ({
+  mockEmitSfx: vi.fn(),
+  mockEmitHoverSfx: vi.fn()
+}))
+vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: mockEmitHoverSfx }))
 
 import UiToggle from '@/components/ui-kit/toggle.vue'
+import { vSfx } from '@/sfx/directive'
 
 function makeToggle(props = {}, slotText = 'Label') {
   let model = props.checked
@@ -16,13 +20,17 @@ function makeToggle(props = {}, slotText = 'Label') {
         wrapper.setProps({ checked: v })
       }
     },
-    slots: { default: () => slotText }
+    slots: { default: () => slotText },
+    global: { directives: { sfx: vSfx } }
   })
   return { wrapper, getChecked: () => model }
 }
 
 describe('UiToggle', () => {
-  beforeEach(() => mockEmitSfx.mockClear())
+  beforeEach(() => {
+    mockEmitSfx.mockClear()
+    mockEmitHoverSfx.mockClear()
+  })
 
   test('renders the root label and switch parts', () => {
     const { wrapper } = makeToggle()
@@ -61,6 +69,34 @@ describe('UiToggle', () => {
   })
 
   test('plays the select sfx when the input changes', async () => {
+    const { wrapper } = makeToggle({ checked: false })
+    await wrapper.find('input[type="checkbox"]').setValue(true)
+    expect(mockEmitSfx).toHaveBeenCalledWith('select')
+  })
+
+  test('silent=true suppresses the select sfx on change [obligation]', async () => {
+    const { wrapper } = makeToggle({ checked: false, silent: true })
+    await wrapper.find('input[type="checkbox"]').setValue(true)
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('select')
+  })
+
+  function pointerEnter(el) {
+    el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
+  }
+
+  test('silent=true suppresses the hover sfx [obligation]', async () => {
+    const { wrapper } = makeToggle({ checked: false, silent: true })
+    pointerEnter(wrapper.find('[data-testid="ui-kit-toggle"]').element)
+    expect(mockEmitHoverSfx).not.toHaveBeenCalled()
+  })
+
+  test('silent=false (default) plays the hover sfx', () => {
+    const { wrapper } = makeToggle({ checked: false })
+    pointerEnter(wrapper.find('[data-testid="ui-kit-toggle"]').element)
+    expect(mockEmitHoverSfx).toHaveBeenCalled()
+  })
+
+  test('silent defaults to false, still playing the select sfx', async () => {
     const { wrapper } = makeToggle({ checked: false })
     await wrapper.find('input[type="checkbox"]').setValue(true)
     expect(mockEmitSfx).toHaveBeenCalledWith('select')

@@ -1,5 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
+import { createTestingPinia } from '@pinia/testing'
 import App from '@/App.vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
@@ -43,6 +44,7 @@ vi.mock('@/sfx/lifecycle', () => ({
 function mountApp() {
   return shallowMount(App, {
     global: {
+      plugins: [createTestingPinia({ createSpy: vi.fn })],
       stubs: {
         RouterView: true
       }

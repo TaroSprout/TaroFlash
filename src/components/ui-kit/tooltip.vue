@@ -112,7 +112,7 @@ function onPointerLeave(e: PointerEvent) {
         :data-theme-dark="theme_dark"
         :data-multiline="is_multiline"
         :style="{ ...floatingStyles, maxWidth: `${max_chars}ch` }"
-        class="ui-tooltip ui-tooltip--visible bg-(--theme-primary) text-(--theme-on-primary) rounded-4 text-sm text-center pointer-events-none z-100 select-none"
+        class="ui-tooltip ui-tooltip--visible bg-(--theme-primary) text-(--theme-on-primary) rounded-4 text-sm text-center pointer-events-none z-102 select-none"
         :class="is_multiline ? 'py-3 px-3' : 'py-1.5 px-2'"
       >
         <slot name="tooltip">{{ text }}</slot>

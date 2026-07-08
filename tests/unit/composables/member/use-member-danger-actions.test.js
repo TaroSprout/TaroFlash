@@ -3,15 +3,15 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 const { mockAlert } = vi.hoisted(() => ({
   mockAlert: { warn: vi.fn() }
 }))
-const { mockToast } = vi.hoisted(() => ({
-  mockToast: { error: vi.fn(), success: vi.fn() }
+const { mockNotice } = vi.hoisted(() => ({
+  mockNotice: { error: vi.fn(), success: vi.fn() }
 }))
 const { mockRouter } = vi.hoisted(() => ({
   mockRouter: { push: vi.fn() }
 }))
 
 vi.mock('@/composables/alert', () => ({ useAlert: () => mockAlert }))
-vi.mock('@/composables/toast', () => ({ useToast: () => mockToast }))
+vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 vi.mock('vue-router', () => ({ useRouter: () => mockRouter }))
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (k) => k }) }))
 
@@ -25,8 +25,8 @@ const close = vi.fn()
 
 beforeEach(() => {
   mockAlert.warn.mockReset()
-  mockToast.success.mockReset()
-  mockToast.error.mockReset()
+  mockNotice.success.mockReset()
+  mockNotice.error.mockReset()
   mockRouter.push.mockReset()
   close.mockReset()
 })
@@ -40,17 +40,36 @@ describe('useMemberDangerActions', () => {
 
     expect(close).not.toHaveBeenCalled()
     expect(mockRouter.push).not.toHaveBeenCalled()
-    expect(mockToast.success).not.toHaveBeenCalled()
+    expect(mockNotice.success).not.toHaveBeenCalled()
     expect(deleting_account.value).toBe(false)
   })
 
-  test('on confirm, fires the success toast, closes, and routes to welcome', async () => {
+  test('on confirm, fires the success notice but does not close or navigate yet', async () => {
     const { onDeleteAccount } = useMemberDangerActions(close)
     confirmResponse(true)
 
     await onDeleteAccount()
 
-    expect(mockToast.success).toHaveBeenCalledWith('toast.success.account-deleted')
+    expect(mockNotice.success).toHaveBeenCalledWith(
+      'toast.success.account-deleted',
+      expect.objectContaining({ variant: 'panel' })
+    )
+    expect(close).not.toHaveBeenCalled()
+    expect(mockRouter.push).not.toHaveBeenCalled()
+  })
+
+  test('close + navigate to welcome fire only when the notice onDismiss runs', async () => {
+    const { onDeleteAccount } = useMemberDangerActions(close)
+    confirmResponse(true)
+
+    await onDeleteAccount()
+
+    const [, options] = mockNotice.success.mock.calls[0]
+    expect(close).not.toHaveBeenCalled()
+    expect(mockRouter.push).not.toHaveBeenCalled()
+
+    options.onDismiss()
+
     expect(close).toHaveBeenCalledOnce()
     expect(mockRouter.push).toHaveBeenCalledWith({ name: 'welcome' })
   })
@@ -75,17 +94,6 @@ describe('useMemberDangerActions', () => {
 
     await onDeleteAccount()
 
-    expect(deleting_account.value).toBe(false)
-  })
-
-  test('resets deleting_account back to false even when router.push throws', async () => {
-    const { onDeleteAccount, deleting_account } = useMemberDangerActions(close)
-    confirmResponse(true)
-    mockRouter.push.mockImplementationOnce(() => {
-      throw new Error('nav failed')
-    })
-
-    await expect(onDeleteAccount()).rejects.toThrow('nav failed')
     expect(deleting_account.value).toBe(false)
   })
 })

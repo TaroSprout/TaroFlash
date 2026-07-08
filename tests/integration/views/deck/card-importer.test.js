@@ -2,17 +2,17 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 
-const { bulkInsertMock, guardAddCardsMock, handleLimitErrorMock, toastErrorMock } = vi.hoisted(
+const { bulkInsertMock, guardAddCardsMock, handleLimitErrorMock, noticeErrorMock } = vi.hoisted(
   () => ({
     bulkInsertMock: vi.fn().mockResolvedValue([]),
     guardAddCardsMock: vi.fn().mockResolvedValue(true),
     handleLimitErrorMock: vi.fn().mockReturnValue(false),
-    toastErrorMock: vi.fn()
+    noticeErrorMock: vi.fn()
   })
 )
 
-vi.mock('@/composables/toast', () => ({
-  useToast: () => ({ error: toastErrorMock })
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => ({ error: noticeErrorMock })
 }))
 
 vi.mock('@/api/cards', () => {
@@ -66,7 +66,7 @@ beforeEach(() => {
   guardAddCardsMock.mockResolvedValue(true)
   handleLimitErrorMock.mockReset()
   handleLimitErrorMock.mockReturnValue(false)
-  toastErrorMock.mockReset()
+  noticeErrorMock.mockReset()
 })
 
 function mount({ deck_id = 10 } = {}) {
@@ -201,7 +201,7 @@ describe('CardImporter', () => {
     await importButton(wrapper).trigger('click')
     await saveButton(wrapper).trigger('click')
     expect(handleLimitErrorMock).toHaveBeenCalledWith(pt402)
-    expect(toastErrorMock).not.toHaveBeenCalled()
+    expect(noticeErrorMock).not.toHaveBeenCalled()
   })
 
   test('shows the generic toast when handleLimitError returns false (non-PT402 error)', async () => {
@@ -213,6 +213,6 @@ describe('CardImporter', () => {
     await importButton(wrapper).trigger('click')
     await saveButton(wrapper).trigger('click')
     expect(handleLimitErrorMock).toHaveBeenCalledWith(generic)
-    expect(toastErrorMock).toHaveBeenCalled()
+    expect(noticeErrorMock).toHaveBeenCalled()
   })
 })
