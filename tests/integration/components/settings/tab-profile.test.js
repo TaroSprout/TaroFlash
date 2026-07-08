@@ -7,6 +7,10 @@ vi.mock('@/composables/ui/media-query', async () => {
   return m.responsiveMockModule
 })
 
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => ({ error: vi.fn(), success: vi.fn(), warn: vi.fn() })
+}))
+
 import { resetResponsive } from '../../../helpers/responsive-mock'
 import TabProfile from '@/components/settings/tab-profile/index.vue'
 import { memberEditorKey } from '@/composables/member/editor'

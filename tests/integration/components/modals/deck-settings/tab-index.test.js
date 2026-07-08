@@ -5,6 +5,9 @@ import { defineComponent, h, reactive, ref, computed, useAttrs } from 'vue'
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
 vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: () => ({ value: false }) }))
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => ({ error: vi.fn(), success: vi.fn(), warn: vi.fn() })
+}))
 
 import TabIndex from '@/components/modals/deck-settings/tab-index/index.vue'
 import { deckEditorKey } from '@/composables/deck/editor'

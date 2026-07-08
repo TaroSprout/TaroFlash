@@ -101,6 +101,10 @@ vi.mock('@/api/reviews', () => ({
   useFlushDeckReviews: () => mockFlushDeckReviews
 }))
 
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => ({ error: vi.fn(), success: vi.fn(), warn: vi.fn() })
+}))
+
 vi.mock('@/api/members', () => ({
   useUpsertMemberMutation: () => ({ mutate: mockUpsertMember, mutateAsync: mockUpsertMember }),
   useCurrentMemberQuery: () => ({
