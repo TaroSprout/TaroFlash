@@ -88,6 +88,12 @@ describe('fetchMemberById', () => {
     makeChain({ data: null, error: err })
     await expect(fetchMemberById('user-1')).rejects.toBe(err)
   })
+
+  test('returns null (not a throw) when RLS filters the row out (PGRST116) [obligation]', async () => {
+    const err = { code: 'PGRST116', message: 'Cannot coerce the result to a single JSON object' }
+    makeChain({ data: null, error: err })
+    await expect(fetchMemberById('user-1')).resolves.toBeNull()
+  })
 })
 
 // ── upsertMember ──────────────────────────────────────────────────────────────

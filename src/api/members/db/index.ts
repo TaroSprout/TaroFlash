@@ -8,7 +8,7 @@ import logger from '@/utils/logger'
 const MEMBER_COLUMNS =
   'id, display_name, description, created_at, email, avatar_url, role, plan, preferences, cover_config, plans(deck_limit, cards_per_deck_limit)' as const
 
-export async function fetchMemberById(id: string): Promise<Member> {
+export async function fetchMemberById(id: string): Promise<Member | null> {
   const { data, error } = await supabase
     .from('members')
     .select(MEMBER_COLUMNS)
@@ -16,6 +16,11 @@ export async function fetchMemberById(id: string): Promise<Member> {
     .single()
 
   if (error) {
+    // PGRST116 = `.single()` found zero rows — RLS is filtering this id out,
+    // not a fetch failure. That's an expected "not visible" outcome, so it
+    // resolves to null rather than surfacing as an error.
+    if (error.code === 'PGRST116') return null
+
     logger.error(error.message)
     throw error
   }
