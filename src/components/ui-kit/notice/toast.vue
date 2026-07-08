@@ -4,7 +4,8 @@ import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { NOTICE_ICON, NOTICE_THEME, NOTICE_THEME_DARK } from './state-config'
-import { type Notice } from '@/stores/notice-store'
+import { emitSfx } from '@/sfx/bus'
+import { type Notice, type NoticeAction } from '@/stores/notice-store'
 
 type NoticeToastProps = {
   notice: Notice
@@ -21,6 +22,7 @@ const { t } = useI18n()
 let timeout: ReturnType<typeof setTimeout> | undefined
 
 onMounted(() => {
+  if (notice.sfx?.open) emitSfx(notice.sfx.open)
   if (notice.persist) return
   timeout = setTimeout(closeToast, notice.delay)
 })
@@ -31,6 +33,11 @@ function closeToast(): void {
   clearTimeout(timeout)
   notice.onDismiss?.()
   emit('close', notice)
+}
+
+function onActionClick(action: NoticeAction) {
+  action.onClick()
+  if (action.closesOnClick) closeToast()
 }
 </script>
 
@@ -62,14 +69,15 @@ function closeToast(): void {
         data-theme-dark="stone-900"
         :key="action.label"
         size="sm"
-        :sfx="{ press: 'snappy_button_5' }"
-        @press="action.onClick"
+        :sfx="{ press: action.sfx?.press ?? 'snappy_button_5' }"
+        @press="onActionClick(action)"
       >
         {{ action.label }}
       </ui-button>
     </div>
 
     <ui-button
+      v-if="notice.closable"
       data-testid="ui-kit-notice-toast__close"
       data-theme="brown-200"
       data-theme-dark="stone-900"

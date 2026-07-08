@@ -5,7 +5,8 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { NOTICE_ICON, NOTICE_THEME, NOTICE_THEME_DARK } from './state-config'
 import { springScaleIn, scaleFadeOut } from '@/utils/animations/modal'
-import { type Notice } from '@/stores/notice-store'
+import { emitSfx } from '@/sfx/bus'
+import { type Notice, type NoticeAction } from '@/stores/notice-store'
 
 type NoticePanelProps = {
   notice: Notice
@@ -23,6 +24,7 @@ const open = ref(false)
 const timeout = ref<number>()
 
 onMounted(() => {
+  if (notice.sfx?.open) emitSfx(notice.sfx.open)
   openPanel()
 })
 
@@ -47,9 +49,27 @@ function onLeave(el: Element, done: () => void) {
     emit('close', notice)
   })
 }
+
+function onActionClick(action: NoticeAction) {
+  action.onClick()
+  if (action.closesOnClick) closePanel()
+}
 </script>
 
 <template>
+  <Transition
+    enter-from-class="opacity-0"
+    enter-active-class="transition-opacity duration-100"
+    leave-to-class="opacity-0"
+    leave-active-class="transition-opacity duration-100"
+  >
+    <div
+      v-if="open && notice.backdrop"
+      data-testid="ui-kit-notice-panel-backdrop"
+      class="pointer-events-auto fixed inset-0 backdrop-blur-4 bg-black/10"
+    />
+  </Transition>
+
   <Transition :css="false" @enter="springScaleIn" @leave="onLeave">
     <div
       v-if="open"
@@ -59,6 +79,7 @@ function onLeave(el: Element, done: () => void) {
       class="group/notice-panel rounded-4 drop-shadow-sm pointer-events-auto relative flex w-96 max-w-full flex-col items-center gap-6 bg-brown-50 dark:bg-stone-700 p-12 text-center border-t border-l border-brown-200 dark:border-grey-900"
     >
       <ui-button
+        v-if="notice.closable"
         data-testid="ui-kit-notice-panel__close"
         data-theme="brown-200"
         data-theme-dark="stone-900"
@@ -92,8 +113,8 @@ function onLeave(el: Element, done: () => void) {
           data-theme-dark="stone-900"
           :key="action.label"
           full-width
-          :sfx="{ press: 'snappy_button_5' }"
-          @press="action.onClick"
+          :sfx="{ press: action.sfx?.press ?? 'snappy_button_5' }"
+          @press="onActionClick(action)"
         >
           {{ action.label }}
         </ui-button>
