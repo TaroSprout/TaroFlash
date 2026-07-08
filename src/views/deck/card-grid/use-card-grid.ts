@@ -1,8 +1,8 @@
 import { type CardGridSize } from '@/views/deck/composables/view-shell'
 import { computed, toValue, type CSSProperties, type MaybeRefOrGetter } from 'vue'
 
-const XL_CARD_WIDTH = 260
-const XL_GAP = 8
+const REFERENCE_CARD_WIDTH = 260
+const REFERENCE_GAP = 8
 // aspect-card is 7 / 8 (width / height), so a cell's height is its width * 8/7.
 const CELL_ASPECT = 8 / 7
 const CARD_SCALE: Record<CardGridSize, number> = {
@@ -33,8 +33,8 @@ export function useCardGrid(
   item_count: MaybeRefOrGetter<number> = 0
 ) {
   const card_scale = computed(() => CARD_SCALE[toValue(grid_size)])
-  const cell_width = computed(() => XL_CARD_WIDTH * card_scale.value)
-  const gap = computed(() => XL_GAP * card_scale.value)
+  const cell_width = computed(() => REFERENCE_CARD_WIDTH * card_scale.value)
+  const gap = computed(() => REFERENCE_GAP * card_scale.value)
   const row_pitch = computed(() => cell_width.value * CELL_ASPECT + gap.value)
 
   const columns = computed(() => {

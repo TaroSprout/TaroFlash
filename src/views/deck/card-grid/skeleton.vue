@@ -32,7 +32,7 @@ const { card_scale, grid_style, grid_classes } = useCardGrid(() => size)
         <card
           class="skeleton-item__card"
           :style="{ '--card-scale': card_scale }"
-          size="xl"
+          size="lg"
           side="cover"
           :shimmer="shimmer"
           :cover_config="DEFAULT_COVER"
