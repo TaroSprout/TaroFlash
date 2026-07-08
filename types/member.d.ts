@@ -5,7 +5,6 @@ type Member = {
   created_at?: string
   email?: string
   avatar_url?: string
-  updated_at?: string
   role?: MemberRole
   plan?: MemberPlan
   preferences?: MemberPreferences

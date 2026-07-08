@@ -1,10 +1,17 @@
 import { supabase } from '@/supabase-client'
 import logger from '@/utils/logger'
 
+// Explicit column list, not `select('*')` — `members` also holds
+// stripe_customer_id/stripe_subscription_id, which are server-only
+// (webhook + edge functions via the service-role client) and have no
+// business shipping to the browser in the fetch response.
+const MEMBER_COLUMNS =
+  'id, display_name, description, created_at, email, avatar_url, role, plan, preferences, cover_config, plans(deck_limit, cards_per_deck_limit)' as const
+
 export async function fetchMemberById(id: string): Promise<Member> {
   const { data, error } = await supabase
     .from('members')
-    .select('*, plans(deck_limit, cards_per_deck_limit)')
+    .select(MEMBER_COLUMNS)
     .eq('id', id)
     .single()
 
@@ -13,7 +20,10 @@ export async function fetchMemberById(id: string): Promise<Member> {
     throw error
   }
 
-  return data
+  // supabase-js can't infer the `plans` embed as a single object without
+  // generated Database types (it defaults nested relations to arrays) — it
+  // is one at runtime, since `plan` is a FK on this table.
+  return data as unknown as Member
 }
 
 /**

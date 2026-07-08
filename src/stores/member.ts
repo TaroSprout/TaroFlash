@@ -24,7 +24,6 @@ export const useMemberStore = defineStore('member', () => {
   const email = computed(() => session.user?.email)
   const created_at = computed(() => member.value?.created_at)
   const avatar_url = computed(() => member.value?.avatar_url)
-  const updated_at = computed(() => member.value?.updated_at)
   const role = computed(() => member.value?.role)
   const plan = computed(() => member.value?.plan)
   const deck_limit = computed(() => member.value?.plans?.deck_limit ?? null)
@@ -42,7 +41,6 @@ export const useMemberStore = defineStore('member', () => {
     created_at,
     id,
     avatar_url,
-    updated_at,
     role,
     plan,
     deck_limit,
