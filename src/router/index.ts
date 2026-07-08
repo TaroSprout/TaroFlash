@@ -4,12 +4,12 @@ import { useMemberStore } from '@/stores/member'
 import { prefetchMemberDecks } from '@/api/decks'
 import { prefetchMemberById } from '@/api/members'
 import { prefetchPlanLimits } from '@/api/plans'
-import WelcomeView from '@/views/welcome/index.vue'
 import AuthenticatedView from '@/views/authenticated.vue'
-import PrivacyPolicyView from '@/views/privacy-policy.vue'
-import TermsOfServiceView from '@/views/terms-of-service.vue'
-import AuthCallbackView from '@/views/auth/callback.vue'
 
+const WelcomeView = () => import('@/views/welcome/index.vue')
+const PrivacyPolicyView = () => import('@/views/privacy-policy.vue')
+const TermsOfServiceView = () => import('@/views/terms-of-service.vue')
+const AuthCallbackView = () => import('@/views/auth/callback.vue')
 const Dashboard = () => import('@/views/dashboard/index.vue')
 const DeckView = () => import('@/views/deck/index.vue')
 const LessonView = () => import('@/views/audio-reader/lesson/index.vue')
