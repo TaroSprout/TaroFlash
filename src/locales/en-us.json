@@ -561,6 +561,7 @@
   "deck.settings-modal.study.section.cards-heading": "Cards",
   "deck.settings-modal.study.section.limits-heading": "Daily Limits",
   "deck.settings-modal.study.section.limits-description": "Cap how many cards you'll see in a single day.",
+  "deck-view.load-error": "Couldn't load this deck. Please try again.",
   "deck-view.hero.study": "Study",
   "deck-view.hero.cards-label": "Cards",
   "deck-view.hero.no-cards-due": "No cards due",

@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed, provide, ref, useTemplateRef } from 'vue'
+import { computed, provide, ref, useTemplateRef, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useNoticeStore } from '@/stores/notice-store'
 import DeckHero from '@/views/deck/deck-hero/index.vue'
 import DeckSkeleton from './skeleton.vue'
 import ModeToolbar from './mode-toolbar/index.vue'
@@ -24,6 +26,9 @@ const { id: deck_id } = defineProps<{
   id: string
 }>()
 
+const { t } = useI18n()
+const notice = useNoticeStore()
+
 const id = computed(() => Number(deck_id))
 
 const image_url = ref<string | undefined>()
@@ -31,6 +36,10 @@ const toolbar = useTemplateRef<HTMLElement>('toolbar')
 
 const deck_query = useDeckQuery(id)
 const deck = deck_query.data
+
+watch(deck_query.error, (err) => {
+  if (err) notice.error(t('deck-view.load-error'))
+})
 
 const shell = useDeckViewShell()
 provide(deckViewShellKey, shell)
