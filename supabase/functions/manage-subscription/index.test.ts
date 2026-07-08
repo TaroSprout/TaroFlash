@@ -6,6 +6,7 @@ type FakeOpts = {
   subscription?: any
   upcoming?: any
   plan?: { stripe_price_id: string } | null
+  price?: { id: string; currency: string }
 }
 
 const DEFAULT_MEMBER = { stripe_customer_id: 'cus_1', stripe_subscription_id: 'sub_1' }
@@ -14,7 +15,8 @@ function makeDeps(opts: FakeOpts = {}) {
   const calls = {
     checkoutSessionsCreate: [] as any[],
     subscriptionsUpdate: [] as any[],
-    subscriptionsCancel: [] as any[]
+    subscriptionsCancel: [] as any[],
+    pricesRetrieve: [] as any[]
   }
 
   const member = opts.member === undefined ? DEFAULT_MEMBER : opts.member
@@ -86,6 +88,12 @@ function makeDeps(opts: FakeOpts = {}) {
           calls.checkoutSessionsCreate.push(args)
           return Promise.resolve({ client_secret: 'cs_secret_setup' })
         }
+      }
+    },
+    prices: {
+      retrieve: (id: string) => {
+        calls.pricesRetrieve.push(id)
+        return Promise.resolve(opts.price === undefined ? { id, currency: 'usd' } : opts.price)
       }
     }
   } as any
@@ -211,6 +219,29 @@ Deno.test('create-setup-intent calls checkout.sessions.create with mode setup, u
   assertEquals(args.customer, 'cus_1')
   assertEquals(args.return_url, 'https://app.test')
   assertEquals(await res.json(), { clientSecret: 'cs_secret_setup' })
+})
+
+Deno.test('create-setup-intent looks up the price for the paid plan and passes its currency to the Checkout Session [regression]', async () => {
+  const { deps, calls } = makeDeps({ price: { id: 'price_1', currency: 'eur' } })
+  const res = await handler(
+    req({ action: 'create-setup-intent', returnUrl: 'https://app.test' }),
+    deps
+  )
+
+  assertEquals(res.status, 200)
+  assertEquals(calls.pricesRetrieve, ['price_1'])
+  assertEquals(calls.checkoutSessionsCreate[0].currency, 'eur')
+})
+
+Deno.test('create-setup-intent returns 500 and never calls checkout.sessions.create when no active paid plan is configured', async () => {
+  const { deps, calls } = makeDeps({ plan: null })
+  const res = await handler(
+    req({ action: 'create-setup-intent', returnUrl: 'https://app.test' }),
+    deps
+  )
+
+  assertEquals(res.status, 500)
+  assertEquals(calls.checkoutSessionsCreate.length, 0)
 })
 
 Deno.test('change-plan returns 400 when there is no active subscription', async () => {

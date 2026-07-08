@@ -1,5 +1,5 @@
 // Shared Appearance config for the Stripe Payment Element — reused by the
-// initial checkout flow and the add-credit-card modal so both share the same
+// initial checkout flow and the change-card modal so both share the same
 // colors, typography, and control styles as the rest of the app.
 //
 // Colors are resolved from Tailwind's :root CSS variables at call time so a

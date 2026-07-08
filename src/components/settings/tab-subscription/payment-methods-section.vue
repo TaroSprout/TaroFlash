@@ -1,61 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import UiButton from '@/components/ui-kit/button.vue'
-import AddCreditCardModal from './add-credit-card-modal.vue'
-import type { AddCreditCardResponse } from './add-credit-card-modal.vue'
-import {
-  usePaymentMethodsQuery,
-  useSetDefaultPaymentMethodMutation,
-  useDetachPaymentMethodMutation
-} from '@/api/billing'
-import { useModal } from '@/composables/modal'
-import { useToast } from '@/composables/toast'
+import { useChangeCardClick } from './use-change-card-click'
 import { formatCardExpiry } from '@/utils/billing'
 
 const { t } = useI18n()
-const modal = useModal()
-const toast = useToast()
-
-const methods_query = usePaymentMethodsQuery()
-const set_default_mutation = useSetDefaultPaymentMethodMutation()
-const detach_mutation = useDetachPaymentMethodMutation()
-
-const payment_methods = computed(() => methods_query.data.value?.paymentMethods ?? [])
-const default_id = computed(() => methods_query.data.value?.defaultPaymentMethodId ?? null)
-const default_card = computed(
-  () =>
-    payment_methods.value.find((m) => m.id === default_id.value) ?? payment_methods.value[0] ?? null
-)
-
-async function onChangeCard() {
-  const old_ids = payment_methods.value.map((m) => m.id)
-  const response = await modal.open<AddCreditCardResponse>(AddCreditCardModal, {
-    mode: 'mobile-sheet',
-    backdrop: true
-  }).response
-
-  if (!response?.added) return
-
-  if (response.paymentMethodId) {
-    try {
-      await set_default_mutation.mutateAsync(response.paymentMethodId)
-    } catch {
-      toast.error(t('settings.subscription.payment-methods.set-default-error'))
-      return
-    }
-
-    const stale_ids = old_ids.filter((id) => id !== response.paymentMethodId)
-    for (const id of stale_ids) {
-      try {
-        await detach_mutation.mutateAsync(id)
-      } catch {
-        toast.error(t('settings.subscription.payment-methods.detach-error'))
-      }
-    }
-  }
-}
+const { methods_query, default_card, onChangeCardClick } = useChangeCardClick()
 </script>
 
 <template>
@@ -98,9 +49,10 @@ async function onChangeCard() {
 
       <ui-button
         data-testid="billing-settings__payment-methods-change"
-        data-theme="brown-300"
+        data-theme="brown-100"
+        data-theme-dark="stone-700"
         size="sm"
-        @press="onChangeCard"
+        @press="onChangeCardClick"
       >
         {{
           default_card

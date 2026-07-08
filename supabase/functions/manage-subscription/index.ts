@@ -25,7 +25,7 @@ type Payload =
 
 export type StripeLike = Pick<
   Stripe,
-  'subscriptions' | 'invoices' | 'paymentMethods' | 'customers' | 'checkout'
+  'subscriptions' | 'invoices' | 'paymentMethods' | 'customers' | 'checkout' | 'prices'
 >
 
 export type AuthedUser = { id: string }
@@ -147,12 +147,29 @@ export async function handler(req: Request, deps: Deps): Promise<Response> {
       case 'create-setup-intent': {
         if (!payload.returnUrl) return err('Missing returnUrl')
 
+        // Unlike subscription-mode sessions (which infer currency from
+        // line_items), a setup-mode session has no price to infer from — Stripe
+        // 400s with "Missing required param: currency" unless we pass it
+        // explicitly. Resolve it from the same paid-plan price used to charge
+        // the card once it's saved.
+        const { data: plan } = await admin
+          .from('plans')
+          .select('stripe_price_id')
+          .eq('id', 'paid')
+          .eq('is_active', true)
+          .maybeSingle()
+
+        if (!plan?.stripe_price_id) return err('No purchasable plan configured', 500)
+
+        const price = await stripe.prices.retrieve(plan.stripe_price_id)
+
         // ui_mode: 'elements' is a preview feature not yet in this SDK
         // version's published types — see create-subscription/index.ts.
         const session = await stripe.checkout.sessions.create({
           mode: 'setup',
           ui_mode: 'elements',
           customer: customerId,
+          currency: price.currency,
           return_url: payload.returnUrl
         } as unknown as Stripe.Checkout.SessionCreateParams)
         return json({ clientSecret: session.client_secret })

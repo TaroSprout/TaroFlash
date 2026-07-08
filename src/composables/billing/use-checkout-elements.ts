@@ -23,7 +23,7 @@ export type ConfirmOutcome =
 
 /**
  * Owns the generic embedded-Checkout-Elements lifecycle shared by the
- * subscription checkout and add-credit-card flows: load Stripe.js, init the
+ * subscription checkout and change-card flows: load Stripe.js, init the
  * Checkout Elements SDK against a Checkout Session client_secret, mount a
  * Payment Element, and confirm on submit. Stays agnostic of subscription vs.
  * setup mode and of what the caller does with a successful session.
