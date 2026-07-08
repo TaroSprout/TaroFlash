@@ -174,7 +174,7 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
     }
 
     if (config.shuffle) {
-      filtered.sort(() => Math.random() - 0.5)
+      filtered = _shuffle(filtered)
     }
 
     _cards_in_deck.value = filtered.map(_setupCard)
@@ -281,6 +281,21 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
     if (!card || !card.id) return
 
     card.state = grade === Rating.Again ? 'failed' : 'passed'
+  }
+
+  /**
+   * Fisher-Yates. `sort(() => Math.random() - 0.5)` was the prior
+   * implementation — it's a known-biased shuffle (comparator-sort based
+   * shuffles skew toward certain permutations depending on the engine's sort
+   * algorithm), not a uniform one.
+   */
+  function _shuffle<T>(items: T[]): T[] {
+    const result = [...items]
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[result[i], result[j]] = [result[j], result[i]]
+    }
+    return result
   }
 
   function _isCardDue(card: Card) {
