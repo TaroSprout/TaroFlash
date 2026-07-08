@@ -157,6 +157,7 @@
   "member-application.title-tag-deck-builder": "Deck Builder",
   "settings.title": "Settings",
   "settings.submit-edit": "Save changes",
+  "settings.save-error": "Couldn't save your changes. Please try again.",
   "settings.unsaved-alert.title": "Unsaved changes",
   "settings.unsaved-alert.message": "You have unsaved changes. Discard them?",
   "settings.unsaved-alert.confirm": "Discard",
