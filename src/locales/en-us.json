@@ -339,6 +339,7 @@
   "toast.error.reset-reviews-failed": "Couldn't reset reviews for this deck. Please try again.",
   "toast.error.move-cards-failed": "Couldn't move these cards. Please try again.",
   "toast.error.delete-cards-failed": "Couldn't delete these cards. Please try again.",
+  "toast.warn.reorder-failed": "Couldn't save the new order. Please try again.",
   "toast.success.reset-reviews": "Reviews reset for this deck.",
   "toast.success.deck-deleted": "Deck deleted.",
   "card.add-image": "Add Image",

@@ -1,10 +1,12 @@
 import { computed, ref, type InjectionKey, type Ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useInfiniteScroll } from '@/composables/ui/infinite-scroll'
 import { useCardsInDeckInfiniteQuery } from '@/api/cards'
 import { useDeckQuery } from '@/api/decks'
 import { useVirtualCardList, type CardEntry } from './virtual-list'
 import { useCardActions } from './actions'
 import { useCardSelection, useCardMutations, useCardLimitGate } from '@/composables/card'
+import { useNoticeStore } from '@/stores/notice-store'
 import { resolveReorderAnchor } from '@/utils/card-editor/selection-payload'
 import { emitSfx } from '@/sfx/bus'
 import type { DeckViewShell } from './view-shell'
@@ -47,6 +49,9 @@ type Options = {
  * provide(cardEditorKey, editor)
  */
 export function useCardListController(opts: Options) {
+  const { t } = useI18n()
+  const notice = useNoticeStore()
+
   const cards_query = useCardsInDeckInfiniteQuery(
     () => opts.deck_id,
     opts.shell.sort_by,
@@ -161,7 +166,7 @@ export function useCardListController(opts: Options) {
    * the drop slot into a `move_card` anchor + side and fires the mutation, which
    * optimistically reorders the cache synchronously (so the dropped row settles
    * without a refetch) and reconciles on settle. Failures roll back in the
-   * mutation, so the floating promise is intentionally swallowed here.
+   * mutation, so the reorder visibly snaps back — a toast explains why.
    *
    * No-op when the dragged row is a temp (not yet persisted) or no persisted
    * neighbour exists to anchor against.
@@ -175,7 +180,9 @@ export function useCardListController(opts: Options) {
     const anchor = resolveReorderAnchor(without, to)
     if (!anchor) return
 
-    mutations.reorderCard({ card_id: dragged.id, deck_id: opts.deck_id, ...anchor }).catch(() => {})
+    mutations
+      .reorderCard({ card_id: dragged.id, deck_id: opts.deck_id, ...anchor })
+      .catch(() => notice.warn(t('toast.warn.reorder-failed')))
   }
 
   const actions = useCardActions({
