@@ -17,12 +17,18 @@ const {
 }))
 
 // card-face-uploader (reached statically via mode-stack → list-item-card) now
-// imports useCan, which pulls useMemberDeckCountQuery from this barrel — so the
-// mock must expose it too, or ESM linking of the graph fails.
+// imports useCan, which pulls useMemberDeckCountQuery from this barrel. The
+// edit/import-export panes (mode-stack → modes.ts) are also statically bundled
+// now (no more defineAsyncComponent boundary), so their own deck/actions and
+// deck/editor composables pull useUpsertDeckMutation and useDeleteDeckMutation
+// from this same barrel too — the mock must expose all of it or ESM linking of
+// the graph fails.
 vi.mock('@/api/decks', () => ({
   useDeckQuery: useDeckQueryMock,
   useMemberDeckCountQuery: () => ({ data: { value: 0 }, refresh: vi.fn() }),
-  useMemberDecksQuery: () => ({ data: { value: [] }, refresh: vi.fn() })
+  useMemberDecksQuery: () => ({ data: { value: [] }, refresh: vi.fn() }),
+  useUpsertDeckMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+  useDeleteDeckMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() })
 }))
 vi.mock('@/views/deck/composables/list-controller', () => ({
   cardEditorKey: Symbol('cardEditor'),

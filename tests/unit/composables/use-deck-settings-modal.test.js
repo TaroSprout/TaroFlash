@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { flushPromises } from '@vue/test-utils'
 import { useDeckSettingsModal } from '@/composables/deck/settings-modal'
+import DeckSettings from '@/components/modals/deck-settings/index.vue'
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 const { mockOpen } = vi.hoisted(() => ({ mockOpen: vi.fn() }))
@@ -10,10 +11,6 @@ vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 vi.mock('@/composables/modal', () => ({
   useModal: vi.fn(() => ({ open: mockOpen }))
 }))
-
-// DeckSettings is wrapped with defineAsyncComponent inside the composable, so
-// the component identity doesn't match the raw .vue import. Assert on shape.
-const asyncComponentMatcher = expect.objectContaining({ __asyncLoader: expect.any(Function) })
 
 function makeModalResult(value) {
   return { response: Promise.resolve(value) }
@@ -41,7 +38,7 @@ describe('useDeckSettingsModal', () => {
     const { open } = useDeckSettingsModal()
     open(deck)
 
-    expect(mockOpen).toHaveBeenCalledWith(asyncComponentMatcher, {
+    expect(mockOpen).toHaveBeenCalledWith(DeckSettings, {
       backdrop: true,
       mode: 'mobile-sheet',
       mobile_below_width: 'md',
@@ -58,7 +55,7 @@ describe('useDeckSettingsModal', () => {
     open(deck, { tab: 'design', side: 'front' })
 
     expect(mockOpen).toHaveBeenCalledWith(
-      asyncComponentMatcher,
+      DeckSettings,
       expect.objectContaining({
         props: expect.objectContaining({ initial_tab: 'design', initial_side: 'front' })
       })
@@ -73,7 +70,7 @@ describe('useDeckSettingsModal', () => {
     open(deck)
 
     expect(mockOpen).toHaveBeenCalledWith(
-      asyncComponentMatcher,
+      DeckSettings,
       expect.objectContaining({
         props: expect.objectContaining({ initial_tab: undefined, initial_side: undefined })
       })
@@ -88,7 +85,7 @@ describe('useDeckSettingsModal', () => {
     open(deck, { tab: 'study' })
 
     expect(mockOpen).toHaveBeenCalledWith(
-      asyncComponentMatcher,
+      DeckSettings,
       expect.objectContaining({
         props: expect.objectContaining({ initial_tab: 'study', initial_side: undefined })
       })

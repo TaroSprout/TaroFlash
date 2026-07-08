@@ -17,11 +17,8 @@ vi.mock('@/composables/modal', () => ({
   useModal: vi.fn(() => ({ open: mockOpen }))
 }))
 
-// SignupDialog is wrapped in defineAsyncComponent inside the composable —
-// assert on the async component wrapper shape rather than the raw .vue import.
-const asyncComponentMatcher = expect.objectContaining({ __asyncLoader: expect.any(Function) })
-
 import { useSignupModal } from '@/views/welcome/signup/signup-modal'
+import SignupDialog from '@/views/welcome/signup/index.vue'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -71,7 +68,7 @@ describe('useSignupModal', () => {
     useSignupModal().open()
 
     expect(mockOpen).toHaveBeenCalledWith(
-      asyncComponentMatcher,
+      SignupDialog,
       expect.objectContaining({ mode: 'mobile-sheet' })
     )
   })
@@ -83,7 +80,7 @@ describe('useSignupModal', () => {
     useSignupModal().open()
 
     expect(mockOpen).toHaveBeenCalledWith(
-      asyncComponentMatcher,
+      SignupDialog,
       expect.objectContaining({ mobile_below_width: 'sm' })
     )
   })
@@ -94,10 +91,7 @@ describe('useSignupModal', () => {
 
     useSignupModal().open()
 
-    expect(mockOpen).toHaveBeenCalledWith(
-      asyncComponentMatcher,
-      expect.objectContaining({ backdrop: true })
-    )
+    expect(mockOpen).toHaveBeenCalledWith(SignupDialog, expect.objectContaining({ backdrop: true }))
   })
 
   test('passes payment prop through to the modal [obligation]', () => {
@@ -107,7 +101,7 @@ describe('useSignupModal', () => {
     useSignupModal().open(true)
 
     expect(mockOpen).toHaveBeenCalledWith(
-      asyncComponentMatcher,
+      SignupDialog,
       expect.objectContaining({ props: { payment: true } })
     )
   })
@@ -119,7 +113,7 @@ describe('useSignupModal', () => {
     useSignupModal().open()
 
     expect(mockOpen).toHaveBeenCalledWith(
-      asyncComponentMatcher,
+      SignupDialog,
       expect.objectContaining({ props: { payment: undefined } })
     )
   })

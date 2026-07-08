@@ -4,12 +4,6 @@ const { mockGsapTo } = vi.hoisted(() => ({ mockGsapTo: vi.fn() }))
 
 vi.mock('gsap', () => ({ gsap: { to: mockGsapTo } }))
 
-// Stub out dynamic imports performed on idle so the real modal modules aren't
-// pulled into the jsdom runtime during this unit test.
-vi.mock('@/components/study-session/index.vue', () => ({ default: {} }))
-vi.mock('@/components/study-session/session-summary/index.vue', () => ({ default: {} }))
-vi.mock('@/components/modals/deck-settings/index.vue', () => ({ default: {} }))
-
 import { warmupAnimations } from '@/utils/animations/warmup'
 
 describe('warmupAnimations', () => {
@@ -39,6 +33,7 @@ describe('warmupAnimations', () => {
   afterEach(() => {
     rafSpy.mockRestore()
     idleSpy?.mockRestore()
+    idleSpy = undefined
   })
 
   test('runs gsap priming tweens for the eases used by modal animations', () => {
@@ -79,11 +74,11 @@ describe('warmupAnimations', () => {
     expect(findProbes()).toHaveLength(0)
   })
 
-  test('schedules a preload pass via requestIdleCallback when available', () => {
+  test('does not schedule any idle preload pass', () => {
     if (!idleSpy) return
 
     warmupAnimations()
 
-    expect(idleSpy).toHaveBeenCalled()
+    expect(idleSpy).not.toHaveBeenCalled()
   })
 })

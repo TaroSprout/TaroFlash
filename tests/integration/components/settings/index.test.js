@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, inject, nextTick, useAttrs } from 'vue'
-import { settingsRecedeKey, SETTINGS_SHEET_BREAKPOINTS } from '@/components/settings/layout'
+import { defineComponent, h, nextTick, useAttrs } from 'vue'
+import { SETTINGS_SHEET_BREAKPOINTS } from '@/components/settings/layout'
 import { useMatchMedia } from '@/composables/ui/media-query'
 
 // ── Hoisted state ─────────────────────────────────────────────────────────────
@@ -113,6 +113,86 @@ vi.mock('@/components/settings/tab-index/index.vue', async () => {
   }
 })
 
+// The rest of the tabs are now statically imported (no defineAsyncComponent
+// boundary to shield the test from their real setup()), so each one that
+// needs real Pinia/editor context we don't provide here gets a lightweight
+// stand-in. Their own business logic is covered in their dedicated test files
+// (tab-profile.test.js, tab-subscription.test.js, etc.) — this file only
+// exercises SettingsApp's own routing/chrome/provide wiring.
+vi.mock('@/components/settings/tab-profile/index.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return {
+    default: defineComponent({
+      name: 'TabProfile',
+      setup: () => () => h('div', { 'data-testid': 'tab-profile-stub' })
+    })
+  }
+})
+
+vi.mock('@/components/settings/tab-app/index.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return {
+    default: defineComponent({
+      name: 'TabApp',
+      setup: () => () => h('div', { 'data-testid': 'tab-app-stub' })
+    })
+  }
+})
+
+vi.mock('@/components/settings/tab-review-preferences/index.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return {
+    default: defineComponent({
+      name: 'TabReviewPreferences',
+      setup: () => () => h('div', { 'data-testid': 'tab-review-preferences-stub' })
+    })
+  }
+})
+
+vi.mock('@/components/settings/tab-danger-zone/index.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return {
+    default: defineComponent({
+      name: 'TabDangerZone',
+      setup: () => () => h('div', { 'data-testid': 'tab-danger-zone-stub' })
+    })
+  }
+})
+
+// TabSubscription doubles as the recede/restore inject probe below — it
+// exposes the same recede-trigger/restore-trigger buttons the dedicated
+// InjectRecedeStub used to provide via global.stubs.
+vi.mock('@/components/settings/tab-subscription/index.vue', async () => {
+  const { defineComponent, h, inject } = await import('vue')
+  const { settingsRecedeKey } = await import('@/components/settings/layout')
+  return {
+    default: defineComponent({
+      name: 'TabSubscription',
+      setup() {
+        const recede = inject(settingsRecedeKey)
+        return () =>
+          h('div', { 'data-testid': 'tab-subscription-stub' }, [
+            h('button', { 'data-testid': 'recede-trigger', onClick: () => recede?.recede() }),
+            h('button', { 'data-testid': 'restore-trigger', onClick: () => recede?.restore() })
+          ])
+      }
+    })
+  }
+})
+
+vi.mock('@/components/settings/tab-account-access/index.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return {
+    default: defineComponent({
+      name: 'TabAccountAccess',
+      setup(_p, { expose }) {
+        expose({ onChromeBack: mockAccountAccessOnChromeBack })
+        return () => h('div', { 'data-testid': 'tab-account-access-stub' })
+      }
+    })
+  }
+})
+
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
 vi.mock('@/utils/animations/fade', () => ({
@@ -144,32 +224,6 @@ const PassthroughStub = defineComponent({
   setup(_p, { slots }) {
     const attrs = useAttrs()
     return () => h('div', { ...attrs }, slots.default?.())
-  }
-})
-
-const TabIndexStub = defineComponent({
-  name: 'TabIndex',
-  emits: ['navigate'],
-  setup(_p, { emit }) {
-    return () =>
-      h(
-        'button',
-        {
-          'data-testid': 'tab-index-stub',
-          onClick: () => emit('navigate', 'app')
-        },
-        'go'
-      )
-  }
-})
-
-// Exposes a controllable onChromeBack so onChromeBack delegation tests can
-// assert the "tab handled it" (true) and "tab didn't handle it" (false) paths.
-const TabAccountAccessStub = defineComponent({
-  name: 'TabAccountAccess',
-  setup(_p, { expose }) {
-    expose({ onChromeBack: mockAccountAccessOnChromeBack })
-    return () => h('div', { 'data-testid': 'tab-account-access-stub' })
   }
 })
 
@@ -243,18 +297,6 @@ const TabSheetStub = defineComponent({
 
 import SettingsApp from '@/components/settings/index.vue'
 
-const InjectRecedeStub = defineComponent({
-  name: 'InjectRecedeStub',
-  setup() {
-    const recede = inject(settingsRecedeKey)
-    return () =>
-      h('div', [
-        h('button', { 'data-testid': 'recede-trigger', onClick: () => recede?.recede() }),
-        h('button', { 'data-testid': 'restore-trigger', onClick: () => recede?.restore() })
-      ])
-  }
-})
-
 // ── Factory ───────────────────────────────────────────────────────────────────
 
 function makeWrapper(closeFn = vi.fn()) {
@@ -263,14 +305,6 @@ function makeWrapper(closeFn = vi.fn()) {
     global: {
       stubs: {
         TabSheet: TabSheetStub,
-        TabIndex: TabIndexStub,
-        TabProfile: PassthroughStub,
-        TabSubscription: PassthroughStub,
-        TabSounds: PassthroughStub,
-        TabApp: PassthroughStub,
-        TabReviewPreferences: PassthroughStub,
-        TabDangerZone: PassthroughStub,
-        TabAccountAccess: TabAccountAccessStub,
         SettingsAside: PassthroughStub,
         SettingsSaveButton: PassthroughStub,
         MemberCard: PassthroughStub,
@@ -661,34 +695,9 @@ describe('settings app — open/close sfx [obligation]', () => {
 // ── Recede/restore provide wiring ───────────────────────────────────────────────
 
 describe('settings app — recede/restore choreography [obligation]', () => {
-  function makeWrapperWithRecedeInjector(closeFn = vi.fn()) {
-    return mount(SettingsApp, {
-      props: { close: closeFn },
-      global: {
-        stubs: {
-          TabSheet: TabSheetStub,
-          TabIndex: TabIndexStub,
-          TabProfile: PassthroughStub,
-          TabSubscription: InjectRecedeStub,
-          TabSounds: PassthroughStub,
-          TabApp: PassthroughStub,
-          TabReviewPreferences: PassthroughStub,
-          TabDangerZone: PassthroughStub,
-          TabAccountAccess: TabAccountAccessStub,
-          SettingsAside: PassthroughStub,
-          SettingsSaveButton: PassthroughStub,
-          MemberCard: PassthroughStub,
-          UiButton: PassthroughStub,
-          UiTagButton: PassthroughStub,
-          UiIcon: PassthroughStub
-        }
-      }
-    })
-  }
-
   test('provides recede() calling recedeModal on the tab-sheet root element', async () => {
     mockRecedeModal.mockClear()
-    const wrapper = makeWrapperWithRecedeInjector()
+    const wrapper = makeWrapper()
     await wrapper.find('[data-testid="tab-sheet__select-subscription"]').trigger('click')
     await flushPromises()
 
@@ -699,7 +708,7 @@ describe('settings app — recede/restore choreography [obligation]', () => {
 
   test('provides restore() calling restoreModal on the tab-sheet root element', async () => {
     mockRestoreModal.mockClear()
-    const wrapper = makeWrapperWithRecedeInjector()
+    const wrapper = makeWrapper()
     await wrapper.find('[data-testid="tab-sheet__select-subscription"]').trigger('click')
     await flushPromises()
 
@@ -716,7 +725,7 @@ describe('settings app — recede/restore choreography [obligation]', () => {
     state.isPinned = true
     mockRecedeModal.mockClear()
 
-    const wrapper = makeWrapperWithRecedeInjector()
+    const wrapper = makeWrapper()
     await wrapper.find('[data-testid="tab-sheet__select-subscription"]').trigger('click')
     await flushPromises()
     await wrapper.find('[data-testid="recede-trigger"]').trigger('click')
@@ -730,7 +739,7 @@ describe('settings app — recede/restore choreography [obligation]', () => {
     state.isPinned = false
     mockRecedeModal.mockClear()
 
-    const wrapper = makeWrapperWithRecedeInjector()
+    const wrapper = makeWrapper()
     await wrapper.find('[data-testid="tab-sheet__select-subscription"]').trigger('click')
     await flushPromises()
     await wrapper.find('[data-testid="recede-trigger"]').trigger('click')

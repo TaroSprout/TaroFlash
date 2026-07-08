@@ -14,8 +14,8 @@ vi.mock('@/utils/animations/deck-view/card-overlay', () => ({
   cancelOverlayAnimation: vi.fn()
 }))
 
-// Panes in DECK_MODES use defineAsyncComponent; mock the whole registry with
-// synchronous stubs so shallowMount can find them by name immediately.
+// Panes in DECK_MODES are plain synchronous components; mock the whole
+// registry with synchronous stubs so shallowMount can find them by name.
 vi.mock('@/views/deck/modes.ts', async () => {
   const { defineComponent, h } = await import('vue')
   const makePane = (name, testid) =>
@@ -28,8 +28,7 @@ vi.mock('@/views/deck/modes.ts', async () => {
       view: { pane: CardGrid },
       edit: { pane: CardEditor },
       'import-export': { pane: CardImporter }
-    },
-    preloadDeckModes: () => {}
+    }
   }
 })
 

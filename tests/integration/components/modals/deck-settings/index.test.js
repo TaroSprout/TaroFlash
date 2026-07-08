@@ -158,6 +158,51 @@ vi.mock('@/components/modals/deck-settings/tab-danger-zone/index.vue', async () 
   }
 })
 
+// The remaining tabs (index/details/design/study) are now statically bundled
+// too — module-mock each so their real setup() (deep editor/i18n context we
+// don't provide here) never runs. Their own logic is covered in their
+// dedicated test files (tab-design/index.test.js, tab-study.test.js, ...).
+function makeTabContentMock(testid) {
+  return async () => {
+    const { defineComponent, h } = await import('vue')
+    return {
+      default: defineComponent({
+        emits: ['navigate'],
+        setup(_props, { emit }) {
+          return () =>
+            h('div', { 'data-testid': testid }, [
+              h(
+                'button',
+                {
+                  'data-testid': 'tab-content__navigate',
+                  onClick: () => emit('navigate', 'study')
+                },
+                'navigate'
+              )
+            ])
+        }
+      })
+    }
+  }
+}
+
+vi.mock(
+  '@/components/modals/deck-settings/tab-index/index.vue',
+  makeTabContentMock('tab-index-stub')
+)
+vi.mock(
+  '@/components/modals/deck-settings/tab-details/index.vue',
+  makeTabContentMock('tab-details-stub')
+)
+vi.mock(
+  '@/components/modals/deck-settings/tab-design/index.vue',
+  makeTabContentMock('tab-content-stub')
+)
+vi.mock(
+  '@/components/modals/deck-settings/tab-study/index.vue',
+  makeTabContentMock('tab-content-stub')
+)
+
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
 const TabSheetStub = defineComponent({
@@ -551,34 +596,6 @@ describe('DeckSettings — overlay actions', () => {
     await wrapper.find('[data-testid="tab-sheet__close-emit"]').trigger('click')
 
     expect(close).toHaveBeenCalledWith(false)
-  })
-
-  test('mounts under requestIdleCallback fallback (setTimeout) without throwing', async () => {
-    const originalIdle = window.requestIdleCallback
-    // drop rIC to force the setTimeout fallback path in onMounted
-    window.requestIdleCallback = undefined
-
-    expect(() => makeWrapper()).not.toThrow()
-    await flushPromises()
-
-    window.requestIdleCallback = originalIdle
-  })
-
-  test('mounts and fires the idle prefetch callback', async () => {
-    const idleSpy = vi.fn((cb) => {
-      cb({ didTimeout: false, timeRemaining: () => 50 })
-      return 0
-    })
-    const originalIdle = window.requestIdleCallback
-    window.requestIdleCallback = idleSpy
-
-    makeWrapper()
-    await flushPromises()
-
-    expect(idleSpy).toHaveBeenCalledTimes(1)
-    expect(idleSpy.mock.calls[0][0]).toBeTypeOf('function')
-
-    window.requestIdleCallback = originalIdle
   })
 })
 

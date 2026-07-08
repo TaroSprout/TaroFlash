@@ -1,15 +1,12 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { useForgotPasswordModal } from '@/views/welcome/forgot-password/forgot-password-modal'
+import ForgotPasswordModal from '@/views/welcome/forgot-password/index.vue'
 
 const { mockOpen } = vi.hoisted(() => ({ mockOpen: vi.fn() }))
 
 vi.mock('@/composables/modal', () => ({
   useModal: vi.fn(() => ({ open: mockOpen }))
 }))
-
-// ForgotPasswordModal is wrapped in defineAsyncComponent inside the composable —
-// assert on the async component wrapper shape rather than the raw .vue import.
-const asyncComponentMatcher = expect.objectContaining({ __asyncLoader: expect.any(Function) })
 
 describe('useForgotPasswordModal — call shape', () => {
   beforeEach(() => {
@@ -22,7 +19,7 @@ describe('useForgotPasswordModal — call shape', () => {
     const { open } = useForgotPasswordModal()
     open()
 
-    expect(mockOpen).toHaveBeenCalledWith(asyncComponentMatcher, {
+    expect(mockOpen).toHaveBeenCalledWith(ForgotPasswordModal, {
       backdrop: true,
       mode: 'popup'
     })
