@@ -4,20 +4,11 @@ import { useActiveCardActions } from '@/components/study-session/composables/car
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const {
-  confirmDeleteMock,
-  openMoveModalMock,
-  deleteCardsMock,
-  moveCardsMock,
-  handleLimitErrorMock,
-  toastErrorMock
-} = vi.hoisted(() => ({
+const { confirmDeleteMock, openMoveModalMock, deleteCardsMock, moveCardsMock } = vi.hoisted(() => ({
   confirmDeleteMock: vi.fn(),
   openMoveModalMock: vi.fn(),
   deleteCardsMock: vi.fn().mockResolvedValue(undefined),
-  moveCardsMock: vi.fn().mockResolvedValue(undefined),
-  handleLimitErrorMock: vi.fn(),
-  toastErrorMock: vi.fn()
+  moveCardsMock: vi.fn().mockResolvedValue(undefined)
 }))
 
 vi.mock('vue-i18n', () => ({
@@ -37,10 +28,6 @@ vi.mock('@/composables/card', () => ({
     openMoveModal: openMoveModalMock
   })
 }))
-vi.mock('@/composables/card/limit-gate', () => ({
-  useCardLimitGate: () => ({ handleLimitError: handleLimitErrorMock })
-}))
-vi.mock('@/composables/toast', () => ({ useToast: () => ({ error: toastErrorMock }) }))
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -64,8 +51,6 @@ beforeEach(() => {
   openMoveModalMock.mockReset()
   deleteCardsMock.mockReset().mockResolvedValue(undefined)
   moveCardsMock.mockReset().mockResolvedValue(undefined)
-  handleLimitErrorMock.mockReset().mockReturnValue(false)
-  toastErrorMock.mockReset()
 })
 
 // ── onDelete ──────────────────────────────────────────────────────────────────
@@ -164,8 +149,13 @@ describe('useActiveCardActions — onMove', () => {
     expect(onRemoved).not.toHaveBeenCalled()
   })
 
-  test('calls moveCards with target_deck_id, card_ids, source_deck_ids on confirm [obligation]', async () => {
-    openMoveModalMock.mockResolvedValueOnce({ deck_id: 99 })
+  test('the move closure calls moveCards with target_deck_id, card_ids, source_deck_ids [obligation]', async () => {
+    // Mirrors what move-cards.vue does: invoke the passed `move` closure with
+    // the chosen deck before resolving with the modal response.
+    openMoveModalMock.mockImplementationOnce(async (_cards, _count, _deck_id, move) => {
+      await move(99)
+      return { deck_id: 99 }
+    })
     const card = makeCard({ id: 7 })
     const { result } = makeSetup({ card, deck_id: 10 })
 
@@ -188,42 +178,32 @@ describe('useActiveCardActions — onMove', () => {
     expect(onRemoved).toHaveBeenCalledWith(7)
   })
 
-  test('opens modal with [card], count=1, and current deck_id', async () => {
+  test('opens modal with [card], count=1, current deck_id, and a move closure', async () => {
     openMoveModalMock.mockResolvedValueOnce(undefined)
     const card = makeCard({ id: 7 })
     const { result } = makeSetup({ card, deck_id: 10 })
 
     await result.onMove()
 
-    expect(openMoveModalMock).toHaveBeenCalledWith([expect.objectContaining({ id: 7 })], 1, 10)
+    expect(openMoveModalMock).toHaveBeenCalledWith(
+      [expect.objectContaining({ id: 7 })],
+      1,
+      10,
+      expect.any(Function)
+    )
   })
 
-  test('shows a toast when the mutation rejects and the limit gate does not handle it [obligation]', async () => {
-    openMoveModalMock.mockResolvedValueOnce({ deck_id: 99 })
+  test('the move closure passed to openMoveModal lets a rejected mutation propagate [obligation]', async () => {
+    // Error handling now lives entirely inside move-cards.vue — this composable's
+    // `move` closure must not swallow a rejection with a local try/catch.
+    openMoveModalMock.mockResolvedValueOnce(undefined)
     moveCardsMock.mockRejectedValueOnce(new Error('boom'))
-    handleLimitErrorMock.mockReturnValue(false)
     const card = makeCard({ id: 7 })
-    const { result, onRemoved } = makeSetup({ card, deck_id: 10 })
+    const { result } = makeSetup({ card, deck_id: 10 })
 
     await result.onMove()
 
-    expect(handleLimitErrorMock).toHaveBeenCalledWith(expect.any(Error))
-    expect(toastErrorMock).toHaveBeenCalledWith('toast.error.move-cards-failed')
-    expect(onRemoved).not.toHaveBeenCalled()
-  })
-
-  test('does not show a toast when the limit gate already handled the rejection [obligation]', async () => {
-    openMoveModalMock.mockResolvedValueOnce({ deck_id: 99 })
-    const limitError = Object.assign(new Error('over limit'), { code: 'PT402' })
-    moveCardsMock.mockRejectedValueOnce(limitError)
-    handleLimitErrorMock.mockReturnValue(true)
-    const card = makeCard({ id: 7 })
-    const { result, onRemoved } = makeSetup({ card, deck_id: 10 })
-
-    await result.onMove()
-
-    expect(handleLimitErrorMock).toHaveBeenCalledWith(limitError)
-    expect(toastErrorMock).not.toHaveBeenCalled()
-    expect(onRemoved).not.toHaveBeenCalled()
+    const move = openMoveModalMock.mock.calls[0][3]
+    await expect(move(99)).rejects.toThrow('boom')
   })
 })

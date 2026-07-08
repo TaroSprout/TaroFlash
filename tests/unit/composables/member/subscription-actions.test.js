@@ -11,8 +11,8 @@ const {
   cancelLoadingState,
   resumeLoadingState,
   alertWarnMock,
-  toastSuccessMock,
-  toastErrorMock,
+  noticeSuccessMock,
+  noticeErrorMock,
   modalOpenMock
 } = vi.hoisted(() => ({
   cancelMutateMock: vi.fn(),
@@ -20,8 +20,8 @@ const {
   cancelLoadingState: { value: false },
   resumeLoadingState: { value: false },
   alertWarnMock: vi.fn(),
-  toastSuccessMock: vi.fn(),
-  toastErrorMock: vi.fn(),
+  noticeSuccessMock: vi.fn(),
+  noticeErrorMock: vi.fn(),
   modalOpenMock: vi.fn()
 }))
 
@@ -40,8 +40,8 @@ vi.mock('@/composables/alert', () => ({
   useAlert: () => ({ warn: alertWarnMock })
 }))
 
-vi.mock('@/composables/toast', () => ({
-  useToast: () => ({ success: toastSuccessMock, error: toastErrorMock })
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => ({ success: noticeSuccessMock, error: noticeErrorMock })
 }))
 
 vi.mock('@/composables/modal', () => ({
@@ -81,8 +81,8 @@ beforeEach(() => {
   cancelMutateMock.mockReset()
   resumeMutateMock.mockReset()
   alertWarnMock.mockReset()
-  toastSuccessMock.mockReset()
-  toastErrorMock.mockReset()
+  noticeSuccessMock.mockReset()
+  noticeErrorMock.mockReset()
   modalOpenMock.mockReset()
   cancelLoadingState.value = false
   resumeLoadingState.value = false
@@ -124,19 +124,22 @@ describe('useSubscriptionActions — onCancel', () => {
     await onCancel()
 
     expect(cancelMutateMock).not.toHaveBeenCalled()
-    expect(toastSuccessMock).not.toHaveBeenCalled()
-    expect(toastErrorMock).not.toHaveBeenCalled()
+    expect(noticeSuccessMock).not.toHaveBeenCalled()
+    expect(noticeErrorMock).not.toHaveBeenCalled()
   })
 
-  test('toasts success when cancel mutation resolves', async () => {
+  test('shows a success notice with the success_3 sfx when cancel mutation resolves', async () => {
     alertWarnMock.mockReturnValue({ response: Promise.resolve(true) })
     cancelMutateMock.mockResolvedValue({})
 
     const { onCancel } = withSetup(() => useSubscriptionActions())
     await onCancel()
 
-    expect(toastSuccessMock).toHaveBeenCalledOnce()
-    expect(toastErrorMock).not.toHaveBeenCalled()
+    expect(noticeSuccessMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ variant: 'panel', sfx: { open: 'success_3' } })
+    )
+    expect(noticeErrorMock).not.toHaveBeenCalled()
   })
 
   test('toasts error when cancel mutation rejects', async () => {
@@ -146,22 +149,25 @@ describe('useSubscriptionActions — onCancel', () => {
     const { onCancel } = withSetup(() => useSubscriptionActions())
     await onCancel()
 
-    expect(toastErrorMock).toHaveBeenCalledOnce()
-    expect(toastSuccessMock).not.toHaveBeenCalled()
+    expect(noticeErrorMock).toHaveBeenCalledOnce()
+    expect(noticeSuccessMock).not.toHaveBeenCalled()
   })
 })
 
 // ── onResume ──────────────────────────────────────────────────────────────────
 
 describe('useSubscriptionActions — onResume', () => {
-  test('calls resume mutation and toasts success [obligation]', async () => {
+  test('calls resume mutation and shows a success notice with the success_3 sfx [obligation]', async () => {
     resumeMutateMock.mockResolvedValue({})
 
     const { onResume } = withSetup(() => useSubscriptionActions())
     await onResume()
 
     expect(resumeMutateMock).toHaveBeenCalledOnce()
-    expect(toastSuccessMock).toHaveBeenCalledOnce()
+    expect(noticeSuccessMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ variant: 'panel', sfx: { open: 'success_3' } })
+    )
   })
 
   test('toasts error when resume mutation rejects [obligation]', async () => {
@@ -170,8 +176,8 @@ describe('useSubscriptionActions — onResume', () => {
     const { onResume } = withSetup(() => useSubscriptionActions())
     await onResume()
 
-    expect(toastErrorMock).toHaveBeenCalledOnce()
-    expect(toastSuccessMock).not.toHaveBeenCalled()
+    expect(noticeErrorMock).toHaveBeenCalledOnce()
+    expect(noticeSuccessMock).not.toHaveBeenCalled()
   })
 })
 

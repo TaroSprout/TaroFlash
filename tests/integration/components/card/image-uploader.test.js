@@ -79,7 +79,7 @@ const UiTooltipStub = defineComponent({
 const mocks = vi.hoisted(() => ({
   setCardImageMock: vi.fn(),
   deleteCardImageMock: vi.fn(),
-  toastErrorMock: vi.fn(),
+  noticeErrorMock: vi.fn(),
   emitSfxMock: vi.fn(),
   guardCardImageMock: vi.fn(),
   mockUseMatchMedia: vi.fn()
@@ -87,7 +87,9 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: mocks.mockUseMatchMedia }))
 vi.mock('@/api/media', () => ({ cardImageUrl: (p) => `https://cdn/${p}` }))
-vi.mock('@/composables/toast', () => ({ useToast: () => ({ error: mocks.toastErrorMock }) }))
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => ({ error: mocks.noticeErrorMock })
+}))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mocks.emitSfxMock, emitHoverSfx: vi.fn() }))
 
 // The paywall gate's own logic is unit-tested separately; here we drive it to
@@ -164,7 +166,7 @@ beforeEach(() => {
   mocks.mockUseMatchMedia.mockReturnValue(ref(false))
   mocks.setCardImageMock.mockReset().mockResolvedValue(undefined)
   mocks.deleteCardImageMock.mockReset().mockResolvedValue(undefined)
-  mocks.toastErrorMock.mockReset()
+  mocks.noticeErrorMock.mockReset()
   mocks.emitSfxMock.mockReset()
   mocks.guardCardImageMock.mockReset()
   // Default: paid member — uploads proceed. Paywalled cases override per-test.
@@ -602,7 +604,7 @@ describe('ImageUploader', () => {
     await dropImage(wrapper, pngFile())
     await flushPromises()
 
-    expect(mocks.toastErrorMock).toHaveBeenCalled()
+    expect(mocks.noticeErrorMock).toHaveBeenCalled()
   })
 
   // ── Browse / onBrowse ─────────────────────────────────────────────────────

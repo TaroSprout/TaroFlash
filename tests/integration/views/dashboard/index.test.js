@@ -5,14 +5,13 @@ import { defineComponent, h, ref } from 'vue'
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 // Only functions/fn refs go in vi.hoisted — Vue ref() is not available there.
 
-const { routerPushMock, guardCreateDeckMock, deckCreateModalOpenMock, toastErrorMock } = vi.hoisted(
-  () => ({
+const { routerPushMock, guardCreateDeckMock, deckCreateModalOpenMock, noticeErrorMock } =
+  vi.hoisted(() => ({
     routerPushMock: vi.fn(),
     guardCreateDeckMock: vi.fn(() => Promise.resolve(true)),
     deckCreateModalOpenMock: vi.fn(),
-    toastErrorMock: vi.fn()
-  })
-)
+    noticeErrorMock: vi.fn()
+  }))
 
 // Reactive state shared between mock factories and tests. Created at module
 // level (not inside vi.hoisted) so Vue's ref() is available.
@@ -58,8 +57,8 @@ vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: () => isMatchMediaRef
 }))
 
-vi.mock('@/composables/toast', () => ({
-  useToast: () => ({ error: toastErrorMock, success: vi.fn() })
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => ({ error: noticeErrorMock, success: vi.fn() })
 }))
 
 vi.mock('@/utils/animations/inbox-toggle', () => ({
@@ -184,7 +183,7 @@ beforeEach(() => {
   localShowInboxRef.value = false
   vi.clearAllMocks()
   guardCreateDeckMock.mockReturnValue(Promise.resolve(true))
-  toastErrorMock.mockReset()
+  noticeErrorMock.mockReset()
 })
 
 describe('DashboardIndex — member-badge cover wiring [obligation]', () => {
@@ -290,6 +289,6 @@ describe('DashboardIndex — decks error watch', () => {
     mountDashboard()
     decksErrorRef.value = { message: 'Network error' }
     await Promise.resolve()
-    expect(toastErrorMock).toHaveBeenCalledWith('Network error')
+    expect(noticeErrorMock).toHaveBeenCalledWith('Network error')
   })
 })

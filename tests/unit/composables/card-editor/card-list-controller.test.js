@@ -978,7 +978,12 @@ describe('useCardListController', () => {
     })
 
     test('onMoveCards opens the move modal and fires the move mutation on confirmation', async () => {
-      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve({ deck_id: 42 }) })
+      // The modal now owns invoking `move` itself (only resolving once it
+      // succeeds), so the mock must call the `move` prop it was given rather
+      // than resolving the response directly.
+      modalOpenMock.mockImplementationOnce((_component, { props }) => ({
+        response: props.move(42).then(() => ({ deck_id: 42 }))
+      }))
       const ctrl = makeController([makeCard({ id: 7 })], [7])
       await ctrl.onMoveCards(7)
       expect(modalOpenMock).toHaveBeenCalledOnce()

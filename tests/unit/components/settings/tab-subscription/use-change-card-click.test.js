@@ -6,12 +6,12 @@ import { settingsRecedeKey } from '@/components/settings/layout'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { setDefaultMutateMock, detachMutateMock, modalOpenMock, toastErrorMock, queryState } =
+const { setDefaultMutateMock, detachMutateMock, modalOpenMock, noticeErrorMock, queryState } =
   vi.hoisted(() => ({
     setDefaultMutateMock: vi.fn(),
     detachMutateMock: vi.fn(),
     modalOpenMock: vi.fn(),
-    toastErrorMock: vi.fn(),
+    noticeErrorMock: vi.fn(),
     queryState: { data: null }
   }))
 
@@ -32,8 +32,8 @@ vi.mock('@/composables/modal', () => ({
   useModal: () => ({ open: modalOpenMock })
 }))
 
-vi.mock('@/composables/toast', () => ({
-  useToast: () => ({ error: toastErrorMock })
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => ({ error: noticeErrorMock })
 }))
 
 import { useChangeCardClick } from '@/components/settings/tab-subscription/use-change-card-click'
@@ -81,7 +81,7 @@ beforeEach(() => {
   setDefaultMutateMock.mockReset()
   detachMutateMock.mockReset()
   modalOpenMock.mockReset()
-  toastErrorMock.mockReset()
+  noticeErrorMock.mockReset()
   queryState.data = null
 })
 
@@ -192,7 +192,7 @@ describe('useChangeCardClick — mutation flow [obligation]', () => {
 
     await onChangeCardClick()
 
-    expect(toastErrorMock).toHaveBeenCalledOnce()
+    expect(noticeErrorMock).toHaveBeenCalledWith(expect.any(String), { variant: 'panel' })
     expect(detachMutateMock).not.toHaveBeenCalled()
   })
 
@@ -215,7 +215,7 @@ describe('useChangeCardClick — mutation flow [obligation]', () => {
     expect(detachMutateMock).toHaveBeenCalledWith('pm_old_1')
     expect(detachMutateMock).toHaveBeenCalledWith('pm_old_2')
     expect(detachMutateMock).toHaveBeenCalledWith('pm_old_3')
-    expect(toastErrorMock).toHaveBeenCalledOnce()
+    expect(noticeErrorMock).toHaveBeenCalledWith(expect.any(String), { variant: 'panel' })
   })
 
   test('does not call any mutation when the modal resolves with added:false', async () => {

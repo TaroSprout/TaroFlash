@@ -1,12 +1,14 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
+import { createTestingPinia } from '@pinia/testing'
 import { defineComponent, h, ref } from 'vue'
 import { card } from '@tests/fixtures/card'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { guardAddCardsMock } = vi.hoisted(() => ({
-  guardAddCardsMock: vi.fn()
+const { guardAddCardsMock, handleLimitErrorMock } = vi.hoisted(() => ({
+  guardAddCardsMock: vi.fn(),
+  handleLimitErrorMock: vi.fn()
 }))
 
 const mockDecksData = { data: ref([]) }
@@ -28,7 +30,10 @@ vi.mock('@/composables/can', () => ({
 }))
 
 vi.mock('@/composables/card/limit-gate', () => ({
-  useCardLimitGate: () => ({ guardAddCards: guardAddCardsMock })
+  useCardLimitGate: () => ({
+    guardAddCards: guardAddCardsMock,
+    handleLimitError: handleLimitErrorMock
+  })
 }))
 
 // ── Component stubs (render functions only — no runtime compiler) ──────────────
@@ -130,15 +135,23 @@ const ScrollBarStub = defineComponent({
 })
 
 import MoveCardsModal from '@/components/modals/move-cards.vue'
+import { useNoticeStore } from '@/stores/notice-store'
 
 function makeCard(overrides = {}) {
   return card.one({ overrides })
 }
 
-function mountModal({ cards = [], current_deck_id = 30, count, close = vi.fn() } = {}) {
+function mountModal({
+  cards = [],
+  current_deck_id = 30,
+  count,
+  close = vi.fn(),
+  move = vi.fn().mockResolvedValue(undefined)
+} = {}) {
   const wrapper = shallowMount(MoveCardsModal, {
-    props: { cards, current_deck_id, count, close },
+    props: { cards, current_deck_id, count, close, move },
     global: {
+      plugins: [createTestingPinia({ createSpy: vi.fn, stubActions: false })],
       stubs: {
         Card: CardStub,
         UiTappable: UiTappableStub,
@@ -150,12 +163,13 @@ function mountModal({ cards = [], current_deck_id = 30, count, close = vi.fn() }
       }
     }
   })
-  return { wrapper, close }
+  return { wrapper, close, move }
 }
 
 describe('MoveCardsModal', () => {
   beforeEach(() => {
     guardAddCardsMock.mockReset().mockResolvedValue(true)
+    handleLimitErrorMock.mockReset().mockReturnValue(false)
     cardsPerDeckLimitRef.value = 200
     mockDecksData.data.value = [
       { id: 10, title: 'Deck A', card_count: 0 },
@@ -379,6 +393,78 @@ describe('MoveCardsModal', () => {
 
     await items[1].trigger('mouseleave')
     expect(radios[1].props('active')).toBe(false)
+  })
+
+  // ── onMove failure handling ──────────────────────────────────────────────────
+
+  describe('onMove failure handling', () => {
+    test('sets moving true before awaiting move, then resets it back to false on success [obligation]', async () => {
+      let resolve_move
+      const move = vi.fn(() => new Promise((resolve) => (resolve_move = resolve)))
+      const { wrapper } = mountModal({ cards: [makeCard()], move })
+      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+      wrapper.find('[data-testid="move-cards__move"]').trigger('click')
+      await flushPromises()
+
+      expect(wrapper.find('[data-testid="move-cards__move"]').attributes('loading')).toBe('true')
+
+      resolve_move()
+      await flushPromises()
+
+      expect(wrapper.find('[data-testid="move-cards__move"]').attributes('loading')).toBe('false')
+    })
+
+    test('calls close({ deck_id }) with the selected deck id when move resolves [obligation]', async () => {
+      const move = vi.fn().mockResolvedValue(undefined)
+      const { wrapper, close } = mountModal({ cards: [makeCard()], move })
+      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+      await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
+      await flushPromises()
+
+      expect(move).toHaveBeenCalledWith(20)
+      expect(close).toHaveBeenCalledWith({ deck_id: 20 })
+    })
+
+    test('when move rejects with a plan-limit error, does not close, calls handleLimitError, and does not show the generic notice [obligation]', async () => {
+      const error = { code: 'PT402' }
+      const move = vi.fn().mockRejectedValue(error)
+      handleLimitErrorMock.mockReturnValue(true)
+      const { wrapper, close } = mountModal({ cards: [makeCard()], move })
+      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+      await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
+      await flushPromises()
+
+      expect(close).not.toHaveBeenCalled()
+      expect(handleLimitErrorMock).toHaveBeenCalledWith(error)
+      const notice = useNoticeStore()
+      expect(notice.notices).toHaveLength(0)
+    })
+
+    test('when move rejects and handleLimitError returns false, shows the generic move-failed notice and does not close [obligation]', async () => {
+      const error = new Error('network down')
+      const move = vi.fn().mockRejectedValue(error)
+      handleLimitErrorMock.mockReturnValue(false)
+      const { wrapper, close } = mountModal({ cards: [makeCard()], move })
+      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+      await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
+      await flushPromises()
+
+      expect(close).not.toHaveBeenCalled()
+      expect(handleLimitErrorMock).toHaveBeenCalledWith(error)
+      const notice = useNoticeStore()
+      expect(notice.notices).toHaveLength(1)
+      expect(notice.notices[0].state).toBe('error')
+    })
+
+    test('resets moving back to false after a failed move [obligation]', async () => {
+      const move = vi.fn().mockRejectedValue(new Error('nope'))
+      const { wrapper } = mountModal({ cards: [makeCard()], move })
+      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+      await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
+      await flushPromises()
+
+      expect(wrapper.find('[data-testid="move-cards__move"]').attributes('loading')).toBe('false')
+    })
   })
 
   test('clicking the radio directly selects its deck', async () => {

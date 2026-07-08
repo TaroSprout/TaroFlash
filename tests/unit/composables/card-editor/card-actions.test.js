@@ -2,14 +2,11 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { ref } from 'vue'
 import { card } from '@tests/fixtures/card'
 
-const { modalOpenMock, alertWarnMock, emitSfxMock, handleLimitErrorMock, toastErrorMock } =
-  vi.hoisted(() => ({
-    modalOpenMock: vi.fn(),
-    alertWarnMock: vi.fn(),
-    emitSfxMock: vi.fn(),
-    handleLimitErrorMock: vi.fn(),
-    toastErrorMock: vi.fn()
-  }))
+const { modalOpenMock, alertWarnMock, emitSfxMock } = vi.hoisted(() => ({
+  modalOpenMock: vi.fn(),
+  alertWarnMock: vi.fn(),
+  emitSfxMock: vi.fn()
+}))
 
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({ t: (key) => key })
@@ -18,10 +15,6 @@ vi.mock('@/composables/alert', () => ({ useAlert: () => ({ warn: alertWarnMock }
 vi.mock('@/composables/modal', () => ({ useModal: () => ({ open: modalOpenMock }) }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: emitSfxMock }))
 vi.mock('@/components/modals/move-cards.vue', () => ({ default: {} }))
-vi.mock('@/composables/card/limit-gate', () => ({
-  useCardLimitGate: () => ({ handleLimitError: handleLimitErrorMock })
-}))
-vi.mock('@/composables/toast', () => ({ useToast: () => ({ error: toastErrorMock }) }))
 
 import { useCardActions } from '@/views/deck/composables/actions'
 
@@ -95,8 +88,6 @@ describe('useCardActions', () => {
     modalOpenMock.mockReset()
     alertWarnMock.mockReset()
     emitSfxMock.mockReset()
-    handleLimitErrorMock.mockReset().mockReturnValue(false)
-    toastErrorMock.mockReset()
   })
 
   // ── onSelectCard ──────────────────────────────────────────────────────────
@@ -233,8 +224,12 @@ describe('useCardActions', () => {
       expect(mutations.moveCards).not.toHaveBeenCalled()
     })
 
-    test('fires the move mutation with the chosen destination on confirm', async () => {
-      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve({ deck_id: 42 }) })
+    test('the move closure passed to the modal fires the mutation with the chosen destination [obligation]', async () => {
+      // Mirrors what move-cards.vue does: invoke the passed `move` closure with
+      // the chosen deck before resolving with the modal response.
+      modalOpenMock.mockImplementationOnce((_component, options) => ({
+        response: options.props.move(42).then(() => ({ deck_id: 42 }))
+      }))
       const persisted = [makeCard({ id: 7 })]
       const { actions, mutations } = makeActions({
         list: makeList({ persisted }),
@@ -273,8 +268,10 @@ describe('useCardActions', () => {
       expect(exitMode).not.toHaveBeenCalled()
     })
 
-    test('select-all mode passes { source_deck_id, except_ids } to mutation', async () => {
-      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve({ deck_id: 55 }) })
+    test('select-all mode: the move closure passes { source_deck_id, except_ids } to mutation', async () => {
+      modalOpenMock.mockImplementationOnce((_component, options) => ({
+        response: options.props.move(55).then(() => ({ deck_id: 55 }))
+      }))
       const { actions, mutations } = makeActions({
         list: makeList(),
         selection: makeSelection({ select_all: true, deselected: [3, 4] }),
@@ -304,9 +301,10 @@ describe('useCardActions', () => {
       expect(options.props.cards).toHaveLength(2)
     })
 
-    test('shows a toast when the mutation rejects and the limit gate does not handle it [obligation]', async () => {
-      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve({ deck_id: 42 }) })
-      handleLimitErrorMock.mockReturnValue(false)
+    test('the move closure passed to the modal lets a rejected mutation propagate [obligation]', async () => {
+      // Error handling now lives entirely inside move-cards.vue — this composable's
+      // `move` closure must not swallow a rejection with a local try/catch.
+      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
       const persisted = [makeCard({ id: 7 })]
       const mutations = makeMutations()
       mutations.moveCards.mockRejectedValueOnce(new Error('boom'))
@@ -316,37 +314,17 @@ describe('useCardActions', () => {
         mutations
       })
       await actions.onMoveCards(7)
-      expect(handleLimitErrorMock).toHaveBeenCalledWith(expect.any(Error))
-      expect(toastErrorMock).toHaveBeenCalledWith('toast.error.move-cards-failed')
+
+      const [, options] = modalOpenMock.mock.calls[0]
+      await expect(options.props.move(42)).rejects.toThrow('boom')
     })
 
-    test('does not show a toast when the limit gate already handled the rejection [obligation]', async () => {
-      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve({ deck_id: 42 }) })
-      handleLimitErrorMock.mockReturnValue(true)
+    test('does not run cleanup (exitSelection/refetch) when the modal is dismissed [obligation]', async () => {
+      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
       const persisted = [makeCard({ id: 7 })]
-      const mutations = makeMutations()
-      const limitError = Object.assign(new Error('over limit'), { code: 'PT402' })
-      mutations.moveCards.mockRejectedValueOnce(limitError)
-      const { actions } = makeActions({
-        list: makeList({ persisted }),
-        selection: makeSelection(),
-        mutations
-      })
-      await actions.onMoveCards(7)
-      expect(handleLimitErrorMock).toHaveBeenCalledWith(limitError)
-      expect(toastErrorMock).not.toHaveBeenCalled()
-    })
-
-    test('does not run cleanup (exitSelection/refetch) when the mutation rejects [obligation]', async () => {
-      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve({ deck_id: 42 }) })
-      handleLimitErrorMock.mockReturnValue(false)
-      const persisted = [makeCard({ id: 7 })]
-      const mutations = makeMutations()
-      mutations.moveCards.mockRejectedValueOnce(new Error('boom'))
       const { actions, selection, deck_query } = makeActions({
         list: makeList({ persisted }),
-        selection: makeSelection(),
-        mutations
+        selection: makeSelection()
       })
       await actions.onMoveCards(7)
       expect(selection.exitSelection).not.toHaveBeenCalled()

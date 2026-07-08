@@ -1,12 +1,11 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { flushPromises } from '@vue/test-utils'
 import { ref } from 'vue'
 
 const { mockAlert } = vi.hoisted(() => ({
   mockAlert: { warn: vi.fn() }
 }))
-const { mockToast } = vi.hoisted(() => ({
-  mockToast: { error: vi.fn(), success: vi.fn() }
+const { mockNotice } = vi.hoisted(() => ({
+  mockNotice: { error: vi.fn(), success: vi.fn() }
 }))
 const { mockRouter, mockRoute } = vi.hoisted(() => ({
   mockRouter: { push: vi.fn() },
@@ -14,7 +13,7 @@ const { mockRouter, mockRoute } = vi.hoisted(() => ({
 }))
 
 vi.mock('@/composables/alert', () => ({ useAlert: () => mockAlert }))
-vi.mock('@/composables/toast', () => ({ useToast: () => mockToast }))
+vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 vi.mock('vue-router', () => ({
   useRouter: () => mockRouter,
   useRoute: () => mockRoute
@@ -41,8 +40,8 @@ const close = vi.fn()
 
 beforeEach(() => {
   mockAlert.warn.mockReset()
-  mockToast.error.mockReset()
-  mockToast.success.mockReset()
+  mockNotice.error.mockReset()
+  mockNotice.success.mockReset()
   mockRouter.push.mockReset()
   close.mockReset()
   mockRoute.name = 'dashboard'
@@ -59,11 +58,11 @@ describe('useDeckDangerActions', () => {
       await onResetReviews()
 
       expect(editor.resetReviews).not.toHaveBeenCalled()
-      expect(mockToast.success).not.toHaveBeenCalled()
-      expect(mockToast.error).not.toHaveBeenCalled()
+      expect(mockNotice.success).not.toHaveBeenCalled()
+      expect(mockNotice.error).not.toHaveBeenCalled()
     })
 
-    test('success path shows a success toast', async () => {
+    test('success path shows a success notice with the success_3 sfx', async () => {
       const editor = makeEditor({ resetOk: true })
       const { onResetReviews } = useDeckDangerActions(editor, deck, close)
       confirmResponse(true)
@@ -71,19 +70,27 @@ describe('useDeckDangerActions', () => {
       await onResetReviews()
 
       expect(editor.resetReviews).toHaveBeenCalledTimes(1)
-      expect(mockToast.success).toHaveBeenCalledTimes(1)
-      expect(mockToast.error).not.toHaveBeenCalled()
+      expect(mockNotice.success).toHaveBeenCalledWith(
+        'toast.success.reset-reviews',
+        expect.objectContaining({ variant: 'panel', sfx: { open: 'success_3' } })
+      )
+      expect(mockNotice.error).not.toHaveBeenCalled()
     })
 
-    test('failure path shows an error toast and bails', async () => {
+    test('failure path shows an error notice without an explicit sfx and bails', async () => {
       const editor = makeEditor({ resetOk: false })
       const { onResetReviews } = useDeckDangerActions(editor, deck, close)
       confirmResponse(true)
 
       await onResetReviews()
 
-      expect(mockToast.error).toHaveBeenCalledTimes(1)
-      expect(mockToast.success).not.toHaveBeenCalled()
+      expect(mockNotice.error).toHaveBeenCalledWith(
+        'toast.error.reset-reviews-failed',
+        expect.objectContaining({ variant: 'panel' })
+      )
+      const [, options] = mockNotice.error.mock.calls[0]
+      expect(options.sfx).toBeUndefined()
+      expect(mockNotice.success).not.toHaveBeenCalled()
     })
   })
 
@@ -99,17 +106,22 @@ describe('useDeckDangerActions', () => {
       expect(close).not.toHaveBeenCalled()
     })
 
-    test('closes the modal with true on success', async () => {
+    test('fires the success notice but does not close or navigate yet', async () => {
       const editor = makeEditor({ deleteOk: true })
       const { onDelete } = useDeckDangerActions(editor, deck, close)
       confirmResponse(true)
 
       await onDelete()
 
-      expect(close).toHaveBeenCalledWith(true)
+      expect(mockNotice.success).toHaveBeenCalledWith(
+        'toast.success.deck-deleted',
+        expect.objectContaining({ variant: 'panel' })
+      )
+      expect(close).not.toHaveBeenCalled()
+      expect(mockRouter.push).not.toHaveBeenCalled()
     })
 
-    test('navigates to the dashboard when the user was viewing the deleted deck', async () => {
+    test('onDismiss closes with true and navigates to dashboard when viewing the deleted deck', async () => {
       const editor = makeEditor({ deleteOk: true })
       mockRoute.name = 'deck'
       mockRoute.params = { id: '42' }
@@ -117,24 +129,28 @@ describe('useDeckDangerActions', () => {
       confirmResponse(true)
 
       await onDelete()
-      await flushPromises()
+      const [, options] = mockNotice.success.mock.calls[0]
+      options.onDismiss()
 
+      expect(close).toHaveBeenCalledWith(true)
       expect(mockRouter.push).toHaveBeenCalledWith({ name: 'dashboard' })
     })
 
-    test('does not navigate when viewing an unrelated route', async () => {
+    test('onDismiss closes with true but does not navigate when viewing an unrelated route', async () => {
       const editor = makeEditor({ deleteOk: true })
       mockRoute.name = 'dashboard'
       const { onDelete } = useDeckDangerActions(editor, deck, close)
       confirmResponse(true)
 
       await onDelete()
-      await flushPromises()
+      const [, options] = mockNotice.success.mock.calls[0]
+      options.onDismiss()
 
+      expect(close).toHaveBeenCalledWith(true)
       expect(mockRouter.push).not.toHaveBeenCalled()
     })
 
-    test('does not navigate when viewing a different deck', async () => {
+    test('onDismiss does not navigate when viewing a different deck', async () => {
       const editor = makeEditor({ deleteOk: true })
       mockRoute.name = 'deck'
       mockRoute.params = { id: '99' }
@@ -142,19 +158,20 @@ describe('useDeckDangerActions', () => {
       confirmResponse(true)
 
       await onDelete()
-      await flushPromises()
+      const [, options] = mockNotice.success.mock.calls[0]
+      options.onDismiss()
 
       expect(mockRouter.push).not.toHaveBeenCalled()
     })
 
-    test('failure path shows an error toast and does not close', async () => {
+    test('failure path shows an error notice and does not close', async () => {
       const editor = makeEditor({ deleteOk: false })
       const { onDelete } = useDeckDangerActions(editor, deck, close)
       confirmResponse(true)
 
       await onDelete()
 
-      expect(mockToast.error).toHaveBeenCalledTimes(1)
+      expect(mockNotice.error).toHaveBeenCalledTimes(1)
       expect(close).not.toHaveBeenCalled()
     })
   })

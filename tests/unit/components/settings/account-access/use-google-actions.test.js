@@ -4,7 +4,7 @@ import { setActivePinia, createPinia } from 'pinia'
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
 const { mockAlert } = vi.hoisted(() => ({ mockAlert: { warn: vi.fn() } }))
-const { mockToast } = vi.hoisted(() => ({ mockToast: { error: vi.fn(), success: vi.fn() } }))
+const { mockNotice } = vi.hoisted(() => ({ mockNotice: { error: vi.fn(), success: vi.fn() } }))
 const { mockLinkGoogleIdentity, mockUnlinkGoogleIdentity, mockGetUser } = vi.hoisted(() => ({
   mockLinkGoogleIdentity: vi.fn(),
   mockUnlinkGoogleIdentity: vi.fn(),
@@ -12,7 +12,7 @@ const { mockLinkGoogleIdentity, mockUnlinkGoogleIdentity, mockGetUser } = vi.hoi
 }))
 
 vi.mock('@/composables/alert', () => ({ useAlert: () => mockAlert }))
-vi.mock('@/composables/toast', () => ({ useToast: () => mockToast }))
+vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (k) => k }) }))
 vi.mock('@/api/session', () => ({
   linkGoogleIdentity: mockLinkGoogleIdentity,
@@ -30,8 +30,8 @@ function confirmResponse(value) {
 beforeEach(() => {
   setActivePinia(createPinia())
   mockAlert.warn.mockReset()
-  mockToast.error.mockReset()
-  mockToast.success.mockReset()
+  mockNotice.error.mockReset()
+  mockNotice.success.mockReset()
   mockLinkGoogleIdentity.mockReset()
   mockUnlinkGoogleIdentity.mockReset()
   mockGetUser.mockReset()
@@ -80,7 +80,9 @@ describe('useGoogleActions — onConnect', () => {
 
     await google.onConnect()
 
-    expect(mockToast.error).toHaveBeenCalledWith('account-access-modal.google.connect-error')
+    expect(mockNotice.error).toHaveBeenCalledWith('account-access-modal.google.connect-error', {
+      variant: 'panel'
+    })
     expect(google.loading.value).toBe(false)
   })
 })
@@ -116,7 +118,9 @@ describe('useGoogleActions — onDisconnect', () => {
 
     await google.onDisconnect()
 
-    expect(mockToast.error).toHaveBeenCalledWith('account-access-modal.google.disconnect-error')
+    expect(mockNotice.error).toHaveBeenCalledWith('account-access-modal.google.disconnect-error', {
+      variant: 'panel'
+    })
     expect(google.loading.value).toBe(false)
   })
 })

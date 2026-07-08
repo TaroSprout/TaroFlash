@@ -46,8 +46,8 @@ vi.mock('@/composables/alert', () => ({
   useAlert: () => ({ warn: mockAlertWarn })
 }))
 
-vi.mock('@/composables/toast', () => ({
-  useToast: () => ({ success: mockToastSuccess, error: mockToastError })
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => ({ success: mockToastSuccess, error: mockToastError })
 }))
 
 vi.mock('vue-router', () => ({

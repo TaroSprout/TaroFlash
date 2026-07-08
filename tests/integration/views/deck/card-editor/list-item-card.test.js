@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
+import { createTestingPinia } from '@pinia/testing'
 import { defineComponent, h, ref, useAttrs } from 'vue'
 
 // Stub ImageUploader so its editor slot renders under shallowMount.
@@ -54,6 +55,7 @@ vi.mock('@/utils/animations/list-item', () => ({
 import ListItemCard from '@/views/deck/card-editor/list-item-card.vue'
 import textEditor from '@/components/card/text-editor.vue'
 import { cardEditorKey } from '@/views/deck/composables/list-controller'
+import { useNoticeStore } from '@/stores/notice-store'
 
 function makeCard(overrides = {}) {
   return {
@@ -86,6 +88,7 @@ function mount(props = {}) {
       card: makeCard(rest.card)
     },
     global: {
+      plugins: [createTestingPinia({ createSpy: vi.fn, stubActions: false })],
       stubs: { ImageUploader: ImageUploaderStub },
       provide: makeProvide({ is_selecting })
     }
@@ -102,6 +105,7 @@ function mountWithFocusStubs(props = {}) {
       card: makeCard(props.card)
     },
     global: {
+      plugins: [createTestingPinia({ createSpy: vi.fn, stubActions: false })],
       stubs: { ImageUploader: ImageUploaderStub, TextEditor: TextEditorStub },
       provide: makeProvide()
     }
@@ -285,6 +289,42 @@ describe('ListItemCard', () => {
     wrapper.unmount()
   })
 
+  test('a window-blur/refocus round trip stays silent (no sfx) on the restoring focusin [obligation]', async () => {
+    const wrapper = mountWithFocusStubs({ card: { id: 42 } })
+    const contenteditable = wrapper.find('[data-testid="text-editor-stub"]').element
+
+    vi.spyOn(document, 'hasFocus').mockReturnValue(false)
+    contenteditable.dispatchEvent(
+      new FocusEvent('focusout', { bubbles: true, relatedTarget: null })
+    )
+    vi.spyOn(document, 'hasFocus').mockReturnValue(true)
+
+    mocks.emitSfxMock.mockReset()
+    contenteditable.dispatchEvent(new FocusEvent('focusin', { bubbles: true, relatedTarget: null }))
+
+    expect(mocks.emitSfxMock).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  test('the programmatic autofocus from claimFocus stays silent on its own focusin [obligation]', () => {
+    mocks.claimFocusMock.mockReturnValue(true)
+    const wrapper = shallowMount(ListItemCard, {
+      attachTo: document.body,
+      props: { card: makeCard({ id: 77, client_id: 'c77' }) },
+      global: {
+        stubs: { ImageUploader: ImageUploaderStub, TextEditor: TextEditorStub },
+        provide: makeProvide()
+      }
+    })
+    const contenteditable = wrapper.find('[data-testid="text-editor-stub"]').element
+
+    mocks.emitSfxMock.mockReset()
+    contenteditable.dispatchEvent(new FocusEvent('focusin', { bubbles: true, relatedTarget: null }))
+
+    expect(mocks.emitSfxMock).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
   test('focusout with relatedTarget inside the card keeps focused true, so the next focusin emits click_04', async () => {
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
     const editors = wrapper.findAll('[data-testid="text-editor-stub"]')
@@ -365,6 +405,19 @@ describe('ListItemCard', () => {
     const uploaders = wrapper.findAllComponents(ImageUploaderStub)
     expect(uploaders[0].props('error')).toBe(true)
     expect(uploaders[1].props('error')).toBe(true)
+  })
+
+  test('save_failed AND notice.error both fire when updateCard rejects [obligation]', async () => {
+    mocks.updateCardMock.mockRejectedValueOnce(new Error('boom'))
+    const wrapper = mount({ card: { id: 42 } })
+    const notice = useNoticeStore()
+
+    await wrapper.findAllComponents(textEditor)[0].vm.$emit('update', 'X')
+    await flushPromises()
+
+    expect(wrapper.findAllComponents(ImageUploaderStub)[0].props('error')).toBe(true)
+    expect(notice.notices).toHaveLength(1)
+    expect(notice.notices[0].message).toBe('Something went wrong while trying to save your card')
   })
 
   test('clears error on the next update', async () => {
