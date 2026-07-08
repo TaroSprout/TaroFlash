@@ -1,4 +1,6 @@
+import { useI18n } from 'vue-i18n'
 import { emitSfx } from '@/sfx/bus'
+import { useNoticeStore } from '@/stores/notice-store'
 import { resolveDeleteArgs, resolveMoveArgs } from '@/utils/card-editor/selection-payload'
 import { useCardPrompts, type CardSelection, type CardMutations } from '@/composables/card'
 import type { useDeckQuery } from '@/api/decks'
@@ -29,6 +31,8 @@ type Args = {
  * actions.onDeleteCards(card_id)
  */
 export function useCardActions({ list, selection, mutations, deck_query, deck_id, shell }: Args) {
+  const { t } = useI18n()
+  const notice = useNoticeStore()
   const { confirmDelete, openMoveModal } = useCardPrompts()
 
   /** Cleanup applied after any successful delete: drop selection, refetch. */
@@ -57,7 +61,12 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
     if (!resolved) return
     if (!(await confirmDelete(resolved.count))) return
 
-    await mutations.deleteCards(resolved.args)
+    try {
+      await mutations.deleteCards(resolved.args)
+    } catch {
+      notice.error(t('toast.error.delete-cards-failed'))
+      return
+    }
     await afterDelete()
   }
 

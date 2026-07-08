@@ -1,4 +1,5 @@
 import { ref, computed, shallowRef, reactive } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   createEmptyCard,
   FSRS,
@@ -11,6 +12,7 @@ import {
 import { useSaveReviewMutation } from '@/api/reviews'
 import { withDeckConfigDefaults } from '@/utils/deck/defaults'
 import { useMemberStore } from '@/stores/member'
+import { useNoticeStore } from '@/stores/notice-store'
 import { usePersistedSession, type PersistedSession } from './session-persistence'
 
 export type StudyCard = Card & { state: ReviewState }
@@ -42,7 +44,9 @@ export type StudySessionCore = ReturnType<typeof useStudySessionCore>
  * Future study modes (matching pairs, cloze, etc.) build on top of this core.
  */
 export function useStudySessionCore(_config?: Partial<DeckConfig>) {
+  const { t } = useI18n()
   const member_store = useMemberStore()
+  const notice = useNoticeStore()
 
   // Ratings mode is a member-wide preference, not per-deck — seeded once here,
   // toggled locally for instant feedback, and persisted by the caller.
@@ -256,12 +260,20 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
       _persist()
 
       if (card.id && card.deck_id !== undefined) {
-        return save_review_mutation.mutateAsync({
-          card_id: card.id,
-          deck_id: card.deck_id,
-          card: item.card,
-          log: item.log
-        })
+        return save_review_mutation
+          .mutateAsync({
+            card_id: card.id,
+            deck_id: card.deck_id,
+            card: item.card,
+            log: item.log
+          })
+          .catch(() => {
+            notice.error(t('study-session.review-save-error'), {
+              subMessage: t('study-session.review-save-error-sub'),
+              variant: 'panel',
+              actions: [{ label: t('notice.refresh-label'), onClick: () => location.reload() }]
+            })
+          })
       }
     } else {
       card.state = 'passed'
