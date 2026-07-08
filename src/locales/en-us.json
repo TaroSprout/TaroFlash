@@ -359,6 +359,7 @@
   "study.flashcard.edit-footer.flip-button": "Flip",
   "study.flashcard.start-button": "Start",
   "study.idle.next-session-cta": "Study again {time}",
+  "study-session.resume-error": "Couldn't resume your last session.",
   "study-session.load-error": "Couldn't load your study session",
   "study-session.load-error-sub": "Check your connection and try again.",
   "study-session.review-save-error": "Couldn't save your last answer",
