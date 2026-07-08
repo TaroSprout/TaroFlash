@@ -77,7 +77,14 @@ export const useSessionStore = defineStore('sessionStore', () => {
   }
 
   async function logout(): Promise<void> {
-    await supaLogout()
+    try {
+      await supaLogout()
+    } catch (e: any) {
+      logger.error(`Error logging out: ${e.message}`)
+      notice.error(t('session.logout-error'))
+      return
+    }
+
     reset()
     router.push({ name: 'welcome' })
   }
