@@ -1,9 +1,6 @@
-import { defineAsyncComponent } from 'vue'
 import { useModal } from '@/composables/modal'
 import { emitSfx } from '@/sfx/bus'
-import type { DeckCreateResponse } from '@/components/modals/deck-create/index.vue'
-
-const DeckCreate = defineAsyncComponent(() => import('@/components/modals/deck-create/index.vue'))
+import DeckCreate, { type DeckCreateResponse } from '@/components/modals/deck-create/index.vue'
 
 /** Open the create-deck modal. Resolves true when the deck was saved. */
 export function useDeckCreateModal() {

@@ -1,14 +1,5 @@
 <script setup lang="ts">
-import {
-  computed,
-  defineAsyncComponent,
-  onBeforeUnmount,
-  onMounted,
-  provide,
-  ref,
-  useTemplateRef,
-  watch
-} from 'vue'
+import { computed, onBeforeUnmount, onMounted, provide, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SettingsAside from './settings-aside.vue'
 import {
@@ -30,19 +21,16 @@ import { recedeModal, restoreModal } from '@/utils/animations/modal'
 import MemberCard from '@/components/member/member-card.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import TabSheet from '@/components/layout-kit/sheet/tab-sheet.vue'
+import TabProfile from './tab-profile/index.vue'
+import TabSubscription from './tab-subscription/index.vue'
+import TabApp from './tab-app/index.vue'
+import TabReviewPreferences from './tab-review-preferences/index.vue'
+import TabDangerZone from './tab-danger-zone/index.vue'
+import TabAccountAccess from './tab-account-access/index.vue'
+import TabIndex from './tab-index/index.vue'
 const { close } = defineProps<{ close: () => void }>()
 
 const { t } = useI18n()
-
-const TabProfile = defineAsyncComponent(() => import('./tab-profile/index.vue'))
-const TabSubscription = defineAsyncComponent(() => import('./tab-subscription/index.vue'))
-const TabApp = defineAsyncComponent(() => import('./tab-app/index.vue'))
-const TabReviewPreferences = defineAsyncComponent(
-  () => import('./tab-review-preferences/index.vue')
-)
-const TabDangerZone = defineAsyncComponent(() => import('./tab-danger-zone/index.vue'))
-const TabAccountAccess = defineAsyncComponent(() => import('./tab-account-access/index.vue'))
-const TabIndex = defineAsyncComponent(() => import('./tab-index/index.vue'))
 
 const TAB_COMPONENTS = {
   index: TabIndex,

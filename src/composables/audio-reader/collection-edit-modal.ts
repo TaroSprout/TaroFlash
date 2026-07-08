@@ -1,11 +1,8 @@
-import { defineAsyncComponent } from 'vue'
 import { useModal } from '@/composables/modal'
 import { emitSfx } from '@/sfx/bus'
-import type { CollectionEditResponse } from '@/components/modals/collection-edit/index.vue'
-
-const CollectionEdit = defineAsyncComponent(
-  () => import('@/components/modals/collection-edit/index.vue')
-)
+import CollectionEdit, {
+  type CollectionEditResponse
+} from '@/components/modals/collection-edit/index.vue'
 
 /**
  * Open the edit-collection modal (manage a collection's chapters + danger zone)

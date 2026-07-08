@@ -1,11 +1,8 @@
-import { defineAsyncComponent } from 'vue'
 import { useModal } from '@/composables/modal'
 import { emitSfx } from '@/sfx/bus'
-import type { CollectionCreateResponse } from '@/components/modals/collection-create/index.vue'
-
-const CollectionCreate = defineAsyncComponent(
-  () => import('@/components/modals/collection-create/index.vue')
-)
+import CollectionCreate, {
+  type CollectionCreateResponse
+} from '@/components/modals/collection-create/index.vue'
 
 /**
  * Open the create-collection modal. Resolves to the created LessonCollection,

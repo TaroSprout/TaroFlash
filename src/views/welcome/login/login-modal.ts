@@ -1,8 +1,6 @@
-import { defineAsyncComponent } from 'vue'
 import { useModal } from '@/composables/modal'
 import { emitSfx } from '@/sfx/bus'
-
-const LoginSheet = defineAsyncComponent(() => import('./sheet.vue'))
+import LoginSheet from './sheet.vue'
 
 /** Opens the login dialog as a mobile sheet on small viewports. */
 export function useLoginModal() {

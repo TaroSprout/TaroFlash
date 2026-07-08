@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onMounted, provide, ref, useTemplateRef, watch } from 'vue'
+import { computed, onMounted, provide, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DeckAside from './deck-aside.vue'
 import { deckSettingsLayoutKey, deckSettingsCloseKey } from './layout'
@@ -12,6 +12,11 @@ import { useAlert } from '@/composables/alert'
 import { useModalAfterEnter, useModalRequestClose } from '@/composables/modal'
 import DeckPinnedPreview from '@/components/deck/pinned-preview.vue'
 import TabSheet from '@/components/layout-kit/sheet/tab-sheet.vue'
+import TabDetails from './tab-details/index.vue'
+import TabDesign from './tab-design/index.vue'
+import TabStudy from './tab-study/index.vue'
+import TabDangerZone from './tab-danger-zone/index.vue'
+import TabIndex from './tab-index/index.vue'
 import { TAB_META, type TabValue } from './tabs'
 
 export type DeckSettingsResponse = boolean
@@ -23,12 +28,6 @@ const { deck, close, initial_tab, initial_side } = defineProps<{
   initial_tab?: ActiveTab
   initial_side?: CardSide
 }>()
-
-const TabDetails = defineAsyncComponent(() => import('./tab-details/index.vue'))
-const TabDesign = defineAsyncComponent(() => import('./tab-design/index.vue'))
-const TabStudy = defineAsyncComponent(() => import('./tab-study/index.vue'))
-const TabDangerZone = defineAsyncComponent(() => import('./tab-danger-zone/index.vue'))
-const TabIndex = defineAsyncComponent(() => import('./tab-index/index.vue'))
 
 const TAB_COMPONENTS = {
   index: TabIndex,

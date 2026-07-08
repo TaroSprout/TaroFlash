@@ -1,8 +1,6 @@
-import { defineAsyncComponent } from 'vue'
 import { useModal } from '@/composables/modal'
 import { emitSfx } from '@/sfx/bus'
-
-const SignupDialog = defineAsyncComponent(() => import('./index.vue'))
+import SignupDialog from './index.vue'
 
 /** Opens the sign-up modal as a mobile sheet on small viewports. */
 export function useSignupModal() {
