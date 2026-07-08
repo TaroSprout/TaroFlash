@@ -63,6 +63,7 @@ async function onMove() {
   moving.value = true
   try {
     await move(selected_deck_id.value)
+    notice.success(t('toast.success.cards-moved', { count: moving_count.value }))
     close({ deck_id: selected_deck_id.value })
   } catch (error) {
     if (!handleLimitError(error)) notice.error(t('toast.error.move-cards-failed'))
