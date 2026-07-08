@@ -1,8 +1,6 @@
-import { defineAsyncComponent } from 'vue'
 import { useModal } from '@/composables/modal'
 import { emitSfx } from '@/sfx/bus'
-
-const StudySession = defineAsyncComponent(() => import('@/components/study-session/index.vue'))
+import StudySession from '@/components/study-session/index.vue'
 
 export type SecondaryAction = 'study-more' | 'study-all' | 'study-again'
 

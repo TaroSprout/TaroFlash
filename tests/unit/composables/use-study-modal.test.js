@@ -1,11 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { flushPromises } from '@vue/test-utils'
 import { useStudyModal } from '@/components/study-session/composables/study-modal'
-
-// StudySession is wrapped with defineAsyncComponent inside the composable, so
-// the component identity doesn't match the raw .vue import. We assert on the
-// wrapper object shape instead.
-const asyncComponentMatcher = expect.objectContaining({ __asyncLoader: expect.any(Function) })
+import StudySession from '@/components/study-session/index.vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -67,7 +63,7 @@ describe('useStudyModal', () => {
     const { start } = useStudyModal()
     const startPromise = start(DECKS)
 
-    expect(mockOpen).toHaveBeenCalledWith(asyncComponentMatcher, {
+    expect(mockOpen).toHaveBeenCalledWith(StudySession, {
       backdrop: true,
       mode: 'popup',
       props: { decks: DECKS, config_override: undefined }
@@ -85,7 +81,7 @@ describe('useStudyModal', () => {
     const startPromise = start(MULTI_DECKS)
 
     expect(mockOpen).toHaveBeenCalledWith(
-      asyncComponentMatcher,
+      StudySession,
       expect.objectContaining({ props: { decks: MULTI_DECKS, config_override: undefined } })
     )
 

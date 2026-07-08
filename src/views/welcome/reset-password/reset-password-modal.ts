@@ -1,7 +1,5 @@
-import { defineAsyncComponent } from 'vue'
 import { useModal } from '@/composables/modal'
-
-const ResetPasswordModal = defineAsyncComponent(() => import('./index.vue'))
+import ResetPasswordModal from './index.vue'
 
 /** Opens the post-recovery reset-password modal. */
 export function useResetPasswordModal() {

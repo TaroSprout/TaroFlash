@@ -1,11 +1,8 @@
-import { defineAsyncComponent } from 'vue'
 import { useModal } from '@/composables/modal'
 import { emitSfx } from '@/sfx/bus'
-import type { UploadLessonResponse } from '@/components/modals/upload-lesson/index.vue'
-
-const UploadLesson = defineAsyncComponent(
-  () => import('@/components/modals/upload-lesson/index.vue')
-)
+import UploadLesson, {
+  type UploadLessonResponse
+} from '@/components/modals/upload-lesson/index.vue'
 
 /**
  * Open the upload-lesson modal for a collection. Resolves to the created

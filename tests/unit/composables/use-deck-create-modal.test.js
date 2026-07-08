@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { flushPromises } from '@vue/test-utils'
 import { useDeckCreateModal } from '@/composables/deck/create-modal'
+import DeckCreate from '@/components/modals/deck-create/index.vue'
 
 const { mockEmitSfx, mockOpen } = vi.hoisted(() => ({
   mockEmitSfx: vi.fn(),
@@ -11,8 +12,6 @@ vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 vi.mock('@/composables/modal', () => ({
   useModal: vi.fn(() => ({ open: mockOpen }))
 }))
-
-const asyncComponentMatcher = expect.objectContaining({ __asyncLoader: expect.any(Function) })
 
 function makeModalResult(value) {
   return { response: Promise.resolve(value) }
@@ -29,7 +28,7 @@ describe('useDeckCreateModal', () => {
 
     useDeckCreateModal().open()
 
-    expect(mockOpen).toHaveBeenCalledWith(asyncComponentMatcher, {
+    expect(mockOpen).toHaveBeenCalledWith(DeckCreate, {
       backdrop: true,
       mode: 'mobile-sheet',
       mobile_below_width: 'md',

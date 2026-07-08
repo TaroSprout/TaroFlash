@@ -17,11 +17,8 @@ vi.mock('@/composables/modal', () => ({
   useModal: vi.fn(() => ({ open: mockOpen }))
 }))
 
-// LoginSheet is wrapped in defineAsyncComponent inside the composable —
-// assert on the async component wrapper shape rather than the raw .vue import.
-const asyncComponentMatcher = expect.objectContaining({ __asyncLoader: expect.any(Function) })
-
 import { useLoginModal } from '@/views/welcome/login/login-modal'
+import LoginSheet from '@/views/welcome/login/sheet.vue'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -84,7 +81,7 @@ describe('useLoginModal', () => {
     useLoginModal().open()
 
     expect(mockOpen).toHaveBeenCalledWith(
-      asyncComponentMatcher,
+      LoginSheet,
       expect.objectContaining({ mode: 'mobile-sheet' })
     )
   })
@@ -96,7 +93,7 @@ describe('useLoginModal', () => {
     useLoginModal().open()
 
     expect(mockOpen).toHaveBeenCalledWith(
-      asyncComponentMatcher,
+      LoginSheet,
       expect.objectContaining({ mobile_below_width: 'md' })
     )
   })
@@ -107,10 +104,7 @@ describe('useLoginModal', () => {
 
     useLoginModal().open()
 
-    expect(mockOpen).toHaveBeenCalledWith(
-      asyncComponentMatcher,
-      expect.objectContaining({ backdrop: true })
-    )
+    expect(mockOpen).toHaveBeenCalledWith(LoginSheet, expect.objectContaining({ backdrop: true }))
   })
 
   test('returns the modal result from open', () => {

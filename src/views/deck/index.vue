@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, provide, ref, useTemplateRef } from 'vue'
+import { computed, provide, ref, useTemplateRef } from 'vue'
 import DeckHero from '@/views/deck/deck-hero/index.vue'
 import DeckSkeleton from './skeleton.vue'
 import ModeToolbar from './mode-toolbar/index.vue'
@@ -7,7 +7,6 @@ import ModeToolbarSkeleton from './mode-toolbar/skeleton.vue'
 import ModeStack from './mode-stack.vue'
 import CardGridSkeleton from './card-grid/skeleton.vue'
 import CardGridEmpty from './card-grid/empty-state.vue'
-import { preloadDeckModes } from './modes'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import DeckMobileFooter from './mobile-footer/index.vue'
 import { useDeckQuery } from '@/api/decks'
@@ -59,8 +58,6 @@ const view_state = computed<'loading' | 'empty' | 'ready'>(() => {
 })
 
 const show_skeleton = computed(() => !deck.value)
-
-onMounted(preloadDeckModes)
 </script>
 
 <template>

@@ -1,8 +1,8 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
-import { DECK_MODES, preloadDeckModes } from '@/views/deck/modes'
+import { DECK_MODES } from '@/views/deck/modes'
 
-// Lazy pane imports inside DECK_MODES use defineAsyncComponent — mock them so
-// the test environment doesn't need the full component graphs.
+// Pane imports inside DECK_MODES are plain synchronous components — mock them
+// so the test environment doesn't need the full component graphs.
 vi.mock('@/views/deck/card-grid/scroll-grid.vue', () => ({
   default: { name: 'CardGrid' }
 }))
@@ -24,11 +24,5 @@ describe('DECK_MODES registry', () => {
     for (const config of Object.values(DECK_MODES)) {
       expect(config.pane).toBeDefined()
     }
-  })
-})
-
-describe('preloadDeckModes', () => {
-  test('is callable without throwing', () => {
-    expect(() => preloadDeckModes()).not.toThrow()
   })
 })

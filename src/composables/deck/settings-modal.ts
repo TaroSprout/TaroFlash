@@ -1,11 +1,9 @@
-import { defineAsyncComponent } from 'vue'
 import { useModal } from '@/composables/modal'
 import { emitSfx } from '@/sfx/bus'
-import type { ActiveTab, DeckSettingsResponse } from '@/components/modals/deck-settings/index.vue'
-
-const DeckSettings = defineAsyncComponent(
-  () => import('@/components/modals/deck-settings/index.vue')
-)
+import DeckSettings, {
+  type ActiveTab,
+  type DeckSettingsResponse
+} from '@/components/modals/deck-settings/index.vue'
 
 type OpenOptions = {
   tab?: ActiveTab
