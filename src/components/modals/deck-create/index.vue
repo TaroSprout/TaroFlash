@@ -9,6 +9,7 @@ import { useDeckEditor, deckEditorKey } from '@/composables/deck/editor'
 import { useTabModalLayout } from '@/composables/ui/tab-modal-layout'
 import { randomCoverConfig } from '@/utils/cover'
 import { emitSfx } from '@/sfx/bus'
+import { useNoticeStore } from '@/stores/notice-store'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiInput from '@/components/ui-kit/input.vue'
 import UiTextarea from '@/components/ui-kit/textarea.vue'
@@ -22,6 +23,7 @@ const { close } = defineProps<{
 
 const { t } = useI18n()
 const router = useRouter()
+const notice = useNoticeStore()
 
 const editor = useDeckEditor({ cover_config: randomCoverConfig() } as Deck)
 provide(deckEditorKey, editor)
@@ -40,7 +42,10 @@ async function onSave() {
   }
 
   const saved = await editor.saveDeck()
-  if (!saved) return
+  if (!saved) {
+    notice.error(t('toast.error.deck-save-failed'))
+    return
+  }
   close(true)
   router.push({ name: 'deck', params: { id: saved.id } })
 }

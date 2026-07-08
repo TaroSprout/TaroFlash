@@ -28,13 +28,24 @@ export function useDeckActions() {
     return false
   }
 
+  /** Create a new deck. Returns null if the plan's deck limit blocks it or the write fails. */
   async function createDeck(deck: Deck): Promise<Deck | null> {
     if (!(await guardCreateDeck())) return null
-    return await upsert_mutation.mutateAsync(deck)
+
+    try {
+      return await upsert_mutation.mutateAsync(deck)
+    } catch {
+      return null
+    }
   }
 
+  /** Persist changes to an existing deck. Returns null if the write fails. */
   async function updateDeck(deck: Deck): Promise<Deck | null> {
-    return await upsert_mutation.mutateAsync(deck)
+    try {
+      return await upsert_mutation.mutateAsync(deck)
+    } catch {
+      return null
+    }
   }
 
   return { guardCreateDeck, createDeck, updateDeck }
