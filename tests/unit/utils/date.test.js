@@ -187,10 +187,12 @@ describe('toRelativeDistinct [obligation]', () => {
     expect(labelB).toBe('in 3 hours')
   })
 
-  test('a collision between two dates bumps every date in the batch to day granularity [obligation]', () => {
+  test('a collision between two dates bumps every date in the batch to day granularity, except a sub-day sibling which renders in hours [obligation]', () => {
     // Regression: this used to demote only the colliding pair (a, b) and leave
     // the third, non-colliding date at its natural unit. Now one collision
-    // anywhere in the batch bumps the whole group together.
+    // anywhere in the batch bumps the whole group together — but a date under
+    // a day away is exempted from the day bump (would show "0 days") and
+    // renders in hours instead.
     const a = new Date(Date.now() + 7.6 * day)
     const b = new Date(Date.now() + 8.6 * day)
     const distinct = new Date(Date.now() + 2 * 60 * 1000) // in 2 minutes, no collision with a/b
@@ -199,7 +201,33 @@ describe('toRelativeDistinct [obligation]', () => {
 
     expect(labelA).toBe('in 8 days')
     expect(labelB).toBe('in 9 days')
-    expect(labelC).toBe('in 0 days')
+    expect(labelC).toBe('in 0 hours')
+  })
+
+  test('within a colliding batch, a date under 24h away renders hour-granularity while day-level siblings stay at day granularity [obligation]', () => {
+    const under_a_day = new Date(Date.now() + 5 * 60 * 60 * 1000) // in 5 hours
+    const a = new Date(Date.now() + 7.6 * day)
+    const b = new Date(Date.now() + 8.6 * day)
+
+    const [labelUnderDay, labelA, labelB] = toRelativeDistinct([under_a_day, a, b], {
+      locale: 'en-US'
+    })
+
+    expect(labelUnderDay).toBe('in 5 hours')
+    expect(labelA).toBe('in 8 days')
+    expect(labelB).toBe('in 9 days')
+  })
+
+  test('when every date in a colliding batch is >= 1 day away, all bump to day granularity together (no hour exemption applies) [obligation]', () => {
+    const a = new Date(Date.now() + 7.6 * day)
+    const b = new Date(Date.now() + 8.6 * day)
+    const c = new Date(Date.now() + 1.2 * day)
+
+    const [labelA, labelB, labelC] = toRelativeDistinct([a, b, c], { locale: 'en-US' })
+
+    expect(labelA).toBe('in 8 days')
+    expect(labelB).toBe('in 9 days')
+    expect(labelC).toBe('in 1 day')
   })
 
   test('preserves each date at its natural granularity when no two labels collide [obligation]', () => {

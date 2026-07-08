@@ -78,6 +78,10 @@ function toRelativeAtUnit(
  * the batch collapses to day-level granularity instead, so "1 week" / "1
  * week" / "9 days" becomes "8 days" / "8 days" / "9 days" — one clash bumps
  * the whole group, keeping their granularity consistent with each other.
+ *
+ * A date under a day away is exempted from the day-level bump — rounding it
+ * to days would show "0 days" — and renders in hours instead, even while
+ * its siblings stay at day granularity.
  */
 export function toRelativeDistinct(inputs: DateInput[], options: RelativeOptions = {}): string[] {
   const labels = inputs.map((d) => toRelative(d, options))
@@ -86,5 +90,9 @@ export function toRelativeDistinct(inputs: DateInput[], options: RelativeOptions
   )
   if (!has_collision) return labels
 
-  return inputs.map((input) => toRelativeAtUnit(input, 'day', options))
+  return inputs.map((input) => {
+    const diffSeconds = (toDate(input).getTime() - Date.now()) / 1000
+    const unit = Math.abs(diffSeconds) < 86_400 ? 'hour' : 'day'
+    return toRelativeAtUnit(input, unit, options)
+  })
 }

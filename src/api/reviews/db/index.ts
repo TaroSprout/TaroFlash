@@ -16,6 +16,7 @@ export async function saveReview(card_id: number, card: Review, log: ReviewLog):
     p_lapses: card.lapses,
     p_last_review: card.last_review ?? null,
     p_card_state: card.state,
+    p_learning_steps: card.learning_steps,
 
     // Review event log
     p_rating: log.rating,

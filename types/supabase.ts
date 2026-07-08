@@ -837,34 +837,59 @@ export type Database = {
           term: string
         }[]
       }
-      get_study_session_cards: {
-        Args: {
-          p_deck_id: number
-          p_study_all?: boolean
-          p_today_start: string
-        }
-        Returns: {
-          back_image_bucket: string | null
-          back_image_path: string | null
-          back_text: string | null
-          created_at: string | null
-          deck_id: number | null
-          front_image_bucket: string | null
-          front_image_path: string | null
-          front_text: string | null
-          id: number | null
-          is_duplicate: boolean | null
-          member_id: string | null
-          rank: number | null
-          updated_at: string | null
-        }[]
-        SetofOptions: {
-          from: '*'
-          to: 'cards_with_images'
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
+      get_study_session_cards:
+        | {
+            Args: { p_deck_id: number; p_study_all?: boolean }
+            Returns: {
+              back_image_bucket: string | null
+              back_image_path: string | null
+              back_text: string | null
+              created_at: string | null
+              deck_id: number | null
+              front_image_bucket: string | null
+              front_image_path: string | null
+              front_text: string | null
+              id: number | null
+              is_duplicate: boolean | null
+              member_id: string | null
+              rank: number | null
+              updated_at: string | null
+            }[]
+            SetofOptions: {
+              from: '*'
+              to: 'cards_with_images'
+              isOneToOne: false
+              isSetofReturn: true
+            }
+          }
+        | {
+            Args: {
+              p_deck_id: number
+              p_study_all?: boolean
+              p_today_start: string
+            }
+            Returns: {
+              back_image_bucket: string | null
+              back_image_path: string | null
+              back_text: string | null
+              created_at: string | null
+              deck_id: number | null
+              front_image_bucket: string | null
+              front_image_path: string | null
+              front_text: string | null
+              id: number | null
+              is_duplicate: boolean | null
+              member_id: string | null
+              rank: number | null
+              updated_at: string | null
+            }[]
+            SetofOptions: {
+              from: '*'
+              to: 'cards_with_images'
+              isOneToOne: false
+              isSetofReturn: true
+            }
+          }
       insert_card_at: {
         Args: {
           p_anchor_id: number
@@ -921,6 +946,7 @@ export type Database = {
               p_elapsed_days: number
               p_lapses: number
               p_last_review: string
+              p_learning_steps?: number
               p_log_difficulty: number
               p_log_due: string
               p_log_scheduled_days: number

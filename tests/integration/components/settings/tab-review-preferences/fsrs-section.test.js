@@ -144,12 +144,15 @@ describe('FsrsSection', () => {
   // ── keyForSteps round-trip [obligation] ─────────────────────────────────────
   // For every preset key, reading the computed off the matching stored array
   // must resolve back to that same key — the get/set halves of keyForSteps
-  // must agree with each other.
+  // must agree with each other. "none" (empty-array steps) was removed from
+  // both preset lists this session — an empty array causes ts-fsrs to skip
+  // the learning/relearning phase entirely on the very first "Again".
 
   describe('learning_steps_key round-trip [obligation]', () => {
     const LEARNING_CASES = [
-      ['none', []],
       ['10m', ['10m']],
+      ['1hr', ['1h']],
+      ['1d', ['1d']],
       ['1m-10m', ['1m', '10m']],
       ['1m-10m-1d', ['1m', '10m', '1d']]
     ]
@@ -170,12 +173,26 @@ describe('FsrsSection', () => {
         expect(editor.preferences.study.learning_steps).toEqual(steps)
       }
     )
+
+    test('learning steps options list does not contain a "none" / empty-array entry [obligation]', () => {
+      const { wrapper } = makeSection()
+      const values = learningSelect(wrapper)
+        .props('options')
+        .map((o) => o.value)
+      expect(values).not.toContain('none')
+      expect(
+        learningSelect(wrapper)
+          .props('options')
+          .find((o) => o.value === 'none')
+      ).toBeUndefined()
+    })
   })
 
   describe('relearning_steps_key round-trip [obligation]', () => {
     const RELEARNING_CASES = [
-      ['none', []],
       ['10m', ['10m']],
+      ['1hr', ['1h']],
+      ['1d', ['1d']],
       ['1m-10m', ['1m', '10m']]
     ]
 
@@ -195,19 +212,39 @@ describe('FsrsSection', () => {
         expect(editor.preferences.study.relearning_steps).toEqual(steps)
       }
     )
+
+    test('relearning steps options list does not contain a "none" / empty-array entry [obligation]', () => {
+      const { wrapper } = makeSection()
+      const values = relearningSelect(wrapper)
+        .props('options')
+        .map((o) => o.value)
+      expect(values).not.toContain('none')
+    })
   })
 
   // ── keyForSteps fallback [obligation] ───────────────────────────────────────
-  // A stray array matching no preset must resolve to 'none', not throw or
-  // return undefined — this is a deliberate fallback in keyForSteps(), not a bug.
+  // A stray array matching no preset (e.g. a stale `[]` before the backfill
+  // migration runs) must resolve to '1d', not the old 'none' fallback — 'none'
+  // no longer exists as a preset, so falling back to it would desync the
+  // dropdown from its own options list.
 
-  test('a learning_steps array matching no preset (e.g. ["5m"]) resolves the select to "none" [obligation]', () => {
+  test('a learning_steps array matching no preset (e.g. ["5m"]) resolves the select to "1d" [obligation]', () => {
     const { wrapper } = makeSection({ learning_steps: ['5m'] })
-    expect(learningSelect(wrapper).props('modelValue')).toBe('none')
+    expect(learningSelect(wrapper).props('modelValue')).toBe('1d')
   })
 
-  test('a relearning_steps array matching no preset (e.g. ["5m"]) resolves the select to "none" [obligation]', () => {
+  test('a stale empty learning_steps array (pre-backfill) resolves the select to "1d", not "none" [obligation]', () => {
+    const { wrapper } = makeSection({ learning_steps: [] })
+    expect(learningSelect(wrapper).props('modelValue')).toBe('1d')
+  })
+
+  test('a relearning_steps array matching no preset (e.g. ["5m"]) resolves the select to "1d" [obligation]', () => {
     const { wrapper } = makeSection({ relearning_steps: ['5m'] })
-    expect(relearningSelect(wrapper).props('modelValue')).toBe('none')
+    expect(relearningSelect(wrapper).props('modelValue')).toBe('1d')
+  })
+
+  test('a stale empty relearning_steps array (pre-backfill) resolves the select to "1d", not "none" [obligation]', () => {
+    const { wrapper } = makeSection({ relearning_steps: [] })
+    expect(relearningSelect(wrapper).props('modelValue')).toBe('1d')
   })
 })
