@@ -352,6 +352,8 @@
   "study.flashcard.edit-footer.flip-button": "Flip",
   "study.flashcard.start-button": "Start",
   "study.idle.next-session-cta": "Study again {time}",
+  "study-session.load-error": "Couldn't load your study session",
+  "study-session.load-error-sub": "Check your connection and try again.",
   "study-session.review-save-error": "Couldn't save your last answer",
   "study-session.review-save-error-sub": "Your progress may be out of sync — refresh before continuing to be safe.",
   "study-session.modal.title": "Studying {deck}",
