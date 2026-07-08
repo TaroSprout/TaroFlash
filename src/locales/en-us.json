@@ -415,6 +415,7 @@
   "lesson-collections.create.cancel-button": "Cancel",
   "lesson-collections.create.submit-button": "Create",
   "lesson-collections.create.error": "Couldn't create that collection. Try again.",
+  "lesson-collections.open-error": "Couldn't open that lesson. Try again.",
   "collection-view.new-button": "New Lesson",
   "collection-view.empty-fallback": "No lessons yet. Upload an audio file to get started.",
   "collection-view.delete-error": "Couldn't delete that lesson. Try again.",
