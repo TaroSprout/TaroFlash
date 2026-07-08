@@ -1,10 +1,22 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { createApp, h } from 'vue'
 import { flushPromises } from '@vue/test-utils'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
-const { mockLoadStripe } = vi.hoisted(() => ({ mockLoadStripe: vi.fn() }))
+const { mockLoadStripe, mockLoadStripeSideEffecting } = vi.hoisted(() => ({
+  mockLoadStripe: vi.fn(),
+  // The default `@stripe/stripe-js` entry point self-injects a <script> +
+  // fraud-detection <iframe> as a top-level side effect on import — even
+  // when this export is never called. Guarded against in the
+  // "regression guard" describe block below.
+  mockLoadStripeSideEffecting: vi.fn()
+}))
 
-vi.mock('@stripe/stripe-js', () => ({ loadStripe: mockLoadStripe }))
+// The composable must import `loadStripe` from the side-effect-free `/pure`
+// entry point — see the regression-guard block below for why.
+vi.mock('@stripe/stripe-js/pure', () => ({ loadStripe: mockLoadStripe }))
+vi.mock('@stripe/stripe-js', () => ({ loadStripe: mockLoadStripeSideEffecting }))
 vi.mock('@/utils/logger', () => ({ default: { error: vi.fn() } }))
 vi.mock('@/stores/theme', async () => {
   const { ref } = await import('vue')
@@ -74,6 +86,7 @@ function baseOptions(overrides = {}) {
 
 beforeEach(() => {
   mockLoadStripe.mockReset()
+  mockLoadStripeSideEffecting.mockReset()
   useThemeStore().is_dark.value = false
 })
 
@@ -299,5 +312,34 @@ describe('useCheckoutElements — dark-mode reactivity', () => {
     await flushPromises()
 
     expect(changeAppearance).toHaveBeenCalledWith(getStripeAppearance(true))
+  })
+})
+
+describe('useCheckoutElements — Stripe.js side-effect regression guard', () => {
+  // The default `@stripe/stripe-js` entry point schedules Stripe.js to
+  // self-inject a <script> tag and fraud-detection <iframe> as a
+  // module-load side effect, independent of whether `loadStripe()` is ever
+  // called. Importing it anywhere in the app's dependency graph — including
+  // composables only used behind auth — loads Stripe.js globally, which
+  // triggered a WebKit bug (spurious file-download prompt) on the anonymous
+  // /welcome marketing page. The `/pure` entry point has no such side
+  // effect. This composable must keep importing from `/pure`.
+  test('[obligation] never invokes the side-effecting default @stripe/stripe-js entry point', async () => {
+    mockLoadStripe.mockResolvedValue(makeStripe())
+
+    withSetup(baseOptions())
+    await flushPromises()
+
+    expect(mockLoadStripeSideEffecting).not.toHaveBeenCalled()
+    expect(mockLoadStripe).toHaveBeenCalledTimes(1)
+  })
+
+  test('[obligation] imports loadStripe from the @stripe/stripe-js/pure entry point', () => {
+    const source_path = resolve(process.cwd(), 'src/composables/billing/use-checkout-elements.ts')
+    const source = readFileSync(source_path, 'utf-8')
+
+    expect(source).toMatch(
+      /import\s*\{\s*loadStripe\s*\}\s*from\s*['"]@stripe\/stripe-js\/pure['"]/
+    )
   })
 })

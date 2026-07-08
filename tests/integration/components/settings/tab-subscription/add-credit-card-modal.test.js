@@ -23,7 +23,7 @@ const {
   mockLoadStripe: vi.fn()
 }))
 
-vi.mock('@stripe/stripe-js', () => ({ loadStripe: mockLoadStripe }))
+vi.mock('@stripe/stripe-js/pure', () => ({ loadStripe: mockLoadStripe }))
 
 vi.mock('@/api/billing', () => ({
   useCreateSetupIntentMutation: () => ({ mutateAsync: mockCreateSetupIntent })
