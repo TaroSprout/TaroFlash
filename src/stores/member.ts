@@ -27,6 +27,8 @@ export const useMemberStore = defineStore('member', () => {
   const updated_at = computed(() => member.value?.updated_at)
   const role = computed(() => member.value?.role)
   const plan = computed(() => member.value?.plan)
+  const deck_limit = computed(() => member.value?.plans?.deck_limit ?? null)
+  const cards_per_deck_limit = computed(() => member.value?.plans?.cards_per_deck_limit ?? null)
   const preferences = computed(() => withMemberPreferencesDefaults(member.value?.preferences))
   const cover = computed(() => withMemberCardCoverDefaults(member.value?.cover_config))
 
@@ -43,6 +45,8 @@ export const useMemberStore = defineStore('member', () => {
     updated_at,
     role,
     plan,
+    deck_limit,
+    cards_per_deck_limit,
     preferences,
     cover,
     error

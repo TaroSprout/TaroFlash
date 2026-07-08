@@ -1,7 +1,6 @@
 import { computed } from 'vue'
 import { useMemberStore } from '@/stores/member'
 import { useMemberDeckCountQuery } from '@/api/decks'
-import { usePlanLimits } from '@/composables/plan-limits'
 
 /**
  * Capability checks for the current member.
@@ -25,12 +24,11 @@ import { usePlanLimits } from '@/composables/plan-limits'
 export function useCan() {
   const member = useMemberStore()
   const deckCount = useMemberDeckCountQuery()
-  const { deckLimit, cardsPerDeckLimit } = usePlanLimits()
 
   const useProFeature = computed(() => member.plan === 'paid')
 
   const createDeck = computed(() => {
-    const limit = deckLimit.value
+    const limit = member.deck_limit
     const count = deckCount.data.value ?? 0
     return limit === null || count < limit
   })
@@ -47,7 +45,7 @@ export function useCan() {
    * cap is evaluated per-deck, against a live count the caller supplies.
    */
   function addCards(count: number, adding = 1): boolean {
-    const limit = cardsPerDeckLimit.value
+    const limit = member.cards_per_deck_limit
     return limit === null || count + adding <= limit
   }
 

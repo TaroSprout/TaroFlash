@@ -2,7 +2,11 @@ import { supabase } from '@/supabase-client'
 import logger from '@/utils/logger'
 
 export async function fetchMemberById(id: string): Promise<Member> {
-  const { data, error } = await supabase.from('members').select('*').eq('id', id).single()
+  const { data, error } = await supabase
+    .from('members')
+    .select('*, plans(deck_limit, cards_per_deck_limit)')
+    .eq('id', id)
+    .single()
 
   if (error) {
     logger.error(error.message)
