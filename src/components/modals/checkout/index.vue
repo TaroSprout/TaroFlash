@@ -35,7 +35,7 @@ const { status, is_ready, onSubmit } = useCheckout(close)
       <div
         data-testid="checkout__scroll-area"
         :data-full-bleed="viewport === 'mobile'"
-        class="flex min-h-0 flex-1 flex-col gap-4 h-full"
+        class="flex min-h-0 flex-1 flex-col gap-4 h-full pt-4"
         :class="[
           status === 'success' ? 'justify-center' : 'justify-between',
           viewport === 'mobile' ? 'overflow-y-auto scroll-hidden' : ''
