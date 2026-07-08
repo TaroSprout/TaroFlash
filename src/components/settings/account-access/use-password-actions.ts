@@ -1,6 +1,7 @@
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSessionStore } from '@/stores/session'
+import { useNoticeStore } from '@/stores/notice-store'
 import { validatePasswordFields, type PasswordFieldErrors } from '@/utils/password-validation'
 import { emitSfx } from '@/sfx/bus'
 
@@ -17,6 +18,7 @@ export type SubmitResult = 'success' | 'invalid' | 'error'
  */
 export function usePasswordActions() {
   const session = useSessionStore()
+  const notice = useNoticeStore()
   const { t } = useI18n()
 
   const password = ref('')
@@ -72,6 +74,7 @@ export function usePasswordActions() {
       return 'invalid'
     }
 
+    notice.error(t('account-access-modal.password.error'))
     return 'error'
   }
 

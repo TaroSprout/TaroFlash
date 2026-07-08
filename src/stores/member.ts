@@ -9,6 +9,7 @@ export const useMemberStore = defineStore('member', () => {
   const session = useSessionStore()
   const query = useCurrentMemberQuery()
   const member = query.data
+  const error = query.error
 
   // `id` is sourced from the session (set synchronously once auth restores),
   // not the member-profile query. Downstream api calls that scope queries by
@@ -23,9 +24,10 @@ export const useMemberStore = defineStore('member', () => {
   const email = computed(() => session.user?.email)
   const created_at = computed(() => member.value?.created_at)
   const avatar_url = computed(() => member.value?.avatar_url)
-  const updated_at = computed(() => member.value?.updated_at)
   const role = computed(() => member.value?.role)
   const plan = computed(() => member.value?.plan)
+  const deck_limit = computed(() => member.value?.plans?.deck_limit ?? null)
+  const cards_per_deck_limit = computed(() => member.value?.plans?.cards_per_deck_limit ?? null)
   const preferences = computed(() => withMemberPreferencesDefaults(member.value?.preferences))
   const cover = computed(() => withMemberCardCoverDefaults(member.value?.cover_config))
 
@@ -39,10 +41,12 @@ export const useMemberStore = defineStore('member', () => {
     created_at,
     id,
     avatar_url,
-    updated_at,
     role,
     plan,
+    deck_limit,
+    cards_per_deck_limit,
     preferences,
-    cover
+    cover,
+    error
   }
 })

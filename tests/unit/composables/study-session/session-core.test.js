@@ -23,6 +23,10 @@ const { mockMemberStore, generatorParametersMock } = vi.hoisted(() => ({
   generatorParametersMock: vi.fn()
 }))
 
+const { mockNotice } = vi.hoisted(() => ({
+  mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
+}))
+
 vi.mock('@/api/reviews', () => ({
   useSaveReviewMutation: () => ({
     mutate: vi.fn(),
@@ -32,6 +36,14 @@ vi.mock('@/api/reviews', () => ({
 
 vi.mock('@/stores/member', () => ({
   useMemberStore: () => mockMemberStore
+}))
+
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => mockNotice
+}))
+
+vi.mock('vue-i18n', () => ({
+  useI18n: () => ({ t: (key) => key })
 }))
 
 vi.mock('ts-fsrs', async (importOriginal) => {
@@ -48,6 +60,7 @@ vi.mock('ts-fsrs', async (importOriginal) => {
 beforeEach(() => {
   saveReviewMock.mockReset().mockResolvedValue(undefined)
   generatorParametersMock.mockClear()
+  mockNotice.error.mockReset()
   mockMemberStore.preferences.study.show_all_ratings = true
   mockMemberStore.preferences.study.desired_retention = 90
   mockMemberStore.preferences.study.learning_steps = ['1m', '10m']
@@ -361,6 +374,38 @@ describe('session-core — reviewCard (with grade)', () => {
     session.reviewCard(Rating.Good)
 
     expect(saveReviewMock).not.toHaveBeenCalled()
+  })
+})
+
+// ── reviewCard — save failure [obligation] ───────────────────────────────────
+
+describe('session-core — reviewCard save failure [obligation]', () => {
+  test('resolves (does not reject) when save_review_mutation.mutateAsync rejects, since the caller awaits it as a floating promise [obligation]', async () => {
+    saveReviewMock.mockRejectedValueOnce(new Error('network error'))
+    const session = useStudySessionCore({ study_all_cards: true })
+    const c = makeNewCard({ id: 1, deck_id: 1 })
+    session.setCards([c])
+
+    await expect(session.reviewCard(Rating.Good)).resolves.toBeUndefined()
+  })
+
+  test('shows a panel notice with a Refresh action when the save fails [obligation]', async () => {
+    saveReviewMock.mockRejectedValueOnce(new Error('network error'))
+    const session = useStudySessionCore({ study_all_cards: true })
+    const c = makeNewCard({ id: 1, deck_id: 1 })
+    session.setCards([c])
+
+    await session.reviewCard(Rating.Good)
+
+    expect(mockNotice.error).toHaveBeenCalledWith(
+      'study-session.review-save-error',
+      expect.objectContaining({
+        variant: 'panel',
+        actions: expect.arrayContaining([
+          expect.objectContaining({ label: 'notice.refresh-label' })
+        ])
+      })
+    )
   })
 })
 

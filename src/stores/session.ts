@@ -25,10 +25,14 @@ import {
 } from '@/api/session'
 import { useRouter } from 'vue-router'
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import logger from '@/utils/logger'
+import { useNoticeStore } from '@/stores/notice-store'
 
 export const useSessionStore = defineStore('sessionStore', () => {
   const router = useRouter()
+  const { t } = useI18n()
+  const notice = useNoticeStore()
 
   const user = ref<User | undefined>(undefined)
   const loading_count = ref(0)
@@ -73,7 +77,14 @@ export const useSessionStore = defineStore('sessionStore', () => {
   }
 
   async function logout(): Promise<void> {
-    await supaLogout()
+    try {
+      await supaLogout()
+    } catch (e: any) {
+      logger.error(`Error logging out: ${e.message}`)
+      notice.error(t('session.logout-error'))
+      return
+    }
+
     reset()
     router.push({ name: 'welcome' })
   }
@@ -91,6 +102,8 @@ export const useSessionStore = defineStore('sessionStore', () => {
       await supaSignInOAuth(provider, options)
     } catch (e: any) {
       logger.error(`Error signing in with OAuth: ${e.message}`)
+      notice.error(t('login-dialog.errors.generic'))
+      return
     }
 
     router.push({ name: 'dashboard' })

@@ -2,6 +2,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSessionStore } from '@/stores/session'
 import { useMemberStore } from '@/stores/member'
+import { useNoticeStore } from '@/stores/notice-store'
 import { emitSfx } from '@/sfx/bus'
 
 export type SubmitResult = 'success' | 'invalid' | 'error'
@@ -20,6 +21,7 @@ function isEmail(s: string) {
 export function useEmailActions() {
   const session = useSessionStore()
   const member = useMemberStore()
+  const notice = useNoticeStore()
   const { t } = useI18n()
 
   const current_email = computed(() => member.email ?? '')
@@ -62,6 +64,7 @@ export function useEmailActions() {
       return 'invalid'
     }
 
+    notice.error(t('account-access-modal.email.error'))
     return 'error'
   }
 

@@ -5,11 +5,12 @@ type Member = {
   created_at?: string
   email?: string
   avatar_url?: string
-  updated_at?: string
   role?: MemberRole
   plan?: MemberPlan
   preferences?: MemberPreferences
   cover_config?: DeckCover
+  // Embedded via the `members.plan` FK — null if the plan row is inactive/missing.
+  plans?: Pick<PlanLimits, 'deck_limit' | 'cards_per_deck_limit'> | null
 }
 
 type PlanLimits = {

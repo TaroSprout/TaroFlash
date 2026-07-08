@@ -1,5 +1,7 @@
 import { ref, watch, type MaybeRefOrGetter, type Ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useCardMutations } from '@/composables/card'
+import { useNoticeStore } from '@/stores/notice-store'
 import type { StudyCard } from './session-core'
 
 /**
@@ -17,6 +19,8 @@ export function useCardEdit(
   deck_id: MaybeRefOrGetter<number | undefined>,
   updateCard: (card_id: number, values: Partial<Card>) => void
 ) {
+  const { t } = useI18n()
+  const notice = useNoticeStore()
   const editing = ref(false)
   const saving = ref(false)
   const mutations = useCardMutations(deck_id)
@@ -42,9 +46,14 @@ export function useCardEdit(
     if (!card?.id) return
     saving.value = true
     const values = { [`${side}_text`]: text }
-    await mutations.saveCard(card, values)
-    updateCard(card.id, values)
-    saving.value = false
+    try {
+      await mutations.saveCard(card, values)
+      updateCard(card.id, values)
+    } catch {
+      notice.error(t('toast.error.card-save-failed'))
+    } finally {
+      saving.value = false
+    }
   }
 
   return { editing, saving, start, stop, update }

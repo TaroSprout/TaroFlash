@@ -1,6 +1,8 @@
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { resolveCollectionEntryLesson } from '@/api/lessons'
 import { useCollectionEditModal } from '@/composables/audio-reader/collection-edit-modal'
+import { useNoticeStore } from '@/stores/notice-store'
 
 /**
  * Open a collection like a book: navigate to the chapter the member left off on
@@ -13,10 +15,19 @@ import { useCollectionEditModal } from '@/composables/audio-reader/collection-ed
  */
 export function useOpenCollection() {
   const router = useRouter()
+  const { t } = useI18n()
+  const notice = useNoticeStore()
   const edit_modal = useCollectionEditModal()
 
   async function openCollection(collection: LessonCollection) {
-    const lesson_id = await resolveCollectionEntryLesson(collection)
+    let lesson_id: number | null
+    try {
+      lesson_id = await resolveCollectionEntryLesson(collection)
+    } catch {
+      notice.error(t('lesson-collections.open-error'))
+      return
+    }
+
     if (!lesson_id) {
       edit_modal.open(collection.id)
       return

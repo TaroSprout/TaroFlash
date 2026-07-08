@@ -11,8 +11,15 @@ const { confirmDeleteMock, openMoveModalMock, deleteCardsMock, moveCardsMock } =
   moveCardsMock: vi.fn().mockResolvedValue(undefined)
 }))
 
+const { mockNotice } = vi.hoisted(() => ({
+  mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
+}))
+
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({ t: (key) => key })
+}))
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => mockNotice
 }))
 vi.mock('@/composables/card', () => ({
   useCardMutations: () => ({
@@ -51,6 +58,7 @@ beforeEach(() => {
   openMoveModalMock.mockReset()
   deleteCardsMock.mockReset().mockResolvedValue(undefined)
   moveCardsMock.mockReset().mockResolvedValue(undefined)
+  mockNotice.error.mockReset()
 })
 
 // ── onDelete ──────────────────────────────────────────────────────────────────
@@ -113,6 +121,18 @@ describe('useActiveCardActions — onDelete', () => {
     await result.onDelete()
 
     expect(confirmDeleteMock).toHaveBeenCalledWith(1)
+  })
+
+  test('shows an error notice and does NOT call onRemoved when deleteCards rejects [obligation]', async () => {
+    confirmDeleteMock.mockResolvedValueOnce(true)
+    deleteCardsMock.mockRejectedValueOnce(new Error('boom'))
+    const card = makeCard({ id: 42 })
+    const { result, onRemoved } = makeSetup({ card })
+
+    await result.onDelete()
+
+    expect(mockNotice.error).toHaveBeenCalledWith('toast.error.delete-cards-failed')
+    expect(onRemoved).not.toHaveBeenCalled()
   })
 })
 

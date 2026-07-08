@@ -8,8 +8,13 @@ const { mockSession, mockEmitSfx } = vi.hoisted(() => ({
   mockEmitSfx: vi.fn()
 }))
 
+const { mockNotice } = vi.hoisted(() => ({
+  mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
+}))
+
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (k) => k }) }))
 vi.mock('@/stores/session', () => ({ useSessionStore: () => mockSession }))
+vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
 import { usePasswordActions } from '@/components/settings/account-access/use-password-actions'
@@ -17,6 +22,7 @@ import { usePasswordActions } from '@/components/settings/account-access/use-pas
 beforeEach(() => {
   mockSession.updatePassword.mockReset()
   mockEmitSfx.mockReset()
+  mockNotice.error.mockReset()
 })
 
 describe('usePasswordActions — validation', () => {
@@ -81,6 +87,12 @@ describe('usePasswordActions — validation', () => {
     await password_actions.submit()
     expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
   })
+
+  test('[obligation] does NOT fire a notice-store error for a validation failure', async () => {
+    const password_actions = usePasswordActions()
+    await password_actions.submit()
+    expect(mockNotice.error).not.toHaveBeenCalled()
+  })
 })
 
 describe('usePasswordActions — submit', () => {
@@ -137,6 +149,17 @@ describe('usePasswordActions — submit', () => {
     )
   })
 
+  test('[obligation] does NOT fire a notice-store error for the "same-password" outcome', async () => {
+    mockSession.updatePassword.mockResolvedValueOnce('same-password')
+    const password_actions = usePasswordActions()
+    password_actions.password.value = 'longenough1'
+    password_actions.confirm_password.value = 'longenough1'
+
+    await password_actions.submit()
+
+    expect(mockNotice.error).not.toHaveBeenCalled()
+  })
+
   test('returns "error" for any other outcome', async () => {
     mockSession.updatePassword.mockResolvedValueOnce('error')
     const password_actions = usePasswordActions()
@@ -146,6 +169,17 @@ describe('usePasswordActions — submit', () => {
     const result = await password_actions.submit()
 
     expect(result).toBe('error')
+  })
+
+  test('[obligation] fires a notice-store error only on the true fallthrough "error" outcome', async () => {
+    mockSession.updatePassword.mockResolvedValueOnce('error')
+    const password_actions = usePasswordActions()
+    password_actions.password.value = 'longenough1'
+    password_actions.confirm_password.value = 'longenough1'
+
+    await password_actions.submit()
+
+    expect(mockNotice.error).toHaveBeenCalledWith('account-access-modal.password.error')
   })
 
   test('[obligation] plays the stuck sfx for every non-success server outcome', async () => {

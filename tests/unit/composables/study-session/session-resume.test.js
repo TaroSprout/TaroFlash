@@ -13,6 +13,10 @@ const { refetchImpl, startMock, readPersistedSessionMock, clearPersistedSessionM
   })
 )
 
+const { mockNotice } = vi.hoisted(() => ({
+  mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
+}))
+
 vi.mock('@/api/decks', () => ({
   useDecksByIdsQuery: vi.fn(() => ({
     refetch: (...args) => refetchImpl.current(...args)
@@ -26,6 +30,14 @@ vi.mock('@/components/study-session/composables/study-modal', () => ({
 vi.mock('@/components/study-session/composables/session-persistence', () => ({
   readPersistedSession: (...args) => readPersistedSessionMock(...args),
   clearPersistedSession: (...args) => clearPersistedSessionMock(...args)
+}))
+
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => mockNotice
+}))
+
+vi.mock('vue-i18n', () => ({
+  useI18n: () => ({ t: (key) => key })
 }))
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -53,6 +65,7 @@ describe('useResumeStudySession', () => {
     startMock.mockReset()
     readPersistedSessionMock.mockReset()
     clearPersistedSessionMock.mockReset()
+    mockNotice.error.mockReset()
     unmount = null
   })
 
@@ -125,6 +138,43 @@ describe('useResumeStudySession', () => {
     await nextTick()
 
     expect(startMock).toHaveBeenCalledWith(decks, config_override)
+    expect(clearPersistedSessionMock).not.toHaveBeenCalled()
+  })
+
+  test('shows a notice and does NOT start the modal when the decks refetch throws [obligation]', async () => {
+    readPersistedSessionMock.mockReturnValue({
+      deck_ids: [1],
+      card_ids: [10],
+      results: [],
+      mode: 'studying'
+    })
+    refetchImpl.current = vi.fn().mockRejectedValue(new Error('network error'))
+
+    const setup = withSetup(() => useResumeStudySession())
+    unmount = setup.unmount
+
+    await new Promise((r) => setTimeout(r, 0))
+    await nextTick()
+
+    expect(mockNotice.error).toHaveBeenCalledWith('study-session.resume-error')
+    expect(startMock).not.toHaveBeenCalled()
+  })
+
+  test('does NOT clear the persisted session when the decks refetch throws (only the empty-decks path clears it) [obligation]', async () => {
+    readPersistedSessionMock.mockReturnValue({
+      deck_ids: [1],
+      card_ids: [10],
+      results: [],
+      mode: 'studying'
+    })
+    refetchImpl.current = vi.fn().mockRejectedValue(new Error('network error'))
+
+    const setup = withSetup(() => useResumeStudySession())
+    unmount = setup.unmount
+
+    await new Promise((r) => setTimeout(r, 0))
+    await nextTick()
+
     expect(clearPersistedSessionMock).not.toHaveBeenCalled()
   })
 })

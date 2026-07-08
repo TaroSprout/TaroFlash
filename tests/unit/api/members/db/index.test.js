@@ -55,13 +55,22 @@ beforeEach(() => {
 // ── fetchMemberById ───────────────────────────────────────────────────────────
 
 describe('fetchMemberById', () => {
-  test('selects "*" (no plans embed — display_name comes from PLANS config now) [obligation]', async () => {
+  test('selects the explicit member column list, including the plans(deck_limit, cards_per_deck_limit) embed [obligation]', async () => {
     makeChain({ data: baseMemberRow, error: null })
     await fetchMemberById('user-1')
-    expect(mocks.selectMock).toHaveBeenCalledWith('*')
+    expect(mocks.selectMock).toHaveBeenCalledWith(
+      'id, display_name, description, created_at, email, avatar_url, role, plan, preferences, cover_config, plans(deck_limit, cards_per_deck_limit)'
+    )
   })
 
-  test('returns the row as-is, with no plan_display_name projection [obligation]', async () => {
+  test('select does not include stripe_customer_id, stripe_subscription_id, or updated_at [obligation]', async () => {
+    makeChain({ data: baseMemberRow, error: null })
+    await fetchMemberById('user-1')
+    const [columns] = mocks.selectMock.mock.calls[0]
+    expect(columns).not.toMatch(/stripe_customer_id|stripe_subscription_id|updated_at/)
+  })
+
+  test('returns the row as-is, with no plan_display_name projection', async () => {
     makeChain({ data: baseMemberRow, error: null })
     const result = await fetchMemberById('user-1')
     expect(result).toEqual(baseMemberRow)
@@ -74,10 +83,16 @@ describe('fetchMemberById', () => {
     expect(eq).toHaveBeenCalledWith('id', 'user-1')
   })
 
-  test('returns null on error', async () => {
-    makeChain({ data: null, error: { message: 'not found' } })
-    const result = await fetchMemberById('user-1')
-    expect(result).toBeNull()
+  test('rethrows the supabase error instead of swallowing it [obligation]', async () => {
+    const err = { message: 'not found' }
+    makeChain({ data: null, error: err })
+    await expect(fetchMemberById('user-1')).rejects.toBe(err)
+  })
+
+  test('returns null (not a throw) when RLS filters the row out (PGRST116) [obligation]', async () => {
+    const err = { code: 'PGRST116', message: 'Cannot coerce the result to a single JSON object' }
+    makeChain({ data: null, error: err })
+    await expect(fetchMemberById('user-1')).resolves.toBeNull()
   })
 })
 

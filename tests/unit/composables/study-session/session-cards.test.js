@@ -13,6 +13,10 @@ const { refetchImpl, restoreRefetchImpl, cardsByIdsQueryMock, readPersistedSessi
     readPersistedSessionMock: vi.fn(() => undefined)
   }))
 
+const { mockNotice } = vi.hoisted(() => ({
+  mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
+}))
+
 vi.mock('@/api/cards', () => ({
   useMultiDeckStudyCardsQuery: vi.fn(() => ({
     data: { value: undefined },
@@ -30,6 +34,14 @@ vi.mock('@/api/cards', () => ({
 
 vi.mock('@/components/study-session/composables/session-persistence', () => ({
   readPersistedSession: (...args) => readPersistedSessionMock(...args)
+}))
+
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => mockNotice
+}))
+
+vi.mock('vue-i18n', () => ({
+  useI18n: () => ({ t: (key) => key })
 }))
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -61,6 +73,7 @@ describe('useSessionCards', () => {
     restoreRefetchImpl.current = vi.fn()
     cardsByIdsQueryMock.mockClear()
     readPersistedSessionMock.mockReset().mockReturnValue(undefined)
+    mockNotice.error.mockReset()
     unmount = null
   })
 
@@ -198,7 +211,7 @@ describe('useSessionCards', () => {
 
   // ── Non-success refetch ────────────────────────────────────────────────────
 
-  test('leaves loading true and does NOT seed when refetch returns non-success [obligation]', async () => {
+  test('resets loading to false and does NOT seed when refetch returns non-success [obligation]', async () => {
     refetchImpl.current = vi.fn().mockResolvedValue({ status: 'error', data: null, error: 'oops' })
 
     const seed = vi.fn()
@@ -217,10 +230,10 @@ describe('useSessionCards', () => {
     await nextTick()
 
     expect(seed).not.toHaveBeenCalled()
-    expect(setup.result.loading.value).toBe(true)
+    expect(setup.result.loading.value).toBe(false)
   })
 
-  test('leaves loading true and does NOT seed when refetch returns pending [obligation]', async () => {
+  test('resets loading to false and does NOT seed when refetch returns pending [obligation]', async () => {
     refetchImpl.current = vi.fn().mockResolvedValue({ status: 'loading', data: null, error: null })
 
     const seed = vi.fn()
@@ -239,7 +252,61 @@ describe('useSessionCards', () => {
     await nextTick()
 
     expect(seed).not.toHaveBeenCalled()
-    expect(setup.result.loading.value).toBe(true)
+    expect(setup.result.loading.value).toBe(false)
+  })
+
+  test('fires a panel notice with a Retry action, closable, when the bootstrap fetch fails [obligation]', async () => {
+    refetchImpl.current = vi.fn().mockResolvedValue({ status: 'error', data: null, error: 'oops' })
+
+    const setup = withSetup(() =>
+      useSessionCards({
+        deckIds: () => [1],
+        studyAllCards: () => false,
+        seed: vi.fn(),
+        onMissingDeck: vi.fn()
+      })
+    )
+    unmount = setup.unmount
+
+    await new Promise((r) => setTimeout(r, 0))
+    await nextTick()
+
+    expect(mockNotice.error).toHaveBeenCalledWith(
+      'study-session.load-error',
+      expect.objectContaining({
+        variant: 'panel',
+        actions: expect.arrayContaining([expect.objectContaining({ label: 'notice.retry-label' })])
+      })
+    )
+    const [, options] = mockNotice.error.mock.calls[0]
+    expect(options).not.toHaveProperty('closable', false)
+  })
+
+  test('clicking the Retry action re-invokes the bootstrap fetch [obligation]', async () => {
+    refetchImpl.current = vi.fn().mockResolvedValue({ status: 'error', data: null, error: 'oops' })
+
+    const setup = withSetup(() =>
+      useSessionCards({
+        deckIds: () => [1],
+        studyAllCards: () => false,
+        seed: vi.fn(),
+        onMissingDeck: vi.fn()
+      })
+    )
+    unmount = setup.unmount
+
+    await new Promise((r) => setTimeout(r, 0))
+    await nextTick()
+
+    expect(refetchImpl.current).toHaveBeenCalledTimes(1)
+
+    const [, options] = mockNotice.error.mock.calls[0]
+    const retry_action = options.actions.find((a) => a.label === 'notice.retry-label')
+    retry_action.onClick()
+    await new Promise((r) => setTimeout(r, 0))
+    await nextTick()
+
+    expect(refetchImpl.current).toHaveBeenCalledTimes(2)
   })
 
   // ── loading initial value ──────────────────────────────────────────────────
@@ -413,7 +480,7 @@ describe('useSessionCards', () => {
     expect(setup.result.loading.value).toBe(false)
   })
 
-  test('does NOT call restore or clear loading when the remainder fetch does not succeed [obligation]', async () => {
+  test('does NOT call restore, but does clear loading, when the remainder fetch does not succeed [obligation]', async () => {
     readPersistedSessionMock.mockReturnValue({
       deck_ids: [1],
       card_ids: [10],
@@ -438,6 +505,10 @@ describe('useSessionCards', () => {
     await nextTick()
 
     expect(restore).not.toHaveBeenCalled()
-    expect(setup.result.loading.value).toBe(true)
+    expect(setup.result.loading.value).toBe(false)
+    expect(mockNotice.error).toHaveBeenCalledWith(
+      'study-session.load-error',
+      expect.objectContaining({ variant: 'panel' })
+    )
   })
 })

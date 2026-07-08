@@ -10,6 +10,8 @@ vi.mock('@/stores/member', async () => {
   const { ref } = await vi.importActual('vue')
   planRef = ref(null)
   roleRef = ref(null)
+  deckLimitRef = ref(5)
+  cardsPerDeckLimitRef = ref(200)
   return {
     useMemberStore: () => ({
       get plan() {
@@ -17,6 +19,12 @@ vi.mock('@/stores/member', async () => {
       },
       get role() {
         return roleRef.value
+      },
+      get deck_limit() {
+        return deckLimitRef.value
+      },
+      get cards_per_deck_limit() {
+        return cardsPerDeckLimitRef.value
       }
     })
   }
@@ -27,15 +35,6 @@ vi.mock('@/api/decks', async () => {
   deckCountRef = ref(0)
   return {
     useMemberDeckCountQuery: () => ({ data: deckCountRef })
-  }
-})
-
-vi.mock('@/composables/plan-limits', async () => {
-  const { ref } = await vi.importActual('vue')
-  deckLimitRef = ref(5)
-  cardsPerDeckLimitRef = ref(200)
-  return {
-    usePlanLimits: () => ({ deckLimit: deckLimitRef, cardsPerDeckLimit: cardsPerDeckLimitRef })
   }
 })
 

@@ -87,6 +87,11 @@ vi.mock('@/composables/ui/infinite-scroll', () => ({
 
 vi.mock('@/components/modals/move-cards.vue', () => ({ default: {} }))
 
+const { mockNotice } = vi.hoisted(() => ({
+  mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
+}))
+vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
+
 import { useCardListController } from '@/views/deck/composables/list-controller'
 
 function makeCard(overrides = {}) {
@@ -180,6 +185,7 @@ describe('useCardListController', () => {
     guardAddCardsMock.mockResolvedValue(true)
     handleLimitErrorMock.mockReset()
     handleLimitErrorMock.mockReturnValue(false)
+    mockNotice.warn.mockReset()
   })
 
   // ── Initialization ─────────────────────────────────────────────────────────
@@ -800,11 +806,21 @@ describe('useCardListController', () => {
       })
     })
 
-    test('swallows rejection from the mutation (floating promise)', async () => {
+    test('does not throw when the mutation rejects (floating promise)', async () => {
       reorderCardMock.mockRejectedValueOnce(new Error('network'))
       const ctrl = makeController([makeCard({ id: 1 }), makeCard({ id: 2 })])
       // Should not throw
       expect(() => ctrl.reorderCard(1, 0)).not.toThrow()
+    })
+
+    test('fires notice.warn(toast.warn.reorder-failed) when the mutation rejects [obligation]', async () => {
+      reorderCardMock.mockRejectedValueOnce(new Error('network'))
+      const ctrl = makeController([makeCard({ id: 1 }), makeCard({ id: 2 })])
+
+      ctrl.reorderCard(1, 0)
+      await new Promise((r) => setTimeout(r, 0))
+
+      expect(mockNotice.warn).toHaveBeenCalledWith('toast.warn.reorder-failed')
     })
   })
 

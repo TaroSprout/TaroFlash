@@ -25,7 +25,7 @@ vi.mock('@/components/modals/checkout/index.vue', () => ({ default: {} }))
 
 // `useCan().addCards` owns the cap comparison now — mock it directly with the
 // same 200-card-per-deck free-tier math the real composable would derive from
-// usePlanLimits, driven by a reactive limit so tests can flip free ⇄ paid.
+// member.cards_per_deck_limit, driven by a reactive limit so tests can flip free ⇄ paid.
 const cardsPerDeckLimitRef = ref(200)
 
 vi.mock('@/composables/can', () => ({

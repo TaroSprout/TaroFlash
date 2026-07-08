@@ -13,6 +13,13 @@ vi.stubGlobal(
 )
 vi.stubGlobal('cancelAnimationFrame', vi.fn())
 
+const { mockNotice } = vi.hoisted(() => ({
+  mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
+}))
+
+vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (key) => key }) }))
+vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
+
 const { useAudioPlayer } = await import('@/composables/audio-reader/audio-player')
 
 // Helper: run the composable inside a real Vue app so watch() + onUnmounted work
@@ -52,6 +59,10 @@ function makeAudioEl() {
 
 describe('useAudioPlayer', () => {
   let app
+
+  beforeEach(() => {
+    mockNotice.error.mockReset()
+  })
 
   afterEach(() => {
     app?.unmount()
@@ -445,6 +456,78 @@ describe('useAudioPlayer', () => {
       app = a
       // Must not throw
       result.pause()
+    })
+  })
+
+  describe('play() failure handling [obligation]', () => {
+    test('shows an error notice when el.play() rejects with a non-AbortError [obligation]', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      const el = makeAudioEl()
+      el.play.mockRejectedValueOnce(new Error('network error'))
+      target.value = el
+      await nextTick()
+
+      result.play()
+      await nextTick()
+      await nextTick()
+
+      expect(mockNotice.error).toHaveBeenCalledWith('audio-reader.player.play-error')
+    })
+
+    test('silently ignores an AbortError rejection (no notice) [obligation]', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      const el = makeAudioEl()
+      el.play.mockRejectedValueOnce(
+        new DOMException('The play() request was interrupted', 'AbortError')
+      )
+      target.value = el
+      await nextTick()
+
+      result.play()
+      await nextTick()
+      await nextTick()
+
+      expect(mockNotice.error).not.toHaveBeenCalled()
+    })
+
+    test('playClip() shows an error notice when el.play() rejects with a non-AbortError [obligation]', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      const el = makeAudioEl()
+      el.play.mockRejectedValueOnce(new Error('network error'))
+      target.value = el
+      await nextTick()
+
+      result.playClip(0, 5)
+      await nextTick()
+      await nextTick()
+
+      expect(mockNotice.error).toHaveBeenCalledWith('audio-reader.player.play-error')
+    })
+
+    test('playClip() silently ignores an AbortError rejection (no notice) [obligation]', async () => {
+      const target = ref(null)
+      const [result, a] = withSetup(() => useAudioPlayer(target))
+      app = a
+
+      const el = makeAudioEl()
+      el.play.mockRejectedValueOnce(new DOMException('interrupted', 'AbortError'))
+      target.value = el
+      await nextTick()
+
+      result.playClip(0, 5)
+      await nextTick()
+      await nextTick()
+
+      expect(mockNotice.error).not.toHaveBeenCalled()
     })
   })
 

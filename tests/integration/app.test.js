@@ -1,7 +1,9 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
-import { shallowMount } from '@vue/test-utils'
+import { shallowMount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
+import { reactive } from 'vue'
 import App from '@/App.vue'
+import { useNoticeStore } from '@/stores/notice-store'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 // App.vue's onMounted pulls in theme/session/member stores (which themselves
@@ -27,8 +29,10 @@ vi.mock('@/stores/session', () => ({
   useSessionStore: () => ({ startLoading: mockStartLoading, stopLoading: mockStopLoading })
 }))
 
+const mockMember = reactive({ preferences: {}, error: null })
+
 vi.mock('@/stores/member', () => ({
-  useMemberStore: () => ({ preferences: {} })
+  useMemberStore: () => mockMember
 }))
 
 vi.mock('@/sfx/player', () => ({
@@ -61,6 +65,7 @@ beforeEach(() => {
   original_matchMedia = window.matchMedia
   original_navigator_standalone = window.navigator.standalone
   document.documentElement.removeAttribute('data-standalone')
+  mockMember.error = null
 })
 
 afterEach(() => {
@@ -106,6 +111,39 @@ describe('App', () => {
       mountApp()
 
       expect(document.documentElement.getAttribute('data-standalone')).toBe('false')
+    })
+  })
+
+  describe('member.error watcher [obligation]', () => {
+    test('fires a panel notice with closable:false and a Refresh action when member.error becomes truthy [obligation]', async () => {
+      stubMatchMedia(false)
+      delete window.navigator.standalone
+      const wrapper = mountApp()
+      const notice = useNoticeStore()
+
+      mockMember.error = new Error('fetch failed')
+      await flushPromises()
+
+      expect(notice.error).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          variant: 'panel',
+          closable: false,
+          actions: expect.arrayContaining([
+            expect.objectContaining({ onClick: expect.any(Function) })
+          ])
+        })
+      )
+      wrapper.unmount()
+    })
+
+    test('does NOT fire a notice on mount when member.error is falsy', () => {
+      stubMatchMedia(false)
+      delete window.navigator.standalone
+      mountApp()
+      const notice = useNoticeStore()
+
+      expect(notice.error).not.toHaveBeenCalled()
     })
   })
 })

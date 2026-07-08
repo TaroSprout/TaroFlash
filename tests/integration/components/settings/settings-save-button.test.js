@@ -33,6 +33,11 @@ const UiButtonStub = defineComponent({
   }
 })
 
+const { mockNotice } = vi.hoisted(() => ({
+  mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
+}))
+vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
+
 // ── Factory ───────────────────────────────────────────────────────────────────
 
 function makeWrapper({ is_dirty = true, save_result = true } = {}) {
@@ -107,6 +112,20 @@ describe('settings-save-button — save behaviour [obligation]', () => {
     await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
     await flushPromises()
     expect(close).not.toHaveBeenCalled()
+  })
+
+  test('shows settings.save-error notice when saveMember resolves false [obligation]', async () => {
+    const { wrapper } = makeWrapper({ is_dirty: true, save_result: false })
+    await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
+    await flushPromises()
+    expect(mockNotice.error).toHaveBeenCalledWith("Couldn't save your changes. Please try again.")
+  })
+
+  test('does NOT show an error notice when saveMember resolves true', async () => {
+    const { wrapper } = makeWrapper({ is_dirty: true, save_result: true })
+    await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
+    await flushPromises()
+    expect(mockNotice.error).not.toHaveBeenCalled()
   })
 
   test('shows loading state while saveMember is in flight', async () => {

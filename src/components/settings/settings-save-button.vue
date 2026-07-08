@@ -5,8 +5,10 @@ import UiButton from '@/components/ui-kit/button.vue'
 import { memberEditorKey } from '@/composables/member/editor'
 import { settingsCloseKey } from './layout'
 import { inject } from 'vue'
+import { useNoticeStore } from '@/stores/notice-store'
 
 const { t } = useI18n()
+const notice = useNoticeStore()
 const { is_dirty, saveMember } = inject(memberEditorKey)!
 const close = inject(settingsCloseKey)!
 
@@ -16,7 +18,11 @@ async function onSave() {
   is_saving.value = true
   const saved = await saveMember()
   is_saving.value = false
-  if (saved) close()
+  if (saved) {
+    close()
+    return
+  }
+  notice.error(t('settings.save-error'))
 }
 </script>
 

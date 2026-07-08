@@ -1,5 +1,7 @@
 import { type MaybeRefOrGetter, type Ref, toValue } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useCardMutations, useCardPrompts } from '@/composables/card'
+import { useNoticeStore } from '@/stores/notice-store'
 import type { StudyCard } from './session-core'
 
 type UseActiveCardActionsOptions = {
@@ -26,6 +28,8 @@ export function useActiveCardActions({
   deck_id,
   onRemoved
 }: UseActiveCardActionsOptions) {
+  const { t } = useI18n()
+  const notice = useNoticeStore()
   const { confirmDelete, openMoveModal } = useCardPrompts()
   const mutations = useCardMutations(deck_id)
 
@@ -35,7 +39,12 @@ export function useActiveCardActions({
     if (!card) return
     if (!(await confirmDelete(1))) return
 
-    await mutations.deleteCards({ cards: [card] })
+    try {
+      await mutations.deleteCards({ cards: [card] })
+    } catch {
+      notice.error(t('toast.error.delete-cards-failed'))
+      return
+    }
     onRemoved(card.id)
   }
 

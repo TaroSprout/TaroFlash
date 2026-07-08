@@ -1,4 +1,6 @@
 import { onUnmounted, ref, toValue, watch, type MaybeRefOrGetter } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useNoticeStore } from '@/stores/notice-store'
 
 /**
  * Wrap a native `<audio>` element with reactive playback state.
@@ -15,6 +17,9 @@ import { onUnmounted, ref, toValue, watch, type MaybeRefOrGetter } from 'vue'
  * const { current_time, is_playing, seek } = useAudioPlayer(audio)
  */
 export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>) {
+  const { t } = useI18n()
+  const notice = useNoticeStore()
+
   const current_time = ref(0)
   const duration = ref(0)
   const is_playing = ref(false)
@@ -171,6 +176,12 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
     if (el) el.playbackRate = rate
   }
 
+  /** Ignores AbortError — expected when a rapid seek/pause interrupts an in-flight play(). */
+  function _reportPlayFailure(err: unknown) {
+    if (err instanceof DOMException && err.name === 'AbortError') return
+    notice.error(t('audio-reader.player.play-error'))
+  }
+
   function play() {
     clip_end = null
     if (!el) return
@@ -182,7 +193,7 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
       pending_seek = null
     }
 
-    el.play()
+    el.play().catch(_reportPlayFailure)
   }
 
   function pause() {
@@ -196,7 +207,7 @@ export function useAudioPlayer(target: MaybeRefOrGetter<HTMLAudioElement | null>
     pending_seek = null
     el.currentTime = start
     current_time.value = start
-    el.play()
+    el.play().catch(_reportPlayFailure)
   }
 
   return {

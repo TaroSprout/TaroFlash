@@ -6,9 +6,14 @@ const { memberRef, sessionUser } = vi.hoisted(() => ({
   sessionUser: { value: null }
 }))
 
-vi.mock('@/api/members', () => ({
-  useCurrentMemberQuery: () => ({ data: memberRef })
-}))
+vi.mock('@/api/members', async () => {
+  const { ref } = await vi.importActual('vue')
+  const errorRef = ref(null)
+  return {
+    useCurrentMemberQuery: () => ({ data: memberRef, error: errorRef }),
+    __mockMemberError: errorRef
+  }
+})
 
 vi.mock('@/stores/session', () => ({
   useSessionStore: () => ({
@@ -19,12 +24,14 @@ vi.mock('@/stores/session', () => ({
 }))
 
 import { useMemberStore } from '@/stores/member'
+import { __mockMemberError as memberErrorRef } from '@/api/members'
 
 describe('useMemberStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     memberRef.value = null
     sessionUser.value = null
+    memberErrorRef.value = null
   })
 
   test('all fields are undefined and has_member is false when nothing is loaded', () => {
@@ -53,7 +60,6 @@ describe('useMemberStore', () => {
       email: 'a@test.com',
       created_at: '2026-01-01',
       avatar_url: 'https://avatar',
-      updated_at: '2026-01-02',
       role: 'admin',
       plan: 'paid'
     }
@@ -66,7 +72,6 @@ describe('useMemberStore', () => {
     expect(store.email).toBe('current@test.com')
     expect(store.created_at).toBe('2026-01-01')
     expect(store.avatar_url).toBe('https://avatar')
-    expect(store.updated_at).toBe('2026-01-02')
     expect(store.role).toBe('admin')
     expect(store.plan).toBe('paid')
     expect(store.has_member).toBe(true)
@@ -146,5 +151,59 @@ describe('useMemberStore', () => {
       relearning_steps: ['10m']
     })
     expect(store.preferences.accessibility).toEqual({ left_hand: false })
+  })
+
+  // ── deck_limit / cards_per_deck_limit — null-safe against the plans embed [obligation]
+
+  describe('deck_limit / cards_per_deck_limit [obligation]', () => {
+    test('reads limits from the embedded plans object when present [obligation]', () => {
+      sessionUser.value = { id: 'user-1' }
+      memberRef.value = { id: 'user-1', plans: { deck_limit: 5, cards_per_deck_limit: 200 } }
+
+      const store = useMemberStore()
+
+      expect(store.deck_limit).toBe(5)
+      expect(store.cards_per_deck_limit).toBe(200)
+    })
+
+    test('falls back to null when plans is null (e.g. inactive plan row) [obligation]', () => {
+      sessionUser.value = { id: 'user-1' }
+      memberRef.value = { id: 'user-1', plans: null }
+
+      const store = useMemberStore()
+
+      expect(store.deck_limit).toBeNull()
+      expect(store.cards_per_deck_limit).toBeNull()
+    })
+
+    test('falls back to null when plans is undefined (e.g. member query has no data yet) [obligation]', () => {
+      sessionUser.value = { id: 'user-1' }
+      memberRef.value = null
+
+      const store = useMemberStore()
+
+      expect(store.deck_limit).toBeNull()
+      expect(store.cards_per_deck_limit).toBeNull()
+    })
+  })
+
+  // ── error — passthrough from the query [obligation] ────────────────────────
+
+  describe('error [obligation]', () => {
+    test('is undefined/null when the query has no error', () => {
+      sessionUser.value = { id: 'user-1' }
+      const store = useMemberStore()
+      expect(store.error).toBeFalsy()
+    })
+
+    test('passes the query error straight through [obligation]', () => {
+      sessionUser.value = { id: 'user-1' }
+      const err = new Error('fetch failed')
+      memberErrorRef.value = err
+
+      const store = useMemberStore()
+
+      expect(store.error).toBe(err)
+    })
   })
 })

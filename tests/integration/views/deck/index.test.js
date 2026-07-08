@@ -16,6 +16,12 @@ const {
   useCardSortMock: vi.fn()
 }))
 
+const { mockNotice } = vi.hoisted(() => ({
+  mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
+}))
+
+vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
+
 // card-face-uploader (reached statically via mode-stack → list-item-card) now
 // imports useCan, which pulls useMemberDeckCountQuery from this barrel. The
 // edit/import-export panes (mode-stack → modes.ts) are also statically bundled
@@ -105,8 +111,8 @@ function makeEditor({ cards = [], isLoading = false } = {}) {
   }
 }
 
-function makeDeckQuery(deck) {
-  return { data: ref(deck) }
+function makeDeckQuery(deck, error = null) {
+  return { data: ref(deck), error: ref(error) }
 }
 
 function makeSearch({ is_active = false } = {}) {
@@ -387,5 +393,73 @@ describe('DeckView (views/deck/index.vue)', () => {
     expect(isRef(query_ref)).toBe(true)
     expect(isRef(all_cards)).toBe(true)
     expect(isRef(is_querying)).toBe(true)
+  })
+
+  // ── deck_query.error watcher [obligation] ─────────────────────────────────
+
+  function mountWithDeckQuery(deck_query) {
+    useDeckQueryMock.mockReturnValue(deck_query)
+    useDeckViewShellMock.mockReturnValue(makeShell('view'))
+    useCardListControllerMock.mockReturnValue(makeEditor())
+    useCardSortMock.mockReturnValue({
+      is_active: ref(false),
+      displayed_cards: ref([]),
+      is_loading: ref(false)
+    })
+    useCardSearchMock.mockReturnValue(makeSearch())
+
+    return shallowMount(DeckView, {
+      props: { id: '1' },
+      global: {
+        stubs: {
+          DeckHero: DeckHeroStub,
+          DeckSkeleton: DeckSkeletonStub,
+          ModeToolbar: ModeToolbarStub,
+          ModeToolbarSkeleton: ModeToolbarSkeletonStub,
+          ModeStack: ModeStackStub,
+          ScrollBar: ScrollBarStub,
+          CardGridSkeleton: CardGridSkeletonStub,
+          CardGridEmpty: CardGridEmptyStub
+        }
+      }
+    })
+  }
+
+  describe('deck_query.error watcher [obligation]', () => {
+    test('does not fire on mount when there is no error', () => {
+      mockNotice.error.mockClear()
+      const deck_query = makeDeckQuery({ id: 1, name: 'Test' })
+      mountWithDeckQuery(deck_query)
+
+      expect(mockNotice.error).not.toHaveBeenCalled()
+    })
+
+    test('fires an error notice once when the query error transitions from falsy to truthy [obligation]', async () => {
+      mockNotice.error.mockClear()
+      const deck_query = makeDeckQuery({ id: 1, name: 'Test' })
+      const wrapper = mountWithDeckQuery(deck_query)
+
+      deck_query.error.value = new Error('load failed')
+      await wrapper.vm.$nextTick()
+
+      expect(mockNotice.error).toHaveBeenCalledTimes(1)
+      expect(mockNotice.error).toHaveBeenCalledWith("Couldn't load this deck. Please try again.")
+    })
+
+    test('does not fire again on an unrelated re-render once already truthy [obligation]', async () => {
+      mockNotice.error.mockClear()
+      const deck_query = makeDeckQuery({ id: 1, name: 'Test' })
+      const wrapper = mountWithDeckQuery(deck_query)
+
+      deck_query.error.value = new Error('load failed')
+      await wrapper.vm.$nextTick()
+      expect(mockNotice.error).toHaveBeenCalledTimes(1)
+
+      // An unrelated prop/data change triggers a re-render without touching error.
+      deck_query.data.value = { id: 1, name: 'Renamed' }
+      await wrapper.vm.$nextTick()
+
+      expect(mockNotice.error).toHaveBeenCalledTimes(1)
+    })
   })
 })

@@ -30,6 +30,24 @@ vi.mock('@/composables/modal', () => ({
   useModal: () => ({ open: mocks.modalOpen })
 }))
 
+// `useSessionStore()` calls `useI18n()` internally, which requires an active
+// component instance the first time the store's setup() runs. `primeSessionStore`
+// forces that first run — by actually calling `useSessionStore` — inside a real
+// (throwaway) mount, so a later direct `useSessionStore(pinia)` call — needed to
+// configure action mocks before the real mount below — just returns the
+// already-instantiated, cached store instead of re-running setup() cold.
+function primeSessionStore(pinia, useSessionStore) {
+  shallowMount(
+    defineComponent({
+      setup: () => {
+        useSessionStore()
+        return () => null
+      }
+    }),
+    { global: { plugins: [pinia] } }
+  )
+}
+
 // ── Stubs ──────────────────────────────────────────────────────────────────────
 
 const SplashStub = defineComponent({
@@ -245,6 +263,7 @@ describe('WelcomeIndex', () => {
   test('redirects to authenticated route when session restore returns true', async () => {
     const { useSessionStore } = await import('@/stores/session')
     const pinia = createTestingPinia({ createSpy: vi.fn, stubActions: true })
+    primeSessionStore(pinia, useSessionStore)
     mocks.modalOpen.mockReturnValue({ response: Promise.resolve(undefined) })
 
     // Must get the store and configure the mock BEFORE mounting so the
@@ -276,6 +295,7 @@ describe('WelcomeIndex', () => {
     test('opens the reset-password modal and skips restoreSession/redirect when it resolves true [obligation]', async () => {
       const { useSessionStore } = await import('@/stores/session')
       const pinia = createTestingPinia({ createSpy: vi.fn, stubActions: true })
+      primeSessionStore(pinia, useSessionStore)
       mocks.modalOpen.mockReturnValue({ response: Promise.resolve(undefined) })
 
       const session = useSessionStore(pinia)
@@ -306,6 +326,7 @@ describe('WelcomeIndex', () => {
     test('runs the normal restoreSession/redirect flow when it resolves false [obligation]', async () => {
       const { useSessionStore } = await import('@/stores/session')
       const pinia = createTestingPinia({ createSpy: vi.fn, stubActions: true })
+      primeSessionStore(pinia, useSessionStore)
       mocks.modalOpen.mockReturnValue({ response: Promise.resolve(undefined) })
 
       const session = useSessionStore(pinia)

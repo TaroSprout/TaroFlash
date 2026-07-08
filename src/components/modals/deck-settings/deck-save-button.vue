@@ -5,8 +5,10 @@ import UiButton from '@/components/ui-kit/button.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { deckSettingsCloseKey } from './layout'
 import { emitSfx } from '@/sfx/bus'
+import { useNoticeStore } from '@/stores/notice-store'
 
 const { t } = useI18n()
+const notice = useNoticeStore()
 const { settings, is_dirty, saveDeck } = inject(deckEditorKey)!
 const close = inject(deckSettingsCloseKey)!
 
@@ -24,7 +26,11 @@ async function onSave() {
   is_saving.value = true
   const saved = await saveDeck()
   is_saving.value = false
-  if (saved) close(true)
+  if (saved) {
+    close(true)
+    return
+  }
+  notice.error(t('toast.error.deck-save-failed'))
 }
 </script>
 

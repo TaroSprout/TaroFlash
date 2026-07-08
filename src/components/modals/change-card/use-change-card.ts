@@ -31,6 +31,8 @@ export function useChangeCard(close: (response?: ChangeCardResponse) => void) {
   onBeforeUnmount(() => emitSfx('pop_up_close'))
 
   async function onSubmit() {
+    // A failed outcome is intentionally left unhandled here — Stripe's own
+    // Payment Element renders the decline/validation message inline.
     const outcome = await confirm()
     if (outcome.status !== 'success') return
 

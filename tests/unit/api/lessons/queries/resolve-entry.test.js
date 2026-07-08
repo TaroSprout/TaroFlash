@@ -1,15 +1,15 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 
-const { ensureMock, fetchMock, fetchLessonsByCollectionMock } = vi.hoisted(() => ({
+const { ensureMock, refreshMock, fetchLessonsByCollectionMock } = vi.hoisted(() => ({
   ensureMock: vi.fn(),
-  fetchMock: vi.fn().mockResolvedValue({ data: [] }),
+  refreshMock: vi.fn().mockResolvedValue({ data: [] }),
   fetchLessonsByCollectionMock: vi.fn().mockResolvedValue([])
 }))
 
 vi.mock('@pinia/colada', () => ({
   useQueryCache: () => ({
     ensure: ensureMock,
-    fetch: fetchMock
+    refresh: refreshMock
   })
 }))
 
@@ -21,7 +21,7 @@ import { resolveCollectionEntryLesson } from '@/api/lessons/queries/resolve-entr
 
 beforeEach(() => {
   ensureMock.mockClear()
-  fetchMock.mockClear()
+  refreshMock.mockClear()
   fetchLessonsByCollectionMock.mockClear()
 })
 
@@ -32,15 +32,15 @@ describe('resolveCollectionEntryLesson', () => {
       const result = await resolveCollectionEntryLesson(collection)
       expect(result).toBe(42)
       expect(ensureMock).not.toHaveBeenCalled()
-      expect(fetchMock).not.toHaveBeenCalled()
+      expect(refreshMock).not.toHaveBeenCalled()
     })
   })
 
   describe('when last_lesson_id is null', () => {
-    test('returns the first lesson id from the cache fetch', async () => {
+    test('returns the first lesson id from the cache refresh', async () => {
       const entry = Symbol('entry')
       ensureMock.mockReturnValue(entry)
-      fetchMock.mockResolvedValue({
+      refreshMock.mockResolvedValue({
         data: [
           { id: 10, title: 'Chapter 1' },
           { id: 11, title: 'Chapter 2' }
@@ -51,14 +51,37 @@ describe('resolveCollectionEntryLesson', () => {
       const result = await resolveCollectionEntryLesson(collection)
 
       expect(ensureMock).toHaveBeenCalledWith(expect.objectContaining({ key: ['lessons', 5] }))
-      expect(fetchMock).toHaveBeenCalledWith(entry)
       expect(result).toBe(10)
+    })
+
+    test('calls refresh (not fetch) against the ensured entry so a warm cache skips the refetch [obligation]', async () => {
+      const entry = Symbol('entry')
+      ensureMock.mockReturnValue(entry)
+      refreshMock.mockResolvedValue({ data: [{ id: 10 }] })
+
+      const collection = { id: 5, last_lesson_id: null }
+      await resolveCollectionEntryLesson(collection)
+
+      expect(refreshMock).toHaveBeenCalledWith(entry)
+    })
+
+    test('the ensure query closure forwards collection.id to fetchLessonsByCollection at call time', async () => {
+      const entry = Symbol('entry')
+      ensureMock.mockReturnValue(entry)
+      refreshMock.mockResolvedValue({ data: [] })
+
+      const collection = { id: 9, last_lesson_id: null }
+      await resolveCollectionEntryLesson(collection)
+
+      const [opts] = ensureMock.mock.calls[0]
+      await opts.query()
+      expect(fetchLessonsByCollectionMock).toHaveBeenCalledWith(9)
     })
 
     test('returns null when the lesson list is empty', async () => {
       const entry = Symbol('entry')
       ensureMock.mockReturnValue(entry)
-      fetchMock.mockResolvedValue({ data: [] })
+      refreshMock.mockResolvedValue({ data: [] })
 
       const collection = { id: 7, last_lesson_id: null }
       const result = await resolveCollectionEntryLesson(collection)

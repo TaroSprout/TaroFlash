@@ -121,10 +121,10 @@ describe('CardGridSkeleton (card-grid/skeleton.vue)', () => {
 
   // ── Card props ─────────────────────────────────────────────────────────────
 
-  test('all cards are rendered at size="xl"', () => {
+  test('all cards are rendered at size="lg"', () => {
     const wrapper = mountSkeleton()
     for (const card of wrapper.findAll('[data-testid="card-stub"]')) {
-      expect(card.attributes('data-size')).toBe('xl')
+      expect(card.attributes('data-size')).toBe('lg')
     }
   })
 

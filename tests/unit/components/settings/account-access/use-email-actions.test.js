@@ -8,6 +8,10 @@ const { mockSession, mockEmitSfx } = vi.hoisted(() => ({
   mockEmitSfx: vi.fn()
 }))
 
+const { mockNotice } = vi.hoisted(() => ({
+  mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
+}))
+
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (k) => k }) }))
 vi.mock('@/stores/session', () => ({ useSessionStore: () => mockSession }))
 vi.mock('@/stores/member', async () => {
@@ -15,6 +19,7 @@ vi.mock('@/stores/member', async () => {
   const mockMember = reactive({ email: 'current@example.com' })
   return { useMemberStore: () => mockMember, __mockMember: mockMember }
 })
+vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
 import { useEmailActions } from '@/components/settings/account-access/use-email-actions'
@@ -25,6 +30,7 @@ beforeEach(() => {
   mockSession.updateEmail.mockReset()
   mockMember.email = 'current@example.com'
   mockEmitSfx.mockReset()
+  mockNotice.error.mockReset()
 })
 
 describe('useEmailActions — initial state', () => {
@@ -96,6 +102,13 @@ describe('useEmailActions — validation', () => {
     await email_actions.submit()
     expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
   })
+
+  test('[obligation] does NOT fire a notice-store error for a validation failure', async () => {
+    const email_actions = useEmailActions()
+    email_actions.email.value = ''
+    await email_actions.submit()
+    expect(mockNotice.error).not.toHaveBeenCalled()
+  })
 })
 
 describe('useEmailActions — submit', () => {
@@ -132,6 +145,16 @@ describe('useEmailActions — submit', () => {
     expect(email_actions.error.value).toBe('account-access-modal.email.validation-taken')
   })
 
+  test('[obligation] does NOT fire a notice-store error for the "email-taken" outcome', async () => {
+    mockSession.updateEmail.mockResolvedValueOnce('email-taken')
+    const email_actions = useEmailActions()
+    email_actions.email.value = 'new@example.com'
+
+    await email_actions.submit()
+
+    expect(mockNotice.error).not.toHaveBeenCalled()
+  })
+
   test('returns "error" for any other outcome', async () => {
     mockSession.updateEmail.mockResolvedValueOnce('error')
     const email_actions = useEmailActions()
@@ -140,6 +163,16 @@ describe('useEmailActions — submit', () => {
     const result = await email_actions.submit()
 
     expect(result).toBe('error')
+  })
+
+  test('[obligation] fires a notice-store error only on the true fallthrough "error" outcome', async () => {
+    mockSession.updateEmail.mockResolvedValueOnce('error')
+    const email_actions = useEmailActions()
+    email_actions.email.value = 'new@example.com'
+
+    await email_actions.submit()
+
+    expect(mockNotice.error).toHaveBeenCalledWith('account-access-modal.email.error')
   })
 
   test('[obligation] plays the stuck sfx for every non-success server outcome', async () => {

@@ -1,15 +1,15 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 
-const { ensureSpy, fetchSpy, fetchMemberByIdMock } = vi.hoisted(() => ({
+const { ensureSpy, refreshSpy, fetchMemberByIdMock } = vi.hoisted(() => ({
   ensureSpy: vi.fn(),
-  fetchSpy: vi.fn(),
+  refreshSpy: vi.fn(),
   fetchMemberByIdMock: vi.fn()
 }))
 
 vi.mock('@pinia/colada', () => ({
   useQueryCache: () => ({
     ensure: ensureSpy,
-    fetch: fetchSpy
+    refresh: refreshSpy
   })
 }))
 
@@ -21,14 +21,14 @@ import { prefetchMemberById } from '@/api/members/queries/prefetch'
 
 beforeEach(() => {
   ensureSpy.mockReset()
-  fetchSpy.mockReset()
+  refreshSpy.mockReset()
   fetchMemberByIdMock.mockReset()
 })
 
 describe('prefetchMemberById', () => {
   test('scopes the cache key by id so the entry matches useCurrentMemberQuery for the same user', () => {
     ensureSpy.mockReturnValue({})
-    fetchSpy.mockResolvedValue({})
+    refreshSpy.mockResolvedValue({})
 
     prefetchMemberById('user-1')
 
@@ -38,7 +38,7 @@ describe('prefetchMemberById', () => {
 
   test('query closure forwards the id to fetchMemberById at call time', async () => {
     ensureSpy.mockReturnValue({})
-    fetchSpy.mockResolvedValue({})
+    refreshSpy.mockResolvedValue({})
     fetchMemberByIdMock.mockResolvedValue({ id: 'user-1' })
 
     prefetchMemberById('user-1')
@@ -48,20 +48,20 @@ describe('prefetchMemberById', () => {
     expect(fetchMemberByIdMock).toHaveBeenCalledWith('user-1')
   })
 
-  test('kicks a fetch against the ensured entry so the request starts before any view mounts', () => {
+  test('calls refresh (not fetch) against the ensured entry so an in-flight request from the member store query is reused [obligation]', () => {
     const entry = { id: 'entry' }
     ensureSpy.mockReturnValue(entry)
-    fetchSpy.mockResolvedValue({})
+    refreshSpy.mockResolvedValue({})
 
     prefetchMemberById('user-1')
 
-    expect(fetchSpy).toHaveBeenCalledWith(entry)
+    expect(refreshSpy).toHaveBeenCalledWith(entry)
   })
 
-  test('returns the fetch promise so callers can await it when needed', async () => {
+  test('returns the refresh promise so callers can await it when needed', async () => {
     const data = { id: 'user-1', display_name: 'A' }
     ensureSpy.mockReturnValue({})
-    fetchSpy.mockResolvedValue(data)
+    refreshSpy.mockResolvedValue(data)
 
     await expect(prefetchMemberById('user-1')).resolves.toBe(data)
   })

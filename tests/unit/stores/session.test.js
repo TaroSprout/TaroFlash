@@ -35,6 +35,13 @@ const {
   mockPush: vi.fn()
 }))
 
+const { mockNotice } = vi.hoisted(() => ({
+  mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
+}))
+
+vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
+vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (key) => key }) }))
+
 vi.mock('@/api/session', () => ({
   getSession: mockGetSession,
   getUser: mockGetUser,
@@ -75,6 +82,7 @@ beforeEach(() => {
   mockIsPasswordRecoveryUrl.mockReset()
   mockWaitForPasswordRecovery.mockReset()
   mockPush.mockReset()
+  mockNotice.error.mockReset()
 })
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
@@ -210,6 +218,20 @@ describe('useSessionStore', () => {
       expect(store.user).toBeUndefined()
       expect(mockPush).toHaveBeenCalledWith({ name: 'welcome' })
     })
+
+    test('shows an error notice and does NOT reset user or navigate when supaLogout rejects [obligation]', async () => {
+      const user = { id: 'u1', aud: 'authenticated' }
+      mockGetSession.mockResolvedValueOnce({ user })
+      mockLogout.mockRejectedValueOnce(new Error('network down'))
+      const store = useSessionStore()
+      await store.restoreSession()
+
+      await store.logout()
+
+      expect(mockNotice.error).toHaveBeenCalledWith('session.logout-error')
+      expect(store.user).toEqual(user)
+      expect(mockPush).not.toHaveBeenCalledWith({ name: 'welcome' })
+    })
   })
 
   // ── signupEmail ────────────────────────────────────────────────────────────
@@ -250,11 +272,18 @@ describe('useSessionStore', () => {
       expect(mockPush).toHaveBeenCalledWith({ name: 'dashboard' })
     })
 
-    test('still redirects to dashboard even when OAuth throws', async () => {
+    test('does NOT redirect to dashboard when OAuth throws [obligation]', async () => {
       mockSignInOAuth.mockRejectedValueOnce(new Error('popup blocked'))
       const store = useSessionStore()
       await store.signInOAuth('google')
-      expect(mockPush).toHaveBeenCalledWith({ name: 'dashboard' })
+      expect(mockPush).not.toHaveBeenCalledWith({ name: 'dashboard' })
+    })
+
+    test('shows the generic login-error notice when OAuth throws [obligation]', async () => {
+      mockSignInOAuth.mockRejectedValueOnce(new Error('popup blocked'))
+      const store = useSessionStore()
+      await store.signInOAuth('google')
+      expect(mockNotice.error).toHaveBeenCalledWith('login-dialog.errors.generic')
     })
   })
 
