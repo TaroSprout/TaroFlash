@@ -31,6 +31,8 @@
   "login-dialog.errors.rate-limited": "Too many attempts — please try again in a bit",
   "login-dialog.errors.generic": "Something went wrong. Please try again",
   "session.logout-error": "Couldn't log out. Please try again.",
+  "member.load-error": "Couldn't load your account",
+  "member.load-error-sub": "Something went wrong loading your profile.",
   "login-dialog.forgot-password-link": "Forgot password?",
   "forgot-password-modal.heading": "Reset Password",
   "forgot-password-modal.instructions": "Enter your email and we'll send you a link to reset your password.",

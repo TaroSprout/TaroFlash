@@ -9,6 +9,7 @@ export const useMemberStore = defineStore('member', () => {
   const session = useSessionStore()
   const query = useCurrentMemberQuery()
   const member = query.data
+  const error = query.error
 
   // `id` is sourced from the session (set synchronously once auth restores),
   // not the member-profile query. Downstream api calls that scope queries by
@@ -43,6 +44,7 @@ export const useMemberStore = defineStore('member', () => {
     role,
     plan,
     preferences,
-    cover
+    cover,
+    error
   }
 })

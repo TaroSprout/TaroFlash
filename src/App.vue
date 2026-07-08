@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useNoticeStore } from '@/stores/notice-store'
 import NoticeToast from '@/components/ui-kit/notice/toast.vue'
 import NoticePanel from '@/components/ui-kit/notice/panel.vue'
@@ -16,10 +17,25 @@ import { useMemberStore } from '@/stores/member'
 import { withMemberPreferencesDefaults, toBusVolumes } from '@/utils/member/preferences'
 import { watch } from 'vue'
 
+const { t } = useI18n()
 const notice = useNoticeStore()
 const session = useSessionStore()
 const theme = useThemeStore()
 const member = useMemberStore()
+
+watch(
+  () => member.error,
+  (err) => {
+    if (!err) return
+
+    notice.error(t('member.load-error'), {
+      subMessage: t('member.load-error-sub'),
+      variant: 'panel',
+      closable: false,
+      actions: [{ label: t('notice.refresh-label'), onClick: () => location.reload() }]
+    })
+  }
+)
 
 watch(
   () => member.preferences,

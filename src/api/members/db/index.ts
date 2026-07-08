@@ -1,12 +1,12 @@
 import { supabase } from '@/supabase-client'
 import logger from '@/utils/logger'
 
-export async function fetchMemberById(id: string): Promise<Member | null> {
+export async function fetchMemberById(id: string): Promise<Member> {
   const { data, error } = await supabase.from('members').select('*').eq('id', id).single()
 
   if (error) {
     logger.error(error.message)
-    return null
+    throw error
   }
 
   return data

@@ -19,7 +19,7 @@ const LessonView = () => import('@/views/audio-reader/lesson/index.vue')
 // the edge functions; this just keeps non-admins out of the UI.
 async function requireAudioReader() {
   const id = useSessionStore().user?.id
-  if (id) await prefetchMemberById(id)
+  if (id) await prefetchMemberById(id).catch(() => {})
   if (useMemberStore().role !== 'admin') return { name: 'dashboard' }
 }
 
@@ -68,7 +68,7 @@ const router = createRouter({
         prefetchMemberDecks()
         prefetchPlanLimits()
         const id = session.user?.id
-        if (id) prefetchMemberById(id)
+        if (id) prefetchMemberById(id).catch(() => {})
       },
       children: [
         {
