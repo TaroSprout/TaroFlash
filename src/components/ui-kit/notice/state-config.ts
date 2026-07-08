@@ -14,3 +14,10 @@ export const NOTICE_THEME: Record<NoticeState, Theme> = {
   warn: 'yellow-500',
   info: 'blue-500'
 }
+
+export const NOTICE_THEME_DARK: Record<NoticeState, Theme> = {
+  success: 'green-800',
+  error: 'red-600',
+  warn: 'yellow-700',
+  info: 'blue-650'
+}

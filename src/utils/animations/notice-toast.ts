@@ -1,25 +1,21 @@
 import { gsap } from 'gsap'
+import { scaleFadeOut } from './modal'
 
-const DURATION = 0.14
-const OFFSET = 24
+/**
+ * Leave handler for a toast living inside a TransitionGroup list: freezes the
+ * card at its current position (out of flow) so the remaining toasts can FLIP
+ * into the gap immediately, then plays the shared scale-out.
+ */
+export function noticeToastListLeave(el: Element, done: () => void) {
+  const { offsetTop, offsetLeft, offsetWidth, offsetHeight } = el as HTMLElement
 
-/** Slide-down + fade in. Pairs with `noticeToastLeave`. */
-export function noticeToastEnter(el: Element, done: () => void) {
-  gsap.fromTo(
-    el,
-    { opacity: 0, y: -OFFSET },
-    {
-      opacity: 1,
-      y: 0,
-      duration: DURATION,
-      ease: 'power2.out',
-      clearProps: 'transform',
-      onComplete: done
-    }
-  )
-}
+  gsap.set(el, {
+    position: 'absolute',
+    top: offsetTop,
+    left: offsetLeft,
+    width: offsetWidth,
+    height: offsetHeight
+  })
 
-/** Slide-up + fade out. */
-export function noticeToastLeave(el: Element, done: () => void) {
-  gsap.to(el, { opacity: 0, y: -OFFSET, duration: DURATION, ease: 'power2.out', onComplete: done })
+  scaleFadeOut(el, done)
 }

@@ -4,6 +4,8 @@ import { useNoticeStore } from '@/stores/notice-store'
 import NoticeToast from '@/components/ui-kit/notice/toast.vue'
 import NoticePanel from '@/components/ui-kit/notice/panel.vue'
 import UiModal from '@/components/ui-kit/modal.vue'
+import { springScaleIn } from '@/utils/animations/modal'
+import { noticeToastListLeave } from '@/utils/animations/notice-toast'
 import audio_player from '@/sfx/player'
 import { installAudioLifecycle } from '@/sfx/lifecycle'
 import { useSessionStore } from '@/stores/session'
@@ -75,12 +77,19 @@ onBeforeUnmount(() => {
   <router-view />
 
   <teleport to="[notice-toast-container]">
-    <notice-toast
-      v-for="item in notice.toast_notices"
-      :key="item.id"
-      :notice="item"
-      @close="notice.removeNotice"
-    />
+    <transition-group
+      :css="false"
+      move-class="transition-transform duration-200 ease-out"
+      @enter="springScaleIn"
+      @leave="noticeToastListLeave"
+    >
+      <notice-toast
+        v-for="item in notice.toast_notices"
+        :key="item.id"
+        :notice="item"
+        @close="notice.removeNotice"
+      />
+    </transition-group>
   </teleport>
 
   <teleport to="[notice-panel-container]">
