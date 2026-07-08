@@ -8,27 +8,33 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import { memberEditorKey } from '@/composables/member/editor'
 
-type LearningStepsKey = 'none' | '10m' | '1m-10m' | '1m-10m-1d'
-type RelearningStepsKey = 'none' | '10m' | '1m-10m'
+type LearningStepsKey = '10m' | '1hr' | '1d' | '1m-10m' | '1m-10m-1d'
+type RelearningStepsKey = '10m' | '1hr' | '1d' | '1m-10m'
 
 const LEARNING_STEP_PRESETS: Record<LearningStepsKey, string[]> = {
-  none: [],
   '10m': ['10m'],
+  '1hr': ['1h'],
+  '1d': ['1d'],
   '1m-10m': ['1m', '10m'],
   '1m-10m-1d': ['1m', '10m', '1d']
 }
 
 const RELEARNING_STEP_PRESETS: Record<RelearningStepsKey, string[]> = {
-  none: [],
   '10m': ['10m'],
+  '1hr': ['1h'],
+  '1d': ['1d'],
   '1m-10m': ['1m', '10m']
 }
 
-function keyForSteps<K extends string>(presets: Record<K, string[]>, steps: string[]): K {
+function keyForSteps<K extends string>(
+  presets: Record<K, string[]>,
+  steps: string[],
+  fallback: K
+): K {
   const match = (Object.keys(presets) as K[]).find(
     (key) => presets[key].length === steps.length && presets[key].every((s, i) => s === steps[i])
   )
-  return match ?? ('none' as K)
+  return match ?? fallback
 }
 
 const { t } = useI18n()
@@ -36,12 +42,16 @@ const editor = inject(memberEditorKey)!
 
 const learning_steps_options = computed(() => [
   {
-    value: 'none' as LearningStepsKey,
-    label: t('settings.review-preferences.fsrs.step-preset-none')
-  },
-  {
     value: '10m' as LearningStepsKey,
     label: t('settings.review-preferences.fsrs.step-preset-10m')
+  },
+  {
+    value: '1hr' as LearningStepsKey,
+    label: t('settings.review-preferences.fsrs.step-preset-1hr')
+  },
+  {
+    value: '1d' as LearningStepsKey,
+    label: t('settings.review-preferences.fsrs.step-preset-1d')
   },
   {
     value: '1m-10m' as LearningStepsKey,
@@ -55,12 +65,16 @@ const learning_steps_options = computed(() => [
 
 const relearning_steps_options = computed(() => [
   {
-    value: 'none' as RelearningStepsKey,
-    label: t('settings.review-preferences.fsrs.step-preset-none')
-  },
-  {
     value: '10m' as RelearningStepsKey,
     label: t('settings.review-preferences.fsrs.step-preset-10m')
+  },
+  {
+    value: '1hr' as RelearningStepsKey,
+    label: t('settings.review-preferences.fsrs.step-preset-1hr')
+  },
+  {
+    value: '1d' as RelearningStepsKey,
+    label: t('settings.review-preferences.fsrs.step-preset-1d')
   },
   {
     value: '1m-10m' as RelearningStepsKey,
@@ -69,12 +83,12 @@ const relearning_steps_options = computed(() => [
 ])
 
 const learning_steps_key = computed<LearningStepsKey>({
-  get: () => keyForSteps(LEARNING_STEP_PRESETS, editor.preferences.study.learning_steps),
+  get: () => keyForSteps(LEARNING_STEP_PRESETS, editor.preferences.study.learning_steps, '1d'),
   set: (key) => (editor.preferences.study.learning_steps = LEARNING_STEP_PRESETS[key])
 })
 
 const relearning_steps_key = computed<RelearningStepsKey>({
-  get: () => keyForSteps(RELEARNING_STEP_PRESETS, editor.preferences.study.relearning_steps),
+  get: () => keyForSteps(RELEARNING_STEP_PRESETS, editor.preferences.study.relearning_steps, '1d'),
   set: (key) => (editor.preferences.study.relearning_steps = RELEARNING_STEP_PRESETS[key])
 })
 </script>
