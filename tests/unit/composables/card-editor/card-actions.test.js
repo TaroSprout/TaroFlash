@@ -8,6 +8,10 @@ const { modalOpenMock, alertWarnMock, emitSfxMock } = vi.hoisted(() => ({
   emitSfxMock: vi.fn()
 }))
 
+const { mockNotice } = vi.hoisted(() => ({
+  mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
+}))
+
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({ t: (key) => key })
 }))
@@ -15,6 +19,7 @@ vi.mock('@/composables/alert', () => ({ useAlert: () => ({ warn: alertWarnMock }
 vi.mock('@/composables/modal', () => ({ useModal: () => ({ open: modalOpenMock }) }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: emitSfxMock }))
 vi.mock('@/components/modals/move-cards.vue', () => ({ default: {} }))
+vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 
 import { useCardActions } from '@/views/deck/composables/actions'
 
@@ -88,6 +93,7 @@ describe('useCardActions', () => {
     modalOpenMock.mockReset()
     alertWarnMock.mockReset()
     emitSfxMock.mockReset()
+    mockNotice.error.mockReset()
   })
 
   // ── onSelectCard ──────────────────────────────────────────────────────────
@@ -186,6 +192,24 @@ describe('useCardActions', () => {
       await actions.onDeleteCards()
       const [args] = mutations.deleteCards.mock.calls[0]
       expect(args.except_ids).toEqual([3, 4])
+    })
+
+    test('shows an error notice and skips cleanup when deleteCards rejects [obligation]', async () => {
+      alertWarnMock.mockReturnValueOnce({ response: Promise.resolve(true) })
+      const persisted = [makeCard({ id: 1 })]
+      const mutations = makeMutations()
+      mutations.deleteCards.mockRejectedValueOnce(new Error('boom'))
+      const { actions, selection, deck_query } = makeActions({
+        list: makeList({ persisted }),
+        selection: makeSelection({ selected_ids: [1] }),
+        mutations
+      })
+
+      await actions.onDeleteCards()
+
+      expect(mockNotice.error).toHaveBeenCalledWith('toast.error.delete-cards-failed')
+      expect(selection.exitSelection).not.toHaveBeenCalled()
+      expect(deck_query.refetch).not.toHaveBeenCalled()
     })
   })
 

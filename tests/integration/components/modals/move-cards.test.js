@@ -425,6 +425,19 @@ describe('MoveCardsModal', () => {
       expect(close).toHaveBeenCalledWith({ deck_id: 20 })
     })
 
+    test('shows a success toast with the moved-card count before closing [obligation]', async () => {
+      const move = vi.fn().mockResolvedValue(undefined)
+      const cards = [makeCard({ id: 1 }), makeCard({ id: 2 })]
+      const { wrapper } = mountModal({ cards, move })
+      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+      await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
+      await flushPromises()
+
+      const notice = useNoticeStore()
+      expect(notice.notices).toHaveLength(1)
+      expect(notice.notices[0].state).toBe('success')
+    })
+
     test('when move rejects with a plan-limit error, does not close, calls handleLimitError, and does not show the generic notice [obligation]', async () => {
       const error = { code: 'PT402' }
       const move = vi.fn().mockRejectedValue(error)

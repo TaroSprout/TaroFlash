@@ -122,6 +122,14 @@ describe('useDeckActions', () => {
       expect(upsertMock).not.toHaveBeenCalled()
       expect(result).toBeNull()
     })
+
+    test('returns null instead of throwing when the mutation rejects [obligation]', async () => {
+      canCreateDeck.value = true
+      upsertMock.mockRejectedValueOnce(new Error('boom'))
+      const { createDeck } = useDeckActions()
+
+      await expect(createDeck({ title: 'New Deck' })).resolves.toBeNull()
+    })
   })
 
   describe('updateDeck', () => {
@@ -135,6 +143,13 @@ describe('useDeckActions', () => {
       expect(mockWarn).not.toHaveBeenCalled()
       expect(upsertMock).toHaveBeenCalledWith({ id: 1, title: 'Updated' })
       expect(result).toEqual({ id: 1, title: 'Updated' })
+    })
+
+    test('returns null instead of throwing when the mutation rejects [obligation]', async () => {
+      upsertMock.mockRejectedValueOnce(new Error('boom'))
+      const { updateDeck } = useDeckActions()
+
+      await expect(updateDeck({ id: 1, title: 'Updated' })).resolves.toBeNull()
     })
   })
 })

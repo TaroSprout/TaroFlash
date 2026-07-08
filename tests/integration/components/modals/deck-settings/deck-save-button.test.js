@@ -10,6 +10,11 @@ import { deckSettingsCloseKey } from '@/components/modals/deck-settings/layout'
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
+const { mockNotice } = vi.hoisted(() => ({
+  mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
+}))
+vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
+
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
 const UiButtonStub = defineComponent({
@@ -61,6 +66,7 @@ function makeSaveButton({ title = 'My Deck', is_dirty = true } = {}) {
 
 beforeEach(() => {
   mockEmitSfx.mockClear()
+  mockNotice.error.mockClear()
 })
 
 describe('DeckSaveButton — not dirty', () => {
@@ -142,6 +148,25 @@ describe('DeckSaveButton — dirty with valid title', () => {
     await flushPromises()
 
     expect(close).not.toHaveBeenCalled()
+  })
+
+  test('shows an error notice when saveDeck resolves false [obligation]', async () => {
+    const { wrapper, saveDeck } = makeSaveButton({ title: 'My Deck', is_dirty: true })
+    saveDeck.mockResolvedValue(false)
+
+    await wrapper.find('[data-testid="deck-settings__save-button"]').trigger('click')
+    await flushPromises()
+
+    expect(mockNotice.error).toHaveBeenCalledWith("Couldn't save this deck. Please try again.")
+  })
+
+  test('does NOT show an error notice when saveDeck resolves true', async () => {
+    const { wrapper } = makeSaveButton({ title: 'My Deck', is_dirty: true })
+
+    await wrapper.find('[data-testid="deck-settings__save-button"]').trigger('click')
+    await flushPromises()
+
+    expect(mockNotice.error).not.toHaveBeenCalled()
   })
 })
 

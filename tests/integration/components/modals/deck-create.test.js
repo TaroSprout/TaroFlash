@@ -13,9 +13,15 @@ const { mockEditor, mockRouterPush, mockRandomCover, mockEmitSfx, capturedSettin
   })
 )
 
+const { mockNotice } = vi.hoisted(() => ({
+  mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
+}))
+
 vi.mock('vue-router', () => ({
   useRouter: () => ({ push: mockRouterPush })
 }))
+
+vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
@@ -152,6 +158,7 @@ describe('DeckCreate modal', () => {
     mockRouterPush.mockClear()
     mockRandomCover.mockClear()
     mockEmitSfx.mockClear()
+    mockNotice.error.mockClear()
     __setMobile(false)
   })
 
@@ -296,6 +303,19 @@ describe('DeckCreate modal', () => {
     expect(mockRouterPush).not.toHaveBeenCalled()
   })
 
+  test('shows an error notice when saveDeck returns null [obligation]', async () => {
+    mockEditor.saveDeck.mockResolvedValueOnce(null)
+    const { wrapper } = mountModal()
+
+    capturedSettings.current.title = 'My Deck'
+    await wrapper.vm.$nextTick()
+
+    await wrapper.find('[data-testid="deck-create__aside-submit"]').trigger('click')
+    await flushPromises()
+
+    expect(mockNotice.error).toHaveBeenCalledWith("Couldn't save this deck. Please try again.")
+  })
+
   // ── Title-required guard ───────────────────────────────────────────────────
 
   test('onSave with empty title plays woodblock sfx and does NOT call saveDeck [obligation]', async () => {
@@ -380,5 +400,29 @@ describe('DeckCreate modal', () => {
     await wrapper.vm.$nextTick()
 
     expect(wrapper.find('[data-testid="deck-create__mobile-inputs"]').exists()).toBe(true)
+  })
+
+  test('non-mobile: typing into the aside title/description inputs writes back to editor.settings', async () => {
+    const { wrapper } = mountModal()
+    const aside_inputs = wrapper.find('[data-testid="deck-create__aside-inputs"]')
+
+    await aside_inputs.find('input').setValue('Typed Title')
+    await aside_inputs.find('textarea').setValue('Typed Description')
+
+    expect(capturedSettings.current.title).toBe('Typed Title')
+    expect(capturedSettings.current.description).toBe('Typed Description')
+  })
+
+  test('mobile: typing into the mobile title/description inputs writes back to editor.settings', async () => {
+    __setMobile(true)
+    const { wrapper } = mountModal()
+    await wrapper.vm.$nextTick()
+
+    const inputs = wrapper.find('[data-testid="deck-create__mobile-inputs"]').findAll('input')
+    await inputs[0].setValue('Mobile Typed Title')
+    await inputs[1].setValue('Mobile Typed Description')
+
+    expect(capturedSettings.current.title).toBe('Mobile Typed Title')
+    expect(capturedSettings.current.description).toBe('Mobile Typed Description')
   })
 })

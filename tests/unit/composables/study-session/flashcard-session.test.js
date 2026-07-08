@@ -34,6 +34,14 @@ vi.mock('@/stores/member', () => ({
   useMemberStore: () => mockMemberStore
 }))
 
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => ({ error: vi.fn(), success: vi.fn(), warn: vi.fn() })
+}))
+
+vi.mock('vue-i18n', () => ({
+  useI18n: () => ({ t: (key) => key })
+}))
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Build a card that is due now (no review or a recent due date). */

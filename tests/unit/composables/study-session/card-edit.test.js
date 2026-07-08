@@ -8,6 +8,10 @@ const { saveCardMock } = vi.hoisted(() => ({
   saveCardMock: vi.fn().mockResolvedValue(undefined)
 }))
 
+const { mockNotice } = vi.hoisted(() => ({
+  mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
+}))
+
 vi.mock('@/composables/card/mutations', () => ({
   useCardMutations: () => ({
     saveCard: saveCardMock,
@@ -17,6 +21,14 @@ vi.mock('@/composables/card/mutations', () => ({
     setCardImage: vi.fn(),
     deleteCardImage: vi.fn()
   })
+}))
+
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => mockNotice
+}))
+
+vi.mock('vue-i18n', () => ({
+  useI18n: () => ({ t: (key) => key })
 }))
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -33,6 +45,7 @@ function makeSetup({ card = makeCard(), deck_id = () => 10, updateCard = vi.fn()
 
 beforeEach(() => {
   saveCardMock.mockReset().mockResolvedValue(undefined)
+  mockNotice.error.mockReset()
 })
 
 // ── editing flag ──────────────────────────────────────────────────────────────
@@ -119,6 +132,24 @@ describe('useCardEdit — saving flag [obligation]', () => {
     const { result } = makeSetup()
     await result.update('front', 'New text')
     expect(result.saving.value).toBe(false)
+  })
+
+  test('saving resets to false after a failed save (finally), instead of getting stuck [obligation]', async () => {
+    saveCardMock.mockRejectedValueOnce(new Error('boom'))
+    const { result } = makeSetup()
+
+    await result.update('front', 'New text')
+
+    expect(result.saving.value).toBe(false)
+  })
+
+  test('shows an error notice when saveCard rejects [obligation]', async () => {
+    saveCardMock.mockRejectedValueOnce(new Error('boom'))
+    const { result } = makeSetup()
+
+    await result.update('front', 'New text')
+
+    expect(mockNotice.error).toHaveBeenCalledWith('toast.error.card-save-failed')
   })
 })
 
