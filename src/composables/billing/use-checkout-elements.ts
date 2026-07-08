@@ -1,11 +1,11 @@
 import { onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import {
-  loadStripe,
-  type Stripe,
-  type StripeCheckoutElementsSdk,
-  type StripeCheckoutSession,
-  type StripePaymentElement
+import { loadStripe } from '@stripe/stripe-js/pure'
+import type {
+  Stripe,
+  StripeCheckoutElementsSdk,
+  StripeCheckoutSession,
+  StripePaymentElement
 } from '@stripe/stripe-js'
 import { getStripeAppearance, STRIPE_FONTS } from '@/utils/billing/stripe-theme'
 import { useThemeStore } from '@/stores/theme'
