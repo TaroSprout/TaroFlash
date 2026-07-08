@@ -7,6 +7,7 @@ import textEditor from '@/components/card/text-editor.vue'
 import { emitSfx } from '@/sfx/bus'
 import { useWindowRefocusGuard } from '@/composables/ui/window-refocus-guard'
 import { expandListItemIn } from '@/utils/animations/list-item'
+import { useNoticeStore } from '@/stores/notice-store'
 
 type ListItemCardProps = {
   card: CardWithClientId
@@ -15,6 +16,7 @@ type ListItemCardProps = {
 const { card } = defineProps<ListItemCardProps>()
 
 const { t } = useI18n()
+const notice = useNoticeStore()
 const list_item_card = useTemplateRef('list-item-card')
 const front_input = useTemplateRef('front-input')
 
@@ -57,6 +59,7 @@ async function onUpdate(side: 'front' | 'back', text: string) {
     await updateCard(card.id, { front_text: front_text.value, back_text: back_text.value })
   } catch {
     save_failed.value = true
+    notice.error(t('toast.error.card-save-failed'))
   }
 }
 
