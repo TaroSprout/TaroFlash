@@ -114,6 +114,14 @@ function matchCached(media: string): Ref<boolean> {
   mq.addEventListener('change', () => (r!.value = mq.matches))
   cache.set(media, r)
 
+  // iOS Safari's viewport can still be settling (zoom/safe-area renegotiation)
+  // at the instant a fresh page's first script runs, making this initial
+  // synchronous read unreliable. Re-check once after first paint and
+  // self-correct if it drifted.
+  requestAnimationFrame(() => {
+    if (r!.value !== mq.matches) r!.value = mq.matches
+  })
+
   return r
 }
 
