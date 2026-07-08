@@ -2,7 +2,7 @@ import { ref, type InjectionKey, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useAlert } from '@/composables/alert'
-import { useToast } from '@/composables/toast'
+import { useNoticeStore } from '@/stores/notice-store'
 
 export type MemberDangerActions = {
   onDeleteAccount: () => Promise<void>
@@ -25,7 +25,7 @@ export const memberDangerActionsKey = Symbol(
 export function useMemberDangerActions(close: () => void): MemberDangerActions {
   const { t } = useI18n()
   const alert = useAlert()
-  const toast = useToast()
+  const notice = useNoticeStore()
   const router = useRouter()
 
   const deleting_account = ref(false)
@@ -42,9 +42,13 @@ export function useMemberDangerActions(close: () => void): MemberDangerActions {
     deleting_account.value = true
     try {
       // TODO wire to BE: cascade member rows + auth.users removal via edge function.
-      toast.success(t('toast.success.account-deleted'))
-      close()
-      router.push({ name: 'welcome' })
+      notice.success(t('toast.success.account-deleted'), {
+        variant: 'panel',
+        onDismiss: () => {
+          close()
+          router.push({ name: 'welcome' })
+        }
+      })
     } finally {
       deleting_account.value = false
     }

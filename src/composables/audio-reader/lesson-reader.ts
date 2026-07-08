@@ -1,7 +1,7 @@
 import { computed, ref, shallowRef, toValue, useTemplateRef, watch } from 'vue'
 import type { MaybeRefOrGetter } from 'vue'
 import { emitSfx } from '@/sfx/bus'
-import { useToast } from '@/composables/toast'
+import { useNoticeStore } from '@/stores/notice-store'
 import { useLessonQuery, useLessonAudioUrlQuery } from '@/api/lessons'
 import { useMemberCardIndexQuery } from '@/api/cards'
 import { useMemberDecksQuery } from '@/api/decks'
@@ -33,7 +33,7 @@ const TARGET_LANG = 'English'
  * const reader = useLessonReader(() => Number(props.id))
  */
 export function useLessonReader(id: MaybeRefOrGetter<number>) {
-  const toast = useToast()
+  const notice = useNoticeStore()
 
   const lesson_id = computed(() => toValue(id))
   const { data: lesson, error } = useLessonQuery(lesson_id)
@@ -116,7 +116,7 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
   )
 
   watch(error, (err) => {
-    if (err) toast.error(err.message)
+    if (err) notice.error(err.message)
   })
 
   // Colour a match by the cover of the first of its decks in the member's list:

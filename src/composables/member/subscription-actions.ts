@@ -1,7 +1,7 @@
 import { useI18n } from 'vue-i18n'
 import { useCancelSubscriptionMutation, useResumeSubscriptionMutation } from '@/api/billing'
 import { useAlert } from '@/composables/alert'
-import { useToast } from '@/composables/toast'
+import { useNoticeStore } from '@/stores/notice-store'
 import { useModal } from '@/composables/modal'
 import Checkout from '@/components/modals/checkout/index.vue'
 
@@ -9,7 +9,7 @@ import Checkout from '@/components/modals/checkout/index.vue'
  * Subscription lifecycle orchestrators for the billing plan section: upgrade a
  * free member (opens checkout), cancel at period end (confirm-alert + mutation),
  * and resume a canceling plan. Owns the cancel/resume billing mutations and
- * surfaces their loading state, plus the toasts. `onCancel` is a no-op when the
+ * surfaces their loading state, plus the notices. `onCancel` is a no-op when the
  * member dismisses the confirm-alert.
  *
  * @example
@@ -18,7 +18,7 @@ import Checkout from '@/components/modals/checkout/index.vue'
 export function useSubscriptionActions() {
   const { t } = useI18n()
   const alert = useAlert()
-  const toast = useToast()
+  const notice = useNoticeStore()
   const modal = useModal()
   const cancelMutation = useCancelSubscriptionMutation()
   const resumeMutation = useResumeSubscriptionMutation()
@@ -39,18 +39,18 @@ export function useSubscriptionActions() {
 
     try {
       await cancelMutation.mutateAsync(true)
-      toast.success(t('settings.subscription.plan.cancel-success'))
+      notice.success(t('settings.subscription.plan.cancel-success'), { variant: 'panel' })
     } catch {
-      toast.error(t('settings.subscription.plan.cancel-error'))
+      notice.error(t('settings.subscription.plan.cancel-error'), { variant: 'panel' })
     }
   }
 
   async function onResume() {
     try {
       await resumeMutation.mutateAsync()
-      toast.success(t('settings.subscription.plan.resume-success'))
+      notice.success(t('settings.subscription.plan.resume-success'), { variant: 'panel' })
     } catch {
-      toast.error(t('settings.subscription.plan.resume-error'))
+      notice.error(t('settings.subscription.plan.resume-error'), { variant: 'panel' })
     }
   }
 

@@ -3,7 +3,7 @@ import { emitSfx } from '@/sfx/bus'
 import { resolveDeleteArgs, resolveMoveArgs } from '@/utils/card-editor/selection-payload'
 import { useCardPrompts, type CardSelection, type CardMutations } from '@/composables/card'
 import { useCardLimitGate } from '@/composables/card/limit-gate'
-import { useToast } from '@/composables/toast'
+import { useNoticeStore } from '@/stores/notice-store'
 import type { useDeckQuery } from '@/api/decks'
 import type { VirtualCardList } from './virtual-list'
 import type { DeckViewShell } from './view-shell'
@@ -35,7 +35,7 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
   const { t } = useI18n()
   const { confirmDelete, openMoveModal } = useCardPrompts()
   const { handleLimitError } = useCardLimitGate(undefined)
-  const toast = useToast()
+  const notice = useNoticeStore()
 
   /** Cleanup applied after any successful delete: drop selection, refetch. */
   async function afterDelete() {
@@ -105,7 +105,7 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
     try {
       await mutations.moveCards(vars)
     } catch (error) {
-      if (!handleLimitError(error)) toast.error(t('toast.error.move-cards-failed'))
+      if (!handleLimitError(error)) notice.error(t('toast.error.move-cards-failed'))
       return
     }
 

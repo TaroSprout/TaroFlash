@@ -2,7 +2,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSessionStore } from '@/stores/session'
 import { useAlert } from '@/composables/alert'
-import { useToast } from '@/composables/toast'
+import { useNoticeStore } from '@/stores/notice-store'
 
 /**
  * Connect/disconnect actions for the account-access modal's Google row.
@@ -14,7 +14,7 @@ export function useGoogleActions() {
   const session = useSessionStore()
   const { t } = useI18n()
   const alert = useAlert()
-  const toast = useToast()
+  const notice = useNoticeStore()
 
   const loading = ref(false)
 
@@ -23,7 +23,7 @@ export function useGoogleActions() {
     try {
       await session.linkGoogleIdentity()
     } catch {
-      toast.error(t('account-access-modal.google.connect-error'))
+      notice.error(t('account-access-modal.google.connect-error'), { variant: 'panel' })
     }
     loading.value = false
   }
@@ -41,7 +41,7 @@ export function useGoogleActions() {
     try {
       await session.unlinkGoogleIdentity()
     } catch {
-      toast.error(t('account-access-modal.google.disconnect-error'))
+      notice.error(t('account-access-modal.google.disconnect-error'), { variant: 'panel' })
     }
     loading.value = false
   }

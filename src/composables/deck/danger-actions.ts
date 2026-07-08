@@ -2,7 +2,7 @@ import { type InjectionKey, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useAlert } from '@/composables/alert'
-import { useToast } from '@/composables/toast'
+import { useNoticeStore } from '@/stores/notice-store'
 import type { DeckEditor } from '@/composables/deck/editor'
 
 export type DeckDangerActions = {
@@ -16,8 +16,9 @@ export const deckDangerActionsKey = Symbol('deckDangerActions') as InjectionKey<
 
 /**
  * Destructive deck actions (delete deck, reset reviews) wrapped with
- * confirm-alert + toast feedback. Owns the post-delete navigation
- * (returns to dashboard when the user is on the deleted deck's page).
+ * confirm-alert + notice feedback. Owns the post-delete navigation, deferred
+ * until the success notice auto-dismisses (returns to dashboard when the
+ * user is on the deleted deck's page).
  *
  * Created once at the modal root and provided via `deckDangerActionsKey`
  * so any tab — the dedicated danger-zone tab or the tablet index — can
@@ -30,7 +31,7 @@ export function useDeckDangerActions(
 ): DeckDangerActions {
   const { t } = useI18n()
   const alert = useAlert()
-  const toast = useToast()
+  const notice = useNoticeStore()
   const router = useRouter()
   const route = useRoute()
 
@@ -44,10 +45,10 @@ export function useDeckDangerActions(
 
     const ok = await editor.resetReviews()
     if (!ok) {
-      toast.error(t('toast.error.reset-reviews-failed'))
+      notice.error(t('toast.error.reset-reviews-failed'), { variant: 'panel' })
       return
     }
-    toast.success(t('toast.success.reset-reviews'))
+    notice.success(t('toast.success.reset-reviews'), { variant: 'panel' })
   }
 
   async function onDelete() {
@@ -61,14 +62,19 @@ export function useDeckDangerActions(
 
     const ok = await editor.deleteDeck()
     if (!ok) {
-      toast.error(t('toast.error.deck-delete-failed'))
+      notice.error(t('toast.error.deck-delete-failed'), { variant: 'panel' })
       return
     }
 
-    close(true)
-
     const on_deleted_deck = route.name === 'deck' && Number(route.params.id) === deck.id
-    if (on_deleted_deck) router.push({ name: 'dashboard' })
+
+    notice.success(t('toast.success.deck-deleted'), {
+      variant: 'panel',
+      onDismiss: () => {
+        close(true)
+        if (on_deleted_deck) router.push({ name: 'dashboard' })
+      }
+    })
   }
 
   return {

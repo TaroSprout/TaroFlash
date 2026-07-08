@@ -5,7 +5,7 @@ import { useMemberDecksQuery } from '@/api/decks'
 import { useInsertCardAtMutation } from '@/api/cards'
 import { useLastDeck } from '@/composables/last-deck'
 import { useCardLimitGate } from '@/composables/card'
-import { useToast } from '@/composables/toast'
+import { useNoticeStore } from '@/stores/notice-store'
 import { emitSfx } from '@/sfx/bus'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiDropdownButton, {
@@ -34,7 +34,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const toast = useToast()
+const notice = useNoticeStore()
 const insert_card = useInsertCardAtMutation()
 const { setLastDeck } = useLastDeck()
 
@@ -128,10 +128,10 @@ async function onSave() {
       note
     })
     setLastDeck(deck_id.value)
-    toast.success(t('audio-reader.add-card-modal.success'))
+    notice.success(t('audio-reader.add-card-modal.success'))
     emit('saved')
   } catch (error) {
-    if (!handleLimitError(error)) toast.error(t('audio-reader.add-card-modal.error'))
+    if (!handleLimitError(error)) notice.error(t('audio-reader.add-card-modal.error'))
   } finally {
     saving.value = false
   }

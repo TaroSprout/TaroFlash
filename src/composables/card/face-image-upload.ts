@@ -11,7 +11,7 @@ import { useI18n } from 'vue-i18n'
 import { useCardMutations } from './mutations'
 import { useCardImageGate } from './image-gate'
 import { useImageDropzone } from './image-dropzone'
-import { useToast } from '@/composables/toast'
+import { useNoticeStore } from '@/stores/notice-store'
 import { emitSfx } from '@/sfx/bus'
 import { collapseFaceImage, revealFaceImage } from '@/utils/animations/face-image'
 
@@ -49,7 +49,7 @@ type UseFaceImageUploadOptions = {
  */
 export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceImageUploadOptions) {
   const { t } = useI18n()
-  const toast = useToast()
+  const notice = useNoticeStore()
   const { guardCardImage } = useCardImageGate()
   const mutations = useCardMutations(() => toValue(card).deck_id)
 
@@ -110,7 +110,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
     try {
       await mutations.setCardImage(toValue(card).id!, toValue(side), file)
     } catch {
-      toast.error(t('toast.error.card-image-upload-failed'))
+      notice.error(t('toast.error.card-image-upload-failed'))
       pending.value = false
       return
     }
@@ -150,7 +150,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
       await mutations.deleteCardImage(toValue(card).id!, toValue(side))
       emitSfx('trash_crumple_short')
     } catch {
-      toast.error(t('toast.error.card-image-delete-failed'))
+      notice.error(t('toast.error.card-image-delete-failed'))
     } finally {
       pending.value = false
     }

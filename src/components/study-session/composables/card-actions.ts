@@ -2,7 +2,7 @@ import { type MaybeRefOrGetter, type Ref, toValue } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCardMutations, useCardPrompts } from '@/composables/card'
 import { useCardLimitGate } from '@/composables/card/limit-gate'
-import { useToast } from '@/composables/toast'
+import { useNoticeStore } from '@/stores/notice-store'
 import type { StudyCard } from './session-core'
 
 type UseActiveCardActionsOptions = {
@@ -32,7 +32,7 @@ export function useActiveCardActions({
   const { t } = useI18n()
   const { confirmDelete, openMoveModal } = useCardPrompts()
   const { handleLimitError } = useCardLimitGate(undefined)
-  const toast = useToast()
+  const notice = useNoticeStore()
   const mutations = useCardMutations(deck_id)
 
   /** Confirm + delete the active card, then drop it from the session. */
@@ -60,7 +60,7 @@ export function useActiveCardActions({
         source_deck_ids: [toValue(deck_id)!]
       })
     } catch (error) {
-      if (!handleLimitError(error)) toast.error(t('toast.error.move-cards-failed'))
+      if (!handleLimitError(error)) notice.error(t('toast.error.move-cards-failed'))
       return
     }
 

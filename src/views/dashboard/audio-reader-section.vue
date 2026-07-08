@@ -2,7 +2,7 @@
 import { computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLessonCollectionsQuery } from '@/api/lessons'
-import { useToast } from '@/composables/toast'
+import { useNoticeStore } from '@/stores/notice-store'
 import { useOpenCollection } from '@/composables/audio-reader/open-collection'
 import { useCollectionCreateModal } from '@/composables/audio-reader/collection-create-modal'
 import { useCollectionEditModal } from '@/composables/audio-reader/collection-edit-modal'
@@ -10,7 +10,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import CollectionCard from '@/views/audio-reader/collection-card.vue'
 
 const { t } = useI18n()
-const toast = useToast()
+const notice = useNoticeStore()
 const { openCollection } = useOpenCollection()
 const create_modal = useCollectionCreateModal()
 const edit_modal = useCollectionEditModal()
@@ -34,7 +34,7 @@ async function onCreate() {
 }
 
 watch(collections_error, (err) => {
-  if (err) toast.error(err.message)
+  if (err) notice.error(err.message)
 })
 </script>
 

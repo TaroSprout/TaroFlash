@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { useMemberDecksQuery } from '@/api/decks'
-import { useToast } from '@/composables/toast'
+import { useNoticeStore } from '@/stores/notice-store'
 import DeckThumbnail from '@/components/deck/deck-thumbnail.vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -23,7 +23,7 @@ import {
 } from '@/utils/animations/inbox-toggle'
 
 const { t } = useI18n()
-const toast = useToast()
+const notice = useNoticeStore()
 const router = useRouter()
 const is_md = useMatchMedia('w>=md')
 const can = useCan()
@@ -34,7 +34,7 @@ const deck_actions = useDeckActions()
 const { data: decks_data, error: decks_error } = useMemberDecksQuery()
 const decks = computed(() => decks_data.value ?? [])
 watch(decks_error, (err) => {
-  if (err) toast.error(err.message)
+  if (err) notice.error(err.message)
 })
 
 const due_decks = computed(() => {

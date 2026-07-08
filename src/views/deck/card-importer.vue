@@ -4,11 +4,11 @@ import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import Card from '@/components/card/index.vue'
 import { useBulkInsertCardsInDeckMutation } from '@/api/cards'
-import { useToast } from '@/composables/toast'
+import { useNoticeStore } from '@/stores/notice-store'
 import { cardEditorKey } from '@/views/deck/composables'
 
 const { t } = useI18n()
-const toast = useToast()
+const notice = useNoticeStore()
 
 type CardDraft = { front_text: string; back_text: string }
 
@@ -41,7 +41,7 @@ async function onSave() {
     await bulk_insert_mutation.mutateAsync({ deck_id, cards: cards.value })
     cards.value = []
   } catch (error) {
-    if (!handleLimitError(error)) toast.error(t('deck-view.card-importer.error'))
+    if (!handleLimitError(error)) notice.error(t('deck-view.card-importer.error'))
   } finally {
     saving.value = false
   }
