@@ -1,9 +1,6 @@
-import { useI18n } from 'vue-i18n'
 import { emitSfx } from '@/sfx/bus'
 import { resolveDeleteArgs, resolveMoveArgs } from '@/utils/card-editor/selection-payload'
 import { useCardPrompts, type CardSelection, type CardMutations } from '@/composables/card'
-import { useCardLimitGate } from '@/composables/card/limit-gate'
-import { useNoticeStore } from '@/stores/notice-store'
 import type { useDeckQuery } from '@/api/decks'
 import type { VirtualCardList } from './virtual-list'
 import type { DeckViewShell } from './view-shell'
@@ -32,10 +29,7 @@ type Args = {
  * actions.onDeleteCards(card_id)
  */
 export function useCardActions({ list, selection, mutations, deck_query, deck_id, shell }: Args) {
-  const { t } = useI18n()
   const { confirmDelete, openMoveModal } = useCardPrompts()
-  const { handleLimitError } = useCardLimitGate(undefined)
-  const notice = useNoticeStore()
 
   /** Cleanup applied after any successful delete: drop selection, refetch. */
   async function afterDelete() {
@@ -88,26 +82,25 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
     const resolved = resolveMoveArgs(selection, list, deck_id, additional_card_id)
     if (!resolved) return
 
-    const target = await openMoveModal(resolved.preview_cards, resolved.count, deck_id)
-    if (!target) return
+    async function move(target_deck_id: number) {
+      const vars =
+        'card_ids' in resolved!.args
+          ? {
+              target_deck_id,
+              card_ids: resolved!.args.card_ids,
+              source_deck_ids: Array.from(
+                new Set(
+                  resolved!.preview_cards.map((c) => c.deck_id).filter((id) => id !== undefined)
+                )
+              )
+            }
+          : { target_deck_id, ...resolved!.args }
 
-    const vars =
-      'card_ids' in resolved.args
-        ? {
-            target_deck_id: target.deck_id,
-            card_ids: resolved.args.card_ids,
-            source_deck_ids: Array.from(
-              new Set(resolved.preview_cards.map((c) => c.deck_id).filter((id) => id !== undefined))
-            )
-          }
-        : { target_deck_id: target.deck_id, ...resolved.args }
-
-    try {
       await mutations.moveCards(vars)
-    } catch (error) {
-      if (!handleLimitError(error)) notice.error(t('toast.error.move-cards-failed'))
-      return
     }
+
+    const target = await openMoveModal(resolved.preview_cards, resolved.count, deck_id, move)
+    if (!target) return
 
     await afterMove()
   }

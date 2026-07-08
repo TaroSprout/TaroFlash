@@ -29,15 +29,22 @@ export function useCardPrompts() {
 
   /**
    * Open the move-cards modal for `cards`, paired with the open / close sfx.
+   * `move` runs the actual mutation once a deck is picked — the modal shows
+   * its own loading state while it awaits and stays open if it throws.
    * Resolves to the chosen destination deck, or `undefined` if dismissed.
    */
-  function openMoveModal(cards: Card[], count: number, current_deck_id: number) {
+  function openMoveModal(
+    cards: Card[],
+    count: number,
+    current_deck_id: number,
+    move: (deck_id: number) => Promise<void>
+  ) {
     emitSfx('double_pop_up')
 
     const { response } = modal.open<{ deck_id: number }>(MoveCardsModal, {
       backdrop: true,
       mode: 'popup',
-      props: { cards, count, current_deck_id }
+      props: { cards, count, current_deck_id, move }
     })
     response.then(() => emitSfx('double_pop_down'))
 
