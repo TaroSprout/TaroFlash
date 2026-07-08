@@ -62,12 +62,13 @@ const router = createRouter({
 
         if (!authenticated) return { name: 'welcome' }
 
-        // Fire member (which brings its plan limits along via an embedded
-        // join) + decks in parallel with the lazy route chunk fetch so the
-        // dashboard / deck view renders against warm cache.
+        // Fire decks in parallel with the lazy route chunk fetch so the
+        // dashboard / deck view renders against warm cache. The member fetch
+        // (which brings its plan limits along via an embedded join) doesn't
+        // need the same explicit prefetch — App.vue's member store is
+        // mounted at the app root and already starts fetching reactively
+        // the moment restoreSession() above sets session.user.
         prefetchMemberDecks()
-        const id = session.user?.id
-        if (id) prefetchMemberById(id).catch(() => {})
       },
       children: [
         {

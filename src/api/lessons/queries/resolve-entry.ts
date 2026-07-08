@@ -22,7 +22,9 @@ export async function resolveCollectionEntryLesson(
     key: ['lessons', collection.id],
     query: () => fetchLessonsByCollection(collection.id)
   })
-  const { data } = await cache.fetch(entry)
+  // refresh(), not fetch() — actually honors the "warm cache skips the
+  // refetch" behavior this function's docstring already promised.
+  const { data } = await cache.refresh(entry)
 
   return data?.[0]?.id ?? null
 }
