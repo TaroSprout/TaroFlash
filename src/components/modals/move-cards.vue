@@ -86,7 +86,7 @@ function onClick(deck_id?: number) {
             data-testid="move-cards__deck-item"
             :class="[
               deck.id === current_deck_id || isDeckFull(deck)
-                ? ' bg-brown-200 dark:bg-stone-900 pointer-events-none text-(--theme-on-primary)/20'
+                ? ' bg-brown-300 dark:bg-stone-700 pointer-events-none text-(--theme-on-primary)/20'
                 : 'cursor-pointer'
             ]"
             class="text-(--theme-on-primary) text-left flex items-center gap-3 p-4"
