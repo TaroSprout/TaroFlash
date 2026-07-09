@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiButtonGroup, { type ButtonGroupOption } from '@/components/ui-kit/button-group.vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
-import { usePrimedGrade } from '../primed-grade-context'
+import { usePrimedGrade } from '../card/primed-grade-context'
 
 const primed_grade = usePrimedGrade()
 

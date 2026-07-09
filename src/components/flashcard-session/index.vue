@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SessionFlashcard from './flashcard/index.vue'
+import SessionStudying from './session-studying/index.vue'
 import SessionSummary from './session-summary/index.vue'
 import SessionHeaderCloseButton from './session-header-close-button.vue'
 import SessionHeaderMenu from './session-header-menu.vue'
@@ -104,7 +104,7 @@ function onHeaderStop() {
     <template #default>
       <div data-testid="study-session__outlet" class="relative w-full h-full">
         <dialog-card-pager @enter-start="onPaneEnterStart">
-          <session-flashcard v-if="phase === 'studying'" key="studying" />
+          <session-studying v-if="phase === 'studying'" key="studying" />
           <session-summary
             v-else
             key="summary"

@@ -8,7 +8,7 @@ import { useGestures } from '@/composables/ui/gestures'
 import { useShortcuts } from '@/composables/shortcuts'
 import { useRatingFormat } from '@/composables/fsrs'
 import { useI18n } from 'vue-i18n'
-import { useDeckContext } from '../deck-context'
+import { useDeckContext } from '../../deck-context'
 
 const DRAG_RATING_CONFIG = {
   [Rating.Hard]: { icon: 'smiley-unhappy', label_key: 'study.flashcard.rating.hard-button' },

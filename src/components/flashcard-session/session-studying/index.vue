@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import SessionProgress from './session-progress.vue'
-import CardStage from './card-stage.vue'
+import CardStage from './card/card-stage.vue'
 import StudyEditFooter from './study-edit-footer.vue'
 import RatingButtons from './rating-buttons/index.vue'
 import { useInjectedStudySessionController } from '@/components/flashcard-session/composables/session-controller'
 import { type Grade } from 'ts-fsrs'
 import { ref, useTemplateRef } from 'vue'
-import { providePrimedGrade } from './primed-grade-context'
+import { providePrimedGrade } from './card/primed-grade-context'
 
 const {
   mode,

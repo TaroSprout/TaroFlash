@@ -2,7 +2,7 @@
 import { type Grade, Rating } from 'ts-fsrs'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
-import { usePrimedGrade } from '../primed-grade-context'
+import { usePrimedGrade } from '../card/primed-grade-context'
 
 const primed_grade = usePrimedGrade()
 

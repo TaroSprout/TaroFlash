@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FaceEditor from '@/components/card/face-editor.vue'
-import { useDeckContext } from '../deck-context'
+import { useDeckContext } from '../../deck-context'
 
 type CardSide = 'front' | 'back'
 
