@@ -18,7 +18,7 @@ vi.mock('vue-i18n', () => ({
 vi.mock('@/composables/alert', () => ({ useAlert: () => ({ warn: alertWarnMock }) }))
 vi.mock('@/composables/modal', () => ({ useModal: () => ({ open: modalOpenMock }) }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: emitSfxMock }))
-vi.mock('@/components/modals/move-cards.vue', () => ({ default: {} }))
+vi.mock('@/components/card/move-cards-modal.vue', () => ({ default: {} }))
 vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 
 import { useCardActions } from '@/views/deck/composables/actions'

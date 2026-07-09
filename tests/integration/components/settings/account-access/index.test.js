@@ -15,7 +15,7 @@ vi.mock('gsap', () => ({
   }
 }))
 
-import AccountAccessModal from '@/components/settings/account-access/index.vue'
+import AccountAccessModal from '@/views/settings/account-access/index.vue'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────

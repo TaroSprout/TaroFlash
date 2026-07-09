@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, reactive, useAttrs } from 'vue'
-import FsrsSection from '@/components/settings/tab-review-preferences/fsrs-section.vue'
+import FsrsSection from '@/views/settings/tab-review-preferences/fsrs-section.vue'
 import { memberEditorKey } from '@/composables/member/editor'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────

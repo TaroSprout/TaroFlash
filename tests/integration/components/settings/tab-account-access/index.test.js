@@ -15,7 +15,7 @@ vi.mock('gsap', () => ({
   }
 }))
 
-import TabAccountAccess from '@/components/settings/tab-account-access/index.vue'
+import TabAccountAccess from '@/views/settings/tab-account-access/index.vue'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 

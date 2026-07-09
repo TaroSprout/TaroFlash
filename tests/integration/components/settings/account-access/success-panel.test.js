@@ -6,7 +6,7 @@ import { mount } from '@vue/test-utils'
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn(), emitStudySfx: vi.fn() }))
 
-import SuccessPanel from '@/components/settings/account-access/success-panel.vue'
+import SuccessPanel from '@/views/settings/account-access/success-panel.vue'
 
 function makeWrapper(props = {}) {
   return mount(SuccessPanel, {

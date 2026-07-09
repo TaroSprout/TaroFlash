@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import SuccessView from '@/components/modals/checkout/success-view.vue'
+import SuccessView from '@/components/billing/checkout-modal/success-view.vue'
 
 describe('SuccessView', () => {
   test('renders the success heading and message', () => {

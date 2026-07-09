@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { reactive, defineComponent, h } from 'vue'
-import CoverDesigner from '@/components/deck/cover-designer/index.vue'
+import CoverDesigner from '@/views/deck/cover-designer/index.vue'
 
 function slotlessStub(name) {
   return defineComponent({

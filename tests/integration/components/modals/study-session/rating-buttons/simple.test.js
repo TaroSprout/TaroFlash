@@ -2,8 +2,8 @@ import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { Rating } from 'ts-fsrs'
-import SimpleRatingButtons from '@/components/flashcard-session/session-studying/rating-buttons/simple.vue'
-import { PrimedGradeKey } from '@/components/flashcard-session/session-studying/card/primed-grade-context'
+import SimpleRatingButtons from '@/views/study-session/session-studying/rating-buttons/simple.vue'
+import { PrimedGradeKey } from '@/views/study-session/session-studying/card/primed-grade-context'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

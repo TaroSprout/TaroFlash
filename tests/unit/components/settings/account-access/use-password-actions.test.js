@@ -17,7 +17,7 @@ vi.mock('@/stores/session', () => ({ useSessionStore: () => mockSession }))
 vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
-import { usePasswordActions } from '@/components/settings/account-access/use-password-actions'
+import { usePasswordActions } from '@/views/settings/account-access/use-password-actions'
 
 beforeEach(() => {
   mockSession.updatePassword.mockReset()

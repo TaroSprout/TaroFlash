@@ -16,7 +16,7 @@ const DeckSkeletonStub = defineComponent({
 
 // ── Imports ───────────────────────────────────────────────────────────────────
 
-import RouteSkeleton from '@/components/route-skeleton.vue'
+import RouteSkeleton from '@/views/app-shell/route-skeleton.vue'
 
 const stubs = {
   DashboardSkeleton: DashboardSkeletonStub,

@@ -22,7 +22,7 @@ vi.mock('@/stores/member', async () => {
 vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
-import { useEmailActions } from '@/components/settings/account-access/use-email-actions'
+import { useEmailActions } from '@/views/settings/account-access/use-email-actions'
 import { __mockMember as mockMember } from '@/stores/member'
 
 beforeEach(() => {

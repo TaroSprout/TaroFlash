@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
-import DangerDeleteAccountButton from '@/components/settings/danger-delete-account-button.vue'
+import DangerDeleteAccountButton from '@/views/settings/danger-delete-account-button.vue'
 import { memberDangerActionsKey } from '@/composables/member/danger-actions'
 
 const ButtonStub = defineComponent({

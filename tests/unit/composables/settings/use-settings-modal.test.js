@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { useSettingsModal } from '@/composables/settings/use-settings-modal'
-import { SETTINGS_SHEET_BREAKPOINTS } from '@/components/settings/layout'
+import { SETTINGS_SHEET_BREAKPOINTS } from '@/views/settings/layout'
 
 const { mockOpen } = vi.hoisted(() => ({ mockOpen: vi.fn() }))
 

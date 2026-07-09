@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, nextTick } from 'vue'
-import DeckSettings from '@/components/modals/deck-settings/index.vue'
+import DeckSettings from '@/views/deck/deck-settings/index.vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { deck as deckFixture } from '../../../../fixtures/deck'
 import { setSidebar, setBelowMd, resetResponsive } from '../../../../helpers/responsive-mock'
@@ -115,7 +115,7 @@ vi.mock('@/composables/deck/editor', async () => {
 
 // `<script setup>` imports are direct bindings — Vue's `stubs` option can't
 // replace them. Use module mocks for the tab children we want stubbed.
-vi.mock('@/components/modals/deck-settings/deck-aside.vue', async () => {
+vi.mock('@/views/deck/deck-settings/deck-aside.vue', async () => {
   const { defineComponent, h } = await import('vue')
   return {
     default: defineComponent({
@@ -137,7 +137,7 @@ vi.mock('@/components/modals/deck-settings/deck-aside.vue', async () => {
   }
 })
 
-vi.mock('@/components/modals/deck-settings/tab-danger-zone/index.vue', async () => {
+vi.mock('@/views/deck/deck-settings/tab-danger-zone/index.vue', async () => {
   const { defineComponent, h } = await import('vue')
   return {
     default: defineComponent({
@@ -186,22 +186,10 @@ function makeTabContentMock(testid) {
   }
 }
 
-vi.mock(
-  '@/components/modals/deck-settings/tab-index/index.vue',
-  makeTabContentMock('tab-index-stub')
-)
-vi.mock(
-  '@/components/modals/deck-settings/tab-details/index.vue',
-  makeTabContentMock('tab-details-stub')
-)
-vi.mock(
-  '@/components/modals/deck-settings/tab-design/index.vue',
-  makeTabContentMock('tab-content-stub')
-)
-vi.mock(
-  '@/components/modals/deck-settings/tab-study/index.vue',
-  makeTabContentMock('tab-content-stub')
-)
+vi.mock('@/views/deck/deck-settings/tab-index/index.vue', makeTabContentMock('tab-index-stub'))
+vi.mock('@/views/deck/deck-settings/tab-details/index.vue', makeTabContentMock('tab-details-stub'))
+vi.mock('@/views/deck/deck-settings/tab-design/index.vue', makeTabContentMock('tab-content-stub'))
+vi.mock('@/views/deck/deck-settings/tab-study/index.vue', makeTabContentMock('tab-content-stub'))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 

@@ -46,7 +46,7 @@ const UiButtonStub = defineComponent({
   }
 })
 
-import CollectionCreate from '@/components/modals/collection-create/index.vue'
+import CollectionCreate from '@/views/audio-reader/collection-create-modal.vue'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

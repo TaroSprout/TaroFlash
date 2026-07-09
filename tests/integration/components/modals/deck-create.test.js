@@ -80,7 +80,7 @@ vi.mock('@/components/deck/deck-design-preview.vue', async () => {
   }
 })
 
-vi.mock('@/components/deck/cover-designer/index.vue', async () => {
+vi.mock('@/views/deck/cover-designer/index.vue', async () => {
   const { defineComponent, h } = await import('vue')
   return {
     default: defineComponent({
@@ -140,7 +140,7 @@ vi.mock('@/components/ui-kit/icon.vue', async () => {
   }
 })
 
-import DeckCreate from '@/components/modals/deck-create/index.vue'
+import DeckCreate from '@/views/deck/deck-create-modal.vue'
 import { __setMobile } from '@/composables/ui/media-query'
 
 function mountModal(close = vi.fn()) {

@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import PaymentStatus from '@/components/modals/checkout/payment-status.vue'
+import PaymentStatus from '@/components/billing/checkout-modal/payment-status.vue'
 
 function mountStatus(status) {
   return shallowMount(PaymentStatus, { props: { status } })

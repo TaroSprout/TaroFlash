@@ -16,7 +16,7 @@ const { mockOnAccountAccessClick } = vi.hoisted(() => ({
   mockOnAccountAccessClick: vi.fn()
 }))
 
-vi.mock('@/components/settings/use-account-access-click', () => ({
+vi.mock('@/views/settings/use-account-access-click', () => ({
   useAccountAccessClick: () => ({ onAccountAccessClick: mockOnAccountAccessClick })
 }))
 
@@ -24,9 +24,9 @@ vi.mock('@/stores/notice-store', () => ({
   useNoticeStore: () => ({ error: vi.fn(), success: vi.fn(), warn: vi.fn() })
 }))
 
-import SettingsAside from '@/components/settings/settings-aside.vue'
+import SettingsAside from '@/views/settings/settings-aside.vue'
 import { memberEditorKey } from '@/composables/member/editor'
-import { settingsCloseKey } from '@/components/settings/layout'
+import { settingsCloseKey } from '@/views/settings/layout'
 
 function makeEditor() {
   return {

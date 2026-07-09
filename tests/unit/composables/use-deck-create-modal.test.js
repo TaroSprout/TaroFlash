@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { flushPromises } from '@vue/test-utils'
 import { useDeckCreateModal } from '@/composables/deck/create-modal'
-import DeckCreate from '@/components/modals/deck-create/index.vue'
+import DeckCreate from '@/views/deck/deck-create-modal.vue'
 
 const { mockEmitSfx, mockOpen } = vi.hoisted(() => ({
   mockEmitSfx: vi.fn(),

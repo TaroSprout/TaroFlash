@@ -20,7 +20,7 @@ vi.mock('gsap', () => ({
   }
 }))
 
-vi.mock('@/components/modals/change-card/use-change-card', () => ({
+vi.mock('@/views/settings/tab-subscription/use-change-cc', () => ({
   useChangeCard: () => ({
     is_loading: changeCardState.is_loading,
     is_submitting: changeCardState.is_submitting,
@@ -30,7 +30,7 @@ vi.mock('@/components/modals/change-card/use-change-card', () => ({
   })
 }))
 
-import ChangeCardModal from '@/components/modals/change-card/index.vue'
+import ChangeCardModal from '@/views/settings/tab-subscription/change-cc-modal.vue'
 
 // ── Setup ──────────────────────────────────────────────────────────────────────
 

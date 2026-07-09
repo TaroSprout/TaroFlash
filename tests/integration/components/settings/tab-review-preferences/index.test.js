@@ -1,8 +1,8 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { computed, defineComponent, h } from 'vue'
-import TabReviewPreferences from '@/components/settings/tab-review-preferences/index.vue'
-import { settingsLayoutKey } from '@/components/settings/layout'
+import TabReviewPreferences from '@/views/settings/tab-review-preferences/index.vue'
+import { settingsLayoutKey } from '@/views/settings/layout'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 

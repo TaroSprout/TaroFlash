@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { createApp } from 'vue'
-import { settingsRecedeKey } from '@/components/settings/layout'
+import { settingsRecedeKey } from '@/views/settings/layout'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -10,7 +10,7 @@ vi.mock('@/composables/settings/use-account-access-modal', () => ({
   useAccountAccessModal: () => ({ open: mockOpen })
 }))
 
-import { useAccountAccessClick } from '@/components/settings/use-account-access-click'
+import { useAccountAccessClick } from '@/views/settings/use-account-access-click'
 
 // ── Setup ─────────────────────────────────────────────────────────────────────
 

@@ -5,9 +5,9 @@ import { computed, defineComponent, h, ref, useAttrs } from 'vue'
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
 
-import TabIndex from '@/components/settings/tab-index/index.vue'
+import TabIndex from '@/views/settings/tab-index/index.vue'
 import { memberDangerActionsKey } from '@/composables/member/danger-actions'
-import { settingsLayoutKey } from '@/components/settings/layout'
+import { settingsLayoutKey } from '@/views/settings/layout'
 
 const ButtonStub = defineComponent({
   name: 'UiButton',

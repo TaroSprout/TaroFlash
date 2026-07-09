@@ -12,9 +12,9 @@ vi.mock('@/stores/notice-store', () => ({
 }))
 
 import { resetResponsive } from '../../../helpers/responsive-mock'
-import TabProfile from '@/components/settings/tab-profile/index.vue'
+import TabProfile from '@/views/settings/tab-profile/index.vue'
 import { memberEditorKey } from '@/composables/member/editor'
-import { settingsLayoutKey } from '@/components/settings/layout'
+import { settingsLayoutKey } from '@/views/settings/layout'
 import { computed } from 'vue'
 
 const InputStub = defineComponent({

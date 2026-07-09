@@ -36,7 +36,7 @@ const UiButtonStub = defineComponent({
   }
 })
 
-import PlanActions from '@/components/settings/tab-subscription/plan-actions.vue'
+import PlanActions from '@/views/settings/tab-subscription/plan-actions.vue'
 
 // ── Factory ───────────────────────────────────────────────────────────────────
 

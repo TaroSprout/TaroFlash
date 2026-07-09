@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import ImageLayoutPicker from '@/components/modals/deck-settings/tab-design/card-designer/image-layout-picker.vue'
+import ImageLayoutPicker from '@/views/deck/deck-settings/tab-design/card-designer/image-layout-picker.vue'
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))

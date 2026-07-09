@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { ref } from 'vue'
-import { useActiveCardActions } from '@/components/flashcard-session/composables/card-actions'
+import { useActiveCardActions } from '@/views/study-session/composables/card-actions'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 

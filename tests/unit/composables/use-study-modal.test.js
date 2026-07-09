@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { flushPromises } from '@vue/test-utils'
-import { useStudyModal } from '@/components/flashcard-session/composables/study-modal'
-import StudySession from '@/components/flashcard-session/index.vue'
+import { useStudyModal } from '@/views/study-session/composables/study-modal'
+import StudySession from '@/views/study-session/index.vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 

@@ -15,11 +15,11 @@ const mockPasswordActions = {
   success: ref(false),
   submit: vi.fn()
 }
-vi.mock('@/components/settings/account-access/use-password-actions', () => ({
+vi.mock('@/views/settings/account-access/use-password-actions', () => ({
   usePasswordActions: () => mockPasswordActions
 }))
 
-import PasswordSection from '@/components/settings/account-access/password-section.vue'
+import PasswordSection from '@/views/settings/account-access/password-section.vue'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 

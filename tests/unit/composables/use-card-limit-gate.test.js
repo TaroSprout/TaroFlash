@@ -21,7 +21,7 @@ vi.mock('vue-i18n', () => ({
   useI18n: () => ({ t: (key) => key })
 }))
 
-vi.mock('@/components/modals/checkout/index.vue', () => ({ default: {} }))
+vi.mock('@/components/billing/checkout-modal/index.vue', () => ({ default: {} }))
 
 // `useCan().addCards` owns the cap comparison now — mock it directly with the
 // same 200-card-per-deck free-tier math the real composable would derive from

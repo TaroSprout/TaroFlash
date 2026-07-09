@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
-import SessionHeaderMenu from '@/components/flashcard-session/session-header-menu.vue'
+import SessionHeaderMenu from '@/views/study-session/session-header-menu.vue'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 

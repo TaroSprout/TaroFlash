@@ -31,9 +31,8 @@ const LabeledSectionStub = defineComponent({
 })
 
 async function makeInvoicesSection() {
-  const InvoicesSection = (
-    await import('@/components/settings/tab-subscription/invoices-section.vue')
-  ).default
+  const InvoicesSection = (await import('@/views/settings/tab-subscription/invoices-section.vue'))
+    .default
 
   return shallowMount(InvoicesSection, {
     global: { stubs: { LabeledSection: LabeledSectionStub } }

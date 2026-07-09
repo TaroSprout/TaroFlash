@@ -19,11 +19,11 @@ const mockGoogleActions = {
   onConnect: vi.fn(),
   onDisconnect: vi.fn()
 }
-vi.mock('@/components/settings/account-access/use-google-actions', () => ({
+vi.mock('@/views/settings/account-access/use-google-actions', () => ({
   useGoogleActions: () => mockGoogleActions
 }))
 
-import AccountAccessMenu from '@/components/settings/account-access/account-access-menu.vue'
+import AccountAccessMenu from '@/views/settings/account-access/account-access-menu.vue'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 

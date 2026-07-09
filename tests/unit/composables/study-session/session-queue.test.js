@@ -1,8 +1,8 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { nextTick } from 'vue'
 import { Rating } from 'ts-fsrs'
-import { useSessionQueue } from '@/components/flashcard-session/composables/session-queue'
-import { readPersistedSession } from '@/components/flashcard-session/composables/session-persistence'
+import { useSessionQueue } from '@/views/study-session/composables/session-queue'
+import { readPersistedSession } from '@/views/study-session/composables/session-persistence'
 import { card } from '../../../fixtures/card'
 
 const { saveReviewMock } = vi.hoisted(() => ({

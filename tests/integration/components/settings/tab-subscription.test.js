@@ -91,7 +91,7 @@ const SectionListStub = defineComponent({
   }
 })
 
-import TabSubscription from '@/components/settings/tab-subscription/index.vue'
+import TabSubscription from '@/views/settings/tab-subscription/index.vue'
 
 // ── Factory ───────────────────────────────────────────────────────────────────
 

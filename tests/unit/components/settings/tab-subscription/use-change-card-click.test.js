@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/tes
 import { createApp } from 'vue'
 import { createI18n } from 'vue-i18n'
 import messages from '@intlify/unplugin-vue-i18n/messages'
-import { settingsRecedeKey } from '@/components/settings/layout'
+import { settingsRecedeKey } from '@/views/settings/layout'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -36,7 +36,7 @@ vi.mock('@/stores/notice-store', () => ({
   useNoticeStore: () => ({ error: noticeErrorMock })
 }))
 
-import { useChangeCardClick } from '@/components/settings/tab-subscription/use-change-card-click'
+import { useChangeCcClick } from '@/views/settings/tab-subscription/use-change-cc-click'
 
 // ── Setup ─────────────────────────────────────────────────────────────────────
 
@@ -87,26 +87,26 @@ beforeEach(() => {
 
 // ── default_card fallback ────────────────────────────────────────────────────
 
-describe('useChangeCardClick — default_card [obligation]', () => {
+describe('useChangeCcClick — default_card [obligation]', () => {
   test('falls back to the first payment method when none matches defaultPaymentMethodId', () => {
     queryState.data = {
       paymentMethods: [card('pm_1', 'visa', '4242'), card('pm_2', 'mastercard', '5555')],
       defaultPaymentMethodId: 'pm_nonexistent'
     }
-    const { default_card } = withSetup(() => useChangeCardClick())
+    const { default_card } = withSetup(() => useChangeCcClick())
     expect(default_card.value?.id).toBe('pm_1')
   })
 
   test('is null when the payment methods list is empty', () => {
     queryState.data = { paymentMethods: [], defaultPaymentMethodId: null }
-    const { default_card } = withSetup(() => useChangeCardClick())
+    const { default_card } = withSetup(() => useChangeCcClick())
     expect(default_card.value).toBeNull()
   })
 })
 
 // ── recede/restore choreography ──────────────────────────────────────────────
 
-describe('useChangeCardClick — recede/restore choreography [obligation]', () => {
+describe('useChangeCcClick — recede/restore choreography [obligation]', () => {
   test('calls recede() before opening the modal and restore() after it resolves, added:false', async () => {
     queryState.data = { paymentMethods: [card('pm_1')], defaultPaymentMethodId: 'pm_1' }
     const { order, recede } = makeRecede()
@@ -114,7 +114,7 @@ describe('useChangeCardClick — recede/restore choreography [obligation]', () =
       order.push('modal-open')
       return { response: Promise.resolve({ added: false, paymentMethodId: null }) }
     })
-    const { onChangeCardClick } = withSetup(() => useChangeCardClick(), recede)
+    const { onChangeCardClick } = withSetup(() => useChangeCcClick(), recede)
 
     await onChangeCardClick()
 
@@ -129,7 +129,7 @@ describe('useChangeCardClick — recede/restore choreography [obligation]', () =
       order.push('modal-open')
       return { response: Promise.resolve({ added: true, paymentMethodId: 'pm_1' }) }
     })
-    const { onChangeCardClick } = withSetup(() => useChangeCardClick(), recede)
+    const { onChangeCardClick } = withSetup(() => useChangeCcClick(), recede)
 
     await onChangeCardClick()
 
@@ -139,7 +139,7 @@ describe('useChangeCardClick — recede/restore choreography [obligation]', () =
 
 // ── mutation flow ─────────────────────────────────────────────────────────────
 
-describe('useChangeCardClick — mutation flow [obligation]', () => {
+describe('useChangeCcClick — mutation flow [obligation]', () => {
   test('sets the new default and detaches every other previously-known id', async () => {
     queryState.data = {
       paymentMethods: [card('pm_old_1'), card('pm_old_2'), card('pm_old_3')],
@@ -150,7 +150,7 @@ describe('useChangeCardClick — mutation flow [obligation]', () => {
     modalOpenMock.mockReturnValue({
       response: Promise.resolve({ added: true, paymentMethodId: 'pm_new' })
     })
-    const { onChangeCardClick } = withSetup(() => useChangeCardClick())
+    const { onChangeCardClick } = withSetup(() => useChangeCcClick())
 
     await onChangeCardClick()
 
@@ -171,7 +171,7 @@ describe('useChangeCardClick — mutation flow [obligation]', () => {
     modalOpenMock.mockReturnValue({
       response: Promise.resolve({ added: true, paymentMethodId: 'pm_new' })
     })
-    const { onChangeCardClick } = withSetup(() => useChangeCardClick())
+    const { onChangeCardClick } = withSetup(() => useChangeCcClick())
 
     await onChangeCardClick()
 
@@ -188,7 +188,7 @@ describe('useChangeCardClick — mutation flow [obligation]', () => {
     modalOpenMock.mockReturnValue({
       response: Promise.resolve({ added: true, paymentMethodId: 'pm_new' })
     })
-    const { onChangeCardClick } = withSetup(() => useChangeCardClick())
+    const { onChangeCardClick } = withSetup(() => useChangeCcClick())
 
     await onChangeCardClick()
 
@@ -208,7 +208,7 @@ describe('useChangeCardClick — mutation flow [obligation]', () => {
     modalOpenMock.mockReturnValue({
       response: Promise.resolve({ added: true, paymentMethodId: 'pm_new' })
     })
-    const { onChangeCardClick } = withSetup(() => useChangeCardClick())
+    const { onChangeCardClick } = withSetup(() => useChangeCcClick())
 
     await onChangeCardClick()
 
@@ -223,7 +223,7 @@ describe('useChangeCardClick — mutation flow [obligation]', () => {
     modalOpenMock.mockReturnValue({
       response: Promise.resolve({ added: false, paymentMethodId: null })
     })
-    const { onChangeCardClick } = withSetup(() => useChangeCardClick())
+    const { onChangeCardClick } = withSetup(() => useChangeCcClick())
 
     await onChangeCardClick()
 
@@ -234,7 +234,7 @@ describe('useChangeCardClick — mutation flow [obligation]', () => {
   test('does not call any mutation when the modal resolves with no response (closed)', async () => {
     queryState.data = { paymentMethods: [card('pm_1')], defaultPaymentMethodId: 'pm_1' }
     modalOpenMock.mockReturnValue({ response: Promise.resolve(undefined) })
-    const { onChangeCardClick } = withSetup(() => useChangeCardClick())
+    const { onChangeCardClick } = withSetup(() => useChangeCcClick())
 
     await onChangeCardClick()
 
