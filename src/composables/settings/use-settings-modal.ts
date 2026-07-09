@@ -1,6 +1,6 @@
 import { useModal } from '@/composables/modal'
-import { SETTINGS_SHEET_BREAKPOINTS } from '@/components/settings/layout'
-import SettingsComponent from '@/components/settings/index.vue'
+import { SETTINGS_SHEET_BREAKPOINTS } from '@/views/settings/layout'
+import SettingsComponent from '@/views/settings/index.vue'
 
 /** Opens the settings modal. Shared by the phone launcher and any other settings entry point. */
 export function useSettingsModal() {

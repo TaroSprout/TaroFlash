@@ -1,5 +1,5 @@
 import { useModal } from '@/composables/modal'
-import AccountAccessModal from '@/components/settings/account-access/index.vue'
+import AccountAccessModal from '@/views/settings/account-access/index.vue'
 
 /** Opens the email/password/Google account-access modal from the settings aside. */
 export function useAccountAccessModal() {

@@ -3,7 +3,7 @@ import { useCancelSubscriptionMutation, useResumeSubscriptionMutation } from '@/
 import { useAlert } from '@/composables/alert'
 import { useNoticeStore } from '@/stores/notice-store'
 import { useModal } from '@/composables/modal'
-import Checkout from '@/components/modals/checkout/index.vue'
+import Checkout from '@/components/billing/checkout-modal/index.vue'
 
 /**
  * Subscription lifecycle orchestrators for the billing plan section: upgrade a
