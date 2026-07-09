@@ -2,11 +2,11 @@
 import { useI18n } from 'vue-i18n'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import UiButton from '@/components/ui-kit/button.vue'
-import { useChangeCardClick } from './use-change-card-click'
+import { useChangeCcClick } from './use-change-cc-click'
 import { formatCardExpiry } from '@/utils/billing'
 
 const { t } = useI18n()
-const { methods_query, default_card, onChangeCardClick } = useChangeCardClick()
+const { methods_query, default_card, onChangeCardClick } = useChangeCcClick()
 </script>
 
 <template>

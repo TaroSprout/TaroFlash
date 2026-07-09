@@ -1,6 +1,6 @@
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import ChangeCardModal, { type ChangeCardResponse } from '@/components/modals/change-card/index.vue'
+import ChangeCcModal, { type ChangeCardResponse } from './change-cc-modal.vue'
 import {
   usePaymentMethodsQuery,
   useSetDefaultPaymentMethodMutation,
@@ -15,7 +15,7 @@ import { settingsRecedeKey } from '../layout'
  * choreography, then syncs the returned payment method as the new default
  * and detaches whatever card(s) it replaced.
  */
-export function useChangeCardClick() {
+export function useChangeCcClick() {
   const { t } = useI18n()
   const recede = inject(settingsRecedeKey)
   const modal = useModal()
@@ -38,7 +38,7 @@ export function useChangeCardClick() {
     const old_ids = payment_methods.value.map((m) => m.id)
 
     recede?.recede()
-    const response = await modal.open<ChangeCardResponse>(ChangeCardModal, {
+    const response = await modal.open<ChangeCardResponse>(ChangeCcModal, {
       mode: 'popup',
       backdrop: true,
       props: { has_existing_card: !!default_card.value }
