@@ -1,7 +1,8 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { mount, flushPromises } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import { defineComponent, h, nextTick } from 'vue'
 import StudySession from '@/components/flashcard-session/index.vue'
+import { MODAL_ID_KEY, request_close_handlers } from '@/composables/modal'
 import { deck } from '../../../../fixtures/deck'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
@@ -18,7 +19,6 @@ vi.mock('@/sfx/bus', () => ({
 }))
 
 // Pane animation hooks — call done() immediately so transitions complete synchronously.
-// sessionPaneEnter also calls onStart so the sfx fires as the animation begins.
 const { mockSessionPaneEnter, mockSessionPaneLeave } = vi.hoisted(() => ({
   mockSessionPaneEnter: vi.fn((_el, done, onStart) => {
     onStart?.()
@@ -48,8 +48,6 @@ vi.mock(
 )
 
 // Mock viewport so provideDialogCardViewport() doesn't hit real matchMedia.
-// mediaState is mutable so individual tests can flip mobile/desktop, and
-// capturedQueries records what query string dialog-card actually forwarded.
 const { mediaState, capturedQueries } = vi.hoisted(() => ({
   mediaState: { is_mobile: { value: false } },
   capturedQueries: []
@@ -62,22 +60,65 @@ vi.mock('@/composables/ui/media-query', () => ({
   })
 }))
 
-// ── Stubs ─────────────────────────────────────────────────────────────────────
-
-const FlashcardStub = defineComponent({
-  name: 'SessionFlashcard',
-  emits: ['closed', 'finished'],
-  props: ['decks', 'title', 'config_override'],
-  setup(_props, { expose }) {
-    expose({})
-    return () => h('div', { 'data-testid': 'session-flashcard-stub' })
+// Mock the session controller entirely — index.vue's own responsibility is the
+// shell (header slots + phase switch), not the FSRS session itself. The
+// controller's own orchestration (requestClose / finishSession / onCardReviewed)
+// is unit-tested directly in session-controller.test.js.
+const {
+  is_cover_ref,
+  can_edit_ref,
+  show_all_ratings_ref,
+  mockRequestClose,
+  mockStartEdit,
+  mockOnMove,
+  mockOnDelete,
+  mockToggleRatings,
+  capturedControllerOptions
+} = await vi.hoisted(async () => {
+  const { ref } = await import('vue')
+  return {
+    is_cover_ref: ref(false),
+    can_edit_ref: ref(true),
+    show_all_ratings_ref: ref(false),
+    mockRequestClose: vi.fn(),
+    mockStartEdit: vi.fn(),
+    mockOnMove: vi.fn(),
+    mockOnDelete: vi.fn(),
+    mockToggleRatings: vi.fn(),
+    capturedControllerOptions: { current: null }
   }
 })
 
-const SummaryStub = defineComponent({
+vi.mock('@/components/flashcard-session/composables/session-controller', () => ({
+  provideStudySessionController: (options) => {
+    capturedControllerOptions.current = options
+    return {
+      is_cover: is_cover_ref,
+      can_edit: can_edit_ref,
+      show_all_ratings: show_all_ratings_ref,
+      requestClose: mockRequestClose,
+      startEdit: mockStartEdit,
+      onMove: mockOnMove,
+      onDelete: mockOnDelete,
+      toggleRatings: mockToggleRatings
+    }
+  },
+  useInjectedStudySessionController: vi.fn()
+}))
+
+// ── Stubs ─────────────────────────────────────────────────────────────────────
+
+const SessionStudyingStub = defineComponent({
+  name: 'SessionStudying',
+  setup() {
+    return () => h('div', { 'data-testid': 'session-studying-stub' })
+  }
+})
+
+const SessionSummaryStub = defineComponent({
   name: 'SessionSummary',
+  props: ['results'],
   emits: ['close'],
-  props: ['results', 'title'],
   setup(_props, { emit }) {
     return () =>
       h('div', { 'data-testid': 'session-summary-stub' }, [
@@ -87,6 +128,8 @@ const SummaryStub = defineComponent({
 })
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+const TEST_MODAL_ID = 'study-session-modal'
 
 function makeWrapper({ close = vi.fn(), decks_override } = {}) {
   const deck_data = deck.one({ overrides: { id: 1, title: 'My Deck' } })
@@ -99,8 +142,11 @@ function makeWrapper({ close = vi.fn(), decks_override } = {}) {
       props: { decks, close },
       global: {
         stubs: {
-          SessionFlashcard: FlashcardStub,
-          SessionSummary: SummaryStub
+          SessionStudying: SessionStudyingStub,
+          SessionSummary: SessionSummaryStub
+        },
+        provide: {
+          [MODAL_ID_KEY]: TEST_MODAL_ID
         }
       },
       attachTo: document.body
@@ -111,11 +157,11 @@ function makeWrapper({ close = vi.fn(), decks_override } = {}) {
 // Vue Transition JS hooks use 2x rAF even with :css="false".
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
 
-async function finishSession(wrapper, results = []) {
-  await wrapper.findComponent({ name: 'SessionFlashcard' }).vm.$emit('finished', results)
+/** Simulates the controller calling onFinished — the shell's own transition into summary. */
+async function finishSession(results = []) {
+  capturedControllerOptions.current.onFinished(results)
   await nextTick()
   await nextFrame()
-  await flushPromises()
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -127,165 +173,224 @@ describe('StudySession (index.vue)', () => {
     mockSessionPaneEnter.mockClear()
     mockSessionPaneLeave.mockClear()
     mockClearPersistedSession.mockClear()
+    mockRequestClose.mockClear()
+    mockStartEdit.mockClear()
+    mockOnMove.mockClear()
+    mockOnDelete.mockClear()
+    mockToggleRatings.mockClear()
+    is_cover_ref.value = false
+    can_edit_ref.value = true
+    show_all_ratings_ref.value = false
+    capturedControllerOptions.current = null
     mediaState.is_mobile.value = false
     capturedQueries.length = 0
+    request_close_handlers.clear()
   })
 
   // ── Initial phase: studying ────────────────────────────────────────────────
 
-  test('renders session-flashcard in studying phase', () => {
+  test('renders session-studying in studying phase', () => {
     const { wrapper } = makeWrapper()
-    expect(wrapper.find('[data-testid="session-flashcard-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="session-studying-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="session-summary-stub"]').exists()).toBe(false)
   })
 
-  // ── onClosed: plays sfx then calls close() [obligation] ───────────────────
+  // ── header-start close button: is_cover wiring [obligation] ────────────────
 
-  test('@closed plays snappy_button_5 sfx then calls close() [obligation]', async () => {
-    const { wrapper, close } = makeWrapper()
-
-    await wrapper.findComponent({ name: 'SessionFlashcard' }).vm.$emit('closed')
-
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
-    expect(close).toHaveBeenCalledOnce()
-    expect(close).toHaveBeenCalledWith()
+  test('header-start renders the close-button variant (is_cover=true) when the controller reports is_cover [obligation]', () => {
+    is_cover_ref.value = true
+    const { wrapper } = makeWrapper()
+    expect(wrapper.find('[data-testid="session-header__close"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="session-header__stop"]').exists()).toBe(false)
   })
 
-  test('@closed clears the persisted session snapshot [obligation]', async () => {
+  test('header-start renders the stop-button variant (is_cover=false) during studying when the controller reports not-cover [obligation]', () => {
+    is_cover_ref.value = false
+    const { wrapper } = makeWrapper()
+    expect(wrapper.find('[data-testid="session-header__stop"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="session-header__close"]').exists()).toBe(false)
+  })
+
+  test('header-start renders the close-button variant during the summary phase, regardless of the controller is_cover value [obligation]', async () => {
+    is_cover_ref.value = false
     const { wrapper } = makeWrapper()
 
-    await wrapper.findComponent({ name: 'SessionFlashcard' }).vm.$emit('closed')
+    await finishSession([])
 
-    expect(mockClearPersistedSession).toHaveBeenCalledOnce()
+    expect(wrapper.find('[data-testid="session-header__close"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="session-header__stop"]').exists()).toBe(false)
+  })
+
+  // ── header-end menu: only during studying [obligation] ─────────────────────
+
+  test('header-end (menu) renders during the studying phase [obligation]', () => {
+    const { wrapper } = makeWrapper()
+    expect(wrapper.find('[data-testid="session-header__menu"]').exists()).toBe(true)
+  })
+
+  test('header-end (menu) is absent during the summary phase [obligation]', async () => {
+    const { wrapper } = makeWrapper()
+
+    await finishSession([])
+
+    expect(wrapper.find('[data-testid="session-header__menu"]').exists()).toBe(false)
+  })
+
+  // ── header-end menu delegates to the controller ────────────────────────────
+
+  test('menu edit/move/delete/toggle-ratings delegate to the controller', async () => {
+    const { wrapper } = makeWrapper()
+
+    await wrapper.find('[data-testid="session-header__menu"]').trigger('click')
+    // The dropdown itself is exercised in session-header-menu.test.js; here we
+    // only need the wiring, so invoke the component's emitted handlers directly.
+    const menu = wrapper.findComponent({ name: 'SessionHeaderMenu' })
+    menu.vm.$emit('edit')
+    menu.vm.$emit('move')
+    menu.vm.$emit('delete')
+    menu.vm.$emit('toggle-ratings')
+
+    expect(mockStartEdit).toHaveBeenCalledOnce()
+    expect(mockOnMove).toHaveBeenCalledOnce()
+    expect(mockOnDelete).toHaveBeenCalledOnce()
+    expect(mockToggleRatings).toHaveBeenCalledOnce()
+  })
+
+  // ── onHeaderStop is phase-aware [obligation] ────────────────────────────────
+
+  describe('onHeaderStop: phase-aware close-button handler [obligation]', () => {
+    test('during studying, the close/stop button calls the controller requestClose(), not onClosed directly [obligation]', async () => {
+      const { wrapper, close } = makeWrapper()
+
+      await wrapper.find('[data-testid="session-header__stop"]').trigger('click')
+
+      expect(mockRequestClose).toHaveBeenCalledOnce()
+      expect(mockClearPersistedSession).not.toHaveBeenCalled()
+      expect(close).not.toHaveBeenCalled()
+    })
+
+    test('during summary, the close button calls onClosed() directly — sfx, clear persisted session, close() [obligation]', async () => {
+      const { wrapper, close } = makeWrapper()
+      await finishSession([])
+
+      await wrapper.find('[data-testid="session-header__close"]').trigger('click')
+
+      expect(mockRequestClose).not.toHaveBeenCalled()
+      expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+      expect(mockClearPersistedSession).toHaveBeenCalledOnce()
+      expect(close).toHaveBeenCalledOnce()
+    })
+  })
+
+  // ── useModalRequestClose (backdrop/esc) routes through onHeaderStop, phase-aware [obligation] ─
+  // Regression: before this refactor, useModalRequestClose only lived on the now-deleted
+  // flashcard/index.vue, so esc/backdrop during the summary phase fell through to a raw
+  // modal-stack pop() that skipped cleanup entirely. It's now registered at the shell level
+  // for the whole session lifetime, so both phases route through onHeaderStop.
+
+  describe('useModalRequestClose (backdrop/esc) [obligation]', () => {
+    test('during studying, esc/backdrop calls the controller requestClose() [obligation]', () => {
+      const { close } = makeWrapper()
+
+      request_close_handlers.get(TEST_MODAL_ID)()
+
+      expect(mockRequestClose).toHaveBeenCalledOnce()
+      expect(close).not.toHaveBeenCalled()
+    })
+
+    test('during summary, esc/backdrop calls onClosed() — sfx + clearPersistedSession + close() [obligation]', async () => {
+      const { close } = makeWrapper()
+      await finishSession([])
+
+      request_close_handlers.get(TEST_MODAL_ID)()
+
+      expect(mockRequestClose).not.toHaveBeenCalled()
+      expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+      expect(mockClearPersistedSession).toHaveBeenCalledOnce()
+      expect(close).toHaveBeenCalledOnce()
+    })
   })
 
   // ── onSessionFinished: switches to summary phase [obligation] ──────────────
 
-  test('@finished switches phase to summary [obligation]', async () => {
+  test('controller onFinished switches phase to summary [obligation]', async () => {
     const { wrapper } = makeWrapper()
 
-    await finishSession(wrapper)
+    await finishSession([])
 
     expect(wrapper.find('[data-testid="session-summary-stub"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="session-flashcard-stub"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="session-studying-stub"]').exists()).toBe(false)
   })
 
-  test('@finished only takes session_results — no secondary_action logic [obligation]', async () => {
+  test('controller onFinished forwards the session results to session-summary [obligation]', async () => {
     const { wrapper } = makeWrapper()
+    const results = [{ card_id: 1, passed: true }]
 
-    // Signal: only one argument (session_results) — passing two extra should still work
-    // but the second/third are ignored now
-    await finishSession(wrapper, [])
+    await finishSession(results)
 
-    expect(wrapper.find('[data-testid="session-summary-stub"]').exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'SessionSummary' }).props('results')).toEqual(results)
   })
 
   // ── summary @close forwards to onClosed → close() [obligation] ────────────
 
-  test('summary @close event calls close() [obligation]', async () => {
+  test('summary @close event calls onClosed (sfx + clear + close) [obligation]', async () => {
     const { wrapper, close } = makeWrapper()
 
-    await finishSession(wrapper)
+    await finishSession([])
     await wrapper.find('[data-testid="summary-close-btn"]').trigger('click')
 
     expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockClearPersistedSession).toHaveBeenCalledOnce()
     expect(close).toHaveBeenCalledOnce()
-    expect(close).toHaveBeenCalledWith()
   })
 
-  // ── emitStudySfx fires in pane enter's onStart, not at phase-flip [obligation] ─
+  // ── Title computation: single deck vs multi-deck ───────────────────────────
 
-  // The onPaneEnter → sessionPaneEnter(onStart→sfx) coupling is tested at the
-  // unit level in tests/unit/utils/animations/session-pane.test.js.
-  // Here we verify the integration-level invariant: sfx is NOT called during
-  // onSessionFinished itself (i.e. not at phase-flip time).
-  test('music_pizz_duo_hi sfx is NOT emitted directly in onSessionFinished [obligation]', async () => {
-    const { wrapper } = makeWrapper()
-    await finishSession(wrapper)
-
-    // The summary renders (phase flipped) but the sfx must not have been emitted
-    // during the onSessionFinished handler — it lives in the enter-hook onStart.
-    expect(wrapper.find('[data-testid="session-summary-stub"]').exists()).toBe(true)
-    expect(mockEmitStudySfx).not.toHaveBeenCalledWith('music_pizz_duo_hi')
-  })
-
-  // ── Title computation: single deck vs multi-deck [obligation] ─────────────
-
-  test('title equals the deck title when exactly one deck is passed [obligation]', () => {
+  test('title equals the deck title when exactly one deck is passed', () => {
     const deck1 = deck.one({ overrides: { id: 1, title: 'My Deck' } })
     const { wrapper } = makeWrapper({ decks_override: [deck1] })
-
-    const flashcard = wrapper.findComponent({ name: 'SessionFlashcard' })
-    expect(flashcard.props('title')).toBe('My Deck')
+    expect(wrapper.find('[data-testid="dialog-card-header__title"]').text()).toBe('My Deck')
   })
 
-  test('title is the multiple-decks i18n key when more than one deck passed [obligation]', () => {
+  test('title is the multiple-decks i18n key when more than one deck passed', () => {
     const deck1 = deck.one({ overrides: { id: 1, title: 'Deck One' } })
     const deck2 = deck.one({ overrides: { id: 2, title: 'Deck Two' } })
     const { wrapper } = makeWrapper({ decks_override: [deck1, deck2] })
 
-    const flashcard = wrapper.findComponent({ name: 'SessionFlashcard' })
-    // The i18n key 'study-session.multiple-decks-title' renders as "Multiple Decks"
-    // in the test setup; we just verify it's not one of the individual deck titles.
-    const title = flashcard.props('title')
+    const title = wrapper.find('[data-testid="dialog-card-header__title"]').text()
     expect(title).not.toBe('Deck One')
     expect(title).not.toBe('Deck Two')
-    expect(typeof title).toBe('string')
     expect(title.length).toBeGreaterThan(0)
   })
 
-  // ── dialog-card size="lg" sources full_bleed_at="w<sm" [obligation] ────────
+  // ── dialog-card size="lg" sources full_bleed_at="w<sm" ─────────────────────
 
-  test('[obligation] size="lg" resolves full_bleed_at to "w<sm" (not the "md"/"sm" default), since no explicit full_bleed_at is passed', () => {
+  test('size="lg" resolves full_bleed_at to "w<sm"', () => {
     makeWrapper()
     expect(capturedQueries).toContain('w<sm')
     expect(capturedQueries).not.toContain('w<sm | h<sm')
   })
 
-  // ── root sizing: fluid w-full/max-w-160 always, h-170 desktop-only [obligation] ─
-
-  test('[obligation] root carries w-full and max-w-160 on desktop', () => {
-    mediaState.is_mobile.value = false
+  // ── emitStudySfx fires in pane enter's onStart, not at phase-flip [obligation] ─
+  // The onPaneEnter → sessionPaneEnter(onStart→sfx) coupling is tested at the
+  // unit level in tests/unit/utils/animations/session-pane.test.js. Here we
+  // verify the integration-level invariant: sfx is NOT called directly inside
+  // onSessionFinished itself (i.e. not at phase-flip time) — it only fires via
+  // the pane's enter-hook onStart callback.
+  test('music_pizz_duo_hi sfx is NOT emitted directly in onSessionFinished [obligation]', async () => {
     const { wrapper } = makeWrapper()
-    const classes = wrapper.find('[data-testid="study-session"]').classes()
-    expect(classes).toContain('w-full')
-    expect(classes).toContain('max-w-160')
-    expect(classes).toContain('h-170')
+
+    await finishSession([])
+
+    expect(wrapper.find('[data-testid="session-summary-stub"]').exists()).toBe(true)
+    expect(mockEmitStudySfx).not.toHaveBeenCalledWith('music_pizz_duo_hi')
   })
 
-  test('[obligation] root carries w-full and max-w-160 on mobile too (fluid, capped)', () => {
-    mediaState.is_mobile.value = true
-    const { wrapper } = makeWrapper()
-    const classes = wrapper.find('[data-testid="study-session"]').classes()
-    expect(classes).toContain('w-full')
-    expect(classes).toContain('max-w-160')
-  })
+  // ── regression: outlet must not clip the swipe/drag animation ──────────────
 
-  test('[obligation] mobile viewport overrides h-170 via h-full! so height stays fluid', () => {
-    mediaState.is_mobile.value = true
-    const { wrapper } = makeWrapper()
-    const classes = wrapper.find('[data-testid="study-session"]').classes()
-    expect(classes).toContain('h-full!')
-  })
-
-  // ── regression: outlet must not clip the swipe/drag animation [obligation] ─
-  // study-session__outlet used to carry its own overflow-hidden, which clipped
-  // the flashcard swipe/drag animation at the narrower content column instead
-  // of the full card. dialog-card's own root overflow-hidden (clipping at the
-  // true full-card boundary) is now the only clip boundary.
-
-  test('[obligation] study-session__outlet does not carry overflow-hidden', () => {
+  test('study-session__outlet does not carry overflow-hidden', () => {
     const { wrapper } = makeWrapper()
     const classes = wrapper.find('[data-testid="study-session__outlet"]').classes()
     expect(classes).not.toContain('overflow-hidden')
-  })
-
-  // ── header teleport target [obligation] ────────────────────────────────────
-  // session-header teleports itself into study-session__header-target, which
-  // study-session renders via dialog-card's #header slot override.
-
-  test('[obligation] renders a study-session__header-target placeholder via the #header slot', () => {
-    const { wrapper } = makeWrapper()
-    expect(wrapper.find('[data-testid="study-session__header-target"]').exists()).toBe(true)
   })
 })

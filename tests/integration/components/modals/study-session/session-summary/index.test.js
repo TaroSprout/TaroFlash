@@ -1,28 +1,10 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h, computed } from 'vue'
+import { defineComponent, h } from 'vue'
 import SessionSummary from '@/components/flashcard-session/session-summary/index.vue'
-import { dialogCardViewportKey } from '@/components/layout-kit/dialog-card/dialog-card-viewport'
-import { deck } from '../../../../../fixtures/deck'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
-// Stub session-header to control @stop emission and check show_menu/title
-const SessionHeaderStub = defineComponent({
-  name: 'SessionHeader',
-  props: ['title', 'is_cover', 'show_menu'],
-  emits: ['stop'],
-  setup(props, { emit }) {
-    return () =>
-      h(
-        'div',
-        { 'data-testid': 'session-header-stub', 'data-show-menu': String(props.show_menu) },
-        [h('button', { 'data-testid': 'header-stop-btn', onClick: () => emit('stop') }, 'X')]
-      )
-  }
-})
-
-// Stub stat-tile so we don't need to provide viewport for it
 const StatTileStub = defineComponent({
   name: 'StatTile',
   props: ['summary'],
@@ -46,23 +28,10 @@ function makeResult(overrides = {}) {
   }
 }
 
-function makeDeck(overrides = {}) {
-  return deck.one({ overrides: { title: 'My Test Deck', ...overrides } })
-}
-
-function mountSummary({ results = [], deck_data = makeDeck() } = {}) {
+function mountSummary({ results = [] } = {}) {
   return mount(SessionSummary, {
-    props: { title: deck_data.title, results },
-    global: {
-      stubs: {
-        SessionHeader: SessionHeaderStub,
-        StatTile: StatTileStub
-      },
-      provide: {
-        // Provide the viewport injection so useDialogCardViewport() doesn't throw
-        [dialogCardViewportKey]: computed(() => 'desktop')
-      }
-    }
+    props: { results },
+    global: { stubs: { StatTile: StatTileStub } }
   })
 }
 
@@ -91,31 +60,24 @@ describe('SessionSummary (index.vue)', () => {
     expect(wrapper.find('[data-testid="session-summary__title"]').exists()).toBe(true)
   })
 
-  // ── Header: deck title + show_menu=false [obligation] ─────────────────────
+  // ── No title prop, no session-header [obligation] ─────────────────────────
+  // session-summary no longer owns any header chrome — the shell
+  // (flashcard-session/index.vue) renders the header via dialog-card's
+  // native slots, so session-summary only takes `results` + emits `close`.
 
-  test('session-header receives deck title [obligation]', () => {
-    const wrapper = mountSummary({ deck_data: makeDeck({ title: 'Kanji N3' }) })
-    // The stub forwards props — title is passed through to SessionHeader
-    expect(wrapper.findComponent({ name: 'SessionHeader' }).props('title')).toBe('Kanji N3')
-  })
-
-  test('session-header receives show_menu=false [obligation]', () => {
+  test('does not render a session-header [obligation]', () => {
     const wrapper = mountSummary()
-    const header = wrapper.find('[data-testid="session-header-stub"]')
-    expect(header.attributes('data-show-menu')).toBe('false')
+    expect(wrapper.findComponent({ name: 'SessionHeader' }).exists()).toBe(false)
+    expect(wrapper.find('[data-testid="session-header"]').exists()).toBe(false)
   })
 
-  // ── Header X → emits close [obligation] ───────────────────────────────────
-
-  test('header @stop (X button) emits close [obligation]', async () => {
-    const wrapper = mountSummary()
-    await wrapper.find('[data-testid="header-stop-btn"]').trigger('click')
-    expect(wrapper.emitted('close')).toHaveLength(1)
+  test('mounts fine without a title prop [obligation]', () => {
+    expect(() => mountSummary()).not.toThrow()
   })
 
-  // ── Score blurb: recalled/total pill spans [obligation] ──────────────────
+  // ── Score blurb: recalled/total pill spans ────────────────────────────────
 
-  test('score-recalled span shows correct passed count [obligation]', () => {
+  test('score-recalled span shows correct passed count', () => {
     const results = [
       makeResult({ card_id: 1, passed: true }),
       makeResult({ card_id: 2, passed: false }),
@@ -125,7 +87,7 @@ describe('SessionSummary (index.vue)', () => {
     expect(wrapper.find('[data-testid="session-summary__score-recalled"]').text()).toBe('2')
   })
 
-  test('score-total span shows total count [obligation]', () => {
+  test('score-total span shows total count', () => {
     const results = [makeResult({ card_id: 1 }), makeResult({ card_id: 2 })]
     const wrapper = mountSummary({ results })
     expect(wrapper.find('[data-testid="session-summary__score-total"]').text()).toBe('2')
@@ -137,9 +99,9 @@ describe('SessionSummary (index.vue)', () => {
     expect(wrapper.find('[data-testid="session-summary__score-total"]').text()).toBe('0')
   })
 
-  // ── Stat tile rendered [obligation] ───────────────────────────────────────
+  // ── Stat tile rendered ─────────────────────────────────────────────────────
 
-  test('renders the stat-tile stub [obligation]', () => {
+  test('renders the stat-tile stub', () => {
     const wrapper = mountSummary()
     expect(wrapper.find('[data-testid="stat-tile-stub"]').exists()).toBe(true)
   })
@@ -150,14 +112,5 @@ describe('SessionSummary (index.vue)', () => {
     const wrapper = mountSummary()
     await wrapper.find('[data-testid="session-summary__close"]').trigger('click')
     expect(wrapper.emitted('close')).toHaveLength(1)
-  })
-
-  test('both header X and footer close button emit close independently', async () => {
-    const wrapper = mountSummary()
-
-    await wrapper.find('[data-testid="header-stop-btn"]').trigger('click')
-    await wrapper.find('[data-testid="session-summary__close"]').trigger('click')
-
-    expect(wrapper.emitted('close')).toHaveLength(2)
   })
 })

@@ -6,7 +6,7 @@ import { computed, onUnmounted, useTemplateRef, type StyleValue } from 'vue'
 import type { gsap } from 'gsap'
 import { type Grade, type RecordLog } from 'ts-fsrs'
 import { coverCardBeforeEnter, coverCardEnter } from '@/utils/animations/session-intro'
-import { useDeckContext } from '../deck-context'
+import { useDeckContext } from '../../deck-context'
 import { useCoverCarousel } from '@/components/flashcard-session/composables/cover-carousel'
 import { type StudyCard as StudyCardType } from '@/components/flashcard-session/composables/flashcard-session'
 

@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import SessionFlashcard from './flashcard/index.vue'
+import SessionStudying from './session-studying/index.vue'
 import SessionSummary from './session-summary/index.vue'
+import SessionHeaderCloseButton from './session-header-close-button.vue'
+import SessionHeaderMenu from './session-header-menu.vue'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
@@ -8,6 +10,8 @@ import DialogCardPager from '@/components/layout-kit/dialog-card/dialog-card-pag
 import { emitSfx, emitStudySfx } from '@/sfx/bus'
 import { useProvideDeckContext } from './deck-context'
 import { clearPersistedSession } from './composables/session-persistence'
+import { provideStudySessionController } from './composables/session-controller'
+import { useModalRequestClose } from '@/composables/modal'
 import type { CardReviewResult } from './composables/session-queue'
 import type { SecondaryAction } from './composables/study-modal'
 
@@ -30,6 +34,24 @@ useProvideDeckContext(() => decks)
 const phase = ref<Phase>('studying')
 const results = ref<CardReviewResult[]>([])
 
+const {
+  is_cover,
+  can_edit,
+  show_all_ratings,
+  requestClose,
+  startEdit,
+  onMove,
+  onDelete,
+  toggleRatings
+} = provideStudySessionController({
+  decks,
+  config_override,
+  onFinished: onSessionFinished,
+  onClosed
+})
+
+useModalRequestClose(onHeaderStop)
+
 function onSessionFinished(session_results: CardReviewResult[]) {
   results.value = session_results
   phase.value = 'summary'
@@ -45,6 +67,12 @@ function onClosed() {
 function onPaneEnterStart() {
   emitStudySfx('music_pizz_duo_hi')
 }
+
+/** Header close/stop button, and the modal backdrop / esc handler. */
+function onHeaderStop() {
+  if (phase.value === 'studying') requestClose()
+  else onClosed()
+}
 </script>
 
 <template>
@@ -53,28 +81,34 @@ function onPaneEnterStart() {
     class="bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-brown-500"
     bg_class="bg-brown-300 dark:bg-grey-800"
     size="lg"
+    :title="title"
   >
-    <template #header>
-      <div data-testid="study-session__header-target"></div>
+    <template #header-start>
+      <session-header-close-button
+        :is_cover="phase === 'summary' || is_cover"
+        @stop="onHeaderStop"
+      />
+    </template>
+
+    <template v-if="phase === 'studying'" #header-end>
+      <session-header-menu
+        :can_edit="can_edit"
+        :show_all_ratings="show_all_ratings"
+        @edit="startEdit"
+        @move="onMove"
+        @delete="onDelete"
+        @toggle-ratings="toggleRatings"
+      />
     </template>
 
     <template #default>
       <div data-testid="study-session__outlet" class="relative w-full h-full">
         <dialog-card-pager @enter-start="onPaneEnterStart">
-          <session-flashcard
-            v-if="phase === 'studying'"
-            key="studying"
-            :decks="decks"
-            :title="title"
-            :config_override="config_override"
-            @closed="onClosed"
-            @finished="onSessionFinished"
-          />
+          <session-studying v-if="phase === 'studying'" key="studying" />
           <session-summary
             v-else
             key="summary"
             class="absolute inset-0 z-10"
-            :title="title"
             :results="results"
             @close="onClosed"
           />

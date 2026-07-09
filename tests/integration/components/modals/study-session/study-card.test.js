@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/tes
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 import { FSRS, generatorParameters, createEmptyCard, Rating } from 'ts-fsrs'
-import StudyCard from '@/components/flashcard-session/flashcard/study-card.vue'
+import StudyCard from '@/components/flashcard-session/session-studying/card/study-card.vue'
 import { useProvideDeckContext } from '@/components/flashcard-session/deck-context'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
