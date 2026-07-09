@@ -2,7 +2,7 @@ import { useModal } from '@/composables/modal'
 import { emitSfx } from '@/sfx/bus'
 import CollectionCreate, {
   type CollectionCreateResponse
-} from '@/components/modals/collection-create/index.vue'
+} from '@/views/audio-reader/collection-create-modal.vue'
 
 /**
  * Open the create-collection modal. Resolves to the created LessonCollection,
