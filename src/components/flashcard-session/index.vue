@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SessionFlashcard from './session-flashcard/index.vue'
+import SessionFlashcard from './flashcard/index.vue'
 import SessionSummary from './session-summary/index.vue'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -8,7 +8,7 @@ import DialogCardPager from '@/components/layout-kit/dialog-card/dialog-card-pag
 import { emitSfx, emitStudySfx } from '@/sfx/bus'
 import { useProvideDeckContext } from './deck-context'
 import { clearPersistedSession } from './composables/session-persistence'
-import type { CardReviewResult } from './composables/session-core'
+import type { CardReviewResult } from './composables/session-queue'
 import type { SecondaryAction } from './composables/study-modal'
 
 type Phase = 'studying' | 'summary'

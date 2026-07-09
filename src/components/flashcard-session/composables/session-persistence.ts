@@ -1,5 +1,5 @@
 import { useSessionRef } from '@/composables/storage/session-ref'
-import type { CardReviewResult } from './session-core'
+import type { CardReviewResult } from './session-queue'
 
 const STORAGE_KEY = 'study-session'
 

@@ -4,7 +4,7 @@ import TaroPhone from '@/components/taro-phone/index.vue'
 import MobileDockHost from '@/components/mobile-dock/mobile-dock-host.vue'
 import RouteSkeleton from '@/components/route-skeleton.vue'
 import { useRouteTransition } from '@/composables/ui/route-transition'
-import { useResumeStudySession } from '@/components/study-session/composables/session-resume'
+import { useResumeStudySession } from '@/components/flashcard-session/composables/session-resume'
 
 const { show_skeleton_overlay, onSuspensePending, onSuspenseResolve, onLeave, onEnter } =
   useRouteTransition()

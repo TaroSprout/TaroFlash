@@ -1,4 +1,4 @@
-import type { CardReviewResult } from '@/components/study-session/composables/session-core'
+import type { CardReviewResult } from '@/components/flashcard-session/composables/session-queue'
 
 /**
  * Pure FSRS-aware aggregation for the post-session summary. Turns the raw

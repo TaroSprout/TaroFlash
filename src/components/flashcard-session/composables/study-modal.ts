@@ -1,6 +1,6 @@
 import { useModal } from '@/composables/modal'
 import { emitSfx } from '@/sfx/bus'
-import StudySession from '@/components/study-session/index.vue'
+import StudySession from '@/components/flashcard-session/index.vue'
 
 export type SecondaryAction = 'study-more' | 'study-all' | 'study-again'
 

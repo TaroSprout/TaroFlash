@@ -1,20 +1,17 @@
 import { ref, computed } from 'vue'
 import { type Grade } from 'ts-fsrs'
-import { useStudySessionCore } from './session-core'
+import { useSessionQueue } from './session-queue'
 import { emitStudySfx } from '@/sfx/bus'
 
-export type { StudyCard } from './session-core'
+export type { StudyCard, CardReviewResult } from './session-queue'
 
 /**
- * Flashcard-mode composable. Builds on top of useStudySessionCore by adding
- * the concept of card sides: a card can be on its front, back, or cover
- * (pre-session splash). All side transitions live here, keeping the core
- * mode-agnostic.
- *
- * This is the composable used directly by session-flashcard.vue.
+ * Wraps `useSessionQueue` with the concept of card sides: a card can be on
+ * its front, back, or cover (pre-session splash). All side transitions live
+ * here. This is the composable used directly by flashcard/index.vue.
  */
 export function useFlashcardSession(_config?: Partial<DeckConfig>) {
-  const core = useStudySessionCore(_config)
+  const core = useSessionQueue(_config)
 
   const current_card_side = ref<CardSide>('cover')
 

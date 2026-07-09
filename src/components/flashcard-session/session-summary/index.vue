@@ -3,10 +3,10 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import SessionHeader from '../session-flashcard/session-header.vue'
+import SessionHeader from '../flashcard/session-header.vue'
 import StatTile from './stat-tile.vue'
 import { aggregateSession } from './aggregate'
-import type { CardReviewResult } from '@/components/study-session/composables/session-core'
+import type { CardReviewResult } from '@/components/flashcard-session/composables/session-queue'
 
 const { results } = defineProps<{
   title: string
