@@ -39,10 +39,7 @@ export function useSubscriptionActions() {
 
     try {
       await cancelMutation.mutateAsync(true)
-      notice.success(t('settings.subscription.plan.cancel-success'), {
-        variant: 'panel',
-        sfx: { open: 'success_3' }
-      })
+      notice.success(t('settings.subscription.plan.cancel-success'), { variant: 'panel' })
     } catch {
       notice.error(t('settings.subscription.plan.cancel-error'), { variant: 'panel' })
     }
@@ -51,10 +48,7 @@ export function useSubscriptionActions() {
   async function onResume() {
     try {
       await resumeMutation.mutateAsync()
-      notice.success(t('settings.subscription.plan.resume-success'), {
-        variant: 'panel',
-        sfx: { open: 'success_3' }
-      })
+      notice.success(t('settings.subscription.plan.resume-success'), { variant: 'panel' })
     } catch {
       notice.error(t('settings.subscription.plan.resume-error'), { variant: 'panel' })
     }

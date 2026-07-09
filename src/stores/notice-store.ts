@@ -37,7 +37,7 @@ export type Notice = NoticeOptions & {
   id: string
 }
 
-const DEFAULT_DELAY = 2000
+const DEFAULT_DELAY = 3000
 
 export const useNoticeStore = defineStore('notice', () => {
   const notices = ref<Notice[]>([])
@@ -67,11 +67,11 @@ export const useNoticeStore = defineStore('notice', () => {
   }
 
   function warn(message: string, options?: NoticeOptions): void {
-    addNotice('warn', message, options)
+    addNotice('warn', message, { ...options, sfx: { open: 'etc_error_swipe', ...options?.sfx } })
   }
 
   function success(message: string, options?: NoticeOptions): void {
-    addNotice('success', message, options)
+    addNotice('success', message, { ...options, sfx: { open: 'success_3', ...options?.sfx } })
   }
 
   function error(message: string, options?: NoticeOptions): void {
@@ -82,7 +82,10 @@ export const useNoticeStore = defineStore('notice', () => {
   }
 
   function info(message: string, options?: NoticeOptions): void {
-    addNotice('info', message, options)
+    addNotice('info', message, {
+      ...options,
+      sfx: { open: 'chime_ring', ...options?.sfx }
+    })
   }
 
   return {
