@@ -5,6 +5,7 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { NOTICE_ICON, NOTICE_THEME, NOTICE_THEME_DARK } from './state-config'
 import { useSwipeDismiss } from './use-swipe-dismiss'
+import { usePausableTimer } from './use-pausable-timer'
 import { springScaleIn, scaleFadeOut } from '@/utils/animations/modal'
 import { emitSfx } from '@/sfx/bus'
 import { type Notice, type NoticeAction } from '@/stores/notice-store'
@@ -22,27 +23,21 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const open = ref(false)
-const timeout = ref<number>()
 const panel_ref = ref<HTMLElement | null>(null)
 
 useSwipeDismiss(panel_ref, { directions: ['up', 'down'], onDismiss: () => closePanel() })
+const { stop: stopAutoClose } = usePausableTimer(panel_ref, closePanel, {
+  delay: notice.delay,
+  persist: notice.persist
+})
 
 onMounted(() => {
   if (notice.sfx?.open) emitSfx(notice.sfx.open)
-  openPanel()
+  open.value = true
 })
 
-function openPanel(): void {
-  open.value = true
-  if (notice.persist) return
-
-  timeout.value = window.setTimeout(() => {
-    closePanel()
-  }, notice.delay)
-}
-
 function closePanel(): void {
-  clearTimeout(timeout.value)
+  stopAutoClose()
   open.value = false
   notice.onDismiss?.()
 }

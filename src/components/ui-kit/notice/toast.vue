@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { NOTICE_ICON, NOTICE_THEME, NOTICE_THEME_DARK } from './state-config'
 import { useSwipeDismiss } from './use-swipe-dismiss'
+import { usePausableTimer } from './use-pausable-timer'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { emitSfx } from '@/sfx/bus'
 import { type Notice, type NoticeAction } from '@/stores/notice-store'
@@ -24,19 +25,17 @@ const root_ref = ref<HTMLElement | null>(null)
 const is_coarse = useMatchMedia('coarse')
 
 useSwipeDismiss(root_ref, { directions: ['up'], onDismiss: () => closeToast() })
-
-let timeout: ReturnType<typeof setTimeout> | undefined
+const { stop: stopAutoClose } = usePausableTimer(root_ref, closeToast, {
+  delay: notice.delay,
+  persist: notice.persist
+})
 
 onMounted(() => {
   if (notice.sfx?.open) emitSfx(notice.sfx.open)
-  if (notice.persist) return
-  timeout = setTimeout(closeToast, notice.delay)
 })
 
-onBeforeUnmount(() => clearTimeout(timeout))
-
 function closeToast(): void {
-  clearTimeout(timeout)
+  stopAutoClose()
   notice.onDismiss?.()
   emit('close', notice)
 }
