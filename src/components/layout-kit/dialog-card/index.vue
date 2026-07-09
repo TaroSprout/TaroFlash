@@ -41,6 +41,11 @@ export type DialogCardProps = {
   // that full height, not the space left over after the header. The header
   // then visually floats over the top of the body instead of pushing it down.
   float_header?: boolean
+  // Background utility classes. A dedicated prop rather than a `class`
+  // override so a caller's value replaces the default outright instead of
+  // both landing in the same Tailwind layer, where two conflicting bg-*
+  // utilities race unpredictably.
+  bg_class?: string
 }
 
 const {
@@ -54,7 +59,8 @@ const {
   dialog_px,
   content_max_width,
   content_breakout_max_width,
-  float_header = false
+  float_header = false,
+  bg_class = 'bg-brown-200 dark:bg-grey-800'
 } = defineProps<DialogCardProps>()
 
 const emit = defineEmits<{
@@ -89,6 +95,7 @@ defineExpose({ viewport })
     class="relative flex flex-col gap-4 overflow-hidden [--dialog-px:1.5rem] sm:[--dialog-px:2rem]"
     :class="[
       SIZE_CLASSES[size],
+      bg_class,
       viewport === 'mobile'
         ? 'h-full! w-full! rounded-none!'
         : 'rounded-8 shadow-lg border-t border-l border-brown-100 dark:border-grey-900'

@@ -25,7 +25,7 @@ async function onSubmit() {
 <template>
   <dialog-card
     data-testid="forgot-password-modal-card"
-    class="bg-brown-200 dark:bg-grey-800 gap-0!"
+    class="gap-0!"
     size="sm"
     float_header
     data-theme="brown-50"

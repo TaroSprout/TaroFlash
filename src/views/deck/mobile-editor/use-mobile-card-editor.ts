@@ -1,10 +1,13 @@
-import { computed, ref, shallowRef, type InjectionKey } from 'vue'
+import { computed, ref, shallowRef } from 'vue'
 import { emitSfx } from '@/sfx/bus'
+import { useModal } from '@/composables/modal'
 import type { CardListController } from '@/views/deck/composables'
+import { mobileCardEditorKey } from './mobile-card-editor-key'
+import MobileEditor from './index.vue'
 
 export type MobileCardEditor = ReturnType<typeof useMobileCardEditor>
 
-export const mobileCardEditorKey = Symbol('mobileCardEditor') as InjectionKey<MobileCardEditor>
+export { mobileCardEditorKey }
 
 type CardSide = 'front' | 'back'
 
@@ -28,7 +31,9 @@ export type ImageControls = { openPicker: () => void; onRemove: () => void }
 export function useMobileCardEditor(controller: CardListController) {
   const cards = controller.list.all_cards
 
-  const open = ref(false)
+  const modal = useModal()
+  let close_modal: (() => void) | null = null
+
   const cursor_client_id = ref<string | null>(null)
   const side = ref<CardSide>('front')
   const image_controls = shallowRef<ImageControls | null>(null)
@@ -51,12 +56,24 @@ export function useMobileCardEditor(controller: CardListController) {
 
     cursor_client_id.value = target
     side.value = 'front'
-    open.value = true
     emitSfx('snappy_button_3')
+
+    if (close_modal) return
+
+    close_modal = modal.open(MobileEditor, {
+      mode: 'popup',
+      context: { key: mobileCardEditorKey, value: api }
+    }).close
   }
 
   function close() {
-    open.value = false
+    close_modal?.()
+  }
+
+  // Called by the modal wrapper's onUnmounted so state stays in sync no matter
+  // how the modal actually closed (done button, esc, background tap).
+  function onClosed() {
+    close_modal = null
     emitSfx('snappy_button_5')
   }
 
@@ -123,8 +140,7 @@ export function useMobileCardEditor(controller: CardListController) {
     reconcileCursor(at)
   }
 
-  return {
-    open,
+  const api = {
     side,
     cards,
     current,
@@ -137,6 +153,7 @@ export function useMobileCardEditor(controller: CardListController) {
     saving: controller.saving,
     open_at,
     close,
+    onClosed,
     flip,
     prev,
     next,
@@ -144,4 +161,6 @@ export function useMobileCardEditor(controller: CardListController) {
     moveCard,
     deleteCard
   }
+
+  return api
 }
