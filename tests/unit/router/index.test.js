@@ -26,7 +26,7 @@ vi.mock('@/api/members', () => ({
   prefetchMemberById: mockPrefetchMemberById
 }))
 
-vi.mock('@/views/authenticated.vue', () => ({ default: {} }))
+vi.mock('@/views/app-shell/authenticated.vue', () => ({ default: {} }))
 
 import router from '@/router/index'
 

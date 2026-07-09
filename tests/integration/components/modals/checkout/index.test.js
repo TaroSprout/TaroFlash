@@ -22,7 +22,7 @@ vi.mock('gsap', () => ({
   }
 }))
 
-vi.mock('@/components/modals/checkout/use-checkout', () => ({
+vi.mock('@/components/billing/checkout-modal/use-checkout', () => ({
   useCheckout: () => ({
     status: checkoutState.status,
     is_ready: checkoutState.is_ready,
@@ -41,7 +41,7 @@ vi.mock('@/composables/ui/media-query', () => ({
   })
 }))
 
-import Checkout from '@/components/modals/checkout/index.vue'
+import Checkout from '@/components/billing/checkout-modal/index.vue'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 
 // ── Setup ──────────────────────────────────────────────────────────────────────

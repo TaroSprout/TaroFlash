@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { createApp, defineComponent, nextTick, ref } from 'vue'
-import { useCoverCarousel } from '@/components/flashcard-session/composables/cover-carousel'
+import { useCoverCarousel } from '@/views/study-session/composables/cover-carousel'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 

@@ -15,11 +15,11 @@ const mockEmailActions = {
   pending: ref(false),
   submit: vi.fn()
 }
-vi.mock('@/components/settings/account-access/use-email-actions', () => ({
+vi.mock('@/views/settings/account-access/use-email-actions', () => ({
   useEmailActions: () => mockEmailActions
 }))
 
-import EmailSection from '@/components/settings/account-access/email-section.vue'
+import EmailSection from '@/views/settings/account-access/email-section.vue'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 

@@ -1,6 +1,6 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import CheckoutFooter from '@/components/modals/checkout/checkout-footer.vue'
+import CheckoutFooter from '@/components/billing/checkout-modal/checkout-footer.vue'
 
 function mountFooter(props) {
   return shallowMount(CheckoutFooter, { props })

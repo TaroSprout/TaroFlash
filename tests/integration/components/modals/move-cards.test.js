@@ -134,7 +134,7 @@ const ScrollBarStub = defineComponent({
   }
 })
 
-import MoveCardsModal from '@/components/modals/move-cards.vue'
+import MoveCardsModal from '@/components/card/move-cards-modal.vue'
 import { useNoticeStore } from '@/stores/notice-store'
 
 function makeCard(overrides = {}) {

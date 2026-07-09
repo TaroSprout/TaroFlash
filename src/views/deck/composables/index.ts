@@ -1,5 +1,5 @@
 // Deck-view card-editor orchestration. Colocated with the deck view because
-// it's consumed only by views/deck/** (card-editor, card-grid, mode-toolbar,
+// it's consumed only by deck/** (card-editor, card-grid, mode-toolbar,
 // deck-hero). For reusable, feature-neutral card primitives (mutations,
 // selection, prompts, gates, image upload) import from `@/composables/card`.
 

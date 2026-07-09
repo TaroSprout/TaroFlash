@@ -48,7 +48,7 @@ vi.mock('@/composables/billing/use-checkout-elements', () => ({
   })
 }))
 
-import { useCheckout } from '@/components/modals/checkout/use-checkout'
+import { useCheckout } from '@/components/billing/checkout-modal/use-checkout'
 
 // ── Setup ──────────────────────────────────────────────────────────────────────
 

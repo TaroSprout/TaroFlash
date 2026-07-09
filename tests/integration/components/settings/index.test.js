@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, nextTick, useAttrs } from 'vue'
-import { SETTINGS_SHEET_BREAKPOINTS } from '@/components/settings/layout'
+import { SETTINGS_SHEET_BREAKPOINTS } from '@/views/settings/layout'
 import { useMatchMedia } from '@/composables/ui/media-query'
 
 // ── Hoisted state ─────────────────────────────────────────────────────────────
@@ -92,7 +92,7 @@ vi.mock('@/composables/alert', () => ({
   useAlert: () => ({ warn: mockAlertWarn })
 }))
 
-vi.mock('@/components/settings/tab-index/index.vue', async () => {
+vi.mock('@/views/settings/tab-index/index.vue', async () => {
   const { defineComponent, h } = await import('vue')
   return {
     default: defineComponent({
@@ -119,7 +119,7 @@ vi.mock('@/components/settings/tab-index/index.vue', async () => {
 // stand-in. Their own business logic is covered in their dedicated test files
 // (tab-profile.test.js, tab-subscription.test.js, etc.) — this file only
 // exercises SettingsApp's own routing/chrome/provide wiring.
-vi.mock('@/components/settings/tab-profile/index.vue', async () => {
+vi.mock('@/views/settings/tab-profile/index.vue', async () => {
   const { defineComponent, h } = await import('vue')
   return {
     default: defineComponent({
@@ -129,7 +129,7 @@ vi.mock('@/components/settings/tab-profile/index.vue', async () => {
   }
 })
 
-vi.mock('@/components/settings/tab-app/index.vue', async () => {
+vi.mock('@/views/settings/tab-app/index.vue', async () => {
   const { defineComponent, h } = await import('vue')
   return {
     default: defineComponent({
@@ -139,7 +139,7 @@ vi.mock('@/components/settings/tab-app/index.vue', async () => {
   }
 })
 
-vi.mock('@/components/settings/tab-review-preferences/index.vue', async () => {
+vi.mock('@/views/settings/tab-review-preferences/index.vue', async () => {
   const { defineComponent, h } = await import('vue')
   return {
     default: defineComponent({
@@ -149,7 +149,7 @@ vi.mock('@/components/settings/tab-review-preferences/index.vue', async () => {
   }
 })
 
-vi.mock('@/components/settings/tab-danger-zone/index.vue', async () => {
+vi.mock('@/views/settings/tab-danger-zone/index.vue', async () => {
   const { defineComponent, h } = await import('vue')
   return {
     default: defineComponent({
@@ -162,9 +162,9 @@ vi.mock('@/components/settings/tab-danger-zone/index.vue', async () => {
 // TabSubscription doubles as the recede/restore inject probe below — it
 // exposes the same recede-trigger/restore-trigger buttons the dedicated
 // InjectRecedeStub used to provide via global.stubs.
-vi.mock('@/components/settings/tab-subscription/index.vue', async () => {
+vi.mock('@/views/settings/tab-subscription/index.vue', async () => {
   const { defineComponent, h, inject } = await import('vue')
-  const { settingsRecedeKey } = await import('@/components/settings/layout')
+  const { settingsRecedeKey } = await import('@/views/settings/layout')
   return {
     default: defineComponent({
       name: 'TabSubscription',
@@ -180,7 +180,7 @@ vi.mock('@/components/settings/tab-subscription/index.vue', async () => {
   }
 })
 
-vi.mock('@/components/settings/tab-account-access/index.vue', async () => {
+vi.mock('@/views/settings/tab-account-access/index.vue', async () => {
   const { defineComponent, h } = await import('vue')
   return {
     default: defineComponent({
@@ -295,7 +295,7 @@ const TabSheetStub = defineComponent({
   }
 })
 
-import SettingsApp from '@/components/settings/index.vue'
+import SettingsApp from '@/views/settings/index.vue'
 
 // ── Factory ───────────────────────────────────────────────────────────────────
 

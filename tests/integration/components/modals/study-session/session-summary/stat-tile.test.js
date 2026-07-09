@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import StatTile from '@/components/flashcard-session/session-summary/stat-tile.vue'
+import StatTile from '@/views/study-session/session-summary/stat-tile.vue'
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 

@@ -5,7 +5,7 @@ import { defineComponent, h, ref } from 'vue'
 // Deck context resolves a card's appearance by deck_id. Mock the seam so each
 // test controls what appearanceFor() returns for the card under test.
 const { mockAppearanceFor } = vi.hoisted(() => ({ mockAppearanceFor: vi.fn(() => ({})) }))
-vi.mock('@/components/flashcard-session/deck-context', () => ({
+vi.mock('@/views/study-session/deck-context', () => ({
   useDeckContext: () => ref({ appearanceFor: mockAppearanceFor, covers: [] })
 }))
 
@@ -27,7 +27,7 @@ const FaceEditorStub = defineComponent({
 
 // ── Imports ───────────────────────────────────────────────────────────────────
 
-import StudyCardEdit from '@/components/flashcard-session/session-studying/card/study-card-edit.vue'
+import StudyCardEdit from '@/views/study-session/session-studying/card/study-card-edit.vue'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

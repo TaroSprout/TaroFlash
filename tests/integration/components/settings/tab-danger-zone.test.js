@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
-import TabDangerZone from '@/components/settings/tab-danger-zone/index.vue'
+import TabDangerZone from '@/views/settings/tab-danger-zone/index.vue'
 import { memberDangerActionsKey } from '@/composables/member/danger-actions'
 
 const ButtonStub = defineComponent({

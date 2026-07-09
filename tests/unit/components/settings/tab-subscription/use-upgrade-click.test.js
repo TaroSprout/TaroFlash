@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { createApp } from 'vue'
-import { settingsRecedeKey } from '@/components/settings/layout'
+import { settingsRecedeKey } from '@/views/settings/layout'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -16,7 +16,7 @@ vi.mock('@/composables/member/subscription-actions', () => ({
   })
 }))
 
-import { useUpgradeClick } from '@/components/settings/tab-subscription/use-upgrade-click'
+import { useUpgradeClick } from '@/views/settings/tab-subscription/use-upgrade-click'
 
 // ── Setup ─────────────────────────────────────────────────────────────────────
 

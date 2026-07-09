@@ -3,14 +3,14 @@ import { useSessionStore } from '@/stores/session'
 import { useMemberStore } from '@/stores/member'
 import { prefetchMemberDecks } from '@/api/decks'
 import { prefetchMemberById } from '@/api/members'
-import AuthenticatedView from '@/views/authenticated.vue'
+import AuthenticatedView from '@/views/app-shell/authenticated.vue'
 
 const WelcomeView = () => import('@/views/welcome/index.vue')
 const PrivacyPolicyView = () => import('@/views/privacy-policy.vue')
 const TermsOfServiceView = () => import('@/views/terms-of-service.vue')
 const AuthCallbackView = () => import('@/views/auth/callback.vue')
 const Dashboard = () => import('@/views/dashboard/index.vue')
-const DeckView = () => import('@/views/deck/index.vue')
+const DeckView = () => import('@/views/deck/deck-view.vue')
 const LessonView = () => import('@/views/audio-reader/lesson/index.vue')
 
 // Mirrors useCan().useAudioReader (admin-only). Awaits the member query so a

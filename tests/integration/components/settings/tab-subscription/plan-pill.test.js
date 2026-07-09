@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { h } from 'vue'
-import PlanPill from '@/components/settings/tab-subscription/plan-pill.vue'
+import PlanPill from '@/views/settings/tab-subscription/plan-pill.vue'
 
 function makePlanPill(props = {}, slots = {}) {
   return shallowMount(PlanPill, {

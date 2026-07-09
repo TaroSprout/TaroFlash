@@ -52,7 +52,7 @@ vi.mock('@/views/deck/composables/card-sort', () => ({
   useCardSort: useCardSortMock
 }))
 
-import DeckView from '@/views/deck/index.vue'
+import DeckView from '@/views/deck/deck-view.vue'
 
 const DeckHeroStub = defineComponent({
   name: 'DeckHero',
@@ -162,7 +162,7 @@ function mount({
   })
 }
 
-describe('DeckView (views/deck/index.vue)', () => {
+describe('DeckView (views/deck/deck-view.vue)', () => {
   beforeEach(() => {
     useDeckQueryMock.mockReset()
     useCardListControllerMock.mockReset()

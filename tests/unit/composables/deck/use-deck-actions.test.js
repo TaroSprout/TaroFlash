@@ -25,7 +25,7 @@ vi.mock('@/composables/modal', () => ({
   useModal: () => ({ open: mockModalOpen })
 }))
 
-vi.mock('@/components/modals/checkout/index.vue', () => ({
+vi.mock('@/components/billing/checkout-modal/index.vue', () => ({
   default: { name: 'Checkout' }
 }))
 

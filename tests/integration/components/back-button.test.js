@@ -43,7 +43,7 @@ const UiButtonStub = defineComponent({
   }
 })
 
-import BackButton from '@/components/back-button.vue'
+import BackButton from '@/views/app-shell/nav-bar/back-button.vue'
 
 function mount(routeName) {
   mockCurrentRoute.value = { name: routeName }

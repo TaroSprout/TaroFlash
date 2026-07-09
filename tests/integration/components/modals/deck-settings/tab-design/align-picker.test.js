@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import AlignPicker from '@/components/modals/deck-settings/tab-design/card-designer/align-picker.vue'
+import AlignPicker from '@/views/deck/deck-settings/tab-design/card-designer/align-picker.vue'
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))

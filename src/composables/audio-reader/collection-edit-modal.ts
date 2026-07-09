@@ -2,7 +2,7 @@ import { useModal } from '@/composables/modal'
 import { emitSfx } from '@/sfx/bus'
 import CollectionEdit, {
   type CollectionEditResponse
-} from '@/components/modals/collection-edit/index.vue'
+} from '@/views/audio-reader/collection-edit-modal.vue'
 
 /**
  * Open the edit-collection modal (manage a collection's chapters + danger zone)

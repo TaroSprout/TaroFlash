@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { createApp, defineComponent, h } from 'vue'
-import { useProvideDeckContext, useDeckContext } from '@/components/flashcard-session/deck-context'
+import { useProvideDeckContext, useDeckContext } from '@/views/study-session/deck-context'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

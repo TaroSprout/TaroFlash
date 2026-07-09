@@ -1,6 +1,6 @@
 import { toValue, type MaybeRefOrGetter } from 'vue'
 import { useI18n } from 'vue-i18n'
-import Checkout from '@/components/modals/checkout/index.vue'
+import Checkout from '@/components/billing/checkout-modal/index.vue'
 import { useAlert } from '@/composables/alert'
 import { useModal } from '@/composables/modal'
 import { useCan } from '@/composables/can'

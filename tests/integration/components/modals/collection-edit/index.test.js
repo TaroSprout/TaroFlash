@@ -104,7 +104,7 @@ const LessonCardStub = defineComponent({
 
 // ── Component import (after mocks) ────────────────────────────────────────────
 
-import CollectionEditModal from '@/components/modals/collection-edit/index.vue'
+import CollectionEditModal from '@/views/audio-reader/collection-edit-modal.vue'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 

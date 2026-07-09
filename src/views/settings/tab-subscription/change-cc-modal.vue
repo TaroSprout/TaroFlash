@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 import UiButton from '@/components/ui-kit/button.vue'
-import { useChangeCard, type ChangeCardResponse } from './use-change-card'
+import { useChangeCard, type ChangeCardResponse } from './use-change-cc'
 
 export type { ChangeCardResponse }
 

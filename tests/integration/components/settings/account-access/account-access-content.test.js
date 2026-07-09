@@ -39,7 +39,7 @@ const mockSession = {
 }
 vi.mock('@/stores/session', () => ({ useSessionStore: () => mockSession }))
 
-import AccountAccessContent from '@/components/settings/account-access/account-access-content.vue'
+import AccountAccessContent from '@/views/settings/account-access/account-access-content.vue'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 

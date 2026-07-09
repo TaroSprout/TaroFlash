@@ -1,8 +1,8 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
-import DangerResetButton from '@/components/modals/deck-settings/danger-reset-button.vue'
-import DangerDeleteButton from '@/components/modals/deck-settings/danger-delete-button.vue'
+import DangerResetButton from '@/views/deck/deck-settings/danger-reset-button.vue'
+import DangerDeleteButton from '@/views/deck/deck-settings/danger-delete-button.vue'
 import { deckDangerActionsKey } from '@/composables/deck/danger-actions'
 
 const ButtonStub = defineComponent({

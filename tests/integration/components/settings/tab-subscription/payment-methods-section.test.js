@@ -9,8 +9,8 @@ const { onChangeCardClickMock, queryState } = vi.hoisted(() => ({
 
 const default_card_ref = ref(null)
 
-vi.mock('@/components/settings/tab-subscription/use-change-card-click', () => ({
-  useChangeCardClick: () => ({
+vi.mock('@/views/settings/tab-subscription/use-change-cc-click', () => ({
+  useChangeCcClick: () => ({
     methods_query: {
       isLoading: {
         get value() {
@@ -44,7 +44,7 @@ const UiButtonStub = defineComponent({
 
 async function makePaymentMethodsSection() {
   const PaymentMethodsSection = (
-    await import('@/components/settings/tab-subscription/payment-methods-section.vue')
+    await import('@/views/settings/tab-subscription/payment-methods-section.vue')
   ).default
 
   return shallowMount(PaymentMethodsSection, {
@@ -121,7 +121,7 @@ describe('payment-methods-section — card state', () => {
 // ── Click forwarding ─────────────────────────────────────────────────────────
 
 describe('payment-methods-section — click forwarding [obligation]', () => {
-  test('forwards the button press to onChangeCardClick from useChangeCardClick', async () => {
+  test('forwards the button press to onChangeCardClick from useChangeCcClick', async () => {
     const wrapper = await makePaymentMethodsSection()
     await wrapper.find('[data-testid="billing-settings__payment-methods-change"]').trigger('click')
     expect(onChangeCardClickMock).toHaveBeenCalledOnce()

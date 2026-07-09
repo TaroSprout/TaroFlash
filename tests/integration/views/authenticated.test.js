@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import AuthenticatedView from '@/views/authenticated.vue'
+import AuthenticatedView from '@/views/app-shell/authenticated.vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -15,7 +15,7 @@ const { mockUseResumeStudySession, mockUseRouteTransition } = vi.hoisted(() => (
   }))
 }))
 
-vi.mock('@/components/flashcard-session/composables/session-resume', () => ({
+vi.mock('@/views/study-session/composables/session-resume', () => ({
   useResumeStudySession: mockUseResumeStudySession
 }))
 

@@ -2,7 +2,7 @@ import { useModal } from '@/composables/modal'
 import { emitSfx } from '@/sfx/bus'
 import UploadLesson, {
   type UploadLessonResponse
-} from '@/components/modals/upload-lesson/index.vue'
+} from '@/views/audio-reader/upload-lesson-modal/index.vue'
 
 /**
  * Open the upload-lesson modal for a collection. Resolves to the created

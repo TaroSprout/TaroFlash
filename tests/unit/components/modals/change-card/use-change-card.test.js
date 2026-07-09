@@ -35,7 +35,7 @@ vi.mock('@/composables/billing/use-checkout-elements', () => ({
   useCheckoutElements: mockUseCheckoutElements
 }))
 
-import { useChangeCard } from '@/components/modals/change-card/use-change-card'
+import { useChangeCard } from '@/views/settings/tab-subscription/use-change-cc'
 
 // ── Setup ──────────────────────────────────────────────────────────────────────
 

@@ -59,7 +59,7 @@ const ScriptSelectStub = defineComponent({
   }
 })
 
-import UploadLesson from '@/components/modals/upload-lesson/index.vue'
+import UploadLesson from '@/views/audio-reader/upload-lesson-modal/index.vue'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

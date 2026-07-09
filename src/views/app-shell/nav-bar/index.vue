@@ -2,7 +2,7 @@
 import { onMounted, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import BackButton from '@/components/back-button.vue'
+import BackButton from '@/views/app-shell/nav-bar/back-button.vue'
 
 const { t } = useI18n()
 const nav_bar = useTemplateRef('nav-bar')

@@ -1,6 +1,6 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import StudyEditFooter from '@/components/flashcard-session/session-studying/study-edit-footer.vue'
+import StudyEditFooter from '@/views/study-session/session-studying/study-edit-footer.vue'
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 

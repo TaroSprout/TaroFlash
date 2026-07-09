@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, reactive } from 'vue'
-import RatingsSection from '@/components/settings/tab-review-preferences/ratings-section.vue'
+import RatingsSection from '@/views/settings/tab-review-preferences/ratings-section.vue'
 import { memberEditorKey } from '@/composables/member/editor'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────

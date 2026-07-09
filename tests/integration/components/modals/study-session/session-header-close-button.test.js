@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import SessionHeaderCloseButton from '@/components/flashcard-session/session-header-close-button.vue'
+import SessionHeaderCloseButton from '@/views/study-session/session-header-close-button.vue'
 
 function mountButton(props = {}) {
   return mount(SessionHeaderCloseButton, { props })

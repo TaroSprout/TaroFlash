@@ -45,7 +45,7 @@ const UiButtonStub = defineComponent({
 
 // ── Import ────────────────────────────────────────────────────────────────────
 
-import PaidFeatures from '@/components/settings/tab-subscription/paid-features.vue'
+import PaidFeatures from '@/views/settings/tab-subscription/paid-features.vue'
 
 // ── Factory ───────────────────────────────────────────────────────────────────
 

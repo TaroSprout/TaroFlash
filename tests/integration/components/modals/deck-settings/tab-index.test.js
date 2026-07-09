@@ -9,10 +9,10 @@ vi.mock('@/stores/notice-store', () => ({
   useNoticeStore: () => ({ error: vi.fn(), success: vi.fn(), warn: vi.fn() })
 }))
 
-import TabIndex from '@/components/modals/deck-settings/tab-index/index.vue'
+import TabIndex from '@/views/deck/deck-settings/tab-index/index.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { deckDangerActionsKey } from '@/composables/deck/danger-actions'
-import { deckSettingsLayoutKey } from '@/components/modals/deck-settings/layout'
+import { deckSettingsLayoutKey } from '@/views/deck/deck-settings/layout'
 
 const ButtonStub = defineComponent({
   name: 'UiButton',

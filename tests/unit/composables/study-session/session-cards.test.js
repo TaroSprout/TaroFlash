@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { createApp, nextTick } from 'vue'
-import { useSessionCards } from '@/components/flashcard-session/composables/session-cards'
+import { useSessionCards } from '@/views/study-session/composables/session-cards'
 import { card } from '../../../fixtures/card'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
@@ -32,7 +32,7 @@ vi.mock('@/api/cards', () => ({
   }
 }))
 
-vi.mock('@/components/flashcard-session/composables/session-persistence', () => ({
+vi.mock('@/views/study-session/composables/session-persistence', () => ({
   readPersistedSession: (...args) => readPersistedSessionMock(...args)
 }))
 

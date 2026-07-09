@@ -3,7 +3,7 @@ import { createApp, h, nextTick, ref } from 'vue'
 import {
   provideStudySessionController,
   useInjectedStudySessionController
-} from '@/components/flashcard-session/composables/session-controller'
+} from '@/views/study-session/composables/session-controller'
 
 // ── Hoisted fakes for every sub-composable session-controller orchestrates ────
 // session-controller.ts is a pure orchestration layer: it wires together
@@ -34,7 +34,7 @@ const { mockReviewCard, mockAwaitFlip, mockRestoreCards, mockStartSession } = vi
   mockStartSession: vi.fn()
 }))
 
-vi.mock('@/components/flashcard-session/composables/flashcard-session', () => ({
+vi.mock('@/views/study-session/composables/flashcard-session', () => ({
   useFlashcardSession: () => ({
     mode,
     cards: ref([]),
@@ -60,7 +60,7 @@ vi.mock('@/components/flashcard-session/composables/flashcard-session', () => ({
   })
 }))
 
-vi.mock('@/components/flashcard-session/composables/card-preview', () => ({
+vi.mock('@/views/study-session/composables/card-preview', () => ({
   useCardPreview: () => ({
     next_card_side: ref('front'),
     preview_style: ref({}),
@@ -70,7 +70,7 @@ vi.mock('@/components/flashcard-session/composables/card-preview', () => ({
   })
 }))
 
-vi.mock('@/components/flashcard-session/composables/card-edit', () => ({
+vi.mock('@/views/study-session/composables/card-edit', () => ({
   useCardEdit: () => ({
     editing: ref(false),
     saving: ref(false),
@@ -84,7 +84,7 @@ const { capturedActiveCardActionsOptions } = vi.hoisted(() => ({
   capturedActiveCardActionsOptions: { current: null }
 }))
 
-vi.mock('@/components/flashcard-session/composables/card-actions', () => ({
+vi.mock('@/views/study-session/composables/card-actions', () => ({
   useActiveCardActions: (options) => {
     capturedActiveCardActionsOptions.current = options
     return {
@@ -99,7 +99,7 @@ const { mockOnMissingDeck, capturedSessionCardsOptions } = vi.hoisted(() => ({
   capturedSessionCardsOptions: { current: null }
 }))
 
-vi.mock('@/components/flashcard-session/composables/session-cards', () => ({
+vi.mock('@/views/study-session/composables/session-cards', () => ({
   useSessionCards: (options) => {
     mockOnMissingDeck.current = options.onMissingDeck
     capturedSessionCardsOptions.current = options

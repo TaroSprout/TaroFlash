@@ -5,10 +5,10 @@ import { defineComponent, h, reactive, ref, computed, useAttrs } from 'vue'
 vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn() }))
 vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: () => ({ value: false }) }))
 
-import TabDetails from '@/components/modals/deck-settings/tab-details/index.vue'
+import TabDetails from '@/views/deck/deck-settings/tab-details/index.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
-import { deckSettingsLayoutKey } from '@/components/modals/deck-settings/layout'
-import { deckSettingsCloseKey } from '@/components/modals/deck-settings/layout'
+import { deckSettingsLayoutKey } from '@/views/deck/deck-settings/layout'
+import { deckSettingsCloseKey } from '@/views/deck/deck-settings/layout'
 
 const InputStub = defineComponent({
   name: 'UiInput',

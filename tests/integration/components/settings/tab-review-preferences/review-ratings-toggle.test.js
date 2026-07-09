@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
-import ReviewRatingsToggle from '@/components/settings/tab-review-preferences/review-ratings-toggle.vue'
+import ReviewRatingsToggle from '@/views/settings/tab-review-preferences/review-ratings-toggle.vue'
 
 // ── OptionGroup stub ──────────────────────────────────────────────────────────
 // Renders each option as a clickable button carrying data-active so tests can

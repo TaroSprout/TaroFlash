@@ -1,13 +1,13 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
-import CardStage from '@/components/flashcard-session/session-studying/card/card-stage.vue'
+import CardStage from '@/views/study-session/session-studying/card/card-stage.vue'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
 // Deck context is an inject seam; these tests don't exercise the cover carousel,
 // so a single-cover (idle) context keeps it inert.
-vi.mock('@/components/flashcard-session/deck-context', () => ({
+vi.mock('@/views/study-session/deck-context', () => ({
   useDeckContext: () => ref({ appearanceFor: () => ({}), covers: [] })
 }))
 

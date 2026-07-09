@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, nextTick } from 'vue'
-import StudySession from '@/components/flashcard-session/index.vue'
+import StudySession from '@/views/study-session/index.vue'
 import { MODAL_ID_KEY, request_close_handlers } from '@/composables/modal'
 import { deck } from '../../../../fixtures/deck'
 
@@ -36,16 +36,13 @@ const { mockClearPersistedSession } = vi.hoisted(() => ({
   mockClearPersistedSession: vi.fn()
 }))
 
-vi.mock(
-  '@/components/flashcard-session/composables/session-persistence',
-  async (importOriginal) => {
-    const actual = await importOriginal()
-    return {
-      ...actual,
-      clearPersistedSession: mockClearPersistedSession
-    }
+vi.mock('@/views/study-session/composables/session-persistence', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    clearPersistedSession: mockClearPersistedSession
   }
-)
+})
 
 // Mock viewport so provideDialogCardViewport() doesn't hit real matchMedia.
 const { mediaState, capturedQueries } = vi.hoisted(() => ({
@@ -89,7 +86,7 @@ const {
   }
 })
 
-vi.mock('@/components/flashcard-session/composables/session-controller', () => ({
+vi.mock('@/views/study-session/composables/session-controller', () => ({
   provideStudySessionController: (options) => {
     capturedControllerOptions.current = options
     return {

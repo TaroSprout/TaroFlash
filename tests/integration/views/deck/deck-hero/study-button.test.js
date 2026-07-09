@@ -4,7 +4,7 @@ import { defineComponent, h, useAttrs } from 'vue'
 
 const { mockStartStudy } = vi.hoisted(() => ({ mockStartStudy: vi.fn() }))
 
-vi.mock('@/components/flashcard-session/composables/study-modal', () => ({
+vi.mock('@/views/study-session/composables/study-modal', () => ({
   useStudyModal: () => ({ start: mockStartStudy })
 }))
 

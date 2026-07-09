@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, nextTick } from 'vue'
-import SessionStudying from '@/components/flashcard-session/session-studying/index.vue'
+import SessionStudying from '@/views/study-session/session-studying/index.vue'
 
 // ── Hoisted controller fake ────────────────────────────────────────────────────
 // session-studying/index.vue is a dumb presentational shell — the FSRS session
@@ -39,7 +39,7 @@ const { controller_state } = await vi.hoisted(async () => {
   }
 })
 
-vi.mock('@/components/flashcard-session/composables/session-controller', () => ({
+vi.mock('@/views/study-session/composables/session-controller', () => ({
   useInjectedStudySessionController: () => controller_state
 }))
 

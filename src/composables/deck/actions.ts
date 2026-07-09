@@ -3,7 +3,7 @@ import { useMemberDeckCountQuery, useUpsertDeckMutation } from '@/api/decks'
 import { useAlert } from '@/composables/alert'
 import { useModal } from '@/composables/modal'
 import { useCan } from '@/composables/can'
-import Checkout from '@/components/modals/checkout/index.vue'
+import Checkout from '@/components/billing/checkout-modal/index.vue'
 
 export function useDeckActions() {
   const { t } = useI18n()
