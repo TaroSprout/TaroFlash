@@ -1,6 +1,6 @@
 import { useModal } from '@/composables/modal'
 import { emitSfx } from '@/sfx/bus'
-import DeckCreate, { type DeckCreateResponse } from '@/deck/deck-create-modal.vue'
+import DeckCreate, { type DeckCreateResponse } from '@/views/deck/deck-create-modal.vue'
 
 /** Open the create-deck modal. Resolves true when the deck was saved. */
 export function useDeckCreateModal() {

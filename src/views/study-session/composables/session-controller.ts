@@ -27,9 +27,9 @@ type UseStudySessionControllerOptions = {
 /**
  * Owns the whole study session — FSRS queue, card editing/actions, review
  * flushing — and provides it to the subtree. Called once by the session's
- * modal root (`flashcard-session/index.vue`) so the header (which lives at
+ * modal root (`study-session/index.vue`) so the header (which lives at
  * that level, via `dialog-card`'s native slots) and the studying view
- * (`flashcard/index.vue`) read the same instance instead of duplicating it.
+ * (`session-studying/index.vue`) read the same instance instead of duplicating it.
  */
 export function provideStudySessionController(options: UseStudySessionControllerOptions) {
   const controller = useStudySessionController(options)

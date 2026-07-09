@@ -19,7 +19,7 @@ export const deckViewShellKey = Symbol('deckViewShell') as InjectionKey<DeckView
  *
  * Mode changes all funnel through here — `setMode` / `toggleMode` / `exitMode`
  * are the single seam for cross-cutting concerns like unsaved-changes guards.
- * The pane/chrome each mode maps to lives in `views/deck/modes.ts`.
+ * The pane/chrome each mode maps to lives in `deck/modes.ts`.
  *
  * @example
  * const shell = useDeckViewShell()

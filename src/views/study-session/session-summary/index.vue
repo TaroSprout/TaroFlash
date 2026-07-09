@@ -5,7 +5,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import StatTile from './stat-tile.vue'
 import { aggregateSession } from './aggregate'
-import type { CardReviewResult } from '@/components/flashcard-session/composables/session-queue'
+import type { CardReviewResult } from '@/views/study-session/composables/session-queue'
 
 const { results } = defineProps<{
   results: CardReviewResult[]

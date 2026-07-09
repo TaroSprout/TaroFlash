@@ -3,7 +3,7 @@ import { emitSfx } from '@/sfx/bus'
 import DeckSettings, {
   type ActiveTab,
   type DeckSettingsResponse
-} from '@/deck/deck-settings/index.vue'
+} from '@/views/deck/deck-settings/index.vue'
 
 type OpenOptions = {
   tab?: ActiveTab

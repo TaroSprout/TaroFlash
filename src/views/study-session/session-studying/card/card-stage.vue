@@ -7,8 +7,8 @@ import type { gsap } from 'gsap'
 import { type Grade, type RecordLog } from 'ts-fsrs'
 import { coverCardBeforeEnter, coverCardEnter } from '@/utils/animations/session-intro'
 import { useDeckContext } from '../../deck-context'
-import { useCoverCarousel } from '@/components/flashcard-session/composables/cover-carousel'
-import { type StudyCard as StudyCardType } from '@/components/flashcard-session/composables/flashcard-session'
+import { useCoverCarousel } from '@/views/study-session/composables/cover-carousel'
+import { type StudyCard as StudyCardType } from '@/views/study-session/composables/flashcard-session'
 
 type CardStageProps = {
   loading: boolean

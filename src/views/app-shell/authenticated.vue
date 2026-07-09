@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import NavBar from '@/app-shell/nav-bar/index.vue'
+import NavBar from '@/views/app-shell/nav-bar/index.vue'
 import TaroPhone from '@/components/taro-phone/index.vue'
 import MobileDockHost from '@/components/mobile-dock/mobile-dock-host.vue'
-import RouteSkeleton from '@/app-shell/route-skeleton.vue'
+import RouteSkeleton from '@/views/app-shell/route-skeleton.vue'
 import { useRouteTransition } from '@/composables/ui/route-transition'
-import { useResumeStudySession } from '@/components/flashcard-session/composables/session-resume'
+import { useResumeStudySession } from '@/views/study-session/composables/session-resume'
 
 const { show_skeleton_overlay, onSuspensePending, onSuspenseResolve, onLeave, onEnter } =
   useRouteTransition()

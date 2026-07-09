@@ -2,7 +2,7 @@
 import { computed, provide, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import CoverDesigner from '@/components/deck/cover-designer/index.vue'
+import CoverDesigner from '@/views/deck/cover-designer/index.vue'
 import DeckDesignPreview from '@/components/deck/deck-design-preview.vue'
 import DeckPinnedPreview from '@/components/deck/pinned-preview.vue'
 import { useDeckEditor, deckEditorKey } from '@/composables/deck/editor'

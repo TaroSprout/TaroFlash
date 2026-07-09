@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import CoverDesigner from '@/components/deck/cover-designer/index.vue'
+import CoverDesigner from '@/views/deck/cover-designer/index.vue'
 import CardDesigner from './card-designer/index.vue'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import TabBar from '@/components/layout-kit/tab-bar.vue'

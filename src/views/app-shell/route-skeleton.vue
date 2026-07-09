@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import DashboardSkeleton from '@/views/dashboard/skeleton.vue'
-import DeckSkeleton from '@/deck/skeleton.vue'
+import DeckSkeleton from '@/views/deck/skeleton.vue'
 
 defineProps<{ name: string | symbol | null | undefined }>()
 </script>
