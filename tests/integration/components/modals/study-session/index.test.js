@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, nextTick } from 'vue'
-import StudySession from '@/components/study-session/index.vue'
+import StudySession from '@/components/flashcard-session/index.vue'
 import { deck } from '../../../../fixtures/deck'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
@@ -36,13 +36,16 @@ const { mockClearPersistedSession } = vi.hoisted(() => ({
   mockClearPersistedSession: vi.fn()
 }))
 
-vi.mock('@/components/study-session/composables/session-persistence', async (importOriginal) => {
-  const actual = await importOriginal()
-  return {
-    ...actual,
-    clearPersistedSession: mockClearPersistedSession
+vi.mock(
+  '@/components/flashcard-session/composables/session-persistence',
+  async (importOriginal) => {
+    const actual = await importOriginal()
+    return {
+      ...actual,
+      clearPersistedSession: mockClearPersistedSession
+    }
   }
-})
+)
 
 // Mock viewport so provideDialogCardViewport() doesn't hit real matchMedia.
 // mediaState is mutable so individual tests can flip mobile/desktop, and

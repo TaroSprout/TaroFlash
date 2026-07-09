@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
-import SessionProgress from '@/components/study-session/session-flashcard/session-progress.vue'
+import SessionProgress from '@/components/flashcard-session/flashcard/session-progress.vue'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 

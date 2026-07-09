@@ -14,7 +14,6 @@ describe('deck defaults', () => {
 
   test('DECK_CONFIG_DEFAULTS covers every DeckConfig field', () => {
     expect(DECK_CONFIG_DEFAULTS).toMatchObject({
-      study_mode: 'flashcard',
       study_all_cards: false,
       shuffle: false,
       max_reviews_per_day: null,

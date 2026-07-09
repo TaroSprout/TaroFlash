@@ -39,7 +39,7 @@ describe('buildDeckPayload', () => {
     expect(out.study_config.study_all_cards).toBe(true)
     expect(out.study_config.max_reviews_per_day).toBe(30)
     // unspecified field falls through to its default
-    expect(out.study_config.study_mode).toBe(DECK_CONFIG_DEFAULTS.study_mode)
+    expect(out.study_config.shuffle).toBe(DECK_CONFIG_DEFAULTS.shuffle)
   })
 
   test('cover_config is a shallow copy of state.cover', () => {

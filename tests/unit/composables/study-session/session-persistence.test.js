@@ -4,7 +4,7 @@ import {
   usePersistedSession,
   readPersistedSession,
   clearPersistedSession
-} from '@/components/study-session/composables/session-persistence'
+} from '@/components/flashcard-session/composables/session-persistence'
 
 const STORAGE_KEY = 'study-session'
 

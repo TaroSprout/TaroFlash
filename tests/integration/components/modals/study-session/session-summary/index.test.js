@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, computed } from 'vue'
-import SessionSummary from '@/components/study-session/session-summary/index.vue'
+import SessionSummary from '@/components/flashcard-session/session-summary/index.vue'
 import { dialogCardViewportKey } from '@/components/layout-kit/dialog-card/dialog-card-viewport'
 import { deck } from '../../../../../fixtures/deck'
 

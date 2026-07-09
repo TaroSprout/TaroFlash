@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vite-plus/test'
-import { aggregateSession } from '@/components/study-session/session-summary/aggregate'
+import { aggregateSession } from '@/components/flashcard-session/session-summary/aggregate'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

@@ -1,8 +1,8 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, watch, h, useAttrs } from 'vue'
-import Session from '@/components/study-session/session-flashcard/index.vue'
-import SessionHeader from '@/components/study-session/session-flashcard/session-header.vue'
+import Session from '@/components/flashcard-session/flashcard/index.vue'
+import SessionHeader from '@/components/flashcard-session/flashcard/session-header.vue'
 import { card } from '../../../../fixtures/card'
 import { deck } from '../../../../fixtures/deck'
 

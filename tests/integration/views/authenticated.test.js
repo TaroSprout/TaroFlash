@@ -15,7 +15,7 @@ const { mockUseResumeStudySession, mockUseRouteTransition } = vi.hoisted(() => (
   }))
 }))
 
-vi.mock('@/components/study-session/composables/session-resume', () => ({
+vi.mock('@/components/flashcard-session/composables/session-resume', () => ({
   useResumeStudySession: mockUseResumeStudySession
 }))
 
