@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { createApp, nextTick } from 'vue'
-import { useResumeStudySession } from '@/components/study-session/composables/session-resume'
+import { useResumeStudySession } from '@/components/flashcard-session/composables/session-resume'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -23,11 +23,11 @@ vi.mock('@/api/decks', () => ({
   }))
 }))
 
-vi.mock('@/components/study-session/composables/study-modal', () => ({
+vi.mock('@/components/flashcard-session/composables/study-modal', () => ({
   useStudyModal: () => ({ start: startMock })
 }))
 
-vi.mock('@/components/study-session/composables/session-persistence', () => ({
+vi.mock('@/components/flashcard-session/composables/session-persistence', () => ({
   readPersistedSession: (...args) => readPersistedSessionMock(...args),
   clearPersistedSession: (...args) => clearPersistedSessionMock(...args)
 }))

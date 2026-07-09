@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, nextTick } from 'vue'
-import SessionHeader from '@/components/study-session/session-flashcard/session-header.vue'
+import SessionHeader from '@/components/flashcard-session/flashcard/session-header.vue'
 
 // session-header teleports into a placeholder rendered by its ancestor
 // (study-session/index.vue via dialog-card's #header slot). Since teleport

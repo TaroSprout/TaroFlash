@@ -10,7 +10,6 @@ export const DECK_SETTINGS_DEFAULTS = {
 } as const
 
 export const DECK_CONFIG_DEFAULTS: Required<DeckConfig> = {
-  study_mode: 'flashcard',
   study_all_cards: false,
   shuffle: false,
   max_reviews_per_day: null,

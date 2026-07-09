@@ -3,7 +3,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import ReviewInboxItem from './review-inbox-item.vue'
-import { useStudyModal } from '@/components/study-session/composables/study-modal'
+import { useStudyModal } from '@/components/flashcard-session/composables/study-modal'
 import {
   carouselReset,
   carouselSlide,

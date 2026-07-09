@@ -34,16 +34,12 @@ export type CardReviewResult = {
   passed: boolean
 }
 
-export type StudySessionCore = ReturnType<typeof useStudySessionCore>
-
 /**
- * Mode-agnostic study session core: queue management, FSRS scheduling,
- * session lifecycle, and stats. Does not know about flashcard sides, flipping,
- * or any other interaction model — those live in mode-specific composables.
- *
- * Future study modes (matching pairs, cloze, etc.) build on top of this core.
+ * Queue management, FSRS scheduling, session lifecycle, and stats. Doesn't
+ * know about flashcard sides/flipping — that lives in `useFlashcardSession`,
+ * which wraps this.
  */
-export function useStudySessionCore(_config?: Partial<DeckConfig>) {
+export function useSessionQueue(_config?: Partial<DeckConfig>) {
   const { t } = useI18n()
   const member_store = useMemberStore()
   const notice = useNoticeStore()
@@ -160,7 +156,6 @@ export function useStudySessionCore(_config?: Partial<DeckConfig>) {
   }
 
   function updateConfig(updates: Partial<DeckConfig>) {
-    config.study_mode = updates.study_mode ?? config.study_mode
     config.study_all_cards = updates.study_all_cards ?? config.study_all_cards
     config.shuffle = updates.shuffle ?? config.shuffle
     config.max_reviews_per_day = updates.max_reviews_per_day ?? config.max_reviews_per_day

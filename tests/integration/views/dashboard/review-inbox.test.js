@@ -10,7 +10,7 @@ const { studyStartMock, carouselSlideMock, carouselResetMock } = vi.hoisted(() =
   carouselResetMock: vi.fn()
 }))
 
-vi.mock('@/components/study-session/composables/study-modal', () => ({
+vi.mock('@/components/flashcard-session/composables/study-modal', () => ({
   useStudyModal: () => ({ start: studyStartMock })
 }))
 

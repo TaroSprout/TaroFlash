@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { Rating } from 'ts-fsrs'
-import { useFlashcardSession } from '@/components/study-session/composables/flashcard-session'
+import { useFlashcardSession } from '@/components/flashcard-session/composables/flashcard-session'
 import { card } from '../../../fixtures/card'
 
 const { saveReviewMock } = vi.hoisted(() => ({

@@ -34,10 +34,7 @@ type Deck = {
 
 type CardEditorMode = 'view' | 'edit' | 'import-export'
 
-type DeckStudyMode = 'flashcard'
-
 type DeckConfig = {
-  study_mode?: DeckStudyMode
   study_all_cards: boolean
   shuffle?: boolean
   max_reviews_per_day?: number | null

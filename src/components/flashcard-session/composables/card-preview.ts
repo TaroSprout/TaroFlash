@@ -1,5 +1,5 @@
 import { computed, onUnmounted, ref, watch, type ComputedRef } from 'vue'
-import type { StudyCard } from './session-core'
+import type { StudyCard } from './session-queue'
 import { emitSfx } from '@/sfx/bus'
 
 /**

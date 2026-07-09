@@ -2,7 +2,7 @@ import { ref, watch, type MaybeRefOrGetter, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCardMutations } from '@/composables/card'
 import { useNoticeStore } from '@/stores/notice-store'
-import type { StudyCard } from './session-core'
+import type { StudyCard } from './session-queue'
 
 /**
  * Owns the editing/saving UI state for the active study card. Card writes go
