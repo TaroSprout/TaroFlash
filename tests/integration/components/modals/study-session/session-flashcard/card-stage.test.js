@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
-import CardStage from '@/components/flashcard-session/flashcard/card-stage.vue'
+import CardStage from '@/components/flashcard-session/session-studying/card/card-stage.vue'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 

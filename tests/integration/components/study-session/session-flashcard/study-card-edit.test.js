@@ -27,7 +27,7 @@ const FaceEditorStub = defineComponent({
 
 // ── Imports ───────────────────────────────────────────────────────────────────
 
-import StudyCardEdit from '@/components/flashcard-session/flashcard/study-card-edit.vue'
+import StudyCardEdit from '@/components/flashcard-session/session-studying/card/study-card-edit.vue'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
