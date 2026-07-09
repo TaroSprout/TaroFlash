@@ -5,7 +5,7 @@
 //
 // Deck-editor-specific orchestration (the cardEditorKey controller, actions,
 // bulk-actions, virtual-list) is colocated with its view in
-// `@/views/deck/composables` — not here.
+// `@/deck/composables` — not here.
 
 export { useCardMutations, type CardMutations } from './mutations'
 export { useCardSelection, type CardSelection } from './selection'

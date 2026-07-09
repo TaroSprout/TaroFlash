@@ -10,7 +10,7 @@ const PrivacyPolicyView = () => import('@/views/privacy-policy.vue')
 const TermsOfServiceView = () => import('@/views/terms-of-service.vue')
 const AuthCallbackView = () => import('@/views/auth/callback.vue')
 const Dashboard = () => import('@/views/dashboard/index.vue')
-const DeckView = () => import('@/views/deck/index.vue')
+const DeckView = () => import('@/deck/deck-view.vue')
 const LessonView = () => import('@/views/audio-reader/lesson/index.vue')
 
 // Mirrors useCan().useAudioReader (admin-only). Awaits the member query so a
