@@ -1,9 +1,20 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, useAttrs } from 'vue'
+import { defineComponent, h, ref, useAttrs } from 'vue'
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
+
+const { mockRegister } = vi.hoisted(() => ({ mockRegister: vi.fn() }))
+vi.mock('@/composables/ui/gestures', () => ({ useGestures: () => ({ register: mockRegister }) }))
+
+// `mockCoarse` is a plain container so it can be assigned inside vi.hoisted
+// (where Vue's `ref` is not yet importable). The real ref is created below.
+const { mockCoarse } = vi.hoisted(() => ({ mockCoarse: { ref: null } }))
+vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: () => mockCoarse.ref }))
+
+const coarseRef = ref(false)
+mockCoarse.ref = coarseRef
 
 vi.mock('gsap', () => ({
   gsap: {
@@ -38,6 +49,7 @@ const UiButtonStub = defineComponent({
   }
 })
 
+import { gsap } from 'gsap'
 import NoticePanel from '@/components/ui-kit/notice/panel.vue'
 
 function makeNotice(overrides = {}) {
@@ -68,10 +80,28 @@ async function mountPanel(notice) {
   return wrapper
 }
 
+function getCallbacks() {
+  const call = mockRegister.mock.calls[0]
+  if (!call) return null
+  return { el: call[0], callbacks: call[1] }
+}
+
 describe('NoticePanel', () => {
-  beforeEach(() => mockEmitSfx.mockClear())
+  beforeEach(() => {
+    mockEmitSfx.mockClear()
+    mockRegister.mockClear()
+    coarseRef.value = false
+  })
+
+  afterEach(() => vi.useRealTimers())
 
   test('close button is present when notice.closable is true', async () => {
+    const wrapper = await mountPanel(makeNotice({ closable: true }))
+    expect(wrapper.find('[data-testid="ui-kit-notice-panel__close"]').exists()).toBe(true)
+  })
+
+  test('close button still renders on a coarse pointer (regression guard)', async () => {
+    coarseRef.value = true
     const wrapper = await mountPanel(makeNotice({ closable: true }))
     expect(wrapper.find('[data-testid="ui-kit-notice-panel__close"]').exists()).toBe(true)
   })
@@ -162,5 +192,77 @@ describe('NoticePanel', () => {
 
     expect(onClick).toHaveBeenCalledOnce()
     expect(onDismiss).toHaveBeenCalledOnce()
+  })
+
+  describe('swipe to dismiss', () => {
+    test('does not register the drag handler on a fine pointer [obligation]', async () => {
+      coarseRef.value = false
+      await mountPanel(makeNotice())
+      expect(mockRegister).not.toHaveBeenCalled()
+    })
+
+    test('swiping up past the threshold dismisses [obligation]', async () => {
+      coarseRef.value = true
+      const onDismiss = vi.fn()
+      await mountPanel(makeNotice({ onDismiss }))
+
+      const { callbacks } = getCallbacks()
+      callbacks.onEnd({ dy: -61 })
+      await flushPromises()
+
+      expect(onDismiss).toHaveBeenCalledOnce()
+    })
+
+    test('swiping down past the threshold dismisses [obligation]', async () => {
+      coarseRef.value = true
+      const onDismiss = vi.fn()
+      await mountPanel(makeNotice({ onDismiss }))
+
+      const { callbacks } = getCallbacks()
+      callbacks.onEnd({ dy: 61 })
+      await flushPromises()
+
+      expect(onDismiss).toHaveBeenCalledOnce()
+    })
+
+    test('a drag below the threshold snaps back without dismissing [obligation]', async () => {
+      coarseRef.value = true
+      const onDismiss = vi.fn()
+      await mountPanel(makeNotice({ onDismiss }))
+      gsap.to.mockClear()
+
+      const { callbacks, el } = getCallbacks()
+      callbacks.onEnd({ dy: -20 })
+
+      expect(onDismiss).not.toHaveBeenCalled()
+      expect(gsap.to).toHaveBeenCalledWith(el, expect.objectContaining({ y: 0 }))
+    })
+  })
+
+  describe('hover pauses auto-dismiss', () => {
+    test('pointerenter pauses the timer so the delay elapsing does not dismiss [obligation]', async () => {
+      vi.useFakeTimers()
+      const onDismiss = vi.fn()
+      const wrapper = await mountPanel(makeNotice({ onDismiss, delay: 1000, persist: false }))
+
+      await wrapper.find('[data-testid="ui-kit-notice-panel"]').trigger('pointerenter')
+      vi.advanceTimersByTime(1000)
+
+      expect(onDismiss).not.toHaveBeenCalled()
+    })
+
+    test('pointerleave resumes with the remaining time and eventually dismisses [obligation]', async () => {
+      vi.useFakeTimers()
+      const onDismiss = vi.fn()
+      const wrapper = await mountPanel(makeNotice({ onDismiss, delay: 1000, persist: false }))
+      const panel = wrapper.find('[data-testid="ui-kit-notice-panel"]')
+
+      await panel.trigger('pointerenter')
+      vi.advanceTimersByTime(1000)
+      await panel.trigger('pointerleave')
+      vi.advanceTimersByTime(1000)
+
+      expect(onDismiss).toHaveBeenCalledOnce()
+    })
   })
 })

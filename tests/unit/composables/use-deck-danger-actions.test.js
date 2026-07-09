@@ -62,7 +62,7 @@ describe('useDeckDangerActions', () => {
       expect(mockNotice.error).not.toHaveBeenCalled()
     })
 
-    test('success path shows a success notice with the success_3 sfx', async () => {
+    test('success path shows a success notice without an explicit sfx', async () => {
       const editor = makeEditor({ resetOk: true })
       const { onResetReviews } = useDeckDangerActions(editor, deck, close)
       confirmResponse(true)
@@ -72,8 +72,10 @@ describe('useDeckDangerActions', () => {
       expect(editor.resetReviews).toHaveBeenCalledTimes(1)
       expect(mockNotice.success).toHaveBeenCalledWith(
         'toast.success.reset-reviews',
-        expect.objectContaining({ variant: 'panel', sfx: { open: 'success_3' } })
+        expect.objectContaining({ variant: 'panel' })
       )
+      const [, options] = mockNotice.success.mock.calls[0]
+      expect(options.sfx).toBeUndefined()
       expect(mockNotice.error).not.toHaveBeenCalled()
     })
 
