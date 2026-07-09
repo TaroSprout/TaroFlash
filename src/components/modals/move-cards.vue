@@ -83,13 +83,7 @@ function onClick(deck_id?: number) {
 </script>
 
 <template>
-  <dialog-card
-    data-testid="move-cards"
-    class="bg-brown-200 dark:bg-stone-900"
-    size="md"
-    :title="title"
-    @close="close(false)"
-  >
+  <dialog-card data-testid="move-cards" size="md" :title="title" @close="close(false)">
     <div data-testid="move-cards__body" class="flex h-full min-h-0 flex-col">
       <div data-testid="move-cards__deck-list-wrap" class="relative flex min-h-0 flex-1 flex-col">
         <grouped-list data-testid="move-cards__deck-list" scrollable class="my-4 min-h-0 flex-1">

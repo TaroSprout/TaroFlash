@@ -50,7 +50,8 @@ function onPaneEnterStart() {
 <template>
   <dialog-card
     data-testid="study-session"
-    class="bg-brown-300 dark:bg-grey-800 bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-brown-500"
+    class="bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-brown-500"
+    bg_class="bg-brown-300 dark:bg-grey-800"
     size="lg"
   >
     <template #header>

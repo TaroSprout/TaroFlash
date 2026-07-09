@@ -32,7 +32,8 @@ const submit_label = computed(() =>
 <template>
   <dialog-card
     data-testid="change-card-modal"
-    class="bg-brown-100 pb-6 dark:bg-grey-800"
+    class="pb-6"
+    bg_class="bg-brown-100 dark:bg-grey-800"
     size="lg"
     data-theme="brown-300"
     data-theme-dark="stone-700"
