@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { NOTICE_ICON, NOTICE_THEME, NOTICE_THEME_DARK } from './state-config'
+import { useSwipeDismiss } from './use-swipe-dismiss'
+import { useMatchMedia } from '@/composables/ui/media-query'
 import { emitSfx } from '@/sfx/bus'
 import { type Notice, type NoticeAction } from '@/stores/notice-store'
 
@@ -18,6 +20,10 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const root_ref = ref<HTMLElement | null>(null)
+const is_coarse = useMatchMedia('coarse')
+
+useSwipeDismiss(root_ref, { directions: ['up'], onDismiss: () => closeToast() })
 
 let timeout: ReturnType<typeof setTimeout> | undefined
 
@@ -43,6 +49,7 @@ function onActionClick(action: NoticeAction) {
 
 <template>
   <div
+    ref="root_ref"
     data-testid="ui-kit-notice-toast"
     :data-theme="NOTICE_THEME[notice.state]"
     :data-theme-dark="NOTICE_THEME_DARK[notice.state]"
@@ -77,13 +84,13 @@ function onActionClick(action: NoticeAction) {
     </div>
 
     <ui-button
-      v-if="notice.closable"
+      v-if="notice.closable && !is_coarse"
       data-testid="ui-kit-notice-toast__close"
       data-theme="brown-200"
       data-theme-dark="stone-900"
       icon-only
       icon-left="close"
-      class="absolute! -right-2 -top-2 opacity-0 transition-opacity group-hover/notice-toast:opacity-100 group-focus-within/notice-toast:opacity-100 pointer-coarse:opacity-100"
+      class="absolute! -right-2 -top-2 opacity-0 transition-opacity group-hover/notice-toast:opacity-100 group-focus-within/notice-toast:opacity-100"
       :sfx="{ press: 'snappy_button_5' }"
       @press="closeToast"
     >

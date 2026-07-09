@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { NOTICE_ICON, NOTICE_THEME, NOTICE_THEME_DARK } from './state-config'
+import { useSwipeDismiss } from './use-swipe-dismiss'
 import { springScaleIn, scaleFadeOut } from '@/utils/animations/modal'
 import { emitSfx } from '@/sfx/bus'
 import { type Notice, type NoticeAction } from '@/stores/notice-store'
@@ -22,6 +23,9 @@ const { t } = useI18n()
 
 const open = ref(false)
 const timeout = ref<number>()
+const panel_ref = ref<HTMLElement | null>(null)
+
+useSwipeDismiss(panel_ref, { directions: ['up', 'down'], onDismiss: () => closePanel() })
 
 onMounted(() => {
   if (notice.sfx?.open) emitSfx(notice.sfx.open)
@@ -73,6 +77,7 @@ function onActionClick(action: NoticeAction) {
   <Transition :css="false" @enter="springScaleIn" @leave="onLeave">
     <div
       v-if="open"
+      ref="panel_ref"
       data-testid="ui-kit-notice-panel"
       :data-theme="NOTICE_THEME[notice.state]"
       :data-theme-dark="NOTICE_THEME_DARK[notice.state]"
