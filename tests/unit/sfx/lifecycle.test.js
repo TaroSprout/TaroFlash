@@ -13,7 +13,8 @@ const engineMock = {
   }),
   play: vi.fn(),
   decode: vi.fn(),
-  onUnlock: vi.fn()
+  onUnlock: vi.fn(),
+  probeLiveness: vi.fn().mockResolvedValue(true)
 }
 
 vi.mock('@/sfx/engine', () => ({ default: engineMock }))
@@ -31,6 +32,22 @@ function fireVisibility(state) {
   document.dispatchEvent(new Event('visibilitychange'))
 }
 
+function firePageShow(persisted = false) {
+  const event = new Event('pageshow')
+  Object.defineProperty(event, 'persisted', { value: persisted })
+  window.dispatchEvent(event)
+}
+
+// Controls navigator.userActivation.hasBeenActive, the gate on speculative
+// resume() calls. `undefined` simulates a browser/state where no gesture has
+// been recorded yet (or the API is unsupported).
+function setUserActivation(hasBeenActive) {
+  Object.defineProperty(navigator, 'userActivation', {
+    configurable: true,
+    value: hasBeenActive === undefined ? undefined : { hasBeenActive }
+  })
+}
+
 function flushMicrotasks() {
   return new Promise((resolve) => setTimeout(resolve, 0))
 }
@@ -46,6 +63,15 @@ describe('installAudioLifecycle', () => {
     engineMock.unlock.mockClear()
     engineMock.state.mockReset().mockReturnValue('suspended')
     engineMock.onStateChange.mockClear()
+    engineMock.probeLiveness.mockReset().mockResolvedValue(true)
+    // Existing tests below assert on the opportunistic resume() call itself,
+    // not the userActivation gate — default to "gesture already happened" so
+    // that behavior is unchanged. The gate gets its own describe block.
+    setUserActivation(true)
+  })
+
+  afterEach(() => {
+    setUserActivation(undefined)
   })
 
   afterEach(() => {
@@ -223,5 +249,171 @@ describe('installAudioLifecycle', () => {
     expect(engineMock.resume).toHaveBeenCalledTimes(1)
     expect(typeof noopTeardown).toBe('function')
     noopTeardown()
+  })
+
+  describe('background recovery (hidden→visible) — unconditional forced unlock [obligation]', () => {
+    test('arms a forced gesture retry even when the engine reports running', async () => {
+      engineMock.state.mockReturnValue('running')
+      const install = await loadLifecycle()
+      teardown = install()
+      await flushMicrotasks()
+
+      fireVisibility('hidden')
+      fireVisibility('visible')
+      await flushMicrotasks()
+
+      window.dispatchEvent(new Event('click'))
+      await flushMicrotasks()
+
+      expect(engineMock.unlock).toHaveBeenCalledWith(true)
+    })
+
+    test('a plain focus event (no prior hide) still takes the old running short-circuit', async () => {
+      engineMock.state.mockReturnValue('running')
+      const install = await loadLifecycle()
+      teardown = install()
+      await flushMicrotasks()
+
+      window.dispatchEvent(new Event('focus'))
+      await flushMicrotasks()
+
+      window.dispatchEvent(new Event('click'))
+      await flushMicrotasks()
+
+      expect(engineMock.unlock).not.toHaveBeenCalled()
+    })
+
+    test('pageshow with event.persisted true triggers the same unconditional forced recovery', async () => {
+      engineMock.state.mockReturnValue('running')
+      const install = await loadLifecycle()
+      teardown = install()
+      await flushMicrotasks()
+
+      firePageShow(true)
+      await flushMicrotasks()
+
+      window.dispatchEvent(new Event('click'))
+      await flushMicrotasks()
+
+      expect(engineMock.unlock).toHaveBeenCalledWith(true)
+    })
+
+    test('the forced flag resets after firing once — the next gesture-armed cycle unlocks unforced', async () => {
+      engineMock.state.mockReturnValue('running')
+      const install = await loadLifecycle()
+      teardown = install()
+      await flushMicrotasks()
+
+      fireVisibility('hidden')
+      fireVisibility('visible')
+      await flushMicrotasks()
+      window.dispatchEvent(new Event('click'))
+      await flushMicrotasks()
+
+      expect(engineMock.unlock).toHaveBeenCalledWith(true)
+      engineMock.unlock.mockClear()
+
+      // A later recovery cycle where the engine is genuinely not running arms
+      // the gesture retry unforced — the consumed flag must not leak forward.
+      engineMock.state.mockReturnValue('suspended')
+      window.dispatchEvent(new Event('focus'))
+      await flushMicrotasks()
+      window.dispatchEvent(new Event('click'))
+      await flushMicrotasks()
+
+      expect(engineMock.unlock).toHaveBeenCalledWith(false)
+    })
+  })
+
+  describe('navigator.userActivation gate on opportunistic resume() [obligation]', () => {
+    test('does not call resume() when hasBeenActive is false', async () => {
+      setUserActivation(false)
+      const install = await loadLifecycle()
+      teardown = install()
+      await flushMicrotasks()
+
+      expect(engineMock.resume).not.toHaveBeenCalled()
+    })
+
+    test('does not call resume() when userActivation is unsupported (undefined)', async () => {
+      setUserActivation(undefined)
+      const install = await loadLifecycle()
+      teardown = install()
+      await flushMicrotasks()
+
+      expect(engineMock.resume).not.toHaveBeenCalled()
+    })
+
+    test('still calls resume() when hasBeenActive is true', async () => {
+      setUserActivation(true)
+      const install = await loadLifecycle()
+      teardown = install()
+      await flushMicrotasks()
+
+      expect(engineMock.resume).toHaveBeenCalledTimes(1)
+    })
+
+    test('background recovery also skips resume() when hasBeenActive is false', async () => {
+      setUserActivation(false)
+      engineMock.state.mockReturnValue('running')
+      const install = await loadLifecycle()
+      teardown = install()
+      await flushMicrotasks()
+
+      fireVisibility('hidden')
+      fireVisibility('visible')
+      await flushMicrotasks()
+
+      expect(engineMock.resume).not.toHaveBeenCalled()
+    })
+
+    test('background recovery calls resume() when hasBeenActive is true', async () => {
+      setUserActivation(true)
+      engineMock.state.mockReturnValue('running')
+      const install = await loadLifecycle()
+      teardown = install()
+      await flushMicrotasks()
+      engineMock.resume.mockClear()
+
+      fireVisibility('hidden')
+      fireVisibility('visible')
+      await flushMicrotasks()
+
+      expect(engineMock.resume).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('background recovery — probeLiveness diagnostic hook [obligation]', () => {
+    test('fires onSuspectedDesync when probeLiveness resolves false', async () => {
+      engineMock.probeLiveness.mockResolvedValue(false)
+      engineMock.state.mockReturnValue('running')
+      const onSuspectedDesync = vi.fn()
+      const install = await loadLifecycle()
+      teardown = install(onSuspectedDesync)
+      await flushMicrotasks()
+
+      fireVisibility('hidden')
+      fireVisibility('visible')
+      await flushMicrotasks()
+
+      expect(engineMock.probeLiveness).toHaveBeenCalledTimes(1)
+      expect(onSuspectedDesync).toHaveBeenCalledTimes(1)
+    })
+
+    test('does not fire onSuspectedDesync when probeLiveness resolves true', async () => {
+      engineMock.probeLiveness.mockResolvedValue(true)
+      engineMock.state.mockReturnValue('running')
+      const onSuspectedDesync = vi.fn()
+      const install = await loadLifecycle()
+      teardown = install(onSuspectedDesync)
+      await flushMicrotasks()
+
+      fireVisibility('hidden')
+      fireVisibility('visible')
+      await flushMicrotasks()
+
+      expect(engineMock.probeLiveness).toHaveBeenCalledTimes(1)
+      expect(onSuspectedDesync).not.toHaveBeenCalled()
+    })
   })
 })

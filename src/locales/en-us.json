@@ -32,6 +32,7 @@
   "login-dialog.errors.generic": "Something went wrong. Please try again",
   "session.logout-error": "Couldn't log out. Please try again.",
   "member.load-error": "Couldn't load your account",
+  "sfx.background-desync-warning": "Sound effects may have gone quiet after switching apps",
   "member.load-error-sub": "Something went wrong loading your profile.",
   "login-dialog.forgot-password-link": "Forgot password?",
   "forgot-password-modal.heading": "Reset Password",

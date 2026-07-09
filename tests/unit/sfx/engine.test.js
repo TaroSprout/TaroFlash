@@ -166,6 +166,35 @@ describe('unlock() when context is already running', () => {
   })
 })
 
+// ─── unlock(force) — bypasses the running-state shortcut [obligation] ────────
+
+describe('unlock(force) when context is already running [obligation]', () => {
+  let engine
+  let contexts
+
+  beforeEach(async () => {
+    contexts = []
+    // Both calls to the ctor return 'running' — the original + the forced rebuild.
+    installCtor(makeCtorWithContexts(contexts, ['running', 'running']))
+    engine = await loadFreshEngine()
+  })
+
+  test('unlock(true) closes and rebuilds even though state is running', () => {
+    engine.unlock(true)
+
+    const old_ctx = contexts[0]
+    expect(old_ctx.close).toHaveBeenCalledTimes(1)
+    expect(contexts.length).toBe(2)
+  })
+
+  test('unlock(false) (default) does not close or rebuild when running', () => {
+    engine.unlock(false)
+
+    expect(contexts.length).toBe(1)
+    expect(contexts[0].close).not.toHaveBeenCalled()
+  })
+})
+
 // ─── unlock() — rebuild path (context suspended) ─────────────────────────────
 
 describe('unlock() when context is suspended — rebuild path', () => {
@@ -680,6 +709,61 @@ describe('resume() — timeout & clearTimeout [obligation]', () => {
     // context.resume().finally(() => clearTimeout(id)) must have run
     expect(clearTimeoutSpy).toHaveBeenCalled()
     clearTimeoutSpy.mockRestore()
+  })
+})
+
+// ─── probeLiveness() [obligation] ─────────────────────────────────────────────
+
+describe('probeLiveness() [obligation]', () => {
+  test('resolves true immediately when no context exists', async () => {
+    delete window.AudioContext
+    delete window.webkitAudioContext
+    const engine = await loadFreshEngine()
+
+    await expect(engine.probeLiveness()).resolves.toBe(true)
+  })
+
+  test('resolves true immediately when context state is not running', async () => {
+    const contexts = []
+    installCtor(makeCtorWithContexts(contexts, ['suspended', 'suspended']))
+    const engine = await loadFreshEngine()
+    engine.unlock() // ensureContext() creates a suspended context, no rebuild reached running
+
+    await expect(engine.probeLiveness()).resolves.toBe(true)
+  })
+
+  test('resolves false when currentTime is frozen despite state reporting running', async () => {
+    vi.useFakeTimers()
+    const contexts = []
+    installCtor(makeCtorWithContexts(contexts, ['running']))
+    const engine = await loadFreshEngine()
+    engine.unlock() // context already running, no rebuild
+
+    contexts[0].currentTime = 5 // frozen — never advances
+
+    const result = engine.probeLiveness()
+    await vi.advanceTimersByTimeAsync(150)
+
+    await expect(result).resolves.toBe(false)
+    vi.useRealTimers()
+  })
+
+  test('resolves true when currentTime advances during the probe window', async () => {
+    vi.useFakeTimers()
+    const contexts = []
+    installCtor(makeCtorWithContexts(contexts, ['running']))
+    const engine = await loadFreshEngine()
+    engine.unlock()
+
+    let time = 5
+    Object.defineProperty(contexts[0], 'currentTime', { get: () => time })
+
+    const result = engine.probeLiveness()
+    time = 5.5 // hardware advanced during the wait
+    await vi.advanceTimersByTimeAsync(150)
+
+    await expect(result).resolves.toBe(true)
+    vi.useRealTimers()
   })
 })
 

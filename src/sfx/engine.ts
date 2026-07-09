@@ -14,6 +14,7 @@
 type AudioContextCtor = new () => AudioContext
 
 const RESUME_TIMEOUT_MS = 2000
+const LIVENESS_PROBE_MS = 150
 
 let ctx: AudioContext | undefined
 let unlocked = false
@@ -149,11 +150,16 @@ async function resume(): Promise<boolean> {
 
 // Synchronous unlock for the user gesture. Everything here runs inside the
 // gesture's synchronous turn — iOS ignores audio work that happens after an await.
-function unlock(): void {
+//
+// `force` bypasses the running-state shortcut. iOS can report the context as
+// 'running' after an app-switch while the audio hardware is actually dead —
+// state alone isn't trustworthy on the way back from background, so
+// lifecycle.ts asks for a forced rebuild there regardless of what state claims.
+function unlock(force = false): void {
   const current = ensureContext()
   if (!current) return
 
-  if (current.state === 'running') {
+  if (current.state === 'running' && !force) {
     markUnlocked()
     return
   }
@@ -194,4 +200,29 @@ function state(): AudioContextState | undefined {
   return ctx?.state
 }
 
-export default { decode, play, resume, unlock, onStateChange, onUnlock, isUnlocked, state }
+// Diagnostic only — never gates the unlock decision (lifecycle.ts forces a
+// rebuild unconditionally on background-return regardless of this result).
+// Samples currentTime twice: a context that's actually dead despite reporting
+// 'running' leaves it frozen. Tells us whether iOS's state-lie is still
+// happening after the forced-rebuild fix, since the bug is too intermittent to
+// reproduce on demand.
+async function probeLiveness(): Promise<boolean> {
+  const context = ctx
+  if (!context || context.state !== 'running') return true
+
+  const before = context.currentTime
+  await new Promise((resolve) => setTimeout(resolve, LIVENESS_PROBE_MS))
+  return context.currentTime !== before
+}
+
+export default {
+  decode,
+  play,
+  resume,
+  unlock,
+  onStateChange,
+  onUnlock,
+  isUnlocked,
+  state,
+  probeLiveness
+}
