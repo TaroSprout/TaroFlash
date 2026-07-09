@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import NavBar from '@/components/nav-bar.vue'
+import NavBar from '@/app-shell/nav-bar/index.vue'
 import TaroPhone from '@/components/taro-phone/index.vue'
 import MobileDockHost from '@/components/mobile-dock/mobile-dock-host.vue'
-import RouteSkeleton from '@/components/route-skeleton.vue'
+import RouteSkeleton from '@/app-shell/route-skeleton.vue'
 import { useRouteTransition } from '@/composables/ui/route-transition'
 import { useResumeStudySession } from '@/components/flashcard-session/composables/session-resume'
 

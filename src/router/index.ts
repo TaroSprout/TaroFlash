@@ -3,7 +3,7 @@ import { useSessionStore } from '@/stores/session'
 import { useMemberStore } from '@/stores/member'
 import { prefetchMemberDecks } from '@/api/decks'
 import { prefetchMemberById } from '@/api/members'
-import AuthenticatedView from '@/views/authenticated.vue'
+import AuthenticatedView from '@/app-shell/authenticated.vue'
 
 const WelcomeView = () => import('@/views/welcome/index.vue')
 const PrivacyPolicyView = () => import('@/views/privacy-policy.vue')
