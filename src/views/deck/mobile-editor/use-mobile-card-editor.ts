@@ -61,7 +61,7 @@ export function useMobileCardEditor(controller: CardListController) {
     if (close_modal) return
 
     close_modal = modal.open(MobileEditor, {
-      mode: 'mobile-sheet',
+      mode: 'popup',
       context: { key: mobileCardEditorKey, value: api }
     }).close
   }
