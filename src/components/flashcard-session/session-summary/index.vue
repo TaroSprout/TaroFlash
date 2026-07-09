@@ -3,13 +3,11 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import SessionHeader from '../flashcard/session-header.vue'
 import StatTile from './stat-tile.vue'
 import { aggregateSession } from './aggregate'
 import type { CardReviewResult } from '@/components/flashcard-session/composables/session-queue'
 
 const { results } = defineProps<{
-  title: string
   results: CardReviewResult[]
 }>()
 
@@ -24,14 +22,6 @@ const summary = computed(() => aggregateSession(results))
 
 <template>
   <div data-testid="session-summary" class="h-full w-full flex flex-col gap-6 p-(--dialog-px)">
-    <session-header
-      teleport_target="[data-testid='study-session__header-target']"
-      :title="title"
-      is_cover
-      :show_menu="false"
-      @stop="emit('close')"
-    />
-
     <div
       data-testid="session-summary__body"
       class="flex-1 min-h-0 flex flex-col items-center gap-6"
