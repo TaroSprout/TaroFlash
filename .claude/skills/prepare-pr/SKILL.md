@@ -269,6 +269,14 @@ gh pr create \
 - Capture the URL `gh pr create` prints — needed for the Step 11 report.
 - The PR number is available the moment `gh pr create` returns (`gh pr view --json number,url`), so Step 10 can start watching CI right away.
 
+Immediately after the PR is created, open it in the user's browser — the user wants to watch CI themselves from the start, not just get a URL in the final report:
+
+```sh
+open "<pr-url>"
+```
+
+(macOS `open`; fall back to `gh pr view <pr-number> --web` if `open` is unavailable.) If this fails (headless environment, no display), skip silently and just leave the URL in the Step 11 report.
+
 If `gh` is unavailable or auth failed in Step 1: print the title, body, and base as fenced blocks so the user can create manually, then note the CI watch was skipped.
 
 ### Step 10 — Watch CI and coverage (skip with `--no-watch`)

@@ -128,7 +128,7 @@ describe('useSubscriptionActions — onCancel', () => {
     expect(noticeErrorMock).not.toHaveBeenCalled()
   })
 
-  test('shows a success notice with the success_3 sfx when cancel mutation resolves', async () => {
+  test('shows a success notice without an explicit sfx when cancel mutation resolves', async () => {
     alertWarnMock.mockReturnValue({ response: Promise.resolve(true) })
     cancelMutateMock.mockResolvedValue({})
 
@@ -137,8 +137,10 @@ describe('useSubscriptionActions — onCancel', () => {
 
     expect(noticeSuccessMock).toHaveBeenCalledWith(
       expect.any(String),
-      expect.objectContaining({ variant: 'panel', sfx: { open: 'success_3' } })
+      expect.objectContaining({ variant: 'panel' })
     )
+    const [, options] = noticeSuccessMock.mock.calls[0]
+    expect(options.sfx).toBeUndefined()
     expect(noticeErrorMock).not.toHaveBeenCalled()
   })
 
@@ -157,7 +159,7 @@ describe('useSubscriptionActions — onCancel', () => {
 // ── onResume ──────────────────────────────────────────────────────────────────
 
 describe('useSubscriptionActions — onResume', () => {
-  test('calls resume mutation and shows a success notice with the success_3 sfx [obligation]', async () => {
+  test('calls resume mutation and shows a success notice without an explicit sfx [obligation]', async () => {
     resumeMutateMock.mockResolvedValue({})
 
     const { onResume } = withSetup(() => useSubscriptionActions())
@@ -166,8 +168,10 @@ describe('useSubscriptionActions — onResume', () => {
     expect(resumeMutateMock).toHaveBeenCalledOnce()
     expect(noticeSuccessMock).toHaveBeenCalledWith(
       expect.any(String),
-      expect.objectContaining({ variant: 'panel', sfx: { open: 'success_3' } })
+      expect.objectContaining({ variant: 'panel' })
     )
+    const [, options] = noticeSuccessMock.mock.calls[0]
+    expect(options.sfx).toBeUndefined()
   })
 
   test('toasts error when resume mutation rejects [obligation]', async () => {

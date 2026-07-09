@@ -62,9 +62,9 @@ The subagent works from a cold diff and can mis-scope or over-claim. Cross-check
 3. **No collateral breakage.** The branch's own source changes can have broken existing test files the subagent never ran (it scopes to "touched files" and may not realise an untouched test exercises touched source). A composable that gained a new query dependency, for instance, throws `getActivePinia()` in every pre-existing test until its harness mocks the new hook; a barrel that now re-exports a heavier module makes every partial `vi.mock` of that barrel's transitive deps fail the ESM named-export check.
 4. **Coverage floor.** Touched files should be ~90% lines; note any genuine deferrals.
 
-### Mandatory final gate — run the FULL suite
+### Mandatory final gate — run the FULL suite once, then scope
 
-Before you commit, run the **entire** suite, not just the touched/mirror files:
+Before you commit, run the **entire** suite exactly once, to identify failures:
 
 ```
 pnpm test:fast
@@ -74,11 +74,13 @@ pnpm test:fast
 
 This is non-negotiable. The subagent only ever runs touched-file scope, so collateral breakage in **untouched** test files is invisible to it — and that is the single most common reason these PRs fail CI (it happens on nearly every move/barrel/mock-shape change). The mirror-file check in item 3 is necessary but **not sufficient**: a file-move or barrel-widening refactor breaks tests that don't mirror any touched source at all (e.g. a sibling feature whose `vi.mock('@/some/barrel')` is now missing a newly-transitive export). Only a full run catches those.
 
+**`pnpm test:fast` runs at most once per skill invocation.** Use it only to identify which files are failing. Every subsequent run — while fixing failures, after a re-dispatch, before final commit — must be scoped to the specific failing test file(s) (`vp test --no-coverage <path> ...`), never the full suite again. If you suspect the fixes had wider fallout, re-scope to the broader set of files plausibly affected (e.g. everything importing the changed barrel), not to a second full-suite run.
+
 If the full suite is red:
 
 - Fix the failures yourself when they're mechanical (repoint a moved import, add the missing export to a `vi.mock` factory, mock the barrel the source now imports instead of the old deep path). These are review fixes, not new authoring — keep them in the test commit.
 - Re-dispatch the subagent only if the failures reveal a genuine missing-coverage gap, not just a broken harness.
-- Do **not** commit until `pnpm test:fast` is fully green. A green touched-file scope with a red full suite is a failed run.
+- Verify fixes with the scoped run above, not another `pnpm test:fast`. Do **not** commit until every file identified as failing is confirmed green via its scoped run.
 
 ### Decide
 

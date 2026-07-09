@@ -20,27 +20,39 @@ describe('useNoticeStore', () => {
       expect(store.notices[0].sfx).toEqual({ open: 'success_3' })
     })
 
-    test('success() does not auto-inject any sfx', () => {
+    test('success() auto-defaults sfx.open to success_3 when caller omits it', () => {
       const store = useNoticeStore()
       store.success('yay')
-      expect(store.notices[0].sfx).toBeUndefined()
+      expect(store.notices[0].sfx).toEqual({ open: 'success_3' })
     })
 
-    test('warn() does not auto-inject any sfx', () => {
+    test('success() lets a caller-supplied sfx.open override the default', () => {
+      const store = useNoticeStore()
+      store.success('yay', { sfx: { open: 'chime_ring' } })
+      expect(store.notices[0].sfx).toEqual({ open: 'chime_ring' })
+    })
+
+    test('warn() auto-defaults sfx.open to etc_error_swipe when caller omits it', () => {
       const store = useNoticeStore()
       store.warn('careful')
-      expect(store.notices[0].sfx).toBeUndefined()
+      expect(store.notices[0].sfx).toEqual({ open: 'etc_error_swipe' })
     })
 
-    test('info() does not auto-inject any sfx', () => {
+    test('warn() lets a caller-supplied sfx.open override the default', () => {
+      const store = useNoticeStore()
+      store.warn('careful', { sfx: { open: 'success_3' } })
+      expect(store.notices[0].sfx).toEqual({ open: 'success_3' })
+    })
+
+    test('info() auto-defaults sfx.open to chime_ring when caller omits it', () => {
       const store = useNoticeStore()
       store.info('fyi')
-      expect(store.notices[0].sfx).toBeUndefined()
+      expect(store.notices[0].sfx).toEqual({ open: 'chime_ring' })
     })
 
-    test('success() keeps caller-supplied sfx untouched', () => {
+    test('info() lets a caller-supplied sfx.open override the default', () => {
       const store = useNoticeStore()
-      store.success('yay', { sfx: { open: 'success_3' } })
+      store.info('fyi', { sfx: { open: 'success_3' } })
       expect(store.notices[0].sfx).toEqual({ open: 'success_3' })
     })
   })

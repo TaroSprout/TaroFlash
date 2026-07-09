@@ -287,13 +287,11 @@ jobs:
         continue-on-error: true
         run: pnpm exec vp test --merge-reports --coverage
 
-      # Decouple baseline upload from merge step's exit code. `vp test
-      # --merge-reports --coverage` occasionally exits non-zero after
-      # successfully writing coverage-summary.json (e.g. Vue warns flipping
-      # an internal error count, or mixed vitest+coverage-v8 versions). As
-      # long as the summary file landed on disk we still want it published
-      # as the master baseline so subsequent PR runs aren't comparing
-      # against a stale snapshot.
+      # `vp test --merge-reports --coverage` occasionally exits non-zero even
+      # after successfully writing coverage-summary.json (e.g. Vue warns
+      # flipping an internal error count, or mixed vitest+coverage-v8
+      # versions). Check the file landed on disk instead of trusting the
+      # step's exit code.
       - name: Check merged summary present
         id: merged
         run: |
@@ -305,42 +303,8 @@ jobs:
             exit 1
           fi
 
-      - name: Upload coverage summary (master baseline)
-        if: |
-          github.event_name == 'push' &&
-          github.ref == 'refs/heads/master' &&
-          steps.merged.outputs.ok == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-summary-master
-          path: coverage/coverage-summary.json
-          retention-days: 30
-
-      - name: Download master coverage summary (PR delta baseline)
-        if: github.event_name == 'pull_request'
-        uses: dawidd6/action-download-artifact@v6
-        continue-on-error: true
-        with:
-          workflow: ci.yml
-          workflow_conclusion: success
-          branch: master
-          name: coverage-summary-master
-          path: coverage-base/
-          if_no_artifact_found: warn
-
-      - name: Check baseline summary present
-        if: github.event_name == 'pull_request'
-        id: baseline
-        run: |
-          if [ -f coverage-base/coverage-summary.json ]; then
-            echo "path=coverage-base/coverage-summary.json" >> "$GITHUB_OUTPUT"
-          else
-            echo "path=" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Report Coverage
         if: github.event_name == 'pull_request'
         uses: davelosert/vitest-coverage-report-action@v2
         with:
-          file-coverage-mode: 'all'
-          json-summary-compare-path: ${{ steps.baseline.outputs.path }}
+          file-coverage-mode: 'none'
