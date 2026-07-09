@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, nextTick } from 'vue'
 import SessionStudying from '@/components/flashcard-session/session-studying/index.vue'
 
 // ── Hoisted controller fake ────────────────────────────────────────────────────
@@ -207,25 +207,25 @@ describe('SessionStudying (index.vue)', () => {
 
   test('card-stage @started delegates to controller.startSession', async () => {
     const wrapper = mountSessionStudying()
-    await wrapper.findComponent(CardStageStub).vm.$emit('started')
+    wrapper.findComponent(CardStageStub).vm.$emit('started')
     expect(controller_state.startSession).toHaveBeenCalledOnce()
   })
 
   test('card-stage @side-changed delegates to controller.flipCurrentCard', async () => {
     const wrapper = mountSessionStudying()
-    await wrapper.findComponent(CardStageStub).vm.$emit('side-changed')
+    wrapper.findComponent(CardStageStub).vm.$emit('side-changed')
     expect(controller_state.flipCurrentCard).toHaveBeenCalledOnce()
   })
 
   test('card-stage @reviewed delegates to controller.onCardReviewed with the grade', async () => {
     const wrapper = mountSessionStudying()
-    await wrapper.findComponent(CardStageStub).vm.$emit('reviewed', 3)
+    wrapper.findComponent(CardStageStub).vm.$emit('reviewed', 3)
     expect(controller_state.onCardReviewed).toHaveBeenCalledWith(3)
   })
 
   test('card-stage @edit-update delegates to controller.onEditUpdate', async () => {
     const wrapper = mountSessionStudying()
-    await wrapper.findComponent(CardStageStub).vm.$emit('edit-update', 'new text')
+    wrapper.findComponent(CardStageStub).vm.$emit('edit-update', 'new text')
     expect(controller_state.onEditUpdate).toHaveBeenCalledWith('new text')
   })
 
@@ -237,7 +237,8 @@ describe('SessionStudying (index.vue)', () => {
   test('card-stage @drag-rating primes the matching rating-buttons option as active', async () => {
     const wrapper = mountWithRealRatingButtons()
 
-    await wrapper.findComponent(CardStageStub).vm.$emit('drag-rating', 1)
+    wrapper.findComponent(CardStageStub).vm.$emit('drag-rating', 1)
+    await nextTick()
 
     expect(wrapper.find('[data-testid="rating-buttons__again"]').attributes('data-active')).toBe(
       'true'
