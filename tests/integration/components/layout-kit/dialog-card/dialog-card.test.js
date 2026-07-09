@@ -351,6 +351,26 @@ describe('DialogCard', () => {
     })
   })
 
+  // ── bg_class prop ────────────────────────────────────────────────────────────
+
+  describe('bg_class', () => {
+    test('defaults to bg-brown-200 dark:bg-grey-800 when omitted', () => {
+      const wrapper = mountCard()
+      const classes = wrapper.find('[data-testid="dialog-card"]').classes()
+
+      expect(classes).toContain('bg-brown-200')
+      expect(classes).toContain('dark:bg-grey-800')
+    })
+
+    test('a caller value replaces the default outright', () => {
+      const wrapper = mountCard({ bg_class: 'bg-brown-100 dark:bg-grey-800' })
+      const classes = wrapper.find('[data-testid="dialog-card"]').classes()
+
+      expect(classes).toContain('bg-brown-100')
+      expect(classes).not.toContain('bg-brown-200')
+    })
+  })
+
   // ── dialog_px prop ─────────────────────────────────────────────────────────────
 
   describe('dialog_px', () => {

@@ -3,13 +3,25 @@ import { ref, nextTick } from 'vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
+const { mockEmitSfx, mockOpen, mockClose } = vi.hoisted(() => ({
+  mockEmitSfx: vi.fn(),
+  mockOpen: vi.fn(),
+  mockClose: vi.fn()
+}))
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
+vi.mock('@/composables/modal', () => ({
+  useModal: () => ({ open: mockOpen })
+}))
+
 // ── Imports ───────────────────────────────────────────────────────────────────
 
-import { useMobileCardEditor } from '@/views/deck/mobile-editor/use-mobile-card-editor'
+import {
+  useMobileCardEditor,
+  mobileCardEditorKey
+} from '@/views/deck/mobile-editor/use-mobile-card-editor'
+import MobileEditor from '@/views/deck/mobile-editor/index.vue'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -52,14 +64,12 @@ function makeEditor(cards = []) {
 
 beforeEach(() => {
   mockEmitSfx.mockClear()
+  mockOpen.mockClear()
+  mockClose.mockClear()
+  mockOpen.mockReturnValue({ response: Promise.resolve(), close: mockClose })
 })
 
 describe('useMobileCardEditor — initial state', () => {
-  test('open is false initially', () => {
-    const { editor } = makeEditor()
-    expect(editor.open.value).toBe(false)
-  })
-
   test('current is undefined when no cursor is set', () => {
     const { editor } = makeEditor([makeCard()])
     expect(editor.current.value).toBeUndefined()
@@ -72,11 +82,15 @@ describe('useMobileCardEditor — initial state', () => {
 })
 
 describe('useMobileCardEditor — open_at [obligation]', () => {
-  test('open_at sets open to true [obligation]', () => {
+  test('open_at opens the editor via useModal().open with MobileEditor, mode popup, and the editor context [obligation]', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
-    expect(editor.open.value).toBe(true)
+
+    expect(mockOpen).toHaveBeenCalledWith(MobileEditor, {
+      mode: 'popup',
+      context: { key: mobileCardEditorKey, value: editor }
+    })
   })
 
   test('open_at sets cursor to the given client_id [obligation]', () => {
@@ -112,26 +126,67 @@ describe('useMobileCardEditor — open_at [obligation]', () => {
   test('open_at is a no-op when the deck is empty [obligation]', () => {
     const { editor } = makeEditor([])
     editor.open_at()
-    expect(editor.open.value).toBe(false)
+    expect(mockOpen).not.toHaveBeenCalled()
+  })
+
+  test('calling open_at again while already open does not push a second modal [obligation]', () => {
+    const c1 = makeCard({ client_id: 'cid-1' })
+    const c2 = makeCard({ client_id: 'cid-2' })
+    const { editor } = makeEditor([c1, c2])
+
+    editor.open_at('cid-1')
+    editor.open_at('cid-2')
+
+    expect(mockOpen).toHaveBeenCalledTimes(1)
+    expect(editor.current.value?.client_id).toBe('cid-2')
+  })
+
+  test('reopening after onClosed pushes a new modal [obligation]', () => {
+    const c1 = makeCard({ client_id: 'cid-1' })
+    const { editor } = makeEditor([c1])
+
+    editor.open_at('cid-1')
+    editor.close()
+    editor.onClosed()
+    editor.open_at('cid-1')
+
+    expect(mockOpen).toHaveBeenCalledTimes(2)
   })
 })
 
 describe('useMobileCardEditor — close [obligation]', () => {
-  test('close sets open to false [obligation]', () => {
+  test('close invokes the close function returned by modal.open [obligation]', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
     editor.close()
-    expect(editor.open.value).toBe(false)
+    expect(mockClose).toHaveBeenCalled()
   })
 
-  test('close emits snappy_button_5 [obligation]', () => {
+  test('close is a no-op (does not throw) when the editor was never opened [obligation]', () => {
+    const { editor } = makeEditor([])
+    expect(() => editor.close()).not.toThrow()
+    expect(mockClose).not.toHaveBeenCalled()
+  })
+})
+
+describe('useMobileCardEditor — onClosed [obligation]', () => {
+  test('onClosed emits snappy_button_5 [obligation]', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
     mockEmitSfx.mockClear()
-    editor.close()
+    editor.onClosed()
     expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+  })
+
+  test('onClosed resets internal state so a later open_at reopens the editor [obligation]', () => {
+    const card = makeCard({ client_id: 'cid-1' })
+    const { editor } = makeEditor([card])
+    editor.open_at('cid-1')
+    editor.onClosed()
+    editor.open_at('cid-1')
+    expect(mockOpen).toHaveBeenCalledTimes(2)
   })
 })
 
@@ -389,7 +444,7 @@ describe('useMobileCardEditor — reconcileCursor after delete [obligation]', ()
     expect(editor.current.value?.client_id).toBe('cid-1')
   })
 
-  test('closes when the deck becomes empty after delete [obligation]', async () => {
+  test('closes (via modal close) when the deck becomes empty after delete [obligation]', async () => {
     const card = makeCard({ id: 1, client_id: 'cid-1' })
     const { editor, controller } = makeEditor([card])
     editor.open_at('cid-1')
@@ -401,7 +456,7 @@ describe('useMobileCardEditor — reconcileCursor after delete [obligation]', ()
     await editor.deleteCard()
     await nextTick()
 
-    expect(editor.open.value).toBe(false)
+    expect(mockClose).toHaveBeenCalled()
   })
 
   test('reconcileCursor is a no-op when the card is still present (user dismissed modal) [obligation]', async () => {
@@ -411,12 +466,13 @@ describe('useMobileCardEditor — reconcileCursor after delete [obligation]', ()
 
     // onDeleteCards resolves without removing the card (dismiss path)
     controller.actions.onDeleteCards.mockResolvedValueOnce(undefined)
+    mockClose.mockClear()
 
     await editor.deleteCard()
     await nextTick()
 
-    // Card is still in the list, cursor stays on it
+    // Card is still in the list, cursor stays on it, and the modal was not closed
     expect(editor.current.value?.client_id).toBe('cid-1')
-    expect(editor.open.value).toBe(true)
+    expect(mockClose).not.toHaveBeenCalled()
   })
 })
