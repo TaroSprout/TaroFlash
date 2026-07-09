@@ -105,7 +105,10 @@ export function useModal() {
         close: closeFunc
       },
       resolve: resolveFn,
-      context: args?.context,
+      context: args?.context && {
+        key: args.context.key,
+        value: markRaw(args.context.value as object)
+      },
       mobile_below_width: args?.mobile_below_width,
       mobile_below_height: args?.mobile_below_height
     }
