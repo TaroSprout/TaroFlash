@@ -17,8 +17,9 @@ export type CardEditMenu = ReturnType<typeof useCardEditMenu>
  * footer prepends its own `edit` entry). `primaryAction`/`startEditing` are the
  * primary edit action — the dock editor below md, desktop edit mode at md+.
  *
- * The rearrange option disables itself while rearranging: stopping happens via
- * the yellow primary button (desktop) or footer button (mobile), not from here.
+ * All options disable while rearranging — bulk-select toggles don't work
+ * mid-drag, so nothing else in the menu should be reachable either. Stopping
+ * happens via the yellow primary button (desktop) or footer button (mobile).
  */
 export function useCardEditMenu() {
   const { t } = useI18n()
@@ -34,7 +35,12 @@ export function useCardEditMenu() {
   const is_rearranging = computed(() => !!shell?.is_rearranging.value)
 
   const options = computed<DropdownOption[]>(() => [
-    { label: t('deck-view.actions.select-cards'), value: 'select', icon: 'data-check' },
+    {
+      label: t('deck-view.actions.select-cards'),
+      value: 'select',
+      icon: 'data-check',
+      disabled: is_rearranging.value
+    },
     {
       label: t('deck-view.actions.reorder-cards'),
       value: 'rearrange',
@@ -44,7 +50,8 @@ export function useCardEditMenu() {
     {
       label: t('deck-view.actions.edit-card-appearance'),
       value: 'appearance',
-      icon: 'align-horizontal-frame'
+      icon: 'align-horizontal-frame',
+      disabled: is_rearranging.value
     }
   ])
 
