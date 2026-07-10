@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import logger from '@/utils/logger'
 
 const { src, size = 'unset' } = defineProps<{
   src: string
   size?: 'full' | 'xl' | 'lg' | 'base' | 'sm' | 'xs' | 'unset'
 }>()
-
-const imageUrl = ref<string | null>(null)
 
 // Images listed in the eager globs are bundled into the main chunk.
 // All others are code-split and fetched on first use.
@@ -42,27 +40,35 @@ const lazySvgs = import.meta.glob('../../assets/images/*.svg', {
 })
 
 const lazyModules = { ...lazyRaster, ...lazySvgs }
+const lazyUrl = ref<string | null>(null)
+
+const eagerUrl = computed(() => {
+  const key = findKey(eagerImages, src)
+  return key ? (eagerImages[key] as string) : null
+})
+const imageUrl = computed(() => eagerUrl.value ?? lazyUrl.value)
 
 function findKey(mods: Record<string, any>, name: string) {
   const re = new RegExp(`/${name}\\.(png|jpe?g|svg)$`, 'i')
   return Object.keys(mods).find((k) => re.test(k))
 }
 
-onMounted(async () => {
-  const eagerKey = findKey(eagerImages, src)
-  if (eagerKey) {
-    imageUrl.value = eagerImages[eagerKey] as string
-    return
-  }
+watch(
+  () => src,
+  async (name) => {
+    lazyUrl.value = null
+    if (eagerUrl.value) return
 
-  const lazyKey = findKey(lazyModules, src)
-  if (!lazyKey) {
-    logger.warn(`No image found for: ${src}`)
-    return
-  }
+    const lazyKey = findKey(lazyModules, name)
+    if (!lazyKey) {
+      logger.warn(`No image found for: ${name}`)
+      return
+    }
 
-  imageUrl.value = (await lazyModules[lazyKey]()) as string
-})
+    lazyUrl.value = (await lazyModules[lazyKey]()) as string
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
