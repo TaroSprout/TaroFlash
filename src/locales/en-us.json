@@ -176,6 +176,7 @@
   "settings.profile.section.about-you": "About you",
   "settings.profile.section.appearance": "Appearance",
   "settings.profile.member-name-placeholder": "Member Name",
+  "settings.profile.member-name-required": "Give your profile a name",
   "settings.profile.description-placeholder": "Bio",
   "settings.profile.theme-label": "Theme",
   "settings.profile.pattern-label": "Pattern",

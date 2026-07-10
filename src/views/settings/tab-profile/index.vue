@@ -32,6 +32,7 @@ const layout_mode = inject(settingsLayoutKey)!
     <labeled-section :label="t('settings.profile.section.about-you')">
       <ui-input
         :placeholder="t('settings.profile.member-name-placeholder')"
+        :error="editor.name_error.value"
         :max-length="MEMBER_DISPLAY_NAME_MAX_LENGTH"
         v-model:value="editor.settings.display_name"
       />
