@@ -287,3 +287,20 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
 }
+
+/* Live-measured by src/composables/ui/safe-area.ts. Defaults to the device's
+   inset so first paint errs toward extra padding rather than clipped content;
+   corrected once the real chrome state is measured post-mount.
+   Registered as a typed <length> so the browser interpolates it directly —
+   every consumer downstream (e.g. --dock-pb's calc()) animates smoothly for
+   free, with no transition needed on each individual consumer. */
+@property --edge-safe-padding {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+
+:root {
+  --edge-safe-padding: env(safe-area-inset-bottom);
+  transition: --edge-safe-padding 200ms ease;
+}

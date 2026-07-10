@@ -9,6 +9,7 @@ import { springScaleIn } from '@/utils/animations/modal'
 import { noticeToastListLeave } from '@/utils/animations/notice-toast'
 import audio_player from '@/sfx/player'
 import { installAudioLifecycle } from '@/sfx/lifecycle'
+import { installSafeAreaPadding } from '@/composables/ui/safe-area'
 import { useSessionStore } from '@/stores/session'
 import { onMounted, onBeforeUnmount } from 'vue'
 import logger from '@/utils/logger'
@@ -51,6 +52,7 @@ watch(
 )
 
 let teardownAudioLifecycle: (() => void) | undefined
+let teardownSafeAreaPadding: (() => void) | undefined
 
 const scheduleIdle =
   typeof window !== 'undefined' && 'requestIdleCallback' in window
@@ -58,12 +60,7 @@ const scheduleIdle =
     : (cb: () => void) => setTimeout(cb, 0)
 
 onMounted(() => {
-  // navigator.standalone is iOS Safari's legacy fallback — display-mode alone misses
-  // older iOS versions that never adopted the media-feature check.
-  const is_standalone =
-    window.matchMedia('(display-mode: standalone)').matches ||
-    (window.navigator as any).standalone === true
-  document.documentElement.setAttribute('data-standalone', String(is_standalone))
+  teardownSafeAreaPadding = installSafeAreaPadding()
 
   try {
     theme.load()
@@ -86,6 +83,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   teardownAudioLifecycle?.()
+  teardownSafeAreaPadding?.()
 })
 </script>
 
