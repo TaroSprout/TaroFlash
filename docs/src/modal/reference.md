@@ -1,5 +1,5 @@
 ---
-lastUpdated: 2026-04-12T12:16:07-07:00
+lastUpdated: 2026-07-10T17:37:36Z
 ---
 
 # API Reference
@@ -22,12 +22,14 @@ function useModal(): {
 
 Opens a modal and returns `{ response, close }`.
 
-| Option     | Type           | Default     | Description                                                    |
-| ---------- | -------------- | ----------- | -------------------------------------------------------------- |
-| `props`    | `object`       | `{}`        | Props passed to the component. `close` is always injected too. |
-| `backdrop` | `boolean`      | `false`     | Show a blurred backdrop. Clicking it triggers a close request. |
-| `mode`     | `ModalMode`    | `'dialog'`  | Controls layout and animation. See [Modes](./modes).           |
-| `context`  | `ModalContext` | `undefined` | Vue injection to provide into the modal subtree.               |
+| Option                | Type            | Default     | Description                                                                                         |
+| --------------------- | --------------- | ----------- | --------------------------------------------------------------------------------------------------- |
+| `props`               | `object`        | `{}`        | Props passed to the component. `close` is always injected too.                                      |
+| `backdrop`            | `boolean`       | `false`     | Show a blurred backdrop. Clicking it triggers a close request.                                      |
+| `mode`                | `ModalMode`     | `'dialog'`  | Controls layout and animation. See [Modes](./modes).                                                |
+| `context`             | `ModalContext`  | `undefined` | Vue injection to provide into the modal subtree.                                                    |
+| `mobile_below_width`  | `BreakpointKey` | `'sm'`      | Overrides the width threshold below which `mobile-sheet` renders as a sheet. See [Modes](./modes).  |
+| `mobile_below_height` | `BreakpointKey` | `'sm'`      | Overrides the height threshold below which `mobile-sheet` renders as a sheet. See [Modes](./modes). |
 
 ### `pop()`
 
@@ -44,6 +46,26 @@ function useModalRequestClose(handler: () => void): void
 Registers a handler that runs when the backdrop is clicked or `Esc` is pressed, instead of the default `pop()`. Must be called inside a component that renders inside a modal. The handler is automatically removed on component unmount.
 
 See [Intercepting Close](./request-close).
+
+---
+
+## `useModalAfterEnter()`
+
+```ts
+function useModalAfterEnter(): Promise<void>
+```
+
+Returns a promise that resolves once this modal's enter transition finishes. Must be called during component setup (uses `inject()` internally to find the modal's id). Resolves immediately if called outside a modal.
+
+Useful for deferring GSAP-driven warmup work (e.g. measuring layout, starting an animation) until the modal is actually visible and settled, instead of racing the enter transition.
+
+### `resolveModalAfterEnter(id)`
+
+```ts
+function resolveModalAfterEnter(id: string): void
+```
+
+Internal — called by `modal.vue`'s `@after-enter` handler once the enter transition for the given modal id completes. Resolves the matching promise from `useModalAfterEnter()`. You shouldn't need to call this directly.
 
 ---
 
