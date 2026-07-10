@@ -4,10 +4,11 @@ import { useI18n } from 'vue-i18n'
 import UiInput from '@/components/ui-kit/input.vue'
 import UiTextarea from '@/components/ui-kit/textarea.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
+import { DECK_TITLE_MAX_LENGTH } from '@/utils/deck/defaults'
 import DeckSaveButton from './deck-save-button.vue'
 
 const { t } = useI18n()
-const { settings } = inject(deckEditorKey)!
+const { settings, title_error } = inject(deckEditorKey)!
 </script>
 
 <template>
@@ -18,6 +19,8 @@ const { settings } = inject(deckEditorKey)!
     <div data-testid="deck-aside__inputs" class="flex flex-col gap-2">
       <ui-input
         :placeholder="t('deck.title-placeholder')"
+        :error="title_error"
+        :max-length="DECK_TITLE_MAX_LENGTH"
         text-align="center"
         size="lg"
         v-model:value="settings.title"
@@ -25,6 +28,7 @@ const { settings } = inject(deckEditorKey)!
       <ui-textarea
         :placeholder="t('deck.description-placeholder')"
         :max_chars="100"
+        no-newlines
         rows="3"
         v-model:value="settings.description"
       />

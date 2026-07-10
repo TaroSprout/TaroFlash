@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 
-const { textAlign = 'left', size = 'lg' } = defineProps<{
+type UiInputProps = {
   label?: string
   placeholder?: string
   textAlign?: 'left' | 'center' | 'right'
   size?: 'sm' | 'base' | 'lg'
   error?: string
-}>()
+  maxLength?: number
+}
+
+const { textAlign = 'left', size = 'lg', maxLength } = defineProps<UiInputProps>()
 
 const emit = defineEmits<{
   (e: 'input', value?: string): void
@@ -42,6 +45,7 @@ const value = defineModel<string>('value')
         v-bind="$attrs"
         v-sfx.focus="'type_05'"
         :placeholder="placeholder"
+        :maxlength="maxLength"
         v-model="value"
         @input="emit('input', value)"
       />

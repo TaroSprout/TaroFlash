@@ -19,7 +19,10 @@ import { computed } from 'vue'
 
 const InputStub = defineComponent({
   name: 'UiInput',
-  props: { value: { type: String, default: '' } },
+  props: {
+    value: { type: String, default: '' },
+    maxLength: { type: Number, default: undefined }
+  },
   emits: ['update:value'],
   inheritAttrs: false,
   setup(props, { emit }) {
@@ -27,6 +30,7 @@ const InputStub = defineComponent({
     return () =>
       h('input', {
         ...attrs,
+        maxlength: props.maxLength,
         value: props.value,
         onInput: (e) => emit('update:value', e.target.value)
       })
@@ -79,6 +83,8 @@ function makeEditor() {
     created_at: ref('2024-04-15T00:00:00Z'),
     plan: ref('free'),
     is_dirty: ref(false),
+    has_name: ref(true),
+    name_error: ref(undefined),
     saving: ref(false),
     saveMember: () => Promise.resolve(false)
   }
@@ -126,6 +132,20 @@ describe('TabProfile', () => {
     const input = wrapper.findAll('input')[0]
     await input.setValue('Nina')
     expect(editor.settings.display_name).toBe('Nina')
+  })
+
+  test('name input carries MEMBER_DISPLAY_NAME_MAX_LENGTH as maxlength', () => {
+    const { wrapper } = makeTab()
+    const input = wrapper.findAll('input')[0]
+    expect(input.attributes('maxlength')).toBe('12')
+  })
+
+  test('name input error reflects editor.name_error.value [obligation]', async () => {
+    const editor = makeEditor()
+    editor.name_error.value = 'Give this member a name'
+    const { wrapper } = makeTab(editor)
+    const input = wrapper.findAll('input')[0]
+    expect(input.attributes('error')).toBe('Give this member a name')
   })
 
   test('typing into the bio textarea updates editor.settings.description', async () => {

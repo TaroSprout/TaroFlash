@@ -5,6 +5,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import { useI18n } from 'vue-i18n'
 import type { OAuthProvider } from '@/api/session'
 import type { SignupFieldErrors } from '@/composables/auth/use-signup-actions'
+import { MEMBER_DISPLAY_NAME_MAX_LENGTH } from '@/utils/member/defaults'
 
 const { errors = {} } = defineProps<{ errors?: SignupFieldErrors }>()
 
@@ -43,6 +44,7 @@ const { t } = useI18n()
       <ui-input
         size="lg"
         :placeholder="t('signup-dialog.form.username-placeholder')"
+        :max-length="MEMBER_DISPLAY_NAME_MAX_LENGTH"
         v-model="username"
         :error="errors.username"
       />

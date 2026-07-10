@@ -6,13 +6,22 @@ vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn() }))
 vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: () => ({ value: false }) }))
 
 import TabDetails from '@/views/deck/deck-settings/tab-details/index.vue'
+import DeckSaveButton from '@/views/deck/deck-settings/deck-save-button.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { deckSettingsLayoutKey } from '@/views/deck/deck-settings/layout'
 import { deckSettingsCloseKey } from '@/views/deck/deck-settings/layout'
 
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => ({ error: vi.fn(), success: vi.fn(), warn: vi.fn() })
+}))
+
 const InputStub = defineComponent({
   name: 'UiInput',
-  props: { value: { type: String, default: '' }, placeholder: { type: String, default: '' } },
+  props: {
+    value: { type: String, default: '' },
+    placeholder: { type: String, default: '' },
+    maxLength: { type: Number, default: undefined }
+  },
   emits: ['update:value'],
   inheritAttrs: false,
   setup(props, { emit }) {
@@ -22,6 +31,7 @@ const InputStub = defineComponent({
         ...attrs,
         'data-testid': 'ui-input',
         'data-placeholder': props.placeholder,
+        maxlength: props.maxLength,
         value: props.value,
         onInput: (e) => emit('update:value', e.target.value)
       })
@@ -63,7 +73,7 @@ const ButtonStub = defineComponent({
           type: 'button',
           ...attrs,
           'data-loading': String(!!props.loading),
-          disabled: props.loading || props.disabled,
+          'data-disabled': String(!!props.disabled),
           onClick: (e) => emit('press', e)
         },
         slots.default?.()
@@ -87,9 +97,12 @@ const SaveButtonStub = defineComponent({
 })
 
 function makeEditor(overrides = {}) {
+  const settings = reactive({ title: 'My Deck', description: 'A test deck', ...overrides })
   return {
-    settings: reactive({ title: 'My Deck', description: 'A test deck', ...overrides }),
+    settings,
     is_dirty: ref(false),
+    has_title: computed(() => !!settings.title?.trim()),
+    title_error: ref(undefined),
     saveDeck: vi.fn().mockResolvedValue(true)
   }
 }
@@ -143,6 +156,11 @@ describe('TabDetails [obligation]', () => {
     expect(editor.settings.description).toBe('New desc')
   })
 
+  test('title input carries DECK_TITLE_MAX_LENGTH as maxlength', () => {
+    const { wrapper } = makeTab()
+    expect(wrapper.find('[data-testid="ui-input"]').attributes('maxlength')).toBe('15')
+  })
+
   test('does not render a back button (chrome-driven back replaced the inline button) [obligation]', () => {
     const { wrapper } = makeTab('sheet')
     expect(wrapper.find('[data-testid="deck-back-button-stub"]').exists()).toBe(false)
@@ -157,5 +175,47 @@ describe('TabDetails [obligation]', () => {
   test('save button not rendered in tablet mode', () => {
     const { wrapper } = makeTab('tablet')
     expect(wrapper.find('[data-testid="deck-save-button-stub"]').exists()).toBe(false)
+  })
+
+  test('title input carries the error set on the shared editor instance [obligation]', () => {
+    const editor = makeEditor({ title: '' })
+    const { wrapper } = makeTab('sheet', editor)
+    editor.title_error.value = 'Give this deck a title'
+    return wrapper.vm.$nextTick().then(() => {
+      expect(wrapper.find('[data-testid="ui-input"]').attributes('error')).toBe(
+        'Give this deck a title'
+      )
+    })
+  })
+})
+
+describe('TabDetails + DeckSaveButton — shared editor instance [obligation]', () => {
+  test('title_error set by deck-save-button onSave is visible in tab-details rendered error', async () => {
+    const editor = makeEditor({ title: '' })
+    const close = vi.fn()
+    const wrapper = mount(TabDetails, {
+      global: {
+        provide: {
+          [deckEditorKey]: editor,
+          [deckSettingsLayoutKey]: computed(() => 'sheet'),
+          [deckSettingsCloseKey]: close
+        },
+        stubs: {
+          UiInput: InputStub,
+          UiTextarea: TextareaStub,
+          UiButton: ButtonStub,
+          DeckSaveButton,
+          SectionList: PassthroughStub
+        },
+        mocks: { $t: (k) => k }
+      }
+    })
+
+    await wrapper.find('button').trigger('click')
+
+    expect(wrapper.find('[data-testid="ui-input"]').attributes('error')).toBe(
+      'Give your deck a name'
+    )
+    expect(close).not.toHaveBeenCalled()
   })
 })

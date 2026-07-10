@@ -17,7 +17,9 @@ vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (k) => k }) }))
 vi.mock('@/api/session', () => ({
   linkGoogleIdentity: mockLinkGoogleIdentity,
   unlinkGoogleIdentity: mockUnlinkGoogleIdentity,
-  getUser: mockGetUser
+  getUser: mockGetUser,
+  onSignedOut: vi.fn(() => vi.fn()),
+  isAuthError: vi.fn()
 }))
 
 import { useSessionStore } from '@/stores/session'

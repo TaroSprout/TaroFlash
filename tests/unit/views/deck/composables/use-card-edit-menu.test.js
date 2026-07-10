@@ -105,23 +105,26 @@ describe('useCardEditMenu — options', () => {
     expect(result.options.value[0].value).toBe('select')
     expect(result.options.value[1].value).toBe('rearrange')
     expect(result.options.value[2].value).toBe('appearance')
-    result // lint-happy
   })
 
-  test('rearrange option has disabled:true exactly when is_rearranging [obligation]', () => {
+  test('all three options have disabled:true when is_rearranging [obligation]', () => {
     const shell = makeShell({ is_rearranging: true })
     const r = setup({ shell })
     app = r.app
-    const rearrange_opt = r.result.options.value.find((o) => o.value === 'rearrange')
-    expect(rearrange_opt.disabled).toBe(true)
+    for (const value of ['select', 'rearrange', 'appearance']) {
+      const opt = r.result.options.value.find((o) => o.value === value)
+      expect(opt.disabled).toBe(true)
+    }
   })
 
-  test('rearrange option is NOT disabled when not rearranging [obligation]', () => {
+  test('none of the three options are disabled when not rearranging [obligation]', () => {
     const shell = makeShell({ is_rearranging: false })
     const r = setup({ shell })
     app = r.app
-    const rearrange_opt = r.result.options.value.find((o) => o.value === 'rearrange')
-    expect(rearrange_opt.disabled).toBeFalsy()
+    for (const value of ['select', 'rearrange', 'appearance']) {
+      const opt = r.result.options.value.find((o) => o.value === value)
+      expect(opt.disabled).toBeFalsy()
+    }
   })
 
   test('is_rearranging computed reflects shell.is_rearranging', () => {

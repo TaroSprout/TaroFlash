@@ -1,4 +1,4 @@
-import { computed, reactive, type InjectionKey } from 'vue'
+import { computed, reactive, ref, watch, type InjectionKey } from 'vue'
 import { useUpsertMemberMutation } from '@/api/members'
 import { useMemberStore } from '@/stores/member'
 import { buildMemberPayload, hasMemberChanges } from '@/utils/member/payload'
@@ -20,9 +20,12 @@ export function useMemberEditor() {
 
   const cover = reactive<DeckCover>({ ...member_store.cover })
 
+  const name_error = ref<string>()
+
   const email = computed(() => member_store.email ?? '')
   const created_at = computed(() => member_store.created_at ?? '')
   const plan = computed(() => member_store.plan ?? 'free')
+  const has_name = computed(() => !!settings.display_name?.trim())
 
   const initial_payload = buildMemberPayload({ settings, preferences, cover })
   const is_dirty = computed(() =>
@@ -47,6 +50,13 @@ export function useMemberEditor() {
     }
   }
 
+  watch(
+    () => settings.display_name,
+    () => {
+      name_error.value = undefined
+    }
+  )
+
   return {
     settings,
     preferences,
@@ -55,6 +65,8 @@ export function useMemberEditor() {
     created_at,
     plan,
     is_dirty,
+    has_name,
+    name_error,
     saving: upsert_mutation.isLoading,
     saveMember
   }

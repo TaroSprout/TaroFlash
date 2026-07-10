@@ -54,9 +54,19 @@ describe('MemberCard', () => {
     expect(wrapper.find('[data-testid="member-card__header"]').text()).toContain('Nina')
   })
 
-  test('header is empty when displayName omitted', () => {
+  test('shows the name-placeholder fallback when displayName is omitted [obligation]', () => {
     const wrapper = mountCard()
-    expect(wrapper.find('[data-testid="member-card__header"]').text()).toBe('')
+    expect(wrapper.find('h1').text()).toBe('Member Name')
+  })
+
+  test('shows the name-placeholder fallback when displayName is an empty string [obligation]', () => {
+    const wrapper = mountCard({ displayName: '' })
+    expect(wrapper.find('h1').text()).toBe('Member Name')
+  })
+
+  test('renders displayName as-is when provided, not the fallback [obligation]', () => {
+    const wrapper = mountCard({ displayName: 'Nina' })
+    expect(wrapper.find('h1').text()).toBe('Nina')
   })
 
   test('renders cardComment when provided', () => {

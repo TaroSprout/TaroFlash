@@ -40,12 +40,14 @@ vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 
 // ── Factory ───────────────────────────────────────────────────────────────────
 
-function makeWrapper({ is_dirty = true, save_result = true } = {}) {
+function makeWrapper({ is_dirty = true, save_result = true, has_name = true } = {}) {
   const saveMember = vi.fn().mockResolvedValue(save_result)
   const close = vi.fn()
 
   const editor = {
     is_dirty: ref(is_dirty),
+    has_name: ref(has_name),
+    name_error: ref(undefined),
     saveMember
   }
 
@@ -59,7 +61,7 @@ function makeWrapper({ is_dirty = true, save_result = true } = {}) {
     }
   })
 
-  return { wrapper, saveMember, close }
+  return { wrapper, saveMember, close, editor }
 }
 
 beforeEach(() => {
@@ -88,6 +90,36 @@ describe('settings-save-button — disabled state [obligation]', () => {
     expect(
       wrapper.find('[data-testid="settings__save-button"]').attributes('data-click-when-disabled')
     ).toBe('true')
+  })
+
+  test('button is disabled when has_name is false, even if dirty', () => {
+    const { wrapper } = makeWrapper({ is_dirty: true, has_name: false })
+    expect(wrapper.find('[data-testid="settings__save-button"]').attributes('data-disabled')).toBe(
+      'true'
+    )
+  })
+})
+
+// ── Blank-name save guard ──────────────────────────────────────────────────────
+
+describe('settings-save-button — blank-name save guard [obligation]', () => {
+  test('sets name_error to the required-name copy when has_name is false', async () => {
+    const { wrapper, editor } = makeWrapper({ is_dirty: true, has_name: false })
+    await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
+    expect(editor.name_error.value).toBe('Give your profile a name')
+  })
+
+  test('does not call saveMember when has_name is false', async () => {
+    const { wrapper, saveMember } = makeWrapper({ is_dirty: true, has_name: false })
+    await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
+    expect(saveMember).not.toHaveBeenCalled()
+  })
+
+  test('does NOT show notice.error when has_name is false (regression: blank name used to fall through to saveMember)', async () => {
+    const { wrapper } = makeWrapper({ is_dirty: true, has_name: false })
+    await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
+    await flushPromises()
+    expect(mockNotice.error).not.toHaveBeenCalled()
   })
 })
 
@@ -135,7 +167,12 @@ describe('settings-save-button — save behaviour [obligation]', () => {
     const wrapper = mount(SettingsSaveButton, {
       global: {
         provide: {
-          [memberEditorKey]: { is_dirty: ref(true), saveMember },
+          [memberEditorKey]: {
+            is_dirty: ref(true),
+            has_name: ref(true),
+            name_error: ref(undefined),
+            saveMember
+          },
           [settingsCloseKey]: close
         },
         stubs: { UiButton: UiButtonStub }

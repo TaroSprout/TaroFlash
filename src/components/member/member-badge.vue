@@ -43,7 +43,7 @@ const body_bindings = computed(() => memberCoverBindings(cover))
       <span data-testid="member-badge__name" class="font-semibold text-3xl text-brown-100 truncate">
         {{ displayName || t('member-badge.name-placeholder') }}
       </span>
-      <div data-testid="member-badge__description" class="text-sm text-brown-100">
+      <div data-testid="member-badge__description" class="text-sm text-brown-100 wrap-break-word">
         <slot name="description">{{ description || t('member-badge.description-fallback') }}</slot>
       </div>
     </div>

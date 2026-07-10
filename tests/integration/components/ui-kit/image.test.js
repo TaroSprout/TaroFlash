@@ -51,4 +51,41 @@ describe('UiImage', () => {
     const img = wrapper.find('img')
     expect(img.classes()).toContain('ui-kit-image--unset')
   })
+
+  // ── eager src resolves synchronously [obligation] ─────────────────────────
+
+  test('an eager-whitelisted src renders its <img> synchronously, with no separate tick needed after mount [obligation]', () => {
+    const wrapper = mountImage({ src: 'shortcuts' })
+    const img = wrapper.find('img')
+    expect(img.exists()).toBe(true)
+    expect(img.attributes('src')).toBeTruthy()
+  })
+
+  // ── reactive src prop changes [obligation] ────────────────────────────────
+
+  test('changing src to another eager image re-resolves the rendered <img> [obligation]', async () => {
+    const wrapper = mountImage({ src: 'shortcuts' })
+    await flushPromises()
+    const firstSrc = wrapper.find('img').attributes('src')
+
+    await wrapper.setProps({ src: 'darkmode-dark' })
+    await flushPromises()
+
+    const secondSrc = wrapper.find('img').attributes('src')
+    expect(secondSrc).toBeTruthy()
+    expect(secondSrc).not.toBe(firstSrc)
+    expect(wrapper.find('img').attributes('alt')).toBe('darkmode-dark')
+  })
+
+  test('changing src from an eager image to a lazy image re-resolves the rendered <img> (regression) [obligation]', async () => {
+    const wrapper = mountImage({ src: 'shortcuts' })
+    await flushPromises()
+    expect(wrapper.find('img').exists()).toBe(true)
+
+    await wrapper.setProps({ src: 'binder-clip' })
+    await vi.waitFor(() => expect(wrapper.find('img').exists()).toBe(true))
+
+    const img = wrapper.find('img')
+    expect(img.attributes('alt')).toBe('binder-clip')
+  })
 })

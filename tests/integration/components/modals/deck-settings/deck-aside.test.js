@@ -1,6 +1,6 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h, reactive, ref } from 'vue'
+import { defineComponent, h, reactive, ref, computed } from 'vue'
 import DeckAside from '@/views/deck/deck-settings/deck-aside.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { deckSettingsCloseKey } from '@/views/deck/deck-settings/layout'
@@ -9,13 +9,21 @@ vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn() }))
 
 const InputStub = defineComponent({
   name: 'UiInput',
-  props: { placeholder: String, error: String, value: String, textAlign: String, size: String },
+  props: {
+    placeholder: String,
+    error: String,
+    value: String,
+    textAlign: String,
+    size: String,
+    maxLength: Number
+  },
   emits: ['update:value'],
   setup(props, { emit }) {
     return () =>
       h('input', {
         'data-testid': 'ui-kit-input',
         'data-error': props.error ?? '',
+        maxlength: props.maxLength,
         value: props.value ?? '',
         onInput: (e) => emit('update:value', e.target.value)
       })
@@ -55,7 +63,7 @@ const ButtonStub = defineComponent({
   }
 })
 
-function makeAside({ title = '', is_dirty = false } = {}) {
+function makeAside({ title = '', is_dirty = false, title_error } = {}) {
   const settings = reactive({ title, description: '' })
   const editor = {
     settings,
@@ -63,6 +71,8 @@ function makeAside({ title = '', is_dirty = false } = {}) {
     cover: reactive({}),
     card_attributes: reactive({ front: {}, back: {} }),
     is_dirty: ref(is_dirty),
+    has_title: computed(() => !!settings.title?.trim()),
+    title_error: ref(title_error),
     active_side: ref('cover'),
     saveDeck: vi.fn(async () => null),
     deleteDeck: vi.fn(async () => false),
@@ -100,5 +110,29 @@ describe('DeckAside — layout', () => {
     const { settings } = makeAside({ title: 'A' })
     settings.description = 'new desc'
     expect(settings.description).toBe('new desc')
+  })
+
+  test('typing in the description textarea updates settings.description via v-model', async () => {
+    const { wrapper, settings } = makeAside({ title: 'A' })
+    await wrapper.find('[data-testid="ui-kit-textarea"]').setValue('typed description')
+    expect(settings.description).toBe('typed description')
+  })
+
+  test('typing in the title input updates settings.title via v-model', async () => {
+    const { wrapper, settings } = makeAside({ title: 'A' })
+    await wrapper.find('[data-testid="ui-kit-input"]').setValue('New Title')
+    expect(settings.title).toBe('New Title')
+  })
+
+  test('title input carries DECK_TITLE_MAX_LENGTH as maxlength', () => {
+    const { wrapper } = makeAside({ title: 'A' })
+    expect(wrapper.find('[data-testid="ui-kit-input"]').attributes('maxlength')).toBe('15')
+  })
+
+  test('title input error reflects editor.title_error (destructured, no .value) [obligation]', () => {
+    const { wrapper } = makeAside({ title: '', title_error: 'Give this deck a title' })
+    expect(wrapper.find('[data-testid="ui-kit-input"]').attributes('data-error')).toBe(
+      'Give this deck a title'
+    )
   })
 })

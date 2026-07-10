@@ -9,18 +9,19 @@ import { useNoticeStore } from '@/stores/notice-store'
 
 const { t } = useI18n()
 const notice = useNoticeStore()
-const { settings, is_dirty, saveDeck } = inject(deckEditorKey)!
+const { is_dirty, has_title, title_error, saveDeck } = inject(deckEditorKey)!
 const close = inject(deckSettingsCloseKey)!
 
 const is_saving = ref(false)
 
 async function onSave() {
-  if (!is_dirty.value) {
-    emitSfx('digi_powerdown')
+  if (!has_title.value) {
+    title_error.value = t('deck.settings-modal.title-required')
+    emitSfx('etc_woodblock_stuck')
     return
   }
-  if (!settings.title?.trim()) {
-    emitSfx('etc_woodblock_stuck')
+  if (!is_dirty.value) {
+    emitSfx('digi_powerdown')
     return
   }
   is_saving.value = true
@@ -42,7 +43,7 @@ async function onSave() {
     size="lg"
     full-width
     :loading="is_saving"
-    :disabled="!is_dirty"
+    :disabled="!is_dirty || !has_title"
     :sfx="{ press: 'snappy_button_2' }"
     click-when-disabled
     @press="onSave"

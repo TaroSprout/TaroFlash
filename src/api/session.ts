@@ -102,6 +102,28 @@ export function waitForPasswordRecovery(): Promise<boolean> {
   })
 }
 
+// Fires when Supabase's client gives up on the session locally — a manual
+// sign-out, or its own background token refresh failing because the session
+// was revoked/expired elsewhere. Returns an unsubscribe function.
+export function onSignedOut(callback: () => void): () => void {
+  const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+    if (event !== 'SIGNED_OUT') return
+    callback()
+  })
+
+  return () => sub.subscription.unsubscribe()
+}
+
+// A revoked/expired session doesn't always trigger onSignedOut before the
+// next API call — the request itself can come back 401/JWT-expired first.
+// This lets callers recognize that case and treat it the same way.
+export function isAuthError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false
+
+  const { status, code, name } = error as { status?: number; code?: string; name?: string }
+  return status === 401 || code === 'PGRST301' || name === 'AuthApiError'
+}
+
 export async function login(email: string, password: string): Promise<LoginOutcome> {
   try {
     const { error } = await supabase.auth.signInWithPassword({ email, password })

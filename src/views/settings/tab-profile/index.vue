@@ -10,6 +10,7 @@ import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import MemberBadge from '@/components/member/member-badge.vue'
 import SettingsSaveButton from '../settings-save-button.vue'
 import { memberEditorKey } from '@/composables/member/editor'
+import { MEMBER_DISPLAY_NAME_MAX_LENGTH } from '@/utils/member/defaults'
 import { settingsLayoutKey } from '../layout'
 import { SUPPORTED_THEMES, SUPPORTED_PATTERNS } from '@/utils/cover'
 
@@ -31,11 +32,14 @@ const layout_mode = inject(settingsLayoutKey)!
     <labeled-section :label="t('settings.profile.section.about-you')">
       <ui-input
         :placeholder="t('settings.profile.member-name-placeholder')"
+        :error="editor.name_error.value"
+        :max-length="MEMBER_DISPLAY_NAME_MAX_LENGTH"
         v-model:value="editor.settings.display_name"
       />
       <ui-textarea
         :placeholder="t('settings.profile.description-placeholder')"
         :max_chars="100"
+        no-newlines
         rows="3"
         v-model:value="editor.settings.description"
       />

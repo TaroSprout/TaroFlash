@@ -4,6 +4,8 @@ import {
   getSession,
   getUser,
   isPasswordRecoveryUrl,
+  isAuthError,
+  onSignedOut,
   waitForPasswordRecovery,
   login as supaLogin,
   logout as supaLogout,
@@ -36,12 +38,22 @@ export const useSessionStore = defineStore('sessionStore', () => {
 
   const user = ref<User | undefined>(undefined)
   const loading_count = ref(0)
+  let logging_out_intentionally = false
 
   const authenticated = computed(() => Boolean(user.value?.aud === 'authenticated'))
   const isLoading = computed(() => loading_count.value > 0)
   const identities = computed(() => user.value?.identities ?? [])
   const hasPasswordIdentity = computed(() => identities.value.some((i) => i.provider === 'email'))
   const hasGoogleIdentity = computed(() => identities.value.some((i) => i.provider === 'google'))
+
+  // Supabase's client can locally sign itself out (e.g. a background token
+  // refresh rejected because the session was revoked on another device)
+  // without any component ever calling logout(). This is the "stale tab"
+  // case: catch it here rather than only reacting to failed API calls.
+  onSignedOut(() => {
+    if (logging_out_intentionally) return
+    forceLogout()
+  })
 
   /**
    * True if this page load is a password-recovery redirect, after awaiting the
@@ -77,16 +89,49 @@ export const useSessionStore = defineStore('sessionStore', () => {
   }
 
   async function logout(): Promise<void> {
+    logging_out_intentionally = true
+
     try {
       await supaLogout()
     } catch (e: any) {
       logger.error(`Error logging out: ${e.message}`)
       notice.error(t('session.logout-error'))
       return
+    } finally {
+      logging_out_intentionally = false
     }
 
     reset()
     router.push({ name: 'welcome' })
+  }
+
+  /** Call when an API response indicates the session is no longer valid server-side. */
+  function handleAuthError(error: unknown): void {
+    if (isAuthError(error)) forceLogout()
+  }
+
+  // Same end state as logout(), but skipped when already logged out (avoids
+  // reacting to its own signOut() call below) and shows a "session expired"
+  // notice instead of silently redirecting.
+  async function forceLogout(): Promise<void> {
+    if (!authenticated.value) return
+
+    reset()
+    notice.warn(t('session.expired-error'), {
+      variant: 'panel',
+      persist: true,
+      closable: false,
+      actions: [
+        { label: t('session.expired-error-action'), onClick: () => {}, closesOnClick: true }
+      ],
+      onDismiss: () => router.push({ name: 'welcome' })
+    })
+
+    try {
+      await supaLogout()
+    } catch {
+      // Session was already invalid server-side — nothing left to clean up.
+    }
   }
 
   function signupEmail(
@@ -157,6 +202,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
     checkPasswordRecovery,
     restoreSession,
     logout,
+    handleAuthError,
     signupEmail,
     signInOAuth,
     updateEmail,

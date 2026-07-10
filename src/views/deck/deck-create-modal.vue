@@ -8,6 +8,7 @@ import DeckPinnedPreview from '@/components/deck/pinned-preview.vue'
 import { useDeckEditor, deckEditorKey } from '@/composables/deck/editor'
 import { useTabModalLayout } from '@/composables/ui/tab-modal-layout'
 import { randomCoverConfig } from '@/utils/cover'
+import { DECK_TITLE_MAX_LENGTH } from '@/utils/deck/defaults'
 import { emitSfx } from '@/sfx/bus'
 import { useNoticeStore } from '@/stores/notice-store'
 import UiButton from '@/components/ui-kit/button.vue'
@@ -117,6 +118,7 @@ watch(
           <ui-input
             :placeholder="t('deck.title-placeholder')"
             :error="title_error"
+            :max-length="DECK_TITLE_MAX_LENGTH"
             text-align="center"
             size="lg"
             v-model:value="editor.settings.title"
@@ -124,6 +126,7 @@ watch(
           <ui-textarea
             :placeholder="t('deck.description-placeholder')"
             :max_chars="100"
+            no-newlines
             rows="3"
             v-model:value="editor.settings.description"
           />
@@ -152,6 +155,7 @@ watch(
           <ui-input
             :placeholder="t('deck.title-placeholder')"
             :error="title_error"
+            :max-length="DECK_TITLE_MAX_LENGTH"
             text-align="center"
             size="lg"
             v-model:value="editor.settings.title"
