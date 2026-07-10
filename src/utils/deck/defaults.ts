@@ -9,7 +9,7 @@ export const DECK_SETTINGS_DEFAULTS = {
   is_public: true
 } as const
 
-export const DECK_TITLE_MAX_LENGTH = 50
+export const DECK_TITLE_MAX_LENGTH = 15
 
 export const DECK_CONFIG_DEFAULTS: Required<DeckConfig> = {
   study_all_cards: false,

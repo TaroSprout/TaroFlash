@@ -9,7 +9,7 @@ export const MEMBER_SETTINGS_DEFAULTS = {
   description: ''
 } as const
 
-export const MEMBER_DISPLAY_NAME_MAX_LENGTH = 30
+export const MEMBER_DISPLAY_NAME_MAX_LENGTH = 12
 
 export const MEMBER_CARD_COVER_DEFAULTS: DeckCover = {
   theme: 'green-500',
