@@ -62,6 +62,7 @@ export function useMobileCardEditor(controller: CardListController) {
 
     close_modal = modal.open(MobileEditor, {
       mode: 'popup',
+      backdrop: true,
       context: { key: mobileCardEditorKey, value: api }
     }).close
   }

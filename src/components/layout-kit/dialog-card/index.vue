@@ -10,13 +10,13 @@ export type DialogCardSize = 'sm' | 'md' | 'lg'
 const SIZE_CLASSES: Record<DialogCardSize, string> = {
   sm: 'w-140 h-110',
   md: 'w-150 h-160',
-  lg: 'w-full max-w-160 h-170'
+  lg: 'w-160 h-170'
 }
 
 const SIZE_FULL_BLEED_AT: Record<DialogCardSize, string> = {
   sm: 'w<sm | h<sm',
   md: 'w<sm | h<sm',
-  lg: 'w<sm'
+  lg: 'w<sm | h<md'
 }
 
 const SIZE_CONTENT_MAX_WIDTH: Record<DialogCardSize, string> = {

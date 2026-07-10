@@ -83,69 +83,73 @@ function onClick(deck_id?: number) {
 </script>
 
 <template>
-  <dialog-card data-testid="move-cards" size="md" :title="title" @close="close(false)">
-    <div data-testid="move-cards__body" class="flex h-full min-h-0 flex-col">
-      <div data-testid="move-cards__deck-list-wrap" class="relative flex min-h-0 flex-1 flex-col">
-        <grouped-list data-testid="move-cards__deck-list" scrollable class="my-4 min-h-0 flex-1">
-          <ui-tappable
-            v-for="(deck, index) in decks"
-            :key="index"
-            data-testid="move-cards__deck-item"
-            :class="[
-              deck.id === current_deck_id || isDeckFull(deck)
-                ? ' bg-brown-300 dark:bg-stone-700 pointer-events-none text-(--theme-on-primary)/20'
-                : 'cursor-pointer'
-            ]"
-            class="text-(--theme-on-primary) text-left flex items-center gap-3 p-4"
-            active_on_hover
-            :sfx="{ press: 'snappy_button_2', hover: TYPE_SFX }"
-            @tap="onClick(deck.id)"
-            @mouseenter="hovered_deck_id = deck.id"
-            @mouseleave="hovered_deck_id = undefined"
-          >
-            <card size="2xs" :cover_config="deck.cover_config" side="cover" />
-            <span class="flex-1">{{ deck.title }}</span>
-            <span
-              v-if="deck.id !== current_deck_id && isDeckFull(deck)"
-              data-testid="move-cards__deck-full-label"
-              class="text-sm"
-            >
-              {{ t('move-cards-modal.deck-full-label') }}
-            </span>
-            <ui-radio
-              v-else
-              :class="{ 'opacity-20': deck.id === current_deck_id }"
-              data-theme="blue-500"
-              data-theme-dark="blue-650"
-              :sfx="{ press: 'snappy_button_2' }"
-              :checked="deck.id === selected_deck_id || deck.id === current_deck_id"
-              :active="deck.id === hovered_deck_id"
-              @click.stop="selected_deck_id = deck.id"
-            />
-          </ui-tappable>
-        </grouped-list>
-
-        <scroll-bar
-          target="[data-testid='move-cards__deck-list__content']"
-          min-width="sm"
-          class="absolute right-0 top-4 bottom-4"
-        />
-      </div>
-
-      <div data-testid="move-cards__actions" class="pb-6 flex w-full justify-end gap-3">
-        <ui-button
-          data-testid="move-cards__move"
-          data-theme="blue-500"
-          icon-left="move-item"
-          size="xl"
-          full-width
-          :loading="moving"
-          @press="onMove"
-          :disabled="!selected_deck_id || moving"
+  <dialog-card
+    data-testid="move-cards"
+    size="md"
+    :title="title"
+    class="grid-rows-[auto_1fr_auto]! pb-(--dialog-px)"
+    @close="close(false)"
+  >
+    <div data-testid="move-cards__deck-list-wrap" class="relative flex min-h-0 flex-1 flex-col">
+      <grouped-list data-testid="move-cards__deck-list" scrollable class="my-4 min-h-0 flex-1">
+        <ui-tappable
+          v-for="(deck, index) in decks"
+          :key="index"
+          data-testid="move-cards__deck-item"
+          :class="[
+            deck.id === current_deck_id || isDeckFull(deck)
+              ? ' bg-brown-300 dark:bg-stone-700 pointer-events-none text-(--theme-on-primary)/20'
+              : 'cursor-pointer'
+          ]"
+          class="text-(--theme-on-primary) text-left flex items-center gap-3 p-4"
+          active_on_hover
+          :sfx="{ press: 'snappy_button_2', hover: TYPE_SFX }"
+          @tap="onClick(deck.id)"
+          @mouseenter="hovered_deck_id = deck.id"
+          @mouseleave="hovered_deck_id = undefined"
         >
-          {{ t('move-cards-modal.confirm') }}
-        </ui-button>
-      </div>
+          <card size="2xs" :cover_config="deck.cover_config" side="cover" />
+          <span class="flex-1">{{ deck.title }}</span>
+          <span
+            v-if="deck.id !== current_deck_id && isDeckFull(deck)"
+            data-testid="move-cards__deck-full-label"
+            class="text-sm"
+          >
+            {{ t('move-cards-modal.deck-full-label') }}
+          </span>
+          <ui-radio
+            v-else
+            :class="{ 'opacity-20': deck.id === current_deck_id }"
+            data-theme="blue-500"
+            data-theme-dark="blue-650"
+            :sfx="{ press: 'snappy_button_2' }"
+            :checked="deck.id === selected_deck_id || deck.id === current_deck_id"
+            :active="deck.id === hovered_deck_id"
+            @click.stop="selected_deck_id = deck.id"
+          />
+        </ui-tappable>
+      </grouped-list>
+
+      <scroll-bar
+        target="[data-testid='move-cards__deck-list__content']"
+        min-width="sm"
+        class="absolute -right-6 top-4 bottom-4"
+      />
+    </div>
+
+    <div data-testid="move-cards__actions" class="flex w-full justify-end gap-3">
+      <ui-button
+        data-testid="move-cards__move"
+        data-theme="blue-500"
+        icon-left="move-item"
+        size="xl"
+        full-width
+        :loading="moving"
+        @press="onMove"
+        :disabled="!selected_deck_id || moving"
+      >
+        {{ t('move-cards-modal.confirm') }}
+      </ui-button>
     </div>
   </dialog-card>
 </template>

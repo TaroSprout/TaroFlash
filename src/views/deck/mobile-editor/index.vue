@@ -28,15 +28,14 @@ onUnmounted(() => onClosed())
     :title="title"
     :close_label="t('deck-view.mobile-editor.done-button')"
     size="lg"
+    class="grid-rows-[auto_1fr_auto]! pb-(--dialog-px)"
     @close="close"
   >
     <template #header-end>
       <editor-header />
     </template>
 
-    <div class="flex w-full h-full flex-col justify-between gap-4 pt-4 pb-6">
-      <editor-stage />
-      <editor-controls />
-    </div>
+    <editor-stage class="self-center" />
+    <editor-controls />
   </dialog-card>
 </template>
