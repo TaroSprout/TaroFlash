@@ -50,7 +50,7 @@ function spawnBurst() {
 
 <template>
   <div data-testid="app-shell-container" class="flex flex-col items-center gap-0.5">
-    <div>
+    <div class="relative">
       <button
         data-testid="phone-app"
         v-bind="$attrs"
