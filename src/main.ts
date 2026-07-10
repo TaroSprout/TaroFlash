@@ -34,13 +34,18 @@ app.use(pinia)
 app.use(i18n)
 app.use(router)
 
-// Needs router + i18n installed above — the store injects both via
-// useRouter()/useI18n() during its own setup.
-const session = useSessionStore(pinia)
+// Deferred to call-time: the store's own setup() calls useI18n()/useRouter(),
+// which only work while a component is being set up. Resolving it here would
+// create the store before any component exists. By the time a query/mutation
+// actually errors, the router guard has already triggered its first (and
+// only) real construction, so this just looks up the cached instance.
+function handleAuthError(error: unknown) {
+  useSessionStore(pinia).handleAuthError(error)
+}
 
 app.use(PiniaColada, {
-  plugins: [PiniaColadaQueryHooksPlugin({ onError: session.handleAuthError })],
-  mutationOptions: { onError: session.handleAuthError }
+  plugins: [PiniaColadaQueryHooksPlugin({ onError: handleAuthError })],
+  mutationOptions: { onError: handleAuthError }
 })
 
 app.directive('sfx', vSfx)

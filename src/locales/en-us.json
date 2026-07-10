@@ -32,6 +32,7 @@
   "login-dialog.errors.generic": "Something went wrong. Please try again",
   "session.logout-error": "Couldn't log out. Please try again.",
   "session.expired-error": "Your session expired. Please log in again.",
+  "session.expired-error-action": "Got It",
   "member.load-error": "Couldn't load your account",
   "member.load-error-sub": "Something went wrong loading your profile.",
   "login-dialog.forgot-password-link": "Forgot password?",

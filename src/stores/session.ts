@@ -120,6 +120,10 @@ export const useSessionStore = defineStore('sessionStore', () => {
     notice.warn(t('session.expired-error'), {
       variant: 'panel',
       persist: true,
+      closable: false,
+      actions: [
+        { label: t('session.expired-error-action'), onClick: () => {}, closesOnClick: true }
+      ],
       onDismiss: () => router.push({ name: 'welcome' })
     })
 
