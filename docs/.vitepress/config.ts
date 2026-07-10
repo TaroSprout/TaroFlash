@@ -11,8 +11,6 @@ const frontendSidebar = [
     collapsed: true,
     items: [
       { text: 'Button', link: '/components/button' },
-      { text: 'Button Menu', link: '/components/button-menu' },
-      { text: 'Card', link: '/components/card' },
       { text: 'Icon', link: '/components/icon' },
       { text: 'Image', link: '/components/image' },
       { text: 'Modal', link: '/components/modal' },
@@ -49,10 +47,10 @@ const frontendSidebar = [
     collapsed: true,
     items: [
       { text: 'Overview', link: '/phone/index' },
-      { text: 'App Types', link: '/phone/app-types' },
-      { text: 'Controllers', link: '/phone/controllers' },
+      { text: 'App Structure', link: '/phone/app-types' },
+      { text: 'App Logic', link: '/phone/controllers' },
       { text: 'Notifications', link: '/phone/notifications' },
-      { text: 'Context & Injection', link: '/phone/context' },
+      { text: 'Shared State', link: '/phone/context' },
       { text: 'API Reference', link: '/phone/reference' }
     ]
   }
