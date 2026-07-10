@@ -1,6 +1,25 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { shallowMount } from '@vue/test-utils'
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
+import { shallowMount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, nextTick, ref } from 'vue'
+
+// Wraps the real useWindowVirtualizer so existing tests keep exercising real
+// geometry, while exposing a spy on the returned virtualizer's `measure` so
+// the resize-debounce tests below can assert on it without reaching into
+// wrapper.vm. The underlying shallowRef never swaps its `.value` instance
+// (see @tanstack/vue-virtual's useVirtualizerBase), so spying once after
+// creation stays valid for the component's whole lifetime.
+const { captured_measure_spy } = vi.hoisted(() => ({ captured_measure_spy: { fn: null } }))
+vi.mock('@tanstack/vue-virtual', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    useWindowVirtualizer: (options) => {
+      const virtualizer = actual.useWindowVirtualizer(options)
+      captured_measure_spy.fn = vi.spyOn(virtualizer.value, 'measure')
+      return virtualizer
+    }
+  }
+})
 
 const GridItemStub = defineComponent({
   name: 'GridItem',
@@ -242,5 +261,91 @@ describe('card-grid/scroll-grid', () => {
     expect(items).toHaveLength(2)
     expect(items[0].attributes('data-card-id')).toBe('10')
     expect(items[1].attributes('data-card-id')).toBe('20')
+  })
+
+  // ── body-resize debounce → single coalesced measureLayout() ──────────────
+  // document.body resizing (e.g. the mobile dock republishing its height into
+  // page padding) previously drove measureLayout synchronously on every single
+  // ResizeObserver firing, racing the virtualizer's own scroll tracking. A
+  // burst of firings within RESIZE_DEBOUNCE_MS must now coalesce into one
+  // measureLayout() call, and every measureLayout() run must pair its
+  // scroll_margin write with an explicit virtualizer.measure() call.
+
+  describe('body resize debounce', () => {
+    let captured_ro_callback
+    let original_resize_observer
+
+    beforeEach(() => {
+      original_resize_observer = window.ResizeObserver
+      window.ResizeObserver = class {
+        constructor(callback) {
+          captured_ro_callback = callback
+        }
+        observe() {}
+        disconnect() {}
+      }
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+      window.ResizeObserver = original_resize_observer
+    })
+
+    test('[obligation] measureLayout pairs its scroll_margin write with an explicit virtualizer.measure() call', async () => {
+      mountScrollGrid()
+      await nextTick()
+
+      // measureLayout() already ran once synchronously in onMounted.
+      expect(captured_measure_spy.fn).toHaveBeenCalledTimes(1)
+    })
+
+    test('[obligation] the is_view watcher remeasuring on return-to-grid also pairs with an explicit virtualizer.measure() call', async () => {
+      const shell = makeShell()
+      shell.is_view.value = false
+      mountScrollGrid(makeEditor(), shell)
+      await nextTick()
+      captured_measure_spy.fn.mockClear()
+
+      shell.is_view.value = true
+      await flushPromises()
+
+      expect(captured_measure_spy.fn).toHaveBeenCalledTimes(1)
+    })
+
+    test('[obligation] a burst of ResizeObserver firings within the debounce window coalesces into a single measureLayout call', async () => {
+      const wrapper = mountScrollGrid()
+      await nextTick()
+      captured_measure_spy.fn.mockClear()
+
+      const container_el = wrapper.element.parentElement
+      const rect_spy = vi.spyOn(container_el, 'getBoundingClientRect')
+
+      captured_ro_callback([])
+      captured_ro_callback([])
+      captured_ro_callback([])
+      expect(rect_spy).not.toHaveBeenCalled()
+
+      vi.advanceTimersByTime(120)
+
+      expect(rect_spy).toHaveBeenCalledTimes(1)
+      expect(captured_measure_spy.fn).toHaveBeenCalledTimes(1)
+    })
+
+    test('[obligation] unmounting clears the pending debounce timer so a queued measureLayout never fires after teardown', async () => {
+      const wrapper = mountScrollGrid()
+      await nextTick()
+      captured_measure_spy.fn.mockClear()
+
+      const container_el = wrapper.element.parentElement
+      const rect_spy = vi.spyOn(container_el, 'getBoundingClientRect')
+
+      captured_ro_callback([])
+      wrapper.unmount()
+
+      expect(() => vi.advanceTimersByTime(120)).not.toThrow()
+      expect(rect_spy).not.toHaveBeenCalled()
+      expect(captured_measure_spy.fn).not.toHaveBeenCalled()
+    })
   })
 })
