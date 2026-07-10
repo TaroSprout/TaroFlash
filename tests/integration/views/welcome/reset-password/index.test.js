@@ -223,12 +223,12 @@ describe('ResetPasswordModal (reset-password/index.vue)', () => {
       const wrapper = makeWrapper()
       await flushTransition()
 
-      expect(wrapper.find('[data-testid="dialog-card__header-wrap"] header').exists()).toBe(false)
+      expect(wrapper.find('header[data-testid="dialog-card-header"]').exists()).toBe(false)
     })
 
     test('shows the dialog-card header while not yet successful', () => {
       const wrapper = makeWrapper()
-      expect(wrapper.find('[data-testid="dialog-card__header-wrap"] header').exists()).toBe(true)
+      expect(wrapper.find('header[data-testid="dialog-card-header"]').exists()).toBe(true)
     })
 
     test('renders the party-popper icon on the success page [obligation]', async () => {

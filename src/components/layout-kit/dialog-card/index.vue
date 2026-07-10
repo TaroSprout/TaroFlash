@@ -10,19 +10,25 @@ export type DialogCardSize = 'sm' | 'md' | 'lg'
 const SIZE_CLASSES: Record<DialogCardSize, string> = {
   sm: 'w-140 h-110',
   md: 'w-150 h-160',
-  lg: 'w-full max-w-160 h-170'
+  lg: 'w-160 h-170'
 }
 
 const SIZE_FULL_BLEED_AT: Record<DialogCardSize, string> = {
   sm: 'w<sm | h<sm',
   md: 'w<sm | h<sm',
-  lg: 'w<sm'
+  lg: 'w<sm | h<md'
 }
 
 const SIZE_CONTENT_MAX_WIDTH: Record<DialogCardSize, string> = {
   sm: '25rem',
   md: '32.5rem',
   lg: '35rem'
+}
+
+const SIZE_CONTENT_BREAKOUT_MAX_WIDTH: Record<DialogCardSize, string> = {
+  sm: '35rem',
+  md: '37.5rem',
+  lg: '40rem'
 }
 
 export type DialogCardProps = {
@@ -77,13 +83,11 @@ const slots = defineSlots<{
 const { t } = useI18n()
 const viewport = provideDialogCardViewport(full_bleed_at ?? SIZE_FULL_BLEED_AT[size])
 
-const card_style = computed(() => (dialog_px ? { '--dialog-px': dialog_px } : undefined))
-
-const body_style = computed(() => ({
+const card_style = computed(() => ({
+  ...(dialog_px && { '--dialog-px': dialog_px }),
   '--content-grid-max-width': content_max_width ?? SIZE_CONTENT_MAX_WIDTH[size],
-  ...(content_breakout_max_width && {
-    '--content-grid-breakout-max-width': content_breakout_max_width
-  })
+  '--content-grid-breakout-max-width':
+    content_breakout_max_width ?? SIZE_CONTENT_BREAKOUT_MAX_WIDTH[size]
 }))
 
 defineExpose({ viewport })
@@ -92,57 +96,48 @@ defineExpose({ viewport })
 <template>
   <div
     data-testid="dialog-card"
-    class="relative flex flex-col gap-4 overflow-hidden [--dialog-px:1.5rem] sm:[--dialog-px:2rem]"
+    class="content-grid content-grid-px-(--dialog-px) relative gap-y-4 overflow-hidden [--dialog-px:1.5rem] sm:[--dialog-px:2rem]"
     :class="[
       SIZE_CLASSES[size],
       bg_class,
+      float_header ? 'grid-rows-[minmax(0,1fr)]' : 'grid-rows-[auto_minmax(0,1fr)]',
       viewport === 'mobile'
         ? 'h-full! w-full! rounded-none!'
         : 'rounded-8 shadow-lg border-t border-l border-brown-100 dark:border-grey-900'
     ]"
     :style="card_style"
   >
-    <div
-      data-testid="dialog-card__header-wrap"
-      :class="float_header ? 'absolute inset-x-0 top-0 z-10' : ''"
-    >
-      <slot name="header">
-        <dialog-card-header
-          v-if="show_header && (title || show_close_button || slots['header-start'])"
-          :title="title"
-          class="full-width"
-        >
-          <template #start>
-            <slot name="header-start">
-              <ui-button
-                v-if="show_close_button"
-                data-testid="dialog-card__close"
-                data-theme="brown-100"
-                data-theme-dark="stone-700"
-                icon-left="close"
-                icon-only
-                rounded-full
-                :disabled="close_disabled"
-                @press="emit('close')"
-              >
-                {{ close_label ?? t('dialog-card.close-label') }}
-              </ui-button>
-            </slot>
-          </template>
+    <slot name="header">
+      <dialog-card-header
+        v-if="show_header && (title || show_close_button || slots['header-start'])"
+        :title="title"
+        class="full-width"
+        :class="float_header ? 'absolute inset-x-0 top-0 z-10' : ''"
+      >
+        <template #start>
+          <slot name="header-start">
+            <ui-button
+              v-if="show_close_button"
+              data-testid="dialog-card__close"
+              data-theme="brown-100"
+              data-theme-dark="stone-700"
+              icon-left="close"
+              icon-only
+              rounded-full
+              :disabled="close_disabled"
+              @press="emit('close')"
+            >
+              {{ close_label ?? t('dialog-card.close-label') }}
+            </ui-button>
+          </slot>
+        </template>
 
-          <template v-if="slots['header-end']" #end>
-            <slot name="header-end"></slot>
-          </template>
-        </dialog-card-header>
-      </slot>
-    </div>
+        <template v-if="slots['header-end']" #end>
+          <slot name="header-end"></slot>
+        </template>
+      </dialog-card-header>
+    </slot>
 
-    <div
-      data-testid="dialog-card__body"
-      class="content-grid content-grid-px-(--dialog-px) min-h-0 flex-1"
-      :style="body_style"
-    >
-      <slot :viewport="viewport"></slot>
-    </div>
+    <slot :viewport="viewport"></slot>
   </div>
 </template>
