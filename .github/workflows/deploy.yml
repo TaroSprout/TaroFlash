@@ -55,12 +55,6 @@ on:
         description: Skip the E2E smoke gate (emergency hotfix only)
         type: boolean
         default: false
-      bump:
-        description: Semver bump for manual production deploys (ignored for staging)
-        required: false
-        type: choice
-        default: none
-        options: [none, patch, minor, major]
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -287,7 +281,7 @@ jobs:
           NETLIFY_SITE_ID: ${{ vars.NETLIFY_SITE_ID }}
 
   tag-release:
-    name: Tag + release (manual prod)
+    name: Tag + release (semantic-release)
     needs: [migrate, functions, config, frontend]
     if: |
       always() &&
@@ -302,48 +296,14 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Validate bump input
-        run: |
-          if [ "${{ inputs.bump }}" = "none" ] || [ -z "${{ inputs.bump }}" ]; then
-            echo "::error::'bump' input is required for manual production deploys (patch | minor | major)"
-            exit 1
-          fi
-
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Compute next version
-        id: ver
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BUMP: ${{ inputs.bump }}
-        run: |
-          set -euo pipefail
-          LATEST=$(gh release list --limit 1 --json tagName --jq '.[0].tagName // ""')
-          if [ -z "$LATEST" ]; then
-            LATEST="v0.0.0"
-          fi
-          STRIPPED="${LATEST#v}"
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$STRIPPED"
-          case "$BUMP" in
-            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
-            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
-            patch) PATCH=$((PATCH + 1)) ;;
-            *) echo "::error::invalid bump '$BUMP'"; exit 1 ;;
-          esac
-          NEXT="v${MAJOR}.${MINOR}.${PATCH}"
-          echo "next=$NEXT" >> "$GITHUB_OUTPUT"
-          echo "Bumping $LATEST -> $NEXT ($BUMP)"
+      - uses: ./.github/actions/setup-node
 
-      - name: Create tag + release
+      - name: Run semantic-release
+        run: pnpm exec semantic-release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NEXT: ${{ steps.ver.outputs.next }}
-        run: |
-          set -euo pipefail
-          gh release create "$NEXT" \
-            --target "${{ github.sha }}" \
-            --title "$NEXT" \
-            --generate-notes
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
