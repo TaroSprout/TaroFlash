@@ -8,7 +8,7 @@ import { DECK_TITLE_MAX_LENGTH } from '@/utils/deck/defaults'
 import DeckSaveButton from './deck-save-button.vue'
 
 const { t } = useI18n()
-const { settings } = inject(deckEditorKey)!
+const { settings, title_error } = inject(deckEditorKey)!
 </script>
 
 <template>
@@ -19,6 +19,7 @@ const { settings } = inject(deckEditorKey)!
     <div data-testid="deck-aside__inputs" class="flex flex-col gap-2">
       <ui-input
         :placeholder="t('deck.title-placeholder')"
+        :error="title_error"
         :max-length="DECK_TITLE_MAX_LENGTH"
         text-align="center"
         size="lg"

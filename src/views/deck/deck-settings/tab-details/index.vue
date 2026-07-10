@@ -10,7 +10,7 @@ import { deckSettingsLayoutKey } from '../layout'
 import DeckSaveButton from '../deck-save-button.vue'
 
 const { t } = useI18n()
-const { settings } = inject(deckEditorKey)!
+const { settings, title_error } = inject(deckEditorKey)!
 const layout_mode = inject(deckSettingsLayoutKey)!
 </script>
 
@@ -22,6 +22,7 @@ const layout_mode = inject(deckSettingsLayoutKey)!
     <div data-testid="tab-details__inputs" class="flex flex-col gap-2">
       <ui-input
         :placeholder="t('deck.title-placeholder')"
+        :error="title_error"
         :max-length="DECK_TITLE_MAX_LENGTH"
         text-align="center"
         size="lg"

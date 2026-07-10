@@ -521,6 +521,7 @@
   "deck.settings-modal.preview.front-fallback": "Front",
   "deck.settings-modal.preview.back-fallback": "Back",
   "deck.settings-modal.submit-edit": "Save changes",
+  "deck.settings-modal.title-required": "Give your deck a name",
   "deck.settings-modal.unsaved-alert.title": "Unsaved changes",
   "deck.settings-modal.unsaved-alert.message": "You have unsaved changes. Exit anyway?",
   "deck.settings-modal.unsaved-alert.confirm": "Exit",
