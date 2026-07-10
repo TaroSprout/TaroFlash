@@ -220,6 +220,8 @@ jobs:
         run: supabase config push --yes
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          AUTH_EXTERNAL_GOOGLE_CLIENT_ID: ${{ secrets.AUTH_EXTERNAL_GOOGLE_CLIENT_ID }}
+          AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET: ${{ secrets.AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET }}
 
   frontend:
     name: Deploy frontend
