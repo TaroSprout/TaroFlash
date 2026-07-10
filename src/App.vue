@@ -78,9 +78,7 @@ onMounted(() => {
     audio_player
       .setup()
       .then(() => {
-        teardownAudioLifecycle = installAudioLifecycle(() => {
-          notice.warn(t('sfx.background-desync-warning'))
-        })
+        teardownAudioLifecycle = installAudioLifecycle()
       })
       .catch((e: any) => logger.error(e.message, e))
   })

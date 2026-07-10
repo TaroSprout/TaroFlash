@@ -46,16 +46,11 @@ function hasUserActivation(): boolean {
  * interaction. If that attempt doesn't land within `UNLOCK_CHECK_MS`, it
  * re-arms for the next gesture rather than leaving audio dead for the session.
  *
- * `onSuspectedDesync` fires when a hidden→visible return finds the context
- * reporting 'running' with a frozen `currentTime` — the state-lie this module
- * works around. Diagnostic only, so a caller (App.vue) can surface it to a
- * toast; the recovery itself doesn't wait on or need this.
- *
  * Returns a teardown function that removes every listener it registered.
  * Calling `installAudioLifecycle` while already installed is a no-op and returns
  * a no-op teardown — the original teardown remains the only way to uninstall.
  */
-export function installAudioLifecycle(onSuspectedDesync?: () => void): () => void {
+export function installAudioLifecycle(): () => void {
   if (installed || typeof window === 'undefined') return () => {}
   installed = true
 
@@ -81,12 +76,6 @@ export function installAudioLifecycle(onSuspectedDesync?: () => void): () => voi
   const recoverFromBackground = () => {
     armGestureRetry(true)
     if (hasUserActivation()) void engine.resume()
-    void diagnoseLiveness()
-  }
-
-  const diagnoseLiveness = async () => {
-    const alive = await engine.probeLiveness()
-    if (!alive) onSuspectedDesync?.()
   }
 
   // Synchronous so the unlock's priming source + resume() fire inside the
