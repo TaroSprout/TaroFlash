@@ -1,233 +1,105 @@
 ---
-lastUpdated: 2026-04-12T11:56:41-07:00
+lastUpdated: 2026-07-10T17:37:36Z
 ---
 
-# App Types
+# App Structure
 
-Every TaroPhone app is one of three types. The type you choose determines how the app appears in the launcher, how it's rendered, and what lifecycle hooks are available to it.
+There is no manifest or type system anymore — every TaroPhone app is just a `.vue` file under `src/components/taro-phone/apps/` that renders the shared `<app-shell>` component and is listed directly in `app-launcher.vue`.
 
-| Type         | Launcher icon | Renders a component | Triggered by                                 |
-| ------------ | :-----------: | :-----------------: | -------------------------------------------- |
-| `ViewApp`    |       ✓       |          ✓          | Tapping icon → navigates into app            |
-| `WidgetApp`  |       —       |     ✓ (inline)      | Tapping widget directly                      |
-| `TriggerApp` |       ✓       |          —          | Tapping icon → runs `controller.onTrigger()` |
+## The Shape of an App
 
----
-
-## ViewApp
-
-A `ViewApp` renders a full component inside the phone shell when the user taps its launcher icon. It has two display modes that control how it's presented.
-
-### Display Modes
-
-**`panel`** — The component renders inside the phone frame, replacing the launcher grid. The back button returns to the home screen. Use this for contextual panels like shortcuts, card queues, or in-phone navigation.
-
-**`full`** — The component opens as a centered modal dialog above the rest of the UI. The phone shell stays in place in the background. Use this for large settings screens or any experience that needs more screen space than the phone frame provides.
-
-### Example
-
-```ts
-// src/phone/apps/shortcuts/_manifest.ts
-import type { ViewApp } from '@/phone/system/types'
-import component from './component.vue'
-
-export default {
-  title: 'Shortcuts',
-  type: 'view',
-  display: 'panel',
-  component,
-  launcher: {
-    icon_src: 'shortcuts',
-    hover_icon_src: 'shortcuts-hover',
-    theme: 'yellow-500'
-  }
-} satisfies Omit<ViewApp, 'id'>
-```
-
-### Component Contract
-
-A ViewApp component must accept a `close` prop and emit a `close` event. Use the `AppProps` and `AppEmits` types to satisfy this contract:
+An app component is self-contained: it owns its own icon, title, theme, and press behaviour, and pulls in whatever composables/stores it needs directly. There's no external configuration object describing it.
 
 ```vue
-<!-- src/phone/apps/my-app/component.vue -->
+<!-- src/components/taro-phone/apps/settings-app.vue -->
 <script setup lang="ts">
-import type { AppProps, AppEmits } from '@/phone/system/types'
+import { useI18n } from 'vue-i18n'
+import AppShell from '@/components/taro-phone/app-shell.vue'
+import { useTaroPhoneStore } from '@/stores/taro-phone'
+import { useSettingsModal } from '@/composables/settings/use-settings-modal'
 
-defineProps<AppProps>()
-const emit = defineEmits<AppEmits>()
+const { t } = useI18n()
+const phone = useTaroPhoneStore()
+const settingsModal = useSettingsModal()
+
+function onPress() {
+  phone.openApp(settingsModal.open())
+}
 </script>
 
 <template>
-  <div>
-    <button @click="emit('close')">Close</button>
-    <!-- app content -->
-  </div>
+  <app-shell
+    :title="t('phone.apps.settings.title')"
+    data-theme="pink-400"
+    data-theme-dark="pink-600"
+    icon-src="settings"
+    hover-icon-src="settings-hover"
+    @press="onPress"
+  />
 </template>
 ```
 
-::: tip Accessing the controller
-A ViewApp component can access its controller via injection. See [Context & Injection](./context) for details.
-:::
+Every app follows the same recipe: render `<app-shell>` for the tile, theme it with `data-theme`/`data-theme-dark`, and handle the `@press` emit however that app needs to.
 
----
+## `app-shell.vue`
 
-## WidgetApp
+`app-shell` (`src/components/taro-phone/app-shell.vue`) is the single primitive every app is built on. It renders the launcher tile — the tap-animated button plus its title — and lets the app fill in the icon and the tap behaviour.
 
-A `WidgetApp` renders its component **inline in the launcher grid** rather than navigating to a new view. It has no launcher icon configuration — the component itself is the icon.
+### Props
 
-Use a WidgetApp for stateful toggles that the user should be able to interact with directly from the home screen without any navigation: dark mode cycling, language switching, or status indicators.
+| Prop            | Type       | Default | Description                                                                                   |
+| --------------- | ---------- | ------- | --------------------------------------------------------------------------------------------- |
+| `title`         | `string`   | —       | Label shown under the tile.                                                                   |
+| `iconSrc`       | `string?`  | —       | Default icon, resolved via `ui-image`.                                                        |
+| `hoverIconSrc`  | `string?`  | —       | Alternate icon shown on hover/focus/active.                                                   |
+| `tapHold`       | `number?`  | `0.1`   | Seconds the tap animation holds at its peak before firing `press`.                            |
+| `tapDuration`   | `number?`  | `0.1`   | Duration of the pop animation.                                                                |
+| `instantAction` | `boolean?` | `false` | When `true`, `press` fires immediately on pointerdown instead of at the tap animation's peak. |
 
-### Example
+`data-theme` / `data-theme-dark` are forwarded via `$attrs` (`inheritAttrs: false`), not dedicated props — set them directly on `<app-shell>` in the app's template, per the theming convention.
 
-```ts
-// src/phone/apps/darkmode/_manifest.ts
-import type { WidgetApp } from '@/phone/system/types'
-import component from './component.vue'
+### Slots
 
-export default {
-  title: 'Darkmode',
-  type: 'widget',
-  component
-} satisfies Omit<WidgetApp, 'id'>
-```
+| Slot    | Description                                                                                                                                                         |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| default | Replaces the icon markup entirely. Used by apps like `darkmode-app.vue` that swap icons based on reactive state rather than a static `iconSrc`/`hoverIconSrc` pair. |
 
-The component is responsible for its own visual presentation. Use the `<widget>` primitive to get consistent sizing, hover effects, and tooltip behaviour:
+### Emits
+
+| Event   | Payload      | Fired                                                                  |
+| ------- | ------------ | ---------------------------------------------------------------------- |
+| `press` | `MouseEvent` | After the tap animation resolves (or immediately, if `instantAction`). |
+
+### Example: custom icon via the default slot
 
 ```vue
-<!-- src/phone/apps/darkmode/component.vue -->
-<script setup lang="ts">
-import Widget from '@/phone/components/widget.vue'
-import { useTheme } from '@/composables/use-theme'
-
-const { cycle, mode } = useTheme()
-const theme = computed(() => (mode.value === 'dark' ? 'blue-650' : 'orange-600'))
-</script>
-
-<template>
-  <widget :theme="theme" title="Dark Mode" @click="cycle">
-    <!-- icon -->
-  </widget>
-</template>
+<!-- src/components/taro-phone/apps/darkmode-app.vue -->
+<app-shell
+  :data-theme="theme"
+  :title="title"
+  :tap-hold="0"
+  :tap-duration="0.2"
+  instant-action
+  @press="cycleMode"
+>
+  <ui-image v-if="mode === 'system'" src="darkmode-system" />
+  <ui-image v-else-if="mode === 'light'" src="darkmode-light" />
+  <ui-image v-else src="darkmode-dark" />
+</app-shell>
 ```
 
-::: info
-WidgetApps do not participate in navigation — tapping them triggers a click on the component, not `runtime.open()`. They cannot have a controller and do not receive `AppContext`.
-:::
+## Apps That Open a Modal vs. Apps That Act Directly
 
----
+Nothing in the system distinguishes these — it's just what the app component does in its `onPress` handler:
 
-## TriggerApp
+- **Opens a modal**: `settings-app.vue` calls `phone.openApp(settingsModal.open())`, which hides the phone while the modal is open and reopens it once the modal resolves. See [`taro-phone` store](./reference#the-taro-phone-store) for what `openApp()` does.
+- **Acts immediately, no modal**: `darkmode-app.vue` cycles the theme directly with no navigation at all.
+- **Confirms then acts**: `logout-app.vue` opens an `useAlert()` confirmation and logs out via `useSessionStore()` if confirmed.
 
-A `TriggerApp` has a launcher icon but no component. When tapped, the runtime calls `controller.onTrigger()` immediately. Nothing is rendered in the phone frame.
+## Adding a New App
 
-Use a TriggerApp for actions that open their own modal (like a logout confirmation), launch an external flow, or perform an immediate side effect.
+1. Create the component under `src/components/taro-phone/apps/`, wrapping `<app-shell>`.
+2. Add the required translation keys under `phone.apps.<app-name>.*` in `src/locales/en-us.json`.
+3. Import the component and add it to the grid in `app-launcher.vue`.
 
-### Example
-
-```ts
-// src/phone/apps/logout/_manifest.ts
-import type { TriggerApp } from '@/phone/system/types'
-import { createLogoutController } from './controller'
-
-export default {
-  title: 'Logout',
-  type: 'trigger',
-  controller: createLogoutController,
-  launcher: {
-    icon_src: 'logout',
-    hover_icon_src: 'logout-hover',
-    theme: 'red-400'
-  }
-} satisfies Omit<TriggerApp, 'id'>
-```
-
-```ts
-// src/phone/apps/logout/controller.ts
-import type { AppContext, AppController } from '@/phone/system/types'
-import { useAlert } from '@/composables/alert'
-import { useSessionStore } from '@/stores/session'
-
-export function createLogoutController(ctx: AppContext): AppController {
-  const alert = useAlert()
-  const session = useSessionStore()
-
-  return {
-    onTrigger() {
-      const { response } = alert.warn({
-        title: ctx.t('phone.apps.logout.title'),
-        message: ctx.t('phone.apps.logout.description'),
-        confirmLabel: ctx.t('common.logout')
-      })
-      response.then((confirmed) => {
-        if (confirmed) session.logout()
-      })
-    }
-  }
-}
-```
-
-::: tip Controller required
-`controller` is optional on `ViewApp` but **required** on `TriggerApp` — without an `onTrigger()` implementation, tapping the icon does nothing.
-:::
-
----
-
-## File & Manifest Conventions
-
-All apps live under `src/phone/apps/` in their own named directory:
-
-```
-src/phone/apps/
-  my-app/
-    _manifest.ts     ← required: exports the app definition
-    component.vue    ← required for ViewApp and WidgetApp
-    controller.ts    ← recommended when logic is non-trivial
-```
-
-The manifest filename is always `_manifest.ts`. The leading underscore ensures it sorts to the top and signals that it's a system file rather than a component.
-
-### The `satisfies` Pattern
-
-Manifests use TypeScript's `satisfies` operator to get full type-checking without losing the literal types needed by the runtime:
-
-```ts
-// Correct — satisfies checks the shape, preserves literal 'view' type
-export default {
-  type: 'view',
-  display: 'panel',
-  ...
-} satisfies Omit<ViewApp, 'id'>
-
-// Avoid — explicit annotation widens 'view' to string
-export default {
-  type: 'view',
-  ...
-} as ViewApp
-```
-
----
-
-## Installing an App
-
-Apps are opt-in. Add the directory name and `true` to `src/phone/apps/installed.ts`:
-
-```ts
-// src/phone/apps/installed.ts
-export default {
-  settings: true,
-  darkmode: true,
-  shortcuts: true,
-  logout: true,
-  'my-app': true // ← enable your new app
-}
-```
-
-Set the value to `false` to disable without deleting the app:
-
-```ts
-  'my-app': false,  // disabled — not loaded, doesn't appear in launcher
-```
-
-::: warning
-The key must exactly match the subdirectory name under `src/phone/apps/`. A mismatch will throw at runtime when the dynamic import fails.
-:::
+There's no install/registration step, no runtime-assigned `id`, and no dynamic import — the component is just referenced directly like any other Vue component.

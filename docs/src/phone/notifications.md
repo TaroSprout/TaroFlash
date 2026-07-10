@@ -1,141 +1,109 @@
 ---
-lastUpdated: 2026-04-12T11:56:41-07:00
+lastUpdated: 2026-07-10T17:37:36Z
 ---
 
 # Notifications
 
-TaroPhone has a lightweight badge notification system. Any app can push a count to the phone icon — the small red dot visible when the phone is closed.
+TaroPhone has a lightweight badge notification system. Any code with access to `useTaroPhoneStore()` can push a count to the phone icon — the small red dot visible when the phone is closed.
 
 ## How It Works
 
 ```
-Controller calls ctx.notify()
+Code calls phone.notify(app_id, count)
         │
         ▼
-Runtime stores PhoneNotification { app_id, count }
+Store updates notifications: Record<string, number>
         │
         ▼
-phone-sm.vue reads total count → shows badge
+taro-phone-sm.vue reads notification_count → shows badge
 ```
 
-Notifications are **per-app** and **upserted** — calling `notify()` a second time replaces the previous entry for that app rather than stacking. Each app has at most one notification in the queue at a time.
+Notifications are **per-app** and **upserted** — calling `notify()` a second time for the same `app_id` replaces the previous entry rather than stacking. Each app has at most one notification in the store at a time.
 
 ---
 
 ## Pushing a Notification
 
-Call `ctx.notify()` from inside a controller with an optional count:
+Call `useTaroPhoneStore().notify(app_id, count)`:
 
 ```ts
-ctx.notify({ count: 5 }) // badge shows "5"
-ctx.notify({ count: 10 }) // badge updates to "10" (upsert)
-ctx.notify({}) // no count — badge shows the dot, counts as 1
+const phone = useTaroPhoneStore()
+
+phone.notify('due-cards', 5) // badge shows "5"
+phone.notify('due-cards', 10) // badge updates to "10" (upsert)
 ```
 
-The `count` field is optional. When omitted it defaults to `1` in the badge total.
+Unlike the old API, `count` is required — there's no "omit for 1" shorthand. Pass the actual count you want reflected in the badge total.
 
 ---
 
 ## Clearing a Notification
 
-Call `ctx.clearNotification()` when the underlying data no longer warrants an alert:
+Call `clearNotification(app_id)` when the underlying data no longer warrants an alert:
 
 ```ts
-ctx.clearNotification()
+phone.clearNotification('due-cards')
 ```
 
 ---
 
 ## Auto-Clear on Open
 
-By default, the runtime does **not** clear notifications when the user opens an app. If you want the badge to disappear automatically when the user taps the icon, set `clear_notifications_on_open: true` in the manifest:
+There's no `clear_notifications_on_open` flag anymore — since apps are plain components with no manifest, clearing on open is just something the app's own `onPress` handler (or a watcher on the relevant store) does explicitly:
 
 ```ts
-export default {
-  title: 'Inbox',
-  type: 'trigger',
-  mount_policy: 'immediate',
-  clear_notifications_on_open: true,   // ← badge clears when user opens the app
-  controller: createInboxController,
-  launcher: { ... }
-} satisfies Omit<TriggerApp, 'id'>
+function onPress() {
+  phone.clearNotification('due-cards')
+  // ... open the app's modal/view
+}
 ```
-
-Without this flag, your controller is responsible for calling `ctx.clearNotification()` at the appropriate time (e.g. after the user has seen the relevant content).
-
----
-
-## Notifications Require `mount_policy: 'immediate'`
-
-Notifications are only useful if the controller factory is running _before_ the user opens the app — otherwise you'd push a badge and immediately show (or clear) it.
-
-For notifications to work correctly, set `mount_policy: 'immediate'` in the manifest. The factory runs at phone startup and sets up whatever subscription keeps the badge in sync.
 
 ---
 
 ## Worked Example
 
-Here's a complete notification source that watches a Pinia store and keeps the badge count in sync:
+A notification source that watches a Pinia store and keeps the badge count in sync, set up directly in an app component's `<script setup>`:
 
-```ts
-// src/phone/apps/inbox/controller.ts
-import type { AppContext, AppController } from '@/phone/system/types'
-import { useInboxStore } from '@/stores/inbox'
+```vue
+<!-- src/components/taro-phone/apps/due-cards-app.vue -->
+<script setup lang="ts">
+import { useTaroPhoneStore } from '@/stores/taro-phone'
+import { useDeckStore } from '@/stores/deck'
 
-export function createInboxController(ctx: AppContext): AppController {
-  const inbox = useInboxStore()
+const phone = useTaroPhoneStore()
+const deckStore = useDeckStore()
 
-  // Factory body runs at startup — sync badge immediately and subscribe
-  syncBadge()
-  inbox.$subscribe(() => syncBadge())
+syncBadge()
+deckStore.$subscribe(() => syncBadge())
 
-  function syncBadge() {
-    if (inbox.unread_count > 0) {
-      ctx.notify({ count: inbox.unread_count })
-    } else {
-      ctx.clearNotification()
-    }
+function syncBadge() {
+  const due = deckStore.decks.reduce((sum, d) => sum + d.due_count, 0)
+
+  if (due > 0) {
+    phone.notify('due-cards', due)
+  } else {
+    phone.clearNotification('due-cards')
   }
-
-  return {}
 }
+</script>
 ```
 
-```ts
-// src/phone/apps/inbox/_manifest.ts
-import type { TriggerApp } from '@/phone/system/types'
-import { createInboxController } from './controller'
-
-export default {
-  title: 'Inbox',
-  type: 'trigger',
-  mount_policy: 'immediate',
-  clear_notifications_on_open: true,
-  controller: createInboxController,
-  launcher: {
-    icon_src: 'inbox',
-    theme: 'blue-500'
-  }
-} satisfies Omit<TriggerApp, 'id'>
-```
-
-When the phone mounts, the factory fires, the store subscription is registered, and the badge immediately reflects `inbox.unread_count`. As the user reads messages, `unread_count` drops; the store fires, `syncBadge()` is called, and the badge updates. When count reaches zero, the badge disappears. When the user opens the app, the badge clears automatically.
+Because `app-launcher.vue` renders every app component unconditionally, this subscription is set up as soon as the launcher mounts — there's no separate "immediate mount" concept to opt into.
 
 ---
 
 ## Badge Display
 
-The badge renders on `phone-sm` (the closed phone icon) as a small red dot. The total shown is the **sum of all active notification counts** across every app:
+The badge renders on `taro-phone-sm.vue` (the closed phone icon) as a small red dot when `store.notification_count > 0`:
 
 ```
-badge total = sum of n.count for each active notification
-             (notifications without a count contribute 1)
+notification_count = sum of all values in notifications
 ```
 
-If the total exceeds 9, the badge displays `9+`.
+The current implementation shows a plain dot (no numeric count or `9+` overflow rendering) — see `taro-phone-sm.vue`'s `data-testid="notification-badge"` element.
 
 ---
 
 ## Notification Lifetime
 
-Notifications are **ephemeral** — they live only in Vue reactive memory. They do not persist across page refreshes. Apps with `mount_policy: 'immediate'` re-instantiate their controller on every phone mount, which re-evaluates current state and re-pushes any badges that are still relevant.
+Notifications are **ephemeral** — they live only in the Pinia store's reactive memory and do not persist across page refreshes. Apps that set up a store subscription re-run that subscription on every app mount, which re-evaluates current state and re-pushes any badges that are still relevant.

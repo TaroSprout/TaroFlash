@@ -1,302 +1,145 @@
 ---
-lastUpdated: 2026-04-12T11:56:41-07:00
+lastUpdated: 2026-07-10T17:37:36Z
 ---
 
 # API Reference
 
-All types and values exported from `@/phone/system/types` unless otherwise noted.
+## `app-shell.vue`
 
----
+`src/components/taro-phone/app-shell.vue` — the shared launcher-tile primitive every app renders.
 
-## App Definitions
-
-### `ViewApp`
-
-A full-UI app that renders a component inside the phone frame or as a modal.
+### Props (`AppShellProps`)
 
 ```ts
-type ViewApp = {
-  id: string // assigned by runtime — do not set in manifest
-  title: string // display name and manifest lookup key
-  type: 'view'
-  display: 'panel' | 'full' // panel: renders in phone frame; full: opens as modal
-  component: Component // the Vue component to render
-  launcher: LauncherConfig // icon and theme for the launcher grid
-  mount_policy?: MountPolicy // default: 'lazy'
-  clear_notifications_on_open?: boolean // default: false
-  controller?: (ctx: AppContext) => AppController
-}
-```
-
-### `WidgetApp`
-
-An inline interactive widget rendered directly in the launcher grid.
-
-```ts
-type WidgetApp = {
-  id: string
+type AppShellProps = {
   title: string
-  type: 'widget'
-  component?: Component // the widget component; renders in-grid
-  mount_policy?: MountPolicy
-  clear_notifications_on_open?: boolean
-  controller?: (ctx: AppContext) => AppController
+  iconSrc?: string
+  hoverIconSrc?: string
+  tapHold?: number // default: 0.1
+  tapDuration?: number // default: 0.1
+  instantAction?: boolean // default: false
 }
 ```
 
-### `TriggerApp`
+| Prop            | Description                                                                              |
+| --------------- | ---------------------------------------------------------------------------------------- |
+| `title`         | Label rendered under the tile.                                                           |
+| `iconSrc`       | Default icon name, resolved via `ui-image`.                                              |
+| `hoverIconSrc`  | Icon shown on hover/focus/active in place of `iconSrc`.                                  |
+| `tapHold`       | Seconds the tap animation holds at peak before `press` fires (when not `instantAction`). |
+| `tapDuration`   | Duration of the pop tap animation.                                                       |
+| `instantAction` | Fires `press` on pointerdown instead of waiting for the tap animation's peak.            |
 
-An action-only app with a launcher icon but no rendered component.
+`data-theme` / `data-theme-dark` and other attrs are forwarded to the root `<button>` via `$attrs` (`inheritAttrs: false`) — set them directly on the `<app-shell>` tag.
+
+### Slots
+
+| Slot    | Description                                                                                  |
+| ------- | -------------------------------------------------------------------------------------------- |
+| default | Replaces the icon rendering; falls back to `iconSrc`/`hoverIconSrc` `ui-image`s when unused. |
+
+### Emits
 
 ```ts
-type TriggerApp = {
-  id: string
-  title: string
-  type: 'trigger'
-  launcher: LauncherConfig
-  mount_policy?: MountPolicy
-  clear_notifications_on_open?: boolean
-  controller?: (ctx: AppContext) => AppController // onTrigger() called on tap
-}
+{ press: [e: MouseEvent] }
 ```
 
-### `PhoneApp`
+Fired once per tap, after the tap animation resolves (or immediately if `instantAction` is set).
 
-Union of all app types.
+---
+
+## The `taro-phone` Store
+
+`src/stores/taro-phone.ts` — a plain Pinia setup store. This is the only shared state layer for the phone; there is no separate context/injection object.
+
+### State
+
+| Field                      | Type                          | Description                                                              |
+| -------------------------- | ----------------------------- | ------------------------------------------------------------------------ |
+| `is_open`                  | `Ref<boolean>`                | Whether the phone frame (`taro-phone-base.vue`) is currently shown.      |
+| `notifications`            | `Ref<Record<string, number>>` | Per-app notification counts, keyed by an arbitrary app id string.        |
+| `was_hidden_for_app_modal` | `Ref<boolean>`                | Internal flag tracking whether the phone was auto-hidden by `openApp()`. |
+
+### Computed
+
+| Field                | Type                  | Description                                             |
+| -------------------- | --------------------- | ------------------------------------------------------- |
+| `notification_count` | `ComputedRef<number>` | Sum of all values in `notifications` — the badge total. |
+
+### Actions
+
+| Action                                      | Description                                                                                                                                                                      |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `open()`                                    | Sets `is_open` to `true`.                                                                                                                                                        |
+| `close()`                                   | Sets `is_open` to `false`.                                                                                                                                                       |
+| `openApp(result: OpenModalResult<unknown>)` | Hides the phone (`is_open = false`) while an app-launched modal is open, and reopens it once `result.response` settles — unless the phone was explicitly closed in the meantime. |
+| `notify(app_id: string, count: number)`     | Upserts the notification count for `app_id`.                                                                                                                                     |
+| `clearNotification(app_id: string)`         | Removes the notification entry for `app_id`.                                                                                                                                     |
+
+### Example
 
 ```ts
-type PhoneApp = ViewApp | WidgetApp | TriggerApp
-```
+import { useTaroPhoneStore } from '@/stores/taro-phone'
 
-### `LauncherConfig`
+const phone = useTaroPhoneStore()
 
-Visual configuration for the launcher grid icon.
+phone.notify('due-cards', 5) // badge shows 5
+phone.clearNotification('due-cards') // badge entry removed
 
-```ts
-type LauncherConfig = {
-  icon_src: string // icon name (resolved via ui-image)
-  hover_icon_src?: string // optional alternate icon shown on hover/focus
-  theme: MemberTheme // theme token applied to the launcher tile
-}
+phone.openApp(settingsModal.open()) // hides phone, reopens when modal closes
 ```
 
 ---
 
-## Controller
+## Modal Hooks (the `useXModal()` Pattern)
 
-### `AppController`
-
-The object returned by a controller factory. All fields are optional.
+Apps that open a shared modal (rather than acting immediately) wrap `useModal()` in a small dedicated composable instead of calling `useModal().open()` directly from the app component. This keeps the modal's config (backdrop, sheet breakpoints, component) in one place shared by every entry point.
 
 ```ts
-type AppController = {
-  onOpen?: () => void | Promise<void>
-  onTrigger?: () => void | Promise<void>
-}
-```
-
-| Hook          | When called                     | Used by           |
-| ------------- | ------------------------------- | ----------------- |
-| `onOpen()`    | Each time a `ViewApp` is opened | `ViewApp`         |
-| `onTrigger()` | Immediately on icon tap         | `TriggerApp` only |
-
-You can extend this interface with your own reactive state and methods — the runtime only calls `onOpen()` and `onTrigger()`. Everything else is for your component's use via injection.
-
----
-
-## Context
-
-### `AppContext`
-
-Passed to every controller factory. Scoped per-app: `notify` and `clearNotification` are pre-bound to the app's own ID.
-
-```ts
-type AppContext = {
-  // Navigation
-  open(id: string, transition?: TransitionPreset): Promise<void>
-  close(): void
-  clear(): void
-
-  // Notifications
-  notify(payload: NotifyPayload): void
-  clearNotification(): void
-
-  // i18n
-  t: ReturnType<typeof useI18n>['t']
-}
-```
-
-### `AppContextInjection`
-
-The type of the `'app-context'` injection. Available to all phone descendants via `inject(APP_CTX_KEY)`.
-
-```ts
-type AppContextInjection = {
-  open(id: string, transition?: TransitionPreset): Promise<void>
-  close(): void
-  clear(): void
-  t: ReturnType<typeof useI18n>['t']
-  controller: AppController | undefined
-}
-```
-
-Note: `notify` and `clearNotification` are intentionally absent — they are app-scoped and only available inside controller factories via `AppContext`.
-
----
-
-## Notifications
-
-### `NotifyPayload`
-
-What you pass to `ctx.notify()`.
-
-```ts
-type NotifyPayload = {
-  count?: number // omit to count as 1
-}
-```
-
-### `PhoneNotification`
-
-What the runtime stores internally. You don't construct this directly.
-
-```ts
-type PhoneNotification = NotifyPayload & {
-  app_id: string
-}
-```
-
----
-
-## Component Contracts
-
-### `AppProps`
-
-Props interface for `ViewApp` components. Provides the `close` function.
-
-```ts
-type AppProps = {
-  close: () => void
-}
-```
-
-### `AppEmits`
-
-Emits interface for `ViewApp` components.
-
-```ts
-type AppEmits = {
-  (e: 'close'): void
-}
-```
-
-::: tip Usage
-Declare both in every ViewApp component so it can be closed by both the phone frame (which listens to the `close` event) and the modal system (which passes `close` as a prop):
-
-```ts
-defineProps<AppProps>()
-const emit = defineEmits<AppEmits>()
-```
-
-:::
-
----
-
-## Enumerations
-
-### `MountPolicy`
-
-Controls when the controller factory is instantiated.
-
-```ts
-type MountPolicy = 'immediate' | 'lazy'
-```
-
-| Value         | Behaviour                                                                 |
-| ------------- | ------------------------------------------------------------------------- |
-| `'lazy'`      | _(default)_ Factory is called the first time the user opens the app       |
-| `'immediate'` | Factory is called when the phone initialises, before any user interaction |
-
-Use `'immediate'` for background apps that need to subscribe to stores or push notifications before the user has opened them. Any initialisation work goes in the factory body — not in a hook.
-
-### `PhoneAppDisplay`
-
-The two display modes for `ViewApp`.
-
-```ts
-type PhoneAppDisplay = 'full' | 'panel'
-```
-
-### `TransitionPreset`
-
-Named transitions used when navigating between apps.
-
-```ts
-type TransitionPreset = 'slide-left' | 'slide-right' | 'pop-up' | 'pop-down' | 'none'
-```
-
----
-
-## Injection Key
-
-### `APP_CTX_KEY`
-
-```ts
-import { APP_CTX_KEY } from '@/phone/system/types'
-
-const APP_CTX_KEY = 'app-context' // plain string constant
-```
-
-Provided by `phone.vue` for all phone descendants, and re-provided by the modal slot for `display: 'full'` apps. Inject with an explicit type:
-
-```ts
-import { inject } from 'vue'
-import { APP_CTX_KEY, type AppContextInjection } from '@/phone/system/types'
-
-const ctx = inject<AppContextInjection>(APP_CTX_KEY)!
-```
-
----
-
-## Manifest Helper
-
-### `installApps()` _(from `@/phone/system/install-apps`)_
-
-Reads `src/phone/apps/installed.ts`, dynamically imports each enabled app's `_manifest.ts`, validates uniqueness, assigns runtime IDs, and marks components as `markRaw`. Called once during phone mount.
-
-```ts
-function installApps(): Promise<PhoneApp[]>
-```
-
-You do not call this directly — `phone.vue` handles it.
-
----
-
-## Modal Context _(from `@/composables/modal`)_
-
-### `ModalContext`
-
-Passed to `useModal().open()` to inject arbitrary context into the rendered component's Vue subtree.
-
-```ts
-type ModalContext = {
-  key: InjectionKey<unknown> | string
-  value: unknown
-}
-```
-
-**Usage:**
-
-```ts
-const { open } = useModal()
-
-open(MyComponent, {
-  backdrop: true,
-  context: {
-    key: APP_CTX_KEY,
-    value: { controller: myController, ...phoneOS, t }
+// src/composables/settings/use-settings-modal.ts
+import { useModal } from '@/composables/modal'
+import { SETTINGS_SHEET_BREAKPOINTS } from '@/views/settings/layout'
+import SettingsComponent from '@/views/settings/index.vue'
+
+/** Opens the settings modal. Shared by the phone launcher and any other settings entry point. */
+export function useSettingsModal() {
+  const modal = useModal()
+
+  function open() {
+    return modal.open(SettingsComponent, {
+      backdrop: true,
+      mode: 'mobile-sheet',
+      mobile_below_width: SETTINGS_SHEET_BREAKPOINTS.width,
+      mobile_below_height: SETTINGS_SHEET_BREAKPOINTS.height
+    })
   }
-})
+
+  return { open }
+}
 ```
 
-Any component rendered inside `MyComponent` can then `inject(APP_CTX_KEY)` and receive the full `AppContextInjection`.
+The app component calls it and hands the result straight to `phone.openApp()`:
+
+```ts
+const phone = useTaroPhoneStore()
+const settingsModal = useSettingsModal()
+
+function onPress() {
+  phone.openApp(settingsModal.open())
+}
+```
+
+See `src/composables/modal/` for `useModal()` and `OpenModalResult` themselves — those aren't phone-specific.
+
+---
+
+## Component Tree
+
+| Component             | Path                                            | Responsibility                                                                                 |
+| --------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `index.vue`           | `src/components/taro-phone/index.vue`           | Positions the phone, drives open/close transitions, outside-click close.                       |
+| `taro-phone-sm.vue`   | `src/components/taro-phone/taro-phone-sm.vue`   | Closed phone icon; renders the notification badge from `notification_count`.                   |
+| `taro-phone-base.vue` | `src/components/taro-phone/taro-phone-base.vue` | Open phone frame; close button + `app-launcher`.                                               |
+| `app-launcher.vue`    | `src/components/taro-phone/app-launcher.vue`    | Renders the grid of app components; keyboard nav between tiles.                                |
+| `app-shell.vue`       | `src/components/taro-phone/app-shell.vue`       | Shared launcher-tile primitive (see above).                                                    |
+| `apps/*.vue`          | `src/components/taro-phone/apps/`               | Individual apps: `settings-app.vue`, `darkmode-app.vue`, `logout-app.vue`, `feedback-app.vue`. |
