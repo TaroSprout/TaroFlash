@@ -26,7 +26,9 @@ const body_bindings = computed(() => memberCoverBindings(cover))
     class="bg-brown-200 dark:bg-stone-900 rounded-8 border-brown-200 dark:border-stone-900 flex w-89 flex-col overflow-hidden border-8 shadow-[-1px_-1px_0_0_var(--color-brown-100)] dark:shadow-[-1px_-1px_0_0_var(--color-grey-900)]"
   >
     <div data-testid="member-card__header" class="flex items-center justify-center px-9 pt-4 pb-1">
-      <h1 class="text-brown-700 dark:text-brown-200 text-5xl">{{ displayName }}</h1>
+      <h1 class="text-brown-700 dark:text-brown-200 text-5xl">
+        {{ displayName || t('member-badge.name-placeholder') }}
+      </h1>
     </div>
 
     <div
