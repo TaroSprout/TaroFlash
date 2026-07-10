@@ -90,7 +90,10 @@ function onClick(deck_id?: number) {
     class="grid-rows-[auto_1fr_auto]! pb-(--dialog-px)"
     @close="close(false)"
   >
-    <div data-testid="move-cards__deck-list-wrap" class="relative flex min-h-0 flex-1 flex-col">
+    <div
+      data-testid="move-cards__deck-list-wrap"
+      class="relative flex min-h-0 flex-1 flex-col px-(--dialog-px)"
+    >
       <grouped-list data-testid="move-cards__deck-list" scrollable class="my-4 min-h-0 flex-1">
         <ui-tappable
           v-for="(deck, index) in decks"
@@ -137,7 +140,7 @@ function onClick(deck_id?: number) {
       />
     </div>
 
-    <div data-testid="move-cards__actions" class="flex w-full justify-end gap-3">
+    <div data-testid="move-cards__actions" class="flex w-full justify-end gap-3 px-(--dialog-px)">
       <ui-button
         data-testid="move-cards__move"
         data-theme="blue-500"
