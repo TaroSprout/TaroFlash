@@ -49,7 +49,9 @@ import {
   updatePassword,
   isPasswordRecoveryUrl,
   waitForPasswordRecovery,
-  requestPasswordReset
+  requestPasswordReset,
+  isAuthError,
+  onSignedOut
 } from '@/api/session'
 
 beforeEach(() => {
@@ -679,6 +681,87 @@ describe('waitForPasswordRecovery [obligation]', () => {
     promise.then(() => (settled = true))
     await Promise.resolve()
     expect(settled).toBe(false)
+  })
+})
+
+describe('isAuthError [obligation]', () => {
+  test('returns true for a 401 status error [obligation]', () => {
+    expect(isAuthError({ status: 401 })).toBe(true)
+  })
+
+  test('returns true for a PGRST301 code error [obligation]', () => {
+    expect(isAuthError({ code: 'PGRST301' })).toBe(true)
+  })
+
+  test('returns true for an AuthApiError name [obligation]', () => {
+    expect(isAuthError({ name: 'AuthApiError' })).toBe(true)
+  })
+
+  test('returns false for an unrelated error shape [obligation]', () => {
+    expect(isAuthError({ status: 500, code: 'server_error', message: 'boom' })).toBe(false)
+  })
+
+  test('returns false for null [obligation]', () => {
+    expect(isAuthError(null)).toBe(false)
+  })
+
+  test('returns false for undefined [obligation]', () => {
+    expect(isAuthError(undefined)).toBe(false)
+  })
+
+  test('returns false for a plain non-auth error [obligation]', () => {
+    expect(isAuthError(new Error('generic failure'))).toBe(false)
+  })
+})
+
+describe('onSignedOut [obligation]', () => {
+  function captureAuthCallback() {
+    let cb
+    const unsubscribe = vi.fn()
+    mocks.onAuthStateChange.mockImplementationOnce((fn) => {
+      cb = fn
+      return { data: { subscription: { unsubscribe } } }
+    })
+    return { get: () => cb, unsubscribe }
+  }
+
+  test('invokes the callback when SIGNED_OUT fires [obligation]', () => {
+    const cb = captureAuthCallback()
+    const callback = vi.fn()
+    onSignedOut(callback)
+
+    cb.get()('SIGNED_OUT')
+
+    expect(callback).toHaveBeenCalledOnce()
+  })
+
+  test('does not invoke the callback for SIGNED_IN [obligation]', () => {
+    const cb = captureAuthCallback()
+    const callback = vi.fn()
+    onSignedOut(callback)
+
+    cb.get()('SIGNED_IN')
+
+    expect(callback).not.toHaveBeenCalled()
+  })
+
+  test('does not invoke the callback for TOKEN_REFRESHED [obligation]', () => {
+    const cb = captureAuthCallback()
+    const callback = vi.fn()
+    onSignedOut(callback)
+
+    cb.get()('TOKEN_REFRESHED')
+
+    expect(callback).not.toHaveBeenCalled()
+  })
+
+  test('returned unsubscribe function unsubscribes from the auth listener [obligation]', () => {
+    const cb = captureAuthCallback()
+    const unsubscribeFn = onSignedOut(vi.fn())
+
+    unsubscribeFn()
+
+    expect(cb.unsubscribe).toHaveBeenCalledOnce()
   })
 })
 

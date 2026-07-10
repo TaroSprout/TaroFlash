@@ -146,6 +146,66 @@ describe('UiTextarea — label', () => {
   })
 })
 
+describe('UiTextarea — noNewlines [obligation]', () => {
+  test('pressing Enter does NOT insert a newline into the model value when noNewlines is true [obligation]', async () => {
+    const wrapper = mountTextarea({ value: 'hello', noNewlines: true })
+    const ta = wrapper.find('textarea')
+    await ta.trigger('keydown', { key: 'Enter' })
+    expect(wrapper.emitted('update:value')).toBeFalsy()
+  })
+
+  test('pressing Enter does not preventDefault when noNewlines is false [obligation]', async () => {
+    const wrapper = mountTextarea({ value: 'hello', noNewlines: false })
+    const ta = wrapper.find('textarea').element
+    const event = new KeyboardEvent('keydown', { key: 'Enter', cancelable: true })
+    ta.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(false)
+  })
+
+  test('pressing Enter does not preventDefault when noNewlines is omitted [obligation]', async () => {
+    const wrapper = mountTextarea({ value: 'hello' })
+    const ta = wrapper.find('textarea').element
+    const event = new KeyboardEvent('keydown', { key: 'Enter', cancelable: true })
+    ta.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(false)
+  })
+
+  test('pressing Enter calls preventDefault when noNewlines is true [obligation]', async () => {
+    const wrapper = mountTextarea({ value: 'hello', noNewlines: true })
+    const ta = wrapper.find('textarea').element
+    const event = new KeyboardEvent('keydown', { key: 'Enter', cancelable: true })
+    ta.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(true)
+  })
+
+  test('sanitizes a pasted value containing newlines to spaces when noNewlines is true [obligation]', async () => {
+    const wrapper = mountTextarea({ noNewlines: true })
+    const ta = wrapper.find('textarea')
+    await ta.setValue('line one\nline two\r\nline three')
+    const emitted = wrapper.emitted('update:value')
+    const last = emitted[emitted.length - 1][0]
+    expect(last).not.toContain('\n')
+    expect(last).not.toContain('\r')
+  })
+
+  test('does not sanitize newlines when noNewlines is false', async () => {
+    const wrapper = mountTextarea({ noNewlines: false })
+    const ta = wrapper.find('textarea')
+    await ta.setValue('line one\nline two')
+    const emitted = wrapper.emitted('update:value')
+    const last = emitted[emitted.length - 1][0]
+    expect(last).toBe('line one\nline two')
+  })
+})
+
+describe('UiTextarea — max_chars behavior unaffected by noNewlines [obligation]', () => {
+  test('char count still reflects value length when noNewlines is true [obligation]', () => {
+    const wrapper = mountTextarea({ max_chars: 100, value: 'hello', noNewlines: true })
+    const counter = wrapper.find('[data-testid="ui-kit-textarea-char-count"]')
+    expect(counter.text()).toBe('5/100')
+  })
+})
+
 describe('UiTextarea — sfx', () => {
   beforeEach(() => {
     mockEmitSfx.mockReset()

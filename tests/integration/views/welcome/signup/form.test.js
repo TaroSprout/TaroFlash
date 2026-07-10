@@ -23,7 +23,16 @@ vi.mock('vue-i18n', () => ({
 const UiInputStub = defineComponent({
   name: 'UiInput',
   inheritAttrs: false,
-  props: ['placeholder', 'error', 'size', 'type', 'name', 'autocomplete', 'modelValue'],
+  props: [
+    'placeholder',
+    'error',
+    'size',
+    'type',
+    'name',
+    'autocomplete',
+    'modelValue',
+    'maxLength'
+  ],
   emits: ['update:modelValue'],
   setup(props, { attrs, emit }) {
     return () =>
@@ -31,6 +40,7 @@ const UiInputStub = defineComponent({
         ...attrs,
         type: props.type ?? 'text',
         placeholder: props.placeholder,
+        maxlength: props.maxLength,
         value: props.modelValue ?? '',
         onInput: (e) => emit('update:modelValue', e.target.value)
       })
@@ -138,6 +148,12 @@ describe('SignupForm (signup/form.vue)', () => {
     expect(form.findAll('input').length).toBe(4)
   })
 
+  test('username input carries MEMBER_DISPLAY_NAME_MAX_LENGTH as maxlength', () => {
+    const wrapper = mountForm()
+    const inputs = wrapper.find('[data-testid="email-auth"]').findAll('input')
+    expect(inputs[0].attributes('maxlength')).toBe('12')
+  })
+
   test('passes errors.username to the username input via error prop', () => {
     const wrapper = mountForm({ errors: { username: 'Required' } })
     const inputs = wrapper.findAllComponents({ name: 'UiInput' })
@@ -160,5 +176,35 @@ describe('SignupForm (signup/form.vue)', () => {
     const wrapper = mountForm({ errors: { confirm_password: 'Mismatch' } })
     const inputs = wrapper.findAllComponents({ name: 'UiInput' })
     expect(inputs[3].props('error')).toBe('Mismatch')
+  })
+
+  // ── model bindings ─────────────────────────────────────────────────────────
+
+  test('typing into the username input emits update:username', async () => {
+    const wrapper = mountForm()
+    const inputs = wrapper.find('[data-testid="email-auth"]').findAll('input')
+    await inputs[0].setValue('Nina')
+    expect(wrapper.emitted('update:username')).toEqual([['Nina']])
+  })
+
+  test('typing into the email input emits update:email', async () => {
+    const wrapper = mountForm()
+    const inputs = wrapper.find('[data-testid="email-auth"]').findAll('input')
+    await inputs[1].setValue('nina@example.com')
+    expect(wrapper.emitted('update:email')).toEqual([['nina@example.com']])
+  })
+
+  test('typing into the password input emits update:password', async () => {
+    const wrapper = mountForm()
+    const inputs = wrapper.find('[data-testid="email-auth"]').findAll('input')
+    await inputs[2].setValue('hunter22')
+    expect(wrapper.emitted('update:password')).toEqual([['hunter22']])
+  })
+
+  test('typing into the confirm-password input emits update:confirmPassword', async () => {
+    const wrapper = mountForm()
+    const inputs = wrapper.find('[data-testid="email-auth"]').findAll('input')
+    await inputs[3].setValue('hunter22')
+    expect(wrapper.emitted('update:confirmPassword')).toEqual([['hunter22']])
   })
 })

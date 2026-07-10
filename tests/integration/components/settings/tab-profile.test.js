@@ -19,7 +19,10 @@ import { computed } from 'vue'
 
 const InputStub = defineComponent({
   name: 'UiInput',
-  props: { value: { type: String, default: '' } },
+  props: {
+    value: { type: String, default: '' },
+    maxLength: { type: Number, default: undefined }
+  },
   emits: ['update:value'],
   inheritAttrs: false,
   setup(props, { emit }) {
@@ -27,6 +30,7 @@ const InputStub = defineComponent({
     return () =>
       h('input', {
         ...attrs,
+        maxlength: props.maxLength,
         value: props.value,
         onInput: (e) => emit('update:value', e.target.value)
       })
@@ -126,6 +130,12 @@ describe('TabProfile', () => {
     const input = wrapper.findAll('input')[0]
     await input.setValue('Nina')
     expect(editor.settings.display_name).toBe('Nina')
+  })
+
+  test('name input carries MEMBER_DISPLAY_NAME_MAX_LENGTH as maxlength', () => {
+    const { wrapper } = makeTab()
+    const input = wrapper.findAll('input')[0]
+    expect(input.attributes('maxlength')).toBe('12')
   })
 
   test('typing into the bio textarea updates editor.settings.description', async () => {

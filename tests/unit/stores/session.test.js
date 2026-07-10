@@ -39,6 +39,11 @@ const { mockNotice } = vi.hoisted(() => ({
   mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
 }))
 
+const { mockOnSignedOut, mockIsAuthError } = vi.hoisted(() => ({
+  mockOnSignedOut: vi.fn(() => vi.fn()),
+  mockIsAuthError: vi.fn()
+}))
+
 vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (key) => key }) }))
 
@@ -55,7 +60,9 @@ vi.mock('@/api/session', () => ({
   linkGoogleIdentity: mockLinkGoogleIdentity,
   unlinkGoogleIdentity: mockUnlinkGoogleIdentity,
   isPasswordRecoveryUrl: mockIsPasswordRecoveryUrl,
-  waitForPasswordRecovery: mockWaitForPasswordRecovery
+  waitForPasswordRecovery: mockWaitForPasswordRecovery,
+  onSignedOut: mockOnSignedOut,
+  isAuthError: mockIsAuthError
 }))
 
 vi.mock('vue-router', () => ({
@@ -83,6 +90,10 @@ beforeEach(() => {
   mockWaitForPasswordRecovery.mockReset()
   mockPush.mockReset()
   mockNotice.error.mockReset()
+  mockNotice.warn.mockReset()
+  mockOnSignedOut.mockReset()
+  mockOnSignedOut.mockImplementation(() => vi.fn())
+  mockIsAuthError.mockReset()
 })
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
@@ -390,6 +401,110 @@ describe('useSessionStore', () => {
       expect(mockGetUser).toHaveBeenCalledOnce()
       expect(mockGetSession).not.toHaveBeenCalled()
       expect(store.hasGoogleIdentity).toBe(false)
+    })
+  })
+
+  // ── handleAuthError / forceLogout [obligation] ────────────────────────────
+
+  describe('handleAuthError [obligation]', () => {
+    test('forces a logout when isAuthError returns true [obligation]', async () => {
+      const user = { id: 'u1', aud: 'authenticated' }
+      mockGetSession.mockResolvedValueOnce({ user })
+      mockIsAuthError.mockReturnValueOnce(true)
+      mockLogout.mockResolvedValueOnce(undefined)
+      const store = useSessionStore()
+      await store.restoreSession()
+
+      store.handleAuthError({ status: 401 })
+      await Promise.resolve()
+
+      expect(store.user).toBeUndefined()
+      expect(mockNotice.warn).toHaveBeenCalledOnce()
+    })
+
+    test('does NOT force a logout when isAuthError returns false [obligation]', async () => {
+      const user = { id: 'u1', aud: 'authenticated' }
+      mockGetSession.mockResolvedValueOnce({ user })
+      mockIsAuthError.mockReturnValueOnce(false)
+      const store = useSessionStore()
+      await store.restoreSession()
+
+      store.handleAuthError({ status: 500 })
+      await Promise.resolve()
+
+      expect(store.user).toEqual(user)
+      expect(mockNotice.warn).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('forceLogout guard [obligation]', () => {
+    test('is a no-op when already logged out, preventing its own supaLogout from re-triggering it [obligation]', async () => {
+      // Store is never authenticated in this test (no restoreSession call).
+      mockIsAuthError.mockReturnValueOnce(true)
+      const store = useSessionStore()
+
+      store.handleAuthError({ status: 401 })
+      await Promise.resolve()
+
+      expect(mockLogout).not.toHaveBeenCalled()
+      expect(mockNotice.warn).not.toHaveBeenCalled()
+    })
+
+    test('shows a panel notice whose onDismiss navigates to welcome, not immediately [obligation]', async () => {
+      const user = { id: 'u1', aud: 'authenticated' }
+      mockGetSession.mockResolvedValueOnce({ user })
+      mockIsAuthError.mockReturnValueOnce(true)
+      mockLogout.mockResolvedValueOnce(undefined)
+      const store = useSessionStore()
+      await store.restoreSession()
+
+      store.handleAuthError({ status: 401 })
+      await Promise.resolve()
+
+      expect(mockNotice.warn).toHaveBeenCalledWith(
+        'session.expired-error',
+        expect.objectContaining({ variant: 'panel' })
+      )
+      expect(mockPush).not.toHaveBeenCalledWith({ name: 'welcome' })
+
+      const [, options] = mockNotice.warn.mock.calls[0]
+      options.onDismiss()
+
+      expect(mockPush).toHaveBeenCalledWith({ name: 'welcome' })
+    })
+  })
+
+  describe('onSignedOut wiring [obligation]', () => {
+    test('forces a logout when the stale-tab listener fires and we are not already logging out [obligation]', async () => {
+      const user = { id: 'u1', aud: 'authenticated' }
+      mockGetSession.mockResolvedValueOnce({ user })
+      mockLogout.mockResolvedValueOnce(undefined)
+      let staleTabCallback
+      mockOnSignedOut.mockImplementationOnce((cb) => {
+        staleTabCallback = cb
+        return vi.fn()
+      })
+      const store = useSessionStore()
+      await store.restoreSession()
+
+      staleTabCallback()
+      await Promise.resolve()
+
+      expect(store.user).toBeUndefined()
+      expect(mockNotice.warn).toHaveBeenCalledOnce()
+    })
+
+    test('manual logout() does not trigger the forced/expired panel notice path [obligation]', async () => {
+      const user = { id: 'u1', aud: 'authenticated' }
+      mockGetSession.mockResolvedValueOnce({ user })
+      mockLogout.mockResolvedValueOnce(undefined)
+      const store = useSessionStore()
+      await store.restoreSession()
+
+      await store.logout()
+
+      expect(mockNotice.warn).not.toHaveBeenCalled()
+      expect(mockPush).toHaveBeenCalledWith({ name: 'welcome' })
     })
   })
 

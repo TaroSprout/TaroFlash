@@ -87,6 +87,18 @@ describe('UiInput', () => {
     expect(wrapper.find('input').attributes('type')).toBe('email')
   })
 
+  // ── maxLength ──────────────────────────────────────────────────────────────
+
+  test('sets maxlength attribute on the <input> when maxLength prop is provided [obligation]', () => {
+    const wrapper = mountInput({ maxLength: 12 })
+    expect(wrapper.find('input').attributes('maxlength')).toBe('12')
+  })
+
+  test('does not set maxlength attribute when maxLength prop is omitted [obligation]', () => {
+    const wrapper = mountInput()
+    expect(wrapper.find('input').attributes('maxlength')).toBeUndefined()
+  })
+
   // ── sfx on focus ──────────────────────────────────────────────────────────
 
   test('plays type_05 sfx when the <input> receives focus [obligation]', async () => {

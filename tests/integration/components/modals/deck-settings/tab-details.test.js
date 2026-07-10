@@ -12,7 +12,11 @@ import { deckSettingsCloseKey } from '@/views/deck/deck-settings/layout'
 
 const InputStub = defineComponent({
   name: 'UiInput',
-  props: { value: { type: String, default: '' }, placeholder: { type: String, default: '' } },
+  props: {
+    value: { type: String, default: '' },
+    placeholder: { type: String, default: '' },
+    maxLength: { type: Number, default: undefined }
+  },
   emits: ['update:value'],
   inheritAttrs: false,
   setup(props, { emit }) {
@@ -22,6 +26,7 @@ const InputStub = defineComponent({
         ...attrs,
         'data-testid': 'ui-input',
         'data-placeholder': props.placeholder,
+        maxlength: props.maxLength,
         value: props.value,
         onInput: (e) => emit('update:value', e.target.value)
       })
@@ -141,6 +146,11 @@ describe('TabDetails [obligation]', () => {
     const { wrapper } = makeTab('sheet', editor)
     await wrapper.find('[data-testid="ui-textarea"]').setValue('New desc')
     expect(editor.settings.description).toBe('New desc')
+  })
+
+  test('title input carries DECK_TITLE_MAX_LENGTH as maxlength', () => {
+    const { wrapper } = makeTab()
+    expect(wrapper.find('[data-testid="ui-input"]').attributes('maxlength')).toBe('15')
   })
 
   test('does not render a back button (chrome-driven back replaced the inline button) [obligation]', () => {

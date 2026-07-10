@@ -9,13 +9,21 @@ vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn() }))
 
 const InputStub = defineComponent({
   name: 'UiInput',
-  props: { placeholder: String, error: String, value: String, textAlign: String, size: String },
+  props: {
+    placeholder: String,
+    error: String,
+    value: String,
+    textAlign: String,
+    size: String,
+    maxLength: Number
+  },
   emits: ['update:value'],
   setup(props, { emit }) {
     return () =>
       h('input', {
         'data-testid': 'ui-kit-input',
         'data-error': props.error ?? '',
+        maxlength: props.maxLength,
         value: props.value ?? '',
         onInput: (e) => emit('update:value', e.target.value)
       })
@@ -100,5 +108,22 @@ describe('DeckAside — layout', () => {
     const { settings } = makeAside({ title: 'A' })
     settings.description = 'new desc'
     expect(settings.description).toBe('new desc')
+  })
+
+  test('typing in the description textarea updates settings.description via v-model', async () => {
+    const { wrapper, settings } = makeAside({ title: 'A' })
+    await wrapper.find('[data-testid="ui-kit-textarea"]').setValue('typed description')
+    expect(settings.description).toBe('typed description')
+  })
+
+  test('typing in the title input updates settings.title via v-model', async () => {
+    const { wrapper, settings } = makeAside({ title: 'A' })
+    await wrapper.find('[data-testid="ui-kit-input"]').setValue('New Title')
+    expect(settings.title).toBe('New Title')
+  })
+
+  test('title input carries DECK_TITLE_MAX_LENGTH as maxlength', () => {
+    const { wrapper } = makeAside({ title: 'A' })
+    expect(wrapper.find('[data-testid="ui-kit-input"]').attributes('maxlength')).toBe('15')
   })
 })
