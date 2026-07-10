@@ -96,7 +96,7 @@ defineExpose({ viewport })
 <template>
   <div
     data-testid="dialog-card"
-    class="content-grid content-grid-px-(--dialog-px) relative gap-4 overflow-hidden [--dialog-px:1.5rem] sm:[--dialog-px:2rem]"
+    class="content-grid content-grid-px-(--dialog-px) relative gap-y-4 overflow-hidden [--dialog-px:1.5rem] sm:[--dialog-px:2rem]"
     :class="[
       SIZE_CLASSES[size],
       bg_class,
