@@ -66,7 +66,7 @@ vp dlx <bin>        # Run a one-off binary (instead of npx/pnpm dlx)
 
 **Card text**: Cards use a plain `contenteditable` editor (`src/components/card/text-editor.vue`).
 
-**Sound effects**: Custom `v-sfx` directive plays audio via Howler.js.
+**Sound effects**: Custom `v-sfx` directive plays audio via a lightweight custom engine (`src/sfx/`) — Howler.js was removed.
 
 ### Backend (`supabase/`)
 
