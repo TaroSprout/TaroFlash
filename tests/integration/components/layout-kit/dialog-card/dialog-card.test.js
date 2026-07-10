@@ -113,7 +113,7 @@ describe('DialogCard', () => {
 
       expect(classes).toContain('w-150')
       expect(classes).toContain('h-160')
-      expect(wrapper.find('[data-testid="dialog-card__body"]').attributes('style')).toContain(
+      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
         '--content-grid-max-width: 32.5rem'
       )
     })
@@ -125,21 +125,20 @@ describe('DialogCard', () => {
       expect(classes).toContain('w-140')
       expect(classes).toContain('h-110')
       expect(capturedQueries).toContain('w<sm | h<sm')
-      expect(wrapper.find('[data-testid="dialog-card__body"]').attributes('style')).toContain(
+      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
         '--content-grid-max-width: 25rem'
       )
     })
 
-    test('size="lg" applies w-full max-w-160 h-170, full_bleed_at "w<sm", and a 35rem content max width', () => {
+    test('size="lg" applies w-160 h-170, full_bleed_at "w<sm | h<md", and a 35rem content max width', () => {
       const wrapper = mountCard({ size: 'lg' })
       const classes = wrapper.find('[data-testid="dialog-card"]').classes()
 
-      expect(classes).toContain('w-full')
-      expect(classes).toContain('max-w-160')
+      expect(classes).toContain('w-160')
       expect(classes).toContain('h-170')
-      expect(capturedQueries).toContain('w<sm')
+      expect(capturedQueries).toContain('w<sm | h<md')
       expect(capturedQueries).not.toContain('w<sm | h<sm')
-      expect(wrapper.find('[data-testid="dialog-card__body"]').attributes('style')).toContain(
+      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
         '--content-grid-max-width: 35rem'
       )
     })
@@ -152,8 +151,40 @@ describe('DialogCard', () => {
 
     test('an explicit content_max_width wins over the size default', () => {
       const wrapper = mountCard({ size: 'sm', content_max_width: '50rem' })
-      expect(wrapper.find('[data-testid="dialog-card__body"]').attributes('style')).toContain(
+      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
         '--content-grid-max-width: 50rem'
+      )
+    })
+  })
+
+  // ── content_breakout_max_width per size [obligation] ────────────────────────
+
+  describe('content_breakout_max_width [obligation]', () => {
+    test('size="sm" defaults --content-grid-breakout-max-width to 35rem', () => {
+      const wrapper = mountCard({ size: 'sm' })
+      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
+        '--content-grid-breakout-max-width: 35rem'
+      )
+    })
+
+    test('size="md" (default) sets --content-grid-breakout-max-width to 37.5rem', () => {
+      const wrapper = mountCard()
+      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
+        '--content-grid-breakout-max-width: 37.5rem'
+      )
+    })
+
+    test('size="lg" sets --content-grid-breakout-max-width to 40rem', () => {
+      const wrapper = mountCard({ size: 'lg' })
+      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
+        '--content-grid-breakout-max-width: 40rem'
+      )
+    })
+
+    test('an explicit content_breakout_max_width wins over the size default', () => {
+      const wrapper = mountCard({ size: 'sm', content_breakout_max_width: '60rem' })
+      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
+        '--content-grid-breakout-max-width: 60rem'
       )
     })
   })
@@ -335,7 +366,7 @@ describe('DialogCard', () => {
   describe('float_header [obligation]', () => {
     test('takes the header out of flow (absolute inset-x-0 top-0 z-10) when true [obligation]', () => {
       const wrapper = mountCard({ title: 'x', float_header: true })
-      const classes = wrapper.find('[data-testid="dialog-card__header-wrap"]').classes()
+      const classes = wrapper.find('[data-testid="dialog-card-header"]').classes()
 
       expect(classes).toContain('absolute')
       expect(classes).toContain('inset-x-0')
@@ -343,9 +374,9 @@ describe('DialogCard', () => {
       expect(classes).toContain('z-10')
     })
 
-    test('leaves the header in normal flex flow by default (no absolute classes) [obligation]', () => {
+    test('leaves the header in normal flow by default (no absolute classes) [obligation]', () => {
       const wrapper = mountCard({ title: 'x' })
-      const classes = wrapper.find('[data-testid="dialog-card__header-wrap"]').classes()
+      const classes = wrapper.find('[data-testid="dialog-card-header"]').classes()
 
       expect(classes).not.toContain('absolute')
     })
@@ -383,7 +414,9 @@ describe('DialogCard', () => {
 
     test('leaves --dialog-px unset (falls back to the Tailwind arbitrary value) when omitted', () => {
       const wrapper = mountCard()
-      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toBeUndefined()
+      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).not.toContain(
+        '--dialog-px'
+      )
     })
   })
 })

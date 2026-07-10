@@ -360,11 +360,11 @@ describe('StudySession (index.vue)', () => {
     expect(title.length).toBeGreaterThan(0)
   })
 
-  // ── dialog-card size="lg" sources full_bleed_at="w<sm" ─────────────────────
+  // ── dialog-card size="lg" sources full_bleed_at="w<sm | h<md" ──────────────
 
-  test('size="lg" resolves full_bleed_at to "w<sm"', () => {
+  test('size="lg" resolves full_bleed_at to "w<sm | h<md"', () => {
     makeWrapper()
-    expect(capturedQueries).toContain('w<sm')
+    expect(capturedQueries).toContain('w<sm | h<md')
     expect(capturedQueries).not.toContain('w<sm | h<sm')
   })
 

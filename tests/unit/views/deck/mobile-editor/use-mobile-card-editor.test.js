@@ -89,6 +89,7 @@ describe('useMobileCardEditor — open_at [obligation]', () => {
 
     expect(mockOpen).toHaveBeenCalledWith(MobileEditor, {
       mode: 'popup',
+      backdrop: true,
       context: { key: mobileCardEditorKey, value: editor }
     })
   })
