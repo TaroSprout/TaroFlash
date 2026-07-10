@@ -47,9 +47,11 @@ const body_bindings = computed(() => memberCoverBindings(cover))
         class="bg-brown-200 dark:bg-stone-900 rounded-4 w-full px-2 py-3"
       >
         <p
-          class="text-brown-700 dark:text-brown-100 flex h-[3lh] items-center justify-center text-center wrap-break-word"
+          class="text-brown-700 dark:text-brown-100 flex h-[3lh] items-center justify-center text-center"
         >
-          <q>{{ cardComment || t('member-card.description-fallback') }}</q>
+          <q class="min-w-0 wrap-break-word">{{
+            cardComment || t('member-card.description-fallback')
+          }}</q>
         </p>
       </div>
 
