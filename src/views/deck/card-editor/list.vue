@@ -72,6 +72,25 @@ function measureScrollMargin() {
   const container = list_el.value?.parentElement
   if (!container) return
   scroll_margin.value = container.getBoundingClientRect().top + window.scrollY
+  // scrollMargin flows into the virtualizer's options reactively, but its own
+  // scroll-offset tracking doesn't otherwise know to resync against it — an
+  // explicit measure() keeps the two from racing (see the resize debounce
+  // below for why this can otherwise fire mid-scroll).
+  virtualizer.value.measure()
+}
+
+// The mobile dock publishing its live height resizes the page body (see
+// mobile-dock-host.vue), which can itself be driven by --edge-safe-padding
+// changing live while the visual viewport resizes during a scroll gesture on
+// mobile Chrome. Observing document.body means that cascade fires this
+// mid-scroll, computing `scroll_margin` from a `window.scrollY` snapshot
+// that's still moving — debounce so a resize burst settles once the scroll
+// (and the cascade it triggered) has actually stopped.
+const RESIZE_DEBOUNCE_MS = 120
+let resize_timer: ReturnType<typeof setTimeout> | undefined
+function onBodyResize() {
+  clearTimeout(resize_timer)
+  resize_timer = setTimeout(measureScrollMargin, RESIZE_DEBOUNCE_MS)
 }
 
 // Start a drag and, when it actually begins (gated to md+ / not selecting),
@@ -95,11 +114,14 @@ let lifted_row: HTMLElement | null = null
 onMounted(() => {
   measureScrollMargin()
   sticky_toolbar = document.querySelector('[data-testid="deck-view__toolbar"]')
-  resize_observer = new ResizeObserver(measureScrollMargin)
+  resize_observer = new ResizeObserver(onBodyResize)
   resize_observer.observe(document.body)
 })
 
-onBeforeUnmount(() => resize_observer?.disconnect())
+onBeforeUnmount(() => {
+  clearTimeout(resize_timer)
+  resize_observer?.disconnect()
+})
 
 watchEffect(() => {
   const items = virtualizer.value.getVirtualItems()
