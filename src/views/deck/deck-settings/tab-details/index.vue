@@ -5,6 +5,7 @@ import UiInput from '@/components/ui-kit/input.vue'
 import UiTextarea from '@/components/ui-kit/textarea.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
+import { DECK_TITLE_MAX_LENGTH } from '@/utils/deck/defaults'
 import { deckSettingsLayoutKey } from '../layout'
 import DeckSaveButton from '../deck-save-button.vue'
 
@@ -21,6 +22,7 @@ const layout_mode = inject(deckSettingsLayoutKey)!
     <div data-testid="tab-details__inputs" class="flex flex-col gap-2">
       <ui-input
         :placeholder="t('deck.title-placeholder')"
+        :max-length="DECK_TITLE_MAX_LENGTH"
         text-align="center"
         size="lg"
         v-model:value="settings.title"
