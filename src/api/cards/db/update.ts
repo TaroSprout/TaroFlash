@@ -76,6 +76,16 @@ export async function setCardImage(card_id: number, file: File, side: 'front' | 
   // Failure mode: upload fails → nothing changed.
   //                insertMedia fails → storage file is orphaned, reaped by
   //                cleanup-media cron.
-  await uploadImage(bucket, path, file)
-  await insertMedia({ bucket, path, card_id, slot })
+  // `cause` tags which step failed so the UI can tell the two apart.
+  try {
+    await uploadImage(bucket, path, file)
+  } catch {
+    throw new Error('Failed to upload image', { cause: 'upload' })
+  }
+
+  try {
+    await insertMedia({ bucket, path, card_id, slot })
+  } catch {
+    throw new Error('Failed to save uploaded image', { cause: 'insert' })
+  }
 }

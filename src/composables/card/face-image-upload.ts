@@ -109,8 +109,13 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
 
     try {
       await mutations.setCardImage(toValue(card).id!, toValue(side), file)
-    } catch {
-      notice.error(t('toast.error.card-image-upload-failed'))
+    } catch (err) {
+      const cause = err instanceof Error ? err.cause : undefined
+      notice.error(
+        cause === 'insert'
+          ? t('toast.error.card-image-save-failed')
+          : t('toast.error.card-image-upload-failed')
+      )
       pending.value = false
       return
     }

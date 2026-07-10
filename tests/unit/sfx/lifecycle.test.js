@@ -14,7 +14,7 @@ const engineMock = {
   play: vi.fn(),
   decode: vi.fn(),
   onUnlock: vi.fn(),
-  probeLiveness: vi.fn().mockResolvedValue(true)
+  isUnlocked: vi.fn(() => true)
 }
 
 vi.mock('@/sfx/engine', () => ({ default: engineMock }))
@@ -63,7 +63,7 @@ describe('installAudioLifecycle', () => {
     engineMock.unlock.mockClear()
     engineMock.state.mockReset().mockReturnValue('suspended')
     engineMock.onStateChange.mockClear()
-    engineMock.probeLiveness.mockReset().mockResolvedValue(true)
+    engineMock.isUnlocked.mockReset().mockReturnValue(true)
     // Existing tests below assert on the opportunistic resume() call itself,
     // not the userActivation gate — default to "gesture already happened" so
     // that behavior is unchanged. The gate gets its own describe block.
@@ -383,37 +383,51 @@ describe('installAudioLifecycle', () => {
     })
   })
 
-  describe('background recovery — probeLiveness diagnostic hook [obligation]', () => {
-    test('fires onSuspectedDesync when probeLiveness resolves false', async () => {
-      engineMock.probeLiveness.mockResolvedValue(false)
-      engineMock.state.mockReturnValue('running')
-      const onSuspectedDesync = vi.fn()
+  describe('self-healing re-arm on a failed unlock attempt [obligation]', () => {
+    // Fake timers here (rather than the file's real-time flushMicrotasks
+    // helper) so the UNLOCK_CHECK_MS wait can't bleed into other tests' own
+    // pending self-heal timeouts sharing the same real clock.
+    test('re-arms the gesture retry when isUnlocked() is still false UNLOCK_CHECK_MS after a gesture unlock [obligation]', async () => {
+      vi.useFakeTimers()
+      engineMock.isUnlocked.mockReturnValue(false)
       const install = await loadLifecycle()
-      teardown = install(onSuspectedDesync)
-      await flushMicrotasks()
+      teardown = install()
+      await vi.advanceTimersByTimeAsync(0)
 
-      fireVisibility('hidden')
-      fireVisibility('visible')
-      await flushMicrotasks()
+      window.dispatchEvent(new Event('click'))
+      await vi.advanceTimersByTimeAsync(0)
+      expect(engineMock.unlock).toHaveBeenCalledTimes(1)
 
-      expect(engineMock.probeLiveness).toHaveBeenCalledTimes(1)
-      expect(onSuspectedDesync).toHaveBeenCalledTimes(1)
+      // Unlock never actually landed — advance past UNLOCK_CHECK_MS (300ms)
+      // for the self-healing check to re-arm the gesture listeners.
+      await vi.advanceTimersByTimeAsync(320)
+
+      window.dispatchEvent(new Event('click'))
+      await vi.advanceTimersByTimeAsync(0)
+
+      expect(engineMock.unlock).toHaveBeenCalledTimes(2)
+      vi.useRealTimers()
     })
 
-    test('does not fire onSuspectedDesync when probeLiveness resolves true', async () => {
-      engineMock.probeLiveness.mockResolvedValue(true)
-      engineMock.state.mockReturnValue('running')
-      const onSuspectedDesync = vi.fn()
+    test('does NOT re-arm when isUnlocked() reports true within the check window [obligation]', async () => {
+      vi.useFakeTimers()
+      engineMock.isUnlocked.mockReturnValue(true)
       const install = await loadLifecycle()
-      teardown = install(onSuspectedDesync)
-      await flushMicrotasks()
+      teardown = install()
+      await vi.advanceTimersByTimeAsync(0)
 
-      fireVisibility('hidden')
-      fireVisibility('visible')
-      await flushMicrotasks()
+      window.dispatchEvent(new Event('click'))
+      await vi.advanceTimersByTimeAsync(0)
+      expect(engineMock.unlock).toHaveBeenCalledTimes(1)
 
-      expect(engineMock.probeLiveness).toHaveBeenCalledTimes(1)
-      expect(onSuspectedDesync).not.toHaveBeenCalled()
+      await vi.advanceTimersByTimeAsync(320)
+
+      window.dispatchEvent(new Event('click'))
+      await vi.advanceTimersByTimeAsync(0)
+
+      // No re-arm happened, so this second click has no listener to fire it again.
+      expect(engineMock.unlock).toHaveBeenCalledTimes(1)
+      vi.useRealTimers()
     })
   })
 })

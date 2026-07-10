@@ -20,6 +20,10 @@ let gesture_armed = false
 // iOS ignores, so audio stays muted.
 const GESTURE_EVENTS = ['touchend', 'click', 'keydown'] as const
 
+// How long to wait after a gesture-triggered unlock attempt before checking
+// whether it actually landed, and re-arming if not.
+const UNLOCK_CHECK_MS = 300
+
 // Calling context.resume() before any user gesture has happened is exactly what
 // autoplay-blocking browsers reject — and Chrome logs a console warning about it
 // natively, even though we handle the rejection. Skip the speculative call
@@ -39,18 +43,14 @@ function hasUserActivation(): boolean {
  * Wires `visibilitychange`, `pageshow`, `focus`, and context `statechange`
  * listeners that resume the engine, plus a one-shot `touchend`/`click`/`keydown`
  * listener that unlocks (and, if needed, rebuilds) the context on the next
- * interaction.
- *
- * `onSuspectedDesync` fires when a hidden→visible return finds the context
- * reporting 'running' with a frozen `currentTime` — the state-lie this module
- * works around. Diagnostic only, so a caller (App.vue) can surface it to a
- * toast; the recovery itself doesn't wait on or need this.
+ * interaction. If that attempt doesn't land within `UNLOCK_CHECK_MS`, it
+ * re-arms for the next gesture rather than leaving audio dead for the session.
  *
  * Returns a teardown function that removes every listener it registered.
  * Calling `installAudioLifecycle` while already installed is a no-op and returns
  * a no-op teardown — the original teardown remains the only way to uninstall.
  */
-export function installAudioLifecycle(onSuspectedDesync?: () => void): () => void {
+export function installAudioLifecycle(): () => void {
   if (installed || typeof window === 'undefined') return () => {}
   installed = true
 
@@ -76,12 +76,6 @@ export function installAudioLifecycle(onSuspectedDesync?: () => void): () => voi
   const recoverFromBackground = () => {
     armGestureRetry(true)
     if (hasUserActivation()) void engine.resume()
-    void diagnoseLiveness()
-  }
-
-  const diagnoseLiveness = async () => {
-    const alive = await engine.probeLiveness()
-    if (!alive) onSuspectedDesync?.()
   }
 
   // Synchronous so the unlock's priming source + resume() fire inside the
@@ -92,6 +86,17 @@ export function installAudioLifecycle(onSuspectedDesync?: () => void): () => voi
     gesture_armed = false
     engine.unlock(forced_unlock)
     forced_unlock = false
+
+    // This attempt's unlock is confirmed asynchronously, via the fresh
+    // context's `statechange` event — but heavy synchronous work sharing the
+    // same gesture (e.g. a modal mounting) can starve that transition
+    // entirely, so it may never fire at all. When that happens there's no
+    // event left to re-arm on, so nothing would ever retry and audio would
+    // stay dead for the rest of the session. Check back shortly and, if still
+    // locked, re-arm for the next gesture.
+    setTimeout(() => {
+      if (!engine.isUnlocked()) armGestureRetry(false)
+    }, UNLOCK_CHECK_MS)
   }
 
   // Capture phase, not bubble: handlers like the dropdown caret's `@click.stop`

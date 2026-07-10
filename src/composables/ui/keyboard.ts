@@ -26,6 +26,16 @@ let max_height = 0
 let timeout: ReturnType<typeof setTimeout> | undefined
 let stop_pointer_watch: (() => void) | undefined
 
+// Mobile Chrome's own URL bar hides/reveals as the page scrolls, which — unlike
+// Safari's — shrinks the visual viewport just like the keyboard does, so the
+// height comparison alone can't tell them apart. A real on-screen keyboard is
+// never open without a focused text surface, so gate on that too.
+function hasEditableFocus(): boolean {
+  const el = document.activeElement as HTMLElement | null
+  if (!el) return false
+  return el.isContentEditable || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA'
+}
+
 function measure() {
   const viewport = window.visualViewport
   if (!viewport) return
@@ -37,7 +47,7 @@ function measure() {
   }
 
   max_height = Math.max(max_height, viewport.height)
-  is_open.value = max_height - viewport.height > THRESHOLD_PX
+  is_open.value = max_height - viewport.height > THRESHOLD_PX && hasEditableFocus()
 }
 
 function update() {

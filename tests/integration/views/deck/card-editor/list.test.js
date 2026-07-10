@@ -1,6 +1,6 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import { ref, computed, shallowRef } from 'vue'
+import { ref, computed, shallowRef, nextTick } from 'vue'
 
 const { useWindowVirtualizerMock, useReorderDragMock, startMock } = vi.hoisted(() => {
   const startMock = vi.fn()
@@ -73,7 +73,8 @@ function makeEditor({
 function setupVirtualizer({ items, totalSize }) {
   const virtualizer = shallowRef({
     getVirtualItems: () => items,
-    getTotalSize: () => totalSize
+    getTotalSize: () => totalSize,
+    measure: vi.fn()
   })
   useWindowVirtualizerMock.mockReturnValue(virtualizer)
   return virtualizer
@@ -321,5 +322,88 @@ describe('CardList (list.vue)', () => {
 
     expect(liftMock).toHaveBeenCalledWith(rowEl)
     document.body.removeChild(rowEl)
+  })
+
+  // ── body-resize debounce → single coalesced measureScrollMargin() ────────
+  // document.body resizing (e.g. the mobile dock republishing its height into
+  // page padding) previously drove measureScrollMargin synchronously on every
+  // single ResizeObserver firing, racing the virtualizer's own scroll
+  // tracking. A burst of firings within RESIZE_DEBOUNCE_MS must now coalesce
+  // into one measureScrollMargin() call, and every measureScrollMargin() run
+  // must pair its scroll_margin write with an explicit virtualizer.measure()
+  // call.
+
+  describe('body resize debounce', () => {
+    let captured_ro_callback
+    let original_resize_observer
+
+    beforeEach(() => {
+      original_resize_observer = window.ResizeObserver
+      window.ResizeObserver = class {
+        constructor(callback) {
+          captured_ro_callback = callback
+        }
+        observe() {}
+        disconnect() {}
+      }
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+      window.ResizeObserver = original_resize_observer
+    })
+
+    test('[obligation] measureScrollMargin pairs its scroll_margin write with an explicit virtualizer.measure() call', async () => {
+      const cards = [{ id: 1 }]
+      const virtualizer = setupVirtualizer({ items: makeVirtualItems([0]), totalSize: ROW_PITCH })
+
+      mount({ editor: makeEditor({ cards }) })
+      await nextTick()
+
+      // measureScrollMargin() already ran once synchronously in onMounted.
+      expect(virtualizer.value.measure).toHaveBeenCalledTimes(1)
+    })
+
+    test('[obligation] a burst of ResizeObserver firings within the debounce window coalesces into a single measureScrollMargin call', async () => {
+      const cards = [{ id: 1 }]
+      const virtualizer = setupVirtualizer({ items: makeVirtualItems([0]), totalSize: ROW_PITCH })
+
+      const wrapper = mount({ editor: makeEditor({ cards }) })
+      await nextTick()
+      virtualizer.value.measure.mockClear()
+
+      const container_el = wrapper.element.parentElement
+      const rect_spy = vi.spyOn(container_el, 'getBoundingClientRect')
+
+      captured_ro_callback([])
+      captured_ro_callback([])
+      captured_ro_callback([])
+      expect(rect_spy).not.toHaveBeenCalled()
+
+      vi.advanceTimersByTime(120)
+
+      expect(rect_spy).toHaveBeenCalledTimes(1)
+      expect(virtualizer.value.measure).toHaveBeenCalledTimes(1)
+    })
+
+    test('[obligation] unmounting clears the pending debounce timer so a queued measureScrollMargin never fires after teardown', async () => {
+      const cards = [{ id: 1 }]
+      const virtualizer = setupVirtualizer({ items: makeVirtualItems([0]), totalSize: ROW_PITCH })
+
+      const wrapper = mount({ editor: makeEditor({ cards }) })
+      await nextTick()
+      virtualizer.value.measure.mockClear()
+
+      const container_el = wrapper.element.parentElement
+      const rect_spy = vi.spyOn(container_el, 'getBoundingClientRect')
+
+      captured_ro_callback([])
+      wrapper.unmount()
+
+      expect(() => vi.advanceTimersByTime(120)).not.toThrow()
+      expect(rect_spy).not.toHaveBeenCalled()
+      expect(virtualizer.value.measure).not.toHaveBeenCalled()
+    })
   })
 })

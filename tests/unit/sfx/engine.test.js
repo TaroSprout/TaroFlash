@@ -712,61 +712,6 @@ describe('resume() — timeout & clearTimeout [obligation]', () => {
   })
 })
 
-// ─── probeLiveness() [obligation] ─────────────────────────────────────────────
-
-describe('probeLiveness() [obligation]', () => {
-  test('resolves true immediately when no context exists', async () => {
-    delete window.AudioContext
-    delete window.webkitAudioContext
-    const engine = await loadFreshEngine()
-
-    await expect(engine.probeLiveness()).resolves.toBe(true)
-  })
-
-  test('resolves true immediately when context state is not running', async () => {
-    const contexts = []
-    installCtor(makeCtorWithContexts(contexts, ['suspended', 'suspended']))
-    const engine = await loadFreshEngine()
-    engine.unlock() // ensureContext() creates a suspended context, no rebuild reached running
-
-    await expect(engine.probeLiveness()).resolves.toBe(true)
-  })
-
-  test('resolves false when currentTime is frozen despite state reporting running', async () => {
-    vi.useFakeTimers()
-    const contexts = []
-    installCtor(makeCtorWithContexts(contexts, ['running']))
-    const engine = await loadFreshEngine()
-    engine.unlock() // context already running, no rebuild
-
-    contexts[0].currentTime = 5 // frozen — never advances
-
-    const result = engine.probeLiveness()
-    await vi.advanceTimersByTimeAsync(150)
-
-    await expect(result).resolves.toBe(false)
-    vi.useRealTimers()
-  })
-
-  test('resolves true when currentTime advances during the probe window', async () => {
-    vi.useFakeTimers()
-    const contexts = []
-    installCtor(makeCtorWithContexts(contexts, ['running']))
-    const engine = await loadFreshEngine()
-    engine.unlock()
-
-    let time = 5
-    Object.defineProperty(contexts[0], 'currentTime', { get: () => time })
-
-    const result = engine.probeLiveness()
-    time = 5.5 // hardware advanced during the wait
-    await vi.advanceTimersByTimeAsync(150)
-
-    await expect(result).resolves.toBe(true)
-    vi.useRealTimers()
-  })
-})
-
 // ─── state() ─────────────────────────────────────────────────────────────────
 
 describe('state()', () => {

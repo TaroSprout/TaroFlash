@@ -14,7 +14,6 @@
 type AudioContextCtor = new () => AudioContext
 
 const RESUME_TIMEOUT_MS = 2000
-const LIVENESS_PROBE_MS = 150
 
 let ctx: AudioContext | undefined
 let unlocked = false
@@ -200,21 +199,6 @@ function state(): AudioContextState | undefined {
   return ctx?.state
 }
 
-// Diagnostic only — never gates the unlock decision (lifecycle.ts forces a
-// rebuild unconditionally on background-return regardless of this result).
-// Samples currentTime twice: a context that's actually dead despite reporting
-// 'running' leaves it frozen. Tells us whether iOS's state-lie is still
-// happening after the forced-rebuild fix, since the bug is too intermittent to
-// reproduce on demand.
-async function probeLiveness(): Promise<boolean> {
-  const context = ctx
-  if (!context || context.state !== 'running') return true
-
-  const before = context.currentTime
-  await new Promise((resolve) => setTimeout(resolve, LIVENESS_PROBE_MS))
-  return context.currentTime !== before
-}
-
 export default {
   decode,
   play,
@@ -223,6 +207,5 @@ export default {
   onStateChange,
   onUnlock,
   isUnlocked,
-  state,
-  probeLiveness
+  state
 }
