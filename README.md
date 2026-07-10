@@ -37,13 +37,13 @@ Staging is served at `stage.taro-flash.com`.
 
 ### Production
 
-Publish a GitHub Release targeting `master`:
+Run the `deploy.yml` workflow manually with `environment: production`:
 
 ```sh
-gh release create v0.1.0 --title "v0.1.0" --notes "Release notes"
+gh workflow run deploy.yml -f environment=production
 ```
 
-Or use the GitHub UI: **Releases > Draft a new release > Publish**.
+Or use the GitHub UI: **Actions > Deploy > Run workflow**. A successful deploy tags and publishes a GitHub Release automatically via `semantic-release`.
 
 See [DevOps docs](docs/src/devops/index.md) for full details and environment setup.
 
@@ -62,7 +62,7 @@ See [DevOps docs](docs/src/devops/index.md) for full details and environment set
 | `src/components/modals/`      | Modal content components — [docs](docs/src/modal/index.md)                                                                  |
 | `src/components/text-editor/` | Lexical-based rich text editor with markdown support                                                                        |
 | `src/composables/`            | Reusable composition functions (modal, toast, shortcuts, theme, etc.)                                                       |
-| `src/phone/`                  | TaroPhone system — apps, components, and core logic — [docs](docs/src/phone/index.md)                                       |
+| `src/components/taro-phone/`  | TaroPhone system — apps, components, and core logic — [docs](docs/src/phone/index.md)                                       |
 | `src/stores/`                 | Pinia stores: `session.ts` (auth), `member.ts` (profile), `shortcut-store.ts`                                               |
 | `src/views/`                  | Routed page components; `authenticated.vue` is the layout wrapper                                                           |
 | `src/styles/`                 | Global CSS and TailwindCSS 4 config; `palettes.css` defines color tokens — [design system](docs/src/design-system/index.md) |
@@ -74,11 +74,10 @@ See [DevOps docs](docs/src/devops/index.md) for full details and environment set
 <details>
 <summary><strong>supabase/</strong> — Backend</summary>
 
-| Path                                      | Purpose                                                                                          |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `supabase/migrations/`                    | SQL migrations applied via `supabase migrations up` — [setup guide](docs/src/supabase/index.md)  |
-| `supabase/functions/create-subscription/` | Stripe subscription edge function — [edge function secrets](docs/src/supabase/edge-functions.md) |
-| `supabase/functions/cleanup-media/`       | Orphaned media cleanup edge function — [vault secrets](docs/src/supabase/vault.md)               |
+| Path                   | Purpose                                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `supabase/migrations/` | SQL migrations applied via `supabase migrations up` — [setup guide](docs/src/supabase/index.md)                                       |
+| `supabase/functions/`  | Stripe billing, media cleanup, and lesson transcription/translation edge functions — [reference](docs/src/supabase/edge-functions.md) |
 
 </details>
 

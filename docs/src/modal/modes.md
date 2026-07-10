@@ -1,5 +1,5 @@
 ---
-lastUpdated: 2026-04-12T12:16:07-07:00
+lastUpdated: 2026-07-10T17:37:36Z
 ---
 
 # Modes & Backdrop
@@ -36,6 +36,15 @@ modal.open(DeckSettings, {
 })
 ```
 
+By default the sheet kicks in below the `sm` breakpoint for both width and height. Override per-modal with `mobile_below_width` / `mobile_below_height` when a modal needs a different threshold:
+
+```ts
+modal.open(DeckSettings, {
+  mode: 'mobile-sheet',
+  mobile_below_width: 'md'
+})
+```
+
 ### `popup`
 
 Centered on screen. Animates with a spring scale-in on enter and a scale-fade-out on leave — lighter and faster than `dialog`.
@@ -57,3 +66,13 @@ Without a backdrop, the content behind the modal remains fully interactive. Use 
 ::: tip
 The backdrop is evaluated across the whole stack — if **any** open modal has `backdrop: true`, the overlay is shown.
 :::
+
+---
+
+## Background Scroll
+
+Opening a modal doesn't touch the page's scroll position — the background is locked by cancelling `wheel`/`touchmove` events outside the modal rather than mutating `<html>`/`<body>` layout, so scrolling deep in a page and opening a modal won't snap it back to the top.
+
+## Enter Animation Warmup
+
+The first time a modal opens, [`useModalAfterEnter()`](./reference#usemodalafterenter) resolves once the enter transition finishes — use it to defer GSAP warmup work (measuring layout, starting an animation) until the modal is actually visible and settled.

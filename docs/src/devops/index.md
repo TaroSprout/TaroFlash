@@ -1,5 +1,5 @@
 ---
-lastUpdated: 2026-04-13T21:03:32-07:00
+lastUpdated: 2026-07-10T17:37:36Z
 ---
 
 # DevOps
@@ -28,22 +28,23 @@ The status comment is reused across deploys (updated in place rather than creati
 
 ## Production deploy
 
-Create a **GitHub Release** from `master`. The workflow will:
+Manually trigger the `Deploy` workflow (`.github/workflows/deploy.yml`) via **Actions > Deploy > Run workflow**, choosing `environment: production`. The workflow will:
 
-1. Run the frontend test suite and database tests (pgTAP) in parallel
-2. Run pending DB migrations against the production Supabase project (after both test jobs pass)
-3. Deploy edge functions to production
-4. Build the frontend with CI, then deploy the pre-built `dist/` to the production Netlify site (Netlify's own build is skipped)
+1. Run the E2E smoke gate (skippable via the `skip_smoke` input for emergency hotfixes)
+2. Run pending DB migrations against the production Supabase project
+3. Deploy edge functions to production (setting `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` as function secrets first)
+4. Push `supabase/config.toml` changes via `supabase config push`, if config changed
+5. Build the frontend with CI, then deploy the pre-built `dist/` to the production Netlify site (Netlify's own build is skipped)
+6. If the deploy succeeded, a `tag-release` job runs `semantic-release` to create the version tag and GitHub Release
 
-All steps are sequential and gated — tests must pass before any deploy starts, and migrations must succeed before functions or frontend deploy.
+Each numbered step only runs if its relevant files changed since the last release (path-filtered via a `detect-changes` job), and later steps are gated on earlier ones succeeding or being skipped. The release is now an **output** of a successful deploy, not a trigger for one.
 
-### Creating a release
+### Triggering a deploy
 
-1. Go to **Releases** on GitHub
-2. Click **Draft a new release**
-3. Create a new tag (e.g., `v0.2.0`) targeting `master`
-4. Add release notes describing what changed
-5. Click **Publish release** — this triggers the deploy
+1. Go to **Actions > Deploy** on GitHub
+2. Click **Run workflow**
+3. Choose the branch (usually `master`) and set `environment` to `production`
+4. Click **Run workflow** — this runs the steps above, then tags + releases automatically if the deploy succeeded
 
 ### Recommended safeguards
 
@@ -62,13 +63,18 @@ Secrets and variables are stored under GitHub Environments (**Settings > Environ
 
 Encrypted and masked in logs. Set under **Environments > \<env\> > Secrets**.
 
-| Secret                  | What it's for                                                     | Where to find it                                                                                            |
-| ----------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `SUPABASE_ACCESS_TOKEN` | Authenticates the Supabase CLI to link and run migrations         | [supabase.com/dashboard/account/tokens](https://supabase.com/dashboard/account/tokens) > Generate new token |
-| `SUPABASE_DB_PASSWORD`  | Required by `supabase link` to connect to the database            | Supabase dashboard > **Settings > Database > Database password**                                            |
-| `NETLIFY_AUTH_TOKEN`    | Authenticates the Netlify CLI to deploy                           | Netlify > User settings > OAuth > Personal access tokens                                                    |
-| `VITE_SUPABASE_API_KEY` | Supabase anon key for client-side queries (subject to RLS)        | Supabase dashboard > **Settings > API > anon public**                                                       |
-| `STRIPE_SECRET_KEY`     | Stripe secret key used by the `create-subscription` edge function | Stripe dashboard > test/live secret key                                                                     |
+| Secret                  | What it's for                                                                        | Where to find it                                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `SUPABASE_ACCESS_TOKEN` | Authenticates the Supabase CLI to link and run migrations                            | [supabase.com/dashboard/account/tokens](https://supabase.com/dashboard/account/tokens) > Generate new token |
+| `SUPABASE_DB_PASSWORD`  | Required by `supabase link` to connect to the database                               | Supabase dashboard > **Settings > Database > Database password**                                            |
+| `NETLIFY_AUTH_TOKEN`    | Authenticates the Netlify CLI to deploy                                              | Netlify > User settings > OAuth > Personal access tokens                                                    |
+| `VITE_SUPABASE_API_KEY` | Supabase anon key for client-side queries (subject to RLS)                           | Supabase dashboard > **Settings > API > anon public**                                                       |
+| `STRIPE_SECRET_KEY`     | Stripe secret key used by the `create-subscription` edge function                    | Stripe dashboard > test/live secret key                                                                     |
+| `STRIPE_WEBHOOK_SECRET` | Verifies Stripe webhook signatures; set on edge functions via `supabase secrets set` | Stripe dashboard > webhook endpoint > Signing secret                                                        |
+
+### Permissions
+
+The `tag-release` job runs `semantic-release` using the default `GITHUB_TOKEN`, which needs `permissions: contents: write` on that job (already set in `deploy.yml`) so it can push tags and create the GitHub Release. No environment secret is needed for this — it's a workflow-level permission, not a configurable value.
 
 ### Variables
 

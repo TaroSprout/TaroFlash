@@ -1,5 +1,5 @@
 ---
-lastUpdated: 2026-04-12T12:16:07-07:00
+lastUpdated: 2026-07-10T17:37:36Z
 ---
 
 # Context Injection
@@ -55,3 +55,7 @@ const ctx = inject(MY_KEY)!
 ## How It Works
 
 `modal.vue` renders each stack entry inside a `<modal-slot>` wrapper. `modal-slot.vue` calls `provide(context.key, context.value)` before rendering the component, so `inject()` resolves from anywhere inside the modal subtree.
+
+::: tip
+`context.value` is wrapped in `markRaw` internally before being stored, so objects you pass are never made reactive — mutating them won't trigger Vue reactivity in the modal subtree. Pass already-reactive refs/reactive objects inside `value` if a descendant needs to react to changes.
+:::

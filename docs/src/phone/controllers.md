@@ -1,263 +1,106 @@
 ---
-lastUpdated: 2026-04-12T11:56:41-07:00
+lastUpdated: 2026-07-10T17:37:36Z
 ---
 
-# Controllers
+# App Logic
 
-A **controller** is the logic layer for a phone app. It separates data fetching, state management, and side effects from the component that renders them — the controller is the model, the component is the view.
+There is no separate controller/factory layer. Each app's logic — state, composables, store access, side effects — lives directly in its own `.vue` file, right alongside the markup that renders it.
 
-Controllers are entirely optional for simple apps, but they're the right home for anything that needs to:
+## Where Logic Lives
 
-- Subscribe to a Pinia store or Supabase realtime channel
-- Perform async work when an app opens
-- Start running in the background before the user ever opens the app
-- Push notification badges to the phone icon
+An app component is both the model and the view: it calls whatever composables and stores it needs in `<script setup>`, and wires the result to `<app-shell>`'s `@press` emit.
 
----
+```vue
+<!-- src/components/taro-phone/apps/logout-app.vue -->
+<script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+import AppShell from '@/components/taro-phone/app-shell.vue'
+import { useAlert } from '@/composables/alert'
+import { useSessionStore } from '@/stores/session'
 
-## The Factory Pattern
+const { t } = useI18n()
+const alert = useAlert()
+const session = useSessionStore()
 
-A controller is defined as a **factory function** — a function that receives `AppContext` and returns an `AppController` object.
-
-```ts
-import type { AppContext, AppController } from '@/phone/system/types'
-
-export function createMyController(ctx: AppContext): AppController {
-  return {
-    onOpen()   { ... },
-    onTrigger() { ... },
-  }
-}
-```
-
-The factory is called when the controller is instantiated (at phone startup for `mount_policy: 'immediate'`, or on first open otherwise). The returned object's hooks are then called at the appropriate points in the lifecycle.
-
-Register it in the manifest via the `controller` field:
-
-```ts
-export default {
-  title: 'My App',
-  type: 'view',
-  display: 'panel',
-  component,
-  controller: createMyController,
-  launcher: { ... }
-} satisfies Omit<ViewApp, 'id'>
-```
-
----
-
-## Lifecycle Hooks
-
-The `AppController` interface exposes two hooks:
-
-```ts
-type AppController = {
-  onOpen?: () => void | Promise<void>
-  onTrigger?: () => void | Promise<void>
-}
-```
-
-### `onOpen()`
-
-Called each time a **`ViewApp`** is opened by the user. Runs before the component is shown.
-
-Use `onOpen` to fetch or refresh data the component will need on each visit:
-
-```ts
-export function createShortcutsController(ctx: AppContext): AppController {
-  const store = useShortcutStore()
-
-  return {
-    async onOpen() {
-      await store.fetchShortcuts()
-    }
-  }
-}
-```
-
-::: info
-`onOpen()` is called on **every open**, not just the first. If your app needs one-time initialisation, do it in the factory body — that runs exactly once when the controller is instantiated.
-:::
-
-### `onTrigger()`
-
-Called when a **`TriggerApp`** icon is tapped. The phone does not navigate anywhere — it just executes `onTrigger()` and stays on the home screen.
-
-`onTrigger()` is ignored on `ViewApp` and `WidgetApp`.
-
-```ts
-export function createFeedbackController(ctx: AppContext): AppController {
-  const modal = useModal()
-
-  return {
-    onTrigger() {
-      modal.open(FeedbackForm, { backdrop: true })
-    }
-  }
-}
-```
-
----
-
-## AppContext
-
-The `ctx` parameter passed to every controller factory is an `AppContext` — the full phone API scoped to that specific app.
-
-```ts
-type AppContext = {
-  // Navigation
-  open(id: string): Promise<void>
-  close(): void
-  clear(): void
-
-  // Notifications (scoped — no app ID needed)
-  notify(payload: NotifyPayload): void
-  clearNotification(): void
-
-  // i18n
-  t: ReturnType<typeof useI18n>['t']
-}
-```
-
-| Method                | Description                                                                                                                                 |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `open(id)`            | Open another app by its runtime ID. IDs are assigned dynamically; prefer navigating via events or the launcher rather than hard-coding IDs. |
-| `close()`             | Close the currently open app and return to the launcher.                                                                                    |
-| `clear()`             | Immediately return to the launcher, clearing any navigation state.                                                                          |
-| `notify(payload)`     | Push a notification badge to the phone icon. See [Notifications](./notifications).                                                          |
-| `clearNotification()` | Remove this app's notification badge.                                                                                                       |
-| `t`                   | The vue-i18n translation function, bound to the current locale.                                                                             |
-
----
-
-## Background Apps
-
-By default, the controller factory is called the first time the user opens the app. If you want an app to **start running at phone initialisation** — for example to subscribe to a realtime channel and push notifications — set `mount_policy` to `'immediate'` in the manifest.
-
-```ts
-export default {
-  title: 'Due Cards',
-  type: 'trigger',
-  mount_policy: 'immediate',   // ← factory runs at phone startup
-  controller: createDueCardsController,
-  launcher: { ... }
-} satisfies Omit<TriggerApp, 'id'>
-```
-
-With `mount_policy: 'immediate'`, the runtime calls the controller factory when the phone mounts — before the user has interacted with anything. Any background work (subscriptions, badge initialisation) goes directly in the factory body, not in a hook:
-
-```ts
-export function createDueCardsController(ctx: AppContext): AppController {
-  const deckStore = useDeckStore()
-
-  // Factory body runs at startup — set up subscriptions here
-  deckStore.$subscribe((_, state) => {
-    const due = state.decks.reduce((sum, d) => sum + d.due_count, 0)
-
-    if (due > 0) {
-      ctx.notify({ count: due })
-    } else {
-      ctx.clearNotification()
-    }
+function onPress() {
+  const { response } = alert.warn({
+    title: t('phone.apps.logout.title'),
+    message: t('phone.apps.logout.description'),
+    confirmLabel: t('phone.apps.logout.confirm'),
+    cancelAudio: 'digi_powerdown',
+    confirmAudio: 'toggle_off'
   })
 
-  return {}
+  response.then((result) => {
+    if (result) session.logout()
+  })
 }
+</script>
 ```
 
-::: warning
-`mount_policy: 'immediate'` is a startup cost. Keep the factory body lean: subscribe to events, don't eagerly fetch large datasets. Prefer reactive store subscriptions over one-shot fetch calls.
-:::
+For simple apps this is the entire file — there's no separate `controller.ts`, no factory function, and nothing to register.
 
-### Background Notification Pattern
+## Reactive State Inside an App
 
-```ts
-// src/phone/apps/due-cards/controller.ts
-import type { AppContext, AppController } from '@/phone/system/types'
+Apps that need to derive their own display state (icon, theme, title) just use `computed()` and `storeToRefs()` like any other component:
+
+```vue
+<!-- src/components/taro-phone/apps/darkmode-app.vue -->
+<script setup lang="ts">
+import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useThemeStore, type ThemeMode } from '@/stores/theme'
+
+const theme_store = useThemeStore()
+const { mode } = storeToRefs(theme_store)
+const { cycle } = theme_store
+
+const modes = computed<{ [key in ThemeMode]: ModeConfig }>(() => ({
+  system: { labelKey: 'phone.apps.darkmode.mode-system', theme: 'purple-500' },
+  light: { labelKey: 'phone.apps.darkmode.mode-light', theme: 'orange-500' },
+  dark: { labelKey: 'phone.apps.darkmode.mode-dark', theme: 'blue-650' }
+}))
+
+const active_mode_config = computed(() => modes.value[mode.value])
+</script>
+```
+
+## Background Work / Subscriptions
+
+There's no `mount_policy: 'immediate'` concept and no dedicated startup hook for apps. If an app needs to run logic before the user opens it (e.g. keeping a notification badge in sync with store state), that subscription is set up wherever the app component lives in the tree — since `app-launcher.vue` renders every app unconditionally, each app component's own `<script setup>` body runs as soon as the launcher mounts, which is effectively immediate.
+
+```vue
+<script setup lang="ts">
+import { useTaroPhoneStore } from '@/stores/taro-phone'
 import { useDeckStore } from '@/stores/deck'
 
-export function createDueCardsController(ctx: AppContext): AppController {
-  const deckStore = useDeckStore()
+const phone = useTaroPhoneStore()
+const deckStore = useDeckStore()
 
-  deckStore.$subscribe((_, state) => {
-    const due = state.decks.reduce((sum, d) => sum + d.due_count, 0)
+deckStore.$subscribe((_, state) => {
+  const due = state.decks.reduce((sum, d) => sum + d.due_count, 0)
+  phone.notify('due-cards', due)
+})
+</script>
+```
 
-    if (due > 0) {
-      ctx.notify({ count: due })
-    } else {
-      ctx.clearNotification()
-    }
-  })
+## Opening Modals from an App
 
-  return {}
+Apps that need a shared modal (e.g. settings) pull it in via a small `useXModal()` composable rather than owning the modal wiring themselves:
+
+```vue
+<!-- src/components/taro-phone/apps/settings-app.vue -->
+<script setup lang="ts">
+import { useTaroPhoneStore } from '@/stores/taro-phone'
+import { useSettingsModal } from '@/composables/settings/use-settings-modal'
+
+const phone = useTaroPhoneStore()
+const settingsModal = useSettingsModal()
+
+function onPress() {
+  phone.openApp(settingsModal.open())
 }
+</script>
 ```
 
-```ts
-// src/phone/apps/due-cards/_manifest.ts
-export default {
-  title: 'Due Cards',
-  type: 'trigger',
-  mount_policy: 'immediate',
-  controller: createDueCardsController,
-  launcher: {
-    icon_src: 'cards-due',
-    theme: 'blue-500'
-  }
-} satisfies Omit<TriggerApp, 'id'>
-```
-
-Now the badge updates in real time as decks become due, and the user sees the count before they ever open the app.
-
----
-
-## Separating the Controller File
-
-For anything beyond a trivial `onTrigger()`, extract the controller into its own `controller.ts` file. This keeps `_manifest.ts` as pure configuration and makes the controller independently testable.
-
-```
-src/phone/apps/my-app/
-  _manifest.ts      ← imports createMyController
-  controller.ts     ← all logic lives here
-  component.vue     ← only rendering
-```
-
-A controller file typically exports a single factory function:
-
-```ts
-// controller.ts
-import type { AppContext, AppController } from '@/phone/system/types'
-
-export function createMyController(ctx: AppContext): AppController {
-  // set up reactive state, composables, stores here
-  const count = ref(0)
-
-  return {
-    // expose state and methods on the returned object
-    count,
-
-    async onOpen() {
-      count.value = await fetchCount()
-    }
-  }
-}
-
-// Infer the controller type for use in the component
-export type MyController = ReturnType<typeof createMyController>
-```
-
-The component can then inject and cast:
-
-```ts
-import { inject } from 'vue'
-import { APP_CTX_KEY } from '@/phone/system/types'
-import type { MyController } from './controller'
-
-const ctx = inject(APP_CTX_KEY)!
-const ctrl = ctx.controller as MyController
-
-// ctrl.count is fully typed
-```
-
-See [Context & Injection](./context) for the full injection API.
+`phone.openApp(result)` hides the phone shell while the modal is open and reopens it once the modal's `response` promise settles. See [`taro-phone` store](./reference#the-taro-phone-store) for the full method.
