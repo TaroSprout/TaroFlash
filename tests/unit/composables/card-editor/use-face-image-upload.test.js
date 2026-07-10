@@ -417,16 +417,38 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
     unmount()
   })
 
-  test('upload failure calls notice.error with the upload-failed message and does not play music_plink_ok [obligation]', async () => {
-    mockSetCardImage.mockRejectedValueOnce(new Error('upload error'))
+  test('upload failure with cause "insert" shows the card-image-save-failed toast [obligation]', async () => {
+    mockSetCardImage.mockRejectedValueOnce(new Error('save failed', { cause: 'insert' }))
     const { result, onFile, unmount } = withUpload()
 
     await onFile(new File(['x'], 'img.png', { type: 'image/png' }))
     await flushPromises()
 
-    expect(mockNoticeError).toHaveBeenCalledWith('Failed to upload image')
+    expect(mockNoticeError).toHaveBeenCalledWith("Couldn't save image — try again")
     expect(mockEmitSfx).not.toHaveBeenCalledWith('music_plink_ok')
     expect(result.pending.value).toBe(false)
+    unmount()
+  })
+
+  test('upload failure with cause "upload" shows the card-image-upload-failed toast [obligation]', async () => {
+    mockSetCardImage.mockRejectedValueOnce(new Error('upload failed', { cause: 'upload' }))
+    const { onFile, unmount } = withUpload()
+
+    await onFile(new File(['x'], 'img.png', { type: 'image/png' }))
+    await flushPromises()
+
+    expect(mockNoticeError).toHaveBeenCalledWith("Couldn't upload image — try again")
+    unmount()
+  })
+
+  test('a non-Error rejection (no .cause) shows the card-image-upload-failed toast [obligation]', async () => {
+    mockSetCardImage.mockRejectedValueOnce('some non-error rejection')
+    const { onFile, unmount } = withUpload()
+
+    await onFile(new File(['x'], 'img.png', { type: 'image/png' }))
+    await flushPromises()
+
+    expect(mockNoticeError).toHaveBeenCalledWith("Couldn't upload image — try again")
     unmount()
   })
 

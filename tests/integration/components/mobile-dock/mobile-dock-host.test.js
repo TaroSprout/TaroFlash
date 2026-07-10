@@ -141,17 +141,6 @@ describe('MobileDockHost', () => {
     })
   })
 
-  describe('standalone PWA padding [obligation]', () => {
-    test('footer carries the standalone:max-sm:[--dock-pb:3rem] class alongside the base --dock-pb [obligation]', () => {
-      mountHost()
-
-      const footer = document.querySelector('[data-testid="mobile-dock-host"]')
-      expect(footer).not.toBeNull()
-      expect(footer?.className).toContain('standalone:max-sm:[--dock-pb:3rem]')
-      expect(footer?.className).toContain('[--dock-pb:0.5rem]')
-    })
-  })
-
   describe('content slot target', () => {
     test('renders the inner content div with [mobile-dock-content] attribute', async () => {
       mountHost()

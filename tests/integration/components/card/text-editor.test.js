@@ -1,4 +1,4 @@
-import { describe, test, expect } from 'vite-plus/test'
+import { describe, test, expect, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import TextEditor from '@/components/card/text-editor.vue'
 
@@ -260,5 +260,114 @@ describe('TextEditor', () => {
     editorEl.dispatchEvent(event)
 
     expect(focused).toBe(false)
+  })
+
+  // ── Ghost-event guard [obligation] ────────────────────────────────────────
+  // Regression guard for a real mobile bug: after a forwarded-focus tap, iOS
+  // can dispatch a stray compatibility mousedown on a wholly different element
+  // (e.g. a button elsewhere on screen) that steals focus back and/or fires an
+  // unintended click. armGhostClickGuard swallows the whole ghost sequence,
+  // wherever in the document it lands, within a short window after the tap.
+
+  function dispatchContainerPointerDown(wrapper) {
+    const container = getContainer(wrapper)
+    const event = new PointerEvent('pointerdown', { bubbles: true, cancelable: true })
+    Object.defineProperty(event, 'target', { value: container.element, configurable: true })
+    container.element.dispatchEvent(event)
+  }
+
+  // Fires a bubbling event of `type` on a button that lives elsewhere in the
+  // real document (standing in for iOS's stray-element ghost event), and
+  // reports whether the guard swallowed it: prevented default and stopped it
+  // from ever reaching the button's own listener (capture phase runs first).
+  function fireGhostEvent(type) {
+    const button = document.createElement('button')
+    document.body.appendChild(button)
+    const onButton = vi.fn()
+    button.addEventListener(type, onButton)
+
+    const event = new MouseEvent(type, { bubbles: true, cancelable: true })
+    button.dispatchEvent(event)
+
+    document.body.removeChild(button)
+    return {
+      defaultPrevented: event.defaultPrevented,
+      reachedTarget: onButton.mock.calls.length > 0
+    }
+  }
+
+  test('after a forwarded-focus tap, a mousedown anywhere in the document is swallowed [obligation]', () => {
+    const wrapper = makeEditor()
+    dispatchContainerPointerDown(wrapper)
+
+    const result = fireGhostEvent('mousedown')
+
+    expect(result.defaultPrevented).toBe(true)
+    expect(result.reachedTarget).toBe(false)
+  })
+
+  test('after a forwarded-focus tap, a mouseup anywhere in the document is swallowed [obligation]', () => {
+    const wrapper = makeEditor()
+    dispatchContainerPointerDown(wrapper)
+
+    const result = fireGhostEvent('mouseup')
+
+    expect(result.defaultPrevented).toBe(true)
+    expect(result.reachedTarget).toBe(false)
+  })
+
+  test('after a forwarded-focus tap, a click anywhere in the document is swallowed [obligation]', () => {
+    const wrapper = makeEditor()
+    dispatchContainerPointerDown(wrapper)
+
+    const result = fireGhostEvent('click')
+
+    expect(result.defaultPrevented).toBe(true)
+    expect(result.reachedTarget).toBe(false)
+  })
+
+  test('the guard disarms on the next click, not on mousedown/mouseup alone [obligation]', () => {
+    const wrapper = makeEditor()
+    dispatchContainerPointerDown(wrapper)
+
+    fireGhostEvent('mousedown')
+    fireGhostEvent('mouseup')
+    // Still armed — neither mousedown nor mouseup disarms it.
+    expect(fireGhostEvent('mousedown').defaultPrevented).toBe(true)
+
+    // The click both gets swallowed AND disarms the guard.
+    expect(fireGhostEvent('click').defaultPrevented).toBe(true)
+
+    // A later mousedown is no longer intercepted.
+    const after = fireGhostEvent('mousedown')
+    expect(after.defaultPrevented).toBe(false)
+    expect(after.reachedTarget).toBe(true)
+  })
+
+  test('the guard disarms on its own after the fixed window elapses, even with no click [obligation]', async () => {
+    vi.useFakeTimers()
+    const wrapper = makeEditor()
+    dispatchContainerPointerDown(wrapper)
+
+    await vi.advanceTimersByTimeAsync(600)
+
+    const after = fireGhostEvent('mousedown')
+    expect(after.defaultPrevented).toBe(false)
+    expect(after.reachedTarget).toBe(true)
+    vi.useRealTimers()
+  })
+
+  test('pointerdown whose target IS the editable does not arm the ghost-event guard [obligation]', () => {
+    const wrapper = makeEditor()
+    const editorEl = getEditorEl(wrapper).element
+
+    // Native/fast path: target === editor, handler must bail before arming.
+    const event = new PointerEvent('pointerdown', { bubbles: true, cancelable: true })
+    Object.defineProperty(event, 'target', { value: editorEl, configurable: true })
+    editorEl.dispatchEvent(event)
+
+    const after = fireGhostEvent('mousedown')
+    expect(after.defaultPrevented).toBe(false)
+    expect(after.reachedTarget).toBe(true)
   })
 })

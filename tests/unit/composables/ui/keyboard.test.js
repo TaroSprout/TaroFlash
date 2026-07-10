@@ -51,6 +51,20 @@ describe('useKeyboardOpen', () => {
     firePointerChange()
   }
 
+  // Real on-screen keyboards never open without a focused editable surface —
+  // most "is_open becomes true" scenarios need one present.
+  let focused_input
+  function focusInput() {
+    focused_input = document.createElement('input')
+    document.body.appendChild(focused_input)
+    focused_input.focus()
+  }
+
+  afterEach(() => {
+    focused_input?.remove()
+    focused_input = undefined
+  })
+
   test('is_open starts false when the viewport has not shrunk', () => {
     const { is_open } = useKeyboardOpen()
     expect(is_open.value).toBe(false)
@@ -58,6 +72,7 @@ describe('useKeyboardOpen', () => {
 
   test('is_open becomes true once the viewport shrinks past the threshold from its running max [obligation]', async () => {
     setCoarse(true)
+    focusInput()
     const { is_open } = useKeyboardOpen()
 
     resize(500)
@@ -66,8 +81,58 @@ describe('useKeyboardOpen', () => {
     expect(is_open.value).toBe(true)
   })
 
+  // ── hasEditableFocus gate [obligation] ──────────────────────────────────────
+  // Mobile Chrome's own URL bar hides/reveals on scroll, shrinking the visual
+  // viewport just like the keyboard does. Gating on an editable element having
+  // focus tells the two apart — a real on-screen keyboard is never open
+  // without a focused text surface.
+
+  test('stays false on a coarse-pointer shrink past the threshold when nothing editable has focus [obligation]', () => {
+    setCoarse(true)
+    const { is_open } = useKeyboardOpen()
+
+    resize(500)
+    vi.advanceTimersByTime(120)
+
+    expect(is_open.value).toBe(false)
+  })
+
+  test('becomes true on a coarse-pointer shrink past the threshold when an <input> has focus [obligation]', () => {
+    setCoarse(true)
+    focusInput()
+    const { is_open } = useKeyboardOpen()
+
+    resize(500)
+    vi.advanceTimersByTime(120)
+
+    expect(is_open.value).toBe(true)
+  })
+
+  test('becomes true when a contenteditable element has focus [obligation]', () => {
+    setCoarse(true)
+    // jsdom doesn't compute isContentEditable from the contenteditable
+    // attribute, so stub document.activeElement directly with an element
+    // that reports isContentEditable — mirroring the real DOM contract.
+    const editable = document.createElement('div')
+    Object.defineProperty(editable, 'isContentEditable', { value: true })
+    Object.defineProperty(document, 'activeElement', {
+      configurable: true,
+      get: () => editable
+    })
+
+    const { is_open } = useKeyboardOpen()
+
+    resize(500)
+    vi.advanceTimersByTime(120)
+
+    expect(is_open.value).toBe(true)
+
+    delete document.activeElement
+  })
+
   test('a burst of resize events debounces to a single settle after ~120ms [obligation]', () => {
     setCoarse(true)
+    focusInput()
     const { is_open } = useKeyboardOpen()
 
     resize(700)
@@ -85,6 +150,7 @@ describe('useKeyboardOpen', () => {
 
   test('running max keeps growing so a later, larger viewport height raises the baseline [obligation]', () => {
     setCoarse(true)
+    focusInput()
     const { is_open } = useKeyboardOpen()
 
     // Viewport grows (e.g. mobile Safari toolbar hides) — new running max.
@@ -120,6 +186,7 @@ describe('useKeyboardOpen', () => {
 
   test('re-evaluates on a pointer-type change without a new resize event [obligation]', async () => {
     setCoarse(true)
+    focusInput()
     const { is_open } = useKeyboardOpen()
 
     resize(500)

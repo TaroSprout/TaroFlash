@@ -201,7 +201,31 @@ describe('setCardImage', () => {
   test('does not call insertMedia when upload fails (old image stays intact)', async () => {
     mocks.uploadImageMock.mockRejectedValueOnce(new Error('upload failed'))
     const file = new File(['x'], 'f.png', { type: 'image/png' })
-    await expect(setCardImage(42, file, 'front')).rejects.toThrow('upload failed')
+    await expect(setCardImage(42, file, 'front')).rejects.toThrow('Failed to upload image')
     expect(mocks.insertMediaMock).not.toHaveBeenCalled()
+  })
+
+  // ── cause tagging [obligation] ────────────────────────────────────────────
+  // The UI toast needs to tell an upload failure apart from an insert failure
+  // (different copy for each), so the two throw sites must tag distinct causes.
+
+  test('a storage-upload failure throws with cause: "upload" [obligation]', async () => {
+    mocks.uploadImageMock.mockRejectedValueOnce(new Error('network down'))
+    const file = new File(['x'], 'f.png', { type: 'image/png' })
+
+    const error = await setCardImage(42, file, 'front').catch((e) => e)
+
+    expect(error).toBeInstanceOf(Error)
+    expect(error.cause).toBe('upload')
+  })
+
+  test('a media-row insert failure throws with cause: "insert" [obligation]', async () => {
+    mocks.insertMediaMock.mockRejectedValueOnce(new Error('db error'))
+    const file = new File(['x'], 'f.png', { type: 'image/png' })
+
+    const error = await setCardImage(42, file, 'front').catch((e) => e)
+
+    expect(error).toBeInstanceOf(Error)
+    expect(error.cause).toBe('insert')
   })
 })

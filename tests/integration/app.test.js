@@ -8,18 +8,27 @@ import { useNoticeStore } from '@/stores/notice-store'
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 // App.vue's onMounted pulls in theme/session/member stores (which themselves
 // pull in vue-router + the member query), plus the audio player and its
-// lifecycle wiring. None of that is relevant to the standalone-detection
-// logic under test, so every dependency is mocked to keep the mount cheap and
-// deterministic.
+// lifecycle wiring, and the safe-area padding installer. None of that is
+// relevant to the member-error watcher under test, so every dependency is
+// mocked to keep the mount cheap and deterministic.
 
-const { mockLoad, mockStartLoading, mockStopLoading, mockSetup, mockInstallAudioLifecycle } =
-  vi.hoisted(() => ({
-    mockLoad: vi.fn(),
-    mockStartLoading: vi.fn(),
-    mockStopLoading: vi.fn(),
-    mockSetup: vi.fn(() => Promise.resolve()),
-    mockInstallAudioLifecycle: vi.fn(() => vi.fn())
-  }))
+const {
+  mockLoad,
+  mockStartLoading,
+  mockStopLoading,
+  mockSetup,
+  mockInstallAudioLifecycle,
+  mockInstallSafeAreaPadding,
+  mockTeardownSafeAreaPadding
+} = vi.hoisted(() => ({
+  mockLoad: vi.fn(),
+  mockStartLoading: vi.fn(),
+  mockStopLoading: vi.fn(),
+  mockSetup: vi.fn(() => Promise.resolve()),
+  mockInstallAudioLifecycle: vi.fn(() => vi.fn()),
+  mockInstallSafeAreaPadding: vi.fn(),
+  mockTeardownSafeAreaPadding: vi.fn()
+}))
 
 vi.mock('@/stores/theme', () => ({
   useThemeStore: () => ({ load: mockLoad })
@@ -43,6 +52,10 @@ vi.mock('@/sfx/lifecycle', () => ({
   installAudioLifecycle: mockInstallAudioLifecycle
 }))
 
+vi.mock('@/composables/ui/safe-area', () => ({
+  installSafeAreaPadding: mockInstallSafeAreaPadding
+}))
+
 // ── Mount helper ──────────────────────────────────────────────────────────────
 
 function mountApp() {
@@ -58,66 +71,34 @@ function mountApp() {
 
 // ── State reset ───────────────────────────────────────────────────────────────
 
-let original_matchMedia
-let original_navigator_standalone
-
 beforeEach(() => {
-  original_matchMedia = window.matchMedia
-  original_navigator_standalone = window.navigator.standalone
-  document.documentElement.removeAttribute('data-standalone')
   mockMember.error = null
+  mockInstallSafeAreaPadding.mockReset().mockReturnValue(mockTeardownSafeAreaPadding)
+  mockTeardownSafeAreaPadding.mockReset()
 })
-
-afterEach(() => {
-  window.matchMedia = original_matchMedia
-  if (original_navigator_standalone === undefined) {
-    delete window.navigator.standalone
-  } else {
-    window.navigator.standalone = original_navigator_standalone
-  }
-  document.documentElement.removeAttribute('data-standalone')
-})
-
-function stubMatchMedia(matches) {
-  window.matchMedia = vi.fn().mockReturnValue({ matches })
-}
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('App', () => {
-  describe('data-standalone detection [obligation]', () => {
-    test('sets data-standalone="true" on <html> when display-mode: standalone matches [obligation]', () => {
-      stubMatchMedia(true)
-      delete window.navigator.standalone
+  describe('safe-area padding lifecycle [obligation]', () => {
+    test('calls installSafeAreaPadding on mount [obligation]', () => {
+      const wrapper = mountApp()
 
-      mountApp()
-
-      expect(document.documentElement.getAttribute('data-standalone')).toBe('true')
+      expect(mockInstallSafeAreaPadding).toHaveBeenCalledTimes(1)
+      wrapper.unmount()
     })
 
-    test('sets data-standalone="true" via the navigator.standalone iOS fallback when display-mode does not match [obligation]', () => {
-      stubMatchMedia(false)
-      window.navigator.standalone = true
+    test('calls the returned teardown on unmount [obligation]', () => {
+      const wrapper = mountApp()
 
-      mountApp()
+      wrapper.unmount()
 
-      expect(document.documentElement.getAttribute('data-standalone')).toBe('true')
-    })
-
-    test('sets data-standalone="false" when neither display-mode nor navigator.standalone match [obligation]', () => {
-      stubMatchMedia(false)
-      delete window.navigator.standalone
-
-      mountApp()
-
-      expect(document.documentElement.getAttribute('data-standalone')).toBe('false')
+      expect(mockTeardownSafeAreaPadding).toHaveBeenCalledTimes(1)
     })
   })
 
   describe('member.error watcher [obligation]', () => {
     test('fires a panel notice with closable:false and a Refresh action when member.error becomes truthy [obligation]', async () => {
-      stubMatchMedia(false)
-      delete window.navigator.standalone
       const wrapper = mountApp()
       const notice = useNoticeStore()
 
@@ -138,8 +119,6 @@ describe('App', () => {
     })
 
     test('does NOT fire a notice on mount when member.error is falsy', () => {
-      stubMatchMedia(false)
-      delete window.navigator.standalone
       mountApp()
       const notice = useNoticeStore()
 
