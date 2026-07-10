@@ -126,6 +126,7 @@ watch(
           <ui-textarea
             :placeholder="t('deck.description-placeholder')"
             :max_chars="100"
+            no-newlines
             rows="3"
             v-model:value="editor.settings.description"
           />

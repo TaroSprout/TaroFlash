@@ -2,13 +2,16 @@
 import { computed } from 'vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 
-const { textAlign = 'left', max_chars } = defineProps<{
+type UiTextareaProps = {
   label?: string
   placeholder?: string
   textAlign?: 'left' | 'center' | 'right'
   error?: string
   max_chars?: number
-}>()
+  noNewlines?: boolean
+}
+
+const { textAlign = 'left', max_chars, noNewlines = false } = defineProps<UiTextareaProps>()
 
 const emit = defineEmits<{
   (e: 'input', value?: string): void
@@ -18,6 +21,17 @@ const value = defineModel<string>('value')
 
 const char_count = computed(() => value.value?.length ?? 0)
 const at_limit = computed(() => max_chars !== undefined && char_count.value >= max_chars)
+
+function onKeydown(e: KeyboardEvent) {
+  if (noNewlines && e.key === 'Enter') e.preventDefault()
+}
+
+function onInput() {
+  if (noNewlines && value.value?.includes('\n')) {
+    value.value = value.value.replace(/[\r\n]+/g, ' ')
+  }
+  emit('input', value.value)
+}
 </script>
 
 <template>
@@ -46,7 +60,8 @@ const at_limit = computed(() => max_chars !== undefined && char_count.value >= m
         :placeholder="placeholder"
         :maxlength="max_chars"
         v-model="value"
-        @input="emit('input', value)"
+        @keydown="onKeydown"
+        @input="onInput"
       />
       <span
         v-if="max_chars !== undefined"

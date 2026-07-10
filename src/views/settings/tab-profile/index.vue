@@ -38,6 +38,7 @@ const layout_mode = inject(settingsLayoutKey)!
       <ui-textarea
         :placeholder="t('settings.profile.description-placeholder')"
         :max_chars="100"
+        no-newlines
         rows="3"
         v-model:value="editor.settings.description"
       />

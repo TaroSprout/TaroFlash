@@ -30,6 +30,7 @@ const layout_mode = inject(deckSettingsLayoutKey)!
       <ui-textarea
         :placeholder="t('deck.description-placeholder')"
         :max_chars="100"
+        no-newlines
         rows="3"
         v-model:value="settings.description"
       />
