@@ -63,7 +63,7 @@ const ButtonStub = defineComponent({
   }
 })
 
-function makeAside({ title = '', is_dirty = false, title_error = undefined } = {}) {
+function makeAside({ title = '', is_dirty = false, title_error } = {}) {
   const settings = reactive({ title, description: '' })
   const editor = {
     settings,

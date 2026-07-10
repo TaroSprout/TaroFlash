@@ -1,12 +1,8 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
-
-const { mockSubmitOAuth } = vi.hoisted(() => ({
-  mockSubmitOAuth: vi.fn()
-}))
 
 vi.mock('@/sfx/bus', () => ({
   emitSfx: vi.fn(),

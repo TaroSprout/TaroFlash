@@ -105,7 +105,6 @@ describe('useCardEditMenu — options', () => {
     expect(result.options.value[0].value).toBe('select')
     expect(result.options.value[1].value).toBe('rearrange')
     expect(result.options.value[2].value).toBe('appearance')
-    result // lint-happy
   })
 
   test('all three options have disabled:true when is_rearranging [obligation]', () => {
