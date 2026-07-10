@@ -31,6 +31,7 @@
   "login-dialog.errors.rate-limited": "Too many attempts — please try again in a bit",
   "login-dialog.errors.generic": "Something went wrong. Please try again",
   "session.logout-error": "Couldn't log out. Please try again.",
+  "session.expired-error": "Your session expired. Please log in again.",
   "member.load-error": "Couldn't load your account",
   "member.load-error-sub": "Something went wrong loading your profile.",
   "login-dialog.forgot-password-link": "Forgot password?",
