@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
 
 type TextEditorProps = {
   disabled?: boolean
@@ -59,18 +59,55 @@ function onContainerPointerDown(event: PointerEvent) {
   const editor = text_editor.value
   if (disabled || !editor || event.target === editor) return
 
-  event.preventDefault()
   editor.focus()
 
   const selection = window.getSelection()
-  if (!selection) return
+  if (selection) {
+    const range = document.createRange()
+    range.selectNodeContents(editor)
+    range.collapse(false)
+    selection.removeAllRanges()
+    selection.addRange(range)
+  }
 
-  const range = document.createRange()
-  range.selectNodeContents(editor)
-  range.collapse(false)
-  selection.removeAllRanges()
-  selection.addRange(range)
+  armGhostClickGuard()
 }
+
+// Focusing the editor here can trigger the browser's native "scroll the
+// focused input above the keyboard" behavior, shifting the layout mid-tap.
+// The tap's synthesized compatibility mouse events (`mousedown`, `mouseup`,
+// `click`) then get hit-tested at dispatch time — after that shift — instead
+// of against the original touch target, so they land on whatever now sits
+// under the finger (e.g. a button below the card). The `mousedown` in that
+// sequence is the real problem: its default action blurs the editor we just
+// focused, before `click` ever gets a say. Swallow the whole ghost sequence,
+// wherever it lands, within a short window after this gesture.
+const GHOST_EVENT_WINDOW_MS = 500
+const GHOST_EVENT_TYPES = ['mousedown', 'mouseup', 'click'] as const
+let ghost_event_timer: ReturnType<typeof setTimeout> | undefined
+
+function armGhostClickGuard() {
+  for (const type of GHOST_EVENT_TYPES) {
+    document.addEventListener(type, suppressGhostEvent, { capture: true })
+  }
+  clearTimeout(ghost_event_timer)
+  ghost_event_timer = setTimeout(disarmGhostClickGuard, GHOST_EVENT_WINDOW_MS)
+}
+
+function suppressGhostEvent(event: MouseEvent) {
+  event.preventDefault()
+  event.stopPropagation()
+  if (event.type === 'click') disarmGhostClickGuard()
+}
+
+function disarmGhostClickGuard() {
+  for (const type of GHOST_EVENT_TYPES) {
+    document.removeEventListener(type, suppressGhostEvent, { capture: true })
+  }
+  clearTimeout(ghost_event_timer)
+}
+
+onBeforeUnmount(disarmGhostClickGuard)
 
 defineExpose({ focus })
 </script>
