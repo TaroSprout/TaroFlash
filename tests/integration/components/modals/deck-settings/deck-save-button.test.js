@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, nextTick, reactive, ref } from 'vue'
+import { defineComponent, h, nextTick, reactive, ref, computed } from 'vue'
 import DeckSaveButton from '@/views/deck/deck-settings/deck-save-button.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { deckSettingsCloseKey } from '@/views/deck/deck-settings/layout'
@@ -46,6 +46,8 @@ function makeSaveButton({ title = 'My Deck', is_dirty = true } = {}) {
   const editor = {
     settings,
     is_dirty: ref(is_dirty),
+    has_title: computed(() => !!settings.title?.trim()),
+    title_error: ref(undefined),
     saveDeck
   }
 
@@ -118,6 +120,54 @@ describe('DeckSaveButton — empty title', () => {
     await wrapper.find('[data-testid="deck-settings__save-button"]').trigger('click')
 
     expect(saveDeck).not.toHaveBeenCalled()
+  })
+
+  test('sets title_error to the required-title copy when title is empty [obligation]', async () => {
+    const { wrapper, editor } = makeSaveButton({ title: '', is_dirty: true })
+
+    await wrapper.find('[data-testid="deck-settings__save-button"]').trigger('click')
+
+    expect(editor.title_error.value).toBe('Give your deck a name')
+  })
+
+  test('does NOT show an error notice when title is empty (blank-title path) [obligation]', async () => {
+    const { wrapper } = makeSaveButton({ title: '', is_dirty: true })
+
+    await wrapper.find('[data-testid="deck-settings__save-button"]').trigger('click')
+    await flushPromises()
+
+    expect(mockNotice.error).not.toHaveBeenCalled()
+  })
+
+  test('does not close when title is empty', async () => {
+    const { wrapper, close } = makeSaveButton({ title: '', is_dirty: true })
+
+    await wrapper.find('[data-testid="deck-settings__save-button"]').trigger('click')
+
+    expect(close).not.toHaveBeenCalled()
+  })
+})
+
+describe('DeckSaveButton — disabled state [obligation]', () => {
+  test('disabled when not dirty', () => {
+    const { wrapper } = makeSaveButton({ is_dirty: false })
+    expect(
+      wrapper.find('[data-testid="deck-settings__save-button"]').attributes('data-disabled')
+    ).toBe('true')
+  })
+
+  test('disabled when title is blank, even if dirty', () => {
+    const { wrapper } = makeSaveButton({ title: '', is_dirty: true })
+    expect(
+      wrapper.find('[data-testid="deck-settings__save-button"]').attributes('data-disabled')
+    ).toBe('true')
+  })
+
+  test('not disabled when dirty and title is non-empty', () => {
+    const { wrapper } = makeSaveButton({ title: 'My Deck', is_dirty: true })
+    expect(
+      wrapper.find('[data-testid="deck-settings__save-button"]').attributes('data-disabled')
+    ).toBe('false')
   })
 })
 
@@ -201,14 +251,13 @@ describe('DeckSaveButton — loading state', () => {
   })
 })
 
-describe('DeckSaveButton — not dirty plays woodblock only when title is empty first check', () => {
-  test('not-dirty check fires before empty-title check', async () => {
-    // When not dirty AND title is empty: digi_powerdown fires (not woodblock)
+describe('DeckSaveButton — empty-title check fires before not-dirty check [obligation]', () => {
+  test('when not dirty AND title is empty: etc_woodblock_stuck fires (title check runs first)', async () => {
     const { wrapper } = makeSaveButton({ title: '', is_dirty: false })
 
     await wrapper.find('[data-testid="deck-settings__save-button"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('etc_woodblock_stuck')
+    expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('digi_powerdown')
   })
 })

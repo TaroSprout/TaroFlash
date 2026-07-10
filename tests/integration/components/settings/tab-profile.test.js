@@ -83,6 +83,8 @@ function makeEditor() {
     created_at: ref('2024-04-15T00:00:00Z'),
     plan: ref('free'),
     is_dirty: ref(false),
+    has_name: ref(true),
+    name_error: ref(undefined),
     saving: ref(false),
     saveMember: () => Promise.resolve(false)
   }
@@ -136,6 +138,14 @@ describe('TabProfile', () => {
     const { wrapper } = makeTab()
     const input = wrapper.findAll('input')[0]
     expect(input.attributes('maxlength')).toBe('12')
+  })
+
+  test('name input error reflects editor.name_error.value [obligation]', async () => {
+    const editor = makeEditor()
+    editor.name_error.value = 'Give this member a name'
+    const { wrapper } = makeTab(editor)
+    const input = wrapper.findAll('input')[0]
+    expect(input.attributes('error')).toBe('Give this member a name')
   })
 
   test('typing into the bio textarea updates editor.settings.description', async () => {

@@ -1,6 +1,6 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h, reactive, ref } from 'vue'
+import { defineComponent, h, reactive, ref, computed } from 'vue'
 import DeckAside from '@/views/deck/deck-settings/deck-aside.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { deckSettingsCloseKey } from '@/views/deck/deck-settings/layout'
@@ -63,7 +63,7 @@ const ButtonStub = defineComponent({
   }
 })
 
-function makeAside({ title = '', is_dirty = false } = {}) {
+function makeAside({ title = '', is_dirty = false, title_error = undefined } = {}) {
   const settings = reactive({ title, description: '' })
   const editor = {
     settings,
@@ -71,6 +71,8 @@ function makeAside({ title = '', is_dirty = false } = {}) {
     cover: reactive({}),
     card_attributes: reactive({ front: {}, back: {} }),
     is_dirty: ref(is_dirty),
+    has_title: computed(() => !!settings.title?.trim()),
+    title_error: ref(title_error),
     active_side: ref('cover'),
     saveDeck: vi.fn(async () => null),
     deleteDeck: vi.fn(async () => false),
@@ -125,5 +127,12 @@ describe('DeckAside — layout', () => {
   test('title input carries DECK_TITLE_MAX_LENGTH as maxlength', () => {
     const { wrapper } = makeAside({ title: 'A' })
     expect(wrapper.find('[data-testid="ui-kit-input"]').attributes('maxlength')).toBe('15')
+  })
+
+  test('title input error reflects editor.title_error (destructured, no .value) [obligation]', () => {
+    const { wrapper } = makeAside({ title: '', title_error: 'Give this deck a title' })
+    expect(wrapper.find('[data-testid="ui-kit-input"]').attributes('data-error')).toBe(
+      'Give this deck a title'
+    )
   })
 })
