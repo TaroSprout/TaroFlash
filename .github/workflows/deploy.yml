@@ -8,7 +8,22 @@ on:
         required: true
         type: string
       skip_smoke:
-        description: Skip the E2E smoke gate (use only for emergency hotfixes)
+        required: false
+        type: boolean
+        default: false
+      force_frontend:
+        required: false
+        type: boolean
+        default: false
+      force_migrations:
+        required: false
+        type: boolean
+        default: false
+      force_functions:
+        required: false
+        type: boolean
+        default: false
+      force_config:
         required: false
         type: boolean
         default: false
@@ -20,7 +35,18 @@ on:
         type: choice
         options: [staging, production]
       skip_smoke:
-        description: Skip the E2E smoke gate (emergency hotfix only)
+        type: boolean
+        default: false
+      force_frontend:
+        type: boolean
+        default: false
+      force_migrations:
+        type: boolean
+        default: false
+      force_functions:
+        type: boolean
+        default: false
+      force_config:
         type: boolean
         default: false
 
@@ -86,9 +112,9 @@ jobs:
     needs: [detect-changes]
     if: |
       !inputs.skip_smoke && (
-        needs.detect-changes.outputs.frontend == 'true' ||
-        needs.detect-changes.outputs.migrations == 'true' ||
-        needs.detect-changes.outputs.functions == 'true'
+        needs.detect-changes.outputs.frontend == 'true' || inputs.force_frontend ||
+        needs.detect-changes.outputs.migrations == 'true' || inputs.force_migrations ||
+        needs.detect-changes.outputs.functions == 'true' || inputs.force_functions
       )
     uses: ./.github/workflows/e2e.yml
     secrets: inherit
@@ -96,7 +122,7 @@ jobs:
   build:
     name: Build frontend
     needs: [detect-changes]
-    if: needs.detect-changes.outputs.frontend == 'true'
+    if: needs.detect-changes.outputs.frontend == 'true' || inputs.force_frontend
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     permissions:
@@ -130,7 +156,7 @@ jobs:
     if: |
       always() &&
       (needs.e2e-smoke.result == 'success' || needs.e2e-smoke.result == 'skipped') &&
-      needs.detect-changes.outputs.migrations == 'true'
+      (needs.detect-changes.outputs.migrations == 'true' || inputs.force_migrations)
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     permissions:
@@ -159,7 +185,7 @@ jobs:
       always() &&
       (needs.e2e-smoke.result == 'success' || needs.e2e-smoke.result == 'skipped') &&
       (needs.migrate.result == 'success' || needs.migrate.result == 'skipped') &&
-      needs.detect-changes.outputs.functions == 'true'
+      (needs.detect-changes.outputs.functions == 'true' || inputs.force_functions)
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     permissions:
@@ -196,7 +222,7 @@ jobs:
   config:
     name: Push Supabase config
     needs: [detect-changes]
-    if: needs.detect-changes.outputs.config == 'true'
+    if: needs.detect-changes.outputs.config == 'true' || inputs.force_config
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     permissions:
