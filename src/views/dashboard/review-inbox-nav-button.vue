@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import UiButton from '@/components/ui-kit/button.vue'
+import UiTappable from '@/components/ui-kit/tappable.vue'
+import UiIcon from '@/components/ui-kit/icon.vue'
 import { useI18n } from 'vue-i18n'
 
 type ReviewInboxNavButtonProps = {
@@ -15,17 +16,15 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <ui-button
+  <ui-tappable
     :data-testid="`review-inbox__${direction}-btn`"
-    :icon-left="direction === 'prev' ? 'chevron-left' : 'chevron-right'"
-    icon-only
-    :disabled="disabled"
-    data-theme="brown-50"
-    class="absolute! top-1/2 -translate-y-1/2 z-20"
-    :class="direction === 'prev' ? '-left-4' : '-right-4'"
+    :aria-label="t(direction === 'prev' ? 'review-inbox.prev-button' : 'review-inbox.next-button')"
+    class="flex shrink-0 w-10 items-center justify-center text-brown-700 dark:text-brown-100 touch-manipulation cursor-pointer"
+    :class="disabled && 'opacity-40 pointer-events-none'"
     :sfx="{ press: 'snappy_button_5' }"
-    @press="emit('press')"
+    bgx_color="var(--color-brown-500)"
+    @tap="emit('press')"
   >
-    {{ t(direction === 'prev' ? 'review-inbox.prev-button' : 'review-inbox.next-button') }}
-  </ui-button>
+    <ui-icon :src="direction === 'prev' ? 'chevron-left' : 'chevron-right'" class="h-5 w-5" />
+  </ui-tappable>
 </template>

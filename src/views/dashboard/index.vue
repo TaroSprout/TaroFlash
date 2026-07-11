@@ -51,8 +51,6 @@ const due_decks = computed(() => {
   return decks.value.filter((deck) => (deck.due_count ?? 0) > 0)
 })
 
-const total_due = computed(() => due_decks.value.reduce((sum, d) => sum + (d.due_count ?? 0), 0))
-
 const study_button_key = computed(() => {
   if (due_decks.value.length === 1) return 'review-inbox.study-button'
   if (due_decks.value.length === 2) return 'review-inbox.study-both-button'
@@ -112,23 +110,6 @@ async function onCreateDeckClicked() {
           }"
           @click="onBadgeClick"
         >
-          <template #description>
-            <div
-              data-testid="member-badge__cards-due"
-              class="border-t-2 border-brown-100 pt-3 mt-0.5 text-lg text-brown-100"
-            >
-              <template v-if="due_decks.length > 0">
-                <span
-                  class="inline-flex items-center justify-center bg-brown-100 text-(--theme-primary) px-1 rounded-2 min-w-6"
-                  >{{ total_due }}</span
-                >
-                {{ t('dashboard.cards-due.cards-label', total_due) }}
-                {{ due_decks.length }}
-                {{ t('dashboard.cards-due.decks-label', due_decks.length) }}
-              </template>
-              <template v-else>{{ t('review-inbox.empty-label') }}</template>
-            </div>
-          </template>
           <template #actions>
             <button
               v-if="!show_dashboard_actions && due_decks.length > 0"
