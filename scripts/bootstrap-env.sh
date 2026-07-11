@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Ensures local dev env vars exist before the stack boots.
-# Idempotent — safe to run on every `pnpm dev:full`.
-# Currently: caches the Stripe CLI webhook signing secret so the
-# stripe-webhook Edge Function can verify incoming events.
+# Idempotent — safe to run on every `pnpm dev`.
+# Edge functions run in an isolated container and don't inherit `doppler run`'s
+# env (unlike vite/supabase start, which are direct child processes), so their
+# secrets are cached into this file instead — the channel `supabase functions
+# serve` actually reads.
 set -euo pipefail
 
 ENV_FILE="supabase/functions/.env.local"
@@ -16,3 +18,11 @@ if ! grep -q '^STRIPE_WEBHOOK_SECRET=' "$ENV_FILE"; then
   echo "STRIPE_WEBHOOK_SECRET=$secret" >> "$ENV_FILE"
   echo "Cached STRIPE_WEBHOOK_SECRET → $ENV_FILE"
 fi
+
+for key in STRIPE_SECRET_KEY OPENAI_API_KEY ANTHROPIC_API_KEY; do
+  if ! grep -q "^${key}=" "$ENV_FILE"; then
+    value=$(doppler secrets get "$key" --plain)
+    echo "${key}=${value}" >> "$ENV_FILE"
+    echo "Cached ${key} → $ENV_FILE"
+  fi
+done
