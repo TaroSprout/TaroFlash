@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "./scripts/bootstrap-env.sh && mprocs",
-    "dev:vite": "vp dev",
-    "dev:host": "vp dev --host",
+    "dev": "./scripts/bootstrap-env.sh && doppler run -- mprocs",
+    "dev:vite": "doppler run -- vp dev",
+    "dev:host": "doppler run -- vp dev --host",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vp preview",
     "test": "vp test run --coverage",
