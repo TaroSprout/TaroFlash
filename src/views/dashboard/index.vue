@@ -180,52 +180,50 @@ async function onCreateDeckClicked() {
       </div>
     </div>
 
-    <div data-testid="dashboard__right-column" class="flex flex-col gap-y-5">
-      <div data-testid="dashboard__main-column" class="flex flex-col gap-y-20 self-start">
-        <review-inbox v-if="due_decks.length > 0" :due_decks="due_decks" />
+    <div data-testid="dashboard__right-column" class="flex flex-col gap-y-5 min-w-0">
+      <review-inbox v-if="due_decks.length > 0" :due_decks="due_decks" />
 
-        <transition-group
-          tag="div"
-          data-testid="dashboard__decks"
-          class="flex gap-x-3 gap-y-8 flex-wrap"
-          :css="false"
-          @enter="popDeckIn"
-          @leave="popDeckOut"
+      <transition-group
+        tag="div"
+        data-testid="dashboard__decks"
+        class="flex gap-x-3 gap-y-8 flex-wrap"
+        :css="false"
+        @enter="popDeckIn"
+        @leave="popDeckOut"
+      >
+        <DeckThumbnail
+          v-for="deck in decks"
+          :key="deck.id"
+          :deck="deck"
+          :size="is_md ? 'base' : 'sm'"
+          :sfx="{ press: 'snappy_button_5' }"
+          @press="onDeckClicked(deck)"
         >
-          <DeckThumbnail
-            v-for="deck in decks"
-            :key="deck.id"
-            :deck="deck"
-            :size="is_md ? 'base' : 'sm'"
-            :sfx="{ press: 'snappy_button_5' }"
-            @press="onDeckClicked(deck)"
-          >
-            <template #corner-action>
-              <ui-button
-                data-testid="dashboard__deck-settings-button"
-                data-theme="blue-500"
-                data-theme-dark="blue-650"
-                icon-left="build"
-                icon-only
-                @click.stop
-                @press="onDeckSettingsClicked(deck)"
-                class="ring-4 ring-brown-100 dark:ring-grey-900"
-              >
-                {{ t('deck.settings-modal.title') }}
-              </ui-button>
-            </template>
-          </DeckThumbnail>
+          <template #corner-action>
+            <ui-button
+              data-testid="dashboard__deck-settings-button"
+              data-theme="blue-500"
+              data-theme-dark="blue-650"
+              icon-left="build"
+              icon-only
+              @click.stop
+              @press="onDeckSettingsClicked(deck)"
+              class="ring-4 ring-brown-100 dark:ring-grey-900"
+            >
+              {{ t('deck.settings-modal.title') }}
+            </ui-button>
+          </template>
+        </DeckThumbnail>
 
-          <NewDeckCard
-            key="new-deck-card"
-            :size="is_md ? 'base' : 'sm'"
-            :loading="creating_deck"
-            @press="onCreateDeckClicked"
-          />
-        </transition-group>
+        <NewDeckCard
+          key="new-deck-card"
+          :size="is_md ? 'base' : 'sm'"
+          :loading="creating_deck"
+          @press="onCreateDeckClicked"
+        />
+      </transition-group>
 
-        <audio-reader-section v-if="can.useAudioReader.value" />
-      </div>
+      <audio-reader-section v-if="can.useAudioReader.value" />
     </div>
   </div>
 </template>
