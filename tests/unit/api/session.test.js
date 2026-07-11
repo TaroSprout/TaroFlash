@@ -51,7 +51,8 @@ import {
   waitForPasswordRecovery,
   requestPasswordReset,
   isAuthError,
-  onSignedOut
+  onSignedOut,
+  consumeOAuthPopupFlag
 } from '@/api/session'
 
 beforeEach(() => {
@@ -75,6 +76,30 @@ describe('getSession', () => {
   test('throws when supabase returns an error', async () => {
     mocks.getSession.mockResolvedValueOnce({ data: null, error: { message: 'nope' } })
     await expect(getSession()).rejects.toThrow('nope')
+  })
+
+  test('resolves with the session when supabase.auth.getSession() settles before the timeout [obligation]', async () => {
+    vi.useFakeTimers()
+    const session = { user: { id: 'u1' } }
+    mocks.getSession.mockResolvedValueOnce({ data: { session }, error: null })
+
+    const promise = getSession()
+    await vi.advanceTimersByTimeAsync(0)
+
+    await expect(promise).resolves.toEqual(session)
+    vi.useRealTimers()
+  })
+
+  test('rejects once the 2s timeout elapses when supabase.auth.getSession() never resolves [obligation]', async () => {
+    vi.useFakeTimers()
+    mocks.getSession.mockImplementationOnce(() => new Promise(() => {}))
+
+    const promise = getSession()
+    promise.catch(() => {})
+    await vi.advanceTimersByTimeAsync(2000)
+
+    await expect(promise).rejects.toThrow('getSession timed out')
+    vi.useRealTimers()
   })
 })
 
@@ -236,6 +261,16 @@ describe('signInOAuth', () => {
       mocks.signInWithOAuth.mockResolvedValueOnce({ data: null, error: new Error('boom') })
       await expect(signInOAuth('google')).rejects.toThrow('boom')
     })
+
+    test('clears a stale oauth-popup-pending flag left by an abandoned popup [obligation]', async () => {
+      global.__matchMedia.matches = true
+      window.localStorage.setItem('oauth-popup-pending', '1')
+      mocks.signInWithOAuth.mockResolvedValueOnce({ data: null, error: null })
+
+      await signInOAuth('google')
+
+      expect(consumeOAuthPopupFlag()).toBe(false)
+    })
   })
 
   describe('popup path', () => {
@@ -248,6 +283,36 @@ describe('signInOAuth', () => {
       })
       return { get: () => cb, unsubscribe }
     }
+
+    test('sets the oauth-popup-pending flag when a genuine popup opens [obligation]', async () => {
+      mocks.signInWithOAuth.mockResolvedValueOnce({
+        data: { url: 'https://auth.x/login' },
+        error: null
+      })
+      const popup = { closed: false }
+      openSpy.mockReturnValue(popup)
+      captureAuthCallback()
+
+      signInOAuth('google')
+      await Promise.resolve()
+
+      expect(consumeOAuthPopupFlag()).toBe(true)
+      expect(consumeOAuthPopupFlag()).toBe(false)
+    })
+
+    test('does not set the oauth-popup-pending flag when window.open is blocked [obligation]', async () => {
+      mocks.signInWithOAuth.mockResolvedValueOnce({
+        data: { url: 'https://auth.x' },
+        error: null
+      })
+      openSpy.mockReturnValue(null)
+      const locationStub = { href: '' }
+      vi.stubGlobal('location', locationStub)
+
+      await signInOAuth('google')
+
+      expect(consumeOAuthPopupFlag()).toBe(false)
+    })
 
     test('passes skipBrowserRedirect=true and opens the popup', async () => {
       mocks.signInWithOAuth.mockResolvedValueOnce({
@@ -762,6 +827,32 @@ describe('onSignedOut [obligation]', () => {
     unsubscribeFn()
 
     expect(cb.unsubscribe).toHaveBeenCalledOnce()
+  })
+})
+
+describe('consumeOAuthPopupFlag [obligation]', () => {
+  afterEach(() => {
+    window.localStorage.removeItem('oauth-popup-pending')
+  })
+
+  test('returns true when the flag is exactly "1" [obligation]', () => {
+    window.localStorage.setItem('oauth-popup-pending', '1')
+    expect(consumeOAuthPopupFlag()).toBe(true)
+  })
+
+  test('returns false when the flag is absent [obligation]', () => {
+    expect(consumeOAuthPopupFlag()).toBe(false)
+  })
+
+  test('returns false for any non-"1" value [obligation]', () => {
+    window.localStorage.setItem('oauth-popup-pending', 'true')
+    expect(consumeOAuthPopupFlag()).toBe(false)
+  })
+
+  test('clears the flag as a side effect, so a second call returns false [obligation]', () => {
+    window.localStorage.setItem('oauth-popup-pending', '1')
+    expect(consumeOAuthPopupFlag()).toBe(true)
+    expect(consumeOAuthPopupFlag()).toBe(false)
   })
 })
 

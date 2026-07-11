@@ -2,13 +2,14 @@
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase-client'
+import { consumeOAuthPopupFlag } from '@/api/session'
 
 const router = useRouter()
 
 onMounted(async () => {
   await supabase.auth.getSession()
 
-  if (window.name === 'oauthFlow') {
+  if (consumeOAuthPopupFlag()) {
     window.close()
     return
   }
