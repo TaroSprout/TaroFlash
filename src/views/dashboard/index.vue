@@ -3,9 +3,9 @@ import { computed, watch } from 'vue'
 import { useMemberDecksQuery } from '@/api/decks'
 import { useNoticeStore } from '@/stores/notice-store'
 import DeckThumbnail from '@/components/deck/deck-thumbnail.vue'
+import NewDeckCard from '@/components/deck/new-deck-card.vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import ReviewInbox from './review-inbox.vue'
@@ -131,18 +131,6 @@ async function onCreateDeckClicked() {
           </div>
         </transition>
       </div>
-
-      <ui-button
-        v-if="is_md"
-        icon-left="add"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
-        class="w-full!"
-        size="xl"
-        @press="onCreateDeckClicked"
-      >
-        {{ t('dashboard.create-deck-button') }}
-      </ui-button>
     </div>
 
     <div data-testid="dashboard__right-column" class="flex flex-col gap-y-5">
@@ -156,19 +144,9 @@ async function onCreateDeckClicked() {
             :sfx="{ press: 'snappy_button_5' }"
             @press="onDeckClicked(deck)"
           />
-        </div>
 
-        <ui-button
-          v-if="!is_md"
-          icon-left="add"
-          data-theme="blue-500"
-          data-theme-dark="blue-650"
-          class="w-full!"
-          size="xl"
-          @press="onCreateDeckClicked"
-        >
-          {{ t('dashboard.create-deck-button') }}
-        </ui-button>
+          <NewDeckCard :size="is_md ? 'base' : 'sm'" @press="onCreateDeckClicked" />
+        </div>
 
         <audio-reader-section v-if="can.useAudioReader.value" />
       </div>

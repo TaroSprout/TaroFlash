@@ -399,6 +399,7 @@
   "dashboard.deck-filter.due-label": "Due",
   "dashboard.deck-filter.all-label": "All Decks",
   "dashboard.create-deck-button": "Make a New Deck",
+  "dashboard.new-deck-card.label": "New Deck",
   "dashboard.cards-due.cards-label": "card due across | cards due across",
   "dialog-card.close-label": "Close",
   "dialog-card.back-label": "Back",
