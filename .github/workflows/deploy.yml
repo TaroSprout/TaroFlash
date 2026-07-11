@@ -276,11 +276,13 @@ jobs:
           name: dist
           path: dist
 
+      - name: Setup Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
       - name: Deploy to Netlify
-        run: npx --yes netlify-cli deploy --dir=dist --prod --no-build
+        run: doppler run -- npx --yes netlify-cli deploy --dir=dist --prod --no-build
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ vars.NETLIFY_SITE_ID }}
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
 
   tag-release:
     name: Tag + release (semantic-release)
