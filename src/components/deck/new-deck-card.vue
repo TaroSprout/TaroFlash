@@ -9,9 +9,10 @@ type CardSize = InstanceType<typeof Card>['$props']['size']
 
 type NewDeckCardProps = {
   size?: CardSize
+  loading?: boolean
 }
 
-const { size = 'base' } = defineProps<NewDeckCardProps>()
+const { size = 'base', loading = false } = defineProps<NewDeckCardProps>()
 
 const emit = defineEmits<{ press: [e: MouseEvent] }>()
 
@@ -24,6 +25,7 @@ const { t } = useI18n()
     data-testid="new-deck-card"
     :aria-label="t('dashboard.create-deck-button')"
     class="pointer-fine:hover:scale-101 data-[tap-active=true]:scale-101 pointer-coarse:data-[tap-active=true]:scale-105 pointer-fine:transition-transform duration-75 relative cursor-pointer h-min touch-manipulation"
+    :class="loading && 'opacity-50 pointer-events-none'"
     :sfx="{ hover: TYPE_SFX, press: 'snappy_button_5' }"
     @tap="emit('press', $event)"
   >
@@ -31,7 +33,7 @@ const { t } = useI18n()
       <template #front>
         <div
           data-testid="new-deck-card__outline"
-          class="h-full w-full rounded-(--face-radius) border-4 border-dashed border-brown-500 flex flex-col items-center justify-center gap-2 text-brown-500 hover:border-blue-500 hover:text-blue-500 dark:hover:border-blue-650 dark:hover:text-blue-650"
+          class="h-full w-full rounded-(--face-radius) bg-brown-200 flex flex-col items-center justify-center gap-2 text-brown-500"
         >
           <ui-icon src="add" class="w-1/3 h-1/3" />
           <span class="text-lg text-center">{{ t('dashboard.new-deck-card.label') }}</span>

@@ -533,6 +533,7 @@
   "deck.create-modal.submit": "Create Deck",
   "deck.create-modal.cancel": "Cancel",
   "deck.create-modal.title-required": "Give your deck a name",
+  "deck.default-title": "New Deck",
   "deck.settings-modal.aside.owner-fallback": "Unknown",
   "deck.settings-modal.aside.card-count-label": "Cards",
   "deck.settings-modal.aside.date-fallback": "—",

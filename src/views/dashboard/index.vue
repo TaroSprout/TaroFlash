@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useMemberDecksQuery } from '@/api/decks'
 import { useNoticeStore } from '@/stores/notice-store'
 import DeckThumbnail from '@/components/deck/deck-thumbnail.vue'
@@ -10,12 +10,14 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import ReviewInbox from './review-inbox.vue'
 import AudioReaderSection from './audio-reader-section.vue'
-import { useDeckCreateModal } from '@/composables/deck/create-modal'
 import { useDeckActions } from '@/composables/deck/actions'
 import { useCan } from '@/composables/can'
 import MemberBadge from '@/components/member/member-badge.vue'
 import { useMemberStore } from '@/stores/member'
 import { useLocalRef } from '@/composables/storage/local-ref'
+import { randomCoverConfig } from '@/utils/cover'
+import { DECK_SETTINGS_DEFAULTS, DECK_CONFIG_DEFAULTS } from '@/utils/deck/defaults'
+import { popDeckIn, popDeckOut } from '@/utils/animations/deck-grid'
 import {
   inboxSwingBeforeEnter,
   inboxSwingEnter,
@@ -29,10 +31,13 @@ const is_md = useMatchMedia('w>=md')
 const can = useCan()
 const member_store = useMemberStore()
 
-const deck_create_modal = useDeckCreateModal()
 const deck_actions = useDeckActions()
 const { data: decks_data, error: decks_error } = useMemberDecksQuery()
-const decks = computed(() => decks_data.value ?? [])
+const decks = computed(() => {
+  return [...(decks_data.value ?? [])].sort((a, b) =>
+    (a.created_at ?? '').localeCompare(b.created_at ?? '')
+  )
+})
 watch(decks_error, (err) => {
   if (err) notice.error(err.message)
 })
@@ -44,6 +49,7 @@ const due_decks = computed(() => {
 const total_due = computed(() => due_decks.value.reduce((sum, d) => sum + (d.due_count ?? 0), 0))
 
 const show_inbox = useLocalRef('dashboard.show_inbox', false)
+const creating_deck = ref(false)
 
 function onBadgeClick() {
   if (due_decks.value.length === 0) return
@@ -55,9 +61,17 @@ function onDeckClicked(deck: Deck) {
 }
 
 async function onCreateDeckClicked() {
-  if (await deck_actions.guardCreateDeck()) {
-    deck_create_modal.open()
-  }
+  if (creating_deck.value) return
+  creating_deck.value = true
+
+  await deck_actions.createDeck({
+    title: t('deck.default-title'),
+    is_public: DECK_SETTINGS_DEFAULTS.is_public,
+    study_config: { study_all_cards: DECK_CONFIG_DEFAULTS.study_all_cards },
+    cover_config: randomCoverConfig()
+  } as Deck)
+
+  creating_deck.value = false
 }
 </script>
 
@@ -135,18 +149,30 @@ async function onCreateDeckClicked() {
 
     <div data-testid="dashboard__right-column" class="flex flex-col gap-y-5">
       <div data-testid="dashboard__main-column" class="flex flex-col gap-y-20 self-start">
-        <div data-testid="dashboard__decks" class="flex gap-x-3 gap-y-8 flex-wrap">
+        <transition-group
+          tag="div"
+          data-testid="dashboard__decks"
+          class="flex gap-x-3 gap-y-8 flex-wrap"
+          :css="false"
+          @enter="popDeckIn"
+          @leave="popDeckOut"
+        >
           <DeckThumbnail
-            v-for="(deck, index) in decks"
-            :key="index"
+            v-for="deck in decks"
+            :key="deck.id"
             :deck="deck"
             :size="is_md ? 'base' : 'sm'"
             :sfx="{ press: 'snappy_button_5' }"
             @press="onDeckClicked(deck)"
           />
 
-          <NewDeckCard :size="is_md ? 'base' : 'sm'" @press="onCreateDeckClicked" />
-        </div>
+          <NewDeckCard
+            key="new-deck-card"
+            :size="is_md ? 'base' : 'sm'"
+            :loading="creating_deck"
+            @press="onCreateDeckClicked"
+          />
+        </transition-group>
 
         <audio-reader-section v-if="can.useAudioReader.value" />
       </div>
