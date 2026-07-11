@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { describe, test, expect, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 import { TYPE_SFX } from '@/sfx/config'
@@ -139,6 +139,46 @@ describe('DeckThumbnail', () => {
       global: { stubs: { UiTappable: UiTappableStub } }
     })
     expect(wrapper.find('[data-testid="thumbnail-action"]').exists()).toBe(true)
+  })
+
+  // ── corner-action slot [obligation] ──────────────────────────────────────────
+
+  describe('corner-action slot [obligation]', () => {
+    test('does not render the corner-action wrapper when the slot is not provided', () => {
+      const wrapper = mountWithDeck()
+      expect(wrapper.find('[data-testid="deck-thumbnail__corner-action"]').exists()).toBe(false)
+    })
+
+    test('renders the corner-action wrapper and slot content when the slot is provided', () => {
+      const wrapper = shallowMount(DeckThumbnail, {
+        props: { deck: { title: 'My Deck' } },
+        slots: { 'corner-action': '<button data-testid="corner-button">act</button>' },
+        global: { stubs: { UiTappable: UiTappableStub } }
+      })
+      expect(wrapper.find('[data-testid="deck-thumbnail__corner-action"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="corner-button"]').exists()).toBe(true)
+    })
+  })
+
+  // ── card-count label [obligation] ────────────────────────────────────────────
+
+  describe('card-count label [obligation]', () => {
+    test('does not render the card-count label when deck.card_count is undefined', () => {
+      const wrapper = mountWithDeck()
+      expect(wrapper.find('[data-testid="deck-thumbnail__card-count"]').exists()).toBe(false)
+    })
+
+    test('renders the card-count label when deck.card_count is defined', () => {
+      const wrapper = mountWithDeck({ card_count: 5 })
+      const label = wrapper.find('[data-testid="deck-thumbnail__card-count"]')
+      expect(label.exists()).toBe(true)
+      expect(label.text()).toContain('5')
+    })
+
+    test('renders the card-count label even when card_count is 0', () => {
+      const wrapper = mountWithDeck({ card_count: 0 })
+      expect(wrapper.find('[data-testid="deck-thumbnail__card-count"]').exists()).toBe(true)
+    })
   })
 
   // ── press event ───────────────────────────────────────────────────────────────
