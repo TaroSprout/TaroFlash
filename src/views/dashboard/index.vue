@@ -13,6 +13,7 @@ import ReviewInbox from './review-inbox.vue'
 import AudioReaderSection from './audio-reader-section.vue'
 import { useDeckActions } from '@/composables/deck/actions'
 import { useDeckSettingsModal } from '@/composables/deck/settings-modal'
+import { useStudyModal } from '@/views/study-session/composables/study-modal'
 import { useCan } from '@/composables/can'
 import MemberBadge from '@/components/member/member-badge.vue'
 import { useMemberStore } from '@/stores/member'
@@ -21,10 +22,10 @@ import { randomCoverConfig } from '@/utils/cover'
 import { DECK_SETTINGS_DEFAULTS, DECK_CONFIG_DEFAULTS } from '@/utils/deck/defaults'
 import { popDeckIn, popDeckOut } from '@/utils/animations/deck-grid'
 import {
-  inboxSwingBeforeEnter,
-  inboxSwingEnter,
-  inboxSwingLeave
-} from '@/utils/animations/inbox-toggle'
+  actionsSwingBeforeEnter,
+  actionsSwingEnter,
+  actionsSwingLeave
+} from '@/utils/animations/dashboard-actions'
 
 const { t } = useI18n()
 const notice = useNoticeStore()
@@ -35,6 +36,7 @@ const member_store = useMemberStore()
 
 const deck_actions = useDeckActions()
 const deck_settings_modal = useDeckSettingsModal()
+const study_session = useStudyModal()
 const { data: decks_data, error: decks_error } = useMemberDecksQuery()
 const decks = computed(() => {
   return [...(decks_data.value ?? [])].sort((a, b) =>
@@ -51,12 +53,18 @@ const due_decks = computed(() => {
 
 const total_due = computed(() => due_decks.value.reduce((sum, d) => sum + (d.due_count ?? 0), 0))
 
-const show_inbox = useLocalRef('dashboard.show_inbox', false)
+const study_button_key = computed(() => {
+  if (due_decks.value.length === 1) return 'review-inbox.study-button'
+  if (due_decks.value.length === 2) return 'review-inbox.study-both-button'
+  return 'review-inbox.study-all-button'
+})
+
+const show_dashboard_actions = useLocalRef('dashboard.show_dashboard_actions', false)
 const creating_deck = ref(false)
 
 function onBadgeClick() {
   if (due_decks.value.length === 0) return
-  show_inbox.value = !show_inbox.value
+  show_dashboard_actions.value = !show_dashboard_actions.value
 }
 
 function onDeckClicked(deck: Deck) {
@@ -65,6 +73,10 @@ function onDeckClicked(deck: Deck) {
 
 function onDeckSettingsClicked(deck: Deck) {
   deck_settings_modal.open(deck)
+}
+
+function onStudyAll() {
+  study_session.start(due_decks.value)
 }
 
 async function onCreateDeckClicked() {
@@ -119,7 +131,7 @@ async function onCreateDeckClicked() {
           </template>
           <template #actions>
             <button
-              v-if="!show_inbox && due_decks.length > 0"
+              v-if="!show_dashboard_actions && due_decks.length > 0"
               data-testid="member-badge__expand-button"
               class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-20 flex h-5 w-10 cursor-pointer items-center justify-center rounded-full bg-brown-100 text-(--theme-primary) ring-4 ring-(--theme-primary)"
             >
@@ -129,7 +141,7 @@ async function onCreateDeckClicked() {
         </member-badge>
 
         <div
-          v-if="show_inbox && due_decks.length > 0"
+          v-if="show_dashboard_actions && due_decks.length > 0"
           data-testid="dashboard__binder-rings"
           class="absolute top-29.5 z-10 w-full flex justify-between px-14 pointer-events-none"
         >
@@ -143,12 +155,26 @@ async function onCreateDeckClicked() {
 
         <transition
           :css="false"
-          @before-enter="inboxSwingBeforeEnter"
-          @enter="inboxSwingEnter"
-          @leave="inboxSwingLeave"
+          @before-enter="actionsSwingBeforeEnter"
+          @enter="actionsSwingEnter"
+          @leave="actionsSwingLeave"
         >
-          <div v-if="show_inbox && due_decks.length > 0" style="perspective: 1200px">
-            <review-inbox :due_decks="due_decks" />
+          <div v-if="show_dashboard_actions && due_decks.length > 0" style="perspective: 1200px">
+            <div
+              data-testid="dashboard__actions-panel"
+              class="w-full rounded-8 bg-brown-300 dark:bg-stone-900 select-none p-3"
+            >
+              <ui-button
+                size="xl"
+                icon-left="book-flip-page"
+                data-theme="brown-100"
+                data-theme-dark="stone-700"
+                class="w-full!"
+                @press="onStudyAll"
+              >
+                {{ t(study_button_key) }}
+              </ui-button>
+            </div>
           </div>
         </transition>
       </div>
@@ -156,6 +182,8 @@ async function onCreateDeckClicked() {
 
     <div data-testid="dashboard__right-column" class="flex flex-col gap-y-5">
       <div data-testid="dashboard__main-column" class="flex flex-col gap-y-20 self-start">
+        <review-inbox v-if="due_decks.length > 0" :due_decks="due_decks" />
+
         <transition-group
           tag="div"
           data-testid="dashboard__decks"

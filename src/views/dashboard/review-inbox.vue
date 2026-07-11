@@ -24,12 +24,6 @@ const offset = ref(0)
 
 const has_overflow = computed(() => due_decks.length > VISIBLE_COUNT)
 
-const study_button_key = computed(() => {
-  if (due_decks.length === 1) return 'review-inbox.study-button'
-  if (due_decks.length === 2) return 'review-inbox.study-both-button'
-  return 'review-inbox.study-all-button'
-})
-
 const tape = ref<Deck[]>([])
 const tape_el = ref<HTMLElement | null>(null)
 const is_animating = ref(false)
@@ -55,10 +49,6 @@ watch(
 
 function onItemClicked(deck: Deck) {
   study_session.start([deck])
-}
-
-function onStudyAll() {
-  study_session.start(due_decks)
 }
 
 async function navigate(dir: CarouselDirection) {
@@ -146,19 +136,6 @@ function next() {
             {{ t('review-inbox.next-button') }}
           </ui-button>
         </div>
-      </div>
-
-      <div data-testid="review-inbox__actions" class="mt-1 px-3">
-        <ui-button
-          size="xl"
-          icon-left="book-flip-page"
-          data-theme="brown-100"
-          data-theme-dark="stone-700"
-          class="w-full!"
-          @press="onStudyAll"
-        >
-          {{ t(study_button_key) }}
-        </ui-button>
       </div>
     </div>
   </div>
