@@ -7,10 +7,12 @@ import NewDeckCard from '@/components/deck/new-deck-card.vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import UiButton from '@/components/ui-kit/button.vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import ReviewInbox from './review-inbox.vue'
 import AudioReaderSection from './audio-reader-section.vue'
 import { useDeckActions } from '@/composables/deck/actions'
+import { useDeckSettingsModal } from '@/composables/deck/settings-modal'
 import { useCan } from '@/composables/can'
 import MemberBadge from '@/components/member/member-badge.vue'
 import { useMemberStore } from '@/stores/member'
@@ -32,6 +34,7 @@ const can = useCan()
 const member_store = useMemberStore()
 
 const deck_actions = useDeckActions()
+const deck_settings_modal = useDeckSettingsModal()
 const { data: decks_data, error: decks_error } = useMemberDecksQuery()
 const decks = computed(() => {
   return [...(decks_data.value ?? [])].sort((a, b) =>
@@ -58,6 +61,10 @@ function onBadgeClick() {
 
 function onDeckClicked(deck: Deck) {
   router.push({ name: 'deck', params: { id: deck.id } })
+}
+
+function onDeckSettingsClicked(deck: Deck) {
+  deck_settings_modal.open(deck)
 }
 
 async function onCreateDeckClicked() {
@@ -164,7 +171,22 @@ async function onCreateDeckClicked() {
             :size="is_md ? 'base' : 'sm'"
             :sfx="{ press: 'snappy_button_5' }"
             @press="onDeckClicked(deck)"
-          />
+          >
+            <template #corner-action>
+              <ui-button
+                data-testid="dashboard__deck-settings-button"
+                data-theme="blue-500"
+                data-theme-dark="blue-650"
+                icon-left="build"
+                icon-only
+                @click.stop
+                @press="onDeckSettingsClicked(deck)"
+                class="ring-4 ring-brown-100 dark:ring-grey-900"
+              >
+                {{ t('deck.settings-modal.title') }}
+              </ui-button>
+            </template>
+          </DeckThumbnail>
 
           <NewDeckCard
             key="new-deck-card"
