@@ -200,6 +200,29 @@ type StartOAuth = (options: {
   skipBrowserRedirect?: boolean
 }) => Promise<{ data: { url: string | null } | null; error: unknown }>
 
+// Google's consent screen sends Cross-Origin-Opener-Policy, which forces a
+// permanent browsing-context-group switch on the popup — window.opener is
+// severed for good, and window.name (tied to that same context) doesn't
+// survive the swap either, even once the popup navigates back to our own
+// origin. localStorage isn't scoped to the browsing-context group the way
+// those are, so a flag written right before window.open() is still readable
+// once the popup lands back on our site.
+const OAUTH_POPUP_FLAG = 'oauth-popup-pending'
+
+// Cleared unconditionally up front so a flag left behind by an abandoned
+// popup (closed before completing auth) can't misfire on a later full-page
+// redirect flow.
+function clearOAuthPopupFlag(): void {
+  window.localStorage.removeItem(OAUTH_POPUP_FLAG)
+}
+
+/** Callback view checks this to decide whether to close itself or navigate to the dashboard. */
+export function consumeOAuthPopupFlag(): boolean {
+  const pending = window.localStorage.getItem(OAUTH_POPUP_FLAG) === '1'
+  clearOAuthPopupFlag()
+  return pending
+}
+
 // Sign-in resolves on the store's own 'SIGNED_IN' auth event; linking a new
 // identity to an already-signed-in user doesn't fire that event, so it resolves
 // once the popup/redirect tab closes instead.
@@ -207,6 +230,8 @@ async function runOAuthFlow(
   start: StartOAuth,
   waitFor: 'signed-in' | 'popup-closed'
 ): Promise<void> {
+  clearOAuthPopupFlag()
+
   if (prefersFullRedirect()) {
     const { error } = await start({ redirectTo: AUTH_REDIRECT_URL })
     if (error) throw error
@@ -231,6 +256,8 @@ async function runOAuthFlow(
     window.location.href = data.url
     return
   }
+
+  window.localStorage.setItem(OAUTH_POPUP_FLAG, '1')
 
   const TIMEOUT_MS = 5 * 60 * 1000
 
