@@ -42,8 +42,22 @@ const RESET_PASSWORD_REDIRECT_URL = buildRedirectUrl(
   import.meta.env.VITE_RESET_PASSWORD_REDIRECT_URL
 )
 
+const GET_SESSION_TIMEOUT_MS = 2000
+
+// getSession() triggers a background refresh_token request when the cached
+// session is expired. supabase-js wraps any network failure on that request
+// (e.g. connection refused) as retryable and retries with backoff for up to
+// 30s before surfacing an error — there's no way to special-case it sooner
+// from out here. Race it against a short timeout so a dead connection still
+// bails out fast instead of stalling anything awaiting it (e.g. the root
+// route's auth guard) for the full retry window.
 export async function getSession(): Promise<Session | null> {
-  const { data, error } = await supabase.auth.getSession()
+  const { data, error } = await Promise.race([
+    supabase.auth.getSession(),
+    new Promise<never>((_, reject) => {
+      window.setTimeout(() => reject(new Error('getSession timed out')), GET_SESSION_TIMEOUT_MS)
+    })
+  ])
 
   if (error) {
     throw new Error(error.message)
