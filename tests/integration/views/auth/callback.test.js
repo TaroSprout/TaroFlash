@@ -16,6 +16,13 @@ vi.mock('vue-router', () => ({
 
 import Callback from '@/views/auth/callback.vue'
 
+function setWindowName(value) {
+  Object.defineProperty(window, 'name', {
+    configurable: true,
+    value
+  })
+}
+
 function setOpener(value) {
   Object.defineProperty(window, 'opener', {
     configurable: true,
@@ -25,22 +32,28 @@ function setOpener(value) {
 
 describe('auth/callback', () => {
   let closeSpy
+  let originalNameDescriptor
   let originalOpenerDescriptor
 
   beforeEach(() => {
     mocks.getSession.mockReset()
     mocks.getSession.mockResolvedValue({ data: { session: null }, error: null })
     mocks.push.mockReset()
+    originalNameDescriptor = Object.getOwnPropertyDescriptor(window, 'name')
     originalOpenerDescriptor = Object.getOwnPropertyDescriptor(window, 'opener')
     closeSpy = vi.spyOn(window, 'close').mockImplementation(() => {})
   })
 
   afterEach(() => {
     closeSpy.mockRestore()
+    if (originalNameDescriptor) {
+      Object.defineProperty(window, 'name', originalNameDescriptor)
+    } else {
+      setWindowName('')
+    }
     if (originalOpenerDescriptor) {
       Object.defineProperty(window, 'opener', originalOpenerDescriptor)
     } else {
-      // Best-effort reset when browser has no own descriptor for opener.
       try {
         // eslint-disable-next-line no-self-assign
         delete window.opener
@@ -51,33 +64,35 @@ describe('auth/callback', () => {
   })
 
   test('awaits getSession on mount', async () => {
-    setOpener(null)
+    setWindowName('')
     mount(Callback)
     await flushPromises()
     expect(mocks.getSession).toHaveBeenCalledTimes(1)
   })
 
-  test('pushes to the dashboard route when not running inside a popup', async () => {
-    setOpener(null)
+  test('pushes to the dashboard route when window.name is not oauthFlow', async () => {
+    setWindowName('')
     mount(Callback)
     await flushPromises()
     expect(mocks.push).toHaveBeenCalledWith({ name: 'dashboard' })
     expect(closeSpy).not.toHaveBeenCalled()
   })
 
-  test('closes the window when running inside a popup and does not navigate', async () => {
-    setOpener({})
+  test('closes the window and does not navigate when window.name is oauthFlow, even with opener severed by COOP [obligation]', async () => {
+    setWindowName('oauthFlow')
+    setOpener(null)
     mount(Callback)
     await flushPromises()
     expect(closeSpy).toHaveBeenCalledTimes(1)
     expect(mocks.push).not.toHaveBeenCalled()
   })
 
-  test('ignores a self-referential opener (same window) and routes to dashboard', async () => {
-    setOpener(window)
+  test('navigates to the dashboard for a plain full-page redirect (window.name unset, no popup) [obligation]', async () => {
+    setWindowName('')
+    setOpener(null)
     mount(Callback)
     await flushPromises()
-    expect(closeSpy).not.toHaveBeenCalled()
     expect(mocks.push).toHaveBeenCalledWith({ name: 'dashboard' })
+    expect(closeSpy).not.toHaveBeenCalled()
   })
 })

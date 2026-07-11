@@ -8,7 +8,7 @@ const router = useRouter()
 onMounted(async () => {
   await supabase.auth.getSession()
 
-  if (window.opener && window.opener !== window) {
+  if (window.name === 'oauthFlow') {
     window.close()
     return
   }

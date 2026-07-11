@@ -67,10 +67,12 @@ The subagent works from a cold diff and can mis-scope or over-claim. Cross-check
 Before you commit, run the **entire** suite exactly once, to identify failures:
 
 ```
-pnpm test:fast
+pnpm test:fast 2>&1 | tee /tmp/update-tests-full-run.log | tail -100
 ```
 
 (Unit + Integration, no coverage — the fast full-suite runner. Never add `--coverage` here; this gate only needs pass/fail, not instrumentation.)
+
+Capture the full output to a file via `tee` in the same invocation. The tail may only show a coverage table, not the pass/fail summary — re-grep the saved log (`grep -E "Test Files|Tests |FAIL|failed" /tmp/update-tests-full-run.log`) instead of re-running the command. **Never re-invoke `pnpm test:fast` just to see a different slice of output you didn't capture the first time** — that silently violates the once-per-invocation rule below.
 
 This is non-negotiable. The subagent only ever runs touched-file scope, so collateral breakage in **untouched** test files is invisible to it — and that is the single most common reason these PRs fail CI (it happens on nearly every move/barrel/mock-shape change). The mirror-file check in item 3 is necessary but **not sufficient**: a file-move or barrel-widening refactor breaks tests that don't mirror any touched source at all (e.g. a sibling feature whose `vi.mock('@/some/barrel')` is now missing a newly-transitive export). Only a full run catches those.
 
