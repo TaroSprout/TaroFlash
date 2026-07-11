@@ -1,26 +1,31 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useMemberDecksQuery } from '@/api/decks'
 import { useNoticeStore } from '@/stores/notice-store'
 import DeckThumbnail from '@/components/deck/deck-thumbnail.vue'
+import NewDeckCard from '@/components/deck/new-deck-card.vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import UiButton from '@/components/ui-kit/button.vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import ReviewInbox from './review-inbox.vue'
 import AudioReaderSection from './audio-reader-section.vue'
-import { useDeckCreateModal } from '@/composables/deck/create-modal'
 import { useDeckActions } from '@/composables/deck/actions'
+import { useDeckSettingsModal } from '@/composables/deck/settings-modal'
+import { useStudyModal } from '@/views/study-session/composables/study-modal'
 import { useCan } from '@/composables/can'
 import MemberBadge from '@/components/member/member-badge.vue'
 import { useMemberStore } from '@/stores/member'
 import { useLocalRef } from '@/composables/storage/local-ref'
+import { randomCoverConfig } from '@/utils/cover'
+import { DECK_SETTINGS_DEFAULTS, DECK_CONFIG_DEFAULTS } from '@/utils/deck/defaults'
+import { popDeckIn, popDeckOut } from '@/utils/animations/deck-grid'
 import {
-  inboxSwingBeforeEnter,
-  inboxSwingEnter,
-  inboxSwingLeave
-} from '@/utils/animations/inbox-toggle'
+  actionsSwingBeforeEnter,
+  actionsSwingEnter,
+  actionsSwingLeave
+} from '@/utils/animations/dashboard-actions'
 
 const { t } = useI18n()
 const notice = useNoticeStore()
@@ -29,10 +34,15 @@ const is_md = useMatchMedia('w>=md')
 const can = useCan()
 const member_store = useMemberStore()
 
-const deck_create_modal = useDeckCreateModal()
 const deck_actions = useDeckActions()
+const deck_settings_modal = useDeckSettingsModal()
+const study_session = useStudyModal()
 const { data: decks_data, error: decks_error } = useMemberDecksQuery()
-const decks = computed(() => decks_data.value ?? [])
+const decks = computed(() => {
+  return [...(decks_data.value ?? [])].sort((a, b) =>
+    (a.created_at ?? '').localeCompare(b.created_at ?? '')
+  )
+})
 watch(decks_error, (err) => {
   if (err) notice.error(err.message)
 })
@@ -41,23 +51,44 @@ const due_decks = computed(() => {
   return decks.value.filter((deck) => (deck.due_count ?? 0) > 0)
 })
 
-const total_due = computed(() => due_decks.value.reduce((sum, d) => sum + (d.due_count ?? 0), 0))
+const study_button_key = computed(() => {
+  if (due_decks.value.length === 1) return 'review-inbox.study-button'
+  if (due_decks.value.length === 2) return 'review-inbox.study-both-button'
+  return 'review-inbox.study-all-button'
+})
 
-const show_inbox = useLocalRef('dashboard.show_inbox', false)
+const show_dashboard_actions = useLocalRef('dashboard.show_dashboard_actions', false)
+const creating_deck = ref(false)
 
 function onBadgeClick() {
   if (due_decks.value.length === 0) return
-  show_inbox.value = !show_inbox.value
+  show_dashboard_actions.value = !show_dashboard_actions.value
 }
 
 function onDeckClicked(deck: Deck) {
   router.push({ name: 'deck', params: { id: deck.id } })
 }
 
+function onDeckSettingsClicked(deck: Deck) {
+  deck_settings_modal.open(deck)
+}
+
+function onStudyAll() {
+  study_session.start(due_decks.value)
+}
+
 async function onCreateDeckClicked() {
-  if (await deck_actions.guardCreateDeck()) {
-    deck_create_modal.open()
-  }
+  if (creating_deck.value) return
+  creating_deck.value = true
+
+  await deck_actions.createDeck({
+    title: t('deck.default-title'),
+    is_public: DECK_SETTINGS_DEFAULTS.is_public,
+    study_config: { study_all_cards: DECK_CONFIG_DEFAULTS.study_all_cards },
+    cover_config: randomCoverConfig()
+  } as Deck)
+
+  creating_deck.value = false
 }
 </script>
 
@@ -79,26 +110,9 @@ async function onCreateDeckClicked() {
           }"
           @click="onBadgeClick"
         >
-          <template #description>
-            <div
-              data-testid="member-badge__cards-due"
-              class="border-t-2 border-brown-100 pt-3 mt-0.5 text-lg text-brown-100"
-            >
-              <template v-if="due_decks.length > 0">
-                <span
-                  class="inline-flex items-center justify-center bg-brown-100 text-(--theme-primary) px-1 rounded-2 min-w-6"
-                  >{{ total_due }}</span
-                >
-                {{ t('dashboard.cards-due.cards-label', total_due) }}
-                {{ due_decks.length }}
-                {{ t('dashboard.cards-due.decks-label', due_decks.length) }}
-              </template>
-              <template v-else>{{ t('review-inbox.empty-label') }}</template>
-            </div>
-          </template>
           <template #actions>
             <button
-              v-if="!show_inbox && due_decks.length > 0"
+              v-if="!show_dashboard_actions && due_decks.length > 0"
               data-testid="member-badge__expand-button"
               class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-20 flex h-5 w-10 cursor-pointer items-center justify-center rounded-full bg-brown-100 text-(--theme-primary) ring-4 ring-(--theme-primary)"
             >
@@ -108,7 +122,7 @@ async function onCreateDeckClicked() {
         </member-badge>
 
         <div
-          v-if="show_inbox && due_decks.length > 0"
+          v-if="show_dashboard_actions && due_decks.length > 0"
           data-testid="dashboard__binder-rings"
           class="absolute top-29.5 z-10 w-full flex justify-between px-14 pointer-events-none"
         >
@@ -122,56 +136,75 @@ async function onCreateDeckClicked() {
 
         <transition
           :css="false"
-          @before-enter="inboxSwingBeforeEnter"
-          @enter="inboxSwingEnter"
-          @leave="inboxSwingLeave"
+          @before-enter="actionsSwingBeforeEnter"
+          @enter="actionsSwingEnter"
+          @leave="actionsSwingLeave"
         >
-          <div v-if="show_inbox && due_decks.length > 0" style="perspective: 1200px">
-            <review-inbox :due_decks="due_decks" />
+          <div v-if="show_dashboard_actions && due_decks.length > 0" style="perspective: 1200px">
+            <div
+              data-testid="dashboard__actions-panel"
+              class="w-full rounded-8 bg-brown-300 dark:bg-stone-900 select-none p-3"
+            >
+              <ui-button
+                size="xl"
+                icon-left="book-flip-page"
+                data-theme="brown-100"
+                data-theme-dark="stone-700"
+                class="w-full!"
+                @press="onStudyAll"
+              >
+                {{ t(study_button_key) }}
+              </ui-button>
+            </div>
           </div>
         </transition>
       </div>
-
-      <ui-button
-        v-if="is_md"
-        icon-left="add"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
-        class="w-full!"
-        size="xl"
-        @press="onCreateDeckClicked"
-      >
-        {{ t('dashboard.create-deck-button') }}
-      </ui-button>
     </div>
 
-    <div data-testid="dashboard__right-column" class="flex flex-col gap-y-5">
-      <div data-testid="dashboard__main-column" class="flex flex-col gap-y-20 self-start">
-        <div data-testid="dashboard__decks" class="flex gap-x-3 gap-y-8 flex-wrap">
-          <DeckThumbnail
-            v-for="(deck, index) in decks"
-            :key="index"
-            :deck="deck"
-            :size="is_md ? 'base' : 'sm'"
-            :sfx="{ press: 'snappy_button_5' }"
-            @press="onDeckClicked(deck)"
-          />
-        </div>
+    <div data-testid="dashboard__right-column" class="flex flex-col gap-y-5 min-w-0">
+      <review-inbox v-if="due_decks.length > 0" :due_decks="due_decks" />
 
-        <ui-button
-          v-if="!is_md"
-          icon-left="add"
-          data-theme="blue-500"
-          data-theme-dark="blue-650"
-          class="w-full!"
-          size="xl"
-          @press="onCreateDeckClicked"
+      <transition-group
+        tag="div"
+        data-testid="dashboard__decks"
+        class="flex gap-x-3 gap-y-8 flex-wrap"
+        :css="false"
+        @enter="popDeckIn"
+        @leave="popDeckOut"
+      >
+        <DeckThumbnail
+          v-for="deck in decks"
+          :key="deck.id"
+          :deck="deck"
+          :size="is_md ? 'base' : 'sm'"
+          :sfx="{ press: 'snappy_button_5' }"
+          @press="onDeckClicked(deck)"
         >
-          {{ t('dashboard.create-deck-button') }}
-        </ui-button>
+          <template #corner-action>
+            <ui-button
+              data-testid="dashboard__deck-settings-button"
+              data-theme="blue-500"
+              data-theme-dark="blue-650"
+              icon-left="build"
+              icon-only
+              @click.stop
+              @press="onDeckSettingsClicked(deck)"
+              class="ring-4 ring-brown-100 dark:ring-grey-900"
+            >
+              {{ t('deck.settings-modal.title') }}
+            </ui-button>
+          </template>
+        </DeckThumbnail>
 
-        <audio-reader-section v-if="can.useAudioReader.value" />
-      </div>
+        <NewDeckCard
+          key="new-deck-card"
+          :size="is_md ? 'base' : 'sm'"
+          :loading="creating_deck"
+          @press="onCreateDeckClicked"
+        />
+      </transition-group>
+
+      <audio-reader-section v-if="can.useAudioReader.value" />
     </div>
   </div>
 </template>

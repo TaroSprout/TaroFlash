@@ -8,7 +8,7 @@ defineProps<{ deck: Deck }>()
 <template>
   <div
     data-testid="review-inbox-item"
-    class="card-outline pointer-fine:hover:scale-101 pointer-fine:hover:z-10 pointer-fine:transition-transform duration-75 relative cursor-pointer touch-manipulation"
+    class="pointer-fine:hover:scale-102 pointer-fine:hover:z-10 pointer-fine:transition-transform duration-75 relative cursor-pointer touch-manipulation"
     v-sfx="{ hover: TYPE_SFX }"
   >
     <card side="cover" size="xs" :cover_config="deck.cover_config" />

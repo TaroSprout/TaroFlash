@@ -44,7 +44,6 @@ async function onSave() {
     full-width
     :loading="is_saving"
     :disabled="!is_dirty || !has_title"
-    :sfx="{ press: 'snappy_button_2' }"
     click-when-disabled
     @press="onSave"
   >
