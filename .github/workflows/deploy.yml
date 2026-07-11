@@ -134,14 +134,13 @@ jobs:
 
       - uses: ./.github/actions/setup-node
 
+      - name: Setup Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
       - name: Build
-        run: pnpm run build
+        run: doppler run -- pnpm run build
         env:
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_API_KEY: ${{ secrets.VITE_SUPABASE_API_KEY }}
-          VITE_STRIPE_PUBLIC_KEY: ${{ vars.VITE_STRIPE_PUBLIC_KEY }}
-          VITE_MEMBERSHIP_PRICE_ID: ${{ vars.VITE_MEMBERSHIP_PRICE_ID }}
-          VITE_AUTH_REDIRECT_URL: ${{ vars.VITE_AUTH_REDIRECT_URL }}
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -171,12 +170,15 @@ jobs:
         with:
           version: latest
 
+      - name: Setup Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
       - name: Run migrations
         run: |
-          supabase link --project-ref ${{ vars.SUPABASE_PROJECT_REF }} --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
-          supabase migration up --linked
+          doppler run -- supabase link --project-ref ${{ vars.SUPABASE_PROJECT_REF }} --password "$(doppler secrets get SUPABASE_DB_PASSWORD --plain)"
+          doppler run -- supabase migration up --linked
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
 
   functions:
     name: Deploy edge functions
@@ -200,24 +202,27 @@ jobs:
         with:
           version: latest
 
+      - name: Setup Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
       - name: Link project
-        run: supabase link --project-ref ${{ vars.SUPABASE_PROJECT_REF }} --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
+        run: doppler run -- supabase link --project-ref ${{ vars.SUPABASE_PROJECT_REF }} --password "$(doppler secrets get SUPABASE_DB_PASSWORD --plain)"
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
 
       - name: Set edge function secrets
         run: |
-          supabase secrets set \
-            STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }} \
-            STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }} \
+          doppler run -- supabase secrets set \
+            STRIPE_SECRET_KEY="$(doppler secrets get STRIPE_SECRET_KEY --plain)" \
+            STRIPE_WEBHOOK_SECRET="$(doppler secrets get STRIPE_WEBHOOK_SECRET --plain)" \
             --project-ref ${{ vars.SUPABASE_PROJECT_REF }}
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
 
       - name: Deploy functions
-        run: supabase functions deploy --project-ref ${{ vars.SUPABASE_PROJECT_REF }}
+        run: doppler run -- supabase functions deploy --project-ref ${{ vars.SUPABASE_PROJECT_REF }}
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
 
   config:
     name: Push Supabase config
@@ -237,17 +242,18 @@ jobs:
         with:
           version: latest
 
+      - name: Setup Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
       - name: Link project
-        run: supabase link --project-ref ${{ vars.SUPABASE_PROJECT_REF }} --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
+        run: doppler run -- supabase link --project-ref ${{ vars.SUPABASE_PROJECT_REF }} --password "$(doppler secrets get SUPABASE_DB_PASSWORD --plain)"
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
 
       - name: Push config
-        run: supabase config push --yes
+        run: doppler run -- supabase config push --yes
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          AUTH_EXTERNAL_GOOGLE_CLIENT_ID: ${{ vars.AUTH_EXTERNAL_GOOGLE_CLIENT_ID }}
-          AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET: ${{ secrets.AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET }}
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
 
   frontend:
     name: Deploy frontend
