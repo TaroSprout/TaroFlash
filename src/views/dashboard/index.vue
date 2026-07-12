@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useMemberDecksQuery } from '@/api/decks'
 import { useNoticeStore } from '@/stores/notice-store'
@@ -17,13 +17,17 @@ const can = useCan()
 
 const { data: decks_data, error: decks_error } = useMemberDecksQuery()
 const decks = computed(() => {
-  return [...(decks_data.value ?? [])].sort((a, b) =>
-    (a.created_at ?? '').localeCompare(b.created_at ?? '')
-  )
+  return [...(decks_data.value ?? [])].sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
 })
+const editing_decks = ref(false)
+
 watch(decks_error, (err) => {
   if (err) notice.error(err.message)
 })
+
+function onToggleEditDecks() {
+  editing_decks.value = !editing_decks.value
+}
 
 const due_decks = computed(() => {
   return decks.value.filter((deck) => (deck.due_count ?? 0) > 0)
@@ -36,7 +40,11 @@ const due_decks = computed(() => {
     class="grid grid-cols-[1fr] md:grid-cols-[345px_1fr] gap-x-15.5 gap-y-8 md:gap-y-0 px-(--page-px) pt-(--page-pt) pb-12"
   >
     <div data-testid="dashboard__left-column" class="flex flex-col gap-6 self-start">
-      <dashboard-actions-panel :due_decks="due_decks" />
+      <dashboard-actions-panel
+        :due_decks="due_decks"
+        :editing_decks="editing_decks"
+        @toggle-edit-decks="onToggleEditDecks"
+      />
     </div>
 
     <div data-testid="dashboard__right-column" class="flex flex-col gap-y-13 min-w-0">
@@ -49,7 +57,7 @@ const due_decks = computed(() => {
           <deck-grid-sort-options />
         </template>
 
-        <deck-grid :decks="decks" />
+        <deck-grid :decks="decks" :editing="editing_decks" />
       </dashboard-section>
 
       <audio-reader-section v-if="can.useAudioReader.value" />

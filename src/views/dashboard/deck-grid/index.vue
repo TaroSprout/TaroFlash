@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import DeckGridItem from './item.vue'
@@ -9,12 +9,14 @@ import { useDeckActions } from '@/composables/deck/actions'
 import { useDeckSettingsModal } from '@/composables/deck/settings-modal'
 import { buildNewDeckPayload } from '@/utils/deck/defaults'
 import { popDeckIn, popDeckOut } from '@/utils/animations/deck-grid'
+import { useDeckGridReorder } from './use-deck-grid-reorder'
 
 type DeckGridProps = {
   decks: Deck[]
+  editing?: boolean
 }
 
-const { decks } = defineProps<DeckGridProps>()
+const { decks, editing = false } = defineProps<DeckGridProps>()
 
 const { t } = useI18n()
 const router = useRouter()
@@ -23,6 +25,13 @@ const deck_actions = useDeckActions()
 const deck_settings_modal = useDeckSettingsModal()
 
 const creating_deck = ref(false)
+const size = computed(() => (is_md.value ? 'base' : 'sm'))
+
+const { container_el, ...reorder } = useDeckGridReorder(
+  () => decks,
+  () => editing,
+  size
+)
 
 function onDeckClicked(deck: Deck) {
   router.push({ name: 'deck', params: { id: deck.id } })
@@ -43,29 +52,69 @@ async function onCreateDeckClicked() {
 </script>
 
 <template>
-  <transition-group
-    tag="div"
+  <div
+    ref="container_el"
     data-testid="dashboard__decks"
-    class="flex gap-x-3 gap-y-8 flex-wrap"
-    :css="false"
-    @enter="popDeckIn"
-    @leave="popDeckOut"
+    class="relative w-full"
+    :class="{ 'rearrange-no-select': editing }"
+    :style="{ height: `${reorder.row_count.value * reorder.row_pitch.value}px` }"
   >
-    <DeckGridItem
-      v-for="deck in decks"
-      :key="deck.id"
-      :data-deck-id="deck.id"
-      :deck="deck"
-      :size="is_md ? 'base' : 'sm'"
-      @press="onDeckClicked(deck)"
-      @settings="onDeckSettingsClicked(deck)"
-    />
+    <transition-group tag="div" :css="false" @enter="popDeckIn" @leave="popDeckOut">
+      <div
+        v-for="(deck, index) in decks"
+        :key="deck.id"
+        data-testid="deck-grid__item"
+        class="absolute top-0 left-0"
+        :class="{
+          'z-30': index === reorder.dragging_index.value,
+          'cursor-grabbing': index === reorder.dragging_index.value,
+          'cursor-grab': editing && index !== reorder.dragging_index.value
+        }"
+        :style="{
+          width: `${reorder.cell_width.value}px`,
+          transform: `translate(${reorder.itemPosition(index).x}px, ${reorder.itemPosition(index).y}px)`
+        }"
+        @pointerdown="reorder.onItemPointerdown(index, $event)"
+      >
+        <div
+          class="will-change-transform"
+          :class="{ 'transition-transform duration-150 ease-out': reorder.shouldTransition(index) }"
+          :style="{ transform: reorder.dragTransform(index) }"
+        >
+          <DeckGridItem
+            :data-deck-id="deck.id"
+            :deck="deck"
+            :size="size"
+            :rearranging="editing"
+            :dragging="index === reorder.dragging_index.value"
+            :style="reorder.jiggleStyle(index)"
+            @press="onDeckClicked(deck)"
+            @settings="onDeckSettingsClicked(deck)"
+          />
+        </div>
+      </div>
 
-    <NewDeckCard
-      key="new-deck-card"
-      :size="is_md ? 'base' : 'sm'"
-      :loading="creating_deck"
-      @press="onCreateDeckClicked"
-    />
-  </transition-group>
+      <div
+        key="new-deck-card"
+        class="absolute top-0 left-0"
+        :style="{
+          width: `${reorder.cell_width.value}px`,
+          transform: `translate(${reorder.itemPosition(decks.length).x}px, ${reorder.itemPosition(decks.length).y}px)`
+        }"
+      >
+        <NewDeckCard :size="size" :loading="creating_deck" @press="onCreateDeckClicked" />
+      </div>
+    </transition-group>
+  </div>
 </template>
+
+<style scoped>
+/* In edit mode a press-and-hold must not start a text selection or the iOS
+   callout. user-select / touch-callout inherit, so suppressing them on the
+   container covers every card inside. */
+.rearrange-no-select {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+</style>
