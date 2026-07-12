@@ -1,11 +1,23 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 
-const { refreshMock, upsertMock, canCreateDeck, mockWarn, mockModalOpen } = vi.hoisted(() => ({
+const {
+  refreshMock,
+  upsertMock,
+  canCreateDeck,
+  mockWarn,
+  mockModalOpen,
+  mockDeckSettingsOpen,
+  mockWaitForDeckPopIn,
+  call_order
+} = vi.hoisted(() => ({
   refreshMock: vi.fn().mockResolvedValue(undefined),
   upsertMock: vi.fn(),
   canCreateDeck: { value: true },
   mockWarn: vi.fn(),
-  mockModalOpen: vi.fn()
+  mockModalOpen: vi.fn(),
+  mockDeckSettingsOpen: vi.fn(),
+  mockWaitForDeckPopIn: vi.fn().mockResolvedValue(undefined),
+  call_order: []
 }))
 
 vi.mock('@/api/decks', () => ({
@@ -23,6 +35,22 @@ vi.mock('@/composables/alert', () => ({
 
 vi.mock('@/composables/modal', () => ({
   useModal: () => ({ open: mockModalOpen })
+}))
+
+vi.mock('@/composables/deck/settings-modal', () => ({
+  useDeckSettingsModal: () => ({
+    open: (...args) => {
+      call_order.push('settings-modal-open')
+      return mockDeckSettingsOpen(...args)
+    }
+  })
+}))
+
+vi.mock('@/utils/animations/deck-grid', () => ({
+  waitForDeckPopIn: (...args) => {
+    call_order.push('wait-for-pop-in')
+    return mockWaitForDeckPopIn(...args)
+  }
 }))
 
 vi.mock('@/components/billing/checkout-modal/index.vue', () => ({
@@ -47,6 +75,10 @@ describe('useDeckActions', () => {
     mockWarn.mockReset()
     mockWarn.mockReturnValue(makeAlertResponse())
     mockModalOpen.mockClear()
+    mockDeckSettingsOpen.mockClear()
+    mockWaitForDeckPopIn.mockClear()
+    mockWaitForDeckPopIn.mockResolvedValue(undefined)
+    call_order.length = 0
     canCreateDeck.value = true
   })
 
@@ -129,6 +161,55 @@ describe('useDeckActions', () => {
       const { createDeck } = useDeckActions()
 
       await expect(createDeck({ title: 'New Deck' })).resolves.toBeNull()
+    })
+
+    describe('openSettingsAfterCreate', () => {
+      test('awaits the pop-in signal for the new deck id before opening settings, in order [obligation]', async () => {
+        canCreateDeck.value = true
+        upsertMock.mockResolvedValueOnce({ id: 42, title: 'New Deck' })
+        const { createDeck } = useDeckActions()
+
+        await createDeck({ title: 'New Deck' }, { openSettingsAfterCreate: true })
+
+        expect(mockWaitForDeckPopIn).toHaveBeenCalledWith(42)
+        expect(mockDeckSettingsOpen).toHaveBeenCalledWith(expect.objectContaining({ id: 42 }))
+        expect(call_order).toEqual(['wait-for-pop-in', 'settings-modal-open'])
+      })
+
+      test('does not wait or open settings when openSettingsAfterCreate is omitted [obligation]', async () => {
+        canCreateDeck.value = true
+        upsertMock.mockResolvedValueOnce({ id: 42, title: 'New Deck' })
+        const { createDeck } = useDeckActions()
+
+        await createDeck({ title: 'New Deck' })
+
+        expect(mockWaitForDeckPopIn).not.toHaveBeenCalled()
+        expect(mockDeckSettingsOpen).not.toHaveBeenCalled()
+      })
+
+      test('skips the pop-in wait and settings open when the guard blocks creation [obligation]', async () => {
+        canCreateDeck.value = false
+        const { createDeck } = useDeckActions()
+
+        const result = await createDeck({ title: 'Blocked' }, { openSettingsAfterCreate: true })
+
+        expect(result).toBeNull()
+        expect(upsertMock).not.toHaveBeenCalled()
+        expect(mockWaitForDeckPopIn).not.toHaveBeenCalled()
+        expect(mockDeckSettingsOpen).not.toHaveBeenCalled()
+      })
+
+      test('skips the pop-in wait and settings open when the mutation rejects [obligation]', async () => {
+        canCreateDeck.value = true
+        upsertMock.mockRejectedValueOnce(new Error('boom'))
+        const { createDeck } = useDeckActions()
+
+        const result = await createDeck({ title: 'New Deck' }, { openSettingsAfterCreate: true })
+
+        expect(result).toBeNull()
+        expect(mockWaitForDeckPopIn).not.toHaveBeenCalled()
+        expect(mockDeckSettingsOpen).not.toHaveBeenCalled()
+      })
     })
   })
 
