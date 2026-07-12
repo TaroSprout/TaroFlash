@@ -24,12 +24,9 @@ const OPTIONS: { key: SortOption; label_key: string }[] = [
     <span
       v-for="option in OPTIONS"
       :key="option.key"
-      class="cursor-pointer"
-      :class="
-        option.key === selected
-          ? 'text-brown-700 dark:text-brown-100 underline underline-offset-8'
-          : ''
-      "
+      :data-testid="`deck-grid-sort-options__${option.key}`"
+      :data-active="option.key === selected"
+      class="cursor-pointer data-[active=true]:text-brown-700 data-[active=true]:underline data-[active=true]:underline-offset-8 dark:data-[active=true]:text-brown-100"
     >
       {{ t(option.label_key) }}
     </span>
