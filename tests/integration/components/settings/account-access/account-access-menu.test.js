@@ -38,23 +38,23 @@ const UiTooltipStub = defineComponent({
   }
 })
 
-const NavListStub = defineComponent({
-  name: 'UiNavList',
+const OptionsPanelStub = defineComponent({
+  name: 'UiOptionsPanel',
   props: ['entries'],
-  emits: ['navigate'],
+  emits: ['select'],
   setup(props, { emit }) {
     return () =>
       h(
         'div',
-        { 'data-testid': 'ui-nav-list-stub' },
+        { 'data-testid': 'ui-options-panel-stub' },
         props.entries.map((entry) =>
           h(
             'button',
             {
               key: entry.value,
-              'data-testid': 'nav-list__card',
+              'data-testid': 'options-panel__card',
               'data-value': entry.value,
-              onClick: () => emit('navigate', entry.value)
+              onClick: () => emit('select', entry.value)
             },
             entry.label
           )
@@ -66,7 +66,7 @@ const NavListStub = defineComponent({
 function makeWrapper() {
   return mount(AccountAccessMenu, {
     global: {
-      stubs: { UiTooltip: UiTooltipStub, UiNavList: NavListStub },
+      stubs: { UiTooltip: UiTooltipStub, UiOptionsPanel: OptionsPanelStub },
       directives: { sfx: {} }
     }
   })
@@ -90,13 +90,15 @@ describe('AccountAccessMenu', () => {
 
   test('renders the nav list with email and password entries', () => {
     const wrapper = makeWrapper()
-    const cards = wrapper.findAll('[data-testid="nav-list__card"]')
+    const cards = wrapper.findAll('[data-testid="options-panel__card"]')
     expect(cards.map((c) => c.attributes('data-value'))).toEqual(['email', 'password'])
   })
 
   test('emits navigate with the tapped entry value', async () => {
     const wrapper = makeWrapper()
-    await wrapper.find('[data-testid="nav-list__card"][data-value="password"]').trigger('click')
+    await wrapper
+      .find('[data-testid="options-panel__card"][data-value="password"]')
+      .trigger('click')
     expect(wrapper.emitted('navigate')).toEqual([['password']])
   })
 

@@ -2,7 +2,7 @@
 import ToolbarBase from '@/views/deck/mode-toolbar/toolbar-base.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiTag from '@/components/ui-kit/tag.vue'
-import UiNavList, { type NavListEntry } from '@/components/ui-kit/nav-list.vue'
+import UiOptionsPanel, { type OptionsPanelEntry } from '@/components/ui-kit/options-panel/index.vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useBulkActions } from '@/views/deck/composables'
@@ -19,7 +19,7 @@ const {
   onCancel
 } = useBulkActions()
 
-const nav_entries = computed<NavListEntry[]>(() => [
+const nav_entries = computed<OptionsPanelEntry[]>(() => [
   {
     value: 'select-all',
     label: select_all_label.value,
@@ -32,7 +32,7 @@ const nav_entries = computed<NavListEntry[]>(() => [
   }
 ])
 
-function onNavigate(value: string) {
+function onSelect(value: string) {
   if (value === 'select-all') onToggleSelectAll()
   else if (value === 'move') actions.onMoveCards()
 }
@@ -67,7 +67,7 @@ function onNavigate(value: string) {
       </template>
     </toolbar-base>
 
-    <ui-nav-list data-theme="brown-300" :entries="nav_entries" size="lg" @navigate="onNavigate" />
+    <ui-options-panel data-theme="brown-300" :entries="nav_entries" size="lg" @select="onSelect" />
 
     <ui-button
       data-testid="bulk-actions__delete"

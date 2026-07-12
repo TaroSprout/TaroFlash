@@ -81,7 +81,7 @@ describe('TabIndex', () => {
     expect(wrapper.find('[data-testid="tab-index__nav-group--appearance"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="tab-index__nav-group--study"]').exists()).toBe(true)
 
-    const cards = wrapper.findAll('[data-testid="nav-list__card"]')
+    const cards = wrapper.findAll('[data-testid="options-panel__card"]')
     expect(cards).toHaveLength(2)
     expect(cards.map((c) => c.attributes('data-value'))).toEqual(['design', 'study'])
     expect(cards[0].text()).toContain('Appearance')
@@ -90,7 +90,7 @@ describe('TabIndex', () => {
 
   test('study nav entry renders the card-deck icon (matches member-settings study icon) [obligation]', () => {
     const { wrapper } = makeTab('desktop')
-    const studyCard = wrapper.find('[data-testid="nav-list__card"][data-value="study"]')
+    const studyCard = wrapper.find('[data-testid="options-panel__card"][data-value="study"]')
     expect(studyCard.find('[data-testid="ui-icon"]').attributes('data-src')).toBe('card-deck')
   })
 
@@ -98,7 +98,7 @@ describe('TabIndex', () => {
     const { wrapper } = makeTab('tablet')
     const appearanceCards = wrapper
       .find('[data-testid="tab-index__nav-group--appearance"]')
-      .findAll('[data-testid="nav-list__card"]')
+      .findAll('[data-testid="options-panel__card"]')
     expect(appearanceCards).toHaveLength(1)
     expect(appearanceCards[0].attributes('data-value')).toBe('design')
   })
@@ -107,7 +107,7 @@ describe('TabIndex', () => {
     const { wrapper } = makeTab('sheet')
     const appearanceCards = wrapper
       .find('[data-testid="tab-index__nav-group--appearance"]')
-      .findAll('[data-testid="nav-list__card"]')
+      .findAll('[data-testid="options-panel__card"]')
     expect(appearanceCards).toHaveLength(2)
     expect(appearanceCards[0].attributes('data-value')).toBe('details')
     expect(appearanceCards[1].attributes('data-value')).toBe('design')
@@ -116,24 +116,24 @@ describe('TabIndex', () => {
   test('"details" nav entry absent in tablet/desktop (sheet-only) [obligation]', () => {
     const { wrapper: tabletWrapper } = makeTab('tablet')
     expect(
-      tabletWrapper.find('[data-testid="nav-list__card"][data-value="details"]').exists()
+      tabletWrapper.find('[data-testid="options-panel__card"][data-value="details"]').exists()
     ).toBe(false)
     const { wrapper: desktopWrapper } = makeTab('desktop')
     expect(
-      desktopWrapper.find('[data-testid="nav-list__card"][data-value="details"]').exists()
+      desktopWrapper.find('[data-testid="options-panel__card"][data-value="details"]').exists()
     ).toBe(false)
   })
 
   test('emits navigate with the clicked entry value', async () => {
     const { wrapper } = makeTab('desktop')
-    const designCard = wrapper.find('[data-testid="nav-list__card"][data-value="design"]')
+    const designCard = wrapper.find('[data-testid="options-panel__card"][data-value="design"]')
     await designCard.trigger('click')
     expect(wrapper.emitted('navigate')).toEqual([['design']])
   })
 
   test('emits navigate("details") when details card clicked in sheet mode [obligation]', async () => {
     const { wrapper } = makeTab('sheet')
-    await wrapper.find('[data-testid="nav-list__card"][data-value="details"]').trigger('click')
+    await wrapper.find('[data-testid="options-panel__card"][data-value="details"]').trigger('click')
     expect(wrapper.emitted('navigate')).toEqual([['details']])
   })
 

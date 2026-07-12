@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import UiNavList, { type NavListEntry } from '@/components/ui-kit/nav-list.vue'
+import UiOptionsPanel, { type OptionsPanelEntry } from '@/components/ui-kit/options-panel/index.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useGoogleActions } from './use-google-actions'
 
@@ -12,7 +12,7 @@ const { t } = useI18n()
 const { loading, hasGoogleIdentity, hasPasswordIdentity, onConnect, onDisconnect } =
   useGoogleActions()
 
-const entries: NavListEntry[] = [
+const entries: OptionsPanelEntry[] = [
   {
     value: 'email',
     icon: 'mail-envelope',
@@ -25,7 +25,7 @@ const entries: NavListEntry[] = [
   }
 ]
 
-function onNavigate(value: string) {
+function onSelect(value: string) {
   emit('navigate', value as AccountAccessPage)
 }
 
@@ -43,11 +43,11 @@ function onGooglePress() {
       {{ t('account-access-modal.description') }}
     </p>
 
-    <ui-nav-list
+    <ui-options-panel
       data-theme="brown-50"
       :entries="entries"
       :sfx="{ press: 'snappy_button_5' }"
-      @navigate="onNavigate"
+      @select="onSelect"
     />
 
     <ui-button
