@@ -15,7 +15,11 @@ const decksErrorRef = ref(null)
 const useAudioReaderRef = ref(false)
 
 vi.mock('@/api/decks', () => ({
-  useMemberDecksQuery: () => ({ data: decksDataRef, error: decksErrorRef })
+  useMemberDecksQuery: () => ({ data: decksDataRef, error: decksErrorRef }),
+  // Not exercised here (DeckGrid is stubbed by name below) — only needs to
+  // exist so the real deck-grid module graph (statically imported for the
+  // stub-by-name resolution) can resolve this named import.
+  useMoveDeckMutation: () => ({ mutateAsync: () => Promise.resolve() })
 }))
 
 vi.mock('@/composables/can', () => ({
@@ -63,12 +67,15 @@ vi.mock('@/views/study-session/composables/study-modal', () => ({
 
 const DashboardActionsPanelStub = defineComponent({
   name: 'DashboardActionsPanel',
-  props: ['due_decks'],
-  setup(props) {
+  props: ['due_decks', 'editing_decks'],
+  emits: ['toggle-edit-decks'],
+  setup(props, { emit }) {
     return () =>
       h('div', {
         'data-testid': 'dashboard-actions-panel',
-        'data-due-count': props.due_decks.length
+        'data-due-count': props.due_decks.length,
+        'data-editing-decks': String(!!props.editing_decks),
+        onClick: () => emit('toggle-edit-decks')
       })
   }
 })
@@ -96,9 +103,14 @@ const ReviewInboxStub = defineComponent({
 
 const DeckGridStub = defineComponent({
   name: 'DeckGrid',
-  props: ['decks'],
+  props: ['decks', 'editing'],
   setup(props) {
-    return () => h('div', { 'data-testid': 'deck-grid', 'data-deck-count': props.decks.length })
+    return () =>
+      h('div', {
+        'data-testid': 'deck-grid',
+        'data-deck-count': props.decks.length,
+        'data-editing': String(!!props.editing)
+      })
   }
 })
 
@@ -122,8 +134,8 @@ import DashboardIndex from '@/views/dashboard/index.vue'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-function makeDeck(id, { due_count = 0, created_at = `2026-01-0${id}` } = {}) {
-  return { id, title: `Deck ${id}`, due_count, created_at }
+function makeDeck(id, { due_count = 0, rank = id } = {}) {
+  return { id, title: `Deck ${id}`, due_count, rank }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -153,11 +165,11 @@ beforeEach(() => {
 })
 
 describe('DashboardIndex — deck ordering', () => {
-  test('sorts decks by created_at ascending before passing to DeckGrid', () => {
+  test('sorts decks by rank ascending before passing to DeckGrid [obligation]', () => {
     decksDataRef.value = [
-      makeDeck(3, { created_at: '2026-03-01' }),
-      makeDeck(1, { created_at: '2026-01-01' }),
-      makeDeck(2, { created_at: '2026-02-01' })
+      makeDeck(3, { rank: 30 }),
+      makeDeck(1, { rank: 10 }),
+      makeDeck(2, { rank: 20 })
     ]
     const wrapper = mountDashboard()
     expect(
@@ -166,6 +178,22 @@ describe('DashboardIndex — deck ordering', () => {
         .props('decks')
         .map((d) => d.id)
     ).toEqual([1, 2, 3])
+  })
+})
+
+describe('DashboardIndex — edit-decks toggle', () => {
+  test('editing_decks starts false and is forwarded to deck-grid as editing', () => {
+    const wrapper = mountDashboard()
+    expect(wrapper.findComponent(DeckGridStub).props('editing')).toBe(false)
+  })
+
+  test('toggle-edit-decks from the actions panel flips editing on, and again flips it off [obligation]', async () => {
+    const wrapper = mountDashboard()
+    await wrapper.find('[data-testid="dashboard-actions-panel"]').trigger('click')
+    expect(wrapper.findComponent(DeckGridStub).props('editing')).toBe(true)
+
+    await wrapper.find('[data-testid="dashboard-actions-panel"]').trigger('click')
+    expect(wrapper.findComponent(DeckGridStub).props('editing')).toBe(false)
   })
 })
 

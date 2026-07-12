@@ -13,9 +13,14 @@ import { emitSfx } from '@/sfx/bus'
 
 type DashboardActionsPanelProps = {
   due_decks: Deck[]
+  editing_decks?: boolean
 }
 
-const { due_decks } = defineProps<DashboardActionsPanelProps>()
+const { due_decks, editing_decks = false } = defineProps<DashboardActionsPanelProps>()
+
+const emit = defineEmits<{
+  'toggle-edit-decks': []
+}>()
 
 const { t } = useI18n()
 const member_store = useMemberStore()
@@ -34,8 +39,10 @@ const deck_entries = computed<OptionsPanelEntry[]>(() => [
   },
   {
     value: 'edit-decks',
-    label: t('dashboard.actions-panel.edit-decks-label'),
-    trailingIcon: 'pencil'
+    label: editing_decks
+      ? t('dashboard.actions-panel.done-editing-label')
+      : t('dashboard.actions-panel.edit-decks-label'),
+    trailingIcon: editing_decks ? 'data-check' : 'pencil'
   }
 ])
 
@@ -44,6 +51,11 @@ function onStudyAll() {
 }
 
 async function onSelect(value: string) {
+  if (value === 'edit-decks') {
+    emit('toggle-edit-decks')
+    return
+  }
+
   if (value !== 'new-deck' || creating_deck.value) return
 
   creating_deck.value = true

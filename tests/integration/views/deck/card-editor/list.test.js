@@ -24,7 +24,7 @@ vi.mock('@tanstack/vue-virtual', () => ({
     return arr
   }
 }))
-vi.mock('@/views/deck/card-editor/use-reorder-drag', () => ({
+vi.mock('@/composables/use-reorder-drag', () => ({
   useReorderDrag: useReorderDragMock
 }))
 vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: () => ref(true) }))

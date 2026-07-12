@@ -7,7 +7,7 @@ import { useVirtualCardList, type CardEntry } from './virtual-list'
 import { useCardActions } from './actions'
 import { useCardSelection, useCardMutations, useCardLimitGate } from '@/composables/card'
 import { useNoticeStore } from '@/stores/notice-store'
-import { resolveReorderAnchor } from '@/utils/card-editor/selection-payload'
+import { resolveReorderAnchor } from '@/utils/reorder'
 import { emitSfx } from '@/sfx/bus'
 import type { DeckViewShell } from './view-shell'
 

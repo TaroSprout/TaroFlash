@@ -12,6 +12,18 @@ import { useSessionStore } from '@/stores/session'
 
 warmupAnimations()
 
+// The router's own scrollBehavior (savedPosition ?? {top: 0}) only runs on
+// client-side navigations — a hard refresh bypasses it entirely and falls to
+// the browser's native restoration, which tries to replay the last scrollY
+// for this URL. Dashboard content height is query-loaded and genuinely
+// changes during boot, so a native restore against a transient or
+// previously-taller page gets clamped to the bottom once layout settles.
+// Disabling it makes a refresh always start at the top, matching what the
+// route-level fallback already assumes.
+if ('scrollRestoration' in window.history) {
+  window.history.scrollRestoration = 'manual'
+}
+
 window.addEventListener('vite:preloadError', () => {
   const reload_key = 'stale-chunk-reload'
   if (sessionStorage.getItem(reload_key)) return

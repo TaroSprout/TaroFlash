@@ -4,6 +4,7 @@ const { queryMock, capturedTables, capturedRpcs } = vi.hoisted(() => {
   const queryMock = {
     select: vi.fn(),
     eq: vi.fn(),
+    in: vi.fn(),
     order: vi.fn(),
     single: vi.fn(),
     upsert: vi.fn(),
@@ -36,14 +37,17 @@ import {
   fetchMemberDecks,
   fetchDeck,
   fetchMemberDeckCount,
+  fetchDecksByIds,
   upsertDeck,
-  deleteDeck
+  deleteDeck,
+  moveDeck
 } from '@/api/decks/db'
 
 beforeEach(() => {
   Object.values(queryMock).forEach((fn) => fn.mockReset?.())
   queryMock.select.mockReturnValue(queryMock)
   queryMock.eq.mockReturnValue(queryMock)
+  queryMock.in.mockReturnValue(queryMock)
   queryMock.order.mockReturnValue(queryMock)
   queryMock.delete.mockReturnValue(queryMock)
   queryMock.upsert.mockReturnValue(queryMock)
@@ -85,6 +89,35 @@ describe('fetchDeck', () => {
     const err = new Error('missing')
     queryMock.single.mockResolvedValueOnce({ data: null, error: err })
     await expect(fetchDeck(5)).rejects.toBe(err)
+  })
+})
+
+describe('fetchDecksByIds', () => {
+  test('returns an empty array without querying when ids is empty', async () => {
+    const result = await fetchDecksByIds([])
+    expect(result).toEqual([])
+    expect(supabase.rpc).not.toHaveBeenCalled()
+  })
+
+  test('calls decks_with_stats RPC filtered by the given ids', async () => {
+    const rows = [{ id: 1 }, { id: 2 }]
+    queryMock.in.mockResolvedValueOnce({ data: rows, error: null })
+    const result = await fetchDecksByIds([1, 2])
+    expect(capturedRpcs[0].fn).toBe('decks_with_stats')
+    expect(queryMock.in).toHaveBeenCalledWith('id', [1, 2])
+    expect(result).toEqual(rows)
+  })
+
+  test('returns an empty array when data is null', async () => {
+    queryMock.in.mockResolvedValueOnce({ data: null, error: null })
+    const result = await fetchDecksByIds([1])
+    expect(result).toEqual([])
+  })
+
+  test('throws when the query errors', async () => {
+    const err = new Error('denied')
+    queryMock.in.mockResolvedValueOnce({ data: null, error: err })
+    await expect(fetchDecksByIds([1])).rejects.toBe(err)
   })
 })
 
@@ -153,5 +186,24 @@ describe('deleteDeck', () => {
     const err = new Error('denied')
     supabase.rpc.mockImplementationOnce(() => Promise.resolve({ error: err }))
     await expect(deleteDeck(42)).rejects.toBe(err)
+  })
+})
+
+describe('moveDeck', () => {
+  test('calls the move_deck RPC with the deck/anchor/side params and returns the new rank', async () => {
+    supabase.rpc.mockImplementationOnce((fn, args) => {
+      capturedRpcs.push({ fn, args })
+      return Promise.resolve({ data: 15, error: null })
+    })
+    const result = await moveDeck({ deck_id: 1, anchor_id: 2, side: 'after' })
+    expect(capturedRpcs[0].fn).toBe('move_deck')
+    expect(capturedRpcs[0].args).toEqual({ p_deck_id: 1, p_anchor_id: 2, p_side: 'after' })
+    expect(result).toBe(15)
+  })
+
+  test('throws when the RPC errors', async () => {
+    const err = new Error('denied')
+    supabase.rpc.mockImplementationOnce(() => Promise.resolve({ data: null, error: err }))
+    await expect(moveDeck({ deck_id: 1, anchor_id: 2, side: 'before' })).rejects.toBe(err)
   })
 })

@@ -30,6 +30,7 @@ type Deck = {
   card_attributes?: DeckCardAttributes
   has_image?: boolean
   card_count?: number
+  rank?: number
 }
 
 type CardEditorMode = 'view' | 'edit' | 'import-export'

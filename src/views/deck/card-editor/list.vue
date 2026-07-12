@@ -15,7 +15,7 @@ import { useWindowVirtualizer, defaultRangeExtractor } from '@tanstack/vue-virtu
 import { cardEditorKey } from '@/views/deck/composables'
 import { usePinScrollWhileTyping } from '@/composables/ui/pin-scroll-while-typing'
 import { useMatchMedia } from '@/composables/ui/media-query'
-import { useReorderDrag } from './use-reorder-drag'
+import { useReorderDrag } from '@/composables/use-reorder-drag'
 import { liftListItem, dropListItem } from '@/utils/animations/list-item'
 
 const { t } = useI18n()

@@ -13,10 +13,20 @@ const POP_IN_SIGNAL_TIMEOUT = 1000
  * Reveal a freshly created deck thumbnail with a playful pop-in. Also
  * broadcasts a `deck-pop-in` event (read by `waitForDeckPopIn`) once the
  * animation completes, keyed off the element's `data-deck-id` attribute.
+ *
+ * Animates `el`'s first child, not `el` itself: `el` is the transition-group's
+ * direct child and carries the deck grid's reactive resting-position
+ * transform. GSAP's scale tween and this element's translate would otherwise
+ * fight over the same `transform` property (and compose in the wrong
+ * direction — scaling the *ancestor* of a translated element scales its
+ * offset too). Same reason `liftListItem`/`dropListItem` target the deepest
+ * card element instead of a positioned wrapper.
  */
 export function popDeckIn(el: Element, done: () => void) {
+  const target = el.firstElementChild ?? el
+
   gsap.fromTo(
-    el,
+    target,
     { scale: 0.5, opacity: 0 },
     {
       scale: 1,
@@ -60,9 +70,9 @@ export function waitForDeckPopIn(id: number): Promise<void> {
   })
 }
 
-/** Shrink a removed deck thumbnail away. */
+/** Shrink a removed deck thumbnail away. Same first-child target as popDeckIn. */
 export function popDeckOut(el: Element, done: () => void) {
-  gsap.to(el, {
+  gsap.to(el.firstElementChild ?? el, {
     scale: 0.5,
     opacity: 0,
     duration: POP_OUT_DURATION,

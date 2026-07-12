@@ -30,6 +30,17 @@ describe('deck-grid animations', () => {
       )
     })
 
+    // [obligation] animates the innermost DOM child, not the position-carrying wrapper
+    test('animates the first child instead of the wrapper el when el has children [obligation]', () => {
+      const wrapper = document.createElement('div')
+      const inner = document.createElement('div')
+      wrapper.appendChild(inner)
+
+      popDeckIn(wrapper, vi.fn())
+
+      expect(mockFromTo).toHaveBeenCalledWith(inner, expect.anything(), expect.anything())
+    })
+
     test('clears inline props and calls done on complete', () => {
       const done = vi.fn()
       popDeckIn(el, done)
@@ -75,6 +86,17 @@ describe('deck-grid animations', () => {
       popDeckOut(el, done)
 
       expect(done).toHaveBeenCalledTimes(1)
+    })
+
+    // [obligation] same first-child targeting as popDeckIn
+    test('animates the first child instead of the wrapper el when el has children [obligation]', () => {
+      const wrapper = document.createElement('div')
+      const inner = document.createElement('div')
+      wrapper.appendChild(inner)
+
+      popDeckOut(wrapper, vi.fn())
+
+      expect(mockTo).toHaveBeenCalledWith(inner, expect.anything())
     })
   })
 

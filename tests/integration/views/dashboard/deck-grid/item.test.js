@@ -67,3 +67,16 @@ describe('DeckGridItem — settings emit [obligation]', () => {
     expect(wrapper.emitted('press')).toBeFalsy()
   })
 })
+
+describe('DeckGridItem — rearranging mode suppresses press [obligation]', () => {
+  test('pressing the thumbnail while rearranging does not emit press', async () => {
+    const wrapper = mount({ deck: DECK, size: 'base', rearranging: true })
+    await wrapper.find('[data-testid="deck-thumbnail"]').trigger('click')
+    expect(wrapper.emitted('press')).toBeFalsy()
+  })
+
+  test('the corner-action (settings button) is not rendered while rearranging', () => {
+    const wrapper = mount({ deck: DECK, size: 'base', rearranging: true })
+    expect(wrapper.find('[data-testid="dashboard__deck-settings-button"]').exists()).toBe(false)
+  })
+})

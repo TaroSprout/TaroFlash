@@ -89,6 +89,7 @@ export type Database = {
           id: number
           is_public: boolean
           member_id: string
+          rank: number
           study_config: Json | null
           tags: string[] | null
           title: string | null
@@ -103,6 +104,7 @@ export type Database = {
           id?: number
           is_public?: boolean
           member_id: string
+          rank: number
           study_config?: Json | null
           tags?: string[] | null
           title?: string | null
@@ -117,6 +119,7 @@ export type Database = {
           id?: number
           is_public?: boolean
           member_id?: string
+          rank?: number
           study_config?: Json | null
           tags?: string[] | null
           title?: string | null
@@ -760,6 +763,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      deck_rank_between: {
+        Args: {
+          p_left_deck_id: number
+          p_member_id: string
+          p_right_deck_id: number
+        }
+        Returns: number
+      }
       decks_with_stats: {
         Args: { p_today_start: string }
         Returns: {
@@ -775,6 +786,7 @@ export type Database = {
           member_display_name: string
           member_id: string
           new_reviewed_today_count: number
+          rank: number
           reviewed_today_count: number
           study_config: Json
           tags: string[]
@@ -922,8 +934,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      move_deck: {
+        Args: { p_anchor_id: number; p_deck_id: number; p_side: string }
+        Returns: number
+      }
       reap_stalled_lessons: { Args: never; Returns: number }
       reindex_deck_ranks: { Args: { p_deck_id: number }; Returns: undefined }
+      reindex_member_deck_ranks: {
+        Args: { p_member_id: string }
+        Returns: undefined
+      }
       reserve_card: {
         Args: {
           p_deck_id: number
