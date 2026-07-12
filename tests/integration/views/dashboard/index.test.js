@@ -26,10 +26,10 @@ vi.mock('@/stores/notice-store', () => ({
   useNoticeStore: () => ({ error: noticeErrorMock, success: vi.fn(), warn: vi.fn() })
 }))
 
-// The real DeckGrid and MemberSection modules are still imported (only their
-// render output is stubbed below), so their own composable dependencies must
-// resolve. None of this behavior is under test here — it's covered directly
-// in deck-grid/index.test.js and member-section/index.test.js.
+// The real DeckGrid and DashboardActionsPanel modules are still imported (only
+// their render output is stubbed below), so their own composable dependencies
+// must resolve. None of this behavior is under test here — it's covered
+// directly in deck-grid/index.test.js and actions-panel/index.test.js.
 
 vi.mock('vue-router', () => ({
   useRouter: () => ({ push: vi.fn() })
@@ -61,12 +61,15 @@ vi.mock('@/views/study-session/composables/study-modal', () => ({
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
-const MemberSectionStub = defineComponent({
-  name: 'MemberSection',
+const DashboardActionsPanelStub = defineComponent({
+  name: 'DashboardActionsPanel',
   props: ['due_decks'],
   setup(props) {
     return () =>
-      h('div', { 'data-testid': 'member-section', 'data-due-count': props.due_decks.length })
+      h('div', {
+        'data-testid': 'dashboard-actions-panel',
+        'data-due-count': props.due_decks.length
+      })
   }
 })
 
@@ -129,7 +132,7 @@ function mountDashboard() {
   return shallowMount(DashboardIndex, {
     global: {
       stubs: {
-        MemberSection: MemberSectionStub,
+        DashboardActionsPanel: DashboardActionsPanelStub,
         DashboardSection: DashboardSectionStub,
         ReviewInbox: ReviewInboxStub,
         DeckGrid: DeckGridStub,
@@ -167,14 +170,14 @@ describe('DashboardIndex — deck ordering', () => {
 })
 
 describe('DashboardIndex — due decks derivation', () => {
-  test('passes only decks with due_count > 0 to member-section and review-inbox', () => {
+  test('passes only decks with due_count > 0 to actions-panel and review-inbox', () => {
     decksDataRef.value = [
       makeDeck(1, { due_count: 3 }),
       makeDeck(2, { due_count: 0 }),
       makeDeck(3, { due_count: 1 })
     ]
     const wrapper = mountDashboard()
-    expect(wrapper.findComponent(MemberSectionStub).props('due_decks')).toHaveLength(2)
+    expect(wrapper.findComponent(DashboardActionsPanelStub).props('due_decks')).toHaveLength(2)
     expect(wrapper.findComponent(ReviewInboxStub).props('due_decks')).toHaveLength(2)
   })
 })

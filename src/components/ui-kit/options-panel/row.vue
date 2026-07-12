@@ -44,7 +44,7 @@ function onSelect() {
     "
     data-testid="options-panel__card"
     :data-value="entry.value"
-    class="text-(--theme-on-primary) text-left flex items-center gap-3 p-4"
+    class="text-(--theme-on-primary) text-left flex items-center gap-3 py-4 px-6 first:pt-6 first:pb-3 last:pb-6 last:pt-3"
     :class="[
       interactive ? 'cursor-pointer' : '',
       entry.disabled ? 'pointer-events-none opacity-20' : ''

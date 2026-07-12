@@ -71,3 +71,31 @@
   -webkit-mask: var(--cloud-mask);
   mask: var(--cloud-mask);
 }
+
+@utility cloud-top-* {
+  /* main control — depth of the flat cut, not the bump radius */
+  --cloud-size: --value([length]);
+
+  --cloud-cut: var(--cloud-size);
+  --cloud-tile-w: calc(var(--cloud-size) * 1.85); /* 55.5 / 30 */
+  /* bumps are drawn from a circle a bit larger than the cut, so only its
+     shallow cap crosses the cut line — the rest of the circle (and the
+     overlap with its neighbors) sits below, inside the already-opaque
+     region, where it's a no-op. Centering the tile on that larger circle
+     is what pushes it "down"; a bigger circle also means neighbors meet
+     closer to their peak (shallow) instead of their equator (stark). Push
+     the multiplier higher for flatter bumps, but each step trades away
+     cut depth — the valleys stop reaching the full cut the bigger it gets. */
+  --cloud-radius: calc(var(--cloud-size) * 1.3);
+  --cloud-tile-h: calc(var(--cloud-radius) * 2);
+
+  --cloud-mask:
+    /* hide the top strip so bumps carve downward */
+    linear-gradient(180deg, #0000 var(--cloud-cut), #000 0),
+    /* repeated circular bumps along top */
+      radial-gradient(var(--cloud-radius), #000 calc(100% - 1px), #0000) top / var(--cloud-tile-w)
+      var(--cloud-tile-h) repeat-x;
+
+  -webkit-mask: var(--cloud-mask);
+  mask: var(--cloud-mask);
+}

@@ -5,7 +5,7 @@ import { useMemberDecksQuery } from '@/api/decks'
 import { useNoticeStore } from '@/stores/notice-store'
 import { useCan } from '@/composables/can'
 import DashboardSection from './dashboard-section.vue'
-import MemberSection from './member-section/index.vue'
+import DashboardActionsPanel from './actions-panel/index.vue'
 import ReviewInbox from './review-inbox/index.vue'
 import DeckGrid from './deck-grid/index.vue'
 import DeckGridSortOptions from './deck-grid/sort-options.vue'
@@ -36,7 +36,7 @@ const due_decks = computed(() => {
     class="grid grid-cols-[1fr] md:grid-cols-[345px_1fr] gap-x-15.5 gap-y-8 md:gap-y-0 px-(--page-px) pt-(--page-pt) pb-12"
   >
     <div data-testid="dashboard__left-column" class="flex flex-col gap-6 self-start">
-      <member-section :due_decks="due_decks" />
+      <dashboard-actions-panel :due_decks="due_decks" />
     </div>
 
     <div data-testid="dashboard__right-column" class="flex flex-col gap-y-13 min-w-0">

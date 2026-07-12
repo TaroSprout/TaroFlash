@@ -4,7 +4,8 @@ import {
   DECK_CONFIG_DEFAULTS,
   CARD_ATTRIBUTES_DEFAULTS,
   DAILY_LIMIT_BOUNDS,
-  withDeckConfigDefaults
+  withDeckConfigDefaults,
+  buildNewDeckPayload
 } from '@/utils/deck/defaults'
 
 describe('deck defaults', () => {
@@ -67,6 +68,28 @@ describe('deck defaults', () => {
       const result = withDeckConfigDefaults({ shuffle: undefined, is_spaced: undefined })
       expect(result.shuffle).toBe(false)
       expect(result.is_spaced).toBe(true)
+    })
+  })
+
+  describe('buildNewDeckPayload [obligation]', () => {
+    test('passes the given title through', () => {
+      expect(buildNewDeckPayload('My Deck').title).toBe('My Deck')
+    })
+
+    test('applies the is_public default', () => {
+      expect(buildNewDeckPayload('My Deck').is_public).toBe(DECK_SETTINGS_DEFAULTS.is_public)
+    })
+
+    test('applies the study_config default', () => {
+      expect(buildNewDeckPayload('My Deck').study_config).toEqual({
+        study_all_cards: DECK_CONFIG_DEFAULTS.study_all_cards
+      })
+    })
+
+    test('populates a cover_config', () => {
+      const result = buildNewDeckPayload('My Deck')
+      expect(result.cover_config).toBeTruthy()
+      expect(typeof result.cover_config).toBe('object')
     })
   })
 })

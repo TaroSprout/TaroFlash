@@ -5,6 +5,8 @@
  * core (when filling missing fields on a loaded deck) read from here.
  */
 
+import { randomCoverConfig } from '@/utils/cover'
+
 export const DECK_SETTINGS_DEFAULTS = {
   is_public: true
 } as const
@@ -53,4 +55,14 @@ export function withDeckConfigDefaults(partial?: Partial<DeckConfig>): Required<
     if (v !== undefined) (out as Record<string, unknown>)[k] = v
   }
   return out
+}
+
+/** Payload for a freshly created deck: given title, default settings, a random cover. */
+export function buildNewDeckPayload(title: string): Deck {
+  return {
+    title,
+    is_public: DECK_SETTINGS_DEFAULTS.is_public,
+    study_config: { study_all_cards: DECK_CONFIG_DEFAULTS.study_all_cards },
+    cover_config: randomCoverConfig()
+  } as Deck
 }
