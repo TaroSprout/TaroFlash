@@ -90,3 +90,24 @@ export async function deleteDeck(id: number): Promise<void> {
     throw error
   }
 }
+
+export type MoveDeckParams = {
+  deck_id: number
+  anchor_id: number
+  side: 'before' | 'after'
+}
+
+export async function moveDeck(params: MoveDeckParams): Promise<number> {
+  const { data, error } = await supabase.rpc('move_deck', {
+    p_deck_id: params.deck_id,
+    p_anchor_id: params.anchor_id,
+    p_side: params.side
+  })
+
+  if (error) {
+    logger.error(error.message)
+    throw error
+  }
+
+  return data
+}
