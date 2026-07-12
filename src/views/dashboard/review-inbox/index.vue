@@ -31,7 +31,7 @@ function onItemClicked(deck: Deck) {
     <div
       ref="items_el"
       data-testid="review-inbox__items"
-      class="flex-1 min-w-0 flex gap-3 overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-px-4 touch-pan-x scroll-hidden pt-4"
+      class="flex-1 min-w-0 flex gap-3 overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-px-4 touch-pan-x scroll-hidden pt-1.5"
     >
       <review-inbox-item
         v-for="deck in due_decks"

@@ -396,7 +396,7 @@
   "study.settings.flip-toggle": "Flip cards",
   "study.settings.card-limit-label": "Card limit",
   "edit-card-modal.title": "Edit Card",
-  "dashboard.deck-filter.due-label": "Due",
+  "dashboard.deck-filter.due-label": "Due Decks",
   "dashboard.deck-filter.all-label": "All Decks",
   "dashboard.create-deck-button": "Make a New Deck",
   "dashboard.new-deck-card.label": "New Deck",

@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useMemberDecksQuery } from '@/api/decks'
 import { useNoticeStore } from '@/stores/notice-store'
 import { useCan } from '@/composables/can'
+import DashboardSection from './dashboard-section.vue'
 import MemberSection from './member-section/index.vue'
 import ReviewInbox from './review-inbox/index.vue'
 import DeckGrid from './deck-grid/index.vue'
 import AudioReaderSection from './audio-reader-section.vue'
 
+const { t } = useI18n()
 const notice = useNoticeStore()
 const can = useCan()
 
@@ -35,10 +38,14 @@ const due_decks = computed(() => {
       <member-section :due_decks="due_decks" />
     </div>
 
-    <div data-testid="dashboard__right-column" class="flex flex-col gap-y-24 min-w-0">
-      <review-inbox v-if="due_decks.length > 0" :due_decks="due_decks" />
+    <div data-testid="dashboard__right-column" class="flex flex-col gap-y-13 min-w-0">
+      <dashboard-section v-if="due_decks.length > 0" :label="t('dashboard.deck-filter.due-label')">
+        <review-inbox :due_decks="due_decks" />
+      </dashboard-section>
 
-      <deck-grid :decks="decks" />
+      <dashboard-section :label="t('dashboard.deck-filter.all-label')">
+        <deck-grid :decks="decks" />
+      </dashboard-section>
 
       <audio-reader-section v-if="can.useAudioReader.value" />
     </div>
