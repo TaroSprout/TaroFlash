@@ -15,7 +15,7 @@ import {
 } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useWindowVirtualizer, defaultRangeExtractor } from '@tanstack/vue-virtual'
-import { useReorderDrag } from '@/views/deck/card-editor/use-reorder-drag'
+import { useReorderDrag } from '@/composables/use-reorder-drag'
 import { liftListItem, dropListItem } from '@/utils/animations/list-item'
 
 type VisibleItem = { index: number; card: CardWithClientId; x: number; y: number }
