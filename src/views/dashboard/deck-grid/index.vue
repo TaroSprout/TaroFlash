@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import DeckGridItem from './item.vue'
@@ -26,8 +26,10 @@ const deck_settings_modal = useDeckSettingsModal()
 
 const creating_deck = ref(false)
 const size = computed(() => (is_md.value ? 'base' : 'sm'))
+const container_el = useTemplateRef<HTMLElement>('container_el')
 
-const { container_el, ...reorder } = useDeckGridReorder(
+const reorder = useDeckGridReorder(
+  container_el,
   () => decks,
   () => editing,
   size

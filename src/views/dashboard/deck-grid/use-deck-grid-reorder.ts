@@ -5,6 +5,7 @@ import {
   ref,
   watch,
   type MaybeRefOrGetter,
+  type Ref,
   toValue
 } from 'vue'
 import { useMoveDeckMutation } from '@/api/decks'
@@ -29,6 +30,7 @@ const HOLD_TOLERANCE = 8
  * measurement.
  */
 export function useDeckGridReorder(
+  container_el: Ref<HTMLElement | null>,
   decks: MaybeRefOrGetter<Deck[]>,
   editing: MaybeRefOrGetter<boolean>,
   size: MaybeRefOrGetter<'base' | 'sm'>
@@ -37,7 +39,6 @@ export function useDeckGridReorder(
   const notice = useNoticeStore()
   const move_deck_mutation = useMoveDeckMutation()
 
-  const container_el = ref<HTMLElement | null>(null)
   const container_width = ref(0)
 
   const { cell_width, gap_x, columns, row_count, row_pitch, itemPosition } = useDeckGrid(
@@ -178,7 +179,6 @@ export function useDeckGridReorder(
   )
 
   return {
-    container_el,
     cell_width,
     row_count,
     row_pitch,
