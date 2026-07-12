@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import GroupedList from '@/components/layout-kit/grouped-list.vue'
+import UiOptionsPanel, { type OptionsPanelEntry } from '@/components/ui-kit/options-panel.vue'
 import SectionHeader from '../section-header.vue'
 
 type RoadmapItem = {
@@ -23,6 +23,15 @@ const items: RoadmapItem[] = [
   { key: 'paperclips-shop', done: false },
   { key: 'bulk-edit', done: false }
 ]
+
+function itemFor(value: string) {
+  return items.find((item) => item.key === value)!
+}
+
+const entries: OptionsPanelEntry[] = items.map((item) => ({
+  value: item.key,
+  label: t(`welcome-view.roadmap.item.${item.key}`)
+}))
 </script>
 
 <template>
@@ -40,48 +49,42 @@ const items: RoadmapItem[] = [
         :subtitle="t('welcome-view.roadmap.subtitle')"
       />
 
-      <grouped-list
+      <ui-options-panel
         data-testid="welcome-roadmap__list"
         data-theme="brown-50"
         class="w-full max-w-200"
+        :entries="entries"
+        :interactive="false"
       >
-        <div
-          v-for="item in items"
-          :key="item.key"
-          :data-testid="`welcome-roadmap__item-${item.key}`"
-          class="flex items-center gap-3 py-4 px-6"
-        >
+        <template #leading="{ entry }">
           <span
             aria-hidden="true"
             class="flex shrink-0 items-center justify-center size-8 rounded-full"
             :class="
-              item.done
+              itemFor(entry.value).done
                 ? 'bg-green-500 dark:bg-green-800 text-brown-100'
                 : 'border-3 border-dashed border-brown-500'
             "
           >
-            <ui-icon v-if="item.done" src="check" class="size-4.5" />
+            <ui-icon v-if="itemFor(entry.value).done" src="check" class="size-4.5" />
           </span>
+        </template>
 
-          <span
-            class="flex-1 text-lg text-(--theme-on-primary)"
-            :class="{ 'line-through opacity-70': item.done }"
-          >
-            {{ t(`welcome-view.roadmap.item.${item.key}`) }}
-          </span>
-
+        <template #trailing="{ entry }">
           <span
             class="text-base"
-            :class="item.done ? 'text-green-600 dark:text-green-800' : 'text-brown-500'"
+            :class="
+              itemFor(entry.value).done ? 'text-green-600 dark:text-green-800' : 'text-brown-500'
+            "
           >
             {{
-              item.done
+              itemFor(entry.value).done
                 ? t('welcome-view.roadmap.done-label')
                 : t('welcome-view.roadmap.upcoming-label')
             }}
           </span>
-        </div>
-      </grouped-list>
+        </template>
+      </ui-options-panel>
     </div>
   </section>
 </template>

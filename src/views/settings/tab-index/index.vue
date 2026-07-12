@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import UiNavList from '@/components/ui-kit/nav-list.vue'
+import UiOptionsPanel from '@/components/ui-kit/options-panel.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import DangerDeleteAccountButton from '../danger-delete-account-button.vue'
@@ -36,7 +36,7 @@ const emit = defineEmits<{
   navigate: [value: TabIndexNavValue]
 }>()
 
-function onNavigate(value: string) {
+function onSelect(value: string) {
   emit('navigate', value as TabIndexNavValue)
 }
 </script>
@@ -49,7 +49,7 @@ function onNavigate(value: string) {
       :data-testid="`tab-index__nav-group--${group.key}`"
       :label="group.heading"
     >
-      <ui-nav-list
+      <ui-options-panel
         :entries="
           group.entries.map((value) => ({
             value,
@@ -58,7 +58,7 @@ function onNavigate(value: string) {
           }))
         "
         :sfx="{ press: 'snappy_button_5' }"
-        @navigate="onNavigate"
+        @select="onSelect"
       />
     </labeled-section>
 

@@ -5,11 +5,9 @@ import Card from '@/components/card/index.vue'
 import { useI18n } from 'vue-i18n'
 import UiRadio from '@/components/ui-kit/radio.vue'
 import UiButton from '@/components/ui-kit/button.vue'
-import UiTappable from '@/components/ui-kit/tappable.vue'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
-import GroupedList from '@/components/layout-kit/grouped-list.vue'
+import UiOptionsPanel, { type OptionsPanelEntry } from '@/components/ui-kit/options-panel.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
-import { TYPE_SFX } from '@/sfx/config'
 import { useCardLimitGate } from '@/composables/card/limit-gate'
 import { useCan } from '@/composables/can'
 import { useNoticeStore } from '@/stores/notice-store'
@@ -33,7 +31,6 @@ const { t } = useI18n()
 const can = useCan()
 const { data: decks } = useMemberDecksQuery()
 const selected_deck_id = ref<number | undefined>(undefined)
-const hovered_deck_id = ref<number | undefined>(undefined)
 const moving = ref(false)
 
 const title = computed(() => {
@@ -56,6 +53,18 @@ function isDeckFull(deck: Deck) {
   return !can.addCards(deck.card_count ?? 0, moving_count.value)
 }
 
+const entries = computed<OptionsPanelEntry[]>(() =>
+  (decks.value ?? []).map((deck) => ({
+    value: String(deck.id),
+    label: deck.title ?? '',
+    disabled: deck.id === current_deck_id || isDeckFull(deck)
+  }))
+)
+
+function deckFor(value: string) {
+  return (decks.value ?? []).find((deck) => deck.id === Number(value))!
+}
+
 async function onMove() {
   if (!selected_deck_id.value) return
   if (!(await guardAddCards(moving_count.value))) return
@@ -72,13 +81,10 @@ async function onMove() {
   }
 }
 
-function onClick(deck_id?: number) {
-  if (deck_id === selected_deck_id.value) {
-    selected_deck_id.value = undefined
-    return
-  }
+function onSelect(value: string) {
+  const deck_id = Number(value)
 
-  selected_deck_id.value = deck_id
+  selected_deck_id.value = deck_id === selected_deck_id.value ? undefined : deck_id
 }
 </script>
 
@@ -94,27 +100,21 @@ function onClick(deck_id?: number) {
       data-testid="move-cards__deck-list-wrap"
       class="relative flex min-h-0 flex-1 flex-col px-(--dialog-px)"
     >
-      <grouped-list data-testid="move-cards__deck-list" scrollable class="my-4 min-h-0 flex-1">
-        <ui-tappable
-          v-for="(deck, index) in decks"
-          :key="index"
-          data-testid="move-cards__deck-item"
-          :class="[
-            deck.id === current_deck_id || isDeckFull(deck)
-              ? ' bg-brown-300 dark:bg-stone-700 pointer-events-none text-(--theme-on-primary)/20'
-              : 'cursor-pointer'
-          ]"
-          class="text-(--theme-on-primary) text-left flex items-center gap-3 p-4"
-          active_on_hover
-          :sfx="{ press: 'snappy_button_2', hover: TYPE_SFX }"
-          @tap="onClick(deck.id)"
-          @mouseenter="hovered_deck_id = deck.id"
-          @mouseleave="hovered_deck_id = undefined"
-        >
-          <card size="2xs" :cover_config="deck.cover_config" side="cover" />
-          <span class="flex-1">{{ deck.title }}</span>
+      <ui-options-panel
+        data-testid="move-cards__deck-list"
+        scrollable
+        class="my-4 min-h-0 flex-1"
+        :entries="entries"
+        :sfx="{ press: 'snappy_button_2' }"
+        @select="onSelect"
+      >
+        <template #leading="{ entry }">
+          <card size="2xs" :cover_config="deckFor(entry.value).cover_config" side="cover" />
+        </template>
+
+        <template #trailing="{ entry }">
           <span
-            v-if="deck.id !== current_deck_id && isDeckFull(deck)"
+            v-if="isDeckFull(deckFor(entry.value)) && Number(entry.value) !== current_deck_id"
             data-testid="move-cards__deck-full-label"
             class="text-sm"
           >
@@ -122,16 +122,18 @@ function onClick(deck_id?: number) {
           </span>
           <ui-radio
             v-else
-            :class="{ 'opacity-20': deck.id === current_deck_id }"
+            class="group-hover/tappable:bg-(--theme-primary)!"
+            :class="{ 'opacity-20': Number(entry.value) === current_deck_id }"
             data-theme="blue-500"
             data-theme-dark="blue-650"
             :sfx="{ press: 'snappy_button_2' }"
-            :checked="deck.id === selected_deck_id || deck.id === current_deck_id"
-            :active="deck.id === hovered_deck_id"
-            @click.stop="selected_deck_id = deck.id"
+            :checked="
+              Number(entry.value) === selected_deck_id || Number(entry.value) === current_deck_id
+            "
+            @click.stop="selected_deck_id = Number(entry.value)"
           />
-        </ui-tappable>
-      </grouped-list>
+        </template>
+      </ui-options-panel>
 
       <scroll-bar
         target="[data-testid='move-cards__deck-list__content']"
