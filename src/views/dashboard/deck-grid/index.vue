@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef } from 'vue'
+import { computed, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import DeckGridItem from './item.vue'
@@ -33,6 +33,25 @@ const reorder = useDeckGridReorder(
   () => decks,
   () => editing,
   size
+)
+
+// Animate a slot reflow only when the deck count itself changes (delete/create)
+// — a drag-drop reorder already has its own lift/drop settle animation, and
+// transitioning the resting position too would fight it (the dropped card
+// would visibly slide from its pre-persist slot to its post-persist one).
+const REFLOW_TRANSITION_DURATION = 200
+const reflowing = ref(false)
+let reflow_timeout = 0
+
+watch(
+  () => decks.length,
+  () => {
+    reflowing.value = true
+    window.clearTimeout(reflow_timeout)
+    reflow_timeout = window.setTimeout(() => {
+      reflowing.value = false
+    }, REFLOW_TRANSITION_DURATION)
+  }
 )
 
 // TransitionGroup's `appear` never fires here: this route renders inside a
@@ -87,7 +106,8 @@ async function onCreateDeckClicked() {
         :class="{
           'z-30': index === reorder.dragging_index.value,
           'cursor-grabbing': index === reorder.dragging_index.value,
-          'cursor-grab': editing && index !== reorder.dragging_index.value
+          'cursor-grab': editing && index !== reorder.dragging_index.value,
+          'transition-transform duration-200 ease-out': reflowing
         }"
         :style="{
           width: `${reorder.cell_width.value}px`,
@@ -115,6 +135,7 @@ async function onCreateDeckClicked() {
       <div
         key="new-deck-card"
         class="absolute top-0 left-0"
+        :class="{ 'transition-transform duration-200 ease-out': reflowing }"
         :style="{
           width: `${reorder.cell_width.value}px`,
           transform: `translate(${reorder.itemPosition(decks.length).x}px, ${reorder.itemPosition(decks.length).y}px)`
