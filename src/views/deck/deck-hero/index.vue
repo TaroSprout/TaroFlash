@@ -37,17 +37,22 @@ const is_desktop = useMatchMedia('w>=xl')
     >
       <deck-details :deck="deck" />
 
-      <div v-if="!hideActions" data-testid="deck-hero__actions-wrap" class="relative w-full">
+      <div
+        v-if="!hideActions"
+        data-testid="deck-hero__actions-wrap"
+        class="grid w-full items-start pb-0.5"
+      >
         <Transition :css="false" @enter="defaultEnter" @leave="defaultLeave">
           <actions
             v-if="!is_desktop || !is_selecting"
+            class="col-start-1 row-start-1"
             :deck="deck"
             :is-selecting="!!is_selecting"
           />
         </Transition>
 
         <Transition :css="false" @enter="bulkEnter" @leave="bulkLeave">
-          <bulk-actions v-if="is_desktop && is_selecting" class="absolute inset-0" />
+          <bulk-actions v-if="is_desktop && is_selecting" class="col-start-1 row-start-1" />
         </Transition>
       </div>
     </div>
