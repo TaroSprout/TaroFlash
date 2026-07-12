@@ -2,6 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import DeckThumbnail from '@/components/deck/deck-thumbnail.vue'
 import UiButton from '@/components/ui-kit/button.vue'
+import DeckGridDeleteButton from './delete-button.vue'
 
 type DeckGridItemProps = {
   deck: Deck
@@ -28,32 +29,35 @@ function onPress() {
 </script>
 
 <template>
-  <DeckThumbnail
-    :deck="deck"
-    :size="size"
-    :sfx="{ press: 'snappy_button_5' }"
-    class="w-full"
-    :class="{
-      jiggle: rearranging && !dragging,
-      'pointer-events-none cursor-grab': rearranging
-    }"
-    @press="onPress"
-  >
-    <template v-if="!rearranging" #corner-action>
-      <ui-button
-        data-testid="dashboard__deck-settings-button"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
-        icon-left="build"
-        icon-only
-        @click.stop
-        @press="emit('settings')"
-        class="ring-4 ring-brown-100 dark:ring-grey-900"
-      >
-        {{ t('deck.settings-modal.title') }}
-      </ui-button>
-    </template>
-  </DeckThumbnail>
+  <div class="w-full" :class="{ jiggle: rearranging && !dragging }">
+    <DeckThumbnail
+      :deck="deck"
+      :size="size"
+      :corner_action_always_visible="rearranging"
+      :rearranging="rearranging"
+      :dragging="dragging"
+      :sfx="{ press: 'snappy_button_5' }"
+      class="w-full"
+      @press="onPress"
+    >
+      <template #corner-action>
+        <DeckGridDeleteButton v-if="rearranging" :deck="deck" @pointerdown.stop />
+        <ui-button
+          v-else
+          data-testid="dashboard__deck-settings-button"
+          data-theme="blue-500"
+          data-theme-dark="blue-650"
+          icon-left="build"
+          icon-only
+          @click.stop
+          @press="emit('settings')"
+          class="ring-4 ring-brown-100 dark:ring-grey-900"
+        >
+          {{ t('deck.settings-modal.title') }}
+        </ui-button>
+      </template>
+    </DeckThumbnail>
+  </div>
 </template>
 
 <style scoped>
@@ -61,19 +65,20 @@ function onPress() {
    tempo are set per card via --jiggle-* so the grid doesn't beat in unison. */
 @keyframes deck-grid-item-jiggle {
   0% {
-    transform: rotate(-1.4deg);
+    transform: rotate(calc(var(--jiggle-rotation, 1.4deg) * -1));
   }
   50% {
-    transform: rotate(1.4deg);
+    transform: rotate(var(--jiggle-rotation, 1.4deg));
   }
   100% {
-    transform: rotate(-1.4deg);
+    transform: rotate(calc(var(--jiggle-rotation, 1.4deg) * -1));
   }
 }
 
-/* .jiggle is bound directly on DeckThumbnail's root (not a descendant), so
-   this stays a plain scoped selector — :deep() would compile to a descendant
-   combinator and never match. */
+/* .jiggle sits on a wrapper around DeckThumbnail, not DeckThumbnail's own
+   root — that root also carries a hover-scale transform (see deck-thumbnail.vue),
+   and one element can't animate + hover-transition the same `transform`
+   property without one clobbering the other. */
 .jiggle {
   animation: deck-grid-item-jiggle var(--jiggle-duration, 0.26s) ease-in-out infinite;
   animation-delay: var(--jiggle-delay, 0s);
