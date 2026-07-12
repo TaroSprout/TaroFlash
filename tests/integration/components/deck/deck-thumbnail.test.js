@@ -190,6 +190,59 @@ describe('DeckThumbnail', () => {
     expect(wrapper.emitted('press')).toHaveLength(1)
   })
 
+  // ── rearranging/dragging/corner_action_always_visible [obligation] ───────────
+
+  describe('rearranging/dragging/corner_action_always_visible [obligation]', () => {
+    test('rearranging adds pointer-events-none select-none to the Card and cursor-grab to the root', () => {
+      const wrapper = mountWithDeck({}, { rearranging: true })
+      const card = wrapper.findComponent({ name: 'Card' })
+      expect(card.classes()).toContain('pointer-events-none')
+      expect(card.classes()).toContain('select-none')
+      expect(wrapper.find('[data-testid="deck-thumbnail"]').classes()).toContain('cursor-grab')
+    })
+
+    test('not rearranging keeps the default hover-scale classes and drops cursor-grab', () => {
+      const wrapper = mountWithDeck({}, { rearranging: false })
+      const root = wrapper.find('[data-testid="deck-thumbnail"]')
+      expect(root.classes()).not.toContain('cursor-grab')
+      expect(root.classes()).toContain('cursor-pointer')
+    })
+
+    test('dragging adds drop-shadow-sm to the root', () => {
+      const wrapper = mountWithDeck({}, { dragging: true })
+      expect(wrapper.find('[data-testid="deck-thumbnail"]').classes()).toContain('drop-shadow-sm')
+    })
+
+    test('not dragging omits drop-shadow-sm', () => {
+      const wrapper = mountWithDeck({}, { dragging: false })
+      expect(wrapper.find('[data-testid="deck-thumbnail"]').classes()).not.toContain(
+        'drop-shadow-sm'
+      )
+    })
+
+    test('corner_action_always_visible keeps the corner-action slot visible without hover', () => {
+      const wrapper = shallowMount(DeckThumbnail, {
+        props: { deck: { title: 'X' }, corner_action_always_visible: true },
+        slots: { 'corner-action': '<button data-testid="corner-button">act</button>' },
+        global: { stubs: { UiTappable: UiTappableStub } }
+      })
+      const corner = wrapper.find('[data-testid="deck-thumbnail__corner-action"]')
+      expect(corner.classes()).toContain('opacity-100')
+      expect(corner.classes()).toContain('pointer-events-auto')
+    })
+
+    test('defaults to hover-only visibility for the corner-action slot', () => {
+      const wrapper = shallowMount(DeckThumbnail, {
+        props: { deck: { title: 'X' } },
+        slots: { 'corner-action': '<button data-testid="corner-button">act</button>' },
+        global: { stubs: { UiTappable: UiTappableStub } }
+      })
+      const corner = wrapper.find('[data-testid="deck-thumbnail__corner-action"]')
+      expect(corner.classes()).toContain('opacity-0')
+      expect(corner.classes()).not.toContain('opacity-100')
+    })
+  })
+
   // ── sfx prop spread (obligation 7) ───────────────────────────────────────────
 
   describe('sfx prop — default + override [obligation]', () => {

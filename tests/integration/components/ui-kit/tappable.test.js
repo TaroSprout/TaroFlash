@@ -139,6 +139,18 @@ describe('UiTappable — data-tap-active state', () => {
   })
 })
 
+describe('UiTappable — active prop [obligation]', () => {
+  test('data-tap-active is "true" when active is true, with no hover or press', () => {
+    const wrapper = mountTappable({ active: true })
+    expect(wrapper.attributes('data-tap-active')).toBe('true')
+  })
+
+  test('data-tap-active is absent when active is false and nothing else is active', () => {
+    const wrapper = mountTappable({ active: false })
+    expect(wrapper.attributes('data-tap-active')).toBeUndefined()
+  })
+})
+
 describe('UiTappable — active_on_hover [obligation]', () => {
   test('hover does not set data-tap-active when active_on_hover is unset (default off)', async () => {
     fineRef.value = true

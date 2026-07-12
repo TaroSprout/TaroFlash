@@ -135,6 +135,55 @@ describe('OptionsPanel', () => {
     })
   })
 
+  // ── selected state [obligation] ──────────────────────────────────────────
+
+  test('a selected entry gets data-active=true and the theme-primary fill class', () => {
+    const wrapper = makePanel({
+      entries: [
+        ...ENTRIES,
+        { value: 'edit-decks', label: 'Edit Decks', selected: true, selectedTheme: 'yellow-500' }
+      ]
+    })
+    const card = wrapper.find('[data-testid="options-panel__card"][data-value="edit-decks"]')
+    expect(card.attributes('data-active')).toBe('true')
+    expect(card.classes()).toContain('data-[active=true]:bg-(--theme-primary)')
+  })
+
+  test('an unselected entry has no data-active attribute', () => {
+    const wrapper = makePanel({
+      entries: [...ENTRIES, { value: 'edit-decks', label: 'Edit Decks', selected: false }]
+    })
+    const card = wrapper.find('[data-testid="options-panel__card"][data-value="edit-decks"]')
+    expect(card.attributes('data-active')).toBeUndefined()
+  })
+
+  test('applies selectedTheme/selectedThemeDark as data-theme/data-theme-dark while selected', () => {
+    const wrapper = makePanel({
+      entries: [
+        ...ENTRIES,
+        {
+          value: 'edit-decks',
+          label: 'Edit Decks',
+          selected: true,
+          selectedTheme: 'yellow-500',
+          selectedThemeDark: 'yellow-700'
+        }
+      ]
+    })
+    const card = wrapper.find('[data-testid="options-panel__card"][data-value="edit-decks"]')
+    expect(card.attributes('data-theme')).toBe('yellow-500')
+    expect(card.attributes('data-theme-dark')).toBe('yellow-700')
+  })
+
+  test('falls back to no explicit data-theme when selected but selectedTheme is omitted', () => {
+    const wrapper = makePanel({
+      entries: [...ENTRIES, { value: 'edit-decks', label: 'Edit Decks', selected: true }]
+    })
+    const card = wrapper.find('[data-testid="options-panel__card"][data-value="edit-decks"]')
+    expect(card.attributes('data-theme')).toBeUndefined()
+    expect(card.attributes('data-theme-dark')).toBeUndefined()
+  })
+
   // ── content testid derivation ────────────────────────────────────────────
 
   test('content div falls back to options-panel__content when caller passes no data-testid', () => {

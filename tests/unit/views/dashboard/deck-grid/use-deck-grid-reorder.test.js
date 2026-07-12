@@ -232,6 +232,21 @@ describe('useDeckGridReorder — jiggleStyle', () => {
     expect(a['--jiggle-delay']).not.toBe(b['--jiggle-delay'])
     expect(a['--jiggle-duration']).not.toBe(b['--jiggle-duration'])
   })
+
+  test('sets a lighter --jiggle-rotation than the deck-view card grid default [obligation]', () => {
+    const container_el = ref(document.createElement('div'))
+    let reorder
+    ;({ app, result: reorder } = withSetup(() =>
+      useDeckGridReorder(
+        container_el,
+        () => [deck(1)],
+        () => true,
+        () => 'base'
+      )
+    ))
+
+    expect(reorder.jiggleStyle(0)['--jiggle-rotation']).toBe('0.7deg')
+  })
 })
 
 // ── onItemPointerdown ──────────────────────────────────────────────────────────

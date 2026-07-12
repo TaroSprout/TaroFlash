@@ -108,22 +108,19 @@ describe('useDeckDangerActions', () => {
       expect(close).not.toHaveBeenCalled()
     })
 
-    test('fires the success notice but does not close or navigate yet', async () => {
+    test('deletes and closes immediately without a success notice [obligation]', async () => {
       const editor = makeEditor({ deleteOk: true })
       const { onDelete } = useDeckDangerActions(editor, deck, close)
       confirmResponse(true)
 
       await onDelete()
 
-      expect(mockNotice.success).toHaveBeenCalledWith(
-        'toast.success.deck-deleted',
-        expect.objectContaining({ variant: 'panel' })
-      )
-      expect(close).not.toHaveBeenCalled()
-      expect(mockRouter.push).not.toHaveBeenCalled()
+      expect(editor.deleteDeck).toHaveBeenCalledTimes(1)
+      expect(close).toHaveBeenCalledWith(true)
+      expect(mockNotice.success).not.toHaveBeenCalled()
     })
 
-    test('onDismiss closes with true and navigates to dashboard when viewing the deleted deck', async () => {
+    test('navigates to dashboard when viewing the deleted deck [obligation]', async () => {
       const editor = makeEditor({ deleteOk: true })
       mockRoute.name = 'deck'
       mockRoute.params = { id: '42' }
@@ -131,28 +128,24 @@ describe('useDeckDangerActions', () => {
       confirmResponse(true)
 
       await onDelete()
-      const [, options] = mockNotice.success.mock.calls[0]
-      options.onDismiss()
 
       expect(close).toHaveBeenCalledWith(true)
       expect(mockRouter.push).toHaveBeenCalledWith({ name: 'dashboard' })
     })
 
-    test('onDismiss closes with true but does not navigate when viewing an unrelated route', async () => {
+    test('does not navigate when viewing an unrelated route [obligation]', async () => {
       const editor = makeEditor({ deleteOk: true })
       mockRoute.name = 'dashboard'
       const { onDelete } = useDeckDangerActions(editor, deck, close)
       confirmResponse(true)
 
       await onDelete()
-      const [, options] = mockNotice.success.mock.calls[0]
-      options.onDismiss()
 
       expect(close).toHaveBeenCalledWith(true)
       expect(mockRouter.push).not.toHaveBeenCalled()
     })
 
-    test('onDismiss does not navigate when viewing a different deck', async () => {
+    test('does not navigate when viewing a different deck [obligation]', async () => {
       const editor = makeEditor({ deleteOk: true })
       mockRoute.name = 'deck'
       mockRoute.params = { id: '99' }
@@ -160,9 +153,8 @@ describe('useDeckDangerActions', () => {
       confirmResponse(true)
 
       await onDelete()
-      const [, options] = mockNotice.success.mock.calls[0]
-      options.onDismiss()
 
+      expect(close).toHaveBeenCalledWith(true)
       expect(mockRouter.push).not.toHaveBeenCalled()
     })
 
