@@ -9,6 +9,7 @@ import { memberCoverBindings } from '@/components/member/cover'
 import { useStudyModal } from '@/views/study-session/composables/study-modal'
 import { useDeckActions } from '@/composables/deck/actions'
 import { buildNewDeckPayload } from '@/utils/deck/defaults'
+import { emitSfx } from '@/sfx/bus'
 
 type DashboardActionsPanelProps = {
   due_decks: Deck[]
@@ -46,6 +47,7 @@ async function onSelect(value: string) {
   if (value !== 'new-deck' || creating_deck.value) return
 
   creating_deck.value = true
+  emitSfx('pop_up_pop')
   await deck_actions.createDeck(buildNewDeckPayload(t('deck.default-title')), {
     openSettingsAfterCreate: true
   })
