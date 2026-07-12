@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
 import { createApp, nextTick, ref } from 'vue'
-import { useReviewInboxScroll } from '@/views/dashboard/use-review-inbox-scroll'
+import { useReviewInboxScroll } from '@/views/dashboard/review-inbox/use-scroll'
 
 // ── ResizeObserver stub ───────────────────────────────────────────────────────
 // jsdom does not implement ResizeObserver — stub it and capture the callback so

@@ -21,7 +21,7 @@ vi.mock('@/views/study-session/composables/study-modal', () => ({
   useStudyModal: () => ({ start: studyStartMock })
 }))
 
-vi.mock('@/views/dashboard/use-review-inbox-scroll', () => ({
+vi.mock('@/views/dashboard/review-inbox/use-scroll', () => ({
   useReviewInboxScroll: () => ({
     items_el: ref(null),
     has_overflow: hasOverflowRef,
@@ -64,7 +64,7 @@ const ReviewInboxNavButtonStub = defineComponent({
 
 // ── Component import (after mocks) ────────────────────────────────────────────
 
-import ReviewInbox from '@/views/dashboard/review-inbox.vue'
+import ReviewInbox from '@/views/dashboard/review-inbox/index.vue'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 

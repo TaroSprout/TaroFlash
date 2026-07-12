@@ -4,7 +4,7 @@ import { shallowMount } from '@vue/test-utils'
 // GSAP pulled in transitively via Card
 vi.mock('gsap', () => ({ gsap: { fromTo: vi.fn(), to: vi.fn() } }))
 
-import ReviewInboxItem from '@/views/dashboard/review-inbox-item.vue'
+import ReviewInboxItem from '@/views/dashboard/review-inbox/item.vue'
 
 function mount(deck) {
   return shallowMount(ReviewInboxItem, {
