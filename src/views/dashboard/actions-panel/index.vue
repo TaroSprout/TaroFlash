@@ -104,6 +104,7 @@ async function onSelect(value: string) {
         data-theme="yellow-500"
         data-theme-dark="yellow-700"
         full-width
+        :disabled="editing_decks"
         @press="onStudyAll"
       >
         {{ t('dashboard.actions-panel.study-button', due_decks.length) }}

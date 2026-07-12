@@ -406,7 +406,7 @@
   "dashboard.new-deck-card.label": "New Deck",
   "dashboard.actions-panel.new-deck-label": "New Deck",
   "dashboard.actions-panel.edit-decks-label": "Edit Decks",
-  "dashboard.actions-panel.done-editing-label": "Done Editing",
+  "dashboard.actions-panel.done-editing-label": "Stop Editing",
   "dashboard.deck-grid-item.delete-button": "Delete Deck",
   "dashboard.actions-panel.study-button": "Study {count} Deck | Study {count} Decks",
   "dialog-card.close-label": "Close",
