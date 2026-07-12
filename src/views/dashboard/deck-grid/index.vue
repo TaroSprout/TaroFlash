@@ -70,6 +70,7 @@ async function onCreateDeckClicked() {
         v-for="(deck, index) in decks"
         :key="deck.id"
         data-testid="deck-grid__item"
+        :data-deck-id="deck.id"
         class="absolute top-0 left-0"
         :class="{
           'z-30': index === reorder.dragging_index.value,
@@ -88,7 +89,6 @@ async function onCreateDeckClicked() {
           :style="{ transform: reorder.dragTransform(index) }"
         >
           <DeckGridItem
-            :data-deck-id="deck.id"
             :deck="deck"
             :size="size"
             :rearranging="editing"
