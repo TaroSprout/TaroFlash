@@ -24,7 +24,7 @@ const deck_entries = computed<OptionsPanelEntry[]>(() => [
   {
     value: 'new-deck',
     label: t('dashboard.actions-panel.new-deck-label'),
-    trailingIcon: 'card-deck'
+    trailingIcon: 'card-add'
   },
   {
     value: 'edit-decks',
@@ -48,17 +48,18 @@ function onStudyAll() {
 
     <span
       data-testid="dashboard-actions-panel__header"
-      class="text-(--theme-on-primary) text-4xl font-semibold truncate p-6 pl-24 text-center"
+      class="text-(--theme-on-primary) text-4xl font-semibold truncate p-6 pl-34"
     >
       {{ member_store.display_name || t('member-badge.name-placeholder') }}
     </span>
 
     <div
       data-testid="dashboard-actions-panel__body"
-      class="cloud-top-[40px] bg-brown-300 dark:bg-stone-800 rounded-b-8 flex flex-col gap-6 p-4 pt-14"
+      class="cloud-top-[40px] bg-brown-300 dark:bg-stone-800 rounded-b-8 flex flex-col gap-6 px-4 pt-14 pb-6"
     >
       <ui-options-panel
         :entries="deck_entries"
+        size="lg"
         data-testid="dashboard-actions-panel__deck-options"
       />
 
