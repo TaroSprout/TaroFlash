@@ -20,7 +20,7 @@ function onItemClicked(deck: Deck) {
 </script>
 
 <template>
-  <div data-testid="review-inbox" class="w-full select-none flex overflow-hidden">
+  <div data-testid="review-inbox" class="w-full select-none flex overflow-hidden -mt-1.5">
     <review-inbox-nav-button
       v-if="has_overflow"
       direction="prev"

@@ -13,8 +13,8 @@ defineSlots<{
 </script>
 
 <template>
-  <section data-testid="dashboard-section" class="flex flex-col gap-3">
-    <div data-testid="dashboard-section__heading" class="flex flex-col gap-2">
+  <section data-testid="dashboard-section" class="flex flex-col gap-6">
+    <div data-testid="dashboard-section__heading" class="flex flex-col gap-1.5">
       <h2
         data-testid="dashboard-section__label"
         class="text-3xl text-brown-700 dark:text-brown-300"

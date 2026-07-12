@@ -8,6 +8,7 @@ import DashboardSection from './dashboard-section.vue'
 import MemberSection from './member-section/index.vue'
 import ReviewInbox from './review-inbox/index.vue'
 import DeckGrid from './deck-grid/index.vue'
+import DeckGridSortOptions from './deck-grid/sort-options.vue'
 import AudioReaderSection from './audio-reader-section.vue'
 
 const { t } = useI18n()
@@ -44,6 +45,10 @@ const due_decks = computed(() => {
       </dashboard-section>
 
       <dashboard-section :label="t('dashboard.deck-filter.all-label')">
+        <template #subheader>
+          <deck-grid-sort-options />
+        </template>
+
         <deck-grid :decks="decks" />
       </dashboard-section>
 
