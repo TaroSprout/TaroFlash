@@ -786,6 +786,7 @@ export type Database = {
           member_display_name: string
           member_id: string
           new_reviewed_today_count: number
+          rank: number
           reviewed_today_count: number
           study_config: Json
           tags: string[]
