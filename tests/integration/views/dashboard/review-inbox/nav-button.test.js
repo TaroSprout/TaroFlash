@@ -32,7 +32,7 @@ const UiTappableStub = defineComponent({
 
 // ── Imports ───────────────────────────────────────────────────────────────────
 
-import ReviewInboxNavButton from '@/views/dashboard/review-inbox-nav-button.vue'
+import ReviewInboxNavButton from '@/views/dashboard/review-inbox/nav-button.vue'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

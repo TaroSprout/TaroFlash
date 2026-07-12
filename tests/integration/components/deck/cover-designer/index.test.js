@@ -2,6 +2,7 @@ import { describe, test, expect } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { reactive, defineComponent, h } from 'vue'
 import CoverDesigner from '@/views/deck/cover-designer/index.vue'
+import { SUPPORTED_ICONS } from '@/utils/cover'
 
 function slotlessStub(name) {
   return defineComponent({
@@ -62,7 +63,7 @@ describe('CoverDesigner toolbar', () => {
     const { wrapper } = makeDesigner({
       theme: 'pink-400',
       theme_dark: 'pink-700',
-      icon: 'book',
+      icon: SUPPORTED_ICONS[0],
       pattern: 'wave'
     })
 
@@ -74,8 +75,10 @@ describe('CoverDesigner toolbar', () => {
     )
 
     const iconProps = wrapper.findComponent(IconPickerStub).props()
-    expect(iconProps.icon).toBe('book')
-    expect(iconProps.supported_icons).toEqual(expect.arrayContaining(['card-deck', 'book']))
+    expect(iconProps.icon).toBe(SUPPORTED_ICONS[0])
+    expect(iconProps.supported_icons).toEqual(
+      expect.arrayContaining([SUPPORTED_ICONS[0], SUPPORTED_ICONS[1]])
+    )
 
     const patternProps = wrapper.findComponent(UiPatternPickerStub).props()
     expect(patternProps.selected_pattern).toBe('wave')
