@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, useTemplateRef } from 'vue'
+import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import DeckGridItem from './item.vue'
@@ -34,6 +34,18 @@ const reorder = useDeckGridReorder(
   () => editing,
   size
 )
+
+// TransitionGroup's `appear` never fires here: this route renders inside a
+// <Suspense> (authenticated.vue), and Vue skips transition hooks for elements
+// mounted within an unresolved suspense boundary — even one that resolves
+// synchronously. Play the reveal once by hand instead.
+onMounted(() => {
+  if (!container_el.value) return
+
+  container_el.value
+    .querySelectorAll('[data-testid="deck-grid__item"]')
+    .forEach((el) => popDeckIn(el, () => {}))
+})
 
 function onDeckClicked(deck: Deck) {
   router.push({ name: 'deck', params: { id: deck.id } })
