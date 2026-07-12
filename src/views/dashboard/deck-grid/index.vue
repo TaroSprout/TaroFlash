@@ -7,8 +7,7 @@ import NewDeckCard from '@/components/deck/new-deck-card.vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { useDeckActions } from '@/composables/deck/actions'
 import { useDeckSettingsModal } from '@/composables/deck/settings-modal'
-import { randomCoverConfig } from '@/utils/cover'
-import { DECK_SETTINGS_DEFAULTS, DECK_CONFIG_DEFAULTS } from '@/utils/deck/defaults'
+import { buildNewDeckPayload } from '@/utils/deck/defaults'
 import { popDeckIn, popDeckOut } from '@/utils/animations/deck-grid'
 
 type DeckGridProps = {
@@ -37,12 +36,7 @@ async function onCreateDeckClicked() {
   if (creating_deck.value) return
   creating_deck.value = true
 
-  await deck_actions.createDeck({
-    title: t('deck.default-title'),
-    is_public: DECK_SETTINGS_DEFAULTS.is_public,
-    study_config: { study_all_cards: DECK_CONFIG_DEFAULTS.study_all_cards },
-    cover_config: randomCoverConfig()
-  } as Deck)
+  await deck_actions.createDeck(buildNewDeckPayload(t('deck.default-title')))
 
   creating_deck.value = false
 }
@@ -60,6 +54,7 @@ async function onCreateDeckClicked() {
     <DeckGridItem
       v-for="deck in decks"
       :key="deck.id"
+      :data-deck-id="deck.id"
       :deck="deck"
       :size="is_md ? 'base' : 'sm'"
       @press="onDeckClicked(deck)"
