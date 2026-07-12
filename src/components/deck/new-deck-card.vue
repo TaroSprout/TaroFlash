@@ -24,7 +24,7 @@ const { t } = useI18n()
     as="div"
     data-testid="new-deck-card"
     :aria-label="t('dashboard.create-deck-button')"
-    class="pointer-fine:hover:scale-101 data-[tap-active=true]:scale-101 pointer-coarse:data-[tap-active=true]:scale-105 pointer-fine:transition-transform duration-75 relative cursor-pointer h-min touch-manipulation"
+    class="pointer-fine:hover:scale-102 data-[tap-active=true]:scale-101 pointer-coarse:data-[tap-active=true]:scale-105 pointer-fine:transition-transform duration-75 relative cursor-pointer h-min touch-manipulation"
     :class="loading && 'opacity-50 pointer-events-none'"
     :sfx="{ hover: TYPE_SFX, press: 'snappy_button_5' }"
     @tap="emit('press', $event)"
@@ -33,7 +33,7 @@ const { t } = useI18n()
       <template #front>
         <div
           data-testid="new-deck-card__outline"
-          class="h-full w-full rounded-(--face-radius) bg-brown-200 flex flex-col items-center justify-center gap-2 text-brown-500"
+          class="h-full w-full rounded-(--face-radius) bg-brown-200 dark:bg-stone-900 flex flex-col items-center justify-center gap-2 text-brown-500"
         >
           <ui-icon src="add" class="size-12" />
           <span class="text-lg text-center">{{ t('dashboard.new-deck-card.label') }}</span>
