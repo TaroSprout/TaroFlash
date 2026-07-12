@@ -111,9 +111,16 @@ export function useDeckGridReorder(
     reorder.start(index, event)
     if (reorder.dragging_index.value === null) return
 
-    lifted_card = (event.target as HTMLElement).closest<HTMLElement>(
+    // Lift/drop must animate the innermost, transform-free element — the
+    // outer item carries the reactive itemPosition translate, and the middle
+    // wrapper carries the reactive drag-offset translate. GSAP caches
+    // whichever transform is on the element it tweens and rewrites the whole
+    // thing on drop, stomping either one (same reason popDeckIn/popDeckOut
+    // target the innermost child, not the position-carrying wrapper).
+    const item = (event.target as HTMLElement).closest<HTMLElement>(
       '[data-testid="deck-grid__item"]'
     )
+    lifted_card = item?.querySelector<HTMLElement>('[data-testid="deck-thumbnail"]') ?? null
     if (lifted_card) liftListItem(lifted_card)
   }
 
