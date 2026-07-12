@@ -15,6 +15,9 @@ type UiTappableProps = {
   triggerAt?: StagedTapPhase
   bgx_color?: string
   active_on_hover?: boolean
+  // persistent selected/active state — shows the bgx background statically,
+  // without the hover/press bgx-slide sweep
+  active?: boolean
 }
 
 const {
@@ -23,7 +26,8 @@ const {
   sfx = {},
   triggerAt,
   bgx_color = 'var(--theme-neutral)',
-  active_on_hover = false
+  active_on_hover = false,
+  active = false
 } = defineProps<UiTappableProps>()
 
 const emit = defineEmits<{
@@ -55,7 +59,8 @@ function onPointerLeave() {
 <template>
   <component
     :is="as"
-    :data-tap-active="playing || hovering || null"
+    :data-tap-active="playing || hovering || active || null"
+    :data-tap-transient="playing || hovering || null"
     class="group/tappable relative isolate"
     v-sfx="{ hover: sfx.hover, focus: sfx.focus, blur: sfx.blur, debounce: sfx.debounce }"
     @pointerenter="onPointerEnter"
@@ -64,7 +69,7 @@ function onPointerLeave() {
   >
     <slot />
     <div
-      class="absolute inset-0 -z-10 rounded-[inherit] bgx-diagonal-stripes animation-safe:group-data-[tap-active=true]/tappable:bgx-slide pointer-events-none hidden group-data-[tap-active=true]/tappable:block"
+      class="absolute inset-0 -z-10 rounded-[inherit] bgx-diagonal-stripes animation-safe:group-data-[tap-transient=true]/tappable:bgx-slide pointer-events-none hidden group-data-[tap-active=true]/tappable:block"
       :style="{ '--bgx-fill': bgx_color }"
     />
   </component>

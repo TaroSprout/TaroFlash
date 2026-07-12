@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useMemberDecksQuery } from '@/api/decks'
 import { useNoticeStore } from '@/stores/notice-store'
 import { useCan } from '@/composables/can'
+import { emitSfx } from '@/sfx/bus'
 import DashboardSection from './dashboard-section.vue'
 import DashboardActionsPanel from './actions-panel/index.vue'
 import ReviewInbox from './review-inbox/index.vue'
@@ -27,6 +28,7 @@ watch(decks_error, (err) => {
 
 function onToggleEditDecks() {
   editing_decks.value = !editing_decks.value
+  emitSfx(editing_decks.value ? 'pop_up_pop' : 'digi_powerdown')
 }
 
 const due_decks = computed(() => {

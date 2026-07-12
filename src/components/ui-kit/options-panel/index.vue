@@ -10,6 +10,12 @@ export type OptionsPanelEntry = {
   // replaces the trailing chevron; falls back to 'line-arrow-right' when interactive
   trailingIcon?: string
   disabled?: boolean
+  selected?: boolean
+  // data-theme/data-theme-dark applied while selected; the selected background
+  // reads off this theme's --theme-primary, so omitting it falls back to the
+  // panel's own ambient theme
+  selectedTheme?: string
+  selectedThemeDark?: string
 }
 
 type OptionsPanelProps = {
@@ -60,7 +66,7 @@ function onSelect(entry: OptionsPanelEntry) {
       :data-testid="
         attrs['data-testid'] ? `${attrs['data-testid']}__content` : 'options-panel__content'
       "
-      class="flex min-h-0 flex-1 flex-col rounded-4 bg-(--theme-primary)"
+      class="flex min-h-0 flex-1 flex-col rounded-4 bg-(--theme-primary) p-1"
       :class="scrollable ? 'overflow-y-auto scroll-hidden' : 'overflow-hidden'"
     >
       <options-panel-row
