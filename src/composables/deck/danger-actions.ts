@@ -68,6 +68,7 @@ export function useDeckDangerActions(
 
     const on_deleted_deck = route.name === 'deck' && Number(route.params.id) === deck.id
     if (on_deleted_deck) router.push({ name: 'dashboard' })
+    close(true)
   }
 
   return {
