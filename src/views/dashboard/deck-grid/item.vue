@@ -71,13 +71,16 @@ function onPress() {
   }
 }
 
-:deep(.jiggle) {
+/* .jiggle is bound directly on DeckThumbnail's root (not a descendant), so
+   this stays a plain scoped selector — :deep() would compile to a descendant
+   combinator and never match. */
+.jiggle {
   animation: deck-grid-item-jiggle var(--jiggle-duration, 0.26s) ease-in-out infinite;
   animation-delay: var(--jiggle-delay, 0s);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :deep(.jiggle) {
+  .jiggle {
     animation: none;
   }
 }
