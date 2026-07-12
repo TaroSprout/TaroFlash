@@ -67,14 +67,8 @@ export function useDeckDangerActions(
     }
 
     const on_deleted_deck = route.name === 'deck' && Number(route.params.id) === deck.id
-
-    notice.success(t('toast.success.deck-deleted'), {
-      variant: 'panel',
-      onDismiss: () => {
-        close(true)
-        if (on_deleted_deck) router.push({ name: 'dashboard' })
-      }
-    })
+    if (on_deleted_deck) router.push({ name: 'dashboard' })
+    close(true)
   }
 
   return {

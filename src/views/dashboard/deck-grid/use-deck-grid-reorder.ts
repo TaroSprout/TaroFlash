@@ -88,11 +88,14 @@ export function useDeckGridReorder(
   }
 
   // Idle iOS-style jiggle: vary phase and tempo per card off its index so the
-  // grid shimmers organically instead of beating in unison.
+  // grid shimmers organically instead of beating in unison. Lighter rotation
+  // than the deck-view card grid — the dashboard shows more cards at once, so
+  // the default amplitude reads as too busy.
   function jiggleStyle(index: number) {
     return {
       '--jiggle-delay': `${-(index % 11) * 47}ms`,
-      '--jiggle-duration': `${240 + (index % 5) * 16}ms`
+      '--jiggle-duration': `${240 + (index % 5) * 16}ms`,
+      '--jiggle-rotation': '0.7deg'
     }
   }
 

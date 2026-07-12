@@ -4,7 +4,7 @@ import { defineComponent, h } from 'vue'
 
 const DeckThumbnailStub = defineComponent({
   name: 'DeckThumbnail',
-  props: ['deck', 'size', 'sfx'],
+  props: ['deck', 'size', 'sfx', 'rearranging', 'dragging', 'corner_action_always_visible'],
   emits: ['press'],
   setup(props, { emit, slots }) {
     return () =>
@@ -16,6 +16,15 @@ const DeckThumbnailStub = defineComponent({
         },
         [slots['corner-action']?.()]
       )
+  }
+})
+
+const DeckGridDeleteButtonStub = defineComponent({
+  name: 'DeckGridDeleteButton',
+  props: ['deck'],
+  setup(props) {
+    return () =>
+      h('div', { 'data-testid': 'deck-grid-delete-button', 'data-deck-id': props.deck.id })
   }
 })
 
@@ -45,7 +54,13 @@ import DeckGridItem from '@/views/dashboard/deck-grid/item.vue'
 function mount(props) {
   return shallowMount(DeckGridItem, {
     props,
-    global: { stubs: { DeckThumbnail: DeckThumbnailStub, UiButton: UiButtonStub } }
+    global: {
+      stubs: {
+        DeckThumbnail: DeckThumbnailStub,
+        UiButton: UiButtonStub,
+        DeckGridDeleteButton: DeckGridDeleteButtonStub
+      }
+    }
   })
 }
 
@@ -78,5 +93,51 @@ describe('DeckGridItem — rearranging mode suppresses press [obligation]', () =
   test('the corner-action (settings button) is not rendered while rearranging', () => {
     const wrapper = mount({ deck: DECK, size: 'base', rearranging: true })
     expect(wrapper.find('[data-testid="dashboard__deck-settings-button"]').exists()).toBe(false)
+  })
+})
+
+describe('DeckGridItem — jiggle sits on the wrapper, not DeckThumbnail root [obligation]', () => {
+  test('applies .jiggle to the outer wrapper element while rearranging and not dragging', () => {
+    const wrapper = mount({ deck: DECK, size: 'base', rearranging: true, dragging: false })
+    expect(wrapper.classes()).toContain('jiggle')
+    expect(wrapper.find('[data-testid="deck-thumbnail"]').classes()).not.toContain('jiggle')
+  })
+
+  test('omits .jiggle while dragging (opts out of the idle jiggle)', () => {
+    const wrapper = mount({ deck: DECK, size: 'base', rearranging: true, dragging: true })
+    expect(wrapper.classes()).not.toContain('jiggle')
+  })
+
+  test('omits .jiggle when not rearranging', () => {
+    const wrapper = mount({ deck: DECK, size: 'base' })
+    expect(wrapper.classes()).not.toContain('jiggle')
+  })
+})
+
+describe('DeckGridItem — corner-action swaps to the delete button while rearranging [obligation]', () => {
+  test('renders DeckGridDeleteButton with the deck while rearranging', () => {
+    const wrapper = mount({ deck: DECK, size: 'base', rearranging: true })
+    const delete_button = wrapper.findComponent(DeckGridDeleteButtonStub)
+    expect(delete_button.exists()).toBe(true)
+    expect(delete_button.props('deck')).toEqual(DECK)
+  })
+
+  test('does not render DeckGridDeleteButton when not rearranging', () => {
+    const wrapper = mount({ deck: DECK, size: 'base', rearranging: false })
+    expect(wrapper.findComponent(DeckGridDeleteButtonStub).exists()).toBe(false)
+  })
+})
+
+describe('DeckGridItem — forwards rearranging/dragging to DeckThumbnail [obligation]', () => {
+  test('forwards rearranging as corner_action_always_visible and rearranging', () => {
+    const wrapper = mount({ deck: DECK, size: 'base', rearranging: true })
+    const thumbnail = wrapper.findComponent(DeckThumbnailStub)
+    expect(thumbnail.props('rearranging')).toBe(true)
+    expect(thumbnail.props('corner_action_always_visible')).toBe(true)
+  })
+
+  test('forwards dragging to DeckThumbnail', () => {
+    const wrapper = mount({ deck: DECK, size: 'base', rearranging: true, dragging: true })
+    expect(wrapper.findComponent(DeckThumbnailStub).props('dragging')).toBe(true)
   })
 })

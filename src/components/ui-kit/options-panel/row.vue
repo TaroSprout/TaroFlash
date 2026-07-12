@@ -38,16 +38,21 @@ function onSelect() {
             as: 'button',
             type: 'button',
             active_on_hover: true,
+            active: entry.selected,
             sfx: { hover: TYPE_SFX, ...sfx }
           }
         : {}
     "
     data-testid="options-panel__card"
     :data-value="entry.value"
-    class="text-(--theme-on-primary) text-left flex items-center gap-3 py-4 px-6 first:pt-6 first:pb-3 last:pb-6 last:pt-3"
+    :data-active="entry.selected || null"
+    :data-theme="entry.selected ? entry.selectedTheme : undefined"
+    :data-theme-dark="entry.selected ? entry.selectedThemeDark : undefined"
+    class="text-(--theme-on-primary) text-left flex items-center gap-3 py-3 px-5 first:pt-5 first:pb-2 last:pb-5 last:pt-2 rounded-3"
     :class="[
       interactive ? 'cursor-pointer' : '',
-      entry.disabled ? 'pointer-events-none opacity-20' : ''
+      entry.disabled ? 'pointer-events-none opacity-20' : '',
+      interactive && 'data-[active=true]:bg-(--theme-primary)'
     ]"
     :bgx_color="interactive ? 'var(--theme-neutral)' : undefined"
     @tap="onSelect"

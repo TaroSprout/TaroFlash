@@ -42,7 +42,10 @@ const deck_entries = computed<OptionsPanelEntry[]>(() => [
     label: editing_decks
       ? t('dashboard.actions-panel.done-editing-label')
       : t('dashboard.actions-panel.edit-decks-label'),
-    trailingIcon: editing_decks ? 'data-check' : 'pencil'
+    trailingIcon: editing_decks ? 'stop' : 'pencil',
+    selected: editing_decks,
+    selectedTheme: 'yellow-500',
+    selectedThemeDark: 'yellow-700'
   }
 ])
 
@@ -101,6 +104,7 @@ async function onSelect(value: string) {
         data-theme="yellow-500"
         data-theme-dark="yellow-700"
         full-width
+        :disabled="editing_decks"
         @press="onStudyAll"
       >
         {{ t('dashboard.actions-panel.study-button', due_decks.length) }}

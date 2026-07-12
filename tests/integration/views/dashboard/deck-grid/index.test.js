@@ -33,7 +33,13 @@ const reorderState = {
 }
 
 vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: routerPushMock })
+  useRouter: () => ({ push: routerPushMock }),
+  // DeckGridDeleteButton (rendered inside DeckGridItem, which is stubbed by
+  // name below) still gets statically imported through item.vue -> its own
+  // module graph reaches composables/deck/danger-actions.ts, which calls
+  // useRoute() at setup — needs a resolvable named export even though the
+  // stub means it's never actually invoked here.
+  useRoute: () => ({ name: 'dashboard', params: {} })
 }))
 
 vi.mock('@/composables/deck/actions', () => ({
@@ -253,6 +259,46 @@ describe('DeckGrid — editing mode forwards rearranging/dragging to each item [
     const items = wrapper.findAllComponents(DeckGridItemStub)
     expect(items[0].props('dragging')).toBe(false)
     expect(items[1].props('dragging')).toBe(true)
+  })
+})
+
+describe('DeckGrid — reflow transition [obligation]', () => {
+  test('does not apply the transition class on the initial decks.length change from mount', async () => {
+    const wrapper = mount([])
+    await wrapper.setProps({ decks: [makeDeck(1)] })
+    expect(wrapper.find('[data-testid="deck-grid__item"]').classes()).not.toContain(
+      'transition-transform'
+    )
+  })
+
+  test('applies the transition class on a genuine subsequent decks.length change (create/delete)', async () => {
+    const wrapper = mount([makeDeck(1)])
+    // First length change after mount is the skipped "initial load" firing.
+    await wrapper.setProps({ decks: [makeDeck(1), makeDeck(2)] })
+    // Second length change is a real reflow (e.g. a delete).
+    await wrapper.setProps({ decks: [makeDeck(2)] })
+    expect(wrapper.find('[data-testid="deck-grid__item"]').classes()).toContain(
+      'transition-transform'
+    )
+  })
+
+  test('does not apply the transition class for a same-length reorder (drag-drop resort)', async () => {
+    const wrapper = mount([makeDeck(1), makeDeck(2)])
+    // Same length, different order — the reflow watcher is keyed off
+    // decks.length only, so this change must not fire it at all.
+    await wrapper.setProps({ decks: [makeDeck(2), makeDeck(1)] })
+    const items = wrapper.findAll('[data-testid="deck-grid__item"]')
+    expect(items.every((i) => !i.classes().includes('transition-transform'))).toBe(true)
+  })
+
+  test('does not key reflow off reorder.dragging_index becoming null', async () => {
+    const wrapper = mount([makeDeck(1), makeDeck(2)])
+    reorderState.dragging_index.value = 1
+    await wrapper.vm.$nextTick()
+    reorderState.dragging_index.value = null
+    await wrapper.vm.$nextTick()
+    const items = wrapper.findAll('[data-testid="deck-grid__item"]')
+    expect(items.every((i) => !i.classes().includes('transition-transform'))).toBe(true)
   })
 })
 

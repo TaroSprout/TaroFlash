@@ -73,6 +73,11 @@ import DashboardActionsPanel from '@/views/dashboard/actions-panel/index.vue'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+function wrapper_entry(wrapper) {
+  const entries = wrapper.findComponent(UiOptionsPanelStub).props('entries')
+  return entries.find((e) => e.value === 'edit-decks')
+}
+
 function mount(due_decks = [], editing_decks = false) {
   return shallowMount(DashboardActionsPanel, {
     props: { due_decks, editing_decks },
@@ -108,6 +113,20 @@ describe('DashboardActionsPanel — study button', () => {
     const wrapper = mount(due_decks)
     await wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').trigger('click')
     expect(mockStartStudy).toHaveBeenCalledWith(due_decks)
+  })
+
+  test('is disabled while editing_decks is true [obligation]', () => {
+    const wrapper = mount([], true)
+    expect(
+      wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').attributes('disabled')
+    ).not.toBeUndefined()
+  })
+
+  test('is enabled when editing_decks is false [obligation]', () => {
+    const wrapper = mount([], false)
+    expect(
+      wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').attributes('disabled')
+    ).toBeUndefined()
   })
 })
 
@@ -146,12 +165,24 @@ describe('DashboardActionsPanel — edit-decks entry reflects editing_decks stat
     expect(edit_entry.trailingIcon).toBe('pencil')
   })
 
-  test('shows the done-editing label and check icon when editing [obligation]', () => {
+  test('shows the done-editing label and stop icon when editing [obligation]', () => {
     const wrapper = mount([], true)
     const entries = wrapper.findComponent(UiOptionsPanelStub).props('entries')
     const edit_entry = entries.find((e) => e.value === 'edit-decks')
-    expect(edit_entry.label).toBe('Done Editing')
-    expect(edit_entry.trailingIcon).toBe('data-check')
+    expect(edit_entry.label).toBe('Stop Editing')
+    expect(edit_entry.trailingIcon).toBe('stop')
+  })
+
+  test('carries selected/selectedTheme/selectedThemeDark reflecting editing_decks [obligation]', () => {
+    const not_editing = wrapper_entry(mount([], false))
+    expect(not_editing.selected).toBe(false)
+    expect(not_editing.selectedTheme).toBe('yellow-500')
+    expect(not_editing.selectedThemeDark).toBe('yellow-700')
+
+    const editing = wrapper_entry(mount([], true))
+    expect(editing.selected).toBe(true)
+    expect(editing.selectedTheme).toBe('yellow-500')
+    expect(editing.selectedThemeDark).toBe('yellow-700')
   })
 })
 

@@ -4,8 +4,9 @@ import { defineComponent, h, ref } from 'vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { noticeErrorMock } = vi.hoisted(() => ({
-  noticeErrorMock: vi.fn()
+const { noticeErrorMock, mockEmitSfx } = vi.hoisted(() => ({
+  noticeErrorMock: vi.fn(),
+  mockEmitSfx: vi.fn()
 }))
 
 // Reactive state shared between mock factories and tests. Created at module
@@ -18,8 +19,16 @@ vi.mock('@/api/decks', () => ({
   useMemberDecksQuery: () => ({ data: decksDataRef, error: decksErrorRef }),
   // Not exercised here (DeckGrid is stubbed by name below) — only needs to
   // exist so the real deck-grid module graph (statically imported for the
-  // stub-by-name resolution) can resolve this named import.
-  useMoveDeckMutation: () => ({ mutateAsync: () => Promise.resolve() })
+  // stub-by-name resolution) can resolve this named import. That graph now
+  // reaches deck-grid/delete-button.vue -> composables/deck/editor.ts, which
+  // imports useDeleteDeckMutation.
+  useMoveDeckMutation: () => ({ mutateAsync: () => Promise.resolve() }),
+  useDeleteDeckMutation: () => ({ mutateAsync: () => Promise.resolve() })
+}))
+
+vi.mock('@/sfx/bus', () => ({
+  emitSfx: mockEmitSfx,
+  emitHoverSfx: vi.fn()
 }))
 
 vi.mock('@/composables/can', () => ({
@@ -36,7 +45,8 @@ vi.mock('@/stores/notice-store', () => ({
 // directly in deck-grid/index.test.js and actions-panel/index.test.js.
 
 vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: vi.fn() })
+  useRouter: () => ({ push: vi.fn() }),
+  useRoute: () => ({ name: 'dashboard', params: {} })
 }))
 
 vi.mock('@/composables/deck/actions', () => ({
@@ -194,6 +204,16 @@ describe('DashboardIndex — edit-decks toggle', () => {
 
     await wrapper.find('[data-testid="dashboard-actions-panel"]').trigger('click')
     expect(wrapper.findComponent(DeckGridStub).props('editing')).toBe(false)
+  })
+
+  test('emits pop_up_pop sfx when editing_decks flips true, and digi_powerdown when it flips false [obligation]', async () => {
+    const wrapper = mountDashboard()
+    await wrapper.find('[data-testid="dashboard-actions-panel"]').trigger('click')
+    expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_pop')
+
+    mockEmitSfx.mockClear()
+    await wrapper.find('[data-testid="dashboard-actions-panel"]').trigger('click')
+    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
   })
 })
 
