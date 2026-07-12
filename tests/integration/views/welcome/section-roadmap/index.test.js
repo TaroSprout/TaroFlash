@@ -20,10 +20,27 @@ const UiIconStub = defineComponent({
   }
 })
 
-const GroupedListStub = defineComponent({
-  name: 'GroupedList',
-  setup(_props, { slots, attrs }) {
-    return () => h('div', { ...attrs }, slots.default?.())
+const UiOptionsPanelStub = defineComponent({
+  name: 'UiOptionsPanel',
+  props: ['entries', 'interactive'],
+  inheritAttrs: false,
+  setup(props, { slots, attrs }) {
+    return () =>
+      h(
+        'div',
+        { ...attrs },
+        props.entries.map((entry) =>
+          h(
+            'div',
+            {
+              key: entry.value,
+              'data-testid': 'options-panel__card',
+              'data-value': entry.value
+            },
+            [slots.leading?.({ entry }), h('span', entry.label), slots.trailing?.({ entry })]
+          )
+        )
+      )
   }
 })
 
@@ -39,7 +56,7 @@ function mountRoadmap() {
       stubs: {
         SectionHeader: SectionHeaderStub,
         UiIcon: UiIconStub,
-        GroupedList: GroupedListStub
+        UiOptionsPanel: UiOptionsPanelStub
       }
     }
   })
@@ -77,23 +94,31 @@ describe('SectionRoadmap', () => {
     expect(wrapper.find('[data-testid="section-header"]').exists()).toBe(true)
   })
 
-  test('renders the roadmap list inside a grouped-list', () => {
+  test('renders the roadmap list inside an options-panel', () => {
     const wrapper = mountRoadmap()
     expect(wrapper.find('[data-testid="welcome-roadmap__list"]').exists()).toBe(true)
+  })
+
+  test('passes interactive=false so the roadmap list is purely informational [obligation]', () => {
+    const wrapper = mountRoadmap()
+    const panel = wrapper.findComponent({ name: 'UiOptionsPanel' })
+    expect(panel.props('interactive')).toBe(false)
   })
 
   // ── Item count ────────────────────────────────────────────────────────────
 
   test('renders 10 roadmap items', () => {
     const wrapper = mountRoadmap()
-    const items = wrapper.findAll('[data-testid^="welcome-roadmap__item-"]')
+    const items = wrapper.findAll('[data-testid="options-panel__card"]')
     expect(items).toHaveLength(10)
   })
 
   test('renders each item by key', () => {
     const wrapper = mountRoadmap()
     for (const key of ROADMAP_KEYS) {
-      expect(wrapper.find(`[data-testid="welcome-roadmap__item-${key}"]`).exists()).toBe(true)
+      expect(
+        wrapper.find(`[data-testid="options-panel__card"][data-value="${key}"]`).exists()
+      ).toBe(true)
     }
   })
 
@@ -101,19 +126,19 @@ describe('SectionRoadmap', () => {
 
   test('done item shows the done-label text', () => {
     const wrapper = mountRoadmap()
-    const doneItem = wrapper.find(`[data-testid="welcome-roadmap__item-${DONE_KEY}"]`)
+    const doneItem = wrapper.find(`[data-testid="options-panel__card"][data-value="${DONE_KEY}"]`)
     expect(doneItem.text()).toContain('Done')
   })
 
   test('done item does not show the upcoming-label text', () => {
     const wrapper = mountRoadmap()
-    const doneItem = wrapper.find(`[data-testid="welcome-roadmap__item-${DONE_KEY}"]`)
+    const doneItem = wrapper.find(`[data-testid="options-panel__card"][data-value="${DONE_KEY}"]`)
     expect(doneItem.text()).not.toContain('Upcoming')
   })
 
   test('done item renders a check icon', () => {
     const wrapper = mountRoadmap()
-    const doneItem = wrapper.find(`[data-testid="welcome-roadmap__item-${DONE_KEY}"]`)
+    const doneItem = wrapper.find(`[data-testid="options-panel__card"][data-value="${DONE_KEY}"]`)
     const icon = doneItem.find('[data-testid="ui-icon"]')
     expect(icon.exists()).toBe(true)
     expect(icon.attributes('data-src')).toBe('check')
@@ -123,19 +148,25 @@ describe('SectionRoadmap', () => {
 
   test('upcoming item shows the upcoming-label text', () => {
     const wrapper = mountRoadmap()
-    const upcomingItem = wrapper.find(`[data-testid="welcome-roadmap__item-${UPCOMING_KEY}"]`)
+    const upcomingItem = wrapper.find(
+      `[data-testid="options-panel__card"][data-value="${UPCOMING_KEY}"]`
+    )
     expect(upcomingItem.text()).toContain('Upcoming')
   })
 
   test('upcoming item does not show the done-label text', () => {
     const wrapper = mountRoadmap()
-    const upcomingItem = wrapper.find(`[data-testid="welcome-roadmap__item-${UPCOMING_KEY}"]`)
+    const upcomingItem = wrapper.find(
+      `[data-testid="options-panel__card"][data-value="${UPCOMING_KEY}"]`
+    )
     expect(upcomingItem.text()).not.toContain('Done')
   })
 
   test('upcoming item does not render a check icon', () => {
     const wrapper = mountRoadmap()
-    const upcomingItem = wrapper.find(`[data-testid="welcome-roadmap__item-${UPCOMING_KEY}"]`)
+    const upcomingItem = wrapper.find(
+      `[data-testid="options-panel__card"][data-value="${UPCOMING_KEY}"]`
+    )
     expect(upcomingItem.find('[data-testid="ui-icon"]').exists()).toBe(false)
   })
 })

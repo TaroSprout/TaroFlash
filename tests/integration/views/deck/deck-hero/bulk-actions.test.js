@@ -26,22 +26,22 @@ const UiButtonStub = defineComponent({
   }
 })
 
-const UiNavListStub = defineComponent({
-  name: 'UiNavList',
+const UiOptionsPanelStub = defineComponent({
+  name: 'UiOptionsPanel',
   props: ['entries'],
-  emits: ['navigate'],
+  emits: ['select'],
   setup(props, { emit }) {
     return () =>
       h(
         'div',
-        { 'data-testid': 'ui-nav-list' },
+        { 'data-testid': 'ui-options-panel' },
         props.entries.map((entry) =>
           h(
             'button',
             {
               key: entry.value,
               'data-testid': `nav-entry-${entry.value}`,
-              onClick: () => emit('navigate', entry.value)
+              onClick: () => emit('select', entry.value)
             },
             entry.label
           )
@@ -79,7 +79,7 @@ function mount(editor = makeEditor()) {
   return {
     wrapper: vtuMount(BulkActions, {
       global: {
-        stubs: { UiButton: UiButtonStub, UiNavList: UiNavListStub },
+        stubs: { UiButton: UiButtonStub, UiOptionsPanel: UiOptionsPanelStub },
         provide: { [cardEditorKey]: editor }
       }
     }),

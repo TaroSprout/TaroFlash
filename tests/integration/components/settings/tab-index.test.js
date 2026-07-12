@@ -65,7 +65,7 @@ describe('TabIndex', () => {
     expect(wrapper.find('[data-testid="tab-index__nav-group--account"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="tab-index__nav-group--app"]').exists()).toBe(true)
 
-    const cards = wrapper.findAll('[data-testid="nav-list__card"]')
+    const cards = wrapper.findAll('[data-testid="options-panel__card"]')
     expect(cards).toHaveLength(4)
     expect(cards.map((c) => c.attributes('data-value'))).toEqual([
       'profile',
@@ -81,7 +81,9 @@ describe('TabIndex', () => {
 
   test('emits navigate with the clicked entry value', async () => {
     const { wrapper } = makeTab()
-    await wrapper.find('[data-testid="nav-list__card"][data-value="subscription"]').trigger('click')
+    await wrapper
+      .find('[data-testid="options-panel__card"][data-value="subscription"]')
+      .trigger('click')
     expect(wrapper.emitted('navigate')).toEqual([['subscription']])
   })
 
@@ -101,7 +103,7 @@ describe('TabIndex', () => {
 describe('TabIndex — account-access nav entry (sheet-only) [obligation]', () => {
   test('includes account-access in the account group on sheet layout [obligation]', () => {
     const { wrapper } = makeTab('sheet')
-    const cards = wrapper.findAll('[data-testid="nav-list__card"]')
+    const cards = wrapper.findAll('[data-testid="options-panel__card"]')
     expect(cards.map((c) => c.attributes('data-value'))).toEqual([
       'profile',
       'subscription',
@@ -113,13 +115,13 @@ describe('TabIndex — account-access nav entry (sheet-only) [obligation]', () =
 
   test('omits account-access from the account group on tablet layout [obligation]', () => {
     const { wrapper } = makeTab('tablet')
-    const cards = wrapper.findAll('[data-testid="nav-list__card"]')
+    const cards = wrapper.findAll('[data-testid="options-panel__card"]')
     expect(cards.map((c) => c.attributes('data-value'))).not.toContain('account-access')
   })
 
   test('omits account-access from the account group on desktop layout [obligation]', () => {
     const { wrapper } = makeTab('desktop')
-    const cards = wrapper.findAll('[data-testid="nav-list__card"]')
+    const cards = wrapper.findAll('[data-testid="options-panel__card"]')
     expect(cards.map((c) => c.attributes('data-value'))).not.toContain('account-access')
   })
 })

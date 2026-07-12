@@ -46,31 +46,6 @@ const CardStub = defineComponent({
   }
 })
 
-// Mirrors the CSS `pointer-events-none` guard the real UiTappable relies on:
-// dispatchEvent bypasses real hit-testing, so this stub reads the same class
-// the production template applies and no-ops the tap the way the browser would.
-const UiTappableStub = defineComponent({
-  name: 'UiTappable',
-  props: ['sfx', 'activeOnHover'],
-  emits: ['tap'],
-  inheritAttrs: false,
-  setup(_props, { slots, emit, attrs }) {
-    return () =>
-      h(
-        'div',
-        {
-          ...attrs,
-          onClick: (e) => {
-            const class_list = [].concat(attrs.class ?? [])
-            if (class_list.some((c) => String(c).includes('pointer-events-none'))) return
-            emit('tap', e)
-          }
-        },
-        slots.default?.()
-      )
-  }
-})
-
 const UiRadioStub = defineComponent({
   name: 'UiRadio',
   props: ['checked', 'active', 'sfx'],
@@ -118,12 +93,33 @@ const DialogCardStub = defineComponent({
   }
 })
 
-const GroupedListStub = defineComponent({
-  name: 'GroupedList',
-  props: ['scrollable', 'dividers'],
+const UiOptionsPanelStub = defineComponent({
+  name: 'UiOptionsPanel',
+  props: ['entries', 'scrollable', 'sfx'],
+  emits: ['select'],
   inheritAttrs: false,
-  setup(_props, { slots, attrs }) {
-    return () => h('div', { ...attrs }, slots.default?.())
+  setup(props, { slots, emit, attrs }) {
+    return () =>
+      h(
+        'div',
+        { ...attrs },
+        props.entries.map((entry) =>
+          h(
+            'div',
+            {
+              key: entry.value,
+              'data-testid': 'options-panel__card',
+              'data-value': entry.value,
+              class: entry.disabled ? 'pointer-events-none' : '',
+              onClick: () => {
+                if (entry.disabled) return
+                emit('select', entry.value)
+              }
+            },
+            [slots.leading?.({ entry }), h('span', entry.label), slots.trailing?.({ entry })]
+          )
+        )
+      )
   }
 })
 
@@ -154,11 +150,10 @@ function mountModal({
       plugins: [createTestingPinia({ createSpy: vi.fn, stubActions: false })],
       stubs: {
         Card: CardStub,
-        UiTappable: UiTappableStub,
         UiRadio: UiRadioStub,
         UiButton: UiButtonStub,
         DialogCard: DialogCardStub,
-        GroupedList: GroupedListStub,
+        UiOptionsPanel: UiOptionsPanelStub,
         ScrollBar: ScrollBarStub
       }
     }
@@ -190,14 +185,14 @@ describe('MoveCardsModal', () => {
   test('renders one deck item per deck from useMemberDecksQuery', () => {
     const cards = [makeCard()]
     const { wrapper } = mountModal({ cards })
-    const items = wrapper.findAll('[data-testid="move-cards__deck-item"]')
+    const items = wrapper.findAll('[data-testid="options-panel__card"]')
     expect(items).toHaveLength(3)
   })
 
   test('disables the current deck row', () => {
     const cards = [makeCard()]
     const { wrapper } = mountModal({ cards, current_deck_id: 10 })
-    const items = wrapper.findAll('[data-testid="move-cards__deck-item"]')
+    const items = wrapper.findAll('[data-testid="options-panel__card"]')
     // deck 10 (index 0) is the current deck
     expect(items[0].attributes('class')).toContain('pointer-events-none')
     expect(items[1].attributes('class')).not.toContain('pointer-events-none')
@@ -234,7 +229,7 @@ describe('MoveCardsModal', () => {
     const blank_preview = [makeCard({ front_text: '', back_text: '' })]
     const { wrapper } = mountModal({ cards: blank_preview, count: 200 })
 
-    await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+    await wrapper.findAll('[data-testid="options-panel__card"]')[1].trigger('click')
     await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
     await flushPromises()
 
@@ -247,7 +242,7 @@ describe('MoveCardsModal', () => {
     test('calls guardAddCards with moving_count against the selected deck [obligation]', async () => {
       const cards = [makeCard()]
       const { wrapper } = mountModal({ cards, current_deck_id: 30 })
-      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+      await wrapper.findAll('[data-testid="options-panel__card"]')[1].trigger('click')
       await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
       await flushPromises()
       expect(guardAddCardsMock).toHaveBeenCalledWith(1)
@@ -257,7 +252,7 @@ describe('MoveCardsModal', () => {
       guardAddCardsMock.mockResolvedValue(false)
       const cards = [makeCard()]
       const { wrapper, close } = mountModal({ cards, current_deck_id: 30 })
-      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+      await wrapper.findAll('[data-testid="options-panel__card"]')[1].trigger('click')
       await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
       await flushPromises()
       expect(close).not.toHaveBeenCalled()
@@ -267,7 +262,7 @@ describe('MoveCardsModal', () => {
       guardAddCardsMock.mockResolvedValue(true)
       const cards = [makeCard()]
       const { wrapper, close } = mountModal({ cards, current_deck_id: 30 })
-      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+      await wrapper.findAll('[data-testid="options-panel__card"]')[1].trigger('click')
       await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
       await flushPromises()
       expect(close).toHaveBeenCalledWith({ deck_id: 20 })
@@ -285,7 +280,7 @@ describe('MoveCardsModal', () => {
       ]
       const cards = [makeCard()]
       const { wrapper } = mountModal({ cards, current_deck_id: 30 })
-      const items = wrapper.findAll('[data-testid="move-cards__deck-item"]')
+      const items = wrapper.findAll('[data-testid="options-panel__card"]')
       expect(items[0].find('[data-testid="move-cards__deck-full-label"]').exists()).toBe(true)
       expect(items[0].find('[data-testid="move-cards__deck-radio"]').exists()).toBe(false)
     })
@@ -298,7 +293,7 @@ describe('MoveCardsModal', () => {
       ]
       const cards = [makeCard()]
       const { wrapper } = mountModal({ cards, current_deck_id: 30 })
-      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[0].trigger('click')
+      await wrapper.findAll('[data-testid="options-panel__card"]')[0].trigger('click')
       // Move button stays disabled — no deck got selected via the full row's tap
       expect(wrapper.find('[data-testid="move-cards__move"]').attributes('disabled')).toBeDefined()
     })
@@ -311,7 +306,7 @@ describe('MoveCardsModal', () => {
       ]
       const cards = [makeCard()]
       const { wrapper } = mountModal({ cards, current_deck_id: 30 })
-      const items = wrapper.findAll('[data-testid="move-cards__deck-item"]')
+      const items = wrapper.findAll('[data-testid="options-panel__card"]')
       expect(items[1].find('[data-testid="move-cards__deck-full-label"]').exists()).toBe(false)
       expect(items[1].find('[data-testid="move-cards__deck-radio"]').exists()).toBe(true)
     })
@@ -321,7 +316,7 @@ describe('MoveCardsModal', () => {
       mockDecksData.data.value = [{ id: 10, title: 'Deck A', card_count: 999999 }]
       const cards = [makeCard()]
       const { wrapper } = mountModal({ cards, current_deck_id: 30 })
-      const items = wrapper.findAll('[data-testid="move-cards__deck-item"]')
+      const items = wrapper.findAll('[data-testid="options-panel__card"]')
       expect(items[0].find('[data-testid="move-cards__deck-full-label"]').exists()).toBe(false)
     })
 
@@ -333,7 +328,7 @@ describe('MoveCardsModal', () => {
       ]
       const cards = [makeCard()]
       const { wrapper } = mountModal({ cards, current_deck_id: 30 })
-      const items = wrapper.findAll('[data-testid="move-cards__deck-item"]')
+      const items = wrapper.findAll('[data-testid="options-panel__card"]')
       // Current deck is index 2 — stays radio-based disabled treatment, no "Full" label
       expect(items[2].find('[data-testid="move-cards__deck-full-label"]').exists()).toBe(false)
       expect(items[2].find('[data-testid="move-cards__deck-radio"]').exists()).toBe(true)
@@ -351,7 +346,7 @@ describe('MoveCardsModal', () => {
   test('clicking a deck item selects that deck', async () => {
     const cards = [makeCard()]
     const { wrapper } = mountModal({ cards })
-    const items = wrapper.findAll('[data-testid="move-cards__deck-item"]')
+    const items = wrapper.findAll('[data-testid="options-panel__card"]')
     await items[1].trigger('click')
     expect(wrapper.find('[data-testid="move-cards__move"]').attributes('disabled')).toBeUndefined()
   })
@@ -359,7 +354,7 @@ describe('MoveCardsModal', () => {
   test('clicking the same deck again deselects it', async () => {
     const cards = [makeCard()]
     const { wrapper } = mountModal({ cards })
-    const items = wrapper.findAll('[data-testid="move-cards__deck-item"]')
+    const items = wrapper.findAll('[data-testid="options-panel__card"]')
     await items[1].trigger('click')
     await items[1].trigger('click')
     expect(wrapper.find('[data-testid="move-cards__move"]').attributes('disabled')).toBeDefined()
@@ -381,20 +376,6 @@ describe('MoveCardsModal', () => {
     expect(close).toHaveBeenCalledWith(false)
   })
 
-  // ── Hover + direct radio click ────────────────────────────────────────────────
-
-  test('mouseenter/mouseleave on a deck item mirrors hover onto its radio active prop', async () => {
-    const { wrapper } = mountModal({ cards: [makeCard()] })
-    const items = wrapper.findAll('[data-testid="move-cards__deck-item"]')
-    const radios = wrapper.findAllComponents({ name: 'UiRadio' })
-
-    await items[1].trigger('mouseenter')
-    expect(radios[1].props('active')).toBe(true)
-
-    await items[1].trigger('mouseleave')
-    expect(radios[1].props('active')).toBe(false)
-  })
-
   // ── onMove failure handling ──────────────────────────────────────────────────
 
   describe('onMove failure handling', () => {
@@ -402,7 +383,7 @@ describe('MoveCardsModal', () => {
       let resolve_move
       const move = vi.fn(() => new Promise((resolve) => (resolve_move = resolve)))
       const { wrapper } = mountModal({ cards: [makeCard()], move })
-      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+      await wrapper.findAll('[data-testid="options-panel__card"]')[1].trigger('click')
       wrapper.find('[data-testid="move-cards__move"]').trigger('click')
       await flushPromises()
 
@@ -417,7 +398,7 @@ describe('MoveCardsModal', () => {
     test('calls close({ deck_id }) with the selected deck id when move resolves [obligation]', async () => {
       const move = vi.fn().mockResolvedValue(undefined)
       const { wrapper, close } = mountModal({ cards: [makeCard()], move })
-      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+      await wrapper.findAll('[data-testid="options-panel__card"]')[1].trigger('click')
       await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
       await flushPromises()
 
@@ -429,7 +410,7 @@ describe('MoveCardsModal', () => {
       const move = vi.fn().mockResolvedValue(undefined)
       const cards = [makeCard({ id: 1 }), makeCard({ id: 2 })]
       const { wrapper } = mountModal({ cards, move })
-      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+      await wrapper.findAll('[data-testid="options-panel__card"]')[1].trigger('click')
       await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
       await flushPromises()
 
@@ -443,7 +424,7 @@ describe('MoveCardsModal', () => {
       const move = vi.fn().mockRejectedValue(error)
       handleLimitErrorMock.mockReturnValue(true)
       const { wrapper, close } = mountModal({ cards: [makeCard()], move })
-      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+      await wrapper.findAll('[data-testid="options-panel__card"]')[1].trigger('click')
       await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
       await flushPromises()
 
@@ -458,7 +439,7 @@ describe('MoveCardsModal', () => {
       const move = vi.fn().mockRejectedValue(error)
       handleLimitErrorMock.mockReturnValue(false)
       const { wrapper, close } = mountModal({ cards: [makeCard()], move })
-      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+      await wrapper.findAll('[data-testid="options-panel__card"]')[1].trigger('click')
       await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
       await flushPromises()
 
@@ -472,7 +453,7 @@ describe('MoveCardsModal', () => {
     test('resets moving back to false after a failed move [obligation]', async () => {
       const move = vi.fn().mockRejectedValue(new Error('nope'))
       const { wrapper } = mountModal({ cards: [makeCard()], move })
-      await wrapper.findAll('[data-testid="move-cards__deck-item"]')[1].trigger('click')
+      await wrapper.findAll('[data-testid="options-panel__card"]')[1].trigger('click')
       await wrapper.find('[data-testid="move-cards__move"]').trigger('click')
       await flushPromises()
 

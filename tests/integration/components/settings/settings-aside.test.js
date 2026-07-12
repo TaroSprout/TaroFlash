@@ -65,9 +65,9 @@ describe('SettingsAside', () => {
 
   test('renders the member store email in the account-info row', () => {
     const { wrapper } = makeWrapper()
-    expect(wrapper.find('[data-testid="settings-aside__email-row"]').text()).toContain(
-      memberState.email
-    )
+    expect(
+      wrapper.find('[data-testid="options-panel__card"][data-value="email"]').text()
+    ).toContain(memberState.email)
   })
 
   test('pressing the edit-account button invokes onAccountAccessClick', async () => {
