@@ -59,7 +59,11 @@ async function onCreateDeckClicked() {
     data-testid="dashboard__decks"
     class="relative w-full"
     :class="{ 'rearrange-no-select': editing }"
-    :style="{ height: `${reorder.row_count.value * reorder.row_pitch.value}px` }"
+    :style="{
+      height: reorder.measured.value
+        ? `${reorder.row_count.value * reorder.row_pitch.value}px`
+        : '0px'
+    }"
   >
     <transition-group tag="div" :css="false" @enter="popDeckIn" @leave="popDeckOut">
       <div

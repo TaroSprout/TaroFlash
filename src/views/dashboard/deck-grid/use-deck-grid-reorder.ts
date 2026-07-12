@@ -40,6 +40,11 @@ export function useDeckGridReorder(
   const move_deck_mutation = useMoveDeckMutation()
 
   const container_width = ref(0)
+  // container_width starts at 0, so columns/row_count fall back to a single
+  // tall column for one frame — gate the rendered height on this so a refresh
+  // never briefly renders (and lays out scroll restoration against) a page
+  // several times its real height.
+  const measured = computed(() => container_width.value > 0)
 
   const { cell_width, gap_x, columns, row_count, row_pitch, itemPosition } = useDeckGrid(
     size,
@@ -180,6 +185,7 @@ export function useDeckGridReorder(
 
   return {
     cell_width,
+    measured,
     row_count,
     row_pitch,
     itemPosition,
