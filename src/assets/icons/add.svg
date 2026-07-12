@@ -1,3 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor">
-  <path d="M417-417H229q-26 0-44.5-18.5T166-480q0-26 18.5-44.5T229-543h188v-188q0-26 18.5-44.5T480-794q26 0 44.5 18.5T543-731v188h188q26 0 44.5 18.5T794-480q0 26-18.5 44.5T731-417H543v188q0 26-18.5 44.5T480-166q-26 0-44.5-18.5T417-229v-188Z"/>
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="Add-1--Streamline-Flex">
+  <desc>
+    Add 1 Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="add-1--expand-cross-buttons-button-more-remove-plus-add-+-mathematics-math">
+    <path id="Union" fill="currentColor" fill-rule="evenodd" d="M7.99975 1.00134c0 -0.552282 -0.44772 -0.99999723 -1 -0.99999723 -0.55229 0 -1 0.44771523 -1 0.99999723V6H1.00122c-0.552284 0 -0.99999927 0.44772 -0.9999993 1 -2e-8 0.55229 0.4477143 1 0.9999993 1h4.99853v4.9987c0 0.5522 0.44771 1 1 1 0.55228 0 1 -0.4478 1 -1V8h4.99875c0.5523 0 1 -0.44771 1 -1 0 -0.55228 -0.4477 -1 -1 -1H7.99975V1.00134Z" clip-rule="evenodd" stroke-width="1"></path>
+  </g>
 </svg>

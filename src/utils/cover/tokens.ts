@@ -9,15 +9,16 @@ export const SUPPORTED_THEMES: DeckTheme[] = [
 ]
 
 export const SUPPORTED_ICONS: string[] = [
-  'card-deck',
-  'book',
-  'school-cap',
-  'music-note',
-  'moon-stars',
-  'cable-car',
-  'bell',
-  'public',
-  'id-card'
+  'symbol-clubs',
+  'symbol-diamonds',
+  'symbol-hearts',
+  'symbol-spades',
+  'tree-2',
+  'open-hand',
+  'megaphone',
+  'flame',
+  'piggy-bank',
+  'skull'
 ]
 
 export const BORDER_SIZE_PX = 16
