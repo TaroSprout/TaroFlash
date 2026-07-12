@@ -42,10 +42,17 @@ const reorder = useDeckGridReorder(
 const REFLOW_TRANSITION_DURATION = 200
 const reflowing = ref(false)
 let reflow_timeout = 0
+// The first firing is the initial query resolving, not a real reflow — skip it.
+let deck_count_initialized = false
 
 watch(
   () => decks.length,
   () => {
+    if (!deck_count_initialized) {
+      deck_count_initialized = true
+      return
+    }
+
     reflowing.value = true
     window.clearTimeout(reflow_timeout)
     reflow_timeout = window.setTimeout(() => {
