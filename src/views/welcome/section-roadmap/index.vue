@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import UiOptionsPanel, { type OptionsPanelEntry } from '@/components/ui-kit/options-panel.vue'
+import UiOptionsPanel, { type OptionsPanelEntry } from '@/components/ui-kit/options-panel/index.vue'
 import SectionHeader from '../section-header.vue'
 
 type RoadmapItem = {

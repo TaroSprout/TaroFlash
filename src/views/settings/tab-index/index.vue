@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import UiOptionsPanel from '@/components/ui-kit/options-panel.vue'
+import UiOptionsPanel from '@/components/ui-kit/options-panel/index.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import DangerDeleteAccountButton from '../danger-delete-account-button.vue'

@@ -2,7 +2,7 @@
 import ToolbarBase from '@/views/deck/mode-toolbar/toolbar-base.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiTag from '@/components/ui-kit/tag.vue'
-import UiOptionsPanel, { type OptionsPanelEntry } from '@/components/ui-kit/options-panel.vue'
+import UiOptionsPanel, { type OptionsPanelEntry } from '@/components/ui-kit/options-panel/index.vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useBulkActions } from '@/views/deck/composables'

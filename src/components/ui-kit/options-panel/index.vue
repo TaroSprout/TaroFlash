@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { useAttrs } from 'vue'
-import UiIcon from './icon.vue'
-import UiTappable from './tappable.vue'
-import { TYPE_SFX } from '@/sfx/config'
+import OptionsPanelRow from './row.vue'
 import type { SfxOptions } from '@/sfx/directive'
 
 export type OptionsPanelEntry = {
@@ -47,7 +45,6 @@ const emit = defineEmits<{
 const attrs = useAttrs()
 
 function onSelect(entry: OptionsPanelEntry) {
-  if (entry.disabled) return
   emit('select', entry.value)
 }
 </script>
@@ -66,50 +63,22 @@ function onSelect(entry: OptionsPanelEntry) {
       class="flex min-h-0 flex-1 flex-col rounded-4 bg-(--theme-primary)"
       :class="scrollable ? 'overflow-y-auto scroll-hidden' : 'overflow-hidden'"
     >
-      <component
-        :is="interactive ? UiTappable : 'div'"
+      <options-panel-row
         v-for="entry in entries"
         :key="entry.value"
-        v-bind="
-          interactive
-            ? {
-                as: 'button',
-                type: 'button',
-                active_on_hover: true,
-                sfx: { hover: TYPE_SFX, ...sfx }
-              }
-            : {}
-        "
-        data-testid="options-panel__card"
-        :data-value="entry.value"
-        class="text-(--theme-on-primary) text-left flex items-center gap-3 p-4"
-        :class="[
-          interactive ? 'cursor-pointer' : '',
-          entry.disabled ? 'pointer-events-none opacity-20' : ''
-        ]"
-        :bgx_color="interactive ? 'var(--theme-neutral)' : undefined"
-        @tap="onSelect(entry)"
+        :entry="entry"
+        :size="size"
+        :sfx="sfx"
+        :interactive="interactive"
+        @select="onSelect(entry)"
       >
-        <slot name="leading" :entry="entry">
-          <ui-icon
-            v-if="entry.icon"
-            :src="entry.icon"
-            :class="size === 'lg' ? 'size-7' : 'size-6'"
-          />
-        </slot>
-
-        <span class="flex-1" :class="size === 'lg' ? 'text-lg' : 'text-base'">{{
-          entry.label
-        }}</span>
-
-        <slot name="trailing" :entry="entry">
-          <ui-icon
-            v-if="interactive"
-            :src="entry.trailingIcon ?? 'line-arrow-right'"
-            :class="size === 'lg' ? 'size-5' : 'size-4'"
-          />
-        </slot>
-      </component>
+        <template v-if="$slots.leading" #leading="slot_props">
+          <slot name="leading" v-bind="slot_props" />
+        </template>
+        <template v-if="$slots.trailing" #trailing="slot_props">
+          <slot name="trailing" v-bind="slot_props" />
+        </template>
+      </options-panel-row>
     </div>
 
     <div

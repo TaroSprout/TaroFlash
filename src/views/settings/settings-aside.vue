@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import UiOptionsPanel, { type OptionsPanelEntry } from '@/components/ui-kit/options-panel.vue'
+import UiOptionsPanel, { type OptionsPanelEntry } from '@/components/ui-kit/options-panel/index.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useMemberStore } from '@/stores/member'
 import { useAccountAccessClick } from './use-account-access-click'
