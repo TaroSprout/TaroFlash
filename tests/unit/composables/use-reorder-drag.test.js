@@ -16,7 +16,7 @@ if (!globalThis.PointerEvent) {
 const { emitSfxMock } = vi.hoisted(() => ({ emitSfxMock: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: emitSfxMock }))
 
-import { useReorderDrag } from '@/views/deck/card-editor/use-reorder-drag'
+import { useReorderDrag } from '@/composables/use-reorder-drag'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

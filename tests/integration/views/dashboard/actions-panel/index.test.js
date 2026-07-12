@@ -73,9 +73,9 @@ import DashboardActionsPanel from '@/views/dashboard/actions-panel/index.vue'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function mount(due_decks = []) {
+function mount(due_decks = [], editing_decks = false) {
   return shallowMount(DashboardActionsPanel, {
-    props: { due_decks },
+    props: { due_decks, editing_decks },
     global: {
       stubs: {
         DashboardActionsPanelPolaroid: PolaroidStub,
@@ -127,12 +127,31 @@ describe('DashboardActionsPanel — onSelect only wires new-deck', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_pop')
   })
 
-  test('selecting edit-decks is a no-op [obligation]', async () => {
+  test('selecting edit-decks emits toggle-edit-decks and does not create a deck [obligation]', async () => {
     const wrapper = mount()
     await wrapper.find('[data-testid="entry-edit-decks"]').trigger('click')
     await Promise.resolve()
+    expect(wrapper.emitted('toggle-edit-decks')).toHaveLength(1)
     expect(mockCreateDeck).not.toHaveBeenCalled()
     expect(mockEmitSfx).not.toHaveBeenCalled()
+  })
+})
+
+describe('DashboardActionsPanel — edit-decks entry reflects editing_decks state', () => {
+  test('shows the edit-decks label and pencil icon when not editing', () => {
+    const wrapper = mount([], false)
+    const entries = wrapper.findComponent(UiOptionsPanelStub).props('entries')
+    const edit_entry = entries.find((e) => e.value === 'edit-decks')
+    expect(edit_entry.label).toBe('Edit Decks')
+    expect(edit_entry.trailingIcon).toBe('pencil')
+  })
+
+  test('shows the done-editing label and check icon when editing [obligation]', () => {
+    const wrapper = mount([], true)
+    const entries = wrapper.findComponent(UiOptionsPanelStub).props('entries')
+    const edit_entry = entries.find((e) => e.value === 'edit-decks')
+    expect(edit_entry.label).toBe('Done Editing')
+    expect(edit_entry.trailingIcon).toBe('data-check')
   })
 })
 

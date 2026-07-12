@@ -4,16 +4,33 @@ import { defineComponent, h, ref } from 'vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { routerPushMock, createDeckMock, deckSettingsOpenMock, randomCoverConfigMock } = vi.hoisted(
-  () => ({
-    routerPushMock: vi.fn(),
-    createDeckMock: vi.fn(() => Promise.resolve({ id: 99 })),
-    deckSettingsOpenMock: vi.fn(),
-    randomCoverConfigMock: vi.fn(() => ({ theme: 'pink-400', pattern: 'wave', icon: 'flame' }))
-  })
-)
+const {
+  routerPushMock,
+  createDeckMock,
+  deckSettingsOpenMock,
+  randomCoverConfigMock,
+  onItemPointerdownMock
+} = vi.hoisted(() => ({
+  routerPushMock: vi.fn(),
+  createDeckMock: vi.fn(() => Promise.resolve({ id: 99 })),
+  deckSettingsOpenMock: vi.fn(),
+  randomCoverConfigMock: vi.fn(() => ({ theme: 'pink-400', pattern: 'wave', icon: 'flame' })),
+  onItemPointerdownMock: vi.fn()
+}))
 
 const isMatchMediaRef = ref(true)
+
+// Reactive knobs the reorder-drag stub reports back through, so tests can
+// assert the template wires the real reorder engine's return values through
+// without exercising the engine itself (that's use-deck-grid-reorder.test.js).
+// Created at module level (not inside vi.hoisted) so Vue's ref() is available.
+const reorderState = {
+  measured: ref(true),
+  row_count: ref(2),
+  row_pitch: ref(300),
+  cell_width: ref(192),
+  dragging_index: ref(null)
+}
 
 vi.mock('vue-router', () => ({
   useRouter: () => ({ push: routerPushMock })
@@ -41,17 +58,37 @@ vi.mock('@/utils/animations/deck-grid', () => ({
   popDeckOut: vi.fn((_el, done) => done?.())
 }))
 
+// The drag engine itself (geometry, pointer tracking, the move_deck mutation
+// call) is covered directly in use-deck-grid-reorder.test.js — this component
+// test only needs to confirm the template wires its return values through.
+vi.mock('@/views/dashboard/deck-grid/use-deck-grid-reorder', () => ({
+  useDeckGridReorder: () => ({
+    cell_width: reorderState.cell_width,
+    measured: reorderState.measured,
+    row_count: reorderState.row_count,
+    row_pitch: reorderState.row_pitch,
+    itemPosition: (index) => ({ x: index * 10, y: index * 20 }),
+    dragging_index: reorderState.dragging_index,
+    shouldTransition: () => false,
+    dragTransform: () => 'translate(0px, 0px)',
+    jiggleStyle: () => ({}),
+    onItemPointerdown: onItemPointerdownMock
+  })
+}))
+
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
 const DeckGridItemStub = defineComponent({
   name: 'DeckGridItem',
-  props: ['deck', 'size'],
+  props: ['deck', 'size', 'rearranging', 'dragging'],
   emits: ['press', 'settings'],
   setup(props, { emit }) {
     return () =>
       h('div', {
         'data-testid': 'deck-grid-item',
         'data-deck-id': props.deck.id,
+        'data-rearranging': String(!!props.rearranging),
+        'data-dragging': String(!!props.dragging),
         onClick: () => emit('press'),
         onContextmenu: () => emit('settings')
       })
@@ -84,9 +121,9 @@ function makeDeck(id) {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function mount(decks) {
+function mount(decks, editing = false) {
   return shallowMount(DeckGrid, {
-    props: { decks },
+    props: { decks, editing },
     global: { stubs: { DeckGridItem: DeckGridItemStub, NewDeckCard: NewDeckCardStub } }
   })
 }
@@ -97,6 +134,11 @@ beforeEach(() => {
   vi.clearAllMocks()
   createDeckMock.mockResolvedValue({ id: 99 })
   randomCoverConfigMock.mockReturnValue({ theme: 'pink-400', pattern: 'wave', icon: 'flame' })
+  reorderState.measured.value = true
+  reorderState.row_count.value = 2
+  reorderState.row_pitch.value = 300
+  reorderState.cell_width.value = 192
+  reorderState.dragging_index.value = null
 })
 
 describe('DeckGrid — renders one item per deck plus the new-deck-card last', () => {
@@ -108,8 +150,12 @@ describe('DeckGrid — renders one item per deck plus the new-deck-card last', (
   test('renders the new-deck-card as the last child of the grid', () => {
     const wrapper = mount([makeDeck(1), makeDeck(2)])
     const grid = wrapper.find('[data-testid="dashboard__decks"]')
-    const children = [...grid.element.children]
-    expect(children[children.length - 1].getAttribute('data-testid')).toBe('new-deck-card')
+    const wrapped_items = [
+      ...grid.element.querySelectorAll(
+        '[data-testid="deck-grid__item"], [data-testid="new-deck-card"]'
+      )
+    ]
+    expect(wrapped_items.at(-1).getAttribute('data-testid')).toBe('new-deck-card')
   })
 })
 
@@ -185,5 +231,56 @@ describe('DeckGrid — size responds to breakpoint', () => {
     isMatchMediaRef.value = false
     const wrapper = mount([makeDeck(1)])
     expect(wrapper.findComponent(NewDeckCardStub).props('size')).toBe('sm')
+  })
+})
+
+describe('DeckGrid — editing mode forwards rearranging/dragging to each item [obligation]', () => {
+  test('forwards rearranging=true to every item when editing', () => {
+    const wrapper = mount([makeDeck(1), makeDeck(2)], true)
+    const items = wrapper.findAllComponents(DeckGridItemStub)
+    expect(items.every((i) => i.props('rearranging') === true)).toBe(true)
+  })
+
+  test('forwards rearranging=false to every item when not editing', () => {
+    const wrapper = mount([makeDeck(1), makeDeck(2)], false)
+    const items = wrapper.findAllComponents(DeckGridItemStub)
+    expect(items.every((i) => i.props('rearranging') === false)).toBe(true)
+  })
+
+  test('only the item at dragging_index gets dragging=true', () => {
+    reorderState.dragging_index.value = 1
+    const wrapper = mount([makeDeck(1), makeDeck(2)], true)
+    const items = wrapper.findAllComponents(DeckGridItemStub)
+    expect(items[0].props('dragging')).toBe(false)
+    expect(items[1].props('dragging')).toBe(true)
+  })
+})
+
+describe('DeckGrid — pointerdown wiring [obligation]', () => {
+  test('pointerdown on an item calls reorder.onItemPointerdown with its index', async () => {
+    const wrapper = mount([makeDeck(1), makeDeck(2)], true)
+    const item_wrapper = wrapper.find('[data-testid="deck-grid__item"]')
+    await item_wrapper.trigger('pointerdown')
+    expect(onItemPointerdownMock).toHaveBeenCalledWith(0, expect.anything())
+  })
+})
+
+describe('DeckGrid — container height reflects reorder geometry', () => {
+  test('sets height from row_count * row_pitch once measured', () => {
+    reorderState.measured.value = true
+    reorderState.row_count.value = 3
+    reorderState.row_pitch.value = 250
+    const wrapper = mount([makeDeck(1)])
+    expect(wrapper.find('[data-testid="dashboard__decks"]').attributes('style')).toContain(
+      'height: 750px'
+    )
+  })
+
+  test('collapses height to 0 before the container is measured', () => {
+    reorderState.measured.value = false
+    const wrapper = mount([makeDeck(1)])
+    expect(wrapper.find('[data-testid="dashboard__decks"]').attributes('style')).toContain(
+      'height: 0px'
+    )
   })
 })
