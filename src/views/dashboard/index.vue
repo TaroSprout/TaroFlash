@@ -40,7 +40,9 @@ function onToggleEditDecks() {
 }
 
 const due_decks = computed(() => {
-  return decks.value.filter((deck) => (deck.due_count ?? 0) > 0)
+  return decks.value
+    .filter((deck) => (deck.due_count ?? 0) > 0)
+    .sort((a, b) => (b.due_count ?? 0) - (a.due_count ?? 0))
 })
 </script>
 
