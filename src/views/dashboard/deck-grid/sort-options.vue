@@ -20,13 +20,16 @@ const OPTIONS: { key: SortOption; label_key: string }[] = [
 </script>
 
 <template>
-  <div data-testid="deck-grid-sort-options" class="flex gap-8 text-brown-500">
+  <div
+    data-testid="deck-grid-sort-options"
+    class="flex gap-8 text-brown-500 overflow-x-auto scroll-hidden"
+  >
     <span
       v-for="option in OPTIONS"
       :key="option.key"
       :data-testid="`deck-grid-sort-options__${option.key}`"
       :data-active="option.key === selected"
-      class="cursor-pointer data-[active=true]:text-brown-700 data-[active=true]:underline data-[active=true]:underline-offset-8 dark:data-[active=true]:text-brown-100"
+      class="cursor-pointer shrink-0 data-[active=true]:text-brown-700 data-[active=true]:underline data-[active=true]:underline-offset-8 dark:data-[active=true]:text-brown-100"
     >
       {{ t(option.label_key) }}
     </span>
