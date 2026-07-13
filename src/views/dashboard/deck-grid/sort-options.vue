@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import { emitSfx } from '@/sfx/bus'
 
 export type SortOption = 'custom' | 'date-created' | 'last-updated'
 
@@ -18,6 +19,11 @@ const OPTIONS: { key: SortOption; label_key: string }[] = [
   { key: 'date-created', label_key: 'dashboard.deck-grid-sort.date-created-label' },
   { key: 'last-updated', label_key: 'dashboard.deck-grid-sort.last-updated-label' }
 ]
+
+function onOptionClicked(option: SortOption) {
+  emitSfx(option === selected ? 'digi_powerdown' : 'snappy_button_5')
+  emit('select', option)
+}
 </script>
 
 <template>
@@ -31,7 +37,7 @@ const OPTIONS: { key: SortOption; label_key: string }[] = [
       :data-testid="`deck-grid-sort-options__${option.key}`"
       :data-active="option.key === selected"
       class="cursor-pointer shrink-0 data-[active=true]:text-brown-700 data-[active=true]:underline data-[active=true]:underline-offset-8 dark:data-[active=true]:text-brown-100"
-      @click="emit('select', option.key)"
+      @click="onOptionClicked(option.key)"
     >
       {{ t(option.label_key) }}
     </span>
