@@ -4,12 +4,20 @@ import { shallowMount } from '@vue/test-utils'
 // GSAP pulled in transitively via Card
 vi.mock('gsap', () => ({ gsap: { fromTo: vi.fn(), to: vi.fn() } }))
 
+const mockEmitHoverSfx = vi.fn()
+vi.mock('@/sfx/bus', () => ({
+  emitSfx: vi.fn(),
+  emitHoverSfx: (...args) => mockEmitHoverSfx(...args)
+}))
+
 import ReviewInboxItem from '@/views/dashboard/review-inbox/item.vue'
+import { vSfx } from '@/sfx/directive'
+import { TYPE_SFX } from '@/sfx/config'
 
 function mount(deck) {
   return shallowMount(ReviewInboxItem, {
     props: { deck },
-    global: { directives: { sfx: {} } }
+    global: { directives: { sfx: vSfx } }
   })
 }
 
@@ -30,5 +38,13 @@ describe('ReviewInboxItem', () => {
   test('shows the due_count badge', () => {
     const wrapper = mount({ id: 1, due_count: 7 })
     expect(wrapper.find('[data-testid="review-inbox-item__due-badge"]').text()).toBe('7')
+  })
+
+  test('plays the type hover sfx on hover [obligation]', () => {
+    const wrapper = mount({ id: 1, due_count: 3 })
+    wrapper
+      .find('[data-testid="review-inbox-item"]')
+      .element.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
+    expect(mockEmitHoverSfx).toHaveBeenCalledWith(TYPE_SFX, expect.anything())
   })
 })
