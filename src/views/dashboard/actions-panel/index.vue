@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DashboardActionsPanelPolaroid from './polaroid.vue'
 import UiOptionsPanel, { type OptionsPanelEntry } from '@/components/ui-kit/options-panel/index.vue'
@@ -7,9 +7,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import { useMemberStore } from '@/stores/member'
 import { memberCoverBindings } from '@/components/member/cover'
 import { useStudyModal } from '@/views/study-session/composables/study-modal'
-import { useDeckActions } from '@/composables/deck/actions'
-import { buildNewDeckPayload } from '@/utils/deck/defaults'
-import { emitSfx } from '@/sfx/bus'
+import { useNewDeckAction } from '../composables/new-deck-action'
 
 type DashboardActionsPanelProps = {
   due_decks: Deck[]
@@ -25,10 +23,9 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const member_store = useMemberStore()
 const study_session = useStudyModal()
-const deck_actions = useDeckActions()
+const { creating_deck, createNewDeck } = useNewDeckAction()
 
 const root_bindings = computed(() => memberCoverBindings(member_store.cover))
-const creating_deck = ref(false)
 
 const deck_entries = computed<OptionsPanelEntry[]>(() => [
   {
@@ -61,12 +58,7 @@ async function onSelect(value: string) {
 
   if (value !== 'new-deck' || creating_deck.value || editing_decks) return
 
-  creating_deck.value = true
-  emitSfx('pop_up_pop')
-  await deck_actions.createDeck(buildNewDeckPayload(t('deck.default-title')), {
-    openSettingsAfterCreate: true
-  })
-  creating_deck.value = false
+  await createNewDeck()
 }
 </script>
 
@@ -93,6 +85,7 @@ async function onSelect(value: string) {
         data-theme-dark="stone-700"
         :entries="deck_entries"
         size="lg"
+        class="max-mxl:hidden"
         data-testid="dashboard-actions-panel__deck-options"
         @select="onSelect"
       />
@@ -104,6 +97,7 @@ async function onSelect(value: string) {
         data-theme="yellow-500"
         data-theme-dark="yellow-700"
         full-width
+        class="max-mxl:hidden!"
         :disabled="editing_decks"
         @press="onStudyAll"
       >

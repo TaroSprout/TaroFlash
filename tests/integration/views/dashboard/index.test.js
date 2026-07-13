@@ -141,6 +141,20 @@ const AudioReaderSectionStub = defineComponent({
   }
 })
 
+const DashboardMobileFooterStub = defineComponent({
+  name: 'DashboardMobileFooter',
+  props: ['due_decks', 'editing_decks'],
+  emits: ['toggle-edit-decks'],
+  setup(props) {
+    return () =>
+      h('div', {
+        'data-testid': 'dashboard-mobile-footer',
+        'data-due-count': props.due_decks.length,
+        'data-editing-decks': String(!!props.editing_decks)
+      })
+  }
+})
+
 // ── Component import (after mocks) ────────────────────────────────────────────
 
 import DashboardIndex from '@/views/dashboard/index.vue'
@@ -162,7 +176,8 @@ function mountDashboard() {
         ReviewInbox: ReviewInboxStub,
         DeckGrid: DeckGridStub,
         DeckGridSortOptions: DeckGridSortOptionsStub,
-        AudioReaderSection: AudioReaderSectionStub
+        AudioReaderSection: AudioReaderSectionStub,
+        DashboardMobileFooter: DashboardMobileFooterStub
       }
     }
   })
@@ -326,5 +341,20 @@ describe('DashboardIndex — decks error watch', () => {
     decksErrorRef.value = { message: 'Network error' }
     await Promise.resolve()
     expect(noticeErrorMock).toHaveBeenCalledWith('Network error')
+  })
+})
+
+describe('DashboardIndex — mobile footer', () => {
+  test('mounts unconditionally, forwarding due_decks and editing_decks', async () => {
+    decksDataRef.value = [makeDeck(1, { due_count: 3 })]
+    const wrapper = mountDashboard()
+    const footer = wrapper.findComponent(DashboardMobileFooterStub)
+
+    expect(footer.exists()).toBe(true)
+    expect(footer.props('due_decks')).toHaveLength(1)
+    expect(footer.props('editing_decks')).toBe(false)
+
+    await wrapper.find('[data-testid="dashboard-actions-panel"]').trigger('click')
+    expect(wrapper.findComponent(DashboardMobileFooterStub).props('editing_decks')).toBe(true)
   })
 })

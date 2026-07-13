@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { nextTick, ref } from 'vue'
 import { useMobileDock } from '@/components/mobile-dock/use-mobile-dock'
 import MobileDockHost from '@/components/mobile-dock/mobile-dock-host.vue'
+import { setBelowMd, resetResponsive } from '../../../helpers/responsive-mock'
 
 // The real useKeyboardOpen reads window.visualViewport, which is unreliable
 // (and may or may not exist) across browser-mode runs — mock it so keyboard
@@ -15,6 +16,14 @@ const mockIsKeyboardOpen = ref(false)
 vi.mock('@/composables/ui/keyboard', () => ({
   useKeyboardOpen: () => ({ is_open: mockIsKeyboardOpen })
 }))
+
+// The host reads `w<${breakpoint}` via useMatchMedia — mock it so "does the
+// registered breakpoint match the viewport" is directly controllable per test,
+// independent of jsdom's fixed viewport / getComputedStyle breakpoint tokens.
+vi.mock('@/composables/ui/media-query', async () => {
+  const m = await import('../../../helpers/responsive-mock')
+  return m.responsiveMockModule
+})
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -33,10 +42,11 @@ function mountHost() {
 
 beforeEach(() => {
   // Reset module-level singleton state between tests.
-  const { el, fills } = useMobileDock()
+  const { el, breakpoint } = useMobileDock()
   el.value = null
-  fills.value = 0
+  breakpoint.value = 'xl'
   mockIsKeyboardOpen.value = false
+  resetResponsive()
 
   // Create the teleport target for mobile-dock-host.
   container = document.createElement('div')
@@ -74,21 +84,19 @@ describe('MobileDockHost', () => {
   })
 
   describe('footer visibility [obligation]', () => {
-    test('footer is hidden when fills is 0 [obligation]', async () => {
-      const { fills } = useMobileDock()
-      fills.value = 0
+    test('footer is hidden when the registered breakpoint does not match the viewport [obligation]', async () => {
+      setBelowMd(false)
 
       mountHost()
 
       const footer = document.querySelector('[data-testid="mobile-dock-host"]')
       expect(footer).not.toBeNull()
-      // v-show="fills > 0" adds display:none when false
+      // v-show="is_mobile && !is_keyboard_open" adds display:none when false
       expect(footer.style.display).toBe('none')
     })
 
-    test('footer is visible when fills > 0 [obligation]', async () => {
-      const { fills } = useMobileDock()
-      fills.value = 1
+    test('footer is visible when the registered breakpoint matches the viewport [obligation]', async () => {
+      setBelowMd(true)
 
       mountHost()
 
@@ -97,16 +105,15 @@ describe('MobileDockHost', () => {
       expect(footer.style.display).not.toBe('none')
     })
 
-    test('footer hides when fills drops back to 0', async () => {
-      const { fills } = useMobileDock()
-      fills.value = 1
+    test('footer hides when the viewport stops matching the registered breakpoint', async () => {
+      setBelowMd(true)
 
       mountHost()
 
       const footer = document.querySelector('[data-testid="mobile-dock-host"]')
       expect(footer.style.display).not.toBe('none')
 
-      fills.value = 0
+      setBelowMd(false)
       await nextTick()
 
       expect(footer.style.display).toBe('none')
@@ -114,9 +121,8 @@ describe('MobileDockHost', () => {
 
     // ── keyboard-open hides the dock [obligation] ──────────────────────────
 
-    test('footer hides while the on-screen keyboard is open, even with fills > 0 [obligation]', () => {
-      const { fills } = useMobileDock()
-      fills.value = 1
+    test('footer hides while the on-screen keyboard is open, even when the breakpoint matches [obligation]', () => {
+      setBelowMd(true)
       mockIsKeyboardOpen.value = true
 
       mountHost()
@@ -126,8 +132,7 @@ describe('MobileDockHost', () => {
     })
 
     test('footer reappears once the keyboard closes again [obligation]', async () => {
-      const { fills } = useMobileDock()
-      fills.value = 1
+      setBelowMd(true)
       mockIsKeyboardOpen.value = true
 
       mountHost()
@@ -172,9 +177,8 @@ describe('MobileDockHost', () => {
   })
 
   describe('--mobile-dock-height CSS property [obligation]', () => {
-    test('publishes --mobile-dock-height = 0px on mount when fills is 0 [obligation]', () => {
-      const { fills } = useMobileDock()
-      fills.value = 0
+    test('publishes --mobile-dock-height = 0px on mount when the breakpoint does not match [obligation]', () => {
+      setBelowMd(false)
 
       mountHost()
 
@@ -191,23 +195,21 @@ describe('MobileDockHost', () => {
       expect(document.documentElement.style.getPropertyValue('--mobile-dock-height')).toBe('')
     })
 
-    test('updates --mobile-dock-height when fills changes to > 0 [obligation]', async () => {
-      const { fills } = useMobileDock()
-      fills.value = 0
+    test('updates --mobile-dock-height when the breakpoint starts matching [obligation]', async () => {
+      setBelowMd(false)
 
       mountHost()
       expect(document.documentElement.style.getPropertyValue('--mobile-dock-height')).toBe('0px')
 
-      fills.value = 1
+      setBelowMd(true)
       await nextTick()
       // offsetHeight is 0 in jsdom (no layout), so height stays 0px — but the
       // property is set (not removed). Just verify the property exists.
       expect(document.documentElement.style.getPropertyValue('--mobile-dock-height')).not.toBe('')
     })
 
-    test('publishes --mobile-dock-height = 0px while the keyboard is open, even with fills > 0 [obligation]', async () => {
-      const { fills } = useMobileDock()
-      fills.value = 1
+    test('publishes --mobile-dock-height = 0px while the keyboard is open, even when the breakpoint matches [obligation]', async () => {
+      setBelowMd(true)
 
       mountHost()
 

@@ -8,6 +8,7 @@ import { useLocalRef } from '@/composables/storage/local-ref'
 import { emitSfx } from '@/sfx/bus'
 import DashboardSection from './dashboard-section.vue'
 import DashboardActionsPanel from './actions-panel/index.vue'
+import DashboardMobileFooter from './mobile-footer/index.vue'
 import ReviewInbox from './review-inbox/index.vue'
 import DeckGrid from './deck-grid/index.vue'
 import DeckGridSortOptions, { type SortOption } from './deck-grid/sort-options.vue'
@@ -74,5 +75,11 @@ const due_decks = computed(() => {
 
       <audio-reader-section v-if="can.useAudioReader.value" />
     </div>
+
+    <dashboard-mobile-footer
+      :due_decks="due_decks"
+      :editing_decks="editing_decks"
+      @toggle-edit-decks="onToggleEditDecks"
+    />
   </div>
 </template>

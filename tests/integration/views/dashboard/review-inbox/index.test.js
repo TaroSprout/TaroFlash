@@ -103,6 +103,25 @@ beforeEach(() => {
   canScrollNextRef.value = false
 })
 
+describe('ReviewInbox — editing mode disables item interaction [obligation]', () => {
+  test('passes disabled=true to every item when editing is true', () => {
+    const wrapper = mountInbox(makeDecks(3), true)
+    wrapper.findAllComponents(ReviewInboxItemStub).forEach((item) => {
+      expect(item.props('disabled')).toBe(true)
+    })
+  })
+
+  test('clicking an item while editing plays digi_powerdown and does not start a study session [obligation]', async () => {
+    const decks = makeDecks(3)
+    const wrapper = mountInbox(decks, true)
+
+    await wrapper.findAll('[data-testid="review-inbox-item"]')[1].trigger('click')
+
+    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+    expect(studyStartMock).not.toHaveBeenCalled()
+  })
+})
+
 describe('ReviewInbox — renders every due deck', () => {
   test('renders one item per due deck, with no VISIBLE_COUNT cap', () => {
     const wrapper = mountInbox(makeDecks(5))
