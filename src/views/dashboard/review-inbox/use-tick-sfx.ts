@@ -1,5 +1,6 @@
 import { onBeforeUnmount, watch, type Ref } from 'vue'
 import { emitSfx } from '@/sfx/bus'
+import { useMatchMedia } from '@/composables/ui/media-query'
 
 // Matches the "+4" gap fudge use-scroll.ts uses for its own page-size math,
 // so both stay in lockstep with the actual card pitch.
@@ -11,9 +12,12 @@ function cardPitch(el: HTMLElement) {
 /**
  * Plays a tick each time the scroll strip crosses a card-width boundary,
  * quantizing scrollLeft by the card pitch rather than watching visibility —
- * ties the tick to the same distance the paging buttons step by.
+ * ties the tick to the same distance the paging buttons step by. Skipped on
+ * fine-pointer devices (mouse/trackpad), where the scroll gesture itself
+ * doesn't carry the same tactile framing touch/momentum scroll does.
  */
 export function useReviewInboxTickSfx(items_el: Ref<HTMLElement | null>) {
+  const is_fine = useMatchMedia('fine')
   let attached_el: HTMLElement | null = null
   let last_index = 0
   let raf = 0
@@ -31,7 +35,7 @@ export function useReviewInboxTickSfx(items_el: Ref<HTMLElement | null>) {
       const scroll_left = Math.min(Math.max(el.scrollLeft, 0), max_scroll_left)
 
       const index = Math.round(scroll_left / cardPitch(el))
-      if (index !== last_index) emitSfx('tap_05', { volume: 0.025 })
+      if (index !== last_index && !is_fine.value) emitSfx('tap_05', { volume: 0.025 })
       last_index = index
     })
   }

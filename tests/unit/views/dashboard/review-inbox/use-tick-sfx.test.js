@@ -3,12 +3,17 @@ import { createApp, ref } from 'vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockEmitSfx } = vi.hoisted(() => ({
-  mockEmitSfx: vi.fn()
+const { mockEmitSfx, mockIsFine } = vi.hoisted(() => ({
+  mockEmitSfx: vi.fn(),
+  mockIsFine: { value: false }
 }))
 
 vi.mock('@/sfx/bus', () => ({
   emitSfx: mockEmitSfx
+}))
+
+vi.mock('@/composables/ui/media-query', () => ({
+  useMatchMedia: vi.fn(() => mockIsFine)
 }))
 
 import { useReviewInboxTickSfx } from '@/views/dashboard/review-inbox/use-tick-sfx'
@@ -57,6 +62,7 @@ function withSetup(el_ref) {
 
 beforeEach(() => {
   mockEmitSfx.mockClear()
+  mockIsFine.value = false
 })
 
 afterEach(() => {
@@ -164,6 +170,37 @@ describe('useReviewInboxTickSfx — teardown', () => {
     el.dispatchEvent(new Event('scroll'))
     await nextFrame()
 
+    expect(mockEmitSfx).not.toHaveBeenCalled()
+  })
+})
+
+// ── Fine-pointer gating ───────────────────────────────────────────────────────
+
+describe('useReviewInboxTickSfx — fine-pointer gating [obligation]', () => {
+  test('does not emit when the pointer is fine, even when crossing a boundary [obligation]', async () => {
+    mockIsFine.value = true
+    const el = makeStripEl()
+    const el_ref = ref(el)
+    withSetup(el_ref)
+
+    await scrollTo(el, 100)
+
+    expect(mockEmitSfx).not.toHaveBeenCalled()
+  })
+
+  test('index tracking still advances while fine, so unmuting mid-scroll does not catch up with a spurious tick [obligation]', async () => {
+    mockIsFine.value = true
+    const el = makeStripEl()
+    const el_ref = ref(el)
+    withSetup(el_ref)
+
+    // Crosses into index 1 while fine — no tick, but last_index should update.
+    await scrollTo(el, 100)
+    expect(mockEmitSfx).not.toHaveBeenCalled()
+
+    mockIsFine.value = false
+    // Still index 1 — if tracking had stalled at 0, this would spuriously fire.
+    await scrollTo(el, 105)
     expect(mockEmitSfx).not.toHaveBeenCalled()
   })
 })
