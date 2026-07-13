@@ -23,7 +23,7 @@ const OPTIONS: { key: SortOption; label_key: string }[] = [
 <template>
   <div
     data-testid="deck-grid-sort-options"
-    class="flex gap-8 text-brown-500 overflow-x-auto scroll-hidden"
+    class="flex gap-8 text-brown-500 overflow-x-auto scroll-hidden pb-2"
   >
     <span
       v-for="option in OPTIONS"
