@@ -265,7 +265,7 @@ describe('useCardActions', () => {
       expect(args.card_ids).toEqual([7])
     })
 
-    test('emits the open + close move-modal sfx pair', async () => {
+    test('emits the open move-modal sfx', async () => {
       modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
       const persisted = [makeCard({ id: 7 })]
       const { actions } = makeActions({
@@ -274,7 +274,6 @@ describe('useCardActions', () => {
       })
       await actions.onMoveCards(7)
       expect(emitSfxMock).toHaveBeenCalledWith('double_pop_up')
-      expect(emitSfxMock).toHaveBeenCalledWith('double_pop_down')
     })
 
     test('runs cleanup after a successful move: exitSelection + refetch (mode unchanged)', async () => {

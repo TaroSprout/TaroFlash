@@ -34,8 +34,8 @@ function makeStripEl({ scrollWidth = 300, clientWidth = 300, scrollLeft = 0 } = 
   })
   Object.defineProperty(first_child, 'offsetWidth', { value: 96, configurable: true })
 
-  // jsdom does not implement scrollBy — stub it so prev()/next() can be spied.
-  el.scrollBy = () => {}
+  // jsdom does not implement scrollTo — stub it so prev()/next() can be spied.
+  el.scrollTo = () => {}
 
   return el
 }
@@ -162,24 +162,47 @@ describe('useReviewInboxScroll — recompute triggers', () => {
 // ── prev / next ───────────────────────────────────────────────────────────────
 
 describe('useReviewInboxScroll — prev / next', () => {
-  test('next() scrolls by the first child width plus the gap', () => {
-    const el = makeStripEl({ scrollWidth: 500, clientWidth: 300 })
-    const scroll_by = vi.spyOn(el, 'scrollBy').mockImplementation(() => {})
+  test('next() steps by 3 card-widths worth of scroll [obligation]', () => {
+    const el = makeStripEl({ scrollWidth: 1000, clientWidth: 300, scrollLeft: 0 })
+    const scroll_to = vi.spyOn(el, 'scrollTo').mockImplementation(() => {})
     const { next } = withSetup(() => [], el)
 
     next()
 
-    expect(scroll_by).toHaveBeenCalledWith({ left: 100, behavior: 'smooth' })
+    // step = (offsetWidth 96 + 4 gap) * PAGE_SIZE 3 = 300
+    expect(scroll_to).toHaveBeenCalledWith({ left: 300, behavior: 'smooth' })
   })
 
-  test('prev() scrolls by the negative first child width plus the gap', () => {
-    const el = makeStripEl({ scrollWidth: 500, clientWidth: 300 })
-    const scroll_by = vi.spyOn(el, 'scrollBy').mockImplementation(() => {})
+  test('prev() steps by 3 card-widths worth of scroll in the negative direction [obligation]', () => {
+    const el = makeStripEl({ scrollWidth: 1000, clientWidth: 300, scrollLeft: 400 })
+    const scroll_to = vi.spyOn(el, 'scrollTo').mockImplementation(() => {})
     const { prev } = withSetup(() => [], el)
 
     prev()
 
-    expect(scroll_by).toHaveBeenCalledWith({ left: -100, behavior: 'smooth' })
+    expect(scroll_to).toHaveBeenCalledWith({ left: 100, behavior: 'smooth' })
+  })
+
+  test('next() clamps the target to max_scroll_left when the remaining distance is under 3 card-widths [obligation]', () => {
+    // max_scroll_left = 500 - 300 = 200; unclamped target would be 150 + 300 = 450
+    const el = makeStripEl({ scrollWidth: 500, clientWidth: 300, scrollLeft: 150 })
+    const scroll_to = vi.spyOn(el, 'scrollTo').mockImplementation(() => {})
+    const { next } = withSetup(() => [], el)
+
+    next()
+
+    expect(scroll_to).toHaveBeenCalledWith({ left: 200, behavior: 'smooth' })
+  })
+
+  test('prev() clamps the target to 0 when the remaining distance to the start is under 3 card-widths [obligation]', () => {
+    // unclamped target would be 100 - 300 = -200
+    const el = makeStripEl({ scrollWidth: 1000, clientWidth: 300, scrollLeft: 100 })
+    const scroll_to = vi.spyOn(el, 'scrollTo').mockImplementation(() => {})
+    const { prev } = withSetup(() => [], el)
+
+    prev()
+
+    expect(scroll_to).toHaveBeenCalledWith({ left: 0, behavior: 'smooth' })
   })
 })
 

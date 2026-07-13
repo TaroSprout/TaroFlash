@@ -6,9 +6,14 @@ import { card } from '@tests/fixtures/card'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { guardAddCardsMock, handleLimitErrorMock } = vi.hoisted(() => ({
+const { guardAddCardsMock, handleLimitErrorMock, emitSfxMock } = vi.hoisted(() => ({
   guardAddCardsMock: vi.fn(),
-  handleLimitErrorMock: vi.fn()
+  handleLimitErrorMock: vi.fn(),
+  emitSfxMock: vi.fn()
+}))
+
+vi.mock('@/sfx/bus', () => ({
+  emitSfx: emitSfxMock
 }))
 
 const mockDecksData = { data: ref([]) }
@@ -165,6 +170,7 @@ describe('MoveCardsModal', () => {
   beforeEach(() => {
     guardAddCardsMock.mockReset().mockResolvedValue(true)
     handleLimitErrorMock.mockReset().mockReturnValue(false)
+    emitSfxMock.mockReset()
     cardsPerDeckLimitRef.value = 200
     mockDecksData.data.value = [
       { id: 10, title: 'Deck A', card_count: 0 },
@@ -374,6 +380,12 @@ describe('MoveCardsModal', () => {
     const { wrapper, close } = mountModal({ cards: [makeCard()] })
     await wrapper.find('[data-testid="move-cards__dialog-close"]').trigger('click')
     expect(close).toHaveBeenCalledWith(false)
+  })
+
+  test('dialog-card close emits pop_up_close [obligation]', async () => {
+    const { wrapper } = mountModal({ cards: [makeCard()] })
+    await wrapper.find('[data-testid="move-cards__dialog-close"]').trigger('click')
+    expect(emitSfxMock).toHaveBeenCalledWith('pop_up_close')
   })
 
   // ── onMove failure handling ──────────────────────────────────────────────────
