@@ -1,10 +1,11 @@
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 const EPSILON = 1
+const PAGE_SIZE = 3
 
 /**
  * Detects horizontal overflow and scroll position on the review-inbox card
- * strip, exposing scroll-by-one-card navigation. The floating prev/next
+ * strip, exposing scroll-by-page navigation. The floating prev/next
  * buttons only render when the strip overflows, and disable individually
  * once there's nothing left to scroll toward in that direction.
  */
@@ -42,19 +43,21 @@ export function useReviewInboxScroll(due_decks: () => Deck[]) {
     () => nextTick(updateScrollState)
   )
 
-  function scrollByCard(dir: 1 | -1) {
+  function scrollByPage(dir: 1 | -1) {
     const el = items_el.value
     if (!el) return
     const step = (el.firstElementChild as HTMLElement | null)?.offsetWidth ?? el.clientWidth
-    el.scrollBy({ left: dir * (step + 4), behavior: 'smooth' })
+    const max_scroll_left = el.scrollWidth - el.clientWidth
+    const target = el.scrollLeft + dir * (step + 4) * PAGE_SIZE
+    el.scrollTo({ left: Math.max(0, Math.min(target, max_scroll_left)), behavior: 'smooth' })
   }
 
   function prev() {
-    scrollByCard(-1)
+    scrollByPage(-1)
   }
 
   function next() {
-    scrollByCard(1)
+    scrollByPage(1)
   }
 
   return { items_el, has_overflow, can_scroll_prev, can_scroll_next, prev, next }
