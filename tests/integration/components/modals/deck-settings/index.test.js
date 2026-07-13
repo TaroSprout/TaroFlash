@@ -188,8 +188,8 @@ function makeTabContentMock(testid) {
 
 vi.mock('@/views/deck/deck-settings/tab-index/index.vue', makeTabContentMock('tab-index-stub'))
 vi.mock('@/views/deck/deck-settings/tab-details/index.vue', makeTabContentMock('tab-details-stub'))
-vi.mock('@/views/deck/deck-settings/tab-design/index.vue', makeTabContentMock('tab-content-stub'))
-vi.mock('@/views/deck/deck-settings/tab-study/index.vue', makeTabContentMock('tab-content-stub'))
+vi.mock('@/views/deck/deck-settings/tab-design/index.vue', makeTabContentMock('tab-design-stub'))
+vi.mock('@/views/deck/deck-settings/tab-study/index.vue', makeTabContentMock('tab-study-stub'))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
@@ -397,20 +397,23 @@ describe('DeckSettings — save button (DeckAside renders DeckSaveButton interna
   })
 })
 
-describe('DeckSettings — header copy is tab-driven', () => {
-  const cases = [
-    { tab: 'design', title: 'Appearance' },
-    { tab: 'study', title: 'Study Settings' },
-    { tab: 'danger-zone', title: 'Danger Zone' }
-  ]
-
-  for (const { tab, title } of cases) {
-    test(`renders the ${tab} header title`, () => {
-      const { wrapper } = makeWrapper({ initial_tab: tab })
-
-      expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe(title)
+describe('DeckSettings — header_title reflects the deck title, not the active tab [obligation]', () => {
+  test('shows deck.title verbatim regardless of active tab [obligation]', () => {
+    const { wrapper } = makeWrapper({
+      deck: deckFixture.one({ overrides: { id: 1, title: 'My Deck' } }),
+      initial_tab: 'study'
     })
-  }
+
+    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('My Deck')
+  })
+
+  test('falls back to the i18n default title when deck.title is an empty string [obligation]', () => {
+    const { wrapper } = makeWrapper({
+      deck: deckFixture.one({ overrides: { id: 1, title: '' } })
+    })
+
+    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Deck Settings')
+  })
 })
 
 describe('DeckSettings — tab bar composition [obligation]', () => {
@@ -435,20 +438,20 @@ describe('DeckSettings — aside wiring', () => {
 describe('DeckSettings — null active_tab tracks sidebar visibility', () => {
   // The default tab must be the strict inverse of whether TabSheet shows its
   // sidebar ('w>=lg & fine'): sidebar visible -> design, hidden -> index.
-  test('null active_tab renders the design header when the sidebar is visible', async () => {
+  test('null active_tab renders the design tab when the sidebar is visible', async () => {
     setSidebar(true)
     // No initial_tab → active_tab starts null (plain ref)
     const { wrapper } = makeWrapper()
     // has_sidebar arrives from TabSheet via a template ref — one render late.
     await nextTick()
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Appearance')
+    expect(wrapper.find('[data-testid="tab-design-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="deck-settings__back-button"]').exists()).toBe(false)
   })
 
-  test('null active_tab renders the index header when the sidebar is hidden', () => {
+  test('null active_tab renders the index tab when the sidebar is hidden', () => {
     setSidebar(false)
     const { wrapper } = makeWrapper()
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Deck Settings')
+    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
   })
 
   test('hiding the sidebar with danger-zone selected redirects to the index (null)', async () => {
@@ -458,12 +461,12 @@ describe('DeckSettings — null active_tab tracks sidebar visibility', () => {
     // the real true -> false transition (not a no-op false -> false).
     await nextTick()
 
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Danger Zone')
+    expect(wrapper.find('[data-testid="tab-danger-zone-stub"]').exists()).toBe(true)
 
     setSidebar(false)
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Deck Settings')
+    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
   })
 })
 
@@ -519,7 +522,7 @@ describe('DeckSettings — tab transition hooks', () => {
     await nextFrame()
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Appearance')
+    expect(wrapper.find('[data-testid="tab-design-stub"]').exists()).toBe(true)
   })
 
   test('swapping tabs below md routes through the mobile height tween', async () => {
@@ -531,7 +534,7 @@ describe('DeckSettings — tab transition hooks', () => {
     await nextFrame()
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Appearance')
+    expect(wrapper.find('[data-testid="tab-design-stub"]').exists()).toBe(true)
   })
 })
 
@@ -565,7 +568,7 @@ describe('DeckSettings — overlay actions', () => {
     await wrapper.find('[data-testid="tab-sheet__back-emit"]').trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Deck Settings')
+    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
   })
 
   test('onChromeBack falls through to the default back action when the active tab has no onChromeBack [obligation]', async () => {
@@ -575,7 +578,7 @@ describe('DeckSettings — overlay actions', () => {
     await wrapper.vm.onChromeBack()
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Deck Settings')
+    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
   })
 
   test('tab-sheet close emit forwards to close(false)', async () => {
@@ -592,26 +595,24 @@ describe('DeckSettings — active_tab is a plain non-persisted ref [obligation]'
     setSidebar(false)
     const { wrapper } = makeWrapper()
     // With null active_tab and no sidebar, the index tab is displayed
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Deck Settings')
+    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
   })
 
   test('initial_tab prop sets active_tab to that tab on mount [obligation]', () => {
     const { wrapper } = makeWrapper({ initial_tab: 'study' })
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe(
-      'Study Settings'
-    )
+    expect(wrapper.find('[data-testid="tab-study-stub"]').exists()).toBe(true)
   })
 
   test('second mount starts fresh (no cross-mount state leak) [obligation]', () => {
     // First mount with design tab
     const { wrapper: w1 } = makeWrapper({ initial_tab: 'design' })
-    expect(w1.find('[data-testid="deck-settings__header-title"]').text()).toBe('Appearance')
+    expect(w1.find('[data-testid="tab-design-stub"]').exists()).toBe(true)
     w1.unmount()
 
     // Second mount with no initial_tab: should start at null/index, not design
     setSidebar(false)
     const { wrapper: w2 } = makeWrapper()
-    expect(w2.find('[data-testid="deck-settings__header-title"]').text()).toBe('Deck Settings')
+    expect(w2.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
   })
 })
 
@@ -650,14 +651,12 @@ describe('DeckSettings — active_side resets to cover when tab becomes null [ob
 describe('DeckSettings — initial_tab / initial_side override [obligation]', () => {
   test('initial_tab prop opens that tab directly (design)', () => {
     const { wrapper } = makeWrapper({ initial_tab: 'design' })
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Appearance')
+    expect(wrapper.find('[data-testid="tab-design-stub"]').exists()).toBe(true)
   })
 
   test('initial_tab prop opens that tab directly (study)', () => {
     const { wrapper } = makeWrapper({ initial_tab: 'study' })
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe(
-      'Study Settings'
-    )
+    expect(wrapper.find('[data-testid="tab-study-stub"]').exists()).toBe(true)
   })
 
   test('initial_side is NOT applied synchronously during setup [obligation]', () => {
@@ -702,7 +701,7 @@ describe('DeckSettings — initial_tab / initial_side override [obligation]', ()
 })
 
 describe('DeckSettings — onNavigate sets direction forward and activates tab', () => {
-  test('navigate event from tab content sets the header to the navigated tab', async () => {
+  test('navigate event from tab content activates the navigated tab', async () => {
     setSidebar(false)
     // Start at design tab (which is TabContentStub) so navigate button is present
     const { wrapper } = makeWrapper({ initial_tab: 'design' })
@@ -710,9 +709,7 @@ describe('DeckSettings — onNavigate sets direction forward and activates tab',
     await wrapper.find('[data-testid="tab-content__navigate"]').trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe(
-      'Study Settings'
-    )
+    expect(wrapper.find('[data-testid="tab-study-stub"]').exists()).toBe(true)
   })
 })
 
@@ -757,12 +754,12 @@ describe('DeckSettings — tab_initial_render fast-path [obligation]', () => {
     // the important assertion is that tab_initial_render prevents any slide/fade
     // call on the very first enter. Since the transition fires internally on
     // mount, the initial render completes without additional GSAP calls.
-    // Verify: after mount, the header is visible (tab content rendered = done() was called).
+    // Verify: after mount, the tab content is visible (rendered = done() was called).
     setSidebar(false)
     const { wrapper } = makeWrapper({ initial_tab: 'design' })
     await flushPromises()
 
     // Component is visible — onTabEnter called done() via the fast-path
-    expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Appearance')
+    expect(wrapper.find('[data-testid="tab-design-stub"]').exists()).toBe(true)
   })
 })

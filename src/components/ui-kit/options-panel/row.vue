@@ -48,7 +48,7 @@ function onSelect() {
     :data-active="entry.selected || null"
     :data-theme="entry.selected ? entry.selectedTheme : undefined"
     :data-theme-dark="entry.selected ? entry.selectedThemeDark : undefined"
-    class="text-(--theme-on-primary) text-left flex items-center gap-3 py-3 px-5 first:pt-5 first:pb-2 last:pb-5 last:pt-2 rounded-3"
+    class="text-(--theme-on-primary) text-left flex items-center gap-3 py-3 px-5 [&:first-child:not(:only-child)]:pt-5 [&:first-child:not(:only-child)]:pb-2 [&:last-child:not(:only-child)]:pb-5 [&:last-child:not(:only-child)]:pt-2 rounded-3"
     :class="[
       interactive ? 'cursor-pointer' : '',
       entry.disabled ? 'pointer-events-none opacity-20' : '',

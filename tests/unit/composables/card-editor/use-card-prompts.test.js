@@ -148,13 +148,17 @@ describe('useCardPrompts — openMoveModal [obligation]', () => {
     expect(emitSfxMock).toHaveBeenCalledWith('double_pop_up')
   })
 
-  test('emits double_pop_down once the modal settles [obligation]', async () => {
+  test('does not emit any sfx when the returned response promise resolves [obligation]', async () => {
     modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
     const { openMoveModal } = useCardPrompts()
 
-    await openMoveModal([makeCard()], 1, 10)
+    const response = openMoveModal([makeCard()], 1, 10)
+    emitSfxMock.mockClear()
+    await response
 
-    expect(emitSfxMock).toHaveBeenCalledWith('double_pop_down')
+    // The old response.then(() => emitSfx(...)) close-sfx side effect moved into
+    // move-cards-modal.vue's own onClose handler — resolving here fires nothing.
+    expect(emitSfxMock).not.toHaveBeenCalled()
   })
 
   test('resolves to the chosen deck when user confirms [obligation]', async () => {

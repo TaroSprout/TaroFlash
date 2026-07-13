@@ -46,7 +46,6 @@ export function useCardPrompts() {
       mode: 'popup',
       props: { cards, count, current_deck_id, move }
     })
-    response.then(() => emitSfx('double_pop_down'))
 
     return response
   }

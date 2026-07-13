@@ -81,12 +81,7 @@ const sidebar_active = computed({
   set: (v) => (active_tab.value = v as ActiveTab)
 })
 
-const header_meta = computed(() =>
-  displayed_tab.value !== 'index' ? TAB_META[displayed_tab.value] : null
-)
-const header_title = computed(() =>
-  header_meta.value ? t(header_meta.value.labelKey) : t('deck.settings-modal.header.index.title')
-)
+const header_title = computed(() => deck.title || t('deck.settings-modal.title'))
 
 const visible_side = computed(() =>
   displayed_tab.value === 'design' ? editor.active_side.value : 'cover'

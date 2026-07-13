@@ -74,7 +74,7 @@ async function onSelect(value: string) {
   <div
     data-testid="dashboard-actions-panel"
     v-bind="root_bindings"
-    class="bg-(--theme-primary) rounded-8 relative flex flex-col"
+    class="bg-(--theme-primary) rounded-8 relative flex flex-col w-full max-w-100"
   >
     <dashboard-actions-panel-polaroid />
 
