@@ -337,6 +337,7 @@
   "alert.reset-reviews.message": "This wipes your study progress and review history for every card in this deck. This can't be undone.",
   "alert.reset-reviews.confirm": "Reset",
   "toast.error.add-card-failed": "Failed to add a new card",
+  "toast.error.deck-create-failed": "Couldn't create this deck. Please try again.",
   "toast.error.deck-delete-failed": "Couldn't delete this deck. Please try again.",
   "toast.error.deck-save-failed": "Couldn't save this deck. Please try again.",
   "toast.error.reset-reviews-failed": "Couldn't reset reviews for this deck. Please try again.",
