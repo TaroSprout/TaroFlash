@@ -35,7 +35,7 @@ const deck_entries = computed<OptionsPanelEntry[]>(() => [
     value: 'new-deck',
     label: t('dashboard.actions-panel.new-deck-label'),
     trailingIcon: 'card-add',
-    disabled: creating_deck.value
+    disabled: creating_deck.value || editing_decks
   },
   {
     value: 'edit-decks',
@@ -59,7 +59,7 @@ async function onSelect(value: string) {
     return
   }
 
-  if (value !== 'new-deck' || creating_deck.value) return
+  if (value !== 'new-deck' || creating_deck.value || editing_decks) return
 
   creating_deck.value = true
   emitSfx('pop_up_pop')
