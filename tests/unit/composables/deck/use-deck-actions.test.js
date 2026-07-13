@@ -8,6 +8,7 @@ const {
   mockModalOpen,
   mockDeckSettingsOpen,
   mockWaitForDeckPopIn,
+  mockNoticeError,
   call_order
 } = vi.hoisted(() => ({
   refreshMock: vi.fn().mockResolvedValue(undefined),
@@ -17,6 +18,7 @@ const {
   mockModalOpen: vi.fn(),
   mockDeckSettingsOpen: vi.fn(),
   mockWaitForDeckPopIn: vi.fn().mockResolvedValue(undefined),
+  mockNoticeError: vi.fn(),
   call_order: []
 }))
 
@@ -35,6 +37,10 @@ vi.mock('@/composables/alert', () => ({
 
 vi.mock('@/composables/modal', () => ({
   useModal: () => ({ open: mockModalOpen })
+}))
+
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => ({ error: mockNoticeError })
 }))
 
 vi.mock('@/composables/deck/settings-modal', () => ({
@@ -78,6 +84,7 @@ describe('useDeckActions', () => {
     mockDeckSettingsOpen.mockClear()
     mockWaitForDeckPopIn.mockClear()
     mockWaitForDeckPopIn.mockResolvedValue(undefined)
+    mockNoticeError.mockReset()
     call_order.length = 0
     canCreateDeck.value = true
   })
@@ -161,6 +168,17 @@ describe('useDeckActions', () => {
       const { createDeck } = useDeckActions()
 
       await expect(createDeck({ title: 'New Deck' })).resolves.toBeNull()
+    })
+
+    test('shows an error toast when the mutation rejects [obligation]', async () => {
+      canCreateDeck.value = true
+      upsertMock.mockRejectedValueOnce(new Error('boom'))
+      const { createDeck } = useDeckActions()
+
+      const result = await createDeck({ title: 'New Deck' })
+
+      expect(mockNoticeError).toHaveBeenCalledWith('toast.error.deck-create-failed')
+      expect(result).toBeNull()
     })
 
     describe('openSettingsAfterCreate', () => {

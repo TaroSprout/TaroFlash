@@ -14,9 +14,9 @@ import ReviewInboxItem from '@/views/dashboard/review-inbox/item.vue'
 import { vSfx } from '@/sfx/directive'
 import { TYPE_SFX } from '@/sfx/config'
 
-function mount(deck) {
+function mount(deck, props = {}) {
   return shallowMount(ReviewInboxItem, {
-    props: { deck },
+    props: { deck, ...props },
     global: { directives: { sfx: vSfx } }
   })
 }
@@ -46,5 +46,17 @@ describe('ReviewInboxItem', () => {
       .find('[data-testid="review-inbox-item"]')
       .element.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
     expect(mockEmitHoverSfx).toHaveBeenCalledWith(TYPE_SFX, expect.anything())
+  })
+
+  describe('disabled prop [obligation]', () => {
+    test('defaults to not disabled', () => {
+      const wrapper = mount({ id: 1, due_count: 3 })
+      expect(wrapper.props('disabled')).toBe(false)
+    })
+
+    test('reflects a disabled=true prop', () => {
+      const wrapper = mount({ id: 1, due_count: 3 }, { disabled: true })
+      expect(wrapper.props('disabled')).toBe(true)
+    })
   })
 })

@@ -103,13 +103,14 @@ const DeckGridItemStub = defineComponent({
 
 const NewDeckCardStub = defineComponent({
   name: 'NewDeckCard',
-  props: ['size', 'loading'],
+  props: ['size', 'loading', 'disabled'],
   emits: ['press'],
   setup(props, { emit }) {
     return () =>
       h('div', {
         'data-testid': 'new-deck-card',
         'data-loading': String(!!props.loading),
+        'data-disabled': String(!!props.disabled),
         onClick: () => emit('press')
       })
   }
@@ -223,6 +224,22 @@ describe('DeckGrid — create deck', () => {
     resolve_create({ id: 1 })
     await Promise.resolve()
     await Promise.resolve()
+  })
+
+  test('does not call createDeck when editing is true, even bypassing the disabled UI state [obligation]', async () => {
+    const wrapper = mount([], true)
+    await wrapper.find('[data-testid="new-deck-card"]').trigger('click')
+    expect(createDeckMock).not.toHaveBeenCalled()
+  })
+
+  test('passes disabled=true to new-deck-card when editing [obligation]', () => {
+    const wrapper = mount([], true)
+    expect(wrapper.find('[data-testid="new-deck-card"]').attributes('data-disabled')).toBe('true')
+  })
+
+  test('passes disabled=false to new-deck-card when not editing [obligation]', () => {
+    const wrapper = mount([], false)
+    expect(wrapper.find('[data-testid="new-deck-card"]').attributes('data-disabled')).toBe('false')
   })
 })
 

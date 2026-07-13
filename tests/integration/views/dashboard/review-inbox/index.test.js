@@ -5,11 +5,14 @@ import { defineComponent, h, ref } from 'vue'
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 // Only functions go in vi.hoisted — Vue ref() is not available there.
 
-const { studyStartMock, prevMock, nextMock } = vi.hoisted(() => ({
+const { studyStartMock, prevMock, nextMock, mockEmitSfx } = vi.hoisted(() => ({
   studyStartMock: vi.fn(),
   prevMock: vi.fn(),
-  nextMock: vi.fn()
+  nextMock: vi.fn(),
+  mockEmitSfx: vi.fn()
 }))
+
+vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
 
 // Reactive state shared between the mock factory and tests. Created at module
 // level (not inside vi.hoisted) so Vue's ref() is available.
@@ -36,13 +39,14 @@ vi.mock('@/views/dashboard/review-inbox/use-scroll', () => ({
 
 const ReviewInboxItemStub = defineComponent({
   name: 'ReviewInboxItem',
-  props: ['deck'],
+  props: ['deck', 'disabled'],
   emits: ['click'],
   setup(props, { emit }) {
     return () =>
       h('div', {
         'data-testid': 'review-inbox-item',
         'data-deck-id': props.deck.id,
+        'data-disabled': String(!!props.disabled),
         onClick: () => emit('click')
       })
   }
@@ -78,9 +82,9 @@ function makeDecks(n) {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function mountInbox(due_decks) {
+function mountInbox(due_decks, editing = false) {
   return shallowMount(ReviewInbox, {
-    props: { due_decks },
+    props: { due_decks, editing },
     global: {
       stubs: {
         ReviewInboxItem: ReviewInboxItemStub,
@@ -163,5 +167,36 @@ describe('ReviewInbox — clicking an item starts a study session for just that 
     const wrapper = mountInbox(decks)
     await wrapper.findAll('[data-testid="review-inbox-item"]')[1].trigger('click')
     expect(studyStartMock).toHaveBeenCalledWith([decks[1]])
+  })
+
+  test('does not play digi_powerdown when not editing [obligation]', async () => {
+    const decks = makeDecks(3)
+    const wrapper = mountInbox(decks)
+    await wrapper.findAll('[data-testid="review-inbox-item"]')[1].trigger('click')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('digi_powerdown')
+  })
+})
+
+describe('ReviewInbox — clicking an item while editing [obligation]', () => {
+  test('plays digi_powerdown and does not start a study session', async () => {
+    const decks = makeDecks(3)
+    const wrapper = mountInbox(decks, true)
+    await wrapper.findAll('[data-testid="review-inbox-item"]')[1].trigger('click')
+    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+    expect(studyStartMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('ReviewInbox — forwards editing as the disabled prop to each item [obligation]', () => {
+  test('forwards disabled=true to items when editing', () => {
+    const wrapper = mountInbox(makeDecks(2), true)
+    const items = wrapper.findAllComponents(ReviewInboxItemStub)
+    expect(items.every((i) => i.props('disabled') === true)).toBe(true)
+  })
+
+  test('forwards disabled=false to items when not editing', () => {
+    const wrapper = mountInbox(makeDecks(2), false)
+    const items = wrapper.findAllComponents(ReviewInboxItemStub)
+    expect(items.every((i) => i.props('disabled') === false)).toBe(true)
   })
 })

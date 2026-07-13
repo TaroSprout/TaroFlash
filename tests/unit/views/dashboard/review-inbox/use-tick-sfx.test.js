@@ -81,7 +81,7 @@ describe('useReviewInboxTickSfx — tick firing', () => {
     await scrollTo(el, 100)
 
     expect(mockEmitSfx).toHaveBeenCalledTimes(1)
-    expect(mockEmitSfx).toHaveBeenCalledWith('tap_05', { volume: 0.025 })
+    expect(mockEmitSfx).toHaveBeenCalledWith('tap_05', { volume: 0.1 })
   })
 
   test('does not fire when the scroll delta stays within the same quantized index [obligation]', async () => {

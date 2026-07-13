@@ -62,7 +62,7 @@ vi.mock('@/composables/ui/media-query', () => ({
 }))
 
 vi.mock('@/composables/storage/local-ref', () => ({
-  useLocalRef: () => ref(false)
+  useLocalRef: (_key, default_value) => ref(default_value)
 }))
 
 vi.mock('@/stores/member', () => ({
@@ -126,8 +126,11 @@ const DeckGridStub = defineComponent({
 
 const DeckGridSortOptionsStub = defineComponent({
   name: 'DeckGridSortOptions',
-  setup() {
-    return () => h('div', { 'data-testid': 'deck-grid-sort-options' })
+  props: ['selected'],
+  emits: ['select'],
+  setup(props) {
+    return () =>
+      h('div', { 'data-testid': 'deck-grid-sort-options', 'data-selected': props.selected })
   }
 })
 
@@ -144,8 +147,8 @@ import DashboardIndex from '@/views/dashboard/index.vue'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-function makeDeck(id, { due_count = 0, rank = id } = {}) {
-  return { id, title: `Deck ${id}`, due_count, rank }
+function makeDeck(id, { due_count = 0, rank = id, created_at, updated_at } = {}) {
+  return { id, title: `Deck ${id}`, due_count, rank, created_at, updated_at }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -189,6 +192,42 @@ describe('DashboardIndex — deck ordering', () => {
         .map((d) => d.id)
     ).toEqual([1, 2, 3])
   })
+
+  test('sorts decks by created_at descending when sort-options emits date-created [obligation]', async () => {
+    decksDataRef.value = [
+      makeDeck(1, { created_at: '2026-01-01' }),
+      makeDeck(2, { created_at: '2026-03-01' }),
+      makeDeck(3, { created_at: '2026-02-01' })
+    ]
+    const wrapper = mountDashboard()
+    wrapper.findComponent(DeckGridSortOptionsStub).vm.$emit('select', 'date-created')
+    await wrapper.vm.$nextTick()
+
+    expect(
+      wrapper
+        .findComponent(DeckGridStub)
+        .props('decks')
+        .map((d) => d.id)
+    ).toEqual([2, 3, 1])
+  })
+
+  test('sorts decks by updated_at descending when sort-options emits last-updated [obligation]', async () => {
+    decksDataRef.value = [
+      makeDeck(1, { updated_at: '2026-01-01' }),
+      makeDeck(2, { updated_at: '2026-03-01' }),
+      makeDeck(3, { updated_at: '2026-02-01' })
+    ]
+    const wrapper = mountDashboard()
+    wrapper.findComponent(DeckGridSortOptionsStub).vm.$emit('select', 'last-updated')
+    await wrapper.vm.$nextTick()
+
+    expect(
+      wrapper
+        .findComponent(DeckGridStub)
+        .props('decks')
+        .map((d) => d.id)
+    ).toEqual([2, 3, 1])
+  })
 })
 
 describe('DashboardIndex — edit-decks toggle', () => {
@@ -206,14 +245,14 @@ describe('DashboardIndex — edit-decks toggle', () => {
     expect(wrapper.findComponent(DeckGridStub).props('editing')).toBe(false)
   })
 
-  test('emits pop_up_pop sfx when editing_decks flips true, and digi_powerdown when it flips false [obligation]', async () => {
+  test('emits pop_up_pop sfx when editing_decks flips true, and pop_up_close when it flips false [obligation]', async () => {
     const wrapper = mountDashboard()
     await wrapper.find('[data-testid="dashboard-actions-panel"]').trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_pop')
 
     mockEmitSfx.mockClear()
     await wrapper.find('[data-testid="dashboard-actions-panel"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+    expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
   })
 })
 
@@ -227,6 +266,20 @@ describe('DashboardIndex — due decks derivation', () => {
     const wrapper = mountDashboard()
     expect(wrapper.findComponent(DashboardActionsPanelStub).props('due_decks')).toHaveLength(2)
     expect(wrapper.findComponent(ReviewInboxStub).props('due_decks')).toHaveLength(2)
+  })
+
+  test('sorts due decks by due_count descending [obligation]', () => {
+    decksDataRef.value = [
+      makeDeck(1, { due_count: 2 }),
+      makeDeck(2, { due_count: 9 }),
+      makeDeck(3, { due_count: 5 })
+    ]
+    const wrapper = mountDashboard()
+    const ids = wrapper
+      .findComponent(ReviewInboxStub)
+      .props('due_decks')
+      .map((d) => d.id)
+    expect(ids).toEqual([2, 3, 1])
   })
 })
 
