@@ -28,7 +28,7 @@ watch(decks_error, (err) => {
 
 function onToggleEditDecks() {
   editing_decks.value = !editing_decks.value
-  emitSfx(editing_decks.value ? 'pop_up_pop' : 'digi_powerdown')
+  emitSfx(editing_decks.value ? 'pop_up_pop' : 'pop_up_close')
 }
 
 const due_decks = computed(() => {
