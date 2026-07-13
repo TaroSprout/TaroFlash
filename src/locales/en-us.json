@@ -402,7 +402,6 @@
   "dashboard.deck-grid-sort.custom-label": "Custom",
   "dashboard.deck-grid-sort.date-created-label": "Date Created",
   "dashboard.deck-grid-sort.last-updated-label": "Last Updated",
-  "dashboard.deck-grid-sort.last-studied-label": "Last Studied",
   "dashboard.create-deck-button": "Make a New Deck",
   "dashboard.new-deck-card.label": "New Deck",
   "dashboard.actions-panel.new-deck-label": "New Deck",

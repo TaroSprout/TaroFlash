@@ -4,21 +4,29 @@ import { useI18n } from 'vue-i18n'
 import { useMemberDecksQuery } from '@/api/decks'
 import { useNoticeStore } from '@/stores/notice-store'
 import { useCan } from '@/composables/can'
+import { useLocalRef } from '@/composables/storage/local-ref'
 import { emitSfx } from '@/sfx/bus'
 import DashboardSection from './dashboard-section.vue'
 import DashboardActionsPanel from './actions-panel/index.vue'
 import ReviewInbox from './review-inbox/index.vue'
 import DeckGrid from './deck-grid/index.vue'
-import DeckGridSortOptions from './deck-grid/sort-options.vue'
+import DeckGridSortOptions, { type SortOption } from './deck-grid/sort-options.vue'
 import AudioReaderSection from './audio-reader-section.vue'
+
+const DECK_SORT_COMPARATORS: Record<SortOption, (a: Deck, b: Deck) => number> = {
+  custom: (a, b) => (a.rank ?? 0) - (b.rank ?? 0),
+  'date-created': (a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''),
+  'last-updated': (a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? '')
+}
 
 const { t } = useI18n()
 const notice = useNoticeStore()
 const can = useCan()
 
 const { data: decks_data, error: decks_error } = useMemberDecksQuery()
+const sort_by = useLocalRef<SortOption>('dashboard-deck-sort', 'custom')
 const decks = computed(() => {
-  return [...(decks_data.value ?? [])].sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
+  return [...(decks_data.value ?? [])].sort(DECK_SORT_COMPARATORS[sort_by.value])
 })
 const editing_decks = ref(false)
 
@@ -56,7 +64,7 @@ const due_decks = computed(() => {
 
       <dashboard-section :label="t('dashboard.deck-filter.all-label')">
         <template #subheader>
-          <deck-grid-sort-options />
+          <deck-grid-sort-options :selected="sort_by" @select="sort_by = $event" />
         </template>
 
         <deck-grid :decks="decks" :editing="editing_decks" />
