@@ -5,7 +5,6 @@ import { useMemberDecksQuery } from '@/api/decks'
 import { useNoticeStore } from '@/stores/notice-store'
 import { useCan } from '@/composables/can'
 import { useLocalRef } from '@/composables/storage/local-ref'
-import { useMatchMedia } from '@/composables/ui/media-query'
 import { emitSfx } from '@/sfx/bus'
 import DashboardSection from './dashboard-section.vue'
 import DashboardActionsPanel from './actions-panel/index.vue'
@@ -26,7 +25,6 @@ const notice = useNoticeStore()
 const can = useCan()
 
 const { data: decks_data, error: decks_error } = useMemberDecksQuery()
-const is_mobile = useMatchMedia('w<mxl')
 const sort_by = useLocalRef<SortOption>('dashboard-deck-sort', 'custom')
 const decks = computed(() => {
   return [...(decks_data.value ?? [])].sort(DECK_SORT_COMPARATORS[sort_by.value])
@@ -79,7 +77,6 @@ const due_decks = computed(() => {
     </div>
 
     <dashboard-mobile-footer
-      v-if="is_mobile"
       :due_decks="due_decks"
       :editing_decks="editing_decks"
       @toggle-edit-decks="onToggleEditDecks"

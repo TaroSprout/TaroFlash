@@ -15,7 +15,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <mobile-dock>
+  <mobile-dock breakpoint="mxl">
     <footer-actions
       :due_decks="due_decks"
       :editing_decks="editing_decks"

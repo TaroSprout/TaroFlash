@@ -20,7 +20,6 @@ import {
 } from '@/views/deck/composables'
 import { deckViewShellKey, useDeckViewShell } from '@/views/deck/composables/view-shell'
 import { mobileCardEditorKey, useMobileCardEditor } from './mobile-editor/use-mobile-card-editor'
-import { useMatchMedia } from '@/composables/ui/media-query'
 
 const { id: deck_id } = defineProps<{
   id: string
@@ -57,8 +56,6 @@ provide(cardSearchKey, search)
 
 const mobile_editor = useMobileCardEditor(editor)
 provide(mobileCardEditorKey, mobile_editor)
-
-const is_mobile = useMatchMedia('w<md')
 
 const view_state = computed<'loading' | 'empty' | 'ready'>(() => {
   if (editor.list.all_cards.value.length > 0) return 'ready'
@@ -121,6 +118,6 @@ const show_skeleton = computed(() => !deck.value)
       target="html"
     />
 
-    <deck-mobile-footer v-if="is_mobile" />
+    <deck-mobile-footer />
   </section>
 </template>

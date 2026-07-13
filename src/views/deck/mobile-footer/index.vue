@@ -13,7 +13,7 @@ const { is_selecting } = inject(cardEditorKey)!.selection
 </script>
 
 <template>
-  <mobile-dock>
+  <mobile-dock breakpoint="md">
     <crossfade-resize data-testid="deck-mobile-footer">
       <footer-bulk-actions v-if="is_selecting" key="bulk-actions" />
       <mobile-page-settings v-else-if="is_page_settings_open" key="page-settings" />

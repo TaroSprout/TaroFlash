@@ -1,13 +1,20 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { useMobileDock } from './use-mobile-dock'
+import type { BreakpointKey } from '@/composables/ui/media-query'
 
-const { fills } = useMobileDock()
+type MobileDockProps = {
+  // Width below which the host shows itself for this fill's content.
+  breakpoint?: BreakpointKey
+}
+
+const { breakpoint = 'xl' } = defineProps<MobileDockProps>()
+
+const dock = useMobileDock()
 
 defineSlots<{ default: () => unknown; above?: () => unknown }>()
 
-onMounted(() => (fills.value += 1))
-onBeforeUnmount(() => (fills.value -= 1))
+onMounted(() => (dock.breakpoint.value = breakpoint))
 </script>
 
 <template>
