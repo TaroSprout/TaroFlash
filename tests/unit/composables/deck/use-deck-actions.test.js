@@ -84,7 +84,7 @@ describe('useDeckActions', () => {
     mockDeckSettingsOpen.mockClear()
     mockWaitForDeckPopIn.mockClear()
     mockWaitForDeckPopIn.mockResolvedValue(undefined)
-    mockNoticeError.mockReset()
+    mockNoticeError.mockClear()
     call_order.length = 0
     canCreateDeck.value = true
   })
@@ -170,15 +170,14 @@ describe('useDeckActions', () => {
       await expect(createDeck({ title: 'New Deck' })).resolves.toBeNull()
     })
 
-    test('shows an error toast when the mutation rejects [obligation]', async () => {
+    test('shows an error notice when the mutation rejects [obligation]', async () => {
       canCreateDeck.value = true
       upsertMock.mockRejectedValueOnce(new Error('boom'))
       const { createDeck } = useDeckActions()
 
-      const result = await createDeck({ title: 'New Deck' })
+      await createDeck({ title: 'New Deck' })
 
       expect(mockNoticeError).toHaveBeenCalledWith('toast.error.deck-create-failed')
-      expect(result).toBeNull()
     })
 
     describe('openSettingsAfterCreate', () => {

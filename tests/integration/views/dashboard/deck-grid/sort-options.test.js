@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
@@ -15,6 +15,10 @@ const OPTION_TESTIDS = [
 function mount(props) {
   return shallowMount(DeckGridSortOptions, { props })
 }
+
+beforeEach(() => {
+  mockEmitSfx.mockClear()
+})
 
 describe('DeckGridSortOptions — options rendered', () => {
   test('renders exactly 3 options', () => {

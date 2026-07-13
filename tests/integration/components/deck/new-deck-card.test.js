@@ -118,4 +118,18 @@ describe('NewDeckCard', () => {
       expect(root.classes()).toContain('pointer-events-none')
     })
   })
+
+  describe('disabled prop [obligation]', () => {
+    test('does not emit press when tapped while disabled [obligation]', async () => {
+      const wrapper = mount({ disabled: true })
+      await wrapper.find('[data-testid="new-deck-card"]').trigger('click')
+      expect(wrapper.emitted('press')).toBeFalsy()
+    })
+
+    test('still emits press when tapped and not disabled', async () => {
+      const wrapper = mount({ disabled: false })
+      await wrapper.find('[data-testid="new-deck-card"]').trigger('click')
+      expect(wrapper.emitted('press')).toBeTruthy()
+    })
+  })
 })

@@ -12,8 +12,8 @@ let content_target
 let above_target
 const wrappers = []
 
-function mountFill(slots = {}) {
-  const wrapper = mount(MobileDock, { attachTo: document.body, slots })
+function mountFill(slots = {}, props = {}) {
+  const wrapper = mount(MobileDock, { attachTo: document.body, props, slots })
   wrappers.push(wrapper)
   return wrapper
 }
@@ -22,9 +22,9 @@ function mountFill(slots = {}) {
 
 beforeEach(() => {
   // Reset module-level singleton state between tests.
-  const { el, fills } = useMobileDock()
+  const { el, breakpoint } = useMobileDock()
   el.value = null
-  fills.value = 0
+  breakpoint.value = 'xl'
 
   // Create the teleport target that [mobile-dock-content] expects.
   content_target = document.createElement('div')
@@ -46,38 +46,23 @@ afterEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('MobileDock', () => {
-  describe('fills counter [obligation]', () => {
-    test('increments fills by 1 when mounted [obligation]', () => {
-      const { fills } = useMobileDock()
-      expect(fills.value).toBe(0)
+  describe('breakpoint prop [obligation]', () => {
+    test('writes its breakpoint prop to the shared breakpoint ref onMounted [obligation]', async () => {
+      const { breakpoint } = useMobileDock()
+      expect(breakpoint.value).toBe('xl')
+
+      mountFill({}, { breakpoint: 'md' })
+
+      expect(breakpoint.value).toBe('md')
+    })
+
+    test('defaults to xl when no breakpoint prop is passed [obligation]', () => {
+      const { breakpoint } = useMobileDock()
+      breakpoint.value = 'md'
 
       mountFill()
 
-      expect(fills.value).toBe(1)
-    })
-
-    test('decrements fills by 1 when unmounted [obligation]', () => {
-      const { fills } = useMobileDock()
-
-      const wrapper = mountFill()
-      expect(fills.value).toBe(1)
-
-      wrapper.unmount()
-      expect(fills.value).toBe(0)
-    })
-
-    test('two mounted fills give fills === 2, two unmounts return to 0 [obligation]', () => {
-      const { fills } = useMobileDock()
-
-      const w1 = mountFill()
-      const w2 = mountFill()
-      expect(fills.value).toBe(2)
-
-      w1.unmount()
-      expect(fills.value).toBe(1)
-
-      w2.unmount()
-      expect(fills.value).toBe(0)
+      expect(breakpoint.value).toBe('xl')
     })
   })
 

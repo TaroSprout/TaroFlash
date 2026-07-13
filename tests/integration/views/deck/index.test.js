@@ -181,6 +181,11 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     expect(wrapper.find('[data-testid="deck-hero-stub"]').exists()).toBe(false)
   })
 
+  test('always mounts deck-mobile-footer, unconditionally of viewport [obligation]', () => {
+    const wrapper = mount({ deck: { id: 1, name: 'Test' } })
+    expect(wrapper.findComponent({ name: 'DeckMobileFooter' }).exists()).toBe(true)
+  })
+
   // ── DeckSkeleton (top-level v-if) ─────────────────────────────────────────
 
   test('renders DeckSkeleton when deck query data is null (initial loading) [obligation]', () => {
