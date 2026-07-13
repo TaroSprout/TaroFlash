@@ -109,7 +109,7 @@ export function useDeckViewShell() {
   /** Flip drag-to-reorder on the base grid; turning it on returns to the view. */
   function toggleRearrange() {
     is_rearranging.value = !is_rearranging.value
-    emitSfx(is_rearranging.value ? 'generic_button_15' : 'pop_up_close')
+    emitSfx(is_rearranging.value ? 'pop_up_pop' : 'pop_up_close')
     if (is_rearranging.value) {
       mode.value = 'view'
       sort_by.value = 'default'

@@ -197,10 +197,10 @@ describe('useDeckViewShell', () => {
     expect(shell.mode.value).toBe('view') // still view (no mode side-effect)
   })
 
-  test('toggleRearrange emits generic_button_15 when turning ON', () => {
+  test('toggleRearrange emits pop_up_pop when turning ON [obligation]', () => {
     const shell = useDeckViewShell()
     shell.toggleRearrange()
-    expect(emitSfxMock).toHaveBeenCalledWith('generic_button_15')
+    expect(emitSfxMock).toHaveBeenCalledWith('pop_up_pop')
   })
 
   test('toggleRearrange emits pop_up_close when turning OFF', () => {

@@ -82,7 +82,7 @@ function onDeckSettingsClicked(deck: Deck) {
 }
 
 async function onCreateDeckClicked() {
-  if (creating_deck.value) return
+  if (creating_deck.value || editing) return
   creating_deck.value = true
 
   await deck_actions.createDeck(buildNewDeckPayload(t('deck.default-title')))
@@ -148,7 +148,12 @@ async function onCreateDeckClicked() {
           transform: `translate(${reorder.itemPosition(decks.length).x}px, ${reorder.itemPosition(decks.length).y}px)`
         }"
       >
-        <NewDeckCard :size="size" :loading="creating_deck" @press="onCreateDeckClicked" />
+        <NewDeckCard
+          :size="size"
+          :loading="creating_deck"
+          :disabled="editing"
+          @press="onCreateDeckClicked"
+        />
       </div>
     </transition-group>
   </div>

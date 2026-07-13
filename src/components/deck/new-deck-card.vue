@@ -10,9 +10,10 @@ type CardSize = InstanceType<typeof Card>['$props']['size']
 type NewDeckCardProps = {
   size?: CardSize
   loading?: boolean
+  disabled?: boolean
 }
 
-const { size = 'base', loading = false } = defineProps<NewDeckCardProps>()
+const { size = 'base', loading = false, disabled = false } = defineProps<NewDeckCardProps>()
 
 const emit = defineEmits<{ press: [e: MouseEvent] }>()
 
@@ -25,9 +26,9 @@ const { t } = useI18n()
     data-testid="new-deck-card"
     :aria-label="t('dashboard.create-deck-button')"
     class="pointer-fine:hover:scale-102 data-[tap-active=true]:scale-101 pointer-coarse:data-[tap-active=true]:scale-105 pointer-fine:transition-transform duration-75 relative cursor-pointer h-min touch-manipulation"
-    :class="loading && 'opacity-50 pointer-events-none'"
+    :class="(loading || disabled) && 'opacity-50 pointer-events-none'"
     :sfx="{ hover: TYPE_SFX, press: 'pop_up_pop' }"
-    @tap="emit('press', $event)"
+    @tap="!disabled && emit('press', $event)"
   >
     <card :size="size" side="front">
       <template #front>

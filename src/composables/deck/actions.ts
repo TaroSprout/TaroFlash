@@ -4,6 +4,7 @@ import { useAlert } from '@/composables/alert'
 import { useModal } from '@/composables/modal'
 import { useCan } from '@/composables/can'
 import { useDeckSettingsModal } from '@/composables/deck/settings-modal'
+import { useNoticeStore } from '@/stores/notice-store'
 import { waitForDeckPopIn } from '@/utils/animations/deck-grid'
 import Checkout from '@/components/billing/checkout-modal/index.vue'
 
@@ -20,6 +21,7 @@ export function useDeckActions() {
   const modal = useModal()
   const can = useCan()
   const deck_settings_modal = useDeckSettingsModal()
+  const notice = useNoticeStore()
   const deck_count_query = useMemberDeckCountQuery()
   const upsert_mutation = useUpsertDeckMutation()
 
@@ -52,6 +54,7 @@ export function useDeckActions() {
     try {
       created = await upsert_mutation.mutateAsync(deck)
     } catch {
+      notice.error(t('toast.error.deck-create-failed'))
       return null
     }
 

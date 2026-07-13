@@ -146,6 +146,14 @@ describe('DashboardActionsPanel — onSelect only wires new-deck', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_pop')
   })
 
+  test('selecting new-deck while editing_decks is true does not create a deck, even bypassing the disabled UI state [obligation]', async () => {
+    const wrapper = mount([], true)
+    await wrapper.find('[data-testid="entry-new-deck"]').trigger('click')
+    await Promise.resolve()
+    expect(mockCreateDeck).not.toHaveBeenCalled()
+    expect(mockEmitSfx).not.toHaveBeenCalled()
+  })
+
   test('selecting edit-decks emits toggle-edit-decks and does not create a deck [obligation]', async () => {
     const wrapper = mount()
     await wrapper.find('[data-testid="entry-edit-decks"]').trigger('click')
