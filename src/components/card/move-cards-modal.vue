@@ -11,6 +11,7 @@ import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import { useCardLimitGate } from '@/composables/card/limit-gate'
 import { useCan } from '@/composables/can'
 import { useNoticeStore } from '@/stores/notice-store'
+import { emitSfx } from '@/sfx/bus'
 
 export type MoveCardsModalResponse = {
   deck_id: number
@@ -86,6 +87,11 @@ function onSelect(value: string) {
 
   selected_deck_id.value = deck_id === selected_deck_id.value ? undefined : deck_id
 }
+
+function onClose() {
+  emitSfx('pop_up_close')
+  close(false)
+}
 </script>
 
 <template>
@@ -94,7 +100,7 @@ function onSelect(value: string) {
     size="md"
     :title="title"
     class="grid-rows-[auto_1fr_auto]! pb-(--dialog-px)"
-    @close="close(false)"
+    @close="onClose"
   >
     <div
       data-testid="move-cards__deck-list-wrap"
