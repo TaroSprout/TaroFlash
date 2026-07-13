@@ -330,7 +330,7 @@ onBeforeUnmount(() => {
         />
       </div>
 
-      <mobile-dock>
+      <mobile-dock breakpoint="xl">
         <template #above>
           <transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
             <resume-follow-button
