@@ -97,6 +97,7 @@ async function onSelect(value: string) {
         data-theme="yellow-500"
         data-theme-dark="yellow-700"
         full-width
+        class="max-mxl:hidden!"
         :disabled="editing_decks"
         @press="onStudyAll"
       >

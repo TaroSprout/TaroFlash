@@ -412,6 +412,7 @@
   "dashboard.mobile-footer.new-deck-label": "New Deck",
   "dashboard.mobile-footer.edit-decks-label": "Edit Decks",
   "dashboard.mobile-footer.done-editing-label": "Stop Editing",
+  "dashboard.mobile-footer.study-button": "Study {count} Deck | Study {count} Decks",
   "dialog-card.close-label": "Close",
   "dialog-card.back-label": "Back",
   "review-inbox.cards-due-heading": "{count} card due | {count} cards due",

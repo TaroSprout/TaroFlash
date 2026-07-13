@@ -80,6 +80,7 @@ const due_decks = computed(() => {
 
     <dashboard-mobile-footer
       v-if="is_mobile"
+      :due_decks="due_decks"
       :editing_decks="editing_decks"
       @toggle-edit-decks="onToggleEditDecks"
     />

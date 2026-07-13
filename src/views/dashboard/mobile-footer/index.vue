@@ -3,6 +3,7 @@ import MobileDock from '@/components/mobile-dock/mobile-dock.vue'
 import FooterActions from './footer-actions.vue'
 
 type DashboardMobileFooterProps = {
+  due_decks: Deck[]
   editing_decks?: boolean
 }
 
@@ -15,6 +16,10 @@ const emit = defineEmits<{
 
 <template>
   <mobile-dock>
-    <footer-actions :editing_decks="editing_decks" @toggle-edit-decks="emit('toggle-edit-decks')" />
+    <footer-actions
+      :due_decks="due_decks"
+      :editing_decks="editing_decks"
+      @toggle-edit-decks="emit('toggle-edit-decks')"
+    />
   </mobile-dock>
 </template>
