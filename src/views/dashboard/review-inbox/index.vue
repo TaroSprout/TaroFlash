@@ -4,12 +4,14 @@ import ReviewInboxNavButton from './nav-button.vue'
 import { useStudyModal } from '@/views/study-session/composables/study-modal'
 import { useReviewInboxScroll } from './use-scroll'
 import { useReviewInboxTickSfx } from './use-tick-sfx'
+import { emitSfx } from '@/sfx/bus'
 
 type ReviewInboxProps = {
   due_decks: Deck[]
+  editing?: boolean
 }
 
-const { due_decks } = defineProps<ReviewInboxProps>()
+const { due_decks, editing = false } = defineProps<ReviewInboxProps>()
 
 const study_session = useStudyModal()
 const { items_el, has_overflow, can_scroll_prev, can_scroll_next, prev, next } =
@@ -18,6 +20,11 @@ const { items_el, has_overflow, can_scroll_prev, can_scroll_next, prev, next } =
 useReviewInboxTickSfx(items_el)
 
 function onItemClicked(deck: Deck) {
+  if (editing) {
+    emitSfx('digi_powerdown')
+    return
+  }
+
   study_session.start([deck])
 }
 </script>
@@ -40,6 +47,7 @@ function onItemClicked(deck: Deck) {
         v-for="deck in due_decks"
         :key="deck.id"
         :deck="deck"
+        :disabled="editing"
         class="snap-start shrink-0"
         @click="onItemClicked(deck)"
       />

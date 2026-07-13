@@ -2,13 +2,19 @@
 import Card from '@/components/card/index.vue'
 import { TYPE_SFX } from '@/sfx/config'
 
-defineProps<{ deck: Deck }>()
+type ReviewInboxItemProps = {
+  deck: Deck
+  disabled?: boolean
+}
+
+const { disabled = false } = defineProps<ReviewInboxItemProps>()
 </script>
 
 <template>
   <div
     data-testid="review-inbox-item"
     class="flex flex-col items-center gap-2.5 pointer-fine:hover:scale-102 pointer-fine:hover:z-10 pointer-fine:transition-transform duration-75 relative cursor-pointer touch-manipulation"
+    :class="disabled && 'opacity-50'"
     v-sfx="{ hover: TYPE_SFX }"
   >
     <card side="cover" size="xs" :cover_config="deck.cover_config" />

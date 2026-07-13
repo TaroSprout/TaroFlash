@@ -51,7 +51,7 @@ const due_decks = computed(() => {
 
     <div data-testid="dashboard__right-column" class="flex flex-col gap-y-13 min-w-0">
       <dashboard-section v-if="due_decks.length > 0" :label="t('dashboard.deck-filter.due-label')">
-        <review-inbox :due_decks="due_decks" />
+        <review-inbox :due_decks="due_decks" :editing="editing_decks" />
       </dashboard-section>
 
       <dashboard-section :label="t('dashboard.deck-filter.all-label')">
