@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, useTemplateRef, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue'
 import { useMobileDock } from './use-mobile-dock'
 import { useKeyboardOpen } from '@/composables/ui/keyboard'
 import { useAnimatedHeight } from '@/composables/ui/animated-height'
@@ -35,6 +35,10 @@ useAnimatedHeight(
 onMounted(() => {
   el.value = bar.value
   publishHeight()
+})
+
+onBeforeUnmount(() => {
+  document.documentElement.style.removeProperty('--mobile-dock-height')
 })
 
 watch([is_mobile, is_keyboard_open], publishHeight, { flush: 'post' })
