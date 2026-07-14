@@ -2,13 +2,16 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 
-const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
+const { mockEmitSfx, mockLoadAvatarUrl } = vi.hoisted(() => ({
+  mockEmitSfx: vi.fn(),
+  mockLoadAvatarUrl: vi.fn()
+}))
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
 vi.mock('@/components/member/avatars', () => ({
-  AVATAR_KEYS: ['panda', 'otter', 'owl'],
-  loadAvatarUrl: () => null
+  AVATAR_KEYS: ['panda', 'otter', 'owl', 'frog'],
+  loadAvatarUrl: mockLoadAvatarUrl
 }))
 
 const DialogCardStub = defineComponent({
@@ -27,6 +30,7 @@ const DialogCardStub = defineComponent({
 })
 
 import AvatarPickerModal from '@/components/member/avatar-picker-modal.vue'
+import AvatarImage from '@/components/member/avatar-image.vue'
 
 function mountModal(props = {}) {
   return shallowMount(AvatarPickerModal, {
@@ -40,6 +44,7 @@ function mountModal(props = {}) {
 
 beforeEach(() => {
   mockEmitSfx.mockClear()
+  mockLoadAvatarUrl.mockReset()
 })
 
 describe('AvatarPickerModal', () => {
@@ -93,10 +98,59 @@ describe('AvatarPickerModal', () => {
     ).toBeUndefined()
   })
 
+  test('marks the frog avatar as selected when selected is "frog" (default fallback value)', () => {
+    const wrapper = mountModal({ selected: 'frog' })
+    expect(
+      wrapper.find('[data-testid="avatar-picker-modal__option-frog"]').attributes('data-selected')
+    ).toBe('true')
+  })
+
   test('dialog-card close emits calls close() with no argument (dismiss)', () => {
     const close = vi.fn()
     const wrapper = mountModal({ close })
     wrapper.findComponent(DialogCardStub).vm.$emit('close')
     expect(close).toHaveBeenCalledWith()
+  })
+
+  test('shows a skeleton and no avatar-image for an option before its load resolves', () => {
+    mockLoadAvatarUrl.mockReturnValue(new Promise(() => {}))
+    const wrapper = mountModal()
+
+    const option = wrapper.find('[data-testid="avatar-picker-modal__option-panda"]')
+    expect(option.find('[data-testid="avatar-picker-modal__skeleton"]').exists()).toBe(true)
+    expect(option.findComponent(AvatarImage).exists()).toBe(false)
+  })
+
+  test('replaces the skeleton with avatar-image once loadAvatarUrl resolves', async () => {
+    let resolvePanda
+    mockLoadAvatarUrl.mockImplementation((key) =>
+      key === 'panda' ? new Promise((resolve) => (resolvePanda = resolve)) : new Promise(() => {})
+    )
+    const wrapper = mountModal()
+    const option = wrapper.find('[data-testid="avatar-picker-modal__option-panda"]')
+    expect(option.find('[data-testid="avatar-picker-modal__skeleton"]').exists()).toBe(true)
+
+    resolvePanda('/mock/panda.svg')
+    await wrapper.vm.$nextTick()
+    await wrapper.vm.$nextTick()
+
+    expect(option.find('[data-testid="avatar-picker-modal__skeleton"]').exists()).toBe(false)
+    expect(option.findComponent(AvatarImage).exists()).toBe(true)
+  })
+
+  test('resolving one option does not reveal the skeleton on other options', async () => {
+    let resolvePanda
+    mockLoadAvatarUrl.mockImplementation((key) =>
+      key === 'panda' ? new Promise((resolve) => (resolvePanda = resolve)) : new Promise(() => {})
+    )
+    const wrapper = mountModal()
+
+    resolvePanda('/mock/panda.svg')
+    await wrapper.vm.$nextTick()
+    await wrapper.vm.$nextTick()
+
+    const otter = wrapper.find('[data-testid="avatar-picker-modal__option-otter"]')
+    expect(otter.find('[data-testid="avatar-picker-modal__skeleton"]').exists()).toBe(true)
+    expect(otter.findComponent(AvatarImage).exists()).toBe(false)
   })
 })

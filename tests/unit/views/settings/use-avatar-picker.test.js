@@ -87,4 +87,17 @@ describe('useAvatarPicker — works as a plain function with no injection contex
       expect.objectContaining({ props: { selected: 'otter' } })
     )
   })
+
+  test('passes "frog" as the selected prop when editor.cover.avatar is unset', async () => {
+    modalOpenMock.mockReturnValue({ response: Promise.resolve(undefined) })
+    const editor = makeEditor(undefined)
+    const { onEditAvatar } = useAvatarPicker(editor)
+
+    await onEditAvatar()
+
+    expect(modalOpenMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ props: { selected: 'frog' } })
+    )
+  })
 })

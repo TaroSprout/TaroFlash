@@ -21,7 +21,7 @@ export function useAvatarPicker(editor: MemberEditor, recede?: SettingsRecede) {
     const avatar = await modal.open<string>(AvatarPickerModal, {
       mode: 'popup',
       backdrop: true,
-      props: { selected: editor.cover.avatar }
+      props: { selected: editor.cover.avatar ?? 'frog' }
     }).response
     recede?.restore()
 
