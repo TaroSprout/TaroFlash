@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { onMounted, useTemplateRef } from 'vue'
+import { onMounted, reactive, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 import AvatarImage from './avatar-image.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
-import { AVATAR_KEYS } from './avatars'
+import { AVATAR_KEYS, loadAvatarUrl } from './avatars'
 import { emitSfx } from '@/sfx/bus'
 import { TYPE_SFX } from '@/sfx/config'
 
@@ -18,8 +18,12 @@ const { selected, close } = defineProps<AvatarPickerModalProps>()
 
 const { t } = useI18n()
 const grid_el = useTemplateRef<HTMLElement>('grid')
+const loaded = reactive(new Set<string>())
 
-onMounted(() => emitSfx('wooden_chime_ring'))
+onMounted(() => {
+  emitSfx('wooden_chime_ring')
+  AVATAR_KEYS.forEach((avatar) => loadAvatarUrl(avatar)?.then(() => loaded.add(avatar)))
+})
 
 function onAvatarSelect(avatar: string) {
   if (avatar === selected) {
@@ -59,7 +63,12 @@ function onAvatarSelect(avatar: string) {
             class="rounded-10 cursor-pointer hover:bg-(--theme-primary) hover:bgx-diagonal-stripes hover:bgx-slide data-selected:bg-(--theme-primary) data-selected:bgx-diagonal-stripes data-selected:outline-6 outline-white relative aspect-square p-2"
             @click="onAvatarSelect(avatar)"
           >
-            <avatar-image :avatar="avatar" class="h-full w-full" />
+            <div
+              v-if="!loaded.has(avatar)"
+              data-testid="avatar-picker-modal__skeleton"
+              class="h-full w-full rounded-8 animate-pulse bg-brown-300 bgx-diagonal-stripes"
+            />
+            <avatar-image v-else :avatar="avatar" class="h-full w-full" />
 
             <div
               v-if="avatar === selected"
