@@ -98,10 +98,14 @@ async function onSelect(value: string) {
         data-theme-dark="yellow-700"
         full-width
         class="max-mxl:hidden!"
-        :disabled="editing_decks"
+        :disabled="editing_decks || due_decks.length === 0"
         @press="onStudyAll"
       >
-        {{ t('dashboard.actions-panel.study-button', due_decks.length) }}
+        {{
+          due_decks.length === 0
+            ? t('dashboard.actions-panel.no-decks-due-label')
+            : t('dashboard.actions-panel.study-button', due_decks.length)
+        }}
       </ui-button>
     </div>
   </div>

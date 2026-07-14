@@ -409,6 +409,7 @@
   "dashboard.actions-panel.done-editing-label": "Stop Editing",
   "dashboard.deck-grid-item.delete-button": "Delete Deck",
   "dashboard.actions-panel.study-button": "Study {count} Deck | Study {count} Decks",
+  "dashboard.actions-panel.no-decks-due-label": "No Decks Due",
   "dashboard.mobile-footer.new-deck-label": "New Deck",
   "dashboard.mobile-footer.edit-decks-label": "Edit Decks",
   "dashboard.mobile-footer.done-editing-label": "Stop Editing",
