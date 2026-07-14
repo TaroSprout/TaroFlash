@@ -53,9 +53,7 @@ function onEditAvatar(e: MouseEvent) {
         data-theme-dark="stone-700"
         icon-left="pencil"
         icon-only
-        rounded-full
-        size="sm"
-        class="absolute -top-2 -right-2"
+        class="absolute! -top-2 -right-2"
         @press="onEditAvatar"
       >
         {{ t('member-badge.avatar-edit-button') }}

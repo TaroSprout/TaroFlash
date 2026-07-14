@@ -55,12 +55,12 @@ const body_bindings = computed(() => memberCoverBindings(cover))
           <ui-button
             v-if="editable"
             data-testid="member-card__avatar-edit"
-            data-theme="brown-100"
+            data-theme="brown-50"
             data-theme-dark="stone-700"
             icon-left="pencil"
             icon-only
-            rounded-full
-            class="absolute -top-2 -right-2"
+            size="xl"
+            class="absolute! -top-1 -right-1"
             @press="emit('edit-avatar')"
           >
             {{ t('member-card.avatar-edit-button') }}
