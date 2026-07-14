@@ -53,7 +53,7 @@ const show_skeleton = computed(() => !decks_data.value)
 </script>
 
 <template>
-  <dashboard-skeleton v-if="show_skeleton" />
+  <dashboard-skeleton v-if="true" />
 
   <div v-else data-testid="dashboard" class="w-full">
     <dashboard-shell>

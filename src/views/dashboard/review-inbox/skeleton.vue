@@ -19,14 +19,18 @@ const DEFAULT_COVER: DeckCover = {
     data-testid="review-inbox-skeleton"
     class="relative w-full flex gap-3 overflow-hidden pt-1.5 -mt-1.5"
   >
-    <card
+    <div
       v-for="n in count"
       :key="n"
-      side="cover"
-      size="xs"
-      shimmer
-      :cover_config="DEFAULT_COVER"
-      class="shrink-0"
-    />
+      data-testid="review-inbox-skeleton__item"
+      class="flex flex-col items-center gap-2.5 shrink-0"
+    >
+      <card side="cover" size="xs" shimmer :cover_config="DEFAULT_COVER" />
+
+      <div
+        data-testid="review-inbox-skeleton__label"
+        class="h-5 w-16 bg-brown-200 dark:bg-grey-800 rounded-sm animate-pulse"
+      ></div>
+    </div>
   </div>
 </template>
