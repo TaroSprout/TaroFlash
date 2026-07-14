@@ -6,6 +6,7 @@ import { useNoticeStore } from '@/stores/notice-store'
 import { useCan } from '@/composables/can'
 import { useLocalRef } from '@/composables/storage/local-ref'
 import { emitSfx } from '@/sfx/bus'
+import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import DashboardSection from './dashboard-section.vue'
 import DashboardActionsPanel from './actions-panel/index.vue'
 import DashboardMobileFooter from './mobile-footer/index.vue'
@@ -78,6 +79,8 @@ const due_decks = computed(() => {
 
       <audio-reader-section v-if="can.useAudioReader.value" />
     </div>
+
+    <scroll-bar class="fixed right-4 top-(--nav-height) bottom-10 z-30" target="html" />
 
     <dashboard-mobile-footer
       :due_decks="due_decks"
