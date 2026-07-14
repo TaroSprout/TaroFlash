@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { loadAvatarUrl } from './avatars'
-import avatarDefaultUrl from '@/assets/avatars/frog.svg'
+import avatarDefaultUrl from '@/assets/avatars/frog.svg?url'
 
 type MemberAvatarImageProps = {
   avatar?: string
