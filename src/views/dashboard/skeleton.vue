@@ -21,11 +21,11 @@ onUnmounted(() => (document.documentElement.style.overflow = ''))
       </template>
 
       <template #right>
-        <dashboard-section :label="t('dashboard.deck-filter.due-label')">
+        <dashboard-section loading :label="t('dashboard.deck-filter.due-label')">
           <review-inbox-skeleton />
         </dashboard-section>
 
-        <dashboard-section :label="t('dashboard.deck-filter.all-label')">
+        <dashboard-section loading :label="t('dashboard.deck-filter.all-label')">
           <deck-grid-skeleton />
         </dashboard-section>
       </template>

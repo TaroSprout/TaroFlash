@@ -1,9 +1,10 @@
 <script setup lang="ts">
 type DashboardSectionProps = {
   label: string
+  loading?: boolean
 }
 
-defineProps<DashboardSectionProps>()
+const { loading = false } = defineProps<DashboardSectionProps>()
 
 defineSlots<{
   default(): any
@@ -17,7 +18,10 @@ defineSlots<{
     <div data-testid="dashboard-section__heading" class="flex flex-col gap-1.5">
       <h2
         data-testid="dashboard-section__label"
-        class="text-3xl text-brown-700 dark:text-brown-300"
+        class="text-3xl"
+        :class="
+          loading ? 'text-brown-300 dark:text-stone-700' : 'text-brown-700 dark:text-brown-300'
+        "
       >
         {{ label }}
       </h2>
