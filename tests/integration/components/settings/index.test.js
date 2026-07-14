@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, nextTick, useAttrs } from 'vue'
 import { SETTINGS_SHEET_BREAKPOINTS } from '@/views/settings/layout'
@@ -296,10 +296,27 @@ const TabSheetStub = defineComponent({
 })
 
 import SettingsApp from '@/views/settings/index.vue'
+import { useModal } from '@/composables/modal'
+import AvatarPickerModal from '@/components/member/avatar-picker-modal.vue'
+
+const MemberCardStub = defineComponent({
+  name: 'MemberCard',
+  inheritAttrs: false,
+  props: { editable: Boolean },
+  emits: ['edit-avatar'],
+  setup(props, { emit }) {
+    return () =>
+      h('button', {
+        'data-testid': 'member-card-stub',
+        'data-editable': String(!!props.editable),
+        onClick: () => emit('edit-avatar')
+      })
+  }
+})
 
 // ── Factory ───────────────────────────────────────────────────────────────────
 
-function makeWrapper(closeFn = vi.fn()) {
+function makeWrapper(closeFn = vi.fn(), member_card_stub = PassthroughStub) {
   return mount(SettingsApp, {
     props: { close: closeFn },
     global: {
@@ -307,7 +324,7 @@ function makeWrapper(closeFn = vi.fn()) {
         TabSheet: TabSheetStub,
         SettingsAside: PassthroughStub,
         SettingsSaveButton: PassthroughStub,
-        MemberCard: PassthroughStub,
+        MemberCard: member_card_stub,
         UiButton: PassthroughStub,
         UiTagButton: PassthroughStub,
         UiIcon: PassthroughStub
@@ -745,5 +762,28 @@ describe('settings app — recede/restore choreography [obligation]', () => {
     await wrapper.find('[data-testid="recede-trigger"]').trigger('click')
 
     expect(mockRecedeModal).toHaveBeenCalledWith(expect.anything(), false)
+  })
+})
+
+describe('settings app — member-card avatar edit wiring [obligation]', () => {
+  afterEach(() => useModal().pop())
+
+  test('passes editable to member-card', () => {
+    const wrapper = makeWrapper(vi.fn(), MemberCardStub)
+    expect(wrapper.find('[data-testid="member-card-stub"]').attributes('data-editable')).toBe(
+      'true'
+    )
+  })
+
+  test('emitting edit-avatar on member-card recedes and opens the avatar picker modal', async () => {
+    mockRecedeModal.mockClear()
+    const wrapper = makeWrapper(vi.fn(), MemberCardStub)
+
+    await wrapper.find('[data-testid="member-card-stub"]').trigger('click')
+
+    expect(mockRecedeModal).toHaveBeenCalledOnce()
+    const modal = useModal()
+    expect(modal.modal_stack.value).toHaveLength(1)
+    expect(modal.modal_stack.value[0].component).toBe(AvatarPickerModal)
   })
 })

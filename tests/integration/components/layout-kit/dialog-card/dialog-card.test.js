@@ -21,7 +21,7 @@ vi.mock('@/composables/ui/media-query', () => ({
 const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
-  props: { iconLeft: String, iconOnly: Boolean, roundedFull: Boolean },
+  props: { iconLeft: String, iconOnly: Boolean, roundedFull: Boolean, sfx: Object },
   emits: ['press'],
   setup(_p, { slots, attrs, emit }) {
     return () =>
@@ -279,6 +279,12 @@ describe('DialogCard', () => {
       const close = wrapper.find('[data-testid="dialog-card__close"]')
       expect(close.attributes('data-theme')).toBe('brown-100')
       expect(close.attributes('data-theme-dark')).toBe('stone-700')
+    })
+
+    test('forwards close_sfx to the close button sfx prop', () => {
+      const wrapper = mountCard({ title: 'x', close_sfx: { press: 'snappy_button_5' } })
+      const close = wrapper.findComponent(UiButtonStub)
+      expect(close.props('sfx')).toEqual({ press: 'snappy_button_5' })
     })
   })
 

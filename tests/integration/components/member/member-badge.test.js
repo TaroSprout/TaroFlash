@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { shallowMount } from '@vue/test-utils'
+import { shallowMount, mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 
 // Hoist shared mock refs before vi.mock calls
@@ -27,11 +27,22 @@ vi.mock('gsap', () => ({
 import MemberBadge from '@/components/member/member-badge.vue'
 import { MEMBER_CARD_COVER_DEFAULTS } from '@/utils/member/defaults'
 
-// UiImage stub
-const UiImageStub = defineComponent({
-  name: 'UiImage',
-  setup() {
-    return () => h('div', { 'data-testid': 'ui-image-stub' })
+// AvatarImage stub
+const AvatarImageStub = defineComponent({
+  name: 'AvatarImage',
+  props: { avatar: { type: String, default: undefined } },
+  setup(props) {
+    return () => h('div', { 'data-testid': 'avatar-image-stub', 'data-avatar': props.avatar ?? '' })
+  }
+})
+
+const UiButtonStub = defineComponent({
+  name: 'UiButton',
+  inheritAttrs: false,
+  props: { editable: Boolean },
+  emits: ['press'],
+  setup(_p, { slots, attrs, emit }) {
+    return () => h('button', { ...attrs, onClick: (e) => emit('press', e) }, slots.default?.())
   }
 })
 
@@ -49,7 +60,7 @@ function mountBadge(props = {}) {
   return shallowMount(MemberBadge, {
     props,
     global: {
-      stubs: { UiImage: UiImageStub, UiTappable: UiTappableStub },
+      stubs: { AvatarImage: AvatarImageStub, UiTappable: UiTappableStub, UiButton: UiButtonStub },
       directives: { sfx: {} }
     }
   })
@@ -155,6 +166,59 @@ describe('MemberBadge', () => {
       const wrapper = mountBadge()
       await wrapper.findComponent({ name: 'UiTappable' }).vm.$emit('tap', new MouseEvent('click'))
       expect(wrapper.emitted('click')).toHaveLength(1)
+    })
+  })
+
+  // ── avatar image ──────────────────────────────────────────────────────────
+
+  describe('avatar image', () => {
+    test('forwards cover.avatar to avatar-image', () => {
+      const wrapper = mountBadge({ cover: { theme: 'blue-700', pattern: 'wave', avatar: 'panda' } })
+      expect(wrapper.find('[data-testid="avatar-image-stub"]').attributes('data-avatar')).toBe(
+        'panda'
+      )
+    })
+  })
+
+  // ── editable / edit-avatar [obligation] ──────────────────────────────────
+
+  describe('editable [obligation]', () => {
+    test('the edit-avatar button is absent when editable is unset', () => {
+      const wrapper = mountBadge()
+      expect(wrapper.find('[data-testid="member-badge__avatar-edit"]').exists()).toBe(false)
+    })
+
+    test('the edit-avatar button is absent when editable is explicitly false', () => {
+      const wrapper = mountBadge({ editable: false })
+      expect(wrapper.find('[data-testid="member-badge__avatar-edit"]').exists()).toBe(false)
+    })
+
+    test('the edit-avatar button renders when editable is true', () => {
+      const wrapper = mountBadge({ editable: true })
+      expect(wrapper.find('[data-testid="member-badge__avatar-edit"]').exists()).toBe(true)
+    })
+
+    test('clicking the edit-avatar button emits edit-avatar but not click', async () => {
+      const wrapper = mountBadge({ editable: true })
+      await wrapper.find('[data-testid="member-badge__avatar-edit"]').trigger('click')
+
+      expect(wrapper.emitted('edit-avatar')).toHaveLength(1)
+      expect(wrapper.emitted('click')).toBeUndefined()
+    })
+
+    // Real UiTappable + UiButton so the native click actually bubbles through
+    // the DOM — this is the only way to catch a regression in the
+    // e.stopPropagation() guard onEditAvatar relies on.
+    test('the click does not bubble to the badge tappable in a real DOM tree [obligation]', async () => {
+      const wrapper = mount(MemberBadge, {
+        props: { editable: true },
+        global: { stubs: { AvatarImage: AvatarImageStub }, directives: { sfx: {} } }
+      })
+
+      await wrapper.find('[data-testid="member-badge__avatar-edit"]').trigger('click')
+
+      expect(wrapper.emitted('edit-avatar')).toHaveLength(1)
+      expect(wrapper.emitted('click')).toBeUndefined()
     })
   })
 })
