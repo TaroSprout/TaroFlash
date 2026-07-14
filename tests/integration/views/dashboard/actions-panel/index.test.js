@@ -122,11 +122,32 @@ describe('DashboardActionsPanel — study button', () => {
     ).not.toBeUndefined()
   })
 
-  test('is enabled when editing_decks is false [obligation]', () => {
-    const wrapper = mount([], false)
+  test('is enabled when editing_decks is false and there are due decks [obligation]', () => {
+    const wrapper = mount([{ id: 1 }], false)
     expect(
       wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').attributes('disabled')
     ).toBeUndefined()
+  })
+
+  test('is disabled when there are no due decks, even with editing_decks false [obligation]', () => {
+    const wrapper = mount([], false)
+    expect(
+      wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').attributes('disabled')
+    ).not.toBeUndefined()
+  })
+
+  test('shows the no-decks-due label when due_decks is empty [obligation]', () => {
+    const wrapper = mount([], false)
+    expect(wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').text()).toBe(
+      'No Decks Due'
+    )
+  })
+
+  test('shows the study label with count when due_decks is non-empty', () => {
+    const wrapper = mount([{ id: 1 }, { id: 2 }], false)
+    expect(wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').text()).toContain(
+      '2'
+    )
   })
 })
 

@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import UiIcon from '@/components/ui-kit/icon.vue'
+import AvatarImage from '@/components/member/avatar-image.vue'
+import { useMemberStore } from '@/stores/member'
+
+const member_store = useMemberStore()
 </script>
 
 <template>
@@ -15,8 +19,10 @@ import UiIcon from '@/components/ui-kit/icon.vue'
     <div class="bg-brown-50 dark:bg-stone-700 rounded-2 shadow-xs w-30 p-2 pb-6">
       <div
         data-testid="dashboard-actions-panel__polaroid-photo"
-        class="bg-brown-200 dark:bg-stone-900 rounded-1 aspect-square"
-      />
+        class="bg-brown-200 dark:bg-stone-900 rounded-1 aspect-square overflow-hidden"
+      >
+        <avatar-image :avatar="member_store.cover.avatar" class="h-full w-full" />
+      </div>
     </div>
   </div>
 </template>

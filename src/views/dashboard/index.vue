@@ -6,6 +6,7 @@ import { useNoticeStore } from '@/stores/notice-store'
 import { useCan } from '@/composables/can'
 import { useLocalRef } from '@/composables/storage/local-ref'
 import { emitSfx } from '@/sfx/bus'
+import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import DashboardSection from './dashboard-section.vue'
 import DashboardActionsPanel from './actions-panel/index.vue'
 import DashboardMobileFooter from './mobile-footer/index.vue'
@@ -52,7 +53,10 @@ const due_decks = computed(() => {
     data-testid="dashboard"
     class="grid grid-cols-[1fr] mxl:grid-cols-[345px_1fr] gap-x-15.5 gap-y-8 mxl:gap-y-0 px-(--page-px) pt-(--page-pt) pb-12 w-full max-w-229 mx-auto mxl:max-w-none mxl:mx-0"
   >
-    <div data-testid="dashboard__left-column" class="flex flex-col gap-6 self-start">
+    <div
+      data-testid="dashboard__left-column"
+      class="flex flex-col gap-6 self-start mxl:sticky mxl:top-(--nav-height)"
+    >
       <dashboard-actions-panel
         :due_decks="due_decks"
         :editing_decks="editing_decks"
@@ -75,6 +79,8 @@ const due_decks = computed(() => {
 
       <audio-reader-section v-if="can.useAudioReader.value" />
     </div>
+
+    <scroll-bar class="fixed right-4 top-(--nav-height) bottom-10 z-30" target="html" />
 
     <dashboard-mobile-footer
       :due_decks="due_decks"

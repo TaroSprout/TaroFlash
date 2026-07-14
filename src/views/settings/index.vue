@@ -6,7 +6,8 @@ import {
   settingsLayoutKey,
   settingsCloseKey,
   settingsRecedeKey,
-  SETTINGS_SHEET_BREAKPOINTS
+  SETTINGS_SHEET_BREAKPOINTS,
+  type SettingsRecede
 } from './layout'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { emitSfx } from '@/sfx/bus'
@@ -18,6 +19,7 @@ import { useTabTransition } from '@/composables/ui/tab-transition'
 import { useAlert } from '@/composables/alert'
 import { useModalRequestClose } from '@/composables/modal'
 import { recedeModal, restoreModal } from '@/utils/animations/modal'
+import { useAvatarPicker } from './use-avatar-picker'
 import MemberCard from '@/components/member/member-card.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import TabSheet from '@/components/layout-kit/sheet/tab-sheet.vue'
@@ -65,10 +67,13 @@ const is_pinned = useMatchMedia(
 )
 
 const settings_root = useTemplateRef<{ $el: HTMLElement }>('settings_root')
-provide(settingsRecedeKey, {
+const recede: SettingsRecede = {
   recede: () => settings_root.value?.$el && recedeModal(settings_root.value.$el, is_pinned.value),
   restore: () => settings_root.value?.$el && restoreModal(settings_root.value.$el, is_pinned.value)
-})
+}
+provide(settingsRecedeKey, recede)
+
+const { onEditAvatar } = useAvatarPicker(editor, recede)
 
 type ActiveTab = TabValue
 const active_tab = ref<ActiveTab | null>(null)
@@ -242,7 +247,9 @@ watch(layout_mode, (mode) => {
             :card-comment="editor.settings.description"
             :card-title="t('settings.preview.title-fallback')"
             :cover="editor.cover"
+            editable
             class="rotate-4 drop-shadow-sm"
+            @edit-avatar="onEditAvatar"
           />
         </div>
       </div>

@@ -11,12 +11,15 @@ import MemberBadge from '@/components/member/member-badge.vue'
 import SettingsSaveButton from '../settings-save-button.vue'
 import { memberEditorKey } from '@/composables/member/editor'
 import { MEMBER_DISPLAY_NAME_MAX_LENGTH } from '@/utils/member/defaults'
-import { settingsLayoutKey } from '../layout'
+import { settingsLayoutKey, settingsRecedeKey } from '../layout'
+import { useAvatarPicker } from '../use-avatar-picker'
 import { SUPPORTED_THEMES, SUPPORTED_PATTERNS } from '@/utils/cover'
 
 const { t } = useI18n()
 const editor = inject(memberEditorKey)!
 const layout_mode = inject(settingsLayoutKey)!
+const recede = inject(settingsRecedeKey)
+const { onEditAvatar } = useAvatarPicker(editor, recede)
 </script>
 
 <template>
@@ -27,6 +30,8 @@ const layout_mode = inject(settingsLayoutKey)!
       :display-name="editor.settings.display_name"
       :description="editor.settings.description"
       :cover="editor.cover"
+      editable
+      @edit-avatar="onEditAvatar"
     />
 
     <labeled-section :label="t('settings.profile.section.about-you')">

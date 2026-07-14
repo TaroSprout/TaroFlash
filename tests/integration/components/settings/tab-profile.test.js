@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, reactive, ref, useAttrs } from 'vue'
 
@@ -14,7 +14,9 @@ vi.mock('@/stores/notice-store', () => ({
 import { resetResponsive } from '../../../helpers/responsive-mock'
 import TabProfile from '@/views/settings/tab-profile/index.vue'
 import { memberEditorKey } from '@/composables/member/editor'
-import { settingsLayoutKey } from '@/views/settings/layout'
+import { settingsLayoutKey, settingsRecedeKey } from '@/views/settings/layout'
+import { useModal } from '@/composables/modal'
+import AvatarPickerModal from '@/components/member/avatar-picker-modal.vue'
 import { computed } from 'vue'
 
 const InputStub = defineComponent({
@@ -45,6 +47,21 @@ const MemberBadgeStub = defineComponent({
     // Preserve the outer data-testid (tab-profile__preview) from the source template
     // and add data-stub so tests can also assert the rendered component is member-badge.
     return () => h('div', { ...attrs, 'data-stub': 'member-badge' })
+  }
+})
+
+const EditableMemberBadgeStub = defineComponent({
+  name: 'MemberBadge',
+  inheritAttrs: false,
+  props: { editable: Boolean },
+  emits: ['edit-avatar'],
+  setup(props, { emit }) {
+    return () =>
+      h('button', {
+        'data-testid': 'member-badge-stub',
+        'data-editable': String(!!props.editable),
+        onClick: () => emit('edit-avatar')
+      })
   }
 })
 
@@ -90,7 +107,7 @@ function makeEditor() {
   }
 }
 
-function makeTab(editor = makeEditor(), layout = 'tablet') {
+function makeTab(editor = makeEditor(), layout = 'tablet', member_badge_stub = MemberBadgeStub) {
   const wrapper = mount(TabProfile, {
     global: {
       provide: {
@@ -99,7 +116,7 @@ function makeTab(editor = makeEditor(), layout = 'tablet') {
       },
       stubs: {
         UiInput: InputStub,
-        MemberBadge: MemberBadgeStub,
+        MemberBadge: member_badge_stub,
         UiThemePicker: ThemePickerStub,
         UiPatternPicker: PatternPickerStub
       },
@@ -187,5 +204,52 @@ describe('TabProfile', () => {
     const preview = wrapper.find('[data-testid="tab-profile__preview"]')
     expect(preview.exists()).toBe(true)
     expect(preview.attributes('data-stub')).toBe('member-badge')
+  })
+
+  describe('member-badge avatar edit wiring [obligation]', () => {
+    afterEach(() => useModal().pop())
+
+    test('passes editable to member-badge', () => {
+      const { wrapper } = makeTab(makeEditor(), 'sheet', EditableMemberBadgeStub)
+      expect(wrapper.find('[data-testid="member-badge-stub"]').attributes('data-editable')).toBe(
+        'true'
+      )
+    })
+
+    test('emitting edit-avatar opens the avatar picker modal via the injected recede', async () => {
+      const recede = { recede: vi.fn(), restore: vi.fn() }
+      const wrapper = mount(TabProfile, {
+        global: {
+          provide: {
+            [memberEditorKey]: makeEditor(),
+            [settingsLayoutKey]: computed(() => 'sheet'),
+            [settingsRecedeKey]: recede
+          },
+          stubs: {
+            UiInput: InputStub,
+            MemberBadge: EditableMemberBadgeStub,
+            UiThemePicker: ThemePickerStub,
+            UiPatternPicker: PatternPickerStub
+          },
+          mocks: { $t: (k) => k }
+        }
+      })
+
+      await wrapper.find('[data-testid="member-badge-stub"]').trigger('click')
+
+      expect(recede.recede).toHaveBeenCalledOnce()
+      const modal = useModal()
+      expect(modal.modal_stack.value).toHaveLength(1)
+      expect(modal.modal_stack.value[0].component).toBe(AvatarPickerModal)
+    })
+
+    test('works without a provided recede (undefined injection)', async () => {
+      const { wrapper } = makeTab(makeEditor(), 'sheet', EditableMemberBadgeStub)
+
+      await wrapper.find('[data-testid="member-badge-stub"]').trigger('click')
+
+      const modal = useModal()
+      expect(modal.modal_stack.value).toHaveLength(1)
+    })
   })
 })

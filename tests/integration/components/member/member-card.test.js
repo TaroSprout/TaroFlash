@@ -1,13 +1,21 @@
-import { describe, test, expect } from 'vite-plus/test'
-import { shallowMount } from '@vue/test-utils'
+import { describe, test, expect, vi } from 'vite-plus/test'
+import { shallowMount, mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import MemberCard from '@/components/member/member-card.vue'
 import { MEMBER_CARD_COVER_DEFAULTS } from '@/utils/member/defaults'
 
-const UiImageStub = defineComponent({
-  name: 'UiImage',
-  setup() {
-    return () => h('div', { 'data-testid': 'ui-image-stub' })
+vi.mock('gsap', () => ({
+  gsap: {
+    to: vi.fn((_el, opts) => opts?.onComplete?.()),
+    fromTo: vi.fn((_el, _from, to) => to?.onComplete?.())
+  }
+}))
+
+const AvatarImageStub = defineComponent({
+  name: 'AvatarImage',
+  props: { avatar: { type: String, default: undefined } },
+  setup(props) {
+    return () => h('div', { 'data-testid': 'avatar-image-stub', 'data-avatar': props.avatar ?? '' })
   }
 })
 
@@ -19,7 +27,7 @@ function mountCard(props = {}) {
       ...props
     },
     global: {
-      stubs: { UiImage: UiImageStub },
+      stubs: { AvatarImage: AvatarImageStub },
       mocks: { $t: (key, params) => (params ? `${key}:${JSON.stringify(params)}` : key) }
     }
   })
@@ -99,5 +107,42 @@ describe('MemberCard', () => {
     expect(body.attributes('data-theme')).toBe('teal-400')
     expect(body.attributes('data-theme-dark')).toBe('teal-800')
     expect(body.classes()).toContain('pattern-mask')
+  })
+
+  test('forwards cover.avatar to avatar-image', () => {
+    const wrapper = mountCard({ cover: { theme: 'teal-400', pattern: 'aztec', avatar: 'panda' } })
+    expect(wrapper.find('[data-testid="avatar-image-stub"]').attributes('data-avatar')).toBe(
+      'panda'
+    )
+  })
+
+  // ── editable / edit-avatar [obligation] ────────────────────────────────────
+
+  describe('editable [obligation]', () => {
+    test('the avatar-edit button is absent when editable is unset', () => {
+      const wrapper = mountCard()
+      expect(wrapper.find('[data-testid="member-card__avatar-edit"]').exists()).toBe(false)
+    })
+
+    test('the avatar-edit button is absent when editable is explicitly false', () => {
+      const wrapper = mountCard({ editable: false })
+      expect(wrapper.find('[data-testid="member-card__avatar-edit"]').exists()).toBe(false)
+    })
+
+    test('the avatar-edit button renders when editable is true', () => {
+      const wrapper = mountCard({ editable: true })
+      expect(wrapper.find('[data-testid="member-card__avatar-edit"]').exists()).toBe(true)
+    })
+
+    test('pressing the avatar-edit button emits edit-avatar', async () => {
+      const wrapper = mount(MemberCard, {
+        props: { createdAt: '2024-04-15T00:00:00Z', cardTitle: 'Apprentice', editable: true },
+        global: { stubs: { AvatarImage: AvatarImageStub }, directives: { sfx: {} } }
+      })
+
+      await wrapper.find('[data-testid="member-card__avatar-edit"]').trigger('click')
+
+      expect(wrapper.emitted('edit-avatar')).toHaveLength(1)
+    })
   })
 })

@@ -2,24 +2,31 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { memberCoverBindings } from './cover'
-import UiImage from '@/components/ui-kit/image.vue'
+import AvatarImage from './avatar-image.vue'
+import UiButton from '@/components/ui-kit/button.vue'
 import UiTappable from '@/components/ui-kit/tappable.vue'
 import type { SfxOptions } from '@/sfx/directive'
 
 type MemberBadgeProps = {
   displayName?: string
   description?: string
-  cover?: DeckCover
+  cover?: MemberCover
   sfx?: SfxOptions
+  editable?: boolean
 }
 
-const { displayName, description, cover, sfx } = defineProps<MemberBadgeProps>()
+const { displayName, description, cover, sfx, editable = false } = defineProps<MemberBadgeProps>()
 defineSlots<{ actions?: () => any; description?: () => any }>()
-const emit = defineEmits<{ click: [e: MouseEvent] }>()
+const emit = defineEmits<{ click: [e: MouseEvent]; 'edit-avatar': [] }>()
 
 const { t } = useI18n()
 
 const body_bindings = computed(() => memberCoverBindings(cover))
+
+function onEditAvatar(e: MouseEvent) {
+  e.stopPropagation()
+  emit('edit-avatar')
+}
 </script>
 
 <template>
@@ -32,11 +39,25 @@ const body_bindings = computed(() => memberCoverBindings(cover))
     class="card-outline pointer-fine:hover:scale-101 data-[tap-active=true]:scale-101 pointer-coarse:data-[tap-active=true]:scale-105 pointer-fine:transition-transform duration-75 cursor-pointer touch-manipulation select-none flex items-center gap-4 rounded-(--badge-radius) p-(--badge-padding) bg-(--theme-primary)"
     @tap="emit('click', $event)"
   >
-    <div
-      data-testid="member-badge__avatar"
-      class="bg-brown-200 dark:bg-stone-900 rounded-[calc(var(--badge-radius)-var(--badge-padding)+6px)] border-brown-200 dark:border-stone-900 h-25 w-25 overflow-hidden shrink-0 border-4"
-    >
-      <ui-image src="_default" class="h-full w-full" />
+    <div data-testid="member-badge__avatar" class="relative shrink-0">
+      <div
+        class="bg-brown-200 dark:bg-stone-900 rounded-[calc(var(--badge-radius)-var(--badge-padding)+6px)] border-brown-200 dark:border-stone-900 h-25 w-25 overflow-hidden border-4"
+      >
+        <avatar-image :avatar="cover?.avatar" class="h-full w-full" />
+      </div>
+
+      <ui-button
+        v-if="editable"
+        data-testid="member-badge__avatar-edit"
+        data-theme="brown-100"
+        data-theme-dark="stone-700"
+        icon-left="pencil"
+        icon-only
+        class="absolute! -top-2 -right-2"
+        @press="onEditAvatar"
+      >
+        {{ t('member-badge.avatar-edit-button') }}
+      </ui-button>
     </div>
 
     <div data-testid="member-badge__info" class="flex flex-col min-w-0 flex-1">
