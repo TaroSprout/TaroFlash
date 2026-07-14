@@ -36,9 +36,10 @@ function onAvatarSelect(avatar: string) {
   <dialog-card
     data-testid="avatar-picker-modal"
     size="lg"
-    data-theme="brown-300"
-    data-theme-dark="stone-700"
+    data-theme="blue-500"
+    data-theme-dark="blue-650"
     :title="t('avatar-picker-modal.title')"
+    :close_sfx="{ press: 'snappy_button_5' }"
     @close="close()"
   >
     <template #default="{ viewport }">
@@ -55,14 +56,14 @@ function onAvatarSelect(avatar: string) {
             :data-testid="`avatar-picker-modal__option-${avatar}`"
             :data-selected="avatar === selected || undefined"
             v-sfx="{ hover: TYPE_SFX }"
-            class="rounded-6 cursor-pointer hover:bg-(--theme-primary) data-selected:bg-(--theme-primary) relative aspect-square p-2"
+            class="rounded-10 cursor-pointer hover:bg-(--theme-primary) hover:bgx-diagonal-stripes hover:bgx-slide data-selected:bg-(--theme-primary) data-selected:bgx-diagonal-stripes data-selected:outline-6 outline-white relative aspect-square p-2"
             @click="onAvatarSelect(avatar)"
           >
             <avatar-image :avatar="avatar" class="h-full w-full" />
 
             <div
               v-if="avatar === selected"
-              class="absolute -top-2 -right-2 bg-white p-1.5 size-6.5 rounded-full flex items-center justify-center"
+              class="absolute -top-2 -right-2 bg-white p-1.5 size-8 rounded-full flex items-center justify-center"
             >
               <ui-icon src="check" class="text-(--theme-primary)" />
             </div>
