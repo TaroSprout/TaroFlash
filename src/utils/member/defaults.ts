@@ -11,17 +11,17 @@ export const MEMBER_SETTINGS_DEFAULTS = {
 
 export const MEMBER_DISPLAY_NAME_MAX_LENGTH = 12
 
-export const MEMBER_CARD_COVER_DEFAULTS: DeckCover = {
+export const MEMBER_CARD_COVER_DEFAULTS: MemberCover = {
   theme: 'green-500',
   theme_dark: 'green-800',
   pattern: 'bank-note'
 }
 
 /** Merge a partial cover over MEMBER_CARD_COVER_DEFAULTS, dropping undefined overrides. */
-export function withMemberCardCoverDefaults(partial?: Partial<DeckCover>): DeckCover {
+export function withMemberCardCoverDefaults(partial?: Partial<MemberCover>): MemberCover {
   const out = { ...MEMBER_CARD_COVER_DEFAULTS }
   if (!partial) return out
-  for (const k of Object.keys(partial) as (keyof DeckCover)[]) {
+  for (const k of Object.keys(partial) as (keyof MemberCover)[]) {
     const v = partial[k]
     if (v !== undefined) (out as Record<string, unknown>)[k] = v
   }

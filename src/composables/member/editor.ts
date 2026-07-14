@@ -18,7 +18,7 @@ export function useMemberEditor() {
 
   const preferences = reactive({ ...member_store.preferences })
 
-  const cover = reactive<DeckCover>({ ...member_store.cover })
+  const cover = reactive<MemberCover>({ ...member_store.cover })
 
   const name_error = ref<string>()
 

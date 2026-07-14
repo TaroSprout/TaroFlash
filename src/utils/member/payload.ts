@@ -4,14 +4,14 @@ import { withMemberPreferencesDefaults, type ResolvedMemberPreferences } from '.
 export type MemberEditorState = {
   settings: { display_name?: string; description?: string }
   preferences: MemberPreferences
-  cover: DeckCover
+  cover: MemberCover
 }
 
 export type MemberPayload = {
   display_name: string
   description: string
   preferences: ResolvedMemberPreferences
-  cover_config: DeckCover
+  cover_config: MemberCover
 }
 
 /**
