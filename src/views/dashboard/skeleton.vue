@@ -1,30 +1,34 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+import DashboardShell from './dashboard-shell.vue'
+import DashboardSection from './dashboard-section.vue'
+import DashboardActionsPanelSkeleton from './actions-panel/skeleton.vue'
+import ReviewInboxSkeleton from './review-inbox/skeleton.vue'
+import DeckGridSkeleton from './deck-grid/skeleton.vue'
+
+const { t } = useI18n()
+
+onMounted(() => (document.documentElement.style.overflow = 'hidden'))
+onUnmounted(() => (document.documentElement.style.overflow = ''))
+</script>
 
 <template>
-  <div
-    data-testid="dashboard-skeleton"
-    class="grid grid-cols-[1fr] md:grid-cols-[345px_1fr] md:grid-rows-[auto_1fr] gap-x-15.5 gap-y-6 md:gap-y-11.5 h-full px-(--page-px) pt-(--page-pt) pb-12 animate-pulse"
-  >
-    <div
-      data-testid="dashboard-skeleton__create-button"
-      class="h-12 w-full bg-brown-300 dark:bg-grey-700 rounded-lg max-md:row-start-4"
-    ></div>
+  <div data-testid="dashboard-skeleton" class="w-full">
+    <dashboard-shell>
+      <template #left>
+        <dashboard-actions-panel-skeleton />
+      </template>
 
-    <div
-      data-testid="dashboard-skeleton__title"
-      class="h-10 w-40 bg-brown-300 dark:bg-grey-700 rounded-sm max-md:row-start-2"
-    ></div>
+      <template #right>
+        <dashboard-section :label="t('dashboard.deck-filter.due-label')">
+          <review-inbox-skeleton />
+        </dashboard-section>
 
-    <div
-      data-testid="dashboard-skeleton__inbox"
-      class="h-64 w-full bg-brown-200 dark:bg-grey-800 rounded-xl"
-    ></div>
-
-    <div
-      data-testid="dashboard-skeleton__decks"
-      class="flex gap-x-6.5 gap-y-8 flex-wrap md:col-start-2"
-    >
-      <div v-for="n in 6" :key="n" class="h-64 w-44 bg-brown-200 dark:bg-grey-800 rounded-xl"></div>
-    </div>
+        <dashboard-section :label="t('dashboard.deck-filter.all-label')">
+          <deck-grid-skeleton />
+        </dashboard-section>
+      </template>
+    </dashboard-shell>
   </div>
 </template>
