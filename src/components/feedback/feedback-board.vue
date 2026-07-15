@@ -19,7 +19,6 @@ const { data: items } = useFeedbackItemsQuery()
     data-theme-dark="green-800"
     class="sm:w-170"
     :title="t('feedback-board.title')"
-    surface="inverted"
     @close="close"
   >
     <div data-testid="feedback-board__body" class="flex h-full flex-col gap-5 px-5 sm:px-20 pb-6">
