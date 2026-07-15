@@ -2,6 +2,11 @@
 -- pre-accepted and public. Attributed to an admin member since there's no
 -- "system" member to own reference data. Guarded by title so this stays
 -- idempotent if migrations are ever re-run.
+--
+-- A fresh database (CI, a new environment) has no members at all yet, so
+-- there's nothing to attribute seeded items to — skip with a NOTICE rather
+-- than failing the whole migration run. Environments that already have an
+-- admin (local dev, stage, prod) get seeded as normal.
 
 BEGIN;
 
@@ -12,7 +17,8 @@ BEGIN
   SELECT id INTO v_admin_id FROM public.members WHERE role = 'admin' ORDER BY created_at LIMIT 1;
 
   IF v_admin_id IS NULL THEN
-    RAISE EXCEPTION 'No admin member found to attribute seeded feedback items to';
+    RAISE NOTICE 'No admin member found yet — skipping feedback board seed';
+    RETURN;
   END IF;
 
   -- set_member_id (BEFORE INSERT) stamps member_id from auth.uid(), which is
