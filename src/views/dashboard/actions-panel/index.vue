@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import DashboardActionsPanelShell from './shell.vue'
 import DashboardActionsPanelPolaroid from './polaroid.vue'
 import UiOptionsPanel, { type OptionsPanelEntry } from '@/components/ui-kit/options-panel/index.vue'
 import UiButton from '@/components/ui-kit/button.vue'
@@ -63,24 +64,26 @@ async function onSelect(value: string) {
 </script>
 
 <template>
-  <div
+  <dashboard-actions-panel-shell
     data-testid="dashboard-actions-panel"
     v-bind="root_bindings"
-    class="bg-(--theme-primary) rounded-8 relative flex flex-col w-full max-w-100"
+    class="bg-(--theme-primary)"
+    body_class="bg-brown-300 dark:bg-stone-900"
   >
-    <dashboard-actions-panel-polaroid />
+    <template #polaroid>
+      <dashboard-actions-panel-polaroid />
+    </template>
 
-    <span
-      data-testid="dashboard-actions-panel__header"
-      class="text-(--theme-on-primary) text-4xl font-semibold truncate p-6 pl-34"
-    >
-      {{ member_store.display_name || t('member-badge.name-placeholder') }}
-    </span>
+    <template #header>
+      <span
+        data-testid="dashboard-actions-panel__header"
+        class="text-(--theme-on-primary) text-4xl font-semibold truncate"
+      >
+        {{ member_store.display_name || t('member-badge.name-placeholder') }}
+      </span>
+    </template>
 
-    <div
-      data-testid="dashboard-actions-panel__body"
-      class="cloud-top-[40px] bg-brown-300 dark:bg-stone-900 rounded-b-8 flex flex-col gap-6 px-4 pt-14 pb-6"
-    >
+    <template #body>
       <ui-options-panel
         data-theme-dark="stone-700"
         :entries="deck_entries"
@@ -107,6 +110,6 @@ async function onSelect(value: string) {
             : t('dashboard.actions-panel.study-button', due_decks.length)
         }}
       </ui-button>
-    </div>
-  </div>
+    </template>
+  </dashboard-actions-panel-shell>
 </template>
