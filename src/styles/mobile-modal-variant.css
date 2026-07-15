@@ -19,6 +19,25 @@
       @slot;
     }
   }
+  /* width < msm (44rem): thresholds msm/md/mlg/lg/xl/2xl go mobile */
+  @media (width < 44rem) {
+    &:where(
+      [data-mobile-below-width='msm'],
+      [data-mobile-below-width='msm'] *,
+      [data-mobile-below-width='md'],
+      [data-mobile-below-width='md'] *,
+      [data-mobile-below-width='mlg'],
+      [data-mobile-below-width='mlg'] *,
+      [data-mobile-below-width='lg'],
+      [data-mobile-below-width='lg'] *,
+      [data-mobile-below-width='xl'],
+      [data-mobile-below-width='xl'] *,
+      [data-mobile-below-width='2xl'],
+      [data-mobile-below-width='2xl'] *
+    ) {
+      @slot;
+    }
+  }
   /* width < md (52rem): thresholds md/mlg/lg/xl/2xl go mobile */
   @media (width < 52rem) {
     &:where(
@@ -82,9 +101,27 @@
     }
   }
 
-  /* Same five tiers, on the height axis. */
+  /* Same tiers, on the height axis. */
   @media (height < 40rem) {
     &:where([data-mobile-below-height], [data-mobile-below-height] *) {
+      @slot;
+    }
+  }
+  @media (height < 44rem) {
+    &:where(
+      [data-mobile-below-height='msm'],
+      [data-mobile-below-height='msm'] *,
+      [data-mobile-below-height='md'],
+      [data-mobile-below-height='md'] *,
+      [data-mobile-below-height='mlg'],
+      [data-mobile-below-height='mlg'] *,
+      [data-mobile-below-height='lg'],
+      [data-mobile-below-height='lg'] *,
+      [data-mobile-below-height='xl'],
+      [data-mobile-below-height='xl'] *,
+      [data-mobile-below-height='2xl'],
+      [data-mobile-below-height='2xl'] *
+    ) {
       @slot;
     }
   }
