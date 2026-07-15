@@ -20,8 +20,7 @@ const items: RoadmapItem[] = [
   { key: 'community', done: false },
   { key: 'challenges', done: false },
   { key: 'collect-rewards', done: false },
-  { key: 'paperclips-shop', done: false },
-  { key: 'bulk-edit', done: false }
+  { key: 'paperclips-shop', done: false }
 ]
 
 function itemFor(value: string) {
