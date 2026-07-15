@@ -244,6 +244,7 @@
     font-family: var(--font-primary);
     font-size: var(--text-base);
     line-height: var(--text-base--line-height);
+    background-color: var(--color-brown-200);
   }
 
   body {
@@ -273,6 +274,10 @@
   &:where([data-theme='dark'], [data-theme='dark'] *) {
     --shadow-color: rgba(0, 0, 0, 1);
     --color-input: var(--color-grey-700);
+  }
+
+  html:where([data-theme='dark']) {
+    background-color: var(--color-grey-900);
   }
 }
 
