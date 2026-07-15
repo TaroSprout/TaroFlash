@@ -32,6 +32,12 @@ values (
 )
 on conflict (id) do nothing;
 
+-- Promote Cheesy to admin. The feedback board's roadmap-item seed migration
+-- (20260715000004) skips itself on a fresh DB because no admin exists yet at
+-- migration time — this also gives the feedback board something to moderate
+-- locally.
+update public.members set role = 'admin' where id = '00000000-0000-0000-0000-000000000001';
+
 -- -----------------------------------------------------------------------------
 -- 2. Impersonate Cheesy so member_id / rank triggers and RLS policies behave
 --    exactly as they would for a real authenticated request (same pattern as
@@ -94,6 +100,48 @@ where not exists (
   select 1 from public.cards c
   join public.decks d on d.id = c.deck_id
   where d.title = 'Deck Two' and d.member_id = '00000000-0000-0000-0000-000000000001'
+);
+
+-- -----------------------------------------------------------------------------
+-- 5. Feedback board roadmap items — same seed list as migration
+--    20260715000004, which skips itself when no admin exists yet.
+-- -----------------------------------------------------------------------------
+insert into public.feedback_items (title, body, type, status, visibility)
+select title, body, type, 'accepted', 'public'
+from (values
+  (
+    'Import & Export Decks',
+    'Import/export support for common flashcard formats so switching tools doesn''t mean losing your decks.',
+    'idea'::feedback_type
+  ),
+  (
+    'Card Audio Upload',
+    'Add sound to your cards — perfect for language decks, music theory, or anything that needs to be heard, not just read.',
+    'idea'::feedback_type
+  ),
+  (
+    'Share Decks with the Community',
+    'A community hub where members browse, save, and study each other''s public decks.',
+    'idea'::feedback_type
+  ),
+  (
+    'Challenges',
+    'Complete daily/weekly challenges to earn bonus rewards on top of normal study.',
+    'idea'::feedback_type
+  ),
+  (
+    'Collect Rewards for Everything You Do',
+    'Rewards for both big milestones and small daily actions, so there''s always something to work toward.',
+    'idea'::feedback_type
+  ),
+  (
+    'Paperclips & a Shop to Spend Them In',
+    'Paperclips are the in-app currency — earn them, then spend on shop items.',
+    'idea'::feedback_type
+  )
+) as seed(title, body, type)
+where not exists (
+  select 1 from public.feedback_items f where f.title = seed.title
 );
 
 set local role = 'postgres';
