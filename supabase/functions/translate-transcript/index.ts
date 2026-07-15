@@ -6,9 +6,9 @@
 // Response: { translations: string[] }  // same length/order as `sentences`
 //
 // The Anthropic key never reaches the client — it lives in ANTHROPIC_API_KEY.
-// Admin-only: requireAdmin() runs before any work.
+// Admin-only: requireCapability() runs before any work.
 
-import { cors, requireAdmin } from '../_shared/require-admin.ts'
+import { cors, requireCapability } from '../_shared/require-capability.ts'
 import { translateSentences } from '../_shared/transcription/translate.ts'
 
 type TranslateRequest = { sentences: string[]; target_lang: string }
@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     return new Response('Method Not Allowed', { status: 405, headers: cors })
   }
 
-  const auth = await requireAdmin(req)
+  const auth = await requireCapability(req, 'can_read_lesson_audio')
   if ('error' in auth) return auth.error
 
   const { sentences, target_lang }: Partial<TranslateRequest> = await req.json().catch(() => ({}))

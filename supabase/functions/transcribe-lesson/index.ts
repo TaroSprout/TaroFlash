@@ -14,7 +14,7 @@
 //
 // The OpenAI/Anthropic keys never reach the client.
 
-import { cors, requireAdmin } from '../_shared/require-admin.ts'
+import { cors, requireCapability } from '../_shared/require-capability.ts'
 import { isTargetScript } from '../_shared/transcription/script.ts'
 import { processLessonPhase, serviceClient } from './worker.ts'
 import { type SupabaseClient } from '@supabase/supabase-js'
@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
   // admin gate that 'start'/'retry' go through.
   if (body?.action === 'process') return handleProcess(req, body)
 
-  const auth = await requireAdmin(req)
+  const auth = await requireCapability(req, 'can_read_lesson_audio')
   if ('error' in auth) return auth.error
 
   if (body?.action === 'start') return handleStart(body, auth.userClient)

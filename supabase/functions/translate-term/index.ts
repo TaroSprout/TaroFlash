@@ -7,9 +7,9 @@
 // Response: { translation, reading, pos, description }  // all strings
 //
 // The Anthropic key never reaches the client — it lives in ANTHROPIC_API_KEY.
-// Admin-only: requireAdmin() runs before any work.
+// Admin-only: requireCapability() runs before any work.
 
-import { cors, requireAdmin } from '../_shared/require-admin.ts'
+import { cors, requireCapability } from '../_shared/require-capability.ts'
 
 // Machine-readable failure codes the FE switches on (read from the error body).
 // `output_truncated` is split out so the UI can say "selection too long" rather
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
     return new Response('Method Not Allowed', { status: 405, headers: cors })
   }
 
-  const auth = await requireAdmin(req)
+  const auth = await requireCapability(req, 'can_read_lesson_audio')
   if ('error' in auth) return auth.error
 
   const { term, sentence, target_lang }: Partial<TranslateRequest> = await req
