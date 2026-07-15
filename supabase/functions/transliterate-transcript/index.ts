@@ -7,9 +7,12 @@
 // Response: { readings: string[] }  // flat, aligned to the sentences' words
 //
 // The Anthropic key never reaches the client — it lives in ANTHROPIC_API_KEY.
-// Admin-only: requireAdmin() runs before any work.
+// Admin-only: requireCapability() runs before any work.
 
-import { cors, requireAdmin } from '../_shared/require-admin.ts'
+import {
+  cors,
+  requireCapability as defaultRequireCapability
+} from '../_shared/require-capability.ts'
 import { readSentences, type ReadingSentence } from '../_shared/transcription/transliterate.ts'
 
 type TransliterateRequest = { sentences: ReadingSentence[]; lang: string }
@@ -22,7 +25,13 @@ function jsonError(code: string, status: number): Response {
   })
 }
 
-Deno.serve(async (req) => {
+// Injectable gate for tests — real callers never pass this, so the shared
+// requireCapability() (and its real network calls) is untouched in production.
+export type Deps = { requireCapability?: typeof defaultRequireCapability }
+
+export async function handler(req: Request, deps: Deps = {}): Promise<Response> {
+  const requireCapability = deps.requireCapability ?? defaultRequireCapability
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: cors })
   }
@@ -30,7 +39,7 @@ Deno.serve(async (req) => {
     return new Response('Method Not Allowed', { status: 405, headers: cors })
   }
 
-  const auth = await requireAdmin(req)
+  const auth = await requireCapability(req, 'can_read_lesson_audio')
   if ('error' in auth) return auth.error
 
   const { sentences, lang }: Partial<TransliterateRequest> = await req.json().catch(() => ({}))
@@ -45,4 +54,8 @@ Deno.serve(async (req) => {
   return new Response(JSON.stringify({ readings }), {
     headers: { ...cors, 'Content-Type': 'application/json' }
   })
-})
+}
+
+if (import.meta.main) {
+  Deno.serve((req) => handler(req))
+}

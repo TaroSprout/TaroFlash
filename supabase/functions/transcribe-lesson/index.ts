@@ -14,7 +14,10 @@
 //
 // The OpenAI/Anthropic keys never reach the client.
 
-import { cors, requireAdmin } from '../_shared/require-admin.ts'
+import {
+  cors,
+  requireCapability as defaultRequireCapability
+} from '../_shared/require-capability.ts'
 import { isTargetScript } from '../_shared/transcription/script.ts'
 import { processLessonPhase, serviceClient } from './worker.ts'
 import { type SupabaseClient } from '@supabase/supabase-js'
@@ -33,7 +36,13 @@ function accepted(lesson: unknown): Response {
   })
 }
 
-Deno.serve(async (req) => {
+// Injectable gate for tests — real callers never pass this, so the shared
+// requireCapability() (and its real network calls) is untouched in production.
+export type Deps = { requireCapability?: typeof defaultRequireCapability }
+
+export async function handler(req: Request, deps: Deps = {}): Promise<Response> {
+  const requireCapability = deps.requireCapability ?? defaultRequireCapability
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: cors })
   }
@@ -48,13 +57,17 @@ Deno.serve(async (req) => {
   // admin gate that 'start'/'retry' go through.
   if (body?.action === 'process') return handleProcess(req, body)
 
-  const auth = await requireAdmin(req)
+  const auth = await requireCapability(req, 'can_read_lesson_audio')
   if ('error' in auth) return auth.error
 
   if (body?.action === 'start') return handleStart(body, auth.userClient)
   if (body?.action === 'retry') return handleRetry(body, auth.admin, auth.userClient)
   return jsonError('bad_request', 400)
-})
+}
+
+if (import.meta.main) {
+  Deno.serve((req) => handler(req))
+}
 
 async function handleStart(
   body: Record<string, unknown>,

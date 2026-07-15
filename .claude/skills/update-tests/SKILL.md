@@ -7,7 +7,7 @@ arguments:
     type: string
     description: Optional context to help understand the changes
 argument-hint: '[additional-context]'
-lastUpdated: 2026-06-23T00:00:00Z
+lastUpdated: 2026-07-15T00:00:00Z
 ---
 
 The main thread runs **only** the obligation-mining step below. The subagent has none of this conversation in its context, so the cross-cutting tests that depend on it must be discovered here and passed in explicitly. Everything mechanical (scoped per-file coverage of touched files, diff, type selection, writing, validation, re-measure, report) happens inside the subagent. The subagent measures coverage **only for touched files** and targets ~90% lines each — it does not run the full suite or baseline against master.
@@ -59,30 +59,34 @@ The subagent works from a cold diff and can mis-scope or over-claim. Cross-check
 
 1. **Scope completeness.** Run `git diff master...HEAD --name-only -- src/ supabase/` and `git status --short -- src/` yourself, and compare against the report's coverage table. A file the subagent claims "wasn't in the diff" but that actually appears here is a **missed obligation, not a scope decision** — this is the most common and most damaging failure. Every changed source file must be accounted for (covered, or an explicit justified deferral).
 2. **Obligations.** Every Step-A obligation must appear under "Obligations satisfied" with a ✅. Any ❌ or silent omission is a gap to close.
-3. **No collateral breakage.** The branch's own source changes can have broken existing test files the subagent never ran (it scopes to "touched files" and may not realise an untouched test exercises touched source). A composable that gained a new query dependency, for instance, throws `getActivePinia()` in every pre-existing test until its harness mocks the new hook; a barrel that now re-exports a heavier module makes every partial `vi.mock` of that barrel's transitive deps fail the ESM named-export check.
+3. **No collateral breakage.** The branch's own source changes can have broken existing test files the subagent never ran (it scopes to "touched files" and may not realise an untouched test exercises touched source). A composable that gained a new query dependency, for instance, throws `getActivePinia()` in every pre-existing test until its harness mocks the new hook; a barrel that now re-exports a heavier module makes every partial `vi.mock` of that barrel's transitive deps fail the ESM named-export check. On the backend, a renamed/reshaped `supabase/functions/_shared/*.ts` helper (or a `RETURNS TABLE`/view shape change) silently breaks every untouched edge function or pgTAP file that imports/depends on it — invisible until that gate's full run.
 4. **Coverage floor.** Touched files should be ~90% lines; note any genuine deferrals.
 
-### Mandatory final gate — run the FULL suite once, then scope
+### Mandatory final gate — run each relevant full suite once, then scope
 
-Before you commit, run the **entire** suite exactly once, to identify failures:
+Before you commit, decide which gates apply from the touched-file scope you already gathered for item 1 above, and run **only** those — each **exactly once**:
 
-```
-pnpm test:fast 2>&1 | tee /tmp/update-tests-full-run.log | tail -100
-```
+| Touched scope                                         | Gate          | Command                                                                                                                           |
+| ----------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `src/` or `tests/**`                                  | Vitest (full) | `pnpm test:fast 2>&1 \| tee /tmp/update-tests-full-run.log \| tail -100`                                                          |
+| `supabase/migrations/**` (schema, RLS, RPC, triggers) | pgTAP (full)  | `supabase test db 2>&1 \| tee /tmp/update-tests-pgtap-run.log \| tail -100` (needs `supabase start`)                              |
+| `supabase/functions/**` (incl. `_shared/`)            | Deno (full)   | `cd supabase/functions && deno test --allow-net --allow-env --allow-read 2>&1 \| tee /tmp/update-tests-deno-run.log \| tail -100` |
 
-(Unit + Integration, no coverage — the fast full-suite runner. Never add `--coverage` here; this gate only needs pass/fail, not instrumentation.)
+Skip a gate whose scope wasn't touched entirely — a pure `supabase/` change never runs `pnpm test:fast`; a pure `src/` change never runs `supabase test db` or `deno test`. A change spanning both (e.g. a migration plus the FE query hook that consumes it) runs every applicable gate, each once.
 
-Capture the full output to a file via `tee` in the same invocation. The tail may only show a coverage table, not the pass/fail summary — re-grep the saved log (`grep -E "Test Files|Tests |FAIL|failed" /tmp/update-tests-full-run.log`) instead of re-running the command. **Never re-invoke `pnpm test:fast` just to see a different slice of output you didn't capture the first time** — that silently violates the once-per-invocation rule below.
+(Unit + Integration, no coverage, for the Vitest row — the fast full-suite runner. Never add `--coverage` to any of these; each gate only needs pass/fail, not instrumentation.)
 
-This is non-negotiable. The subagent only ever runs touched-file scope, so collateral breakage in **untouched** test files is invisible to it — and that is the single most common reason these PRs fail CI (it happens on nearly every move/barrel/mock-shape change). The mirror-file check in item 3 is necessary but **not sufficient**: a file-move or barrel-widening refactor breaks tests that don't mirror any touched source at all (e.g. a sibling feature whose `vi.mock('@/some/barrel')` is now missing a newly-transitive export). Only a full run catches those.
+Capture each gate's full output to its own log file via `tee` in the same invocation. Tails may only show a coverage table or the last few tests, not the pass/fail summary — re-grep the saved log (e.g. `grep -E "Test Files|Tests |FAIL|failed" /tmp/update-tests-full-run.log`) instead of re-running the command. **Never re-invoke a gate just to see a different slice of output you didn't capture the first time** — that silently violates the once-per-invocation rule below.
 
-**`pnpm test:fast` runs at most once per skill invocation.** Use it only to identify which files are failing. Every subsequent run — while fixing failures, after a re-dispatch, before final commit — must be scoped to the specific failing test file(s) (`vp test --no-coverage <path> ...`), never the full suite again. If you suspect the fixes had wider fallout, re-scope to the broader set of files plausibly affected (e.g. everything importing the changed barrel), not to a second full-suite run.
+This is non-negotiable for whichever gates apply. The subagent only ever runs touched-file scope, so collateral breakage in **untouched** test files is invisible to it — and that is the single most common reason these PRs fail CI (it happens on nearly every move/barrel/mock-shape change, frontend or backend). The mirror-file check in item 3 is necessary but **not sufficient**: a file-move or barrel-widening refactor breaks tests that don't mirror any touched source at all (e.g. a sibling feature whose `vi.mock('@/some/barrel')` is now missing a newly-transitive export, or a sibling edge function importing a renamed `_shared/*.ts` export). Only a full run per gate catches those.
 
-If the full suite is red:
+**Each applicable gate runs at most once per skill invocation** — except pgTAP: `supabase test db` has no per-file scoping in the CLI (it runs the whole `supabase/tests/*.sql` suite as one transaction-wrapped batch), so if it's the failing gate, re-running it in full is the only option and is acceptable (it's DB-only, no browser, and fast). For Vitest and Deno, use the once-per-invocation full run only to identify which files are failing, then scope every subsequent run to those files (`vp test --no-coverage <path> ...` / `deno test --allow-net --allow-env --allow-read <file>`), never the full suite again. If you suspect the fixes had wider fallout, re-scope to the broader set of files plausibly affected (e.g. everything importing the changed barrel or shared helper), not to a second full-suite run.
 
-- Fix the failures yourself when they're mechanical (repoint a moved import, add the missing export to a `vi.mock` factory, mock the barrel the source now imports instead of the old deep path). These are review fixes, not new authoring — keep them in the test commit.
+If a gate is red:
+
+- Fix the failures yourself when they're mechanical (repoint a moved import, add the missing export to a `vi.mock` factory or Deno fake-supabase, mock the barrel the source now imports instead of the old deep path). These are review fixes, not new authoring — keep them in the test commit.
 - Re-dispatch the subagent only if the failures reveal a genuine missing-coverage gap, not just a broken harness.
-- Verify fixes with the scoped run above, not another `pnpm test:fast`. Do **not** commit until every file identified as failing is confirmed green via its scoped run.
+- Verify fixes with the scoped run above (or, for pgTAP, a fresh full `supabase test db`), not a second full Vitest/Deno run. Do **not** commit until every file identified as failing is confirmed green.
 
 ### Decide
 

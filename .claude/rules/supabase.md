@@ -28,6 +28,15 @@ Gate on `auth.uid()::text = (storage.foldername(name))[1]` when paths start with
 
 `storage.protect_delete` blocks direct `DELETE FROM storage.objects`, so DELETE policies can only be verified in the UI, not via pgTAP.
 
+## Capability functions for authorization
+
+Gate role/plan-based access through named capability functions, not inline `auth_role()`/`auth_plan()` checks. Mirrors `src/composables/can.ts`'s naming rule: name for the grant, not the role — `can_manage_members()`, never `is_admin()`.
+
+- One SQL function per capability, `stable`, returns `boolean`, body combines `auth_role()`/`auth_plan()`.
+- Colocate a new capability function in the migration of the feature that first needs it — don't pre-create capabilities for hypothetical future features.
+- Every capability function needs `grant execute on function public.can_x() to authenticated` — required for edge functions to reach it via `rpc()`.
+- RLS policies: `using (can_x())`. Edge functions: `requireCapability(req, 'can_x')` from `supabase/functions/_shared/require-capability.ts`.
+
 ## Migration workflow
 
 - `supabase migration up --local` immediately after writing — catches errors while the context is fresh. Never `supabase db reset`.

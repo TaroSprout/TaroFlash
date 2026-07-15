@@ -7,9 +7,12 @@
 // Response: { translation, reading, pos, description }  // all strings
 //
 // The Anthropic key never reaches the client — it lives in ANTHROPIC_API_KEY.
-// Admin-only: requireAdmin() runs before any work.
+// Admin-only: requireCapability() runs before any work.
 
-import { cors, requireAdmin } from '../_shared/require-admin.ts'
+import {
+  cors,
+  requireCapability as defaultRequireCapability
+} from '../_shared/require-capability.ts'
 
 // Machine-readable failure codes the FE switches on (read from the error body).
 // `output_truncated` is split out so the UI can say "selection too long" rather
@@ -65,7 +68,13 @@ const SYSTEM_PROMPT =
   'description: 1-3 short sentences. If the selection is only part of a larger word in this sentence, begin by naming that larger word (the word itself — do not gloss it). Then call out the specific meaning the selection carries in this sentence, and mention its other common meanings or uses when it has them. Whenever you name a character, word, or compound in the description — whether the selection itself or a related term — always append its phonetic reading in parentheses immediately after it, e.g. 日落(rìluò) or 落(luò). Never leave a character or compound unreadable. ' +
   'difficulty: integer 1-10 rating how advanced this term is for a learner of the target language. 1 = most basic vocabulary taught in the very first lessons; 10 = rare, literary, or highly specialised vocabulary. Base this on how commonly the term appears in everyday language and how early it would typically be introduced in a structured course.'
 
-Deno.serve(async (req) => {
+// Injectable gate for tests — real callers never pass this, so the shared
+// requireCapability() (and its real network calls) is untouched in production.
+export type Deps = { requireCapability?: typeof defaultRequireCapability }
+
+export async function handler(req: Request, deps: Deps = {}): Promise<Response> {
+  const requireCapability = deps.requireCapability ?? defaultRequireCapability
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: cors })
   }
@@ -73,7 +82,7 @@ Deno.serve(async (req) => {
     return new Response('Method Not Allowed', { status: 405, headers: cors })
   }
 
-  const auth = await requireAdmin(req)
+  const auth = await requireCapability(req, 'can_read_lesson_audio')
   if ('error' in auth) return auth.error
 
   const { term, sentence, target_lang }: Partial<TranslateRequest> = await req
@@ -128,4 +137,8 @@ Deno.serve(async (req) => {
   return new Response(JSON.stringify(parsed), {
     headers: { ...cors, 'Content-Type': 'application/json' }
   })
-})
+}
+
+if (import.meta.main) {
+  Deno.serve((req) => handler(req))
+}
