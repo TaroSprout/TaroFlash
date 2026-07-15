@@ -4,7 +4,8 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 
 const mocks = vi.hoisted(() => ({
   rpcMock: vi.fn(),
-  selectMock: vi.fn()
+  selectMock: vi.fn(),
+  eqMock: vi.fn()
 }))
 
 vi.mock('@/supabase-client', () => ({
@@ -25,35 +26,38 @@ import {
 beforeEach(() => {
   mocks.rpcMock.mockReset()
   mocks.selectMock.mockReset()
+  mocks.eqMock.mockReset()
+  mocks.selectMock.mockReturnValue({ eq: mocks.eqMock })
 })
 
 // ── fetchFeedbackItems ─────────────────────────────────────────────────────────
 
 describe('fetchFeedbackItems', () => {
-  test('calls the feedback_items_with_votes rpc and selects *', async () => {
-    mocks.selectMock.mockResolvedValueOnce({ data: [{ id: 1 }], error: null })
+  test('calls the feedback_items_with_votes rpc, selects *, and filters visibility to public [obligation]', async () => {
+    mocks.eqMock.mockResolvedValueOnce({ data: [{ id: 1 }], error: null })
     mocks.rpcMock.mockReturnValueOnce({ select: mocks.selectMock })
     await fetchFeedbackItems()
     expect(mocks.rpcMock).toHaveBeenCalledWith('feedback_items_with_votes')
     expect(mocks.selectMock).toHaveBeenCalledWith('*')
+    expect(mocks.eqMock).toHaveBeenCalledWith('visibility', 'public')
   })
 
   test('returns the rows on success', async () => {
     const rows = [{ id: 1 }, { id: 2 }]
-    mocks.selectMock.mockResolvedValueOnce({ data: rows, error: null })
+    mocks.eqMock.mockResolvedValueOnce({ data: rows, error: null })
     mocks.rpcMock.mockReturnValueOnce({ select: mocks.selectMock })
     await expect(fetchFeedbackItems()).resolves.toEqual(rows)
   })
 
   test('returns an empty array when data is null', async () => {
-    mocks.selectMock.mockResolvedValueOnce({ data: null, error: null })
+    mocks.eqMock.mockResolvedValueOnce({ data: null, error: null })
     mocks.rpcMock.mockReturnValueOnce({ select: mocks.selectMock })
     await expect(fetchFeedbackItems()).resolves.toEqual([])
   })
 
   test('rethrows the supabase error', async () => {
     const err = { message: 'boom' }
-    mocks.selectMock.mockResolvedValueOnce({ data: null, error: err })
+    mocks.eqMock.mockResolvedValueOnce({ data: null, error: err })
     mocks.rpcMock.mockReturnValueOnce({ select: mocks.selectMock })
     await expect(fetchFeedbackItems()).rejects.toBe(err)
   })

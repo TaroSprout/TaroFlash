@@ -4,12 +4,21 @@ import MobileSheet from '@/components/layout-kit/sheet/mobile-sheet.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import FeedbackCard from './feedback-card.vue'
+import FeedbackSubmitDialog from './feedback-submit-dialog.vue'
 import { useFeedbackItemsQuery } from '@/api/feedback'
+import { useModal } from '@/composables/modal'
+import { emitSfx } from '@/sfx/bus'
 
 const { close } = defineProps<{ close: () => void }>()
 
 const { t } = useI18n()
+const modal = useModal()
 const { data: items } = useFeedbackItemsQuery()
+
+function onSubmitPress() {
+  emitSfx('wooden_chime_ring')
+  modal.open(FeedbackSubmitDialog, { backdrop: true, mode: 'popup' })
+}
 </script>
 
 <template>
@@ -48,7 +57,7 @@ const { data: items } = useFeedbackItemsQuery()
         icon-left="shooting-star"
         size="lg"
         full-width
-        disabled
+        @press="onSubmitPress"
       >
         {{ t('feedback-board.submit-button') }}
       </ui-button>

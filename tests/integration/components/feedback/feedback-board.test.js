@@ -2,14 +2,22 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
 import FeedbackBoard from '@/components/feedback/feedback-board.vue'
+import FeedbackSubmitDialog from '@/components/feedback/feedback-submit-dialog.vue'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
 const mockItems = ref([])
 
+const { modalOpenMock } = vi.hoisted(() => ({ modalOpenMock: vi.fn() }))
+
 vi.mock('@/api/feedback', () => ({
   useFeedbackItemsQuery: () => ({ data: mockItems }),
-  useToggleFeedbackVoteMutation: () => ({ mutateAsync: vi.fn(), isLoading: { value: false } })
+  useToggleFeedbackVoteMutation: () => ({ mutateAsync: vi.fn(), isLoading: { value: false } }),
+  useSubmitFeedbackMutation: () => ({ mutateAsync: vi.fn(), isLoading: { value: false } })
+}))
+
+vi.mock('@/composables/modal', () => ({
+  useModal: () => ({ open: modalOpenMock })
 }))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
@@ -46,9 +54,7 @@ beforeEach(() => {
 describe('FeedbackBoard — content', () => {
   test('renders the mobile-sheet with the feedback-board title', () => {
     const { wrapper } = mountBoard()
-    expect(wrapper.findComponent({ name: 'MobileSheet' }).props('title')).toBe(
-      'Suggestions & Feedback'
-    )
+    expect(wrapper.findComponent({ name: 'MobileSheet' }).props('title')).toBe('Feedback')
   })
 
   test('renders one feedback-card per item from useFeedbackItemsQuery', () => {
@@ -69,13 +75,6 @@ describe('FeedbackBoard — content', () => {
     expect(wrapper.findComponent(FeedbackCardStub).props('item')).toEqual({ id: 7 })
   })
 
-  test('the submit button is disabled', () => {
-    const { wrapper } = mountBoard()
-    expect(
-      wrapper.find('[data-testid="feedback-board__submit-button"]').attributes('aria-disabled')
-    ).toBe('true')
-  })
-
   test('the submit button reads Leave Feedback', () => {
     const { wrapper } = mountBoard()
     expect(wrapper.find('[data-testid="feedback-board__submit-button"]').text()).toBe(
@@ -91,5 +90,22 @@ describe('FeedbackBoard — close wiring', () => {
     const { wrapper, close } = mountBoard()
     await wrapper.findComponent({ name: 'MobileSheet' }).vm.$emit('close')
     expect(close).toHaveBeenCalledOnce()
+  })
+})
+
+// ── Submit dialog wiring ─────────────────────────────────────────────────────
+
+describe('FeedbackBoard — submit dialog wiring [obligation]', () => {
+  beforeEach(() => {
+    modalOpenMock.mockReset()
+  })
+
+  test('pressing the submit button opens FeedbackSubmitDialog as a stacked modal via useModal().open', async () => {
+    const { wrapper } = mountBoard()
+    await wrapper.find('[data-testid="feedback-board__submit-button"]').trigger('click')
+    expect(modalOpenMock).toHaveBeenCalledWith(FeedbackSubmitDialog, {
+      backdrop: true,
+      mode: 'popup'
+    })
   })
 })

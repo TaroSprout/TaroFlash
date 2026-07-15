@@ -17,7 +17,7 @@
 
 BEGIN;
 
-SELECT plan(21);
+SELECT plan(22);
 
 -- ── Setup ─────────────────────────────────────────────────────────────────────
 
@@ -34,9 +34,9 @@ UPDATE public.members SET role = 'moderator'
 UPDATE public.members SET display_name = 'Alice Display', cover_config = '{"avatar":"alice.png"}'::jsonb
   WHERE id = 'a1111111-1111-1111-1111-111111111111';
 
--- Fixture feedback items inserted directly as postgres (bypasses RLS) rather
--- than via submit_feedback — see Bug found in report: feedback_items has no
--- INSERT policy, so submit_feedback currently fails RLS for every caller.
+-- Fixture feedback items inserted directly as postgres (bypasses RLS) so
+-- these fixtures can set visibility explicitly, independent of submit_feedback's
+-- defaults.
 SET LOCAL role = 'postgres';
 
 SELECT tests.set_claims('a1111111-1111-1111-1111-111111111111'::uuid);
@@ -98,8 +98,7 @@ SELECT throws_ok(
   'submit_feedback raises when p_title is blank/whitespace-only'
 );
 
--- Test 5: valid title succeeds. NOTE: expected to currently FAIL — see
--- Bug found in the accompanying report (feedback_items has no INSERT policy).
+-- Test 5: valid title succeeds.
 SELECT lives_ok(
   $$ SELECT public.submit_feedback('Valid Title', 'body', 'idea') $$,
   'submit_feedback succeeds for a member submitting their own feedback'
@@ -137,6 +136,18 @@ SELECT is(
   (SELECT count(*)::int FROM public.feedback_items WHERE title = 'Internal Item B'),
   1,
   'moderator (can_moderate_feedback) can read another member''s internal feedback item'
+);
+
+SET LOCAL role = 'postgres';
+SELECT tests.set_claims('b2222222-2222-2222-2222-222222222222'::uuid);
+SET LOCAL role = 'authenticated';
+
+-- Test 8b: a member can read their own internal item (needed so
+-- submit_feedback's `RETURNING *` can read back a fresh 'internal' row).
+SELECT is(
+  (SELECT count(*)::int FROM public.feedback_items WHERE title = 'Internal Item B'),
+  1,
+  'a member can read their own internal feedback item'
 );
 
 SET LOCAL role = 'postgres';
