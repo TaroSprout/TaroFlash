@@ -210,21 +210,9 @@ describe('modal animations', () => {
       expect(vars).toMatchObject({ translateY: '60px', filter: 'brightness(0.8) blur(2px)' })
       expect(vars).not.toHaveProperty('scale')
     })
-
-    test('disables pointer events while receded', () => {
-      recedeModal(el, false)
-
-      expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ pointerEvents: 'none' }))
-    })
   })
 
   describe('restoreModal', () => {
-    test('[obligation] seeds pointerEvents to auto before tweening', () => {
-      restoreModal(el, false)
-
-      expect(mockSet).toHaveBeenCalledWith(el, { pointerEvents: 'auto' })
-    })
-
     test('[obligation] tweens scale (not translateY) back to full prominence when not pinned', () => {
       restoreModal(el, false)
 

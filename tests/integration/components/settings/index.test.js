@@ -28,7 +28,7 @@ const {
   }
 
   return {
-    state: { isSheet: false, isDesktop: false, isPinned: false },
+    state: { isSheet: false, isDesktop: false },
     mockEditor: {
       settings: { display_name: 'Chris', description: 'hi' },
       preferences: { accessibility: { left_hand: false } },
@@ -73,16 +73,8 @@ vi.mock('@/composables/storage/session-ref', async () => {
 vi.mock('@/composables/ui/media-query', async () => {
   const { ref } = await import('vue')
   return {
-    // sheet_query (useTabModalLayout, width-only 'w<mlg') and the settings-only
-    // pin check (SETTINGS_SHEET_BREAKPOINTS, 'w<mlg | h<md') are distinct
-    // queries on purpose — they resolve from separate state fields so a test
-    // can pin the recede/restore animation while layout_mode stays desktop/tablet.
     useMatchMedia: vi.fn((query) => {
       if (query.includes('&')) return ref(state.isDesktop)
-      if (
-        query === `w<${SETTINGS_SHEET_BREAKPOINTS.width} | h<${SETTINGS_SHEET_BREAKPOINTS.height}`
-      )
-        return ref(state.isPinned)
       return ref(state.isSheet)
     })
   }
@@ -159,23 +151,12 @@ vi.mock('@/views/settings/tab-danger-zone/index.vue', async () => {
   }
 })
 
-// TabSubscription doubles as the recede/restore inject probe below — it
-// exposes the same recede-trigger/restore-trigger buttons the dedicated
-// InjectRecedeStub used to provide via global.stubs.
 vi.mock('@/views/settings/tab-subscription/index.vue', async () => {
-  const { defineComponent, h, inject } = await import('vue')
-  const { settingsRecedeKey } = await import('@/views/settings/layout')
+  const { defineComponent, h } = await import('vue')
   return {
     default: defineComponent({
       name: 'TabSubscription',
-      setup() {
-        const recede = inject(settingsRecedeKey)
-        return () =>
-          h('div', { 'data-testid': 'tab-subscription-stub' }, [
-            h('button', { 'data-testid': 'recede-trigger', onClick: () => recede?.recede() }),
-            h('button', { 'data-testid': 'restore-trigger', onClick: () => recede?.restore() })
-          ])
-      }
+      setup: () => () => h('div', { 'data-testid': 'tab-subscription-stub' })
     })
   }
 })
@@ -203,17 +184,6 @@ vi.mock('@/utils/animations/fade', () => ({
 vi.mock('@/utils/animations/tab-slide', () => ({
   tabSlideEnter: vi.fn(() => vi.fn((_el, done) => done?.())),
   tabSlideLeave: vi.fn(() => vi.fn((_el, done) => done?.()))
-}))
-
-const { mockRecedeModal, mockRestoreModal } = vi.hoisted(() => ({
-  mockRecedeModal: vi.fn(),
-  mockRestoreModal: vi.fn()
-}))
-
-vi.mock('@/utils/animations/modal', async (importOriginal) => ({
-  ...(await importOriginal()),
-  recedeModal: mockRecedeModal,
-  restoreModal: mockRestoreModal
 }))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
@@ -709,62 +679,6 @@ describe('settings app — open/close sfx [obligation]', () => {
   })
 })
 
-// ── Recede/restore provide wiring ───────────────────────────────────────────────
-
-describe('settings app — recede/restore choreography [obligation]', () => {
-  test('provides recede() calling recedeModal on the tab-sheet root element', async () => {
-    mockRecedeModal.mockClear()
-    const wrapper = makeWrapper()
-    await wrapper.find('[data-testid="tab-sheet__select-subscription"]').trigger('click')
-    await flushPromises()
-
-    await wrapper.find('[data-testid="recede-trigger"]').trigger('click')
-
-    expect(mockRecedeModal).toHaveBeenCalledOnce()
-  })
-
-  test('provides restore() calling restoreModal on the tab-sheet root element', async () => {
-    mockRestoreModal.mockClear()
-    const wrapper = makeWrapper()
-    await wrapper.find('[data-testid="tab-sheet__select-subscription"]').trigger('click')
-    await flushPromises()
-
-    await wrapper.find('[data-testid="restore-trigger"]').trigger('click')
-
-    expect(mockRestoreModal).toHaveBeenCalledOnce()
-  })
-
-  test("[obligation] uses SETTINGS_SHEET_BREAKPOINTS pin check, not layout_mode's own sheet_query — recedes with is_pinned true even while layout_mode resolves tablet/desktop", async () => {
-    // sheet_query ('w<mlg') resolves false here so layout_mode is tablet/desktop,
-    // but the narrower SETTINGS_SHEET_BREAKPOINTS pin query still resolves true.
-    state.isSheet = false
-    state.isDesktop = false
-    state.isPinned = true
-    mockRecedeModal.mockClear()
-
-    const wrapper = makeWrapper()
-    await wrapper.find('[data-testid="tab-sheet__select-subscription"]').trigger('click')
-    await flushPromises()
-    await wrapper.find('[data-testid="recede-trigger"]').trigger('click')
-
-    expect(mockRecedeModal).toHaveBeenCalledWith(expect.anything(), true)
-  })
-
-  test('[obligation] recedes with is_pinned false when below the narrower SETTINGS_SHEET_BREAKPOINTS threshold', async () => {
-    state.isSheet = false
-    state.isDesktop = false
-    state.isPinned = false
-    mockRecedeModal.mockClear()
-
-    const wrapper = makeWrapper()
-    await wrapper.find('[data-testid="tab-sheet__select-subscription"]').trigger('click')
-    await flushPromises()
-    await wrapper.find('[data-testid="recede-trigger"]').trigger('click')
-
-    expect(mockRecedeModal).toHaveBeenCalledWith(expect.anything(), false)
-  })
-})
-
 describe('settings app — member-card avatar edit wiring [obligation]', () => {
   afterEach(() => useModal().pop())
 
@@ -775,13 +689,11 @@ describe('settings app — member-card avatar edit wiring [obligation]', () => {
     )
   })
 
-  test('emitting edit-avatar on member-card recedes and opens the avatar picker modal', async () => {
-    mockRecedeModal.mockClear()
+  test('emitting edit-avatar on member-card opens the avatar picker modal', async () => {
     const wrapper = makeWrapper(vi.fn(), MemberCardStub)
 
     await wrapper.find('[data-testid="member-card-stub"]').trigger('click')
 
-    expect(mockRecedeModal).toHaveBeenCalledOnce()
     const modal = useModal()
     expect(modal.modal_stack.value).toHaveLength(1)
     expect(modal.modal_stack.value[0].component).toBe(AvatarPickerModal)

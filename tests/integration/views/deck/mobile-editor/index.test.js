@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, nextTick, ref } from 'vue'
-import ModalUiKit from '@/components/ui-kit/modal.vue'
+import ModalUiKit from '@/components/ui-kit/modal/index.vue'
 import { useModal, request_close_handlers } from '@/composables/modal'
 import { useMobileCardEditor } from '@/views/deck/mobile-editor/use-mobile-card-editor'
 

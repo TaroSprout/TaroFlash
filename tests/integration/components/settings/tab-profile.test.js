@@ -14,7 +14,7 @@ vi.mock('@/stores/notice-store', () => ({
 import { resetResponsive } from '../../../helpers/responsive-mock'
 import TabProfile from '@/views/settings/tab-profile/index.vue'
 import { memberEditorKey } from '@/composables/member/editor'
-import { settingsLayoutKey, settingsRecedeKey } from '@/views/settings/layout'
+import { settingsLayoutKey } from '@/views/settings/layout'
 import { useModal } from '@/composables/modal'
 import AvatarPickerModal from '@/components/member/avatar-picker-modal.vue'
 import { computed } from 'vue'
@@ -216,40 +216,14 @@ describe('TabProfile', () => {
       )
     })
 
-    test('emitting edit-avatar opens the avatar picker modal via the injected recede', async () => {
-      const recede = { recede: vi.fn(), restore: vi.fn() }
-      const wrapper = mount(TabProfile, {
-        global: {
-          provide: {
-            [memberEditorKey]: makeEditor(),
-            [settingsLayoutKey]: computed(() => 'sheet'),
-            [settingsRecedeKey]: recede
-          },
-          stubs: {
-            UiInput: InputStub,
-            MemberBadge: EditableMemberBadgeStub,
-            UiThemePicker: ThemePickerStub,
-            UiPatternPicker: PatternPickerStub
-          },
-          mocks: { $t: (k) => k }
-        }
-      })
-
-      await wrapper.find('[data-testid="member-badge-stub"]').trigger('click')
-
-      expect(recede.recede).toHaveBeenCalledOnce()
-      const modal = useModal()
-      expect(modal.modal_stack.value).toHaveLength(1)
-      expect(modal.modal_stack.value[0].component).toBe(AvatarPickerModal)
-    })
-
-    test('works without a provided recede (undefined injection)', async () => {
+    test('emitting edit-avatar opens the avatar picker modal', async () => {
       const { wrapper } = makeTab(makeEditor(), 'sheet', EditableMemberBadgeStub)
 
       await wrapper.find('[data-testid="member-badge-stub"]').trigger('click')
 
       const modal = useModal()
       expect(modal.modal_stack.value).toHaveLength(1)
+      expect(modal.modal_stack.value[0].component).toBe(AvatarPickerModal)
     })
   })
 })
