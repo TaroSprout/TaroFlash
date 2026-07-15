@@ -25,6 +25,8 @@ vp check         # format + lint + type-check
 
 Local Supabase runs on port 54321 (API) and 54322 (Postgres). Start it with `supabase start` and apply migrations with `supabase migration up`. See [Supabase setup](docs/src/supabase/index.md) for details.
 
+`supabase db reset` seeds a demo member — log in with `cheesy@example.com` / `password` (2 decks, 500 + 200 dummy cards).
+
 ---
 
 ## Deploy
