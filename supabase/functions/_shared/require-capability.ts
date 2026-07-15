@@ -23,9 +23,17 @@ type RequireCapabilityResult =
   | { user: { id: string; email?: string }; admin: SupabaseClient; userClient: SupabaseClient }
   | { error: Response }
 
+// Injectable clients for tests — real callers never pass these, so
+// createClient() (and the real network) is untouched in production.
+export type RequireCapabilityDeps = {
+  userClient?: SupabaseClient
+  adminClient?: SupabaseClient
+}
+
 export async function requireCapability(
   req: Request,
-  capability: string
+  capability: string,
+  deps: RequireCapabilityDeps = {}
 ): Promise<RequireCapabilityResult> {
   const authHeader = req.headers.get('Authorization')
   if (!authHeader) {
@@ -35,11 +43,11 @@ export async function requireCapability(
   // User-scoped client: carries the caller's JWT, so auth.getUser() resolves to
   // the real signed-in member, and rpc() calls run as them — auth.uid() inside
   // the capability function resolves from this JWT, not a service-role lookup.
-  const userClient = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_ANON_KEY')!,
-    { global: { headers: { Authorization: authHeader } } }
-  )
+  const userClient =
+    deps.userClient ??
+    createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      global: { headers: { Authorization: authHeader } }
+    })
 
   const {
     data: { user },
@@ -55,10 +63,9 @@ export async function requireCapability(
   }
 
   // Service-role client for privileged writes once the capability check passes.
-  const admin = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  )
+  const admin =
+    deps.adminClient ??
+    createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
 
   return { user, admin, userClient }
 }

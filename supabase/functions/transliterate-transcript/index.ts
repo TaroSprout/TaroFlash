@@ -9,7 +9,10 @@
 // The Anthropic key never reaches the client — it lives in ANTHROPIC_API_KEY.
 // Admin-only: requireCapability() runs before any work.
 
-import { cors, requireCapability } from '../_shared/require-capability.ts'
+import {
+  cors,
+  requireCapability as defaultRequireCapability
+} from '../_shared/require-capability.ts'
 import { readSentences, type ReadingSentence } from '../_shared/transcription/transliterate.ts'
 
 type TransliterateRequest = { sentences: ReadingSentence[]; lang: string }
@@ -22,7 +25,13 @@ function jsonError(code: string, status: number): Response {
   })
 }
 
-Deno.serve(async (req) => {
+// Injectable gate for tests — real callers never pass this, so the shared
+// requireCapability() (and its real network calls) is untouched in production.
+export type Deps = { requireCapability?: typeof defaultRequireCapability }
+
+export async function handler(req: Request, deps: Deps = {}): Promise<Response> {
+  const requireCapability = deps.requireCapability ?? defaultRequireCapability
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: cors })
   }
@@ -45,4 +54,8 @@ Deno.serve(async (req) => {
   return new Response(JSON.stringify({ readings }), {
     headers: { ...cors, 'Content-Type': 'application/json' }
   })
-})
+}
+
+if (import.meta.main) {
+  Deno.serve((req) => handler(req))
+}
