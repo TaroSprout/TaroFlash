@@ -11,6 +11,7 @@ import ModalSlot from './slot.vue'
 const {
   modal_stack,
   show_backdrop,
+  receded_ids,
   setModalEl,
   requestClose,
   onBeforeEnter,
@@ -72,6 +73,7 @@ const {
           :data-modal-mode="modal.mode"
           :data-mobile-below-width="modal.mobile_below_width ?? DEFAULT_WIDTH_KEY"
           :data-mobile-below-height="modal.mobile_below_height ?? DEFAULT_HEIGHT_KEY"
+          :inert="receded_ids.has(modal.id)"
           class="pointer-events-auto"
         />
       </modal-slot>

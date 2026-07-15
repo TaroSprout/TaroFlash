@@ -1,4 +1,4 @@
-import { computed, onUnmounted, useTemplateRef, watch, watchEffect } from 'vue'
+import { computed, onUnmounted, reactive, useTemplateRef, watch, watchEffect } from 'vue'
 import {
   useModal,
   request_close_handlers,
@@ -41,12 +41,17 @@ export function useModalStack() {
   const scroll_lock = useScrollLock(() => modal_container.value?.$el)
 
   const modal_els = new Map<string, HTMLElement>()
+  const receded_ids = reactive(new Set<string>())
 
   const show_backdrop = computed(() => modal_stack.value.some((m) => m.backdrop))
 
   function setModalEl(id: string, el: Element | null) {
-    if (el) modal_els.set(id, el as HTMLElement)
-    else modal_els.delete(id)
+    if (el) {
+      modal_els.set(id, el as HTMLElement)
+    } else {
+      modal_els.delete(id)
+      receded_ids.delete(id)
+    }
   }
 
   function requestClose() {
@@ -80,11 +85,17 @@ export function useModalStack() {
     (new_length, old_length) => {
       if (new_length > old_length) {
         const receding = modal_stack.value.at(-2)
-        const el = receding && modal_els.get(receding.id)
+        if (!receding) return
+
+        receded_ids.add(receding.id)
+        const el = modal_els.get(receding.id)
         if (el) recedeModal(el, isMobileFor(el))
       } else if (new_length < old_length) {
         const restoring = modal_stack.value.at(-1)
-        const el = restoring && modal_els.get(restoring.id)
+        if (!restoring) return
+
+        receded_ids.delete(restoring.id)
+        const el = modal_els.get(restoring.id)
         if (el) restoreModal(el, isMobileFor(el))
       }
     }
@@ -122,6 +133,7 @@ export function useModalStack() {
     modal_stack,
     modal_container,
     show_backdrop,
+    receded_ids,
     setModalEl,
     requestClose,
     onBeforeEnter,
