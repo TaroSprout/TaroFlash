@@ -17,34 +17,18 @@ function makeEditor(avatar) {
   return { cover: reactive({ avatar }) }
 }
 
-function makeRecede() {
-  const order = []
-  return {
-    order,
-    recede: {
-      recede: vi.fn(() => order.push('recede')),
-      restore: vi.fn(() => order.push('restore'))
-    }
-  }
-}
-
 beforeEach(() => {
   modalOpenMock.mockReset()
 })
 
-describe('useAvatarPicker — works as a plain function with no injection context', () => {
-  test('calls recede() before opening the modal and restore() after it resolves', async () => {
-    const { order, recede } = makeRecede()
-    modalOpenMock.mockImplementation(() => {
-      order.push('modal-open')
-      return { response: Promise.resolve(undefined) }
-    })
+describe('useAvatarPicker', () => {
+  test('opens the avatar picker modal and awaits its response', async () => {
+    modalOpenMock.mockReturnValue({ response: Promise.resolve(undefined) })
     const editor = makeEditor(undefined)
-    const { onEditAvatar } = useAvatarPicker(editor, recede)
+    const { onEditAvatar } = useAvatarPicker(editor)
 
-    await onEditAvatar()
-
-    expect(order).toEqual(['recede', 'modal-open', 'restore'])
+    await expect(onEditAvatar()).resolves.toBeUndefined()
+    expect(modalOpenMock).toHaveBeenCalledOnce()
   })
 
   test('assigns editor.cover.avatar when the modal resolves with a truthy avatar', async () => {
@@ -65,14 +49,6 @@ describe('useAvatarPicker — works as a plain function with no injection contex
     await onEditAvatar()
 
     expect(editor.cover.avatar).toBe('owl')
-  })
-
-  test('works without a recede argument at all', async () => {
-    modalOpenMock.mockReturnValue({ response: Promise.resolve(undefined) })
-    const editor = makeEditor(undefined)
-    const { onEditAvatar } = useAvatarPicker(editor)
-
-    await expect(onEditAvatar()).resolves.toBeUndefined()
   })
 
   test('passes the current editor.cover.avatar as the selected prop to the modal', async () => {

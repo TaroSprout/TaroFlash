@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import StackedBar from '@/components/ui-kit/charts/stacked-bar.vue'
+import StackedBar from '@/components/charts/stacked-bar.vue'
 
 function makeWrapper(segments, props = {}) {
   return shallowMount(StackedBar, { props: { segments, ...props } })

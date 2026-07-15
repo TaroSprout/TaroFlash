@@ -69,6 +69,15 @@ describe('useAlert', () => {
       )
     })
 
+    test('opens the modal with mode: popup [obligation]', () => {
+      const { warn } = useAlert()
+      warn()
+      expect(mockOpen).toHaveBeenCalledWith(
+        anyComponent,
+        expect.objectContaining({ mode: 'popup' })
+      )
+    })
+
     test('opens the modal with type: warn', () => {
       const { warn } = useAlert()
       warn({ title: 't' })
@@ -126,6 +135,15 @@ describe('useAlert', () => {
       expect(mockOpen).toHaveBeenCalledWith(
         anyComponent,
         expect.objectContaining({ props: expect.objectContaining({ type: 'info' }) })
+      )
+    })
+
+    test('opens the modal with mode: popup [obligation]', () => {
+      const { info } = useAlert()
+      info()
+      expect(mockOpen).toHaveBeenCalledWith(
+        anyComponent,
+        expect.objectContaining({ mode: 'popup' })
       )
     })
 

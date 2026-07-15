@@ -2,14 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, provide, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SettingsAside from './settings-aside.vue'
-import {
-  settingsLayoutKey,
-  settingsCloseKey,
-  settingsRecedeKey,
-  SETTINGS_SHEET_BREAKPOINTS,
-  type SettingsRecede
-} from './layout'
-import { useMatchMedia } from '@/composables/ui/media-query'
+import { settingsLayoutKey, settingsCloseKey } from './layout'
 import { emitSfx } from '@/sfx/bus'
 import { useMemberEditor, memberEditorKey } from '@/composables/member/editor'
 import { TAB_META, type TabValue } from './tabs'
@@ -18,7 +11,6 @@ import { useTabModalLayout } from '@/composables/ui/tab-modal-layout'
 import { useTabTransition } from '@/composables/ui/tab-transition'
 import { useAlert } from '@/composables/alert'
 import { useModalRequestClose } from '@/composables/modal'
-import { recedeModal, restoreModal } from '@/utils/animations/modal'
 import { useAvatarPicker } from './use-avatar-picker'
 import MemberCard from '@/components/member/member-card.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
@@ -59,21 +51,7 @@ const { layout_mode, sheet_px } = useTabModalLayout({
 provide(settingsLayoutKey, layout_mode)
 provide(settingsCloseKey, close)
 
-// Mirrors the mobile-sheet primitive's own bottom-pin check (same breakpoint keys
-// passed to modal.open in useSettingsModal) so recede/restore can't drift from it —
-// layout_mode is width-only and stays desktop/tablet regardless of height.
-const is_pinned = useMatchMedia(
-  `w<${SETTINGS_SHEET_BREAKPOINTS.width} | h<${SETTINGS_SHEET_BREAKPOINTS.height}`
-)
-
-const settings_root = useTemplateRef<{ $el: HTMLElement }>('settings_root')
-const recede: SettingsRecede = {
-  recede: () => settings_root.value?.$el && recedeModal(settings_root.value.$el, is_pinned.value),
-  restore: () => settings_root.value?.$el && restoreModal(settings_root.value.$el, is_pinned.value)
-}
-provide(settingsRecedeKey, recede)
-
-const { onEditAvatar } = useAvatarPicker(editor, recede)
+const { onEditAvatar } = useAvatarPicker(editor)
 
 type ActiveTab = TabValue
 const active_tab = ref<ActiveTab | null>(null)
@@ -167,7 +145,6 @@ watch(layout_mode, (mode) => {
 
 <template>
   <tab-sheet
-    ref="settings_root"
     data-testid="settings-container"
     data-theme="blue-500"
     data-theme-dark="blue-650"

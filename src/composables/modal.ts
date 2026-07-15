@@ -7,7 +7,7 @@ export type ModalContext = {
 }
 import uid from '@/utils/uid'
 
-/** Provided by modal-slot.vue so any descendant can identify which modal it lives in. */
+/** Provided by ui-kit/modal/slot.vue so any descendant can identify which modal it lives in. */
 export const MODAL_ID_KEY: InjectionKey<string> = Symbol('modalId')
 
 /** Handlers registered via useModalRequestClose, keyed by modal id. */
@@ -27,7 +27,7 @@ export function useModalAfterEnter(): Promise<void> {
   })
 }
 
-/** Called by modal.vue after the enter transition for the given modal id completes. */
+/** Called by ui-kit/modal/use-modal-transitions.ts after the enter transition for the given modal id completes. */
 export function resolveModalAfterEnter(id: string) {
   after_enter_resolvers.get(id)?.()
   after_enter_resolvers.delete(id)

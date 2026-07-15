@@ -70,14 +70,12 @@ export function recedeModal(el: Element, is_pinned: boolean) {
     ...(is_pinned ? { translateY: RECEDE_TRANSLATE_Y } : { scale: RECEDE_SCALE }),
     filter: 'brightness(0.8) blur(2px)',
     duration: RECEDE_DURATION,
-    ease: 'expo.out',
-    pointerEvents: 'none'
+    ease: 'expo.out'
   })
 }
 
 /** Restores a modal to full prominence once the modal above it has closed. */
 export function restoreModal(el: Element, is_pinned: boolean) {
-  gsap.set(el, { pointerEvents: 'auto' })
   gsap.to(el, {
     ...(is_pinned ? { translateY: 0 } : { scale: 1 }),
     filter: 'brightness(1) blur(0px)',

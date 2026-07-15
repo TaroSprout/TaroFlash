@@ -2,7 +2,6 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/tes
 import { createApp } from 'vue'
 import { createI18n } from 'vue-i18n'
 import messages from '@intlify/unplugin-vue-i18n/messages'
-import { settingsRecedeKey } from '@/views/settings/layout'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -42,7 +41,7 @@ import { useChangeCcClick } from '@/views/settings/tab-subscription/use-change-c
 
 let app = null
 
-function withSetup(composable, recede) {
+function withSetup(composable) {
   let result
   app = createApp({
     setup() {
@@ -52,24 +51,12 @@ function withSetup(composable, recede) {
   })
   const i18n = createI18n({ locale: 'en-us', legacy: false, messages })
   app.use(i18n)
-  if (recede) app.provide(settingsRecedeKey, recede)
   app.mount(document.createElement('div'))
   return result
 }
 
 function card(id, brand = 'visa', last4 = '4242') {
   return { id, card: { brand, last4, exp_month: 12, exp_year: 2030 } }
-}
-
-function makeRecede() {
-  const order = []
-  return {
-    order,
-    recede: {
-      recede: vi.fn(() => order.push('recede')),
-      restore: vi.fn(() => order.push('restore'))
-    }
-  }
 }
 
 afterEach(() => {
@@ -101,39 +88,6 @@ describe('useChangeCcClick — default_card [obligation]', () => {
     queryState.data = { paymentMethods: [], defaultPaymentMethodId: null }
     const { default_card } = withSetup(() => useChangeCcClick())
     expect(default_card.value).toBeNull()
-  })
-})
-
-// ── recede/restore choreography ──────────────────────────────────────────────
-
-describe('useChangeCcClick — recede/restore choreography [obligation]', () => {
-  test('calls recede() before opening the modal and restore() after it resolves, added:false', async () => {
-    queryState.data = { paymentMethods: [card('pm_1')], defaultPaymentMethodId: 'pm_1' }
-    const { order, recede } = makeRecede()
-    modalOpenMock.mockImplementation(() => {
-      order.push('modal-open')
-      return { response: Promise.resolve({ added: false, paymentMethodId: null }) }
-    })
-    const { onChangeCardClick } = withSetup(() => useChangeCcClick(), recede)
-
-    await onChangeCardClick()
-
-    expect(order).toEqual(['recede', 'modal-open', 'restore'])
-  })
-
-  test('calls recede() before opening the modal and restore() after it resolves, added:true', async () => {
-    queryState.data = { paymentMethods: [card('pm_1')], defaultPaymentMethodId: 'pm_1' }
-    const { order, recede } = makeRecede()
-    setDefaultMutateMock.mockResolvedValue({})
-    modalOpenMock.mockImplementation(() => {
-      order.push('modal-open')
-      return { response: Promise.resolve({ added: true, paymentMethodId: 'pm_1' }) }
-    })
-    const { onChangeCardClick } = withSetup(() => useChangeCcClick(), recede)
-
-    await onChangeCardClick()
-
-    expect(order).toEqual(['recede', 'modal-open', 'restore'])
   })
 })
 

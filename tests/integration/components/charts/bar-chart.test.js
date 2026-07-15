@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import BarChart from '@/components/ui-kit/charts/bar-chart.vue'
+import BarChart from '@/components/charts/bar-chart.vue'
 
 function makeWrapper(bars, props = {}) {
   return shallowMount(BarChart, { props: { bars, ...props } })

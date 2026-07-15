@@ -11,15 +11,14 @@ import MemberBadge from '@/components/member/member-badge.vue'
 import SettingsSaveButton from '../settings-save-button.vue'
 import { memberEditorKey } from '@/composables/member/editor'
 import { MEMBER_DISPLAY_NAME_MAX_LENGTH } from '@/utils/member/defaults'
-import { settingsLayoutKey, settingsRecedeKey } from '../layout'
+import { settingsLayoutKey } from '../layout'
 import { useAvatarPicker } from '../use-avatar-picker'
 import { SUPPORTED_THEMES, SUPPORTED_PATTERNS } from '@/utils/cover'
 
 const { t } = useI18n()
 const editor = inject(memberEditorKey)!
 const layout_mode = inject(settingsLayoutKey)!
-const recede = inject(settingsRecedeKey)
-const { onEditAvatar } = useAvatarPicker(editor, recede)
+const { onEditAvatar } = useAvatarPicker(editor)
 </script>
 
 <template>

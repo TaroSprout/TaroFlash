@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, nextTick, ref, withAttrs } from 'vue'
-import ModalUiKit from '@/components/ui-kit/modal.vue'
+import ModalUiKit from '@/components/ui-kit/modal/index.vue'
 import { useModal, useModalRequestClose, request_close_handlers } from '@/composables/modal'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
@@ -60,6 +60,28 @@ const ScrollableStub = defineComponent({
     return h('div', { 'data-testid': 'scroll-stub', style: 'overflow-y: auto; height: 50px;' }, [
       h('div', { style: 'height: 500px;' })
     ])
+  }
+})
+
+// A modal whose descendant sets its own explicit pointer-events-auto class —
+// the real-world shape of settings-aside's edit-account button. Used to prove
+// `inert` (not a naive pointer-events toggle on the ancestor) is what blocks it.
+const PointerEventsAutoDescendantStub = defineComponent({
+  props: ['onDescendantClick'],
+  emits: ['descendant-click'],
+  setup(_props, { emit }) {
+    return () =>
+      h('div', { 'data-testid': 'pointer-events-descendant-host' }, [
+        h(
+          'button',
+          {
+            'data-testid': 'pointer-events-descendant-button',
+            class: 'pointer-events-auto',
+            onClick: () => emit('descendant-click')
+          },
+          'edit'
+        )
+      ])
   }
 })
 
@@ -525,5 +547,150 @@ describe('mobile breakpoint forwarding', () => {
     expect(widths).toContain('lg')
     expect(heights).toContain('sm')
     expect(heights).toContain('2xl')
+  })
+})
+
+// ── recede/restore choreography [obligation] ─────────────────────────────────
+
+describe('recede/restore choreography [obligation]', () => {
+  beforeEach(() => {
+    const { modal_stack, pop } = useModal()
+    while (modal_stack.value.length > 0) pop()
+    request_close_handlers.clear()
+  })
+
+  test('opening a second modal on top recedes the first (not the top) [obligation]', async () => {
+    const { open } = useModal()
+    const wrapper = mountModal()
+
+    open(ModalStub)
+    await nextTick()
+    open(ModalStub)
+    await nextTick()
+
+    const entries = wrapper.findAll('[data-testid="modal-stub"]')
+    expect(entries[0].element.inert).toBe(true)
+    expect(entries[1].element.inert).toBe(false)
+  })
+
+  test('closing the top modal restores the previously-receded one [obligation]', async () => {
+    const { open } = useModal()
+    const wrapper = mountModal()
+
+    open(ModalStub)
+    await nextTick()
+    const { close } = open(ModalStub)
+    await nextTick()
+
+    expect(wrapper.findAll('[data-testid="modal-stub"]')[0].element.inert).toBe(true)
+
+    close()
+    await nextTick()
+
+    const entries = wrapper.findAll('[data-testid="modal-stub"]')
+    expect(entries).toHaveLength(1)
+    expect(entries[0].element.inert).toBe(false)
+  })
+
+  test('a batch jump in stack size (1 → 3 in one tick) still receded everything except the top [obligation]', async () => {
+    const { open } = useModal()
+    const wrapper = mountModal()
+
+    open(ModalStub)
+    await nextTick()
+
+    // Open two more synchronously, in the same tick — simulates the stack
+    // changing by more than one entry at once, not one push at a time.
+    open(ModalStub)
+    open(ModalStub)
+    await nextTick()
+
+    const entries = wrapper.findAll('[data-testid="modal-stub"]')
+    expect(entries).toHaveLength(3)
+    expect(entries[0].element.inert).toBe(true)
+    expect(entries[1].element.inert).toBe(true)
+    expect(entries[2].element.inert).toBe(false)
+  })
+
+  test('a batch shrink in stack size (3 → 1 in one tick) still restores the sole remaining entry [obligation]', async () => {
+    const { open, pop } = useModal()
+    const wrapper = mountModal()
+
+    open(ModalStub)
+    await nextTick()
+    open(ModalStub)
+    await nextTick()
+    open(ModalStub)
+    await nextTick()
+
+    expect(wrapper.findAll('[data-testid="modal-stub"]')[0].element.inert).toBe(true)
+
+    // Pop two synchronously, in the same tick — simulates the stack
+    // collapsing by more than one entry at once, not one pop at a time.
+    pop()
+    pop()
+    await nextTick()
+
+    const entries = wrapper.findAll('[data-testid="modal-stub"]')
+    expect(entries).toHaveLength(1)
+    expect(entries[0].element.inert).toBe(false)
+  })
+})
+
+// ── receded modal blocks clicks via `inert`, even with a descendant
+// pointer-events-auto override [obligation] ──────────────────────────────────
+
+describe('a receded modal is unclickable even when a descendant sets pointer-events-auto [obligation]', () => {
+  beforeEach(() => {
+    const { modal_stack, pop } = useModal()
+    while (modal_stack.value.length > 0) pop()
+    request_close_handlers.clear()
+  })
+
+  // `trigger('click')` dispatches a synthetic event directly at the target,
+  // which bypasses the browser's own hit-testing/interaction gating (the same
+  // gap the `pointer-events-auto` class exploited before the fix). `inert`'s
+  // actual guarantee — unfocusable, un-hit-testable descendants — is asserted
+  // via focus, since that's enforced by the browser regardless of how the
+  // interaction was dispatched.
+  test('a pointer-events-auto descendant of the receded (non-top) modal cannot receive focus [obligation]', async () => {
+    const onDescendantClick = vi.fn()
+    const { open } = useModal()
+    const wrapper = mountModal()
+
+    open(PointerEventsAutoDescendantStub, { props: { onDescendantClick } })
+    await nextTick()
+    open(ModalStub)
+    await nextTick()
+
+    const host = wrapper.find('[data-testid="pointer-events-descendant-host"]')
+    expect(host.element.inert).toBe(true)
+
+    const button = wrapper.find('[data-testid="pointer-events-descendant-button"]').element
+    button.focus()
+
+    expect(document.activeElement).not.toBe(button)
+  })
+
+  test('the same pointer-events-auto descendant can receive focus once its modal becomes the top again [obligation]', async () => {
+    const onDescendantClick = vi.fn()
+    const { open } = useModal()
+    const wrapper = mountModal()
+
+    open(PointerEventsAutoDescendantStub, { props: { onDescendantClick } })
+    await nextTick()
+    const { close } = open(ModalStub)
+    await nextTick()
+
+    close()
+    await nextTick()
+
+    const host = wrapper.find('[data-testid="pointer-events-descendant-host"]')
+    expect(host.element.inert).toBe(false)
+
+    const button = wrapper.find('[data-testid="pointer-events-descendant-button"]').element
+    button.focus()
+
+    expect(document.activeElement).toBe(button)
   })
 })
