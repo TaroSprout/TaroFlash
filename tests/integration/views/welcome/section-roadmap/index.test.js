@@ -72,8 +72,7 @@ const ROADMAP_KEYS = [
   'community',
   'challenges',
   'collect-rewards',
-  'paperclips-shop',
-  'bulk-edit'
+  'paperclips-shop'
 ]
 
 const DONE_KEY = 'build-study-decks'
@@ -107,10 +106,10 @@ describe('SectionRoadmap', () => {
 
   // ── Item count ────────────────────────────────────────────────────────────
 
-  test('renders 10 roadmap items', () => {
+  test('renders 9 roadmap items', () => {
     const wrapper = mountRoadmap()
     const items = wrapper.findAll('[data-testid="options-panel__card"]')
-    expect(items).toHaveLength(10)
+    expect(items).toHaveLength(9)
   })
 
   test('renders each item by key', () => {
