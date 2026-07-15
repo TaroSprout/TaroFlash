@@ -6,6 +6,8 @@ type FeedbackItem = {
   id: number
   created_at: string
   member_id: string
+  member_display_name?: string
+  member_avatar?: string
   title: string
   body?: string
   type: FeedbackType
