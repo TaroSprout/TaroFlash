@@ -6,9 +6,28 @@ vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: () => ({ value: false })
 }))
 
-describe('FeedbackApp — stub [obligation]', () => {
-  test('renders the phone-app trigger with no handler wired', () => {
+const { mockOpenApp, mockFeedbackModalOpen } = vi.hoisted(() => ({
+  mockOpenApp: vi.fn(),
+  mockFeedbackModalOpen: vi.fn()
+}))
+
+vi.mock('@/stores/taro-phone', () => ({
+  useTaroPhoneStore: () => ({ openApp: mockOpenApp })
+}))
+
+vi.mock('@/composables/feedback/use-feedback-modal', () => ({
+  useFeedbackModal: () => ({ open: mockFeedbackModalOpen })
+}))
+
+describe('FeedbackApp — openApp wiring [obligation]', () => {
+  test('pressing the app launches the feedback modal through phone.openApp', async () => {
+    const modal_result = { response: Promise.resolve(undefined) }
+    mockFeedbackModalOpen.mockReturnValueOnce(modal_result)
+
     const wrapper = mount(FeedbackApp)
-    expect(wrapper.find('[data-testid="phone-app"]').exists()).toBe(true)
+    await wrapper.find('[data-testid="phone-app"]').trigger('click')
+
+    expect(mockFeedbackModalOpen).toHaveBeenCalledOnce()
+    expect(mockOpenApp).toHaveBeenCalledWith(modal_result)
   })
 })

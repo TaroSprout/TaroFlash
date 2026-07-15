@@ -1,11 +1,12 @@
 import { ref, type Ref } from 'vue'
 
-export type BreakpointKey = 'sm' | 'md' | 'mlg' | 'lg' | 'mxl' | 'xl' | '2xl'
+export type BreakpointKey = 'sm' | 'msm' | 'md' | 'mlg' | 'lg' | 'mxl' | 'xl' | '2xl'
 
 let styles = getComputedStyle(document.documentElement)
 
 const BREAKPOINTS: Record<BreakpointKey, string> = {
   sm: styles.getPropertyValue('--breakpoint-sm'),
+  msm: styles.getPropertyValue('--breakpoint-msm'),
   md: styles.getPropertyValue('--breakpoint-md'),
   mlg: styles.getPropertyValue('--breakpoint-mlg'),
   lg: styles.getPropertyValue('--breakpoint-lg'),
@@ -29,7 +30,7 @@ type FeatureAtom = { feature: string }
 type Atom = DimensionAtom | FeatureAtom
 
 // `w>=md`, `w<sm`, `h>=lg`, `h<sm` — axis, comparison, breakpoint token.
-const DIMENSION = /^([wh])(>=|<)(sm|md|mlg|lg|mxl|xl|2xl)$/
+const DIMENSION = /^([wh])(>=|<)(sm|msm|md|mlg|lg|mxl|xl|2xl)$/
 
 function isDimension(atom: Atom): atom is DimensionAtom {
   return 'axis' in atom
