@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onUnmounted, watchEffect, computed, useTemplateRef } from 'vue'
+import { onUnmounted, watch, watchEffect, computed, useTemplateRef } from 'vue'
 import {
   useModal,
   request_close_handlers,
@@ -9,6 +9,7 @@ import {
 import { useMatchMedia, type BreakpointKey } from '@/composables/ui/media-query'
 import { useScrollLock } from '@/composables/ui/scroll-lock'
 import { useShortcuts } from '@/composables/shortcuts'
+import { recedeModal, restoreModal } from '@/utils/animations/modal'
 import { MODAL_MODE_CONFIG } from './modal-mode-config'
 import ModalSlot from './modal-slot.vue'
 
@@ -29,6 +30,13 @@ function isMobileFor(el: Element) {
 
 const modal_container = useTemplateRef<{ $el: HTMLElement }>('modal_container')
 const scroll_lock = useScrollLock(() => modal_container.value?.$el)
+
+const modal_els = new Map<string, HTMLElement>()
+
+function setModalEl(id: string, el: Element | null) {
+  if (el) modal_els.set(id, el as HTMLElement)
+  else modal_els.delete(id)
+}
 
 function requestClose() {
   const top = modal_stack.value.at(-1)
@@ -59,6 +67,24 @@ watchEffect(() => {
 })
 
 const show_backdrop = computed(() => modal_stack.value.some((m) => m.backdrop))
+
+// A modal opening on top of another dials the one beneath it back, as if a shadow
+// fell over it; closing the top modal restores whatever's now on top. Recede/restore
+// only ever touch the entries directly affected by a push/pop, not the whole stack.
+watch(
+  () => modal_stack.value.length,
+  (new_length, old_length) => {
+    if (new_length > old_length) {
+      const receding = modal_stack.value.at(-2)
+      const el = receding && modal_els.get(receding.id)
+      if (el) recedeModal(el, isMobileFor(el))
+    } else if (new_length < old_length) {
+      const restoring = modal_stack.value.at(-1)
+      const el = restoring && modal_els.get(restoring.id)
+      if (el) restoreModal(el, isMobileFor(el))
+    }
+  }
+)
 
 function getElementMode(el: Element): ModalMode {
   return ((el as HTMLElement).dataset.modalMode as ModalMode) ?? DEFAULT_MODE
@@ -133,6 +159,7 @@ function onLeave(el: Element, done: () => void) {
     <div
       v-for="modal in modal_stack"
       :key="modal.id"
+      :ref="(el) => setModalEl(modal.id, el as Element | null)"
       :data-modal-id="modal.id"
       data-testid="ui-kit-modal"
       class="absolute inset-0 flex justify-center pointer-events-none"

@@ -1,4 +1,4 @@
-import { computed, inject } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ChangeCcModal, { type ChangeCardResponse } from './change-cc-modal.vue'
 import {
@@ -8,16 +8,13 @@ import {
 } from '@/api/billing'
 import { useModal } from '@/composables/modal'
 import { useNoticeStore } from '@/stores/notice-store'
-import { settingsRecedeKey } from '../layout'
 
 /**
- * Wraps opening the change-card modal with the settings-modal recede/restore
- * choreography, then syncs the returned payment method as the new default
- * and detaches whatever card(s) it replaced.
+ * Opens the change-card modal, then syncs the returned payment method as the
+ * new default and detaches whatever card(s) it replaced.
  */
 export function useChangeCcClick() {
   const { t } = useI18n()
-  const recede = inject(settingsRecedeKey)
   const modal = useModal()
   const notice = useNoticeStore()
 
@@ -37,13 +34,11 @@ export function useChangeCcClick() {
   async function onChangeCardClick() {
     const old_ids = payment_methods.value.map((m) => m.id)
 
-    recede?.recede()
     const response = await modal.open<ChangeCardResponse>(ChangeCcModal, {
       mode: 'popup',
       backdrop: true,
       props: { has_existing_card: !!default_card.value }
     }).response
-    recede?.restore()
 
     if (!response?.added) return
 
