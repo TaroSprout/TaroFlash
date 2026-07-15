@@ -49,17 +49,17 @@ set local role = 'authenticated';
 -- 3. Decks
 -- -----------------------------------------------------------------------------
 insert into public.decks (title, description)
-select 'Everyday Japanese', 'Common words and phrases for daily conversation'
+select 'Deck One', 'Dummy seed deck'
 where not exists (
   select 1 from public.decks
-  where title = 'Everyday Japanese' and member_id = '00000000-0000-0000-0000-000000000001'
+  where title = 'Deck One' and member_id = '00000000-0000-0000-0000-000000000001'
 );
 
 insert into public.decks (title, description)
-select 'JLPT N5 Vocabulary', 'Core vocab for the JLPT N5 exam'
+select 'Deck Two', 'Dummy seed deck'
 where not exists (
   select 1 from public.decks
-  where title = 'JLPT N5 Vocabulary' and member_id = '00000000-0000-0000-0000-000000000001'
+  where title = 'Deck Two' and member_id = '00000000-0000-0000-0000-000000000001'
 );
 
 -- -----------------------------------------------------------------------------
@@ -68,7 +68,7 @@ where not exists (
 -- -----------------------------------------------------------------------------
 select public.bulk_insert_cards_in_deck(
   (select id from public.decks
-   where title = 'Everyday Japanese' and member_id = '00000000-0000-0000-0000-000000000001'),
+   where title = 'Deck One' and member_id = '00000000-0000-0000-0000-000000000001'),
   (select jsonb_agg(jsonb_build_object(
      'front_text', 'Card ' || i || ' front',
      'back_text', 'Card ' || i || ' back'
@@ -78,12 +78,12 @@ select public.bulk_insert_cards_in_deck(
 where not exists (
   select 1 from public.cards c
   join public.decks d on d.id = c.deck_id
-  where d.title = 'Everyday Japanese' and d.member_id = '00000000-0000-0000-0000-000000000001'
+  where d.title = 'Deck One' and d.member_id = '00000000-0000-0000-0000-000000000001'
 );
 
 select public.bulk_insert_cards_in_deck(
   (select id from public.decks
-   where title = 'JLPT N5 Vocabulary' and member_id = '00000000-0000-0000-0000-000000000001'),
+   where title = 'Deck Two' and member_id = '00000000-0000-0000-0000-000000000001'),
   (select jsonb_agg(jsonb_build_object(
      'front_text', 'Card ' || i || ' front',
      'back_text', 'Card ' || i || ' back'
@@ -93,7 +93,7 @@ select public.bulk_insert_cards_in_deck(
 where not exists (
   select 1 from public.cards c
   join public.decks d on d.id = c.deck_id
-  where d.title = 'JLPT N5 Vocabulary' and d.member_id = '00000000-0000-0000-0000-000000000001'
+  where d.title = 'Deck Two' and d.member_id = '00000000-0000-0000-0000-000000000001'
 );
 
 set local role = 'postgres';
