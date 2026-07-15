@@ -67,6 +67,15 @@ const UiButtonStub = defineComponent({
   }
 })
 
+const DashboardActionsPanelShellStub = defineComponent({
+  name: 'DashboardActionsPanelShell',
+  inheritAttrs: false,
+  setup(_props, { slots }) {
+    const attrs = useAttrs()
+    return () => h('div', { ...attrs }, [slots.polaroid?.(), slots.header?.(), slots.body?.()])
+  }
+})
+
 // ── Component import (after mocks) ────────────────────────────────────────────
 
 import DashboardActionsPanel from '@/views/dashboard/actions-panel/index.vue'
@@ -83,6 +92,7 @@ function mount(due_decks = [], editing_decks = false) {
     props: { due_decks, editing_decks },
     global: {
       stubs: {
+        DashboardActionsPanelShell: DashboardActionsPanelShellStub,
         DashboardActionsPanelPolaroid: PolaroidStub,
         UiOptionsPanel: UiOptionsPanelStub,
         UiButton: UiButtonStub
