@@ -36,6 +36,7 @@ export function useAlert() {
     emitSfx(openAudio)
 
     return modal.open(alert, {
+      mode: 'popup',
       backdrop: backdrop ?? true,
       props: { type, cancelAudio, ...props }
     })
