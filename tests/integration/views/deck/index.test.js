@@ -54,6 +54,14 @@ vi.mock('@/views/deck/composables/card-sort', () => ({
 
 import DeckView from '@/views/deck/deck-view.vue'
 
+const DeckShellStub = defineComponent({
+  name: 'DeckShell',
+  setup:
+    (_props, { slots }) =>
+    () =>
+      h('div', { 'data-testid': 'deck-shell-stub' }, [slots.hero?.(), slots.main?.()])
+})
+
 const DeckHeroStub = defineComponent({
   name: 'DeckHero',
   setup: () => () => h('div', { 'data-testid': 'deck-hero-stub' })
@@ -149,6 +157,7 @@ function mount({
     props: { id: '1' },
     global: {
       stubs: {
+        DeckShell: DeckShellStub,
         DeckHero: withHideActionsCheck ? DeckHeroStubWithProps : DeckHeroStub,
         DeckSkeleton: DeckSkeletonStub,
         ModeToolbar: ModeToolbarStub,
@@ -417,6 +426,7 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
       props: { id: '1' },
       global: {
         stubs: {
+          DeckShell: DeckShellStub,
           DeckHero: DeckHeroStub,
           DeckSkeleton: DeckSkeletonStub,
           ModeToolbar: ModeToolbarStub,

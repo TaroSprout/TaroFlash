@@ -9,7 +9,7 @@ vi.mock('@/components/member/avatars', () => ({
   loadAvatarUrl: mockLoadAvatarUrl
 }))
 
-vi.mock('@/assets/avatars/frog.svg', () => ({
+vi.mock('@/assets/avatars/frog.svg?url', () => ({
   default: '/mock/frog.svg'
 }))
 

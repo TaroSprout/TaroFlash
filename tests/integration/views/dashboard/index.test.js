@@ -75,6 +75,18 @@ vi.mock('@/views/study-session/composables/study-modal', () => ({
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
+const DashboardSkeletonStub = defineComponent({
+  name: 'DashboardSkeleton',
+  setup: () => () => h('div', { 'data-testid': 'dashboard-skeleton-stub' })
+})
+
+const DashboardShellStub = defineComponent({
+  name: 'DashboardShell',
+  setup(_props, { slots }) {
+    return () => h('div', { 'data-testid': 'dashboard-shell' }, [slots.left?.(), slots.right?.()])
+  }
+})
+
 const DashboardActionsPanelStub = defineComponent({
   name: 'DashboardActionsPanel',
   props: ['due_decks', 'editing_decks'],
@@ -171,6 +183,8 @@ function mountDashboard() {
   return shallowMount(DashboardIndex, {
     global: {
       stubs: {
+        DashboardSkeleton: DashboardSkeletonStub,
+        DashboardShell: DashboardShellStub,
         DashboardActionsPanel: DashboardActionsPanelStub,
         DashboardSection: DashboardSectionStub,
         ReviewInbox: ReviewInboxStub,
@@ -341,6 +355,39 @@ describe('DashboardIndex — decks error watch', () => {
     decksErrorRef.value = { message: 'Network error' }
     await Promise.resolve()
     expect(noticeErrorMock).toHaveBeenCalledWith('Network error')
+  })
+})
+
+describe('DashboardIndex — skeleton gating [obligation]', () => {
+  test('renders dashboard-skeleton while useMemberDecksQuery data is undefined', () => {
+    decksDataRef.value = undefined
+    const wrapper = mountDashboard()
+    expect(wrapper.find('[data-testid="dashboard-skeleton-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="dashboard"]').exists()).toBe(false)
+  })
+
+  test('switches to real content once data resolves', async () => {
+    decksDataRef.value = undefined
+    const wrapper = mountDashboard()
+    expect(wrapper.find('[data-testid="dashboard-skeleton-stub"]').exists()).toBe(true)
+
+    decksDataRef.value = [makeDeck(1)]
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid="dashboard-skeleton-stub"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="dashboard"]').exists()).toBe(true)
+  })
+
+  test('stays on dashboard-skeleton when the decks query errors before ever resolving data', async () => {
+    decksDataRef.value = undefined
+    const wrapper = mountDashboard()
+
+    decksErrorRef.value = { message: 'Network error' }
+    await Promise.resolve()
+
+    expect(noticeErrorMock).toHaveBeenCalledWith('Network error')
+    expect(wrapper.find('[data-testid="dashboard-skeleton-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="dashboard"]').exists()).toBe(false)
   })
 })
 

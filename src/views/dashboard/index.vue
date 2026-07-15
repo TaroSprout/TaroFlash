@@ -7,6 +7,8 @@ import { useCan } from '@/composables/can'
 import { useLocalRef } from '@/composables/storage/local-ref'
 import { emitSfx } from '@/sfx/bus'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
+import DashboardShell from './dashboard-shell.vue'
+import DashboardSkeleton from './skeleton.vue'
 import DashboardSection from './dashboard-section.vue'
 import DashboardActionsPanel from './actions-panel/index.vue'
 import DashboardMobileFooter from './mobile-footer/index.vue'
@@ -46,39 +48,42 @@ const due_decks = computed(() => {
     .filter((deck) => (deck.due_count ?? 0) > 0)
     .sort((a, b) => (b.due_count ?? 0) - (a.due_count ?? 0))
 })
+
+const show_skeleton = computed(() => !decks_data.value)
 </script>
 
 <template>
-  <div
-    data-testid="dashboard"
-    class="grid grid-cols-[1fr] mxl:grid-cols-[345px_1fr] gap-x-15.5 gap-y-8 mxl:gap-y-0 px-(--page-px) pt-(--page-pt) pb-12 w-full max-w-229 mx-auto mxl:max-w-none mxl:mx-0"
-  >
-    <div
-      data-testid="dashboard__left-column"
-      class="flex flex-col gap-6 self-start mxl:sticky mxl:top-(--nav-height)"
-    >
-      <dashboard-actions-panel
-        :due_decks="due_decks"
-        :editing_decks="editing_decks"
-        @toggle-edit-decks="onToggleEditDecks"
-      />
-    </div>
+  <dashboard-skeleton v-if="show_skeleton" />
 
-    <div data-testid="dashboard__right-column" class="flex flex-col gap-y-13 min-w-0">
-      <dashboard-section v-if="due_decks.length > 0" :label="t('dashboard.deck-filter.due-label')">
-        <review-inbox :due_decks="due_decks" :editing="editing_decks" />
-      </dashboard-section>
+  <div v-else data-testid="dashboard" class="w-full">
+    <dashboard-shell>
+      <template #left>
+        <dashboard-actions-panel
+          :due_decks="due_decks"
+          :editing_decks="editing_decks"
+          @toggle-edit-decks="onToggleEditDecks"
+        />
+      </template>
 
-      <dashboard-section :label="t('dashboard.deck-filter.all-label')">
-        <template #subheader>
-          <deck-grid-sort-options :selected="sort_by" @select="sort_by = $event" />
-        </template>
+      <template #right>
+        <dashboard-section
+          v-if="due_decks.length > 0"
+          :label="t('dashboard.deck-filter.due-label')"
+        >
+          <review-inbox :due_decks="due_decks" :editing="editing_decks" />
+        </dashboard-section>
 
-        <deck-grid :decks="decks" :editing="editing_decks" />
-      </dashboard-section>
+        <dashboard-section :label="t('dashboard.deck-filter.all-label')">
+          <template #subheader>
+            <deck-grid-sort-options :selected="sort_by" @select="sort_by = $event" />
+          </template>
 
-      <audio-reader-section v-if="can.useAudioReader.value" />
-    </div>
+          <deck-grid :decks="decks" :editing="editing_decks" />
+        </dashboard-section>
+
+        <audio-reader-section v-if="can.useAudioReader.value" />
+      </template>
+    </dashboard-shell>
 
     <scroll-bar class="fixed right-4 top-(--nav-height) bottom-10 z-30" target="html" />
 

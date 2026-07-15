@@ -28,6 +28,35 @@ describe('DashboardSection — default slot', () => {
   })
 })
 
+describe('DashboardSection — loading prop [obligation]', () => {
+  test('uses the flat loading color classes when loading is true', () => {
+    const wrapper = mountSection({ label: 'All Decks', loading: true })
+    const label = wrapper.find('[data-testid="dashboard-section__label"]')
+    expect(label.classes()).toEqual(
+      expect.arrayContaining(['text-brown-300', 'dark:text-stone-700'])
+    )
+    expect(label.classes()).not.toEqual(
+      expect.arrayContaining(['text-brown-700', 'dark:text-brown-300'])
+    )
+  })
+
+  test('uses the default heading color classes when loading is false', () => {
+    const wrapper = mountSection({ label: 'All Decks', loading: false })
+    const label = wrapper.find('[data-testid="dashboard-section__label"]')
+    expect(label.classes()).toEqual(
+      expect.arrayContaining(['text-brown-700', 'dark:text-brown-300'])
+    )
+  })
+
+  test('omitting the loading prop preserves the original non-loading appearance', () => {
+    const wrapper = mountSection({ label: 'All Decks' })
+    const label = wrapper.find('[data-testid="dashboard-section__label"]')
+    expect(label.classes()).toEqual(
+      expect.arrayContaining(['text-brown-700', 'dark:text-brown-300'])
+    )
+  })
+})
+
 describe('DashboardSection — subheader slot', () => {
   test('does not render the subheader wrapper when the subheader slot is not provided', () => {
     const wrapper = mountSection({ label: 'All Decks' })
