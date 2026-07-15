@@ -1,24 +1,21 @@
 <script setup lang="ts">
-import {
-  DEFAULT_MODE,
-  DEFAULT_WIDTH_KEY,
-  DEFAULT_HEIGHT_KEY,
-  useModalStack
-} from './use-modal-stack'
+import { computed, useTemplateRef } from 'vue'
+import { useModal } from '@/composables/modal'
+import { useModalGuards } from './use-modal-guards'
+import { useModalRecede } from './use-modal-recede'
+import { useModalTransitions } from './use-modal-transitions'
+import { DEFAULT_MODE, DEFAULT_WIDTH_KEY, DEFAULT_HEIGHT_KEY } from './mobile-below'
 import { MODAL_MODE_CONFIG } from './mode-config'
 import ModalSlot from './slot.vue'
 
-const {
-  modal_stack,
-  show_backdrop,
-  receded_ids,
-  setModalEl,
-  requestClose,
-  onBeforeEnter,
-  onEnter,
-  onAfterEnter,
-  onLeave
-} = useModalStack()
+const { modal_stack } = useModal()
+
+const modal_container = useTemplateRef<{ $el: HTMLElement }>('modal_container')
+const { requestClose } = useModalGuards(() => modal_container.value?.$el)
+const { receded_ids, setModalEl } = useModalRecede()
+const { onBeforeEnter, onEnter, onAfterEnter, onLeave } = useModalTransitions()
+
+const show_backdrop = computed(() => modal_stack.value.some((m) => m.backdrop))
 </script>
 
 <template>
