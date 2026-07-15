@@ -7,6 +7,7 @@ import AvatarImage from '@/components/member/avatar-image.vue'
 import { emitSfx } from '@/sfx/bus'
 import { useNoticeStore } from '@/stores/notice-store'
 import { useToggleFeedbackVoteMutation } from '@/api/feedback'
+import { TYPE_SFX } from '@/sfx/config'
 
 const { item } = defineProps<{ item: FeedbackItem }>()
 
@@ -42,7 +43,15 @@ async function onToggleVote() {
     </div>
 
     <div data-testid="feedback-card__content" class="flex min-w-0 flex-1 flex-col gap-2">
-      <h2 class="text-brown-700 dark:text-brown-200 truncate text-2xl">{{ item.title }}</h2>
+      <div data-testid="feedback-card__heading">
+        <h2 class="text-brown-700 dark:text-brown-200 truncate text-2xl">{{ item.title }}</h2>
+        <p
+          v-if="item.member_display_name"
+          class="text-blue-500 dark:text-blue-650 truncate text-base"
+        >
+          {{ item.member_display_name }}
+        </p>
+      </div>
       <p v-if="item.body" class="text-brown-500 dark:text-brown-300 text-base">{{ item.body }}</p>
     </div>
 
@@ -52,8 +61,9 @@ async function onToggleVote() {
         type="button"
         :aria-label="t('feedback-board.card.vote-button')"
         :disabled="toggleVote.isLoading.value"
-        class="flex cursor-pointer items-center justify-center duration-100 disabled:opacity-50 hover:scale-110"
+        class="flex cursor-pointer items-center justify-center duration-100 disabled:opacity-50 hover:scale-110 hover:rotate-5"
         :class="item.voted_by_me ? 'text-pink-500 dark:text-pink-700' : 'text-brown-500'"
+        v-sfx="{ hover: TYPE_SFX }"
         @click="onToggleVote"
       >
         <ui-icon src="symbol-hearts" class="size-6" />
