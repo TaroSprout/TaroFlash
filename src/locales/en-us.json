@@ -359,6 +359,7 @@
   "toast.error.card-image-upload-failed": "Couldn't upload image — try again",
   "toast.error.card-image-save-failed": "Couldn't save image — try again",
   "toast.error.card-image-delete-failed": "Failed to delete image",
+  "toast.error.feedback-vote-failed": "Couldn't register your vote. Please try again.",
   "study.flashcard.rating.fail-button": "Nope!",
   "study.flashcard.rating.fail-feedback": "Nope!",
   "study.flashcard.rating.again-button": "Fail",
