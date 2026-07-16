@@ -10,8 +10,8 @@ export type { StudyCard, CardReviewResult } from './session-queue'
  * its front, back, or cover (pre-session splash). All side transitions live
  * here. This is the composable used directly by flashcard/index.vue.
  */
-export function useFlashcardSession(_config?: Partial<DeckConfig>) {
-  const core = useSessionQueue(_config)
+export function useFlashcardSession(pacing: ReviewPacingParams, _config?: Partial<DeckConfig>) {
+  const core = useSessionQueue(pacing, _config)
 
   const current_card_side = ref<CardSide>('cover')
 

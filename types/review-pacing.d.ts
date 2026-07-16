@@ -8,3 +8,10 @@ type ReviewPacingPreset = {
   is_system: boolean
   created_at?: string
 }
+
+/** The three FSRS scheduling params a study session needs, already resolved. */
+type ReviewPacingParams = {
+  desired_retention: number
+  learning_steps: string[]
+  relearning_steps: string[]
+}
