@@ -96,7 +96,7 @@ function onAdvancedPress() {
         <span
           v-if="has_advanced_override"
           data-testid="tab-review-pacing__advanced-badge"
-          class="absolute -top-0.5 -right-0.5 size-3 rounded-full bg-red-400 dark:bg-red-500 ring-3 ring-brown-300 dark:ring-grey-900"
+          class="absolute -top-0.5 -right-0.5 size-3 rounded-full bg-red-400 dark:bg-red-500"
         ></span>
       </div>
     </div>
