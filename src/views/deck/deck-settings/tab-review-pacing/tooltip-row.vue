@@ -1,15 +1,22 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import UiButton from '@/components/ui-kit/button.vue'
 
 defineProps<{
   label: string
   tooltip?: string
+  overridden?: boolean
 }>()
+
+const emit = defineEmits<{ reset: [] }>()
 
 defineSlots<{
   default(): any
 }>()
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -29,6 +36,23 @@ defineSlots<{
       </ui-tooltip>
     </span>
 
-    <slot></slot>
+    <div class="relative flex items-center gap-1">
+      <slot></slot>
+
+      <ui-button
+        v-if="overridden"
+        data-testid="tooltip-row__reset"
+        data-theme="brown-300"
+        variant="ghost"
+        size="sm"
+        icon-only
+        icon-left="refresh"
+        mobile-tooltip
+        @press="emit('reset')"
+        class="absolute! -right-8"
+      >
+        {{ t('deck.settings-modal.review-pacing.reset-to-preset') }}
+      </ui-button>
+    </div>
   </div>
 </template>

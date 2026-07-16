@@ -13,8 +13,16 @@ import { useAdvancedPacingModal } from './use-advanced-pacing-modal'
 const { t } = useI18n()
 const { deck, pacing } = inject(deckEditorKey)!
 
-const { preset_options, selected_preset_value, max_reviews_per_day, max_new_per_day } =
-  usePacingFields(deck!, pacing)
+const {
+  preset_options,
+  selected_preset_value,
+  max_reviews_per_day,
+  max_new_per_day,
+  has_max_reviews_override,
+  has_max_new_override,
+  resetMaxReviewsPerDay,
+  resetMaxNewPerDay
+} = usePacingFields(deck!, pacing)
 
 const advanced_pacing_modal = useAdvancedPacingModal()
 
@@ -52,7 +60,9 @@ function onAdvancedPress() {
         :step="DAILY_LIMIT_BOUNDS.step"
         :default_value="DAILY_LIMIT_BOUNDS.reviews.default"
         :prefill_when_all="deck?.card_count"
+        :overridden="has_max_reviews_override"
         v-model:value="max_reviews_per_day"
+        @reset="resetMaxReviewsPerDay"
       />
 
       <capped-spinbox-row
@@ -65,7 +75,9 @@ function onAdvancedPress() {
         :step="DAILY_LIMIT_BOUNDS.step"
         :default_value="DAILY_LIMIT_BOUNDS.new_cards.default"
         :prefill_when_all="deck?.card_count"
+        :overridden="has_max_new_override"
         v-model:value="max_new_per_day"
+        @reset="resetMaxNewPerDay"
       />
 
       <ui-button

@@ -31,7 +31,17 @@ const {
   learning_steps_key,
   learning_steps_options,
   relearning_steps_key,
-  relearning_steps_options
+  relearning_steps_options,
+  has_max_reviews_override,
+  has_max_new_override,
+  has_desired_retention_override,
+  has_learning_steps_override,
+  has_relearning_steps_override,
+  resetMaxReviewsPerDay,
+  resetMaxNewPerDay,
+  resetDesiredRetention,
+  resetLearningSteps,
+  resetRelearningSteps
 } = usePacingFields(deck, pacing)
 
 onMounted(() => emitSfx('wooden_chime_ring'))
@@ -83,8 +93,12 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
       >
         <daily-limits
           :deck="deck"
+          :has_max_reviews_override="has_max_reviews_override"
+          :has_max_new_override="has_max_new_override"
           v-model:max_reviews="max_reviews_per_day"
           v-model:max_new="max_new_per_day"
+          @reset:max_reviews="resetMaxReviewsPerDay"
+          @reset:max_new="resetMaxNewPerDay"
         />
       </labeled-section>
 
@@ -96,6 +110,8 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
           data-testid="tab-review-pacing__retention"
           :label="t('deck.settings-modal.review-pacing.desired-retention-label')"
           :tooltip="t('deck.settings-modal.review-pacing.desired-retention-tooltip')"
+          :overridden="has_desired_retention_override"
+          @reset="resetDesiredRetention"
         >
           <ui-spinbox v-model:value="desired_retention" :min="70" :max="97" />
         </tooltip-row>
@@ -104,6 +120,8 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
           data-testid="tab-review-pacing__learning-steps"
           :label="t('deck.settings-modal.review-pacing.learning-steps-label')"
           :tooltip="t('deck.settings-modal.review-pacing.learning-steps-tooltip')"
+          :overridden="has_learning_steps_override"
+          @reset="resetLearningSteps"
         >
           <ui-select-menu
             data-theme="brown-100"
@@ -120,6 +138,8 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
           data-testid="tab-review-pacing__relearning-steps"
           :label="t('deck.settings-modal.review-pacing.relearning-steps-label')"
           :tooltip="t('deck.settings-modal.review-pacing.relearning-steps-tooltip')"
+          :overridden="has_relearning_steps_override"
+          @reset="resetRelearningSteps"
         >
           <ui-select-menu
             data-theme="brown-100"

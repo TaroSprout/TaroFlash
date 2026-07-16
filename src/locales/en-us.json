@@ -609,7 +609,7 @@
   "deck.settings-modal.review-pacing.learning-steps-tooltip": "Fixed delays (1m, 10m) that a brand-new card goes through before real SRS scheduling starts.",
   "deck.settings-modal.review-pacing.relearning-steps-label": "Relearning Steps",
   "deck.settings-modal.review-pacing.relearning-steps-tooltip": "Fixed delays (1m, 10m) that a forgotten card goes through before SRS scheduling resumes.",
-  "deck.settings-modal.review-pacing.reset-to-preset": "Reset to Preset",
+  "deck.settings-modal.review-pacing.reset-to-preset": "Reset",
   "deck.settings-modal.review-pacing.step-preset-10m": "10m",
   "deck.settings-modal.review-pacing.step-preset-1hr": "1hr",
   "deck.settings-modal.review-pacing.step-preset-1d": "1d",

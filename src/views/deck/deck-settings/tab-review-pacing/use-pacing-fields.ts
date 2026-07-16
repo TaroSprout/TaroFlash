@@ -61,6 +61,34 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
     pacing.max_new_per_day_override = null
   }
 
+  const has_desired_retention_override = computed(() => pacing.desired_retention_override !== null)
+  const has_learning_steps_override = computed(() => pacing.learning_steps_override !== null)
+  const has_relearning_steps_override = computed(() => pacing.relearning_steps_override !== null)
+  const has_max_reviews_override = computed(() => pacing.has_max_reviews_override)
+  const has_max_new_override = computed(() => pacing.has_max_new_override)
+
+  function resetDesiredRetention() {
+    pacing.desired_retention_override = null
+  }
+
+  function resetLearningSteps() {
+    pacing.learning_steps_override = null
+  }
+
+  function resetRelearningSteps() {
+    pacing.relearning_steps_override = null
+  }
+
+  function resetMaxReviewsPerDay() {
+    pacing.has_max_reviews_override = false
+    pacing.max_reviews_per_day_override = null
+  }
+
+  function resetMaxNewPerDay() {
+    pacing.has_max_new_override = false
+    pacing.max_new_per_day_override = null
+  }
+
   const desired_retention = computed<number>({
     get: () => pacing.desired_retention_override ?? deck.desired_retention!,
     set: (value) => (pacing.desired_retention_override = value)
@@ -133,6 +161,16 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
     relearning_steps_key,
     relearning_steps_options,
     max_reviews_per_day,
-    max_new_per_day
+    max_new_per_day,
+    has_desired_retention_override,
+    has_learning_steps_override,
+    has_relearning_steps_override,
+    has_max_reviews_override,
+    has_max_new_override,
+    resetDesiredRetention,
+    resetLearningSteps,
+    resetRelearningSteps,
+    resetMaxReviewsPerDay,
+    resetMaxNewPerDay
   }
 }
