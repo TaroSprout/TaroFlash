@@ -15,8 +15,8 @@ import type { DeckPacingEditorState } from '@/utils/deck/payload'
  * retention/step controls. `deck` supplies the already-resolved display
  * values (via get_member_decks); `pacing` is the staged editor state that
  * gets written on save — editing a control here always pins that field's
- * override, `resetOverrides()` un-pins all three back to following the
- * preset.
+ * override, the per-field `reset*` functions un-pin it back to following
+ * the preset.
  */
 export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
   const { t } = useI18n()
@@ -50,26 +50,6 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
       (preset) => preset.id === (pacing.preset_id ?? system_preset.value?.id)
     )
   )
-
-  const is_overridden = computed(
-    () =>
-      pacing.desired_retention_override !== null ||
-      pacing.learning_steps_override !== null ||
-      pacing.relearning_steps_override !== null ||
-      pacing.has_max_reviews_override ||
-      pacing.has_max_new_override
-  )
-
-  /** Un-pins every field back to following the linked preset. */
-  function resetOverrides() {
-    pacing.desired_retention_override = null
-    pacing.learning_steps_override = null
-    pacing.relearning_steps_override = null
-    pacing.has_max_reviews_override = false
-    pacing.max_reviews_per_day_override = null
-    pacing.has_max_new_override = false
-    pacing.max_new_per_day_override = null
-  }
 
   const has_desired_retention_override = computed(() => pacing.desired_retention_override !== null)
   const has_learning_steps_override = computed(() => pacing.learning_steps_override !== null)
@@ -188,8 +168,6 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
   return {
     preset_options,
     selected_preset_value,
-    is_overridden,
-    resetOverrides,
     desired_retention,
     learning_steps_key,
     learning_steps_options,
