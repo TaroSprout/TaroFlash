@@ -25,7 +25,7 @@ const { spin_value, is_all, onSpin } = useCappedToggle(
 </script>
 
 <template>
-  <div data-testid="capped-spinbox-row" class="flex items-center justify-between gap-4">
+  <div data-testid="capped-spinbox-row" class="flex items-center justify-between gap-4 w-full">
     <span data-testid="capped-spinbox-row__label" class="text-brown-700 dark:text-brown-100">
       {{ label }}
     </span>
