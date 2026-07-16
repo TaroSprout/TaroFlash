@@ -1,4 +1,4 @@
-export type TipCategory = 'shortcuts'
+export type TipCategory = 'sound' | 'cards' | 'browser' | 'shortcuts' | 'study-session' | 'feedback'
 
 export type Tip = {
   id: string
@@ -13,9 +13,39 @@ export type Tip = {
  */
 export const TIPS: Tip[] = [
   {
-    id: 'shortcuts-overview',
+    id: 'sound',
+    category: 'sound',
+    title_key: 'tips.sound.title',
+    body_key: 'tips.sound.body'
+  },
+  {
+    id: 'cards',
+    category: 'cards',
+    title_key: 'tips.cards.title',
+    body_key: 'tips.cards.body'
+  },
+  {
+    id: 'companion-window',
+    category: 'browser',
+    title_key: 'tips.companion-window.title',
+    body_key: 'tips.companion-window.body'
+  },
+  {
+    id: 'horizontal-scroll',
     category: 'shortcuts',
-    title_key: 'tips.shortcuts-overview.title',
-    body_key: 'tips.shortcuts-overview.body'
+    title_key: 'tips.horizontal-scroll.title',
+    body_key: 'tips.horizontal-scroll.body'
+  },
+  {
+    id: 'swipe-rating',
+    category: 'study-session',
+    title_key: 'tips.swipe-rating.title',
+    body_key: 'tips.swipe-rating.body'
+  },
+  {
+    id: 'feedback',
+    category: 'feedback',
+    title_key: 'tips.feedback.title',
+    body_key: 'tips.feedback.body'
   }
 ]
