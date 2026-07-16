@@ -10,11 +10,14 @@ import PacingSection from './pacing-section.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { deckSettingsLayoutKey } from '../layout'
 import { DAILY_LIMIT_BOUNDS } from '@/utils/deck/defaults'
+import { usePacingFields } from './use-pacing-fields'
 import DeckSaveButton from '../deck-save-button.vue'
 
 const { t } = useI18n()
-const { deck, config } = inject(deckEditorKey)!
+const { deck, config, pacing } = inject(deckEditorKey)!
 const layout_mode = inject(deckSettingsLayoutKey)!
+
+const { max_reviews_per_day, max_new_per_day } = usePacingFields(deck!, pacing)
 </script>
 
 <template>
@@ -53,7 +56,7 @@ const layout_mode = inject(deckSettingsLayoutKey)!
         :step="DAILY_LIMIT_BOUNDS.step"
         :default_value="DAILY_LIMIT_BOUNDS.reviews.default"
         :prefill_when_all="deck?.card_count"
-        v-model:value="config.max_reviews_per_day"
+        v-model:value="max_reviews_per_day"
       />
 
       <capped-spinbox-row
@@ -65,7 +68,7 @@ const layout_mode = inject(deckSettingsLayoutKey)!
         :step="DAILY_LIMIT_BOUNDS.step"
         :default_value="DAILY_LIMIT_BOUNDS.new_cards.default"
         :prefill_when_all="deck?.card_count"
-        v-model:value="config.max_new_per_day"
+        v-model:value="max_new_per_day"
       />
     </labeled-section>
     <deck-save-button v-if="layout_mode === 'sheet'" />

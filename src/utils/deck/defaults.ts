@@ -16,8 +16,6 @@ export const DECK_TITLE_MAX_LENGTH = 15
 export const DECK_CONFIG_DEFAULTS: Required<DeckConfig> = {
   study_all_cards: false,
   shuffle: false,
-  max_reviews_per_day: null,
-  max_new_per_day: null,
   flip_cards: false,
   is_spaced: true,
   auto_play: false
@@ -31,9 +29,9 @@ export const CARD_ATTRIBUTES_DEFAULTS: Required<
 }
 
 /**
- * UI bounds for the daily-limit spinboxes in tab-study. Step + min are shared;
- * each row has its own max + default. `null` on the model means "no cap" (the
- * "all" pill is active).
+ * UI bounds for the daily-limit spinboxes in tab-review-pacing. Step + min
+ * are shared; each row has its own max + default. `null` on the model means
+ * "no cap" (the "all" pill is active).
  */
 export const DAILY_LIMIT_BOUNDS = {
   step: 5,
@@ -45,7 +43,6 @@ export const DAILY_LIMIT_BOUNDS = {
 /**
  * Merge a `Partial<DeckConfig>` over `DECK_CONFIG_DEFAULTS`, ignoring keys
  * whose override value is `undefined` so they don't leak past the default.
- * Explicit `null` is preserved (it means "all" / unbounded for the daily limits).
  */
 export function withDeckConfigDefaults(partial?: Partial<DeckConfig>): Required<DeckConfig> {
   const out = { ...DECK_CONFIG_DEFAULTS }

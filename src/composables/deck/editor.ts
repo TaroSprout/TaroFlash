@@ -38,7 +38,11 @@ export function useDeckEditor(deck?: Deck) {
     preset_id: deck?.review_pacing_preset_id ?? null,
     desired_retention_override: deck?.desired_retention_override ?? null,
     learning_steps_override: deck?.learning_steps_override ?? null,
-    relearning_steps_override: deck?.relearning_steps_override ?? null
+    relearning_steps_override: deck?.relearning_steps_override ?? null,
+    has_max_reviews_override: deck?.has_max_reviews_override ?? false,
+    max_reviews_per_day_override: deck?.max_reviews_per_day_override ?? null,
+    has_max_new_override: deck?.has_max_new_override ?? false,
+    max_new_per_day_override: deck?.max_new_per_day_override ?? null
   })
 
   const active_side = ref<CardSide>('cover')

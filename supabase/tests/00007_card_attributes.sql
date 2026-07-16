@@ -4,7 +4,7 @@
 --
 -- Covers:
 --   1. The column was renamed (old name gone, new name present).
---   2. decks_with_stats returns card_attributes.
+--   2. get_member_decks returns card_attributes.
 --   3. The projection survives round-tripping a nested {front,back} shape.
 -- =============================================================================
 
@@ -46,7 +46,7 @@ SET LOCAL role = 'authenticated';
 SELECT results_eq(
   $$
     SELECT card_attributes
-    FROM public.decks_with_stats(date_trunc('day', now()))
+    FROM public.get_member_decks(date_trunc('day', now()))
     WHERE id = 900
   $$,
   $$
@@ -57,7 +57,7 @@ SELECT results_eq(
       )
     )
   $$,
-  'decks_with_stats returns the nested {front,back} card_attributes shape'
+  'get_member_decks returns the nested {front,back} card_attributes shape'
 );
 
 -- Null card_attributes should surface as null (not crash the projection)
@@ -72,11 +72,11 @@ SET LOCAL role = 'authenticated';
 SELECT results_eq(
   $$
     SELECT card_attributes IS NULL
-    FROM public.decks_with_stats(date_trunc('day', now()))
+    FROM public.get_member_decks(date_trunc('day', now()))
     WHERE id = 901
   $$,
   $$ VALUES (true) $$,
-  'decks_with_stats returns NULL card_attributes when the column is NULL'
+  'get_member_decks returns NULL card_attributes when the column is NULL'
 );
 
 

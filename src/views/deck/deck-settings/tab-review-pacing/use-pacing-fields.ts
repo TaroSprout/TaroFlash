@@ -13,7 +13,7 @@ import type { DeckPacingEditorState } from '@/utils/deck/payload'
 /**
  * Derived state + writes for the Review Pacing tab's preset picker and
  * retention/step controls. `deck` supplies the already-resolved display
- * values (via decks_with_stats); `pacing` is the staged editor state that
+ * values (via get_member_decks); `pacing` is the staged editor state that
  * gets written on save — editing a control here always pins that field's
  * override, `resetOverrides()` un-pins all three back to following the
  * preset.
@@ -45,7 +45,9 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
     () =>
       pacing.desired_retention_override !== null ||
       pacing.learning_steps_override !== null ||
-      pacing.relearning_steps_override !== null
+      pacing.relearning_steps_override !== null ||
+      pacing.has_max_reviews_override ||
+      pacing.has_max_new_override
   )
 
   /** Un-pins every field back to following the linked preset. */
@@ -53,6 +55,10 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
     pacing.desired_retention_override = null
     pacing.learning_steps_override = null
     pacing.relearning_steps_override = null
+    pacing.has_max_reviews_override = false
+    pacing.max_reviews_per_day_override = null
+    pacing.has_max_new_override = false
+    pacing.max_new_per_day_override = null
   }
 
   const desired_retention = computed<number>({
@@ -94,6 +100,28 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
     set: (key) => (relearning_steps.value = RELEARNING_STEP_PRESETS[key])
   })
 
+  const max_reviews_per_day = computed<number | null>({
+    get: () =>
+      pacing.has_max_reviews_override
+        ? pacing.max_reviews_per_day_override
+        : (deck.max_reviews_per_day ?? null),
+    set: (value) => {
+      pacing.has_max_reviews_override = true
+      pacing.max_reviews_per_day_override = value
+    }
+  })
+
+  const max_new_per_day = computed<number | null>({
+    get: () =>
+      pacing.has_max_new_override
+        ? pacing.max_new_per_day_override
+        : (deck.max_new_per_day ?? null),
+    set: (value) => {
+      pacing.has_max_new_override = true
+      pacing.max_new_per_day_override = value
+    }
+  })
+
   return {
     preset_options,
     selected_preset_value,
@@ -103,6 +131,8 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
     learning_steps_key,
     learning_steps_options,
     relearning_steps_key,
-    relearning_steps_options
+    relearning_steps_options,
+    max_reviews_per_day,
+    max_new_per_day
   }
 }

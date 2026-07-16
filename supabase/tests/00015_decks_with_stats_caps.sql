@@ -1,11 +1,13 @@
 -- =============================================================================
--- decks_with_stats: due_count respects max_new_per_day + max_reviews_per_day
+-- get_member_decks: due_count respects max_new_per_day + max_reviews_per_day
 -- =============================================================================
 -- Covers the cap interaction that was missing from the original implementation:
 --   • new-card pool clamped by max_new_per_day
 --   • total clamped by max_reviews_per_day
 --   • caps consume from today's already-reviewed counts (remaining = cap - used)
 --   • no caps → raw pool
+-- Caps now live on the deck_review_pacing sidecar (has_max_*_override +
+-- max_*_per_day_override), not decks.study_config.
 -- =============================================================================
 
 BEGIN;
@@ -18,11 +20,22 @@ SELECT tests.set_claims('11111111-1111-1111-1111-111111111111'::uuid);
 SET LOCAL role = 'authenticated';
 
 -- Four decks, each with 20 brand-new cards and zero reviews/log rows.
-INSERT INTO public.decks (id, title, is_public, study_config) VALUES
-  (9700, 'No caps',           false, '{}'::jsonb),
-  (9701, 'New cap only',      false, '{"max_new_per_day": 5}'::jsonb),
-  (9702, 'Total cap only',    false, '{"max_reviews_per_day": 7}'::jsonb),
-  (9703, 'Both caps',         false, '{"max_new_per_day": 5, "max_reviews_per_day": 12}'::jsonb);
+INSERT INTO public.decks (id, title, is_public) VALUES
+  (9700, 'No caps',           false),
+  (9701, 'New cap only',      false),
+  (9702, 'Total cap only',    false),
+  (9703, 'Both caps',         false);
+
+INSERT INTO public.deck_review_pacing (deck_id, has_max_new_override, max_new_per_day_override)
+VALUES (9701, true, 5);
+
+INSERT INTO public.deck_review_pacing (deck_id, has_max_reviews_override, max_reviews_per_day_override)
+VALUES (9702, true, 7);
+
+INSERT INTO public.deck_review_pacing (
+  deck_id, has_max_new_override, max_new_per_day_override,
+  has_max_reviews_override, max_reviews_per_day_override
+) VALUES (9703, true, 5, true, 12);
 
 INSERT INTO public.cards (deck_id, front_text, back_text, rank)
 SELECT d.id, 'Q' || gs, 'A' || gs, gs * 1000
@@ -34,7 +47,7 @@ CROSS JOIN generate_series(1, 20) AS gs;
 -- Test 1: no caps → all 20 new cards are reported due.
 SELECT is(
   (SELECT due_count
-     FROM public.decks_with_stats(date_trunc('day', now()))
+     FROM public.get_member_decks(date_trunc('day', now()))
     WHERE id = 9700),
   20,
   'no caps → due_count equals the raw new-card pool'
@@ -43,7 +56,7 @@ SELECT is(
 -- Test 2: max_new_per_day = 5 → clamps new bucket to 5; no review bucket → 5.
 SELECT is(
   (SELECT due_count
-     FROM public.decks_with_stats(date_trunc('day', now()))
+     FROM public.get_member_decks(date_trunc('day', now()))
     WHERE id = 9701),
   5,
   'max_new_per_day caps the new-card contribution'
@@ -52,7 +65,7 @@ SELECT is(
 -- Test 3: max_reviews_per_day = 7 → total cap dominates the unbounded new pool.
 SELECT is(
   (SELECT due_count
-     FROM public.decks_with_stats(date_trunc('day', now()))
+     FROM public.get_member_decks(date_trunc('day', now()))
     WHERE id = 9702),
   7,
   'max_reviews_per_day caps the total even when new-cap is unset'
@@ -62,7 +75,7 @@ SELECT is(
 -- so due_count = LEAST(new_cap, total_cap) = 5.
 SELECT is(
   (SELECT due_count
-     FROM public.decks_with_stats(date_trunc('day', now()))
+     FROM public.get_member_decks(date_trunc('day', now()))
     WHERE id = 9703),
   5,
   'with both caps and only new cards available, due_count = max_new_per_day'
@@ -86,7 +99,7 @@ LIMIT 3;
 
 SELECT is(
   (SELECT due_count
-     FROM public.decks_with_stats(date_trunc('day', now()))
+     FROM public.get_member_decks(date_trunc('day', now()))
     WHERE id = 9701),
   2,
   'remaining_new = max_new_per_day - new_reviewed_today_count'

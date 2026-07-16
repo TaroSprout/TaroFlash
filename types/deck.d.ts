@@ -41,6 +41,16 @@ type Deck = {
   desired_retention_override?: number | null
   learning_steps_override?: string[] | null
   relearning_steps_override?: string[] | null
+  // Resolved daily limits (override -> preset -> system, null = unbounded)
+  max_reviews_per_day?: number | null
+  max_new_per_day?: number | null
+  // has_max_*_override gates its sibling *_override column: a NULL override
+  // is ambiguous between "not overridden" and "overridden to unbounded", so
+  // the boolean carries which case it is.
+  has_max_reviews_override?: boolean
+  max_reviews_per_day_override?: number | null
+  has_max_new_override?: boolean
+  max_new_per_day_override?: number | null
 }
 
 type CardEditorMode = 'view' | 'edit' | 'import-export'
@@ -48,8 +58,6 @@ type CardEditorMode = 'view' | 'edit' | 'import-export'
 type DeckConfig = {
   study_all_cards: boolean
   shuffle?: boolean
-  max_reviews_per_day?: number | null
-  max_new_per_day?: number | null
   flip_cards?: boolean
   is_spaced?: boolean
   auto_play?: boolean

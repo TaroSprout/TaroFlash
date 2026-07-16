@@ -1,7 +1,10 @@
 -- =============================================================================
--- review_pacing_presets + decks_with_stats review-pacing resolution
+-- review_pacing_presets + get_member_decks review-pacing resolution
 -- Introduced in 20260716000000_review-pacing-presets.sql,
---   20260716000002_decks-with-stats-review-pacing.sql
+--   20260716000002_decks-with-stats-review-pacing.sql,
+--   20260716000003_review-pacing-presets-daily-limits.sql (daily limits),
+--   20260716000004_deck-review-pacing-table.sql (deck_review_pacing sidecar),
+--   20260716000005_get-member-decks.sql (rename + resolution ladder)
 --
 -- Covers:
 --   1. one_system_review_pacing_preset partial unique index — only one
@@ -10,7 +13,7 @@
 --      never another member's private preset.
 --   3. RLS INSERT/UPDATE/DELETE — the system preset can never be edited,
 --      deleted, or self-granted via is_system = true on insert.
---   4. decks_with_stats resolution ladder — override -> preset -> system,
+--   4. get_member_decks resolution ladder — override -> preset -> system,
 --      resolved independently per field (desired_retention, learning_steps,
 --      relearning_steps), including a deck with fields split across tiers.
 --   5. desired_retention_override / learning_steps_override /
@@ -19,12 +22,18 @@
 --      (not cascade, not error) and the deck resolves back to the system
 --      preset's values.
 --   7. Assigning another member's private preset to a deck does not leak
---      that member's preset values through decks_with_stats.
+--      that member's preset values through get_member_decks.
+--   8. Daily-limit resolution ladder distinguishes "no preset linked" from
+--      "preset linked but its own max_reviews_per_day/max_new_per_day is
+--      NULL" (that preset's explicit "unbounded") — a naive COALESCE would
+--      wrongly fall through to the system default in the second case.
+--   9. deck_review_pacing RLS — a member cannot read or write another
+--      member's deck_review_pacing row (SELECT and UPDATE/INSERT).
 -- =============================================================================
 
 BEGIN;
 
-SELECT plan(27);
+SELECT plan(36);
 
 -- ── Setup (as postgres superuser) ─────────────────────────────────────────────
 
@@ -59,6 +68,13 @@ SET LOCAL role = 'authenticated';
 
 INSERT INTO public.review_pacing_presets (id, name, desired_retention, learning_steps, relearning_steps)
 VALUES (9001, 'Alice Custom', 95, ARRAY['1m'], ARRAY['1d']);
+
+-- A second custom preset with an explicit max_reviews_per_day, and a NULL
+-- max_new_per_day (this preset's own "unbounded" for new cards) — used by
+-- the daily-limit resolution-ladder tests below.
+INSERT INTO public.review_pacing_presets
+  (id, name, desired_retention, learning_steps, relearning_steps, max_reviews_per_day, max_new_per_day)
+VALUES (9004, 'Alice Capped', 92, ARRAY['1m'], ARRAY['1d'], 40, NULL);
 
 -- Bob: one private preset.
 SET LOCAL role = 'postgres';
@@ -129,71 +145,73 @@ SELECT is(
 );
 
 
--- ── decks_with_stats resolution ladder ────────────────────────────────────────
+-- ── get_member_decks resolution ladder ────────────────────────────────────────
 
 -- Deck 300: no preset, no overrides -> every field resolves to the system preset.
 INSERT INTO public.decks (id, title, is_public) VALUES (300, 'No preset, no override', false);
 
 -- Deck 301: preset assigned, no overrides -> every field resolves to the preset.
-INSERT INTO public.decks (id, title, is_public, review_pacing_preset_id)
-VALUES (301, 'Preset only', false, 9001);
+INSERT INTO public.decks (id, title, is_public) VALUES (301, 'Preset only', false);
+INSERT INTO public.deck_review_pacing (deck_id, review_pacing_preset_id) VALUES (301, 9001);
 
 -- Deck 302: preset assigned + desired_retention overridden only -> retention
 -- resolves to the override, learning/relearning fall through to the preset.
-INSERT INTO public.decks (id, title, is_public, review_pacing_preset_id, desired_retention_override)
-VALUES (302, 'Mixed: retention overridden, rest from preset', false, 9001, 99);
+INSERT INTO public.decks (id, title, is_public) VALUES (302, 'Mixed: retention overridden, rest from preset', false);
+INSERT INTO public.deck_review_pacing (deck_id, review_pacing_preset_id, desired_retention_override)
+VALUES (302, 9001, 99);
 
 -- Deck 303: no preset, learning/relearning overridden, retention not ->
 -- retention falls all the way through to the system preset while
 -- learning/relearning resolve to their overrides.
-INSERT INTO public.decks (id, title, is_public, learning_steps_override, relearning_steps_override)
-VALUES (303, 'Mixed: steps overridden, retention from system', false, ARRAY['30m'], ARRAY['1h']);
+INSERT INTO public.decks (id, title, is_public) VALUES (303, 'Mixed: steps overridden, retention from system', false);
+INSERT INTO public.deck_review_pacing (deck_id, learning_steps_override, relearning_steps_override)
+VALUES (303, ARRAY['30m'], ARRAY['1h']);
 
 -- Test 9: deck 300 desired_retention resolves to the system value (tier 3).
 SELECT is(
-  (SELECT desired_retention FROM public.decks_with_stats(date_trunc('day', now())) WHERE id = 300),
+  (SELECT desired_retention FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 300),
   90,
   'deck 300 desired_retention resolves to the system preset (no preset, no override)'
 );
 
 -- Test 10: deck 300 learning_steps resolves to the system value (tier 3).
 SELECT is(
-  (SELECT learning_steps FROM public.decks_with_stats(date_trunc('day', now())) WHERE id = 300),
+  (SELECT learning_steps FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 300),
   ARRAY['1m', '10m'],
   'deck 300 learning_steps resolves to the system preset'
 );
 
 -- Test 11: deck 300 relearning_steps resolves to the system value (tier 3).
 SELECT is(
-  (SELECT relearning_steps FROM public.decks_with_stats(date_trunc('day', now())) WHERE id = 300),
+  (SELECT relearning_steps FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 300),
   ARRAY['10m'],
   'deck 300 relearning_steps resolves to the system preset'
 );
 
 -- Test 12: deck 300's raw override columns are all NULL.
 SELECT is(
-  (SELECT desired_retention_override FROM public.decks_with_stats(date_trunc('day', now())) WHERE id = 300),
+  (SELECT desired_retention_override FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 300),
   NULL::int,
   'deck 300 raw desired_retention_override is NULL'
 );
 
 -- Test 13: deck 301 desired_retention resolves to the linked preset (tier 2).
 SELECT is(
-  (SELECT desired_retention FROM public.decks_with_stats(date_trunc('day', now())) WHERE id = 301),
+  (SELECT desired_retention FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 301),
   95,
   'deck 301 desired_retention resolves to the linked preset'
 );
 
 -- Test 14: deck 301 learning_steps resolves to the linked preset (tier 2).
 SELECT is(
-  (SELECT learning_steps FROM public.decks_with_stats(date_trunc('day', now())) WHERE id = 301),
+  (SELECT learning_steps FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 301),
   ARRAY['1m'],
   'deck 301 learning_steps resolves to the linked preset'
 );
 
 -- Test 15: deck 301 relearning_steps resolves to the linked preset (tier 2).
 SELECT is(
-  (SELECT relearning_steps FROM public.decks_with_stats(date_trunc('day', now())) WHERE id = 301),
+  (SELECT relearning_steps FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 301),
   ARRAY['1d'],
   'deck 301 relearning_steps resolves to the linked preset'
 );
@@ -201,7 +219,7 @@ SELECT is(
 -- Test 16: deck 302 desired_retention resolves to its own override (tier 1),
 -- winning over the linked preset's value (95).
 SELECT is(
-  (SELECT desired_retention FROM public.decks_with_stats(date_trunc('day', now())) WHERE id = 302),
+  (SELECT desired_retention FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 302),
   99,
   'deck 302 desired_retention resolves to its override, not the linked preset'
 );
@@ -209,7 +227,7 @@ SELECT is(
 -- Test 17: deck 302 learning_steps (not overridden) falls through to the
 -- linked preset — proves per-field resolution, not per-deck.
 SELECT is(
-  (SELECT learning_steps FROM public.decks_with_stats(date_trunc('day', now())) WHERE id = 302),
+  (SELECT learning_steps FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 302),
   ARRAY['1m'],
   'deck 302 learning_steps (unoverridden) still resolves to the linked preset'
 );
@@ -217,7 +235,7 @@ SELECT is(
 -- Test 18: deck 302's raw desired_retention_override surfaces the actual
 -- value, independent of the resolved column.
 SELECT is(
-  (SELECT desired_retention_override FROM public.decks_with_stats(date_trunc('day', now())) WHERE id = 302),
+  (SELECT desired_retention_override FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 302),
   99,
   'deck 302 raw desired_retention_override surfaces the actual override value'
 );
@@ -225,14 +243,14 @@ SELECT is(
 -- Test 19: deck 302's raw learning_steps_override is NULL (only retention
 -- was overridden).
 SELECT is(
-  (SELECT learning_steps_override FROM public.decks_with_stats(date_trunc('day', now())) WHERE id = 302),
+  (SELECT learning_steps_override FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 302),
   NULL::text[],
   'deck 302 raw learning_steps_override is NULL'
 );
 
 -- Test 19b: deck 302's raw relearning_steps_override is likewise NULL.
 SELECT is(
-  (SELECT relearning_steps_override FROM public.decks_with_stats(date_trunc('day', now())) WHERE id = 302),
+  (SELECT relearning_steps_override FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 302),
   NULL::text[],
   'deck 302 raw relearning_steps_override is NULL'
 );
@@ -240,7 +258,7 @@ SELECT is(
 -- Test 20: deck 303 desired_retention (no override, no preset) resolves to
 -- the system value.
 SELECT is(
-  (SELECT desired_retention FROM public.decks_with_stats(date_trunc('day', now())) WHERE id = 303),
+  (SELECT desired_retention FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 303),
   90,
   'deck 303 desired_retention resolves to the system preset (no override, no preset)'
 );
@@ -248,14 +266,14 @@ SELECT is(
 -- Test 21: deck 303 learning_steps resolves to its own override (tier 1),
 -- skipping straight past the (absent) preset tier to the override.
 SELECT is(
-  (SELECT learning_steps FROM public.decks_with_stats(date_trunc('day', now())) WHERE id = 303),
+  (SELECT learning_steps FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 303),
   ARRAY['30m'],
   'deck 303 learning_steps resolves to its override'
 );
 
 -- Test 22: deck 303 relearning_steps resolves to its own override (tier 1).
 SELECT is(
-  (SELECT relearning_steps FROM public.decks_with_stats(date_trunc('day', now())) WHERE id = 303),
+  (SELECT relearning_steps FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 303),
   ARRAY['1h'],
   'deck 303 relearning_steps resolves to its override'
 );
@@ -266,12 +284,12 @@ SELECT is(
 INSERT INTO public.review_pacing_presets (id, name, desired_retention, learning_steps, relearning_steps)
 VALUES (9003, 'Alice Temp', 77, ARRAY['3m'], ARRAY['3d']);
 
-INSERT INTO public.decks (id, title, is_public, review_pacing_preset_id)
-VALUES (304, 'Delete-preset target', false, 9003);
+INSERT INTO public.decks (id, title, is_public) VALUES (304, 'Delete-preset target', false);
+INSERT INTO public.deck_review_pacing (deck_id, review_pacing_preset_id) VALUES (304, 9003);
 
 -- Sanity check before delete.
 SELECT is(
-  (SELECT desired_retention FROM public.decks_with_stats(date_trunc('day', now())) WHERE id = 304),
+  (SELECT desired_retention FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 304),
   77,
   'deck 304 resolves to the temp preset before it is deleted'
 );
@@ -281,14 +299,14 @@ DELETE FROM public.review_pacing_presets WHERE id = 9003;
 -- Test 23: deleting the preset SET NULLs the deck's FK (not cascade-deleted —
 -- the deck row itself still exists — and not an error).
 SELECT is(
-  (SELECT review_pacing_preset_id FROM public.decks_with_stats(date_trunc('day', now())) WHERE id = 304),
+  (SELECT review_pacing_preset_id FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 304),
   NULL::bigint,
   'deleting the assigned preset SET NULLs the deck FK'
 );
 
 -- Test 23b: the deck resolves back to the system preset's values.
 SELECT is(
-  (SELECT desired_retention FROM public.decks_with_stats(date_trunc('day', now())) WHERE id = 304),
+  (SELECT desired_retention FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 304),
   90,
   'after the preset is deleted, the deck resolves back to the system preset'
 );
@@ -301,8 +319,9 @@ SET LOCAL role = 'postgres';
 -- A deck owned by Alice, pointed (by a superuser, bypassing any FE-level
 -- guard) at Bob's private preset — there is no ownership check on the FK
 -- itself, so this insert succeeds structurally.
-INSERT INTO public.decks (id, member_id, title, is_public, review_pacing_preset_id)
-VALUES (305, 'a1111111-1111-1111-1111-111111111111', 'Cross-member assignment', false, 9002);
+INSERT INTO public.decks (id, member_id, title, is_public)
+VALUES (305, 'a1111111-1111-1111-1111-111111111111', 'Cross-member assignment', false);
+INSERT INTO public.deck_review_pacing (deck_id, review_pacing_preset_id) VALUES (305, 9002);
 
 SELECT tests.set_claims('a1111111-1111-1111-1111-111111111111'::uuid);
 SET LOCAL role = 'authenticated';
@@ -311,9 +330,126 @@ SET LOCAL role = 'authenticated';
 -- values (80) — RLS on review_pacing_presets blocks the LEFT JOIN from
 -- seeing Bob's row under security_invoker, so COALESCE falls through.
 SELECT is(
-  (SELECT desired_retention FROM public.decks_with_stats(date_trunc('day', now())) WHERE id = 305),
+  (SELECT desired_retention FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 305),
   90,
   'a deck pointed at another member''s private preset does not leak its values — falls back to system'
+);
+
+
+-- ── Daily-limit resolution ladder [obligation] ────────────────────────────────
+-- Distinguishes "no preset linked" (falls through to the system default)
+-- from "preset linked but its own max_*_per_day is NULL" (that preset's
+-- explicit "unbounded" — must NOT fall through to the system default).
+
+-- Deck 306: no preset, no override -> system default (40 seeded by the
+-- review-pacing-presets migration for the system preset's max_reviews_per_day
+-- — asserted indirectly via deck 307 below instead, since the system row's
+-- actual seed value may vary; this deck only proves "some value, not NULL,
+-- when unlinked" by comparing against deck 307's linked-preset NULL).
+INSERT INTO public.decks (id, title, is_public) VALUES (306, 'No preset - system default', false);
+
+-- Deck 307: linked to preset 9004 (max_reviews_per_day = 40, max_new_per_day
+-- = NULL). max_reviews_per_day must resolve to 40 (the preset's value), and
+-- max_new_per_day must resolve to NULL (the preset's own "unbounded") — NOT
+-- fall through to the system preset's value.
+INSERT INTO public.decks (id, title, is_public) VALUES (307, 'Preset with NULL max_new_per_day', false);
+INSERT INTO public.deck_review_pacing (deck_id, review_pacing_preset_id) VALUES (307, 9004);
+
+-- Test 25: deck 306 (no preset linked) resolves max_reviews_per_day to the
+-- system preset's value, proving the "no preset" branch still falls through.
+SELECT is(
+  (SELECT max_reviews_per_day FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 306),
+  (SELECT max_reviews_per_day FROM public.review_pacing_presets WHERE is_system),
+  'deck 306 (no preset) resolves max_reviews_per_day to the system preset'
+);
+
+-- Test 26: deck 307 max_reviews_per_day resolves to the linked preset's
+-- concrete value (40), not the system default.
+SELECT is(
+  (SELECT max_reviews_per_day FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 307),
+  40,
+  'deck 307 max_reviews_per_day resolves to the linked preset''s concrete cap'
+);
+
+-- Test 27 [obligation]: deck 307 max_new_per_day resolves to NULL — the
+-- linked preset's own "unbounded" — and must NOT fall through to the system
+-- preset's max_new_per_day (a naive COALESCE would get this wrong).
+SELECT is(
+  (SELECT max_new_per_day FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 307),
+  NULL::int,
+  'deck 307 max_new_per_day resolves to the linked preset''s own NULL (unbounded), not the system default [obligation]'
+);
+
+-- Test 28 [obligation]: a deck can override to unbounded even when the
+-- linked preset has a concrete numeric cap (40) — has_max_reviews_override
+-- = true with a NULL override value beats the preset's concrete value.
+INSERT INTO public.decks (id, title, is_public) VALUES (308, 'Override to unbounded over a capped preset', false);
+INSERT INTO public.deck_review_pacing (deck_id, review_pacing_preset_id, has_max_reviews_override, max_reviews_per_day_override)
+VALUES (308, 9004, true, NULL);
+
+SELECT is(
+  (SELECT max_reviews_per_day FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 308),
+  NULL::int,
+  'deck can override to unbounded even when its linked preset has a concrete cap [obligation]'
+);
+
+-- Test 29: has_max_reviews_override / has_max_new_override surface as false
+-- (not overridden) for a deck whose pacing row was never inserted.
+SELECT is(
+  (SELECT has_max_reviews_override FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 306),
+  false,
+  'deck 306 (no deck_review_pacing row) has_max_reviews_override resolves to false, not NULL'
+);
+
+
+-- ── deck_review_pacing RLS [obligation] ───────────────────────────────────────
+-- deck_review_pacing has no member_id column of its own — ownership is
+-- proved via EXISTS(decks d WHERE d.id = deck_id AND d.member_id = auth.uid()).
+
+SET LOCAL role = 'postgres';
+SELECT tests.set_claims('b2222222-2222-2222-2222-222222222222'::uuid);
+SET LOCAL role = 'authenticated';
+
+-- Test 30 [obligation]: Bob cannot SELECT Alice's deck_review_pacing row
+-- (deck 301, owned by Alice).
+SELECT is(
+  (SELECT count(*)::int FROM public.deck_review_pacing WHERE deck_id = 301),
+  0,
+  'Bob cannot SELECT Alice''s deck_review_pacing row [obligation]'
+);
+
+-- Test 31 [obligation]: Bob's UPDATE against Alice's deck_review_pacing row
+-- affects 0 rows (RLS USING excludes it — no error, just a no-op).
+UPDATE public.deck_review_pacing SET desired_retention_override = 60 WHERE deck_id = 301;
+SET LOCAL role = 'postgres';
+SELECT is(
+  (SELECT desired_retention_override FROM public.deck_review_pacing WHERE deck_id = 301),
+  NULL::int,
+  'Bob cannot UPDATE Alice''s deck_review_pacing row [obligation]'
+);
+
+-- Test 32 [obligation]: Bob cannot INSERT a deck_review_pacing row for a
+-- deck he does not own — WITH CHECK rejects it.
+SELECT tests.set_claims('b2222222-2222-2222-2222-222222222222'::uuid);
+SET LOCAL role = 'authenticated';
+SELECT throws_ok(
+  $$ INSERT INTO public.deck_review_pacing (deck_id, desired_retention_override) VALUES (300, 55) $$,
+  '42501',
+  NULL,
+  'Bob cannot INSERT a deck_review_pacing row for a deck he does not own [obligation]'
+);
+
+-- Test 33: Bob CAN read/write his own deck's pacing row.
+SET LOCAL role = 'postgres';
+INSERT INTO public.decks (id, member_id, title, is_public) VALUES (400, 'b2222222-2222-2222-2222-222222222222', 'Bob Deck', false);
+SELECT tests.set_claims('b2222222-2222-2222-2222-222222222222'::uuid);
+SET LOCAL role = 'authenticated';
+INSERT INTO public.deck_review_pacing (deck_id, desired_retention_override) VALUES (400, 88);
+
+SELECT is(
+  (SELECT desired_retention_override FROM public.deck_review_pacing WHERE deck_id = 400),
+  88,
+  'Bob can read and write his own deck''s deck_review_pacing row'
 );
 
 SELECT * FROM finish();

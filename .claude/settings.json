@@ -7,7 +7,6 @@
       "Bash(git checkout -b *)",
       "Bash(git push -u origin *)",
       "Bash(gh pr create*)",
-      "Write(tests/**)",
       "Edit(tests/**)",
       "Bash(cat:*)",
       "Bash(head:*)",

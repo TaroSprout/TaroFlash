@@ -11,6 +11,10 @@ export type DeckPacingEditorState = {
   desired_retention_override: number | null
   learning_steps_override: string[] | null
   relearning_steps_override: string[] | null
+  has_max_reviews_override: boolean
+  max_reviews_per_day_override: number | null
+  has_max_new_override: boolean
+  max_new_per_day_override: number | null
 }
 
 export type DeckEditorState = {
@@ -32,6 +36,10 @@ export type DeckPayload = {
   desired_retention_override: number | null
   learning_steps_override: string[] | null
   relearning_steps_override: string[] | null
+  has_max_reviews_override: boolean
+  max_reviews_per_day_override: number | null
+  has_max_new_override: boolean
+  max_new_per_day_override: number | null
 }
 
 /**
@@ -58,7 +66,11 @@ export function buildDeckPayload(state: DeckEditorState): DeckPayload {
     review_pacing_preset_id: state.pacing.preset_id,
     desired_retention_override: state.pacing.desired_retention_override,
     learning_steps_override: state.pacing.learning_steps_override,
-    relearning_steps_override: state.pacing.relearning_steps_override
+    relearning_steps_override: state.pacing.relearning_steps_override,
+    has_max_reviews_override: state.pacing.has_max_reviews_override,
+    max_reviews_per_day_override: state.pacing.max_reviews_per_day_override,
+    has_max_new_override: state.pacing.has_max_new_override,
+    max_new_per_day_override: state.pacing.max_new_per_day_override
   }
 }
 

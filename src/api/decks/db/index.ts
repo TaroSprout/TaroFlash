@@ -1,11 +1,11 @@
 import { supabase } from '@/supabase-client'
 import { useMemberStore } from '@/stores/member'
 import logger from '@/utils/logger'
-import { isoNow, localDayStart } from '@/utils/date'
+import { localDayStart } from '@/utils/date'
 
 export async function fetchMemberDecks(): Promise<Deck[]> {
   const { data, error } = await supabase
-    .rpc('decks_with_stats', { p_today_start: localDayStart() })
+    .rpc('get_member_decks', { p_today_start: localDayStart() })
     .select('*')
     .eq('member_id', useMemberStore().id)
 
@@ -19,7 +19,7 @@ export async function fetchMemberDecks(): Promise<Deck[]> {
 
 export async function fetchDeck(id: number): Promise<Deck> {
   const { data, error } = await supabase
-    .rpc('decks_with_stats', { p_today_start: localDayStart() })
+    .rpc('get_member_decks', { p_today_start: localDayStart() })
     .select('*')
     .eq('id', id)
     .single()
@@ -40,7 +40,7 @@ export async function fetchDecksByIds(ids: number[]): Promise<Deck[]> {
   if (!ids.length) return []
 
   const { data, error } = await supabase
-    .rpc('decks_with_stats', { p_today_start: localDayStart() })
+    .rpc('get_member_decks', { p_today_start: localDayStart() })
     .select('*')
     .in('id', ids)
 
@@ -67,19 +67,30 @@ export async function fetchMemberDeckCount(): Promise<number> {
 }
 
 export async function upsertDeck(deck: Deck): Promise<Deck> {
-  const payload = { ...deck, updated_at: isoNow() }
-  const { data, error } = await supabase
-    .from('decks')
-    .upsert(payload, { onConflict: 'id' })
-    .select()
-    .single()
+  const { data, error } = await supabase.rpc('save_deck', {
+    p_deck_id: deck.id ?? null,
+    p_title: deck.title ?? null,
+    p_description: deck.description ?? null,
+    p_is_public: deck.is_public ?? false,
+    p_study_config: deck.study_config ?? {},
+    p_cover_config: deck.cover_config ?? {},
+    p_card_attributes: deck.card_attributes ?? {},
+    p_review_pacing_preset_id: deck.review_pacing_preset_id ?? null,
+    p_desired_retention_override: deck.desired_retention_override ?? null,
+    p_learning_steps_override: deck.learning_steps_override ?? null,
+    p_relearning_steps_override: deck.relearning_steps_override ?? null,
+    p_has_max_reviews_override: deck.has_max_reviews_override ?? false,
+    p_max_reviews_per_day_override: deck.max_reviews_per_day_override ?? null,
+    p_has_max_new_override: deck.has_max_new_override ?? false,
+    p_max_new_per_day_override: deck.max_new_per_day_override ?? null
+  })
 
   if (error) {
     logger.error(error.message)
     throw error
   }
 
-  return data as Deck
+  return (Array.isArray(data) ? data[0] : data) as Deck
 }
 
 export async function deleteDeck(id: number): Promise<void> {

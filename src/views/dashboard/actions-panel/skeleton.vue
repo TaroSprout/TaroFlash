@@ -5,7 +5,7 @@ import DashboardActionsPanelShell from './shell.vue'
 <template>
   <dashboard-actions-panel-shell
     data-testid="dashboard-actions-panel-skeleton"
-    class="bg-brown-200 dark:bg-stone-900 animate-pulse bgx-diagonal-stripes bgx-size-15 bgx-opacity-40"
+    class="bg-brown-200 dark:bg-stone-900 animate-pulse bgx-diagonal-stripes bgx-size-15 bgx-opacity-40 dark:bgx-color-(--color-grey-700)"
     body_class="bg-brown-300 dark:bg-stone-900"
   >
     <template #polaroid>
@@ -18,12 +18,12 @@ import DashboardActionsPanelShell from './shell.vue'
     </template>
 
     <template #header>
-      <div class="h-11 w-40 bg-brown-300 dark:bg-grey-600 rounded-3"></div>
+      <div class="h-11 w-40 bg-brown-300 dark:bg-stone-900 rounded-3"></div>
     </template>
 
     <template #body>
       <div class="h-30 w-full bg-brown-200 dark:bg-stone-700 rounded-4 max-mxl:hidden"></div>
-      <div class="h-14 w-full bg-brown-200 dark:bg-grey-800 rounded-4 max-mxl:hidden!"></div>
+      <div class="h-14 w-full bg-brown-200 dark:bg-stone-700 rounded-4 max-mxl:hidden!"></div>
     </template>
   </dashboard-actions-panel-shell>
 </template>

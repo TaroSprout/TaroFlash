@@ -85,7 +85,7 @@ describe('TabIndex', () => {
     expect(cards).toHaveLength(2)
     expect(cards.map((c) => c.attributes('data-value'))).toEqual(['design', 'review-pacing'])
     expect(cards[0].text()).toContain('Appearance')
-    expect(cards[1].text()).toContain('Review Pacing')
+    expect(cards[1].text()).toContain('Study Settings')
   })
 
   test('review-pacing nav entry renders the card-deck icon (matches member-settings review-pacing icon) [obligation]', () => {
