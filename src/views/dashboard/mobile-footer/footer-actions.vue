@@ -33,8 +33,8 @@ function onStudyAll() {
       data-testid="dashboard-footer-actions__new-deck"
       icon-only
       icon-left="card-add"
-      data-theme="brown-300"
-      data-theme-dark="stone-700"
+      data-theme="brown-700"
+      data-theme-dark="brown-100"
       variant="ghost"
       size="lg"
       :disabled="creating_deck || editing_decks"
@@ -74,8 +74,8 @@ function onStudyAll() {
       data-testid="dashboard-footer-actions__edit-decks"
       icon-only
       icon-left="pencil"
-      data-theme="brown-300"
-      data-theme-dark="stone-700"
+      data-theme="brown-700"
+      data-theme-dark="brown-100"
       variant="ghost"
       size="lg"
       @press="emit('toggle-edit-decks')"

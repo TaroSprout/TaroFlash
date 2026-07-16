@@ -191,8 +191,8 @@ function setMode(next: 'expanded' | 'mini') {
         <div data-testid="audio-toolbar__options-start" class="flex justify-start">
           <ui-button
             data-testid="audio-toolbar__collapse"
-            data-theme="brown-100"
-            data-theme-dark="stone-700"
+            data-theme="brown-700"
+            data-theme-dark="brown-100"
             icon-left="minimize"
             variant="ghost"
             icon-only
@@ -205,6 +205,8 @@ function setMode(next: 'expanded' | 'mini') {
         <div data-testid="audio-toolbar__options-center" class="flex justify-center">
           <ui-dropdown-button
             data-testid="audio-toolbar__chapter-select"
+            data-theme="brown-700"
+            data-theme-dark="brown-100"
             icon-left="browser-content"
             menu-theme="brown-100"
             menu-class="border-1 border-brown-300 dark:border-grey-900"
@@ -227,6 +229,8 @@ function setMode(next: 'expanded' | 'mini') {
         <div data-testid="audio-toolbar__options-end" class="flex justify-end">
           <ui-dropdown-button
             data-testid="audio-toolbar__speed-select"
+            data-theme="brown-700"
+            data-theme-dark="brown-100"
             icon-left="stopwatch"
             menu-theme="brown-100"
             variant="ghost"
@@ -250,8 +254,8 @@ function setMode(next: 'expanded' | 'mini') {
     >
       <ui-button
         data-testid="audio-toolbar__expand"
-        data-theme="brown-100"
-        data-theme-dark="stone-700"
+        data-theme="brown-700"
+        data-theme-dark="brown-100"
         icon-left="maximize"
         variant="ghost"
         icon-only
@@ -303,8 +307,8 @@ function setMode(next: 'expanded' | 'mini') {
 
       <ui-dropdown-button
         data-testid="audio-toolbar__speed-select"
-        data-theme="brown-100"
-        data-theme-dark="stone-700"
+        data-theme="brown-700"
+        data-theme-dark="brown-100"
         icon-left="stopwatch"
         variant="ghost"
         open-on-trigger

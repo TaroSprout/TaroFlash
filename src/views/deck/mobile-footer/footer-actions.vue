@@ -55,8 +55,8 @@ const edit_options = computed<DropdownOption[]>(() => [
       v-else
       data-testid="deck-footer-actions__new-card"
       icon-left="card-add"
-      data-theme="brown-100"
-      data-theme-dark="stone-700"
+      data-theme="brown-700"
+      data-theme-dark="brown-100"
       variant="ghost"
       full-width
       size="lg"
@@ -68,8 +68,8 @@ const edit_options = computed<DropdownOption[]>(() => [
       data-testid="deck-footer-actions__edit-menu"
       trigger-only
       trigger-icon="pencil"
-      trigger-theme="brown-200"
-      trigger-theme-dark="stone-700"
+      trigger-theme="brown-700"
+      trigger-theme-dark="brown-100"
       menu-theme="brown-200"
       menu-theme-dark="stone-700"
       menu-class="outline-1 outline-brown-300 dark:outline-grey-900"

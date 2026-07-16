@@ -42,7 +42,8 @@ const { t } = useI18n()
       <ui-button
         v-if="overridden"
         data-testid="tooltip-row__reset"
-        data-theme="brown-300"
+        data-theme="brown-700"
+        data-theme-dark="brown-100"
         variant="ghost"
         size="sm"
         icon-only
