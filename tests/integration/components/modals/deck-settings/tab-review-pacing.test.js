@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, reactive, ref, useAttrs } from 'vue'
 import { deckEditorKey } from '@/composables/deck/editor'
@@ -16,6 +16,13 @@ vi.mock('@/views/deck/deck-settings/tab-review-pacing/pacing-section.vue', async
     })
   }
 })
+
+// use-pacing-fields.ts calls usePresetsQuery() internally (Pinia Colada) —
+// stub the query module so mounting index.vue doesn't need a real Pinia app.
+const { mockPresetsData } = vi.hoisted(() => ({ mockPresetsData: { value: [] } }))
+vi.mock('@/api/review-pacing', () => ({
+  usePresetsQuery: () => ({ data: mockPresetsData })
+}))
 
 import TabReviewPacing from '@/views/deck/deck-settings/tab-review-pacing/index.vue'
 
@@ -116,17 +123,24 @@ const SpinboxStub = defineComponent({
   }
 })
 
-function makeTabReviewPacing({ config: initial = {}, card_count } = {}) {
-  const config = reactive({ ...initial })
+function makeTabReviewPacing({ deck: deckOverrides = {}, pacing: pacingOverrides = {} } = {}) {
+  const config = reactive({ shuffle: false, flip_cards: false })
+  const deck = reactive({ id: 1, card_count: undefined, ...deckOverrides })
+  const pacing = reactive({
+    preset_id: null,
+    desired_retention_override: null,
+    learning_steps_override: null,
+    relearning_steps_override: null,
+    has_max_reviews_override: false,
+    max_reviews_per_day_override: null,
+    has_max_new_override: false,
+    max_new_per_day_override: null,
+    ...pacingOverrides
+  })
   const editor = {
-    deck: card_count !== undefined ? { card_count } : undefined,
+    deck,
     config,
-    pacing: reactive({
-      preset_id: null,
-      desired_retention_override: null,
-      learning_steps_override: null,
-      relearning_steps_override: null
-    }),
+    pacing,
     settings: reactive({}),
     cover: reactive({}),
     card_attributes: reactive({ front: {}, back: {} }),
@@ -148,7 +162,7 @@ function makeTabReviewPacing({ config: initial = {}, card_count } = {}) {
       mocks: { $t: (k) => k }
     }
   })
-  return { wrapper, config }
+  return { wrapper, config, deck, pacing }
 }
 
 function rowSpinbox(wrapper, row) {
@@ -158,6 +172,10 @@ function rowSpinbox(wrapper, row) {
 function rowAllToggle(wrapper, row) {
   return wrapper.find(`[data-testid="${row}"] [data-testid="ui-kit-spinbox__all-pill"]`)
 }
+
+beforeEach(() => {
+  mockPresetsData.value = []
+})
 
 describe('TabReviewPacing', () => {
   test('renders the pacing-section (preset + retention/steps controls)', () => {
@@ -181,7 +199,7 @@ describe('TabReviewPacing', () => {
   })
 
   test('updates config.shuffle when shuffle toggle changes', async () => {
-    const { wrapper, config } = makeTabReviewPacing({ config: { shuffle: false } })
+    const { wrapper, config } = makeTabReviewPacing()
     const toggles = wrapper.findAllComponents(ToggleStub)
     toggles[0].vm.$emit('update:checked', true)
     await wrapper.vm.$nextTick()
@@ -189,7 +207,7 @@ describe('TabReviewPacing', () => {
   })
 
   test('updates config.flip_cards from the flip-cards toggle', async () => {
-    const { wrapper, config } = makeTabReviewPacing({ config: { flip_cards: false } })
+    const { wrapper, config } = makeTabReviewPacing()
     const toggles = wrapper.findAllComponents(ToggleStub)
     toggles[1].vm.$emit('update:checked', true)
     await wrapper.vm.$nextTick()
@@ -197,7 +215,7 @@ describe('TabReviewPacing', () => {
   })
 
   test('reviews spinbox is configured: step 5, min 5, max 200', () => {
-    const { wrapper } = makeTabReviewPacing({ config: { max_reviews_per_day: 50 } })
+    const { wrapper } = makeTabReviewPacing({ deck: { max_reviews_per_day: 50 } })
     const spinbox = rowSpinbox(wrapper, 'tab-review-pacing__max-reviews')
     expect(spinbox.attributes('data-step')).toBe('5')
     expect(spinbox.attributes('data-min')).toBe('5')
@@ -206,7 +224,7 @@ describe('TabReviewPacing', () => {
   })
 
   test('new spinbox is configured: step 5, min 5, max 100', () => {
-    const { wrapper } = makeTabReviewPacing({ config: { max_new_per_day: 10 } })
+    const { wrapper } = makeTabReviewPacing({ deck: { max_new_per_day: 10 } })
     const spinbox = rowSpinbox(wrapper, 'tab-review-pacing__max-new')
     expect(spinbox.attributes('data-step')).toBe('5')
     expect(spinbox.attributes('data-min')).toBe('5')
@@ -214,51 +232,82 @@ describe('TabReviewPacing', () => {
     expect(spinbox.attributes('data-value')).toBe('10')
   })
 
-  test('incrementing reviews spinbox writes a stepped value to config', async () => {
-    const { wrapper, config } = makeTabReviewPacing({ config: { max_reviews_per_day: 50 } })
+  test('reads the deck-resolved value when the deck has no override [obligation]', () => {
+    const { wrapper } = makeTabReviewPacing({ deck: { max_reviews_per_day: 42 } })
+    expect(rowSpinbox(wrapper, 'tab-review-pacing__max-reviews').attributes('data-value')).toBe(
+      '42'
+    )
+  })
+
+  test('reads the override value over the deck-resolved value when set [obligation]', () => {
+    const { wrapper } = makeTabReviewPacing({
+      deck: { max_reviews_per_day: 42 },
+      pacing: { has_max_reviews_override: true, max_reviews_per_day_override: 10 }
+    })
+    expect(rowSpinbox(wrapper, 'tab-review-pacing__max-reviews').attributes('data-value')).toBe(
+      '10'
+    )
+  })
+
+  test('a deck can override to unbounded even when the linked preset has a concrete cap [obligation]', () => {
+    const { wrapper } = makeTabReviewPacing({
+      deck: { max_reviews_per_day: 42 },
+      pacing: { has_max_reviews_override: true, max_reviews_per_day_override: null }
+    })
+    expect(rowAllToggle(wrapper, 'tab-review-pacing__max-reviews').attributes('data-active')).toBe(
+      'true'
+    )
+  })
+
+  test('incrementing reviews spinbox always pins has_max_reviews_override and writes a stepped value [obligation]', async () => {
+    const { wrapper, pacing } = makeTabReviewPacing({ deck: { max_reviews_per_day: 50 } })
     await wrapper
       .find(
         '[data-testid="tab-review-pacing__max-reviews"] [data-testid="ui-kit-spinbox__increment"]'
       )
       .trigger('click')
-    expect(config.max_reviews_per_day).toBe(55)
+    expect(pacing.has_max_reviews_override).toBe(true)
+    expect(pacing.max_reviews_per_day_override).toBe(55)
   })
 
-  test('reaching reviews max sets max_reviews_per_day to null (switches to all)', async () => {
-    const { wrapper, config } = makeTabReviewPacing({ config: { max_reviews_per_day: 195 } })
+  test('reaching reviews max sets max_reviews_per_day_override to null (switches to all)', async () => {
+    const { wrapper, pacing } = makeTabReviewPacing({ deck: { max_reviews_per_day: 195 } })
     await wrapper
       .find(
         '[data-testid="tab-review-pacing__max-reviews"] [data-testid="ui-kit-spinbox__increment"]'
       )
       .trigger('click')
-    expect(config.max_reviews_per_day).toBeNull()
+    expect(pacing.max_reviews_per_day_override).toBeNull()
+    expect(pacing.has_max_reviews_override).toBe(true)
   })
 
-  test('reaching new-per-day max sets max_new_per_day to null (switches to all)', async () => {
-    const { wrapper, config } = makeTabReviewPacing({ config: { max_new_per_day: 95 } })
+  test('reaching new-per-day max sets max_new_per_day_override to null (switches to all)', async () => {
+    const { wrapper, pacing } = makeTabReviewPacing({ deck: { max_new_per_day: 95 } })
     await wrapper
       .find('[data-testid="tab-review-pacing__max-new"] [data-testid="ui-kit-spinbox__increment"]')
       .trigger('click')
-    expect(config.max_new_per_day).toBeNull()
+    expect(pacing.max_new_per_day_override).toBeNull()
   })
 
-  test('clicking the reviews "all" pill from numeric sets the value to null', async () => {
-    const { wrapper, config } = makeTabReviewPacing({ config: { max_reviews_per_day: 50 } })
+  test('clicking the reviews "all" pill from numeric sets the override to null', async () => {
+    const { wrapper, pacing } = makeTabReviewPacing({ deck: { max_reviews_per_day: 50 } })
     await rowAllToggle(wrapper, 'tab-review-pacing__max-reviews').trigger('click')
-    expect(config.max_reviews_per_day).toBeNull()
+    expect(pacing.max_reviews_per_day_override).toBeNull()
+    expect(pacing.has_max_reviews_override).toBe(true)
   })
 
-  test('clicking the new "all" pill from null restores a numeric value', async () => {
-    const { wrapper, config } = makeTabReviewPacing({ config: { max_new_per_day: null } })
+  test('clicking the new "all" pill from a numeric deck value restores a numeric override', async () => {
+    const { wrapper, pacing } = makeTabReviewPacing({ deck: { max_new_per_day: 10 } })
     await rowAllToggle(wrapper, 'tab-review-pacing__max-new').trigger('click')
-    expect(typeof config.max_new_per_day).toBe('number')
-    expect(config.max_new_per_day).toBeGreaterThan(0)
+    expect(pacing.max_new_per_day_override).toBeNull()
+    await rowAllToggle(wrapper, 'tab-review-pacing__max-new').trigger('click')
+    expect(typeof pacing.max_new_per_day_override).toBe('number')
+    expect(pacing.max_new_per_day_override).toBeGreaterThan(0)
   })
 
   test('clicking reviews "all" pre-fills the spinbox with card_count', async () => {
     const { wrapper } = makeTabReviewPacing({
-      config: { max_reviews_per_day: 50 },
-      card_count: 137
+      deck: { max_reviews_per_day: 50, card_count: 137 }
     })
     await rowAllToggle(wrapper, 'tab-review-pacing__max-reviews').trigger('click')
     expect(rowSpinbox(wrapper, 'tab-review-pacing__max-reviews').attributes('data-value')).toBe(
@@ -268,15 +317,14 @@ describe('TabReviewPacing', () => {
 
   test('clicking new "all" pre-fills the spinbox with card_count', async () => {
     const { wrapper } = makeTabReviewPacing({
-      config: { max_new_per_day: 10 },
-      card_count: 42
+      deck: { max_new_per_day: 10, card_count: 42 }
     })
     await rowAllToggle(wrapper, 'tab-review-pacing__max-new').trigger('click')
     expect(rowSpinbox(wrapper, 'tab-review-pacing__max-new').attributes('data-value')).toBe('42')
   })
 
   test('clicking "all" without card_count leaves spinbox value unchanged', async () => {
-    const { wrapper } = makeTabReviewPacing({ config: { max_reviews_per_day: 50 } })
+    const { wrapper } = makeTabReviewPacing({ deck: { max_reviews_per_day: 50 } })
     await rowAllToggle(wrapper, 'tab-review-pacing__max-reviews').trigger('click')
     expect(rowSpinbox(wrapper, 'tab-review-pacing__max-reviews').attributes('data-value')).toBe(
       '50'
@@ -284,43 +332,45 @@ describe('TabReviewPacing', () => {
   })
 
   test('clicking reviews "all" twice restores the last numeric local value', async () => {
-    const { wrapper, config } = makeTabReviewPacing({ config: { max_reviews_per_day: 75 } })
+    const { wrapper, pacing } = makeTabReviewPacing({ deck: { max_reviews_per_day: 75 } })
     const pill = rowAllToggle(wrapper, 'tab-review-pacing__max-reviews')
     await pill.trigger('click')
     await pill.trigger('click')
-    expect(config.max_reviews_per_day).toBe(75)
+    expect(pacing.max_reviews_per_day_override).toBe(75)
   })
 
-  test('decrementing from null state turns "all" off and writes a numeric value', async () => {
-    const { wrapper, config } = makeTabReviewPacing({ config: { max_reviews_per_day: null } })
+  test('decrementing from an unbounded deck value turns "all" off and writes a numeric value', async () => {
+    const { wrapper, pacing } = makeTabReviewPacing({ deck: { max_reviews_per_day: null } })
     await wrapper
       .find(
         '[data-testid="tab-review-pacing__max-reviews"] [data-testid="ui-kit-spinbox__decrement"]'
       )
       .trigger('click')
-    expect(typeof config.max_reviews_per_day).toBe('number')
-    expect(config.max_reviews_per_day).toBeLessThan(200)
+    expect(typeof pacing.max_reviews_per_day_override).toBe('number')
+    expect(pacing.max_reviews_per_day_override).toBeLessThan(200)
   })
 
-  test('external prop change to null updates the "all" toggle state', async () => {
-    const { wrapper, config } = makeTabReviewPacing({ config: { max_reviews_per_day: 50 } })
-    config.max_reviews_per_day = null
+  test('external override change to null updates the "all" toggle state', async () => {
+    const { wrapper, pacing } = makeTabReviewPacing({ deck: { max_reviews_per_day: 50 } })
+    pacing.has_max_reviews_override = true
+    pacing.max_reviews_per_day_override = null
     await wrapper.vm.$nextTick()
     expect(rowAllToggle(wrapper, 'tab-review-pacing__max-reviews').attributes('data-active')).toBe(
       'true'
     )
   })
 
-  test('external prop change to a number updates the spinbox value', async () => {
-    const { wrapper, config } = makeTabReviewPacing({ config: { max_new_per_day: 10 } })
-    config.max_new_per_day = 80
+  test('external override change to a number updates the spinbox value', async () => {
+    const { wrapper, pacing } = makeTabReviewPacing({ deck: { max_new_per_day: 10 } })
+    pacing.has_max_new_override = true
+    pacing.max_new_per_day_override = 80
     await wrapper.vm.$nextTick()
     expect(rowSpinbox(wrapper, 'tab-review-pacing__max-new').attributes('data-value')).toBe('80')
   })
 
-  test('the "all" toggles reflect null state via data-checked', () => {
+  test('the "all" toggles reflect the deck-resolved unbounded state via data-checked', () => {
     const { wrapper } = makeTabReviewPacing({
-      config: { max_reviews_per_day: null, max_new_per_day: 20 }
+      deck: { max_reviews_per_day: null, max_new_per_day: 20 }
     })
     expect(rowAllToggle(wrapper, 'tab-review-pacing__max-reviews').attributes('data-active')).toBe(
       'true'
