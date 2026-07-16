@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, nextTick, reactive, ref, computed } from 'vue'
+import { defineComponent, h, nextTick, reactive, ref, computed, useAttrs } from 'vue'
 import DeckSaveButton from '@/views/deck/deck-settings/deck-save-button.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { deckSettingsCloseKey } from '@/views/deck/deck-settings/layout'
@@ -21,12 +21,14 @@ const UiButtonStub = defineComponent({
   name: 'UiButton',
   props: { loading: Boolean, disabled: Boolean },
   emits: ['press'],
+  inheritAttrs: false,
   setup(props, { slots, emit }) {
+    const attrs = useAttrs()
     return () =>
       h(
         'button',
         {
-          'data-testid': 'deck-settings__save-button',
+          ...attrs,
           'data-loading': String(!!props.loading),
           'data-disabled': String(!!props.disabled),
           onClick: () => emit('press')
@@ -41,6 +43,7 @@ const UiButtonStub = defineComponent({
 function makeSaveButton({ title = 'My Deck', is_dirty = true } = {}) {
   const settings = reactive({ title })
   const saveDeck = vi.fn().mockResolvedValue(true)
+  const resetChanges = vi.fn()
   const close = vi.fn()
 
   const editor = {
@@ -48,7 +51,8 @@ function makeSaveButton({ title = 'My Deck', is_dirty = true } = {}) {
     is_dirty: ref(is_dirty),
     has_title: computed(() => !!settings.title?.trim()),
     title_error: ref(undefined),
-    saveDeck
+    saveDeck,
+    resetChanges
   }
 
   const wrapper = mount(DeckSaveButton, {
@@ -61,7 +65,7 @@ function makeSaveButton({ title = 'My Deck', is_dirty = true } = {}) {
     }
   })
 
-  return { wrapper, editor, settings, saveDeck, close }
+  return { wrapper, editor, settings, saveDeck, resetChanges, close }
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -259,5 +263,38 @@ describe('DeckSaveButton — empty-title check fires before not-dirty check [obl
 
     expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
     expect(mockEmitSfx).not.toHaveBeenCalledWith('digi_powerdown')
+  })
+})
+
+describe('DeckSaveButton — reset button [obligation]', () => {
+  test('is disabled when not dirty [obligation]', () => {
+    const { wrapper } = makeSaveButton({ is_dirty: false })
+    expect(
+      wrapper.find('[data-testid="deck-settings__reset-button"]').attributes('data-disabled')
+    ).toBe('true')
+  })
+
+  test('is not disabled when dirty [obligation]', () => {
+    const { wrapper } = makeSaveButton({ is_dirty: true })
+    expect(
+      wrapper.find('[data-testid="deck-settings__reset-button"]').attributes('data-disabled')
+    ).toBe('false')
+  })
+
+  test('pressing it while disabled does NOT call resetChanges, only plays digi_powerdown [obligation]', async () => {
+    const { wrapper, resetChanges } = makeSaveButton({ is_dirty: false })
+
+    await wrapper.find('[data-testid="deck-settings__reset-button"]').trigger('click')
+
+    expect(resetChanges).not.toHaveBeenCalled()
+    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+  })
+
+  test('pressing it while enabled calls resetChanges [obligation]', async () => {
+    const { wrapper, resetChanges } = makeSaveButton({ is_dirty: true })
+
+    await wrapper.find('[data-testid="deck-settings__reset-button"]').trigger('click')
+
+    expect(resetChanges).toHaveBeenCalledTimes(1)
   })
 })

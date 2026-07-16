@@ -1,7 +1,11 @@
 import { computed, reactive, ref, watch, type InjectionKey } from 'vue'
 import { useUpsertMemberMutation } from '@/api/members'
 import { useMemberStore } from '@/stores/member'
-import { buildMemberPayload, hasMemberChanges } from '@/utils/member/payload'
+import {
+  buildMemberPayload,
+  hasMemberChanges,
+  type ResolvedMemberPreferences
+} from '@/utils/member/payload'
 import { replaceReactiveContents } from '@/utils/reactive'
 
 /**
@@ -19,8 +23,16 @@ export function useMemberEditor() {
     }
   }
 
-  function buildInitialPreferences() {
-    return { ...member_store.preferences }
+  // Spread each nested group individually — `{ ...member_store.preferences }`
+  // only copies the top level, so `preferences.study` etc. would still alias
+  // the store's own objects and silently write through to it on edit (same
+  // aliasing bug `useDeckEditor.buildInitialCardAttributes` avoids for `front`/`back`).
+  function buildInitialPreferences(): ResolvedMemberPreferences {
+    return {
+      accessibility: { ...member_store.preferences.accessibility },
+      audio: { ...member_store.preferences.audio },
+      study: { ...member_store.preferences.study }
+    }
   }
 
   function buildInitialCover(): MemberCover {

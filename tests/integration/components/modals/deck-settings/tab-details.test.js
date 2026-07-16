@@ -211,7 +211,7 @@ describe('TabDetails + DeckSaveButton — shared editor instance [obligation]', 
       }
     })
 
-    await wrapper.find('button').trigger('click')
+    await wrapper.find('[data-testid="deck-settings__save-button"]').trigger('click')
 
     expect(wrapper.find('[data-testid="ui-input"]').attributes('error')).toBe(
       'Give your deck a name'

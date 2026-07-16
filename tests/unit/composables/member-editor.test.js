@@ -194,4 +194,39 @@ describe('useMemberEditor', () => {
     const editor = useMemberEditor()
     expect(editor.saving).toBe(mockIsLoading)
   })
+
+  describe('resetChanges [obligation]', () => {
+    test('restores settings/preferences/cover to their store-seeded values', () => {
+      const editor = useMemberEditor()
+
+      editor.settings.display_name = 'Renamed'
+      editor.settings.description = 'changed'
+      editor.preferences.accessibility.left_hand = true
+      editor.cover.theme = 'red-500'
+
+      editor.resetChanges()
+
+      expect(editor.settings.display_name).toBe('Chris')
+      expect(editor.settings.description).toBe('hello')
+      expect(editor.preferences).toEqual(mockMember.preferences)
+      expect(editor.cover).toEqual({
+        theme: 'green-500',
+        theme_dark: 'green-800',
+        pattern: 'bank-note'
+      })
+    })
+
+    test('is_dirty is false again after resetChanges, across settings/preferences/cover edits [obligation]', () => {
+      const editor = useMemberEditor()
+
+      editor.settings.display_name = 'Renamed'
+      editor.preferences.study.show_all_ratings = false
+      editor.cover.theme = 'red-500'
+      expect(editor.is_dirty.value).toBe(true)
+
+      editor.resetChanges()
+
+      expect(editor.is_dirty.value).toBe(false)
+    })
+  })
 })

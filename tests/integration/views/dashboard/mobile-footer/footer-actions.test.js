@@ -83,12 +83,12 @@ describe('DashboardFooterActions', () => {
   })
 
   describe('edit-decks button', () => {
-    test('shows pencil icon, Edit Decks label, and brown-300 theme when not editing', () => {
+    test('shows pencil icon, Edit Decks label, and brown-700 theme when not editing', () => {
       const wrapper = mountFooterActions({ editing_decks: false })
       const button = wrapper.find('[data-testid="dashboard-footer-actions__edit-decks"]')
 
       expect(button.attributes('icon-left')).toBe('pencil')
-      expect(button.attributes('data-theme')).toBe('brown-300')
+      expect(button.attributes('data-theme')).toBe('brown-700')
       expect(button.text()).toBe('Edit Decks')
     })
 
