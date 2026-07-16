@@ -45,6 +45,8 @@ const { spin_value, is_all, onSpin } = useCappedToggle(
       :max="max"
       :step="step"
       :pill_label="all_label"
+      pill_theme="green-500"
+      pill_theme_dark="green-800"
       v-model:pill_active="is_all"
       wrap
       @update:value="onSpin"

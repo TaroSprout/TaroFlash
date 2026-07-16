@@ -3,7 +3,7 @@ import { computed, ref, watch, type Ref, type WritableComputedRef } from 'vue'
 type Capped = number | null | undefined
 
 export type UseCappedToggleResult = {
-  /** Numeric value bound to a spinbox; updates when the model is non-null. */
+  /** Numeric value bound to a spinbox; shows `on_all_prefill()` while "all" is active. */
   spin_value: WritableComputedRef<number>
   /** True when the model is `null` ("all" / unlimited). */
   is_all: WritableComputedRef<boolean>
@@ -13,8 +13,12 @@ export type UseCappedToggleResult = {
 
 /**
  * Pair a numeric model with an "all" toggle, where `null` means unlimited.
- * Hitting `max` on the spinbox flips to `null`; toggling "all" off restores
- * the last numeric value (or `default_value`).
+ * While "all" is active the spinbox displays `on_all_prefill()` (e.g. the
+ * deck's card count) rather than a cached number — this keeps it honest when
+ * `model` becomes `null` from outside (preset switch, reset-to-preset), not
+ * just from the pill click. Toggling "all" off restores the last numeric
+ * value the model held, or `on_all_prefill()` if it was never set (entering
+ * already in "all" mode).
  *
  * @example
  * const { spin_value, is_all, onSpin } = useCappedToggle(model, 200, 50, () => deck.card_count)
@@ -25,10 +29,9 @@ export function useCappedToggle(
   default_value: number,
   on_all_prefill?: () => number | undefined
 ): UseCappedToggleResult {
-  const local = ref<number>(
-    model.value ?? on_all_prefill?.() ?? (Number.isFinite(max) ? max : default_value)
-  )
+  const fallback_max = () => on_all_prefill?.() ?? (Number.isFinite(max) ? max : default_value)
 
+  const local = ref<number>(model.value ?? default_value)
   const last_numeric = ref<number | null>(model.value ?? null)
 
   watch(model, (v) => {
@@ -42,20 +45,18 @@ export function useCappedToggle(
     get: () => model.value === null,
     set: (on: boolean) => {
       if (on) {
-        if (local.value != null) last_numeric.value = local.value
-        const prefill = on_all_prefill?.()
-        if (prefill != null) local.value = prefill
         model.value = null
-      } else {
-        const restored = last_numeric.value ?? local.value
-        local.value = restored
-        model.value = restored
+        return
       }
+
+      const restored = last_numeric.value ?? fallback_max()
+      local.value = restored
+      model.value = restored
     }
   })
 
   const spin_value = computed({
-    get: () => local.value,
+    get: () => (is_all.value ? fallback_max() : local.value),
     set: (n: number) => onSpin(n)
   })
 

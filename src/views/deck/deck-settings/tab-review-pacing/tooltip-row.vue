@@ -42,13 +42,14 @@ const { t } = useI18n()
       <ui-button
         v-if="overridden"
         data-testid="tooltip-row__reset"
-        data-theme="brown-700"
+        data-theme="brown-500"
         data-theme-dark="brown-100"
         variant="ghost"
         size="sm"
         icon-only
         icon-left="refresh"
         mobile-tooltip
+        :sfx="{ press: 'snappy_button_5' }"
         @press="emit('reset')"
         class="absolute! -right-8"
       >

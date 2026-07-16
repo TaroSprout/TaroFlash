@@ -41,6 +41,16 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
     }
   })
 
+  // `deck.*` is the value resolved server-side at fetch time — it still
+  // reflects a since-cleared override, so un-pinning a field must fall back
+  // to the live selected preset instead, or the UI won't visibly change
+  // until save + refetch.
+  const selected_preset = computed(() =>
+    presets_query.data.value?.find(
+      (preset) => preset.id === (pacing.preset_id ?? system_preset.value?.id)
+    )
+  )
+
   const is_overridden = computed(
     () =>
       pacing.desired_retention_override !== null ||
@@ -90,17 +100,26 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
   }
 
   const desired_retention = computed<number>({
-    get: () => pacing.desired_retention_override ?? deck.desired_retention!,
+    get: () =>
+      pacing.desired_retention_override ??
+      selected_preset.value?.desired_retention ??
+      deck.desired_retention!,
     set: (value) => (pacing.desired_retention_override = value)
   })
 
   const learning_steps = computed<string[]>({
-    get: () => pacing.learning_steps_override ?? deck.learning_steps!,
+    get: () =>
+      pacing.learning_steps_override ??
+      selected_preset.value?.learning_steps ??
+      deck.learning_steps!,
     set: (steps) => (pacing.learning_steps_override = steps)
   })
 
   const relearning_steps = computed<string[]>({
-    get: () => pacing.relearning_steps_override ?? deck.relearning_steps!,
+    get: () =>
+      pacing.relearning_steps_override ??
+      selected_preset.value?.relearning_steps ??
+      deck.relearning_steps!,
     set: (steps) => (pacing.relearning_steps_override = steps)
   })
 
@@ -128,11 +147,16 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
     set: (key) => (relearning_steps.value = RELEARNING_STEP_PRESETS[key])
   })
 
+  // `max_*_per_day` are nullable on the preset row itself (null = unbounded),
+  // so a loaded preset's value must win outright — falling back to `deck.*`
+  // only while the preset hasn't loaded yet, not whenever it's null.
   const max_reviews_per_day = computed<number | null>({
-    get: () =>
-      pacing.has_max_reviews_override
-        ? pacing.max_reviews_per_day_override
-        : (deck.max_reviews_per_day ?? null),
+    get: () => {
+      if (pacing.has_max_reviews_override) return pacing.max_reviews_per_day_override
+      return selected_preset.value
+        ? selected_preset.value.max_reviews_per_day
+        : (deck.max_reviews_per_day ?? null)
+    },
     set: (value) => {
       pacing.has_max_reviews_override = true
       pacing.max_reviews_per_day_override = value
@@ -140,10 +164,12 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
   })
 
   const max_new_per_day = computed<number | null>({
-    get: () =>
-      pacing.has_max_new_override
-        ? pacing.max_new_per_day_override
-        : (deck.max_new_per_day ?? null),
+    get: () => {
+      if (pacing.has_max_new_override) return pacing.max_new_per_day_override
+      return selected_preset.value
+        ? selected_preset.value.max_new_per_day
+        : (deck.max_new_per_day ?? null)
+    },
     set: (value) => {
       pacing.has_max_new_override = true
       pacing.max_new_per_day_override = value
