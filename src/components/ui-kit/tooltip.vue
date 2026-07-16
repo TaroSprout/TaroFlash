@@ -14,7 +14,6 @@ const {
   element = 'div',
   visible = false,
   suppress = false,
-  static_on_mobile = false,
   theme = 'white',
   theme_dark = 'brown-100',
   max_chars = 32
@@ -26,7 +25,6 @@ const {
   element?: 'div' | 'span' | 'button' | 'label'
   visible?: boolean
   suppress?: boolean
-  static_on_mobile?: boolean
   theme?: string
   theme_dark?: string
   // Wraps the tooltip body at roughly this many characters per line, using
@@ -42,9 +40,10 @@ const is_coarse_pointer = useMatchMedia('coarse')
 
 // gates both DOM mount (v-if) and autoUpdate — keeps unused tooltips out of
 // the DOM entirely so switching modes doesn't pay the cost of mounting N
-// teleported popovers up front
+// teleported popovers up front. Coarse pointers (touch) never show tooltips —
+// there's no hover to trigger them intentionally, only a tap-driven focus.
 const should_show = computed(
-  () => !suppress && (visible || is_active.value || (static_on_mobile && is_coarse_pointer.value))
+  () => !suppress && !is_coarse_pointer.value && (visible || is_active.value)
 )
 
 // Rough heuristic — good enough to tell whether `text` will wrap onto more
@@ -128,11 +127,5 @@ function onPointerLeave(e: PointerEvent) {
 
 .ui-tooltip--visible {
   display: block;
-}
-
-@media (pointer: coarse) {
-  .ui-tooltip--static {
-    display: block;
-  }
 }
 </style>
