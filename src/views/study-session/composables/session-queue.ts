@@ -158,8 +158,6 @@ export function useSessionQueue(pacing: ReviewPacingParams, _config?: Partial<De
   function updateConfig(updates: Partial<DeckConfig>) {
     config.study_all_cards = updates.study_all_cards ?? config.study_all_cards
     config.shuffle = updates.shuffle ?? config.shuffle
-    config.max_reviews_per_day = updates.max_reviews_per_day ?? config.max_reviews_per_day
-    config.max_new_per_day = updates.max_new_per_day ?? config.max_new_per_day
     config.flip_cards = updates.flip_cards ?? config.flip_cards
 
     if (_raw_cards.value.length) _processCards()
