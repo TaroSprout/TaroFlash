@@ -53,9 +53,10 @@ describe('DashboardSkeleton (views/dashboard/skeleton.vue)', () => {
     expect(wrapper.find('[data-testid="dashboard-skeleton"]').exists()).toBe(true)
   })
 
-  test('includes DashboardActionsPanelSkeleton in the left column', () => {
+  test('includes DashboardActionsPanelSkeleton and DashboardTipCardSkeleton in the left column', () => {
     const wrapper = mountSkeleton()
     expect(wrapper.find('[data-testid="actions-panel-skeleton-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="dashboard-tip-card-skeleton"]').exists()).toBe(true)
   })
 
   test('includes ReviewInboxSkeleton and DeckGridSkeleton in the right column', () => {
