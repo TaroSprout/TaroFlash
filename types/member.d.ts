@@ -32,9 +32,6 @@ type MemberPreferences = {
   }
   study?: {
     show_all_ratings?: boolean
-    desired_retention?: number
-    learning_steps?: string[]
-    relearning_steps?: string[]
   }
 }
 

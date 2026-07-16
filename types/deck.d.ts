@@ -31,6 +31,11 @@ type Deck = {
   has_image?: boolean
   card_count?: number
   rank?: number
+  review_pacing_preset_id?: number | null
+  desired_retention?: number
+  learning_steps?: string[]
+  relearning_steps?: string[]
+  has_review_pacing_overrides?: boolean
 }
 
 type CardEditorMode = 'view' | 'edit' | 'import-export'
