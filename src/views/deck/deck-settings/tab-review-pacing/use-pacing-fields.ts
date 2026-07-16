@@ -77,6 +77,15 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
   const has_max_reviews_override = computed(() => pacing.has_max_reviews_override)
   const has_max_new_override = computed(() => pacing.has_max_new_override)
 
+  // The three fields only editable from the advanced modal — surfaced so the
+  // "Advanced" button can badge itself without the caller re-deriving this.
+  const has_advanced_override = computed(
+    () =>
+      has_desired_retention_override.value ||
+      has_learning_steps_override.value ||
+      has_relearning_steps_override.value
+  )
+
   function resetDesiredRetention() {
     pacing.desired_retention_override = null
   }
@@ -193,6 +202,7 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
     has_relearning_steps_override,
     has_max_reviews_override,
     has_max_new_override,
+    has_advanced_override,
     resetDesiredRetention,
     resetLearningSteps,
     resetRelearningSteps,
