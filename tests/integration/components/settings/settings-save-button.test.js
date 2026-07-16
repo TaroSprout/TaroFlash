@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, ref } from 'vue'
+import { defineComponent, h, ref, useAttrs } from 'vue'
 import SettingsSaveButton from '@/views/settings/settings-save-button.vue'
 import { memberEditorKey } from '@/composables/member/editor'
 import { settingsCloseKey } from '@/views/settings/layout'
@@ -17,12 +17,14 @@ const UiButtonStub = defineComponent({
     clickWhenDisabled: Boolean
   },
   emits: ['press'],
+  inheritAttrs: false,
   setup(props, { slots, emit }) {
+    const attrs = useAttrs()
     return () =>
       h(
         'button',
         {
-          'data-testid': 'settings__save-button',
+          ...attrs,
           'data-loading': String(!!props.loading),
           'data-disabled': String(!!props.disabled),
           'data-click-when-disabled': String(!!props.clickWhenDisabled),
@@ -42,13 +44,15 @@ vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 
 function makeWrapper({ is_dirty = true, save_result = true, has_name = true } = {}) {
   const saveMember = vi.fn().mockResolvedValue(save_result)
+  const resetChanges = vi.fn()
   const close = vi.fn()
 
   const editor = {
     is_dirty: ref(is_dirty),
     has_name: ref(has_name),
     name_error: ref(undefined),
-    saveMember
+    saveMember,
+    resetChanges
   }
 
   const wrapper = mount(SettingsSaveButton, {
@@ -61,7 +65,7 @@ function makeWrapper({ is_dirty = true, save_result = true, has_name = true } = 
     }
   })
 
-  return { wrapper, saveMember, close, editor }
+  return { wrapper, saveMember, resetChanges, close, editor }
 }
 
 beforeEach(() => {
@@ -171,7 +175,8 @@ describe('settings-save-button — save behaviour [obligation]', () => {
             is_dirty: ref(true),
             has_name: ref(true),
             name_error: ref(undefined),
-            saveMember
+            saveMember,
+            resetChanges: vi.fn()
           },
           [settingsCloseKey]: close
         },
@@ -189,5 +194,39 @@ describe('settings-save-button — save behaviour [obligation]', () => {
     expect(wrapper.find('[data-testid="settings__save-button"]').attributes('data-loading')).toBe(
       'false'
     )
+  })
+})
+
+// ── Reset button ────────────────────────────────────────────────────────────
+
+describe('settings-save-button — reset button [obligation]', () => {
+  test('is disabled when is_dirty is false [obligation]', () => {
+    const { wrapper } = makeWrapper({ is_dirty: false })
+    expect(wrapper.find('[data-testid="settings__reset-button"]').attributes('data-disabled')).toBe(
+      'true'
+    )
+  })
+
+  test('is not disabled when is_dirty is true [obligation]', () => {
+    const { wrapper } = makeWrapper({ is_dirty: true })
+    expect(wrapper.find('[data-testid="settings__reset-button"]').attributes('data-disabled')).toBe(
+      'false'
+    )
+  })
+
+  test('pressing it while disabled does NOT call resetChanges, only plays digi_powerdown [obligation]', async () => {
+    const { wrapper, resetChanges } = makeWrapper({ is_dirty: false })
+
+    await wrapper.find('[data-testid="settings__reset-button"]').trigger('click')
+
+    expect(resetChanges).not.toHaveBeenCalled()
+  })
+
+  test('pressing it while enabled calls resetChanges [obligation]', async () => {
+    const { wrapper, resetChanges } = makeWrapper({ is_dirty: true })
+
+    await wrapper.find('[data-testid="settings__reset-button"]').trigger('click')
+
+    expect(resetChanges).toHaveBeenCalledTimes(1)
   })
 })

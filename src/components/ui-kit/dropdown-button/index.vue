@@ -119,12 +119,17 @@ const button_attrs = computed(() =>
 const show_trigger = computed(() => !hideTrigger || !openOnTrigger)
 
 // Both transparent variants (ghost, outline) fill with theme-primary while the
-// menu is up, so the trigger and menu read as one continuous surface.
-const trigger_style = computed(() =>
-  variant !== 'solid' && popover_open.value
-    ? { '--btn-bg-color': 'var(--theme-primary)' }
-    : undefined
-)
+// menu is up, so the trigger and menu read as one continuous surface. Ghost's
+// text normally reads in theme-primary (nothing behind it), so it also needs
+// to flip to on-primary here to stay legible against that fill — outline's
+// text is on-primary already, so it needs no override.
+const trigger_style = computed(() => {
+  if (variant === 'solid' || !popover_open.value) return undefined
+  return {
+    '--btn-bg-color': 'var(--theme-primary)',
+    ...(variant === 'ghost' ? { '--btn-text-color': 'var(--theme-on-primary)' } : {})
+  }
+})
 
 function filter_attrs(keep: (key: string) => boolean) {
   const result: Record<string, unknown> = {}

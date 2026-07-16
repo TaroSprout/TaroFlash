@@ -13,8 +13,17 @@ import { useAdvancedPacingModal } from './use-advanced-pacing-modal'
 const { t } = useI18n()
 const { deck, pacing } = inject(deckEditorKey)!
 
-const { preset_options, selected_preset_value, max_reviews_per_day, max_new_per_day } =
-  usePacingFields(deck!, pacing)
+const {
+  preset_options,
+  selected_preset_value,
+  max_reviews_per_day,
+  max_new_per_day,
+  has_max_reviews_override,
+  has_max_new_override,
+  has_advanced_override,
+  resetMaxReviewsPerDay,
+  resetMaxNewPerDay
+} = usePacingFields(deck!, pacing)
 
 const advanced_pacing_modal = useAdvancedPacingModal()
 
@@ -52,7 +61,9 @@ function onAdvancedPress() {
         :step="DAILY_LIMIT_BOUNDS.step"
         :default_value="DAILY_LIMIT_BOUNDS.reviews.default"
         :prefill_when_all="deck?.card_count"
+        :overridden="has_max_reviews_override"
         v-model:value="max_reviews_per_day"
+        @reset="resetMaxReviewsPerDay"
       />
 
       <capped-spinbox-row
@@ -65,19 +76,29 @@ function onAdvancedPress() {
         :step="DAILY_LIMIT_BOUNDS.step"
         :default_value="DAILY_LIMIT_BOUNDS.new_cards.default"
         :prefill_when_all="deck?.card_count"
+        :overridden="has_max_new_override"
         v-model:value="max_new_per_day"
+        @reset="resetMaxNewPerDay"
       />
 
-      <ui-button
-        data-testid="tab-review-pacing__advanced"
-        data-theme="brown-100"
-        data-theme-dark="stone-700"
-        size="sm"
-        icon-right="line-arrow-right"
-        @press="onAdvancedPress"
-      >
-        {{ t('deck.settings-modal.review-pacing.advanced-toggle') }}
-      </ui-button>
+      <div class="relative">
+        <ui-button
+          data-testid="tab-review-pacing__advanced"
+          data-theme="brown-100"
+          data-theme-dark="stone-700"
+          size="sm"
+          icon-right="line-arrow-right"
+          @press="onAdvancedPress"
+        >
+          {{ t('deck.settings-modal.review-pacing.advanced-toggle') }}
+        </ui-button>
+
+        <span
+          v-if="has_advanced_override"
+          data-testid="tab-review-pacing__advanced-badge"
+          class="absolute -top-0.5 -right-0.5 size-3 rounded-full bg-red-400 dark:bg-red-500"
+        ></span>
+      </div>
     </div>
   </labeled-section>
 </template>

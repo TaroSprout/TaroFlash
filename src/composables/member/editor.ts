@@ -1,7 +1,12 @@
 import { computed, reactive, ref, watch, type InjectionKey } from 'vue'
 import { useUpsertMemberMutation } from '@/api/members'
 import { useMemberStore } from '@/stores/member'
-import { buildMemberPayload, hasMemberChanges } from '@/utils/member/payload'
+import {
+  buildMemberPayload,
+  hasMemberChanges,
+  type ResolvedMemberPreferences
+} from '@/utils/member/payload'
+import { replaceReactiveContents } from '@/utils/reactive'
 
 /**
  * Reactive state + mutations for editing the current member's profile.
@@ -11,14 +16,32 @@ import { buildMemberPayload, hasMemberChanges } from '@/utils/member/payload'
 export function useMemberEditor() {
   const member_store = useMemberStore()
 
-  const settings = reactive<{ display_name?: string; description?: string }>({
-    display_name: member_store.display_name,
-    description: member_store.description
-  })
+  function buildInitialSettings(): { display_name?: string; description?: string } {
+    return {
+      display_name: member_store.display_name,
+      description: member_store.description
+    }
+  }
 
-  const preferences = reactive({ ...member_store.preferences })
+  // Spread each nested group individually — `{ ...member_store.preferences }`
+  // only copies the top level, so `preferences.study` etc. would still alias
+  // the store's own objects and silently write through to it on edit (same
+  // aliasing bug `useDeckEditor.buildInitialCardAttributes` avoids for `front`/`back`).
+  function buildInitialPreferences(): ResolvedMemberPreferences {
+    return {
+      accessibility: { ...member_store.preferences.accessibility },
+      audio: { ...member_store.preferences.audio },
+      study: { ...member_store.preferences.study }
+    }
+  }
 
-  const cover = reactive<MemberCover>({ ...member_store.cover })
+  function buildInitialCover(): MemberCover {
+    return { ...member_store.cover }
+  }
+
+  const settings = reactive(buildInitialSettings())
+  const preferences = reactive(buildInitialPreferences())
+  const cover = reactive(buildInitialCover())
 
   const name_error = ref<string>()
 
@@ -57,6 +80,13 @@ export function useMemberEditor() {
     }
   )
 
+  /** Discard every staged edit, restoring `settings`/`preferences`/`cover` to their last-saved values. */
+  function resetChanges() {
+    replaceReactiveContents(settings, buildInitialSettings())
+    replaceReactiveContents(preferences, buildInitialPreferences())
+    replaceReactiveContents(cover, buildInitialCover())
+  }
+
   return {
     settings,
     preferences,
@@ -68,7 +98,8 @@ export function useMemberEditor() {
     has_name,
     name_error,
     saving: upsert_mutation.isLoading,
-    saveMember
+    saveMember,
+    resetChanges
   }
 }
 

@@ -281,10 +281,12 @@ function onClick(e: MouseEvent) {
 }
 
 /* Ghost: no background, no outline (transparent so the global hover-outline
-   rule never shows). Keeps the standard size padding. */
+   rule never shows). Text reads in --theme-primary since it sits directly on
+   the page/surface, not on a --theme-primary-colored fill like solid does.
+   Keeps the standard size padding. */
 .ui-kit-btn--ghost {
   --btn-bg-color: transparent;
-  --btn-text-color: var(--theme-on-primary);
+  --btn-text-color: var(--theme-primary);
   --btn-outline-color: transparent;
 }
 
@@ -423,6 +425,13 @@ function onClick(e: MouseEvent) {
 }
 .ui-kit-btn[data-active] .btn-icon.btn-icon--right {
   transform: scale(1.3) rotate(5deg);
+}
+
+/* Ghost fills its background solid with --theme-primary while active (see
+   `data-[active=true]:bg-(--theme-primary)` below) — flip text to
+   --theme-on-primary so it stays legible against that fill. */
+.ui-kit-btn--ghost[data-active] {
+  --btn-text-color: var(--theme-on-primary);
 }
 
 /* Quiet tap: the bgx sweep still plays via [data-active], but the icon holds

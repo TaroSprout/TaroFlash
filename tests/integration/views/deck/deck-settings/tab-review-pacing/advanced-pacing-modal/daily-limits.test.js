@@ -75,4 +75,20 @@ describe('DailyLimits', () => {
       .trigger('click')
     expect(wrapper.emitted('update:max_new')).toEqual([[11]])
   })
+
+  test('clicking the max-reviews reset button emits reset:max_reviews [obligation]', async () => {
+    const { wrapper } = makeWrapper({ has_max_reviews_override: true })
+    await wrapper
+      .find('[data-testid="tab-review-pacing__max-reviews"] [data-testid="tooltip-row__reset"]')
+      .trigger('click')
+    expect(wrapper.emitted('reset:max_reviews')).toHaveLength(1)
+  })
+
+  test('clicking the max-new reset button emits reset:max_new [obligation]', async () => {
+    const { wrapper } = makeWrapper({ has_max_new_override: true })
+    await wrapper
+      .find('[data-testid="tab-review-pacing__max-new"] [data-testid="tooltip-row__reset"]')
+      .trigger('click')
+    expect(wrapper.emitted('reset:max_new')).toHaveLength(1)
+  })
 })

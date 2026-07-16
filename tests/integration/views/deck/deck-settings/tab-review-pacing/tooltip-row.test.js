@@ -45,4 +45,29 @@ describe('TooltipRow', () => {
     expect(wrapper.find('[data-testid="trailing-control"]').exists()).toBe(true)
     expect(wrapper.findComponent(UiTooltip).exists()).toBe(true)
   })
+
+  describe('reset button [obligation]', () => {
+    test('does not render when overridden is false [obligation]', () => {
+      const wrapper = makeWrapper({ label: 'Max reviews', overridden: false })
+      expect(wrapper.find('[data-testid="tooltip-row__reset"]').exists()).toBe(false)
+    })
+
+    test('does not render when overridden is not passed [obligation]', () => {
+      const wrapper = makeWrapper({ label: 'Max reviews' })
+      expect(wrapper.find('[data-testid="tooltip-row__reset"]').exists()).toBe(false)
+    })
+
+    test('renders when overridden is true [obligation]', () => {
+      const wrapper = makeWrapper({ label: 'Max reviews', overridden: true })
+      expect(wrapper.find('[data-testid="tooltip-row__reset"]').exists()).toBe(true)
+    })
+
+    test('clicking it emits reset with no confirmation dialog [obligation]', async () => {
+      const wrapper = makeWrapper({ label: 'Max reviews', overridden: true })
+
+      await wrapper.find('[data-testid="tooltip-row__reset"]').trigger('click')
+
+      expect(wrapper.emitted('reset')).toHaveLength(1)
+    })
+  })
 })

@@ -116,82 +116,114 @@ describe('usePacingFields — selected_preset_value [obligation]', () => {
   })
 })
 
-// ── is_overridden / resetOverrides [obligation] ───────────────────────────────
+// ── has_advanced_override [obligation] ────────────────────────────────────────
+// Badges the "Advanced" button — scoped to the three fields hidden inside that
+// modal (retention/steps). Daily-limit overrides live outside it and must NOT
+// flip this flag, even though they have their own has_max_*_override computeds.
 
-describe('usePacingFields — is_overridden / resetOverrides [obligation]', () => {
-  test('is_overridden is false when no override field is set', () => {
-    const { is_overridden } = usePacingFields(makeDeck(), makePacing())
-    expect(is_overridden.value).toBe(false)
+describe('usePacingFields — has_advanced_override [obligation]', () => {
+  test('is false when no override field is set', () => {
+    const { has_advanced_override } = usePacingFields(makeDeck(), makePacing())
+    expect(has_advanced_override.value).toBe(false)
   })
 
-  test('is_overridden is true when desired_retention_override is set', () => {
-    const { is_overridden } = usePacingFields(
+  test('is true when desired_retention_override is set', () => {
+    const { has_advanced_override } = usePacingFields(
       makeDeck(),
       makePacing({ desired_retention_override: 95 })
     )
-    expect(is_overridden.value).toBe(true)
+    expect(has_advanced_override.value).toBe(true)
   })
 
-  test('is_overridden is true when only learning_steps_override is set', () => {
-    const { is_overridden } = usePacingFields(
+  test('is true when only learning_steps_override is set', () => {
+    const { has_advanced_override } = usePacingFields(
       makeDeck(),
       makePacing({ learning_steps_override: ['1d'] })
     )
-    expect(is_overridden.value).toBe(true)
+    expect(has_advanced_override.value).toBe(true)
   })
 
-  test('is_overridden is true when only relearning_steps_override is set', () => {
-    const { is_overridden } = usePacingFields(
+  test('is true when only relearning_steps_override is set', () => {
+    const { has_advanced_override } = usePacingFields(
       makeDeck(),
       makePacing({ relearning_steps_override: ['1d'] })
     )
-    expect(is_overridden.value).toBe(true)
+    expect(has_advanced_override.value).toBe(true)
   })
 
-  test('is_overridden is true when has_max_reviews_override is set, even when the override value itself is null (unbounded) [obligation]', () => {
-    const { is_overridden } = usePacingFields(
+  test('stays false when only has_max_reviews_override is set (daily limits are not "advanced") [obligation]', () => {
+    const { has_advanced_override } = usePacingFields(
       makeDeck(),
-      makePacing({ has_max_reviews_override: true, max_reviews_per_day_override: null })
+      makePacing({ has_max_reviews_override: true, max_reviews_per_day_override: 30 })
     )
-    expect(is_overridden.value).toBe(true)
+    expect(has_advanced_override.value).toBe(false)
   })
 
-  test('is_overridden is true when has_max_new_override is set [obligation]', () => {
-    const { is_overridden } = usePacingFields(
+  test('stays false when only has_max_new_override is set (daily limits are not "advanced") [obligation]', () => {
+    const { has_advanced_override } = usePacingFields(
       makeDeck(),
       makePacing({ has_max_new_override: true, max_new_per_day_override: 30 })
     )
-    expect(is_overridden.value).toBe(true)
+    expect(has_advanced_override.value).toBe(false)
   })
+})
 
-  test('resetOverrides clears every override field back to not-overridden [obligation]', () => {
-    const pacing = makePacing({
-      desired_retention_override: 95,
-      learning_steps_override: ['1d'],
-      relearning_steps_override: ['1d'],
-      has_max_reviews_override: true,
-      max_reviews_per_day_override: 30,
-      has_max_new_override: true,
-      max_new_per_day_override: null
-    })
-    const { resetOverrides } = usePacingFields(makeDeck(), pacing)
+// ── per-field reset* functions ─────────────────────────────────────────────────
 
-    resetOverrides()
+describe('usePacingFields — per-field reset functions', () => {
+  test('resetDesiredRetention clears only desired_retention_override', () => {
+    const pacing = makePacing({ desired_retention_override: 95, learning_steps_override: ['1d'] })
+    const { resetDesiredRetention } = usePacingFields(makeDeck(), pacing)
+
+    resetDesiredRetention()
 
     expect(pacing.desired_retention_override).toBeNull()
+    expect(pacing.learning_steps_override).toEqual(['1d'])
+  })
+
+  test('resetLearningSteps clears only learning_steps_override', () => {
+    const pacing = makePacing({ learning_steps_override: ['1d'] })
+    const { resetLearningSteps } = usePacingFields(makeDeck(), pacing)
+
+    resetLearningSteps()
+
     expect(pacing.learning_steps_override).toBeNull()
+  })
+
+  test('resetRelearningSteps clears only relearning_steps_override', () => {
+    const pacing = makePacing({ relearning_steps_override: ['1d'] })
+    const { resetRelearningSteps } = usePacingFields(makeDeck(), pacing)
+
+    resetRelearningSteps()
+
     expect(pacing.relearning_steps_override).toBeNull()
+  })
+
+  test('resetMaxReviewsPerDay un-pins the override and clears its value', () => {
+    const pacing = makePacing({ has_max_reviews_override: true, max_reviews_per_day_override: 30 })
+    const { resetMaxReviewsPerDay } = usePacingFields(makeDeck(), pacing)
+
+    resetMaxReviewsPerDay()
+
     expect(pacing.has_max_reviews_override).toBe(false)
     expect(pacing.max_reviews_per_day_override).toBeNull()
+  })
+
+  test('resetMaxNewPerDay un-pins the override and clears its value', () => {
+    const pacing = makePacing({ has_max_new_override: true, max_new_per_day_override: 30 })
+    const { resetMaxNewPerDay } = usePacingFields(makeDeck(), pacing)
+
+    resetMaxNewPerDay()
+
     expect(pacing.has_max_new_override).toBe(false)
     expect(pacing.max_new_per_day_override).toBeNull()
   })
 
-  test('resetOverrides does not touch pacing.preset_id [obligation]', () => {
+  test('resetting a field does not touch pacing.preset_id', () => {
     const pacing = makePacing({ preset_id: 2, desired_retention_override: 95 })
-    const { resetOverrides } = usePacingFields(makeDeck(), pacing)
+    const { resetDesiredRetention } = usePacingFields(makeDeck(), pacing)
 
-    resetOverrides()
+    resetDesiredRetention()
 
     expect(pacing.preset_id).toBe(2)
   })
@@ -272,20 +304,37 @@ describe('usePacingFields — learning_steps_key / relearning_steps_key [obligat
 // ── max_reviews_per_day / max_new_per_day [obligation] ────────────────────────
 
 describe('usePacingFields — max_reviews_per_day / max_new_per_day [obligation]', () => {
-  test('reads the deck-resolved value when not overridden', () => {
+  test('reads the live selected preset value, not deck.max_reviews_per_day, when not overridden [obligation]', () => {
+    mockPresetsData.value = [{ ...SYSTEM_PRESET, max_reviews_per_day: 77 }, CUSTOM_PRESET]
+    const { max_reviews_per_day } = usePacingFields(
+      makeDeck({ max_reviews_per_day: 42 }),
+      makePacing()
+    )
+    expect(max_reviews_per_day.value).toBe(77)
+  })
+
+  test('reads the live selected preset value, not deck.max_new_per_day, when not overridden [obligation]', () => {
+    mockPresetsData.value = [{ ...SYSTEM_PRESET, max_new_per_day: 15 }, CUSTOM_PRESET]
+    const { max_new_per_day } = usePacingFields(makeDeck({ max_new_per_day: 20 }), makePacing())
+    expect(max_new_per_day.value).toBe(15)
+  })
+
+  test('returns null (unbounded) when the loaded preset explicitly caps max_reviews_per_day at null, not deck.max_reviews_per_day [obligation]', () => {
+    mockPresetsData.value = [{ ...SYSTEM_PRESET, max_reviews_per_day: null }, CUSTOM_PRESET]
+    const { max_reviews_per_day } = usePacingFields(
+      makeDeck({ max_reviews_per_day: 42 }),
+      makePacing()
+    )
+    expect(max_reviews_per_day.value).toBeNull()
+  })
+
+  test('falls back to deck.max_reviews_per_day only while no preset has loaded yet [obligation]', () => {
+    mockPresetsData.value = []
     const { max_reviews_per_day } = usePacingFields(
       makeDeck({ max_reviews_per_day: 42 }),
       makePacing()
     )
     expect(max_reviews_per_day.value).toBe(42)
-  })
-
-  test('reads the deck-resolved unbounded (null) value when not overridden', () => {
-    const { max_reviews_per_day } = usePacingFields(
-      makeDeck({ max_reviews_per_day: null }),
-      makePacing()
-    )
-    expect(max_reviews_per_day.value).toBeNull()
   })
 
   test('reads the override value over the deck-resolved value when has_max_reviews_override is set [obligation]', () => {

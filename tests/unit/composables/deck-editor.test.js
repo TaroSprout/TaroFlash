@@ -422,6 +422,54 @@ describe('useDeckEditor', () => {
     })
   })
 
+  // ── resetChanges ───────────────────────────────────────────────────────────
+
+  describe('resetChanges [obligation]', () => {
+    test('restores cover/config/card_attributes to their original deck values without mutating the original deck object [obligation]', () => {
+      const deck = makeDeck({
+        cover_config: { color: '#ff0000', theme: 'sunrise' },
+        study_config: { study_all_cards: false, shuffle: false },
+        card_attributes: {
+          front: { text_size: 'medium' },
+          back: { text_size: 'small' }
+        }
+      })
+      const deck_snapshot = structuredClone(deck)
+      const { cover, config, card_attributes, resetChanges } = useDeckEditor(deck)
+
+      cover.theme = 'midnight'
+      config.shuffle = true
+      card_attributes.front.text_size = 'huge'
+
+      resetChanges()
+
+      expect(cover).toEqual(deck_snapshot.cover_config)
+      expect(config).toEqual(deck_snapshot.study_config)
+      expect(card_attributes).toEqual(deck_snapshot.card_attributes)
+      expect(deck).toEqual(deck_snapshot)
+    })
+
+    test('is_dirty is false again after resetChanges, across settings/config/cover/card_attributes/pacing edits [obligation]', () => {
+      const deck = makeDeck({
+        cover_config: { color: '#ff0000' },
+        study_config: { study_all_cards: false }
+      })
+      const { settings, config, cover, card_attributes, pacing, is_dirty, resetChanges } =
+        useDeckEditor(deck)
+
+      settings.title = 'Renamed'
+      config.study_all_cards = true
+      cover.color = '#000000'
+      card_attributes.front.text_size = 'huge'
+      pacing.desired_retention_override = 0.8
+      expect(is_dirty.value).toBe(true)
+
+      resetChanges()
+
+      expect(is_dirty.value).toBe(false)
+    })
+  })
+
   // ── deleteDeck ─────────────────────────────────────────────────────────────
 
   describe('deleteDeck', () => {

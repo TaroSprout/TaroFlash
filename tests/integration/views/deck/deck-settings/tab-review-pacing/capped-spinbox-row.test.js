@@ -157,4 +157,15 @@ describe('CappedSpinboxRow', () => {
     await wrapper.find('[data-testid="ui-kit-spinbox__all-pill"]').trigger('click')
     expect(wrapper.find('[data-testid="ui-kit-spinbox"]').attributes('data-value')).toBe('137')
   })
+
+  test('forwards the overridden prop to tooltip-row', () => {
+    const { wrapper } = makeRow({ overridden: true })
+    expect(wrapper.findComponent(TooltipRow).props('overridden')).toBe(true)
+  })
+
+  test('clicking the reset button emits reset [obligation]', async () => {
+    const { wrapper } = makeRow({ overridden: true })
+    await wrapper.find('[data-testid="tooltip-row__reset"]').trigger('click')
+    expect(wrapper.emitted('reset')).toHaveLength(1)
+  })
 })

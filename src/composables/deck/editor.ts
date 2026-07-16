@@ -5,6 +5,7 @@ import { useResetDeckReviewsMutation } from '@/api/reviews'
 import { useDeckActions } from '@/composables/deck/actions'
 import { DECK_SETTINGS_DEFAULTS, DECK_CONFIG_DEFAULTS } from '@/utils/deck/defaults'
 import { buildDeckPayload, hasDeckChanges, type DeckPacingEditorState } from '@/utils/deck/payload'
+import { replaceReactiveContents } from '@/utils/reactive'
 import { emitSfx } from '@/sfx/bus'
 
 /**
@@ -14,36 +15,59 @@ import { emitSfx } from '@/sfx/bus'
  * helpers that flush them to the backend.
  */
 export function useDeckEditor(deck?: Deck) {
-  const settings = reactive<Omit<Deck, 'study_config' | 'cover_config'>>({
-    id: deck?.id as number,
-    title: deck?.title,
-    description: deck?.description,
-    is_public: deck?.is_public ?? DECK_SETTINGS_DEFAULTS.is_public,
-    updated_at: deck?.updated_at
-  })
-
-  const config = reactive<DeckConfig>(
-    deck?.study_config ?? {
-      study_all_cards: DECK_CONFIG_DEFAULTS.study_all_cards
+  function buildInitialSettings(): Omit<Deck, 'study_config' | 'cover_config'> {
+    return {
+      id: deck?.id as number,
+      title: deck?.title,
+      description: deck?.description,
+      is_public: deck?.is_public ?? DECK_SETTINGS_DEFAULTS.is_public,
+      updated_at: deck?.updated_at
     }
-  )
+  }
 
-  const cover = reactive<DeckCover>(deck?.cover_config ?? {})
-  const card_attributes = reactive<DeckCardAttributes>({
-    front: deck?.card_attributes?.front ?? {},
-    back: deck?.card_attributes?.back ?? {}
-  })
+  // Fresh copies, not the `deck` prop's own nested objects/arrays — `reactive()`
+  // wraps whatever it's given rather than cloning it, so aliasing `deck`'s
+  // objects here would let editor mutations silently write through to `deck`
+  // itself, corrupting the very snapshot `resetChanges()` reads back from.
+  function buildInitialConfig(): DeckConfig {
+    return deck?.study_config
+      ? { ...deck.study_config }
+      : { study_all_cards: DECK_CONFIG_DEFAULTS.study_all_cards }
+  }
 
-  const pacing = reactive<DeckPacingEditorState>({
-    preset_id: deck?.review_pacing_preset_id ?? null,
-    desired_retention_override: deck?.desired_retention_override ?? null,
-    learning_steps_override: deck?.learning_steps_override ?? null,
-    relearning_steps_override: deck?.relearning_steps_override ?? null,
-    has_max_reviews_override: deck?.has_max_reviews_override ?? false,
-    max_reviews_per_day_override: deck?.max_reviews_per_day_override ?? null,
-    has_max_new_override: deck?.has_max_new_override ?? false,
-    max_new_per_day_override: deck?.max_new_per_day_override ?? null
-  })
+  function buildInitialCover(): DeckCover {
+    return { ...deck?.cover_config }
+  }
+
+  function buildInitialCardAttributes(): DeckCardAttributes {
+    return {
+      front: { ...deck?.card_attributes?.front },
+      back: { ...deck?.card_attributes?.back }
+    }
+  }
+
+  function buildInitialPacing(): DeckPacingEditorState {
+    return {
+      preset_id: deck?.review_pacing_preset_id ?? null,
+      desired_retention_override: deck?.desired_retention_override ?? null,
+      learning_steps_override: deck?.learning_steps_override
+        ? [...deck.learning_steps_override]
+        : null,
+      relearning_steps_override: deck?.relearning_steps_override
+        ? [...deck.relearning_steps_override]
+        : null,
+      has_max_reviews_override: deck?.has_max_reviews_override ?? false,
+      max_reviews_per_day_override: deck?.max_reviews_per_day_override ?? null,
+      has_max_new_override: deck?.has_max_new_override ?? false,
+      max_new_per_day_override: deck?.max_new_per_day_override ?? null
+    }
+  }
+
+  const settings = reactive(buildInitialSettings())
+  const config = reactive(buildInitialConfig())
+  const cover = reactive(buildInitialCover())
+  const card_attributes = reactive(buildInitialCardAttributes())
+  const pacing = reactive(buildInitialPacing())
 
   const active_side = ref<CardSide>('cover')
   const title_error = ref<string>()
@@ -105,6 +129,15 @@ export function useDeckEditor(deck?: Deck) {
     active_side.value = side
   }
 
+  /** Discard every staged edit, restoring `settings`/`config`/`cover`/`card_attributes`/`pacing` to their last-saved values. */
+  function resetChanges() {
+    replaceReactiveContents(settings, buildInitialSettings())
+    replaceReactiveContents(config, buildInitialConfig())
+    replaceReactiveContents(cover, buildInitialCover())
+    replaceReactiveContents(card_attributes, buildInitialCardAttributes())
+    replaceReactiveContents(pacing, buildInitialPacing())
+  }
+
   watch(
     () => settings.title,
     () => {
@@ -130,6 +163,7 @@ export function useDeckEditor(deck?: Deck) {
     saveDeck,
     deleteDeck,
     resetReviews,
+    resetChanges,
     setActiveSide
   }
 }

@@ -76,7 +76,16 @@ const ButtonStub = defineComponent({
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-const SYSTEM_PRESET = { id: 1, name: 'Recommended', is_system: true }
+const SYSTEM_PRESET = {
+  id: 1,
+  name: 'Recommended',
+  is_system: true,
+  desired_retention: 90,
+  learning_steps: ['1m', '10m'],
+  relearning_steps: ['10m'],
+  max_reviews_per_day: 50,
+  max_new_per_day: 10
+}
 
 function makeWrapper({ deckOverrides = {}, pacingOverrides = {} } = {}) {
   const deck = {
