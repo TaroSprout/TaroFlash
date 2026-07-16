@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
-import UiTooltip from '@/components/ui-kit/tooltip.vue'
-import UiIcon from '@/components/ui-kit/icon.vue'
+import TooltipRow from './tooltip-row.vue'
 import { useCappedToggle } from '@/composables/ui/capped-toggle'
 
 type CappedSpinboxRowProps = {
@@ -15,7 +14,7 @@ type CappedSpinboxRowProps = {
   tooltip?: string
 }
 
-const { max, default_value, prefill_when_all, tooltip } = defineProps<CappedSpinboxRowProps>()
+const { max, default_value, prefill_when_all } = defineProps<CappedSpinboxRowProps>()
 
 const model = defineModel<number | null | undefined>('value')
 
@@ -28,22 +27,7 @@ const { spin_value, is_all, onSpin } = useCappedToggle(
 </script>
 
 <template>
-  <div data-testid="capped-spinbox-row" class="flex items-center justify-between gap-4 w-full">
-    <span
-      data-testid="capped-spinbox-row__label"
-      class="flex items-center gap-2 text-brown-700 dark:text-brown-100"
-    >
-      {{ label }}
-      <ui-tooltip
-        v-if="tooltip"
-        element="span"
-        :text="tooltip"
-        class="flex cursor-pointer items-center"
-      >
-        <ui-icon src="info-circle" class="size-4 shrink-0" />
-      </ui-tooltip>
-    </span>
-
+  <tooltip-row data-testid="capped-spinbox-row" :label="label" :tooltip="tooltip" class="w-full">
     <ui-spinbox
       data-testid="capped-spinbox-row__spinbox"
       :value="spin_value"
@@ -55,5 +39,5 @@ const { spin_value, is_all, onSpin } = useCappedToggle(
       wrap
       @update:value="onSpin"
     />
-  </div>
+  </tooltip-row>
 </template>
