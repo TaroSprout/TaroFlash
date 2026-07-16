@@ -1,5 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
 import { createApp, ref, nextTick } from 'vue'
+import { createI18n } from 'vue-i18n'
+import messages from '@intlify/unplugin-vue-i18n/messages'
 
 const {
   lessonQueryMock,
@@ -74,6 +76,8 @@ function withReader(id = () => 1) {
       return () => {}
     }
   })
+  const i18n = createI18n({ locale: 'en-us', legacy: false, messages })
+  app.use(i18n)
   app.mount(document.createElement('div'))
   return [reader, app]
 }
@@ -247,7 +251,7 @@ describe('useLessonReader', () => {
       error.value = new Error('lesson exploded')
       await nextTick()
 
-      expect(noticeErrorMock).toHaveBeenCalledWith('lesson exploded')
+      expect(noticeErrorMock).toHaveBeenCalledWith("Couldn't load this lesson. Please try again.")
     })
   })
 

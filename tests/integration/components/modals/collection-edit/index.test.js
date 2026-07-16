@@ -321,7 +321,7 @@ describe('CollectionEditModal', () => {
       lessonsErrorRef.value = new Error('network down')
       await flushPromises()
 
-      expect(noticeErrorMock).toHaveBeenCalledWith('network down')
+      expect(noticeErrorMock).toHaveBeenCalledWith("Couldn't load these lessons. Please try again.")
       wrapper.unmount()
     })
   })

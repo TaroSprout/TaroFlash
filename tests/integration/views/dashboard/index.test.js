@@ -354,7 +354,7 @@ describe('DashboardIndex — decks error watch', () => {
     mountDashboard()
     decksErrorRef.value = { message: 'Network error' }
     await Promise.resolve()
-    expect(noticeErrorMock).toHaveBeenCalledWith('Network error')
+    expect(noticeErrorMock).toHaveBeenCalledWith("Couldn't load your decks. Please try again.")
   })
 })
 
@@ -385,7 +385,7 @@ describe('DashboardIndex — skeleton gating [obligation]', () => {
     decksErrorRef.value = { message: 'Network error' }
     await Promise.resolve()
 
-    expect(noticeErrorMock).toHaveBeenCalledWith('Network error')
+    expect(noticeErrorMock).toHaveBeenCalledWith("Couldn't load your decks. Please try again.")
     expect(wrapper.find('[data-testid="dashboard-skeleton-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="dashboard"]').exists()).toBe(false)
   })
