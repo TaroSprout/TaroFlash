@@ -35,7 +35,7 @@ const decks = computed(() => {
 const editing_decks = ref(false)
 
 watch(decks_error, (err) => {
-  if (err) notice.error(err.message)
+  if (err) notice.error(t('dashboard.decks-load-error'))
 })
 
 function onToggleEditDecks() {

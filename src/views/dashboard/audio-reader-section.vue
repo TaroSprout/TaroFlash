@@ -34,7 +34,7 @@ async function onCreate() {
 }
 
 watch(collections_error, (err) => {
-  if (err) notice.error(err.message)
+  if (err) notice.error(t('lesson-collections.section.load-error'))
 })
 </script>
 

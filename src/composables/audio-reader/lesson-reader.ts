@@ -1,5 +1,6 @@
 import { computed, ref, shallowRef, toValue, useTemplateRef, watch } from 'vue'
 import type { MaybeRefOrGetter } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { emitSfx } from '@/sfx/bus'
 import { useNoticeStore } from '@/stores/notice-store'
 import { useLessonQuery, useLessonAudioUrlQuery } from '@/api/lessons'
@@ -33,6 +34,7 @@ const TARGET_LANG = 'English'
  * const reader = useLessonReader(() => Number(props.id))
  */
 export function useLessonReader(id: MaybeRefOrGetter<number>) {
+  const { t } = useI18n()
   const notice = useNoticeStore()
 
   const lesson_id = computed(() => toValue(id))
@@ -116,7 +118,7 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
   )
 
   watch(error, (err) => {
-    if (err) notice.error(err.message)
+    if (err) notice.error(t('lesson-reader.load-error'))
   })
 
   // Colour a match by the cover of the first of its decks in the member's list:

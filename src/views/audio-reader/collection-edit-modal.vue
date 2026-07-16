@@ -109,7 +109,7 @@ async function onDeleteCollection() {
 }
 
 watch(lessons_error, (err) => {
-  if (err) notice.error(err.message)
+  if (err) notice.error(t('collection-view.lessons-load-error'))
 })
 
 // Start/stop polling as lessons enter/leave the processing state, so a card
