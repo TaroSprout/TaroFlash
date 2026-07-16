@@ -102,10 +102,7 @@ function onClose() {
     class="grid-rows-[auto_1fr_auto]! pb-(--dialog-px)"
     @close="onClose"
   >
-    <div
-      data-testid="move-cards__deck-list-wrap"
-      class="relative flex min-h-0 flex-1 flex-col px-(--dialog-px)"
-    >
+    <div data-testid="move-cards__deck-list-wrap" class="relative flex min-h-0 flex-1 flex-col">
       <ui-options-panel
         data-testid="move-cards__deck-list"
         scrollable
@@ -148,7 +145,7 @@ function onClose() {
       />
     </div>
 
-    <div data-testid="move-cards__actions" class="flex w-full justify-end gap-3 px-(--dialog-px)">
+    <div data-testid="move-cards__actions" class="flex w-full justify-end gap-3">
       <ui-button
         data-testid="move-cards__move"
         data-theme="blue-500"

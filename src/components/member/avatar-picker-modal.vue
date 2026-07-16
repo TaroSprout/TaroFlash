@@ -52,7 +52,7 @@ function onAvatarSelect(avatar: string) {
           ref="grid"
           data-testid="avatar-picker-modal__grid"
           :data-full-bleed="viewport === 'mobile'"
-          class="scroll-hidden grid grid-cols-4 gap-3 overflow-y-auto px-(--dialog-px) pb-(--dialog-px) pt-2 h-full"
+          class="scroll-hidden grid grid-cols-4 gap-3 overflow-y-auto pb-(--dialog-px) pt-2 h-full"
         >
           <button
             v-for="avatar in AVATAR_KEYS"

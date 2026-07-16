@@ -12,7 +12,7 @@ const { has_prev, has_next, flip, prev, next } = inject(mobileCardEditorKey)!
 <template>
   <div
     data-testid="mobile-card-editor__controls"
-    class="flex w-full items-center justify-between gap-2 px-(--dialog-px)"
+    class="flex w-full items-center justify-between gap-2"
   >
     <ui-button
       data-testid="mobile-card-editor__prev"
