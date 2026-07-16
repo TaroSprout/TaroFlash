@@ -1,7 +1,7 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { TIPS } from '@/utils/tips/catalog'
 
-const ROTATE_INTERVAL_MS = 15000
+const ROTATE_INTERVAL_MS = 30000
 
 export function useTipRotation() {
   const index = ref(Math.floor(Math.random() * TIPS.length))
