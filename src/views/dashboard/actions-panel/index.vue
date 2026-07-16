@@ -85,6 +85,7 @@ async function onSelect(value: string) {
 
     <template #body>
       <ui-options-panel
+        data-theme="brown-200"
         data-theme-dark="stone-700"
         :entries="deck_entries"
         size="lg"
