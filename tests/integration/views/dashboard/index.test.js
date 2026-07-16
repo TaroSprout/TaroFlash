@@ -153,6 +153,11 @@ const AudioReaderSectionStub = defineComponent({
   }
 })
 
+const DashboardTipCardStub = defineComponent({
+  name: 'DashboardTipCard',
+  setup: () => () => h('div', { 'data-testid': 'dashboard-tip-card-stub' })
+})
+
 const DashboardMobileFooterStub = defineComponent({
   name: 'DashboardMobileFooter',
   props: ['due_decks', 'editing_decks'],
@@ -191,6 +196,7 @@ function mountDashboard() {
         DeckGrid: DeckGridStub,
         DeckGridSortOptions: DeckGridSortOptionsStub,
         AudioReaderSection: AudioReaderSectionStub,
+        DashboardTipCard: DashboardTipCardStub,
         DashboardMobileFooter: DashboardMobileFooterStub
       }
     }
@@ -388,6 +394,15 @@ describe('DashboardIndex — skeleton gating [obligation]', () => {
     expect(noticeErrorMock).toHaveBeenCalledWith("Couldn't load your decks. Please try again.")
     expect(wrapper.find('[data-testid="dashboard-skeleton-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="dashboard"]').exists()).toBe(false)
+  })
+})
+
+describe('DashboardIndex — left column layout', () => {
+  test('renders dashboard-tip-card below dashboard-actions-panel in the left slot', () => {
+    const wrapper = mountDashboard()
+    const left = wrapper.find('[data-testid="dashboard-shell"]')
+    expect(left.find('[data-testid="dashboard-actions-panel"]').exists()).toBe(true)
+    expect(left.find('[data-testid="dashboard-tip-card-stub"]').exists()).toBe(true)
   })
 })
 

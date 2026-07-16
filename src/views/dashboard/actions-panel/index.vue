@@ -97,10 +97,9 @@ async function onSelect(value: string) {
         data-testid="dashboard-actions-panel__study-button"
         size="xl"
         icon-left="book-flip-page"
-        data-theme="yellow-500"
-        data-theme-dark="yellow-700"
+        data-theme="blue-500"
+        data-theme-dark="blue-650"
         full-width
-        class="max-mxl:hidden!"
         :disabled="editing_decks || due_decks.length === 0"
         @press="onStudyAll"
       >

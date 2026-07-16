@@ -61,20 +61,28 @@ Symlink `node_modules` so Vite runs without a fresh install:
 ln -s "$(pwd)/node_modules" "../TaroFlash-<slug>/node_modules"
 ```
 
-Copy all gitignored env files that exist — missing env vars cause silent runtime crashes:
+Copy all gitignored env files that exist — missing env vars cause silent runtime crashes. Use `setopt nullglob` (not a bare glob) so a non-matching pattern doesn't abort the whole loop under zsh:
 
 ```sh
+setopt nullglob
 for f in .env .env.local .env.*.local; do
   [ -f "$f" ] && cp "$f" "../TaroFlash-<slug>/$f"
 done
+unsetopt nullglob
+```
+
+**Secrets manager**: this project pulls `VITE_SUPABASE_*` and other secrets from Doppler at runtime (`doppler run -- vp dev`), not from `.env` — `.env` only holds non-secret vars like `VITE_LOG_LEVEL`. Doppler's project/config scope is set per-directory and does **not** carry over to the worktree, so it must be scoped there explicitly or the dev server will fail with errors like `supabaseUrl is required`:
+
+```sh
+cd ../TaroFlash-<slug> && doppler setup --project taroflash --config dev --no-interactive
 ```
 
 ### Step 4 — Start the dev server
 
-Run in the background (`run_in_background: true`):
+Run in the background (`run_in_background: true`), through Doppler so secrets are injected:
 
 ```sh
-cd ../TaroFlash-<slug> && VITE_APP_TITLE="[<slug>] TaroFlash" node_modules/.bin/vp dev --port <port> --host 2>&1 | tee /tmp/fork-dev-<slug>.log
+cd ../TaroFlash-<slug> && VITE_APP_TITLE="[<slug>] TaroFlash" doppler run -- node_modules/.bin/vp dev --port <port> --host 2>&1 | tee /tmp/fork-dev-<slug>.log
 ```
 
 Poll for the URL instead of sleeping a fixed amount:
@@ -102,6 +110,7 @@ To clean: git worktree remove ../TaroFlash-<slug>
 - The worktree shares the main repo's git object store — branches are isolated from each other and from the main checkout.
 - Don't run `vp install` in the worktree — `node_modules` is symlinked from the main repo.
 - If `vp dev` fails to start, read `/tmp/fork-dev-<slug>.log` and surface the error.
+- If the log shows `supabaseUrl is required` (or other missing-secret errors), Doppler wasn't scoped to the worktree — run `doppler setup --project taroflash --config dev --no-interactive` in it and restart the server.
 - `git worktree remove ../TaroFlash-<slug>` will refuse if there are uncommitted changes; use `--force` only after the agent's work is merged or discarded.
 
 ---

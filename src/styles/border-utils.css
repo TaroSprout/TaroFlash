@@ -72,6 +72,28 @@
   mask: var(--cloud-mask);
 }
 
+@utility tape-edges {
+  /* 3-tooth sawtooth cut into the left and right edges; top/bottom stay flat. */
+  --tape-cut: 7%;
+
+  clip-path: polygon(
+    0% 0%,
+    var(--tape-cut) 16.667%,
+    0% 33.333%,
+    var(--tape-cut) 50%,
+    0% 66.667%,
+    var(--tape-cut) 83.333%,
+    0% 100%,
+    100% 100%,
+    calc(100% - var(--tape-cut)) 83.333%,
+    100% 66.667%,
+    calc(100% - var(--tape-cut)) 50%,
+    100% 33.333%,
+    calc(100% - var(--tape-cut)) 16.667%,
+    100% 0%
+  );
+}
+
 @utility cloud-top-* {
   /* main control — depth of the flat cut, not the bump radius */
   --cloud-size: --value([length]);

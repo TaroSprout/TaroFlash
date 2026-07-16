@@ -13,7 +13,7 @@ defineSlots<{
 </script>
 
 <template>
-  <div class="rounded-8 relative flex flex-col w-full max-w-100">
+  <div class="rounded-8 relative flex flex-col w-full max-w-86.25 shrink-0">
     <slot name="polaroid" />
 
     <div data-testid="dashboard-actions-panel-shell__header" class="p-6 pl-34">
@@ -22,7 +22,7 @@ defineSlots<{
 
     <div
       data-testid="dashboard-actions-panel-shell__body"
-      class="cloud-top-[40px] rounded-b-8 flex flex-col gap-6 px-4 pt-14 pb-6"
+      class="cloud-top-[40px] rounded-b-8 flex flex-col gap-6 px-4 pt-14 pb-6 h-full max-mxl:justify-end"
       :class="body_class"
     >
       <slot name="body" />

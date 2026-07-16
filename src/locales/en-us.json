@@ -416,6 +416,7 @@
   "dashboard.mobile-footer.edit-decks-label": "Edit Decks",
   "dashboard.mobile-footer.done-editing-label": "Stop Editing",
   "dashboard.mobile-footer.study-button": "Study {count} Deck | Study {count} Decks",
+  "dashboard.tip-card.tape-label": "Tip",
   "dialog-card.close-label": "Close",
   "dialog-card.back-label": "Back",
   "review-inbox.cards-due-heading": "{count} card due | {count} cards due",
@@ -771,5 +772,17 @@
   "terms-of-service.section-6.title": "Termination",
   "terms-of-service.section-6.content": "Accounts may be suspended or deleted if these terms are violated.",
   "terms-of-service.section-7.title": "Changes to These Terms",
-  "terms-of-service.section-7.content": "These terms may be updated periodically. Continued use of the service constitutes acceptance of the updated terms."
+  "terms-of-service.section-7.content": "These terms may be updated periodically. Continued use of the service constitutes acceptance of the updated terms.",
+  "tips.sound.title": "Sound",
+  "tips.sound.body": "If you're not hearing sounds on your phone try taking it off silent or wearing headphones!",
+  "tips.cards.title": "Cards",
+  "tips.cards.body": "The front and back faces of your cards are fully customizable in the deck settings.",
+  "tips.companion-window.title": "Pocket Size",
+  "tips.companion-window.body": "TaroFlash works great at small sizes — keep it as a companion window beside your other tabs.",
+  "tips.horizontal-scroll.title": "Scrolling",
+  "tips.horizontal-scroll.body": "Need to scroll sideways? Hold shift while you scroll.",
+  "tips.swipe-rating.title": "Study Session",
+  "tips.swipe-rating.body": "Swiping right to pass a card? Drag up or down before releasing to choose how well it went.",
+  "tips.feedback.title": "Feedback",
+  "tips.feedback.body": "Have a feature idea, or found something broken? Send it through the feedback app in the phone menu."
 }

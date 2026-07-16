@@ -16,6 +16,7 @@ import ReviewInbox from './review-inbox/index.vue'
 import DeckGrid from './deck-grid/index.vue'
 import DeckGridSortOptions, { type SortOption } from './deck-grid/sort-options.vue'
 import AudioReaderSection from './audio-reader-section.vue'
+import DashboardTipCard from './tip-card/index.vue'
 
 const DECK_SORT_COMPARATORS: Record<SortOption, (a: Deck, b: Deck) => number> = {
   custom: (a, b) => (a.rank ?? 0) - (b.rank ?? 0),
@@ -63,6 +64,8 @@ const show_skeleton = computed(() => !decks_data.value)
           :editing_decks="editing_decks"
           @toggle-edit-decks="onToggleEditDecks"
         />
+
+        <dashboard-tip-card />
       </template>
 
       <template #right>

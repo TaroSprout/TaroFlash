@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import DashboardShell from './dashboard-shell.vue'
 import DashboardSection from './dashboard-section.vue'
 import DashboardActionsPanelSkeleton from './actions-panel/skeleton.vue'
+import DashboardTipCardSkeleton from './tip-card/skeleton.vue'
 import ReviewInboxSkeleton from './review-inbox/skeleton.vue'
 import DeckGridSkeleton from './deck-grid/skeleton.vue'
 
@@ -18,6 +19,7 @@ onUnmounted(() => (document.documentElement.style.overflow = ''))
     <dashboard-shell>
       <template #left>
         <dashboard-actions-panel-skeleton />
+        <dashboard-tip-card-skeleton />
       </template>
 
       <template #right>
