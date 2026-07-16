@@ -416,6 +416,7 @@
   "dashboard.mobile-footer.edit-decks-label": "Edit Decks",
   "dashboard.mobile-footer.done-editing-label": "Stop Editing",
   "dashboard.mobile-footer.study-button": "Study {count} Deck | Study {count} Decks",
+  "dashboard.tip-card.tape-label": "Tip",
   "dialog-card.close-label": "Close",
   "dialog-card.back-label": "Back",
   "review-inbox.cards-due-heading": "{count} card due | {count} cards due",
@@ -771,5 +772,7 @@
   "terms-of-service.section-6.title": "Termination",
   "terms-of-service.section-6.content": "Accounts may be suspended or deleted if these terms are violated.",
   "terms-of-service.section-7.title": "Changes to These Terms",
-  "terms-of-service.section-7.content": "These terms may be updated periodically. Continued use of the service constitutes acceptance of the updated terms."
+  "terms-of-service.section-7.content": "These terms may be updated periodically. Continued use of the service constitutes acceptance of the updated terms.",
+  "tips.shortcuts-overview.title": "Shortcuts",
+  "tips.shortcuts-overview.body": "Most actions have a keyboard shortcut! Take a look at the shortcuts app in the Phone Menu to see which shortcuts are available at any time."
 }

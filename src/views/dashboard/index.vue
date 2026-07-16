@@ -7,7 +7,6 @@ import { useCan } from '@/composables/can'
 import { useLocalRef } from '@/composables/storage/local-ref'
 import { emitSfx } from '@/sfx/bus'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
-import UiTape from '@/components/ui-kit/tape.vue'
 import DashboardShell from './dashboard-shell.vue'
 import DashboardSkeleton from './skeleton.vue'
 import DashboardSection from './dashboard-section.vue'
@@ -17,6 +16,7 @@ import ReviewInbox from './review-inbox/index.vue'
 import DeckGrid from './deck-grid/index.vue'
 import DeckGridSortOptions, { type SortOption } from './deck-grid/sort-options.vue'
 import AudioReaderSection from './audio-reader-section.vue'
+import DashboardTipCard from './tip-card/index.vue'
 
 const DECK_SORT_COMPARATORS: Record<SortOption, (a: Deck, b: Deck) => number> = {
   custom: (a, b) => (a.rank ?? 0) - (b.rank ?? 0),
@@ -65,8 +65,8 @@ const show_skeleton = computed(() => !decks_data.value)
           @toggle-edit-decks="onToggleEditDecks"
         />
 
-        <div class="mt-6 flex justify-center">
-          <ui-tape>Tip</ui-tape>
+        <div class="mt-6">
+          <dashboard-tip-card />
         </div>
       </template>
 
