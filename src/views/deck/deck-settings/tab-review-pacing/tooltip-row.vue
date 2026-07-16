@@ -25,7 +25,7 @@ defineSlots<{
         :text="tooltip"
         class="flex cursor-pointer items-center"
       >
-        <ui-icon src="info-circle" class="size-4 shrink-0" />
+        <ui-icon src="info-circle" class="size-4 shrink-0 text-brown-500" />
       </ui-tooltip>
     </span>
 
