@@ -13,7 +13,7 @@ import type { DeckPacingEditorState } from '@/utils/deck/payload'
 /**
  * Derived state + writes for the Review Pacing tab's preset picker and
  * retention/step controls. `deck` supplies the already-resolved display
- * values (via decks_with_stats); `pacing` is the staged editor state that
+ * values (via get_member_decks); `pacing` is the staged editor state that
  * gets written on save — editing a control here always pins that field's
  * override, `resetOverrides()` un-pins all three back to following the
  * preset.
