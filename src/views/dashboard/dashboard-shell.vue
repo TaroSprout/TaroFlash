@@ -12,7 +12,7 @@ defineSlots<{
   >
     <div
       data-testid="dashboard-shell__left-column"
-      class="flex flex-col gap-6 self-start mxl:sticky mxl:top-(--nav-height)"
+      class="flex justify-center xs:justify-start mxl:flex-col gap-6 self-start mxl:sticky mxl:top-(--nav-height)"
     >
       <slot name="left" />
     </div>

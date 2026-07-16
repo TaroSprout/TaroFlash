@@ -65,9 +65,7 @@ const show_skeleton = computed(() => !decks_data.value)
           @toggle-edit-decks="onToggleEditDecks"
         />
 
-        <div class="mt-6">
-          <dashboard-tip-card />
-        </div>
+        <dashboard-tip-card />
       </template>
 
       <template #right>
