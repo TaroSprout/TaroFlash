@@ -29,7 +29,9 @@ SELECT bag_eq(
       ('id'), ('created_at'), ('updated_at'), ('description'), ('is_public'),
       ('title'), ('member_id'), ('member_display_name'), ('tags'), ('has_image'),
       ('study_config'), ('cover_config'), ('card_attributes'), ('card_count'),
-      ('reviewed_today_count'), ('new_reviewed_today_count'), ('due_count'), ('rank') $$,
+      ('reviewed_today_count'), ('new_reviewed_today_count'), ('due_count'), ('rank'),
+      ('review_pacing_preset_id'), ('desired_retention'), ('learning_steps'), ('relearning_steps'),
+      ('desired_retention_override'), ('learning_steps_override'), ('relearning_steps_override') $$,
   'decks_with_stats exposes the columns the FE consumes'
 );
 

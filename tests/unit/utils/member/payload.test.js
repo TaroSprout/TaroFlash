@@ -6,10 +6,7 @@ const DEFAULT_PREFS = {
   accessibility: { left_hand: false },
   audio: { study_sounds: 5, interface_sounds: 5, hover_sounds: 5 },
   study: {
-    show_all_ratings: true,
-    desired_retention: 90,
-    learning_steps: ['1m', '10m'],
-    relearning_steps: ['10m']
+    show_all_ratings: true
   }
 }
 

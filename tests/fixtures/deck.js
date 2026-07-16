@@ -24,7 +24,16 @@ export const deck = build({
     due_cards: () => [],
     study_config: () => ({
       study_all_cards: false
-    })
+    }),
+    // Resolved review-pacing fields decks_with_stats always surfaces (system
+    // preset defaults when the deck has no linked preset/overrides).
+    review_pacing_preset_id: () => null,
+    desired_retention: () => 90,
+    learning_steps: () => ['1m', '10m'],
+    relearning_steps: () => ['10m'],
+    desired_retention_override: () => null,
+    learning_steps_override: () => null,
+    relearning_steps_override: () => null
   },
   traits: {
     with_cards: {

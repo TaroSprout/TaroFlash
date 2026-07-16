@@ -13,15 +13,16 @@ const { mockMemberStore, generatorParametersMock } = vi.hoisted(() => ({
   mockMemberStore: {
     preferences: {
       study: {
-        show_all_ratings: true,
-        desired_retention: 90,
-        learning_steps: ['1m', '10m'],
-        relearning_steps: ['10m']
+        show_all_ratings: true
       }
     }
   },
   generatorParametersMock: vi.fn()
 }))
+
+// Default ReviewPacingParams — the resolved deck-level pacing useSessionQueue
+// now takes as an explicit first argument instead of reading member prefs.
+const PACING = { desired_retention: 90, learning_steps: ['1m', '10m'], relearning_steps: ['10m'] }
 
 const { mockNotice } = vi.hoisted(() => ({
   mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
@@ -62,9 +63,6 @@ beforeEach(() => {
   generatorParametersMock.mockClear()
   mockNotice.error.mockReset()
   mockMemberStore.preferences.study.show_all_ratings = true
-  mockMemberStore.preferences.study.desired_retention = 90
-  mockMemberStore.preferences.study.learning_steps = ['1m', '10m']
-  mockMemberStore.preferences.study.relearning_steps = ['10m']
   sessionStorage.clear()
 })
 
@@ -104,7 +102,7 @@ describe('session-core — shuffle: true', () => {
 
     let found_review_before_new = false
     for (let i = 0; i < RUNS; i++) {
-      const session = useSessionQueue({ study_all_cards: true, shuffle: true })
+      const session = useSessionQueue(PACING, { study_all_cards: true, shuffle: true })
       session.setCards(all_cards)
 
       const result_ids = session.cards.value.map((c) => c.id)
@@ -127,7 +125,7 @@ describe('session-core — shuffle: true', () => {
     const new_cards = Array.from({ length: 3 }, () => makeNewCard())
     const review_cards = Array.from({ length: 4 }, () => makeReviewCard())
 
-    const session = useSessionQueue({ study_all_cards: true, shuffle: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true, shuffle: true })
     session.setCards([...new_cards, ...review_cards])
 
     expect(session.cards.value).toHaveLength(7)
@@ -137,7 +135,7 @@ describe('session-core — shuffle: true', () => {
     const cards = [makeNewCard(), makeNewCard(), makeReviewCard(), makeReviewCard()]
     const expected_ids = new Set(cards.map((c) => c.id))
 
-    const session = useSessionQueue({ study_all_cards: true, shuffle: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true, shuffle: true })
     session.setCards(cards)
 
     const result_ids = new Set(session.cards.value.map((c) => c.id))
@@ -152,7 +150,7 @@ describe('session-core — shuffle: false', () => {
     const cards = [makeNewCard(), makeReviewCard(), makeNewCard(), makeReviewCard()]
     const original_ids = cards.map((c) => c.id)
 
-    const session = useSessionQueue({ study_all_cards: true, shuffle: false })
+    const session = useSessionQueue(PACING, { study_all_cards: true, shuffle: false })
     session.setCards(cards)
 
     const result_ids = session.cards.value.map((c) => c.id)
@@ -164,7 +162,7 @@ describe('session-core — shuffle: false', () => {
     const cards = [makeNewCard(), makeReviewCard(), makeNewCard(), makeReviewCard()]
     const original_ids = cards.map((c) => c.id)
 
-    const session = useSessionQueue({ study_all_cards: true, shuffle: false })
+    const session = useSessionQueue(PACING, { study_all_cards: true, shuffle: false })
     session.setCards(cards)
 
     expect(session.cards.value.map((c) => c.id)).toEqual(original_ids)
@@ -175,19 +173,19 @@ describe('session-core — shuffle: false', () => {
 
 describe('session-core — setCards', () => {
   test('study_all_cards:true includes all cards', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     session.setCards([makeNewCard(), makeNotDueCard()])
     expect(session.cards.value).toHaveLength(2)
   })
 
   test('study_all_cards:false filters out cards with a future due date', () => {
-    const session = useSessionQueue({ study_all_cards: false })
+    const session = useSessionQueue(PACING, { study_all_cards: false })
     session.setCards([makeNewCard(), makeNotDueCard()])
     expect(session.cards.value).toHaveLength(1)
   })
 
   test('empty deck sets mode to completed immediately', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     session.setCards([])
     expect(session.mode.value).toBe('completed')
   })
@@ -200,7 +198,7 @@ describe('session-core — updateConfig', () => {
     const cards = [makeNewCard(), makeReviewCard()]
     const original_ids = cards.map((c) => c.id)
 
-    const session = useSessionQueue({ study_all_cards: true, shuffle: false })
+    const session = useSessionQueue(PACING, { study_all_cards: true, shuffle: false })
     session.setCards(cards)
 
     // Confirm un-shuffled order first
@@ -212,7 +210,7 @@ describe('session-core — updateConfig', () => {
   })
 
   test('updateConfig does not call _processCards when no cards have been set', () => {
-    const session = useSessionQueue({ study_all_cards: false })
+    const session = useSessionQueue(PACING, { study_all_cards: false })
     session.updateConfig({ study_all_cards: true })
     expect(session.cards.value).toHaveLength(0)
   })
@@ -223,31 +221,38 @@ describe('session-core — updateConfig', () => {
 describe('session-core — member preference seeding [obligation]', () => {
   test('show_all_ratings seeds from member_store.preferences.study.show_all_ratings [obligation]', () => {
     mockMemberStore.preferences.study.show_all_ratings = false
-    const session = useSessionQueue()
+    const session = useSessionQueue(PACING)
     expect(session.show_all_ratings.value).toBe(false)
   })
 
   test('show_all_ratings is a local ref, toggling it does not write back to the store [obligation]', () => {
     mockMemberStore.preferences.study.show_all_ratings = true
-    const session = useSessionQueue()
+    const session = useSessionQueue(PACING)
     session.show_all_ratings.value = false
     expect(mockMemberStore.preferences.study.show_all_ratings).toBe(true)
   })
+})
 
-  test('FSRS is seeded with request_retention = desired_retention / 100 [obligation]', () => {
-    mockMemberStore.preferences.study.desired_retention = 82
-    useSessionQueue()
+// ── FSRS generatorParameters — built from the passed-in pacing, not the
+// member store [obligation] ─────────────────────────────────────────────────
+// useSessionQueue's signature changed to take a required `pacing:
+// ReviewPacingParams` first argument; member_store no longer carries FSRS
+// fields at all (MemberPreferences.study was trimmed to show_all_ratings).
+
+describe('session-core — FSRS params sourced from the pacing argument [obligation]', () => {
+  test('FSRS is seeded with request_retention = pacing.desired_retention / 100 [obligation]', () => {
+    useSessionQueue({ ...PACING, desired_retention: 82 })
     expect(generatorParametersMock).toHaveBeenCalledWith(
       expect.objectContaining({ request_retention: 0.82 })
     )
   })
 
-  test('FSRS is seeded with learning_steps/relearning_steps from member_store.preferences.study, not hardcoded to [] [obligation]', () => {
-    // Regression guard: this was previously hardcoded to `[]` for both fields,
-    // silently disabling learning/relearning steps regardless of member prefs.
-    mockMemberStore.preferences.study.learning_steps = ['1m', '10m', '1d']
-    mockMemberStore.preferences.study.relearning_steps = ['1m', '10m']
-    useSessionQueue()
+  test('FSRS is seeded with learning_steps/relearning_steps from the pacing argument, not member_store [obligation]', () => {
+    useSessionQueue({
+      ...PACING,
+      learning_steps: ['1m', '10m', '1d'],
+      relearning_steps: ['1m', '10m']
+    })
     expect(generatorParametersMock).toHaveBeenCalledWith(
       expect.objectContaining({
         learning_steps: ['1m', '10m', '1d'],
@@ -261,7 +266,7 @@ describe('session-core — member preference seeding [obligation]', () => {
 
 describe('session-core — reviewCard (no grade)', () => {
   test('no-grade review marks the active card as passed and advances', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2] = [makeNewCard(), makeNewCard()]
     session.setCards([c1, c2])
 
@@ -274,7 +279,7 @@ describe('session-core — reviewCard (no grade)', () => {
   })
 
   test('no-grade review on the last card sets mode to completed', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     session.setCards([makeNewCard()])
 
     session.reviewCard()
@@ -283,7 +288,7 @@ describe('session-core — reviewCard (no grade)', () => {
   })
 
   test('no-grade review does NOT call save_review_mutation', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     session.setCards([makeNewCard()])
 
     session.reviewCard()
@@ -292,7 +297,7 @@ describe('session-core — reviewCard (no grade)', () => {
   })
 
   test('reviewCard with no active_card is a no-op', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     // No setCards — active_card is undefined
     session.reviewCard()
 
@@ -305,7 +310,7 @@ describe('session-core — reviewCard (no grade)', () => {
 
 describe('session-core — reviewCard (with grade)', () => {
   test('grade=Good marks the active card as passed', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2] = [makeNewCard(), makeNewCard()]
     session.setCards([c1, c2])
 
@@ -315,7 +320,7 @@ describe('session-core — reviewCard (with grade)', () => {
   })
 
   test('grade=Again marks the active card as failed', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2] = [makeNewCard(), makeNewCard()]
     session.setCards([c1, c2])
 
@@ -325,7 +330,7 @@ describe('session-core — reviewCard (with grade)', () => {
   })
 
   test('grade=Hard marks the active card as passed (not failed)', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2] = [makeNewCard(), makeNewCard()]
     session.setCards([c1, c2])
 
@@ -335,7 +340,7 @@ describe('session-core — reviewCard (with grade)', () => {
   })
 
   test('graded review advances to the next unreviewed card', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2] = [makeNewCard(), makeNewCard()]
     session.setCards([c1, c2])
 
@@ -345,7 +350,7 @@ describe('session-core — reviewCard (with grade)', () => {
   })
 
   test('graded review on the last card sets mode to completed', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     session.setCards([makeNewCard()])
 
     session.reviewCard(Rating.Good)
@@ -354,7 +359,7 @@ describe('session-core — reviewCard (with grade)', () => {
   })
 
   test('graded review calls save_review_mutation with card_id and deck_id', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const c = makeNewCard({ id: 42, deck_id: 7 })
     session.setCards([c])
 
@@ -366,7 +371,7 @@ describe('session-core — reviewCard (with grade)', () => {
   })
 
   test('graded review does NOT call save when card has no id', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     // id falsy — mutation should be skipped
     const c = makeNewCard({ id: 0 })
     session.setCards([c])
@@ -382,7 +387,7 @@ describe('session-core — reviewCard (with grade)', () => {
 describe('session-core — reviewCard save failure [obligation]', () => {
   test('resolves (does not reject) when save_review_mutation.mutateAsync rejects, since the caller awaits it as a floating promise [obligation]', async () => {
     saveReviewMock.mockRejectedValueOnce(new Error('network error'))
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const c = makeNewCard({ id: 1, deck_id: 1 })
     session.setCards([c])
 
@@ -391,7 +396,7 @@ describe('session-core — reviewCard save failure [obligation]', () => {
 
   test('shows a panel notice with a Refresh action when the save fails [obligation]', async () => {
     saveReviewMock.mockRejectedValueOnce(new Error('network error'))
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const c = makeNewCard({ id: 1, deck_id: 1 })
     session.setCards([c])
 
@@ -416,7 +421,7 @@ describe('session-core — results (CardReviewResult capture)', () => {
     // The central invariant: the before-interval must be the PRIOR scheduled_days,
     // captured at the moment of review, before FSRS overwrites card.review.
     const prior_scheduled_days = 10
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const c = card.one({
       traits: 'with_due_review',
       overrides: {
@@ -445,7 +450,7 @@ describe('session-core — results (CardReviewResult capture)', () => {
   })
 
   test('is_new is true for a card with no prior review (reps=0) [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const c = makeNewCard({ id: 1, deck_id: 1 })
     session.setCards([c])
 
@@ -455,7 +460,7 @@ describe('session-core — results (CardReviewResult capture)', () => {
   })
 
   test('is_new is false when card has prior reviews (reps > 0) [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const c = makeReviewCard({ id: 1, deck_id: 1 })
     session.setCards([c])
 
@@ -465,7 +470,7 @@ describe('session-core — results (CardReviewResult capture)', () => {
   })
 
   test('reviewCard() with no grade (auto-pass) does NOT push a result [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const c = makeNewCard({ id: 1 })
     session.setCards([c])
 
@@ -475,7 +480,7 @@ describe('session-core — results (CardReviewResult capture)', () => {
   })
 
   test('reviewCard(grade) pushes exactly one result per graded review [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2] = [makeNewCard({ id: 1, deck_id: 1 }), makeNewCard({ id: 2, deck_id: 1 })]
     session.setCards([c1, c2])
 
@@ -486,7 +491,7 @@ describe('session-core — results (CardReviewResult capture)', () => {
   })
 
   test('setCards clears results from a previous session [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2] = [makeNewCard({ id: 1, deck_id: 1 }), makeNewCard({ id: 2, deck_id: 1 })]
     session.setCards([c1])
     session.reviewCard(Rating.Good)
@@ -498,7 +503,7 @@ describe('session-core — results (CardReviewResult capture)', () => {
   })
 
   test('passed = true for grade Hard [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const c = makeNewCard({ id: 1, deck_id: 1 })
     session.setCards([c])
 
@@ -508,7 +513,7 @@ describe('session-core — results (CardReviewResult capture)', () => {
   })
 
   test('passed = true for grade Easy [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const c = makeNewCard({ id: 1, deck_id: 1 })
     session.setCards([c])
 
@@ -518,7 +523,7 @@ describe('session-core — results (CardReviewResult capture)', () => {
   })
 
   test('passed = false for grade Again [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2] = [makeNewCard({ id: 1, deck_id: 1 }), makeNewCard({ id: 2, deck_id: 1 })]
     session.setCards([c1, c2])
 
@@ -532,7 +537,7 @@ describe('session-core — results (CardReviewResult capture)', () => {
 
 describe('session-core — computed stats', () => {
   test('num_correct counts only passed cards', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2, c3] = [makeNewCard(), makeNewCard(), makeNewCard()]
     session.setCards([c1, c2, c3])
 
@@ -543,7 +548,7 @@ describe('session-core — computed stats', () => {
   })
 
   test('reviewed_count counts both passed and failed cards', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2, c3] = [makeNewCard(), makeNewCard(), makeNewCard()]
     session.setCards([c1, c2, c3])
 
@@ -554,7 +559,7 @@ describe('session-core — computed stats', () => {
   })
 
   test('current_index returns the index of the active card', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2] = [makeNewCard(), makeNewCard()]
     session.setCards([c1, c2])
 
@@ -566,7 +571,7 @@ describe('session-core — computed stats', () => {
   })
 
   test('current_index returns cards.length when no active card', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     session.setCards([makeNewCard()])
 
     session.reviewCard()
@@ -575,14 +580,14 @@ describe('session-core — computed stats', () => {
   })
 
   test('remaining_due_count is 0 when study_all_cards is true', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     session.setCards([makeNewCard(), makeReviewCard()])
 
     expect(session.remaining_due_count.value).toBe(0)
   })
 
   test('remaining_due_count reflects total due minus already-reviewed count', () => {
-    const session = useSessionQueue({ study_all_cards: false })
+    const session = useSessionQueue(PACING, { study_all_cards: false })
     // Two due review cards — remaining starts at 2
     session.setCards([makeReviewCard(), makeReviewCard()])
 
@@ -590,7 +595,7 @@ describe('session-core — computed stats', () => {
   })
 
   test('remaining_due_count is 0 when no due cards in deck', () => {
-    const session = useSessionQueue({ study_all_cards: false })
+    const session = useSessionQueue(PACING, { study_all_cards: false })
     // Only not-due cards — they don't show up at all
     session.setCards([makeNotDueCard()])
 
@@ -602,7 +607,7 @@ describe('session-core — computed stats', () => {
 
 describe('session-core — dropCard [obligation]', () => {
   test('removing the active card advances active_card to the next unreviewed card [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2, c3] = [makeNewCard(), makeNewCard(), makeNewCard()]
     session.setCards([c1, c2, c3])
 
@@ -614,7 +619,7 @@ describe('session-core — dropCard [obligation]', () => {
   })
 
   test('dropping the active card removes it from cards [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2] = [makeNewCard(), makeNewCard()]
     session.setCards([c1, c2])
 
@@ -625,7 +630,7 @@ describe('session-core — dropCard [obligation]', () => {
   })
 
   test('dropping the active card also removes it from the due pool (remaining_due_count decreases) [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: false })
+    const session = useSessionQueue(PACING, { study_all_cards: false })
     const [c1, c2] = [makeReviewCard(), makeReviewCard()]
     session.setCards([c1, c2])
 
@@ -637,7 +642,7 @@ describe('session-core — dropCard [obligation]', () => {
   })
 
   test('removing the last remaining card sets mode to completed [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const c1 = makeNewCard()
     session.setCards([c1])
 
@@ -647,7 +652,7 @@ describe('session-core — dropCard [obligation]', () => {
   })
 
   test('removing a non-active card leaves active_card unchanged [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2, c3] = [makeNewCard(), makeNewCard(), makeNewCard()]
     session.setCards([c1, c2, c3])
 
@@ -660,7 +665,7 @@ describe('session-core — dropCard [obligation]', () => {
   })
 
   test('removing a non-active card removes it from cards but leaves the rest', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2, c3] = [makeNewCard(), makeNewCard(), makeNewCard()]
     session.setCards([c1, c2, c3])
 
@@ -674,7 +679,7 @@ describe('session-core — dropCard [obligation]', () => {
 
 describe('session-core — updateCard [obligation]', () => {
   test('patches the matching card in cards [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2] = [makeNewCard(), makeNewCard()]
     session.setCards([c1, c2])
 
@@ -684,7 +689,7 @@ describe('session-core — updateCard [obligation]', () => {
   })
 
   test('reassigns the cards array reference (shallowRef immutability) [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2] = [makeNewCard(), makeNewCard()]
     session.setCards([c1, c2])
     const before = session.cards.value
@@ -695,7 +700,7 @@ describe('session-core — updateCard [obligation]', () => {
   })
 
   test('leaves non-matching cards untouched (value and reference) [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2] = [makeNewCard(), makeNewCard()]
     session.setCards([c1, c2])
     const c2_before = session.cards.value.find((c) => c.id === c2.id)
@@ -707,7 +712,7 @@ describe('session-core — updateCard [obligation]', () => {
   })
 
   test('patches active_card when the patched card is the active one [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2] = [makeNewCard(), makeNewCard()]
     session.setCards([c1, c2])
 
@@ -719,7 +724,7 @@ describe('session-core — updateCard [obligation]', () => {
   })
 
   test('does not touch active_card when the patched card is not the active one [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2] = [makeNewCard(), makeNewCard()]
     session.setCards([c1, c2])
     const active_before = session.active_card.value
@@ -734,7 +739,7 @@ describe('session-core — updateCard [obligation]', () => {
 
 describe('session-core — persistence [obligation]', () => {
   test('setCards persists card_ids into sessionStorage [obligation]', async () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2] = [makeNewCard(), makeNewCard()]
     session.setCards([c1, c2])
     await nextTick()
@@ -745,7 +750,7 @@ describe('session-core — persistence [obligation]', () => {
   })
 
   test('setSessionMeta records deck_ids and config_override into the next persisted snapshot [obligation]', async () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     session.setSessionMeta([1, 2], { shuffle: true })
     session.setCards([makeNewCard()])
     await nextTick()
@@ -756,7 +761,7 @@ describe('session-core — persistence [obligation]', () => {
   })
 
   test('reviewCard(grade) updates the persisted results and card_ids, not just the initial seed [obligation]', async () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2] = [makeNewCard({ id: 1, deck_id: 1 }), makeNewCard({ id: 2, deck_id: 1 })]
     session.setCards([c1, c2])
     await nextTick()
@@ -771,7 +776,7 @@ describe('session-core — persistence [obligation]', () => {
   })
 
   test('reviewCard() with no grade also persists the resulting completed mode [obligation]', async () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     session.setCards([makeNewCard()])
     await nextTick()
 
@@ -782,7 +787,7 @@ describe('session-core — persistence [obligation]', () => {
   })
 
   test('persisted results only carry CardReviewResult fields, no full card data [obligation]', async () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     session.setCards([makeNewCard({ id: 1, deck_id: 1 })])
     await nextTick()
 
@@ -804,7 +809,7 @@ describe('session-core — persistence [obligation]', () => {
   })
 
   test('dropCard on a non-active card persists the updated card_ids [obligation]', async () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2, c3] = [makeNewCard(), makeNewCard(), makeNewCard()]
     session.setCards([c1, c2, c3])
     await nextTick()
@@ -816,7 +821,7 @@ describe('session-core — persistence [obligation]', () => {
   })
 
   test('dropCard on the active card persists the updated card_ids [obligation]', async () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2] = [makeNewCard(), makeNewCard()]
     session.setCards([c1, c2])
     await nextTick()
@@ -841,12 +846,12 @@ describe('session-core — active_card_preview [obligation]', () => {
   })
 
   test('is undefined when there is no active card [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     expect(session.active_card_preview.value).toBeUndefined()
   })
 
   test('is defined once a card is active [obligation]', () => {
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     session.setCards([makeNewCard()])
 
     expect(session.active_card_preview.value).toBeDefined()
@@ -857,7 +862,7 @@ describe('session-core — active_card_preview [obligation]', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'))
 
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     const [c1, c2] = [makeNewCard(), makeNewCard()]
     session.setCards([c1, c2])
 
@@ -882,7 +887,7 @@ describe('session-core — active_card_preview [obligation]', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'))
 
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     session.setCards([makeNewCard()])
     const first_preview = session.active_card_preview.value
 
@@ -902,7 +907,7 @@ describe('session-core — active_card_preview [obligation]', () => {
     const c1 = makeNewCard()
     const persisted = { deck_ids: [1], card_ids: [c1.id], results: [], mode: 'studying' }
 
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
 
     vi.setSystemTime(new Date('2026-02-01T00:00:00.000Z'))
     session.restoreCards([c1], persisted)
@@ -925,7 +930,7 @@ describe('session-core — restoreCards [obligation]', () => {
       mode: 'studying'
     }
 
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     session.restoreCards([c1, c2, c3], persisted)
 
     expect(session.cards.value.map((c) => c.id)).toEqual([c3.id, c1.id, c2.id])
@@ -940,7 +945,7 @@ describe('session-core — restoreCards [obligation]', () => {
       mode: 'studying'
     }
 
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     session.restoreCards([c1, c2, extra], persisted)
 
     expect(session.cards.value.map((c) => c.id)).toEqual([c1.id, c2.id])
@@ -956,7 +961,7 @@ describe('session-core — restoreCards [obligation]', () => {
       mode: 'studying'
     }
 
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     expect(() => session.restoreCards([c1], persisted)).not.toThrow()
 
     expect(session.cards.value.map((c) => c.id)).toEqual([c1.id])
@@ -981,7 +986,7 @@ describe('session-core — restoreCards [obligation]', () => {
       mode: 'studying'
     }
 
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     // raw only contains the unreviewed remainder — c1 must NOT need to be fetched
     session.restoreCards([c2], persisted)
 
@@ -1008,7 +1013,7 @@ describe('session-core — restoreCards [obligation]', () => {
       mode: 'studying'
     }
 
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     session.restoreCards([], persisted)
 
     expect(session.cards.value.find((c) => c.id === c1.id)?.state).toBe('failed')
@@ -1033,7 +1038,7 @@ describe('session-core — restoreCards [obligation]', () => {
       mode: 'studying'
     }
 
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     session.restoreCards([c2, c3], persisted)
 
     expect(session.active_card.value?.id).toBe(c2.id)
@@ -1047,7 +1052,7 @@ describe('session-core — restoreCards [obligation]', () => {
       mode: 'studying'
     }
 
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     // The only persisted id has no matching fetched card — dropped, leaving no unreviewed card.
     session.restoreCards([], persisted)
 
@@ -1064,7 +1069,7 @@ describe('session-core — restoreCards [obligation]', () => {
       mode: 'completed'
     }
 
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     session.restoreCards([c1], persisted)
 
     expect(session.mode.value).toBe('completed')
@@ -1080,7 +1085,7 @@ describe('session-core — restoreCards [obligation]', () => {
       mode: 'studying'
     }
 
-    const session = useSessionQueue({ study_all_cards: true })
+    const session = useSessionQueue(PACING, { study_all_cards: true })
     session.restoreCards([c1], persisted)
     await nextTick()
 

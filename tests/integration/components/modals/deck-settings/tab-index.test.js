@@ -75,23 +75,25 @@ function makeTab(layout = 'desktop') {
 describe('TabIndex', () => {
   beforeEach(() => mockEmitSfx.mockClear())
 
-  test('renders both nav groups with two nav cards on desktop (design + study), labeled from deck.settings-modal.tab.*', () => {
+  test('renders both nav groups with two nav cards on desktop (design + review-pacing), labeled from deck.settings-modal.tab.*', () => {
     const { wrapper } = makeTab('desktop')
     expect(wrapper.find('[data-testid="tab-index"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="tab-index__nav-group--appearance"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="tab-index__nav-group--study"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="tab-index__nav-group--review-pacing"]').exists()).toBe(true)
 
     const cards = wrapper.findAll('[data-testid="options-panel__card"]')
     expect(cards).toHaveLength(2)
-    expect(cards.map((c) => c.attributes('data-value'))).toEqual(['design', 'study'])
+    expect(cards.map((c) => c.attributes('data-value'))).toEqual(['design', 'review-pacing'])
     expect(cards[0].text()).toContain('Appearance')
-    expect(cards[1].text()).toContain('Study Settings')
+    expect(cards[1].text()).toContain('Review Pacing')
   })
 
-  test('study nav entry renders the card-deck icon (matches member-settings study icon) [obligation]', () => {
+  test('review-pacing nav entry renders the card-deck icon (matches member-settings review-pacing icon) [obligation]', () => {
     const { wrapper } = makeTab('desktop')
-    const studyCard = wrapper.find('[data-testid="options-panel__card"][data-value="study"]')
-    expect(studyCard.find('[data-testid="ui-icon"]').attributes('data-src')).toBe('card-deck')
+    const pacingCard = wrapper.find(
+      '[data-testid="options-panel__card"][data-value="review-pacing"]'
+    )
+    expect(pacingCard.find('[data-testid="ui-icon"]').attributes('data-src')).toBe('card-deck')
   })
 
   test('appearance group lists only "design" in tablet mode', () => {

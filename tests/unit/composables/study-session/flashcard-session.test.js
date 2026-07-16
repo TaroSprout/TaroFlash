@@ -15,10 +15,14 @@ const { mockEmitSfx, mockEmitStudySfx } = vi.hoisted(() => ({
 const { mockMemberStore } = vi.hoisted(() => ({
   mockMemberStore: {
     preferences: {
-      study: { show_all_ratings: true, desired_retention: 90 }
+      study: { show_all_ratings: true }
     }
   }
 }))
+
+// ReviewPacingParams — useFlashcardSession/useSessionQueue now take this as a
+// required first argument instead of reading member_store.preferences.study.*.
+const PACING = { desired_retention: 90, learning_steps: ['1m', '10m'], relearning_steps: ['10m'] }
 
 vi.mock('@/api/reviews', () => ({
   useSaveReviewMutation: () => ({ mutate: saveReviewMock, mutateAsync: saveReviewMock })
@@ -72,7 +76,10 @@ describe('useFlashcardSession', () => {
 
   describe('setCards with study_all_cards: false (default)', () => {
     test('includes cards that have no review (never studied)', () => {
-      const session = useFlashcardSession({ study_all_cards: false, retry_failed_cards: false })
+      const session = useFlashcardSession(PACING, {
+        study_all_cards: false,
+        retry_failed_cards: false
+      })
       const cards = [makeDueCard({ review: null }), makeDueCard({ review: null })]
 
       session.setCards(cards)
@@ -81,7 +88,10 @@ describe('useFlashcardSession', () => {
     })
 
     test('includes cards whose due date is in the past', () => {
-      const session = useFlashcardSession({ study_all_cards: false, retry_failed_cards: false })
+      const session = useFlashcardSession(PACING, {
+        study_all_cards: false,
+        retry_failed_cards: false
+      })
       const cards = [makeDueTodayCard()]
 
       session.setCards(cards)
@@ -90,7 +100,10 @@ describe('useFlashcardSession', () => {
     })
 
     test('excludes cards whose due date is in the future', () => {
-      const session = useFlashcardSession({ study_all_cards: false, retry_failed_cards: false })
+      const session = useFlashcardSession(PACING, {
+        study_all_cards: false,
+        retry_failed_cards: false
+      })
       const cards = [makeNotDueCard(), makeNotDueCard(), makeDueCard({ review: null })]
 
       session.setCards(cards)
@@ -100,7 +113,10 @@ describe('useFlashcardSession', () => {
     })
 
     test('results in an empty deck when all cards are not due', () => {
-      const session = useFlashcardSession({ study_all_cards: false, retry_failed_cards: false })
+      const session = useFlashcardSession(PACING, {
+        study_all_cards: false,
+        retry_failed_cards: false
+      })
       const cards = [makeNotDueCard(), makeNotDueCard()]
 
       session.setCards(cards)
@@ -111,7 +127,10 @@ describe('useFlashcardSession', () => {
 
   describe('setCards with study_all_cards: true', () => {
     test('includes all cards regardless of due date', () => {
-      const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+      const session = useFlashcardSession(PACING, {
+        study_all_cards: true,
+        retry_failed_cards: false
+      })
       const cards = [makeNotDueCard(), makeNotDueCard(), makeDueCard({ review: null })]
 
       session.setCards(cards)
@@ -123,7 +142,10 @@ describe('useFlashcardSession', () => {
   // ── active_card ────────────────────────────────────────────────────────────
 
   test('active_card is the first unreviewed card after setCards', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     const cards = [makeDueCard({ review: null }), makeDueCard({ review: null })]
 
     session.setCards(cards)
@@ -134,7 +156,10 @@ describe('useFlashcardSession', () => {
   })
 
   test('active_card is undefined when deck is empty', () => {
-    const session = useFlashcardSession({ study_all_cards: false, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: false,
+      retry_failed_cards: false
+    })
 
     session.setCards([])
 
@@ -144,7 +169,10 @@ describe('useFlashcardSession', () => {
   // ── current_index ──────────────────────────────────────────────────────────
 
   test('current_index is 0 for the first card', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     const cards = [makeDueCard({ review: null }), makeDueCard({ review: null })]
 
     session.setCards(cards)
@@ -153,7 +181,10 @@ describe('useFlashcardSession', () => {
   })
 
   test('current_index advances after reviewing a card', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     const cards = [makeDueCard({ review: null }), makeDueCard({ review: null })]
 
     session.setCards(cards)
@@ -165,7 +196,10 @@ describe('useFlashcardSession', () => {
   })
 
   test('current_index equals cards.length when no active card', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
 
     session.setCards([])
 
@@ -177,7 +211,10 @@ describe('useFlashcardSession', () => {
 
   describe('reviewCard with Rating.Good', () => {
     test('marks the reviewed card as passed', () => {
-      const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+      const session = useFlashcardSession(PACING, {
+        study_all_cards: true,
+        retry_failed_cards: false
+      })
       const cards = [makeDueCard({ review: null }), makeDueCard({ review: null })]
       session.setCards(cards)
 
@@ -189,7 +226,10 @@ describe('useFlashcardSession', () => {
     })
 
     test('advances to the next card', () => {
-      const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+      const session = useFlashcardSession(PACING, {
+        study_all_cards: true,
+        retry_failed_cards: false
+      })
       const cards = [makeDueCard({ review: null }), makeDueCard({ review: null })]
       session.setCards(cards)
 
@@ -200,7 +240,10 @@ describe('useFlashcardSession', () => {
     })
 
     test('resets current_card_side to front after review', () => {
-      const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+      const session = useFlashcardSession(PACING, {
+        study_all_cards: true,
+        retry_failed_cards: false
+      })
       const cards = [makeDueCard({ review: null }), makeDueCard({ review: null })]
       session.setCards(cards)
 
@@ -211,7 +254,10 @@ describe('useFlashcardSession', () => {
     })
 
     test('calls saveReview with the card id and updated review', () => {
-      const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+      const session = useFlashcardSession(PACING, {
+        study_all_cards: true,
+        retry_failed_cards: false
+      })
       const cards = [makeDueCard({ review: null })]
       session.setCards(cards)
 
@@ -231,7 +277,10 @@ describe('useFlashcardSession', () => {
 
   describe('reviewCard with Rating.Again', () => {
     test('marks the reviewed card as failed', () => {
-      const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+      const session = useFlashcardSession(PACING, {
+        study_all_cards: true,
+        retry_failed_cards: false
+      })
       const cards = [makeDueCard({ review: null }), makeDueCard({ review: null })]
       session.setCards(cards)
 
@@ -243,7 +292,10 @@ describe('useFlashcardSession', () => {
     })
 
     test('advances to the next card', () => {
-      const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+      const session = useFlashcardSession(PACING, {
+        study_all_cards: true,
+        retry_failed_cards: false
+      })
       const cards = [makeDueCard({ review: null }), makeDueCard({ review: null })]
       session.setCards(cards)
 
@@ -257,7 +309,10 @@ describe('useFlashcardSession', () => {
   // ── num_correct ────────────────────────────────────────────────────────────
 
   test('num_correct counts only cards in passed state', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     const cards = [
       makeDueCard({ review: null }),
       makeDueCard({ review: null }),
@@ -277,7 +332,10 @@ describe('useFlashcardSession', () => {
   // ── Mode completion ────────────────────────────────────────────────────────
 
   test('mode becomes completed when the last card is reviewed', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     const cards = [makeDueCard({ review: null })]
     session.setCards(cards)
 
@@ -289,7 +347,10 @@ describe('useFlashcardSession', () => {
   })
 
   test('mode stays studying while cards remain unreviewed', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     const cards = [makeDueCard({ review: null }), makeDueCard({ review: null })]
     session.setCards(cards)
 
@@ -301,7 +362,7 @@ describe('useFlashcardSession', () => {
   // ── Retry logic (removed — failed cards are never retried) ────────────────
 
   test('failed cards are NOT retried regardless of due date', () => {
-    const session = useFlashcardSession({ study_all_cards: true })
+    const session = useFlashcardSession(PACING, { study_all_cards: true })
     const cards = [makeDueTodayCard(), makeDueTodayCard()]
     session.setCards(cards)
 
@@ -314,7 +375,10 @@ describe('useFlashcardSession', () => {
   // ── Edge cases ─────────────────────────────────────────────────────────────
 
   test('no API call if active card has no id', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     // Build a card with id explicitly set to undefined/null to simulate missing id
     const cardData = { ...makeDueCard({ review: null }), id: undefined }
     session.setCards([cardData])
@@ -325,7 +389,10 @@ describe('useFlashcardSession', () => {
   })
 
   test('reviewCard is a no-op when there is no active card', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([])
 
     // Should not throw
@@ -336,7 +403,10 @@ describe('useFlashcardSession', () => {
   // ── current_card_side initial state ────────────────────────────────────────
 
   test('current_card_side starts at "cover" after setCards', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null })])
 
     expect(session.current_card_side.value).toBe('cover')
@@ -345,7 +415,10 @@ describe('useFlashcardSession', () => {
   // ── startSession ───────────────────────────────────────────────────────────
 
   test('startSession sets current_card_side to "front" by default', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null })])
 
     session.startSession()
@@ -354,7 +427,7 @@ describe('useFlashcardSession', () => {
   })
 
   test('startSession sets current_card_side to "back" when flip_cards is true', () => {
-    const session = useFlashcardSession({
+    const session = useFlashcardSession(PACING, {
       study_all_cards: true,
       retry_failed_cards: false,
       flip_cards: true
@@ -369,7 +442,10 @@ describe('useFlashcardSession', () => {
   // ── startSession sfx [obligation] ─────────────────────────────────────────
 
   test('startSession emits music_plink_chordyes sfx [obligation]', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null })])
 
     session.startSession()
@@ -378,7 +454,10 @@ describe('useFlashcardSession', () => {
   })
 
   test('startSession({ silent: true }) does NOT emit the start sfx [obligation]', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null })])
 
     session.startSession({ silent: true })
@@ -387,7 +466,10 @@ describe('useFlashcardSession', () => {
   })
 
   test('startSession({ silent: true }) still sets current_card_side [obligation]', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null })])
 
     session.startSession({ silent: true })
@@ -398,7 +480,10 @@ describe('useFlashcardSession', () => {
   // ── flipCurrentCard ────────────────────────────────────────────────────────
 
   test('flipCurrentCard toggles from front to back', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null })])
     session.startSession() // sets to 'front'
 
@@ -408,7 +493,10 @@ describe('useFlashcardSession', () => {
   })
 
   test('flipCurrentCard toggles from back to front', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null })])
     session.startSession() // sets to 'front'
     session.flipCurrentCard() // sets to 'back'
@@ -423,7 +511,10 @@ describe('useFlashcardSession', () => {
   // when on the non-starting side (back → front). SFX is computed BEFORE the toggle.
 
   test('flipCurrentCard emits transition_up when on starting side (front) [obligation]', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null })])
     session.startSession() // sets to 'front' — the starting side
 
@@ -434,7 +525,10 @@ describe('useFlashcardSession', () => {
   })
 
   test('flipCurrentCard emits transition_down when NOT on starting side (back) [obligation]', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null })])
     session.startSession() // 'front'
     session.flipCurrentCard() // now on 'back' — NOT starting side
@@ -448,7 +542,10 @@ describe('useFlashcardSession', () => {
   // ── is_starting_side ───────────────────────────────────────────────────────
 
   test('is_starting_side is false when on cover', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null })])
 
     // After setCards, current_card_side is 'cover', starting_side is 'front'
@@ -456,7 +553,10 @@ describe('useFlashcardSession', () => {
   })
 
   test('is_starting_side is true after startSession', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null })])
 
     session.startSession()
@@ -465,7 +565,10 @@ describe('useFlashcardSession', () => {
   })
 
   test('is_starting_side is false after flipping away from starting side', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null })])
     session.startSession()
 
@@ -477,7 +580,10 @@ describe('useFlashcardSession', () => {
   // ── updateConfig ───────────────────────────────────────────────────────────
 
   test('updateConfig with study_all_cards:true re-includes previously excluded cards', () => {
-    const session = useFlashcardSession({ study_all_cards: false, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: false,
+      retry_failed_cards: false
+    })
     const cards = [makeNotDueCard(), makeNotDueCard(), makeDueCard({ review: null })]
     session.setCards(cards)
 
@@ -489,7 +595,10 @@ describe('useFlashcardSession', () => {
   })
 
   test('updateConfig does not call _processCards when no cards have been set', () => {
-    const session = useFlashcardSession({ study_all_cards: false, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: false,
+      retry_failed_cards: false
+    })
 
     // No setCards call — updateConfig should be a no-op on card list
     session.updateConfig({ study_all_cards: true })
@@ -506,7 +615,7 @@ describe('useFlashcardSession', () => {
 
   test('shuffle:true still returns the correct number of cards', () => {
     const cards = Array.from({ length: 5 }, () => makeDueCard({ review: null }))
-    const session = useFlashcardSession({
+    const session = useFlashcardSession(PACING, {
       study_all_cards: true,
       retry_failed_cards: false,
       shuffle: true
@@ -519,14 +628,20 @@ describe('useFlashcardSession', () => {
   // ── reviewed_count ─────────────────────────────────────────────────────────
 
   test('reviewed_count is 0 before any card is reviewed', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null }), makeDueCard({ review: null })])
 
     expect(session.reviewed_count.value).toBe(0)
   })
 
   test('reviewed_count increments after a Good review', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null }), makeDueCard({ review: null })])
 
     session.reviewCard(Rating.Good)
@@ -535,7 +650,10 @@ describe('useFlashcardSession', () => {
   })
 
   test('reviewed_count counts both passed and failed cards', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null }), makeDueCard({ review: null })])
 
     session.reviewCard(Rating.Good)
@@ -547,21 +665,30 @@ describe('useFlashcardSession', () => {
   // ── remaining_due_count ────────────────────────────────────────────────────
 
   test('remaining_due_count is 0 when study_all_cards is true', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null }), makeDueCard({ review: null })])
 
     expect(session.remaining_due_count.value).toBe(0)
   })
 
   test('remaining_due_count equals number of due cards when nothing reviewed yet', () => {
-    const session = useFlashcardSession({ study_all_cards: false, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: false,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null }), makeDueCard({ review: null })])
 
     expect(session.remaining_due_count.value).toBe(2)
   })
 
   test('remaining_due_count decreases after reviewing a due card', () => {
-    const session = useFlashcardSession({ study_all_cards: false, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: false,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null }), makeDueCard({ review: null })])
 
     session.reviewCard(Rating.Good)
@@ -570,7 +697,10 @@ describe('useFlashcardSession', () => {
   })
 
   test('remaining_due_count excludes cards with a future due date', () => {
-    const session = useFlashcardSession({ study_all_cards: false, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: false,
+      retry_failed_cards: false
+    })
     // Only 1 of the 2 raw cards is actually due
     session.setCards([makeDueCard({ review: null }), makeNotDueCard()])
 
@@ -580,7 +710,10 @@ describe('useFlashcardSession', () => {
   // ── next_card ──────────────────────────────────────────────────────────────
 
   test('next_card is the second card when two unreviewed cards exist', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     const cards = [makeDueCard({ review: null }), makeDueCard({ review: null })]
     session.setCards(cards)
 
@@ -588,14 +721,20 @@ describe('useFlashcardSession', () => {
   })
 
   test('next_card is undefined when only one card in the deck', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null })])
 
     expect(session.next_card.value).toBeUndefined()
   })
 
   test('next_card skips already-reviewed cards', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     const cards = [
       makeDueCard({ review: null }),
       makeDueCard({ review: null }),
@@ -614,7 +753,10 @@ describe('useFlashcardSession', () => {
   // its starting side — otherwise a flipped card left the next card back-side-up.
 
   test('dropCard resets current_card_side to the starting side when a card remains [obligation]', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     const cards = [makeDueCard({ review: null }), makeDueCard({ review: null })]
     session.setCards(cards)
     session.startSession() // 'front'
@@ -628,7 +770,7 @@ describe('useFlashcardSession', () => {
   })
 
   test('dropCard resets to "back" as the starting side when flip_cards is true [obligation]', () => {
-    const session = useFlashcardSession({
+    const session = useFlashcardSession(PACING, {
       study_all_cards: true,
       retry_failed_cards: false,
       flip_cards: true
@@ -644,7 +786,10 @@ describe('useFlashcardSession', () => {
   })
 
   test('dropCard does not force a side change when no cards remain [obligation]', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     const cards = [makeDueCard({ review: null })]
     session.setCards(cards)
     session.startSession() // 'front'
@@ -660,14 +805,20 @@ describe('useFlashcardSession', () => {
   // ── is_cover ───────────────────────────────────────────────────────────────
 
   test('is_cover is true before startSession', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null })])
 
     expect(session.is_cover.value).toBe(true)
   })
 
   test('is_cover is false after startSession', () => {
-    const session = useFlashcardSession({ study_all_cards: true, retry_failed_cards: false })
+    const session = useFlashcardSession(PACING, {
+      study_all_cards: true,
+      retry_failed_cards: false
+    })
     session.setCards([makeDueCard({ review: null })])
 
     session.startSession()

@@ -42,7 +42,7 @@ beforeEach(() => {
     preferences: {
       accessibility: { left_hand: false },
       audio: { study_sounds: 5, interface_sounds: 5, hover_sounds: 5 },
-      study: { show_all_ratings: true, desired_retention: 90 }
+      study: { show_all_ratings: true }
     },
     cover: { theme: 'green-500', theme_dark: 'green-800', pattern: 'bank-note' }
   })
@@ -76,7 +76,7 @@ describe('useMemberEditor', () => {
     mockMember.preferences = {
       accessibility: { left_hand: true },
       audio: { study_sounds: 1, interface_sounds: 2, hover_sounds: 3 },
-      study: { show_all_ratings: false, desired_retention: 75 }
+      study: { show_all_ratings: false }
     }
     const editor = useMemberEditor()
     expect(editor.preferences).toEqual(mockMember.preferences)
@@ -162,10 +162,7 @@ describe('useMemberEditor', () => {
         accessibility: { left_hand: false },
         audio: { study_sounds: 5, interface_sounds: 5, hover_sounds: 5 },
         study: {
-          show_all_ratings: true,
-          desired_retention: 90,
-          learning_steps: ['1m', '10m'],
-          relearning_steps: ['10m']
+          show_all_ratings: true
         }
       },
       cover_config: { theme: 'green-500', theme_dark: 'green-800', pattern: 'bank-note' }

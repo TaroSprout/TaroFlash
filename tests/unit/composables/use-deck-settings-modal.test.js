@@ -82,12 +82,12 @@ describe('useDeckSettingsModal', () => {
     mockOpen.mockReturnValueOnce(makeModalResult(undefined))
 
     const { open } = useDeckSettingsModal()
-    open(deck, { tab: 'study' })
+    open(deck, { tab: 'review-pacing' })
 
     expect(mockOpen).toHaveBeenCalledWith(
       DeckSettings,
       expect.objectContaining({
-        props: expect.objectContaining({ initial_tab: 'study', initial_side: undefined })
+        props: expect.objectContaining({ initial_tab: 'review-pacing', initial_side: undefined })
       })
     )
   })
