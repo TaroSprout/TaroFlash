@@ -6,6 +6,7 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import CappedSpinboxRow from './capped-spinbox-row.vue'
+import PacingSection from './pacing-section.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { deckSettingsLayoutKey } from '../layout'
 import { DAILY_LIMIT_BOUNDS } from '@/utils/deck/defaults'
@@ -18,33 +19,35 @@ const layout_mode = inject(deckSettingsLayoutKey)!
 
 <template>
   <section-list
-    data-testid="tab-study"
+    data-testid="tab-review-pacing"
     class="px-(--deck-settings-padding) pb-(--deck-settings-padding)"
   >
-    <labeled-section :label="t('deck.settings-modal.study.section.cards-heading')">
+    <pacing-section />
+
+    <labeled-section :label="t('deck.settings-modal.review-pacing.section.cards-heading')">
       <ui-toggle v-model:checked="config.shuffle">
         <div class="flex items-center gap-2.5">
           <ui-icon src="reorder" />
-          {{ t('deck.settings-modal.study.shuffle') }}
+          {{ t('deck.settings-modal.review-pacing.shuffle') }}
         </div>
       </ui-toggle>
 
       <ui-toggle v-model:checked="config.flip_cards">
         <div class="flex items-center gap-2.5">
           <ui-icon src="horizontal-align" />
-          {{ t('deck.settings-modal.study.flip-cards') }}
+          {{ t('deck.settings-modal.review-pacing.flip-cards') }}
         </div>
       </ui-toggle>
     </labeled-section>
 
     <labeled-section
-      :label="t('deck.settings-modal.study.section.limits-heading')"
-      :description="t('deck.settings-modal.study.section.limits-description')"
+      :label="t('deck.settings-modal.review-pacing.section.limits-heading')"
+      :description="t('deck.settings-modal.review-pacing.section.limits-description')"
     >
       <capped-spinbox-row
-        data-testid="tab-study__max-reviews"
-        :label="t('deck.settings-modal.study.max-reviews-per-day')"
-        :all_label="t('deck.settings-modal.study.max-reviews.all-toggle')"
+        data-testid="tab-review-pacing__max-reviews"
+        :label="t('deck.settings-modal.review-pacing.max-reviews-per-day')"
+        :all_label="t('deck.settings-modal.review-pacing.max-reviews.all-toggle')"
         :min="DAILY_LIMIT_BOUNDS.min"
         :max="DAILY_LIMIT_BOUNDS.reviews.max"
         :step="DAILY_LIMIT_BOUNDS.step"
@@ -54,9 +57,9 @@ const layout_mode = inject(deckSettingsLayoutKey)!
       />
 
       <capped-spinbox-row
-        data-testid="tab-study__max-new"
-        :label="t('deck.settings-modal.study.max-new-per-day')"
-        :all_label="t('deck.settings-modal.study.max-new.all-toggle')"
+        data-testid="tab-review-pacing__max-new"
+        :label="t('deck.settings-modal.review-pacing.max-new-per-day')"
+        :all_label="t('deck.settings-modal.review-pacing.max-new.all-toggle')"
         :min="DAILY_LIMIT_BOUNDS.min"
         :max="DAILY_LIMIT_BOUNDS.new_cards.max"
         :step="DAILY_LIMIT_BOUNDS.step"

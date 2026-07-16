@@ -39,7 +39,7 @@ export type CardReviewResult = {
  * know about flashcard sides/flipping — that lives in `useFlashcardSession`,
  * which wraps this.
  */
-export function useSessionQueue(_config?: Partial<DeckConfig>) {
+export function useSessionQueue(pacing: ReviewPacingParams, _config?: Partial<DeckConfig>) {
   const { t } = useI18n()
   const member_store = useMemberStore()
   const notice = useNoticeStore()
@@ -50,10 +50,10 @@ export function useSessionQueue(_config?: Partial<DeckConfig>) {
 
   const _PARAMS = generatorParameters({
     enable_fuzz: true,
-    learning_steps: member_store.preferences.study.learning_steps as Steps,
-    relearning_steps: member_store.preferences.study.relearning_steps as Steps,
+    learning_steps: pacing.learning_steps as Steps,
+    relearning_steps: pacing.relearning_steps as Steps,
     // desired_retention is stored as a whole-number percent (e.g. 90 = 90%).
-    request_retention: member_store.preferences.study.desired_retention / 100
+    request_retention: pacing.desired_retention / 100
   })
 
   const config = reactive<Required<DeckConfig>>(withDeckConfigDefaults(_config))

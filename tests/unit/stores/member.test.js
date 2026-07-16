@@ -116,10 +116,7 @@ describe('useMemberStore', () => {
         hover_sounds: expect.any(Number)
       },
       study: {
-        show_all_ratings: true,
-        desired_retention: 90,
-        learning_steps: ['1m', '10m'],
-        relearning_steps: ['10m']
+        show_all_ratings: true
       }
     })
   })
@@ -131,10 +128,7 @@ describe('useMemberStore', () => {
     const store = useMemberStore()
 
     expect(store.preferences.study).toEqual({
-      show_all_ratings: true,
-      desired_retention: 90,
-      learning_steps: ['1m', '10m'],
-      relearning_steps: ['10m']
+      show_all_ratings: true
     })
   })
 
@@ -145,10 +139,7 @@ describe('useMemberStore', () => {
     const store = useMemberStore()
 
     expect(store.preferences.study).toEqual({
-      show_all_ratings: false,
-      desired_retention: 90,
-      learning_steps: ['1m', '10m'],
-      relearning_steps: ['10m']
+      show_all_ratings: false
     })
     expect(store.preferences.accessibility).toEqual({ left_hand: false })
   })

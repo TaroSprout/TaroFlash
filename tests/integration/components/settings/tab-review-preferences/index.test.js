@@ -11,11 +11,6 @@ const RatingsSectionStub = defineComponent({
   setup: () => () => h('div', { 'data-testid': 'ratings-section-stub' })
 })
 
-const FsrsSectionStub = defineComponent({
-  name: 'FsrsSection',
-  setup: () => () => h('div', { 'data-testid': 'fsrs-section-stub' })
-})
-
 const SaveButtonStub = defineComponent({
   name: 'SettingsSaveButton',
   setup: () => () => h('div', { 'data-testid': 'settings-save-button-stub' })
@@ -28,7 +23,6 @@ function makeTab(layout_mode = 'sheet') {
     global: {
       stubs: {
         RatingsSection: RatingsSectionStub,
-        FsrsSection: FsrsSectionStub,
         SettingsSaveButton: SaveButtonStub
       },
       mocks: { $t: (k) => k },
@@ -45,10 +39,10 @@ describe('TabReviewPreferences', () => {
     expect(wrapper.find('[data-testid="tab-review-preferences"]').exists()).toBe(true)
   })
 
-  test('renders the ratings and fsrs sections', () => {
+  test('renders only the ratings section (fsrs-section was removed) [obligation]', () => {
     const wrapper = makeTab()
     expect(wrapper.find('[data-testid="ratings-section-stub"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="fsrs-section-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="fsrs-section-stub"]').exists()).toBe(false)
   })
 
   test('shows the save button on sheet layout', () => {

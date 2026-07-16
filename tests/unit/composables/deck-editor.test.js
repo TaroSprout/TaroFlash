@@ -141,6 +141,78 @@ describe('useDeckEditor', () => {
     })
   })
 
+  // ── pacing ─────────────────────────────────────────────────────────────────
+
+  describe('pacing', () => {
+    test('initializes pacing from deck review-pacing fields [obligation]', () => {
+      const deck = makeDeck({
+        review_pacing_preset_id: 3,
+        desired_retention_override: 0.85,
+        learning_steps_override: ['1m', '10m'],
+        relearning_steps_override: ['10m']
+      })
+      const { pacing } = useDeckEditor(deck)
+
+      expect(pacing.preset_id).toBe(3)
+      expect(pacing.desired_retention_override).toBe(0.85)
+      expect(pacing.learning_steps_override).toEqual(['1m', '10m'])
+      expect(pacing.relearning_steps_override).toEqual(['10m'])
+    })
+
+    test('initializes pacing fields to null when the deck has none set', () => {
+      const { pacing } = useDeckEditor(makeDeck())
+
+      expect(pacing.preset_id).toBeNull()
+      expect(pacing.desired_retention_override).toBeNull()
+      expect(pacing.learning_steps_override).toBeNull()
+      expect(pacing.relearning_steps_override).toBeNull()
+    })
+
+    test('initializes pacing fields to null with no deck argument', () => {
+      const { pacing } = useDeckEditor()
+
+      expect(pacing.preset_id).toBeNull()
+      expect(pacing.desired_retention_override).toBeNull()
+      expect(pacing.learning_steps_override).toBeNull()
+      expect(pacing.relearning_steps_override).toBeNull()
+    })
+
+    test('saveDeck includes pacing fields alongside title/config/cover in a single payload [obligation]', async () => {
+      // There is no separate "save pacing" request — buildDeckPayload folds
+      // pacing into the same payload as title/config/cover.
+      const deck = makeDeck({
+        review_pacing_preset_id: 3,
+        desired_retention_override: 0.85,
+        learning_steps_override: ['1m', '10m'],
+        relearning_steps_override: ['10m']
+      })
+      const { saveDeck } = useDeckEditor(deck)
+
+      await saveDeck()
+
+      const [arg] = mockUpdateDeck.mock.calls[0]
+      expect(arg.review_pacing_preset_id).toBe(3)
+      expect(arg.desired_retention_override).toBe(0.85)
+      expect(arg.learning_steps_override).toEqual(['1m', '10m'])
+      expect(arg.relearning_steps_override).toEqual(['10m'])
+      expect(arg.title).toBe(deck.title)
+      expect(arg.study_config).toMatchObject(deck.study_config)
+    })
+
+    test('reactive pacing changes are reflected in saveDeck payload', async () => {
+      const { pacing, saveDeck } = useDeckEditor(makeDeck())
+
+      pacing.preset_id = 7
+      pacing.desired_retention_override = 0.92
+
+      await saveDeck()
+
+      const [arg] = mockUpdateDeck.mock.calls[0]
+      expect(arg.review_pacing_preset_id).toBe(7)
+      expect(arg.desired_retention_override).toBe(0.92)
+    })
+  })
+
   // ── saveDeck ───────────────────────────────────────────────────────────────
 
   describe('saveDeck', () => {
@@ -341,6 +413,12 @@ describe('useDeckEditor', () => {
       expect(is_dirty.value).toBe(true)
       settings.title = 'Original'
       expect(is_dirty.value).toBe(false)
+    })
+
+    test('flips to true when only a pacing field is mutated [obligation]', () => {
+      const { pacing, is_dirty } = useDeckEditor(makeDeck())
+      pacing.desired_retention_override = 0.8
+      expect(is_dirty.value).toBe(true)
     })
   })
 

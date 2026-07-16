@@ -10,6 +10,13 @@ function makeState(overrides = {}) {
     card_attributes: {
       front: overrides.card_attributes?.front ?? {},
       back: overrides.card_attributes?.back ?? {}
+    },
+    pacing: {
+      preset_id: null,
+      desired_retention_override: null,
+      learning_steps_override: null,
+      relearning_steps_override: null,
+      ...overrides.pacing
     }
   }
 }
@@ -64,6 +71,31 @@ describe('buildDeckPayload', () => {
     const b = buildDeckPayload(makeState())
     expect(JSON.stringify(a)).toBe(JSON.stringify(b))
   })
+
+  test('maps pacing state onto the payload override columns as-is [obligation]', () => {
+    const out = buildDeckPayload(
+      makeState({
+        pacing: {
+          preset_id: 3,
+          desired_retention_override: 0.85,
+          learning_steps_override: ['1m', '10m'],
+          relearning_steps_override: ['10m']
+        }
+      })
+    )
+    expect(out.review_pacing_preset_id).toBe(3)
+    expect(out.desired_retention_override).toBe(0.85)
+    expect(out.learning_steps_override).toEqual(['1m', '10m'])
+    expect(out.relearning_steps_override).toEqual(['10m'])
+  })
+
+  test('null pacing fields pass through as null (not stripped like card_attributes) [obligation]', () => {
+    const out = buildDeckPayload(makeState())
+    expect(out.review_pacing_preset_id).toBeNull()
+    expect(out.desired_retention_override).toBeNull()
+    expect(out.learning_steps_override).toBeNull()
+    expect(out.relearning_steps_override).toBeNull()
+  })
 })
 
 describe('hasDeckChanges', () => {
@@ -113,6 +145,13 @@ describe('hasDeckChanges', () => {
     const payload_with = buildDeckPayload(with_undef)
     const payload_without = buildDeckPayload(without)
     expect(JSON.stringify(payload_with)).toBe(JSON.stringify(payload_without))
+  })
+
+  test('returns true when a pacing override field changes [obligation]', () => {
+    const state = makeState()
+    const snapshot = buildDeckPayload(state)
+    state.pacing.desired_retention_override = 0.8
+    expect(hasDeckChanges(state, snapshot)).toBe(true)
   })
 
   test('stripNullish: selecting center/center after non-default state produces payload identical to initial snapshot [obligation]', () => {

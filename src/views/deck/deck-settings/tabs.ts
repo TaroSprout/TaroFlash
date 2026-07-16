@@ -1,4 +1,4 @@
-export type TabValue = 'details' | 'design' | 'study' | 'danger-zone'
+export type TabValue = 'details' | 'design' | 'review-pacing' | 'danger-zone'
 
 /**
  * Single source of truth for each tab's icon + label key. Consumed by the tab
@@ -8,6 +8,6 @@ export type TabValue = 'details' | 'design' | 'study' | 'danger-zone'
 export const TAB_META: Record<TabValue, { icon: string; labelKey: string }> = {
   details: { icon: 'text-field', labelKey: 'deck.settings-modal.tab.details' },
   design: { icon: 'paint-brush', labelKey: 'deck.settings-modal.tab.design' },
-  study: { icon: 'card-deck', labelKey: 'deck.settings-modal.tab.study' },
+  'review-pacing': { icon: 'card-deck', labelKey: 'deck.settings-modal.tab.review-pacing' },
   'danger-zone': { icon: 'delete', labelKey: 'deck.settings-modal.tab.danger-zone' }
 }

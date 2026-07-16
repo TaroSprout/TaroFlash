@@ -4,7 +4,7 @@ import { useCardsInDeckInfiniteQuery } from '@/api/cards'
 import { useResetDeckReviewsMutation } from '@/api/reviews'
 import { useDeckActions } from '@/composables/deck/actions'
 import { DECK_SETTINGS_DEFAULTS, DECK_CONFIG_DEFAULTS } from '@/utils/deck/defaults'
-import { buildDeckPayload, hasDeckChanges } from '@/utils/deck/payload'
+import { buildDeckPayload, hasDeckChanges, type DeckPacingEditorState } from '@/utils/deck/payload'
 import { emitSfx } from '@/sfx/bus'
 
 /**
@@ -34,6 +34,13 @@ export function useDeckEditor(deck?: Deck) {
     back: deck?.card_attributes?.back ?? {}
   })
 
+  const pacing = reactive<DeckPacingEditorState>({
+    preset_id: deck?.review_pacing_preset_id ?? null,
+    desired_retention_override: deck?.desired_retention_override ?? null,
+    learning_steps_override: deck?.learning_steps_override ?? null,
+    relearning_steps_override: deck?.relearning_steps_override ?? null
+  })
+
   const active_side = ref<CardSide>('cover')
   const title_error = ref<string>()
 
@@ -44,9 +51,9 @@ export function useDeckEditor(deck?: Deck) {
   const preview_front_text = computed(() => first_card.value?.front_text)
   const preview_back_text = computed(() => first_card.value?.back_text)
 
-  const initial_payload = buildDeckPayload({ settings, config, cover, card_attributes })
+  const initial_payload = buildDeckPayload({ settings, config, cover, card_attributes, pacing })
   const is_dirty = computed(() =>
-    hasDeckChanges({ settings, config, cover, card_attributes }, initial_payload)
+    hasDeckChanges({ settings, config, cover, card_attributes, pacing }, initial_payload)
   )
   const has_title = computed(() => !!settings.title?.trim())
 
@@ -57,7 +64,7 @@ export function useDeckEditor(deck?: Deck) {
   async function saveDeck(): Promise<Deck | null> {
     const payload: Deck = {
       id: settings.id,
-      ...buildDeckPayload({ settings, config, cover, card_attributes })
+      ...buildDeckPayload({ settings, config, cover, card_attributes, pacing })
     }
     return settings.id
       ? await deck_actions.updateDeck(payload)
@@ -107,6 +114,7 @@ export function useDeckEditor(deck?: Deck) {
     config,
     cover,
     card_attributes,
+    pacing,
     active_side,
     preview_front_text,
     preview_back_text,

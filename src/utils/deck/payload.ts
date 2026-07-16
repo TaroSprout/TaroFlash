@@ -6,11 +6,19 @@ function stripNullish<T extends object>(obj: T): Partial<T> {
   ) as Partial<T>
 }
 
+export type DeckPacingEditorState = {
+  preset_id: number | null
+  desired_retention_override: number | null
+  learning_steps_override: string[] | null
+  relearning_steps_override: string[] | null
+}
+
 export type DeckEditorState = {
   settings: { title?: string; description?: string; is_public?: boolean }
   config: DeckConfig
   cover: DeckCover
   card_attributes: DeckCardAttributes
+  pacing: DeckPacingEditorState
 }
 
 export type DeckPayload = {
@@ -20,6 +28,10 @@ export type DeckPayload = {
   study_config: DeckConfig
   cover_config: DeckCover
   card_attributes: DeckCardAttributes
+  review_pacing_preset_id: number | null
+  desired_retention_override: number | null
+  learning_steps_override: string[] | null
+  relearning_steps_override: string[] | null
 }
 
 /**
@@ -42,7 +54,11 @@ export function buildDeckPayload(state: DeckEditorState): DeckPayload {
     card_attributes: {
       front: stripNullish(state.card_attributes.front),
       back: stripNullish(state.card_attributes.back)
-    }
+    },
+    review_pacing_preset_id: state.pacing.preset_id,
+    desired_retention_override: state.pacing.desired_retention_override,
+    learning_steps_override: state.pacing.learning_steps_override,
+    relearning_steps_override: state.pacing.relearning_steps_override
   }
 }
 

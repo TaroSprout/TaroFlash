@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
-import CappedSpinboxRow from '@/views/deck/deck-settings/tab-study/capped-spinbox-row.vue'
+import CappedSpinboxRow from '@/views/deck/deck-settings/tab-review-pacing/capped-spinbox-row.vue'
 
 const SpinboxStub = defineComponent({
   name: 'UiSpinbox',

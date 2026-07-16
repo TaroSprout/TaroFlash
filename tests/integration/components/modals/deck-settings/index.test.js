@@ -158,10 +158,10 @@ vi.mock('@/views/deck/deck-settings/tab-danger-zone/index.vue', async () => {
   }
 })
 
-// The remaining tabs (index/details/design/study) are now statically bundled
+// The remaining tabs (index/details/design/review-pacing) are now statically bundled
 // too — module-mock each so their real setup() (deep editor/i18n context we
 // don't provide here) never runs. Their own logic is covered in their
-// dedicated test files (tab-design/index.test.js, tab-study.test.js, ...).
+// dedicated test files (tab-design/index.test.js, tab-review-pacing.test.js, ...).
 function makeTabContentMock(testid) {
   return async () => {
     const { defineComponent, h } = await import('vue')
@@ -175,7 +175,7 @@ function makeTabContentMock(testid) {
                 'button',
                 {
                   'data-testid': 'tab-content__navigate',
-                  onClick: () => emit('navigate', 'study')
+                  onClick: () => emit('navigate', 'review-pacing')
                 },
                 'navigate'
               )
@@ -189,7 +189,10 @@ function makeTabContentMock(testid) {
 vi.mock('@/views/deck/deck-settings/tab-index/index.vue', makeTabContentMock('tab-index-stub'))
 vi.mock('@/views/deck/deck-settings/tab-details/index.vue', makeTabContentMock('tab-details-stub'))
 vi.mock('@/views/deck/deck-settings/tab-design/index.vue', makeTabContentMock('tab-design-stub'))
-vi.mock('@/views/deck/deck-settings/tab-study/index.vue', makeTabContentMock('tab-study-stub'))
+vi.mock(
+  '@/views/deck/deck-settings/tab-review-pacing/index.vue',
+  makeTabContentMock('tab-review-pacing-stub')
+)
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
@@ -295,7 +298,7 @@ const TabContentStub = defineComponent({
           'button',
           {
             'data-testid': 'tab-content__navigate',
-            onClick: () => emit('navigate', 'study')
+            onClick: () => emit('navigate', 'review-pacing')
           },
           'navigate'
         )
@@ -357,7 +360,7 @@ function makeWrapper(extraProps = {}) {
         TabSheet: TabSheetStub,
         TabDesign: TabContentStub,
         TabGeneral: TabContentStub,
-        TabStudy: TabContentStub,
+        TabReviewPacing: TabContentStub,
         TabDangerZone: TabDangerZoneStub,
         DeckDesignPreview: DeckPreviewStub,
         DeckPinnedPreview: DeckPinnedPreviewStub,
@@ -401,7 +404,7 @@ describe('DeckSettings — header_title reflects the deck title, not the active 
   test('shows deck.title verbatim regardless of active tab [obligation]', () => {
     const { wrapper } = makeWrapper({
       deck: deckFixture.one({ overrides: { id: 1, title: 'My Deck' } }),
-      initial_tab: 'study'
+      initial_tab: 'review-pacing'
     })
 
     expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('My Deck')
@@ -417,12 +420,12 @@ describe('DeckSettings — header_title reflects the deck title, not the active 
 })
 
 describe('DeckSettings — tab bar composition [obligation]', () => {
-  test('desktop tab bar excludes "details" but includes design/study/danger-zone [obligation]', () => {
+  test('desktop tab bar excludes "details" but includes design/review-pacing/danger-zone [obligation]', () => {
     const { wrapper } = makeWrapper()
     const tab_bar_entries = JSON.parse(
       wrapper.find('[data-tab-icons]').attributes('data-tab-icons')
     )
-    expect(tab_bar_entries.map((t) => t.value)).toEqual(['design', 'study', 'danger-zone'])
+    expect(tab_bar_entries.map((t) => t.value)).toEqual(['design', 'review-pacing', 'danger-zone'])
   })
 })
 
@@ -512,7 +515,7 @@ const nextFrame = () => new Promise((r) => requestAnimationFrame(r))
 describe('DeckSettings — tab transition hooks', () => {
   test('swapping tabs on desktop completes through requestAnimationFrame', async () => {
     setBelowMd(false)
-    const { wrapper } = makeWrapper({ initial_tab: 'study' })
+    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
 
     mockEditor.editor.is_dirty.value = false
     // Drive the tab swap via the sheet's update:active emit so the
@@ -527,7 +530,7 @@ describe('DeckSettings — tab transition hooks', () => {
 
   test('swapping tabs below md routes through the mobile height tween', async () => {
     setBelowMd(true)
-    const { wrapper } = makeWrapper({ initial_tab: 'study' })
+    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
 
     await wrapper.find('[data-testid="tab-sheet__select-design"]').trigger('click')
     await flushPromises()
@@ -553,7 +556,7 @@ describe('DeckSettings — overlay actions', () => {
   test('floating preview click is a no-op when not on the design tab', async () => {
     setBelowMd(false)
     const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
-    const { wrapper } = makeWrapper({ initial_tab: 'study' })
+    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
 
     await wrapper.find('[data-testid="deck-preview-stub"]').trigger('click')
 
@@ -599,8 +602,8 @@ describe('DeckSettings — active_tab is a plain non-persisted ref [obligation]'
   })
 
   test('initial_tab prop sets active_tab to that tab on mount [obligation]', () => {
-    const { wrapper } = makeWrapper({ initial_tab: 'study' })
-    expect(wrapper.find('[data-testid="tab-study-stub"]').exists()).toBe(true)
+    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
+    expect(wrapper.find('[data-testid="tab-review-pacing-stub"]').exists()).toBe(true)
   })
 
   test('second mount starts fresh (no cross-mount state leak) [obligation]', () => {
@@ -654,9 +657,9 @@ describe('DeckSettings — initial_tab / initial_side override [obligation]', ()
     expect(wrapper.find('[data-testid="tab-design-stub"]').exists()).toBe(true)
   })
 
-  test('initial_tab prop opens that tab directly (study)', () => {
-    const { wrapper } = makeWrapper({ initial_tab: 'study' })
-    expect(wrapper.find('[data-testid="tab-study-stub"]').exists()).toBe(true)
+  test('initial_tab prop opens that tab directly (review-pacing)', () => {
+    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
+    expect(wrapper.find('[data-testid="tab-review-pacing-stub"]').exists()).toBe(true)
   })
 
   test('initial_side is NOT applied synchronously during setup [obligation]', () => {
@@ -709,7 +712,7 @@ describe('DeckSettings — onNavigate sets direction forward and activates tab',
     await wrapper.find('[data-testid="tab-content__navigate"]').trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="tab-study-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="tab-review-pacing-stub"]').exists()).toBe(true)
   })
 })
 

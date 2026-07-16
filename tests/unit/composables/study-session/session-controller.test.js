@@ -34,30 +34,37 @@ const { mockReviewCard, mockAwaitFlip, mockRestoreCards, mockStartSession } = vi
   mockStartSession: vi.fn()
 }))
 
+const { capturedFlashcardSessionArgs } = vi.hoisted(() => ({
+  capturedFlashcardSessionArgs: { current: null }
+}))
+
 vi.mock('@/views/study-session/composables/flashcard-session', () => ({
-  useFlashcardSession: () => ({
-    mode,
-    cards: ref([]),
-    results,
-    current_card_side: ref('front'),
-    current_index: ref(0),
-    active_card,
-    active_card_preview: ref(undefined),
-    reviewed_count,
-    is_starting_side: ref(true),
-    config,
-    show_all_ratings: ref(false),
-    next_card,
-    is_cover,
-    reviewCard: mockReviewCard,
-    setCards: vi.fn(),
-    restoreCards: mockRestoreCards,
-    setSessionMeta: vi.fn(),
-    startSession: mockStartSession,
-    flipCurrentCard: vi.fn(),
-    dropCard: vi.fn(),
-    updateCard: vi.fn()
-  })
+  useFlashcardSession: (pacing, config_override) => {
+    capturedFlashcardSessionArgs.current = { pacing, config_override }
+    return {
+      mode,
+      cards: ref([]),
+      results,
+      current_card_side: ref('front'),
+      current_index: ref(0),
+      active_card,
+      active_card_preview: ref(undefined),
+      reviewed_count,
+      is_starting_side: ref(true),
+      config,
+      show_all_ratings: ref(false),
+      next_card,
+      is_cover,
+      reviewCard: mockReviewCard,
+      setCards: vi.fn(),
+      restoreCards: mockRestoreCards,
+      setSessionMeta: vi.fn(),
+      startSession: mockStartSession,
+      flipCurrentCard: vi.fn(),
+      dropCard: vi.fn(),
+      updateCard: vi.fn()
+    }
+  }
 }))
 
 vi.mock('@/views/study-session/composables/card-preview', () => ({
@@ -160,7 +167,15 @@ function makeController(overrides = {}) {
   const Parent = {
     setup() {
       controller = provideStudySessionController({
-        decks: [{ id: 1 }, { id: 2 }],
+        decks: [
+          {
+            id: 1,
+            desired_retention: 90,
+            learning_steps: ['1m', '10m'],
+            relearning_steps: ['10m']
+          },
+          { id: 2 }
+        ],
         onFinished,
         onClosed,
         ...overrides
@@ -195,6 +210,7 @@ describe('session-controller', () => {
     mockEmitSfx.mockClear()
     mockMemberStore.id = 'member-1'
     mockMemberStore.preferences = { study: { show_all_ratings: false } }
+    capturedFlashcardSessionArgs.current = null
   })
 
   afterEach(() => {
@@ -435,5 +451,45 @@ describe('session-controller', () => {
 
     expect(mockRestoreCards).toHaveBeenCalledWith('restore-arg')
     expect(mockStartSession).not.toHaveBeenCalled()
+  })
+
+  // ── pacing wiring [obligation] ──────────────────────────────────────────────
+  // useFlashcardSession now takes a required ReviewPacingParams first argument,
+  // built from decks[0]'s already-resolved decks_with_stats fields rather
+  // than read from member_store.preferences.study.*.
+
+  describe('pacing wiring [obligation]', () => {
+    test('useFlashcardSession is called with pacing resolved from decks[0] [obligation]', () => {
+      makeController({
+        decks: [
+          { id: 5, desired_retention: 82, learning_steps: ['1d'], relearning_steps: ['1h'] },
+          { id: 6 }
+        ]
+      })
+
+      expect(capturedFlashcardSessionArgs.current.pacing).toEqual({
+        desired_retention: 82,
+        learning_steps: ['1d'],
+        relearning_steps: ['1h']
+      })
+    })
+
+    test('useFlashcardSession config_override still merges decks[0].study_config with the passed config_override', () => {
+      makeController({
+        decks: [
+          {
+            id: 5,
+            desired_retention: 90,
+            learning_steps: ['1m'],
+            relearning_steps: ['10m'],
+            study_config: { shuffle: false }
+          },
+          { id: 6 }
+        ],
+        config_override: { shuffle: true }
+      })
+
+      expect(capturedFlashcardSessionArgs.current.config_override).toEqual({ shuffle: true })
+    })
   })
 })

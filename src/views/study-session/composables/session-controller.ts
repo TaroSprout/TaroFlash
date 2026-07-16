@@ -71,7 +71,14 @@ function useStudySessionController({
     flipCurrentCard,
     dropCard,
     updateCard
-  } = useFlashcardSession({ ...decks[0]?.study_config, ...config_override })
+  } = useFlashcardSession(
+    {
+      desired_retention: decks[0].desired_retention!,
+      learning_steps: decks[0].learning_steps!,
+      relearning_steps: decks[0].relearning_steps!
+    },
+    { ...decks[0]?.study_config, ...config_override }
+  )
 
   setSessionMeta(
     decks.map((deck) => deck.id),

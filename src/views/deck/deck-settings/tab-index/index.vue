@@ -24,9 +24,9 @@ const nav_groups = computed<NavGroup[]>(() => [
     entries: layout_mode.value === 'sheet' ? ['details', 'design'] : ['design']
   },
   {
-    key: 'study',
-    heading: t('deck.settings-modal.index.study-heading'),
-    entries: ['study']
+    key: 'review-pacing',
+    heading: t('deck.settings-modal.index.review-pacing-heading'),
+    entries: ['review-pacing']
   }
 ])
 
