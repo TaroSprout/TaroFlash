@@ -3,21 +3,17 @@ import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiToggle from '@/components/ui-kit/toggle.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import UiDivider from '@/components/ui-kit/divider.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
-import CappedSpinboxRow from './capped-spinbox-row.vue'
 import PacingSection from './pacing-section.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { deckSettingsLayoutKey } from '../layout'
-import { DAILY_LIMIT_BOUNDS } from '@/utils/deck/defaults'
-import { usePacingFields } from './use-pacing-fields'
 import DeckSaveButton from '../deck-save-button.vue'
 
 const { t } = useI18n()
-const { deck, config, pacing } = inject(deckEditorKey)!
+const { config } = inject(deckEditorKey)!
 const layout_mode = inject(deckSettingsLayoutKey)!
-
-const { max_reviews_per_day, max_new_per_day } = usePacingFields(deck!, pacing)
 </script>
 
 <template>
@@ -25,52 +21,26 @@ const { max_reviews_per_day, max_new_per_day } = usePacingFields(deck!, pacing)
     data-testid="tab-review-pacing"
     class="px-(--deck-settings-padding) pb-(--deck-settings-padding)"
   >
-    <pacing-section />
-
     <labeled-section :label="t('deck.settings-modal.review-pacing.section.cards-heading')">
       <ui-toggle v-model:checked="config.shuffle">
         <div class="flex items-center gap-2.5">
-          <ui-icon src="reorder" />
+          <ui-icon src="shuffle" class="size-4.5" />
           {{ t('deck.settings-modal.review-pacing.shuffle') }}
         </div>
       </ui-toggle>
 
       <ui-toggle v-model:checked="config.flip_cards">
         <div class="flex items-center gap-2.5">
-          <ui-icon src="horizontal-align" />
+          <ui-icon src="card-flip" class="size-4.5" />
           {{ t('deck.settings-modal.review-pacing.flip-cards') }}
         </div>
       </ui-toggle>
     </labeled-section>
 
-    <labeled-section
-      :label="t('deck.settings-modal.review-pacing.section.limits-heading')"
-      :description="t('deck.settings-modal.review-pacing.section.limits-description')"
-    >
-      <capped-spinbox-row
-        data-testid="tab-review-pacing__max-reviews"
-        :label="t('deck.settings-modal.review-pacing.max-reviews-per-day')"
-        :all_label="t('deck.settings-modal.review-pacing.max-reviews.all-toggle')"
-        :min="DAILY_LIMIT_BOUNDS.min"
-        :max="DAILY_LIMIT_BOUNDS.reviews.max"
-        :step="DAILY_LIMIT_BOUNDS.step"
-        :default_value="DAILY_LIMIT_BOUNDS.reviews.default"
-        :prefill_when_all="deck?.card_count"
-        v-model:value="max_reviews_per_day"
-      />
+    <ui-divider />
 
-      <capped-spinbox-row
-        data-testid="tab-review-pacing__max-new"
-        :label="t('deck.settings-modal.review-pacing.max-new-per-day')"
-        :all_label="t('deck.settings-modal.review-pacing.max-new.all-toggle')"
-        :min="DAILY_LIMIT_BOUNDS.min"
-        :max="DAILY_LIMIT_BOUNDS.new_cards.max"
-        :step="DAILY_LIMIT_BOUNDS.step"
-        :default_value="DAILY_LIMIT_BOUNDS.new_cards.default"
-        :prefill_when_all="deck?.card_count"
-        v-model:value="max_new_per_day"
-      />
-    </labeled-section>
+    <pacing-section />
+
     <deck-save-button v-if="layout_mode === 'sheet'" />
   </section-list>
 </template>

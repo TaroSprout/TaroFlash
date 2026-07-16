@@ -64,7 +64,7 @@ function onClose() {
   >
     <div
       data-testid="feedback-submit-dialog__body"
-      class="h-full flex flex-col justify-between gap-4 px-(--dialog-px) pb-(--dialog-px)"
+      class="h-full flex flex-col justify-between gap-4 pb-(--dialog-px)"
     >
       <p class="text-brown-500 dark:text-brown-300 text-base text-center">
         {{ t('feedback-submit-dialog.intro') }}

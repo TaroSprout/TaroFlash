@@ -27,7 +27,7 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div data-testid="mobile-card-editor__stage" class="flex w-full justify-center px-(--dialog-px)">
+  <div data-testid="mobile-card-editor__stage" class="flex w-full justify-center">
     <face-editor
       v-if="current"
       ref="face"

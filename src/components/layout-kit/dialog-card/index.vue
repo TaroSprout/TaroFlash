@@ -86,9 +86,22 @@ const slots = defineSlots<{
 const { t } = useI18n()
 const viewport = provideDialogCardViewport(full_bleed_at ?? SIZE_FULL_BLEED_AT[size])
 
+// `--content-grid-padding` is set here directly rather than via a
+// `content-grid-px-(--dialog-px)` class: Tailwind's arbitrary-value matcher
+// for that utility never actually generates a rule for a bare custom-property
+// reference, so the class silently no-ops and the padding stays at the
+// content-grid default of 0 — every direct child then renders flush against
+// the card's edge instead of inset by --dialog-px.
+//
+// --content-grid-max-width is capped to 100% on mobile so the content column
+// always resolves to `100% - padding*2` instead of the (larger, desktop-sized)
+// fixed max-width — otherwise a phone narrower than the size's max-width but
+// still wider than `100% - padding*2` renders content flush against the edge.
 const card_style = computed(() => ({
   ...(dialog_px && { '--dialog-px': dialog_px }),
-  '--content-grid-max-width': content_max_width ?? SIZE_CONTENT_MAX_WIDTH[size],
+  '--content-grid-padding': 'var(--dialog-px)',
+  '--content-grid-max-width':
+    viewport.value === 'mobile' ? '100%' : (content_max_width ?? SIZE_CONTENT_MAX_WIDTH[size]),
   '--content-grid-breakout-max-width':
     content_breakout_max_width ?? SIZE_CONTENT_BREAKOUT_MAX_WIDTH[size]
 }))
@@ -99,7 +112,7 @@ defineExpose({ viewport })
 <template>
   <div
     data-testid="dialog-card"
-    class="content-grid content-grid-px-(--dialog-px) relative gap-y-4 overflow-hidden [--dialog-px:1.5rem] sm:[--dialog-px:2rem]"
+    class="content-grid relative gap-y-4 overflow-hidden [--dialog-px:1.5rem] sm:[--dialog-px:2rem]"
     :class="[
       SIZE_CLASSES[size],
       bg_class,
