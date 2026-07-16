@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
@@ -6,6 +7,7 @@ import UiSelectMenu from '@/components/ui-kit/select-menu.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { usePacingFields } from './use-pacing-fields'
+import { emitSfx } from '@/sfx/bus'
 import type { DeckPacingEditorState } from '@/utils/deck/payload'
 
 const { deck, pacing, close } = defineProps<{
@@ -23,6 +25,9 @@ const {
   relearning_steps_key,
   relearning_steps_options
 } = usePacingFields(deck, pacing)
+
+onMounted(() => emitSfx('wooden_chime_ring'))
+onBeforeUnmount(() => emitSfx('pop_up_close'))
 </script>
 
 <template>

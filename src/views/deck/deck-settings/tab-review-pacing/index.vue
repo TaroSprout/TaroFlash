@@ -3,6 +3,7 @@ import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiToggle from '@/components/ui-kit/toggle.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import UiDivider from '@/components/ui-kit/divider.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import PacingSection from './pacing-section.vue'
@@ -23,18 +24,20 @@ const layout_mode = inject(deckSettingsLayoutKey)!
     <labeled-section :label="t('deck.settings-modal.review-pacing.section.cards-heading')">
       <ui-toggle v-model:checked="config.shuffle">
         <div class="flex items-center gap-2.5">
-          <ui-icon src="reorder" />
+          <ui-icon src="shuffle" class="size-4.5" />
           {{ t('deck.settings-modal.review-pacing.shuffle') }}
         </div>
       </ui-toggle>
 
       <ui-toggle v-model:checked="config.flip_cards">
         <div class="flex items-center gap-2.5">
-          <ui-icon src="horizontal-align" />
+          <ui-icon src="card-flip" class="size-4.5" />
           {{ t('deck.settings-modal.review-pacing.flip-cards') }}
         </div>
       </ui-toggle>
     </labeled-section>
+
+    <ui-divider />
 
     <pacing-section />
 
