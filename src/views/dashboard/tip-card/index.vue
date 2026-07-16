@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import UiTape from '@/components/ui-kit/tape.vue'
+import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import { useTipRotation } from './use-tip-rotation'
 
 const { t } = useI18n()
@@ -10,7 +11,7 @@ const { tip } = useTipRotation()
 <template>
   <div
     data-testid="dashboard-tip-card"
-    class="mt-6 w-full rounded-4 relative hidden md:flex flex-col items-center gap-2 bg-brown-50 dark:bg-stone-700 px-6 pt-8 pb-6 text-center"
+    class="mt-6 h-47.5 w-full rounded-4 relative hidden md:flex flex-col items-center justify-center gap-2 bg-brown-50 dark:bg-stone-700 px-10 text-center"
   >
     <ui-tape
       data-testid="dashboard-tip-card__tape"
@@ -20,23 +21,26 @@ const { tip } = useTipRotation()
       :label="t('dashboard.tip-card.tape-label')"
     />
 
-    <h3
-      data-testid="dashboard-tip-card__title"
-      class="mt-4 text-brown-700 dark:text-brown-100 text-xl"
-    >
-      {{ t(tip.title_key) }}
-    </h3>
+    <Transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
+      <div
+        :key="tip.id"
+        data-testid="dashboard-tip-card__content"
+        class="absolute inset-0 flex flex-col items-center justify-center gap-2 px-10"
+      >
+        <h3
+          data-testid="dashboard-tip-card__title"
+          class="text-brown-700 dark:text-brown-100 text-xl"
+        >
+          {{ t(tip.title_key) }}
+        </h3>
 
-    <div
-      data-testid="dashboard-tip-card__divider"
-      aria-hidden="true"
-      class="text-brown-700 dark:text-stone-100"
-    >
-      ―
-    </div>
-
-    <p data-testid="dashboard-tip-card__body" class="text-brown-500 dark:text-brown-300 text-base">
-      {{ t(tip.body_key) }}
-    </p>
+        <p
+          data-testid="dashboard-tip-card__body"
+          class="text-brown-500 dark:text-brown-300 text-base"
+        >
+          {{ t(tip.body_key) }}
+        </p>
+      </div>
+    </Transition>
   </div>
 </template>
