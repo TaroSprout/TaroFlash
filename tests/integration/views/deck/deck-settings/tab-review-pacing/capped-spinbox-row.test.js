@@ -2,6 +2,8 @@ import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 import CappedSpinboxRow from '@/views/deck/deck-settings/tab-review-pacing/capped-spinbox-row.vue'
+import TooltipRow from '@/views/deck/deck-settings/tab-review-pacing/tooltip-row.vue'
+import UiTooltip from '@/components/ui-kit/tooltip.vue'
 
 const SpinboxStub = defineComponent({
   name: 'UiSpinbox',
@@ -83,10 +85,20 @@ function makeRow(overrides = {}) {
 }
 
 describe('CappedSpinboxRow', () => {
-  test('renders the label and the all-pill label', () => {
+  test('renders the label and the all-pill label via tooltip-row', () => {
     const { wrapper } = makeRow({ label: 'Max reviews', all_label: 'Unlimited' })
-    expect(wrapper.find('[data-testid="capped-spinbox-row__label"]').text()).toBe('Max reviews')
+    expect(wrapper.find('[data-testid="tooltip-row__label"]').text()).toContain('Max reviews')
     expect(wrapper.find('[data-testid="ui-kit-spinbox__all-pill"]').text()).toContain('Unlimited')
+  })
+
+  test('passes the tooltip prop through to tooltip-row', () => {
+    const { wrapper } = makeRow({ tooltip: 'Caps daily review count' })
+    expect(wrapper.findComponent(TooltipRow).props('tooltip')).toBe('Caps daily review count')
+  })
+
+  test('omits the tooltip icon when no tooltip prop is given', () => {
+    const { wrapper } = makeRow()
+    expect(wrapper.findComponent(UiTooltip).exists()).toBe(false)
   })
 
   test('passes min/max/step through to the spinbox', () => {

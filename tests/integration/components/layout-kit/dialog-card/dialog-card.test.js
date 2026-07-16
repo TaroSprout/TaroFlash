@@ -420,8 +420,72 @@ describe('DialogCard', () => {
 
     test('leaves --dialog-px unset (falls back to the Tailwind arbitrary value) when omitted', () => {
       const wrapper = mountCard()
+      // `--content-grid-padding: var(--dialog-px)` always contains the
+      // substring "--dialog-px" as a var() reference — assert there's no
+      // actual `--dialog-px:` declaration instead of a bare substring match.
       expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).not.toContain(
-        '--dialog-px'
+        '--dialog-px:'
+      )
+    })
+  })
+
+  // ── --content-grid-padding regression [obligation] ──────────────────────────
+  // The `content-grid-px-(--dialog-px)` Tailwind utility never generated a CSS
+  // rule for a bare custom-property reference, so padding silently stayed 0.
+  // The fix sets --content-grid-padding directly via inline style instead.
+
+  describe('--content-grid-padding [obligation]', () => {
+    test('sets --content-grid-padding to var(--dialog-px) via inline style', () => {
+      const wrapper = mountCard()
+      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
+        '--content-grid-padding: var(--dialog-px)'
+      )
+    })
+
+    test('still sets --content-grid-padding when a custom dialog_px is provided', () => {
+      const wrapper = mountCard({ dialog_px: '3rem' })
+      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
+        '--content-grid-padding: var(--dialog-px)'
+      )
+    })
+  })
+
+  // ── --content-grid-max-width mobile cap [obligation] ────────────────────────
+  // On mobile the content column is capped to 100% instead of resolving to the
+  // (larger) desktop size-based default or a caller override — otherwise a
+  // phone narrower than the size max-width still renders content flush against
+  // the edge.
+
+  describe('--content-grid-max-width mobile cap [obligation]', () => {
+    test('resolves to 100% on mobile regardless of size', () => {
+      matchState.value = true
+      const wrapper = mountCard({ size: 'lg' })
+      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
+        '--content-grid-max-width: 100%'
+      )
+    })
+
+    test('resolves to 100% on mobile even when content_max_width is explicitly set', () => {
+      matchState.value = true
+      const wrapper = mountCard({ content_max_width: '50rem' })
+      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
+        '--content-grid-max-width: 100%'
+      )
+    })
+
+    test('falls back to the size default on desktop (not 100%)', () => {
+      matchState.value = false
+      const wrapper = mountCard({ size: 'lg' })
+      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
+        '--content-grid-max-width: 35rem'
+      )
+    })
+
+    test('an explicit content_max_width still wins on desktop', () => {
+      matchState.value = false
+      const wrapper = mountCard({ content_max_width: '50rem' })
+      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
+        '--content-grid-max-width: 50rem'
       )
     })
   })
