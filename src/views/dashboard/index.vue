@@ -7,6 +7,7 @@ import { useCan } from '@/composables/can'
 import { useLocalRef } from '@/composables/storage/local-ref'
 import { emitSfx } from '@/sfx/bus'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
+import UiTape from '@/components/ui-kit/tape.vue'
 import DashboardShell from './dashboard-shell.vue'
 import DashboardSkeleton from './skeleton.vue'
 import DashboardSection from './dashboard-section.vue'
@@ -63,6 +64,10 @@ const show_skeleton = computed(() => !decks_data.value)
           :editing_decks="editing_decks"
           @toggle-edit-decks="onToggleEditDecks"
         />
+
+        <div class="mt-6 flex justify-center">
+          <ui-tape>Tip</ui-tape>
+        </div>
       </template>
 
       <template #right>
