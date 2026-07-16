@@ -44,6 +44,7 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
     size="md"
     :title="t('deck.settings-modal.review-pacing.advanced-modal.title')"
     class="grid-rows-[auto_auto_1fr_auto]! pb-(--dialog-px)"
+    bg_class="bg-brown-300 dark:bg-stone-900"
     @close="close()"
   >
     <template #header-end>
@@ -53,7 +54,6 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
         data-theme-dark="stone-700"
         menu-theme="brown-100"
         menu-theme-dark="stone-700"
-        size="sm"
         v-model="selected_preset_value"
         :options="preset_options"
       />
@@ -76,7 +76,7 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
       </template>
     </i18n-t>
 
-    <section-list data-testid="advanced-pacing-modal__content">
+    <section-list data-testid="advanced-pacing-modal__content" class="mt-4">
       <labeled-section
         :label="t('deck.settings-modal.review-pacing.advanced-modal.limits-heading')"
         :description="t('deck.settings-modal.review-pacing.advanced-modal.limits-description')"
