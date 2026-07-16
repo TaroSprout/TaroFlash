@@ -49,7 +49,10 @@ function onSelect(h: Horizontal, v: Vertical) {
 </script>
 
 <template>
-  <div data-testid="align-picker" class="grid grid-cols-3 gap-1 w-full bg-input rounded-[22px] p-2">
+  <div
+    data-testid="align-picker"
+    class="grid grid-cols-3 gap-1 w-full bg-brown-100 dark:bg-stone-700 rounded-[22px] p-2"
+  >
     <template v-for="v in VERTICALS" :key="v">
       <button
         v-for="h in HORIZONTALS"

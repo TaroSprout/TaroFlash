@@ -66,7 +66,12 @@ function onPillClick(e: MouseEvent) {
 </script>
 
 <template>
-  <div data-testid="ui-kit-spinbox-container" class="flex gap-1 w-max">
+  <div
+    data-testid="ui-kit-spinbox-container"
+    class="flex gap-1 w-max"
+    data-theme="brown-100"
+    data-theme-dark="stone-700"
+  >
     <label
       v-if="label"
       data-testid="ui-kit-spinbox__label"
@@ -77,7 +82,7 @@ function onPillClick(e: MouseEvent) {
 
     <div
       data-testid="ui-kit-spinbox"
-      class="inline-flex items-center bg-(--theme-neutral) rounded-4 p-1 gap-0.5"
+      class="inline-flex items-center bg-(--theme-primary) rounded-4 p-1 gap-0.5"
       :class="pill_label && 'rounded-r-2'"
     >
       <spinbox-button
@@ -122,7 +127,7 @@ function onPillClick(e: MouseEvent) {
       type="button"
       data-testid="ui-kit-spinbox__pill"
       :data-active="pill_active || pill_playing || null"
-      class="inline-flex items-center justify-center bg-input px-3 text-sm cursor-pointer text-brown-700 dark:text-brown-100 transition-colors rounded-4 rounded-l-2 data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary) data-[active=false]:hover:bg-(--theme-primary) data-[active=false]:hover:text-(--theme-on-primary)"
+      class="inline-flex items-center justify-center bg-brown-100 dark:bg-stone-700 px-3 text-sm cursor-pointer text-brown-700 dark:text-brown-100 transition-colors rounded-4 rounded-l-2 data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary) data-[active=false]:hover:bg-(--theme-primary) data-[active=false]:hover:text-(--theme-on-primary)"
       v-sfx="{ hover: TYPE_SFX }"
       @click="onPillClick"
     >
