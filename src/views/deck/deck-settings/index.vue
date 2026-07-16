@@ -14,7 +14,7 @@ import DeckPinnedPreview from '@/components/deck/pinned-preview.vue'
 import TabSheet from '@/components/layout-kit/sheet/tab-sheet.vue'
 import TabDetails from './tab-details/index.vue'
 import TabDesign from './tab-design/index.vue'
-import TabStudy from './tab-study/index.vue'
+import TabReviewPacing from './tab-review-pacing/index.vue'
 import TabDangerZone from './tab-danger-zone/index.vue'
 import TabIndex from './tab-index/index.vue'
 import { TAB_META, type TabValue } from './tabs'
@@ -33,7 +33,7 @@ const TAB_COMPONENTS = {
   index: TabIndex,
   details: TabDetails,
   design: TabDesign,
-  study: TabStudy,
+  'review-pacing': TabReviewPacing,
   'danger-zone': TabDangerZone
 }
 
@@ -62,7 +62,7 @@ const active_tab_ref = useTemplateRef<{ onChromeBack?: () => boolean }>('active_
 
 if (initial_tab) active_tab.value = initial_tab
 
-const DESKTOP_TABS: TabValue[] = ['design', 'study', 'danger-zone']
+const DESKTOP_TABS: TabValue[] = ['design', 'review-pacing', 'danger-zone']
 
 const tabs = computed(() =>
   DESKTOP_TABS.map((value) => ({

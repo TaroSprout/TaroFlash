@@ -35,7 +35,12 @@ type Deck = {
   desired_retention?: number
   learning_steps?: string[]
   relearning_steps?: string[]
-  has_review_pacing_overrides?: boolean
+  // Raw per-field pins — non-null means this field is overriding its preset
+  // rather than inheriting it. desired_retention/learning_steps/
+  // relearning_steps above are already resolved against these.
+  desired_retention_override?: number | null
+  learning_steps_override?: string[] | null
+  relearning_steps_override?: string[] | null
 }
 
 type CardEditorMode = 'view' | 'edit' | 'import-export'

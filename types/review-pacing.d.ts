@@ -8,9 +8,3 @@ type ReviewPacingPreset = {
   is_system: boolean
   created_at?: string
 }
-
-type DeckReviewPacingOverrides = {
-  desired_retention_override?: number | null
-  learning_steps_override?: string[] | null
-  relearning_steps_override?: string[] | null
-}
