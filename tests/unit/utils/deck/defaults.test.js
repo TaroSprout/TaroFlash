@@ -17,12 +17,15 @@ describe('deck defaults', () => {
     expect(DECK_CONFIG_DEFAULTS).toMatchObject({
       study_all_cards: false,
       shuffle: false,
-      max_reviews_per_day: null,
-      max_new_per_day: null,
       flip_cards: false,
       is_spaced: true,
       auto_play: false
     })
+  })
+
+  test('DECK_CONFIG_DEFAULTS no longer carries the daily-limit fields (moved to pacing overrides)', () => {
+    expect(DECK_CONFIG_DEFAULTS).not.toHaveProperty('max_reviews_per_day')
+    expect(DECK_CONFIG_DEFAULTS).not.toHaveProperty('max_new_per_day')
   })
 
   test('CARD_ATTRIBUTES_DEFAULTS exposes text_size default', () => {
@@ -53,15 +56,9 @@ describe('deck defaults', () => {
     })
 
     test('overrides defaults with concrete partial values', () => {
-      const result = withDeckConfigDefaults({ shuffle: true, max_reviews_per_day: 50 })
+      const result = withDeckConfigDefaults({ shuffle: true, flip_cards: true })
       expect(result.shuffle).toBe(true)
-      expect(result.max_reviews_per_day).toBe(50)
-      expect(result.flip_cards).toBe(false)
-    })
-
-    test('preserves explicit null overrides', () => {
-      const result = withDeckConfigDefaults({ max_reviews_per_day: null })
-      expect(result.max_reviews_per_day).toBeNull()
+      expect(result.flip_cards).toBe(true)
     })
 
     test('ignores keys whose override value is undefined', () => {

@@ -58,10 +58,10 @@ beforeEach(() => {
 })
 
 describe('fetchMemberDecks', () => {
-  test('calls decks_with_stats RPC filtered by current member', async () => {
+  test('calls get_member_decks RPC filtered by current member', async () => {
     queryMock.eq.mockResolvedValueOnce({ data: [{ id: 1 }], error: null })
     const result = await fetchMemberDecks()
-    expect(capturedRpcs[0].fn).toBe('decks_with_stats')
+    expect(capturedRpcs[0].fn).toBe('get_member_decks')
     expect(capturedRpcs[0].args.p_today_start).toEqual(expect.any(String))
     expect(queryMock.eq).toHaveBeenCalledWith('member_id', 'member-uuid-1')
     expect(result).toEqual([{ id: 1 }])
@@ -75,11 +75,11 @@ describe('fetchMemberDecks', () => {
 })
 
 describe('fetchDeck', () => {
-  test('calls decks_with_stats RPC filtered by id and returns the row', async () => {
+  test('calls get_member_decks RPC filtered by id and returns the row', async () => {
     const row = { id: 5, title: 'X', member_display_name: 'Alice' }
     queryMock.single.mockResolvedValueOnce({ data: row, error: null })
     const result = await fetchDeck(5)
-    expect(capturedRpcs[0].fn).toBe('decks_with_stats')
+    expect(capturedRpcs[0].fn).toBe('get_member_decks')
     expect(capturedRpcs[0].args.p_today_start).toEqual(expect.any(String))
     expect(queryMock.eq).toHaveBeenCalledWith('id', 5)
     expect(result).toEqual(row)
@@ -99,11 +99,11 @@ describe('fetchDecksByIds', () => {
     expect(supabase.rpc).not.toHaveBeenCalled()
   })
 
-  test('calls decks_with_stats RPC filtered by the given ids', async () => {
+  test('calls get_member_decks RPC filtered by the given ids', async () => {
     const rows = [{ id: 1 }, { id: 2 }]
     queryMock.in.mockResolvedValueOnce({ data: rows, error: null })
     const result = await fetchDecksByIds([1, 2])
-    expect(capturedRpcs[0].fn).toBe('decks_with_stats')
+    expect(capturedRpcs[0].fn).toBe('get_member_decks')
     expect(queryMock.in).toHaveBeenCalledWith('id', [1, 2])
     expect(result).toEqual(rows)
   })
@@ -145,28 +145,60 @@ describe('fetchMemberDeckCount', () => {
 })
 
 describe('upsertDeck', () => {
-  test('upserts on the decks table, stamps updated_at, and returns the inserted row', async () => {
-    const inserted = { id: 1, title: 'T', updated_at: '2026-05-10T00:00:00Z' }
-    queryMock.single.mockResolvedValueOnce({ data: inserted, error: null })
-    const result = await upsertDeck({ id: 1, title: 'T' })
+  test('calls the save_deck RPC with the deck id and pacing override params, and returns the resolved row', async () => {
+    const saved = { id: 1, title: 'T' }
+    supabase.rpc.mockImplementationOnce((fn, args) => {
+      capturedRpcs.push({ fn, args })
+      return Promise.resolve({ data: [saved], error: null })
+    })
 
-    expect(capturedTables[0]).toBe('decks')
-    const [payload, opts] = queryMock.upsert.mock.calls[0]
-    expect(payload.updated_at).toBeTruthy()
-    expect(opts).toEqual({ onConflict: 'id' })
-    expect(result).toEqual(inserted)
+    const result = await upsertDeck({
+      id: 1,
+      title: 'T',
+      has_max_reviews_override: true,
+      max_reviews_per_day_override: 30,
+      has_max_new_override: false,
+      max_new_per_day_override: null
+    })
+
+    expect(capturedRpcs[0].fn).toBe('save_deck')
+    expect(capturedRpcs[0].args).toMatchObject({
+      p_deck_id: 1,
+      p_title: 'T',
+      p_has_max_reviews_override: true,
+      p_max_reviews_per_day_override: 30,
+      p_has_max_new_override: false,
+      p_max_new_per_day_override: null
+    })
+    expect(result).toEqual(saved)
   })
 
-  test('does not mutate the supplied deck argument', async () => {
-    queryMock.single.mockResolvedValueOnce({ data: { id: 1 }, error: null })
-    const deck = { id: 1, title: 'T' }
-    await upsertDeck(deck)
-    expect(deck).toEqual({ id: 1, title: 'T' })
+  test('sends p_deck_id null when the deck has no id yet (create path)', async () => {
+    supabase.rpc.mockImplementationOnce((fn, args) => {
+      capturedRpcs.push({ fn, args })
+      return Promise.resolve({ data: [{ id: 9, title: 'New' }], error: null })
+    })
+
+    await upsertDeck({ title: 'New' })
+
+    expect(capturedRpcs[0].args.p_deck_id).toBeNull()
   })
 
-  test('throws when the upsert fails', async () => {
+  test('unwraps a single-row array response', async () => {
+    supabase.rpc.mockImplementationOnce(() => Promise.resolve({ data: [{ id: 1 }], error: null }))
+    const result = await upsertDeck({ id: 1 })
+    expect(result).toEqual({ id: 1 })
+  })
+
+  test('returns the data as-is when the RPC does not return an array', async () => {
+    supabase.rpc.mockImplementationOnce(() => Promise.resolve({ data: { id: 1 }, error: null }))
+    const result = await upsertDeck({ id: 1 })
+    expect(result).toEqual({ id: 1 })
+  })
+
+  test('throws when the RPC fails', async () => {
     const err = new Error('dup')
-    queryMock.single.mockResolvedValueOnce({ data: null, error: err })
+    supabase.rpc.mockImplementationOnce(() => Promise.resolve({ data: null, error: err }))
     await expect(upsertDeck({ id: 1 })).rejects.toBe(err)
   })
 })

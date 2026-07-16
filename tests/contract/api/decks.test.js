@@ -1,6 +1,12 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vite-plus/test'
 import { signInAsTestUser } from '../setup.js'
-import { fetchMemberDecks, fetchDeck, fetchMemberDeckCount, fetchDecksByIds } from '@/api/decks/db'
+import {
+  fetchMemberDecks,
+  fetchDeck,
+  fetchMemberDeckCount,
+  fetchDecksByIds,
+  upsertDeck
+} from '@/api/decks/db'
 
 let session
 let displayName
@@ -80,6 +86,41 @@ describe('fetchMemberDeckCount (contract)', () => {
     await insertDeck()
     await insertDeck({ title: 'Second' })
     expect(await fetchMemberDeckCount()).toBe(2)
+  })
+})
+
+describe('upsertDeck (contract)', () => {
+  test('creates a new deck via save_deck and returns the resolved shape', async () => {
+    const deck = await upsertDeck({ title: 'Brand New Deck' })
+
+    expect(deck).toMatchObject({ title: 'Brand New Deck', member_id: session.userId })
+    expect(deck).toHaveProperty('card_count')
+    expect(deck).toHaveProperty('due_count')
+    expect(deck).toHaveProperty('max_reviews_per_day')
+    expect(deck).toHaveProperty('has_max_reviews_override')
+  })
+
+  test('updates an existing deck via save_deck', async () => {
+    const created = await upsertDeck({ title: 'Original' })
+
+    const updated = await upsertDeck({ id: created.id, title: 'Renamed' })
+
+    expect(updated.id).toBe(created.id)
+    expect(updated.title).toBe('Renamed')
+  })
+
+  test('persists a daily-limit override on the deck_review_pacing sidecar', async () => {
+    const created = await upsertDeck({ title: 'Capped Deck' })
+
+    const updated = await upsertDeck({
+      id: created.id,
+      title: 'Capped Deck',
+      has_max_reviews_override: true,
+      max_reviews_per_day_override: 15
+    })
+
+    expect(updated.has_max_reviews_override).toBe(true)
+    expect(updated.max_reviews_per_day).toBe(15)
   })
 })
 

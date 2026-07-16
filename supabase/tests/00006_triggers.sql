@@ -3,7 +3,7 @@
 --
 -- The update_deck_card_count trigger + decks.card_count column were removed
 -- in 20260416000002_drop-deck-card-count-column.sql — per-deck counts are
--- now computed live in the decks_with_stats view (see 00009_decks_with_stats.sql).
+-- now computed live in the get_member_decks view (see 00009_decks_with_stats.sql).
 -- =============================================================================
 
 BEGIN;
