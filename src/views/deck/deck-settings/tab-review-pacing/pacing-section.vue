@@ -16,7 +16,7 @@ import { emitSfx } from '@/sfx/bus'
 import UiDivider from '@/components/ui-kit/divider.vue'
 
 const { t } = useI18n()
-const { deck, pacing } = inject(deckEditorKey)!
+const { deck, draft } = inject(deckEditorKey)!
 
 const {
   preset_options,
@@ -28,7 +28,7 @@ const {
   has_advanced_override,
   resetMaxReviewsPerDay,
   resetMaxNewPerDay
-} = usePacingFields(deck!, pacing)
+} = usePacingFields(deck!, draft)
 
 const is_advanced_open = ref(false)
 

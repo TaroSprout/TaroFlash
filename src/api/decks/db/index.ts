@@ -76,16 +76,7 @@ export async function upsertDeck(deck: Deck): Promise<Deck> {
     p_cover_config: deck.cover_config ?? {},
     p_card_attributes: deck.card_attributes ?? {},
     p_review_pacing_preset_id: deck.review_pacing_preset_id ?? null,
-    p_desired_retention_override: deck.desired_retention_override ?? null,
-    p_learning_steps_override: deck.learning_steps_override ?? null,
-    p_relearning_steps_override: deck.relearning_steps_override ?? null,
-    p_has_max_reviews_override: deck.has_max_reviews_override ?? false,
-    p_max_reviews_per_day_override: deck.max_reviews_per_day_override ?? null,
-    p_has_max_new_override: deck.has_max_new_override ?? false,
-    p_max_new_per_day_override: deck.max_new_per_day_override ?? null,
-    p_leech_threshold_override: deck.leech_threshold_override ?? null,
-    p_has_max_interval_override: deck.has_max_interval_override ?? false,
-    p_max_interval_override: deck.max_interval_override ?? null
+    p_pacing_overrides: deck.pacing_overrides ?? {}
   })
 
   if (error) {

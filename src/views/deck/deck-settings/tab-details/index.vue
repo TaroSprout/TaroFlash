@@ -10,7 +10,7 @@ import { deckSettingsLayoutKey } from '../layout'
 import DeckSaveButton from '../deck-save-button.vue'
 
 const { t } = useI18n()
-const { settings, title_error } = inject(deckEditorKey)!
+const { draft, title_error } = inject(deckEditorKey)!
 const layout_mode = inject(deckSettingsLayoutKey)!
 </script>
 
@@ -26,14 +26,14 @@ const layout_mode = inject(deckSettingsLayoutKey)!
         :max-length="DECK_TITLE_MAX_LENGTH"
         text-align="center"
         size="lg"
-        v-model:value="settings.title"
+        v-model:value="draft.title"
       />
       <ui-textarea
         :placeholder="t('deck.description-placeholder')"
         :max_chars="100"
         no-newlines
         rows="3"
-        v-model:value="settings.description"
+        v-model:value="draft.description"
       />
     </div>
 

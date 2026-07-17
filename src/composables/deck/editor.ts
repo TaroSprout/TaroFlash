@@ -1,105 +1,85 @@
-import { computed, reactive, ref, watch, type InjectionKey } from 'vue'
-import { useDeleteDeckMutation } from '@/api/decks'
+import { computed, ref, watch, type InjectionKey } from 'vue'
+import { useUpsertDeckMutation, useDeleteDeckMutation } from '@/api/decks'
 import { useCardsInDeckInfiniteQuery } from '@/api/cards'
 import { useResetDeckReviewsMutation } from '@/api/reviews'
 import { useDeckActions } from '@/composables/deck/actions'
+import { useDraft } from '@/composables/draft'
 import { DECK_SETTINGS_DEFAULTS, DECK_CONFIG_DEFAULTS } from '@/utils/deck/defaults'
-import { buildDeckPayload, hasDeckChanges, type DeckPacingEditorState } from '@/utils/deck/payload'
-import { replaceReactiveContents } from '@/utils/reactive'
 import { emitSfx } from '@/sfx/bus'
+
+// The editable surface of a deck: the columns save_deck persists, defaults
+// merged in so the draft is always fully populated and dirty-diffing is clean.
+export type DeckDraft = {
+  title?: string
+  description?: string
+  is_public: boolean
+  study_config: DeckConfig
+  cover_config: DeckCover
+  card_attributes: DeckCardAttributes
+  review_pacing_preset_id: number | null
+  pacing_overrides: PacingOverrides
+}
 
 /**
  * Reactive state + mutations for editing one deck (or staging a brand-new one
- * when `deck` is omitted). Owns the in-flight `settings` / `config` / `cover`
- * objects that the deck-settings tabs bind into, plus the persistence
- * helpers that flush them to the backend.
+ * when `deck` is omitted). A single `useDraft` over the deck's editable columns
+ * replaces the old per-field clone/payload/dirty machinery — tabs and designers
+ * mutate `draft` directly, and `is_dirty` falls out of a deep diff against the
+ * last-saved base.
  */
 export function useDeckEditor(deck?: Deck) {
-  function buildInitialSettings(): Omit<Deck, 'study_config' | 'cover_config'> {
+  function buildDeckBase(): DeckDraft {
     return {
-      id: deck?.id as number,
       title: deck?.title,
       description: deck?.description,
       is_public: deck?.is_public ?? DECK_SETTINGS_DEFAULTS.is_public,
-      updated_at: deck?.updated_at
+      study_config: { ...DECK_CONFIG_DEFAULTS, ...deck?.study_config },
+      cover_config: { ...deck?.cover_config },
+      card_attributes: {
+        front: { ...deck?.card_attributes?.front },
+        back: { ...deck?.card_attributes?.back }
+      },
+      review_pacing_preset_id: deck?.review_pacing_preset_id ?? null,
+      pacing_overrides: { ...deck?.pacing_overrides }
     }
   }
 
-  // Fresh copies, not the `deck` prop's own nested objects/arrays — `reactive()`
-  // wraps whatever it's given rather than cloning it, so aliasing `deck`'s
-  // objects here would let editor mutations silently write through to `deck`
-  // itself, corrupting the very snapshot `resetChanges()` reads back from.
-  function buildInitialConfig(): DeckConfig {
-    return deck?.study_config
-      ? { ...deck.study_config }
-      : { study_all_cards: DECK_CONFIG_DEFAULTS.study_all_cards }
-  }
-
-  function buildInitialCover(): DeckCover {
-    return { ...deck?.cover_config }
-  }
-
-  function buildInitialCardAttributes(): DeckCardAttributes {
-    return {
-      front: { ...deck?.card_attributes?.front },
-      back: { ...deck?.card_attributes?.back }
-    }
-  }
-
-  function buildInitialPacing(): DeckPacingEditorState {
-    return {
-      preset_id: deck?.review_pacing_preset_id ?? null,
-      desired_retention_override: deck?.desired_retention_override ?? null,
-      learning_steps_override: deck?.learning_steps_override
-        ? [...deck.learning_steps_override]
-        : null,
-      relearning_steps_override: deck?.relearning_steps_override
-        ? [...deck.relearning_steps_override]
-        : null,
-      has_max_reviews_override: deck?.has_max_reviews_override ?? false,
-      max_reviews_per_day_override: deck?.max_reviews_per_day_override ?? null,
-      has_max_new_override: deck?.has_max_new_override ?? false,
-      max_new_per_day_override: deck?.max_new_per_day_override ?? null,
-      leech_threshold_override: deck?.leech_threshold_override ?? null,
-      has_max_interval_override: deck?.has_max_interval_override ?? false,
-      max_interval_override: deck?.max_interval_override ?? null
-    }
-  }
-
-  const settings = reactive(buildInitialSettings())
-  const config = reactive(buildInitialConfig())
-  const cover = reactive(buildInitialCover())
-  const card_attributes = reactive(buildInitialCardAttributes())
-  const pacing = reactive(buildInitialPacing())
+  const { state: draft, is_dirty, reset: resetChanges, rebase } = useDraft(buildDeckBase)
 
   const active_side = ref<CardSide>('cover')
   const title_error = ref<string>()
 
+  const deck_actions = useDeckActions()
+  const upsert_mutation = useUpsertDeckMutation()
+  const delete_mutation = useDeleteDeckMutation()
+  const reset_reviews_mutation = useResetDeckReviewsMutation()
+
   // The design preview shows the deck's first card. Disabled for unsaved decks
   // (no id), so deck-create just falls back to placeholder text.
-  const cards_query = useCardsInDeckInfiniteQuery(() => settings.id)
+  const cards_query = useCardsInDeckInfiniteQuery(() => deck?.id)
   const first_card = computed(() => cards_query.data.value?.pages?.[0]?.[0])
   const preview_front_text = computed(() => first_card.value?.front_text)
   const preview_back_text = computed(() => first_card.value?.back_text)
 
-  const initial_payload = buildDeckPayload({ settings, config, cover, card_attributes, pacing })
-  const is_dirty = computed(() =>
-    hasDeckChanges({ settings, config, cover, card_attributes, pacing }, initial_payload)
-  )
-  const has_title = computed(() => !!settings.title?.trim())
+  const has_title = computed(() => !!draft.title?.trim())
 
-  const deck_actions = useDeckActions()
-  const delete_mutation = useDeleteDeckMutation()
-  const reset_reviews_mutation = useResetDeckReviewsMutation()
-
+  /**
+   * Persist the draft. Existing decks flush straight through the upsert
+   * mutation (rebasing on success so the dirty flag clears); a brand-new deck
+   * routes through `createDeck` for the plan-limit guard + post-create flow.
+   */
   async function saveDeck(): Promise<Deck | null> {
-    const payload: Deck = {
-      id: settings.id,
-      ...buildDeckPayload({ settings, config, cover, card_attributes, pacing })
+    const payload: Deck = { id: deck?.id as number, ...draft }
+
+    if (!payload.id) return deck_actions.createDeck(payload)
+
+    try {
+      const saved = await upsert_mutation.mutateAsync(payload)
+      rebase()
+      return saved
+    } catch {
+      return null
     }
-    return settings.id
-      ? await deck_actions.updateDeck(payload)
-      : await deck_actions.createDeck(payload)
   }
 
   async function deleteDeck(): Promise<boolean> {
@@ -132,17 +112,8 @@ export function useDeckEditor(deck?: Deck) {
     active_side.value = side
   }
 
-  /** Discard every staged edit, restoring `settings`/`config`/`cover`/`card_attributes`/`pacing` to their last-saved values. */
-  function resetChanges() {
-    replaceReactiveContents(settings, buildInitialSettings())
-    replaceReactiveContents(config, buildInitialConfig())
-    replaceReactiveContents(cover, buildInitialCover())
-    replaceReactiveContents(card_attributes, buildInitialCardAttributes())
-    replaceReactiveContents(pacing, buildInitialPacing())
-  }
-
   watch(
-    () => settings.title,
+    () => draft.title,
     () => {
       title_error.value = undefined
     }
@@ -150,11 +121,7 @@ export function useDeckEditor(deck?: Deck) {
 
   return {
     deck,
-    settings,
-    config,
-    cover,
-    card_attributes,
-    pacing,
+    draft,
     active_side,
     preview_front_text,
     preview_back_text,
