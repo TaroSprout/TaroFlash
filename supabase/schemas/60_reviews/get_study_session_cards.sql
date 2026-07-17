@@ -27,18 +27,20 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Read caps. NULL = unlimited. Same override -> preset -> system ladder
-  -- as get_member_decks: a linked preset's own NULL means "that preset says
-  -- unlimited", which is why this checks "is a preset linked" (dp/p present)
-  -- rather than COALESCE-ing straight through a possibly-NULL preset value.
+  -- Read caps. NULL = unlimited. Same override -> preset -> system ladder as
+  -- get_member_decks: `overrides ? '<key>'` (key present) means the deck pins
+  -- that cap, and a pinned null there is unambiguously "uncapped" — no has_*
+  -- boolean needed. A linked preset's own NULL still means "preset says
+  -- unlimited", which is why an absent key falls to the preset, not straight
+  -- COALESCE through a possibly-NULL preset value.
   SELECT
     CASE
-      WHEN dp.has_max_reviews_override THEN dp.max_reviews_per_day_override
+      WHEN dp.overrides ? 'max_reviews_per_day' THEN (dp.overrides->>'max_reviews_per_day')::int
       WHEN p.id IS NOT NULL THEN p.max_reviews_per_day
       ELSE sys.max_reviews_per_day
     END,
     CASE
-      WHEN dp.has_max_new_override THEN dp.max_new_per_day_override
+      WHEN dp.overrides ? 'max_new_per_day' THEN (dp.overrides->>'max_new_per_day')::int
       WHEN p.id IS NOT NULL THEN p.max_new_per_day
       ELSE sys.max_new_per_day
     END

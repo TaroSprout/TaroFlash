@@ -48,42 +48,49 @@ CREATE FUNCTION public.get_member_decks(p_today_start timestamp with time zone) 
     d.rank,
 
     dp.review_pacing_preset_id,
-    COALESCE(dp.desired_retention_override, p.desired_retention, sys.desired_retention) AS desired_retention,
-    COALESCE(dp.learning_steps_override, p.learning_steps, sys.learning_steps) AS learning_steps,
-    COALESCE(dp.relearning_steps_override, p.relearning_steps, sys.relearning_steps) AS relearning_steps,
-    dp.desired_retention_override,
-    dp.learning_steps_override,
-    dp.relearning_steps_override,
 
+    -- One uniform resolution ladder for every pacing field now that overrides
+    -- are key-presence in a jsonb bag: pinned override (`?` = key present, so a
+    -- pinned null resolves to null/uncapped) -> linked preset -> system default.
+    -- This subsumes the old COALESCE-vs-CASE split — a null cap value pinned in
+    -- overrides is unambiguous where a null column once needed a has_* boolean.
     CASE
-      WHEN dp.has_max_reviews_override THEN dp.max_reviews_per_day_override
+      WHEN dp.overrides ? 'desired_retention' THEN (dp.overrides->>'desired_retention')::int
+      WHEN p.id IS NOT NULL THEN p.desired_retention
+      ELSE sys.desired_retention
+    END AS desired_retention,
+    CASE
+      WHEN dp.overrides ? 'learning_steps' THEN ARRAY(SELECT jsonb_array_elements_text(dp.overrides->'learning_steps'))
+      WHEN p.id IS NOT NULL THEN p.learning_steps
+      ELSE sys.learning_steps
+    END AS learning_steps,
+    CASE
+      WHEN dp.overrides ? 'relearning_steps' THEN ARRAY(SELECT jsonb_array_elements_text(dp.overrides->'relearning_steps'))
+      WHEN p.id IS NOT NULL THEN p.relearning_steps
+      ELSE sys.relearning_steps
+    END AS relearning_steps,
+    CASE
+      WHEN dp.overrides ? 'max_reviews_per_day' THEN (dp.overrides->>'max_reviews_per_day')::int
       WHEN p.id IS NOT NULL THEN p.max_reviews_per_day
       ELSE sys.max_reviews_per_day
     END AS max_reviews_per_day,
     CASE
-      WHEN dp.has_max_new_override THEN dp.max_new_per_day_override
+      WHEN dp.overrides ? 'max_new_per_day' THEN (dp.overrides->>'max_new_per_day')::int
       WHEN p.id IS NOT NULL THEN p.max_new_per_day
       ELSE sys.max_new_per_day
     END AS max_new_per_day,
-    COALESCE(dp.has_max_reviews_override, false),
-    dp.max_reviews_per_day_override,
-    COALESCE(dp.has_max_new_override, false),
-    dp.max_new_per_day_override,
-
-    -- leech_threshold is a plain NOT NULL preset value (like desired_retention):
-    -- override -> linked preset -> system, no "unbounded" case to gate.
-    COALESCE(dp.leech_threshold_override, p.leech_threshold, sys.leech_threshold) AS leech_threshold,
-    -- max_interval carries the same three-state shape as the daily limits: a
-    -- preset's max_interval is nullable (null = uncapped), so a null override is
-    -- ambiguous — the has_max_interval_override boolean says whether it's set.
     CASE
-      WHEN dp.has_max_interval_override THEN dp.max_interval_override
+      WHEN dp.overrides ? 'leech_threshold' THEN (dp.overrides->>'leech_threshold')::int
+      WHEN p.id IS NOT NULL THEN p.leech_threshold
+      ELSE sys.leech_threshold
+    END AS leech_threshold,
+    CASE
+      WHEN dp.overrides ? 'max_interval' THEN (dp.overrides->>'max_interval')::int
       WHEN p.id IS NOT NULL THEN p.max_interval
       ELSE sys.max_interval
     END AS max_interval,
-    dp.leech_threshold_override,
-    COALESCE(dp.has_max_interval_override, false),
-    dp.max_interval_override
+
+    dp.overrides AS pacing_overrides
 
   FROM public.decks d
   LEFT JOIN public.members m ON m.id = d.member_id
@@ -137,7 +144,7 @@ CREATE FUNCTION public.get_member_decks(p_today_start timestamp with time zone) 
         COALESCE(
           (
             CASE
-              WHEN dp.has_max_reviews_override THEN dp.max_reviews_per_day_override
+              WHEN dp.overrides ? 'max_reviews_per_day' THEN (dp.overrides->>'max_reviews_per_day')::int
               WHEN p.id IS NOT NULL THEN p.max_reviews_per_day
               ELSE sys.max_reviews_per_day
             END
@@ -157,7 +164,7 @@ CREATE FUNCTION public.get_member_decks(p_today_start timestamp with time zone) 
         COALESCE(
           (
             CASE
-              WHEN dp.has_max_new_override THEN dp.max_new_per_day_override
+              WHEN dp.overrides ? 'max_new_per_day' THEN (dp.overrides->>'max_new_per_day')::int
               WHEN p.id IS NOT NULL THEN p.max_new_per_day
               ELSE sys.max_new_per_day
             END

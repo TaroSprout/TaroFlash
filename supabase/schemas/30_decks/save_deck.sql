@@ -3,7 +3,7 @@
 -- produce the migration.
 SET check_function_bodies = false;
 
-CREATE FUNCTION public.save_deck(p_deck_id bigint, p_title text, p_description text, p_is_public boolean, p_study_config jsonb, p_cover_config jsonb, p_card_attributes jsonb, p_review_pacing_preset_id bigint, p_desired_retention_override integer, p_learning_steps_override text[], p_relearning_steps_override text[], p_has_max_reviews_override boolean, p_max_reviews_per_day_override integer, p_has_max_new_override boolean, p_max_new_per_day_override integer, p_leech_threshold_override integer, p_has_max_interval_override boolean, p_max_interval_override integer) RETURNS SETOF public.member_deck
+CREATE FUNCTION public.save_deck(p_deck_id bigint, p_title text, p_description text, p_is_public boolean, p_study_config jsonb, p_cover_config jsonb, p_card_attributes jsonb, p_review_pacing_preset_id bigint, p_pacing_overrides jsonb) RETURNS SETOF public.member_deck
     LANGUAGE plpgsql
     AS $$
 DECLARE
@@ -30,37 +30,22 @@ BEGIN
     END IF;
   END IF;
 
-  INSERT INTO public.deck_review_pacing (
-    deck_id, review_pacing_preset_id, desired_retention_override, learning_steps_override, relearning_steps_override,
-    has_max_reviews_override, max_reviews_per_day_override, has_max_new_override, max_new_per_day_override,
-    leech_threshold_override, has_max_interval_override, max_interval_override
-  )
-  VALUES (
-    v_deck_id, p_review_pacing_preset_id, p_desired_retention_override, p_learning_steps_override, p_relearning_steps_override,
-    p_has_max_reviews_override, p_max_reviews_per_day_override, p_has_max_new_override, p_max_new_per_day_override,
-    p_leech_threshold_override, p_has_max_interval_override, p_max_interval_override
-  )
+  -- Sidecar carries just the preset link + the overrides bag now; every
+  -- per-field override/has_* column collapsed into p_pacing_overrides.
+  INSERT INTO public.deck_review_pacing (deck_id, review_pacing_preset_id, overrides)
+  VALUES (v_deck_id, p_review_pacing_preset_id, COALESCE(p_pacing_overrides, '{}'::jsonb))
   ON CONFLICT (deck_id) DO UPDATE SET
     review_pacing_preset_id = EXCLUDED.review_pacing_preset_id,
-    desired_retention_override = EXCLUDED.desired_retention_override,
-    learning_steps_override = EXCLUDED.learning_steps_override,
-    relearning_steps_override = EXCLUDED.relearning_steps_override,
-    has_max_reviews_override = EXCLUDED.has_max_reviews_override,
-    max_reviews_per_day_override = EXCLUDED.max_reviews_per_day_override,
-    has_max_new_override = EXCLUDED.has_max_new_override,
-    max_new_per_day_override = EXCLUDED.max_new_per_day_override,
-    leech_threshold_override = EXCLUDED.leech_threshold_override,
-    has_max_interval_override = EXCLUDED.has_max_interval_override,
-    max_interval_override = EXCLUDED.max_interval_override;
+    overrides = EXCLUDED.overrides;
 
   RETURN QUERY SELECT * FROM public.get_member_decks(now()) gmd WHERE gmd.id = v_deck_id;
 END;
 $$;
 
 
-ALTER FUNCTION public.save_deck(p_deck_id bigint, p_title text, p_description text, p_is_public boolean, p_study_config jsonb, p_cover_config jsonb, p_card_attributes jsonb, p_review_pacing_preset_id bigint, p_desired_retention_override integer, p_learning_steps_override text[], p_relearning_steps_override text[], p_has_max_reviews_override boolean, p_max_reviews_per_day_override integer, p_has_max_new_override boolean, p_max_new_per_day_override integer, p_leech_threshold_override integer, p_has_max_interval_override boolean, p_max_interval_override integer) OWNER TO postgres;
+ALTER FUNCTION public.save_deck(p_deck_id bigint, p_title text, p_description text, p_is_public boolean, p_study_config jsonb, p_cover_config jsonb, p_card_attributes jsonb, p_review_pacing_preset_id bigint, p_pacing_overrides jsonb) OWNER TO postgres;
 
 
-GRANT ALL ON FUNCTION public.save_deck(p_deck_id bigint, p_title text, p_description text, p_is_public boolean, p_study_config jsonb, p_cover_config jsonb, p_card_attributes jsonb, p_review_pacing_preset_id bigint, p_desired_retention_override integer, p_learning_steps_override text[], p_relearning_steps_override text[], p_has_max_reviews_override boolean, p_max_reviews_per_day_override integer, p_has_max_new_override boolean, p_max_new_per_day_override integer, p_leech_threshold_override integer, p_has_max_interval_override boolean, p_max_interval_override integer) TO anon;
-GRANT ALL ON FUNCTION public.save_deck(p_deck_id bigint, p_title text, p_description text, p_is_public boolean, p_study_config jsonb, p_cover_config jsonb, p_card_attributes jsonb, p_review_pacing_preset_id bigint, p_desired_retention_override integer, p_learning_steps_override text[], p_relearning_steps_override text[], p_has_max_reviews_override boolean, p_max_reviews_per_day_override integer, p_has_max_new_override boolean, p_max_new_per_day_override integer, p_leech_threshold_override integer, p_has_max_interval_override boolean, p_max_interval_override integer) TO authenticated;
-GRANT ALL ON FUNCTION public.save_deck(p_deck_id bigint, p_title text, p_description text, p_is_public boolean, p_study_config jsonb, p_cover_config jsonb, p_card_attributes jsonb, p_review_pacing_preset_id bigint, p_desired_retention_override integer, p_learning_steps_override text[], p_relearning_steps_override text[], p_has_max_reviews_override boolean, p_max_reviews_per_day_override integer, p_has_max_new_override boolean, p_max_new_per_day_override integer, p_leech_threshold_override integer, p_has_max_interval_override boolean, p_max_interval_override integer) TO service_role;
+GRANT ALL ON FUNCTION public.save_deck(p_deck_id bigint, p_title text, p_description text, p_is_public boolean, p_study_config jsonb, p_cover_config jsonb, p_card_attributes jsonb, p_review_pacing_preset_id bigint, p_pacing_overrides jsonb) TO anon;
+GRANT ALL ON FUNCTION public.save_deck(p_deck_id bigint, p_title text, p_description text, p_is_public boolean, p_study_config jsonb, p_cover_config jsonb, p_card_attributes jsonb, p_review_pacing_preset_id bigint, p_pacing_overrides jsonb) TO authenticated;
+GRANT ALL ON FUNCTION public.save_deck(p_deck_id bigint, p_title text, p_description text, p_is_public boolean, p_study_config jsonb, p_cover_config jsonb, p_card_attributes jsonb, p_review_pacing_preset_id bigint, p_pacing_overrides jsonb) TO service_role;
