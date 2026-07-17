@@ -194,6 +194,8 @@ function isPageTarget(el: HTMLElement) {
     v-show="visible"
     ref="scrollBarRef"
     data-testid="ui-kit-scroll-bar"
+    data-theme="brown-300"
+    data-theme-dark="grey-500"
     :data-min-width="minWidth"
     class="ui-kit-scroll-bar"
     :class="visibilityClass"
@@ -211,8 +213,8 @@ function isPageTarget(el: HTMLElement) {
 
 <style scoped>
 .ui-kit-scroll-bar {
-  --bar-color: var(--color-brown-300);
-  --thumb-color: var(--color-brown-300);
+  --bar-color: var(--theme-primary);
+  --thumb-color: var(--theme-primary);
   --theme-color: var(--color-purple-400);
 
   --transition-dur: 0.05s;

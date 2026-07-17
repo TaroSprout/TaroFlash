@@ -70,10 +70,10 @@ describe('useTabTransition — nav_direction [obligation]', () => {
   })
 })
 
-// ── onTabEnter — initial-render skip ─────────────────────────────────────────
+// ── onTabEnter — regression: first call must animate, not skip ────────────────
 
-describe('useTabTransition — onTabEnter initial-render skip [obligation]', () => {
-  test('first onTabEnter call fires done() immediately without any GSAP animation', () => {
+describe('useTabTransition — onTabEnter does not skip the first call [obligation]', () => {
+  test('first onTabEnter animates (does not skip) — regression for removed initial-render guard', () => {
     const { layout_mode } = makeLayout('sheet')
     const tab_outlet = ref(document.createElement('div'))
     const { onTabEnter } = useTabTransition(layout_mode, tab_outlet)
@@ -81,24 +81,13 @@ describe('useTabTransition — onTabEnter initial-render skip [obligation]', () 
     const done = vi.fn()
     onTabEnter(makeEl(), done)
 
+    // A single call routes straight to the sheet-mode animation — no skip,
+    // no second call required. The removed guard used to freeze __main's
+    // height on tabSlideLeave and never re-run tabSlideEnter to unfreeze it
+    // on the very next enter, clipping content until the user navigated away
+    // and back.
+    expect(mockTabSlideEnter).toHaveBeenCalledOnce()
     expect(done).toHaveBeenCalledOnce()
-    // No animation calls on initial render
-    expect(mockTabSlideEnter).not.toHaveBeenCalled()
-    expect(mockFadeEnter).not.toHaveBeenCalled()
-  })
-
-  test('second onTabEnter call does run the animation (guard is consumed after first call)', () => {
-    const { layout_mode } = makeLayout('tablet')
-    const tab_outlet = ref(document.createElement('div'))
-    const { onTabEnter } = useTabTransition(layout_mode, tab_outlet)
-
-    const done1 = vi.fn()
-    const done2 = vi.fn()
-
-    onTabEnter(makeEl(), done1) // consumed — initial render skip
-    onTabEnter(makeEl(), done2) // now routes through fade (tablet mode)
-
-    expect(mockFadeEnter).toHaveBeenCalledOnce()
   })
 })
 
@@ -111,8 +100,7 @@ describe('useTabTransition — onTabEnter routing [obligation]', () => {
     const { onTabEnter } = useTabTransition(layout_mode, tab_outlet)
 
     const done = vi.fn()
-    onTabEnter(makeEl(), done) // first call — consumed
-    onTabEnter(makeEl(), done) // second call — animates
+    onTabEnter(makeEl(), done)
 
     expect(mockTabSlideEnter).toHaveBeenCalledOnce()
     expect(mockFadeEnter).not.toHaveBeenCalled()
@@ -124,8 +112,7 @@ describe('useTabTransition — onTabEnter routing [obligation]', () => {
     const { onTabEnter } = useTabTransition(layout_mode, tab_outlet)
 
     const done = vi.fn()
-    onTabEnter(makeEl(), done) // first call — consumed
-    onTabEnter(makeEl(), done) // second call — animates
+    onTabEnter(makeEl(), done)
 
     expect(mockFadeEnter).toHaveBeenCalledOnce()
     expect(mockTabSlideEnter).not.toHaveBeenCalled()
@@ -137,8 +124,7 @@ describe('useTabTransition — onTabEnter routing [obligation]', () => {
     const { onTabEnter } = useTabTransition(layout_mode, tab_outlet)
 
     const done = vi.fn()
-    onTabEnter(makeEl(), done) // first call — consumed
-    onTabEnter(makeEl(), done) // second call — animates
+    onTabEnter(makeEl(), done)
 
     expect(mockFadeEnter).toHaveBeenCalledOnce()
     expect(mockTabSlideEnter).not.toHaveBeenCalled()
@@ -201,9 +187,7 @@ describe('useTabTransition — onTabLeave routing [obligation]', () => {
     const tab_outlet = ref(outlet)
     const { onTabEnter, nav_direction } = useTabTransition(layout_mode, tab_outlet)
 
-    const done = vi.fn()
-    onTabEnter(makeEl(), done) // consumed
-    onTabEnter(makeEl(), done) // animates
+    onTabEnter(makeEl(), vi.fn())
 
     expect(mockTabSlideEnter).toHaveBeenCalledWith(nav_direction, outlet)
   })

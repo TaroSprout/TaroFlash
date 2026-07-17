@@ -9,7 +9,6 @@ export function useTabTransition(
   tab_outlet: Ref<HTMLElement | undefined>
 ) {
   const nav_direction = ref<'forward' | 'back'>('forward')
-  const tab_initial_render = ref(true)
 
   function onTabLeave(el: Element, done: () => void) {
     if (layout_mode.value === 'sheet') {
@@ -20,11 +19,6 @@ export function useTabTransition(
   }
 
   function onTabEnter(el: Element, done: () => void) {
-    if (tab_initial_render.value) {
-      tab_initial_render.value = false
-      done()
-      return
-    }
     if (layout_mode.value === 'sheet') {
       tabSlideEnter(nav_direction, tab_outlet.value)(el, done)
       return

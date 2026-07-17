@@ -140,7 +140,7 @@ provide(mobileSheetOverlayKey, overlay_root)
           </div>
         </slot>
 
-        <div data-testid="mobile-sheet__body" class="h-full">
+        <div data-testid="mobile-sheet__body" class="min-h-0 flex-1">
           <slot></slot>
         </div>
       </div>

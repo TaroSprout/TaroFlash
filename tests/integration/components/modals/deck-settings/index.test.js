@@ -751,18 +751,16 @@ describe('DeckSettings — onClose when dirty shows alert', () => {
   })
 })
 
-describe('DeckSettings — tab_initial_render fast-path [obligation]', () => {
-  test('onTabEnter calls done immediately on first render without GSAP tween', async () => {
-    // The GSAP mock fires onComplete synchronously (see gsap mock above), but
-    // the important assertion is that tab_initial_render prevents any slide/fade
-    // call on the very first enter. Since the transition fires internally on
-    // mount, the initial render completes without additional GSAP calls.
-    // Verify: after mount, the tab content is visible (rendered = done() was called).
+describe('DeckSettings — initial tab renders on mount [obligation]', () => {
+  test('tab content is visible after mount (no <transition appear>, so onTabEnter never fires on initial mount)', async () => {
+    // The tab `<transition>` has no `appear` attribute, so `enter` only fires
+    // on a subsequent tab swap, not on the initial mount — the tab content is
+    // simply rendered directly. This guards against re-adding an `appear` (or
+    // an initial-render skip guard in useTabTransition) that would change this.
     setSidebar(false)
     const { wrapper } = makeWrapper({ initial_tab: 'design' })
     await flushPromises()
 
-    // Component is visible — onTabEnter called done() via the fast-path
     expect(wrapper.find('[data-testid="tab-design-stub"]').exists()).toBe(true)
   })
 })
