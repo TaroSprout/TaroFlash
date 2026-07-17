@@ -25,15 +25,15 @@ const { t } = useI18n()
       data-testid="tooltip-row__label"
       class="flex items-center gap-2 text-brown-700 dark:text-brown-100"
     >
-      {{ label }}
       <ui-tooltip
         v-if="tooltip"
         element="span"
         :text="tooltip"
-        class="flex cursor-pointer items-center"
+        class="flex cursor-pointer items-center absolute! -left-4.5"
       >
-        <ui-icon src="info-circle" class="size-4 shrink-0 text-brown-500" />
+        <ui-icon src="info-circle" class="size-3.25 shrink-0 text-brown-500" />
       </ui-tooltip>
+      {{ label }}
     </span>
 
     <div class="relative flex items-center gap-1">
@@ -42,7 +42,7 @@ const { t } = useI18n()
       <ui-button
         v-if="overridden"
         data-testid="tooltip-row__reset"
-        data-theme="brown-500"
+        data-theme="brown-700"
         data-theme-dark="brown-100"
         variant="ghost"
         size="sm"
