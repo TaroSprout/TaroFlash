@@ -26,9 +26,9 @@ const { onEditAvatar } = useAvatarPicker(editor)
     <member-badge
       v-if="layout_mode === 'sheet'"
       data-testid="tab-profile__preview"
-      :display-name="editor.settings.display_name"
-      :description="editor.settings.description"
-      :cover="editor.cover"
+      :display-name="editor.draft.display_name"
+      :description="editor.draft.description"
+      :cover="editor.draft.cover_config"
       editable
       @edit-avatar="onEditAvatar"
     />
@@ -38,38 +38,38 @@ const { onEditAvatar } = useAvatarPicker(editor)
         :placeholder="t('settings.profile.member-name-placeholder')"
         :error="editor.name_error.value"
         :max-length="MEMBER_DISPLAY_NAME_MAX_LENGTH"
-        v-model:value="editor.settings.display_name"
+        v-model:value="editor.draft.display_name"
       />
       <ui-textarea
         :placeholder="t('settings.profile.description-placeholder')"
         :max_chars="100"
         no-newlines
         rows="3"
-        v-model:value="editor.settings.description"
+        v-model:value="editor.draft.description"
       />
     </labeled-section>
 
     <labeled-section :label="t('settings.profile.section.appearance')">
       <div
         data-testid="tab-profile__design"
-        :data-theme="editor.cover.theme"
-        :data-theme-dark="editor.cover.theme_dark"
+        :data-theme="editor.draft.cover_config.theme"
+        :data-theme-dark="editor.draft.cover_config.theme_dark"
         class="flex flex-col gap-6"
       >
         <ui-theme-picker
           :label="t('settings.profile.theme-label')"
           :supported_themes="SUPPORTED_THEMES"
-          :theme="editor.cover.theme"
-          :theme_dark="editor.cover.theme_dark"
-          @update:theme="editor.cover.theme = $event"
-          @update:theme_dark="editor.cover.theme_dark = $event"
+          :theme="editor.draft.cover_config.theme"
+          :theme_dark="editor.draft.cover_config.theme_dark"
+          @update:theme="editor.draft.cover_config.theme = $event"
+          @update:theme_dark="editor.draft.cover_config.theme_dark = $event"
         />
 
         <ui-pattern-picker
           :label="t('settings.profile.pattern-label')"
           :supported_patterns="SUPPORTED_PATTERNS"
-          :selected_pattern="editor.cover.pattern"
-          @update:pattern="editor.cover.pattern = $event"
+          :selected_pattern="editor.draft.cover_config.pattern"
+          @update:pattern="editor.draft.cover_config.pattern = $event"
         />
       </div>
     </labeled-section>
