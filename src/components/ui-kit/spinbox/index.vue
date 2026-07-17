@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import SpinboxButton from './button.vue'
 import { useNumericInput } from '@/composables/ui/numeric-input'
 
@@ -23,13 +23,38 @@ const {
 
 const value = defineModel<number>('value', { required: true })
 
+const focused = ref(false)
+
 const can_decrement = computed(() => value.value > min || (wrap && Number.isFinite(max)))
 const can_increment = computed(() => value.value < max || (wrap && Number.isFinite(min)))
 
-const { clamp, onInput, onBeforeInput, onFocus, onBlur } = useNumericInput(value, {
+// The suffix is rendered as part of the value string ("10d") so it reads as one
+// centered token in the fixed-width field. While focused we drop it back to the
+// bare number so the numeric parser + caret only ever see digits.
+const display_value = computed(() =>
+  suffix && !focused.value ? `${value.value}${suffix}` : value.value
+)
+
+const {
+  clamp,
+  onInput,
+  onBeforeInput,
+  onBlur: normalizeInput
+} = useNumericInput(value, {
   min: () => min,
   max: () => max
 })
+
+function onFocus(e: FocusEvent) {
+  focused.value = true
+  const el = e.target as HTMLInputElement
+  void nextTick(() => el.select())
+}
+
+function onBlur(e: Event) {
+  normalizeInput(e)
+  focused.value = false
+}
 
 function decrement() {
   if (value.value <= min) {
@@ -80,20 +105,13 @@ function increment() {
           inputmode="numeric"
           data-testid="ui-kit-spinbox__input"
           class="text-center tabular-nums text-brown-700 dark:text-brown-100 bg-transparent outline-none text-base px-2 w-12"
-          :value="value"
+          :value="display_value"
           :step="step"
           @beforeinput="onBeforeInput"
           @focus="onFocus"
           @input="onInput"
           @blur="onBlur"
         />
-        <span
-          v-if="suffix"
-          data-testid="ui-kit-spinbox__suffix"
-          class="ml-0.5 text-brown-500 dark:text-brown-300"
-        >
-          {{ suffix }}
-        </span>
       </div>
 
       <spinbox-button
