@@ -39,6 +39,7 @@ jobs:
               - 'supabase/functions/**'
             db:
               - 'supabase/migrations/**'
+              - 'supabase/schemas/**'
               - 'supabase/tests/**'
               - 'supabase/seed.sql'
               - 'supabase/config.toml'
@@ -154,6 +155,20 @@ jobs:
 
       - name: Run database tests
         run: supabase test db
+
+      # supabase/schemas/ must stay in sync with the migration history: a
+      # schema edit without a generated migration (or a hand-written DDL
+      # migration without a schema edit) makes db diff non-empty, which
+      # writes a migration file here and fails the build.
+      - name: Check declarative schema sync
+        run: |
+          supabase db diff -f ci_drift_check
+          drift=$(find supabase/migrations -name '*ci_drift_check.sql')
+          if [ -n "$drift" ]; then
+            echo "::error::supabase/schemas is out of sync with migrations — run 'supabase db diff -f <name>' locally and commit the result. Drift:"
+            cat $drift
+            exit 1
+          fi
 
   test-contract:
     needs: changes
