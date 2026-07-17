@@ -14,6 +14,7 @@ import { useModalRequestClose } from '@/composables/modal'
 import { useAvatarPicker } from './use-avatar-picker'
 import MemberCard from '@/components/member/member-card.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import TabSheet from '@/components/layout-kit/sheet/tab-sheet.vue'
 import TabProfile from './tab-profile/index.vue'
 import TabSubscription from './tab-subscription/index.vue'
@@ -91,14 +92,10 @@ const header_title = computed(() =>
 
 const tab_component = computed(() => TAB_COMPONENTS[displayed_tab.value])
 
-// Sheet mode goes full-bleed so the animated tab outlet doesn't clip outlines/
-// rings — each tab self-pads via --settings-padding instead. Tablet/desktop keep
-// the container padding so the aside column stays inset.
-const tab_content_class = computed(() =>
-  layout_mode.value === 'sheet'
-    ? 'flex gap-14 h-full items-start'
-    : 'px-(--sheet-px) pb-8 pt-0 flex gap-14 h-full items-start'
-)
+// The content row is always full-bleed: `__main` (the scroll container) owns its
+// own padding and the aside owns its own inset, so floating elements/outlines
+// aren't clipped by the overflow and the sheet-mode tab animation stays clean.
+const tab_content_class = 'flex h-full items-start'
 
 // Open/close sfx live on the modal itself so every callsite (phone launcher,
 // dashboard edit button) sounds identically. Mirrors the deck-settings modal.
@@ -181,28 +178,42 @@ watch(layout_mode, (mode) => {
     </template>
 
     <div
-      ref="tab_outlet"
-      data-testid="settings__main"
-      :class="[
-        'relative flex flex-1 flex-col gap-4 w-full min-w-0',
-        layout_mode === 'sheet' && 'max-w-111 mx-auto overflow-hidden pt-0.5'
-      ]"
+      class="relative flex flex-1 flex-col min-w-0"
+      :class="layout_mode !== 'sheet' && 'max-h-full'"
     >
-      <transition :css="false" mode="out-in" @leave="onTabLeave" @enter="onTabEnter">
-        <component
-          ref="active_tab_ref"
-          :is="tab_component"
-          :key="displayed_tab"
-          @navigate="onNavigate"
-        />
-      </transition>
+      <div
+        ref="tab_outlet"
+        data-testid="settings__main"
+        :class="[
+          'flex flex-col gap-4 w-full',
+          layout_mode === 'sheet'
+            ? 'max-w-111 mx-auto overflow-hidden pt-0.5'
+            : 'min-h-0 flex-1 overflow-y-auto scroll-hidden px-(--sheet-px) pb-8'
+        ]"
+      >
+        <transition :css="false" mode="out-in" @leave="onTabLeave" @enter="onTabEnter">
+          <component
+            ref="active_tab_ref"
+            :is="tab_component"
+            :key="displayed_tab"
+            @navigate="onNavigate"
+          />
+        </transition>
+      </div>
+
+      <scroll-bar
+        v-if="layout_mode !== 'sheet'"
+        target="[data-testid='settings__main']"
+        class="absolute top-2 bottom-2 right-2"
+      />
     </div>
 
+    <!-- Aside has a bespoke layout so it matches visually with the pinned preview -->
     <settings-aside
       v-if="layout_mode !== 'sheet'"
       data-testid="settings__aside"
-      class="w-90 shrink-0 self-end"
-      :class="layout_mode === 'tablet' ? 'pt-56' : 'pt-60'"
+      class="shrink-0 self-end pb-8"
+      :class="layout_mode === 'tablet' ? 'w-110 pt-56 pl-10 pr-26' : 'w-100 pt-60 pl-8 pr-16'"
     />
 
     <template #overlay>
