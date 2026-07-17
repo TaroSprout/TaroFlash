@@ -20,7 +20,7 @@ const study_session = useStudyModal()
 const { creating_deck, createNewDeck } = useNewDeckAction()
 
 function onStudyAll() {
-  study_session.start(due_decks)
+  study_session.start(due_decks.map((deck) => deck.id))
 }
 </script>
 

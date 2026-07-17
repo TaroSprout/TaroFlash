@@ -35,7 +35,7 @@ const DeckContextKey: InjectionKey<Ref<DeckContext>> = Symbol('study-session.dec
  * the card subtree. The map is keyed by `deck_id` so each card resolves its own
  * deck's cover/attributes; `covers` is the ordered cover list the splash cycles.
  */
-export function useProvideDeckContext(decks: MaybeRefOrGetter<Deck[]>) {
+export function useProvideDeckContext(decks: MaybeRefOrGetter<SessionDeck[]>) {
   const appearance_by_deck = computed(() => {
     const map = new Map<number, DeckAppearance>()
     for (const deck of toValue(decks))

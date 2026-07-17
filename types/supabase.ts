@@ -1016,12 +1016,12 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_session_decks_and_cards: {
+        Args: { p_deck_ids: number[]; p_today_start: string }
+        Returns: Json
+      }
       get_study_session_cards: {
-        Args: {
-          p_deck_id: number
-          p_study_all?: boolean
-          p_today_start: string
-        }
+        Args: { p_deck_id: number; p_today_start: string }
         Returns: {
           back_image_bucket: string | null
           back_image_path: string | null
@@ -1098,6 +1098,16 @@ export type Database = {
         }[]
       }
       reset_deck_reviews: { Args: { p_deck_id: number }; Returns: undefined }
+      resolve_deck_pacing: {
+        Args: { p_deck_id: number }
+        Returns: Database['public']['CompositeTypes']['resolved_pacing']
+        SetofOptions: {
+          from: '*'
+          to: 'resolved_pacing'
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       save_deck: {
         Args: {
           p_card_attributes: Json
@@ -1230,6 +1240,15 @@ export type Database = {
         leech_threshold: number | null
         max_interval: number | null
         pacing_overrides: Json | null
+      }
+      resolved_pacing: {
+        desired_retention: number | null
+        learning_steps: string[] | null
+        relearning_steps: string[] | null
+        max_reviews_per_day: number | null
+        max_new_per_day: number | null
+        leech_threshold: number | null
+        max_interval: number | null
       }
     }
   }

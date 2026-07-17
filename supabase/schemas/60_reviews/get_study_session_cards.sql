@@ -3,7 +3,7 @@
 -- produce the migration.
 SET check_function_bodies = false;
 
-CREATE FUNCTION public.get_study_session_cards(p_deck_id bigint, p_today_start timestamp with time zone, p_study_all boolean DEFAULT false) RETURNS SETOF public.cards_with_images
+CREATE FUNCTION public.get_study_session_cards(p_deck_id bigint, p_today_start timestamp with time zone) RETURNS SETOF public.cards_with_images
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE
@@ -17,44 +17,10 @@ DECLARE
   v_new_take        int;
   v_review_take     int;
 BEGIN
-  -- study_all bypasses caps + due filter — return every card in rank order.
-  IF p_study_all THEN
-    RETURN QUERY
-    SELECT cwi.*
-    FROM public.cards_with_images cwi
-    WHERE cwi.deck_id = p_deck_id
-    ORDER BY cwi.rank;
-    RETURN;
-  END IF;
-
-  -- Read caps. NULL = unlimited. Same override -> preset -> system ladder as
-  -- get_member_decks: `overrides ? '<key>'` (key present) means the deck pins
-  -- that cap, and a pinned null there is unambiguously "uncapped" — no has_*
-  -- boolean needed. A linked preset's own NULL still means "preset says
-  -- unlimited", which is why an absent key falls to the preset, not straight
-  -- COALESCE through a possibly-NULL preset value.
-  SELECT
-    CASE
-      WHEN dp.overrides ? 'max_reviews_per_day' THEN (dp.overrides->>'max_reviews_per_day')::int
-      WHEN p.id IS NOT NULL THEN p.max_reviews_per_day
-      ELSE sys.max_reviews_per_day
-    END,
-    CASE
-      WHEN dp.overrides ? 'max_new_per_day' THEN (dp.overrides->>'max_new_per_day')::int
-      WHEN p.id IS NOT NULL THEN p.max_new_per_day
-      ELSE sys.max_new_per_day
-    END
+  -- Read the resolved daily caps (NULL = unlimited) via the shared resolver.
+  SELECT rp.max_reviews_per_day, rp.max_new_per_day
   INTO v_max_total, v_max_new
-  FROM public.decks d
-  LEFT JOIN public.deck_review_pacing dp ON dp.deck_id = d.id
-  LEFT JOIN public.review_pacing_presets p ON p.id = dp.review_pacing_preset_id
-  CROSS JOIN (
-    SELECT max_reviews_per_day, max_new_per_day
-    FROM public.review_pacing_presets
-    WHERE is_system
-    LIMIT 1
-  ) sys
-  WHERE d.id = p_deck_id;
+  FROM public.resolve_deck_pacing(p_deck_id) rp;
 
   -- Today's usage: distinct cards reviewed since the member's local midnight.
   SELECT
@@ -125,9 +91,9 @@ END;
 $$;
 
 
-ALTER FUNCTION public.get_study_session_cards(p_deck_id bigint, p_today_start timestamp with time zone, p_study_all boolean) OWNER TO postgres;
+ALTER FUNCTION public.get_study_session_cards(p_deck_id bigint, p_today_start timestamp with time zone) OWNER TO postgres;
 
 
-GRANT ALL ON FUNCTION public.get_study_session_cards(p_deck_id bigint, p_today_start timestamp with time zone, p_study_all boolean) TO anon;
-GRANT ALL ON FUNCTION public.get_study_session_cards(p_deck_id bigint, p_today_start timestamp with time zone, p_study_all boolean) TO authenticated;
-GRANT ALL ON FUNCTION public.get_study_session_cards(p_deck_id bigint, p_today_start timestamp with time zone, p_study_all boolean) TO service_role;
+GRANT ALL ON FUNCTION public.get_study_session_cards(p_deck_id bigint, p_today_start timestamp with time zone) TO anon;
+GRANT ALL ON FUNCTION public.get_study_session_cards(p_deck_id bigint, p_today_start timestamp with time zone) TO authenticated;
+GRANT ALL ON FUNCTION public.get_study_session_cards(p_deck_id bigint, p_today_start timestamp with time zone) TO service_role;

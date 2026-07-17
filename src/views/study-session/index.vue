@@ -17,18 +17,12 @@ import type { CardReviewResult } from './composables/session-queue'
 
 type Phase = 'studying' | 'summary'
 
-const { decks, close } = defineProps<{
-  decks: Deck[]
+const { deck_ids, close } = defineProps<{
+  deck_ids: number[]
   close: () => void
 }>()
 
 const { t } = useI18n()
-
-const title = computed(() =>
-  decks.length === 1 ? (decks[0]?.title ?? '') : t('study-session.multiple-decks-title')
-)
-
-useProvideDeckContext(() => decks)
 
 const phase = ref<Phase>('studying')
 const results = ref<CardReviewResult[]>([])
@@ -37,16 +31,29 @@ const {
   is_cover,
   can_edit,
   show_all_ratings,
+  sessionDecks,
   requestClose,
   startEdit,
   onMove,
   onDelete,
   toggleRatings
 } = provideStudySessionController({
-  decks,
+  deck_ids,
   onFinished: onSessionFinished,
   onClosed
 })
+
+useProvideDeckContext(() => sessionDecks.value)
+
+const title = computed(() =>
+  sessionDecks.value.length === 1
+    ? (sessionDecks.value[0]?.title ?? '')
+    : t('study-session.multiple-decks-title')
+)
+
+const summary_leech_threshold = computed(
+  () => sessionDecks.value[0]?.leech_threshold ?? DEFAULT_LEECH_THRESHOLD
+)
 
 useModalRequestClose(onHeaderStop)
 
@@ -108,7 +115,7 @@ function onHeaderStop() {
             key="summary"
             class="absolute inset-0 z-10"
             :results="results"
-            :leech_threshold="decks[0]?.leech_threshold ?? DEFAULT_LEECH_THRESHOLD"
+            :leech_threshold="summary_leech_threshold"
             @close="onClosed"
           />
         </dialog-card-pager>

@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, type MaybeRefOrGetter } from 'vue'
 import { type Grade } from 'ts-fsrs'
 import { useSessionQueue } from './session-queue'
 import { emitStudySfx } from '@/sfx/bus'
@@ -10,13 +10,16 @@ export type { StudyCard, CardReviewResult } from './session-queue'
  * its front, back, or cover (pre-session splash). All side transitions live
  * here. This is the composable used directly by flashcard/index.vue.
  */
-export function useFlashcardSession(pacing: ReviewPacingParams, _config?: Partial<DeckConfig>) {
-  const core = useSessionQueue(pacing, _config)
+export function useFlashcardSession(
+  pacing: MaybeRefOrGetter<ReviewPacingParams | undefined>,
+  config?: MaybeRefOrGetter<Partial<DeckConfig> | undefined>
+) {
+  const core = useSessionQueue(pacing, config)
 
   const current_card_side = ref<CardSide>('cover')
 
   const starting_side = computed<'front' | 'back'>(() =>
-    core.config.flip_cards ? 'back' : 'front'
+    core.config.value.flip_cards ? 'back' : 'front'
   )
 
   const is_starting_side = computed(() => current_card_side.value === starting_side.value)

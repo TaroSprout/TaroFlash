@@ -1,37 +1,18 @@
 import { onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useDecksByIdsQuery } from '@/api/decks'
-import { useNoticeStore } from '@/stores/notice-store'
 import { useStudyModal } from './study-modal'
-import { readPersistedSession, clearPersistedSession } from './session-persistence'
+import { readPersistedSession } from './session-persistence'
 
 /**
  * Reopens an in-progress study session after a page refresh. sessionStorage
- * only tells us which decks the session belongs to — the modal's own restore
- * logic (session-cards.ts) rebuilds the locked queue once it remounts.
+ * only tells us which decks the session belongs to; the modal's own bootstrap
+ * (session-cards.ts) refetches the resolved decks + rebuilds the locked queue
+ * once it remounts, so passing the persisted ids straight through is enough.
  */
 export function useResumeStudySession() {
-  const { t } = useI18n()
-  const notice = useNoticeStore()
-
-  onMounted(async () => {
+  onMounted(() => {
     const persisted = readPersistedSession()
-    if (!persisted) return
+    if (!persisted?.deck_ids.length) return
 
-    let decks: Deck[]
-    try {
-      const { data } = await useDecksByIdsQuery(persisted.deck_ids).refetch()
-      decks = data ?? []
-    } catch {
-      notice.error(t('study-session.resume-error'))
-      return
-    }
-
-    if (!decks.length) {
-      clearPersistedSession()
-      return
-    }
-
-    useStudyModal().start(decks)
+    useStudyModal().start(persisted.deck_ids)
   })
 }

@@ -1,4 +1,4 @@
-import { ref, computed, shallowRef, reactive } from 'vue'
+import { ref, computed, shallowRef, toValue, type MaybeRefOrGetter } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   createEmptyCard,
@@ -39,7 +39,10 @@ export type CardReviewResult = {
  * know about flashcard sides/flipping — that lives in `useFlashcardSession`,
  * which wraps this.
  */
-export function useSessionQueue(pacing: ReviewPacingParams, _config?: Partial<DeckConfig>) {
+export function useSessionQueue(
+  pacing: MaybeRefOrGetter<ReviewPacingParams | undefined>,
+  configInput?: MaybeRefOrGetter<Partial<DeckConfig> | undefined>
+) {
   const { t } = useI18n()
   const member_store = useMemberStore()
   const notice = useNoticeStore()
@@ -48,18 +51,27 @@ export function useSessionQueue(pacing: ReviewPacingParams, _config?: Partial<De
   // toggled locally for instant feedback, and persisted by the caller.
   const show_all_ratings = ref(member_store.preferences.study.show_all_ratings)
 
-  const _PARAMS = generatorParameters({
-    enable_fuzz: true,
-    learning_steps: pacing.learning_steps as Steps,
-    relearning_steps: pacing.relearning_steps as Steps,
-    // desired_retention is stored as a whole-number percent (e.g. 90 = 90%).
-    request_retention: pacing.desired_retention / 100,
-    maximum_interval: pacing.max_interval
+  const config = computed<Required<DeckConfig>>(() => withDeckConfigDefaults(toValue(configInput)))
+
+  // Pacing resolves asynchronously (the session bootstrap fetches it), so the
+  // scheduler is derived reactively — falling back to ts-fsrs defaults until the
+  // deck's resolved pacing lands. The cover screen gates on `loading`, so the
+  // fallback instance is never used to schedule a real review.
+  const _fsrs = computed<FSRS>(() => {
+    const p = toValue(pacing)
+    if (!p) return new FSRS(generatorParameters({ enable_fuzz: true }))
+    return new FSRS(
+      generatorParameters({
+        enable_fuzz: true,
+        learning_steps: p.learning_steps as Steps,
+        relearning_steps: p.relearning_steps as Steps,
+        // desired_retention is stored as a whole-number percent (e.g. 90 = 90%).
+        request_retention: p.desired_retention / 100,
+        maximum_interval: p.max_interval
+      })
+    )
   })
 
-  const config = reactive<Required<DeckConfig>>(withDeckConfigDefaults(_config))
-
-  const _FSRS_INSTANCE: FSRS = new FSRS(_PARAMS)
   const _raw_cards = shallowRef<Card[]>([])
   const _cards_in_deck = shallowRef<StudyCard[]>([])
   const _deck_ids = shallowRef<number[]>([])
@@ -95,7 +107,7 @@ export function useSessionQueue(pacing: ReviewPacingParams, _config?: Partial<De
   const active_card_preview = computed<RecordLog | undefined>(() => {
     if (!active_card.value) return undefined
     const review = active_card.value.review ?? (createEmptyCard(new Date()) as Review)
-    return _FSRS_INSTANCE.repeat(review, new Date())
+    return _fsrs.value.repeat(review, new Date())
   })
 
   /**
@@ -148,7 +160,7 @@ export function useSessionQueue(pacing: ReviewPacingParams, _config?: Partial<De
   }
 
   function _processCards() {
-    const ordered = config.shuffle ? _shuffle(_raw_cards.value) : _raw_cards.value
+    const ordered = config.value.shuffle ? _shuffle(_raw_cards.value) : _raw_cards.value
 
     _cards_in_deck.value = ordered.map(_setupCard)
     mode.value = 'studying'
@@ -207,7 +219,7 @@ export function useSessionQueue(pacing: ReviewPacingParams, _config?: Partial<De
       // returns a fresh RecordLogItem with item.log.review = now and
       // item.card.due calculated from this exact moment.
       const review = card.review ?? (createEmptyCard(new Date()) as Review)
-      const item = _FSRS_INSTANCE.next(review, new Date(), grade)
+      const item = _fsrs.value.next(review, new Date(), grade)
 
       if (card.id) {
         results.value.push({

@@ -49,59 +49,22 @@ CREATE FUNCTION public.get_member_decks(p_today_start timestamp with time zone) 
 
     dp.review_pacing_preset_id,
 
-    -- One uniform resolution ladder for every pacing field now that overrides
-    -- are key-presence in a jsonb bag: pinned override (`?` = key present, so a
-    -- pinned null resolves to null/uncapped) -> linked preset -> system default.
-    -- This subsumes the old COALESCE-vs-CASE split — a null cap value pinned in
-    -- overrides is unambiguous where a null column once needed a has_* boolean.
-    CASE
-      WHEN dp.overrides ? 'desired_retention' THEN (dp.overrides->>'desired_retention')::int
-      WHEN p.id IS NOT NULL THEN p.desired_retention
-      ELSE sys.desired_retention
-    END AS desired_retention,
-    CASE
-      WHEN dp.overrides ? 'learning_steps' THEN ARRAY(SELECT jsonb_array_elements_text(dp.overrides->'learning_steps'))
-      WHEN p.id IS NOT NULL THEN p.learning_steps
-      ELSE sys.learning_steps
-    END AS learning_steps,
-    CASE
-      WHEN dp.overrides ? 'relearning_steps' THEN ARRAY(SELECT jsonb_array_elements_text(dp.overrides->'relearning_steps'))
-      WHEN p.id IS NOT NULL THEN p.relearning_steps
-      ELSE sys.relearning_steps
-    END AS relearning_steps,
-    CASE
-      WHEN dp.overrides ? 'max_reviews_per_day' THEN (dp.overrides->>'max_reviews_per_day')::int
-      WHEN p.id IS NOT NULL THEN p.max_reviews_per_day
-      ELSE sys.max_reviews_per_day
-    END AS max_reviews_per_day,
-    CASE
-      WHEN dp.overrides ? 'max_new_per_day' THEN (dp.overrides->>'max_new_per_day')::int
-      WHEN p.id IS NOT NULL THEN p.max_new_per_day
-      ELSE sys.max_new_per_day
-    END AS max_new_per_day,
-    CASE
-      WHEN dp.overrides ? 'leech_threshold' THEN (dp.overrides->>'leech_threshold')::int
-      WHEN p.id IS NOT NULL THEN p.leech_threshold
-      ELSE sys.leech_threshold
-    END AS leech_threshold,
-    CASE
-      WHEN dp.overrides ? 'max_interval' THEN (dp.overrides->>'max_interval')::int
-      WHEN p.id IS NOT NULL THEN p.max_interval
-      ELSE sys.max_interval
-    END AS max_interval,
+    -- All seven resolved pacing fields come from the shared resolver — the
+    -- override -> preset -> system ladder lives only in resolve_deck_pacing now.
+    rp.desired_retention,
+    rp.learning_steps,
+    rp.relearning_steps,
+    rp.max_reviews_per_day,
+    rp.max_new_per_day,
+    rp.leech_threshold,
+    rp.max_interval,
 
     dp.overrides AS pacing_overrides
 
   FROM public.decks d
   LEFT JOIN public.members m ON m.id = d.member_id
   LEFT JOIN public.deck_review_pacing dp ON dp.deck_id = d.id
-  LEFT JOIN public.review_pacing_presets p ON p.id = dp.review_pacing_preset_id
-  CROSS JOIN (
-    SELECT desired_retention, learning_steps, relearning_steps, max_reviews_per_day, max_new_per_day, leech_threshold, max_interval
-    FROM public.review_pacing_presets
-    WHERE is_system
-    LIMIT 1
-  ) sys
+  CROSS JOIN LATERAL public.resolve_deck_pacing(d.id) AS rp
   CROSS JOIN LATERAL (
     SELECT
       (
@@ -142,13 +105,7 @@ CREATE FUNCTION public.get_member_decks(p_today_start timestamp with time zone) 
       GREATEST(
         0,
         COALESCE(
-          (
-            CASE
-              WHEN dp.overrides ? 'max_reviews_per_day' THEN (dp.overrides->>'max_reviews_per_day')::int
-              WHEN p.id IS NOT NULL THEN p.max_reviews_per_day
-              ELSE sys.max_reviews_per_day
-            END
-          ) - (
+          rp.max_reviews_per_day - (
             SELECT count(DISTINCT rl.card_id)::int
             FROM public.review_logs rl
             JOIN public.cards c ON c.id = rl.card_id
@@ -162,13 +119,7 @@ CREATE FUNCTION public.get_member_decks(p_today_start timestamp with time zone) 
       GREATEST(
         0,
         COALESCE(
-          (
-            CASE
-              WHEN dp.overrides ? 'max_new_per_day' THEN (dp.overrides->>'max_new_per_day')::int
-              WHEN p.id IS NOT NULL THEN p.max_new_per_day
-              ELSE sys.max_new_per_day
-            END
-          ) - (
+          rp.max_new_per_day - (
             SELECT count(DISTINCT rl.card_id)::int
             FROM public.review_logs rl
             JOIN public.cards c ON c.id = rl.card_id

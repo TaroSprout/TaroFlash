@@ -19,7 +19,7 @@ const StudySessionControllerKey: InjectionKey<StudySessionController> = Symbol(
 )
 
 type UseStudySessionControllerOptions = {
-  decks: Deck[]
+  deck_ids: number[]
   onFinished: (results: CardReviewResult[]) => void
   onClosed: () => void
 }
@@ -44,10 +44,30 @@ export function useInjectedStudySessionController(): StudySessionController {
 }
 
 function useStudySessionController({
-  decks,
+  deck_ids,
   onFinished,
   onClosed
 }: UseStudySessionControllerOptions) {
+  // Pacing + study config come from the first session deck, resolved
+  // asynchronously by the bootstrap. Getters so the reactive scheduler picks
+  // them up once the fetch lands. (Commit 3 makes this per-deck.)
+  const firstDeckPacing = (): ReviewPacingParams | undefined => {
+    const deck = sessionDecks.value[0]
+    if (!deck) return undefined
+    return {
+      desired_retention: deck.desired_retention,
+      learning_steps: deck.learning_steps,
+      relearning_steps: deck.relearning_steps,
+      // null = uncapped -> the FSRS default max interval
+      max_interval: deck.max_interval ?? FSRS_MAX_INTERVAL
+    }
+  }
+
+  const firstDeckConfig = (): Partial<DeckConfig> | undefined => {
+    const deck = sessionDecks.value[0]
+    return deck ? { flip_cards: deck.flip_cards, shuffle: deck.shuffle } : undefined
+  }
+
   const {
     mode,
     cards,
@@ -70,18 +90,9 @@ function useStudySessionController({
     flipCurrentCard,
     dropCard,
     updateCard
-  } = useFlashcardSession(
-    {
-      desired_retention: decks[0].desired_retention!,
-      learning_steps: decks[0].learning_steps!,
-      relearning_steps: decks[0].relearning_steps!,
-      // null = uncapped -> the FSRS default max interval
-      max_interval: decks[0].max_interval ?? FSRS_MAX_INTERVAL
-    },
-    { ...decks[0]?.study_config }
-  )
+  } = useFlashcardSession(firstDeckPacing, firstDeckConfig)
 
-  setSessionMeta(decks.map((deck) => deck.id))
+  setSessionMeta(deck_ids)
 
   const { next_card_side, preview_style, onDragProgress, onNextCardFlipped, awaitFlip } =
     useCardPreview(next_card)
@@ -100,8 +111,8 @@ function useStudySessionController({
     onRemoved: dropCard
   })
 
-  const { loading } = useSessionCards({
-    deckIds: () => decks.map((deck) => deck.id),
+  const { loading, sessionDecks } = useSessionCards({
+    deckIds: () => deck_ids,
     seed: setCards,
     restore: onRestore,
     onMissingDeck: onClosed
@@ -131,7 +142,7 @@ function useStudySessionController({
    * (last card reviewed, stop button, last card dropped, empty queue).
    */
   function finishSession() {
-    for (const deck of decks) flushDeckReviews(deck.id)
+    for (const id of deck_ids) flushDeckReviews(id)
     onFinished(results.value)
   }
 
@@ -161,7 +172,7 @@ function useStudySessionController({
   async function onCardReviewed(grade?: Grade) {
     if (!active_card.value?.id || mode.value !== 'studying') return
 
-    if (next_card.value) await awaitFlip(config.flip_cards ? 'back' : 'front')
+    if (next_card.value) await awaitFlip(config.value.flip_cards ? 'back' : 'front')
 
     reviewCard(grade)
   }
@@ -186,6 +197,7 @@ function useStudySessionController({
     preview_style,
     is_cover,
     loading,
+    sessionDecks,
     editing,
     saving,
     can_edit,
