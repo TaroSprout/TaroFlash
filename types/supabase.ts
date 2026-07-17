@@ -1194,51 +1194,29 @@ export type Database = {
           updated_at: string
         }[]
       }
-      save_review:
-        | {
-            Args: {
-              p_card_id: number
-              p_card_state: number
-              p_difficulty: number
-              p_due: string
-              p_elapsed_days: number
-              p_lapses: number
-              p_last_review: string
-              p_learning_steps?: number
-              p_log_difficulty: number
-              p_log_due: string
-              p_log_scheduled_days: number
-              p_log_stability: number
-              p_rating: number
-              p_reps: number
-              p_review: string
-              p_scheduled_days: number
-              p_stability: number
-              p_state: number
-            }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_card_id: number
-              p_difficulty: number
-              p_due: string
-              p_elapsed_days: number
-              p_lapses: number
-              p_last_review: string
-              p_log_difficulty: number
-              p_log_due: string
-              p_log_scheduled_days: number
-              p_log_stability: number
-              p_rating: number
-              p_reps: number
-              p_review: string
-              p_scheduled_days: number
-              p_stability: number
-              p_state: number
-            }
-            Returns: undefined
-          }
+      save_review: {
+        Args: {
+          p_card_id: number
+          p_card_state: number
+          p_difficulty: number
+          p_due: string
+          p_elapsed_days: number
+          p_lapses: number
+          p_last_review: string
+          p_learning_steps?: number
+          p_log_difficulty: number
+          p_log_due: string
+          p_log_scheduled_days: number
+          p_log_stability: number
+          p_rating: number
+          p_reps: number
+          p_review: string
+          p_scheduled_days: number
+          p_stability: number
+          p_state: number
+        }
+        Returns: undefined
+      }
       submit_feedback: {
         Args: {
           p_body: string
