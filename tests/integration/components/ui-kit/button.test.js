@@ -30,7 +30,7 @@ import UiTooltip from '@/components/ui-kit/tooltip.vue'
 const UiTooltipSlotStub = defineComponent({
   name: 'UiTooltip',
   inheritAttrs: false,
-  props: ['element', 'gap', 'suppress', 'static_on_mobile', 'text'],
+  props: ['element', 'gap', 'suppress', 'text'],
   setup(_props, { slots, attrs }) {
     return () => h('button', { ...attrs, 'data-testid': 'ui-kit-button' }, slots.default?.())
   }
@@ -71,16 +71,6 @@ describe('UiButton', () => {
     test('tooltip suppressed when there is no slot content', () => {
       const wrapper = mountButton({ iconOnly: true })
       expect(findTooltip(wrapper).props('suppress')).toBe(true)
-    })
-
-    test('mobileTooltip=true forwards static_on_mobile=true (tap-shows on mobile)', () => {
-      const wrapper = mountButton({ iconOnly: true, mobileTooltip: true }, { default: 'Close' })
-      expect(findTooltip(wrapper).props('static_on_mobile')).toBe(true)
-    })
-
-    test('mobileTooltip=false forwards static_on_mobile=false (hover-only)', () => {
-      const wrapper = mountButton({ iconOnly: true, mobileTooltip: false }, { default: 'Close' })
-      expect(findTooltip(wrapper).props('static_on_mobile')).toBe(false)
     })
 
     test('renders tooltip via element=button (button is the trigger)', () => {

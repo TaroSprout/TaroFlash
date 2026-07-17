@@ -48,7 +48,6 @@ const { t } = useI18n()
         size="sm"
         icon-only
         icon-left="refresh"
-        mobile-tooltip
         :sfx="{ press: 'snappy_button_5' }"
         @press="emit('reset')"
         class="absolute! -right-8"

@@ -52,7 +52,6 @@ function onReset() {
       size="lg"
       icon-only
       icon-left="refresh"
-      mobile-tooltip
       :sfx="{ press: 'snappy_button_5' }"
       :disabled="!is_dirty"
       click-when-disabled

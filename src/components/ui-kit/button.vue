@@ -21,7 +21,6 @@ export type ButtonProps = {
   loading?: boolean
   sfx?: SfxOptions
   fullWidth?: boolean
-  mobileTooltip?: boolean
   // Touch-only tap feedback: on coarse pointers the click is deferred a beat to
   // play the tap (desktop passes straight through). On by default.
   playOnTap?: boolean
@@ -46,7 +45,6 @@ const {
   active = false,
   sfx = {},
   fullWidth = false,
-  mobileTooltip = false,
   playOnTap = true,
   tapAnimate = false,
   disabled = false,
@@ -113,7 +111,6 @@ function onClick(e: MouseEvent) {
     element="button"
     :gap="-6"
     :suppress="!tooltip_active"
-    :static_on_mobile="mobileTooltip"
     data-testid="ui-kit-button"
     class="ui-kit-btn group/btn"
     v-sfx="merged_sfx"
