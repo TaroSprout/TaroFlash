@@ -16,7 +16,7 @@
 
 BEGIN;
 
-SELECT plan(14);
+SELECT plan(15);
 
 -- ── Setup ─────────────────────────────────────────────────────────────────────
 SELECT tests.create_user('11111111-1111-1111-1111-111111111111'::uuid, 'alice_caps');
@@ -92,7 +92,7 @@ SELECT is(
 -- overdue review card first, then the new card, then the second review card:
 -- [1002, 1000, 1003].
 SELECT results_eq(
-  $$ SELECT id FROM public.get_study_session_cards(100) $$,
+  $$ SELECT id FROM public.get_study_session_cards(100, date_trunc('day', now())) $$,
   $$ VALUES (1002::bigint), (1000::bigint), (1003::bigint) $$,
   'queue: 1 new card + due reviews up to total cap, resolved via deck_review_pacing [obligation]'
 );
@@ -132,7 +132,7 @@ SELECT is(
 -- skips 1001 (new budget exhausted: 1 used, max 1). Returns 2 due reviews:
 -- [1002, 1003] up to remaining total budget = 2.
 SELECT results_eq(
-  $$ SELECT id FROM public.get_study_session_cards(100) $$,
+  $$ SELECT id FROM public.get_study_session_cards(100, date_trunc('day', now())) $$,
   $$ VALUES (1002::bigint), (1003::bigint) $$,
   'queue respects exhausted new-card budget and remaining total budget'
 );
@@ -140,7 +140,7 @@ SELECT results_eq(
 -- Test 9: p_study_all = true returns every card in deck regardless of caps,
 -- in rank order.
 SELECT results_eq(
-  $$ SELECT id FROM public.get_study_session_cards(100, true) $$,
+  $$ SELECT id FROM public.get_study_session_cards(100, date_trunc('day', now()), true) $$,
   $$ VALUES (1000::bigint), (1001::bigint), (1002::bigint), (1003::bigint), (1004::bigint) $$,
   'p_study_all bypasses caps and returns all cards in rank order'
 );
@@ -161,6 +161,17 @@ SELECT is(
   'p_today_start in the future restores due_count to the unclamped cap'
 );
 
+-- Test 9c [obligation]: get_study_session_cards scopes today's usage by
+-- p_today_start too — the same day boundary as get_member_decks, so the inbox
+-- count and the session queue can never disagree. With a future p_today_start
+-- the logged review of 1000 no longer counts: full budget restored, new_take
+-- = 1 (1001), review_take = 2 (1002, 1003), interleaved [1002, 1001, 1003].
+SELECT results_eq(
+  $$ SELECT id FROM public.get_study_session_cards(100, now() + interval '1 day') $$,
+  $$ VALUES (1002::bigint), (1001::bigint), (1003::bigint) $$,
+  'p_today_start scopes the usage window in get_study_session_cards [obligation]'
+);
+
 
 -- ── Act as Bob — RLS scoping ──────────────────────────────────────────────────
 SET LOCAL role = 'postgres';
@@ -177,7 +188,7 @@ SELECT is(
 -- Test 11: Bob's RPC call against Alice's deck returns no rows (his own
 -- claims scope cards/reviews — the function runs as invoker so RLS applies).
 SELECT is(
-  (SELECT count(*) FROM public.get_study_session_cards(100))::int,
+  (SELECT count(*) FROM public.get_study_session_cards(100, date_trunc('day', now())))::int,
   0,
   'security_invoker: Bob''s call to get_study_session_cards on Alice''s deck returns 0 rows'
 );
@@ -202,7 +213,7 @@ SELECT 1200 + gs, 102, 'Q' || gs, 'A' || gs, gs * 1000
 FROM generate_series(1, 5) AS gs;
 
 SELECT is(
-  (SELECT count(*) FROM public.get_study_session_cards(102))::int,
+  (SELECT count(*) FROM public.get_study_session_cards(102, date_trunc('day', now())))::int,
   5,
   'get_study_session_cards resolves an unbounded linked-preset cap (NULL), not the system default [obligation]'
 );
