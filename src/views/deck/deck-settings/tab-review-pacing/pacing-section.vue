@@ -4,8 +4,9 @@ import { useI18n } from 'vue-i18n'
 import UiSelectMenu from '@/components/ui-kit/select-menu.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
-import CappedSpinboxRow from './capped-spinbox-row.vue'
+import TooltipRow from './tooltip-row.vue'
 import SchedulingSection from './scheduling-section.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { DAILY_LIMIT_BOUNDS } from '@/utils/deck/defaults'
@@ -55,35 +56,41 @@ function toggleAdvanced() {
     </template>
 
     <div data-testid="tab-review-pacing__pacing" class="flex flex-col gap-4 items-end">
-      <capped-spinbox-row
+      <tooltip-row
         data-testid="tab-review-pacing__max-reviews"
         :label="t('deck.settings-modal.review-pacing.max-reviews-per-day')"
-        :all_label="t('deck.settings-modal.review-pacing.max-reviews.all-toggle')"
         :tooltip="t('deck.settings-modal.review-pacing.max-reviews-tooltip')"
-        :min="DAILY_LIMIT_BOUNDS.min"
-        :max="DAILY_LIMIT_BOUNDS.reviews.max"
-        :step="DAILY_LIMIT_BOUNDS.step"
-        :default_value="DAILY_LIMIT_BOUNDS.reviews.default"
-        :prefill_when_all="deck?.card_count"
         :overridden="has_max_reviews_override"
-        v-model:value="max_reviews_per_day"
+        class="w-full"
         @reset="resetMaxReviewsPerDay"
-      />
+      >
+        <ui-spinbox
+          data-testid="tab-review-pacing__max-reviews-spinbox"
+          v-model:value="max_reviews_per_day"
+          :min="DAILY_LIMIT_BOUNDS.min"
+          :max="deck?.card_count"
+          :step="DAILY_LIMIT_BOUNDS.step"
+          wrap
+        />
+      </tooltip-row>
 
-      <capped-spinbox-row
+      <tooltip-row
         data-testid="tab-review-pacing__max-new"
         :label="t('deck.settings-modal.review-pacing.max-new-per-day')"
-        :all_label="t('deck.settings-modal.review-pacing.max-new.all-toggle')"
         :tooltip="t('deck.settings-modal.review-pacing.max-new-tooltip')"
-        :min="DAILY_LIMIT_BOUNDS.min"
-        :max="DAILY_LIMIT_BOUNDS.new_cards.max"
-        :step="DAILY_LIMIT_BOUNDS.step"
-        :default_value="DAILY_LIMIT_BOUNDS.new_cards.default"
-        :prefill_when_all="deck?.card_count"
         :overridden="has_max_new_override"
-        v-model:value="max_new_per_day"
+        class="w-full"
         @reset="resetMaxNewPerDay"
-      />
+      >
+        <ui-spinbox
+          data-testid="tab-review-pacing__max-new-spinbox"
+          v-model:value="max_new_per_day"
+          :min="DAILY_LIMIT_BOUNDS.min"
+          :max="deck?.card_count"
+          :step="DAILY_LIMIT_BOUNDS.step"
+          wrap
+        />
+      </tooltip-row>
 
       <div class="relative">
         <ui-button

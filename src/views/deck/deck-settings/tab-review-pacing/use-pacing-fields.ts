@@ -57,8 +57,8 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
   const has_max_reviews_override = computed(() => pacing.has_max_reviews_override)
   const has_max_new_override = computed(() => pacing.has_max_new_override)
 
-  // The three fields only editable from the advanced modal — surfaced so the
-  // "Advanced" button can badge itself without the caller re-deriving this.
+  // The three fields only editable from the advanced accordion — surfaced so
+  // the "Advanced" button can badge itself without the caller re-deriving this.
   const has_advanced_override = computed(
     () =>
       has_desired_retention_override.value ||
@@ -136,32 +136,36 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
     set: (key) => (relearning_steps.value = RELEARNING_STEP_PRESETS[key])
   })
 
-  // `max_*_per_day` are nullable on the preset row itself (null = unbounded),
-  // so a loaded preset's value must win outright — falling back to `deck.*`
-  // only while the preset hasn't loaded yet, not whenever it's null.
-  const max_reviews_per_day = computed<number | null>({
+  // The UI uses `0` to mean "no limit"; the model stores that as `null` —
+  // which is also how a preset expresses "unbounded". Map between the two
+  // here so the spinbox only ever sees a plain number. A loaded preset's
+  // value must win outright, falling back to `deck.*` only while the preset
+  // hasn't loaded yet, not whenever it's null.
+  const max_reviews_per_day = computed<number>({
     get: () => {
-      if (pacing.has_max_reviews_override) return pacing.max_reviews_per_day_override
-      return selected_preset.value
+      if (pacing.has_max_reviews_override) return pacing.max_reviews_per_day_override ?? 0
+      const preset_value = selected_preset.value
         ? selected_preset.value.max_reviews_per_day
         : (deck.max_reviews_per_day ?? null)
+      return preset_value ?? 0
     },
     set: (value) => {
       pacing.has_max_reviews_override = true
-      pacing.max_reviews_per_day_override = value
+      pacing.max_reviews_per_day_override = value === 0 ? null : value
     }
   })
 
-  const max_new_per_day = computed<number | null>({
+  const max_new_per_day = computed<number>({
     get: () => {
-      if (pacing.has_max_new_override) return pacing.max_new_per_day_override
-      return selected_preset.value
+      if (pacing.has_max_new_override) return pacing.max_new_per_day_override ?? 0
+      const preset_value = selected_preset.value
         ? selected_preset.value.max_new_per_day
         : (deck.max_new_per_day ?? null)
+      return preset_value ?? 0
     },
     set: (value) => {
       pacing.has_max_new_override = true
-      pacing.max_new_per_day_override = value
+      pacing.max_new_per_day_override = value === 0 ? null : value
     }
   })
 

@@ -50,7 +50,7 @@ const { t } = useI18n()
         icon-left="refresh"
         :sfx="{ press: 'snappy_button_5' }"
         @press="emit('reset')"
-        class="absolute! -right-8"
+        class="absolute! -left-8"
       >
         {{ t('deck.settings-modal.review-pacing.reset-to-preset') }}
       </ui-button>
