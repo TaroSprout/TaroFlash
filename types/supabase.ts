@@ -89,9 +89,12 @@ export type Database = {
         Row: {
           deck_id: number
           desired_retention_override: number | null
+          has_max_interval_override: boolean
           has_max_new_override: boolean
           has_max_reviews_override: boolean
           learning_steps_override: string[] | null
+          leech_threshold_override: number | null
+          max_interval_override: number | null
           max_new_per_day_override: number | null
           max_reviews_per_day_override: number | null
           relearning_steps_override: string[] | null
@@ -100,9 +103,12 @@ export type Database = {
         Insert: {
           deck_id: number
           desired_retention_override?: number | null
+          has_max_interval_override?: boolean
           has_max_new_override?: boolean
           has_max_reviews_override?: boolean
           learning_steps_override?: string[] | null
+          leech_threshold_override?: number | null
+          max_interval_override?: number | null
           max_new_per_day_override?: number | null
           max_reviews_per_day_override?: number | null
           relearning_steps_override?: string[] | null
@@ -111,9 +117,12 @@ export type Database = {
         Update: {
           deck_id?: number
           desired_retention_override?: number | null
+          has_max_interval_override?: boolean
           has_max_new_override?: boolean
           has_max_reviews_override?: boolean
           learning_steps_override?: string[] | null
+          leech_threshold_override?: number | null
+          max_interval_override?: number | null
           max_new_per_day_override?: number | null
           max_reviews_per_day_override?: number | null
           relearning_steps_override?: string[] | null
@@ -645,6 +654,8 @@ export type Database = {
           id: number
           is_system: boolean
           learning_steps: string[]
+          leech_threshold: number
+          max_interval: number | null
           max_new_per_day: number | null
           max_reviews_per_day: number | null
           member_id: string | null
@@ -657,6 +668,8 @@ export type Database = {
           id?: number
           is_system?: boolean
           learning_steps: string[]
+          leech_threshold?: number
+          max_interval?: number | null
           max_new_per_day?: number | null
           max_reviews_per_day?: number | null
           member_id?: string | null
@@ -669,6 +682,8 @@ export type Database = {
           id?: number
           is_system?: boolean
           learning_steps?: string[]
+          leech_threshold?: number
+          max_interval?: number | null
           max_new_per_day?: number | null
           max_reviews_per_day?: number | null
           member_id?: string | null
@@ -1026,39 +1041,13 @@ export type Database = {
       }
       get_member_decks: {
         Args: { p_today_start: string }
-        Returns: {
-          card_attributes: Json
-          card_count: number
-          cover_config: Json
-          created_at: string
-          description: string
-          desired_retention: number
-          desired_retention_override: number
-          due_count: number
-          has_image: boolean
-          has_max_new_override: boolean
-          has_max_reviews_override: boolean
-          id: number
-          is_public: boolean
-          learning_steps: string[]
-          learning_steps_override: string[]
-          max_new_per_day: number
-          max_new_per_day_override: number
-          max_reviews_per_day: number
-          max_reviews_per_day_override: number
-          member_display_name: string
-          member_id: string
-          new_reviewed_today_count: number
-          rank: number
-          relearning_steps: string[]
-          relearning_steps_override: string[]
-          review_pacing_preset_id: number
-          reviewed_today_count: number
-          study_config: Json
-          tags: string[]
-          title: string
-          updated_at: string
-        }[]
+        Returns: Database["public"]["CompositeTypes"]["member_deck"][]
+        SetofOptions: {
+          from: "*"
+          to: "member_deck"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_study_session_cards: {
         Args: {
@@ -1149,10 +1138,13 @@ export type Database = {
           p_deck_id: number
           p_description: string
           p_desired_retention_override: number
+          p_has_max_interval_override: boolean
           p_has_max_new_override: boolean
           p_has_max_reviews_override: boolean
           p_is_public: boolean
           p_learning_steps_override: string[]
+          p_leech_threshold_override: number
+          p_max_interval_override: number
           p_max_new_per_day_override: number
           p_max_reviews_per_day_override: number
           p_relearning_steps_override: string[]
@@ -1160,39 +1152,13 @@ export type Database = {
           p_study_config: Json
           p_title: string
         }
-        Returns: {
-          card_attributes: Json
-          card_count: number
-          cover_config: Json
-          created_at: string
-          description: string
-          desired_retention: number
-          desired_retention_override: number
-          due_count: number
-          has_image: boolean
-          has_max_new_override: boolean
-          has_max_reviews_override: boolean
-          id: number
-          is_public: boolean
-          learning_steps: string[]
-          learning_steps_override: string[]
-          max_new_per_day: number
-          max_new_per_day_override: number
-          max_reviews_per_day: number
-          max_reviews_per_day_override: number
-          member_display_name: string
-          member_id: string
-          new_reviewed_today_count: number
-          rank: number
-          relearning_steps: string[]
-          relearning_steps_override: string[]
-          review_pacing_preset_id: number
-          reviewed_today_count: number
-          study_config: Json
-          tags: string[]
-          title: string
-          updated_at: string
-        }[]
+        Returns: Database["public"]["CompositeTypes"]["member_deck"][]
+        SetofOptions: {
+          from: "*"
+          to: "member_deck"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       save_review: {
         Args: {
@@ -1278,7 +1244,44 @@ export type Database = {
       shop_category: "power_ups" | "stationary"
     }
     CompositeTypes: {
-      [_ in never]: never
+      member_deck: {
+        id: number | null
+        created_at: string | null
+        updated_at: string | null
+        description: string | null
+        is_public: boolean | null
+        title: string | null
+        member_id: string | null
+        member_display_name: string | null
+        tags: string[] | null
+        has_image: boolean | null
+        study_config: Json | null
+        cover_config: Json | null
+        card_attributes: Json | null
+        card_count: number | null
+        reviewed_today_count: number | null
+        new_reviewed_today_count: number | null
+        due_count: number | null
+        rank: number | null
+        review_pacing_preset_id: number | null
+        desired_retention: number | null
+        learning_steps: string[] | null
+        relearning_steps: string[] | null
+        desired_retention_override: number | null
+        learning_steps_override: string[] | null
+        relearning_steps_override: string[] | null
+        max_reviews_per_day: number | null
+        max_new_per_day: number | null
+        has_max_reviews_override: boolean | null
+        max_reviews_per_day_override: number | null
+        has_max_new_override: boolean | null
+        max_new_per_day_override: number | null
+        leech_threshold: number | null
+        max_interval: number | null
+        leech_threshold_override: number | null
+        has_max_interval_override: boolean | null
+        max_interval_override: number | null
+      }
     }
   }
 }
