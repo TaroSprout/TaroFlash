@@ -15,10 +15,6 @@ function mountSpinbox(props = {}) {
   return shallowMount(UiSpinbox, { props: { value: 0, ...props } })
 }
 
-function findValue(wrapper) {
-  return wrapper.find('[data-testid="ui-kit-spinbox__value"]')
-}
-
 function findInput(wrapper) {
   return wrapper.find('[data-testid="ui-kit-spinbox__input"]')
 }
