@@ -13,6 +13,7 @@ import { DAILY_LIMIT_BOUNDS } from '@/utils/deck/defaults'
 import { usePacingFields } from './use-pacing-fields'
 import { accordionEnter, accordionLeave } from '@/utils/animations/accordion'
 import { emitSfx } from '@/sfx/bus'
+import UiDivider from '@/components/ui-kit/divider.vue'
 
 const { t } = useI18n()
 const { deck, pacing } = inject(deckEditorKey)!
@@ -54,6 +55,8 @@ function toggleAdvanced() {
         :options="preset_options"
       />
     </template>
+
+    <ui-divider class="mb-4" />
 
     <div data-testid="tab-review-pacing__pacing" class="flex flex-col gap-4 items-end">
       <tooltip-row
