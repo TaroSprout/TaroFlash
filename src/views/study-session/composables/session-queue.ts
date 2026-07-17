@@ -53,7 +53,8 @@ export function useSessionQueue(pacing: ReviewPacingParams, _config?: Partial<De
     learning_steps: pacing.learning_steps as Steps,
     relearning_steps: pacing.relearning_steps as Steps,
     // desired_retention is stored as a whole-number percent (e.g. 90 = 90%).
-    request_retention: pacing.desired_retention / 100
+    request_retention: pacing.desired_retention / 100,
+    maximum_interval: pacing.max_interval
   })
 
   const config = reactive<Required<DeckConfig>>(withDeckConfigDefaults(_config))

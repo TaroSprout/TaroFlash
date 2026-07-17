@@ -15,6 +15,9 @@ export type DeckPacingEditorState = {
   max_reviews_per_day_override: number | null
   has_max_new_override: boolean
   max_new_per_day_override: number | null
+  leech_threshold_override: number | null
+  has_max_interval_override: boolean
+  max_interval_override: number | null
 }
 
 export type DeckEditorState = {
@@ -40,6 +43,9 @@ export type DeckPayload = {
   max_reviews_per_day_override: number | null
   has_max_new_override: boolean
   max_new_per_day_override: number | null
+  leech_threshold_override: number | null
+  has_max_interval_override: boolean
+  max_interval_override: number | null
 }
 
 /**
@@ -70,7 +76,10 @@ export function buildDeckPayload(state: DeckEditorState): DeckPayload {
     has_max_reviews_override: state.pacing.has_max_reviews_override,
     max_reviews_per_day_override: state.pacing.max_reviews_per_day_override,
     has_max_new_override: state.pacing.has_max_new_override,
-    max_new_per_day_override: state.pacing.max_new_per_day_override
+    max_new_per_day_override: state.pacing.max_new_per_day_override,
+    leech_threshold_override: state.pacing.leech_threshold_override,
+    has_max_interval_override: state.pacing.has_max_interval_override,
+    max_interval_override: state.pacing.max_interval_override
   }
 }
 

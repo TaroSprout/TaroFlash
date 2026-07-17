@@ -1,6 +1,14 @@
 export type LearningStepsKey = '10m' | '1hr' | '1d' | '1m-10m' | '1m-10m-1d'
 export type RelearningStepsKey = '10m' | '1hr' | '1d' | '1m-10m'
 
+// ts-fsrs' own default maximum_interval (~100 years) — the "uncapped" value a
+// null/0 max_interval resolves to before it reaches the scheduler.
+export const FSRS_MAX_INTERVAL = 36500
+
+export const LEECH_THRESHOLD_BOUNDS = { min: 1, max: 99, step: 1 } as const
+// 0 in the UI means "uncapped"; the model stores that as null.
+export const MAX_INTERVAL_BOUNDS = { min: 0, max: FSRS_MAX_INTERVAL, step: 15 } as const
+
 export const LEARNING_STEP_PRESETS: Record<LearningStepsKey, string[]> = {
   '10m': ['10m'],
   '1hr': ['1h'],

@@ -59,7 +59,10 @@ export function useDeckEditor(deck?: Deck) {
       has_max_reviews_override: deck?.has_max_reviews_override ?? false,
       max_reviews_per_day_override: deck?.max_reviews_per_day_override ?? null,
       has_max_new_override: deck?.has_max_new_override ?? false,
-      max_new_per_day_override: deck?.max_new_per_day_override ?? null
+      max_new_per_day_override: deck?.max_new_per_day_override ?? null,
+      leech_threshold_override: deck?.leech_threshold_override ?? null,
+      has_max_interval_override: deck?.has_max_interval_override ?? false,
+      max_interval_override: deck?.max_interval_override ?? null
     }
   }
 
