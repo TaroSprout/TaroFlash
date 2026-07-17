@@ -41,11 +41,11 @@ Gate role/plan-based access through named capability functions, not inline `auth
 
 `supabase/schemas/` is the source of truth for all DDL (tables, views, functions, triggers, policies, grants). **Never hand-write DDL migrations.** To change schema:
 
-1. Edit the object's file in `supabase/schemas/` (functions live one-per-file in `schemas/functions/`).
+1. Edit the object's file in `supabase/schemas/` — files are hand-organized by domain (single files like `20_members.sql`, or domain dirs like `30_decks/` whose `00_tables.sql` holds tables/policies/grants and each big RPC gets its own file, e.g. `30_decks/save_deck.sql`).
 2. `supabase db diff -f <migration-name>` — generates the migration by diffing declared state against migration history.
 3. Review the generated file, then `supabase migration up --local`.
 
-Apply order is `schema_paths` in `config.toml` — new files must be added there. `scripts/dump-schemas` regenerates the files from the local DB (drift check: `git diff supabase/schemas` should be empty after).
+Apply order is `schema_paths` in `config.toml` — new files must be added there. `scripts/dump-schemas` writes a raw type-bucketed snapshot of the local DB to git-ignored `supabase/.schema-snapshot/` for drift comparison; it never touches `supabase/schemas/` (the real drift check is `supabase db diff` returning empty).
 
 **Still hand-written migrations** (db diff can't track them): DML — storage bucket inserts, `cron.schedule`, vault secrets, seed rows; default privileges; comment changes.
 

@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Split a marker-annotated pg_dump into ordered declarative schema files."""
+"""Split a marker-annotated pg_dump into a raw, type-bucketed snapshot.
+
+Drift-check helper only. The canonical declarative schema files in
+supabase/schemas/ are hand-organized by domain (domain files/dirs; big RPCs
+one-per-file inside their domain dir) and are NOT written by this tool. This
+splitter emits a throwaway type-bucketed snapshot into the output dir passed by
+scripts/dump-schemas for manual comparison against the hand-organized files.
+"""
 import re
 import sys
 from collections import defaultdict

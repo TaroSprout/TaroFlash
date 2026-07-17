@@ -1,15 +1,20 @@
 #!/usr/bin/env zsh
-# Regenerate supabase/schemas/ from the local database. One-time adoption tool
-# + drift check: after running, `git diff supabase/schemas` should be empty
-# unless the local DB has objects the schema files don't declare.
-# 06_auth_storage.sql (hand-maintained) and 00_extensions.sql are left untouched.
+# Drift-check helper. The declarative schema files in supabase/schemas/ are
+# hand-organized by domain — this tool does NOT write to them. It dumps the
+# local database and produces a raw, type-bucketed snapshot in a git-ignored
+# scratch dir for manual comparison against the hand-organized declarations.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+snapshot="supabase/.schema-snapshot"
 tmp="$(mktemp)"
 docker exec supabase_db_TaroFlash pg_dump -U postgres -d postgres \
   --schema-only --schema=public --schema=tests > "$tmp"
 
-find supabase/schemas -name '*.sql' ! -name '06_auth_storage.sql' ! -name '00_extensions.sql' -delete
-python3 scripts/split-schema.py "$tmp" supabase/schemas
+rm -rf "$snapshot"
+python3 scripts/split-schema.py "$tmp" "$snapshot"
 rm "$tmp"
+
+echo "Wrote type-bucketed snapshot to $snapshot/ (git-ignored)."
+echo "Compare it by hand against supabase/schemas/ to spot drift; nothing under"
+echo "supabase/schemas/ was touched."
