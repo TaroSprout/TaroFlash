@@ -25,10 +25,6 @@ export type SummaryData = {
 // Ordered weakest → strongest; the index is the comparable "level".
 const BAND_ORDER: MaturityBand[] = ['forming', 'familiar', 'strong', 'mastered']
 
-// Hanzi routinely take many lapses before sticking; 8 flags too aggressively.
-// Bumped to 24 so only genuinely stubborn cards surface. TODO: expose in settings.
-const LEECH_THRESHOLD = 24
-
 function levelFor(interval_days: number): number {
   if (interval_days < 7) return BAND_ORDER.indexOf('forming')
   if (interval_days < 30) return BAND_ORDER.indexOf('familiar')
@@ -36,7 +32,10 @@ function levelFor(interval_days: number): number {
   return BAND_ORDER.indexOf('mastered')
 }
 
-export function aggregateSession(results: CardReviewResult[]): SummaryData {
+export function aggregateSession(
+  results: CardReviewResult[],
+  leech_threshold: number
+): SummaryData {
   let score = 0
   let new_count = 0
   let leveled_up_count = 0
@@ -46,7 +45,7 @@ export function aggregateSession(results: CardReviewResult[]): SummaryData {
   for (const result of results) {
     if (result.passed) score++
 
-    if (!result.passed && result.lapses >= LEECH_THRESHOLD) stuck_count++
+    if (!result.passed && result.lapses >= leech_threshold) stuck_count++
 
     if (result.is_new) {
       new_count++

@@ -7,8 +7,9 @@ import StatTile from './stat-tile.vue'
 import { aggregateSession } from './aggregate'
 import type { CardReviewResult } from '@/views/study-session/composables/session-queue'
 
-const { results } = defineProps<{
+const { results, leech_threshold } = defineProps<{
   results: CardReviewResult[]
+  leech_threshold: number
 }>()
 
 const emit = defineEmits<{
@@ -17,7 +18,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-const summary = computed(() => aggregateSession(results))
+const summary = computed(() => aggregateSession(results, leech_threshold))
 </script>
 
 <template>
