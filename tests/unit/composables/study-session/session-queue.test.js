@@ -260,6 +260,13 @@ describe('session-core — FSRS params sourced from the pacing argument [obligat
       })
     )
   })
+
+  test('FSRS maximum_interval is seeded from pacing.max_interval as-is [obligation]', () => {
+    useSessionQueue({ ...PACING, max_interval: 36500 })
+    expect(generatorParametersMock).toHaveBeenCalledWith(
+      expect.objectContaining({ maximum_interval: 36500 })
+    )
+  })
 })
 
 // ── reviewCard — no-grade (pass-through) ─────────────────────────────────────

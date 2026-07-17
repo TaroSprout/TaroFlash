@@ -462,7 +462,13 @@ describe('session-controller', () => {
     test('useFlashcardSession is called with pacing resolved from decks[0] [obligation]', () => {
       makeController({
         decks: [
-          { id: 5, desired_retention: 82, learning_steps: ['1d'], relearning_steps: ['1h'] },
+          {
+            id: 5,
+            desired_retention: 82,
+            learning_steps: ['1d'],
+            relearning_steps: ['1h'],
+            max_interval: 90
+          },
           { id: 6 }
         ]
       })
@@ -470,8 +476,26 @@ describe('session-controller', () => {
       expect(capturedFlashcardSessionArgs.current.pacing).toEqual({
         desired_retention: 82,
         learning_steps: ['1d'],
-        relearning_steps: ['1h']
+        relearning_steps: ['1h'],
+        max_interval: 90
       })
+    })
+
+    test('maps a null decks[0].max_interval to FSRS_MAX_INTERVAL (uncapped) [obligation]', () => {
+      makeController({
+        decks: [
+          {
+            id: 5,
+            desired_retention: 82,
+            learning_steps: ['1d'],
+            relearning_steps: ['1h'],
+            max_interval: null
+          },
+          { id: 6 }
+        ]
+      })
+
+      expect(capturedFlashcardSessionArgs.current.pacing.max_interval).toBe(36500)
     })
 
     test('useFlashcardSession config_override still merges decks[0].study_config with the passed config_override', () => {

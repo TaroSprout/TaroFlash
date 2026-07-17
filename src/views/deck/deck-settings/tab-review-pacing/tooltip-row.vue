@@ -20,7 +20,7 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <div data-testid="tooltip-row" class="flex items-center justify-between gap-4">
+  <div data-testid="tooltip-row" class="flex items-center justify-between gap-4 group">
     <span
       data-testid="tooltip-row__label"
       class="flex items-center gap-2 text-brown-700 dark:text-brown-100"
@@ -30,9 +30,9 @@ const { t } = useI18n()
         v-if="tooltip"
         element="span"
         :text="tooltip"
-        class="flex cursor-pointer items-center"
+        class="flex cursor-pointer items-center opacity-0 group-hover:opacity-100"
       >
-        <ui-icon src="info-circle" class="size-4 shrink-0 text-brown-500" />
+        <ui-icon src="info-circle" class="size-3.25 shrink-0" />
       </ui-tooltip>
     </span>
 
@@ -43,14 +43,13 @@ const { t } = useI18n()
         v-if="overridden"
         data-testid="tooltip-row__reset"
         data-theme="brown-500"
-        data-theme-dark="brown-100"
         variant="ghost"
         size="sm"
         icon-only
         icon-left="refresh"
         :sfx="{ press: 'snappy_button_5' }"
         @press="emit('reset')"
-        class="absolute! -right-8"
+        class="absolute! -left-8"
       >
         {{ t('deck.settings-modal.review-pacing.reset-to-preset') }}
       </ui-button>

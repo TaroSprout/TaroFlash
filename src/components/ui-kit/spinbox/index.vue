@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import SpinboxButton from './button.vue'
 import { useNumericInput } from '@/composables/ui/numeric-input'
-import { useStagedTap } from '@/composables/ui/staged-tap'
-import { TYPE_SFX } from '@/sfx/config'
 
 type SpinboxProps = {
   min?: number
@@ -12,12 +10,6 @@ type SpinboxProps = {
   label?: string
   suffix?: string
   wrap?: boolean
-  /** When set, renders a connected pill button on the right; toggles `pill_active`. */
-  pill_label?: string
-  // The pill sits on the spinbox's own `data-theme` surface, so its selected
-  // state needs an independent theme scope to read as "on" against it.
-  pill_theme?: string
-  pill_theme_dark?: string
 }
 
 const {
@@ -26,22 +18,43 @@ const {
   step = 1,
   label,
   suffix,
-  wrap = false,
-  pill_label,
-  pill_theme,
-  pill_theme_dark
+  wrap = false
 } = defineProps<SpinboxProps>()
 
 const value = defineModel<number>('value', { required: true })
-const pill_active = defineModel<boolean>('pill_active', { default: false })
+
+const focused = ref(false)
 
 const can_decrement = computed(() => value.value > min || (wrap && Number.isFinite(max)))
 const can_increment = computed(() => value.value < max || (wrap && Number.isFinite(min)))
 
-const { clamp, onInput, onBeforeInput, onFocus, onBlur } = useNumericInput(value, {
+// The suffix is rendered as part of the value string ("10d") so it reads as one
+// centered token in the fixed-width field. While focused we drop it back to the
+// bare number so the numeric parser + caret only ever see digits.
+const display_value = computed(() =>
+  suffix && !focused.value ? `${value.value}${suffix}` : value.value
+)
+
+const {
+  clamp,
+  onInput,
+  onBeforeInput,
+  onBlur: normalizeInput
+} = useNumericInput(value, {
   min: () => min,
   max: () => max
 })
+
+function onFocus(e: FocusEvent) {
+  focused.value = true
+  const el = e.target as HTMLInputElement
+  void nextTick(() => el.select())
+}
+
+function onBlur(e: Event) {
+  normalizeInput(e)
+  focused.value = false
+}
 
 function decrement() {
   if (value.value <= min) {
@@ -57,17 +70,6 @@ function increment() {
     return
   }
   value.value = clamp(value.value + step)
-}
-
-const { playing: pill_playing, tap: tapPill } = useStagedTap({ triggerAt: 'press' })
-
-function onPillClick(e: MouseEvent) {
-  tapPill(
-    () => {
-      pill_active.value = !pill_active.value
-    },
-    { audio: 'select' }
-  )(e)
 }
 </script>
 
@@ -89,7 +91,6 @@ function onPillClick(e: MouseEvent) {
     <div
       data-testid="ui-kit-spinbox"
       class="inline-flex items-center bg-(--theme-primary) rounded-4 p-1 gap-0.5"
-      :class="pill_label && 'rounded-r-2'"
     >
       <spinbox-button
         data-testid="ui-kit-spinbox__decrement"
@@ -104,20 +105,13 @@ function onPillClick(e: MouseEvent) {
           inputmode="numeric"
           data-testid="ui-kit-spinbox__input"
           class="text-center tabular-nums text-brown-700 dark:text-brown-100 bg-transparent outline-none text-base px-2 w-12"
-          :value="value"
+          :value="display_value"
           :step="step"
           @beforeinput="onBeforeInput"
           @focus="onFocus"
           @input="onInput"
           @blur="onBlur"
         />
-        <span
-          v-if="suffix"
-          data-testid="ui-kit-spinbox__suffix"
-          class="ml-0.5 text-brown-500 dark:text-brown-300"
-        >
-          {{ suffix }}
-        </span>
       </div>
 
       <spinbox-button
@@ -127,19 +121,5 @@ function onPillClick(e: MouseEvent) {
         @click="increment"
       />
     </div>
-
-    <button
-      v-if="pill_label"
-      type="button"
-      data-testid="ui-kit-spinbox__pill"
-      :data-active="pill_active || pill_playing || null"
-      :data-theme="pill_theme"
-      :data-theme-dark="pill_theme_dark"
-      class="inline-flex items-center justify-center bg-brown-100 dark:bg-stone-700 px-3 text-sm cursor-pointer text-brown-700 dark:text-brown-100 transition-colors rounded-4 rounded-l-2 data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary) data-[active=false]:hover:bg-(--theme-primary) data-[active=false]:hover:text-(--theme-on-primary)"
-      v-sfx="{ hover: TYPE_SFX }"
-      @click="onPillClick"
-    >
-      {{ pill_label }}
-    </button>
   </div>
 </template>

@@ -51,6 +51,14 @@ type Deck = {
   max_reviews_per_day_override?: number | null
   has_max_new_override?: boolean
   max_new_per_day_override?: number | null
+  // Resolved leech threshold (override -> preset -> system) + its raw pin.
+  leech_threshold?: number
+  leech_threshold_override?: number | null
+  // Resolved max interval in days (null = uncapped); has_max_interval_override
+  // gates the nullable override the same way the daily limits do.
+  max_interval?: number | null
+  has_max_interval_override?: boolean
+  max_interval_override?: number | null
 }
 
 type CardEditorMode = 'view' | 'edit' | 'import-export'

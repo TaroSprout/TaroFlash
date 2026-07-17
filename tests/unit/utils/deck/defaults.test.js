@@ -36,13 +36,9 @@ describe('deck defaults', () => {
     expect(CARD_ATTRIBUTES_DEFAULTS.image_layout).toBe('above')
   })
 
-  test('DAILY_LIMIT_BOUNDS exposes shared step + min and per-row max + default', () => {
+  test('DAILY_LIMIT_BOUNDS exposes a shared step and a min of 0 (the "all"/uncapped sentinel) [obligation]', () => {
     expect(DAILY_LIMIT_BOUNDS.step).toBe(5)
-    expect(DAILY_LIMIT_BOUNDS.min).toBe(5)
-    expect(DAILY_LIMIT_BOUNDS.reviews.max).toBe(200)
-    expect(DAILY_LIMIT_BOUNDS.reviews.default).toBe(50)
-    expect(DAILY_LIMIT_BOUNDS.new_cards.max).toBe(100)
-    expect(DAILY_LIMIT_BOUNDS.new_cards.default).toBe(20)
+    expect(DAILY_LIMIT_BOUNDS.min).toBe(0)
   })
 
   describe('withDeckConfigDefaults', () => {

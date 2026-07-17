@@ -1,6 +1,7 @@
 import { computed, inject, provide, watch, type InjectionKey } from 'vue'
 import { type Grade } from 'ts-fsrs'
 import { useFlashcardSession } from './flashcard-session'
+import { FSRS_MAX_INTERVAL } from '@/utils/review-pacing/defaults'
 import { useCardPreview } from './card-preview'
 import { useCardEdit } from './card-edit'
 import { useActiveCardActions } from './card-actions'
@@ -75,7 +76,9 @@ function useStudySessionController({
     {
       desired_retention: decks[0].desired_retention!,
       learning_steps: decks[0].learning_steps!,
-      relearning_steps: decks[0].relearning_steps!
+      relearning_steps: decks[0].relearning_steps!,
+      // null = uncapped -> the FSRS default max interval
+      max_interval: decks[0].max_interval ?? FSRS_MAX_INTERVAL
     },
     { ...decks[0]?.study_config, ...config_override }
   )

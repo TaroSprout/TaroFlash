@@ -82,7 +82,10 @@ export async function upsertDeck(deck: Deck): Promise<Deck> {
     p_has_max_reviews_override: deck.has_max_reviews_override ?? false,
     p_max_reviews_per_day_override: deck.max_reviews_per_day_override ?? null,
     p_has_max_new_override: deck.has_max_new_override ?? false,
-    p_max_new_per_day_override: deck.max_new_per_day_override ?? null
+    p_max_new_per_day_override: deck.max_new_per_day_override ?? null,
+    p_leech_threshold_override: deck.leech_threshold_override ?? null,
+    p_has_max_interval_override: deck.has_max_interval_override ?? false,
+    p_max_interval_override: deck.max_interval_override ?? null
   })
 
   if (error) {

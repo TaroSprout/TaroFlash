@@ -15,16 +15,8 @@ function mountSpinbox(props = {}) {
   return shallowMount(UiSpinbox, { props: { value: 0, ...props } })
 }
 
-function findValue(wrapper) {
-  return wrapper.find('[data-testid="ui-kit-spinbox__value"]')
-}
-
 function findInput(wrapper) {
   return wrapper.find('[data-testid="ui-kit-spinbox__input"]')
-}
-
-function findSuffix(wrapper) {
-  return wrapper.find('[data-testid="ui-kit-spinbox__suffix"]')
 }
 
 function findDecrement(wrapper) {
@@ -68,15 +60,31 @@ describe('UiSpinbox', () => {
     expect(findInput(wrapper).element.value).toBe('7')
   })
 
-  test('appends suffix when suffix prop is set', () => {
-    const wrapper = mountSpinbox({ value: 30, suffix: 'px' })
-    expect(findInput(wrapper).element.value).toBe('30')
-    expect(findSuffix(wrapper).text()).toBe('px')
+  test('renders value+suffix as one string in the input while blurred [obligation]', () => {
+    const wrapper = mountSpinbox({ value: 30, suffix: 'd' })
+    expect(findInput(wrapper).element.value).toBe('30d')
   })
 
-  test('does not render suffix span when suffix is omitted', () => {
+  test('renders the bare number, no suffix, once the input is focused [obligation]', async () => {
+    const wrapper = mountSpinbox({ value: 30, suffix: 'd' })
+    const input = findInput(wrapper)
+    input.element.focus()
+    await input.trigger('focus')
+    expect(input.element.value).toBe('30')
+  })
+
+  test('re-appends the suffix on blur [obligation]', async () => {
+    const wrapper = mountSpinbox({ value: 30, suffix: 'd' })
+    const input = findInput(wrapper)
+    input.element.focus()
+    await input.trigger('focus')
+    await input.trigger('blur')
+    expect(input.element.value).toBe('30d')
+  })
+
+  test('shows the bare number with no suffix prop', () => {
     const wrapper = mountSpinbox({ value: 30 })
-    expect(findSuffix(wrapper).exists()).toBe(false)
+    expect(findInput(wrapper).element.value).toBe('30')
   })
 
   // ── Increment / decrement (v-model) ────────────────────────────────────────
@@ -163,6 +171,16 @@ describe('UiSpinbox', () => {
     input.element.value = '42'
     await input.trigger('input')
     expect(wrapper.emitted('update:value')).toEqual([[42]])
+  })
+
+  test('typing digits still parses correctly with a suffix set (suffix never leaks into the numeric model) [obligation]', async () => {
+    const wrapper = mountSpinbox({ value: 5, min: 1, max: 365, suffix: 'd' })
+    const input = findInput(wrapper)
+    input.element.focus()
+    await input.trigger('focus')
+    input.element.value = '90'
+    await input.trigger('input')
+    expect(wrapper.emitted('update:value')).toEqual([[90]])
   })
 
   test('typing a value above max clamps via input event', async () => {

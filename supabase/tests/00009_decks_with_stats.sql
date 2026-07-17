@@ -15,16 +15,18 @@ BEGIN;
 SELECT plan(9);
 
 -- ── Test: function returns the exact columns the FE consumes ─────────────────
--- Locks the OUT parameter list of get_member_decks. Renaming or removing a
--- column without updating the FE will fail here. (Cannot guard PostgREST
--- embed resolution — that's a contract-test job — but this catches column
--- drift cheaply.)
+-- get_member_decks now RETURNS SETOF public.member_deck (a composite type)
+-- rather than declaring its own OUT parameter list, so the column set lives
+-- on the type instead — locks the public.member_deck attribute list.
+-- Renaming or removing a column without updating the FE will fail here.
+-- (Cannot guard PostgREST embed resolution — that's a contract-test job —
+-- but this catches column drift cheaply.)
 SELECT bag_eq(
-  $$ SELECT parameter_name
-     FROM information_schema.parameters
-     WHERE specific_schema = 'public'
-       AND specific_name LIKE 'get_member_decks%'
-       AND parameter_mode = 'OUT' $$,
+  $$ SELECT attname
+     FROM pg_attribute
+     WHERE attrelid = 'public.member_deck'::regclass
+       AND attnum > 0
+       AND NOT attisdropped $$,
   $$ VALUES
       ('id'), ('created_at'), ('updated_at'), ('description'), ('is_public'),
       ('title'), ('member_id'), ('member_display_name'), ('tags'), ('has_image'),
@@ -34,8 +36,10 @@ SELECT bag_eq(
       ('desired_retention_override'), ('learning_steps_override'), ('relearning_steps_override'),
       ('max_reviews_per_day'), ('max_new_per_day'),
       ('has_max_reviews_override'), ('max_reviews_per_day_override'),
-      ('has_max_new_override'), ('max_new_per_day_override') $$,
-  'get_member_decks exposes the columns the FE consumes'
+      ('has_max_new_override'), ('max_new_per_day_override'),
+      ('leech_threshold'), ('max_interval'),
+      ('leech_threshold_override'), ('has_max_interval_override'), ('max_interval_override') $$,
+  'get_member_decks (via public.member_deck) exposes the columns the FE consumes [obligation]'
 );
 
 -- ── Setup ─────────────────────────────────────────────────────────────────────

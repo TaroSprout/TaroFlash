@@ -12,7 +12,10 @@ CREATE TABLE public.deck_review_pacing (
     has_max_reviews_override boolean DEFAULT false NOT NULL,
     max_reviews_per_day_override integer,
     has_max_new_override boolean DEFAULT false NOT NULL,
-    max_new_per_day_override integer
+    max_new_per_day_override integer,
+    leech_threshold_override integer,
+    has_max_interval_override boolean DEFAULT false NOT NULL,
+    max_interval_override integer
 );
 
 
@@ -57,7 +60,9 @@ CREATE TABLE public.review_pacing_presets (
     relearning_steps text[] NOT NULL,
     is_system boolean DEFAULT false NOT NULL,
     max_reviews_per_day integer,
-    max_new_per_day integer
+    max_new_per_day integer,
+    leech_threshold integer DEFAULT 8 NOT NULL,
+    max_interval integer
 );
 
 

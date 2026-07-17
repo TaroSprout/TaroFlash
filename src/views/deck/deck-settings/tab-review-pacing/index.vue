@@ -3,7 +3,6 @@ import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiToggle from '@/components/ui-kit/toggle.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import UiDivider from '@/components/ui-kit/divider.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import PacingSection from './pacing-section.vue'
@@ -37,9 +36,7 @@ const layout_mode = inject(deckSettingsLayoutKey)!
       </ui-toggle>
     </labeled-section>
 
-    <ui-divider />
-
-    <pacing-section />
+    <pacing-section class="mt-4" />
 
     <deck-save-button v-if="layout_mode === 'sheet'" />
   </section-list>

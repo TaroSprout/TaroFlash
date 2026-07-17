@@ -8,8 +8,12 @@ import SessionSummary from '@/views/study-session/session-summary/index.vue'
 const StatTileStub = defineComponent({
   name: 'StatTile',
   props: ['summary'],
-  setup() {
-    return () => h('div', { 'data-testid': 'stat-tile-stub' })
+  setup(props) {
+    return () =>
+      h('div', {
+        'data-testid': 'stat-tile-stub',
+        'data-stuck-count': props.summary?.stuck_count
+      })
   }
 })
 
@@ -28,9 +32,9 @@ function makeResult(overrides = {}) {
   }
 }
 
-function mountSummary({ results = [] } = {}) {
+function mountSummary({ results = [], leech_threshold = 24 } = {}) {
   return mount(SessionSummary, {
-    props: { results },
+    props: { results, leech_threshold },
     global: { stubs: { StatTile: StatTileStub } }
   })
 }
@@ -104,6 +108,24 @@ describe('SessionSummary (index.vue)', () => {
   test('renders the stat-tile stub', () => {
     const wrapper = mountSummary()
     expect(wrapper.find('[data-testid="stat-tile-stub"]').exists()).toBe(true)
+  })
+
+  // ── leech_threshold prop threading [obligation] ───────────────────────────
+  // session-summary passes its own leech_threshold prop into aggregateSession —
+  // a different threshold on the same results must change the derived summary.
+
+  test('passes leech_threshold into aggregateSession, changing stuck_count for the same results [obligation]', () => {
+    const results = [makeResult({ card_id: 1, passed: false, lapses: 10 })]
+
+    const low_threshold = mountSummary({ results, leech_threshold: 8 })
+    const high_threshold = mountSummary({ results, leech_threshold: 24 })
+
+    expect(
+      low_threshold.find('[data-testid="stat-tile-stub"]').attributes('data-stuck-count')
+    ).toBe('1')
+    expect(
+      high_threshold.find('[data-testid="stat-tile-stub"]').attributes('data-stuck-count')
+    ).toBe('0')
   })
 
   // ── Footer close button emits close [obligation] ──────────────────────────

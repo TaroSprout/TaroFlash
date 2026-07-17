@@ -85,15 +85,13 @@ function precedes(a, b) {
 }
 
 describe('TabReviewPacing — section order [obligation]', () => {
-  test('renders the Cards section before the divider, and the divider before the pacing section [obligation]', () => {
+  test('renders the Cards section before the pacing section [obligation]', () => {
     const { wrapper } = makeWrapper()
     const sections = wrapper.findAll('[data-testid="labeled-section"]')
     const cards_section = sections[0].element
-    const divider = wrapper.find('[data-testid="ui-kit-divider"]').element
     const pacing_section = wrapper.find('[data-testid="pacing-section-stub"]').element
 
-    expect(precedes(cards_section, divider)).toBe(true)
-    expect(precedes(divider, pacing_section)).toBe(true)
+    expect(precedes(cards_section, pacing_section)).toBe(true)
   })
 
   test('renders the pacing-section', () => {
@@ -101,9 +99,9 @@ describe('TabReviewPacing — section order [obligation]', () => {
     expect(wrapper.find('[data-testid="pacing-section-stub"]').exists()).toBe(true)
   })
 
-  test('renders a divider between the Cards and Pacing sections', () => {
+  test('no longer renders its own divider — the divider moved under the pacing-section header [obligation]', () => {
     const { wrapper } = makeWrapper()
-    expect(wrapper.find('[data-testid="ui-kit-divider"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="ui-kit-divider"]').exists()).toBe(false)
   })
 })
 

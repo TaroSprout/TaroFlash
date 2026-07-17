@@ -114,7 +114,7 @@ const SessionStudyingStub = defineComponent({
 
 const SessionSummaryStub = defineComponent({
   name: 'SessionSummary',
-  props: ['results'],
+  props: ['results', 'leech_threshold'],
   emits: ['close'],
   setup(_props, { emit }) {
     return () =>
@@ -326,6 +326,25 @@ describe('StudySession (index.vue)', () => {
     await finishSession(results)
 
     expect(wrapper.findComponent({ name: 'SessionSummary' }).props('results')).toEqual(results)
+  })
+
+  // ── leech_threshold prop threading [obligation] ─────────────────────────────
+
+  test('passes decks[0].leech_threshold as the session-summary leech_threshold prop [obligation]', async () => {
+    const deck_data = deck.one({ overrides: { id: 1, title: 'My Deck', leech_threshold: 12 } })
+    const { wrapper } = makeWrapper({ decks_override: [deck_data] })
+
+    await finishSession([])
+
+    expect(wrapper.findComponent({ name: 'SessionSummary' }).props('leech_threshold')).toBe(12)
+  })
+
+  test('falls back to DEFAULT_LEECH_THRESHOLD (8) when decks[0].leech_threshold is nullish [obligation]', async () => {
+    const { wrapper } = makeWrapper()
+
+    await finishSession([])
+
+    expect(wrapper.findComponent({ name: 'SessionSummary' }).props('leech_threshold')).toBe(8)
   })
 
   // ── summary @close forwards to onClosed → close() [obligation] ────────────

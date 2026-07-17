@@ -12,6 +12,7 @@ import { useProvideDeckContext } from './deck-context'
 import { clearPersistedSession } from './composables/session-persistence'
 import { provideStudySessionController } from './composables/session-controller'
 import { useModalRequestClose } from '@/composables/modal'
+import { DEFAULT_LEECH_THRESHOLD } from '@/utils/review-pacing/defaults'
 import type { CardReviewResult } from './composables/session-queue'
 import type { SecondaryAction } from './composables/study-modal'
 
@@ -110,6 +111,7 @@ function onHeaderStop() {
             key="summary"
             class="absolute inset-0 z-10"
             :results="results"
+            :leech_threshold="decks[0]?.leech_threshold ?? DEFAULT_LEECH_THRESHOLD"
             @close="onClosed"
           />
         </dialog-card-pager>

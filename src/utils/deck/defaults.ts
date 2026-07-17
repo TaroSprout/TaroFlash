@@ -35,9 +35,8 @@ export const CARD_ATTRIBUTES_DEFAULTS: Required<
  */
 export const DAILY_LIMIT_BOUNDS = {
   step: 5,
-  min: 5,
-  reviews: { max: 200, default: 50 },
-  new_cards: { max: 100, default: 20 }
+  // 0 is the "all" / no-limit sentinel; the model stores it as `null`.
+  min: 0
 } as const
 
 /**

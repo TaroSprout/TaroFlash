@@ -158,7 +158,10 @@ describe('upsertDeck', () => {
       has_max_reviews_override: true,
       max_reviews_per_day_override: 30,
       has_max_new_override: false,
-      max_new_per_day_override: null
+      max_new_per_day_override: null,
+      leech_threshold_override: 12,
+      has_max_interval_override: true,
+      max_interval_override: 90
     })
 
     expect(capturedRpcs[0].fn).toBe('save_deck')
@@ -168,9 +171,27 @@ describe('upsertDeck', () => {
       p_has_max_reviews_override: true,
       p_max_reviews_per_day_override: 30,
       p_has_max_new_override: false,
-      p_max_new_per_day_override: null
+      p_max_new_per_day_override: null,
+      p_leech_threshold_override: 12,
+      p_has_max_interval_override: true,
+      p_max_interval_override: 90
     })
     expect(result).toEqual(saved)
+  })
+
+  test('defaults leech/max-interval override params when omitted from the deck [obligation]', async () => {
+    supabase.rpc.mockImplementationOnce((fn, args) => {
+      capturedRpcs.push({ fn, args })
+      return Promise.resolve({ data: [{ id: 1 }], error: null })
+    })
+
+    await upsertDeck({ id: 1, title: 'T' })
+
+    expect(capturedRpcs[0].args).toMatchObject({
+      p_leech_threshold_override: null,
+      p_has_max_interval_override: false,
+      p_max_interval_override: null
+    })
   })
 
   test('sends p_deck_id null when the deck has no id yet (create path)', async () => {

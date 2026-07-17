@@ -177,6 +177,27 @@ describe('useDeckEditor', () => {
       expect(pacing.relearning_steps_override).toBeNull()
     })
 
+    test('seeds leech_threshold_override, has_max_interval_override, and max_interval_override from the deck [obligation]', () => {
+      const deck = makeDeck({
+        leech_threshold_override: 12,
+        has_max_interval_override: true,
+        max_interval_override: 90
+      })
+      const { pacing } = useDeckEditor(deck)
+
+      expect(pacing.leech_threshold_override).toBe(12)
+      expect(pacing.has_max_interval_override).toBe(true)
+      expect(pacing.max_interval_override).toBe(90)
+    })
+
+    test('defaults leech_threshold_override/max_interval_override to null and has_max_interval_override to false when absent from the deck [obligation]', () => {
+      const { pacing } = useDeckEditor(makeDeck())
+
+      expect(pacing.leech_threshold_override).toBeNull()
+      expect(pacing.has_max_interval_override).toBe(false)
+      expect(pacing.max_interval_override).toBeNull()
+    })
+
     test('saveDeck includes pacing fields alongside title/config/cover in a single payload [obligation]', async () => {
       // There is no separate "save pacing" request — buildDeckPayload folds
       // pacing into the same payload as title/config/cover.
