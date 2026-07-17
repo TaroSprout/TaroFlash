@@ -18,11 +18,14 @@
 --      create path's returned row is actually visible to the creating
 --      member (the trigger-set member_id satisfies decks' SELECT policy
 --      before RETURNING runs).
+--   7. leech_threshold_override, has_max_interval_override, and
+--      max_interval_override round-trip through deck_review_pacing and the
+--      resolved return row, same as the other pacing override columns.
 -- =============================================================================
 
 BEGIN;
 
-SELECT plan(12);
+SELECT plan(14);
 
 SELECT tests.create_user('a1111111-1111-1111-1111-111111111111'::uuid, 'alice_save_deck');
 SELECT tests.create_user('b2222222-2222-2222-2222-222222222222'::uuid, 'bob_save_deck');
@@ -37,7 +40,8 @@ SELECT lives_ok(
     SELECT * FROM public.save_deck(
       NULL, 'Smoke Test Deck', NULL, true, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb,
       NULL, NULL, NULL, NULL,
-      false, NULL, false, NULL
+      false, NULL, false, NULL,
+      NULL, false, NULL
     )
   $$,
   'save_deck with p_deck_id NULL creates a new deck without raising'
@@ -48,7 +52,8 @@ SELECT lives_ok(
 SELECT id AS v_new_deck_id FROM public.save_deck(
   NULL, 'New Deck', NULL, true, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb,
   NULL, NULL, NULL, NULL,
-  false, NULL, false, NULL
+  false, NULL, false, NULL,
+  NULL, false, NULL
 ) \gset
 
 -- Test 2: the created deck's member_id was populated by decks' own trigger,
@@ -81,7 +86,8 @@ SELECT is(
   (SELECT title FROM public.save_deck(
       NULL, 'Visible Deck', NULL, false, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb,
       NULL, NULL, NULL, NULL,
-      false, NULL, false, NULL
+      false, NULL, false, NULL,
+      NULL, false, NULL
     )),
   'Visible Deck',
   'the created deck row is visible to the creating member via RETURNING [obligation]'
@@ -94,7 +100,8 @@ SELECT is(
   (SELECT desired_retention FROM public.save_deck(
       NULL, 'Resolved Shape Deck', NULL, false, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb,
       NULL, NULL, NULL, NULL,
-      false, NULL, false, NULL
+      false, NULL, false, NULL,
+      NULL, false, NULL
     )),
   (SELECT desired_retention FROM public.review_pacing_presets WHERE is_system),
   'save_deck returns the fully resolved deck shape (same as get_member_decks) in one call'
@@ -110,7 +117,8 @@ SELECT is(
   (SELECT title FROM public.save_deck(
       500, 'Updated Title', 'new description', true, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb,
       NULL, 88, NULL, NULL,
-      true, 25, false, NULL
+      true, 25, false, NULL,
+      NULL, false, NULL
     )),
   'Updated Title',
   'save_deck with p_deck_id set updates the existing deck row'
@@ -131,7 +139,8 @@ SELECT lives_ok(
     SELECT * FROM public.save_deck(
       500, 'Updated Title Again', NULL, true, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb,
       NULL, 60, NULL, NULL,
-      true, 40, false, NULL
+      true, 40, false, NULL,
+      NULL, false, NULL
     )
   $$,
   'calling save_deck twice on the same deck does not raise a duplicate-key error [obligation]'
@@ -144,6 +153,40 @@ SELECT is(
 );
 
 
+-- ── leech_threshold / max_interval overrides [obligation] ────────────────────
+
+-- Test 10 [obligation]: leech_threshold_override, has_max_interval_override,
+-- and max_interval_override persist to deck_review_pacing.
+INSERT INTO public.decks (id, title, is_public) VALUES (700, 'Pacing Overrides Deck', false);
+
+SELECT * FROM public.save_deck(
+  700, 'Pacing Overrides Deck', NULL, false, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb,
+  NULL, NULL, NULL, NULL,
+  false, NULL, false, NULL,
+  12, true, 90
+);
+
+SELECT is(
+  (SELECT (leech_threshold_override, has_max_interval_override, max_interval_override)
+   FROM public.deck_review_pacing WHERE deck_id = 700),
+  ROW(12, true, 90),
+  'save_deck writes leech_threshold_override / has_max_interval_override / max_interval_override to deck_review_pacing [obligation]'
+);
+
+-- Test 11 [obligation]: the resolved return row carries the same values back
+-- (round-trips through the get_member_decks-shaped return).
+SELECT is(
+  (SELECT (leech_threshold, max_interval) FROM public.save_deck(
+      700, 'Pacing Overrides Deck', NULL, false, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb,
+      NULL, NULL, NULL, NULL,
+      false, NULL, false, NULL,
+      12, true, 90
+    )),
+  ROW(12, 90),
+  'save_deck returns leech_threshold / max_interval resolved from the overrides just written [obligation]'
+);
+
+
 -- ── Ownership guard [obligation] ──────────────────────────────────────────────
 
 -- Test 11a: updating a nonexistent deck id raises rather than silently no-op'ing.
@@ -152,7 +195,8 @@ SELECT throws_ok(
     SELECT * FROM public.save_deck(
       999999, 'Ghost', NULL, false, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb,
       NULL, NULL, NULL, NULL,
-      false, NULL, false, NULL
+      false, NULL, false, NULL,
+      NULL, false, NULL
     )
   $$,
   'P0001',
@@ -181,7 +225,8 @@ SELECT throws_ok(
     SELECT * FROM public.save_deck(
       600, 'Hijacked', NULL, false, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb,
       NULL, NULL, NULL, NULL,
-      false, NULL, false, NULL
+      false, NULL, false, NULL,
+      NULL, false, NULL
     )
   $$,
   'P0001',

@@ -122,6 +122,22 @@ describe('upsertDeck (contract)', () => {
     expect(updated.has_max_reviews_override).toBe(true)
     expect(updated.max_reviews_per_day).toBe(15)
   })
+
+  test('persists leech_threshold_override and max_interval overrides on the deck_review_pacing sidecar [obligation]', async () => {
+    const created = await upsertDeck({ title: 'Leech + Interval Deck' })
+
+    const updated = await upsertDeck({
+      id: created.id,
+      title: 'Leech + Interval Deck',
+      leech_threshold_override: 12,
+      has_max_interval_override: true,
+      max_interval_override: 90
+    })
+
+    expect(updated.leech_threshold).toBe(12)
+    expect(updated.has_max_interval_override).toBe(true)
+    expect(updated.max_interval).toBe(90)
+  })
 })
 
 describe('fetchDecksByIds (contract)', () => {

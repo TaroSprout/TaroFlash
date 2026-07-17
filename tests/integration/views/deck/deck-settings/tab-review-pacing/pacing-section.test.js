@@ -1,23 +1,40 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h, reactive, useAttrs } from 'vue'
+import { defineComponent, h, nextTick, reactive, useAttrs } from 'vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockPresetsData, mockOpen } = vi.hoisted(() => ({
+const { mockPresetsData, mockEmitSfx } = vi.hoisted(() => ({
   mockPresetsData: { value: [] },
-  mockOpen: vi.fn()
+  mockEmitSfx: vi.fn()
 }))
 
 vi.mock('@/api/review-pacing', () => ({
   usePresetsQuery: () => ({ data: mockPresetsData })
 }))
 
-vi.mock('@/composables/modal', async (importOriginal) => ({
-  ...(await importOriginal()),
-  useModal: vi.fn(() => ({ open: mockOpen }))
+vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
+
+// accordionEnter/Leave call gsap under the hood via scheduling-section's real
+// component tree — call done() synchronously so the transition completes.
+vi.mock('@/utils/animations/accordion', () => ({
+  accordionEnter: (_el, done) => done(),
+  accordionLeave: (_el, done) => done()
 }))
+
+// scheduling-section.vue has its own dedicated test file — stub it here so
+// this suite only exercises the daily-limit rows + accordion toggle that
+// live directly in pacing-section.vue.
+vi.mock('@/views/deck/deck-settings/tab-review-pacing/scheduling-section.vue', async () => {
+  const { defineComponent: dc, h: hh } = await import('vue')
+  return {
+    default: dc({
+      name: 'SchedulingSection',
+      setup: () => () => hh('div', { 'data-testid': 'tab-review-pacing__advanced-panel' })
+    })
+  }
+})
 
 import PacingSection from '@/views/deck/deck-settings/tab-review-pacing/pacing-section.vue'
 
@@ -46,14 +63,8 @@ const SelectMenuStub = defineComponent({
 
 const SpinboxStub = defineComponent({
   name: 'UiSpinbox',
-  props: {
-    value: { type: Number, required: true },
-    min: Number,
-    max: Number,
-    pill_label: { type: String, default: undefined },
-    pill_active: { type: Boolean, default: false }
-  },
-  emits: ['update:value', 'update:pill_active'],
+  props: { value: { type: Number, required: true }, min: Number, max: Number },
+  emits: ['update:value'],
   inheritAttrs: false,
   setup(props, { emit }) {
     const attrs = useAttrs()
@@ -106,13 +117,23 @@ function makeWrapper({ deck: deckOverrides = {}, pacingOverrides = {} } = {}) {
     max_reviews_per_day_override: null,
     has_max_new_override: false,
     max_new_per_day_override: null,
+    desired_retention_override: null,
+    learning_steps_override: null,
+    relearning_steps_override: null,
+    leech_threshold_override: null,
+    has_max_interval_override: false,
+    max_interval_override: null,
     ...pacingOverrides
   })
   const editor = { deck, pacing }
   const wrapper = mount(PacingSection, {
     global: {
       provide: { [deckEditorKey]: editor },
-      stubs: { UiSelectMenu: SelectMenuStub, UiSpinbox: SpinboxStub, UiButton: ButtonStub },
+      stubs: {
+        UiSelectMenu: SelectMenuStub,
+        UiSpinbox: SpinboxStub,
+        UiButton: ButtonStub
+      },
       mocks: { $t: (k) => k }
     }
   })
@@ -121,7 +142,7 @@ function makeWrapper({ deck: deckOverrides = {}, pacingOverrides = {} } = {}) {
 
 beforeEach(() => {
   mockPresetsData.value = [SYSTEM_PRESET, CUSTOM_PRESET]
-  mockOpen.mockReset()
+  mockEmitSfx.mockClear()
 })
 
 describe('PacingSection — rendering', () => {
@@ -132,16 +153,11 @@ describe('PacingSection — rendering', () => {
     expect(wrapper.find('[data-testid="tab-review-pacing__max-new"]').exists()).toBe(true)
   })
 
-  test('does not render the retention/learning-steps/relearning-steps rows (moved to the advanced modal)', () => {
+  test('does not render the retention/learning-steps/relearning-steps rows (they live in scheduling-section, gated behind the accordion)', () => {
     const { wrapper } = makeWrapper()
     expect(wrapper.find('[data-testid="tab-review-pacing__retention"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="tab-review-pacing__learning-steps"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="tab-review-pacing__relearning-steps"]').exists()).toBe(false)
-  })
-
-  test('does not render a reset-overrides button (moved out, not yet rebuilt)', () => {
-    const { wrapper } = makeWrapper()
-    expect(wrapper.find('[data-testid="tab-review-pacing__reset-overrides"]').exists()).toBe(false)
   })
 
   test('renders the "Advanced" button', () => {
@@ -198,15 +214,55 @@ describe('PacingSection — preset selection [obligation]', () => {
   })
 })
 
-describe('PacingSection — Advanced button opens the modal [obligation]', () => {
-  test('pressing "Advanced" opens the advanced pacing modal with the deck and pacing state [obligation]', async () => {
-    const { wrapper, deck, pacing } = makeWrapper()
+// ── Advanced accordion [obligation] ────────────────────────────────────────
+// use-advanced-pacing-modal.ts was retired — the "Advanced" button now toggles
+// an inline accordion (scheduling-section) instead of opening a modal.
+
+describe('PacingSection — Advanced accordion [obligation]', () => {
+  test('the scheduling-section panel is not rendered until "Advanced" is pressed [obligation]', () => {
+    const { wrapper } = makeWrapper()
+    expect(wrapper.find('[data-testid="tab-review-pacing__advanced-panel"]').exists()).toBe(false)
+  })
+
+  test('pressing "Advanced" reveals the scheduling-section panel [obligation]', async () => {
+    const { wrapper } = makeWrapper()
 
     await wrapper.find('[data-testid="tab-review-pacing__advanced"]').trigger('click')
+    await nextTick()
 
-    expect(mockOpen).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ props: { deck, pacing }, backdrop: true, mode: 'popup' })
-    )
+    expect(wrapper.find('[data-testid="tab-review-pacing__advanced-panel"]').exists()).toBe(true)
+  })
+
+  test('pressing "Advanced" again collapses the panel [obligation]', async () => {
+    const { wrapper } = makeWrapper()
+    const advanced_button = wrapper.find('[data-testid="tab-review-pacing__advanced"]')
+
+    await advanced_button.trigger('click')
+    await advanced_button.trigger('click')
+
+    expect(wrapper.find('[data-testid="tab-review-pacing__advanced-panel"]').exists()).toBe(false)
+  })
+
+  test('opening the accordion emits the open chime, closing emits the close chime', async () => {
+    const { wrapper } = makeWrapper()
+    const advanced_button = wrapper.find('[data-testid="tab-review-pacing__advanced"]')
+
+    await advanced_button.trigger('click')
+    expect(mockEmitSfx).toHaveBeenLastCalledWith('wooden_chime_ring')
+
+    await advanced_button.trigger('click')
+    expect(mockEmitSfx).toHaveBeenLastCalledWith('pop_up_close')
+  })
+
+  test('does not render the advanced-override badge when no advanced field is overridden', () => {
+    const { wrapper } = makeWrapper()
+    expect(wrapper.find('[data-testid="tab-review-pacing__advanced-badge"]').exists()).toBe(false)
+  })
+
+  test('renders the advanced-override badge when an advanced field is overridden [obligation]', () => {
+    const { wrapper } = makeWrapper({
+      pacingOverrides: { desired_retention_override: 0.85 }
+    })
+    expect(wrapper.find('[data-testid="tab-review-pacing__advanced-badge"]').exists()).toBe(true)
   })
 })

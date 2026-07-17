@@ -96,6 +96,21 @@ describe('buildDeckPayload', () => {
     expect(out.learning_steps_override).toBeNull()
     expect(out.relearning_steps_override).toBeNull()
   })
+
+  test('maps leech_threshold_override, has_max_interval_override, and max_interval_override onto the payload [obligation]', () => {
+    const out = buildDeckPayload(
+      makeState({
+        pacing: {
+          leech_threshold_override: 12,
+          has_max_interval_override: true,
+          max_interval_override: 90
+        }
+      })
+    )
+    expect(out.leech_threshold_override).toBe(12)
+    expect(out.has_max_interval_override).toBe(true)
+    expect(out.max_interval_override).toBe(90)
+  })
 })
 
 describe('hasDeckChanges', () => {
@@ -151,6 +166,29 @@ describe('hasDeckChanges', () => {
     const state = makeState()
     const snapshot = buildDeckPayload(state)
     state.pacing.desired_retention_override = 0.8
+    expect(hasDeckChanges(state, snapshot)).toBe(true)
+  })
+
+  test('returns true when leech_threshold_override changes [obligation]', () => {
+    const state = makeState()
+    const snapshot = buildDeckPayload(state)
+    state.pacing.leech_threshold_override = 12
+    expect(hasDeckChanges(state, snapshot)).toBe(true)
+  })
+
+  test('returns true when has_max_interval_override changes [obligation]', () => {
+    const state = makeState()
+    const snapshot = buildDeckPayload(state)
+    state.pacing.has_max_interval_override = true
+    expect(hasDeckChanges(state, snapshot)).toBe(true)
+  })
+
+  test('returns true when max_interval_override changes [obligation]', () => {
+    const state = makeState({
+      pacing: { has_max_interval_override: true, max_interval_override: 90 }
+    })
+    const snapshot = buildDeckPayload(state)
+    state.pacing.max_interval_override = 30
     expect(hasDeckChanges(state, snapshot)).toBe(true)
   })
 
