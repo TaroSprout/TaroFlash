@@ -2,15 +2,11 @@ import { supabase } from '@/supabase-client'
 import logger from '@/utils/logger'
 import { localDayStart } from '@/utils/date'
 
-export async function fetchStudySessionCards(
-  deck_id: number,
-  study_all: boolean = false
-): Promise<Card[]> {
+export async function fetchStudySessionCards(deck_id: number): Promise<Card[]> {
   const { data, error } = await supabase
     .rpc('get_study_session_cards', {
       p_deck_id: deck_id,
-      p_today_start: localDayStart(),
-      p_study_all: study_all
+      p_today_start: localDayStart()
     })
     .select('*, review:reviews(*)')
 

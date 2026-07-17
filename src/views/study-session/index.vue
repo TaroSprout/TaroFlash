@@ -14,14 +14,12 @@ import { provideStudySessionController } from './composables/session-controller'
 import { useModalRequestClose } from '@/composables/modal'
 import { DEFAULT_LEECH_THRESHOLD } from '@/utils/review-pacing/defaults'
 import type { CardReviewResult } from './composables/session-queue'
-import type { SecondaryAction } from './composables/study-modal'
 
 type Phase = 'studying' | 'summary'
 
-const { decks, close, config_override } = defineProps<{
+const { decks, close } = defineProps<{
   decks: Deck[]
-  close: (response?: SecondaryAction) => void
-  config_override?: Partial<DeckConfig>
+  close: () => void
 }>()
 
 const { t } = useI18n()
@@ -46,7 +44,6 @@ const {
   toggleRatings
 } = provideStudySessionController({
   decks,
-  config_override,
   onFinished: onSessionFinished,
   onClosed
 })

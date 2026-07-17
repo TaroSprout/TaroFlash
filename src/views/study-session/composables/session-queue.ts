@@ -63,7 +63,6 @@ export function useSessionQueue(pacing: ReviewPacingParams, _config?: Partial<De
   const _raw_cards = shallowRef<Card[]>([])
   const _cards_in_deck = shallowRef<StudyCard[]>([])
   const _deck_ids = shallowRef<number[]>([])
-  const _config_override = shallowRef<Partial<DeckConfig> | undefined>(undefined)
 
   const save_review_mutation = useSaveReviewMutation()
   const persisted_session = usePersistedSession()
@@ -78,14 +77,7 @@ export function useSessionQueue(pacing: ReviewPacingParams, _config?: Partial<De
     return _cards_in_deck.value
   })
 
-  const num_correct = computed(() => cards.value.filter((c) => c.state === 'passed').length)
   const reviewed_count = computed(() => cards.value.filter((c) => c.state !== 'unreviewed').length)
-
-  const remaining_due_count = computed(() => {
-    if (config.study_all_cards) return 0
-    const total_due = _raw_cards.value.filter(_isCardDue).length
-    return Math.max(0, total_due - reviewed_count.value)
-  })
 
   const current_index = computed(() => {
     if (!active_card.value) return cards.value.length
@@ -107,13 +99,12 @@ export function useSessionQueue(pacing: ReviewPacingParams, _config?: Partial<De
   })
 
   /**
-   * Records which decks/config this session belongs to, so a refresh-resume
-   * knows what to reopen the modal with. Doesn't touch the card queue —
-   * call once, up front, alongside setCards()/restoreCards().
+   * Records which decks this session belongs to, so a refresh-resume knows what
+   * to reopen the modal with. Doesn't touch the card queue — call once, up
+   * front, alongside setCards()/restoreCards().
    */
-  function setSessionMeta(deck_ids: number[], config_override?: Partial<DeckConfig>) {
+  function setSessionMeta(deck_ids: number[]) {
     _deck_ids.value = deck_ids
-    _config_override.value = config_override
   }
 
   function setCards(raw: Card[]) {
@@ -156,26 +147,10 @@ export function useSessionQueue(pacing: ReviewPacingParams, _config?: Partial<De
     _persist()
   }
 
-  function updateConfig(updates: Partial<DeckConfig>) {
-    config.study_all_cards = updates.study_all_cards ?? config.study_all_cards
-    config.shuffle = updates.shuffle ?? config.shuffle
-    config.flip_cards = updates.flip_cards ?? config.flip_cards
-
-    if (_raw_cards.value.length) _processCards()
-  }
-
   function _processCards() {
-    let filtered = [..._raw_cards.value]
+    const ordered = config.shuffle ? _shuffle(_raw_cards.value) : _raw_cards.value
 
-    if (!config.study_all_cards) {
-      filtered = filtered.filter(_isCardDue)
-    }
-
-    if (config.shuffle) {
-      filtered = _shuffle(filtered)
-    }
-
-    _cards_in_deck.value = filtered.map(_setupCard)
+    _cards_in_deck.value = ordered.map(_setupCard)
     mode.value = 'studying'
     active_card.value = cards.value.find((c) => c.state === 'unreviewed')
 
@@ -304,13 +279,6 @@ export function useSessionQueue(pacing: ReviewPacingParams, _config?: Partial<De
     return result
   }
 
-  function _isCardDue(card: Card) {
-    if (!card.review?.due) return true
-    const raw = card.review.due
-    const due = raw instanceof Date ? raw : new Date(String(raw))
-    return due.getTime() <= Date.now()
-  }
-
   /**
    * `results` and `_cards_in_deck` are shallowRefs mutated in place
    * (`.push()`, direct property writes) for performance — a `watch()` on them
@@ -322,7 +290,6 @@ export function useSessionQueue(pacing: ReviewPacingParams, _config?: Partial<De
     if (!_has_seeded) return
     persisted_session.value = {
       deck_ids: _deck_ids.value,
-      config_override: _config_override.value,
       card_ids: _cards_in_deck.value.map((c) => c.id),
       results: results.value,
       mode: mode.value
@@ -335,16 +302,13 @@ export function useSessionQueue(pacing: ReviewPacingParams, _config?: Partial<De
     active_card_preview,
     results,
     cards,
-    num_correct,
     reviewed_count,
-    remaining_due_count,
     current_index,
     config,
     show_all_ratings,
     setSessionMeta,
     setCards,
     restoreCards,
-    updateConfig,
     reviewCard,
     dropCard,
     updateCard

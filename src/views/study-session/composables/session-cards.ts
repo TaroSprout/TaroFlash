@@ -6,7 +6,6 @@ import { readPersistedSession, type PersistedSession } from './session-persisten
 
 type UseSessionCardsOptions = {
   deckIds: () => number[]
-  studyAllCards: () => boolean
   seed: (cards: Card[]) => void
   restore: (cards: Card[], persisted: PersistedSession) => void
   onMissingDeck: () => void
@@ -29,18 +28,12 @@ type UseSessionCardsOptions = {
  * queue from that snapshot is restored instead of fetching a fresh due-cards
  * queue — otherwise newly-due cards would leak into an in-progress session.
  */
-export function useSessionCards({
-  deckIds,
-  studyAllCards,
-  seed,
-  restore,
-  onMissingDeck
-}: UseSessionCardsOptions) {
+export function useSessionCards({ deckIds, seed, restore, onMissingDeck }: UseSessionCardsOptions) {
   const { t } = useI18n()
   const notice = useNoticeStore()
 
   const loading = ref(true)
-  const query = useMultiDeckStudyCardsQuery(deckIds, studyAllCards)
+  const query = useMultiDeckStudyCardsQuery(deckIds)
 
   const restore_ids = ref<number[]>([])
   const restore_query = useCardsByIdsQuery(restore_ids)

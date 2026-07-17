@@ -32,6 +32,6 @@ export function useResumeStudySession() {
       return
     }
 
-    useStudyModal().start(decks, persisted.config_override)
+    useStudyModal().start(decks)
   })
 }

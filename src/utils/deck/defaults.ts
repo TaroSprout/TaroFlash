@@ -14,7 +14,6 @@ export const DECK_SETTINGS_DEFAULTS = {
 export const DECK_TITLE_MAX_LENGTH = 15
 
 export const DECK_CONFIG_DEFAULTS: Required<DeckConfig> = {
-  study_all_cards: false,
   shuffle: false,
   flip_cards: false,
   is_spaced: true,
@@ -58,7 +57,7 @@ export function buildNewDeckPayload(title: string): Deck {
   return {
     title,
     is_public: DECK_SETTINGS_DEFAULTS.is_public,
-    study_config: { study_all_cards: DECK_CONFIG_DEFAULTS.study_all_cards },
+    study_config: {},
     cover_config: randomCoverConfig()
   } as Deck
 }

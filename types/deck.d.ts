@@ -62,7 +62,6 @@ type PacingOverrides = Partial<{
 type CardEditorMode = 'view' | 'edit' | 'import-export'
 
 type DeckConfig = {
-  study_all_cards: boolean
   shuffle?: boolean
   flip_cards?: boolean
   is_spaced?: boolean

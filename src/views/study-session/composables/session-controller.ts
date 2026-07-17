@@ -20,7 +20,6 @@ const StudySessionControllerKey: InjectionKey<StudySessionController> = Symbol(
 
 type UseStudySessionControllerOptions = {
   decks: Deck[]
-  config_override?: Partial<DeckConfig>
   onFinished: (results: CardReviewResult[]) => void
   onClosed: () => void
 }
@@ -46,7 +45,6 @@ export function useInjectedStudySessionController(): StudySessionController {
 
 function useStudySessionController({
   decks,
-  config_override,
   onFinished,
   onClosed
 }: UseStudySessionControllerOptions) {
@@ -80,13 +78,10 @@ function useStudySessionController({
       // null = uncapped -> the FSRS default max interval
       max_interval: decks[0].max_interval ?? FSRS_MAX_INTERVAL
     },
-    { ...decks[0]?.study_config, ...config_override }
+    { ...decks[0]?.study_config }
   )
 
-  setSessionMeta(
-    decks.map((deck) => deck.id),
-    config_override
-  )
+  setSessionMeta(decks.map((deck) => deck.id))
 
   const { next_card_side, preview_style, onDragProgress, onNextCardFlipped, awaitFlip } =
     useCardPreview(next_card)
@@ -107,7 +102,6 @@ function useStudySessionController({
 
   const { loading } = useSessionCards({
     deckIds: () => decks.map((deck) => deck.id),
-    studyAllCards: () => !!config.study_all_cards,
     seed: setCards,
     restore: onRestore,
     onMissingDeck: onClosed

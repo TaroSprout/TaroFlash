@@ -6,10 +6,7 @@ import { fetchStudySessionCards } from './study-session-cards'
  * per-deck RPC so each deck keeps its own daily caps + new/review partition;
  * the concat order is preserved (deck-by-deck) for unshuffled sessions.
  */
-export async function fetchMultiDeckStudyCards(
-  deck_ids: number[],
-  study_all: boolean = false
-): Promise<Card[]> {
-  const batches = await Promise.all(deck_ids.map((id) => fetchStudySessionCards(id, study_all)))
+export async function fetchMultiDeckStudyCards(deck_ids: number[]): Promise<Card[]> {
+  const batches = await Promise.all(deck_ids.map((id) => fetchStudySessionCards(id)))
   return batches.flat()
 }

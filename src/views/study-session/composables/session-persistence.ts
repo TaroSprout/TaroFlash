@@ -5,7 +5,6 @@ const STORAGE_KEY = 'study-session'
 
 export type PersistedSession = {
   deck_ids: number[]
-  config_override?: Partial<DeckConfig>
   card_ids: number[]
   results: CardReviewResult[]
   mode: 'studying' | 'completed'
