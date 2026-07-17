@@ -152,7 +152,8 @@ watch(active_tab, (tab) => {
     data-theme-dark="green-800"
     :data-layout="layout_mode"
     :class="[
-      layout_mode === 'desktop' ? 'w-236! h-181.5' : 'w-full! max-w-205.5 h-181.5',
+      layout_mode === 'desktop' ? 'w-236!' : 'w-full! max-w-205.5',
+      layout_mode !== 'sheet' && 'h-181.5',
       layout_mode === 'sheet'
         ? '[--deck-settings-padding:var(--sheet-px)]'
         : '[--deck-settings-padding:0px]'
