@@ -15,7 +15,7 @@ const editor = inject(memberEditorKey)!
     :description="t('settings.review-preferences.ratings.description')"
   >
     <div data-testid="tab-review-preferences__ratings">
-      <review-ratings-toggle v-model:value="editor.preferences.study.show_all_ratings" />
+      <review-ratings-toggle v-model:value="editor.draft.preferences.study.show_all_ratings" />
     </div>
   </labeled-section>
 </template>

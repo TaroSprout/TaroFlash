@@ -23,7 +23,8 @@ vi.mock('@/api/decks', () => ({
   // reaches deck-grid/delete-button.vue -> composables/deck/editor.ts, which
   // imports useDeleteDeckMutation.
   useMoveDeckMutation: () => ({ mutateAsync: () => Promise.resolve() }),
-  useDeleteDeckMutation: () => ({ mutateAsync: () => Promise.resolve() })
+  useDeleteDeckMutation: () => ({ mutateAsync: () => Promise.resolve() }),
+  useUpsertDeckMutation: () => ({ mutateAsync: () => Promise.resolve() })
 }))
 
 vi.mock('@/sfx/bus', () => ({

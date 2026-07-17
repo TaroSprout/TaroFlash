@@ -1,10 +1,4 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
   graphql_public: {
@@ -70,79 +64,52 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "cards_deck_id_fkey"
-            columns: ["deck_id"]
+            foreignKeyName: 'cards_deck_id_fkey'
+            columns: ['deck_id']
             isOneToOne: false
-            referencedRelation: "decks"
-            referencedColumns: ["id"]
+            referencedRelation: 'decks'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "cards_member_id_fkey"
-            columns: ["member_id"]
+            foreignKeyName: 'cards_member_id_fkey'
+            columns: ['member_id']
             isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          },
+            referencedRelation: 'members'
+            referencedColumns: ['id']
+          }
         ]
       }
       deck_review_pacing: {
         Row: {
           deck_id: number
-          desired_retention_override: number | null
-          has_max_interval_override: boolean
-          has_max_new_override: boolean
-          has_max_reviews_override: boolean
-          learning_steps_override: string[] | null
-          leech_threshold_override: number | null
-          max_interval_override: number | null
-          max_new_per_day_override: number | null
-          max_reviews_per_day_override: number | null
-          relearning_steps_override: string[] | null
+          overrides: Json
           review_pacing_preset_id: number | null
         }
         Insert: {
           deck_id: number
-          desired_retention_override?: number | null
-          has_max_interval_override?: boolean
-          has_max_new_override?: boolean
-          has_max_reviews_override?: boolean
-          learning_steps_override?: string[] | null
-          leech_threshold_override?: number | null
-          max_interval_override?: number | null
-          max_new_per_day_override?: number | null
-          max_reviews_per_day_override?: number | null
-          relearning_steps_override?: string[] | null
+          overrides?: Json
           review_pacing_preset_id?: number | null
         }
         Update: {
           deck_id?: number
-          desired_retention_override?: number | null
-          has_max_interval_override?: boolean
-          has_max_new_override?: boolean
-          has_max_reviews_override?: boolean
-          learning_steps_override?: string[] | null
-          leech_threshold_override?: number | null
-          max_interval_override?: number | null
-          max_new_per_day_override?: number | null
-          max_reviews_per_day_override?: number | null
-          relearning_steps_override?: string[] | null
+          overrides?: Json
           review_pacing_preset_id?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "deck_review_pacing_deck_id_fkey"
-            columns: ["deck_id"]
+            foreignKeyName: 'deck_review_pacing_deck_id_fkey'
+            columns: ['deck_id']
             isOneToOne: true
-            referencedRelation: "decks"
-            referencedColumns: ["id"]
+            referencedRelation: 'decks'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "deck_review_pacing_review_pacing_preset_id_fkey"
-            columns: ["review_pacing_preset_id"]
+            foreignKeyName: 'deck_review_pacing_review_pacing_preset_id_fkey'
+            columns: ['review_pacing_preset_id']
             isOneToOne: false
-            referencedRelation: "review_pacing_presets"
-            referencedColumns: ["id"]
-          },
+            referencedRelation: 'review_pacing_presets'
+            referencedColumns: ['id']
+          }
         ]
       }
       decks: {
@@ -193,12 +160,12 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "decks_member_id_fkey"
-            columns: ["member_id"]
+            foreignKeyName: 'decks_member_id_fkey'
+            columns: ['member_id']
             isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          },
+            referencedRelation: 'members'
+            referencedColumns: ['id']
+          }
         ]
       }
       feedback_items: {
@@ -207,39 +174,39 @@ export type Database = {
           created_at: string
           id: number
           member_id: string
-          status: Database["public"]["Enums"]["feedback_status"]
+          status: Database['public']['Enums']['feedback_status']
           title: string
-          type: Database["public"]["Enums"]["feedback_type"]
-          visibility: Database["public"]["Enums"]["feedback_visibility"]
+          type: Database['public']['Enums']['feedback_type']
+          visibility: Database['public']['Enums']['feedback_visibility']
         }
         Insert: {
           body?: string | null
           created_at?: string
           id?: number
           member_id: string
-          status?: Database["public"]["Enums"]["feedback_status"]
+          status?: Database['public']['Enums']['feedback_status']
           title: string
-          type: Database["public"]["Enums"]["feedback_type"]
-          visibility?: Database["public"]["Enums"]["feedback_visibility"]
+          type: Database['public']['Enums']['feedback_type']
+          visibility?: Database['public']['Enums']['feedback_visibility']
         }
         Update: {
           body?: string | null
           created_at?: string
           id?: number
           member_id?: string
-          status?: Database["public"]["Enums"]["feedback_status"]
+          status?: Database['public']['Enums']['feedback_status']
           title?: string
-          type?: Database["public"]["Enums"]["feedback_type"]
-          visibility?: Database["public"]["Enums"]["feedback_visibility"]
+          type?: Database['public']['Enums']['feedback_type']
+          visibility?: Database['public']['Enums']['feedback_visibility']
         }
         Relationships: [
           {
-            foreignKeyName: "feedback_items_member_id_fkey"
-            columns: ["member_id"]
+            foreignKeyName: 'feedback_items_member_id_fkey'
+            columns: ['member_id']
             isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          },
+            referencedRelation: 'members'
+            referencedColumns: ['id']
+          }
         ]
       }
       feedback_votes: {
@@ -260,19 +227,19 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "feedback_votes_feedback_id_fkey"
-            columns: ["feedback_id"]
+            foreignKeyName: 'feedback_votes_feedback_id_fkey'
+            columns: ['feedback_id']
             isOneToOne: false
-            referencedRelation: "feedback_items"
-            referencedColumns: ["id"]
+            referencedRelation: 'feedback_items'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "feedback_votes_member_id_fkey"
-            columns: ["member_id"]
+            foreignKeyName: 'feedback_votes_member_id_fkey'
+            columns: ['member_id']
             isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          },
+            referencedRelation: 'members'
+            referencedColumns: ['id']
+          }
         ]
       }
       lesson_collections: {
@@ -305,19 +272,19 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "lesson_collections_last_lesson_id_fkey"
-            columns: ["last_lesson_id"]
+            foreignKeyName: 'lesson_collections_last_lesson_id_fkey'
+            columns: ['last_lesson_id']
             isOneToOne: false
-            referencedRelation: "lessons"
-            referencedColumns: ["id"]
+            referencedRelation: 'lessons'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "lesson_collections_member_id_fkey"
-            columns: ["member_id"]
+            foreignKeyName: 'lesson_collections_member_id_fkey'
+            columns: ['member_id']
             isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          },
+            referencedRelation: 'members'
+            referencedColumns: ['id']
+          }
         ]
       }
       lessons: {
@@ -377,26 +344,26 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "lessons_collection_id_fkey"
-            columns: ["collection_id"]
+            foreignKeyName: 'lessons_collection_id_fkey'
+            columns: ['collection_id']
             isOneToOne: false
-            referencedRelation: "lesson_collections"
-            referencedColumns: ["id"]
+            referencedRelation: 'lesson_collections'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "lessons_collection_id_fkey"
-            columns: ["collection_id"]
+            foreignKeyName: 'lessons_collection_id_fkey'
+            columns: ['collection_id']
             isOneToOne: false
-            referencedRelation: "lesson_collections_with_counts"
-            referencedColumns: ["id"]
+            referencedRelation: 'lesson_collections_with_counts'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "lessons_member_id_fkey"
-            columns: ["member_id"]
+            foreignKeyName: 'lessons_member_id_fkey'
+            columns: ['member_id']
             isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          },
+            referencedRelation: 'members'
+            referencedColumns: ['id']
+          }
         ]
       }
       media: {
@@ -410,7 +377,7 @@ export type Database = {
           lesson_id: number | null
           member_id: string | null
           path: string
-          slot: Database["public"]["Enums"]["media_slot"] | null
+          slot: Database['public']['Enums']['media_slot'] | null
         }
         Insert: {
           bucket: string
@@ -422,7 +389,7 @@ export type Database = {
           lesson_id?: number | null
           member_id?: string | null
           path: string
-          slot?: Database["public"]["Enums"]["media_slot"] | null
+          slot?: Database['public']['Enums']['media_slot'] | null
         }
         Update: {
           bucket?: string
@@ -434,37 +401,37 @@ export type Database = {
           lesson_id?: number | null
           member_id?: string | null
           path?: string
-          slot?: Database["public"]["Enums"]["media_slot"] | null
+          slot?: Database['public']['Enums']['media_slot'] | null
         }
         Relationships: [
           {
-            foreignKeyName: "media_card_id_fkey"
-            columns: ["card_id"]
+            foreignKeyName: 'media_card_id_fkey'
+            columns: ['card_id']
             isOneToOne: false
-            referencedRelation: "cards"
-            referencedColumns: ["id"]
+            referencedRelation: 'cards'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "media_card_id_fkey"
-            columns: ["card_id"]
+            foreignKeyName: 'media_card_id_fkey'
+            columns: ['card_id']
             isOneToOne: false
-            referencedRelation: "cards_with_images"
-            referencedColumns: ["id"]
+            referencedRelation: 'cards_with_images'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "media_deck_id_fkey"
-            columns: ["deck_id"]
+            foreignKeyName: 'media_deck_id_fkey'
+            columns: ['deck_id']
             isOneToOne: false
-            referencedRelation: "decks"
-            referencedColumns: ["id"]
+            referencedRelation: 'decks'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "media_lesson_id_fkey"
-            columns: ["lesson_id"]
+            foreignKeyName: 'media_lesson_id_fkey'
+            columns: ['lesson_id']
             isOneToOne: false
-            referencedRelation: "lessons"
-            referencedColumns: ["id"]
-          },
+            referencedRelation: 'lessons'
+            referencedColumns: ['id']
+          }
         ]
       }
       members: {
@@ -478,7 +445,7 @@ export type Database = {
           id: string
           plan: string
           preferences: Json
-          role: Database["public"]["Enums"]["member_role"]
+          role: Database['public']['Enums']['member_role']
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
         }
@@ -492,7 +459,7 @@ export type Database = {
           id: string
           plan?: string
           preferences?: Json
-          role?: Database["public"]["Enums"]["member_role"]
+          role?: Database['public']['Enums']['member_role']
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
         }
@@ -506,18 +473,18 @@ export type Database = {
           id?: string
           plan?: string
           preferences?: Json
-          role?: Database["public"]["Enums"]["member_role"]
+          role?: Database['public']['Enums']['member_role']
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "members_plan_fkey"
-            columns: ["plan"]
+            foreignKeyName: 'members_plan_fkey'
+            columns: ['plan']
             isOneToOne: false
-            referencedRelation: "plans"
-            referencedColumns: ["id"]
-          },
+            referencedRelation: 'plans'
+            referencedColumns: ['id']
+          }
         ]
       }
       plans: {
@@ -568,19 +535,19 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "purchases_item_id_fkey"
-            columns: ["item_id"]
+            foreignKeyName: 'purchases_item_id_fkey'
+            columns: ['item_id']
             isOneToOne: false
-            referencedRelation: "shop_items"
-            referencedColumns: ["id"]
+            referencedRelation: 'shop_items'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "purchases_member_id_fkey"
-            columns: ["member_id"]
+            foreignKeyName: 'purchases_member_id_fkey'
+            columns: ['member_id']
             isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          },
+            referencedRelation: 'members'
+            referencedColumns: ['id']
+          }
         ]
       }
       review_logs: {
@@ -625,26 +592,26 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "review_logs_card_id_fkey"
-            columns: ["card_id"]
+            foreignKeyName: 'review_logs_card_id_fkey'
+            columns: ['card_id']
             isOneToOne: false
-            referencedRelation: "cards"
-            referencedColumns: ["id"]
+            referencedRelation: 'cards'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "review_logs_card_id_fkey"
-            columns: ["card_id"]
+            foreignKeyName: 'review_logs_card_id_fkey'
+            columns: ['card_id']
             isOneToOne: false
-            referencedRelation: "cards_with_images"
-            referencedColumns: ["id"]
+            referencedRelation: 'cards_with_images'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "review_logs_member_id_fkey"
-            columns: ["member_id"]
+            foreignKeyName: 'review_logs_member_id_fkey'
+            columns: ['member_id']
             isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          },
+            referencedRelation: 'members'
+            referencedColumns: ['id']
+          }
         ]
       }
       review_pacing_presets: {
@@ -692,12 +659,12 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "review_pacing_presets_member_id_fkey"
-            columns: ["member_id"]
+            foreignKeyName: 'review_pacing_presets_member_id_fkey'
+            columns: ['member_id']
             isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          },
+            referencedRelation: 'members'
+            referencedColumns: ['id']
+          }
         ]
       }
       reviews: {
@@ -751,31 +718,31 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "reviews_card_id_fkey"
-            columns: ["card_id"]
+            foreignKeyName: 'reviews_card_id_fkey'
+            columns: ['card_id']
             isOneToOne: true
-            referencedRelation: "cards"
-            referencedColumns: ["id"]
+            referencedRelation: 'cards'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "reviews_card_id_fkey"
-            columns: ["card_id"]
+            foreignKeyName: 'reviews_card_id_fkey'
+            columns: ['card_id']
             isOneToOne: true
-            referencedRelation: "cards_with_images"
-            referencedColumns: ["id"]
+            referencedRelation: 'cards_with_images'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "reviews_member_id_fkey"
-            columns: ["member_id"]
+            foreignKeyName: 'reviews_member_id_fkey'
+            columns: ['member_id']
             isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          },
+            referencedRelation: 'members'
+            referencedColumns: ['id']
+          }
         ]
       }
       shop_items: {
         Row: {
-          category: Database["public"]["Enums"]["shop_category"] | null
+          category: Database['public']['Enums']['shop_category'] | null
           description: string | null
           id: number
           item_key: string | null
@@ -783,7 +750,7 @@ export type Database = {
           price: number | null
         }
         Insert: {
-          category?: Database["public"]["Enums"]["shop_category"] | null
+          category?: Database['public']['Enums']['shop_category'] | null
           description?: string | null
           id?: number
           item_key?: string | null
@@ -791,7 +758,7 @@ export type Database = {
           price?: number | null
         }
         Update: {
-          category?: Database["public"]["Enums"]["shop_category"] | null
+          category?: Database['public']['Enums']['shop_category'] | null
           description?: string | null
           id?: number
           item_key?: string | null
@@ -820,19 +787,19 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "cards_deck_id_fkey"
-            columns: ["deck_id"]
+            foreignKeyName: 'cards_deck_id_fkey'
+            columns: ['deck_id']
             isOneToOne: false
-            referencedRelation: "decks"
-            referencedColumns: ["id"]
+            referencedRelation: 'decks'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "cards_member_id_fkey"
-            columns: ["member_id"]
+            foreignKeyName: 'cards_member_id_fkey'
+            columns: ['member_id']
             isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          },
+            referencedRelation: 'members'
+            referencedColumns: ['id']
+          }
         ]
       }
       lesson_collections_with_counts: {
@@ -868,19 +835,19 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "lesson_collections_last_lesson_id_fkey"
-            columns: ["last_lesson_id"]
+            foreignKeyName: 'lesson_collections_last_lesson_id_fkey'
+            columns: ['last_lesson_id']
             isOneToOne: false
-            referencedRelation: "lessons"
-            referencedColumns: ["id"]
+            referencedRelation: 'lessons'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "lesson_collections_member_id_fkey"
-            columns: ["member_id"]
+            foreignKeyName: 'lesson_collections_member_id_fkey'
+            columns: ['member_id']
             isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          },
+            referencedRelation: 'members'
+            referencedColumns: ['id']
+          }
         ]
       }
     }
@@ -892,7 +859,7 @@ export type Database = {
       auth_plan: { Args: never; Returns: string }
       auth_role: {
         Args: never
-        Returns: Database["public"]["Enums"]["member_role"]
+        Returns: Database['public']['Enums']['member_role']
       }
       bulk_insert_cards_in_deck: {
         Args: { p_cards: Json; p_deck_id: number }
@@ -908,8 +875,8 @@ export type Database = {
           updated_at: string | null
         }[]
         SetofOptions: {
-          from: "*"
-          to: "cards"
+          from: '*'
+          to: 'cards'
           isOneToOne: false
           isSetofReturn: true
         }
@@ -953,8 +920,8 @@ export type Database = {
           updated_at: string
         }
         SetofOptions: {
-          from: "*"
-          to: "lessons"
+          from: '*'
+          to: 'lessons'
           isOneToOne: true
           isSetofReturn: false
         }
@@ -985,10 +952,10 @@ export type Database = {
           member_avatar: string
           member_display_name: string
           member_id: string
-          status: Database["public"]["Enums"]["feedback_status"]
+          status: Database['public']['Enums']['feedback_status']
           title: string
-          type: Database["public"]["Enums"]["feedback_type"]
-          visibility: Database["public"]["Enums"]["feedback_visibility"]
+          type: Database['public']['Enums']['feedback_type']
+          visibility: Database['public']['Enums']['feedback_visibility']
           vote_count: number
           voted_by_me: boolean
         }[]
@@ -1041,10 +1008,10 @@ export type Database = {
       }
       get_member_decks: {
         Args: { p_today_start: string }
-        Returns: Database["public"]["CompositeTypes"]["member_deck"][]
+        Returns: Database['public']['CompositeTypes']['member_deck'][]
         SetofOptions: {
-          from: "*"
-          to: "member_deck"
+          from: '*'
+          to: 'member_deck'
           isOneToOne: false
           isSetofReturn: true
         }
@@ -1071,8 +1038,8 @@ export type Database = {
           updated_at: string | null
         }[]
         SetofOptions: {
-          from: "*"
-          to: "cards_with_images"
+          from: '*'
+          to: 'cards_with_images'
           isOneToOne: false
           isSetofReturn: true
         }
@@ -1137,25 +1104,16 @@ export type Database = {
           p_cover_config: Json
           p_deck_id: number
           p_description: string
-          p_desired_retention_override: number
-          p_has_max_interval_override: boolean
-          p_has_max_new_override: boolean
-          p_has_max_reviews_override: boolean
           p_is_public: boolean
-          p_learning_steps_override: string[]
-          p_leech_threshold_override: number
-          p_max_interval_override: number
-          p_max_new_per_day_override: number
-          p_max_reviews_per_day_override: number
-          p_relearning_steps_override: string[]
+          p_pacing_overrides: Json
           p_review_pacing_preset_id: number
           p_study_config: Json
           p_title: string
         }
-        Returns: Database["public"]["CompositeTypes"]["member_deck"][]
+        Returns: Database['public']['CompositeTypes']['member_deck'][]
         SetofOptions: {
-          from: "*"
-          to: "member_deck"
+          from: '*'
+          to: 'member_deck'
           isOneToOne: false
           isSetofReturn: true
         }
@@ -1187,21 +1145,21 @@ export type Database = {
         Args: {
           p_body: string
           p_title: string
-          p_type: Database["public"]["Enums"]["feedback_type"]
+          p_type: Database['public']['Enums']['feedback_type']
         }
         Returns: {
           body: string | null
           created_at: string
           id: number
           member_id: string
-          status: Database["public"]["Enums"]["feedback_status"]
+          status: Database['public']['Enums']['feedback_status']
           title: string
-          type: Database["public"]["Enums"]["feedback_type"]
-          visibility: Database["public"]["Enums"]["feedback_visibility"]
+          type: Database['public']['Enums']['feedback_type']
+          visibility: Database['public']['Enums']['feedback_visibility']
         }
         SetofOptions: {
-          from: "*"
-          to: "feedback_items"
+          from: '*'
+          to: 'feedback_items'
           isOneToOne: true
           isSetofReturn: false
         }
@@ -1213,35 +1171,35 @@ export type Database = {
       update_feedback_item: {
         Args: {
           p_feedback_id: number
-          p_status: Database["public"]["Enums"]["feedback_status"]
-          p_visibility: Database["public"]["Enums"]["feedback_visibility"]
+          p_status: Database['public']['Enums']['feedback_status']
+          p_visibility: Database['public']['Enums']['feedback_visibility']
         }
         Returns: {
           body: string | null
           created_at: string
           id: number
           member_id: string
-          status: Database["public"]["Enums"]["feedback_status"]
+          status: Database['public']['Enums']['feedback_status']
           title: string
-          type: Database["public"]["Enums"]["feedback_type"]
-          visibility: Database["public"]["Enums"]["feedback_visibility"]
+          type: Database['public']['Enums']['feedback_type']
+          visibility: Database['public']['Enums']['feedback_visibility']
         }
         SetofOptions: {
-          from: "*"
-          to: "feedback_items"
+          from: '*'
+          to: 'feedback_items'
           isOneToOne: true
           isSetofReturn: false
         }
       }
     }
     Enums: {
-      card_state: "new" | "learning" | "young" | "mature" | "relearn"
-      feedback_status: "new" | "accepted" | "rejected" | "in-progress" | "done"
-      feedback_type: "idea" | "bug" | "other"
-      feedback_visibility: "public" | "internal"
-      media_slot: "card_front" | "card_back"
-      member_role: "user" | "moderator" | "admin"
-      shop_category: "power_ups" | "stationary"
+      card_state: 'new' | 'learning' | 'young' | 'mature' | 'relearn'
+      feedback_status: 'new' | 'accepted' | 'rejected' | 'in-progress' | 'done'
+      feedback_type: 'idea' | 'bug' | 'other'
+      feedback_visibility: 'public' | 'internal'
+      media_slot: 'card_front' | 'card_back'
+      member_role: 'user' | 'moderator' | 'admin'
+      shop_category: 'power_ups' | 'stationary'
     }
     CompositeTypes: {
       member_deck: {
@@ -1267,52 +1225,41 @@ export type Database = {
         desired_retention: number | null
         learning_steps: string[] | null
         relearning_steps: string[] | null
-        desired_retention_override: number | null
-        learning_steps_override: string[] | null
-        relearning_steps_override: string[] | null
         max_reviews_per_day: number | null
         max_new_per_day: number | null
-        has_max_reviews_override: boolean | null
-        max_reviews_per_day_override: number | null
-        has_max_new_override: boolean | null
-        max_new_per_day_override: number | null
         leech_threshold: number | null
         max_interval: number | null
-        leech_threshold_override: number | null
-        has_max_interval_override: boolean | null
-        max_interval_override: number | null
+        pacing_overrides: Json | null
       }
     }
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
+    : never = never
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    ? (DefaultSchema['Tables'] & DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -1321,23 +1268,23 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+    | keyof DefaultSchema['Tables']
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    : never = never
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -1346,23 +1293,23 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+    | keyof DefaultSchema['Tables']
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    : never = never
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -1371,52 +1318,51 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
+    | keyof DefaultSchema['Enums']
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
+    : never = never
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
+    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
+    | keyof DefaultSchema['CompositeTypes']
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
+    : never = never
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
+    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
   graphql_public: {
-    Enums: {},
+    Enums: {}
   },
   public: {
     Enums: {
-      card_state: ["new", "learning", "young", "mature", "relearn"],
-      feedback_status: ["new", "accepted", "rejected", "in-progress", "done"],
-      feedback_type: ["idea", "bug", "other"],
-      feedback_visibility: ["public", "internal"],
-      media_slot: ["card_front", "card_back"],
-      member_role: ["user", "moderator", "admin"],
-      shop_category: ["power_ups", "stationary"],
-    },
-  },
+      card_state: ['new', 'learning', 'young', 'mature', 'relearn'],
+      feedback_status: ['new', 'accepted', 'rejected', 'in-progress', 'done'],
+      feedback_type: ['idea', 'bug', 'other'],
+      feedback_visibility: ['public', 'internal'],
+      media_slot: ['card_front', 'card_back'],
+      member_role: ['user', 'moderator', 'admin'],
+      shop_category: ['power_ups', 'stationary']
+    }
+  }
 } as const
-

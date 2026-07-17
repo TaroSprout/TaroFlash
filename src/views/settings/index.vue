@@ -231,10 +231,10 @@ watch(layout_mode, (mode) => {
           </div>
           <member-card
             :created-at="editor.created_at.value"
-            :display-name="editor.settings.display_name"
-            :card-comment="editor.settings.description"
+            :display-name="editor.draft.display_name"
+            :card-comment="editor.draft.description"
             :card-title="t('settings.preview.title-fallback')"
-            :cover="editor.cover"
+            :cover="editor.draft.cover_config"
             editable
             class="rotate-4 drop-shadow-sm"
             @edit-avatar="onEditAvatar"

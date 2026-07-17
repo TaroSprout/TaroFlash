@@ -64,14 +64,19 @@ const ButtonStub = defineComponent({
 })
 
 function makeAside({ title = '', is_dirty = false, title_error } = {}) {
-  const settings = reactive({ title, description: '' })
+  const draft = reactive({
+    title,
+    description: '',
+    study_config: {},
+    cover_config: {},
+    card_attributes: { front: {}, back: {} },
+    review_pacing_preset_id: null,
+    pacing_overrides: {}
+  })
   const editor = {
-    settings,
-    config: reactive({}),
-    cover: reactive({}),
-    card_attributes: reactive({ front: {}, back: {} }),
+    draft,
     is_dirty: ref(is_dirty),
-    has_title: computed(() => !!settings.title?.trim()),
+    has_title: computed(() => !!draft.title?.trim()),
     title_error: ref(title_error),
     active_side: ref('cover'),
     saveDeck: vi.fn(async () => null),
@@ -90,7 +95,7 @@ function makeAside({ title = '', is_dirty = false, title_error } = {}) {
       }
     }
   })
-  return { wrapper, editor, settings }
+  return { wrapper, editor, settings: draft }
 }
 
 describe('DeckAside — layout', () => {

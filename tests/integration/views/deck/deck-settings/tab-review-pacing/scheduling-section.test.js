@@ -70,7 +70,7 @@ const SpinboxStub = defineComponent({
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-function makeWrapper({ deck: deckOverrides = {}, pacingOverrides = {} } = {}) {
+function makeWrapper({ deck: deckOverrides = {}, pacing_overrides = {} } = {}) {
   const deck = {
     id: 1,
     desired_retention: 90,
@@ -80,21 +80,11 @@ function makeWrapper({ deck: deckOverrides = {}, pacingOverrides = {} } = {}) {
     relearning_steps: ['10m'],
     ...deckOverrides
   }
-  const pacing = reactive({
-    preset_id: null,
-    desired_retention_override: null,
-    learning_steps_override: null,
-    relearning_steps_override: null,
-    has_max_reviews_override: false,
-    max_reviews_per_day_override: null,
-    has_max_new_override: false,
-    max_new_per_day_override: null,
-    leech_threshold_override: null,
-    has_max_interval_override: false,
-    max_interval_override: null,
-    ...pacingOverrides
+  const draft = reactive({
+    review_pacing_preset_id: null,
+    pacing_overrides: { ...pacing_overrides }
   })
-  const editor = { deck, pacing }
+  const editor = { deck, draft }
   const wrapper = mount(SchedulingSection, {
     global: {
       provide: { [deckEditorKey]: editor },
@@ -102,7 +92,7 @@ function makeWrapper({ deck: deckOverrides = {}, pacingOverrides = {} } = {}) {
       mocks: { $t: (k) => k }
     }
   })
-  return { wrapper, deck, pacing }
+  return { wrapper, deck, draft }
 }
 
 beforeEach(() => {
@@ -125,24 +115,24 @@ describe('SchedulingSection — rendering', () => {
 // ── learning-steps / relearning-steps ─────────────────────────────────────────
 
 describe('SchedulingSection — learning-steps / relearning-steps', () => {
-  test('selecting a learning-steps key pins pacing.learning_steps_override', async () => {
-    const { wrapper, pacing } = makeWrapper()
+  test('selecting a learning-steps key pins the learning_steps override', async () => {
+    const { wrapper, draft } = makeWrapper()
 
     await wrapper
       .find('[data-testid="tab-review-pacing__learning-steps"] [data-testid="ui-select-menu"]')
       .setValue('1hr')
 
-    expect(pacing.learning_steps_override).toEqual(['1h'])
+    expect(draft.pacing_overrides.learning_steps).toEqual(['1h'])
   })
 
-  test('selecting a relearning-steps key pins pacing.relearning_steps_override', async () => {
-    const { wrapper, pacing } = makeWrapper()
+  test('selecting a relearning-steps key pins the relearning_steps override', async () => {
+    const { wrapper, draft } = makeWrapper()
 
     await wrapper
       .find('[data-testid="tab-review-pacing__relearning-steps"] [data-testid="ui-select-menu"]')
       .setValue('1m-10m')
 
-    expect(pacing.relearning_steps_override).toEqual(['1m', '10m'])
+    expect(draft.pacing_overrides.relearning_steps).toEqual(['1m', '10m'])
   })
 })
 
@@ -157,15 +147,15 @@ describe('SchedulingSection — max-interval spinbox [obligation]', () => {
     expect(spinbox.attributes('data-value')).toBe('0')
   })
 
-  test('bumping the spinbox pins has_max_interval_override and writes max_interval_override [obligation]', async () => {
-    const { wrapper, pacing } = makeWrapper({ deck: { max_interval: null } })
+  test('bumping the spinbox pins the max_interval key in pacing_overrides [obligation]', async () => {
+    const { wrapper, draft } = makeWrapper({ deck: { max_interval: null } })
 
     await wrapper
       .find('[data-testid="tab-review-pacing__max-interval"] [data-testid="ui-spinbox__increment"]')
       .trigger('click')
 
-    expect(pacing.has_max_interval_override).toBe(true)
-    expect(pacing.max_interval_override).toBe(1)
+    expect('max_interval' in draft.pacing_overrides).toBe(true)
+    expect(draft.pacing_overrides.max_interval).toBe(1)
   })
 
   test('passes the max-interval-suffix translation through as the spinbox suffix prop', () => {
@@ -188,8 +178,8 @@ describe('SchedulingSection — leech-threshold spinbox [obligation]', () => {
     expect(spinbox.attributes('data-value')).toBe('24')
   })
 
-  test('bumping the spinbox writes leech_threshold_override directly, without a has-gate [obligation]', async () => {
-    const { wrapper, pacing } = makeWrapper({ deck: { leech_threshold: 24 } })
+  test('bumping the spinbox pins the leech_threshold key directly, without a has-gate [obligation]', async () => {
+    const { wrapper, draft } = makeWrapper({ deck: { leech_threshold: 24 } })
 
     await wrapper
       .find(
@@ -197,34 +187,33 @@ describe('SchedulingSection — leech-threshold spinbox [obligation]', () => {
       )
       .trigger('click')
 
-    expect(pacing.leech_threshold_override).toBe(25)
-    expect(pacing).not.toHaveProperty('has_leech_threshold_override')
+    expect(draft.pacing_overrides.leech_threshold).toBe(25)
+    expect(draft.pacing_overrides).not.toHaveProperty('has_leech_threshold_override')
   })
 })
 
 // ── reset wiring [obligation] ──────────────────────────────────────────────────
 
 describe('SchedulingSection — reset wiring [obligation]', () => {
-  test('resetting the max-interval row un-pins the override and clears its value [obligation]', async () => {
-    const { wrapper, pacing } = makeWrapper({
-      pacingOverrides: { has_max_interval_override: true, max_interval_override: 90 }
+  test('resetting the max-interval row un-pins the override — deletes the key entirely [obligation]', async () => {
+    const { wrapper, draft } = makeWrapper({
+      pacing_overrides: { max_interval: 90 }
     })
 
     await wrapper
       .find('[data-testid="tab-review-pacing__max-interval"] [data-testid="tooltip-row__reset"]')
       .trigger('click')
 
-    expect(pacing.has_max_interval_override).toBe(false)
-    expect(pacing.max_interval_override).toBeNull()
+    expect('max_interval' in draft.pacing_overrides).toBe(false)
   })
 
-  test('resetting the leech-threshold row nulls leech_threshold_override [obligation]', async () => {
-    const { wrapper, pacing } = makeWrapper({ pacingOverrides: { leech_threshold_override: 12 } })
+  test('resetting the leech-threshold row deletes the leech_threshold key [obligation]', async () => {
+    const { wrapper, draft } = makeWrapper({ pacing_overrides: { leech_threshold: 12 } })
 
     await wrapper
       .find('[data-testid="tab-review-pacing__leech-threshold"] [data-testid="tooltip-row__reset"]')
       .trigger('click')
 
-    expect(pacing.leech_threshold_override).toBeNull()
+    expect('leech_threshold' in draft.pacing_overrides).toBe(false)
   })
 })

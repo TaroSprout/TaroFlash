@@ -10,7 +10,7 @@ import { usePacingFields } from './use-pacing-fields'
 import { LEECH_THRESHOLD_BOUNDS, MAX_INTERVAL_BOUNDS } from '@/utils/review-pacing/defaults'
 
 const { t } = useI18n()
-const { deck, pacing } = inject(deckEditorKey)!
+const { deck, draft } = inject(deckEditorKey)!
 
 const {
   desired_retention,
@@ -30,7 +30,7 @@ const {
   resetRelearningSteps,
   resetLeechThreshold,
   resetMaxInterval
-} = usePacingFields(deck!, pacing)
+} = usePacingFields(deck!, draft)
 </script>
 
 <template>

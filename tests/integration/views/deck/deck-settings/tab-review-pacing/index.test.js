@@ -48,15 +48,17 @@ const ToggleStub = defineComponent({
 })
 
 function makeWrapper({ config: configOverrides = {}, layout_mode = 'modal' } = {}) {
-  const config = reactive({ shuffle: false, flip_cards: false, ...configOverrides })
   const deck = reactive({ id: 1 })
+  const draft = reactive({
+    study_config: { shuffle: false, flip_cards: false, ...configOverrides },
+    cover_config: {},
+    card_attributes: { front: {}, back: {} },
+    review_pacing_preset_id: null,
+    pacing_overrides: {}
+  })
   const editor = {
     deck,
-    config,
-    pacing: reactive({}),
-    settings: reactive({}),
-    cover: reactive({}),
-    card_attributes: reactive({ front: {}, back: {} }),
+    draft,
     cover_image_preview: ref(undefined),
     cover_image_loading: ref(false),
     active_side: ref('cover'),
@@ -75,7 +77,7 @@ function makeWrapper({ config: configOverrides = {}, layout_mode = 'modal' } = {
       mocks: { $t: (k) => k }
     }
   })
-  return { wrapper, config }
+  return { wrapper, config: draft.study_config }
 }
 
 // Node.compareDocumentPosition returns a bitmask; DOCUMENT_POSITION_FOLLOWING

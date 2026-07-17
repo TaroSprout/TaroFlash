@@ -10,10 +10,10 @@ export function useAvatarPicker(editor: MemberEditor) {
     const avatar = await modal.open<string>(AvatarPickerModal, {
       mode: 'popup',
       backdrop: true,
-      props: { selected: editor.cover.avatar ?? 'frog' }
+      props: { selected: editor.draft.cover_config.avatar ?? 'frog' }
     }).response
 
-    if (avatar) editor.cover.avatar = avatar
+    if (avatar) editor.draft.cover_config.avatar = avatar
   }
 
   return { onEditAvatar }

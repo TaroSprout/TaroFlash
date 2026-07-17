@@ -1,72 +1,64 @@
-import { computed, reactive, ref, watch, type InjectionKey } from 'vue'
+import { computed, ref, watch, type InjectionKey } from 'vue'
 import { useUpsertMemberMutation } from '@/api/members'
 import { useMemberStore } from '@/stores/member'
+import { useDraft } from '@/composables/draft'
+import { MEMBER_SETTINGS_DEFAULTS, withMemberCardCoverDefaults } from '@/utils/member/defaults'
 import {
-  buildMemberPayload,
-  hasMemberChanges,
+  withMemberPreferencesDefaults,
   type ResolvedMemberPreferences
-} from '@/utils/member/payload'
-import { replaceReactiveContents } from '@/utils/reactive'
+} from '@/utils/member/preferences'
+
+// The editable surface of a member profile, keyed to the persisted columns so
+// the draft flushes straight through the upsert mutation. Defaults are merged
+// in `buildMemberBase`, so the draft is always fully populated.
+export type MemberDraft = {
+  display_name: string
+  description: string
+  preferences: ResolvedMemberPreferences
+  cover_config: MemberCover
+}
 
 /**
- * Reactive state + mutations for editing the current member's profile.
- * Owns the in-flight `settings` object that the settings tabs bind into,
- * plus a `cover` object the member-card preview consumes. Mirrors `useDeckEditor`.
+ * Reactive state + mutations for editing the current member's profile. A single
+ * `useDraft` over the profile's editable columns backs the settings tabs and
+ * the member-card preview; `is_dirty` falls out of a deep diff against the
+ * last-saved base. Mirrors `useDeckEditor`, minus the pacing inheritance lens.
  */
 export function useMemberEditor() {
   const member_store = useMemberStore()
 
-  function buildInitialSettings(): { display_name?: string; description?: string } {
+  function buildMemberBase(): MemberDraft {
     return {
-      display_name: member_store.display_name,
-      description: member_store.description
+      display_name: member_store.display_name ?? MEMBER_SETTINGS_DEFAULTS.display_name,
+      description: member_store.description ?? MEMBER_SETTINGS_DEFAULTS.description,
+      preferences: withMemberPreferencesDefaults(member_store.preferences),
+      cover_config: withMemberCardCoverDefaults(member_store.cover)
     }
   }
 
-  // Spread each nested group individually — `{ ...member_store.preferences }`
-  // only copies the top level, so `preferences.study` etc. would still alias
-  // the store's own objects and silently write through to it on edit (same
-  // aliasing bug `useDeckEditor.buildInitialCardAttributes` avoids for `front`/`back`).
-  function buildInitialPreferences(): ResolvedMemberPreferences {
-    return {
-      accessibility: { ...member_store.preferences.accessibility },
-      audio: { ...member_store.preferences.audio },
-      study: { ...member_store.preferences.study }
-    }
-  }
-
-  function buildInitialCover(): MemberCover {
-    return { ...member_store.cover }
-  }
-
-  const settings = reactive(buildInitialSettings())
-  const preferences = reactive(buildInitialPreferences())
-  const cover = reactive(buildInitialCover())
+  const { state: draft, is_dirty, reset: resetChanges, rebase } = useDraft(buildMemberBase)
 
   const name_error = ref<string>()
 
   const email = computed(() => member_store.email ?? '')
   const created_at = computed(() => member_store.created_at ?? '')
   const plan = computed(() => member_store.plan ?? 'free')
-  const has_name = computed(() => !!settings.display_name?.trim())
-
-  const initial_payload = buildMemberPayload({ settings, preferences, cover })
-  const is_dirty = computed(() =>
-    hasMemberChanges({ settings, preferences, cover }, initial_payload)
-  )
+  const has_name = computed(() => !!draft.display_name?.trim())
 
   const upsert_mutation = useUpsertMemberMutation()
 
-  /** Persist staged changes via the members upsert mutation. No-op when nothing changed. */
+  /**
+   * Persist staged changes via the members upsert mutation, rebasing on success
+   * so the dirty flag clears even when the modal stays open. No-op when nothing
+   * changed or the member id hasn't resolved yet.
+   */
   async function saveMember(): Promise<boolean> {
     if (!is_dirty.value) return false
     if (!member_store.id) return false
 
     try {
-      await upsert_mutation.mutateAsync({
-        id: member_store.id,
-        ...buildMemberPayload({ settings, preferences, cover })
-      })
+      await upsert_mutation.mutateAsync({ id: member_store.id, ...draft })
+      rebase()
       return true
     } catch {
       return false
@@ -74,23 +66,14 @@ export function useMemberEditor() {
   }
 
   watch(
-    () => settings.display_name,
+    () => draft.display_name,
     () => {
       name_error.value = undefined
     }
   )
 
-  /** Discard every staged edit, restoring `settings`/`preferences`/`cover` to their last-saved values. */
-  function resetChanges() {
-    replaceReactiveContents(settings, buildInitialSettings())
-    replaceReactiveContents(preferences, buildInitialPreferences())
-    replaceReactiveContents(cover, buildInitialCover())
-  }
-
   return {
-    settings,
-    preferences,
-    cover,
+    draft,
     email,
     created_at,
     plan,

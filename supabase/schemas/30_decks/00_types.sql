@@ -30,20 +30,11 @@ CREATE TYPE public.member_deck AS (
     desired_retention             integer,
     learning_steps                text[],
     relearning_steps              text[],
-    desired_retention_override    integer,
-    learning_steps_override       text[],
-    relearning_steps_override     text[],
     max_reviews_per_day           integer,
     max_new_per_day               integer,
-    has_max_reviews_override      boolean,
-    max_reviews_per_day_override  integer,
-    has_max_new_override          boolean,
-    max_new_per_day_override      integer,
     leech_threshold               integer,
     max_interval                  integer,
-    leech_threshold_override      integer,
-    has_max_interval_override     boolean,
-    max_interval_override         integer
+    pacing_overrides              jsonb
 );
 
 

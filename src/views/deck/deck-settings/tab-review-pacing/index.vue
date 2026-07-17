@@ -11,7 +11,7 @@ import { deckSettingsLayoutKey } from '../layout'
 import DeckSaveButton from '../deck-save-button.vue'
 
 const { t } = useI18n()
-const { config } = inject(deckEditorKey)!
+const { draft } = inject(deckEditorKey)!
 const layout_mode = inject(deckSettingsLayoutKey)!
 </script>
 
@@ -21,14 +21,14 @@ const layout_mode = inject(deckSettingsLayoutKey)!
     class="px-(--deck-settings-padding) pb-(--deck-settings-padding)"
   >
     <labeled-section :label="t('deck.settings-modal.review-pacing.section.cards-heading')">
-      <ui-toggle v-model:checked="config.shuffle">
+      <ui-toggle v-model:checked="draft.study_config.shuffle">
         <div class="flex items-center gap-2.5">
           <ui-icon src="shuffle" class="size-4.5" />
           {{ t('deck.settings-modal.review-pacing.shuffle') }}
         </div>
       </ui-toggle>
 
-      <ui-toggle v-model:checked="config.flip_cards">
+      <ui-toggle v-model:checked="draft.study_config.flip_cards">
         <div class="flex items-center gap-2.5">
           <ui-icon src="card-flip" class="size-4.5" />
           {{ t('deck.settings-modal.review-pacing.flip-cards') }}

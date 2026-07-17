@@ -3,19 +3,15 @@
 -- produce the migration.
 SET check_function_bodies = false;
 
+-- Per-deck pacing overrides live in a single jsonb bag rather than a column
+-- per field. Key present = the deck pins that field (value may be null, e.g.
+-- max_interval null = "uncapped"); key absent = follow the linked preset. This
+-- collapses what used to be a value column + a has_*_override boolean gate for
+-- every cap field into plain key-presence.
 CREATE TABLE public.deck_review_pacing (
     deck_id bigint NOT NULL,
     review_pacing_preset_id bigint,
-    desired_retention_override integer,
-    learning_steps_override text[],
-    relearning_steps_override text[],
-    has_max_reviews_override boolean DEFAULT false NOT NULL,
-    max_reviews_per_day_override integer,
-    has_max_new_override boolean DEFAULT false NOT NULL,
-    max_new_per_day_override integer,
-    leech_threshold_override integer,
-    has_max_interval_override boolean DEFAULT false NOT NULL,
-    max_interval_override integer
+    overrides jsonb DEFAULT '{}'::jsonb NOT NULL
 );
 
 

@@ -12,7 +12,7 @@ const editor = inject(memberEditorKey)!
 <template>
   <labeled-section :label="t('settings.app.section.accessibility')">
     <div data-testid="tab-app__accessibility" class="flex flex-col gap-4">
-      <ui-toggle v-model:checked="editor.preferences.accessibility!.left_hand">
+      <ui-toggle v-model:checked="editor.draft.preferences.accessibility.left_hand">
         <span class="flex flex-col">
           <span data-testid="tab-app__left-hand-label">{{
             t('settings.app.accessibility.left-hand-label')

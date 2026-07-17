@@ -229,8 +229,8 @@ watch(active_tab, (tab) => {
         class="pointer-events-auto absolute right-(--sheet-px) top-6"
       >
         <deck-pinned-preview
-          :cover="editor.cover"
-          :card_attributes="editor.card_attributes"
+          :cover="editor.draft.cover_config"
+          :card_attributes="editor.draft.card_attributes"
           :side="visible_side"
           :front_text="editor.preview_front_text.value"
           :back_text="editor.preview_back_text.value"

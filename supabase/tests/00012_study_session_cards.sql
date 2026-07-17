@@ -25,14 +25,12 @@ SELECT tests.create_user('22222222-2222-2222-2222-222222222222'::uuid, 'bob_caps
 SELECT tests.set_claims('11111111-1111-1111-1111-111111111111'::uuid);
 
 -- Deck 100: max_reviews_per_day = 3, max_new_per_day = 1, set via a deck-level
--- override (has_max_*_override + override value) on the deck_review_pacing
--- sidecar — this is the only place daily caps live now.
+-- override in the overrides jsonb bag on the deck_review_pacing sidecar —
+-- this is the only place daily caps live now.
 -- 5 cards: 1000, 1001 are NEW (no review row); 1002, 1003 are due reviews; 1004 is not due.
 INSERT INTO public.decks (id, title, is_public) VALUES (100, 'Caps Deck', false);
-INSERT INTO public.deck_review_pacing (
-  deck_id, has_max_reviews_override, max_reviews_per_day_override,
-  has_max_new_override, max_new_per_day_override
-) VALUES (100, true, 3, true, 1);
+INSERT INTO public.deck_review_pacing (deck_id, overrides)
+VALUES (100, '{"max_reviews_per_day": 3, "max_new_per_day": 1}'::jsonb);
 
 INSERT INTO public.cards (id, deck_id, front_text, back_text, rank) VALUES
   (1000, 100, 'New A', '', 1000),

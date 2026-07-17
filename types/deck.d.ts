@@ -32,34 +32,32 @@ type Deck = {
   card_count?: number
   rank?: number
   review_pacing_preset_id?: number | null
+  // Resolved pacing values (override -> preset -> system). Daily limits and
+  // max_interval use null = unbounded/uncapped.
   desired_retention?: number
   learning_steps?: string[]
   relearning_steps?: string[]
-  // Raw per-field pins — non-null means this field is overriding its preset
-  // rather than inheriting it. desired_retention/learning_steps/
-  // relearning_steps above are already resolved against these.
-  desired_retention_override?: number | null
-  learning_steps_override?: string[] | null
-  relearning_steps_override?: string[] | null
-  // Resolved daily limits (override -> preset -> system, null = unbounded)
   max_reviews_per_day?: number | null
   max_new_per_day?: number | null
-  // has_max_*_override gates its sibling *_override column: a NULL override
-  // is ambiguous between "not overridden" and "overridden to unbounded", so
-  // the boolean carries which case it is.
-  has_max_reviews_override?: boolean
-  max_reviews_per_day_override?: number | null
-  has_max_new_override?: boolean
-  max_new_per_day_override?: number | null
-  // Resolved leech threshold (override -> preset -> system) + its raw pin.
   leech_threshold?: number
-  leech_threshold_override?: number | null
-  // Resolved max interval in days (null = uncapped); has_max_interval_override
-  // gates the nullable override the same way the daily limits do.
   max_interval?: number | null
-  has_max_interval_override?: boolean
-  max_interval_override?: number | null
+  // Raw per-field pins. A key's presence means the deck overrides that field
+  // (value may be null = pinned-uncapped for the caps); an absent key follows
+  // the linked preset. The resolved fields above are computed from these.
+  pacing_overrides?: PacingOverrides
 }
+
+// Keyed by resolved field name; present key = pinned. Caps allow null (pinned
+// to uncapped), mirroring the deck_review_pacing.overrides jsonb bag.
+type PacingOverrides = Partial<{
+  desired_retention: number
+  learning_steps: string[]
+  relearning_steps: string[]
+  max_reviews_per_day: number | null
+  max_new_per_day: number | null
+  leech_threshold: number
+  max_interval: number | null
+}>
 
 type CardEditorMode = 'view' | 'edit' | 'import-export'
 

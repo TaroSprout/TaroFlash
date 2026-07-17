@@ -8,17 +8,19 @@ import {
   type LearningStepsKey,
   type RelearningStepsKey
 } from '@/utils/review-pacing/defaults'
-import type { DeckPacingEditorState } from '@/utils/deck/payload'
+import type { DeckDraft } from '@/composables/deck/editor'
 
 /**
- * Derived state + writes for the Review Pacing tab's preset picker and
- * retention/step controls. `deck` supplies the already-resolved display
- * values (via get_member_decks); `pacing` is the staged editor state that
- * gets written on save — editing a control here always pins that field's
- * override, the per-field `reset*` functions un-pin it back to following
- * the preset.
+ * Derived state + writes for the Review Pacing tab. Reads through a resolution
+ * lens — a control's displayed value is the staged override (key present in
+ * `draft.pacing_overrides`), else the drafted preset's value, else the deck's
+ * BE-resolved value. Editing a control pins that field's override; its `reset`
+ * deletes the key so the field follows the preset again.
+ *
+ * `deck` supplies the already-resolved values (from get_member_decks); `draft`
+ * is the staged editor state that save_deck persists.
  */
-export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
+export function usePacingFields(deck: Deck, draft: DeckDraft) {
   const { t } = useI18n()
 
   const presets_query = usePresetsQuery()
@@ -34,10 +36,10 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
   )
 
   const selected_preset_value = computed<string>({
-    get: () => String(pacing.preset_id ?? system_preset.value?.id ?? ''),
+    get: () => String(draft.review_pacing_preset_id ?? system_preset.value?.id ?? ''),
     set: (value) => {
       const id = Number(value)
-      pacing.preset_id = id === system_preset.value?.id ? null : id
+      draft.review_pacing_preset_id = id === system_preset.value?.id ? null : id
     }
   })
 
@@ -47,90 +49,69 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
   // until save + refetch.
   const selected_preset = computed(() =>
     presets_query.data.value?.find(
-      (preset) => preset.id === (pacing.preset_id ?? system_preset.value?.id)
+      (preset) => preset.id === (draft.review_pacing_preset_id ?? system_preset.value?.id)
     )
   )
 
-  const has_desired_retention_override = computed(() => pacing.desired_retention_override !== null)
-  const has_learning_steps_override = computed(() => pacing.learning_steps_override !== null)
-  const has_relearning_steps_override = computed(() => pacing.relearning_steps_override !== null)
-  const has_leech_threshold_override = computed(() => pacing.leech_threshold_override !== null)
-  const has_max_interval_override = computed(() => pacing.has_max_interval_override)
-  const has_max_reviews_override = computed(() => pacing.has_max_reviews_override)
-  const has_max_new_override = computed(() => pacing.has_max_new_override)
+  /** Presence badge + un-pin escape hatch shared by every field's control. */
+  function overrideField(key: keyof PacingOverrides) {
+    return {
+      overridden: computed(() => key in draft.pacing_overrides),
+      reset: () => {
+        delete draft.pacing_overrides[key]
+      }
+    }
+  }
+
+  const retention = overrideField('desired_retention')
+  const leech = overrideField('leech_threshold')
+  const learning = overrideField('learning_steps')
+  const relearning = overrideField('relearning_steps')
+  const reviews_cap = overrideField('max_reviews_per_day')
+  const new_cap = overrideField('max_new_per_day')
+  const interval_cap = overrideField('max_interval')
 
   // The fields only editable from the advanced accordion — surfaced so the
   // "Advanced" button can badge itself without the caller re-deriving this.
   const has_advanced_override = computed(
     () =>
-      has_desired_retention_override.value ||
-      has_learning_steps_override.value ||
-      has_relearning_steps_override.value ||
-      has_leech_threshold_override.value ||
-      has_max_interval_override.value
+      retention.overridden.value ||
+      learning.overridden.value ||
+      relearning.overridden.value ||
+      leech.overridden.value ||
+      interval_cap.overridden.value
   )
-
-  function resetDesiredRetention() {
-    pacing.desired_retention_override = null
-  }
-
-  function resetLearningSteps() {
-    pacing.learning_steps_override = null
-  }
-
-  function resetRelearningSteps() {
-    pacing.relearning_steps_override = null
-  }
-
-  function resetMaxReviewsPerDay() {
-    pacing.has_max_reviews_override = false
-    pacing.max_reviews_per_day_override = null
-  }
-
-  function resetMaxNewPerDay() {
-    pacing.has_max_new_override = false
-    pacing.max_new_per_day_override = null
-  }
-
-  function resetLeechThreshold() {
-    pacing.leech_threshold_override = null
-  }
-
-  function resetMaxInterval() {
-    pacing.has_max_interval_override = false
-    pacing.max_interval_override = null
-  }
 
   const desired_retention = computed<number>({
     get: () =>
-      pacing.desired_retention_override ??
+      draft.pacing_overrides.desired_retention ??
       selected_preset.value?.desired_retention ??
       deck.desired_retention!,
-    set: (value) => (pacing.desired_retention_override = value)
+    set: (value) => (draft.pacing_overrides.desired_retention = value)
   })
 
   const leech_threshold = computed<number>({
     get: () =>
-      pacing.leech_threshold_override ??
+      draft.pacing_overrides.leech_threshold ??
       selected_preset.value?.leech_threshold ??
       deck.leech_threshold!,
-    set: (value) => (pacing.leech_threshold_override = value)
+    set: (value) => (draft.pacing_overrides.leech_threshold = value)
   })
 
   const learning_steps = computed<string[]>({
     get: () =>
-      pacing.learning_steps_override ??
+      draft.pacing_overrides.learning_steps ??
       selected_preset.value?.learning_steps ??
       deck.learning_steps!,
-    set: (steps) => (pacing.learning_steps_override = steps)
+    set: (steps) => (draft.pacing_overrides.learning_steps = steps)
   })
 
   const relearning_steps = computed<string[]>({
     get: () =>
-      pacing.relearning_steps_override ??
+      draft.pacing_overrides.relearning_steps ??
       selected_preset.value?.relearning_steps ??
       deck.relearning_steps!,
-    set: (steps) => (pacing.relearning_steps_override = steps)
+    set: (steps) => (draft.pacing_overrides.relearning_steps = steps)
   })
 
   const learning_steps_options = computed(() =>
@@ -157,53 +138,42 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
     set: (key) => (relearning_steps.value = RELEARNING_STEP_PRESETS[key])
   })
 
-  // The UI uses `0` to mean "no limit"; the model stores that as `null` —
-  // which is also how a preset expresses "unbounded". Map between the two
-  // here so the spinbox only ever sees a plain number. A loaded preset's
-  // value must win outright, falling back to `deck.*` only while the preset
-  // hasn't loaded yet, not whenever it's null.
+  // The UI uses `0` to mean "no limit"; the model stores that as `null` (a
+  // present key with a null value = pinned-uncapped) — which is also how a
+  // preset expresses "unbounded". Map between the two here so the spinbox only
+  // ever sees a plain number. A loaded preset's value must win outright,
+  // falling back to `deck.*` only while the preset hasn't loaded yet.
   const max_reviews_per_day = computed<number>({
     get: () => {
-      if (pacing.has_max_reviews_override) return pacing.max_reviews_per_day_override ?? 0
+      if (reviews_cap.overridden.value) return draft.pacing_overrides.max_reviews_per_day ?? 0
       const preset_value = selected_preset.value
         ? selected_preset.value.max_reviews_per_day
         : (deck.max_reviews_per_day ?? null)
       return preset_value ?? 0
     },
-    set: (value) => {
-      pacing.has_max_reviews_override = true
-      pacing.max_reviews_per_day_override = value === 0 ? null : value
-    }
+    set: (value) => (draft.pacing_overrides.max_reviews_per_day = value === 0 ? null : value)
   })
 
   const max_new_per_day = computed<number>({
     get: () => {
-      if (pacing.has_max_new_override) return pacing.max_new_per_day_override ?? 0
+      if (new_cap.overridden.value) return draft.pacing_overrides.max_new_per_day ?? 0
       const preset_value = selected_preset.value
         ? selected_preset.value.max_new_per_day
         : (deck.max_new_per_day ?? null)
       return preset_value ?? 0
     },
-    set: (value) => {
-      pacing.has_max_new_override = true
-      pacing.max_new_per_day_override = value === 0 ? null : value
-    }
+    set: (value) => (draft.pacing_overrides.max_new_per_day = value === 0 ? null : value)
   })
 
-  // Same 0-means-uncapped mapping as the daily limits: a null resolved value
-  // (preset or system "uncapped") surfaces as 0, and setting 0 stores null.
   const max_interval = computed<number>({
     get: () => {
-      if (pacing.has_max_interval_override) return pacing.max_interval_override ?? 0
+      if (interval_cap.overridden.value) return draft.pacing_overrides.max_interval ?? 0
       const preset_value = selected_preset.value
         ? selected_preset.value.max_interval
         : (deck.max_interval ?? null)
       return preset_value ?? 0
     },
-    set: (value) => {
-      pacing.has_max_interval_override = true
-      pacing.max_interval_override = value === 0 ? null : value
-    }
+    set: (value) => (draft.pacing_overrides.max_interval = value === 0 ? null : value)
   })
 
   return {
@@ -218,20 +188,20 @@ export function usePacingFields(deck: Deck, pacing: DeckPacingEditorState) {
     relearning_steps_options,
     max_reviews_per_day,
     max_new_per_day,
-    has_desired_retention_override,
-    has_learning_steps_override,
-    has_relearning_steps_override,
-    has_leech_threshold_override,
-    has_max_interval_override,
-    has_max_reviews_override,
-    has_max_new_override,
+    has_desired_retention_override: retention.overridden,
+    has_learning_steps_override: learning.overridden,
+    has_relearning_steps_override: relearning.overridden,
+    has_leech_threshold_override: leech.overridden,
+    has_max_interval_override: interval_cap.overridden,
+    has_max_reviews_override: reviews_cap.overridden,
+    has_max_new_override: new_cap.overridden,
     has_advanced_override,
-    resetDesiredRetention,
-    resetLearningSteps,
-    resetRelearningSteps,
-    resetLeechThreshold,
-    resetMaxInterval,
-    resetMaxReviewsPerDay,
-    resetMaxNewPerDay
+    resetDesiredRetention: retention.reset,
+    resetLearningSteps: learning.reset,
+    resetRelearningSteps: relearning.reset,
+    resetLeechThreshold: leech.reset,
+    resetMaxInterval: interval_cap.reset,
+    resetMaxReviewsPerDay: reviews_cap.reset,
+    resetMaxNewPerDay: new_cap.reset
   }
 }

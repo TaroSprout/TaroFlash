@@ -97,11 +97,11 @@ const SaveButtonStub = defineComponent({
 })
 
 function makeEditor(overrides = {}) {
-  const settings = reactive({ title: 'My Deck', description: 'A test deck', ...overrides })
+  const draft = reactive({ title: 'My Deck', description: 'A test deck', ...overrides })
   return {
-    settings,
+    draft,
     is_dirty: ref(false),
-    has_title: computed(() => !!settings.title?.trim()),
+    has_title: computed(() => !!draft.title?.trim()),
     title_error: ref(undefined),
     saveDeck: vi.fn().mockResolvedValue(true)
   }
@@ -142,18 +142,18 @@ describe('TabDetails [obligation]', () => {
     expect(wrapper.find('[data-testid="ui-textarea"]').exists()).toBe(true)
   })
 
-  test('title input bound to editor.settings.title [obligation]', async () => {
+  test('title input bound to editor.draft.title [obligation]', async () => {
     const editor = makeEditor({ title: 'Old Title' })
     const { wrapper } = makeTab('sheet', editor)
     await wrapper.find('[data-testid="ui-input"]').setValue('New Title')
-    expect(editor.settings.title).toBe('New Title')
+    expect(editor.draft.title).toBe('New Title')
   })
 
-  test('description textarea bound to editor.settings.description [obligation]', async () => {
+  test('description textarea bound to editor.draft.description [obligation]', async () => {
     const editor = makeEditor({ description: 'Old desc' })
     const { wrapper } = makeTab('sheet', editor)
     await wrapper.find('[data-testid="ui-textarea"]').setValue('New desc')
-    expect(editor.settings.description).toBe('New desc')
+    expect(editor.draft.description).toBe('New desc')
   })
 
   test('title input carries DECK_TITLE_MAX_LENGTH as maxlength', () => {

@@ -103,7 +103,11 @@ const SYSTEM_PRESET = {
 }
 const CUSTOM_PRESET = { id: 2, name: 'Aggressive', is_system: false }
 
-function makeWrapper({ deck: deckOverrides = {}, pacingOverrides = {} } = {}) {
+function makeWrapper({
+  deck: deckOverrides = {},
+  review_pacing_preset_id = null,
+  pacing_overrides = {}
+} = {}) {
   const deck = {
     id: 1,
     card_count: undefined,
@@ -111,21 +115,11 @@ function makeWrapper({ deck: deckOverrides = {}, pacingOverrides = {} } = {}) {
     max_new_per_day: 10,
     ...deckOverrides
   }
-  const pacing = reactive({
-    preset_id: null,
-    has_max_reviews_override: false,
-    max_reviews_per_day_override: null,
-    has_max_new_override: false,
-    max_new_per_day_override: null,
-    desired_retention_override: null,
-    learning_steps_override: null,
-    relearning_steps_override: null,
-    leech_threshold_override: null,
-    has_max_interval_override: false,
-    max_interval_override: null,
-    ...pacingOverrides
+  const draft = reactive({
+    review_pacing_preset_id,
+    pacing_overrides: { ...pacing_overrides }
   })
-  const editor = { deck, pacing }
+  const editor = { deck, draft }
   const wrapper = mount(PacingSection, {
     global: {
       provide: { [deckEditorKey]: editor },
@@ -137,7 +131,7 @@ function makeWrapper({ deck: deckOverrides = {}, pacingOverrides = {} } = {}) {
       mocks: { $t: (k) => k }
     }
   })
-  return { wrapper, deck, pacing }
+  return { wrapper, deck, draft }
 }
 
 beforeEach(() => {
@@ -173,44 +167,42 @@ describe('PacingSection — rendering', () => {
 })
 
 describe('PacingSection — daily limits pin overrides [obligation]', () => {
-  test('bumping the max-reviews spinbox writes to pacing.max_reviews_per_day_override [obligation]', async () => {
-    const { wrapper, pacing } = makeWrapper({ deck: { max_reviews_per_day: 50 } })
+  test('bumping the max-reviews spinbox pins the max_reviews_per_day key in pacing_overrides [obligation]', async () => {
+    const { wrapper, draft } = makeWrapper({ deck: { max_reviews_per_day: 50 } })
 
     await wrapper
       .find('[data-testid="tab-review-pacing__max-reviews"] [data-testid="ui-spinbox__increment"]')
       .trigger('click')
 
-    expect(pacing.has_max_reviews_override).toBe(true)
-    expect(pacing.max_reviews_per_day_override).toBe(51)
+    expect(draft.pacing_overrides.max_reviews_per_day).toBe(51)
   })
 
-  test('bumping the max-new spinbox writes to pacing.max_new_per_day_override [obligation]', async () => {
-    const { wrapper, pacing } = makeWrapper({ deck: { max_new_per_day: 10 } })
+  test('bumping the max-new spinbox pins the max_new_per_day key in pacing_overrides [obligation]', async () => {
+    const { wrapper, draft } = makeWrapper({ deck: { max_new_per_day: 10 } })
 
     await wrapper
       .find('[data-testid="tab-review-pacing__max-new"] [data-testid="ui-spinbox__increment"]')
       .trigger('click')
 
-    expect(pacing.has_max_new_override).toBe(true)
-    expect(pacing.max_new_per_day_override).toBe(11)
+    expect(draft.pacing_overrides.max_new_per_day).toBe(11)
   })
 })
 
 describe('PacingSection — preset selection [obligation]', () => {
-  test('selecting a preset in the picker writes to pacing.preset_id [obligation]', async () => {
-    const { wrapper, pacing } = makeWrapper()
+  test('selecting a preset in the picker writes to draft.review_pacing_preset_id [obligation]', async () => {
+    const { wrapper, draft } = makeWrapper()
 
     await wrapper.find('[data-testid="tab-review-pacing__preset"]').setValue('2')
 
-    expect(pacing.preset_id).toBe(2)
+    expect(draft.review_pacing_preset_id).toBe(2)
   })
 
-  test('selecting the system preset writes null (not its literal id) to pacing.preset_id [obligation]', async () => {
-    const { wrapper, pacing } = makeWrapper({ pacingOverrides: { preset_id: 2 } })
+  test('selecting the system preset writes null (not its literal id) to draft.review_pacing_preset_id [obligation]', async () => {
+    const { wrapper, draft } = makeWrapper({ review_pacing_preset_id: 2 })
 
     await wrapper.find('[data-testid="tab-review-pacing__preset"]').setValue('1')
 
-    expect(pacing.preset_id).toBeNull()
+    expect(draft.review_pacing_preset_id).toBeNull()
   })
 })
 
@@ -261,7 +253,7 @@ describe('PacingSection — Advanced accordion [obligation]', () => {
 
   test('renders the advanced-override badge when an advanced field is overridden [obligation]', () => {
     const { wrapper } = makeWrapper({
-      pacingOverrides: { desired_retention_override: 0.85 }
+      pacing_overrides: { desired_retention: 85 }
     })
     expect(wrapper.find('[data-testid="tab-review-pacing__advanced-badge"]').exists()).toBe(true)
   })
