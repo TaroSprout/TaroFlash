@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { inject } from 'vue'
+import { inject, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiSelectMenu from '@/components/ui-kit/select-menu.vue'
 import UiButton from '@/components/ui-kit/button.vue'
+import UiIcon from '@/components/ui-kit/icon.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import CappedSpinboxRow from './capped-spinbox-row.vue'
+import SchedulingSection from './scheduling-section.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { DAILY_LIMIT_BOUNDS } from '@/utils/deck/defaults'
 import { usePacingFields } from './use-pacing-fields'
-import { useAdvancedPacingModal } from './use-advanced-pacing-modal'
+import { accordionEnter, accordionLeave } from '@/utils/animations/accordion'
+import { emitSfx } from '@/sfx/bus'
 
 const { t } = useI18n()
 const { deck, pacing } = inject(deckEditorKey)!
@@ -25,10 +28,11 @@ const {
   resetMaxNewPerDay
 } = usePacingFields(deck!, pacing)
 
-const advanced_pacing_modal = useAdvancedPacingModal()
+const is_advanced_open = ref(false)
 
-function onAdvancedPress() {
-  advanced_pacing_modal.open(deck!, pacing)
+function toggleAdvanced() {
+  is_advanced_open.value = !is_advanced_open.value
+  emitSfx(is_advanced_open.value ? 'wooden_chime_ring' : 'pop_up_close')
 }
 </script>
 
@@ -87,10 +91,16 @@ function onAdvancedPress() {
           data-theme="brown-100"
           data-theme-dark="stone-700"
           size="sm"
-          icon-right="line-arrow-right"
-          @press="onAdvancedPress"
+          @press="toggleAdvanced"
         >
-          {{ t('deck.settings-modal.review-pacing.advanced-toggle') }}
+          <span class="flex items-center gap-2">
+            {{ t('deck.settings-modal.review-pacing.advanced-toggle') }}
+            <ui-icon
+              src="line-arrow-right"
+              class="size-4 transition-transform duration-200"
+              :class="{ 'rotate-90': is_advanced_open }"
+            />
+          </span>
         </ui-button>
 
         <span
@@ -100,5 +110,9 @@ function onAdvancedPress() {
         ></span>
       </div>
     </div>
+
+    <transition :css="false" @enter="accordionEnter" @leave="accordionLeave">
+      <scheduling-section v-if="is_advanced_open" data-testid="tab-review-pacing__advanced-panel" />
+    </transition>
   </labeled-section>
 </template>
