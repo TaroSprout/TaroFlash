@@ -243,15 +243,15 @@ describe('PacingSection — Advanced accordion [obligation]', () => {
     expect(wrapper.find('[data-testid="tab-review-pacing__advanced-panel"]').exists()).toBe(false)
   })
 
-  test('opening the accordion emits the open chime, closing emits the close chime', async () => {
+  test('toggling the accordion emits the toggle sfx on both open and close', async () => {
     const { wrapper } = makeWrapper()
     const advanced_button = wrapper.find('[data-testid="tab-review-pacing__advanced"]')
 
     await advanced_button.trigger('click')
-    expect(mockEmitSfx).toHaveBeenLastCalledWith('wooden_chime_ring')
+    expect(mockEmitSfx).toHaveBeenLastCalledWith('snappy_button_5')
 
     await advanced_button.trigger('click')
-    expect(mockEmitSfx).toHaveBeenLastCalledWith('pop_up_close')
+    expect(mockEmitSfx).toHaveBeenLastCalledWith('snappy_button_5')
   })
 
   test('does not render the advanced-override badge when no advanced field is overridden', () => {

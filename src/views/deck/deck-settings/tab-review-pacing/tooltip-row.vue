@@ -20,20 +20,20 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <div data-testid="tooltip-row" class="relative flex items-center justify-between gap-4 group">
+  <div data-testid="tooltip-row" class="flex items-center justify-between gap-4 group">
     <span
       data-testid="tooltip-row__label"
       class="flex items-center gap-2 text-brown-700 dark:text-brown-100"
     >
+      {{ label }}
       <ui-tooltip
         v-if="tooltip"
         element="span"
         :text="tooltip"
-        class="flex cursor-pointer items-center absolute! -left-4.5 opacity-0 group-hover:opacity-100"
+        class="flex cursor-pointer items-center opacity-0 group-hover:opacity-100"
       >
         <ui-icon src="info-circle" class="size-3.25 shrink-0" />
       </ui-tooltip>
-      {{ label }}
     </span>
 
     <div class="relative flex items-center gap-1">

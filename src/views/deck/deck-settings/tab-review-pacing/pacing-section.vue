@@ -34,7 +34,7 @@ const is_advanced_open = ref(false)
 
 function toggleAdvanced() {
   is_advanced_open.value = !is_advanced_open.value
-  emitSfx(is_advanced_open.value ? 'wooden_chime_ring' : 'pop_up_close')
+  emitSfx('snappy_button_5')
 }
 </script>
 
