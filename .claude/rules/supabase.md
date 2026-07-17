@@ -37,6 +37,20 @@ Gate role/plan-based access through named capability functions, not inline `auth
 - Every capability function needs `grant execute on function public.can_x() to authenticated` — required for edge functions to reach it via `rpc()`.
 - RLS policies: `using (can_x())`. Edge functions: `requireCapability(req, 'can_x')` from `supabase/functions/_shared/require-capability.ts`.
 
+## Declarative schemas — the default workflow
+
+`supabase/schemas/` is the source of truth for all DDL (tables, views, functions, triggers, policies, grants). **Never hand-write DDL migrations.** To change schema:
+
+1. Edit the object's file in `supabase/schemas/` (functions live one-per-file in `schemas/functions/`).
+2. `supabase db diff -f <migration-name>` — generates the migration by diffing declared state against migration history.
+3. Review the generated file, then `supabase migration up --local`.
+
+Apply order is `schema_paths` in `config.toml` — new files must be added there. `scripts/dump-schemas` regenerates the files from the local DB (drift check: `git diff supabase/schemas` should be empty after).
+
+**Still hand-written migrations** (db diff can't track them): DML — storage bucket inserts, `cron.schedule`, vault secrets, seed rows; default privileges; comment changes.
+
+**CREATE OR REPLACE FUNCTION only replaces an identical argument list** — a changed signature silently creates a second overload. The declarative flow generates the DROP for you; the pgTAP overload guard (`tests/00029`) fails CI if a duplicate slips through.
+
 ## Migration workflow
 
 - `supabase migration up --local` immediately after writing — catches errors while the context is fresh. Never `supabase db reset`.

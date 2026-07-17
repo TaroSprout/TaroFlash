@@ -1,0 +1,15 @@
+#!/usr/bin/env zsh
+# Regenerate supabase/schemas/ from the local database. One-time adoption tool
+# + drift check: after running, `git diff supabase/schemas` should be empty
+# unless the local DB has objects the schema files don't declare.
+# 06_auth_storage.sql (hand-maintained) and 00_extensions.sql are left untouched.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+tmp="$(mktemp)"
+docker exec supabase_db_TaroFlash pg_dump -U postgres -d postgres \
+  --schema-only --schema=public --schema=tests > "$tmp"
+
+find supabase/schemas -name '*.sql' ! -name '06_auth_storage.sql' ! -name '00_extensions.sql' -delete
+python3 scripts/split-schema.py "$tmp" supabase/schemas
+rm "$tmp"

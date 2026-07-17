@@ -48,7 +48,18 @@ max_client_conn = 100
 [db.migrations]
 # Specifies an ordered list of schema files that describe your database.
 # Supports glob patterns relative to supabase directory: "./schemas/*.sql"
-schema_paths = []
+schema_paths = [
+  "./schemas/00_extensions.sql",
+  "./schemas/02_types.sql",
+  "./schemas/03_tables.sql",
+  "./schemas/04_views.sql",
+  "./schemas/functions/*.sql",
+  "./schemas/06_auth_storage.sql",
+  "./schemas/07_triggers.sql",
+  "./schemas/08_policies.sql",
+  "./schemas/09_grants.sql",
+  "./schemas/10_comments.sql"
+]
 
 [db.seed]
 # If enabled, seeds the database after migrations during a db reset.
