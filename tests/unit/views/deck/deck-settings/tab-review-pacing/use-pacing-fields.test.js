@@ -48,20 +48,12 @@ function makeDeck(overrides = {}) {
   }
 }
 
-function makePacing(overrides = {}) {
+function makeDraft(overrides = {}) {
+  const { review_pacing_preset_id = null, pacing_overrides = {}, ...rest } = overrides
   return reactive({
-    preset_id: null,
-    desired_retention_override: null,
-    learning_steps_override: null,
-    relearning_steps_override: null,
-    has_max_reviews_override: false,
-    max_reviews_per_day_override: null,
-    has_max_new_override: false,
-    max_new_per_day_override: null,
-    leech_threshold_override: null,
-    has_max_interval_override: false,
-    max_interval_override: null,
-    ...overrides
+    review_pacing_preset_id,
+    pacing_overrides: { ...pacing_overrides },
+    ...rest
   })
 }
 
@@ -73,20 +65,20 @@ beforeEach(() => {
 
 describe('usePacingFields — preset_options', () => {
   test('labels the system preset via the default-preset-label translation, not its raw name', () => {
-    const { preset_options } = usePacingFields(makeDeck(), makePacing())
+    const { preset_options } = usePacingFields(makeDeck(), makeDraft())
     const system_option = preset_options.value.find((o) => o.value === '1')
     expect(system_option.label).toBe('deck.settings-modal.review-pacing.default-preset-label')
   })
 
   test('labels custom presets with their raw name', () => {
-    const { preset_options } = usePacingFields(makeDeck(), makePacing())
+    const { preset_options } = usePacingFields(makeDeck(), makeDraft())
     const custom_option = preset_options.value.find((o) => o.value === '2')
     expect(custom_option.label).toBe('Aggressive')
   })
 
   test('is empty when the presets query has no data yet', () => {
     mockPresetsData.value = []
-    const { preset_options } = usePacingFields(makeDeck(), makePacing())
+    const { preset_options } = usePacingFields(makeDeck(), makeDraft())
     expect(preset_options.value).toEqual([])
   })
 })
@@ -94,28 +86,34 @@ describe('usePacingFields — preset_options', () => {
 // ── selected_preset_value [obligation] ────────────────────────────────────────
 
 describe('usePacingFields — selected_preset_value [obligation]', () => {
-  test('reflects pacing.preset_id when set', () => {
-    const { selected_preset_value } = usePacingFields(makeDeck(), makePacing({ preset_id: 2 }))
+  test('reflects draft.review_pacing_preset_id when set', () => {
+    const { selected_preset_value } = usePacingFields(
+      makeDeck(),
+      makeDraft({ review_pacing_preset_id: 2 })
+    )
     expect(selected_preset_value.value).toBe('2')
   })
 
-  test('falls back to the system preset id when pacing.preset_id is null', () => {
-    const { selected_preset_value } = usePacingFields(makeDeck(), makePacing({ preset_id: null }))
+  test('falls back to the system preset id when review_pacing_preset_id is null', () => {
+    const { selected_preset_value } = usePacingFields(
+      makeDeck(),
+      makeDraft({ review_pacing_preset_id: null })
+    )
     expect(selected_preset_value.value).toBe('1')
   })
 
-  test('selecting a non-system preset writes its id to pacing.preset_id', () => {
-    const pacing = makePacing()
-    const { selected_preset_value } = usePacingFields(makeDeck(), pacing)
+  test('selecting a non-system preset writes its id to draft.review_pacing_preset_id', () => {
+    const draft = makeDraft()
+    const { selected_preset_value } = usePacingFields(makeDeck(), draft)
     selected_preset_value.value = '2'
-    expect(pacing.preset_id).toBe(2)
+    expect(draft.review_pacing_preset_id).toBe(2)
   })
 
-  test("selecting the system preset in the picker sets pacing.preset_id to null, not the system preset's id [obligation]", () => {
-    const pacing = makePacing({ preset_id: 2 })
-    const { selected_preset_value } = usePacingFields(makeDeck(), pacing)
+  test("selecting the system preset in the picker sets review_pacing_preset_id to null, not the system preset's id [obligation]", () => {
+    const draft = makeDraft({ review_pacing_preset_id: 2 })
+    const { selected_preset_value } = usePacingFields(makeDeck(), draft)
     selected_preset_value.value = '1'
-    expect(pacing.preset_id).toBeNull()
+    expect(draft.review_pacing_preset_id).toBeNull()
   })
 })
 
@@ -125,171 +123,185 @@ describe('usePacingFields — selected_preset_value [obligation]', () => {
 // flip this flag, even though they have their own has_max_*_override computeds.
 
 describe('usePacingFields — has_advanced_override [obligation]', () => {
-  test('is false when no override field is set', () => {
-    const { has_advanced_override } = usePacingFields(makeDeck(), makePacing())
+  test('is false when no override key is pinned', () => {
+    const { has_advanced_override } = usePacingFields(makeDeck(), makeDraft())
     expect(has_advanced_override.value).toBe(false)
   })
 
-  test('is true when desired_retention_override is set', () => {
+  test('is true when desired_retention is pinned', () => {
     const { has_advanced_override } = usePacingFields(
       makeDeck(),
-      makePacing({ desired_retention_override: 95 })
+      makeDraft({ pacing_overrides: { desired_retention: 95 } })
     )
     expect(has_advanced_override.value).toBe(true)
   })
 
-  test('is true when only learning_steps_override is set', () => {
+  test('is true when only learning_steps is pinned', () => {
     const { has_advanced_override } = usePacingFields(
       makeDeck(),
-      makePacing({ learning_steps_override: ['1d'] })
+      makeDraft({ pacing_overrides: { learning_steps: ['1d'] } })
     )
     expect(has_advanced_override.value).toBe(true)
   })
 
-  test('is true when only relearning_steps_override is set', () => {
+  test('is true when only relearning_steps is pinned', () => {
     const { has_advanced_override } = usePacingFields(
       makeDeck(),
-      makePacing({ relearning_steps_override: ['1d'] })
+      makeDraft({ pacing_overrides: { relearning_steps: ['1d'] } })
     )
     expect(has_advanced_override.value).toBe(true)
   })
 
-  test('stays false when only has_max_reviews_override is set (daily limits are not "advanced") [obligation]', () => {
+  test('stays false when only max_reviews_per_day is pinned (daily limits are not "advanced") [obligation]', () => {
     const { has_advanced_override } = usePacingFields(
       makeDeck(),
-      makePacing({ has_max_reviews_override: true, max_reviews_per_day_override: 30 })
-    )
-    expect(has_advanced_override.value).toBe(false)
-  })
-
-  test('stays false when only has_max_new_override is set (daily limits are not "advanced") [obligation]', () => {
-    const { has_advanced_override } = usePacingFields(
-      makeDeck(),
-      makePacing({ has_max_new_override: true, max_new_per_day_override: 30 })
+      makeDraft({ pacing_overrides: { max_reviews_per_day: 30 } })
     )
     expect(has_advanced_override.value).toBe(false)
   })
 
-  test('is true when only leech_threshold_override is set [obligation]', () => {
+  test('stays false when only max_new_per_day is pinned (daily limits are not "advanced") [obligation]', () => {
     const { has_advanced_override } = usePacingFields(
       makeDeck(),
-      makePacing({ leech_threshold_override: 12 })
+      makeDraft({ pacing_overrides: { max_new_per_day: 30 } })
+    )
+    expect(has_advanced_override.value).toBe(false)
+  })
+
+  test('is true when only leech_threshold is pinned [obligation]', () => {
+    const { has_advanced_override } = usePacingFields(
+      makeDeck(),
+      makeDraft({ pacing_overrides: { leech_threshold: 12 } })
     )
     expect(has_advanced_override.value).toBe(true)
   })
 
-  test('is true when only has_max_interval_override is set [obligation]', () => {
+  test('is true when only max_interval is pinned [obligation]', () => {
     const { has_advanced_override } = usePacingFields(
       makeDeck(),
-      makePacing({ has_max_interval_override: true, max_interval_override: 90 })
+      makeDraft({ pacing_overrides: { max_interval: 90 } })
     )
     expect(has_advanced_override.value).toBe(true)
   })
 })
 
-// ── per-field reset* functions ─────────────────────────────────────────────────
+// ── per-field reset* functions [obligation] ───────────────────────────────────
+// reset* is the only un-pin path — it deletes the key entirely (as opposed to
+// writing a value), which the "equality never unpins" tests below rely on.
 
-describe('usePacingFields — per-field reset functions', () => {
-  test('resetDesiredRetention clears only desired_retention_override', () => {
-    const pacing = makePacing({ desired_retention_override: 95, learning_steps_override: ['1d'] })
-    const { resetDesiredRetention } = usePacingFields(makeDeck(), pacing)
+describe('usePacingFields — per-field reset functions [obligation]', () => {
+  test('resetDesiredRetention deletes only the desired_retention key', () => {
+    const draft = makeDraft({
+      pacing_overrides: { desired_retention: 95, learning_steps: ['1d'] }
+    })
+    const { resetDesiredRetention } = usePacingFields(makeDeck(), draft)
 
     resetDesiredRetention()
 
-    expect(pacing.desired_retention_override).toBeNull()
-    expect(pacing.learning_steps_override).toEqual(['1d'])
+    expect('desired_retention' in draft.pacing_overrides).toBe(false)
+    expect(draft.pacing_overrides.learning_steps).toEqual(['1d'])
   })
 
-  test('resetLearningSteps clears only learning_steps_override', () => {
-    const pacing = makePacing({ learning_steps_override: ['1d'] })
-    const { resetLearningSteps } = usePacingFields(makeDeck(), pacing)
+  test('resetLearningSteps deletes only the learning_steps key', () => {
+    const draft = makeDraft({ pacing_overrides: { learning_steps: ['1d'] } })
+    const { resetLearningSteps } = usePacingFields(makeDeck(), draft)
 
     resetLearningSteps()
 
-    expect(pacing.learning_steps_override).toBeNull()
+    expect('learning_steps' in draft.pacing_overrides).toBe(false)
   })
 
-  test('resetRelearningSteps clears only relearning_steps_override', () => {
-    const pacing = makePacing({ relearning_steps_override: ['1d'] })
-    const { resetRelearningSteps } = usePacingFields(makeDeck(), pacing)
+  test('resetRelearningSteps deletes only the relearning_steps key', () => {
+    const draft = makeDraft({ pacing_overrides: { relearning_steps: ['1d'] } })
+    const { resetRelearningSteps } = usePacingFields(makeDeck(), draft)
 
     resetRelearningSteps()
 
-    expect(pacing.relearning_steps_override).toBeNull()
+    expect('relearning_steps' in draft.pacing_overrides).toBe(false)
   })
 
-  test('resetMaxReviewsPerDay un-pins the override and clears its value', () => {
-    const pacing = makePacing({ has_max_reviews_override: true, max_reviews_per_day_override: 30 })
-    const { resetMaxReviewsPerDay } = usePacingFields(makeDeck(), pacing)
+  test('resetMaxReviewsPerDay deletes the max_reviews_per_day key entirely', () => {
+    const draft = makeDraft({ pacing_overrides: { max_reviews_per_day: 30 } })
+    const { resetMaxReviewsPerDay } = usePacingFields(makeDeck(), draft)
 
     resetMaxReviewsPerDay()
 
-    expect(pacing.has_max_reviews_override).toBe(false)
-    expect(pacing.max_reviews_per_day_override).toBeNull()
+    expect('max_reviews_per_day' in draft.pacing_overrides).toBe(false)
   })
 
-  test('resetMaxNewPerDay un-pins the override and clears its value', () => {
-    const pacing = makePacing({ has_max_new_override: true, max_new_per_day_override: 30 })
-    const { resetMaxNewPerDay } = usePacingFields(makeDeck(), pacing)
+  test('resetMaxNewPerDay deletes the max_new_per_day key entirely', () => {
+    const draft = makeDraft({ pacing_overrides: { max_new_per_day: 30 } })
+    const { resetMaxNewPerDay } = usePacingFields(makeDeck(), draft)
 
     resetMaxNewPerDay()
 
-    expect(pacing.has_max_new_override).toBe(false)
-    expect(pacing.max_new_per_day_override).toBeNull()
+    expect('max_new_per_day' in draft.pacing_overrides).toBe(false)
   })
 
-  test('resetLeechThreshold nulls leech_threshold_override [obligation]', () => {
-    const pacing = makePacing({ leech_threshold_override: 12 })
-    const { resetLeechThreshold } = usePacingFields(makeDeck(), pacing)
+  test('resetLeechThreshold deletes the leech_threshold key [obligation]', () => {
+    const draft = makeDraft({ pacing_overrides: { leech_threshold: 12 } })
+    const { resetLeechThreshold } = usePacingFields(makeDeck(), draft)
 
     resetLeechThreshold()
 
-    expect(pacing.leech_threshold_override).toBeNull()
+    expect('leech_threshold' in draft.pacing_overrides).toBe(false)
   })
 
-  test('resetMaxInterval un-pins the override and clears its value [obligation]', () => {
-    const pacing = makePacing({ has_max_interval_override: true, max_interval_override: 90 })
-    const { resetMaxInterval } = usePacingFields(makeDeck(), pacing)
+  test('resetMaxInterval deletes the max_interval key entirely, including a pinned-null value [obligation]', () => {
+    const draft = makeDraft({ pacing_overrides: { max_interval: null } })
+    const { resetMaxInterval } = usePacingFields(makeDeck(), draft)
 
     resetMaxInterval()
 
-    expect(pacing.has_max_interval_override).toBe(false)
-    expect(pacing.max_interval_override).toBeNull()
+    expect('max_interval' in draft.pacing_overrides).toBe(false)
   })
 
-  test('resetting a field does not touch pacing.preset_id', () => {
-    const pacing = makePacing({ preset_id: 2, desired_retention_override: 95 })
-    const { resetDesiredRetention } = usePacingFields(makeDeck(), pacing)
+  test('resetting a field does not touch review_pacing_preset_id', () => {
+    const draft = makeDraft({
+      review_pacing_preset_id: 2,
+      pacing_overrides: { desired_retention: 95 }
+    })
+    const { resetDesiredRetention } = usePacingFields(makeDeck(), draft)
 
     resetDesiredRetention()
 
-    expect(pacing.preset_id).toBe(2)
+    expect(draft.review_pacing_preset_id).toBe(2)
   })
 })
 
 // ── desired_retention [obligation] ────────────────────────────────────────────
 
 describe('usePacingFields — desired_retention [obligation]', () => {
-  test('reads the deck-resolved value when no override is set', () => {
-    const { desired_retention } = usePacingFields(makeDeck({ desired_retention: 90 }), makePacing())
+  test('reads the deck-resolved value when no override is pinned', () => {
+    const { desired_retention } = usePacingFields(makeDeck({ desired_retention: 90 }), makeDraft())
     expect(desired_retention.value).toBe(90)
   })
 
-  test('reads the override value over the deck-resolved value when set', () => {
+  test('reads the pinned override value over the deck-resolved value when set', () => {
     const { desired_retention } = usePacingFields(
       makeDeck({ desired_retention: 90 }),
-      makePacing({ desired_retention_override: 82 })
+      makeDraft({ pacing_overrides: { desired_retention: 82 } })
     )
     expect(desired_retention.value).toBe(82)
   })
 
-  test('writing to desired_retention always pins pacing.desired_retention_override [obligation]', () => {
-    const pacing = makePacing()
-    const { desired_retention } = usePacingFields(makeDeck(), pacing)
+  test('writing to desired_retention always pins the key in pacing_overrides [obligation]', () => {
+    const draft = makeDraft()
+    const { desired_retention } = usePacingFields(makeDeck(), draft)
 
     desired_retention.value = 88
 
-    expect(pacing.desired_retention_override).toBe(88)
+    expect(draft.pacing_overrides.desired_retention).toBe(88)
+  })
+
+  test('writing the same value as the selected preset still pins the key — equality never unpins [obligation]', () => {
+    const draft = makeDraft({ review_pacing_preset_id: 2 }) // CUSTOM_PRESET.desired_retention = 95
+    const { desired_retention } = usePacingFields(makeDeck(), draft)
+
+    desired_retention.value = 95
+
+    expect('desired_retention' in draft.pacing_overrides).toBe(true)
+    expect(draft.pacing_overrides.desired_retention).toBe(95)
   })
 })
 
@@ -299,7 +311,7 @@ describe('usePacingFields — learning_steps_key / relearning_steps_key [obligat
   test('learning_steps_key resolves from the deck value when no override is set', () => {
     const { learning_steps_key } = usePacingFields(
       makeDeck({ learning_steps: ['1m', '10m'] }),
-      makePacing()
+      makeDraft()
     )
     expect(learning_steps_key.value).toBe('1m-10m')
   })
@@ -307,35 +319,35 @@ describe('usePacingFields — learning_steps_key / relearning_steps_key [obligat
   test('learning_steps_key resolves from the override when set', () => {
     const { learning_steps_key } = usePacingFields(
       makeDeck({ learning_steps: ['1m', '10m'] }),
-      makePacing({ learning_steps_override: ['1d'] })
+      makeDraft({ pacing_overrides: { learning_steps: ['1d'] } })
     )
     expect(learning_steps_key.value).toBe('1d')
   })
 
-  test('setting learning_steps_key always pins pacing.learning_steps_override to the preset array [obligation]', () => {
-    const pacing = makePacing()
-    const { learning_steps_key } = usePacingFields(makeDeck(), pacing)
+  test('setting learning_steps_key always pins the learning_steps key to the preset array [obligation]', () => {
+    const draft = makeDraft()
+    const { learning_steps_key } = usePacingFields(makeDeck(), draft)
 
     learning_steps_key.value = '1hr'
 
-    expect(pacing.learning_steps_override).toEqual(['1h'])
+    expect(draft.pacing_overrides.learning_steps).toEqual(['1h'])
   })
 
   test('relearning_steps_key resolves from the deck value when no override is set', () => {
     const { relearning_steps_key } = usePacingFields(
       makeDeck({ relearning_steps: ['10m'] }),
-      makePacing()
+      makeDraft()
     )
     expect(relearning_steps_key.value).toBe('10m')
   })
 
-  test('setting relearning_steps_key always pins pacing.relearning_steps_override [obligation]', () => {
-    const pacing = makePacing()
-    const { relearning_steps_key } = usePacingFields(makeDeck(), pacing)
+  test('setting relearning_steps_key always pins the relearning_steps key [obligation]', () => {
+    const draft = makeDraft()
+    const { relearning_steps_key } = usePacingFields(makeDeck(), draft)
 
     relearning_steps_key.value = '1m-10m'
 
-    expect(pacing.relearning_steps_override).toEqual(['1m', '10m'])
+    expect(draft.pacing_overrides.relearning_steps).toEqual(['1m', '10m'])
   })
 })
 
@@ -346,14 +358,14 @@ describe('usePacingFields — max_reviews_per_day / max_new_per_day [obligation]
     mockPresetsData.value = [{ ...SYSTEM_PRESET, max_reviews_per_day: 77 }, CUSTOM_PRESET]
     const { max_reviews_per_day } = usePacingFields(
       makeDeck({ max_reviews_per_day: 42 }),
-      makePacing()
+      makeDraft()
     )
     expect(max_reviews_per_day.value).toBe(77)
   })
 
   test('reads the live selected preset value, not deck.max_new_per_day, when not overridden [obligation]', () => {
     mockPresetsData.value = [{ ...SYSTEM_PRESET, max_new_per_day: 15 }, CUSTOM_PRESET]
-    const { max_new_per_day } = usePacingFields(makeDeck({ max_new_per_day: 20 }), makePacing())
+    const { max_new_per_day } = usePacingFields(makeDeck({ max_new_per_day: 20 }), makeDraft())
     expect(max_new_per_day.value).toBe(15)
   })
 
@@ -361,7 +373,7 @@ describe('usePacingFields — max_reviews_per_day / max_new_per_day [obligation]
     mockPresetsData.value = [{ ...SYSTEM_PRESET, max_reviews_per_day: null }, CUSTOM_PRESET]
     const { max_reviews_per_day } = usePacingFields(
       makeDeck({ max_reviews_per_day: 42 }),
-      makePacing()
+      makeDraft()
     )
     expect(max_reviews_per_day.value).toBe(0)
   })
@@ -370,73 +382,74 @@ describe('usePacingFields — max_reviews_per_day / max_new_per_day [obligation]
     mockPresetsData.value = []
     const { max_reviews_per_day } = usePacingFields(
       makeDeck({ max_reviews_per_day: 42 }),
-      makePacing()
+      makeDraft()
     )
     expect(max_reviews_per_day.value).toBe(42)
   })
 
-  test('reads the override value over the deck-resolved value when has_max_reviews_override is set [obligation]', () => {
+  test('reads the pinned override value over the deck-resolved value when the key is present [obligation]', () => {
     const { max_reviews_per_day } = usePacingFields(
       makeDeck({ max_reviews_per_day: 42 }),
-      makePacing({ has_max_reviews_override: true, max_reviews_per_day_override: 10 })
+      makeDraft({ pacing_overrides: { max_reviews_per_day: 10 } })
     )
     expect(max_reviews_per_day.value).toBe(10)
   })
 
-  test('a deck can override to unbounded (0) even when the deck-resolved value is a concrete number [obligation]', () => {
+  test('a pinned-null override displays 0, even when the deck-resolved value is a concrete number [obligation]', () => {
     const { max_reviews_per_day } = usePacingFields(
       makeDeck({ max_reviews_per_day: 42 }),
-      makePacing({ has_max_reviews_override: true, max_reviews_per_day_override: null })
+      makeDraft({ pacing_overrides: { max_reviews_per_day: null } })
     )
     expect(max_reviews_per_day.value).toBe(0)
   })
 
-  test('writing to max_reviews_per_day always pins has_max_reviews_override [obligation]', () => {
-    const pacing = makePacing()
-    const { max_reviews_per_day } = usePacingFields(makeDeck(), pacing)
+  test('writing to max_reviews_per_day always pins the key in pacing_overrides [obligation]', () => {
+    const draft = makeDraft()
+    const { max_reviews_per_day } = usePacingFields(makeDeck(), draft)
 
     max_reviews_per_day.value = 60
 
-    expect(pacing.has_max_reviews_override).toBe(true)
-    expect(pacing.max_reviews_per_day_override).toBe(60)
+    expect('max_reviews_per_day' in draft.pacing_overrides).toBe(true)
+    expect(draft.pacing_overrides.max_reviews_per_day).toBe(60)
   })
 
-  test('writing 0 to max_reviews_per_day stores null and pins has_max_reviews_override [obligation]', () => {
-    const pacing = makePacing()
-    const { max_reviews_per_day } = usePacingFields(makeDeck(), pacing)
+  test('writing 0 stores null UNDER the key — the key stays present, pinned-uncapped [obligation]', () => {
+    const draft = makeDraft()
+    const { max_reviews_per_day } = usePacingFields(makeDeck(), draft)
 
     max_reviews_per_day.value = 0
 
-    expect(pacing.has_max_reviews_override).toBe(true)
-    expect(pacing.max_reviews_per_day_override).toBeNull()
+    expect('max_reviews_per_day' in draft.pacing_overrides).toBe(true)
+    expect(draft.pacing_overrides.max_reviews_per_day).toBeNull()
   })
 
-  test('reads the override value for max_new_per_day over the deck-resolved value when set [obligation]', () => {
+  test('writing the same value as the selected preset still pins the key — equality never unpins [obligation]', () => {
+    mockPresetsData.value = [{ ...SYSTEM_PRESET, max_reviews_per_day: 40 }, CUSTOM_PRESET]
+    const draft = makeDraft()
+    const { max_reviews_per_day } = usePacingFields(makeDeck(), draft)
+
+    max_reviews_per_day.value = 40
+
+    expect('max_reviews_per_day' in draft.pacing_overrides).toBe(true)
+    expect(draft.pacing_overrides.max_reviews_per_day).toBe(40)
+  })
+
+  test('reads the pinned override value for max_new_per_day over the deck-resolved value when set [obligation]', () => {
     const { max_new_per_day } = usePacingFields(
       makeDeck({ max_new_per_day: 20 }),
-      makePacing({ has_max_new_override: true, max_new_per_day_override: 5 })
+      makeDraft({ pacing_overrides: { max_new_per_day: 5 } })
     )
     expect(max_new_per_day.value).toBe(5)
   })
 
-  test('writing to max_new_per_day always pins has_max_new_override [obligation]', () => {
-    const pacing = makePacing()
-    const { max_new_per_day } = usePacingFields(makeDeck(), pacing)
-
-    max_new_per_day.value = null
-
-    expect(pacing.has_max_new_override).toBe(true)
-    expect(pacing.max_new_per_day_override).toBeNull()
-  })
-
-  test('writing 0 to max_new_per_day stores null and pins has_max_new_override [obligation]', () => {
-    const pacing = makePacing()
-    const { max_new_per_day } = usePacingFields(makeDeck(), pacing)
+  test('writing 0 to max_new_per_day stores null under the key, key stays present [obligation]', () => {
+    const draft = makeDraft()
+    const { max_new_per_day } = usePacingFields(makeDeck(), draft)
 
     max_new_per_day.value = 0
 
-    expect(pacing.has_max_new_override).toBe(true)
-    expect(pacing.max_new_per_day_override).toBeNull()
+    expect('max_new_per_day' in draft.pacing_overrides).toBe(true)
+    expect(draft.pacing_overrides.max_new_per_day).toBeNull()
   })
 })
 
@@ -448,76 +461,137 @@ describe('usePacingFields — leech_threshold [obligation]', () => {
   test('reads the override value over the preset and deck-resolved values when set', () => {
     const { leech_threshold } = usePacingFields(
       makeDeck({ leech_threshold: 24 }),
-      makePacing({ leech_threshold_override: 5 })
+      makeDraft({ pacing_overrides: { leech_threshold: 5 } })
     )
     expect(leech_threshold.value).toBe(5)
   })
 
   test('falls back to the selected preset value when no override is set', () => {
     mockPresetsData.value = [{ ...SYSTEM_PRESET, leech_threshold: 16 }, CUSTOM_PRESET]
-    const { leech_threshold } = usePacingFields(makeDeck({ leech_threshold: 24 }), makePacing())
+    const { leech_threshold } = usePacingFields(makeDeck({ leech_threshold: 24 }), makeDraft())
     expect(leech_threshold.value).toBe(16)
   })
 
   test('falls back to deck.leech_threshold when neither override nor preset value is present', () => {
     mockPresetsData.value = []
-    const { leech_threshold } = usePacingFields(makeDeck({ leech_threshold: 24 }), makePacing())
+    const { leech_threshold } = usePacingFields(makeDeck({ leech_threshold: 24 }), makeDraft())
     expect(leech_threshold.value).toBe(24)
   })
 
-  test('writing to leech_threshold always pins pacing.leech_threshold_override', () => {
-    const pacing = makePacing()
-    const { leech_threshold } = usePacingFields(makeDeck(), pacing)
+  test('writing to leech_threshold always pins the key in pacing_overrides', () => {
+    const draft = makeDraft()
+    const { leech_threshold } = usePacingFields(makeDeck(), draft)
 
     leech_threshold.value = 5
 
-    expect(pacing.leech_threshold_override).toBe(5)
+    expect(draft.pacing_overrides.leech_threshold).toBe(5)
   })
 })
 
 // ── max_interval [obligation] ─────────────────────────────────────────────────
-// 0-sentinel + has-gate (CASE), same shape as the daily-limit computeds — resolves
-// differently from leech_threshold above.
+// 0-sentinel + key-presence gate, same shape as the daily-limit computeds —
+// resolves differently from leech_threshold above.
 
 describe('usePacingFields — max_interval [obligation]', () => {
   test('returns 0 when the resolved deck value is null (uncapped) and no override is pinned', () => {
     mockPresetsData.value = []
-    const { max_interval } = usePacingFields(makeDeck({ max_interval: null }), makePacing())
+    const { max_interval } = usePacingFields(makeDeck({ max_interval: null }), makeDraft())
     expect(max_interval.value).toBe(0)
   })
 
   test('reads the live selected preset value, not deck.max_interval, when not overridden', () => {
     mockPresetsData.value = [{ ...SYSTEM_PRESET, max_interval: 180 }, CUSTOM_PRESET]
-    const { max_interval } = usePacingFields(makeDeck({ max_interval: 365 }), makePacing())
+    const { max_interval } = usePacingFields(makeDeck({ max_interval: 365 }), makeDraft())
     expect(max_interval.value).toBe(180)
   })
 
-  test('reads the override value over the deck-resolved value when has_max_interval_override is set', () => {
+  test('reads the pinned override value over the deck-resolved value when the key is present', () => {
     const { max_interval } = usePacingFields(
       makeDeck({ max_interval: 365 }),
-      makePacing({ has_max_interval_override: true, max_interval_override: 90 })
+      makeDraft({ pacing_overrides: { max_interval: 90 } })
     )
     expect(max_interval.value).toBe(90)
   })
 
-  test('setter with 0 stores null and pins has_max_interval_override true', () => {
-    const pacing = makePacing()
-    const { max_interval } = usePacingFields(makeDeck(), pacing)
+  test('a pinned-null max_interval displays 0 even when the selected preset has a numeric cap [obligation]', () => {
+    mockPresetsData.value = [{ ...SYSTEM_PRESET, max_interval: 60 }, CUSTOM_PRESET]
+    const { max_interval } = usePacingFields(
+      makeDeck({ max_interval: 365 }),
+      makeDraft({ pacing_overrides: { max_interval: null } })
+    )
+    expect(max_interval.value).toBe(0)
+  })
+
+  test('setter with 0 stores null under the key — the key stays present, pinned-uncapped [obligation]', () => {
+    const draft = makeDraft()
+    const { max_interval } = usePacingFields(makeDeck(), draft)
 
     max_interval.value = 0
 
-    expect(pacing.has_max_interval_override).toBe(true)
-    expect(pacing.max_interval_override).toBeNull()
+    expect('max_interval' in draft.pacing_overrides).toBe(true)
+    expect(draft.pacing_overrides.max_interval).toBeNull()
   })
 
-  test('setter with a positive value stores it and pins has_max_interval_override true', () => {
-    const pacing = makePacing()
-    const { max_interval } = usePacingFields(makeDeck(), pacing)
+  test('setter with a positive value stores it under the key', () => {
+    const draft = makeDraft()
+    const { max_interval } = usePacingFields(makeDeck(), draft)
 
     max_interval.value = 120
 
-    expect(pacing.has_max_interval_override).toBe(true)
-    expect(pacing.max_interval_override).toBe(120)
+    expect(draft.pacing_overrides.max_interval).toBe(120)
+  })
+})
+
+// ── precedence is read-order [obligation] ─────────────────────────────────────
+// Switching the drafted preset must never touch pacing_overrides keys, and
+// non-overridden fields must reflect the NEWLY drafted preset immediately —
+// not the stale deck.* (which only reflects the last-saved preset).
+
+describe('usePacingFields — precedence is read-order [obligation]', () => {
+  test('switching the drafted preset leaves every pacing_overrides key untouched and keeps the overridden field pinned [obligation]', () => {
+    const draft = makeDraft({
+      review_pacing_preset_id: 1,
+      pacing_overrides: { desired_retention: 99 }
+    })
+    const { desired_retention, selected_preset_value } = usePacingFields(makeDeck(), draft)
+
+    selected_preset_value.value = '2'
+
+    expect(draft.pacing_overrides).toEqual({ desired_retention: 99 })
+    expect(desired_retention.value).toBe(99)
+  })
+
+  test('a non-overridden field immediately reflects the newly drafted preset, not the stale deck.* value [obligation]', () => {
+    // deck.* reflects preset 1 (the previously saved preset); switching the
+    // draft to preset 2 must show preset 2's values right away.
+    const deck = makeDeck({ desired_retention: SYSTEM_PRESET.desired_retention })
+    const draft = makeDraft({ review_pacing_preset_id: 1 })
+    const { desired_retention, selected_preset_value } = usePacingFields(deck, draft)
+
+    expect(desired_retention.value).toBe(SYSTEM_PRESET.desired_retention)
+
+    selected_preset_value.value = '2'
+
+    expect(desired_retention.value).toBe(CUSTOM_PRESET.desired_retention)
+  })
+})
+
+// ── unpin fallback [obligation] ────────────────────────────────────────────────
+// Deleting an override key while deck.* still bakes in the old override must
+// fall back to the LIVE selected preset, not the stale deck.* value.
+
+describe('usePacingFields — unpin fallback [obligation]', () => {
+  test('deleting an override falls back to the live selected preset, not the stale deck.* value [obligation]', () => {
+    mockPresetsData.value = [{ ...SYSTEM_PRESET, desired_retention: 90 }, CUSTOM_PRESET]
+    // deck.desired_retention still reflects a since-cleared override (99) —
+    // a naive fallback to deck.* would wrongly keep showing 99.
+    const deck = makeDeck({ desired_retention: 99 })
+    const draft = makeDraft({ pacing_overrides: { desired_retention: 99 } })
+    const { desired_retention, resetDesiredRetention } = usePacingFields(deck, draft)
+
+    resetDesiredRetention()
+
+    expect(desired_retention.value).toBe(90)
   })
 })
 
@@ -525,7 +599,7 @@ describe('usePacingFields — max_interval [obligation]', () => {
 
 describe('usePacingFields — step options', () => {
   test('learning_steps_options covers every LEARNING_STEP_PRESETS key', () => {
-    const { learning_steps_options } = usePacingFields(makeDeck(), makePacing())
+    const { learning_steps_options } = usePacingFields(makeDeck(), makeDraft())
     expect(learning_steps_options.value.map((o) => o.value)).toEqual([
       '10m',
       '1hr',
@@ -536,7 +610,7 @@ describe('usePacingFields — step options', () => {
   })
 
   test('relearning_steps_options covers every RELEARNING_STEP_PRESETS key', () => {
-    const { relearning_steps_options } = usePacingFields(makeDeck(), makePacing())
+    const { relearning_steps_options } = usePacingFields(makeDeck(), makeDraft())
     expect(relearning_steps_options.value.map((o) => o.value)).toEqual([
       '10m',
       '1hr',

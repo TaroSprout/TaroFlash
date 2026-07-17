@@ -33,12 +33,9 @@ SELECT bag_eq(
       ('study_config'), ('cover_config'), ('card_attributes'), ('card_count'),
       ('reviewed_today_count'), ('new_reviewed_today_count'), ('due_count'), ('rank'),
       ('review_pacing_preset_id'), ('desired_retention'), ('learning_steps'), ('relearning_steps'),
-      ('desired_retention_override'), ('learning_steps_override'), ('relearning_steps_override'),
       ('max_reviews_per_day'), ('max_new_per_day'),
-      ('has_max_reviews_override'), ('max_reviews_per_day_override'),
-      ('has_max_new_override'), ('max_new_per_day_override'),
       ('leech_threshold'), ('max_interval'),
-      ('leech_threshold_override'), ('has_max_interval_override'), ('max_interval_override') $$,
+      ('pacing_overrides') $$,
   'get_member_decks (via public.member_deck) exposes the columns the FE consumes [obligation]'
 );
 

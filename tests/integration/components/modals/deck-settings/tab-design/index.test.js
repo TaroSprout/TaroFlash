@@ -49,9 +49,7 @@ const CardDesignerStub = defineComponent({
 
 function makeEditor(overrides = {}) {
   return {
-    settings: reactive({ id: 7 }),
-    cover: reactive({}),
-    card_attributes: reactive({ front: {}, back: {} }),
+    draft: reactive({ id: 7, cover_config: {}, card_attributes: { front: {}, back: {} } }),
     active_side: ref('cover'),
     preview_front_text: ref(undefined),
     preview_back_text: ref(undefined),
@@ -91,9 +89,9 @@ describe('TabDesign — inline preview visibility', () => {
     expect(wrapper.find('[data-testid="tab-design__inline-preview"]').exists()).toBe(true)
   })
 
-  test('passes the active side from editor.settings to the inline preview', () => {
+  test('passes the active side from editor.draft to the inline preview', () => {
     const editor = makeEditor()
-    editor.settings.id = 42
+    editor.draft.id = 42
     const { wrapper } = makeWrapper(editor, 'sheet')
 
     // Preview renders with the current active side (cover by default)

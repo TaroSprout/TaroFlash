@@ -84,10 +84,7 @@ vi.mock('@/composables/deck/editor', async () => {
   const { reactive, ref: vueRef } = await import('vue')
   const editor = {
     deck: { id: 1 },
-    settings: reactive({}),
-    config: reactive({}),
-    cover: reactive({}),
-    card_attributes: reactive({ front: {}, back: {} }),
+    draft: reactive({ cover_config: {}, card_attributes: { front: {}, back: {} } }),
     cover_image_preview: vueRef(undefined),
     cover_image_loading: vueRef(false),
     active_side: vueRef('cover'),

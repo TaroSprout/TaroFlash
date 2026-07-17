@@ -145,7 +145,7 @@ describe('fetchMemberDeckCount', () => {
 })
 
 describe('upsertDeck', () => {
-  test('calls the save_deck RPC with the deck id and pacing override params, and returns the resolved row', async () => {
+  test('calls the save_deck RPC with the deck id, preset link and pacing overrides bag, and returns the resolved row', async () => {
     const saved = { id: 1, title: 'T' }
     supabase.rpc.mockImplementationOnce((fn, args) => {
       capturedRpcs.push({ fn, args })
@@ -155,31 +155,21 @@ describe('upsertDeck', () => {
     const result = await upsertDeck({
       id: 1,
       title: 'T',
-      has_max_reviews_override: true,
-      max_reviews_per_day_override: 30,
-      has_max_new_override: false,
-      max_new_per_day_override: null,
-      leech_threshold_override: 12,
-      has_max_interval_override: true,
-      max_interval_override: 90
+      review_pacing_preset_id: 7,
+      pacing_overrides: { max_reviews_per_day: 30, leech_threshold: 12, max_interval: null }
     })
 
     expect(capturedRpcs[0].fn).toBe('save_deck')
     expect(capturedRpcs[0].args).toMatchObject({
       p_deck_id: 1,
       p_title: 'T',
-      p_has_max_reviews_override: true,
-      p_max_reviews_per_day_override: 30,
-      p_has_max_new_override: false,
-      p_max_new_per_day_override: null,
-      p_leech_threshold_override: 12,
-      p_has_max_interval_override: true,
-      p_max_interval_override: 90
+      p_review_pacing_preset_id: 7,
+      p_pacing_overrides: { max_reviews_per_day: 30, leech_threshold: 12, max_interval: null }
     })
     expect(result).toEqual(saved)
   })
 
-  test('defaults leech/max-interval override params when omitted from the deck [obligation]', async () => {
+  test('defaults the pacing overrides bag to empty when omitted from the deck', async () => {
     supabase.rpc.mockImplementationOnce((fn, args) => {
       capturedRpcs.push({ fn, args })
       return Promise.resolve({ data: [{ id: 1 }], error: null })
@@ -188,9 +178,8 @@ describe('upsertDeck', () => {
     await upsertDeck({ id: 1, title: 'T' })
 
     expect(capturedRpcs[0].args).toMatchObject({
-      p_leech_threshold_override: null,
-      p_has_max_interval_override: false,
-      p_max_interval_override: null
+      p_review_pacing_preset_id: null,
+      p_pacing_overrides: {}
     })
   })
 

@@ -97,7 +97,7 @@ describe('upsertDeck (contract)', () => {
     expect(deck).toHaveProperty('card_count')
     expect(deck).toHaveProperty('due_count')
     expect(deck).toHaveProperty('max_reviews_per_day')
-    expect(deck).toHaveProperty('has_max_reviews_override')
+    expect(deck).toHaveProperty('pacing_overrides')
   })
 
   test('updates an existing deck via save_deck', async () => {
@@ -109,34 +109,31 @@ describe('upsertDeck (contract)', () => {
     expect(updated.title).toBe('Renamed')
   })
 
-  test('persists a daily-limit override on the deck_review_pacing sidecar', async () => {
+  test('persists a daily-limit override in the pacing_overrides jsonb bag', async () => {
     const created = await upsertDeck({ title: 'Capped Deck' })
 
     const updated = await upsertDeck({
       id: created.id,
       title: 'Capped Deck',
-      has_max_reviews_override: true,
-      max_reviews_per_day_override: 15
+      pacing_overrides: { max_reviews_per_day: 15 }
     })
 
-    expect(updated.has_max_reviews_override).toBe(true)
+    expect(updated.pacing_overrides).toEqual({ max_reviews_per_day: 15 })
     expect(updated.max_reviews_per_day).toBe(15)
   })
 
-  test('persists leech_threshold_override and max_interval overrides on the deck_review_pacing sidecar [obligation]', async () => {
+  test('persists leech_threshold and a pinned-null max_interval override [obligation]', async () => {
     const created = await upsertDeck({ title: 'Leech + Interval Deck' })
 
     const updated = await upsertDeck({
       id: created.id,
       title: 'Leech + Interval Deck',
-      leech_threshold_override: 12,
-      has_max_interval_override: true,
-      max_interval_override: 90
+      pacing_overrides: { leech_threshold: 12, max_interval: null }
     })
 
     expect(updated.leech_threshold).toBe(12)
-    expect(updated.has_max_interval_override).toBe(true)
-    expect(updated.max_interval).toBe(90)
+    expect(updated.pacing_overrides).toEqual({ leech_threshold: 12, max_interval: null })
+    expect(updated.max_interval).toBeNull()
   })
 })
 

@@ -6,8 +6,8 @@
 --   • total clamped by max_reviews_per_day
 --   • caps consume from today's already-reviewed counts (remaining = cap - used)
 --   • no caps → raw pool
--- Caps now live on the deck_review_pacing sidecar (has_max_*_override +
--- max_*_per_day_override), not decks.study_config.
+-- Caps now live on the deck_review_pacing sidecar's overrides jsonb bag, not
+-- decks.study_config.
 -- =============================================================================
 
 BEGIN;
@@ -26,16 +26,14 @@ INSERT INTO public.decks (id, title, is_public) VALUES
   (9702, 'Total cap only',    false),
   (9703, 'Both caps',         false);
 
-INSERT INTO public.deck_review_pacing (deck_id, has_max_new_override, max_new_per_day_override)
-VALUES (9701, true, 5);
+INSERT INTO public.deck_review_pacing (deck_id, overrides)
+VALUES (9701, '{"max_new_per_day": 5}'::jsonb);
 
-INSERT INTO public.deck_review_pacing (deck_id, has_max_reviews_override, max_reviews_per_day_override)
-VALUES (9702, true, 7);
+INSERT INTO public.deck_review_pacing (deck_id, overrides)
+VALUES (9702, '{"max_reviews_per_day": 7}'::jsonb);
 
-INSERT INTO public.deck_review_pacing (
-  deck_id, has_max_new_override, max_new_per_day_override,
-  has_max_reviews_override, max_reviews_per_day_override
-) VALUES (9703, true, 5, true, 12);
+INSERT INTO public.deck_review_pacing (deck_id, overrides)
+VALUES (9703, '{"max_new_per_day": 5, "max_reviews_per_day": 12}'::jsonb);
 
 INSERT INTO public.cards (deck_id, front_text, back_text, rank)
 SELECT d.id, 'Q' || gs, 'A' || gs, gs * 1000

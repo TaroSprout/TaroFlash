@@ -85,9 +85,11 @@ let _wrappers = []
 
 function makeTab({ audio = {}, accessibility = {} } = {}) {
   const editor = {
-    preferences: reactive({
-      accessibility: { left_hand: false, ...accessibility },
-      audio: { study_sounds: 5, interface_sounds: 5, hover_sounds: 5, ...audio }
+    draft: reactive({
+      preferences: {
+        accessibility: { left_hand: false, ...accessibility },
+        audio: { study_sounds: 5, interface_sounds: 5, hover_sounds: 5, ...audio }
+      }
     })
   }
 
@@ -165,19 +167,19 @@ describe('TabApp', () => {
   test('clicking first slider increments study_sounds on the editor', async () => {
     const { wrapper, editor } = makeTab()
     await wrapper.findAll('[data-testid="slider-stub"]')[0].trigger('click')
-    expect(editor.preferences.audio.study_sounds).toBe(6)
+    expect(editor.draft.preferences.audio.study_sounds).toBe(6)
   })
 
   test('clicking second slider increments interface_sounds on the editor', async () => {
     const { wrapper, editor } = makeTab()
     await wrapper.findAll('[data-testid="slider-stub"]')[1].trigger('click')
-    expect(editor.preferences.audio.interface_sounds).toBe(6)
+    expect(editor.draft.preferences.audio.interface_sounds).toBe(6)
   })
 
   test('clicking third slider increments hover_sounds on the editor', async () => {
     const { wrapper, editor } = makeTab()
     await wrapper.findAll('[data-testid="slider-stub"]')[2].trigger('click')
-    expect(editor.preferences.audio.hover_sounds).toBe(6)
+    expect(editor.draft.preferences.audio.hover_sounds).toBe(6)
   })
 
   test('renders the left-hand toggle reflecting editor preferences', () => {
@@ -190,14 +192,14 @@ describe('TabApp', () => {
   test('toggling left-hand updates editor preferences', async () => {
     const { wrapper, editor } = makeTab()
     await wrapper.find('[data-testid="toggle-stub"]').trigger('click')
-    expect(editor.preferences.accessibility.left_hand).toBe(true)
+    expect(editor.draft.preferences.accessibility.left_hand).toBe(true)
   })
 
   // ── Preview/reset obligation tests ────────────────────────────────────────
 
   test('changing audio prefs calls previewVolumeConfig with mapped bus volumes [obligation]', async () => {
     const { editor } = makeTab()
-    editor.preferences.audio.study_sounds = 8
+    editor.draft.preferences.audio.study_sounds = 8
     await nextTick()
     await nextTick()
     expect(mockPreviewVolumeConfig).toHaveBeenCalledWith(expect.objectContaining({ study: 8 }))
@@ -207,7 +209,7 @@ describe('TabApp', () => {
     const { editor } = makeTab({
       audio: { study_sounds: 3, interface_sounds: 7, hover_sounds: 1 }
     })
-    editor.preferences.audio.interface_sounds = 9
+    editor.draft.preferences.audio.interface_sounds = 9
     await nextTick()
     await nextTick()
     expect(mockPreviewVolumeConfig).toHaveBeenCalledWith({ study: 3, interface: 9, hover: 1 })

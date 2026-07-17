@@ -3,9 +3,9 @@ import { useDeckEditor } from '@/composables/deck/editor'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockCreateDeck, mockUpdateDeck } = vi.hoisted(() => ({
-  mockCreateDeck: vi.fn().mockResolvedValue(true),
-  mockUpdateDeck: vi.fn().mockResolvedValue(true)
+const { mockUpsertMutateAsync, mockCreateDeck } = vi.hoisted(() => ({
+  mockUpsertMutateAsync: vi.fn().mockResolvedValue({ id: 1, title: 'Saved Deck' }),
+  mockCreateDeck: vi.fn().mockResolvedValue({ id: 99, title: 'Created Deck' })
 }))
 
 const { mockDeleteDeck, mockDeleteIsLoading } = vi.hoisted(() => {
@@ -32,6 +32,11 @@ vi.mock('@/api/cards', () => ({
 }))
 
 vi.mock('@/api/decks', () => ({
+  useUpsertDeckMutation: () => ({
+    mutate: mockUpsertMutateAsync,
+    mutateAsync: mockUpsertMutateAsync,
+    isLoading: { value: false }
+  }),
   useDeleteDeckMutation: () => ({
     mutate: mockDeleteDeck,
     mutateAsync: mockDeleteDeck,
@@ -41,8 +46,7 @@ vi.mock('@/api/decks', () => ({
 
 vi.mock('@/composables/deck/actions', () => ({
   useDeckActions: () => ({
-    createDeck: mockCreateDeck,
-    updateDeck: mockUpdateDeck
+    createDeck: mockCreateDeck
   })
 }))
 
@@ -69,6 +73,8 @@ function makeDeck(overrides = {}) {
     updated_at: '2026-01-01T00:00:00Z',
     study_config: { study_all_cards: false, retry_failed_cards: true },
     cover_config: { color: '#ff0000' },
+    review_pacing_preset_id: null,
+    pacing_overrides: {},
     ...overrides
   }
 }
@@ -77,281 +83,191 @@ function makeDeck(overrides = {}) {
 
 describe('useDeckEditor', () => {
   beforeEach(() => {
+    mockUpsertMutateAsync.mockClear()
+    mockUpsertMutateAsync.mockResolvedValue({ id: 1, title: 'Saved Deck' })
     mockCreateDeck.mockClear()
-    mockCreateDeck.mockResolvedValue(true)
-    mockUpdateDeck.mockClear()
-    mockUpdateDeck.mockResolvedValue(true)
+    mockCreateDeck.mockResolvedValue({ id: 99, title: 'Created Deck' })
     mockDeleteDeck.mockClear()
     mockResetReviews.mockClear()
     mockResetReviews.mockResolvedValue(undefined)
     mockEmitSfx.mockClear()
-    sessionStorage.clear()
   })
 
   // ── Initialization ─────────────────────────────────────────────────────────
 
   describe('initialization', () => {
-    test('initializes settings from deck fields', () => {
+    test('initializes draft settings from deck fields', () => {
       const deck = makeDeck()
-      const { settings } = useDeckEditor(deck)
+      const { draft } = useDeckEditor(deck)
 
-      expect(settings.id).toBe(1)
-      expect(settings.title).toBe('My Deck')
-      expect(settings.description).toBe('A description')
-      expect(settings.is_public).toBe(true)
+      expect(draft.title).toBe('My Deck')
+      expect(draft.description).toBe('A description')
+      expect(draft.is_public).toBe(true)
     })
 
-    test('initializes config from deck.study_config', () => {
-      const deck = makeDeck({
-        study_config: { study_all_cards: true }
-      })
-      const { config } = useDeckEditor(deck)
+    test('initializes draft.study_config from deck.study_config, merged over defaults', () => {
+      const deck = makeDeck({ study_config: { study_all_cards: true } })
+      const { draft } = useDeckEditor(deck)
 
-      expect(config.study_all_cards).toBe(true)
+      expect(draft.study_config.study_all_cards).toBe(true)
+      expect(draft.study_config.shuffle).toBe(false)
     })
 
-    test('initializes config with defaults when deck has no study_config', () => {
+    test('initializes draft.study_config with defaults when deck has no study_config', () => {
       const deck = makeDeck({ study_config: undefined })
-      const { config } = useDeckEditor(deck)
+      const { draft } = useDeckEditor(deck)
 
-      expect(config.study_all_cards).toBe(false)
+      expect(draft.study_config.study_all_cards).toBe(false)
     })
 
-    test('initializes cover from deck.cover_config', () => {
+    test('initializes draft.cover_config from deck.cover_config', () => {
       const deck = makeDeck({ cover_config: { color: '#abc123' } })
-      const { cover } = useDeckEditor(deck)
+      const { draft } = useDeckEditor(deck)
 
-      expect(cover.color).toBe('#abc123')
+      expect(draft.cover_config.color).toBe('#abc123')
     })
 
-    test('initializes cover as empty object when deck has no cover_config', () => {
+    test('initializes draft.cover_config as empty object when deck has no cover_config', () => {
       const deck = makeDeck({ cover_config: undefined })
-      const { cover } = useDeckEditor(deck)
+      const { draft } = useDeckEditor(deck)
 
-      expect(cover).toEqual({})
+      expect(draft.cover_config).toEqual({})
     })
 
     test('works with no deck argument', () => {
-      const { settings, config, cover } = useDeckEditor()
+      const { draft } = useDeckEditor()
 
-      expect(settings.id).toBeUndefined()
-      expect(settings.title).toBeUndefined()
-      expect(config.study_all_cards).toBe(false)
-      expect(cover).toEqual({})
+      expect(draft.title).toBeUndefined()
+      expect(draft.study_config.study_all_cards).toBe(false)
+      expect(draft.cover_config).toEqual({})
+      expect(draft.review_pacing_preset_id).toBeNull()
+      expect(draft.pacing_overrides).toEqual({})
     })
   })
 
-  // ── pacing ─────────────────────────────────────────────────────────────────
+  // ── pacing draft fields ────────────────────────────────────────────────────
 
-  describe('pacing', () => {
-    test('initializes pacing from deck review-pacing fields [obligation]', () => {
+  describe('pacing draft fields', () => {
+    test('initializes review_pacing_preset_id and pacing_overrides from the deck [obligation]', () => {
       const deck = makeDeck({
         review_pacing_preset_id: 3,
-        desired_retention_override: 0.85,
-        learning_steps_override: ['1m', '10m'],
-        relearning_steps_override: ['10m']
+        pacing_overrides: { desired_retention: 85, leech_threshold: 12 }
       })
-      const { pacing } = useDeckEditor(deck)
+      const { draft } = useDeckEditor(deck)
 
-      expect(pacing.preset_id).toBe(3)
-      expect(pacing.desired_retention_override).toBe(0.85)
-      expect(pacing.learning_steps_override).toEqual(['1m', '10m'])
-      expect(pacing.relearning_steps_override).toEqual(['10m'])
+      expect(draft.review_pacing_preset_id).toBe(3)
+      expect(draft.pacing_overrides).toEqual({ desired_retention: 85, leech_threshold: 12 })
     })
 
-    test('initializes pacing fields to null when the deck has none set', () => {
-      const { pacing } = useDeckEditor(makeDeck())
+    test('defaults review_pacing_preset_id to null and pacing_overrides to {} when the deck has none set', () => {
+      const { draft } = useDeckEditor(
+        makeDeck({ review_pacing_preset_id: undefined, pacing_overrides: undefined })
+      )
 
-      expect(pacing.preset_id).toBeNull()
-      expect(pacing.desired_retention_override).toBeNull()
-      expect(pacing.learning_steps_override).toBeNull()
-      expect(pacing.relearning_steps_override).toBeNull()
-    })
-
-    test('initializes pacing fields to null with no deck argument', () => {
-      const { pacing } = useDeckEditor()
-
-      expect(pacing.preset_id).toBeNull()
-      expect(pacing.desired_retention_override).toBeNull()
-      expect(pacing.learning_steps_override).toBeNull()
-      expect(pacing.relearning_steps_override).toBeNull()
-    })
-
-    test('seeds leech_threshold_override, has_max_interval_override, and max_interval_override from the deck [obligation]', () => {
-      const deck = makeDeck({
-        leech_threshold_override: 12,
-        has_max_interval_override: true,
-        max_interval_override: 90
-      })
-      const { pacing } = useDeckEditor(deck)
-
-      expect(pacing.leech_threshold_override).toBe(12)
-      expect(pacing.has_max_interval_override).toBe(true)
-      expect(pacing.max_interval_override).toBe(90)
-    })
-
-    test('defaults leech_threshold_override/max_interval_override to null and has_max_interval_override to false when absent from the deck [obligation]', () => {
-      const { pacing } = useDeckEditor(makeDeck())
-
-      expect(pacing.leech_threshold_override).toBeNull()
-      expect(pacing.has_max_interval_override).toBe(false)
-      expect(pacing.max_interval_override).toBeNull()
-    })
-
-    test('saveDeck includes pacing fields alongside title/config/cover in a single payload [obligation]', async () => {
-      // There is no separate "save pacing" request — buildDeckPayload folds
-      // pacing into the same payload as title/config/cover.
-      const deck = makeDeck({
-        review_pacing_preset_id: 3,
-        desired_retention_override: 0.85,
-        learning_steps_override: ['1m', '10m'],
-        relearning_steps_override: ['10m']
-      })
-      const { saveDeck } = useDeckEditor(deck)
-
-      await saveDeck()
-
-      const [arg] = mockUpdateDeck.mock.calls[0]
-      expect(arg.review_pacing_preset_id).toBe(3)
-      expect(arg.desired_retention_override).toBe(0.85)
-      expect(arg.learning_steps_override).toEqual(['1m', '10m'])
-      expect(arg.relearning_steps_override).toEqual(['10m'])
-      expect(arg.title).toBe(deck.title)
-      expect(arg.study_config).toMatchObject(deck.study_config)
-    })
-
-    test('reactive pacing changes are reflected in saveDeck payload', async () => {
-      const { pacing, saveDeck } = useDeckEditor(makeDeck())
-
-      pacing.preset_id = 7
-      pacing.desired_retention_override = 0.92
-
-      await saveDeck()
-
-      const [arg] = mockUpdateDeck.mock.calls[0]
-      expect(arg.review_pacing_preset_id).toBe(7)
-      expect(arg.desired_retention_override).toBe(0.92)
+      expect(draft.review_pacing_preset_id).toBeNull()
+      expect(draft.pacing_overrides).toEqual({})
     })
   })
 
   // ── saveDeck ───────────────────────────────────────────────────────────────
 
   describe('saveDeck', () => {
-    test('calls upsertDeck with study_config key', async () => {
+    test('calls the upsert mutation directly for an existing deck, with study_config/cover_config/pacing folded in', async () => {
       const deck = makeDeck({
-        study_config: { study_all_cards: true, retry_failed_cards: false }
+        study_config: { study_all_cards: true, retry_failed_cards: false },
+        review_pacing_preset_id: 3,
+        pacing_overrides: { desired_retention: 92 }
       })
       const { saveDeck } = useDeckEditor(deck)
 
       await saveDeck()
 
-      expect(mockUpdateDeck).toHaveBeenCalledOnce()
-      const [arg] = mockUpdateDeck.mock.calls[0]
+      expect(mockUpsertMutateAsync).toHaveBeenCalledOnce()
+      const [arg] = mockUpsertMutateAsync.mock.calls[0]
+      expect(arg.id).toBe(1)
       expect(arg.study_config).toMatchObject({
         study_all_cards: true,
         retry_failed_cards: false
       })
+      expect(arg.review_pacing_preset_id).toBe(3)
+      expect(arg.pacing_overrides).toEqual({ desired_retention: 92 })
     })
 
-    test('calls upsertDeck with cover_config key', async () => {
-      const deck = makeDeck({ cover_config: { color: '#ff0000' } })
-      const { saveDeck } = useDeckEditor(deck)
-
-      await saveDeck()
-
-      expect(mockUpdateDeck).toHaveBeenCalledOnce()
-      const [arg] = mockUpdateDeck.mock.calls[0]
-      expect(arg.cover_config).toEqual({ color: '#ff0000' })
-    })
-
-    test('calls upsertDeck with settings fields', async () => {
-      const deck = makeDeck({ title: 'Updated Title', is_public: false })
-      const { saveDeck } = useDeckEditor(deck)
-
-      await saveDeck()
-
-      const [arg] = mockUpdateDeck.mock.calls[0]
-      expect(arg.title).toBe('Updated Title')
-      expect(arg.is_public).toBe(false)
-    })
-
-    test('reactive config changes are reflected in saveDeck payload', async () => {
-      const deck = makeDeck({
-        study_config: { study_all_cards: false, retry_failed_cards: true }
-      })
-      const { config, saveDeck } = useDeckEditor(deck)
-
-      config.study_all_cards = true
-
-      await saveDeck()
-
-      const [arg] = mockUpdateDeck.mock.calls[0]
-      expect(arg.study_config.study_all_cards).toBe(true)
-    })
-
-    test('routes to createDeck when the deck has no id', async () => {
+    test('routes to createDeck (not the upsert mutation) when the deck has no id', async () => {
       const { saveDeck } = useDeckEditor()
 
       await saveDeck()
 
       expect(mockCreateDeck).toHaveBeenCalledOnce()
-      expect(mockUpdateDeck).not.toHaveBeenCalled()
+      expect(mockUpsertMutateAsync).not.toHaveBeenCalled()
     })
 
-    test('routes to updateDeck when the deck has an id', async () => {
+    test('routes to the upsert mutation (not createDeck) when the deck has an id', async () => {
       const { saveDeck } = useDeckEditor(makeDeck({ id: 42 }))
 
       await saveDeck()
 
-      expect(mockUpdateDeck).toHaveBeenCalledOnce()
+      expect(mockUpsertMutateAsync).toHaveBeenCalledOnce()
       expect(mockCreateDeck).not.toHaveBeenCalled()
     })
 
-    test('returns the boolean result from the action', async () => {
-      mockCreateDeck.mockResolvedValueOnce(false)
-      const { saveDeck } = useDeckEditor()
+    test('rebases the draft on a successful existing-deck save, so is_dirty clears without closing [obligation]', async () => {
+      const deck = makeDeck({ title: 'Original' })
+      const { draft, is_dirty, saveDeck } = useDeckEditor(deck)
 
-      await expect(saveDeck()).resolves.toBe(false)
+      draft.title = 'Changed'
+      expect(is_dirty.value).toBe(true)
+
+      await saveDeck()
+
+      expect(is_dirty.value).toBe(false)
     })
 
-    test('returns true from updateDeck by default', async () => {
-      const { saveDeck } = useDeckEditor(makeDeck({ id: 1 }))
+    test('returns null and does not rebase when the upsert mutation rejects', async () => {
+      mockUpsertMutateAsync.mockRejectedValueOnce(new Error('Network error'))
+      const deck = makeDeck({ title: 'Original' })
+      const { draft, is_dirty, saveDeck } = useDeckEditor(deck)
 
-      await expect(saveDeck()).resolves.toBe(true)
+      draft.title = 'Changed'
+      const result = await saveDeck()
+
+      expect(result).toBeNull()
+      expect(is_dirty.value).toBe(true)
+    })
+
+    test('returns the result from createDeck for a new deck', async () => {
+      mockCreateDeck.mockResolvedValueOnce(null)
+      const { saveDeck } = useDeckEditor()
+
+      await expect(saveDeck()).resolves.toBeNull()
     })
   })
 
   // ── card_attributes ────────────────────────────────────────────────────────
 
   describe('card_attributes', () => {
-    test('initializes card_attributes from deck.card_attributes', () => {
+    test('initializes draft.card_attributes from deck.card_attributes', () => {
       const deck = makeDeck({
         card_attributes: {
           front: { text_size: 'huge', horizontal_alignment: 'left' },
           back: { text_size: 'small' }
         }
       })
-      const { card_attributes } = useDeckEditor(deck)
+      const { draft } = useDeckEditor(deck)
 
-      expect(card_attributes.front.text_size).toBe('huge')
-      expect(card_attributes.front.horizontal_alignment).toBe('left')
-      expect(card_attributes.back.text_size).toBe('small')
+      expect(draft.card_attributes.front.text_size).toBe('huge')
+      expect(draft.card_attributes.front.horizontal_alignment).toBe('left')
+      expect(draft.card_attributes.back.text_size).toBe('small')
     })
 
-    test('initializes card_attributes with empty sides when deck has no card_attributes', () => {
+    test('initializes draft.card_attributes with empty sides when deck has no card_attributes', () => {
       const deck = makeDeck({ card_attributes: undefined })
-      const { card_attributes } = useDeckEditor(deck)
+      const { draft } = useDeckEditor(deck)
 
-      expect(card_attributes).toEqual({ front: {}, back: {} })
+      expect(draft.card_attributes).toEqual({ front: {}, back: {} })
     })
 
-    test('initializes card_attributes with empty sides with no deck argument', () => {
-      const { card_attributes } = useDeckEditor()
-
-      expect(card_attributes).toEqual({ front: {}, back: {} })
-    })
-
-    test('saveDeck includes card_attributes in payload', async () => {
+    test('saveDeck includes draft.card_attributes in the mutation payload', async () => {
       const deck = makeDeck({
         card_attributes: {
           front: { text_size: 'ginormous', vertical_alignment: 'bottom' },
@@ -362,29 +278,11 @@ describe('useDeckEditor', () => {
 
       await saveDeck()
 
-      const [arg] = mockUpdateDeck.mock.calls[0]
+      const [arg] = mockUpsertMutateAsync.mock.calls[0]
       expect(arg.card_attributes).toEqual({
         front: { text_size: 'ginormous', vertical_alignment: 'bottom' },
         back: { text_size: 'medium' }
       })
-    })
-
-    test('reactive card_attributes changes are reflected in saveDeck payload', async () => {
-      const deck = makeDeck({
-        card_attributes: { front: { text_size: 'small' }, back: {} }
-      })
-      const { card_attributes, saveDeck } = useDeckEditor(deck)
-
-      card_attributes.front.text_size = 'x-large'
-      card_attributes.front.horizontal_alignment = 'right'
-      card_attributes.back.vertical_alignment = 'top'
-
-      await saveDeck()
-
-      const [arg] = mockUpdateDeck.mock.calls[0]
-      expect(arg.card_attributes.front.text_size).toBe('x-large')
-      expect(arg.card_attributes.front.horizontal_alignment).toBe('right')
-      expect(arg.card_attributes.back.vertical_alignment).toBe('top')
     })
   })
 
@@ -401,44 +299,44 @@ describe('useDeckEditor', () => {
       expect(is_dirty.value).toBe(false)
     })
 
-    test('flips to true when a settings field is mutated', () => {
-      const { settings, is_dirty } = useDeckEditor(makeDeck())
-      settings.title = 'Renamed'
+    test('flips to true when draft.title is mutated', () => {
+      const { draft, is_dirty } = useDeckEditor(makeDeck())
+      draft.title = 'Renamed'
       expect(is_dirty.value).toBe(true)
     })
 
-    test('flips to true when a study_config field is mutated', () => {
-      const { config, is_dirty } = useDeckEditor(
+    test('flips to true when draft.study_config is mutated', () => {
+      const { draft, is_dirty } = useDeckEditor(
         makeDeck({ study_config: { study_all_cards: false } })
       )
-      config.study_all_cards = true
+      draft.study_config.study_all_cards = true
       expect(is_dirty.value).toBe(true)
     })
 
-    test('flips to true when cover_config is mutated', () => {
-      const { cover, is_dirty } = useDeckEditor(makeDeck())
-      cover.color = '#000000'
+    test('flips to true when draft.cover_config is mutated', () => {
+      const { draft, is_dirty } = useDeckEditor(makeDeck())
+      draft.cover_config.color = '#000000'
       expect(is_dirty.value).toBe(true)
     })
 
-    test('flips to true when card_attributes is mutated', () => {
-      const { card_attributes, is_dirty } = useDeckEditor(makeDeck())
-      card_attributes.front.text_size = 6
+    test('flips to true when draft.card_attributes is mutated', () => {
+      const { draft, is_dirty } = useDeckEditor(makeDeck())
+      draft.card_attributes.front.text_size = 6
       expect(is_dirty.value).toBe(true)
     })
 
     test('returns false again when a mutation is reverted to the original value', () => {
       const deck = makeDeck({ title: 'Original' })
-      const { settings, is_dirty } = useDeckEditor(deck)
-      settings.title = 'Changed'
+      const { draft, is_dirty } = useDeckEditor(deck)
+      draft.title = 'Changed'
       expect(is_dirty.value).toBe(true)
-      settings.title = 'Original'
+      draft.title = 'Original'
       expect(is_dirty.value).toBe(false)
     })
 
-    test('flips to true when only a pacing field is mutated [obligation]', () => {
-      const { pacing, is_dirty } = useDeckEditor(makeDeck())
-      pacing.desired_retention_override = 0.8
+    test('flips to true when only draft.pacing_overrides is mutated [obligation]', () => {
+      const { draft, is_dirty } = useDeckEditor(makeDeck())
+      draft.pacing_overrides.desired_retention = 80
       expect(is_dirty.value).toBe(true)
     })
   })
@@ -456,33 +354,35 @@ describe('useDeckEditor', () => {
         }
       })
       const deck_snapshot = structuredClone(deck)
-      const { cover, config, card_attributes, resetChanges } = useDeckEditor(deck)
+      const { draft, resetChanges } = useDeckEditor(deck)
 
-      cover.theme = 'midnight'
-      config.shuffle = true
-      card_attributes.front.text_size = 'huge'
+      draft.cover_config.theme = 'midnight'
+      draft.study_config.shuffle = true
+      draft.card_attributes.front.text_size = 'huge'
 
       resetChanges()
 
-      expect(cover).toEqual(deck_snapshot.cover_config)
-      expect(config).toEqual(deck_snapshot.study_config)
-      expect(card_attributes).toEqual(deck_snapshot.card_attributes)
+      expect(draft.cover_config).toEqual(deck_snapshot.cover_config)
+      // study_config is merged over DECK_CONFIG_DEFAULTS when the draft base
+      // is built, so the reset target carries the full default shape, not the
+      // raw deck.study_config the test seeded.
+      expect(draft.study_config).toMatchObject(deck_snapshot.study_config)
+      expect(draft.card_attributes).toEqual(deck_snapshot.card_attributes)
       expect(deck).toEqual(deck_snapshot)
     })
 
-    test('is_dirty is false again after resetChanges, across settings/config/cover/card_attributes/pacing edits [obligation]', () => {
+    test('is_dirty is false again after resetChanges, across title/config/cover/card_attributes/pacing edits [obligation]', () => {
       const deck = makeDeck({
         cover_config: { color: '#ff0000' },
         study_config: { study_all_cards: false }
       })
-      const { settings, config, cover, card_attributes, pacing, is_dirty, resetChanges } =
-        useDeckEditor(deck)
+      const { draft, is_dirty, resetChanges } = useDeckEditor(deck)
 
-      settings.title = 'Renamed'
-      config.study_all_cards = true
-      cover.color = '#000000'
-      card_attributes.front.text_size = 'huge'
-      pacing.desired_retention_override = 0.8
+      draft.title = 'Renamed'
+      draft.study_config.study_all_cards = true
+      draft.cover_config.color = '#000000'
+      draft.card_attributes.front.text_size = 'huge'
+      draft.pacing_overrides.desired_retention = 80
       expect(is_dirty.value).toBe(true)
 
       resetChanges()

@@ -94,8 +94,11 @@ const PatternPickerStub = defineComponent({
 
 function makeEditor() {
   return {
-    settings: reactive({ display_name: 'Chris', description: 'Hi' }),
-    cover: reactive({ theme: 'green-500', theme_dark: 'green-800', pattern: 'bank-note' }),
+    draft: reactive({
+      display_name: 'Chris',
+      description: 'Hi',
+      cover_config: { theme: 'green-500', theme_dark: 'green-800', pattern: 'bank-note' }
+    }),
     email: ref('chris@example.com'),
     created_at: ref('2024-04-15T00:00:00Z'),
     plan: ref('free'),
@@ -144,11 +147,11 @@ describe('TabProfile', () => {
     expect(design.attributes('data-theme-dark')).toBe('green-800')
   })
 
-  test('typing into the name input updates editor.settings.display_name', async () => {
+  test('typing into the name input updates editor.draft.display_name', async () => {
     const { wrapper, editor } = makeTab()
     const input = wrapper.findAll('input')[0]
     await input.setValue('Nina')
-    expect(editor.settings.display_name).toBe('Nina')
+    expect(editor.draft.display_name).toBe('Nina')
   })
 
   test('name input carries MEMBER_DISPLAY_NAME_MAX_LENGTH as maxlength', () => {
@@ -165,28 +168,28 @@ describe('TabProfile', () => {
     expect(input.attributes('error')).toBe('Give this member a name')
   })
 
-  test('typing into the bio textarea updates editor.settings.description', async () => {
+  test('typing into the bio textarea updates editor.draft.description', async () => {
     const { wrapper, editor } = makeTab()
     const textarea = wrapper.find('textarea')
     await textarea.setValue('New bio')
-    expect(editor.settings.description).toBe('New bio')
+    expect(editor.draft.description).toBe('New bio')
   })
 
-  test('theme-picker update events mutate editor.cover theme + theme_dark', async () => {
+  test('theme-picker update events mutate editor.draft.cover_config theme + theme_dark', async () => {
     const { wrapper, editor } = makeTab()
     const themePicker = wrapper.findComponent(ThemePickerStub)
     themePicker.vm.$emit('update:theme', 'red-500')
     themePicker.vm.$emit('update:theme_dark', 'red-700')
     await wrapper.vm.$nextTick()
-    expect(editor.cover.theme).toBe('red-500')
-    expect(editor.cover.theme_dark).toBe('red-700')
+    expect(editor.draft.cover_config.theme).toBe('red-500')
+    expect(editor.draft.cover_config.theme_dark).toBe('red-700')
   })
 
-  test('pattern-picker update event mutates editor.cover.pattern', async () => {
+  test('pattern-picker update event mutates editor.draft.cover_config.pattern', async () => {
     const { wrapper, editor } = makeTab()
     wrapper.findComponent(PatternPickerStub).vm.$emit('update:pattern', 'wave')
     await wrapper.vm.$nextTick()
-    expect(editor.cover.pattern).toBe('wave')
+    expect(editor.draft.cover_config.pattern).toBe('wave')
   })
 
   test('hides the inline member-badge preview on desktop', () => {

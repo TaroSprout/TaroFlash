@@ -30,9 +30,12 @@ const {
   return {
     state: { isSheet: false, isDesktop: false },
     mockEditor: {
-      settings: { display_name: 'Chris', description: 'hi' },
-      preferences: { accessibility: { left_hand: false } },
-      cover: { theme: 'green-500', theme_dark: 'green-800', pattern: 'bank-note' },
+      draft: {
+        display_name: 'Chris',
+        description: 'hi',
+        preferences: { accessibility: { left_hand: false } },
+        cover_config: { theme: 'green-500', theme_dark: 'green-800', pattern: 'bank-note' }
+      },
       email: { value: 'chris@example.com' },
       created_at: { value: '2026-01-01T00:00:00Z' },
       plan: { value: 'pro' },

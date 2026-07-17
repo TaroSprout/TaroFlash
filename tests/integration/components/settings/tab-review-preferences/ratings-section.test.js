@@ -32,7 +32,7 @@ const ReviewRatingsToggleStub = defineComponent({
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function makeSection(show_all_ratings = false) {
-  const editor = { preferences: reactive({ study: { show_all_ratings } }) }
+  const editor = { draft: reactive({ preferences: { study: { show_all_ratings } } }) }
   const wrapper = mount(RatingsSection, {
     global: {
       stubs: { LabeledSection: LabeledSectionStub, ReviewRatingsToggle: ReviewRatingsToggleStub },
@@ -51,16 +51,16 @@ describe('RatingsSection', () => {
     expect(wrapper.find('[data-testid="tab-review-preferences__ratings"]').exists()).toBe(true)
   })
 
-  test('binds the toggle to editor.preferences.study.show_all_ratings', () => {
+  test('binds the toggle to editor.draft.preferences.study.show_all_ratings', () => {
     const { wrapper } = makeSection(true)
     expect(wrapper.find('[data-testid="ratings-toggle-stub"]').attributes('data-value')).toBe(
       'true'
     )
   })
 
-  test('toggling updates editor.preferences.study.show_all_ratings [obligation]', async () => {
+  test('toggling updates editor.draft.preferences.study.show_all_ratings [obligation]', async () => {
     const { wrapper, editor } = makeSection(false)
     await wrapper.find('[data-testid="ratings-toggle-stub"]').trigger('click')
-    expect(editor.preferences.study.show_all_ratings).toBe(true)
+    expect(editor.draft.preferences.study.show_all_ratings).toBe(true)
   })
 })
