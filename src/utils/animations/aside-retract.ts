@@ -1,6 +1,6 @@
 import { gsap } from 'gsap'
 
-const DURATION = 0.28
+const DURATION = 0.2
 const EASE = 'power2.inOut'
 
 /**

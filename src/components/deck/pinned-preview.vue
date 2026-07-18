@@ -30,7 +30,7 @@ const emit = defineEmits<{
 
     <div
       data-testid="deck-pinned-preview__paperclip"
-      class="absolute -top-8 right-15 -translate-x-1/2 z-10 drop-shadow-2xs"
+      class="absolute -top-8 right-15 -translate-x-1/2 z-10 drop-shadow-2xs transition-opacity duration-100 group-data-[tucked=true]:opacity-0"
     >
       <ui-icon src="paperclip" class="w-16 h-16 -rotate-186 text-grey-300" />
     </div>

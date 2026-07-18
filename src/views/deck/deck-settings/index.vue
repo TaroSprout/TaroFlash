@@ -252,7 +252,7 @@ watch(active_tab, (tab) => {
         ref="preview_el"
         data-testid="deck-settings__pinned-preview"
         :data-tucked="chrome.is_tucked.value"
-        class="absolute right-(--sheet-px) top-6"
+        class="group absolute right-(--sheet-px) top-6"
         :class="chrome.is_tucked.value ? 'pointer-events-none' : 'pointer-events-auto'"
       >
         <deck-pinned-preview

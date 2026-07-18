@@ -1,6 +1,6 @@
 import { gsap } from 'gsap'
 
-const HALF_TURN_DURATION = 0.22
+const HALF_TURN_DURATION = 0.14
 const FLIP_PERSPECTIVE = 800
 
 const TUCKED_POSE = { y: -136, scale: 0.78 }
