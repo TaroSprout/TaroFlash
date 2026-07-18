@@ -188,14 +188,18 @@ describe('TabReviewPacing — starting-side option group [obligation]', () => {
   })
 })
 
-describe('TabReviewPacing — deck-save-button gated on layout_mode', () => {
+// [obligation] This tab claims the whole content area, so the aside that used
+// to carry the save button is retracted — the save button now renders
+// unconditionally (it used to be gated on layout_mode === 'sheet'), so there's
+// still a way to save on desktop/tablet.
+describe('TabReviewPacing — renders deck-save-button unconditionally [obligation]', () => {
   test('renders the save button when layout_mode is "sheet"', () => {
     const { wrapper } = makeWrapper({ layout_mode: 'sheet' })
     expect(wrapper.findComponent({ name: 'DeckSaveButton' }).exists()).toBe(true)
   })
 
-  test('omits the save button for other layout modes', () => {
+  test('renders the save button on desktop/tablet layout modes too', () => {
     const { wrapper } = makeWrapper({ layout_mode: 'modal' })
-    expect(wrapper.findComponent({ name: 'DeckSaveButton' }).exists()).toBe(false)
+    expect(wrapper.findComponent({ name: 'DeckSaveButton' }).exists()).toBe(true)
   })
 })
