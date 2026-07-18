@@ -1,4 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import AppWindow from '@/components/layout-kit/app-window/index.vue'
 import { shallowMount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, nextTick } from 'vue'
 
@@ -73,7 +74,7 @@ function mountModal(close = vi.fn()) {
           UiInput: UiInputStub,
           UiButton: UiButtonStub,
           ScriptSelect: ScriptSelectStub,
-          MobileSheet: false
+          AppWindow: false
         }
       }
     })
@@ -228,9 +229,9 @@ describe('UploadLesson (index.vue)', () => {
     expect(wrapper.find('[data-testid="upload-lesson__error"]').exists()).toBe(true)
   })
 
-  test('mobile-sheet close event calls close(undefined)', async () => {
+  test('app-window close event calls close(undefined)', async () => {
     const { wrapper, close } = mountModal()
-    await wrapper.findComponent({ name: 'MobileSheet' }).vm.$emit('close')
+    await wrapper.findComponent(AppWindow).vm.$emit('close')
     expect(close).toHaveBeenCalledWith(undefined)
   })
 

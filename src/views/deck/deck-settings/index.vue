@@ -3,24 +3,26 @@ import { computed, onMounted, provide, ref, useTemplateRef, watch } from 'vue'
 import type { ComponentPublicInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DeckAside from './deck-aside.vue'
-import { deckSettingsLayoutKey, deckSettingsCloseKey } from './layout'
+import DeckSaveButton from './deck-save-button.vue'
+import { deckSettingsCloseKey } from './layout'
+import { useWindowChrome } from './window-chrome'
 import { emitSfx } from '@/sfx/bus'
 import { useDeckEditor, deckEditorKey } from '@/composables/deck/editor'
 import { useDeckDangerActions, deckDangerActionsKey } from '@/composables/deck/danger-actions'
-import { useTabModalLayout } from '@/composables/ui/tab-modal-layout'
-import { useTabTransition } from '@/composables/ui/tab-transition'
-import { useSheetChrome } from '@/composables/ui/sheet-chrome'
+import type { WindowLayout } from '@/components/layout-kit/paged-window/layout'
 import { useAlert } from '@/composables/alert'
 import { useModalAfterEnter, useModalRequestClose } from '@/composables/modal'
 import DeckPinnedPreview from '@/components/deck/pinned-preview.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
-import TabSheet from '@/components/layout-kit/sheet/tab-sheet.vue'
+import PagedWindow, {
+  type PagedWindowGroup,
+  type Page
+} from '@/components/layout-kit/paged-window/index.vue'
 import TabDetails from './tab-details/index.vue'
 import TabDesign from './tab-design/index.vue'
 import TabReviewPacing from './tab-review-pacing/index.vue'
 import TabReviewHistory from './tab-review-history/index.vue'
 import TabDangerZone from './tab-danger-zone/index.vue'
-import TabIndex from './tab-index/index.vue'
 import { TAB_META, type TabValue } from './tabs'
 
 export type DeckSettingsResponse = boolean
@@ -34,7 +36,6 @@ const { deck, close, initial_tab, initial_side } = defineProps<{
 }>()
 
 const TAB_COMPONENTS = {
-  index: TabIndex,
   details: TabDetails,
   design: TabDesign,
   'review-pacing': TabReviewPacing,
@@ -54,86 +55,79 @@ const alert = useAlert()
 useModalRequestClose(() => onClose())
 const after_enter = useModalAfterEnter()
 
-const { layout_mode, sheet_px } = useTabModalLayout({ desktop_query: 'w>=lg & fine' })
-provide(deckSettingsLayoutKey, layout_mode)
-provide(deckSettingsCloseKey, close)
+const active_tab = ref<ActiveTab | null>(initial_tab ?? null)
 
-const active_tab = ref<ActiveTab | null>(null)
-const tab_outlet = ref<HTMLElement>()
+const pager = useTemplateRef<{ layout_mode: WindowLayout; displayed_page: string }>('pager')
+const active_tab_ref = useTemplateRef<{ onChromeBack?: () => boolean }>('active_tab_ref')
 
 const preview_el = useTemplateRef<HTMLElement>('preview_el')
 const aside_instance = useTemplateRef<ComponentPublicInstance>('aside_instance')
 const aside_el = computed(() => aside_instance.value?.$el as HTMLElement | undefined)
 
-const chrome = useSheetChrome(preview_el, aside_el)
+const chrome = useWindowChrome(preview_el, aside_el)
 
-const { nav_direction, onTabEnter, onTabLeave } = useTabTransition(layout_mode, tab_outlet, {
-  chrome,
-  is_full_bleed: () => is_full_bleed.value
-})
+const layout_mode = computed<WindowLayout>(() => pager.value?.layout_mode ?? 'phone')
+const displayed_page = computed(() => pager.value?.displayed_page ?? 'directory')
+provide(deckSettingsCloseKey, close)
 
-const active_tab_ref = useTemplateRef<{ onChromeBack?: () => boolean }>('active_tab_ref')
-
-if (initial_tab) active_tab.value = initial_tab
-
-const DESKTOP_TABS: TabValue[] = ['design', 'review-pacing', 'review-history', 'danger-zone']
-
-const tabs = computed(() =>
-  DESKTOP_TABS.map((value) => ({
+const pages = computed<Page[]>(() =>
+  (Object.keys(TAB_META) as TabValue[]).map((value) => ({
     value,
     icon: TAB_META[value].icon,
     label: t(TAB_META[value].labelKey),
-    danger: value === 'danger-zone'
+    danger: value === 'danger-zone',
+    sidebar: value !== 'details'
   }))
 )
 
-const displayed_tab = computed(
-  () => active_tab.value ?? (layout_mode.value === 'desktop' ? 'design' : 'index')
-)
-
-const sidebar_active = computed({
-  get: () => active_tab.value ?? 'design',
-  set: (v) => (active_tab.value = v as ActiveTab)
-})
+const groups = computed<PagedWindowGroup[]>(() => [
+  {
+    key: 'appearance',
+    heading: t('deck.settings-modal.index.general-heading'),
+    entries:
+      layout_mode.value === 'phone'
+        ? ['details', 'design', 'danger-zone']
+        : ['design', 'danger-zone']
+  },
+  {
+    key: 'review-pacing',
+    heading: t('deck.settings-modal.index.review-pacing-heading'),
+    entries: ['review-pacing', 'review-history']
+  }
+])
 
 const header_title = computed(() => deck.title || t('deck.settings-modal.title'))
 
 const visible_side = computed(() =>
-  displayed_tab.value === 'design' ? editor.active_side.value : 'cover'
+  displayed_page.value === 'design' ? editor.active_side.value : 'cover'
 )
 
-const tab_component = computed(() => TAB_COMPONENTS[displayed_tab.value])
-
-// Sheet mode has no pinned preview or aside to clear away, so full-bleed is a
+// Phone mode has no pinned preview or aside to clear away, so full-bleed is a
 // desktop/tablet-only concern.
 const is_full_bleed = computed(
   () =>
-    layout_mode.value !== 'sheet' && Boolean(TAB_META[displayed_tab.value as TabValue]?.full_bleed)
+    layout_mode.value !== 'phone' && Boolean(TAB_META[displayed_page.value as TabValue]?.full_bleed)
 )
 
-// The content row is always full-bleed: `__main` (the scroll container) owns its
-// own padding and the aside owns its own inset, so floating elements/outlines
-// aren't clipped by the overflow and the sheet-mode tab animation stays clean.
-const tab_content_class = 'flex h-full items-start'
-
 onMounted(async () => {
-  // Opening straight onto a full-bleed tab starts with the chrome already gone
-  // rather than animating it away in front of the user.
-  if (is_full_bleed.value) chrome.snap(true)
-
   if (initial_side) {
     await after_enter
     editor.setActiveSide(initial_side)
   }
 })
 
+function runChromeSync() {
+  return is_full_bleed.value ? chrome.tuck() : chrome.restore()
+}
+
 function onPreviewSide(side: CardSide) {
-  if (displayed_tab.value !== 'design') return
+  if (displayed_page.value !== 'design') return
   editor.setActiveSide(side)
 }
 
 async function onClose() {
   if (!editor.is_dirty.value) return close(false)
+
   const { response } = alert.warn({
     title: t('deck.settings-modal.unsaved-alert.title'),
     message: t('deck.settings-modal.unsaved-alert.message'),
@@ -143,19 +137,16 @@ async function onClose() {
   if (await response) close(false)
 }
 
-function onNavigate(tab: ActiveTab) {
-  nav_direction.value = 'forward'
-  active_tab.value = tab
-}
-
 function onBack() {
   emitSfx('snappy_button_5')
-  nav_direction.value = 'back'
   active_tab.value = null
 }
 
 function onChromeBack() {
-  if (active_tab_ref.value?.onChromeBack?.()) return
+  if (active_tab_ref.value?.onChromeBack?.()) {
+    emitSfx('snappy_button_5')
+    return
+  }
   onBack()
 }
 
@@ -164,28 +155,38 @@ function onChromeBack() {
 watch(active_tab, (tab) => {
   if (tab === null) editor.active_side.value = 'cover'
 })
+
+// The preview and aside unmount at the phone boundary and remount in their
+// untucked poses on the way back, dropping the imperative tuck styling — so
+// whenever they (re)appear, snap the chrome to the pose the displayed tab
+// demands. This also covers first mount: a sheet opened straight onto a
+// full-bleed tab starts with the chrome already gone rather than animating it
+// away in front of the user.
+watch([preview_el, aside_el], ([preview]) => {
+  if (preview) chrome.snap(is_full_bleed.value)
+})
 </script>
 
 <template>
-  <tab-sheet
+  <paged-window
+    ref="pager"
     data-testid="deck-settings-container"
     data-theme="green-500"
     data-theme-dark="green-800"
     :data-layout="layout_mode"
     :class="[
       layout_mode === 'desktop' ? 'w-237!' : 'w-full! max-w-205.5',
-      layout_mode !== 'sheet' && 'h-181.5',
-      layout_mode === 'sheet'
-        ? '[--deck-settings-padding:var(--sheet-px)]'
+      layout_mode !== 'phone' && 'h-181.5',
+      layout_mode === 'phone'
+        ? '[--deck-settings-padding:var(--window-px)]'
         : '[--deck-settings-padding:0px]',
-      chrome.is_tucked.value && '[--sheet-overlay-z:15]'
+      chrome.is_tucked.value && '[--window-overlay-z:15]'
     ]"
-    :sheet_px="sheet_px"
-    :tabs="tabs"
+    :pages="pages"
+    :groups="groups"
     :pattern_config="{ pattern: 'endless-clouds' }"
-    :parts="{ content: tab_content_class }"
-    :show_back="active_tab !== null"
-    v-model:active="sidebar_active"
+    :between="runChromeSync"
+    v-model:active="active_tab"
     @close="onClose"
     @back="onChromeBack"
   >
@@ -204,55 +205,41 @@ watch(active_tab, (tab) => {
       </div>
     </template>
 
-    <div
-      class="relative flex flex-1 flex-col min-w-0"
-      :class="layout_mode !== 'sheet' && 'max-h-full'"
-    >
-      <div
-        ref="tab_outlet"
-        data-testid="deck-settings__main"
-        :class="[
-          'flex flex-col gap-4 w-full',
-          layout_mode === 'sheet'
-            ? 'max-w-111 mx-auto overflow-hidden pt-0.5'
-            : 'min-h-0 flex-1 overflow-y-auto scroll-hidden px-(--sheet-px) pb-8'
-        ]"
-      >
-        <transition :css="false" mode="out-in" @leave="onTabLeave" @enter="onTabEnter">
-          <component
-            ref="active_tab_ref"
-            :is="tab_component"
-            :key="displayed_tab"
-            @navigate="onNavigate"
-          />
-        </transition>
-      </div>
+    <template #default="{ displayed_page: page }">
+      <component :is="TAB_COMPONENTS[page as TabValue]" ref="active_tab_ref" />
+    </template>
 
+    <template #scrollbar>
       <scroll-bar
-        v-if="layout_mode !== 'sheet'"
+        v-if="layout_mode !== 'phone'"
         data-theme="brown-200"
-        target="[data-testid='deck-settings__main']"
+        target="[data-testid='paged-window__main']"
         class="absolute top-2 bottom-4 right-0"
         :class="layout_mode === 'tablet' && 'right-9'"
       />
-    </div>
+    </template>
 
-    <!-- Aside has a bespoke layout so it matches visually with the pinned preview -->
-    <deck-aside
-      v-if="layout_mode !== 'sheet'"
-      ref="aside_instance"
-      data-testid="deck-settings__aside"
-      class="w-92 shrink-0 self-end pb-8"
-      :class="layout_mode === 'tablet' ? 'pt-66 pr-22' : 'pt-70 px-8'"
-    />
+    <template #aside>
+      <deck-aside
+        v-if="layout_mode !== 'phone'"
+        ref="aside_instance"
+        data-testid="deck-settings__aside"
+        class="w-92 shrink-0 self-end pb-8"
+        :class="layout_mode === 'tablet' ? 'pt-66 pr-22' : 'pt-70 px-8'"
+      />
+    </template>
+
+    <template #directory-footer>
+      <deck-save-button v-if="layout_mode === 'phone'" />
+    </template>
 
     <template #overlay>
       <div
-        v-if="layout_mode !== 'sheet'"
+        v-if="layout_mode !== 'phone'"
         ref="preview_el"
         data-testid="deck-settings__pinned-preview"
         :data-tucked="chrome.is_tucked.value"
-        class="absolute right-(--sheet-px) top-6"
+        class="absolute right-(--window-px) top-6"
         :class="chrome.is_tucked.value ? 'pointer-events-none' : 'pointer-events-auto'"
       >
         <deck-pinned-preview
@@ -266,5 +253,5 @@ watch(active_tab, (tab) => {
         />
       </div>
     </template>
-  </tab-sheet>
+  </paged-window>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import MobileSheet from '@/components/layout-kit/sheet/mobile-sheet.vue'
+import AppWindow from '@/components/layout-kit/app-window/index.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import SignupForm from './form.vue'
 import { useSignupActions } from '@/composables/auth/use-signup-actions'
@@ -38,7 +38,7 @@ async function onSubmit() {
 </script>
 
 <template>
-  <mobile-sheet
+  <app-window
     data-testid="signup-container"
     data-theme="blue-500"
     data-theme-dark="blue-650"
@@ -89,5 +89,5 @@ async function onSubmit() {
         </ui-button>
       </div>
     </div>
-  </mobile-sheet>
+  </app-window>
 </template>

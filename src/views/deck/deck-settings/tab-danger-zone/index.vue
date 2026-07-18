@@ -5,17 +5,17 @@ import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import DangerResetButton from '../danger-reset-button.vue'
 import DangerDeleteButton from '../danger-delete-button.vue'
-import { deckSettingsLayoutKey } from '../layout'
+import { windowLayoutKey } from '@/components/layout-kit/paged-window/layout'
 
 const { t } = useI18n()
-const layout_mode = inject(deckSettingsLayoutKey)!
+const layout_mode = inject(windowLayoutKey)!
 </script>
 
 <template>
   <section-list
     data-testid="tab-danger-zone"
     class="px-(--deck-settings-padding)"
-    :class="layout_mode === 'sheet' && 'pb-24'"
+    :class="layout_mode === 'phone' && 'pb-24'"
   >
     <labeled-section
       :label="t('deck.settings-modal.danger-zone.section.reset-heading')"

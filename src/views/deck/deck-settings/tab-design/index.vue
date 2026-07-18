@@ -7,14 +7,14 @@ import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import TabBar from '@/components/layout-kit/tab-bar.vue'
 import DeckDesignPreview from '@/components/deck/deck-design-preview.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
-import { deckSettingsLayoutKey } from '../layout'
+import { windowLayoutKey } from '@/components/layout-kit/paged-window/layout'
 import DeckSaveButton from '../deck-save-button.vue'
 
 type SideTab = { value: CardSide; label: string }
 
 const { t } = useI18n()
 const editor = inject(deckEditorKey)!
-const layout_mode = inject(deckSettingsLayoutKey)!
+const layout_mode = inject(windowLayoutKey)!
 
 const tabs = computed<SideTab[]>(() => [
   { value: 'cover', label: t('deck.settings-modal.design.designer-tabs.cover') },
@@ -35,7 +35,7 @@ const card_side_attributes = computed(() =>
     class="flex flex-col items-center gap-6 px-(--deck-settings-padding) pb-(--deck-settings-padding)"
   >
     <div
-      v-if="layout_mode === 'sheet'"
+      v-if="layout_mode === 'phone'"
       data-testid="tab-design__inline-preview"
       class="flex justify-center w-full"
     >
@@ -63,6 +63,6 @@ const card_side_attributes = computed(() =>
       />
       <card-designer v-else :key="editor.active_side.value" :attributes="card_side_attributes" />
     </transition>
-    <deck-save-button v-if="layout_mode === 'sheet'" />
+    <deck-save-button v-if="layout_mode === 'phone'" />
   </div>
 </template>

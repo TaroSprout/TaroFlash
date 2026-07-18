@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import MobileSheet from '@/components/layout-kit/sheet/mobile-sheet.vue'
+import AppWindow from '@/components/layout-kit/app-window/index.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import FeedbackCard from './feedback-card.vue'
@@ -22,7 +22,7 @@ function onSubmitPress() {
 </script>
 
 <template>
-  <mobile-sheet
+  <app-window
     data-testid="feedback-board"
     data-theme="green-500"
     data-theme-dark="green-800"
@@ -62,5 +62,5 @@ function onSubmitPress() {
         {{ t('feedback-board.submit-button') }}
       </ui-button>
     </div>
-  </mobile-sheet>
+  </app-window>
 </template>

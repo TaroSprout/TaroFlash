@@ -14,7 +14,7 @@ vi.mock('@/stores/notice-store', () => ({
 import { resetResponsive } from '../../../helpers/responsive-mock'
 import TabProfile from '@/views/settings/tab-profile/index.vue'
 import { memberEditorKey } from '@/composables/member/editor'
-import { settingsLayoutKey } from '@/views/settings/layout'
+import { windowLayoutKey } from '@/components/layout-kit/paged-window/layout'
 import { useModal } from '@/composables/modal'
 import AvatarPickerModal from '@/components/member/avatar-picker-modal.vue'
 import { computed } from 'vue'
@@ -115,7 +115,7 @@ function makeTab(editor = makeEditor(), layout = 'tablet', member_badge_stub = M
     global: {
       provide: {
         [memberEditorKey]: editor,
-        [settingsLayoutKey]: computed(() => layout)
+        [windowLayoutKey]: computed(() => layout)
       },
       stubs: {
         UiInput: InputStub,
@@ -203,7 +203,7 @@ describe('TabProfile', () => {
   })
 
   test('shows member-badge (not member-card) preview on sheet layout [obligation]', () => {
-    const { wrapper } = makeTab(makeEditor(), 'sheet')
+    const { wrapper } = makeTab(makeEditor(), 'phone')
     const preview = wrapper.find('[data-testid="tab-profile__preview"]')
     expect(preview.exists()).toBe(true)
     expect(preview.attributes('data-stub')).toBe('member-badge')
@@ -213,14 +213,14 @@ describe('TabProfile', () => {
     afterEach(() => useModal().pop())
 
     test('passes editable to member-badge', () => {
-      const { wrapper } = makeTab(makeEditor(), 'sheet', EditableMemberBadgeStub)
+      const { wrapper } = makeTab(makeEditor(), 'phone', EditableMemberBadgeStub)
       expect(wrapper.find('[data-testid="member-badge-stub"]').attributes('data-editable')).toBe(
         'true'
       )
     })
 
     test('emitting edit-avatar opens the avatar picker modal', async () => {
-      const { wrapper } = makeTab(makeEditor(), 'sheet', EditableMemberBadgeStub)
+      const { wrapper } = makeTab(makeEditor(), 'phone', EditableMemberBadgeStub)
 
       await wrapper.find('[data-testid="member-badge-stub"]').trigger('click')
 

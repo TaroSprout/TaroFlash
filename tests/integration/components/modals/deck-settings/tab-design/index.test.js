@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import { defineComponent, h, reactive, ref, computed } from 'vue'
 import TabDesign from '@/views/deck/deck-settings/tab-design/index.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
-import { deckSettingsLayoutKey } from '@/views/deck/deck-settings/layout'
+import { windowLayoutKey } from '@/components/layout-kit/paged-window/layout'
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn() }))
 
@@ -63,7 +63,7 @@ function makeWrapper(editor = makeEditor(), layout_mode = 'desktop') {
     global: {
       provide: {
         [deckEditorKey]: editor,
-        [deckSettingsLayoutKey]: computed(() => layout_mode)
+        [windowLayoutKey]: computed(() => layout_mode)
       },
       stubs: {
         DeckDesignPreview: DeckPreviewStub,
@@ -85,14 +85,14 @@ describe('TabDesign — inline preview visibility', () => {
   })
 
   test('renders the inline preview on sheet', () => {
-    const { wrapper } = makeWrapper(makeEditor(), 'sheet')
+    const { wrapper } = makeWrapper(makeEditor(), 'phone')
     expect(wrapper.find('[data-testid="tab-design__inline-preview"]').exists()).toBe(true)
   })
 
   test('passes the active side from editor.draft to the inline preview', () => {
     const editor = makeEditor()
     editor.draft.id = 42
-    const { wrapper } = makeWrapper(editor, 'sheet')
+    const { wrapper } = makeWrapper(editor, 'phone')
 
     // Preview renders with the current active side (cover by default)
     expect(wrapper.find('[data-testid="deck-preview-stub"]').attributes('data-side')).toBe('cover')
@@ -101,13 +101,13 @@ describe('TabDesign — inline preview visibility', () => {
   test('passes the active side from editor to the inline preview', () => {
     const editor = makeEditor()
     editor.active_side.value = 'back'
-    const { wrapper } = makeWrapper(editor, 'sheet')
+    const { wrapper } = makeWrapper(editor, 'phone')
 
     expect(wrapper.find('[data-testid="deck-preview-stub"]').attributes('data-side')).toBe('back')
   })
 
   test('forwards inline preview update:side to editor.setActiveSide', async () => {
-    const { wrapper, editor } = makeWrapper(makeEditor(), 'sheet')
+    const { wrapper, editor } = makeWrapper(makeEditor(), 'phone')
 
     await wrapper.find('[data-testid="deck-preview-stub"]').trigger('click')
 

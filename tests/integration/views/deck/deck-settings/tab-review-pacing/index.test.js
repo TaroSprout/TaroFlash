@@ -2,7 +2,7 @@ import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, reactive, ref, useAttrs } from 'vue'
 import { deckEditorKey } from '@/composables/deck/editor'
-import { deckSettingsLayoutKey } from '@/views/deck/deck-settings/layout'
+import { windowLayoutKey } from '@/components/layout-kit/paged-window/layout'
 
 // pacing-section.vue has its own dedicated test file — stub it here so this
 // suite only exercises the toggles + divider + section order that live
@@ -101,7 +101,7 @@ function makeWrapper({ config: configOverrides = {}, layout_mode = 'modal' } = {
   }
   const wrapper = mount(TabReviewPacing, {
     global: {
-      provide: { [deckEditorKey]: editor, [deckSettingsLayoutKey]: layout_mode },
+      provide: { [deckEditorKey]: editor, [windowLayoutKey]: layout_mode },
       stubs: { UiToggle: ToggleStub, UiOptionGroup: OptionGroupStub, DeckSaveButton: true },
       mocks: { $t: (k) => k }
     }

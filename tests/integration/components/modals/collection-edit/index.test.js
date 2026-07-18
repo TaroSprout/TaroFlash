@@ -72,13 +72,13 @@ const UiButtonStub = defineComponent({
   }
 })
 
-const MobileSheetStub = defineComponent({
-  name: 'MobileSheet',
+const AppWindowStub = defineComponent({
+  name: 'AppWindow',
   emits: ['close'],
   setup(_p, { slots, emit }) {
     return () =>
-      h('div', { 'data-testid': 'mobile-sheet-stub' }, [
-        h('button', { 'data-testid': 'mobile-sheet-stub__close', onClick: () => emit('close') }),
+      h('div', { 'data-testid': 'app-window-stub' }, [
+        h('button', { 'data-testid': 'app-window-stub__close', onClick: () => emit('close') }),
         slots.default?.()
       ])
   }
@@ -118,7 +118,7 @@ function mountModal(props = {}) {
   const wrapper = shallowMount(CollectionEditModal, {
     props: { collection_id: 1, close: closeMock, ...props },
     global: {
-      stubs: { UiButton: UiButtonStub, MobileSheet: MobileSheetStub, LessonCard: LessonCardStub }
+      stubs: { UiButton: UiButtonStub, AppWindow: AppWindowStub, LessonCard: LessonCardStub }
     }
   })
   return { wrapper, closeMock }

@@ -11,20 +11,20 @@ import MemberBadge from '@/components/member/member-badge.vue'
 import SettingsSaveButton from '../settings-save-button.vue'
 import { memberEditorKey } from '@/composables/member/editor'
 import { MEMBER_DISPLAY_NAME_MAX_LENGTH } from '@/utils/member/defaults'
-import { settingsLayoutKey } from '../layout'
+import { windowLayoutKey } from '@/components/layout-kit/paged-window/layout'
 import { useAvatarPicker } from '../use-avatar-picker'
 import { SUPPORTED_THEMES, SUPPORTED_PATTERNS } from '@/utils/cover'
 
 const { t } = useI18n()
 const editor = inject(memberEditorKey)!
-const layout_mode = inject(settingsLayoutKey)!
+const layout_mode = inject(windowLayoutKey)!
 const { onEditAvatar } = useAvatarPicker(editor)
 </script>
 
 <template>
   <section-list data-testid="tab-profile" class="px-(--settings-padding) pb-(--settings-padding)">
     <member-badge
-      v-if="layout_mode === 'sheet'"
+      v-if="layout_mode === 'phone'"
       data-testid="tab-profile__preview"
       :display-name="editor.draft.display_name"
       :description="editor.draft.description"
@@ -74,6 +74,6 @@ const { onEditAvatar } = useAvatarPicker(editor)
       </div>
     </labeled-section>
 
-    <settings-save-button v-if="layout_mode === 'sheet'" />
+    <settings-save-button v-if="layout_mode === 'phone'" />
   </section-list>
 </template>
