@@ -10,14 +10,13 @@ import { usePressHold } from '@/composables/ui/press-hold'
 
 type DeckGridItemProps = {
   deck: Deck
-  size: 'sm' | 'base'
   // the grid is in drag-to-reorder mode: the card is a drag handle, not tappable
   rearranging?: boolean
   // this card is the one currently being dragged — opts out of the idle jiggle
   dragging?: boolean
 }
 
-const { deck, size, rearranging = false, dragging = false } = defineProps<DeckGridItemProps>()
+const { deck, rearranging = false, dragging = false } = defineProps<DeckGridItemProps>()
 
 const emit = defineEmits<{
   press: []
@@ -52,7 +51,6 @@ function onOptionSelect(option: DropdownOption) {
   <div class="w-full" :class="{ jiggle: rearranging && !dragging }" @pointerdown="onPointerdown">
     <DeckThumbnail
       :deck="deck"
-      :size="size"
       :corner_action_always_visible="rearranging"
       :rearranging="rearranging"
       :dragging="dragging"

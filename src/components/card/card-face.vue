@@ -2,44 +2,23 @@
 import { computed } from 'vue'
 import textEditor from './text-editor.vue'
 import { CARD_ATTRIBUTES_DEFAULTS } from '@/utils/deck/defaults'
+import { cardTextScale } from '@/utils/card/text-scale'
 
-const {
-  image,
-  text,
-  attributes,
-  size = 'base'
-} = defineProps<{
+type CardFaceProps = {
   image?: string
   text?: string
   mode?: 'view' | 'edit'
   attributes?: CardAttributes
-  size?: CardSize
-}>()
-
-// Font size depends on BOTH the card size and the per-deck text_size level (1–10).
-// The xl row is the canonical scale; other rows scale by card width. Both the
-// default editor and any slotted editor inherit this via the cascade.
-const SIZE_LEVEL_PX: Record<CardSize, number[]> = {
-  '2xl': [19, 24, 29, 36, 44, 53, 63, 73, 85, 102],
-  xl: [16, 20, 24, 30, 36, 44, 52, 60, 70, 84],
-  lg: [13, 17, 20, 25, 30, 36, 43, 50, 58, 70],
-  md: [10, 12, 15, 19, 22, 27, 32, 37, 43, 52],
-  base: [8, 10, 12, 15, 18, 22, 27, 31, 36, 43],
-  sm: [7, 9, 11, 13, 16, 19, 23, 26, 31, 37],
-  xs: [5, 6, 8, 10, 12, 14, 17, 19, 23, 27],
-  '2xs': [4, 4, 4, 4, 5, 6, 7, 8, 10, 12],
-  '3xs': [4, 4, 4, 4, 4, 4, 5, 5, 6, 7]
 }
-const DEFAULT_TEXT_LEVEL = 4
+
+const { image, text, attributes } = defineProps<CardFaceProps>()
 
 const layout = computed(() => attributes?.image_layout ?? CARD_ATTRIBUTES_DEFAULTS.image_layout)
 
-const font_size = computed(() => {
-  const levels = SIZE_LEVEL_PX[size]
-  const level = attributes?.text_size ?? DEFAULT_TEXT_LEVEL
-  const clamped = Math.min(levels.length, Math.max(1, Math.round(level)))
-  return `${levels[clamped - 1]}px`
-})
+// Font size is fluid off the card width (cqi, see the text-region rule); the
+// per-deck text_size level (1–10) only picks the multiplier. Both the default
+// editor and any slotted editor inherit it via the cascade.
+const text_scale = computed(() => cardTextScale(attributes?.text_size))
 </script>
 
 <template>
@@ -64,7 +43,7 @@ const font_size = computed(() => {
     <div
       data-testid="card-face__text-region"
       class="card-face__text-region"
-      :style="{ fontSize: font_size }"
+      :style="{ '--card-text-scale': text_scale }"
     >
       <slot name="editor">
         <text-editor
@@ -144,6 +123,10 @@ const font_size = computed(() => {
   min-height: 0;
 
   overflow: hidden;
+
+  /* 9.554cqi * level multiplier reproduces the historical level table exactly
+     at --card-w-full (level 4 = 30px at 314px); tiny cards floor at 4px. */
+  font-size: max(4px, calc(9.554cqi * var(--card-text-scale, 1)));
 }
 
 /* In above/below, the image shrinks as the text grows — but never below half

@@ -17,7 +17,7 @@ const { disabled = false } = defineProps<ReviewInboxItemProps>()
     :class="disabled && 'opacity-50'"
     v-sfx="{ hover: TYPE_SFX }"
   >
-    <card side="cover" size="xs" :cover_config="deck.cover_config" />
+    <card side="cover" class="w-[102px]" :cover_config="deck.cover_config" />
 
     <div
       data-testid="review-inbox-item__due-badge"

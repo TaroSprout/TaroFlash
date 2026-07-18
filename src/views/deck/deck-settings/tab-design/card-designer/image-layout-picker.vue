@@ -38,7 +38,7 @@ function onSelect(value: CardImageLayout) {
       @click="onSelect(option)"
       v-sfx="{ hover: selected === option ? undefined : TYPE_SFX }"
     >
-      <card size="xs" side="front">
+      <card class="w-[102px]" side="front">
         <template #front>
           <layout-skeleton :layout="option" />
         </template>

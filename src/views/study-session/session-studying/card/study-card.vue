@@ -291,9 +291,8 @@ function toSwipeZone(offset: number) {
     <card
       ref="card_ref"
       data-testid="study-card"
-      class="z-10"
+      class="z-10 w-(--card-w-full)"
       :class="is_dragging ? 'cursor-grabbing' : 'cursor-grab'"
-      size="xl"
       v-bind="card"
       :side="side"
       :cover_config="cover_override ?? appearance.cover_config"

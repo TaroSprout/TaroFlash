@@ -5,15 +5,12 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 import { TYPE_SFX } from '@/sfx/config'
 import { useI18n } from 'vue-i18n'
 
-type CardSize = InstanceType<typeof Card>['$props']['size']
-
 type NewDeckCardProps = {
-  size?: CardSize
   loading?: boolean
   disabled?: boolean
 }
 
-const { size = 'base', loading = false, disabled = false } = defineProps<NewDeckCardProps>()
+const { loading = false, disabled = false } = defineProps<NewDeckCardProps>()
 
 const emit = defineEmits<{ press: [e: MouseEvent] }>()
 
@@ -30,7 +27,7 @@ const { t } = useI18n()
     :sfx="{ hover: TYPE_SFX, press: 'pop_up_pop' }"
     @tap="!disabled && emit('press', $event)"
   >
-    <card :size="size" side="front">
+    <card side="front">
       <template #front>
         <div
           data-testid="new-deck-card__outline"

@@ -64,8 +64,8 @@ async function onSave() {
       <div class="w-full flex flex-col gap-2">
         <div class="flex flex-col gap-2 w-full h-200 overflow-auto">
           <div v-for="(card, i) in cards" :key="i" class="flex gap-2">
-            <Card v-bind="card" side="front" size="lg" />
-            <Card v-bind="card" side="back" size="lg" />
+            <Card v-bind="card" side="front" class="w-[260px]" />
+            <Card v-bind="card" side="back" class="w-[260px]" />
           </div>
         </div>
         <ui-button data-theme="blue-500" @press="onSave" :disabled="!has_unsaved_changes">{{

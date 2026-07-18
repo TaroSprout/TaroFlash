@@ -20,7 +20,6 @@ type ImageUploaderProps = {
   card: Card
   side: 'front' | 'back'
   card_attributes: DeckCardAttributes
-  size?: CardSize
   disabled?: boolean
   error?: boolean
 }
@@ -29,7 +28,6 @@ const {
   card,
   side,
   card_attributes,
-  size = 'xl',
   disabled = false,
   error = false
 } = defineProps<ImageUploaderProps>()
@@ -132,7 +130,6 @@ function onAddClick() {
   <card
     ref="cardRef"
     mode="edit"
-    :size="size"
     :side="side"
     v-bind="card"
     :card_attributes="card_attributes"

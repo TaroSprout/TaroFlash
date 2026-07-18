@@ -1,6 +1,6 @@
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 
-// Matches the Card component's --card-width for 'lg'/'sm' and --aspect-card.
+// Fixed per-breakpoint cell widths (the fluid card fills the cell) + --aspect-card.
 const CELL_WIDTH: Record<'base' | 'sm', number> = { base: 192, sm: 172 }
 const CELL_ASPECT = 8 / 7
 const GAP_X = 12 // gap-x-3

@@ -138,6 +138,7 @@ defineExpose({ focusEditor, hasFocusWithin })
   >
     <image-uploader
       data-testid="front-input"
+      class="w-(--card-w-full)"
       :data-id="card.id"
       :card="card"
       side="front"
@@ -159,6 +160,7 @@ defineExpose({ focusEditor, hasFocusWithin })
 
     <image-uploader
       data-testid="back-input"
+      class="w-(--card-w-full)"
       :data-id="card.id"
       :card="card"
       side="back"

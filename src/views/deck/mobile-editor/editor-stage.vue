@@ -37,7 +37,7 @@ watchEffect(() => {
       :card_key="current.client_id"
       :card_attributes="card_attributes"
       :placeholder="placeholder"
-      size="xl"
+      class="w-(--card-w-full)"
       input_testid="mobile-card-editor__input"
       @update="update"
     ></face-editor>

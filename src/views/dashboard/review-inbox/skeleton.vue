@@ -25,7 +25,7 @@ const DEFAULT_COVER: DeckCover = {
       data-testid="review-inbox-skeleton__item"
       class="flex flex-col items-center gap-2.5 shrink-0"
     >
-      <card side="cover" size="xs" shimmer :cover_config="DEFAULT_COVER" />
+      <card side="cover" class="w-[102px]" shimmer :cover_config="DEFAULT_COVER" />
 
       <div
         data-testid="review-inbox-skeleton__label"

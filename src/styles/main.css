@@ -178,6 +178,10 @@
 
   /* Other Utilities */
   --aspect-card: 7 / 8;
+  /* The enshrined full card width — study session / editors. All fluid card
+     geometry (radius, padding, font) is calibrated to reproduce the historical
+     xl card exactly at this width. */
+  --card-w-full: 314px;
   --page-width: 1570px;
   --blur-md: 24px;
   --blur-4: 4px;

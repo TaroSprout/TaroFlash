@@ -8,7 +8,6 @@ import { type SfxOptions } from '@/sfx/directive'
 import { gsap } from 'gsap'
 
 type CardProps = Partial<CardBase> & {
-  size?: CardSize
   mode?: 'view' | 'edit'
   side?: CardSide
   cover_config?: DeckCover
@@ -25,7 +24,6 @@ const emit = defineEmits<{
 }>()
 
 const {
-  size = 'base',
   side = 'front',
   mode = 'view',
   cover_config,
@@ -84,7 +82,7 @@ function onLeave(el: Element, done: () => void) {
     data-testid="card"
     translate="no"
     class="card-container"
-    :class="`card-container--${size} card-container--${mode}`"
+    :class="`card-container--${mode}`"
     :data-error="error || undefined"
     v-sfx="sfx"
   >
@@ -102,7 +100,6 @@ function onLeave(el: Element, done: () => void) {
           :image="front_image_url"
           :text="front_text"
           :mode="mode"
-          :size="size"
           :attributes="card_attributes?.front"
         >
           <template #image>
@@ -121,7 +118,6 @@ function onLeave(el: Element, done: () => void) {
           :image="back_image_url"
           :text="back_text"
           :mode="mode"
-          :size="size"
           :attributes="card_attributes?.back"
         >
           <template #image>
@@ -137,88 +133,54 @@ function onLeave(el: Element, done: () => void) {
 </template>
 
 <style>
-.card-container {
-  perspective: 600px;
+/* The card is width-fluid: it fills its parent and everything inside scales
+   off the resolved width via container-query (cqi) units. The container is the
+   card root itself, so the geometry vars below live on its direct children —
+   cqi units on the container element would resolve against an ancestor.
 
-  --min-element-height: 80px;
+   The base rule sits in the components layer so width utilities on the card
+   (`w-[260px]`, `w-(--card-w-full)`) can override the fluid 100% default —
+   unlayered SFC CSS would always beat Tailwind's layered utilities. */
+@layer components {
+  .card-container {
+    container-type: inline-size;
+    perspective: 600px;
+
+    --card-bg-color: var(--color-white);
+    --card-text-color: var(--color-brown-700);
+    --card-text-color--placeholder: var(--color-brown-500);
+
+    aspect-ratio: var(--aspect-card);
+    position: relative;
+    width: 100%;
+
+    color: var(--card-text-color);
+  }
+}
+
+/* Fluid geometry, calibrated so a card at --card-w-full (314px) reproduces the
+   historical full-size values exactly: radius 58px, padding 20px. Floors keep
+   tiny covers from collapsing to sharp corners / zero padding. */
+.card-container > * {
+  --face-radius: clamp(8px, 18.471cqi, 70px);
+  --face-padding: clamp(2px, 6.369cqi, 42px);
   --face-image-padding: calc(var(--face-padding) / 2);
-  --card-bg-color: var(--color-white);
-  --card-text-color: var(--color-brown-700);
-  --card-text-color--placeholder: var(--color-brown-500);
 
-  aspect-ratio: var(--aspect-card);
-  position: relative;
-  width: var(--card-width);
-  transition: width 0.05s ease-in-out;
-
-  color: var(--card-text-color);
+  /* Chrome (border band, cover icon, pattern tile) is two-variant, not fluid:
+     the full band here, and a deliberately chunky tiny variant below. */
+  --face-border-width: 16px;
+  --cover-icon-size: 33%;
+  --card-pattern-scale: 1;
 }
 
-.card-container--2xl {
-  --card-width: 380px;
-  --face-border-width: 16px;
-  --face-radius: 70px;
-  --face-padding: 42px;
-  --cover-icon-size: 30%;
-}
-.card-container--xl {
-  --card-width: 314px;
-  --face-border-width: 16px;
-  --face-radius: 58px;
-  --face-padding: 20px;
-  --min-element-height: 80px;
-  --cover-icon-size: 32%;
-}
-.card-container--lg {
-  --card-width: 260px;
-  --face-border-width: 16px;
-  --face-radius: 56px;
-  --face-padding: 24px;
-  --cover-icon-size: 33%;
-}
-.card-container--md {
-  --card-width: 240px;
-  --face-border-width: 16px;
-  --face-radius: 46px;
-  --face-padding: 16px;
-  --min-element-height: 80px;
-  --cover-icon-size: 33%;
-}
-.card-container--base {
-  --card-width: 192px;
-  --face-border-width: 16px;
-  --face-radius: 40px;
-  --face-padding: 20px;
-  --min-element-height: 80px;
-  --cover-icon-size: 33%;
-}
-.card-container--sm {
-  --card-width: 172px;
-  --face-border-width: 16px;
-  --face-radius: 32px;
-  --face-padding: 10px;
-  --cover-icon-size: 40%;
-}
-.card-container--xs {
-  --card-width: 102px;
-  --face-border-width: 16px;
-  --face-radius: 24px;
-  --face-padding: 4px;
-  --cover-icon-size: 60%;
-}
-.card-container--2xs {
-  --card-width: 43px;
-  --face-border-width: 6px;
-  --face-radius: 14px;
-  --face-padding: 4px;
-  --cover-icon-size: 80%;
-}
-.card-container--3xs {
-  --card-width: 28px;
-  --face-border-width: 2px;
-  --face-radius: 8px;
-  --face-padding: 1px;
-  --cover-icon-size: 55%;
+/* Tiny cards (list-leading swatches and the like): the fluid band would smear
+   away, so switch to intentionally chunky chrome that still reads at ~43px. */
+@container (max-width: 72px) {
+  .card-container > * {
+    --face-border-width: 6px;
+    --cover-icon-size: 80%;
+    --card-pattern-scale: 0.5;
+  }
 }
 
 [data-theme='dark'] .card-container {

@@ -15,8 +15,9 @@ const DEFAULT_COVER: DeckCover = {
   pattern: 'diagonal-stripes'
 }
 
+// Mirrors the real grid's per-breakpoint cell width (use-deck-grid CELL_WIDTH).
 const is_md = useMatchMedia('w>=md')
-const size = computed(() => (is_md.value ? 'base' : 'sm'))
+const card_width = computed(() => (is_md.value ? 'w-[192px]' : 'w-[172px]'))
 </script>
 
 <template>
@@ -25,7 +26,7 @@ const size = computed(() => (is_md.value ? 'base' : 'sm'))
       v-for="n in count"
       :key="n"
       side="cover"
-      :size="size"
+      :class="card_width"
       shimmer
       :cover_config="DEFAULT_COVER"
     />

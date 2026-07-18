@@ -8,18 +8,10 @@ type CardFaceFieldProps = {
   text: string
   attributes?: CardAttributes
   placeholder: string
-  size?: '2xl' | 'xl' | 'lg' | 'base'
   error?: boolean
 }
 
-const {
-  side,
-  text,
-  attributes,
-  placeholder,
-  size = 'xl',
-  error = false
-} = defineProps<CardFaceFieldProps>()
+const { side, text, attributes, placeholder, error = false } = defineProps<CardFaceFieldProps>()
 
 const emit = defineEmits<{
   (e: 'update:text', value: string): void
@@ -37,7 +29,6 @@ const card_attributes = computed<DeckCardAttributes>(() => ({
   <card
     data-testid="card-face-field"
     mode="edit"
-    :size="size"
     :side="side"
     :card_attributes="card_attributes"
     :error="error"

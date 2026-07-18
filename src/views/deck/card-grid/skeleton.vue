@@ -17,7 +17,7 @@ const DEFAULT_COVER: DeckCover = {
   pattern: 'diagonal-stripes'
 }
 
-const { card_scale, grid_style, grid_classes } = useCardGrid(() => size)
+const { grid_style, grid_classes } = useCardGrid(() => size)
 </script>
 
 <template>
@@ -27,28 +27,10 @@ const { card_scale, grid_style, grid_classes } = useCardGrid(() => size)
         v-for="n in count"
         :key="n"
         data-testid="card-grid-skeleton__item"
-        class="skeleton-item relative aspect-card w-full"
+        class="relative aspect-card w-full"
       >
-        <card
-          class="skeleton-item__card"
-          :style="{ '--card-scale': card_scale }"
-          size="lg"
-          side="cover"
-          :shimmer="shimmer"
-          :cover_config="DEFAULT_COVER"
-        />
+        <card side="cover" :shimmer="shimmer" :cover_config="DEFAULT_COVER" />
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.skeleton-item :deep(.skeleton-item__card) {
-  position: absolute;
-  top: 0;
-  left: 0;
-
-  transform-origin: top left;
-  transform: scale(var(--card-scale));
-}
-</style>

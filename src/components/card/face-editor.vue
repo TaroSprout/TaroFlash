@@ -17,7 +17,6 @@ type FaceEditorProps = {
   // host cycling through temp cards passes the client_id so a temp→real id
   // promotion mid-typing doesn't remount the editor and drop the caret.
   card_key?: string | number
-  size?: CardSize
   input_testid?: string
   with_images?: boolean
   disabled?: boolean
@@ -31,7 +30,6 @@ const {
   card_attributes,
   placeholder,
   card_key,
-  size = 'xl',
   input_testid = 'face-editor__input',
   with_images = false,
   disabled = false,
@@ -63,7 +61,6 @@ defineExpose({ uploader })
     :card="card"
     :side="side"
     :card_attributes="card_attributes"
-    :size="size"
     :disabled="disabled"
     :error="error"
   >
@@ -81,14 +78,7 @@ defineExpose({ uploader })
     </template>
   </image-uploader>
 
-  <card
-    v-else
-    :size="size"
-    mode="edit"
-    :side="side"
-    v-bind="card"
-    :card_attributes="card_attributes"
-  >
+  <card v-else mode="edit" :side="side" v-bind="card" :card_attributes="card_attributes">
     <template #editor>
       <text-editor
         :key="editor_key"
