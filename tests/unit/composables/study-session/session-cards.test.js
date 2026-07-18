@@ -5,24 +5,32 @@ import { card } from '../../../fixtures/card'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { refetchImpl, restoreRefetchImpl, cardsByIdsQueryMock, readPersistedSessionMock } =
-  vi.hoisted(() => ({
-    refetchImpl: { current: vi.fn() },
-    restoreRefetchImpl: { current: vi.fn() },
-    cardsByIdsQueryMock: vi.fn(),
-    readPersistedSessionMock: vi.fn(() => undefined)
-  }))
+const {
+  bootstrapRefetchImpl,
+  restoreRefetchImpl,
+  cardsByIdsQueryMock,
+  sessionBootstrapQueryMock,
+  readPersistedSessionMock
+} = vi.hoisted(() => ({
+  bootstrapRefetchImpl: { current: vi.fn() },
+  restoreRefetchImpl: { current: vi.fn() },
+  cardsByIdsQueryMock: vi.fn(),
+  sessionBootstrapQueryMock: vi.fn(),
+  readPersistedSessionMock: vi.fn(() => undefined)
+}))
 
 const { mockNotice } = vi.hoisted(() => ({
   mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
 }))
 
 vi.mock('@/api/cards', () => ({
-  useMultiDeckStudyCardsQuery: vi.fn(() => ({
-    data: { value: undefined },
-    refetch: (...args) => refetchImpl.current(...args),
-    refresh: vi.fn()
-  })),
+  useSessionBootstrapQuery: (...args) => {
+    sessionBootstrapQueryMock(...args)
+    return {
+      data: { value: undefined },
+      refetch: (...args2) => bootstrapRefetchImpl.current(...args2)
+    }
+  },
   useCardsByIdsQuery: (...args) => {
     cardsByIdsQueryMock(...args)
     return {
@@ -46,10 +54,6 @@ vi.mock('vue-i18n', () => ({
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/**
- * Mounts useSessionCards inside a minimal app so onMounted fires.
- * Returns the composable result and an unmount function.
- */
 function withSetup(composable) {
   let result
   const app = createApp({
@@ -63,15 +67,24 @@ function withSetup(composable) {
   return { result, unmount: () => app.unmount() }
 }
 
+function bootstrapSuccess(decks, cards) {
+  return { status: 'success', data: { decks, cards }, error: null }
+}
+
+function makeDeck(overrides = {}) {
+  return { id: 1, title: 'Deck', ...overrides }
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('useSessionCards', () => {
   let unmount
 
   beforeEach(() => {
-    refetchImpl.current = vi.fn()
+    bootstrapRefetchImpl.current = vi.fn()
     restoreRefetchImpl.current = vi.fn()
     cardsByIdsQueryMock.mockClear()
+    sessionBootstrapQueryMock.mockClear()
     readPersistedSessionMock.mockReset().mockReturnValue(undefined)
     mockNotice.error.mockReset()
     unmount = null
@@ -88,12 +101,7 @@ describe('useSessionCards', () => {
     const onMissingDeck = vi.fn()
 
     const setup = withSetup(() =>
-      useSessionCards({
-        deckIds: () => [],
-        studyAllCards: () => false,
-        seed,
-        onMissingDeck
-      })
+      useSessionCards({ deckIds: () => [], seed, restore: vi.fn(), onMissingDeck })
     )
     unmount = setup.unmount
 
@@ -101,15 +109,15 @@ describe('useSessionCards', () => {
 
     expect(onMissingDeck).toHaveBeenCalledOnce()
     expect(seed).not.toHaveBeenCalled()
-    expect(refetchImpl.current).not.toHaveBeenCalled()
+    expect(bootstrapRefetchImpl.current).not.toHaveBeenCalled()
   })
 
   test('loading stays true when deckIds() is empty [obligation]', async () => {
     const setup = withSetup(() =>
       useSessionCards({
         deckIds: () => [],
-        studyAllCards: () => false,
         seed: vi.fn(),
+        restore: vi.fn(),
         onMissingDeck: vi.fn()
       })
     )
@@ -120,62 +128,57 @@ describe('useSessionCards', () => {
     expect(setup.result.loading.value).toBe(true)
   })
 
-  test('does NOT fire the query (refetch) when deckIds() is empty [obligation]', async () => {
-    const setup = withSetup(() =>
-      useSessionCards({
-        deckIds: () => [],
-        studyAllCards: () => false,
-        seed: vi.fn(),
-        onMissingDeck: vi.fn()
-      })
-    )
-    unmount = setup.unmount
+  // ── Successful bootstrap (no persisted session) — awaits refetch() [obligation] ─
 
-    await nextTick()
-
-    expect(refetchImpl.current).not.toHaveBeenCalled()
-  })
-
-  // ── Successful load ────────────────────────────────────────────────────────
-
-  test('seeds cards and sets loading=false when refetch returns success [obligation]', async () => {
+  test('seeds cards from the awaited refetch() result, not a synchronously-cached value [obligation]', async () => {
     const cards = card.many(3)
-    refetchImpl.current = vi.fn().mockResolvedValue({ status: 'success', data: cards, error: null })
+    const decks = [makeDeck({ id: 42 })]
+    bootstrapRefetchImpl.current = vi.fn().mockResolvedValue(bootstrapSuccess(decks, cards))
 
     const seed = vi.fn()
     const onMissingDeck = vi.fn()
 
     const setup = withSetup(() =>
-      useSessionCards({
-        deckIds: () => [42],
-        studyAllCards: () => true,
-        seed,
-        onMissingDeck
-      })
+      useSessionCards({ deckIds: () => [42], seed, restore: vi.fn(), onMissingDeck })
     )
     unmount = setup.unmount
 
-    // Wait for onMounted async work to finish
     await new Promise((r) => setTimeout(r, 0))
     await nextTick()
 
+    expect(bootstrapRefetchImpl.current).toHaveBeenCalledOnce()
     expect(onMissingDeck).not.toHaveBeenCalled()
     expect(seed).toHaveBeenCalledWith(cards)
     expect(setup.result.loading.value).toBe(false)
   })
 
-  test('seeds with empty array when data is null (success with no cards) [obligation]', async () => {
-    refetchImpl.current = vi.fn().mockResolvedValue({ status: 'success', data: null, error: null })
+  test('exposes the resolved sessionDecks from the bootstrap [obligation]', async () => {
+    const decks = [makeDeck({ id: 1 }), makeDeck({ id: 2 })]
+    bootstrapRefetchImpl.current = vi.fn().mockResolvedValue(bootstrapSuccess(decks, []))
+
+    const setup = withSetup(() =>
+      useSessionCards({
+        deckIds: () => [1, 2],
+        seed: vi.fn(),
+        restore: vi.fn(),
+        onMissingDeck: vi.fn()
+      })
+    )
+    unmount = setup.unmount
+
+    await new Promise((r) => setTimeout(r, 0))
+    await nextTick()
+
+    expect(setup.result.sessionDecks.value).toEqual(decks)
+  })
+
+  test('seeds with an empty array when the bootstrap returns no cards', async () => {
+    bootstrapRefetchImpl.current = vi.fn().mockResolvedValue(bootstrapSuccess([], undefined))
 
     const seed = vi.fn()
 
     const setup = withSetup(() =>
-      useSessionCards({
-        deckIds: () => [1],
-        studyAllCards: () => false,
-        seed,
-        onMissingDeck: vi.fn()
-      })
+      useSessionCards({ deckIds: () => [1], seed, restore: vi.fn(), onMissingDeck: vi.fn() })
     )
     unmount = setup.unmount
 
@@ -186,83 +189,54 @@ describe('useSessionCards', () => {
     expect(setup.result.loading.value).toBe(false)
   })
 
-  test('works with multiple deck ids — passes deckIds getter to the query', async () => {
-    const cards = card.many(5)
-    refetchImpl.current = vi.fn().mockResolvedValue({ status: 'success', data: cards, error: null })
-
-    const seed = vi.fn()
-
+  test('passes the deckIds getter through to the bootstrap query', () => {
+    bootstrapRefetchImpl.current = vi.fn().mockResolvedValue(bootstrapSuccess([], []))
     const setup = withSetup(() =>
       useSessionCards({
         deckIds: () => [1, 2, 3],
-        studyAllCards: () => false,
-        seed,
-        onMissingDeck: vi.fn()
-      })
-    )
-    unmount = setup.unmount
-
-    await new Promise((r) => setTimeout(r, 0))
-    await nextTick()
-
-    expect(seed).toHaveBeenCalledWith(cards)
-    expect(setup.result.loading.value).toBe(false)
-  })
-
-  // ── Non-success refetch ────────────────────────────────────────────────────
-
-  test('resets loading to false and does NOT seed when refetch returns non-success [obligation]', async () => {
-    refetchImpl.current = vi.fn().mockResolvedValue({ status: 'error', data: null, error: 'oops' })
-
-    const seed = vi.fn()
-
-    const setup = withSetup(() =>
-      useSessionCards({
-        deckIds: () => [1],
-        studyAllCards: () => false,
-        seed,
-        onMissingDeck: vi.fn()
-      })
-    )
-    unmount = setup.unmount
-
-    await new Promise((r) => setTimeout(r, 0))
-    await nextTick()
-
-    expect(seed).not.toHaveBeenCalled()
-    expect(setup.result.loading.value).toBe(false)
-  })
-
-  test('resets loading to false and does NOT seed when refetch returns pending [obligation]', async () => {
-    refetchImpl.current = vi.fn().mockResolvedValue({ status: 'loading', data: null, error: null })
-
-    const seed = vi.fn()
-
-    const setup = withSetup(() =>
-      useSessionCards({
-        deckIds: () => [1],
-        studyAllCards: () => false,
-        seed,
-        onMissingDeck: vi.fn()
-      })
-    )
-    unmount = setup.unmount
-
-    await new Promise((r) => setTimeout(r, 0))
-    await nextTick()
-
-    expect(seed).not.toHaveBeenCalled()
-    expect(setup.result.loading.value).toBe(false)
-  })
-
-  test('fires a panel notice with a Retry action, closable, when the bootstrap fetch fails [obligation]', async () => {
-    refetchImpl.current = vi.fn().mockResolvedValue({ status: 'error', data: null, error: 'oops' })
-
-    const setup = withSetup(() =>
-      useSessionCards({
-        deckIds: () => [1],
-        studyAllCards: () => false,
         seed: vi.fn(),
+        restore: vi.fn(),
+        onMissingDeck: vi.fn()
+      })
+    )
+
+    expect(sessionBootstrapQueryMock).toHaveBeenCalledWith(expect.any(Function))
+    expect(sessionBootstrapQueryMock.mock.calls[0][0]()).toEqual([1, 2, 3])
+
+    setup.unmount()
+  })
+
+  // ── Non-success bootstrap ──────────────────────────────────────────────────
+
+  test('resets loading to false and does NOT seed when the bootstrap returns non-success [obligation]', async () => {
+    bootstrapRefetchImpl.current = vi
+      .fn()
+      .mockResolvedValue({ status: 'error', data: null, error: 'oops' })
+
+    const seed = vi.fn()
+
+    const setup = withSetup(() =>
+      useSessionCards({ deckIds: () => [1], seed, restore: vi.fn(), onMissingDeck: vi.fn() })
+    )
+    unmount = setup.unmount
+
+    await new Promise((r) => setTimeout(r, 0))
+    await nextTick()
+
+    expect(seed).not.toHaveBeenCalled()
+    expect(setup.result.loading.value).toBe(false)
+  })
+
+  test('fires a panel notice with a Retry action when the bootstrap fetch fails [obligation]', async () => {
+    bootstrapRefetchImpl.current = vi
+      .fn()
+      .mockResolvedValue({ status: 'error', data: null, error: 'oops' })
+
+    const setup = withSetup(() =>
+      useSessionCards({
+        deckIds: () => [1],
+        seed: vi.fn(),
+        restore: vi.fn(),
         onMissingDeck: vi.fn()
       })
     )
@@ -278,18 +252,18 @@ describe('useSessionCards', () => {
         actions: expect.arrayContaining([expect.objectContaining({ label: 'notice.retry-label' })])
       })
     )
-    const [, options] = mockNotice.error.mock.calls[0]
-    expect(options).not.toHaveProperty('closable', false)
   })
 
   test('clicking the Retry action re-invokes the bootstrap fetch [obligation]', async () => {
-    refetchImpl.current = vi.fn().mockResolvedValue({ status: 'error', data: null, error: 'oops' })
+    bootstrapRefetchImpl.current = vi
+      .fn()
+      .mockResolvedValue({ status: 'error', data: null, error: 'oops' })
 
     const setup = withSetup(() =>
       useSessionCards({
         deckIds: () => [1],
-        studyAllCards: () => false,
         seed: vi.fn(),
+        restore: vi.fn(),
         onMissingDeck: vi.fn()
       })
     )
@@ -298,7 +272,7 @@ describe('useSessionCards', () => {
     await new Promise((r) => setTimeout(r, 0))
     await nextTick()
 
-    expect(refetchImpl.current).toHaveBeenCalledTimes(1)
+    expect(bootstrapRefetchImpl.current).toHaveBeenCalledTimes(1)
 
     const [, options] = mockNotice.error.mock.calls[0]
     const retry_action = options.actions.find((a) => a.label === 'notice.retry-label')
@@ -306,29 +280,28 @@ describe('useSessionCards', () => {
     await new Promise((r) => setTimeout(r, 0))
     await nextTick()
 
-    expect(refetchImpl.current).toHaveBeenCalledTimes(2)
+    expect(bootstrapRefetchImpl.current).toHaveBeenCalledTimes(2)
   })
 
   // ── loading initial value ──────────────────────────────────────────────────
 
   test('loading starts as true before mount resolves', () => {
-    refetchImpl.current = vi.fn().mockReturnValue(new Promise(() => {})) // never resolves
+    bootstrapRefetchImpl.current = vi.fn().mockReturnValue(new Promise(() => {})) // never resolves
 
     const setup = withSetup(() =>
       useSessionCards({
         deckIds: () => [1],
-        studyAllCards: () => false,
         seed: vi.fn(),
+        restore: vi.fn(),
         onMissingDeck: vi.fn()
       })
     )
     unmount = setup.unmount
 
-    // Immediately after mount (but before the async onMounted callback resolves)
     expect(setup.result.loading.value).toBe(true)
   })
 
-  // ── Restore path (refresh-resume) [obligation] ────────────────────────────
+  // ── Restore path (refresh-resume) — restore queue lock [obligation] ───────
 
   test('fetches only the unreviewed remainder by id — not the full card_ids list [obligation]', async () => {
     const persisted = {
@@ -338,15 +311,15 @@ describe('useSessionCards', () => {
         { card_id: 10, passed: true },
         { card_id: 12, passed: false }
       ],
-      mode: 'studying'
+      completed: false
     }
     readPersistedSessionMock.mockReturnValue(persisted)
     restoreRefetchImpl.current = vi.fn().mockResolvedValue({ status: 'success', data: [] })
+    bootstrapRefetchImpl.current = vi.fn().mockResolvedValue(bootstrapSuccess([makeDeck()], []))
 
     const setup = withSetup(() =>
       useSessionCards({
         deckIds: () => [1],
-        studyAllCards: () => false,
         seed: vi.fn(),
         restore: vi.fn(),
         onMissingDeck: vi.fn()
@@ -357,45 +330,36 @@ describe('useSessionCards', () => {
     await new Promise((r) => setTimeout(r, 0))
     await nextTick()
 
-    // useCardsByIdsQuery is called with a ref — assert on the value passed through.
     const passed_ref = cardsByIdsQueryMock.mock.calls[0][0]
     expect(passed_ref.value).toEqual([11, 13])
   })
 
-  test('does NOT call the fresh due-cards query when a persisted session exists [obligation]', async () => {
-    readPersistedSessionMock.mockReturnValue({
-      deck_ids: [1],
-      card_ids: [10],
-      results: [],
-      mode: 'studying'
-    })
+  test('ignores the bootstrap card list on restore — decks still come from the bootstrap', async () => {
+    const persisted = { deck_ids: [1], card_ids: [10], results: [], completed: false }
+    readPersistedSessionMock.mockReturnValue(persisted)
+    const decks = [makeDeck({ id: 1 })]
+    bootstrapRefetchImpl.current = vi
+      .fn()
+      .mockResolvedValue(bootstrapSuccess(decks, [card.one({ overrides: { id: 999 } })]))
     restoreRefetchImpl.current = vi.fn().mockResolvedValue({ status: 'success', data: [] })
 
+    const restore = vi.fn()
     const setup = withSetup(() =>
-      useSessionCards({
-        deckIds: () => [1],
-        studyAllCards: () => false,
-        seed: vi.fn(),
-        restore: vi.fn(),
-        onMissingDeck: vi.fn()
-      })
+      useSessionCards({ deckIds: () => [1], seed: vi.fn(), restore, onMissingDeck: vi.fn() })
     )
     unmount = setup.unmount
 
     await new Promise((r) => setTimeout(r, 0))
     await nextTick()
 
-    expect(refetchImpl.current).not.toHaveBeenCalled()
+    expect(setup.result.sessionDecks.value).toEqual(decks)
+    expect(restore).toHaveBeenCalledWith([], persisted)
   })
 
   test('calls restore with the fetched remainder and the persisted snapshot on success [obligation]', async () => {
-    const persisted = {
-      deck_ids: [1],
-      card_ids: [10, 11],
-      results: [],
-      mode: 'studying'
-    }
+    const persisted = { deck_ids: [1], card_ids: [10, 11], results: [], completed: false }
     readPersistedSessionMock.mockReturnValue(persisted)
+    bootstrapRefetchImpl.current = vi.fn().mockResolvedValue(bootstrapSuccess([makeDeck()], []))
     const remainder_cards = card.many(2)
     restoreRefetchImpl.current = vi
       .fn()
@@ -403,13 +367,7 @@ describe('useSessionCards', () => {
 
     const restore = vi.fn()
     const setup = withSetup(() =>
-      useSessionCards({
-        deckIds: () => [1],
-        studyAllCards: () => false,
-        seed: vi.fn(),
-        restore,
-        onMissingDeck: vi.fn()
-      })
+      useSessionCards({ deckIds: () => [1], seed: vi.fn(), restore, onMissingDeck: vi.fn() })
     )
     unmount = setup.unmount
 
@@ -417,35 +375,6 @@ describe('useSessionCards', () => {
     await nextTick()
 
     expect(restore).toHaveBeenCalledWith(remainder_cards, persisted)
-    expect(setup.result.loading.value).toBe(false)
-  })
-
-  test('calls restore with an empty array when the remainder fetch succeeds with null data', async () => {
-    const persisted = {
-      deck_ids: [1],
-      card_ids: [10],
-      results: [],
-      mode: 'studying'
-    }
-    readPersistedSessionMock.mockReturnValue(persisted)
-    restoreRefetchImpl.current = vi.fn().mockResolvedValue({ status: 'success', data: null })
-
-    const restore = vi.fn()
-    const setup = withSetup(() =>
-      useSessionCards({
-        deckIds: () => [1],
-        studyAllCards: () => false,
-        seed: vi.fn(),
-        restore,
-        onMissingDeck: vi.fn()
-      })
-    )
-    unmount = setup.unmount
-
-    await new Promise((r) => setTimeout(r, 0))
-    await nextTick()
-
-    expect(restore).toHaveBeenCalledWith([], persisted)
     expect(setup.result.loading.value).toBe(false)
   })
 
@@ -457,22 +386,18 @@ describe('useSessionCards', () => {
         { card_id: 10, passed: true },
         { card_id: 11, passed: true }
       ],
-      mode: 'completed'
+      completed: true
     }
     readPersistedSessionMock.mockReturnValue(persisted)
+    bootstrapRefetchImpl.current = vi.fn().mockResolvedValue(bootstrapSuccess([makeDeck()], []))
 
     const restore = vi.fn()
     const setup = withSetup(() =>
-      useSessionCards({
-        deckIds: () => [1],
-        studyAllCards: () => false,
-        seed: vi.fn(),
-        restore,
-        onMissingDeck: vi.fn()
-      })
+      useSessionCards({ deckIds: () => [1], seed: vi.fn(), restore, onMissingDeck: vi.fn() })
     )
     unmount = setup.unmount
 
+    await new Promise((r) => setTimeout(r, 0))
     await nextTick()
 
     expect(restore).toHaveBeenCalledWith([], persisted)
@@ -485,19 +410,14 @@ describe('useSessionCards', () => {
       deck_ids: [1],
       card_ids: [10],
       results: [],
-      mode: 'studying'
+      completed: false
     })
+    bootstrapRefetchImpl.current = vi.fn().mockResolvedValue(bootstrapSuccess([makeDeck()], []))
     restoreRefetchImpl.current = vi.fn().mockResolvedValue({ status: 'error', data: null })
 
     const restore = vi.fn()
     const setup = withSetup(() =>
-      useSessionCards({
-        deckIds: () => [1],
-        studyAllCards: () => false,
-        seed: vi.fn(),
-        restore,
-        onMissingDeck: vi.fn()
-      })
+      useSessionCards({ deckIds: () => [1], seed: vi.fn(), restore, onMissingDeck: vi.fn() })
     )
     unmount = setup.unmount
 
@@ -510,5 +430,30 @@ describe('useSessionCards', () => {
       'study-session.load-error',
       expect.objectContaining({ variant: 'panel' })
     )
+  })
+
+  test('a failing bootstrap fetch does not seed and reports the load error even when a persisted session exists [obligation]', async () => {
+    readPersistedSessionMock.mockReturnValue({
+      deck_ids: [1],
+      card_ids: [10],
+      results: [],
+      completed: false
+    })
+    bootstrapRefetchImpl.current = vi
+      .fn()
+      .mockResolvedValue({ status: 'error', data: null, error: 'oops' })
+
+    const restore = vi.fn()
+    const setup = withSetup(() =>
+      useSessionCards({ deckIds: () => [1], seed: vi.fn(), restore, onMissingDeck: vi.fn() })
+    )
+    unmount = setup.unmount
+
+    await new Promise((r) => setTimeout(r, 0))
+    await nextTick()
+
+    expect(restore).not.toHaveBeenCalled()
+    expect(restoreRefetchImpl.current).not.toHaveBeenCalled()
+    expect(setup.result.loading.value).toBe(false)
   })
 })

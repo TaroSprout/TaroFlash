@@ -1,7 +1,27 @@
-import { describe, test, expect } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import SessionProgress from '@/views/study-session/session-studying/session-progress.vue'
+
+// ── Hoisted mocks ─────────────────────────────────────────────────────────────
+// session-progress.vue no longer takes editing/saving/is_cover/reviewed/total
+// as props — it reads editing/saving/is_cover/current_index/cards off the
+// injected StudySessionController; `total` is derived locally from cards.length.
+
+const { editing, saving, is_cover, current_index, cards } = await vi.hoisted(async () => {
+  const { ref } = await import('vue')
+  return {
+    editing: ref(false),
+    saving: ref(false),
+    is_cover: ref(false),
+    current_index: ref(0),
+    cards: ref([])
+  }
+})
+
+vi.mock('@/views/study-session/composables/session-controller', () => ({
+  useInjectedStudySessionController: () => ({ editing, saving, is_cover, current_index, cards })
+}))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
@@ -27,17 +47,15 @@ const UiIconStub = defineComponent({
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function mountProgress(props = {}) {
+function mountProgress({ reviewed = 0, total = 50, ...overrides } = {}) {
   capturedBarProps = {}
+  editing.value = overrides.editing ?? false
+  saving.value = overrides.saving ?? false
+  is_cover.value = overrides.is_cover ?? false
+  current_index.value = reviewed
+  cards.value = Array.from({ length: total })
+
   return mount(SessionProgress, {
-    props: {
-      editing: false,
-      saving: false,
-      is_cover: false,
-      reviewed: 0,
-      total: 50,
-      ...props
-    },
     global: {
       stubs: {
         UiProgressBar: ProgressBarStub,
@@ -50,6 +68,14 @@ function mountProgress(props = {}) {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('SessionProgress', () => {
+  beforeEach(() => {
+    editing.value = false
+    saving.value = false
+    is_cover.value = false
+    current_index.value = 0
+    cards.value = []
+  })
+
   // ── editing=false: renders progress bar [obligation] ──────────────────────
 
   describe('editing=false: progress bar shown', () => {
@@ -63,22 +89,22 @@ describe('SessionProgress', () => {
       expect(wrapper.find('[data-testid="study-session__save-status"]').exists()).toBe(false)
     })
 
-    test('bar label is "reviewed/total" — "0/50" when reviewed=0 [obligation]', () => {
+    test('bar label is "current_index/total" — "0/50" when current_index=0 [obligation]', () => {
       mountProgress({ editing: false, reviewed: 0, total: 50 })
       expect(capturedBarProps.label).toBe('0/50')
     })
 
-    test('bar label reflects current reviewed count', () => {
+    test('bar label reflects the current_index', () => {
       mountProgress({ editing: false, reviewed: 10, total: 50 })
       expect(capturedBarProps.label).toBe('10/50')
     })
 
-    test('bar :value is reviewed', () => {
+    test('bar :value is current_index', () => {
       mountProgress({ editing: false, reviewed: 7, total: 50 })
       expect(capturedBarProps.value).toBe(7)
     })
 
-    test('bar :max is total', () => {
+    test('bar :max is cards.length', () => {
       mountProgress({ editing: false, reviewed: 0, total: 50 })
       expect(capturedBarProps.max).toBe(50)
     })

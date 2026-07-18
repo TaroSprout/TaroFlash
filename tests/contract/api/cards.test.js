@@ -8,6 +8,7 @@ import {
   fetchCardsInDeck,
   fetchCardsByIds,
   fetchMemberCardCount,
+  fetchSessionBootstrap,
   moveCard,
   deleteCards,
   deleteCardsInDeck,
@@ -290,5 +291,44 @@ describe('fetchCardsByIds (contract)', () => {
     const byId = (x, y) => x - y
     expect(result.map((c) => c.id).sort(byId)).toEqual([first.id, second.id].sort(byId))
     expect(result[0]).toHaveProperty('review')
+  })
+})
+
+describe('fetchSessionBootstrap (contract)', () => {
+  test('returns the resolved deck and its cards for a single requested deck', async () => {
+    await bulkInsertCardsInDeck({
+      deck_id: deck.id,
+      cards: [
+        { front_text: 'F1', back_text: 'B1' },
+        { front_text: 'F2', back_text: 'B2' }
+      ]
+    })
+
+    const result = await fetchSessionBootstrap([deck.id])
+
+    expect(result.decks).toHaveLength(1)
+    expect(result.decks[0]).toMatchObject({
+      id: deck.id,
+      desired_retention: expect.any(Number),
+      learning_steps: expect.any(Array)
+    })
+    expect(result.cards).toHaveLength(2)
+    expect(result.cards[0]).toHaveProperty('review')
+  })
+
+  test('merges cards across multiple decks, in the requested deck order', async () => {
+    const deck2 = await createDeck(session.client, session.userId, { title: 'Second Deck' })
+    await insertCardDirect(session.client, deck.id, { front_text: 'Deck1 Card' })
+    await insertCardDirect(session.client, deck2.id, { front_text: 'Deck2 Card' })
+
+    const result = await fetchSessionBootstrap([deck2.id, deck.id])
+
+    expect(result.decks.map((d) => d.id)).toEqual([deck2.id, deck.id])
+    expect(result.cards.map((c) => c.front_text)).toEqual(['Deck2 Card', 'Deck1 Card'])
+  })
+
+  test('returns empty decks/cards for an empty deck_ids list', async () => {
+    const result = await fetchSessionBootstrap([])
+    expect(result).toEqual({ decks: [], cards: [] })
   })
 })

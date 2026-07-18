@@ -5,66 +5,82 @@ import {
   useInjectedStudySessionController
 } from '@/views/study-session/composables/session-controller'
 
-// ── Hoisted fakes for every sub-composable session-controller orchestrates ────
-// session-controller.ts is a pure orchestration layer: it wires together
-// useFlashcardSession, useCardPreview, useCardEdit, useActiveCardActions,
-// useSessionCards, useFlushDeckReviews, useUpsertMemberMutation and
-// useMemberStore. Each of those already has its own dedicated unit test, so
-// here they're faked out entirely — this suite only exercises the
-// orchestration contract described in the obligations.
+// ── Hoisted fakes for every sub-composable the controller orchestrates ────────
+// session-controller.ts is a pure composition root: it wires the deck
+// resolution, the deck-blind engine, card edit/preview/actions, review
+// flushing, and the prefs seam, then provides the whole bundle. Every
+// sub-composable already has its own dedicated unit test, so here they're
+// faked out entirely — this suite exercises only the orchestration contract.
 
-const { mode, results, reviewed_count, is_cover, active_card, next_card, config } =
+const { state, results, reviewed_count, is_cover, active_card, next_card, cards } =
   await vi.hoisted(async () => {
     const { ref } = await import('vue')
     return {
-      mode: ref('studying'),
+      state: ref('studying'),
       results: ref([]),
       reviewed_count: ref(0),
       is_cover: ref(false),
       active_card: ref({ id: 1, deck_id: 1 }),
       next_card: ref(undefined),
-      config: { study_all_cards: false }
+      cards: ref([])
     }
   })
 
-const { mockReviewCard, mockAwaitFlip, mockRestoreCards, mockStartSession } = vi.hoisted(() => ({
-  mockReviewCard: vi.fn(),
-  mockAwaitFlip: vi.fn().mockResolvedValue(undefined),
-  mockRestoreCards: vi.fn(),
-  mockStartSession: vi.fn()
-}))
+const { mockReviewCard, mockAwaitFlip, mockRestoreCards, mockStartSession, mockSetCards } =
+  vi.hoisted(() => ({
+    mockReviewCard: vi.fn(),
+    mockAwaitFlip: vi.fn().mockResolvedValue(undefined),
+    mockRestoreCards: vi.fn(),
+    mockStartSession: vi.fn(),
+    mockSetCards: vi.fn()
+  }))
 
-const { capturedFlashcardSessionArgs } = vi.hoisted(() => ({
-  capturedFlashcardSessionArgs: { current: null }
-}))
+const { capturedEngineDeps } = vi.hoisted(() => ({ capturedEngineDeps: { current: null } }))
 
-vi.mock('@/views/study-session/composables/flashcard-session', () => ({
-  useFlashcardSession: (pacing, config_override) => {
-    capturedFlashcardSessionArgs.current = { pacing, config_override }
+vi.mock('@/views/study-session/composables/session-engine', () => ({
+  useSessionEngine: (deps) => {
+    capturedEngineDeps.current = deps
     return {
-      mode,
-      cards: ref([]),
-      results,
+      state,
       current_card_side: ref('front'),
+      display_side: ref('front'),
+      cards,
+      results,
+      reviewed_count,
       current_index: ref(0),
+      is_starting_side: ref(true),
       active_card,
       active_card_preview: ref(undefined),
-      reviewed_count,
-      is_starting_side: ref(true),
-      config,
-      show_all_ratings: ref(false),
       next_card,
       is_cover,
-      reviewCard: mockReviewCard,
-      setCards: vi.fn(),
+      setCards: mockSetCards,
       restoreCards: mockRestoreCards,
-      setSessionMeta: vi.fn(),
       startSession: mockStartSession,
       flipCurrentCard: vi.fn(),
+      reviewCard: mockReviewCard,
       dropCard: vi.fn(),
       updateCard: vi.fn()
     }
   }
+}))
+
+const { capturedResolution } = vi.hoisted(() => ({ capturedResolution: { current: null } }))
+
+vi.mock('@/views/study-session/deck-resolution', () => ({
+  buildDeckResolution: (decksGetter) => {
+    const resolution = {
+      appearanceFor: vi.fn(() => ({})),
+      schedulerFor: vi.fn(),
+      flipFor: vi.fn((deck_id) => deck_id === 2),
+      thresholdFor: vi.fn(() => 8),
+      covers: { value: [] },
+      shuffle: { value: false },
+      _decksGetter: decksGetter
+    }
+    capturedResolution.current = resolution
+    return resolution
+  },
+  provideDeckResolution: vi.fn()
 }))
 
 vi.mock('@/views/study-session/composables/card-preview', () => ({
@@ -94,10 +110,7 @@ const { capturedActiveCardActionsOptions } = vi.hoisted(() => ({
 vi.mock('@/views/study-session/composables/card-actions', () => ({
   useActiveCardActions: (options) => {
     capturedActiveCardActionsOptions.current = options
-    return {
-      onMove: vi.fn(),
-      onDelete: vi.fn()
-    }
+    return { onMove: vi.fn(), onDelete: vi.fn() }
   }
 }))
 
@@ -110,8 +123,20 @@ vi.mock('@/views/study-session/composables/session-cards', () => ({
   useSessionCards: (options) => {
     mockOnMissingDeck.current = options.onMissingDeck
     capturedSessionCardsOptions.current = options
-    return { loading: ref(false) }
+    return { loading: ref(false), sessionDecks: ref([]) }
   }
+}))
+
+const { mockShowAllRatings, mockToggleRatings } = await vi.hoisted(async () => {
+  const { ref } = await import('vue')
+  return { mockShowAllRatings: ref(false), mockToggleRatings: vi.fn() }
+})
+
+vi.mock('@/views/study-session/composables/session-prefs', () => ({
+  useSessionPrefs: () => ({
+    show_all_ratings: mockShowAllRatings,
+    toggleRatings: mockToggleRatings
+  })
 }))
 
 const { mockFlushDeckReviews } = vi.hoisted(() => ({ mockFlushDeckReviews: vi.fn() }))
@@ -120,39 +145,11 @@ vi.mock('@/api/reviews', () => ({
   useFlushDeckReviews: () => mockFlushDeckReviews
 }))
 
-const { mockUpsertMember, mockMemberStore } = vi.hoisted(() => ({
-  mockUpsertMember: { mutate: vi.fn() },
-  mockMemberStore: {
-    id: 'member-1',
-    preferences: { study: { show_all_ratings: false } }
-  }
-}))
-
-vi.mock('@/api/members', () => ({
-  useUpsertMemberMutation: () => mockUpsertMember
-}))
-
-vi.mock('@/stores/member', () => ({
-  useMemberStore: () => mockMemberStore
-}))
-
-const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
-
-vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
-
 // ── Host components so provide/inject has a component context ─────────────────
-// provide() only reaches descendant component instances, so the injected
-// assertion needs a real parent → child pair, not a single setup() calling
-// both. See .claude/rules/testing-composables.md.
 
-// Every makeController() mounts a fresh app whose watch(mode) keeps observing
-// the shared hoisted `mode` ref for as long as the app stays mounted. Without
-// unmounting between tests, earlier tests' watchers keep firing on later
-// mode.value assignments and inflate call counts.
 const mounted_apps = []
 
 function makeController(overrides = {}) {
-  const onFinished = vi.fn()
   const onClosed = vi.fn()
   let controller
   let injected
@@ -166,20 +163,7 @@ function makeController(overrides = {}) {
 
   const Parent = {
     setup() {
-      controller = provideStudySessionController({
-        decks: [
-          {
-            id: 1,
-            desired_retention: 90,
-            learning_steps: ['1m', '10m'],
-            relearning_steps: ['10m']
-          },
-          { id: 2 }
-        ],
-        onFinished,
-        onClosed,
-        ...overrides
-      })
+      controller = provideStudySessionController({ deck_ids: [1, 2], onClosed, ...overrides })
       return () => h(Child)
     }
   }
@@ -188,29 +172,30 @@ function makeController(overrides = {}) {
   app.mount(document.createElement('div'))
   mounted_apps.push(app)
 
-  return { controller, injected, onFinished, onClosed, app }
+  return { controller, injected, onClosed, app }
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('session-controller', () => {
   beforeEach(() => {
-    mode.value = 'studying'
+    state.value = 'studying'
     results.value = []
     reviewed_count.value = 0
     is_cover.value = false
     active_card.value = { id: 1, deck_id: 1 }
     next_card.value = undefined
+    cards.value = []
     mockReviewCard.mockClear()
     mockAwaitFlip.mockClear()
     mockRestoreCards.mockClear()
     mockStartSession.mockClear()
+    mockSetCards.mockClear()
     mockFlushDeckReviews.mockClear()
-    mockUpsertMember.mutate.mockClear()
-    mockEmitSfx.mockClear()
-    mockMemberStore.id = 'member-1'
-    mockMemberStore.preferences = { study: { show_all_ratings: false } }
-    capturedFlashcardSessionArgs.current = null
+    mockToggleRatings.mockClear()
+    mockShowAllRatings.value = false
+    capturedEngineDeps.current = null
+    sessionStorage.clear()
   })
 
   afterEach(() => {
@@ -239,10 +224,10 @@ describe('session-controller', () => {
     )
   })
 
-  // ── requestClose [obligation] ──────────────────────────────────────────────
+  // ── requestClose ─────────────────────────────────────────────────────────
 
-  describe('requestClose [obligation]', () => {
-    test('calls onClosed (not mode=completed) when is_cover is true', () => {
+  describe('requestClose', () => {
+    test('calls onClosed (does not transition to summary) when is_cover is true', () => {
       is_cover.value = true
       reviewed_count.value = 5
       const { controller, onClosed } = makeController()
@@ -250,7 +235,7 @@ describe('session-controller', () => {
       controller.requestClose()
 
       expect(onClosed).toHaveBeenCalledOnce()
-      expect(mode.value).toBe('studying')
+      expect(state.value).toBe('studying')
     })
 
     test('calls onClosed when reviewed_count is 0, even if is_cover is false', () => {
@@ -261,10 +246,10 @@ describe('session-controller', () => {
       controller.requestClose()
 
       expect(onClosed).toHaveBeenCalledOnce()
-      expect(mode.value).toBe('studying')
+      expect(state.value).toBe('studying')
     })
 
-    test('sets mode to "completed" (not onClosed) when not is_cover and reviewed_count > 0', () => {
+    test('sets state to "summary" (not onClosed) when not is_cover and reviewed_count > 0', () => {
       is_cover.value = false
       reviewed_count.value = 2
       const { controller, onClosed } = makeController()
@@ -272,54 +257,37 @@ describe('session-controller', () => {
       controller.requestClose()
 
       expect(onClosed).not.toHaveBeenCalled()
-      expect(mode.value).toBe('completed')
+      expect(state.value).toBe('summary')
     })
   })
 
-  // ── watch(mode): onFinished fires only on the transition into 'completed' [obligation] ─
+  // ── review flush on reaching summary [obligation] ───────────────────────
 
-  describe('watch(mode) → finishSession [obligation]', () => {
-    test('flips to "completed" fires onFinished(results) exactly once, with the session flushed per deck', async () => {
-      results.value = [{ card_id: 1, passed: true }]
-      const { onFinished } = makeController()
+  describe('watch(state) — flush on the transition into summary [obligation]', () => {
+    test('flushes every session deck once state flips to "summary" [obligation]', async () => {
+      const { controller: _controller } = makeController()
 
-      mode.value = 'completed'
-      await nextTick()
+      state.value = 'summary'
+      await Promise.resolve()
 
-      expect(onFinished).toHaveBeenCalledOnce()
-      expect(onFinished).toHaveBeenCalledWith(results.value)
       expect(mockFlushDeckReviews).toHaveBeenCalledTimes(2)
       expect(mockFlushDeckReviews).toHaveBeenCalledWith(1)
       expect(mockFlushDeckReviews).toHaveBeenCalledWith(2)
     })
 
-    test('re-assigning mode to "studying" then back does not double-fire for the same completed transition', async () => {
-      const { onFinished } = makeController()
+    test('does not flush when state changes to something other than "summary"', async () => {
+      makeController()
 
-      mode.value = 'studying'
-      await nextTick()
-      expect(onFinished).not.toHaveBeenCalled()
-    })
+      state.value = 'cover'
+      await Promise.resolve()
 
-    test('assigning mode="completed" a second time in a row (no intervening change) does not re-fire', async () => {
-      const { onFinished } = makeController()
-
-      mode.value = 'completed'
-      await nextTick()
-      onFinished.mockClear()
-      mockFlushDeckReviews.mockClear()
-
-      mode.value = 'completed'
-      await nextTick()
-
-      expect(onFinished).not.toHaveBeenCalled()
       expect(mockFlushDeckReviews).not.toHaveBeenCalled()
     })
   })
 
-  // ── onCardReviewed no-op guards [obligation] ────────────────────────────────
+  // ── onCardReviewed no-op guards ──────────────────────────────────────────
 
-  describe('onCardReviewed [obligation]', () => {
+  describe('onCardReviewed', () => {
     test('is a no-op when there is no active_card.value.id', async () => {
       active_card.value = { id: undefined, deck_id: 1 }
       const { controller } = makeController()
@@ -329,8 +297,8 @@ describe('session-controller', () => {
       expect(mockReviewCard).not.toHaveBeenCalled()
     })
 
-    test('is a no-op when mode is not "studying"', async () => {
-      mode.value = 'completed'
+    test('is a no-op when state is not "studying"', async () => {
+      state.value = 'summary'
       const { controller } = makeController()
 
       await controller.onCardReviewed('good')
@@ -338,9 +306,9 @@ describe('session-controller', () => {
       expect(mockReviewCard).not.toHaveBeenCalled()
     })
 
-    test('reviews the card when active_card has an id and mode is "studying"', async () => {
+    test('reviews the card when active_card has an id and state is "studying"', async () => {
       active_card.value = { id: 1, deck_id: 1 }
-      mode.value = 'studying'
+      state.value = 'studying'
       const { controller } = makeController()
 
       await controller.onCardReviewed('good')
@@ -348,45 +316,26 @@ describe('session-controller', () => {
       expect(mockReviewCard).toHaveBeenCalledWith('good')
     })
 
-    test('awaits the flip animation before reviewing when a next_card exists', async () => {
+    test('awaits the flip animation, resolved to the next card own deck side, before reviewing [obligation]', async () => {
       active_card.value = { id: 1, deck_id: 1 }
-      mode.value = 'studying'
-      next_card.value = { id: 2 }
+      state.value = 'studying'
+      next_card.value = { id: 2, deck_id: 2 }
       const { controller } = makeController()
 
       await controller.onCardReviewed('good')
 
-      expect(mockAwaitFlip).toHaveBeenCalledOnce()
+      // flipFor(2) is mocked to true -> the next card (deck 2) flips to 'back'.
+      expect(mockAwaitFlip).toHaveBeenCalledWith('back')
       expect(mockReviewCard).toHaveBeenCalledWith('good')
     })
   })
 
-  // ── toggleRatings [obligation] ──────────────────────────────────────────────
+  // ── toggleRatings [obligation] ──────────────────────────────────────────
 
-  describe('toggleRatings', () => {
-    test('flips show_all_ratings and upserts the member preferences', () => {
-      const { controller } = makeController()
-
-      controller.toggleRatings()
-
-      expect(controller.show_all_ratings.value).toBe(true)
-      expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
-      expect(mockUpsertMember.mutate).toHaveBeenCalledWith({
-        id: 'member-1',
-        preferences: expect.objectContaining({
-          study: expect.objectContaining({ show_all_ratings: true })
-        })
-      })
-    })
-
-    test('is a no-op upsert when the member store has no id', () => {
-      mockMemberStore.id = undefined
-      const { controller } = makeController()
-
-      controller.toggleRatings()
-
-      expect(mockUpsertMember.mutate).not.toHaveBeenCalled()
-    })
+  test('toggleRatings delegates to the session-prefs seam', () => {
+    const { controller } = makeController()
+    controller.toggleRatings()
+    expect(mockToggleRatings).toHaveBeenCalledOnce()
   })
 
   // ── can_edit ─────────────────────────────────────────────────────────────
@@ -422,98 +371,92 @@ describe('session-controller', () => {
     expect(capturedActiveCardActionsOptions.current.deck_id()).toBe(42)
   })
 
-  test('useSessionCards deckIds/studyAllCards getters read from the decks option and config', () => {
-    config.study_all_cards = true
-    makeController({ decks: [{ id: 10 }, { id: 20 }] })
+  test('useSessionCards deckIds getter reads from the deck_ids option', () => {
+    makeController({ deck_ids: [10, 20] })
 
     expect(capturedSessionCardsOptions.current.deckIds()).toEqual([10, 20])
-    expect(capturedSessionCardsOptions.current.studyAllCards()).toBe(true)
-    config.study_all_cards = false
   })
 
-  // ── onRestore: refresh-restore drops the user back into the card, not the cover ─
+  // ── engine deps: injected deck-resolution accessors, seed = engine.setCards ─
 
-  test('useSessionCards restore calls restoreCards and, while studying, resumes silently', () => {
-    mode.value = 'studying'
+  test('the engine is wired to the deck-resolution schedulerFor/flipFor and shuffle accessors [obligation]', () => {
     makeController()
 
-    capturedSessionCardsOptions.current.restore('restore-arg')
+    expect(capturedEngineDeps.current.schedulerFor).toBe(capturedResolution.current.schedulerFor)
+    expect(capturedEngineDeps.current.flipFor).toBe(capturedResolution.current.flipFor)
+    expect(capturedEngineDeps.current.shuffle()).toBe(false)
+  })
 
-    expect(mockRestoreCards).toHaveBeenCalledWith('restore-arg')
+  test('useSessionCards seed is wired straight to engine.setCards [obligation]', () => {
+    makeController()
+
+    const cards_arg = [{ id: 1 }]
+    capturedSessionCardsOptions.current.seed(cards_arg)
+
+    expect(mockSetCards).toHaveBeenCalledWith(cards_arg)
+  })
+
+  // ── onRestore: refresh-restore drops the user back into the card, not the cover [obligation] ─
+
+  test('onRestore calls restoreCards and, when not landing on summary, resumes silently [obligation]', () => {
+    state.value = 'studying'
+    makeController()
+
+    const persisted = { card_ids: [1], results: [], completed: false }
+    capturedSessionCardsOptions.current.restore(['raw-card'], persisted)
+
+    expect(mockRestoreCards).toHaveBeenCalledWith(['raw-card'], {
+      card_ids: [1],
+      results: [],
+      completed: false
+    })
     expect(mockStartSession).toHaveBeenCalledWith({ silent: true })
   })
 
-  test('useSessionCards restore does not resume when mode is not studying', () => {
-    mode.value = 'completed'
+  test('onRestore does not resume when the engine lands on "summary" [obligation]', () => {
+    state.value = 'summary'
     makeController()
 
-    capturedSessionCardsOptions.current.restore('restore-arg')
+    capturedSessionCardsOptions.current.restore(['raw-card'], {
+      card_ids: [1],
+      results: [],
+      completed: true
+    })
 
-    expect(mockRestoreCards).toHaveBeenCalledWith('restore-arg')
+    expect(mockRestoreCards).toHaveBeenCalled()
     expect(mockStartSession).not.toHaveBeenCalled()
   })
 
-  // ── pacing wiring [obligation] ──────────────────────────────────────────────
-  // useFlashcardSession now takes a required ReviewPacingParams first argument,
-  // built from decks[0]'s already-resolved decks_with_stats fields rather
-  // than read from member_store.preferences.study.*.
+  // ── persist contract: onChange writes {deck_ids, card_ids, results, completed} [obligation] ─
 
-  describe('pacing wiring [obligation]', () => {
-    test('useFlashcardSession is called with pacing resolved from decks[0] [obligation]', () => {
-      makeController({
-        decks: [
-          {
-            id: 5,
-            desired_retention: 82,
-            learning_steps: ['1d'],
-            relearning_steps: ['1h'],
-            max_interval: 90
-          },
-          { id: 6 }
-        ]
-      })
+  test('engine onChange persists {deck_ids, card_ids, results, completed} via the persisted-session ref [obligation]', async () => {
+    cards.value = [{ id: 1 }, { id: 2 }]
+    results.value = [{ card_id: 1, passed: true }]
+    state.value = 'studying'
+    makeController({ deck_ids: [7, 8] })
 
-      expect(capturedFlashcardSessionArgs.current.pacing).toEqual({
-        desired_retention: 82,
-        learning_steps: ['1d'],
-        relearning_steps: ['1h'],
-        max_interval: 90
-      })
+    capturedEngineDeps.current.onChange()
+    await nextTick()
+
+    // The controller's persist() writes through usePersistedSession — assert
+    // the write landed in sessionStorage under the shared storage key.
+    const persisted = JSON.parse(sessionStorage.getItem('study-session'))
+    expect(persisted).toEqual({
+      deck_ids: [7, 8],
+      card_ids: [1, 2],
+      results: [{ card_id: 1, passed: true }],
+      completed: false
     })
+  })
 
-    test('maps a null decks[0].max_interval to FSRS_MAX_INTERVAL (uncapped) [obligation]', () => {
-      makeController({
-        decks: [
-          {
-            id: 5,
-            desired_retention: 82,
-            learning_steps: ['1d'],
-            relearning_steps: ['1h'],
-            max_interval: null
-          },
-          { id: 6 }
-        ]
-      })
+  test('persist marks completed:true once state reaches "summary" [obligation]', async () => {
+    state.value = 'summary'
+    makeController({ deck_ids: [1] })
 
-      expect(capturedFlashcardSessionArgs.current.pacing.max_interval).toBe(36500)
-    })
+    capturedEngineDeps.current.onChange()
+    await nextTick()
 
-    test('useFlashcardSession config_override still merges decks[0].study_config with the passed config_override', () => {
-      makeController({
-        decks: [
-          {
-            id: 5,
-            desired_retention: 90,
-            learning_steps: ['1m'],
-            relearning_steps: ['10m'],
-            study_config: { shuffle: false }
-          },
-          { id: 6 }
-        ],
-        config_override: { shuffle: true }
-      })
-
-      expect(capturedFlashcardSessionArgs.current.config_override).toEqual({ shuffle: true })
-    })
+    const persisted = JSON.parse(sessionStorage.getItem('study-session'))
+    expect(persisted.completed).toBe(true)
   })
 })

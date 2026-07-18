@@ -15,10 +15,9 @@ beforeEach(() => {
 function makeSnapshot(overrides = {}) {
   return {
     deck_ids: [1],
-    config_override: undefined,
     card_ids: [10, 11],
     results: [],
-    mode: 'studying',
+    completed: false,
     ...overrides
   }
 }
@@ -37,10 +36,10 @@ describe('usePersistedSession', () => {
   })
 
   test('a fresh usePersistedSession() call reads the previously written snapshot', async () => {
-    usePersistedSession().value = makeSnapshot({ mode: 'completed' })
+    usePersistedSession().value = makeSnapshot({ completed: true })
     await nextTick()
 
-    expect(usePersistedSession().value).toEqual(makeSnapshot({ mode: 'completed' }))
+    expect(usePersistedSession().value).toEqual(makeSnapshot({ completed: true }))
   })
 })
 
@@ -64,6 +63,53 @@ describe('readPersistedSession', () => {
     clearPersistedSession()
 
     expect(readPersistedSession()).toBeUndefined()
+  })
+
+  // ── Stale snapshot rejection [obligation] ──────────────────────────────────
+  // An older build's sessionStorage shape (mode/config_override instead of a
+  // boolean `completed`) must never be resumed from — reading it clears the
+  // key and returns undefined instead of handing back a stale-shaped object.
+
+  test('clears and returns undefined for an old-shape snapshot (mode + config_override, no completed) [obligation]', async () => {
+    sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        deck_ids: [1],
+        card_ids: [10],
+        results: [],
+        mode: 'studying',
+        config_override: { shuffle: true }
+      })
+    )
+
+    expect(readPersistedSession()).toBeUndefined()
+    expect(sessionStorage.getItem(STORAGE_KEY)).toBeNull()
+  })
+
+  test('rejects a snapshot missing deck_ids entirely [obligation]', () => {
+    sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ card_ids: [10], results: [], completed: false })
+    )
+
+    expect(readPersistedSession()).toBeUndefined()
+    expect(sessionStorage.getItem(STORAGE_KEY)).toBeNull()
+  })
+
+  test('rejects a snapshot whose completed field is not a boolean [obligation]', () => {
+    sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ deck_ids: [1], card_ids: [10], results: [], completed: 'studying' })
+    )
+
+    expect(readPersistedSession()).toBeUndefined()
+  })
+
+  test('accepts a valid current-shape snapshot with completed: true', async () => {
+    usePersistedSession().value = makeSnapshot({ completed: true })
+    await nextTick()
+
+    expect(readPersistedSession()).toEqual(makeSnapshot({ completed: true }))
   })
 })
 

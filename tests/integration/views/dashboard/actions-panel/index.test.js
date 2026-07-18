@@ -122,7 +122,7 @@ describe('DashboardActionsPanel — study button', () => {
     const due_decks = [{ id: 1 }, { id: 2 }]
     const wrapper = mount(due_decks)
     await wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').trigger('click')
-    expect(mockStartStudy).toHaveBeenCalledWith(due_decks)
+    expect(mockStartStudy).toHaveBeenCalledWith(due_decks.map((deck) => deck.id))
   })
 
   test('is disabled while editing_decks is true [obligation]', () => {

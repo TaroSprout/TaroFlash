@@ -192,7 +192,7 @@ describe('DeckGrid — create deck', () => {
       expect.objectContaining({
         title: 'New Deck',
         is_public: true,
-        study_config: { study_all_cards: false },
+        study_config: {},
         cover_config: { theme: 'pink-400', pattern: 'wave', icon: 'flame' }
       })
     )

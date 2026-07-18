@@ -185,7 +185,7 @@ describe('ReviewInbox — clicking an item starts a study session for just that 
     const decks = makeDecks(3)
     const wrapper = mountInbox(decks)
     await wrapper.findAll('[data-testid="review-inbox-item"]')[1].trigger('click')
-    expect(studyStartMock).toHaveBeenCalledWith([decks[1]])
+    expect(studyStartMock).toHaveBeenCalledWith([decks[1].id])
   })
 
   test('does not play digi_powerdown when not editing [obligation]', async () => {

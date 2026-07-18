@@ -4,6 +4,7 @@ import { aggregateSession } from '@/views/study-session/session-summary/aggregat
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const LEECH_THRESHOLD = 24
+const thresholdFor = () => LEECH_THRESHOLD
 
 let _next_card_id = 1
 
@@ -24,7 +25,7 @@ function makeResult(overrides = {}) {
 
 describe('aggregateSession — empty results', () => {
   test('returns zero for all counts', () => {
-    const data = aggregateSession([], LEECH_THRESHOLD)
+    const data = aggregateSession([], thresholdFor)
 
     expect(data.score).toBe(0)
     expect(data.total).toBe(0)
@@ -45,7 +46,7 @@ describe('aggregateSession — score / total [obligation]', () => {
       makeResult({ passed: true })
     ]
 
-    const data = aggregateSession(results, LEECH_THRESHOLD)
+    const data = aggregateSession(results, thresholdFor)
 
     expect(data.score).toBe(2)
     expect(data.total).toBe(3)
@@ -54,7 +55,7 @@ describe('aggregateSession — score / total [obligation]', () => {
   test('total = results.length regardless of pass/fail', () => {
     const results = [makeResult({ passed: false }), makeResult({ passed: false })]
 
-    const data = aggregateSession(results, LEECH_THRESHOLD)
+    const data = aggregateSession(results, thresholdFor)
 
     expect(data.total).toBe(2)
     expect(data.score).toBe(0)
@@ -71,7 +72,7 @@ describe('aggregateSession — new_count [obligation]', () => {
       makeResult({ is_new: false })
     ]
 
-    const data = aggregateSession(results, LEECH_THRESHOLD)
+    const data = aggregateSession(results, thresholdFor)
 
     expect(data.new_count).toBe(2)
   })
@@ -80,7 +81,7 @@ describe('aggregateSession — new_count [obligation]', () => {
     // New card from forming→familiar boundary; must NOT count as leveled up
     const result = makeResult({ is_new: true, before_interval: 1, after_interval: 10 })
 
-    const data = aggregateSession([result], LEECH_THRESHOLD)
+    const data = aggregateSession([result], thresholdFor)
 
     expect(data.new_count).toBe(1)
     expect(data.leveled_up_count).toBe(0)
@@ -89,7 +90,7 @@ describe('aggregateSession — new_count [obligation]', () => {
   test('new cards are excluded from leveled_down_count [obligation]', () => {
     const result = makeResult({ is_new: true, before_interval: 10, after_interval: 1 })
 
-    const data = aggregateSession([result], LEECH_THRESHOLD)
+    const data = aggregateSession([result], thresholdFor)
 
     expect(data.new_count).toBe(1)
     expect(data.leveled_down_count).toBe(0)
@@ -146,7 +147,7 @@ describe('aggregateSession — leveled_up_count [obligation]', () => {
     // forming(4d) → familiar(8d)
     const result = makeResult({ is_new: false, before_interval: 4, after_interval: 8 })
 
-    const data = aggregateSession([result], LEECH_THRESHOLD)
+    const data = aggregateSession([result], thresholdFor)
 
     expect(data.leveled_up_count).toBe(1)
     expect(data.leveled_down_count).toBe(0)
@@ -156,7 +157,7 @@ describe('aggregateSession — leveled_up_count [obligation]', () => {
     // familiar(9d) → familiar(21d) — same band, maintenance only
     const result = makeResult({ is_new: false, before_interval: 9, after_interval: 21 })
 
-    const data = aggregateSession([result], LEECH_THRESHOLD)
+    const data = aggregateSession([result], thresholdFor)
 
     expect(data.leveled_up_count).toBe(0)
     expect(data.leveled_down_count).toBe(0)
@@ -168,7 +169,7 @@ describe('aggregateSession — leveled_up_count [obligation]', () => {
       makeResult({ is_new: false, before_interval: 10, after_interval: 35 }) // familiar→strong
     ]
 
-    const data = aggregateSession(results, LEECH_THRESHOLD)
+    const data = aggregateSession(results, thresholdFor)
 
     expect(data.leveled_up_count).toBe(2)
   })
@@ -186,7 +187,7 @@ describe('aggregateSession — leveled_down_count [obligation]', () => {
       passed: false
     })
 
-    const data = aggregateSession([result], LEECH_THRESHOLD)
+    const data = aggregateSession([result], thresholdFor)
 
     expect(data.leveled_down_count).toBe(1)
     expect(data.leveled_up_count).toBe(0)
@@ -201,7 +202,7 @@ describe('aggregateSession — leveled_down_count [obligation]', () => {
       passed: false
     })
 
-    const data = aggregateSession([result], LEECH_THRESHOLD)
+    const data = aggregateSession([result], thresholdFor)
 
     expect(data.leveled_down_count).toBe(0)
     expect(data.leveled_up_count).toBe(0)
@@ -216,7 +217,7 @@ describe('aggregateSession — leveled_down_count [obligation]', () => {
       passed: false
     })
 
-    const data = aggregateSession([result], LEECH_THRESHOLD)
+    const data = aggregateSession([result], thresholdFor)
 
     expect(data.leveled_down_count).toBe(0)
   })
@@ -231,7 +232,7 @@ describe('aggregateSession — stuck_count [obligation]', () => {
   test('!passed && lapses >= leech_threshold → stuck [obligation]', () => {
     const result = makeResult({ passed: false, lapses: 24 })
 
-    const data = aggregateSession([result], 24)
+    const data = aggregateSession([result], () => 24)
 
     expect(data.stuck_count).toBe(1)
   })
@@ -239,7 +240,7 @@ describe('aggregateSession — stuck_count [obligation]', () => {
   test('lapses one below threshold → NOT stuck [obligation]', () => {
     const result = makeResult({ passed: false, lapses: 23 })
 
-    const data = aggregateSession([result], 24)
+    const data = aggregateSession([result], () => 24)
 
     expect(data.stuck_count).toBe(0)
   })
@@ -247,7 +248,7 @@ describe('aggregateSession — stuck_count [obligation]', () => {
   test('passed with lapses >= leech_threshold → NOT stuck [obligation]', () => {
     const result = makeResult({ passed: true, lapses: 24 })
 
-    const data = aggregateSession([result], 24)
+    const data = aggregateSession([result], () => 24)
 
     expect(data.stuck_count).toBe(0)
   })
@@ -260,8 +261,8 @@ describe('aggregateSession — stuck_count [obligation]', () => {
       makeResult({ passed: false, lapses: 24 })
     ]
 
-    const with_threshold_8 = aggregateSession(results, 8)
-    const with_threshold_24 = aggregateSession(results, 24)
+    const with_threshold_8 = aggregateSession(results, () => 8)
+    const with_threshold_24 = aggregateSession(results, () => 24)
 
     expect(with_threshold_8.stuck_count).toBe(2)
     expect(with_threshold_24.stuck_count).toBe(1)
@@ -278,7 +279,7 @@ describe('aggregateSession — stuck_count [obligation]', () => {
       lapses: 24
     })
 
-    const data = aggregateSession([result], 24)
+    const data = aggregateSession([result], () => 24)
 
     expect(data.stuck_count).toBe(1)
     expect(data.leveled_down_count).toBe(0)
@@ -294,7 +295,7 @@ describe('aggregateSession — stuck_count [obligation]', () => {
       lapses: 24
     })
 
-    const data = aggregateSession([result], 24)
+    const data = aggregateSession([result], () => 24)
 
     expect(data.leveled_down_count).toBe(1)
     expect(data.stuck_count).toBe(1)
@@ -304,9 +305,58 @@ describe('aggregateSession — stuck_count [obligation]', () => {
     // new cards are excluded from leveled counts but stuck_count fires before the is_new continue
     const result = makeResult({ is_new: true, passed: false, lapses: 24 })
 
-    const data = aggregateSession([result], 24)
+    const data = aggregateSession([result], () => 24)
 
     expect(data.stuck_count).toBe(1)
     expect(data.leveled_down_count).toBe(0)
+  })
+})
+
+// ── Per-deck leech threshold [obligation] ───────────────────────────────────
+// thresholdFor is now a per-result lookup keyed by each result's own deck_id —
+// two decks with different thresholds in the same session must count "stuck"
+// cards using each result's own deck, not a single session-wide scalar.
+
+describe('aggregateSession — per-deck leech threshold [obligation]', () => {
+  test('resolves each result own deck threshold via thresholdFor(result.deck_id) [obligation]', () => {
+    const threshold_by_deck = { 1: 4, 2: 20 }
+    const threshold_for = (deck_id) => threshold_by_deck[deck_id]
+
+    // deck 1's threshold (4) is crossed by lapses=5; deck 2's threshold (20) is not.
+    const results = [
+      makeResult({ deck_id: 1, passed: false, lapses: 5 }),
+      makeResult({ deck_id: 2, passed: false, lapses: 5 })
+    ]
+
+    const data = aggregateSession(results, threshold_for)
+
+    expect(data.stuck_count).toBe(1)
+  })
+
+  test('the same lapses count is stuck under one deck threshold but not the other, in one session [obligation]', () => {
+    const threshold_by_deck = { 1: 2, 2: 30 }
+    const threshold_for = (deck_id) => threshold_by_deck[deck_id]
+
+    const deck_1_result = makeResult({ deck_id: 1, passed: false, lapses: 3 })
+    const deck_2_result = makeResult({ deck_id: 2, passed: false, lapses: 3 })
+
+    const data = aggregateSession([deck_1_result, deck_2_result], threshold_for)
+
+    // Only the deck-1 result crosses its (lower) threshold.
+    expect(data.stuck_count).toBe(1)
+  })
+
+  test('both decks count as stuck when both cross their own (different) thresholds [obligation]', () => {
+    const threshold_by_deck = { 1: 2, 2: 5 }
+    const threshold_for = (deck_id) => threshold_by_deck[deck_id]
+
+    const results = [
+      makeResult({ deck_id: 1, passed: false, lapses: 3 }),
+      makeResult({ deck_id: 2, passed: false, lapses: 6 })
+    ]
+
+    const data = aggregateSession(results, threshold_for)
+
+    expect(data.stuck_count).toBe(2)
   })
 })

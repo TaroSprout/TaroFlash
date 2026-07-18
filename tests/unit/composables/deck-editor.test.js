@@ -71,7 +71,7 @@ function makeDeck(overrides = {}) {
     description: 'A description',
     is_public: true,
     updated_at: '2026-01-01T00:00:00Z',
-    study_config: { study_all_cards: false, retry_failed_cards: true },
+    study_config: { shuffle: false, retry_failed_cards: true },
     cover_config: { color: '#ff0000' },
     review_pacing_preset_id: null,
     pacing_overrides: {},
@@ -106,18 +106,18 @@ describe('useDeckEditor', () => {
     })
 
     test('initializes draft.study_config from deck.study_config, merged over defaults', () => {
-      const deck = makeDeck({ study_config: { study_all_cards: true } })
+      const deck = makeDeck({ study_config: { shuffle: true } })
       const { draft } = useDeckEditor(deck)
 
-      expect(draft.study_config.study_all_cards).toBe(true)
-      expect(draft.study_config.shuffle).toBe(false)
+      expect(draft.study_config.shuffle).toBe(true)
+      expect(draft.study_config.flip_cards).toBe(false)
     })
 
     test('initializes draft.study_config with defaults when deck has no study_config', () => {
       const deck = makeDeck({ study_config: undefined })
       const { draft } = useDeckEditor(deck)
 
-      expect(draft.study_config.study_all_cards).toBe(false)
+      expect(draft.study_config.shuffle).toBe(false)
     })
 
     test('initializes draft.cover_config from deck.cover_config', () => {
@@ -138,7 +138,7 @@ describe('useDeckEditor', () => {
       const { draft } = useDeckEditor()
 
       expect(draft.title).toBeUndefined()
-      expect(draft.study_config.study_all_cards).toBe(false)
+      expect(draft.study_config.shuffle).toBe(false)
       expect(draft.cover_config).toEqual({})
       expect(draft.review_pacing_preset_id).toBeNull()
       expect(draft.pacing_overrides).toEqual({})
@@ -174,7 +174,7 @@ describe('useDeckEditor', () => {
   describe('saveDeck', () => {
     test('calls the upsert mutation directly for an existing deck, with study_config/cover_config/pacing folded in', async () => {
       const deck = makeDeck({
-        study_config: { study_all_cards: true, retry_failed_cards: false },
+        study_config: { shuffle: true, retry_failed_cards: false },
         review_pacing_preset_id: 3,
         pacing_overrides: { desired_retention: 92 }
       })
@@ -186,7 +186,7 @@ describe('useDeckEditor', () => {
       const [arg] = mockUpsertMutateAsync.mock.calls[0]
       expect(arg.id).toBe(1)
       expect(arg.study_config).toMatchObject({
-        study_all_cards: true,
+        shuffle: true,
         retry_failed_cards: false
       })
       expect(arg.review_pacing_preset_id).toBe(3)
@@ -306,10 +306,8 @@ describe('useDeckEditor', () => {
     })
 
     test('flips to true when draft.study_config is mutated', () => {
-      const { draft, is_dirty } = useDeckEditor(
-        makeDeck({ study_config: { study_all_cards: false } })
-      )
-      draft.study_config.study_all_cards = true
+      const { draft, is_dirty } = useDeckEditor(makeDeck({ study_config: { shuffle: false } }))
+      draft.study_config.shuffle = true
       expect(is_dirty.value).toBe(true)
     })
 
@@ -347,7 +345,7 @@ describe('useDeckEditor', () => {
     test('restores cover/config/card_attributes to their original deck values without mutating the original deck object [obligation]', () => {
       const deck = makeDeck({
         cover_config: { color: '#ff0000', theme: 'sunrise' },
-        study_config: { study_all_cards: false, shuffle: false },
+        study_config: { shuffle: false, flip_cards: false },
         card_attributes: {
           front: { text_size: 'medium' },
           back: { text_size: 'small' }
@@ -374,12 +372,12 @@ describe('useDeckEditor', () => {
     test('is_dirty is false again after resetChanges, across title/config/cover/card_attributes/pacing edits [obligation]', () => {
       const deck = makeDeck({
         cover_config: { color: '#ff0000' },
-        study_config: { study_all_cards: false }
+        study_config: { shuffle: false }
       })
       const { draft, is_dirty, resetChanges } = useDeckEditor(deck)
 
       draft.title = 'Renamed'
-      draft.study_config.study_all_cards = true
+      draft.study_config.shuffle = true
       draft.cover_config.color = '#000000'
       draft.card_attributes.front.text_size = 'huge'
       draft.pacing_overrides.desired_retention = 80

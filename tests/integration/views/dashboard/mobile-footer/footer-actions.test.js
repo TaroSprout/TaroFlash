@@ -137,7 +137,7 @@ describe('DashboardFooterActions', () => {
 
       await wrapper.find('[data-testid="dashboard-footer-actions__study-button"]').trigger('click')
 
-      expect(mockStudyStart).toHaveBeenCalledWith(due_decks)
+      expect(mockStudyStart).toHaveBeenCalledWith(due_decks.map((deck) => deck.id))
     })
 
     test('labels via the pluralized dashboard.mobile-footer.study-button key', () => {
