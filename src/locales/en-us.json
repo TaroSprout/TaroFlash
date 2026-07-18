@@ -309,6 +309,8 @@
   "toast.success.account-deleted": "Account deleted.",
   "ui-kit.alert.title-default": "Continue?",
   "ui-kit.alert.message-default": "Are you sure you want to continue?",
+  "ui-kit.prompt.cancel": "Cancel",
+  "ui-kit.prompt.required-error": "Enter a name",
   "alert.delete-card.title": "Delete Card? | Delete {count} Cards?",
   "alert.delete-card.message": "Are you sure you want to delete this card? | Are you sure you want to delete these cards?",
   "alert.delete-card.confirm": "Delete",
