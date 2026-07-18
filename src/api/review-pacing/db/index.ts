@@ -1,10 +1,19 @@
 import { supabase } from '@/supabase-client'
 import logger from '@/utils/logger'
 
-export type NewReviewPacingPreset = Pick<
+/** Every pacing field a preset carries, minus its identity — the shape a deck resolves down to. */
+export type ReviewPacingValues = Pick<
   ReviewPacingPreset,
-  'name' | 'desired_retention' | 'learning_steps' | 'relearning_steps'
+  | 'desired_retention'
+  | 'learning_steps'
+  | 'relearning_steps'
+  | 'max_reviews_per_day'
+  | 'max_new_per_day'
+  | 'leech_threshold'
+  | 'max_interval'
 >
+
+export type NewReviewPacingPreset = ReviewPacingValues & Pick<ReviewPacingPreset, 'name'>
 
 /** Fetches the current member's preset library plus the one system preset — RLS scopes the rest. */
 export async function fetchPresets(): Promise<ReviewPacingPreset[]> {
