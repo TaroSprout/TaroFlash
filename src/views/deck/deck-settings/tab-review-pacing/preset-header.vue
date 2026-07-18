@@ -17,7 +17,7 @@ const divergence_label = computed(() =>
 
 <template>
   <div data-testid="preset-header" class="flex flex-col gap-3">
-    <div data-testid="preset-header__row" class="flex items-start justify-between gap-4">
+    <div data-testid="preset-header__row" class="flex items-end justify-between gap-4">
       <div data-testid="preset-header__titles" class="flex flex-col">
         <h2 data-testid="preset-header__title" class="text-2xl text-brown-700 dark:text-brown-100">
           {{ t('deck.settings-modal.review-pacing.heading') }}
