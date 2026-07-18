@@ -295,8 +295,8 @@ describe('no FE due-filter', () => {
     engine.setCards([future_due_card, due_card])
 
     expect(engine.cards.value).toHaveLength(2)
-    expect(engine.cards.value.map((c) => c.id).sort()).toEqual(
-      [future_due_card.id, due_card.id].sort()
+    expect(engine.cards.value.map((c) => c.id).sort((a, b) => a - b)).toEqual(
+      [future_due_card.id, due_card.id].sort((a, b) => a - b)
     )
   })
 })
@@ -454,7 +454,7 @@ describe('review-save failure surface [obligation]', () => {
 
   test('the refresh action reloads the page', async () => {
     const reload_spy = vi.fn()
-    vi.stubGlobal('location', { ...window.location, reload: reload_spy })
+    vi.stubGlobal('location', { reload: reload_spy })
     saveReviewMock.mockRejectedValueOnce(new Error('network error'))
     const { engine } = makeEngine()
     engine.setCards([makeCard({ id: 503, deck_id: 1 })])

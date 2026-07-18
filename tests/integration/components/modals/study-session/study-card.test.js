@@ -904,7 +904,7 @@ describe('StudyCard', () => {
   // ── swipe() via keyboard shortcuts (arrowright/arrowleft) ─────────────────
 
   test('arrowright shortcut calls swipe and flings card right when not animating [obligation]', async () => {
-    const wrapper = mountStudyCard({ side: 'back', options })
+    mountStudyCard({ side: 'back', options })
     await flushPromises()
 
     capturedShortcuts['arrowright']?.()
@@ -916,7 +916,7 @@ describe('StudyCard', () => {
   })
 
   test('arrowleft shortcut calls swipe and flings card left when not animating [obligation]', async () => {
-    const wrapper = mountStudyCard({ side: 'back', options })
+    mountStudyCard({ side: 'back', options })
     await flushPromises()
 
     capturedShortcuts['arrowleft']?.()
