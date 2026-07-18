@@ -1,7 +1,8 @@
 import { gsap } from 'gsap'
 
-// The card's flip (src/components/card/index.vue), generalised so the rotation
-// axis can be chosen: 'y' flips horizontally (like the card), 'x' vertically.
+// The card flip (src/components/card/index.vue delegates here), generalised so
+// the rotation axis can be chosen: 'y' flips horizontally (the card), 'x'
+// vertically.
 type FlipAxis = 'x' | 'y'
 
 const ROTATE = { x: 'rotateX', y: 'rotateY' } as const

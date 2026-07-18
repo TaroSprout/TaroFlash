@@ -5,7 +5,7 @@ import CardCover from './card-cover.vue'
 import { type CardBase } from '@type/card'
 import { cardImageUrl } from '@/api/media'
 import { type SfxOptions } from '@/sfx/directive'
-import { gsap } from 'gsap'
+import { flipEnter, flipLeave } from '@/utils/animations/flip'
 
 type CardProps = Partial<CardBase> & {
   mode?: 'view' | 'edit'
@@ -45,34 +45,16 @@ const back_image_url = computed(() => {
 })
 
 function onEnter(el: Element, done: () => void) {
-  gsap.fromTo(
-    el,
-    { rotateY: -60, translateY: '-12px', scale: 0.95 },
-    {
-      rotateY: 0,
-      translateY: 0,
-      scale: 1,
-      duration: 0.2,
-      ease: 'back.out(2)',
-      onComplete: () => {
-        done()
-        emit('flip-complete')
-      }
-    }
-  )
+  flipEnter(el, 'y', () => {
+    done()
+    emit('flip-complete')
+  })
 }
 
 function onLeave(el: Element, done: () => void) {
-  gsap.to(el, {
-    rotateY: 60,
-    translateY: '8px',
-    scale: 0.95,
-    duration: 0.12,
-    ease: 'expo.in',
-    onComplete: () => {
-      done()
-      emit('flip-out-complete')
-    }
+  flipLeave(el, 'y', () => {
+    done()
+    emit('flip-out-complete')
   })
 }
 </script>
