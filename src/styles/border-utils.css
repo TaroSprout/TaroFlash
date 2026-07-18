@@ -28,6 +28,44 @@
   mask: var(--wave-mask);
 }
 
+@utility wave-bottom-fill-* {
+  /* Exact complement of wave-bottom-* at the same size: opaque below the wave
+     line, transparent above it. Share a box with a wave-bottom element and this
+     paints back precisely what that element's mask cut away — so a layer sitting
+     between the two can be occluded along the wave instead of a straight edge.
+     The geometry below is copied from wave-bottom-*; keep the two in sync. */
+  --wave-size: --value([length]);
+  --wave-radius: var(--wave-size);
+  --wave-width: calc(var(--wave-size) * 1.788);
+  --crest-offset: calc(var(--wave-size) * 1.341);
+  --trough-offset: calc(var(--wave-size) * 0.895);
+  --baseline-offset: calc(var(--wave-size) * 0.447);
+  --crest-horizontal-shift: calc(50% - (var(--wave-width) / 2));
+
+  /* Layers composite bottom-up: trough and crest union into the wave, then the
+     full-cover layer XORs against it to invert the result. */
+  --wave-fill-mask:
+    linear-gradient(#000, #000),
+    radial-gradient(
+        var(--wave-radius) at 50% calc(100% - var(--crest-offset)),
+        #000 99%,
+        #0000 101%
+      )
+      var(--crest-horizontal-shift) 0 / var(--wave-width) 100%,
+    radial-gradient(
+        var(--wave-radius) at 50% calc(100% + var(--trough-offset)),
+        #0000 99%,
+        #000 101%
+      )
+      50% round(down, calc(100% - var(--baseline-offset)), 1px) / var(--wave-width)
+      round(down, 100%, 1px) repeat-x;
+
+  -webkit-mask: var(--wave-fill-mask);
+  mask: var(--wave-fill-mask);
+  -webkit-mask-composite: xor, source-over, source-over;
+  mask-composite: exclude, add, add;
+}
+
 @utility wave-top-* {
   --wave-size: --value([length]); /* main control */
   --wave-radius: var(--wave-size);

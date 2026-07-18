@@ -65,7 +65,24 @@ vi.mock('gsap', () => ({
     fromTo: vi.fn((_el, _from, to) => to?.onComplete?.()),
     to: vi.fn((_el, opts) => opts?.onComplete?.()),
     set: vi.fn(),
-    killTweensOf: vi.fn()
+    killTweensOf: vi.fn(),
+    // Chrome tuck/restore drive a gsap.timeline() (preview-tuck.ts) — collapse
+    // it synchronously the same way the `to`/`fromTo` mocks above do, firing
+    // both the mid-timeline onComplete (onEdgeOn) and the final one.
+    timeline: vi.fn(() => {
+      const tl = {
+        set: vi.fn(() => tl),
+        to: vi.fn((_el, opts) => {
+          opts?.onComplete?.()
+          return tl
+        }),
+        eventCallback: vi.fn((_event, cb) => {
+          cb?.()
+          return tl
+        })
+      }
+      return tl
+    })
   }
 }))
 
@@ -766,5 +783,62 @@ describe('DeckSettings — initial tab renders on mount [obligation]', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="tab-design-stub"]').exists()).toBe(true)
+  })
+})
+
+describe('DeckSettings — is_full_bleed is false in sheet layout regardless of TAB_META [obligation]', () => {
+  test('a full-bleed tab (review-pacing) does not claim full-bleed once the layout collapses to a sheet', () => {
+    setSidebar(false)
+    setBelowMd(true)
+    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
+
+    // Sheet mode has no aside or pinned preview to clear away, so full-bleed
+    // is a desktop/tablet-only concern even for a tab whose TAB_META says
+    // full_bleed: true.
+    expect(wrapper.vm.is_full_bleed).toBe(false)
+  })
+
+  test('the same tab does claim full-bleed once the layout is tablet/desktop', () => {
+    setSidebar(false)
+    setBelowMd(false)
+    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
+
+    expect(wrapper.vm.is_full_bleed).toBe(true)
+  })
+})
+
+describe('DeckSettings — opening directly on a full-bleed tab snaps the chrome instead of animating it [obligation]', () => {
+  test('chrome.is_tucked is already true synchronously after mount, with no animation frame needed', () => {
+    setSidebar(false)
+    setBelowMd(false)
+    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
+
+    expect(wrapper.vm.chrome.is_tucked.value).toBe(true)
+  })
+
+  test('opening on a non-full-bleed tab leaves the chrome untucked', () => {
+    setSidebar(false)
+    setBelowMd(false)
+    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+
+    expect(wrapper.vm.chrome.is_tucked.value).toBe(false)
+  })
+
+  test('onTabLeave reads the live is_full_bleed value to decide whether to tuck or restore the chrome', async () => {
+    setSidebar(false)
+    setBelowMd(false)
+    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+    expect(wrapper.vm.chrome.is_tucked.value).toBe(false)
+
+    // Simulate navigating into the full-bleed tab, then drive the transition's
+    // leave hook directly — this is the exact wiring DeckSettings passes to
+    // useTabTransition (`is_full_bleed: () => is_full_bleed.value`).
+    wrapper.vm.active_tab = 'review-pacing'
+    await wrapper.vm.$nextTick()
+    expect(wrapper.vm.is_full_bleed).toBe(true)
+
+    await wrapper.vm.onTabLeave(document.createElement('div'), () => {})
+
+    expect(wrapper.vm.chrome.is_tucked.value).toBe(true)
   })
 })

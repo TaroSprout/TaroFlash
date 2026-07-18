@@ -6,6 +6,7 @@ import { mobileSheetOverlayKey } from './mobile-sheet-overlay'
 import {
   SHEET_BODY_BG,
   SHEET_HEADER_BORDER_CLASS,
+  SHEET_HEADER_FILL_CLASS,
   type SheetHeaderBorder,
   type SheetSurface
 } from './sheet-surface'
@@ -57,6 +58,7 @@ const emit = defineEmits<{
 
 const body_bg_class = computed(() => SHEET_BODY_BG[surface])
 const header_border_class = computed(() => SHEET_HEADER_BORDER_CLASS[header_border])
+const header_fill_class = computed(() => SHEET_HEADER_FILL_CLASS[header_border])
 const close_label_text = computed(() => close_label ?? t('mobile-sheet.close-label'))
 
 // The default header owns the close button. A custom `header` slot replaces the
@@ -92,7 +94,7 @@ provide(mobileSheetOverlayKey, overlay_root)
     <div
       ref="overlay_root"
       data-testid="mobile-sheet__overlay"
-      class="absolute inset-0 pointer-events-none z-10"
+      class="absolute inset-0 pointer-events-none z-(--sheet-overlay-z,30)"
     >
       <slot name="overlay"></slot>
     </div>
@@ -106,12 +108,12 @@ provide(mobileSheetOverlayKey, overlay_root)
       <div
         data-testid="mobile-sheet"
         :data-surface="surface"
-        :class="['relative flex w-full h-full flex-col', body_bg_class]"
+        class="relative flex w-full h-full flex-col"
       >
         <div
           v-if="show_builtin_close"
           data-testid="mobile-sheet__close-slot"
-          class="absolute top-0 p-4 left-0 z-20"
+          class="absolute top-0 p-4 left-0 z-40"
         >
           <ui-button
             :icon-left="close_icon"
@@ -124,23 +126,35 @@ provide(mobileSheetOverlayKey, overlay_root)
           </ui-button>
         </div>
 
-        <slot v-if="showHeader" name="header">
-          <div
-            data-testid="mobile-sheet__header"
-            :data-header-border="header_border"
-            v-bind="header_bindings"
-            :class="[
-              'w-full flex justify-center items-center place-items-center px-(--sheet-px) pt-11.5 pb-14 gap-6 bg-(--theme-primary) text-(--theme-on-primary) relative',
-              header_border_class
-            ]"
-          >
-            <slot name="header-content">
-              <h1 class="text-5xl text-white">{{ title }}</h1>
-            </slot>
-          </div>
-        </slot>
+        <div v-if="showHeader" data-testid="mobile-sheet__header-slot" class="relative">
+          <slot name="header">
+            <div
+              data-testid="mobile-sheet__header"
+              :data-header-border="header_border"
+              v-bind="header_bindings"
+              :class="[
+                'w-full flex justify-center items-center place-items-center px-(--sheet-px) pt-11.5 pb-14 gap-6 bg-(--theme-primary) text-(--theme-on-primary) relative z-10',
+                header_border_class
+              ]"
+            >
+              <slot name="header-content">
+                <h1 class="text-5xl text-white">{{ title }}</h1>
+              </slot>
+            </div>
+          </slot>
 
-        <div data-testid="mobile-sheet__body" class="min-h-0 flex-1">
+          <div
+            v-if="header_fill_class"
+            data-testid="mobile-sheet__header-fill"
+            aria-hidden="true"
+            :class="['absolute inset-0 z-20 pointer-events-none', body_bg_class, header_fill_class]"
+          ></div>
+        </div>
+
+        <div
+          data-testid="mobile-sheet__body"
+          :class="['relative z-20 min-h-0 flex-1', body_bg_class]"
+        >
           <slot></slot>
         </div>
       </div>

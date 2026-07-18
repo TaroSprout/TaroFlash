@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { shallowMount } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import PinnedPreview from '@/components/deck/pinned-preview.vue'
 
@@ -33,7 +33,7 @@ const baseProps = {
 // ── Factory ───────────────────────────────────────────────────────────────────
 
 function makeWrapper(props = {}) {
-  return shallowMount(PinnedPreview, {
+  return mount(PinnedPreview, {
     props: { ...baseProps, ...props },
     global: {
       stubs: {
@@ -62,9 +62,9 @@ describe('PinnedPreview — rendering', () => {
     expect(wrapper.find('[data-testid="deck-pinned-preview__shadow-card"]').exists()).toBe(true)
   })
 
-  test('renders the paperclip decoration', () => {
+  test('renders the paperclip decoration (owned by ui-pinned-card, forwarded through)', () => {
     const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="deck-pinned-preview__paperclip"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="ui-pinned-card__paperclip"]').exists()).toBe(true)
   })
 
   test('renders the deck-design-preview', () => {
@@ -119,5 +119,26 @@ describe('PinnedPreview — update:side emit [obligation]', () => {
 
     expect(wrapper.emitted('update:side')).toBeTruthy()
     expect(wrapper.emitted('update:side')[0]).toEqual(['back'])
+  })
+})
+
+// ── tucked prop forwarding [obligation] ─────────────────────────────────────────
+// The DOM contract moved from an ancestor's `group-data-[tucked=true]` selector
+// to an explicit `tucked` prop on ui-pinned-card — assert PinnedPreview forwards
+// it through, and that the paperclip reflects it via data-tucked.
+
+describe('PinnedPreview — forwards tucked through to ui-pinned-card [obligation]', () => {
+  test('defaults the paperclip data-tucked to false when the prop is omitted', () => {
+    const wrapper = makeWrapper()
+    expect(
+      wrapper.find('[data-testid="ui-pinned-card__paperclip"]').attributes('data-tucked')
+    ).toBe('false')
+  })
+
+  test('forwards tucked=true so the paperclip data-tucked reflects it', () => {
+    const wrapper = makeWrapper({ tucked: true })
+    expect(
+      wrapper.find('[data-testid="ui-pinned-card__paperclip"]').attributes('data-tucked')
+    ).toBe('true')
   })
 })

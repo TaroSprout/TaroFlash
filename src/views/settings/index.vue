@@ -13,7 +13,7 @@ import { useAlert } from '@/composables/alert'
 import { useModalRequestClose } from '@/composables/modal'
 import { useAvatarPicker } from './use-avatar-picker'
 import MemberCard from '@/components/member/member-card.vue'
-import UiIcon from '@/components/ui-kit/icon.vue'
+import UiPinnedCard from '@/components/ui-kit/pinned-card.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import TabSheet from '@/components/layout-kit/sheet/tab-sheet.vue'
 import TabProfile from './tab-profile/index.vue'
@@ -215,13 +215,7 @@ watch(layout_mode, (mode) => {
         data-testid="settings__pinned-preview"
         class="pointer-events-auto absolute right-(--sheet-px) top-6"
       >
-        <div data-testid="settings__pinned-preview-inner" class="relative">
-          <div
-            data-testid="settings__pinned-preview-paperclip"
-            class="absolute -top-8 right-15 -translate-x-1/2 z-10 drop-shadow-2xs"
-          >
-            <ui-icon src="paperclip" class="w-16 h-16 -rotate-186 text-grey-300" />
-          </div>
+        <ui-pinned-card data-testid="settings__pinned-preview-inner">
           <member-card
             :created-at="editor.created_at.value"
             :display-name="editor.draft.display_name"
@@ -229,10 +223,9 @@ watch(layout_mode, (mode) => {
             :card-title="t('settings.preview.title-fallback')"
             :cover="editor.draft.cover_config"
             editable
-            class="rotate-4 drop-shadow-sm"
             @edit-avatar="onEditAvatar"
           />
-        </div>
+        </ui-pinned-card>
       </div>
     </template>
   </tab-sheet>

@@ -1,5 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { ref, computed } from 'vue'
+import { flushPromises } from '@vue/test-utils'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -190,5 +191,169 @@ describe('useTabTransition — onTabLeave routing [obligation]', () => {
     onTabEnter(makeEl(), vi.fn())
 
     expect(mockTabSlideEnter).toHaveBeenCalledWith(nav_direction, outlet)
+  })
+})
+
+// ── onTabEnter never touches the chrome [obligation] ───────────────────────────
+// Regression: chrome tuck/restore used to run inside onTabEnter too. Restoring
+// during enter reflowed the content row while the incoming tab was still
+// rendering. The chrome now only moves during leave.
+
+describe('useTabTransition — onTabEnter never touches the chrome [obligation]', () => {
+  function makeChrome() {
+    return { tuck: vi.fn(() => Promise.resolve()), restore: vi.fn(() => Promise.resolve()) }
+  }
+
+  test('does not call chrome.tuck when entering a full-bleed tab', () => {
+    const { layout_mode } = makeLayout('tablet')
+    const tab_outlet = ref(document.createElement('div'))
+    const chrome = makeChrome()
+    const { onTabEnter } = useTabTransition(layout_mode, tab_outlet, {
+      chrome,
+      is_full_bleed: () => true
+    })
+
+    onTabEnter(makeEl(), vi.fn())
+
+    expect(chrome.tuck).not.toHaveBeenCalled()
+    expect(chrome.restore).not.toHaveBeenCalled()
+  })
+
+  test('does not call chrome.restore when entering a non-full-bleed tab', () => {
+    const { layout_mode } = makeLayout('tablet')
+    const tab_outlet = ref(document.createElement('div'))
+    const chrome = makeChrome()
+    const { onTabEnter } = useTabTransition(layout_mode, tab_outlet, {
+      chrome,
+      is_full_bleed: () => false
+    })
+
+    onTabEnter(makeEl(), vi.fn())
+
+    expect(chrome.tuck).not.toHaveBeenCalled()
+    expect(chrome.restore).not.toHaveBeenCalled()
+  })
+
+  test('onTabEnter still calls done, chrome or not', () => {
+    const { layout_mode } = makeLayout('tablet')
+    const tab_outlet = ref(document.createElement('div'))
+    const chrome = makeChrome()
+    const { onTabEnter } = useTabTransition(layout_mode, tab_outlet, {
+      chrome,
+      is_full_bleed: () => true
+    })
+
+    const done = vi.fn()
+    onTabEnter(makeEl(), done)
+
+    expect(done).toHaveBeenCalledOnce()
+  })
+})
+
+// ── onTabLeave awaits the chrome before calling done [obligation] ──────────────
+// Both directions (tuck and restore) run inside onTabLeave, awaited before
+// `done()` fires — the only moment with no tab mounted for the reflow to shift.
+
+describe('useTabTransition — onTabLeave awaits the chrome before calling done [obligation]', () => {
+  test('calls chrome.tuck when leaving into a full-bleed tab, and withholds done until it resolves', async () => {
+    const { layout_mode } = makeLayout('tablet')
+    const tab_outlet = ref(document.createElement('div'))
+    let resolveTuck
+    const chrome = {
+      tuck: vi.fn(
+        () =>
+          new Promise((resolve) => {
+            resolveTuck = resolve
+          })
+      ),
+      restore: vi.fn(() => Promise.resolve())
+    }
+    const { onTabLeave } = useTabTransition(layout_mode, tab_outlet, {
+      chrome,
+      is_full_bleed: () => true
+    })
+
+    const done = vi.fn()
+    onTabLeave(makeEl(), done)
+    await flushPromises()
+
+    expect(chrome.tuck).toHaveBeenCalledOnce()
+    expect(chrome.restore).not.toHaveBeenCalled()
+    expect(done).not.toHaveBeenCalled()
+
+    resolveTuck()
+    await flushPromises()
+
+    expect(done).toHaveBeenCalledOnce()
+  })
+
+  test('calls chrome.restore when leaving into a non-full-bleed tab, and withholds done until it resolves', async () => {
+    const { layout_mode } = makeLayout('tablet')
+    const tab_outlet = ref(document.createElement('div'))
+    let resolveRestore
+    const chrome = {
+      tuck: vi.fn(() => Promise.resolve()),
+      restore: vi.fn(
+        () =>
+          new Promise((resolve) => {
+            resolveRestore = resolve
+          })
+      )
+    }
+    const { onTabLeave } = useTabTransition(layout_mode, tab_outlet, {
+      chrome,
+      is_full_bleed: () => false
+    })
+
+    const done = vi.fn()
+    onTabLeave(makeEl(), done)
+    await flushPromises()
+
+    expect(chrome.restore).toHaveBeenCalledOnce()
+    expect(chrome.tuck).not.toHaveBeenCalled()
+    expect(done).not.toHaveBeenCalled()
+
+    resolveRestore()
+    await flushPromises()
+
+    expect(done).toHaveBeenCalledOnce()
+  })
+
+  test('is_full_bleed is read lazily — reading the value at call time, not construction time', async () => {
+    const { layout_mode } = makeLayout('tablet')
+    const tab_outlet = ref(document.createElement('div'))
+    const chrome = { tuck: vi.fn(() => Promise.resolve()), restore: vi.fn(() => Promise.resolve()) }
+    let full_bleed = false
+    const { onTabLeave } = useTabTransition(layout_mode, tab_outlet, {
+      chrome,
+      is_full_bleed: () => full_bleed
+    })
+
+    full_bleed = true
+    await onTabLeave(makeEl(), vi.fn())
+
+    expect(chrome.tuck).toHaveBeenCalledOnce()
+    expect(chrome.restore).not.toHaveBeenCalled()
+  })
+
+  test('without chrome/is_full_bleed configured, onTabLeave still resolves and calls done', async () => {
+    const { layout_mode } = makeLayout('tablet')
+    const tab_outlet = ref(document.createElement('div'))
+    const { onTabLeave } = useTabTransition(layout_mode, tab_outlet)
+
+    const done = vi.fn()
+    await onTabLeave(makeEl(), done)
+
+    expect(done).toHaveBeenCalledOnce()
+  })
+
+  test('onTabLeave returns a promise (async), unlike onTabEnter', () => {
+    const { layout_mode } = makeLayout('tablet')
+    const tab_outlet = ref(document.createElement('div'))
+    const { onTabLeave } = useTabTransition(layout_mode, tab_outlet)
+
+    const result = onTabLeave(makeEl(), vi.fn())
+
+    expect(result).toBeInstanceOf(Promise)
   })
 })

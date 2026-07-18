@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, provide, ref, useTemplateRef, watch } from 'vue'
+import type { ComponentPublicInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DeckAside from './deck-aside.vue'
 import { deckSettingsLayoutKey, deckSettingsCloseKey } from './layout'
@@ -8,6 +9,7 @@ import { useDeckEditor, deckEditorKey } from '@/composables/deck/editor'
 import { useDeckDangerActions, deckDangerActionsKey } from '@/composables/deck/danger-actions'
 import { useTabModalLayout } from '@/composables/ui/tab-modal-layout'
 import { useTabTransition } from '@/composables/ui/tab-transition'
+import { useSheetChrome } from '@/composables/ui/sheet-chrome'
 import { useAlert } from '@/composables/alert'
 import { useModalAfterEnter, useModalRequestClose } from '@/composables/modal'
 import DeckPinnedPreview from '@/components/deck/pinned-preview.vue'
@@ -59,7 +61,16 @@ provide(deckSettingsCloseKey, close)
 const active_tab = ref<ActiveTab | null>(null)
 const tab_outlet = ref<HTMLElement>()
 
-const { nav_direction, onTabEnter, onTabLeave } = useTabTransition(layout_mode, tab_outlet)
+const preview_el = useTemplateRef<HTMLElement>('preview_el')
+const aside_instance = useTemplateRef<ComponentPublicInstance>('aside_instance')
+const aside_el = computed(() => aside_instance.value?.$el as HTMLElement | undefined)
+
+const chrome = useSheetChrome(preview_el, aside_el)
+
+const { nav_direction, onTabEnter, onTabLeave } = useTabTransition(layout_mode, tab_outlet, {
+  chrome,
+  is_full_bleed: () => is_full_bleed.value
+})
 
 const active_tab_ref = useTemplateRef<{ onChromeBack?: () => boolean }>('active_tab_ref')
 
@@ -93,12 +104,23 @@ const visible_side = computed(() =>
 
 const tab_component = computed(() => TAB_COMPONENTS[displayed_tab.value])
 
+// Sheet mode has no pinned preview or aside to clear away, so full-bleed is a
+// desktop/tablet-only concern.
+const is_full_bleed = computed(
+  () =>
+    layout_mode.value !== 'sheet' && Boolean(TAB_META[displayed_tab.value as TabValue]?.full_bleed)
+)
+
 // The content row is always full-bleed: `__main` (the scroll container) owns its
 // own padding and the aside owns its own inset, so floating elements/outlines
 // aren't clipped by the overflow and the sheet-mode tab animation stays clean.
 const tab_content_class = 'flex h-full items-start'
 
 onMounted(async () => {
+  // Opening straight onto a full-bleed tab starts with the chrome already gone
+  // rather than animating it away in front of the user.
+  if (is_full_bleed.value) chrome.snap(true)
+
   if (initial_side) {
     await after_enter
     editor.setActiveSide(initial_side)
@@ -155,7 +177,8 @@ watch(active_tab, (tab) => {
       layout_mode !== 'sheet' && 'h-181.5',
       layout_mode === 'sheet'
         ? '[--deck-settings-padding:var(--sheet-px)]'
-        : '[--deck-settings-padding:0px]'
+        : '[--deck-settings-padding:0px]',
+      chrome.is_tucked.value && '[--sheet-overlay-z:15]'
     ]"
     :sheet_px="sheet_px"
     :tabs="tabs"
@@ -217,6 +240,7 @@ watch(active_tab, (tab) => {
     <!-- Aside has a bespoke layout so it matches visually with the pinned preview -->
     <deck-aside
       v-if="layout_mode !== 'sheet'"
+      ref="aside_instance"
       data-testid="deck-settings__aside"
       class="w-92 shrink-0 self-end pb-8"
       :class="layout_mode === 'tablet' ? 'pt-66 pr-22' : 'pt-70 px-8'"
@@ -225,13 +249,17 @@ watch(active_tab, (tab) => {
     <template #overlay>
       <div
         v-if="layout_mode !== 'sheet'"
+        ref="preview_el"
         data-testid="deck-settings__pinned-preview"
-        class="pointer-events-auto absolute right-(--sheet-px) top-6"
+        :data-tucked="chrome.is_tucked.value"
+        class="absolute right-(--sheet-px) top-6"
+        :class="chrome.is_tucked.value ? 'pointer-events-none' : 'pointer-events-auto'"
       >
         <deck-pinned-preview
           :cover="editor.draft.cover_config"
           :card_attributes="editor.draft.card_attributes"
           :side="visible_side"
+          :tucked="chrome.is_tucked.value"
           :front_text="editor.preview_front_text.value"
           :back_text="editor.preview_back_text.value"
           @update:side="onPreviewSide"
