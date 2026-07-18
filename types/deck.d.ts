@@ -61,9 +61,15 @@ type PacingOverrides = Partial<{
 
 type CardEditorMode = 'view' | 'edit' | 'import-export'
 
+/**
+ * Which face a card opens on. `random` is rolled per card at study time, not
+ * stored — see the session engine's per-card memo.
+ */
+type CardStartingSide = 'front' | 'back' | 'random'
+
 type DeckConfig = {
   shuffle?: boolean
-  flip_cards?: boolean
+  starting_side?: CardStartingSide
   is_spaced?: boolean
   auto_play?: boolean
 }

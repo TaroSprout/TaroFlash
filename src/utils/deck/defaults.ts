@@ -15,7 +15,7 @@ export const DECK_TITLE_MAX_LENGTH = 15
 
 export const DECK_CONFIG_DEFAULTS: Required<DeckConfig> = {
   shuffle: false,
-  flip_cards: false,
+  starting_side: 'front',
   is_spaced: true,
   auto_play: false
 }

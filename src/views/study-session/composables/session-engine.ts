@@ -32,8 +32,8 @@ export type CardReviewResult = {
 type SessionEngineDeps = {
   /** Per-deck FSRS scheduler for the given card's deck. */
   schedulerFor: (deck_id?: number) => FSRS
-  /** Whether the given card's deck starts on its back (flipped). */
-  flipFor: (deck_id?: number) => boolean
+  /** Which face the given card's deck opens on (`random` is rolled per card here). */
+  startingSideFor: (deck_id?: number) => CardStartingSide
   /** Whether the merged queue should be shuffled. */
   shuffle: () => boolean
   /** Called after every state-changing mutation, so the owner can persist. */
@@ -44,10 +44,15 @@ type SessionEngineDeps = {
  * The deck-blind session core: one state machine owning the whole lifecycle
  * (loading -> cover -> studying -> summary), the FSRS queue, card sides, and
  * per-card scheduling. It knows nothing about decks beyond each card's
- * `deck_id`, which it hands to the injected `schedulerFor` / `flipFor` — so a
- * merged multi-deck queue schedules each card against its own deck's pacing.
+ * `deck_id`, which it hands to the injected `schedulerFor` / `startingSideFor` —
+ * so a merged multi-deck queue schedules each card against its own deck's pacing.
  */
-export function useSessionEngine({ schedulerFor, flipFor, shuffle, onChange }: SessionEngineDeps) {
+export function useSessionEngine({
+  schedulerFor,
+  startingSideFor,
+  shuffle,
+  onChange
+}: SessionEngineDeps) {
   const { t } = useI18n()
   const notice = useNoticeStore()
 
@@ -60,6 +65,13 @@ export function useSessionEngine({ schedulerFor, flipFor, shuffle, onChange }: S
   const _cards_in_deck = shallowRef<StudyCard[]>([])
   const active_card = shallowRef<StudyCard | undefined>(undefined)
   const results = shallowRef<CardReviewResult[]>([])
+
+  // A `random` deck rolls each card's side once, the first time it's asked for,
+  // and remembers it for the rest of the session. Without the memo the roll
+  // would land differently on every read — and the preview card's intro flip
+  // (played before the engine advances) would disagree with the side the card
+  // actually opens on.
+  const _rolled_sides = new Map<number, 'front' | 'back'>()
 
   const cards = computed(() => _cards_in_deck.value)
 
@@ -79,7 +91,7 @@ export function useSessionEngine({ schedulerFor, flipFor, shuffle, onChange }: S
   const is_cover = computed(() => state.value === 'loading' || state.value === 'cover')
 
   const active_starting_side = computed<'front' | 'back'>(() =>
-    flipFor(active_card.value?.deck_id) ? 'back' : 'front'
+    startingSideForCard(active_card.value)
   )
 
   const is_starting_side = computed(() => current_card_side.value === active_starting_side.value)
@@ -153,6 +165,22 @@ export function useSessionEngine({ schedulerFor, flipFor, shuffle, onChange }: S
     if (!silent) emitSfx('music_plink_chordyes')
     current_card_side.value = active_starting_side.value
     state.value = 'studying'
+  }
+
+  /**
+   * The face `card` opens on, resolving its deck's `random` to a concrete side.
+   * Stable per card: the controller calls this for the incoming preview card's
+   * intro flip, and the engine reads the same answer when that card goes active.
+   */
+  function startingSideForCard(card?: StudyCard): 'front' | 'back' {
+    if (!card) return 'front'
+
+    const setting = startingSideFor(card.deck_id)
+    if (setting !== 'random') return setting
+
+    const rolled = _rolled_sides.get(card.id) ?? (Math.random() < 0.5 ? 'front' : 'back')
+    _rolled_sides.set(card.id, rolled)
+    return rolled
   }
 
   function flipCurrentCard() {
@@ -286,6 +314,7 @@ export function useSessionEngine({ schedulerFor, flipFor, shuffle, onChange }: S
     setCards,
     restoreCards,
     startSession,
+    startingSideForCard,
     flipCurrentCard,
     reviewCard,
     dropCard,

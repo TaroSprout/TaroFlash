@@ -47,10 +47,39 @@ const ToggleStub = defineComponent({
   }
 })
 
+// Renders one button per option, tagged data-testid="option-<value>", carrying
+// data-active — matches the ui-kit convention the real component exposes.
+const OptionGroupStub = defineComponent({
+  name: 'UiOptionGroup',
+  props: { options: { type: Array, default: () => [] }, value: { type: String, default: '' } },
+  emits: ['update:value'],
+  inheritAttrs: false,
+  setup(props, { emit }) {
+    const attrs = useAttrs()
+    return () =>
+      h(
+        'div',
+        { ...attrs },
+        props.options.map((option) =>
+          h(
+            'button',
+            {
+              key: option.value,
+              'data-testid': `option-${option.value}`,
+              'data-active': String(option.value === props.value),
+              onClick: () => emit('update:value', option.value)
+            },
+            option.label
+          )
+        )
+      )
+  }
+})
+
 function makeWrapper({ config: configOverrides = {}, layout_mode = 'modal' } = {}) {
   const deck = reactive({ id: 1 })
   const draft = reactive({
-    study_config: { shuffle: false, flip_cards: false, ...configOverrides },
+    study_config: { shuffle: false, ...configOverrides },
     cover_config: {},
     card_attributes: { front: {}, back: {} },
     review_pacing_preset_id: null,
@@ -73,7 +102,7 @@ function makeWrapper({ config: configOverrides = {}, layout_mode = 'modal' } = {
   const wrapper = mount(TabReviewPacing, {
     global: {
       provide: { [deckEditorKey]: editor, [deckSettingsLayoutKey]: layout_mode },
-      stubs: { UiToggle: ToggleStub, DeckSaveButton: true },
+      stubs: { UiToggle: ToggleStub, UiOptionGroup: OptionGroupStub, DeckSaveButton: true },
       mocks: { $t: (k) => k }
     }
   })
@@ -108,9 +137,9 @@ describe('TabReviewPacing — section order [obligation]', () => {
 })
 
 describe('TabReviewPacing — behavior toggles', () => {
-  test('renders two behavior toggles', () => {
+  test('renders one behavior toggle (shuffle)', () => {
     const { wrapper } = makeWrapper()
-    expect(wrapper.findAllComponents(ToggleStub)).toHaveLength(2)
+    expect(wrapper.findAllComponents(ToggleStub)).toHaveLength(1)
   })
 
   test('updates config.shuffle when shuffle toggle changes', async () => {
@@ -120,13 +149,42 @@ describe('TabReviewPacing — behavior toggles', () => {
     await wrapper.vm.$nextTick()
     expect(config.shuffle).toBe(true)
   })
+})
 
-  test('updates config.flip_cards from the flip-cards toggle', async () => {
+describe('TabReviewPacing — starting-side option group [obligation]', () => {
+  test('displays "front" as active when draft.study_config.starting_side is absent [obligation]', () => {
+    const { wrapper } = makeWrapper()
+    const group = wrapper.find('[data-testid="tab-review-pacing__starting-side-options"]')
+    expect(group.find('[data-testid="option-front"]').attributes('data-active')).toBe('true')
+  })
+
+  test('reflects an existing draft.study_config.starting_side value', () => {
+    const { wrapper } = makeWrapper({ config: { starting_side: 'random' } })
+    const group = wrapper.find('[data-testid="tab-review-pacing__starting-side-options"]')
+    expect(group.find('[data-testid="option-random"]').attributes('data-active')).toBe('true')
+  })
+
+  test('writes "back" into draft.study_config.starting_side when the back option is picked [obligation]', async () => {
     const { wrapper, config } = makeWrapper()
-    const toggles = wrapper.findAllComponents(ToggleStub)
-    toggles[1].vm.$emit('update:checked', true)
-    await wrapper.vm.$nextTick()
-    expect(config.flip_cards).toBe(true)
+    await wrapper.find('[data-testid="option-back"]').trigger('click')
+    expect(config.starting_side).toBe('back')
+  })
+
+  test('writes "random" into draft.study_config.starting_side when the random option is picked [obligation]', async () => {
+    const { wrapper, config } = makeWrapper()
+    await wrapper.find('[data-testid="option-random"]').trigger('click')
+    expect(config.starting_side).toBe('random')
+  })
+
+  test('writes "front" into draft.study_config.starting_side when the front option is picked from a "back" draft [obligation]', async () => {
+    const { wrapper, config } = makeWrapper({ config: { starting_side: 'back' } })
+    await wrapper.find('[data-testid="option-front"]').trigger('click')
+    expect(config.starting_side).toBe('front')
+  })
+
+  test('renders the starting-side row wrapper [data-testid]', () => {
+    const { wrapper } = makeWrapper()
+    expect(wrapper.find('[data-testid="tab-review-pacing__starting-side"]').exists()).toBe(true)
   })
 })
 

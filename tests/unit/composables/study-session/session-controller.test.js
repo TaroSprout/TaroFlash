@@ -26,14 +26,25 @@ const { state, results, reviewed_count, is_cover, active_card, next_card, cards 
     }
   })
 
-const { mockReviewCard, mockAwaitFlip, mockRestoreCards, mockStartSession, mockSetCards } =
-  vi.hoisted(() => ({
-    mockReviewCard: vi.fn(),
-    mockAwaitFlip: vi.fn().mockResolvedValue(undefined),
-    mockRestoreCards: vi.fn(),
-    mockStartSession: vi.fn(),
-    mockSetCards: vi.fn()
-  }))
+const {
+  mockReviewCard,
+  mockAwaitFlip,
+  mockRestoreCards,
+  mockStartSession,
+  mockSetCards,
+  mockStartingSideForCard
+} = vi.hoisted(() => ({
+  mockReviewCard: vi.fn(),
+  mockAwaitFlip: vi.fn().mockResolvedValue(undefined),
+  mockRestoreCards: vi.fn(),
+  mockStartSession: vi.fn(),
+  mockSetCards: vi.fn(),
+  // Mirrors the real engine's contract: the side resolves from the given
+  // card's own deck (deck 2 -> 'back', everything else -> 'front'), stable
+  // across repeated calls for the same card — the memoization the real
+  // startingSideForCard performs is exercised directly in session-engine.test.js.
+  mockStartingSideForCard: vi.fn((card) => (card?.deck_id === 2 ? 'back' : 'front'))
+}))
 
 const { capturedEngineDeps } = vi.hoisted(() => ({ capturedEngineDeps: { current: null } }))
 
@@ -56,6 +67,7 @@ vi.mock('@/views/study-session/composables/session-engine', () => ({
       setCards: mockSetCards,
       restoreCards: mockRestoreCards,
       startSession: mockStartSession,
+      startingSideForCard: mockStartingSideForCard,
       flipCurrentCard: vi.fn(),
       reviewCard: mockReviewCard,
       dropCard: vi.fn(),
@@ -71,7 +83,7 @@ vi.mock('@/views/study-session/deck-resolution', () => ({
     const resolution = {
       appearanceFor: vi.fn(() => ({})),
       schedulerFor: vi.fn(),
-      flipFor: vi.fn((deck_id) => deck_id === 2),
+      startingSideFor: vi.fn((deck_id) => (deck_id === 2 ? 'back' : 'front')),
       thresholdFor: vi.fn(() => 8),
       covers: { value: [] },
       shuffle: { value: false },
@@ -191,6 +203,7 @@ describe('session-controller', () => {
     mockRestoreCards.mockClear()
     mockStartSession.mockClear()
     mockSetCards.mockClear()
+    mockStartingSideForCard.mockClear()
     mockFlushDeckReviews.mockClear()
     mockToggleRatings.mockClear()
     mockShowAllRatings.value = false
@@ -324,7 +337,9 @@ describe('session-controller', () => {
 
       await controller.onCardReviewed('good')
 
-      // flipFor(2) is mocked to true -> the next card (deck 2) flips to 'back'.
+      // startingSideForCard is called with the next card (deck 2 -> 'back') —
+      // the engine mock resolves deck 2 to 'back'.
+      expect(mockStartingSideForCard).toHaveBeenCalledWith(next_card.value)
       expect(mockAwaitFlip).toHaveBeenCalledWith('back')
       expect(mockReviewCard).toHaveBeenCalledWith('good')
     })
@@ -379,11 +394,13 @@ describe('session-controller', () => {
 
   // ── engine deps: injected deck-resolution accessors, seed = engine.setCards ─
 
-  test('the engine is wired to the deck-resolution schedulerFor/flipFor and shuffle accessors [obligation]', () => {
+  test('the engine is wired to the deck-resolution schedulerFor/startingSideFor and shuffle accessors [obligation]', () => {
     makeController()
 
     expect(capturedEngineDeps.current.schedulerFor).toBe(capturedResolution.current.schedulerFor)
-    expect(capturedEngineDeps.current.flipFor).toBe(capturedResolution.current.flipFor)
+    expect(capturedEngineDeps.current.startingSideFor).toBe(
+      capturedResolution.current.startingSideFor
+    )
     expect(capturedEngineDeps.current.shuffle()).toBe(false)
   })
 

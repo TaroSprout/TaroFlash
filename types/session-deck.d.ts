@@ -6,7 +6,7 @@
 type SessionDeck = {
   id: number
   title?: string
-  flip_cards: boolean
+  starting_side: CardStartingSide
   shuffle: boolean
   cover_config?: DeckCover
   card_attributes?: DeckCardAttributes

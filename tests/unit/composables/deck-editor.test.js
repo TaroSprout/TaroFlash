@@ -110,7 +110,7 @@ describe('useDeckEditor', () => {
       const { draft } = useDeckEditor(deck)
 
       expect(draft.study_config.shuffle).toBe(true)
-      expect(draft.study_config.flip_cards).toBe(false)
+      expect(draft.study_config.starting_side).toBe('front')
     })
 
     test('initializes draft.study_config with defaults when deck has no study_config', () => {
@@ -345,7 +345,7 @@ describe('useDeckEditor', () => {
     test('restores cover/config/card_attributes to their original deck values without mutating the original deck object [obligation]', () => {
       const deck = makeDeck({
         cover_config: { color: '#ff0000', theme: 'sunrise' },
-        study_config: { shuffle: false, flip_cards: false },
+        study_config: { shuffle: false, starting_side: 'front' },
         card_attributes: {
           front: { text_size: 'medium' },
           back: { text_size: 'small' }
