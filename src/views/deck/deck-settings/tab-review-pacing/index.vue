@@ -31,7 +31,7 @@ provide(pacingFieldsKey, usePacingFields(deck!, draft))
         <limits-section />
       </div>
 
-      <scheduling-section />
+      <scheduling-section class="rounded-6 bg-brown-200 dark:bg-stone-900 p-6" />
     </div>
 
     <deck-save-button class="mt-auto" />
