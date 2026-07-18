@@ -28,7 +28,7 @@ vi.mock('gsap', () => ({ gsap: { fromTo: vi.fn(), to: vi.fn() } }))
 const UiTappableStub = defineComponent({
   name: 'UiTappable',
   inheritAttrs: false,
-  props: ['sfx', 'as', 'animate', 'triggerAt'],
+  props: ['sfx', 'as', 'animate', 'triggerAt', 'active'],
   emits: ['tap'],
   setup(props, { slots, emit }) {
     const attrs = useAttrs()
@@ -37,6 +37,7 @@ const UiTappableStub = defineComponent({
         'div',
         {
           ...attrs,
+          'data-tap-active': props.active || null,
           onClick: (e) => emit('tap', e)
         },
         slots.default?.()
@@ -240,6 +241,38 @@ describe('DeckThumbnail', () => {
       const corner = wrapper.find('[data-testid="deck-thumbnail__corner-action"]')
       expect(corner.classes()).toContain('opacity-0')
       expect(corner.classes()).not.toContain('opacity-100')
+    })
+  })
+
+  // ── active prop [obligation] ──────────────────────────────────────────────
+  // Forwards to UiTappable's `active`, so the root carries data-tap-active —
+  // never assert classes for this. The corner-action also stays visible while
+  // active (it normally hover-fades).
+
+  describe('active prop [obligation]', () => {
+    test('active=true forwards to UiTappable and sets data-tap-active on the root', () => {
+      const wrapper = mountWithDeck({}, { active: true })
+      expect(wrapper.find('[data-testid="deck-thumbnail"]').attributes('data-tap-active')).toBe(
+        'true'
+      )
+    })
+
+    test('active=false (default) leaves data-tap-active unset', () => {
+      const wrapper = mountWithDeck()
+      expect(
+        wrapper.find('[data-testid="deck-thumbnail"]').attributes('data-tap-active')
+      ).toBeUndefined()
+    })
+
+    test('active=true keeps the corner-action visible without hover', () => {
+      const wrapper = shallowMount(DeckThumbnail, {
+        props: { deck: { title: 'X' }, active: true },
+        slots: { 'corner-action': '<button data-testid="corner-button">act</button>' },
+        global: { stubs: { UiTappable: UiTappableStub } }
+      })
+      const corner = wrapper.find('[data-testid="deck-thumbnail__corner-action"]')
+      expect(corner.classes()).toContain('opacity-100')
+      expect(corner.classes()).toContain('pointer-events-auto')
     })
   })
 

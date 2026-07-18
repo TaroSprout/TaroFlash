@@ -87,7 +87,7 @@ vi.mock('@/views/dashboard/deck-grid/use-deck-grid-reorder', () => ({
 const DeckGridItemStub = defineComponent({
   name: 'DeckGridItem',
   props: ['deck', 'size', 'rearranging', 'dragging'],
-  emits: ['press', 'settings'],
+  emits: ['press', 'rearrange'],
   setup(props, { emit }) {
     return () =>
       h('div', {
@@ -96,7 +96,7 @@ const DeckGridItemStub = defineComponent({
         'data-rearranging': String(!!props.rearranging),
         'data-dragging': String(!!props.dragging),
         onClick: () => emit('press'),
-        onContextmenu: () => emit('settings')
+        onContextmenu: () => emit('rearrange')
       })
   }
 })
@@ -172,14 +172,11 @@ describe('DeckGrid — deck press navigates to the deck route', () => {
     await wrapper.find('[data-testid="deck-grid-item"]').trigger('click')
     expect(routerPushMock).toHaveBeenCalledWith({ name: 'deck', params: { id: 42 } })
   })
-})
 
-describe('DeckGrid — deck settings opens the deck settings modal', () => {
-  test('the settings event opens the deck settings modal for that deck', async () => {
-    const deck = makeDeck(7)
-    const wrapper = mount([deck])
+  test('an item rearrange emit re-emits rearrange upward', async () => {
+    const wrapper = mount([makeDeck(1)])
     await wrapper.find('[data-testid="deck-grid-item"]').trigger('contextmenu')
-    expect(deckSettingsOpenMock).toHaveBeenCalledWith(deck)
+    expect(wrapper.emitted('rearrange')).toHaveLength(1)
   })
 })
 
@@ -297,6 +294,24 @@ describe('DeckGrid — reflow transition [obligation]', () => {
     expect(wrapper.find('[data-testid="deck-grid__item"]').classes()).toContain(
       'transition-transform'
     )
+  })
+
+  test('clears the transition class once REFLOW_TRANSITION_DURATION elapses', async () => {
+    vi.useFakeTimers()
+    const wrapper = mount([makeDeck(1)])
+    await wrapper.setProps({ decks: [makeDeck(1), makeDeck(2)] })
+    await wrapper.setProps({ decks: [makeDeck(2)] })
+    expect(wrapper.find('[data-testid="deck-grid__item"]').classes()).toContain(
+      'transition-transform'
+    )
+
+    vi.advanceTimersByTime(200)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid="deck-grid__item"]').classes()).not.toContain(
+      'transition-transform'
+    )
+    vi.useRealTimers()
   })
 
   test('does not apply the transition class for a same-length reorder (drag-drop resort)', async () => {

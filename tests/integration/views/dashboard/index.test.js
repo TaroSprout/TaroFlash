@@ -127,12 +127,14 @@ const ReviewInboxStub = defineComponent({
 const DeckGridStub = defineComponent({
   name: 'DeckGrid',
   props: ['decks', 'editing'],
-  setup(props) {
+  emits: ['rearrange'],
+  setup(props, { emit }) {
     return () =>
       h('div', {
         'data-testid': 'deck-grid',
         'data-deck-count': props.decks.length,
-        'data-editing': String(!!props.editing)
+        'data-editing': String(!!props.editing),
+        onContextmenu: () => emit('rearrange')
       })
   }
 })
@@ -289,6 +291,27 @@ describe('DashboardIndex — edit-decks toggle', () => {
     mockEmitSfx.mockClear()
     await wrapper.find('[data-testid="dashboard-actions-panel"]').trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
+  })
+})
+
+describe('DashboardIndex — rearrange wiring [obligation]', () => {
+  test('selecting Rearrange while not editing enters edit mode', async () => {
+    const wrapper = mountDashboard()
+    expect(wrapper.findComponent(DeckGridStub).props('editing')).toBe(false)
+
+    await wrapper.find('[data-testid="deck-grid"]').trigger('contextmenu')
+
+    expect(wrapper.findComponent(DeckGridStub).props('editing')).toBe(true)
+  })
+
+  test('selecting Rearrange while ALREADY editing does not toggle editing off', async () => {
+    const wrapper = mountDashboard()
+    await wrapper.find('[data-testid="dashboard-actions-panel"]').trigger('click')
+    expect(wrapper.findComponent(DeckGridStub).props('editing')).toBe(true)
+
+    await wrapper.find('[data-testid="deck-grid"]').trigger('contextmenu')
+
+    expect(wrapper.findComponent(DeckGridStub).props('editing')).toBe(true)
   })
 })
 
