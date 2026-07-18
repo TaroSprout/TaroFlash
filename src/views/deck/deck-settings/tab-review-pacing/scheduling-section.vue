@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { inject, ref, useTemplateRef } from 'vue'
+import type { ComponentPublicInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiSelectMenu from '@/components/ui-kit/select-menu.vue'
 import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
@@ -11,6 +12,7 @@ import {
   MAX_INTERVAL_BOUNDS
 } from '@/utils/review-pacing/defaults'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import { popScrimReveal } from '@/utils/animations/scrim-reveal'
 import { emitSfx } from '@/sfx/bus'
 
@@ -42,31 +44,35 @@ const revealed = ref(false)
 // first toggle onwards gsap's inline opacity/scale wins over the class. Only
 // pointer-events stays class-driven, since it isn't animated.
 const scrim = useTemplateRef<HTMLElement>('scrim')
-const badge = useTemplateRef<HTMLElement>('badge')
+// The badge is a ui-tooltip rendering as a <button>, so its element — the tween
+// target — comes off the instance rather than the ref directly.
+const badge = useTemplateRef<ComponentPublicInstance>('badge')
 const fields = useTemplateRef<HTMLElement>('fields')
 
 function toggleRevealed() {
-  if (!scrim.value || !badge.value || !fields.value) return
+  const badge_el = badge.value?.$el as HTMLElement | undefined
+  if (!scrim.value || !badge_el || !fields.value) return
 
   revealed.value = !revealed.value
   emitSfx('snappy_button_5')
-  popScrimReveal(scrim.value, [badge.value, fields.value], revealed.value)
+  popScrimReveal(scrim.value, [badge_el, fields.value], revealed.value)
 }
 </script>
 
 <template>
   <div data-testid="scheduling-panel" class="relative">
-    <button
+    <ui-tooltip
       ref="badge"
-      type="button"
+      element="button"
+      :text="t('deck.settings-modal.review-pacing.advanced-hide-tooltip')"
       data-testid="scheduling-panel__badge"
       class="absolute -top-3 left-1/2 -translate-x-1/2 flex cursor-pointer items-center gap-2 rounded-full bg-brown-300 dark:bg-grey-800 px-4 py-1 text-base text-brown-500 dark:text-brown-100 opacity-0"
       :class="!revealed && 'pointer-events-none'"
       @click="toggleRevealed"
     >
+      <ui-icon src="eye-close" class="size-4.5" />
       {{ t('deck.settings-modal.review-pacing.advanced-label') }}
-      <ui-icon src="eye" class="size-4.5" />
-    </button>
+    </ui-tooltip>
 
     <button
       ref="scrim"
