@@ -38,12 +38,12 @@ const {
   <div data-testid="scheduling-panel" class="relative">
     <span
       data-testid="scheduling-panel__badge"
-      class="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-brown-300 dark:bg-stone-700 px-4 py-1 text-base text-brown-700 dark:text-brown-100"
+      class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brown-300 dark:bg-stone-700 px-4 py-1 text-base text-brown-700 dark:text-brown-100"
     >
       {{ t('deck.settings-modal.review-pacing.advanced-label') }}
     </span>
 
-    <div data-testid="scheduling-section__fields" class="flex flex-col gap-4 text-brown-500">
+    <div data-testid="scheduling-section__fields" class="flex flex-col gap-4 text-brown-500 pt-4">
       <tooltip-row
         data-testid="tab-review-pacing__retention"
         :label="t('deck.settings-modal.review-pacing.desired-retention-label')"

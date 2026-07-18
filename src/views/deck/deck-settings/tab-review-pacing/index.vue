@@ -26,7 +26,7 @@ provide(pacingFieldsKey, usePacingFields(deck!, draft))
       data-testid="tab-review-pacing__columns"
       class="grid flex-1 grid-cols-1 gap-8 @min-[46rem]:grid-cols-2 @min-[46rem]:gap-12"
     >
-      <div data-testid="tab-review-pacing__deck-column" class="flex flex-col gap-8">
+      <div data-testid="tab-review-pacing__deck-column" class="flex flex-col gap-12">
         <general-section />
         <limits-section />
       </div>
