@@ -10,6 +10,9 @@ import { fetchSessionBootstrap } from '../db'
 export function useSessionBootstrapQuery(deck_ids: MaybeRefOrGetter<number[]>) {
   return useQuery({
     key: () => ['cards', 'session-bootstrap', toValue(deck_ids)],
-    query: () => fetchSessionBootstrap(toValue(deck_ids))
+    query: () => fetchSessionBootstrap(toValue(deck_ids)),
+    // Driven manually via refetch() by the session bootstrap (which must await
+    // server truth, never seed from cache) — auto-fetch would double the call.
+    enabled: () => false
   })
 }
