@@ -636,6 +636,51 @@ describe('UiDropdownButton', () => {
     })
   })
 
+  // ── DropdownOption.separator [obligation] ──────────────────────────────────
+
+  describe('DropdownOption.separator [obligation]', () => {
+    test('renders a divider above the option that sets separator: true [obligation]', async () => {
+      const wrapper = mountDropdown({
+        options: [
+          { label: 'Select Cards', value: 'select' },
+          { label: 'Delete All', value: 'delete', separator: true }
+        ]
+      })
+      await trigger(wrapper).trigger('click')
+
+      const separators = menu(wrapper).findAll('[data-testid="dropdown-button__separator"]')
+      expect(separators).toHaveLength(1)
+    })
+
+    test('no divider renders when no option sets separator [obligation]', async () => {
+      const wrapper = mountDropdown()
+      await trigger(wrapper).trigger('click')
+
+      expect(menu(wrapper).findAll('[data-testid="dropdown-button__separator"]')).toHaveLength(0)
+    })
+
+    test('the divider sits immediately above its option in DOM order [obligation]', async () => {
+      const wrapper = mountDropdown({
+        options: [
+          { label: 'Select Cards', value: 'select' },
+          { label: 'Delete All', value: 'delete', separator: true }
+        ]
+      })
+      await trigger(wrapper).trigger('click')
+
+      const children = [...menu(wrapper).element.children]
+      const separator_index = children.findIndex(
+        (el) => el.getAttribute('data-testid') === 'dropdown-button__separator'
+      )
+      const delete_option_index = options(wrapper)[1].element
+        ? children.indexOf(options(wrapper)[1].element)
+        : -1
+
+      expect(separator_index).toBeGreaterThanOrEqual(0)
+      expect(separator_index).toBe(delete_option_index - 1)
+    })
+  })
+
   // ── #panel slot [obligation] ──────────────────────────────────────────────
   // When a #panel slot is provided, its content renders inside the
   // dropdown-button__menu container and NO option rows are shown.

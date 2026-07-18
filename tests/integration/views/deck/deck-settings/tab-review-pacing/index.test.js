@@ -5,8 +5,28 @@ import { deckEditorKey } from '@/composables/deck/editor'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockPresetsData } = vi.hoisted(() => ({ mockPresetsData: { value: [] } }))
-vi.mock('@/api/review-pacing', () => ({ usePresetsQuery: () => ({ data: mockPresetsData }) }))
+const { mockPresetsData, mockDecksData } = vi.hoisted(() => ({
+  mockPresetsData: { value: [] },
+  mockDecksData: { value: [] }
+}))
+vi.mock('@/api/review-pacing', () => ({
+  usePresetsQuery: () => ({ data: mockPresetsData }),
+  useUpsertPresetMutation: () => ({ mutateAsync: vi.fn() }),
+  useDeletePresetMutation: () => ({ mutateAsync: vi.fn() })
+}))
+vi.mock('@/api/decks', () => ({
+  useMemberDecksQuery: () => ({ data: mockDecksData }),
+  useMemberDeckCountQuery: () => ({ data: { value: 0 } }),
+  useDeckQuery: () => ({ data: { value: undefined } }),
+  useUpsertDeckMutation: () => ({ mutateAsync: vi.fn() }),
+  useMoveDeckMutation: () => ({ mutateAsync: vi.fn() }),
+  useDeleteDeckMutation: () => ({ mutateAsync: vi.fn() })
+}))
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => ({ success: vi.fn(), error: vi.fn() })
+}))
+vi.mock('@/composables/alert', () => ({ useAlert: () => ({ warn: vi.fn() }) }))
+vi.mock('@/composables/prompt', () => ({ usePrompt: () => ({ ask: vi.fn() }) }))
 
 // SchedulingSection pulls in gsap timelines, media-query, sfx and local-ref —
 // none of that is under test here, so it's stubbed to keep this suite scoped

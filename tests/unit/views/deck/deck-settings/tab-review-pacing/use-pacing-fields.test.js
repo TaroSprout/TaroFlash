@@ -390,6 +390,63 @@ describe.each(['max_reviews_per_day', 'max_new_per_day', 'max_interval'])(
   }
 )
 
+// ── resolved_pacing [obligation] ──────────────────────────────────────────────
+// resolved_pacing collects every pacing field through the same ladder the
+// individual controls read through — override → drafted preset → deck.*.
+// Fork/push both promote this object verbatim, so its resolution order and
+// the CAP fields' key-presence semantics matter independently of any one
+// field's own computed.
+
+describe('usePacingFields — resolved_pacing [obligation]', () => {
+  test('PLAIN field resolves the override when pinned, ahead of the drafted preset and deck.* [obligation]', () => {
+    const { resolved_pacing } = usePacingFields(
+      makeDeck({ desired_retention: 90 }),
+      makeDraft({ review_pacing_preset_id: 2, pacing_overrides: { desired_retention: 80 } })
+    )
+    expect(resolved_pacing.value.desired_retention).toBe(80)
+  })
+
+  test('PLAIN field resolves the drafted preset when no override is pinned [obligation]', () => {
+    const { resolved_pacing } = usePacingFields(
+      makeDeck({ desired_retention: 90 }),
+      makeDraft({ review_pacing_preset_id: 2 })
+    )
+    expect(resolved_pacing.value.desired_retention).toBe(CUSTOM_PRESET.desired_retention)
+  })
+
+  test('PLAIN field falls back to deck.* when neither override nor a resolvable preset apply [obligation]', () => {
+    mockPresetsData.value = []
+    const { resolved_pacing } = usePacingFields(makeDeck({ desired_retention: 77 }), makeDraft())
+    expect(resolved_pacing.value.desired_retention).toBe(77)
+  })
+
+  test.each(['max_reviews_per_day', 'max_new_per_day', 'max_interval'])(
+    'CAP field %s resolves a pinned-null override to null, not the preset value — key presence, not ?? [obligation]',
+    (key) => {
+      const { resolved_pacing } = usePacingFields(
+        makeDeck({ [key]: 42 }),
+        makeDraft({ review_pacing_preset_id: 2, pacing_overrides: { [key]: null } })
+      )
+      expect(resolved_pacing.value[key]).toBeNull()
+    }
+  )
+
+  test('CAP field resolves the drafted preset value when not overridden [obligation]', () => {
+    mockPresetsData.value = [SYSTEM_PRESET, { ...CUSTOM_PRESET, max_reviews_per_day: 55 }]
+    const { resolved_pacing } = usePacingFields(
+      makeDeck({ max_reviews_per_day: 42 }),
+      makeDraft({ review_pacing_preset_id: 2 })
+    )
+    expect(resolved_pacing.value.max_reviews_per_day).toBe(55)
+  })
+
+  test('CAP field falls back to deck.* when no preset has loaded yet [obligation]', () => {
+    mockPresetsData.value = []
+    const { resolved_pacing } = usePacingFields(makeDeck({ max_reviews_per_day: 42 }), makeDraft())
+    expect(resolved_pacing.value.max_reviews_per_day).toBe(42)
+  })
+})
+
 // ── resolution order: LIVE selected preset over stale deck.* [obligation] ────
 // deck.* is resolved server-side at fetch time and still reflects a
 // since-cleared override — un-pinning a field must resolve to the LIVE
