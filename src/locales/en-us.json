@@ -250,7 +250,7 @@
   "settings.subscription.change-card.add-submit": "Save card",
   "settings.subscription.change-card.change-submit": "Update card",
   "settings.subscription.change-card.submit-error": "Couldn't save card. Please try again.",
-  "settings.app.section.audio": "Audio",
+  "settings.app.section.audio": "Volume",
   "settings.app.audio.mute-all": "Mute all audio",
   "settings.app.audio.interface-sounds": "Interface sounds",
   "settings.app.audio.hover-sounds": "Hover sounds",
