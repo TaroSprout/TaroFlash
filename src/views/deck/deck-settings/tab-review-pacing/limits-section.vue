@@ -27,7 +27,10 @@ const {
     :label="t('deck.settings-modal.review-pacing.limits-heading')"
     :description="t('deck.settings-modal.review-pacing.limits-description')"
   >
-    <div data-testid="tab-review-pacing__pacing" class="flex flex-col gap-4">
+    <div
+      data-testid="tab-review-pacing__pacing"
+      class="flex flex-col gap-4 text-brown-700 dark:text-brown-100"
+    >
       <tooltip-row
         data-testid="tab-review-pacing__max-reviews"
         :label="t('deck.settings-modal.review-pacing.max-reviews-per-day')"

@@ -43,7 +43,7 @@ const {
       {{ t('deck.settings-modal.review-pacing.advanced-label') }}
     </span>
 
-    <div data-testid="scheduling-section__fields" class="flex flex-col gap-4">
+    <div data-testid="scheduling-section__fields" class="flex flex-col gap-4 text-brown-500">
       <tooltip-row
         data-testid="tab-review-pacing__retention"
         :label="t('deck.settings-modal.review-pacing.desired-retention-label')"
