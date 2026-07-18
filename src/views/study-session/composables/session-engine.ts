@@ -3,7 +3,7 @@ import { useI18n } from 'vue-i18n'
 import { createEmptyCard, FSRS, Rating, type Grade, type RecordLog } from 'ts-fsrs'
 import { useSaveReviewMutation } from '@/api/reviews'
 import { useNoticeStore } from '@/stores/notice-store'
-import { emitStudySfx } from '@/sfx/bus'
+import { emitSfx } from '@/sfx/bus'
 
 export type StudyCard = Card & { state: ReviewState }
 
@@ -150,13 +150,13 @@ export function useSessionEngine({ schedulerFor, flipFor, shuffle, onChange }: S
 
   /** Transitions from the cover into the active session. `silent` skips the start jingle (refresh-restore). */
   function startSession({ silent = false }: { silent?: boolean } = {}) {
-    if (!silent) emitStudySfx('music_plink_chordyes')
+    if (!silent) emitSfx('music_plink_chordyes')
     current_card_side.value = active_starting_side.value
     state.value = 'studying'
   }
 
   function flipCurrentCard() {
-    emitStudySfx(is_starting_side.value ? 'transition_up' : 'transition_down')
+    emitSfx(is_starting_side.value ? 'transition_up' : 'transition_down')
     current_card_side.value = current_card_side.value === 'front' ? 'back' : 'front'
   }
 

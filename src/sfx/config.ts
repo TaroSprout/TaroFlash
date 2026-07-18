@@ -1,4 +1,4 @@
-export type Bus = 'interface' | 'study' | 'hover'
+export type Bus = 'interface' | 'hover'
 
 export type SoundDef = {
   ext?: string
@@ -6,7 +6,7 @@ export type SoundDef = {
   // The volume bus a sound answers to when the caller doesn't override it.
   // Only set for sounds that are intrinsically one bus regardless of trigger
   // (the type_0x chatter is always 'hover'). Everything else defaults to
-  // 'interface'; study contexts pass `{ bus: 'study' }` at emit time.
+  // 'interface'.
   defaultBus?: Bus
 }
 
@@ -82,6 +82,5 @@ export const TYPE_SFX: SoundKey[] = [
 // Resting volume setting per bus. 5 yields a 1.0× multiplier (see player.ts).
 export const BUS_DEFAULTS: Record<Bus, number> = {
   interface: 5,
-  study: 5,
   hover: 5
 }

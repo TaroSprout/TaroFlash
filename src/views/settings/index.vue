@@ -19,7 +19,6 @@ import TabSheet from '@/components/layout-kit/sheet/tab-sheet.vue'
 import TabProfile from './tab-profile/index.vue'
 import TabSubscription from './tab-subscription/index.vue'
 import TabApp from './tab-app/index.vue'
-import TabReviewPreferences from './tab-review-preferences/index.vue'
 import TabDangerZone from './tab-danger-zone/index.vue'
 import TabAccountAccess from './tab-account-access/index.vue'
 import TabIndex from './tab-index/index.vue'
@@ -31,7 +30,6 @@ const TAB_COMPONENTS = {
   index: TabIndex,
   profile: TabProfile,
   app: TabApp,
-  'review-preferences': TabReviewPreferences,
   subscription: TabSubscription,
   'danger-zone': TabDangerZone,
   'account-access': TabAccountAccess
@@ -83,12 +81,7 @@ const sidebar_active = computed({
   set: (v) => (active_tab.value = v as ActiveTab)
 })
 
-const header_meta = computed(() =>
-  displayed_tab.value !== 'index' ? TAB_META[displayed_tab.value] : null
-)
-const header_title = computed(() =>
-  header_meta.value ? t(header_meta.value.labelKey) : t('settings.header.index.title')
-)
+const header_title = computed(() => t('settings.header.title'))
 
 const tab_component = computed(() => TAB_COMPONENTS[displayed_tab.value])
 

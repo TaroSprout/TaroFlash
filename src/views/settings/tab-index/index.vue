@@ -27,7 +27,7 @@ const nav_groups = computed<NavGroup[]>(() => [
   {
     key: 'app',
     heading: t('settings.index.app-heading'),
-    entries: ['app', 'review-preferences', 'danger-zone']
+    entries: ['app', 'danger-zone']
   }
 ])
 

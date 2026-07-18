@@ -7,7 +7,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 import DialogCardPager from '@/components/layout-kit/dialog-card/dialog-card-pager.vue'
-import { emitSfx, emitStudySfx } from '@/sfx/bus'
+import { emitSfx } from '@/sfx/bus'
 import { clearPersistedSession } from './composables/session-persistence'
 import { provideStudySessionController } from './composables/session-controller'
 import { useModalRequestClose } from '@/composables/modal'
@@ -53,7 +53,7 @@ function onClosed() {
 }
 
 function onPaneEnterStart() {
-  emitStudySfx('music_pizz_duo_hi')
+  emitSfx('music_pizz_duo_hi')
 }
 
 /** Header close/stop button, and the modal backdrop / esc handler. */

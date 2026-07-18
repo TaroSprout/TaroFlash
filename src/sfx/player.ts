@@ -6,7 +6,7 @@ export type PlayOptions = {
   volume?: number
   debounce?: number
   // Override the bus this sound is routed through. Falls back to the sound's
-  // defaultBus, then 'interface'. Study contexts pass `{ bus: 'study' }`.
+  // defaultBus, then 'interface'.
   bus?: Bus
 }
 
