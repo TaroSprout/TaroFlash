@@ -14,7 +14,7 @@ const layout_mode = inject(settingsLayoutKey)!
   <section-list
     data-testid="tab-danger-zone"
     class="px-(--settings-padding)"
-    :class="layout_mode === 'sheet' && 'pt-8 pb-32'"
+    :class="layout_mode === 'sheet' && 'pb-24'"
   >
     <labeled-section
       :label="t('settings.danger-zone.section.delete-account')"

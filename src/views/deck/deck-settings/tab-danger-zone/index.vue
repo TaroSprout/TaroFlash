@@ -15,7 +15,7 @@ const layout_mode = inject(deckSettingsLayoutKey)!
   <section-list
     data-testid="tab-danger-zone"
     class="px-(--deck-settings-padding)"
-    :class="layout_mode === 'sheet' && 'pt-8 pb-30'"
+    :class="layout_mode === 'sheet' && 'pb-24'"
   >
     <labeled-section
       :label="t('deck.settings-modal.danger-zone.section.reset-heading')"
