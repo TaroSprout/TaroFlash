@@ -4,12 +4,11 @@ import { useI18n } from 'vue-i18n'
 import UiOptionsPanel from '@/components/ui-kit/options-panel/index.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
-import DangerDeleteAccountButton from '../danger-delete-account-button.vue'
 import SettingsSaveButton from '../settings-save-button.vue'
 import { settingsLayoutKey } from '../layout'
 import { TAB_META, type TabValue } from '../tabs'
 
-export type TabIndexNavValue = Exclude<TabValue, 'danger-zone'>
+export type TabIndexNavValue = TabValue
 
 const { t } = useI18n()
 const layout_mode = inject(settingsLayoutKey)!
@@ -28,7 +27,7 @@ const nav_groups = computed<NavGroup[]>(() => [
   {
     key: 'app',
     heading: t('settings.index.app-heading'),
-    entries: ['app', 'review-preferences']
+    entries: ['app', 'review-preferences', 'danger-zone']
   }
 ])
 
@@ -63,14 +62,5 @@ function onSelect(value: string) {
     </labeled-section>
 
     <settings-save-button v-if="layout_mode === 'sheet'" />
-
-    <labeled-section
-      data-testid="tab-index__danger-zone"
-      :label="t(TAB_META['danger-zone'].labelKey)"
-    >
-      <div data-testid="tab-index__danger-actions" class="flex flex-col gap-2">
-        <danger-delete-account-button />
-      </div>
-    </labeled-section>
   </section-list>
 </template>

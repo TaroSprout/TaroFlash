@@ -135,7 +135,6 @@ function onChromeBack() {
 }
 
 watch(layout_mode, (mode) => {
-  if (mode !== 'desktop' && active_tab.value === 'danger-zone') active_tab.value = null
   if (mode !== 'sheet' && active_tab.value === 'account-access') active_tab.value = null
 })
 </script>

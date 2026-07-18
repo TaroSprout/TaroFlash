@@ -134,10 +134,6 @@ function onChromeBack() {
   onBack()
 }
 
-watch(layout_mode, (mode) => {
-  if (mode !== 'desktop' && active_tab.value === 'danger-zone') active_tab.value = null
-})
-
 // Leaving a tab (back to the index) resets the designer side to cover — assign
 // directly rather than via setActiveSide so it doesn't fire the slide sfx.
 watch(active_tab, (tab) => {
