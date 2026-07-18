@@ -184,6 +184,7 @@ watch([preview_el, aside_el], ([preview]) => {
     ]"
     :pages="pages"
     :groups="groups"
+    :stretch_page="is_full_bleed"
     :pattern_config="{ pattern: 'endless-clouds' }"
     :between="runChromeSync"
     v-model:active="active_tab"

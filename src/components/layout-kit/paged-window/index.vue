@@ -43,6 +43,10 @@ export type PagedWindowProps = PagedWindowFrameProps & {
   hover_sfx?: SoundKey | SoundKey[] | ''
   select_sfx?: SoundKey | ''
   reselect_sfx?: SoundKey | ''
+  // Stretch the page column to the full content height instead of sizing it to
+  // its content, so a page can pin its own footer to the bottom. Off by
+  // default — pages sit at the top and end where their content does.
+  stretch_page?: boolean
 }
 
 const DIRECTORY = 'directory'
@@ -65,7 +69,8 @@ const {
   between,
   hover_sfx = TYPE_SFX,
   select_sfx = 'snappy_button_5',
-  reselect_sfx = 'digi_powerdown'
+  reselect_sfx = 'digi_powerdown',
+  stretch_page = false
 } = defineProps<PagedWindowProps>()
 
 const { t } = useI18n()
@@ -230,7 +235,11 @@ function onDirectoryNavigate(value: string) {
       </div>
     </template>
 
-    <div data-testid="paged-window__content-row" class="flex h-full items-start">
+    <div
+      data-testid="paged-window__content-row"
+      class="flex h-full"
+      :class="stretch_page ? 'items-stretch' : 'items-start'"
+    >
       <div
         data-testid="paged-window__page-column"
         class="relative flex flex-1 flex-col min-w-0"
@@ -260,7 +269,13 @@ function onDirectoryNavigate(value: string) {
               </template>
             </directory-page>
 
-            <div v-else :key="displayed_page" data-testid="paged-window__page" class="w-full">
+            <div
+              v-else
+              :key="displayed_page"
+              data-testid="paged-window__page"
+              class="w-full"
+              :class="stretch_page && 'flex flex-1 flex-col'"
+            >
               <slot :displayed_page="displayed_page"></slot>
             </div>
           </transition>
