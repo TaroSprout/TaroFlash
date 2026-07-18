@@ -6,6 +6,7 @@
 export { useCardListController, cardEditorKey, type CardListController } from './list-controller'
 export { useCardSearch, cardSearchKey, type CardSearch } from './card-search'
 export { useCardEditMenu, type CardEditMenu } from './edit-menu'
+export { useCardItemOptionsMenu, type CardItemOptionsMenu } from './item-options-menu'
 export { useCardActions, type CardActions } from './actions'
 export { useBulkActions } from './bulk-actions'
 export {

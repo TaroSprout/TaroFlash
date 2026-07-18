@@ -16,6 +16,7 @@ import {
 import { useI18n } from 'vue-i18n'
 import { useWindowVirtualizer, defaultRangeExtractor } from '@tanstack/vue-virtual'
 import { useReorderDrag } from '@/composables/use-reorder-drag'
+import { usePressHold } from '@/composables/ui/press-hold'
 import { liftListItem, dropListItem } from '@/utils/animations/list-item'
 
 type VisibleItem = { index: number; card: CardWithClientId; x: number; y: number }
@@ -33,6 +34,8 @@ const { selection, card_attributes, reorderCard, hasNextPage, isLoading, observe
 const { grid_size, grid_face, is_view, is_rearranging } = inject(deckViewShellKey)!
 const { is_active, displayed_cards, no_results } = inject(cardSearchKey)!
 const { isCardSelected } = selection
+
+const reorder_hold = usePressHold({ duration: HOLD_MS, tolerance: HOLD_TOLERANCE })
 
 const grid_el = useTemplateRef<HTMLElement>('grid_el')
 const sentinel = useTemplateRef<HTMLElement>('sentinel')
@@ -118,13 +121,6 @@ let sticky_toolbar: HTMLElement | null = null
 // drop fires from a window pointerup, not a DOM event on the card.
 let lifted_card: HTMLElement | null = null
 
-// Pending touch press-and-hold: the timer, where the finger landed, and the
-// card + event it would pick up if the hold completes without moving away.
-let hold_timer = 0
-let hold_origin = { x: 0, y: 0 }
-let hold_index = -1
-let hold_event: PointerEvent | null = null
-
 // Measure the container, not the grid itself: during a mode-swap the grid pane
 // is transformed (it scales + drops out of flow), which would corrupt its own
 // rect. The parent stays in flow, so its width and document offset stay true.
@@ -183,44 +179,13 @@ function beginDrag(index: number, event: PointerEvent) {
 }
 
 // Mouse picks up immediately; touch waits out a press-and-hold so a plain swipe
-// still scrolls the grid. The hold aborts the moment the finger drifts.
+// still scrolls the grid. The hold aborts the moment the finger drifts. Outside
+// rearrange mode each grid item owns its own long-press (see grid-item.vue).
 function onItemPointerdown(index: number, event: PointerEvent) {
   if (!is_rearranging.value || is_active.value) return
 
-  if (event.pointerType === 'mouse') {
-    beginDrag(index, event)
-    return
-  }
-
-  hold_index = index
-  hold_event = event
-  hold_origin = { x: event.clientX, y: event.clientY }
-  hold_timer = window.setTimeout(onHoldElapsed, HOLD_MS)
-  window.addEventListener('pointermove', onHoldMove)
-  window.addEventListener('pointerup', cancelHold)
-  window.addEventListener('pointercancel', cancelHold)
-}
-
-function onHoldMove(event: PointerEvent) {
-  const moved = Math.hypot(event.clientX - hold_origin.x, event.clientY - hold_origin.y)
-  if (moved > HOLD_TOLERANCE) cancelHold()
-}
-
-function onHoldElapsed() {
-  const index = hold_index
-  const event = hold_event
-  cancelHold()
-  if (event) beginDrag(index, event)
-}
-
-function cancelHold() {
-  if (hold_timer) clearTimeout(hold_timer)
-  hold_timer = 0
-  hold_event = null
-  hold_index = -1
-  window.removeEventListener('pointermove', onHoldMove)
-  window.removeEventListener('pointerup', cancelHold)
-  window.removeEventListener('pointercancel', cancelHold)
+  if (event.pointerType === 'mouse') beginDrag(index, event)
+  else reorder_hold.arm(event, () => beginDrag(index, event))
 }
 
 onMounted(() => {
@@ -233,7 +198,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   clearTimeout(resize_timer)
   resize_observer?.disconnect()
-  cancelHold()
+  reorder_hold.cancel()
 })
 
 observeSentinel(sentinel)
@@ -264,7 +229,7 @@ watch(
   <div
     ref="grid_el"
     data-testid="card-grid-container"
-    class="w-full py-2"
+    class="press-hold-guard w-full py-2"
     :class="{ 'rearrange-no-select': is_rearranging }"
   >
     <p
@@ -328,11 +293,23 @@ watch(
 </template>
 
 <style scoped>
-/* In rearrange mode a press-and-hold must not start a text selection or the iOS
-   callout. user-select / touch-callout inherit, so suppressing them on the
-   container covers every card inside. */
-.rearrange-no-select {
+/* A press-and-hold must never race the iOS text-selection / callout gesture.
+   Suppress the callout everywhere, and selection on touch pointers the whole
+   time — desktop keeps click-drag text selection of card content. Both inherit,
+   so setting them on the container covers every card inside. */
+.press-hold-guard {
   -webkit-touch-callout: none;
+}
+
+@media (pointer: coarse) {
+  .press-hold-guard {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* Rearrange also suppresses selection for mouse drags (desktop pickup). */
+.rearrange-no-select {
   -webkit-user-select: none;
   user-select: none;
 }
