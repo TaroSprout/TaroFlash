@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { computed, provide, ref } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { coverBindings } from '@/utils/cover'
-import { mobileSheetOverlayKey } from './mobile-sheet-overlay'
 import {
   SHEET_BODY_BG,
   SHEET_HEADER_BORDER_CLASS,
@@ -20,7 +19,7 @@ type SheetPatternConfig = {
   pattern_opacity?: string
 }
 
-export type MobileSheetProps = {
+export type SheetFrameProps = {
   pattern_config?: SheetPatternConfig
   title?: string
   show_close_button?: boolean
@@ -40,7 +39,7 @@ const {
   surface = 'standard',
   header_border = 'wave',
   sheet_px
-} = defineProps<MobileSheetProps>()
+} = defineProps<SheetFrameProps>()
 
 const { t } = useI18n()
 
@@ -59,7 +58,7 @@ const emit = defineEmits<{
 const body_bg_class = computed(() => SHEET_BODY_BG[surface])
 const header_border_class = computed(() => SHEET_HEADER_BORDER_CLASS[header_border])
 const header_fill_class = computed(() => SHEET_HEADER_FILL_CLASS[header_border])
-const close_label_text = computed(() => close_label ?? t('mobile-sheet.close-label'))
+const close_label_text = computed(() => close_label ?? t('sheet-frame.close-label'))
 
 // The default header owns the close button. A custom `header` slot replaces the
 // header entirely, so the caller owns its own close affordance there.
@@ -80,9 +79,6 @@ const header_bindings = computed(() =>
 )
 
 const showHeader = computed(() => Boolean(slots.header || slots['header-content'] || title))
-
-const overlay_root = ref<HTMLElement>()
-provide(mobileSheetOverlayKey, overlay_root)
 </script>
 
 <template>
@@ -92,7 +88,6 @@ provide(mobileSheetOverlayKey, overlay_root)
     :style="sheet_px ? { '--sheet-px': sheet_px } : undefined"
   >
     <div
-      ref="overlay_root"
       data-testid="mobile-sheet__overlay"
       class="absolute inset-0 pointer-events-none z-(--sheet-overlay-z,30)"
     >
