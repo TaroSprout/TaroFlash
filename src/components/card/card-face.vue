@@ -190,10 +190,10 @@ const text_scale = computed(() => cardTextScale(attributes?.text_size))
 }
 
 /* Over a full-bleed image the placeholder would just clutter the picture — the
-   text cursor already signals you can click to type. */
-.card-face[data-mode='edit'][data-image='true'][data-text='false'][data-layout='behind']
-  .text-editor__placeholder {
-  display: none;
+   text cursor already signals you can click to type. The text editor reads
+   this var instead of us reaching into its internals. */
+.card-face[data-mode='edit'][data-image='true'][data-text='false'][data-layout='behind'] {
+  --text-editor-placeholder-display: none;
 }
 
 /* View, above/below, no text: drop the empty text region so the gap below the
@@ -221,20 +221,20 @@ const text_scale = computed(() => cardTextScale(attributes?.text_size))
     border-radius 0.15s ease;
 }
 
-.card-container--edit[data-active]
+.card-container[data-active]
   .card-face[data-mode='edit'][data-image='true']:not([data-layout='behind'])
   .card-face__image-region {
   outline-color: var(--color-brown-500);
 }
 
-.card-container--edit[data-dragging]
+.card-container[data-dragging]
   .card-face[data-mode='edit'][data-image='true']:not([data-layout='behind'])
   .card-face__image-region {
   outline-color: var(--color-blue-500);
 }
 
 [data-theme='dark']
-  .card-container--edit[data-dragging]
+  .card-container[data-dragging]
   .card-face[data-mode='edit'][data-image='true']:not([data-layout='behind'])
   .card-face__image-region {
   outline-color: var(--color-blue-650);
@@ -251,7 +251,7 @@ const text_scale = computed(() => cardTextScale(attributes?.text_size))
     border-radius 0.15s ease;
 }
 
-.card-container--edit[data-dragging]
+.card-container[data-dragging]
   .card-face[data-mode='edit'][data-layout='behind'][data-image='true']
   .card-face__image-region {
   inset: var(--face-padding);
@@ -259,7 +259,7 @@ const text_scale = computed(() => cardTextScale(attributes?.text_size))
   border-radius: var(--inner-radius);
 }
 
-.card-container--edit[data-dragging]
+.card-container[data-dragging]
   .card-face[data-mode='edit'][data-layout='behind'][data-image='true'] {
   outline: 3px dashed var(--color-blue-500);
   outline-offset: -3px;
@@ -267,15 +267,9 @@ const text_scale = computed(() => cardTextScale(attributes?.text_size))
 }
 
 [data-theme='dark']
-  .card-container--edit[data-dragging]
+  .card-container[data-dragging]
   .card-face[data-mode='edit'][data-layout='behind'][data-image='true'] {
   outline-color: var(--color-blue-650);
-}
-
-/* Behind the translucent loading scrim the placeholder would read through on an
-   empty card — hide it while an upload/removal is in flight. */
-.card-container[data-loading] .text-editor__placeholder {
-  display: none;
 }
 
 .card-face__text-editor {

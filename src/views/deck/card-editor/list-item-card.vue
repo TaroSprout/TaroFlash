@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import ImageUploader from '@/components/card/image-uploader.vue'
+import FaceEditor from '@/components/card/face-editor.vue'
 import { useI18n } from 'vue-i18n'
 import { inject, onMounted, ref, useTemplateRef } from 'vue'
 import { cardEditorKey, type CardWithClientId } from '@/views/deck/composables'
-import textEditor from '@/components/card/text-editor.vue'
 import { emitSfx } from '@/sfx/bus'
 import { useWindowRefocusGuard } from '@/composables/ui/window-refocus-guard'
 import { expandListItemIn } from '@/utils/animations/list-item'
@@ -136,48 +135,37 @@ defineExpose({ focusEditor, hasFocusWithin })
     @focusin="onFocusIn"
     @focusout="onFocusOut"
   >
-    <image-uploader
+    <face-editor
+      ref="front-input"
       data-testid="front-input"
       class="w-(--card-w-full)"
       :data-id="card.id"
       :card="card"
       side="front"
+      with_images
       :card_attributes="card_attributes"
+      :text="front_text"
+      :card_key="card.client_id"
       :disabled="is_selecting"
       :error="save_failed"
-    >
-      <template #editor>
-        <text-editor
-          ref="front-input"
-          :content="front_text"
-          :attributes="card_attributes.front"
-          :placeholder="t('deck-view.card-editor.list-item.front-placeholder')"
-          class="w-full h-full"
-          @update="onUpdate('front', $event)"
-        />
-      </template>
-    </image-uploader>
+      :placeholder="t('deck-view.card-editor.list-item.front-placeholder')"
+      @update="onUpdate"
+    />
 
-    <image-uploader
+    <face-editor
       data-testid="back-input"
       class="w-(--card-w-full)"
       :data-id="card.id"
       :card="card"
       side="back"
+      with_images
       :card_attributes="card_attributes"
+      :text="back_text"
+      :card_key="card.client_id"
       :disabled="is_selecting"
       :error="save_failed"
-    >
-      <template #editor>
-        <text-editor
-          ref="back-input"
-          :content="back_text"
-          :attributes="card_attributes.back"
-          :placeholder="t('deck-view.card-editor.list-item.back-placeholder')"
-          class="w-full h-full"
-          @update="onUpdate('back', $event)"
-        />
-      </template>
-    </image-uploader>
+      :placeholder="t('deck-view.card-editor.list-item.back-placeholder')"
+      @update="onUpdate"
+    />
   </div>
 </template>
