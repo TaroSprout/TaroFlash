@@ -1,5 +1,15 @@
+<script lang="ts">
+// Only one dropdown menu may be open at a time, app-wide. Outside-click close
+// usually enforces this on its own, but a long-press open swallows the release
+// click (see press-hold.ts), so the previous menu would survive — the seam
+// closes it explicitly instead.
+let close_open_menu: (() => void) | null = null
+
+export type { DropdownOption } from './types'
+</script>
+
 <script setup lang="ts">
-import { computed, ref, useAttrs } from 'vue'
+import { computed, onUnmounted, ref, useAttrs } from 'vue'
 import type { Placement } from '@floating-ui/vue'
 import UiButton, { type ButtonProps } from '../button.vue'
 import UiPopover from '@/components/ui-kit/popover.vue'
@@ -7,8 +17,6 @@ import DropdownCaret from './caret.vue'
 import DropdownMenu from './menu.vue'
 import { emitSfx } from '@/sfx/bus'
 import type { DropdownOption } from './types'
-
-export type { DropdownOption } from './types'
 
 type DropdownButtonProps = Pick<
   ButtonProps,
@@ -93,6 +101,11 @@ const attrs = useAttrs()
 
 const popover_open = ref(false)
 
+// Callers reach these through a template ref: `open` to mirror the menu state
+// (e.g. keeping a card's active look while its menu is up), `show` to open the
+// menu from a gesture that isn't a trigger press (e.g. a long-press on the card).
+defineExpose({ open: popover_open, show })
+
 // Theme/class/layout attrs ride the popover container (its non-teleported
 // content inherits the theme), while event handlers — the consumer's primary
 // @click — land on the inner button so they fire only from the label region.
@@ -139,10 +152,20 @@ function filter_attrs(keep: (key: string) => boolean) {
   return result
 }
 
+// Unmounting while open (e.g. the card unmounts) must release the singleton
+// slot, or the next open would call a dead instance's close.
+onUnmounted(() => {
+  if (close_open_menu === close) close_open_menu = null
+})
+
 function toggle() {
   if (disabled) return
   emitSfx('snappy_button_5')
-  popover_open.value = !popover_open.value
+  if (popover_open.value) return close()
+
+  close_open_menu?.()
+  close_open_menu = close
+  popover_open.value = true
 }
 
 // With `openOnTrigger`, the whole button is the dropdown trigger — not just the
@@ -164,7 +187,13 @@ function onButtonClick(e: MouseEvent) {
   else consumer?.(e)
 }
 
+/** Open the menu programmatically, with the same sfx/disabled gate as a press. */
+function show() {
+  if (!popover_open.value) toggle()
+}
+
 function close() {
+  if (close_open_menu === close) close_open_menu = null
   popover_open.value = false
 }
 

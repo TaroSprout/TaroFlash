@@ -4,9 +4,16 @@ import { defineComponent, h, ref, useAttrs } from 'vue'
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 const { mockUseMatchMedia } = vi.hoisted(() => ({ mockUseMatchMedia: vi.fn() }))
+const { pressHoldArmMock, pressHoldCancelMock } = vi.hoisted(() => ({
+  pressHoldArmMock: vi.fn(),
+  pressHoldCancelMock: vi.fn()
+}))
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
 vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: mockUseMatchMedia }))
+vi.mock('@/composables/ui/press-hold', () => ({
+  usePressHold: () => ({ arm: pressHoldArmMock, cancel: pressHoldCancelMock })
+}))
 
 const CardStub = defineComponent({
   name: 'Card',
@@ -129,6 +136,8 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
   beforeEach(() => {
     mockEmitSfx.mockClear()
     mockUseMatchMedia.mockReturnValue(ref(false))
+    pressHoldArmMock.mockClear()
+    pressHoldCancelMock.mockClear()
   })
 
   test('renders root with data-testid="grid-item"', () => {
@@ -261,7 +270,7 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     const editor = makeEditor({ is_selecting: false })
     const { wrapper } = mountGridItem({ editor })
     // Emit an unknown option value directly on the UiDropdownButton stub
-    await wrapper.findComponent(UiDropdownButtonStub).vm.$emit('select', { value: 'unknown' })
+    wrapper.findComponent(UiDropdownButtonStub).vm.$emit('select', { value: 'unknown' })
     expect(editor.actions.onSelectCard).not.toHaveBeenCalled()
     expect(editor.actions.onMoveCards).not.toHaveBeenCalled()
     expect(editor.actions.onDeleteCards).not.toHaveBeenCalled()
@@ -397,5 +406,46 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
 
     expect(mobile_editor.open_at).not.toHaveBeenCalled()
     expect(card.attributes('data-side')).toBe('back')
+  })
+
+  // ── mode arbitration on pointerdown [obligation] ──────────────────────────
+
+  describe('mode arbitration on pointerdown [obligation]', () => {
+    test('a touch pointerdown in normal mode arms a hold that calls the dropdown show()', async () => {
+      const { wrapper } = mountGridItem()
+      await wrapper.find('[data-testid="grid-item"]').trigger('pointerdown', {
+        pointerType: 'touch'
+      })
+
+      expect(pressHoldArmMock).toHaveBeenCalledTimes(1)
+    })
+
+    test('a mouse pointerdown does NOT arm the hold — desktop hovers the menu', async () => {
+      const { wrapper } = mountGridItem()
+      await wrapper.find('[data-testid="grid-item"]').trigger('pointerdown', {
+        pointerType: 'mouse'
+      })
+
+      expect(pressHoldArmMock).not.toHaveBeenCalled()
+    })
+
+    test('rearranging mode does NOT arm the hold — the grid owns pointerdown for pickup', async () => {
+      const { wrapper } = mountGridItem({ props: { rearranging: true } })
+      await wrapper.find('[data-testid="grid-item"]').trigger('pointerdown', {
+        pointerType: 'touch'
+      })
+
+      expect(pressHoldArmMock).not.toHaveBeenCalled()
+    })
+
+    test('is_selecting also does NOT arm the hold', async () => {
+      const editor = makeEditor({ is_selecting: true })
+      const { wrapper } = mountGridItem({ editor })
+      await wrapper.find('[data-testid="grid-item"]').trigger('pointerdown', {
+        pointerType: 'touch'
+      })
+
+      expect(pressHoldArmMock).not.toHaveBeenCalled()
+    })
   })
 })

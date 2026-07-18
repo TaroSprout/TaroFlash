@@ -44,6 +44,10 @@ function onToggleEditDecks() {
   emitSfx(editing_decks.value ? 'pop_up_pop' : 'pop_up_close')
 }
 
+function onEnterEditDecks() {
+  if (!editing_decks.value) onToggleEditDecks()
+}
+
 const due_decks = computed(() => {
   return decks.value
     .filter((deck) => (deck.due_count ?? 0) > 0)
@@ -81,7 +85,7 @@ const show_skeleton = computed(() => !decks_data.value)
             <deck-grid-sort-options :selected="sort_by" @select="sort_by = $event" />
           </template>
 
-          <deck-grid :decks="decks" :editing="editing_decks" />
+          <deck-grid :decks="decks" :editing="editing_decks" @rearrange="onEnterEditDecks" />
         </dashboard-section>
 
         <audio-reader-section v-if="can.useAudioReader.value" />

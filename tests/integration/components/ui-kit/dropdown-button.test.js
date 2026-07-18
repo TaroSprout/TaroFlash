@@ -554,9 +554,7 @@ describe('UiDropdownButton', () => {
         btn.attributes('disabled') !== undefined ||
         btn.attributes('aria-disabled') !== undefined ||
         btn.props('disabled') === true
-      // The component forwards :disabled="primaryDisabled" to UiButton
-      // — verify by checking if the disabled value is truthy on the stub
-      expect(wrapper.findComponent(UiButtonStub).exists()).toBe(true)
+      expect(hasDisabled).toBe(true)
     })
 
     test('primaryDisabled=true: caret trigger is still rendered and clickable [obligation]', async () => {
@@ -715,6 +713,90 @@ describe('UiDropdownButton', () => {
       const wrapper = mountDropdown()
       const popover = wrapper.findComponent(UiPopoverStub)
       expect(popover.props('match_reference_width')).toBe(true)
+    })
+  })
+
+  // ── module singleton — close_open_menu [obligation] ───────────────────────
+  // Only one dropdown menu may be open at a time app-wide. A long-press open
+  // swallows the release click (see press-hold.ts), so outside-click close
+  // alone can't be relied on to close a previously open menu — opening a new
+  // dropdown must explicitly close whichever one was already open.
+
+  describe('module singleton — close_open_menu [obligation]', () => {
+    test('opening dropdown B while A is open closes A [obligation]', async () => {
+      const wrapperA = mountDropdown()
+      const wrapperB = mountDropdown()
+
+      await trigger(wrapperA).trigger('click')
+      expect(menu(wrapperA).exists()).toBe(true)
+
+      await trigger(wrapperB).trigger('click')
+
+      expect(menu(wrapperB).exists()).toBe(true)
+      expect(menu(wrapperA).exists()).toBe(false)
+
+      wrapperA.unmount()
+      wrapperB.unmount()
+    })
+
+    test('unmounting an open dropdown releases the singleton slot so the next open is unaffected [obligation]', async () => {
+      const wrapperA = mountDropdown()
+      await trigger(wrapperA).trigger('click')
+      expect(menu(wrapperA).exists()).toBe(true)
+
+      wrapperA.unmount()
+
+      const wrapperB = mountDropdown()
+      await trigger(wrapperB).trigger('click')
+      expect(menu(wrapperB).exists()).toBe(true)
+
+      // A third dropdown opening still correctly closes B — proving B (not a
+      // dangling reference to the unmounted A) is the registered singleton owner.
+      const wrapperC = mountDropdown()
+      await trigger(wrapperC).trigger('click')
+      expect(menu(wrapperC).exists()).toBe(true)
+      expect(menu(wrapperB).exists()).toBe(false)
+
+      wrapperB.unmount()
+      wrapperC.unmount()
+    })
+  })
+
+  // ── defineExpose { open, show } [obligation] ──────────────────────────────
+
+  describe('defineExpose { open, show } [obligation]', () => {
+    test('show() opens the menu', async () => {
+      const wrapper = mountDropdown()
+      wrapper.vm.show()
+      await nextTick()
+      expect(menu(wrapper).exists()).toBe(true)
+    })
+
+    test('show() is a no-op when disabled — the same gate as a press', async () => {
+      const wrapper = mountDropdown({ disabled: true })
+      wrapper.vm.show()
+      await nextTick()
+      expect(menu(wrapper).exists()).toBe(false)
+    })
+
+    test('show() is a no-op when the menu is already open (does not toggle it closed)', async () => {
+      const wrapper = mountDropdown()
+      wrapper.vm.show()
+      await nextTick()
+      expect(menu(wrapper).exists()).toBe(true)
+
+      wrapper.vm.show()
+      await nextTick()
+      expect(menu(wrapper).exists()).toBe(true)
+    })
+
+    test('exposed open reflects the popover state', async () => {
+      const wrapper = mountDropdown()
+      expect(wrapper.vm.open).toBe(false)
+
+      wrapper.vm.show()
+      await nextTick()
+      expect(wrapper.vm.open).toBe(true)
     })
   })
 })

@@ -13,6 +13,7 @@ import { useNoticeStore } from '@/stores/notice-store'
 import { useI18n } from 'vue-i18n'
 import { liftListItem, dropListItem } from '@/utils/animations/list-item'
 import { useReorderDrag } from '@/composables/use-reorder-drag'
+import { usePressHold } from '@/composables/ui/press-hold'
 import { resolveReorderAnchor } from '@/utils/reorder'
 import { useDeckGrid } from './use-deck-grid'
 
@@ -38,6 +39,7 @@ export function useDeckGridReorder(
   const { t } = useI18n()
   const notice = useNoticeStore()
   const move_deck_mutation = useMoveDeckMutation()
+  const press_hold = usePressHold({ duration: HOLD_MS, tolerance: HOLD_TOLERANCE })
 
   const container_width = ref(0)
   // container_width starts at 0, so columns/row_count fall back to a single
@@ -103,13 +105,6 @@ export function useDeckGridReorder(
   // the drop fires from a window pointerup, not a DOM event on the card.
   let lifted_card: HTMLElement | null = null
 
-  // Pending touch press-and-hold: the timer, where the finger landed, and the
-  // card + event it would pick up if the hold completes without moving away.
-  let hold_timer = 0
-  let hold_origin = { x: 0, y: 0 }
-  let hold_index = -1
-  let hold_event: PointerEvent | null = null
-
   function beginDrag(index: number, event: PointerEvent) {
     reorder.start(index, event)
     if (reorder.dragging_index.value === null) return
@@ -127,28 +122,6 @@ export function useDeckGridReorder(
     if (lifted_card) liftListItem(lifted_card)
   }
 
-  function cancelHold() {
-    if (hold_timer) clearTimeout(hold_timer)
-    hold_timer = 0
-    hold_event = null
-    hold_index = -1
-    window.removeEventListener('pointermove', onHoldMove)
-    window.removeEventListener('pointerup', cancelHold)
-    window.removeEventListener('pointercancel', cancelHold)
-  }
-
-  function onHoldMove(event: PointerEvent) {
-    const moved = Math.hypot(event.clientX - hold_origin.x, event.clientY - hold_origin.y)
-    if (moved > HOLD_TOLERANCE) cancelHold()
-  }
-
-  function onHoldElapsed() {
-    const index = hold_index
-    const event = hold_event
-    cancelHold()
-    if (event) beginDrag(index, event)
-  }
-
   function onItemPointerdown(index: number, event: PointerEvent) {
     if (!toValue(editing)) return
 
@@ -157,13 +130,7 @@ export function useDeckGridReorder(
       return
     }
 
-    hold_index = index
-    hold_event = event
-    hold_origin = { x: event.clientX, y: event.clientY }
-    hold_timer = window.setTimeout(onHoldElapsed, HOLD_MS)
-    window.addEventListener('pointermove', onHoldMove)
-    window.addEventListener('pointerup', cancelHold)
-    window.addEventListener('pointercancel', cancelHold)
+    press_hold.arm(event, () => beginDrag(index, event))
   }
 
   let resize_observer: ResizeObserver | undefined
@@ -179,7 +146,7 @@ export function useDeckGridReorder(
 
   onBeforeUnmount(() => {
     resize_observer?.disconnect()
-    cancelHold()
+    press_hold.cancel()
   })
 
   // Settle the lifted card back to rest the moment the drag ends (the engine

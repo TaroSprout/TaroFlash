@@ -21,6 +21,52 @@ vi.mock('@tanstack/vue-virtual', async (importOriginal) => {
   }
 })
 
+// Reorder-hold mode arbitration (mouse-immediate vs touch-waits-out-the-hold)
+// is a shared contract with usePressHold/useReorderDrag — mocked here so the
+// pointerdown obligations below assert on the wiring, not the engines' own
+// internals (covered directly in press-hold.test.js and use-reorder-drag.test.js).
+const {
+  reorderStartMock,
+  pressHoldArmMock,
+  pressHoldCancelMock,
+  liftListItemMock,
+  dropListItemMock
+} = vi.hoisted(() => ({
+  reorderStartMock: vi.fn(),
+  pressHoldArmMock: vi.fn(),
+  pressHoldCancelMock: vi.fn(),
+  liftListItemMock: vi.fn(),
+  dropListItemMock: vi.fn()
+}))
+// Reactive state shared between the mock factory and tests — created at
+// module level (not inside vi.hoisted) so Vue's ref() is available. Captures
+// the options object scroll-grid.vue builds for useReorderDrag so tests can
+// invoke its getters/geometry directly (the real geometry/scroll math is
+// exercised this way, same pattern as use-deck-grid-reorder.test.js).
+const reorderDraggingIndex = ref(null)
+const reorderCaptured = { opts: null }
+vi.mock('@/composables/use-reorder-drag', () => ({
+  useReorderDrag: (opts) => {
+    reorderCaptured.opts = opts
+    return {
+      dragging_index: reorderDraggingIndex,
+      shouldTransition: () => false,
+      dragOffset: () => ({ x: 0, y: 0 }),
+      start: (index, event) => {
+        reorderDraggingIndex.value = index
+        reorderStartMock(index, event)
+      }
+    }
+  }
+}))
+vi.mock('@/composables/ui/press-hold', () => ({
+  usePressHold: () => ({ arm: pressHoldArmMock, cancel: pressHoldCancelMock })
+}))
+vi.mock('@/utils/animations/list-item', () => ({
+  liftListItem: liftListItemMock,
+  dropListItem: dropListItemMock
+}))
+
 const GridItemStub = defineComponent({
   name: 'GridItem',
   props: ['card', 'side', 'scale', 'card_attributes', 'selected'],
@@ -92,6 +138,13 @@ function mountScrollGrid(editor = makeEditor(), shell = makeShell(), search = ma
 describe('card-grid/scroll-grid', () => {
   beforeEach(() => {
     localStorage.clear()
+    reorderStartMock.mockClear()
+    pressHoldArmMock.mockClear()
+    pressHoldCancelMock.mockClear()
+    liftListItemMock.mockClear()
+    dropListItemMock.mockClear()
+    reorderDraggingIndex.value = null
+    reorderCaptured.opts = null
   })
 
   // ── grid_size → virtualizer-driven height ────────────────────────────────
@@ -346,6 +399,185 @@ describe('card-grid/scroll-grid', () => {
       expect(() => vi.advanceTimersByTime(120)).not.toThrow()
       expect(rect_spy).not.toHaveBeenCalled()
       expect(captured_measure_spy.fn).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── reorder pointerdown mode arbitration [obligation] ────────────────────
+  // Mouse picks up immediately; touch waits out a press-and-hold so a plain
+  // swipe still scrolls the grid. Outside rearrange mode (or while search is
+  // active) the grid must not touch the drag engine at all.
+
+  describe('reorder pointerdown mode arbitration [obligation]', () => {
+    function firstItem(wrapper) {
+      return wrapper.find('[data-testid="card-grid__item"]')
+    }
+
+    function search(cards) {
+      return makeSearch({ displayed_cards: cards })
+    }
+
+    const ONE_CARD = [{ id: 1, client_id: 'c1', front_text: 'q', back_text: 'a' }]
+
+    test('a mouse pointerdown in rearrange mode begins the drag immediately', async () => {
+      const shell = makeShell({ is_rearranging: true })
+      const wrapper = mountScrollGrid(makeEditor(), shell, search(ONE_CARD))
+
+      await firstItem(wrapper).trigger('pointerdown', { pointerType: 'mouse' })
+
+      expect(reorderStartMock).toHaveBeenCalledWith(0, expect.anything())
+      expect(pressHoldArmMock).not.toHaveBeenCalled()
+    })
+
+    test('a touch pointerdown in rearrange mode arms the hold instead of starting immediately', async () => {
+      const shell = makeShell({ is_rearranging: true })
+      const wrapper = mountScrollGrid(makeEditor(), shell, search(ONE_CARD))
+
+      await firstItem(wrapper).trigger('pointerdown', { pointerType: 'touch' })
+
+      expect(pressHoldArmMock).toHaveBeenCalledTimes(1)
+      expect(reorderStartMock).not.toHaveBeenCalled()
+    })
+
+    test('the touch hold firing begins the drag', async () => {
+      const shell = makeShell({ is_rearranging: true })
+      const wrapper = mountScrollGrid(makeEditor(), shell, search(ONE_CARD))
+
+      await firstItem(wrapper).trigger('pointerdown', { pointerType: 'touch' })
+      const onHold = pressHoldArmMock.mock.calls[0][1]
+      onHold()
+
+      expect(reorderStartMock).toHaveBeenCalledWith(0, expect.anything())
+    })
+
+    test('outside rearrange mode, pointerdown is a no-op (grid does not touch the drag engine)', async () => {
+      const shell = makeShell({ is_rearranging: false })
+      const wrapper = mountScrollGrid(makeEditor(), shell, search(ONE_CARD))
+
+      await firstItem(wrapper).trigger('pointerdown', { pointerType: 'touch' })
+
+      expect(pressHoldArmMock).not.toHaveBeenCalled()
+      expect(reorderStartMock).not.toHaveBeenCalled()
+    })
+
+    test('while search is active, pointerdown is a no-op even in rearrange mode', async () => {
+      const shell = makeShell({ is_rearranging: true })
+      const active_search = makeSearch({ is_active: true, displayed_cards: ONE_CARD })
+      const wrapper = mountScrollGrid(makeEditor(), shell, active_search)
+
+      await firstItem(wrapper).trigger('pointerdown', { pointerType: 'touch' })
+
+      expect(pressHoldArmMock).not.toHaveBeenCalled()
+      expect(reorderStartMock).not.toHaveBeenCalled()
+    })
+
+    test('once the drag actually starts, the matching grid-item element is lifted', async () => {
+      const shell = makeShell({ is_rearranging: true })
+      const wrapper = mountScrollGrid(makeEditor(), shell, search(ONE_CARD))
+      const item_el = firstItem(wrapper).element
+      const inner = document.createElement('div')
+      inner.dataset.testid = 'grid-item'
+      item_el.appendChild(inner)
+
+      const event = new PointerEvent('pointerdown', {
+        bubbles: true,
+        cancelable: true,
+        pointerType: 'mouse'
+      })
+      Object.defineProperty(event, 'target', { value: inner })
+      item_el.dispatchEvent(event)
+
+      expect(liftListItemMock).toHaveBeenCalledWith(inner)
+    })
+
+    test('settles the lifted card once the drag ends (dragging_index returns to null)', async () => {
+      const shell = makeShell({ is_rearranging: true })
+      const wrapper = mountScrollGrid(makeEditor(), shell, search(ONE_CARD))
+      const item_el = firstItem(wrapper).element
+      const inner = document.createElement('div')
+      inner.dataset.testid = 'grid-item'
+      item_el.appendChild(inner)
+
+      const event = new PointerEvent('pointerdown', {
+        bubbles: true,
+        cancelable: true,
+        pointerType: 'mouse'
+      })
+      Object.defineProperty(event, 'target', { value: inner })
+      item_el.dispatchEvent(event)
+      await nextTick()
+
+      reorderDraggingIndex.value = null
+      await nextTick()
+
+      expect(dropListItemMock).toHaveBeenCalledWith(inner)
+    })
+  })
+
+  // ── useReorderDrag options — real geometry/scroll closures [obligation] ──
+  // The engine itself is mocked above (so pointerdown tests assert on wiring,
+  // not the engine's internals) — these tests invoke the captured option
+  // getters directly so the real count/enabled/topInset/maxScroll/geometry
+  // closures scroll-grid.vue builds are still exercised.
+
+  describe('useReorderDrag options passed by scroll-grid [obligation]', () => {
+    test('count reflects the live displayed_cards length', () => {
+      const search_state = makeSearch({
+        displayed_cards: [
+          { id: 1, client_id: 'c1', front_text: 'q', back_text: 'a' },
+          { id: 2, client_id: 'c2', front_text: 'q', back_text: 'a' }
+        ]
+      })
+      mountScrollGrid(makeEditor(), makeShell(), search_state)
+
+      expect(reorderCaptured.opts.count()).toBe(2)
+    })
+
+    test('enabled is true only when rearranging and search is not active', () => {
+      mountScrollGrid(makeEditor(), makeShell({ is_rearranging: true }), makeSearch())
+      expect(reorderCaptured.opts.enabled()).toBe(true)
+
+      mountScrollGrid(
+        makeEditor(),
+        makeShell({ is_rearranging: true }),
+        makeSearch({ is_active: true })
+      )
+      expect(reorderCaptured.opts.enabled()).toBe(false)
+
+      mountScrollGrid(makeEditor(), makeShell({ is_rearranging: false }), makeSearch())
+      expect(reorderCaptured.opts.enabled()).toBe(false)
+    })
+
+    test('topInset falls back to 0 when no sticky toolbar is present in the document', () => {
+      mountScrollGrid()
+      expect(reorderCaptured.opts.topInset()).toBe(0)
+    })
+
+    test('maxScroll returns a finite number derived from scroll_margin and viewport height', () => {
+      mountScrollGrid()
+      expect(Number.isFinite(reorderCaptured.opts.maxScroll())).toBe(true)
+    })
+
+    test('geometry.idealIndex computes a finite slot index from origin + drag delta [obligation]', () => {
+      const search_state = makeSearch({
+        displayed_cards: [
+          { id: 1, client_id: 'c1', front_text: 'q', back_text: 'a' },
+          { id: 2, client_id: 'c2', front_text: 'q', back_text: 'a' },
+          { id: 3, client_id: 'c3', front_text: 'q', back_text: 'a' }
+        ]
+      })
+      mountScrollGrid(makeEditor(), makeShell({ is_rearranging: true }), search_state)
+
+      const { idealIndex } = reorderCaptured.opts.geometry
+      expect(Number.isFinite(idealIndex(0, 500, 0))).toBe(true)
+      expect(Number.isFinite(idealIndex(1, -200, 100))).toBe(true)
+    })
+
+    test('geometry.position delegates to itemPosition', () => {
+      mountScrollGrid()
+      expect(reorderCaptured.opts.geometry.position).toBeInstanceOf(Function)
+      expect(reorderCaptured.opts.geometry.position(0)).toEqual(
+        expect.objectContaining({ x: expect.any(Number), y: expect.any(Number) })
+      )
     })
   })
 })

@@ -6,31 +6,37 @@ import UiDropdownButton, {
 } from '@/components/ui-kit/dropdown-button/index.vue'
 import { emitSfx } from '@/sfx/bus'
 import { TYPE_SFX } from '@/sfx/config'
-import { computed, inject, ref, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { cardEditorKey, type CardWithClientId } from '@/views/deck/composables'
+import { inject, ref, useTemplateRef, watch } from 'vue'
+import { usePressHold } from '@/composables/ui/press-hold'
+import {
+  cardEditorKey,
+  useCardItemOptionsMenu,
+  type CardWithClientId
+} from '@/views/deck/composables'
 import { mobileCardEditorKey } from '@/views/deck/mobile-editor/use-mobile-card-editor'
 import { useMatchMedia } from '@/composables/ui/media-query'
 
-const { t } = useI18n()
-
 const { actions, selection } = inject(cardEditorKey)!
-const { onDeleteCards, onMoveCards, onSelectCard } = actions
+const { onSelectCard } = actions
 const { is_selecting } = selection
 
 const mobile_editor = inject(mobileCardEditorKey, null)
 const is_mobile = useMatchMedia('w<md')
 
-const menu_options = computed<DropdownOption[]>(() => [
-  { label: t('deck-view.item-options.select'), value: 'select', icon: 'data-check' },
-  { label: t('deck-view.item-options.move'), value: 'move', icon: 'move-item' },
-  { label: t('deck-view.item-options.delete'), value: 'delete', icon: 'delete' }
-])
+const { options: menu_options, onSelect: onMenuOptionSelect } = useCardItemOptionsMenu()
+const dropdown = useTemplateRef<InstanceType<typeof UiDropdownButton>>('dropdown')
+const options_hold = usePressHold()
 
 function onMenuSelect(option: DropdownOption) {
-  if (option.value === 'select') onSelectCard(card.id!)
-  else if (option.value === 'move') onMoveCards(card.id!)
-  else if (option.value === 'delete') onDeleteCards(card.id!)
+  onMenuOptionSelect(option, card.id!)
+}
+
+// A touch hold opens the corner more-menu; a plain tap still flows through the
+// click path (flip / select / mobile editor). In rearrange mode the grid owns
+// pointerdown (drag pickup), and mouse holds stay inert — desktop hovers the menu.
+function onPointerdown(event: PointerEvent) {
+  if (rearranging || is_selecting.value || event.pointerType === 'mouse') return
+  options_hold.arm(event, () => dropdown.value?.show())
 }
 
 const {
@@ -106,6 +112,7 @@ watch(
     v-sfx="{ hover: is_selecting || rearranging ? TYPE_SFX : undefined }"
     @mouseenter="is_hovering = true"
     @mouseleave="is_hovering = false"
+    @pointerdown="onPointerdown"
   >
     <card
       v-bind="card"
@@ -134,13 +141,14 @@ watch(
 
     <ui-dropdown-button
       v-if="!is_selecting && !rearranging"
+      ref="dropdown"
       trigger-only
-      trigger-icon="more"
+      :trigger-icon="dropdown?.open ? 'close' : 'more'"
       trigger-theme="brown-300"
       trigger-theme-dark="stone-900"
       menu-theme-dark="stone-900"
-      position="bottom-start"
-      class="absolute -top-1 -left-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto data-[active=true]:opacity-100 data-[active=true]:pointer-events-auto"
+      position="bottom-end"
+      class="absolute -top-1 -right-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto data-[active=true]:opacity-100 data-[active=true]:pointer-events-auto [&>button]:ring-4 [&>button]:ring-brown-100 dark:[&>button]:ring-grey-900"
       :options="menu_options"
       @select="onMenuSelect"
     />
