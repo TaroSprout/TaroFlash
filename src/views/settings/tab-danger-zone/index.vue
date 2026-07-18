@@ -4,10 +4,10 @@ import { useI18n } from 'vue-i18n'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import DangerDeleteAccountButton from '../danger-delete-account-button.vue'
-import { sheetLayoutKey } from '@/components/layout-kit/sheet/sheet-layout'
+import { windowLayoutKey } from '@/components/layout-kit/paged-window/layout'
 
 const { t } = useI18n()
-const layout_mode = inject(sheetLayoutKey)!
+const layout_mode = inject(windowLayoutKey)!
 </script>
 
 <template>

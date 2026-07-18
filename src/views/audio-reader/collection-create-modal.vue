@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiInput from '@/components/ui-kit/input.vue'
-import SheetFrame from '@/components/layout-kit/sheet/sheet-frame.vue'
+import AppWindow from '@/components/layout-kit/app-window/index.vue'
 import { useCreateLessonCollectionMutation } from '@/api/lessons'
 
 export type CollectionCreateResponse = LessonCollection | undefined
@@ -34,7 +34,7 @@ async function onSubmit() {
 </script>
 
 <template>
-  <sheet-frame
+  <app-window
     data-testid="collection-create-container"
     data-theme="blue-500"
     data-theme-dark="blue-650"
@@ -84,5 +84,5 @@ async function onSubmit() {
         </ui-button>
       </div>
     </div>
-  </sheet-frame>
+  </app-window>
 </template>

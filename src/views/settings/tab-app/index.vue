@@ -3,9 +3,9 @@ import { inject } from 'vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import AudioSection from './audio-section.vue'
 import SettingsSaveButton from '../settings-save-button.vue'
-import { sheetLayoutKey } from '@/components/layout-kit/sheet/sheet-layout'
+import { windowLayoutKey } from '@/components/layout-kit/paged-window/layout'
 
-const layout_mode = inject(sheetLayoutKey)!
+const layout_mode = inject(windowLayoutKey)!
 </script>
 
 <template>

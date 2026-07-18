@@ -12,7 +12,7 @@ import {
 import { useNoticeStore } from '@/stores/notice-store'
 import { useAlert } from '@/composables/alert'
 import { useUploadLessonModal } from '@/composables/audio-reader/upload-lesson-modal'
-import SheetFrame from '@/components/layout-kit/sheet/sheet-frame.vue'
+import AppWindow from '@/components/layout-kit/app-window/index.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import LessonCard from '@/views/audio-reader/lesson-card.vue'
 
@@ -125,7 +125,7 @@ watch(
 </script>
 
 <template>
-  <sheet-frame
+  <app-window
     data-testid="collection-edit-container"
     data-theme="blue-500"
     data-theme-dark="blue-650"
@@ -193,5 +193,5 @@ watch(
         </ui-button>
       </section>
     </div>
-  </sheet-frame>
+  </app-window>
 </template>

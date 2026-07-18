@@ -2,7 +2,7 @@ export type TabValue = 'details' | 'design' | 'review-pacing' | 'review-history'
 
 /**
  * Single source of truth for each tab's icon + label key. Consumed by the tab
- * bar, the mobile tab-index nav list, and the modal header — so icon/copy
+ * bar, the mobile directory-page nav list, and the modal header — so icon/copy
  * can't drift between the three surfaces.
  */
 export const TAB_META: Record<TabValue, { icon: string; labelKey: string; full_bleed?: boolean }> =

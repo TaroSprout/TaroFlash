@@ -8,17 +8,17 @@ import { emitSfx } from '@/sfx/bus'
 import { useMemberEditor, memberEditorKey } from '@/composables/member/editor'
 import { TAB_META, type TabValue } from './tabs'
 import { useMemberDangerActions, memberDangerActionsKey } from '@/composables/member/danger-actions'
-import type { SheetLayout } from '@/components/layout-kit/sheet/sheet-layout'
+import type { WindowLayout } from '@/components/layout-kit/paged-window/layout'
 import { useAlert } from '@/composables/alert'
 import { useModalRequestClose } from '@/composables/modal'
 import { useAvatarPicker } from './use-avatar-picker'
 import MemberCard from '@/components/member/member-card.vue'
 import UiPinnedCard from '@/components/ui-kit/pinned-card.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
-import SheetPager, {
-  type SheetPagerGroup,
-  type Tab
-} from '@/components/layout-kit/sheet/sheet-pager.vue'
+import PagedWindow, {
+  type PagedWindowGroup,
+  type Page
+} from '@/components/layout-kit/paged-window/index.vue'
 import TabProfile from './tab-profile/index.vue'
 import TabSubscription from './tab-subscription/index.vue'
 import TabApp from './tab-app/index.vue'
@@ -50,16 +50,16 @@ const { onEditAvatar } = useAvatarPicker(editor)
 
 const active_tab = ref<ActiveTab | null>(null)
 
-const pager = useTemplateRef<{ layout_mode: SheetLayout; displayed_tab: string }>('pager')
+const pager = useTemplateRef<{ layout_mode: WindowLayout; displayed_page: string }>('pager')
 const active_tab_ref = useTemplateRef<{ onChromeBack?: () => boolean }>('active_tab_ref')
 
-const layout_mode = computed<SheetLayout>(() => pager.value?.layout_mode ?? 'phone')
-const displayed_tab = computed(() => pager.value?.displayed_tab ?? 'index')
+const layout_mode = computed<WindowLayout>(() => pager.value?.layout_mode ?? 'phone')
+const displayed_page = computed(() => pager.value?.displayed_page ?? 'directory')
 provide(settingsCloseKey, close)
 
 // account-access is reachable via the aside's edit button (tablet/desktop) or the
 // phone-only index entry — it never appears as a sidebar tab-bar icon itself.
-const tabs = computed<Tab[]>(() =>
+const pages = computed<Page[]>(() =>
   (Object.keys(TAB_META) as TabValue[]).map((value) => ({
     value,
     icon: TAB_META[value].icon,
@@ -69,7 +69,7 @@ const tabs = computed<Tab[]>(() =>
   }))
 )
 
-const groups = computed<SheetPagerGroup[]>(() => [
+const groups = computed<PagedWindowGroup[]>(() => [
   {
     key: 'account',
     heading: t('settings.index.account-heading'),
@@ -125,7 +125,7 @@ watch(layout_mode, (mode) => {
 </script>
 
 <template>
-  <sheet-pager
+  <paged-window
     ref="pager"
     data-testid="settings-container"
     data-theme="blue-500"
@@ -134,9 +134,9 @@ watch(layout_mode, (mode) => {
     :class="[
       layout_mode === 'desktop' ? 'w-248!' : 'w-full! max-w-224',
       layout_mode !== 'phone' && 'h-187',
-      layout_mode === 'phone' ? '[--settings-padding:var(--sheet-px)]' : '[--settings-padding:0px]'
+      layout_mode === 'phone' ? '[--settings-padding:var(--window-px)]' : '[--settings-padding:0px]'
     ]"
-    :tabs="tabs"
+    :pages="pages"
     :groups="groups"
     phone_query="w<mlg"
     :pattern_config="{ pattern: 'diagonal-stripes', pattern_size: '48px', pattern_opacity: '0.15' }"
@@ -161,14 +161,14 @@ watch(layout_mode, (mode) => {
       </div>
     </template>
 
-    <template #default="{ displayed_tab: pane }">
-      <component :is="TAB_COMPONENTS[pane as TabValue]" ref="active_tab_ref" />
+    <template #default="{ displayed_page: page }">
+      <component :is="TAB_COMPONENTS[page as TabValue]" ref="active_tab_ref" />
     </template>
 
     <template #scrollbar>
       <scroll-bar
         v-if="layout_mode !== 'phone'"
-        target="[data-testid='sheet-pager__main']"
+        target="[data-testid='paged-window__main']"
         class="absolute top-2 bottom-2 right-2"
       />
     </template>
@@ -182,7 +182,7 @@ watch(layout_mode, (mode) => {
       />
     </template>
 
-    <template #index-footer>
+    <template #directory-footer>
       <settings-save-button v-if="layout_mode === 'phone'" />
     </template>
 
@@ -190,7 +190,7 @@ watch(layout_mode, (mode) => {
       <div
         v-if="layout_mode !== 'phone'"
         data-testid="settings__pinned-preview"
-        class="pointer-events-auto absolute right-(--sheet-px) top-6"
+        class="pointer-events-auto absolute right-(--window-px) top-6"
       >
         <ui-pinned-card data-testid="settings__pinned-preview-inner">
           <member-card
@@ -205,5 +205,5 @@ watch(layout_mode, (mode) => {
         </ui-pinned-card>
       </div>
     </template>
-  </sheet-pager>
+  </paged-window>
 </template>

@@ -3,15 +3,15 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { coverBindings } from '@/utils/cover'
 import {
-  SHEET_BODY_BG,
-  SHEET_HEADER_BORDER_CLASS,
-  SHEET_HEADER_FILL_CLASS,
-  type SheetHeaderBorder,
-  type SheetSurface
-} from './sheet-surface'
+  WINDOW_BODY_BG,
+  WINDOW_HEADER_BORDER_CLASS,
+  WINDOW_HEADER_FILL_CLASS,
+  type WindowHeaderBorder,
+  type WindowSurface
+} from './surface'
 import UiButton from '@/components/ui-kit/button.vue'
 
-type SheetPatternConfig = {
+type WindowPatternConfig = {
   theme?: Theme
   theme_dark?: Theme
   pattern?: DeckCoverPattern
@@ -19,15 +19,15 @@ type SheetPatternConfig = {
   pattern_opacity?: string
 }
 
-export type SheetFrameProps = {
-  pattern_config?: SheetPatternConfig
+export type AppWindowProps = {
+  pattern_config?: WindowPatternConfig
   title?: string
   show_close_button?: boolean
   close_label?: string
   close_icon?: string
-  surface?: SheetSurface
-  header_border?: SheetHeaderBorder
-  sheet_px?: string
+  surface?: WindowSurface
+  header_border?: WindowHeaderBorder
+  window_px?: string
 }
 
 const {
@@ -38,8 +38,8 @@ const {
   close_icon = 'close',
   surface = 'standard',
   header_border = 'wave',
-  sheet_px
-} = defineProps<SheetFrameProps>()
+  window_px
+} = defineProps<AppWindowProps>()
 
 const { t } = useI18n()
 
@@ -55,10 +55,10 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
-const body_bg_class = computed(() => SHEET_BODY_BG[surface])
-const header_border_class = computed(() => SHEET_HEADER_BORDER_CLASS[header_border])
-const header_fill_class = computed(() => SHEET_HEADER_FILL_CLASS[header_border])
-const close_label_text = computed(() => close_label ?? t('sheet-frame.close-label'))
+const body_bg_class = computed(() => WINDOW_BODY_BG[surface])
+const header_border_class = computed(() => WINDOW_HEADER_BORDER_CLASS[header_border])
+const header_fill_class = computed(() => WINDOW_HEADER_FILL_CLASS[header_border])
+const close_label_text = computed(() => close_label ?? t('app-window.close-label'))
 
 // The default header owns the close button. A custom `header` slot replaces the
 // header entirely, so the caller owns its own close affordance there.
@@ -83,31 +83,31 @@ const showHeader = computed(() => Boolean(slots.header || slots['header-content'
 
 <template>
   <div
-    data-testid="mobile-sheet-root"
-    class="relative w-full shrink-0 mobile-modal:mt-auto pointer-coarse:pt-px [--sheet-px:4.5rem] lg:[--sheet-px:2rem]"
-    :style="sheet_px ? { '--sheet-px': sheet_px } : undefined"
+    data-testid="app-window-root"
+    class="relative w-full shrink-0 mobile-modal:mt-auto pointer-coarse:pt-px [--window-px:4.5rem] lg:[--window-px:2rem]"
+    :style="window_px ? { '--window-px': window_px } : undefined"
   >
     <div
-      data-testid="mobile-sheet__overlay"
-      class="absolute inset-0 pointer-events-none z-(--sheet-overlay-z,30)"
+      data-testid="app-window__overlay"
+      class="absolute inset-0 pointer-events-none z-(--window-overlay-z,30)"
     >
       <slot name="overlay"></slot>
     </div>
 
     <div
-      data-testid="mobile-sheet-container"
+      data-testid="app-window-container"
       class="flex overflow-hidden w-full h-full rounded-t-8 rounded-b-8 mobile-modal:rounded-b-none shadow-lg border-brown-100 dark:border-grey-900 border-t border-l mobile-modal:border-r"
     >
       <slot name="sidebar"></slot>
 
       <div
-        data-testid="mobile-sheet"
+        data-testid="app-window"
         :data-surface="surface"
         class="relative flex w-full h-full flex-col"
       >
         <div
           v-if="show_builtin_close"
-          data-testid="mobile-sheet__close-slot"
+          data-testid="app-window__close-slot"
           class="absolute top-0 p-4 left-0 z-40"
         >
           <ui-button
@@ -121,14 +121,14 @@ const showHeader = computed(() => Boolean(slots.header || slots['header-content'
           </ui-button>
         </div>
 
-        <div v-if="showHeader" data-testid="mobile-sheet__header-slot" class="relative">
+        <div v-if="showHeader" data-testid="app-window__header-slot" class="relative">
           <slot name="header">
             <div
-              data-testid="mobile-sheet__header"
+              data-testid="app-window__header"
               :data-header-border="header_border"
               v-bind="header_bindings"
               :class="[
-                'w-full flex justify-center items-center place-items-center px-(--sheet-px) pt-11.5 pb-14 gap-6 bg-(--theme-primary) text-(--theme-on-primary) relative z-10',
+                'w-full flex justify-center items-center place-items-center px-(--window-px) pt-11.5 pb-14 gap-6 bg-(--theme-primary) text-(--theme-on-primary) relative z-10',
                 header_border_class
               ]"
             >
@@ -140,14 +140,14 @@ const showHeader = computed(() => Boolean(slots.header || slots['header-content'
 
           <div
             v-if="header_fill_class"
-            data-testid="mobile-sheet__header-fill"
+            data-testid="app-window__header-fill"
             aria-hidden="true"
             :class="['absolute inset-0 z-20 pointer-events-none', body_bg_class, header_fill_class]"
           ></div>
         </div>
 
         <div
-          data-testid="mobile-sheet__body"
+          data-testid="app-window__body"
           :class="['relative z-20 min-h-0 flex-1', body_bg_class]"
         >
           <slot></slot>

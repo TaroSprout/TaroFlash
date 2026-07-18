@@ -5,19 +5,19 @@ import { useI18n } from 'vue-i18n'
 import DeckAside from './deck-aside.vue'
 import DeckSaveButton from './deck-save-button.vue'
 import { deckSettingsCloseKey } from './layout'
-import { useSheetChrome } from './sheet-chrome'
+import { useWindowChrome } from './window-chrome'
 import { emitSfx } from '@/sfx/bus'
 import { useDeckEditor, deckEditorKey } from '@/composables/deck/editor'
 import { useDeckDangerActions, deckDangerActionsKey } from '@/composables/deck/danger-actions'
-import type { SheetLayout } from '@/components/layout-kit/sheet/sheet-layout'
+import type { WindowLayout } from '@/components/layout-kit/paged-window/layout'
 import { useAlert } from '@/composables/alert'
 import { useModalAfterEnter, useModalRequestClose } from '@/composables/modal'
 import DeckPinnedPreview from '@/components/deck/pinned-preview.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
-import SheetPager, {
-  type SheetPagerGroup,
-  type Tab
-} from '@/components/layout-kit/sheet/sheet-pager.vue'
+import PagedWindow, {
+  type PagedWindowGroup,
+  type Page
+} from '@/components/layout-kit/paged-window/index.vue'
 import TabDetails from './tab-details/index.vue'
 import TabDesign from './tab-design/index.vue'
 import TabReviewPacing from './tab-review-pacing/index.vue'
@@ -57,20 +57,20 @@ const after_enter = useModalAfterEnter()
 
 const active_tab = ref<ActiveTab | null>(initial_tab ?? null)
 
-const pager = useTemplateRef<{ layout_mode: SheetLayout; displayed_tab: string }>('pager')
+const pager = useTemplateRef<{ layout_mode: WindowLayout; displayed_page: string }>('pager')
 const active_tab_ref = useTemplateRef<{ onChromeBack?: () => boolean }>('active_tab_ref')
 
 const preview_el = useTemplateRef<HTMLElement>('preview_el')
 const aside_instance = useTemplateRef<ComponentPublicInstance>('aside_instance')
 const aside_el = computed(() => aside_instance.value?.$el as HTMLElement | undefined)
 
-const chrome = useSheetChrome(preview_el, aside_el)
+const chrome = useWindowChrome(preview_el, aside_el)
 
-const layout_mode = computed<SheetLayout>(() => pager.value?.layout_mode ?? 'phone')
-const displayed_tab = computed(() => pager.value?.displayed_tab ?? 'index')
+const layout_mode = computed<WindowLayout>(() => pager.value?.layout_mode ?? 'phone')
+const displayed_page = computed(() => pager.value?.displayed_page ?? 'directory')
 provide(deckSettingsCloseKey, close)
 
-const tabs = computed<Tab[]>(() =>
+const pages = computed<Page[]>(() =>
   (Object.keys(TAB_META) as TabValue[]).map((value) => ({
     value,
     icon: TAB_META[value].icon,
@@ -80,7 +80,7 @@ const tabs = computed<Tab[]>(() =>
   }))
 )
 
-const groups = computed<SheetPagerGroup[]>(() => [
+const groups = computed<PagedWindowGroup[]>(() => [
   {
     key: 'appearance',
     heading: t('deck.settings-modal.index.general-heading'),
@@ -99,14 +99,14 @@ const groups = computed<SheetPagerGroup[]>(() => [
 const header_title = computed(() => deck.title || t('deck.settings-modal.title'))
 
 const visible_side = computed(() =>
-  displayed_tab.value === 'design' ? editor.active_side.value : 'cover'
+  displayed_page.value === 'design' ? editor.active_side.value : 'cover'
 )
 
-// Sheet mode has no pinned preview or aside to clear away, so full-bleed is a
+// Phone mode has no pinned preview or aside to clear away, so full-bleed is a
 // desktop/tablet-only concern.
 const is_full_bleed = computed(
   () =>
-    layout_mode.value !== 'phone' && Boolean(TAB_META[displayed_tab.value as TabValue]?.full_bleed)
+    layout_mode.value !== 'phone' && Boolean(TAB_META[displayed_page.value as TabValue]?.full_bleed)
 )
 
 onMounted(async () => {
@@ -121,7 +121,7 @@ function runChromeSync() {
 }
 
 function onPreviewSide(side: CardSide) {
-  if (displayed_tab.value !== 'design') return
+  if (displayed_page.value !== 'design') return
   editor.setActiveSide(side)
 }
 
@@ -168,7 +168,7 @@ watch([preview_el, aside_el], ([preview]) => {
 </script>
 
 <template>
-  <sheet-pager
+  <paged-window
     ref="pager"
     data-testid="deck-settings-container"
     data-theme="green-500"
@@ -178,11 +178,11 @@ watch([preview_el, aside_el], ([preview]) => {
       layout_mode === 'desktop' ? 'w-237!' : 'w-full! max-w-205.5',
       layout_mode !== 'phone' && 'h-181.5',
       layout_mode === 'phone'
-        ? '[--deck-settings-padding:var(--sheet-px)]'
+        ? '[--deck-settings-padding:var(--window-px)]'
         : '[--deck-settings-padding:0px]',
-      chrome.is_tucked.value && '[--sheet-overlay-z:15]'
+      chrome.is_tucked.value && '[--window-overlay-z:15]'
     ]"
-    :tabs="tabs"
+    :pages="pages"
     :groups="groups"
     :pattern_config="{ pattern: 'endless-clouds' }"
     :between="runChromeSync"
@@ -205,15 +205,15 @@ watch([preview_el, aside_el], ([preview]) => {
       </div>
     </template>
 
-    <template #default="{ displayed_tab: pane }">
-      <component :is="TAB_COMPONENTS[pane as TabValue]" ref="active_tab_ref" />
+    <template #default="{ displayed_page: page }">
+      <component :is="TAB_COMPONENTS[page as TabValue]" ref="active_tab_ref" />
     </template>
 
     <template #scrollbar>
       <scroll-bar
         v-if="layout_mode !== 'phone'"
         data-theme="brown-200"
-        target="[data-testid='sheet-pager__main']"
+        target="[data-testid='paged-window__main']"
         class="absolute top-2 bottom-4 right-0"
         :class="layout_mode === 'tablet' && 'right-9'"
       />
@@ -229,7 +229,7 @@ watch([preview_el, aside_el], ([preview]) => {
       />
     </template>
 
-    <template #index-footer>
+    <template #directory-footer>
       <deck-save-button v-if="layout_mode === 'phone'" />
     </template>
 
@@ -239,7 +239,7 @@ watch([preview_el, aside_el], ([preview]) => {
         ref="preview_el"
         data-testid="deck-settings__pinned-preview"
         :data-tucked="chrome.is_tucked.value"
-        class="absolute right-(--sheet-px) top-6"
+        class="absolute right-(--window-px) top-6"
         :class="chrome.is_tucked.value ? 'pointer-events-none' : 'pointer-events-auto'"
       >
         <deck-pinned-preview
@@ -253,5 +253,5 @@ watch([preview_el, aside_el], ([preview]) => {
         />
       </div>
     </template>
-  </sheet-pager>
+  </paged-window>
 </template>

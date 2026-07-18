@@ -7,14 +7,14 @@ import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import TabBar from '@/components/layout-kit/tab-bar.vue'
 import DeckDesignPreview from '@/components/deck/deck-design-preview.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
-import { sheetLayoutKey } from '@/components/layout-kit/sheet/sheet-layout'
+import { windowLayoutKey } from '@/components/layout-kit/paged-window/layout'
 import DeckSaveButton from '../deck-save-button.vue'
 
 type SideTab = { value: CardSide; label: string }
 
 const { t } = useI18n()
 const editor = inject(deckEditorKey)!
-const layout_mode = inject(sheetLayoutKey)!
+const layout_mode = inject(windowLayoutKey)!
 
 const tabs = computed<SideTab[]>(() => [
   { value: 'cover', label: t('deck.settings-modal.design.designer-tabs.cover') },

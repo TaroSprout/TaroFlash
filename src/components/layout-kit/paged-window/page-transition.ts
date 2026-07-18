@@ -1,37 +1,37 @@
 import { ref, type ComputedRef, type Ref } from 'vue'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import { tabSlideEnter, tabSlideLeave } from '@/utils/animations/tab-slide'
-import type { SheetLayout } from './sheet-layout'
+import type { WindowLayout } from './layout'
 
-type PaneTransitionOptions = {
-  // Runs in the empty gap between the leaving and entering pane — the one frame
-  // with no pane mounted, so any reflow it triggers can't shift live content.
+type PageTransitionOptions = {
+  // Runs in the empty gap between the leaving and entering page — the one frame
+  // with no page mounted, so any reflow it triggers can't shift live content.
   between?: () => void | Promise<void>
 }
 
 /**
- * Drives the between-panes Transition for sheet-pager: a directional slide on
+ * Drives the between-pages Transition for paged-window: a directional slide on
  * `phone`, a plain crossfade on tablet/desktop. Set the returned
- * `nav_direction` before changing the displayed pane so the leave that follows
+ * `nav_direction` before changing the displayed page so the leave that follows
  * animates the right way.
  *
  * @param outlet - the scroll container whose height animates on phone
  */
-export function usePaneTransition(
-  layout_mode: ComputedRef<SheetLayout>,
+export function usePageTransition(
+  layout_mode: ComputedRef<WindowLayout>,
   outlet: Ref<HTMLElement | undefined>,
-  { between }: PaneTransitionOptions = {}
+  { between }: PageTransitionOptions = {}
 ) {
   const nav_direction = ref<'forward' | 'back'>('forward')
 
-  async function onPaneLeave(el: Element, done: () => void) {
+  async function onPageLeave(el: Element, done: () => void) {
     await runLeave(el)
 
     await between?.()
     done()
   }
 
-  function onPaneEnter(el: Element, done: () => void) {
+  function onPageEnter(el: Element, done: () => void) {
     runEnter(el, done)
   }
 
@@ -53,5 +53,5 @@ export function usePaneTransition(
     fadeEnter(el, done)
   }
 
-  return { nav_direction, onPaneEnter, onPaneLeave }
+  return { nav_direction, onPageEnter, onPageLeave }
 }

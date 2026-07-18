@@ -3,19 +3,19 @@ import { computed, inject } from 'vue'
 import UiOptionsPanel, { type OptionsPanelEntry } from '@/components/ui-kit/options-panel/index.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
-import { sheetLayoutKey } from './sheet-layout'
+import { windowLayoutKey } from './layout'
 
-export type PagerIndexGroup = {
+export type DirectoryPageGroup = {
   key: string
   heading: string
   entries: OptionsPanelEntry[]
 }
 
-type PagerIndexProps = {
-  groups: PagerIndexGroup[]
+type DirectoryPageProps = {
+  groups: DirectoryPageGroup[]
 }
 
-defineProps<PagerIndexProps>()
+defineProps<DirectoryPageProps>()
 
 defineSlots<{
   footer?(): any
@@ -25,12 +25,12 @@ const emit = defineEmits<{
   navigate: [value: string]
 }>()
 
-const layout_mode = inject(sheetLayoutKey)
+const layout_mode = inject(windowLayoutKey)
 
-// On phone the scroll container carries no padding, so the index owns its own
-// inset; on tablet/desktop the container already pads with `--sheet-px`.
+// On phone the scroll container carries no padding, so the directory page owns
+// its own inset; on tablet/desktop the container already pads with `--window-px`.
 const padding_class = computed(() =>
-  layout_mode?.value === 'phone' ? 'px-(--sheet-px) pb-(--sheet-px)' : ''
+  layout_mode?.value === 'phone' ? 'px-(--window-px) pb-(--window-px)' : ''
 )
 
 function onSelect(value: string) {
@@ -39,11 +39,11 @@ function onSelect(value: string) {
 </script>
 
 <template>
-  <section-list data-testid="tab-index" :class="padding_class">
+  <section-list data-testid="directory-page" :class="padding_class">
     <labeled-section
       v-for="group in groups"
       :key="group.key"
-      :data-testid="`tab-index__nav-group--${group.key}`"
+      :data-testid="`directory-page__nav-group--${group.key}`"
       :label="group.heading"
     >
       <ui-options-panel
