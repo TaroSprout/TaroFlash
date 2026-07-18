@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n'
+import { useTemplateRef } from 'vue'
 import DeckThumbnail from '@/components/deck/deck-thumbnail.vue'
-import UiButton from '@/components/ui-kit/button.vue'
+import UiDropdownButton, {
+  type DropdownOption
+} from '@/components/ui-kit/dropdown-button/index.vue'
 import DeckGridDeleteButton from './delete-button.vue'
+import { useDeckOptionsMenu } from '@/views/dashboard/composables/deck-options-menu'
+import { usePressHold } from '@/composables/ui/press-hold'
 
 type DeckGridItemProps = {
   deck: Deck
@@ -17,44 +21,66 @@ const { deck, size, rearranging = false, dragging = false } = defineProps<DeckGr
 
 const emit = defineEmits<{
   press: []
-  settings: []
+  rearrange: []
 }>()
 
-const { t } = useI18n()
+const { options: deck_options, onSelect: onDeckOptionSelect } = useDeckOptionsMenu({
+  onRearrange: () => emit('rearrange')
+})
+const dropdown = useTemplateRef<InstanceType<typeof UiDropdownButton>>('dropdown')
+const options_hold = usePressHold()
 
 function onPress() {
   if (rearranging) return
   emit('press')
 }
+
+// A touch hold opens the corner options menu; a plain tap still flows through
+// the click path to `press`. In rearrange mode the grid owns pointerdown (drag
+// pickup), and mouse holds stay inert — desktop opens the menu from the button.
+function onPointerdown(event: PointerEvent) {
+  if (rearranging || event.pointerType === 'mouse') return
+  options_hold.arm(event, () => dropdown.value?.show())
+}
+
+function onOptionSelect(option: DropdownOption) {
+  onDeckOptionSelect(option, deck)
+}
 </script>
 
 <template>
-  <div class="w-full" :class="{ jiggle: rearranging && !dragging }">
+  <div class="w-full" :class="{ jiggle: rearranging && !dragging }" @pointerdown="onPointerdown">
     <DeckThumbnail
       :deck="deck"
       :size="size"
       :corner_action_always_visible="rearranging"
       :rearranging="rearranging"
       :dragging="dragging"
+      :active="!!dropdown?.open"
       :sfx="{ press: 'snappy_button_5' }"
       class="w-full"
       @press="onPress"
     >
       <template #corner-action>
         <DeckGridDeleteButton v-if="rearranging" :deck="deck" @pointerdown.stop />
-        <ui-button
-          v-else
-          data-testid="dashboard__deck-settings-button"
-          data-theme="blue-500"
-          data-theme-dark="blue-650"
-          icon-left="build"
-          icon-only
-          @click.stop
-          @press="emit('settings')"
-          class="ring-4 ring-brown-100 dark:ring-grey-900"
-        >
-          {{ t('deck.settings-modal.title') }}
-        </ui-button>
+        <!-- dropdown-button drops on* attrs in trigger-only mode (inheritAttrs:
+             false + attr partitioning), so .stop must live on a wrapper or the
+             gear's events reach ui-tappable (navigate) and the hold recognizer -->
+        <div v-else @pointerdown.stop @click.stop>
+          <ui-dropdown-button
+            ref="dropdown"
+            data-testid="dashboard__deck-options-button"
+            trigger-only
+            :trigger-icon="dropdown?.open ? 'close' : 'more'"
+            trigger-theme="brown-300"
+            trigger-theme-dark="stone-900"
+            menu-theme-dark="stone-900"
+            position="bottom-end"
+            :options="deck_options"
+            class="[&>button]:ring-4 [&>button]:ring-brown-100 dark:[&>button]:ring-grey-900"
+            @select="onOptionSelect"
+          />
+        </div>
       </template>
     </DeckThumbnail>
   </div>

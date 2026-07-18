@@ -93,6 +93,11 @@ const attrs = useAttrs()
 
 const popover_open = ref(false)
 
+// Callers reach these through a template ref: `open` to mirror the menu state
+// (e.g. keeping a card's active look while its menu is up), `show` to open the
+// menu from a gesture that isn't a trigger press (e.g. a long-press on the card).
+defineExpose({ open: popover_open, show })
+
 // Theme/class/layout attrs ride the popover container (its non-teleported
 // content inherits the theme), while event handlers — the consumer's primary
 // @click — land on the inner button so they fire only from the label region.
@@ -162,6 +167,11 @@ function onButtonClick(e: MouseEvent) {
     | undefined
   if (Array.isArray(consumer)) consumer.forEach((fn) => fn(e))
   else consumer?.(e)
+}
+
+/** Open the menu programmatically, with the same sfx/disabled gate as a press. */
+function show() {
+  if (!popover_open.value) toggle()
 }
 
 function close() {

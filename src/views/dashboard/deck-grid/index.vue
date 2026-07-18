@@ -6,7 +6,6 @@ import DeckGridItem from './item.vue'
 import NewDeckCard from '@/components/deck/new-deck-card.vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { useDeckActions } from '@/composables/deck/actions'
-import { useDeckSettingsModal } from '@/composables/deck/settings-modal'
 import { buildNewDeckPayload } from '@/utils/deck/defaults'
 import { popDeckIn, popDeckOut } from '@/utils/animations/deck-grid'
 import { useDeckGridReorder } from './use-deck-grid-reorder'
@@ -18,11 +17,14 @@ type DeckGridProps = {
 
 const { decks, editing = false } = defineProps<DeckGridProps>()
 
+const emit = defineEmits<{
+  rearrange: []
+}>()
+
 const { t } = useI18n()
 const router = useRouter()
 const is_md = useMatchMedia('w>=md')
 const deck_actions = useDeckActions()
-const deck_settings_modal = useDeckSettingsModal()
 
 const creating_deck = ref(false)
 const size = computed(() => (is_md.value ? 'base' : 'sm'))
@@ -77,10 +79,6 @@ function onDeckClicked(deck: Deck) {
   router.push({ name: 'deck', params: { id: deck.id } })
 }
 
-function onDeckSettingsClicked(deck: Deck) {
-  deck_settings_modal.open(deck)
-}
-
 async function onCreateDeckClicked() {
   if (creating_deck.value || editing) return
   creating_deck.value = true
@@ -95,7 +93,7 @@ async function onCreateDeckClicked() {
   <div
     ref="container_el"
     data-testid="dashboard__decks"
-    class="relative w-full"
+    class="press-hold-guard relative w-full"
     :class="{ 'rearrange-no-select': editing }"
     :style="{
       height: reorder.measured.value
@@ -134,7 +132,7 @@ async function onCreateDeckClicked() {
             :dragging="index === reorder.dragging_index.value"
             :style="reorder.jiggleStyle(index)"
             @press="onDeckClicked(deck)"
-            @settings="onDeckSettingsClicked(deck)"
+            @rearrange="emit('rearrange')"
           />
         </div>
       </div>
@@ -160,11 +158,23 @@ async function onCreateDeckClicked() {
 </template>
 
 <style scoped>
-/* In edit mode a press-and-hold must not start a text selection or the iOS
-   callout. user-select / touch-callout inherit, so suppressing them on the
-   container covers every card inside. */
-.rearrange-no-select {
+/* A press-and-hold must never race the iOS text-selection / callout gesture.
+   Suppress the callout everywhere, and selection on touch pointers the whole
+   time — desktop keeps click-drag selection. Both inherit, so setting them on
+   the container covers every card inside. */
+.press-hold-guard {
   -webkit-touch-callout: none;
+}
+
+@media (pointer: coarse) {
+  .press-hold-guard {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* Rearrange also suppresses selection for mouse drags (desktop pickup). */
+.rearrange-no-select {
   -webkit-user-select: none;
   user-select: none;
 }

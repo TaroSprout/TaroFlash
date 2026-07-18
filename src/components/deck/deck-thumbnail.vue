@@ -17,6 +17,8 @@ type DeckThumbnailProps = {
   rearranging?: boolean
   // this is the card currently being picked up — show a lift shadow
   dragging?: boolean
+  // hold the hover/press look open (e.g. while the card's options menu is up)
+  active?: boolean
   sfx?: SfxOptions
 }
 
@@ -26,6 +28,7 @@ const {
   corner_action_always_visible = false,
   rearranging = false,
   dragging = false,
+  active = false,
   sfx
 } = defineProps<DeckThumbnailProps>()
 
@@ -46,6 +49,7 @@ const { t } = useI18n()
         : 'data-[tap-active=true]:scale-101 pointer-coarse:data-[tap-active=true]:scale-105 cursor-pointer',
       dragging && 'drop-shadow-sm'
     ]"
+    :active="active"
     :sfx="{ hover: TYPE_SFX, ...sfx }"
     @tap="emit('press', $event)"
   >
@@ -61,7 +65,7 @@ const { t } = useI18n()
       data-testid="deck-thumbnail__corner-action"
       class="absolute -top-1 -right-1"
       :class="
-        corner_action_always_visible
+        corner_action_always_visible || active
           ? 'opacity-100 pointer-events-auto'
           : 'opacity-0 pointer-fine:group-hover/tappable:opacity-100'
       "
