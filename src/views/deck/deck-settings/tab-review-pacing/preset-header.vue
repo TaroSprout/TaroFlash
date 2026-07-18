@@ -16,16 +16,14 @@ const divergence_label = computed(() =>
 </script>
 
 <template>
-  <div data-testid="preset-header" class="flex flex-col gap-3">
-    <div data-testid="preset-header__row" class="flex items-end justify-between gap-4">
-      <div data-testid="preset-header__titles" class="flex flex-col">
-        <h2 data-testid="preset-header__title" class="text-2xl text-brown-700 dark:text-brown-100">
-          {{ t('deck.settings-modal.review-pacing.heading') }}
-        </h2>
-        <p data-testid="preset-header__subheading" class="text-base text-brown-500">
-          {{ t('deck.settings-modal.review-pacing.subheading') }}
-        </p>
-      </div>
+  <div data-testid="preset-header" class="flex flex-col gap-1">
+    <div
+      data-testid="preset-header__row"
+      class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2"
+    >
+      <h2 data-testid="preset-header__title" class="text-2xl text-brown-700 dark:text-brown-100">
+        {{ t('deck.settings-modal.review-pacing.heading') }}
+      </h2>
 
       <div data-testid="preset-header__controls" class="flex shrink-0 items-center gap-2">
         <transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
@@ -57,6 +55,10 @@ const divergence_label = computed(() =>
       </div>
     </div>
 
-    <ui-divider data-theme="brown-500" />
+    <p data-testid="preset-header__subheading" class="text-base text-brown-500">
+      {{ t('deck.settings-modal.review-pacing.subheading') }}
+    </p>
+
+    <ui-divider data-theme="brown-500" class="mt-2 max-md:hidden" />
   </div>
 </template>
