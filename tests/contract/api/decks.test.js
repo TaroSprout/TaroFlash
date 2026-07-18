@@ -1,12 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vite-plus/test'
 import { signInAsTestUser } from '../setup.js'
-import {
-  fetchMemberDecks,
-  fetchDeck,
-  fetchMemberDeckCount,
-  fetchDecksByIds,
-  upsertDeck
-} from '@/api/decks/db'
+import { fetchMemberDecks, fetchDeck, fetchMemberDeckCount, upsertDeck } from '@/api/decks/db'
 
 let session
 let displayName
@@ -134,23 +128,5 @@ describe('upsertDeck (contract)', () => {
     expect(updated.leech_threshold).toBe(12)
     expect(updated.pacing_overrides).toEqual({ leech_threshold: 12, max_interval: null })
     expect(updated.max_interval).toBeNull()
-  })
-})
-
-describe('fetchDecksByIds (contract)', () => {
-  test('returns an empty array for an empty id list', async () => {
-    expect(await fetchDecksByIds([])).toEqual([])
-  })
-
-  test('returns the decks matching the given ids, with stats columns populated', async () => {
-    const a = await insertDeck({ title: 'A' })
-    const b = await insertDeck({ title: 'B' })
-    await insertDeck({ title: 'Not requested' })
-
-    const decks = await fetchDecksByIds([a.id, b.id])
-
-    const byId = (x, y) => x - y
-    expect(decks.map((d) => d.id).sort(byId)).toEqual([a.id, b.id].sort(byId))
-    expect(decks[0]).toHaveProperty('card_count')
   })
 })

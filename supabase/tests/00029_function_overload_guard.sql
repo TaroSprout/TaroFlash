@@ -21,7 +21,7 @@
 
 BEGIN;
 
-SELECT plan(3);
+SELECT plan(4);
 
 -- Test 1: every public function name maps to exactly one overload.
 SELECT is_empty(
@@ -36,13 +36,26 @@ SELECT is_empty(
   'no public function has multiple overloads (DROP the old signature before CREATE-ing a new one)'
 );
 
--- Test 2: get_study_session_cards exists with the exact signature the FE
--- calls (src/api/cards/db/study-session-cards.ts).
+-- Test 2: get_study_session_cards exists with its current 2-arg signature —
+-- p_study_all was dropped (refactor/study-session-multi-deck). The FE no
+-- longer calls this RPC directly (src/api/cards/db/study-session-cards.ts was
+-- deleted); it's now only reached internally, per-deck, from
+-- get_session_decks_and_cards, which owns the FE-facing contract instead.
 SELECT has_function(
   'public',
   'get_study_session_cards',
-  ARRAY['bigint', 'timestamp with time zone', 'boolean'],
-  'get_study_session_cards has the (p_deck_id, p_today_start, p_study_all) signature the FE sends'
+  ARRAY['bigint', 'timestamp with time zone'],
+  'get_study_session_cards has the (p_deck_id, p_today_start) signature — p_study_all was dropped'
+);
+
+-- Test 2b [obligation]: get_session_decks_and_cards exists with the exact
+-- signature the FE sends (src/api/cards/db/session-bootstrap.ts) — this RPC
+-- is now the FE-facing study-session bootstrap contract.
+SELECT has_function(
+  'public',
+  'get_session_decks_and_cards',
+  ARRAY['bigint[]', 'timestamp with time zone'],
+  'get_session_decks_and_cards has the (p_deck_ids, p_today_start) signature the FE sends [obligation]'
 );
 
 -- Test 3: save_review exists with the exact 18-arg signature the FE calls

@@ -18,7 +18,7 @@ const has_due_cards = computed(() => (deck.due_count ?? 0) > 0)
 const is_disabled = computed(() => disabled || !has_due_cards.value)
 
 function onStudyClicked() {
-  study_session.start([deck])
+  study_session.start([deck.id])
 }
 </script>
 

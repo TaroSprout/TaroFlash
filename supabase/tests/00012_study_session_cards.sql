@@ -6,17 +6,20 @@
 --      and clamps due_count by max_reviews_per_day - reviewed_today.
 --   2. get_study_session_cards returns ordered (new-first, then review)
 --      respecting both max_new_per_day and max_reviews_per_day.
---   3. p_study_all = true bypasses caps.
---   4. NULL caps mean unlimited.
---   5. RLS scopes both view + RPC to the calling member.
---   6. get_study_session_cards resolves caps through deck_review_pacing (the
+--   3. NULL caps mean unlimited.
+--   4. RLS scopes both view + RPC to the calling member.
+--   5. get_study_session_cards resolves caps through deck_review_pacing (the
 --      override -> preset -> system ladder), not decks.study_config, which
 --      no longer carries max_reviews_per_day/max_new_per_day [obligation].
+--
+-- p_study_all was dropped from get_study_session_cards's signature — the
+-- single-deck study-all bypass no longer exists (the FE deck-blind session
+-- always trusts the backend queue verbatim); those tests were removed here.
 -- =============================================================================
 
 BEGIN;
 
-SELECT plan(15);
+SELECT plan(14);
 
 -- ── Setup ─────────────────────────────────────────────────────────────────────
 SELECT tests.create_user('11111111-1111-1111-1111-111111111111'::uuid, 'alice_caps');
@@ -133,14 +136,6 @@ SELECT results_eq(
   $$ SELECT id FROM public.get_study_session_cards(100, date_trunc('day', now())) $$,
   $$ VALUES (1002::bigint), (1003::bigint) $$,
   'queue respects exhausted new-card budget and remaining total budget'
-);
-
--- Test 9: p_study_all = true returns every card in deck regardless of caps,
--- in rank order.
-SELECT results_eq(
-  $$ SELECT id FROM public.get_study_session_cards(100, date_trunc('day', now()), true) $$,
-  $$ VALUES (1000::bigint), (1001::bigint), (1002::bigint), (1003::bigint), (1004::bigint) $$,
-  'p_study_all bypasses caps and returns all cards in rank order'
 );
 
 -- Test 9a: p_today_start in the future ignores all logs → reviewed_today = 0

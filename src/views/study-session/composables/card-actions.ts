@@ -2,7 +2,7 @@ import { type MaybeRefOrGetter, type Ref, toValue } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCardMutations, useCardPrompts } from '@/composables/card'
 import { useNoticeStore } from '@/stores/notice-store'
-import type { StudyCard } from './session-queue'
+import type { StudyCard } from './session-engine'
 
 type UseActiveCardActionsOptions = {
   active_card: Ref<StudyCard | undefined>

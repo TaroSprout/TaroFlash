@@ -1,4 +1,4 @@
-import type { CardReviewResult } from '@/views/study-session/composables/session-queue'
+import type { CardReviewResult } from '@/views/study-session/composables/session-engine'
 
 /**
  * Pure FSRS-aware aggregation for the post-session summary. Turns the raw
@@ -34,7 +34,7 @@ function levelFor(interval_days: number): number {
 
 export function aggregateSession(
   results: CardReviewResult[],
-  leech_threshold: number
+  thresholdFor: (deck_id?: number) => number
 ): SummaryData {
   let score = 0
   let new_count = 0
@@ -45,7 +45,7 @@ export function aggregateSession(
   for (const result of results) {
     if (result.passed) score++
 
-    if (!result.passed && result.lapses >= leech_threshold) stuck_count++
+    if (!result.passed && result.lapses >= thresholdFor(result.deck_id)) stuck_count++
 
     if (result.is_new) {
       new_count++

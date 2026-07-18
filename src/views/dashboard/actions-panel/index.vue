@@ -48,7 +48,7 @@ const deck_entries = computed<OptionsPanelEntry[]>(() => [
 ])
 
 function onStudyAll() {
-  study_session.start(due_decks)
+  study_session.start(due_decks.map((deck) => deck.id))
 }
 
 async function onSelect(value: string) {

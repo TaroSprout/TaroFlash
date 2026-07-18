@@ -1,7 +1,18 @@
-import { describe, test, expect } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import SessionSummary from '@/views/study-session/session-summary/index.vue'
+
+// ── Hoisted mocks ─────────────────────────────────────────────────────────────
+// session-summary no longer takes a leech_threshold prop — it reads
+// thresholdFor(deck_id) off the injected DeckResolution, so the same
+// aggregateSession call can resolve a different threshold per result's deck.
+
+const { mockThresholdFor } = vi.hoisted(() => ({ mockThresholdFor: vi.fn(() => 24) }))
+
+vi.mock('@/views/study-session/deck-resolution', () => ({
+  useDeckResolution: () => ({ thresholdFor: mockThresholdFor })
+}))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
@@ -32,9 +43,9 @@ function makeResult(overrides = {}) {
   }
 }
 
-function mountSummary({ results = [], leech_threshold = 24 } = {}) {
+function mountSummary({ results = [] } = {}) {
   return mount(SessionSummary, {
-    props: { results, leech_threshold },
+    props: { results },
     global: { stubs: { StatTile: StatTileStub } }
   })
 }
@@ -42,6 +53,10 @@ function mountSummary({ results = [], leech_threshold = 24 } = {}) {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('SessionSummary (index.vue)', () => {
+  beforeEach(() => {
+    mockThresholdFor.mockReset().mockReturnValue(24)
+  })
+
   // ── Structure ───────────────────────────────────────────────────────────────
 
   test('renders session-summary root', () => {
@@ -110,15 +125,18 @@ describe('SessionSummary (index.vue)', () => {
     expect(wrapper.find('[data-testid="stat-tile-stub"]').exists()).toBe(true)
   })
 
-  // ── leech_threshold prop threading [obligation] ───────────────────────────
-  // session-summary passes its own leech_threshold prop into aggregateSession —
+  // ── thresholdFor(deck_id) threading [obligation] ──────────────────────────
+  // session-summary passes DeckResolution's thresholdFor into aggregateSession —
   // a different threshold on the same results must change the derived summary.
 
-  test('passes leech_threshold into aggregateSession, changing stuck_count for the same results [obligation]', () => {
+  test('passes thresholdFor into aggregateSession, changing stuck_count for the same results [obligation]', () => {
     const results = [makeResult({ card_id: 1, passed: false, lapses: 10 })]
 
-    const low_threshold = mountSummary({ results, leech_threshold: 8 })
-    const high_threshold = mountSummary({ results, leech_threshold: 24 })
+    mockThresholdFor.mockReturnValue(8)
+    const low_threshold = mountSummary({ results })
+
+    mockThresholdFor.mockReturnValue(24)
+    const high_threshold = mountSummary({ results })
 
     expect(
       low_threshold.find('[data-testid="stat-tile-stub"]').attributes('data-stuck-count')
@@ -126,6 +144,22 @@ describe('SessionSummary (index.vue)', () => {
     expect(
       high_threshold.find('[data-testid="stat-tile-stub"]').attributes('data-stuck-count')
     ).toBe('0')
+  })
+
+  test('resolves each result own deck threshold via thresholdFor(deck_id), per deck [obligation]', () => {
+    const threshold_by_deck = { 1: 4, 2: 30 }
+    mockThresholdFor.mockImplementation((deck_id) => threshold_by_deck[deck_id])
+
+    const results = [
+      makeResult({ card_id: 1, deck_id: 1, passed: false, lapses: 5 }),
+      makeResult({ card_id: 2, deck_id: 2, passed: false, lapses: 5 })
+    ]
+    const wrapper = mountSummary({ results })
+
+    // deck 1's threshold (4) is crossed by lapses=5; deck 2's threshold (30) is not.
+    expect(wrapper.find('[data-testid="stat-tile-stub"]').attributes('data-stuck-count')).toBe('1')
+    expect(mockThresholdFor).toHaveBeenCalledWith(1)
+    expect(mockThresholdFor).toHaveBeenCalledWith(2)
   })
 
   // ── Footer close button emits close [obligation] ──────────────────────────

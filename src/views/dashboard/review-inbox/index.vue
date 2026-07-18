@@ -25,7 +25,7 @@ function onItemClicked(deck: Deck) {
     return
   }
 
-  study_session.start([deck])
+  study_session.start([deck.id])
 }
 </script>
 

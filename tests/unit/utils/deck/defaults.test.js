@@ -15,12 +15,15 @@ describe('deck defaults', () => {
 
   test('DECK_CONFIG_DEFAULTS covers every DeckConfig field', () => {
     expect(DECK_CONFIG_DEFAULTS).toMatchObject({
-      study_all_cards: false,
       shuffle: false,
       flip_cards: false,
       is_spaced: true,
       auto_play: false
     })
+  })
+
+  test('DECK_CONFIG_DEFAULTS no longer carries study_all_cards (dropped with the deck-blind study session) [obligation]', () => {
+    expect(DECK_CONFIG_DEFAULTS).not.toHaveProperty('study_all_cards')
   })
 
   test('DECK_CONFIG_DEFAULTS no longer carries the daily-limit fields (moved to pacing overrides)', () => {
@@ -73,10 +76,8 @@ describe('deck defaults', () => {
       expect(buildNewDeckPayload('My Deck').is_public).toBe(DECK_SETTINGS_DEFAULTS.is_public)
     })
 
-    test('applies the study_config default', () => {
-      expect(buildNewDeckPayload('My Deck').study_config).toEqual({
-        study_all_cards: DECK_CONFIG_DEFAULTS.study_all_cards
-      })
+    test('applies an empty study_config default', () => {
+      expect(buildNewDeckPayload('My Deck').study_config).toEqual({})
     })
 
     test('populates a cover_config', () => {

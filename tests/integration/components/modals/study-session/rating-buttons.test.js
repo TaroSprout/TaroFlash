@@ -1,15 +1,36 @@
-import { describe, test, expect, beforeEach } from 'vite-plus/test'
+import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { Rating } from 'ts-fsrs'
 import RatingButtons from '@/views/study-session/session-studying/rating-buttons/index.vue'
 import { PrimedGradeKey } from '@/views/study-session/session-studying/card/primed-grade-context'
 
+// ── Hoisted mocks ─────────────────────────────────────────────────────────────
+// rating-buttons/index.vue no longer takes side/show_all_ratings/loading as
+// props — it reads them off the injected StudySessionController.
+
+const { display_side, show_all_ratings, loading } = await vi.hoisted(async () => {
+  const { ref } = await import('vue')
+  return { display_side: ref('cover'), show_all_ratings: ref(false), loading: ref(false) }
+})
+
+vi.mock('@/views/study-session/composables/session-controller', () => ({
+  useInjectedStudySessionController: () => ({ display_side, show_all_ratings, loading })
+}))
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function mountRatingButtons({ primed_grade = null, ...props } = {}) {
+function mountRatingButtons({
+  side = 'cover',
+  show_all_ratings: sar = false,
+  loading: is_loading = false,
+  primed_grade = null
+} = {}) {
+  display_side.value = side
+  show_all_ratings.value = sar
+  loading.value = is_loading
+
   return mount(RatingButtons, {
-    props,
     global: { provide: { [PrimedGradeKey]: ref(primed_grade) } }
   })
 }
@@ -17,6 +38,12 @@ function mountRatingButtons({ primed_grade = null, ...props } = {}) {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('RatingButtons', () => {
+  beforeEach(() => {
+    display_side.value = 'cover'
+    show_all_ratings.value = false
+    loading.value = false
+  })
+
   // ── side: 'front' ──────────────────────────────────────────────────────────
 
   describe('when side is "front"', () => {

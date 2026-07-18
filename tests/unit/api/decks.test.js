@@ -37,7 +37,6 @@ import {
   fetchMemberDecks,
   fetchDeck,
   fetchMemberDeckCount,
-  fetchDecksByIds,
   upsertDeck,
   deleteDeck,
   moveDeck
@@ -89,35 +88,6 @@ describe('fetchDeck', () => {
     const err = new Error('missing')
     queryMock.single.mockResolvedValueOnce({ data: null, error: err })
     await expect(fetchDeck(5)).rejects.toBe(err)
-  })
-})
-
-describe('fetchDecksByIds', () => {
-  test('returns an empty array without querying when ids is empty', async () => {
-    const result = await fetchDecksByIds([])
-    expect(result).toEqual([])
-    expect(supabase.rpc).not.toHaveBeenCalled()
-  })
-
-  test('calls get_member_decks RPC filtered by the given ids', async () => {
-    const rows = [{ id: 1 }, { id: 2 }]
-    queryMock.in.mockResolvedValueOnce({ data: rows, error: null })
-    const result = await fetchDecksByIds([1, 2])
-    expect(capturedRpcs[0].fn).toBe('get_member_decks')
-    expect(queryMock.in).toHaveBeenCalledWith('id', [1, 2])
-    expect(result).toEqual(rows)
-  })
-
-  test('returns an empty array when data is null', async () => {
-    queryMock.in.mockResolvedValueOnce({ data: null, error: null })
-    const result = await fetchDecksByIds([1])
-    expect(result).toEqual([])
-  })
-
-  test('throws when the query errors', async () => {
-    const err = new Error('denied')
-    queryMock.in.mockResolvedValueOnce({ data: null, error: err })
-    await expect(fetchDecksByIds([1])).rejects.toBe(err)
   })
 })
 

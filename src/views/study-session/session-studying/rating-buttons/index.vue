@@ -1,31 +1,24 @@
 <script setup lang="ts">
-import { type RecordLog } from 'ts-fsrs'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import SimpleRatingButtons from './simple.vue'
 import AdvancedRatingButtons from './advanced.vue'
-
-type RatingButtonsProps = {
-  options?: RecordLog
-  side: CardSide
-  show_all_ratings?: boolean
-  loading?: boolean
-}
-
-const { side, show_all_ratings = false, loading = false } = defineProps<RatingButtonsProps>()
-
-const { t } = useI18n()
+import { useInjectedStudySessionController } from '@/views/study-session/composables/session-controller'
 
 const emit = defineEmits<{
   (e: 'started'): void
   (e: 'rated', grade: import('ts-fsrs').Grade): void
 }>()
+
+const { t } = useI18n()
+
+const { display_side, show_all_ratings, loading } = useInjectedStudySessionController()
 </script>
 
 <template>
   <div data-testid="rating-buttons" class="w-full">
     <ui-button
-      v-if="side === 'cover'"
+      v-if="display_side === 'cover'"
       data-testid="rating-buttons__start"
       data-theme="blue-500"
       data-theme-dark="blue-650"

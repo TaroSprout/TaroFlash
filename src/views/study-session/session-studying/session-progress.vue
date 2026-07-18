@@ -1,16 +1,12 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiProgressBar from '@/components/ui-kit/progress-bar.vue'
+import { useInjectedStudySessionController } from '@/views/study-session/composables/session-controller'
 
-type SessionProgressProps = {
-  editing: boolean
-  saving: boolean
-  is_cover: boolean
-  reviewed: number
-  total: number
-}
+const { editing, saving, is_cover, current_index, cards } = useInjectedStudySessionController()
 
-const { reviewed, total } = defineProps<SessionProgressProps>()
+const total = computed(() => cards.value.length)
 </script>
 
 <template>
@@ -37,9 +33,9 @@ const { reviewed, total } = defineProps<SessionProgressProps>()
 
       <ui-progress-bar
         data-theme="blue-500"
-        :value="reviewed"
+        :value="current_index"
         :max="total"
-        :label="`${reviewed}/${total}`"
+        :label="`${current_index}/${total}`"
         class="transition-opacity duration-300"
         :class="is_cover ? 'opacity-0' : 'opacity-100'"
       />

@@ -1,6 +1,5 @@
 export * from './cards-page'
-export * from './study-session-cards'
-export * from './multi-deck-study-cards'
+export * from './session-bootstrap'
 export * from './cards-by-ids'
 export * from './member-card-count'
 export * from './member-card-index'

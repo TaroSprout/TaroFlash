@@ -1,12 +1,12 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import { defineComponent, h, ref } from 'vue'
+import { defineComponent, h } from 'vue'
 
-// Deck context resolves a card's appearance by deck_id. Mock the seam so each
-// test controls what appearanceFor() returns for the card under test.
+// Deck resolution resolves a card's appearance by deck_id. Mock the seam so
+// each test controls what appearanceFor() returns for the card under test.
 const { mockAppearanceFor } = vi.hoisted(() => ({ mockAppearanceFor: vi.fn(() => ({})) }))
-vi.mock('@/views/study-session/deck-context', () => ({
-  useDeckContext: () => ref({ appearanceFor: mockAppearanceFor, covers: [] })
+vi.mock('@/views/study-session/deck-resolution', () => ({
+  useDeckResolution: () => ({ appearanceFor: mockAppearanceFor, covers: { value: [] } })
 }))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────

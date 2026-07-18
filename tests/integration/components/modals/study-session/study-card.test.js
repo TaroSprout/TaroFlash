@@ -3,7 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 import { FSRS, generatorParameters, createEmptyCard, Rating } from 'ts-fsrs'
 import StudyCard from '@/views/study-session/session-studying/card/study-card.vue'
-import { useProvideDeckContext } from '@/views/study-session/deck-context'
+import { buildDeckResolution, provideDeckResolution } from '@/views/study-session/deck-resolution'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -83,32 +83,34 @@ function makeOptionsWithDue(due) {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function mountStudyCard(props = {}) {
-  return mount(StudyCard, {
-    props: { side: 'front', ...props },
-    attachTo: document.body,
-    global: { stubs: { Card: CardStub } }
-  })
-}
-
 /**
- * Mounts StudyCard inside a parent that provides a DeckContext so tests can
- * verify the cover/attributes resolution without importing the private injection
- * key. The `decks` array is passed to `useProvideDeckContext`.
+ * StudyCard unconditionally injects a DeckResolution (throws without one), so
+ * every mount goes through a parent that provides one. `decks` defaults to an
+ * empty list — appearanceFor(undefined-or-unknown deck_id) resolves to `{}`,
+ * matching the "no matching deck" fallback exercised by most of this file's
+ * tests. Returns `.findComponent(StudyCard)` — a VueWrapper scoped to the
+ * StudyCard instance itself — so every existing `wrapper.vm.rate(...)` /
+ * `wrapper.emitted(...)` call site below keeps working unchanged against the
+ * actual StudyCard instance, not the wrapping host component.
  */
 function mountStudyCardWithDeckContext(decks, card_data, extra_props = {}) {
   const Wrapper = defineComponent({
     setup() {
-      useProvideDeckContext(() => decks)
+      provideDeckResolution(buildDeckResolution(() => decks))
     },
     render() {
       return h(StudyCard, { card: card_data, side: 'front', ...extra_props })
     }
   })
-  return mount(Wrapper, {
+  const root = mount(Wrapper, {
     attachTo: document.body,
     global: { stubs: { Card: CardStub } }
   })
+  return root.findComponent(StudyCard)
+}
+
+function mountStudyCard(props = {}) {
+  return mountStudyCardWithDeckContext([], undefined, props)
 }
 
 /**
@@ -902,7 +904,7 @@ describe('StudyCard', () => {
   // ── swipe() via keyboard shortcuts (arrowright/arrowleft) ─────────────────
 
   test('arrowright shortcut calls swipe and flings card right when not animating [obligation]', async () => {
-    const wrapper = mountStudyCard({ side: 'back', options })
+    mountStudyCard({ side: 'back', options })
     await flushPromises()
 
     capturedShortcuts['arrowright']?.()
@@ -914,7 +916,7 @@ describe('StudyCard', () => {
   })
 
   test('arrowleft shortcut calls swipe and flings card left when not animating [obligation]', async () => {
-    const wrapper = mountStudyCard({ side: 'back', options })
+    mountStudyCard({ side: 'back', options })
     await flushPromises()
 
     capturedShortcuts['arrowleft']?.()

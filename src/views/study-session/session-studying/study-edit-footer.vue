@@ -1,24 +1,20 @@
 <script setup lang="ts">
 import { useStagedTap } from '@/composables/ui/staged-tap'
+import { useInjectedStudySessionController } from '@/views/study-session/composables/session-controller'
 
-const { is_starting_side } = defineProps<{ is_starting_side: boolean }>()
-
-const emit = defineEmits<{
-  (e: 'flip'): void
-  (e: 'done'): void
-}>()
+const { is_starting_side, flipCurrentCard, stopEdit } = useInjectedStudySessionController()
 
 const { playing: flip_playing, tap: tapFlip } = useStagedTap({ triggerAt: 'press' })
 const { playing: done_playing, tap: tapDone } = useStagedTap({ triggerAt: 'press' })
 
 function onFlip(e: MouseEvent) {
-  tapFlip(() => emit('flip'), {
-    audio: is_starting_side ? 'transition_up' : 'transition_down'
+  tapFlip(flipCurrentCard, {
+    audio: is_starting_side.value ? 'transition_up' : 'transition_down'
   })(e)
 }
 
 function onDone(e: MouseEvent) {
-  tapDone(() => emit('done'), { audio: 'music_plink_ok' })(e)
+  tapDone(stopEdit, { audio: 'music_plink_ok' })(e)
 }
 </script>
 
