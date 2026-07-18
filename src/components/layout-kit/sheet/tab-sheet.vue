@@ -41,7 +41,7 @@ const {
   sidebar_query = 'w>=lg & fine',
   sheet_px,
   hover_sfx = TYPE_SFX,
-  select_sfx = 'select',
+  select_sfx = 'snappy_button_5',
   reselect_sfx = 'digi_powerdown',
   show_back = false
 } = defineProps<TabSheetProps>()
