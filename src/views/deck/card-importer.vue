@@ -22,14 +22,14 @@ const { deck_id, guardAddCards, handleLimitError } = inject(cardEditorKey)!
 
 const has_unsaved_changes = computed(() => cards.value.length > 0)
 
+// Lines without the delimiter (blank lines, stray notes) have no back side —
+// skip them instead of crashing on `back.trim()`.
 function onImport() {
-  cards.value = raw_text.value.split('\n').map((line) => {
-    const [front, back] = line.split(delimiter.value)
-    return {
-      front_text: front.trim(),
-      back_text: back.trim()
-    }
-  })
+  cards.value = raw_text.value
+    .split('\n')
+    .map((line) => line.split(delimiter.value))
+    .filter((parts): parts is [string, string, ...string[]] => parts.length >= 2)
+    .map(([front, back]) => ({ front_text: front.trim(), back_text: back.trim() }))
 }
 
 async function onSave() {
