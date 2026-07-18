@@ -110,10 +110,6 @@ const is_full_bleed = computed(
 )
 
 onMounted(async () => {
-  // Opening straight onto a full-bleed tab starts with the chrome already gone
-  // rather than animating it away in front of the user.
-  if (is_full_bleed.value) chrome.snap(true)
-
   if (initial_side) {
     await after_enter
     editor.setActiveSide(initial_side)
@@ -158,6 +154,16 @@ function onChromeBack() {
 // directly rather than via setActiveSide so it doesn't fire the slide sfx.
 watch(active_tab, (tab) => {
   if (tab === null) editor.active_side.value = 'cover'
+})
+
+// The preview and aside unmount at the phone boundary and remount in their
+// untucked poses on the way back, dropping the imperative tuck styling — so
+// whenever they (re)appear, snap the chrome to the pose the displayed tab
+// demands. This also covers first mount: a sheet opened straight onto a
+// full-bleed tab starts with the chrome already gone rather than animating it
+// away in front of the user.
+watch([preview_el, aside_el], ([preview]) => {
+  if (preview) chrome.snap(is_full_bleed.value)
 })
 </script>
 
