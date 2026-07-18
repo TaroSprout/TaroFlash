@@ -598,6 +598,7 @@
   "deck.settings-modal.review-pacing.limits-heading": "Daily Limits",
   "deck.settings-modal.review-pacing.limits-description": "How much this deck puts in front of you each day.",
   "deck.settings-modal.review-pacing.limits-hint": "Set either to 0 for no limit.",
+  "deck.settings-modal.review-pacing.advanced-label": "Advanced",
   "deck.settings-modal.review-pacing.scheduling-heading": "Scheduling",
   "deck.settings-modal.review-pacing.scheduling-description": "How the scheduler spaces your reviews over time.",
   "deck.settings-modal.review-pacing.desired-retention-label": "Desired Retention",
