@@ -144,7 +144,12 @@ vi.mock('@/views/deck/deck-settings/deck-aside.vue', async () => {
 
 vi.mock('@/views/deck/deck-settings/deck-save-button.vue', async () => {
   const { defineComponent, h } = await import('vue')
-  return { default: defineComponent({ name: 'DeckSaveButton', setup: () => () => h('div') }) }
+  return {
+    default: defineComponent({
+      name: 'DeckSaveButton',
+      setup: () => () => h('div', { 'data-testid': 'deck-save-button-stub' })
+    })
+  }
 })
 
 vi.mock('@/components/deck/pinned-preview.vue', async () => {
@@ -514,5 +519,27 @@ describe('DeckSettings — between hook drives the chrome tuck/restore', () => {
     await between()
 
     expect(mockChromeRestore).toHaveBeenCalledOnce()
+  })
+})
+
+// ── Layout poses across breakpoints ───────────────────────────────────────────
+
+describe('DeckSettings — layout poses across breakpoints', () => {
+  test('tablet keeps the aside, scrollbar and preview in their tablet poses', async () => {
+    const { wrapper } = makeWrapper()
+    await setLayout('tablet')
+
+    expect(wrapper.find('[data-testid="deck-settings__aside"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="deck-preview-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="deck-settings__pinned-preview"]').exists()).toBe(true)
+  })
+
+  test('phone drops the aside and preview and shows the directory save button', async () => {
+    const { wrapper } = makeWrapper()
+    await setLayout('phone')
+
+    expect(wrapper.find('[data-testid="deck-settings__aside"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="deck-preview-stub"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="deck-save-button-stub"]').exists()).toBe(true)
   })
 })

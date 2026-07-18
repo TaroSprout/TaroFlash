@@ -407,3 +407,39 @@ describe('PagedWindow', () => {
     expect(wrapper.find('[data-testid="content"]').exists()).toBe(true)
   })
 })
+
+// ── Optional sfx + danger + hidden close branches ─────────────────────────────
+
+describe('PagedWindow — sfx suppression, danger pages, hidden close', () => {
+  test('empty-string select_sfx and reselect_sfx suppress all selection sounds', async () => {
+    const wrapper = mountWindow({ select_sfx: '', reselect_sfx: '' })
+    const tabs = wrapper.findAll('[data-testid="paged-window__tab"]')
+
+    await tabs[1].trigger('click')
+    await tabs[1].trigger('click')
+
+    expect(wrapper.emitted('select')).toBeTruthy()
+    expect(wrapper.emitted('reselect')).toBeTruthy()
+    expect(mockEmitSfx).not.toHaveBeenCalled()
+  })
+
+  test('a danger page renders as a sidebar tab and still selects normally', async () => {
+    const wrapper = mountWindow()
+    const danger_tab = wrapper
+      .findAll('[data-testid="paged-window__tab"]')
+      .find((tab) => tab.text().includes('Danger Zone'))
+
+    expect(danger_tab).toBeTruthy()
+    await danger_tab.trigger('click')
+
+    expect(wrapper.emitted('select')?.at(-1)).toEqual(['danger-zone'])
+    expect(danger_tab.attributes('data-active')).toBe('true')
+  })
+
+  test('show_close_button: false hides the frame close affordance', () => {
+    const wrapper = mountWindow({ show_close_button: false })
+    expect(
+      wrapper.find('[data-testid="app-window-stub"]').attributes('data-show-close-button')
+    ).toBe('false')
+  })
+})

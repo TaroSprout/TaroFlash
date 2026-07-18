@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, computed } from 'vue'
+import { defineComponent, h, computed, ref, nextTick } from 'vue'
 
 // ── Hoisted state ─────────────────────────────────────────────────────────────
 
@@ -107,18 +107,32 @@ vi.mock('@/views/settings/tab-account-access/index.vue', async () => {
 
 vi.mock('@/views/settings/settings-aside.vue', async () => {
   const { defineComponent, h } = await import('vue')
-  return { default: defineComponent({ name: 'SettingsAside', setup: () => () => h('div') }) }
+  return {
+    default: defineComponent({
+      name: 'SettingsAside',
+      setup: () => () => h('div', { 'data-testid': 'settings-aside-stub' })
+    })
+  }
 })
 
 vi.mock('@/views/settings/settings-save-button.vue', async () => {
   const { defineComponent, h } = await import('vue')
-  return { default: defineComponent({ name: 'SettingsSaveButton', setup: () => () => h('div') }) }
+  return {
+    default: defineComponent({
+      name: 'SettingsSaveButton',
+      setup: () => () => h('div', { 'data-testid': 'settings-save-button-stub' })
+    })
+  }
 })
 
 // ── PagedWindow stub ──────────────────────────────────────────────────────────
 // Settings' own routing/chrome-back wiring is under test; paged-window's own
 // pages/directory/back-mode behavior is covered in
 // tests/integration/components/layout-kit/paged-window/index.test.js.
+
+// Shared reactive layout mode the stub exposes, so tests can cross breakpoints
+// mid-test the same way the deck-settings suite does.
+const stub_layout_mode = ref('desktop')
 
 const PagedWindowStub = defineComponent({
   name: 'PagedWindow',
@@ -131,9 +145,9 @@ const PagedWindowStub = defineComponent({
   setup(props, { slots, emit, expose }) {
     const displayed_page = computed(() => props.active ?? 'directory')
     expose({
-      layout_mode: computed(() => 'desktop'),
+      layout_mode: computed(() => stub_layout_mode.value),
       displayed_page,
-      has_sidebar: computed(() => true)
+      has_sidebar: computed(() => stub_layout_mode.value === 'desktop')
     })
 
     return () =>
@@ -150,6 +164,8 @@ const PagedWindowStub = defineComponent({
           'account-access'
         ),
         h('div', { 'data-testid': 'pw__aside' }, slots.aside?.()),
+        h('div', { 'data-testid': 'pw__scrollbar' }, slots.scrollbar?.()),
+        h('div', { 'data-testid': 'pw__directory-footer' }, slots['directory-footer']?.()),
         h('div', { 'data-testid': 'pw__overlay' }, slots.overlay?.()),
         h(
           'div',
@@ -196,6 +212,7 @@ function makeWrapper(closeFn = vi.fn(), member_card_stub) {
 // ── Reset ─────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
+  stub_layout_mode.value = 'desktop'
   mockEditor.is_dirty.value = false
   mockEditor.saving.value = false
   mockEditor.saveMember.mockReset().mockResolvedValue(true)
@@ -407,5 +424,33 @@ describe('settings app — member-card avatar edit wiring', () => {
     const modal = useModal()
     expect(modal.modal_stack.value).toHaveLength(1)
     expect(modal.modal_stack.value[0].component).toBe(AvatarPickerModal)
+  })
+})
+
+// ── Layout poses across breakpoints ───────────────────────────────────────────
+
+describe('settings app — layout poses across breakpoints', () => {
+  test('tablet keeps the aside and scrollbar, drops the desktop width', async () => {
+    const wrapper = makeWrapper()
+    stub_layout_mode.value = 'tablet'
+    await nextTick()
+    await nextTick()
+
+    expect(wrapper.find('[data-testid="settings-container"]').attributes('data-layout')).toBe(
+      'tablet'
+    )
+    expect(wrapper.find('[data-testid="settings__aside"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="settings__pinned-preview"]').exists()).toBe(true)
+  })
+
+  test('phone drops the aside, scrollbar and preview, and shows the directory save button', async () => {
+    const wrapper = makeWrapper()
+    stub_layout_mode.value = 'phone'
+    await nextTick()
+    await nextTick()
+
+    expect(wrapper.find('[data-testid="settings__aside"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="settings__pinned-preview"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="settings-save-button-stub"]').exists()).toBe(true)
   })
 })
