@@ -31,7 +31,7 @@ const show_backdrop = computed(() => modal_stack.value.some((m) => m.backdrop))
       v-if="modal_stack.length > 0"
       data-testid="ui-kit-modal-backdrop"
       class="pointer-events-auto fixed inset-0 flex items-center justify-center px-4 py-7"
-      :class="{ 'pointer-fine:backdrop-blur-4 pointer-fine:bg-black/10': show_backdrop }"
+      :class="{ 'backdrop-blur-4 bg-black/10': show_backdrop }"
       @click="requestClose"
     >
       <slot></slot>
