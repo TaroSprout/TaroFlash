@@ -443,3 +443,39 @@ describe('PagedWindow — sfx suppression, danger pages, hidden close', () => {
     ).toBe('false')
   })
 })
+
+// ── stretch_page [obligation] ─────────────────────────────────────────────────
+// Opt-in and false by default — the content-row/page pair must render exactly
+// as before when the prop is absent, since every other paged-window caller
+// still relies on the content-hugging layout.
+
+describe('PagedWindow — stretch_page [obligation]', () => {
+  test('defaults to data-stretch="false" on both the content-row and the page when the prop is omitted [obligation]', () => {
+    const wrapper = mountWindow({ active: 'design' })
+
+    expect(
+      wrapper.find('[data-testid="paged-window__content-row"]').attributes('data-stretch')
+    ).toBe('false')
+    expect(wrapper.find('[data-testid="paged-window__page"]').attributes('data-stretch')).toBe(
+      'false'
+    )
+  })
+
+  test('stretch_page: true flips data-stretch to "true" on both the content-row and the page [obligation]', () => {
+    const wrapper = mountWindow({ active: 'design', stretch_page: true })
+
+    expect(
+      wrapper.find('[data-testid="paged-window__content-row"]').attributes('data-stretch')
+    ).toBe('true')
+    expect(wrapper.find('[data-testid="paged-window__page"]').attributes('data-stretch')).toBe(
+      'true'
+    )
+  })
+
+  test('the directory (not a page) never carries data-stretch, regardless of stretch_page', () => {
+    setDesktop(false)
+    const wrapper = mountWindow({ active: null, stretch_page: true }, {}, { attachTo: undefined })
+
+    expect(wrapper.find('[data-testid="paged-window__page"]').exists()).toBe(false)
+  })
+})

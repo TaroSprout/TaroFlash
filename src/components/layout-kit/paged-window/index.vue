@@ -237,6 +237,7 @@ function onDirectoryNavigate(value: string) {
 
     <div
       data-testid="paged-window__content-row"
+      :data-stretch="stretch_page"
       class="flex h-full"
       :class="stretch_page ? 'items-stretch' : 'items-start'"
     >
@@ -273,6 +274,7 @@ function onDirectoryNavigate(value: string) {
               v-else
               :key="displayed_page"
               data-testid="paged-window__page"
+              :data-stretch="stretch_page"
               class="w-full"
               :class="stretch_page && 'flex flex-1 flex-col'"
             >

@@ -187,7 +187,8 @@ const PagedWindowStub = defineComponent({
     active: { type: String, default: null },
     pages: { type: Array, default: () => [] },
     groups: { type: Array, default: () => [] },
-    between: { type: Function, default: undefined }
+    between: { type: Function, default: undefined },
+    stretch_page: { type: Boolean, default: false }
   },
   emits: ['close', 'back', 'select', 'reselect', 'update:active'],
   setup(props, { slots, emit, expose }) {
@@ -447,6 +448,21 @@ describe('DeckSettings — is_full_bleed is phone-exempt regardless of TAB_META 
     const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
     await setLayout('desktop')
     expect(wrapper.vm.is_full_bleed).toBe(true)
+  })
+
+  // [obligation] paged-window's stretch_page prop is only true when the
+  // displayed tab is full-bleed — every other tab keeps the content-hugging
+  // layout paged-window has always used.
+  test('passes stretch_page: true to paged-window while a full-bleed tab is displayed on desktop [obligation]', async () => {
+    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
+    await setLayout('desktop')
+    expect(wrapper.findComponent({ name: 'PagedWindow' }).props('stretch_page')).toBe(true)
+  })
+
+  test('passes stretch_page: false to paged-window on phone layout, where is_full_bleed is exempt [obligation]', async () => {
+    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
+    await setLayout('phone')
+    expect(wrapper.findComponent({ name: 'PagedWindow' }).props('stretch_page')).toBe(false)
   })
 })
 

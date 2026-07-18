@@ -117,71 +117,84 @@ describe('usePacingFields — selected_preset_value [obligation]', () => {
   })
 })
 
-// ── has_advanced_override [obligation] ────────────────────────────────────────
-// Badges the "Advanced" button — scoped to the three fields hidden inside that
-// modal (retention/steps). Daily-limit overrides live outside it and must NOT
-// flip this flag, even though they have their own has_max_*_override computeds.
+// ── override_count / has_overrides [obligation] ───────────────────────────────
+// Whole-draft divergence from the preset — counts KEY PRESENCE in
+// pacing_overrides, not value inequality. A pinned-null daily-cap (0 in the
+// UI) still counts, since the key is present even though the value is null.
 
-describe('usePacingFields — has_advanced_override [obligation]', () => {
-  test('is false when no override key is pinned', () => {
-    const { has_advanced_override } = usePacingFields(makeDeck(), makeDraft())
-    expect(has_advanced_override.value).toBe(false)
+describe('usePacingFields — override_count / has_overrides [obligation]', () => {
+  test('override_count is 0 and has_overrides is false when no override key is pinned', () => {
+    const { override_count, has_overrides } = usePacingFields(makeDeck(), makeDraft())
+    expect(override_count.value).toBe(0)
+    expect(has_overrides.value).toBe(false)
   })
 
-  test('is true when desired_retention is pinned', () => {
-    const { has_advanced_override } = usePacingFields(
+  test('override_count counts every distinct pinned key, regardless of field', () => {
+    const { override_count, has_overrides } = usePacingFields(
       makeDeck(),
-      makeDraft({ pacing_overrides: { desired_retention: 95 } })
+      makeDraft({
+        pacing_overrides: { desired_retention: 95, learning_steps: ['1d'], leech_threshold: 12 }
+      })
     )
-    expect(has_advanced_override.value).toBe(true)
+    expect(override_count.value).toBe(3)
+    expect(has_overrides.value).toBe(true)
   })
 
-  test('is true when only learning_steps is pinned', () => {
-    const { has_advanced_override } = usePacingFields(
+  test('a pinned-null daily-cap override (0 in the UI) still counts — key presence, not value truthiness [obligation]', () => {
+    const { override_count, has_overrides } = usePacingFields(
       makeDeck(),
-      makeDraft({ pacing_overrides: { learning_steps: ['1d'] } })
+      makeDraft({ pacing_overrides: { max_reviews_per_day: null } })
     )
-    expect(has_advanced_override.value).toBe(true)
+    expect(override_count.value).toBe(1)
+    expect(has_overrides.value).toBe(true)
+  })
+})
+
+// ── resetAllOverrides [obligation] ────────────────────────────────────────────
+// The bulk "follow the preset again" escape hatch — deletes every key from
+// pacing_overrides in one call, driving override_count back to 0.
+
+describe('usePacingFields — resetAllOverrides [obligation]', () => {
+  test('deletes every key from draft.pacing_overrides [obligation]', () => {
+    const draft = makeDraft({
+      pacing_overrides: { desired_retention: 95, learning_steps: ['1d'], max_reviews_per_day: null }
+    })
+    const { resetAllOverrides } = usePacingFields(makeDeck(), draft)
+
+    resetAllOverrides()
+
+    expect(draft.pacing_overrides).toEqual({})
   })
 
-  test('is true when only relearning_steps is pinned', () => {
-    const { has_advanced_override } = usePacingFields(
-      makeDeck(),
-      makeDraft({ pacing_overrides: { relearning_steps: ['1d'] } })
-    )
-    expect(has_advanced_override.value).toBe(true)
+  test('drives override_count to 0 and has_overrides to false [obligation]', () => {
+    const draft = makeDraft({ pacing_overrides: { desired_retention: 95, leech_threshold: 12 } })
+    const { override_count, has_overrides, resetAllOverrides } = usePacingFields(makeDeck(), draft)
+
+    resetAllOverrides()
+
+    expect(override_count.value).toBe(0)
+    expect(has_overrides.value).toBe(false)
   })
 
-  test('stays false when only max_reviews_per_day is pinned (daily limits are not "advanced") [obligation]', () => {
-    const { has_advanced_override } = usePacingFields(
-      makeDeck(),
-      makeDraft({ pacing_overrides: { max_reviews_per_day: 30 } })
-    )
-    expect(has_advanced_override.value).toBe(false)
+  test('does not touch review_pacing_preset_id', () => {
+    const draft = makeDraft({
+      review_pacing_preset_id: 2,
+      pacing_overrides: { desired_retention: 95 }
+    })
+    const { resetAllOverrides } = usePacingFields(makeDeck(), draft)
+
+    resetAllOverrides()
+
+    expect(draft.review_pacing_preset_id).toBe(2)
   })
 
-  test('stays false when only max_new_per_day is pinned (daily limits are not "advanced") [obligation]', () => {
-    const { has_advanced_override } = usePacingFields(
-      makeDeck(),
-      makeDraft({ pacing_overrides: { max_new_per_day: 30 } })
-    )
-    expect(has_advanced_override.value).toBe(false)
-  })
+  test('is a no-op when pacing_overrides is already empty', () => {
+    const draft = makeDraft()
+    const { resetAllOverrides } = usePacingFields(makeDeck(), draft)
 
-  test('is true when only leech_threshold is pinned [obligation]', () => {
-    const { has_advanced_override } = usePacingFields(
-      makeDeck(),
-      makeDraft({ pacing_overrides: { leech_threshold: 12 } })
-    )
-    expect(has_advanced_override.value).toBe(true)
-  })
+    resetAllOverrides()
 
-  test('is true when only max_interval is pinned [obligation]', () => {
-    const { has_advanced_override } = usePacingFields(
-      makeDeck(),
-      makeDraft({ pacing_overrides: { max_interval: 90 } })
-    )
-    expect(has_advanced_override.value).toBe(true)
+    expect(draft.pacing_overrides).toEqual({})
   })
 })
 

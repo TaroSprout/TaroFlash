@@ -5,6 +5,7 @@ import {
   keyForSteps,
   FSRS_MAX_INTERVAL,
   DEFAULT_LEECH_THRESHOLD,
+  DESIRED_RETENTION_BOUNDS,
   LEECH_THRESHOLD_BOUNDS,
   MAX_INTERVAL_BOUNDS
 } from '@/utils/review-pacing/defaults'
@@ -28,6 +29,12 @@ describe('review-pacing constants', () => {
     expect(MAX_INTERVAL_BOUNDS.min).toBe(0)
     expect(MAX_INTERVAL_BOUNDS.max).toBe(FSRS_MAX_INTERVAL)
     expect(MAX_INTERVAL_BOUNDS.step).toBe(15)
+  })
+
+  test('DESIRED_RETENTION_BOUNDS spans the usable FSRS range (70-97) in 1% steps', () => {
+    expect(DESIRED_RETENTION_BOUNDS.min).toBe(70)
+    expect(DESIRED_RETENTION_BOUNDS.max).toBe(97)
+    expect(DESIRED_RETENTION_BOUNDS.step).toBe(1)
   })
 })
 
