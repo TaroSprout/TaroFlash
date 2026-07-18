@@ -1,26 +1,10 @@
--- Hand-organized declarative schema (by domain). Edit freely — this file is the
--- canonical definition. Run `supabase db diff -f <name>` after editing to
--- produce the migration.
-SET check_function_bodies = false;
+set check_function_bodies = off;
 
--- Single-request bootstrap for a study session over one or more decks. Returns
--- everything the FE session needs in one round-trip:
---
---   { "decks": [ <slim resolved deck>, ... ],       -- requested order
---     "cards": [ <card + embedded review>, ... ] }  -- merged study queue
---
--- `cards` is the same due/new selection (per-deck daily caps, new/review
--- partition, interleave) as get_study_session_cards, but merged across every
--- requested deck. Decks are studied in the given order (an unshuffled session
--- studies deck 1's cards, then deck 2's, ...); ordering inside a deck is the
--- selection function's own interleave. `decks` carries the per-deck appearance
--- + resolved pacing the deck-blind session core needs to schedule each card.
---
--- SECURITY INVOKER (the default): RLS on decks/cards/reviews runs as the caller,
--- so a member only ever sees their own rows even if they pass a foreign deck id.
-CREATE FUNCTION public.get_session_decks_and_cards(p_deck_ids bigint[], p_today_start timestamp with time zone) RETURNS jsonb
-    LANGUAGE sql STABLE
-    AS $$
+CREATE OR REPLACE FUNCTION public.get_session_decks_and_cards(p_deck_ids bigint[], p_today_start timestamp with time zone)
+ RETURNS jsonb
+ LANGUAGE sql
+ STABLE
+AS $function$
   SELECT jsonb_build_object(
     'decks', COALESCE(decks.arr, '[]'::jsonb),
     'cards', COALESCE(cards.arr, '[]'::jsonb)
@@ -74,12 +58,7 @@ CREATE FUNCTION public.get_session_decks_and_cards(p_deck_ids bigint[], p_today_
         LEFT JOIN public.reviews r ON r.card_id = (sc.card).id
       ) AS q
     ) AS cards;
-$$;
+$function$
+;
 
 
-ALTER FUNCTION public.get_session_decks_and_cards(p_deck_ids bigint[], p_today_start timestamp with time zone) OWNER TO postgres;
-
-
-GRANT ALL ON FUNCTION public.get_session_decks_and_cards(p_deck_ids bigint[], p_today_start timestamp with time zone) TO anon;
-GRANT ALL ON FUNCTION public.get_session_decks_and_cards(p_deck_ids bigint[], p_today_start timestamp with time zone) TO authenticated;
-GRANT ALL ON FUNCTION public.get_session_decks_and_cards(p_deck_ids bigint[], p_today_start timestamp with time zone) TO service_role;
