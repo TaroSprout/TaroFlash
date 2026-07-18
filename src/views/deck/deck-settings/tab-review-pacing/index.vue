@@ -7,11 +7,15 @@ import LimitsSection from './limits-section.vue'
 import SchedulingSection from './scheduling-section.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { pacingFieldsKey, usePacingFields } from './use-pacing-fields'
+import { presetActionsKey, usePresetActions } from './use-preset-actions'
 import DeckSaveButton from '../deck-save-button.vue'
 
 const { deck, draft } = inject(deckEditorKey)!
 
-provide(pacingFieldsKey, usePacingFields(deck!, draft))
+const pacing = usePacingFields(deck!, draft)
+
+provide(pacingFieldsKey, pacing)
+provide(presetActionsKey, usePresetActions(pacing, draft, deck!))
 </script>
 
 <template>
