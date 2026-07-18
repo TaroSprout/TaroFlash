@@ -1,5 +1,4 @@
 export * from './list'
 export * from './by-id'
-export * from './by-ids'
 export * from './count'
 export * from './prefetch'
