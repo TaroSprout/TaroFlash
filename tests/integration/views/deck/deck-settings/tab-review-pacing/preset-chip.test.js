@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
-import { pacingFieldsKey } from '@/views/deck/deck-settings/tab-review-pacing/pacing-fields'
+import { pacingFieldsKey } from '@/views/deck/deck-settings/tab-review-pacing/use-pacing-fields'
 import PresetChip from '@/views/deck/deck-settings/tab-review-pacing/preset-chip.vue'
 
 // ── Stub ──────────────────────────────────────────────────────────────────────

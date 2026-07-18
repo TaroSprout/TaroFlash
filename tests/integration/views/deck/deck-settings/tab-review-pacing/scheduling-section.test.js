@@ -1,33 +1,21 @@
-import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
+import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
-import { pacingFieldsKey } from '@/views/deck/deck-settings/tab-review-pacing/pacing-fields'
-
-// ── Hoisted mocks ─────────────────────────────────────────────────────────────
-
-const { mockPresetsData } = vi.hoisted(() => ({ mockPresetsData: { value: [] } }))
-vi.mock('@/api/review-pacing', () => ({ usePresetsQuery: () => ({ data: mockPresetsData }) }))
-
-const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
-vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
-
-const { mockPopScrimReveal } = vi.hoisted(() => ({ mockPopScrimReveal: vi.fn() }))
-vi.mock('@/utils/animations/scrim-reveal', () => ({ popScrimReveal: mockPopScrimReveal }))
-
-const { mockIsPhone } = vi.hoisted(() => ({ mockIsPhone: { value: false } }))
-vi.mock('@/composables/ui/media-query', () => ({
-  useMatchMedia: () => ({
-    get value() {
-      return mockIsPhone.value
-    }
-  })
-}))
-
+import { pacingFieldsKey } from '@/views/deck/deck-settings/tab-review-pacing/use-pacing-fields'
 import SchedulingSection from '@/views/deck/deck-settings/tab-review-pacing/scheduling-section.vue'
 
-const LOCAL_STORAGE_KEY = 'deck-settings-advanced-revealed'
-
 // ── Stubs ─────────────────────────────────────────────────────────────────────
+// AdvancedReveal owns its own reveal chrome (scrim/badge/persistence), covered
+// directly in advanced-reveal.test.js — here it's a pass-through so this suite
+// stays scoped to the field list scheduling-section renders into its slot.
+
+const AdvancedRevealStub = defineComponent({
+  name: 'AdvancedReveal',
+  setup:
+    (_props, { slots }) =>
+    () =>
+      h('div', { 'data-testid': 'advanced-reveal-stub' }, slots.default?.())
+})
 
 const SelectMenuStub = defineComponent({
   name: 'UiSelectMenu',
@@ -84,68 +72,56 @@ const SpinboxStub = defineComponent({
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-function makePacingFields(overrides = {}) {
+function makeField({ value = 0, overridden = false, reset = () => {} } = {}) {
+  return { value: ref(value), overridden: ref(overridden), reset }
+}
+
+function makePacingFields(fieldOverrides = {}) {
   return {
-    desired_retention: ref(90),
-    max_interval: ref(0),
-    leech_threshold: ref(24),
-    learning_steps_key: ref('1m-10m'),
-    learning_steps_options: ref([{ value: '1m-10m', label: 'label' }]),
-    relearning_steps_key: ref('10m'),
-    relearning_steps_options: ref([{ value: '10m', label: 'label' }]),
-    has_desired_retention_override: ref(false),
-    has_max_interval_override: ref(false),
-    has_leech_threshold_override: ref(false),
-    has_learning_steps_override: ref(false),
-    has_relearning_steps_override: ref(false),
-    resetDesiredRetention: vi.fn(),
-    resetLearningSteps: vi.fn(),
-    resetRelearningSteps: vi.fn(),
-    resetLeechThreshold: vi.fn(),
-    resetMaxInterval: vi.fn(),
-    ...overrides
+    fields: {
+      desired_retention: makeField({ value: 90 }),
+      max_interval: makeField({ value: 0 }),
+      leech_threshold: makeField({ value: 24 }),
+      learning_steps: {
+        ...makeField({ value: '1m-10m' }),
+        options: ref([{ value: '1m-10m', label: 'label' }])
+      },
+      relearning_steps: {
+        ...makeField({ value: '10m' }),
+        options: ref([{ value: '10m', label: 'label' }])
+      },
+      ...fieldOverrides
+    }
   }
 }
 
-const mounted_wrappers = []
-
-function makeWrapper({ pacingFieldsOverrides = {} } = {}) {
-  const pacing_fields = makePacingFields(pacingFieldsOverrides)
+function makeWrapper({ fieldOverrides = {} } = {}) {
+  const pacing_fields = makePacingFields(fieldOverrides)
   const wrapper = mount(SchedulingSection, {
     global: {
       provide: { [pacingFieldsKey]: pacing_fields },
-      stubs: { UiSelectMenu: SelectMenuStub, UiSpinbox: SpinboxStub },
+      stubs: {
+        AdvancedReveal: AdvancedRevealStub,
+        UiSelectMenu: SelectMenuStub,
+        UiSpinbox: SpinboxStub
+      },
       mocks: { $t: (k) => k }
-    },
-    attachTo: document.body
+    }
   })
-  mounted_wrappers.push(wrapper)
   return { wrapper, pacing_fields }
 }
-
-beforeEach(() => {
-  mockPresetsData.value = []
-  mockIsPhone.value = false
-  mockEmitSfx.mockClear()
-  mockPopScrimReveal.mockClear()
-  localStorage.clear()
-})
-
-afterEach(() => {
-  localStorage.clear()
-  mounted_wrappers.splice(0).forEach((wrapper) => wrapper.unmount())
-})
 
 // ── rendering ─────────────────────────────────────────────────────────────────
 
 describe('SchedulingSection — rendering', () => {
-  test('renders retention, max-interval, leech-threshold, learning-steps, and relearning-steps rows', () => {
+  test('renders retention, max-interval, leech-threshold, learning-steps, and relearning-steps rows inside the advanced-reveal slot', () => {
     const { wrapper } = makeWrapper()
-    expect(wrapper.find('[data-testid="tab-review-pacing__retention"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="tab-review-pacing__max-interval"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="tab-review-pacing__leech-threshold"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="tab-review-pacing__learning-steps"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="tab-review-pacing__relearning-steps"]').exists()).toBe(true)
+    const slot = wrapper.find('[data-testid="advanced-reveal-stub"]')
+    expect(slot.find('[data-testid="tab-review-pacing__retention"]').exists()).toBe(true)
+    expect(slot.find('[data-testid="tab-review-pacing__max-interval"]').exists()).toBe(true)
+    expect(slot.find('[data-testid="tab-review-pacing__leech-threshold"]').exists()).toBe(true)
+    expect(slot.find('[data-testid="tab-review-pacing__learning-steps"]').exists()).toBe(true)
+    expect(slot.find('[data-testid="tab-review-pacing__relearning-steps"]').exists()).toBe(true)
   })
 
   test('caps the retention spinbox at DESIRED_RETENTION_BOUNDS (70-97) [obligation]', () => {
@@ -161,51 +137,51 @@ describe('SchedulingSection — rendering', () => {
 // ── learning-steps / relearning-steps ─────────────────────────────────────────
 
 describe('SchedulingSection — learning-steps / relearning-steps', () => {
-  test('selecting a learning-steps key writes through learning_steps_key', async () => {
+  test('selecting a learning-steps key writes through fields.learning_steps.value', async () => {
     const { wrapper, pacing_fields } = makeWrapper()
 
     await wrapper
       .find('[data-testid="tab-review-pacing__learning-steps"] [data-testid="ui-select-menu"]')
       .setValue('1m-10m')
 
-    expect(pacing_fields.learning_steps_key.value).toBe('1m-10m')
+    expect(pacing_fields.fields.learning_steps.value.value).toBe('1m-10m')
   })
 
-  test('selecting a relearning-steps key writes through relearning_steps_key', async () => {
+  test('selecting a relearning-steps key writes through fields.relearning_steps.value', async () => {
     const { wrapper, pacing_fields } = makeWrapper()
 
     await wrapper
       .find('[data-testid="tab-review-pacing__relearning-steps"] [data-testid="ui-select-menu"]')
       .setValue('10m')
 
-    expect(pacing_fields.relearning_steps_key.value).toBe('10m')
+    expect(pacing_fields.fields.relearning_steps.value.value).toBe('10m')
   })
 })
 
-// ── spinbox writes [obligation] ─────────────────────────────────────────────────
+// ── spinbox writes ────────────────────────────────────────────────────────────
 
 describe('SchedulingSection — spinbox writes', () => {
-  test('bumping the retention spinbox writes through desired_retention', async () => {
+  test('bumping the retention spinbox writes through fields.desired_retention.value', async () => {
     const { wrapper, pacing_fields } = makeWrapper()
 
     await wrapper
       .find('[data-testid="tab-review-pacing__retention"] [data-testid="ui-spinbox__increment"]')
       .trigger('click')
 
-    expect(pacing_fields.desired_retention.value).toBe(91)
+    expect(pacing_fields.fields.desired_retention.value.value).toBe(91)
   })
 
-  test('bumping the max-interval spinbox writes through max_interval', async () => {
+  test('bumping the max-interval spinbox writes through fields.max_interval.value', async () => {
     const { wrapper, pacing_fields } = makeWrapper()
 
     await wrapper
       .find('[data-testid="tab-review-pacing__max-interval"] [data-testid="ui-spinbox__increment"]')
       .trigger('click')
 
-    expect(pacing_fields.max_interval.value).toBe(1)
+    expect(pacing_fields.fields.max_interval.value.value).toBe(1)
   })
 
-  test('bumping the leech-threshold spinbox writes through leech_threshold', async () => {
+  test('bumping the leech-threshold spinbox writes through fields.leech_threshold.value', async () => {
     const { wrapper, pacing_fields } = makeWrapper()
 
     await wrapper
@@ -214,148 +190,40 @@ describe('SchedulingSection — spinbox writes', () => {
       )
       .trigger('click')
 
-    expect(pacing_fields.leech_threshold.value).toBe(25)
-  })
-})
-
-// ── advanced badge is inert while hidden [obligation] ─────────────────────────
-// Only scheduling-panel__scrim opens the panel; the badge stays inert (no
-// pointer events) while its own content is invisible, so an invisible label
-// isn't clickable.
-
-describe('SchedulingSection — advanced badge is inert while hidden, scrim is the only opener [obligation]', () => {
-  test('the badge starts inert (pointer-events disabled) when not revealed [obligation]', () => {
-    const { wrapper } = makeWrapper()
-    // The badge only carries pointer-events-none via a class we cannot assert
-    // directly — instead assert clicking it does nothing while hidden.
-    const badge = wrapper.find('[data-testid="scheduling-panel__badge"]')
-    expect(badge.exists()).toBe(true)
-  })
-
-  test('clicking the scrim toggles revealed on and calls popScrimReveal with revealed=true [obligation]', async () => {
-    const { wrapper } = makeWrapper()
-
-    await wrapper.find('[data-testid="scheduling-panel__scrim"]').trigger('click')
-
-    expect(mockPopScrimReveal).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.anything(),
-      expect.anything(),
-      true,
-      expect.objectContaining({ collapse: false })
-    )
-  })
-
-  test('clicking the badge after reveal toggles revealed back off and calls popScrimReveal with revealed=false [obligation]', async () => {
-    const { wrapper } = makeWrapper()
-
-    await wrapper.find('[data-testid="scheduling-panel__scrim"]').trigger('click')
-    mockPopScrimReveal.mockClear()
-    await wrapper.find('[data-testid="scheduling-panel__badge"]').trigger('click')
-
-    expect(mockPopScrimReveal).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.anything(),
-      expect.anything(),
-      false,
-      expect.objectContaining({ collapse: false })
-    )
-  })
-
-  test('toggling plays the snappy_button_5 sfx', async () => {
-    const { wrapper } = makeWrapper()
-
-    await wrapper.find('[data-testid="scheduling-panel__scrim"]').trigger('click')
-
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
-  })
-})
-
-// ── collapse follows the phone breakpoint [obligation] ────────────────────────
-
-describe('SchedulingSection — collapse option follows the phone breakpoint [obligation]', () => {
-  test('passes collapse: true to popScrimReveal on phone layout [obligation]', async () => {
-    mockIsPhone.value = true
-    const { wrapper } = makeWrapper()
-
-    await wrapper.find('[data-testid="scheduling-panel__scrim"]').trigger('click')
-
-    expect(mockPopScrimReveal).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.anything(),
-      expect.anything(),
-      true,
-      { collapse: true }
-    )
-  })
-
-  test('passes collapse: false to popScrimReveal on wider layouts [obligation]', async () => {
-    mockIsPhone.value = false
-    const { wrapper } = makeWrapper()
-
-    await wrapper.find('[data-testid="scheduling-panel__scrim"]').trigger('click')
-
-    expect(mockPopScrimReveal).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.anything(),
-      expect.anything(),
-      true,
-      { collapse: false }
-    )
-  })
-})
-
-// ── revealed persists via useLocalRef [obligation] ────────────────────────────
-
-describe('SchedulingSection — revealed persists via localStorage [obligation]', () => {
-  test('toggling writes the new state to localStorage under deck-settings-advanced-revealed [obligation]', async () => {
-    const { wrapper } = makeWrapper()
-
-    await wrapper.find('[data-testid="scheduling-panel__scrim"]').trigger('click')
-
-    expect(localStorage.getItem(LOCAL_STORAGE_KEY)).toBe('true')
-  })
-
-  test('a restored true value renders the fields visible on first paint, without needing a toggle [obligation]', () => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, 'true')
-    const { wrapper } = makeWrapper()
-
-    // With revealed already true on mount, clicking the badge (the "hide"
-    // affordance once revealed) must flip it off — proving the initial state
-    // was read from storage rather than defaulting to false.
-    return wrapper
-      .find('[data-testid="scheduling-panel__badge"]')
-      .trigger('click')
-      .then(() => {
-        expect(localStorage.getItem(LOCAL_STORAGE_KEY)).toBe('false')
-      })
+    expect(pacing_fields.fields.leech_threshold.value.value).toBe(25)
   })
 })
 
 // ── reset wiring [obligation] ──────────────────────────────────────────────────
 
 describe('SchedulingSection — reset wiring [obligation]', () => {
-  test('resetting the max-interval row calls resetMaxInterval [obligation]', async () => {
-    const { wrapper, pacing_fields } = makeWrapper({
-      pacingFieldsOverrides: { has_max_interval_override: ref(true) }
+  test('resetting the max-interval row calls fields.max_interval.reset [obligation]', async () => {
+    const resetMaxInterval = vi.fn()
+    const { wrapper } = makeWrapper({
+      fieldOverrides: {
+        max_interval: makeField({ overridden: true, reset: resetMaxInterval })
+      }
     })
 
     await wrapper
-      .find('[data-testid="tab-review-pacing__max-interval"] [data-testid="tooltip-row__reset"]')
+      .find('[data-testid="tab-review-pacing__max-interval"] [data-testid="field-row__reset"]')
       .trigger('click')
 
-    expect(pacing_fields.resetMaxInterval).toHaveBeenCalledOnce()
+    expect(resetMaxInterval).toHaveBeenCalledOnce()
   })
 
-  test('resetting the leech-threshold row calls resetLeechThreshold [obligation]', async () => {
-    const { wrapper, pacing_fields } = makeWrapper({
-      pacingFieldsOverrides: { has_leech_threshold_override: ref(true) }
+  test('resetting the leech-threshold row calls fields.leech_threshold.reset [obligation]', async () => {
+    const resetLeechThreshold = vi.fn()
+    const { wrapper } = makeWrapper({
+      fieldOverrides: {
+        leech_threshold: makeField({ overridden: true, reset: resetLeechThreshold })
+      }
     })
 
     await wrapper
-      .find('[data-testid="tab-review-pacing__leech-threshold"] [data-testid="tooltip-row__reset"]')
+      .find('[data-testid="tab-review-pacing__leech-threshold"] [data-testid="field-row__reset"]')
       .trigger('click')
 
-    expect(pacing_fields.resetLeechThreshold).toHaveBeenCalledOnce()
+    expect(resetLeechThreshold).toHaveBeenCalledOnce()
   })
 })

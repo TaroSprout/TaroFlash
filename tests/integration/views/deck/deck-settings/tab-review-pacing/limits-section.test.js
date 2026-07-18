@@ -2,7 +2,7 @@ import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
 import { deckEditorKey } from '@/composables/deck/editor'
-import { pacingFieldsKey } from '@/views/deck/deck-settings/tab-review-pacing/pacing-fields'
+import { pacingFieldsKey } from '@/views/deck/deck-settings/tab-review-pacing/use-pacing-fields'
 import LimitsSection from '@/views/deck/deck-settings/tab-review-pacing/limits-section.vue'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
@@ -30,18 +30,20 @@ const SpinboxStub = defineComponent({
 
 // ── Fixture ───────────────────────────────────────────────────────────────────
 
-function makeWrapper({ deck: deckOverrides = {}, pacingFieldsOverrides = {} } = {}) {
+function makeField({ value = 0, overridden = false, reset = vi.fn() } = {}) {
+  return { value: ref(value), overridden: ref(overridden), reset }
+}
+
+function makeWrapper({ deck: deckOverrides = {}, fieldOverrides = {} } = {}) {
   const deck = { id: 1, card_count: 100, ...deckOverrides }
-  const resetMaxReviewsPerDay = vi.fn()
-  const resetMaxNewPerDay = vi.fn()
+  const max_reviews_per_day = makeField({ value: 10 })
+  const max_new_per_day = makeField({ value: 5 })
   const pacing_fields = {
-    max_reviews_per_day: ref(10),
-    max_new_per_day: ref(5),
-    has_max_reviews_override: ref(false),
-    has_max_new_override: ref(false),
-    resetMaxReviewsPerDay,
-    resetMaxNewPerDay,
-    ...pacingFieldsOverrides
+    fields: {
+      max_reviews_per_day,
+      max_new_per_day,
+      ...fieldOverrides
+    }
   }
   const wrapper = mount(LimitsSection, {
     global: {
@@ -50,7 +52,7 @@ function makeWrapper({ deck: deckOverrides = {}, pacingFieldsOverrides = {} } = 
       mocks: { $t: (k) => k }
     }
   })
-  return { wrapper, pacing_fields, resetMaxReviewsPerDay, resetMaxNewPerDay }
+  return { wrapper, max_reviews_per_day, max_new_per_day }
 }
 
 // ── rendering ─────────────────────────────────────────────────────────────────
@@ -63,11 +65,11 @@ describe('LimitsSection — rendering', () => {
   })
 
   test('reads its shared instance from the pacingFieldsKey injection, not by calling usePacingFields directly [obligation]', () => {
-    const { wrapper, pacing_fields } = makeWrapper()
+    const { wrapper, max_reviews_per_day } = makeWrapper()
     const spinbox = wrapper.find(
       '[data-testid="tab-review-pacing__max-reviews"] [data-testid="ui-spinbox"]'
     )
-    expect(spinbox.attributes('data-value')).toBe(String(pacing_fields.max_reviews_per_day.value))
+    expect(spinbox.attributes('data-value')).toBe(String(max_reviews_per_day.value.value))
   })
 
   test('caps both spinboxes at deck.card_count', () => {
@@ -81,49 +83,55 @@ describe('LimitsSection — rendering', () => {
 // ── writes ────────────────────────────────────────────────────────────────────
 
 describe('LimitsSection — writes through the injected computeds', () => {
-  test('bumping the max-reviews spinbox writes through max_reviews_per_day', async () => {
-    const { wrapper, pacing_fields } = makeWrapper()
+  test('bumping the max-reviews spinbox writes through fields.max_reviews_per_day.value', async () => {
+    const { wrapper, max_reviews_per_day } = makeWrapper()
 
     await wrapper
       .find('[data-testid="tab-review-pacing__max-reviews"] [data-testid="ui-spinbox__increment"]')
       .trigger('click')
 
-    expect(pacing_fields.max_reviews_per_day.value).toBe(11)
+    expect(max_reviews_per_day.value.value).toBe(11)
   })
 
-  test('bumping the max-new spinbox writes through max_new_per_day', async () => {
-    const { wrapper, pacing_fields } = makeWrapper()
+  test('bumping the max-new spinbox writes through fields.max_new_per_day.value', async () => {
+    const { wrapper, max_new_per_day } = makeWrapper()
 
     await wrapper
       .find('[data-testid="tab-review-pacing__max-new"] [data-testid="ui-spinbox__increment"]')
       .trigger('click')
 
-    expect(pacing_fields.max_new_per_day.value).toBe(6)
+    expect(max_new_per_day.value.value).toBe(6)
   })
 })
 
 // ── reset wiring [obligation] ──────────────────────────────────────────────────
 
 describe('LimitsSection — reset wiring [obligation]', () => {
-  test('resetting the max-reviews row calls resetMaxReviewsPerDay [obligation]', async () => {
-    const { wrapper, resetMaxReviewsPerDay } = makeWrapper({
-      pacingFieldsOverrides: { has_max_reviews_override: ref(true) }
+  test('resetting the max-reviews row calls fields.max_reviews_per_day.reset [obligation]', async () => {
+    const resetMaxReviewsPerDay = vi.fn()
+    const { wrapper } = makeWrapper({
+      fieldOverrides: {
+        max_reviews_per_day: makeField({ overridden: true, reset: resetMaxReviewsPerDay })
+      }
     })
 
     await wrapper
-      .find('[data-testid="tab-review-pacing__max-reviews"] [data-testid="tooltip-row__reset"]')
+      .find('[data-testid="tab-review-pacing__max-reviews"] [data-testid="field-row__reset"]')
       .trigger('click')
 
     expect(resetMaxReviewsPerDay).toHaveBeenCalledOnce()
   })
 
-  test('resetting the max-new row calls resetMaxNewPerDay [obligation]', async () => {
-    const { wrapper, resetMaxNewPerDay } = makeWrapper({
-      pacingFieldsOverrides: { has_max_new_override: ref(true) }
+  test('resetting the max-new row calls fields.max_new_per_day.reset [obligation]', async () => {
+    const resetMaxNewPerDay = vi.fn()
+    const { wrapper } = makeWrapper({
+      fieldOverrides: {
+        max_new_per_day: makeField({ overridden: true, reset: resetMaxNewPerDay })
+      }
     })
 
     await wrapper
-      .find('[data-testid="tab-review-pacing__max-new"] [data-testid="tooltip-row__reset"]')
+      .find('[data-testid="tab-review-pacing__max-new"] [data-testid="field-row__reset"]')
       .trigger('click')
 
     expect(resetMaxNewPerDay).toHaveBeenCalledOnce()

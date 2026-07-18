@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
-import { pacingFieldsKey } from '@/views/deck/deck-settings/tab-review-pacing/pacing-fields'
+import { pacingFieldsKey } from '@/views/deck/deck-settings/tab-review-pacing/use-pacing-fields'
 import PresetHeader from '@/views/deck/deck-settings/tab-review-pacing/preset-header.vue'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
@@ -23,10 +23,9 @@ const PresetChipStub = defineComponent({
 
 const mounted_wrappers = []
 
-function makeWrapper({ has_overrides = false, override_count = 0 } = {}) {
+function makeWrapper({ override_count = 0 } = {}) {
   const resetAllOverrides = vi.fn()
   const pacing_fields = {
-    has_overrides: ref(has_overrides),
     override_count: ref(override_count),
     resetAllOverrides
   }
@@ -48,13 +47,13 @@ afterEach(() => {
 // ── divergence visibility [obligation] ────────────────────────────────────────
 
 describe('PresetHeader — divergence block visibility [obligation]', () => {
-  test('hides the divergence block when has_overrides is false', () => {
-    const { wrapper } = makeWrapper({ has_overrides: false })
+  test('hides the divergence block when override_count is 0 [obligation]', () => {
+    const { wrapper } = makeWrapper({ override_count: 0 })
     expect(wrapper.find('[data-testid="preset-header__divergence"]').exists()).toBe(false)
   })
 
-  test('shows the divergence block when has_overrides is true', () => {
-    const { wrapper } = makeWrapper({ has_overrides: true, override_count: 1 })
+  test('shows the divergence block when override_count > 0, derived locally (has_overrides was removed from the composable) [obligation]', () => {
+    const { wrapper } = makeWrapper({ override_count: 1 })
     expect(wrapper.find('[data-testid="preset-header__divergence"]').exists()).toBe(true)
   })
 })
@@ -63,12 +62,12 @@ describe('PresetHeader — divergence block visibility [obligation]', () => {
 
 describe('PresetHeader — preset-header__count pluralisation [obligation]', () => {
   test('singular phrasing for exactly one override', () => {
-    const { wrapper } = makeWrapper({ has_overrides: true, override_count: 1 })
+    const { wrapper } = makeWrapper({ override_count: 1 })
     expect(wrapper.find('[data-testid="preset-header__count"]').text()).toBe('1 change')
   })
 
   test('plural phrasing for more than one override', () => {
-    const { wrapper } = makeWrapper({ has_overrides: true, override_count: 3 })
+    const { wrapper } = makeWrapper({ override_count: 3 })
     expect(wrapper.find('[data-testid="preset-header__count"]').text()).toBe('3 changes')
   })
 })
@@ -77,7 +76,7 @@ describe('PresetHeader — preset-header__count pluralisation [obligation]', () 
 
 describe('PresetHeader — preset-header__reset-all [obligation]', () => {
   test('pressing reset-all calls resetAllOverrides [obligation]', async () => {
-    const { wrapper, resetAllOverrides } = makeWrapper({ has_overrides: true, override_count: 2 })
+    const { wrapper, resetAllOverrides } = makeWrapper({ override_count: 2 })
 
     await wrapper.find('[data-testid="preset-header__reset-all"]').trigger('click')
 
@@ -85,7 +84,7 @@ describe('PresetHeader — preset-header__reset-all [obligation]', () => {
   })
 
   test('exposes its reset-all-label translation as the icon-only button tooltip', async () => {
-    const { wrapper } = makeWrapper({ has_overrides: true, override_count: 1 })
+    const { wrapper } = makeWrapper({ override_count: 1 })
 
     await wrapper
       .find('[data-testid="preset-header__reset-all"]')
