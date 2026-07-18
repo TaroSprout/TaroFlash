@@ -1,4 +1,5 @@
 import { ref, type Ref } from 'vue'
+import { emitSfx } from '@/sfx/bus'
 import { retractAside, restoreAside, snapAside } from '@/utils/animations/aside-retract'
 import {
   snapPinnedPreview,
@@ -33,6 +34,7 @@ export function useSheetChrome(
   async function tuck() {
     if (is_tucked.value) return
 
+    emitSfx('slide_up')
     await Promise.all([
       preview.value && tuckPinnedPreview(preview.value, () => (is_tucked.value = true)),
       aside.value && retractAside(aside.value)
@@ -44,6 +46,7 @@ export function useSheetChrome(
   async function restore() {
     if (!is_tucked.value) return
 
+    emitSfx('slide_up')
     await Promise.all([
       preview.value && untuckPinnedPreview(preview.value, () => (is_tucked.value = false)),
       aside.value && restoreAside(aside.value)
