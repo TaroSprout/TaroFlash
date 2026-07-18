@@ -8,12 +8,10 @@ import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import PacingSection from './pacing-section.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
-import { deckSettingsLayoutKey } from '../layout'
 import DeckSaveButton from '../deck-save-button.vue'
 
 const { t } = useI18n()
 const { draft } = inject(deckEditorKey)!
-const layout_mode = inject(deckSettingsLayoutKey)!
 
 // The draft always carries a seeded value; the getter default only satisfies
 // `DeckConfig`'s optional key.
@@ -62,6 +60,6 @@ const starting_side_options = computed(() =>
 
     <pacing-section class="mt-4" />
 
-    <deck-save-button v-if="layout_mode === 'sheet'" />
+    <deck-save-button />
   </section-list>
 </template>
