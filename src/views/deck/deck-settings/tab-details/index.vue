@@ -6,12 +6,12 @@ import UiTextarea from '@/components/ui-kit/textarea.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { DECK_TITLE_MAX_LENGTH } from '@/utils/deck/defaults'
-import { deckSettingsLayoutKey } from '../layout'
+import { sheetLayoutKey } from '@/components/layout-kit/sheet/sheet-layout'
 import DeckSaveButton from '../deck-save-button.vue'
 
 const { t } = useI18n()
 const { draft, title_error } = inject(deckEditorKey)!
-const layout_mode = inject(deckSettingsLayoutKey)!
+const layout_mode = inject(sheetLayoutKey)!
 </script>
 
 <template>
@@ -37,6 +37,6 @@ const layout_mode = inject(deckSettingsLayoutKey)!
       />
     </div>
 
-    <deck-save-button v-if="layout_mode === 'sheet'" />
+    <deck-save-button v-if="layout_mode === 'phone'" />
   </section-list>
 </template>
