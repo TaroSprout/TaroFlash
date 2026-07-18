@@ -57,6 +57,6 @@ const divergence_label = computed(() =>
       </div>
     </div>
 
-    <ui-divider />
+    <ui-divider data-theme="brown-500" />
   </div>
 </template>

@@ -3,7 +3,6 @@ import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiToggle from '@/components/ui-kit/toggle.vue'
 import UiOptionGroup from '@/components/ui-kit/option-group.vue'
-import UiIcon from '@/components/ui-kit/icon.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 
@@ -29,11 +28,9 @@ const starting_side_options = computed(() =>
   <labeled-section
     data-testid="general-section"
     :label="t('deck.settings-modal.review-pacing.general-heading')"
-    :description="t('deck.settings-modal.review-pacing.general-description')"
   >
     <ui-toggle v-model:checked="draft.study_config.shuffle">
-      <div class="flex items-center gap-2.5">
-        <ui-icon src="shuffle" class="size-4.5" />
+      <div class="flex items-center gap-2.5 text-brown-500">
         {{ t('deck.settings-modal.review-pacing.shuffle') }}
       </div>
     </ui-toggle>
@@ -42,8 +39,7 @@ const starting_side_options = computed(() =>
       data-testid="tab-review-pacing__starting-side"
       class="flex items-center justify-between gap-3"
     >
-      <div class="flex items-center gap-2.5 text-brown-700 dark:text-brown-100">
-        <ui-icon src="card-flip" class="size-4.5" />
+      <div class="flex items-center gap-2.5 text-brown-500 dark:text-brown-100">
         {{ t('deck.settings-modal.review-pacing.starting-side-label') }}
       </div>
 
