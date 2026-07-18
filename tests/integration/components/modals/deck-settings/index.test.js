@@ -1,23 +1,25 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, nextTick } from 'vue'
+import { defineComponent, h, computed, ref, nextTick } from 'vue'
 import DeckSettings from '@/views/deck/deck-settings/index.vue'
-import { useMatchMedia } from '@/composables/ui/media-query'
 import { deck as deckFixture } from '../../../../fixtures/deck'
-import { setSidebar, setBelowMd, resetResponsive } from '../../../../helpers/responsive-mock'
+
+// Shared reactive layout mode the PagedWindowStub reads from — driven directly
+// (not via wrapper.setProps, since VTU only allows setProps on the root
+// mounted component) so tests can simulate crossing breakpoints mid-test.
+const stub_layout_mode = ref('desktop')
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
 const {
   mockAlertWarn,
-  mockToastSuccess,
-  mockToastError,
   mockEditor,
-  mockRouterPush,
+  mockChromeTuck,
+  mockChromeRestore,
+  mockChromeSnap,
+  chromeIsTucked,
   afterEnterControls
 } = vi.hoisted(() => {
-  // afterEnterControls holds a resolve fn that tests can call to simulate the
-  // modal enter animation completing. Reset before each test.
   let _resolve = null
   const afterEnterControls = {
     resolve: () => _resolve?.(),
@@ -30,14 +32,15 @@ const {
   }
   return {
     mockAlertWarn: vi.fn(),
-    mockToastSuccess: vi.fn(),
-    mockToastError: vi.fn(),
     mockEditor: {
       resetReviews: vi.fn().mockResolvedValue(true),
       deleteDeck: vi.fn().mockResolvedValue(true),
       saveDeck: vi.fn().mockResolvedValue(true)
     },
-    mockRouterPush: vi.fn(),
+    mockChromeTuck: vi.fn().mockResolvedValue(undefined),
+    mockChromeRestore: vi.fn().mockResolvedValue(undefined),
+    mockChromeSnap: vi.fn(),
+    chromeIsTucked: { value: false },
     afterEnterControls
   }
 })
@@ -46,49 +49,19 @@ vi.mock('@/composables/alert', () => ({
   useAlert: () => ({ warn: mockAlertWarn })
 }))
 
-vi.mock('@/stores/notice-store', () => ({
-  useNoticeStore: () => ({ success: mockToastSuccess, error: mockToastError })
+// Mock the window-chrome composable directly — its own tuck/restore/snap
+// contract (edge-on timing, no-op guards) is covered by
+// tests/unit/views/deck/deck-settings/window-chrome.test.js. Here we only
+// care that deck-settings calls it correctly.
+vi.mock('@/views/deck/deck-settings/window-chrome', () => ({
+  useWindowChrome: () => ({
+    is_tucked: chromeIsTucked,
+    tuck: mockChromeTuck,
+    restore: mockChromeRestore,
+    snap: mockChromeSnap
+  })
 }))
 
-vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: mockRouterPush }),
-  useRoute: () => ({ name: 'dashboard', params: {} })
-}))
-
-vi.mock('@/composables/ui/media-query', async () => {
-  const m = await import('../../../../helpers/responsive-mock')
-  return m.responsiveMockModule
-})
-
-vi.mock('gsap', () => ({
-  gsap: {
-    fromTo: vi.fn((_el, _from, to) => to?.onComplete?.()),
-    to: vi.fn((_el, opts) => opts?.onComplete?.()),
-    set: vi.fn(),
-    killTweensOf: vi.fn(),
-    // Chrome tuck/restore drive a gsap.timeline() (preview-tuck.ts) — collapse
-    // it synchronously the same way the `to`/`fromTo` mocks above do, firing
-    // both the mid-timeline onComplete (onEdgeOn) and the final one.
-    timeline: vi.fn(() => {
-      const tl = {
-        set: vi.fn(() => tl),
-        to: vi.fn((_el, opts) => {
-          opts?.onComplete?.()
-          return tl
-        }),
-        eventCallback: vi.fn((_event, cb) => {
-          cb?.()
-          return tl
-        })
-      }
-      return tl
-    })
-  }
-}))
-
-// Mock useModalAfterEnter so tests control when the enter promise resolves.
-// useModalRequestClose is kept as a no-op (the close path is tested via the
-// alert warn mock — not via the modal close hook).
 vi.mock('@/composables/modal', () => ({
   useModalAfterEnter: () =>
     new Promise((resolve) => {
@@ -102,24 +75,15 @@ vi.mock('@/composables/deck/editor', async () => {
   const editor = {
     deck: { id: 1 },
     draft: reactive({ cover_config: {}, card_attributes: { front: {}, back: {} } }),
-    cover_image_preview: vueRef(undefined),
-    cover_image_loading: vueRef(false),
     active_side: vueRef('cover'),
     preview_front_text: vueRef(undefined),
     preview_back_text: vueRef(undefined),
     is_dirty: vueRef(false),
-    deleting: vueRef(false),
-    resetting_reviews: vueRef(false),
     saveDeck: (...args) => mockEditor.saveDeck(...args),
     deleteDeck: (...args) => mockEditor.deleteDeck(...args),
     resetReviews: (...args) => mockEditor.resetReviews(...args),
-    uploadImage: () => {},
-    removeImage: () => {},
-    setCoverImage: async () => {},
-    removeCoverImage: () => {},
     setActiveSide: () => {}
   }
-  // expose on the mockEditor handle so individual tests can flip dirty state
   mockEditor.editor = editor
   return {
     useDeckEditor: () => editor,
@@ -127,594 +91,240 @@ vi.mock('@/composables/deck/editor', async () => {
   }
 })
 
-// `<script setup>` imports are direct bindings — Vue's `stubs` option can't
-// replace them. Use module mocks for the tab children we want stubbed.
-vi.mock('@/views/deck/deck-settings/deck-aside.vue', async () => {
-  const { defineComponent, h } = await import('vue')
-  return {
-    default: defineComponent({
-      name: 'DeckAside',
-      props: ['loading'],
-      emits: ['save'],
-      setup(props, { emit, expose }) {
-        expose({ validate: () => true })
-        return () =>
-          h('div', { 'data-testid': 'deck-aside-stub' }, [
-            h(
-              'button',
-              { 'data-testid': 'deck-aside-save-btn', onClick: () => emit('save') },
-              'save'
-            )
-          ])
-      }
-    })
-  }
-})
+vi.mock('@/composables/deck/danger-actions', () => ({
+  useDeckDangerActions: () => ({
+    onDelete: vi.fn(),
+    onResetReviews: vi.fn(),
+    deleting: { value: false },
+    resetting_reviews: { value: false }
+  }),
+  deckDangerActionsKey: Symbol('deckDangerActions')
+}))
 
-vi.mock('@/views/deck/deck-settings/tab-danger-zone/index.vue', async () => {
-  const { defineComponent, h } = await import('vue')
-  return {
-    default: defineComponent({
-      name: 'TabDangerZone',
-      emits: ['delete', 'reset-reviews'],
-      setup(_props, { emit }) {
-        return () =>
-          h('div', { 'data-testid': 'tab-danger-zone-stub' }, [
-            h(
-              'button',
-              { 'data-testid': 'tdz__reset', onClick: () => emit('reset-reviews') },
-              'reset'
-            ),
-            h('button', { 'data-testid': 'tdz__delete', onClick: () => emit('delete') }, 'delete')
-          ])
-      }
-    })
-  }
-})
-
-// The remaining tabs (index/details/design/review-pacing) are now statically bundled
-// too — module-mock each so their real setup() (deep editor/i18n context we
-// don't provide here) never runs. Their own logic is covered in their
-// dedicated test files (tab-design/index.test.js, tab-review-pacing.test.js, ...).
-function makeTabContentMock(testid) {
+// Tab content components are stubbed at the module level — their own logic
+// is covered in their dedicated test files.
+function makeTabStub(testid) {
   return async () => {
     const { defineComponent, h } = await import('vue')
     return {
       default: defineComponent({
-        emits: ['navigate'],
-        setup(_props, { emit }) {
-          return () =>
-            h('div', { 'data-testid': testid }, [
-              h(
-                'button',
-                {
-                  'data-testid': 'tab-content__navigate',
-                  onClick: () => emit('navigate', 'review-pacing')
-                },
-                'navigate'
-              )
-            ])
+        name: testid,
+        setup(_p, { expose }) {
+          expose({})
+          return () => h('div', { 'data-testid': testid })
         }
       })
     }
   }
 }
-
-vi.mock('@/views/deck/deck-settings/tab-index/index.vue', makeTabContentMock('tab-index-stub'))
-vi.mock('@/views/deck/deck-settings/tab-details/index.vue', makeTabContentMock('tab-details-stub'))
-vi.mock('@/views/deck/deck-settings/tab-design/index.vue', makeTabContentMock('tab-design-stub'))
+vi.mock('@/views/deck/deck-settings/tab-details/index.vue', makeTabStub('tab-details-stub'))
+vi.mock('@/views/deck/deck-settings/tab-design/index.vue', makeTabStub('tab-design-stub'))
 vi.mock(
   '@/views/deck/deck-settings/tab-review-pacing/index.vue',
-  makeTabContentMock('tab-review-pacing-stub')
+  makeTabStub('tab-review-pacing-stub')
 )
+vi.mock(
+  '@/views/deck/deck-settings/tab-review-history/index.vue',
+  makeTabStub('tab-review-history-stub')
+)
+vi.mock('@/views/deck/deck-settings/tab-danger-zone/index.vue', makeTabStub('tab-danger-zone-stub'))
 
-// ── Stubs ─────────────────────────────────────────────────────────────────────
+vi.mock('@/views/deck/deck-settings/deck-aside.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return {
+    default: defineComponent({
+      name: 'DeckAside',
+      setup(_props, { expose }) {
+        expose({ validate: () => true })
+        return () => h('div', { 'data-testid': 'deck-aside-stub' })
+      }
+    })
+  }
+})
 
-const TabSheetStub = defineComponent({
-  props: ['tabs'],
-  emits: ['close', 'back', 'update:active'],
+vi.mock('@/views/deck/deck-settings/deck-save-button.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return { default: defineComponent({ name: 'DeckSaveButton', setup: () => () => h('div') }) }
+})
+
+vi.mock('@/components/deck/pinned-preview.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return {
+    default: defineComponent({
+      name: 'DeckPinnedPreview',
+      emits: ['update:side'],
+      setup(_props, { emit }) {
+        return () =>
+          h(
+            'button',
+            { 'data-testid': 'deck-preview-stub', onClick: () => emit('update:side', 'front') },
+            'preview'
+          )
+      }
+    })
+  }
+})
+
+vi.mock('@/components/ui-kit/scroll-bar.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return { default: defineComponent({ name: 'ScrollBar', setup: () => () => h('div') }) }
+})
+
+// ── PagedWindow stub ──────────────────────────────────────────────────────────
+// Exposes a controllable layout_mode/displayed_page so tests can drive the
+// desktop/tablet/phone crossing without fighting the real component's own
+// media-query + Transition machinery (covered separately in
+// tests/integration/components/layout-kit/paged-window/index.test.js).
+
+const PagedWindowStub = defineComponent({
+  name: 'PagedWindow',
+  props: {
+    active: { type: String, default: null },
+    pages: { type: Array, default: () => [] },
+    groups: { type: Array, default: () => [] },
+    between: { type: Function, default: undefined }
+  },
+  emits: ['close', 'back', 'select', 'reselect', 'update:active'],
   setup(props, { slots, emit, expose }) {
-    // Mirror the real TabSheet: own sidebar visibility and expose it upward.
-    expose({ has_sidebar: useMatchMedia('w>=lg & fine') })
+    const layout_mode = computed(() => stub_layout_mode.value)
+    const displayed_page = computed(() => props.active ?? 'directory')
+    const has_sidebar = computed(() => layout_mode.value === 'desktop')
+    expose({ layout_mode, displayed_page, has_sidebar })
+
     return () =>
-      h(
-        'div',
-        {
-          'data-testid': 'tab-sheet',
-          'data-tab-icons': JSON.stringify(props.tabs ?? [])
-        },
-        [
-          h('div', { 'data-testid': 'tab-sheet__header-content' }, slots['header-content']?.()),
-          h(
-            'button',
-            {
-              'data-testid': 'tab-sheet__close-emit',
-              onClick: () => emit('close')
-            },
-            'close'
-          ),
-          h(
-            'button',
-            {
-              'data-testid': 'tab-sheet__back-emit',
-              onClick: () => emit('back')
-            },
-            'back'
-          ),
-          ...(props.tabs ?? []).map((tab) =>
-            h(
-              'button',
-              {
-                'data-testid': `tab-sheet__select-${tab.value}`,
-                onClick: () => emit('update:active', tab.value)
-              },
-              tab.value
-            )
-          ),
-          slots.default?.(),
-          slots.overlay?.(),
-          h('div', { 'data-testid': 'tab-sheet__footer' }, slots.footer?.())
-        ]
-      )
-  }
-})
-
-const UiButtonStub = defineComponent({
-  name: 'UiButton',
-  setup(_props, { slots, attrs }) {
-    return () => h('button', { 'data-testid': 'ui-button', ...attrs }, slots.default?.())
-  }
-})
-
-const UiIconStub = defineComponent({
-  name: 'UiIcon',
-  props: ['src'],
-  setup(props, { attrs }) {
-    return () => h('div', { ...attrs, 'data-icon-src': props.src })
-  }
-})
-
-const TabDangerZoneStub = defineComponent({
-  name: 'TabDangerZone',
-  emits: ['delete', 'reset-reviews'],
-  setup(_props, { emit }) {
-    return () =>
-      h('div', { 'data-testid': 'tab-danger-zone-stub' }, [
+      h('div', { 'data-testid': 'paged-window-stub' }, [
+        h('div', { 'data-testid': 'pw__header-content' }, slots['header-content']?.()),
+        h('button', { 'data-testid': 'pw__close', onClick: () => emit('close') }, 'close'),
+        h('button', { 'data-testid': 'pw__back', onClick: () => emit('back') }, 'back'),
         h(
           'button',
           {
-            'data-testid': 'tdz__reset',
-            onClick: () => emit('reset-reviews')
+            'data-testid': 'pw__select-review-pacing',
+            onClick: () => emit('update:active', 'review-pacing')
           },
-          'reset'
+          'review-pacing'
         ),
         h(
           'button',
-          {
-            'data-testid': 'tdz__delete',
-            onClick: () => emit('delete')
-          },
-          'delete'
-        )
-      ])
-  }
-})
-
-// Stub for tab content components that includes a navigate trigger so the
-// parent's @navigate handler can be exercised from tests. Tabs no longer emit
-// 'back' themselves — that's chrome-driven via the tab-sheet's own back button.
-const TabContentStub = defineComponent({
-  emits: ['navigate'],
-  setup(_props, { emit }) {
-    return () => {
-      return h('div', { 'data-testid': 'tab-content-stub' }, [
+          { 'data-testid': 'pw__select-design', onClick: () => emit('update:active', 'design') },
+          'design'
+        ),
+        h('div', { 'data-testid': 'pw__scrollbar' }, slots.scrollbar?.()),
+        h('div', { 'data-testid': 'pw__aside' }, slots.aside?.()),
+        h('div', { 'data-testid': 'pw__directory-footer' }, slots['directory-footer']?.()),
+        h('div', { 'data-testid': 'pw__overlay' }, slots.overlay?.()),
         h(
-          'button',
-          {
-            'data-testid': 'tab-content__navigate',
-            onClick: () => emit('navigate', 'review-pacing')
-          },
-          'navigate'
-        )
-      ])
-    }
-  }
-})
-
-const DeckPreviewStub = defineComponent({
-  name: 'DeckDesignPreview',
-  emits: ['update:side'],
-  setup(_props, { emit }) {
-    return () =>
-      h(
-        'button',
-        {
-          'data-testid': 'deck-preview-stub',
-          onClick: () => emit('update:side', 'front')
-        },
-        'preview'
-      )
-  }
-})
-
-const DeckPinnedPreviewStub = defineComponent({
-  name: 'DeckPinnedPreview',
-  emits: ['update:side'],
-  setup(_props, { emit }) {
-    return () =>
-      h('div', { 'data-testid': 'deck-pinned-preview-stub' }, [
-        h(
-          'button',
-          { 'data-testid': 'deck-preview-stub', onClick: () => emit('update:side', 'front') },
-          'preview'
+          'div',
+          { 'data-testid': 'pw__default' },
+          slots.default?.({ displayed_page: displayed_page.value })
         )
       ])
   }
 })
 
-const DeckAsideStub = defineComponent({
-  name: 'DeckAside',
-  props: ['loading'],
-  emits: ['save'],
-  setup(_props, { emit, expose }) {
-    expose({ validate: () => true })
-    return () =>
-      h('div', { 'data-testid': 'deck-aside-stub' }, [
-        h('button', { 'data-testid': 'deck-aside-save-btn', onClick: () => emit('save') }, 'save')
-      ])
-  }
-})
+// ── Factory ───────────────────────────────────────────────────────────────────
 
 function makeWrapper(extraProps = {}) {
   const close = vi.fn()
   const wrapper = mount(DeckSettings, {
     props: { deck: deckFixture.one({ overrides: { id: 1 } }), close, ...extraProps },
-    global: {
-      stubs: {
-        TabSheet: TabSheetStub,
-        TabDesign: TabContentStub,
-        TabGeneral: TabContentStub,
-        TabReviewPacing: TabContentStub,
-        TabDangerZone: TabDangerZoneStub,
-        DeckDesignPreview: DeckPreviewStub,
-        DeckPinnedPreview: DeckPinnedPreviewStub,
-        DeckAside: DeckAsideStub,
-        UiButton: UiButtonStub,
-        UiIcon: UiIconStub
-      }
-      // $t is supplied by the real i18n plugin from setup-browser.js
-    }
+    global: { stubs: { PagedWindow: PagedWindowStub } }
   })
   return { wrapper, close }
 }
 
-// ── Tests ─────────────────────────────────────────────────────────────────────
+async function setLayout(mode) {
+  stub_layout_mode.value = mode
+  await nextTick()
+  await nextTick()
+}
+
+// ── Reset ─────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
+  stub_layout_mode.value = 'desktop'
   mockAlertWarn.mockReset()
-  mockToastSuccess.mockReset()
-  mockToastError.mockReset()
-  mockRouterPush.mockReset()
+  mockChromeTuck.mockReset().mockResolvedValue(undefined)
+  mockChromeRestore.mockReset().mockResolvedValue(undefined)
+  mockChromeSnap.mockReset()
+  chromeIsTucked.value = false
   mockEditor.resetReviews.mockReset().mockResolvedValue(true)
   mockEditor.deleteDeck.mockReset().mockResolvedValue(true)
   mockEditor.saveDeck.mockReset().mockResolvedValue(true)
-  // Reset the mocked editor's active_side back to cover between tests
   if (mockEditor.editor) mockEditor.editor.active_side.value = 'cover'
   afterEnterControls.reset()
-  resetResponsive()
 })
 
-describe('DeckSettings — save button (DeckAside renders DeckSaveButton internally)', () => {
-  // Save logic is fully tested in deck-save-button.test.js.
-  // Index-level concerns: DeckAside is present and the stub is wired correctly.
-  test('renders the DeckAside component', () => {
-    const { wrapper } = makeWrapper()
-    // deck-settings__aside is passed as a prop attr and lands on DeckAside's root
-    expect(wrapper.find('[data-testid="deck-settings__aside"]').exists()).toBe(true)
-  })
-})
+// ── Header + pages wiring ──────────────────────────────────────────────────────
 
-describe('DeckSettings — header_title reflects the deck title, not the active tab [obligation]', () => {
-  test('shows deck.title verbatim regardless of active tab [obligation]', () => {
+describe('DeckSettings — header_title reflects the deck title, not the active tab', () => {
+  test('shows deck.title verbatim regardless of active tab', () => {
     const { wrapper } = makeWrapper({
       deck: deckFixture.one({ overrides: { id: 1, title: 'My Deck' } }),
       initial_tab: 'review-pacing'
     })
-
     expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('My Deck')
   })
 
-  test('falls back to the i18n default title when deck.title is an empty string [obligation]', () => {
+  test('falls back to the i18n default title when deck.title is an empty string', () => {
     const { wrapper } = makeWrapper({
       deck: deckFixture.one({ overrides: { id: 1, title: '' } })
     })
-
     expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('Deck Settings')
   })
 })
 
-describe('DeckSettings — tab bar composition [obligation]', () => {
-  test('desktop tab bar excludes "details" but includes design/review-pacing/review-history/danger-zone [obligation]', () => {
+describe('DeckSettings — pages prop composition [obligation]', () => {
+  test('passes a Page[] with details excluded from the sidebar (sidebar: false)', () => {
     const { wrapper } = makeWrapper()
-    const tab_bar_entries = JSON.parse(
-      wrapper.find('[data-tab-icons]').attributes('data-tab-icons')
-    )
-    expect(tab_bar_entries.map((t) => t.value)).toEqual([
-      'design',
-      'review-pacing',
-      'review-history',
-      'danger-zone'
-    ])
+    const pw = wrapper.findComponent({ name: 'PagedWindow' })
+    const values = pw.props('pages').map((p) => p.value)
+    expect(values).toEqual(['details', 'design', 'review-pacing', 'review-history', 'danger-zone'])
+    expect(pw.props('pages').find((p) => p.value === 'details').sidebar).toBe(false)
+  })
+
+  test('groups include "details" in the appearance group only on phone layout', async () => {
+    const { wrapper } = makeWrapper()
+    const pw = wrapper.findComponent({ name: 'PagedWindow' })
+
+    await setLayout('desktop')
+    const desktop_group = pw.props('groups').find((g) => g.key === 'appearance')
+    expect(desktop_group.entries).not.toContain('details')
+
+    await setLayout('phone')
+    const phone_group = pw.props('groups').find((g) => g.key === 'appearance')
+    expect(phone_group.entries).toContain('details')
   })
 })
 
-describe('DeckSettings — aside wiring', () => {
-  test('renders the DeckAside', () => {
-    const { wrapper } = makeWrapper()
+// ── initial_tab / initial_side ────────────────────────────────────────────────
 
-    const aside = wrapper.find('[data-testid="deck-settings__aside"]')
-    expect(aside.exists()).toBe(true)
-  })
-})
-
-describe('DeckSettings — null active_tab tracks sidebar visibility', () => {
-  // The default tab must be the strict inverse of whether TabSheet shows its
-  // sidebar ('w>=lg & fine'): sidebar visible -> design, hidden -> index.
-  test('null active_tab renders the design tab when the sidebar is visible', async () => {
-    setSidebar(true)
-    // No initial_tab → active_tab starts null (plain ref)
-    const { wrapper } = makeWrapper()
-    // has_sidebar arrives from TabSheet via a template ref — one render late.
-    await nextTick()
-    expect(wrapper.find('[data-testid="tab-design-stub"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="deck-settings__back-button"]').exists()).toBe(false)
-  })
-
-  test('null active_tab renders the index tab when the sidebar is hidden', () => {
-    setSidebar(false)
-    const { wrapper } = makeWrapper()
-    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
-  })
-
-  // [obligation] the layout_mode watch that used to reset active_tab off
-  // danger-zone on non-desktop was removed — navigation to danger-zone now
-  // sticks even when the sidebar hides (e.g. rotating to mobile).
-  test('hiding the sidebar with danger-zone selected keeps danger-zone active [obligation]', async () => {
-    setSidebar(true)
-    const { wrapper } = makeWrapper({ initial_tab: 'danger-zone' })
-    // Let the sidebar-visible state settle before hiding it.
-    await nextTick()
-
-    expect(wrapper.find('[data-testid="tab-danger-zone-stub"]').exists()).toBe(true)
-
-    setSidebar(false)
-    await flushPromises()
-
-    expect(wrapper.find('[data-testid="tab-danger-zone-stub"]').exists()).toBe(true)
-  })
-})
-
-describe('DeckSettings — below-md layout collapse', () => {
-  test('renders aside + floating preview above md', () => {
-    setBelowMd(false)
-    const { wrapper } = makeWrapper()
-
-    expect(wrapper.find('[data-testid="deck-settings__aside"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="deck-settings__pinned-preview"]').exists()).toBe(true)
-  })
-
-  test('hides the aside when below md', () => {
-    setBelowMd(true)
-    const { wrapper } = makeWrapper()
-
-    expect(wrapper.find('[data-testid="deck-settings__aside"]').exists()).toBe(false)
-  })
-
-  test('hides the floating overlay preview when below md', () => {
-    setBelowMd(true)
-    const { wrapper } = makeWrapper()
-
-    expect(wrapper.find('[data-testid="deck-settings__pinned-preview"]').exists()).toBe(false)
-  })
-
-  test('toggles aside + floating preview reactively when crossing md', async () => {
-    setBelowMd(false)
-    const { wrapper } = makeWrapper()
-
-    expect(wrapper.find('[data-testid="deck-settings__aside"]').exists()).toBe(true)
-
-    setBelowMd(true)
-    await flushPromises()
-
-    expect(wrapper.find('[data-testid="deck-settings__aside"]').exists()).toBe(false)
-    expect(wrapper.find('[data-testid="deck-settings__pinned-preview"]').exists()).toBe(false)
-  })
-})
-
-const nextFrame = () => new Promise((r) => requestAnimationFrame(r))
-
-describe('DeckSettings — tab transition hooks', () => {
-  test('swapping tabs on desktop completes through requestAnimationFrame', async () => {
-    setBelowMd(false)
-    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
-
-    mockEditor.editor.is_dirty.value = false
-    // Drive the tab swap via the sheet's update:active emit so the
-    // sidebar_active setter is exercised too.
-    await wrapper.find('[data-testid="tab-sheet__select-design"]').trigger('click')
-    await flushPromises()
-    await nextFrame()
-    await flushPromises()
-
-    expect(wrapper.find('[data-testid="tab-design-stub"]').exists()).toBe(true)
-  })
-
-  test('swapping tabs below md routes through the mobile height tween', async () => {
-    setBelowMd(true)
-    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
-
-    await wrapper.find('[data-testid="tab-sheet__select-design"]').trigger('click')
-    await flushPromises()
-    await nextFrame()
-    await flushPromises()
-
-    expect(wrapper.find('[data-testid="tab-design-stub"]').exists()).toBe(true)
-  })
-})
-
-describe('DeckSettings — overlay actions', () => {
-  test('floating preview click forwards the new side to editor.setActiveSide on the design tab', async () => {
-    setBelowMd(false)
-    const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
-    const { wrapper } = makeWrapper({ initial_tab: 'design' })
-
-    await wrapper.find('[data-testid="deck-preview-stub"]').trigger('click')
-
-    expect(setActiveSide).toHaveBeenCalledWith('front')
-    setActiveSide.mockRestore()
-  })
-
-  test('floating preview click is a no-op when not on the design tab', async () => {
-    setBelowMd(false)
-    const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
-    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
-
-    await wrapper.find('[data-testid="deck-preview-stub"]').trigger('click')
-
-    expect(setActiveSide).not.toHaveBeenCalled()
-    setActiveSide.mockRestore()
-  })
-
-  test('tab-sheet back emit clears active_tab (chrome-driven back, no per-tab back button) [obligation]', async () => {
-    setSidebar(false)
-    const { wrapper } = makeWrapper({ initial_tab: 'design' })
-
-    await wrapper.find('[data-testid="tab-sheet__back-emit"]').trigger('click')
-    await flushPromises()
-
-    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
-  })
-
-  test('onChromeBack falls through to the default back action when the active tab has no onChromeBack [obligation]', async () => {
-    setSidebar(false)
-    const { wrapper } = makeWrapper({ initial_tab: 'design' })
-
-    await wrapper.vm.onChromeBack()
-    await flushPromises()
-
-    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
-  })
-
-  test('tab-sheet close emit forwards to close(false)', async () => {
-    const { wrapper, close } = makeWrapper()
-
-    await wrapper.find('[data-testid="tab-sheet__close-emit"]').trigger('click')
-
-    expect(close).toHaveBeenCalledWith(false)
-  })
-})
-
-describe('DeckSettings — active_tab is a plain non-persisted ref [obligation]', () => {
-  test('active_tab defaults to null (no initial_tab prop)', () => {
-    setSidebar(false)
-    const { wrapper } = makeWrapper()
-    // With null active_tab and no sidebar, the index tab is displayed
-    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
-  })
-
-  test('initial_tab prop sets active_tab to that tab on mount [obligation]', () => {
-    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
-    expect(wrapper.find('[data-testid="tab-review-pacing-stub"]').exists()).toBe(true)
-  })
-
-  test('second mount starts fresh (no cross-mount state leak) [obligation]', () => {
-    // First mount with design tab
-    const { wrapper: w1 } = makeWrapper({ initial_tab: 'design' })
-    expect(w1.find('[data-testid="tab-design-stub"]').exists()).toBe(true)
-    w1.unmount()
-
-    // Second mount with no initial_tab: should start at null/index, not design
-    setSidebar(false)
-    const { wrapper: w2 } = makeWrapper()
-    expect(w2.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
-  })
-})
-
-describe('DeckSettings — active_side resets to cover when tab becomes null [obligation]', () => {
-  test('going back (null tab) resets editor.active_side to cover via direct assignment [obligation]', async () => {
-    setSidebar(false)
-    const { wrapper } = makeWrapper({ initial_tab: 'design' })
-
-    // Simulate designer changing active_side to front
-    mockEditor.editor.active_side.value = 'front'
-    expect(mockEditor.editor.active_side.value).toBe('front')
-
-    // Click back → active_tab becomes null
-    await wrapper.find('[data-testid="tab-sheet__back-emit"]').trigger('click')
-    await flushPromises()
-
-    // The watcher on active_tab should have reset active_side to 'cover'
-    expect(mockEditor.editor.active_side.value).toBe('cover')
-  })
-
-  test('navigating to a non-null tab does not reset active_side [obligation]', async () => {
-    setSidebar(false)
-    const { wrapper } = makeWrapper({ initial_tab: 'design' })
-
-    mockEditor.editor.active_side.value = 'front'
-
-    // Switch to general (non-null tab) via the sheet
-    await wrapper.find('[data-testid="tab-sheet__select-design"]').trigger('click')
-    await flushPromises()
-
-    // Still 'front' — watcher only fires when tab === null
-    expect(mockEditor.editor.active_side.value).toBe('front')
-  })
-})
-
-describe('DeckSettings — initial_tab / initial_side override [obligation]', () => {
-  test('initial_tab prop opens that tab directly (design)', () => {
+describe('DeckSettings — initial_tab / initial_side [obligation]', () => {
+  test('initial_tab prop opens that tab directly', () => {
     const { wrapper } = makeWrapper({ initial_tab: 'design' })
     expect(wrapper.find('[data-testid="tab-design-stub"]').exists()).toBe(true)
   })
 
-  test('initial_tab prop opens that tab directly (review-pacing)', () => {
-    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
-    expect(wrapper.find('[data-testid="tab-review-pacing-stub"]').exists()).toBe(true)
-  })
-
-  test('initial_side is NOT applied synchronously during setup [obligation]', () => {
-    // The bug we fixed: flip and modal-open were simultaneous because setActiveSide
-    // was called synchronously. The new contract is: setActiveSide is deferred until
-    // after the enter animation resolves (await after_enter).
+  test('initial_side is NOT applied synchronously during setup', () => {
     const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
     makeWrapper({ initial_tab: 'design', initial_side: 'front' })
     expect(setActiveSide).not.toHaveBeenCalled()
     setActiveSide.mockRestore()
   })
 
-  test('initial_side=front: setActiveSide is called after the enter promise resolves [obligation]', async () => {
+  test('setActiveSide is called with the initial_side after the enter promise resolves', async () => {
     const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
     makeWrapper({ initial_tab: 'design', initial_side: 'front' })
-    // Not called yet — waiting for enter animation
     expect(setActiveSide).not.toHaveBeenCalled()
-    // Simulate the modal enter completing
+
     afterEnterControls.resolve()
     await flushPromises()
+
     expect(setActiveSide).toHaveBeenCalledWith('front')
     setActiveSide.mockRestore()
   })
 
-  test('initial_side=back: setActiveSide("back") is called after enter resolves [obligation]', async () => {
-    const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
-    makeWrapper({ initial_tab: 'design', initial_side: 'back' })
-    afterEnterControls.resolve()
-    await flushPromises()
-    expect(setActiveSide).toHaveBeenCalledWith('back')
-    setActiveSide.mockRestore()
-  })
-
-  test('omitting initial_side does not call editor.setActiveSide (even after enter) [obligation]', async () => {
+  test('omitting initial_side never calls setActiveSide, even after enter resolves', async () => {
     const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
     makeWrapper({ initial_tab: 'design' })
     afterEnterControls.resolve()
@@ -724,121 +334,185 @@ describe('DeckSettings — initial_tab / initial_side override [obligation]', ()
   })
 })
 
-describe('DeckSettings — onNavigate sets direction forward and activates tab', () => {
-  test('navigate event from tab content activates the navigated tab', async () => {
-    setSidebar(false)
-    // Start at design tab (which is TabContentStub) so navigate button is present
-    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+// ── active_side reset on back ──────────────────────────────────────────────────
 
-    await wrapper.find('[data-testid="tab-content__navigate"]').trigger('click')
+describe('DeckSettings — active_side resets to cover when active_tab becomes null', () => {
+  test('going back (null tab) resets editor.active_side to cover', async () => {
+    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+    mockEditor.editor.active_side.value = 'front'
+
+    await wrapper.find('[data-testid="pw__back"]').trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="tab-review-pacing-stub"]').exists()).toBe(true)
+    expect(mockEditor.editor.active_side.value).toBe('cover')
+  })
+
+  test('navigating to a non-null tab does not reset active_side', async () => {
+    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+    mockEditor.editor.active_side.value = 'front'
+
+    await wrapper.find('[data-testid="pw__select-design"]').trigger('click')
+    await flushPromises()
+
+    expect(mockEditor.editor.active_side.value).toBe('front')
   })
 })
 
-describe('DeckSettings — onClose when dirty shows alert', () => {
-  test('close while dirty shows unsaved-changes alert', async () => {
-    mockAlertWarn.mockReturnValue({ response: Promise.resolve(false) })
-    const { wrapper } = makeWrapper()
-    mockEditor.editor.is_dirty.value = true
+// ── onClose unsaved-changes guard ──────────────────────────────────────────────
 
-    await wrapper.find('[data-testid="tab-sheet__close-emit"]').trigger('click')
+describe('DeckSettings — onClose unsaved-changes guard', () => {
+  test('close while not dirty calls close(false) immediately with no alert', async () => {
+    const { wrapper, close } = makeWrapper()
+    await wrapper.find('[data-testid="pw__close"]').trigger('click')
+    expect(mockAlertWarn).not.toHaveBeenCalled()
+    expect(close).toHaveBeenCalledWith(false)
+  })
+
+  test('close while dirty shows the unsaved-changes alert and only closes on confirm', async () => {
+    mockEditor.editor.is_dirty.value = true
+    mockAlertWarn.mockReturnValue({ response: Promise.resolve(true) })
+    const { wrapper, close } = makeWrapper()
+
+    await wrapper.find('[data-testid="pw__close"]').trigger('click')
     await flushPromises()
 
     expect(mockAlertWarn).toHaveBeenCalledTimes(1)
-  })
-
-  test('close while dirty and alert confirmed calls close(false)', async () => {
-    mockAlertWarn.mockReturnValue({ response: Promise.resolve(true) })
-    const { wrapper, close } = makeWrapper()
-    mockEditor.editor.is_dirty.value = true
-
-    await wrapper.find('[data-testid="tab-sheet__close-emit"]').trigger('click')
-    await flushPromises()
-
     expect(close).toHaveBeenCalledWith(false)
   })
 
   test('close while dirty and alert cancelled does not close', async () => {
+    mockEditor.editor.is_dirty.value = true
     mockAlertWarn.mockReturnValue({ response: Promise.resolve(false) })
     const { wrapper, close } = makeWrapper()
-    mockEditor.editor.is_dirty.value = true
 
-    await wrapper.find('[data-testid="tab-sheet__close-emit"]').trigger('click')
+    await wrapper.find('[data-testid="pw__close"]').trigger('click')
     await flushPromises()
 
     expect(close).not.toHaveBeenCalled()
   })
 })
 
-describe('DeckSettings — initial tab renders on mount [obligation]', () => {
-  test('tab content is visible after mount (no <transition appear>, so onTabEnter never fires on initial mount)', async () => {
-    // The tab `<transition>` has no `appear` attribute, so `enter` only fires
-    // on a subsequent tab swap, not on the initial mount — the tab content is
-    // simply rendered directly. This guards against re-adding an `appear` (or
-    // an initial-render skip guard in useTabTransition) that would change this.
-    setSidebar(false)
-    const { wrapper } = makeWrapper({ initial_tab: 'design' })
-    await flushPromises()
+// ── onChromeBack delegation ────────────────────────────────────────────────────
 
-    expect(wrapper.find('[data-testid="tab-design-stub"]').exists()).toBe(true)
+describe('DeckSettings — onChromeBack falls through to the default back action', () => {
+  test('the active tab has no onChromeBack, so back navigates to the index', async () => {
+    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+    await wrapper.vm.onChromeBack()
+    await flushPromises()
+    expect(wrapper.vm.active_tab).toBe(null)
   })
 })
 
-describe('DeckSettings — is_full_bleed is false in sheet layout regardless of TAB_META [obligation]', () => {
-  test('a full-bleed tab (review-pacing) does not claim full-bleed once the layout collapses to a sheet', () => {
-    setSidebar(false)
-    setBelowMd(true)
-    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
+// ── overlay actions ────────────────────────────────────────────────────────────
 
-    // Sheet mode has no aside or pinned preview to clear away, so full-bleed
-    // is a desktop/tablet-only concern even for a tab whose TAB_META says
-    // full_bleed: true.
+describe('DeckSettings — overlay preview forwards side changes only on the design tab', () => {
+  test('floating preview click forwards the new side to editor.setActiveSide on the design tab', async () => {
+    const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
+    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+    await nextTick()
+
+    await wrapper.find('[data-testid="deck-preview-stub"]').trigger('click')
+
+    expect(setActiveSide).toHaveBeenCalledWith('front')
+    setActiveSide.mockRestore()
+  })
+
+  test('floating preview click is a no-op when not on the design tab', async () => {
+    const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
+    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
+    await nextTick()
+
+    await wrapper.find('[data-testid="deck-preview-stub"]').trigger('click')
+
+    expect(setActiveSide).not.toHaveBeenCalled()
+    setActiveSide.mockRestore()
+  })
+})
+
+// ── is_full_bleed [obligation] ─────────────────────────────────────────────────
+
+describe('DeckSettings — is_full_bleed is phone-exempt regardless of TAB_META [obligation]', () => {
+  test('a full-bleed tab (review-pacing) does not claim full-bleed on phone layout', async () => {
+    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
+    await setLayout('phone')
     expect(wrapper.vm.is_full_bleed).toBe(false)
   })
 
-  test('the same tab does claim full-bleed once the layout is tablet/desktop', () => {
-    setSidebar(false)
-    setBelowMd(false)
+  test('the same tab claims full-bleed once the layout is tablet/desktop', async () => {
     const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
-
+    await setLayout('desktop')
     expect(wrapper.vm.is_full_bleed).toBe(true)
   })
 })
 
-describe('DeckSettings — opening directly on a full-bleed tab snaps the chrome instead of animating it [obligation]', () => {
-  test('chrome.is_tucked is already true synchronously after mount, with no animation frame needed', () => {
-    setSidebar(false)
-    setBelowMd(false)
+// ── Chrome remount re-snap [obligation] ────────────────────────────────────────
+// The preview/aside sit behind v-if on phone layout. Crossing desktop -> phone
+// -> desktop while a full-bleed page is displayed must re-apply the tucked
+// pose on remount, since the elements come back untucked by default.
+
+describe('DeckSettings — chrome remount re-snap [obligation]', () => {
+  test('first mount straight onto a full-bleed page snaps instead of animating', async () => {
+    makeWrapper({ initial_tab: 'review-pacing' })
+    await nextTick()
+    expect(mockChromeSnap).toHaveBeenCalledWith(true)
+    expect(mockChromeTuck).not.toHaveBeenCalled()
+  })
+
+  test('first mount onto a non-full-bleed page snaps to the untucked pose', async () => {
+    makeWrapper({ initial_tab: 'design' })
+    await nextTick()
+    expect(mockChromeSnap).toHaveBeenCalledWith(false)
+  })
+
+  test('remounting the preview/aside while full-bleed re-snaps to tucked (desktop -> phone -> desktop)', async () => {
+    makeWrapper({ initial_tab: 'review-pacing' })
+    mockChromeSnap.mockClear()
+
+    // Phone unmounts the preview/aside behind v-if.
+    await setLayout('phone')
+    // Back to desktop remounts them, untucked by default — the watcher must
+    // re-apply the tucked pose rather than leaving them exposed.
+    await setLayout('desktop')
+
+    expect(mockChromeSnap).toHaveBeenCalledWith(true)
+  })
+
+  test('remounting the preview/aside while non-full-bleed re-snaps to untucked (desktop -> phone -> desktop)', async () => {
+    makeWrapper({ initial_tab: 'design' })
+    mockChromeSnap.mockClear()
+
+    await setLayout('phone')
+    await setLayout('desktop')
+
+    expect(mockChromeSnap).toHaveBeenCalledWith(false)
+  })
+})
+
+// ── between hook wiring (runChromeSync) ───────────────────────────────────────
+
+describe('DeckSettings — between hook drives the chrome tuck/restore', () => {
+  test('passes a `between` function to PagedWindow that tucks when moving into review-pacing', async () => {
+    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+    const pw = wrapper.findComponent({ name: 'PagedWindow' })
+    const between = pw.props('between')
+    expect(typeof between).toBe('function')
+
+    await wrapper.find('[data-testid="pw__select-review-pacing"]').trigger('click')
+    await flushPromises()
+    await between()
+
+    expect(mockChromeTuck).toHaveBeenCalledOnce()
+  })
+
+  test('between restores the chrome when moving into a non-full-bleed page', async () => {
     const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
+    const pw = wrapper.findComponent({ name: 'PagedWindow' })
+    const between = pw.props('between')
 
-    expect(wrapper.vm.chrome.is_tucked.value).toBe(true)
-  })
+    await wrapper.find('[data-testid="pw__select-design"]').trigger('click')
+    await flushPromises()
+    await between()
 
-  test('opening on a non-full-bleed tab leaves the chrome untucked', () => {
-    setSidebar(false)
-    setBelowMd(false)
-    const { wrapper } = makeWrapper({ initial_tab: 'design' })
-
-    expect(wrapper.vm.chrome.is_tucked.value).toBe(false)
-  })
-
-  test('onTabLeave reads the live is_full_bleed value to decide whether to tuck or restore the chrome', async () => {
-    setSidebar(false)
-    setBelowMd(false)
-    const { wrapper } = makeWrapper({ initial_tab: 'design' })
-    expect(wrapper.vm.chrome.is_tucked.value).toBe(false)
-
-    // Simulate navigating into the full-bleed tab, then drive the transition's
-    // leave hook directly — this is the exact wiring DeckSettings passes to
-    // useTabTransition (`is_full_bleed: () => is_full_bleed.value`).
-    wrapper.vm.active_tab = 'review-pacing'
-    await wrapper.vm.$nextTick()
-    expect(wrapper.vm.is_full_bleed).toBe(true)
-
-    await wrapper.vm.onTabLeave(document.createElement('div'), () => {})
-
-    expect(wrapper.vm.chrome.is_tucked.value).toBe(true)
+    expect(mockChromeRestore).toHaveBeenCalledOnce()
   })
 })

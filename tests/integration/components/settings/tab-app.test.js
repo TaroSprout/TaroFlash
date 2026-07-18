@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import { computed, defineComponent, h, nextTick, reactive, useAttrs } from 'vue'
 import TabApp from '@/views/settings/tab-app/index.vue'
 import { memberEditorKey } from '@/composables/member/editor'
-import { settingsLayoutKey } from '@/views/settings/layout'
+import { windowLayoutKey } from '@/components/layout-kit/paged-window/layout'
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn(), emitHoverSfx: vi.fn() }))
 // Break config→player→config circular dep.
@@ -105,7 +105,7 @@ function makeTab({ audio = {} } = {}) {
       mocks: { $t: (k) => k },
       provide: {
         [memberEditorKey]: editor,
-        [settingsLayoutKey]: computed(() => 'sheet')
+        [windowLayoutKey]: computed(() => 'phone')
       }
     }
   })

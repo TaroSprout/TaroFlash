@@ -47,14 +47,14 @@ vi.mock('@/composables/auth/use-signup-actions', () => ({
 
 // ── Stubs ──────────────────────────────────────────────────────────────────────
 
-const MobileSheetStub = defineComponent({
-  name: 'MobileSheet',
+const AppWindowStub = defineComponent({
+  name: 'AppWindow',
   inheritAttrs: false,
   emits: ['close'],
   setup(_props, { slots, emit }) {
     return () =>
       h('div', { 'data-testid': 'signup-container' }, [
-        h('button', { 'data-testid': 'mobile-sheet__close', onClick: () => emit('close') }),
+        h('button', { 'data-testid': 'app-window__close', onClick: () => emit('close') }),
         slots.default?.()
       ])
   }
@@ -103,7 +103,7 @@ function mountSignupDialog({ close = vi.fn() } = {}) {
     props: { close },
     global: {
       stubs: {
-        MobileSheet: MobileSheetStub,
+        AppWindow: AppWindowStub,
         UiButton: UiButtonStub,
         SignupForm: SignupFormStub
       }
@@ -243,11 +243,11 @@ describe('SignupDialog (signup/index.vue)', () => {
     expect(close).toHaveBeenCalledWith()
   })
 
-  test('mobile-sheet close event calls close() with no argument', async () => {
+  test('app-window close event calls close() with no argument', async () => {
     const close = vi.fn()
     const wrapper = mountSignupDialog({ close })
 
-    await wrapper.find('[data-testid="mobile-sheet__close"]').trigger('click')
+    await wrapper.find('[data-testid="app-window__close"]').trigger('click')
 
     expect(close).toHaveBeenCalledWith()
   })

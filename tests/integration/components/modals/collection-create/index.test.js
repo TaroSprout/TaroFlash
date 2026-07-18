@@ -56,7 +56,7 @@ function mountModal(close = vi.fn()) {
     wrapper: shallowMount(CollectionCreate, {
       props: { close },
       global: {
-        stubs: { UiInput: UiInputStub, UiButton: UiButtonStub, MobileSheet: false }
+        stubs: { UiInput: UiInputStub, UiButton: UiButtonStub, AppWindow: false }
       }
     })
   }

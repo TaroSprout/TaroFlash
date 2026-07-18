@@ -8,7 +8,7 @@ vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: () => ({ value: 
 import TabDetails from '@/views/deck/deck-settings/tab-details/index.vue'
 import DeckSaveButton from '@/views/deck/deck-settings/deck-save-button.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
-import { deckSettingsLayoutKey } from '@/views/deck/deck-settings/layout'
+import { windowLayoutKey } from '@/components/layout-kit/paged-window/layout'
 import { deckSettingsCloseKey } from '@/views/deck/deck-settings/layout'
 
 vi.mock('@/stores/notice-store', () => ({
@@ -107,13 +107,13 @@ function makeEditor(overrides = {}) {
   }
 }
 
-function makeTab(layout = 'sheet', editor = makeEditor()) {
+function makeTab(layout = 'phone', editor = makeEditor()) {
   const close = vi.fn()
   const wrapper = mount(TabDetails, {
     global: {
       provide: {
         [deckEditorKey]: editor,
-        [deckSettingsLayoutKey]: computed(() => layout),
+        [windowLayoutKey]: computed(() => layout),
         [deckSettingsCloseKey]: close
       },
       stubs: {
@@ -144,14 +144,14 @@ describe('TabDetails [obligation]', () => {
 
   test('title input bound to editor.draft.title [obligation]', async () => {
     const editor = makeEditor({ title: 'Old Title' })
-    const { wrapper } = makeTab('sheet', editor)
+    const { wrapper } = makeTab('phone', editor)
     await wrapper.find('[data-testid="ui-input"]').setValue('New Title')
     expect(editor.draft.title).toBe('New Title')
   })
 
   test('description textarea bound to editor.draft.description [obligation]', async () => {
     const editor = makeEditor({ description: 'Old desc' })
-    const { wrapper } = makeTab('sheet', editor)
+    const { wrapper } = makeTab('phone', editor)
     await wrapper.find('[data-testid="ui-textarea"]').setValue('New desc')
     expect(editor.draft.description).toBe('New desc')
   })
@@ -162,13 +162,13 @@ describe('TabDetails [obligation]', () => {
   })
 
   test('does not render a back button (chrome-driven back replaced the inline button) [obligation]', () => {
-    const { wrapper } = makeTab('sheet')
+    const { wrapper } = makeTab('phone')
     expect(wrapper.find('[data-testid="deck-back-button-stub"]').exists()).toBe(false)
     expect(wrapper.emitted('back')).toBeUndefined()
   })
 
-  test('save button rendered in sheet mode [obligation]', () => {
-    const { wrapper } = makeTab('sheet')
+  test('save button rendered in phone mode [obligation]', () => {
+    const { wrapper } = makeTab('phone')
     expect(wrapper.find('[data-testid="deck-save-button-stub"]').exists()).toBe(true)
   })
 
@@ -179,7 +179,7 @@ describe('TabDetails [obligation]', () => {
 
   test('title input carries the error set on the shared editor instance [obligation]', () => {
     const editor = makeEditor({ title: '' })
-    const { wrapper } = makeTab('sheet', editor)
+    const { wrapper } = makeTab('phone', editor)
     editor.title_error.value = 'Give this deck a title'
     return wrapper.vm.$nextTick().then(() => {
       expect(wrapper.find('[data-testid="ui-input"]').attributes('error')).toBe(
@@ -197,7 +197,7 @@ describe('TabDetails + DeckSaveButton — shared editor instance [obligation]', 
       global: {
         provide: {
           [deckEditorKey]: editor,
-          [deckSettingsLayoutKey]: computed(() => 'sheet'),
+          [windowLayoutKey]: computed(() => 'phone'),
           [deckSettingsCloseKey]: close
         },
         stubs: {

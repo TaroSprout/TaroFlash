@@ -1,4 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import AppWindow from '@/components/layout-kit/app-window/index.vue'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
 import FeedbackBoard from '@/components/feedback/feedback-board.vue'
@@ -39,7 +40,7 @@ function mountBoard(close = vi.fn()) {
       props: { close },
       global: {
         renderStubDefaultSlot: true,
-        stubs: { MobileSheet: false, UiButton: false, FeedbackCard: FeedbackCardStub }
+        stubs: { AppWindow: false, UiButton: false, FeedbackCard: FeedbackCardStub }
       }
     })
   }
@@ -52,9 +53,9 @@ beforeEach(() => {
 // ── Content ───────────────────────────────────────────────────────────────────
 
 describe('FeedbackBoard — content', () => {
-  test('renders the mobile-sheet with the feedback-board title', () => {
+  test('renders the app-window with the feedback-board title', () => {
     const { wrapper } = mountBoard()
-    expect(wrapper.findComponent({ name: 'MobileSheet' }).props('title')).toBe('Feedback')
+    expect(wrapper.findComponent(AppWindow).props('title')).toBe('Feedback')
   })
 
   test('renders one feedback-card per item from useFeedbackItemsQuery', () => {
@@ -86,9 +87,9 @@ describe('FeedbackBoard — content', () => {
 // ── Close wiring ──────────────────────────────────────────────────────────────
 
 describe('FeedbackBoard — close wiring', () => {
-  test('mobile-sheet close event calls close', async () => {
+  test('app-window close event calls close', async () => {
     const { wrapper, close } = mountBoard()
-    await wrapper.findComponent({ name: 'MobileSheet' }).vm.$emit('close')
+    await wrapper.findComponent(AppWindow).vm.$emit('close')
     expect(close).toHaveBeenCalledOnce()
   })
 })

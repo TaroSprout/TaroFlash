@@ -1,4 +1,5 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
+import AppWindow from '@/components/layout-kit/app-window/index.vue'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 
@@ -23,7 +24,7 @@ function mountSheet(close = vi.fn()) {
     close,
     wrapper: shallowMount(LoginSheet, {
       props: { close },
-      global: { stubs: { LoginDialog: LoginDialogStub, MobileSheet: false } }
+      global: { stubs: { LoginDialog: LoginDialogStub, AppWindow: false } }
     })
   }
 }
@@ -31,7 +32,7 @@ function mountSheet(close = vi.fn()) {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('LoginSheet (welcome/login/sheet.vue)', () => {
-  test('renders the login-dialog inside the mobile-sheet body', () => {
+  test('renders the login-dialog inside the app-window body', () => {
     const { wrapper } = mountSheet()
     expect(wrapper.find('[data-testid="login-sheet__body"]').exists()).toBe(true)
     expect(
@@ -47,9 +48,9 @@ describe('LoginSheet (welcome/login/sheet.vue)', () => {
     expect(wrapper.findComponent({ name: 'LoginDialog' }).props('close')).toBe(close)
   })
 
-  test('mobile-sheet close event calls close()', async () => {
+  test('app-window close event calls close()', async () => {
     const { wrapper, close } = mountSheet()
-    await wrapper.findComponent({ name: 'MobileSheet' }).vm.$emit('close')
+    await wrapper.findComponent(AppWindow).vm.$emit('close')
     expect(close).toHaveBeenCalledWith()
   })
 })

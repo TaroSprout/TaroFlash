@@ -41,14 +41,14 @@ vi.mock('@/utils/animations/aside-retract', () => ({
   snapAside: mockSnapAside
 }))
 
-import { useSheetChrome } from '@/composables/ui/sheet-chrome'
+import { useWindowChrome } from '@/views/deck/deck-settings/window-chrome'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function makeChrome() {
   const preview = ref(document.createElement('div'))
   const aside = ref(document.createElement('div'))
-  return { preview, aside, chrome: useSheetChrome(preview, aside) }
+  return { preview, aside, chrome: useWindowChrome(preview, aside) }
 }
 
 beforeEach(() => {
@@ -65,7 +65,7 @@ beforeEach(() => {
 
 // ── is_tucked flips at the onEdgeOn midpoint [obligation] ─────────────────────
 
-describe('useSheetChrome — is_tucked flips at the animation midpoint, not on promise resolution [obligation]', () => {
+describe('useWindowChrome — is_tucked flips at the animation midpoint, not on promise resolution', () => {
   test('tuck(): is_tucked flips true exactly when onEdgeOn fires, before the tween promise resolves', async () => {
     let edgeCb
     let resolveAnim
@@ -116,7 +116,7 @@ describe('useSheetChrome — is_tucked flips at the animation midpoint, not on p
 
 // ── no-op guards + single sfx emission [obligation] ────────────────────────────
 
-describe('useSheetChrome — tuck/restore are no-ops when already in that state [obligation]', () => {
+describe('useWindowChrome — tuck/restore are no-ops when already in that state [obligation]', () => {
   test('tuck() called twice only animates and emits sfx once', async () => {
     const { chrome } = makeChrome()
 
@@ -160,7 +160,7 @@ describe('useSheetChrome — tuck/restore are no-ops when already in that state 
 
 // ── aside is animated alongside the preview ────────────────────────────────────
 
-describe('useSheetChrome — drives the aside alongside the preview', () => {
+describe('useWindowChrome — drives the aside alongside the preview', () => {
   test('tuck() retracts the aside and restore() restores it', async () => {
     const { chrome } = makeChrome()
 
@@ -175,7 +175,7 @@ describe('useSheetChrome — drives the aside alongside the preview', () => {
   test('tuck() skips animating the preview/aside when their refs are null, but still flips is_tucked', async () => {
     const preview = ref(null)
     const aside = ref(null)
-    const chrome = useSheetChrome(preview, aside)
+    const chrome = useWindowChrome(preview, aside)
 
     await chrome.tuck()
 
@@ -187,7 +187,7 @@ describe('useSheetChrome — drives the aside alongside the preview', () => {
 
 // ── snap ────────────────────────────────────────────────────────────────────────
 
-describe('useSheetChrome — snap jumps straight to a pose with no animation', () => {
+describe('useWindowChrome — snap jumps straight to a pose with no animation', () => {
   test('snap(true) sets is_tucked, snaps the preview and aside, and never emits sfx', () => {
     const { preview, aside, chrome } = makeChrome()
 
@@ -211,7 +211,7 @@ describe('useSheetChrome — snap jumps straight to a pose with no animation', (
     expect(mockEmitSfx).not.toHaveBeenCalled()
   })
 
-  test('snap() is unguarded — it re-applies even when already in that state', () => {
+  test('snap() is unguarded — it re-applies even when already in that state [obligation]', () => {
     const { chrome } = makeChrome()
 
     chrome.snap(true)
@@ -223,7 +223,7 @@ describe('useSheetChrome — snap jumps straight to a pose with no animation', (
   test('snap() still flips is_tucked when the preview/aside refs are null', () => {
     const preview = ref(null)
     const aside = ref(null)
-    const chrome = useSheetChrome(preview, aside)
+    const chrome = useWindowChrome(preview, aside)
 
     chrome.snap(true)
 

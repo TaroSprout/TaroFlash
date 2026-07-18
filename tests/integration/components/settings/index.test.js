@@ -1,34 +1,11 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, nextTick, useAttrs } from 'vue'
-import { SETTINGS_SHEET_BREAKPOINTS } from '@/views/settings/layout'
-import { useMatchMedia } from '@/composables/ui/media-query'
+import { defineComponent, h, computed } from 'vue'
 
 // ── Hoisted state ─────────────────────────────────────────────────────────────
 
-const {
-  mockEditor,
-  mockDanger,
-  mockEmitSfx,
-  mockAlertWarn,
-  alertResponse,
-  state,
-  mockAccountAccessOnChromeBack
-} = vi.hoisted(() => {
-  // alertResponse holds a resolve fn so tests control whether the user confirms.
-  let _resolve = null
-  const alertResponse = {
-    resolve: (val) => _resolve?.(val),
-    reset: () => {
-      _resolve = null
-    },
-    _setResolve: (fn) => {
-      _resolve = fn
-    }
-  }
-
-  return {
-    state: { isSheet: false, isDesktop: false },
+const { mockEditor, mockDanger, mockEmitSfx, mockAlertWarn, mockAccountAccessOnChromeBack } =
+  vi.hoisted(() => ({
     mockEditor: {
       draft: {
         display_name: 'Chris',
@@ -49,10 +26,8 @@ const {
     },
     mockEmitSfx: vi.fn(),
     mockAlertWarn: vi.fn(),
-    alertResponse,
     mockAccountAccessOnChromeBack: vi.fn()
-  }
-})
+  }))
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
@@ -68,52 +43,15 @@ vi.mock('@/composables/member/danger-actions', () => ({
 
 vi.mock('@/composables/storage/session-ref', async () => {
   const { ref } = await import('vue')
-  return {
-    useSessionRef: (_key, initial) => ref(initial)
-  }
-})
-
-vi.mock('@/composables/ui/media-query', async () => {
-  const { ref } = await import('vue')
-  return {
-    useMatchMedia: vi.fn((query) => {
-      if (query.includes('&')) return ref(state.isDesktop)
-      return ref(state.isSheet)
-    })
-  }
+  return { useSessionRef: (_key, initial) => ref(initial) }
 })
 
 vi.mock('@/composables/alert', () => ({
   useAlert: () => ({ warn: mockAlertWarn })
 }))
 
-vi.mock('@/views/settings/tab-index/index.vue', async () => {
-  const { defineComponent, h } = await import('vue')
-  return {
-    default: defineComponent({
-      name: 'TabIndex',
-      emits: ['navigate'],
-      setup(_p, { emit }) {
-        return () =>
-          h(
-            'button',
-            {
-              'data-testid': 'tab-index-stub',
-              onClick: () => emit('navigate', 'app')
-            },
-            'go'
-          )
-      }
-    })
-  }
-})
+vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
-// The rest of the tabs are now statically imported (no defineAsyncComponent
-// boundary to shield the test from their real setup()), so each one that
-// needs real Pinia/editor context we don't provide here gets a lightweight
-// stand-in. Their own business logic is covered in their dedicated test files
-// (tab-profile.test.js, tab-subscription.test.js, etc.) — this file only
-// exercises SettingsApp's own routing/chrome/provide wiring.
 vi.mock('@/views/settings/tab-profile/index.vue', async () => {
   const { defineComponent, h } = await import('vue')
   return {
@@ -130,16 +68,6 @@ vi.mock('@/views/settings/tab-app/index.vue', async () => {
     default: defineComponent({
       name: 'TabApp',
       setup: () => () => h('div', { 'data-testid': 'tab-app-stub' })
-    })
-  }
-})
-
-vi.mock('@/views/settings/tab-review-preferences/index.vue', async () => {
-  const { defineComponent, h } = await import('vue')
-  return {
-    default: defineComponent({
-      name: 'TabReviewPreferences',
-      setup: () => () => h('div', { 'data-testid': 'tab-review-preferences-stub' })
     })
   }
 })
@@ -177,94 +105,58 @@ vi.mock('@/views/settings/tab-account-access/index.vue', async () => {
   }
 })
 
-vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
-
-vi.mock('@/utils/animations/fade', () => ({
-  fadeEnter: vi.fn((_el, done) => done?.()),
-  fadeLeave: vi.fn((_el, done) => done?.())
-}))
-
-vi.mock('@/utils/animations/tab-slide', () => ({
-  tabSlideEnter: vi.fn(() => vi.fn((_el, done) => done?.())),
-  tabSlideLeave: vi.fn(() => vi.fn((_el, done) => done?.()))
-}))
-
-// ── Stubs ─────────────────────────────────────────────────────────────────────
-
-const PassthroughStub = defineComponent({
-  name: 'PassthroughStub',
-  inheritAttrs: false,
-  setup(_p, { slots }) {
-    const attrs = useAttrs()
-    return () => h('div', { ...attrs }, slots.default?.())
-  }
+vi.mock('@/views/settings/settings-aside.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return { default: defineComponent({ name: 'SettingsAside', setup: () => () => h('div') }) }
 })
 
-const TabSheetStub = defineComponent({
-  name: 'TabSheet',
-  props: ['active', 'tabs', 'sheetPx'],
-  emits: ['close', 'back', 'update:active'],
-  inheritAttrs: false,
-  setup(props, { slots, emit, attrs }) {
+vi.mock('@/views/settings/settings-save-button.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return { default: defineComponent({ name: 'SettingsSaveButton', setup: () => () => h('div') }) }
+})
+
+// ── PagedWindow stub ──────────────────────────────────────────────────────────
+// Settings' own routing/chrome-back wiring is under test; paged-window's own
+// pages/directory/back-mode behavior is covered in
+// tests/integration/components/layout-kit/paged-window/index.test.js.
+
+const PagedWindowStub = defineComponent({
+  name: 'PagedWindow',
+  props: {
+    active: { type: String, default: null },
+    pages: { type: Array, default: () => [] },
+    groups: { type: Array, default: () => [] }
+  },
+  emits: ['close', 'back', 'select', 'reselect', 'update:active'],
+  setup(props, { slots, emit, expose }) {
+    const displayed_page = computed(() => props.active ?? 'directory')
+    expose({
+      layout_mode: computed(() => 'desktop'),
+      displayed_page,
+      has_sidebar: computed(() => true)
+    })
+
     return () =>
-      h(
-        'div',
-        {
-          'data-testid': 'tab-sheet-stub',
-          'data-active': props.active,
-          'data-layout': attrs['data-layout'],
-          'data-tabs': JSON.stringify(props.tabs?.map((t) => t.value) ?? []),
-          'data-tab-icons': JSON.stringify(props.tabs ?? [])
-        },
-        [
-          h('div', { 'data-testid': 'tab-sheet__header' }, slots['header-content']?.()),
-          h(
-            'button',
-            {
-              'data-testid': 'tab-sheet__emit-close',
-              onClick: () => emit('close')
-            },
-            'close'
-          ),
-          h(
-            'button',
-            {
-              'data-testid': 'tab-sheet__emit-back',
-              onClick: () => emit('back')
-            },
-            'back'
-          ),
-          h(
-            'button',
-            {
-              'data-testid': 'tab-sheet__select-app',
-              onClick: () => emit('update:active', 'app')
-            },
-            'app'
-          ),
-          h(
-            'button',
-            {
-              'data-testid': 'tab-sheet__select-subscription',
-              onClick: () => emit('update:active', 'subscription')
-            },
-            'subscription'
-          ),
-          ...(props.tabs ?? []).map((tab) =>
-            h(
-              'button',
-              {
-                'data-testid': `tab-sheet__select-${tab.value}`,
-                onClick: () => emit('update:active', tab.value)
-              },
-              tab.value
-            )
-          ),
-          h('div', { 'data-testid': 'tab-sheet__content' }, slots.default?.()),
-          h('div', { 'data-testid': 'tab-sheet__overlay' }, slots.overlay?.()),
-          h('div', { 'data-testid': 'tab-sheet__footer' }, slots.footer?.())
-        ]
-      )
+      h('div', { 'data-testid': 'paged-window-stub' }, [
+        h('div', { 'data-testid': 'pw__header-content' }, slots['header-content']?.()),
+        h('button', { 'data-testid': 'pw__close', onClick: () => emit('close') }, 'close'),
+        h('button', { 'data-testid': 'pw__back', onClick: () => emit('back') }, 'back'),
+        h(
+          'button',
+          {
+            'data-testid': 'pw__select-account-access',
+            onClick: () => emit('update:active', 'account-access')
+          },
+          'account-access'
+        ),
+        h('div', { 'data-testid': 'pw__aside' }, slots.aside?.()),
+        h('div', { 'data-testid': 'pw__overlay' }, slots.overlay?.()),
+        h(
+          'div',
+          { 'data-testid': 'pw__default' },
+          slots.default?.({ displayed_page: displayed_page.value })
+        )
+      ])
   }
 })
 
@@ -289,18 +181,13 @@ const MemberCardStub = defineComponent({
 
 // ── Factory ───────────────────────────────────────────────────────────────────
 
-function makeWrapper(closeFn = vi.fn(), member_card_stub = PassthroughStub) {
+function makeWrapper(closeFn = vi.fn(), member_card_stub) {
   return mount(SettingsApp, {
     props: { close: closeFn },
     global: {
       stubs: {
-        TabSheet: TabSheetStub,
-        SettingsAside: PassthroughStub,
-        SettingsSaveButton: PassthroughStub,
-        MemberCard: member_card_stub,
-        UiButton: PassthroughStub,
-        UiTagButton: PassthroughStub,
-        UiIcon: PassthroughStub
+        PagedWindow: PagedWindowStub,
+        ...(member_card_stub ? { MemberCard: member_card_stub } : {})
       }
     }
   })
@@ -309,357 +196,172 @@ function makeWrapper(closeFn = vi.fn(), member_card_stub = PassthroughStub) {
 // ── Reset ─────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
-  state.isSheet = false
-  state.isDesktop = false
-  state.isPinned = false
-  useMatchMedia.mockClear()
   mockEditor.is_dirty.value = false
   mockEditor.saving.value = false
   mockEditor.saveMember.mockReset().mockResolvedValue(true)
   mockEmitSfx.mockReset()
   mockDanger.onDeleteAccount.mockReset()
   mockAlertWarn.mockReset()
-  alertResponse.reset()
   mockAccountAccessOnChromeBack.mockReset()
 })
 
-// ── Tab routing ───────────────────────────────────────────────────────────────
+// ── pages composition ───────────────────────────────────────────────────────
 
-describe('settings app — tab routing', () => {
-  test('exposes the four expected tab values in the correct order', () => {
+describe('settings app — pages composition [obligation]', () => {
+  test('exposes the four sidebar pages in the expected order, excluding account-access', () => {
     const wrapper = makeWrapper()
-    const tabs = JSON.parse(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-tabs'))
-    expect(tabs).toEqual(['profile', 'app', 'subscription', 'danger-zone'])
+    const pw = wrapper.findComponent({ name: 'PagedWindow' })
+    const sidebar_values = pw
+      .props('pages')
+      .filter((p) => p.sidebar !== false)
+      .map((p) => p.value)
+    expect(sidebar_values).toEqual(['profile', 'app', 'subscription', 'danger-zone'])
   })
 
-  test('never includes account-access in the sidebar tab-bar (reachable only via aside/tab-index) [obligation]', () => {
+  test('account-access is present in the registry but marked sidebar: false', () => {
     const wrapper = makeWrapper()
-    const tabs = JSON.parse(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-tabs'))
-    expect(tabs).not.toContain('account-access')
-  })
-
-  test('defaults the active sidebar tab to "profile" on non-sheet layout', () => {
-    state.isSheet = false
-    const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe('profile')
-  })
-
-  test('sidebar tab updates flip the displayed tab', async () => {
-    const wrapper = makeWrapper()
-    await wrapper.find('[data-testid="tab-sheet__select-app"]').trigger('click')
-    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe('app')
+    const pw = wrapper.findComponent({ name: 'PagedWindow' })
+    const account_access = pw.props('pages').find((p) => p.value === 'account-access')
+    expect(account_access).toBeTruthy()
+    expect(account_access.sidebar).toBe(false)
   })
 })
 
 // ── Header copy ───────────────────────────────────────────────────────────────
 
-describe('settings app — header copy is static across tabs/layouts [obligation]', () => {
-  test('renders the static "App Settings" header on tablet layout (no tab selected) [obligation]', async () => {
-    state.isSheet = false
-    state.isDesktop = false
+describe('settings app — header copy is static across tabs [obligation]', () => {
+  test('renders the static header title with no tab selected', () => {
     const wrapper = makeWrapper()
-    await nextTick()
-    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('App Settings')
-  })
-
-  test('renders the static "App Settings" header on desktop layout (no tab selected) [obligation]', async () => {
-    state.isSheet = false
-    state.isDesktop = true
-    const wrapper = makeWrapper()
-    await nextTick()
     expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('App Settings')
   })
 
   test('header copy stays the same when the active tab changes', async () => {
     const wrapper = makeWrapper()
-    await wrapper.find('[data-testid="tab-sheet__select-app"]').trigger('click')
-    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('App Settings')
-  })
-
-  test('renders the static "App Settings" header on sheet layout with no tab selected', () => {
-    state.isSheet = true
-    const wrapper = makeWrapper()
+    await wrapper.find('[data-testid="pw__select-account-access"]').trigger('click')
     expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('App Settings')
   })
 })
 
-// ── Layout mode data attribute ────────────────────────────────────────────────
+// ── active_tab defaults ───────────────────────────────────────────────────────
 
-describe('settings app — data-layout attribute', () => {
-  test('sets data-layout="tablet" by default', () => {
-    state.isSheet = false
-    state.isDesktop = false
+describe('settings app — active_tab is a plain, non-persisted ref [obligation]', () => {
+  test('defaults to null on every mount', () => {
     const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-layout')).toBe('tablet')
+    expect(wrapper.vm.active_tab).toBe(null)
   })
 
-  test('sets data-layout="sheet" when sheet query matches', () => {
-    state.isSheet = true
-    const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-layout')).toBe('sheet')
-  })
+  test('a second mount starts fresh, with no cross-mount state leak', () => {
+    const w1 = makeWrapper()
+    w1.vm.active_tab = 'app'
+    w1.unmount()
 
-  test('sets data-layout="desktop" when desktop query matches', () => {
-    state.isSheet = false
-    state.isDesktop = true
-    const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-layout')).toBe('desktop')
-  })
-
-  test('passes a width-only sheet_query to useTabModalLayout, with no height clause folded in [obligation]', () => {
-    makeWrapper()
-    const sheet_query_calls = useMatchMedia.mock.calls
-      .map((call) => call[0])
-      .filter((query) => !query.includes('&') && !query.includes(SETTINGS_SHEET_BREAKPOINTS.height))
-    expect(sheet_query_calls).toContain('w<mlg')
-  })
-
-  test('resets active_tab away from account-access when layout_mode leaves sheet [obligation]', async () => {
-    state.isSheet = true
-    const wrapper = makeWrapper()
-    wrapper.vm.onNavigate('account-access')
-    await nextTick()
-    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe(
-      'account-access'
-    )
-
-    // Flip the underlying sheet_query ref to simulate crossing out of sheet mode.
-    const sheet_call_index = useMatchMedia.mock.calls.findIndex(([q]) => q === 'w<mlg')
-    useMatchMedia.mock.results[sheet_call_index].value.value = false
-    await nextTick()
-
-    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe('profile')
-  })
-
-  test('layout_mode stays "tablet"/"desktop" on a short-but-wide viewport — width band alone drives the mode, height is never folded into sheet_query [obligation]', () => {
-    // Regression guard: sheet_query used to be 'w<mlg | h<sm', so a viewport with
-    // width in the tablet/desktop band but a short height incorrectly matched the
-    // sheet query. Now sheet_query is width-only ('w<mlg'), so the mocked
-    // useMatchMedia never receives a height-driven sheet condition — state.isSheet
-    // is only ever toggled by a real width breakpoint, never by height alone.
-    state.isSheet = false
-    state.isDesktop = false
-    const wrapper = makeWrapper()
-
-    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-layout')).toBe('tablet')
-    const sheet_query_calls = useMatchMedia.mock.calls.map((call) => call[0])
-    expect(sheet_query_calls).not.toContain('w<mlg | h<sm')
-  })
-})
-
-// ── Overlay / aside visibility ────────────────────────────────────────────────
-
-describe('settings app — overlay and aside visibility', () => {
-  test('shows the pinned member-card preview on non-sheet layout', () => {
-    state.isSheet = false
-    const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="settings__pinned-preview"]').exists()).toBe(true)
-  })
-
-  test('hides the pinned member-card preview on sheet layout', () => {
-    state.isSheet = true
-    const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="settings__pinned-preview"]').exists()).toBe(false)
-  })
-
-  test('renders the settings-aside on non-sheet layout', () => {
-    state.isSheet = false
-    const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="settings__aside"]').exists()).toBe(true)
-  })
-
-  test('hides the settings-aside on sheet layout', () => {
-    state.isSheet = true
-    const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="settings__aside"]').exists()).toBe(false)
-  })
-})
-
-// ── active_tab defaults (obligation) ─────────────────────────────────────────
-
-describe('settings app — active_tab is plain ref, not session-persisted [obligation]', () => {
-  test('active_tab defaults to null on every mount (sheet mode shows index tab) [obligation]', () => {
-    state.isSheet = true
-    const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
-  })
-
-  test('active_tab defaults to null on every mount (tablet mode shows index tab) [obligation]', () => {
-    state.isSheet = false
-    state.isDesktop = false
-    const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
-  })
-
-  test('onBack returns to index (sheet mode) [obligation]', async () => {
-    state.isSheet = true
-    const wrapper = makeWrapper()
-    await wrapper.find('[data-testid="tab-index-stub"]').trigger('click')
-    await wrapper.vm.onBack()
-    await nextTick()
-    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
-  })
-})
-
-// ── displayed_tab resolution (obligation) ────────────────────────────────────
-
-describe('settings app — displayed_tab resolves correctly per layout [obligation]', () => {
-  test('resolves to "index" on sheet layout with no active tab [obligation]', () => {
-    state.isSheet = true
-    const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
-  })
-
-  test('resolves to "index" on tablet layout with no active tab [obligation]', () => {
-    state.isSheet = false
-    state.isDesktop = false
-    const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
-  })
-
-  test('resolves to "profile" only on desktop layout with no active tab [obligation]', () => {
-    state.isSheet = false
-    state.isDesktop = true
-    const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(false)
-    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe('profile')
-  })
-})
-
-// ── Index tab (sheet mobile entry point) ─────────────────────────────────────
-
-describe('settings app — index tab', () => {
-  test('renders the index tab on sheet layout with no tab selected', () => {
-    state.isSheet = true
-    const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
-  })
-
-  test('navigate emit from the index tab swaps the active tab', async () => {
-    state.isSheet = true
-    const wrapper = makeWrapper()
-    await wrapper.find('[data-testid="tab-index-stub"]').trigger('click')
-    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe('app')
+    const w2 = makeWrapper()
+    expect(w2.vm.active_tab).toBe(null)
   })
 })
 
 // ── Back navigation ───────────────────────────────────────────────────────────
 
 describe('settings app — back navigation', () => {
-  test('back action clears the active tab (sidebar defaults to profile)', async () => {
+  test('onBack clears the active tab and plays the snappy_button_5 sfx', async () => {
     const wrapper = makeWrapper()
-    await wrapper.find('[data-testid="tab-sheet__select-app"]').trigger('click')
-    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe('app')
+    await flushPromises()
+    await wrapper.find('[data-testid="pw__select-account-access"]').trigger('click')
+    expect(wrapper.vm.active_tab).toBe('account-access')
 
     await wrapper.vm.onBack()
-    await nextTick()
-    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe('profile')
+
+    expect(wrapper.vm.active_tab).toBe(null)
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
   })
 
-  test('back action emits the snappy_button_5 sfx', async () => {
+  test('the paged-window back emit routes to onChromeBack, clearing the active tab', async () => {
     const wrapper = makeWrapper()
-    await wrapper.vm.onBack()
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    await flushPromises()
+    await wrapper.find('[data-testid="pw__select-account-access"]').trigger('click')
+
+    await wrapper.find('[data-testid="pw__back"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.vm.active_tab).toBe(null)
   })
 })
 
-// ── onChromeBack delegation (obligation) ──────────────────────────────────────
+// ── onChromeBack delegation [obligation] ──────────────────────────────────────
 
 describe('settings app — onChromeBack delegates to the active tab first [obligation]', () => {
-  test('falls through to the default exit when the active tab has no onChromeBack [obligation]', async () => {
+  test('falls through to the default exit when the active tab has no onChromeBack', async () => {
     const wrapper = makeWrapper()
-    await wrapper.find('[data-testid="tab-sheet__select-app"]').trigger('click')
+    await flushPromises()
+    await wrapper.find('[data-testid="pw__select-account-access"]').trigger('click')
 
+    // account-access's onChromeBack defaults to returning false in this suite
+    // until a test overrides it — falling through clears active_tab.
+    mockAccountAccessOnChromeBack.mockReturnValue(false)
     await wrapper.vm.onChromeBack()
-    await nextTick()
 
-    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe('profile')
+    expect(wrapper.vm.active_tab).toBe(null)
     expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
   })
 
-  test('stays on the tab when the active tab onChromeBack returns true (handled locally) [obligation]', async () => {
+  test('stays on the tab when the active tab onChromeBack returns true (handled locally)', async () => {
     mockAccountAccessOnChromeBack.mockReturnValue(true)
     const wrapper = makeWrapper()
-    wrapper.vm.onNavigate('account-access')
-    await nextTick()
+    await flushPromises()
+    await wrapper.find('[data-testid="pw__select-account-access"]').trigger('click')
 
     mockEmitSfx.mockClear()
     await wrapper.vm.onChromeBack()
-    await nextTick()
 
     expect(mockAccountAccessOnChromeBack).toHaveBeenCalledOnce()
-    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe(
-      'account-access'
-    )
-    // [obligation] regression guard — sound must fire even when a nested tab
-    // handles its own back-navigation, not only when falling through to onBack().
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
-  })
-
-  test('falls through to the default exit when the active tab onChromeBack returns false [obligation]', async () => {
-    mockAccountAccessOnChromeBack.mockReturnValue(false)
-    const wrapper = makeWrapper()
-    wrapper.vm.onNavigate('account-access')
-    await nextTick()
-
-    await wrapper.vm.onChromeBack()
-    await nextTick()
-
-    expect(mockAccountAccessOnChromeBack).toHaveBeenCalledOnce()
-    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe('profile')
+    expect(wrapper.vm.active_tab).toBe('account-access')
+    // Sound still plays even when a nested tab handles its own back-navigation.
     expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
   })
 })
 
 // ── onClose — unsaved-changes guard ──────────────────────────────────────────
 
-describe('settings app — close with unsaved-changes guard [obligation]', () => {
+describe('settings app — close with unsaved-changes guard', () => {
   test('calls close() immediately when editor is not dirty', async () => {
     mockEditor.is_dirty.value = false
     const close = vi.fn()
     const wrapper = makeWrapper(close)
 
-    await wrapper.find('[data-testid="tab-sheet__emit-close"]').trigger('click')
+    await wrapper.find('[data-testid="pw__close"]').trigger('click')
     await flushPromises()
 
     expect(mockAlertWarn).not.toHaveBeenCalled()
     expect(close).toHaveBeenCalledOnce()
   })
 
-  test('shows alert when editor is dirty on close', async () => {
+  test('shows alert when editor is dirty on close, and closes only on confirm', async () => {
     mockEditor.is_dirty.value = true
     let alertResolve
-    mockAlertWarn.mockReturnValue({
-      response: new Promise((r) => (alertResolve = r))
-    })
+    mockAlertWarn.mockReturnValue({ response: new Promise((r) => (alertResolve = r)) })
 
     const close = vi.fn()
     const wrapper = makeWrapper(close)
 
-    await wrapper.find('[data-testid="tab-sheet__emit-close"]').trigger('click')
+    await wrapper.find('[data-testid="pw__close"]').trigger('click')
 
     expect(mockAlertWarn).toHaveBeenCalledOnce()
     expect(close).not.toHaveBeenCalled()
 
-    // User confirms
     alertResolve(true)
     await flushPromises()
     expect(close).toHaveBeenCalledOnce()
   })
 
-  test('does NOT call close() when user cancels the alert [obligation]', async () => {
+  test('does NOT call close() when the user cancels the alert', async () => {
     mockEditor.is_dirty.value = true
     let alertResolve
-    mockAlertWarn.mockReturnValue({
-      response: new Promise((r) => (alertResolve = r))
-    })
+    mockAlertWarn.mockReturnValue({ response: new Promise((r) => (alertResolve = r)) })
 
     const close = vi.fn()
     const wrapper = makeWrapper(close)
 
-    await wrapper.find('[data-testid="tab-sheet__emit-close"]').trigger('click')
-
-    // User cancels
+    await wrapper.find('[data-testid="pw__close"]').trigger('click')
     alertResolve(false)
     await flushPromises()
 
@@ -669,13 +371,13 @@ describe('settings app — close with unsaved-changes guard [obligation]', () =>
 
 // ── Open / close sfx ──────────────────────────────────────────────────────────
 
-describe('settings app — open/close sfx [obligation]', () => {
-  test('emits snappy_button_3 on mount (open sound) [obligation]', () => {
+describe('settings app — open/close sfx', () => {
+  test('emits snappy_button_3 on mount', () => {
     makeWrapper()
     expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_3')
   })
 
-  test('emits pop_up_close on unmount (close sound) [obligation]', () => {
+  test('emits pop_up_close on unmount', () => {
     const wrapper = makeWrapper()
     mockEmitSfx.mockReset()
     wrapper.unmount()
@@ -683,11 +385,14 @@ describe('settings app — open/close sfx [obligation]', () => {
   })
 })
 
-describe('settings app — member-card avatar edit wiring [obligation]', () => {
+// ── member-card avatar edit wiring ────────────────────────────────────────────
+
+describe('settings app — member-card avatar edit wiring', () => {
   afterEach(() => useModal().pop())
 
-  test('passes editable to member-card', () => {
+  test('passes editable to member-card', async () => {
     const wrapper = makeWrapper(vi.fn(), MemberCardStub)
+    await flushPromises()
     expect(wrapper.find('[data-testid="member-card-stub"]').attributes('data-editable')).toBe(
       'true'
     )
@@ -695,6 +400,7 @@ describe('settings app — member-card avatar edit wiring [obligation]', () => {
 
   test('emitting edit-avatar on member-card opens the avatar picker modal', async () => {
     const wrapper = makeWrapper(vi.fn(), MemberCardStub)
+    await flushPromises()
 
     await wrapper.find('[data-testid="member-card-stub"]').trigger('click')
 
