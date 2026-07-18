@@ -5,7 +5,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import UiInput from '@/components/ui-kit/input.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiProgressBar from '@/components/ui-kit/progress-bar.vue'
-import MobileSheet from '@/components/layout-kit/sheet/mobile-sheet.vue'
+import SheetFrame from '@/components/layout-kit/sheet/sheet-frame.vue'
 import ScriptSelect from './script-select.vue'
 import { useStartLessonMutation, EdgeFunctionError } from '@/api/lessons'
 import type { LessonUploadProgress } from '@/api/lessons'
@@ -102,7 +102,7 @@ function errorKeyFor(error: unknown): string {
 </script>
 
 <template>
-  <mobile-sheet
+  <sheet-frame
     data-testid="upload-lesson-container"
     data-theme="blue-500"
     data-theme-dark="blue-650"
@@ -175,5 +175,5 @@ function errorKeyFor(error: unknown): string {
         </ui-button>
       </div>
     </div>
-  </mobile-sheet>
+  </sheet-frame>
 </template>

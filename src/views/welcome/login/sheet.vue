@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import MobileSheet from '@/components/layout-kit/sheet/mobile-sheet.vue'
+import SheetFrame from '@/components/layout-kit/sheet/sheet-frame.vue'
 import LoginDialog from './dialog.vue'
 import { useI18n } from 'vue-i18n'
 
@@ -11,7 +11,7 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <mobile-sheet
+  <sheet-frame
     data-testid="login-sheet"
     data-theme="blue-500"
     data-theme-dark="blue-650"
@@ -22,5 +22,5 @@ const { t } = useI18n()
     <div data-testid="login-sheet__body" class="flex flex-col items-center p-4">
       <login-dialog :close="close" />
     </div>
-  </mobile-sheet>
+  </sheet-frame>
 </template>
