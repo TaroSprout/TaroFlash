@@ -14,6 +14,9 @@ type UiTappableProps = {
   sfx?: SfxOptions
   triggerAt?: StagedTapPhase
   bgx_color?: string
+  // false drops the diagonal-stripe bgx layer entirely — for tappables whose
+  // rounded children would let the square bgx bleed past the corners
+  bgx?: boolean
   active_on_hover?: boolean
   // persistent selected/active state — shows the bgx background + slide,
   // same as hover/press but held open
@@ -26,6 +29,7 @@ const {
   sfx = {},
   triggerAt,
   bgx_color = 'var(--theme-neutral)',
+  bgx = true,
   active_on_hover = false,
   active = false
 } = defineProps<UiTappableProps>()
@@ -68,6 +72,7 @@ function onPointerLeave() {
   >
     <slot />
     <div
+      v-if="bgx"
       class="absolute inset-0 -z-10 rounded-[inherit] bgx-diagonal-stripes animation-safe:group-data-[tap-active=true]/tappable:bgx-slide pointer-events-none hidden group-data-[tap-active=true]/tappable:block"
       :style="{ '--bgx-fill': bgx_color }"
     />
