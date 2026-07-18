@@ -1,16 +1,12 @@
 <script setup lang="ts">
 import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import UiButton from '@/components/ui-kit/button.vue'
-import UiIcon from '@/components/ui-kit/icon.vue'
 import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import TooltipRow from './tooltip-row.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { DAILY_LIMIT_BOUNDS } from '@/utils/deck/defaults'
 import { pacingFieldsKey } from './pacing-fields'
-
-const emit = defineEmits<{ advance: [] }>()
 
 const { t } = useI18n()
 const { deck } = inject(deckEditorKey)!
@@ -31,20 +27,6 @@ const {
     :label="t('deck.settings-modal.review-pacing.limits-heading')"
     :description="t('deck.settings-modal.review-pacing.limits-description')"
   >
-    <template #actions>
-      <ui-button
-        data-testid="tab-review-pacing__advanced"
-        data-theme="brown-100"
-        data-theme-dark="stone-700"
-        size="sm"
-        icon-right="line-arrow-right"
-        :sfx="{ press: 'snappy_button_5' }"
-        @press="emit('advance')"
-      >
-        {{ t('deck.settings-modal.review-pacing.advanced-toggle') }}
-      </ui-button>
-    </template>
-
     <div data-testid="tab-review-pacing__pacing" class="flex flex-col gap-4">
       <tooltip-row
         data-testid="tab-review-pacing__max-reviews"

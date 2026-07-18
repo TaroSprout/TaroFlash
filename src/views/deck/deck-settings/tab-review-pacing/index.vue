@@ -3,7 +3,8 @@ import { inject, provide } from 'vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import PresetHeader from './preset-header.vue'
 import GeneralSection from './general-section.vue'
-import PacingColumn from './pacing-column.vue'
+import LimitsSection from './limits-section.vue'
+import SchedulingSection from './scheduling-section.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { usePacingFields } from './use-pacing-fields'
 import { pacingFieldsKey } from './pacing-fields'
@@ -25,8 +26,12 @@ provide(pacingFieldsKey, usePacingFields(deck!, draft))
       data-testid="tab-review-pacing__columns"
       class="grid grid-cols-1 items-start gap-8 @min-[46rem]:grid-cols-2 @min-[46rem]:gap-12"
     >
-      <general-section />
-      <pacing-column />
+      <div data-testid="tab-review-pacing__deck-column" class="flex flex-col gap-8">
+        <general-section />
+        <limits-section />
+      </div>
+
+      <scheduling-section />
     </div>
 
     <deck-save-button />

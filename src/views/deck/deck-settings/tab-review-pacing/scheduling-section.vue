@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import UiButton from '@/components/ui-kit/button.vue'
 import UiSelectMenu from '@/components/ui-kit/select-menu.vue'
 import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
@@ -12,8 +11,6 @@ import {
   LEECH_THRESHOLD_BOUNDS,
   MAX_INTERVAL_BOUNDS
 } from '@/utils/review-pacing/defaults'
-
-const emit = defineEmits<{ back: [] }>()
 
 const { t } = useI18n()
 
@@ -44,20 +41,6 @@ const {
     :label="t('deck.settings-modal.review-pacing.scheduling-heading')"
     :description="t('deck.settings-modal.review-pacing.scheduling-description')"
   >
-    <template #actions>
-      <ui-button
-        data-testid="tab-review-pacing__advanced-back"
-        data-theme="brown-100"
-        data-theme-dark="stone-700"
-        size="sm"
-        icon-left="line-arrow-left"
-        :sfx="{ press: 'snappy_button_5' }"
-        @press="emit('back')"
-      >
-        {{ t('deck.settings-modal.review-pacing.advanced-back') }}
-      </ui-button>
-    </template>
-
     <div data-testid="scheduling-section__fields" class="flex flex-col gap-4">
       <tooltip-row
         data-testid="tab-review-pacing__retention"
