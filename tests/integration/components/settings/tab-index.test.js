@@ -71,12 +71,12 @@ describe('TabIndex', () => {
       'profile',
       'subscription',
       'app',
-      'review-preferences'
+      'danger-zone'
     ])
     expect(cards[0].text()).toContain('Profile')
     expect(cards[1].text()).toContain('Subscription')
-    expect(cards[2].text()).toContain('App Settings')
-    expect(cards[3].text()).toContain('Study Settings')
+    expect(cards[2].text()).toContain('Audio')
+    expect(cards[3].text()).toContain('Danger Zone')
   })
 
   test('emits navigate with the clicked entry value', async () => {
@@ -87,16 +87,14 @@ describe('TabIndex', () => {
     expect(wrapper.emitted('navigate')).toEqual([['subscription']])
   })
 
-  test('renders the inlined delete-account button', () => {
+  // [obligation] danger-zone is a navigable option-panel entry, not a hand-rendered
+  // root block — selecting it emits navigate('danger-zone') like any other tab.
+  test('selecting danger-zone emits navigate with "danger-zone" [obligation]', async () => {
     const { wrapper } = makeTab()
-    expect(wrapper.find('[data-testid="tab-index__danger-zone"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="danger-delete-account-button"]').exists()).toBe(true)
-  })
-
-  test('forwards delete-account click to injected danger.onDeleteAccount', async () => {
-    const { wrapper, onDeleteAccount } = makeTab()
-    await wrapper.find('[data-testid="danger-delete-account-button"]').trigger('click')
-    expect(onDeleteAccount).toHaveBeenCalledTimes(1)
+    await wrapper
+      .find('[data-testid="options-panel__card"][data-value="danger-zone"]')
+      .trigger('click')
+    expect(wrapper.emitted('navigate')).toEqual([['danger-zone']])
   })
 })
 
@@ -109,7 +107,7 @@ describe('TabIndex — account-access nav entry (sheet-only) [obligation]', () =
       'subscription',
       'account-access',
       'app',
-      'review-preferences'
+      'danger-zone'
     ])
   })
 

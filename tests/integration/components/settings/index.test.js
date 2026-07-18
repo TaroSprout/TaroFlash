@@ -326,10 +326,10 @@ beforeEach(() => {
 // ── Tab routing ───────────────────────────────────────────────────────────────
 
 describe('settings app — tab routing', () => {
-  test('exposes the five expected tab values in the correct order', () => {
+  test('exposes the four expected tab values in the correct order', () => {
     const wrapper = makeWrapper()
     const tabs = JSON.parse(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-tabs'))
-    expect(tabs).toEqual(['profile', 'app', 'review-preferences', 'subscription', 'danger-zone'])
+    expect(tabs).toEqual(['profile', 'app', 'subscription', 'danger-zone'])
   })
 
   test('never includes account-access in the sidebar tab-bar (reachable only via aside/tab-index) [obligation]', () => {
@@ -353,33 +353,33 @@ describe('settings app — tab routing', () => {
 
 // ── Header copy ───────────────────────────────────────────────────────────────
 
-describe('settings app — header copy follows displayed tab', () => {
-  test('renders index header on tablet layout (no tab selected) [obligation]', async () => {
+describe('settings app — header copy is static across tabs/layouts [obligation]', () => {
+  test('renders the static "App Settings" header on tablet layout (no tab selected) [obligation]', async () => {
     state.isSheet = false
     state.isDesktop = false
     const wrapper = makeWrapper()
     await nextTick()
-    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('Settings')
+    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('App Settings')
   })
 
-  test('renders profile header on desktop layout (no tab selected) [obligation]', async () => {
+  test('renders the static "App Settings" header on desktop layout (no tab selected) [obligation]', async () => {
     state.isSheet = false
     state.isDesktop = true
     const wrapper = makeWrapper()
     await nextTick()
-    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('Profile')
+    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('App Settings')
   })
 
-  test('switches header copy when the active tab changes', async () => {
+  test('header copy stays the same when the active tab changes', async () => {
     const wrapper = makeWrapper()
     await wrapper.find('[data-testid="tab-sheet__select-app"]').trigger('click')
     expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('App Settings')
   })
 
-  test('shows the index header on sheet layout with no tab selected', () => {
+  test('renders the static "App Settings" header on sheet layout with no tab selected', () => {
     state.isSheet = true
     const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('Settings')
+    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('App Settings')
   })
 })
 
@@ -507,21 +507,22 @@ describe('settings app — displayed_tab resolves correctly per layout [obligati
   test('resolves to "index" on sheet layout with no active tab [obligation]', () => {
     state.isSheet = true
     const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('Settings')
+    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
   })
 
   test('resolves to "index" on tablet layout with no active tab [obligation]', () => {
     state.isSheet = false
     state.isDesktop = false
     const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('Settings')
+    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
   })
 
   test('resolves to "profile" only on desktop layout with no active tab [obligation]', () => {
     state.isSheet = false
     state.isDesktop = true
     const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('Profile')
+    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="tab-sheet-stub"]').attributes('data-active')).toBe('profile')
   })
 })
 
@@ -674,11 +675,11 @@ describe('settings app — open/close sfx [obligation]', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_3')
   })
 
-  test('emits snappy_button_5 on unmount (close sound) [obligation]', () => {
+  test('emits pop_up_close on unmount (close sound) [obligation]', () => {
     const wrapper = makeWrapper()
     mockEmitSfx.mockReset()
     wrapper.unmount()
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
   })
 })
 

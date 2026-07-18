@@ -111,7 +111,7 @@ describe('useMemberStore', () => {
     expect(store.preferences).toEqual({
       accessibility: { left_hand: false },
       audio: {
-        study_sounds: expect.any(Number),
+        muted: expect.any(Boolean),
         interface_sounds: expect.any(Number),
         hover_sounds: expect.any(Number)
       },

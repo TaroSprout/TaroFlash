@@ -5,12 +5,12 @@ import TabApp from '@/views/settings/tab-app/index.vue'
 import { memberEditorKey } from '@/composables/member/editor'
 import { settingsLayoutKey } from '@/views/settings/layout'
 
-vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn(), emitHoverSfx: vi.fn(), emitStudySfx: vi.fn() }))
+vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn(), emitHoverSfx: vi.fn() }))
 // Break config→player→config circular dep.
 vi.mock('@/sfx/config', () => ({
   TYPE_SFX: [],
   SOUNDS: {},
-  BUS_DEFAULTS: { interface: 5, study: 5, hover: 5 }
+  BUS_DEFAULTS: { interface: 5, hover: 5 }
 }))
 
 const { mockResetSettings, mockPreviewVolumeConfig } = vi.hoisted(() => ({
@@ -83,12 +83,11 @@ const NullStub = defineComponent({ setup: () => () => h('div') })
 
 let _wrappers = []
 
-function makeTab({ audio = {}, accessibility = {} } = {}) {
+function makeTab({ audio = {} } = {}) {
   const editor = {
     draft: reactive({
       preferences: {
-        accessibility: { left_hand: false, ...accessibility },
-        audio: { study_sounds: 5, interface_sounds: 5, hover_sounds: 5, ...audio }
+        audio: { muted: false, interface_sounds: 5, hover_sounds: 5, ...audio }
       }
     })
   }
@@ -130,89 +129,76 @@ describe('TabApp', () => {
     expect(wrapper.find('[data-testid="tab-app"]').exists()).toBe(true)
   })
 
-  test('renders three slider controls in the audio section', () => {
+  test('renders two slider controls in the audio section [obligation]', () => {
     const { wrapper } = makeTab()
     expect(wrapper.find('[data-testid="tab-app__audio"]').exists()).toBe(true)
-    expect(wrapper.findAll('[data-testid="slider-stub"]')).toHaveLength(3)
+    expect(wrapper.findAll('[data-testid="slider-stub"]')).toHaveLength(2)
   })
 
   test('sliders reflect editor audio values', () => {
-    const { wrapper } = makeTab({
-      audio: { study_sounds: 3, interface_sounds: 7, hover_sounds: 1 }
-    })
+    const { wrapper } = makeTab({ audio: { interface_sounds: 7, hover_sounds: 1 } })
     const sliders = wrapper.findAll('[data-testid="slider-stub"]')
-    expect(sliders[0].attributes('data-value')).toBe('3')
-    expect(sliders[1].attributes('data-value')).toBe('7')
-    expect(sliders[2].attributes('data-value')).toBe('1')
+    expect(sliders[0].attributes('data-value')).toBe('7')
+    expect(sliders[1].attributes('data-value')).toBe('1')
   })
 
-  test('first slider (study_sounds) routes sfx through study bus', () => {
+  test('first slider (interface_sounds) routes sfx through interface bus', () => {
     const { wrapper } = makeTab()
     const sliders = wrapper.findAll('[data-testid="slider-stub"]')
-    expect(sliders[0].attributes('data-bus')).toBe('study')
+    expect(sliders[0].attributes('data-bus')).toBe('interface')
   })
 
-  test('second slider (interface_sounds) routes sfx through interface bus', () => {
+  test('second slider (hover_sounds) routes sfx through hover bus', () => {
     const { wrapper } = makeTab()
     const sliders = wrapper.findAll('[data-testid="slider-stub"]')
-    expect(sliders[1].attributes('data-bus')).toBe('interface')
+    expect(sliders[1].attributes('data-bus')).toBe('hover')
   })
 
-  test('third slider (hover_sounds) routes sfx through hover bus', () => {
-    const { wrapper } = makeTab()
-    const sliders = wrapper.findAll('[data-testid="slider-stub"]')
-    expect(sliders[2].attributes('data-bus')).toBe('hover')
-  })
-
-  test('clicking first slider increments study_sounds on the editor', async () => {
+  test('clicking first slider increments interface_sounds on the editor', async () => {
     const { wrapper, editor } = makeTab()
     await wrapper.findAll('[data-testid="slider-stub"]')[0].trigger('click')
-    expect(editor.draft.preferences.audio.study_sounds).toBe(6)
-  })
-
-  test('clicking second slider increments interface_sounds on the editor', async () => {
-    const { wrapper, editor } = makeTab()
-    await wrapper.findAll('[data-testid="slider-stub"]')[1].trigger('click')
     expect(editor.draft.preferences.audio.interface_sounds).toBe(6)
   })
 
-  test('clicking third slider increments hover_sounds on the editor', async () => {
+  test('clicking second slider increments hover_sounds on the editor', async () => {
     const { wrapper, editor } = makeTab()
-    await wrapper.findAll('[data-testid="slider-stub"]')[2].trigger('click')
+    await wrapper.findAll('[data-testid="slider-stub"]')[1].trigger('click')
     expect(editor.draft.preferences.audio.hover_sounds).toBe(6)
   })
 
-  test('renders the left-hand toggle reflecting editor preferences', () => {
-    const { wrapper } = makeTab({ accessibility: { left_hand: true } })
+  // ── Mute-all toggle [obligation] ──────────────────────────────────────────
+
+  test('renders the mute-all toggle reflecting editor preferences [obligation]', () => {
+    const { wrapper } = makeTab({ audio: { muted: true } })
     const toggle = wrapper.find('[data-testid="toggle-stub"]')
     expect(toggle.exists()).toBe(true)
     expect(toggle.attributes('data-checked')).toBe('true')
   })
 
-  test('toggling left-hand updates editor preferences', async () => {
+  test('toggling mute-all updates editor preferences [obligation]', async () => {
     const { wrapper, editor } = makeTab()
     await wrapper.find('[data-testid="toggle-stub"]').trigger('click')
-    expect(editor.draft.preferences.accessibility.left_hand).toBe(true)
+    expect(editor.draft.preferences.audio.muted).toBe(true)
   })
 
   // ── Preview/reset obligation tests ────────────────────────────────────────
 
   test('changing audio prefs calls previewVolumeConfig with mapped bus volumes [obligation]', async () => {
     const { editor } = makeTab()
-    editor.draft.preferences.audio.study_sounds = 8
+    editor.draft.preferences.audio.interface_sounds = 8
     await nextTick()
     await nextTick()
-    expect(mockPreviewVolumeConfig).toHaveBeenCalledWith(expect.objectContaining({ study: 8 }))
+    expect(mockPreviewVolumeConfig).toHaveBeenCalledWith(expect.objectContaining({ interface: 8 }))
   })
 
-  test('previewVolumeConfig receives all three buses on audio change [obligation]', async () => {
-    const { editor } = makeTab({
-      audio: { study_sounds: 3, interface_sounds: 7, hover_sounds: 1 }
-    })
-    editor.draft.preferences.audio.interface_sounds = 9
+  test('previewVolumeConfig receives both buses on audio change, always unmuted for preview [obligation]', async () => {
+    const { editor } = makeTab({ audio: { interface_sounds: 7, hover_sounds: 1, muted: true } })
+    editor.draft.preferences.audio.hover_sounds = 9
     await nextTick()
     await nextTick()
-    expect(mockPreviewVolumeConfig).toHaveBeenCalledWith({ study: 3, interface: 9, hover: 1 })
+    // Preview always treats audio as unmuted regardless of the mute toggle —
+    // mute is only applied on save via App.vue.
+    expect(mockPreviewVolumeConfig).toHaveBeenCalledWith({ interface: 7, hover: 9 })
   })
 
   test('unmounting the tab calls resetSettings to discard any preview [obligation]', () => {

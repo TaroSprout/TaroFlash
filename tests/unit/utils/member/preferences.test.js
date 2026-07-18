@@ -6,9 +6,9 @@ import {
 } from '@/utils/member/preferences'
 
 describe('MEMBER_PREFERENCES_DEFAULTS', () => {
-  test('audio defaults match AUDIO_VOLUME_DEFAULTS (all three fields = 5)', () => {
+  test('audio defaults to muted=false and both buses = 5', () => {
     expect(MEMBER_PREFERENCES_DEFAULTS.audio).toEqual({
-      study_sounds: 5,
+      muted: false,
       interface_sounds: 5,
       hover_sounds: 5
     })
@@ -27,11 +27,18 @@ describe('MEMBER_PREFERENCES_DEFAULTS', () => {
 })
 
 describe('toBusVolumes', () => {
-  test('maps *_sounds fields onto the bus-keyed shape the player consumes', () => {
-    expect(toBusVolumes({ study_sounds: 1, interface_sounds: 2, hover_sounds: 3 })).toEqual({
-      study: 1,
+  test('maps *_sounds fields onto the bus-keyed shape the player consumes when not muted', () => {
+    expect(toBusVolumes({ muted: false, interface_sounds: 2, hover_sounds: 3 })).toEqual({
       interface: 2,
       hover: 3
+    })
+  })
+
+  // [obligation] mute is applied through the volume path — muted ignores slider values
+  test('returns interface: 0, hover: 0 when muted is true, ignoring slider values [obligation]', () => {
+    expect(toBusVolumes({ muted: true, interface_sounds: 8, hover_sounds: 9 })).toEqual({
+      interface: 0,
+      hover: 0
     })
   })
 })
@@ -39,32 +46,32 @@ describe('toBusVolumes', () => {
 describe('withMemberPreferencesDefaults', () => {
   test('returns all defaults when called with no argument', () => {
     const result = withMemberPreferencesDefaults()
-    expect(result.audio).toEqual({ study_sounds: 5, interface_sounds: 5, hover_sounds: 5 })
+    expect(result.audio).toEqual({ muted: false, interface_sounds: 5, hover_sounds: 5 })
     expect(result.accessibility.left_hand).toBe(false)
   })
 
   test('returns all defaults when called with null', () => {
     const result = withMemberPreferencesDefaults(null)
-    expect(result.audio).toEqual({ study_sounds: 5, interface_sounds: 5, hover_sounds: 5 })
+    expect(result.audio).toEqual({ muted: false, interface_sounds: 5, hover_sounds: 5 })
     expect(result.study).toEqual({ show_all_ratings: true })
   })
 
   test('returns all defaults when called with undefined', () => {
     const result = withMemberPreferencesDefaults(undefined)
-    expect(result.audio).toEqual({ study_sounds: 5, interface_sounds: 5, hover_sounds: 5 })
+    expect(result.audio).toEqual({ muted: false, interface_sounds: 5, hover_sounds: 5 })
     expect(result.study).toEqual({ show_all_ratings: true })
   })
 
-  // [obligation] partial prefs with no `audio` key → all three audio fields default to 5
-  test('partial prefs with no audio key → all three audio fields default to 5', () => {
+  // [obligation] partial prefs with no `audio` key → all audio fields default
+  test('partial prefs with no audio key → audio fields default (muted=false, both buses=5)', () => {
     const result = withMemberPreferencesDefaults({ accessibility: { left_hand: true } })
-    expect(result.audio).toEqual({ study_sounds: 5, interface_sounds: 5, hover_sounds: 5 })
+    expect(result.audio).toEqual({ muted: false, interface_sounds: 5, hover_sounds: 5 })
   })
 
-  // [obligation] partial prefs with audio.study_sounds = 3 → resolved is 3
-  test('partial prefs with audio.study_sounds = 3 → resolved study_sounds is 3', () => {
-    const result = withMemberPreferencesDefaults({ audio: { study_sounds: 3 } })
-    expect(result.audio.study_sounds).toBe(3)
+  // [obligation] partial prefs with audio.muted=true is preserved through the merge
+  test('partial prefs with audio.muted=true → resolved muted is true [obligation]', () => {
+    const result = withMemberPreferencesDefaults({ audio: { muted: true } })
+    expect(result.audio.muted).toBe(true)
   })
 
   test('partial prefs with audio.interface_sounds = 7 → resolved interface_sounds is 7', () => {
@@ -78,16 +85,22 @@ describe('withMemberPreferencesDefaults', () => {
   })
 
   test('only the provided audio fields are overridden; others remain at default', () => {
-    const result = withMemberPreferencesDefaults({ audio: { study_sounds: 3 } })
-    expect(result.audio.interface_sounds).toBe(5)
+    const result = withMemberPreferencesDefaults({ audio: { interface_sounds: 3 } })
+    expect(result.audio.muted).toBe(false)
     expect(result.audio.hover_sounds).toBe(5)
   })
 
-  test('all three audio fields can be overridden at once', () => {
+  // [obligation] partial audio.muted=true + missing bus keys merges correctly over defaults
+  test('partial audio.muted=true with missing bus keys merges correctly over defaults [obligation]', () => {
+    const result = withMemberPreferencesDefaults({ audio: { muted: true } })
+    expect(result.audio).toEqual({ muted: true, interface_sounds: 5, hover_sounds: 5 })
+  })
+
+  test('all audio fields can be overridden at once', () => {
     const result = withMemberPreferencesDefaults({
-      audio: { study_sounds: 1, interface_sounds: 2, hover_sounds: 3 }
+      audio: { muted: true, interface_sounds: 2, hover_sounds: 3 }
     })
-    expect(result.audio).toEqual({ study_sounds: 1, interface_sounds: 2, hover_sounds: 3 })
+    expect(result.audio).toEqual({ muted: true, interface_sounds: 2, hover_sounds: 3 })
   })
 
   test('accessibility.left_hand is preserved from partial', () => {
@@ -109,7 +122,7 @@ describe('withMemberPreferencesDefaults', () => {
 
   test('does not mutate MEMBER_PREFERENCES_DEFAULTS', () => {
     const before_audio = { ...MEMBER_PREFERENCES_DEFAULTS.audio }
-    withMemberPreferencesDefaults({ audio: { study_sounds: 1 } })
+    withMemberPreferencesDefaults({ audio: { interface_sounds: 1 } })
     expect(MEMBER_PREFERENCES_DEFAULTS.audio).toEqual(before_audio)
   })
 })

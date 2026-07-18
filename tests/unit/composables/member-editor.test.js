@@ -41,7 +41,7 @@ beforeEach(() => {
     plan: 'pro',
     preferences: {
       accessibility: { left_hand: false },
-      audio: { study_sounds: 5, interface_sounds: 5, hover_sounds: 5 },
+      audio: { muted: false, interface_sounds: 5, hover_sounds: 5 },
       study: { show_all_ratings: true }
     },
     cover: { theme: 'green-500', theme_dark: 'green-800', pattern: 'bank-note' }
@@ -75,7 +75,7 @@ describe('useMemberEditor', () => {
   test('seeds draft.preferences verbatim from the store (already resolved upstream) [obligation]', () => {
     mockMember.preferences = {
       accessibility: { left_hand: true },
-      audio: { study_sounds: 1, interface_sounds: 2, hover_sounds: 3 },
+      audio: { muted: false, interface_sounds: 2, hover_sounds: 3 },
       study: { show_all_ratings: false }
     }
     const editor = useMemberEditor()
@@ -164,7 +164,7 @@ describe('useMemberEditor', () => {
       description: 'new desc',
       preferences: {
         accessibility: { left_hand: false },
-        audio: { study_sounds: 5, interface_sounds: 5, hover_sounds: 5 },
+        audio: { muted: false, interface_sounds: 5, hover_sounds: 5 },
         study: {
           show_all_ratings: true
         }

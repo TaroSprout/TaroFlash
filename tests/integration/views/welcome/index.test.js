@@ -202,7 +202,7 @@ describe('WelcomeIndex', () => {
     expect(mocks.modalOpen).toHaveBeenCalled()
   })
 
-  test('modal response resolution emits snappy_button_5 sfx [obligation]', async () => {
+  test('modal response resolution emits pop_up_close sfx [obligation]', async () => {
     let resolve_response
     const deferred = new Promise((resolve) => {
       resolve_response = resolve
@@ -212,7 +212,7 @@ describe('WelcomeIndex', () => {
     mocks.emitSfx.mockReset()
     resolve_response(undefined)
     await flushPromises()
-    expect(mocks.emitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mocks.emitSfx).toHaveBeenCalledWith('pop_up_close')
   })
 
   // ── scrollToContent / See More [obligation] ────────────────────────────────
