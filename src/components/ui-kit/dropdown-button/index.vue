@@ -136,8 +136,10 @@ const show_trigger = computed(() => !hideTrigger || !openOnTrigger)
 // text normally reads in theme-primary (nothing behind it), so it also needs
 // to flip to on-primary here to stay legible against that fill — outline's
 // text is on-primary already, so it needs no override.
+// Inline is excluded alongside solid: it has no pill to fill, and tinting the
+// label region mid-sentence would read as a highlight rather than an open menu.
 const trigger_style = computed(() => {
-  if (variant === 'solid' || !popover_open.value) return undefined
+  if (variant === 'solid' || variant === 'inline' || !popover_open.value) return undefined
   return {
     '--btn-bg-color': 'var(--theme-primary)',
     ...(variant === 'ghost' ? { '--btn-text-color': 'var(--theme-on-primary)' } : {})
@@ -257,6 +259,7 @@ function onMenuSelect(option: DropdownOption) {
             :open="popover_open"
             :icon="triggerIcon"
             :size="size"
+            :variant="variant"
             :trigger-theme="triggerTheme"
             :trigger-theme-dark="triggerThemeDark"
             :disabled="disabled"

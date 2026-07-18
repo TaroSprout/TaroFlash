@@ -34,7 +34,7 @@ function onSelect(option: DropdownOption) {
           data-theme-dark="stone-700"
           menu-theme="brown-100"
           menu-theme-dark="stone-700"
-          variant="ghost"
+          variant="inline"
           open-on-trigger
           :options="preset_options"
           @select="onSelect"

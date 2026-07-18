@@ -10,7 +10,9 @@ defineOptions({ inheritAttrs: false })
 
 export type ButtonProps = {
   size?: 'xl' | 'lg' | 'base' | 'sm'
-  variant?: 'solid' | 'outline' | 'ghost'
+  // `inline` is ghost with the surrounding text's metrics and no trailing
+  // padding — for a dropdown sitting inside a sentence.
+  variant?: 'solid' | 'outline' | 'ghost' | 'inline'
   inverted?: boolean
   iconOnly?: boolean
   roundedFull?: boolean
@@ -71,6 +73,10 @@ const merged_sfx = computed<SfxOptions>(() => {
     debounce: sfx.debounce
   }
 })
+
+// Solid and outline paint a surface the hover stripes can sweep across; the
+// transparent variants have nothing behind the content to sweep.
+const has_surface = computed(() => variant === 'solid' || variant === 'outline')
 
 const tooltip_active = computed(() => iconOnly && !!slots.default)
 
@@ -153,7 +159,7 @@ function onClick(e: MouseEvent) {
         'bg-(--theme-primary) flex items-center justify-center': loading,
         hidden: !loading,
         'group-hover/btn:block group-data-[active=true]/btn:block':
-          !loading && !disabled && fancyHover && variant !== 'ghost',
+          !loading && !disabled && fancyHover && has_surface,
         'bgx-color-[var(--theme-neutral)]': variant === 'solid',
         'bgx-color-[var(--theme-on-neutral)]': inverted,
         // Ghost has no surface, so only the coarse quiet tap sweeps it (the
@@ -285,6 +291,23 @@ function onClick(e: MouseEvent) {
   --btn-bg-color: transparent;
   --btn-text-color: var(--theme-primary);
   --btn-outline-color: transparent;
+}
+
+/* Inline: ghost that sits *in* a line of text rather than beside it. Takes the
+   surrounding font metrics instead of the size class's, drops the fixed
+   --btn-height so it never grows the line box, and zeroes the padding so the
+   button occupies exactly its text. Composers that need breathing room add it
+   themselves — the primitive can't know what it's sitting next to. */
+.ui-kit-btn--inline {
+  --btn-bg-color: transparent;
+  --btn-text-color: var(--theme-primary);
+  --btn-outline-color: transparent;
+  --btn-padding: 0;
+  --icon-size: 1.25em;
+
+  font-size: inherit;
+  line-height: inherit;
+  height: max-content;
 }
 
 .ui-kit-btn--solid.ui-kit-btn--inverted {
