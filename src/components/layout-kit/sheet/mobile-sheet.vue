@@ -92,7 +92,7 @@ provide(mobileSheetOverlayKey, overlay_root)
     <div
       ref="overlay_root"
       data-testid="mobile-sheet__overlay"
-      class="absolute inset-0 pointer-events-none z-10"
+      class="absolute inset-0 pointer-events-none z-[var(--sheet-overlay-z,30)]"
     >
       <slot name="overlay"></slot>
     </div>
@@ -111,7 +111,7 @@ provide(mobileSheetOverlayKey, overlay_root)
         <div
           v-if="show_builtin_close"
           data-testid="mobile-sheet__close-slot"
-          class="absolute top-0 p-4 left-0 z-20"
+          class="absolute top-0 p-4 left-0 z-40"
         >
           <ui-button
             :icon-left="close_icon"
@@ -130,7 +130,7 @@ provide(mobileSheetOverlayKey, overlay_root)
             :data-header-border="header_border"
             v-bind="header_bindings"
             :class="[
-              'w-full flex justify-center items-center place-items-center px-(--sheet-px) pt-11.5 pb-14 gap-6 bg-(--theme-primary) text-(--theme-on-primary) relative',
+              'w-full flex justify-center items-center place-items-center px-(--sheet-px) pt-11.5 pb-14 gap-6 bg-(--theme-primary) text-(--theme-on-primary) relative z-10',
               header_border_class
             ]"
           >
@@ -140,7 +140,10 @@ provide(mobileSheetOverlayKey, overlay_root)
           </div>
         </slot>
 
-        <div data-testid="mobile-sheet__body" class="min-h-0 flex-1">
+        <div
+          data-testid="mobile-sheet__body"
+          :class="['relative z-20 min-h-0 flex-1', body_bg_class]"
+        >
           <slot></slot>
         </div>
       </div>
