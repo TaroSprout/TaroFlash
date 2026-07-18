@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, ref, useTemplateRef } from 'vue'
+import { inject, useTemplateRef } from 'vue'
 import type { ComponentPublicInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiSelectMenu from '@/components/ui-kit/select-menu.vue'
@@ -15,6 +15,9 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import { popScrimReveal } from '@/utils/animations/scrim-reveal'
 import { emitSfx } from '@/sfx/bus'
+import { useLocalRef } from '@/composables/storage/local-ref'
+
+const ADVANCED_REVEALED_KEY = 'deck-settings-advanced-revealed'
 
 const { t } = useI18n()
 
@@ -38,11 +41,13 @@ const {
   resetMaxInterval
 } = inject(pacingFieldsKey)!
 
-const revealed = ref(false)
+// Whether the advanced fields are showing is a per-machine preference — a
+// power user shouldn't have to reveal them on every visit.
+const revealed = useLocalRef(ADVANCED_REVEALED_KEY, false)
 
-// The badge and fields render with `opacity-0` as their at-rest state; from the
-// first toggle onwards gsap's inline opacity/scale wins over the class. Only
-// pointer-events stays class-driven, since it isn't animated.
+// Each layer's at-rest opacity is class-driven so the restored state paints
+// correctly on first render; from the first toggle onwards gsap's inline
+// opacity/scale wins over the class, and the two always agree on the endpoint.
 const scrim = useTemplateRef<HTMLElement>('scrim')
 // The badge is a ui-tooltip rendering as a <button>, so its element — the tween
 // target — comes off the instance rather than the ref directly.
@@ -66,8 +71,8 @@ function toggleRevealed() {
       element="button"
       :text="t('deck.settings-modal.review-pacing.advanced-hide-tooltip')"
       data-testid="scheduling-panel__badge"
-      class="absolute -top-3 left-1/2 -translate-x-1/2 flex cursor-pointer items-center gap-2 rounded-full bg-brown-300 dark:bg-grey-800 px-4 py-1 text-base text-brown-500 dark:text-brown-100 opacity-0"
-      :class="!revealed && 'pointer-events-none'"
+      class="absolute -top-3 left-1/2 -translate-x-1/2 flex cursor-pointer items-center gap-2 rounded-full bg-brown-300 dark:bg-grey-800 px-4 py-1 text-base text-brown-500 dark:text-brown-100"
+      :class="!revealed && 'pointer-events-none opacity-0'"
       @click="toggleRevealed"
     >
       <ui-icon src="eye-close" class="size-4.5" />
@@ -79,7 +84,7 @@ function toggleRevealed() {
       type="button"
       data-testid="scheduling-panel__scrim"
       class="absolute inset-0 flex cursor-pointer flex-col items-center justify-center gap-4 text-brown-500"
-      :class="revealed && 'pointer-events-none'"
+      :class="revealed && 'pointer-events-none opacity-0'"
       @click="toggleRevealed"
     >
       <ui-icon src="eye" class="size-10" />
@@ -89,8 +94,8 @@ function toggleRevealed() {
     <div
       ref="fields"
       data-testid="scheduling-section__fields"
-      class="flex flex-col gap-4 opacity-0"
-      :class="!revealed && 'pointer-events-none'"
+      class="flex flex-col gap-4"
+      :class="!revealed && 'pointer-events-none opacity-0'"
     >
       <tooltip-row
         data-testid="tab-review-pacing__retention"
