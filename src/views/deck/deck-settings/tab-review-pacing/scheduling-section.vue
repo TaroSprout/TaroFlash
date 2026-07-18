@@ -115,6 +115,7 @@ function toggleRevealed() {
         @reset="resetDesiredRetention"
       >
         <ui-spinbox
+          data-theme-dark="stone-900"
           v-model:value="desired_retention"
           :min="DESIRED_RETENTION_BOUNDS.min"
           :max="DESIRED_RETENTION_BOUNDS.max"
@@ -130,6 +131,7 @@ function toggleRevealed() {
         @reset="resetMaxInterval"
       >
         <ui-spinbox
+          data-theme-dark="stone-900"
           v-model:value="max_interval"
           :min="MAX_INTERVAL_BOUNDS.min"
           :max="MAX_INTERVAL_BOUNDS.max"
@@ -147,6 +149,7 @@ function toggleRevealed() {
       >
         <ui-spinbox
           v-model:value="leech_threshold"
+          data-theme-dark="stone-900"
           :min="LEECH_THRESHOLD_BOUNDS.min"
           :max="LEECH_THRESHOLD_BOUNDS.max"
           :step="LEECH_THRESHOLD_BOUNDS.step"
@@ -162,7 +165,7 @@ function toggleRevealed() {
       >
         <ui-select-menu
           data-theme="brown-100"
-          data-theme-dark="stone-700"
+          data-theme-dark="stone-900"
           menu-theme="brown-100"
           menu-theme-dark="stone-700"
           v-model="learning_steps_key"
@@ -180,7 +183,7 @@ function toggleRevealed() {
       >
         <ui-select-menu
           data-theme="brown-100"
-          data-theme-dark="stone-700"
+          data-theme-dark="stone-900"
           menu-theme="brown-100"
           menu-theme-dark="stone-700"
           v-model="relearning_steps_key"

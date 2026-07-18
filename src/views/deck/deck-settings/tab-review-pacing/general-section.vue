@@ -39,7 +39,7 @@ const starting_side_options = computed(() =>
       data-testid="tab-review-pacing__starting-side"
       class="flex items-center justify-between gap-3"
     >
-      <div class="flex items-center gap-2.5 text-brown-500 dark:text-brown-100">
+      <div class="flex items-center gap-2.5 text-brown-500">
         {{ t('deck.settings-modal.review-pacing.starting-side-label') }}
       </div>
 

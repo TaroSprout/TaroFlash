@@ -33,7 +33,7 @@ provide(pacingFieldsKey, usePacingFields(deck!, draft))
 
       <div data-testid="tab-review-pacing__scheduling-column" class="flex flex-col gap-8">
         <scheduling-section
-          class="rounded-6 bg-brown-200 dark:bg-stone-900 px-6 pb-8 pt-12 bgx-bank-note bgx-size-20 bgx-opacity-50"
+          class="rounded-6 bg-brown-200 dark:bg-stone-700 px-6 pb-8 pt-12 bgx-bank-note bgx-size-20 bgx-opacity-50 dark:bgx-opacity-2"
         />
         <deck-save-button class="mt-auto" />
       </div>
