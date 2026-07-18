@@ -2,38 +2,42 @@
 import { computed, onBeforeUnmount, onMounted, provide, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SettingsAside from './settings-aside.vue'
-import { settingsLayoutKey, settingsCloseKey } from './layout'
+import SettingsSaveButton from './settings-save-button.vue'
+import { settingsCloseKey } from './layout'
 import { emitSfx } from '@/sfx/bus'
 import { useMemberEditor, memberEditorKey } from '@/composables/member/editor'
 import { TAB_META, type TabValue } from './tabs'
 import { useMemberDangerActions, memberDangerActionsKey } from '@/composables/member/danger-actions'
-import { useTabModalLayout } from '@/composables/ui/tab-modal-layout'
-import { useTabTransition } from '@/composables/ui/tab-transition'
+import { sheetLayoutKey, type SheetLayout } from '@/components/layout-kit/sheet/sheet-layout'
 import { useAlert } from '@/composables/alert'
 import { useModalRequestClose } from '@/composables/modal'
 import { useAvatarPicker } from './use-avatar-picker'
 import MemberCard from '@/components/member/member-card.vue'
 import UiPinnedCard from '@/components/ui-kit/pinned-card.vue'
 import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
-import TabSheet from '@/components/layout-kit/sheet/tab-sheet.vue'
+import SheetPager, {
+  type SheetPagerGroup,
+  type Tab
+} from '@/components/layout-kit/sheet/sheet-pager.vue'
 import TabProfile from './tab-profile/index.vue'
 import TabSubscription from './tab-subscription/index.vue'
 import TabApp from './tab-app/index.vue'
 import TabDangerZone from './tab-danger-zone/index.vue'
 import TabAccountAccess from './tab-account-access/index.vue'
-import TabIndex from './tab-index/index.vue'
+
+export type ActiveTab = TabValue
+
 const { close } = defineProps<{ close: () => void }>()
 
-const { t } = useI18n()
-
 const TAB_COMPONENTS = {
-  index: TabIndex,
   profile: TabProfile,
   app: TabApp,
   subscription: TabSubscription,
   'danger-zone': TabDangerZone,
   'account-access': TabAccountAccess
 }
+
+const { t } = useI18n()
 
 const editor = useMemberEditor()
 provide(memberEditorKey, editor)
@@ -42,54 +46,47 @@ const danger = useMemberDangerActions(close)
 provide(memberDangerActionsKey, danger)
 
 const alert = useAlert()
-
-const { layout_mode, sheet_px } = useTabModalLayout({
-  sheet_query: 'w<mlg',
-  desktop_query: 'w>=lg & fine'
-})
-provide(settingsLayoutKey, layout_mode)
-provide(settingsCloseKey, close)
-
 const { onEditAvatar } = useAvatarPicker(editor)
 
-type ActiveTab = TabValue
 const active_tab = ref<ActiveTab | null>(null)
 
-const tab_outlet = ref<HTMLElement>()
-const { nav_direction, onTabEnter, onTabLeave } = useTabTransition(layout_mode, tab_outlet)
-
+const pager = useTemplateRef<{ layout_mode: SheetLayout; displayed_tab: string }>('pager')
 const active_tab_ref = useTemplateRef<{ onChromeBack?: () => boolean }>('active_tab_ref')
 
+const layout_mode = computed<SheetLayout>(() => pager.value?.layout_mode ?? 'phone')
+const displayed_tab = computed(() => pager.value?.displayed_tab ?? 'index')
+provide(settingsCloseKey, close)
+provide(sheetLayoutKey, layout_mode)
+
 // account-access is reachable via the aside's edit button (tablet/desktop) or the
-// sheet-only tab-index entry — it never appears as a sidebar tab-bar icon itself.
-const tabs = computed(() =>
-  (Object.keys(TAB_META) as TabValue[])
-    .filter((value) => value !== 'account-access')
-    .map((value) => ({
-      value,
-      icon: TAB_META[value].icon,
-      label: t(TAB_META[value].labelKey),
-      danger: value === 'danger-zone'
-    }))
+// phone-only index entry — it never appears as a sidebar tab-bar icon itself.
+const tabs = computed<Tab[]>(() =>
+  (Object.keys(TAB_META) as TabValue[]).map((value) => ({
+    value,
+    icon: TAB_META[value].icon,
+    label: t(TAB_META[value].labelKey),
+    danger: value === 'danger-zone',
+    sidebar: value !== 'account-access'
+  }))
 )
 
-const displayed_tab = computed(
-  () => active_tab.value ?? (layout_mode.value === 'desktop' ? 'profile' : 'index')
-)
-
-const sidebar_active = computed({
-  get: () => active_tab.value ?? 'profile',
-  set: (v) => (active_tab.value = v as ActiveTab)
-})
+const groups = computed<SheetPagerGroup[]>(() => [
+  {
+    key: 'account',
+    heading: t('settings.index.account-heading'),
+    entries:
+      layout_mode.value === 'phone'
+        ? ['profile', 'subscription', 'account-access']
+        : ['profile', 'subscription']
+  },
+  {
+    key: 'app',
+    heading: t('settings.index.app-heading'),
+    entries: ['app', 'danger-zone']
+  }
+])
 
 const header_title = computed(() => t('settings.header.title'))
-
-const tab_component = computed(() => TAB_COMPONENTS[displayed_tab.value])
-
-// The content row is always full-bleed: `__main` (the scroll container) owns its
-// own padding and the aside owns its own inset, so floating elements/outlines
-// aren't clipped by the overflow and the sheet-mode tab animation stays clean.
-const tab_content_class = 'flex h-full items-start'
 
 // Open/close sfx live on the modal itself so every callsite (phone launcher,
 // dashboard edit button) sounds identically. Mirrors the deck-settings modal.
@@ -98,6 +95,7 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
 
 async function onClose() {
   if (!editor.is_dirty.value) return close()
+
   const { response } = alert.warn({
     title: t('settings.unsaved-alert.title'),
     message: t('settings.unsaved-alert.message'),
@@ -109,14 +107,8 @@ async function onClose() {
 
 useModalRequestClose(onClose)
 
-function onNavigate(tab: ActiveTab) {
-  nav_direction.value = 'forward'
-  active_tab.value = tab
-}
-
 function onBack() {
   emitSfx('snappy_button_5')
-  nav_direction.value = 'back'
   active_tab.value = null
 }
 
@@ -129,27 +121,27 @@ function onChromeBack() {
 }
 
 watch(layout_mode, (mode) => {
-  if (mode !== 'sheet' && active_tab.value === 'account-access') active_tab.value = null
+  if (mode !== 'phone' && active_tab.value === 'account-access') active_tab.value = null
 })
 </script>
 
 <template>
-  <tab-sheet
+  <sheet-pager
+    ref="pager"
     data-testid="settings-container"
     data-theme="blue-500"
     data-theme-dark="blue-650"
     :data-layout="layout_mode"
     :class="[
       layout_mode === 'desktop' ? 'w-248!' : 'w-full! max-w-224',
-      layout_mode !== 'sheet' && 'h-187',
-      layout_mode === 'sheet' ? '[--settings-padding:var(--sheet-px)]' : '[--settings-padding:0px]'
+      layout_mode !== 'phone' && 'h-187',
+      layout_mode === 'phone' ? '[--settings-padding:var(--sheet-px)]' : '[--settings-padding:0px]'
     ]"
-    :sheet_px="sheet_px"
     :tabs="tabs"
+    :groups="groups"
+    phone_query="w<mlg"
     :pattern_config="{ pattern: 'diagonal-stripes', pattern_size: '48px', pattern_opacity: '0.15' }"
-    :parts="{ content: tab_content_class }"
-    :show_back="active_tab !== null"
-    v-model:active="sidebar_active"
+    v-model:active="active_tab"
     @close="onClose"
     @back="onChromeBack"
   >
@@ -158,7 +150,7 @@ watch(layout_mode, (mode) => {
         data-testid="settings__header"
         class="w-full flex flex-col"
         :class="
-          layout_mode === 'sheet' ? 'items-center text-center' : layout_mode === 'tablet' && 'pt-4'
+          layout_mode === 'phone' ? 'items-center text-center' : layout_mode === 'tablet' && 'pt-4'
         "
       >
         <h1
@@ -170,48 +162,34 @@ watch(layout_mode, (mode) => {
       </div>
     </template>
 
-    <div
-      class="relative flex flex-1 flex-col min-w-0"
-      :class="layout_mode !== 'sheet' && 'max-h-full'"
-    >
-      <div
-        ref="tab_outlet"
-        data-testid="settings__main"
-        :class="[
-          'flex flex-col gap-4 w-full',
-          layout_mode === 'sheet'
-            ? 'max-w-111 mx-auto overflow-hidden pt-0.5'
-            : 'min-h-0 flex-1 overflow-y-auto scroll-hidden px-(--sheet-px) pb-8'
-        ]"
-      >
-        <transition :css="false" mode="out-in" @leave="onTabLeave" @enter="onTabEnter">
-          <component
-            ref="active_tab_ref"
-            :is="tab_component"
-            :key="displayed_tab"
-            @navigate="onNavigate"
-          />
-        </transition>
-      </div>
+    <template #default="{ displayed_tab: pane }">
+      <component :is="TAB_COMPONENTS[pane as TabValue]" ref="active_tab_ref" />
+    </template>
 
+    <template #scrollbar>
       <scroll-bar
-        v-if="layout_mode !== 'sheet'"
-        target="[data-testid='settings__main']"
+        v-if="layout_mode !== 'phone'"
+        target="[data-testid='sheet-pager__main']"
         class="absolute top-2 bottom-2 right-2"
       />
-    </div>
+    </template>
 
-    <!-- Aside has a bespoke layout so it matches visually with the pinned preview -->
-    <settings-aside
-      v-if="layout_mode !== 'sheet'"
-      data-testid="settings__aside"
-      class="shrink-0 self-end pb-8"
-      :class="layout_mode === 'tablet' ? 'w-110 pt-56 pl-10 pr-26' : 'w-100 pt-60 pl-8 pr-16'"
-    />
+    <template #aside>
+      <settings-aside
+        v-if="layout_mode !== 'phone'"
+        data-testid="settings__aside"
+        class="shrink-0 self-end pb-8"
+        :class="layout_mode === 'tablet' ? 'w-110 pt-56 pl-10 pr-26' : 'w-100 pt-60 pl-8 pr-16'"
+      />
+    </template>
+
+    <template #index-footer>
+      <settings-save-button v-if="layout_mode === 'phone'" />
+    </template>
 
     <template #overlay>
       <div
-        v-if="layout_mode !== 'sheet'"
+        v-if="layout_mode !== 'phone'"
         data-testid="settings__pinned-preview"
         class="pointer-events-auto absolute right-(--sheet-px) top-6"
       >
@@ -228,5 +206,5 @@ watch(layout_mode, (mode) => {
         </ui-pinned-card>
       </div>
     </template>
-  </tab-sheet>
+  </sheet-pager>
 </template>
