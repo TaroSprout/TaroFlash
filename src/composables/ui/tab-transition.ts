@@ -22,16 +22,20 @@ export function useTabTransition(
   async function onTabLeave(el: Element, done: () => void) {
     await runLeave(el)
 
-    // Tucking waits for the outgoing tab so the chrome doesn't animate over a
-    // pane that's still fading; untucking rides along with the incoming tab
-    // below, since there's nothing left to collide with.
-    if (is_full_bleed?.()) await chrome?.tuck()
+    // Both directions run here, in the gap between the two tabs. The chrome
+    // takes and gives back the content row's width instantly, and this is the
+    // only moment with no tab mounted for that reflow to shift.
+    await syncChrome()
     done()
   }
 
   function onTabEnter(el: Element, done: () => void) {
-    if (is_full_bleed && !is_full_bleed()) chrome?.restore()
     runEnter(el, done)
+  }
+
+  function syncChrome() {
+    if (!chrome || !is_full_bleed) return
+    return is_full_bleed() ? chrome.tuck() : chrome.restore()
   }
 
   function runLeave(el: Element) {
