@@ -20,7 +20,7 @@ provide(pacingFieldsKey, usePacingFields(deck!, draft))
     data-testid="tab-review-pacing"
     class="@container flex-1 px-(--deck-settings-padding) pb-(--deck-settings-padding)"
   >
-    <preset-header />
+    <preset-header class="pb-4" />
 
     <div
       data-testid="tab-review-pacing__columns"
@@ -32,7 +32,9 @@ provide(pacingFieldsKey, usePacingFields(deck!, draft))
       </div>
 
       <div data-testid="tab-review-pacing__scheduling-column" class="flex flex-col gap-8">
-        <scheduling-section class="rounded-6 bg-brown-200 dark:bg-stone-900 p-6" />
+        <scheduling-section
+          class="rounded-6 bg-brown-200 dark:bg-stone-900 px-6 pb-8 pt-12 bgx-bank-note bgx-size-20 bgx-opacity-50"
+        />
         <deck-save-button class="mt-auto" />
       </div>
     </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject } from 'vue'
+import { inject, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiSelectMenu from '@/components/ui-kit/select-menu.vue'
 import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
@@ -10,6 +10,9 @@ import {
   LEECH_THRESHOLD_BOUNDS,
   MAX_INTERVAL_BOUNDS
 } from '@/utils/review-pacing/defaults'
+import UiIcon from '@/components/ui-kit/icon.vue'
+import { popScrimReveal } from '@/utils/animations/scrim-reveal'
+import { emitSfx } from '@/sfx/bus'
 
 const { t } = useI18n()
 
@@ -32,18 +35,56 @@ const {
   resetLeechThreshold,
   resetMaxInterval
 } = inject(pacingFieldsKey)!
+
+const revealed = ref(false)
+
+// The badge and fields render with `opacity-0` as their at-rest state; from the
+// first toggle onwards gsap's inline opacity/scale wins over the class. Only
+// pointer-events stays class-driven, since it isn't animated.
+const scrim = useTemplateRef<HTMLElement>('scrim')
+const badge = useTemplateRef<HTMLElement>('badge')
+const fields = useTemplateRef<HTMLElement>('fields')
+
+function toggleRevealed() {
+  if (!scrim.value || !badge.value || !fields.value) return
+
+  revealed.value = !revealed.value
+  emitSfx('snappy_button_5')
+  popScrimReveal(scrim.value, [badge.value, fields.value], revealed.value)
+}
 </script>
 
 <template>
   <div data-testid="scheduling-panel" class="relative">
-    <span
+    <button
+      ref="badge"
+      type="button"
       data-testid="scheduling-panel__badge"
-      class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brown-300 dark:bg-stone-700 px-4 py-1 text-base text-brown-700 dark:text-brown-100"
+      class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brown-300 dark:bg-grey-800 px-4 py-1 text-base text-brown-500 dark:text-brown-100 opacity-0"
+      :class="!revealed && 'pointer-events-none'"
+      @click="toggleRevealed"
     >
       {{ t('deck.settings-modal.review-pacing.advanced-label') }}
-    </span>
+    </button>
 
-    <div data-testid="scheduling-section__fields" class="flex flex-col gap-4 text-brown-500 pt-4">
+    <button
+      ref="scrim"
+      type="button"
+      data-testid="scheduling-panel__scrim"
+      class="absolute inset-0 flex flex-col items-center justify-center gap-4 text-brown-500"
+      :class="revealed && 'pointer-events-none'"
+      @click="toggleRevealed"
+    >
+      <ui-icon src="eye" class="size-10" />
+      {{ t('deck.settings-modal.review-pacing.advanced-toggle') }}
+    </button>
+
+    <div
+      ref="fields"
+      data-testid="scheduling-section__fields"
+      class="flex flex-col gap-4 opacity-0"
+      :class="!revealed && 'pointer-events-none'"
+    >
       <tooltip-row
         data-testid="tab-review-pacing__retention"
         :label="t('deck.settings-modal.review-pacing.desired-retention-label')"
