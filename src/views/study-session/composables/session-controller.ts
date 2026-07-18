@@ -50,7 +50,7 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
 
   const engine = useSessionEngine({
     schedulerFor: resolution.schedulerFor,
-    flipFor: resolution.flipFor,
+    startingSideFor: resolution.startingSideFor,
     shuffle: () => resolution.shuffle.value,
     onChange: persist
   })
@@ -122,7 +122,7 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     if (!engine.active_card.value?.id || engine.state.value !== 'studying') return
 
     if (engine.next_card.value) {
-      await awaitFlip(resolution.flipFor(engine.next_card.value.deck_id) ? 'back' : 'front')
+      await awaitFlip(engine.startingSideForCard(engine.next_card.value))
     }
 
     engine.reviewCard(grade)

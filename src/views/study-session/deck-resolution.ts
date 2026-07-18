@@ -18,8 +18,9 @@ export type DeckAppearance = {
 /**
  * The single place that reads `SessionDeck` fields. The study session runs on a
  * flat, deck-blind card queue where every card carries its own `deck_id`; this
- * maps that id back to the deck's appearance, scheduler, flip default, and leech
- * threshold, so nothing downstream needs to know about `SessionDeck` at all.
+ * maps that id back to the deck's appearance, scheduler, starting side, and
+ * leech threshold, so nothing downstream needs to know about `SessionDeck` at
+ * all.
  *
  * `schedulerFor` returns a per-deck FSRS instance built from that deck's
  * resolved pacing, cached so it's constructed once per deck. `covers`/`shuffle`
@@ -28,7 +29,7 @@ export type DeckAppearance = {
 export type DeckResolution = {
   appearanceFor: (deck_id?: number) => DeckAppearance
   schedulerFor: (deck_id?: number) => FSRS
-  flipFor: (deck_id?: number) => boolean
+  startingSideFor: (deck_id?: number) => CardStartingSide
   thresholdFor: (deck_id?: number) => number
   covers: ComputedRef<DeckCover[]>
   shuffle: ComputedRef<boolean>
@@ -37,7 +38,7 @@ export type DeckResolution = {
 type ResolvedDeck = {
   appearance: DeckAppearance
   fsrs: FSRS
-  flip: boolean
+  starting_side: CardStartingSide
   threshold: number
 }
 
@@ -65,7 +66,7 @@ function resolveDeck(deck: SessionDeck): ResolvedDeck {
   return {
     appearance: { cover_config: deck.cover_config, card_attributes: deck.card_attributes },
     fsrs: buildScheduler(deck),
-    flip: deck.flip_cards,
+    starting_side: deck.starting_side,
     threshold: deck.leech_threshold
   }
 }
@@ -94,7 +95,7 @@ export function buildDeckResolution(decks: MaybeRefOrGetter<SessionDeck[]>): Dec
   return {
     appearanceFor: (id) => (id != null && by_deck.value.get(id)?.appearance) || {},
     schedulerFor: (id) => (id != null && by_deck.value.get(id)?.fsrs) || FALLBACK_FSRS,
-    flipFor: (id) => (id != null && by_deck.value.get(id)?.flip) || false,
+    startingSideFor: (id) => (id != null && by_deck.value.get(id)?.starting_side) || 'front',
     thresholdFor: (id) =>
       (id != null ? by_deck.value.get(id)?.threshold : undefined) ?? DEFAULT_LEECH_THRESHOLD,
     covers,
