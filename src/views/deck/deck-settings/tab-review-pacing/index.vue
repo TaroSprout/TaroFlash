@@ -24,16 +24,17 @@ provide(pacingFieldsKey, usePacingFields(deck!, draft))
 
     <div
       data-testid="tab-review-pacing__columns"
-      class="grid grid-cols-1 items-start gap-8 @min-[46rem]:grid-cols-2 @min-[46rem]:gap-12"
+      class="grid flex-1 grid-cols-1 gap-8 @min-[46rem]:grid-cols-2 @min-[46rem]:gap-12"
     >
       <div data-testid="tab-review-pacing__deck-column" class="flex flex-col gap-8">
         <general-section />
         <limits-section />
       </div>
 
-      <scheduling-section class="rounded-6 bg-brown-200 dark:bg-stone-900 p-6" />
+      <div data-testid="tab-review-pacing__scheduling-column" class="flex flex-col gap-8">
+        <scheduling-section class="rounded-6 bg-brown-200 dark:bg-stone-900 p-6" />
+        <deck-save-button class="mt-auto" />
+      </div>
     </div>
-
-    <deck-save-button class="mt-auto" />
   </section-list>
 </template>
