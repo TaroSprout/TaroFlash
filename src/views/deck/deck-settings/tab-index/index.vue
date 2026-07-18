@@ -27,7 +27,7 @@ const nav_groups = computed<NavGroup[]>(() => [
   {
     key: 'review-pacing',
     heading: t('deck.settings-modal.index.review-pacing-heading'),
-    entries: ['review-pacing']
+    entries: ['review-pacing', 'review-history']
   }
 ])
 
