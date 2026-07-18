@@ -43,11 +43,11 @@ describe('useDeckSettingsModal', () => {
       mode: 'mobile-sheet',
       mobile_below_width: 'md',
       mobile_below_height: 'md',
-      props: { deck, initial_tab: undefined, initial_side: undefined }
+      props: { deck, initial_page: undefined, initial_side: undefined }
     })
   })
 
-  test('open(deck, { tab, side }) forwards tab as initial_tab and side as initial_side in props [obligation]', () => {
+  test('open(deck, { tab, side }) forwards tab as initial_page and side as initial_side in props [obligation]', () => {
     const deck = { id: 7 }
     mockOpen.mockReturnValueOnce(makeModalResult(undefined))
 
@@ -57,12 +57,12 @@ describe('useDeckSettingsModal', () => {
     expect(mockOpen).toHaveBeenCalledWith(
       DeckSettings,
       expect.objectContaining({
-        props: expect.objectContaining({ initial_tab: 'design', initial_side: 'front' })
+        props: expect.objectContaining({ initial_page: 'design', initial_side: 'front' })
       })
     )
   })
 
-  test('open(deck) with no options passes undefined for initial_tab and initial_side [obligation]', () => {
+  test('open(deck) with no options passes undefined for initial_page and initial_side [obligation]', () => {
     const deck = { id: 8 }
     mockOpen.mockReturnValueOnce(makeModalResult(undefined))
 
@@ -72,7 +72,7 @@ describe('useDeckSettingsModal', () => {
     expect(mockOpen).toHaveBeenCalledWith(
       DeckSettings,
       expect.objectContaining({
-        props: expect.objectContaining({ initial_tab: undefined, initial_side: undefined })
+        props: expect.objectContaining({ initial_page: undefined, initial_side: undefined })
       })
     )
   })
@@ -87,7 +87,7 @@ describe('useDeckSettingsModal', () => {
     expect(mockOpen).toHaveBeenCalledWith(
       DeckSettings,
       expect.objectContaining({
-        props: expect.objectContaining({ initial_tab: 'review-pacing', initial_side: undefined })
+        props: expect.objectContaining({ initial_page: 'review-pacing', initial_side: undefined })
       })
     )
   })

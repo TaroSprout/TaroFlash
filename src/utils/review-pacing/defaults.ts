@@ -9,6 +9,10 @@ export const FSRS_MAX_INTERVAL = 36500
 // fallback for when a resolved deck value is somehow absent.
 export const DEFAULT_LEECH_THRESHOLD = 8
 
+// Percentages. Below 70 the scheduler thrashes; above 97 intervals collapse to
+// near-daily, so FSRS itself treats the range outside these as unusable.
+export const DESIRED_RETENTION_BOUNDS = { min: 70, max: 97, step: 1 } as const
+
 export const LEECH_THRESHOLD_BOUNDS = { min: 1, max: 99, step: 1 } as const
 // 0 in the UI means "uncapped"; the model stores that as null.
 export const MAX_INTERVAL_BOUNDS = { min: 0, max: FSRS_MAX_INTERVAL, step: 15 } as const

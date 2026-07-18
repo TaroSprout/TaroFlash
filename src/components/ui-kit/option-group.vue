@@ -24,7 +24,7 @@ function onTap(value: T) {
 <template>
   <div
     data-testid="ui-option-group"
-    class="bg-(--theme-neutral) gap-1 p-1"
+    class="bg-brown-100 dark:bg-stone-700 gap-1 p-1"
     :class="[
       size === 'base' ? 'rounded-3.5 ' : 'rounded-2.5',
       full_width ? 'flex w-full' : 'inline-flex w-fit'

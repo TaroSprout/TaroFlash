@@ -94,7 +94,7 @@ function increment() {
     >
       <spinbox-button
         data-testid="ui-kit-spinbox__decrement"
-        icon="horizontal-rule"
+        icon="subtract"
         :disabled="!can_decrement"
         @click="decrement"
       />
@@ -116,7 +116,7 @@ function increment() {
 
       <spinbox-button
         data-testid="ui-kit-spinbox__increment"
-        icon="add"
+        icon="add-2"
         :disabled="!can_increment"
         @click="increment"
       />

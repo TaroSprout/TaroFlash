@@ -6,7 +6,7 @@ import SettingsSaveButton from './settings-save-button.vue'
 import { settingsCloseKey } from './layout'
 import { emitSfx } from '@/sfx/bus'
 import { useMemberEditor, memberEditorKey } from '@/composables/member/editor'
-import { TAB_META, type TabValue } from './tabs'
+import { PAGE_META, type PageValue } from './pages'
 import { useMemberDangerActions, memberDangerActionsKey } from '@/composables/member/danger-actions'
 import type { WindowLayout } from '@/components/layout-kit/paged-window/layout'
 import { useAlert } from '@/composables/alert'
@@ -25,11 +25,11 @@ import TabApp from './tab-app/index.vue'
 import TabDangerZone from './tab-danger-zone/index.vue'
 import TabAccountAccess from './tab-account-access/index.vue'
 
-export type ActiveTab = TabValue
+export type ActivePage = PageValue
 
 const { close } = defineProps<{ close: () => void }>()
 
-const TAB_COMPONENTS = {
+const PAGE_COMPONENTS = {
   profile: TabProfile,
   app: TabApp,
   subscription: TabSubscription,
@@ -48,22 +48,22 @@ provide(memberDangerActionsKey, danger)
 const alert = useAlert()
 const { onEditAvatar } = useAvatarPicker(editor)
 
-const active_tab = ref<ActiveTab | null>(null)
+const active_page = ref<ActivePage | null>(null)
 
 const pager = useTemplateRef<{ layout_mode: WindowLayout; displayed_page: string }>('pager')
-const active_tab_ref = useTemplateRef<{ onChromeBack?: () => boolean }>('active_tab_ref')
+const active_page_ref = useTemplateRef<{ onChromeBack?: () => boolean }>('active_page_ref')
 
 const layout_mode = computed<WindowLayout>(() => pager.value?.layout_mode ?? 'phone')
 const displayed_page = computed(() => pager.value?.displayed_page ?? 'directory')
 provide(settingsCloseKey, close)
 
 // account-access is reachable via the aside's edit button (tablet/desktop) or the
-// phone-only index entry — it never appears as a sidebar tab-bar icon itself.
+// phone-only index entry — it never appears as a sidebar page-bar icon itself.
 const pages = computed<Page[]>(() =>
-  (Object.keys(TAB_META) as TabValue[]).map((value) => ({
+  (Object.keys(PAGE_META) as PageValue[]).map((value) => ({
     value,
-    icon: TAB_META[value].icon,
-    label: t(TAB_META[value].labelKey),
+    icon: PAGE_META[value].icon,
+    label: t(PAGE_META[value].labelKey),
     danger: value === 'danger-zone',
     sidebar: value !== 'account-access'
   }))
@@ -108,11 +108,11 @@ useModalRequestClose(onClose)
 
 function onBack() {
   emitSfx('snappy_button_5')
-  active_tab.value = null
+  active_page.value = null
 }
 
 function onChromeBack() {
-  if (active_tab_ref.value?.onChromeBack?.()) {
+  if (active_page_ref.value?.onChromeBack?.()) {
     emitSfx('snappy_button_5')
     return
   }
@@ -120,7 +120,7 @@ function onChromeBack() {
 }
 
 watch(layout_mode, (mode) => {
-  if (mode !== 'phone' && active_tab.value === 'account-access') active_tab.value = null
+  if (mode !== 'phone' && active_page.value === 'account-access') active_page.value = null
 })
 </script>
 
@@ -140,7 +140,7 @@ watch(layout_mode, (mode) => {
     :groups="groups"
     phone_query="w<mlg"
     :pattern_config="{ pattern: 'diagonal-stripes', pattern_size: '48px', pattern_opacity: '0.15' }"
-    v-model:active="active_tab"
+    v-model:active="active_page"
     @close="onClose"
     @back="onChromeBack"
   >
@@ -162,7 +162,7 @@ watch(layout_mode, (mode) => {
     </template>
 
     <template #default="{ displayed_page: page }">
-      <component :is="TAB_COMPONENTS[page as TabValue]" ref="active_tab_ref" />
+      <component :is="PAGE_COMPONENTS[page as PageValue]" ref="active_page_ref" />
     </template>
 
     <template #scrollbar>

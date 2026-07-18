@@ -23,19 +23,19 @@ import TabDesign from './tab-design/index.vue'
 import TabReviewPacing from './tab-review-pacing/index.vue'
 import TabReviewHistory from './tab-review-history/index.vue'
 import TabDangerZone from './tab-danger-zone/index.vue'
-import { TAB_META, type TabValue } from './tabs'
+import { PAGE_META, type PageValue } from './pages'
 
 export type DeckSettingsResponse = boolean
-export type ActiveTab = TabValue
+export type ActivePage = PageValue
 
-const { deck, close, initial_tab, initial_side } = defineProps<{
+const { deck, close, initial_page, initial_side } = defineProps<{
   deck: Deck
   close: (response?: DeckSettingsResponse) => void
-  initial_tab?: ActiveTab
+  initial_page?: ActivePage
   initial_side?: CardSide
 }>()
 
-const TAB_COMPONENTS = {
+const PAGE_COMPONENTS = {
   details: TabDetails,
   design: TabDesign,
   'review-pacing': TabReviewPacing,
@@ -55,10 +55,10 @@ const alert = useAlert()
 useModalRequestClose(() => onClose())
 const after_enter = useModalAfterEnter()
 
-const active_tab = ref<ActiveTab | null>(initial_tab ?? null)
+const active_page = ref<ActivePage | null>(initial_page ?? null)
 
 const pager = useTemplateRef<{ layout_mode: WindowLayout; displayed_page: string }>('pager')
-const active_tab_ref = useTemplateRef<{ onChromeBack?: () => boolean }>('active_tab_ref')
+const active_page_ref = useTemplateRef<{ onChromeBack?: () => boolean }>('active_page_ref')
 
 const preview_el = useTemplateRef<HTMLElement>('preview_el')
 const aside_instance = useTemplateRef<ComponentPublicInstance>('aside_instance')
@@ -71,10 +71,10 @@ const displayed_page = computed(() => pager.value?.displayed_page ?? 'directory'
 provide(deckSettingsCloseKey, close)
 
 const pages = computed<Page[]>(() =>
-  (Object.keys(TAB_META) as TabValue[]).map((value) => ({
+  (Object.keys(PAGE_META) as PageValue[]).map((value) => ({
     value,
-    icon: TAB_META[value].icon,
-    label: t(TAB_META[value].labelKey),
+    icon: PAGE_META[value].icon,
+    label: t(PAGE_META[value].labelKey),
     danger: value === 'danger-zone',
     sidebar: value !== 'details'
   }))
@@ -106,7 +106,8 @@ const visible_side = computed(() =>
 // desktop/tablet-only concern.
 const is_full_bleed = computed(
   () =>
-    layout_mode.value !== 'phone' && Boolean(TAB_META[displayed_page.value as TabValue]?.full_bleed)
+    layout_mode.value !== 'phone' &&
+    Boolean(PAGE_META[displayed_page.value as PageValue]?.full_bleed)
 )
 
 onMounted(async () => {
@@ -139,21 +140,21 @@ async function onClose() {
 
 function onBack() {
   emitSfx('snappy_button_5')
-  active_tab.value = null
+  active_page.value = null
 }
 
 function onChromeBack() {
-  if (active_tab_ref.value?.onChromeBack?.()) {
+  if (active_page_ref.value?.onChromeBack?.()) {
     emitSfx('snappy_button_5')
     return
   }
   onBack()
 }
 
-// Leaving a tab (back to the index) resets the designer side to cover — assign
+// Leaving a page (back to the index) resets the designer side to cover — assign
 // directly rather than via setActiveSide so it doesn't fire the slide sfx.
-watch(active_tab, (tab) => {
-  if (tab === null) editor.active_side.value = 'cover'
+watch(active_page, (page) => {
+  if (page === null) editor.active_side.value = 'cover'
 })
 
 // The preview and aside unmount at the phone boundary and remount in their
@@ -184,9 +185,10 @@ watch([preview_el, aside_el], ([preview]) => {
     ]"
     :pages="pages"
     :groups="groups"
+    :stretch_page="is_full_bleed"
     :pattern_config="{ pattern: 'endless-clouds' }"
     :between="runChromeSync"
-    v-model:active="active_tab"
+    v-model:active="active_page"
     @close="onClose"
     @back="onChromeBack"
   >
@@ -206,7 +208,7 @@ watch([preview_el, aside_el], ([preview]) => {
     </template>
 
     <template #default="{ displayed_page: page }">
-      <component :is="TAB_COMPONENTS[page as TabValue]" ref="active_tab_ref" />
+      <component :is="PAGE_COMPONENTS[page as PageValue]" ref="active_page_ref" />
     </template>
 
     <template #scrollbar>

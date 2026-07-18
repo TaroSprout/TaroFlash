@@ -1,205 +1,108 @@
-import { describe, test, expect, vi } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h, reactive, ref, useAttrs } from 'vue'
+import { defineComponent, h, reactive } from 'vue'
 import { deckEditorKey } from '@/composables/deck/editor'
-import { windowLayoutKey } from '@/components/layout-kit/paged-window/layout'
 
-// pacing-section.vue has its own dedicated test file — stub it here so this
-// suite only exercises the toggles + divider + section order that live
-// directly in tab-review-pacing/index.vue.
-vi.mock('@/views/deck/deck-settings/tab-review-pacing/pacing-section.vue', async () => {
-  const { defineComponent: dc, h: hh } = await import('vue')
-  return {
-    default: dc({
-      name: 'PacingSection',
-      setup: () => () => hh('div', { 'data-testid': 'pacing-section-stub' })
-    })
-  }
+// ── Hoisted mocks ─────────────────────────────────────────────────────────────
+
+const { mockPresetsData } = vi.hoisted(() => ({ mockPresetsData: { value: [] } }))
+vi.mock('@/api/review-pacing', () => ({ usePresetsQuery: () => ({ data: mockPresetsData }) }))
+
+// SchedulingSection pulls in gsap timelines, media-query, sfx and local-ref —
+// none of that is under test here, so it's stubbed to keep this suite scoped
+// to the tab root's own wiring (provide/inject + section layout).
+const SchedulingSectionStub = defineComponent({
+  name: 'SchedulingSection',
+  setup: () => () => h('div', { 'data-testid': 'scheduling-section-stub' })
+})
+const DeckSaveButtonStub = defineComponent({
+  name: 'DeckSaveButton',
+  setup: () => () => h('div', { 'data-testid': 'deck-save-button-stub' })
 })
 
 import TabReviewPacing from '@/views/deck/deck-settings/tab-review-pacing/index.vue'
 
-const ToggleStub = defineComponent({
-  name: 'UiToggle',
-  props: { checked: { type: Boolean, default: false } },
-  emits: ['update:checked'],
-  inheritAttrs: false,
-  setup(props, { slots, emit }) {
-    const attrs = useAttrs()
-    return () =>
-      h(
-        'label',
-        {
-          'data-testid': 'ui-kit-toggle',
-          'data-checked': String(!!props.checked),
-          ...attrs
-        },
-        [
-          h('span', { 'data-testid': 'ui-kit-toggle__label' }, slots.default?.()),
-          h('input', {
-            type: 'checkbox',
-            checked: !!props.checked,
-            'data-testid': 'ui-kit-toggle__input',
-            onChange: (e) => emit('update:checked', e.target.checked)
-          })
-        ]
-      )
-  }
-})
+// ── Fixtures ──────────────────────────────────────────────────────────────────
 
-// Renders one button per option, tagged data-testid="option-<value>", carrying
-// data-active — matches the ui-kit convention the real component exposes.
-const OptionGroupStub = defineComponent({
-  name: 'UiOptionGroup',
-  props: { options: { type: Array, default: () => [] }, value: { type: String, default: '' } },
-  emits: ['update:value'],
-  inheritAttrs: false,
-  setup(props, { emit }) {
-    const attrs = useAttrs()
-    return () =>
-      h(
-        'div',
-        { ...attrs },
-        props.options.map((option) =>
-          h(
-            'button',
-            {
-              key: option.value,
-              'data-testid': `option-${option.value}`,
-              'data-active': String(option.value === props.value),
-              onClick: () => emit('update:value', option.value)
-            },
-            option.label
-          )
-        )
-      )
-  }
-})
+const SYSTEM_PRESET = { id: 1, name: 'Recommended', is_system: true, desired_retention: 90 }
+const CUSTOM_PRESET = { id: 2, name: 'Aggressive', is_system: false, desired_retention: 95 }
 
-function makeWrapper({ config: configOverrides = {}, layout_mode = 'modal' } = {}) {
-  const deck = reactive({ id: 1 })
+function makeWrapper({ review_pacing_preset_id = null } = {}) {
+  const deck = reactive({ id: 1, card_count: 100, desired_retention: 90 })
   const draft = reactive({
-    study_config: { shuffle: false, ...configOverrides },
-    cover_config: {},
-    card_attributes: { front: {}, back: {} },
-    review_pacing_preset_id: null,
+    study_config: { shuffle: false },
+    review_pacing_preset_id,
     pacing_overrides: {}
   })
-  const editor = {
-    deck,
-    draft,
-    cover_image_preview: ref(undefined),
-    cover_image_loading: ref(false),
-    active_side: ref('cover'),
-    saveDeck: async () => true,
-    deleteDeck: async () => {},
-    uploadImage: () => {},
-    removeImage: () => {},
-    setCoverImage: async () => {},
-    removeCoverImage: () => {},
-    setActiveSide: () => {}
-  }
+  const editor = { deck, draft }
   const wrapper = mount(TabReviewPacing, {
     global: {
-      provide: { [deckEditorKey]: editor, [windowLayoutKey]: layout_mode },
-      stubs: { UiToggle: ToggleStub, UiOptionGroup: OptionGroupStub, DeckSaveButton: true },
+      provide: { [deckEditorKey]: editor },
+      stubs: { SchedulingSection: SchedulingSectionStub, DeckSaveButton: DeckSaveButtonStub },
       mocks: { $t: (k) => k }
     }
   })
-  return { wrapper, config: draft.study_config }
+  return { wrapper, draft }
 }
 
-// Node.compareDocumentPosition returns a bitmask; DOCUMENT_POSITION_FOLLOWING
-// (4) is set on `b` when `a` precedes it in document order.
-function precedes(a, b) {
-  return !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
-}
+beforeEach(() => {
+  mockPresetsData.value = [SYSTEM_PRESET, CUSTOM_PRESET]
+})
 
-describe('TabReviewPacing — section order [obligation]', () => {
-  test('renders the Cards section before the pacing section [obligation]', () => {
+// ── section layout ────────────────────────────────────────────────────────────
+
+describe('TabReviewPacing — section layout', () => {
+  test('renders the preset-header, general-section and limits-section in the deck column', () => {
     const { wrapper } = makeWrapper()
-    const sections = wrapper.findAll('[data-testid="labeled-section"]')
-    const cards_section = sections[0].element
-    const pacing_section = wrapper.find('[data-testid="pacing-section-stub"]').element
-
-    expect(precedes(cards_section, pacing_section)).toBe(true)
+    const column = wrapper.find('[data-testid="tab-review-pacing__deck-column"]')
+    expect(column.findComponent({ name: 'GeneralSection' }).exists()).toBe(true)
+    expect(column.findComponent({ name: 'LimitsSection' }).exists()).toBe(true)
   })
 
-  test('renders the pacing-section', () => {
+  test('renders the preset-header above the two-column grid', () => {
     const { wrapper } = makeWrapper()
-    expect(wrapper.find('[data-testid="pacing-section-stub"]').exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'PresetHeader' }).exists()).toBe(true)
   })
 
-  test('no longer renders its own divider — the divider moved under the pacing-section header [obligation]', () => {
+  test('renders scheduling-section and deck-save-button in the scheduling column', () => {
     const { wrapper } = makeWrapper()
-    expect(wrapper.find('[data-testid="ui-kit-divider"]').exists()).toBe(false)
+    const column = wrapper.find('[data-testid="tab-review-pacing__scheduling-column"]')
+    expect(column.find('[data-testid="scheduling-section-stub"]').exists()).toBe(true)
+    expect(column.find('[data-testid="deck-save-button-stub"]').exists()).toBe(true)
+  })
+
+  test('renders the save button unconditionally — no layout-mode gate on this tab', () => {
+    const { wrapper } = makeWrapper()
+    expect(wrapper.find('[data-testid="deck-save-button-stub"]').exists()).toBe(true)
   })
 })
 
-describe('TabReviewPacing — behavior toggles', () => {
-  test('renders one behavior toggle (shuffle)', () => {
-    const { wrapper } = makeWrapper()
-    expect(wrapper.findAllComponents(ToggleStub)).toHaveLength(1)
+// ── shared usePacingFields instance [obligation] ──────────────────────────────
+// usePacingFields is resolved once at the tab root and shared via provide —
+// every reader must reflect the SAME resolved preset, proving there's one
+// subscription rather than each child re-deriving its own.
+
+describe('TabReviewPacing — usePacingFields is provided once and shared [obligation]', () => {
+  test('preset-header/preset-chip renders the system preset label when no preset is drafted', () => {
+    const { wrapper } = makeWrapper({ review_pacing_preset_id: null })
+    expect(wrapper.find('[data-testid="preset-chip"]').text()).toContain('Default')
   })
 
-  test('updates config.shuffle when shuffle toggle changes', async () => {
-    const { wrapper, config } = makeWrapper()
-    const toggles = wrapper.findAllComponents(ToggleStub)
-    toggles[0].vm.$emit('update:checked', true)
-    await wrapper.vm.$nextTick()
-    expect(config.shuffle).toBe(true)
-  })
-})
-
-describe('TabReviewPacing — starting-side option group [obligation]', () => {
-  test('displays "front" as active when draft.study_config.starting_side is absent [obligation]', () => {
-    const { wrapper } = makeWrapper()
-    const group = wrapper.find('[data-testid="tab-review-pacing__starting-side-options"]')
-    expect(group.find('[data-testid="option-front"]').attributes('data-active')).toBe('true')
+  test('preset-header/preset-chip reflects a drafted non-system preset by name [obligation]', () => {
+    const { wrapper } = makeWrapper({ review_pacing_preset_id: 2 })
+    expect(wrapper.find('[data-testid="preset-chip"]').text()).toContain('Aggressive')
   })
 
-  test('reflects an existing draft.study_config.starting_side value', () => {
-    const { wrapper } = makeWrapper({ config: { starting_side: 'random' } })
-    const group = wrapper.find('[data-testid="tab-review-pacing__starting-side-options"]')
-    expect(group.find('[data-testid="option-random"]').attributes('data-active')).toBe('true')
-  })
+  test('preset-header shows no divergence and limits-section resolves caps off the same shared instance [obligation]', () => {
+    const { wrapper } = makeWrapper({ review_pacing_preset_id: 2 })
 
-  test('writes "back" into draft.study_config.starting_side when the back option is picked [obligation]', async () => {
-    const { wrapper, config } = makeWrapper()
-    await wrapper.find('[data-testid="option-back"]').trigger('click')
-    expect(config.starting_side).toBe('back')
-  })
-
-  test('writes "random" into draft.study_config.starting_side when the random option is picked [obligation]', async () => {
-    const { wrapper, config } = makeWrapper()
-    await wrapper.find('[data-testid="option-random"]').trigger('click')
-    expect(config.starting_side).toBe('random')
-  })
-
-  test('writes "front" into draft.study_config.starting_side when the front option is picked from a "back" draft [obligation]', async () => {
-    const { wrapper, config } = makeWrapper({ config: { starting_side: 'back' } })
-    await wrapper.find('[data-testid="option-front"]').trigger('click')
-    expect(config.starting_side).toBe('front')
-  })
-
-  test('renders the starting-side row wrapper [data-testid]', () => {
-    const { wrapper } = makeWrapper()
-    expect(wrapper.find('[data-testid="tab-review-pacing__starting-side"]').exists()).toBe(true)
-  })
-})
-
-// [obligation] This tab claims the whole content area, so the aside that used
-// to carry the save button is retracted — the save button now renders
-// unconditionally (it used to be gated on layout_mode === 'sheet'), so there's
-// still a way to save on desktop/tablet.
-describe('TabReviewPacing — renders deck-save-button unconditionally [obligation]', () => {
-  test('renders the save button when layout_mode is "sheet"', () => {
-    const { wrapper } = makeWrapper({ layout_mode: 'sheet' })
-    expect(wrapper.findComponent({ name: 'DeckSaveButton' }).exists()).toBe(true)
-  })
-
-  test('renders the save button on desktop/tablet layout modes too', () => {
-    const { wrapper } = makeWrapper({ layout_mode: 'modal' })
-    expect(wrapper.findComponent({ name: 'DeckSaveButton' }).exists()).toBe(true)
+    expect(wrapper.find('[data-testid="preset-header__divergence"]').exists()).toBe(false)
+    const spinbox_input = wrapper
+      .find('[data-testid="tab-review-pacing__max-reviews-spinbox"]')
+      .find('[data-testid="ui-kit-spinbox__input"]')
+    // CUSTOM_PRESET doesn't set max_reviews_per_day — a component re-deriving
+    // its own usePacingFields instance from a different presets snapshot would
+    // drift from this; sharing the one instance keeps it at the 0 sentinel.
+    expect(spinbox_input.element.value).toBe('0')
   })
 })

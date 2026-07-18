@@ -187,7 +187,8 @@ const PagedWindowStub = defineComponent({
     active: { type: String, default: null },
     pages: { type: Array, default: () => [] },
     groups: { type: Array, default: () => [] },
-    between: { type: Function, default: undefined }
+    between: { type: Function, default: undefined },
+    stretch_page: { type: Boolean, default: false }
   },
   emits: ['close', 'back', 'select', 'reselect', 'update:active'],
   setup(props, { slots, emit, expose }) {
@@ -266,7 +267,7 @@ describe('DeckSettings — header_title reflects the deck title, not the active 
   test('shows deck.title verbatim regardless of active tab', () => {
     const { wrapper } = makeWrapper({
       deck: deckFixture.one({ overrides: { id: 1, title: 'My Deck' } }),
-      initial_tab: 'review-pacing'
+      initial_page: 'review-pacing'
     })
     expect(wrapper.find('[data-testid="deck-settings__header-title"]').text()).toBe('My Deck')
   })
@@ -302,24 +303,24 @@ describe('DeckSettings — pages prop composition [obligation]', () => {
   })
 })
 
-// ── initial_tab / initial_side ────────────────────────────────────────────────
+// ── initial_page / initial_side ────────────────────────────────────────────────
 
-describe('DeckSettings — initial_tab / initial_side [obligation]', () => {
-  test('initial_tab prop opens that tab directly', () => {
-    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+describe('DeckSettings — initial_page / initial_side [obligation]', () => {
+  test('initial_page prop opens that tab directly', () => {
+    const { wrapper } = makeWrapper({ initial_page: 'design' })
     expect(wrapper.find('[data-testid="tab-design-stub"]').exists()).toBe(true)
   })
 
   test('initial_side is NOT applied synchronously during setup', () => {
     const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
-    makeWrapper({ initial_tab: 'design', initial_side: 'front' })
+    makeWrapper({ initial_page: 'design', initial_side: 'front' })
     expect(setActiveSide).not.toHaveBeenCalled()
     setActiveSide.mockRestore()
   })
 
   test('setActiveSide is called with the initial_side after the enter promise resolves', async () => {
     const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
-    makeWrapper({ initial_tab: 'design', initial_side: 'front' })
+    makeWrapper({ initial_page: 'design', initial_side: 'front' })
     expect(setActiveSide).not.toHaveBeenCalled()
 
     afterEnterControls.resolve()
@@ -331,7 +332,7 @@ describe('DeckSettings — initial_tab / initial_side [obligation]', () => {
 
   test('omitting initial_side never calls setActiveSide, even after enter resolves', async () => {
     const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
-    makeWrapper({ initial_tab: 'design' })
+    makeWrapper({ initial_page: 'design' })
     afterEnterControls.resolve()
     await flushPromises()
     expect(setActiveSide).not.toHaveBeenCalled()
@@ -341,9 +342,9 @@ describe('DeckSettings — initial_tab / initial_side [obligation]', () => {
 
 // ── active_side reset on back ──────────────────────────────────────────────────
 
-describe('DeckSettings — active_side resets to cover when active_tab becomes null', () => {
+describe('DeckSettings — active_side resets to cover when active_page becomes null', () => {
   test('going back (null tab) resets editor.active_side to cover', async () => {
-    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+    const { wrapper } = makeWrapper({ initial_page: 'design' })
     mockEditor.editor.active_side.value = 'front'
 
     await wrapper.find('[data-testid="pw__back"]').trigger('click')
@@ -353,7 +354,7 @@ describe('DeckSettings — active_side resets to cover when active_tab becomes n
   })
 
   test('navigating to a non-null tab does not reset active_side', async () => {
-    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+    const { wrapper } = makeWrapper({ initial_page: 'design' })
     mockEditor.editor.active_side.value = 'front'
 
     await wrapper.find('[data-testid="pw__select-design"]').trigger('click')
@@ -401,10 +402,10 @@ describe('DeckSettings — onClose unsaved-changes guard', () => {
 
 describe('DeckSettings — onChromeBack falls through to the default back action', () => {
   test('the active tab has no onChromeBack, so back navigates to the index', async () => {
-    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+    const { wrapper } = makeWrapper({ initial_page: 'design' })
     await wrapper.vm.onChromeBack()
     await flushPromises()
-    expect(wrapper.vm.active_tab).toBe(null)
+    expect(wrapper.vm.active_page).toBe(null)
   })
 })
 
@@ -413,7 +414,7 @@ describe('DeckSettings — onChromeBack falls through to the default back action
 describe('DeckSettings — overlay preview forwards side changes only on the design tab', () => {
   test('floating preview click forwards the new side to editor.setActiveSide on the design tab', async () => {
     const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
-    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+    const { wrapper } = makeWrapper({ initial_page: 'design' })
     await nextTick()
 
     await wrapper.find('[data-testid="deck-preview-stub"]').trigger('click')
@@ -424,7 +425,7 @@ describe('DeckSettings — overlay preview forwards side changes only on the des
 
   test('floating preview click is a no-op when not on the design tab', async () => {
     const setActiveSide = vi.spyOn(mockEditor.editor, 'setActiveSide').mockImplementation(() => {})
-    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
+    const { wrapper } = makeWrapper({ initial_page: 'review-pacing' })
     await nextTick()
 
     await wrapper.find('[data-testid="deck-preview-stub"]').trigger('click')
@@ -436,17 +437,32 @@ describe('DeckSettings — overlay preview forwards side changes only on the des
 
 // ── is_full_bleed [obligation] ─────────────────────────────────────────────────
 
-describe('DeckSettings — is_full_bleed is phone-exempt regardless of TAB_META [obligation]', () => {
+describe('DeckSettings — is_full_bleed is phone-exempt regardless of PAGE_META [obligation]', () => {
   test('a full-bleed tab (review-pacing) does not claim full-bleed on phone layout', async () => {
-    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
+    const { wrapper } = makeWrapper({ initial_page: 'review-pacing' })
     await setLayout('phone')
     expect(wrapper.vm.is_full_bleed).toBe(false)
   })
 
   test('the same tab claims full-bleed once the layout is tablet/desktop', async () => {
-    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
+    const { wrapper } = makeWrapper({ initial_page: 'review-pacing' })
     await setLayout('desktop')
     expect(wrapper.vm.is_full_bleed).toBe(true)
+  })
+
+  // [obligation] paged-window's stretch_page prop is only true when the
+  // displayed tab is full-bleed — every other tab keeps the content-hugging
+  // layout paged-window has always used.
+  test('passes stretch_page: true to paged-window while a full-bleed tab is displayed on desktop [obligation]', async () => {
+    const { wrapper } = makeWrapper({ initial_page: 'review-pacing' })
+    await setLayout('desktop')
+    expect(wrapper.findComponent({ name: 'PagedWindow' }).props('stretch_page')).toBe(true)
+  })
+
+  test('passes stretch_page: false to paged-window on phone layout, where is_full_bleed is exempt [obligation]', async () => {
+    const { wrapper } = makeWrapper({ initial_page: 'review-pacing' })
+    await setLayout('phone')
+    expect(wrapper.findComponent({ name: 'PagedWindow' }).props('stretch_page')).toBe(false)
   })
 })
 
@@ -457,20 +473,20 @@ describe('DeckSettings — is_full_bleed is phone-exempt regardless of TAB_META 
 
 describe('DeckSettings — chrome remount re-snap [obligation]', () => {
   test('first mount straight onto a full-bleed page snaps instead of animating', async () => {
-    makeWrapper({ initial_tab: 'review-pacing' })
+    makeWrapper({ initial_page: 'review-pacing' })
     await nextTick()
     expect(mockChromeSnap).toHaveBeenCalledWith(true)
     expect(mockChromeTuck).not.toHaveBeenCalled()
   })
 
   test('first mount onto a non-full-bleed page snaps to the untucked pose', async () => {
-    makeWrapper({ initial_tab: 'design' })
+    makeWrapper({ initial_page: 'design' })
     await nextTick()
     expect(mockChromeSnap).toHaveBeenCalledWith(false)
   })
 
   test('remounting the preview/aside while full-bleed re-snaps to tucked (desktop -> phone -> desktop)', async () => {
-    makeWrapper({ initial_tab: 'review-pacing' })
+    makeWrapper({ initial_page: 'review-pacing' })
     mockChromeSnap.mockClear()
 
     // Phone unmounts the preview/aside behind v-if.
@@ -483,7 +499,7 @@ describe('DeckSettings — chrome remount re-snap [obligation]', () => {
   })
 
   test('remounting the preview/aside while non-full-bleed re-snaps to untucked (desktop -> phone -> desktop)', async () => {
-    makeWrapper({ initial_tab: 'design' })
+    makeWrapper({ initial_page: 'design' })
     mockChromeSnap.mockClear()
 
     await setLayout('phone')
@@ -497,7 +513,7 @@ describe('DeckSettings — chrome remount re-snap [obligation]', () => {
 
 describe('DeckSettings — between hook drives the chrome tuck/restore', () => {
   test('passes a `between` function to PagedWindow that tucks when moving into review-pacing', async () => {
-    const { wrapper } = makeWrapper({ initial_tab: 'design' })
+    const { wrapper } = makeWrapper({ initial_page: 'design' })
     const pw = wrapper.findComponent({ name: 'PagedWindow' })
     const between = pw.props('between')
     expect(typeof between).toBe('function')
@@ -510,7 +526,7 @@ describe('DeckSettings — between hook drives the chrome tuck/restore', () => {
   })
 
   test('between restores the chrome when moving into a non-full-bleed page', async () => {
-    const { wrapper } = makeWrapper({ initial_tab: 'review-pacing' })
+    const { wrapper } = makeWrapper({ initial_page: 'review-pacing' })
     const pw = wrapper.findComponent({ name: 'PagedWindow' })
     const between = pw.props('between')
 

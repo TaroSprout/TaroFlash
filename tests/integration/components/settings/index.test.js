@@ -259,21 +259,21 @@ describe('settings app — header copy is static across tabs [obligation]', () =
   })
 })
 
-// ── active_tab defaults ───────────────────────────────────────────────────────
+// ── active_page defaults ───────────────────────────────────────────────────────
 
-describe('settings app — active_tab is a plain, non-persisted ref [obligation]', () => {
+describe('settings app — active_page is a plain, non-persisted ref [obligation]', () => {
   test('defaults to null on every mount', () => {
     const wrapper = makeWrapper()
-    expect(wrapper.vm.active_tab).toBe(null)
+    expect(wrapper.vm.active_page).toBe(null)
   })
 
   test('a second mount starts fresh, with no cross-mount state leak', () => {
     const w1 = makeWrapper()
-    w1.vm.active_tab = 'app'
+    w1.vm.active_page = 'app'
     w1.unmount()
 
     const w2 = makeWrapper()
-    expect(w2.vm.active_tab).toBe(null)
+    expect(w2.vm.active_page).toBe(null)
   })
 })
 
@@ -284,11 +284,11 @@ describe('settings app — back navigation', () => {
     const wrapper = makeWrapper()
     await flushPromises()
     await wrapper.find('[data-testid="pw__select-account-access"]').trigger('click')
-    expect(wrapper.vm.active_tab).toBe('account-access')
+    expect(wrapper.vm.active_page).toBe('account-access')
 
     await wrapper.vm.onBack()
 
-    expect(wrapper.vm.active_tab).toBe(null)
+    expect(wrapper.vm.active_page).toBe(null)
     expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
   })
 
@@ -300,7 +300,7 @@ describe('settings app — back navigation', () => {
     await wrapper.find('[data-testid="pw__back"]').trigger('click')
     await flushPromises()
 
-    expect(wrapper.vm.active_tab).toBe(null)
+    expect(wrapper.vm.active_page).toBe(null)
   })
 })
 
@@ -313,11 +313,11 @@ describe('settings app — onChromeBack delegates to the active tab first [oblig
     await wrapper.find('[data-testid="pw__select-account-access"]').trigger('click')
 
     // account-access's onChromeBack defaults to returning false in this suite
-    // until a test overrides it — falling through clears active_tab.
+    // until a test overrides it — falling through clears active_page.
     mockAccountAccessOnChromeBack.mockReturnValue(false)
     await wrapper.vm.onChromeBack()
 
-    expect(wrapper.vm.active_tab).toBe(null)
+    expect(wrapper.vm.active_page).toBe(null)
     expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
   })
 
@@ -331,7 +331,7 @@ describe('settings app — onChromeBack delegates to the active tab first [oblig
     await wrapper.vm.onChromeBack()
 
     expect(mockAccountAccessOnChromeBack).toHaveBeenCalledOnce()
-    expect(wrapper.vm.active_tab).toBe('account-access')
+    expect(wrapper.vm.active_page).toBe('account-access')
     // Sound still plays even when a nested tab handles its own back-navigation.
     expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
   })

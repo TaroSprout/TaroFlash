@@ -1,21 +1,21 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h, reactive, useAttrs } from 'vue'
-import { deckEditorKey } from '@/composables/deck/editor'
-
-// ── Hoisted mocks ─────────────────────────────────────────────────────────────
-
-const { mockPresetsData } = vi.hoisted(() => ({
-  mockPresetsData: { value: [] }
-}))
-
-vi.mock('@/api/review-pacing', () => ({
-  usePresetsQuery: () => ({ data: mockPresetsData })
-}))
-
+import { defineComponent, h, ref, useAttrs } from 'vue'
+import { pacingFieldsKey } from '@/views/deck/deck-settings/tab-review-pacing/use-pacing-fields'
 import SchedulingSection from '@/views/deck/deck-settings/tab-review-pacing/scheduling-section.vue'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
+// AdvancedReveal owns its own reveal chrome (scrim/badge/persistence), covered
+// directly in advanced-reveal.test.js — here it's a pass-through so this suite
+// stays scoped to the field list scheduling-section renders into its slot.
+
+const AdvancedRevealStub = defineComponent({
+  name: 'AdvancedReveal',
+  setup:
+    (_props, { slots }) =>
+    () =>
+      h('div', { 'data-testid': 'advanced-reveal-stub' }, slots.default?.())
+})
 
 const SelectMenuStub = defineComponent({
   name: 'UiSelectMenu',
@@ -52,7 +52,9 @@ const SpinboxStub = defineComponent({
           ...attrs,
           'data-testid': 'ui-spinbox',
           'data-value': String(props.value),
-          'data-suffix': props.suffix
+          'data-suffix': props.suffix,
+          'data-min': String(props.min),
+          'data-max': String(props.max)
         },
         [
           h(
@@ -70,116 +72,117 @@ const SpinboxStub = defineComponent({
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-function makeWrapper({ deck: deckOverrides = {}, pacing_overrides = {} } = {}) {
-  const deck = {
-    id: 1,
-    desired_retention: 90,
-    leech_threshold: 24,
-    max_interval: null,
-    learning_steps: ['1m', '10m'],
-    relearning_steps: ['10m'],
-    ...deckOverrides
+function makeField({ value = 0, overridden = false, reset = () => {} } = {}) {
+  return { value: ref(value), overridden: ref(overridden), reset }
+}
+
+function makePacingFields(fieldOverrides = {}) {
+  return {
+    fields: {
+      desired_retention: makeField({ value: 90 }),
+      max_interval: makeField({ value: 0 }),
+      leech_threshold: makeField({ value: 24 }),
+      learning_steps: {
+        ...makeField({ value: '1m-10m' }),
+        options: ref([{ value: '1m-10m', label: 'label' }])
+      },
+      relearning_steps: {
+        ...makeField({ value: '10m' }),
+        options: ref([{ value: '10m', label: 'label' }])
+      },
+      ...fieldOverrides
+    }
   }
-  const draft = reactive({
-    review_pacing_preset_id: null,
-    pacing_overrides: { ...pacing_overrides }
-  })
-  const editor = { deck, draft }
+}
+
+function makeWrapper({ fieldOverrides = {} } = {}) {
+  const pacing_fields = makePacingFields(fieldOverrides)
   const wrapper = mount(SchedulingSection, {
     global: {
-      provide: { [deckEditorKey]: editor },
-      stubs: { UiSelectMenu: SelectMenuStub, UiSpinbox: SpinboxStub },
+      provide: { [pacingFieldsKey]: pacing_fields },
+      stubs: {
+        AdvancedReveal: AdvancedRevealStub,
+        UiSelectMenu: SelectMenuStub,
+        UiSpinbox: SpinboxStub
+      },
       mocks: { $t: (k) => k }
     }
   })
-  return { wrapper, deck, draft }
+  return { wrapper, pacing_fields }
 }
 
-beforeEach(() => {
-  mockPresetsData.value = []
-})
-
-// ── Structure ────────────────────────────────────────────────────────────────
+// ── rendering ─────────────────────────────────────────────────────────────────
 
 describe('SchedulingSection — rendering', () => {
-  test('renders retention, max-interval, leech-threshold, learning-steps, and relearning-steps rows', () => {
+  test('renders retention, max-interval, leech-threshold, learning-steps, and relearning-steps rows inside the advanced-reveal slot', () => {
     const { wrapper } = makeWrapper()
-    expect(wrapper.find('[data-testid="tab-review-pacing__retention"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="tab-review-pacing__max-interval"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="tab-review-pacing__leech-threshold"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="tab-review-pacing__learning-steps"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="tab-review-pacing__relearning-steps"]').exists()).toBe(true)
+    const slot = wrapper.find('[data-testid="advanced-reveal-stub"]')
+    expect(slot.find('[data-testid="tab-review-pacing__retention"]').exists()).toBe(true)
+    expect(slot.find('[data-testid="tab-review-pacing__max-interval"]').exists()).toBe(true)
+    expect(slot.find('[data-testid="tab-review-pacing__leech-threshold"]').exists()).toBe(true)
+    expect(slot.find('[data-testid="tab-review-pacing__learning-steps"]').exists()).toBe(true)
+    expect(slot.find('[data-testid="tab-review-pacing__relearning-steps"]').exists()).toBe(true)
+  })
+
+  test('caps the retention spinbox at DESIRED_RETENTION_BOUNDS (70-97) [obligation]', () => {
+    const { wrapper } = makeWrapper()
+    const spinbox = wrapper.find(
+      '[data-testid="tab-review-pacing__retention"] [data-testid="ui-spinbox"]'
+    )
+    expect(spinbox.attributes('data-min')).toBe('70')
+    expect(spinbox.attributes('data-max')).toBe('97')
   })
 })
 
 // ── learning-steps / relearning-steps ─────────────────────────────────────────
 
 describe('SchedulingSection — learning-steps / relearning-steps', () => {
-  test('selecting a learning-steps key pins the learning_steps override', async () => {
-    const { wrapper, draft } = makeWrapper()
+  test('selecting a learning-steps key writes through fields.learning_steps.value', async () => {
+    const { wrapper, pacing_fields } = makeWrapper()
 
     await wrapper
       .find('[data-testid="tab-review-pacing__learning-steps"] [data-testid="ui-select-menu"]')
-      .setValue('1hr')
+      .setValue('1m-10m')
 
-    expect(draft.pacing_overrides.learning_steps).toEqual(['1h'])
+    expect(pacing_fields.fields.learning_steps.value.value).toBe('1m-10m')
   })
 
-  test('selecting a relearning-steps key pins the relearning_steps override', async () => {
-    const { wrapper, draft } = makeWrapper()
+  test('selecting a relearning-steps key writes through fields.relearning_steps.value', async () => {
+    const { wrapper, pacing_fields } = makeWrapper()
 
     await wrapper
       .find('[data-testid="tab-review-pacing__relearning-steps"] [data-testid="ui-select-menu"]')
-      .setValue('1m-10m')
+      .setValue('10m')
 
-    expect(draft.pacing_overrides.relearning_steps).toEqual(['1m', '10m'])
+    expect(pacing_fields.fields.relearning_steps.value.value).toBe('10m')
   })
 })
 
-// ── max-interval [obligation] ─────────────────────────────────────────────────
+// ── spinbox writes ────────────────────────────────────────────────────────────
 
-describe('SchedulingSection — max-interval spinbox [obligation]', () => {
-  test('resolves to 0 (uncapped sentinel) when the deck value is null', () => {
-    const { wrapper } = makeWrapper({ deck: { max_interval: null } })
-    const spinbox = wrapper.find(
-      '[data-testid="tab-review-pacing__max-interval"] [data-testid="ui-spinbox"]'
-    )
-    expect(spinbox.attributes('data-value')).toBe('0')
+describe('SchedulingSection — spinbox writes', () => {
+  test('bumping the retention spinbox writes through fields.desired_retention.value', async () => {
+    const { wrapper, pacing_fields } = makeWrapper()
+
+    await wrapper
+      .find('[data-testid="tab-review-pacing__retention"] [data-testid="ui-spinbox__increment"]')
+      .trigger('click')
+
+    expect(pacing_fields.fields.desired_retention.value.value).toBe(91)
   })
 
-  test('bumping the spinbox pins the max_interval key in pacing_overrides [obligation]', async () => {
-    const { wrapper, draft } = makeWrapper({ deck: { max_interval: null } })
+  test('bumping the max-interval spinbox writes through fields.max_interval.value', async () => {
+    const { wrapper, pacing_fields } = makeWrapper()
 
     await wrapper
       .find('[data-testid="tab-review-pacing__max-interval"] [data-testid="ui-spinbox__increment"]')
       .trigger('click')
 
-    expect('max_interval' in draft.pacing_overrides).toBe(true)
-    expect(draft.pacing_overrides.max_interval).toBe(1)
+    expect(pacing_fields.fields.max_interval.value.value).toBe(1)
   })
 
-  test('passes the max-interval-suffix translation through as the spinbox suffix prop', () => {
-    const { wrapper } = makeWrapper()
-    const spinbox = wrapper.find(
-      '[data-testid="tab-review-pacing__max-interval"] [data-testid="ui-spinbox"]'
-    )
-    expect(spinbox.attributes('data-suffix')).toBe('d')
-  })
-})
-
-// ── leech-threshold [obligation] ──────────────────────────────────────────────
-
-describe('SchedulingSection — leech-threshold spinbox [obligation]', () => {
-  test('resolves to deck.leech_threshold when no override is set', () => {
-    const { wrapper } = makeWrapper({ deck: { leech_threshold: 24 } })
-    const spinbox = wrapper.find(
-      '[data-testid="tab-review-pacing__leech-threshold"] [data-testid="ui-spinbox"]'
-    )
-    expect(spinbox.attributes('data-value')).toBe('24')
-  })
-
-  test('bumping the spinbox pins the leech_threshold key directly, without a has-gate [obligation]', async () => {
-    const { wrapper, draft } = makeWrapper({ deck: { leech_threshold: 24 } })
+  test('bumping the leech-threshold spinbox writes through fields.leech_threshold.value', async () => {
+    const { wrapper, pacing_fields } = makeWrapper()
 
     await wrapper
       .find(
@@ -187,33 +190,40 @@ describe('SchedulingSection — leech-threshold spinbox [obligation]', () => {
       )
       .trigger('click')
 
-    expect(draft.pacing_overrides.leech_threshold).toBe(25)
-    expect(draft.pacing_overrides).not.toHaveProperty('has_leech_threshold_override')
+    expect(pacing_fields.fields.leech_threshold.value.value).toBe(25)
   })
 })
 
 // ── reset wiring [obligation] ──────────────────────────────────────────────────
 
 describe('SchedulingSection — reset wiring [obligation]', () => {
-  test('resetting the max-interval row un-pins the override — deletes the key entirely [obligation]', async () => {
-    const { wrapper, draft } = makeWrapper({
-      pacing_overrides: { max_interval: 90 }
+  test('resetting the max-interval row calls fields.max_interval.reset [obligation]', async () => {
+    const resetMaxInterval = vi.fn()
+    const { wrapper } = makeWrapper({
+      fieldOverrides: {
+        max_interval: makeField({ overridden: true, reset: resetMaxInterval })
+      }
     })
 
     await wrapper
-      .find('[data-testid="tab-review-pacing__max-interval"] [data-testid="tooltip-row__reset"]')
+      .find('[data-testid="tab-review-pacing__max-interval"] [data-testid="field-row__reset"]')
       .trigger('click')
 
-    expect('max_interval' in draft.pacing_overrides).toBe(false)
+    expect(resetMaxInterval).toHaveBeenCalledOnce()
   })
 
-  test('resetting the leech-threshold row deletes the leech_threshold key [obligation]', async () => {
-    const { wrapper, draft } = makeWrapper({ pacing_overrides: { leech_threshold: 12 } })
+  test('resetting the leech-threshold row calls fields.leech_threshold.reset [obligation]', async () => {
+    const resetLeechThreshold = vi.fn()
+    const { wrapper } = makeWrapper({
+      fieldOverrides: {
+        leech_threshold: makeField({ overridden: true, reset: resetLeechThreshold })
+      }
+    })
 
     await wrapper
-      .find('[data-testid="tab-review-pacing__leech-threshold"] [data-testid="tooltip-row__reset"]')
+      .find('[data-testid="tab-review-pacing__leech-threshold"] [data-testid="field-row__reset"]')
       .trigger('click')
 
-    expect('leech_threshold' in draft.pacing_overrides).toBe(false)
+    expect(resetLeechThreshold).toHaveBeenCalledOnce()
   })
 })
