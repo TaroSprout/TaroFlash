@@ -3,14 +3,14 @@ import { gsap } from 'gsap'
 const HALF_TURN_DURATION = 0.14
 const FLIP_PERSPECTIVE = 800
 
-const TUCKED_POSE = { y: -136, scale: 0.78 }
+const TUCKED_POSE = { y: -70, scale: 0.8 }
 const RESTING_POSE = { y: 0, scale: 1 }
 
-type PreviewPose = { y: number; scale: number }
+type PreviewPose = typeof TUCKED_POSE
 
 /**
- * Flips the pinned preview a full turn while it slides up and shrinks away, so
- * it reads as the card tucking in behind the content pane with its top edge
+ * Flips the pinned preview a full turn while it lifts and eases back a touch,
+ * so it reads as the card tucking in behind the content pane with its top edge
  * still poking into the sheet header.
  *
  * @param onEdgeOn - fires at 90°, the frame where the card is edge-on and
@@ -43,7 +43,7 @@ function flipToPose(el: HTMLElement, pose: PreviewPose, onEdgeOn: () => void) {
   tl.to(el, { rotateY: 0, duration: HALF_TURN_DURATION, ease: 'power2.out' })
 
   // The travel runs across both halves rather than after them, so the card is
-  // already moving away as it turns rather than turning then sliding.
+  // already drifting away as it turns rather than turning then sliding.
   tl.to(el, { ...pose, duration: HALF_TURN_DURATION * 2, ease: 'power2.inOut' }, 0)
 
   return new Promise<void>((resolve) => {
