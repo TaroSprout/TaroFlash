@@ -9,7 +9,7 @@ import { useSheetChrome } from './sheet-chrome'
 import { emitSfx } from '@/sfx/bus'
 import { useDeckEditor, deckEditorKey } from '@/composables/deck/editor'
 import { useDeckDangerActions, deckDangerActionsKey } from '@/composables/deck/danger-actions'
-import { sheetLayoutKey, type SheetLayout } from '@/components/layout-kit/sheet/sheet-layout'
+import type { SheetLayout } from '@/components/layout-kit/sheet/sheet-layout'
 import { useAlert } from '@/composables/alert'
 import { useModalAfterEnter, useModalRequestClose } from '@/composables/modal'
 import DeckPinnedPreview from '@/components/deck/pinned-preview.vue'
@@ -69,7 +69,6 @@ const chrome = useSheetChrome(preview_el, aside_el)
 const layout_mode = computed<SheetLayout>(() => pager.value?.layout_mode ?? 'phone')
 const displayed_tab = computed(() => pager.value?.displayed_tab ?? 'index')
 provide(deckSettingsCloseKey, close)
-provide(sheetLayoutKey, layout_mode)
 
 const tabs = computed<Tab[]>(() =>
   (Object.keys(TAB_META) as TabValue[]).map((value) => ({

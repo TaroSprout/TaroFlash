@@ -11,9 +11,9 @@ type PaneTransitionOptions = {
 
 /**
  * Drives the between-panes Transition for sheet-pager: a directional slide on
- * `phone`, a plain crossfade on tablet/desktop. Callers pass the same
- * `nav_direction` ref into their navigation so the enter hook reads the
- * direction set before the leave began.
+ * `phone`, a plain crossfade on tablet/desktop. Set the returned
+ * `nav_direction` before changing the displayed pane so the leave that follows
+ * animates the right way.
  *
  * @param outlet - the scroll container whose height animates on phone
  */

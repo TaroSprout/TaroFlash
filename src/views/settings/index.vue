@@ -8,7 +8,7 @@ import { emitSfx } from '@/sfx/bus'
 import { useMemberEditor, memberEditorKey } from '@/composables/member/editor'
 import { TAB_META, type TabValue } from './tabs'
 import { useMemberDangerActions, memberDangerActionsKey } from '@/composables/member/danger-actions'
-import { sheetLayoutKey, type SheetLayout } from '@/components/layout-kit/sheet/sheet-layout'
+import type { SheetLayout } from '@/components/layout-kit/sheet/sheet-layout'
 import { useAlert } from '@/composables/alert'
 import { useModalRequestClose } from '@/composables/modal'
 import { useAvatarPicker } from './use-avatar-picker'
@@ -56,7 +56,6 @@ const active_tab_ref = useTemplateRef<{ onChromeBack?: () => boolean }>('active_
 const layout_mode = computed<SheetLayout>(() => pager.value?.layout_mode ?? 'phone')
 const displayed_tab = computed(() => pager.value?.displayed_tab ?? 'index')
 provide(settingsCloseKey, close)
-provide(sheetLayoutKey, layout_mode)
 
 // account-access is reachable via the aside's edit button (tablet/desktop) or the
 // phone-only index entry — it never appears as a sidebar tab-bar icon itself.
