@@ -3,21 +3,15 @@ import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
-import TooltipRow from './tooltip-row.vue'
+import FieldRow from './field-row.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { DAILY_LIMIT_BOUNDS } from '@/utils/deck/defaults'
-import { pacingFieldsKey } from './pacing-fields'
+import { pacingFieldsKey } from './use-pacing-fields'
 
 const { t } = useI18n()
 const { deck } = inject(deckEditorKey)!
-
 const {
-  max_reviews_per_day,
-  max_new_per_day,
-  has_max_reviews_override,
-  has_max_new_override,
-  resetMaxReviewsPerDay,
-  resetMaxNewPerDay
+  fields: { max_reviews_per_day, max_new_per_day }
 } = inject(pacingFieldsKey)!
 </script>
 
@@ -28,39 +22,37 @@ const {
     :description="t('deck.settings-modal.review-pacing.limits-description')"
   >
     <div data-testid="tab-review-pacing__pacing" class="flex flex-col gap-4">
-      <tooltip-row
+      <field-row
         data-testid="tab-review-pacing__max-reviews"
         :label="t('deck.settings-modal.review-pacing.max-reviews-per-day')"
         :tooltip="t('deck.settings-modal.review-pacing.max-reviews-tooltip')"
-        :overridden="has_max_reviews_override"
-        @reset="resetMaxReviewsPerDay"
+        :field="max_reviews_per_day"
       >
         <ui-spinbox
           data-testid="tab-review-pacing__max-reviews-spinbox"
-          v-model:value="max_reviews_per_day"
+          v-model:value="max_reviews_per_day.value.value"
           :min="DAILY_LIMIT_BOUNDS.min"
           :max="deck?.card_count"
           :step="DAILY_LIMIT_BOUNDS.step"
           wrap
         />
-      </tooltip-row>
+      </field-row>
 
-      <tooltip-row
+      <field-row
         data-testid="tab-review-pacing__max-new"
         :label="t('deck.settings-modal.review-pacing.max-new-per-day')"
         :tooltip="t('deck.settings-modal.review-pacing.max-new-tooltip')"
-        :overridden="has_max_new_override"
-        @reset="resetMaxNewPerDay"
+        :field="max_new_per_day"
       >
         <ui-spinbox
           data-testid="tab-review-pacing__max-new-spinbox"
-          v-model:value="max_new_per_day"
+          v-model:value="max_new_per_day.value.value"
           :min="DAILY_LIMIT_BOUNDS.min"
           :max="deck?.card_count"
           :step="DAILY_LIMIT_BOUNDS.step"
           wrap
         />
-      </tooltip-row>
+      </field-row>
     </div>
   </labeled-section>
 </template>

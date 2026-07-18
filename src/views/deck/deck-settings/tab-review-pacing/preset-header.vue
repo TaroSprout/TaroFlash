@@ -4,11 +4,13 @@ import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiDivider from '@/components/ui-kit/divider.vue'
 import PresetChip from './preset-chip.vue'
-import { pacingFieldsKey } from './pacing-fields'
+import { pacingFieldsKey } from './use-pacing-fields'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 
 const { t } = useI18n()
-const { has_overrides, override_count, resetAllOverrides } = inject(pacingFieldsKey)!
+const { override_count, resetAllOverrides } = inject(pacingFieldsKey)!
+
+const has_overrides = computed(() => override_count.value > 0)
 
 const divergence_label = computed(() =>
   t('deck.settings-modal.review-pacing.preset-diverged', override_count.value)

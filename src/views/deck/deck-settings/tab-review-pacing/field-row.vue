@@ -4,13 +4,13 @@ import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 
-defineProps<{
+type FieldRowProps = {
   label: string
   tooltip?: string
-  overridden?: boolean
-}>()
+  field?: { overridden: { value: boolean }; reset: () => void }
+}
 
-const emit = defineEmits<{ reset: [] }>()
+const { label, tooltip, field } = defineProps<FieldRowProps>()
 
 defineSlots<{
   default(): any
@@ -20,8 +20,8 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <div data-testid="tooltip-row" class="flex items-center justify-between gap-4 group">
-    <span data-testid="tooltip-row__label" class="flex items-center gap-2 text-brown-500">
+  <div data-testid="field-row" class="flex items-center justify-between gap-4 group">
+    <span data-testid="field-row__label" class="flex items-center gap-2 text-brown-500">
       {{ label }}
       <ui-tooltip
         v-if="tooltip"
@@ -37,15 +37,15 @@ const { t } = useI18n()
       <slot></slot>
 
       <ui-button
-        v-if="overridden"
-        data-testid="tooltip-row__reset"
+        v-if="field?.overridden.value"
+        data-testid="field-row__reset"
         data-theme="brown-500"
         variant="ghost"
         size="sm"
         icon-only
         icon-left="refresh"
         :sfx="{ press: 'snappy_button_5' }"
-        @press="emit('reset')"
+        @press="field?.reset()"
         class="absolute! -left-8"
       >
         {{ t('deck.settings-modal.review-pacing.reset-to-preset') }}

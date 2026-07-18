@@ -6,8 +6,7 @@ import GeneralSection from './general-section.vue'
 import LimitsSection from './limits-section.vue'
 import SchedulingSection from './scheduling-section.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
-import { usePacingFields } from './use-pacing-fields'
-import { pacingFieldsKey } from './pacing-fields'
+import { pacingFieldsKey, usePacingFields } from './use-pacing-fields'
 import DeckSaveButton from '../deck-save-button.vue'
 
 const { deck, draft } = inject(deckEditorKey)!

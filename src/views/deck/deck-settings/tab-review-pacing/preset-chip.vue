@@ -3,7 +3,7 @@ import { computed, inject } from 'vue'
 import UiDropdownButton, {
   type DropdownOption
 } from '@/components/ui-kit/dropdown-button/index.vue'
-import { pacingFieldsKey } from './pacing-fields'
+import { pacingFieldsKey } from './use-pacing-fields'
 
 const { preset_options, selected_preset_value } = inject(pacingFieldsKey)!
 
