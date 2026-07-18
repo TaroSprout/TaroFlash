@@ -252,13 +252,14 @@ watch(active_tab, (tab) => {
         ref="preview_el"
         data-testid="deck-settings__pinned-preview"
         :data-tucked="chrome.is_tucked.value"
-        class="group absolute right-(--sheet-px) top-6"
+        class="absolute right-(--sheet-px) top-6"
         :class="chrome.is_tucked.value ? 'pointer-events-none' : 'pointer-events-auto'"
       >
         <deck-pinned-preview
           :cover="editor.draft.cover_config"
           :card_attributes="editor.draft.card_attributes"
           :side="visible_side"
+          :tucked="chrome.is_tucked.value"
           :front_text="editor.preview_front_text.value"
           :back_text="editor.preview_back_text.value"
           @update:side="onPreviewSide"

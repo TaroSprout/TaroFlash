@@ -108,7 +108,7 @@ provide(mobileSheetOverlayKey, overlay_root)
       <div
         data-testid="mobile-sheet"
         :data-surface="surface"
-        :class="['relative flex w-full h-full flex-col', body_bg_class]"
+        class="relative flex w-full h-full flex-col"
       >
         <div
           v-if="show_builtin_close"
