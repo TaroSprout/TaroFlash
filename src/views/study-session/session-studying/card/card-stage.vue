@@ -2,71 +2,62 @@
 import Card from '@/components/card/index.vue'
 import StudyCard from './study-card.vue'
 import StudyCardEdit from './study-card-edit.vue'
-import { computed, onUnmounted, useTemplateRef, type StyleValue } from 'vue'
+import { computed, onUnmounted, useTemplateRef } from 'vue'
 import type { gsap } from 'gsap'
-import { type Grade, type RecordLog } from 'ts-fsrs'
+import { type Grade } from 'ts-fsrs'
 import { coverCardBeforeEnter, coverCardEnter } from '@/utils/animations/session-intro'
-import { useDeckContext } from '../../deck-context'
+import { useDeckResolution } from '../../deck-resolution'
 import { useCoverCarousel } from '@/views/study-session/composables/cover-carousel'
-import { type StudyCard as StudyCardType } from '@/views/study-session/composables/flashcard-session'
+import { useInjectedStudySessionController } from '@/views/study-session/composables/session-controller'
+import { usePrimedGrade } from './primed-grade-context'
 
-type CardStageProps = {
-  loading: boolean
-  editing: boolean
-  active_card?: StudyCardType
-  active_card_preview?: RecordLog
-  current_card_side: CardSide
-  next_card?: StudyCardType
-  next_card_side: CardSide
-  preview_style: StyleValue
-  show_all_ratings?: boolean
-}
+defineExpose({ rate })
 
 const {
   loading,
   editing,
   active_card,
   active_card_preview,
-  current_card_side,
+  display_side,
   next_card,
   next_card_side,
-  show_all_ratings
-} = defineProps<CardStageProps>()
+  preview_style,
+  show_all_ratings,
+  startSession,
+  flipCurrentCard,
+  onCardReviewed,
+  onDragProgress,
+  onNextCardFlipped,
+  onEditUpdate
+} = useInjectedStudySessionController()
 
-const emit = defineEmits<{
-  (e: 'started'): void
-  (e: 'side-changed'): void
-  (e: 'reviewed', grade: Grade | undefined): void
-  (e: 'drag-progress', progress: number, duration: number): void
-  (e: 'drag-rating', grade: Grade | null): void
-  (e: 'next-flipped'): void
-  (e: 'edit-update', side: 'front' | 'back', text: string): void
-}>()
-
-defineExpose({ rate })
-
-const deck_context = useDeckContext()
+const resolution = useDeckResolution()
+const primed_grade = usePrimedGrade()
 const study_card_ref = useTemplateRef('study-card')
 
 const { current_cover } = useCoverCarousel(
-  () => deck_context.value.covers,
-  () => current_card_side === 'cover',
+  () => resolution.covers.value,
+  () => display_side.value === 'cover',
   () => study_card_ref.value?.el()
 )
 
-const preview_appearance = computed(() => deck_context.value.appearanceFor(next_card?.deck_id))
+const preview_appearance = computed(() => resolution.appearanceFor(next_card.value?.deck_id))
 
 // While loading nothing renders in the stage — the cover card rises in (via the
 // transition) once data lands. No separate skeleton: it's just the cover card.
 const card_view = computed<'loading' | 'edit' | 'read'>(() => {
-  if (loading) return 'loading'
-  if (editing) return 'edit'
+  if (loading.value) return 'loading'
+  if (editing.value) return 'edit'
   return 'read'
 })
 
-/** Triggers the fling animation on the active card; its `reviewed` event follows. */
+/** Triggers the fling animation on the active card; its review follows. */
 function rate(grade: Grade) {
   study_card_ref.value?.rate(grade)
+}
+
+function onDragRating(grade: Grade | null) {
+  primed_grade.value = grade
 }
 
 // Only the cover card rises in (the modal-open intro). Subsequent cards mount
@@ -75,11 +66,11 @@ function rate(grade: Grade) {
 let cover_tween: gsap.core.Tween | undefined
 
 function onCardBeforeEnter(el: Element) {
-  if (current_card_side === 'cover') coverCardBeforeEnter(el as HTMLElement)
+  if (display_side.value === 'cover') coverCardBeforeEnter(el as HTMLElement)
 }
 
 function onCardEnter(el: Element, done: () => void) {
-  if (current_card_side !== 'cover') return done()
+  if (display_side.value !== 'cover') return done()
   cover_tween = coverCardEnter(el as HTMLElement, done)
 }
 
@@ -109,7 +100,7 @@ onUnmounted(() => cover_tween?.kill())
         v-bind="next_card"
         :cover_config="preview_appearance.cover_config"
         :card_attributes="preview_appearance.card_attributes"
-        @flip-complete="emit('next-flipped')"
+        @flip-complete="onNextCardFlipped"
       />
     </div>
 
@@ -127,22 +118,22 @@ onUnmounted(() => cover_tween?.kill())
         ref="study-card"
         :key="active_card?.id"
         :card="active_card"
-        :side="current_card_side"
+        :side="display_side"
         :options="active_card_preview"
         :show_all_ratings="show_all_ratings"
         :cover_override="current_cover"
-        @started="emit('started')"
-        @side-changed="emit('side-changed')"
-        @reviewed="(grade) => emit('reviewed', grade)"
-        @drag-progress="(progress, duration) => emit('drag-progress', progress, duration)"
-        @drag-rating="(grade) => emit('drag-rating', grade)"
+        @started="startSession"
+        @side-changed="flipCurrentCard"
+        @reviewed="onCardReviewed"
+        @drag-progress="onDragProgress"
+        @drag-rating="onDragRating"
       />
     </transition>
     <study-card-edit
       v-if="card_view === 'edit' && active_card"
       :card="active_card"
-      :side="current_card_side === 'back' ? 'back' : 'front'"
-      @update="(side, text) => emit('edit-update', side, text)"
+      :side="display_side === 'back' ? 'back' : 'front'"
+      @update="onEditUpdate"
     />
   </div>
 </template>

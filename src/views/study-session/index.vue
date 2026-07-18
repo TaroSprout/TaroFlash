@@ -3,19 +3,14 @@ import SessionStudying from './session-studying/index.vue'
 import SessionSummary from './session-summary/index.vue'
 import SessionHeaderCloseButton from './session-header-close-button.vue'
 import SessionHeaderMenu from './session-header-menu.vue'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 import DialogCardPager from '@/components/layout-kit/dialog-card/dialog-card-pager.vue'
 import { emitSfx, emitStudySfx } from '@/sfx/bus'
-import { useProvideDeckContext } from './deck-context'
 import { clearPersistedSession } from './composables/session-persistence'
 import { provideStudySessionController } from './composables/session-controller'
 import { useModalRequestClose } from '@/composables/modal'
-import { DEFAULT_LEECH_THRESHOLD } from '@/utils/review-pacing/defaults'
-import type { CardReviewResult } from './composables/session-queue'
-
-type Phase = 'studying' | 'summary'
 
 const { deck_ids, close } = defineProps<{
   deck_ids: number[]
@@ -24,10 +19,9 @@ const { deck_ids, close } = defineProps<{
 
 const { t } = useI18n()
 
-const phase = ref<Phase>('studying')
-const results = ref<CardReviewResult[]>([])
-
 const {
+  state,
+  results,
   is_cover,
   can_edit,
   show_all_ratings,
@@ -37,13 +31,11 @@ const {
   onMove,
   onDelete,
   toggleRatings
-} = provideStudySessionController({
-  deck_ids,
-  onFinished: onSessionFinished,
-  onClosed
-})
+} = provideStudySessionController({ deck_ids, onClosed })
 
-useProvideDeckContext(() => sessionDecks.value)
+const phase = computed<'studying' | 'summary'>(() =>
+  state.value === 'summary' ? 'summary' : 'studying'
+)
 
 const title = computed(() =>
   sessionDecks.value.length === 1
@@ -51,16 +43,7 @@ const title = computed(() =>
     : t('study-session.multiple-decks-title')
 )
 
-const summary_leech_threshold = computed(
-  () => sessionDecks.value[0]?.leech_threshold ?? DEFAULT_LEECH_THRESHOLD
-)
-
 useModalRequestClose(onHeaderStop)
-
-function onSessionFinished(session_results: CardReviewResult[]) {
-  results.value = session_results
-  phase.value = 'summary'
-}
 
 /** Early close (close button / backdrop / esc before any review). */
 function onClosed() {
@@ -115,7 +98,6 @@ function onHeaderStop() {
             key="summary"
             class="absolute inset-0 z-10"
             :results="results"
-            :leech_threshold="summary_leech_threshold"
             @close="onClosed"
           />
         </dialog-card-pager>

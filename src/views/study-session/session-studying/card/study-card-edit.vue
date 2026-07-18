@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FaceEditor from '@/components/card/face-editor.vue'
-import { useDeckContext } from '../../deck-context'
+import { useDeckResolution } from '../../deck-resolution'
 
 type CardSide = 'front' | 'back'
 
@@ -16,10 +16,10 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const deck_context = useDeckContext()
+const resolution = useDeckResolution()
 
 const card_attributes = computed(
-  () => deck_context.value.appearanceFor(card?.deck_id).card_attributes ?? { front: {}, back: {} }
+  () => resolution.appearanceFor(card?.deck_id).card_attributes ?? { front: {}, back: {} }
 )
 const placeholder = computed(() =>
   side === 'front'

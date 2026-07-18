@@ -5,11 +5,11 @@ import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import StatTile from './stat-tile.vue'
 import { aggregateSession } from './aggregate'
-import type { CardReviewResult } from '@/views/study-session/composables/session-queue'
+import { useDeckResolution } from '@/views/study-session/deck-resolution'
+import type { CardReviewResult } from '@/views/study-session/composables/session-engine'
 
-const { results, leech_threshold } = defineProps<{
+const { results } = defineProps<{
   results: CardReviewResult[]
-  leech_threshold: number
 }>()
 
 const emit = defineEmits<{
@@ -17,8 +17,9 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const { thresholdFor } = useDeckResolution()
 
-const summary = computed(() => aggregateSession(results, leech_threshold))
+const summary = computed(() => aggregateSession(results, thresholdFor))
 </script>
 
 <template>

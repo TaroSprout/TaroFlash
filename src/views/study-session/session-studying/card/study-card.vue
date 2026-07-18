@@ -8,7 +8,7 @@ import { useGestures } from '@/composables/ui/gestures'
 import { useShortcuts } from '@/composables/shortcuts'
 import { useRatingFormat } from '@/composables/fsrs'
 import { useI18n } from 'vue-i18n'
-import { useDeckContext } from '../../deck-context'
+import { useDeckResolution } from '../../deck-resolution'
 
 const DRAG_RATING_CONFIG = {
   [Rating.Hard]: { icon: 'smiley-unhappy', label_key: 'study.flashcard.rating.hard-button' },
@@ -30,7 +30,7 @@ type StudyCardProps = {
 
 const { card, side, options, show_all_ratings, cover_override } = defineProps<StudyCardProps>()
 
-const deck_context = useDeckContext()
+const resolution = useDeckResolution()
 
 const emit = defineEmits<{
   (e: 'started'): void
@@ -66,7 +66,7 @@ const is_animating = ref(false)
 const { register } = useGestures()
 const shortcuts = useShortcuts('study-card')
 
-const appearance = computed(() => deck_context.value.appearanceFor(card?.deck_id))
+const appearance = computed(() => resolution.appearanceFor(card?.deck_id))
 
 const passVisible = computed(() => card_offset.value > SWIPE_DISTANCE_THRESHOLD)
 const failVisible = computed(() => card_offset.value < -SWIPE_DISTANCE_THRESHOLD)

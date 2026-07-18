@@ -1,35 +1,33 @@
 import { computed, inject, provide, watch, type InjectionKey } from 'vue'
 import { type Grade } from 'ts-fsrs'
-import { useFlashcardSession } from './flashcard-session'
-import { FSRS_MAX_INTERVAL } from '@/utils/review-pacing/defaults'
+import { useSessionEngine } from './session-engine'
 import { useCardPreview } from './card-preview'
 import { useCardEdit } from './card-edit'
 import { useActiveCardActions } from './card-actions'
 import { useSessionCards } from './session-cards'
+import { useSessionPrefs } from './session-prefs'
+import { usePersistedSession } from './session-persistence'
+import { buildDeckResolution, provideDeckResolution } from '../deck-resolution'
 import { useFlushDeckReviews } from '@/api/reviews'
-import { useUpsertMemberMutation } from '@/api/members'
-import { useMemberStore } from '@/stores/member'
-import { emitSfx } from '@/sfx/bus'
-import type { CardReviewResult } from './session-queue'
+import type { PersistedSession } from './session-persistence'
 
 export type StudySessionController = ReturnType<typeof useStudySessionController>
 
 const StudySessionControllerKey: InjectionKey<StudySessionController> = Symbol(
-  'flashcard-session.controller'
+  'study-session.controller'
 )
 
 type UseStudySessionControllerOptions = {
   deck_ids: number[]
-  onFinished: (results: CardReviewResult[]) => void
   onClosed: () => void
 }
 
 /**
- * Owns the whole study session — FSRS queue, card editing/actions, review
- * flushing — and provides it to the subtree. Called once by the session's
- * modal root (`study-session/index.vue`) so the header (which lives at
- * that level, via `dialog-card`'s native slots) and the studying view
- * (`session-studying/index.vue`) read the same instance instead of duplicating it.
+ * The session's composition root: wires the deck resolution, the deck-blind
+ * engine, card edit/preview/actions, review flushing, and the prefs seam, then
+ * provides the whole thing to the subtree. Called once by the modal root
+ * (`study-session/index.vue`); the header and the studying view read the same
+ * instance via inject rather than duplicating it.
  */
 export function provideStudySessionController(options: UseStudySessionControllerOptions) {
   const controller = useStudySessionController(options)
@@ -43,59 +41,22 @@ export function useInjectedStudySessionController(): StudySessionController {
   return controller
 }
 
-function useStudySessionController({
-  deck_ids,
-  onFinished,
-  onClosed
-}: UseStudySessionControllerOptions) {
-  // Pacing + study config come from the first session deck, resolved
-  // asynchronously by the bootstrap. Getters so the reactive scheduler picks
-  // them up once the fetch lands. (Commit 3 makes this per-deck.)
-  const firstDeckPacing = (): ReviewPacingParams | undefined => {
-    const deck = sessionDecks.value[0]
-    if (!deck) return undefined
-    return {
-      desired_retention: deck.desired_retention,
-      learning_steps: deck.learning_steps,
-      relearning_steps: deck.relearning_steps,
-      // null = uncapped -> the FSRS default max interval
-      max_interval: deck.max_interval ?? FSRS_MAX_INTERVAL
-    }
-  }
+function useStudySessionController({ deck_ids, onClosed }: UseStudySessionControllerOptions) {
+  const persisted_session = usePersistedSession()
+  const flushDeckReviews = useFlushDeckReviews()
 
-  const firstDeckConfig = (): Partial<DeckConfig> | undefined => {
-    const deck = sessionDecks.value[0]
-    return deck ? { flip_cards: deck.flip_cards, shuffle: deck.shuffle } : undefined
-  }
+  const resolution = buildDeckResolution(() => sessionDecks.value)
+  provideDeckResolution(resolution)
 
-  const {
-    mode,
-    cards,
-    results,
-    current_card_side,
-    current_index,
-    active_card,
-    active_card_preview,
-    reviewed_count,
-    is_starting_side,
-    config,
-    show_all_ratings,
-    next_card,
-    is_cover,
-    reviewCard,
-    setCards,
-    restoreCards,
-    setSessionMeta,
-    startSession,
-    flipCurrentCard,
-    dropCard,
-    updateCard
-  } = useFlashcardSession(firstDeckPacing, firstDeckConfig)
-
-  setSessionMeta(deck_ids)
+  const engine = useSessionEngine({
+    schedulerFor: resolution.schedulerFor,
+    flipFor: resolution.flipFor,
+    shuffle: () => resolution.shuffle.value,
+    onChange: persist
+  })
 
   const { next_card_side, preview_style, onDragProgress, onNextCardFlipped, awaitFlip } =
-    useCardPreview(next_card)
+    useCardPreview(engine.next_card)
 
   const {
     editing,
@@ -103,107 +64,102 @@ function useStudySessionController({
     start: startEdit,
     stop: stopEdit,
     update: onEditUpdate
-  } = useCardEdit(active_card, () => active_card.value?.deck_id, updateCard)
+  } = useCardEdit(engine.active_card, () => engine.active_card.value?.deck_id, engine.updateCard)
 
   const { onMove, onDelete } = useActiveCardActions({
-    active_card,
-    deck_id: () => active_card.value?.deck_id,
-    onRemoved: dropCard
+    active_card: engine.active_card,
+    deck_id: () => engine.active_card.value?.deck_id,
+    onRemoved: engine.dropCard
   })
 
   const { loading, sessionDecks } = useSessionCards({
     deckIds: () => deck_ids,
-    seed: setCards,
+    seed: engine.setCards,
     restore: onRestore,
     onMissingDeck: onClosed
   })
 
-  const flushDeckReviews = useFlushDeckReviews()
-  const member_store = useMemberStore()
-  const upsert_member = useUpsertMemberMutation()
+  const { show_all_ratings, toggleRatings } = useSessionPrefs()
 
-  const can_edit = computed(() => !loading.value && !editing.value && !is_cover.value)
+  const can_edit = computed(() => !loading.value && !editing.value && !engine.is_cover.value)
 
   /**
-   * Called by the shell's close button and by the modal backdrop / esc handler.
+   * Persistence lives here, not in the engine — the engine is deck-blind, and
+   * only the controller knows the deck ids to reopen with. Called via the
+   * engine's `onChange` after every state-changing mutation, since its
+   * shallowRefs are mutated in place (a watch wouldn't fire).
    */
+  function persist() {
+    persisted_session.value = {
+      deck_ids,
+      card_ids: engine.cards.value.map((c) => c.id),
+      results: engine.results.value,
+      completed: engine.state.value === 'summary'
+    }
+  }
+
+  /** Shell close button + modal backdrop / esc handler. */
   function requestClose() {
-    if (is_cover.value || reviewed_count.value === 0) {
+    if (engine.is_cover.value || engine.reviewed_count.value === 0) {
       onClosed()
       return
     }
 
-    mode.value = 'completed'
+    engine.state.value = 'summary'
   }
 
-  /**
-   * Session is over — flush the queued reviews and hand the results up so the
-   * shell can pop the summary in. Fires for every path that ends the session
-   * (last card reviewed, stop button, last card dropped, empty queue).
-   */
-  function finishSession() {
-    for (const id of deck_ids) flushDeckReviews(id)
-    onFinished(results.value)
-  }
-
-  function toggleRatings() {
-    emitSfx('snappy_button_5')
-    show_all_ratings.value = !show_all_ratings.value
-
-    if (!member_store.id) return
-    upsert_member.mutate({
-      id: member_store.id,
-      preferences: {
-        ...member_store.preferences,
-        study: { ...member_store.preferences.study, show_all_ratings: show_all_ratings.value }
-      }
+  /** A refresh-restore drops the user straight back into the card they were on. */
+  function onRestore(raw: Card[], persisted: PersistedSession) {
+    engine.restoreCards(raw, {
+      card_ids: persisted.card_ids,
+      results: persisted.results,
+      completed: persisted.completed
     })
-  }
-
-  /**
-   * A refresh-restore should drop the user straight back into the card they
-   * were on, not back at the cover screen requiring another Start click.
-   */
-  function onRestore(...restoreArgs: Parameters<typeof restoreCards>) {
-    restoreCards(...restoreArgs)
-    if (mode.value === 'studying') startSession({ silent: true })
+    if (engine.state.value !== 'summary') engine.startSession({ silent: true })
   }
 
   async function onCardReviewed(grade?: Grade) {
-    if (!active_card.value?.id || mode.value !== 'studying') return
+    if (!engine.active_card.value?.id || engine.state.value !== 'studying') return
 
-    if (next_card.value) await awaitFlip(config.value.flip_cards ? 'back' : 'front')
+    if (engine.next_card.value) {
+      await awaitFlip(resolution.flipFor(engine.next_card.value.deck_id) ? 'back' : 'front')
+    }
 
-    reviewCard(grade)
+    engine.reviewCard(grade)
   }
 
-  watch(mode, (m) => {
-    if (m === 'completed') finishSession()
-  })
+  // The session ends the moment the engine reaches `summary` (last card reviewed
+  // or stop button) — flush every deck's queued reviews. Shell derives its own
+  // view from `state`, so there's no onFinished callback to relay results.
+  watch(
+    () => engine.state.value,
+    (state) => {
+      if (state === 'summary') for (const id of deck_ids) flushDeckReviews(id)
+    }
+  )
 
   return {
-    mode,
-    cards,
-    current_card_side,
-    current_index,
-    active_card,
-    active_card_preview,
-    reviewed_count,
-    is_starting_side,
-    config,
-    show_all_ratings,
-    next_card,
+    state: engine.state,
+    cards: engine.cards,
+    display_side: engine.display_side,
+    current_index: engine.current_index,
+    active_card: engine.active_card,
+    active_card_preview: engine.active_card_preview,
+    reviewed_count: engine.reviewed_count,
+    is_starting_side: engine.is_starting_side,
+    results: engine.results,
+    next_card: engine.next_card,
     next_card_side,
     preview_style,
-    is_cover,
+    is_cover: engine.is_cover,
     loading,
     sessionDecks,
+    show_all_ratings,
     editing,
     saving,
     can_edit,
-    startSession,
-    flipCurrentCard,
-    dropCard,
+    startSession: engine.startSession,
+    flipCurrentCard: engine.flipCurrentCard,
     onDragProgress,
     onNextCardFlipped,
     onEditUpdate,
