@@ -33,6 +33,7 @@ const total = computed(() => cards.value.length)
 
       <ui-progress-bar
         data-theme="blue-500"
+        data-theme-dark="blue-650"
         :value="current_index"
         :max="total"
         :label="`${current_index}/${total}`"

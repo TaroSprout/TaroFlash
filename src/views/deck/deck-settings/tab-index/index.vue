@@ -4,13 +4,11 @@ import { useI18n } from 'vue-i18n'
 import UiOptionsPanel from '@/components/ui-kit/options-panel/index.vue'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
-import DangerResetButton from '../danger-reset-button.vue'
-import DangerDeleteButton from '../danger-delete-button.vue'
 import { deckSettingsLayoutKey } from '../layout'
 import DeckSaveButton from '../deck-save-button.vue'
 import { TAB_META, type TabValue } from '../tabs'
 
-export type TabIndexNavValue = Exclude<TabValue, 'danger-zone'>
+export type TabIndexNavValue = TabValue
 
 const { t } = useI18n()
 const layout_mode = inject(deckSettingsLayoutKey)!
@@ -21,12 +19,15 @@ const nav_groups = computed<NavGroup[]>(() => [
   {
     key: 'appearance',
     heading: t('deck.settings-modal.index.general-heading'),
-    entries: layout_mode.value === 'sheet' ? ['details', 'design'] : ['design']
+    entries:
+      layout_mode.value === 'sheet'
+        ? ['details', 'design', 'danger-zone']
+        : ['design', 'danger-zone']
   },
   {
     key: 'review-pacing',
     heading: t('deck.settings-modal.index.review-pacing-heading'),
-    entries: ['review-pacing']
+    entries: ['review-pacing', 'review-history']
   }
 ])
 
@@ -55,7 +56,8 @@ function onSelect(value: string) {
           group.entries.map((value) => ({
             value,
             icon: TAB_META[value].icon,
-            label: t(TAB_META[value].labelKey)
+            label: t(TAB_META[value].labelKey),
+            danger: value === 'danger-zone'
           }))
         "
         :sfx="{ press: 'snappy_button_5' }"
@@ -64,15 +66,5 @@ function onSelect(value: string) {
     </labeled-section>
 
     <deck-save-button v-if="layout_mode === 'sheet'" />
-
-    <labeled-section
-      data-testid="tab-index__danger-zone"
-      :label="t(TAB_META['danger-zone'].labelKey)"
-    >
-      <div data-testid="tab-index__danger-actions" class="flex flex-col gap-2">
-        <danger-reset-button />
-        <danger-delete-button />
-      </div>
-    </labeled-section>
   </section-list>
 </template>

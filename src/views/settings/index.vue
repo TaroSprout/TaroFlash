@@ -19,7 +19,6 @@ import TabSheet from '@/components/layout-kit/sheet/tab-sheet.vue'
 import TabProfile from './tab-profile/index.vue'
 import TabSubscription from './tab-subscription/index.vue'
 import TabApp from './tab-app/index.vue'
-import TabReviewPreferences from './tab-review-preferences/index.vue'
 import TabDangerZone from './tab-danger-zone/index.vue'
 import TabAccountAccess from './tab-account-access/index.vue'
 import TabIndex from './tab-index/index.vue'
@@ -31,7 +30,6 @@ const TAB_COMPONENTS = {
   index: TabIndex,
   profile: TabProfile,
   app: TabApp,
-  'review-preferences': TabReviewPreferences,
   subscription: TabSubscription,
   'danger-zone': TabDangerZone,
   'account-access': TabAccountAccess
@@ -70,7 +68,8 @@ const tabs = computed(() =>
     .map((value) => ({
       value,
       icon: TAB_META[value].icon,
-      label: t(TAB_META[value].labelKey)
+      label: t(TAB_META[value].labelKey),
+      danger: value === 'danger-zone'
     }))
 )
 
@@ -83,12 +82,7 @@ const sidebar_active = computed({
   set: (v) => (active_tab.value = v as ActiveTab)
 })
 
-const header_meta = computed(() =>
-  displayed_tab.value !== 'index' ? TAB_META[displayed_tab.value] : null
-)
-const header_title = computed(() =>
-  header_meta.value ? t(header_meta.value.labelKey) : t('settings.header.index.title')
-)
+const header_title = computed(() => t('settings.header.title'))
 
 const tab_component = computed(() => TAB_COMPONENTS[displayed_tab.value])
 
@@ -100,7 +94,7 @@ const tab_content_class = 'flex h-full items-start'
 // Open/close sfx live on the modal itself so every callsite (phone launcher,
 // dashboard edit button) sounds identically. Mirrors the deck-settings modal.
 onMounted(() => emitSfx('snappy_button_3'))
-onBeforeUnmount(() => emitSfx('snappy_button_5'))
+onBeforeUnmount(() => emitSfx('pop_up_close'))
 
 async function onClose() {
   if (!editor.is_dirty.value) return close()
@@ -135,7 +129,6 @@ function onChromeBack() {
 }
 
 watch(layout_mode, (mode) => {
-  if (mode !== 'desktop' && active_tab.value === 'danger-zone') active_tab.value = null
   if (mode !== 'sheet' && active_tab.value === 'account-access') active_tab.value = null
 })
 </script>
@@ -148,7 +141,7 @@ watch(layout_mode, (mode) => {
     :data-layout="layout_mode"
     :class="[
       layout_mode === 'desktop' ? 'w-248!' : 'w-full! max-w-224',
-      layout_mode !== 'sheet' && 'h-186',
+      layout_mode !== 'sheet' && 'h-187',
       layout_mode === 'sheet' ? '[--settings-padding:var(--sheet-px)]' : '[--settings-padding:0px]'
     ]"
     :sheet_px="sheet_px"

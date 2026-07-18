@@ -10,6 +10,8 @@ export type OptionsPanelEntry = {
   // replaces the trailing chevron; falls back to 'line-arrow-right' when interactive
   trailingIcon?: string
   disabled?: boolean
+  // renders the row's icon + label in the danger red, for destructive options
+  danger?: boolean
   selected?: boolean
   // data-theme/data-theme-dark applied while selected; the selected background
   // reads off this theme's --theme-primary, so omitting it falls back to the

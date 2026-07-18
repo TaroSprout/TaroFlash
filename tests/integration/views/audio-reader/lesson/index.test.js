@@ -35,7 +35,11 @@ const {
   closeTermMock: vi.fn(),
   playFromHereMock: vi.fn(),
   playClipMock: vi.fn(),
-  playerRef: { is_playing: { value: false } },
+  playerRef: {
+    is_playing: { value: false },
+    seek: vi.fn(),
+    play: vi.fn()
+  },
   chaptersRef: { value: [] },
   progressMutate: vi.fn(),
   useReaderProgressMock: vi.fn(() => ({ restored: { value: true } })),
@@ -205,6 +209,7 @@ const MobileDockStub = defineComponent({
 // dock-placement assertions see exactly one pane at a time.
 const CrossfadeResizeStub = defineComponent({
   name: 'CrossfadeResize',
+  emits: ['swap-start', 'swap-end'],
   setup(_props, { slots }) {
     return () => h('div', { 'data-testid': 'crossfade-resize-stub' }, slots.default?.())
   }
@@ -263,6 +268,8 @@ beforeEach(() => {
   transcriptFollowing.value = true
   transcriptFollowDirection.value = 'down'
   transcriptResumeMock.mockClear()
+  playerRef.seek.mockClear()
+  playerRef.play.mockClear()
   // Fire rAF callbacks synchronously so show_term_in_dock_deferred flips
   // in the same tick as nextTick() — avoids the one-frame lag in tests.
   vi.stubGlobal('requestAnimationFrame', (cb) => cb())
@@ -298,6 +305,17 @@ describe('LessonView', () => {
         name: 'lesson',
         params: { collectionId: 5, lessonId: 1 }
       })
+    })
+
+    test('the audio toolbar seek event seeks the player and plays [obligation]', async () => {
+      chaptersRef.value = CHAPTERS
+      const wrapper = mountView({ lessonId: '2' })
+
+      wrapper.findComponent(AudioToolbar).vm.$emit('seek', 42)
+      await flushPromises()
+
+      expect(playerRef.seek).toHaveBeenCalledWith(42)
+      expect(playerRef.play).toHaveBeenCalledOnce()
     })
   })
 
@@ -507,7 +525,7 @@ describe('LessonView', () => {
       expect(closeTermMock).toHaveBeenCalledOnce()
     })
 
-    test('transcript dismiss event emits ui.snappy_button_5 [obligation]', async () => {
+    test('transcript dismiss event emits ui.pop_up_close [obligation]', async () => {
       popoverOpenRef.value = true
       selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
 
@@ -516,10 +534,10 @@ describe('LessonView', () => {
 
       await wrapper.find('[data-testid="transcript-stub__dismiss"]').trigger('click')
 
-      expect(emitSfxMock).toHaveBeenCalledWith('snappy_button_5')
+      expect(emitSfxMock).toHaveBeenCalledWith('pop_up_close')
     })
 
-    test('closeTerm alone does NOT emit ui.snappy_button_5 [obligation]', async () => {
+    test('closeTerm alone does NOT emit ui.pop_up_close [obligation]', async () => {
       const wrapper = mountView()
       selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
       popoverOpenRef.value = true
@@ -530,7 +548,7 @@ describe('LessonView', () => {
 
       // closeTermMock was called but sfx was NOT emitted (sfx only in dismissTerm)
       expect(closeTermMock).toHaveBeenCalledOnce()
-      expect(emitSfxMock).not.toHaveBeenCalledWith('snappy_button_5')
+      expect(emitSfxMock).not.toHaveBeenCalledWith('pop_up_close')
     })
   })
 
@@ -581,6 +599,23 @@ describe('LessonView', () => {
       await nextTick()
 
       expect(wrapper.find('[data-testid="lesson-view__resume-follow"]').exists()).toBe(false)
+    })
+
+    test('swap-start/swap-end from the dock crossfade toggle the "not swapping" flag read by useAnimatedHeight [obligation]', async () => {
+      vi.clearAllMocks()
+      const wrapper = mountView()
+      await nextTick()
+
+      // useAnimatedHeight(footer_swap_el, footer_term, () => !swapping, reclearSelection)
+      const not_swapping = useAnimatedHeight.mock.calls[0][2]
+      expect(not_swapping()).toBe(true)
+
+      const crossfade = wrapper.findComponent({ name: 'CrossfadeResize' })
+      await crossfade.vm.$emit('swap-start')
+      expect(not_swapping()).toBe(false)
+
+      await crossfade.vm.$emit('swap-end')
+      expect(not_swapping()).toBe(true)
     })
 
     test('follow_direction prop matches transcript follow_direction [obligation]', async () => {

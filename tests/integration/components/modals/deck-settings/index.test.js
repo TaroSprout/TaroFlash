@@ -417,12 +417,17 @@ describe('DeckSettings — header_title reflects the deck title, not the active 
 })
 
 describe('DeckSettings — tab bar composition [obligation]', () => {
-  test('desktop tab bar excludes "details" but includes design/review-pacing/danger-zone [obligation]', () => {
+  test('desktop tab bar excludes "details" but includes design/review-pacing/review-history/danger-zone [obligation]', () => {
     const { wrapper } = makeWrapper()
     const tab_bar_entries = JSON.parse(
       wrapper.find('[data-tab-icons]').attributes('data-tab-icons')
     )
-    expect(tab_bar_entries.map((t) => t.value)).toEqual(['design', 'review-pacing', 'danger-zone'])
+    expect(tab_bar_entries.map((t) => t.value)).toEqual([
+      'design',
+      'review-pacing',
+      'review-history',
+      'danger-zone'
+    ])
   })
 })
 
@@ -454,11 +459,13 @@ describe('DeckSettings — null active_tab tracks sidebar visibility', () => {
     expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
   })
 
-  test('hiding the sidebar with danger-zone selected redirects to the index (null)', async () => {
+  // [obligation] the layout_mode watch that used to reset active_tab off
+  // danger-zone on non-desktop was removed — navigation to danger-zone now
+  // sticks even when the sidebar hides (e.g. rotating to mobile).
+  test('hiding the sidebar with danger-zone selected keeps danger-zone active [obligation]', async () => {
     setSidebar(true)
     const { wrapper } = makeWrapper({ initial_tab: 'danger-zone' })
-    // Let the sidebar-visible state settle before hiding it, so the watch sees
-    // the real true -> false transition (not a no-op false -> false).
+    // Let the sidebar-visible state settle before hiding it.
     await nextTick()
 
     expect(wrapper.find('[data-testid="tab-danger-zone-stub"]').exists()).toBe(true)
@@ -466,7 +473,7 @@ describe('DeckSettings — null active_tab tracks sidebar visibility', () => {
     setSidebar(false)
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="tab-index-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="tab-danger-zone-stub"]').exists()).toBe(true)
   })
 })
 

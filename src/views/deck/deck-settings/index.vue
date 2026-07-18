@@ -16,6 +16,7 @@ import TabSheet from '@/components/layout-kit/sheet/tab-sheet.vue'
 import TabDetails from './tab-details/index.vue'
 import TabDesign from './tab-design/index.vue'
 import TabReviewPacing from './tab-review-pacing/index.vue'
+import TabReviewHistory from './tab-review-history/index.vue'
 import TabDangerZone from './tab-danger-zone/index.vue'
 import TabIndex from './tab-index/index.vue'
 import { TAB_META, type TabValue } from './tabs'
@@ -35,6 +36,7 @@ const TAB_COMPONENTS = {
   details: TabDetails,
   design: TabDesign,
   'review-pacing': TabReviewPacing,
+  'review-history': TabReviewHistory,
   'danger-zone': TabDangerZone
 }
 
@@ -63,13 +65,14 @@ const active_tab_ref = useTemplateRef<{ onChromeBack?: () => boolean }>('active_
 
 if (initial_tab) active_tab.value = initial_tab
 
-const DESKTOP_TABS: TabValue[] = ['design', 'review-pacing', 'danger-zone']
+const DESKTOP_TABS: TabValue[] = ['design', 'review-pacing', 'review-history', 'danger-zone']
 
 const tabs = computed(() =>
   DESKTOP_TABS.map((value) => ({
     value,
     icon: TAB_META[value].icon,
-    label: t(TAB_META[value].labelKey)
+    label: t(TAB_META[value].labelKey),
+    danger: value === 'danger-zone'
   }))
 )
 
@@ -134,10 +137,6 @@ function onChromeBack() {
   onBack()
 }
 
-watch(layout_mode, (mode) => {
-  if (mode !== 'desktop' && active_tab.value === 'danger-zone') active_tab.value = null
-})
-
 // Leaving a tab (back to the index) resets the designer side to cover — assign
 // directly rather than via setActiveSide so it doesn't fire the slide sfx.
 watch(active_tab, (tab) => {
@@ -152,7 +151,7 @@ watch(active_tab, (tab) => {
     data-theme-dark="green-800"
     :data-layout="layout_mode"
     :class="[
-      layout_mode === 'desktop' ? 'w-236!' : 'w-full! max-w-205.5',
+      layout_mode === 'desktop' ? 'w-237!' : 'w-full! max-w-205.5',
       layout_mode !== 'sheet' && 'h-181.5',
       layout_mode === 'sheet'
         ? '[--deck-settings-padding:var(--sheet-px)]'
@@ -211,6 +210,7 @@ watch(active_tab, (tab) => {
         data-theme="brown-200"
         target="[data-testid='deck-settings__main']"
         class="absolute top-2 bottom-4 right-0"
+        :class="layout_mode === 'tablet' && 'right-9'"
       />
     </div>
 

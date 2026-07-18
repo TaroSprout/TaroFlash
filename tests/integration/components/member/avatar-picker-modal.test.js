@@ -53,10 +53,10 @@ describe('AvatarPickerModal', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('wooden_chime_ring')
   })
 
-  test('passes close_sfx: { press: "snappy_button_5" } to dialog-card', () => {
+  test('passes close_sfx: { press: "pop_up_close" } to dialog-card', () => {
     const wrapper = mountModal()
     expect(wrapper.find('[data-testid="avatar-picker-modal"]').attributes('data-close-sfx')).toBe(
-      JSON.stringify({ press: 'snappy_button_5' })
+      JSON.stringify({ press: 'pop_up_close' })
     )
   })
 

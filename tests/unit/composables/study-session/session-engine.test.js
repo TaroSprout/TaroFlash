@@ -13,7 +13,7 @@ const { mockNotice } = vi.hoisted(() => ({
   mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
 }))
 
-const { mockEmitStudySfx } = vi.hoisted(() => ({ mockEmitStudySfx: vi.fn() }))
+const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 
 vi.mock('@/api/reviews', () => ({
   useSaveReviewMutation: () => ({ mutate: vi.fn(), mutateAsync: saveReviewMock })
@@ -24,8 +24,7 @@ vi.mock('@/stores/notice-store', () => ({
 }))
 
 vi.mock('@/sfx/bus', () => ({
-  emitStudySfx: mockEmitStudySfx,
-  emitSfx: vi.fn(),
+  emitSfx: mockEmitSfx,
   emitHoverSfx: vi.fn()
 }))
 
@@ -93,7 +92,7 @@ function makeReviewedCard(overrides = {}) {
 beforeEach(() => {
   saveReviewMock.mockReset().mockResolvedValue(undefined)
   mockNotice.error.mockReset()
-  mockEmitStudySfx.mockClear()
+  mockEmitSfx.mockClear()
 })
 
 // ── Single state machine [obligation] ───────────────────────────────────────
@@ -585,12 +584,12 @@ describe('flipCurrentCard sfx', () => {
     engine.setCards([makeCard({ id: 901, deck_id: 1 })])
     engine.startSession()
 
-    mockEmitStudySfx.mockClear()
+    mockEmitSfx.mockClear()
     engine.flipCurrentCard()
-    expect(mockEmitStudySfx).toHaveBeenCalledWith('transition_up')
+    expect(mockEmitSfx).toHaveBeenCalledWith('transition_up')
 
-    mockEmitStudySfx.mockClear()
+    mockEmitSfx.mockClear()
     engine.flipCurrentCard()
-    expect(mockEmitStudySfx).toHaveBeenCalledWith('transition_down')
+    expect(mockEmitSfx).toHaveBeenCalledWith('transition_down')
   })
 })

@@ -11,7 +11,7 @@ import uid from '@/utils/uid'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 
-export type Tab = { label: string; value: string; icon?: string }
+export type Tab = { label: string; value: string; icon?: string; danger?: boolean }
 
 export type TabSheetParts = {
   content?: string
@@ -160,7 +160,10 @@ function selectOption(value: string) {
             :tabindex="tab.value === active ? 0 : -1"
             :data-active="tab.value === active"
             :class="[
-              'text-left py-3 px-4 rounded-4 flex items-center gap-3 cursor-pointer text-brown-700 dark:text-brown-100 data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary) hover:bg-(--theme-neutral) hover:text-(--theme-on-neutral) data-[active=false]:hover:[&_svg]:scale-120 data-[active=false]:hover:[&_svg]:rotate-6 [&_svg]:transition-transform [&_svg]:duration-75 focus:outline-none',
+              'text-left py-3 px-4 rounded-4 flex items-center gap-3 cursor-pointer data-[active=false]:hover:[&_svg]:scale-120 data-[active=false]:hover:[&_svg]:rotate-6 [&_svg]:transition-transform [&_svg]:duration-75 focus:outline-none',
+              tab.danger
+                ? 'text-red-500 dark:text-red-600 hover:bg-red-500/10 dark:hover:bg-red-400/10 data-[active=true]:bg-red-500 dark:data-[active=true]:bg-red-600 data-[active=true]:text-white'
+                : 'text-brown-700 dark:text-brown-100 data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary) hover:bg-(--theme-neutral) hover:text-(--theme-on-neutral)',
               parts?.tab
             ]"
             v-sfx="tab.value === active ? {} : { hover: hover_sfx }"

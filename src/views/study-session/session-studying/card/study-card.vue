@@ -3,7 +3,7 @@ import Card from '@/components/card/index.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { computed, onMounted, ref } from 'vue'
 import { type Grade, Rating, type RecordLog } from 'ts-fsrs'
-import { emitStudySfx } from '@/sfx/bus'
+import { emitSfx } from '@/sfx/bus'
 import { useGestures } from '@/composables/ui/gestures'
 import { useShortcuts } from '@/composables/shortcuts'
 import { useRatingFormat } from '@/composables/fsrs'
@@ -151,7 +151,7 @@ function flingCard(
   el.style.transform = `translateX(${targetX}px) rotate(${direction * 45}deg)`
   emit('drag-progress', 1, FLING_SPEED)
 
-  emitStudySfx(grade === Rating.Again ? 'music_plink_locancel' : 'music_plink_ok')
+  emitSfx(grade === Rating.Again ? 'music_plink_locancel' : 'music_plink_ok')
 
   // Leave is_animating true: after `reviewed` the parent plays the incoming
   // card's intro flip before advancing. This instance stays mounted (and so
@@ -170,7 +170,7 @@ function flingCard(
 function handleDrag(el: HTMLElement, dx: number, dy: number) {
   if (side === 'cover') return
 
-  if (toSwipeZone(card_offset.value) !== toSwipeZone(dx)) emitStudySfx('music_plink_mid')
+  if (toSwipeZone(card_offset.value) !== toSwipeZone(dx)) emitSfx('music_plink_mid')
 
   is_dragging.value = Math.abs(dx) > FLIP_THRESHOLD
   card_offset.value = dx
@@ -185,7 +185,7 @@ function updateDragRating(dx: number, dy: number) {
   if (show_all_ratings && dx > SWIPE_DISTANCE_THRESHOLD) {
     const new_rating = toDragRating(dy)
     if (new_rating !== drag_rating.value) {
-      emitStudySfx('music_plink_mid')
+      emitSfx('music_plink_mid')
       drag_rating.value = new_rating
     }
   } else {

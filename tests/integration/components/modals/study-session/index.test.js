@@ -289,7 +289,7 @@ describe('StudySession (index.vue)', () => {
       await wrapper.find('[data-testid="session-header__close"]').trigger('click')
 
       expect(mockRequestClose).not.toHaveBeenCalled()
-      expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+      expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
       expect(mockClearPersistedSession).toHaveBeenCalledOnce()
       expect(close).toHaveBeenCalledOnce()
     })
@@ -314,7 +314,7 @@ describe('StudySession (index.vue)', () => {
       request_close_handlers.get(TEST_MODAL_ID)()
 
       expect(mockRequestClose).not.toHaveBeenCalled()
-      expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+      expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
       expect(mockClearPersistedSession).toHaveBeenCalledOnce()
       expect(close).toHaveBeenCalledOnce()
     })
@@ -368,7 +368,7 @@ describe('StudySession (index.vue)', () => {
     await finishSession([])
     await wrapper.find('[data-testid="summary-close-btn"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
     expect(mockClearPersistedSession).toHaveBeenCalledOnce()
     expect(close).toHaveBeenCalledOnce()
   })

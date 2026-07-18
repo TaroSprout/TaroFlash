@@ -149,6 +149,7 @@ function onClose() {
       <ui-button
         data-testid="move-cards__move"
         data-theme="blue-500"
+        data-theme-dark="blue-650"
         icon-left="move-item"
         size="xl"
         full-width

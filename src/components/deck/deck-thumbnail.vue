@@ -37,6 +37,7 @@ const { t } = useI18n()
 <template>
   <ui-tappable
     as="div"
+    :bgx="false"
     data-testid="deck-thumbnail"
     class="relative h-min touch-manipulation pointer-fine:hover:scale-102 pointer-fine:transition-transform duration-75"
     :class="[

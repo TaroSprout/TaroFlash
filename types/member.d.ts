@@ -26,7 +26,7 @@ type MemberPreferences = {
     left_hand?: boolean
   }
   audio?: {
-    study_sounds?: number
+    muted?: boolean
     interface_sounds?: number
     hover_sounds?: number
   }

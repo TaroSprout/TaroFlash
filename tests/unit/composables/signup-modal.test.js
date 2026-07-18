@@ -49,7 +49,7 @@ describe('useSignupModal', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_3')
   })
 
-  test('emits snappy_button_3 before snappy_button_5 (ordering) [obligation]', async () => {
+  test('emits snappy_button_3 before pop_up_close (ordering) [obligation]', async () => {
     const { result, resolve } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
@@ -58,7 +58,7 @@ describe('useSignupModal', () => {
     await flushPromises()
 
     const calls = mockEmitSfx.mock.calls.map((c) => c[0])
-    expect(calls.indexOf('snappy_button_3')).toBeLessThan(calls.indexOf('snappy_button_5'))
+    expect(calls.indexOf('snappy_button_3')).toBeLessThan(calls.indexOf('pop_up_close'))
   })
 
   test('opens modal with mode mobile-sheet [obligation]', () => {
@@ -118,7 +118,7 @@ describe('useSignupModal', () => {
     )
   })
 
-  test('emits snappy_button_5 when the modal response resolves [obligation]', async () => {
+  test('emits pop_up_close when the modal response resolves [obligation]', async () => {
     const { result, resolve } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
@@ -128,7 +128,7 @@ describe('useSignupModal', () => {
     resolve(undefined)
     await flushPromises()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
   })
 
   test('returns the modal result from open', () => {

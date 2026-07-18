@@ -11,9 +11,8 @@ const { mockRegister } = vi.hoisted(() => ({
   mockRegister: vi.fn().mockReturnValue(() => {})
 }))
 
-const { mockEmitSfx, mockEmitStudySfx } = vi.hoisted(() => ({
-  mockEmitSfx: vi.fn(),
-  mockEmitStudySfx: vi.fn()
+const { mockEmitSfx } = vi.hoisted(() => ({
+  mockEmitSfx: vi.fn()
 }))
 
 // Captures shortcut handlers by combo so tests can invoke them directly.
@@ -39,7 +38,6 @@ vi.mock('@/composables/shortcuts', () => ({
 
 vi.mock('@/sfx/bus', () => ({
   emitSfx: mockEmitSfx,
-  emitStudySfx: mockEmitStudySfx,
   emitHoverSfx: vi.fn()
 }))
 
@@ -132,7 +130,6 @@ describe('StudyCard', () => {
     mockRegister.mockClear()
     mockShortcutRegister.mockClear()
     mockEmitSfx.mockClear()
-    mockEmitStudySfx.mockClear()
     // Clear captured shortcut handlers between tests
     for (const key of Object.keys(capturedShortcuts)) delete capturedShortcuts[key]
     options = makeOptions()
@@ -218,8 +215,8 @@ describe('StudyCard', () => {
     wrapper.vm.rate(Rating.Hard)
     await flushPromises()
 
-    expect(mockEmitStudySfx).toHaveBeenCalledWith('music_plink_ok')
-    expect(mockEmitStudySfx).not.toHaveBeenCalledWith('music_plink_locancel')
+    expect(mockEmitSfx).toHaveBeenCalledWith('music_plink_ok')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('music_plink_locancel')
   })
 
   // ── Swipe fallback grade (drag path, no explicit grade) [obligation] ────────
@@ -470,7 +467,7 @@ describe('StudyCard', () => {
     wrapper.vm.rate(Rating.Good)
     await flushPromises()
 
-    expect(mockEmitStudySfx).toHaveBeenCalledWith('music_plink_ok')
+    expect(mockEmitSfx).toHaveBeenCalledWith('music_plink_ok')
   })
 
   test('rate(Again) plays study.music_plink_locancel sfx', async () => {
@@ -480,7 +477,7 @@ describe('StudyCard', () => {
     wrapper.vm.rate(Rating.Again)
     await flushPromises()
 
-    expect(mockEmitStudySfx).toHaveBeenCalledWith('music_plink_locancel')
+    expect(mockEmitSfx).toHaveBeenCalledWith('music_plink_locancel')
   })
 
   test('rate(Good) emits reviewed with Rating.Good after transitionend', async () => {
@@ -540,17 +537,15 @@ describe('StudyCard', () => {
     callbacks.onMove({ dx: 60, dy: 0 })
     await flushPromises()
 
-    expect(mockEmitStudySfx).toHaveBeenCalledWith('music_plink_mid')
-    const call_count = mockEmitStudySfx.mock.calls.filter((c) => c[0] === 'music_plink_mid').length
+    expect(mockEmitSfx).toHaveBeenCalledWith('music_plink_mid')
+    const call_count = mockEmitSfx.mock.calls.filter((c) => c[0] === 'music_plink_mid').length
     expect(call_count).toBe(1)
 
     // Another move within the same zone should NOT trigger the sfx again
     callbacks.onMove({ dx: 80, dy: 0 })
     await flushPromises()
 
-    const call_count_after = mockEmitStudySfx.mock.calls.filter(
-      (c) => c[0] === 'music_plink_mid'
-    ).length
+    const call_count_after = mockEmitSfx.mock.calls.filter((c) => c[0] === 'music_plink_mid').length
     expect(call_count_after).toBe(1)
   })
 
@@ -563,7 +558,7 @@ describe('StudyCard', () => {
     callbacks.onMove({ dx: -60, dy: 0 })
     await flushPromises()
 
-    expect(mockEmitStudySfx).toHaveBeenCalledWith('music_plink_mid')
+    expect(mockEmitSfx).toHaveBeenCalledWith('music_plink_mid')
   })
 
   // ── cover side: gestures and rate() are no-ops ────────────────────────────

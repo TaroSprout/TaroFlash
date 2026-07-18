@@ -13,7 +13,7 @@ export function useLoginModal() {
       mode: 'mobile-sheet',
       mobile_below_width: 'md'
     })
-    result.response.then(() => emitSfx('snappy_button_5'))
+    result.response.then(() => emitSfx('pop_up_close'))
     return result
   }
 

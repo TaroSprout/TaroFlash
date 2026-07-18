@@ -43,7 +43,7 @@ function onAvatarSelect(avatar: string) {
     data-theme="blue-500"
     data-theme-dark="blue-650"
     :title="t('avatar-picker-modal.title')"
-    :close_sfx="{ press: 'snappy_button_5' }"
+    :close_sfx="{ press: 'pop_up_close' }"
     @close="close()"
   >
     <template #default="{ viewport }">
@@ -60,7 +60,7 @@ function onAvatarSelect(avatar: string) {
             :data-testid="`avatar-picker-modal__option-${avatar}`"
             :data-selected="avatar === selected || undefined"
             v-sfx="{ hover: TYPE_SFX }"
-            class="rounded-10 cursor-pointer hover:bg-(--theme-primary) hover:bgx-diagonal-stripes hover:bgx-slide data-selected:bg-(--theme-primary) data-selected:bgx-diagonal-stripes data-selected:outline-6 outline-white relative aspect-square p-2"
+            class="rounded-10 cursor-pointer hover:bg-(--theme-primary) hover:bgx-diagonal-stripes hover:bgx-slide data-selected:bg-(--theme-primary) data-selected:bgx-diagonal-stripes data-selected:border-6 border-white relative aspect-square p-2"
             @click="onAvatarSelect(avatar)"
           >
             <div
@@ -80,7 +80,7 @@ function onAvatarSelect(avatar: string) {
         </div>
 
         <scroll-bar
-          v-if="grid_el"
+          v-if="grid_el && viewport !== 'mobile'"
           :target="grid_el"
           min-width="sm"
           class="absolute -right-6 top-1 bottom-(--dialog-px)"

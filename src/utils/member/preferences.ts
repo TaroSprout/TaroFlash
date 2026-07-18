@@ -7,7 +7,7 @@ export type ResolvedMemberPreferences = {
   // Persisted audio prefs — one slider per bus, named with the `_sounds` suffix
   // the settings UI and DB use. `toBusVolumes` maps them onto the player's buses.
   audio: {
-    study_sounds: number
+    muted: boolean
     interface_sounds: number
     hover_sounds: number
   }
@@ -21,7 +21,7 @@ export const MEMBER_PREFERENCES_DEFAULTS: ResolvedMemberPreferences = {
     left_hand: false
   },
   audio: {
-    study_sounds: BUS_DEFAULTS.study,
+    muted: false,
     interface_sounds: BUS_DEFAULTS.interface,
     hover_sounds: BUS_DEFAULTS.hover
   },
@@ -40,7 +40,7 @@ export function withMemberPreferencesDefaults(
         partial?.accessibility?.left_hand ?? MEMBER_PREFERENCES_DEFAULTS.accessibility.left_hand
     },
     audio: {
-      study_sounds: partial?.audio?.study_sounds ?? MEMBER_PREFERENCES_DEFAULTS.audio.study_sounds,
+      muted: partial?.audio?.muted ?? MEMBER_PREFERENCES_DEFAULTS.audio.muted,
       interface_sounds:
         partial?.audio?.interface_sounds ?? MEMBER_PREFERENCES_DEFAULTS.audio.interface_sounds,
       hover_sounds: partial?.audio?.hover_sounds ?? MEMBER_PREFERENCES_DEFAULTS.audio.hover_sounds
@@ -52,10 +52,14 @@ export function withMemberPreferencesDefaults(
   }
 }
 
-/** Map persisted `*_sounds` prefs onto the bus-keyed volumes the player consumes. */
+/**
+ * Map persisted `*_sounds` prefs onto the bus-keyed volumes the player consumes.
+ * When `muted` is set, every bus resolves to 0 regardless of its slider value.
+ */
 export function toBusVolumes(audio: ResolvedMemberPreferences['audio']): Record<Bus, number> {
+  if (audio.muted) return { interface: 0, hover: 0 }
+
   return {
-    study: audio.study_sounds,
     interface: audio.interface_sounds,
     hover: audio.hover_sounds
   }

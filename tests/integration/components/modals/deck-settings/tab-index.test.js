@@ -75,17 +75,22 @@ function makeTab(layout = 'desktop') {
 describe('TabIndex', () => {
   beforeEach(() => mockEmitSfx.mockClear())
 
-  test('renders both nav groups with two nav cards on desktop (design + review-pacing), labeled from deck.settings-modal.tab.*', () => {
+  test('renders both nav groups with four nav cards on desktop (design/danger-zone + review-pacing/review-history), labeled from deck.settings-modal.tab.*', () => {
     const { wrapper } = makeTab('desktop')
     expect(wrapper.find('[data-testid="tab-index"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="tab-index__nav-group--appearance"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="tab-index__nav-group--review-pacing"]').exists()).toBe(true)
 
     const cards = wrapper.findAll('[data-testid="options-panel__card"]')
-    expect(cards).toHaveLength(2)
-    expect(cards.map((c) => c.attributes('data-value'))).toEqual(['design', 'review-pacing'])
+    expect(cards).toHaveLength(4)
+    expect(cards.map((c) => c.attributes('data-value'))).toEqual([
+      'design',
+      'danger-zone',
+      'review-pacing',
+      'review-history'
+    ])
     expect(cards[0].text()).toContain('Appearance')
-    expect(cards[1].text()).toContain('Study Settings')
+    expect(cards[2].text()).toContain('Review Settings')
   })
 
   test('review-pacing nav entry renders the card-deck icon (matches member-settings review-pacing icon) [obligation]', () => {
@@ -96,23 +101,25 @@ describe('TabIndex', () => {
     expect(pacingCard.find('[data-testid="ui-icon"]').attributes('data-src')).toBe('card-deck')
   })
 
-  test('appearance group lists only "design" in tablet mode', () => {
+  test('appearance group lists "design" and "danger-zone" (no "details") in tablet mode', () => {
     const { wrapper } = makeTab('tablet')
     const appearanceCards = wrapper
       .find('[data-testid="tab-index__nav-group--appearance"]')
       .findAll('[data-testid="options-panel__card"]')
-    expect(appearanceCards).toHaveLength(1)
+    expect(appearanceCards).toHaveLength(2)
     expect(appearanceCards[0].attributes('data-value')).toBe('design')
+    expect(appearanceCards[1].attributes('data-value')).toBe('danger-zone')
   })
 
-  test('appearance group lists "details" and "design" in sheet mode [obligation]', () => {
+  test('appearance group lists "details", "design", and "danger-zone" in sheet mode [obligation]', () => {
     const { wrapper } = makeTab('sheet')
     const appearanceCards = wrapper
       .find('[data-testid="tab-index__nav-group--appearance"]')
       .findAll('[data-testid="options-panel__card"]')
-    expect(appearanceCards).toHaveLength(2)
+    expect(appearanceCards).toHaveLength(3)
     expect(appearanceCards[0].attributes('data-value')).toBe('details')
     expect(appearanceCards[1].attributes('data-value')).toBe('design')
+    expect(appearanceCards[2].attributes('data-value')).toBe('danger-zone')
   })
 
   test('"details" nav entry absent in tablet/desktop (sheet-only) [obligation]', () => {
@@ -139,22 +146,13 @@ describe('TabIndex', () => {
     expect(wrapper.emitted('navigate')).toEqual([['details']])
   })
 
-  test('renders inlined danger reset + delete buttons', () => {
-    const { wrapper } = makeTab()
-    expect(wrapper.find('[data-testid="tab-index__danger-zone"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="danger-reset-button"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="danger-delete-button"]').exists()).toBe(true)
-  })
-
-  test('forwards delete click to injected danger.onDelete', async () => {
-    const { wrapper, onDelete } = makeTab()
-    await wrapper.find('[data-testid="danger-delete-button"]').trigger('click')
-    expect(onDelete).toHaveBeenCalledTimes(1)
-  })
-
-  test('forwards reset click to injected danger.onResetReviews', async () => {
-    const { wrapper, onResetReviews } = makeTab()
-    await wrapper.find('[data-testid="danger-reset-button"]').trigger('click')
-    expect(onResetReviews).toHaveBeenCalledTimes(1)
+  // [obligation] danger-zone is a navigable option-panel entry, not a hand-rendered
+  // root block — selecting it emits navigate('danger-zone') like any other tab.
+  test('selecting danger-zone emits navigate with "danger-zone" [obligation]', async () => {
+    const { wrapper } = makeTab('desktop')
+    await wrapper
+      .find('[data-testid="options-panel__card"][data-value="danger-zone"]')
+      .trigger('click')
+    expect(wrapper.emitted('navigate')).toEqual([['danger-zone']])
   })
 })

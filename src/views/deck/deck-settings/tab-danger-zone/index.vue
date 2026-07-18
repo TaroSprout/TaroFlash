@@ -1,17 +1,21 @@
 <script setup lang="ts">
+import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SectionList from '@/components/layout-kit/section-list.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import DangerResetButton from '../danger-reset-button.vue'
 import DangerDeleteButton from '../danger-delete-button.vue'
+import { deckSettingsLayoutKey } from '../layout'
 
 const { t } = useI18n()
+const layout_mode = inject(deckSettingsLayoutKey)!
 </script>
 
 <template>
   <section-list
     data-testid="tab-danger-zone"
-    class="px-(--deck-settings-padding) pb-(--deck-settings-padding)"
+    class="px-(--deck-settings-padding)"
+    :class="layout_mode === 'sheet' && 'pb-24'"
   >
     <labeled-section
       :label="t('deck.settings-modal.danger-zone.section.reset-heading')"

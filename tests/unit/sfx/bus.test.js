@@ -19,7 +19,7 @@ vi.mock('@/sfx/pointer-activity', () => ({
 const { default: player } = await import('@/sfx/player')
 const { default: logger } = await import('@/utils/logger')
 const { pointerStationaryAfterClick } = await import('@/sfx/pointer-activity')
-const { emitSfx, emitHoverSfx, emitStudySfx } = await import('@/sfx/bus')
+const { emitSfx, emitHoverSfx } = await import('@/sfx/bus')
 
 describe('emitSfx', () => {
   beforeEach(() => {
@@ -124,29 +124,6 @@ describe('emitHoverSfx', () => {
     expect(player.play).toHaveBeenCalledTimes(1)
     expect(player.play.mock.calls[0][0]).toBe('type_01')
     expect(player.play.mock.calls[0][1]).toMatchObject({ bus: 'hover' })
-    Math.random.mockRestore()
-  })
-})
-
-describe('emitStudySfx', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  test('calls player.play with bus:study [obligation]', async () => {
-    await emitStudySfx('transition_up')
-    expect(player.play).toHaveBeenCalledWith('transition_up', { bus: 'study' })
-  })
-
-  test('merges caller opts with bus:study', async () => {
-    await emitStudySfx('transition_up', { blocking: true })
-    expect(player.play).toHaveBeenCalledWith('transition_up', { blocking: true, bus: 'study' })
-  })
-
-  test('array form — picks one key and routes to study bus', async () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0)
-    await emitStudySfx(['transition_up', 'transition_down'])
-    expect(player.play).toHaveBeenCalledWith('transition_up', { bus: 'study' })
     Math.random.mockRestore()
   })
 })

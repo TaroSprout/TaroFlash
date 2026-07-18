@@ -172,7 +172,7 @@ watch(
             icon-only
             size="base"
             play-on-tap
-            :sfx="{ press: 'snappy_button_5' }"
+            :sfx="{ press: 'pop_up_close' }"
             @press="emit('back')"
           >
             {{ t('audio-reader.popover.close-button') }}

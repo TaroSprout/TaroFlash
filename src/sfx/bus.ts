@@ -17,14 +17,6 @@ export function emitSfx(keys: SoundKey | SoundKey[], opts: PlayOptions = {}): Pr
 }
 
 /**
- * Bus-scoped emitter for study-session sounds — sugar for
- * `emitSfx(keys, { bus: 'study' })` so study call sites don't repeat the bus.
- */
-export function emitStudySfx(keys: SoundKey | SoundKey[], opts: PlayOptions = {}): Promise<void> {
-  return emitSfx(keys, { ...opts, bus: 'study' })
-}
-
-/**
  * Plays a sound effect, unless it's a spurious hover. Skips when touch is the
  * primary input, or when the pointer hasn't moved since the last click — i.e.
  * the UI shifted under a stationary cursor (a panel opened where the mouse was),
