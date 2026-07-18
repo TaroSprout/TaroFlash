@@ -60,18 +60,19 @@ function toggleRevealed() {
       ref="badge"
       type="button"
       data-testid="scheduling-panel__badge"
-      class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brown-300 dark:bg-grey-800 px-4 py-1 text-base text-brown-500 dark:text-brown-100 opacity-0"
+      class="absolute -top-3 left-1/2 -translate-x-1/2 flex cursor-pointer items-center gap-2 rounded-full bg-brown-300 dark:bg-grey-800 px-4 py-1 text-base text-brown-500 dark:text-brown-100 opacity-0"
       :class="!revealed && 'pointer-events-none'"
       @click="toggleRevealed"
     >
       {{ t('deck.settings-modal.review-pacing.advanced-label') }}
+      <ui-icon src="eye" class="size-4.5" />
     </button>
 
     <button
       ref="scrim"
       type="button"
       data-testid="scheduling-panel__scrim"
-      class="absolute inset-0 flex flex-col items-center justify-center gap-4 text-brown-500"
+      class="absolute inset-0 flex cursor-pointer flex-col items-center justify-center gap-4 text-brown-500"
       :class="revealed && 'pointer-events-none'"
       @click="toggleRevealed"
     >
