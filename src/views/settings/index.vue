@@ -68,7 +68,8 @@ const tabs = computed(() =>
     .map((value) => ({
       value,
       icon: TAB_META[value].icon,
-      label: t(TAB_META[value].labelKey)
+      label: t(TAB_META[value].labelKey),
+      danger: value === 'danger-zone'
     }))
 )
 
@@ -140,7 +141,7 @@ watch(layout_mode, (mode) => {
     :data-layout="layout_mode"
     :class="[
       layout_mode === 'desktop' ? 'w-248!' : 'w-full! max-w-224',
-      layout_mode !== 'sheet' && 'h-186',
+      layout_mode !== 'sheet' && 'h-187',
       layout_mode === 'sheet' ? '[--settings-padding:var(--sheet-px)]' : '[--settings-padding:0px]'
     ]"
     :sheet_px="sheet_px"

@@ -53,7 +53,8 @@ function onSelect(value: string) {
           group.entries.map((value) => ({
             value,
             icon: TAB_META[value].icon,
-            label: t(TAB_META[value].labelKey)
+            label: t(TAB_META[value].labelKey),
+            danger: value === 'danger-zone'
           }))
         "
         :sfx="{ press: 'snappy_button_5' }"

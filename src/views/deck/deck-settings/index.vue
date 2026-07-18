@@ -71,7 +71,8 @@ const tabs = computed(() =>
   DESKTOP_TABS.map((value) => ({
     value,
     icon: TAB_META[value].icon,
-    label: t(TAB_META[value].labelKey)
+    label: t(TAB_META[value].labelKey),
+    danger: value === 'danger-zone'
   }))
 )
 
@@ -209,6 +210,7 @@ watch(active_tab, (tab) => {
         data-theme="brown-200"
         target="[data-testid='deck-settings__main']"
         class="absolute top-2 bottom-4 right-0"
+        :class="layout_mode === 'tablet' && 'right-9'"
       />
     </div>
 
