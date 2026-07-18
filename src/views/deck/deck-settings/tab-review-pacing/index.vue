@@ -18,7 +18,7 @@ provide(pacingFieldsKey, usePacingFields(deck!, draft))
 <template>
   <section-list
     data-testid="tab-review-pacing"
-    class="@container px-(--deck-settings-padding) pb-(--deck-settings-padding)"
+    class="@container flex-1 px-(--deck-settings-padding) pb-(--deck-settings-padding)"
   >
     <preset-header />
 
@@ -34,6 +34,6 @@ provide(pacingFieldsKey, usePacingFields(deck!, draft))
       <scheduling-section />
     </div>
 
-    <deck-save-button />
+    <deck-save-button class="mt-auto" />
   </section-list>
 </template>
