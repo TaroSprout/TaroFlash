@@ -9,7 +9,6 @@ type DropdownCaretProps = {
   open: boolean
   icon?: string
   size?: NonNullable<ButtonProps['size']>
-  variant?: NonNullable<ButtonProps['variant']>
   // Re-bases just the caret to its own palette; see `surface` below.
   triggerTheme?: Theme
   triggerThemeDark?: Theme
@@ -20,7 +19,6 @@ const {
   open,
   icon = 'arrow-drop-down',
   size = 'base',
-  variant = 'solid',
   triggerTheme,
   triggerThemeDark,
   disabled = false
@@ -33,14 +31,11 @@ const emit = defineEmits<{
 // The caret normally contrasts against the main button via theme-secondary. A
 // `triggerTheme` re-bases the caret to its own palette, so it reads as that
 // palette's primary surface instead (matching how the menu maps its theme).
-// Inline drops the surface entirely — a filled pill mid-sentence would read as
-// a separate control rather than part of the label.
-const surface = computed(() => {
-  if (variant === 'inline') return 'text-current'
-  return triggerTheme
+const surface = computed(() =>
+  triggerTheme
     ? 'bg-(--theme-primary) text-(--theme-on-primary)'
     : 'bg-(--theme-secondary) text-(--theme-on-secondary)'
-})
+)
 
 // Only re-base dark when a triggerTheme is set: a lone light override would
 // otherwise stay light in dark mode. With no triggerTheme the caret inherits
@@ -57,7 +52,7 @@ const TRIGGER_PADDING: Record<NonNullable<ButtonProps['size']>, string> = {
   lg: '8px',
   xl: '8px'
 }
-const trigger_padding = computed(() => (variant === 'inline' ? '0px' : TRIGGER_PADDING[size]))
+const trigger_padding = computed(() => TRIGGER_PADDING[size])
 
 function onEnter(el: Element, done: () => void) {
   flipEnter(el, 'x', done)

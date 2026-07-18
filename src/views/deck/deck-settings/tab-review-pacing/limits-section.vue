@@ -20,7 +20,6 @@ const {
   max_new_per_day,
   has_max_reviews_override,
   has_max_new_override,
-  has_advanced_override,
   resetMaxReviewsPerDay,
   resetMaxNewPerDay
 } = inject(pacingFieldsKey)!
@@ -33,25 +32,17 @@ const {
     :description="t('deck.settings-modal.review-pacing.limits-description')"
   >
     <template #actions>
-      <div class="relative">
-        <ui-button
-          data-testid="tab-review-pacing__advanced"
-          data-theme="brown-100"
-          data-theme-dark="stone-700"
-          size="sm"
-          icon-right="line-arrow-right"
-          :sfx="{ press: 'snappy_button_5' }"
-          @press="emit('advance')"
-        >
-          {{ t('deck.settings-modal.review-pacing.advanced-toggle') }}
-        </ui-button>
-
-        <span
-          v-if="has_advanced_override"
-          data-testid="tab-review-pacing__advanced-badge"
-          class="absolute -top-0.5 -right-0.5 size-3 rounded-full bg-red-400 dark:bg-red-500"
-        ></span>
-      </div>
+      <ui-button
+        data-testid="tab-review-pacing__advanced"
+        data-theme="brown-100"
+        data-theme-dark="stone-700"
+        size="sm"
+        icon-right="line-arrow-right"
+        :sfx="{ press: 'snappy_button_5' }"
+        @press="emit('advance')"
+      >
+        {{ t('deck.settings-modal.review-pacing.advanced-toggle') }}
+      </ui-button>
     </template>
 
     <div data-testid="tab-review-pacing__pacing" class="flex flex-col gap-4">

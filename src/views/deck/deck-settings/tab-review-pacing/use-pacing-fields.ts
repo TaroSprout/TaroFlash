@@ -71,16 +71,17 @@ export function usePacingFields(deck: Deck, draft: DeckDraft) {
   const new_cap = overrideField('max_new_per_day')
   const interval_cap = overrideField('max_interval')
 
-  // The fields only editable from the advanced accordion — surfaced so the
-  // "Advanced" button can badge itself without the caller re-deriving this.
-  const has_advanced_override = computed(
-    () =>
-      retention.overridden.value ||
-      learning.overridden.value ||
-      relearning.overridden.value ||
-      leech.overridden.value ||
-      interval_cap.overridden.value
-  )
+  // Divergence from the preset, as a whole. Belongs to the preset control —
+  // it's the preset relationship being reported, not any one field's state.
+  const override_count = computed(() => Object.keys(draft.pacing_overrides).length)
+  const has_overrides = computed(() => override_count.value > 0)
+
+  /** Un-pins every field at once, so the deck follows the preset outright again. */
+  function resetAllOverrides() {
+    for (const key of Object.keys(draft.pacing_overrides)) {
+      delete draft.pacing_overrides[key as keyof PacingOverrides]
+    }
+  }
 
   const desired_retention = computed<number>({
     get: () =>
@@ -195,7 +196,9 @@ export function usePacingFields(deck: Deck, draft: DeckDraft) {
     has_max_interval_override: interval_cap.overridden,
     has_max_reviews_override: reviews_cap.overridden,
     has_max_new_override: new_cap.overridden,
-    has_advanced_override,
+    override_count,
+    has_overrides,
+    resetAllOverrides,
     resetDesiredRetention: retention.reset,
     resetLearningSteps: learning.reset,
     resetRelearningSteps: relearning.reset,
