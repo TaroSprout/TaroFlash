@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { inject, useTemplateRef } from 'vue'
-import type { ComponentPublicInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiSelectMenu from '@/components/ui-kit/select-menu.vue'
 import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
@@ -55,18 +54,15 @@ const is_phone = useMatchMedia('w<md')
 // correctly on first render; from the first toggle onwards gsap's inline
 // opacity/scale wins over the class, and the two always agree on the endpoint.
 const scrim = useTemplateRef<HTMLElement>('scrim')
-// The badge is a ui-tooltip rendering as a <button>, so its element — the tween
-// target — comes off the instance rather than the ref directly.
-const badge = useTemplateRef<ComponentPublicInstance>('badge')
+const badge_content = useTemplateRef<HTMLElement>('badge_content')
 const fields = useTemplateRef<HTMLElement>('fields')
 
 function toggleRevealed() {
-  const badge_el = badge.value?.$el as HTMLElement | undefined
-  if (!scrim.value || !badge_el || !fields.value) return
+  if (!scrim.value || !badge_content.value || !fields.value) return
 
   revealed.value = !revealed.value
   emitSfx('snappy_button_5')
-  popScrimReveal(scrim.value, badge_el, fields.value, revealed.value, {
+  popScrimReveal(scrim.value, badge_content.value, fields.value, revealed.value, {
     collapse: is_phone.value
   })
 }
@@ -75,16 +71,22 @@ function toggleRevealed() {
 <template>
   <div data-testid="scheduling-panel" class="relative grid">
     <ui-tooltip
-      ref="badge"
       element="button"
       :text="t('deck.settings-modal.review-pacing.advanced-hide-tooltip')"
       data-testid="scheduling-panel__badge"
-      class="absolute -top-3 left-1/2 -translate-x-1/2 flex cursor-pointer items-center gap-2 rounded-full bg-brown-300 dark:bg-grey-800 px-4 py-1 text-base text-brown-500 dark:text-brown-100"
-      :class="!revealed && 'pointer-events-none opacity-0'"
+      class="absolute -top-3 left-1/2 z-1 -translate-x-1/2 rounded-full bg-brown-300 dark:bg-grey-800 px-4 py-1 text-base text-brown-500 dark:text-brown-100"
+      :class="!revealed && 'pointer-events-none'"
       @click="toggleRevealed"
     >
-      <ui-icon src="eye-close" class="size-4.5" />
-      {{ t('deck.settings-modal.review-pacing.advanced-label') }}
+      <span
+        ref="badge_content"
+        data-testid="scheduling-panel__badge-content"
+        class="flex cursor-pointer items-center gap-2"
+        :class="!revealed && 'opacity-0'"
+      >
+        <ui-icon src="eye-close" class="size-4.5" />
+        {{ t('deck.settings-modal.review-pacing.advanced-label') }}
+      </span>
     </ui-tooltip>
 
     <button

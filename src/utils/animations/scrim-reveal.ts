@@ -15,6 +15,10 @@ type PopScrimRevealOptions = {
  * outgoing layer shrinks away while the incoming one overshoots back to full
  * size.
  *
+ * The badge's own pill never moves — only its contents ride along with the
+ * fields, so the notch in the panel's top edge is permanent and just empties
+ * out while the fields are hidden.
+ *
  * Both layers stay mounted and share a grid cell, so the panel is always as
  * tall as the taller one. Without `collapse` that's the fields whichever layer
  * is showing, which keeps the panel's height stable; with it the fields tween
@@ -26,13 +30,13 @@ type PopScrimRevealOptions = {
  */
 export function popScrimReveal(
   scrim: HTMLElement,
-  badge: HTMLElement,
+  badge_content: HTMLElement,
   fields: HTMLElement,
   revealed: boolean,
   { collapse = false }: PopScrimRevealOptions = {}
 ) {
-  const incoming = revealed ? [badge, fields] : [scrim]
-  const outgoing = revealed ? [scrim] : [badge, fields]
+  const incoming = revealed ? [badge_content, fields] : [scrim]
+  const outgoing = revealed ? [scrim] : [badge_content, fields]
 
   const timeline = gsap.timeline()
 
