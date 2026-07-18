@@ -14,7 +14,7 @@
 
 BEGIN;
 
-SELECT plan(14);
+SELECT plan(17);
 
 -- ── Setup ─────────────────────────────────────────────────────────────────────
 
@@ -48,6 +48,11 @@ INSERT INTO public.cards (id, deck_id, front_text, back_text, rank) VALUES
 -- (unreviewed) — their embedded review must be null.
 INSERT INTO public.reviews (id, card_id, due, stability, difficulty)
 VALUES (500, 4000, now() - interval '1 day', 1.0, 5.0);
+
+-- Deck 403: explicit starting_side: 'random' — proves the RPC passes the
+-- value through verbatim rather than coercing it to a boolean-derived side.
+INSERT INTO public.decks (id, title, is_public, study_config)
+VALUES (403, 'Random starting side', false, '{"starting_side": "random"}'::jsonb);
 
 -- Dave has his own deck — used to confirm RLS isolation.
 SET LOCAL role = 'postgres';
@@ -177,6 +182,44 @@ SELECT ok(
   'get_session_decks_and_cards embeds the real review row for a reviewed card [obligation]'
 );
 
+
+-- ── starting_side pass-through [obligation] ──────────────────────────────────
+
+-- Test 13 [obligation]: the resolved deck record carries starting_side, not
+-- the retired flip_cards key.
+SELECT is(
+  (
+    SELECT (d->>'starting_side')
+    FROM jsonb_array_elements(
+      (public.get_session_decks_and_cards(ARRAY[400], date_trunc('day', now())))->'decks'
+    ) AS d
+  ),
+  'front',
+  'get_session_decks_and_cards deck record carries starting_side [obligation]'
+);
+
+SELECT ok(
+  NOT (
+    SELECT d ? 'flip_cards'
+    FROM jsonb_array_elements(
+      (public.get_session_decks_and_cards(ARRAY[400], date_trunc('day', now())))->'decks'
+    ) AS d
+  ),
+  'get_session_decks_and_cards deck record no longer carries flip_cards [obligation]'
+);
+
+-- Test 14 [obligation]: 'random' passes through verbatim, not coerced to
+-- 'front'/'back'.
+SELECT is(
+  (
+    SELECT (d->>'starting_side')
+    FROM jsonb_array_elements(
+      (public.get_session_decks_and_cards(ARRAY[403], date_trunc('day', now())))->'decks'
+    ) AS d
+  ),
+  'random',
+  'get_session_decks_and_cards passes starting_side: "random" through verbatim [obligation]'
+);
 
 -- ── RLS as invoker [obligation] ──────────────────────────────────────────────
 

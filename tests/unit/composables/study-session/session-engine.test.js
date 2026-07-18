@@ -47,13 +47,15 @@ const FSRS_BY_DECK = {
   )
 }
 
-const FLIP_BY_DECK = { 1: false, 2: true }
+// deck 1 opens on 'front', deck 2 opens on 'back' — used by the per-deck flip
+// tests. Tests that need a 'random' deck pass their own startingSideFor override.
+const STARTING_SIDE_BY_DECK = { 1: 'front', 2: 'back' }
 
 function makeEngine(overrides = {}) {
   const onChange = vi.fn()
   const engine = useSessionEngine({
     schedulerFor: (deck_id) => FSRS_BY_DECK[deck_id] ?? FSRS_BY_DECK[1],
-    flipFor: (deck_id) => FLIP_BY_DECK[deck_id] ?? false,
+    startingSideFor: (deck_id) => STARTING_SIDE_BY_DECK[deck_id] ?? 'front',
     shuffle: () => false,
     onChange,
     ...overrides
@@ -245,9 +247,9 @@ describe('per-deck scheduling [obligation]', () => {
 // ── Per-card flip [obligation] ──────────────────────────────────────────────
 
 describe('per-card flip [obligation]', () => {
-  test('active_starting_side / current_card_side follow the active card own deck flip_cards on startSession [obligation]', () => {
+  test('active_starting_side / current_card_side follow the active card own deck starting_side on startSession [obligation]', () => {
     const { engine } = makeEngine()
-    const deck_a_card = makeCard({ id: 401, deck_id: 1 }) // flip_cards: false
+    const deck_a_card = makeCard({ id: 401, deck_id: 1 }) // starting_side: 'front'
 
     engine.setCards([deck_a_card])
     engine.startSession()
@@ -255,9 +257,9 @@ describe('per-card flip [obligation]', () => {
     expect(engine.current_card_side.value).toBe('front')
   })
 
-  test('starting side resets to "back" for a deck B card (flip_cards: true) [obligation]', () => {
+  test('starting side resets to "back" for a deck B card (starting_side: "back") [obligation]', () => {
     const { engine } = makeEngine()
-    const deck_b_card = makeCard({ id: 402, deck_id: 2 }) // flip_cards: true
+    const deck_b_card = makeCard({ id: 402, deck_id: 2 }) // starting_side: 'back'
 
     engine.setCards([deck_b_card])
     engine.startSession()
@@ -280,6 +282,107 @@ describe('per-card flip [obligation]', () => {
 
     expect(engine.active_card.value?.id).toBe(deck_b_card.id)
     expect(engine.current_card_side.value).toBe('back')
+  })
+
+  test('is_starting_side is relative to a "back" starting side, not hardcoded to "front" [obligation]', () => {
+    const { engine } = makeEngine()
+    const deck_b_card = makeCard({ id: 405, deck_id: 2 }) // starting_side: 'back'
+    engine.setCards([deck_b_card])
+    engine.startSession()
+
+    expect(engine.current_card_side.value).toBe('back')
+    expect(engine.is_starting_side.value).toBe(true)
+
+    engine.flipCurrentCard()
+
+    expect(engine.current_card_side.value).toBe('front')
+    expect(engine.is_starting_side.value).toBe(false)
+  })
+
+  test('flipCurrentCard sfx is relative to a "back" starting side [obligation]', () => {
+    const { engine } = makeEngine()
+    engine.setCards([makeCard({ id: 406, deck_id: 2 })]) // starting_side: 'back'
+    engine.startSession()
+
+    mockEmitSfx.mockClear()
+    engine.flipCurrentCard() // fired while still on the starting side ('back')
+    expect(mockEmitSfx).toHaveBeenCalledWith('transition_up')
+
+    mockEmitSfx.mockClear()
+    engine.flipCurrentCard() // fired while off the starting side ('front')
+    expect(mockEmitSfx).toHaveBeenCalledWith('transition_down')
+  })
+})
+
+// ── startingSideForCard: random rolled once per card [obligation] ───────────
+
+describe('startingSideForCard — random rolled once per card [obligation]', () => {
+  test('a "random" deck rolls once and memoizes: repeated reads for the same card stay stable [obligation]', () => {
+    const random_spy = vi.spyOn(Math, 'random').mockReturnValue(0.9) // -> 'back'
+    const { engine } = makeEngine({ startingSideFor: () => 'random' })
+    const c1 = makeCard({ id: 1101, deck_id: 1 })
+    engine.setCards([c1])
+
+    const first = engine.startingSideForCard(c1)
+    random_spy.mockReturnValue(0.1) // would flip to 'front' if re-rolled
+    const second = engine.startingSideForCard(c1)
+    const third = engine.startingSideForCard(c1)
+
+    expect(first).toBe('back')
+    expect(second).toBe('back')
+    expect(third).toBe('back')
+    random_spy.mockRestore()
+  })
+
+  test('active_starting_side reads the same memoized roll across many reads [obligation]', () => {
+    const random_spy = vi.spyOn(Math, 'random').mockReturnValue(0.1) // -> 'front'
+    const { engine } = makeEngine({ startingSideFor: () => 'random' })
+    const c1 = makeCard({ id: 1102, deck_id: 1 })
+    engine.setCards([c1])
+    engine.startSession()
+
+    const reads = [
+      engine.current_card_side.value,
+      engine.startingSideForCard(engine.active_card.value),
+      engine.startingSideForCard(engine.active_card.value)
+    ]
+
+    expect(reads).toEqual(['front', 'front', 'front'])
+    random_spy.mockRestore()
+  })
+
+  test('two different cards in a random deck roll independently — alternating Math.random lands each on a different side [obligation]', () => {
+    const random_spy = vi.spyOn(Math, 'random')
+    const { engine } = makeEngine({ startingSideFor: () => 'random' })
+    const c1 = makeCard({ id: 1103, deck_id: 1 })
+    const c2 = makeCard({ id: 1104, deck_id: 1 })
+    engine.setCards([c1, c2])
+
+    random_spy.mockReturnValueOnce(0.1) // c1 -> 'front'
+    const side_1 = engine.startingSideForCard(c1)
+    random_spy.mockReturnValueOnce(0.9) // c2 -> 'back'
+    const side_2 = engine.startingSideForCard(c2)
+
+    expect(side_1).toBe('front')
+    expect(side_2).toBe('back')
+    random_spy.mockRestore()
+  })
+
+  test('non-random decks ("front"/"back") ignore the memo entirely, for every card [obligation]', () => {
+    const { engine } = makeEngine()
+    const front_card = makeCard({ id: 1105, deck_id: 1 })
+    const back_card = makeCard({ id: 1106, deck_id: 2 })
+    engine.setCards([front_card, back_card])
+
+    expect(engine.startingSideForCard(front_card)).toBe('front')
+    expect(engine.startingSideForCard(front_card)).toBe('front')
+    expect(engine.startingSideForCard(back_card)).toBe('back')
+    expect(engine.startingSideForCard(back_card)).toBe('back')
+  })
+
+  test('startingSideForCard returns "front" when no card is given', () => {
+    const { engine } = makeEngine()
+    expect(engine.startingSideForCard(undefined)).toBe('front')
   })
 })
 

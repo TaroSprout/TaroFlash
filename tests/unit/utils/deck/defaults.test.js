@@ -16,7 +16,7 @@ describe('deck defaults', () => {
   test('DECK_CONFIG_DEFAULTS covers every DeckConfig field', () => {
     expect(DECK_CONFIG_DEFAULTS).toMatchObject({
       shuffle: false,
-      flip_cards: false,
+      starting_side: 'front',
       is_spaced: true,
       auto_play: false
     })
@@ -55,9 +55,14 @@ describe('deck defaults', () => {
     })
 
     test('overrides defaults with concrete partial values', () => {
-      const result = withDeckConfigDefaults({ shuffle: true, flip_cards: true })
+      const result = withDeckConfigDefaults({ shuffle: true, starting_side: 'back' })
       expect(result.shuffle).toBe(true)
-      expect(result.flip_cards).toBe(true)
+      expect(result.starting_side).toBe('back')
+    })
+
+    test('overrides starting_side with "random"', () => {
+      const result = withDeckConfigDefaults({ starting_side: 'random' })
+      expect(result.starting_side).toBe('random')
     })
 
     test('ignores keys whose override value is undefined', () => {

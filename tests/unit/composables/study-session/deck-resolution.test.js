@@ -12,7 +12,7 @@ function makeDeck(overrides = {}) {
   return {
     id: 1,
     title: 'Deck',
-    flip_cards: false,
+    starting_side: 'front',
     shuffle: false,
     cover_config: null,
     card_attributes: null,
@@ -123,21 +123,30 @@ describe('schedulerFor', () => {
   })
 })
 
-describe('flipFor', () => {
-  test('returns each deck own flip_cards value', () => {
+describe('startingSideFor [obligation]', () => {
+  test('returns each deck own starting_side value', () => {
     const { resolution } = withDecks([
-      makeDeck({ id: 1, flip_cards: false }),
-      makeDeck({ id: 2, flip_cards: true })
+      makeDeck({ id: 1, starting_side: 'front' }),
+      makeDeck({ id: 2, starting_side: 'back' })
     ])
 
-    expect(resolution.flipFor(1)).toBe(false)
-    expect(resolution.flipFor(2)).toBe(true)
+    expect(resolution.startingSideFor(1)).toBe('front')
+    expect(resolution.startingSideFor(2)).toBe('back')
   })
 
-  test('returns false for an unknown/undefined deck_id', () => {
-    const { resolution } = withDecks([makeDeck({ id: 1, flip_cards: true })])
-    expect(resolution.flipFor(999)).toBe(false)
-    expect(resolution.flipFor(undefined)).toBe(false)
+  test('passes "random" through verbatim', () => {
+    const { resolution } = withDecks([makeDeck({ id: 1, starting_side: 'random' })])
+    expect(resolution.startingSideFor(1)).toBe('random')
+  })
+
+  test('falls back to "front" for an unknown deck_id [obligation]', () => {
+    const { resolution } = withDecks([makeDeck({ id: 1, starting_side: 'back' })])
+    expect(resolution.startingSideFor(999)).toBe('front')
+  })
+
+  test('falls back to "front" for an undefined deck_id (a card whose deck hasn\'t landed yet) [obligation]', () => {
+    const { resolution } = withDecks([makeDeck({ id: 1, starting_side: 'back' })])
+    expect(resolution.startingSideFor(undefined)).toBe('front')
   })
 })
 
