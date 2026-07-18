@@ -16,7 +16,7 @@ export function useSignupModal() {
       mobile_below_height: 'md',
       props: { payment }
     })
-    result.response.then(() => emitSfx('snappy_button_5'))
+    result.response.then(() => emitSfx('pop_up_close'))
     return result
   }
 

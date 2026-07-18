@@ -100,7 +100,7 @@ const tab_content_class = 'flex h-full items-start'
 // Open/close sfx live on the modal itself so every callsite (phone launcher,
 // dashboard edit button) sounds identically. Mirrors the deck-settings modal.
 onMounted(() => emitSfx('snappy_button_3'))
-onBeforeUnmount(() => emitSfx('snappy_button_5'))
+onBeforeUnmount(() => emitSfx('pop_up_close'))
 
 async function onClose() {
   if (!editor.is_dirty.value) return close()

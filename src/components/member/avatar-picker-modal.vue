@@ -43,7 +43,7 @@ function onAvatarSelect(avatar: string) {
     data-theme="blue-500"
     data-theme-dark="blue-650"
     :title="t('avatar-picker-modal.title')"
-    :close_sfx="{ press: 'snappy_button_5' }"
+    :close_sfx="{ press: 'pop_up_close' }"
     @close="close()"
   >
     <template #default="{ viewport }">

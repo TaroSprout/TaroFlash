@@ -47,7 +47,7 @@ useModalRequestClose(onHeaderStop)
 
 /** Early close (close button / backdrop / esc before any review). */
 function onClosed() {
-  emitSfx('snappy_button_5')
+  emitSfx('pop_up_close')
   clearPersistedSession()
   close()
 }
