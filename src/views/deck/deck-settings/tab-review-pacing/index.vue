@@ -20,13 +20,13 @@ provide(pacingFieldsKey, usePacingFields(deck!, draft))
     data-testid="tab-review-pacing"
     class="@container flex-1 px-(--deck-settings-padding) pb-(--deck-settings-padding)"
   >
-    <preset-header class="pb-4" />
+    <preset-header class="md:pb-4" />
 
     <div
       data-testid="tab-review-pacing__columns"
-      class="grid flex-1 grid-cols-1 gap-8 @min-[46rem]:grid-cols-2 @min-[46rem]:gap-12"
+      class="grid flex-1 grid-cols-1 gap-8 @min-[46rem]:grid-cols-2 md:gap-12"
     >
-      <div data-testid="tab-review-pacing__deck-column" class="flex flex-col gap-12">
+      <div data-testid="tab-review-pacing__deck-column" class="flex flex-col gap-8 md:gap-12">
         <general-section />
         <limits-section />
       </div>
