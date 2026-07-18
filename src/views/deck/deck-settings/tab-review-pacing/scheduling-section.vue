@@ -16,6 +16,7 @@ import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import { popScrimReveal } from '@/utils/animations/scrim-reveal'
 import { emitSfx } from '@/sfx/bus'
 import { useLocalRef } from '@/composables/storage/local-ref'
+import { useMatchMedia } from '@/composables/ui/media-query'
 
 const ADVANCED_REVEALED_KEY = 'deck-settings-advanced-revealed'
 
@@ -45,6 +46,11 @@ const {
 // power user shouldn't have to reveal them on every visit.
 const revealed = useLocalRef(ADVANCED_REVEALED_KEY, false)
 
+// Tracks paged-window's own phone breakpoint, so the panel collapses exactly
+// when the tab drops to a single column and the reserved height would push the
+// save button off screen.
+const is_phone = useMatchMedia('w<md')
+
 // Each layer's at-rest opacity is class-driven so the restored state paints
 // correctly on first render; from the first toggle onwards gsap's inline
 // opacity/scale wins over the class, and the two always agree on the endpoint.
@@ -60,12 +66,14 @@ function toggleRevealed() {
 
   revealed.value = !revealed.value
   emitSfx('snappy_button_5')
-  popScrimReveal(scrim.value, [badge_el, fields.value], revealed.value)
+  popScrimReveal(scrim.value, badge_el, fields.value, revealed.value, {
+    collapse: is_phone.value
+  })
 }
 </script>
 
 <template>
-  <div data-testid="scheduling-panel" class="relative">
+  <div data-testid="scheduling-panel" class="relative grid">
     <ui-tooltip
       ref="badge"
       element="button"
@@ -83,7 +91,7 @@ function toggleRevealed() {
       ref="scrim"
       type="button"
       data-testid="scheduling-panel__scrim"
-      class="absolute inset-0 flex cursor-pointer flex-col items-center justify-center gap-4 text-brown-500"
+      class="col-start-1 row-start-1 flex cursor-pointer flex-col items-center justify-center gap-4 text-brown-500"
       :class="revealed && 'pointer-events-none opacity-0'"
       @click="toggleRevealed"
     >
@@ -94,8 +102,8 @@ function toggleRevealed() {
     <div
       ref="fields"
       data-testid="scheduling-section__fields"
-      class="flex flex-col gap-4"
-      :class="!revealed && 'pointer-events-none opacity-0'"
+      class="col-start-1 row-start-1 flex flex-col gap-4"
+      :class="!revealed && 'pointer-events-none opacity-0 max-md:h-0 max-md:overflow-hidden'"
     >
       <tooltip-row
         data-testid="tab-review-pacing__retention"
