@@ -15,7 +15,7 @@ import { liftListItem, dropListItem } from '@/utils/animations/list-item'
 import { useReorderDrag } from '@/composables/use-reorder-drag'
 import { usePressHold } from '@/composables/ui/press-hold'
 import { resolveReorderAnchor } from '@/utils/reorder'
-import { useDeckGrid } from './use-deck-grid'
+import { useDeckGrid, type DeckGridCellSize } from './use-deck-grid'
 
 // Touch picks a card up on a press-and-hold (like iOS), so a plain swipe still
 // scrolls the page; a small finger move within the window aborts the hold.
@@ -34,7 +34,7 @@ export function useDeckGridReorder(
   container_el: Ref<HTMLElement | null>,
   decks: MaybeRefOrGetter<Deck[]>,
   editing: MaybeRefOrGetter<boolean>,
-  size: MaybeRefOrGetter<'base' | 'sm'>
+  size: MaybeRefOrGetter<DeckGridCellSize>
 ) {
   const { t } = useI18n()
   const notice = useNoticeStore()

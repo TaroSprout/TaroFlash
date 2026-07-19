@@ -27,7 +27,9 @@ const is_md = useMatchMedia('w>=md')
 const deck_actions = useDeckActions()
 
 const creating_deck = ref(false)
-const size = computed(() => (is_md.value ? 'base' : 'sm'))
+// Drives the reorder-grid geometry (cell width per breakpoint); the cards
+// themselves are fluid and just fill the positioned cells.
+const size = computed(() => (is_md.value ? 'sm' : 'xs'))
 const container_el = useTemplateRef<HTMLElement>('container_el')
 
 const reorder = useDeckGridReorder(
@@ -127,7 +129,6 @@ async function onCreateDeckClicked() {
         >
           <DeckGridItem
             :deck="deck"
-            :size="size"
             :rearranging="editing"
             :dragging="index === reorder.dragging_index.value"
             :style="reorder.jiggleStyle(index)"
@@ -146,12 +147,7 @@ async function onCreateDeckClicked() {
           transform: `translate(${reorder.itemPosition(decks.length).x}px, ${reorder.itemPosition(decks.length).y}px)`
         }"
       >
-        <NewDeckCard
-          :size="size"
-          :loading="creating_deck"
-          :disabled="editing"
-          @press="onCreateDeckClicked"
-        />
+        <NewDeckCard :loading="creating_deck" :disabled="editing" @press="onCreateDeckClicked" />
       </div>
     </transition-group>
   </div>

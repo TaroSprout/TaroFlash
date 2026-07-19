@@ -45,7 +45,7 @@ const scroll_margin = ref(0)
 // column for one frame — gate the rendered height on this so that never paints.
 const measured = ref(false)
 
-const { card_scale, cell_width, gap, columns, row_count, row_pitch, itemPosition } = useCardGrid(
+const { cell_width, gap, columns, row_count, row_pitch, itemPosition } = useCardGrid(
   grid_size,
   container_width,
   () => displayed_cards.value.length
@@ -270,7 +270,6 @@ watch(
           <grid-item
             :card="item.card"
             :side="grid_face"
-            :scale="card_scale"
             :card_attributes="card_attributes"
             :rearranging="is_rearranging"
             :dragging="item.index === reorder.dragging_index.value"

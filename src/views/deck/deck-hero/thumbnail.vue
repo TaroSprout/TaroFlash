@@ -15,7 +15,7 @@ function onSettingsClicked() {
 </script>
 
 <template>
-  <deck-thumbnail size="lg" class="relative" :deck="deck" @press="onSettingsClicked">
+  <deck-thumbnail class="relative w-(--card-w-md)" :deck="deck" @press="onSettingsClicked">
     <template #actions>
       <ui-button
         data-testid="deck-hero__settings-button"

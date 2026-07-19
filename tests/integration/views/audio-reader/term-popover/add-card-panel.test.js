@@ -44,6 +44,32 @@ vi.mock('@/composables/card', () => ({
   useCardLimitGate: () => ({
     guardAddCards: guardAddCardsMock,
     handleLimitError: handleLimitErrorMock
+  }),
+  // card/index.vue statically imports face-image-layer.vue (mounted only when
+  // image_editing is true), which pulls these from the composable barrel —
+  // the module graph resolves regardless of whether that branch renders here.
+  CARD_IMAGE_MAX_BYTES: 2 * 1024 * 1024,
+  useFaceImageUpload: () => ({
+    accept: { value: '' },
+    onFileChange: vi.fn(),
+    onDragEnter: vi.fn(),
+    onDragLeave: vi.fn(),
+    onDragOver: vi.fn(),
+    onDrop: vi.fn(),
+    dragging: { value: false },
+    file_error: { value: '' },
+    hovered: { value: false },
+    active: { value: false },
+    covered: { value: false },
+    pending: { value: false },
+    has_image: { value: false },
+    image_path: { value: undefined },
+    can_upload: { value: false },
+    onRemove: vi.fn(),
+    openPicker: vi.fn(),
+    onDismissError: vi.fn(),
+    onPointerEnter: vi.fn(),
+    onPointerLeave: vi.fn()
   })
 }))
 

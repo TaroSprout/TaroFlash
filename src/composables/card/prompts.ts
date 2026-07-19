@@ -2,7 +2,7 @@ import { useI18n } from 'vue-i18n'
 import { useAlert } from '@/composables/alert'
 import { useModal } from '@/composables/modal'
 import { emitSfx } from '@/sfx/bus'
-import MoveCardsModal from '@/components/card/move-cards-modal.vue'
+import MoveCardsModal from '@/components/card-actions/move-cards-modal.vue'
 
 /**
  * Shared UI prompts for destructive card actions — the confirm-delete alert

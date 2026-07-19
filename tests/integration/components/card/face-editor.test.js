@@ -1,33 +1,33 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import { defineComponent, h, ref, useAttrs } from 'vue'
+import { defineComponent, h } from 'vue'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
-// Card stub — renders the #editor named slot so we can observe text-editor content.
+// Card stub — renders the #editor named slot and exposes an image_controls
+// object (mirroring the real Card's defineExpose) so FaceEditor's own
+// `uploader` expose can be observed.
 const CardStub = defineComponent({
   name: 'Card',
   inheritAttrs: false,
-  props: ['side', 'size', 'mode'],
-  setup(props, { slots }) {
-    return () =>
-      h('div', { 'data-testid': 'card-stub', 'data-side': props.side }, [
-        h('div', { 'data-testid': 'card-stub__editor' }, slots.editor?.())
-      ])
-  }
-})
-
-// ImageUploader stub — renders the #editor named slot and exposes openPicker/onRemove.
-const ImageUploaderStub = defineComponent({
-  name: 'ImageUploader',
-  inheritAttrs: false,
-  props: ['card', 'side', 'card_attributes', 'size', 'disabled', 'error'],
+  props: ['side', 'mode', 'card_attributes', 'image_editing', 'disabled', 'error'],
   setup(props, { slots, expose }) {
-    expose({ openPicker: vi.fn(), onRemove: vi.fn() })
+    expose({
+      image_controls: props.image_editing ? { openPicker: vi.fn(), onRemove: vi.fn() } : null
+    })
     return () =>
-      h('div', { 'data-testid': 'image-uploader-stub', 'data-side': props.side }, [
-        h('div', { 'data-testid': 'image-uploader-stub__editor' }, slots.editor?.())
-      ])
+      h(
+        'div',
+        {
+          'data-testid': 'card-stub',
+          'data-side': props.side,
+          'data-mode': props.mode,
+          'data-image-editing': String(!!props.image_editing),
+          'data-disabled': String(!!props.disabled),
+          'data-error': String(!!props.error)
+        },
+        [h('div', { 'data-testid': 'card-stub__editor' }, slots.editor?.())]
+      )
   }
 })
 
@@ -35,15 +35,17 @@ const ImageUploaderStub = defineComponent({
 const TextEditorStub = defineComponent({
   name: 'TextEditor',
   inheritAttrs: false,
-  props: ['content', 'placeholder', 'disabled'],
+  props: ['content', 'attributes', 'placeholder', 'disabled'],
   emits: ['update'],
-  setup(props, { attrs, emit }) {
+  setup(props, { attrs, emit, expose }) {
+    expose({ focus: vi.fn() })
     return () =>
       h('div', {
         ...attrs,
         'data-testid': attrs['data-testid'] ?? 'text-editor-stub',
         'data-content': props.content,
-        'data-placeholder': props.placeholder
+        'data-placeholder': props.placeholder,
+        'data-disabled': String(!!props.disabled)
       })
   }
 })
@@ -66,64 +68,128 @@ function makeCard(overrides = {}) {
   }
 }
 
-const DEFAULT_CARD_ATTRIBUTES = { front: {}, back: {} }
-
 function mountFaceEditor(props = {}) {
   return shallowMount(FaceEditor, {
     props: {
       side: 'front',
-      card_attributes: DEFAULT_CARD_ATTRIBUTES,
       placeholder: 'Type here...',
       ...props
     },
     global: {
-      stubs: {
-        Card: CardStub,
-        ImageUploader: ImageUploaderStub,
-        TextEditor: TextEditorStub
-      }
+      stubs: { Card: CardStub, TextEditor: TextEditorStub }
     }
   })
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe('FaceEditor — without images (card fallback)', () => {
-  test('renders Card stub when with_images is false (default)', () => {
+describe('FaceEditor — Card forwarding, with and without images [obligation]', () => {
+  // The old no-images branch dropped `disabled`/`error` on the way to Card —
+  // both configurations must forward both, every time.
+
+  test('forwards disabled=true to Card when with_images is false [obligation]', () => {
+    const wrapper = mountFaceEditor({ card: makeCard(), disabled: true })
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-disabled')).toBe('true')
+  })
+
+  test('forwards error=true to Card when with_images is false [obligation]', () => {
+    const wrapper = mountFaceEditor({ card: makeCard(), error: true })
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-error')).toBe('true')
+  })
+
+  test('forwards disabled=true to Card when with_images is true [obligation]', () => {
+    const wrapper = mountFaceEditor({ card: makeCard(), with_images: true, disabled: true })
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-disabled')).toBe('true')
+  })
+
+  test('forwards error=true to Card when with_images is true [obligation]', () => {
+    const wrapper = mountFaceEditor({ card: makeCard(), with_images: true, error: true })
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-error')).toBe('true')
+  })
+
+  test('disabled/error default to false when omitted, in both configurations', () => {
+    const without_images = mountFaceEditor({ card: makeCard() })
+    expect(without_images.find('[data-testid="card-stub"]').attributes('data-disabled')).toBe(
+      'false'
+    )
+    expect(without_images.find('[data-testid="card-stub"]').attributes('data-error')).toBe('false')
+
+    const with_images = mountFaceEditor({ card: makeCard(), with_images: true })
+    expect(with_images.find('[data-testid="card-stub"]').attributes('data-disabled')).toBe('false')
+    expect(with_images.find('[data-testid="card-stub"]').attributes('data-error')).toBe('false')
+  })
+
+  test('forwards image_editing=with_images to Card', () => {
+    const wrapper = mountFaceEditor({ card: makeCard(), with_images: true })
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-image-editing')).toBe('true')
+  })
+
+  test('image_editing defaults to false when with_images is omitted', () => {
     const wrapper = mountFaceEditor({ card: makeCard() })
-    expect(wrapper.find('[data-testid="card-stub"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="image-uploader-stub"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-image-editing')).toBe('false')
+  })
+})
+
+describe('FaceEditor — card_attributes resolution', () => {
+  test('forwards card_attributes as-is when provided', () => {
+    const card_attributes = { front: { image_layout: 'behind' }, back: {} }
+    const wrapper = mountFaceEditor({ card: makeCard(), card_attributes })
+    expect(wrapper.findComponent(CardStub).props('card_attributes')).toEqual(card_attributes)
   })
 
-  test('renders Card stub when no card prop is given (card is undefined)', () => {
+  test('wraps a bare `attributes` prop into { front, back } when card_attributes is absent', () => {
+    const attributes = { image_layout: 'above' }
+    const wrapper = mountFaceEditor({ attributes })
+    expect(wrapper.findComponent(CardStub).props('card_attributes')).toEqual({
+      front: attributes,
+      back: attributes
+    })
+  })
+
+  test('falls back to empty objects when neither card_attributes nor attributes is given', () => {
     const wrapper = mountFaceEditor()
-    expect(wrapper.find('[data-testid="card-stub"]').exists()).toBe(true)
+    expect(wrapper.findComponent(CardStub).props('card_attributes')).toEqual({
+      front: {},
+      back: {}
+    })
   })
+})
 
+describe('FaceEditor — text/placeholder/side wiring', () => {
   test('card stub receives the correct side prop', () => {
     const wrapper = mountFaceEditor({ card: makeCard(), side: 'back' })
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('back')
   })
 
-  test('TextEditor inside Card receives the correct content for front side', () => {
+  test('TextEditor receives the card front text for side=front', () => {
     const wrapper = mountFaceEditor({ card: makeCard(), side: 'front' })
-    const editor = wrapper.find('[data-testid="face-editor__input"]')
-    expect(editor.attributes('data-content')).toBe('front text')
+    expect(wrapper.find('[data-testid="face-editor__input"]').attributes('data-content')).toBe(
+      'front text'
+    )
   })
 
-  test('TextEditor inside Card receives the correct content for back side', () => {
+  test('TextEditor receives the card back text for side=back', () => {
     const wrapper = mountFaceEditor({ card: makeCard(), side: 'back' })
-    const editor = wrapper.find('[data-testid="face-editor__input"]')
-    expect(editor.attributes('data-content')).toBe('back text')
+    expect(wrapper.find('[data-testid="face-editor__input"]').attributes('data-content')).toBe(
+      'back text'
+    )
+  })
+
+  test('an explicit text prop overrides the card text', () => {
+    const wrapper = mountFaceEditor({ card: makeCard(), side: 'front', text: 'override' })
+    expect(wrapper.find('[data-testid="face-editor__input"]').attributes('data-content')).toBe(
+      'override'
+    )
   })
 
   test('TextEditor receives the placeholder prop', () => {
     const wrapper = mountFaceEditor({ card: makeCard(), placeholder: 'Write here' })
-    const editor = wrapper.find('[data-testid="face-editor__input"]')
-    expect(editor.attributes('data-placeholder')).toBe('Write here')
+    expect(wrapper.find('[data-testid="face-editor__input"]').attributes('data-placeholder')).toBe(
+      'Write here'
+    )
   })
 
-  test('input_testid prop overrides default testid on TextEditor [obligation]', () => {
+  test('input_testid prop overrides the default TextEditor testid', () => {
     const wrapper = mountFaceEditor({ card: makeCard(), input_testid: 'study-card-edit__input' })
     expect(wrapper.find('[data-testid="study-card-edit__input"]').exists()).toBe(true)
   })
@@ -133,42 +199,37 @@ describe('FaceEditor — without images (card fallback)', () => {
     await wrapper.findComponent(TextEditorStub).vm.$emit('update', 'new text')
     expect(wrapper.emitted('update')).toEqual([['front', 'new text']])
   })
+
+  test('TextEditor disabled mirrors the FaceEditor disabled prop', () => {
+    const wrapper = mountFaceEditor({ card: makeCard(), disabled: true })
+    expect(wrapper.find('[data-testid="face-editor__input"]').attributes('data-disabled')).toBe(
+      'true'
+    )
+  })
 })
 
-describe('FaceEditor — with images (image-uploader path)', () => {
-  test('renders ImageUploader when with_images is true and card is provided [obligation]', () => {
+describe('FaceEditor — defineExpose surface', () => {
+  test('uploader surfaces the Card image_controls when images are enabled [obligation]', () => {
     const wrapper = mountFaceEditor({ card: makeCard(), with_images: true })
-    expect(wrapper.find('[data-testid="image-uploader-stub"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="card-stub"]').exists()).toBe(false)
+    expect(wrapper.vm.uploader).not.toBeNull()
+    expect(typeof wrapper.vm.uploader.openPicker).toBe('function')
+    expect(typeof wrapper.vm.uploader.onRemove).toBe('function')
   })
 
-  test('falls back to Card when with_images is true but card is undefined [obligation]', () => {
-    const wrapper = mountFaceEditor({ with_images: true })
-    expect(wrapper.find('[data-testid="card-stub"]').exists()).toBe(true)
+  test('uploader is null when images are not enabled [obligation]', () => {
+    const wrapper = mountFaceEditor({ card: makeCard() })
+    expect(wrapper.vm.uploader).toBeNull()
   })
 
-  test('ImageUploader receives the correct side', () => {
-    const wrapper = mountFaceEditor({ card: makeCard(), with_images: true, side: 'back' })
-    expect(wrapper.find('[data-testid="image-uploader-stub"]').attributes('data-side')).toBe('back')
-  })
-
-  test('TextEditor inside ImageUploader receives input_testid [obligation]', () => {
-    const wrapper = mountFaceEditor({
-      card: makeCard(),
-      with_images: true,
-      input_testid: 'study-card-edit__input'
-    })
-    expect(wrapper.find('[data-testid="study-card-edit__input"]').exists()).toBe(true)
+  test('exposes a focus function', () => {
+    const wrapper = mountFaceEditor({ card: makeCard() })
+    expect(typeof wrapper.vm.focus).toBe('function')
+    expect(() => wrapper.vm.focus()).not.toThrow()
   })
 })
 
-describe('FaceEditor — editor_key remount strategy [obligation]', () => {
-  test('editor_key is card_key + side when card_key is provided [obligation]', async () => {
-    // The TextEditor is keyed by editor_key. Since we use shallowMount the stub
-    // doesn't remount, but we verify that the key formula uses card_key when supplied.
-    // We observe this indirectly: changing card_key changes the computed key,
-    // which would force a remount on the real TextEditor.
-    // In this integration test, we verify the stub still renders after key change (no crash).
+describe('FaceEditor — editor_key remount strategy', () => {
+  test('no crash when card_key + side change together', async () => {
     const wrapper = mountFaceEditor({ card: makeCard(), card_key: 'client-abc', side: 'front' })
     expect(wrapper.find('[data-testid="face-editor__input"]').exists()).toBe(true)
 
@@ -176,16 +237,8 @@ describe('FaceEditor — editor_key remount strategy [obligation]', () => {
     expect(wrapper.find('[data-testid="face-editor__input"]').exists()).toBe(true)
   })
 
-  test('editor_key falls back to card.id + side when no card_key [obligation]', () => {
-    // No crash when card_key is omitted — id-based key is derived correctly.
+  test('falls back to card.id + side when no card_key is given', () => {
     const wrapper = mountFaceEditor({ card: makeCard({ id: 99 }), side: 'front' })
     expect(wrapper.find('[data-testid="face-editor__input"]').exists()).toBe(true)
-  })
-})
-
-describe('FaceEditor — custom input testid forwarding [obligation]', () => {
-  test('input_testid="study-card-edit__input" is forwarded to the TextEditor [obligation]', () => {
-    const wrapper = mountFaceEditor({ input_testid: 'study-card-edit__input' })
-    expect(wrapper.find('[data-testid="study-card-edit__input"]').exists()).toBe(true)
   })
 })

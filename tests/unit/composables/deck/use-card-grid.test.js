@@ -9,23 +9,6 @@ import { useCardGrid } from '@/views/deck/card-grid/use-card-grid'
 // Derived gaps:          base=8*0.65=5.2,   md=8*0.85=6.8,   xl=8*1=8
 
 describe('useCardGrid', () => {
-  // ── card_scale ────────────────────────────────────────────────────────────
-
-  test('card_scale is 0.65 for grid_size="base" [obligation]', () => {
-    const { card_scale } = useCardGrid('base')
-    expect(card_scale.value).toBe(0.65)
-  })
-
-  test('card_scale is 0.85 for grid_size="md" [obligation]', () => {
-    const { card_scale } = useCardGrid('md')
-    expect(card_scale.value).toBe(0.85)
-  })
-
-  test('card_scale is 1 for grid_size="xl" [obligation]', () => {
-    const { card_scale } = useCardGrid('xl')
-    expect(card_scale.value).toBe(1)
-  })
-
   // ── grid_style — columns ──────────────────────────────────────────────────
 
   test('grid_style has gridTemplateColumns repeat(auto-fill, 169px) for "base" [obligation]', () => {
@@ -76,35 +59,32 @@ describe('useCardGrid', () => {
   // ── reactivity — accepts a MaybeRefOrGetter ───────────────────────────────
 
   test('accepts a plain string value (not a ref)', () => {
-    const { card_scale, grid_style } = useCardGrid('md')
-    expect(card_scale.value).toBe(0.85)
+    const { grid_style } = useCardGrid('md')
     expect(grid_style.value.gridTemplateColumns).toBe('repeat(auto-fill, 221px)')
   })
 
   test('accepts a ref and reacts to changes [obligation]', () => {
     const size = ref('base')
-    const { card_scale, grid_style } = useCardGrid(size)
+    const { grid_style } = useCardGrid(size)
 
-    expect(card_scale.value).toBe(0.65)
     expect(grid_style.value.gridTemplateColumns).toBe('repeat(auto-fill, 169px)')
 
     size.value = 'xl'
 
-    expect(card_scale.value).toBe(1)
     expect(grid_style.value.gridTemplateColumns).toBe('repeat(auto-fill, 260px)')
   })
 
   test('accepts a getter function and reacts to its returned value', () => {
     let size = 'base'
-    const { card_scale } = useCardGrid(() => size)
-    expect(card_scale.value).toBe(0.65)
+    const { cell_width } = useCardGrid(() => size)
+    expect(cell_width.value).toBe(169)
   })
 
   // ── return shape ──────────────────────────────────────────────────────────
 
-  test('returns card_scale and grid_style as computed refs', () => {
-    const { card_scale, grid_style } = useCardGrid('md')
-    expect(card_scale).toHaveProperty('value')
+  test('returns cell_width and grid_style as computed refs', () => {
+    const { cell_width, grid_style } = useCardGrid('md')
+    expect(cell_width).toHaveProperty('value')
     expect(grid_style).toHaveProperty('value')
   })
 

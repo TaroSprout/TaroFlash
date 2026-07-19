@@ -2,6 +2,7 @@ import { describe, test, expect, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import CardFace from '@/components/card/card-face.vue'
+import { cardTextScale } from '@/utils/card/text-scale'
 
 // TextEditor stub — no real rendering needed; just suppresses warnings
 const TextEditorStub = defineComponent({
@@ -142,70 +143,45 @@ describe('CardFace', () => {
     expect(wrapper.find('.card-face').attributes('data-mode')).toBeUndefined()
   })
 
-  // ── Text-region font size (size × text_size level) ───────────────────────────
-  // Font size scales with BOTH the card size and the per-deck text_size level.
-  // The editor inherits it from the text-region via the cascade.
+  // ── Text-region --card-text-scale (fluid font-size multiplier) ──────────────
+  // Font size is fully fluid (cqi) now — not testable in jsdom — but the JS
+  // seam (which multiplier the deck's text_size level resolves to) is: the
+  // text-region's --card-text-scale var must equal cardTextScale(level).
 
-  function textRegionStyle(wrapper) {
-    return wrapper.find('[data-testid="card-face__text-region"]').attributes('style')
+  function textScaleVar(wrapper) {
+    return wrapper
+      .find('[data-testid="card-face__text-region"]')
+      .element.style.getPropertyValue('--card-text-scale')
   }
 
-  test('defaults to base size, level 4 (15px) when no size/attributes provided', () => {
-    expect(textRegionStyle(mountFace())).toContain('font-size: 15px')
+  test('defaults to the default level multiplier (1) when no attributes provided', () => {
+    expect(textScaleVar(mountFace())).toBe(String(cardTextScale()))
   })
 
-  test('xl size preserves the canonical scale: level 4 maps to 30px', () => {
-    const wrapper = mountFace({ size: 'xl', attributes: { text_size: 4 } })
-    expect(textRegionStyle(wrapper)).toContain('font-size: 30px')
+  test('text_size level 4 (the deck default) resolves to a multiplier of 1', () => {
+    const wrapper = mountFace({ attributes: { text_size: 4 } })
+    expect(textScaleVar(wrapper)).toBe('1')
   })
 
-  test('xl level 1 maps to 16px and level 10 maps to 84px', () => {
-    expect(textRegionStyle(mountFace({ size: 'xl', attributes: { text_size: 1 } }))).toContain(
-      'font-size: 16px'
-    )
-    expect(textRegionStyle(mountFace({ size: 'xl', attributes: { text_size: 10 } }))).toContain(
-      'font-size: 84px'
-    )
+  test('text_size level 1 resolves to cardTextScale(1)', () => {
+    const wrapper = mountFace({ attributes: { text_size: 1 } })
+    expect(textScaleVar(wrapper)).toBe(String(cardTextScale(1)))
   })
 
-  test('md size row: default level 4 maps to 19px [obligation]', () => {
-    expect(textRegionStyle(mountFace({ size: 'md', attributes: { text_size: 4 } }))).toContain(
-      'font-size: 19px'
-    )
+  test('text_size level 10 resolves to cardTextScale(10)', () => {
+    const wrapper = mountFace({ attributes: { text_size: 10 } })
+    expect(textScaleVar(wrapper)).toBe(String(cardTextScale(10)))
   })
 
-  test('md size row: level 1 maps to 10px [obligation]', () => {
-    expect(textRegionStyle(mountFace({ size: 'md', attributes: { text_size: 1 } }))).toContain(
-      'font-size: 10px'
+  test('an out-of-range level clamps the same way cardTextScale does', () => {
+    expect(textScaleVar(mountFace({ attributes: { text_size: 99 } }))).toBe(
+      String(cardTextScale(99))
     )
+    expect(textScaleVar(mountFace({ attributes: { text_size: 0 } }))).toBe(String(cardTextScale(0)))
   })
 
-  test('md size row: level 10 maps to 52px', () => {
-    expect(textRegionStyle(mountFace({ size: 'md', attributes: { text_size: 10 } }))).toContain(
-      'font-size: 52px'
-    )
-  })
-
-  test('the same level scales down for smaller cards', () => {
-    expect(textRegionStyle(mountFace({ size: '2xl', attributes: { text_size: 4 } }))).toContain(
-      'font-size: 36px'
-    )
-    expect(textRegionStyle(mountFace({ size: 'xs', attributes: { text_size: 4 } }))).toContain(
-      'font-size: 10px'
-    )
-  })
-
-  test('level clamps within the size row', () => {
-    expect(textRegionStyle(mountFace({ size: 'xl', attributes: { text_size: 99 } }))).toContain(
-      'font-size: 84px'
-    )
-    expect(textRegionStyle(mountFace({ size: 'xl', attributes: { text_size: 0 } }))).toContain(
-      'font-size: 16px'
-    )
-  })
-
-  test('non-integer level rounds to the nearest level', () => {
-    const wrapper = mountFace({ size: 'xl', attributes: { text_size: 3.7 } })
-    expect(textRegionStyle(wrapper)).toContain('font-size: 30px')
+  test('a fractional level rounds the same way cardTextScale does', () => {
+    const wrapper = mountFace({ attributes: { text_size: 3.7 } })
+    expect(textScaleVar(wrapper)).toBe(String(cardTextScale(3.7)))
   })
 })

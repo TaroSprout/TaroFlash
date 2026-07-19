@@ -90,18 +90,6 @@ describe('DeckThumbnail', () => {
     expect(wrapper.findComponent({ name: 'Card' }).props('cover_config')).toBeUndefined()
   })
 
-  // ── Size prop ─────────────────────────────────────────────────────────────────
-
-  test('defaults to base size', () => {
-    const wrapper = mountWithDeck()
-    expect(wrapper.findComponent({ name: 'Card' }).props('size')).toBe('base')
-  })
-
-  test('forwards size prop to Card', () => {
-    const wrapper = mount({ deck: { title: 'X' }, size: 'xl' })
-    expect(wrapper.findComponent({ name: 'Card' }).props('size')).toBe('xl')
-  })
-
   // ── Title ────────────────────────────────────────────────────────────────────
 
   test('shows deck title by default', () => {

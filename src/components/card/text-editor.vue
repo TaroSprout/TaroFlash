@@ -19,8 +19,8 @@ const emit = defineEmits<{
 const text_editor = useTemplateRef<HTMLDivElement>('text-editor')
 const has_content = ref(Boolean(content?.trim()))
 
-// Font size is owned by the parent card-face and inherited via the cascade — see
-// SIZE_LEVEL_PX there. This surface only renders text and its alignment.
+// Font size is owned by the parent card-face and inherited via the cascade —
+// see its fluid text-region rule. This surface only renders text and alignment.
 // Horizontal alignment lives on the editable (text-align); vertical lives on the
 // filling container (flex justify) so the editable can be content-height and
 // keep an empty caret centered instead of pinned to the top.
@@ -210,7 +210,9 @@ defineExpose({ focus })
 .text-editor__placeholder {
   position: absolute;
   inset: 0;
-  display: flex;
+  /* Hosts (card-face, the card's loading scrim) hide the placeholder by
+     setting this var instead of selecting into our internals. */
+  display: var(--text-editor-placeholder-display, flex);
   pointer-events: none;
   color: var(--color-brown-300);
   /* Match the editor so the hint's line box fits a content-height region

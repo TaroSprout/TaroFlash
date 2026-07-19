@@ -95,7 +95,7 @@ onUnmounted(() => cover_tween?.kill())
     >
       <card
         :key="next_card.id"
-        size="xl"
+        class="w-(--card-w-full)"
         :side="next_card_side"
         v-bind="next_card"
         :cover_config="preview_appearance.cover_config"

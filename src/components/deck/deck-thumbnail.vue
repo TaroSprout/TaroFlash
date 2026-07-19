@@ -5,11 +5,8 @@ import { TYPE_SFX } from '@/sfx/config'
 import type { SfxOptions } from '@/sfx/directive'
 import { useI18n } from 'vue-i18n'
 
-type CardSize = InstanceType<typeof Card>['$props']['size']
-
 type DeckThumbnailProps = {
   deck?: Deck
-  size?: CardSize
   hide_title?: boolean
   // skip the hover-to-reveal fade — corner action stays visible unconditionally
   corner_action_always_visible?: boolean
@@ -24,7 +21,6 @@ type DeckThumbnailProps = {
 
 const {
   deck,
-  size = 'base',
   corner_action_always_visible = false,
   rearranging = false,
   dragging = false,
@@ -55,7 +51,6 @@ const { t } = useI18n()
   >
     <card
       side="cover"
-      :size="size"
       :cover_config="deck?.cover_config"
       :class="{ 'pointer-events-none select-none': rearranging }"
     />

@@ -31,6 +31,7 @@ const placeholder = computed(() =>
 <template>
   <face-editor
     data-testid="study-card-edit"
+    class="w-(--card-w-full)"
     input_testid="study-card-edit__input"
     :card="card"
     :side="side"

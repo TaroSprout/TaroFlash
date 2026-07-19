@@ -129,6 +129,40 @@ describe('CardImporter', () => {
     expect(args.deck_id).toBe(99)
   })
 
+  // ── onImport: skips lines missing the delimiter instead of crashing [obligation] ──
+  // Regression: a line without the delimiter used to crash on `back.trim()`
+  // (back was undefined) — malformed lines must be skipped, valid ones still import.
+
+  test('skips a blank line with no delimiter and still imports the valid lines [obligation]', async () => {
+    const wrapper = mount()
+    await wrapper.find('textarea').setValue('front1::back1\n\nfront2::back2')
+    await importButton(wrapper).trigger('click')
+    const cardStubs = wrapper.findAllComponents({ name: 'Card' })
+    // 2 valid lines × 2 (front + back preview) = 4 Card stubs; the blank line
+    // contributes nothing.
+    expect(cardStubs).toHaveLength(4)
+  })
+
+  test('skips a stray note line with no delimiter, in the middle of valid lines [obligation]', async () => {
+    const wrapper = mount()
+    await wrapper.find('textarea').setValue('front1::back1\njust a note\nfront2::back2')
+    await importButton(wrapper).trigger('click')
+    await saveButton(wrapper).trigger('click')
+    const [args] = bulkInsertMock.mock.calls[0]
+    expect(args.cards).toEqual([
+      { front_text: 'front1', back_text: 'back1' },
+      { front_text: 'front2', back_text: 'back2' }
+    ])
+  })
+
+  test('does not crash and yields no cards when every line is malformed [obligation]', async () => {
+    const wrapper = mount()
+    await wrapper.find('textarea').setValue('no delimiter here\nanother stray line')
+    await expect(importButton(wrapper).trigger('click')).resolves.not.toThrow()
+    expect(wrapper.findAllComponents({ name: 'Card' })).toHaveLength(0)
+    expect(saveButton(wrapper).props('disabled')).toBe(true)
+  })
+
   test('sends every parsed card to the bulk-insert mutation in order', async () => {
     const wrapper = mount()
     await wrapper.find('textarea').setValue('a1::b1\na2::b2\na3::b3')

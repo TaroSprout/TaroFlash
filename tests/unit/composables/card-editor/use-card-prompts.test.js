@@ -25,7 +25,7 @@ vi.mock('@/sfx/bus', () => ({
   emitSfx: emitSfxMock
 }))
 
-vi.mock('@/components/card/move-cards-modal.vue', () => ({ default: {} }))
+vi.mock('@/components/card-actions/move-cards-modal.vue', () => ({ default: {} }))
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

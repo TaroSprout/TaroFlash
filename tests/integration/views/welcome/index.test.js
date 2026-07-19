@@ -27,7 +27,8 @@ vi.mock('@/sfx/bus', () => ({
 }))
 
 vi.mock('@/composables/modal', () => ({
-  useModal: () => ({ open: mocks.modalOpen })
+  useModal: () => ({ open: mocks.modalOpen }),
+  useModalRequestClose: () => {}
 }))
 
 // `useSessionStore()` calls `useI18n()` internally, which requires an active

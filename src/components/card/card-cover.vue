@@ -37,4 +37,12 @@ const bindings = computed(() =>
   box-sizing: border-box;
   border: var(--face-border-width) solid var(--theme-primary);
 }
+
+/* Tiny cards shrink the pattern tile via --card-pattern-scale (set by the
+   card's container-query chrome variants) so it still reads at ~43px. The
+   inline --bgx-size from coverBindings stays the single source of tile size. */
+.card-cover.pattern-mask::before {
+  -webkit-mask-size: calc(var(--bgx-size) * var(--card-pattern-scale, 1));
+  mask-size: calc(var(--bgx-size) * var(--card-pattern-scale, 1));
+}
 </style>

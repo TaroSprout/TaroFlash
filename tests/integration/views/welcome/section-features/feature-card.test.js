@@ -154,26 +154,6 @@ describe('FeatureCard', () => {
     )
   })
 
-  // ── size derived from useWelcomeWidth() [obligation] ────────────────────────
-
-  test('passes size="lg" to the card on desktop [obligation]', () => {
-    width.value = 'desktop'
-    const wrapper = mountFeatureCard()
-    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('lg')
-  })
-
-  test('passes size="xl" to the card on tablet [obligation]', () => {
-    width.value = 'tablet'
-    const wrapper = mountFeatureCard()
-    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('xl')
-  })
-
-  test('passes size="sm" to the card on mobile [obligation]', () => {
-    width.value = 'mobile'
-    const wrapper = mountFeatureCard()
-    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('sm')
-  })
-
   // The face's data-size-tier mirrors the same `size` value that drives the
   // icon/heading/description lookup maps (FACE_ROWS/ICON_SIZE/HEADING_SIZE/
   // DESCRIPTION_SIZE) — asserting the attribute proves each width tier picks a

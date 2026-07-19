@@ -255,14 +255,6 @@ describe('card-grid/scroll-grid', () => {
     expect(wrapper.find('[data-testid="card-grid"]').exists()).toBe(true)
   })
 
-  test('passes the computed card_scale to each grid-item as the scale prop', () => {
-    const search = makeSearch({
-      displayed_cards: [{ id: 1, client_id: 'c1', front_text: 'q', back_text: 'a' }]
-    })
-    const wrapper = mountScrollGrid(makeEditor(), makeShell({ grid_size: 'base' }), search)
-    expect(wrapper.find('[data-testid="grid-item-stub"]').attributes('data-scale')).toBe('0.65')
-  })
-
   test('grid-item selected is false when card.id is undefined', () => {
     const search = makeSearch({
       displayed_cards: [{ client_id: 'c1', front_text: 'q', back_text: 'a' }]

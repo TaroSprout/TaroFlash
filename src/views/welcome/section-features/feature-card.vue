@@ -14,6 +14,8 @@ type FeatureCardProps = {
   side?: CardSide
 }
 
+type FeatureCardTier = 'sm' | 'lg' | 'xl'
+
 const {
   feature_key,
   icon,
@@ -26,31 +28,37 @@ const {
 const { t } = useI18n()
 const width = useWelcomeWidth()
 
-const size = computed<CardSize>(() => {
+const size = computed<FeatureCardTier>(() => {
   if (width.value === 'desktop') return 'lg'
   return width.value === 'tablet' ? 'xl' : 'sm'
 })
 
-// Icon/heading/description scale with the card size — xl (tablet) reads
-// biggest since the card itself is largest there, lg (desktop) and sm
+// Card width + icon/heading/description scale with the tier — xl (tablet)
+// reads biggest since the card itself is largest there, lg (desktop) and sm
 // (mobile) step down from it.
-const FACE_ROWS: Partial<Record<CardSize, string>> = {
+const CARD_WIDTH: Record<FeatureCardTier, string> = {
+  xl: 'w-(--card-w-full)',
+  lg: 'w-(--card-w-md)',
+  sm: 'w-(--card-w-xs)'
+}
+const FACE_ROWS: Record<FeatureCardTier, string> = {
   xl: 'grid-rows-[70px_2.5rem_88px] gap-2',
   lg: 'grid-rows-[56px_2rem_70px] gap-2',
   sm: 'grid-rows-[30px_1.5rem_80px] gap-3'
 }
-const ICON_SIZE: Partial<Record<CardSize, string>> = { xl: 'size-12', lg: 'size-10', sm: 'size-8' }
-const HEADING_SIZE: Partial<Record<CardSize, string>> = {
+const ICON_SIZE: Record<FeatureCardTier, string> = { xl: 'size-12', lg: 'size-10', sm: 'size-8' }
+const HEADING_SIZE: Record<FeatureCardTier, string> = {
   xl: 'text-2xl',
   lg: 'text-2xl',
   sm: 'text-lg'
 }
-const DESCRIPTION_SIZE: Partial<Record<CardSize, string>> = {
+const DESCRIPTION_SIZE: Record<FeatureCardTier, string> = {
   xl: 'text-lg',
   lg: 'text-base',
   sm: 'text-base'
 }
 
+const card_width = computed(() => CARD_WIDTH[size.value])
 const face_rows = computed(() => FACE_ROWS[size.value])
 const icon_size = computed(() => ICON_SIZE[size.value])
 const heading_size = computed(() => HEADING_SIZE[size.value])
@@ -59,7 +67,7 @@ const description_size = computed(() => DESCRIPTION_SIZE[size.value])
 
 <template>
   <card
-    :size="size"
+    :class="card_width"
     :side="side"
     :cover_config="cover"
     :style="{ '--accent': accent, '--accent-dark': accent_dark }"

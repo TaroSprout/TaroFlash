@@ -85,7 +85,7 @@ vi.mock('@/composables/ui/infinite-scroll', () => ({
   useInfiniteScroll: useInfiniteScrollMock
 }))
 
-vi.mock('@/components/card/move-cards-modal.vue', () => ({ default: {} }))
+vi.mock('@/components/card-actions/move-cards-modal.vue', () => ({ default: {} }))
 
 const { mockNotice } = vi.hoisted(() => ({
   mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
