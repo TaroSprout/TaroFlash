@@ -179,7 +179,7 @@ function onDirectoryNavigate(value: string) {
     </template>
 
     <template v-if="has_sidebar" #sidebar>
-      <div data-testid="paged-window__sidebar" class="flex flex-col gap-10 p-4.5 shrink-0 bg-below">
+      <div data-testid="paged-window__sidebar" class="flex flex-col gap-10 p-4.5 shrink-0 bg-panel">
         <ui-button
           data-testid="paged-window__close-button"
           icon-left="close"

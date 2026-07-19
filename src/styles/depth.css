@@ -60,12 +60,14 @@
 }
 
 :root[data-mode='dark'] {
-  --ramp-sub: var(--color-stone-950);
-  --ramp-0: var(--color-stone-950);
-  --ramp-1: var(--color-stone-900);
-  --ramp-2: var(--color-stone-700);
+  /* Surfaces are the GREY family in dark (containers), distinct from the STONE
+     family used by raised elements — see --color-element below. */
+  --ramp-sub: var(--color-grey-900);
+  --ramp-0: var(--color-grey-900);
+  --ramp-1: var(--color-grey-800);
+  --ramp-2: var(--color-grey-700);
 
-  --chrome-panel: var(--color-stone-900);
+  --chrome-panel: var(--color-grey-850);
   --chrome-float: var(--color-stone-700);
   --chrome-overlay: var(--color-brown-100);
   --chrome-ink: var(--color-brown-100);
@@ -134,6 +136,30 @@
 
   --color-ink: var(--chrome-ink);
   --color-ink-muted: var(--chrome-ink-muted);
+}
+
+/* ─── TIER 2: RAISED ELEMENTS + THE CARD EXCEPTION ──────────────────── */
+
+/* Raised neutral element resting on a surface (non-accent buttons, chips).
+ * STONE family in dark — the sibling to the grey surface ramp. Light value is
+ * brown-300 (set in main.css @theme); dark is stone-700. Depth-relative in
+ * light (an element on a deeper surface goes darker); in dark it holds stone-700
+ * — that value was authored for this role and reads correctly on every surface. */
+:root[data-mode='dark'] {
+  --color-element: var(--color-stone-700);
+}
+
+[data-depth='1'] {
+  --color-element: var(--color-brown-500);
+}
+[data-mode='dark'] [data-depth='1'],
+[data-mode='dark'][data-depth='1'] {
+  --color-element: var(--color-stone-700);
+}
+
+/* The flashcard — a fixed exception, white/stone-700, never depth-derived. */
+:root[data-mode='dark'] {
+  --color-card: var(--color-stone-700);
 }
 
 /* ─── TIER 2: OVERLAY DEPTH ─────────────────────────────────────────── */

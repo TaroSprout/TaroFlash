@@ -27,6 +27,17 @@
   --color-blue-500: #11b7d4;
   --color-blue-400: #6cbfd5;
 
+  /* Two dark neutral families with distinct jobs:
+     - grey  = SURFACES (containers: page, window, panels) — the depth ramp
+     - stone = ELEMENTS (raised neutral things resting on a surface: buttons,
+       chips) + the flashcard exception
+     They read differently despite close lightness: grey is flat-neutral, stone
+     carries a little blue. */
+  --color-grey-900: #1c1c1c;
+  --color-grey-850: #212225;
+  --color-grey-800: #292929;
+  --color-grey-700: #4f4f4f;
+
   --color-stone-950: #1c1c1c;
   --color-stone-900: #292c2e;
   --color-stone-700: #393e40;
@@ -95,6 +106,14 @@
   --color-overlay: var(--color-white);
   --color-ink: var(--color-brown-700);
   --color-ink-muted: var(--color-brown-500);
+
+  /* Raised neutral element resting on a surface (non-accent buttons, chips).
+     Stone family in dark. Depth-relative — overridden per depth in depth.css. */
+  --color-element: var(--color-brown-300);
+  --color-on-element: var(--color-brown-700);
+
+  /* The flashcard surface — a fixed exception, not depth-derived. */
+  --color-card: var(--color-white);
 
   /* Identity role slots — owned by data-palette, overridden per identity in
      src/styles/identities.gen.css. Defaults are the `blue` light rendition,
