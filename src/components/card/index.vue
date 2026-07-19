@@ -223,17 +223,18 @@ function onLeave(el: Element, done: () => void) {
 }
 
 /* Fluid geometry, calibrated so a card at --card-w-full (314px) reproduces the
-   historical full-size values exactly: radius 58px, padding 20px. Floors keep
-   tiny covers from collapsing to sharp corners / zero padding. */
+   historical full-size padding (20px); radius is deliberately rounder than the
+   historical 58px. Floors keep tiny covers from collapsing to sharp corners /
+   zero padding and keep the cover icon legible. */
 .card-container > * {
-  --face-radius: clamp(8px, 18.471cqi, 70px);
+  --face-radius: clamp(14px, 22cqi, 70px);
   --face-padding: clamp(2px, 6.369cqi, 42px);
   --face-image-padding: calc(var(--face-padding) / 2);
 
   /* Chrome (border band, cover icon, pattern tile) is two-variant, not fluid:
      the full band here, and a deliberately chunky tiny variant below. */
   --face-border-width: 16px;
-  --cover-icon-size: 33%;
+  --cover-icon-size: clamp(42px, 33%, 200px);
   --card-pattern-scale: 1;
 }
 
