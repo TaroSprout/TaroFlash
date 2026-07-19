@@ -71,7 +71,7 @@ const { t } = useI18n()
     <div
       v-if="!hide_title"
       data-testid="deck-thumbnail__title"
-      class="absolute w-full -bottom-2.5 bg-brown-300 dark:bg-stone-700 p-4 rounded-5.5"
+      class="absolute w-full -bottom-2.5 bg-element p-4 rounded-5.5"
     >
       <slot name="actions"></slot>
       <h2 class="text-xl text-center text-ink">{{ deck?.title }}</h2>

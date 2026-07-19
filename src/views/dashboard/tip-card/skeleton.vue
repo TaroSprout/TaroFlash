@@ -1,7 +1,7 @@
 <template>
   <div
     data-testid="dashboard-tip-card-skeleton"
-    class="mt-6 h-47.5 w-full rounded-4 relative hidden md:flex flex-col items-center justify-center gap-3 bg-brown-200 dark:bg-stone-700 px-10"
+    class="mt-6 h-47.5 w-full rounded-4 relative hidden md:flex flex-col items-center justify-center gap-3 bg-element px-10"
   >
     <div
       data-testid="dashboard-tip-card-skeleton__tape"

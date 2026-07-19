@@ -22,8 +22,8 @@ import DashboardActionsPanelShell from './shell.vue'
     </template>
 
     <template #body>
-      <div class="h-30 w-full bg-brown-200 dark:bg-stone-700 rounded-4 max-mxl:hidden"></div>
-      <div class="h-14 w-full bg-brown-200 dark:bg-stone-700 rounded-4 max-mxl:hidden!"></div>
+      <div class="h-30 w-full bg-element rounded-4 max-mxl:hidden"></div>
+      <div class="h-14 w-full bg-element rounded-4 max-mxl:hidden!"></div>
     </template>
   </dashboard-actions-panel-shell>
 </template>

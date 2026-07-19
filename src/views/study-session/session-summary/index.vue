@@ -48,14 +48,14 @@ const summary = computed(() => aggregateSession(results, thresholdFor))
             <template #recalled>
               <span
                 data-testid="session-summary__score-recalled"
-                class="inline-flex min-w-6 items-center justify-center rounded-2 bg-brown-100 dark:bg-stone-700 px-1 text-ink"
+                class="inline-flex min-w-6 items-center justify-center rounded-2 bg-element px-1 text-ink"
                 >{{ summary.score }}</span
               >
             </template>
             <template #total>
               <span
                 data-testid="session-summary__score-total"
-                class="inline-flex min-w-6 items-center justify-center rounded-2 bg-brown-100 dark:bg-stone-700 px-1 text-ink"
+                class="inline-flex min-w-6 items-center justify-center rounded-2 bg-element px-1 text-ink"
                 >{{ summary.total }}</span
               >
             </template>
