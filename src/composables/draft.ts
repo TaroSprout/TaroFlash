@@ -5,7 +5,7 @@ export type Draft<T extends object> = {
   state: T
   is_dirty: ComputedRef<boolean>
   reset: () => void
-  rebase: () => void
+  rebase: (keys?: (keyof T)[]) => void
 }
 
 /**
@@ -40,9 +40,17 @@ export function useDraft<T extends object>(buildBase: () => T): Draft<T> {
     deepReplaceInPlace(state as Record<string, unknown>, base.value as Record<string, unknown>)
   }
 
-  /** Adopt the current `state` as the new base, e.g. after a successful save. */
-  function rebase() {
-    base.value = deepClone(state)
+  /**
+   * Adopt the current `state` as the new base, e.g. after a successful save.
+   * Pass `keys` to adopt only part of it — for a write that persisted a slice of
+   * the row on its own, leaving the rest of the draft staged and still dirty.
+   */
+  function rebase(keys?: (keyof T)[]) {
+    if (!keys) return void (base.value = deepClone(state))
+
+    const next = deepClone(base.value)
+    for (const key of keys) next[key] = deepClone(state[key])
+    base.value = next
   }
 
   return { state, is_dirty, reset, rebase }
