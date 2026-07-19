@@ -134,8 +134,6 @@ watch(width, buildReveals, { flush: 'post' })
   <section data-testid="welcome-features" class="w-full bg-surface py-12 sm:py-32">
     <div class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex flex-col gap-14">
       <section-header
-        data-theme="brown-100"
-        data-theme-dark="green-800"
         :heading="t('welcome-view.features.heading')"
         :subtitle="t('welcome-view.features.subtitle')"
       />

@@ -36,8 +36,6 @@ const entries: OptionsPanelEntry[] = items.map((item) => ({
 <template>
   <section
     data-testid="welcome-roadmap"
-    data-theme="brown-100"
-    data-theme-dark="grey-900"
     class="w-full bg-green-500 dark:bg-green-800 flex justify-center"
   >
     <div
