@@ -147,6 +147,7 @@
  * — that value was authored for this role and reads correctly on every surface. */
 :root[data-mode='dark'] {
   --color-element: var(--color-stone-700);
+  --color-on-element: var(--color-brown-100);
 }
 
 [data-depth='1'] {
