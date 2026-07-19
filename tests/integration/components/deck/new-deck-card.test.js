@@ -61,16 +61,6 @@ describe('NewDeckCard', () => {
     expect(card.props('side')).toBe('front')
   })
 
-  test('defaults to base size', () => {
-    const wrapper = mount()
-    expect(wrapper.findComponent({ name: 'Card' }).props('size')).toBe('base')
-  })
-
-  test('forwards size prop to Card', () => {
-    const wrapper = mount({ size: 'xl' })
-    expect(wrapper.findComponent({ name: 'Card' }).props('size')).toBe('xl')
-  })
-
   test('renders the outline with the new-deck-card label text', () => {
     // Card renders its #front slot only when fully mounted — Card is stubbed
     // (and its slot content discarded) under shallowMount.

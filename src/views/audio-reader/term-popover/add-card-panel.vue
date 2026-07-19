@@ -188,7 +188,7 @@ async function onSave() {
         :text="active_text"
         :attributes="active_attributes"
         :placeholder="active_placeholder"
-        size="lg"
+        class="w-(--card-w-md)"
         @update:text="onEditActive"
       />
     </div>

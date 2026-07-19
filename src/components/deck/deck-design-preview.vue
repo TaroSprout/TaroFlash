@@ -35,13 +35,12 @@ function cycleSide() {
 <template>
   <div data-testid="deck-design-preview">
     <card
-      size="xl"
+      class="w-(--card-w-full) cursor-pointer"
       :side="side"
       :front_text="side === 'front' ? preview_text : undefined"
       :back_text="side === 'back' ? preview_text : undefined"
       :cover_config="cover"
       :card_attributes="card_attributes"
-      class="cursor-pointer"
       face_classes="border-t border-l border-brown-100 dark:border-stone-900"
       @click="cycleSide"
     />

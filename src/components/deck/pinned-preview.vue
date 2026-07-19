@@ -25,8 +25,7 @@ const emit = defineEmits<{
     <template #backdrop>
       <card
         data-testid="deck-pinned-preview__shadow-card"
-        size="xl"
-        class="absolute! -top-2 right-1"
+        class="absolute! -top-2 right-1 w-(--card-w-full)"
         face_classes="bg-white! dark:bg-stone-700!"
       />
     </template>

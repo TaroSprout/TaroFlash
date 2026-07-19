@@ -240,20 +240,6 @@ describe('DeckGrid — create deck', () => {
   })
 })
 
-describe('DeckGrid — size responds to breakpoint', () => {
-  test('uses base size at >=md', () => {
-    isMatchMediaRef.value = true
-    const wrapper = mount([makeDeck(1)])
-    expect(wrapper.findComponent(NewDeckCardStub).props('size')).toBe('base')
-  })
-
-  test('uses sm size below md', () => {
-    isMatchMediaRef.value = false
-    const wrapper = mount([makeDeck(1)])
-    expect(wrapper.findComponent(NewDeckCardStub).props('size')).toBe('sm')
-  })
-})
-
 describe('DeckGrid — editing mode forwards rearranging/dragging to each item [obligation]', () => {
   test('forwards rearranging=true to every item when editing', () => {
     const wrapper = mount([makeDeck(1), makeDeck(2)], true)

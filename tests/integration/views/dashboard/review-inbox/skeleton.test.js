@@ -54,11 +54,10 @@ describe('ReviewInboxSkeleton (views/dashboard/review-inbox/skeleton.vue) [oblig
     expect(wrapper.findAll('[data-testid="review-inbox-skeleton__item"]')).toHaveLength(1)
   })
 
-  test('all cards use side="cover" size="xs" and shimmer=true', () => {
+  test('all cards use side="cover" and shimmer=true', () => {
     const wrapper = mountSkeleton()
     for (const card of wrapper.findAllComponents(CardStub)) {
       expect(card.props('side')).toBe('cover')
-      expect(card.props('size')).toBe('xs')
       expect(card.props('shimmer')).toBe(true)
     }
   })

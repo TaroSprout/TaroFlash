@@ -42,15 +42,12 @@ function onPointerdown(event: PointerEvent) {
 const {
   card,
   side,
-  scale = 1,
   rearranging = false
 } = defineProps<{
   card: CardWithClientId
   side: 'front' | 'back'
   selected: boolean
   card_attributes?: DeckCardAttributes
-  // render an xl card uniformly scaled by `scale` into a fixed grid cell
-  scale?: number
   // the grid is in drag-to-reorder mode: the card is a drag handle, not tappable
   rearranging?: boolean
   // this card is the one currently being dragged — pop it with a lift shadow
@@ -116,13 +113,10 @@ watch(
   >
     <card
       v-bind="card"
-      class="grid-item__card--scaled"
       :class="[
         rearranging ? 'cursor-grab pointer-events-none select-none' : 'cursor-pointer',
         dragging && 'drop-shadow-lg'
       ]"
-      :style="{ '--card-scale': scale }"
-      size="lg"
       :side="active_side"
       :card_attributes="card_attributes"
       @mousedown="onCardMouseDown"
@@ -156,17 +150,6 @@ watch(
 </template>
 
 <style scoped>
-/* Uniform scale: an xl card rendered at its natural width, scaled by --card-scale
-   to fill the fixed grid cell (cell width = xl width × --card-scale). */
-.grid-item :deep(.grid-item__card--scaled) {
-  position: absolute;
-  top: 0;
-  left: 0;
-
-  transform-origin: top left;
-  transform: scale(var(--card-scale));
-}
-
 /* iOS-style "edit mode" jiggle. Phase + tempo are set per card via the
    --jiggle-* vars so the grid doesn't beat in unison. The dragged card opts out
    (its lift owns the transform). */

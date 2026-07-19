@@ -112,7 +112,7 @@ function onClose() {
         @select="onSelect"
       >
         <template #leading="{ entry }">
-          <card size="2xs" :cover_config="deckFor(entry.value).cover_config" side="cover" />
+          <card class="w-[43px]" :cover_config="deckFor(entry.value).cover_config" side="cover" />
         </template>
 
         <template #trailing="{ entry }">

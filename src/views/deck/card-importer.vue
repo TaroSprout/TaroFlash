@@ -22,14 +22,14 @@ const { deck_id, guardAddCards, handleLimitError } = inject(cardEditorKey)!
 
 const has_unsaved_changes = computed(() => cards.value.length > 0)
 
+// Lines without the delimiter (blank lines, stray notes) have no back side —
+// skip them instead of crashing on `back.trim()`.
 function onImport() {
-  cards.value = raw_text.value.split('\n').map((line) => {
-    const [front, back] = line.split(delimiter.value)
-    return {
-      front_text: front.trim(),
-      back_text: back.trim()
-    }
-  })
+  cards.value = raw_text.value
+    .split('\n')
+    .map((line) => line.split(delimiter.value))
+    .filter((parts): parts is [string, string, ...string[]] => parts.length >= 2)
+    .map(([front, back]) => ({ front_text: front.trim(), back_text: back.trim() }))
 }
 
 async function onSave() {
@@ -64,8 +64,8 @@ async function onSave() {
       <div class="w-full flex flex-col gap-2">
         <div class="flex flex-col gap-2 w-full h-200 overflow-auto">
           <div v-for="(card, i) in cards" :key="i" class="flex gap-2">
-            <Card v-bind="card" side="front" size="lg" />
-            <Card v-bind="card" side="back" size="lg" />
+            <Card v-bind="card" side="front" class="w-(--card-w-md)" />
+            <Card v-bind="card" side="back" class="w-(--card-w-md)" />
           </div>
         </div>
         <ui-button data-theme="blue-500" @press="onSave" :disabled="!has_unsaved_changes">{{

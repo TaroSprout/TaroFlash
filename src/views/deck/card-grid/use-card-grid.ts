@@ -23,7 +23,7 @@ export type GridItemPosition = { x: number; y: number }
  * @param grid_size       - Active size level (Small / Base / Full).
  * @param container_width - Measured inner width of the scroll container, used to
  *                          derive the column count. Defaults to 0 (skeleton use,
- *                          which only needs `card_scale` / `grid_style`).
+ *                          which only needs `grid_style`).
  * @param item_count      - Total cards on screen, used for row count + per-row
  *                          centering of the trailing partial row.
  */
@@ -70,7 +70,6 @@ export function useCardGrid(
   }
 
   return {
-    card_scale,
     cell_width,
     gap,
     columns,
