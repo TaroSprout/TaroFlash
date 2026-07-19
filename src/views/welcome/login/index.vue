@@ -9,8 +9,6 @@ const { t } = useI18n()
 <template>
   <ui-dropdown-button
     size="lg"
-    data-theme="brown-700"
-    data-theme-dark="brown-100"
     variant="ghost"
     shadow
     position="bottom-end"

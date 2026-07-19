@@ -93,6 +93,14 @@ const ambient_depth = useAmbientDepth()
 
 const popover_open = ref(false)
 
+// A dropdown trigger is CHROME by default — most are settings/overflow/option
+// menus, not accent actions. An accent dropdown opts in by passing a
+// `data-palette`, which routes onto the trigger button (and, via inheritance,
+// its caret) so the `[data-palette]` seam repaints it. Absent that, the trigger
+// button + caret render the `element` chrome roles (`neutral`).
+const identity_palette = computed(() => attrs['data-palette'] as string | undefined)
+const is_neutral = computed(() => !identity_palette.value)
+
 // Callers reach these through a template ref: `open` to mirror the menu state
 // (e.g. keeping a card's active look while its menu is up), `show` to open the
 // menu from a gesture that isn't a trigger press (e.g. a long-press on the card).
@@ -102,7 +110,9 @@ defineExpose({ open: popover_open, show })
 // consumer's primary @click — land on the inner button so they fire only from
 // the label region. Nothing is injected here: the container inherits the
 // ambient depth and identity like any other element.
-const popover_attrs = computed(() => filter_attrs((key) => !key.startsWith('on')))
+const popover_attrs = computed(() =>
+  filter_attrs((key) => !key.startsWith('on') && key !== 'data-palette')
+)
 // `onClick` is handled through `onButtonClick` instead of forwarded, so the inner
 // button never receives both it and the trigger handler as a merged array — which
 // its play-on-tap intercept can't invoke (it expects a single onClick function).
@@ -210,6 +220,8 @@ function onMenuSelect(option: DropdownOption) {
         :icon-left="triggerIcon"
         :size="size"
         :variant="variant"
+        :neutral="is_neutral"
+        :data-palette="identity_palette"
         :data-depth="trigger_depth"
         :data-active="popover_open"
         :disabled="disabled"
@@ -223,6 +235,8 @@ function onMenuSelect(option: DropdownOption) {
         :size="size"
         :variant="variant"
         :inverted="inverted"
+        :neutral="is_neutral"
+        :data-palette="identity_palette"
         :full-width="fullWidth"
         :icon-left="iconLeft"
         :icon-right="iconRight"
@@ -243,6 +257,7 @@ function onMenuSelect(option: DropdownOption) {
             :icon="triggerIcon"
             :size="size"
             :disabled="disabled"
+            :neutral="is_neutral"
             @toggle="toggle"
           />
         </template>

@@ -65,8 +65,7 @@ const edit_label = computed(() => {
         data-testid="overview-panel__settings-button"
         :options="menu.options.value"
         :icon-left="is_active_mode ? 'stop' : 'edit'"
-        :data-theme="is_active_mode ? 'yellow-500' : 'brown-300'"
-        :data-theme-dark="is_active_mode ? 'yellow-700' : 'stone-700'"
+        :data-palette="is_active_mode ? 'yellow' : undefined"
         full-width
         size="xl"
         :disabled="isSelecting"

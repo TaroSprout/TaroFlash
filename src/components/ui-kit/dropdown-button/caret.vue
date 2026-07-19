@@ -11,13 +11,18 @@ type DropdownCaretProps = {
   icon?: string
   size?: NonNullable<ButtonProps['size']>
   disabled?: boolean
+  // Chrome vs identity: a neutral caret rings itself in the `element` role;
+  // otherwise it reads `--color-accent`, which it inherits from the identity
+  // button it sits inside (that button carries the `data-palette`).
+  neutral?: boolean
 }
 
 const {
   open,
   icon = 'arrow-drop-down',
   size = 'base',
-  disabled = false
+  disabled = false,
+  neutral = false
 } = defineProps<DropdownCaretProps>()
 
 const emit = defineEmits<{
@@ -70,8 +75,13 @@ function onLeave(el: Element, done: () => void) {
         :aria-disabled="disabled || undefined"
         :data-active="open"
         :data-depth="depth"
-        class="relative z-1 flex aspect-square h-full items-center justify-center rounded-[calc(var(--btn-border-radius)-var(--btn-trigger-padding))] pointer-coarse:rounded-(--btn-border-radius) transition-[scale] duration-120 ease-[ease] bg-surface text-ink shadow-[inset_0_0_0_1px_var(--color-accent)]"
-        :class="disabled ? 'opacity-50' : 'cursor-pointer hover:scale-110'"
+        class="relative z-1 flex aspect-square h-full items-center justify-center rounded-[calc(var(--btn-border-radius)-var(--btn-trigger-padding))] pointer-coarse:rounded-(--btn-border-radius) transition-[scale] duration-120 ease-[ease] bg-surface text-ink"
+        :class="[
+          disabled ? 'opacity-50' : 'cursor-pointer hover:scale-110',
+          neutral
+            ? 'shadow-[inset_0_0_0_1px_var(--color-element)]'
+            : 'shadow-[inset_0_0_0_1px_var(--color-accent)]'
+        ]"
         data-testid="dropdown-button__trigger"
         v-sfx="{ hover: disabled ? undefined : TYPE_SFX }"
         @click.stop="!disabled && emit('toggle')"
