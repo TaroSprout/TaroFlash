@@ -68,7 +68,7 @@ async function onSelect(value: string) {
     data-testid="dashboard-actions-panel"
     v-bind="root_bindings"
     class="bg-(--theme-primary)"
-    body_class="bg-brown-300 dark:bg-stone-900"
+    body_class="bg-surface"
   >
     <template #polaroid>
       <dashboard-actions-panel-polaroid />

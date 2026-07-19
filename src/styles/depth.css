@@ -140,18 +140,24 @@
 
 /* ─── TIER 2: RAISED ELEMENTS + THE CARD EXCEPTION ──────────────────── */
 
-/* Raised neutral element resting on a surface (non-accent buttons, chips).
- * STONE family in dark — the sibling to the grey surface ramp. Light value is
- * brown-300 (set in main.css @theme); dark is stone-700. Depth-relative in
- * light (an element on a deeper surface goes darker); in dark it holds stone-700
- * — that value was authored for this role and reads correctly on every surface. */
+/* Neutral element resting on a surface (non-accent buttons, chips). It reads by
+ * CONTRASTING with the surface it sits on — there is no border or shadow, only
+ * fill — so it is depth-relative:
+ *
+ *   on a pale page (depth 0)     → brown-300, a darker pop
+ *   on a raised surface (depth 1) → brown-50, a lighter pop
+ *
+ * The direction flips because a pale page has no room to go lighter, while a
+ * mid-tone modal reads best with a lighter element. In dark the surfaces are all
+ * dark enough that stone-700 pops light on every one, so it holds across depths.
+ * Light value at depth 0 is brown-300 (set in main.css @theme). */
 :root[data-mode='dark'] {
   --color-element: var(--color-stone-700);
   --color-on-element: var(--color-brown-100);
 }
 
 [data-depth='1'] {
-  --color-element: var(--color-brown-500);
+  --color-element: var(--color-brown-50);
 }
 [data-mode='dark'] [data-depth='1'],
 [data-mode='dark'][data-depth='1'] {

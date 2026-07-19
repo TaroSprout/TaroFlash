@@ -63,7 +63,7 @@ function onSelect(entry: OptionsPanelEntry) {
       :data-testid="
         attrs['data-testid'] ? `${attrs['data-testid']}__content` : 'options-panel__content'
       "
-      class="flex min-h-0 flex-1 flex-col rounded-4 bg-panel p-1"
+      class="flex min-h-0 flex-1 flex-col rounded-4 bg-below p-1"
       :class="scrollable ? 'overflow-y-auto scroll-hidden' : 'overflow-hidden'"
     >
       <options-panel-row

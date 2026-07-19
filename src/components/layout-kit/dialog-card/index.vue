@@ -70,7 +70,7 @@ const {
   content_max_width,
   content_breakout_max_width,
   float_header = false,
-  bg_class = 'bg-panel'
+  bg_class = 'bg-surface'
 } = defineProps<DialogCardProps>()
 
 const emit = defineEmits<{
