@@ -14,22 +14,9 @@ type SelectMenuOption = {
 type SelectMenuProps = {
   options: SelectMenuOption[]
   modelValue: T
-  triggerTheme?: Theme
-  triggerThemeDark?: Theme
-  menuTheme?: Theme
-  menuThemeDark?: Theme
-  menuClass?: string
 }
 
-const {
-  options,
-  modelValue,
-  triggerTheme,
-  triggerThemeDark,
-  menuTheme = 'brown-200',
-  menuThemeDark = 'stone-700',
-  menuClass = 'outline-1 outline-brown-100 dark:outline-stone-950'
-} = defineProps<SelectMenuProps>()
+const { options, modelValue } = defineProps<SelectMenuProps>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: T]
@@ -45,14 +32,9 @@ function onSelect(option: DropdownOption) {
 <template>
   <ui-dropdown-button
     data-testid="ui-select-menu"
-    :trigger-theme="triggerTheme"
-    :trigger-theme-dark="triggerThemeDark"
     open-on-trigger
     full-width
     :options="options"
-    :menu-theme="menuTheme"
-    :menu-theme-dark="menuThemeDark"
-    :menu-class="menuClass"
     v-bind="$attrs"
     @select="onSelect"
   >

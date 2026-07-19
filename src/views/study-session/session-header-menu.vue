@@ -66,10 +66,6 @@ function onSelect(option: DropdownOption) {
     trigger-icon="pencil"
     variant="ghost"
     position="bottom-end"
-    trigger-theme="brown-700"
-    trigger-theme-dark="brown-100"
-    menu-theme="brown-100"
-    menu-theme-dark="stone-700"
     :options="menu_options"
     @select="onSelect"
   />

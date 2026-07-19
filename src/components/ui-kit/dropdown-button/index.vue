@@ -15,6 +15,7 @@ import UiButton, { type ButtonProps } from '../button.vue'
 import UiPopover from '@/components/ui-kit/popover.vue'
 import DropdownCaret from './caret.vue'
 import DropdownMenu from './menu.vue'
+import { nextDepth, useAmbientDepth } from '@/composables/ui/depth'
 import { emitSfx } from '@/sfx/bus'
 import type { DropdownOption } from './types'
 
@@ -46,11 +47,6 @@ type DropdownButtonProps = Pick<
   // Disable the whole control — primary action AND the caret trigger, so the
   // menu can't be opened either.
   disabled?: boolean
-  menuTheme?: Theme
-  menuThemeDark?: Theme
-  menuClass?: string
-  triggerTheme?: Theme
-  triggerThemeDark?: Theme
 }
 
 defineOptions({ inheritAttrs: false })
@@ -78,12 +74,7 @@ const {
   shadow = false,
   triggerOnly = false,
   primaryDisabled = false,
-  disabled = false,
-  menuTheme = 'brown-300',
-  menuThemeDark,
-  menuClass = 'outline-1 outline-brown-100 dark:outline-stone-950',
-  triggerTheme,
-  triggerThemeDark
+  disabled = false
 } = defineProps<DropdownButtonProps>()
 
 const emit = defineEmits<{
@@ -98,6 +89,7 @@ const slots = defineSlots<{
 }>()
 
 const attrs = useAttrs()
+const ambient_depth = useAmbientDepth()
 
 const popover_open = ref(false)
 
@@ -106,19 +98,11 @@ const popover_open = ref(false)
 // menu from a gesture that isn't a trigger press (e.g. a long-press on the card).
 defineExpose({ open: popover_open, show })
 
-// Theme/class/layout attrs ride the popover container (its non-teleported
-// content inherits the theme), while event handlers — the consumer's primary
-// @click — land on the inner button so they fire only from the label region.
-// With no consumer `data-theme`, the trigger falls back to the neutral surface
-// rather than a theme-primary fill; a supplied `data-theme` still themes it.
-const popover_attrs = computed(() => {
-  const result = filter_attrs((key) => !key.startsWith('on'))
-  if (result['data-theme'] === undefined) {
-    result['data-theme'] = 'brown-100'
-    result['data-theme-dark'] = 'stone-700'
-  }
-  return result
-})
+// Class/layout attrs ride the popover container, while event handlers — the
+// consumer's primary @click — land on the inner button so they fire only from
+// the label region. Nothing is injected here: the container inherits the
+// ambient depth and identity like any other element.
+const popover_attrs = computed(() => filter_attrs((key) => !key.startsWith('on')))
 // `onClick` is handled through `onButtonClick` instead of forwarded, so the inner
 // button never receives both it and the trigger handler as a merged array — which
 // its play-on-tap intercept can't invoke (it expects a single onClick function).
@@ -131,17 +115,18 @@ const button_attrs = computed(() =>
 // region open the popover.
 const show_trigger = computed(() => !hideTrigger || !openOnTrigger)
 
-// Both transparent variants (ghost, outline) fill with theme-primary while the
-// menu is up, so the trigger and menu read as one continuous surface. Ghost's
-// text normally reads in theme-primary (nothing behind it), so it also needs
-// to flip to on-primary here to stay legible against that fill — outline's
-// text is on-primary already, so it needs no override.
+// While the menu is up, the trigger ADOPTS the menu's depth — same data-depth,
+// so the transparent variants (ghost, outline) fill with the very same surface
+// the menu paints and the two read as one continuous plane. This used to be
+// stated in colours (a --theme-primary fill), which said "depth" in the wrong
+// vocabulary and broke the moment either side sat on a different surface.
+const trigger_depth = computed(() =>
+  popover_open.value ? nextDepth(ambient_depth.value) : undefined
+)
+
 const trigger_style = computed(() => {
   if (variant === 'solid' || !popover_open.value) return undefined
-  return {
-    '--btn-bg-color': 'var(--theme-primary)',
-    ...(variant === 'ghost' ? { '--btn-text-color': 'var(--theme-on-primary)' } : {})
-  }
+  return { '--btn-bg-color': 'var(--color-surface)', '--btn-text-color': 'var(--color-ink)' }
 })
 
 function filter_attrs(keep: (key: string) => boolean) {
@@ -225,8 +210,7 @@ function onMenuSelect(option: DropdownOption) {
         :icon-left="triggerIcon"
         :size="size"
         :variant="variant"
-        :data-theme="triggerTheme"
-        :data-theme-dark="triggerThemeDark"
+        :data-depth="trigger_depth"
         :data-active="popover_open"
         :disabled="disabled"
         :style="trigger_style"
@@ -246,6 +230,7 @@ function onMenuSelect(option: DropdownOption) {
         :play-on-tap="playOnTap"
         :tap-animate="tapAnimate"
         :disabled="disabled || primaryDisabled"
+        :data-depth="trigger_depth"
         :style="trigger_style"
         data-testid="dropdown-button__button"
         @press="onButtonClick"
@@ -257,8 +242,6 @@ function onMenuSelect(option: DropdownOption) {
             :open="popover_open"
             :icon="triggerIcon"
             :size="size"
-            :trigger-theme="triggerTheme"
-            :trigger-theme-dark="triggerThemeDark"
             :disabled="disabled"
             @toggle="toggle"
           />
@@ -266,14 +249,7 @@ function onMenuSelect(option: DropdownOption) {
       </ui-button>
     </template>
 
-    <dropdown-menu
-      :options="options"
-      :size="size"
-      :menu-theme="menuTheme"
-      :menu-theme-dark="menuThemeDark"
-      :menu-class="menuClass"
-      @select="onMenuSelect"
-    >
+    <dropdown-menu :options="options" :size="size" @select="onMenuSelect">
       <template v-if="$slots.panel" #default>
         <slot name="panel" :close="close" />
       </template>

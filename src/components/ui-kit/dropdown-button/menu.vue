@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { type ButtonProps } from '../button.vue'
+import { useNestedDepth } from '@/composables/ui/depth'
 import { useStagedTap } from '@/composables/ui/staged-tap'
 import { TYPE_SFX } from '@/sfx/config'
 import type { DropdownOption } from './types'
@@ -9,21 +10,9 @@ import type { DropdownOption } from './types'
 type DropdownMenuProps = {
   options?: DropdownOption[]
   size: NonNullable<ButtonProps['size']>
-  // The menu is teleported, so it can't inherit a `data-theme` ancestor — it
-  // takes its theme explicitly.
-  menuTheme?: Theme
-  menuThemeDark?: Theme
-  // Extra classes for the menu panel (e.g. an outline), merged onto the root.
-  menuClass?: string
 }
 
-const {
-  options = [],
-  size,
-  menuTheme = 'brown-300',
-  menuThemeDark = 'stone-700',
-  menuClass
-} = defineProps<DropdownMenuProps>()
+const { options = [], size } = defineProps<DropdownMenuProps>()
 
 const emit = defineEmits<{
   (e: 'select', option: DropdownOption): void
@@ -31,6 +20,11 @@ const emit = defineEmits<{
 
 // Raw body — replaces the option list while keeping the panel chrome.
 defineSlots<{ default(): unknown }>()
+
+// The panel floats one step above whatever it opened from, and its seam
+// (outline-below) is that context's own surface — so a menu inside a modal
+// reads against the modal rather than a hardcoded neutral.
+const depth = useNestedDepth()
 
 const { tap } = useStagedTap()
 
@@ -50,10 +44,9 @@ function onOptionTap(option: DropdownOption, e: MouseEvent) {
 
 <template>
   <div
-    class="flex flex-col overflow-hidden rounded-(--btn-border-radius) bg-(--theme-primary) p-1.5 text-(length:--btn-font-size) leading-(--btn-font-size--line-height) text-(--theme-on-primary)"
-    :class="[`ui-kit-btn-tokens--${size}`, menuClass]"
-    :data-theme="menuTheme"
-    :data-theme-dark="menuThemeDark"
+    class="flex flex-col overflow-hidden rounded-(--btn-border-radius) bg-surface p-1.5 text-(length:--btn-font-size) leading-(--btn-font-size--line-height) text-ink outline-1 outline-below"
+    :class="`ui-kit-btn-tokens--${size}`"
+    :data-depth="depth"
     data-testid="dropdown-button__menu"
   >
     <slot>
@@ -62,7 +55,7 @@ function onOptionTap(option: DropdownOption, e: MouseEvent) {
           v-if="option.separator"
           aria-hidden="true"
           data-testid="dropdown-button__separator"
-          class="my-1.5 h-px shrink-0 bg-(--theme-neutral) opacity-40"
+          class="my-1.5 h-px shrink-0 bg-ink-muted opacity-40"
         ></div>
 
         <button
@@ -76,7 +69,7 @@ function onOptionTap(option: DropdownOption, e: MouseEvent) {
         >
           <div
             aria-hidden="true"
-            class="pointer-events-none absolute inset-0 hidden bgx-diagonal-stripes bgx-color-[var(--theme-neutral)] animation-safe:bgx-slide group-hover/option:block group-data-[active=true]/option:block"
+            class="pointer-events-none absolute inset-0 hidden bgx-diagonal-stripes bgx-color-[var(--color-ink-muted)] animation-safe:bgx-slide group-hover/option:block group-data-[active=true]/option:block"
           ></div>
           <ui-icon
             v-if="option.icon"

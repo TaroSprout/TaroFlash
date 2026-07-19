@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, ref, useTemplateRef, watch, onBeforeUnmount } from 'vue'
+import { computed, ref, useAttrs, useTemplateRef, watch, onBeforeUnmount } from 'vue'
 import { useFloating, flip, autoUpdate, offset, type Placement } from '@floating-ui/vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 
-// The popover is teleported to <body>, so it can't inherit data-theme through
-// the DOM and reading it off $attrs would wrongly pick up a theme a parent
-// component forwarded to this tooltip. Theme it via explicit props instead.
+// A tooltip is context-independent overlay chrome by design: it deliberately
+// contrasts with whatever it floats over, in both modes, so it inherits
+// nothing. `data-depth="overlay"` is exactly that — off the depth ramp, fixed
+// per mode (src/styles/depth.css).
 const {
   text,
   position = 'top',
@@ -14,8 +15,6 @@ const {
   element = 'div',
   visible = false,
   suppress = false,
-  theme = 'white',
-  theme_dark = 'brown-100',
   max_chars = 32
 } = defineProps<{
   text?: string
@@ -25,12 +24,12 @@ const {
   element?: 'div' | 'span' | 'button' | 'label'
   visible?: boolean
   suppress?: boolean
-  theme?: string
-  theme_dark?: string
   // Wraps the tooltip body at roughly this many characters per line, using
   // `ch` units so it scales with the font instead of a fixed pixel width.
   max_chars?: number
 }>()
+
+const attrs = useAttrs()
 
 const triggerRef = useTemplateRef<HTMLElement>('ui-tooltip-trigger')
 const popoverRef = useTemplateRef<HTMLElement>('ui-tooltip')
@@ -49,6 +48,11 @@ const should_show = computed(
 // Rough heuristic — good enough to tell whether `text` will wrap onto more
 // than one line at `max_chars`, so we can give wrapped tooltips extra breathing room.
 const is_multiline = computed(() => (text?.length ?? 0) > max_chars)
+
+// A tooltip may be given an identity (`data-palette="danger"` on an error
+// tooltip), in which case it paints in that identity instead of neutral overlay
+// chrome. Restated on the teleported node, which inherits nothing from the DOM.
+const palette = computed(() => attrs['data-palette'] as string | undefined)
 
 const { floatingStyles, update } = useFloating(triggerRef, popoverRef, {
   placement: position,
@@ -107,12 +111,15 @@ function onPointerLeave(e: PointerEvent) {
       <div
         ref="ui-tooltip"
         data-testid="ui-tooltip"
-        :data-theme="theme"
-        :data-theme-dark="theme_dark"
+        data-depth="overlay"
+        :data-palette="palette"
         :data-multiline="is_multiline"
         :style="{ ...floatingStyles, maxWidth: `${max_chars}ch` }"
-        class="ui-tooltip ui-tooltip--visible bg-(--theme-primary) text-(--theme-on-primary) rounded-4 text-sm text-center pointer-events-none z-102 select-none"
-        :class="is_multiline ? 'py-3 px-3' : 'py-1.5 px-2'"
+        class="ui-tooltip ui-tooltip--visible rounded-4 text-sm text-center pointer-events-none z-102 select-none"
+        :class="[
+          is_multiline ? 'py-3 px-3' : 'py-1.5 px-2',
+          palette ? 'bg-accent text-on-accent' : 'bg-surface text-ink'
+        ]"
       >
         <slot name="tooltip">{{ text }}</slot>
       </div>

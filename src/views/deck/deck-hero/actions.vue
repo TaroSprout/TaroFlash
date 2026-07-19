@@ -67,7 +67,6 @@ const edit_label = computed(() => {
         :icon-left="is_active_mode ? 'stop' : 'edit'"
         :data-theme="is_active_mode ? 'yellow-500' : 'brown-300'"
         :data-theme-dark="is_active_mode ? 'yellow-700' : 'stone-700'"
-        trigger-theme="brown-200"
         full-width
         size="xl"
         :disabled="isSelecting"

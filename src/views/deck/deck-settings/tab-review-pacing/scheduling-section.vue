@@ -76,8 +76,6 @@ const {
       <ui-select-menu
         data-theme="brown-100"
         data-theme-dark="stone-900"
-        menu-theme="brown-100"
-        menu-theme-dark="stone-700"
         v-model="learning_steps.value.value"
         :options="learning_steps.options.value"
         class="w-32"
@@ -93,8 +91,6 @@ const {
       <ui-select-menu
         data-theme="brown-100"
         data-theme-dark="stone-900"
-        menu-theme="brown-100"
-        menu-theme-dark="stone-700"
         v-model="relearning_steps.value.value"
         :options="relearning_steps.options.value"
         class="w-32"

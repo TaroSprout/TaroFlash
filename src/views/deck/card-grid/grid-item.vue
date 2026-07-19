@@ -138,9 +138,6 @@ watch(
       ref="dropdown"
       trigger-only
       :trigger-icon="dropdown?.open ? 'close' : 'more'"
-      trigger-theme="brown-300"
-      trigger-theme-dark="stone-900"
-      menu-theme-dark="stone-900"
       position="bottom-end"
       class="absolute -top-1 -right-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto data-[active=true]:opacity-100 data-[active=true]:pointer-events-auto [&>button]:ring-4 [&>button]:ring-brown-100 dark:[&>button]:ring-stone-950"
       :options="menu_options"

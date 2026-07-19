@@ -77,8 +77,6 @@ function onSelect(option: DropdownOption) {
     data-testid="preset-chip"
     data-theme="brown-100"
     data-theme-dark="stone-700"
-    menu-theme="brown-100"
-    menu-theme-dark="stone-700"
     size="sm"
     open-on-trigger
     :disabled="busy"

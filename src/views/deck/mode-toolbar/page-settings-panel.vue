@@ -100,9 +100,6 @@ const sort_options = [
         <ui-select-menu
           data-theme="brown-100"
           data-theme-dark="stone-700"
-          trigger-theme="blue-500"
-          trigger-theme-dark="blue-650"
-          menu-theme-dark="stone-700"
           size="base"
           :options="sort_options"
           :model-value="sort_by"

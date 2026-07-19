@@ -73,8 +73,6 @@ function onSelect(option: DropdownOption) {
     data-theme-dark="blue-650"
     :icon-left="already_a_card ? 'check' : 'card-add'"
     size="base"
-    menu-theme="brown-100"
-    menu-theme-dark="stone-700"
     position="bottom-end"
     play-on-tap
     :tap-animate="false"

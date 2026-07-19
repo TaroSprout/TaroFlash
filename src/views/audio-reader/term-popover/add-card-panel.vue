@@ -163,8 +163,6 @@ async function onSave() {
         class="justify-self-center"
         data-theme="brown-700"
         data-theme-dark="brown-100"
-        menu-theme="brown-100"
-        menu-theme-dark="stone-700"
         variant="ghost"
         size="base"
         position="bottom"

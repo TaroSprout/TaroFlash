@@ -42,7 +42,7 @@ function onInput() {
     :text="error"
     :visible="!!error"
     :suppress="!error"
-    theme="red-500"
+    :data-palette="error ? 'danger' : undefined"
     position="top-end"
     :gap="-14"
     :class="[

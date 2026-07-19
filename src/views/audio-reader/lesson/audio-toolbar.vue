@@ -208,8 +208,6 @@ function setMode(next: 'expanded' | 'mini') {
             data-theme="brown-700"
             data-theme-dark="brown-100"
             icon-left="browser-content"
-            menu-theme="brown-100"
-            menu-class="border-1 border-brown-300 dark:border-stone-950"
             variant="ghost"
             open-on-trigger
             hide-trigger
@@ -232,7 +230,6 @@ function setMode(next: 'expanded' | 'mini') {
             data-theme="brown-700"
             data-theme-dark="brown-100"
             icon-left="stopwatch"
-            menu-theme="brown-100"
             variant="ghost"
             open-on-trigger
             hide-trigger
