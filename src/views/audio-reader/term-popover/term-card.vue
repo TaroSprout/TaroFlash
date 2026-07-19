@@ -15,32 +15,27 @@ const DIFFICULTY_TIERS = [
   {
     max: 2,
     key: 'audio-reader.popover.difficulty-beginner',
-    theme: 'green-400',
-    theme_dark: 'green-600'
+    palette: 'green'
   },
   {
     max: 4,
     key: 'audio-reader.popover.difficulty-elementary',
-    theme: 'green-400',
-    theme_dark: 'green-600'
+    palette: 'green'
   },
   {
     max: 6,
     key: 'audio-reader.popover.difficulty-intermediate',
-    theme: 'yellow-500',
-    theme_dark: 'yellow-700'
+    palette: 'yellow'
   },
   {
     max: 8,
     key: 'audio-reader.popover.difficulty-advanced',
-    theme: 'red-500',
-    theme_dark: 'red-600'
+    palette: 'red'
   },
   {
     max: 10,
     key: 'audio-reader.popover.difficulty-expert',
-    theme: 'red-500',
-    theme_dark: 'red-600'
+    palette: 'red'
   }
 ]
 
@@ -250,8 +245,7 @@ watch(
           <template #end>
             <ui-tag
               v-if="difficulty_tier"
-              :data-theme="difficulty_tier.theme"
-              :data-theme-dark="difficulty_tier.theme_dark"
+              :data-palette="difficulty_tier.palette"
               class="shrink-0 bgx-diagonal-stripes"
               >{{ t(difficulty_tier.key) }}</ui-tag
             >

@@ -46,17 +46,16 @@ function onSelect() {
     data-testid="options-panel__card"
     :data-value="entry.value"
     :data-active="entry.selected || null"
-    :data-theme="entry.selected ? entry.selectedTheme : undefined"
-    :data-theme-dark="entry.selected ? entry.selectedThemeDark : undefined"
+    :data-palette="entry.selected ? entry.selectedPalette : undefined"
     class="text-left flex items-center gap-3 py-3 px-5 [&:first-child:not(:only-child)]:pt-5 [&:first-child:not(:only-child)]:pb-2.5 [&:last-child:not(:only-child)]:pb-5 [&:last-child:not(:only-child)]:pt-2.5 rounded-3"
     :class="[
       entry.danger
         ? 'text-red-500 dark:text-red-600 [--row-bgx:var(--color-red-500)] dark:[--row-bgx:var(--color-red-400)]'
-        : 'text-ink [&[data-theme]]:text-(--theme-on-primary) [&[data-palette]]:text-(--color-on-accent)',
+        : 'text-ink [&[data-palette]]:text-(--color-on-accent)',
       interactive ? 'cursor-pointer' : '',
       entry.disabled ? 'pointer-events-none opacity-20' : '',
       interactive &&
-        'data-[active=true]:bg-element [&[data-theme][data-active=true]]:bg-(--theme-primary) [&[data-palette][data-active=true]]:bg-(--color-accent)'
+        'data-[active=true]:bg-element [&[data-palette][data-active=true]]:bg-(--color-accent)'
     ]"
     :bgx_color="
       interactive ? (entry.danger ? 'var(--row-bgx)' : 'var(--color-element)') : undefined

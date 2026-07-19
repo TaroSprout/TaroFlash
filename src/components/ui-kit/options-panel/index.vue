@@ -13,11 +13,9 @@ export type OptionsPanelEntry = {
   // renders the row's icon + label in the danger red, for destructive options
   danger?: boolean
   selected?: boolean
-  // data-theme/data-theme-dark applied while selected; the selected background
-  // reads off this theme's --theme-primary, so omitting it falls back to the
-  // panel's own ambient theme
-  selectedTheme?: string
-  selectedThemeDark?: string
+  // data-palette applied while selected; the selected background reads off this
+  // palette's --color-accent, so omitting it falls back to the panel's ambient.
+  selectedPalette?: Palette
 }
 
 type OptionsPanelProps = {
