@@ -82,13 +82,7 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
         let same = true
         for (const [k, v] of next) {
           const p = prev.get(k)
-          if (
-            !p ||
-            p.lo !== v.lo ||
-            p.hi !== v.hi ||
-            p.theme !== v.theme ||
-            p.theme_dark !== v.theme_dark
-          ) {
+          if (!p || p.lo !== v.lo || p.hi !== v.hi || p.palette !== v.palette) {
             same = false
             break
           }
@@ -126,7 +120,7 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
   function themeMatch(match: CardMatch): CardMatch {
     const ids = new Set(match.deck_ids)
     const cover = decks.value?.find((deck) => ids.has(deck.id))?.cover_config
-    return { ...match, theme: cover?.theme, theme_dark: cover?.theme_dark }
+    return { ...match, palette: cover?.palette }
   }
 
   /**

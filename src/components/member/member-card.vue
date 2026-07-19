@@ -50,7 +50,7 @@ provideDepth(1)
     <div
       data-testid="member-card__body"
       v-bind="body_bindings"
-      class="wave-top-[40px] flex h-full flex-col items-center gap-4 bg-(--theme-primary) px-8 pt-9 pb-3"
+      class="wave-top-[40px] flex h-full flex-col items-center gap-4 bg-(--color-accent) px-8 pt-9 pb-3"
     >
       <div data-testid="member-card__avatar" class="flex h-full flex-col justify-center">
         <div class="relative">

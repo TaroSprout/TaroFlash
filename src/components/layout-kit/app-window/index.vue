@@ -11,8 +11,7 @@ import { nextDepth, provideDepth, useAmbientDepth } from '@/composables/ui/depth
 import UiButton from '@/components/ui-kit/button.vue'
 
 type WindowPatternConfig = {
-  theme?: Theme
-  theme_dark?: Theme
+  palette?: IdentityName
   pattern?: DeckCoverPattern
   pattern_size?: string
   pattern_opacity?: string
@@ -69,7 +68,7 @@ const show_builtin_close = computed(() => show_close_button && !slots.header)
 const header_bindings = computed(() =>
   coverBindings(
     {
-      theme: pattern_config?.theme,
+      palette: pattern_config?.palette,
       pattern: pattern_config?.pattern
     },
     {

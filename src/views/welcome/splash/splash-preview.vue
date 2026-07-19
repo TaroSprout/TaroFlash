@@ -10,8 +10,7 @@ const is_below_lg = useMatchMedia('w<lg')
 const preview_side = ref<CardSide>('cover')
 
 const preview_cover: DeckCover = {
-  theme: 'red-500',
-  theme_dark: 'red-600',
+  palette: 'red',
   pattern: 'endless-clouds',
   icon: 'logo'
 }

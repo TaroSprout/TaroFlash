@@ -7,21 +7,23 @@ const { cover } = defineProps<{
   cover?: DeckCover
 }>()
 
-const bindings = computed(() =>
-  coverBindings(cover, { fallbackTheme: 'purple-500', border: false })
-)
+// A cover with no chosen identity renders NEUTRAL chrome (the `element` role),
+// not an accent — this is what a loading skeleton or an un-themed deck wants.
+// `coverBindings` emits `data-palette` only when a palette is set, so the
+// `:not([data-palette])` rules below pick up the neutral case for free.
+const bindings = computed(() => coverBindings(cover, { border: false }))
 </script>
 
 <template>
   <div
     data-testid="card-cover"
     v-bind="bindings"
-    class="card-cover bg-(--theme-primary) flex items-center justify-center text-(--theme-on-primary)"
+    class="card-cover bg-(--color-accent) text-(--color-on-accent) not-[[data-palette]]:bg-element not-[[data-palette]]:text-on-element flex items-center justify-center"
   >
     <div
       v-if="cover?.icon"
       data-testid="card-cover__icon"
-      class="[&>svg]:w-full [&>svg]:h-full text-(--theme-accent)"
+      class="card-cover__icon [&>svg]:w-full [&>svg]:h-full text-(--color-accent-muted)"
       style="width: var(--cover-icon-size); height: var(--cover-icon-size)"
     >
       <ui-icon :src="cover.icon" />
@@ -35,7 +37,16 @@ const bindings = computed(() =>
   height: 100%;
   border-radius: var(--face-radius);
   box-sizing: border-box;
-  border: var(--face-border-width) solid var(--theme-primary);
+  border: var(--face-border-width) solid var(--color-accent);
+}
+
+/* No palette → neutral cover: the border and icon step off the accent onto the
+   `element` chrome roles, matching the neutral fill above. */
+.card-cover:not([data-palette]) {
+  border-color: var(--color-element);
+}
+.card-cover:not([data-palette]) .card-cover__icon {
+  color: var(--color-on-element);
 }
 
 /* Tiny cards shrink the pattern tile via --card-pattern-scale (set by the

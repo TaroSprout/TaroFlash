@@ -145,7 +145,7 @@ function measureScrollMargin() {
 // reactive inject. With large transcripts (1000+ words) the inject chain caused
 // every word to re-render whenever `matches` got a new Map reference — e.g. each
 // time Pinia Colada re-fetched decks after the term card mounted. Painting
-// data-highlight + data-theme + the lead/core/trail underline split directly
+// data-highlight + data-palette + the lead/core/trail underline split directly
 // bypasses Vue's scheduler entirely for this update path.
 function paintMatchedWords(m: Map<number, CardMatch>) {
   const container = content.value
@@ -160,8 +160,7 @@ function paintMatchedWords(m: Map<number, CardMatch>) {
   // Clear previously highlighted words.
   container.querySelectorAll<HTMLElement>('[data-highlight]').forEach((el) => {
     el.removeAttribute('data-highlight')
-    el.removeAttribute('data-theme')
-    el.removeAttribute('data-theme-dark')
+    el.removeAttribute('data-palette')
     const base = el.querySelector<HTMLElement>('[data-word-base]')
     if (base) base.textContent = el.dataset.wordText ?? ''
   })
@@ -178,8 +177,7 @@ function paintMatchedWords(m: Map<number, CardMatch>) {
     const core = display.slice(lead.length, display.length - trail.length)
 
     el.setAttribute('data-highlight', 'true')
-    if (match.theme) el.setAttribute('data-theme', match.theme)
-    if (match.theme_dark) el.setAttribute('data-theme-dark', match.theme_dark)
+    if (match.palette) el.setAttribute('data-palette', match.palette)
 
     const base = el.querySelector<HTMLElement>('[data-word-base]')
     if (!base) continue
@@ -187,7 +185,7 @@ function paintMatchedWords(m: Map<number, CardMatch>) {
     if (lead) base.appendChild(document.createTextNode(lead))
     const core_span = document.createElement('span')
     core_span.className =
-      'underline decoration-(--theme-primary) decoration-3 underline-offset-[0.18em]'
+      'underline decoration-(--color-accent) decoration-3 underline-offset-[0.18em]'
     core_span.textContent = core
     base.appendChild(core_span)
     if (trail) base.appendChild(document.createTextNode(trail))

@@ -12,8 +12,6 @@ type CardGridSkeletonProps = {
 const { shimmer = true, size = 'md', count = 40 } = defineProps<CardGridSkeletonProps>()
 
 const DEFAULT_COVER: DeckCover = {
-  theme: 'brown-300',
-  theme_dark: 'stone-900',
   pattern: 'diagonal-stripes'
 }
 

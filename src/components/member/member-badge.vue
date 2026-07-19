@@ -36,7 +36,7 @@ function onEditAvatar(e: MouseEvent) {
     data-testid="member-badge"
     v-bind="body_bindings"
     style="--badge-radius: 42px; --badge-padding: 14px"
-    class="card-outline pointer-fine:hover:scale-101 data-[tap-active=true]:scale-101 pointer-coarse:data-[tap-active=true]:scale-105 pointer-fine:transition-transform duration-75 cursor-pointer touch-manipulation select-none flex items-center gap-4 rounded-(--badge-radius) p-(--badge-padding) bg-(--theme-primary)"
+    class="card-outline pointer-fine:hover:scale-101 data-[tap-active=true]:scale-101 pointer-coarse:data-[tap-active=true]:scale-105 pointer-fine:transition-transform duration-75 cursor-pointer touch-manipulation select-none flex items-center gap-4 rounded-(--badge-radius) p-(--badge-padding) bg-(--color-accent)"
     @tap="emit('click', $event)"
   >
     <div data-testid="member-badge__avatar" class="relative shrink-0">

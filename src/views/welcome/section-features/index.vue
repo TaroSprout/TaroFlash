@@ -31,8 +31,7 @@ const features: Feature[] = [
     accent: 'var(--color-purple-500)',
     accent_dark: 'var(--color-purple-700)',
     cover: {
-      theme: 'purple-500',
-      theme_dark: 'purple-700',
+      palette: 'purple',
       pattern: 'diagonal-stripes',
       icon: 'paint-brush'
     }
@@ -43,8 +42,7 @@ const features: Feature[] = [
     accent: 'var(--color-green-500)',
     accent_dark: 'var(--color-green-800)',
     cover: {
-      theme: 'green-500',
-      theme_dark: 'green-800',
+      palette: 'green',
       pattern: 'squiggle',
       icon: 'mobile-phone'
     }
@@ -54,7 +52,7 @@ const features: Feature[] = [
     icon: 'clock',
     accent: 'var(--color-pink-500)',
     accent_dark: 'var(--color-pink-700)',
-    cover: { theme: 'pink-500', theme_dark: 'pink-700', pattern: 'aztec', icon: 'clock' }
+    cover: { palette: 'pink', pattern: 'aztec', icon: 'clock' }
   },
   {
     key: 'upcoming',
@@ -62,8 +60,7 @@ const features: Feature[] = [
     accent: 'var(--color-yellow-500)',
     accent_dark: 'var(--color-yellow-700)',
     cover: {
-      theme: 'yellow-500',
-      theme_dark: 'yellow-700',
+      palette: 'yellow',
       pattern: 'bank-note',
       icon: 'shooting-star'
     }

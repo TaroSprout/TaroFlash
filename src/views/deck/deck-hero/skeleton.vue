@@ -2,8 +2,6 @@
 import Card from '@/components/card/index.vue'
 
 const DEFAULT_COVER: DeckCover = {
-  theme: 'brown-300',
-  theme_dark: 'stone-900',
   pattern: 'diagonal-stripes'
 }
 </script>

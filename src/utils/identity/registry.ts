@@ -6,7 +6,7 @@
  * lockstep with the `IdentityName` union — adding a union member without an
  * entry here (or dropping a role from a rendition) is a compile error.
  *
- * The pairs mirror `SUPPORTED_THEMES` in src/utils/cover/tokens.ts, which is the
+ * The palette set mirrors `SUPPORTED_PALETTES` in src/utils/cover/tokens.ts, which is the
  * real identity set. The other palettes in src/styles/palettes.css are chrome
  * squatting in the theme layer and are retired separately.
  *

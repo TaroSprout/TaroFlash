@@ -85,13 +85,7 @@ type DeckCoverPattern =
   | 'squiggle'
 
 type DeckCover = {
-  theme?: Theme
-  theme_dark?: Theme
+  palette?: IdentityName
   pattern?: DeckCoverPattern
   icon?: string
-}
-
-type DeckTheme = {
-  light: Theme
-  dark?: Theme
 }
