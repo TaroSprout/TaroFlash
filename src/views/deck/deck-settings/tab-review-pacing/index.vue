@@ -19,12 +19,12 @@ import DeckSaveButton from '../deck-save-button.vue'
 // (its -1 pseudo-element needs the stacking context), which traps the steps
 // dropdowns' popovers inside the panel. `z-10` lifts that whole context above
 // the save button below it, which would otherwise paint over an open menu.
-const { deck, draft } = inject(deckEditorKey)!
+const editor = inject(deckEditorKey)!
 
-const pacing = usePacingFields(deck!, draft)
+const pacing = usePacingFields(editor.deck!, editor.draft)
 
 provide(pacingFieldsKey, pacing)
-provide(presetActionsKey, usePresetActions(pacing, draft, deck!))
+provide(presetActionsKey, usePresetActions(pacing, editor))
 </script>
 
 <template>
