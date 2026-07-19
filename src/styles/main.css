@@ -81,13 +81,9 @@
   --theme-neutral: var(--color-brown-100);
   --theme-on-neutral: var(--color-stone-950);
 
-  /* Semantic surface tokens — neutral chrome backgrounds that swap in dark mode. */
-  --color-input: var(--color-brown-100);
-
   /* Neutral role slots. Registering them here is what makes bg-surface,
      bg-below, bg-panel, bg-float, bg-overlay, text-ink, text-ink-muted and the
-     ring-/outline-/border-below utilities resolve (same mechanism as
-     --color-input -> bg-input above).
+     ring-/outline-/border-below utilities resolve as Tailwind colour utilities.
 
      These values are the depth-0 light defaults. src/styles/depth.css
      overrides them per data-depth x data-mode; identity roles (--color-accent
@@ -292,12 +288,6 @@
     html {
       scrollbar-width: none;
     }
-  }
-
-  /* DARK MODE EXPLICIT OVERRIDES */
-  /* Warning: This is global and will affect everything */
-  &:where([data-theme='dark'], [data-theme='dark'] *) {
-    --color-input: var(--color-stone-500);
   }
 
   html:where([data-theme='dark']) {

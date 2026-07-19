@@ -10,7 +10,7 @@
 import { writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
-import { IDENTITIES } from '../src/utils/identity/registry.ts'
+import { IDENTITIES, SEMANTIC_IDENTITIES } from '../src/utils/identity/registry.ts'
 
 const OUT = fileURLToPath(new URL('../src/styles/identities.gen.css', import.meta.url))
 
@@ -27,10 +27,27 @@ const HEADER = `/* GENERATED FILE — DO NOT EDIT.
  * scoped under \`data-mode='dark'\`. Both the descendant and the self form of the
  * dark selector are listed so the palette resolves whether \`data-palette\` sits
  * on a child of the moded root or on the root itself.
+ *
+ * Semantic aliases (\`danger\`, \`info\`, ...) join the selector list of the
+ * identity they point at, so \`data-palette='danger'\` is valid markup and stays
+ * a true alias — repointing it in the registry moves every call site at once.
  */
 `
 
-function block(selector: string, rendition: IdentityRendition): string {
+/** Every data-palette value that resolves to `identity`: the name plus its aliases. */
+function paletteNames(identity: string): string[] {
+  const aliases = Object.entries(SEMANTIC_IDENTITIES)
+    .filter(([, target]) => target === identity)
+    .map(([alias]) => alias)
+
+  return [identity, ...aliases]
+}
+
+function block(prefixes: string[], identity: string, rendition: IdentityRendition): string {
+  const selector = prefixes
+    .flatMap((prefix) => paletteNames(identity).map((name) => `${prefix}[data-palette='${name}']`))
+    .join(',\n')
+
   return [
     `${selector} {`,
     `  --color-accent: var(--color-${rendition.accent});`,
@@ -41,11 +58,8 @@ function block(selector: string, rendition: IdentityRendition): string {
 }
 
 const blocks = Object.entries(IDENTITIES).flatMap(([name, definition]) => [
-  block(`[data-palette='${name}']`, definition.light),
-  block(
-    `[data-mode='dark'] [data-palette='${name}'],\n[data-mode='dark'][data-palette='${name}']`,
-    definition.dark
-  )
+  block([''], name, definition.light),
+  block(["[data-mode='dark'] ", "[data-mode='dark']"], name, definition.dark)
 ])
 
 writeFileSync(OUT, `${HEADER}\n${blocks.join('\n\n')}\n`)

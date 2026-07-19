@@ -23,7 +23,7 @@ const fill_width = computed(() => {
     :aria-valuemin="0"
     :aria-valuemax="max"
     :aria-valuenow="value"
-    class="bg-input relative h-9 w-full overflow-hidden rounded-full"
+    class="bg-below relative h-9 w-full overflow-hidden rounded-full"
   >
     <div
       data-testid="ui-kit-progress-bar__fill"

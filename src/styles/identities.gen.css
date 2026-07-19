@@ -11,55 +11,77 @@
  * scoped under `data-mode='dark'`. Both the descendant and the self form of the
  * dark selector are listed so the palette resolves whether `data-palette` sits
  * on a child of the moded root or on the root itself.
+ *
+ * Semantic aliases (`danger`, `info`, ...) join the selector list of the
+ * identity they point at, so `data-palette='danger'` is valid markup and stays
+ * a true alias — repointing it in the registry moves every call site at once.
  */
 
-[data-palette='blue'] {
+[data-palette='blue'],
+[data-palette='brand'],
+[data-palette='info'] {
   --color-accent: var(--color-blue-500);
   --color-accent-muted: var(--color-blue-400);
   --color-on-accent: var(--color-brown-100);
 }
 
 [data-mode='dark'] [data-palette='blue'],
-[data-mode='dark'][data-palette='blue'] {
+[data-mode='dark'] [data-palette='brand'],
+[data-mode='dark'] [data-palette='info'],
+[data-mode='dark'][data-palette='blue'],
+[data-mode='dark'][data-palette='brand'],
+[data-mode='dark'][data-palette='info'] {
   --color-accent: var(--color-blue-650);
   --color-accent-muted: var(--color-blue-500);
   --color-on-accent: var(--color-brown-100);
 }
 
-[data-palette='red'] {
+[data-palette='red'],
+[data-palette='danger'],
+[data-palette='error'] {
   --color-accent: var(--color-red-500);
   --color-accent-muted: var(--color-red-400);
   --color-on-accent: var(--color-white);
 }
 
 [data-mode='dark'] [data-palette='red'],
-[data-mode='dark'][data-palette='red'] {
+[data-mode='dark'] [data-palette='danger'],
+[data-mode='dark'] [data-palette='error'],
+[data-mode='dark'][data-palette='red'],
+[data-mode='dark'][data-palette='danger'],
+[data-mode='dark'][data-palette='error'] {
   --color-accent: var(--color-red-600);
   --color-accent-muted: var(--color-red-500);
   --color-on-accent: var(--color-white);
 }
 
-[data-palette='green'] {
+[data-palette='green'],
+[data-palette='success'] {
   --color-accent: var(--color-green-500);
   --color-accent-muted: var(--color-green-400);
   --color-on-accent: var(--color-brown-100);
 }
 
 [data-mode='dark'] [data-palette='green'],
-[data-mode='dark'][data-palette='green'] {
+[data-mode='dark'] [data-palette='success'],
+[data-mode='dark'][data-palette='green'],
+[data-mode='dark'][data-palette='success'] {
   --color-accent: var(--color-green-800);
   --color-accent-muted: var(--color-green-600);
   --color-on-accent: var(--color-brown-300);
 }
 
-[data-palette='yellow'] {
+[data-palette='yellow'],
+[data-palette='warning'] {
   --color-accent: var(--color-yellow-500);
   --color-accent-muted: var(--color-yellow-400);
   --color-on-accent: var(--color-brown-700);
 }
 
 [data-mode='dark'] [data-palette='yellow'],
-[data-mode='dark'][data-palette='yellow'] {
+[data-mode='dark'] [data-palette='warning'],
+[data-mode='dark'][data-palette='yellow'],
+[data-mode='dark'][data-palette='warning'] {
   --color-accent: var(--color-yellow-700);
   --color-accent-muted: var(--color-yellow-500);
   --color-on-accent: var(--color-brown-100);

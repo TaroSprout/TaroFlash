@@ -74,23 +74,14 @@ function increment() {
 </script>
 
 <template>
-  <div
-    data-testid="ui-kit-spinbox-container"
-    class="flex gap-1 w-max"
-    data-theme="brown-100"
-    data-theme-dark="stone-700"
-  >
-    <label
-      v-if="label"
-      data-testid="ui-kit-spinbox__label"
-      class="text-brown-700 dark:text-brown-100"
-    >
+  <div data-testid="ui-kit-spinbox-container" class="flex gap-1 w-max">
+    <label v-if="label" data-testid="ui-kit-spinbox__label" class="text-ink">
       {{ label }}
     </label>
 
     <div
       data-testid="ui-kit-spinbox"
-      class="inline-flex items-center bg-(--theme-primary) rounded-4 p-1 gap-0.5"
+      class="inline-flex items-center bg-below rounded-4 p-1 gap-0.5"
     >
       <spinbox-button
         data-testid="ui-kit-spinbox__decrement"
@@ -104,7 +95,7 @@ function increment() {
           type="text"
           inputmode="numeric"
           data-testid="ui-kit-spinbox__input"
-          class="text-center tabular-nums text-brown-700 dark:text-brown-100 bg-transparent outline-none text-base px-2 w-12"
+          class="text-center tabular-nums text-ink bg-transparent outline-none text-base px-2 w-12"
           :value="display_value"
           :step="step"
           @beforeinput="onBeforeInput"

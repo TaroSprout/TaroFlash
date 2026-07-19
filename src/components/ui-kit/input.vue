@@ -22,8 +22,6 @@ const value = defineModel<string>('value')
 <template>
   <ui-tooltip
     element="label"
-    data-theme="brown-100"
-    data-theme-dark="stone-700"
     data-testid="ui-kit-input-container"
     class="ui-kit-input-container"
     :text="error"
@@ -40,7 +38,7 @@ const value = defineModel<string>('value')
     ]"
   >
     <span v-if="label">{{ label }}</span>
-    <div data-testid="ui-kit-input" class="ui-kit-input">
+    <div data-testid="ui-kit-input" class="ui-kit-input" :data-palette="error ? 'danger' : 'info'">
       <input
         v-bind="$attrs"
         v-sfx.focus="'type_05'"
@@ -76,11 +74,14 @@ const value = defineModel<string>('value')
 }
 
 .ui-kit-input-container span {
-  color: var(--color-brown-700);
+  color: var(--color-ink);
 }
 
+/* The field is a WELL — one step below whatever surface it sits on. It used to
+   fake `data-theme="brown-100"` to get a neutral fill, which overwrote the real
+   identity for everything inside it. */
 .ui-kit-input {
-  background-color: var(--theme-primary);
+  background-color: var(--color-below);
   border-radius: var(--radius-4);
   width: 100%;
   padding: 12px 16px;
@@ -91,28 +92,32 @@ const value = defineModel<string>('value')
   position: relative;
 }
 
-.ui-kit-input:focus-within {
-  outline-color: var(--color-blue-500);
-}
-
+/* Both rings read --color-accent; the element carries data-palette="info"
+   normally and "danger" while errored, so the meaning lives in the markup and
+   the colour comes from the identity registry. */
+.ui-kit-input:focus-within,
 .ui-kit-input-container--error .ui-kit-input {
-  outline-color: var(--color-red-500);
+  outline-color: var(--color-accent);
 }
 
 .ui-kit-input input {
-  border-bottom: 1px dashed var(--theme-neutral);
+  border-bottom: 1px dashed var(--color-ink);
   outline: none;
   background: transparent;
-  color: var(--theme-on-primary);
+  color: var(--color-ink);
 
   width: 100%;
   min-width: 0;
 }
+/* The underline is state-driven ink: it recedes while the field is empty. */
+.ui-kit-input input:placeholder-shown {
+  border-bottom-color: var(--color-ink-muted);
+}
 .ui-kit-input input::placeholder {
-  color: var(--color-brown-500);
+  color: var(--color-ink-muted);
 }
 .ui-kit-input input:disabled {
-  color: var(--color-brown-500);
+  color: var(--color-ink-muted);
 }
 .ui-kit-input input:autofill,
 .ui-kit-input input:autofill:hover,
@@ -120,11 +125,7 @@ const value = defineModel<string>('value')
 .ui-kit-input input::-webkit-autofill,
 .ui-kit-input input::-webkit-autofill:hover,
 .ui-kit-input input::-webkit-autofill:focus {
-  box-shadow: 0 0 0px 1000px var(--theme-primary) inset;
-}
-
-:where([data-theme='dark'], [data-theme='dark'] *) .ui-kit-input-container span {
-  color: var(--color-brown-100);
+  box-shadow: 0 0 0px 1000px var(--color-below) inset;
 }
 
 .ui-kit-input-container--text-left input {

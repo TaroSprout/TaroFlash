@@ -113,7 +113,7 @@ const KEY_DELTAS: Record<string, number> = {
     :aria-valuemax="max"
     :aria-valuenow="value"
     :data-active="is_dragging"
-    class="relative h-12 w-full select-none overflow-hidden rounded-4 bg-input touch-none outline-none"
+    class="relative h-12 w-full select-none overflow-hidden rounded-4 bg-below touch-none outline-none"
     :class="is_dragging ? 'cursor-grabbing' : 'cursor-grab'"
     @keydown="onKeydown"
   >
@@ -148,13 +148,13 @@ const KEY_DELTAS: Record<string, number> = {
       <span
         v-if="label"
         data-testid="ui-kit-slider__label"
-        class="flex items-center self-stretch bg-input px-1"
+        class="flex items-center self-stretch bg-below px-1"
       >
         {{ label }}
       </span>
       <span
         data-testid="ui-kit-slider__value"
-        class="flex items-center self-stretch bg-input px-1 tabular-nums"
+        class="flex items-center self-stretch bg-below px-1 tabular-nums"
       >
         {{ value }}
       </span>
