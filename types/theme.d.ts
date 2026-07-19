@@ -43,6 +43,7 @@ type ColorToken =
   | 'red-300'
   | 'orange-700'
   | 'orange-500'
+  | 'orange-400'
   | 'yellow-700'
   | 'yellow-500'
   | 'yellow-400'

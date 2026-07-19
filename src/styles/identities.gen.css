@@ -93,7 +93,7 @@
 
 [data-palette='orange'] {
   --color-accent: var(--color-orange-500);
-  --color-accent-muted: var(--color-yellow-500);
+  --color-accent-muted: var(--color-orange-400);
   --color-on-accent: var(--color-brown-100);
 }
 

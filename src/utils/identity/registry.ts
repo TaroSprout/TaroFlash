@@ -18,12 +18,12 @@
  * hue family and are corrected here:
  *
  *   yellow.dark   palettes.css uses orange-500 -> corrected to yellow-500
- *   orange.light  palettes.css uses yellow-500 -> NO in-hue lighter step exists
+ *   orange.light  palettes.css uses yellow-500 -> corrected to orange-400
  *
- * The orange gap is real: the orange family only defines 700 and 500, so
- * `orange.light.accentMuted` has nowhere in-hue to go. It keeps the historical
- * yellow-500 rather than inventing a hex; adding an `orange-400` step would let
- * it be corrected in place.
+ * `orange-400` was added to the @theme scale in main.css for that second case:
+ * the family previously stopped at 500, so the muted step had nowhere in-hue to
+ * go and borrowed yellow. The new step matches the 500 -> 400 lightness delta of
+ * the other warm families (red, pink).
  *
  * After editing this file run `pnpm gen:identity-css` to regenerate
  * src/styles/identities.gen.css.
@@ -55,8 +55,7 @@ export const IDENTITIES = {
     dark: { accent: 'pink-700', accentMuted: 'pink-500', onAccent: 'brown-100' }
   },
   orange: {
-    // No in-hue step lighter than orange-500 exists — see the note above.
-    light: { accent: 'orange-500', accentMuted: 'yellow-500', onAccent: 'brown-100' },
+    light: { accent: 'orange-500', accentMuted: 'orange-400', onAccent: 'brown-100' },
     dark: { accent: 'orange-700', accentMuted: 'orange-500', onAccent: 'brown-100' }
   }
 } satisfies Record<IdentityName, IdentityDefinition>
