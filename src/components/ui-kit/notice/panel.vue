@@ -79,10 +79,9 @@ function onActionClick(action: NoticeAction) {
       class="group/notice-panel rounded-4 bevel-drop-sm pointer-events-auto relative flex w-96 max-w-full flex-col items-center gap-6 bg-float p-12 text-center"
     >
       <ui-button
+        neutral
         v-if="notice.closable"
         data-testid="ui-kit-notice-panel__close"
-        data-theme="brown-200"
-        data-theme-dark="stone-900"
         class="absolute! -top-2 -right-2 opacity-0 transition-opacity group-hover/notice-panel:opacity-100 group-focus-within/notice-panel:opacity-100 pointer-coarse:opacity-100"
         icon-only
         size="lg"
@@ -108,9 +107,8 @@ function onActionClick(action: NoticeAction) {
         class="w-full flex gap-2"
       >
         <ui-button
+          neutral
           v-for="action in notice.actions"
-          data-theme="brown-200"
-          data-theme-dark="stone-900"
           :key="action.label"
           full-width
           :sfx="{ press: action.sfx?.press ?? 'snappy_button_5' }"

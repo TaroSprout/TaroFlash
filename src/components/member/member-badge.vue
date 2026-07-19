@@ -47,10 +47,9 @@ function onEditAvatar(e: MouseEvent) {
       </div>
 
       <ui-button
+        neutral
         v-if="editable"
         data-testid="member-badge__avatar-edit"
-        data-theme="brown-100"
-        data-theme-dark="stone-700"
         icon-left="pencil"
         icon-only
         class="absolute! -top-2 -right-2"

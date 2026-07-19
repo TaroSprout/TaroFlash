@@ -53,10 +53,9 @@ const body_bindings = computed(() => memberCoverBindings(cover))
           </div>
 
           <ui-button
+            neutral
             v-if="editable"
             data-testid="member-card__avatar-edit"
-            data-theme="brown-50"
-            data-theme-dark="stone-700"
             icon-left="pencil"
             icon-only
             size="xl"

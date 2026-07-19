@@ -70,9 +70,8 @@ function onActionClick(action: NoticeAction) {
       class="col-span-2 w-full flex gap-1 justify-end"
     >
       <ui-button
+        neutral
         v-for="action in notice.actions"
-        data-theme="brown-200"
-        data-theme-dark="stone-900"
         :key="action.label"
         size="sm"
         :sfx="{ press: action.sfx?.press ?? 'snappy_button_5' }"
@@ -83,10 +82,9 @@ function onActionClick(action: NoticeAction) {
     </div>
 
     <ui-button
+      neutral
       v-if="notice.closable && !is_coarse"
       data-testid="ui-kit-notice-toast__close"
-      data-theme="brown-200"
-      data-theme-dark="stone-900"
       icon-only
       icon-left="close"
       class="absolute! -right-2 -top-2 opacity-0 transition-opacity group-hover/notice-toast:opacity-100 group-focus-within/notice-toast:opacity-100"

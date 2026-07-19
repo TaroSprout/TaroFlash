@@ -94,12 +94,7 @@ function onCancel() {
       />
 
       <div data-testid="ui-kit-prompt__actions" class="flex justify-end gap-2">
-        <ui-button
-          data-testid="ui-kit-prompt__cancel"
-          data-theme="brown-500"
-          variant="ghost"
-          @press="onCancel"
-        >
+        <ui-button neutral data-testid="ui-kit-prompt__cancel" variant="ghost" @press="onCancel">
           {{ cancelLabel ?? t('ui-kit.prompt.cancel') }}
         </ui-button>
 
