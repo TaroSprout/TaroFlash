@@ -10,7 +10,7 @@ const emit = defineEmits<{
 <template>
   <div
     data-testid="phone"
-    class="absolute border-t border-l border-brown-100 dark:border-stone-950 top-7 right-0 pointer-events-auto w-60 aspect-120/179 bg-brown-300 dark:bg-stone-900 shadow-sm rounded-16 group/phone z-10"
+    class="absolute top-7 right-0 pointer-events-auto w-60 aspect-120/179 bg-brown-300 dark:bg-stone-900 bevel-sm rounded-16 group/phone z-10"
   >
     <ui-button
       data-theme="brown-100"

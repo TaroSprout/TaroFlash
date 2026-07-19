@@ -52,7 +52,7 @@ function onActionClick(action: NoticeAction) {
     data-testid="ui-kit-notice-toast"
     :data-theme="NOTICE_THEME[notice.state]"
     :data-theme-dark="NOTICE_THEME_DARK[notice.state]"
-    class="group/notice-toast relative rounded-4 pointer-events-auto grid grid-cols-[auto_1fr] items-center w-full xs:w-72 gap-x-4 gap-y-3 bg-brown-50 dark:bg-stone-700 p-4 text-brown-700 dark:text-brown-100 drop-shadow-sm border-t border-l border-brown-200 dark:border-stone-950"
+    class="group/notice-toast relative rounded-4 pointer-events-auto grid grid-cols-[auto_1fr] items-center w-full xs:w-72 gap-x-4 gap-y-3 bg-brown-50 dark:bg-stone-700 p-4 text-brown-700 dark:text-brown-100 bevel-drop-sm"
   >
     <ui-icon
       :src="NOTICE_ICON[notice.state]"

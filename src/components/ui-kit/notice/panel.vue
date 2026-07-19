@@ -76,7 +76,7 @@ function onActionClick(action: NoticeAction) {
       data-testid="ui-kit-notice-panel"
       :data-theme="NOTICE_THEME[notice.state]"
       :data-theme-dark="NOTICE_THEME_DARK[notice.state]"
-      class="group/notice-panel rounded-4 drop-shadow-sm pointer-events-auto relative flex w-96 max-w-full flex-col items-center gap-6 bg-brown-50 dark:bg-stone-700 p-12 text-center border-t border-l border-brown-200 dark:border-stone-950"
+      class="group/notice-panel rounded-4 bevel-drop-sm pointer-events-auto relative flex w-96 max-w-full flex-col items-center gap-6 bg-brown-50 dark:bg-stone-700 p-12 text-center"
     >
       <ui-button
         v-if="notice.closable"

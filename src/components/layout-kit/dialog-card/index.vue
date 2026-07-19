@@ -124,9 +124,7 @@ defineExpose({ viewport })
       SIZE_CLASSES[size],
       bg_class,
       float_header ? 'grid-rows-[minmax(0,1fr)]' : 'grid-rows-[auto_minmax(0,1fr)]',
-      viewport === 'mobile'
-        ? 'h-full! w-full! rounded-none!'
-        : 'rounded-8 shadow-lg border-t border-l border-brown-100 dark:border-stone-950'
+      viewport === 'mobile' ? 'h-full! w-full! rounded-none!' : 'rounded-8 bevel-lg'
     ]"
     :style="card_style"
   >
