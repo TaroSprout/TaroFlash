@@ -11,16 +11,10 @@ const { t } = useI18n()
     class="h-full flex flex-col items-center justify-center gap-4 text-center"
   >
     <ui-icon src="party-popper" class="size-18 text-blue-500" />
-    <h2
-      data-testid="reset-password-modal__success-heading"
-      class="text-2xl text-brown-700 dark:text-brown-100"
-    >
+    <h2 data-testid="reset-password-modal__success-heading" class="text-2xl text-ink">
       {{ t('reset-password-modal.success-heading') }}
     </h2>
-    <p
-      data-testid="reset-password-modal__success-message"
-      class="text-brown-500 dark:text-brown-300"
-    >
+    <p data-testid="reset-password-modal__success-message" class="text-ink-muted">
       {{ t('reset-password-modal.success-message') }}
     </p>
   </div>

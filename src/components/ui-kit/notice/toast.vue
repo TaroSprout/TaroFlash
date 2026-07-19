@@ -52,7 +52,7 @@ function onActionClick(action: NoticeAction) {
     data-testid="ui-kit-notice-toast"
     :data-theme="NOTICE_THEME[notice.state]"
     :data-theme-dark="NOTICE_THEME_DARK[notice.state]"
-    class="group/notice-toast relative rounded-4 pointer-events-auto grid grid-cols-[auto_1fr] items-center w-full xs:w-72 gap-x-4 gap-y-3 bg-brown-50 dark:bg-stone-700 p-4 text-brown-700 dark:text-brown-100 bevel-drop-sm"
+    class="group/notice-toast relative rounded-4 pointer-events-auto grid grid-cols-[auto_1fr] items-center w-full xs:w-72 gap-x-4 gap-y-3 bg-float p-4 text-ink bevel-drop-sm"
   >
     <ui-icon
       :src="NOTICE_ICON[notice.state]"
@@ -61,7 +61,7 @@ function onActionClick(action: NoticeAction) {
 
     <div data-testid="ui-kit-notice-toast__body" class="flex flex-1 flex-col">
       <p class="text-lg">{{ notice.message }}</p>
-      <p class="text-brown-500" v-if="notice.subMessage">{{ notice.subMessage }}</p>
+      <p class="text-ink-muted" v-if="notice.subMessage">{{ notice.subMessage }}</p>
     </div>
 
     <div

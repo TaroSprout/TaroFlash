@@ -149,11 +149,7 @@ watch(
 </script>
 
 <template>
-  <div
-    ref="list_el"
-    data-testid="card-list"
-    class="w-full pb-24 pt-5 bg-brown-100 dark:bg-stone-950"
-  >
+  <div ref="list_el" data-testid="card-list" class="w-full pb-24 pt-5 bg-surface">
     <div
       data-testid="card-list__viewport"
       class="relative w-full mx-auto"
@@ -196,7 +192,7 @@ watch(
     <div
       v-if="isLoading"
       data-testid="card-list__loading"
-      class="w-full py-6 flex items-center justify-center text-brown-500"
+      class="w-full py-6 flex items-center justify-center text-ink-muted"
     >
       <span>{{ t('deck-view.card-editor.list.loading') }}</span>
     </div>

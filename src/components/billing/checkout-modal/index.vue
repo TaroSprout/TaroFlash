@@ -22,7 +22,6 @@ const { status, is_ready, onSubmit } = useCheckout(close)
   <dialog-card
     data-testid="checkout"
     class="pb-6"
-    bg_class="bg-brown-200 dark:bg-stone-900"
     size="md"
     data-theme="brown-300"
     data-theme-dark="stone-700"

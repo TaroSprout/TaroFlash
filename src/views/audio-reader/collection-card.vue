@@ -32,21 +32,15 @@ const { t } = useI18n()
         <ui-icon src="card-deck" class="h-5" />
       </span>
 
-      <span
-        data-testid="collection-card__title"
-        class="line-clamp-2 text-xl text-brown-700 dark:text-brown-200"
-      >
+      <span data-testid="collection-card__title" class="line-clamp-2 text-xl text-ink">
         {{ collection.title }}
       </span>
 
-      <span
-        data-testid="collection-card__count"
-        class="text-base text-brown-700 dark:text-brown-300"
-      >
+      <span data-testid="collection-card__count" class="text-base text-ink">
         {{ t('lesson-collections.card.count', { count: collection.lesson_count }) }}
       </span>
 
-      <span data-testid="collection-card__date" class="text-sm text-brown-500 dark:text-brown-300">
+      <span data-testid="collection-card__date" class="text-sm text-ink-muted">
         {{ formatShortDate(collection.created_at ?? '') }}
       </span>
     </button>

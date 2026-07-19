@@ -5,9 +5,7 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <div
-    class="p-8 w-full max-w-(--page-width) mx-auto text-brown-700 dark:text-brown-100 flex flex-col gap-8"
-  >
+  <div class="p-8 w-full max-w-(--page-width) mx-auto text-ink flex flex-col gap-8">
     <div>
       <h1 class="text-5xl">{{ t('privacy-policy.title') }}</h1>
       <p class="text-lg leading-relaxed">{{ t('privacy-policy.intro') }}</p>

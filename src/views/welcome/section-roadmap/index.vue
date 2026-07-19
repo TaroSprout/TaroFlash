@@ -41,7 +41,7 @@ const entries: OptionsPanelEntry[] = items.map((item) => ({
     class="w-full bg-green-500 dark:bg-green-800 flex justify-center"
   >
     <div
-      class="w-full flex flex-col gap-14 items-center py-30 px-4 sm:px-16 bg-brown-200 dark:bg-stone-900 wave-top-[30px]"
+      class="w-full flex flex-col gap-14 items-center py-30 px-4 sm:px-16 bg-panel wave-top-[30px]"
     >
       <section-header
         :heading="t('welcome-view.roadmap.heading')"
@@ -73,7 +73,7 @@ const entries: OptionsPanelEntry[] = items.map((item) => ({
           <span
             class="text-base"
             :class="
-              itemFor(entry.value).done ? 'text-green-600 dark:text-green-800' : 'text-brown-500'
+              itemFor(entry.value).done ? 'text-green-600 dark:text-green-800' : 'text-ink-muted'
             "
           >
             {{

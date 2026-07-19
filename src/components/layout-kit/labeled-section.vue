@@ -21,7 +21,7 @@ defineSlots<{
   >
     <div data-testid="labeled-section__heading" class="flex flex-col">
       <div data-testid="labeled-section__label-row" class="flex items-center justify-between gap-2">
-        <h3 data-testid="labeled-section__label" class="text-xl text-brown-700 dark:text-brown-100">
+        <h3 data-testid="labeled-section__label" class="text-xl text-ink">
           {{ label }}
         </h3>
         <div v-if="$slots.actions" data-testid="labeled-section__actions">
@@ -31,7 +31,7 @@ defineSlots<{
       <p
         v-if="description"
         data-testid="labeled-section__description"
-        class="text-sm text-brown-500"
+        class="text-sm text-ink-muted"
       >
         {{ description }}
       </p>

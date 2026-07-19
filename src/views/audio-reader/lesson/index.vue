@@ -204,9 +204,9 @@ onBeforeUnmount(() => {
       <div
         v-if="!ready"
         data-testid="lesson-view__loader"
-        class="fixed inset-x-0 top-(--nav-height) bottom-[var(--mobile-dock-height,0px)] z-20 flex items-center justify-center bg-brown-100 dark:bg-stone-950 sm:!bottom-0"
+        class="fixed inset-x-0 top-(--nav-height) bottom-[var(--mobile-dock-height,0px)] z-20 flex items-center justify-center bg-surface sm:!bottom-0"
       >
-        <ui-icon src="loading-dots" class="h-16 w-16 text-brown-700 dark:text-brown-100" />
+        <ui-icon src="loading-dots" class="h-16 w-16 text-ink" />
       </div>
     </transition>
 
@@ -216,12 +216,12 @@ onBeforeUnmount(() => {
     >
       <header data-testid="lesson-view__header" class="flex items-center justify-between gap-4">
         <div data-testid="lesson-view__heading" class="flex flex-col gap-1">
-          <h1 class="text-3xl text-brown-700 dark:text-brown-300">{{ lesson?.title }}</h1>
+          <h1 class="text-3xl text-ink">{{ lesson?.title }}</h1>
 
           <span
             v-if="chapter_of.total > 0"
             data-testid="lesson-view__chapter-of"
-            class="text-base text-brown-500 dark:text-brown-300"
+            class="text-base text-ink-muted"
           >
             {{ t('lesson-view.chapter-of', chapter_of) }}
           </span>
@@ -305,10 +305,7 @@ onBeforeUnmount(() => {
         data-testid="lesson-view__title"
         class="flex flex-col items-center px-4 pb-6 text-center xl:hidden"
       >
-        <h1
-          data-testid="lesson-view__title-text"
-          class="text-3xl text-brown-700 dark:text-brown-300"
-        >
+        <h1 data-testid="lesson-view__title-text" class="text-3xl text-ink">
           {{ lesson?.title }}
         </h1>
       </header>

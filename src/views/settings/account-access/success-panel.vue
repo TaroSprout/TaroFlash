@@ -19,11 +19,11 @@ onMounted(() => emitSfx('success_1'))
 
 <template>
   <div class="h-full flex flex-col items-center justify-center text-center gap-6">
-    <ui-icon :src="icon" class="size-12 text-brown-700 dark:text-brown-100" />
+    <ui-icon :src="icon" class="size-12 text-ink" />
 
     <div class="flex flex-col gap-2">
-      <p class="text-xl text-brown-700 dark:text-brown-100">{{ heading }}</p>
-      <p class="text-brown-500 dark:text-brown-300">{{ message }}</p>
+      <p class="text-xl text-ink">{{ heading }}</p>
+      <p class="text-ink-muted">{{ message }}</p>
     </div>
 
     <ui-button

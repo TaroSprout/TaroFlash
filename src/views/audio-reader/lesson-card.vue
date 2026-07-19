@@ -76,18 +76,11 @@ const error_label = computed(
         <ui-icon :src="status_icon" class="h-5" />
       </span>
 
-      <span
-        data-testid="lesson-card__title"
-        class="line-clamp-2 text-xl text-brown-700 dark:text-brown-200"
-      >
+      <span data-testid="lesson-card__title" class="line-clamp-2 text-xl text-ink">
         {{ lesson.title }}
       </span>
 
-      <span
-        v-if="is_ready"
-        data-testid="lesson-card__date"
-        class="text-sm text-brown-500 dark:text-brown-300"
-      >
+      <span v-if="is_ready" data-testid="lesson-card__date" class="text-sm text-ink-muted">
         {{ formatShortDate(lesson.created_at ?? '') }}
       </span>
 

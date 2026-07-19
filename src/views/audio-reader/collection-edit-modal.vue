@@ -149,11 +149,7 @@ watch(
           {{ t('collection-view.new-button') }}
         </ui-button>
 
-        <p
-          v-if="lessons.length === 0"
-          data-testid="collection-edit__empty"
-          class="text-brown-500 dark:text-brown-300"
-        >
+        <p v-if="lessons.length === 0" data-testid="collection-edit__empty" class="text-ink-muted">
           {{ t('collection-view.empty-fallback') }}
         </p>
 
@@ -173,11 +169,11 @@ watch(
         data-testid="collection-edit__danger-zone"
         class="flex flex-col gap-2 rounded-7 border border-red-300 p-4 dark:border-red-500/40"
       >
-        <h3 class="text-xl text-brown-700 dark:text-brown-200">
+        <h3 class="text-xl text-ink">
           {{ t('collection-edit.danger-zone.heading') }}
         </h3>
 
-        <p class="text-base text-brown-500 dark:text-brown-300">
+        <p class="text-base text-ink-muted">
           {{ t('collection-edit.danger-zone.description') }}
         </p>
 

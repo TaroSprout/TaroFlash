@@ -7,7 +7,7 @@ const { t } = useI18n()
 <template>
   <div
     data-testid="welcome-hero__copy"
-    class="flex flex-col gap-2 max-w-80 text-brown-700 dark:text-brown-100 text-center lg:text-left"
+    class="flex flex-col gap-2 max-w-80 text-ink text-center lg:text-left"
   >
     <h1 class="text-7xl font-bold">
       {{ t('welcome-view.hero.heading') }}

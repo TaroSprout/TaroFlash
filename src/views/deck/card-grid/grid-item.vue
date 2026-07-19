@@ -129,7 +129,7 @@ watch(
         data-theme-dark="blue-650"
         :checked="selected"
         :active="is_hovering"
-        class="outline-4 outline-brown-100 dark:outline-stone-950"
+        class="outline-4 outline-surface"
       />
     </div>
 

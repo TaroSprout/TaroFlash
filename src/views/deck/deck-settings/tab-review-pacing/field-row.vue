@@ -21,7 +21,7 @@ const { t } = useI18n()
 
 <template>
   <div data-testid="field-row" class="flex items-center justify-between gap-4 group">
-    <span data-testid="field-row__label" class="flex items-center gap-2 text-brown-500">
+    <span data-testid="field-row__label" class="flex items-center gap-2 text-ink-muted">
       {{ label }}
       <ui-tooltip
         v-if="tooltip"

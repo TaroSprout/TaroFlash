@@ -18,10 +18,7 @@ const entries = computed<OptionsPanelEntry[]>(() => [
 </script>
 
 <template>
-  <aside
-    data-testid="settings-aside"
-    class="h-full flex flex-col justify-end gap-4 text-brown-700 dark:text-brown-100 px-4"
-  >
+  <aside data-testid="settings-aside" class="h-full flex flex-col justify-end gap-4 text-ink px-4">
     <ui-options-panel
       data-testid="settings-aside__account-info"
       :entries="entries"

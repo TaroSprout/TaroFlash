@@ -33,7 +33,7 @@ const skeleton_size = computed<CardGridSize>(() => (is_compact.value ? 'base' : 
     >
       <div
         data-testid="card-grid-empty__content"
-        class="flex flex-col items-center gap-4 pointer-events-auto text-brown-700 dark:text-brown-100"
+        class="flex flex-col items-center gap-4 pointer-events-auto text-ink"
       >
         <ui-icon src="card-deck" class="w-16 h-16" />
 

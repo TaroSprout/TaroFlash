@@ -36,10 +36,7 @@ function onGooglePress() {
 
 <template>
   <div data-testid="account-access-modal__menu" class="h-full flex flex-col justify-center gap-4">
-    <p
-      data-testid="account-access-modal__description"
-      class="text-center text-brown-500 dark:text-brown-300"
-    >
+    <p data-testid="account-access-modal__description" class="text-center text-ink-muted">
       {{ t('account-access-modal.description') }}
     </p>
 

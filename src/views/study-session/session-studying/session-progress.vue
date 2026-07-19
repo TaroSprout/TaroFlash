@@ -14,7 +14,7 @@ const total = computed(() => cards.value.length)
     <div
       v-if="editing"
       data-testid="study-session__save-status"
-      class="flex items-center justify-center gap-1 text-lg text-brown-700 dark:text-brown-300"
+      class="flex items-center justify-center gap-1 text-lg text-ink"
     >
       <ui-icon :src="saving ? 'loading-dots' : 'check'" class="h-5 w-5" />
       <span class="text-sm">

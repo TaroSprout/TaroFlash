@@ -141,10 +141,7 @@ function errorKeyFor(error: unknown): string {
 
       <div v-if="is_submitting" data-testid="upload-lesson__progress" class="flex flex-col gap-2">
         <ui-progress-bar :value="progress_value" :label="progress_label" />
-        <p
-          data-testid="upload-lesson__progress-hint"
-          class="text-sm text-brown-700 dark:text-brown-300"
-        >
+        <p data-testid="upload-lesson__progress-hint" class="text-sm text-ink">
           {{ t('audio-reader.upload.progress-hint') }}
         </p>
       </div>

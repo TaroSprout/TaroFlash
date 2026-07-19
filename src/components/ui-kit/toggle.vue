@@ -24,7 +24,7 @@ function onChange() {
     class="group/toggle flex cursor-pointer items-center justify-between gap-2"
     v-sfx="silent ? {} : { hover: TYPE_SFX }"
   >
-    <span data-testid="ui-kit-toggle__label" class="text-brown-700 dark:text-brown-100">
+    <span data-testid="ui-kit-toggle__label" class="text-ink">
       <slot></slot>
     </span>
 

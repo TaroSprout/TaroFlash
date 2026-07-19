@@ -86,11 +86,11 @@ const description_size = computed(() => DESCRIPTION_SIZE[size.value])
           :class="icon_size"
         />
 
-        <h3 class="text-brown-700 dark:text-brown-100" :class="heading_size">
+        <h3 class="text-ink" :class="heading_size">
           {{ t(`welcome-view.features.${feature_key}.heading`) }}
         </h3>
 
-        <p class="leading-relaxed text-brown-500 dark:text-brown-300" :class="description_size">
+        <p class="leading-relaxed text-ink-muted" :class="description_size">
           {{ t(`welcome-view.features.${feature_key}.description`) }}
         </p>
       </div>

@@ -76,7 +76,7 @@ function onActionClick(action: NoticeAction) {
       data-testid="ui-kit-notice-panel"
       :data-theme="NOTICE_THEME[notice.state]"
       :data-theme-dark="NOTICE_THEME_DARK[notice.state]"
-      class="group/notice-panel rounded-4 bevel-drop-sm pointer-events-auto relative flex w-96 max-w-full flex-col items-center gap-6 bg-brown-50 dark:bg-stone-700 p-12 text-center"
+      class="group/notice-panel rounded-4 bevel-drop-sm pointer-events-auto relative flex w-96 max-w-full flex-col items-center gap-6 bg-float p-12 text-center"
     >
       <ui-button
         v-if="notice.closable"
@@ -97,8 +97,8 @@ function onActionClick(action: NoticeAction) {
         <ui-icon :src="NOTICE_ICON[notice.state]" class="size-12 text-(--theme-primary)" />
 
         <div data-testid="ui-kit-notice-panel__body" class="flex flex-col gap-2">
-          <p class="text-brown-700 dark:text-brown-100 text-xl">{{ notice.message }}</p>
-          <p v-if="notice.subMessage" class="text-brown-500">{{ notice.subMessage }}</p>
+          <p class="text-ink text-xl">{{ notice.message }}</p>
+          <p v-if="notice.subMessage" class="text-ink-muted">{{ notice.subMessage }}</p>
         </div>
       </div>
 

@@ -249,7 +249,7 @@ watch(
     <div
       ref="content"
       data-testid="transcript-view__content"
-      class="relative isolate select-none text-4xl leading-[2.5] text-brown-700 dark:text-brown-200"
+      class="relative isolate select-none text-4xl leading-[2.5] text-ink"
       :style="{ height: `${virtualizer.getTotalSize()}px` }"
       @pointerdown="onPointerDown"
       @pointermove="onPointerMove"
@@ -287,7 +287,7 @@ watch(
           class="flex flex-col items-center gap-3"
           :class="vrow.index === 0 ? 'mt-0' : 'mt-32'"
         >
-          <h2 class="text-xl font-medium text-brown-500 dark:text-brown-500">
+          <h2 class="text-xl font-medium text-ink-muted">
             {{ rows[vrow.index].chapter_title }}
           </h2>
           <hr class="w-16 border-brown-700 dark:border-brown-700" />

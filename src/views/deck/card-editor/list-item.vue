@@ -107,7 +107,7 @@ function onClick(e: MouseEvent) {
       data-theme="brown-100"
       data-theme-dark="grey-900"
       size="sm"
-      class="absolute! z-1 top-0 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-100 ease-in-out group-hover/listitem:opacity-100 group-hover/listitem:pointer-events-auto group-data-[dragging=true]/listitem:opacity-0! group-data-[dragging=true]/listitem:pointer-events-none! group-focus-within/listitem:opacity-100 group-focus-within/listitem:pointer-events-auto *:[.btn-icon]:text-brown-500"
+      class="absolute! z-1 top-0 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-100 ease-in-out group-hover/listitem:opacity-100 group-hover/listitem:pointer-events-auto group-data-[dragging=true]/listitem:opacity-0! group-data-[dragging=true]/listitem:pointer-events-none! group-focus-within/listitem:opacity-100 group-focus-within/listitem:pointer-events-auto *:[.btn-icon]:text-ink-muted"
       @click.stop="prependCard(card.id!)"
     >
       {{ t('deck-view.card-editor.list-item.add-above') }}
@@ -120,7 +120,7 @@ function onClick(e: MouseEvent) {
       data-theme="brown-100"
       data-theme-dark="grey-900"
       size="sm"
-      class="absolute! z-1 bottom-0 translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-100 ease-in-out group-hover/listitem:opacity-100 group-hover/listitem:pointer-events-auto group-data-[dragging=true]/listitem:opacity-0! group-data-[dragging=true]/listitem:pointer-events-none! group-focus-within/listitem:opacity-100 group-focus-within/listitem:pointer-events-auto *:[.btn-icon]:text-brown-500"
+      class="absolute! z-1 bottom-0 translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-100 ease-in-out group-hover/listitem:opacity-100 group-hover/listitem:pointer-events-auto group-data-[dragging=true]/listitem:opacity-0! group-data-[dragging=true]/listitem:pointer-events-none! group-focus-within/listitem:opacity-100 group-focus-within/listitem:pointer-events-auto *:[.btn-icon]:text-ink-muted"
       @click.stop="appendCard(card.id!)"
     >
       {{ t('deck-view.card-editor.list-item.add-below') }}

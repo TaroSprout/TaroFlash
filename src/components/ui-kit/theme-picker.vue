@@ -35,7 +35,7 @@ function onThemeSelect(option: DeckTheme) {
 
 <template>
   <div data-testid="theme-picker-container" class="flex flex-col gap-2.5">
-    <h3 data-testid="theme-picker__label" class="text-brown-700 dark:text-brown-100">
+    <h3 data-testid="theme-picker__label" class="text-ink">
       {{ label }}
     </h3>
     <div data-testid="theme-picker" class="w-full flex flex-wrap gap-3">

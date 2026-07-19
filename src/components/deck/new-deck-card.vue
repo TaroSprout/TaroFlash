@@ -31,7 +31,7 @@ const { t } = useI18n()
       <template #front>
         <div
           data-testid="new-deck-card__outline"
-          class="h-full w-full rounded-(--face-radius) bg-brown-200 dark:bg-stone-900 flex flex-col items-center justify-center gap-2 text-brown-500"
+          class="h-full w-full rounded-(--face-radius) bg-panel flex flex-col items-center justify-center gap-2 text-ink-muted"
         >
           <ui-icon src="add" class="size-12" />
           <span class="text-lg text-center">{{ t('dashboard.new-deck-card.label') }}</span>

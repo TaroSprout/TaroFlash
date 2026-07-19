@@ -77,8 +77,8 @@ function onCancel() {
       v-bind="$attrs"
     >
       <div data-testid="ui-kit-prompt__body" class="flex flex-col gap-2">
-        <h1 class="text-3xl text-brown-700 dark:text-brown-100">{{ title }}</h1>
-        <p v-if="message" class="text-base text-brown-500">{{ message }}</p>
+        <h1 class="text-3xl text-ink">{{ title }}</h1>
+        <p v-if="message" class="text-base text-ink-muted">{{ message }}</p>
       </div>
 
       <ui-input

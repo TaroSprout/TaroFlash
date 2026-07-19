@@ -29,7 +29,7 @@ function onOption(e: MouseEvent, value: TranscriptScript) {
 
 <template>
   <div data-testid="upload-lesson__script" class="flex flex-col gap-2">
-    <span class="text-sm text-brown-700 dark:text-brown-300">
+    <span class="text-sm text-ink">
       {{ t('audio-reader.upload.script-label') }}
     </span>
 

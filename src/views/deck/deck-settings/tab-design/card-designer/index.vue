@@ -34,10 +34,7 @@ const text_size = computed({
     data-testid="card-designer"
     class="grid grid-cols-[1fr_auto] items-start gap-x-4 gap-y-3 w-full"
   >
-    <span
-      data-testid="card-designer__text-size-label"
-      class="self-center text-brown-700 dark:text-brown-100"
-    >
+    <span data-testid="card-designer__text-size-label" class="self-center text-ink">
       {{ t('deck.settings-modal.design.card-designer.text-size-label') }}
     </span>
     <ui-spinbox
@@ -50,7 +47,7 @@ const text_size = computed({
       :step="1"
     />
 
-    <span data-testid="card-designer__alignment-label" class="text-brown-700 dark:text-brown-100">
+    <span data-testid="card-designer__alignment-label" class="text-ink">
       {{ t('deck.settings-modal.design.card-designer.alignment-label') }}
     </span>
     <align-picker
@@ -59,10 +56,7 @@ const text_size = computed({
     />
 
     <div v-if="can.useCardImages.value" class="col-span-2 flex flex-col gap-2.5">
-      <span
-        data-testid="card-designer__image-layout-label"
-        class="text-brown-700 dark:text-brown-100"
-      >
+      <span data-testid="card-designer__image-layout-label" class="text-ink">
         {{ t('deck.settings-modal.design.card-designer.image-layout-label') }}
       </span>
       <image-layout-picker v-model:layout="attributes.image_layout" />

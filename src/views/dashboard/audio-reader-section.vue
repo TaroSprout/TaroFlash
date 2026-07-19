@@ -41,7 +41,7 @@ watch(collections_error, (err) => {
 <template>
   <section data-testid="audio-reader-section" class="flex flex-col gap-6">
     <header data-testid="audio-reader-section__header" class="flex items-center justify-between">
-      <h2 class="text-3xl text-brown-700 dark:text-brown-300">
+      <h2 class="text-3xl text-ink">
         {{ t('lesson-collections.section.heading') }}
       </h2>
 
@@ -60,7 +60,7 @@ watch(collections_error, (err) => {
     <p
       v-if="collections.length === 0"
       data-testid="audio-reader-section__empty"
-      class="text-brown-500 dark:text-brown-300"
+      class="text-ink-muted"
     >
       {{ t('lesson-collections.section.empty-fallback') }}
     </p>

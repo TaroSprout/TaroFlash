@@ -50,7 +50,7 @@ const price = `$${PLANS.paid.monthlyPriceUsd} / mo`
           v-for="feature in upgrade_features"
           :key="feature.key"
           data-testid="paid-features__item"
-          class="text-base text-brown-500"
+          class="text-base text-ink-muted"
         >
           {{ t(`plans.paid.features.${feature.key}`) }}
         </li>

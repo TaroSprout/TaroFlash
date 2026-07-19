@@ -84,8 +84,6 @@ function spawnBurst() {
       />
     </div>
 
-    <span data-testid="app-shell__title" class="text-brown-500 dark:text-brown-100 text-sm">{{
-      title
-    }}</span>
+    <span data-testid="app-shell__title" class="text-ink-muted text-sm">{{ title }}</span>
   </div>
 </template>

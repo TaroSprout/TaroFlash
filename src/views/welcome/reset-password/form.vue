@@ -25,7 +25,7 @@ const { t } = useI18n()
     data-testid="reset-password-modal"
     class="h-full flex flex-1 flex-col items-center justify-center gap-4 pt-6"
   >
-    <ui-icon src="keyhole" class="size-12 text-brown-700 dark:text-brown-100" />
+    <ui-icon src="keyhole" class="size-12 text-ink" />
 
     <div class="w-full flex flex-col gap-2">
       <form class="contents" @submit.prevent="emit('submit')">

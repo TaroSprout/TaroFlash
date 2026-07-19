@@ -235,7 +235,7 @@ watch(
     <p
       v-if="no_results"
       data-testid="card-grid__no-results"
-      class="py-12 text-center text-base text-brown-700 dark:text-brown-200"
+      class="py-12 text-center text-base text-ink"
     >
       {{ t('deck-view.search-bar.no-results') }}
     </p>
@@ -284,7 +284,7 @@ watch(
       v-if="hasNextPage && !is_active"
       ref="sentinel"
       data-testid="card-grid__sentinel"
-      class="w-full py-6 flex items-center justify-center text-brown-500"
+      class="w-full py-6 flex items-center justify-center text-ink-muted"
     >
       <span v-if="isLoading">{{ t('deck-view.card-grid.loading') }}</span>
     </div>

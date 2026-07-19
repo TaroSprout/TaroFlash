@@ -31,10 +31,10 @@ const { t } = useI18n()
     data-testid="forgot-password-modal"
     class="h-full flex flex-col items-center justify-center gap-4"
   >
-    <ui-icon src="mail-envelope" class="size-12 text-brown-700 dark:text-brown-100" />
+    <ui-icon src="mail-envelope" class="size-12 text-ink" />
 
     <div class="w-full flex flex-col gap-2">
-      <p class="text-base text-brown-500 dark:text-brown-300 text-center">
+      <p class="text-base text-ink-muted text-center">
         {{ t('forgot-password-modal.instructions') }}
       </p>
 

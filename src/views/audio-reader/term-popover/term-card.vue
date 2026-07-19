@@ -189,7 +189,7 @@ watch(
           <div data-testid="term-card__term-group" class="flex min-w-0 items-center gap-2">
             <span
               data-testid="term-card__term"
-              class="text-7xl leading-tight wrap-break-word text-brown-700 dark:text-brown-200"
+              class="text-7xl leading-tight wrap-break-word text-ink"
               :class="{ 'text-center': show_back }"
             >
               {{ term }}
@@ -231,7 +231,7 @@ watch(
           class="mt-1 flex min-h-7 flex-wrap items-center gap-2"
           :class="{ 'justify-center': show_back }"
         >
-          <span v-if="result?.reading" class="text-base text-brown-700 dark:text-brown-300">
+          <span v-if="result?.reading" class="text-base text-ink">
             {{ result.reading }}
           </span>
 
@@ -243,7 +243,7 @@ watch(
 
         <ui-divider class="my-3">
           <template #start>
-            <span class="shrink-0 text-brown-500">{{
+            <span class="shrink-0 text-ink-muted">{{
               t('audio-reader.popover.definition-label')
             }}</span>
           </template>
@@ -290,7 +290,7 @@ watch(
             <p
               v-if="result.description"
               data-testid="term-card__description"
-              class="text-base text-brown-700 dark:text-brown-300"
+              class="text-base text-ink"
             >
               {{ result.description }}
             </p>

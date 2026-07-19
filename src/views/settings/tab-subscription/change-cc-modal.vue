@@ -33,7 +33,6 @@ const submit_label = computed(() =>
   <dialog-card
     data-testid="change-card-modal"
     class="pb-6"
-    bg_class="bg-brown-200 dark:bg-stone-900"
     size="lg"
     data-theme="brown-300"
     data-theme-dark="stone-700"
@@ -52,7 +51,7 @@ const submit_label = computed(() =>
           <p
             v-if="is_loading"
             data-testid="change-card-modal__loading"
-            class="text-brown-700 dark:text-brown-100 py-10 text-center"
+            class="text-ink py-10 text-center"
           >
             {{ t('settings.subscription.change-card.loading') }}
           </p>

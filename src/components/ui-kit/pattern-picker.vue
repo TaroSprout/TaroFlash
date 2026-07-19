@@ -33,7 +33,7 @@ function onPatternSelect(p: DeckCoverPattern | undefined) {
 
 <template>
   <div data-testid="pattern-picker-container" class="flex flex-col gap-2.5">
-    <h3 data-testid="pattern-picker__label" class="text-brown-700 dark:text-brown-100">
+    <h3 data-testid="pattern-picker__label" class="text-ink">
       {{ label }}
     </h3>
 
