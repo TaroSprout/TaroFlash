@@ -32,9 +32,8 @@ const { t } = useI18n()
     class="w-full max-md:max-w-100 md:w-80 flex flex-col items-center gap-6 p-4"
   >
     <ui-button
+      neutral
       data-testid="login-dialog__google"
-      data-theme="brown-50"
-      data-theme-dark="stone-900"
       size="lg"
       class="w-full!"
       icon-left="google-logo"
@@ -51,8 +50,6 @@ const { t } = useI18n()
           <ui-input
             type="email"
             name="email"
-            data-theme="brown-50"
-            data-theme-dark="stone-900"
             autocomplete="username"
             size="lg"
             v-model="email"
@@ -65,8 +62,6 @@ const { t } = useI18n()
           <ui-input
             type="password"
             name="password"
-            data-theme="brown-50"
-            data-theme-dark="stone-900"
             autocomplete="current-password"
             size="lg"
             v-model="password"
@@ -76,11 +71,10 @@ const { t } = useI18n()
         </div>
 
         <ui-button
+          neutral
           data-testid="login-dialog__forgot-password"
           type="button"
           size="sm"
-          data-theme="brown-200"
-          data-theme-dark="stone-700"
           class="self-end!"
           @press="emit('forgot-password')"
         >

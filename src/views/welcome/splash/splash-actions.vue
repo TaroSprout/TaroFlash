@@ -20,10 +20,9 @@ const height = useWelcomeHeight()
 <template>
   <div data-testid="welcome-hero__actions" class="flex items-center gap-2">
     <ui-button
+      neutral
       v-if="width === 'desktop' || height === 'tall'"
       size="xl"
-      data-theme="brown-100"
-      data-theme-dark="stone-700"
       icon-left="arrow-down"
       :sfx="{ press: 'snappy_button_5' }"
       @press="seeMore()"
@@ -32,10 +31,9 @@ const height = useWelcomeHeight()
     </ui-button>
 
     <ui-button
+      neutral
       v-if="height === 'short' && width !== 'desktop'"
       size="xl"
-      data-theme="brown-100"
-      data-theme-dark="stone-700"
       icon-left="user-sticker-square"
       data-testid="welcome-hero__login"
       @press="openLogin()"

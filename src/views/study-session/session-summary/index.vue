@@ -70,9 +70,8 @@ const summary = computed(() => aggregateSession(results, thresholdFor))
         <stat-tile :summary="summary" />
 
         <ui-button
+          neutral
           data-testid="session-summary__close"
-          data-theme="brown-100"
-          data-theme-dark="stone-700"
           full-width
           size="xl"
           :sfx="{ press: 'slide_up' }"

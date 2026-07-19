@@ -50,7 +50,6 @@ const entries: OptionsPanelEntry[] = items.map((item) => ({
 
       <ui-options-panel
         data-testid="welcome-roadmap__list"
-        data-theme="brown-50"
         class="w-full max-w-200"
         :entries="entries"
         :interactive="false"

@@ -39,8 +39,8 @@ const divergence_label = computed(() =>
             </span>
 
             <ui-button
+              neutral
               data-testid="preset-header__reset-all"
-              data-theme="brown-500"
               variant="ghost"
               size="sm"
               icon-only

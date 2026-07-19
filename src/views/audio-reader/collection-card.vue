@@ -46,8 +46,8 @@ const { t } = useI18n()
     </button>
 
     <ui-button
+      neutral
       data-testid="collection-card__edit"
-      data-theme="grey-400"
       icon-left="settings"
       icon-only
       size="sm"

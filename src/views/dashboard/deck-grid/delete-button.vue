@@ -17,9 +17,8 @@ const danger_actions = useDeckDangerActions(editor, deck, () => {})
 
 <template>
   <ui-button
+    neutral
     data-testid="dashboard__deck-delete-button"
-    data-theme="brown-500"
-    data-theme-dark="stone-700"
     icon-left="close"
     icon-only
     :loading="danger_actions.deleting.value"

@@ -190,9 +190,8 @@ function setMode(next: 'expanded' | 'mini') {
       <div data-testid="audio-toolbar__options" class="grid grid-cols-[68px_1fr_68px] items-center">
         <div data-testid="audio-toolbar__options-start" class="flex justify-start">
           <ui-button
+            neutral
             data-testid="audio-toolbar__collapse"
-            data-theme="brown-700"
-            data-theme-dark="brown-100"
             icon-left="minimize"
             variant="ghost"
             icon-only
@@ -250,9 +249,8 @@ function setMode(next: 'expanded' | 'mini') {
       class="grid grid-cols-5 items-center justify-items-center gap-2"
     >
       <ui-button
+        neutral
         data-testid="audio-toolbar__expand"
-        data-theme="brown-700"
-        data-theme-dark="brown-100"
         icon-left="maximize"
         variant="ghost"
         icon-only

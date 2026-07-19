@@ -37,9 +37,9 @@ const { t } = useI18n()
       <slot></slot>
 
       <ui-button
+        neutral
         v-if="field?.overridden.value"
         data-testid="field-row__reset"
-        data-theme="brown-500"
         variant="ghost"
         size="sm"
         icon-only

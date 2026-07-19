@@ -42,9 +42,9 @@ const { onUpgradeClick, onCancel, onResume, canceling, resuming } = useUpgradeCl
   </ui-button>
 
   <ui-button
+    neutral
     v-else
     data-testid="billing-settings__plan-resume"
-    data-theme="brown-100"
     size="sm"
     :loading="resuming"
     @press="onResume"

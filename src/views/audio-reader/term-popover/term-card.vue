@@ -165,9 +165,8 @@ watch(
           class="mb-8 flex items-center justify-between gap-3"
         >
           <ui-button
+            neutral
             data-testid="term-card__back"
-            data-theme="brown-100"
-            data-theme-dark="stone-700"
             icon-left="close"
             icon-only
             size="base"
@@ -196,9 +195,9 @@ watch(
             </span>
 
             <ui-button
+              neutral
               v-if="!show_back"
               data-testid="term-card__play-word"
-              data-theme="grey-400"
               class="shrink-0"
               icon-left="play"
               icon-only
@@ -213,9 +212,9 @@ watch(
             <add-card-control v-if="result" :existing_decks="existing_decks" @add="onAddCard" />
 
             <ui-button
+              neutral
               v-else
               data-testid="term-card__close"
-              data-theme="grey-400"
               icon-left="close"
               icon-only
               size="sm"
@@ -299,9 +298,8 @@ watch(
 
         <footer data-testid="term-card__footer" class="mt-4 flex">
           <ui-button
+            neutral
             data-testid="term-card__play-from-here"
-            data-theme="brown-100"
-            data-theme-dark="stone-700"
             icon-left="play"
             size="xl"
             full-width

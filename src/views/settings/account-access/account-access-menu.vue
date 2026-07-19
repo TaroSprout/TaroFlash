@@ -40,17 +40,11 @@ function onGooglePress() {
       {{ t('account-access-modal.description') }}
     </p>
 
-    <ui-options-panel
-      data-theme="brown-50"
-      :entries="entries"
-      :sfx="{ press: 'snappy_button_5' }"
-      @select="onSelect"
-    />
+    <ui-options-panel :entries="entries" :sfx="{ press: 'snappy_button_5' }" @select="onSelect" />
 
     <ui-button
+      neutral
       data-testid="account-access-modal__google-button"
-      data-theme="brown-50"
-      data-theme-dark="stone-700"
       full-width
       size="lg"
       icon-left="google-logo"

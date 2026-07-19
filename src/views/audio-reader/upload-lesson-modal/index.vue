@@ -148,7 +148,7 @@ function errorKeyFor(error: unknown): string {
 
       <div data-testid="upload-lesson__actions" class="flex gap-3">
         <ui-button
-          data-theme="grey-400"
+          neutral
           icon-left="close"
           size="lg"
           full-width

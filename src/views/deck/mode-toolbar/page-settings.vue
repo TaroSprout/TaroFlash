@@ -45,9 +45,8 @@ function toggle() {
   >
     <template #trigger>
       <ui-button
+        neutral
         data-testid="page-settings__trigger"
-        data-theme="brown-300"
-        data-theme-dark="stone-700"
         :size="size"
         icon-left="page-setting"
         icon-only

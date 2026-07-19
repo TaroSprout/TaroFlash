@@ -27,11 +27,10 @@ const edit_options = computed<DropdownOption[]>(() => [
     class="flex w-full items-center gap-2 px-(--dock-px) pt-(--dock-pt) pb-(--dock-pb)"
   >
     <ui-button
+      neutral
       data-testid="deck-footer-actions__page-settings"
       icon-only
       icon-left="page-setting"
-      data-theme="brown-200"
-      data-theme-dark="stone-700"
       size="lg"
       @press="shell.openPageSettings()"
     >
@@ -52,11 +51,10 @@ const edit_options = computed<DropdownOption[]>(() => [
     </ui-button>
 
     <ui-button
+      neutral
       v-else
       data-testid="deck-footer-actions__new-card"
       icon-left="card-add"
-      data-theme="brown-700"
-      data-theme-dark="brown-100"
       variant="ghost"
       full-width
       size="lg"

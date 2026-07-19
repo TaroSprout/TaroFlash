@@ -115,8 +115,8 @@ const error_label = computed(
     </ui-button>
 
     <ui-button
+      neutral
       data-testid="lesson-card__delete"
-      data-theme="grey-400"
       icon-left="delete"
       icon-only
       size="sm"

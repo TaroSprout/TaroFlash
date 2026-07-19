@@ -15,11 +15,10 @@ const { has_prev, has_next, flip, prev, next } = inject(mobileCardEditorKey)!
     class="flex w-full items-center justify-between gap-2"
   >
     <ui-button
+      neutral
       data-testid="mobile-card-editor__prev"
       icon-only
       icon-left="chevron-left"
-      data-theme="brown-100"
-      data-theme-dark="stone-700"
       size="xl"
       :disabled="!has_prev"
       :sfx="{ press: 'transition_down' }"
@@ -42,11 +41,10 @@ const { has_prev, has_next, flip, prev, next } = inject(mobileCardEditorKey)!
     </ui-button>
 
     <ui-button
+      neutral
       data-testid="mobile-card-editor__next"
       icon-only
       icon-left="chevron-right"
-      data-theme="brown-100"
-      data-theme-dark="stone-700"
       size="xl"
       :disabled="!has_next"
       :sfx="{ press: 'transition_up' }"

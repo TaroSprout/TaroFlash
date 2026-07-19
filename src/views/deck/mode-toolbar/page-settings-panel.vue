@@ -41,11 +41,10 @@ const sort_options = [
       class="grid w-full grid-cols-[1fr_auto_1fr] items-center"
     >
       <ui-button
+        neutral
         data-testid="page-settings-panel__close"
         icon-only
         icon-left="close"
-        data-theme="brown-100"
-        data-theme-dark="stone-700"
         :size="is_mobile ? 'base' : 'sm'"
         class="justify-self-start"
         @press="closePageSettings"

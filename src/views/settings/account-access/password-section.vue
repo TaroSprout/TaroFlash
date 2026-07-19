@@ -29,8 +29,6 @@ watch(success, (isSuccess) => {
 
       <form class="contents" @submit.prevent="submit">
         <ui-input
-          data-theme="brown-50"
-          data-theme-dark="stone-700"
           v-model:value="password"
           type="password"
           autocomplete="new-password"
@@ -40,8 +38,6 @@ watch(success, (isSuccess) => {
           data-testid="account-access-modal__password-input"
         />
         <ui-input
-          data-theme="brown-50"
-          data-theme-dark="stone-700"
           v-model:value="confirm_password"
           type="password"
           autocomplete="new-password"

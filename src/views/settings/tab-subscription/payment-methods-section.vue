@@ -44,9 +44,8 @@ const { methods_query, default_card, onChangeCardClick } = useChangeCcClick()
       </p>
 
       <ui-button
+        neutral
         data-testid="billing-settings__payment-methods-change"
-        data-theme="brown-100"
-        data-theme-dark="stone-700"
         size="sm"
         @press="onChangeCardClick"
       >

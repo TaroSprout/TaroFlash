@@ -43,9 +43,8 @@ function onSelect(value: string) {
     <toolbar-base>
       <template #left>
         <ui-button
+          neutral
           data-testid="bulk-actions__cancel"
-          data-theme="brown-300"
-          data-theme-dark="stone-700"
           icon-only
           icon-left="close"
           @press="onCancel"
@@ -67,7 +66,7 @@ function onSelect(value: string) {
       </template>
     </toolbar-base>
 
-    <ui-options-panel data-theme="brown-300" :entries="nav_entries" size="lg" @select="onSelect" />
+    <ui-options-panel :entries="nav_entries" size="lg" @select="onSelect" />
 
     <ui-button
       data-testid="bulk-actions__delete"

@@ -145,9 +145,8 @@ async function onSave() {
       class="grid grid-cols-[40px_1fr_40px] items-center gap-3"
     >
       <ui-button
+        neutral
         data-testid="add-card-panel__back"
-        data-theme="brown-100"
-        data-theme-dark="stone-700"
         icon-left="arrow-back"
         icon-only
         size="base"
@@ -193,9 +192,8 @@ async function onSave() {
 
     <div data-testid="add-card-panel__actions" class="flex gap-3">
       <ui-button
+        neutral
         data-testid="add-card-panel__flip-button"
-        data-theme="brown-100"
-        data-theme-dark="stone-700"
         size="xl"
         full-width
         icon-left="card-flip"

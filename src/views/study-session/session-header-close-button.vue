@@ -17,10 +17,9 @@ const { t } = useI18n()
 
 <template>
   <ui-button
+    neutral
     v-if="is_cover"
     data-testid="session-header__close"
-    data-theme="brown-100"
-    data-theme-dark="stone-700"
     icon-left="close"
     icon-only
     rounded-full
@@ -29,10 +28,9 @@ const { t } = useI18n()
     {{ t('study-session.close-button') }}
   </ui-button>
   <ui-button
+    neutral
     v-else
     data-testid="session-header__stop"
-    data-theme="brown-100"
-    data-theme-dark="stone-700"
     icon-left="stop"
     rounded-full
     @press="emit('stop')"

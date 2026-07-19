@@ -16,12 +16,12 @@ const { t } = useI18n()
 
 <template>
   <ui-button
+    neutral
     v-if="!disabled"
     :data-testid="`review-inbox__${direction}-btn`"
     :icon-left="direction === 'prev' ? 'chevron-left' : 'chevron-right'"
     icon-only
     :disabled="disabled"
-    data-theme="brown-50"
     class="absolute! top-1/2 z-20 -translate-y-2/3 shadow-xs"
     :class="direction === 'prev' ? '-left-3 sm:-left-8' : '-right-3 sm:-right-8'"
     size="lg"

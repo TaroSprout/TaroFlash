@@ -42,8 +42,6 @@ const { t } = useI18n()
         <ui-input
           type="email"
           name="email"
-          data-theme="brown-50"
-          data-theme-dark="stone-700"
           autocomplete="email"
           size="lg"
           v-model="email"

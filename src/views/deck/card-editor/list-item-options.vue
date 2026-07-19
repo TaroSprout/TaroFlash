@@ -14,11 +14,10 @@ const { t } = useI18n()
 <template>
   <div class="grid grid-cols-1 gap-2">
     <ui-button
+      neutral
       @press="emit('move')"
       icon-only
       icon-left="move-item"
-      data-theme="brown-100"
-      data-theme-dark="grey-900"
       :sfx="{ hover: TYPE_SFX }"
     >
       {{ t('deck-view.item-options.move') }}

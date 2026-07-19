@@ -65,14 +65,7 @@ async function onSubmit() {
       />
 
       <div data-testid="signup__actions" class="w-full flex justify-center gap-2.5">
-        <ui-button
-          size="xl"
-          full-width
-          data-theme="brown-100"
-          data-theme-dark="stone-700"
-          :fancy-hover="false"
-          @press="close()"
-        >
+        <ui-button neutral size="xl" full-width :fancy-hover="false" @press="close()">
           {{ t('signup-dialog.cancel') }}
         </ui-button>
         <ui-button

@@ -61,7 +61,7 @@ async function onSubmit() {
 
       <div data-testid="collection-create__actions" class="flex gap-3">
         <ui-button
-          data-theme="grey-400"
+          neutral
           icon-left="close"
           size="lg"
           full-width

@@ -32,8 +32,6 @@ const { t } = useI18n()
         <ui-input
           type="password"
           name="password"
-          data-theme="brown-50"
-          data-theme-dark="stone-700"
           autocomplete="new-password"
           size="lg"
           v-model="password"
@@ -44,8 +42,6 @@ const { t } = useI18n()
         <ui-input
           type="password"
           name="confirm-password"
-          data-theme="brown-50"
-          data-theme-dark="stone-700"
           autocomplete="new-password"
           size="lg"
           v-model="confirmPassword"

@@ -29,8 +29,6 @@ watch(pending, (isPending) => {
 
       <form class="contents" @submit.prevent="submit">
         <ui-input
-          data-theme="brown-50"
-          data-theme-dark="stone-700"
           :placeholder="t('account-access-modal.email.new-label')"
           v-model:value="email"
           type="email"

@@ -39,7 +39,7 @@ const edit_label = computed(() => {
       data-testid="deck-hero__mobile-actions"
       class="relative flex w-full flex-row items-center gap-2"
     >
-      <search-bar size="xl" fill data-theme="brown-300" />
+      <search-bar size="xl" fill />
 
       <Transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
         <div

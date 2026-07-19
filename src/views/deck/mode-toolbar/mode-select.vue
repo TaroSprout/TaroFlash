@@ -23,16 +23,15 @@ const {
 <template>
   <toolbar-base data-testid="mode-select">
     <template #left>
-      <search-bar data-theme="brown-300" data-theme-dark="stone-700" />
+      <search-bar />
 
       <page-settings />
     </template>
 
     <template #right>
       <ui-button
+        neutral
         data-testid="mode-select__cancel-button"
-        data-theme="brown-300"
-        data-theme-dark="stone-700"
         icon-only
         icon-left="close"
         @press="onCancel"
@@ -41,9 +40,8 @@ const {
       </ui-button>
 
       <ui-button
+        neutral
         data-testid="mode-select__select-all-button"
-        data-theme="brown-300"
-        data-theme-dark="stone-700"
         :icon-left="all_cards_selected ? 'close-window-remove' : 'data-check'"
         @press="onToggleSelectAll"
       >

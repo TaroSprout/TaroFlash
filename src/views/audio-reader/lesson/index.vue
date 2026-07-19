@@ -228,8 +228,8 @@ onBeforeUnmount(() => {
         </div>
 
         <ui-button
+          neutral
           data-testid="lesson-view__edit"
-          data-theme="grey-400"
           icon-left="settings"
           icon-only
           size="lg"

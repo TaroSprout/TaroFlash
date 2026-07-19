@@ -29,9 +29,8 @@ onMounted(() => emitSfx('success_1'))
     </div>
 
     <ui-button
+      neutral
       data-testid="forgot-password-modal__success-close"
-      data-theme="brown-50"
-      data-theme-dark="stone-700"
       size="xl"
       full-width
       :sfx="{ press: 'snappy_button_5' }"
