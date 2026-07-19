@@ -207,7 +207,6 @@
   --page-width: 1570px;
   --blur-md: 24px;
   --blur-4: 4px;
-  --shadow-color: rgba(0, 0, 0, 0.25);
 
   /* Typography */
   --font-primary: 'Tilt Neon', sans-serif;
@@ -298,7 +297,6 @@
   /* DARK MODE EXPLICIT OVERRIDES */
   /* Warning: This is global and will affect everything */
   &:where([data-theme='dark'], [data-theme='dark'] *) {
-    --shadow-color: rgba(0, 0, 0, 1);
     --color-input: var(--color-stone-500);
   }
 

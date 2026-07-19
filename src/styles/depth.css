@@ -10,77 +10,114 @@
  * value: well fills (inputs, slider and toggle tracks), seam outlines (the 1px
  * line on floating panels), and cut-out rings. Same value, different shapes.
  *
- * Each depth x mode block is written out explicitly rather than derived with
- * index math — the ramp direction differs by mode and clamps at the ends.
+ * ─── TWO TIERS ──────────────────────────────────────────────────────────
  *
- *   LIGHT                                DARK
- *   depth  surface     below             surface     below
- *   0      brown-100   brown-50          stone-950   stone-900
- *   1      brown-300   brown-100         stone-900   stone-950
- *   2      brown-500   brown-300         stone-700   stone-900
+ * 1. THE CHROME THEME (--ramp-*, --chrome-*, --shadow-color). The only place
+ *    a raw --color-* scale token is named. Swapping the app's neutral chrome
+ *    means overriding this block and nothing else — it is a data payload, not
+ *    a refactor.
  *
- * The asymmetry is intentional: in light, elevation goes darker and "below"
- * goes lighter; in dark, elevation goes lighter and "below" goes darker —
- * except dark depth 0, which clamps "below" to stone-900 because nothing is
- * darker than the floor.
+ * 2. THE ROLE ASSIGNMENTS (--color-surface, --color-below, ...). Authored once,
+ *    theme-agnostic: they only ever read tier 1. Each depth x mode block is
+ *    written out explicitly rather than derived with index math — the ramp
+ *    direction differs by mode and clamps at the ends.
+ *
+ *   LIGHT                            DARK
+ *   depth  surface   below           surface   below
+ *   0      ramp-0    ramp-sub        ramp-0    ramp-1
+ *   1      ramp-1    ramp-0          ramp-1    ramp-0
+ *   2      ramp-2    ramp-1          ramp-2    ramp-1
+ *
+ * In light, elevation goes darker and "below" goes lighter, so depth 0 needs a
+ * step BELOW the floor — that is `--ramp-sub`. In dark, elevation goes lighter
+ * and "below" goes darker, so depth 0 has nothing darker to point at and clamps
+ * "below" up to `--ramp-1`.
+ *
+ * `[data-depth='overlay']` is not part of the ramp at all: tooltips and toasts
+ * are context-independent by design and deliberately contrast with whatever
+ * they float over, so they read --chrome-overlay in both modes.
  *
  * Base values for these roles live in the `@theme` block in main.css (that is
  * what makes bg-surface / text-ink / ring-below resolve as Tailwind
  * utilities); this file only overrides them per depth and mode.
  */
 
-/* Unattributed content behaves as depth 0, light. */
+/* ─── TIER 1: THE CHROME THEME ──────────────────────────────────────── */
+
 :root {
-  --color-surface: var(--color-brown-100);
-  --color-below: var(--color-brown-50);
+  --ramp-sub: var(--color-brown-50);
+  --ramp-0: var(--color-brown-100);
+  --ramp-1: var(--color-brown-300);
+  --ramp-2: var(--color-brown-500);
+
+  --chrome-panel: var(--color-brown-200);
+  --chrome-float: var(--color-brown-50);
+  --chrome-overlay: var(--color-white);
+  --chrome-ink: var(--color-brown-700);
+  --chrome-ink-muted: var(--color-brown-500);
+
+  --shadow-color: rgba(0, 0, 0, 0.25);
 }
 
-/* ─── DEPTH RAMP — LIGHT ────────────────────────────────────────────── */
+:root[data-mode='dark'] {
+  --ramp-sub: var(--color-stone-950);
+  --ramp-0: var(--color-stone-950);
+  --ramp-1: var(--color-stone-900);
+  --ramp-2: var(--color-stone-700);
 
+  --chrome-panel: var(--color-stone-900);
+  --chrome-float: var(--color-stone-700);
+  --chrome-overlay: var(--color-brown-100);
+  --chrome-ink: var(--color-brown-100);
+  --chrome-ink-muted: var(--color-brown-300);
+
+  --shadow-color: rgba(0, 0, 0, 1);
+}
+
+/* ─── TIER 2: DEPTH RAMP — LIGHT ────────────────────────────────────── */
+
+/* Unattributed content behaves as depth 0, light. */
+:root,
 [data-depth='0'] {
-  --color-surface: var(--color-brown-100);
-  --color-below: var(--color-brown-50);
+  --color-surface: var(--ramp-0);
+  --color-below: var(--ramp-sub);
 }
 
 [data-depth='1'] {
-  --color-surface: var(--color-brown-300);
-  --color-below: var(--color-brown-100);
+  --color-surface: var(--ramp-1);
+  --color-below: var(--ramp-0);
 }
 
 [data-depth='2'] {
-  --color-surface: var(--color-brown-500);
-  --color-below: var(--color-brown-300);
+  --color-surface: var(--ramp-2);
+  --color-below: var(--ramp-1);
 }
 
-/* ─── DEPTH RAMP — DARK ─────────────────────────────────────────────── */
+/* ─── TIER 2: DEPTH RAMP — DARK ─────────────────────────────────────── */
 
 /* Both the descendant and the self form are listed so the ramp resolves
  * whether data-depth sits on a child of the moded root or on the root itself. */
 
-:root[data-mode='dark'] {
-  --color-surface: var(--color-stone-950);
-  --color-below: var(--color-stone-900);
-}
-
+:root[data-mode='dark'],
 [data-mode='dark'] [data-depth='0'],
 [data-mode='dark'][data-depth='0'] {
-  --color-surface: var(--color-stone-950);
-  --color-below: var(--color-stone-900);
+  --color-surface: var(--ramp-0);
+  --color-below: var(--ramp-1);
 }
 
 [data-mode='dark'] [data-depth='1'],
 [data-mode='dark'][data-depth='1'] {
-  --color-surface: var(--color-stone-900);
-  --color-below: var(--color-stone-950);
+  --color-surface: var(--ramp-1);
+  --color-below: var(--ramp-0);
 }
 
 [data-mode='dark'] [data-depth='2'],
 [data-mode='dark'][data-depth='2'] {
-  --color-surface: var(--color-stone-700);
-  --color-below: var(--color-stone-900);
+  --color-surface: var(--ramp-2);
+  --color-below: var(--ramp-1);
 }
 
-/* ─── NON-RAMP NEUTRAL ROLES ────────────────────────────────────────── */
+/* ─── TIER 2: NON-RAMP NEUTRAL ROLES ────────────────────────────────── */
 
 /* Fixed per mode, not derived from depth.
  *
@@ -91,19 +128,24 @@
  */
 
 :root {
-  --color-panel: var(--color-brown-200);
-  --color-float: var(--color-brown-50);
-  --color-overlay: var(--color-white);
+  --color-panel: var(--chrome-panel);
+  --color-float: var(--chrome-float);
+  --color-overlay: var(--chrome-overlay);
 
-  --color-ink: var(--color-brown-700);
-  --color-ink-muted: var(--color-brown-500);
+  --color-ink: var(--chrome-ink);
+  --color-ink-muted: var(--chrome-ink-muted);
 }
 
-[data-mode='dark'] {
-  --color-panel: var(--color-stone-900);
-  --color-float: var(--color-stone-700);
-  --color-overlay: var(--color-brown-100);
+/* ─── TIER 2: OVERLAY DEPTH ─────────────────────────────────────────── */
 
-  --color-ink: var(--color-brown-100);
-  --color-ink-muted: var(--color-brown-300);
+/* Context-independent chrome: tooltips and toasts, which contrast with the
+ * surface they float over rather than inheriting from it. --chrome-overlay is
+ * white in light and brown-100 in dark, so brown-700 ink reads on both — hence
+ * the literal rather than --color-ink, which inverts with mode. */
+
+[data-depth='overlay'],
+[data-mode='dark'] [data-depth='overlay'],
+[data-mode='dark'][data-depth='overlay'] {
+  --color-surface: var(--chrome-overlay);
+  --color-ink: var(--color-brown-700);
 }
