@@ -18,6 +18,7 @@
     "lint": "oxlint",
     "format": "vp fmt src/",
     "build:email-templates": "node scripts/build-email-templates.mjs",
+    "gen:identity-css": "node scripts/gen-identity-css.ts",
     "docs:dev": "vitepress dev docs --port 8080",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"

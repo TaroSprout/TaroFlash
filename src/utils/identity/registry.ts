@@ -1,0 +1,76 @@
+/**
+ * Single source of truth for the seven user-assignable identities.
+ *
+ * Each entry resolves BOTH renditions, so a caller passes one identity name
+ * (`green`) instead of a `theme` + `theme_dark` pair. `satisfies` keeps this in
+ * lockstep with the `IdentityName` union — adding a union member without an
+ * entry here (or dropping a role from a rendition) is a compile error.
+ *
+ * The pairs mirror `SUPPORTED_THEMES` in src/utils/cover/tokens.ts, which is the
+ * real identity set. The other palettes in src/styles/palettes.css are chrome
+ * squatting in the theme layer and are retired separately.
+ *
+ * `accent` / `onAccent` are lifted verbatim from each palette's existing
+ * `--theme-primary` / `--theme-on-primary`.
+ *
+ * `accentMuted` is the adjacent lighter step of the same hue, normally the
+ * palette's existing `--theme-secondary`. Two of those secondaries leave the
+ * hue family and are corrected here:
+ *
+ *   yellow.dark   palettes.css uses orange-500 -> corrected to yellow-500
+ *   orange.light  palettes.css uses yellow-500 -> NO in-hue lighter step exists
+ *
+ * The orange gap is real: the orange family only defines 700 and 500, so
+ * `orange.light.accentMuted` has nowhere in-hue to go. It keeps the historical
+ * yellow-500 rather than inventing a hex; adding an `orange-400` step would let
+ * it be corrected in place.
+ *
+ * After editing this file run `pnpm gen:identity-css` to regenerate
+ * src/styles/identities.gen.css.
+ */
+export const IDENTITIES = {
+  blue: {
+    light: { accent: 'blue-500', accentMuted: 'blue-400', onAccent: 'brown-100' },
+    dark: { accent: 'blue-650', accentMuted: 'blue-500', onAccent: 'brown-100' }
+  },
+  red: {
+    light: { accent: 'red-500', accentMuted: 'red-400', onAccent: 'white' },
+    dark: { accent: 'red-600', accentMuted: 'red-500', onAccent: 'white' }
+  },
+  green: {
+    light: { accent: 'green-500', accentMuted: 'green-400', onAccent: 'brown-100' },
+    dark: { accent: 'green-800', accentMuted: 'green-600', onAccent: 'brown-300' }
+  },
+  yellow: {
+    light: { accent: 'yellow-500', accentMuted: 'yellow-400', onAccent: 'brown-700' },
+    // palettes.css pairs yellow-700 with orange-500; corrected to stay in-hue.
+    dark: { accent: 'yellow-700', accentMuted: 'yellow-500', onAccent: 'brown-100' }
+  },
+  purple: {
+    light: { accent: 'purple-500', accentMuted: 'purple-400', onAccent: 'brown-100' },
+    dark: { accent: 'purple-700', accentMuted: 'purple-500', onAccent: 'brown-100' }
+  },
+  pink: {
+    light: { accent: 'pink-500', accentMuted: 'pink-400', onAccent: 'brown-100' },
+    dark: { accent: 'pink-700', accentMuted: 'pink-500', onAccent: 'brown-100' }
+  },
+  orange: {
+    // No in-hue step lighter than orange-500 exists — see the note above.
+    light: { accent: 'orange-500', accentMuted: 'yellow-500', onAccent: 'brown-100' },
+    dark: { accent: 'orange-700', accentMuted: 'orange-500', onAccent: 'brown-100' }
+  }
+} satisfies Record<IdentityName, IdentityDefinition>
+
+/**
+ * Meaning-first aliases. Call sites that mean "this is destructive" should say
+ * `danger`, not `red` — the identity behind a meaning can change without
+ * touching them.
+ */
+export const SEMANTIC_IDENTITIES = {
+  brand: 'blue',
+  info: 'blue',
+  danger: 'red',
+  error: 'red',
+  success: 'green',
+  warning: 'yellow'
+} satisfies Record<SemanticName, IdentityName>
