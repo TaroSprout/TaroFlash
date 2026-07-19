@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiButton from '@/components/ui-kit/button.vue'
-import { NOTICE_ICON, NOTICE_THEME, NOTICE_THEME_DARK } from './state-config'
+import { NOTICE_ICON, NOTICE_PALETTE } from './state-config'
 import { useSwipeDismiss } from './use-swipe-dismiss'
 import { usePausableTimer } from './use-pausable-timer'
 import { useMatchMedia } from '@/composables/ui/media-query'
@@ -50,13 +50,12 @@ function onActionClick(action: NoticeAction) {
   <div
     ref="root_ref"
     data-testid="ui-kit-notice-toast"
-    :data-theme="NOTICE_THEME[notice.state]"
-    :data-theme-dark="NOTICE_THEME_DARK[notice.state]"
+    :data-palette="NOTICE_PALETTE[notice.state]"
     class="group/notice-toast relative rounded-4 pointer-events-auto grid grid-cols-[auto_1fr] items-center w-full xs:w-72 gap-x-4 gap-y-3 bg-float p-4 text-ink bevel-drop-sm"
   >
     <ui-icon
       :src="NOTICE_ICON[notice.state]"
-      class="size-7.5 place-self-center text-(--theme-primary)"
+      class="size-7.5 place-self-center text-(--color-accent)"
     />
 
     <div data-testid="ui-kit-notice-toast__body" class="flex flex-1 flex-col">
@@ -87,7 +86,7 @@ function onActionClick(action: NoticeAction) {
       data-testid="ui-kit-notice-toast__close"
       icon-only
       icon-left="close"
-      class="absolute! -right-2 -top-2 opacity-0 transition-opacity group-hover/notice-toast:opacity-100 group-focus-within/notice-toast:opacity-100"
+      class="absolute! -right-2 -top-2 [--btn-bg-color:var(--color-below)]! opacity-0 transition-opacity group-hover/notice-toast:opacity-100 group-focus-within/notice-toast:opacity-100"
       :sfx="{ press: 'snappy_button_5' }"
       @press="closeToast"
     >

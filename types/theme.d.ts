@@ -61,6 +61,9 @@ type IdentityName = 'blue' | 'red' | 'green' | 'yellow' | 'purple' | 'pink' | 'o
 /** Meaning-first aliases onto the identity set. */
 type SemanticName = 'brand' | 'info' | 'danger' | 'error' | 'success' | 'warning'
 
+/** Any value accepted by `data-palette` — an identity or a semantic alias. */
+type Palette = IdentityName | SemanticName
+
 /** The identity roles, resolved for a single mode. */
 type IdentityRendition = {
   /** The identity's primary fill. */
