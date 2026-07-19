@@ -1,0 +1,109 @@
+/* Neutral chrome roles — the "depth" axis of the theming system.
+ *
+ * `data-mode` (light|dark) and `data-depth` (0|1|2) are independent axes.
+ * `data-depth` owns the neutral roles only; identity roles (--color-accent
+ * and friends) live on `data-palette` and never collide with these.
+ *
+ * Components name the SLOT they fill (bg-surface, text-ink), never the colour.
+ *
+ * `--color-below` is the surface one step down. It does three jobs with one
+ * value: well fills (inputs, slider and toggle tracks), seam outlines (the 1px
+ * line on floating panels), and cut-out rings. Same value, different shapes.
+ *
+ * Each depth x mode block is written out explicitly rather than derived with
+ * index math — the ramp direction differs by mode and clamps at the ends.
+ *
+ *   LIGHT                                DARK
+ *   depth  surface     below             surface     below
+ *   0      brown-100   brown-50          stone-950   stone-900
+ *   1      brown-300   brown-100         stone-900   stone-950
+ *   2      brown-500   brown-300         stone-700   stone-900
+ *
+ * The asymmetry is intentional: in light, elevation goes darker and "below"
+ * goes lighter; in dark, elevation goes lighter and "below" goes darker —
+ * except dark depth 0, which clamps "below" to stone-900 because nothing is
+ * darker than the floor.
+ *
+ * Base values for these roles live in the `@theme` block in main.css (that is
+ * what makes bg-surface / text-ink / ring-below resolve as Tailwind
+ * utilities); this file only overrides them per depth and mode.
+ */
+
+/* Unattributed content behaves as depth 0, light. */
+:root {
+  --color-surface: var(--color-brown-100);
+  --color-below: var(--color-brown-50);
+}
+
+/* ─── DEPTH RAMP — LIGHT ────────────────────────────────────────────── */
+
+[data-depth='0'] {
+  --color-surface: var(--color-brown-100);
+  --color-below: var(--color-brown-50);
+}
+
+[data-depth='1'] {
+  --color-surface: var(--color-brown-300);
+  --color-below: var(--color-brown-100);
+}
+
+[data-depth='2'] {
+  --color-surface: var(--color-brown-500);
+  --color-below: var(--color-brown-300);
+}
+
+/* ─── DEPTH RAMP — DARK ─────────────────────────────────────────────── */
+
+/* Both the descendant and the self form are listed so the ramp resolves
+ * whether data-depth sits on a child of the moded root or on the root itself. */
+
+:root[data-mode='dark'] {
+  --color-surface: var(--color-stone-950);
+  --color-below: var(--color-stone-900);
+}
+
+[data-mode='dark'] [data-depth='0'],
+[data-mode='dark'][data-depth='0'] {
+  --color-surface: var(--color-stone-950);
+  --color-below: var(--color-stone-900);
+}
+
+[data-mode='dark'] [data-depth='1'],
+[data-mode='dark'][data-depth='1'] {
+  --color-surface: var(--color-stone-900);
+  --color-below: var(--color-stone-950);
+}
+
+[data-mode='dark'] [data-depth='2'],
+[data-mode='dark'][data-depth='2'] {
+  --color-surface: var(--color-stone-700);
+  --color-below: var(--color-stone-900);
+}
+
+/* ─── NON-RAMP NEUTRAL ROLES ────────────────────────────────────────── */
+
+/* Fixed per mode, not derived from depth.
+ *
+ *   --color-panel    tracks, tab bars, skeletons, inset sections
+ *   --color-float    elements that straddle two surfaces
+ *   --color-overlay  tooltips, toasts — context-independent
+ *   --color-ink / --color-ink-muted   body and secondary text
+ */
+
+:root {
+  --color-panel: var(--color-brown-200);
+  --color-float: var(--color-brown-50);
+  --color-overlay: var(--color-white);
+
+  --color-ink: var(--color-brown-700);
+  --color-ink-muted: var(--color-brown-500);
+}
+
+[data-mode='dark'] {
+  --color-panel: var(--color-stone-900);
+  --color-float: var(--color-stone-700);
+  --color-overlay: var(--color-brown-100);
+
+  --color-ink: var(--color-brown-100);
+  --color-ink-muted: var(--color-brown-300);
+}
