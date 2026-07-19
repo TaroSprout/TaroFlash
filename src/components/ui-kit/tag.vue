@@ -57,15 +57,40 @@ const mask = computed(() => {
 <template>
   <span
     data-testid="ui-kit-tag"
-    class="bg-(--theme-primary) rounded-1 w-max shrink-0"
+    class="ui-kit-tag rounded-1 w-max shrink-0"
     :class="[
       notchSide === 'right' ? 'pl-4 pr-5' : 'pl-5 pr-4',
       fillHeight ? 'self-stretch flex items-center' : 'py-1'
     ]"
     :style="{ mask, WebkitMask: mask }"
   >
-    <p class="text-(--theme-on-primary) whitespace-nowrap">
+    <p class="whitespace-nowrap">
       <slot></slot>
     </p>
   </span>
 </template>
+
+<style>
+/* Raised neutral chip. Chrome (`element`) by default; identity is opt-in and
+   attribute-on-self — `[data-palette]` (the new path) or a legacy `[data-theme]`
+   (kept alive until D2). Both are self-selectors, so an ancestor palette/theme
+   can't leak in: the base rule never reads --color-accent, and the identity
+   rules only match when the attribute sits on THIS element (attributes don't
+   inherit), at which point --color-accent resolves to this tag's own palette. */
+.ui-kit-tag {
+  --tag-bg: var(--color-element);
+  --tag-fg: var(--color-on-element);
+  background-color: var(--tag-bg);
+}
+.ui-kit-tag[data-theme] {
+  --tag-bg: var(--theme-primary);
+  --tag-fg: var(--theme-on-primary);
+}
+.ui-kit-tag[data-palette] {
+  --tag-bg: var(--color-accent);
+  --tag-fg: var(--color-on-accent);
+}
+.ui-kit-tag p {
+  color: var(--tag-fg);
+}
+</style>

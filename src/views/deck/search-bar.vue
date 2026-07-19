@@ -106,9 +106,8 @@ function onLeave(el: Element, done: () => void) {
 
 <template>
   <div
-    data-theme="brown-100"
-    data-theme-dark="stone-700"
     ref="container"
+    data-palette="info"
     data-testid="deck-search-bar"
     :data-expanded="is_searching"
     class="search-bar"
@@ -134,6 +133,7 @@ function onLeave(el: Element, done: () => void) {
 
     <ui-button
       data-testid="deck-search-bar__button"
+      neutral
       :size="size"
       :variant="is_searching ? 'ghost' : variant"
       :loading="is_loading"
@@ -157,14 +157,18 @@ function onLeave(el: Element, done: () => void) {
   height: var(--btn-height);
 }
 
+/* The expanded field is a WELL — one step below its surface — mirroring
+   ui-input: --color-below fill, a focus ring in --color-accent. The container
+   carries data-palette="info", so --color-accent is the blue info identity
+   (self-scoped, no ancestor leak), matching the input's ring. */
 .search-bar[data-expanded='true'] {
-  background-color: var(--theme-primary);
-  outline: 2px solid var(--theme-primary);
+  background-color: var(--color-below);
+  outline: 1px solid transparent;
   transition: outline-color 60ms ease-in-out;
 }
 
 .search-bar[data-expanded='true']:focus-within {
-  outline-color: var(--color-blue-500);
+  outline-color: var(--color-accent);
 }
 
 .search-bar__field {
@@ -180,12 +184,12 @@ function onLeave(el: Element, done: () => void) {
   padding-left: 12px;
   background: transparent;
   outline: none;
-  color: var(--theme-on-primary);
+  color: var(--color-ink);
   font-size: var(--btn-font-size);
   line-height: var(--btn-font-size--line-height);
 }
 
 .search-bar__input::placeholder {
-  color: var(--theme-neutral);
+  color: var(--color-ink-muted);
 }
 </style>

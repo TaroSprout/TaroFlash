@@ -52,13 +52,14 @@ function onSelect() {
     :class="[
       entry.danger
         ? 'text-red-500 dark:text-red-600 [--row-bgx:var(--color-red-500)] dark:[--row-bgx:var(--color-red-400)]'
-        : 'text-(--theme-on-primary)',
+        : 'text-ink [&[data-theme]]:text-(--theme-on-primary) [&[data-palette]]:text-(--color-on-accent)',
       interactive ? 'cursor-pointer' : '',
       entry.disabled ? 'pointer-events-none opacity-20' : '',
-      interactive && 'data-[active=true]:bg-(--theme-primary)'
+      interactive &&
+        'data-[active=true]:bg-element [&[data-theme][data-active=true]]:bg-(--theme-primary) [&[data-palette][data-active=true]]:bg-(--color-accent)'
     ]"
     :bgx_color="
-      interactive ? (entry.danger ? 'var(--row-bgx)' : 'var(--theme-neutral)') : undefined
+      interactive ? (entry.danger ? 'var(--row-bgx)' : 'var(--color-element)') : undefined
     "
     @tap="onSelect"
   >
