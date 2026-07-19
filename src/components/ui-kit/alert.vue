@@ -59,18 +59,18 @@ function onKeydown(e: KeyboardEvent) {
     <div
       data-testid="ui-kit-alert"
       :data-depth="depth"
-      class="rounded-2 shadow-lg flex w-115 max-w-115 flex-col bg-white"
+      class="rounded-2 shadow-lg flex w-115 max-w-115 flex-col bg-surface"
       :class="`ui-kit-alert--${type ?? 'warn'}`"
       v-bind="$attrs"
     >
       <div data-testid="ui-kit-alert__body" class="flex flex-col gap-2 p-10">
-        <h1 class="text-brown-700 text-3xl">{{ title ?? t('ui-kit.alert.title-default') }}</h1>
-        <p class="text-brown-500">{{ message ?? t('ui-kit.alert.message-default') }}</p>
+        <h1 class="text-ink text-3xl">{{ title ?? t('ui-kit.alert.title-default') }}</h1>
+        <p class="text-ink-muted">{{ message ?? t('ui-kit.alert.message-default') }}</p>
       </div>
 
       <div
         data-testid="ui-kit-alert__actions"
-        class="border-brown-300 divide-brown-300 flex w-full divide-x border-t"
+        class="border-below divide-below flex w-full divide-x border-t"
         @keydown="onKeydown"
       >
         <button
@@ -81,7 +81,7 @@ function onKeydown(e: KeyboardEvent) {
           v-sfx="{ hover: TYPE_SFX }"
         >
           {{ cancelText }}
-          <div class="hover-effect group-hover:opacity-100! group-focus:opacity-100!">
+          <div class="ui-kit-alert__hover-effect group-hover:opacity-100! group-focus:opacity-100!">
             <span>{{ cancelText }}</span>
           </div>
         </button>
@@ -95,7 +95,7 @@ function onKeydown(e: KeyboardEvent) {
           v-sfx="{ hover: TYPE_SFX }"
         >
           {{ confirmText }}
-          <div class="hover-effect group-hover:opacity-100! group-focus:opacity-100!">
+          <div class="ui-kit-alert__hover-effect group-hover:opacity-100! group-focus:opacity-100!">
             <span>{{ confirmText }}</span>
           </div>
         </button>
@@ -112,14 +112,14 @@ function onKeydown(e: KeyboardEvent) {
   padding: 16px;
   width: 100%;
 
-  color: var(--color-brown-700);
+  color: var(--color-ink);
   font-size: var(--text-lg);
   line-height: var(--text-lg--line-height);
 
   cursor: pointer;
 }
 
-.hover-effect {
+.ui-kit-alert__hover-effect {
   position: absolute;
   inset: -4px;
 
@@ -137,12 +137,12 @@ function onKeydown(e: KeyboardEvent) {
   outline: none;
 }
 
-.ui-kit-alert__cancel .hover-effect {
+.ui-kit-alert__cancel .ui-kit-alert__hover-effect {
   background-color: var(--color-brown-300);
   color: var(--color-brown-500);
 }
 
-.ui-kit-alert--warn .ui-kit-alert__confirm .hover-effect {
+.ui-kit-alert--warn .ui-kit-alert__confirm .ui-kit-alert__hover-effect {
   color: var(--color-red-600);
   background-image: linear-gradient(
     to right bottom in oklab,
@@ -152,7 +152,7 @@ function onKeydown(e: KeyboardEvent) {
   );
 }
 
-.ui-kit-alert--info .ui-kit-alert__confirm .hover-effect {
+.ui-kit-alert--info .ui-kit-alert__confirm .ui-kit-alert__hover-effect {
   color: var(--color-blue-500);
   background-image: linear-gradient(
     to right bottom in oklab,
@@ -162,7 +162,7 @@ function onKeydown(e: KeyboardEvent) {
   );
 }
 
-.hover-effect span {
+.ui-kit-alert__hover-effect span {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -170,7 +170,7 @@ function onKeydown(e: KeyboardEvent) {
   height: 100%;
   width: 100%;
 
-  background-color: var(--color-white);
+  background-color: var(--color-surface);
   border-radius: var(--radius-1_5);
 }
 </style>
