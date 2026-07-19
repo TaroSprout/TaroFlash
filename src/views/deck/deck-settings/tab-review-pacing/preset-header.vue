@@ -61,6 +61,6 @@ const divergence_label = computed(() =>
       {{ t('deck.settings-modal.review-pacing.subheading') }}
     </p>
 
-    <ui-divider data-theme="brown-500" class="mt-2 max-md:hidden" />
+    <ui-divider class="mt-2 max-md:hidden" />
   </div>
 </template>
