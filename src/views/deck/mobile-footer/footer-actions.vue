@@ -72,7 +72,7 @@ const edit_options = computed<DropdownOption[]>(() => [
       trigger-theme-dark="brown-100"
       menu-theme="brown-200"
       menu-theme-dark="stone-700"
-      menu-class="outline-1 outline-brown-300 dark:outline-grey-900"
+      menu-class="outline-1 outline-brown-300 dark:outline-stone-950"
       variant="ghost"
       size="lg"
       position="top-end"

@@ -25,7 +25,7 @@ const danger_actions = useDeckDangerActions(editor, deck, () => {})
     :loading="danger_actions.deleting.value"
     @click.stop
     @press="danger_actions.onDelete"
-    class="ring-4 ring-brown-100 dark:ring-grey-900"
+    class="ring-4 ring-brown-100 dark:ring-stone-950"
   >
     {{ t('dashboard.deck-grid-item.delete-button') }}
   </ui-button>

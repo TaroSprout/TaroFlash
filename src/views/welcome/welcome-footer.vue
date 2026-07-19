@@ -5,7 +5,7 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <div class="w-full bg-brown-200 dark:bg-grey-800">
+  <div class="w-full bg-brown-200 dark:bg-stone-900">
     <div class="w-full bg-blue-500 dark:bg-blue-650 wave-top-[30px] py-20">
       <div class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex flex-col gap-10">
         <div class="grid grid-cols-2 gap-10">

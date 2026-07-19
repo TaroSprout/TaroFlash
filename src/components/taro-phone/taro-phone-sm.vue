@@ -19,7 +19,8 @@ const store = useTaroPhoneStore()
       data-testid="notification-badge"
       class="absolute top-0 left-0 w-4 h-4 bg-red-500 outline-4 outline-brown-300 rounded-full"
     ></div>
-    <div class="w-full h-full bg-[#B8B1A9] rounded-2.5"></div>
-    <div class="w-2.75 h-2.75 rounded-full outline-1 outline-[#B8B1A9] shrink-0"></div>
+    <!-- TODO(phase-c): remap to the nearest surface role once depth tokens are adopted. -->
+    <div class="w-full h-full bg-brown-500 rounded-2.5"></div>
+    <div class="w-2.75 h-2.75 rounded-full outline-1 outline-brown-500 shrink-0"></div>
   </div>
 </template>

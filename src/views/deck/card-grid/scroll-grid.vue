@@ -235,7 +235,7 @@ watch(
     <p
       v-if="no_results"
       data-testid="card-grid__no-results"
-      class="py-12 text-center text-base text-brown-600 dark:text-brown-200"
+      class="py-12 text-center text-base text-brown-700 dark:text-brown-200"
     >
       {{ t('deck-view.search-bar.no-results') }}
     </p>

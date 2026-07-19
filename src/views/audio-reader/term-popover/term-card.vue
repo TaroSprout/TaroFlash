@@ -149,7 +149,7 @@ watch(
 <template>
   <div
     data-testid="term-card"
-    class="relative [--skeleton-sheen:var(--color-brown-200)] dark:[--skeleton-sheen:var(--color-grey-400)]"
+    class="relative [--skeleton-sheen:var(--color-brown-200)] dark:[--skeleton-sheen:var(--color-brown-500)]"
     :class="{ 'overflow-hidden': sliding }"
   >
     <transition
@@ -231,13 +231,13 @@ watch(
           class="mt-1 flex min-h-7 flex-wrap items-center gap-2"
           :class="{ 'justify-center': show_back }"
         >
-          <span v-if="result?.reading" class="text-base text-brown-700 dark:text-grey-400">
+          <span v-if="result?.reading" class="text-base text-brown-700 dark:text-brown-300">
             {{ result.reading }}
           </span>
 
           <span
             v-else-if="is_loading"
-            class="term-card__skeleton h-4 w-24 rounded-2 bg-brown-500 dark:bg-grey-500"
+            class="term-card__skeleton h-4 w-24 rounded-2 bg-brown-500 dark:bg-brown-500"
           />
         </div>
 
@@ -267,9 +267,9 @@ watch(
             aria-busy="true"
             :aria-label="t('audio-reader.popover.loading')"
           >
-            <span class="term-card__skeleton h-6 w-3/5 rounded-2 bg-brown-500 dark:bg-grey-500" />
-            <span class="term-card__skeleton h-4 w-full rounded-2 bg-brown-500 dark:bg-grey-500" />
-            <span class="term-card__skeleton h-4 w-4/5 rounded-2 bg-brown-500 dark:bg-grey-500" />
+            <span class="term-card__skeleton h-6 w-3/5 rounded-2 bg-brown-500 dark:bg-brown-500" />
+            <span class="term-card__skeleton h-4 w-full rounded-2 bg-brown-500 dark:bg-brown-500" />
+            <span class="term-card__skeleton h-4 w-4/5 rounded-2 bg-brown-500 dark:bg-brown-500" />
           </div>
 
           <p
@@ -290,7 +290,7 @@ watch(
             <p
               v-if="result.description"
               data-testid="term-card__description"
-              class="text-base text-brown-700 dark:text-grey-300"
+              class="text-base text-brown-700 dark:text-brown-300"
             >
               {{ result.description }}
             </p>

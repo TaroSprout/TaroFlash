@@ -60,7 +60,7 @@ function onScrubMove(e: PointerEvent) {
     <span
       v-if="layout === 'inline'"
       data-testid="scrubber__current"
-      class="hidden shrink-0 text-base text-brown-500 tabular-nums sm:block dark:text-grey-400"
+      class="hidden shrink-0 text-base text-brown-500 tabular-nums sm:block dark:text-brown-300"
     >
       {{ current_label }}
     </span>
@@ -69,7 +69,7 @@ function onScrubMove(e: PointerEvent) {
       ref="track"
       data-testid="scrubber__track"
       :data-layout="layout"
-      class="relative h-2.5 min-w-0 cursor-pointer touch-none rounded-full bg-brown-200 data-[layout=inline]:flex-1 dark:bg-grey-700"
+      class="relative h-2.5 min-w-0 cursor-pointer touch-none rounded-full bg-brown-200 data-[layout=inline]:flex-1 dark:bg-stone-500"
       role="slider"
       :aria-valuemin="0"
       :aria-valuemax="100"
@@ -93,7 +93,7 @@ function onScrubMove(e: PointerEvent) {
     <span
       v-if="layout === 'inline'"
       data-testid="scrubber__duration"
-      class="hidden shrink-0 text-base text-brown-500 tabular-nums sm:block dark:text-grey-400"
+      class="hidden shrink-0 text-base text-brown-500 tabular-nums sm:block dark:text-brown-300"
     >
       {{ duration_label }}
     </span>
@@ -101,7 +101,7 @@ function onScrubMove(e: PointerEvent) {
     <div
       v-if="layout === 'stacked'"
       data-testid="scrubber__labels"
-      class="absolute inset-x-0 top-full mt-1 flex justify-between text-base text-brown-500 tabular-nums dark:text-grey-400"
+      class="absolute inset-x-0 top-full mt-1 flex justify-between text-base text-brown-500 tabular-nums dark:text-brown-300"
     >
       <span data-testid="scrubber__current">{{ current_label }}</span>
       <span data-testid="scrubber__duration">{{ duration_label }}</span>

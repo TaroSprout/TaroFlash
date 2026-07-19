@@ -96,7 +96,7 @@ const showHeader = computed(() => Boolean(slots.header || slots['header-content'
 
     <div
       data-testid="app-window-container"
-      class="flex overflow-hidden w-full h-full rounded-t-8 rounded-b-8 mobile-modal:rounded-b-none shadow-lg border-brown-100 dark:border-grey-900 border-t border-l mobile-modal:border-r"
+      class="flex overflow-hidden w-full h-full rounded-t-8 rounded-b-8 mobile-modal:rounded-b-none shadow-lg border-brown-100 dark:border-stone-950 border-t border-l mobile-modal:border-r"
     >
       <slot name="sidebar"></slot>
 

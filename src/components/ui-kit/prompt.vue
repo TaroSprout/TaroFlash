@@ -69,7 +69,7 @@ function onCancel() {
       data-testid="ui-kit-prompt"
       data-theme="brown-100"
       data-theme-dark="stone-700"
-      class="rounded-2 shadow-lg flex w-115 max-w-115 flex-col gap-6 bg-white p-10 dark:bg-stone-800"
+      class="rounded-2 shadow-lg flex w-115 max-w-115 flex-col gap-6 bg-white p-10 dark:bg-stone-900"
       v-bind="$attrs"
     >
       <div data-testid="ui-kit-prompt__body" class="flex flex-col gap-2">

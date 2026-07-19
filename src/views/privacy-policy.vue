@@ -110,7 +110,7 @@ const { t } = useI18n()
       <p class="leading-relaxed">{{ t('privacy-policy.section-8.content') }}</p>
       <a
         href="mailto:support@taro-flash.com"
-        class="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 underline"
+        class="text-blue-500 hover:text-blue-650 dark:text-blue-400 dark:hover:text-blue-400 underline"
       >
         {{ t('privacy-policy.section-8.email') }}
       </a>

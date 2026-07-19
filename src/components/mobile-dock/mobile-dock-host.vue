@@ -49,7 +49,7 @@ watch([is_mobile, is_keyboard_open], publishHeight, { flush: 'post' })
     v-show="is_mobile && !is_keyboard_open"
     ref="bar"
     data-testid="mobile-dock-host"
-    class="fixed bottom-0 left-0 z-30 w-full rounded-t-6 bg-brown-300 contain-[layout_style] transform-[translateZ(0)] dark:bg-stone-900 sm:bottom-3 sm:left-auto sm:right-3 sm:w-96 sm:rounded-6 [--dock-px:1.25rem] [--dock-pt:1rem] [--dock-pb:0.5rem] max-sm:[--dock-pb:calc(0.5rem+var(--edge-safe-padding))] ring-1 ring-brown-100 dark:ring-grey-900"
+    class="fixed bottom-0 left-0 z-30 w-full rounded-t-6 bg-brown-300 contain-[layout_style] transform-[translateZ(0)] dark:bg-stone-900 sm:bottom-3 sm:left-auto sm:right-3 sm:w-96 sm:rounded-6 [--dock-px:1.25rem] [--dock-pt:1rem] [--dock-pb:0.5rem] max-sm:[--dock-pb:calc(0.5rem+var(--edge-safe-padding))] ring-1 ring-brown-100 dark:ring-stone-950"
   >
     <div
       mobile-dock-above

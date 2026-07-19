@@ -204,7 +204,7 @@ onBeforeUnmount(() => {
       <div
         v-if="!ready"
         data-testid="lesson-view__loader"
-        class="fixed inset-x-0 top-(--nav-height) bottom-[var(--mobile-dock-height,0px)] z-20 flex items-center justify-center bg-brown-100 dark:bg-grey-900 sm:!bottom-0"
+        class="fixed inset-x-0 top-(--nav-height) bottom-[var(--mobile-dock-height,0px)] z-20 flex items-center justify-center bg-brown-100 dark:bg-stone-950 sm:!bottom-0"
       >
         <ui-icon src="loading-dots" class="h-16 w-16 text-brown-700 dark:text-brown-100" />
       </div>
@@ -221,7 +221,7 @@ onBeforeUnmount(() => {
           <span
             v-if="chapter_of.total > 0"
             data-testid="lesson-view__chapter-of"
-            class="text-base text-brown-500 dark:text-grey-400"
+            class="text-base text-brown-500 dark:text-brown-300"
           >
             {{ t('lesson-view.chapter-of', chapter_of) }}
           </span>
@@ -281,7 +281,7 @@ onBeforeUnmount(() => {
             data-testid="lesson-view__chapter"
             :data-active="chapter.id === lesson_id"
             type="button"
-            class="shrink-0 cursor-pointer rounded-7 bg-brown-200 px-4 py-2 text-left text-base text-brown-700 data-[active=true]:bg-blue-500 data-[active=true]:text-white xl:shrink dark:bg-grey-700 dark:text-brown-200 dark:data-[active=true]:bg-blue-650"
+            class="shrink-0 cursor-pointer rounded-7 bg-brown-200 px-4 py-2 text-left text-base text-brown-700 data-[active=true]:bg-blue-500 data-[active=true]:text-white xl:shrink dark:bg-stone-500 dark:text-brown-200 dark:data-[active=true]:bg-blue-650"
             @click="goToChapter(chapter.id)"
           >
             <span class="line-clamp-1">{{ chapter.title }}</span>

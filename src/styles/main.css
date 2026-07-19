@@ -24,8 +24,10 @@
   --color-blue-500: #11b7d4;
   --color-blue-400: #6cbfd5;
 
+  --color-stone-950: #1c1c1c;
   --color-stone-900: #292c2e;
   --color-stone-700: #393e40;
+  --color-stone-500: #4f4f4f;
 
   --color-green-800: #467d60;
   --color-green-600: #6f9b80;
@@ -63,13 +65,6 @@
   --color-brown-100: #f3f1ea;
   --color-brown-50: #f9f8f5;
 
-  --color-grey-900: #1c1c1c;
-  --color-grey-800: #292929;
-  --color-grey-700: #4f4f4f;
-  --color-grey-500: #959595;
-  --color-grey-400: #b2b2b2;
-  --color-grey-300: #d2d2d2;
-
   --theme-primary: var(--color-blue-500);
   --theme-on-primary: var(--color-brown-100);
 
@@ -80,7 +75,7 @@
   --theme-on-accent: var(--color-brown-100);
 
   --theme-neutral: var(--color-brown-100);
-  --theme-on-neutral: var(--color-grey-900);
+  --theme-on-neutral: var(--color-stone-950);
 
   /* Semantic surface tokens — neutral chrome backgrounds that swap in dark mode. */
   --color-input: var(--color-brown-100);
@@ -283,11 +278,11 @@
   /* Warning: This is global and will affect everything */
   &:where([data-theme='dark'], [data-theme='dark'] *) {
     --shadow-color: rgba(0, 0, 0, 1);
-    --color-input: var(--color-grey-700);
+    --color-input: var(--color-stone-500);
   }
 
   html:where([data-theme='dark']) {
-    background-color: var(--color-grey-900);
+    background-color: var(--color-stone-950);
   }
 }
 

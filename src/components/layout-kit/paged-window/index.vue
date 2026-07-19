@@ -52,8 +52,8 @@ export type PagedWindowProps = PagedWindowFrameProps & {
 const DIRECTORY = 'directory'
 
 const SIDEBAR_BG: Record<WindowSurface, string> = {
-  standard: 'bg-brown-200 dark:bg-grey-900',
-  inverted: 'bg-brown-300 dark:bg-grey-800'
+  standard: 'bg-brown-200 dark:bg-stone-950',
+  inverted: 'bg-brown-300 dark:bg-stone-900'
 }
 
 const {

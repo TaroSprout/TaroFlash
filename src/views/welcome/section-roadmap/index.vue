@@ -41,7 +41,7 @@ const entries: OptionsPanelEntry[] = items.map((item) => ({
     class="w-full bg-green-500 dark:bg-green-800 flex justify-center"
   >
     <div
-      class="w-full flex flex-col gap-14 items-center py-30 px-4 sm:px-16 bg-brown-200 dark:bg-grey-800 wave-top-[30px]"
+      class="w-full flex flex-col gap-14 items-center py-30 px-4 sm:px-16 bg-brown-200 dark:bg-stone-900 wave-top-[30px]"
     >
       <section-header
         :heading="t('welcome-view.roadmap.heading')"

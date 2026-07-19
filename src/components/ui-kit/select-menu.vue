@@ -28,7 +28,7 @@ const {
   triggerThemeDark,
   menuTheme = 'brown-200',
   menuThemeDark = 'stone-700',
-  menuClass = 'outline-1 outline-brown-100 dark:outline-grey-900'
+  menuClass = 'outline-1 outline-brown-100 dark:outline-stone-950'
 } = defineProps<SelectMenuProps>()
 
 const emit = defineEmits<{

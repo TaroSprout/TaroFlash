@@ -132,8 +132,8 @@ function onKeydown(e: KeyboardEvent) {
 }
 
 .ui-kit-alert__cancel .hover-effect {
-  background-color: var(--color-grey-300);
-  color: var(--color-grey-500);
+  background-color: var(--color-brown-300);
+  color: var(--color-brown-500);
 }
 
 .ui-kit-alert--warn .ui-kit-alert__confirm .hover-effect {

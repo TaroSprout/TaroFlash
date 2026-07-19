@@ -60,7 +60,7 @@ watch(collections_error, (err) => {
     <p
       v-if="collections.length === 0"
       data-testid="audio-reader-section__empty"
-      class="text-brown-500 dark:text-grey-400"
+      class="text-brown-500 dark:text-brown-300"
     >
       {{ t('lesson-collections.section.empty-fallback') }}
     </p>

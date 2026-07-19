@@ -75,7 +75,7 @@ function onOptionSelect(option: DropdownOption) {
             menu-theme-dark="stone-900"
             position="bottom-end"
             :options="deck_options"
-            class="[&>button]:ring-4 [&>button]:ring-brown-100 dark:[&>button]:ring-grey-900"
+            class="[&>button]:ring-4 [&>button]:ring-brown-100 dark:[&>button]:ring-stone-950"
             @select="onOptionSelect"
           />
         </div>

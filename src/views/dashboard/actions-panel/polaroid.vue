@@ -13,7 +13,7 @@ const member_store = useMemberStore()
   >
     <ui-icon
       src="paperclip"
-      class="absolute -top-3 left-12 z-10 size-10 rotate-200 text-grey-400"
+      class="absolute -top-3 left-12 z-10 size-10 rotate-200 text-brown-500"
     />
 
     <div class="bg-brown-50 dark:bg-stone-700 rounded-2 shadow-xs w-30 p-2 pb-6">

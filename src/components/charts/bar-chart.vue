@@ -34,7 +34,7 @@ function heightOf(value: number) {
       <div class="w-full rounded-t-2" :class="barClass" :style="{ height: heightOf(bar.value) }" />
       <span
         v-if="bar.label"
-        class="w-full truncate text-center text-base text-brown-500 dark:text-grey-400"
+        class="w-full truncate text-center text-base text-brown-500 dark:text-brown-300"
       >
         {{ bar.label }}
       </span>

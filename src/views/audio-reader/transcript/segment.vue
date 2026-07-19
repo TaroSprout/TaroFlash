@@ -24,7 +24,7 @@ const { group, index } = defineProps<{
         ><rt
           v-if="word.reading"
           data-testid="transcript-word__reading"
-          class="-translate-y-1 select-none text-base text-brown-500 dark:text-grey-400"
+          class="-translate-y-1 select-none text-base text-brown-500 dark:text-brown-300"
           >{{ word.reading }}</rt
         ></ruby
       ></span

@@ -152,7 +152,7 @@ watch(
   <div
     ref="list_el"
     data-testid="card-list"
-    class="w-full pb-24 pt-5 bg-brown-100 dark:bg-grey-900"
+    class="w-full pb-24 pt-5 bg-brown-100 dark:bg-stone-950"
   >
     <div
       data-testid="card-list__viewport"

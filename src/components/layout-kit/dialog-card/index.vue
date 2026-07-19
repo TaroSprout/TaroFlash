@@ -69,7 +69,7 @@ const {
   content_max_width,
   content_breakout_max_width,
   float_header = false,
-  bg_class = 'bg-brown-200 dark:bg-grey-800'
+  bg_class = 'bg-brown-200 dark:bg-stone-900'
 } = defineProps<DialogCardProps>()
 
 const emit = defineEmits<{
@@ -119,7 +119,7 @@ defineExpose({ viewport })
       float_header ? 'grid-rows-[minmax(0,1fr)]' : 'grid-rows-[auto_minmax(0,1fr)]',
       viewport === 'mobile'
         ? 'h-full! w-full! rounded-none!'
-        : 'rounded-8 shadow-lg border-t border-l border-brown-100 dark:border-grey-900'
+        : 'rounded-8 shadow-lg border-t border-l border-brown-100 dark:border-stone-950'
     ]"
     :style="card_style"
   >

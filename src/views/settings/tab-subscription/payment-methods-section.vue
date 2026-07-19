@@ -17,7 +17,7 @@ const { methods_query, default_card, onChangeCardClick } = useChangeCcClick()
     <p
       v-if="methods_query.isLoading.value"
       data-testid="billing-settings__payment-methods-loading"
-      class="text-brown-500 dark:text-brown-400"
+      class="text-brown-500 dark:text-brown-500"
     >
       {{ t('settings.subscription.payment-methods.loading') }}
     </p>
@@ -31,7 +31,7 @@ const { methods_query, default_card, onChangeCardClick } = useChangeCcClick()
         <p class="text-brown-700 dark:text-brown-200 capitalize">
           {{ default_card.card?.brand }} •••• {{ default_card.card?.last4 }}
         </p>
-        <p v-if="default_card.card" class="text-sm text-brown-500 dark:text-brown-400">
+        <p v-if="default_card.card" class="text-sm text-brown-500 dark:text-brown-500">
           {{
             t('settings.subscription.payment-methods.expires', {
               expiry: formatCardExpiry(default_card.card.exp_month, default_card.card.exp_year)
@@ -42,7 +42,7 @@ const { methods_query, default_card, onChangeCardClick } = useChangeCcClick()
       <p
         v-else
         data-testid="billing-settings__payment-methods-empty"
-        class="flex-1 text-brown-500 dark:text-brown-400"
+        class="flex-1 text-brown-500 dark:text-brown-500"
       >
         {{ t('settings.subscription.payment-methods.no-card') }}
       </p>

@@ -12,7 +12,7 @@ const { t } = useI18n()
   >
     <div
       data-testid="tab-review-history__placeholder"
-      class="flex min-h-120 items-center justify-center text-lg text-brown-400"
+      class="flex min-h-120 items-center justify-center text-lg text-brown-500"
     >
       {{ t('deck.settings-modal.review-history.coming-soon') }}
     </div>

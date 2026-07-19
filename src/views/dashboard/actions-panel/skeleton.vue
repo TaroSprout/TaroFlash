@@ -5,7 +5,7 @@ import DashboardActionsPanelShell from './shell.vue'
 <template>
   <dashboard-actions-panel-shell
     data-testid="dashboard-actions-panel-skeleton"
-    class="bg-brown-200 dark:bg-stone-900 animate-pulse bgx-diagonal-stripes bgx-size-15 bgx-opacity-40 dark:bgx-color-(--color-grey-700)"
+    class="bg-brown-200 dark:bg-stone-900 animate-pulse bgx-diagonal-stripes bgx-size-15 bgx-opacity-40 dark:bgx-color-(--color-stone-500)"
     body_class="bg-brown-300 dark:bg-stone-900"
   >
     <template #polaroid>

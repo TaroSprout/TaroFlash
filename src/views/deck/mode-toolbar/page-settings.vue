@@ -60,7 +60,7 @@ function toggle() {
 
     <div
       data-testid="page-settings__panel"
-      class="rounded-7 bg-brown-300 p-4 dark:bg-stone-900 filter-[drop-shadow(var(--drop-shadow-sm))_drop-shadow(-1px_-1px_0_var(--color-brown-100))] dark:filter-[drop-shadow(var(--drop-shadow-sm))_drop-shadow(-1px_-1px_0_var(--color-grey-900))]"
+      class="rounded-7 bg-brown-300 p-4 dark:bg-stone-900 filter-[drop-shadow(var(--drop-shadow-sm))_drop-shadow(-1px_-1px_0_var(--color-brown-100))] dark:filter-[drop-shadow(var(--drop-shadow-sm))_drop-shadow(-1px_-1px_0_var(--color-stone-950))]"
     >
       <page-settings-panel />
     </div>

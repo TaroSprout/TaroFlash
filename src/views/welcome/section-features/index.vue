@@ -136,7 +136,7 @@ watch(width, buildReveals, { flush: 'post' })
 <template>
   <section
     data-testid="welcome-features"
-    class="w-full bg-brown-100 dark:bg-grey-900 py-12 sm:py-32"
+    class="w-full bg-brown-100 dark:bg-stone-950 py-12 sm:py-32"
   >
     <div class="w-full max-w-(--page-width) mx-auto px-4 sm:px-16 flex flex-col gap-14">
       <section-header

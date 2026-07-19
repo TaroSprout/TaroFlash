@@ -17,7 +17,7 @@ const { t } = useI18n()
 <template>
   <div
     data-testid="collection-card"
-    class="group relative flex w-56 flex-col gap-3 rounded-7 bg-brown-200 p-4 text-left dark:bg-grey-700"
+    class="group relative flex w-56 flex-col gap-3 rounded-7 bg-brown-200 p-4 text-left dark:bg-stone-500"
   >
     <button
       data-testid="collection-card__open"
@@ -41,12 +41,12 @@ const { t } = useI18n()
 
       <span
         data-testid="collection-card__count"
-        class="text-base text-brown-600 dark:text-grey-300"
+        class="text-base text-brown-700 dark:text-brown-300"
       >
         {{ t('lesson-collections.card.count', { count: collection.lesson_count }) }}
       </span>
 
-      <span data-testid="collection-card__date" class="text-sm text-brown-500 dark:text-grey-400">
+      <span data-testid="collection-card__date" class="text-sm text-brown-500 dark:text-brown-300">
         {{ formatShortDate(collection.created_at ?? '') }}
       </span>
     </button>

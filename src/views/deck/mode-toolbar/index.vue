@@ -22,6 +22,6 @@ const toolbarComponent = computed(() =>
     <Transition :css="false" @enter="toolbarEnter" @leave="toolbarLeave">
       <component :is="toolbarComponent" :key="toolbarComponent.__name" />
     </Transition>
-    <div class="bg-brown-100 dark:bg-grey-900 p-2 rounded-5 absolute -inset-2 -z-1"></div>
+    <div class="bg-brown-100 dark:bg-stone-950 p-2 rounded-5 absolute -inset-2 -z-1"></div>
   </div>
 </template>

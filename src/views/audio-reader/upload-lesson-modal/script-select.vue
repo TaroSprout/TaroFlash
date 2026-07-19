@@ -29,11 +29,11 @@ function onOption(e: MouseEvent, value: TranscriptScript) {
 
 <template>
   <div data-testid="upload-lesson__script" class="flex flex-col gap-2">
-    <span class="text-sm text-brown-600 dark:text-grey-300">
+    <span class="text-sm text-brown-700 dark:text-brown-300">
       {{ t('audio-reader.upload.script-label') }}
     </span>
 
-    <div class="flex gap-1 rounded-5 bg-brown-100 p-1 dark:bg-grey-800">
+    <div class="flex gap-1 rounded-5 bg-brown-100 p-1 dark:bg-stone-900">
       <button
         v-for="option in OPTIONS"
         :key="option.value"
@@ -41,7 +41,7 @@ function onOption(e: MouseEvent, value: TranscriptScript) {
         data-testid="upload-lesson__script-option"
         :data-value="option.value"
         :data-active="script === option.value"
-        class="flex-1 cursor-pointer rounded-4 px-3 py-2 text-sm transition-colors data-[active=false]:text-brown-600 data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary) data-[active=false]:hover:bg-(--theme-primary)/10 dark:data-[active=false]:text-grey-300"
+        class="flex-1 cursor-pointer rounded-4 px-3 py-2 text-sm transition-colors data-[active=false]:text-brown-700 data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary) data-[active=false]:hover:bg-(--theme-primary)/10 dark:data-[active=false]:text-brown-300"
         :data-playing="playing || null"
         v-sfx="{ hover: TYPE_SFX }"
         @click="(e) => onOption(e, option.value)"

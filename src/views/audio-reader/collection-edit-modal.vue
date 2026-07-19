@@ -152,7 +152,7 @@ watch(
         <p
           v-if="lessons.length === 0"
           data-testid="collection-edit__empty"
-          class="text-brown-500 dark:text-grey-400"
+          class="text-brown-500 dark:text-brown-300"
         >
           {{ t('collection-view.empty-fallback') }}
         </p>
@@ -177,7 +177,7 @@ watch(
           {{ t('collection-edit.danger-zone.heading') }}
         </h3>
 
-        <p class="text-base text-brown-500 dark:text-grey-400">
+        <p class="text-base text-brown-500 dark:text-brown-300">
           {{ t('collection-edit.danger-zone.description') }}
         </p>
 

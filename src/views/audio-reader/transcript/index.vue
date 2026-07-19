@@ -287,7 +287,7 @@ watch(
           class="flex flex-col items-center gap-3"
           :class="vrow.index === 0 ? 'mt-0' : 'mt-32'"
         >
-          <h2 class="text-xl font-medium text-brown-500 dark:text-brown-400">
+          <h2 class="text-xl font-medium text-brown-500 dark:text-brown-500">
             {{ rows[vrow.index].chapter_title }}
           </h2>
           <hr class="w-16 border-brown-700 dark:border-brown-700" />

@@ -81,7 +81,7 @@ const {
   disabled = false,
   menuTheme = 'brown-300',
   menuThemeDark,
-  menuClass = 'outline-1 outline-brown-100 dark:outline-grey-900',
+  menuClass = 'outline-1 outline-brown-100 dark:outline-stone-950',
   triggerTheme,
   triggerThemeDark
 } = defineProps<DropdownButtonProps>()

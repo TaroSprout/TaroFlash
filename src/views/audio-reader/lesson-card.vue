@@ -59,7 +59,7 @@ const error_label = computed(
   <div
     data-testid="lesson-card"
     :data-status="lesson.status"
-    class="group relative flex w-56 flex-col gap-3 rounded-7 bg-brown-200 p-4 text-left dark:bg-grey-700"
+    class="group relative flex w-56 flex-col gap-3 rounded-7 bg-brown-200 p-4 text-left dark:bg-stone-500"
   >
     <button
       data-testid="lesson-card__open"
@@ -86,7 +86,7 @@ const error_label = computed(
       <span
         v-if="is_ready"
         data-testid="lesson-card__date"
-        class="text-sm text-brown-500 dark:text-grey-400"
+        class="text-sm text-brown-500 dark:text-brown-300"
       >
         {{ formatShortDate(lesson.created_at ?? '') }}
       </span>

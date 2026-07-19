@@ -129,7 +129,7 @@ watch(
         data-theme-dark="blue-650"
         :checked="selected"
         :active="is_hovering"
-        class="outline-4 outline-brown-100 dark:outline-grey-900"
+        class="outline-4 outline-brown-100 dark:outline-stone-950"
       />
     </div>
 
@@ -142,7 +142,7 @@ watch(
       trigger-theme-dark="stone-900"
       menu-theme-dark="stone-900"
       position="bottom-end"
-      class="absolute -top-1 -right-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto data-[active=true]:opacity-100 data-[active=true]:pointer-events-auto [&>button]:ring-4 [&>button]:ring-brown-100 dark:[&>button]:ring-grey-900"
+      class="absolute -top-1 -right-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto data-[active=true]:opacity-100 data-[active=true]:pointer-events-auto [&>button]:ring-4 [&>button]:ring-brown-100 dark:[&>button]:ring-stone-950"
       :options="menu_options"
       @select="onMenuSelect"
     />

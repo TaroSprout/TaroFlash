@@ -19,9 +19,9 @@ const DEFAULT_COVER: DeckCover = {
       data-testid="deck-hero-skeleton__details"
       class="flex flex-col items-center gap-2 md:items-start"
     >
-      <div class="h-4 w-64 rounded-2 bg-brown-200 dark:bg-grey-800"></div>
-      <div class="h-4 w-52 rounded-2 bg-brown-200 dark:bg-grey-800"></div>
-      <div class="h-4 w-24 rounded-2 bg-brown-200 dark:bg-grey-800"></div>
+      <div class="h-4 w-64 rounded-2 bg-brown-200 dark:bg-stone-900"></div>
+      <div class="h-4 w-52 rounded-2 bg-brown-200 dark:bg-stone-900"></div>
+      <div class="h-4 w-24 rounded-2 bg-brown-200 dark:bg-stone-900"></div>
     </div>
   </div>
 </template>
