@@ -20,9 +20,7 @@ const emit = defineEmits<{
   <div
     data-testid="tab-bar"
     :class="[
-      size === 'base'
-        ? 'gap-1 p-1 rounded-3.5 bg-brown-200 dark:bg-grey-900'
-        : 'gap-1 p-1 rounded-2.5 bg-brown-200 dark:bg-grey-900',
+      size === 'base' ? 'gap-1 p-1 rounded-3.5 bg-panel' : 'gap-1 p-1 rounded-2.5 bg-panel',
       full_width ? 'flex w-full' : 'inline-flex'
     ]"
   >

@@ -37,7 +37,7 @@ const invoices = computed(() => invoices_query.data.value?.invoices ?? [])
         v-for="invoice in invoices"
         :key="invoice.id"
         :data-testid="`billing-settings__invoice-${invoice.id}`"
-        class="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 bg-brown-200 dark:bg-grey-700 rounded-3 p-3 text-ink"
+        class="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 bg-panel rounded-3 p-3 text-ink"
       >
         <span class="text-sm text-ink-muted tabular-nums">
           {{ formatStripeDate(invoice.created, locale) }}

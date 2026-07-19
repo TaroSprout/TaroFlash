@@ -3,6 +3,7 @@ import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiOptionsPanel, { type OptionsPanelEntry } from '@/components/ui-kit/options-panel/index.vue'
 import SectionHeader from '../section-header.vue'
+import { provideDepth } from '@/composables/ui/depth'
 
 type RoadmapItem = {
   key: string
@@ -10,6 +11,10 @@ type RoadmapItem = {
 }
 
 const { t } = useI18n()
+
+// The panel band is a fixed brown-200 surface on the depth-0 page; declare
+// depth 1 so the options-panel well inside reads `below` against it.
+provideDepth(1)
 
 const items: RoadmapItem[] = [
   { key: 'build-study-decks', done: true },
@@ -39,6 +44,7 @@ const entries: OptionsPanelEntry[] = items.map((item) => ({
     class="w-full bg-green-500 dark:bg-green-800 flex justify-center"
   >
     <div
+      data-depth="1"
       class="w-full flex flex-col gap-14 items-center py-30 px-4 sm:px-16 bg-panel wave-top-[30px]"
     >
       <section-header

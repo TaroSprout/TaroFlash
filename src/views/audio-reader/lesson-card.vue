@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import { provideDepth } from '@/composables/ui/depth'
 import { formatShortDate } from '@/utils/date'
 
 const PHASE_KEYS: Record<LessonPhase, string> = {
@@ -32,6 +33,11 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
+// The card is a fixed brown-200/grey-700 panel surface; declare depth 1 so its
+// neutral delete button resolves to the raised `element` pop, not the depth-0
+// value it would fall through to.
+provideDepth(1)
+
 const is_ready = computed(() => lesson.status === 'ready')
 const is_processing = computed(() => lesson.status === 'processing')
 const is_failed = computed(() => lesson.status === 'failed')
@@ -58,6 +64,7 @@ const error_label = computed(
 <template>
   <div
     data-testid="lesson-card"
+    data-depth="1"
     :data-status="lesson.status"
     class="group relative flex w-56 flex-col gap-3 rounded-7 bg-brown-200 p-4 text-left dark:bg-grey-700"
   >

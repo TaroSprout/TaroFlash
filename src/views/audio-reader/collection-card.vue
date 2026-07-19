@@ -2,6 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import { provideDepth } from '@/composables/ui/depth'
 import { formatShortDate } from '@/utils/date'
 
 const { collection } = defineProps<{ collection: LessonCollectionWithCount }>()
@@ -12,11 +13,16 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+// Fixed brown-200/grey-700 panel surface; declare depth 1 so its neutral edit
+// button resolves to the raised `element` pop (mirrors lesson-card).
+provideDepth(1)
 </script>
 
 <template>
   <div
     data-testid="collection-card"
+    data-depth="1"
     class="group relative flex w-56 flex-col gap-3 rounded-7 bg-brown-200 p-4 text-left dark:bg-grey-700"
   >
     <button
