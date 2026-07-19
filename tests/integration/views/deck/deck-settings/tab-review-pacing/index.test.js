@@ -12,7 +12,8 @@ const { mockPresetsData, mockDecksData } = vi.hoisted(() => ({
 vi.mock('@/api/review-pacing', () => ({
   usePresetsQuery: () => ({ data: mockPresetsData }),
   useUpsertPresetMutation: () => ({ mutateAsync: vi.fn() }),
-  useDeletePresetMutation: () => ({ mutateAsync: vi.fn() })
+  useDeletePresetMutation: () => ({ mutateAsync: vi.fn() }),
+  useSaveDeckPacingMutation: () => ({ mutateAsync: vi.fn() })
 }))
 vi.mock('@/api/decks', () => ({
   useMemberDecksQuery: () => ({ data: mockDecksData }),
@@ -54,7 +55,7 @@ function makeWrapper({ review_pacing_preset_id = null } = {}) {
     review_pacing_preset_id,
     pacing_overrides: {}
   })
-  const editor = { deck, draft }
+  const editor = { deck, draft, rebase: vi.fn() }
   const wrapper = mount(TabReviewPacing, {
     global: {
       provide: { [deckEditorKey]: editor },

@@ -243,6 +243,31 @@ describe('useDeckEditor', () => {
     })
   })
 
+  // ── rebase ─────────────────────────────────────────────────────────────────
+  // Exposed directly (not just through saveDeck) so preset actions can persist
+  // just the pacing slice on their own and rebase only those keys [obligation].
+
+  describe('rebase', () => {
+    test('exposes the underlying useDraft rebase function [obligation]', () => {
+      const { rebase } = useDeckEditor(makeDeck())
+      expect(typeof rebase).toBe('function')
+    })
+
+    test('rebase([key]) adopts only that key, leaving other staged edits dirty [obligation]', () => {
+      const deck = makeDeck({ title: 'Original' })
+      const { draft, is_dirty, rebase } = useDeckEditor(deck)
+
+      draft.title = 'Edited title'
+      draft.pacing_overrides.desired_retention = 0.8
+
+      rebase(['pacing_overrides'])
+
+      expect(draft.pacing_overrides).toEqual({ desired_retention: 0.8 })
+      expect(is_dirty.value).toBe(true)
+      expect(draft.title).toBe('Edited title')
+    })
+  })
+
   // ── card_attributes ────────────────────────────────────────────────────────
 
   describe('card_attributes', () => {

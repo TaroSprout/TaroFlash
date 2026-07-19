@@ -3,6 +3,12 @@ import { mount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
 import { pacingFieldsKey } from '@/views/deck/deck-settings/tab-review-pacing/use-pacing-fields'
 import { presetActionsKey } from '@/views/deck/deck-settings/tab-review-pacing/use-preset-actions'
+
+// ── Hoisted mocks ──────────────────────────────────────────────────────────────
+
+const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
+vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
+
 import PresetChip from '@/views/deck/deck-settings/tab-review-pacing/preset-chip.vue'
 
 // ── Stub ──────────────────────────────────────────────────────────────────────
@@ -10,7 +16,11 @@ import PresetChip from '@/views/deck/deck-settings/tab-review-pacing/preset-chip
 const DropdownButtonStub = defineComponent({
   name: 'UiDropdownButton',
   inheritAttrs: false,
-  props: { options: { type: Array, default: () => [] } },
+  props: {
+    options: { type: Array, default: () => [] },
+    position: String,
+    fallbackPlacements: Array
+  },
   emits: ['select'],
   setup(props, { emit, slots, attrs }) {
     return () =>
@@ -137,6 +147,41 @@ describe('PresetChip — action rows [obligation]', () => {
     const push = options.find((o) => o.value === 'push')
 
     expect(push.disabled).toBe(false)
+  })
+})
+
+// ── popover placement [obligation] ─────────────────────────────────────────────
+
+describe('PresetChip — popover placement [obligation]', () => {
+  test('passes position="bottom-end" to the dropdown button [obligation]', () => {
+    const { wrapper } = makeWrapper()
+    expect(wrapper.findComponent(DropdownButtonStub).props('position')).toBe('bottom-end')
+  })
+
+  test('passes end-only fallback placements to the dropdown button [obligation]', () => {
+    const { wrapper } = makeWrapper()
+    expect(wrapper.findComponent(DropdownButtonStub).props('fallbackPlacements')).toEqual([
+      'bottom-end',
+      'top-end'
+    ])
+  })
+})
+
+// ── select sfx [obligation] ─────────────────────────────────────────────────────
+
+describe('PresetChip — select sfx [obligation]', () => {
+  test('emits the select sfx when picking a preset row [obligation]', async () => {
+    const { wrapper } = makeWrapper()
+    mockEmitSfx.mockClear()
+    await wrapper.find('[data-testid="preset-chip__option-2"]').trigger('click')
+    expect(mockEmitSfx).toHaveBeenCalledWith('select')
+  })
+
+  test('emits the select sfx when picking a CRUD action row [obligation]', async () => {
+    const { wrapper } = makeWrapper()
+    mockEmitSfx.mockClear()
+    await wrapper.find('[data-testid="preset-chip__option-fork"]').trigger('click')
+    expect(mockEmitSfx).toHaveBeenCalledWith('select')
   })
 })
 
