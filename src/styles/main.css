@@ -182,6 +182,12 @@
      geometry (radius, padding, font) is calibrated to reproduce the historical
      xl card exactly at this width. */
   --card-w-full: 314px;
+  /* Reused card widths below full. Size cards with w-(--card-w-*); layout math
+     that needs the number reads the same tokens via utils/card/widths.ts. */
+  --card-w-md: 260px;
+  --card-w-sm: 192px;
+  --card-w-xs: 172px;
+  --card-w-2xs: 102px;
   --page-width: 1570px;
   --blur-md: 24px;
   --blur-4: 4px;

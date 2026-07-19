@@ -29,7 +29,7 @@ const deck_actions = useDeckActions()
 const creating_deck = ref(false)
 // Drives the reorder-grid geometry (cell width per breakpoint); the cards
 // themselves are fluid and just fill the positioned cells.
-const size = computed(() => (is_md.value ? 'base' : 'sm'))
+const size = computed(() => (is_md.value ? 'sm' : 'xs'))
 const container_el = useTemplateRef<HTMLElement>('container_el')
 
 const reorder = useDeckGridReorder(

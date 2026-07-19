@@ -38,8 +38,8 @@ const size = computed<FeatureCardTier>(() => {
 // (mobile) step down from it.
 const CARD_WIDTH: Record<FeatureCardTier, string> = {
   xl: 'w-(--card-w-full)',
-  lg: 'w-[260px]',
-  sm: 'w-[172px]'
+  lg: 'w-(--card-w-md)',
+  sm: 'w-(--card-w-xs)'
 }
 const FACE_ROWS: Record<FeatureCardTier, string> = {
   xl: 'grid-rows-[70px_2.5rem_88px] gap-2',

@@ -1,7 +1,10 @@
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
+import { cardWidthPx } from '@/utils/card/widths'
 
-// Fixed per-breakpoint cell widths (the fluid card fills the cell) + --aspect-card.
-const CELL_WIDTH: Record<'base' | 'sm', number> = { base: 192, sm: 172 }
+export type DeckGridCellSize = 'sm' | 'xs'
+
+// Cell width comes from the shared --card-w-* tokens (the fluid card fills the
+// cell); CELL_ASPECT mirrors --aspect-card.
 const CELL_ASPECT = 8 / 7
 const GAP_X = 12 // gap-x-3
 const GAP_Y = 32 // gap-y-8
@@ -15,11 +18,11 @@ export type DeckGridItemPosition = { x: number; y: number }
  * only `container_width` (how many fit per row) needs a live measurement.
  */
 export function useDeckGrid(
-  size: MaybeRefOrGetter<'base' | 'sm'>,
+  size: MaybeRefOrGetter<DeckGridCellSize>,
   container_width: MaybeRefOrGetter<number> = 0,
   item_count: MaybeRefOrGetter<number> = 0
 ) {
-  const cell_width = computed(() => CELL_WIDTH[toValue(size)])
+  const cell_width = computed(() => cardWidthPx(toValue(size)))
   const row_pitch = computed(() => cell_width.value * CELL_ASPECT + GAP_Y)
 
   const columns = computed(() => {

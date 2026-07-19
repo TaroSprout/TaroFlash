@@ -17,7 +17,7 @@ const DEFAULT_COVER: DeckCover = {
 
 // Mirrors the real grid's per-breakpoint cell width (use-deck-grid CELL_WIDTH).
 const is_md = useMatchMedia('w>=md')
-const card_width = computed(() => (is_md.value ? 'w-[192px]' : 'w-[172px]'))
+const card_width = computed(() => (is_md.value ? 'w-(--card-w-sm)' : 'w-(--card-w-xs)'))
 </script>
 
 <template>
