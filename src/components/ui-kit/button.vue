@@ -11,6 +11,11 @@ defineOptions({ inheritAttrs: false })
 export type ButtonProps = {
   size?: 'xl' | 'lg' | 'base' | 'sm'
   variant?: 'solid' | 'outline' | 'ghost'
+  // Neutral chrome opt-in. A solid button defaults to the ACCENT (a solid
+  // button is an action), so a raised NEUTRAL button — the important case the
+  // theming refactor unlocks — is requested explicitly: it renders the
+  // `element` / `on-element` chrome roles instead of any identity colour.
+  neutral?: boolean
   inverted?: boolean
   iconOnly?: boolean
   roundedFull?: boolean
@@ -38,6 +43,7 @@ export type ButtonProps = {
 const {
   size = 'base',
   variant = 'solid',
+  neutral = false,
   iconOnly = false,
   iconRight,
   iconLeft,
@@ -123,6 +129,7 @@ function onClick(e: MouseEvent) {
       `ui-kit-btn--${variant}`,
       {
         'ui-kit-btn--icon-only': iconOnly,
+        'ui-kit-btn--neutral': neutral,
         'ui-kit-btn--inverted': inverted,
         'ui-kit-btn--split': has_trailing,
         'ui-kit-btn--quiet-tap': playOnTap && !tapAnimate,
@@ -285,6 +292,53 @@ function onClick(e: MouseEvent) {
   --btn-bg-color: transparent;
   --btn-text-color: var(--theme-primary);
   --btn-outline-color: transparent;
+}
+
+/* ─── CHROME / IDENTITY SEAM ─────────────────────────────────────────────
+ *
+ * The base variant rules above are the LEGACY identity path (--theme-*), kept
+ * so any call site still handing a button `data-theme="blue-500"` keeps
+ * painting. The two blocks below ADD the neutral-first vocabulary on top.
+ *
+ * IDENTITY — `.ui-kit-btn--solid[data-palette]`. The `[data-palette]` selector
+ * matches ONLY when the attribute sits on the button ITSELF. `data-palette` is
+ * a plain HTML attribute — attributes don't inherit — so a plain button nested
+ * in a `data-palette="green"` region does NOT match and never reads
+ * --color-accent. When the button DOES carry data-palette, the same-element
+ * selector in identities.gen.css (`[data-palette='green']`) has already set
+ * --color-accent on that element, so it resolves to THIS button's palette, not
+ * an ancestor's. That is the whole seam: identity is opt-in, attribute-on-self,
+ * leak-proof by construction.
+ *
+ * NEUTRAL — `.ui-kit-btn--neutral`. Solid defaults to accent because a solid
+ * button is an action; the raised NEUTRAL button opts in explicitly and paints
+ * the `element` chrome role. Ghost/outline are transparent chrome already, so
+ * neutral only swaps their text/outline off the legacy --theme-* onto ink. */
+
+.ui-kit-btn--neutral.ui-kit-btn--solid {
+  --btn-bg-color: var(--color-element);
+  --btn-text-color: var(--color-on-element);
+  --btn-outline-color: var(--color-element);
+}
+.ui-kit-btn--neutral.ui-kit-btn--ghost {
+  --btn-text-color: var(--color-ink);
+}
+.ui-kit-btn--neutral.ui-kit-btn--outline {
+  --btn-text-color: var(--color-on-element);
+  --btn-outline-color: var(--color-element);
+}
+
+.ui-kit-btn--solid[data-palette] {
+  --btn-bg-color: var(--color-accent);
+  --btn-text-color: var(--color-on-accent);
+  --btn-outline-color: var(--color-accent);
+}
+.ui-kit-btn--outline[data-palette] {
+  --btn-text-color: var(--color-accent);
+  --btn-outline-color: var(--color-accent);
+}
+.ui-kit-btn--ghost[data-palette] {
+  --btn-text-color: var(--color-accent);
 }
 
 .ui-kit-btn--solid.ui-kit-btn--inverted {
