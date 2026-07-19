@@ -59,7 +59,7 @@ const error_label = computed(
   <div
     data-testid="lesson-card"
     :data-status="lesson.status"
-    class="group relative flex w-56 flex-col gap-3 rounded-7 bg-brown-200 p-4 text-left dark:bg-stone-500"
+    class="group relative flex w-56 flex-col gap-3 rounded-7 bg-brown-200 p-4 text-left dark:bg-grey-700"
   >
     <button
       data-testid="lesson-card__open"

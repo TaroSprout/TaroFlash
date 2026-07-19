@@ -21,8 +21,8 @@ const emit = defineEmits<{
     data-testid="tab-bar"
     :class="[
       size === 'base'
-        ? 'gap-1 p-1 rounded-3.5 bg-brown-200 dark:bg-stone-950'
-        : 'gap-1 p-1 rounded-2.5 bg-brown-200 dark:bg-stone-950',
+        ? 'gap-1 p-1 rounded-3.5 bg-brown-200 dark:bg-grey-900'
+        : 'gap-1 p-1 rounded-2.5 bg-brown-200 dark:bg-grey-900',
       full_width ? 'flex w-full' : 'inline-flex'
     ]"
   >

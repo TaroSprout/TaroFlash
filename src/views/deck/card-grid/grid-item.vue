@@ -138,7 +138,7 @@ watch(
       trigger-only
       :trigger-icon="dropdown?.open ? 'close' : 'more'"
       position="bottom-end"
-      class="absolute -top-1 -right-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto data-[active=true]:opacity-100 data-[active=true]:pointer-events-auto [&>button]:ring-4 [&>button]:ring-brown-100 dark:[&>button]:ring-stone-950"
+      class="absolute -top-1 -right-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto data-[active=true]:opacity-100 data-[active=true]:pointer-events-auto [&>button]:ring-4 [&>button]:ring-brown-100 dark:[&>button]:ring-grey-900"
       :options="menu_options"
       @select="onMenuSelect"
     />

@@ -72,7 +72,7 @@ function onOptionSelect(option: DropdownOption) {
             :trigger-icon="dropdown?.open ? 'close' : 'more'"
             position="bottom-end"
             :options="deck_options"
-            class="[&>button]:ring-4 [&>button]:ring-brown-100 dark:[&>button]:ring-stone-950"
+            class="[&>button]:ring-4 [&>button]:ring-brown-100 dark:[&>button]:ring-grey-900"
             @select="onOptionSelect"
           />
         </div>

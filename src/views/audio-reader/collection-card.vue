@@ -17,7 +17,7 @@ const { t } = useI18n()
 <template>
   <div
     data-testid="collection-card"
-    class="group relative flex w-56 flex-col gap-3 rounded-7 bg-brown-200 p-4 text-left dark:bg-stone-500"
+    class="group relative flex w-56 flex-col gap-3 rounded-7 bg-brown-200 p-4 text-left dark:bg-grey-700"
   >
     <button
       data-testid="collection-card__open"

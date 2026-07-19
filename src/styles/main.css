@@ -37,10 +37,8 @@
   --color-grey-800: #292929;
   --color-grey-700: #4f4f4f;
 
-  --color-stone-950: #1c1c1c;
   --color-stone-900: #292c2e;
   --color-stone-700: #393e40;
-  --color-stone-500: #4f4f4f;
 
   --color-green-800: #467d60;
   --color-green-600: #6f9b80;
@@ -297,7 +295,7 @@
   }
 
   html:where([data-mode='dark']) {
-    background-color: var(--color-stone-950);
+    background-color: var(--color-grey-900);
   }
 }
 

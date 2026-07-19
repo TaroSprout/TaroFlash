@@ -34,7 +34,7 @@ function onSelect(value: CardImageLayout) {
       type="button"
       :data-testid="`image-layout-picker__option-${option}`"
       :data-active="selected === option"
-      class="group relative flex cursor-pointer flex-col items-center gap-2 rounded-8 p-2 transition-colors hover:bg-brown-500 dark:hover:bg-stone-500 hover:bgx-diagonal-stripes hover:bgx-opacity-10 data-[active=true]:bg-(--color-accent) data-[active=true]:bgx-diagonal-stripes data-[active=true]:bgx-opacity-10"
+      class="group relative flex cursor-pointer flex-col items-center gap-2 rounded-8 p-2 transition-colors hover:bg-brown-500 dark:hover:bg-grey-700 hover:bgx-diagonal-stripes hover:bgx-opacity-10 data-[active=true]:bg-(--color-accent) data-[active=true]:bgx-diagonal-stripes data-[active=true]:bgx-opacity-10"
       @click="onSelect(option)"
       v-sfx="{ hover: selected === option ? undefined : TYPE_SFX }"
     >

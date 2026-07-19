@@ -119,7 +119,7 @@ function errorKeyFor(error: unknown): string {
 
       <label
         data-testid="upload-lesson__file"
-        class="flex cursor-pointer items-center gap-3 rounded-7 border-2 border-dashed border-brown-500 p-4 text-brown-700 dark:border-stone-500 dark:text-brown-300"
+        class="flex cursor-pointer items-center gap-3 rounded-7 border-2 border-dashed border-brown-500 p-4 text-brown-700 dark:border-grey-700 dark:text-brown-300"
       >
         <ui-icon src="music-note" class="h-5" />
         <span data-testid="upload-lesson__file-name">

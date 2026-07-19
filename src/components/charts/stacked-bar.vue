@@ -6,7 +6,7 @@ type Segment = { value: number; colorClass: string; key?: string | number }
 const {
   segments,
   heightClass = 'h-4',
-  trackClass = 'bg-brown-300/70 dark:bg-stone-500'
+  trackClass = 'bg-brown-300/70 dark:bg-grey-700'
 } = defineProps<{
   segments: Segment[]
   heightClass?: string

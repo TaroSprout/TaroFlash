@@ -69,7 +69,7 @@ function onScrubMove(e: PointerEvent) {
       ref="track"
       data-testid="scrubber__track"
       :data-layout="layout"
-      class="relative h-2.5 min-w-0 cursor-pointer touch-none rounded-full bg-brown-200 data-[layout=inline]:flex-1 dark:bg-stone-500"
+      class="relative h-2.5 min-w-0 cursor-pointer touch-none rounded-full bg-brown-200 data-[layout=inline]:flex-1 dark:bg-grey-700"
       role="slider"
       :aria-valuemin="0"
       :aria-valuemax="100"
