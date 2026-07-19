@@ -50,8 +50,7 @@ watch(success, (isSuccess) => {
       </form>
       <ui-button
         data-testid="account-access-modal__password-submit"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
+        data-palette="brand"
         size="lg"
         full-width
         :loading="loading"

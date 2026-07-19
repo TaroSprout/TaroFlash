@@ -127,7 +127,7 @@ const showHeader = computed(() => Boolean(slots.header || slots['header-content'
               :data-header-border="header_border"
               v-bind="header_bindings"
               :class="[
-                'w-full flex justify-center items-center place-items-center px-(--window-px) pt-11.5 pb-14 gap-6 bg-(--theme-primary) text-(--theme-on-primary) relative z-10',
+                'w-full flex justify-center items-center place-items-center px-(--window-px) pt-11.5 pb-14 gap-6 bg-(--color-accent) text-(--color-on-accent) relative z-10',
                 header_border_class
               ]"
             >

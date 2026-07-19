@@ -45,8 +45,7 @@ const {
     <ui-button
       data-testid="deck-footer-bulk-actions__move"
       icon-left="move-item"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
+      data-palette="blue"
       full-width
       size="lg"
       :disabled="!has_selection"

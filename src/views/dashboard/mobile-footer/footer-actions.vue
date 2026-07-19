@@ -60,8 +60,7 @@ function onStudyAll() {
       data-testid="dashboard-footer-actions__edit-decks"
       icon-only
       icon-left="stop"
-      data-theme="yellow-500"
-      data-theme-dark="yellow-700"
+      data-palette="yellow"
       size="lg"
       @press="emit('toggle-edit-decks')"
     >

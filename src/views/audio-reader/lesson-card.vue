@@ -104,8 +104,7 @@ const error_label = computed(
     <ui-button
       v-if="is_failed"
       data-testid="lesson-card__retry"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
+      data-palette="blue"
       icon-left="play"
       size="sm"
       full-width

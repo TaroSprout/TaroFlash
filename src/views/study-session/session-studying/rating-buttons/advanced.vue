@@ -32,8 +32,7 @@ const success_options = computed<ButtonGroupOption[]>(() => [
   <div data-testid="rating-buttons__advanced" class="flex w-full items-center gap-1.5">
     <ui-button
       data-testid="rating-buttons__again"
-      data-theme="red-500"
-      data-theme-dark="red-600"
+      data-palette="red"
       size="xl"
       icon-left="dislike"
       class="shrink-0"

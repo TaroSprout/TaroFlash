@@ -104,8 +104,7 @@ function errorKeyFor(error: unknown): string {
 <template>
   <app-window
     data-testid="upload-lesson-container"
-    data-theme="blue-500"
-    data-theme-dark="blue-650"
+    data-palette="blue"
     class="sm:w-150"
     :title="t('audio-reader.upload.title')"
     @close="close(undefined)"
@@ -159,8 +158,7 @@ function errorKeyFor(error: unknown): string {
         </ui-button>
 
         <ui-button
-          data-theme="blue-500"
-          data-theme-dark="blue-650"
+          data-palette="brand"
           icon-left="add"
           size="lg"
           full-width

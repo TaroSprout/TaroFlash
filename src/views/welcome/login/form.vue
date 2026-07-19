@@ -94,8 +94,7 @@ const { t } = useI18n()
         <ui-button
           data-testid="login-dialog__submit"
           size="lg"
-          data-theme="blue-500"
-          data-theme-dark="blue-650"
+          data-palette="brand"
           :loading="loading"
           :disabled="!allFilled"
           click-when-disabled

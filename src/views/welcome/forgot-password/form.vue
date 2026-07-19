@@ -62,8 +62,7 @@ const { t } = useI18n()
 
       <ui-button
         data-testid="forgot-password-modal__submit"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
+        data-palette="brand"
         size="lg"
         full-width
         :loading="loading"

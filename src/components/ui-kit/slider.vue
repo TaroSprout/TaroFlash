@@ -119,13 +119,13 @@ const KEY_DELTAS: Record<string, number> = {
   >
     <div
       data-testid="ui-kit-slider__fill"
-      class="absolute inset-y-0 left-0 rounded-4 bg-(--theme-primary)"
+      class="absolute inset-y-0 left-0 rounded-4 bg-(--color-accent)"
       :style="{ width: fill_width }"
     ></div>
 
     <div
       data-testid="ui-kit-slider__handle"
-      class="absolute inset-y-2.5 w-1 -translate-x-1/2 rounded-full bg-(--theme-on-primary) dark:bg-brown-100"
+      class="absolute inset-y-2.5 w-1 -translate-x-1/2 rounded-full bg-(--color-on-accent) dark:bg-brown-100"
       :style="{ left: offsetOf(value) }"
     ></div>
 
@@ -163,13 +163,13 @@ const KEY_DELTAS: Record<string, number> = {
     <div
       aria-hidden="true"
       data-testid="ui-kit-slider__content-fill"
-      class="pointer-events-none absolute inset-0 flex items-center justify-between px-4 text-base text-(--theme-on-primary)"
+      class="pointer-events-none absolute inset-0 flex items-center justify-between px-4 text-base text-(--color-on-accent)"
       :style="{ clipPath: `inset(0 calc(100% - ${fill_width}) 0 0 round 16px)` }"
     >
-      <span v-if="label" class="flex items-center self-stretch bg-(--theme-primary)/70 px-1">
+      <span v-if="label" class="flex items-center self-stretch bg-(--color-accent)/70 px-1">
         {{ label }}
       </span>
-      <span class="flex items-center self-stretch bg-(--theme-primary)/70 px-1 tabular-nums">
+      <span class="flex items-center self-stretch bg-(--color-accent)/70 px-1 tabular-nums">
         {{ value }}
       </span>
     </div>

@@ -29,8 +29,7 @@ const { has_prev, has_next, flip, prev, next } = inject(mobileCardEditorKey)!
 
     <ui-button
       data-testid="mobile-card-editor__flip"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
+      data-palette="blue"
       icon-left="card-flip"
       full-width
       size="xl"

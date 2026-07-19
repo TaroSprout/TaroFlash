@@ -41,8 +41,7 @@ const edit_options = computed<DropdownOption[]>(() => [
       v-if="shell.is_rearranging.value"
       data-testid="deck-footer-actions__stop-rearranging"
       icon-left="stop"
-      data-theme="yellow-500"
-      data-theme-dark="yellow-700"
+      data-palette="yellow"
       full-width
       size="lg"
       @press="shell.toggleRearrange()"

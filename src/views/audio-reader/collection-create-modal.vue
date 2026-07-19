@@ -36,8 +36,7 @@ async function onSubmit() {
 <template>
   <app-window
     data-testid="collection-create-container"
-    data-theme="blue-500"
-    data-theme-dark="blue-650"
+    data-palette="blue"
     class="sm:w-150"
     :title="t('lesson-collections.create.title')"
     @close="close(undefined)"
@@ -72,8 +71,7 @@ async function onSubmit() {
         </ui-button>
 
         <ui-button
-          data-theme="blue-500"
-          data-theme-dark="blue-650"
+          data-palette="brand"
           icon-left="add"
           size="lg"
           full-width

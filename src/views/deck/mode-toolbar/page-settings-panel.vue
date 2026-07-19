@@ -61,8 +61,7 @@ const sort_options = [
     </header>
 
     <div
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
+      data-palette="blue"
       data-testid="page-settings-panel__settings"
       class="mx-auto flex w-full max-w-70 md:max-w-60 flex-col gap-4"
     >

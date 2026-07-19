@@ -26,8 +26,7 @@ const price = `$${PLANS.paid.monthlyPriceUsd} / mo`
     >
       <div data-testid="paid-features__upgrade" class="absolute -bottom-2 -right-2 z-10 rotate-2">
         <ui-button
-          data-theme="yellow-500"
-          data-theme-dark="yellow-700"
+          data-palette="yellow"
           icon-left="triangle-eye"
           class="pointer-events-none"
           tabindex="-1"

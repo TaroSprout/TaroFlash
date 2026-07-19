@@ -69,7 +69,7 @@ async function onToggleVote() {
       <ui-burst
         v-if="burst_id"
         :key="burst_id"
-        data-theme="pink-500"
+        data-palette="pink"
         size="sm"
         :width="4"
         class="pointer-events-none top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"

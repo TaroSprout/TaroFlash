@@ -58,8 +58,7 @@ function onReset() {
 
     <ui-button
       data-testid="settings__save-button"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
+      data-palette="brand"
       size="lg"
       class="flex-1!"
       :loading="is_saving"

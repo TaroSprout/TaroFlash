@@ -50,7 +50,7 @@ const remove_position = computed(() =>
       data-testid="image-dropzone__remove"
       icon-only
       icon-left="remove-image"
-      data-theme="red-500"
+      data-palette="error"
       class="absolute! z-30 transition-opacity duration-150"
       :class="[
         remove_position,
@@ -66,8 +66,7 @@ const remove_position = computed(() =>
       data-testid="image-dropzone__replace"
       icon-only
       icon-left="add-image"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
+      data-palette="brand"
       class="absolute! top-(--face-padding) left-(--face-padding) z-30 transition-opacity duration-150"
       :class="active ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'"
       @click.stop="emit('browse')"

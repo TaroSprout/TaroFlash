@@ -72,8 +72,7 @@ const submit_label = computed(() =>
         >
           <ui-button
             data-testid="change-card-modal__submit"
-            data-theme="blue-500"
-            data-theme-dark="blue-650"
+            data-palette="brand"
             full-width
             size="lg"
             :loading="is_submitting"

@@ -50,8 +50,7 @@ const {
 
       <ui-button
         data-testid="mode-select__move-button"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
+        data-palette="blue"
         icon-left="move-item"
         :disabled="!has_selection"
         @press="actions.onMoveCards()"
@@ -72,8 +71,7 @@ const {
 
       <ui-tag
         data-testid="mode-select__count"
-        data-theme="purple-500"
-        data-theme-dark="purple-700"
+        data-palette="purple"
         fill-height
         class="bgx-diagonal-stripes bgx-opacity-10"
       >

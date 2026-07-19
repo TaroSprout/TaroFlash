@@ -59,7 +59,7 @@ function onSelect(h: Horizontal, v: Vertical) {
         :key="`${h}-${v}`"
         :data-testid="`align-picker__cell-${h}-${v}`"
         :data-active="isActive(h, v)"
-        class="aspect-square flex items-center justify-center rounded-5 cursor-pointer text-ink-muted data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary) data-[active=true]:bgx-diagonal-stripes data-[active=true]:bgx-opacity-10 data-[active=false]:hover:bg-(--theme-primary) data-[active=false]:hover:text-(--theme-on-primary) data-[active=false]:hover:bgx-diagonal-stripes data-[active=false]:hover:bgx-opacity-10"
+        class="aspect-square flex items-center justify-center rounded-5 cursor-pointer text-ink-muted data-[active=true]:bg-(--color-accent) data-[active=true]:text-(--color-on-accent) data-[active=true]:bgx-diagonal-stripes data-[active=true]:bgx-opacity-10 data-[active=false]:hover:bg-(--color-accent) data-[active=false]:hover:text-(--color-on-accent) data-[active=false]:hover:bgx-diagonal-stripes data-[active=false]:hover:bgx-opacity-10"
         @click="onSelect(h, v)"
         v-sfx="{ hover: TYPE_SFX }"
       >

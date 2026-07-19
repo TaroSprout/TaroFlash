@@ -5,7 +5,7 @@ type Bar = { value: number; label?: string; key?: string | number }
 
 const {
   bars,
-  barClass = 'bg-(--theme-primary)',
+  barClass = 'bg-(--color-accent)',
   trackHeight = 110
 } = defineProps<{
   bars: Bar[]

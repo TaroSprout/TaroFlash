@@ -75,7 +75,7 @@ const is_coarse = useMatchMedia('coarse')
   height: 200%;
   transform: translate(-50%, -50%) scale(0.5);
 
-  background-color: var(--theme-primary);
+  background-color: var(--color-accent);
   border-radius: 4.4rem 5.8rem 4.8rem 6.2rem / 5.4rem 4.4rem 6rem 4.8rem;
   filter: var(--wobble-filter);
 }

@@ -15,8 +15,7 @@ const { tip } = useTipRotation()
   >
     <ui-tape
       data-testid="dashboard-tip-card__tape"
-      data-theme="yellow-500"
-      data-theme-dark="yellow-700"
+      data-palette="yellow"
       class="absolute -top-4 rotate-3 w-40 bgx-leaf"
       :label="t('dashboard.tip-card.tape-label')"
     />

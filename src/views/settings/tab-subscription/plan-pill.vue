@@ -33,7 +33,7 @@ defineSlots<{
     <div
       data-testid="plan-pill__body"
       :data-loading="loading"
-      class="flex items-center gap-4 rounded-4 px-5 text-(--theme-on-primary) h-19 data-[loading=false]:bgx-leaf data-[loading=false]:bgx-size-23 data-[loading=false]:bgx-opacity-10 bg-(--theme-primary) data-[loading=true]:bgx-diagonal-stripes data-[loading=true]:shimmer"
+      class="flex items-center gap-4 rounded-4 px-5 text-(--color-on-accent) h-19 data-[loading=false]:bgx-leaf data-[loading=false]:bgx-size-23 data-[loading=false]:bgx-opacity-10 bg-(--color-accent) data-[loading=true]:bgx-diagonal-stripes data-[loading=true]:shimmer"
     >
       <template v-if="!loading">
         <div data-testid="plan-pill__primary" class="flex flex-1 flex-col">
@@ -46,7 +46,7 @@ defineSlots<{
             <span
               v-if="status"
               data-testid="plan-pill__status"
-              class="rounded-2 bg-brown-100 px-2 py-0.5 text-(--theme-primary)"
+              class="rounded-2 bg-brown-100 px-2 py-0.5 text-(--color-accent)"
             >
               {{ status }}
             </span>

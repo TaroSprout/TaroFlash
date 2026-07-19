@@ -127,8 +127,7 @@ watch(
 <template>
   <app-window
     data-testid="collection-edit-container"
-    data-theme="blue-500"
-    data-theme-dark="blue-650"
+    data-palette="blue"
     class="max-h-[90dvh] sm:w-180"
     :title="collection?.title"
     @close="close()"
@@ -140,8 +139,7 @@ watch(
       <section data-testid="collection-edit__lessons" class="flex flex-col gap-4">
         <ui-button
           data-testid="collection-edit__upload"
-          data-theme="blue-500"
-          data-theme-dark="blue-650"
+          data-palette="brand"
           icon-left="add"
           size="lg"
           @press="onUpload"
@@ -179,7 +177,7 @@ watch(
 
         <ui-button
           data-testid="collection-edit__delete"
-          data-theme="red-500"
+          data-palette="danger"
           icon-left="delete"
           size="lg"
           class="self-start"

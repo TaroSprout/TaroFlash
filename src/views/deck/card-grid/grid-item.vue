@@ -125,8 +125,7 @@ watch(
 
     <div v-if="is_selecting" class="absolute -top-1 -right-1 pointer-events-none">
       <ui-radio
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
+        data-palette="blue"
         :checked="selected"
         :active="is_hovering"
         class="outline-4 outline-surface"

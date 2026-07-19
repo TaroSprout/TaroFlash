@@ -203,8 +203,7 @@ async function onSave() {
       </ui-button>
 
       <ui-button
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
+        data-palette="brand"
         icon-left="card-add"
         size="xl"
         full-width

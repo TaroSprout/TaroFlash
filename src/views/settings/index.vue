@@ -126,8 +126,7 @@ watch(layout_mode, (mode) => {
   <paged-window
     ref="pager"
     data-testid="settings-container"
-    data-theme="blue-500"
-    data-theme-dark="blue-650"
+    data-palette="blue"
     :data-layout="layout_mode"
     :class="[
       layout_mode === 'desktop' ? 'w-248!' : 'w-full! max-w-224',

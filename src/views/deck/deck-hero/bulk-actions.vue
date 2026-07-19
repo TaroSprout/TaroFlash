@@ -56,8 +56,7 @@ function onSelect(value: string) {
       <template #right>
         <ui-tag
           data-testid="bulk-actions__count"
-          data-theme="purple-500"
-          data-theme-dark="purple-700"
+          data-palette="purple"
           fill-height
           class="bgx-diagonal-stripes bgx-opacity-10"
         >
@@ -70,8 +69,7 @@ function onSelect(value: string) {
 
     <ui-button
       data-testid="bulk-actions__delete"
-      data-theme="red-500"
-      data-theme-dark="red-600"
+      data-palette="danger"
       full-width
       size="xl"
       :disabled="!has_selection"

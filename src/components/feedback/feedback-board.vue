@@ -24,8 +24,7 @@ function onSubmitPress() {
 <template>
   <app-window
     data-testid="feedback-board"
-    data-theme="green-500"
-    data-theme-dark="green-800"
+    data-palette="green"
     class="sm:w-170"
     :title="t('feedback-board.title')"
     @close="close"
@@ -52,8 +51,7 @@ function onSubmitPress() {
 
       <ui-button
         data-testid="feedback-board__submit-button"
-        data-theme="green-500"
-        data-theme-dark="green-800"
+        data-palette="green"
         icon-left="shooting-star"
         size="lg"
         full-width

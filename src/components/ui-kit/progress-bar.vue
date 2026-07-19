@@ -27,7 +27,7 @@ const fill_width = computed(() => {
   >
     <div
       data-testid="ui-kit-progress-bar__fill"
-      class="absolute inset-y-0 left-0 rounded-full bg-(--theme-primary) transition-[width] duration-300 ease-out"
+      class="absolute inset-y-0 left-0 rounded-full bg-(--color-accent) transition-[width] duration-300 ease-out"
       :style="{ width: fill_width }"
     ></div>
 
@@ -44,7 +44,7 @@ const fill_width = computed(() => {
       v-if="label"
       aria-hidden="true"
       data-testid="ui-kit-progress-bar__label-fill"
-      class="pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-bold text-(--theme-on-primary) transition-[clip-path] duration-300 ease-out"
+      class="pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-bold text-(--color-on-accent) transition-[clip-path] duration-300 ease-out"
       :style="{ clipPath: `inset(0 calc(100% - ${fill_width}) 0 0 round 9999px)` }"
     >
       {{ label }}

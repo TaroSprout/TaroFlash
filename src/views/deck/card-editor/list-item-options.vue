@@ -27,8 +27,7 @@ const { t } = useI18n()
       @press="emit('delete')"
       icon-only
       icon-left="delete"
-      data-theme="red-500"
-      data-theme-dark="red-600"
+      data-palette="danger"
       :sfx="{ hover: TYPE_SFX }"
     >
       {{ t('deck-view.item-options.delete') }}

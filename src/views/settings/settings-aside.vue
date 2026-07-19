@@ -28,8 +28,7 @@ const entries = computed<OptionsPanelEntry[]>(() => [
         <ui-button
           data-testid="settings-aside__edit-account-button"
           class="absolute! -top-2 -right-2 pointer-events-auto"
-          data-theme="blue-500"
-          data-theme-dark="blue-650"
+          data-palette="blue"
           icon-left="pencil"
           icon-only
           @press="onAccountAccessClick"

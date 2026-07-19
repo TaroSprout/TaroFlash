@@ -11,8 +11,7 @@ const { onDeleteAccount, deleting_account } = inject(memberDangerActionsKey)!
 <template>
   <ui-button
     data-testid="danger-delete-account-button"
-    data-theme="red-500"
-    data-theme-dark="red-600"
+    data-palette="danger"
     icon-left="delete"
     size="lg"
     full-width

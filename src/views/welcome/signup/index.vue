@@ -40,8 +40,7 @@ async function onSubmit() {
 <template>
   <app-window
     data-testid="signup-container"
-    data-theme="blue-500"
-    data-theme-dark="blue-650"
+    data-palette="blue"
     class="sm:w-130"
     :title="t('signup-dialog.heading')"
     :pattern_config="{
@@ -71,8 +70,7 @@ async function onSubmit() {
         <ui-button
           size="xl"
           full-width
-          data-theme="blue-500"
-          data-theme-dark="blue-650"
+          data-palette="brand"
           :loading="auth.loading"
           :disabled="!auth.all_filled"
           click-when-disabled

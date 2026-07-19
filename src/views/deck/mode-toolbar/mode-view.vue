@@ -22,8 +22,7 @@ const { newCard } = inject(cardEditorKey)!
 
       <ui-button
         data-testid="mode-view__add-card-button"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
+        data-palette="brand"
         icon-left="add"
         @press="newCard"
       >

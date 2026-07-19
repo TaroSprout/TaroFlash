@@ -20,8 +20,7 @@ const { display_side, show_all_ratings, loading } = useInjectedStudySessionContr
     <ui-button
       v-if="display_side === 'cover'"
       data-testid="rating-buttons__start"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
+      data-palette="brand"
       size="xl"
       full-width
       :loading="loading"

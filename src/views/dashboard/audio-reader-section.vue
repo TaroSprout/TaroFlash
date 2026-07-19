@@ -47,8 +47,7 @@ watch(collections_error, (err) => {
 
       <ui-button
         data-testid="audio-reader-section__new"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
+        data-palette="brand"
         icon-left="add"
         size="lg"
         @press="onCreate"

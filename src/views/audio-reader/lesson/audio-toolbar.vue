@@ -161,12 +161,11 @@ function setMode(next: 'expanded' | 'mini') {
         <button
           data-testid="audio-toolbar__toggle"
           type="button"
-          data-theme="blue-500"
-          data-theme-dark="blue-650"
+          data-palette="brand"
           :aria-label="
             is_playing ? t('lesson-view.audio.pause-button') : t('lesson-view.audio.play-button')
           "
-          class="flex size-18 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
+          class="flex size-18 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--color-accent) text-(--color-on-accent) transition active:scale-95"
           :class="{ [TAP_BGX]: play_playing }"
           @click="onPlayTap"
         >
@@ -275,12 +274,11 @@ function setMode(next: 'expanded' | 'mini') {
       <button
         data-testid="audio-toolbar__toggle"
         type="button"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
+        data-palette="brand"
         :aria-label="
           is_playing ? t('lesson-view.audio.pause-button') : t('lesson-view.audio.play-button')
         "
-        class="flex size-18 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
+        class="flex size-18 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--color-accent) text-(--color-on-accent) transition active:scale-95"
         :class="{ [TAP_BGX]: play_playing }"
         @click="onPlayTap"
       >

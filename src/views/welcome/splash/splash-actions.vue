@@ -41,13 +41,7 @@ const height = useWelcomeHeight()
       {{ t('welcome-view.login-button') }}
     </ui-button>
 
-    <ui-button
-      size="xl"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
-      icon-left="account-circle-add"
-      @press="signup()"
-    >
+    <ui-button size="xl" data-palette="brand" icon-left="account-circle-add" @press="signup()">
       {{
         width === 'desktop'
           ? t('welcome-view.signup-button')

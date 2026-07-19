@@ -37,7 +37,7 @@ const { t } = useI18n()
     <ui-button
       data-testid="face-overlay__dismiss-error"
       size="sm"
-      data-theme="red-500"
+      data-palette="error"
       @click.stop="emit('dismiss-error')"
     >
       {{ t('card.image-editor.dismiss-error-button') }}

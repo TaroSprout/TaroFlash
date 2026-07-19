@@ -56,8 +56,7 @@ function onClose() {
 <template>
   <dialog-card
     data-testid="feedback-submit-dialog"
-    data-theme="green-500"
-    data-theme-dark="green-800"
+    data-palette="green"
     size="lg"
     :title="t('feedback-submit-dialog.title')"
     @close="onClose"
@@ -91,8 +90,7 @@ function onClose() {
 
       <ui-button
         data-testid="feedback-submit-dialog__submit"
-        data-theme="green-500"
-        data-theme-dark="green-800"
+        data-palette="green"
         icon-left="shooting-star"
         size="lg"
         full-width

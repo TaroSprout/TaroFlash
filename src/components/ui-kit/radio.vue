@@ -28,8 +28,8 @@ const onClick = tap(undefined, {
     data-testid="ui-kit-radio"
     class="relative flex size-10 cursor-pointer items-center justify-center rounded-full transition-all duration-50 p-2.5 border-4 border-white dark:border-stone-900"
     :class="{
-      'bg-(--theme-primary)! border-none': checked,
-      'bg-white dark:bg-stone-900 hover:bg-(--theme-primary) data-[active=true]:bg-(--theme-primary)':
+      'bg-(--color-accent)! border-none': checked,
+      'bg-white dark:bg-stone-900 hover:bg-(--color-accent) data-[active=true]:bg-(--color-accent)':
         !checked
     }"
     :data-active="playing || active || null"

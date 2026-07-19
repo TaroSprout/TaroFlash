@@ -43,8 +43,7 @@ const skeleton_size = computed<CardGridSize>(() => (is_compact.value ? 'base' : 
 
         <ui-button
           data-testid="card-grid-empty__create-button"
-          data-theme="blue-500"
-          data-theme-dark="blue-650"
+          data-palette="brand"
           icon-left="card-add"
           @press="newCard"
         >
