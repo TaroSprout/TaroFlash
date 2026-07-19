@@ -56,7 +56,12 @@ function onBlur(e: Event) {
   focused.value = false
 }
 
+// A model value outside [min, max] — a stored value that predates a tightened
+// bound — settles back into range on the first press rather than treating the
+// far edge as "already there" and wrapping past it.
 function decrement() {
+  if (value.value > max) return void (value.value = max)
+
   if (value.value <= min) {
     if (wrap && Number.isFinite(max)) value.value = max
     return
@@ -65,6 +70,8 @@ function decrement() {
 }
 
 function increment() {
+  if (value.value < min) return void (value.value = min)
+
   if (value.value >= max) {
     if (wrap && Number.isFinite(min)) value.value = min
     return

@@ -114,5 +114,47 @@ describe('useDraft', () => {
       state.a = 1
       expect(is_dirty.value).toBe(true)
     })
+
+    // A write that persisted only a slice of the row on its own (e.g. a preset
+    // action writing the deck's pacing sidecar) rebases just that slice —
+    // adopting the whole state would silently commit the user's other staged
+    // edits without them ever pressing Save.
+    describe('partial rebase (keys) [obligation]', () => {
+      test('rebase([key]) leaves other dirty keys still reported dirty by is_dirty [obligation]', () => {
+        const { state, is_dirty, rebase } = useDraft(() => ({ a: 1, b: 1 }))
+
+        state.a = 2
+        state.b = 2
+        rebase(['a'])
+
+        expect(is_dirty.value).toBe(true)
+
+        state.b = 1
+        expect(is_dirty.value).toBe(false)
+      })
+
+      test('a subsequent revert of the rebased key now reads as dirty again', () => {
+        const { state, is_dirty, rebase } = useDraft(() => ({ a: 1, b: 1 }))
+
+        state.a = 2
+        rebase(['a'])
+        expect(is_dirty.value).toBe(false)
+
+        state.a = 1
+        expect(is_dirty.value).toBe(true)
+      })
+
+      test('rebase([key]) on a nested-object key adopts a deep clone, not the live reference', () => {
+        const { state, rebase } = useDraft(() => ({ nested: { b: 1 } }))
+
+        const nested_ref = state.nested
+        state.nested.b = 2
+        rebase(['nested'])
+        state.nested.b = 3
+
+        expect(nested_ref.b).toBe(3)
+        expect(nested_ref).toBe(state.nested)
+      })
+    })
   })
 })

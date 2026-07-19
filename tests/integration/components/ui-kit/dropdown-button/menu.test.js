@@ -173,6 +173,57 @@ describe('DropdownMenu', () => {
     })
   })
 
+  // ── data-active / data-tapping [obligation] ───────────────────────────────
+  // data-active now means SELECTED only (flat fill); data-tapping is the
+  // separate transient tap-sweep signal. These were previously conflated on
+  // data-active.
+
+  describe('data-active / data-tapping [obligation]', () => {
+    test('data-active is true for the option marked selected [obligation]', () => {
+      const wrapper = mountMenu({
+        options: [
+          { value: 'copy', label: 'Copy', selected: true },
+          { value: 'delete', label: 'Delete' }
+        ]
+      })
+      const options = wrapper.findAll('[data-testid="dropdown-button__option"]')
+      expect(options[0].attributes('data-active')).toBe('true')
+      expect(options[1].attributes('data-active')).toBeUndefined()
+    })
+
+    test('data-tapping is unset before any tap [obligation]', () => {
+      const wrapper = mountMenu()
+      const option = wrapper.find('[data-testid="dropdown-button__option"]')
+      expect(option.attributes('data-tapping')).toBeUndefined()
+    })
+
+    test('clicking an unselected option does not set data-active [obligation]', async () => {
+      const wrapper = mountMenu()
+      const option = wrapper.findAll('[data-testid="dropdown-button__option"]')[0]
+      await option.trigger('click')
+      expect(option.attributes('data-active')).toBeUndefined()
+    })
+  })
+
+  // ── separator rows [obligation] ───────────────────────────────────────────
+
+  describe('separator rows [obligation]', () => {
+    test('renders a separator divider above an option flagged separator [obligation]', () => {
+      const wrapper = mountMenu({
+        options: [
+          { value: 'copy', label: 'Copy' },
+          { value: 'delete', label: 'Delete', separator: true }
+        ]
+      })
+      expect(wrapper.findAll('[data-testid="dropdown-button__separator"]')).toHaveLength(1)
+    })
+
+    test('renders no separator divider when no option is flagged separator [obligation]', () => {
+      const wrapper = mountMenu()
+      expect(wrapper.findAll('[data-testid="dropdown-button__separator"]')).toHaveLength(0)
+    })
+  })
+
   // ── menuClass prop [obligation] ───────────────────────────────────────────
 
   describe('menuClass prop [obligation]', () => {

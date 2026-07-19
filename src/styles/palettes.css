@@ -554,7 +554,7 @@
   --theme-on-accent: var(--color-brown-700);
 
   --theme-neutral: var(--color-brown-500);
-  --theme-on-neutral: var(--color-brown-700);
+  --theme-on-neutral: var(--color-brown-100);
 }
 
 [data-theme='brown-50'],

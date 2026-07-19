@@ -44,6 +44,10 @@ describe('deck defaults', () => {
     expect(DAILY_LIMIT_BOUNDS.min).toBe(0)
   })
 
+  test('DAILY_LIMIT_BOUNDS carries no max — unbounded above since decks grow past any stored limit [obligation]', () => {
+    expect(DAILY_LIMIT_BOUNDS).not.toHaveProperty('max')
+  })
+
   describe('withDeckConfigDefaults', () => {
     test('returns the defaults when partial is undefined', () => {
       expect(withDeckConfigDefaults()).toEqual(DECK_CONFIG_DEFAULTS)

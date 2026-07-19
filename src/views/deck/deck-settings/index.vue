@@ -13,7 +13,6 @@ import type { WindowLayout } from '@/components/layout-kit/paged-window/layout'
 import { useAlert } from '@/composables/alert'
 import { useModalAfterEnter, useModalRequestClose } from '@/composables/modal'
 import DeckPinnedPreview from '@/components/deck/pinned-preview.vue'
-import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import PagedWindow, {
   type PagedWindowGroup,
   type Page
@@ -176,9 +175,9 @@ watch([preview_el, aside_el], ([preview]) => {
     data-theme-dark="green-800"
     :data-layout="layout_mode"
     :class="[
-      layout_mode === 'desktop' ? 'w-237!' : 'w-full! max-w-205.5',
-      layout_mode !== 'phone' && 'h-181.5',
-      layout_mode === 'phone'
+      layout_mode === 'desktop' ? 'w-238!' : 'w-full! max-w-205.5', // desktop : not desktop
+      layout_mode !== 'phone' && 'h-181.5', // table & desktop
+      layout_mode === 'phone' // phone : not phone
         ? '[--deck-settings-padding:var(--window-px)]'
         : '[--deck-settings-padding:0px]',
       chrome.is_tucked.value && '[--window-overlay-z:15]'
@@ -209,16 +208,6 @@ watch([preview_el, aside_el], ([preview]) => {
 
     <template #default="{ displayed_page: page }">
       <component :is="PAGE_COMPONENTS[page as PageValue]" ref="active_page_ref" />
-    </template>
-
-    <template #scrollbar>
-      <scroll-bar
-        v-if="layout_mode !== 'phone'"
-        data-theme="brown-200"
-        target="[data-testid='paged-window__main']"
-        class="absolute top-2 bottom-4 right-0"
-        :class="layout_mode === 'tablet' && 'right-9'"
-      />
     </template>
 
     <template #aside>

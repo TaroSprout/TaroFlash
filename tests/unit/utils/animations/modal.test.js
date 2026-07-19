@@ -58,6 +58,12 @@ describe('modal animations', () => {
 
       expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ onComplete: done }))
     })
+
+    test('[obligation] clears the settled transform so it stops trapping popovers', () => {
+      slideUpFadeIn(el, done)
+
+      expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ clearProps: 'transform' }))
+    })
   })
 
   describe('slideDownFadeOut', () => {
@@ -74,6 +80,13 @@ describe('modal animations', () => {
       slideDownFadeOut(el, done)
 
       expect(mockSet).not.toHaveBeenCalled()
+    })
+
+    test('[obligation] does not clear props (the receding modal keeps its transform)', () => {
+      slideDownFadeOut(el, done)
+
+      const [, vars] = mockTo.mock.calls[0]
+      expect(vars.clearProps).toBeUndefined()
     })
 
     test('calls done via onComplete', () => {
@@ -108,6 +121,12 @@ describe('modal animations', () => {
 
       expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ onComplete: done }))
     })
+
+    test('[obligation] clears the settled transform so it stops trapping popovers', () => {
+      slideUpFromEdge(el, done)
+
+      expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ clearProps: 'transform' }))
+    })
   })
 
   describe('slideDownToEdge', () => {
@@ -121,6 +140,13 @@ describe('modal animations', () => {
       slideDownToEdge(el, done)
 
       expect(mockSet).not.toHaveBeenCalled()
+    })
+
+    test('[obligation] does not clear props (the receding modal keeps its transform)', () => {
+      slideDownToEdge(el, done)
+
+      const [, vars] = mockTo.mock.calls[0]
+      expect(vars.clearProps).toBeUndefined()
     })
 
     test('calls done via onComplete', () => {
@@ -158,6 +184,12 @@ describe('modal animations', () => {
 
       expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ onComplete: done }))
     })
+
+    test('[obligation] clears the settled transform so it stops trapping popovers', () => {
+      springScaleIn(el, done)
+
+      expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ clearProps: 'transform' }))
+    })
   })
 
   describe('scaleFadeOut', () => {
@@ -171,6 +203,13 @@ describe('modal animations', () => {
       scaleFadeOut(el, done)
 
       expect(mockSet).not.toHaveBeenCalled()
+    })
+
+    test('[obligation] does not clear props (the receding modal keeps its transform)', () => {
+      scaleFadeOut(el, done)
+
+      const [, vars] = mockTo.mock.calls[0]
+      expect(vars.clearProps).toBeUndefined()
     })
 
     test('calls done via onComplete', () => {
@@ -210,6 +249,13 @@ describe('modal animations', () => {
       expect(vars).toMatchObject({ translateY: '60px', filter: 'brightness(0.8) blur(2px)' })
       expect(vars).not.toHaveProperty('scale')
     })
+
+    test('[obligation] does not clear props — a receded modal stays dimmed/blurred until restored', () => {
+      recedeModal(el, false)
+
+      const [, vars] = mockTo.mock.calls[0]
+      expect(vars.clearProps).toBeUndefined()
+    })
   })
 
   describe('restoreModal', () => {
@@ -227,6 +273,13 @@ describe('modal animations', () => {
       const [, vars] = mockTo.mock.calls[0]
       expect(vars).toMatchObject({ translateY: 0, filter: 'brightness(1) blur(0px)' })
       expect(vars).not.toHaveProperty('scale')
+    })
+
+    test('[obligation] clears both the settled transform and filter, unlike recedeModal', () => {
+      restoreModal(el, false)
+
+      const [, vars] = mockTo.mock.calls[0]
+      expect(vars.clearProps).toBe('transform,filter')
     })
   })
 })

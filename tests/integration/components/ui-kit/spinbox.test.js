@@ -143,6 +143,36 @@ describe('UiSpinbox', () => {
     expect(wrapper.emitted('update:value')).toEqual([[10]])
   })
 
+  // ── Out-of-range recovery [obligation] ──────────────────────────────────────
+  // A stored value outside [min, max] (e.g. a tightened bound after the value
+  // was saved) must settle into range on the very first press of the button
+  // that moves toward the violated bound — not treat the far edge as already
+  // reached and wrap past it.
+
+  test('a value above max settles to max on decrement, not past it to min [obligation]', async () => {
+    const wrapper = mountSpinbox({ value: 45, min: 0, max: 1, step: 1 })
+    await findDecrement(wrapper).trigger('click')
+    expect(wrapper.emitted('update:value')).toEqual([[1]])
+  })
+
+  test('a value above max settles to max on decrement even with a step that would overshoot [obligation]', async () => {
+    const wrapper = mountSpinbox({ value: 45, min: 0, max: 1, step: 10, wrap: true })
+    await findDecrement(wrapper).trigger('click')
+    expect(wrapper.emitted('update:value')).toEqual([[1]])
+  })
+
+  test('a value below min settles to min on increment, not past it to max [obligation]', async () => {
+    const wrapper = mountSpinbox({ value: -10, min: 0, max: 100, step: 1 })
+    await findIncrement(wrapper).trigger('click')
+    expect(wrapper.emitted('update:value')).toEqual([[0]])
+  })
+
+  test('a value below min settles to min on increment even with a step that would overshoot [obligation]', async () => {
+    const wrapper = mountSpinbox({ value: -10, min: 0, max: 1, step: 10, wrap: true })
+    await findIncrement(wrapper).trigger('click')
+    expect(wrapper.emitted('update:value')).toEqual([[0]])
+  })
+
   // ── Wrap ───────────────────────────────────────────────────────────────────
 
   test('decrement at min wraps to max when wrap is enabled', async () => {

@@ -7,17 +7,30 @@ import LimitsSection from './limits-section.vue'
 import SchedulingSection from './scheduling-section.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { pacingFieldsKey, usePacingFields } from './use-pacing-fields'
+import { presetActionsKey, usePresetActions } from './use-preset-actions'
 import DeckSaveButton from '../deck-save-button.vue'
 
-const { deck, draft } = inject(deckEditorKey)!
+// This page is full-bleed, so `--deck-settings-padding` is 0 and the header row
+// would sit flush against the scrolling container's edge — clipping the preset
+// chip's 2px hover outline, which paints outside its border box. `pt-0.5` is
+// just enough room for it.
+//
+// The scheduling panel's `bgx-*` texture brings `isolation: isolate` with it
+// (its -1 pseudo-element needs the stacking context), which traps the steps
+// dropdowns' popovers inside the panel. `z-10` lifts that whole context above
+// the save button below it, which would otherwise paint over an open menu.
+const editor = inject(deckEditorKey)!
 
-provide(pacingFieldsKey, usePacingFields(deck!, draft))
+const pacing = usePacingFields(editor.deck!, editor.draft)
+
+provide(pacingFieldsKey, pacing)
+provide(presetActionsKey, usePresetActions(pacing, editor))
 </script>
 
 <template>
   <section-list
     data-testid="tab-review-pacing"
-    class="@container flex-1 px-(--deck-settings-padding) pb-(--deck-settings-padding)"
+    class="@container flex-1 px-(--deck-settings-padding) pt-0.5 pb-(--deck-settings-padding)"
   >
     <preset-header class="md:pb-4" />
 
@@ -32,7 +45,7 @@ provide(pacingFieldsKey, usePacingFields(deck!, draft))
 
       <div data-testid="tab-review-pacing__scheduling-column" class="flex flex-col gap-8">
         <scheduling-section
-          class="rounded-6 bg-brown-200 dark:bg-stone-700 px-6 pb-8 pt-12 bgx-bank-note bgx-size-20 bgx-opacity-50 dark:bgx-opacity-2"
+          class="rounded-6 bg-brown-200 dark:bg-stone-700 z-10 px-6 pb-8 pt-12 bgx-bank-note bgx-size-20 bgx-opacity-50 dark:bgx-opacity-2"
         />
         <deck-save-button class="mt-auto" />
       </div>

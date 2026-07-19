@@ -14,7 +14,6 @@ import { useModalRequestClose } from '@/composables/modal'
 import { useAvatarPicker } from './use-avatar-picker'
 import MemberCard from '@/components/member/member-card.vue'
 import UiPinnedCard from '@/components/ui-kit/pinned-card.vue'
-import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import PagedWindow, {
   type PagedWindowGroup,
   type Page
@@ -54,7 +53,6 @@ const pager = useTemplateRef<{ layout_mode: WindowLayout; displayed_page: string
 const active_page_ref = useTemplateRef<{ onChromeBack?: () => boolean }>('active_page_ref')
 
 const layout_mode = computed<WindowLayout>(() => pager.value?.layout_mode ?? 'phone')
-const displayed_page = computed(() => pager.value?.displayed_page ?? 'directory')
 provide(settingsCloseKey, close)
 
 // account-access is reachable via the aside's edit button (tablet/desktop) or the
@@ -163,14 +161,6 @@ watch(layout_mode, (mode) => {
 
     <template #default="{ displayed_page: page }">
       <component :is="PAGE_COMPONENTS[page as PageValue]" ref="active_page_ref" />
-    </template>
-
-    <template #scrollbar>
-      <scroll-bar
-        v-if="layout_mode !== 'phone'"
-        target="[data-testid='paged-window__main']"
-        class="absolute top-2 bottom-2 right-2"
-      />
     </template>
 
     <template #aside>

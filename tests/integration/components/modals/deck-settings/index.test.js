@@ -170,11 +170,6 @@ vi.mock('@/components/deck/pinned-preview.vue', async () => {
   }
 })
 
-vi.mock('@/components/ui-kit/scroll-bar.vue', async () => {
-  const { defineComponent, h } = await import('vue')
-  return { default: defineComponent({ name: 'ScrollBar', setup: () => () => h('div') }) }
-})
-
 // ── PagedWindow stub ──────────────────────────────────────────────────────────
 // Exposes a controllable layout_mode/displayed_page so tests can drive the
 // desktop/tablet/phone crossing without fighting the real component's own
@@ -215,7 +210,6 @@ const PagedWindowStub = defineComponent({
           { 'data-testid': 'pw__select-design', onClick: () => emit('update:active', 'design') },
           'design'
         ),
-        h('div', { 'data-testid': 'pw__scrollbar' }, slots.scrollbar?.()),
         h('div', { 'data-testid': 'pw__aside' }, slots.aside?.()),
         h('div', { 'data-testid': 'pw__directory-footer' }, slots['directory-footer']?.()),
         h('div', { 'data-testid': 'pw__overlay' }, slots.overlay?.()),
@@ -541,7 +535,7 @@ describe('DeckSettings — between hook drives the chrome tuck/restore', () => {
 // ── Layout poses across breakpoints ───────────────────────────────────────────
 
 describe('DeckSettings — layout poses across breakpoints', () => {
-  test('tablet keeps the aside, scrollbar and preview in their tablet poses', async () => {
+  test('tablet keeps the aside and preview in their tablet poses', async () => {
     const { wrapper } = makeWrapper()
     await setLayout('tablet')
 

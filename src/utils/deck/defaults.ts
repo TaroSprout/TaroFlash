@@ -28,9 +28,9 @@ export const CARD_ATTRIBUTES_DEFAULTS: Required<
 }
 
 /**
- * UI bounds for the daily-limit spinboxes in tab-review-pacing. Step + min
- * are shared; each row has its own max + default. `null` on the model means
- * "no cap" (the "all" pill is active).
+ * UI bounds for the daily-limit spinboxes in tab-review-pacing. Unbounded above
+ * on purpose — decks grow, so a limit is allowed to exceed the current card
+ * count. `null` on the model means "no cap" (the "all" pill is active).
  */
 export const DAILY_LIMIT_BOUNDS = {
   step: 5,

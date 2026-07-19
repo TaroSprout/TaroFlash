@@ -85,7 +85,6 @@ const emit = defineEmits<{
 defineSlots<{
   default(props: { displayed_page: string }): any
   aside(): any
-  scrollbar(): any
   overlay(): any
   header(): any
   'header-content'(): any
@@ -255,7 +254,7 @@ function onDirectoryNavigate(value: string) {
             'flex flex-col gap-4 w-full',
             layout_mode === 'phone'
               ? 'max-w-111 mx-auto overflow-hidden pt-0.5'
-              : 'min-h-0 flex-1 overflow-y-auto scroll-hidden px-(--window-px) pb-8'
+              : 'min-h-0 flex-1 px-(--window-px) pb-8'
           ]"
         >
           <transition :css="false" mode="out-in" @leave="onPageLeave" @enter="onPageEnter">
@@ -282,8 +281,6 @@ function onDirectoryNavigate(value: string) {
             </div>
           </transition>
         </div>
-
-        <slot name="scrollbar"></slot>
       </div>
 
       <slot name="aside"></slot>

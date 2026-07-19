@@ -9,6 +9,7 @@ import {
   type RelearningStepsKey
 } from '@/utils/review-pacing/defaults'
 import type { DeckDraft } from '@/composables/deck/editor'
+import type { ReviewPacingValues } from '@/api/review-pacing'
 
 type PlainFieldKey = 'desired_retention' | 'leech_threshold' | 'learning_steps' | 'relearning_steps'
 type CapFieldKey = 'max_reviews_per_day' | 'max_new_per_day' | 'max_interval'
@@ -22,9 +23,24 @@ type PacingField<T> = {
 
 type StepsField = PacingField<LearningStepsKey> | PacingField<RelearningStepsKey>
 
-type PacingFields = {
+const PLAIN_KEYS = [
+  'desired_retention',
+  'leech_threshold',
+  'learning_steps',
+  'relearning_steps'
+] as const satisfies readonly PlainFieldKey[]
+
+const CAP_KEYS = [
+  'max_reviews_per_day',
+  'max_new_per_day',
+  'max_interval'
+] as const satisfies readonly CapFieldKey[]
+
+export type PacingFields = {
   preset_options: ComputedRef<{ value: string; label: string }[]>
   selected_preset_value: WritableComputedRef<string>
+  selected_preset: ComputedRef<ReviewPacingPreset | undefined>
+  resolved_pacing: ComputedRef<ReviewPacingValues>
   override_count: ComputedRef<number>
   resetAllOverrides: () => void
   fields: {
@@ -96,6 +112,31 @@ export function usePacingFields(deck: Deck, draft: DeckDraft): PacingFields {
   // Divergence from the preset, as a whole. Belongs to the preset control —
   // it's the preset relationship being reported, not any one field's state.
   const override_count = computed(() => Object.keys(draft.pacing_overrides).length)
+
+  // Every pacing field as the deck currently displays it — the same ladder the
+  // individual controls read through, collected into one preset-shaped payload.
+  // Fork and push both promote exactly this, so what the user sees is what the
+  // preset gets.
+  const resolved_pacing = computed<ReviewPacingValues>(() => {
+    const values = {} as Record<PlainFieldKey | CapFieldKey, unknown>
+
+    for (const key of PLAIN_KEYS) {
+      values[key] = draft.pacing_overrides[key] ?? selected_preset.value?.[key] ?? deck[key]
+    }
+
+    // Caps are nullable all the way down, so `??` can't distinguish "pinned
+    // uncapped" from "absent" — key presence is the only reliable signal.
+    for (const key of CAP_KEYS) {
+      values[key] =
+        key in draft.pacing_overrides
+          ? (draft.pacing_overrides[key] ?? null)
+          : selected_preset.value
+            ? selected_preset.value[key]
+            : (deck[key] ?? null)
+    }
+
+    return values as ReviewPacingValues
+  })
 
   /** Un-pins every field at once, so the deck follows the preset outright again. */
   function resetAllOverrides() {
@@ -180,6 +221,8 @@ export function usePacingFields(deck: Deck, draft: DeckDraft): PacingFields {
   return {
     preset_options,
     selected_preset_value,
+    selected_preset,
+    resolved_pacing,
     override_count,
     resetAllOverrides,
     fields: {
