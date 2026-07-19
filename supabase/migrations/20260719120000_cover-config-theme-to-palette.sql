@@ -27,3 +27,13 @@ set cover_config =
   (cover_config - 'theme' - 'theme_dark')
   || jsonb_build_object('palette', split_part(cover_config ->> 'theme', '-', 1))
 where cover_config ? 'theme';
+
+-- The decks column DEFAULT was theme-shaped too (20260715000007). A deck inserted
+-- via SQL with no cover would otherwise get a shape the new front end can't read,
+-- so re-point the default at the palette form.
+alter table public.decks
+  alter column cover_config set default '{
+    "palette": "blue",
+    "pattern": "diagonal-stripes",
+    "icon": "symbol-spades"
+  }'::jsonb;
