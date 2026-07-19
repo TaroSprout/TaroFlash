@@ -28,8 +28,6 @@ async function onSubmit() {
     class="gap-0!"
     size="sm"
     float_header
-    data-theme="brown-50"
-    data-theme-dark="stone-700"
     :title="t('forgot-password-modal.heading')"
     @close="close()"
   >

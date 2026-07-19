@@ -233,7 +233,7 @@ const text_scale = computed(() => cardTextScale(attributes?.text_size))
   outline-color: var(--color-blue-500);
 }
 
-[data-theme='dark']
+[data-mode='dark']
   .card-container[data-dragging]
   .card-face[data-mode='edit'][data-image='true']:not([data-layout='behind'])
   .card-face__image-region {
@@ -266,7 +266,7 @@ const text_scale = computed(() => cardTextScale(attributes?.text_size))
   transition: outline-color 0.15s ease;
 }
 
-[data-theme='dark']
+[data-mode='dark']
   .card-container[data-dragging]
   .card-face[data-mode='edit'][data-layout='behind'][data-image='true'] {
   outline-color: var(--color-blue-650);

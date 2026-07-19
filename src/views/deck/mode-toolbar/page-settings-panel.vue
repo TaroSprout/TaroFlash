@@ -96,8 +96,6 @@ const sort_options = [
           {{ t('deck-view.page-settings.sort-label') }}
         </span>
         <ui-select-menu
-          data-theme="brown-100"
-          data-theme-dark="stone-700"
           size="base"
           :options="sort_options"
           :model-value="sort_by"

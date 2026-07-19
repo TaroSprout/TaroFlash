@@ -82,7 +82,7 @@
   }
 }
 
-[data-theme='dark'] .pattern-mask {
+[data-mode='dark'] .pattern-mask {
   --bgx-opacity: var(--bgx-opacity-dark, var(--bgx-opacity-light, 0.2));
 }
 

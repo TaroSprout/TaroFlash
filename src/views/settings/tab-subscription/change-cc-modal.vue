@@ -34,8 +34,6 @@ const submit_label = computed(() =>
     data-testid="change-card-modal"
     class="pb-6"
     size="lg"
-    data-theme="brown-300"
-    data-theme-dark="stone-700"
     :title="title"
     :close_disabled="is_submitting"
     @close="close()"

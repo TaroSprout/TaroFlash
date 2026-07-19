@@ -45,8 +45,6 @@ const success_options = computed<ButtonGroupOption[]>(() => [
 
     <ui-button-group
       data-testid="rating-buttons__success-group"
-      data-theme="brown-100"
-      data-theme-dark="stone-700"
       class="flex-1"
       :options="success_options"
       :icon_only="is_mobile"

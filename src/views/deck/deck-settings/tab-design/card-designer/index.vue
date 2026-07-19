@@ -39,8 +39,6 @@ const text_size = computed({
     </span>
     <ui-spinbox
       data-testid="card-designer__text-size-spinbox"
-      data-theme="brown-100"
-      data-theme-dark="stone-700"
       v-model:value="text_size"
       :min="1"
       :max="10"

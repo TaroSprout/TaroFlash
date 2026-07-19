@@ -23,8 +23,6 @@ const { status, is_ready, onSubmit } = useCheckout(close)
     data-testid="checkout"
     class="pb-6"
     size="md"
-    data-theme="brown-300"
-    data-theme-dark="stone-700"
     :title="t('billing.checkout.title')"
     :show_header="status !== 'success'"
     :close_label="t('billing.checkout.close-label')"

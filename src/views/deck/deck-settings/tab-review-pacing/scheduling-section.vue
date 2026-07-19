@@ -28,7 +28,6 @@ const {
       :field="desired_retention"
     >
       <ui-spinbox
-        data-theme-dark="stone-900"
         v-model:value="desired_retention.value.value"
         :min="DESIRED_RETENTION_BOUNDS.min"
         :max="DESIRED_RETENTION_BOUNDS.max"
@@ -43,7 +42,6 @@ const {
       :field="max_interval"
     >
       <ui-spinbox
-        data-theme-dark="stone-900"
         v-model:value="max_interval.value.value"
         :min="MAX_INTERVAL_BOUNDS.min"
         :max="MAX_INTERVAL_BOUNDS.max"
@@ -60,7 +58,6 @@ const {
     >
       <ui-spinbox
         v-model:value="leech_threshold.value.value"
-        data-theme-dark="stone-900"
         :min="LEECH_THRESHOLD_BOUNDS.min"
         :max="LEECH_THRESHOLD_BOUNDS.max"
         :step="LEECH_THRESHOLD_BOUNDS.step"
@@ -74,8 +71,6 @@ const {
       :field="learning_steps"
     >
       <ui-select-menu
-        data-theme="brown-100"
-        data-theme-dark="stone-900"
         v-model="learning_steps.value.value"
         :options="learning_steps.options.value"
         class="w-32"
@@ -89,8 +84,6 @@ const {
       :field="relearning_steps"
     >
       <ui-select-menu
-        data-theme="brown-100"
-        data-theme-dark="stone-900"
         v-model="relearning_steps.value.value"
         :options="relearning_steps.options.value"
         class="w-32"

@@ -22,13 +22,6 @@ export const useThemeStore = defineStore('theme', () => {
   watchEffect(() => {
     const resolved = is_dark.value ? 'dark' : 'light'
     document.documentElement.setAttribute('data-mode', resolved)
-
-    /* `data-theme` is written alongside `data-mode` on purpose. The
-     * `@custom-variant dark` in main.css and every `[data-theme='dark']
-     * [data-theme-dark='X']` selector in palettes.css still key off it, so
-     * dropping it here would break 130+ files at once. Both attributes ride
-     * along until Phase E retires the old theme layer. */
-    document.documentElement.setAttribute('data-theme', resolved)
   })
 
   function load() {

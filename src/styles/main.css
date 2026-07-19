@@ -1,7 +1,6 @@
 /* Web font URL lives in `src/styles/fonts.ts` and is injected by `main.ts`. */
 
 @import 'tailwindcss';
-@import '@/styles/palettes.css';
 @import '@/styles/depth.css';
 @import '@/styles/identities.gen.css';
 @import '@/styles/custom-styles.css';
@@ -79,18 +78,6 @@
   --color-brown-200: #ede9df;
   --color-brown-100: #f3f1ea;
   --color-brown-50: #f9f8f5;
-
-  --theme-primary: var(--color-blue-500);
-  --theme-on-primary: var(--color-brown-100);
-
-  --theme-secondary: var(--color-blue-400);
-  --theme-on-secondary: var(--color-brown-100);
-
-  --theme-accent: var(--color-blue-400);
-  --theme-on-accent: var(--color-brown-100);
-
-  --theme-neutral: var(--color-brown-100);
-  --theme-on-neutral: var(--color-stone-950);
 
   /* Neutral role slots. Registering them here is what makes bg-surface,
      bg-below, bg-panel, bg-float, bg-overlay, text-ink, text-ink-muted and the
@@ -309,22 +296,22 @@
     }
   }
 
-  html:where([data-theme='dark']) {
+  html:where([data-mode='dark']) {
     background-color: var(--color-stone-950);
   }
 }
 
 /* Dark Mode Tailwind Variant */
 @custom-variant dark {
-  &:where([data-theme='dark'], [data-theme='dark'] *) {
+  &:where([data-mode='dark'], [data-mode='dark'] *) {
     @slot;
   }
 }
 
-:root[data-theme='light'] {
+:root[data-mode='light'] {
   color-scheme: light;
 }
-:root[data-theme='dark'] {
+:root[data-mode='dark'] {
   color-scheme: dark;
 }
 

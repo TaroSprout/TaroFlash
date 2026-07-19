@@ -20,9 +20,7 @@
     <!-- Pre-paint mode stamp. The theme store only loads in App.vue's onMounted,
          so without this a dark-mode user gets a guaranteed flash of light theme.
          Mirrors the store's resolution exactly (src/stores/theme.ts): the
-         'app-theme' key holds 'light' | 'dark' | 'system', absent means system.
-         Writes data-theme alongside data-mode because the legacy theme layer
-         still keys off it. -->
+         'app-theme' key holds 'light' | 'dark' | 'system', absent means system. -->
     <script>
       ;(function () {
         var saved = null
@@ -34,7 +32,6 @@
         var system_dark = window.matchMedia('(prefers-color-scheme: dark)').matches
         var resolved = !saved || saved === 'system' ? (system_dark ? 'dark' : 'light') : saved
         document.documentElement.setAttribute('data-mode', resolved)
-        document.documentElement.setAttribute('data-theme', resolved)
       })()
     </script>
   </head>

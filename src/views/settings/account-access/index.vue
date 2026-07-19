@@ -23,8 +23,6 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
     class="gap-0!"
     size="sm"
     float_header
-    data-theme="brown-50"
-    data-theme-dark="stone-700"
     :title="content?.title"
     @close="close()"
   >
