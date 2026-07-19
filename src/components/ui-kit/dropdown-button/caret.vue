@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import { nextDepth, useAmbientDepth } from '@/composables/ui/depth'
 import { type ButtonProps } from '../button.vue'
 import { flipEnter, flipLeave } from '@/utils/animations/flip'
 import { TYPE_SFX } from '@/sfx/config'
@@ -23,6 +24,8 @@ const emit = defineEmits<{
   (e: 'toggle'): void
 }>()
 
+const ambient_depth = useAmbientDepth()
+
 // Own inset scale, distinct from --btn-padding-y (a button's label padding) —
 // this is the caret's circular hit-area inset, so it gets its own token.
 const TRIGGER_PADDING: Record<NonNullable<ButtonProps['size']>, string> = {
@@ -32,6 +35,12 @@ const TRIGGER_PADDING: Record<NonNullable<ButtonProps['size']>, string> = {
   xl: '8px'
 }
 const trigger_padding = computed(() => TRIGGER_PADDING[size])
+
+// The caret is chrome, not identity: it steps one surface above the button it
+// sits in. Painting it from --theme-secondary only ever stepped LIGHTER, so it
+// vanished on a light accent. It owns no descendants, so it stamps data-depth
+// without providing it.
+const depth = computed(() => nextDepth(ambient_depth.value))
 
 function onEnter(el: Element, done: () => void) {
   flipEnter(el, 'x', done)
@@ -60,7 +69,8 @@ function onLeave(el: Element, done: () => void) {
         :aria-expanded="open"
         :aria-disabled="disabled || undefined"
         :data-active="open"
-        class="relative z-1 flex aspect-square h-full items-center justify-center rounded-[calc(var(--btn-border-radius)-var(--btn-trigger-padding))] pointer-coarse:rounded-(--btn-border-radius) transition-[scale] duration-120 ease-[ease] bg-(--theme-secondary) text-(--theme-on-secondary)"
+        :data-depth="depth"
+        class="relative z-1 flex aspect-square h-full items-center justify-center rounded-[calc(var(--btn-border-radius)-var(--btn-trigger-padding))] pointer-coarse:rounded-(--btn-border-radius) transition-[scale] duration-120 ease-[ease] bg-surface text-ink shadow-[inset_0_0_0_1px_var(--theme-primary)]"
         :class="disabled ? 'opacity-50' : 'cursor-pointer hover:scale-110'"
         data-testid="dropdown-button__trigger"
         v-sfx="{ hover: disabled ? undefined : TYPE_SFX }"
