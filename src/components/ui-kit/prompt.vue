@@ -100,7 +100,7 @@ function onCancel() {
 
         <ui-button
           data-testid="ui-kit-prompt__confirm"
-          data-theme="green-400"
+          data-palette="success"
           :disabled="!trimmed"
           click-when-disabled
           @press="onConfirm"

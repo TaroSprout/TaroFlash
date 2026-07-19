@@ -60,8 +60,7 @@ const {
 
       <ui-button
         data-testid="mode-select__delete-button"
-        data-theme="red-500"
-        data-theme-dark="red-700"
+        data-palette="danger"
         icon-left="delete"
         :disabled="!has_selection"
         @press="actions.onDeleteCards()"

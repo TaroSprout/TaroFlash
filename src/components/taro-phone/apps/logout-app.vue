@@ -26,8 +26,7 @@ function onPress() {
 <template>
   <app-shell
     :title="t('phone.apps.logout.title')"
-    data-theme="red-400"
-    data-theme-dark="red-500"
+    data-palette="red"
     icon-src="logout"
     hover-icon-src="logout-hover"
     @press="onPress"

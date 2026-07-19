@@ -57,8 +57,7 @@ const {
     <ui-button
       data-testid="deck-footer-bulk-actions__delete"
       icon-left="delete"
-      data-theme="red-500"
-      data-theme-dark="red-700"
+      data-palette="danger"
       full-width
       size="lg"
       :disabled="!has_selection"
