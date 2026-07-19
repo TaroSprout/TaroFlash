@@ -46,6 +46,7 @@ function onStudyAll() {
       neutral
       data-testid="dashboard-footer-actions__study-button"
       icon-left="book-flip-page"
+      variant="ghost"
       full-width
       size="lg"
       :disabled="editing_decks"
