@@ -8,6 +8,7 @@
 @import '@/styles/custom-variants.css';
 @import '@/styles/mobile-modal-variant.css';
 @import '@/styles/border-utils.css';
+@import '@/styles/bevel-utils.css';
 @import '@/styles/content-grid.css';
 @import '@/styles/bg-utils.css';
 @import '@/styles/shimmer.css';
@@ -166,19 +167,13 @@
   --shadow-lg: 6px 6px 0px 0px var(--shadow-color);
   --drop-shadow-lg: 6px 6px 0px var(--shadow-color);
 
-  /* Upward shadows — for bottom-anchored mobile sheets whose visible overhang
-     is the top-right edge (the bottom cast is clipped by the viewport) */
-  --shadow-xs-up: 3px -3px 0px 0px var(--shadow-color);
-  --drop-shadow-xs-up: 3px -3px 0px var(--shadow-color);
-
-  --shadow-sm-up: 4px -4px 0px 0px var(--shadow-color);
-  --drop-shadow-sm-up: 4px -4px 0px var(--shadow-color);
-
-  --shadow-md-up: 5px -5px 0px 0px var(--shadow-color);
-  --drop-shadow-md-up: 5px -5px 0px var(--shadow-color);
-
-  --shadow-lg-up: 6px -6px 0px 0px var(--shadow-color);
-  --drop-shadow-lg-up: 6px -6px 0px var(--shadow-color);
+  /* Bevel offsets — mirror the shadow scale above. Consumed by the bevel-*
+     utilities in src/styles/bevel-utils.css, which pair the cast shadow with
+     the top-left seam that closes the silhouette. */
+  --bevel-xs: 3px;
+  --bevel-sm: 4px;
+  --bevel-md: 5px;
+  --bevel-lg: 6px;
 
   /* Transitions */
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
