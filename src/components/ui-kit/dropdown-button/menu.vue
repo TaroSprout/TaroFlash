@@ -35,15 +35,15 @@ defineSlots<{ default(): unknown }>()
 const { tap } = useStagedTap()
 
 // Which option is mid-tap, so only its row shows the sweep.
-const playing_value = ref<DropdownOption['value'] | null>(null)
+const tapping_value = ref<DropdownOption['value'] | null>(null)
 
 function onOptionTap(option: DropdownOption, e: MouseEvent) {
   if (option.disabled) return
 
-  playing_value.value = option.value
+  tapping_value.value = option.value
   tap(() => {
     emit('select', option)
-    playing_value.value = null
+    tapping_value.value = null
   })(e)
 }
 </script>
@@ -68,15 +68,16 @@ function onOptionTap(option: DropdownOption, e: MouseEvent) {
         <button
           type="button"
           :disabled="option.disabled"
-          class="group/option relative flex w-full cursor-pointer items-center gap-(--btn-gap) overflow-hidden rounded-[calc(var(--btn-border-radius)-6px)] py-(--btn-padding-y) px-[calc(var(--btn-padding-x)-6px)] text-start whitespace-nowrap disabled:cursor-default disabled:opacity-40"
-          :data-active="playing_value === option.value || option.selected || null"
+          class="group/option relative flex w-full cursor-pointer items-center gap-(--btn-gap) overflow-hidden rounded-[calc(var(--btn-border-radius)-6px)] py-(--btn-padding-y) px-[calc(var(--btn-padding-x)-6px)] text-start whitespace-nowrap data-[active=true]:bg-(--theme-neutral) data-[active=true]:text-(--theme-on-neutral) disabled:cursor-default disabled:opacity-40"
+          :data-active="option.selected || null"
+          :data-tapping="tapping_value === option.value || null"
           data-testid="dropdown-button__option"
           v-sfx="option.disabled ? {} : { hover: TYPE_SFX }"
           @click="onOptionTap(option, $event)"
         >
           <div
             aria-hidden="true"
-            class="pointer-events-none absolute inset-0 hidden bgx-diagonal-stripes bgx-color-[var(--theme-neutral)] animation-safe:bgx-slide group-hover/option:block group-data-[active=true]/option:block"
+            class="pointer-events-none absolute inset-0 hidden bgx-diagonal-stripes bgx-color-[var(--theme-neutral)] animation-safe:bgx-slide group-hover/option:block group-data-[tapping=true]/option:block"
           ></div>
           <ui-icon
             v-if="option.icon"
