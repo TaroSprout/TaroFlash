@@ -151,6 +151,27 @@ describe('popScrimReveal — clears inline height/overflow on complete, both dir
   })
 })
 
+// ── clearProps on incoming only [obligation] ──────────────────────────────────
+// The incoming layer's settled scale is visually a no-op but not a layout one
+// — clear it so it stops being a containing block for popovers. The outgoing
+// layer keeps its inline transform, since that's what holds it hidden.
+
+describe('popScrimReveal — clearProps on incoming only [obligation]', () => {
+  test('the incoming tween clears transform [obligation]', () => {
+    popScrimReveal(el(), el(), el(), true)
+
+    const [, , to] = timelines[0].calls.fromTo[0]
+    expect(to.clearProps).toBe('transform')
+  })
+
+  test('the outgoing tween does not clear props [obligation]', () => {
+    popScrimReveal(el(), el(), el(), true)
+
+    const [, opts] = timelines[0].calls.to[0]
+    expect(opts.clearProps).toBeUndefined()
+  })
+})
+
 // ── return value ────────────────────────────────────────────────────────────────
 
 describe('popScrimReveal — return value', () => {

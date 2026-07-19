@@ -164,7 +164,6 @@ const PagedWindowStub = defineComponent({
           'account-access'
         ),
         h('div', { 'data-testid': 'pw__aside' }, slots.aside?.()),
-        h('div', { 'data-testid': 'pw__scrollbar' }, slots.scrollbar?.()),
         h('div', { 'data-testid': 'pw__directory-footer' }, slots['directory-footer']?.()),
         h('div', { 'data-testid': 'pw__overlay' }, slots.overlay?.()),
         h(
@@ -430,7 +429,7 @@ describe('settings app — member-card avatar edit wiring', () => {
 // ── Layout poses across breakpoints ───────────────────────────────────────────
 
 describe('settings app — layout poses across breakpoints', () => {
-  test('tablet keeps the aside and scrollbar, drops the desktop width', async () => {
+  test('tablet keeps the aside, drops the desktop width', async () => {
     const wrapper = makeWrapper()
     stub_layout_mode.value = 'tablet'
     await nextTick()
@@ -443,7 +442,7 @@ describe('settings app — layout poses across breakpoints', () => {
     expect(wrapper.find('[data-testid="settings__pinned-preview"]').exists()).toBe(true)
   })
 
-  test('phone drops the aside, scrollbar and preview, and shows the directory save button', async () => {
+  test('phone drops the aside and preview, and shows the directory save button', async () => {
     const wrapper = makeWrapper()
     stub_layout_mode.value = 'phone'
     await nextTick()
