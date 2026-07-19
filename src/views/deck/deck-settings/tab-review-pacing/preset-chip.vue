@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import UiDropdownButton, {
   type DropdownOption
 } from '@/components/ui-kit/dropdown-button/index.vue'
+import { emitSfx } from '@/sfx/bus'
 import { pacingFieldsKey } from './use-pacing-fields'
 import { presetActionsKey } from './use-preset-actions'
 
@@ -43,7 +44,7 @@ const action_options = computed<DropdownOption[]>(() => {
     ...actions,
     {
       value: 'push',
-      label: t('deck.settings-modal.review-pacing.push-action', override_count.value),
+      label: t('deck.settings-modal.review-pacing.push-action', { count: override_count.value }),
       icon: 'arrow-circle-up',
       disabled: !has_overrides.value
     },
@@ -65,6 +66,8 @@ const options = computed<DropdownOption[]>(() => [
 ])
 
 function onSelect(option: DropdownOption) {
+  emitSfx('select')
+
   const action = ACTION_HANDLERS[option.value as PresetAction]
   if (action) return void action()
 
@@ -80,6 +83,8 @@ function onSelect(option: DropdownOption) {
     menu-theme="brown-100"
     menu-theme-dark="stone-700"
     size="sm"
+    position="bottom-end"
+    :fallback-placements="['bottom-end', 'top-end']"
     open-on-trigger
     :disabled="busy"
     :options="options"
