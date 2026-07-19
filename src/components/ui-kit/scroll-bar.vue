@@ -194,8 +194,6 @@ function isPageTarget(el: HTMLElement) {
     v-show="visible"
     ref="scrollBarRef"
     data-testid="ui-kit-scroll-bar"
-    data-theme="brown-300"
-    data-theme-dark="grey-500"
     :data-min-width="minWidth"
     class="ui-kit-scroll-bar"
     :class="visibilityClass"
@@ -213,9 +211,9 @@ function isPageTarget(el: HTMLElement) {
 
 <style scoped>
 .ui-kit-scroll-bar {
-  --bar-color: var(--theme-primary);
-  --thumb-color: var(--theme-primary);
-  --theme-color: var(--color-purple-400);
+  --bar-color: var(--color-ink-muted);
+  --thumb-color: var(--color-ink-muted);
+  --thumb-hover-color: var(--color-purple-400);
 
   --transition-dur: 0.05s;
   --transition: background-color 0.05s ease-in-out, outline 0.05s ease-in-out;
@@ -231,8 +229,8 @@ function isPageTarget(el: HTMLElement) {
 }
 
 .ui-kit-scroll-bar:has(.ui-kit-scroll-bar__thumb:hover) {
-  --bar-color: var(--theme-color);
-  --thumb-color: var(--theme-color);
+  --bar-color: var(--thumb-hover-color);
+  --thumb-color: var(--thumb-hover-color);
 }
 
 .ui-kit-scroll-bar::before {

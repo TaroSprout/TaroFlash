@@ -136,7 +136,7 @@ function onClick(e: MouseEvent) {
         'ui-kit-btn--disabled': disabled,
         // Ghost is transparent at rest; fill it behind the content while the
         // coarse quiet tap sweeps, so the bgx reads against a surface.
-        'data-[active=true]:bg-(--theme-primary)': variant === 'ghost' && !disabled,
+        'data-[active=true]:bg-(--color-accent)': variant === 'ghost' && !disabled,
         'rounded-full!': roundedFull,
         'w-full!': fullWidth
       }
@@ -157,15 +157,15 @@ function onClick(e: MouseEvent) {
     <div
       class="absolute inset-0 bgx-diagonal-stripes animation-safe:bgx-slide rounded-(--btn-border-radius) pointer-events-none"
       :class="{
-        'bg-(--theme-primary) flex items-center justify-center': loading,
+        'bg-(--color-accent) flex items-center justify-center': loading,
         hidden: !loading,
         'group-hover/btn:block group-data-[active=true]/btn:block':
           !loading && !disabled && fancyHover && variant !== 'ghost',
-        'bgx-color-[var(--theme-neutral)]': variant === 'solid',
-        'bgx-color-[var(--theme-on-neutral)]': inverted,
+        'bgx-color-[var(--color-on-accent)]': variant === 'solid',
+        'bgx-color-[var(--color-accent)]': inverted,
         // Ghost has no surface, so only the coarse quiet tap sweeps it (the
-        // theme-primary fill is added to the button root, behind the content).
-        'group-data-[active=true]/btn:block bgx-color-[var(--theme-neutral)]':
+        // accent fill is added to the button root, behind the content).
+        'group-data-[active=true]/btn:block bgx-color-[var(--color-on-accent)]':
           !loading && !disabled && variant === 'ghost'
       }"
     >
@@ -272,48 +272,42 @@ function onClick(e: MouseEvent) {
 }
 
 .ui-kit-btn--solid {
-  --btn-bg-color: var(--theme-primary);
-  --btn-text-color: var(--theme-on-primary);
-  --btn-outline-color: var(--theme-primary);
+  --btn-bg-color: var(--color-accent);
+  --btn-text-color: var(--color-on-accent);
+  --btn-outline-color: var(--color-accent);
 }
 
 .ui-kit-btn--outline {
   --btn-bg-color: transparent;
-  --btn-text-color: var(--theme-on-primary);
+  --btn-text-color: var(--color-accent);
   --btn-outline-width: 2px;
-  --btn-outline-color: var(--theme-on-primary);
+  --btn-outline-color: var(--color-accent);
 }
 
 /* Ghost: no background, no outline (transparent so the global hover-outline
-   rule never shows). Text reads in --theme-primary since it sits directly on
-   the page/surface, not on a --theme-primary-colored fill like solid does.
-   Keeps the standard size padding. */
+   rule never shows). Text reads in --color-accent since it sits directly on
+   the page/surface, not on an accent-colored fill like solid does. Keeps the
+   standard size padding. */
 .ui-kit-btn--ghost {
   --btn-bg-color: transparent;
-  --btn-text-color: var(--theme-primary);
+  --btn-text-color: var(--color-accent);
   --btn-outline-color: transparent;
 }
 
 /* ─── CHROME / IDENTITY SEAM ─────────────────────────────────────────────
  *
- * The base variant rules above are the LEGACY identity path (--theme-*), kept
- * so any call site still handing a button `data-theme="blue-500"` keeps
- * painting. The two blocks below ADD the neutral-first vocabulary on top.
- *
- * IDENTITY — `.ui-kit-btn--solid[data-palette]`. The `[data-palette]` selector
- * matches ONLY when the attribute sits on the button ITSELF. `data-palette` is
- * a plain HTML attribute — attributes don't inherit — so a plain button nested
- * in a `data-palette="green"` region does NOT match and never reads
- * --color-accent. When the button DOES carry data-palette, the same-element
- * selector in identities.gen.css (`[data-palette='green']`) has already set
- * --color-accent on that element, so it resolves to THIS button's palette, not
- * an ancestor's. That is the whole seam: identity is opt-in, attribute-on-self,
- * leak-proof by construction.
+ * The base variant rules above read the identity role (--color-accent). A plain
+ * button resolves it to the default accent; a button carrying `[data-palette]`
+ * has already had --color-accent set on ITSELF by identities.gen.css, so the
+ * base rule resolves to THIS button's palette. `data-palette` is a plain HTML
+ * attribute — attributes don't inherit — so a plain button nested in a
+ * `data-palette="green"` region does NOT pick it up: identity is opt-in,
+ * attribute-on-self, leak-proof by construction, with no extra selector needed.
  *
  * NEUTRAL — `.ui-kit-btn--neutral`. Solid defaults to accent because a solid
  * button is an action; the raised NEUTRAL button opts in explicitly and paints
  * the `element` chrome role. Ghost/outline are transparent chrome already, so
- * neutral only swaps their text/outline off the legacy --theme-* onto ink. */
+ * neutral only swaps their text/outline off accent onto ink. */
 
 .ui-kit-btn--neutral.ui-kit-btn--solid {
   --btn-bg-color: var(--color-element);
@@ -328,35 +322,24 @@ function onClick(e: MouseEvent) {
   --btn-outline-color: var(--color-element);
 }
 
-.ui-kit-btn--solid[data-palette] {
-  --btn-bg-color: var(--color-accent);
-  --btn-text-color: var(--color-on-accent);
-  --btn-outline-color: var(--color-accent);
-}
-.ui-kit-btn--outline[data-palette] {
-  --btn-text-color: var(--color-accent);
-  --btn-outline-color: var(--color-accent);
-}
-.ui-kit-btn--ghost[data-palette] {
-  --btn-text-color: var(--color-accent);
-}
-
+/* Inverted: a light neutral button sitting ON an accent-colored region — bg is
+   the on-accent tone, text/outline the accent itself. */
 .ui-kit-btn--solid.ui-kit-btn--inverted {
-  --btn-bg-color: var(--theme-neutral);
-  --btn-text-color: var(--theme-primary);
-  --btn-outline-color: var(--theme-primary);
+  --btn-bg-color: var(--color-on-accent);
+  --btn-text-color: var(--color-accent);
+  --btn-outline-color: var(--color-accent);
 }
 
 .ui-kit-btn--outline.ui-kit-btn--inverted {
   --btn-bg-color: transparent;
-  --btn-text-color: var(--theme-neutral);
+  --btn-text-color: var(--color-on-accent);
   --btn-outline-width: 2px;
-  --btn-outline-color: var(--theme-neutral);
+  --btn-outline-color: var(--color-on-accent);
 
   @media (hover: hover) {
     &:hover {
-      --btn-bg-color: var(--theme-neutral);
-      --btn-text-color: var(--theme-primary);
+      --btn-bg-color: var(--color-on-accent);
+      --btn-text-color: var(--color-accent);
     }
   }
 }
@@ -478,11 +461,11 @@ function onClick(e: MouseEvent) {
   transform: scale(1.3) rotate(5deg);
 }
 
-/* Ghost fills its background solid with --theme-primary while active (see
-   `data-[active=true]:bg-(--theme-primary)` below) — flip text to
-   --theme-on-primary so it stays legible against that fill. */
+/* Ghost fills its background solid with --color-accent while active (see
+   `data-[active=true]:bg-(--color-accent)` in the template) — flip text to
+   --color-on-accent so it stays legible against that fill. */
 .ui-kit-btn--ghost[data-active] {
-  --btn-text-color: var(--theme-on-primary);
+  --btn-text-color: var(--color-on-accent);
 }
 
 /* Quiet tap: the bgx sweep still plays via [data-active], but the icon holds

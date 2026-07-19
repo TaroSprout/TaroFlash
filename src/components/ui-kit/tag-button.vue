@@ -60,17 +60,13 @@ const padding = computed(() => {
 
 <style>
 /* Same chrome/identity seam as ui-tag: `element` chrome by default, identity
-   opt-in via a self `[data-palette]` (new) or legacy `[data-theme]` (until D2).
-   The seam vars sit on the SHELL (the component root that fall-through attrs
-   land on) so the hover drop-shadow silhouette can read them and the inner
-   button + bgx sweep inherit them. Self-selectors, so no ancestor leak. */
+   opt-in via a self `[data-palette]`. The seam vars sit on the SHELL (the
+   component root that fall-through attrs land on) so the hover drop-shadow
+   silhouette can read them and the inner button + bgx sweep inherit them.
+   Self-selectors, so no ancestor leak. */
 .ui-tag-button-shell {
   --tagbtn-bg: var(--color-element);
   --tagbtn-fg: var(--color-on-element);
-}
-.ui-tag-button-shell[data-theme] {
-  --tagbtn-bg: var(--theme-primary);
-  --tagbtn-fg: var(--theme-on-primary);
 }
 .ui-tag-button-shell[data-palette] {
   --tagbtn-bg: var(--color-accent);

@@ -72,19 +72,15 @@ const mask = computed(() => {
 
 <style>
 /* Raised neutral chip. Chrome (`element`) by default; identity is opt-in and
-   attribute-on-self — `[data-palette]` (the new path) or a legacy `[data-theme]`
-   (kept alive until D2). Both are self-selectors, so an ancestor palette/theme
-   can't leak in: the base rule never reads --color-accent, and the identity
-   rules only match when the attribute sits on THIS element (attributes don't
-   inherit), at which point --color-accent resolves to this tag's own palette. */
+   attribute-on-self via `[data-palette]`. Both are self-selectors, so an
+   ancestor palette can't leak in: the base rule never reads --color-accent, and
+   the identity rule only matches when the attribute sits on THIS element
+   (attributes don't inherit), at which point --color-accent resolves to this
+   tag's own palette. */
 .ui-kit-tag {
   --tag-bg: var(--color-element);
   --tag-fg: var(--color-on-element);
   background-color: var(--tag-bg);
-}
-.ui-kit-tag[data-theme] {
-  --tag-bg: var(--theme-primary);
-  --tag-fg: var(--theme-on-primary);
 }
 .ui-kit-tag[data-palette] {
   --tag-bg: var(--color-accent);

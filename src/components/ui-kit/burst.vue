@@ -19,7 +19,6 @@ const emit = defineEmits<{ done: [] }>()
   <div
     data-testid="ui-kit-burst"
     class="burst"
-    data-theme="brown-100"
     :class="`burst--${size}`"
     :style="{
       '--burst-dur': `${duration}ms`,
@@ -27,14 +26,14 @@ const emit = defineEmits<{ done: [] }>()
     }"
     @animationend.once="emit('done')"
   >
-    <div class="spoke" style="--i: 0"><span class="dot bg-(--theme-primary)"></span></div>
-    <div class="spoke" style="--i: 1"><span class="dot bg-(--theme-primary)"></span></div>
-    <div class="spoke" style="--i: 2"><span class="dot bg-(--theme-primary)"></span></div>
-    <div class="spoke" style="--i: 3"><span class="dot bg-(--theme-primary)"></span></div>
-    <div class="spoke" style="--i: 4"><span class="dot bg-(--theme-primary)"></span></div>
-    <div class="spoke" style="--i: 5"><span class="dot bg-(--theme-primary)"></span></div>
-    <div class="spoke" style="--i: 6"><span class="dot bg-(--theme-primary)"></span></div>
-    <div class="spoke" style="--i: 7"><span class="dot bg-(--theme-primary)"></span></div>
+    <div class="spoke" style="--i: 0"><span class="dot bg-(--color-accent)"></span></div>
+    <div class="spoke" style="--i: 1"><span class="dot bg-(--color-accent)"></span></div>
+    <div class="spoke" style="--i: 2"><span class="dot bg-(--color-accent)"></span></div>
+    <div class="spoke" style="--i: 3"><span class="dot bg-(--color-accent)"></span></div>
+    <div class="spoke" style="--i: 4"><span class="dot bg-(--color-accent)"></span></div>
+    <div class="spoke" style="--i: 5"><span class="dot bg-(--color-accent)"></span></div>
+    <div class="spoke" style="--i: 6"><span class="dot bg-(--color-accent)"></span></div>
+    <div class="spoke" style="--i: 7"><span class="dot bg-(--color-accent)"></span></div>
   </div>
 </template>
 

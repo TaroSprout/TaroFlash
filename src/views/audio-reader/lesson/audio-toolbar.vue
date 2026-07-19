@@ -148,10 +148,8 @@ function setMode(next: 'expanded' | 'mini') {
         <button
           data-testid="audio-toolbar__skip-back"
           type="button"
-          data-theme="brown-200"
-          data-theme-dark="grey-700"
           :aria-label="t('lesson-view.audio.skip-back-button')"
-          class="flex size-13 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
+          class="flex size-13 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-element text-on-element transition active:scale-95"
           :class="{ [TAP_BGX]: back_playing }"
           @click="onBackTap"
         >
@@ -175,10 +173,8 @@ function setMode(next: 'expanded' | 'mini') {
         <button
           data-testid="audio-toolbar__skip-forward"
           type="button"
-          data-theme="brown-200"
-          data-theme-dark="grey-700"
           :aria-label="t('lesson-view.audio.skip-forward-button')"
-          class="flex size-13 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
+          class="flex size-13 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-element text-on-element transition active:scale-95"
           :class="{ [TAP_BGX]: forward_playing }"
           @click="onForwardTap"
         >
@@ -257,10 +253,8 @@ function setMode(next: 'expanded' | 'mini') {
       <button
         data-testid="audio-toolbar__skip-back"
         type="button"
-        data-theme="brown-200"
-        data-theme-dark="grey-700"
         :aria-label="t('lesson-view.audio.skip-back-button')"
-        class="flex size-13 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
+        class="flex size-13 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-element text-on-element transition active:scale-95"
         :class="{ [TAP_BGX]: back_playing }"
         @click="onBackTap"
       >
@@ -284,10 +278,8 @@ function setMode(next: 'expanded' | 'mini') {
       <button
         data-testid="audio-toolbar__skip-forward"
         type="button"
-        data-theme="brown-200"
-        data-theme-dark="grey-700"
         :aria-label="t('lesson-view.audio.skip-forward-button')"
-        class="flex size-13 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-(--theme-primary) text-(--theme-on-primary) transition active:scale-95"
+        class="flex size-13 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-element text-on-element transition active:scale-95"
         :class="{ [TAP_BGX]: forward_playing }"
         @click="onForwardTap"
       >

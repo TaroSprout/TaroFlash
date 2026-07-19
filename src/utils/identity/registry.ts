@@ -6,19 +6,18 @@
  * lockstep with the `IdentityName` union — adding a union member without an
  * entry here (or dropping a role from a rendition) is a compile error.
  *
- * The palette set mirrors `SUPPORTED_PALETTES` in src/utils/cover/tokens.ts, which is the
- * real identity set. The other palettes in src/styles/palettes.css are chrome
- * squatting in the theme layer and are retired separately.
+ * The palette set mirrors `SUPPORTED_PALETTES` in src/utils/cover/tokens.ts,
+ * which is the real identity set.
  *
- * `accent` / `onAccent` are lifted verbatim from each palette's existing
- * `--theme-primary` / `--theme-on-primary`.
+ * `accent` / `onAccent` were lifted verbatim from each palette's original
+ * `primary` / `on-primary` rendition in the retired theme layer.
  *
  * `accentMuted` is the adjacent lighter step of the same hue, normally the
- * palette's existing `--theme-secondary`. Two of those secondaries leave the
- * hue family and are corrected here:
+ * palette's original `secondary`. Two of those secondaries left the hue family
+ * and are corrected here:
  *
- *   yellow.dark   palettes.css uses orange-500 -> corrected to yellow-500
- *   orange.light  palettes.css uses yellow-500 -> corrected to orange-400
+ *   yellow.dark   originally paired with orange-500 -> corrected to yellow-500
+ *   orange.light  originally paired with yellow-500 -> corrected to orange-400
  *
  * `orange-400` was added to the @theme scale in main.css for that second case:
  * the family previously stopped at 500, so the muted step had nowhere in-hue to
@@ -43,7 +42,7 @@ export const IDENTITIES = {
   },
   yellow: {
     light: { accent: 'yellow-500', accentMuted: 'yellow-400', onAccent: 'brown-700' },
-    // palettes.css pairs yellow-700 with orange-500; corrected to stay in-hue.
+    // originally paired yellow-700 with orange-500; corrected to stay in-hue.
     dark: { accent: 'yellow-700', accentMuted: 'yellow-500', onAccent: 'brown-100' }
   },
   purple: {
