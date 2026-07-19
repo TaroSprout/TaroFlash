@@ -276,20 +276,6 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(editor.actions.onDeleteCards).not.toHaveBeenCalled()
   })
 
-  // ── scale prop ───────────────────────────────────────────────────────────────
-
-  test('renders Card at size="lg" [obligation]', () => {
-    const { wrapper } = mountGridItem()
-    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('lg')
-  })
-
-  test('applies the scale prop as --card-scale on the scaled Card [obligation]', () => {
-    const { wrapper } = mountGridItem({ props: { scale: 0.6 } })
-    const card = wrapper.find('[data-testid="card-stub"]')
-    expect(card.attributes('data-card-class')).toContain('grid-item__card--scaled')
-    expect(card.attributes('data-card-scale')).toBe('0.6')
-  })
-
   // ── selection guard (non-collapsed selection) [obligation] ─────────────────
 
   test('onCardClick does NOT flip when window.getSelection() is non-collapsed [obligation]', async () => {

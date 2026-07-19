@@ -3,38 +3,35 @@ import { shallowMount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { defineComponent, h, ref, useAttrs } from 'vue'
 
-// Stub ImageUploader so its editor slot renders under shallowMount.
-// Forward attrs so `data-testid="front-input"` / `back-input` make it through,
-// and declare `error` so the save-failure tests can read the forwarded prop.
-const ImageUploaderStub = defineComponent({
-  name: 'ImageUploader',
+// FaceEditor stub — renders a real contenteditable div (so focusin/focusout
+// tests can dispatch events with e.target.isContentEditable === true) and
+// forwards attrs so `data-testid="front-input"` / `back-input` make it
+// through. Exposes `focus()` since the real component's exposed contract is
+// `{ uploader, focus }`, not the inner TextEditor directly.
+const FaceEditorStub = defineComponent({
+  name: 'FaceEditor',
   inheritAttrs: false,
   props: {
     card: { type: Object, required: true },
     side: String,
+    card_attributes: Object,
+    text: String,
+    card_key: [String, Number],
     disabled: Boolean,
-    error: Boolean
+    error: Boolean,
+    placeholder: String,
+    with_images: Boolean
   },
-  setup(_props, { slots }) {
-    const attrs = useAttrs()
-    return () => h('div', attrs, slots.editor?.())
-  }
-})
-
-// Stub TextEditor as a real contenteditable div so focusin/focusout
-// tests can dispatch events with e.target.isContentEditable === true.
-// Exposes focus() so useTemplateRef('front-input')?.focus() doesn't throw when
-// the onMounted claimFocus branch runs.
-const TextEditorStub = defineComponent({
-  name: 'TextEditor',
-  props: ['content', 'attributes', 'placeholder'],
-  setup(_props, { attrs, expose }) {
-    expose({ focus: vi.fn() })
+  emits: ['update'],
+  setup(props, { attrs, expose }) {
+    expose({ focus: vi.fn(), uploader: null })
+    const editor_attrs = useAttrs()
     return () =>
       h('div', {
-        ...attrs,
+        ...editor_attrs,
         contenteditable: 'true',
-        'data-testid': 'text-editor-stub'
+        'data-testid': attrs['data-testid'] ?? `face-editor-stub-${props.side}`,
+        'data-error': String(!!props.error)
       })
   }
 })
@@ -53,7 +50,6 @@ vi.mock('@/utils/animations/list-item', () => ({
 }))
 
 import ListItemCard from '@/views/deck/card-editor/list-item-card.vue'
-import textEditor from '@/components/card/text-editor.vue'
 import { cardEditorKey } from '@/views/deck/composables/list-controller'
 import { useNoticeStore } from '@/stores/notice-store'
 
@@ -89,14 +85,14 @@ function mount(props = {}) {
     },
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn, stubActions: false })],
-      stubs: { ImageUploader: ImageUploaderStub },
+      stubs: { FaceEditor: FaceEditorStub },
       provide: makeProvide({ is_selecting })
     }
   })
 }
 
-// Used for focusin/focusout tests — TextEditor stub renders a real contenteditable
-// div so e.target.isContentEditable is true when events bubble to the root.
+// Used for focusin/focusout tests — same stub (contenteditable), just a
+// distinct helper name kept for readability with the original test names.
 function mountWithFocusStubs(props = {}) {
   return shallowMount(ListItemCard, {
     attachTo: document.body,
@@ -106,7 +102,7 @@ function mountWithFocusStubs(props = {}) {
     },
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn, stubActions: false })],
-      stubs: { ImageUploader: ImageUploaderStub, TextEditor: TextEditorStub },
+      stubs: { FaceEditor: FaceEditorStub },
       provide: makeProvide()
     }
   })
@@ -133,26 +129,33 @@ describe('ListItemCard', () => {
     expect(wrapper.find('[data-testid="back-input"]').exists()).toBe(true)
   })
 
-  test('forwards is_selecting to both uploaders as the disabled prop', () => {
+  test('forwards is_selecting to both FaceEditors as the disabled prop', () => {
     const wrapper = mount({ is_selecting: ref(true), card: { id: 42 } })
-    const uploaders = wrapper.findAllComponents(ImageUploaderStub)
-    expect(uploaders[0].props('disabled')).toBe(true)
-    expect(uploaders[1].props('disabled')).toBe(true)
+    const editors = wrapper.findAllComponents(FaceEditorStub)
+    expect(editors[0].props('disabled')).toBe(true)
+    expect(editors[1].props('disabled')).toBe(true)
+  })
+
+  test('both faces enable with_images', () => {
+    const wrapper = mount({ card: { id: 42 } })
+    const editors = wrapper.findAllComponents(FaceEditorStub)
+    expect(editors[0].props('with_images')).toBe(true)
+    expect(editors[1].props('with_images')).toBe(true)
   })
 
   // ── Auto-save wiring ──────────────────────────────────────────────────────
 
   test('forwards text-editor updates to updateCard with both sides from local state', async () => {
     const wrapper = mount({ card: { id: 42, front_text: 'Q', back_text: 'A' } })
-    const editors = wrapper.findAllComponents(textEditor)
+    const editors = wrapper.findAllComponents(FaceEditorStub)
 
-    await editors[0].vm.$emit('update', 'new front')
+    await editors[0].vm.$emit('update', 'front', 'new front')
     expect(mocks.updateCardMock).toHaveBeenCalledWith(42, {
       front_text: 'new front',
       back_text: 'A'
     })
 
-    await editors[1].vm.$emit('update', 'new back')
+    await editors[1].vm.$emit('update', 'back', 'new back')
     expect(mocks.updateCardMock).toHaveBeenLastCalledWith(42, {
       front_text: 'new front',
       back_text: 'new back'
@@ -163,10 +166,10 @@ describe('ListItemCard', () => {
     // Regression: editing back then front used to send only the changed side,
     // and the save path merged it over the stale cached card — wiping the back.
     const wrapper = mount({ card: { id: 42, front_text: '', back_text: '' } })
-    const editors = wrapper.findAllComponents(textEditor)
+    const editors = wrapper.findAllComponents(FaceEditorStub)
 
-    await editors[1].vm.$emit('update', 'B')
-    await editors[0].vm.$emit('update', 'F')
+    await editors[1].vm.$emit('update', 'back', 'B')
+    await editors[0].vm.$emit('update', 'front', 'F')
 
     expect(mocks.updateCardMock).toHaveBeenLastCalledWith(42, { front_text: 'F', back_text: 'B' })
   })
@@ -189,7 +192,7 @@ describe('ListItemCard', () => {
 
   test('emits ui.slide_up when a card is activated from outside every card (relatedTarget null)', async () => {
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
-    const contenteditable = wrapper.find('[data-testid="text-editor-stub"]').element
+    const contenteditable = wrapper.find('[data-testid="front-input"]').element
     contenteditable.dispatchEvent(new FocusEvent('focusin', { bubbles: true, relatedTarget: null }))
     expect(mocks.emitSfxMock).toHaveBeenCalledWith('slide_up')
     wrapper.unmount()
@@ -199,7 +202,7 @@ describe('ListItemCard', () => {
     const external = document.createElement('div')
     document.body.appendChild(external)
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
-    const contenteditable = wrapper.find('[data-testid="text-editor-stub"]').element
+    const contenteditable = wrapper.find('[data-testid="front-input"]').element
     contenteditable.dispatchEvent(
       new FocusEvent('focusin', { bubbles: true, relatedTarget: external })
     )
@@ -210,10 +213,9 @@ describe('ListItemCard', () => {
 
   test('emits ui.click_04 when focus moves within the card (between sides)', async () => {
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
-    const editors = wrapper.findAll('[data-testid="text-editor-stub"]')
+    const first_editor = wrapper.find('[data-testid="front-input"]').element
+    const second_editor = wrapper.find('[data-testid="back-input"]').element
     // Simulate focus moving from the first editor to the second.
-    const first_editor = editors[0].element
-    const second_editor = editors[1].element
     second_editor.dispatchEvent(
       new FocusEvent('focusin', { bubbles: true, relatedTarget: first_editor })
     )
@@ -224,7 +226,7 @@ describe('ListItemCard', () => {
   test('emits ui.click_04 when focus moves in from another card', async () => {
     const other = makeOtherCardEditor()
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
-    const contenteditable = wrapper.find('[data-testid="text-editor-stub"]').element
+    const contenteditable = wrapper.find('[data-testid="front-input"]').element
     contenteditable.dispatchEvent(
       new FocusEvent('focusin', { bubbles: true, relatedTarget: other.editor })
     )
@@ -247,7 +249,7 @@ describe('ListItemCard', () => {
 
   test('emits ui.card_drop when an editor blurs to outside every card', async () => {
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
-    const contenteditable = wrapper.find('[data-testid="text-editor-stub"]').element
+    const contenteditable = wrapper.find('[data-testid="front-input"]').element
     contenteditable.dispatchEvent(
       new FocusEvent('focusout', { bubbles: true, relatedTarget: null })
     )
@@ -270,7 +272,7 @@ describe('ListItemCard', () => {
   test('does NOT emit ui.card_drop when focus moves out to another card', async () => {
     const other = makeOtherCardEditor()
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
-    const contenteditable = wrapper.find('[data-testid="text-editor-stub"]').element
+    const contenteditable = wrapper.find('[data-testid="front-input"]').element
     contenteditable.dispatchEvent(
       new FocusEvent('focusout', { bubbles: true, relatedTarget: other.editor })
     )
@@ -281,9 +283,10 @@ describe('ListItemCard', () => {
 
   test('does NOT emit ui.card_drop when focus stays within the card (between sides)', async () => {
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
-    const editors = wrapper.findAll('[data-testid="text-editor-stub"]')
-    editors[0].element.dispatchEvent(
-      new FocusEvent('focusout', { bubbles: true, relatedTarget: editors[1].element })
+    const first_editor = wrapper.find('[data-testid="front-input"]').element
+    const second_editor = wrapper.find('[data-testid="back-input"]').element
+    first_editor.dispatchEvent(
+      new FocusEvent('focusout', { bubbles: true, relatedTarget: second_editor })
     )
     expect(mocks.emitSfxMock).not.toHaveBeenCalledWith('card_drop')
     wrapper.unmount()
@@ -291,7 +294,7 @@ describe('ListItemCard', () => {
 
   test('a window-blur/refocus round trip stays silent (no sfx) on the restoring focusin [obligation]', async () => {
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
-    const contenteditable = wrapper.find('[data-testid="text-editor-stub"]').element
+    const contenteditable = wrapper.find('[data-testid="front-input"]').element
 
     vi.spyOn(document, 'hasFocus').mockReturnValue(false)
     contenteditable.dispatchEvent(
@@ -312,11 +315,11 @@ describe('ListItemCard', () => {
       attachTo: document.body,
       props: { card: makeCard({ id: 77, client_id: 'c77' }) },
       global: {
-        stubs: { ImageUploader: ImageUploaderStub, TextEditor: TextEditorStub },
+        stubs: { FaceEditor: FaceEditorStub },
         provide: makeProvide()
       }
     })
-    const contenteditable = wrapper.find('[data-testid="text-editor-stub"]').element
+    const contenteditable = wrapper.find('[data-testid="front-input"]').element
 
     mocks.emitSfxMock.mockReset()
     contenteditable.dispatchEvent(new FocusEvent('focusin', { bubbles: true, relatedTarget: null }))
@@ -327,9 +330,8 @@ describe('ListItemCard', () => {
 
   test('focusout with relatedTarget inside the card keeps focused true, so the next focusin emits click_04', async () => {
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
-    const editors = wrapper.findAll('[data-testid="text-editor-stub"]')
-    const first_editor = editors[0].element
-    const second_editor = editors[1].element
+    const first_editor = wrapper.find('[data-testid="front-input"]').element
+    const second_editor = wrapper.find('[data-testid="back-input"]').element
     // 1. Focus enters the card from outside — focused becomes true
     first_editor.dispatchEvent(new FocusEvent('focusin', { bubbles: true, relatedTarget: null }))
     // 2. Focus moves within the card (first→second) — focusout with relatedTarget inside
@@ -347,17 +349,13 @@ describe('ListItemCard', () => {
 
   test('focused ref becomes false when focusout relatedTarget is null (focus left the card)', async () => {
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
-    const contenteditable = wrapper.find('[data-testid="text-editor-stub"]').element
+    const contenteditable = wrapper.find('[data-testid="front-input"]').element
     // First gain focus so focused is true
     contenteditable.dispatchEvent(new FocusEvent('focusin', { bubbles: true, relatedTarget: null }))
     // Now focus leaves the card entirely
     contenteditable.dispatchEvent(
       new FocusEvent('focusout', { bubbles: true, relatedTarget: null })
     )
-    // wrapper.element.contains(null) === false → focused becomes false
-    // A subsequent focusEditor() call should try to focus the front-input
-    // (we can't assert wrapper.vm.focused directly per blackbox rules, but we can
-    // verify the side effect: emitSfx slides up again next time focus enters)
     mocks.emitSfxMock.mockReset()
     contenteditable.dispatchEvent(new FocusEvent('focusin', { bubbles: true, relatedTarget: null }))
     expect(mocks.emitSfxMock).toHaveBeenCalledWith('slide_up')
@@ -374,13 +372,13 @@ describe('ListItemCard', () => {
 
   test('runs expandListItemIn on the root element when claimFocus returns true [obligation]', async () => {
     mocks.claimFocusMock.mockReturnValue(true)
-    // Use mountWithFocusStubs so the front-input template ref resolves to a real
-    // contenteditable element whose .focus() exists; otherwise focusEditor() throws.
+    // Use mountWithFocusStubs so the front-input template ref resolves to a
+    // stub exposing focus() so focusEditor() doesn't throw.
     const wrapper = shallowMount(ListItemCard, {
       attachTo: document.body,
       props: { card: makeCard({ id: 77, client_id: 'c77' }) },
       global: {
-        stubs: { ImageUploader: ImageUploaderStub, TextEditor: TextEditorStub },
+        stubs: { FaceEditor: FaceEditorStub },
         provide: makeProvide()
       }
     })
@@ -392,19 +390,19 @@ describe('ListItemCard', () => {
 
   test('starts with error=false on both faces', () => {
     const wrapper = mount({ card: { id: 42 } })
-    const uploaders = wrapper.findAllComponents(ImageUploaderStub)
-    expect(uploaders[0].props('error')).toBe(false)
-    expect(uploaders[1].props('error')).toBe(false)
+    const editors = wrapper.findAllComponents(FaceEditorStub)
+    expect(editors[0].props('error')).toBe(false)
+    expect(editors[1].props('error')).toBe(false)
   })
 
   test('sets error=true on both faces when updateCard rejects', async () => {
     mocks.updateCardMock.mockRejectedValueOnce(new Error('boom'))
     const wrapper = mount({ card: { id: 42 } })
-    await wrapper.findAllComponents(textEditor)[0].vm.$emit('update', 'X')
+    await wrapper.findAllComponents(FaceEditorStub)[0].vm.$emit('update', 'front', 'X')
     await flushPromises()
-    const uploaders = wrapper.findAllComponents(ImageUploaderStub)
-    expect(uploaders[0].props('error')).toBe(true)
-    expect(uploaders[1].props('error')).toBe(true)
+    const editors = wrapper.findAllComponents(FaceEditorStub)
+    expect(editors[0].props('error')).toBe(true)
+    expect(editors[1].props('error')).toBe(true)
   })
 
   test('save_failed AND notice.error both fire when updateCard rejects [obligation]', async () => {
@@ -412,10 +410,10 @@ describe('ListItemCard', () => {
     const wrapper = mount({ card: { id: 42 } })
     const notice = useNoticeStore()
 
-    await wrapper.findAllComponents(textEditor)[0].vm.$emit('update', 'X')
+    await wrapper.findAllComponents(FaceEditorStub)[0].vm.$emit('update', 'front', 'X')
     await flushPromises()
 
-    expect(wrapper.findAllComponents(ImageUploaderStub)[0].props('error')).toBe(true)
+    expect(wrapper.findAllComponents(FaceEditorStub)[0].props('error')).toBe(true)
     expect(notice.notices).toHaveLength(1)
     expect(notice.notices[0].message).toBe('Something went wrong while trying to save your card')
   })
@@ -423,12 +421,12 @@ describe('ListItemCard', () => {
   test('clears error on the next update', async () => {
     mocks.updateCardMock.mockRejectedValueOnce(new Error('boom'))
     const wrapper = mount({ card: { id: 42 } })
-    await wrapper.findAllComponents(textEditor)[0].vm.$emit('update', 'X')
+    await wrapper.findAllComponents(FaceEditorStub)[0].vm.$emit('update', 'front', 'X')
     await flushPromises()
-    expect(wrapper.findAllComponents(ImageUploaderStub)[0].props('error')).toBe(true)
+    expect(wrapper.findAllComponents(FaceEditorStub)[0].props('error')).toBe(true)
 
-    await wrapper.findAllComponents(textEditor)[0].vm.$emit('update', 'XY')
+    await wrapper.findAllComponents(FaceEditorStub)[0].vm.$emit('update', 'front', 'XY')
     await flushPromises()
-    expect(wrapper.findAllComponents(ImageUploaderStub)[0].props('error')).toBe(false)
+    expect(wrapper.findAllComponents(FaceEditorStub)[0].props('error')).toBe(false)
   })
 })

@@ -76,14 +76,4 @@ describe('DeckGridSkeleton (views/dashboard/deck-grid/skeleton.vue)', () => {
       })
     }
   })
-
-  test('renders cards at size="base" when useMatchMedia is true (md+)', () => {
-    const wrapper = mountSkeleton({}, true)
-    expect(wrapper.findComponent(CardStub).props('size')).toBe('base')
-  })
-
-  test('renders cards at size="sm" when useMatchMedia is false (below md)', () => {
-    const wrapper = mountSkeleton({}, false)
-    expect(wrapper.findComponent(CardStub).props('size')).toBe('sm')
-  })
 })

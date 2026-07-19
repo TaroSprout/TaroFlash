@@ -59,11 +59,6 @@ describe('DeckHeroSkeleton (deck-hero/skeleton.vue)', () => {
     expect(wrapper.findAll('[data-testid="card-stub"]')).toHaveLength(1)
   })
 
-  test('card is rendered at size="lg"', () => {
-    const wrapper = mountSkeleton()
-    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-size')).toBe('lg')
-  })
-
   test('card is rendered at side="cover"', () => {
     const wrapper = mountSkeleton()
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('cover')

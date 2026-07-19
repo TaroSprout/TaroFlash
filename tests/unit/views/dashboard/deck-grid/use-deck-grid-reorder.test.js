@@ -112,11 +112,17 @@ beforeEach(() => {
   liftListItemMock.mockClear()
   dropListItemMock.mockClear()
   reorderDragState.captured_opts = null
+  // useDeckGrid's cell_width reads --card-w-<token> off the document root via
+  // cardWidthPx() — jsdom won't resolve the real Tailwind theme vars.
+  document.documentElement.style.setProperty('--card-w-sm', '192px')
+  document.documentElement.style.setProperty('--card-w-xs', '172px')
 })
 
 afterEach(() => {
   app?.unmount()
   app = null
+  document.documentElement.style.removeProperty('--card-w-sm')
+  document.documentElement.style.removeProperty('--card-w-xs')
 })
 
 // ── reorderDeck (the onReorder callback wired into useReorderDrag) ────────────
@@ -130,7 +136,7 @@ describe('useDeckGridReorder — reorderDeck (via the captured onReorder callbac
         container_el,
         () => decks,
         () => true,
-        () => 'base'
+        () => 'sm'
       )
     ))
 
@@ -147,7 +153,7 @@ describe('useDeckGridReorder — reorderDeck (via the captured onReorder callbac
         container_el,
         () => decks,
         () => true,
-        () => 'base'
+        () => 'sm'
       )
     ))
 
@@ -165,7 +171,7 @@ describe('useDeckGridReorder — reorderDeck (via the captured onReorder callbac
         container_el,
         () => decks,
         () => true,
-        () => 'base'
+        () => 'sm'
       )
     ))
 
@@ -183,7 +189,7 @@ describe('useDeckGridReorder — reorderDeck (via the captured onReorder callbac
         container_el,
         () => decks,
         () => true,
-        () => 'base'
+        () => 'sm'
       )
     ))
 
@@ -206,7 +212,7 @@ describe('useDeckGridReorder — dragTransform', () => {
         container_el,
         () => [deck(1)],
         () => true,
-        () => 'base'
+        () => 'sm'
       )
     ))
 
@@ -223,7 +229,7 @@ describe('useDeckGridReorder — jiggleStyle', () => {
         container_el,
         () => [deck(1)],
         () => true,
-        () => 'base'
+        () => 'sm'
       )
     ))
 
@@ -241,7 +247,7 @@ describe('useDeckGridReorder — jiggleStyle', () => {
         container_el,
         () => [deck(1)],
         () => true,
-        () => 'base'
+        () => 'sm'
       )
     ))
 
@@ -261,7 +267,7 @@ describe('useDeckGridReorder — onItemPointerdown', () => {
         container_el,
         () => [deck(1)],
         () => editing,
-        () => 'base'
+        () => 'sm'
       )
     ))
 
@@ -284,7 +290,7 @@ describe('useDeckGridReorder — onItemPointerdown', () => {
         container_el,
         () => [deck(1)],
         () => true,
-        () => 'base'
+        () => 'sm'
       )
     ))
 
@@ -307,7 +313,7 @@ describe('useDeckGridReorder — onItemPointerdown', () => {
         container_el,
         () => [deck(1)],
         () => true,
-        () => 'base'
+        () => 'sm'
       )
     ))
 
@@ -326,7 +332,7 @@ describe('useDeckGridReorder — onItemPointerdown', () => {
         container_el,
         () => [deck(1)],
         () => true,
-        () => 'base'
+        () => 'sm'
       )
     ))
 
@@ -353,7 +359,7 @@ describe('useDeckGridReorder — onItemPointerdown', () => {
         container_el,
         () => [deck(1)],
         () => true,
-        () => 'base'
+        () => 'sm'
       )
     ))
 
@@ -379,7 +385,7 @@ describe('useDeckGridReorder — onItemPointerdown', () => {
         container_el,
         () => [deck(1)],
         () => true,
-        () => 'base'
+        () => 'sm'
       )
     ))
 
@@ -408,7 +414,7 @@ describe('useDeckGridReorder — geometry passed to the drag engine', () => {
         container_el,
         () => [deck(1), deck(2)],
         () => true,
-        () => 'base'
+        () => 'sm'
       )
     ))
 
@@ -425,7 +431,7 @@ describe('useDeckGridReorder — geometry passed to the drag engine', () => {
         container_el,
         () => [deck(1), deck(2), deck(3)],
         () => true,
-        () => 'base'
+        () => 'sm'
       )
     ))
 
@@ -445,7 +451,7 @@ describe('useDeckGridReorder — geometry passed to the drag engine', () => {
         container_el,
         () => [deck(1), deck(2)],
         () => true,
-        () => 'base'
+        () => 'sm'
       )
     ))
 
@@ -462,7 +468,7 @@ describe('useDeckGridReorder — measured', () => {
         container_el,
         () => [deck(1)],
         () => true,
-        () => 'base'
+        () => 'sm'
       )
     ))
 
@@ -477,7 +483,7 @@ describe('useDeckGridReorder — measured', () => {
         container_el,
         () => [deck(1)],
         () => true,
-        () => 'base'
+        () => 'sm'
       )
     ))
 
@@ -495,7 +501,7 @@ describe('useDeckGridReorder — measured', () => {
         container_el,
         () => [deck(1)],
         () => true,
-        () => 'base'
+        () => 'sm'
       )
     ))
 
@@ -522,7 +528,7 @@ describe('useDeckGridReorder — settling the lifted card on drag end', () => {
         container_el,
         () => [deck(1), deck(2)],
         () => true,
-        () => 'base'
+        () => 'sm'
       )
     ))
 

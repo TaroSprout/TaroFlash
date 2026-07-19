@@ -39,4 +39,26 @@ describe('CardFaceField', () => {
 
     expect(wrapper.emitted('update:text')).toBeTruthy()
   })
+
+  test('update:text carries only the text value, not the FaceEditor side arg', async () => {
+    // FaceEditor emits ('update', side, text) — card-face-field re-emits just
+    // the text, dropping the side, since callers only track one field.
+    const editor = (wrapper) => wrapper.find('[data-testid="text-editor"]').element
+    const wrapper = mountField({ side: 'front' })
+    editor(wrapper).textContent = 'Cat'
+    await wrapper.find('[data-testid="text-editor"]').trigger('input')
+
+    const [emitted_value] = wrapper.emitted('update:text')[0]
+    expect(typeof emitted_value).toBe('string')
+  })
+
+  test('forwards the error prop through to the card face [obligation]', () => {
+    const wrapper = mountField({ error: true })
+    expect(wrapper.find('[data-testid="card-face-field"]').attributes('data-error')).toBeDefined()
+  })
+
+  test('omits data-error when error is false (default)', () => {
+    const wrapper = mountField()
+    expect(wrapper.find('[data-testid="card-face-field"]').attributes('data-error')).toBeUndefined()
+  })
 })
