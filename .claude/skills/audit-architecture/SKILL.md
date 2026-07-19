@@ -1,24 +1,26 @@
 ---
 name: audit-architecture
-description: Run an architecture audit that starts from what the feature IS, not what the current code shape says it is. First reconstructs the feature in domain terms as if no code existed, has a dedicated blind subagent design the ideal shape from that description alone, then diffs ideal vs actual — that reframe is the primary output. A dense smell punch list (separation of concerns, reusability, naming, theming tokens, locale paths, defaults, prop drilling, ui-kit neutrality, dead code) gathered by parallel finder subagents follows, filtered to whichever shape won. Default scope is the feature(s) touched by the current branch's diff vs master. Use `--global` to expand to the entire `src/` tree. Optional `--context "<note>"` feeds extra heuristics. Trigger on `/audit-architecture`, "audit architecture", "audit this branch", "review for smells", or after a multi-step refactor when the user wants a structural sanity check.
+description: Run an architecture audit that starts from what the feature IS, not what the current code shape says it is. First reconstructs the feature in domain terms as if no code existed, has a dedicated blind subagent design the ideal shape from that description alone, then diffs ideal vs actual — that reframe is the primary output. Pauses for user sign-off on the domain statement before dispatching any subagent. Reports extremely concisely: a bird's-eye view of the architecture now and what the verdict changes, then one ranked list of high/medium fixes and refactors gathered by parallel finder subagents (separation of concerns, reusability, naming, theming tokens, locale paths, defaults, prop drilling, ui-kit neutrality, dead code). Default scope is the feature(s) touched by the current branch's diff vs master. Use `--global` to expand to the entire `src/` tree. `--fable` / `--opus` / `--sonnet` picks the blind agent's model (default fable). Optional `--context "<note>"` feeds extra heuristics. Trigger on `/audit-architecture`, "audit architecture", "audit this branch", "review for smells", or after a multi-step refactor when the user wants a structural sanity check.
 allowed-tools: Read, Bash, Glob, Grep, Agent, SendMessage
-argument-hint: '[--global] [--context "<note>"]'
+argument-hint: '[--global] [--fable|--opus|--sonnet] [--context "<note>"]'
 arguments:
   - name: --global
     description: Audit the entire `src/` tree instead of the feature(s) touched by the branch diff.
+  - name: --fable|--opus|--sonnet
+    description: Model for the blind-reframe agent. Defaults to `--fable`. Finders are unaffected.
   - name: --context "<note>"
     description: Free-form note appended to the audit heuristics (e.g. "focus on theming tokens").
-lastUpdated: 2026-07-18T00:00:00Z
+lastUpdated: 2026-07-19T00:00:00Z
 ---
 
 ## What this skill produces
 
-Two things, in order:
+Two things, in order — **both extremely concise**. The whole report is readable in under a minute.
 
-1. **The reframe.** The #1 thing this skill exists to produce. Reconstruct the feature from its requirements — not its files — have a blind subagent design the ideal architecture from that description, then diff that ideal against what's implemented. A run that takes the current decomposition as given and only proposes rewirings of it (prop-drill → provide/inject, composable → store) is an incomplete run.
-2. A **dense, scannable** punch list of smells within whichever shape the reframe endorsed. Readable in under a minute.
+1. **The reframe.** The #1 thing this skill exists to produce. Reconstruct the feature from its requirements — not its files — have a blind subagent design the ideal architecture from that description, then diff that ideal against what's implemented. A run that takes the current decomposition as given and only proposes rewirings of it (prop-drill → provide/inject, composable → store) is an incomplete run. **Report it as a bird's-eye view: what the architecture is today, and what the verdict changes about it** — a compact current-shape sketch plus the deltas. Not a walkthrough of the reasoning, not the blind design in full, not the assumptions list.
+2. A **single ranked list of H/M fixes and refactors.** Drop `L` findings entirely — they don't reach the report.
 
-The reframe is prose and is **exempt from the density rules** — give it the space it needs (a few tight paragraphs, not an essay). The punch list stays one line per finding. Do **not** apply fixes — wait for the user to pick.
+Density is the point. If a section can be a diagram or a bullet, it isn't a paragraph. Do **not** apply fixes — wait for the user to pick.
 
 Each finding line:
 
@@ -32,10 +34,11 @@ No "Suggested fix:" / "Reason:" labels — the structure carries them. If a find
 
 ## Inputs
 
-| Flag / param         | Purpose                                                                                                                                                                                                 |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--global`           | Expand scope to the entire `src/` tree. Use sparingly — global scans are slow.                                                                                                                          |
-| `--context "<note>"` | Free-text hint that biases the audit. Examples: `"focus on ui-kit primitives"`, `"ignore study-session/* — separate refactor"`. Surface the note in the report header so the user knows you applied it. |
+| Flag / param                      | Purpose                                                                                                                                                                                                                                        |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--global`                        | Expand scope to the entire `src/` tree. Use sparingly — global scans are slow.                                                                                                                                                                 |
+| `--fable` / `--opus` / `--sonnet` | Model for the **blind-reframe agent only**; default `--fable`. Pass as the `model` option on that `Agent` call. Finders always run on the default model. If more than one is given, the last wins. Name the chosen model in the report header. |
+| `--context "<note>"`              | Free-text hint that biases the audit. Examples: `"focus on ui-kit primitives"`, `"ignore study-session/* — separate refactor"`. Surface the note in the report header so the user knows you applied it.                                        |
 
 **Scope rule:** the diff decides _which feature(s)_ to audit; the reframe always covers the feature's **full tree**, not just changed lines. `git diff --name-only master...HEAD` → map changed files to their feature directories (view dir + its composables, api domain, related components) → that whole surface is in scope. The punch list may still weight changed files more heavily. If the branch hasn't diverged, fall back to staged + unstaged changes.
 
@@ -43,11 +46,11 @@ No "Suggested fix:" / "Reason:" labels — the structure carries them. If a find
 
 The invoking agent is the **orchestrator**. It never writes the blind design itself and never walks the smell areas itself — it delegates both and owns everything around them: scope, the domain statement, the diff, the verdict, filtering, and the final report.
 
-| Role          | Who                                         | Reads the implementation?                    |
-| ------------- | ------------------------------------------- | -------------------------------------------- |
-| Orchestrator  | main agent                                  | Only after dispatching the blind agent       |
-| Blind reframe | one `general-purpose` agent, `model: fable` | No — by framing, not enforcement (see below) |
-| Smell finders | 4 parallel `general-purpose` agents         | Yes — full scope tree                        |
+| Role          | Who                                                           | Reads the implementation?                    |
+| ------------- | ------------------------------------------------------------- | -------------------------------------------- |
+| Orchestrator  | main agent                                                    | Only after dispatching the blind agent       |
+| Blind reframe | one `general-purpose` agent, model per flag (default `fable`) | No — by framing, not enforcement (see below) |
+| Smell finders | 4 parallel `general-purpose` agents                           | Yes — full scope tree                        |
 
 Launch the blind agent and all four finders **in the same message** so they run concurrently. The verdict-scoping of findings ("don't flag prop-drilling in code the verdict deletes") happens as an orchestrator **post-filter** after the verdict exists — finders don't wait for the reframe.
 
@@ -59,7 +62,9 @@ Reconstruct the feature in domain terms as if no code existed: its essential ent
 
 **Launder it.** The description must not leak the current decomposition: no file names, component names, composable names, prop names, or locale keys (locale keys encode component structure in this repo). `project_*` memories often describe the _implementation_ — extract the domain facts, drop the shape. If you can't state the feature without naming current files, step back further.
 
-### 2. Design the ideal shape blind (subagent, `model: fable`)
+**Sign-off gate (blocking).** Print the domain statement and stop. Nothing dispatches until the user approves it — everything downstream is derived from this statement, so a wrong one wastes the whole run. Print it as a short concise summary, not the full text: scope line + 3–6 bullets covering entities, invariants/states, and user-facing behavior. Then ask the user to approve or correct. Apply corrections and re-print if the change is material; otherwise proceed straight to dispatch.
+
+### 2. Design the ideal shape blind (subagent, model per flag — default `fable`)
 
 Dispatch a subagent with a prompt containing:
 
@@ -101,40 +106,40 @@ Four finder agents, each owning a lens, launched alongside the blind agent. Each
 
 1. **Resolve scope** per the scope rule. Print the feature(s) and file count up-front so the user can re-scope.
 2. **Write the domain statement** (Phase 1 step 1) — before deep-reading the implementation; skimming file names to map scope is fine, reading bodies is not.
-3. **Dispatch all subagents in one message:** the blind-reframe agent (`model: fable`) + the four finders.
-4. **Read the implementation in full** while they run.
-5. **Diff + verdict** when the blind design returns (answer material open questions via `SendMessage` first if needed).
-6. **Collect finder output, post-filter** against the verdict + `--context`.
-7. **Render the report.** Reframe first, then findings bundled under one heading per lens area (skip empty areas), then 3–5 priority items.
-8. **Stop.** Do **not** edit code. Wait for the user to pick.
+3. **Print the summary and wait for sign-off.** Blocking — no subagent runs before the user approves.
+4. **Dispatch all subagents in one message:** the blind-reframe agent (model per flag, default `fable`) + the four finders.
+5. **Read the implementation in full** while they run.
+6. **Diff + verdict** when the blind design returns (answer material open questions via `SendMessage` first if needed).
+7. **Collect finder output, post-filter** against the verdict + `--context`; drop all `L`.
+8. **Render the report** per the shape below — bird's-eye now/after, then one ranked H/M list. No per-lens sections.
+9. **Stop.** Do **not** edit code. Wait for the user to pick.
 
 ## Report shape
 
+Two sections. Nothing else — no per-lens headings, no assumptions, no methodology.
+
 ```markdown
-# Audit — `refactor-foo` (feature: deck-settings)
+# Audit — `refactor-foo` (deck-settings) · 18 files (12 changed) · context: ui-kit primitives
 
-Context: focus on ui-kit primitives
-Files in scope: 18 (12 changed)
+## Architecture
 
-## Reframe
+**Now:** modal root → 3 tab components, each owning a local draft ref; watchers sync them; `tab-study` fires the commit. API via `src/api/decks/mutations`.
 
-**What it is:** Deck settings is a draft-edit surface over a deck's config: the member opens a modal, edits a draft of general/design/study fields, and commits or discards atomically. The domain concepts are the draft, the field groups, and the commit boundary.
+**Verdict — reshape:** one provided draft composable owns draft + dirty + commit; tabs become pure field groups. Blast radius 5 files, no API change.
 
-**Blind design:** One draft composable owning the reactive draft + dirty state, provided at the modal root; one dumb tab component per field group injecting it; commit/discard live on the composable, not the tabs.
+**Changes:** 3 tab-local refs → 1 provided draft · commit moves out of `tab-study` (fixes silent edit loss) · `settings-modal-state` → `deck-draft`.
 
-**Diff:** The implementation splits the draft across three tab-local refs synced by watchers — the domain says one draft. `tab-study` also owns the commit call, so closing from another tab silently drops edits. Naming follows UI history (`settings-modal-state`) not the domain (`deck draft`).
+**Keeps:** api layer, modal shell, per-tab file split.
 
-**Verdict:** Reshape. Consolidate into one provided draft composable (pattern already used by `member-editor`); the tabs become pure field groups. Blast radius: 5 files, no API changes.
+## Fixes
 
-## SoC
-
-- M `src/components/foo.vue:42` — payload built inline pre-save. Couples view to persistence shape. → move builder to `src/utils/foo/payload.ts`.
-
-## Priority
-
-1. H Reshape per verdict — single provided draft composable.
-2. M Promote `bg-brown-100 dark:bg-grey-700` → `--color-input`.
+1. H Consolidate 3 draft refs → provided `useDeckDraft` (`tab-*.vue`) — see `architecture.md`.
+2. H `tab-study.vue:88` — commit owned by one tab; closing elsewhere drops edits. → move to the draft composable.
+3. M `foo.vue:42` — payload built inline pre-save. → `src/utils/foo/payload.ts`.
 ```
+
+- **Architecture:** four labeled lines max. `Now` is a one-line shape sketch (arrows fine); `Verdict` names the call + blast radius; `Changes` is the delta list; `Keeps` names what survives so the user knows the scope is bounded. If the verdict is **keep**, `Changes`/`Keeps` collapse to one line.
+- **Fixes:** one ranked list, H before M, each one line in the finding format. Cap ~12. If lens coverage found nothing above `L`, say so in one line.
 
 ## When NOT to invoke
 
@@ -146,8 +151,8 @@ Files in scope: 18 (12 changed)
 
 - Audit is **non-destructive**. Read-only tools + subagent dispatch; no formatters, lints, or tests, and no edits by any agent.
 - Cite overlapping project rules by name in the fix ("see `architecture.md` — provide/inject section").
-- Cap the punch list at ~20 findings; group similar ones on a single line and recommend a `--context` focus for the next pass.
-- Brevity > completeness in the punch list; the reframe gets the space it needs.
+- Cap the fix list at ~12 findings; group similar ones on a single line and recommend a `--context` focus for the next pass.
+- Brevity > completeness, everywhere — including the reframe. The report is a bird's-eye view, not a record of the analysis; the depth went into producing the verdict, not into narrating it.
 - Be specific about locations: `src/components/foo.vue:42` beats "the foo component".
 - If the blind design converges suspiciously hard on the current shape, check whether the domain statement leaked structure before accepting a "keep" verdict.
 
