@@ -24,9 +24,10 @@ type PopScrimRevealOptions = {
  * is showing, which keeps the panel's height stable; with it the fields tween
  * to zero and the scrim sets the height instead.
  *
- * Inline height/overflow are cleared once the tween lands so the resting state
- * is owned by the caller's classes — otherwise a collapse would survive a
- * resize into a layout that never collapses.
+ * Inline height/overflow/transform are cleared once the tween lands so the
+ * resting state is owned by the caller's classes — otherwise a collapse would
+ * survive a resize into a layout that never collapses, and a settled transform
+ * would keep trapping the revealed layer's popovers in its stacking context.
  */
 export function popScrimReveal(
   scrim: HTMLElement,
@@ -48,7 +49,19 @@ export function popScrimReveal(
   timeline.fromTo(
     incoming,
     { opacity: 0, scale: HIDDEN_SCALE },
-    { opacity: 1, scale: 1, duration: DURATION, ease: 'back.out(1.7)' },
+    {
+      opacity: 1,
+      scale: 1,
+      duration: DURATION,
+      ease: 'back.out(1.7)',
+      // A settled `scale: 1` is visually a no-op but not a layout one — any
+      // non-none transform makes the element a containing block for fixed
+      // descendants and a stacking context of its own, which traps the slotted
+      // fields' dropdown menus underneath later siblings. Drop it once landed;
+      // the outgoing layer keeps its inline transform, since that's what's
+      // holding it hidden.
+      clearProps: 'transform'
+    },
     DURATION * 0.35
   )
 

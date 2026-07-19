@@ -2,6 +2,15 @@ import { gsap } from 'gsap'
 
 const ENTER_SETTLE_DELAY = 0.033
 
+/**
+ * Enter tweens settle on an identity transform, which gsap leaves inline as
+ * `transform: translate(0px, 0px)`. Visually a no-op, but any non-none
+ * transform (or filter) makes the element a containing block for `position:
+ * fixed` descendants — so a settled modal captures the popovers inside it and
+ * its own `overflow` clips them. Hand the resting state back to CSS instead.
+ */
+const CLEAR_TRANSFORM = { clearProps: 'transform' } as const
+
 export function slideUpFadeIn(el: Element, done: () => void) {
   gsap.set(el, { translateY: '200px', opacity: 0 })
   gsap.to(el, {
@@ -10,6 +19,7 @@ export function slideUpFadeIn(el: Element, done: () => void) {
     duration: 0.2,
     delay: ENTER_SETTLE_DELAY,
     ease: 'expo.out',
+    ...CLEAR_TRANSFORM,
     onComplete: done
   })
 }
@@ -31,6 +41,7 @@ export function slideUpFromEdge(el: Element, done: () => void) {
     duration: 0.2,
     delay: ENTER_SETTLE_DELAY,
     ease: 'expo.out',
+    ...CLEAR_TRANSFORM,
     onComplete: done
   })
 }
@@ -47,6 +58,7 @@ export function springScaleIn(el: Element, done: () => void) {
     duration: 0.1,
     delay: ENTER_SETTLE_DELAY,
     ease: 'back.out(1.7)',
+    ...CLEAR_TRANSFORM,
     onComplete: done
   })
 }
@@ -74,12 +86,20 @@ export function recedeModal(el: Element, is_pinned: boolean) {
   })
 }
 
-/** Restores a modal to full prominence once the modal above it has closed. */
+/**
+ * Restores a modal to full prominence once the modal above it has closed.
+ *
+ * Clears the filter alongside the transform — a settled `brightness(1)
+ * blur(0px)` is as much a containing block as a settled `translate(0, 0)`, so
+ * leaving it behind re-traps this modal's popovers the moment a nested modal
+ * (an alert, a prompt) has come and gone.
+ */
 export function restoreModal(el: Element, is_pinned: boolean) {
   gsap.to(el, {
     ...(is_pinned ? { translateY: 0 } : { scale: 1 }),
     filter: 'brightness(1) blur(0px)',
     duration: RECEDE_DURATION,
-    ease: 'expo.out'
+    ease: 'expo.out',
+    clearProps: 'transform,filter'
   })
 }
