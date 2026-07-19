@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { TYPE_SFX, type SoundKey } from '@/sfx/config'
 import { emitSfx } from '@/sfx/bus'
 import { type ModalCloseFn } from '@/composables/modal'
+import { nextDepth, provideDepth, useAmbientDepth } from '@/composables/ui/depth'
 
 export type AlertType = 'warn' | 'info'
 
@@ -19,6 +20,10 @@ const { cancelLabel, confirmLabel, close, cancelAudio, confirmAudio } = definePr
 }>()
 
 const { t } = useI18n()
+
+// An alert is a modal: it floats one step above whatever opened it.
+const ambient_depth = useAmbientDepth()
+const depth = provideDepth(() => nextDepth(ambient_depth.value))
 
 const cancel_btn = useTemplateRef('cancel_btn')
 const confirm_btn = useTemplateRef('confirm_btn')
@@ -53,6 +58,7 @@ function onKeydown(e: KeyboardEvent) {
   >
     <div
       data-testid="ui-kit-alert"
+      :data-depth="depth"
       class="rounded-2 shadow-lg flex w-115 max-w-115 flex-col bg-white"
       :class="`ui-kit-alert--${type ?? 'warn'}`"
       v-bind="$attrs"

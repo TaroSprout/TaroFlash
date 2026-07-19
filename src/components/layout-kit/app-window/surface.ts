@@ -1,10 +1,4 @@
-export type WindowSurface = 'standard' | 'inverted'
 export type WindowHeaderBorder = 'wave' | 'cloud' | 'none'
-
-export const WINDOW_BODY_BG: Record<WindowSurface, string> = {
-  standard: 'bg-brown-300 dark:bg-stone-900',
-  inverted: 'bg-brown-200 dark:bg-stone-950'
-}
 
 export const WINDOW_HEADER_BORDER_CLASS: Record<WindowHeaderBorder, string> = {
   wave: 'wave-bottom-[50px]',

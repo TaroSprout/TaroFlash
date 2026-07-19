@@ -2,7 +2,6 @@
 import { computed, provide, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppWindow, { type AppWindowProps } from '@/components/layout-kit/app-window/index.vue'
-import type { WindowSurface } from '@/components/layout-kit/app-window/surface'
 import DirectoryPage, { type DirectoryPageGroup } from './directory-page.vue'
 import { useWindowLayout, windowLayoutKey } from './layout'
 import { usePageTransition } from './page-transition'
@@ -31,7 +30,7 @@ export type PagedWindowGroup = {
 
 type PagedWindowFrameProps = Pick<
   AppWindowProps,
-  'pattern_config' | 'title' | 'surface' | 'header_border' | 'show_close_button'
+  'pattern_config' | 'title' | 'header_border' | 'show_close_button'
 >
 
 export type PagedWindowProps = PagedWindowFrameProps & {
@@ -51,18 +50,12 @@ export type PagedWindowProps = PagedWindowFrameProps & {
 
 const DIRECTORY = 'directory'
 
-const SIDEBAR_BG: Record<WindowSurface, string> = {
-  standard: 'bg-brown-200 dark:bg-stone-950',
-  inverted: 'bg-brown-300 dark:bg-stone-900'
-}
-
 const {
   pages,
   groups,
   title,
   pattern_config,
   show_close_button = true,
-  surface = 'standard',
   header_border = 'wave',
   phone_query = 'w<md',
   desktop_query = 'w>=lg & fine',
@@ -104,7 +97,6 @@ const { nav_direction, onPageEnter, onPageLeave } = usePageTransition(layout_mod
 const panel_id = `paged-window__panel--${uid()}`
 const page_id_prefix = `paged-window__page--${uid()}--`
 
-const sidebar_bg_class = computed(() => SIDEBAR_BG[surface])
 const has_sidebar = computed(() => layout_mode.value === 'desktop')
 const sidebar_pages = computed(() => (pages ?? []).filter((page) => page.sidebar !== false))
 const has_pages = computed(() => sidebar_pages.value.length > 0)
@@ -176,7 +168,6 @@ function onDirectoryNavigate(value: string) {
     :show_close_button="window_close_button"
     :close_label="back_mode ? t('paged-window.back-label') : undefined"
     :close_icon="back_mode ? 'arrow-back' : 'close'"
-    :surface="surface"
     :header_border="header_border"
     :window_px="window_px"
     @close="onFrameClose"
@@ -188,11 +179,7 @@ function onDirectoryNavigate(value: string) {
     </template>
 
     <template v-if="has_sidebar" #sidebar>
-      <div
-        data-testid="paged-window__sidebar"
-        :data-surface="surface"
-        :class="['flex flex-col gap-10 p-4.5 shrink-0', sidebar_bg_class]"
-      >
+      <div data-testid="paged-window__sidebar" class="flex flex-col gap-10 p-4.5 shrink-0 bg-below">
         <ui-button
           data-testid="paged-window__close-button"
           icon-left="close"
