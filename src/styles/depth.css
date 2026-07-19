@@ -67,6 +67,13 @@
   --ramp-1: var(--color-grey-800);
   --ramp-2: var(--color-grey-700);
 
+  /* Default accent (no data-palette) is the blue identity — mirror its dark
+     rendition so an un-palette'd accent reads blue-650 in dark, not the light
+     blue-500 the @theme base declares. Identity call sites override via
+     data-palette; this is only the fallback. */
+  --color-accent: var(--color-blue-650);
+  --color-accent-muted: var(--color-blue-500);
+
   --chrome-panel: var(--color-grey-850);
   --chrome-float: var(--color-stone-700);
   --chrome-overlay: var(--color-brown-100);

@@ -67,7 +67,7 @@ async function onSelect(value: string) {
   <dashboard-actions-panel-shell
     data-testid="dashboard-actions-panel"
     v-bind="root_bindings"
-    class="bg-(--color-accent)"
+    class="bg-(--theme-primary)"
     body_class="bg-surface"
   >
     <template #polaroid>
@@ -77,7 +77,7 @@ async function onSelect(value: string) {
     <template #header>
       <span
         data-testid="dashboard-actions-panel__header"
-        class="text-(--color-on-accent) text-4xl font-semibold truncate"
+        class="text-(--theme-on-primary) text-4xl font-semibold truncate"
       >
         {{ member_store.display_name || t('member-badge.name-placeholder') }}
       </span>
