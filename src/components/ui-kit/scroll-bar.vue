@@ -202,7 +202,7 @@ function isPageTarget(el: HTMLElement) {
     <div
       ref="thumbEl"
       data-testid="ui-kit-scroll-bar__thumb"
-      class="ui-kit-scroll-bar__thumb hover:bgx-diagonal-stripes"
+      class="ui-kit-scroll-bar__thumb hover:bgx-diagonal-stripes hover:bgx-color-(--color-element-pattern)"
       :style="thumbStyle"
       @pointerdown.stop.prevent="onThumbPointerDown"
     />

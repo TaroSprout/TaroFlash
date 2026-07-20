@@ -157,12 +157,19 @@ function onClick(e: MouseEvent) {
     <div
       class="absolute inset-0 bgx-diagonal-stripes animation-safe:bgx-slide rounded-(--btn-border-radius) pointer-events-none"
       :class="{
-        'bg-(--color-accent) flex items-center justify-center': loading,
+        'flex items-center justify-center': loading,
+        // Loading fills the button with its own rest colour — a neutral button
+        // is --color-element, everything else the accent.
+        'bg-(--color-element)': loading && neutral && !inverted,
+        'bg-(--color-accent)': loading && !(neutral && !inverted),
         hidden: !loading,
         'group-hover/btn:block group-data-[active=true]/btn:block':
           !loading && !disabled && fancyHover && variant !== 'ghost',
-        // solid + ghost sweep the default accent sheen (--color-accent-pattern);
+        // accent solid + ghost sweep the default accent sheen (--color-accent-
+        // pattern). A NEUTRAL button's fill is --color-element, so it sweeps the
+        // neutral analog instead — element over element would be invisible.
         // inverted is a light button, so its shimmer is the accent colour itself.
+        'bgx-color-[var(--color-element-pattern)]': neutral && !inverted,
         'bgx-color-[var(--color-accent)]': inverted,
         // Ghost has no surface, so only the coarse quiet tap sweeps it (the
         // accent fill is added to the button root, behind the content).

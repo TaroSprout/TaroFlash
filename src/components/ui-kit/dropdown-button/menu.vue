@@ -69,7 +69,7 @@ function onOptionTap(option: DropdownOption, e: MouseEvent) {
         >
           <div
             aria-hidden="true"
-            class="pointer-events-none absolute inset-0 hidden bgx-diagonal-stripes bgx-color-[var(--color-ink-muted)] animation-safe:bgx-slide group-hover/option:block group-data-[tapping=true]/option:block"
+            class="pointer-events-none absolute inset-0 hidden bgx-diagonal-stripes bgx-color-[var(--color-element-pattern)] animation-safe:bgx-slide group-hover/option:block group-data-[tapping=true]/option:block"
           ></div>
           <ui-icon
             v-if="option.icon"

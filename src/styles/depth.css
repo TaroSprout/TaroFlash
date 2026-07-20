@@ -176,11 +176,19 @@
      against stone-700, so the light-mode soft/strong split collapses here. */
   --color-element-strong: var(--color-stone-900);
   --color-element-soft: var(--color-stone-900);
+  /* The pattern goes the OTHER way in dark: a lighter warm tint over the dark
+     neutral, so the texture still reads. Blanket across depths (like --color-
+     element itself, which holds at stone-700); mirrors --color-accent-pattern. */
+  --color-element-pattern: var(--color-brown-300);
 }
 
 [data-depth='1'] {
   --color-element: var(--color-brown-100);
   --color-element-strong: var(--color-brown-300);
+  /* --color-element-pattern is deliberately NOT stepped down here: it stays the
+     base brown-500 at every light depth. A neutral surface is light enough that
+     brown-500 reads at depth 1 too, and depth 0 is currently unreachable, so a
+     depth-relative ramp would only ever expose the faint end. */
 }
 [data-mode='dark'] [data-depth='1'],
 [data-mode='dark'][data-depth='1'] {

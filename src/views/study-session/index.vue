@@ -66,7 +66,7 @@ function onHeaderStop() {
 <template>
   <dialog-card
     data-testid="study-session"
-    class="bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-brown-500"
+    class="bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-(--color-element-pattern)"
     bg_class="bg-surface"
     size="lg"
     :title="title"

@@ -109,6 +109,16 @@
      depth.css. "soft"/"strong" name the LIGHT renditions. */
   --color-element-soft: var(--color-brown-200);
 
+  /* bgx texture on a NEUTRAL surface (neutral buttons, tap-sweeps, chrome
+     dot-grids) — the neutral analog of --color-accent-pattern. A neutral surface
+     is already a light tone, so unlike the accent sheen this reads DARKER than
+     the surface in light and LIGHTER in dark. Flat brown-500 at every light depth
+     (a neutral surface is light enough that it reads even at depth 1); a lighter
+     warm blanket tint in dark, set in depth.css. Unlike --color-element-strong
+     (whose dark rendition goes darker, for a legible caret) this stays a soft
+     texture in both modes. */
+  --color-element-pattern: var(--color-brown-500);
+
   /* The flashcard surface — a fixed exception, not depth-derived. */
   --color-card: var(--color-white);
 

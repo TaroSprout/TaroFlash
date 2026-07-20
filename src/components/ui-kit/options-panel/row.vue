@@ -55,7 +55,7 @@ function onSelect() {
       interactive &&
         'data-[active=true]:bg-element [&[data-palette][data-active=true]]:bg-(--color-accent)'
     ]"
-    :bgx_color="interactive ? 'var(--color-element)' : undefined"
+    :bgx_color="interactive ? 'var(--color-element-pattern)' : undefined"
     @tap="onSelect"
   >
     <slot name="leading" :entry="entry">

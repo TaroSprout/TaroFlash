@@ -38,7 +38,7 @@ function onTap(value: T) {
       type="button"
       data-testid="ui-option-group__option"
       :data-active="option.value === active"
-      bgx_color="var(--color-brown-500)"
+      bgx_color="var(--color-element-pattern)"
       :class="[
         'cursor-pointer text-ink-muted data-[active=false]:hover:bg-element-strong data-[active=true]:bg-(--color-accent) data-[active=true]:text-(--color-on-accent)',
         size === 'base' ? 'py-2 px-4 text-base rounded-3' : 'py-1.5 px-3.5 text-sm rounded-2',
