@@ -48,13 +48,21 @@ function block(prefixes: string[], palette: string, rendition: PaletteRendition)
     .flatMap((prefix) => paletteNames(palette).map((name) => `${prefix}[data-palette='${name}']`))
     .join(',\n')
 
-  return [
+  // --color-accent-pattern is emitted ONLY when a palette pins its own bgx tint;
+  // otherwise it falls through to the blanket defaults (brown-100 light in
+  // main.css @theme, stone-700 dark in depth.css), exactly like --color-accent.
+  const lines = [
     `${selector} {`,
     `  --color-accent: var(--color-${rendition.accent});`,
     `  --color-accent-muted: var(--color-${rendition.accentMuted});`,
-    `  --color-on-accent: var(--color-${rendition.onAccent});`,
-    `}`
-  ].join('\n')
+    `  --color-on-accent: var(--color-${rendition.onAccent});`
+  ]
+  if (rendition.pattern) {
+    lines.push(`  --color-accent-pattern: var(--color-${rendition.pattern});`)
+  }
+  lines.push(`}`)
+
+  return lines.join('\n')
 }
 
 const blocks = Object.entries(PALETTES).flatMap(([name, definition]) => [

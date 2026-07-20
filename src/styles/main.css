@@ -123,6 +123,10 @@
   --color-accent: var(--color-blue-500);
   --color-accent-muted: var(--color-blue-400);
   --color-on-accent: var(--color-brown-100);
+  /* bgx texture on an accent surface — a soft sheen (see PaletteRendition.pattern).
+     This is the light blanket default (brown-100); dark blanket is stone-700 in
+     depth.css; a palette overrides either via palettes.gen.css. */
+  --color-accent-pattern: var(--color-brown-100);
 
   --radius-0_5: --spacing(0.5); /* 2px */
   --radius-1: --spacing(1); /* 4px */

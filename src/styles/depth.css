@@ -73,6 +73,10 @@
      data-palette; this is only the fallback. */
   --color-accent: var(--color-blue-650);
   --color-accent-muted: var(--color-blue-500);
+  /* Blanket dark bgx-texture tint for accent surfaces; per-palette dark
+     renditions override via palettes.gen.css. Light default is brown-100
+     (main.css @theme). */
+  --color-accent-pattern: var(--color-brown-300);
 
   /* Mid-lift structural panels (sidebar, raised cards) lift off the grey
      surfaces in the STONE family, like any raised element — so in dark they

@@ -161,12 +161,12 @@ function onClick(e: MouseEvent) {
         hidden: !loading,
         'group-hover/btn:block group-data-[active=true]/btn:block':
           !loading && !disabled && fancyHover && variant !== 'ghost',
-        'bgx-color-[var(--color-on-accent)]': variant === 'solid',
+        // solid + ghost sweep the default accent sheen (--color-accent-pattern);
+        // inverted is a light button, so its shimmer is the accent colour itself.
         'bgx-color-[var(--color-accent)]': inverted,
         // Ghost has no surface, so only the coarse quiet tap sweeps it (the
         // accent fill is added to the button root, behind the content).
-        'group-data-[active=true]/btn:block bgx-color-[var(--color-on-accent)]':
-          !loading && !disabled && variant === 'ghost'
+        'group-data-[active=true]/btn:block': !loading && !disabled && variant === 'ghost'
       }"
     >
       <ui-icon v-if="loading" src="loading-dots" class="h-12 w-12 text-(--btn-text-color)" />

@@ -70,6 +70,14 @@ type PaletteRendition = {
   accentMuted: ColorToken
   /** Text/icon colour that sits legibly on `accent`. */
   onAccent: ColorToken
+  /**
+   * bgx texture colour for this palette's accent surface (covers, accent
+   * buttons) — a SOFT sheen, not a legible foreground, so it is NOT `onAccent`
+   * (brown-700 on yellow reads far too heavy). Defaults to brown-100 for every
+   * palette; enshrined per-rendition so a palette can pin its own tint later (or
+   * a user-configured one). Omit to take the brown-100 default.
+   */
+  pattern?: ColorToken
 }
 
 /** One palette across both renditions. */
