@@ -15,6 +15,7 @@ type UiButtonGroupProps = {
   sfx?: SfxOptions
   active_value?: ButtonGroupOption['value']
   icon_only?: boolean
+  neutral?: boolean
 }
 
 const {
@@ -22,7 +23,8 @@ const {
   size = 'xl',
   sfx = {},
   active_value,
-  icon_only = false
+  icon_only = false,
+  neutral = false
 } = defineProps<UiButtonGroupProps>()
 
 const emit = defineEmits<{ (e: 'press', value: string | number): void }>()
@@ -60,6 +62,7 @@ function styleFor(index: number) {
       v-for="(option, i) in options"
       :key="option.value"
       :size="size"
+      :neutral="neutral"
       :icon-left="option.icon"
       :icon-only="icon_only"
       :sfx="sfx"

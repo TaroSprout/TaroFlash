@@ -46,6 +46,7 @@ const success_options = computed<ButtonGroupOption[]>(() => [
     <ui-button-group
       data-testid="rating-buttons__success-group"
       class="flex-1"
+      neutral
       :options="success_options"
       :icon_only="is_mobile"
       :active_value="primed_grade ?? undefined"
