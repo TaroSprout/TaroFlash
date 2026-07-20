@@ -19,12 +19,32 @@ vi.mock('gsap', () => ({
   }
 }))
 
+// @vue/test-utils auto-stubs <transition> by default, which never invokes
+// @enter/@leave — spy on flip.ts directly so the delegation can be asserted,
+// and resolve onComplete asynchronously (like the real GSAP animation) since
+// calling it synchronously races Vue's own transition book-keeping and throws.
+const { flipEnterMock, flipLeaveMock } = vi.hoisted(() => ({
+  flipEnterMock: vi.fn((_el, _axis, onComplete) => setTimeout(() => onComplete?.(), 0)),
+  flipLeaveMock: vi.fn((_el, _axis, onComplete) => setTimeout(() => onComplete?.(), 0))
+}))
+vi.mock('@/utils/animations/flip', () => ({
+  flipEnter: flipEnterMock,
+  flipLeave: flipLeaveMock
+}))
+
 import DropdownCaret from '@/components/ui-kit/dropdown-button/caret.vue'
 
 function mountCaret(props = {}) {
   return mount(DropdownCaret, {
     props: { open: false, ...props },
     global: { directives: { sfx: {} } }
+  })
+}
+
+function mountCaretRealTransition(props = {}) {
+  return mount(DropdownCaret, {
+    props: { open: false, ...props },
+    global: { directives: { sfx: {} }, stubs: { transition: false } }
   })
 }
 
@@ -133,6 +153,21 @@ describe('DropdownCaret', () => {
       expect(wrapper.emitted('toggle')).toBeUndefined()
     })
 
+    // The click handler lives on the always-present wrapper div, not the
+    // transitioning trigger span — a click landing mid-flip (or in the
+    // out-in gap) hits the wrapper, which would otherwise swallow it.
+    test('clicking the wrapper div (not the trigger span) emits toggle [obligation]', async () => {
+      const wrapper = mountCaret({ open: false })
+      await wrapper.find('[data-testid="dropdown-button__trigger-wrap"]').trigger('click')
+      expect(wrapper.emitted('toggle')).toHaveLength(1)
+    })
+
+    test('clicking the wrapper div does not emit toggle when disabled [obligation]', async () => {
+      const wrapper = mountCaret({ open: false, disabled: true })
+      await wrapper.find('[data-testid="dropdown-button__trigger-wrap"]').trigger('click')
+      expect(wrapper.emitted('toggle')).toBeUndefined()
+    })
+
     test('Enter keydown on the trigger span does not emit toggle when disabled [obligation]', async () => {
       const wrapper = mountCaret({ open: false, disabled: true })
       await wrapper.find('[data-testid="dropdown-button__trigger"]').trigger('keydown.enter')
@@ -163,16 +198,41 @@ describe('DropdownCaret', () => {
       ).toBe('false')
     })
 
-    // Toggling open exercises the <transition> leave (onLeave → flipLeave) and
-    // enter (onEnter → flipEnter) hooks. The GSAP mock synchronously fires
-    // onComplete so the out-in transition resolves immediately.
-    test('toggling open updates data-active and runs transition hooks', async () => {
+    test('toggling open updates data-active', async () => {
       const wrapper = mountCaret({ open: false })
       await wrapper.setProps({ open: true })
       expect(
         wrapper.find('[data-testid="dropdown-button__trigger"]').attributes('data-active')
       ).toBe('true')
       wrapper.unmount()
+    })
+  })
+
+  // ── transition hooks [obligation] ────────────────────────────────────────
+  // Toggling open swaps the trigger span's key, so the wrapping <transition>
+  // runs a real leave (old span, onLeave → flipLeave) + enter (new span,
+  // onEnter → flipEnter) — @vue/test-utils stubs <transition> by default, so
+  // these are only exercised with `stubs: { transition: false }`.
+
+  describe('transition hooks [obligation]', () => {
+    test('toggling open delegates the leave to flipLeave on the x axis [obligation]', async () => {
+      const wrapper = mountCaretRealTransition({ open: false })
+      flipLeaveMock.mockClear()
+
+      await wrapper.setProps({ open: true })
+      await new Promise((resolve) => setTimeout(resolve, 0))
+
+      expect(flipLeaveMock).toHaveBeenCalledWith(expect.anything(), 'x', expect.any(Function))
+    })
+
+    test('toggling open delegates the enter to flipEnter on the x axis [obligation]', async () => {
+      const wrapper = mountCaretRealTransition({ open: false })
+      flipEnterMock.mockClear()
+
+      await wrapper.setProps({ open: true })
+      await new Promise((resolve) => setTimeout(resolve, 0))
+
+      expect(flipEnterMock).toHaveBeenCalledWith(expect.anything(), 'x', expect.any(Function))
     })
   })
 })

@@ -1,11 +1,15 @@
 import { computed, ref, type ComputedRef, type InjectionKey, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useDeletePresetMutation, useUpsertPresetMutation } from '@/api/review-pacing'
+import {
+  useDeletePresetMutation,
+  useSaveDeckPacingMutation,
+  useUpsertPresetMutation
+} from '@/api/review-pacing'
 import { useMemberDecksQuery } from '@/api/decks'
 import { useAlert } from '@/composables/alert'
 import { usePrompt } from '@/composables/prompt'
 import { useNoticeStore } from '@/stores/notice-store'
-import type { DeckDraft } from '@/composables/deck/editor'
+import type { DeckEditor } from '@/composables/deck/editor'
 import type { PacingFields } from './use-pacing-fields'
 
 // A wrapper rather than `T | undefined` because delete resolves to void — a bare
@@ -33,17 +37,17 @@ export const presetActionsKey: InjectionKey<PresetActions> = Symbol('preset-acti
  * + reset-all). Push is global: it rewrites the preset every following deck reads
  * from, so it's all-or-nothing and confirmed, never per-field.
  *
- * Preset writes hit the server immediately; the deck's own link and overrides are
- * staged on the draft, so the deck half lands on Save like every other edit here.
+ * Preset writes hit the server immediately, so any deck-side bookkeeping they
+ * imply is flushed with them — through `persistPacing`, which writes only the
+ * pacing sidecar. Everything else on the draft still lands on Save as usual.
  *
  * @example
- * provide(presetActionsKey, usePresetActions(pacing, draft, deck))
+ * provide(presetActionsKey, usePresetActions(pacing, editor))
  */
-export function usePresetActions(
-  pacing: PacingFields,
-  draft: DeckDraft,
-  deck: Deck
-): PresetActions {
+export function usePresetActions(pacing: PacingFields, editor: DeckEditor): PresetActions {
+  const { draft, rebase } = editor
+  const deck = editor.deck!
+
   const { t } = useI18n()
   const alert = useAlert()
   const prompt = usePrompt()
@@ -51,6 +55,7 @@ export function usePresetActions(
 
   const upsert_mutation = useUpsertPresetMutation()
   const delete_mutation = useDeletePresetMutation()
+  const save_pacing_mutation = useSaveDeckPacingMutation()
   const decks_query = useMemberDecksQuery()
 
   const busy = ref(false)
@@ -90,7 +95,11 @@ export function usePresetActions(
     // produced it are now pure noise — drop them and follow it cleanly.
     draft.review_pacing_preset_id = created.data.id
     pacing.resetAllOverrides()
-    notice.success(t('toast.success.preset-created'), { variant: 'panel' })
+
+    const linked = await persistPacing('fork-failed')
+    if (!linked.ok) return
+
+    notice.success(t('toast.success.preset-created'))
   }
 
   /** Promotes the deck's overrides into the followed preset — hits every deck on it. */
@@ -119,9 +128,15 @@ export function usePresetActions(
     if (!saved.ok) return
 
     // Without this the deck keeps overrides identical to the preset it just
-    // wrote — divergence badges lit while nothing actually differs.
+    // wrote — divergence badges lit while nothing actually differs. The push
+    // itself already hit the server, so the clear is persisted alongside it
+    // rather than staged: a refresh before Save would otherwise resurrect the
+    // very overrides the user just promoted.
     pacing.resetAllOverrides()
-    notice.success(t('toast.success.preset-updated'), { variant: 'panel' })
+    const cleared = await persistPacing('push-failed')
+    if (!cleared.ok) return
+
+    notice.success(t('toast.success.preset-updated'))
   }
 
   async function onRename() {
@@ -142,7 +157,7 @@ export function usePresetActions(
     )
     if (!saved.ok) return
 
-    notice.success(t('toast.success.preset-renamed'), { variant: 'panel' })
+    notice.success(t('toast.success.preset-renamed'))
   }
 
   async function onDelete() {
@@ -165,7 +180,27 @@ export function usePresetActions(
     // The FK is ON DELETE SET NULL, so the server already dropped the link —
     // mirror that on the draft or Save would write the dead id straight back.
     draft.review_pacing_preset_id = null
-    notice.success(t('toast.success.preset-deleted'), { variant: 'panel' })
+
+    const unlinked = await persistPacing('delete-failed')
+    if (!unlinked.ok) return
+
+    notice.success(t('toast.success.preset-deleted'))
+  }
+
+  /**
+   * Flushes the draft's pacing slice — preset link + override bag — on its own,
+   * then rebases just those keys so the modal doesn't report them as unsaved.
+   * The rest of the draft stays staged and dirty, landing on Save as usual.
+   */
+  function persistPacing(error_key: string) {
+    return runWrite(async () => {
+      await save_pacing_mutation.mutateAsync({
+        deck_id: deck.id,
+        review_pacing_preset_id: draft.review_pacing_preset_id,
+        overrides: { ...draft.pacing_overrides }
+      })
+      rebase(['review_pacing_preset_id', 'pacing_overrides'])
+    }, error_key)
   }
 
   /** Runs a preset write under the shared busy flag, surfacing failures as a notice. */
@@ -174,7 +209,7 @@ export function usePresetActions(
     try {
       return { ok: true, data: await write() }
     } catch {
-      notice.error(t(`toast.error.preset-${error_key}`), { variant: 'panel' })
+      notice.error(t(`toast.error.preset-${error_key}`))
       return { ok: false }
     } finally {
       busy.value = false

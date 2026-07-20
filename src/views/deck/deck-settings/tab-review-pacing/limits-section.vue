@@ -4,12 +4,10 @@ import { useI18n } from 'vue-i18n'
 import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import FieldRow from './field-row.vue'
-import { deckEditorKey } from '@/composables/deck/editor'
 import { DAILY_LIMIT_BOUNDS } from '@/utils/deck/defaults'
 import { pacingFieldsKey } from './use-pacing-fields'
 
 const { t } = useI18n()
-const { deck } = inject(deckEditorKey)!
 const {
   fields: { max_reviews_per_day, max_new_per_day }
 } = inject(pacingFieldsKey)!
@@ -32,9 +30,7 @@ const {
           data-testid="tab-review-pacing__max-reviews-spinbox"
           v-model:value="max_reviews_per_day.value.value"
           :min="DAILY_LIMIT_BOUNDS.min"
-          :max="deck?.card_count"
           :step="DAILY_LIMIT_BOUNDS.step"
-          wrap
         />
       </field-row>
 
@@ -48,9 +44,7 @@ const {
           data-testid="tab-review-pacing__max-new-spinbox"
           v-model:value="max_new_per_day.value.value"
           :min="DAILY_LIMIT_BOUNDS.min"
-          :max="deck?.card_count"
           :step="DAILY_LIMIT_BOUNDS.step"
-          wrap
         />
       </field-row>
     </div>

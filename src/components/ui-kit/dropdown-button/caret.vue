@@ -64,6 +64,7 @@ function onLeave(el: Element, done: () => void) {
       'flex h-full p-(--btn-trigger-padding) pointer-coarse:p-0'
     ]"
     data-testid="dropdown-button__trigger-wrap"
+    @click.stop="!disabled && emit('toggle')"
   >
     <transition mode="out-in" @enter="onEnter" @leave="onLeave">
       <span
@@ -84,7 +85,6 @@ function onLeave(el: Element, done: () => void) {
         ]"
         data-testid="dropdown-button__trigger"
         v-sfx="{ hover: disabled ? undefined : TYPE_SFX }"
-        @click.stop="!disabled && emit('toggle')"
         @keydown.enter.space.stop.prevent="!disabled && emit('toggle')"
       >
         <ui-icon

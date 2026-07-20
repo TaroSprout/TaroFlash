@@ -72,11 +72,11 @@ describe('LimitsSection — rendering', () => {
     expect(spinbox.attributes('data-value')).toBe(String(max_reviews_per_day.value.value))
   })
 
-  test('caps both spinboxes at deck.card_count', () => {
+  test('leaves both spinboxes unbounded above, so a limit may exceed deck.card_count', () => {
     const { wrapper } = makeWrapper({ deck: { card_count: 42 } })
     const spinboxes = wrapper.findAllComponents(SpinboxStub)
-    expect(spinboxes[0].props('max')).toBe(42)
-    expect(spinboxes[1].props('max')).toBe(42)
+    expect(spinboxes[0].props('max')).toBeUndefined()
+    expect(spinboxes[1].props('max')).toBeUndefined()
   })
 })
 

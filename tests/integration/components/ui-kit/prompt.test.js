@@ -116,6 +116,60 @@ describe('UiPrompt — confirm [obligation]', () => {
   })
 })
 
+// ── sound effects [obligation] ──────────────────────────────────────────────────
+
+describe('UiPrompt — sound effects', () => {
+  test('confirm plays confirmAudio when provided', async () => {
+    const { wrapper } = makeWrapper({ confirmAudio: 'trash_crumple_short' })
+    await input(wrapper).setValue('My Preset')
+
+    await confirmButton(wrapper).trigger('click')
+
+    expect(mockEmitSfx).toHaveBeenCalledWith('trash_crumple_short')
+  })
+
+  test('confirm plays no sound when confirmAudio is omitted', async () => {
+    const { wrapper } = makeWrapper()
+    await input(wrapper).setValue('My Preset')
+
+    await confirmButton(wrapper).trigger('click')
+
+    expect(mockEmitSfx).not.toHaveBeenCalled()
+  })
+
+  test('cancel plays cancelAudio when provided', async () => {
+    const { wrapper } = makeWrapper({ cancelAudio: 'digi_powerdown' })
+
+    await cancelButton(wrapper).trigger('click')
+
+    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+  })
+
+  test('cancel plays no sound when cancelAudio is omitted', async () => {
+    const { wrapper } = makeWrapper()
+
+    await cancelButton(wrapper).trigger('click')
+
+    expect(mockEmitSfx).not.toHaveBeenCalled()
+  })
+})
+
+// ── message ──────────────────────────────────────────────────────────────────
+
+describe('UiPrompt — message', () => {
+  test('renders the message paragraph when provided', () => {
+    const { wrapper } = makeWrapper({ message: 'This forks the deck onto a new preset.' })
+    expect(wrapper.find('[data-testid="ui-kit-prompt__body"] p').text()).toBe(
+      'This forks the deck onto a new preset.'
+    )
+  })
+
+  test('renders no message paragraph when omitted', () => {
+    const { wrapper } = makeWrapper()
+    expect(wrapper.find('[data-testid="ui-kit-prompt__body"] p').exists()).toBe(false)
+  })
+})
+
 // ── cancel ────────────────────────────────────────────────────────────────────
 
 describe('UiPrompt — cancel', () => {

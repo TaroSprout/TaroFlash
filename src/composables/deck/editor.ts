@@ -134,6 +134,7 @@ export function useDeckEditor(deck?: Deck) {
     deleteDeck,
     resetReviews,
     resetChanges,
+    rebase,
     setActiveSide
   }
 }

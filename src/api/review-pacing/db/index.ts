@@ -65,6 +65,29 @@ export async function updatePreset({
   return data as ReviewPacingPreset
 }
 
+/** A deck's pacing sidecar row — which preset it follows, and what it pins locally. */
+export type DeckPacing = {
+  deck_id: number
+  review_pacing_preset_id: number | null
+  overrides: PacingOverrides
+}
+
+/**
+ * Writes just a deck's pacing sidecar. Narrower than `save_deck`, which rewrites
+ * every editable deck column; this lets a preset action persist the deck half of
+ * its own work without flushing the rest of an open draft.
+ */
+export async function saveDeckPacing(pacing: DeckPacing): Promise<void> {
+  const { error } = await supabase
+    .from('deck_review_pacing')
+    .upsert(pacing, { onConflict: 'deck_id' })
+
+  if (error) {
+    logger.error(error.message)
+    throw error
+  }
+}
+
 export async function deletePreset(id: number): Promise<void> {
   const { error } = await supabase.from('review_pacing_presets').delete().eq('id', id)
 

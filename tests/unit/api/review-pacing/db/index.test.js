@@ -14,7 +14,8 @@ const mocks = vi.hoisted(() => ({
   updateSelectMock: vi.fn(),
   updateSingleMock: vi.fn(),
   deleteMock: vi.fn(),
-  deleteEqMock: vi.fn()
+  deleteEqMock: vi.fn(),
+  upsertMock: vi.fn()
 }))
 
 vi.mock('@/supabase-client', () => ({
@@ -23,14 +24,21 @@ vi.mock('@/supabase-client', () => ({
       select: mocks.selectMock,
       insert: mocks.insertMock,
       update: mocks.updateMock,
-      delete: mocks.deleteMock
+      delete: mocks.deleteMock,
+      upsert: mocks.upsertMock
     })
   }
 }))
 
 vi.mock('@/utils/logger', () => ({ default: { error: vi.fn() } }))
 
-import { fetchPresets, createPreset, updatePreset, deletePreset } from '@/api/review-pacing/db'
+import {
+  fetchPresets,
+  createPreset,
+  updatePreset,
+  deletePreset,
+  saveDeckPacing
+} from '@/api/review-pacing/db'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -56,6 +64,7 @@ beforeEach(() => {
   mocks.updateSingleMock.mockReset()
   mocks.deleteMock.mockReset()
   mocks.deleteEqMock.mockReset()
+  mocks.upsertMock.mockReset()
 
   mocks.selectMock.mockReturnValue({ order: mocks.orderMock })
   mocks.orderMock.mockReturnValue({ order: mocks.order2Mock })
@@ -154,6 +163,24 @@ describe('updatePreset', () => {
     const err = { message: 'update failed' }
     mocks.updateSingleMock.mockResolvedValueOnce({ data: null, error: err })
     await expect(updatePreset({ id: 1, name: 'Renamed' })).rejects.toBe(err)
+  })
+})
+
+// ── saveDeckPacing ────────────────────────────────────────────────────────────────
+
+describe('saveDeckPacing', () => {
+  const pacing = { deck_id: 42, review_pacing_preset_id: 2, overrides: { desired_retention: 0.8 } }
+
+  test('upserts the pacing row scoped by onConflict: "deck_id" [obligation]', async () => {
+    mocks.upsertMock.mockResolvedValueOnce({ error: null })
+    await saveDeckPacing(pacing)
+    expect(mocks.upsertMock).toHaveBeenCalledWith(pacing, { onConflict: 'deck_id' })
+  })
+
+  test('rethrows the supabase error', async () => {
+    const err = { message: 'upsert failed' }
+    mocks.upsertMock.mockResolvedValueOnce({ error: err })
+    await expect(saveDeckPacing(pacing)).rejects.toBe(err)
   })
 })
 
