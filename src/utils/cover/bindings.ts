@@ -43,7 +43,8 @@ function buildPatternStyle(
 
   return {
     '--bgx-image': `var(--bgx-${pattern})`,
-    '--bgx-fill': 'var(--color-brown-100)',
+    // No --bgx-fill: the pattern-mask utility defaults it to --color-accent-pattern,
+    // which the cover's own data-palette resolves to that palette's texture tint.
     '--bgx-opacity-light': options.patternOpacity ?? token.opacity,
     '--bgx-opacity-dark': options.patternOpacityDark ?? options.patternOpacity ?? token.opacityDark,
     '--bgx-size': options.patternSize ?? token.size
