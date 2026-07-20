@@ -81,7 +81,7 @@
   /* Mid-lift structural panels (sidebar, raised cards) lift off the grey
      surfaces in the STONE family, like any raised element — so in dark they
      match --chrome-float; the two diverge only in light (brown-200 vs brown-50). */
-  --chrome-panel: var(--color-stone-700);
+  --chrome-panel: var(--color-stone-900);
   --chrome-float: var(--color-stone-700);
   --chrome-overlay: var(--color-brown-100);
   --chrome-ink: var(--color-brown-100);
@@ -174,8 +174,8 @@
   --color-on-element: var(--color-brown-100);
   /* Both companions land on stone-900 in dark — a single darker step reads best
      against stone-700, so the light-mode soft/strong split collapses here. */
-  --color-element-strong: var(--color-stone-900);
-  --color-element-soft: var(--color-stone-900);
+  --color-element-strong: var(--color-stone-800);
+  --color-element-soft: var(--color-stone-800);
   /* The pattern goes the OTHER way in dark: a lighter warm tint over the dark
      neutral, so the texture still reads. Blanket across depths (like --color-
      element itself, which holds at stone-700); mirrors --color-accent-pattern. */
@@ -193,14 +193,14 @@
 [data-mode='dark'] [data-depth='1'],
 [data-mode='dark'][data-depth='1'] {
   --color-element: var(--color-stone-700);
-  --color-element-strong: var(--color-stone-900);
+  --color-element-strong: var(--color-stone-800);
 }
 
 /* Fixed media surfaces, never depth-derived: the flashcard (white/stone-700)
  * and the avatar mat (brown-100/stone-700, tuned once for user avatars). */
 :root[data-mode='dark'] {
   --color-card: var(--color-stone-700);
-  --color-mat: var(--color-stone-900);
+  --color-mat: var(--color-stone-800);
 }
 
 /* ─── TIER 2: OVERLAY DEPTH ─────────────────────────────────────────── */
