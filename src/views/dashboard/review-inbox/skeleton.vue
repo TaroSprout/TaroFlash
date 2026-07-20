@@ -27,7 +27,7 @@ const DEFAULT_COVER: DeckCover = {
 
       <div
         data-testid="review-inbox-skeleton__label"
-        class="h-5 w-16 bg-panel rounded-2 animate-pulse"
+        class="h-5 w-16 bg-element rounded-2 animate-pulse"
       ></div>
     </div>
   </div>

@@ -49,7 +49,7 @@ function toggleRevealed() {
       element="button"
       :text="t('deck.settings-modal.review-pacing.advanced-hide-tooltip')"
       data-testid="advanced-reveal__badge"
-      class="absolute -top-3 left-1/2 z-1 -translate-x-1/2 rounded-full bg-surface px-4 py-1 text-base text-ink-muted"
+      class="absolute -top-3 left-1/2 z-1 -translate-x-1/2 rounded-full bg-below px-4 py-1 text-base text-ink-muted"
       :class="!revealed && 'pointer-events-none'"
       @click="toggleRevealed"
     >

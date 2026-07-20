@@ -34,7 +34,7 @@ async function onToggleVote() {
   <div data-testid="feedback-card" class="bg-float rounded-8 flex w-full items-start gap-4 p-6">
     <div
       data-testid="feedback-card__avatar"
-      class="bg-panel rounded-full size-14 p-1 shrink-0 overflow-hidden"
+      class="bg-element rounded-full size-14 p-1 shrink-0 overflow-hidden"
     >
       <avatar-image :avatar="item.member_avatar" class="h-full w-full" />
     </div>
