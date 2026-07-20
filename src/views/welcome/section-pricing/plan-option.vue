@@ -22,7 +22,7 @@ function featureLabel(feature: PlanFeature) {
 <template>
   <div
     data-testid="plan-option"
-    class="w-full h-full mlg:min-w-94 flex flex-col gap-5 rounded-9 p-12 bg-float text-ink"
+    class="w-full h-full mlg:min-w-94 flex flex-col gap-5 rounded-9 p-12 bg-panel text-ink"
   >
     <div data-testid="plan-option__header" class="flex items-center justify-between gap-4">
       <p data-testid="plan-option__name" class="text-3xl">{{ name }}</p>
@@ -42,7 +42,7 @@ function featureLabel(feature: PlanFeature) {
           aria-hidden="true"
           class="flex shrink-0 items-center justify-center size-6 rounded-full"
           :class="
-            feature.ok !== false ? 'bg-ink text-float' : 'border-2 border-dashed border-ink/50'
+            feature.ok !== false ? 'bg-ink text-panel' : 'border-2 border-dashed border-ink/50'
           "
         >
           <ui-icon v-if="feature.ok !== false" src="check" class="size-3" />

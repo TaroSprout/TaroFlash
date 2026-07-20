@@ -39,7 +39,7 @@ provideDepth(1)
   <div
     data-testid="member-card"
     data-depth="1"
-    class="bg-element rounded-8 border-element flex w-89 flex-col overflow-hidden border-8 shadow-[-1px_-1px_0_0_var(--color-brown-100)] dark:shadow-[-1px_-1px_0_0_var(--color-grey-900)]"
+    class="bg-panel rounded-8 border-panel flex w-89 flex-col overflow-hidden border-8 shadow-[-1px_-1px_0_0_var(--color-brown-100)] dark:shadow-[-1px_-1px_0_0_var(--color-grey-900)]"
   >
     <div data-testid="member-card__header" class="flex items-center justify-center px-9 pt-4 pb-1">
       <h1 class="text-ink text-5xl">
@@ -54,7 +54,7 @@ provideDepth(1)
     >
       <div data-testid="member-card__avatar" class="flex h-full flex-col justify-center">
         <div class="relative">
-          <div class="bg-mat rounded-19 border-element h-50 w-50 overflow-hidden border-10">
+          <div class="bg-mat rounded-19 border-panel h-50 w-50 overflow-hidden border-10">
             <avatar-image :avatar="cover?.avatar" class="h-full w-full" />
           </div>
 
@@ -73,7 +73,7 @@ provideDepth(1)
         </div>
       </div>
 
-      <div data-testid="member-card__comment" class="bg-element rounded-4 w-full px-2 py-3">
+      <div data-testid="member-card__comment" class="bg-panel rounded-4 w-full px-2 py-3">
         <p class="text-ink flex h-[3lh] items-center justify-center text-center">
           <q class="min-w-0 wrap-break-word">{{
             cardComment || t('member-card.description-fallback')

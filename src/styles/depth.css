@@ -82,7 +82,7 @@
      surfaces in the STONE family, like any raised element — so in dark they
      match --chrome-float; the two diverge only in light (brown-200 vs brown-50). */
   --chrome-panel: var(--color-stone-900);
-  --chrome-float: var(--color-stone-700);
+  --chrome-float: var(--color-stone-800);
   --chrome-overlay: var(--color-brown-100);
   --chrome-ink: var(--color-brown-100);
   --chrome-ink-muted: var(--color-brown-300);
@@ -200,7 +200,7 @@
  * and the avatar mat (brown-100/stone-700, tuned once for user avatars). */
 :root[data-mode='dark'] {
   --color-card: var(--color-stone-700);
-  --color-mat: var(--color-stone-800);
+  --color-mat: var(--color-stone-900);
 }
 
 /* ─── TIER 2: OVERLAY DEPTH ─────────────────────────────────────────── */
