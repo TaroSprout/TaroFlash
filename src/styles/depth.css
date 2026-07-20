@@ -74,7 +74,10 @@
   --color-accent: var(--color-blue-650);
   --color-accent-muted: var(--color-blue-500);
 
-  --chrome-panel: var(--color-grey-850);
+  /* Mid-lift structural panels (sidebar, raised cards) lift off the grey
+     surfaces in the STONE family, like any raised element — so in dark they
+     match --chrome-float; the two diverge only in light (brown-200 vs brown-50). */
+  --chrome-panel: var(--color-stone-700);
   --chrome-float: var(--color-stone-700);
   --chrome-overlay: var(--color-brown-100);
   --chrome-ink: var(--color-brown-100);
@@ -130,8 +133,8 @@
 
 /* Fixed per mode, not derived from depth.
  *
- *   --color-panel    tracks, tab bars, skeletons, inset sections
- *   --color-float    elements that straddle two surfaces
+ *   --color-panel    mid-lift structural panels — sidebar, raised cards
+ *   --color-float    high-lift floating surfaces — dialogs, toasts, menus
  *   --color-overlay  tooltips, toasts — context-independent
  *   --color-ink / --color-ink-muted   body and secondary text
  */
