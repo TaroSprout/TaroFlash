@@ -170,12 +170,12 @@
  * tone caret against its button): brown-500 on depth 0, brown-300 on depth 1,
  * stone-900 across dark. Base (depth 0 light) lives in main.css @theme. */
 :root[data-mode='dark'] {
-  --color-element: var(--color-stone-700);
+  --color-element: var(--color-stone-800);
   --color-on-element: var(--color-brown-100);
   /* Both companions land on stone-900 in dark — a single darker step reads best
      against stone-700, so the light-mode soft/strong split collapses here. */
-  --color-element-strong: var(--color-stone-800);
-  --color-element-soft: var(--color-stone-800);
+  --color-element-strong: var(--color-stone-900);
+  --color-element-soft: var(--color-stone-700);
   /* The pattern goes the OTHER way in dark: a lighter warm tint over the dark
      neutral, so the texture still reads. Blanket across depths (like --color-
      element itself, which holds at stone-700); mirrors --color-accent-pattern. */
@@ -192,7 +192,7 @@
 }
 [data-mode='dark'] [data-depth='1'],
 [data-mode='dark'][data-depth='1'] {
-  --color-element: var(--color-stone-700);
+  --color-element: var(--color-stone-900);
   --color-element-strong: var(--color-stone-800);
 }
 
