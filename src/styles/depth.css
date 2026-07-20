@@ -152,23 +152,33 @@
  * fill — so it is depth-relative:
  *
  *   on a pale page (depth 0)     → brown-300, a darker pop
- *   on a raised surface (depth 1) → brown-50, a lighter pop
+ *   on a raised surface (depth 1) → brown-100, a lighter pop
  *
  * The direction flips because a pale page has no room to go lighter, while a
  * mid-tone modal reads best with a lighter element. In dark the surfaces are all
  * dark enough that stone-700 pops light on every one, so it holds across depths.
- * Light value at depth 0 is brown-300 (set in main.css @theme). */
+ * Light value at depth 0 is brown-300 (set in main.css @theme).
+ *
+ * --color-element-strong is the darker companion one ramp step down (the two-
+ * tone caret against its button): brown-500 on depth 0, brown-300 on depth 1,
+ * stone-900 across dark. Base (depth 0 light) lives in main.css @theme. */
 :root[data-mode='dark'] {
   --color-element: var(--color-stone-700);
   --color-on-element: var(--color-brown-100);
+  /* Both companions land on stone-900 in dark — a single darker step reads best
+     against stone-700, so the light-mode soft/strong split collapses here. */
+  --color-element-strong: var(--color-stone-900);
+  --color-element-soft: var(--color-stone-900);
 }
 
 [data-depth='1'] {
-  --color-element: var(--color-brown-50);
+  --color-element: var(--color-brown-100);
+  --color-element-strong: var(--color-brown-300);
 }
 [data-mode='dark'] [data-depth='1'],
 [data-mode='dark'][data-depth='1'] {
   --color-element: var(--color-stone-700);
+  --color-element-strong: var(--color-stone-900);
 }
 
 /* The flashcard — a fixed exception, white/stone-700, never depth-derived. */

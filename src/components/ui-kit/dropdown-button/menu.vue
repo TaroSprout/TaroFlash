@@ -2,7 +2,6 @@
 import { ref } from 'vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { type ButtonProps } from '../button.vue'
-import { useNestedDepth } from '@/composables/ui/depth'
 import { useStagedTap } from '@/composables/ui/staged-tap'
 import { TYPE_SFX } from '@/sfx/config'
 import type { DropdownOption } from './types'
@@ -10,9 +9,14 @@ import type { DropdownOption } from './types'
 type DropdownMenuProps = {
   options?: DropdownOption[]
   size: NonNullable<ButtonProps['size']>
+  // Depth of the trigger this menu belongs to. The menu is teleported and can't
+  // inherit the trigger's depth context, so it's passed explicitly — the menu
+  // then paints --color-element at the SAME value as its neutral button, and its
+  // seam (outline-surface) reads the surface the menu floats over.
+  depth?: number
 }
 
-const { options = [], size } = defineProps<DropdownMenuProps>()
+const { options = [], size, depth } = defineProps<DropdownMenuProps>()
 
 const emit = defineEmits<{
   (e: 'select', option: DropdownOption): void
@@ -20,11 +24,6 @@ const emit = defineEmits<{
 
 // Raw body — replaces the option list while keeping the panel chrome.
 defineSlots<{ default(): unknown }>()
-
-// The panel floats one step above whatever it opened from, and its seam
-// (outline-below) is that context's own surface — so a menu inside a modal
-// reads against the modal rather than a hardcoded neutral.
-const depth = useNestedDepth()
 
 const { tap } = useStagedTap()
 
@@ -44,7 +43,7 @@ function onOptionTap(option: DropdownOption, e: MouseEvent) {
 
 <template>
   <div
-    class="flex flex-col overflow-hidden rounded-(--btn-border-radius) bg-surface p-1.5 text-(length:--btn-font-size) leading-(--btn-font-size--line-height) text-ink outline-1 outline-below"
+    class="flex flex-col overflow-hidden rounded-(--btn-border-radius) bg-element p-1.5 text-(length:--btn-font-size) leading-(--btn-font-size--line-height) text-on-element outline-1 outline-surface"
     :class="`ui-kit-btn-tokens--${size}`"
     :data-depth="depth"
     data-testid="dropdown-button__menu"
@@ -61,7 +60,7 @@ function onOptionTap(option: DropdownOption, e: MouseEvent) {
         <button
           type="button"
           :disabled="option.disabled"
-          class="group/option relative flex w-full cursor-pointer items-center gap-(--btn-gap) overflow-hidden rounded-[calc(var(--btn-border-radius)-6px)] py-(--btn-padding-y) px-[calc(var(--btn-padding-x)-6px)] text-start whitespace-nowrap data-[active=true]:bg-element data-[active=true]:text-on-element disabled:cursor-default disabled:opacity-40"
+          class="group/option relative flex w-full cursor-pointer items-center gap-(--btn-gap) overflow-hidden rounded-[calc(var(--btn-border-radius)-6px)] py-(--btn-padding-y) px-[calc(var(--btn-padding-x)-6px)] text-start whitespace-nowrap data-[active=true]:bg-element-strong data-[active=true]:text-on-element disabled:cursor-default disabled:opacity-40"
           :data-active="option.selected || null"
           :data-tapping="tapping_value === option.value || null"
           data-testid="dropdown-button__option"

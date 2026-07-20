@@ -15,7 +15,7 @@ import UiButton, { type ButtonProps } from '../button.vue'
 import UiPopover from '@/components/ui-kit/popover.vue'
 import DropdownCaret from './caret.vue'
 import DropdownMenu from './menu.vue'
-import { nextDepth, useAmbientDepth } from '@/composables/ui/depth'
+import { useAmbientDepth } from '@/composables/ui/depth'
 import { emitSfx } from '@/sfx/bus'
 import type { DropdownOption } from './types'
 
@@ -125,18 +125,14 @@ const button_attrs = computed(() =>
 // region open the popover.
 const show_trigger = computed(() => !hideTrigger || !openOnTrigger)
 
-// While the menu is up, the trigger ADOPTS the menu's depth — same data-depth,
-// so the transparent variants (ghost, outline) fill with the very same surface
-// the menu paints and the two read as one continuous plane. This used to be
-// stated in colours (a --theme-primary fill), which said "depth" in the wrong
-// vocabulary and broke the moment either side sat on a different surface.
-const trigger_depth = computed(() =>
-  popover_open.value ? nextDepth(ambient_depth.value) : undefined
-)
-
+// The menu paints --color-element at the trigger's own ambient depth, so while
+// open the TRANSPARENT variants (ghost, outline) fill with that same element and
+// the trigger + menu read as one continuous surface. A SOLID button already fills
+// element, so it needs nothing. Neither shifts depth — the menu matches the
+// button's depth, not a stepped one.
 const trigger_style = computed(() => {
   if (variant === 'solid' || !popover_open.value) return undefined
-  return { '--btn-bg-color': 'var(--color-surface)', '--btn-text-color': 'var(--color-ink)' }
+  return { '--btn-bg-color': 'var(--color-element)', '--btn-text-color': 'var(--color-on-element)' }
 })
 
 function filter_attrs(keep: (key: string) => boolean) {
@@ -222,7 +218,6 @@ function onMenuSelect(option: DropdownOption) {
         :variant="variant"
         :neutral="is_neutral"
         :data-palette="identity_palette"
-        :data-depth="trigger_depth"
         :data-active="popover_open"
         :disabled="disabled"
         :style="trigger_style"
@@ -244,7 +239,6 @@ function onMenuSelect(option: DropdownOption) {
         :play-on-tap="playOnTap"
         :tap-animate="tapAnimate"
         :disabled="disabled || primaryDisabled"
-        :data-depth="trigger_depth"
         :style="trigger_style"
         data-testid="dropdown-button__button"
         @press="onButtonClick"
@@ -264,7 +258,7 @@ function onMenuSelect(option: DropdownOption) {
       </ui-button>
     </template>
 
-    <dropdown-menu :options="options" :size="size" @select="onMenuSelect">
+    <dropdown-menu :options="options" :size="size" :depth="ambient_depth" @select="onMenuSelect">
       <template v-if="$slots.panel" #default>
         <slot name="panel" :close="close" />
       </template>

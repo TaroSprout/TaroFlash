@@ -41,10 +41,12 @@ const TRIGGER_PADDING: Record<NonNullable<ButtonProps['size']>, string> = {
 }
 const trigger_padding = computed(() => TRIGGER_PADDING[size])
 
-// The caret is chrome, not identity: it steps one surface above the button it
-// sits in. Painting it from --theme-secondary only ever stepped LIGHTER, so it
-// vanished on a light accent. It owns no descendants, so it stamps data-depth
-// without providing it.
+// A NEUTRAL caret is the two-tone companion of its button: it fills
+// --color-element-soft (a subtle adjacent neutral, brown-200 in light) at the
+// button's own ambient depth, so the pair reads as button + companion caret with
+// no ring. An IDENTITY caret has no such companion role, so it keeps the stepped
+// surface + accent pixel-seam: it sits one surface above (data-depth) and rings
+// itself in --color-accent, inherited from the identity button it sits in.
 const depth = computed(() => nextDepth(ambient_depth.value))
 
 function onEnter(el: Element, done: () => void) {
@@ -75,13 +77,13 @@ function onLeave(el: Element, done: () => void) {
         :aria-expanded="open"
         :aria-disabled="disabled || undefined"
         :data-active="open"
-        :data-depth="depth"
-        class="relative z-1 flex aspect-square h-full items-center justify-center rounded-[calc(var(--btn-border-radius)-var(--btn-trigger-padding))] pointer-coarse:rounded-(--btn-border-radius) transition-[scale] duration-120 ease-[ease] bg-surface text-ink"
+        :data-depth="neutral ? undefined : depth"
+        class="relative z-1 flex aspect-square h-full items-center justify-center rounded-[calc(var(--btn-border-radius)-var(--btn-trigger-padding))] pointer-coarse:rounded-(--btn-border-radius) transition-[scale] duration-120 ease-[ease]"
         :class="[
           disabled ? 'opacity-50' : 'cursor-pointer hover:scale-110',
           neutral
-            ? 'shadow-[inset_0_0_0_1px_var(--color-element)]'
-            : 'shadow-[inset_0_0_0_1px_var(--color-accent)]'
+            ? 'bg-(--color-element-soft) text-(--color-on-element)'
+            : 'bg-surface text-ink shadow-[inset_0_0_0_1px_var(--color-accent)]'
         ]"
         data-testid="dropdown-button__trigger"
         v-sfx="{ hover: disabled ? undefined : TYPE_SFX }"

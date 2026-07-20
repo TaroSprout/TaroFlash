@@ -97,6 +97,18 @@
   --color-element: var(--color-brown-300);
   --color-on-element: var(--color-brown-700);
 
+  /* One ramp step firmer than --color-element — the darker companion in a
+     two-tone neutral control (a menu's selected-row highlight). Depth-relative,
+     tracks --color-element one step down. Overridden in depth.css. */
+  --color-element-strong: var(--color-brown-500);
+
+  /* The lighter companion — a subtle adjacent neutral for two-tone control
+     segmentation (the dropdown caret against its button). Fixed brown-200 in
+     light so it reads as ONE step off the button at every depth (lighter than a
+     depth-0 button, darker than a depth-1 one); stone-900 in dark, set in
+     depth.css. "soft"/"strong" name the LIGHT renditions. */
+  --color-element-soft: var(--color-brown-200);
+
   /* The flashcard surface — a fixed exception, not depth-derived. */
   --color-card: var(--color-white);
 
