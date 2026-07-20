@@ -59,7 +59,7 @@ function onKeydown(e: KeyboardEvent) {
     <div
       data-testid="ui-kit-alert"
       :data-depth="depth"
-      class="rounded-2 shadow-lg flex w-115 max-w-115 flex-col bg-surface"
+      class="rounded-2 shadow-lg flex w-115 max-w-115 flex-col bg-float"
       :class="`ui-kit-alert--${type ?? 'warn'}`"
       v-bind="$attrs"
     >
@@ -170,7 +170,7 @@ function onKeydown(e: KeyboardEvent) {
   height: 100%;
   width: 100%;
 
-  background-color: var(--color-surface);
+  background-color: var(--color-float);
   border-radius: var(--radius-1_5);
 }
 </style>
