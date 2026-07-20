@@ -43,7 +43,7 @@ function buildPatternStyle(
 
   return {
     '--bgx-image': `var(--bgx-${pattern})`,
-    '--bgx-fill': 'var(--color-on-accent)',
+    '--bgx-fill': 'var(--color-brown-100)',
     '--bgx-opacity-light': options.patternOpacity ?? token.opacity,
     '--bgx-opacity-dark': options.patternOpacityDark ?? options.patternOpacity ?? token.opacityDark,
     '--bgx-size': options.patternSize ?? token.size

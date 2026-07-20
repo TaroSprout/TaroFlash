@@ -23,7 +23,7 @@ const bindings = computed(() => coverBindings(cover, { border: false }))
     <div
       v-if="cover?.icon"
       data-testid="card-cover__icon"
-      class="card-cover__icon [&>svg]:w-full [&>svg]:h-full text-(--color-accent-muted)"
+      class="card-cover__icon [&>svg]:w-full [&>svg]:h-full text-yellow-500 dark:text-yellow-700"
       style="width: var(--cover-icon-size); height: var(--cover-icon-size)"
     >
       <ui-icon :src="cover.icon" />
