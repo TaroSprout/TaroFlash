@@ -5,21 +5,21 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 
 type ThemePickerProps = {
   label: string
-  supported_palettes: IdentityName[]
-  palette: IdentityName | undefined
+  supported_palettes: PaletteName[]
+  palette: PaletteName | undefined
 }
 
 const { palette } = defineProps<ThemePickerProps>()
 
 const emit = defineEmits<{
-  (e: 'update:palette', value: IdentityName | undefined): void
+  (e: 'update:palette', value: PaletteName | undefined): void
 }>()
 
-function isSelected(option: IdentityName) {
+function isSelected(option: PaletteName) {
   return option === palette
 }
 
-function onThemeSelect(option: IdentityName) {
+function onThemeSelect(option: PaletteName) {
   if (isSelected(option)) {
     emitSfx('digi_powerdown')
     return

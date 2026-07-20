@@ -85,7 +85,7 @@ type DeckCoverPattern =
   | 'squiggle'
 
 type DeckCover = {
-  palette?: IdentityName
+  palette?: PaletteName
   pattern?: DeckCoverPattern
   icon?: string
 }

@@ -2,7 +2,7 @@ import { COVER_PATTERNS } from './patterns'
 import { BORDER_SIZE_PX } from './tokens'
 
 export type CoverBindingsOptions = {
-  fallbackPalette?: IdentityName
+  fallbackPalette?: PaletteName
   pattern?: boolean
   border?: boolean
   /** Flat opacity override (both modes unless `patternOpacityDark` is set). Falls back to `COVER_PATTERNS[pattern].opacity`. */
@@ -14,7 +14,7 @@ export type CoverBindingsOptions = {
 }
 
 export type CoverBindings = {
-  'data-palette': IdentityName | undefined
+  'data-palette': PaletteName | undefined
   class: string[]
   style: Record<string, string>
 }

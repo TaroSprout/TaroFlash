@@ -1,13 +1,13 @@
 /**
- * Single source of truth for the seven user-assignable identities.
+ * Single source of truth for the seven user-assignable palettes.
  *
- * Each entry resolves BOTH renditions, so a caller passes one identity name
+ * Each entry resolves BOTH renditions, so a caller passes one palette name
  * (`green`) instead of a `theme` + `theme_dark` pair. `satisfies` keeps this in
- * lockstep with the `IdentityName` union — adding a union member without an
+ * lockstep with the `PaletteName` union — adding a union member without an
  * entry here (or dropping a role from a rendition) is a compile error.
  *
  * The palette set mirrors `SUPPORTED_PALETTES` in src/utils/cover/tokens.ts,
- * which is the real identity set.
+ * which is the real palette set.
  *
  * `accent` / `onAccent` were lifted verbatim from each palette's original
  * `primary` / `on-primary` rendition in the retired theme layer.
@@ -24,10 +24,10 @@
  * go and borrowed yellow. The new step matches the 500 -> 400 lightness delta of
  * the other warm families (red, pink).
  *
- * After editing this file run `pnpm gen:identity-css` to regenerate
- * src/styles/identities.gen.css.
+ * After editing this file run `pnpm gen:palette-css` to regenerate
+ * src/styles/palettes.gen.css.
  */
-export const IDENTITIES = {
+export const PALETTES = {
   blue: {
     light: { accent: 'blue-500', accentMuted: 'blue-400', onAccent: 'brown-100' },
     dark: { accent: 'blue-650', accentMuted: 'blue-500', onAccent: 'brown-100' }
@@ -57,18 +57,18 @@ export const IDENTITIES = {
     light: { accent: 'orange-500', accentMuted: 'orange-400', onAccent: 'brown-100' },
     dark: { accent: 'orange-700', accentMuted: 'orange-500', onAccent: 'brown-100' }
   }
-} satisfies Record<IdentityName, IdentityDefinition>
+} satisfies Record<PaletteName, PaletteDefinition>
 
 /**
  * Meaning-first aliases. Call sites that mean "this is destructive" should say
- * `danger`, not `red` — the identity behind a meaning can change without
+ * `danger`, not `red` — the palette behind a meaning can change without
  * touching them.
  */
-export const SEMANTIC_IDENTITIES = {
+export const SEMANTIC_ALIASES = {
   brand: 'blue',
   info: 'blue',
   danger: 'red',
   error: 'red',
   success: 'green',
   warning: 'yellow'
-} satisfies Record<SemanticName, IdentityName>
+} satisfies Record<SemanticName, PaletteName>

@@ -1,19 +1,19 @@
 /* GENERATED FILE — DO NOT EDIT.
  *
- * Source: src/utils/identity/registry.ts
- * Regenerate: pnpm gen:identity-css
+ * Source: src/utils/palette/registry.ts
+ * Regenerate: pnpm gen:palette-css
  *
- * Identity roles owned by `data-palette`. They are disjoint from the neutral
+ * Accent roles owned by `data-palette`. They are disjoint from the neutral
  * roles owned by `data-depth` (src/styles/depth.css), so the two axes compose
  * without precedence rules.
  *
- * Each identity emits two blocks: the light rendition, and a dark rendition
+ * Each palette emits two blocks: the light rendition, and a dark rendition
  * scoped under `data-mode='dark'`. Both the descendant and the self form of the
  * dark selector are listed so the palette resolves whether `data-palette` sits
  * on a child of the moded root or on the root itself.
  *
  * Semantic aliases (`danger`, `info`, ...) join the selector list of the
- * identity they point at, so `data-palette='danger'` is valid markup and stays
+ * palette they point at, so `data-palette='danger'` is valid markup and stays
  * a true alias — repointing it in the registry moves every call site at once.
  */
 

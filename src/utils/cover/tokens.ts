@@ -1,6 +1,6 @@
 // The seven user-assignable cover identities. Each resolves both its light and
-// dark rendition through `data-palette` (see src/utils/identity/registry.ts).
-export const SUPPORTED_PALETTES: IdentityName[] = [
+// dark rendition through `data-palette` (see src/utils/palette/registry.ts).
+export const SUPPORTED_PALETTES: PaletteName[] = [
   'green',
   'blue',
   'purple',

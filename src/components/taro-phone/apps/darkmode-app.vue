@@ -9,7 +9,7 @@ import { emitSfx } from '@/sfx/bus'
 
 type ModeConfig = {
   labelKey: string
-  palette: IdentityName
+  palette: PaletteName
 }
 
 const { t } = useI18n()

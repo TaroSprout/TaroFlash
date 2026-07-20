@@ -12,7 +12,7 @@ export type CardMatch = {
   hi: number
   term: string
   deck_ids: number[]
-  palette?: IdentityName
+  palette?: PaletteName
 }
 
 // Normalized card front → the decks holding it. Built once per index, then

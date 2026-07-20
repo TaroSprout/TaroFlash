@@ -298,7 +298,7 @@ function onClick(e: MouseEvent) {
  *
  * The base variant rules above read the identity role (--color-accent). A plain
  * button resolves it to the default accent; a button carrying `[data-palette]`
- * has already had --color-accent set on ITSELF by identities.gen.css, so the
+ * has already had --color-accent set on ITSELF by palettes.gen.css, so the
  * base rule resolves to THIS button's palette. `data-palette` is a plain HTML
  * attribute — attributes don't inherit — so a plain button nested in a
  * `data-palette="green"` region does NOT pick it up: identity is opt-in,

@@ -11,7 +11,7 @@ import { nextDepth, provideDepth, useAmbientDepth } from '@/composables/ui/depth
 import UiButton from '@/components/ui-kit/button.vue'
 
 type WindowPatternConfig = {
-  palette?: IdentityName
+  palette?: PaletteName
   pattern?: DeckCoverPattern
   pattern_size?: string
   pattern_opacity?: string
