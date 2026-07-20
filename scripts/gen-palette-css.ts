@@ -72,4 +72,5 @@ const blocks = Object.entries(PALETTES).flatMap(([name, definition]) => [
 
 writeFileSync(OUT, `${HEADER}\n${blocks.join('\n\n')}\n`)
 
+// eslint-disable-next-line no-console -- codegen CLI: status line is the intended output
 console.log(`Wrote ${Object.keys(PALETTES).length * 2} blocks to ${OUT}`)

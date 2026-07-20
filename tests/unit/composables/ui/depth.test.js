@@ -1,5 +1,5 @@
 import { describe, test, expect, afterEach } from 'vite-plus/test'
-import { createApp, h, ref } from 'vue'
+import { createApp, h, nextTick, ref } from 'vue'
 import { nextDepth, provideDepth, useAmbientDepth, useNestedDepth } from '@/composables/ui/depth'
 
 // depth.ts leans on provide/inject, which needs a real component tree — a
@@ -73,7 +73,7 @@ describe('useAmbientDepth', () => {
 
     expect(results.child.value).toBe(0)
     source.value = 1
-    await null
+    await nextTick()
     expect(results.child.value).toBe(1)
   })
 
