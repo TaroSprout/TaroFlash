@@ -184,9 +184,11 @@
   --color-element-strong: var(--color-stone-900);
 }
 
-/* The flashcard — a fixed exception, white/stone-700, never depth-derived. */
+/* Fixed media surfaces, never depth-derived: the flashcard (white/stone-700)
+ * and the avatar mat (brown-100/stone-700, tuned once for user avatars). */
 :root[data-mode='dark'] {
   --color-card: var(--color-stone-700);
+  --color-mat: var(--color-stone-900);
 }
 
 /* ─── TIER 2: OVERLAY DEPTH ─────────────────────────────────────────── */

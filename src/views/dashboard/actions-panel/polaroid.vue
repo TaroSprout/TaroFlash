@@ -19,7 +19,7 @@ const member_store = useMemberStore()
     <div class="bg-float rounded-2 shadow-xs w-30 p-2 pb-6">
       <div
         data-testid="dashboard-actions-panel__polaroid-photo"
-        class="bg-element rounded-1 aspect-square overflow-hidden"
+        class="bg-mat rounded-1 aspect-square overflow-hidden"
       >
         <avatar-image :avatar="member_store.cover.avatar" class="h-full w-full" />
       </div>

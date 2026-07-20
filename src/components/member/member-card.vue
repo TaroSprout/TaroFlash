@@ -39,7 +39,7 @@ provideDepth(1)
   <div
     data-testid="member-card"
     data-depth="1"
-    class="bg-panel rounded-8 border-brown-200 dark:border-stone-900 flex w-89 flex-col overflow-hidden border-8 shadow-[-1px_-1px_0_0_var(--color-brown-100)] dark:shadow-[-1px_-1px_0_0_var(--color-grey-900)]"
+    class="bg-element rounded-8 border-element flex w-89 flex-col overflow-hidden border-8 shadow-[-1px_-1px_0_0_var(--color-brown-100)] dark:shadow-[-1px_-1px_0_0_var(--color-grey-900)]"
   >
     <div data-testid="member-card__header" class="flex items-center justify-center px-9 pt-4 pb-1">
       <h1 class="text-ink text-5xl">
@@ -54,9 +54,7 @@ provideDepth(1)
     >
       <div data-testid="member-card__avatar" class="flex h-full flex-col justify-center">
         <div class="relative">
-          <div
-            class="bg-element rounded-19 border-brown-200 dark:border-stone-900 h-50 w-50 overflow-hidden border-10"
-          >
+          <div class="bg-mat rounded-19 border-element h-50 w-50 overflow-hidden border-10">
             <avatar-image :avatar="cover?.avatar" class="h-full w-full" />
           </div>
 

@@ -112,6 +112,11 @@
   /* The flashcard surface — a fixed exception, not depth-derived. */
   --color-card: var(--color-white);
 
+  /* Media backdrop for user avatars. FIXED, not depth-relative: avatar images
+     are colour-tuned to read against it, so it must be identical at every depth
+     and location — one tuning pass for light, one for dark. Dark in depth.css. */
+  --color-mat: var(--color-brown-200);
+
   /* Identity role slots — owned by data-palette, overridden per identity in
      src/styles/palettes.gen.css. Defaults are the `blue` light rendition,
      matching the historical :root default in palettes.css. */

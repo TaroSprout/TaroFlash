@@ -41,7 +41,7 @@ function onEditAvatar(e: MouseEvent) {
   >
     <div data-testid="member-badge__avatar" class="relative shrink-0">
       <div
-        class="bg-element rounded-[calc(var(--badge-radius)-var(--badge-padding)+6px)] border-brown-200 dark:border-stone-900 h-25 w-25 overflow-hidden border-4"
+        class="bg-mat rounded-[calc(var(--badge-radius)-var(--badge-padding)+6px)] border-element h-25 w-25 overflow-hidden border-4"
       >
         <avatar-image :avatar="cover?.avatar" class="h-full w-full" />
       </div>
