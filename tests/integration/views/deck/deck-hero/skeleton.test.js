@@ -22,8 +22,7 @@ const CardStub = defineComponent({
         'data-size': props.size,
         'data-side': props.side,
         'data-shimmer': String(props.shimmer),
-        'data-cover-theme': props.cover_config?.theme,
-        'data-cover-theme-dark': props.cover_config?.theme_dark,
+        'data-cover-palette': props.cover_config?.palette,
         'data-cover-pattern': props.cover_config?.pattern
       })
   }
@@ -69,20 +68,13 @@ describe('DeckHeroSkeleton (deck-hero/skeleton.vue)', () => {
     expect(wrapper.findComponent(CardStub).props('shimmer')).toBe(true)
   })
 
-  // ── DEFAULT_COVER (brown-300 / stone-900 / diagonal-stripes) ─────────────
+  // ── DEFAULT_COVER (no palette — neutral chrome / diagonal-stripes) ────────
 
-  test('card uses DEFAULT_COVER theme=brown-300', () => {
+  test('card uses DEFAULT_COVER with no palette (neutral chrome)', () => {
     const wrapper = mountSkeleton()
-    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-cover-theme')).toBe(
-      'brown-300'
-    )
-  })
-
-  test('card uses DEFAULT_COVER theme_dark=stone-900', () => {
-    const wrapper = mountSkeleton()
-    expect(wrapper.find('[data-testid="card-stub"]').attributes('data-cover-theme-dark')).toBe(
-      'stone-900'
-    )
+    expect(
+      wrapper.find('[data-testid="card-stub"]').attributes('data-cover-palette')
+    ).toBeUndefined()
   })
 
   test('card uses DEFAULT_COVER pattern=diagonal-stripes', () => {

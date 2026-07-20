@@ -83,21 +83,21 @@ describe('DashboardFooterActions', () => {
   })
 
   describe('edit-decks button', () => {
-    test('shows pencil icon, Edit Decks label, and brown-700 theme when not editing', () => {
+    test('shows pencil icon, Edit Decks label, and neutral chrome when not editing', () => {
       const wrapper = mountFooterActions({ editing_decks: false })
       const button = wrapper.find('[data-testid="dashboard-footer-actions__edit-decks"]')
 
       expect(button.attributes('icon-left')).toBe('pencil')
-      expect(button.attributes('data-theme')).toBe('brown-700')
+      expect(button.attributes('neutral')).toBe('')
       expect(button.text()).toBe('Edit Decks')
     })
 
-    test('shows stop icon, Stop Editing label, and yellow-500 theme when editing', () => {
+    test('shows stop icon, Stop Editing label, and yellow data-palette when editing', () => {
       const wrapper = mountFooterActions({ editing_decks: true })
       const button = wrapper.find('[data-testid="dashboard-footer-actions__edit-decks"]')
 
       expect(button.attributes('icon-left')).toBe('stop')
-      expect(button.attributes('data-theme')).toBe('yellow-500')
+      expect(button.attributes('data-palette')).toBe('yellow')
       expect(button.text()).toBe('Stop Editing')
     })
 

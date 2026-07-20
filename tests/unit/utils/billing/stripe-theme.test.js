@@ -6,11 +6,9 @@ const TOKENS = {
   '--color-red-600': '#be123c',
   '--color-blue-500': '#3b82f6',
   '--color-blue-650': '#1d4ed8',
-  '--color-grey-800': '#1f2937',
+  '--color-stone-900': '#1c1917',
   '--color-grey-700': '#374151',
   '--color-grey-900': '#111827',
-  '--color-grey-300': '#d1d5db',
-  '--color-grey-500': '#6b7280',
   '--color-brown-50': '#fdf6ec',
   '--color-brown-100': '#f5e9d6',
   '--color-brown-200': '#ecd9bc',
@@ -44,8 +42,8 @@ describe('getStripeAppearance — light/dark token selection', () => {
 
     expect(appearance.variables.colorDanger).toBe(TOKENS['--color-red-600'])
     expect(appearance.variables.colorPrimary).toBe(TOKENS['--color-blue-650'])
-    expect(appearance.variables.colorBackground).toBe(TOKENS['--color-grey-800'])
-    expect(appearance.variables.colorText).toBe(TOKENS['--color-grey-300'])
+    expect(appearance.variables.colorBackground).toBe(TOKENS['--color-stone-900'])
+    expect(appearance.variables.colorText).toBe(TOKENS['--color-brown-300'])
   })
 })
 

@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { shallowMount } from '@vue/test-utils'
+import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
+import { provideDepth } from '@/composables/ui/depth'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -21,7 +22,13 @@ vi.mock('@/composables/ui/media-query', () => ({
 const UiButtonStub = defineComponent({
   name: 'UiButton',
   inheritAttrs: false,
-  props: { iconLeft: String, iconOnly: Boolean, roundedFull: Boolean, sfx: Object },
+  props: {
+    iconLeft: String,
+    iconOnly: Boolean,
+    roundedFull: Boolean,
+    sfx: Object,
+    neutral: Boolean
+  },
   emits: ['press'],
   setup(_p, { slots, attrs, emit }) {
     return () =>
@@ -47,6 +54,23 @@ function mountCard(props = {}, slots = {}) {
   return shallowMount(DialogCard, {
     props,
     slots,
+    global: { stubs: { UiButton: UiButtonStub, DialogCardHeader: false } }
+  })
+}
+
+// Wraps DialogCard in a parent that provides an ambient ui/depth, so tests
+// can assert the card stamps one step above whatever surface opened it.
+function mountCardAtAmbientDepth(ambient_depth, props = {}) {
+  const Parent = defineComponent({
+    setup() {
+      provideDepth(ambient_depth)
+      return () => h(DialogCard, props)
+    }
+  })
+  // `mount`, not `shallowMount` — DialogCard is Parent's direct child, and
+  // shallowMount auto-stubs direct children, which would stub out the very
+  // component under test.
+  return mount(Parent, {
     global: { stubs: { UiButton: UiButtonStub, DialogCardHeader: false } }
   })
 }
@@ -101,6 +125,20 @@ describe('DialogCard', () => {
         { default: (props) => h('div', { 'data-testid': 'slot-viewport' }, props.viewport) }
       )
       expect(wrapper.find('[data-testid="slot-viewport"]').text()).toBe('mobile')
+    })
+  })
+
+  // ── ambient depth ────────────────────────────────────────────────────────────
+
+  describe('depth', () => {
+    test('stamps data-depth one step above the ambient depth (0 → 1) when no ancestor provides one', () => {
+      const wrapper = mountCard()
+      expect(wrapper.find('[data-testid="dialog-card"]').attributes('data-depth')).toBe('1')
+    })
+
+    test('stamps data-depth one step above an ancestor-provided ambient depth', () => {
+      const wrapper = mountCardAtAmbientDepth(1)
+      expect(wrapper.find('[data-testid="dialog-card"]').attributes('data-depth')).toBe('2')
     })
   })
 
@@ -204,39 +242,15 @@ describe('DialogCard', () => {
       expect(classes).toContain('h-160')
     })
 
-    test('applies rounded-8 shadow-lg (not the mobile classes) on desktop', () => {
+    test('applies rounded-8 (not the mobile classes) on desktop', () => {
       matchState.value = false
       const wrapper = mountCard({ class: 'w-150 h-160' })
       const classes = wrapper.find('[data-testid="dialog-card"]').classes()
 
       expect(classes).toContain('rounded-8')
-      expect(classes).toContain('shadow-lg')
       expect(classes).not.toContain('h-full!')
       expect(classes).not.toContain('w-full!')
       expect(classes).not.toContain('rounded-none!')
-    })
-  })
-
-  // ── desktop-only frame chrome [obligation] ──────────────────────────────────
-
-  describe('desktop frame chrome [obligation]', () => {
-    test('applies the border-t/border-l frame classes on desktop', () => {
-      matchState.value = false
-      const wrapper = mountCard()
-      const classes = wrapper.find('[data-testid="dialog-card"]').classes()
-
-      expect(classes).toContain('border-t')
-      expect(classes).toContain('border-l')
-      expect(classes).toContain('border-brown-100')
-    })
-
-    test('drops the frame classes entirely on mobile (full-bleed, no edge to frame)', () => {
-      matchState.value = true
-      const wrapper = mountCard()
-      const classes = wrapper.find('[data-testid="dialog-card"]').classes()
-
-      expect(classes).not.toContain('border-t')
-      expect(classes).not.toContain('border-l')
     })
   })
 
@@ -274,11 +288,10 @@ describe('DialogCard', () => {
       expect(wrapper.find('[data-testid="dialog-card__close"]').text()).toBe('Dismiss')
     })
 
-    test('themes the close button with brown-100 / stone-700', () => {
+    test('renders the close button as neutral', () => {
       const wrapper = mountCard({ title: 'x' })
-      const close = wrapper.find('[data-testid="dialog-card__close"]')
-      expect(close.attributes('data-theme')).toBe('brown-100')
-      expect(close.attributes('data-theme-dark')).toBe('stone-700')
+      const close = wrapper.findComponent(UiButtonStub)
+      expect(close.props('neutral')).toBe(true)
     })
 
     test('forwards close_sfx to the close button sfx prop', () => {
@@ -391,12 +404,11 @@ describe('DialogCard', () => {
   // ── bg_class prop ────────────────────────────────────────────────────────────
 
   describe('bg_class', () => {
-    test('defaults to bg-brown-200 dark:bg-grey-800 when omitted', () => {
+    test('defaults to bg-surface when omitted', () => {
       const wrapper = mountCard()
       const classes = wrapper.find('[data-testid="dialog-card"]').classes()
 
-      expect(classes).toContain('bg-brown-200')
-      expect(classes).toContain('dark:bg-grey-800')
+      expect(classes).toContain('bg-surface')
     })
 
     test('a caller value replaces the default outright', () => {

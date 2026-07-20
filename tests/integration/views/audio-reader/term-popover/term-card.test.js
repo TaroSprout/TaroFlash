@@ -35,7 +35,7 @@ const TRANSLATION_RESULT = {
   description: 'A small domesticated carnivorous mammal.'
 }
 
-// Slot-rendering stub; forwards $attrs so data-theme / data-theme-dark are assertable.
+// Slot-rendering stub; forwards $attrs so data-palette is assertable.
 const UiTagStub = {
   name: 'UiTag',
   inheritAttrs: false,
@@ -507,84 +507,73 @@ describe('TermCard', () => {
     })
 
     // Exact tier boundary: score 2 → beginner (max: 2) [obligation]
-    test('score 2 → beginner tier — data-theme green-400, data-theme-dark green-600 [obligation]', async () => {
+    test('score 2 → beginner tier — data-palette green [obligation]', async () => {
       const wrapper = await mountWithDifficulty(2)
       const tag = wrapper.findComponent(UiTagStub)
       expect(tag.exists()).toBe(true)
-      expect(tag.attributes('data-theme')).toBe('green-400')
-      expect(tag.attributes('data-theme-dark')).toBe('green-600')
+      expect(tag.attributes('data-palette')).toBe('green')
     })
 
     // Score 3 → elementary (max: 4) [obligation]
-    test('score 3 → elementary tier — data-theme green-400, data-theme-dark green-600 [obligation]', async () => {
+    test('score 3 → elementary tier — data-palette green [obligation]', async () => {
       const wrapper = await mountWithDifficulty(3)
       const tag = wrapper.findComponent(UiTagStub)
       expect(tag.exists()).toBe(true)
-      expect(tag.attributes('data-theme')).toBe('green-400')
-      expect(tag.attributes('data-theme-dark')).toBe('green-600')
+      expect(tag.attributes('data-palette')).toBe('green')
     })
 
-    // Score 1 and score 4 share green theme [obligation]
-    test('score 1 → data-theme green-400, data-theme-dark green-600 (same as score 4) [obligation]', async () => {
+    // Score 1 and score 4 share green palette [obligation]
+    test('score 1 → data-palette green (same as score 4) [obligation]', async () => {
       const wrapper = await mountWithDifficulty(1)
       const tag = wrapper.findComponent(UiTagStub)
-      expect(tag.attributes('data-theme')).toBe('green-400')
-      expect(tag.attributes('data-theme-dark')).toBe('green-600')
+      expect(tag.attributes('data-palette')).toBe('green')
     })
 
-    test('score 4 → data-theme green-400, data-theme-dark green-600 (same as score 1) [obligation]', async () => {
+    test('score 4 → data-palette green (same as score 1) [obligation]', async () => {
       const wrapper = await mountWithDifficulty(4)
       const tag = wrapper.findComponent(UiTagStub)
-      expect(tag.attributes('data-theme')).toBe('green-400')
-      expect(tag.attributes('data-theme-dark')).toBe('green-600')
+      expect(tag.attributes('data-palette')).toBe('green')
     })
 
     // Score 6 → intermediate (max: 6) [obligation]
-    test('score 6 → intermediate tier — data-theme yellow-500, data-theme-dark yellow-700 [obligation]', async () => {
+    test('score 6 → intermediate tier — data-palette yellow [obligation]', async () => {
       const wrapper = await mountWithDifficulty(6)
       const tag = wrapper.findComponent(UiTagStub)
       expect(tag.exists()).toBe(true)
-      expect(tag.attributes('data-theme')).toBe('yellow-500')
-      expect(tag.attributes('data-theme-dark')).toBe('yellow-700')
+      expect(tag.attributes('data-palette')).toBe('yellow')
     })
 
     // Score 8 → advanced (max: 8) [obligation]
-    test('score 8 → advanced tier — data-theme red-500, data-theme-dark red-600 [obligation]', async () => {
+    test('score 8 → advanced tier — data-palette red [obligation]', async () => {
       const wrapper = await mountWithDifficulty(8)
       const tag = wrapper.findComponent(UiTagStub)
       expect(tag.exists()).toBe(true)
-      expect(tag.attributes('data-theme')).toBe('red-500')
-      expect(tag.attributes('data-theme-dark')).toBe('red-600')
+      expect(tag.attributes('data-palette')).toBe('red')
     })
 
     // Score 9 → expert (max: 10) [obligation]
-    test('score 9 → expert tier — data-theme red-500, data-theme-dark red-600 [obligation]', async () => {
+    test('score 9 → expert tier — data-palette red [obligation]', async () => {
       const wrapper = await mountWithDifficulty(9)
       const tag = wrapper.findComponent(UiTagStub)
       expect(tag.exists()).toBe(true)
-      expect(tag.attributes('data-theme')).toBe('red-500')
-      expect(tag.attributes('data-theme-dark')).toBe('red-600')
+      expect(tag.attributes('data-palette')).toBe('red')
     })
 
-    // Score 8 and score 9 share red theme [obligation]
-    test('score 8 and score 9 both produce red-500 / red-600 [obligation]', async () => {
+    // Score 8 and score 9 share red palette [obligation]
+    test('score 8 and score 9 both produce data-palette red [obligation]', async () => {
       const w8 = await mountWithDifficulty(8)
       const w9 = await mountWithDifficulty(9)
-      expect(w8.findComponent(UiTagStub).attributes('data-theme')).toBe(
-        w9.findComponent(UiTagStub).attributes('data-theme')
-      )
-      expect(w8.findComponent(UiTagStub).attributes('data-theme-dark')).toBe(
-        w9.findComponent(UiTagStub).attributes('data-theme-dark')
+      expect(w8.findComponent(UiTagStub).attributes('data-palette')).toBe(
+        w9.findComponent(UiTagStub).attributes('data-palette')
       )
     })
 
     // Score 10 → expert (max: 10) [obligation]
-    test('score 10 → expert tier — data-theme red-500, data-theme-dark red-600 [obligation]', async () => {
+    test('score 10 → expert tier — data-palette red [obligation]', async () => {
       const wrapper = await mountWithDifficulty(10)
       const tag = wrapper.findComponent(UiTagStub)
       expect(tag.exists()).toBe(true)
-      expect(tag.attributes('data-theme')).toBe('red-500')
-      expect(tag.attributes('data-theme-dark')).toBe('red-600')
+      expect(tag.attributes('data-palette')).toBe('red')
     })
 
     // Fallback to last tier (expert) for scores > 10 [obligation]
@@ -592,8 +581,7 @@ describe('TermCard', () => {
       const wrapper = await mountWithDifficulty(15)
       const tag = wrapper.findComponent(UiTagStub)
       expect(tag.exists()).toBe(true)
-      expect(tag.attributes('data-theme')).toBe('red-500')
-      expect(tag.attributes('data-theme-dark')).toBe('red-600')
+      expect(tag.attributes('data-palette')).toBe('red')
     })
 
     // POS tag removed — difficulty_tier renders the difficulty label, not result.pos [obligation]

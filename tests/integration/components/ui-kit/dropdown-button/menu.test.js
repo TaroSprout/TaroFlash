@@ -49,35 +49,23 @@ function mountMenu(props = {}) {
 describe('DropdownMenu', () => {
   beforeEach(() => mockEmitSfx.mockClear())
 
-  // ── theme defaults ────────────────────────────────────────────────────────
+  // ── depth prop ─────────────────────────────────────────────────────────────
+  // The menu is teleported and can't inherit the trigger's ambient depth, so
+  // the trigger passes it explicitly.
 
-  describe('theme defaults', () => {
-    test('data-theme defaults to brown-300', () => {
-      const wrapper = mountMenu()
-      expect(wrapper.find('[data-testid="dropdown-button__menu"]').attributes('data-theme')).toBe(
-        'brown-300'
-      )
-    })
-
-    test('data-theme-dark defaults to stone-700', () => {
+  describe('depth prop', () => {
+    test('data-depth is unset when depth is omitted', () => {
       const wrapper = mountMenu()
       expect(
-        wrapper.find('[data-testid="dropdown-button__menu"]').attributes('data-theme-dark')
-      ).toBe('stone-700')
+        wrapper.find('[data-testid="dropdown-button__menu"]').attributes('data-depth')
+      ).toBeUndefined()
     })
 
-    test('data-theme reflects explicit menuTheme prop', () => {
-      const wrapper = mountMenu({ menuTheme: 'blue-500' })
-      expect(wrapper.find('[data-testid="dropdown-button__menu"]').attributes('data-theme')).toBe(
-        'blue-500'
+    test('data-depth reflects an explicit depth prop', () => {
+      const wrapper = mountMenu({ depth: 2 })
+      expect(wrapper.find('[data-testid="dropdown-button__menu"]').attributes('data-depth')).toBe(
+        '2'
       )
-    })
-
-    test('data-theme-dark reflects explicit menuThemeDark prop', () => {
-      const wrapper = mountMenu({ menuThemeDark: 'blue-900' })
-      expect(
-        wrapper.find('[data-testid="dropdown-button__menu"]').attributes('data-theme-dark')
-      ).toBe('blue-900')
     })
   })
 
@@ -221,24 +209,6 @@ describe('DropdownMenu', () => {
     test('renders no separator divider when no option is flagged separator [obligation]', () => {
       const wrapper = mountMenu()
       expect(wrapper.findAll('[data-testid="dropdown-button__separator"]')).toHaveLength(0)
-    })
-  })
-
-  // ── menuClass prop [obligation] ───────────────────────────────────────────
-
-  describe('menuClass prop [obligation]', () => {
-    test('menuClass is applied to the dropdown-button__menu root element [obligation]', () => {
-      const wrapper = mountMenu({ menuClass: 'ring-2 ring-blue-500' })
-      const menu = wrapper.find('[data-testid="dropdown-button__menu"]')
-      expect(menu.classes()).toContain('ring-2')
-      expect(menu.classes()).toContain('ring-blue-500')
-    })
-
-    test('menuClass is absent when not provided [obligation]', () => {
-      const wrapper = mountMenu()
-      const menu = wrapper.find('[data-testid="dropdown-button__menu"]')
-      // Still has the size class from the prop
-      expect(menu.classes().join(' ')).toContain('ui-kit-btn-tokens')
     })
   })
 

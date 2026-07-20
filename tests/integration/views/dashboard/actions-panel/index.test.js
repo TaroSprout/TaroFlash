@@ -212,16 +212,14 @@ describe('DashboardActionsPanel — edit-decks entry reflects editing_decks stat
     expect(edit_entry.trailingIcon).toBe('stop')
   })
 
-  test('carries selected/selectedTheme/selectedThemeDark reflecting editing_decks [obligation]', () => {
+  test('carries selected/selectedPalette reflecting editing_decks [obligation]', () => {
     const not_editing = wrapper_entry(mount([], false))
     expect(not_editing.selected).toBe(false)
-    expect(not_editing.selectedTheme).toBe('yellow-500')
-    expect(not_editing.selectedThemeDark).toBe('yellow-700')
+    expect(not_editing.selectedPalette).toBe('yellow')
 
     const editing = wrapper_entry(mount([], true))
     expect(editing.selected).toBe(true)
-    expect(editing.selectedTheme).toBe('yellow-500')
-    expect(editing.selectedThemeDark).toBe('yellow-700')
+    expect(editing.selectedPalette).toBe('yellow')
   })
 })
 

@@ -12,11 +12,6 @@ const UiDropdownButtonStub = defineComponent({
   inheritAttrs: false,
   props: {
     options: { type: Array, default: () => [] },
-    triggerTheme: String,
-    triggerThemeDark: String,
-    menuTheme: String,
-    menuThemeDark: String,
-    menuClass: String,
     openOnTrigger: { type: Boolean, default: false },
     fullWidth: { type: Boolean, default: false }
   },
@@ -30,12 +25,7 @@ const UiDropdownButtonStub = defineComponent({
           ...attrs,
           'data-testid': attrs['data-testid'] ?? 'ui-dropdown-button-stub',
           'data-open-on-trigger': String(props.openOnTrigger),
-          'data-full-width': String(props.fullWidth),
-          'data-trigger-theme': props.triggerTheme,
-          'data-trigger-theme-dark': props.triggerThemeDark,
-          'data-menu-theme': props.menuTheme,
-          'data-menu-theme-dark': props.menuThemeDark,
-          'data-menu-class': props.menuClass
+          'data-full-width': String(props.fullWidth)
         },
         [
           slots.default?.(),
@@ -90,49 +80,6 @@ describe('UiSelectMenu', () => {
   test('forwards options to the dropdown button', () => {
     const wrapper = mountSelectMenu()
     expect(wrapper.findComponent(UiDropdownButtonStub).props('options')).toEqual(OPTIONS)
-  })
-
-  test('defaults menuTheme to brown-200 and menuThemeDark to stone-700', () => {
-    const wrapper = mountSelectMenu()
-    const dropdown = wrapper.findComponent(UiDropdownButtonStub)
-    expect(dropdown.props('menuTheme')).toBe('brown-200')
-    expect(dropdown.props('menuThemeDark')).toBe('stone-700')
-  })
-
-  test('a custom menuTheme/menuThemeDark prop is passed through', () => {
-    const wrapper = mountSelectMenu({ menuTheme: 'blue-500', menuThemeDark: 'blue-650' })
-    const dropdown = wrapper.findComponent(UiDropdownButtonStub)
-    expect(dropdown.props('menuTheme')).toBe('blue-500')
-    expect(dropdown.props('menuThemeDark')).toBe('blue-650')
-  })
-
-  test('defaults menuClass to the outline utility classes', () => {
-    const wrapper = mountSelectMenu()
-    expect(wrapper.findComponent(UiDropdownButtonStub).props('menuClass')).toBe(
-      'outline-1 outline-brown-100 dark:outline-grey-900'
-    )
-  })
-
-  test('a custom menuClass prop overrides the default', () => {
-    const wrapper = mountSelectMenu({ menuClass: 'custom-class' })
-    expect(wrapper.findComponent(UiDropdownButtonStub).props('menuClass')).toBe('custom-class')
-  })
-
-  test('triggerTheme/triggerThemeDark default to undefined [obligation]', () => {
-    // They must not default to a hardcoded color — otherwise callers that
-    // never pass them would stop inheriting the trigger's color from the
-    // popover's data-theme via CSS cascade.
-    const wrapper = mountSelectMenu()
-    const dropdown = wrapper.findComponent(UiDropdownButtonStub)
-    expect(dropdown.props('triggerTheme')).toBeUndefined()
-    expect(dropdown.props('triggerThemeDark')).toBeUndefined()
-  })
-
-  test('a supplied triggerTheme/triggerThemeDark is forwarded to the dropdown button [obligation]', () => {
-    const wrapper = mountSelectMenu({ triggerTheme: 'blue-500', triggerThemeDark: 'blue-650' })
-    const dropdown = wrapper.findComponent(UiDropdownButtonStub)
-    expect(dropdown.props('triggerTheme')).toBe('blue-500')
-    expect(dropdown.props('triggerThemeDark')).toBe('blue-650')
   })
 
   test('always sets openOnTrigger and fullWidth on the dropdown button', () => {

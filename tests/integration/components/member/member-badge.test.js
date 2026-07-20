@@ -135,25 +135,25 @@ describe('MemberBadge', () => {
   // ── cover bindings ─────────────────────────────────────────────────────────
 
   describe('cover bindings via memberCoverBindings', () => {
-    test('applies data-theme from cover config', () => {
-      const wrapper = mountBadge({ cover: { theme: 'blue-700', pattern: 'wave' } })
-      expect(wrapper.find('[data-testid="member-badge"]').attributes('data-theme')).toBe('blue-700')
+    test('applies data-palette from cover config', () => {
+      const wrapper = mountBadge({ cover: { palette: 'blue', pattern: 'wave' } })
+      expect(wrapper.find('[data-testid="member-badge"]').attributes('data-palette')).toBe('blue')
     })
 
     test('applies pattern class from cover config', () => {
-      const wrapper = mountBadge({ cover: { theme: 'blue-700', pattern: 'wave' } })
+      const wrapper = mountBadge({ cover: { palette: 'blue', pattern: 'wave' } })
       expect(wrapper.find('[data-testid="member-badge"]').classes()).toContain('pattern-mask')
     })
 
-    test('falls back to MEMBER_CARD_COVER_DEFAULTS theme when cover is omitted', () => {
+    test('falls back to MEMBER_CARD_COVER_DEFAULTS palette when cover is omitted', () => {
       const wrapper = mountBadge()
-      expect(wrapper.find('[data-testid="member-badge"]').attributes('data-theme')).toBe(
-        MEMBER_CARD_COVER_DEFAULTS.theme
+      expect(wrapper.find('[data-testid="member-badge"]').attributes('data-palette')).toBe(
+        MEMBER_CARD_COVER_DEFAULTS.palette
       )
     })
 
     test('never has a border style (border: false enforced)', () => {
-      const wrapper = mountBadge({ cover: { theme: 'red-500', pattern: 'saw' } })
+      const wrapper = mountBadge({ cover: { palette: 'red', pattern: 'saw' } })
       const style = wrapper.find('[data-testid="member-badge"]').attributes('style') ?? ''
       expect(style).not.toContain('border:')
     })
@@ -173,7 +173,7 @@ describe('MemberBadge', () => {
 
   describe('avatar image', () => {
     test('forwards cover.avatar to avatar-image', () => {
-      const wrapper = mountBadge({ cover: { theme: 'blue-700', pattern: 'wave', avatar: 'panda' } })
+      const wrapper = mountBadge({ cover: { palette: 'blue', pattern: 'wave', avatar: 'panda' } })
       expect(wrapper.find('[data-testid="avatar-image-stub"]').attributes('data-avatar')).toBe(
         'panda'
       )

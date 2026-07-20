@@ -21,7 +21,8 @@ const UiButtonStub = defineComponent({
   inheritAttrs: false,
   props: {
     active: { type: Boolean, default: false },
-    iconOnly: { type: Boolean, default: false }
+    iconOnly: { type: Boolean, default: false },
+    neutral: { type: Boolean, default: false }
   },
   emits: ['press'],
   setup(props, { emit, slots }) {
@@ -34,6 +35,7 @@ const UiButtonStub = defineComponent({
           'data-testid': 'ui-button-group__button',
           'data-active': props.active ? 'true' : null,
           'data-icon-only': props.iconOnly ? 'true' : null,
+          'data-neutral': props.neutral ? 'true' : null,
           onClick: () => emit('press')
         },
         slots.default?.()
@@ -230,5 +232,21 @@ describe('UiButtonGroup', () => {
     const buttons = getButtons(wrapper)
     expect(buttons[0].text()).toBe('A')
     expect(buttons[1].text()).toBe('B')
+  })
+
+  // ── neutral prop passthrough [obligation] ──────────────────────────────────
+
+  test('neutral=true forwards neutral to every button [obligation]', () => {
+    const wrapper = mountGroup({ options: TRIPLE, neutral: true })
+    for (const btn of getButtons(wrapper)) {
+      expect(btn.attributes('data-neutral')).toBe('true')
+    }
+  })
+
+  test('neutral defaults to false — no button receives neutral [obligation]', () => {
+    const wrapper = mountGroup({ options: TRIPLE })
+    for (const btn of getButtons(wrapper)) {
+      expect(btn.attributes('data-neutral')).toBeUndefined()
+    }
   })
 })

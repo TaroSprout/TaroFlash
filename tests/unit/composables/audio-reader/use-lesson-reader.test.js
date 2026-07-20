@@ -269,7 +269,7 @@ describe('useLessonReader', () => {
     test('a card front that appears in the lesson is keyed by its word index', () => {
       cardIndexQueryMock.mockReturnValue({ data: ref([{ term: 'world', deck_ids: [7] }]) })
       decksQueryMock.mockReturnValue({
-        data: ref([{ id: 7, cover_config: { theme: 'blue-500' } }])
+        data: ref([{ id: 7, cover_config: { palette: 'blue-500' } }])
       })
 
       let reader
@@ -290,18 +290,17 @@ describe('useLessonReader', () => {
       expect(reader.matches.value.has(0)).toBe(false)
     })
 
-    test('themeMatch colours a single-deck match with that deck cover theme', () => {
+    test('themeMatch colours a single-deck match with that deck cover palette', () => {
       cardIndexQueryMock.mockReturnValue({ data: ref([{ term: 'world', deck_ids: [7] }]) })
       decksQueryMock.mockReturnValue({
-        data: ref([{ id: 7, cover_config: { theme: 'blue-500', theme_dark: 'blue-900' } }])
+        data: ref([{ id: 7, cover_config: { palette: 'blue-500' } }])
       })
 
       let reader
       ;[reader, app] = withReader()
 
       const match = reader.matches.value.get(1)
-      expect(match.theme).toBe('blue-500')
-      expect(match.theme_dark).toBe('blue-900')
+      expect(match.palette).toBe('blue-500')
     })
 
     test('themeMatch colours a multi-deck match by the FIRST deck in member order', () => {
@@ -310,8 +309,8 @@ describe('useLessonReader', () => {
       cardIndexQueryMock.mockReturnValue({ data: ref([{ term: 'world', deck_ids: [7, 3] }]) })
       decksQueryMock.mockReturnValue({
         data: ref([
-          { id: 3, cover_config: { theme: 'green-400', theme_dark: 'green-800' } },
-          { id: 7, cover_config: { theme: 'blue-500' } }
+          { id: 3, cover_config: { palette: 'green-400' } },
+          { id: 7, cover_config: { palette: 'blue-500' } }
         ])
       })
 
@@ -319,11 +318,10 @@ describe('useLessonReader', () => {
       ;[reader, app] = withReader()
 
       const match = reader.matches.value.get(1)
-      expect(match.theme).toBe('green-400')
-      expect(match.theme_dark).toBe('green-800')
+      expect(match.palette).toBe('green-400')
     })
 
-    test('themeMatch leaves theme unset when the owning deck has no cover theme', () => {
+    test('themeMatch leaves palette unset when the owning deck has no cover palette', () => {
       cardIndexQueryMock.mockReturnValue({ data: ref([{ term: 'world', deck_ids: [7] }]) })
       decksQueryMock.mockReturnValue({ data: ref([{ id: 7, cover_config: {} }]) })
 
@@ -331,8 +329,39 @@ describe('useLessonReader', () => {
       ;[reader, app] = withReader()
 
       const match = reader.matches.value.get(1)
-      expect(match.theme).toBeUndefined()
-      expect(match.theme_dark).toBeUndefined()
+      expect(match.palette).toBeUndefined()
+    })
+
+    test('matches map keeps the same reference across a decks refetch that resolves the same palette', async () => {
+      cardIndexQueryMock.mockReturnValue({ data: ref([{ term: 'world', deck_ids: [7] }]) })
+      const decks = ref([{ id: 7, cover_config: { palette: 'blue-500' } }])
+      decksQueryMock.mockReturnValue({ data: decks })
+
+      let reader
+      ;[reader, app] = withReader()
+      const before = reader.matches.value
+
+      // New array reference, same content — mirrors a Pinia Colada refetch.
+      decks.value = [{ id: 7, cover_config: { palette: 'blue-500' } }]
+      await nextTick()
+
+      expect(reader.matches.value).toBe(before)
+    })
+
+    test('matches map gets a new reference when the resolved palette actually changes', async () => {
+      cardIndexQueryMock.mockReturnValue({ data: ref([{ term: 'world', deck_ids: [7] }]) })
+      const decks = ref([{ id: 7, cover_config: { palette: 'blue-500' } }])
+      decksQueryMock.mockReturnValue({ data: decks })
+
+      let reader
+      ;[reader, app] = withReader()
+      const before = reader.matches.value
+
+      decks.value = [{ id: 7, cover_config: { palette: 'green-400' } }]
+      await nextTick()
+
+      expect(reader.matches.value).not.toBe(before)
+      expect(reader.matches.value.get(1).palette).toBe('green-400')
     })
   })
 

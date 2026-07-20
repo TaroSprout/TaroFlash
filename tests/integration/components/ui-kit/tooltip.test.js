@@ -115,37 +115,23 @@ describe('UiTooltip', () => {
     })
   })
 
-  describe('theme — popover uses explicit props, not fallthrough attrs', () => {
-    test('popover uses white/brown-100 defaults when no theme prop is passed', async () => {
+  describe('palette — popover reads data-palette off attrs, not a prop', () => {
+    test('popover carries data-depth="overlay" and no data-palette when none is passed', async () => {
       const wrapper = mountTooltip()
       await dispatchPointer(wrapper, 'pointerenter', 'mouse')
 
       const popover = document.body.querySelector('[data-testid="ui-tooltip"]')
-      expect(popover.getAttribute('data-theme')).toBe('white')
-      expect(popover.getAttribute('data-theme-dark')).toBe('brown-100')
+      expect(popover.getAttribute('data-depth')).toBe('overlay')
+      expect(popover.getAttribute('data-palette')).toBeNull()
       wrapper.unmount()
     })
 
-    test('passing theme prop changes the popover data-theme', async () => {
-      const wrapper = mountTooltip({ theme: 'blue-500', theme_dark: 'blue-650' })
+    test("a data-palette attr reaches the teleported popover (it can't inherit through the DOM)", async () => {
+      const wrapper = mountTooltip({}, {}, { 'data-palette': 'danger' })
       await dispatchPointer(wrapper, 'pointerenter', 'mouse')
 
       const popover = document.body.querySelector('[data-testid="ui-tooltip"]')
-      expect(popover.getAttribute('data-theme')).toBe('blue-500')
-      expect(popover.getAttribute('data-theme-dark')).toBe('blue-650')
-      wrapper.unmount()
-    })
-
-    test('a data-theme attr arriving via fallthrough attrs does NOT change the popover theme (regression guard)', async () => {
-      // When a parent component sets data-theme on <ui-tooltip data-theme="red-500">,
-      // that attr should fall through to the trigger element only — NOT reach
-      // the teleported popover, which is themed exclusively via the theme prop.
-      const wrapper = mountTooltip({}, {}, { 'data-theme': 'red-500' })
-      await dispatchPointer(wrapper, 'pointerenter', 'mouse')
-
-      const popover = document.body.querySelector('[data-testid="ui-tooltip"]')
-      // Popover must still use the default white theme
-      expect(popover.getAttribute('data-theme')).toBe('white')
+      expect(popover.getAttribute('data-palette')).toBe('danger')
       wrapper.unmount()
     })
   })

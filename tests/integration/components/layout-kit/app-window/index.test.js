@@ -1,7 +1,8 @@
 import { describe, test, expect } from 'vite-plus/test'
-import { shallowMount } from '@vue/test-utils'
+import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import AppWindow from '@/components/layout-kit/app-window/index.vue'
+import { provideDepth } from '@/composables/ui/depth'
 
 // Default stub: emits press on click so @press="emit('close')" fires through the
 // auto-stub layer without needing real button internals.
@@ -42,6 +43,21 @@ function mountWindow(props = {}, slots = {}, attrs = {}) {
     attrs,
     global: { stubs: { UiButton: UiButtonStub } }
   })
+}
+
+// Wraps AppWindow in a parent that provides an ambient ui/depth, so tests can
+// assert the window stamps one step above whatever surface opened it.
+// `mount`, not `shallowMount` — AppWindow is the parent's direct child, and
+// shallowMount auto-stubs direct children, which would stub the component
+// under test.
+function mountWindowAtAmbientDepth(ambient_depth, props = {}) {
+  const Parent = defineComponent({
+    setup() {
+      provideDepth(ambient_depth)
+      return () => h(AppWindow, props)
+    }
+  })
+  return mount(Parent, { global: { stubs: { UiButton: UiButtonStub } } })
 }
 
 describe('AppWindow', () => {
@@ -207,16 +223,16 @@ describe('AppWindow', () => {
     expect(classes).toContain('relative')
   })
 
-  // ── surface prop ───────────────────────────────────────────────────────────
+  // ── depth ──────────────────────────────────────────────────────────────────
 
-  test('defaults the body surface to "standard"', () => {
+  test('stamps data-depth one step above the ambient depth (0 → 1) when no ancestor provides one', () => {
     const wrapper = mountWindow()
-    expect(wrapper.find('[data-testid="app-window"]').attributes('data-surface')).toBe('standard')
+    expect(wrapper.find('[data-testid="app-window-container"]').attributes('data-depth')).toBe('1')
   })
 
-  test('reflects surface="inverted" on the body data-surface attribute', () => {
-    const wrapper = mountWindow({ surface: 'inverted' })
-    expect(wrapper.find('[data-testid="app-window"]').attributes('data-surface')).toBe('inverted')
+  test('stamps data-depth one step above an ancestor-provided ambient depth', () => {
+    const wrapper = mountWindowAtAmbientDepth(1)
+    expect(wrapper.find('[data-testid="app-window-container"]').attributes('data-depth')).toBe('2')
   })
 
   // ── header_border prop ────────────────────────────────────────────────────

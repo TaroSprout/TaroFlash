@@ -43,17 +43,13 @@ describe('DashboardSection — loading prop [obligation]', () => {
   test('uses the default heading color classes when loading is false', () => {
     const wrapper = mountSection({ label: 'All Decks', loading: false })
     const label = wrapper.find('[data-testid="dashboard-section__label"]')
-    expect(label.classes()).toEqual(
-      expect.arrayContaining(['text-brown-700', 'dark:text-brown-300'])
-    )
+    expect(label.classes()).toEqual(expect.arrayContaining(['text-ink']))
   })
 
   test('omitting the loading prop preserves the original non-loading appearance', () => {
     const wrapper = mountSection({ label: 'All Decks' })
     const label = wrapper.find('[data-testid="dashboard-section__label"]')
-    expect(label.classes()).toEqual(
-      expect.arrayContaining(['text-brown-700', 'dark:text-brown-300'])
-    )
+    expect(label.classes()).toEqual(expect.arrayContaining(['text-ink']))
   })
 })
 
