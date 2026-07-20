@@ -268,7 +268,8 @@ watch(
           <p
             v-else-if="error_key"
             data-testid="term-card__error"
-            class="text-red-500 dark:text-red-400"
+            data-palette="danger"
+            class="text-(--color-accent)"
           >
             {{ t(error_key) }}
           </p>

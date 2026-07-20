@@ -56,7 +56,8 @@ const submit_label = computed(() =>
           <p
             v-else-if="load_error"
             data-testid="change-card-modal__error"
-            class="py-10 text-center text-red-500 dark:text-red-600"
+            data-palette="danger"
+            class="py-10 text-center text-(--color-accent)"
           >
             {{ t('settings.subscription.change-card.error') }}
           </p>

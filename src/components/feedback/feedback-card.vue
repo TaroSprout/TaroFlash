@@ -44,7 +44,8 @@ async function onToggleVote() {
         <h2 class="text-ink truncate text-2xl">{{ item.title }}</h2>
         <p
           v-if="item.member_display_name"
-          class="text-blue-500 dark:text-blue-650 truncate text-base"
+          data-palette="info"
+          class="text-(--color-accent) truncate text-base"
         >
           {{ item.member_display_name }}
         </p>
@@ -58,8 +59,9 @@ async function onToggleVote() {
         type="button"
         :aria-label="t('feedback-board.card.vote-button')"
         :disabled="toggleVote.isLoading.value"
+        data-palette="pink"
         class="flex cursor-pointer items-center justify-center duration-100 disabled:opacity-50 hover:scale-110 hover:rotate-5"
-        :class="item.voted_by_me ? 'text-pink-500 dark:text-pink-700' : 'text-ink-muted'"
+        :class="item.voted_by_me ? 'text-(--color-accent)' : 'text-ink-muted'"
         v-sfx="{ hover: TYPE_SFX }"
         @click="onToggleVote"
       >

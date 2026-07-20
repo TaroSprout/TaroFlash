@@ -205,10 +205,11 @@ function onDirectoryNavigate(value: string) {
             :aria-controls="panel_id"
             :tabindex="page.value === displayed_page ? 0 : -1"
             :data-active="page.value === displayed_page"
+            :data-palette="page.danger ? 'danger' : undefined"
             :class="[
               'text-left py-3 px-4 rounded-4 flex items-center gap-3 cursor-pointer data-[active=false]:hover:[&_svg]:scale-120 data-[active=false]:hover:[&_svg]:rotate-6 [&_svg]:transition-transform [&_svg]:duration-75 focus:outline-none',
               page.danger
-                ? 'text-red-500 dark:text-red-600 hover:bg-red-500/10 dark:hover:bg-red-400/10 data-[active=true]:bg-red-500 dark:data-[active=true]:bg-red-600 data-[active=true]:text-white'
+                ? 'text-(--color-accent) hover:bg-(--color-accent)/10 data-[active=true]:bg-(--color-accent) data-[active=true]:text-(--color-on-accent)'
                 : 'text-ink data-[active=true]:bg-(--color-accent) data-[active=true]:text-(--color-on-accent) hover:bg-(--color-element) hover:text-(--color-on-element)'
             ]"
             v-sfx="page.value === displayed_page ? {} : { hover: hover_sfx }"

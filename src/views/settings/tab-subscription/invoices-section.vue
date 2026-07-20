@@ -52,7 +52,8 @@ const invoices = computed(() => invoices_query.data.value?.invoices ?? [])
           :href="invoice.hosted_invoice_url"
           target="_blank"
           rel="noopener noreferrer"
-          class="text-sm text-green-800 dark:text-green-400 hover:underline"
+          data-palette="info"
+          class="text-sm text-(--color-accent) hover:underline"
         >
           {{ t('settings.subscription.invoices.view') }}
         </a>
