@@ -45,8 +45,8 @@ provide(presetActionsKey, usePresetActions(pacing, editor))
 
       <div data-testid="tab-review-pacing__scheduling-column" class="flex flex-col gap-8">
         <scheduling-section
-          data-depth="1"
-          class="rounded-6 bg-brown-200 dark:bg-stone-700 z-10 px-6 pb-8 pt-12 bgx-bank-note bgx-size-20 bgx-opacity-50 dark:bgx-opacity-2"
+          data-depth="2"
+          class="rounded-6 bg-panel z-10 px-6 pb-8 pt-12 bgx-bank-note bgx-size-20 bgx-opacity-50 dark:bgx-opacity-2"
         />
         <deck-save-button class="mt-auto" />
       </div>
