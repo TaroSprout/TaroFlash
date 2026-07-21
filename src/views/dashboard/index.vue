@@ -66,6 +66,7 @@ const show_skeleton = computed(() => !decks_data.value)
         <dashboard-actions-panel
           :due_decks="due_decks"
           :editing_decks="editing_decks"
+          :has_decks="decks.length > 0"
           @toggle-edit-decks="onToggleEditDecks"
         />
 
@@ -97,6 +98,7 @@ const show_skeleton = computed(() => !decks_data.value)
     <dashboard-mobile-footer
       :due_decks="due_decks"
       :editing_decks="editing_decks"
+      :has_decks="decks.length > 0"
       @toggle-edit-decks="onToggleEditDecks"
     />
   </div>

@@ -13,9 +13,14 @@ import { useNewDeckAction } from '../composables/new-deck-action'
 type DashboardActionsPanelProps = {
   due_decks: Deck[]
   editing_decks?: boolean
+  has_decks?: boolean
 }
 
-const { due_decks, editing_decks = false } = defineProps<DashboardActionsPanelProps>()
+const {
+  due_decks,
+  editing_decks = false,
+  has_decks = false
+} = defineProps<DashboardActionsPanelProps>()
 
 const emit = defineEmits<{
   'toggle-edit-decks': []
@@ -42,7 +47,8 @@ const deck_entries = computed<OptionsPanelEntry[]>(() => [
       : t('dashboard.actions-panel.edit-decks-label'),
     trailingIcon: editing_decks ? 'stop' : 'pencil',
     selected: editing_decks,
-    selectedPalette: 'yellow'
+    selectedPalette: 'yellow',
+    disabled: !editing_decks && !has_decks
   }
 ])
 

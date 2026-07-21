@@ -87,9 +87,9 @@ function wrapper_entry(wrapper) {
   return entries.find((e) => e.value === 'edit-decks')
 }
 
-function mount(due_decks = [], editing_decks = false) {
+function mount(due_decks = [], editing_decks = false, has_decks = false) {
   return shallowMount(DashboardActionsPanel, {
-    props: { due_decks, editing_decks },
+    props: { due_decks, editing_decks, has_decks },
     global: {
       stubs: {
         DashboardActionsPanelShell: DashboardActionsPanelShellStub,
@@ -227,6 +227,23 @@ describe('DashboardActionsPanel — edit-decks entry reflects editing_decks stat
     const editing = wrapper_entry(mount([], true))
     expect(editing.selected).toBe(true)
     expect(editing.selectedPalette).toBe('yellow')
+  })
+})
+
+describe('DashboardActionsPanel — edit-decks entry disabled when no decks', () => {
+  test('is disabled when has_decks is false and not editing', () => {
+    const entry = wrapper_entry(mount([], false, false))
+    expect(entry.disabled).toBe(true)
+  })
+
+  test('is enabled when has_decks is true and not editing', () => {
+    const entry = wrapper_entry(mount([], false, true))
+    expect(entry.disabled).toBe(false)
+  })
+
+  test('done-editing state is never disabled, even with no decks', () => {
+    const entry = wrapper_entry(mount([], true, false))
+    expect(entry.disabled).toBe(false)
   })
 })
 
