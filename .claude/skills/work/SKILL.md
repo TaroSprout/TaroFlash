@@ -14,7 +14,7 @@ arguments:
     description: batch only — restrict to this priority.
   - name: <ID>
     description: pair only — the specific ticket to work.
-lastUpdated: 2026-07-21T00:00:00Z
+lastUpdated: 2026-07-21T16:00:00Z
 ---
 
 ## What this skill does
@@ -98,10 +98,11 @@ Progress`. Drop any that another run already grabbed. Claim before dispatching s
      parallel and must not collide), `model:` = the ticket's `Assignee` lowercased →
      `fable`/`opus`/`sonnet`.
    - Prompt carries the ticket's title + body + acceptance criteria and instructs the subagent to:
-     branch off `master` with a conventional name, implement to the acceptance criteria, follow
-     `.claude/rules/*`, **write its own tests** — new coverage for what it added and fixes for any
-     tests its change broke (it does **not** invoke `update-tests`), and run the gate
-     (`vp check` + `vp test`) green in its worktree.
+     **rename** the worktree's existing branch to a conventional name (`git branch -m <fix/…|feat/…>`)
+     — **not** `git checkout -b`, which orphans the auto-created `worktree-agent-<id>` branch as junk —
+     implement to the acceptance criteria, follow `.claude/rules/*`, **write its own tests** — new
+     coverage for what it added and fixes for any tests its change broke (it does **not** invoke
+     `update-tests`), and run the gate (`vp check` + `vp test`) green in its worktree.
    - **No backend teaching persona** in batch.
    - It **reports back** to the orchestrator: branch name, a summary of what changed, the file
      paths it touched, and gate status (pass/fail + any unresolved failure).
@@ -125,6 +126,12 @@ Progress`. Drop any that another run already grabbed. Claim before dispatching s
    if it still can't pass after real effort, treat the ticket as stuck.
    e. **HANDOFF** — for each opened, green PR: set `Status = Review`, write the PR URL into the
    ticket body.
+   f. **TEAR DOWN** — once a ticket is handed off (PR open + green, branch pushed to origin),
+   **remove its worktree**: `git worktree remove <path>`. The branch lives on origin and its local
+   ref survives worktree removal, so the human can `git checkout <branch>` in the **main** working
+   copy to review it against their local dev server — which a worktree checkout can't feed. Then
+   delete any leftover `worktree-agent-<id>` placeholder branch (`git branch -D`) if a subagent left
+   one behind. Only tear down **successful** tickets here; blocked ones keep their worktree (step 5).
 
 5. **STUCK / BLOCKED** — a ticket is stuck when its subagent can't satisfy acceptance, its gate or
    CI won't pass after real effort, or a conflict needs human resolution. Set `Status = Blocked`,
@@ -146,3 +153,6 @@ Progress`. Drop any that another run already grabbed. Claim before dispatching s
   own worktree. Batch subagents write their own tests; batch does **not** invoke `update-tests`.
 - Every batch PR must merge cleanly (vs `master` and vs the other batch PRs) and be CI-green before
   handoff. A conflict needing human judgment → raise it + `Blocked`; never guess a resolution.
+- Successful batch tickets leave **no worktree and no `worktree-agent-*` branch** behind — subagents
+  rename their worktree branch (never `checkout -b`), and the orchestrator removes each worktree after
+  handoff. Only blocked tickets keep their worktree.
