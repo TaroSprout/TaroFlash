@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import CoverDesigner from '@/views/deck/cover-designer/index.vue'
 import CardDesigner from './card-designer/index.vue'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
-import TabBar from '@/components/layout-kit/tab-bar.vue'
+import UiOptionGroup from '@/components/ui-kit/option-group.vue'
 import DeckDesignPreview from '@/components/deck/deck-design-preview.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { windowLayoutKey } from '@/components/layout-kit/paged-window/layout'
@@ -48,12 +48,12 @@ const card_side_attributes = computed(() =>
         @update:side="editor.setActiveSide"
       />
     </div>
-    <tab-bar
-      :tabs="tabs"
-      :active="editor.active_side.value"
+    <ui-option-group
+      :options="tabs"
+      :value="editor.active_side.value"
       :full_width="layout_mode !== 'desktop'"
       :size="layout_mode !== 'desktop' ? 'base' : 'sm'"
-      @update:active="editor.setActiveSide"
+      @update:value="editor.setActiveSide"
     />
     <transition :css="false" mode="out-in" @leave="fadeLeave" @enter="fadeEnter">
       <cover-designer

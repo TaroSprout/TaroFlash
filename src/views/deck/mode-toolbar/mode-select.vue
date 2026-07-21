@@ -23,16 +23,15 @@ const {
 <template>
   <toolbar-base data-testid="mode-select">
     <template #left>
-      <search-bar data-theme="brown-300" data-theme-dark="stone-700" />
+      <search-bar />
 
       <page-settings />
     </template>
 
     <template #right>
       <ui-button
+        neutral
         data-testid="mode-select__cancel-button"
-        data-theme="brown-300"
-        data-theme-dark="stone-700"
         icon-only
         icon-left="close"
         @press="onCancel"
@@ -41,9 +40,8 @@ const {
       </ui-button>
 
       <ui-button
+        neutral
         data-testid="mode-select__select-all-button"
-        data-theme="brown-300"
-        data-theme-dark="stone-700"
         :icon-left="all_cards_selected ? 'close-window-remove' : 'data-check'"
         @press="onToggleSelectAll"
       >
@@ -52,8 +50,7 @@ const {
 
       <ui-button
         data-testid="mode-select__move-button"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
+        data-palette="blue"
         icon-left="move-item"
         :disabled="!has_selection"
         @press="actions.onMoveCards()"
@@ -63,8 +60,7 @@ const {
 
       <ui-button
         data-testid="mode-select__delete-button"
-        data-theme="red-500"
-        data-theme-dark="red-700"
+        data-palette="danger"
         icon-left="delete"
         :disabled="!has_selection"
         @press="actions.onDeleteCards()"
@@ -74,8 +70,7 @@ const {
 
       <ui-tag
         data-testid="mode-select__count"
-        data-theme="purple-500"
-        data-theme-dark="purple-700"
+        data-palette="purple"
         fill-height
         class="bgx-diagonal-stripes bgx-opacity-10"
       >

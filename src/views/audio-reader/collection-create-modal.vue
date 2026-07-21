@@ -36,8 +36,7 @@ async function onSubmit() {
 <template>
   <app-window
     data-testid="collection-create-container"
-    data-theme="blue-500"
-    data-theme-dark="blue-650"
+    data-palette="blue"
     class="sm:w-150"
     :title="t('lesson-collections.create.title')"
     @close="close(undefined)"
@@ -54,14 +53,15 @@ async function onSubmit() {
       <p
         v-if="error_key"
         data-testid="collection-create__error"
-        class="text-sm text-red-500 dark:text-red-400"
+        data-palette="danger"
+        class="text-sm text-(--color-accent)"
       >
         {{ t(error_key) }}
       </p>
 
       <div data-testid="collection-create__actions" class="flex gap-3">
         <ui-button
-          data-theme="grey-400"
+          neutral
           icon-left="close"
           size="lg"
           full-width
@@ -72,8 +72,7 @@ async function onSubmit() {
         </ui-button>
 
         <ui-button
-          data-theme="blue-500"
-          data-theme-dark="blue-650"
+          data-palette="brand"
           icon-left="add"
           size="lg"
           full-width

@@ -24,7 +24,7 @@ function onTap(value: T) {
 <template>
   <div
     data-testid="ui-option-group"
-    class="bg-brown-100 dark:bg-stone-700 gap-1 p-1"
+    class="bg-below gap-1 p-1"
     :class="[
       size === 'base' ? 'rounded-3.5 ' : 'rounded-2.5',
       full_width ? 'flex w-full' : 'inline-flex w-fit'
@@ -38,9 +38,9 @@ function onTap(value: T) {
       type="button"
       data-testid="ui-option-group__option"
       :data-active="option.value === active"
-      bgx_color="var(--color-brown-500)"
+      bgx_color="var(--color-element-pattern)"
       :class="[
-        'cursor-pointer text-brown-500 dark:text-brown-300 data-[active=false]:hover:bg-brown-300 dark:data-[active=false]:hover:bg-grey-800 data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary)',
+        'cursor-pointer text-ink-muted data-[active=false]:hover:bg-element-strong data-[active=true]:bg-(--color-accent) data-[active=true]:text-(--color-on-accent)',
         size === 'base' ? 'py-2 px-4 text-base rounded-3' : 'py-1.5 px-3.5 text-sm rounded-2',
         full_width && 'flex-1 justify-center'
       ]"

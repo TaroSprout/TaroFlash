@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { shallowMount } from '@vue/test-utils'
+import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h, nextTick } from 'vue'
+import { provideDepth } from '@/composables/ui/depth'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -434,14 +435,14 @@ describe('UiDropdownButton', () => {
     const wrapper = mountDropdown({ variant: 'ghost' })
     await trigger(wrapper).trigger('click')
     expect(mainButton(wrapper).attributes('style')).toContain('--btn-bg-color')
-    expect(mainButton(wrapper).attributes('style')).toContain('var(--theme-primary)')
+    expect(mainButton(wrapper).attributes('style')).toContain('var(--color-element)')
   })
 
   test('outline variant: main button gets --btn-bg-color style when menu is open [obligation]', async () => {
     const wrapper = mountDropdown({ variant: 'outline' })
     await trigger(wrapper).trigger('click')
     expect(mainButton(wrapper).attributes('style')).toContain('--btn-bg-color')
-    expect(mainButton(wrapper).attributes('style')).toContain('var(--theme-primary)')
+    expect(mainButton(wrapper).attributes('style')).toContain('var(--color-element)')
   })
 
   test('solid variant: main button does NOT get --btn-bg-color style when menu is open [obligation]', async () => {
@@ -473,24 +474,43 @@ describe('UiDropdownButton', () => {
     expect(onClick).toHaveBeenCalledTimes(1)
   })
 
-  // ── menuTheme/menuThemeDark forwarded to menu container [obligation] ───────
+  // ── ambient depth forwarded to the menu [obligation] ────────────────────────
+  // The menu is teleported and can't inherit the trigger's ambient depth
+  // through the DOM, so the trigger passes its own ambient depth explicitly —
+  // the menu paints at the SAME depth as the trigger button, not a stepped one.
 
-  test('menuTheme prop is applied as data-theme on the menu container [obligation]', async () => {
-    const wrapper = mountDropdown({ menuTheme: 'blue-500' })
-    await trigger(wrapper).trigger('click')
-    expect(menu(wrapper).attributes('data-theme')).toBe('blue-500')
-  })
-
-  test('default menuTheme is brown-300 [obligation]', async () => {
+  test('the menu receives the ambient depth (0) when no ancestor provides one [obligation]', async () => {
     const wrapper = mountDropdown()
     await trigger(wrapper).trigger('click')
-    expect(menu(wrapper).attributes('data-theme')).toBe('brown-300')
+    expect(menu(wrapper).attributes('data-depth')).toBe('0')
   })
 
-  test('menuThemeDark prop is applied as data-theme-dark on the menu container [obligation]', async () => {
-    const wrapper = mountDropdown({ menuThemeDark: 'stone-900' })
+  test('the menu receives an ancestor-provided ambient depth [obligation]', async () => {
+    const Parent = defineComponent({
+      setup() {
+        provideDepth(1)
+        return () =>
+          h(UiDropdownButton, { options: DEFAULT_OPTIONS }, { default: () => 'Edit Cards' })
+      }
+    })
+    // `mount`, not `shallowMount` — UiDropdownButton is Parent's direct
+    // child, and shallowMount auto-stubs direct children, which would stub
+    // out the component under test.
+    const wrapper = mount(Parent, {
+      global: {
+        stubs: {
+          UiButton: UiButtonStub,
+          UiPopover: UiPopoverStub,
+          UiIcon: UiIconStub,
+          DropdownCaret: false,
+          DropdownMenu: false
+        },
+        directives: { sfx: {} }
+      }
+    })
+
     await trigger(wrapper).trigger('click')
-    expect(menu(wrapper).attributes('data-theme-dark')).toBe('stone-900')
+    expect(menu(wrapper).attributes('data-depth')).toBe('1')
   })
 
   // ── shadow prop forwarded to popover [obligation] ─────────────────────────

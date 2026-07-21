@@ -32,17 +32,10 @@ const summary = computed(() => aggregateSession(results, thresholdFor))
         data-testid="session-summary__hero"
         class="flex flex-1 flex-col items-center justify-center gap-6"
       >
-        <ui-icon
-          data-testid="session-summary__icon"
-          src="award"
-          class="size-30 text-brown-700 dark:text-brown-100"
-        />
+        <ui-icon data-testid="session-summary__icon" src="award" class="size-30 text-ink" />
 
         <div data-testid="session-summary__intro" class="flex flex-col items-center gap-2">
-          <h2
-            data-testid="session-summary__title"
-            class="text-center text-3xl font-bold text-brown-700 dark:text-brown-100"
-          >
+          <h2 data-testid="session-summary__title" class="text-center text-3xl font-bold text-ink">
             {{ t('session-summary.title') }}
           </h2>
 
@@ -50,19 +43,19 @@ const summary = computed(() => aggregateSession(results, thresholdFor))
             keypath="session-summary.blurb"
             tag="p"
             data-testid="session-summary__score"
-            class="text-center text-base text-brown-700 dark:text-brown-100"
+            class="text-center text-base text-ink"
           >
             <template #recalled>
               <span
                 data-testid="session-summary__score-recalled"
-                class="inline-flex min-w-6 items-center justify-center rounded-2 bg-brown-100 dark:bg-stone-700 px-1 text-brown-700 dark:text-brown-100"
+                class="inline-flex min-w-6 items-center justify-center rounded-2 bg-element px-1 text-ink"
                 >{{ summary.score }}</span
               >
             </template>
             <template #total>
               <span
                 data-testid="session-summary__score-total"
-                class="inline-flex min-w-6 items-center justify-center rounded-2 bg-brown-100 dark:bg-stone-700 px-1 text-brown-700 dark:text-brown-100"
+                class="inline-flex min-w-6 items-center justify-center rounded-2 bg-element px-1 text-ink"
                 >{{ summary.total }}</span
               >
             </template>
@@ -77,9 +70,8 @@ const summary = computed(() => aggregateSession(results, thresholdFor))
         <stat-tile :summary="summary" />
 
         <ui-button
+          neutral
           data-testid="session-summary__close"
-          data-theme="brown-100"
-          data-theme-dark="stone-700"
           full-width
           size="xl"
           :sfx="{ press: 'slide_up' }"

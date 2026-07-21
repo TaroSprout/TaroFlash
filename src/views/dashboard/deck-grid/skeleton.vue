@@ -10,8 +10,6 @@ type DeckGridSkeletonProps = {
 const { count = 12 } = defineProps<DeckGridSkeletonProps>()
 
 const DEFAULT_COVER: DeckCover = {
-  theme: 'brown-300',
-  theme_dark: 'stone-900',
   pattern: 'diagonal-stripes'
 }
 

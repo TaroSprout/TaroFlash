@@ -104,6 +104,22 @@ onUnmounted(() => {
 
 const side = computed(() => placement.value.split('-')[0] as 'top' | 'right' | 'bottom' | 'left')
 
+// Teleporting to <body> severs DOM inheritance, so the panel would fall back to
+// the root's depth and identity. Snapshot the trigger's RESOLVED values and
+// restate them on the teleported node. Only when teleported — the in-place path
+// inherits correctly on its own, and restating there would pin a stale value.
+const inherited_context = computed(() => {
+  if (!teleport || !open) return {}
+
+  const trigger = triggerRef.value
+  if (!trigger) return {}
+
+  return {
+    'data-depth': trigger.closest<HTMLElement>('[data-depth]')?.dataset.depth,
+    'data-palette': trigger.closest<HTMLElement>('[data-palette]')?.dataset.palette
+  }
+})
+
 const staticSideMap = { top: 'bottom', right: 'left', bottom: 'top', left: 'right' } as const
 
 const arrowStyle = computed(() => {
@@ -167,6 +183,7 @@ watch(
           ref="popoverRef"
           :data-id="id"
           data-testid="ui-kit-popover"
+          v-bind="inherited_context"
           class="ui-kit-popover"
           :class="[
             `ui-kit-popover--${side}`,
@@ -226,7 +243,7 @@ watch(
 .ui-kit-popover__arrow-default {
   width: 100%;
   height: 100%;
-  background-color: var(--popover-arrow-color, var(--color-brown-300));
+  background-color: var(--popover-arrow-color, var(--color-surface));
   border-radius: var(--radius-1);
   rotate: 45deg;
 }

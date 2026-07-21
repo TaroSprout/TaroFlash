@@ -13,7 +13,7 @@ import { memberEditorKey } from '@/composables/member/editor'
 import { MEMBER_DISPLAY_NAME_MAX_LENGTH } from '@/utils/member/defaults'
 import { windowLayoutKey } from '@/components/layout-kit/paged-window/layout'
 import { useAvatarPicker } from '../use-avatar-picker'
-import { SUPPORTED_THEMES, SUPPORTED_PATTERNS } from '@/utils/cover'
+import { SUPPORTED_PALETTES, SUPPORTED_PATTERNS } from '@/utils/cover'
 
 const { t } = useI18n()
 const editor = inject(memberEditorKey)!
@@ -52,17 +52,14 @@ const { onEditAvatar } = useAvatarPicker(editor)
     <labeled-section :label="t('settings.profile.section.appearance')">
       <div
         data-testid="tab-profile__design"
-        :data-theme="editor.draft.cover_config.theme"
-        :data-theme-dark="editor.draft.cover_config.theme_dark"
+        :data-palette="editor.draft.cover_config.palette"
         class="flex flex-col gap-6"
       >
         <ui-theme-picker
           :label="t('settings.profile.theme-label')"
-          :supported_themes="SUPPORTED_THEMES"
-          :theme="editor.draft.cover_config.theme"
-          :theme_dark="editor.draft.cover_config.theme_dark"
-          @update:theme="editor.draft.cover_config.theme = $event"
-          @update:theme_dark="editor.draft.cover_config.theme_dark = $event"
+          :supported_palettes="SUPPORTED_PALETTES"
+          :palette="editor.draft.cover_config.palette"
+          @update:palette="editor.draft.cover_config.palette = $event"
         />
 
         <ui-pattern-picker

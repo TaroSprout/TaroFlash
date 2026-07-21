@@ -41,7 +41,7 @@ function cycleSide() {
       :back_text="side === 'back' ? preview_text : undefined"
       :cover_config="cover"
       :card_attributes="card_attributes"
-      face_classes="border-t border-l border-brown-100 dark:border-stone-900"
+      face_classes="border-t border-l border-below"
       @click="cycleSide"
     />
   </div>

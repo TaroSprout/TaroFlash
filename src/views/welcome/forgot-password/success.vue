@@ -17,21 +17,20 @@ onMounted(() => emitSfx('success_1'))
     data-testid="forgot-password-modal__success"
     class="h-full flex flex-col items-center justify-center gap-4 text-center"
   >
-    <ui-icon src="send" class="size-12 text-brown-700 dark:text-brown-100" />
+    <ui-icon src="send" class="size-12 text-ink" />
 
     <div class="flex flex-col gap-2">
-      <p class="text-xl text-brown-700 dark:text-brown-100">
+      <p class="text-xl text-ink">
         {{ t('forgot-password-modal.success-heading') }}
       </p>
-      <p class="text-brown-500 dark:text-brown-300">
+      <p class="text-ink-muted">
         {{ t('forgot-password-modal.success-message') }}
       </p>
     </div>
 
     <ui-button
+      neutral
       data-testid="forgot-password-modal__success-close"
-      data-theme="brown-50"
-      data-theme-dark="stone-700"
       size="xl"
       full-width
       :sfx="{ press: 'snappy_button_5' }"

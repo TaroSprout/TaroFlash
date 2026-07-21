@@ -16,14 +16,13 @@ const { newCard } = inject(cardEditorKey)!
 <template>
   <toolbar-base>
     <template #left>
-      <search-bar data-theme="brown-300" data-theme-dark="stone-700" />
+      <search-bar />
 
       <page-settings />
 
       <ui-button
         data-testid="mode-view__add-card-button"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
+        data-palette="brand"
         icon-left="add"
         @press="newCard"
       >

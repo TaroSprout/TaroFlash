@@ -37,14 +37,12 @@ function onInput() {
 <template>
   <ui-tooltip
     element="label"
-    data-theme="brown-100"
-    data-theme-dark="stone-700"
     data-testid="ui-kit-textarea-container"
     class="ui-kit-textarea-container"
     :text="error"
     :visible="!!error"
     :suppress="!error"
-    theme="red-500"
+    :data-palette="error ? 'danger' : undefined"
     position="top-end"
     :gap="-14"
     :class="[
@@ -53,7 +51,11 @@ function onInput() {
     ]"
   >
     <span v-if="label">{{ label }}</span>
-    <div data-testid="ui-kit-textarea" class="ui-kit-textarea">
+    <div
+      data-testid="ui-kit-textarea"
+      class="ui-kit-textarea"
+      :data-palette="error ? 'danger' : 'info'"
+    >
       <textarea
         v-bind="$attrs"
         v-sfx.focus="'type_05'"
@@ -84,11 +86,14 @@ function onInput() {
 }
 
 .ui-kit-textarea-container span {
-  color: var(--color-brown-700);
+  color: var(--color-ink);
 }
 
+/* The field is a WELL — one step below whatever surface it sits on. It used to
+   fake `data-theme="brown-100"` to get a neutral fill, which overwrote the real
+   identity for everything inside it. */
 .ui-kit-textarea {
-  background-color: var(--theme-primary);
+  background-color: var(--color-below);
   border-radius: var(--radius-4);
   width: 100%;
   padding: 12px 16px;
@@ -97,18 +102,18 @@ function onInput() {
   position: relative;
 }
 
-.ui-kit-textarea:focus-within {
-  outline-color: var(--color-blue-500);
-}
-
+/* Both rings read --color-accent; the element carries data-palette="info"
+   normally and "danger" while errored, so the meaning lives in the markup and
+   the colour comes from the identity registry. */
+.ui-kit-textarea:focus-within,
 .ui-kit-textarea-container--error .ui-kit-textarea {
-  outline-color: var(--color-red-500);
+  outline-color: var(--color-accent);
 }
 
 .ui-kit-textarea textarea {
   outline: none;
   background: transparent;
-  color: var(--theme-on-primary);
+  color: var(--color-ink);
   font-size: var(--text-lg);
   line-height: var(--text-lg--line-height);
   width: 100%;
@@ -122,7 +127,7 @@ function onInput() {
 }
 
 .ui-kit-textarea textarea::placeholder {
-  color: var(--color-brown-500);
+  color: var(--color-ink-muted);
 }
 
 .ui-kit-textarea-char-count {
@@ -132,13 +137,6 @@ function onInput() {
   line-height: var(--text-xs--line-height);
   color: var(--color-brown-500) !important;
   margin-top: 4px;
-}
-
-:where([data-theme='dark'], [data-theme='dark'] *) .ui-kit-textarea-container span {
-  color: var(--color-brown-100);
-}
-:where([data-theme='dark'], [data-theme='dark'] *) .ui-kit-textarea-char-count {
-  color: var(--color-brown-500);
 }
 
 .ui-kit-textarea-char-count--limit {

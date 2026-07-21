@@ -22,8 +22,8 @@ function onBack() {
 
 <template>
   <ui-button
+    neutral
     v-if="visible"
-    data-theme="brown-100"
     icon-left="arrow-left"
     :size="is_mobile ? 'base' : 'sm'"
     icon-only

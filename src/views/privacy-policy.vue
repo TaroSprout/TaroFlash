@@ -5,9 +5,7 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <div
-    class="p-8 w-full max-w-(--page-width) mx-auto text-brown-700 dark:text-brown-100 flex flex-col gap-8"
-  >
+  <div class="p-8 w-full max-w-(--page-width) mx-auto text-ink flex flex-col gap-8">
     <div>
       <h1 class="text-5xl">{{ t('privacy-policy.title') }}</h1>
       <p class="text-lg leading-relaxed">{{ t('privacy-policy.intro') }}</p>
@@ -110,7 +108,8 @@ const { t } = useI18n()
       <p class="leading-relaxed">{{ t('privacy-policy.section-8.content') }}</p>
       <a
         href="mailto:support@taro-flash.com"
-        class="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 underline"
+        data-palette="info"
+        class="text-(--color-accent) hover:text-(--color-accent-muted) underline"
       >
         {{ t('privacy-policy.section-8.email') }}
       </a>

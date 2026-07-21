@@ -16,8 +16,7 @@ const { t } = useI18n()
 <template>
   <ui-wobble-box
     data-testid="community-callout"
-    data-theme="blue-500"
-    data-theme-dark="blue-650"
+    data-palette="blue"
     class="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10 px-8 py-10 sm:px-12 mx-auto sm:mt-16"
   >
     <ui-image
@@ -32,11 +31,11 @@ const { t } = useI18n()
       class="relative flex flex-col gap-4 text-center sm:text-left"
     >
       <div data-testid="community-callout__text" class="flex flex-col">
-        <h3 class="text-3xl text-(--theme-on-primary)">
+        <h3 class="text-3xl text-(--color-on-accent)">
           {{ t('welcome-view.features.callout.heading') }}
         </h3>
 
-        <p class="text-lg leading-relaxed text-(--theme-neutral)">
+        <p class="text-lg leading-relaxed text-(--color-on-accent)">
           {{ t('welcome-view.features.callout.description') }}
         </p>
       </div>

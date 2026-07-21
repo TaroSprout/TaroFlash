@@ -15,32 +15,27 @@ const DIFFICULTY_TIERS = [
   {
     max: 2,
     key: 'audio-reader.popover.difficulty-beginner',
-    theme: 'green-400',
-    theme_dark: 'green-600'
+    palette: 'green'
   },
   {
     max: 4,
     key: 'audio-reader.popover.difficulty-elementary',
-    theme: 'green-400',
-    theme_dark: 'green-600'
+    palette: 'green'
   },
   {
     max: 6,
     key: 'audio-reader.popover.difficulty-intermediate',
-    theme: 'yellow-500',
-    theme_dark: 'yellow-700'
+    palette: 'yellow'
   },
   {
     max: 8,
     key: 'audio-reader.popover.difficulty-advanced',
-    theme: 'red-500',
-    theme_dark: 'red-600'
+    palette: 'red'
   },
   {
     max: 10,
     key: 'audio-reader.popover.difficulty-expert',
-    theme: 'red-500',
-    theme_dark: 'red-600'
+    palette: 'red'
   }
 ]
 
@@ -149,7 +144,7 @@ watch(
 <template>
   <div
     data-testid="term-card"
-    class="relative [--skeleton-sheen:var(--color-brown-200)] dark:[--skeleton-sheen:var(--color-grey-400)]"
+    class="relative [--skeleton-sheen:var(--color-brown-200)] dark:[--skeleton-sheen:var(--color-brown-500)]"
     :class="{ 'overflow-hidden': sliding }"
   >
     <transition
@@ -165,9 +160,8 @@ watch(
           class="mb-8 flex items-center justify-between gap-3"
         >
           <ui-button
+            neutral
             data-testid="term-card__back"
-            data-theme="brown-100"
-            data-theme-dark="stone-700"
             icon-left="close"
             icon-only
             size="base"
@@ -189,16 +183,16 @@ watch(
           <div data-testid="term-card__term-group" class="flex min-w-0 items-center gap-2">
             <span
               data-testid="term-card__term"
-              class="text-7xl leading-tight wrap-break-word text-brown-700 dark:text-brown-200"
+              class="text-7xl leading-tight wrap-break-word text-ink"
               :class="{ 'text-center': show_back }"
             >
               {{ term }}
             </span>
 
             <ui-button
+              neutral
               v-if="!show_back"
               data-testid="term-card__play-word"
-              data-theme="grey-400"
               class="shrink-0"
               icon-left="play"
               icon-only
@@ -213,9 +207,9 @@ watch(
             <add-card-control v-if="result" :existing_decks="existing_decks" @add="onAddCard" />
 
             <ui-button
+              neutral
               v-else
               data-testid="term-card__close"
-              data-theme="grey-400"
               icon-left="close"
               icon-only
               size="sm"
@@ -231,19 +225,19 @@ watch(
           class="mt-1 flex min-h-7 flex-wrap items-center gap-2"
           :class="{ 'justify-center': show_back }"
         >
-          <span v-if="result?.reading" class="text-base text-brown-700 dark:text-grey-400">
+          <span v-if="result?.reading" class="text-base text-ink">
             {{ result.reading }}
           </span>
 
           <span
             v-else-if="is_loading"
-            class="term-card__skeleton h-4 w-24 rounded-2 bg-brown-500 dark:bg-grey-500"
+            class="term-card__skeleton h-4 w-24 rounded-2 bg-brown-500 dark:bg-brown-500"
           />
         </div>
 
         <ui-divider class="my-3">
           <template #start>
-            <span class="shrink-0 text-brown-500">{{
+            <span class="shrink-0 text-ink-muted">{{
               t('audio-reader.popover.definition-label')
             }}</span>
           </template>
@@ -251,8 +245,7 @@ watch(
           <template #end>
             <ui-tag
               v-if="difficulty_tier"
-              :data-theme="difficulty_tier.theme"
-              :data-theme-dark="difficulty_tier.theme_dark"
+              :data-palette="difficulty_tier.palette"
               class="shrink-0 bgx-diagonal-stripes"
               >{{ t(difficulty_tier.key) }}</ui-tag
             >
@@ -267,15 +260,16 @@ watch(
             aria-busy="true"
             :aria-label="t('audio-reader.popover.loading')"
           >
-            <span class="term-card__skeleton h-6 w-3/5 rounded-2 bg-brown-500 dark:bg-grey-500" />
-            <span class="term-card__skeleton h-4 w-full rounded-2 bg-brown-500 dark:bg-grey-500" />
-            <span class="term-card__skeleton h-4 w-4/5 rounded-2 bg-brown-500 dark:bg-grey-500" />
+            <span class="term-card__skeleton h-6 w-3/5 rounded-2 bg-brown-500 dark:bg-brown-500" />
+            <span class="term-card__skeleton h-4 w-full rounded-2 bg-brown-500 dark:bg-brown-500" />
+            <span class="term-card__skeleton h-4 w-4/5 rounded-2 bg-brown-500 dark:bg-brown-500" />
           </div>
 
           <p
             v-else-if="error_key"
             data-testid="term-card__error"
-            class="text-red-500 dark:text-red-400"
+            data-palette="danger"
+            class="text-(--color-accent)"
           >
             {{ t(error_key) }}
           </p>
@@ -290,7 +284,7 @@ watch(
             <p
               v-if="result.description"
               data-testid="term-card__description"
-              class="text-base text-brown-700 dark:text-grey-300"
+              class="text-base text-ink"
             >
               {{ result.description }}
             </p>
@@ -299,9 +293,8 @@ watch(
 
         <footer data-testid="term-card__footer" class="mt-4 flex">
           <ui-button
+            neutral
             data-testid="term-card__play-from-here"
-            data-theme="brown-100"
-            data-theme-dark="stone-700"
             icon-left="play"
             size="xl"
             full-width

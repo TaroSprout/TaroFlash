@@ -145,9 +145,8 @@ async function onSave() {
       class="grid grid-cols-[40px_1fr_40px] items-center gap-3"
     >
       <ui-button
+        neutral
         data-testid="add-card-panel__back"
-        data-theme="brown-100"
-        data-theme-dark="stone-700"
         icon-left="arrow-back"
         icon-only
         size="base"
@@ -161,10 +160,6 @@ async function onSave() {
       <ui-dropdown-button
         data-testid="add-card-panel__deck"
         class="justify-self-center"
-        data-theme="brown-700"
-        data-theme-dark="brown-100"
-        menu-theme="brown-100"
-        menu-theme-dark="stone-700"
         variant="ghost"
         size="base"
         position="bottom"
@@ -195,9 +190,8 @@ async function onSave() {
 
     <div data-testid="add-card-panel__actions" class="flex gap-3">
       <ui-button
+        neutral
         data-testid="add-card-panel__flip-button"
-        data-theme="brown-100"
-        data-theme-dark="stone-700"
         size="xl"
         full-width
         icon-left="card-flip"
@@ -207,8 +201,7 @@ async function onSave() {
       </ui-button>
 
       <ui-button
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
+        data-palette="brand"
         icon-left="card-add"
         size="xl"
         full-width

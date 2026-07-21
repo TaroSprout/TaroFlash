@@ -60,7 +60,7 @@ function onScrubMove(e: PointerEvent) {
     <span
       v-if="layout === 'inline'"
       data-testid="scrubber__current"
-      class="hidden shrink-0 text-base text-brown-500 tabular-nums sm:block dark:text-grey-400"
+      class="hidden shrink-0 text-base text-ink-muted tabular-nums sm:block dark:text-brown-300"
     >
       {{ current_label }}
     </span>
@@ -93,7 +93,7 @@ function onScrubMove(e: PointerEvent) {
     <span
       v-if="layout === 'inline'"
       data-testid="scrubber__duration"
-      class="hidden shrink-0 text-base text-brown-500 tabular-nums sm:block dark:text-grey-400"
+      class="hidden shrink-0 text-base text-ink-muted tabular-nums sm:block dark:text-brown-300"
     >
       {{ duration_label }}
     </span>
@@ -101,7 +101,7 @@ function onScrubMove(e: PointerEvent) {
     <div
       v-if="layout === 'stacked'"
       data-testid="scrubber__labels"
-      class="absolute inset-x-0 top-full mt-1 flex justify-between text-base text-brown-500 tabular-nums dark:text-grey-400"
+      class="absolute inset-x-0 top-full mt-1 flex justify-between text-base text-ink-muted tabular-nums dark:text-brown-300"
     >
       <span data-testid="scrubber__current">{{ current_label }}</span>
       <span data-testid="scrubber__duration">{{ duration_label }}</span>

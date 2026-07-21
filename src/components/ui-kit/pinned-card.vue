@@ -23,7 +23,7 @@ defineSlots<{
       class="absolute -top-8 right-15 -translate-x-1/2 z-10 drop-shadow-2xs transition-opacity duration-100"
       :class="tucked && 'opacity-0'"
     >
-      <ui-icon src="paperclip" class="w-16 h-16 -rotate-186 text-grey-300" />
+      <ui-icon src="paperclip" class="w-16 h-16 -rotate-186 text-brown-300" />
     </div>
 
     <div data-testid="ui-pinned-card__card" class="rotate-4 drop-shadow-sm">

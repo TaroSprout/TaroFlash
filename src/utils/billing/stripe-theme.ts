@@ -30,12 +30,12 @@ export function getStripeAppearance(is_dark: boolean): Appearance {
   const danger = token(is_dark ? '--color-red-600' : '--color-red-500')
   const accent = token(is_dark ? '--color-blue-650' : '--color-blue-500')
 
-  const background = token(is_dark ? '--color-grey-800' : '--color-brown-50')
+  const background = token(is_dark ? '--color-stone-900' : '--color-brown-50')
   const surface = token(is_dark ? '--color-grey-700' : '--color-brown-100')
   const surfaceHover = token(is_dark ? '--color-grey-900' : '--color-brown-200')
   const border = token(is_dark ? '--color-grey-700' : '--color-brown-300')
-  const text = token(is_dark ? '--color-grey-300' : '--color-brown-700')
-  const placeholder = token(is_dark ? '--color-grey-500' : '--color-brown-500')
+  const text = token(is_dark ? '--color-brown-300' : '--color-brown-700')
+  const placeholder = token(is_dark ? '--color-brown-500' : '--color-brown-500')
 
   return {
     theme: 'flat',

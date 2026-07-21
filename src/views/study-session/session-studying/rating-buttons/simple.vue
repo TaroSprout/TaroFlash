@@ -17,8 +17,7 @@ const emit = defineEmits<{
   <div data-testid="rating-buttons__simple" class="grid w-full grid-cols-2 gap-1.5">
     <ui-button
       data-testid="rating-buttons__again"
-      data-theme="red-500"
-      data-theme-dark="red-600"
+      data-palette="red"
       size="xl"
       icon-left="dislike"
       full-width
@@ -31,8 +30,7 @@ const emit = defineEmits<{
 
     <ui-button
       data-testid="rating-buttons__good"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
+      data-palette="blue"
       size="xl"
       icon-left="like"
       full-width

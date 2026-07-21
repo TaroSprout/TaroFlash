@@ -19,10 +19,9 @@ function onSettingsClicked() {
     <template #actions>
       <ui-button
         data-testid="deck-hero__settings-button"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
+        data-palette="blue"
         icon-left="build"
-        class="absolute! -top-2.5 -left-2.5 ring-4 ring-brown-300 dark:ring-stone-700"
+        class="absolute! -top-2.5 -left-2.5 ring-4 ring-element"
         icon-only
       >
         {{ t('deck.settings-modal.title') }}

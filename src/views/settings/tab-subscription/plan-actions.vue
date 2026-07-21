@@ -21,7 +21,7 @@ const { onUpgradeClick, onCancel, onResume, canceling, resuming } = useUpgradeCl
   <ui-button
     v-if="!subscription"
     data-testid="tab-subscription__upgrade"
-    data-theme="yellow-500"
+    data-palette="yellow"
     size="sm"
     icon-left="triangle-eye"
     @press="onUpgradeClick"
@@ -32,8 +32,7 @@ const { onUpgradeClick, onCancel, onResume, canceling, resuming } = useUpgradeCl
   <ui-button
     v-else-if="!subscription.cancelAtPeriodEnd"
     data-testid="billing-settings__plan-cancel"
-    data-theme="red-500"
-    data-theme-dark="red-600"
+    data-palette="danger"
     size="sm"
     :loading="canceling"
     @press="onCancel"
@@ -42,9 +41,9 @@ const { onUpgradeClick, onCancel, onResume, canceling, resuming } = useUpgradeCl
   </ui-button>
 
   <ui-button
+    neutral
     v-else
     data-testid="billing-settings__plan-resume"
-    data-theme="brown-100"
     size="sm"
     :loading="resuming"
     @press="onResume"

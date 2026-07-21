@@ -127,8 +127,7 @@ watch(
 <template>
   <app-window
     data-testid="collection-edit-container"
-    data-theme="blue-500"
-    data-theme-dark="blue-650"
+    data-palette="blue"
     class="max-h-[90dvh] sm:w-180"
     :title="collection?.title"
     @close="close()"
@@ -140,8 +139,7 @@ watch(
       <section data-testid="collection-edit__lessons" class="flex flex-col gap-4">
         <ui-button
           data-testid="collection-edit__upload"
-          data-theme="blue-500"
-          data-theme-dark="blue-650"
+          data-palette="brand"
           icon-left="add"
           size="lg"
           @press="onUpload"
@@ -149,11 +147,7 @@ watch(
           {{ t('collection-view.new-button') }}
         </ui-button>
 
-        <p
-          v-if="lessons.length === 0"
-          data-testid="collection-edit__empty"
-          class="text-brown-500 dark:text-grey-400"
-        >
+        <p v-if="lessons.length === 0" data-testid="collection-edit__empty" class="text-ink-muted">
           {{ t('collection-view.empty-fallback') }}
         </p>
 
@@ -173,17 +167,17 @@ watch(
         data-testid="collection-edit__danger-zone"
         class="flex flex-col gap-2 rounded-7 border border-red-300 p-4 dark:border-red-500/40"
       >
-        <h3 class="text-xl text-brown-700 dark:text-brown-200">
+        <h3 class="text-xl text-ink">
           {{ t('collection-edit.danger-zone.heading') }}
         </h3>
 
-        <p class="text-base text-brown-500 dark:text-grey-400">
+        <p class="text-base text-ink-muted">
           {{ t('collection-edit.danger-zone.description') }}
         </p>
 
         <ui-button
           data-testid="collection-edit__delete"
-          data-theme="red-500"
+          data-palette="danger"
           icon-left="delete"
           size="lg"
           class="self-start"

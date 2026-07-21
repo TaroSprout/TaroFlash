@@ -23,7 +23,7 @@ const divergence_label = computed(() =>
       data-testid="preset-header__row"
       class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2"
     >
-      <h2 data-testid="preset-header__title" class="text-2xl text-brown-700 dark:text-brown-100">
+      <h2 data-testid="preset-header__title" class="text-2xl text-ink">
         {{ t('deck.settings-modal.review-pacing.heading') }}
       </h2>
 
@@ -34,13 +34,13 @@ const divergence_label = computed(() =>
             data-testid="preset-header__divergence"
             class="flex items-center gap-1"
           >
-            <span data-testid="preset-header__count" class="text-base text-brown-500">
+            <span data-testid="preset-header__count" class="text-base text-ink-muted">
               {{ divergence_label }}
             </span>
 
             <ui-button
+              neutral
               data-testid="preset-header__reset-all"
-              data-theme="brown-500"
               variant="ghost"
               size="sm"
               icon-only
@@ -57,10 +57,10 @@ const divergence_label = computed(() =>
       </div>
     </div>
 
-    <p data-testid="preset-header__subheading" class="text-base text-brown-500">
+    <p data-testid="preset-header__subheading" class="text-base text-ink-muted">
       {{ t('deck.settings-modal.review-pacing.subheading') }}
     </p>
 
-    <ui-divider data-theme="brown-500" class="mt-2 max-md:hidden" />
+    <ui-divider class="mt-2 max-md:hidden" />
   </div>
 </template>

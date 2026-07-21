@@ -4,16 +4,15 @@ import { cleanTerm, type DisplayWord } from '@/utils/transcript'
 // A run of transcript words whose joined text matches a card front. `lo`/`hi`
 // are global word indices (the same space as WordRange), so a match drops
 // straight into the selection machinery. `deck_ids` are the decks already
-// holding this term, which drive the term panel's add-button state. `theme` /
-// `theme_dark` colour the highlight after the reader joins the owning deck's
-// cover — the matcher itself leaves them unset.
+// holding this term, which drive the term panel's add-button state. `palette`
+// colours the highlight after the reader joins the owning deck's cover — the
+// matcher itself leaves it unset.
 export type CardMatch = {
   lo: number
   hi: number
   term: string
   deck_ids: number[]
-  theme?: Theme
-  theme_dark?: Theme
+  palette?: PaletteName
 }
 
 // Normalized card front → the decks holding it. Built once per index, then

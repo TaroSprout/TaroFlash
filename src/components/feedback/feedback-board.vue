@@ -24,14 +24,13 @@ function onSubmitPress() {
 <template>
   <app-window
     data-testid="feedback-board"
-    data-theme="green-500"
-    data-theme-dark="green-800"
+    data-palette="green"
     class="sm:w-170"
     :title="t('feedback-board.title')"
     @close="close"
   >
     <div data-testid="feedback-board__body" class="flex h-full flex-col gap-5 px-5 sm:px-20 pb-6">
-      <p class="text-brown-500 dark:text-brown-300 text-base text-center">
+      <p class="text-ink-muted text-base text-center">
         {{ t('feedback-board.intro') }}
       </p>
 
@@ -52,8 +51,7 @@ function onSubmitPress() {
 
       <ui-button
         data-testid="feedback-board__submit-button"
-        data-theme="green-500"
-        data-theme-dark="green-800"
+        data-palette="green"
         icon-left="shooting-star"
         size="lg"
         full-width

@@ -14,7 +14,7 @@ const { mockMember } = vi.hoisted(() => ({
     email: 'chris@example.com',
     created_at: '2026-01-01T00:00:00Z',
     plan: 'pro',
-    cover: { theme: 'green-500', theme_dark: 'green-800', pattern: 'bank-note' }
+    cover: { palette: 'green', pattern: 'bank-note' }
   }
 }))
 
@@ -44,7 +44,7 @@ beforeEach(() => {
       audio: { muted: false, interface_sounds: 5, hover_sounds: 5 },
       study: { show_all_ratings: true }
     },
-    cover: { theme: 'green-500', theme_dark: 'green-800', pattern: 'bank-note' }
+    cover: { palette: 'green', pattern: 'bank-note' }
   })
 })
 
@@ -85,18 +85,16 @@ describe('useMemberEditor', () => {
   test('seeds draft.cover_config from member_store.cover (persisted value) [obligation]', () => {
     const editor = useMemberEditor()
     expect(editor.draft.cover_config).toEqual({
-      theme: 'green-500',
-      theme_dark: 'green-800',
+      palette: 'green',
       pattern: 'bank-note'
     })
   })
 
   test('reopening with a previously-saved cover seeds that cover, not hardcoded defaults [obligation]', () => {
-    mockMember.cover = { theme: 'red-500', theme_dark: 'red-700', pattern: 'wave' }
+    mockMember.cover = { palette: 'red', pattern: 'wave' }
     const editor = useMemberEditor()
     expect(editor.draft.cover_config).toEqual({
-      theme: 'red-500',
-      theme_dark: 'red-700',
+      palette: 'red',
       pattern: 'wave'
     })
   })
@@ -118,15 +116,9 @@ describe('useMemberEditor', () => {
     expect(editor.is_dirty.value).toBe(true)
   })
 
-  test('is_dirty flips to true when only draft.cover_config.theme changes, rest untouched [obligation]', () => {
+  test('is_dirty flips to true when only draft.cover_config.palette changes, rest untouched [obligation]', () => {
     const editor = useMemberEditor()
-    editor.draft.cover_config.theme = 'red-500'
-    expect(editor.is_dirty.value).toBe(true)
-  })
-
-  test('is_dirty flips to true when only draft.cover_config.theme_dark changes [obligation]', () => {
-    const editor = useMemberEditor()
-    editor.draft.cover_config.theme_dark = 'red-700'
+    editor.draft.cover_config.palette = 'red'
     expect(editor.is_dirty.value).toBe(true)
   })
 
@@ -169,19 +161,19 @@ describe('useMemberEditor', () => {
           show_all_ratings: true
         }
       },
-      cover_config: { theme: 'green-500', theme_dark: 'green-800', pattern: 'bank-note' }
+      cover_config: { palette: 'green', pattern: 'bank-note' }
     })
   })
 
   test('saveMember includes cover_config in the upsert payload when only cover changed [obligation]', async () => {
     const editor = useMemberEditor()
-    editor.draft.cover_config.theme = 'red-500'
+    editor.draft.cover_config.palette = 'red'
     const result = await editor.saveMember()
     expect(result).toBe(true)
     expect(mockUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'member-1',
-        cover_config: { theme: 'red-500', theme_dark: 'green-800', pattern: 'bank-note' }
+        cover_config: { palette: 'red', pattern: 'bank-note' }
       })
     )
   })
@@ -216,7 +208,7 @@ describe('useMemberEditor', () => {
       editor.draft.display_name = 'Renamed'
       editor.draft.description = 'changed'
       editor.draft.preferences.accessibility.left_hand = true
-      editor.draft.cover_config.theme = 'red-500'
+      editor.draft.cover_config.palette = 'red'
 
       editor.resetChanges()
 
@@ -224,8 +216,7 @@ describe('useMemberEditor', () => {
       expect(editor.draft.description).toBe('hello')
       expect(editor.draft.preferences).toEqual(mockMember.preferences)
       expect(editor.draft.cover_config).toEqual({
-        theme: 'green-500',
-        theme_dark: 'green-800',
+        palette: 'green',
         pattern: 'bank-note'
       })
     })
@@ -235,7 +226,7 @@ describe('useMemberEditor', () => {
 
       editor.draft.display_name = 'Renamed'
       editor.draft.preferences.study.show_all_ratings = false
-      editor.draft.cover_config.theme = 'red-500'
+      editor.draft.cover_config.palette = 'red'
       expect(editor.is_dirty.value).toBe(true)
 
       editor.resetChanges()

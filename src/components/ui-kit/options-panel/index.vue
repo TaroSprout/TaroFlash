@@ -13,11 +13,9 @@ export type OptionsPanelEntry = {
   // renders the row's icon + label in the danger red, for destructive options
   danger?: boolean
   selected?: boolean
-  // data-theme/data-theme-dark applied while selected; the selected background
-  // reads off this theme's --theme-primary, so omitting it falls back to the
-  // panel's own ambient theme
-  selectedTheme?: string
-  selectedThemeDark?: string
+  // data-palette applied while selected; the selected background reads off this
+  // palette's --color-accent, so omitting it falls back to the panel's ambient.
+  selectedPalette?: Palette
 }
 
 type OptionsPanelProps = {
@@ -58,17 +56,12 @@ function onSelect(entry: OptionsPanelEntry) {
 </script>
 
 <template>
-  <div
-    data-testid="options-panel"
-    data-theme="brown-100"
-    data-theme-dark="stone-700"
-    class="relative flex flex-col"
-  >
+  <div data-testid="options-panel" class="relative flex flex-col">
     <div
       :data-testid="
         attrs['data-testid'] ? `${attrs['data-testid']}__content` : 'options-panel__content'
       "
-      class="flex min-h-0 flex-1 flex-col rounded-4 bg-(--theme-primary) p-1"
+      class="flex min-h-0 flex-1 flex-col rounded-4 bg-below p-1"
       :class="scrollable ? 'overflow-y-auto scroll-hidden' : 'overflow-hidden'"
     >
       <options-panel-row

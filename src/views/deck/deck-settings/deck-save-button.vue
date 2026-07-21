@@ -46,9 +46,8 @@ function onReset() {
 <template>
   <div class="flex w-full gap-2">
     <ui-button
+      neutral
       data-testid="deck-settings__reset-button"
-      data-theme="brown-100"
-      data-theme-dark="stone-700"
       size="lg"
       icon-only
       icon-left="refresh"
@@ -63,8 +62,7 @@ function onReset() {
 
     <ui-button
       data-testid="deck-settings__save-button"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
+      data-palette="brand"
       size="lg"
       class="flex-1!"
       :loading="is_saving"

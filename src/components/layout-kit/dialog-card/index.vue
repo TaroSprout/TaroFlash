@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import DialogCardHeader from './dialog-card-header.vue'
 import { provideDialogCardViewport, type DialogCardViewport } from './dialog-card-viewport.ts'
 import UiButton from '@/components/ui-kit/button.vue'
+import { nextDepth, provideDepth, useAmbientDepth } from '@/composables/ui/depth'
 import type { SfxOptions } from '@/sfx/directive'
 
 export type DialogCardSize = 'sm' | 'md' | 'lg'
@@ -69,7 +70,7 @@ const {
   content_max_width,
   content_breakout_max_width,
   float_header = false,
-  bg_class = 'bg-brown-200 dark:bg-grey-800'
+  bg_class = 'bg-surface'
 } = defineProps<DialogCardProps>()
 
 const emit = defineEmits<{
@@ -84,6 +85,11 @@ const slots = defineSlots<{
 }>()
 
 const { t } = useI18n()
+
+// A dialog card always floats over the surface that opened it.
+const ambient_depth = useAmbientDepth()
+const depth = provideDepth(() => nextDepth(ambient_depth.value))
+
 const viewport = provideDialogCardViewport(full_bleed_at ?? SIZE_FULL_BLEED_AT[size])
 
 // `--content-grid-padding` is set here directly rather than via a
@@ -112,14 +118,13 @@ defineExpose({ viewport })
 <template>
   <div
     data-testid="dialog-card"
+    :data-depth="depth"
     class="content-grid relative gap-y-4 overflow-hidden [--dialog-px:1.5rem] sm:[--dialog-px:2rem]"
     :class="[
       SIZE_CLASSES[size],
       bg_class,
       float_header ? 'grid-rows-[minmax(0,1fr)]' : 'grid-rows-[auto_minmax(0,1fr)]',
-      viewport === 'mobile'
-        ? 'h-full! w-full! rounded-none!'
-        : 'rounded-8 shadow-lg border-t border-l border-brown-100 dark:border-grey-900'
+      viewport === 'mobile' ? 'h-full! w-full! rounded-none!' : 'rounded-8 bevel-lg'
     ]"
     :style="card_style"
   >
@@ -133,10 +138,9 @@ defineExpose({ viewport })
         <template #start>
           <slot name="header-start">
             <ui-button
+              neutral
               v-if="show_close_button"
               data-testid="dialog-card__close"
-              data-theme="brown-100"
-              data-theme-dark="stone-700"
               icon-left="close"
               icon-only
               rounded-full

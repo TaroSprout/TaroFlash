@@ -188,10 +188,10 @@ describe('SessionProgress', () => {
       expect(label.classes()).toContain('opacity-0')
     })
 
-    test('the progress bar carries the blue-500 theme', () => {
+    test('the progress bar carries the blue palette', () => {
       const wrapper = mountProgress({ editing: false, is_cover: false })
-      expect(wrapper.find('[data-testid="progress-bar-stub"]').attributes('data-theme')).toBe(
-        'blue-500'
+      expect(wrapper.find('[data-testid="progress-bar-stub"]').attributes('data-palette')).toBe(
+        'blue'
       )
     })
   })

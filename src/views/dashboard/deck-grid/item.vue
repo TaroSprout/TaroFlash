@@ -70,9 +70,6 @@ function onOptionSelect(option: DropdownOption) {
             data-testid="dashboard__deck-options-button"
             trigger-only
             :trigger-icon="dropdown?.open ? 'close' : 'more'"
-            trigger-theme="brown-300"
-            trigger-theme-dark="stone-900"
-            menu-theme-dark="stone-900"
             position="bottom-end"
             :options="deck_options"
             class="[&>button]:ring-4 [&>button]:ring-brown-100 dark:[&>button]:ring-grey-900"

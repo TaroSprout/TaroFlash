@@ -37,7 +37,7 @@ const { t } = useI18n()
     <ui-button
       data-testid="face-overlay__dismiss-error"
       size="sm"
-      data-theme="red-500"
+      data-palette="error"
       @click.stop="emit('dismiss-error')"
     >
       {{ t('card.image-editor.dismiss-error-button') }}
@@ -86,11 +86,11 @@ const { t } = useI18n()
   color: var(--color-blue-500);
 }
 
-[data-theme='dark'] .face-overlay[data-variant='full'] {
+[data-mode='dark'] .face-overlay[data-variant='full'] {
   background-color: var(--color-stone-700);
 }
 
-[data-theme='dark'] .face-overlay[data-variant='full']:not([data-error]) {
+[data-mode='dark'] .face-overlay[data-variant='full']:not([data-error]) {
   border-color: var(--color-blue-650);
   color: var(--color-blue-650);
 }
@@ -112,7 +112,7 @@ const { t } = useI18n()
   opacity: 0;
 }
 
-[data-theme='dark'] .face-overlay[data-variant='inset'] {
+[data-mode='dark'] .face-overlay[data-variant='inset'] {
   background-color: color-mix(in srgb, var(--color-stone-700) 85%, transparent);
   color: var(--color-brown-100);
 }
@@ -134,7 +134,7 @@ const { t } = useI18n()
   color: var(--color-blue-500);
 }
 
-[data-theme='dark'] .card-container[data-dragging] .face-overlay:not([data-error]) {
+[data-mode='dark'] .card-container[data-dragging] .face-overlay:not([data-error]) {
   color: var(--color-blue-650);
 }
 </style>

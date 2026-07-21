@@ -20,10 +20,9 @@ const height = useWelcomeHeight()
 <template>
   <div data-testid="welcome-hero__actions" class="flex items-center gap-2">
     <ui-button
+      neutral
       v-if="width === 'desktop' || height === 'tall'"
       size="xl"
-      data-theme="brown-100"
-      data-theme-dark="stone-700"
       icon-left="arrow-down"
       :sfx="{ press: 'snappy_button_5' }"
       @press="seeMore()"
@@ -32,10 +31,9 @@ const height = useWelcomeHeight()
     </ui-button>
 
     <ui-button
+      neutral
       v-if="height === 'short' && width !== 'desktop'"
       size="xl"
-      data-theme="brown-100"
-      data-theme-dark="stone-700"
       icon-left="user-sticker-square"
       data-testid="welcome-hero__login"
       @press="openLogin()"
@@ -43,13 +41,7 @@ const height = useWelcomeHeight()
       {{ t('welcome-view.login-button') }}
     </ui-button>
 
-    <ui-button
-      size="xl"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
-      icon-left="account-circle-add"
-      @press="signup()"
-    >
+    <ui-button size="xl" data-palette="brand" icon-left="account-circle-add" @press="signup()">
       {{
         width === 'desktop'
           ? t('welcome-view.signup-button')

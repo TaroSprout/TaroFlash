@@ -100,7 +100,7 @@ const show_skeleton = computed(() => !deck.value)
             <div
               data-testid="deck-view__toolbar-backing"
               aria-hidden="true"
-              class="absolute inset-x-0 bottom-0 top-[calc(var(--nav-height)*-1)] -z-10 bg-brown-100 dark:bg-grey-900"
+              class="absolute inset-x-0 bottom-0 top-[calc(var(--nav-height)*-1)] -z-10 bg-surface"
             ></div>
             <mode-toolbar-skeleton v-if="view_state === 'empty'" />
             <mode-toolbar v-else />

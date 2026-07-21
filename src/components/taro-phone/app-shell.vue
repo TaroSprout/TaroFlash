@@ -55,7 +55,7 @@ function spawnBurst() {
         data-testid="phone-app"
         v-bind="$attrs"
         :data-active="playing || null"
-        class="rounded-6 pointer-fine:rounded-6 size-16.5 cursor-pointer hover:scale-110 focus:scale-110 transition-transform duration-50 flex items-center justify-center text-white group outline-none bg-(--theme-primary) tap:bgx-diagonal-stripes animation-safe:tap:bgx-slide p-0.5"
+        class="rounded-6 pointer-fine:rounded-6 size-16.5 cursor-pointer hover:scale-110 focus:scale-110 transition-transform duration-50 flex items-center justify-center text-white group outline-none bg-(--color-accent) tap:bgx-diagonal-stripes animation-safe:tap:bgx-slide p-0.5"
         @click="onClick"
       >
         <slot>
@@ -84,8 +84,6 @@ function spawnBurst() {
       />
     </div>
 
-    <span data-testid="app-shell__title" class="text-brown-500 dark:text-brown-100 text-sm">{{
-      title
-    }}</span>
+    <span data-testid="app-shell__title" class="text-ink-muted text-sm">{{ title }}</span>
   </div>
 </template>

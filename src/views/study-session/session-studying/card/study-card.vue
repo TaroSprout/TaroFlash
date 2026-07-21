@@ -358,7 +358,7 @@ function toSwipeZone(offset: number) {
     opacity var(--duration) linear;
 }
 
-[data-theme='dark'] .review-label {
+[data-mode='dark'] .review-label {
   background: var(--color-stone-700);
 }
 

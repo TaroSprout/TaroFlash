@@ -1,11 +1,13 @@
 /* Web font URL lives in `src/styles/fonts.ts` and is injected by `main.ts`. */
 
 @import 'tailwindcss';
-@import '@/styles/palettes.css';
+@import '@/styles/depth.css';
+@import '@/styles/palettes.gen.css';
 @import '@/styles/custom-styles.css';
 @import '@/styles/custom-variants.css';
 @import '@/styles/mobile-modal-variant.css';
 @import '@/styles/border-utils.css';
+@import '@/styles/bevel-utils.css';
 @import '@/styles/content-grid.css';
 @import '@/styles/bg-utils.css';
 @import '@/styles/shimmer.css';
@@ -24,7 +26,19 @@
   --color-blue-500: #11b7d4;
   --color-blue-400: #6cbfd5;
 
-  --color-stone-900: #292c2e;
+  /* Two dark neutral families with distinct jobs:
+     - grey  = SURFACES (containers: page, window, panels) — the depth ramp
+     - stone = ELEMENTS (raised neutral things resting on a surface: buttons,
+       chips) + the flashcard exception
+     They read differently despite close lightness: grey is flat-neutral, stone
+     carries a little blue. */
+  --color-grey-900: #1c1c1c;
+  --color-grey-850: #232323;
+  --color-grey-800: #292929;
+  --color-grey-700: #4f4f4f;
+
+  --color-stone-900: #1e1f1f;
+  --color-stone-800: #292c2e;
   --color-stone-700: #393e40;
 
   --color-green-800: #467d60;
@@ -50,6 +64,7 @@
 
   --color-orange-700: #cf6e19;
   --color-orange-500: #fc946f;
+  --color-orange-400: #fdac90;
 
   --color-yellow-700: #d69224;
   --color-yellow-500: #fbc56f;
@@ -63,27 +78,66 @@
   --color-brown-100: #f3f1ea;
   --color-brown-50: #f9f8f5;
 
-  --color-grey-900: #1c1c1c;
-  --color-grey-800: #292929;
-  --color-grey-700: #4f4f4f;
-  --color-grey-500: #959595;
-  --color-grey-400: #b2b2b2;
-  --color-grey-300: #d2d2d2;
+  /* Neutral role slots. Registering them here is what makes bg-surface,
+     bg-below, bg-panel, bg-float, bg-overlay, text-ink, text-ink-muted and the
+     ring-/outline-/border-below utilities resolve as Tailwind colour utilities.
 
-  --theme-primary: var(--color-blue-500);
-  --theme-on-primary: var(--color-brown-100);
+     These values are the depth-0 light defaults. src/styles/depth.css
+     overrides them per data-depth x data-mode; identity roles (--color-accent
+     and friends) are owned by data-palette and live in palettes.gen.css. */
+  --color-surface: var(--color-brown-100);
+  --color-below: var(--color-brown-50);
+  --color-panel: var(--color-brown-200);
+  --color-float: var(--color-brown-50);
+  --color-overlay: var(--color-white);
+  --color-ink: var(--color-brown-700);
+  --color-ink-muted: var(--color-brown-500);
 
-  --theme-secondary: var(--color-blue-400);
-  --theme-on-secondary: var(--color-brown-100);
+  /* Raised neutral element resting on a surface (non-accent buttons, chips).
+     Stone family in dark. Depth-relative — overridden per depth in depth.css. */
+  --color-element: var(--color-brown-300);
+  --color-on-element: var(--color-brown-700);
 
-  --theme-accent: var(--color-blue-400);
-  --theme-on-accent: var(--color-brown-100);
+  /* One ramp step firmer than --color-element — the darker companion in a
+     two-tone neutral control (a menu's selected-row highlight). Depth-relative,
+     tracks --color-element one step down. Overridden in depth.css. */
+  --color-element-strong: var(--color-brown-500);
 
-  --theme-neutral: var(--color-brown-100);
-  --theme-on-neutral: var(--color-grey-900);
+  /* The lighter companion — a subtle adjacent neutral for two-tone control
+     segmentation (the dropdown caret against its button). Fixed brown-200 in
+     light so it reads as ONE step off the button at every depth (lighter than a
+     depth-0 button, darker than a depth-1 one); stone-900 in dark, set in
+     depth.css. "soft"/"strong" name the LIGHT renditions. */
+  --color-element-soft: var(--color-brown-200);
 
-  /* Semantic surface tokens — neutral chrome backgrounds that swap in dark mode. */
-  --color-input: var(--color-brown-100);
+  /* bgx texture on a NEUTRAL surface (neutral buttons, tap-sweeps, chrome
+     dot-grids) — the neutral analog of --color-accent-pattern. A neutral surface
+     is already a light tone, so unlike the accent sheen this reads DARKER than
+     the surface in light and LIGHTER in dark. Flat brown-500 at every light depth
+     (a neutral surface is light enough that it reads even at depth 1); a lighter
+     warm blanket tint in dark, set in depth.css. Unlike --color-element-strong
+     (whose dark rendition goes darker, for a legible caret) this stays a soft
+     texture in both modes. */
+  --color-element-pattern: var(--color-brown-500);
+
+  /* The flashcard surface — a fixed exception, not depth-derived. */
+  --color-card: var(--color-white);
+
+  /* Media backdrop for user avatars. FIXED, not depth-relative: avatar images
+     are colour-tuned to read against it, so it must be identical at every depth
+     and location — one tuning pass for light, one for dark. Dark in depth.css. */
+  --color-mat: var(--color-brown-200);
+
+  /* Identity role slots — owned by data-palette, overridden per identity in
+     src/styles/palettes.gen.css. Defaults are the `blue` light rendition,
+     matching the historical :root default in palettes.css. */
+  --color-accent: var(--color-blue-500);
+  --color-accent-muted: var(--color-blue-400);
+  --color-on-accent: var(--color-brown-100);
+  /* bgx texture on an accent surface — a soft sheen (see PaletteRendition.pattern).
+     This is the light blanket default (brown-100); dark blanket is stone-700 in
+     depth.css; a palette overrides either via palettes.gen.css. */
+  --color-accent-pattern: var(--color-brown-100);
 
   --radius-0_5: --spacing(0.5); /* 2px */
   --radius-1: --spacing(1); /* 4px */
@@ -146,19 +200,13 @@
   --shadow-lg: 6px 6px 0px 0px var(--shadow-color);
   --drop-shadow-lg: 6px 6px 0px var(--shadow-color);
 
-  /* Upward shadows — for bottom-anchored mobile sheets whose visible overhang
-     is the top-right edge (the bottom cast is clipped by the viewport) */
-  --shadow-xs-up: 3px -3px 0px 0px var(--shadow-color);
-  --drop-shadow-xs-up: 3px -3px 0px var(--shadow-color);
-
-  --shadow-sm-up: 4px -4px 0px 0px var(--shadow-color);
-  --drop-shadow-sm-up: 4px -4px 0px var(--shadow-color);
-
-  --shadow-md-up: 5px -5px 0px 0px var(--shadow-color);
-  --drop-shadow-md-up: 5px -5px 0px var(--shadow-color);
-
-  --shadow-lg-up: 6px -6px 0px 0px var(--shadow-color);
-  --drop-shadow-lg-up: 6px -6px 0px var(--shadow-color);
+  /* Bevel offsets — mirror the shadow scale above. Consumed by the bevel-*
+     utilities in src/styles/bevel-utils.css, which pair the cast shadow with
+     the top-left seam that closes the silhouette. */
+  --bevel-xs: 3px;
+  --bevel-sm: 4px;
+  --bevel-md: 5px;
+  --bevel-lg: 6px;
 
   /* Transitions */
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
@@ -191,7 +239,6 @@
   --page-width: 1570px;
   --blur-md: 24px;
   --blur-4: 4px;
-  --shadow-color: rgba(0, 0, 0, 0.25);
 
   /* Typography */
   --font-primary: 'Tilt Neon', sans-serif;
@@ -279,29 +326,22 @@
     }
   }
 
-  /* DARK MODE EXPLICIT OVERRIDES */
-  /* Warning: This is global and will affect everything */
-  &:where([data-theme='dark'], [data-theme='dark'] *) {
-    --shadow-color: rgba(0, 0, 0, 1);
-    --color-input: var(--color-grey-700);
-  }
-
-  html:where([data-theme='dark']) {
+  html:where([data-mode='dark']) {
     background-color: var(--color-grey-900);
   }
 }
 
 /* Dark Mode Tailwind Variant */
 @custom-variant dark {
-  &:where([data-theme='dark'], [data-theme='dark'] *) {
+  &:where([data-mode='dark'], [data-mode='dark'] *) {
     @slot;
   }
 }
 
-:root[data-theme='light'] {
+:root[data-mode='light'] {
   color-scheme: light;
 }
-:root[data-theme='dark'] {
+:root[data-mode='dark'] {
   color-scheme: dark;
 }
 

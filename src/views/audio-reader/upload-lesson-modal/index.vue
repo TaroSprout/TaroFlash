@@ -104,8 +104,7 @@ function errorKeyFor(error: unknown): string {
 <template>
   <app-window
     data-testid="upload-lesson-container"
-    data-theme="blue-500"
-    data-theme-dark="blue-650"
+    data-palette="blue"
     class="sm:w-150"
     :title="t('audio-reader.upload.title')"
     @close="close(undefined)"
@@ -120,7 +119,7 @@ function errorKeyFor(error: unknown): string {
 
       <label
         data-testid="upload-lesson__file"
-        class="flex cursor-pointer items-center gap-3 rounded-7 border-2 border-dashed border-brown-400 p-4 text-brown-600 dark:border-grey-600 dark:text-grey-300"
+        class="flex cursor-pointer items-center gap-3 rounded-7 border-2 border-dashed border-brown-500 p-4 text-brown-700 dark:border-grey-700 dark:text-brown-300"
       >
         <ui-icon src="music-note" class="h-5" />
         <span data-testid="upload-lesson__file-name">
@@ -134,24 +133,22 @@ function errorKeyFor(error: unknown): string {
       <p
         v-if="error_key"
         data-testid="upload-lesson__error"
-        class="text-sm text-red-500 dark:text-red-400"
+        data-palette="danger"
+        class="text-sm text-(--color-accent)"
       >
         {{ t(error_key) }}
       </p>
 
       <div v-if="is_submitting" data-testid="upload-lesson__progress" class="flex flex-col gap-2">
         <ui-progress-bar :value="progress_value" :label="progress_label" />
-        <p
-          data-testid="upload-lesson__progress-hint"
-          class="text-sm text-brown-600 dark:text-grey-300"
-        >
+        <p data-testid="upload-lesson__progress-hint" class="text-sm text-ink">
           {{ t('audio-reader.upload.progress-hint') }}
         </p>
       </div>
 
       <div data-testid="upload-lesson__actions" class="flex gap-3">
         <ui-button
-          data-theme="grey-400"
+          neutral
           icon-left="close"
           size="lg"
           full-width
@@ -162,8 +159,7 @@ function errorKeyFor(error: unknown): string {
         </ui-button>
 
         <ui-button
-          data-theme="blue-500"
-          data-theme-dark="blue-650"
+          data-palette="brand"
           icon-left="add"
           size="lg"
           full-width

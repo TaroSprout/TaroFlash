@@ -1,22 +1,10 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, ref, watchEffect } from 'vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import storage from '@/utils/storage'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 const STORAGE_KEY = 'app-theme'
-
-const system_mql = window.matchMedia('(prefers-color-scheme: dark)')
-
-function applyToDOM(next: ThemeMode) {
-  const resolved = next === 'system' ? (system_mql.matches ? 'dark' : 'light') : next
-  document.documentElement.setAttribute('data-theme', resolved)
-}
-
-system_mql.addEventListener('change', () => {
-  const store = useThemeStore()
-  if (store.mode === 'system') applyToDOM('system')
-})
 
 export const useThemeStore = defineStore('theme', () => {
   const mode = ref<ThemeMode>('system')
@@ -27,15 +15,21 @@ export const useThemeStore = defineStore('theme', () => {
     return mode.value === 'dark'
   })
 
+  /* `is_dark` is the single source of truth for the resolved mode. It used to
+   * share the job with a module-scope matchMedia listener that wrote the DOM
+   * directly; the two could disagree, and consumers reading `is_dark`
+   * (getStripeAppearance) then rendered against the wrong mode. */
+  watchEffect(() => {
+    const resolved = is_dark.value ? 'dark' : 'light'
+    document.documentElement.setAttribute('data-mode', resolved)
+  })
+
   function load() {
-    const saved = storage.get<ThemeMode>(STORAGE_KEY)
-    mode.value = saved ?? 'system'
-    applyToDOM(mode.value)
+    mode.value = storage.get<ThemeMode>(STORAGE_KEY) ?? 'system'
   }
 
   function setMode(next: ThemeMode) {
     mode.value = next
-    applyToDOM(next)
     storage.set(STORAGE_KEY, next)
   }
 

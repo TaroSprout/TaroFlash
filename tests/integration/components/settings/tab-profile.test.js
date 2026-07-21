@@ -69,11 +69,10 @@ const ThemePickerStub = defineComponent({
   name: 'UiThemePicker',
   props: {
     label: { type: String, default: '' },
-    supported_themes: { type: Array, default: () => [] },
-    theme: { default: undefined },
-    theme_dark: { default: undefined }
+    supported_palettes: { type: Array, default: () => [] },
+    palette: { default: undefined }
   },
-  emits: ['update:theme', 'update:theme_dark'],
+  emits: ['update:palette'],
   setup(props) {
     return () => h('div', { 'data-testid': 'theme-picker-stub', 'data-label': props.label })
   }
@@ -97,7 +96,7 @@ function makeEditor() {
     draft: reactive({
       display_name: 'Chris',
       description: 'Hi',
-      cover_config: { theme: 'green-500', theme_dark: 'green-800', pattern: 'bank-note' }
+      cover_config: { palette: 'green', pattern: 'bank-note' }
     }),
     email: ref('chris@example.com'),
     created_at: ref('2024-04-15T00:00:00Z'),
@@ -140,11 +139,10 @@ describe('TabProfile', () => {
     expect(wrapper.find('[data-testid="pattern-picker-stub"]').exists()).toBe(true)
   })
 
-  test('design wrapper carries data-theme + data-theme-dark from cover', () => {
+  test('design wrapper carries data-palette from cover', () => {
     const { wrapper } = makeTab()
     const design = wrapper.find('[data-testid="tab-profile__design"]')
-    expect(design.attributes('data-theme')).toBe('green-500')
-    expect(design.attributes('data-theme-dark')).toBe('green-800')
+    expect(design.attributes('data-palette')).toBe('green')
   })
 
   test('typing into the name input updates editor.draft.display_name', async () => {
@@ -175,14 +173,12 @@ describe('TabProfile', () => {
     expect(editor.draft.description).toBe('New bio')
   })
 
-  test('theme-picker update events mutate editor.draft.cover_config theme + theme_dark', async () => {
+  test('theme-picker update:palette event mutates editor.draft.cover_config.palette', async () => {
     const { wrapper, editor } = makeTab()
     const themePicker = wrapper.findComponent(ThemePickerStub)
-    themePicker.vm.$emit('update:theme', 'red-500')
-    themePicker.vm.$emit('update:theme_dark', 'red-700')
+    themePicker.vm.$emit('update:palette', 'red')
     await wrapper.vm.$nextTick()
-    expect(editor.draft.cover_config.theme).toBe('red-500')
-    expect(editor.draft.cover_config.theme_dark).toBe('red-700')
+    expect(editor.draft.cover_config.palette).toBe('red')
   })
 
   test('pattern-picker update event mutates editor.draft.cover_config.pattern', async () => {

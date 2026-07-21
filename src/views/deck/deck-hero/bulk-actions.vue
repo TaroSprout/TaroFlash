@@ -43,9 +43,8 @@ function onSelect(value: string) {
     <toolbar-base>
       <template #left>
         <ui-button
+          neutral
           data-testid="bulk-actions__cancel"
-          data-theme="brown-300"
-          data-theme-dark="stone-700"
           icon-only
           icon-left="close"
           @press="onCancel"
@@ -57,8 +56,7 @@ function onSelect(value: string) {
       <template #right>
         <ui-tag
           data-testid="bulk-actions__count"
-          data-theme="purple-500"
-          data-theme-dark="purple-700"
+          data-palette="purple"
           fill-height
           class="bgx-diagonal-stripes bgx-opacity-10"
         >
@@ -67,19 +65,18 @@ function onSelect(value: string) {
       </template>
     </toolbar-base>
 
-    <ui-options-panel data-theme="brown-300" :entries="nav_entries" size="lg" @select="onSelect" />
+    <ui-options-panel :entries="nav_entries" size="lg" @select="onSelect" />
 
     <ui-button
       data-testid="bulk-actions__delete"
-      data-theme="red-500"
-      data-theme-dark="red-600"
+      data-palette="danger"
       full-width
       size="xl"
       :disabled="!has_selection"
       @press="actions.onDeleteCards()"
     >
       {{ t('deck-view.bulk-actions.delete-prefix') }}
-      <span class="bg-brown-100 px-1 py-0.5 -rotate-5 rounded-1.5 text-red-500 dark:text-red-700">
+      <span class="bg-brown-100 px-1 py-0.5 -rotate-5 rounded-1.5 text-red-500 dark:text-red-600">
         {{ selection.selected_count.value }}
       </span>
       {{ t('deck-view.bulk-actions.delete-cards-label', selection.selected_count.value) }}

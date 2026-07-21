@@ -34,7 +34,7 @@ function onSelect(value: CardImageLayout) {
       type="button"
       :data-testid="`image-layout-picker__option-${option}`"
       :data-active="selected === option"
-      class="group relative flex cursor-pointer flex-col items-center gap-2 rounded-8 p-2 transition-colors hover:bg-brown-500 dark:hover:bg-grey-700 hover:bgx-diagonal-stripes hover:bgx-opacity-10 data-[active=true]:bg-(--theme-primary) data-[active=true]:bgx-diagonal-stripes data-[active=true]:bgx-opacity-10"
+      class="group relative flex cursor-pointer flex-col items-center gap-2 rounded-8 p-2 transition-colors hover:bg-brown-500 dark:hover:bg-grey-700 hover:bgx-diagonal-stripes hover:bgx-opacity-10 data-[active=true]:bg-(--color-accent) data-[active=true]:bgx-diagonal-stripes data-[active=true]:bgx-opacity-10"
       @click="onSelect(option)"
       v-sfx="{ hover: selected === option ? undefined : TYPE_SFX }"
     >
@@ -46,7 +46,7 @@ function onSelect(value: CardImageLayout) {
 
       <span
         data-testid="image-layout-picker__label"
-        class="text-sm text-brown-700 group-hover:text-(--theme-on-primary) group-data-[active=true]:text-(--theme-on-primary) dark:text-brown-100"
+        class="text-sm text-brown-700 group-hover:text-(--color-on-accent) group-data-[active=true]:text-(--color-on-accent) dark:text-brown-100"
       >
         {{ t(`deck.settings-modal.design.card-designer.image-layout.option-${option}`) }}
       </span>

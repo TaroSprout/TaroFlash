@@ -25,8 +25,7 @@ function onStudyClicked() {
 <template>
   <ui-button
     data-testid="overview-panel__study-button"
-    data-theme="blue-500"
-    data-theme-dark="blue-650"
+    data-palette="brand"
     full-width
     size="xl"
     :sfx="{ tap_pre: 'snappy_button_3' }"

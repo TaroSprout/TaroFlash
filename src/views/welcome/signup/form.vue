@@ -23,9 +23,8 @@ const { t } = useI18n()
   <div data-testid="signup__form" class="w-full max-w-94.5 flex flex-col gap-8">
     <div data-testid="social-auth" class="flex flex-col gap-4.5">
       <ui-button
+        neutral
         size="xl"
-        data-theme="brown-100"
-        data-theme-dark="stone-700"
         :fancy-hover="false"
         class="w-full!"
         icon-left="google-logo"

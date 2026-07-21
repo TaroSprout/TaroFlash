@@ -69,12 +69,9 @@ function onSelect(option: DropdownOption) {
 <template>
   <ui-dropdown-button
     data-testid="add-card-control"
-    data-theme="blue-500"
-    data-theme-dark="blue-650"
+    data-palette="brand"
     :icon-left="already_a_card ? 'check' : 'card-add'"
     size="base"
-    menu-theme="brown-100"
-    menu-theme-dark="stone-700"
     position="bottom-end"
     play-on-tap
     :tap-animate="false"

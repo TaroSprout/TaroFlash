@@ -21,11 +21,10 @@ const {
     class="flex w-full items-center gap-2 px-(--dock-px) pt-(--dock-pt) pb-(--dock-pb)"
   >
     <ui-button
+      neutral
       data-testid="deck-footer-bulk-actions__cancel"
       icon-only
       icon-left="close"
-      data-theme="brown-200"
-      data-theme-dark="stone-700"
       size="lg"
       @press="onCancel"
     >
@@ -33,11 +32,10 @@ const {
     </ui-button>
 
     <ui-button
+      neutral
       data-testid="deck-footer-bulk-actions__select-all"
       icon-only
       :icon-left="all_cards_selected ? 'close-window-remove' : 'data-check'"
-      data-theme="brown-200"
-      data-theme-dark="stone-700"
       size="lg"
       @press="onToggleSelectAll"
     >
@@ -47,8 +45,7 @@ const {
     <ui-button
       data-testid="deck-footer-bulk-actions__move"
       icon-left="move-item"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
+      data-palette="blue"
       full-width
       size="lg"
       :disabled="!has_selection"
@@ -60,8 +57,7 @@ const {
     <ui-button
       data-testid="deck-footer-bulk-actions__delete"
       icon-left="delete"
-      data-theme="red-500"
-      data-theme-dark="red-700"
+      data-palette="danger"
       full-width
       size="lg"
       :disabled="!has_selection"

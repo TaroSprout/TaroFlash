@@ -12,10 +12,7 @@ const { draft, title_error } = inject(deckEditorKey)!
 </script>
 
 <template>
-  <aside
-    data-testid="deck-aside"
-    class="h-full flex flex-col justify-between gap-5 text-brown-700 dark:text-brown-100"
-  >
+  <aside data-testid="deck-aside" class="h-full flex flex-col justify-between gap-5 text-ink">
     <div data-testid="deck-aside__inputs" class="flex flex-col gap-2">
       <ui-input
         :placeholder="t('deck.title-placeholder')"

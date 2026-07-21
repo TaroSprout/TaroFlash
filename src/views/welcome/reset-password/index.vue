@@ -42,8 +42,6 @@ async function onSubmit() {
     class="gap-0!"
     size="sm"
     float_header
-    data-theme="brown-50"
-    data-theme-dark="stone-700"
     :title="t('reset-password-modal.heading')"
     :show_header="!success"
     @close="close()"

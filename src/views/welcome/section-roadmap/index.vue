@@ -3,6 +3,7 @@ import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiOptionsPanel, { type OptionsPanelEntry } from '@/components/ui-kit/options-panel/index.vue'
 import SectionHeader from '../section-header.vue'
+import { provideDepth } from '@/composables/ui/depth'
 
 type RoadmapItem = {
   key: string
@@ -10,6 +11,10 @@ type RoadmapItem = {
 }
 
 const { t } = useI18n()
+
+// The panel band is a fixed brown-200 surface on the depth-0 page; declare
+// depth 1 so the options-panel well inside reads `below` against it.
+provideDepth(1)
 
 const items: RoadmapItem[] = [
   { key: 'build-study-decks', done: true },
@@ -36,12 +41,11 @@ const entries: OptionsPanelEntry[] = items.map((item) => ({
 <template>
   <section
     data-testid="welcome-roadmap"
-    data-theme="brown-100"
-    data-theme-dark="grey-900"
     class="w-full bg-green-500 dark:bg-green-800 flex justify-center"
   >
     <div
-      class="w-full flex flex-col gap-14 items-center py-30 px-4 sm:px-16 bg-brown-200 dark:bg-grey-800 wave-top-[30px]"
+      data-depth="1"
+      class="w-full flex flex-col gap-14 items-center py-30 px-4 sm:px-16 bg-panel wave-top-[30px]"
     >
       <section-header
         :heading="t('welcome-view.roadmap.heading')"
@@ -50,7 +54,6 @@ const entries: OptionsPanelEntry[] = items.map((item) => ({
 
       <ui-options-panel
         data-testid="welcome-roadmap__list"
-        data-theme="brown-50"
         class="w-full max-w-200"
         :entries="entries"
         :interactive="false"
@@ -73,7 +76,7 @@ const entries: OptionsPanelEntry[] = items.map((item) => ({
           <span
             class="text-base"
             :class="
-              itemFor(entry.value).done ? 'text-green-600 dark:text-green-800' : 'text-brown-500'
+              itemFor(entry.value).done ? 'text-green-600 dark:text-green-800' : 'text-ink-muted'
             "
           >
             {{

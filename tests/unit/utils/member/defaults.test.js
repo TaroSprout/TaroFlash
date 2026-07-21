@@ -10,10 +10,9 @@ describe('member/defaults', () => {
     expect(MEMBER_SETTINGS_DEFAULTS).toEqual({ display_name: '', description: '' })
   })
 
-  test('MEMBER_CARD_COVER_DEFAULTS exposes a green theme + bank-note pattern', () => {
+  test('MEMBER_CARD_COVER_DEFAULTS exposes a green palette + bank-note pattern', () => {
     expect(MEMBER_CARD_COVER_DEFAULTS).toEqual({
-      theme: 'green-500',
-      theme_dark: 'green-800',
+      palette: 'green',
       pattern: 'bank-note'
     })
   })
@@ -30,39 +29,35 @@ describe('member/defaults', () => {
   })
 
   test('withMemberCardCoverDefaults overrides only the keys present on the partial', () => {
-    const out = withMemberCardCoverDefaults({ theme: 'blue-500' })
+    const out = withMemberCardCoverDefaults({ palette: 'blue' })
     expect(out).toEqual({
-      theme: 'blue-500',
-      theme_dark: 'green-800',
+      palette: 'blue',
       pattern: 'bank-note'
     })
   })
 
   test('withMemberCardCoverDefaults ignores undefined values on the partial', () => {
-    const out = withMemberCardCoverDefaults({ theme: undefined, pattern: 'endless-clouds' })
+    const out = withMemberCardCoverDefaults({ palette: undefined, pattern: 'endless-clouds' })
     expect(out).toEqual({
-      theme: 'green-500',
-      theme_dark: 'green-800',
+      palette: 'green',
       pattern: 'endless-clouds'
     })
   })
 
   test('withMemberCardCoverDefaults can override every field at once', () => {
     const out = withMemberCardCoverDefaults({
-      theme: 'red-500',
-      theme_dark: 'red-800',
+      palette: 'red',
       pattern: 'endless-clouds'
     })
     expect(out).toEqual({
-      theme: 'red-500',
-      theme_dark: 'red-800',
+      palette: 'red',
       pattern: 'endless-clouds'
     })
   })
 
   test('withMemberCardCoverDefaults does not mutate the defaults object', () => {
     const before = { ...MEMBER_CARD_COVER_DEFAULTS }
-    withMemberCardCoverDefaults({ theme: 'red-500' })
+    withMemberCardCoverDefaults({ palette: 'red' })
     expect(MEMBER_CARD_COVER_DEFAULTS).toEqual(before)
   })
 })

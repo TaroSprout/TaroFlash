@@ -41,11 +41,10 @@ const sort_options = [
       class="grid w-full grid-cols-[1fr_auto_1fr] items-center"
     >
       <ui-button
+        neutral
         data-testid="page-settings-panel__close"
         icon-only
         icon-left="close"
-        data-theme="brown-100"
-        data-theme-dark="stone-700"
         :size="is_mobile ? 'base' : 'sm'"
         class="justify-self-start"
         @press="closePageSettings"
@@ -55,20 +54,19 @@ const sort_options = [
 
       <span
         data-testid="page-settings-panel__title"
-        class="justify-self-center text-xl font-semibold text-brown-700 dark:text-brown-100"
+        class="justify-self-center text-xl font-semibold text-ink"
       >
         {{ t('deck-view.page-settings.trigger') }}
       </span>
     </header>
 
     <div
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
+      data-palette="blue"
       data-testid="page-settings-panel__settings"
       class="mx-auto flex w-full max-w-70 md:max-w-60 flex-col gap-4"
     >
       <div data-testid="page-settings-panel__face" class="flex flex-col gap-2">
-        <span class="text-sm text-brown-500 dark:text-brown-300">
+        <span class="text-sm text-ink-muted">
           {{ t('deck-view.page-settings.face-label') }}
         </span>
         <ui-option-group
@@ -81,7 +79,7 @@ const sort_options = [
       </div>
 
       <div data-testid="page-settings-panel__card-size" class="flex flex-col gap-2">
-        <span class="text-sm text-brown-500 dark:text-brown-300">
+        <span class="text-sm text-ink-muted">
           {{ t('deck-view.page-settings.card-size-label') }}
         </span>
         <ui-option-group
@@ -94,15 +92,10 @@ const sort_options = [
       </div>
 
       <div data-testid="page-settings-panel__sort" class="flex flex-col gap-2">
-        <span class="text-sm text-brown-500 dark:text-brown-300">
+        <span class="text-sm text-ink-muted">
           {{ t('deck-view.page-settings.sort-label') }}
         </span>
         <ui-select-menu
-          data-theme="brown-100"
-          data-theme-dark="stone-700"
-          trigger-theme="blue-500"
-          trigger-theme-dark="blue-650"
-          menu-theme-dark="stone-700"
           size="base"
           :options="sort_options"
           :model-value="sort_by"

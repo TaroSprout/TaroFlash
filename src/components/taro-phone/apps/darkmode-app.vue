@@ -9,7 +9,7 @@ import { emitSfx } from '@/sfx/bus'
 
 type ModeConfig = {
   labelKey: string
-  theme: Theme
+  palette: PaletteName
 }
 
 const { t } = useI18n()
@@ -18,13 +18,13 @@ const { mode } = storeToRefs(theme_store)
 const { cycle } = theme_store
 
 const modes = computed<{ [key in ThemeMode]: ModeConfig }>(() => ({
-  system: { labelKey: 'phone.apps.darkmode.mode-system', theme: 'purple-500' },
-  light: { labelKey: 'phone.apps.darkmode.mode-light', theme: 'orange-500' },
-  dark: { labelKey: 'phone.apps.darkmode.mode-dark', theme: 'blue-650' }
+  system: { labelKey: 'phone.apps.darkmode.mode-system', palette: 'purple' },
+  light: { labelKey: 'phone.apps.darkmode.mode-light', palette: 'orange' },
+  dark: { labelKey: 'phone.apps.darkmode.mode-dark', palette: 'blue' }
 }))
 
 const active_mode_config = computed(() => modes.value[mode.value])
-const theme = computed(() => active_mode_config.value.theme)
+const palette = computed(() => active_mode_config.value.palette)
 const title = computed(() => t(active_mode_config.value.labelKey))
 
 function cycleMode() {
@@ -35,7 +35,7 @@ function cycleMode() {
 
 <template>
   <app-shell
-    :data-theme="theme"
+    :data-palette="palette"
     :title="title"
     :tap-hold="0"
     :tap-duration="0.2"

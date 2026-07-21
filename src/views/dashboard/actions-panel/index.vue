@@ -42,8 +42,7 @@ const deck_entries = computed<OptionsPanelEntry[]>(() => [
       : t('dashboard.actions-panel.edit-decks-label'),
     trailingIcon: editing_decks ? 'stop' : 'pencil',
     selected: editing_decks,
-    selectedTheme: 'yellow-500',
-    selectedThemeDark: 'yellow-700'
+    selectedPalette: 'yellow'
   }
 ])
 
@@ -67,8 +66,8 @@ async function onSelect(value: string) {
   <dashboard-actions-panel-shell
     data-testid="dashboard-actions-panel"
     v-bind="root_bindings"
-    class="bg-(--theme-primary)"
-    body_class="bg-brown-300 dark:bg-stone-900"
+    class="bg-(--color-accent)"
+    body_class="bg-surface"
   >
     <template #polaroid>
       <dashboard-actions-panel-polaroid />
@@ -77,7 +76,7 @@ async function onSelect(value: string) {
     <template #header>
       <span
         data-testid="dashboard-actions-panel__header"
-        class="text-(--theme-on-primary) text-4xl font-semibold truncate"
+        class="text-(--color-on-accent) text-4xl font-semibold truncate"
       >
         {{ member_store.display_name || t('member-badge.name-placeholder') }}
       </span>
@@ -85,8 +84,6 @@ async function onSelect(value: string) {
 
     <template #body>
       <ui-options-panel
-        data-theme="brown-200"
-        data-theme-dark="stone-700"
         :entries="deck_entries"
         size="lg"
         class="max-mxl:hidden"
@@ -98,8 +95,7 @@ async function onSelect(value: string) {
         data-testid="dashboard-actions-panel__study-button"
         size="xl"
         icon-left="book-flip-page"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
+        data-palette="brand"
         full-width
         :disabled="editing_decks || due_decks.length === 0"
         @press="onStudyAll"

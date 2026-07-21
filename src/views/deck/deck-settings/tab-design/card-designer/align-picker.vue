@@ -49,17 +49,14 @@ function onSelect(h: Horizontal, v: Vertical) {
 </script>
 
 <template>
-  <div
-    data-testid="align-picker"
-    class="grid grid-cols-3 gap-1 w-full bg-brown-100 dark:bg-stone-700 rounded-[22px] p-2"
-  >
+  <div data-testid="align-picker" class="grid grid-cols-3 gap-1 w-full bg-below rounded-[22px] p-2">
     <template v-for="v in VERTICALS" :key="v">
       <button
         v-for="h in HORIZONTALS"
         :key="`${h}-${v}`"
         :data-testid="`align-picker__cell-${h}-${v}`"
         :data-active="isActive(h, v)"
-        class="aspect-square flex items-center justify-center rounded-5 cursor-pointer text-brown-500 dark:text-brown-100 data-[active=true]:bg-(--theme-primary) data-[active=true]:text-(--theme-on-primary) data-[active=true]:bgx-diagonal-stripes data-[active=true]:bgx-opacity-10 data-[active=false]:hover:bg-(--theme-primary) data-[active=false]:hover:text-(--theme-on-primary) data-[active=false]:hover:bgx-diagonal-stripes data-[active=false]:hover:bgx-opacity-10"
+        class="aspect-square flex items-center justify-center rounded-5 cursor-pointer text-ink-muted data-[active=true]:bg-(--color-accent) data-[active=true]:text-(--color-on-accent) data-[active=true]:bgx-diagonal-stripes data-[active=true]:bgx-opacity-10 data-[active=false]:hover:bg-(--color-accent) data-[active=false]:hover:text-(--color-on-accent) data-[active=false]:hover:bgx-diagonal-stripes data-[active=false]:hover:bgx-opacity-10"
         @click="onSelect(h, v)"
         v-sfx="{ hover: TYPE_SFX }"
       >

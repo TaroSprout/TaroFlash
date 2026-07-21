@@ -12,18 +12,18 @@ describe('CardCover', () => {
     expect(wrapper.find('[data-testid="card-cover"]').exists()).toBe(true)
   })
 
-  test('falls back to purple-500 data-theme when no cover config', () => {
+  test('omits data-palette when no cover config — CSS falls back to the neutral element role', () => {
     const wrapper = mountCover()
-    expect(wrapper.find('[data-testid="card-cover"]').attributes('data-theme')).toBe('purple-500')
+    expect(wrapper.find('[data-testid="card-cover"]').attributes('data-palette')).toBeUndefined()
   })
 
-  test('sets data-theme from theme', () => {
-    const wrapper = mountCover({ theme: 'green-400' })
-    expect(wrapper.find('[data-testid="card-cover"]').attributes('data-theme')).toBe('green-400')
+  test('sets data-palette from palette', () => {
+    const wrapper = mountCover({ palette: 'green' })
+    expect(wrapper.find('[data-testid="card-cover"]').attributes('data-palette')).toBe('green')
   })
 
   test('does not apply an inline border style — border is a static CSS rule now', () => {
-    const wrapper = mountCover({ theme: 'blue-500' })
+    const wrapper = mountCover({ palette: 'blue' })
     const style = wrapper.find('[data-testid="card-cover"]').attributes('style')
     expect(style ?? '').not.toContain('border')
   })
@@ -43,7 +43,7 @@ describe('CardCover', () => {
   })
 
   test('applies no pattern class when pattern is unset', () => {
-    const wrapper = mountCover({ theme: 'blue-500' })
+    const wrapper = mountCover({ palette: 'blue' })
     const classes = wrapper.find('[data-testid="card-cover"]').classes()
     expect(classes).not.toContain('pattern-mask')
   })

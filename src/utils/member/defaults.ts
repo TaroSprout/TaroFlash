@@ -12,8 +12,7 @@ export const MEMBER_SETTINGS_DEFAULTS = {
 export const MEMBER_DISPLAY_NAME_MAX_LENGTH = 12
 
 export const MEMBER_CARD_COVER_DEFAULTS: MemberCover = {
-  theme: 'green-500',
-  theme_dark: 'green-800',
+  palette: 'green',
   pattern: 'bank-note'
 }
 

@@ -19,7 +19,7 @@ const invoices = computed(() => invoices_query.data.value?.invoices ?? [])
     <p
       v-if="invoices_query.isLoading.value"
       data-testid="billing-settings__invoices-loading"
-      class="text-brown-500 dark:text-brown-400"
+      class="text-ink-muted"
     >
       {{ t('settings.subscription.invoices.loading') }}
     </p>
@@ -27,7 +27,7 @@ const invoices = computed(() => invoices_query.data.value?.invoices ?? [])
     <p
       v-else-if="invoices.length === 0"
       data-testid="billing-settings__invoices-empty"
-      class="text-brown-500 dark:text-brown-400"
+      class="text-ink-muted"
     >
       {{ t('settings.subscription.invoices.empty') }}
     </p>
@@ -37,9 +37,9 @@ const invoices = computed(() => invoices_query.data.value?.invoices ?? [])
         v-for="invoice in invoices"
         :key="invoice.id"
         :data-testid="`billing-settings__invoice-${invoice.id}`"
-        class="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 bg-brown-200 dark:bg-grey-700 rounded-3 p-3 text-brown-700 dark:text-brown-200"
+        class="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 bg-panel rounded-3 p-3 text-ink"
       >
-        <span class="text-sm text-brown-500 dark:text-brown-400 tabular-nums">
+        <span class="text-sm text-ink-muted tabular-nums">
           {{ formatStripeDate(invoice.created, locale) }}
         </span>
         <span class="truncate">{{ invoice.number ?? invoice.id }}</span>
@@ -52,7 +52,8 @@ const invoices = computed(() => invoices_query.data.value?.invoices ?? [])
           :href="invoice.hosted_invoice_url"
           target="_blank"
           rel="noopener noreferrer"
-          class="text-sm text-green-700 dark:text-green-400 hover:underline"
+          data-palette="info"
+          class="text-sm text-(--color-accent) hover:underline"
         >
           {{ t('settings.subscription.invoices.view') }}
         </a>

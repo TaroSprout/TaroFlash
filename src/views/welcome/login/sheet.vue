@@ -13,8 +13,7 @@ const { t } = useI18n()
 <template>
   <app-window
     data-testid="login-sheet"
-    data-theme="blue-500"
-    data-theme-dark="blue-650"
+    data-palette="blue"
     :title="t('login-dialog.heading')"
     @close="close()"
     class="md:max-w-100"

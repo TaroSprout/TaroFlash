@@ -30,7 +30,7 @@ function onIconSelect(value: string | undefined) {
 
 <template>
   <div data-testid="icon-picker-container" class="flex flex-col gap-2.5">
-    <h3 data-testid="icon-picker__label" class="text-brown-700 dark:text-brown-100">
+    <h3 data-testid="icon-picker__label" class="text-ink">
       {{ t('deck.settings-modal.cover.icon-picker.label') }}
     </h3>
     <div data-testid="icon-picker" class="flex flex-wrap gap-2">
@@ -40,7 +40,7 @@ function onIconSelect(value: string | undefined) {
         :data-testid="`icon-picker__option-${name}`"
         :data-selected="name === icon || undefined"
         v-sfx="{ hover: TYPE_SFX }"
-        class="w-14.5 aspect-square rounded-6 cursor-pointer flex items-center justify-center bg-brown-100 dark:bg-stone-700 text-brown-500 dark:text-brown-100 [&_svg]:size-6 data-selected:bg-(--theme-primary) data-selected:text-(--theme-accent) hover:bg-(--theme-primary) hover:text-(--theme-accent) hover:bgx-diagonal-stripes hover:bgx-opacity-10 data-selected:bgx-diagonal-stripes data-selected:bgx-opacity-10 transition-colors duration-75 hover:[&_svg]:scale-120 hover:[&_svg]:rotate-6"
+        class="w-14.5 aspect-square rounded-6 cursor-pointer flex items-center justify-center bg-element text-ink-muted [&_svg]:size-6 data-selected:bg-(--color-accent) data-selected:text-(--color-accent-muted) hover:bg-(--color-accent) hover:text-(--color-accent-muted) hover:bgx-diagonal-stripes hover:bgx-opacity-10 data-selected:bgx-diagonal-stripes data-selected:bgx-opacity-10 transition-colors duration-75 hover:[&_svg]:scale-120 hover:[&_svg]:rotate-6"
         @click="onIconSelect(name)"
       >
         <ui-icon :src="name" />

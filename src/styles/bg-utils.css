@@ -2,7 +2,7 @@
   --bgx-image: --value(--bgx-*, [image]);
 
   --bgx-size: auto;
-  --bgx-fill: var(--color-brown-100);
+  --bgx-fill: var(--color-accent-pattern);
   --bgx-opacity: 0.2;
 
   --bgx-x: 50%;
@@ -47,7 +47,7 @@
    so the dark rule below (higher specificity, same author origin) can win. */
 @utility pattern-mask {
   --bgx-size: auto;
-  --bgx-fill: var(--color-brown-100);
+  --bgx-fill: var(--color-accent-pattern);
   --bgx-opacity: var(--bgx-opacity-light, 0.2);
 
   --bgx-x: 50%;
@@ -82,7 +82,7 @@
   }
 }
 
-[data-theme='dark'] .pattern-mask {
+[data-mode='dark'] .pattern-mask {
   --bgx-opacity: var(--bgx-opacity-dark, var(--bgx-opacity-light, 0.2));
 }
 

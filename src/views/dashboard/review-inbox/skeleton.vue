@@ -8,8 +8,6 @@ type ReviewInboxSkeletonProps = {
 const { count = 6 } = defineProps<ReviewInboxSkeletonProps>()
 
 const DEFAULT_COVER: DeckCover = {
-  theme: 'brown-300',
-  theme_dark: 'stone-900',
   pattern: 'diagonal-stripes'
 }
 </script>
@@ -29,7 +27,7 @@ const DEFAULT_COVER: DeckCover = {
 
       <div
         data-testid="review-inbox-skeleton__label"
-        class="h-5 w-16 bg-brown-200 dark:bg-grey-800 rounded-2 animate-pulse"
+        class="h-5 w-16 bg-element rounded-2 animate-pulse"
       ></div>
     </div>
   </div>

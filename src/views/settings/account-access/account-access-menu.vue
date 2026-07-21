@@ -36,24 +36,15 @@ function onGooglePress() {
 
 <template>
   <div data-testid="account-access-modal__menu" class="h-full flex flex-col justify-center gap-4">
-    <p
-      data-testid="account-access-modal__description"
-      class="text-center text-brown-500 dark:text-brown-300"
-    >
+    <p data-testid="account-access-modal__description" class="text-center text-ink-muted">
       {{ t('account-access-modal.description') }}
     </p>
 
-    <ui-options-panel
-      data-theme="brown-50"
-      :entries="entries"
-      :sfx="{ press: 'snappy_button_5' }"
-      @select="onSelect"
-    />
+    <ui-options-panel :entries="entries" :sfx="{ press: 'snappy_button_5' }" @select="onSelect" />
 
     <ui-button
+      neutral
       data-testid="account-access-modal__google-button"
-      data-theme="brown-50"
-      data-theme-dark="stone-700"
       full-width
       size="lg"
       icon-left="google-logo"

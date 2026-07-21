@@ -23,18 +23,18 @@ const fill_width = computed(() => {
     :aria-valuemin="0"
     :aria-valuemax="max"
     :aria-valuenow="value"
-    class="bg-input relative h-9 w-full overflow-hidden rounded-full"
+    class="bg-below relative h-9 w-full overflow-hidden rounded-full"
   >
     <div
       data-testid="ui-kit-progress-bar__fill"
-      class="absolute inset-y-0 left-0 rounded-full bg-(--theme-primary) transition-[width] duration-300 ease-out"
+      class="absolute inset-y-0 left-0 rounded-full bg-(--color-accent) transition-[width] duration-300 ease-out"
       :style="{ width: fill_width }"
     ></div>
 
     <div
       v-if="label"
       data-testid="ui-kit-progress-bar__label"
-      class="pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-bold text-brown-700 dark:text-brown-100 transition-[clip-path] duration-300 ease-out"
+      class="pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-bold text-ink transition-[clip-path] duration-300 ease-out"
       :style="{ clipPath: `inset(0 0 0 ${fill_width})` }"
     >
       {{ label }}
@@ -44,7 +44,7 @@ const fill_width = computed(() => {
       v-if="label"
       aria-hidden="true"
       data-testid="ui-kit-progress-bar__label-fill"
-      class="pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-bold text-(--theme-on-primary) transition-[clip-path] duration-300 ease-out"
+      class="pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-bold text-(--color-on-accent) transition-[clip-path] duration-300 ease-out"
       :style="{ clipPath: `inset(0 calc(100% - ${fill_width}) 0 0 round 9999px)` }"
     >
       {{ label }}

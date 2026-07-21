@@ -21,16 +21,14 @@ watch(pending, (isPending) => {
     data-testid="account-access-modal__email-section"
     class="h-full flex flex-col items-center justify-center gap-4 pt-6"
   >
-    <ui-icon src="mail-envelope" class="size-12 text-brown-700 dark:text-brown-100" />
+    <ui-icon src="mail-envelope" class="size-12 text-ink" />
     <div class="w-full flex flex-col gap-2">
-      <p class="text-base text-brown-500 dark:text-brown-300 text-center">
+      <p class="text-base text-ink-muted text-center">
         {{ t('account-access-modal.email.instructions') }}
       </p>
 
       <form class="contents" @submit.prevent="submit">
         <ui-input
-          data-theme="brown-50"
-          data-theme-dark="stone-700"
           :placeholder="t('account-access-modal.email.new-label')"
           v-model:value="email"
           type="email"
@@ -42,8 +40,7 @@ watch(pending, (isPending) => {
       </form>
       <ui-button
         data-testid="account-access-modal__email-submit"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
+        data-palette="brand"
         size="lg"
         full-width
         :loading="loading"

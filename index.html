@@ -16,8 +16,26 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tilt+Neon&display=swap" />
+
+    <!-- Pre-paint mode stamp. The theme store only loads in App.vue's onMounted,
+         so without this a dark-mode user gets a guaranteed flash of light theme.
+         Mirrors the store's resolution exactly (src/stores/theme.ts): the
+         'app-theme' key holds 'light' | 'dark' | 'system', absent means system. -->
+    <script>
+      ;(function () {
+        var saved = null
+        try {
+          saved = localStorage.getItem('app-theme')
+        } catch (e) {
+          /* storage blocked — fall through to system */
+        }
+        var system_dark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        var resolved = !saved || saved === 'system' ? (system_dark ? 'dark' : 'light') : saved
+        document.documentElement.setAttribute('data-mode', resolved)
+      })()
+    </script>
   </head>
-  <body class="bg-brown-100 dark:bg-grey-900 h-full">
+  <body class="bg-surface h-full">
     <div id="app" class="flex flex-col md:items-center h-full"></div>
 
     <section

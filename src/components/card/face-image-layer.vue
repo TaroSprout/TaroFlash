@@ -173,7 +173,7 @@ defineExpose({
     data-testid="face-image-layer__loading"
     class="absolute inset-0 z-30 flex items-center justify-center rounded-(--face-radius) bg-white/70 dark:bg-stone-700/70"
   >
-    <ui-icon src="loading-dots" class="size-12 text-brown-500 dark:text-brown-100" />
+    <ui-icon src="loading-dots" class="size-12 text-ink-muted" />
   </div>
 
   <ui-tooltip
@@ -187,7 +187,7 @@ defineExpose({
     theme-dark="blue-650"
     data-testid="face-image-layer__add"
     :aria-label="t('card.image-editor.upload-image-button')"
-    class="absolute! top-(--face-padding) right-(--face-padding) z-20 cursor-pointer text-brown-500 transition-[color,opacity] duration-150 hover:text-blue-500 dark:text-brown-100 dark:hover:text-blue-650"
+    class="absolute! top-(--face-padding) right-(--face-padding) z-20 cursor-pointer text-ink-muted transition-[color,opacity] duration-150 hover:text-blue-500 dark:text-brown-100 dark:hover:text-blue-650"
     :class="hovered ? 'opacity-100' : 'opacity-0'"
     v-sfx="{ hover: TYPE_SFX }"
     @click.stop="onAddClick"

@@ -14,7 +14,7 @@ const total = computed(() => cards.value.length)
     <div
       v-if="editing"
       data-testid="study-session__save-status"
-      class="flex items-center justify-center gap-1 text-lg text-brown-700 dark:text-brown-300"
+      class="flex items-center justify-center gap-1 text-lg text-ink"
     >
       <ui-icon :src="saving ? 'loading-dots' : 'check'" class="h-5 w-5" />
       <span class="text-sm">
@@ -25,15 +25,14 @@ const total = computed(() => cards.value.length)
     <div v-else class="relative w-full">
       <p
         data-testid="study-session__studying-count"
-        class="absolute inset-0 flex items-center justify-center text-center text-brown-700 transition-opacity duration-300 dark:text-brown-100 bg-brown-100 dark:bg-stone-700 rounded-3 bgx-diagonal-stripes bgx-color-(--color-brown-300) dark:bgx-color-(--color-grey-900) border-2 border-brown-100 dark:border-stone-700"
+        class="absolute inset-0 flex items-center justify-center text-center text-brown-700 transition-opacity duration-300 dark:text-brown-100 bg-element rounded-3 border-2 border-element"
         :class="is_cover ? 'opacity-100' : 'opacity-0 pointer-events-none'"
       >
         {{ $t('study-session.flashcard.studying-count', total) }}
       </p>
 
       <ui-progress-bar
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
+        data-palette="blue"
         :value="current_index"
         :max="total"
         :label="`${current_index}/${total}`"

@@ -32,8 +32,7 @@ const success_options = computed<ButtonGroupOption[]>(() => [
   <div data-testid="rating-buttons__advanced" class="flex w-full items-center gap-1.5">
     <ui-button
       data-testid="rating-buttons__again"
-      data-theme="red-500"
-      data-theme-dark="red-600"
+      data-palette="red"
       size="xl"
       icon-left="dislike"
       class="shrink-0"
@@ -46,9 +45,8 @@ const success_options = computed<ButtonGroupOption[]>(() => [
 
     <ui-button-group
       data-testid="rating-buttons__success-group"
-      data-theme="brown-100"
-      data-theme-dark="stone-700"
       class="flex-1"
+      neutral
       :options="success_options"
       :icon_only="is_mobile"
       :active_value="primed_grade ?? undefined"

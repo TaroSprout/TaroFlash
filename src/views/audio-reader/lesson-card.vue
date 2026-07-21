@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import { provideDepth } from '@/composables/ui/depth'
 import { formatShortDate } from '@/utils/date'
 
 const PHASE_KEYS: Record<LessonPhase, string> = {
@@ -32,6 +33,11 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
+// The card is a fixed brown-200/grey-700 panel surface; declare depth 1 so its
+// neutral delete button resolves to the raised `element` pop, not the depth-0
+// value it would fall through to.
+provideDepth(1)
+
 const is_ready = computed(() => lesson.status === 'ready')
 const is_processing = computed(() => lesson.status === 'processing')
 const is_failed = computed(() => lesson.status === 'failed')
@@ -58,6 +64,7 @@ const error_label = computed(
 <template>
   <div
     data-testid="lesson-card"
+    data-depth="1"
     :data-status="lesson.status"
     class="group relative flex w-56 flex-col gap-3 rounded-7 bg-brown-200 p-4 text-left dark:bg-grey-700"
   >
@@ -76,25 +83,19 @@ const error_label = computed(
         <ui-icon :src="status_icon" class="h-5" />
       </span>
 
-      <span
-        data-testid="lesson-card__title"
-        class="line-clamp-2 text-xl text-brown-700 dark:text-brown-200"
-      >
+      <span data-testid="lesson-card__title" class="line-clamp-2 text-xl text-ink">
         {{ lesson.title }}
       </span>
 
-      <span
-        v-if="is_ready"
-        data-testid="lesson-card__date"
-        class="text-sm text-brown-500 dark:text-grey-400"
-      >
+      <span v-if="is_ready" data-testid="lesson-card__date" class="text-sm text-ink-muted">
         {{ formatShortDate(lesson.created_at ?? '') }}
       </span>
 
       <span
         v-else-if="is_processing"
         data-testid="lesson-card__status"
-        class="text-base text-blue-500 dark:text-blue-400"
+        data-palette="info"
+        class="text-base text-(--color-accent)"
       >
         {{ t(processing_label) }}
       </span>
@@ -102,7 +103,8 @@ const error_label = computed(
       <span
         v-else
         data-testid="lesson-card__status"
-        class="text-base text-red-500 dark:text-red-400"
+        data-palette="danger"
+        class="text-base text-(--color-accent)"
       >
         {{ t(error_label) }}
       </span>
@@ -111,8 +113,7 @@ const error_label = computed(
     <ui-button
       v-if="is_failed"
       data-testid="lesson-card__retry"
-      data-theme="blue-500"
-      data-theme-dark="blue-650"
+      data-palette="blue"
       icon-left="play"
       size="sm"
       full-width
@@ -122,8 +123,8 @@ const error_label = computed(
     </ui-button>
 
     <ui-button
+      neutral
       data-testid="lesson-card__delete"
-      data-theme="grey-400"
       icon-left="delete"
       icon-only
       size="sm"

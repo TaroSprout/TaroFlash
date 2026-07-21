@@ -67,7 +67,7 @@ function _getApps() {
     @mouseover="onMouseOverApp"
   >
     <div class="grid grid-cols-[18px_1fr_18px] px-6 justify-center items-center">
-      <h2 class="text-brown-500 text-sm select-none col-start-2 justify-self-center">
+      <h2 class="text-ink-muted text-sm select-none col-start-2 justify-self-center">
         {{ t('phone.launcher.title') }}
       </h2>
     </div>

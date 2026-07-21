@@ -22,15 +22,13 @@ const stats = computed(() =>
   <div
     v-if="stats.length"
     data-testid="session-summary__tile"
-    data-theme="brown-100"
-    data-theme-dark="stone-700"
-    class="flex flex-col rounded-10 bg-(--theme-primary) px-6 py-4 text-(--theme-on-primary)"
+    class="flex flex-col rounded-10 bg-element px-6 py-4 text-on-element"
   >
     <div
       v-for="stat in stats"
       :key="stat.key"
       :data-testid="`session-summary__tile-stat-${stat.key}`"
-      class="flex flex-row items-center gap-3 border-(--theme-on-primary)/20 px-2 py-3 not-first:border-t"
+      class="flex flex-row items-center gap-3 border-on-element/20 px-2 py-3 not-first:border-t"
     >
       <ui-icon :src="stat.icon" class="size-6" />
       <span :data-testid="`session-summary__tile-value-${stat.key}`">

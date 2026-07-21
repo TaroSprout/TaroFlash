@@ -13,8 +13,7 @@ const icon = computed(() => (direction === 'up' ? 'arcade-stick-up' : 'arcade-st
 
 <template>
   <ui-button
-    data-theme="brown-300"
-    data-theme-dark="stone-900"
+    neutral
     :icon-left="icon"
     icon-only
     rounded-full

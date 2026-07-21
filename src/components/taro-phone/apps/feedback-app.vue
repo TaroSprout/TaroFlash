@@ -16,8 +16,7 @@ function onPress() {
 <template>
   <app-shell
     :title="t('phone.apps.feedback.title')"
-    data-theme="green-400"
-    data-theme-dark="green-500"
+    data-palette="green"
     icon-src="feedback"
     hover-icon-src="feedback-hover"
     @press="onPress"

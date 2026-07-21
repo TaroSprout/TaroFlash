@@ -36,21 +36,20 @@ function onEditAvatar(e: MouseEvent) {
     data-testid="member-badge"
     v-bind="body_bindings"
     style="--badge-radius: 42px; --badge-padding: 14px"
-    class="card-outline pointer-fine:hover:scale-101 data-[tap-active=true]:scale-101 pointer-coarse:data-[tap-active=true]:scale-105 pointer-fine:transition-transform duration-75 cursor-pointer touch-manipulation select-none flex items-center gap-4 rounded-(--badge-radius) p-(--badge-padding) bg-(--theme-primary)"
+    class="card-outline pointer-fine:hover:scale-101 data-[tap-active=true]:scale-101 pointer-coarse:data-[tap-active=true]:scale-105 pointer-fine:transition-transform duration-75 cursor-pointer touch-manipulation select-none flex items-center gap-4 rounded-(--badge-radius) p-(--badge-padding) bg-(--color-accent)"
     @tap="emit('click', $event)"
   >
     <div data-testid="member-badge__avatar" class="relative shrink-0">
       <div
-        class="bg-brown-200 dark:bg-stone-900 rounded-[calc(var(--badge-radius)-var(--badge-padding)+6px)] border-brown-200 dark:border-stone-900 h-25 w-25 overflow-hidden border-4"
+        class="bg-mat rounded-[calc(var(--badge-radius)-var(--badge-padding)+6px)] border-panel h-25 w-25 overflow-hidden border-4"
       >
         <avatar-image :avatar="cover?.avatar" class="h-full w-full" />
       </div>
 
       <ui-button
+        neutral
         v-if="editable"
         data-testid="member-badge__avatar-edit"
-        data-theme="brown-100"
-        data-theme-dark="stone-700"
         icon-left="pencil"
         icon-only
         class="absolute! -top-2 -right-2"

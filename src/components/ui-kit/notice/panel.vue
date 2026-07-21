@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiButton from '@/components/ui-kit/button.vue'
-import { NOTICE_ICON, NOTICE_THEME, NOTICE_THEME_DARK } from './state-config'
+import { NOTICE_ICON, NOTICE_PALETTE } from './state-config'
 import { useSwipeDismiss } from './use-swipe-dismiss'
 import { usePausableTimer } from './use-pausable-timer'
 import { springScaleIn, scaleFadeOut } from '@/utils/animations/modal'
@@ -74,16 +74,14 @@ function onActionClick(action: NoticeAction) {
       v-if="open"
       ref="panel_ref"
       data-testid="ui-kit-notice-panel"
-      :data-theme="NOTICE_THEME[notice.state]"
-      :data-theme-dark="NOTICE_THEME_DARK[notice.state]"
-      class="group/notice-panel rounded-4 drop-shadow-sm pointer-events-auto relative flex w-96 max-w-full flex-col items-center gap-6 bg-brown-50 dark:bg-stone-700 p-12 text-center border-t border-l border-brown-200 dark:border-grey-900"
+      :data-palette="NOTICE_PALETTE[notice.state]"
+      class="group/notice-panel rounded-4 bevel-drop-sm pointer-events-auto relative flex w-96 max-w-full flex-col items-center gap-6 bg-float p-12 text-center"
     >
       <ui-button
+        neutral
         v-if="notice.closable"
         data-testid="ui-kit-notice-panel__close"
-        data-theme="brown-200"
-        data-theme-dark="stone-900"
-        class="absolute! -top-2 -right-2 opacity-0 transition-opacity group-hover/notice-panel:opacity-100 group-focus-within/notice-panel:opacity-100 pointer-coarse:opacity-100"
+        class="absolute! -top-2 -right-2 [--btn-bg-color:var(--color-below)]! opacity-0 transition-opacity group-hover/notice-panel:opacity-100 group-focus-within/notice-panel:opacity-100 pointer-coarse:opacity-100"
         icon-only
         size="lg"
         icon-left="close"
@@ -94,11 +92,11 @@ function onActionClick(action: NoticeAction) {
       </ui-button>
 
       <div class="flex flex-col items-center gap-4">
-        <ui-icon :src="NOTICE_ICON[notice.state]" class="size-12 text-(--theme-primary)" />
+        <ui-icon :src="NOTICE_ICON[notice.state]" class="size-12 text-(--color-accent)" />
 
         <div data-testid="ui-kit-notice-panel__body" class="flex flex-col gap-2">
-          <p class="text-brown-700 dark:text-brown-100 text-xl">{{ notice.message }}</p>
-          <p v-if="notice.subMessage" class="text-brown-500">{{ notice.subMessage }}</p>
+          <p class="text-ink text-xl">{{ notice.message }}</p>
+          <p v-if="notice.subMessage" class="text-ink-muted">{{ notice.subMessage }}</p>
         </div>
       </div>
 
@@ -108,9 +106,8 @@ function onActionClick(action: NoticeAction) {
         class="w-full flex gap-2"
       >
         <ui-button
+          neutral
           v-for="action in notice.actions"
-          data-theme="brown-200"
-          data-theme-dark="stone-900"
           :key="action.label"
           full-width
           :sfx="{ press: action.sfx?.press ?? 'snappy_button_5' }"

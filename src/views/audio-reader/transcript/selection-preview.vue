@@ -93,7 +93,8 @@ watch(
       :data-below="below"
       :data-visible="!!shown"
       aria-hidden="true"
-      class="pointer-events-none fixed left-0 top-0 max-w-[calc(100vw-1rem)] rounded-4 bg-white px-4 py-2 text-center text-2xl text-brown-700"
+      data-depth="overlay"
+      class="pointer-events-none fixed left-0 top-0 max-w-[calc(100vw-1rem)] rounded-4 bg-surface px-4 py-2 text-center text-2xl text-ink"
       :style="bubble_style"
     >
       {{ shown?.text }}

@@ -33,7 +33,7 @@ function onPatternSelect(p: DeckCoverPattern | undefined) {
 
 <template>
   <div data-testid="pattern-picker-container" class="flex flex-col gap-2.5">
-    <h3 data-testid="pattern-picker__label" class="text-brown-700 dark:text-brown-100">
+    <h3 data-testid="pattern-picker__label" class="text-ink">
       {{ label }}
     </h3>
 
@@ -45,14 +45,14 @@ function onPatternSelect(p: DeckCoverPattern | undefined) {
         :data-selected="pattern === selected_pattern || undefined"
         v-sfx="{ hover: TYPE_SFX }"
         v-bind="swatchBindings(pattern)"
-        class="w-14.5 aspect-square rounded-6 rounded-tr-3 rounded-bl-3 cursor-pointer bg-(--theme-primary) hover:ring-4 data-selected:ring-4 ring-white relative"
+        class="w-14.5 aspect-square rounded-6 rounded-tr-3 rounded-bl-3 cursor-pointer bg-(--color-accent) hover:ring-4 data-selected:ring-4 ring-white relative"
         @click="onPatternSelect(pattern)"
       >
         <div
           v-if="pattern === selected_pattern"
           class="absolute -top-2 -right-2 bg-white p-1.5 size-6.5 rounded-full flex items-center justify-center"
         >
-          <ui-icon src="check" class="text-(--theme-primary)" />
+          <ui-icon src="check" class="text-(--color-accent)" />
         </div>
       </button>
     </div>

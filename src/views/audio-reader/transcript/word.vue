@@ -19,7 +19,7 @@ defineProps<{
     ><rt
       v-if="reading"
       data-testid="transcript-word__reading"
-      class="-translate-y-1 select-none text-base text-brown-500 dark:text-grey-400"
+      class="-translate-y-1 select-none text-base text-ink-muted"
       >{{ reading }}</rt
     ></ruby
   >

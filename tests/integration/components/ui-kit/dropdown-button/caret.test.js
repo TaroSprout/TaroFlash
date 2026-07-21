@@ -1,5 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
+import { defineComponent, h } from 'vue'
+import { provideDepth } from '@/composables/ui/depth'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
@@ -48,48 +50,45 @@ function mountCaretRealTransition(props = {}) {
   })
 }
 
+// Wraps DropdownCaret in a parent that provides an ambient ui/depth, so tests
+// can assert the identity caret stamps one step above whatever surface it's on.
+function mountCaretAtAmbientDepth(ambient_depth, props = {}) {
+  const Parent = defineComponent({
+    setup() {
+      provideDepth(ambient_depth)
+      return () => h(DropdownCaret, { open: false, ...props })
+    }
+  })
+  return mount(Parent, { global: { directives: { sfx: {} } } })
+}
+
 describe('DropdownCaret', () => {
   beforeEach(() => mockEmitSfx.mockClear())
 
-  // ── data-theme ────────────────────────────────────────────────────────────
+  // ── neutral / depth ───────────────────────────────────────────────────────
+  // An identity caret (neutral=false, the default) is one step above the
+  // ambient depth; a neutral caret carries no data-depth (it's a companion of
+  // its button, not a stepped surface).
 
-  describe('data-theme', () => {
-    test('data-theme equals triggerTheme when provided', () => {
-      const wrapper = mountCaret({ triggerTheme: 'green-400' })
-      expect(
-        wrapper.find('[data-testid="dropdown-button__trigger-wrap"]').attributes('data-theme')
-      ).toBe('green-400')
-    })
-
-    test('data-theme is absent when triggerTheme is not provided', () => {
+  describe('neutral / depth', () => {
+    test('data-depth is one step above the ambient depth by default (identity caret)', () => {
       const wrapper = mountCaret()
       expect(
-        wrapper.find('[data-testid="dropdown-button__trigger-wrap"]').attributes('data-theme')
-      ).toBeUndefined()
-    })
-  })
-
-  // ── data-theme-dark ───────────────────────────────────────────────────────
-
-  describe('data-theme-dark', () => {
-    test('data-theme-dark is the explicit triggerThemeDark when provided', () => {
-      const wrapper = mountCaret({ triggerTheme: 'green-400', triggerThemeDark: 'green-900' })
-      expect(
-        wrapper.find('[data-testid="dropdown-button__trigger-wrap"]').attributes('data-theme-dark')
-      ).toBe('green-900')
+        wrapper.find('[data-testid="dropdown-button__trigger"]').attributes('data-depth')
+      ).toBe('1')
     })
 
-    test('data-theme-dark defaults to stone-900 when triggerTheme is set but triggerThemeDark is omitted', () => {
-      const wrapper = mountCaret({ triggerTheme: 'green-400' })
+    test('data-depth steps above an ancestor-provided ambient depth', () => {
+      const wrapper = mountCaretAtAmbientDepth(1)
       expect(
-        wrapper.find('[data-testid="dropdown-button__trigger-wrap"]').attributes('data-theme-dark')
-      ).toBe('stone-900')
+        wrapper.find('[data-testid="dropdown-button__trigger"]').attributes('data-depth')
+      ).toBe('2')
     })
 
-    test('data-theme-dark is absent when neither triggerTheme nor triggerThemeDark is set', () => {
-      const wrapper = mountCaret()
+    test('neutral=true omits data-depth entirely', () => {
+      const wrapper = mountCaret({ neutral: true })
       expect(
-        wrapper.find('[data-testid="dropdown-button__trigger-wrap"]').attributes('data-theme-dark')
+        wrapper.find('[data-testid="dropdown-button__trigger"]').attributes('data-depth')
       ).toBeUndefined()
     })
   })

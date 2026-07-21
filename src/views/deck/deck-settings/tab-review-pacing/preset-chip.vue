@@ -78,10 +78,6 @@ function onSelect(option: DropdownOption) {
 <template>
   <ui-dropdown-button
     data-testid="preset-chip"
-    data-theme="brown-100"
-    data-theme-dark="stone-700"
-    menu-theme="brown-100"
-    menu-theme-dark="stone-700"
     size="sm"
     position="bottom-end"
     :fallback-placements="['bottom-end', 'top-end']"

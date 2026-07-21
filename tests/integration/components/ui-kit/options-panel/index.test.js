@@ -137,16 +137,16 @@ describe('OptionsPanel', () => {
 
   // ── selected state [obligation] ──────────────────────────────────────────
 
-  test('a selected entry gets data-active=true and the theme-primary fill class', () => {
+  test('a selected entry gets data-active=true and data-palette from selectedPalette', () => {
     const wrapper = makePanel({
       entries: [
         ...ENTRIES,
-        { value: 'edit-decks', label: 'Edit Decks', selected: true, selectedTheme: 'yellow-500' }
+        { value: 'edit-decks', label: 'Edit Decks', selected: true, selectedPalette: 'yellow' }
       ]
     })
     const card = wrapper.find('[data-testid="options-panel__card"][data-value="edit-decks"]')
     expect(card.attributes('data-active')).toBe('true')
-    expect(card.classes()).toContain('data-[active=true]:bg-(--theme-primary)')
+    expect(card.attributes('data-palette')).toBe('yellow')
   })
 
   test('an unselected entry has no data-active attribute', () => {
@@ -157,31 +157,20 @@ describe('OptionsPanel', () => {
     expect(card.attributes('data-active')).toBeUndefined()
   })
 
-  test('applies selectedTheme/selectedThemeDark as data-theme/data-theme-dark while selected', () => {
-    const wrapper = makePanel({
-      entries: [
-        ...ENTRIES,
-        {
-          value: 'edit-decks',
-          label: 'Edit Decks',
-          selected: true,
-          selectedTheme: 'yellow-500',
-          selectedThemeDark: 'yellow-700'
-        }
-      ]
-    })
-    const card = wrapper.find('[data-testid="options-panel__card"][data-value="edit-decks"]')
-    expect(card.attributes('data-theme')).toBe('yellow-500')
-    expect(card.attributes('data-theme-dark')).toBe('yellow-700')
-  })
-
-  test('falls back to no explicit data-theme when selected but selectedTheme is omitted', () => {
+  test('falls back to no explicit data-palette when selected but selectedPalette is omitted', () => {
     const wrapper = makePanel({
       entries: [...ENTRIES, { value: 'edit-decks', label: 'Edit Decks', selected: true }]
     })
     const card = wrapper.find('[data-testid="options-panel__card"][data-value="edit-decks"]')
-    expect(card.attributes('data-theme')).toBeUndefined()
-    expect(card.attributes('data-theme-dark')).toBeUndefined()
+    expect(card.attributes('data-palette')).toBeUndefined()
+  })
+
+  test('a danger entry always carries data-palette="danger", regardless of selection', () => {
+    const wrapper = makePanel({
+      entries: [...ENTRIES, { value: 'delete', label: 'Delete', danger: true }]
+    })
+    const card = wrapper.find('[data-testid="options-panel__card"][data-value="delete"]')
+    expect(card.attributes('data-palette')).toBe('danger')
   })
 
   // ── content testid derivation ────────────────────────────────────────────

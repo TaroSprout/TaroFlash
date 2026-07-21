@@ -71,14 +71,14 @@ const { t } = useI18n()
     <div
       v-if="!hide_title"
       data-testid="deck-thumbnail__title"
-      class="absolute w-full -bottom-2.5 bg-brown-300 dark:bg-stone-700 p-4 rounded-5.5"
+      class="absolute w-full -bottom-2.5 bg-element p-4 rounded-5.5"
     >
       <slot name="actions"></slot>
-      <h2 class="text-xl text-center text-brown-700 dark:text-brown-100">{{ deck?.title }}</h2>
+      <h2 class="text-xl text-center text-ink">{{ deck?.title }}</h2>
       <p
         v-if="deck?.card_count !== undefined"
         data-testid="deck-thumbnail__card-count"
-        class="absolute -top-4 right-0 bg-brown-200 dark:bg-stone-900 p-1 px-2 rounded-t-3 rounded-bl-3 text-base text-center text-brown-500 dark:text-brown-100 opacity-0 pointer-fine:group-hover/tappable:opacity-100"
+        class="absolute -top-4 right-0 bg-element-strong p-1 px-2 rounded-t-3 rounded-bl-3 text-base text-center text-ink-muted opacity-0 pointer-fine:group-hover/tappable:opacity-100"
       >
         {{ t('deck-thumbnail.card-count-label', deck.card_count) }}
       </p>

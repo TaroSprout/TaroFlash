@@ -1,0 +1,47 @@
+/* Bevels — the seam that covers the edges the cast shadow cannot reach.
+ *
+ * The shadow does bottom-right, the seam does top-left; together they close the
+ * silhouette. The seam colour is --color-below (src/styles/depth.css): the
+ * surface one step down, the same value used for well fills and cut-out rings.
+ *
+ * Two constraints drive the implementation:
+ *
+ *   1. The seam must be drawn OUTSIDE the box, so an element flush to the
+ *      viewport edge lets its seam overflow off-screen and self-hide.
+ *   2. It must be DIRECTIONAL — which rules out `outline`.
+ *
+ * A non-inset box-shadow with zero blur satisfies both. `-1px -1px 0 0` renders
+ * the silhouette offset up and left; what stays visible is a 1px L along the
+ * top and left, outside the box.
+ *
+ * Sizes mirror the shadow scale (xs 3px, sm 4px, md 5px, lg 6px) via the
+ * --bevel-* tokens in main.css.
+ */
+
+@utility bevel-* {
+  --bevel-offset: --value(--bevel-*, [length]);
+
+  box-shadow:
+    -1px -1px 0 0 var(--color-below),
+    var(--bevel-offset) var(--bevel-offset) 0 0 var(--shadow-color);
+}
+
+/* Filter-based twin, mirroring the existing shadow-* / drop-shadow-* split.
+ * drop-shadow follows the alpha shape rather than the border box, so this is
+ * the variant to use on anything with a wave or cloud edge (notice/panel.vue,
+ * notice/toast.vue). */
+@utility bevel-drop-* {
+  --bevel-offset: --value(--bevel-*, [length]);
+
+  filter: drop-shadow(-1px -1px 0 var(--color-below))
+    drop-shadow(var(--bevel-offset) var(--bevel-offset) 0 var(--shadow-color));
+}
+
+/* Bottom-anchored mobile sheets are full-width and flush to the viewport, so
+ * their cast shadow falls off-screen entirely and is omitted. The seam picks up
+ * the right edge instead, leaving a visible top + left + right outline. */
+@utility bevel-sheet {
+  box-shadow:
+    -1px -1px 0 0 var(--color-below),
+    1px 0 0 0 var(--color-below);
+}

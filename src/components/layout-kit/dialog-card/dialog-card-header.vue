@@ -24,7 +24,7 @@ defineSlots<{
 
     <h1
       data-testid="dialog-card-header__title"
-      class="truncate text-center text-3xl font-bold text-brown-700 dark:text-brown-100"
+      class="truncate text-center text-3xl font-bold text-ink"
     >
       {{ title }}
     </h1>

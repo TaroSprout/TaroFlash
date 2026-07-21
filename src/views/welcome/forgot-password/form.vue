@@ -31,10 +31,10 @@ const { t } = useI18n()
     data-testid="forgot-password-modal"
     class="h-full flex flex-col items-center justify-center gap-4"
   >
-    <ui-icon src="mail-envelope" class="size-12 text-brown-700 dark:text-brown-100" />
+    <ui-icon src="mail-envelope" class="size-12 text-ink" />
 
     <div class="w-full flex flex-col gap-2">
-      <p class="text-base text-brown-500 dark:text-brown-300 text-center">
+      <p class="text-base text-ink-muted text-center">
         {{ t('forgot-password-modal.instructions') }}
       </p>
 
@@ -42,8 +42,6 @@ const { t } = useI18n()
         <ui-input
           type="email"
           name="email"
-          data-theme="brown-50"
-          data-theme-dark="stone-700"
           autocomplete="email"
           size="lg"
           v-model="email"
@@ -57,15 +55,15 @@ const { t } = useI18n()
       <p
         v-if="submitError"
         data-testid="forgot-password-modal__error"
-        class="text-base text-red-500 dark:text-red-400 text-center"
+        data-palette="danger"
+        class="text-base text-(--color-accent) text-center"
       >
         {{ submitError }}
       </p>
 
       <ui-button
         data-testid="forgot-password-modal__submit"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
+        data-palette="brand"
         size="lg"
         full-width
         :loading="loading"

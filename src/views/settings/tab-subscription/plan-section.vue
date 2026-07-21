@@ -34,8 +34,7 @@ const view = computed(() =>
   is_paid.value
     ? {
         label: t('settings.subscription.plan.label'),
-        theme: 'blue-500',
-        theme_dark: 'blue-650',
+        palette: 'blue',
         name: PLANS[member_store.plan ?? 'free'].displayName,
         cost: cost.value,
         status: status.value,
@@ -43,8 +42,7 @@ const view = computed(() =>
       }
     : {
         label: t('settings.subscription.free.label'),
-        theme: 'green-500',
-        theme_dark: 'green-800',
+        palette: 'green',
         name: PLANS[member_store.plan ?? 'free'].displayName,
         cost: t('settings.subscription.free.cost'),
         status: null,
@@ -65,8 +63,7 @@ const view = computed(() =>
 
     <plan-pill
       v-else
-      :data-theme="view.theme"
-      :data-theme-dark="view.theme_dark"
+      :data-palette="view.palette"
       :loading="loading"
       :name="view.name"
       :cost="view.cost"

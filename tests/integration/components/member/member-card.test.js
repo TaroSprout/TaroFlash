@@ -39,21 +39,19 @@ describe('MemberCard', () => {
     expect(wrapper.find('[data-testid="member-card"]').exists()).toBe(true)
   })
 
-  test('applies cover-derived data-theme + data-theme-dark on the body', () => {
+  test('applies cover-derived data-palette on the body', () => {
     const wrapper = mountCard({
-      cover: { theme: 'red-500', theme_dark: 'red-700', pattern: 'wave' }
+      cover: { palette: 'red', pattern: 'wave' }
     })
     const body = wrapper.find('[data-testid="member-card__body"]')
-    expect(body.attributes('data-theme')).toBe('red-500')
-    expect(body.attributes('data-theme-dark')).toBe('red-700')
+    expect(body.attributes('data-palette')).toBe('red')
     expect(body.classes()).toContain('pattern-mask')
   })
 
   test('falls back to MEMBER_CARD_COVER_DEFAULTS when cover omitted', () => {
     const wrapper = mountCard()
     const body = wrapper.find('[data-testid="member-card__body"]')
-    expect(body.attributes('data-theme')).toBe(MEMBER_CARD_COVER_DEFAULTS.theme)
-    expect(body.attributes('data-theme-dark')).toBe(MEMBER_CARD_COVER_DEFAULTS.theme_dark)
+    expect(body.attributes('data-palette')).toBe(MEMBER_CARD_COVER_DEFAULTS.palette)
     expect(body.classes()).toContain('pattern-mask')
   })
 
@@ -94,23 +92,22 @@ describe('MemberCard', () => {
   })
 
   test('body never carries a border style — memberCoverBindings enforces border:false [obligation]', () => {
-    const wrapper = mountCard({ cover: { theme: 'red-500', pattern: 'saw' } })
+    const wrapper = mountCard({ cover: { palette: 'red', pattern: 'saw' } })
     const style = wrapper.find('[data-testid="member-card__body"]').attributes('style') ?? ''
     expect(style).not.toContain('border:')
   })
 
   test('still applies cover-derived bindings via memberCoverBindings after extraction refactor [obligation]', () => {
     const wrapper = mountCard({
-      cover: { theme: 'teal-400', theme_dark: 'teal-800', pattern: 'aztec' }
+      cover: { palette: 'teal', pattern: 'aztec' }
     })
     const body = wrapper.find('[data-testid="member-card__body"]')
-    expect(body.attributes('data-theme')).toBe('teal-400')
-    expect(body.attributes('data-theme-dark')).toBe('teal-800')
+    expect(body.attributes('data-palette')).toBe('teal')
     expect(body.classes()).toContain('pattern-mask')
   })
 
   test('forwards cover.avatar to avatar-image', () => {
-    const wrapper = mountCard({ cover: { theme: 'teal-400', pattern: 'aztec', avatar: 'panda' } })
+    const wrapper = mountCard({ cover: { palette: 'teal', pattern: 'aztec', avatar: 'panda' } })
     expect(wrapper.find('[data-testid="avatar-image-stub"]').attributes('data-avatar')).toBe(
       'panda'
     )

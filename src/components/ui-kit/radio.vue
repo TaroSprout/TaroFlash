@@ -26,11 +26,10 @@ const onClick = tap(undefined, {
 <template>
   <div
     data-testid="ui-kit-radio"
-    class="relative flex size-10 cursor-pointer items-center justify-center rounded-full transition-all duration-50 p-2.5 border-4 border-white dark:border-stone-900"
+    class="relative flex size-10 cursor-pointer items-center justify-center rounded-full transition-all duration-50 p-2.5 border-4 border-below"
     :class="{
-      'bg-(--theme-primary)! border-none': checked,
-      'bg-white dark:bg-stone-900 hover:bg-(--theme-primary) data-[active=true]:bg-(--theme-primary)':
-        !checked
+      'bg-(--color-accent)! border-none': checked,
+      'bg-below hover:bg-(--color-accent) data-[active=true]:bg-(--color-accent)': !checked
     }"
     :data-active="playing || active || null"
     v-sfx="{ hover: sfx.hover, focus: sfx.focus, blur: sfx.blur, debounce: sfx.debounce }"

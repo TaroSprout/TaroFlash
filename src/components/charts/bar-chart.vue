@@ -5,7 +5,7 @@ type Bar = { value: number; label?: string; key?: string | number }
 
 const {
   bars,
-  barClass = 'bg-(--theme-primary)',
+  barClass = 'bg-(--color-accent)',
   trackHeight = 110
 } = defineProps<{
   bars: Bar[]
@@ -28,14 +28,9 @@ function heightOf(value: number) {
       data-testid="ui-bar-chart__bar"
       class="flex flex-1 flex-col items-center gap-2"
     >
-      <span class="text-base font-semibold text-brown-700 dark:text-brown-300">{{
-        bar.value
-      }}</span>
+      <span class="text-base font-semibold text-ink">{{ bar.value }}</span>
       <div class="w-full rounded-t-2" :class="barClass" :style="{ height: heightOf(bar.value) }" />
-      <span
-        v-if="bar.label"
-        class="w-full truncate text-center text-base text-brown-500 dark:text-grey-400"
-      >
+      <span v-if="bar.label" class="w-full truncate text-center text-base text-ink-muted">
         {{ bar.label }}
       </span>
     </div>

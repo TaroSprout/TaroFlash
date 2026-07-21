@@ -33,10 +33,7 @@ const submit_label = computed(() =>
   <dialog-card
     data-testid="change-card-modal"
     class="pb-6"
-    bg_class="bg-brown-200 dark:bg-grey-800"
     size="lg"
-    data-theme="brown-300"
-    data-theme-dark="stone-700"
     :title="title"
     :close_disabled="is_submitting"
     @close="close()"
@@ -52,14 +49,15 @@ const submit_label = computed(() =>
           <p
             v-if="is_loading"
             data-testid="change-card-modal__loading"
-            class="text-brown-700 dark:text-brown-100 py-10 text-center"
+            class="text-ink py-10 text-center"
           >
             {{ t('settings.subscription.change-card.loading') }}
           </p>
           <p
             v-else-if="load_error"
             data-testid="change-card-modal__error"
-            class="py-10 text-center text-red-500 dark:text-red-600"
+            data-palette="danger"
+            class="py-10 text-center text-(--color-accent)"
           >
             {{ t('settings.subscription.change-card.error') }}
           </p>
@@ -73,8 +71,7 @@ const submit_label = computed(() =>
         >
           <ui-button
             data-testid="change-card-modal__submit"
-            data-theme="blue-500"
-            data-theme-dark="blue-650"
+            data-palette="brand"
             full-width
             size="lg"
             :loading="is_submitting"

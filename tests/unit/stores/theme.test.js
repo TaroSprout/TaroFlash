@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import { setActivePinia, createPinia } from 'pinia'
 
 vi.mock('@/composables/ui/media-query')
@@ -8,22 +8,24 @@ import { useThemeStore } from '@/stores/theme'
 import { useMatchMedia } from '@/composables/ui/media-query'
 
 describe('theme store', () => {
+  let system_dark
+
   beforeEach(() => {
     setActivePinia(createPinia())
 
-    // Reset the OS-preference mock (system_mql) to non-dark before each test.
-    // Do NOT clear listeners — the module-level addEventListener call runs once
-    // at import time, so the handler would be lost if we reset the array here.
-    global.__matchMedia.matches = false
+    // Shared ref instance so tests can flip the OS-preference signal after
+    // the store has already captured it (is_dark is reactive to this ref via
+    // the store's `is_system_dark` computed).
+    system_dark = ref(false)
+    vi.mocked(useMatchMedia).mockReturnValue(system_dark)
 
-    // Set up useMatchMedia mock before any store call captures the ref.
-    vi.mocked(useMatchMedia).mockReturnValue(ref(false))
-    // Reset store mode to 'system' (also writes to localStorage).
+    // Reset store mode to 'system' (also writes to localStorage). This also
+    // creates the store, which syncs `data-mode` on the DOM synchronously via
+    // its `watchEffect` — don't clear the attribute afterwards, the store
+    // only reapplies it when `is_dark` actually changes value.
     useThemeStore().setMode('system')
     // Clear localStorage so load() tests start clean.
     localStorage.clear()
-    // Reset DOM attribute.
-    document.documentElement.removeAttribute('data-theme')
   })
 
   test('mode defaults to system', () => {
@@ -38,26 +40,30 @@ describe('theme store', () => {
     expect(store.mode).toBe('dark')
   })
 
-  test('setMode light sets data-theme to light', () => {
+  test('setMode light sets data-mode to light', async () => {
     useThemeStore().setMode('light')
-    expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+    await nextTick()
+    expect(document.documentElement.getAttribute('data-mode')).toBe('light')
   })
 
-  test('setMode dark sets data-theme to dark', () => {
+  test('setMode dark sets data-mode to dark', async () => {
     useThemeStore().setMode('dark')
-    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
+    await nextTick()
+    expect(document.documentElement.getAttribute('data-mode')).toBe('dark')
   })
 
-  test('setMode system sets data-theme to light when system is not dark', () => {
-    global.__matchMedia.matches = false
+  test('setMode system sets data-mode to light when system is not dark', async () => {
+    system_dark.value = false
     useThemeStore().setMode('system')
-    expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+    await nextTick()
+    expect(document.documentElement.getAttribute('data-mode')).toBe('light')
   })
 
-  test('setMode system sets data-theme to dark when system is dark', () => {
-    global.__matchMedia.matches = true
+  test('setMode system sets data-mode to dark when system is dark', async () => {
+    system_dark.value = true
     useThemeStore().setMode('system')
-    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
+    await nextTick()
+    expect(document.documentElement.getAttribute('data-mode')).toBe('dark')
   })
 
   test('setMode persists the selected theme to localStorage', () => {
@@ -78,44 +84,47 @@ describe('theme store', () => {
     expect(store.mode).toBe('system')
   })
 
-  test('load applies an explicit theme to the DOM', () => {
+  test('load applies an explicit theme to the DOM', async () => {
     localStorage.setItem('app-theme', 'light')
     useThemeStore().load()
-    expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+    await nextTick()
+    expect(document.documentElement.getAttribute('data-mode')).toBe('light')
   })
 
-  test('load with system mode resolves to light when system is not dark', () => {
-    global.__matchMedia.matches = false
+  test('load with system mode resolves to light when system is not dark', async () => {
+    system_dark.value = false
     localStorage.setItem('app-theme', 'system')
     useThemeStore().load()
-    expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+    await nextTick()
+    expect(document.documentElement.getAttribute('data-mode')).toBe('light')
   })
 
-  test('load with system mode resolves to dark when system is dark', () => {
-    global.__matchMedia.matches = true
+  test('load with system mode resolves to dark when system is dark', async () => {
+    system_dark.value = true
     localStorage.setItem('app-theme', 'system')
     useThemeStore().load()
-    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
+    await nextTick()
+    expect(document.documentElement.getAttribute('data-mode')).toBe('dark')
   })
 
-  // ── MQL change event ───────────────────────────────────────────────────────
+  // ── OS preference change ────────────────────────────────────────────────────
 
-  test('OS preference change updates data-theme while in system mode', () => {
+  test('OS preference change updates data-mode while in system mode', async () => {
     useThemeStore().setMode('system')
 
-    global.__matchMedia.matches = true
-    global.__matchMedia.listeners.forEach((l) => l())
+    system_dark.value = true
+    await nextTick()
 
-    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
+    expect(document.documentElement.getAttribute('data-mode')).toBe('dark')
   })
 
-  test('OS preference change has no effect when not in system mode', () => {
+  test('OS preference change has no effect when not in system mode', async () => {
     useThemeStore().setMode('light')
 
-    global.__matchMedia.matches = true
-    global.__matchMedia.listeners.forEach((l) => l())
+    system_dark.value = true
+    await nextTick()
 
-    expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+    expect(document.documentElement.getAttribute('data-mode')).toBe('light')
   })
 
   // ── is_dark ────────────────────────────────────────────────────────────────
@@ -133,8 +142,7 @@ describe('theme store', () => {
   })
 
   test('is_dark reflects system preference when mode is system and system is dark', () => {
-    vi.mocked(useMatchMedia).mockReturnValue(ref(true))
-    setActivePinia(createPinia())
+    system_dark.value = true
     expect(useThemeStore().is_dark).toBe(true)
   })
 
@@ -159,8 +167,7 @@ describe('theme store', () => {
   })
 
   test('cycle advances from system to light when system preference is dark', () => {
-    vi.mocked(useMatchMedia).mockReturnValue(ref(true))
-    setActivePinia(createPinia())
+    system_dark.value = true
     const store = useThemeStore()
     store.cycle()
     expect(store.mode).toBe('light')

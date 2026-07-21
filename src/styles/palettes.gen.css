@@ -1,0 +1,127 @@
+/* GENERATED FILE — DO NOT EDIT.
+ *
+ * Source: src/utils/palette/registry.ts
+ * Regenerate: pnpm gen:palette-css
+ *
+ * Accent roles owned by `data-palette`. They are disjoint from the neutral
+ * roles owned by `data-depth` (src/styles/depth.css), so the two axes compose
+ * without precedence rules.
+ *
+ * Each palette emits two blocks: the light rendition, and a dark rendition
+ * scoped under `data-mode='dark'`. Both the descendant and the self form of the
+ * dark selector are listed so the palette resolves whether `data-palette` sits
+ * on a child of the moded root or on the root itself.
+ *
+ * Semantic aliases (`danger`, `info`, ...) join the selector list of the
+ * palette they point at, so `data-palette='danger'` is valid markup and stays
+ * a true alias — repointing it in the registry moves every call site at once.
+ */
+
+[data-palette='blue'],
+[data-palette='brand'],
+[data-palette='info'] {
+  --color-accent: var(--color-blue-500);
+  --color-accent-muted: var(--color-blue-400);
+  --color-on-accent: var(--color-brown-100);
+}
+
+[data-mode='dark'] [data-palette='blue'],
+[data-mode='dark'] [data-palette='brand'],
+[data-mode='dark'] [data-palette='info'],
+[data-mode='dark'][data-palette='blue'],
+[data-mode='dark'][data-palette='brand'],
+[data-mode='dark'][data-palette='info'] {
+  --color-accent: var(--color-blue-650);
+  --color-accent-muted: var(--color-blue-500);
+  --color-on-accent: var(--color-brown-100);
+}
+
+[data-palette='red'],
+[data-palette='danger'],
+[data-palette='error'] {
+  --color-accent: var(--color-red-500);
+  --color-accent-muted: var(--color-red-400);
+  --color-on-accent: var(--color-white);
+}
+
+[data-mode='dark'] [data-palette='red'],
+[data-mode='dark'] [data-palette='danger'],
+[data-mode='dark'] [data-palette='error'],
+[data-mode='dark'][data-palette='red'],
+[data-mode='dark'][data-palette='danger'],
+[data-mode='dark'][data-palette='error'] {
+  --color-accent: var(--color-red-600);
+  --color-accent-muted: var(--color-red-500);
+  --color-on-accent: var(--color-white);
+}
+
+[data-palette='green'],
+[data-palette='success'] {
+  --color-accent: var(--color-green-500);
+  --color-accent-muted: var(--color-green-400);
+  --color-on-accent: var(--color-brown-100);
+}
+
+[data-mode='dark'] [data-palette='green'],
+[data-mode='dark'] [data-palette='success'],
+[data-mode='dark'][data-palette='green'],
+[data-mode='dark'][data-palette='success'] {
+  --color-accent: var(--color-green-800);
+  --color-accent-muted: var(--color-green-600);
+  --color-on-accent: var(--color-brown-300);
+}
+
+[data-palette='yellow'],
+[data-palette='warning'] {
+  --color-accent: var(--color-yellow-500);
+  --color-accent-muted: var(--color-yellow-400);
+  --color-on-accent: var(--color-brown-700);
+}
+
+[data-mode='dark'] [data-palette='yellow'],
+[data-mode='dark'] [data-palette='warning'],
+[data-mode='dark'][data-palette='yellow'],
+[data-mode='dark'][data-palette='warning'] {
+  --color-accent: var(--color-yellow-700);
+  --color-accent-muted: var(--color-yellow-500);
+  --color-on-accent: var(--color-brown-100);
+}
+
+[data-palette='purple'] {
+  --color-accent: var(--color-purple-500);
+  --color-accent-muted: var(--color-purple-400);
+  --color-on-accent: var(--color-brown-100);
+}
+
+[data-mode='dark'] [data-palette='purple'],
+[data-mode='dark'][data-palette='purple'] {
+  --color-accent: var(--color-purple-700);
+  --color-accent-muted: var(--color-purple-500);
+  --color-on-accent: var(--color-brown-100);
+}
+
+[data-palette='pink'] {
+  --color-accent: var(--color-pink-500);
+  --color-accent-muted: var(--color-pink-400);
+  --color-on-accent: var(--color-brown-100);
+}
+
+[data-mode='dark'] [data-palette='pink'],
+[data-mode='dark'][data-palette='pink'] {
+  --color-accent: var(--color-pink-700);
+  --color-accent-muted: var(--color-pink-500);
+  --color-on-accent: var(--color-brown-100);
+}
+
+[data-palette='orange'] {
+  --color-accent: var(--color-orange-500);
+  --color-accent-muted: var(--color-orange-400);
+  --color-on-accent: var(--color-brown-100);
+}
+
+[data-mode='dark'] [data-palette='orange'],
+[data-mode='dark'][data-palette='orange'] {
+  --color-accent: var(--color-orange-700);
+  --color-accent-muted: var(--color-orange-500);
+  --color-on-accent: var(--color-brown-100);
+}

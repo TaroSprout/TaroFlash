@@ -31,7 +31,7 @@ function onDone(e: MouseEvent) {
     <button
       data-testid="study-card-edit__done"
       :data-active="done_playing || null"
-      class="cursor-pointer rounded-full bg-(--theme-primary) px-13 py-4 text-white hover:-translate-0.5 hover:shadow-sm transition-all duration-50"
+      class="cursor-pointer rounded-full bg-(--color-accent) px-13 py-4 text-white hover:-translate-0.5 hover:shadow-sm transition-all duration-50"
       @click="onDone"
     >
       {{ $t('study-session.edit.done') }}

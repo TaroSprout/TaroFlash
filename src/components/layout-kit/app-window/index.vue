@@ -3,17 +3,15 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { coverBindings } from '@/utils/cover'
 import {
-  WINDOW_BODY_BG,
   WINDOW_HEADER_BORDER_CLASS,
   WINDOW_HEADER_FILL_CLASS,
-  type WindowHeaderBorder,
-  type WindowSurface
+  type WindowHeaderBorder
 } from './surface'
+import { nextDepth, provideDepth, useAmbientDepth } from '@/composables/ui/depth'
 import UiButton from '@/components/ui-kit/button.vue'
 
 type WindowPatternConfig = {
-  theme?: Theme
-  theme_dark?: Theme
+  palette?: PaletteName
   pattern?: DeckCoverPattern
   pattern_size?: string
   pattern_opacity?: string
@@ -25,7 +23,6 @@ export type AppWindowProps = {
   show_close_button?: boolean
   close_label?: string
   close_icon?: string
-  surface?: WindowSurface
   header_border?: WindowHeaderBorder
   window_px?: string
 }
@@ -36,12 +33,17 @@ const {
   show_close_button = true,
   close_label,
   close_icon = 'close',
-  surface = 'standard',
   header_border = 'wave',
   window_px
 } = defineProps<AppWindowProps>()
 
 const { t } = useI18n()
+
+// The window is a raised surface: one step above whatever it opened over. The
+// body paints that surface; the sidebar is the recess beside it, so it reads
+// --color-below off the very same depth.
+const ambient_depth = useAmbientDepth()
+const depth = provideDepth(() => nextDepth(ambient_depth.value))
 
 const slots = defineSlots<{
   sidebar(): any
@@ -55,7 +57,6 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
-const body_bg_class = computed(() => WINDOW_BODY_BG[surface])
 const header_border_class = computed(() => WINDOW_HEADER_BORDER_CLASS[header_border])
 const header_fill_class = computed(() => WINDOW_HEADER_FILL_CLASS[header_border])
 const close_label_text = computed(() => close_label ?? t('app-window.close-label'))
@@ -67,7 +68,7 @@ const show_builtin_close = computed(() => show_close_button && !slots.header)
 const header_bindings = computed(() =>
   coverBindings(
     {
-      theme: pattern_config?.theme,
+      palette: pattern_config?.palette,
       pattern: pattern_config?.pattern
     },
     {
@@ -96,15 +97,12 @@ const showHeader = computed(() => Boolean(slots.header || slots['header-content'
 
     <div
       data-testid="app-window-container"
-      class="flex overflow-hidden w-full h-full rounded-t-8 rounded-b-8 mobile-modal:rounded-b-none shadow-lg border-brown-100 dark:border-grey-900 border-t border-l mobile-modal:border-r"
+      :data-depth="depth"
+      class="flex overflow-hidden w-full h-full rounded-t-8 rounded-b-8 mobile-modal:rounded-b-none bevel-lg mobile-modal:bevel-sheet"
     >
       <slot name="sidebar"></slot>
 
-      <div
-        data-testid="app-window"
-        :data-surface="surface"
-        class="relative flex w-full h-full flex-col"
-      >
+      <div data-testid="app-window" class="relative flex w-full h-full flex-col">
         <div
           v-if="show_builtin_close"
           data-testid="app-window__close-slot"
@@ -128,7 +126,7 @@ const showHeader = computed(() => Boolean(slots.header || slots['header-content'
               :data-header-border="header_border"
               v-bind="header_bindings"
               :class="[
-                'w-full flex justify-center items-center place-items-center px-(--window-px) pt-11.5 pb-14 gap-6 bg-(--theme-primary) text-(--theme-on-primary) relative z-10',
+                'w-full flex justify-center items-center place-items-center px-(--window-px) pt-11.5 pb-14 gap-6 bg-(--color-accent) text-(--color-on-accent) relative z-10',
                 header_border_class
               ]"
             >
@@ -142,14 +140,11 @@ const showHeader = computed(() => Boolean(slots.header || slots['header-content'
             v-if="header_fill_class"
             data-testid="app-window__header-fill"
             aria-hidden="true"
-            :class="['absolute inset-0 z-20 pointer-events-none', body_bg_class, header_fill_class]"
+            :class="['absolute inset-0 z-20 pointer-events-none bg-surface', header_fill_class]"
           ></div>
         </div>
 
-        <div
-          data-testid="app-window__body"
-          :class="['relative z-20 min-h-0 flex-1', body_bg_class]"
-        >
+        <div data-testid="app-window__body" class="relative z-20 min-h-0 flex-1 bg-surface">
           <slot></slot>
         </div>
       </div>

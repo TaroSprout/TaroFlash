@@ -30,7 +30,7 @@ const starting_side_options = computed(() =>
     :label="t('deck.settings-modal.review-pacing.general-heading')"
   >
     <ui-toggle v-model:checked="draft.study_config.shuffle">
-      <div class="flex items-center gap-2.5 text-brown-500">
+      <div class="flex items-center gap-2.5 text-ink-muted">
         {{ t('deck.settings-modal.review-pacing.shuffle') }}
       </div>
     </ui-toggle>
@@ -39,7 +39,7 @@ const starting_side_options = computed(() =>
       data-testid="tab-review-pacing__starting-side"
       class="flex items-center justify-between gap-3"
     >
-      <div class="flex items-center gap-2.5 text-brown-500">
+      <div class="flex items-center gap-2.5 text-ink-muted">
         {{ t('deck.settings-modal.review-pacing.starting-side-label') }}
       </div>
 

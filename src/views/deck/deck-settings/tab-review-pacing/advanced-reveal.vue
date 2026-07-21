@@ -49,7 +49,7 @@ function toggleRevealed() {
       element="button"
       :text="t('deck.settings-modal.review-pacing.advanced-hide-tooltip')"
       data-testid="advanced-reveal__badge"
-      class="absolute -top-3 left-1/2 z-1 -translate-x-1/2 rounded-full bg-brown-300 dark:bg-grey-800 px-4 py-1 text-base text-brown-500 dark:text-brown-100"
+      class="absolute -top-3 left-1/2 z-1 -translate-x-1/2 rounded-full bg-below px-4 py-1 text-base text-ink-muted"
       :class="!revealed && 'pointer-events-none'"
       @click="toggleRevealed"
     >
@@ -68,7 +68,7 @@ function toggleRevealed() {
       ref="scrim"
       type="button"
       data-testid="advanced-reveal__scrim"
-      class="col-start-1 row-start-1 flex cursor-pointer flex-col items-center justify-center gap-4 text-brown-500"
+      class="col-start-1 row-start-1 flex cursor-pointer flex-col items-center justify-center gap-4 text-ink-muted"
       :class="revealed && 'pointer-events-none opacity-0'"
       @click="toggleRevealed"
     >

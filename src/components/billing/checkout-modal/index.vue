@@ -22,10 +22,7 @@ const { status, is_ready, onSubmit } = useCheckout(close)
   <dialog-card
     data-testid="checkout"
     class="pb-6"
-    bg_class="bg-brown-200 dark:bg-grey-800"
     size="md"
-    data-theme="brown-300"
-    data-theme-dark="stone-700"
     :title="t('billing.checkout.title')"
     :show_header="status !== 'success'"
     :close_label="t('billing.checkout.close-label')"

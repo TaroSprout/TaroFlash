@@ -125,10 +125,9 @@ function onClose() {
           </span>
           <ui-radio
             v-else
-            class="group-hover/tappable:bg-(--theme-primary)!"
+            class="group-hover/tappable:bg-(--color-accent)!"
             :class="{ 'opacity-20': Number(entry.value) === current_deck_id }"
-            data-theme="blue-500"
-            data-theme-dark="blue-650"
+            data-palette="brand"
             :sfx="{ press: 'snappy_button_2' }"
             :checked="
               Number(entry.value) === selected_deck_id || Number(entry.value) === current_deck_id
@@ -148,8 +147,7 @@ function onClose() {
     <div data-testid="move-cards__actions" class="flex w-full justify-end gap-3">
       <ui-button
         data-testid="move-cards__move"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
+        data-palette="brand"
         icon-left="move-item"
         size="xl"
         full-width

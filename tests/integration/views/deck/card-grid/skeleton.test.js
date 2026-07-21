@@ -10,8 +10,6 @@ vi.mock('gsap', () => ({ gsap: { fromTo: vi.fn(), to: vi.fn() } }))
 
 // DEFAULT_COVER is module-private; assert its observable values through the
 // rendered Card stub props rather than importing the constant directly.
-const DEFAULT_COVER_THEME = 'brown-300'
-const DEFAULT_COVER_THEME_DARK = 'stone-900'
 const DEFAULT_COVER_PATTERN = 'diagonal-stripes'
 
 const CardStub = defineComponent({
@@ -30,8 +28,7 @@ const CardStub = defineComponent({
         'data-size': props.size,
         'data-side': props.side,
         'data-shimmer': String(props.shimmer),
-        'data-cover-theme': props.cover_config?.theme,
-        'data-cover-theme-dark': props.cover_config?.theme_dark,
+        'data-cover-palette': props.cover_config?.palette,
         'data-cover-pattern': props.cover_config?.pattern
       })
   }
@@ -93,21 +90,13 @@ describe('CardGridSkeleton (card-grid/skeleton.vue)', () => {
     }
   })
 
-  // ── DEFAULT_COVER (brown-300 / stone-900 / diagonal-stripes) [obligation] ─
+  // ── DEFAULT_COVER (no palette — neutral chrome / diagonal-stripes) [obligation]
 
-  test('each card uses DEFAULT_COVER theme=brown-300 [obligation]', () => {
+  test('each card uses DEFAULT_COVER with no palette (neutral chrome) [obligation]', () => {
     const wrapper = mountSkeleton()
     const cards = wrapper.findAll('[data-testid="card-stub"]')
     for (const card of cards) {
-      expect(card.attributes('data-cover-theme')).toBe(DEFAULT_COVER_THEME)
-    }
-  })
-
-  test('each card uses DEFAULT_COVER theme_dark=stone-900 [obligation]', () => {
-    const wrapper = mountSkeleton()
-    const cards = wrapper.findAll('[data-testid="card-stub"]')
-    for (const card of cards) {
-      expect(card.attributes('data-cover-theme-dark')).toBe(DEFAULT_COVER_THEME_DARK)
+      expect(card.attributes('data-cover-palette')).toBeUndefined()
     }
   })
 

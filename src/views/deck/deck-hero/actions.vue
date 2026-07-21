@@ -39,7 +39,7 @@ const edit_label = computed(() => {
       data-testid="deck-hero__mobile-actions"
       class="relative flex w-full flex-row items-center gap-2"
     >
-      <search-bar size="xl" fill data-theme="brown-300" />
+      <search-bar size="xl" fill />
 
       <Transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
         <div
@@ -65,9 +65,7 @@ const edit_label = computed(() => {
         data-testid="overview-panel__settings-button"
         :options="menu.options.value"
         :icon-left="is_active_mode ? 'stop' : 'edit'"
-        :data-theme="is_active_mode ? 'yellow-500' : 'brown-300'"
-        :data-theme-dark="is_active_mode ? 'yellow-700' : 'stone-700'"
-        trigger-theme="brown-200"
+        :data-palette="is_active_mode ? 'yellow' : undefined"
         full-width
         size="xl"
         :disabled="isSelecting"

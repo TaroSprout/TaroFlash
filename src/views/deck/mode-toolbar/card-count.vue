@@ -12,8 +12,7 @@ const { card_count } = inject(cardEditorKey)!
 <template>
   <ui-tag
     data-testid="card-count"
-    data-theme="green-400"
-    data-theme-dark="green-800"
+    data-palette="green"
     fill-height
     class="bgx-diagonal-stripes bgx-opacity-10"
   >

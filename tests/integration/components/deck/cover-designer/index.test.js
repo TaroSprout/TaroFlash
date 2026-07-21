@@ -9,11 +9,10 @@ function slotlessStub(name) {
     name,
     inheritAttrs: true,
     props: {
-      supported_themes: { type: Array, default: () => [] },
+      supported_palettes: { type: Array, default: () => [] },
       supported_icons: { type: Array, default: () => [] },
       supported_patterns: { type: Array, default: () => [] },
-      theme: { default: undefined },
-      theme_dark: { default: undefined },
+      palette: { default: undefined },
       icon: { default: undefined },
       selected_pattern: { default: undefined }
     },
@@ -61,18 +60,14 @@ describe('CoverDesigner toolbar', () => {
 
   test('forwards config fields to the appropriate picker', () => {
     const { wrapper } = makeDesigner({
-      theme: 'pink-400',
-      theme_dark: 'pink-700',
+      palette: 'pink',
       icon: SUPPORTED_ICONS[0],
       pattern: 'wave'
     })
 
     const bg = wrapper.findComponent(UiThemePickerStub).props()
-    expect(bg.theme).toBe('pink-400')
-    expect(bg.theme_dark).toBe('pink-700')
-    expect(bg.supported_themes.map((option) => option.light)).toEqual(
-      expect.arrayContaining(['blue-500', 'green-500', 'purple-500'])
-    )
+    expect(bg.palette).toBe('pink')
+    expect(bg.supported_palettes).toEqual(expect.arrayContaining(['blue', 'green', 'purple']))
 
     const iconProps = wrapper.findComponent(IconPickerStub).props()
     expect(iconProps.icon).toBe(SUPPORTED_ICONS[0])
@@ -85,18 +80,11 @@ describe('CoverDesigner toolbar', () => {
     expect(patternProps.supported_patterns).toEqual(expect.arrayContaining(['wave', 'aztec']))
   })
 
-  test('update:theme from UiThemePicker mutates config.theme', async () => {
-    const { wrapper, config } = makeDesigner({ theme: 'blue-500' })
-    wrapper.findComponent(UiThemePickerStub).vm.$emit('update:theme', 'red-500')
+  test('update:palette from UiThemePicker mutates config.palette', async () => {
+    const { wrapper, config } = makeDesigner({ palette: 'blue' })
+    wrapper.findComponent(UiThemePickerStub).vm.$emit('update:palette', 'red')
     await wrapper.vm.$nextTick()
-    expect(config.theme).toBe('red-500')
-  })
-
-  test('update:theme_dark from UiThemePicker mutates config.theme_dark', async () => {
-    const { wrapper, config } = makeDesigner({ theme_dark: 'blue-800' })
-    wrapper.findComponent(UiThemePickerStub).vm.$emit('update:theme_dark', 'red-800')
-    await wrapper.vm.$nextTick()
-    expect(config.theme_dark).toBe('red-800')
+    expect(config.palette).toBe('red')
   })
 
   test('update:icon from IconPicker mutates config.icon', async () => {

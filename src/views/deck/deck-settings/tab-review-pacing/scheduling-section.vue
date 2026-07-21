@@ -6,6 +6,7 @@ import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
 import FieldRow from './field-row.vue'
 import AdvancedReveal from './advanced-reveal.vue'
 import { pacingFieldsKey } from './use-pacing-fields'
+import { provideDepth } from '@/composables/ui/depth'
 import {
   DESIRED_RETENTION_BOUNDS,
   LEECH_THRESHOLD_BOUNDS,
@@ -13,6 +14,14 @@ import {
 } from '@/utils/review-pacing/defaults'
 
 const { t } = useI18n()
+
+// This section paints its own brown-200/stone-700 panel (class set by the
+// parent, data-depth co-located there) that LIFTS OFF the depth-1 window, so it
+// is one elevation up — depth 2. Declaring it makes the spinbox and select-menu
+// wells inside resolve `below` at depth 2 (brown-300 / grey-800), a step darker
+// than the panel so they read as recessed, instead of the window's depth-1
+// `below` which sits lighter than the panel and reads wrong.
+provideDepth(2)
 
 const {
   fields: { desired_retention, leech_threshold, max_interval, learning_steps, relearning_steps }
@@ -28,7 +37,6 @@ const {
       :field="desired_retention"
     >
       <ui-spinbox
-        data-theme-dark="stone-900"
         v-model:value="desired_retention.value.value"
         :min="DESIRED_RETENTION_BOUNDS.min"
         :max="DESIRED_RETENTION_BOUNDS.max"
@@ -43,7 +51,6 @@ const {
       :field="max_interval"
     >
       <ui-spinbox
-        data-theme-dark="stone-900"
         v-model:value="max_interval.value.value"
         :min="MAX_INTERVAL_BOUNDS.min"
         :max="MAX_INTERVAL_BOUNDS.max"
@@ -60,7 +67,6 @@ const {
     >
       <ui-spinbox
         v-model:value="leech_threshold.value.value"
-        data-theme-dark="stone-900"
         :min="LEECH_THRESHOLD_BOUNDS.min"
         :max="LEECH_THRESHOLD_BOUNDS.max"
         :step="LEECH_THRESHOLD_BOUNDS.step"
@@ -74,10 +80,6 @@ const {
       :field="learning_steps"
     >
       <ui-select-menu
-        data-theme="brown-100"
-        data-theme-dark="stone-900"
-        menu-theme="brown-100"
-        menu-theme-dark="stone-700"
         v-model="learning_steps.value.value"
         :options="learning_steps.options.value"
         class="w-32"
@@ -91,10 +93,6 @@ const {
       :field="relearning_steps"
     >
       <ui-select-menu
-        data-theme="brown-100"
-        data-theme-dark="stone-900"
-        menu-theme="brown-100"
-        menu-theme-dark="stone-700"
         v-model="relearning_steps.value.value"
         :options="relearning_steps.options.value"
         class="w-32"

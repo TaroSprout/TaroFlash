@@ -25,15 +25,13 @@ const { t } = useI18n()
     data-testid="reset-password-modal"
     class="h-full flex flex-1 flex-col items-center justify-center gap-4 pt-6"
   >
-    <ui-icon src="keyhole" class="size-12 text-brown-700 dark:text-brown-100" />
+    <ui-icon src="keyhole" class="size-12 text-ink" />
 
     <div class="w-full flex flex-col gap-2">
       <form class="contents" @submit.prevent="emit('submit')">
         <ui-input
           type="password"
           name="password"
-          data-theme="brown-50"
-          data-theme-dark="stone-700"
           autocomplete="new-password"
           size="lg"
           v-model="password"
@@ -44,8 +42,6 @@ const { t } = useI18n()
         <ui-input
           type="password"
           name="confirm-password"
-          data-theme="brown-50"
-          data-theme-dark="stone-700"
           autocomplete="new-password"
           size="lg"
           v-model="confirmPassword"
@@ -58,8 +54,7 @@ const { t } = useI18n()
 
       <ui-button
         data-testid="reset-password-modal__submit"
-        data-theme="blue-500"
-        data-theme-dark="blue-650"
+        data-palette="brand"
         size="lg"
         full-width
         :loading="loading"

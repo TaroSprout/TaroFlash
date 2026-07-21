@@ -10,10 +10,10 @@ type Tab = {
   icon?: string
 }
 
-const { storageKey, theme = 'blue-500' } = defineProps<{
+const { storageKey, palette = 'blue' } = defineProps<{
   tabs: Tab[]
   storageKey?: string
-  theme?: Theme
+  palette?: Palette
 }>()
 const emit = defineEmits<{
   (e: 'update:activeTab', index: number): void
@@ -50,7 +50,7 @@ function onHover(index: number) {
 </script>
 
 <template>
-  <div data-testid="ui-kit-tabs" :data-theme="theme" class="ui-kit-tabs">
+  <div data-testid="ui-kit-tabs" :data-palette="palette" class="ui-kit-tabs">
     <ui-tooltip
       v-for="(tab, index) in tabs"
       data-testid="ui-kit-tabs__tab"
@@ -87,7 +87,7 @@ function onHover(index: number) {
   min-width: 32px;
   padding: 6px;
   border-radius: var(--radius-3_5);
-  background-color: var(--theme-primary);
+  background-color: var(--color-accent);
 
   transition: width 75ms ease-in-out;
   cursor: pointer;

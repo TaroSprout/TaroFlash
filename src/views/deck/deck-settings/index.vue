@@ -171,8 +171,7 @@ watch([preview_el, aside_el], ([preview]) => {
   <paged-window
     ref="pager"
     data-testid="deck-settings-container"
-    data-theme="green-500"
-    data-theme-dark="green-800"
+    data-palette="green"
     :data-layout="layout_mode"
     :class="[
       layout_mode === 'desktop' ? 'w-238!' : 'w-full! max-w-205.5', // desktop : not desktop

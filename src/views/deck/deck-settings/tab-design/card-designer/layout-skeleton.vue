@@ -25,7 +25,7 @@ const { layout } = defineProps<LayoutSkeletonProps>()
       </div>
       <div
         data-testid="layout-skeleton__image"
-        class="grow rounded-[calc(var(--face-radius)-var(--face-padding))] bg-brown-300 dark:bg-stone-900"
+        class="grow rounded-[calc(var(--face-radius)-var(--face-padding))] bg-surface"
         :class="{ 'absolute inset-1': layout === 'behind' }"
       ></div>
     </div>

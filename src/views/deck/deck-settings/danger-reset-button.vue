@@ -10,9 +10,8 @@ const { onResetReviews, resetting_reviews } = inject(deckDangerActionsKey)!
 
 <template>
   <ui-button
+    neutral
     data-testid="danger-reset-button"
-    data-theme="brown-100"
-    data-theme-dark="stone-700"
     icon-left="schedule"
     size="lg"
     full-width

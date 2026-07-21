@@ -27,8 +27,7 @@ const CardStub = defineComponent({
         'data-size': props.size,
         'data-side': props.side,
         'data-shimmer': String(props.shimmer),
-        'data-cover-theme': props.cover_config?.theme,
-        'data-cover-theme-dark': props.cover_config?.theme_dark,
+        'data-cover-palette': props.cover_config?.palette,
         'data-cover-pattern': props.cover_config?.pattern
       })
   }
@@ -66,12 +65,10 @@ describe('DeckGridSkeleton (views/dashboard/deck-grid/skeleton.vue)', () => {
     }
   })
 
-  test('all cards use the DEFAULT_COVER theme/theme_dark/pattern', () => {
+  test('all cards use the DEFAULT_COVER pattern (no palette — neutral chrome)', () => {
     const wrapper = mountSkeleton()
     for (const card of wrapper.findAllComponents(CardStub)) {
       expect(card.props('cover_config')).toEqual({
-        theme: 'brown-300',
-        theme_dark: 'stone-900',
         pattern: 'diagonal-stripes'
       })
     }
