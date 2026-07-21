@@ -1,7 +1,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSessionStore } from '@/stores/session'
-import type { OAuthProvider } from '@/api/session'
+import { isDisplayNameAvailable, type OAuthProvider } from '@/api/session'
 import { emitSfx } from '@/sfx/bus'
 import { validatePasswordFields } from '@/utils/password-validation'
 
@@ -72,6 +72,17 @@ export function useSignupActions() {
     }
 
     loading.value = true
+
+    if (!(await isDisplayNameAvailable(username.value.trim()))) {
+      loading.value = false
+      emitSfx('etc_woodblock_stuck')
+      errors.value = {
+        ...errors.value,
+        username: t('signup-dialog.form-validation.username-already-in-use')
+      }
+      return 'invalid'
+    }
+
     const outcome = await session.signupEmail(email.value.trim(), password.value, {
       display_name: username.value.trim()
     })
