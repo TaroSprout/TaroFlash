@@ -62,7 +62,8 @@ ticket's `Assignee`).
    approval on every change.** If the `Area` touches `supabase/**` (migrations, RPCs, RLS, edge
    functions), the backend teaching persona is **on** — teach as you write per CLAUDE.md. **Do
    not touch tests** — the golden rule holds in pair mode. Follow all `.claude/rules/*`.
-5. **PR** — invoke the **`prepare-pr`** skill (commits, conventional messages, lint+type gate,
+5. **PR** — invoke the **`prepare-pr`** skill with `--ticket <ID>` (the ticket's Notion ID)
+   so the PR title is prefixed `TARO-<ID>:` (commits, conventional messages, lint+type gate,
    opens one PR, watches CI to green).
 6. **HANDOFF** — set the ticket's `Status = Review` and write the PR URL into its body. Stop.
 
@@ -91,7 +92,8 @@ Autonomous. Sequential (one ticket fully done before the next — no parallel wo
    It reports back what it changed + the branch name.
    c. **TESTS** — invoke the **`update-tests`** skill for the changes (this is the explicit ask
    that overrides the golden rule — batch mode owns its tests).
-   d. **PR** — invoke the **`prepare-pr`** skill → one PR, CI watched to green.
+   d. **PR** — invoke the **`prepare-pr`** skill with `--ticket <ID>` (the ticket's Notion ID)
+   → one PR titled `TARO-<ID>: …`, CI watched to green.
    e. **HANDOFF** — set `Status = Review`, write the PR URL into the ticket body.
    f. **If stuck** — subagent can't satisfy acceptance, the gate won't pass after real effort, or
    a blocking unknown surfaces: set `Status = Blocked`, write a one-line reason + what's needed

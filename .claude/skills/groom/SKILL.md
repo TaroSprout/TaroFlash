@@ -72,11 +72,21 @@ it, proceed. If ambiguous or oversized, ask which to include before spending inv
 
 --- batched checkpoints below: do all tickets at each stage, then one interruption ---
 
+> **Checkpoint reporting voice (CHECKPOINT 1 & 2).** Report to the user in **product terms** —
+> describe where a thing sits in the **UI** and what the user experiences ("the edit-decks
+> control on the dashboard", "the popup after Google sign-up", "the red error under the name
+> field"). Do **not** surface filepaths, component/composable names, function names, or symbols
+> in the checkpoint report — the user thinks in screens and flows, not the file tree. Filepaths
+> still belong in the drafted ticket **body** (§ 6, agent-facing), just never in the
+> user-facing checkpoint summaries. When a hunch is fundamentally about a location in code,
+> translate it to the screen/flow the user would recognise.
+
 ### 3. HUNCH-ALL ▸ CHECKPOINT 1
 
-For each ticket, from the raw name + app-map alone (no code reads yet), state a one-liner:
+For each ticket, from the raw name + app-map alone (no code reads yet), state a one-liner in
+product terms — the screen/flow it lives in and what the user sees, not the path:
 
-> `#141` spinbox step bug → likely `src/components/ui-kit/spinbox/` + review-pacing callers
+> `#141` spinbox step bug → likely the number steppers in deck review-pacing settings
 > Present all hunches together. **Stop and let the user course-correct the search direction**
 > before you spend time investigating. Cheap to redirect here, expensive later.
 
@@ -90,16 +100,22 @@ affected paths, constraints, open unknowns.
 
 ### 5. VALIDATE-ALL ▸ CHECKPOINT 2
 
-Report per ticket: assumptions **confirmed** vs **wrong/surprising**, and any unknowns that need
-your input. **Stop for confirmation or redirect** before drafting. If a ticket is still too thin
-to spec even after investigation, flag it as a → `Needs More Info` candidate here.
+Report per ticket, **in product terms** (see reporting-voice note above — screens and flows, no
+filepaths or symbol names): assumptions **confirmed** vs **wrong/surprising**, and any unknowns
+that need your input. Separate the "clean, ready to spec" tickets from the ones that need a
+decision, and for each decision state the user-facing choice plainly (what changes on screen,
+what the trade-off is) rather than the implementation fork. **Stop for confirmation or redirect**
+before drafting. If a ticket is still too thin to spec even after investigation, flag it as a →
+`Needs More Info` candidate here.
 
 ### 6. DRAFT-ALL ▸ APPROVE-BATCH
 
-For every ticket, draft in one pass and present together:
+For every ticket, draft the full body in one pass (per-Type template § below), but **present a
+compact summary** — do not dump full bodies into the review. Per ticket show:
 
 - **Title** — descriptive rewrite.
-- **Body** — per-Type template (§ below), filled with what INVESTIGATE found.
+- **Description summary** — a **single line** (≤1 line) capturing the product intent. The full
+  **Product description** and **Technical notes** live in the drafted body, not the review.
 - **Fields** — suggested `Priority`, `Type`, `Epic` (from the Epic→code map), `Assignee` (§ heuristic).
 - **Lane** — `Ready` (pair) or `Queued` (auto). Default `Queued` when the spec is complete and
   the work is mechanical/low-risk; default `Ready` (pair) when it touches `supabase/`, auth,
@@ -132,31 +148,40 @@ Concise tally: `groomed → Ready/Queued (with assignee)`, `created`, `merged �
 
 ## Body templates
 
+Every body carries two named sections: **Product description** (what the user experiences and
+why, in plain product terms — no filepaths) and **Technical notes** (the agent-facing detail:
+paths, root cause, approach, constraints/out-of-scope, rules, i18n key paths). The description
+summary shown at CHECKPOINT/DRAFT review is a one-line distillation of Product description.
+
 **Bug**
 
 ```
+## Product description
+<1–3 lines: what the user sees/experiences and why it's wrong, product terms>
 ## Repro
 1. …
 ## Expected / Actual
 - Expected: …
 - Actual: …
-## Area
-<path(s)> — <root cause if known>
 ## Acceptance
 <observable condition proving it's fixed>
+## Technical notes
+- Area: <path(s)> — <root cause if known>
+- Approach: <where the fix lives / how>
+- Constraints & rules: <.claude/rules/*, i18n key path, gotchas>
 ```
 
 **Task / Story**
 
 ```
-## Goal
-<what & why, 1–2 lines>
+## Product description
+<what & why for the user, product terms>
 ## Acceptance criteria
 - [ ] …
-## Area
-<path(s)>
-## Constraints / out of scope
-- …
+## Technical notes
+- Area: <path(s)>
+- Approach: <how / where>
+- Constraints & out of scope: <…, rules, i18n key path>
 ```
 
 Keep bodies tight — enough for an agent to act, no padding. Follow project i18n rule: any new

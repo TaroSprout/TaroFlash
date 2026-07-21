@@ -2,16 +2,19 @@
 name: prepare-pr
 description: Fully autonomous — prepare a branch for PR by committing all pending work, rewriting commit messages into release-notes-friendly Conventional Commits, renaming the branch if it no longer fits the changes, running a lint + type-check gate, drafting a PR title and body, then creating a single PR directly (not a draft) and watching CI until green. Never asks for permission or feedback before the PR opens. Always bundles all branch work — committed AND uncommitted (staged + unstaged) — into exactly one PR. Use when a feature branch is code-complete and ready for review.
 allowed-tools: Read, Edit, Write, Bash, Glob, Grep
-argument-hint: '[--no-watch]'
+argument-hint: '[--no-watch] [--ticket <ID>]'
 arguments:
   - name: --no-watch
     description: Skip the post-create CI watch + coverage check (Step 10).
-lastUpdated: 2026-07-03T00:00:00Z
+  - name: --ticket <ID>
+    description: Prefix the PR title with the ticket key `TARO-<ID>` (e.g. `TARO-207: …`). Omit for no prefix.
+lastUpdated: 2026-07-20T00:00:00Z
 ---
 
 ## Args
 
 - **`--no-watch`** (optional) — skip the post-create CI watch + coverage check (Step 10). Default behaviour blocks on CI after opening the PR until checks settle, then inspects coverage and writes more tests if it regressed.
+- **`--ticket <ID>`** (optional) — the Notion Task Board ticket ID this PR resolves. When given, the PR **title** is prefixed with `TARO-<ID>: ` (Step 8). This affects only the PR title — commit subjects stay clean (ticket refs still belong in a commit-body `Refs:` trailer, per Notes). Omit to open a PR with no ticket prefix.
 
 ## Fully autonomous — no approval gates
 
@@ -231,6 +234,8 @@ Examples:
 - `Study session inline editing and architecture cleanup` (multiple commits, mixed types)
 
 Avoid repeating Conventional-Commits prefix in title — GitHub release tooling reads commit subjects, not PR titles, and humans don't need `feat(study-session):` twice.
+
+**Ticket prefix (`--ticket <ID>`).** If the skill was invoked with `--ticket <ID>`, prepend the ticket key to the drafted title: `TARO-<ID>: <title>` — e.g. `TARO-207: Close open modals and clear caches on logout`. Prefix only; the rest of the title is derived exactly as above. Do **not** add the prefix when `--ticket` is absent, and never put the ticket key into commit subjects (Notes).
 
 **Body** — structured for skim:
 
