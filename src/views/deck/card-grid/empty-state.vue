@@ -2,18 +2,19 @@
 import CardGridSkeleton from './skeleton.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import { computed, inject } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { type CardGridSize } from '@/views/deck/composables/view-shell'
-import { cardEditorKey } from '@/views/deck/composables'
+import { useEditorSurface } from '@/views/deck/composables'
 
 const { t } = useI18n()
 
-const { newCard } = inject(cardEditorKey)!
+const surface = useEditorSurface()
 
 // On the narrowest screens the md backdrop cards get cramped — drop to base.
 const is_compact = useMatchMedia('w<sm')
+
 const skeleton_size = computed<CardGridSize>(() => (is_compact.value ? 'base' : 'md'))
 </script>
 
@@ -45,7 +46,7 @@ const skeleton_size = computed<CardGridSize>(() => (is_compact.value ? 'base' : 
           data-testid="card-grid-empty__create-button"
           data-palette="brand"
           icon-left="card-add"
-          @press="newCard"
+          @press="surface.openNewCard"
         >
           {{ t('deck-view.empty-state.create-button') }}
         </ui-button>

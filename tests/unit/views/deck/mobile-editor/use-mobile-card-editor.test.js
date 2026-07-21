@@ -45,11 +45,13 @@ function makeController(cards = []) {
   const updateCard = vi.fn().mockResolvedValue(undefined)
   const onMoveCards = vi.fn().mockResolvedValue(undefined)
   const onDeleteCards = vi.fn().mockResolvedValue(undefined)
+  const addCard = vi.fn().mockResolvedValue(undefined)
   return {
     list: { all_cards },
     card_attributes: { front: {}, back: {} },
     saving: ref(false),
     updateCard,
+    addCard,
     actions: { onMoveCards, onDeleteCards }
   }
 }
@@ -152,6 +154,29 @@ describe('useMobileCardEditor — open_at [obligation]', () => {
     editor.open_at('cid-1')
 
     expect(mockOpen).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('useMobileCardEditor — openNewCard [obligation]', () => {
+  test('openNewCard stages via controller.addCard and opens the editor on the returned client_id [obligation]', async () => {
+    const card = makeCard({ client_id: 'cid-new' })
+    const { editor, controller } = makeEditor([card])
+    controller.addCard.mockResolvedValue('cid-new')
+
+    await editor.openNewCard()
+
+    expect(controller.addCard).toHaveBeenCalledOnce()
+    expect(editor.current.value?.client_id).toBe('cid-new')
+    expect(mockOpen).toHaveBeenCalledOnce()
+  })
+
+  test('openNewCard is a no-op when addCard stages nothing (plan cap gated) [obligation]', async () => {
+    const { editor, controller } = makeEditor([])
+    controller.addCard.mockResolvedValue(undefined)
+
+    await editor.openNewCard()
+
+    expect(mockOpen).not.toHaveBeenCalled()
   })
 })
 

@@ -71,6 +71,21 @@ export function useMobileCardEditor(controller: CardListController) {
     close_modal?.()
   }
 
+  /**
+   * The mobile "new card" intent: stage a fresh temp card through the shared
+   * controller (gated on the plan cap, same as the desktop toolbar) and open
+   * the mobile editor focused on it. Shared by the empty-state CTA and the
+   * dock's new-card button at phone width, so staging + opening stays in one
+   * place. No-op when the cap blocks staging — `addCard` already surfaced the
+   * upgrade alert.
+   */
+  async function openNewCard() {
+    const client_id = await controller.addCard()
+    if (!client_id) return
+
+    open_at(client_id)
+  }
+
   // Called by the modal wrapper's onUnmounted so state stays in sync no matter
   // how the modal actually closed (done button, esc, background tap).
   function onClosed() {
@@ -153,6 +168,7 @@ export function useMobileCardEditor(controller: CardListController) {
     card_attributes: controller.card_attributes,
     saving: controller.saving,
     open_at,
+    openNewCard,
     close,
     onClosed,
     flip,
