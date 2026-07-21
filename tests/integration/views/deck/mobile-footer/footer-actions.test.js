@@ -54,8 +54,12 @@ function makeMobileEditor() {
   return { openNewCard: vi.fn() }
 }
 
-function mountFooterActions(shell = makeShell(), mobile_editor = makeMobileEditor()) {
-  mockUseMatchMedia.mockReturnValue(ref(false))
+function mountFooterActions(
+  shell = makeShell(),
+  mobile_editor = makeMobileEditor(),
+  is_mobile = false
+) {
+  mockUseMatchMedia.mockReturnValue(ref(is_mobile))
   return shallowMount(FooterActions, {
     global: {
       stubs: { UiButton: UiButtonStub },
@@ -118,9 +122,9 @@ describe('mobile-footer/footer-actions', () => {
     expect(shell.toggleRearrange).toHaveBeenCalledOnce()
   })
 
-  test('pressing the new-card button calls mobile_editor.openNewCard [obligation]', async () => {
+  test('pressing the new-card button opens a new card on the mobile surface [obligation]', async () => {
     const mobile_editor = makeMobileEditor()
-    const wrapper = mountFooterActions(makeShell({ is_rearranging: false }), mobile_editor)
+    const wrapper = mountFooterActions(makeShell({ is_rearranging: false }), mobile_editor, true)
     await wrapper.find('[data-testid="deck-footer-actions__new-card"]').trigger('click')
     expect(mobile_editor.openNewCard).toHaveBeenCalledOnce()
   })
