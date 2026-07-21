@@ -102,7 +102,7 @@ function increment() {
           type="text"
           inputmode="numeric"
           data-testid="ui-kit-spinbox__input"
-          class="text-center tabular-nums text-ink bg-transparent outline-none text-base px-2 w-12"
+          class="text-center tabular-nums text-ink bg-transparent outline-none text-lg px-2 w-12"
           :value="display_value"
           :step="step"
           @beforeinput="onBeforeInput"
