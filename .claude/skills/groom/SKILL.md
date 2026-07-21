@@ -51,16 +51,19 @@ keyword→path hunch guide and the Epic→code map are the two tables you lean o
 Query the Task Board for the input set:
 
 ```sql
-SELECT "userDefined:ID" AS id, "Name", "Type", "Priority", "Epic", url
+SELECT "userDefined:ID" AS id, "Name", "Type", "Priority", "Epic", "Assignee", url
 FROM "collection://3630953c-224c-8065-8864-000bb9fe7bad"
-WHERE "Status" = 'Backlog'          -- skips Needs More Info
+WHERE "Status" = 'Backlog'                         -- skips every other lane (Needs More Info, Icebox, …)
+  AND ("Assignee" IS NULL OR "Assignee" <> 'Me')   -- Me on a backlog ticket = hands off, don't groom
 ORDER BY "Priority" ASC, "userDefined:ID" ASC
 ```
 
-Apply args: `--pN` adds `AND "Priority" = '<glyph>'`; explicit `<ID>`s replace the WHERE with
-`"userDefined:ID" IN (…)` (ignoring the Backlog filter — but warn if a named ticket isn't in
-Backlog). `--count N` caps the batch (default 10). If the batch would exceed the cap, take the
-top N by Priority→ID and tell the user how many were left.
+`Assignee = Me` on a Backlog ticket is the user's "I'll handle this myself — don't groom" signal;
+never auto-pull it. Apply args: `--pN` adds `AND "Priority" = '<glyph>'`; explicit `<ID>`s replace
+the WHERE with `"userDefined:ID" IN (…)` (overriding both the Backlog and the `Me` filter, since
+naming a ticket is deliberate — but warn if a named ticket isn't in Backlog or is assigned `Me`).
+`--count N` caps the batch (default 10). If the batch would exceed the cap, take the top N by
+Priority→ID and tell the user how many were left.
 
 ### 2. SELECT
 
