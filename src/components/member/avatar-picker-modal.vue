@@ -8,15 +8,16 @@ import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import { AVATAR_KEYS, loadAvatarUrl } from './avatars'
 import { emitSfx } from '@/sfx/bus'
 import { TYPE_SFX } from '@/sfx/config'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 
 type AvatarPickerModalProps = {
   selected?: string
-  close: (avatar?: string) => void
 }
 
-const { selected, close } = defineProps<AvatarPickerModalProps>()
+const { selected } = defineProps<AvatarPickerModalProps>()
 
 const { t } = useI18n()
+const { close } = useOverlayContext()
 const grid_el = useTemplateRef<HTMLElement>('grid')
 const loaded = reactive(new Set<string>())
 
@@ -43,14 +44,13 @@ function onAvatarSelect(avatar: string) {
     data-palette="blue"
     :title="t('avatar-picker-modal.title')"
     :close_sfx="{ press: 'pop_up_close' }"
-    @close="close()"
   >
-    <template #default="{ viewport }">
+    <template #default="{ is_downgraded }">
       <div data-testid="avatar-picker-modal__scroll-area" class="relative h-full">
         <div
           ref="grid"
           data-testid="avatar-picker-modal__grid"
-          :data-full-bleed="viewport === 'mobile'"
+          :data-full-bleed="is_downgraded"
           class="scroll-hidden grid grid-cols-4 gap-3 overflow-y-auto pb-(--dialog-px) pt-2 h-full"
         >
           <button
@@ -79,7 +79,7 @@ function onAvatarSelect(avatar: string) {
         </div>
 
         <scroll-bar
-          v-if="grid_el && viewport !== 'mobile'"
+          v-if="grid_el && !is_downgraded"
           :target="grid_el"
           min-width="sm"
           class="absolute -right-6 top-1 bottom-(--dialog-px)"

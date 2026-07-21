@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useNoticeStore } from '@/stores/notice-store'
 import NoticeToast from '@/components/ui-kit/notice/toast.vue'
 import NoticePanel from '@/components/ui-kit/notice/panel.vue'
-import UiModal from '@/components/ui-kit/modal/index.vue'
+import OverlayHost from '@/components/overlay/host.vue'
 import { springScaleIn } from '@/utils/animations/modal'
 import { noticeToastListLeave } from '@/utils/animations/notice-toast'
 import audio_player from '@/sfx/player'
@@ -116,6 +116,6 @@ onBeforeUnmount(() => {
   </teleport>
 
   <teleport to="[data-testid='app-modal-container']">
-    <ui-modal />
+    <overlay-host />
   </teleport>
 </template>

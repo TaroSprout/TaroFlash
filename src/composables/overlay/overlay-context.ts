@@ -1,27 +1,21 @@
 import type { OverlayEntry } from '@/stores/overlay-stack'
 import { inject, provide } from 'vue'
-import type { InjectionKey, Ref } from 'vue'
+import type { InjectionKey } from 'vue'
 
 export type OverlayCloseRequest = () => Promise<boolean> | boolean
 
 export type OverlayContext = {
-  // Close this surface with a result value (explicit finish — bypasses the veto).
+  // Close this overlay with a result value (explicit finish — bypasses the veto).
   close: (outcome?: unknown) => void
-  // Request close via the veto pipeline (backdrop/esc semantics); runs onCloseRequest.
+  // Request close via the veto pipeline (backdrop/esc/close-button semantics).
   dismiss: () => void
+  // Register a veto: return false to cancel the close, true to allow it.
   onCloseRequest: (fn: OverlayCloseRequest) => void
-  is_downgraded: Ref<boolean>
+  // Resolves once this overlay's enter animation completes.
   entered: Promise<void>
 }
 
-export type ProvideOverlayContextOptions = {
-  close: (outcome?: unknown) => void
-  dismiss: () => void
-  is_downgraded: Ref<boolean>
-  entered: Promise<void>
-}
-
-export type OverlayHostEntry = {
+export type OverlayContextSource = {
   entry: OverlayEntry
   close: (outcome?: unknown) => void
   dismiss: () => void
@@ -29,28 +23,31 @@ export type OverlayHostEntry = {
 
 export const OVERLAY_CONTEXT_KEY: InjectionKey<OverlayContext> = Symbol('overlay-context')
 
-export const OVERLAY_HOST_ENTRY_KEY: InjectionKey<OverlayHostEntry> = Symbol('overlay-host-entry')
-
 /**
- * Build and provide the inside-surface contract for a single overlay entry.
- * The host calls this once per entry; descendants read it via
- * `useOverlayContext`. `onCloseRequest` writes the entry's veto `interceptor`,
- * replacing the old module-level `request_close_handlers` side-Map.
+ * Build and provide the inside-content overlay context for a single entry.
  *
- * @param entry - the stack entry this surface renders
- * @param opts - `dismiss` (host close-pipeline trigger) + `is_downgraded` (from the downgrade resolver)
+ * Called by `overlay-entry` — the one ancestor of ALL overlay content (the
+ * window primitives AND their slotted content). The surface CANNOT provide
+ * this: Vue scopes slot content to its owner, which sits above the surface, so
+ * a surface `provide` never reaches the content that needs it.
+ *
+ * Wires the entry's lifecycle: creates the `entered` promise (resolved by the
+ * host's after-enter hook via `entry.markEntered`) and routes `onCloseRequest`
+ * to the entry's veto `interceptor`.
  */
-export function provideOverlayContext(
-  entry: OverlayEntry,
-  opts: ProvideOverlayContextOptions
-): OverlayContext {
+export function provideOverlayContext(source: OverlayContextSource): OverlayContext {
+  let resolve_entered!: () => void
+  const entered = new Promise<void>((resolve) => {
+    resolve_entered = resolve
+  })
+  source.entry.markEntered = resolve_entered
+
   const context: OverlayContext = {
-    close: opts.close,
-    dismiss: opts.dismiss,
-    is_downgraded: opts.is_downgraded,
-    entered: opts.entered,
+    close: source.close,
+    dismiss: source.dismiss,
+    entered,
     onCloseRequest: (fn) => {
-      entry.interceptor = async () => fn()
+      source.entry.interceptor = async () => fn()
     }
   }
 
@@ -59,38 +56,15 @@ export function provideOverlayContext(
 }
 
 /**
- * Provide the host→surface channel for a single stack entry. The host calls
- * this once per entry (via the per-entry wrapper); the surface reads it with
- * `useOverlayHostEntry` to complete the content-facing context. Carries the
- * raw `entry` (so the surface can point `markEntered` at its own `entered`
- * resolver) and `dismiss` (the host's close-pipeline trigger for this entry).
- */
-export function provideOverlayHostEntry(channel: OverlayHostEntry): void {
-  provide(OVERLAY_HOST_ENTRY_KEY, channel)
-}
-
-/**
- * Read the host→surface channel from inside a surface. Throws if called
- * outside an overlay host.
- */
-export function useOverlayHostEntry(): OverlayHostEntry {
-  const channel = inject(OVERLAY_HOST_ENTRY_KEY)
-  if (!channel) {
-    throw new Error('useOverlayHostEntry must be called inside an overlay host')
-  }
-
-  return channel
-}
-
-/**
- * Read the overlay contract from inside a surface: `dismiss()` to request
- * close, `onCloseRequest(fn)` to veto, and the reactive `is_downgraded` flag.
- * Throws if called outside an overlay surface.
+ * Read the overlay context from inside any overlay descendant: `close(outcome)`
+ * to finish with a value, `dismiss()` to request close through the veto,
+ * `onCloseRequest(fn)` to veto, and `entered` to await the enter animation.
+ * Throws if called outside an overlay.
  */
 export function useOverlayContext(): OverlayContext {
   const context = inject(OVERLAY_CONTEXT_KEY)
   if (!context) {
-    throw new Error('useOverlayContext must be called inside an overlay surface')
+    throw new Error('useOverlayContext must be called inside an overlay')
   }
 
   return context

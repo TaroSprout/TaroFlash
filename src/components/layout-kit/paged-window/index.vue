@@ -8,6 +8,7 @@ import { usePageTransition } from './page-transition'
 import type { OptionsPanelEntry } from '@/components/ui-kit/options-panel/index.vue'
 import { emitSfx } from '@/sfx/bus'
 import { TYPE_SFX, type SoundKey } from '@/sfx/config'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 import uid from '@/utils/uid'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
@@ -30,7 +31,7 @@ export type PagedWindowGroup = {
 
 type PagedWindowFrameProps = Pick<
   AppWindowProps,
-  'pattern_config' | 'title' | 'header_border' | 'show_close_button'
+  'pattern_config' | 'title' | 'header_border' | 'show_close_button' | 'sheet_at'
 >
 
 export type PagedWindowProps = PagedWindowFrameProps & {
@@ -57,6 +58,7 @@ const {
   pattern_config,
   show_close_button = true,
   header_border = 'wave',
+  sheet_at,
   phone_query = 'w<md',
   desktop_query = 'w>=lg & fine',
   between,
@@ -67,6 +69,8 @@ const {
 } = defineProps<PagedWindowProps>()
 
 const { t } = useI18n()
+
+const { dismiss } = useOverlayContext()
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -136,7 +140,7 @@ function pageId(value: string) {
 }
 
 function onFrameClose() {
-  if (!back_mode.value) return emit('close')
+  if (!back_mode.value) return dismiss()
 
   nav_direction.value = 'back'
   emit('back')
@@ -170,6 +174,7 @@ function onDirectoryNavigate(value: string) {
     :close_icon="back_mode ? 'arrow-back' : 'close'"
     :header_border="header_border"
     :window_px="window_px"
+    :sheet_at="sheet_at"
     @close="onFrameClose"
   >
     <template v-if="$slots.overlay" #overlay><slot name="overlay"></slot></template>
@@ -185,7 +190,7 @@ function onDirectoryNavigate(value: string) {
           icon-left="close"
           icon-only
           :aria-label="t('app-window.close-label')"
-          @press="emit('close')"
+          @press="dismiss()"
         />
 
         <div

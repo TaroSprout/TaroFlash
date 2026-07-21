@@ -7,14 +7,12 @@ import PaymentStatus from './payment-status.vue'
 import SuccessView from './success-view.vue'
 import CheckoutFooter from './checkout-footer.vue'
 import { useCheckout, type CheckoutResponse } from './use-checkout'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 
 export type { CheckoutResponse }
 
-const { close } = defineProps<{
-  close: (response?: CheckoutResponse) => void
-}>()
-
 const { t } = useI18n()
+const { close } = useOverlayContext()
 const { status, is_ready, onSubmit } = useCheckout(close)
 </script>
 
@@ -27,16 +25,15 @@ const { status, is_ready, onSubmit } = useCheckout(close)
     :show_header="status !== 'success'"
     :close_label="t('billing.checkout.close-label')"
     :close_disabled="status === 'confirming'"
-    @close="close()"
   >
-    <template #default="{ viewport }">
+    <template #default="{ is_downgraded }">
       <div
         data-testid="checkout__scroll-area"
-        :data-full-bleed="viewport === 'mobile'"
+        :data-full-bleed="is_downgraded"
         class="flex min-h-0 flex-1 flex-col gap-4 h-full pt-4"
         :class="[
           status === 'success' ? 'justify-center' : 'justify-between',
-          viewport === 'mobile' ? 'overflow-y-auto scroll-hidden' : ''
+          is_downgraded ? 'overflow-y-auto scroll-hidden' : ''
         ]"
       >
         <dialog-card-pager mode="out-in">
@@ -62,7 +59,7 @@ const { status, is_ready, onSubmit } = useCheckout(close)
       </div>
 
       <scroll-bar
-        v-if="viewport === 'mobile'"
+        v-if="is_downgraded"
         target="[data-testid='checkout__scroll-area']"
         min-width="sm"
         class="absolute right-8 top-6 bottom-6"

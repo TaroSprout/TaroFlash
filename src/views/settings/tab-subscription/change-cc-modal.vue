@@ -4,17 +4,18 @@ import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useChangeCard, type ChangeCardResponse } from './use-change-cc'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 
 export type { ChangeCardResponse }
 
 type ChangeCardModalProps = {
   has_existing_card?: boolean
-  close: (response?: ChangeCardResponse) => void
 }
 
-const { has_existing_card = false, close } = defineProps<ChangeCardModalProps>()
+const { has_existing_card = false } = defineProps<ChangeCardModalProps>()
 
 const { t } = useI18n()
+const { close } = useOverlayContext()
 const { is_loading, is_submitting, is_ready, load_error, onSubmit } = useChangeCard(close)
 
 const title = computed(() =>
@@ -36,14 +37,13 @@ const submit_label = computed(() =>
     size="lg"
     :title="title"
     :close_disabled="is_submitting"
-    @close="close()"
   >
-    <template #default="{ viewport }">
+    <template #default="{ is_downgraded }">
       <div
         data-testid="change-card-modal__scroll-area"
-        :data-full-bleed="viewport === 'mobile'"
+        :data-full-bleed="is_downgraded"
         class="flex min-h-0 flex-1 flex-col justify-between gap-4 h-full pt-4"
-        :class="viewport === 'mobile' ? 'overflow-y-auto scroll-hidden' : ''"
+        :class="is_downgraded ? 'overflow-y-auto scroll-hidden' : ''"
       >
         <div data-testid="change-card-modal__body" class="flex flex-col gap-4">
           <p

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { OverlayEntry } from '@/stores/overlay-stack'
 import { useOverlayStore } from '@/stores/overlay-stack'
-import { provideOverlayHostEntry } from '@/composables/overlay/overlay-context'
+import { provideOverlayContext } from '@/composables/overlay/overlay-context'
 
 type OverlayEntryProps = {
   entry: OverlayEntry
@@ -13,7 +13,7 @@ const { entry, inert, requestClose } = defineProps<OverlayEntryProps>()
 
 const store = useOverlayStore()
 
-provideOverlayHostEntry({
+provideOverlayContext({
   entry,
   close: (outcome) => store.remove(entry.id, outcome),
   dismiss: () => requestClose(entry)

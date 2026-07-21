@@ -2,8 +2,10 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCardHeader from './dialog-card-header.vue'
-import { provideDialogCardViewport, type DialogCardViewport } from './dialog-card-viewport.ts'
 import UiButton from '@/components/ui-kit/button.vue'
+import OverlaySurface from '@/components/overlay/overlay-surface/index.vue'
+import { useOverlayDowngrade } from '@/components/overlay/overlay-surface/downgrade'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 import { nextDepth, provideDepth, useAmbientDepth } from '@/composables/ui/depth'
 import type { SfxOptions } from '@/sfx/directive'
 
@@ -41,7 +43,7 @@ export type DialogCardProps = {
   close_disabled?: boolean
   close_sfx?: SfxOptions
   size?: DialogCardSize
-  full_bleed_at?: string
+  sheet_at?: string
   dialog_px?: string
   content_max_width?: string
   content_breakout_max_width?: string
@@ -65,7 +67,7 @@ const {
   close_disabled = false,
   close_sfx,
   size = 'md',
-  full_bleed_at,
+  sheet_at,
   dialog_px,
   content_max_width,
   content_breakout_max_width,
@@ -73,15 +75,11 @@ const {
   bg_class = 'bg-surface'
 } = defineProps<DialogCardProps>()
 
-const emit = defineEmits<{
-  (e: 'close'): void
-}>()
-
 const slots = defineSlots<{
   header(): any
   'header-start'(): any
   'header-end'(): any
-  default(props: { viewport: DialogCardViewport }): any
+  default(props: { is_downgraded: boolean }): any
 }>()
 
 const { t } = useI18n()
@@ -90,7 +88,15 @@ const { t } = useI18n()
 const ambient_depth = useAmbientDepth()
 const depth = provideDepth(() => nextDepth(ambient_depth.value))
 
-const viewport = provideDialogCardViewport(full_bleed_at ?? SIZE_FULL_BLEED_AT[size])
+// The X button funnels through the host close pipeline (backdrop/esc semantics),
+// same as clicking outside the card.
+const { dismiss } = useOverlayContext()
+
+// The threshold at which this card downgrades to a full-bleed sheet. Resolved
+// here so both the surface (CSS marker + animation) and this card's own JS reads
+// key off the identical query.
+const resolved_sheet_at = sheet_at ?? SIZE_FULL_BLEED_AT[size]
+const { is_downgraded } = useOverlayDowngrade(resolved_sheet_at)
 
 // `--content-grid-padding` is set here directly rather than via a
 // `content-grid-px-(--dialog-px)` class: Tailwind's arbitrary-value matcher
@@ -106,59 +112,59 @@ const viewport = provideDialogCardViewport(full_bleed_at ?? SIZE_FULL_BLEED_AT[s
 const card_style = computed(() => ({
   ...(dialog_px && { '--dialog-px': dialog_px }),
   '--content-grid-padding': 'var(--dialog-px)',
-  '--content-grid-max-width':
-    viewport.value === 'mobile' ? '100%' : (content_max_width ?? SIZE_CONTENT_MAX_WIDTH[size]),
+  '--content-grid-max-width': is_downgraded.value
+    ? '100%'
+    : (content_max_width ?? SIZE_CONTENT_MAX_WIDTH[size]),
   '--content-grid-breakout-max-width':
     content_breakout_max_width ?? SIZE_CONTENT_BREAKOUT_MAX_WIDTH[size]
 }))
-
-defineExpose({ viewport })
 </script>
 
 <template>
-  <div
-    data-testid="dialog-card"
-    :data-depth="depth"
-    class="content-grid relative gap-y-4 overflow-hidden [--dialog-px:1.5rem] sm:[--dialog-px:2rem]"
-    :class="[
-      SIZE_CLASSES[size],
-      bg_class,
-      float_header ? 'grid-rows-[minmax(0,1fr)]' : 'grid-rows-[auto_minmax(0,1fr)]',
-      viewport === 'mobile' ? 'h-full! w-full! rounded-none!' : 'rounded-8 bevel-lg'
-    ]"
-    :style="card_style"
-  >
-    <slot name="header">
-      <dialog-card-header
-        v-if="show_header && (title || show_close_button || slots['header-start'])"
-        :title="title"
-        class="full-width"
-        :class="float_header ? 'absolute inset-x-0 top-0 z-10' : ''"
-      >
-        <template #start>
-          <slot name="header-start">
-            <ui-button
-              neutral
-              v-if="show_close_button"
-              data-testid="dialog-card__close"
-              icon-left="close"
-              icon-only
-              rounded-full
-              :sfx="close_sfx"
-              :disabled="close_disabled"
-              @press="emit('close')"
-            >
-              {{ close_label ?? t('dialog-card.close-label') }}
-            </ui-button>
-          </slot>
-        </template>
+  <overlay-surface mode="dialog" :sheet_at="resolved_sheet_at">
+    <div
+      data-testid="dialog-card"
+      :data-depth="depth"
+      class="pointer-events-auto content-grid relative gap-y-4 overflow-hidden rounded-8 bevel-lg overlay-downgrade:h-full! overlay-downgrade:w-full! overlay-downgrade:rounded-none! [--dialog-px:1.5rem] sm:[--dialog-px:2rem]"
+      :class="[
+        SIZE_CLASSES[size],
+        bg_class,
+        float_header ? 'grid-rows-[minmax(0,1fr)]' : 'grid-rows-[auto_minmax(0,1fr)]'
+      ]"
+      :style="card_style"
+    >
+      <slot name="header">
+        <dialog-card-header
+          v-if="show_header && (title || show_close_button || slots['header-start'])"
+          :title="title"
+          class="full-width"
+          :class="float_header ? 'absolute inset-x-0 top-0 z-10' : ''"
+        >
+          <template #start>
+            <slot name="header-start">
+              <ui-button
+                neutral
+                v-if="show_close_button"
+                data-testid="dialog-card__close"
+                icon-left="close"
+                icon-only
+                rounded-full
+                :sfx="close_sfx"
+                :disabled="close_disabled"
+                @press="dismiss"
+              >
+                {{ close_label ?? t('dialog-card.close-label') }}
+              </ui-button>
+            </slot>
+          </template>
 
-        <template v-if="slots['header-end']" #end>
-          <slot name="header-end"></slot>
-        </template>
-      </dialog-card-header>
-    </slot>
+          <template v-if="slots['header-end']" #end>
+            <slot name="header-end"></slot>
+          </template>
+        </dialog-card-header>
+      </slot>
 
-    <slot :viewport="viewport"></slot>
-  </div>
+      <slot :is_downgraded="is_downgraded"></slot>
+    </div>
+  </overlay-surface>
 </template>
