@@ -620,7 +620,7 @@
   "deck.settings-modal.review-pacing.default-preset-label": "Default",
   "deck.settings-modal.review-pacing.general-heading": "General",
   "deck.settings-modal.review-pacing.limits-heading": "Daily Limits",
-  "deck.settings-modal.review-pacing.limits-description": "How much this deck puts in front of you each day.",
+  "deck.settings-modal.review-pacing.limits-description": "Cap how many cards you review and learn each day.",
   "deck.settings-modal.review-pacing.advanced-hide-tooltip": "Hide advanced settings",
   "deck.settings-modal.review-pacing.advanced-label": "Advanced",
   "deck.settings-modal.review-pacing.advanced-toggle": "View Advanced Settings",
