@@ -35,7 +35,7 @@ const onClick = tap(undefined, {
     v-sfx="{ hover: sfx.hover, focus: sfx.focus, blur: sfx.blur, debounce: sfx.debounce }"
     @click="onClick"
   >
-    <ui-icon v-if="checked" class="text-white" src="check" />
-    <ui-icon v-if="intermediate" src="minus" />
+    <ui-icon v-if="checked" class="size-5 text-white" src="check" />
+    <ui-icon v-if="intermediate" class="size-5" src="subtract" />
   </div>
 </template>
