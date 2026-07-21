@@ -7,10 +7,12 @@ import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCardEditMenu } from '@/views/deck/composables'
 import { deckViewShellKey } from '@/views/deck/composables/view-shell'
+import { mobileCardEditorKey } from '@/views/deck/mobile-editor/use-mobile-card-editor'
 
 const { t } = useI18n()
 
 const shell = inject(deckViewShellKey)!
+const mobile_editor = inject(mobileCardEditorKey)!
 const menu = useCardEditMenu()
 
 // Trigger-only here, so the edit action that lives in the desktop primary button
@@ -57,6 +59,7 @@ const edit_options = computed<DropdownOption[]>(() => [
       variant="ghost"
       full-width
       size="lg"
+      @press="mobile_editor.openNewCard()"
     >
       {{ t('deck-view.mobile-footer.new-card') }}
     </ui-button>
