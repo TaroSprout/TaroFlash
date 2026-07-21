@@ -191,6 +191,25 @@ export async function signupEmail(
   }
 }
 
+/**
+ * Whether `name` is free as a display name (case-insensitive), via the
+ * `is_display_name_available` RPC. Fails open — a check failure returns `true`
+ * so a flaky network never blocks signup; the unique constraint is the real
+ * backstop.
+ */
+export async function isDisplayNameAvailable(name: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('is_display_name_available', {
+    candidate: name.trim()
+  })
+
+  if (error) {
+    logger.error(`Display-name availability check failed: ${error.message}`)
+    return true
+  }
+
+  return data
+}
+
 function prefersFullRedirect(): boolean {
   return window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768
 }

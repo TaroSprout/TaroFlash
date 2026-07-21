@@ -18,6 +18,8 @@ export type MemberDraft = {
   cover_config: MemberCover
 }
 
+export type SaveMemberOutcome = 'success' | 'duplicate-name' | 'error'
+
 /**
  * Reactive state + mutations for editing the current member's profile. A single
  * `useDraft` over the profile's editable columns backs the settings tabs and
@@ -50,18 +52,24 @@ export function useMemberEditor() {
   /**
    * Persist staged changes via the members upsert mutation, rebasing on success
    * so the dirty flag clears even when the modal stays open. No-op when nothing
-   * changed or the member id hasn't resolved yet.
+   * changed or the member id hasn't resolved yet. Distinguishes a duplicate
+   * `display_name` (Postgres `23505` on `members_display_name_key`) from any
+   * other failure so the caller can show an inline field error instead of a
+   * generic toast.
    */
-  async function saveMember(): Promise<boolean> {
-    if (!is_dirty.value) return false
-    if (!member_store.id) return false
+  async function saveMember(): Promise<SaveMemberOutcome> {
+    if (!is_dirty.value) return 'error'
+    if (!member_store.id) return 'error'
 
     try {
       await upsert_mutation.mutateAsync({ id: member_store.id, ...draft })
       rebase()
-      return true
-    } catch {
-      return false
+      return 'success'
+    } catch (error: any) {
+      if (error?.code === '23505' && error?.message?.includes('members_display_name_key')) {
+        return 'duplicate-name'
+      }
+      return 'error'
     }
   }
 

@@ -21,10 +21,16 @@ async function onSave() {
     return
   }
   is_saving.value = true
-  const saved = await saveMember()
+  const outcome = await saveMember()
   is_saving.value = false
-  if (saved) {
+
+  if (outcome === 'success') {
     close()
+    return
+  }
+  if (outcome === 'duplicate-name') {
+    name_error.value = t('settings.profile.member-name-duplicate-error')
+    emitSfx('etc_woodblock_stuck')
     return
   }
   notice.error(t('settings.save-error'))

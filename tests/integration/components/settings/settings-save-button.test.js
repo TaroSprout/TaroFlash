@@ -42,7 +42,7 @@ vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 
 // ── Factory ───────────────────────────────────────────────────────────────────
 
-function makeWrapper({ is_dirty = true, save_result = true, has_name = true } = {}) {
+function makeWrapper({ is_dirty = true, save_result = 'success', has_name = true } = {}) {
   const saveMember = vi.fn().mockResolvedValue(save_result)
   const resetChanges = vi.fn()
   const close = vi.fn()
@@ -136,32 +136,53 @@ describe('settings-save-button — save behaviour [obligation]', () => {
     expect(saveMember).toHaveBeenCalledOnce()
   })
 
-  test('calls close() after saveMember resolves true [obligation]', async () => {
-    const { wrapper, close } = makeWrapper({ is_dirty: true, save_result: true })
+  test('calls close() after saveMember resolves "success" [obligation]', async () => {
+    const { wrapper, close } = makeWrapper({ is_dirty: true, save_result: 'success' })
     await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
     await flushPromises()
     expect(close).toHaveBeenCalledOnce()
   })
 
-  test('does NOT call close() when saveMember resolves false [obligation]', async () => {
-    const { wrapper, close } = makeWrapper({ is_dirty: true, save_result: false })
+  test('does NOT call close() when saveMember resolves "error" [obligation]', async () => {
+    const { wrapper, close } = makeWrapper({ is_dirty: true, save_result: 'error' })
     await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
     await flushPromises()
     expect(close).not.toHaveBeenCalled()
   })
 
-  test('shows settings.save-error notice when saveMember resolves false [obligation]', async () => {
-    const { wrapper } = makeWrapper({ is_dirty: true, save_result: false })
+  test('shows settings.save-error notice when saveMember resolves "error" [obligation]', async () => {
+    const { wrapper } = makeWrapper({ is_dirty: true, save_result: 'error' })
     await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
     await flushPromises()
     expect(mockNotice.error).toHaveBeenCalledWith("Couldn't save your changes. Please try again.")
   })
 
-  test('does NOT show an error notice when saveMember resolves true', async () => {
-    const { wrapper } = makeWrapper({ is_dirty: true, save_result: true })
+  test('does NOT show an error notice when saveMember resolves "success"', async () => {
+    const { wrapper } = makeWrapper({ is_dirty: true, save_result: 'success' })
     await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
     await flushPromises()
     expect(mockNotice.error).not.toHaveBeenCalled()
+  })
+
+  test('does NOT call close() when saveMember resolves "duplicate-name" [obligation]', async () => {
+    const { wrapper, close } = makeWrapper({ is_dirty: true, save_result: 'duplicate-name' })
+    await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
+    await flushPromises()
+    expect(close).not.toHaveBeenCalled()
+  })
+
+  test('does NOT show the generic error notice when saveMember resolves "duplicate-name" [obligation]', async () => {
+    const { wrapper } = makeWrapper({ is_dirty: true, save_result: 'duplicate-name' })
+    await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
+    await flushPromises()
+    expect(mockNotice.error).not.toHaveBeenCalled()
+  })
+
+  test('sets name_error to the duplicate-name copy when saveMember resolves "duplicate-name" [obligation]', async () => {
+    const { wrapper, editor } = makeWrapper({ is_dirty: true, save_result: 'duplicate-name' })
+    await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
+    await flushPromises()
+    expect(editor.name_error.value).toBe('Username taken')
   })
 
   test('shows loading state while saveMember is in flight', async () => {
@@ -189,7 +210,7 @@ describe('settings-save-button — save behaviour [obligation]', () => {
       'true'
     )
 
-    resolve(true)
+    resolve('success')
     await flushPromises()
     expect(wrapper.find('[data-testid="settings__save-button"]').attributes('data-loading')).toBe(
       'false'

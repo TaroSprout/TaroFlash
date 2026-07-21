@@ -1063,6 +1063,10 @@ export type Database = {
         Args: { p_lesson_id: number }
         Returns: undefined
       }
+      is_display_name_available: {
+        Args: { candidate: string }
+        Returns: boolean
+      }
       move_card: {
         Args: { p_anchor_id: number; p_card_id: number; p_side: string }
         Returns: number

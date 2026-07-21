@@ -26,8 +26,7 @@ ALTER TABLE ONLY public.members
     ADD CONSTRAINT "Users_pkey" PRIMARY KEY (id);
 
 
-ALTER TABLE ONLY public.members
-    ADD CONSTRAINT members_display_name_key UNIQUE (display_name);
+CREATE UNIQUE INDEX members_display_name_key ON public.members (lower(display_name));
 
 
 ALTER TABLE ONLY public.members
@@ -72,6 +71,24 @@ ALTER FUNCTION public.create_member_on_new_user() OWNER TO postgres;
 GRANT ALL ON FUNCTION public.create_member_on_new_user() TO anon;
 GRANT ALL ON FUNCTION public.create_member_on_new_user() TO authenticated;
 GRANT ALL ON FUNCTION public.create_member_on_new_user() TO service_role;
+
+
+CREATE FUNCTION public.is_display_name_available(candidate text) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select not exists (
+    select 1 from public.members
+    where lower(display_name) = lower(trim(candidate))
+  );
+$$;
+
+
+ALTER FUNCTION public.is_display_name_available(text) OWNER TO postgres;
+
+
+GRANT EXECUTE ON FUNCTION public.is_display_name_available(text) TO anon;
+GRANT EXECUTE ON FUNCTION public.is_display_name_available(text) TO authenticated;
 
 
 ALTER TABLE public.members ENABLE ROW LEVEL SECURITY;
