@@ -60,7 +60,11 @@ function onEditAvatar(e: MouseEvent) {
     </div>
 
     <div data-testid="member-badge__info" class="flex flex-col min-w-0 flex-1">
-      <span data-testid="member-badge__name" class="font-semibold text-3xl text-brown-100 truncate">
+      <span
+        data-testid="member-badge__name"
+        class="block font-semibold text-3xl text-brown-100 truncate"
+        :title="displayName"
+      >
         {{ displayName || t('member-badge.name-placeholder') }}
       </span>
       <div data-testid="member-badge__description" class="text-sm text-brown-100 wrap-break-word">

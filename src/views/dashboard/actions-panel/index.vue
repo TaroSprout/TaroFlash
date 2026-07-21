@@ -76,7 +76,8 @@ async function onSelect(value: string) {
     <template #header>
       <span
         data-testid="dashboard-actions-panel__header"
-        class="text-(--color-on-accent) text-4xl font-semibold truncate"
+        class="text-(--color-on-accent) block text-4xl font-semibold truncate"
+        :title="member_store.display_name || undefined"
       >
         {{ member_store.display_name || t('member-badge.name-placeholder') }}
       </span>
