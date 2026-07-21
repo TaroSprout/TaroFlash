@@ -62,9 +62,10 @@ ticket's `Assignee`).
    approval on every change.** If the `Area` touches `supabase/**` (migrations, RPCs, RLS, edge
    functions), the backend teaching persona is **on** — teach as you write per CLAUDE.md. **Do
    not touch tests** — the golden rule holds in pair mode. Follow all `.claude/rules/*`.
-5. **PR** — invoke the **`prepare-pr`** skill with `--ticket <ID>` (the ticket's Notion ID)
-   so the PR title is prefixed `TARO-<ID>:` (commits, conventional messages, lint+type gate,
-   opens one PR, watches CI to green).
+5. **PR** — invoke the **`prepare-pr`** skill with `--ticket <ID> --ticket-url <url>` (the ticket's
+   `TARO-<ID>` number and its Notion page URL) so the PR title is prefixed `TARO-<ID>:` and the body
+   opens with a `[TARO-<ID>](<url>)` link (commits, conventional messages, lint+type gate, opens one
+   PR, watches CI to green).
 6. **HANDOFF** — set the ticket's `Status = Review` and write the PR URL into its body. Stop.
 
 ## Mode: `batch [--count N] [--p0…]`
@@ -117,8 +118,9 @@ Progress`. Drop any that another run already grabbed. Claim before dispatching s
    needs **genuine human judgment** (semantic overlap, incompatible approaches), do **not** guess:
    **raise it** in the final report and set that ticket's `Status = Blocked`.
    d. **OPEN** — for each non-blocked ticket, invoke the **`prepare-pr`** skill with `--ticket
-<ID>` (the Notion ID) → one PR titled `TARO-<ID>: …`. Pass the stack base when the PR is
-   stacked. `prepare-pr` watches CI; **a PR isn't done until it's green.** If CI fails, hand the
+<ID> --ticket-url <url>` (the `TARO-<ID>` number and the ticket's Notion page URL) → one PR titled
+   `TARO-<ID>: …` whose body opens with a `[TARO-<ID>](<url>)` link. Pass the stack base when the PR
+   is stacked. `prepare-pr` watches CI; **a PR isn't done until it's green.** If CI fails, hand the
    failure back to that ticket's subagent (re-dispatch with the failure) to fix in its worktree;
    if it still can't pass after real effort, treat the ticket as stuck.
    e. **HANDOFF** — for each opened, green PR: set `Status = Review`, write the PR URL into the

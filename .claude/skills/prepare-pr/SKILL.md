@@ -2,19 +2,22 @@
 name: prepare-pr
 description: Fully autonomous — prepare a branch for PR by committing all pending work, rewriting commit messages into release-notes-friendly Conventional Commits, renaming the branch if it no longer fits the changes, running a lint + type-check gate, drafting a PR title and body, then creating a single PR directly (not a draft) and watching CI until green. Never asks for permission or feedback before the PR opens. Always bundles all branch work — committed AND uncommitted (staged + unstaged) — into exactly one PR. Use when a feature branch is code-complete and ready for review.
 allowed-tools: Read, Edit, Write, Bash, Glob, Grep
-argument-hint: '[--no-watch] [--ticket <ID>]'
+argument-hint: '[--no-watch] [--ticket <ID>] [--ticket-url <URL>]'
 arguments:
   - name: --no-watch
     description: Skip the post-create CI watch + coverage check (Step 10).
   - name: --ticket <ID>
     description: Prefix the PR title with the ticket key `TARO-<ID>` (e.g. `TARO-207: …`). Omit for no prefix.
+  - name: --ticket-url <URL>
+    description: Notion ticket URL. When given alongside `--ticket`, the PR body opens with a `[TARO-<ID>](<URL>)` link line. Omit to render just `TARO-<ID>` text (or nothing if `--ticket` is also absent).
 lastUpdated: 2026-07-20T00:00:00Z
 ---
 
 ## Args
 
 - **`--no-watch`** (optional) — skip the post-create CI watch + coverage check (Step 10). Default behaviour blocks on CI after opening the PR until checks settle, then inspects coverage and writes more tests if it regressed.
-- **`--ticket <ID>`** (optional) — the Notion Task Board ticket ID this PR resolves. When given, the PR **title** is prefixed with `TARO-<ID>: ` (Step 8). This affects only the PR title — commit subjects stay clean (ticket refs still belong in a commit-body `Refs:` trailer, per Notes). Omit to open a PR with no ticket prefix.
+- **`--ticket <ID>`** (optional) — the Notion Task Board ticket ID this PR resolves. When given, the PR **title** is prefixed with `TARO-<ID>: ` and the PR **body** opens with a ticket-link line (Step 8). This affects the PR title and body only — commit subjects stay clean (ticket refs still belong in a commit-body `Refs:` trailer, per Notes). Omit to open a PR with no ticket prefix or link.
+- **`--ticket-url <URL>`** (optional) — the Notion page URL for the ticket. When given with `--ticket`, the body's top line renders as a markdown link `[TARO-<ID>](<URL>)`. Without it, the top line falls back to plain `TARO-<ID>` text. Ignored when `--ticket` is absent.
 
 ## Fully autonomous — no approval gates
 
@@ -237,9 +240,14 @@ Avoid repeating Conventional-Commits prefix in title — GitHub release tooling 
 
 **Ticket prefix (`--ticket <ID>`).** If the skill was invoked with `--ticket <ID>`, prepend the ticket key to the drafted title: `TARO-<ID>: <title>` — e.g. `TARO-207: Close open modals and clear caches on logout`. Prefix only; the rest of the title is derived exactly as above. Do **not** add the prefix when `--ticket` is absent, and never put the ticket key into commit subjects (Notes).
 
-**Body** — structured for skim:
+**Body** — structured for skim. When `--ticket <ID>` is given, the **first line** of the body is the ticket link, followed by a blank line, before the `## Summary` heading:
+
+- with `--ticket-url <URL>`: `[TARO-<ID>](<URL>)`
+- without a URL: plain `TARO-<ID>`
 
 ```md
+[TARO-<ID>](URL)
+
 ## Summary
 
 <1–3 sentence overview of the user-visible outcome and why this PR exists.>
@@ -255,7 +263,7 @@ Avoid repeating Conventional-Commits prefix in title — GitHub release tooling 
 - [ ] ...
 ```
 
-If `.github/pull_request_template.md` exists, use its structure and fill sections.
+Omit the ticket-link line entirely when `--ticket` is absent. If `.github/pull_request_template.md` exists, use its structure and fill sections — still prepend the ticket-link line above the template body when `--ticket` is given.
 
 Keep body tight. One short paragraph + handful of bullets beats wall of text.
 
