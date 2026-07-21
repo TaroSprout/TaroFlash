@@ -14,7 +14,7 @@ CREATE TABLE public.decks (
     tags text[],
     has_image boolean DEFAULT false,
     study_config jsonb,
-    cover_config jsonb DEFAULT '{"icon": "symbol-spades", "theme": "blue-500", "pattern": "diagonal-stripes", "theme_dark": "blue-650"}'::jsonb,
+    cover_config jsonb DEFAULT '{"palette": "blue", "pattern": "diagonal-stripes", "icon": "symbol-spades"}'::jsonb,
     card_attributes jsonb,
     rank numeric NOT NULL
 );
