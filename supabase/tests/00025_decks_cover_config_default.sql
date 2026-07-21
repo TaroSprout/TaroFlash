@@ -1,7 +1,7 @@
 -- =============================================================================
 -- decks.cover_config default: a deck inserted without cover_config should get
--- the blue-500/diagonal-stripes/symbol-spades fallback, not null. A deck that
--- explicitly supplies its own cover_config keeps it.
+-- the blue/diagonal-stripes/symbol-spades palette fallback, not null. A deck
+-- that explicitly supplies its own cover_config keeps it.
 -- =============================================================================
 
 BEGIN;
@@ -21,8 +21,7 @@ INSERT INTO public.decks (id, title) VALUES (300, 'Carol Default Cover Deck');
 SELECT is(
   (SELECT cover_config FROM public.decks WHERE id = 300),
   '{
-    "theme": "blue-500",
-    "theme_dark": "blue-650",
+    "palette": "blue",
     "pattern": "diagonal-stripes",
     "icon": "symbol-spades"
   }'::jsonb,
@@ -34,8 +33,7 @@ INSERT INTO public.decks (id, title, cover_config) VALUES (
   301,
   'Carol Custom Cover Deck',
   '{
-    "theme": "green-500",
-    "theme_dark": "green-650",
+    "palette": "green",
     "pattern": "polka-dots",
     "icon": "symbol-clubs"
   }'::jsonb
@@ -44,8 +42,7 @@ INSERT INTO public.decks (id, title, cover_config) VALUES (
 SELECT is(
   (SELECT cover_config FROM public.decks WHERE id = 301),
   '{
-    "theme": "green-500",
-    "theme_dark": "green-650",
+    "palette": "green",
     "pattern": "polka-dots",
     "icon": "symbol-clubs"
   }'::jsonb,
@@ -79,8 +76,7 @@ $$;
 SELECT is(
   current_setting('tests.decks_cover_config_default')::jsonb,
   '{
-    "theme": "blue-500",
-    "theme_dark": "blue-650",
+    "palette": "blue",
     "pattern": "diagonal-stripes",
     "icon": "symbol-spades"
   }'::jsonb,
