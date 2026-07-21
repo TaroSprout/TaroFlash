@@ -28,13 +28,18 @@ import {
 import { useRouter } from 'vue-router'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useQueryCache } from '@pinia/colada'
 import logger from '@/utils/logger'
 import { useNoticeStore } from '@/stores/notice-store'
+import { useTaroPhoneStore } from '@/stores/taro-phone'
+import { closeAll as closeAllModals } from '@/composables/modal'
 
 export const useSessionStore = defineStore('sessionStore', () => {
   const router = useRouter()
   const { t } = useI18n()
   const notice = useNoticeStore()
+  const queryCache = useQueryCache()
+  const taroPhone = useTaroPhoneStore()
 
   const user = ref<User | undefined>(undefined)
   const loading_count = ref(0)
@@ -180,8 +185,22 @@ export const useSessionStore = defineStore('sessionStore', () => {
     user.value = (await getUser()) ?? undefined
   }
 
+  // Single teardown funnel for both logout() and forceLogout(): clears auth
+  // identity, then fans out to every bit of state that would otherwise leak
+  // into the next session or the logged-out surface. The audio engine is left
+  // running — logged-out surfaces still need sound.
   function reset() {
     user.value = undefined
+
+    closeAllModals()
+    clearQueryCache()
+    taroPhone.reset()
+  }
+
+  /** Drop every entry from the Pinia Colada cache so stale data can't carry
+   * over into the next login (Colada has no wholesale clear, so remove each). */
+  function clearQueryCache() {
+    queryCache.getEntries().forEach((entry) => queryCache.remove(entry))
   }
 
   function startLoading(): void {

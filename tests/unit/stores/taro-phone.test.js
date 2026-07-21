@@ -97,6 +97,42 @@ describe('useTaroPhoneStore — openApp idempotency', () => {
   })
 })
 
+// ── reset — logout teardown [obligation] ──────────────────────────────────────
+
+describe('useTaroPhoneStore — reset', () => {
+  test('closes the phone so no stale open state leaks into the next session', () => {
+    const store = useTaroPhoneStore()
+    store.open()
+
+    store.reset()
+
+    expect(store.is_open).toBe(false)
+  })
+
+  test('clears notifications', () => {
+    const store = useTaroPhoneStore()
+    store.notify('settings', 3)
+    store.notify('feedback', 2)
+
+    store.reset()
+
+    expect(store.notification_count).toBe(0)
+  })
+
+  test('clears the app-modal hide flag so a stale finally cannot reopen the phone', async () => {
+    const store = useTaroPhoneStore()
+    store.open()
+    const deferred = makeDeferredResult()
+    store.openApp(deferred)
+
+    store.reset()
+    deferred.resolve(undefined)
+    await flushPromises()
+
+    expect(store.is_open).toBe(false)
+  })
+})
+
 // ── notify / clearNotification / notification_count ───────────────────────────
 
 describe('useTaroPhoneStore — notifications', () => {

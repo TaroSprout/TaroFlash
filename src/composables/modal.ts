@@ -135,5 +135,16 @@ export function useModal() {
     if (top) close(top.id)
   }
 
-  return { open, pop, modal_stack }
+  return { open, pop, closeAll, modal_stack }
+}
+
+/**
+ * Close every open modal at once, resolving each pending `response` promise so
+ * awaiting callers don't hang. Operates on the module-level `modal_stack`, so
+ * it can be called outside component setup (e.g. from the session store's
+ * logout teardown).
+ */
+export function closeAll() {
+  modal_stack.value.forEach((entry) => entry.resolve())
+  modal_stack.value = []
 }
