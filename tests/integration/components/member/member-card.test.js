@@ -113,6 +113,22 @@ describe('MemberCard', () => {
     )
   })
 
+  // ── name truncation title ──────────────────────────────────────────────────
+
+  describe('name truncation title', () => {
+    test('exposes the full displayName via the title attribute', () => {
+      const wrapper = mountCard({ displayName: 'An Extremely Long Member Display Name' })
+      expect(wrapper.find('[data-testid="member-card__name"]').attributes('title')).toBe(
+        'An Extremely Long Member Display Name'
+      )
+    })
+
+    test('omits the title attribute when displayName is absent', () => {
+      const wrapper = mountCard()
+      expect(wrapper.find('[data-testid="member-card__name"]').attributes('title')).toBeUndefined()
+    })
+  })
+
   // ── editable / edit-avatar [obligation] ────────────────────────────────────
 
   describe('editable [obligation]', () => {

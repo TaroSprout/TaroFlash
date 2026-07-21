@@ -44,8 +44,10 @@ async function onToggleVote() {
         <h2 class="text-ink truncate text-2xl">{{ item.title }}</h2>
         <p
           v-if="item.member_display_name"
+          data-testid="feedback-card__author"
           data-palette="info"
           class="text-(--color-accent) truncate text-base"
+          :title="item.member_display_name"
         >
           {{ item.member_display_name }}
         </p>

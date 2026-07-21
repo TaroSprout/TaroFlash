@@ -115,6 +115,13 @@ describe('DashboardActionsPanel — header', () => {
     const wrapper = mount()
     expect(wrapper.find('[data-testid="dashboard-actions-panel__header"]').text()).toBe('Ada')
   })
+
+  test('exposes the full display name via the title attribute', () => {
+    const wrapper = mount()
+    expect(
+      wrapper.find('[data-testid="dashboard-actions-panel__header"]').attributes('title')
+    ).toBe('Ada')
+  })
 })
 
 describe('DashboardActionsPanel — study button', () => {

@@ -132,6 +132,22 @@ describe('MemberBadge', () => {
     })
   })
 
+  // ── name truncation title ──────────────────────────────────────────────────
+
+  describe('name truncation title', () => {
+    test('exposes the full displayName via the title attribute', () => {
+      const wrapper = mountBadge({ displayName: 'An Extremely Long Member Display Name' })
+      expect(wrapper.find('[data-testid="member-badge__name"]').attributes('title')).toBe(
+        'An Extremely Long Member Display Name'
+      )
+    })
+
+    test('omits the title attribute when displayName is absent', () => {
+      const wrapper = mountBadge()
+      expect(wrapper.find('[data-testid="member-badge__name"]').attributes('title')).toBeUndefined()
+    })
+  })
+
   // ── cover bindings ─────────────────────────────────────────────────────────
 
   describe('cover bindings via memberCoverBindings', () => {

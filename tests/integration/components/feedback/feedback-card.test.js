@@ -76,6 +76,18 @@ describe('FeedbackCard — content', () => {
     expect(wrapper.find('[data-testid="feedback-card__heading"]').text()).toContain('Bob')
   })
 
+  test('exposes the full member_display_name via title on the author element', () => {
+    const wrapper = mountCard({ member_display_name: 'An Extremely Long Member Display Name' })
+    expect(wrapper.find('[data-testid="feedback-card__author"]').attributes('title')).toBe(
+      'An Extremely Long Member Display Name'
+    )
+  })
+
+  test('does not render the author element when member_display_name is absent', () => {
+    const wrapper = mountCard({ member_display_name: null })
+    expect(wrapper.find('[data-testid="feedback-card__author"]').exists()).toBe(false)
+  })
+
   test('renders body when present', () => {
     const wrapper = mountCard({ body: 'Some body text' })
     expect(wrapper.find('[data-testid="feedback-card__content"]').text()).toContain(
