@@ -7,9 +7,14 @@ import { useNewDeckAction } from '../composables/new-deck-action'
 type DashboardFooterActionsProps = {
   due_decks: Deck[]
   editing_decks?: boolean
+  has_decks?: boolean
 }
 
-const { due_decks, editing_decks = false } = defineProps<DashboardFooterActionsProps>()
+const {
+  due_decks,
+  editing_decks = false,
+  has_decks = false
+} = defineProps<DashboardFooterActionsProps>()
 
 const emit = defineEmits<{
   'toggle-edit-decks': []
@@ -75,6 +80,7 @@ function onStudyAll() {
       icon-left="pencil"
       variant="ghost"
       size="lg"
+      :disabled="!has_decks"
       @press="emit('toggle-edit-decks')"
     >
       {{ t('dashboard.mobile-footer.edit-decks-label') }}

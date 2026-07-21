@@ -102,11 +102,35 @@ describe('DashboardFooterActions', () => {
     })
 
     test('emits toggle-edit-decks on press', async () => {
-      const wrapper = mountFooterActions()
+      const wrapper = mountFooterActions({ has_decks: true })
 
       await wrapper.find('[data-testid="dashboard-footer-actions__edit-decks"]').trigger('click')
 
       expect(wrapper.emitted('toggle-edit-decks')).toHaveLength(1)
+    })
+
+    test('is disabled when has_decks is false and not editing', () => {
+      const wrapper = mountFooterActions({ editing_decks: false, has_decks: false })
+
+      expect(
+        wrapper.find('[data-testid="dashboard-footer-actions__edit-decks"]').attributes('disabled')
+      ).not.toBeUndefined()
+    })
+
+    test('is enabled when has_decks is true and not editing', () => {
+      const wrapper = mountFooterActions({ editing_decks: false, has_decks: true })
+
+      expect(
+        wrapper.find('[data-testid="dashboard-footer-actions__edit-decks"]').attributes('disabled')
+      ).toBeUndefined()
+    })
+
+    test('done-editing state is never disabled, even with no decks', () => {
+      const wrapper = mountFooterActions({ editing_decks: true, has_decks: false })
+
+      expect(
+        wrapper.find('[data-testid="dashboard-footer-actions__edit-decks"]').attributes('disabled')
+      ).toBeUndefined()
     })
   })
 
