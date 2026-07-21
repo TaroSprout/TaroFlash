@@ -128,10 +128,10 @@ describe('useMemberEditor', () => {
     expect(editor.is_dirty.value).toBe(true)
   })
 
-  test('saveMember is a no-op (false) when nothing has changed', async () => {
+  test('saveMember is a no-op ("error") when nothing has changed', async () => {
     const editor = useMemberEditor()
     const result = await editor.saveMember()
-    expect(result).toBe(false)
+    expect(result).toBe('error')
     expect(mockUpsert).not.toHaveBeenCalled()
   })
 
@@ -140,7 +140,7 @@ describe('useMemberEditor', () => {
     const editor = useMemberEditor()
     editor.draft.display_name = 'Other'
     const result = await editor.saveMember()
-    expect(result).toBe(false)
+    expect(result).toBe('error')
     expect(mockUpsert).not.toHaveBeenCalled()
   })
 
@@ -149,7 +149,7 @@ describe('useMemberEditor', () => {
     editor.draft.display_name = 'Renamed'
     editor.draft.description = 'new desc'
     const result = await editor.saveMember()
-    expect(result).toBe(true)
+    expect(result).toBe('success')
     expect(mockUpsert).toHaveBeenCalledWith({
       id: 'member-1',
       display_name: 'Renamed',
@@ -169,7 +169,7 @@ describe('useMemberEditor', () => {
     const editor = useMemberEditor()
     editor.draft.cover_config.palette = 'red'
     const result = await editor.saveMember()
-    expect(result).toBe(true)
+    expect(result).toBe('success')
     expect(mockUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'member-1',
@@ -178,12 +178,38 @@ describe('useMemberEditor', () => {
     )
   })
 
-  test('saveMember returns false when the mutation throws', async () => {
+  test('saveMember returns "error" when the mutation throws a non-duplicate error', async () => {
     mockUpsert.mockRejectedValueOnce(new Error('boom'))
     const editor = useMemberEditor()
     editor.draft.display_name = 'Renamed'
     const result = await editor.saveMember()
-    expect(result).toBe(false)
+    expect(result).toBe('error')
+  })
+
+  test('saveMember returns "duplicate-name" on a 23505 members_display_name_key violation [obligation]', async () => {
+    const pgError = Object.assign(
+      new Error('duplicate key value violates unique constraint "members_display_name_key"'),
+      {
+        code: '23505'
+      }
+    )
+    mockUpsert.mockRejectedValueOnce(pgError)
+    const editor = useMemberEditor()
+    editor.draft.display_name = 'Taken'
+    const result = await editor.saveMember()
+    expect(result).toBe('duplicate-name')
+  })
+
+  test('saveMember returns "error" (not duplicate-name) for a 23505 on a different constraint [obligation]', async () => {
+    const pgError = Object.assign(
+      new Error('duplicate key value violates unique constraint "members_stripe_customer_id_key"'),
+      { code: '23505' }
+    )
+    mockUpsert.mockRejectedValueOnce(pgError)
+    const editor = useMemberEditor()
+    editor.draft.display_name = 'Renamed'
+    const result = await editor.saveMember()
+    expect(result).toBe('error')
   })
 
   test('exposes the mutation isLoading ref as `saving`', () => {
