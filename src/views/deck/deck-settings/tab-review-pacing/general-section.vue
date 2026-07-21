@@ -5,9 +5,12 @@ import UiToggle from '@/components/ui-kit/toggle.vue'
 import UiOptionGroup from '@/components/ui-kit/option-group.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
+import { useMatchMedia } from '@/composables/ui/media-query'
 
 const { t } = useI18n()
 const { draft } = inject(deckEditorKey)!
+
+const is_coarse = useMatchMedia('coarse')
 
 // The draft always carries a seeded value; the getter default only satisfies
 // `DeckConfig`'s optional key.
@@ -47,6 +50,7 @@ const starting_side_options = computed(() =>
         data-testid="tab-review-pacing__starting-side-options"
         v-model:value="starting_side"
         :options="starting_side_options"
+        :size="is_coarse ? 'base' : 'sm'"
       />
     </div>
   </labeled-section>
