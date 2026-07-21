@@ -10,14 +10,14 @@ import DialogCardPager from '@/components/layout-kit/dialog-card/dialog-card-pag
 import { emitSfx } from '@/sfx/bus'
 import { clearPersistedSession } from './composables/session-persistence'
 import { provideStudySessionController } from './composables/session-controller'
-import { useModalRequestClose } from '@/composables/modal'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 
-const { deck_ids, close } = defineProps<{
+const { deck_ids } = defineProps<{
   deck_ids: number[]
-  close: () => void
 }>()
 
 const { t } = useI18n()
+const { close, onCloseRequest } = useOverlayContext()
 
 const {
   state,
@@ -43,7 +43,12 @@ const title = computed(() =>
     : t('study-session.multiple-decks-title')
 )
 
-useModalRequestClose(onHeaderStop)
+// Backdrop/esc route here; the content orchestrates its own close via
+// `onClosed`, so the veto never lets the host auto-close.
+onCloseRequest(() => {
+  onHeaderStop()
+  return false
+})
 
 /** Early close (close button / backdrop / esc before any review). */
 function onClosed() {

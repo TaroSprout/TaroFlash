@@ -1,5 +1,4 @@
-import { useModal } from './modal'
-import { emitSfx } from '@/sfx/bus'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import alert, { type AlertType } from '@/components/ui-kit/alert.vue'
 import { type SoundKey } from '@/sfx/config'
 
@@ -8,14 +7,21 @@ type AlertArgs = {
   message?: string
   confirmLabel?: string
   cancelLabel?: string
-  backdrop?: boolean
   openAudio?: SoundKey
   cancelAudio?: SoundKey
   confirmAudio?: SoundKey
 }
 
+/**
+ * Confirm/cancel prompt opened on the overlay stack. `warn` and `info` both
+ * resolve `response` to the user's choice — `true` on confirm, `false` (or
+ * `undefined`) on cancel/dismiss.
+ *
+ * @example
+ * if (await useAlert().warn({ title: t('...') }).response) { ... }
+ */
 export function useAlert() {
-  const modal = useModal()
+  const { open } = useOverlay()
 
   function warn(args?: AlertArgs) {
     return _openAlert('warn', args)
@@ -27,19 +33,18 @@ export function useAlert() {
 
   function _openAlert(type: AlertType, args?: AlertArgs) {
     const {
-      backdrop,
       openAudio = 'etc_woodblock_stuck',
       cancelAudio = 'digi_powerdown',
       ...props
     } = args ?? {}
 
-    emitSfx(openAudio)
-
-    return modal.open(alert, {
-      mode: 'popup',
-      backdrop: backdrop ?? true,
+    const { result, close } = open<boolean>(alert, {
+      presentation: 'popup',
+      open_sfx: openAudio,
       props: { type, cancelAudio, ...props }
     })
+
+    return { response: result, close }
   }
 
   return { warn, info }

@@ -1,13 +1,13 @@
-import { useModal } from '@/composables/modal'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import ForgotPasswordModal from './index.vue'
 
 /** Opens the forgot-password request modal. */
 export function useForgotPasswordModal() {
-  const modal = useModal()
+  const { open } = useOverlay()
 
-  function open() {
-    return modal.open<boolean>(ForgotPasswordModal, { backdrop: true, mode: 'popup' })
+  function open_forgot_password() {
+    return open<boolean>(ForgotPasswordModal, { presentation: 'popup' })
   }
 
-  return { open }
+  return { open: open_forgot_password }
 }

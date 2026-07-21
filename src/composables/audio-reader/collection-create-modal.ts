@@ -1,5 +1,4 @@
-import { useModal } from '@/composables/modal'
-import { emitSfx } from '@/sfx/bus'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import CollectionCreate, {
   type CollectionCreateResponse
 } from '@/views/audio-reader/collection-create-modal.vue'
@@ -9,17 +8,15 @@ import CollectionCreate, {
  * or undefined if cancelled.
  */
 export function useCollectionCreateModal() {
-  const modal = useModal()
+  const { open } = useOverlay()
 
-  function open() {
-    emitSfx('snappy_button_3')
-    const result = modal.open<CollectionCreateResponse>(CollectionCreate, {
-      backdrop: true,
-      mode: 'mobile-sheet'
+  function open_collection_create() {
+    return open<CollectionCreateResponse>(CollectionCreate, {
+      presentation: 'dialog',
+      open_sfx: 'snappy_button_3',
+      close_sfx: 'pop_up_close'
     })
-    result.response.then(() => emitSfx('pop_up_close'))
-    return result
   }
 
-  return { open }
+  return { open: open_collection_create }
 }

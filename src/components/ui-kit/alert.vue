@@ -3,12 +3,13 @@ import { computed, onMounted, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { TYPE_SFX, type SoundKey } from '@/sfx/config'
 import { emitSfx } from '@/sfx/bus'
-import { type ModalCloseFn } from '@/composables/modal'
+import OverlaySurface from '@/components/overlay/overlay-surface/index.vue'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 import { nextDepth, provideDepth, useAmbientDepth } from '@/composables/ui/depth'
 
 export type AlertType = 'warn' | 'info'
 
-const { cancelLabel, confirmLabel, close, cancelAudio, confirmAudio } = defineProps<{
+const { cancelLabel, confirmLabel, cancelAudio, confirmAudio } = defineProps<{
   cancelLabel?: string
   confirmLabel?: string
   message?: string
@@ -16,10 +17,10 @@ const { cancelLabel, confirmLabel, close, cancelAudio, confirmAudio } = definePr
   type?: AlertType
   cancelAudio?: SoundKey
   confirmAudio?: SoundKey
-  close: ModalCloseFn<boolean>
 }>()
 
 const { t } = useI18n()
+const { close } = useOverlayContext()
 
 // An alert is a modal: it floats one step above whatever opened it.
 const ambient_depth = useAmbientDepth()
@@ -52,10 +53,7 @@ function onKeydown(e: KeyboardEvent) {
 </script>
 
 <template>
-  <div
-    data-testid="ui-kit-alert-container"
-    class="absolute inset-0 flex items-center justify-center"
-  >
+  <overlay-surface mode="popup">
     <div
       data-testid="ui-kit-alert"
       :data-depth="depth"
@@ -101,7 +99,7 @@ function onKeydown(e: KeyboardEvent) {
         </button>
       </div>
     </div>
-  </div>
+  </overlay-surface>
 </template>
 
 <style>

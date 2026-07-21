@@ -1,7 +1,7 @@
 import { useI18n } from 'vue-i18n'
 import { useMemberDeckCountQuery, useUpsertDeckMutation } from '@/api/decks'
 import { useAlert } from '@/composables/alert'
-import { useModal } from '@/composables/modal'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import { useCan } from '@/composables/can'
 import { useDeckSettingsModal } from '@/composables/deck/settings-modal'
 import { useNoticeStore } from '@/stores/notice-store'
@@ -18,7 +18,7 @@ type CreateDeckOptions = {
 export function useDeckActions() {
   const { t } = useI18n()
   const alert = useAlert()
-  const modal = useModal()
+  const { open } = useOverlay()
   const can = useCan()
   const deck_settings_modal = useDeckSettingsModal()
   const notice = useNoticeStore()
@@ -35,7 +35,7 @@ export function useDeckActions() {
       confirmLabel: t('errors.deck-limit-reached.upgrade-cta')
     }).response
     if (confirmed) {
-      modal.open(Checkout, { mode: 'mobile-sheet', backdrop: true })
+      open(Checkout, { presentation: 'dialog' })
     }
     return false
   }

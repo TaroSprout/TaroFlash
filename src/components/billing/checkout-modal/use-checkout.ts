@@ -4,7 +4,7 @@ import { useQueryCache } from '@pinia/colada'
 import { useCreateSubscriptionMutation } from '@/api/billing'
 import { useCurrentMemberQuery } from '@/api/members'
 import { useCheckoutElements } from '@/composables/billing/use-checkout-elements'
-import { useModalRequestClose } from '@/composables/modal'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 import { emitSfx } from '@/sfx/bus'
 
 export type CheckoutResponse = { upgraded: boolean }
@@ -58,10 +58,9 @@ export function useCheckout(close: (response?: CheckoutResponse) => void) {
   onMounted(() => emitSfx('wooden_chime_ring'))
   onBeforeUnmount(() => emitSfx('pop_up_close'))
 
-  useModalRequestClose(() => {
-    if (status.value === 'confirming') return
-    close()
-  })
+  // Veto a backdrop/esc/close-button dismiss while a payment is confirming; the
+  // host closes the overlay itself once allowed.
+  useOverlayContext().onCloseRequest(() => status.value !== 'confirming')
 
   // The member row flips to the paid plan only once the Stripe webhook syncs
   // it — that can lag a few seconds behind `confirm()` resolving. Poll rather

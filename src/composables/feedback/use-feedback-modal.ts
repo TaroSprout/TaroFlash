@@ -1,22 +1,17 @@
-import { useModal } from '@/composables/modal'
-import { emitSfx } from '@/sfx/bus'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import FeedbackBoard from '@/components/feedback/feedback-board.vue'
 
 /** Opens the feedback board modal. Shared by the phone launcher and any other entry point. */
 export function useFeedbackModal() {
-  const modal = useModal()
+  const { open } = useOverlay()
 
-  function open() {
-    emitSfx('snappy_button_3')
-    const result = modal.open(FeedbackBoard, {
-      backdrop: true,
-      mode: 'mobile-sheet',
-      mobile_below_width: 'msm',
-      mobile_below_height: 'md'
+  function open_feedback() {
+    return open(FeedbackBoard, {
+      presentation: 'dialog',
+      open_sfx: 'snappy_button_3',
+      close_sfx: 'pop_up_close'
     })
-    result.response.then(() => emitSfx('pop_up_close'))
-    return result
   }
 
-  return { open }
+  return { open: open_feedback }
 }

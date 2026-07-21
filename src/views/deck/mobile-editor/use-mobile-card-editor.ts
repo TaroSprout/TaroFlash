@@ -1,6 +1,6 @@
 import { computed, ref, shallowRef } from 'vue'
 import { emitSfx } from '@/sfx/bus'
-import { useModal } from '@/composables/modal'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import type { CardListController } from '@/views/deck/composables'
 import { mobileCardEditorKey } from './mobile-card-editor-key'
 import MobileEditor from './index.vue'
@@ -31,7 +31,7 @@ export type ImageControls = { openPicker: () => void; onRemove: () => void }
 export function useMobileCardEditor(controller: CardListController) {
   const cards = controller.list.all_cards
 
-  const modal = useModal()
+  const { open } = useOverlay()
   let close_modal: (() => void) | null = null
 
   const cursor_client_id = ref<string | null>(null)
@@ -62,11 +62,11 @@ export function useMobileCardEditor(controller: CardListController) {
 
     if (close_modal) return
 
-    close_modal = modal.open(MobileEditor, {
-      mode: 'popup',
-      backdrop: true,
-      context: { key: mobileCardEditorKey, value: api }
-    }).close
+    const overlay = open(MobileEditor, {
+      presentation: 'popup',
+      props: { api }
+    })
+    close_modal = () => overlay.close(undefined)
   }
 
   function close() {

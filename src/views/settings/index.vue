@@ -10,7 +10,7 @@ import { PAGE_META, type PageValue } from './pages'
 import { useMemberDangerActions, memberDangerActionsKey } from '@/composables/member/danger-actions'
 import type { WindowLayout } from '@/components/layout-kit/paged-window/layout'
 import { useAlert } from '@/composables/alert'
-import { useModalRequestClose } from '@/composables/modal'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 import { useAvatarPicker } from './use-avatar-picker'
 import MemberCard from '@/components/member/member-card.vue'
 import UiPinnedCard from '@/components/ui-kit/pinned-card.vue'
@@ -26,8 +26,6 @@ import TabAccountAccess from './tab-account-access/index.vue'
 
 export type ActivePage = PageValue
 
-const { close } = defineProps<{ close: () => void }>()
-
 const PAGE_COMPONENTS = {
   profile: TabProfile,
   app: TabApp,
@@ -37,6 +35,8 @@ const PAGE_COMPONENTS = {
 }
 
 const { t } = useI18n()
+
+const { close, onCloseRequest } = useOverlayContext()
 
 const editor = useMemberEditor()
 provide(memberEditorKey, editor)
@@ -90,8 +90,8 @@ const header_title = computed(() => t('settings.header.title'))
 onMounted(() => emitSfx('snappy_button_3'))
 onBeforeUnmount(() => emitSfx('pop_up_close'))
 
-async function onClose() {
-  if (!editor.is_dirty.value) return close()
+onCloseRequest(async () => {
+  if (!editor.is_dirty.value) return true
 
   const { response } = alert.warn({
     title: t('settings.unsaved-alert.title'),
@@ -99,10 +99,8 @@ async function onClose() {
     confirmLabel: t('settings.unsaved-alert.confirm'),
     cancelLabel: t('settings.unsaved-alert.cancel')
   })
-  if (await response) close()
-}
-
-useModalRequestClose(onClose)
+  return await response
+})
 
 function onBack() {
   emitSfx('snappy_button_5')
@@ -136,9 +134,9 @@ watch(layout_mode, (mode) => {
     :pages="pages"
     :groups="groups"
     phone_query="w<mlg"
+    sheet_at="w<mlg | h<md"
     :pattern_config="{ pattern: 'diagonal-stripes', pattern_size: '48px', pattern_opacity: '0.15' }"
     v-model:active="active_page"
-    @close="onClose"
     @back="onChromeBack"
   >
     <template #header-content>

@@ -3,7 +3,8 @@ import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiInput from '@/components/ui-kit/input.vue'
-import { type ModalCloseFn } from '@/composables/modal'
+import OverlaySurface from '@/components/overlay/overlay-surface/index.vue'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 import { nextDepth, provideDepth, useAmbientDepth } from '@/composables/ui/depth'
 import { emitSfx } from '@/sfx/bus'
 import { type SoundKey } from '@/sfx/config'
@@ -19,18 +20,17 @@ type UiPromptProps = {
   maxLength?: number
   cancelAudio?: SoundKey
   confirmAudio?: SoundKey
-  close: ModalCloseFn<string>
 }
 
 const {
   initialValue = '',
   maxLength = 60,
-  close,
   cancelAudio,
   confirmAudio
 } = defineProps<UiPromptProps>()
 
 const { t } = useI18n()
+const { close } = useOverlayContext()
 
 // A prompt is a modal: it floats one step above whatever opened it.
 const ambient_depth = useAmbientDepth()
@@ -65,10 +65,7 @@ function onCancel() {
 </script>
 
 <template>
-  <div
-    data-testid="ui-kit-prompt-container"
-    class="absolute inset-0 flex items-center justify-center"
-  >
+  <overlay-surface mode="popup">
     <div
       ref="root"
       data-testid="ui-kit-prompt"
@@ -109,5 +106,5 @@ function onCancel() {
         </ui-button>
       </div>
     </div>
-  </div>
+  </overlay-surface>
 </template>

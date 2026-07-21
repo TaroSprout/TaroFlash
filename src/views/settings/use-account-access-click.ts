@@ -5,7 +5,7 @@ export function useAccountAccessClick() {
   const account_access_modal = useAccountAccessModal()
 
   async function onAccountAccessClick() {
-    await account_access_modal.open().response
+    await account_access_modal.open().result
   }
 
   return { onAccountAccessClick }

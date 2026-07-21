@@ -5,10 +5,10 @@ import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import AccountAccessContent, { type AccountAccessContentPage } from './account-access-content.vue'
 import { emitSfx } from '@/sfx/bus'
-
-defineProps<{ close: () => void }>()
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 
 const { t } = useI18n()
+const { close, dismiss } = useOverlayContext()
 
 const page = ref<AccountAccessContentPage>('menu')
 const content = useTemplateRef<{ title: string }>('content')
@@ -24,7 +24,6 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
     size="sm"
     float_header
     :title="content?.title"
-    @close="close()"
   >
     <template #header-start>
       <ui-button
@@ -33,7 +32,7 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
         icon-left="close"
         icon-only
         rounded-full
-        @press="close()"
+        @press="dismiss()"
       >
         {{ t('dialog-card.close-label') }}
       </ui-button>

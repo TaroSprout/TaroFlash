@@ -11,7 +11,7 @@ import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import { useCardLimitGate } from '@/composables/card/limit-gate'
 import { useCan } from '@/composables/can'
 import { useNoticeStore } from '@/stores/notice-store'
-import { emitSfx } from '@/sfx/bus'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 
 export type MoveCardsModalResponse = {
   deck_id: number
@@ -22,12 +22,12 @@ type MoveCardsModalProps = {
   current_deck_id: number
   count?: number
   move: (deck_id: number) => Promise<void>
-  close: (response?: MoveCardsModalResponse | boolean) => void
 }
 
-const { cards, current_deck_id, count, move, close } = defineProps<MoveCardsModalProps>()
+const { cards, current_deck_id, count, move } = defineProps<MoveCardsModalProps>()
 
 const { t } = useI18n()
+const { close } = useOverlayContext()
 
 const can = useCan()
 const { data: decks } = useMemberDecksQuery()
@@ -87,11 +87,6 @@ function onSelect(value: string) {
 
   selected_deck_id.value = deck_id === selected_deck_id.value ? undefined : deck_id
 }
-
-function onClose() {
-  emitSfx('pop_up_close')
-  close(false)
-}
 </script>
 
 <template>
@@ -100,7 +95,7 @@ function onClose() {
     size="md"
     :title="title"
     class="grid-rows-[auto_1fr_auto]! pb-(--dialog-px)"
-    @close="onClose"
+    :close_sfx="{ press: 'pop_up_close' }"
   >
     <div data-testid="move-cards__deck-list-wrap" class="relative flex min-h-0 flex-1 flex-col">
       <ui-options-panel

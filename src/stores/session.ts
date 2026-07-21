@@ -32,7 +32,7 @@ import { useQueryCache } from '@pinia/colada'
 import logger from '@/utils/logger'
 import { useNoticeStore } from '@/stores/notice-store'
 import { useTaroPhoneStore } from '@/stores/taro-phone'
-import { closeAll as closeAllModals } from '@/composables/modal'
+import { useOverlayStore } from '@/stores/overlay-stack'
 
 export const useSessionStore = defineStore('sessionStore', () => {
   const router = useRouter()
@@ -40,6 +40,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
   const notice = useNoticeStore()
   const queryCache = useQueryCache()
   const taroPhone = useTaroPhoneStore()
+  const overlayStore = useOverlayStore()
 
   const user = ref<User | undefined>(undefined)
   const loading_count = ref(0)
@@ -192,7 +193,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
   function reset() {
     user.value = undefined
 
-    closeAllModals()
+    overlayStore.closeAll()
     clearQueryCache()
     taroPhone.reset()
   }

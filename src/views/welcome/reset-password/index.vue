@@ -8,6 +8,7 @@ import { useResetPasswordActions } from '@/composables/auth/use-reset-password-a
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { emitSfx } from '@/sfx/bus'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 
 const SUCCESS_DISPLAY_MS = 1400
 
@@ -15,10 +16,9 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-const { close } = defineProps<{ close: () => void }>()
-
 const { t } = useI18n()
 const router = useRouter()
+const { close } = useOverlayContext()
 
 const { password, confirm_password, loading, errors, success, submit } = useResetPasswordActions()
 
@@ -44,7 +44,6 @@ async function onSubmit() {
     float_header
     :title="t('reset-password-modal.heading')"
     :show_header="!success"
-    @close="close()"
   >
     <dialog-card-pager mode="out-in">
       <reset-password-form

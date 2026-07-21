@@ -1,9 +1,8 @@
-import { useModal } from '@/composables/modal'
-import { emitSfx } from '@/sfx/bus'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import StudySession from '@/views/study-session/index.vue'
 
 export function useStudyModal() {
-  const modal = useModal()
+  const { open } = useOverlay()
 
   /**
    * Opens a study session over one or more decks, by id. Pass `[id]` for a
@@ -12,12 +11,11 @@ export function useStudyModal() {
    * ids (and a refresh-resume can reopen from persisted ids alone).
    */
   function start(deck_ids: number[]) {
-    emitSfx('generic_notification_9')
-    return modal.open(StudySession, {
-      backdrop: true,
-      mode: 'popup',
-      props: { deck_ids }
-    }).response
+    return open(StudySession, {
+      props: { deck_ids },
+      presentation: 'popup',
+      open_sfx: 'generic_notification_9'
+    }).result
   }
 
   return { start }

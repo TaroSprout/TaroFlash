@@ -2,7 +2,7 @@ import { useI18n } from 'vue-i18n'
 import { useCancelSubscriptionMutation, useResumeSubscriptionMutation } from '@/api/billing'
 import { useAlert } from '@/composables/alert'
 import { useNoticeStore } from '@/stores/notice-store'
-import { useModal } from '@/composables/modal'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import Checkout from '@/components/billing/checkout-modal/index.vue'
 
 /**
@@ -19,13 +19,13 @@ export function useSubscriptionActions() {
   const { t } = useI18n()
   const alert = useAlert()
   const notice = useNoticeStore()
-  const modal = useModal()
+  const { open } = useOverlay()
   const cancelMutation = useCancelSubscriptionMutation()
   const resumeMutation = useResumeSubscriptionMutation()
 
   async function onUpgrade() {
-    const { response } = modal.open(Checkout, { mode: 'popup', backdrop: true })
-    await response
+    const { result } = open(Checkout, { presentation: 'popup' })
+    await result
   }
 
   async function onCancel() {

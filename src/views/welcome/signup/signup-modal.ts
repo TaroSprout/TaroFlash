@@ -1,24 +1,19 @@
-import { useModal } from '@/composables/modal'
-import { emitSfx } from '@/sfx/bus'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import SignupDialog from './index.vue'
 
 /** Opens the sign-up modal as a mobile sheet on small viewports. */
 export function useSignupModal() {
-  const modal = useModal()
+  const { open } = useOverlay()
 
   /** @param payment - preselect the paid plan when the user came from a pricing CTA. */
-  function open(payment?: boolean) {
-    emitSfx('snappy_button_3')
-    const result = modal.open<boolean>(SignupDialog, {
-      backdrop: true,
-      mode: 'mobile-sheet',
-      mobile_below_width: 'sm',
-      mobile_below_height: 'md',
-      props: { payment }
+  function open_signup(payment?: boolean) {
+    return open<boolean>(SignupDialog, {
+      props: { payment },
+      presentation: 'dialog',
+      open_sfx: 'snappy_button_3',
+      close_sfx: 'pop_up_close'
     })
-    result.response.then(() => emitSfx('pop_up_close'))
-    return result
   }
 
-  return { open }
+  return { open: open_signup }
 }

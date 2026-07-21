@@ -1,5 +1,4 @@
-import { useModal } from '@/composables/modal'
-import { emitSfx } from '@/sfx/bus'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import UploadLesson, {
   type UploadLessonResponse
 } from '@/views/audio-reader/upload-lesson-modal/index.vue'
@@ -9,18 +8,16 @@ import UploadLesson, {
  * Lesson, or undefined if cancelled.
  */
 export function useUploadLessonModal() {
-  const modal = useModal()
+  const { open } = useOverlay()
 
-  function open(collection_id: number) {
-    emitSfx('snappy_button_3')
-    const result = modal.open<UploadLessonResponse>(UploadLesson, {
+  function open_upload_lesson(collection_id: number) {
+    return open<UploadLessonResponse>(UploadLesson, {
       props: { collection_id },
-      backdrop: true,
-      mode: 'mobile-sheet'
+      presentation: 'dialog',
+      open_sfx: 'snappy_button_3',
+      close_sfx: 'pop_up_close'
     })
-    result.response.then(() => emitSfx('pop_up_close'))
-    return result
   }
 
-  return { open }
+  return { open: open_upload_lesson }
 }

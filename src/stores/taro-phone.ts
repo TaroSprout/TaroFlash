@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import type { OpenModalResult } from '@/composables/modal'
+import type { OpenOverlayResult } from '@/composables/overlay/use-overlay'
 
 export const useTaroPhoneStore = defineStore('taro-phone', () => {
   const is_open = ref(false)
@@ -20,11 +20,11 @@ export const useTaroPhoneStore = defineStore('taro-phone', () => {
   }
 
   /** Hide the phone while an app-launched modal is open, reopening once it closes. */
-  function openApp(result: OpenModalResult<unknown>) {
+  function openApp(result: OpenOverlayResult<unknown>) {
     was_hidden_for_app_modal.value = true
     is_open.value = false
 
-    result.response.finally(() => {
+    result.result.finally(() => {
       if (!was_hidden_for_app_modal.value) return
       was_hidden_for_app_modal.value = false
       is_open.value = true

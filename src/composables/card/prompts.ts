@@ -1,6 +1,6 @@
 import { useI18n } from 'vue-i18n'
 import { useAlert } from '@/composables/alert'
-import { useModal } from '@/composables/modal'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import { emitSfx } from '@/sfx/bus'
 import MoveCardsModal from '@/components/card-actions/move-cards-modal.vue'
 
@@ -14,7 +14,7 @@ import MoveCardsModal from '@/components/card-actions/move-cards-modal.vue'
 export function useCardPrompts() {
   const { t } = useI18n()
   const alert = useAlert()
-  const modal = useModal()
+  const { open } = useOverlay()
 
   /** Show the delete-N-cards confirm alert. Resolves to the user's choice. */
   function confirmDelete(count: number) {
@@ -41,13 +41,12 @@ export function useCardPrompts() {
   ) {
     emitSfx('double_pop_up')
 
-    const { response } = modal.open<{ deck_id: number }>(MoveCardsModal, {
-      backdrop: true,
-      mode: 'popup',
+    const { result } = open<{ deck_id: number } | undefined>(MoveCardsModal, {
+      presentation: 'popup',
       props: { cards, count, current_deck_id, move }
     })
 
-    return response
+    return result
   }
 
   return { confirmDelete, openMoveModal }

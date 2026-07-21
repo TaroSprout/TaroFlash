@@ -6,14 +6,12 @@ import { useSignupActions } from '@/composables/auth/use-signup-actions'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useAlert } from '@/composables/alert'
-
-const { close } = defineProps<{
-  close: (response?: boolean) => void
-}>()
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 
 const { t } = useI18n()
 const router = useRouter()
 const alert = useAlert()
+const { close, dismiss } = useOverlayContext()
 
 const auth = useSignupActions()
 
@@ -42,12 +40,13 @@ async function onSubmit() {
     data-testid="signup-container"
     data-palette="blue"
     class="sm:w-130"
+    sheet_at="w<sm | h<md"
     :title="t('signup-dialog.heading')"
     :pattern_config="{
       pattern: 'leaf',
       pattern_opacity: '0.1'
     }"
-    @close="close()"
+    @close="dismiss"
   >
     <div
       data-testid="signup__body"
@@ -64,7 +63,7 @@ async function onSubmit() {
       />
 
       <div data-testid="signup__actions" class="w-full flex justify-center gap-2.5">
-        <ui-button neutral size="xl" full-width :fancy-hover="false" @press="close()">
+        <ui-button neutral size="xl" full-width :fancy-hover="false" @press="dismiss()">
           {{ t('signup-dialog.cancel') }}
         </ui-button>
         <ui-button

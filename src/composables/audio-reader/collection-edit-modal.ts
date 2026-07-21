@@ -1,5 +1,4 @@
-import { useModal } from '@/composables/modal'
-import { emitSfx } from '@/sfx/bus'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import CollectionEdit, {
   type CollectionEditResponse
 } from '@/views/audio-reader/collection-edit-modal.vue'
@@ -9,18 +8,16 @@ import CollectionEdit, {
  * for `collection_id`. Resolves when the modal closes.
  */
 export function useCollectionEditModal() {
-  const modal = useModal()
+  const { open } = useOverlay()
 
-  function open(collection_id: number) {
-    emitSfx('snappy_button_3')
-    const result = modal.open<CollectionEditResponse>(CollectionEdit, {
+  function open_collection_edit(collection_id: number) {
+    return open<CollectionEditResponse>(CollectionEdit, {
       props: { collection_id },
-      backdrop: true,
-      mode: 'mobile-sheet'
+      presentation: 'dialog',
+      open_sfx: 'snappy_button_3',
+      close_sfx: 'pop_up_close'
     })
-    result.response.then(() => emitSfx('pop_up_close'))
-    return result
   }
 
-  return { open }
+  return { open: open_collection_edit }
 }

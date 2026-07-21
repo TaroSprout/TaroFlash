@@ -11,7 +11,7 @@ import { useDeckEditor, deckEditorKey } from '@/composables/deck/editor'
 import { useDeckDangerActions, deckDangerActionsKey } from '@/composables/deck/danger-actions'
 import type { WindowLayout } from '@/components/layout-kit/paged-window/layout'
 import { useAlert } from '@/composables/alert'
-import { useModalAfterEnter, useModalRequestClose } from '@/composables/modal'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 import DeckPinnedPreview from '@/components/deck/pinned-preview.vue'
 import PagedWindow, {
   type PagedWindowGroup,
@@ -27,9 +27,8 @@ import { PAGE_META, type PageValue } from './pages'
 export type DeckSettingsResponse = boolean
 export type ActivePage = PageValue
 
-const { deck, close, initial_page, initial_side } = defineProps<{
+const { deck, initial_page, initial_side } = defineProps<{
   deck: Deck
-  close: (response?: DeckSettingsResponse) => void
   initial_page?: ActivePage
   initial_side?: CardSide
 }>()
@@ -44,6 +43,8 @@ const PAGE_COMPONENTS = {
 
 const { t } = useI18n()
 
+const { close, onCloseRequest, entered: after_enter } = useOverlayContext()
+
 const editor = useDeckEditor(deck)
 provide(deckEditorKey, editor)
 
@@ -51,8 +52,18 @@ const danger = useDeckDangerActions(editor, deck, close)
 provide(deckDangerActionsKey, danger)
 
 const alert = useAlert()
-useModalRequestClose(() => onClose())
-const after_enter = useModalAfterEnter()
+
+onCloseRequest(async () => {
+  if (!editor.is_dirty.value) return true
+
+  const { response } = alert.warn({
+    title: t('deck.settings-modal.unsaved-alert.title'),
+    message: t('deck.settings-modal.unsaved-alert.message'),
+    confirmLabel: t('deck.settings-modal.unsaved-alert.confirm'),
+    cancelLabel: t('deck.settings-modal.unsaved-alert.cancel')
+  })
+  return await response
+})
 
 const active_page = ref<ActivePage | null>(initial_page ?? null)
 
@@ -125,18 +136,6 @@ function onPreviewSide(side: CardSide) {
   editor.setActiveSide(side)
 }
 
-async function onClose() {
-  if (!editor.is_dirty.value) return close(false)
-
-  const { response } = alert.warn({
-    title: t('deck.settings-modal.unsaved-alert.title'),
-    message: t('deck.settings-modal.unsaved-alert.message'),
-    confirmLabel: t('deck.settings-modal.unsaved-alert.confirm'),
-    cancelLabel: t('deck.settings-modal.unsaved-alert.cancel')
-  })
-  if (await response) close(false)
-}
-
 function onBack() {
   emitSfx('snappy_button_5')
   active_page.value = null
@@ -186,8 +185,8 @@ watch([preview_el, aside_el], ([preview]) => {
     :stretch_page="is_full_bleed"
     :pattern_config="{ pattern: 'endless-clouds' }"
     :between="runChromeSync"
+    sheet_at="w<md | h<md"
     v-model:active="active_page"
-    @close="onClose"
     @back="onChromeBack"
   >
     <template #header-content>

@@ -2,7 +2,7 @@ import { toValue, type MaybeRefOrGetter } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Checkout from '@/components/billing/checkout-modal/index.vue'
 import { useAlert } from '@/composables/alert'
-import { useModal } from '@/composables/modal'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import { useCan } from '@/composables/can'
 
 // SQLSTATE raised by `enforce_deck_card_limit` when a write would push a deck
@@ -40,7 +40,7 @@ function isCardLimitError(error: unknown): boolean {
 export function useCardLimitGate(deck: MaybeRefOrGetter<Deck | undefined>) {
   const { t } = useI18n()
   const alert = useAlert()
-  const modal = useModal()
+  const { open } = useOverlay()
   const can = useCan()
 
   /** Show the upgrade alert and open Checkout on confirm. */
@@ -51,7 +51,7 @@ export function useCardLimitGate(deck: MaybeRefOrGetter<Deck | undefined>) {
       confirmLabel: t('errors.card-limit-reached.upgrade-cta')
     }).response
 
-    if (confirmed) modal.open(Checkout, { mode: 'mobile-sheet', backdrop: true })
+    if (confirmed) open(Checkout, { presentation: 'dialog' })
   }
 
   /**

@@ -1,7 +1,7 @@
 import { useI18n } from 'vue-i18n'
 import Checkout from '@/components/billing/checkout-modal/index.vue'
 import { useAlert } from '@/composables/alert'
-import { useModal } from '@/composables/modal'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import { useCan } from '@/composables/can'
 
 /**
@@ -17,7 +17,7 @@ import { useCan } from '@/composables/can'
 export function useCardImageGate() {
   const { t } = useI18n()
   const alert = useAlert()
-  const modal = useModal()
+  const { open } = useOverlay()
   const can = useCan()
 
   /**
@@ -34,7 +34,7 @@ export function useCardImageGate() {
       confirmLabel: t('errors.card-images-paid.upgrade-cta')
     }).response
 
-    if (confirmed) modal.open(Checkout, { mode: 'mobile-sheet', backdrop: true })
+    if (confirmed) open(Checkout, { presentation: 'dialog' })
     return false
   }
 

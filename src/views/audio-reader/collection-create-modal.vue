@@ -5,14 +5,12 @@ import UiButton from '@/components/ui-kit/button.vue'
 import UiInput from '@/components/ui-kit/input.vue'
 import AppWindow from '@/components/layout-kit/app-window/index.vue'
 import { useCreateLessonCollectionMutation } from '@/api/lessons'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 
 export type CollectionCreateResponse = LessonCollection | undefined
 
-const { close } = defineProps<{
-  close: (response?: CollectionCreateResponse) => void
-}>()
-
 const { t } = useI18n()
+const { close, dismiss } = useOverlayContext()
 const create = useCreateLessonCollectionMutation()
 
 const title = ref('')
@@ -38,8 +36,9 @@ async function onSubmit() {
     data-testid="collection-create-container"
     data-palette="blue"
     class="sm:w-150"
+    sheet_at="w<sm | h<sm"
     :title="t('lesson-collections.create.title')"
-    @close="close(undefined)"
+    @close="dismiss"
   >
     <div data-testid="collection-create__body" class="flex flex-col gap-5 p-6">
       <ui-input
@@ -66,7 +65,7 @@ async function onSubmit() {
           size="lg"
           full-width
           :disabled="create.isLoading.value"
-          @press="close(undefined)"
+          @press="dismiss()"
         >
           {{ t('lesson-collections.create.cancel-button') }}
         </ui-button>

@@ -6,7 +6,7 @@ import {
   useSetDefaultPaymentMethodMutation,
   useDetachPaymentMethodMutation
 } from '@/api/billing'
-import { useModal } from '@/composables/modal'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import { useNoticeStore } from '@/stores/notice-store'
 
 /**
@@ -15,7 +15,7 @@ import { useNoticeStore } from '@/stores/notice-store'
  */
 export function useChangeCcClick() {
   const { t } = useI18n()
-  const modal = useModal()
+  const { open } = useOverlay()
   const notice = useNoticeStore()
 
   const methods_query = usePaymentMethodsQuery()
@@ -34,11 +34,10 @@ export function useChangeCcClick() {
   async function onChangeCardClick() {
     const old_ids = payment_methods.value.map((m) => m.id)
 
-    const response = await modal.open<ChangeCardResponse>(ChangeCcModal, {
-      mode: 'popup',
-      backdrop: true,
+    const response = await open<ChangeCardResponse>(ChangeCcModal, {
+      presentation: 'popup',
       props: { has_existing_card: !!default_card.value }
-    }).response
+    }).result
 
     if (!response?.added) return
 
