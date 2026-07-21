@@ -1,8 +1,21 @@
-import { describe, test, expect } from 'vite-plus/test'
+import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h, reactive, useAttrs } from 'vue'
+import { defineComponent, h, reactive, ref, useAttrs } from 'vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import GeneralSection from '@/views/deck/deck-settings/tab-review-pacing/general-section.vue'
+
+// ── Hoisted mocks ─────────────────────────────────────────────────────────────
+
+// mockIsCoarse is a plain container so it can be assigned inside vi.hoisted
+// (where Vue's `ref` is not yet importable). Tests mutate `.ref`.
+const { mockIsCoarse } = vi.hoisted(() => {
+  const mockIsCoarse = { ref: null }
+  return { mockIsCoarse }
+})
+
+vi.mock('@/composables/ui/media-query', () => ({
+  useMatchMedia: vi.fn(() => mockIsCoarse.ref)
+}))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
@@ -61,7 +74,8 @@ const OptionGroupStub = defineComponent({
 
 // ── Fixture ───────────────────────────────────────────────────────────────────
 
-function makeWrapper({ config: configOverrides = {} } = {}) {
+function makeWrapper({ config: configOverrides = {}, coarse = false } = {}) {
+  mockIsCoarse.ref = ref(coarse)
   const draft = reactive({ study_config: { shuffle: false, ...configOverrides } })
   const wrapper = mount(GeneralSection, {
     global: {
@@ -125,5 +139,17 @@ describe('GeneralSection — starting-side option group [obligation]', () => {
   test('renders the starting-side row wrapper', () => {
     const { wrapper } = makeWrapper()
     expect(wrapper.find('[data-testid="tab-review-pacing__starting-side"]').exists()).toBe(true)
+  })
+
+  test('passes size="base" to the option group on a coarse pointer [obligation]', () => {
+    const { wrapper } = makeWrapper({ coarse: true })
+    const group = wrapper.find('[data-testid="tab-review-pacing__starting-side-options"]')
+    expect(group.attributes('size')).toBe('base')
+  })
+
+  test('passes size="sm" to the option group on a fine pointer [obligation]', () => {
+    const { wrapper } = makeWrapper({ coarse: false })
+    const group = wrapper.find('[data-testid="tab-review-pacing__starting-side-options"]')
+    expect(group.attributes('size')).toBe('sm')
   })
 })
