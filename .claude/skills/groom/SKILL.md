@@ -116,13 +116,14 @@ compact summary** — do not dump full bodies into the review. Per ticket show:
 - **Title** — descriptive rewrite.
 - **Description summary** — a **single line** (≤1 line) capturing the product intent. The full
   **Product description** and **Technical notes** live in the drafted body, not the review.
-- **Fields** — suggested `Priority`, `Type`, `Epic` (from the Epic→code map), `Assignee` (§ heuristic).
+- **Fields** — suggested `Priority`, `Type`, `Epic` (from the Epic→code map), `Assignee` (§ heuristic
+  — always a model, **never `Me`**).
 - **Lane** — `Ready` (pair) or `Queued` (auto). Default `Queued` when the spec is complete and
   the work is mechanical/low-risk; default `Ready` (pair) when it touches `supabase/`, auth,
   billing, RLS/security, or is genuinely ambiguous. State which and why in one phrase.
-  **A `Queued` ticket MUST have `Assignee` ∈ {`Fable`,`Opus`,`Sonnet`}** — `/work batch` skips
-  `Me`, so a `Queued` + `Me` ticket would sit unworked forever. If a ticket is heading to `Queued`
-  but you'd assign `Me`, that's a contradiction: either give it a model, or route it to `Ready`.
+  **Every ticket — `Ready` or `Queued` — gets a suggested `Assignee` ∈ {`Fable`,`Opus`,`Sonnet`}.**
+  Grooming never suggests `Me`; on `Queued` especially a `Me` ticket would sit unworked forever
+  (`/work batch` skips it). The user can always switch a suggestion to `Me` themselves.
 - **Proposals** — where warranted: **CREATE** a new ticket (e.g. work discovered that's out of
   scope), or **MERGE** this ticket into another (name the survivor). Never silently.
 
@@ -189,12 +190,17 @@ user-facing copy the ticket implies should note the locale key path (`src/locale
 
 ## Assignee heuristic (suggest, user overrides)
 
+**Only ever suggest a model — `Fable`, `Opus`, or `Sonnet`. Never suggest `Me`.** `Me` is the
+user's own signal ("I'll drive this myself"), not a value grooming proposes; always suggest the
+model best suited to the work — including for `Ready`/pair-lane tickets — and let the user switch it
+to `Me` if they want to. This holds for every ticket, in every lane.
+
 - **`Opus`** — architectural, cross-cutting, ambiguous, or security/backend-sensitive work.
 - **`Sonnet`** — well-scoped feature/bug work with a clear spec.
 - **`Fable`** — mechanical/localized changes (copy, single-component tweaks, icon swaps).
-- **`Me`** — you want to drive it yourself; also the signal that it is **not** auto-eligible
-  (a `Me` ticket is never picked by `/work batch`). Pair-lane tickets are typically `Me` or a
-  model you'll sit with.
+
+(For context only, never suggested: a **`Me`** ticket is the user's opt-out — never picked by
+`/work batch`, and skipped by grooming's own Backlog query.)
 
 ## Guardrails
 
