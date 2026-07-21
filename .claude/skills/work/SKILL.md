@@ -1,6 +1,6 @@
 ---
 name: work
-description: Execute groomed Notion Task Board tickets. Two modes. `/work pair [ID]` works one Ready ticket interactively in this session — backend teaching on, you approve every change, tests left untouched — then opens a PR. `/work batch [--count N] [--p0…]` pulls up to N Queued tickets assigned to a model (Fable/Opus/Sonnet) and works them in parallel — one worktree-isolated subagent per ticket, each pinned to that ticket's model, each writing its own tests. Subagents report back to this session (the orchestrator), which organizes the branches into non-conflicting, CI-passing PRs. Both claim the ticket to In Progress first and stop at an open PR (Review) — never merge. Trigger on `/work`, "work the board", "work a ticket".
+description: Execute groomed Notion Task Board tickets. Two modes. `/work pair [ID]` works one Ready ticket interactively in this session — backend teaching on, you approve every change, tests written as part of the work — then opens a PR. `/work batch [--count N] [--p0…]` pulls up to N Queued tickets assigned to a model (Fable/Opus/Sonnet) and works them in parallel — one worktree-isolated subagent per ticket, each pinned to that ticket's model, each writing its own tests and cleaning up its worktree when done. Subagents report back to this session (the orchestrator), which organizes the branches into non-conflicting, CI-passing PRs. Both claim the ticket to In Progress first, open a PR (Review), then iterate on your review feedback via a main-workspace subagent that checks out the PR branch — never merge. The golden "no tests" rule is suspended inside `/work` — tests are always in scope. Trigger on `/work`, "work the board", "work a ticket".
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, Skill, mcp__notion__notion-query-data-sources, mcp__notion__notion-fetch, mcp__notion__notion-update-page
 argument-hint: 'pair [<ID>] | batch [--count N] [--p0|--p1|--p2|--p3]'
 arguments:
@@ -24,15 +24,21 @@ review. It never merges and never marks a ticket `Done` — you close the loop.
 
 Two modes, chosen by the first arg. They differ deliberately:
 
-|                 | `pair`                           | `batch`                               |
-| --------------- | -------------------------------- | ------------------------------------- |
-| Source lane     | `Status = Ready`                 | `Status = Queued`                     |
-| Model           | **this session's** model         | each ticket's **`Assignee`** model    |
-| Execution       | interactive, in-session          | parallel subagents, one worktree each |
-| Backend persona | **on** (teaching)                | **off**                               |
-| Your approval   | **every change**                 | none — you review the PR              |
-| Tests           | **left untouched** (golden rule) | each subagent writes its own          |
-| Ends at         | open PR → `Review`               | open PR → `Review`                    |
+|                 | `pair`                             | `batch`                               |
+| --------------- | ---------------------------------- | ------------------------------------- |
+| Source lane     | `Status = Ready`                   | `Status = Queued`                     |
+| Model           | **this session's** model           | each ticket's **`Assignee`** model    |
+| Execution       | interactive, in-session            | parallel subagents, one worktree each |
+| Backend persona | **on** (teaching)                  | **off**                               |
+| Your approval   | **every change**                   | none — you review the PR              |
+| Tests           | **written as part of the work**    | each subagent writes its own          |
+| Ends at         | open PR → `Review` + feedback loop | open PR → `Review` + feedback loop    |
+
+**Tests are always in scope inside `/work`.** The CLAUDE.md golden "never touch tests" rule is
+**suspended** for the entire lifetime of this skill — both modes, initial implementation and every
+follow-up fix. Each agent (the pair session, each batch subagent, each feedback-fix subagent)
+writes its own coverage for what it changed and repairs any test its change broke. Agents do **not**
+invoke the `update-tests` skill — they write tests inline as part of the work.
 
 ## Board constants
 
@@ -60,13 +66,15 @@ ticket's `Assignee`).
 3. **BRANCH** — conventional branch off `master` matching the ticket (`fix/…`, `feat/…`).
 4. **IMPLEMENT — together.** Work through the acceptance criteria in small steps. **Pause for
    approval on every change.** If the `Area` touches `supabase/**` (migrations, RPCs, RLS, edge
-   functions), the backend teaching persona is **on** — teach as you write per CLAUDE.md. **Do
-   not touch tests** — the golden rule holds in pair mode. Follow all `.claude/rules/*`.
+   functions), the backend teaching persona is **on** — teach as you write per CLAUDE.md. **Write
+   and update tests as part of the work** — the golden "no tests" rule is suspended inside `/work`
+   (see the callout above). Follow all `.claude/rules/*`.
 5. **PR** — invoke the **`prepare-pr`** skill with `--ticket <ID> --ticket-url <url>` (the ticket's
    `TARO-<ID>` number and its Notion page URL) so the PR title is prefixed `TARO-<ID>:` and the body
    opens with a `[TARO-<ID>](<url>)` link (commits, conventional messages, lint+type gate, opens one
    PR, watches CI to green).
-6. **HANDOFF** — set the ticket's `Status = Review` and write the PR URL into its body. Stop.
+6. **HANDOFF** — set the ticket's `Status = Review` and write the PR URL into its body. Then enter
+   the **Review & feedback loop** (below) and wait for the user's feedback.
 
 ## Mode: `batch [--count N] [--p0…]`
 
@@ -105,6 +113,9 @@ Progress`. Drop any that another run already grabbed. Claim before dispatching s
    - **No backend teaching persona** in batch.
    - It **reports back** to the orchestrator: branch name, a summary of what changed, the file
      paths it touched, and gate status (pass/fail + any unresolved failure).
+   - **Clean up when done.** After it has pushed/handed back its branch and reported, the subagent
+     removes its own worktree (`git worktree remove`) so no orphaned worktrees pile up. Exception:
+     a **stuck/blocked** ticket leaves its worktree in place for human inspection (step 5).
 
 4. **ORCHESTRATE PRs** — once subagents report, turn their branches into PRs. One PR per ticket:
    a. **GATE CHECK** — if a subagent reported a failing/unfinished gate, don't open its PR; treat
@@ -120,8 +131,8 @@ Progress`. Drop any that another run already grabbed. Claim before dispatching s
    d. **OPEN** — for each non-blocked ticket, invoke the **`prepare-pr`** skill with `--ticket
 <ID> --ticket-url <url>` (the `TARO-<ID>` number and the ticket's Notion page URL) → one PR titled
    `TARO-<ID>: …` whose body opens with a `[TARO-<ID>](<url>)` link. Pass the stack base when the PR
-   is stacked. `prepare-pr` watches CI; **a PR isn't done until it's green.** If CI fails, hand the
-   failure back to that ticket's subagent (re-dispatch with the failure) to fix in its worktree;
+   is stacked. `prepare-pr` watches CI; **a PR isn't done until it's green.** If CI fails, route it
+   through the **Review & feedback loop** (below) — a main-workspace fix subagent on the PR branch;
    if it still can't pass after real effort, treat the ticket as stuck.
    e. **HANDOFF** — for each opened, green PR: set `Status = Review`, write the PR URL into the
    ticket body.
@@ -132,17 +143,50 @@ Progress`. Drop any that another run already grabbed. Claim before dispatching s
    for the human. Never silently fail or leave a ticket stranded in `In Progress`.
 
 6. **REPORT** — tally: worked → `Review` (with PR links, noting any stacked pairs), `Blocked`
-   (with reasons + which need human conflict resolution), skipped.
+   (with reasons + which need human conflict resolution), skipped. Then enter the **Review &
+   feedback loop** below.
+
+## Review & feedback loop (both modes)
+
+Opening the PRs is not the end of the run — it's the handoff into review. After PRs are open the run
+**stays live and waits for the user's feedback**. The user reviews the PRs themselves and will
+usually come back **one PR at a time**, leaving comments on that PR.
+
+Every follow-up change — whether it's user review feedback, a red CI run, or any other fix the PR
+needs — is handled the same way:
+
+1. **Dispatch a fix subagent on the MAIN workspace** (not a worktree). It **checks out the PR
+   branch** in the main checkout. The user keeps a dev server running against the main workspace and
+   verifies each fix **live**, so the fix must land on the branch they're looking at. Model: the
+   ticket's `Assignee` in batch, this session's model in pair. Work one PR at a time (the user goes
+   in order), so only one fix subagent touches the main checkout at once.
+2. **Fix + a fresh test pass, together.** The subagent makes the code change **and** does a new test
+   pass alongside it — new coverage for the new behaviour plus repairs to any test the change breaks.
+   A fix is never code-only; tests ride with it every time. (Golden "no tests" rule stays suspended.)
+3. **Gate, push, watch green.** Run `vp check` + `vp test`, push to the PR branch, and watch CI to
+   green (via `prepare-pr` or directly). A PR isn't done until it's green again.
+4. **Answer the thread.** Reply to the feedback on the PR prefixed `🤖 Claude:` so the user can tell
+   your replies from their own. Leave the ticket in `Review`.
+
+Repeat per PR until the user merges. **Never merge and never set `Done` yourself** — that stays the
+user's call, exactly as at first handoff.
 
 ## Guardrails
 
 - Only ever touch the Task Board data source above — never a backup/duplicate database.
-- **Always stop at an open PR.** Never merge, never set `Done`. That's the user's call in `Review`.
+- **Never merge, never set `Done`.** Opening the PR is a handoff into `Review`, not the end — the
+  run stays live through the feedback loop until the user merges. Merging is always the user's call.
 - Claim before coding; re-check the lane to avoid double-work.
-- Batch never runs the backend teaching persona and never works a `Me` ticket. Pair never touches
-  tests. These are the mode contracts — don't cross them.
+- Batch never runs the backend teaching persona and never works a `Me` ticket. These are mode
+  contracts — don't cross them.
+- **Tests are always in scope** — the golden "no tests" rule is suspended for this whole skill,
+  both modes, implementation and every fix. Each agent writes/repairs its own tests inline; nobody
+  invokes the `update-tests` skill.
 - One PR per ticket (via `prepare-pr`). Don't batch multiple tickets into a single PR.
-- In batch, the orchestrator (this session) never edits ticket code — subagents do, each in its
-  own worktree. Batch subagents write their own tests; batch does **not** invoke `update-tests`.
+- In batch, the orchestrator (this session) never edits ticket code — subagents do. Initial
+  implementation happens in per-ticket **worktrees**, which the subagent **removes when done**
+  (except a stuck ticket, whose worktree is left for inspection). Post-open **fixes happen on the
+  main workspace** on the checked-out PR branch, one PR at a time, so the user's live dev server
+  reflects them.
 - Every batch PR must merge cleanly (vs `master` and vs the other batch PRs) and be CI-green before
   handoff. A conflict needing human judgment → raise it + `Blocked`; never guess a resolution.
