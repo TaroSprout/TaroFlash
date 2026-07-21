@@ -3,6 +3,7 @@ import { defineComponent, h } from 'vue'
 import { mount } from '@vue/test-utils'
 import {
   useModal,
+  closeAll,
   useModalRequestClose,
   useModalAfterEnter,
   resolveModalAfterEnter,
@@ -173,6 +174,36 @@ describe('useModal', () => {
       close()
 
       await expect(response).resolves.toBeUndefined()
+    })
+  })
+
+  describe('closeAll', () => {
+    test('empties the modal_stack', () => {
+      const { open, modal_stack } = useModal()
+      open(FakeComponent)
+      open(FakeComponent)
+
+      closeAll()
+
+      expect(modal_stack.value).toHaveLength(0)
+    })
+
+    test('resolves every pending response promise so awaiting callers do not hang', async () => {
+      const { open } = useModal()
+      const first = open(FakeComponent)
+      const second = open(FakeComponent)
+
+      closeAll()
+
+      await expect(first.response).resolves.toBeUndefined()
+      await expect(second.response).resolves.toBeUndefined()
+    })
+
+    test('is a no-op when the stack is already empty', () => {
+      const { modal_stack } = useModal()
+
+      expect(() => closeAll()).not.toThrow()
+      expect(modal_stack.value).toHaveLength(0)
     })
   })
 

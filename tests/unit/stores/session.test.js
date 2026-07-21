@@ -44,8 +44,17 @@ const { mockOnSignedOut, mockIsAuthError } = vi.hoisted(() => ({
   mockIsAuthError: vi.fn()
 }))
 
+const { mockQueryCache, mockCloseAllModals, mockTaroPhoneReset } = vi.hoisted(() => ({
+  mockQueryCache: { getEntries: vi.fn(() => []), remove: vi.fn() },
+  mockCloseAllModals: vi.fn(),
+  mockTaroPhoneReset: vi.fn()
+}))
+
 vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (key) => key }) }))
+vi.mock('@pinia/colada', () => ({ useQueryCache: () => mockQueryCache }))
+vi.mock('@/composables/modal', () => ({ closeAll: mockCloseAllModals }))
+vi.mock('@/stores/taro-phone', () => ({ useTaroPhoneStore: () => ({ reset: mockTaroPhoneReset }) }))
 
 vi.mock('@/api/session', () => ({
   getSession: mockGetSession,
@@ -94,6 +103,11 @@ beforeEach(() => {
   mockOnSignedOut.mockReset()
   mockOnSignedOut.mockImplementation(() => vi.fn())
   mockIsAuthError.mockReset()
+  mockQueryCache.getEntries.mockReset()
+  mockQueryCache.getEntries.mockReturnValue([])
+  mockQueryCache.remove.mockReset()
+  mockCloseAllModals.mockReset()
+  mockTaroPhoneReset.mockReset()
 })
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
@@ -242,6 +256,35 @@ describe('useSessionStore', () => {
       expect(mockNotice.error).toHaveBeenCalledWith('session.logout-error')
       expect(store.user).toEqual(user)
       expect(mockPush).not.toHaveBeenCalledWith({ name: 'welcome' })
+    })
+
+    test('runs the full teardown — closes modals, clears the query cache, resets the phone [obligation]', async () => {
+      const user = { id: 'u1', aud: 'authenticated' }
+      mockGetSession.mockResolvedValueOnce({ user })
+      mockLogout.mockResolvedValueOnce(undefined)
+      mockQueryCache.getEntries.mockReturnValueOnce(['entry-a', 'entry-b'])
+      const store = useSessionStore()
+      await store.restoreSession()
+
+      await store.logout()
+
+      expect(mockCloseAllModals).toHaveBeenCalledOnce()
+      expect(mockQueryCache.remove).toHaveBeenCalledWith('entry-a')
+      expect(mockQueryCache.remove).toHaveBeenCalledWith('entry-b')
+      expect(mockTaroPhoneReset).toHaveBeenCalledOnce()
+    })
+
+    test('does NOT run teardown when supaLogout rejects (no reset reached) [obligation]', async () => {
+      const user = { id: 'u1', aud: 'authenticated' }
+      mockGetSession.mockResolvedValueOnce({ user })
+      mockLogout.mockRejectedValueOnce(new Error('network down'))
+      const store = useSessionStore()
+      await store.restoreSession()
+
+      await store.logout()
+
+      expect(mockCloseAllModals).not.toHaveBeenCalled()
+      expect(mockTaroPhoneReset).not.toHaveBeenCalled()
     })
   })
 
@@ -471,6 +514,23 @@ describe('useSessionStore', () => {
       options.onDismiss()
 
       expect(mockPush).toHaveBeenCalledWith({ name: 'welcome' })
+    })
+
+    test('forced session-loss runs the same teardown as logout [obligation]', async () => {
+      const user = { id: 'u1', aud: 'authenticated' }
+      mockGetSession.mockResolvedValueOnce({ user })
+      mockIsAuthError.mockReturnValueOnce(true)
+      mockLogout.mockResolvedValueOnce(undefined)
+      mockQueryCache.getEntries.mockReturnValueOnce(['entry-a'])
+      const store = useSessionStore()
+      await store.restoreSession()
+
+      store.handleAuthError({ status: 401 })
+      await Promise.resolve()
+
+      expect(mockCloseAllModals).toHaveBeenCalledOnce()
+      expect(mockQueryCache.remove).toHaveBeenCalledWith('entry-a')
+      expect(mockTaroPhoneReset).toHaveBeenCalledOnce()
     })
   })
 
