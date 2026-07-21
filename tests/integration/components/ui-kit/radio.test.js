@@ -59,23 +59,23 @@ describe('UiRadio', () => {
 
   // ── intermediate state ─────────────────────────────────────────────────────
 
-  test('renders minus icon when intermediate=true', () => {
+  test('renders subtract (dash) icon when intermediate=true', () => {
     const wrapper = mountRadio({ checked: false, intermediate: true })
     const icons = wrapper.findAllComponents({ name: 'UiIcon' })
-    expect(icons.some((c) => c.props('src') === 'minus')).toBe(true)
+    expect(icons.some((c) => c.props('src') === 'subtract')).toBe(true)
   })
 
-  test('does not render minus icon when intermediate is not set', () => {
+  test('does not render subtract icon when intermediate is not set', () => {
     const wrapper = mountRadio({ checked: false })
     const icons = wrapper.findAllComponents({ name: 'UiIcon' })
-    expect(icons.some((c) => c.props('src') === 'minus')).toBe(false)
+    expect(icons.some((c) => c.props('src') === 'subtract')).toBe(false)
   })
 
-  test('can show both check and minus icons simultaneously', () => {
+  test('can show both check and subtract icons simultaneously', () => {
     const wrapper = mountRadio({ checked: true, intermediate: true })
     const icons = wrapper.findAllComponents({ name: 'UiIcon' })
     expect(icons.some((c) => c.props('src') === 'check')).toBe(true)
-    expect(icons.some((c) => c.props('src') === 'minus')).toBe(true)
+    expect(icons.some((c) => c.props('src') === 'subtract')).toBe(true)
   })
 
   // ── click ──────────────────────────────────────────────────────────────────
