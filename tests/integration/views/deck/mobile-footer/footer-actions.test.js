@@ -25,6 +25,7 @@ vi.mock('@/composables/deck/settings-modal', () => ({
 
 import FooterActions from '@/views/deck/mobile-footer/footer-actions.vue'
 import { deckViewShellKey } from '@/views/deck/composables/view-shell'
+import { mobileCardEditorKey } from '@/views/deck/mobile-editor/use-mobile-card-editor'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
@@ -49,12 +50,16 @@ function makeShell({ is_rearranging = false } = {}) {
   }
 }
 
-function mountFooterActions(shell = makeShell()) {
+function makeMobileEditor() {
+  return { openNewCard: vi.fn() }
+}
+
+function mountFooterActions(shell = makeShell(), mobile_editor = makeMobileEditor()) {
   mockUseMatchMedia.mockReturnValue(ref(false))
   return shallowMount(FooterActions, {
     global: {
       stubs: { UiButton: UiButtonStub },
-      provide: { [deckViewShellKey]: shell }
+      provide: { [deckViewShellKey]: shell, [mobileCardEditorKey]: mobile_editor }
     }
   })
 }
@@ -111,6 +116,13 @@ describe('mobile-footer/footer-actions', () => {
     const wrapper = mountFooterActions(shell)
     await wrapper.find('[data-testid="deck-footer-actions__stop-rearranging"]').trigger('click')
     expect(shell.toggleRearrange).toHaveBeenCalledOnce()
+  })
+
+  test('pressing the new-card button calls mobile_editor.openNewCard [obligation]', async () => {
+    const mobile_editor = makeMobileEditor()
+    const wrapper = mountFooterActions(makeShell({ is_rearranging: false }), mobile_editor)
+    await wrapper.find('[data-testid="deck-footer-actions__new-card"]').trigger('click')
+    expect(mobile_editor.openNewCard).toHaveBeenCalledOnce()
   })
 
   // ── edit menu ───────────────────────────────────────────────────────────────

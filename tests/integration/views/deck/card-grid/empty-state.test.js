@@ -3,6 +3,7 @@ import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
 import CardGridEmpty from '@/views/deck/card-grid/empty-state.vue'
 import { cardEditorKey } from '@/views/deck/composables/list-controller'
+import { mobileCardEditorKey } from '@/views/deck/mobile-editor/use-mobile-card-editor'
 
 // ── Module-level mocks ────────────────────────────────────────────────────────
 
@@ -64,12 +65,24 @@ function makeEditor({ newCard } = {}) {
   return { newCard: newCard ?? vi.fn() }
 }
 
-function mount({ editor, isCompact = false } = {}) {
-  // isCompact=true simulates w<sm matching (base skeleton size), false = md
-  matchMediaMock.mockReturnValue(ref(isCompact))
+function makeMobileEditor({ openNewCard } = {}) {
+  return { openNewCard: openNewCard ?? vi.fn() }
+}
+
+function mount({ editor, mobileEditor, isCompact = false, isMobile = false } = {}) {
+  // isCompact drives w<sm (base vs md skeleton size); isMobile drives w<md
+  // (desktop mode-stack vs mobile editor for the create button).
+  matchMediaMock.mockImplementation((token) => {
+    if (token === 'w<sm') return ref(isCompact)
+    if (token === 'w<md') return ref(isMobile)
+    return ref(false)
+  })
   return shallowMount(CardGridEmpty, {
     global: {
-      provide: { [cardEditorKey]: editor ?? makeEditor() },
+      provide: {
+        [cardEditorKey]: editor ?? makeEditor(),
+        [mobileCardEditorKey]: mobileEditor ?? makeMobileEditor()
+      },
       stubs: {
         CardGridSkeleton: CardGridSkeletonStub,
         UiButton: UiButtonStub,
@@ -140,13 +153,32 @@ describe('CardGridEmpty (card-grid/empty-state.vue)', () => {
     expect(skeleton.attributes('data-size')).toBe('base')
   })
 
-  // ── newCard wired to create button [obligation] ───────────────────────────
+  // ── create button — desktop vs mobile [obligation] ────────────────────────
 
-  test('clicking the create button calls newCard from the injected editor [obligation]', async () => {
+  test('clicking the create button calls newCard (desktop editor) at desktop width [obligation]', async () => {
     const newCard = vi.fn()
-    const wrapper = mount({ editor: makeEditor({ newCard }) })
+    const openNewCard = vi.fn()
+    const wrapper = mount({
+      isMobile: false,
+      editor: makeEditor({ newCard }),
+      mobileEditor: makeMobileEditor({ openNewCard })
+    })
     await wrapper.find('[data-testid="card-grid-empty__create-button"]').trigger('click')
     expect(newCard).toHaveBeenCalledOnce()
+    expect(openNewCard).not.toHaveBeenCalled()
+  })
+
+  test('clicking the create button calls mobile_editor.openNewCard at phone width [obligation]', async () => {
+    const newCard = vi.fn()
+    const openNewCard = vi.fn()
+    const wrapper = mount({
+      isMobile: true,
+      editor: makeEditor({ newCard }),
+      mobileEditor: makeMobileEditor({ openNewCard })
+    })
+    await wrapper.find('[data-testid="card-grid-empty__create-button"]').trigger('click')
+    expect(openNewCard).toHaveBeenCalledOnce()
+    expect(newCard).not.toHaveBeenCalled()
   })
 
   // ── heading uses i18n key [obligation] ────────────────────────────────────
