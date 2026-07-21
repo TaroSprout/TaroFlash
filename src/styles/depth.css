@@ -196,6 +196,20 @@
   --color-element-strong: var(--color-stone-800);
 }
 
+/* Depth 2 holds the depth 1 lighter-pop in light (brown-100/brown-300) — a
+ * raised surface is light enough that brown-100 reads on brown-500 too. */
+[data-depth='2'] {
+  --color-element: var(--color-brown-100);
+  --color-element-strong: var(--color-brown-300);
+  --color-element-soft: var(--color-brown-300);
+}
+[data-mode='dark'] [data-depth='2'],
+[data-mode='dark'][data-depth='2'] {
+  --color-element: var(--color-stone-800);
+  --color-element-strong: var(--color-stone-900);
+  --color-element-soft: var(--color-stone-700);
+}
+
 /* Fixed media surfaces, never depth-derived: the flashcard (white/stone-700)
  * and the avatar mat (brown-100/stone-700, tuned once for user avatars). */
 :root[data-mode='dark'] {
