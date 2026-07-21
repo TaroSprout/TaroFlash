@@ -11,17 +11,15 @@ import { usePressHold } from '@/composables/ui/press-hold'
 import {
   cardEditorKey,
   useCardItemOptionsMenu,
+  useEditorSurface,
   type CardWithClientId
 } from '@/views/deck/composables'
-import { mobileCardEditorKey } from '@/views/deck/mobile-editor/use-mobile-card-editor'
-import { useMatchMedia } from '@/composables/ui/media-query'
 
 const { actions, selection } = inject(cardEditorKey)!
 const { onSelectCard } = actions
 const { is_selecting } = selection
 
-const mobile_editor = inject(mobileCardEditorKey, null)
-const is_mobile = useMatchMedia('w<md')
+const surface = useEditorSurface()
 
 const { options: menu_options, onSelect: onMenuOptionSelect } = useCardItemOptionsMenu()
 const dropdown = useTemplateRef<InstanceType<typeof UiDropdownButton>>('dropdown')
@@ -66,11 +64,9 @@ function onCardClick() {
   }
 
   // Below md the grid is read-only — a tap opens the focused dock editor on
-  // this card instead of flipping it in place.
-  if (is_mobile.value) {
-    mobile_editor?.open_at(card.client_id)
-    return
-  }
+  // this card instead of flipping it in place. openCard handles that and
+  // returns true; at md+ it returns false and we flip in place below.
+  if (surface.openCard(card.client_id)) return
 
   // A click that ends a drag-selection of the card's text shouldn't also flip.
   // A plain click collapses the selection on mousedown, so this only catches

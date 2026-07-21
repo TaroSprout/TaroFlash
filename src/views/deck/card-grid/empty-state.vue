@@ -2,31 +2,20 @@
 import CardGridSkeleton from './skeleton.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import { computed, inject } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { type CardGridSize } from '@/views/deck/composables/view-shell'
-import { cardEditorKey } from '@/views/deck/composables'
-import { mobileCardEditorKey } from '@/views/deck/mobile-editor/use-mobile-card-editor'
+import { useEditorSurface } from '@/views/deck/composables'
 
 const { t } = useI18n()
 
-const { newCard } = inject(cardEditorKey)!
-const mobile_editor = inject(mobileCardEditorKey)!
+const surface = useEditorSurface()
 
 // On the narrowest screens the md backdrop cards get cramped — drop to base.
 const is_compact = useMatchMedia('w<sm')
 
-// Mirrors the dock's own breakpoint (mobile-footer's `breakpoint="md"`): below
-// it the mobile editor is the deck's only card-editing surface, so the CTA
-// must stage-and-open through it instead of the desktop mode-stack.
-const is_mobile = useMatchMedia('w<md')
-
 const skeleton_size = computed<CardGridSize>(() => (is_compact.value ? 'base' : 'md'))
-
-function onCreate() {
-  return is_mobile.value ? mobile_editor.openNewCard() : newCard()
-}
 </script>
 
 <template>
@@ -57,7 +46,7 @@ function onCreate() {
           data-testid="card-grid-empty__create-button"
           data-palette="brand"
           icon-left="card-add"
-          @press="onCreate"
+          @press="surface.openNewCard"
         >
           {{ t('deck-view.empty-state.create-button') }}
         </ui-button>
