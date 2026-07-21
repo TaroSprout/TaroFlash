@@ -1,5 +1,5 @@
 import { watch } from 'vue'
-import { useMatchMedia } from '@/composables/ui/media-query'
+import { useEditorSurface } from './editor-surface'
 import type { CardListController } from './list-controller'
 import type { DeckViewShell } from './view-shell'
 import type { MobileCardEditor } from '../mobile-editor/use-mobile-card-editor'
@@ -22,7 +22,9 @@ export function useEditorBreakpointSync(
   editor: CardListController,
   mobile_editor: MobileCardEditor
 ) {
-  const is_mobile = useMatchMedia('w<md')
+  // Share the deck view's one definition of the mobile-editor breakpoint so the
+  // resize reaction can't drift from the entry points that route to each surface.
+  const { is_mobile } = useEditorSurface()
 
   // Which desktop editor row currently holds DOM focus. Desktop edit tracks no
   // "current card" of its own, so focus is the only signal for which card the
