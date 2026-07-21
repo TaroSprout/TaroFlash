@@ -268,6 +268,7 @@ export function useCardListController(opts: Options) {
     newCard,
     reorderCard,
     claimFocus,
+    pending_focus_client_id,
     guardAddCards: limit_gate.guardAddCards,
     handleLimitError: limit_gate.handleLimitError,
     saving,

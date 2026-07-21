@@ -17,7 +17,8 @@ import {
   cardEditorKey,
   cardSearchKey,
   useCardListController,
-  useCardSearch
+  useCardSearch,
+  useEditorBreakpointSync
 } from '@/views/deck/composables'
 import { deckViewShellKey, useDeckViewShell } from '@/views/deck/composables/view-shell'
 import { mobileCardEditorKey, useMobileCardEditor } from './mobile-editor/use-mobile-card-editor'
@@ -57,6 +58,8 @@ provide(cardSearchKey, search)
 
 const mobile_editor = useMobileCardEditor(editor)
 provide(mobileCardEditorKey, mobile_editor)
+
+useEditorBreakpointSync(shell, editor, mobile_editor)
 
 const view_state = computed<'loading' | 'empty' | 'ready'>(() => {
   if (editor.list.all_cards.value.length > 0) return 'ready'
