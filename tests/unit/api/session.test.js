@@ -13,7 +13,8 @@ const mocks = vi.hoisted(() => ({
   refreshSession: vi.fn(),
   updateUser: vi.fn(),
   onAuthStateChange: vi.fn(),
-  resetPasswordForEmail: vi.fn()
+  resetPasswordForEmail: vi.fn(),
+  rpc: vi.fn()
 }))
 
 vi.mock('@/supabase-client', () => ({
@@ -32,7 +33,8 @@ vi.mock('@/supabase-client', () => ({
       updateUser: mocks.updateUser,
       onAuthStateChange: mocks.onAuthStateChange,
       resetPasswordForEmail: mocks.resetPasswordForEmail
-    }
+    },
+    rpc: mocks.rpc
   }
 }))
 
@@ -42,6 +44,7 @@ import {
   login,
   logout,
   signupEmail,
+  isDisplayNameAvailable,
   signInOAuth,
   linkGoogleIdentity,
   unlinkGoogleIdentity,
@@ -206,6 +209,24 @@ describe('signupEmail', () => {
   test('returns "error" when supabase.auth.signUp throws [obligation]', async () => {
     mocks.signUp.mockRejectedValueOnce(new Error('network failure'))
     await expect(signupEmail('e@x.com', 'pw')).resolves.toBe('error')
+  })
+})
+
+describe('isDisplayNameAvailable', () => {
+  test('calls the RPC with the trimmed candidate and returns its boolean', async () => {
+    mocks.rpc.mockResolvedValueOnce({ data: true, error: null })
+    await expect(isDisplayNameAvailable('  Alice  ')).resolves.toBe(true)
+    expect(mocks.rpc).toHaveBeenCalledWith('is_display_name_available', { candidate: 'Alice' })
+  })
+
+  test('returns false when the name is taken', async () => {
+    mocks.rpc.mockResolvedValueOnce({ data: false, error: null })
+    await expect(isDisplayNameAvailable('Alice')).resolves.toBe(false)
+  })
+
+  test('fails open (returns true) when the RPC errors [obligation]', async () => {
+    mocks.rpc.mockResolvedValueOnce({ data: null, error: { message: 'boom' } })
+    await expect(isDisplayNameAvailable('Alice')).resolves.toBe(true)
   })
 })
 

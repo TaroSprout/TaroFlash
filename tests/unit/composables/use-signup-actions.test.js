@@ -4,11 +4,14 @@ import { nextTick } from 'vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { mockEmitSfx, mockSignupEmail, mockSignInOAuth } = vi.hoisted(() => ({
-  mockEmitSfx: vi.fn(),
-  mockSignupEmail: vi.fn(),
-  mockSignInOAuth: vi.fn()
-}))
+const { mockEmitSfx, mockSignupEmail, mockSignInOAuth, mockIsDisplayNameAvailable } = vi.hoisted(
+  () => ({
+    mockEmitSfx: vi.fn(),
+    mockSignupEmail: vi.fn(),
+    mockSignInOAuth: vi.fn(),
+    mockIsDisplayNameAvailable: vi.fn()
+  })
+)
 
 vi.mock('@/sfx/bus', () => ({
   emitSfx: mockEmitSfx,
@@ -21,6 +24,10 @@ vi.mock('vue-i18n', () => ({
 
 vi.mock('@/stores/session', () => ({
   useSessionStore: () => ({ signupEmail: mockSignupEmail, signInOAuth: mockSignInOAuth })
+}))
+
+vi.mock('@/api/session', () => ({
+  isDisplayNameAvailable: mockIsDisplayNameAvailable
 }))
 
 import { useSignupActions } from '@/composables/auth/use-signup-actions'
@@ -41,6 +48,9 @@ beforeEach(() => {
   setActivePinia(createPinia())
   mockEmitSfx.mockReset()
   mockSignupEmail.mockReset()
+  // Default: the chosen display name is free, so submit() proceeds to signup.
+  mockIsDisplayNameAvailable.mockReset()
+  mockIsDisplayNameAvailable.mockResolvedValue(true)
 })
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
@@ -213,6 +223,60 @@ describe('useSignupActions', () => {
       fillValidFields(auth)
       await auth.submit()
       expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+    })
+  })
+
+  // ── submit() — display name taken ─────────────────────────────────────────
+
+  describe('submit() — display name taken', () => {
+    test('checks availability with the trimmed username before signing up', async () => {
+      mockSignupEmail.mockResolvedValueOnce('success')
+      const auth = useSignupActions()
+      auth.username = '  Alice  '
+      auth.email = 'alice@example.com'
+      auth.password = 'password1'
+      auth.confirm_password = 'password1'
+      await auth.submit()
+      expect(mockIsDisplayNameAvailable).toHaveBeenCalledWith('Alice')
+    })
+
+    test('returns "invalid" and never calls signup when the name is taken', async () => {
+      mockIsDisplayNameAvailable.mockResolvedValueOnce(false)
+      const auth = useSignupActions()
+      fillValidFields(auth)
+      const result = await auth.submit()
+      expect(result).toBe('invalid')
+      expect(mockSignupEmail).not.toHaveBeenCalled()
+    })
+
+    test('sets the inline username error when the name is taken', async () => {
+      mockIsDisplayNameAvailable.mockResolvedValueOnce(false)
+      const auth = useSignupActions()
+      fillValidFields(auth)
+      await auth.submit()
+      await nextTick()
+      expect(auth.errors.username).toBeDefined()
+    })
+
+    test('emits etc_woodblock_stuck sfx when the name is taken', async () => {
+      mockIsDisplayNameAvailable.mockResolvedValueOnce(false)
+      const auth = useSignupActions()
+      fillValidFields(auth)
+      await auth.submit()
+      expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+    })
+
+    test('typing in username clears the taken-name error', async () => {
+      mockIsDisplayNameAvailable.mockResolvedValueOnce(false)
+      const auth = useSignupActions()
+      fillValidFields(auth)
+      await auth.submit()
+      await nextTick()
+      expect(auth.errors.username).toBeDefined()
+
+      auth.username = 'Bobbie'
+      await nextTick()
+      expect(auth.errors.username).toBeUndefined()
     })
   })
 

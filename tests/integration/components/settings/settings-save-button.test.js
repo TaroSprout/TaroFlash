@@ -182,7 +182,7 @@ describe('settings-save-button — save behaviour [obligation]', () => {
     const { wrapper, editor } = makeWrapper({ is_dirty: true, save_result: 'duplicate-name' })
     await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
     await flushPromises()
-    expect(editor.name_error.value).toBe("That name's already taken")
+    expect(editor.name_error.value).toBe('Username taken')
   })
 
   test('shows loading state while saveMember is in flight', async () => {
