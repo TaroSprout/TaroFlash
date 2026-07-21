@@ -131,6 +131,7 @@ defineExpose({ focusEditor, hasFocusWithin })
   <div
     ref="list-item-card"
     data-testid="list-item-card"
+    :data-client-id="card.client_id"
     class="flex w-full flex-col justify-center gap-6 md:flex-row"
     @focusin="onFocusIn"
     @focusout="onFocusOut"

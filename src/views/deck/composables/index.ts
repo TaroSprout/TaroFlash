@@ -7,6 +7,7 @@ export { useCardListController, cardEditorKey, type CardListController } from '.
 export { useCardSearch, cardSearchKey, type CardSearch } from './card-search'
 export { useCardEditMenu, type CardEditMenu } from './edit-menu'
 export { useEditorSurface, type EditorSurface } from './editor-surface'
+export { useEditorBreakpointSync } from './editor-breakpoint-sync'
 export { useCardItemOptionsMenu, type CardItemOptionsMenu } from './item-options-menu'
 export { useCardActions, type CardActions } from './actions'
 export { useBulkActions } from './bulk-actions'

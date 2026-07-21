@@ -78,7 +78,7 @@ const { t } = useI18n()
       <p
         v-if="deck?.card_count !== undefined"
         data-testid="deck-thumbnail__card-count"
-        class="absolute -top-4 right-0 bg-element-strong p-1 px-2 rounded-t-3 rounded-bl-3 text-base text-center text-ink-muted opacity-0 pointer-fine:group-hover/tappable:opacity-100"
+        class="absolute -top-4 right-0 bg-element-soft p-1 px-2 rounded-t-3 rounded-bl-3 text-base text-center text-ink opacity-0 pointer-fine:group-hover/tappable:opacity-100"
       >
         {{ t('deck-thumbnail.card-count-label', deck.card_count) }}
       </p>

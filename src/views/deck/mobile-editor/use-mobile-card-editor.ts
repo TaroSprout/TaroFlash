@@ -35,6 +35,7 @@ export function useMobileCardEditor(controller: CardListController) {
   let close_modal: (() => void) | null = null
 
   const cursor_client_id = ref<string | null>(null)
+  const is_open = ref(false)
   const side = ref<CardSide>('front')
   const image_controls = shallowRef<ImageControls | null>(null)
 
@@ -56,6 +57,7 @@ export function useMobileCardEditor(controller: CardListController) {
 
     cursor_client_id.value = target
     side.value = 'front'
+    is_open.value = true
     emitSfx('snappy_button_3')
 
     if (close_modal) return
@@ -90,6 +92,7 @@ export function useMobileCardEditor(controller: CardListController) {
   // how the modal actually closed (done button, esc, background tap).
   function onClosed() {
     close_modal = null
+    is_open.value = false
     emitSfx('snappy_button_5')
   }
 
@@ -161,6 +164,7 @@ export function useMobileCardEditor(controller: CardListController) {
     cards,
     current,
     index,
+    is_open,
     has_prev,
     has_next,
     has_image,
