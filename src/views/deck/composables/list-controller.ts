@@ -1,4 +1,4 @@
-import { computed, ref, type InjectionKey, type Ref } from 'vue'
+import { computed, ref, shallowRef, type InjectionKey, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useInfiniteScroll } from '@/composables/ui/infinite-scroll'
 import { useCardsInDeckInfiniteQuery } from '@/api/cards'
@@ -71,6 +71,11 @@ export function useCardListController(opts: Options) {
   // client_id of the card last staged via `addCardAtTop`, awaiting autofocus.
   // The matching row claims it on mount (see `claimFocus`) and focuses itself.
   const pending_focus_client_id = ref<string | null>(null)
+
+  // The mounted editor list registers its `scrollToCard` here so `editCard`
+  // can reach it without a template-ref chain through the mode-stack's
+  // dynamic `<component :is>` panes (see list.vue).
+  const list_scroller = shallowRef<{ scrollToCard: (client_id: string) => void } | null>(null)
 
   const card_attributes = computed<DeckCardAttributes>(() => ({
     front: deck_query.data.value?.card_attributes?.front ?? {},
@@ -158,6 +163,28 @@ export function useCardListController(opts: Options) {
     if (pending_focus_client_id.value !== client_id) return false
     pending_focus_client_id.value = null
     return true
+  }
+
+  /** Called by the mounted editor list on mount/unmount to publish its scroller. */
+  function registerScroller(scroller: { scrollToCard: (client_id: string) => void } | null) {
+    list_scroller.value = scroller
+  }
+
+  /**
+   * The grid dropdown's "Edit" intent: switch to edit mode, then scroll the
+   * chosen card into view once the editor pane has mounted. `pending_focus_client_id`
+   * is set first so the row claims focus + plays its grow-in the moment it
+   * mounts inside the virtualizer's window (same one-shot claim `addCardAtTop`
+   * uses), then `scrollToCard` pulls it into that window even when it starts
+   * outside the current virtual-scroll range.
+   */
+  async function editCard(card_id: number) {
+    const entry = list.all_cards.value.find((c) => c.id === card_id)
+    if (!entry) return
+
+    pending_focus_client_id.value = entry.client_id
+    await opts.shell.setMode('edit')
+    list_scroller.value?.scrollToCard(entry.client_id)
   }
 
   /**
@@ -269,6 +296,8 @@ export function useCardListController(opts: Options) {
     reorderCard,
     claimFocus,
     pending_focus_client_id,
+    registerScroller,
+    editCard,
     guardAddCards: limit_gate.guardAddCards,
     handleLimitError: limit_gate.handleLimitError,
     saving,

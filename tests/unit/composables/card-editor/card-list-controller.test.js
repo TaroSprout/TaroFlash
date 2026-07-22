@@ -774,6 +774,37 @@ describe('useCardListController', () => {
     })
   })
 
+  // ── editCard — grid dropdown's "Edit" intent ─────────────────────────────────
+
+  describe('editCard', () => {
+    test('is a no-op when card_id matches nothing [obligation]', async () => {
+      const setMode = vi.fn().mockResolvedValue(undefined)
+      const ctrl = makeController([makeCard({ id: 1 })], [1], undefined, makeShell({ setMode }))
+      await ctrl.editCard(999)
+      expect(setMode).not.toHaveBeenCalled()
+    })
+
+    test('sets pending_focus_client_id, switches to edit mode, then scrolls [obligation]', async () => {
+      const setMode = vi.fn().mockResolvedValue(undefined)
+      const ctrl = makeController([makeCard({ id: 1 })], [1], undefined, makeShell({ setMode }))
+      const scroller = { scrollToCard: vi.fn() }
+      ctrl.registerScroller(scroller)
+
+      const client_id = ctrl.list.all_cards.value[0].client_id
+      await ctrl.editCard(1)
+
+      expect(setMode).toHaveBeenCalledWith('edit')
+      expect(ctrl.claimFocus(client_id)).toBe(true)
+      expect(scroller.scrollToCard).toHaveBeenCalledWith(client_id)
+    })
+
+    test('is a no-op scroll-wise when no scroller is registered [obligation]', async () => {
+      const setMode = vi.fn().mockResolvedValue(undefined)
+      const ctrl = makeController([makeCard({ id: 1 })], [1], undefined, makeShell({ setMode }))
+      await expect(ctrl.editCard(1)).resolves.toBeUndefined()
+    })
+  })
+
   // ── reorderCard — moves a persisted card to a new slot ───────────────────────
 
   describe('reorderCard', () => {

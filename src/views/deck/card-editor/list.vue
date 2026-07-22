@@ -24,7 +24,7 @@ const ROW_PITCH = 407
 const LOAD_MORE_THRESHOLD = 5
 const OVERSCAN = 3
 
-const { list, selection, reorderCard, hasNextPage, isLoading, loadNextPage } =
+const { list, selection, reorderCard, hasNextPage, isLoading, loadNextPage, registerScroller } =
   inject(cardEditorKey)!
 const { all_cards } = list
 
@@ -104,6 +104,20 @@ function onReorderStart(index: number, event: PointerEvent) {
   if (lifted_row) liftListItem(lifted_row)
 }
 
+/**
+ * Map a card's client_id to its row index and scroll it into view — works
+ * for cards outside the current virtual-scroll window (the virtualizer
+ * computes the offset from the fixed row pitch, no measurement needed).
+ * Registered with the controller on mount so `editCard` can reach it without
+ * a template-ref chain through the mode-stack's dynamic panes.
+ */
+function scrollToCard(client_id: string) {
+  const index = all_cards.value.findIndex((c) => c.client_id === client_id)
+  if (index === -1) return
+
+  virtualizer.value.scrollToIndex(index, { align: 'center' })
+}
+
 let resize_observer: ResizeObserver | undefined
 // The sticky toolbar (md+) covers the top of the list; its viewport-space
 // bottom is the inset where drag auto-scroll-up should start.
@@ -116,11 +130,13 @@ onMounted(() => {
   sticky_toolbar = document.querySelector('[data-testid="deck-view__toolbar"]')
   resize_observer = new ResizeObserver(onBodyResize)
   resize_observer.observe(document.body)
+  registerScroller({ scrollToCard })
 })
 
 onBeforeUnmount(() => {
   clearTimeout(resize_timer)
   resize_observer?.disconnect()
+  registerScroller(null)
 })
 
 watchEffect(() => {
@@ -146,6 +162,8 @@ watch(
     lifted_row = null
   }
 )
+
+defineExpose({ scrollToCard })
 </script>
 
 <template>
