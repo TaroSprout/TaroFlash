@@ -68,8 +68,9 @@ export function useCardListController(opts: Options) {
 
   const saving = ref(false)
 
-  // client_id of the card last staged via `addCardAtTop`, awaiting autofocus.
-  // The matching row claims it on mount (see `claimFocus`) and focuses itself.
+  // client_id of the card last staged through the create seam (`addFocusedCard`),
+  // awaiting autofocus + grow-in. The matching row claims it on mount (see
+  // `claimFocus`) and focuses itself.
   const pending_focus_client_id = ref<string | null>(null)
 
   const card_attributes = computed<DeckCardAttributes>(() => ({
@@ -78,10 +79,12 @@ export function useCardListController(opts: Options) {
   }))
 
   /**
-   * Stage a new temp card, gated on the deck's plan card cap. The single funnel
-   * every editor "add card" intent (toolbar, empty-state, per-row append /
-   * prepend) flows through, so the cap is enforced in one place. A capped free
-   * member gets the upgrade alert and nothing is staged.
+   * Stage a new temp card, gated on the deck's plan card cap, *without*
+   * requesting autofocus. The flag-free stage used by the mobile dock editor,
+   * which opens its own focused surface over the staged card — the desktop
+   * row's autofocus would fight it. Desktop create paths go through
+   * `addFocusedCard` instead. A capped free member gets the upgrade alert and
+   * nothing is staged.
    *
    * @param left_card_id  - If given, the new card is placed `after` this id.
    * @param right_card_id - If given (and `left_card_id` is not), `before` it.
@@ -94,31 +97,49 @@ export function useCardListController(opts: Options) {
     return list.addCard(left_card_id, right_card_id)
   }
 
-  /** Gated stage of a new temp card immediately after the card with `card_id`. */
-  function appendCard(card_id: number) {
-    return addCard(card_id)
+  /**
+   * The single create seam every desktop "add card" intent funnels through —
+   * toolbar, per-row append / prepend, and the editor's empty-state CTA. Guards
+   * the plan cap, stages the temp via `insert`, then records it as the
+   * autofocus + grow-in target so the new card lands focused and grows in
+   * regardless of which entry point triggered it. No-op past the cap.
+   *
+   * The target is assigned in the same synchronous block as `insert()`, after
+   * the sole `await` (the cap guard): the list insert queues Vue's render, which
+   * flushes before any later microtask, so assigning `pending_focus_client_id`
+   * after a *further* `await` would lose the race — the row would mount and
+   * claim focus before the target is set.
+   *
+   * @param insert - Virtual-list insert to run once the guard passes; returns
+   *   the staged temp's `client_id`.
+   * @returns The staged `client_id`, or `undefined` when the cap vetoes staging.
+   */
+  async function addFocusedCard(insert: () => string): Promise<string | undefined> {
+    if (!(await limit_gate.guardAddCards())) return
+
+    const client_id = insert()
+    pending_focus_client_id.value = client_id
+    return client_id
   }
 
-  /** Gated stage of a new temp card immediately before the card with `card_id`. */
+  /** Stage a focused new temp card immediately after the card with `card_id`. */
+  function appendCard(card_id: number) {
+    return addFocusedCard(() => list.appendCard(card_id))
+  }
+
+  /** Stage a focused new temp card immediately before the card with `card_id`. */
   function prependCard(card_id: number) {
-    return addCard(undefined, card_id)
+    return addFocusedCard(() => list.prependCard(card_id))
   }
 
   /**
-   * Stage a new card at the very top of the deck and request autofocus on it,
-   * so the toolbar's "new card" intent drops the user straight into typing.
-   * Anchors before the first persisted card; on an empty deck it appends (the
-   * lone card is still the top). No-op past the plan cap — `addCard` gates it.
+   * Stage a focused new card at the very top of the deck, so the toolbar's "new
+   * card" intent (and the editor empty-state CTA) drops the user straight into
+   * typing. Anchors before the first persisted card; on an empty deck it appends
+   * (the lone card is still the top). No-op past the plan cap.
    */
-  async function addCardAtTop() {
-    if (!(await limit_gate.guardAddCards())) return
-
-    // Stage and record the autofocus target in the same synchronous block:
-    // `list.addCardAtTop` pushes the temp and queues Vue's render, which flushes
-    // before any later microtask. Assigning `pending_focus_client_id` after an
-    // `await` here would lose the race — the row mounts and claims focus before
-    // the target is set.
-    pending_focus_client_id.value = list.addCardAtTop()
+  function addCardAtTop() {
+    return addFocusedCard(() => list.addCardAtTop())
   }
 
   /**
@@ -151,8 +172,9 @@ export function useCardListController(opts: Options) {
 
   /**
    * One-shot autofocus claim: returns true exactly once, for the card whose
-   * `client_id` was last staged by `addCardAtTop`. The matching row calls this
-   * on mount and focuses its editor; every other card gets false.
+   * `client_id` was last staged through the create seam (`addFocusedCard`). The
+   * matching row calls this on mount and focuses its editor; every other card
+   * gets false.
    */
   function claimFocus(client_id: string): boolean {
     if (pending_focus_client_id.value !== client_id) return false
