@@ -4,7 +4,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import SignupForm from './form.vue'
 import { useSignupActions } from '@/composables/auth/use-signup-actions'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useSessionStore } from '@/stores/session'
 import { useAlert } from '@/composables/alert'
 
 const { close } = defineProps<{
@@ -12,7 +12,7 @@ const { close } = defineProps<{
 }>()
 
 const { t } = useI18n()
-const router = useRouter()
+const session = useSessionStore()
 const alert = useAlert()
 
 const auth = useSignupActions()
@@ -21,8 +21,7 @@ async function onSubmit() {
   const result = await auth.submit()
 
   if (result === 'success') {
-    router.push('/dashboard')
-    close(true)
+    session.onAuthenticated()
     return
   }
 
