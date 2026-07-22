@@ -4,10 +4,10 @@ import { defineComponent, h, reactive } from 'vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { mockSubmit, mockSubmitOAuth, mockPush, mockForgotOpen } = vi.hoisted(() => ({
+const { mockSubmit, mockSubmitOAuth, mockOnAuthenticated, mockForgotOpen } = vi.hoisted(() => ({
   mockSubmit: vi.fn(),
   mockSubmitOAuth: vi.fn(),
-  mockPush: vi.fn(),
+  mockOnAuthenticated: vi.fn(),
   mockForgotOpen: vi.fn()
 }))
 
@@ -35,8 +35,8 @@ vi.mock('@/composables/auth/use-login-actions', () => ({
   useLoginActions: () => mockLoginActions
 }))
 
-vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: mockPush })
+vi.mock('@/stores/session', () => ({
+  useSessionStore: () => ({ onAuthenticated: mockOnAuthenticated })
 }))
 
 vi.mock('@/views/welcome/forgot-password/forgot-password-modal', () => ({
@@ -86,7 +86,7 @@ function mountDialog(props = {}) {
 beforeEach(() => {
   mockSubmit.mockReset()
   mockSubmitOAuth.mockReset()
-  mockPush.mockReset()
+  mockOnAuthenticated.mockReset()
   mockForgotOpen.mockReset()
   mockLoginActions.email = ''
   mockLoginActions.password = ''
@@ -102,7 +102,9 @@ describe('LoginDialog (login/dialog.vue)', () => {
 
   // ── onSubmit — success ─────────────────────────────────────────────────────
 
-  test('routes to authenticated and calls close on a successful submit', async () => {
+  // [obligation] on success the dialog delegates to session.onAuthenticated()
+  // (the single post-auth funnel) instead of pushing + calling close itself.
+  test('calls session.onAuthenticated() on a successful submit [obligation]', async () => {
     mockSubmit.mockResolvedValueOnce('success')
     const close = vi.fn()
     const wrapper = mountDialog({ close })
@@ -110,11 +112,11 @@ describe('LoginDialog (login/dialog.vue)', () => {
     await wrapper.find('[data-testid="trigger-submit"]').trigger('click')
     await flushPromises()
 
-    expect(mockPush).toHaveBeenCalledWith({ name: 'authenticated' })
-    expect(close).toHaveBeenCalledOnce()
+    expect(mockOnAuthenticated).toHaveBeenCalledOnce()
+    expect(close).not.toHaveBeenCalled()
   })
 
-  test('does not route or close on a failed submit', async () => {
+  test('does not call onAuthenticated on a failed submit [obligation]', async () => {
     mockSubmit.mockResolvedValueOnce('invalid')
     const close = vi.fn()
     const wrapper = mountDialog({ close })
@@ -122,7 +124,7 @@ describe('LoginDialog (login/dialog.vue)', () => {
     await wrapper.find('[data-testid="trigger-submit"]').trigger('click')
     await flushPromises()
 
-    expect(mockPush).not.toHaveBeenCalled()
+    expect(mockOnAuthenticated).not.toHaveBeenCalled()
     expect(close).not.toHaveBeenCalled()
   })
 

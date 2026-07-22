@@ -312,32 +312,49 @@ describe('useSessionStore', () => {
   // ── signInOAuth ────────────────────────────────────────────────────────────
 
   describe('signInOAuth', () => {
-    test('calls api signInOAuth with the provider', async () => {
-      mockSignInOAuth.mockResolvedValueOnce(undefined)
-      const store = useSessionStore()
-      await store.signInOAuth('google', { redirectTo: '/dashboard' })
-      expect(mockSignInOAuth).toHaveBeenCalledWith('google', { redirectTo: '/dashboard' })
-    })
-
-    test('redirects to dashboard after OAuth completes', async () => {
-      mockSignInOAuth.mockResolvedValueOnce(undefined)
+    test('calls api signInOAuth with only the provider [obligation]', async () => {
+      mockSignInOAuth.mockResolvedValueOnce('success')
       const store = useSessionStore()
       await store.signInOAuth('google')
+      expect(mockSignInOAuth).toHaveBeenCalledWith('google')
+    })
+
+    // [obligation] on api 'success' the store routes through the single
+    // onAuthenticated() funnel — closes modals AND navigates to dashboard.
+    test('on "success" outcome, calls onAuthenticated — closes modals and routes to dashboard [obligation]', async () => {
+      mockSignInOAuth.mockResolvedValueOnce('success')
+      const store = useSessionStore()
+      await store.signInOAuth('google')
+      expect(mockCloseAllModals).toHaveBeenCalledOnce()
       expect(mockPush).toHaveBeenCalledWith({ name: 'dashboard' })
     })
 
-    test('does NOT redirect to dashboard when OAuth throws [obligation]', async () => {
-      mockSignInOAuth.mockRejectedValueOnce(new Error('popup blocked'))
+    test('on "error" outcome, does NOT navigate or close modals [obligation]', async () => {
+      mockSignInOAuth.mockResolvedValueOnce('error')
       const store = useSessionStore()
       await store.signInOAuth('google')
       expect(mockPush).not.toHaveBeenCalledWith({ name: 'dashboard' })
+      expect(mockCloseAllModals).not.toHaveBeenCalled()
     })
 
-    test('shows the generic login-error notice when OAuth throws [obligation]', async () => {
-      mockSignInOAuth.mockRejectedValueOnce(new Error('popup blocked'))
+    test('on "error" outcome, shows the generic login-error notice [obligation]', async () => {
+      mockSignInOAuth.mockResolvedValueOnce('error')
       const store = useSessionStore()
       await store.signInOAuth('google')
       expect(mockNotice.error).toHaveBeenCalledWith('login-dialog.errors.generic')
+    })
+  })
+
+  // ── onAuthenticated ────────────────────────────────────────────────────────
+
+  describe('onAuthenticated [obligation]', () => {
+    // [obligation] single post-auth funnel: every successful sign-in path routes
+    // through this so no path can navigate without tearing down its modal.
+    test('closes all modals AND routes to dashboard [obligation]', () => {
+      const store = useSessionStore()
+      store.onAuthenticated()
+      expect(mockCloseAllModals).toHaveBeenCalledOnce()
+      expect(mockPush).toHaveBeenCalledWith({ name: 'dashboard' })
     })
   })
 
