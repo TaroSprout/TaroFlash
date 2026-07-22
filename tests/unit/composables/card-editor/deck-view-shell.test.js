@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
 import { nextTick } from 'vue'
 
 const { emitSfxMock } = vi.hoisted(() => ({ emitSfxMock: vi.fn() }))
@@ -29,6 +29,56 @@ describe('useDeckViewShell', () => {
   test('grid_size defaults to md', () => {
     const shell = useDeckViewShell()
     expect(shell.grid_size.value).toBe('md')
+  })
+
+  // ── grid_size mobile-first default (TARO-222) ──────────────────────────────
+  // The first-time default depends on viewport width via useMatchMedia('w<md').
+  // media-query.ts caches compiled queries at module scope, so each case resets
+  // modules and swaps in a width-specific matchMedia mock before importing.
+
+  describe('grid_size mobile-first default', () => {
+    let realMatchMedia
+
+    beforeEach(() => {
+      realMatchMedia = window.matchMedia
+      vi.resetModules()
+    })
+
+    afterEach(() => {
+      window.matchMedia = realMatchMedia
+    })
+
+    function mockViewport(isMobile) {
+      window.matchMedia = vi.fn(() => ({
+        matches: isMobile,
+        addEventListener: () => {},
+        removeEventListener: () => {}
+      }))
+    }
+
+    async function freshShell() {
+      const { useDeckViewShell: fresh } = await import('@/views/deck/composables/view-shell')
+      return fresh()
+    }
+
+    test('defaults to base (Dense) on mobile with no stored choice', async () => {
+      mockViewport(true)
+      const shell = await freshShell()
+      expect(shell.grid_size.value).toBe('base')
+    })
+
+    test('defaults to md on non-mobile with no stored choice', async () => {
+      mockViewport(false)
+      const shell = await freshShell()
+      expect(shell.grid_size.value).toBe('md')
+    })
+
+    test('a stored choice is not overridden on mobile', async () => {
+      localStorage.setItem('deck-grid-size', JSON.stringify('xl'))
+      mockViewport(true)
+      const shell = await freshShell()
+      expect(shell.grid_size.value).toBe('xl')
+    })
   })
 
   // ── setMode ────────────────────────────────────────────────────────────────
