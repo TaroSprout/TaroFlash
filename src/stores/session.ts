@@ -17,7 +17,6 @@ import {
   linkGoogleIdentity as supaLinkGoogleIdentity,
   unlinkGoogleIdentity as supaUnlinkGoogleIdentity,
   type SignupEmailOptions,
-  type SignupOAuthOptions,
   type SignupOutcome,
   type LoginOutcome,
   type OAuthProvider,
@@ -147,16 +146,25 @@ export const useSessionStore = defineStore('sessionStore', () => {
     return supaSignupEmail(email, password, opts)
   }
 
-  async function signInOAuth(provider: OAuthProvider, options?: SignupOAuthOptions): Promise<void> {
-    try {
-      await supaSignInOAuth(provider, options)
-    } catch (e: any) {
-      logger.error(`Error signing in with OAuth: ${e.message}`)
+  // Single funnel for a freshly established session: tear down the auth UI and
+  // land on the dashboard. Every successful sign-in path (OAuth here, email
+  // login/signup from their dialogs) routes through this, so no path can
+  // navigate without closing its modal — the gap that left the OAuth popup's
+  // parent modal open on top of the dashboard.
+  function onAuthenticated(): void {
+    closeAllModals()
+    router.push({ name: 'dashboard' })
+  }
+
+  async function signInOAuth(provider: OAuthProvider): Promise<void> {
+    const outcome = await supaSignInOAuth(provider)
+
+    if (outcome === 'error') {
       notice.error(t('login-dialog.errors.generic'))
       return
     }
 
-    router.push({ name: 'dashboard' })
+    onAuthenticated()
   }
 
   function updateEmail(email: string): Promise<UpdateEmailOutcome> {
@@ -224,6 +232,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
     handleAuthError,
     signupEmail,
     signInOAuth,
+    onAuthenticated,
     updateEmail,
     updatePassword,
     requestPasswordReset,

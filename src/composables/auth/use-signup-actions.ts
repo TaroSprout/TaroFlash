@@ -106,7 +106,7 @@ export function useSignupActions() {
 
   /** Kick off an OAuth sign-in; the store handles the redirect/popup flow. */
   function submitOAuth(provider: OAuthProvider) {
-    return session.signInOAuth(provider, { redirectTo: '/dashboard' })
+    return session.signInOAuth(provider)
   }
 
   // Typing in a field clears its own error so a user correcting one input never

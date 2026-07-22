@@ -2,11 +2,11 @@
 import LoginForm from './form.vue'
 import { useLoginActions } from '@/composables/auth/use-login-actions'
 import { useForgotPasswordModal } from '../forgot-password/forgot-password-modal'
-import { useRouter } from 'vue-router'
+import { useSessionStore } from '@/stores/session'
 
 const { close } = defineProps<{ close?: () => void }>()
 
-const router = useRouter()
+const session = useSessionStore()
 const forgotPasswordModal = useForgotPasswordModal()
 
 const auth = useLoginActions()
@@ -18,8 +18,7 @@ async function onSubmit() {
   // above the submit button — both keep the dialog open.
   if (result !== 'success') return
 
-  router.push({ name: 'authenticated' })
-  close?.()
+  session.onAuthenticated()
 }
 
 function onForgotPassword() {

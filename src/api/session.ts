@@ -15,11 +15,6 @@ export type LoginOutcome =
   | 'rate-limited'
   | 'error'
 
-export type SignupOAuthOptions = {
-  redirectTo?: string
-  skipBrowserRedirect?: boolean
-}
-
 export type OAuthProvider = 'google'
 
 // In dev, requests can come from a LAN hostname (e.g. testing on a phone) rather
@@ -314,14 +309,24 @@ async function runOAuthFlow(
   })
 }
 
-export async function signInOAuth(
-  provider: OAuthProvider,
-  options?: SignupOAuthOptions
-): Promise<void> {
-  return runOAuthFlow(
-    (opts) => supabase.auth.signInWithOAuth({ provider, options: { ...opts, ...options } }),
-    'signed-in'
-  )
+export type OAuthOutcome = 'success' | 'error'
+
+// The OAuth callback URL and popup transport are owned entirely by
+// runOAuthFlow — deliberately not caller-configurable. Letting a caller pass
+// `redirectTo` here once let a UI "land on /dashboard" intent override the
+// registered `/auth/callback` URL, which both broke popup self-close and is the
+// classic open-redirect footgun. `provider` is the only knob.
+export async function signInOAuth(provider: OAuthProvider): Promise<OAuthOutcome> {
+  try {
+    await runOAuthFlow(
+      (opts) => supabase.auth.signInWithOAuth({ provider, options: opts }),
+      'signed-in'
+    )
+    return 'success'
+  } catch (e: any) {
+    logger.error(`OAuth sign-in failed: ${e.message}`)
+    return 'error'
+  }
 }
 
 /** Links a Google identity to the currently signed-in user. Requires `enable_manual_linking`. */
