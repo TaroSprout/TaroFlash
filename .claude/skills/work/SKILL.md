@@ -1,7 +1,7 @@
 ---
 name: work
 description: Execute groomed Notion Task Board tickets. Two modes. `/work pair [ID]` works one Ready ticket interactively in this session — backend teaching on, you approve every change, tests written as part of the work — then opens a PR. `/work batch [--count N] [--p0…]` pulls up to N Queued tickets assigned to a model (Fable/Opus/Sonnet) and works them in parallel — one worktree-isolated subagent per ticket, each pinned to that ticket's model, each writing its own tests and cleaning up its worktree when done. Subagents report back to this session (the orchestrator), which organizes the branches into non-conflicting, CI-passing PRs. Both claim the ticket to In Progress first, open a PR (Review), then iterate on your review feedback via a main-workspace subagent that checks out the PR branch — never merge. The golden "no tests" rule is suspended inside `/work` — tests are always in scope. Trigger on `/work`, "work the board", "work a ticket".
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, Skill, mcp__notion__notion-query-data-sources, mcp__notion__notion-fetch, mcp__notion__notion-update-page
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, Skill, EnterWorktree, ExitWorktree, mcp__notion__notion-query-data-sources, mcp__notion__notion-fetch, mcp__notion__notion-update-page
 argument-hint: 'pair [<ID>] | batch [--count N] [--p0|--p1|--p2|--p3]'
 arguments:
   - name: pair
@@ -83,6 +83,15 @@ own git worktree. This session is the **orchestrator**: it claims the tickets, f
 subagents, then organizes the branches they hand back into clean, passing PRs. The orchestrator
 never edits ticket code itself.
 
+0. **ORCHESTRATOR WORKTREE — always.** Before anything else, the orchestrator moves into its **own**
+   worktree (`EnterWorktree`, e.g. `batch-orchestrator`) and runs the entire batch from there —
+   claims, conflict checks, PR orchestration, teardown, and the feedback loop. This keeps the
+   shared/main checkout free for the user to work in during the run. **Any side request the user
+   makes mid-run that is outside the ticket scope** (e.g. a tweak to this skill, tooling, or docs) is
+   also done on the orchestrator worktree — create branches and commit freely there; it's yours. The
+   only work that leaves the orchestrator worktree is a **feedback-loop fix**, which must land on the
+   main checkout so the user's dev server sees it (see that section for the coordination it needs).
+
 1. **SELECT**
 
    ```sql
@@ -111,6 +120,23 @@ Progress`. Drop any that another run already grabbed. Claim before dispatching s
      implement to the acceptance criteria, follow `.claude/rules/*`, **write its own tests** — new
      coverage for what it added and fixes for any tests its change broke (it does **not** invoke
      `update-tests`), and run the gate (`vp check` + `vp test`) green in its worktree.
+   - **Confine every action to its own worktree — never touch the shared checkout.** The prompt must
+     give the subagent its worktree's **absolute path** and tell it to: run `pwd` first and confirm
+     it is inside `.claude/worktrees/agent-<id>`; do **all** reads, writes, `cd`s, and git commands
+     there; and build **every file path from that worktree root** — never a bare `/…/TaroFlash/src/…`
+     or any path outside its worktree, which is the shared/main checkout a human may be editing live.
+     If it ever notices a change landed on the shared checkout, it must **stop and report it — never
+     `git checkout` / `git restore` / revert the file**, since a blind revert-to-HEAD can wipe the
+     human's uncommitted work.
+   - **Confine every action to its own worktree — never touch the shared checkout.** The prompt must
+     tell the subagent: run `pwd` first and confirm it's inside `.claude/worktrees/agent-<id>`; do
+     **all** reads, writes, `cd`s, and git commands there; and make **every edited path resolve under
+     that worktree root**. It must **never** edit a bare `/…/TaroFlash/src/…` (or any path outside its
+     worktree) — that is the shared/main checkout a human may be editing live. Pass the subagent its
+     worktree's absolute path and tell it to build file paths from that, not from the repo root. If it
+     ever notices a change landed on the shared checkout, it must **stop and report it — never
+     `git checkout`/`git restore`/revert the file**, since a blind revert-to-HEAD can wipe the human's
+     uncommitted work.
    - **No backend teaching persona** in batch.
    - It **reports back** to the orchestrator: branch name, a summary of what changed, the file
      paths it touched, and gate status (pass/fail + any unresolved failure).
@@ -190,11 +216,15 @@ user's call, exactly as at first handoff.
   both modes, implementation and every fix. Each agent writes/repairs its own tests inline; nobody
   invokes the `update-tests` skill.
 - One PR per ticket (via `prepare-pr`). Don't batch multiple tickets into a single PR.
-- In batch, the orchestrator (this session) never edits ticket code — subagents do. Initial
-  implementation happens in per-ticket **worktrees**, which the subagent **removes when done**
-  (except a stuck ticket, whose worktree is left for inspection). Post-open **fixes happen on the
-  main workspace** on the checked-out PR branch, one PR at a time, so the user's live dev server
-  reflects them.
+- In batch, the orchestrator runs from its **own worktree** (step 0) and never edits ticket code —
+  subagents do. Out-of-scope side requests during the run are done on that orchestrator worktree.
+  Initial ticket implementation happens in per-ticket **worktrees**, which the subagent **removes
+  when done** (except a stuck ticket, whose worktree is left for inspection). Post-open **fixes
+  happen on the main workspace** on the checked-out PR branch, one PR at a time, so the user's live
+  dev server reflects them.
+- **Subagents stay inside their own worktree.** Each works only under its `.claude/worktrees/agent-<id>`
+  path — never edits the shared/main checkout, and never reverts a shared-checkout file (that can
+  destroy the user's uncommitted work); it stops and reports instead.
 - Every batch PR must merge cleanly (vs `master` and vs the other batch PRs) and be CI-green before
   handoff. A conflict needing human judgment → raise it + `Blocked`; never guess a resolution.
 - Successful batch tickets leave **no worktree and no `worktree-agent-*` branch** behind — subagents
