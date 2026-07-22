@@ -109,6 +109,20 @@ describe('useAlert', () => {
         })
       )
     })
+
+    test('emits the default close audio when the modal settles [obligation]', async () => {
+      const { warn } = useAlert()
+      warn({ title: 'Are you sure?' })
+      await Promise.resolve()
+      expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
+    })
+
+    test('emits the provided closeAudio when the modal settles', async () => {
+      const { warn } = useAlert()
+      warn({ title: 'x', closeAudio: 'slide_up' })
+      await Promise.resolve()
+      expect(mockEmitSfx).toHaveBeenCalledWith('slide_up')
+    })
   })
 
   describe('info()', () => {

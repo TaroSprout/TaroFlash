@@ -124,4 +124,18 @@ describe('usePrompt — ask()', () => {
       ask({ title: 'Name it', confirmLabel: 'Create' }).response
     ).resolves.toBeUndefined()
   })
+
+  test('emits the default close audio when the modal settles [obligation]', async () => {
+    const { ask } = usePrompt()
+    ask({ title: 'Name it', confirmLabel: 'Create' })
+    await Promise.resolve()
+    expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
+  })
+
+  test('emits the provided closeAudio when the modal settles', async () => {
+    const { ask } = usePrompt()
+    ask({ title: 'Name it', confirmLabel: 'Create', closeAudio: 'slide_up' })
+    await Promise.resolve()
+    expect(mockEmitSfx).toHaveBeenCalledWith('slide_up')
+  })
 })

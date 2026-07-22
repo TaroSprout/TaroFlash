@@ -10,6 +10,7 @@ type AlertArgs = {
   cancelLabel?: string
   backdrop?: boolean
   openAudio?: SoundKey
+  closeAudio?: SoundKey
   cancelAudio?: SoundKey
   confirmAudio?: SoundKey
 }
@@ -29,17 +30,20 @@ export function useAlert() {
     const {
       backdrop,
       openAudio = 'etc_woodblock_stuck',
+      closeAudio = 'pop_up_close',
       cancelAudio = 'digi_powerdown',
       ...props
     } = args ?? {}
 
     emitSfx(openAudio)
 
-    return modal.open(alert, {
+    const result = modal.open(alert, {
       mode: 'popup',
       backdrop: backdrop ?? true,
       props: { type, cancelAudio, ...props }
     })
+    result.response.then(() => emitSfx(closeAudio))
+    return result
   }
 
   return { warn, info }

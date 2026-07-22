@@ -14,6 +14,7 @@ type PromptArgs = {
   maxLength?: number
   backdrop?: boolean
   openAudio?: SoundKey
+  closeAudio?: SoundKey
   cancelAudio?: SoundKey
   confirmAudio?: SoundKey
 }
@@ -40,17 +41,20 @@ export function usePrompt() {
     const {
       backdrop,
       openAudio = 'etc_woodblock_stuck',
+      closeAudio = 'pop_up_close',
       cancelAudio = 'digi_powerdown',
       ...props
     } = args
 
     emitSfx(openAudio)
 
-    return modal.open<string>(prompt, {
+    const result = modal.open<string>(prompt, {
       mode: 'popup',
       backdrop: backdrop ?? true,
       props: { cancelAudio, ...props }
     })
+    result.response.then(() => emitSfx(closeAudio))
+    return result
   }
 
   return { ask }
