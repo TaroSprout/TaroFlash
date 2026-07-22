@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import UiPrompt from '@/components/ui-kit/prompt.vue'
+import { MODAL_ID_KEY, request_close_handlers } from '@/composables/modal'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -24,7 +25,10 @@ vi.mock('@/composables/ui/media-query', () => ({
 
 // ── Mount helper ──────────────────────────────────────────────────────────────
 
-function makeWrapper(props = {}) {
+// The prompt renders only the box — the modal host owns the backdrop and routes
+// backdrop-click / esc through the handler the prompt registers via
+// useModalRequestClose. Provide a MODAL_ID_KEY so that registration happens.
+function makeWrapper(props = {}, { modalId = 'test-prompt' } = {}) {
   const close = vi.fn()
   const wrapper = mount(UiPrompt, {
     props: {
@@ -35,10 +39,11 @@ function makeWrapper(props = {}) {
     },
     attachTo: document.body,
     global: {
-      directives: { sfx: {} }
+      directives: { sfx: {} },
+      provide: { [MODAL_ID_KEY]: modalId }
     }
   })
-  return { wrapper, close }
+  return { wrapper, close, modalId }
 }
 
 function input(wrapper) {
@@ -61,6 +66,7 @@ function errorTooltipText() {
 
 beforeEach(() => {
   mockEmitSfx.mockClear()
+  request_close_handlers.clear()
   document.body.innerHTML = ''
 })
 
@@ -187,6 +193,27 @@ describe('UiPrompt — cancel', () => {
     await cancelButton(wrapper).trigger('click')
 
     expect(close).toHaveBeenCalledTimes(1)
+  })
+})
+
+// ── dismissal via modal machinery ─────────────────────────────────────────────
+
+describe('UiPrompt — request-close dismissal [obligation]', () => {
+  test('registers a request-close handler (backdrop click / esc) that resolves undefined, like cancel [obligation]', () => {
+    const { close, modalId } = makeWrapper()
+
+    // The modal host invokes this handler on backdrop click or esc.
+    request_close_handlers.get(modalId)()
+
+    expect(close).toHaveBeenCalledWith(undefined)
+  })
+
+  test('clicking inside the prompt box does not close it [obligation]', async () => {
+    const { wrapper, close } = makeWrapper()
+
+    await wrapper.find('[data-testid="ui-kit-prompt"]').trigger('click')
+
+    expect(close).not.toHaveBeenCalled()
   })
 })
 
