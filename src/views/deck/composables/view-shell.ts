@@ -1,5 +1,6 @@
 import { computed, ref, type InjectionKey } from 'vue'
 import { useLocalRef } from '@/composables/storage/local-ref'
+import { useMatchMedia } from '@/composables/ui/media-query'
 import { emitSfx } from '@/sfx/bus'
 
 export type DeckViewShell = ReturnType<typeof useDeckViewShell>
@@ -27,7 +28,12 @@ export const deckViewShellKey = Symbol('deckViewShell') as InjectionKey<DeckView
  */
 export function useDeckViewShell() {
   const mode = ref<CardEditorMode>('view')
-  const grid_size = useLocalRef<CardGridSize>('deck-grid-size', 'md')
+
+  // First-time default: mobile packs the densest grid (`base`); larger viewports
+  // keep the roomier `md`. Read once at init — `useLocalRef` ignores this default
+  // whenever a stored choice exists, so an explicit prior pick is preserved.
+  const is_mobile = useMatchMedia('w<md').value
+  const grid_size = useLocalRef<CardGridSize>('deck-grid-size', is_mobile ? 'base' : 'md')
   const grid_face = useLocalRef<Exclude<CardSide, 'cover'>>('deck-grid-face', 'front')
   const sort_by = ref<CardSortKey>('default')
 
