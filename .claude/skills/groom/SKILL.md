@@ -10,7 +10,7 @@ arguments:
     description: Cap the batch at N tickets (default 10). Ordered Priority → ID.
   - name: <ID>
     description: One or more numeric ticket IDs to groom specifically (overrides filters).
-lastUpdated: 2026-07-20T00:00:00Z
+lastUpdated: 2026-07-23T00:00:00Z
 ---
 
 ## What this skill does
@@ -70,6 +70,16 @@ Priority→ID and tell the user how many were left.
 Echo the batch as a compact numbered list (ID · Priority · raw name). If args fully determined
 it, proceed. If ambiguous or oversized, ask which to include before spending investigation time.
 
+### 3. READ existing descriptions
+
+Before hunching, fetch each selected ticket's **page body** (not just properties) via
+`notion-fetch` — the FETCH query in §1 pulls properties only. The user sometimes writes extra
+context, constraints, or a half-formed direction into a raw ticket's description; that is the
+single best grounding you have and must not be discarded. Read every in-scope body, note anything
+the user already said, and carry it into HUNCH, INVESTIGATE, and DRAFT — a hunch that ignores a
+description the user wrote is a wasted checkpoint. If a description already dictates the approach,
+honour it rather than re-deriving from the name alone.
+
 --- batched checkpoints below: do all tickets at each stage, then one interruption ---
 
 > **Checkpoint reporting voice (CHECKPOINT 1 & 2).** Report to the user in **product terms** —
@@ -77,11 +87,11 @@ it, proceed. If ambiguous or oversized, ask which to include before spending inv
 > control on the dashboard", "the popup after Google sign-up", "the red error under the name
 > field"). Do **not** surface filepaths, component/composable names, function names, or symbols
 > in the checkpoint report — the user thinks in screens and flows, not the file tree. Filepaths
-> still belong in the drafted ticket **body** (§ 6, agent-facing), just never in the
+> still belong in the drafted ticket **body** (§ 7, agent-facing), just never in the
 > user-facing checkpoint summaries. When a hunch is fundamentally about a location in code,
 > translate it to the screen/flow the user would recognise.
 
-### 3. HUNCH-ALL ▸ CHECKPOINT 1
+### 4. HUNCH-ALL ▸ CHECKPOINT 1
 
 For each ticket, from the raw name + app-map alone (no code reads yet), state a one-liner in
 product terms — the screen/flow it lives in and what the user sees, not the path:
@@ -90,7 +100,7 @@ product terms — the screen/flow it lives in and what the user sees, not the pa
 > Present all hunches together. **Stop and let the user course-correct the search direction**
 > before you spend time investigating. Cheap to redirect here, expensive later.
 
-### 4. INVESTIGATE
+### 5. INVESTIGATE
 
 With hunches confirmed, dig into the codebase for the whole batch — grep, read the relevant
 files, confirm where the change lives, note affected files, adjacent patterns, and any rules
@@ -98,7 +108,7 @@ files, confirm where the change lives, note affected files, adjacent patterns, a
 subagents, one per ticket or per cluster, to keep it fast. Gather: what/where, root cause (bugs),
 affected paths, constraints, open unknowns.
 
-### 5. VALIDATE-ALL ▸ CHECKPOINT 2
+### 6. VALIDATE-ALL ▸ CHECKPOINT 2
 
 Report per ticket, **in product terms** (see reporting-voice note above — screens and flows, no
 filepaths or symbol names): assumptions **confirmed** vs **wrong/surprising**, and any unknowns
@@ -108,7 +118,7 @@ what the trade-off is) rather than the implementation fork. **Stop for confirmat
 before drafting. If a ticket is still too thin to spec even after investigation, flag it as a →
 `Needs More Info` candidate here.
 
-### 6. DRAFT-ALL ▸ APPROVE-BATCH
+### 7. DRAFT-ALL ▸ APPROVE-BATCH
 
 For every ticket, draft the full body in one pass (per-Type template § below), but **present a
 compact summary** — do not dump full bodies into the review. Per ticket show:
@@ -125,11 +135,26 @@ compact summary** — do not dump full bodies into the review. Per ticket show:
   Grooming never suggests `Me`; on `Queued` especially a `Me` ticket would sit unworked forever
   (`/work batch` skips it). The user can always switch a suggestion to `Me` themselves.
 - **Proposals** — where warranted: **CREATE** a new ticket (e.g. work discovered that's out of
-  scope), or **MERGE** this ticket into another (name the survivor). Never silently.
+  scope), or **MERGE** this ticket into another (name the survivor) — especially for `Ready`, see
+  the consolidation note below. Never silently.
+
+> **Consolidate aggressively for the `Ready` (pair) lane.** A pairing ticket is worked in one
+> interactive session, and one ticket can — and should — encapsulate several related small tasks.
+> When two or more `Ready`-bound tickets share the **same surface** (same screen / flow /
+> component) or the **same root cause**, propose **MERGE**ing them into a single pairing ticket
+> rather than leaving a scatter of one-liners. Lean toward merging here — a session comfortably
+> covers a cluster, and fewer-but-richer pairing tickets beat many thin ones. Two guardrails:
+> (1) merge only by shared surface or shared root cause, **never by shared epic alone** — a ticket
+> bundling unrelated surfaces is a grab-bag that won't spec cleanly for one sitting (e.g. an
+> in-session card animation does **not** belong with an end-of-session summary layout change just
+> because both live under the same epic); (2) fold every absorbed ticket's scope into the
+> survivor's body — acceptance criteria **and** technical notes — so nothing is lost. `Queued`
+> (auto) tickets stay one-task-per-ticket: batch agents work them independently, so merging there
+> only couples unrelated work.
 
 Present as an editable batch. The user approves / edits / skips per ticket in one review.
 
-### 7. WRITE
+### 8. WRITE
 
 Apply only what was approved, via `notion-update-page` per ticket (and `notion-create-pages` for
 CREATEs):
@@ -138,11 +163,12 @@ CREATEs):
 - set `Status` = `Ready` or `Queued` (or `Needs More Info` for the thin ones).
 - **Refuse to write `Status = Queued` when `Assignee` is `Me` or empty.** Stop and ask the user
   to pick a model or send it to `Ready` — never write a self-stranding ticket.
-- **Merges:** move the merged-away ticket to `Status = Duplicate`, add a body line linking the
-  survivor, and fold any unique context into the survivor's body.
+- **Merges:** move the merged-away ticket to `Status = Duplicate`, prepend a body line pointing to
+  the survivor (the Notion MCP can't trash rows — `Duplicate` + the pointer lets the user delete it
+  in the UI), and fold its full scope (acceptance + technical notes) into the survivor's body.
   Write sequentially; if a write fails, report which and stop rather than half-applying silently.
 
-### 8. REPORT
+### 9. REPORT
 
 Concise tally: `groomed → Ready/Queued (with assignee)`, `created`, `merged → Duplicate`,
 `parked → Needs More Info`, `skipped`. One line each. No prose.
