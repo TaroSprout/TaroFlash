@@ -1,0 +1,44 @@
+#!/usr/bin/env sh
+# Archivist per-commit trigger.
+#
+# Cheap, synchronous pre-filter → detaches the real review so the commit returns
+# immediately. Must be fast and must never fail the commit. See ./README.md.
+
+HOOK_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+
+# No claude CLI → nothing to run.
+command -v claude >/dev/null 2>&1 || exit 0
+
+# Opt-out escape hatch.
+[ "${ARCHIVIST_DISABLE:-}" = "1" ] && exit 0
+
+# Skip merge commits (2+ parents) and rebase/cherry-pick storms.
+git rev-parse -q --verify HEAD^2 >/dev/null 2>&1 && exit 0
+[ -d "$REPO_ROOT/.git/rebase-merge" ] || [ -d "$REPO_ROOT/.git/rebase-apply" ] && exit 0
+
+SHA="$(git rev-parse HEAD 2>/dev/null)" || exit 0
+MSG="$(git log -1 --pretty=%B "$SHA" 2>/dev/null)"
+
+# Loop guard #1: never react to the Archivist's own commits.
+case "$MSG" in *"[archivist]"*) exit 0 ;; esac
+
+CHANGED="$(git diff-tree --no-commit-id --name-only -r "$SHA" 2>/dev/null)"
+[ -z "$CHANGED" ] && exit 0
+
+# Loop guard #2: skip commits that touch ONLY corpus/ (the Archivist's output).
+printf '%s\n' "$CHANGED" | grep -qvE '^corpus/' || exit 0
+
+# Relevance pre-filter: only wake for domain-relevant paths. This is the cheap
+# half of the "do nothing" baseline — no model call when a change obviously
+# can't cross the domain line. The agent still applies the real altitude gate.
+printf '%s\n' "$CHANGED" | grep -qE \
+  '^(supabase/schemas/|supabase/functions/|supabase/migrations/|src/api/|src/views/|src/composables/|src/stores/|src/styles/)' \
+  || exit 0
+
+# Concurrency guard: one review at a time; a later commit's run subsumes a skip.
+[ -e "$REPO_ROOT/.git/archivist.lock" ] && exit 0
+
+# Detach the heavy review; the commit returns now.
+nohup sh "$HOOK_DIR/archivist-review.sh" "$SHA" "$REPO_ROOT" >/dev/null 2>&1 &
+exit 0
