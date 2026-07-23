@@ -1,8 +1,22 @@
 import { assertEquals } from '@std/assert'
 import { makeFakeSupabase, noSleep } from '../_shared/test-utils.ts'
-import { handler } from './index.ts'
+import { assertServiceRole, handler } from './index.ts'
 
 type MediaRow = { id: number; bucket: string; path: string }
+
+// assertServiceRole only decodes the payload segment (the gateway already
+// verified the signature) — any dummy header/sig works, only the middle
+// segment's `role` claim matters.
+function jwtWithRole(role: string): string {
+  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+  const payload = btoa(JSON.stringify({ role }))
+  return `${header}.${payload}.sig`
+}
+
+function reqWithAuth(header: string | null): Request {
+  const headers: Record<string, string> = header ? { Authorization: header } : {}
+  return new Request('http://localhost', { headers })
+}
 
 Deno.test('completes with zero counts when there is nothing to clean', async () => {
   const { supabase, calls } = makeFakeSupabase({ rows: [] })
@@ -213,4 +227,57 @@ Deno.test('returns 500 when DB delete fails after storage success', async () => 
   assertEquals(res.status, 500)
   const body = await res.json()
   assertEquals(body.error, 'delete_failed')
+})
+
+// ── assertServiceRole ────────────────────────────────────────────────────────
+// verify_jwt=true means the public anon key — a validly-signed JWT with role
+// "anon" — clears the gateway and reaches the handler. This is the core
+// vulnerability the caller-auth gate closes.
+
+Deno.test('assertServiceRole rejects a bearer token with role anon (403)', async () => {
+  const res = assertServiceRole(reqWithAuth(`Bearer ${jwtWithRole('anon')}`))
+
+  if (!res) throw new Error('expected a Response, got null')
+  assertEquals(res.status, 403)
+  assertEquals(await res.json(), { error: 'forbidden' })
+})
+
+Deno.test('assertServiceRole rejects a bearer token with role authenticated (403)', async () => {
+  const res = assertServiceRole(reqWithAuth(`Bearer ${jwtWithRole('authenticated')}`))
+
+  if (!res) throw new Error('expected a Response, got null')
+  assertEquals(res.status, 403)
+  assertEquals(await res.json(), { error: 'forbidden' })
+})
+
+Deno.test('assertServiceRole allows a bearer token with role service_role (null)', () => {
+  const res = assertServiceRole(reqWithAuth(`Bearer ${jwtWithRole('service_role')}`))
+
+  assertEquals(res, null)
+})
+
+Deno.test('assertServiceRole rejects a request with no Authorization header (401)', async () => {
+  const res = assertServiceRole(reqWithAuth(null))
+
+  if (!res) throw new Error('expected a Response, got null')
+  assertEquals(res.status, 401)
+  assertEquals(await res.json(), { error: 'unauthorized' })
+})
+
+Deno.test('assertServiceRole rejects a bearer token with no payload segment (401)', async () => {
+  const res = assertServiceRole(reqWithAuth('Bearer not-a-real-jwt'))
+
+  if (!res) throw new Error('expected a Response, got null')
+  assertEquals(res.status, 401)
+  assertEquals(await res.json(), { error: 'unauthorized' })
+})
+
+Deno.test('assertServiceRole rejects a bearer token whose payload is not valid JSON (401)', async () => {
+  // Middle segment decodes as base64 but JSON.parse throws — decodeJwtPayload
+  // must swallow the throw and yield a null role, not propagate the error.
+  const res = assertServiceRole(reqWithAuth('Bearer header.bm90LWpzb24.sig'))
+
+  if (!res) throw new Error('expected a Response, got null')
+  assertEquals(res.status, 401)
+  assertEquals(await res.json(), { error: 'unauthorized' })
 })
