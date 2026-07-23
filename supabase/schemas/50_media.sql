@@ -179,9 +179,13 @@ $$;
 ALTER FUNCTION public.invoke_cleanup_media() OWNER TO postgres;
 
 
-GRANT ALL ON FUNCTION public.invoke_cleanup_media() TO anon;
-GRANT ALL ON FUNCTION public.invoke_cleanup_media() TO authenticated;
-GRANT ALL ON FUNCTION public.invoke_cleanup_media() TO service_role;
+-- Owner-only: the hourly pg_cron job runs as postgres (the owner), which
+-- always retains EXECUTE. Nobody else may trigger the sweep. Crucially this
+-- keeps the function off PostgREST's RPC surface — a grant to anon/authenticated
+-- would expose POST /rest/v1/rpc/invoke_cleanup_media, and since the function is
+-- SECURITY DEFINER it would fire the edge function with the Vault service_role
+-- key, sailing past the edge function's own caller-auth gate.
+REVOKE ALL ON FUNCTION public.invoke_cleanup_media() FROM PUBLIC;
 
 
 CREATE FUNCTION public.soft_delete_media_before_card_delete() RETURNS trigger
