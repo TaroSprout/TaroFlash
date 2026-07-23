@@ -91,13 +91,49 @@ GRANT EXECUTE ON FUNCTION public.is_display_name_available(text) TO anon;
 GRANT EXECUTE ON FUNCTION public.is_display_name_available(text) TO authenticated;
 
 
+-- Narrow, safe read across the members RLS boundary. SELECT on `members` is
+-- restricted to your own row (below), which would blank out other members'
+-- profiles anywhere the app legitimately shows them (feedback author,
+-- public-deck author). This SECURITY DEFINER helper runs as the owner so it can
+-- read any member row, but it only ever projects the public-profile fields —
+-- display_name, description, cover_config (banner/theme/avatar) — never email /
+-- stripe ids / preferences / role / plan. Invoker functions call it via LATERAL
+-- to surface author identity without exposing full rows to arbitrary direct
+-- queries.
+CREATE TYPE public.member_profile AS (
+    display_name text,
+    description text,
+    cover_config jsonb
+);
+
+
+ALTER TYPE public.member_profile OWNER TO postgres;
+
+
+CREATE FUNCTION public.member_public_profile(p_member_id uuid) RETURNS SETOF public.member_profile
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  SELECT m.display_name, m.description, m.cover_config
+  FROM public.members m
+  WHERE m.id = p_member_id;
+$$;
+
+
+ALTER FUNCTION public.member_public_profile(uuid) OWNER TO postgres;
+
+
+GRANT EXECUTE ON FUNCTION public.member_public_profile(uuid) TO anon;
+GRANT EXECUTE ON FUNCTION public.member_public_profile(uuid) TO authenticated;
+
+
 ALTER TABLE public.members ENABLE ROW LEVEL SECURITY;
 
 
 CREATE POLICY "Enable insert for authenticated users" ON public.members FOR INSERT TO authenticated WITH CHECK ((auth.uid() = id));
 
 
-CREATE POLICY "Enable read access for all users" ON public.members FOR SELECT USING (true);
+CREATE POLICY "members can read their own row" ON public.members FOR SELECT TO authenticated USING ((auth.uid() = id));
 
 
 CREATE POLICY "admins can update any member" ON public.members FOR UPDATE TO authenticated USING (public.can_manage_members()) WITH CHECK (public.can_manage_members());

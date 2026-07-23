@@ -109,7 +109,7 @@ CREATE FUNCTION public.feedback_items_with_votes() RETURNS TABLE(id bigint, crea
       WHERE v.feedback_id = f.id AND v.member_id = auth.uid()
     ) AS voted_by_me
   FROM public.feedback_items f
-  LEFT JOIN public.members m ON m.id = f.member_id
+  LEFT JOIN LATERAL public.member_public_profile(f.member_id) m ON true
 $$;
 
 

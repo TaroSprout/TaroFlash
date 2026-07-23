@@ -1,11 +1,52 @@
--- Hand-organized declarative schema (by domain). Edit freely — this file is the
--- canonical definition. Run `supabase db diff -f <name>` after editing to
--- produce the migration.
-SET check_function_bodies = false;
+drop policy "Enable read access for all users" on "public"."members";
 
-CREATE FUNCTION public.get_member_decks(p_today_start timestamp with time zone) RETURNS SETOF public.member_deck
-    LANGUAGE sql STABLE
-    AS $$
+set check_function_bodies = off;
+
+create type "public"."member_profile" as ("display_name" text, "description" text, "cover_config" jsonb);
+
+CREATE OR REPLACE FUNCTION public.member_public_profile(p_member_id uuid)
+ RETURNS SETOF public.member_profile
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT m.display_name, m.description, m.cover_config
+  FROM public.members m
+  WHERE m.id = p_member_id;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.feedback_items_with_votes()
+ RETURNS TABLE(id bigint, created_at timestamp with time zone, member_id uuid, member_display_name text, member_avatar text, title text, body text, type public.feedback_type, status public.feedback_status, visibility public.feedback_visibility, vote_count integer, voted_by_me boolean)
+ LANGUAGE sql
+ STABLE
+AS $function$
+  SELECT
+    f.id,
+    f.created_at,
+    f.member_id,
+    m.display_name AS member_display_name,
+    m.cover_config->>'avatar' AS member_avatar,
+    f.title,
+    f.body,
+    f.type,
+    f.status,
+    f.visibility,
+    (SELECT count(*)::int FROM public.feedback_votes v WHERE v.feedback_id = f.id) AS vote_count,
+    EXISTS (
+      SELECT 1 FROM public.feedback_votes v
+      WHERE v.feedback_id = f.id AND v.member_id = auth.uid()
+    ) AS voted_by_me
+  FROM public.feedback_items f
+  LEFT JOIN LATERAL public.member_public_profile(f.member_id) m ON true
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.get_member_decks(p_today_start timestamp with time zone)
+ RETURNS SETOF public.member_deck
+ LANGUAGE sql
+ STABLE
+AS $function$
   SELECT
     d.id,
     d.created_at,
@@ -131,12 +172,16 @@ CREATE FUNCTION public.get_member_decks(p_today_start timestamp with time zone) 
         )
       ) AS remaining_new
   ) AS stats;
-$$;
+$function$
+;
 
 
-ALTER FUNCTION public.get_member_decks(p_today_start timestamp with time zone) OWNER TO postgres;
+  create policy "members can read their own row"
+  on "public"."members"
+  as permissive
+  for select
+  to authenticated
+using ((auth.uid() = id));
 
 
-GRANT ALL ON FUNCTION public.get_member_decks(p_today_start timestamp with time zone) TO anon;
-GRANT ALL ON FUNCTION public.get_member_decks(p_today_start timestamp with time zone) TO authenticated;
-GRANT ALL ON FUNCTION public.get_member_decks(p_today_start timestamp with time zone) TO service_role;
+
