@@ -12,7 +12,7 @@
 
 BEGIN;
 
-SELECT plan(9);
+SELECT plan(10);
 
 -- ── Test: function returns the exact columns the FE consumes ─────────────────
 -- get_member_decks now RETURNS SETOF public.member_deck (a composite type)
@@ -137,6 +137,16 @@ SELECT is(
   (SELECT count(*) FROM public.cards_with_images WHERE id = 1100)::int,
   1,
   'Bob can still see Alice''s public deck card via cards_with_images'
+);
+
+-- Test 9: Bob sees a non-null member_display_name for Alice's public deck
+-- (101) through get_member_decks — the members SELECT RLS lockdown means
+-- get_member_decks can't read Alice's row directly anymore, so this exercises
+-- the member_public_profile() LATERAL join that backfills it.
+SELECT is(
+  (SELECT member_display_name FROM public.get_member_decks(date_trunc('day', now())) WHERE id = 101),
+  'alice_stats',
+  'get_member_decks surfaces member_display_name for another member''s public deck [obligation]'
 );
 
 
