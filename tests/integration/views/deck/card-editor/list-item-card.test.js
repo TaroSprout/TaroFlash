@@ -40,6 +40,7 @@ const mocks = vi.hoisted(() => ({
   updateCardMock: vi.fn(),
   emitSfxMock: vi.fn(),
   claimFocusMock: vi.fn(),
+  claimGrowMock: vi.fn(),
   gsapFromMock: vi.fn()
 }))
 
@@ -71,7 +72,8 @@ function makeProvide({ is_selecting = ref(false) } = {}) {
       selection: { is_selecting },
       updateCard: mocks.updateCardMock,
       card_attributes: { front: {}, back: {} },
-      claimFocus: mocks.claimFocusMock
+      claimFocus: mocks.claimFocusMock,
+      claimGrow: mocks.claimGrowMock
     }
   }
 }
@@ -114,6 +116,8 @@ beforeEach(() => {
   mocks.emitSfxMock.mockReset()
   mocks.claimFocusMock.mockReset()
   mocks.claimFocusMock.mockReturnValue(false)
+  mocks.claimGrowMock.mockReset()
+  mocks.claimGrowMock.mockReturnValue(false)
   mocks.gsapFromMock.mockReset()
   // The runner's window isn't focused, so document.hasFocus() is false and the
   // window-blur guard would swallow every focusout. Simulate a focused window.
@@ -362,18 +366,16 @@ describe('ListItemCard', () => {
     wrapper.unmount()
   })
 
-  // ── onMounted autofocus — claimFocus true branch ──────────────────────────
+  // ── onMounted grow-in — gated on claimGrow, not claimFocus ─────────────────
 
-  test('does NOT run expandListItemIn when claimFocus returns false (scroll-mounted row) [obligation]', () => {
-    mocks.claimFocusMock.mockReturnValue(false)
+  test('does NOT run expandListItemIn when claimGrow returns false (scroll-mounted row) [obligation]', () => {
+    mocks.claimGrowMock.mockReturnValue(false)
     mount({ card: { id: 99, client_id: 'c99' } })
     expect(mocks.gsapFromMock).not.toHaveBeenCalled()
   })
 
-  test('runs expandListItemIn on the root element when claimFocus returns true [obligation]', async () => {
-    mocks.claimFocusMock.mockReturnValue(true)
-    // Use mountWithFocusStubs so the front-input template ref resolves to a
-    // stub exposing focus() so focusEditor() doesn't throw.
+  test('runs expandListItemIn on the root element when claimGrow returns true (freshly-added card) [obligation]', () => {
+    mocks.claimGrowMock.mockReturnValue(true)
     const wrapper = shallowMount(ListItemCard, {
       attachTo: document.body,
       props: { card: makeCard({ id: 77, client_id: 'c77' }) },
@@ -383,6 +385,22 @@ describe('ListItemCard', () => {
       }
     })
     expect(mocks.gsapFromMock).toHaveBeenCalledWith(wrapper.element)
+    wrapper.unmount()
+  })
+
+  test('focuses without the grow-in when claimFocus is true but claimGrow is false (edit navigation) [obligation]', () => {
+    mocks.claimFocusMock.mockReturnValue(true)
+    mocks.claimGrowMock.mockReturnValue(false)
+    const wrapper = shallowMount(ListItemCard, {
+      attachTo: document.body,
+      props: { card: makeCard({ id: 55, client_id: 'c55' }) },
+      global: {
+        stubs: { FaceEditor: FaceEditorStub },
+        provide: makeProvide()
+      }
+    })
+    // Edit-navigation lands focus (claimFocus) but never animates height (no claimGrow).
+    expect(mocks.gsapFromMock).not.toHaveBeenCalled()
     wrapper.unmount()
   })
 

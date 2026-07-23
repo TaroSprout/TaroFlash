@@ -81,6 +81,14 @@ const UiDropdownButtonStub = defineComponent({
               'select',
               (props.options ?? []).find((o) => o.value === 'delete') ?? { value: 'delete' }
             )
+        }),
+        h('button', {
+          'data-testid': 'grid-item-menu-stub__edit',
+          onClick: () =>
+            emit(
+              'select',
+              (props.options ?? []).find((o) => o.value === 'edit') ?? { value: 'edit' }
+            )
         })
       ])
   }
@@ -97,6 +105,7 @@ function makeEditor({ is_selecting = false } = {}) {
       onMoveCards: vi.fn(),
       onDeleteCards: vi.fn()
     },
+    editCard: vi.fn(),
     selection: {
       is_selecting: ref(is_selecting)
     }
@@ -266,6 +275,13 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(editor.actions.onDeleteCards).toHaveBeenCalledWith(1)
   })
 
+  test('onMenuSelect: edit option routes to editCard with the card id [obligation]', async () => {
+    const editor = makeEditor({ is_selecting: false })
+    const { wrapper } = mountGridItem({ editor })
+    await wrapper.find('[data-testid="grid-item-menu-stub__edit"]').trigger('click')
+    expect(editor.editCard).toHaveBeenCalledWith(1)
+  })
+
   test('onMenuSelect: unknown value is a no-op [obligation]', async () => {
     const editor = makeEditor({ is_selecting: false })
     const { wrapper } = mountGridItem({ editor })
@@ -274,6 +290,7 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(editor.actions.onSelectCard).not.toHaveBeenCalled()
     expect(editor.actions.onMoveCards).not.toHaveBeenCalled()
     expect(editor.actions.onDeleteCards).not.toHaveBeenCalled()
+    expect(editor.editCard).not.toHaveBeenCalled()
   })
 
   // ── selection guard (non-collapsed selection) [obligation] ─────────────────

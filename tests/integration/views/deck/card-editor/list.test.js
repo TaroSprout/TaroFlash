@@ -56,7 +56,8 @@ function makeEditor({
   hasNextPage = ref(false),
   isLoading = ref(false),
   loadNextPage = vi.fn(),
-  reorderCard = vi.fn()
+  reorderCard = vi.fn(),
+  registerScroller = vi.fn()
 } = {}) {
   return {
     list: {
@@ -66,7 +67,8 @@ function makeEditor({
     reorderCard,
     hasNextPage,
     isLoading,
-    loadNextPage
+    loadNextPage,
+    registerScroller
   }
 }
 
@@ -74,7 +76,8 @@ function setupVirtualizer({ items, totalSize }) {
   const virtualizer = shallowRef({
     getVirtualItems: () => items,
     getTotalSize: () => totalSize,
-    measure: vi.fn()
+    measure: vi.fn(),
+    scrollToIndex: vi.fn()
   })
   useWindowVirtualizerMock.mockReturnValue(virtualizer)
   return virtualizer
@@ -322,6 +325,54 @@ describe('CardList (list.vue)', () => {
 
     expect(liftMock).toHaveBeenCalledWith(rowEl)
     document.body.removeChild(rowEl)
+  })
+
+  // ── scrollToCard — registered on mount, calls scrollToIndex by client_id ──
+
+  describe('scrollToCard', () => {
+    test('registers a scroller with the controller on mount', () => {
+      const cards = [{ id: 1 }, { id: 2 }]
+      setupVirtualizer({ items: makeVirtualItems([0, 1]), totalSize: 2 * ROW_PITCH })
+      const registerScroller = vi.fn()
+
+      mount({ editor: makeEditor({ cards, registerScroller }) })
+
+      expect(registerScroller).toHaveBeenCalledWith({ scrollToCard: expect.any(Function) })
+    })
+
+    test('unregisters the scroller on unmount', () => {
+      const cards = [{ id: 1 }]
+      setupVirtualizer({ items: makeVirtualItems([0]), totalSize: ROW_PITCH })
+      const registerScroller = vi.fn()
+
+      const wrapper = mount({ editor: makeEditor({ cards, registerScroller }) })
+      wrapper.unmount()
+
+      expect(registerScroller).toHaveBeenLastCalledWith(null)
+    })
+
+    test('maps client_id to its row index and calls virtualizer.scrollToIndex centered', () => {
+      const cards = [{ id: 1 }, { id: 2 }, { id: 3 }]
+      const virtualizer = setupVirtualizer({
+        items: makeVirtualItems([0]),
+        totalSize: 3 * ROW_PITCH
+      })
+
+      const wrapper = mount({ editor: makeEditor({ cards }) })
+      wrapper.vm.scrollToCard('cid-3')
+
+      expect(virtualizer.value.scrollToIndex).toHaveBeenCalledWith(2, { align: 'center' })
+    })
+
+    test('is a no-op when the client_id is not found', () => {
+      const cards = [{ id: 1 }]
+      const virtualizer = setupVirtualizer({ items: makeVirtualItems([0]), totalSize: ROW_PITCH })
+
+      const wrapper = mount({ editor: makeEditor({ cards }) })
+      wrapper.vm.scrollToCard('missing')
+
+      expect(virtualizer.value.scrollToIndex).not.toHaveBeenCalled()
+    })
   })
 
   // ── body-resize debounce → single coalesced measureScrollMargin() ────────

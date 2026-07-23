@@ -389,6 +389,25 @@ describe('useCardListController', () => {
     })
   })
 
+  // ── claimGrow — the reveal target, staged only by addCardAtTop ──────────────
+
+  describe('claimGrow', () => {
+    test('returns true once for a card staged by addCardAtTop (freshly added) [obligation]', async () => {
+      const { addCardAtTop, claimGrow, all_cards } = makeController([makeCard({ id: 100 })])
+      guardAddCardsMock.mockResolvedValue(true)
+      await addCardAtTop()
+      const staged_client_id = all_cards.value[0].client_id
+      expect(claimGrow(staged_client_id)).toBe(true)
+      // One-shot: a second claim returns false
+      expect(claimGrow(staged_client_id)).toBe(false)
+    })
+
+    test('returns false before any addCardAtTop call [obligation]', () => {
+      const { claimGrow } = makeController()
+      expect(claimGrow('some-id')).toBe(false)
+    })
+  })
+
   // ── appendCard / prependCard ───────────────────────────────────────────────
 
   describe('appendCard / prependCard', () => {
@@ -803,6 +822,49 @@ describe('useCardListController', () => {
       await ctrl.newCard()
       // setMode is still called (gate check happens inside addCardAtTop)
       expect(ctrl.list.all_cards.value).toHaveLength(0)
+    })
+  })
+
+  // ── editCard — grid dropdown's "Edit" intent ─────────────────────────────────
+
+  describe('editCard', () => {
+    test('is a no-op when card_id matches nothing [obligation]', async () => {
+      const setMode = vi.fn().mockResolvedValue(undefined)
+      const ctrl = makeController([makeCard({ id: 1 })], [1], undefined, makeShell({ setMode }))
+      await ctrl.editCard(999)
+      expect(setMode).not.toHaveBeenCalled()
+    })
+
+    test('sets pending_focus_client_id, switches to edit mode, then scrolls [obligation]', async () => {
+      const setMode = vi.fn().mockResolvedValue(undefined)
+      const ctrl = makeController([makeCard({ id: 1 })], [1], undefined, makeShell({ setMode }))
+      const scroller = { scrollToCard: vi.fn() }
+      ctrl.registerScroller(scroller)
+
+      const client_id = ctrl.list.all_cards.value[0].client_id
+      await ctrl.editCard(1)
+
+      expect(setMode).toHaveBeenCalledWith('edit')
+      expect(ctrl.claimFocus(client_id)).toBe(true)
+      expect(scroller.scrollToCard).toHaveBeenCalledWith(client_id)
+    })
+
+    test('focuses the edited card but stages no grow-in reveal (unlike addCardAtTop) [obligation]', async () => {
+      const setMode = vi.fn().mockResolvedValue(undefined)
+      const ctrl = makeController([makeCard({ id: 1 })], [1], undefined, makeShell({ setMode }))
+      ctrl.registerScroller({ scrollToCard: vi.fn() })
+
+      const client_id = ctrl.list.all_cards.value[0].client_id
+      await ctrl.editCard(1)
+
+      expect(ctrl.claimGrow(client_id)).toBe(false)
+      expect(ctrl.claimFocus(client_id)).toBe(true)
+    })
+
+    test('is a no-op scroll-wise when no scroller is registered [obligation]', async () => {
+      const setMode = vi.fn().mockResolvedValue(undefined)
+      const ctrl = makeController([makeCard({ id: 1 })], [1], undefined, makeShell({ setMode }))
+      await expect(ctrl.editCard(1)).resolves.toBeUndefined()
     })
   })
 

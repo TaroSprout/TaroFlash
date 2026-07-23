@@ -1,4 +1,4 @@
-import { computed, ref, type InjectionKey, type Ref } from 'vue'
+import { computed, ref, shallowRef, type InjectionKey, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useInfiniteScroll } from '@/composables/ui/infinite-scroll'
 import { useCardsInDeckInfiniteQuery } from '@/api/cards'
@@ -73,6 +73,16 @@ export function useCardListController(opts: Options) {
   // `claimFocus`) and focuses itself.
   const pending_focus_client_id = ref<string | null>(null)
 
+  // client_id of a freshly-added card awaiting its grow-in reveal. Set by the
+  // create seam (`addFocusedCard`) — never by `editCard`, which navigates to an
+  // existing card and must not animate its height. Claimed once on mount.
+  const pending_grow_client_id = ref<string | null>(null)
+
+  // The mounted editor list registers its `scrollToCard` here so `editCard`
+  // can reach it without a template-ref chain through the mode-stack's
+  // dynamic `<component :is>` panes (see list.vue).
+  const list_scroller = shallowRef<{ scrollToCard: (client_id: string) => void } | null>(null)
+
   const card_attributes = computed<DeckCardAttributes>(() => ({
     front: deck_query.data.value?.card_attributes?.front ?? {},
     back: deck_query.data.value?.card_attributes?.back ?? {}
@@ -119,6 +129,7 @@ export function useCardListController(opts: Options) {
 
     const client_id = insert()
     pending_focus_client_id.value = client_id
+    pending_grow_client_id.value = client_id
     return client_id
   }
 
@@ -180,6 +191,42 @@ export function useCardListController(opts: Options) {
     if (pending_focus_client_id.value !== client_id) return false
     pending_focus_client_id.value = null
     return true
+  }
+
+  /**
+   * One-shot grow-in claim: returns true exactly once, for the freshly-added
+   * card whose `client_id` was staged through the create seam (`addFocusedCard`).
+   * The matching row calls this on mount and plays its reveal. `editCard` never
+   * sets this target, so navigating to an existing card focuses it without the
+   * grow-in.
+   */
+  function claimGrow(client_id: string): boolean {
+    if (pending_grow_client_id.value !== client_id) return false
+    pending_grow_client_id.value = null
+    return true
+  }
+
+  /** Called by the mounted editor list on mount/unmount to publish its scroller. */
+  function registerScroller(scroller: { scrollToCard: (client_id: string) => void } | null) {
+    list_scroller.value = scroller
+  }
+
+  /**
+   * The grid dropdown's "Edit" intent: switch to edit mode, then scroll the
+   * chosen card into view. The scroll waits on the mode transition settling —
+   * mode-stack owns the window scroll + pane transforms while it slides, so
+   * scrolling earlier lands at the wrong offset. `scrollToCard` pulls the row
+   * into the virtualizer's window even when it starts outside the current range,
+   * and `pending_focus_client_id` lands the editor focus on it — without the
+   * grow-in reveal, which stays reserved for freshly-added cards (`claimGrow`).
+   */
+  async function editCard(card_id: number) {
+    const entry = list.all_cards.value.find((c) => c.id === card_id)
+    if (!entry) return
+
+    pending_focus_client_id.value = entry.client_id
+    await opts.shell.setMode('edit')
+    list_scroller.value?.scrollToCard(entry.client_id)
   }
 
   /**
@@ -290,7 +337,10 @@ export function useCardListController(opts: Options) {
     newCard,
     reorderCard,
     claimFocus,
+    claimGrow,
     pending_focus_client_id,
+    registerScroller,
+    editCard,
     guardAddCards: limit_gate.guardAddCards,
     handleLimitError: limit_gate.handleLimitError,
     saving,
