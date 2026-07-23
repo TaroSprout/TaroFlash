@@ -3,7 +3,7 @@ id: media
 domain: media
 status: current
 hazard: true
-related: [permissions, card-writes-via-rpc]
+related: [permissions, cards]
 updated: 2026-07-23
 ---
 
@@ -77,11 +77,11 @@ thing that ever deletes a file.
 
 - **Not access control.** Who may _read_ a file is [[permissions]]'s job, not the
   lifecycle's.
-- **Not generation.** How audio gets transcribed or images made lives in its own
-  topic.
+- **Not generation.** How audio gets transcribed into a lesson lives in its own
+  topic — [[audio-generation]].
 - **Not the SQL.** Bucket provisioning, indexes, triggers, and cron wiring are
   code detail — the reference docs cover those.
 
 ## Related
 
-[[permissions]] · [[card-writes-via-rpc]]
+[[permissions]] · [[cards]]
