@@ -430,6 +430,38 @@ describe('useCardListController', () => {
     })
   })
 
+  // ── create seam — every desktop add path requests autofocus + grow-in ────────
+
+  describe('create seam autofocus', () => {
+    test('gated appendCard flags the staged card for autofocus [obligation]', async () => {
+      const { gated_appendCard, claimFocus, all_cards } = makeController([makeCard({ id: 100 })])
+      await gated_appendCard(100)
+      const staged_client_id = all_cards.value.find((c) => c.id < 0).client_id
+      expect(claimFocus(staged_client_id)).toBe(true)
+    })
+
+    test('gated prependCard flags the staged card for autofocus [obligation]', async () => {
+      const { gated_prependCard, claimFocus, all_cards } = makeController([makeCard({ id: 100 })])
+      await gated_prependCard(100)
+      const staged_client_id = all_cards.value.find((c) => c.id < 0).client_id
+      expect(claimFocus(staged_client_id)).toBe(true)
+    })
+
+    test('addCardAtTop (empty-state / toolbar path) flags the staged card for autofocus [obligation]', async () => {
+      const { addCardAtTop, claimFocus, all_cards } = makeController()
+      await addCardAtTop()
+      const staged_client_id = all_cards.value[0].client_id
+      expect(claimFocus(staged_client_id)).toBe(true)
+    })
+
+    test('gated addCard (mobile path) does NOT flag the staged card — the dock owns focus [obligation]', async () => {
+      const { gated_addCard, claimFocus, all_cards } = makeController([makeCard({ id: 100 })])
+      await gated_addCard()
+      const staged_client_id = all_cards.value.find((c) => c.id < 0).client_id
+      expect(claimFocus(staged_client_id)).toBe(false)
+    })
+  })
+
   // ── updateCard — routing between insertCardAt (temp) and saveCard (real) ───
 
   describe('updateCard', () => {

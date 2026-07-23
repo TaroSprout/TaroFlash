@@ -346,11 +346,13 @@ describe('useSignupActions', () => {
   // ── submitOAuth ────────────────────────────────────────────────────────────
 
   describe('submitOAuth', () => {
-    test('delegates to session.signInOAuth with provider and dashboard redirect', () => {
-      mockSignInOAuth.mockResolvedValueOnce(undefined)
+    // [obligation] submitOAuth passes only the provider — the store/api own the
+    // redirect URL; a caller-supplied redirectTo was the original signup bug.
+    test('delegates to session.signInOAuth with only the provider [obligation]', () => {
+      mockSignInOAuth.mockResolvedValueOnce('success')
       const auth = useSignupActions()
       auth.submitOAuth('google')
-      expect(mockSignInOAuth).toHaveBeenCalledWith('google', { redirectTo: '/dashboard' })
+      expect(mockSignInOAuth).toHaveBeenCalledWith('google')
     })
   })
 })

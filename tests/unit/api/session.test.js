@@ -267,20 +267,38 @@ describe('signInOAuth', () => {
       expect(openSpy).not.toHaveBeenCalled()
     })
 
-    test('merges caller-provided options over defaults', async () => {
+    // [obligation] signInOAuth takes only a provider — the redirectTo is always
+    // the registered callback URL, never caller-suppliable. The original bug was
+    // signup passing redirectTo:'/dashboard', which overrode the callback URL and
+    // skipped the popup self-close path; this also closes an open-redirect hole.
+    test('always uses the registered callback redirectTo, never a caller-suppliable route [obligation]', async () => {
       global.__matchMedia.matches = true
       mocks.signInWithOAuth.mockResolvedValueOnce({ data: null, error: null })
 
-      await signInOAuth('google', { redirectTo: '/custom' })
+      await signInOAuth('google')
 
       const [arg] = mocks.signInWithOAuth.mock.calls[0]
-      expect(arg.options.redirectTo).toBe('/custom')
+      expect(arg.options.redirectTo).toBe('http://localhost:5173/auth/callback')
     })
 
-    test('throws when the redirect call errors', async () => {
+    test('signInOAuth does not accept a second argument [obligation]', async () => {
+      global.__matchMedia.matches = true
+      mocks.signInWithOAuth.mockResolvedValueOnce({ data: null, error: null })
+
+      expect(signInOAuth).toHaveLength(1)
+      await signInOAuth('google')
+    })
+
+    test('returns "error" (does not throw) when the redirect call errors [obligation]', async () => {
       global.__matchMedia.matches = true
       mocks.signInWithOAuth.mockResolvedValueOnce({ data: null, error: new Error('boom') })
-      await expect(signInOAuth('google')).rejects.toThrow('boom')
+      await expect(signInOAuth('google')).resolves.toBe('error')
+    })
+
+    test('returns "success" when the redirect call succeeds [obligation]', async () => {
+      global.__matchMedia.matches = true
+      mocks.signInWithOAuth.mockResolvedValueOnce({ data: null, error: null })
+      await expect(signInOAuth('google')).resolves.toBe('success')
     })
 
     test('clears a stale oauth-popup-pending flag left by an abandoned popup [obligation]', async () => {
@@ -371,7 +389,7 @@ describe('signInOAuth', () => {
 
       cb.get()('SIGNED_IN', { user: { id: 'u1' } })
 
-      await expect(promise).resolves.toBeUndefined()
+      await expect(promise).resolves.toBe('success')
       expect(cb.unsubscribe).toHaveBeenCalled()
     })
 
@@ -395,7 +413,7 @@ describe('signInOAuth', () => {
       expect(settled).toBe(false)
 
       cb.get()('SIGNED_IN', { user: { id: 'u1' } })
-      await expect(promise).resolves.toBeUndefined()
+      await expect(promise).resolves.toBe('success')
     })
 
     test('ignores SIGNED_IN when the session is null', async () => {
@@ -417,10 +435,12 @@ describe('signInOAuth', () => {
       expect(settled).toBe(false)
 
       cb.get()('SIGNED_IN', { user: { id: 'u1' } })
-      await expect(promise).resolves.toBeUndefined()
+      await expect(promise).resolves.toBe('success')
     })
 
-    test('rejects after the 5-minute timeout', async () => {
+    // [obligation] signInOAuth never throws — the timeout is caught internally
+    // and mapped to the 'error' outcome so callers can't misread a void promise.
+    test('resolves "error" (does not throw) after the 5-minute timeout [obligation]', async () => {
       vi.useFakeTimers()
       mocks.signInWithOAuth.mockResolvedValueOnce({
         data: { url: 'https://auth.x' },
@@ -430,12 +450,11 @@ describe('signInOAuth', () => {
       const cb = captureAuthCallback()
 
       const promise = signInOAuth('google')
-      promise.catch(() => {})
       await Promise.resolve()
 
-      vi.advanceTimersByTime(5 * 60 * 1000)
+      await vi.advanceTimersByTimeAsync(5 * 60 * 1000)
 
-      await expect(promise).rejects.toThrow('OAuth timed out')
+      await expect(promise).resolves.toBe('error')
       expect(cb.unsubscribe).toHaveBeenCalled()
     })
 
@@ -468,14 +487,14 @@ describe('signInOAuth', () => {
       expect(locationStub.href).toBe('https://auth.x')
     })
 
-    test('throws when signInWithOAuth returns an error', async () => {
+    test('resolves "error" (does not throw) when signInWithOAuth returns an error [obligation]', async () => {
       mocks.signInWithOAuth.mockResolvedValueOnce({ data: null, error: new Error('oauth fail') })
-      await expect(signInOAuth('google')).rejects.toThrow('oauth fail')
+      await expect(signInOAuth('google')).resolves.toBe('error')
     })
 
-    test('throws when signInWithOAuth returns no url', async () => {
+    test('resolves "error" (does not throw) when signInWithOAuth returns no url [obligation]', async () => {
       mocks.signInWithOAuth.mockResolvedValueOnce({ data: {}, error: null })
-      await expect(signInOAuth('google')).rejects.toThrow('No URL returned')
+      await expect(signInOAuth('google')).resolves.toBe('error')
     })
   })
 })

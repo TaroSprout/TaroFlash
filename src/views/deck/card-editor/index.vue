@@ -8,7 +8,7 @@ import { cardEditorKey } from '@/views/deck/composables'
 defineOptions({ inheritAttrs: false })
 
 const { t } = useI18n()
-const { list, addCard } = inject(cardEditorKey)!
+const { list, addCardAtTop } = inject(cardEditorKey)!
 const { all_cards } = list
 </script>
 
@@ -20,7 +20,7 @@ const { all_cards } = list
     class="text-ink-muted flex h-50 flex-col items-center justify-center gap-4"
   >
     <span>{{ t('deck-view.card-editor.list.empty') }}</span>
-    <ui-button data-palette="brand" icon-left="add" @press="addCard()">
+    <ui-button data-palette="brand" icon-left="add" @press="addCardAtTop">
       {{ t('deck-view.add-card') }}
     </ui-button>
   </div>

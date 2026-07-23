@@ -5,7 +5,7 @@ import { defineComponent, h } from 'vue'
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
 const mocks = vi.hoisted(() => ({
-  push: vi.fn(),
+  onAuthenticated: vi.fn(),
   alertWarn: vi.fn(),
   authSubmit: vi.fn(),
   authLoading: false,
@@ -13,8 +13,8 @@ const mocks = vi.hoisted(() => ({
   authErrors: {}
 }))
 
-vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: mocks.push })
+vi.mock('@/stores/session', () => ({
+  useSessionStore: () => ({ onAuthenticated: mocks.onAuthenticated })
 }))
 
 vi.mock('@/composables/alert', () => ({
@@ -83,11 +83,33 @@ const UiButtonStub = defineComponent({
 const SignupFormStub = defineComponent({
   name: 'SignupForm',
   props: ['auth'],
-  emits: ['submit'],
+  emits: [
+    'submit',
+    'update:username',
+    'update:email',
+    'update:password',
+    'update:confirm-password'
+  ],
   setup(_props, { emit }) {
     return () =>
       h('div', { 'data-testid': 'signup-form-stub' }, [
-        h('button', { 'data-testid': 'signup-form-stub__submit', onClick: () => emit('submit') })
+        h('button', { 'data-testid': 'signup-form-stub__submit', onClick: () => emit('submit') }),
+        h('button', {
+          'data-testid': 'signup-form-stub__update-username',
+          onClick: () => emit('update:username', 'newname')
+        }),
+        h('button', {
+          'data-testid': 'signup-form-stub__update-email',
+          onClick: () => emit('update:email', 'new@example.com')
+        }),
+        h('button', {
+          'data-testid': 'signup-form-stub__update-password',
+          onClick: () => emit('update:password', 'hunter22')
+        }),
+        h('button', {
+          'data-testid': 'signup-form-stub__update-confirm-password',
+          onClick: () => emit('update:confirm-password', 'hunter22')
+        })
       ])
   }
 })
@@ -115,7 +137,7 @@ function mountSignupDialog({ close = vi.fn() } = {}) {
 
 describe('SignupDialog (signup/index.vue)', () => {
   beforeEach(() => {
-    mocks.push.mockReset()
+    mocks.onAuthenticated.mockReset()
     mocks.alertWarn.mockReset()
     mocks.authSubmit.mockReset()
     mocks.authLoading = false
@@ -147,7 +169,9 @@ describe('SignupDialog (signup/index.vue)', () => {
 
   // ── onSubmit: success path ─────────────────────────────────────────────────
 
-  test('on success: pushes to /dashboard [obligation]', async () => {
+  // [obligation] on email success the dialog delegates to session.onAuthenticated()
+  // (the single post-auth funnel) instead of pushing + closing itself.
+  test('on success: calls session.onAuthenticated() [obligation]', async () => {
     mocks.authSubmit.mockResolvedValueOnce('success')
     const close = vi.fn()
     const wrapper = mountSignupDialog({ close })
@@ -158,10 +182,10 @@ describe('SignupDialog (signup/index.vue)', () => {
     await submitBtn.trigger('click')
     await flushPromises()
 
-    expect(mocks.push).toHaveBeenCalledWith('/dashboard')
+    expect(mocks.onAuthenticated).toHaveBeenCalledOnce()
   })
 
-  test('on success: calls close(true) [obligation]', async () => {
+  test('on success: does not call close() itself — onAuthenticated owns teardown [obligation]', async () => {
     mocks.authSubmit.mockResolvedValueOnce('success')
     const close = vi.fn()
     const wrapper = mountSignupDialog({ close })
@@ -171,7 +195,7 @@ describe('SignupDialog (signup/index.vue)', () => {
     await submitBtn.trigger('click')
     await flushPromises()
 
-    expect(close).toHaveBeenCalledWith(true)
+    expect(close).not.toHaveBeenCalled()
   })
 
   // ── onSubmit: error path ───────────────────────────────────────────────────
@@ -228,6 +252,36 @@ describe('SignupDialog (signup/index.vue)', () => {
     await flushPromises()
 
     expect(mocks.authSubmit).toHaveBeenCalled()
+  })
+
+  // ── v-model wiring ─────────────────────────────────────────────────────────
+
+  test('forwards "update:username" from the form to auth.username', async () => {
+    const wrapper = mountSignupDialog()
+    await expect(
+      wrapper.find('[data-testid="signup-form-stub__update-username"]').trigger('click')
+    ).resolves.not.toThrow()
+  })
+
+  test('forwards "update:email" from the form to auth.email', async () => {
+    const wrapper = mountSignupDialog()
+    await expect(
+      wrapper.find('[data-testid="signup-form-stub__update-email"]').trigger('click')
+    ).resolves.not.toThrow()
+  })
+
+  test('forwards "update:password" from the form to auth.password', async () => {
+    const wrapper = mountSignupDialog()
+    await expect(
+      wrapper.find('[data-testid="signup-form-stub__update-password"]').trigger('click')
+    ).resolves.not.toThrow()
+  })
+
+  test('forwards "update:confirm-password" from the form to auth.confirm_password', async () => {
+    const wrapper = mountSignupDialog()
+    await expect(
+      wrapper.find('[data-testid="signup-form-stub__update-confirm-password"]').trigger('click')
+    ).resolves.not.toThrow()
   })
 
   // ── Cancel button ──────────────────────────────────────────────────────────
