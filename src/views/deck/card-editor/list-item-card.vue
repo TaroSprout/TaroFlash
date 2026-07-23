@@ -28,20 +28,20 @@ const front_text = ref(card.front_text ?? '')
 const back_text = ref(card.back_text ?? '')
 const save_failed = ref(false)
 
-const { selection, updateCard, card_attributes, claimFocus } = inject(cardEditorKey)!
+const { selection, updateCard, card_attributes, claimFocus, claimGrow } = inject(cardEditorKey)!
 const { is_selecting } = selection
 
 const { flagWindowBlur, consumeWindowRefocus } = useWindowRefocusGuard()
 
-// A card staged by the toolbar's "new card" intent claims its one-shot signal
-// the moment its row mounts: land the user in the front editor ready to type,
-// and reveal the new row with a grow-in (gated here so scroll-mounted rows
-// don't animate).
+// On mount a row claims two independent one-shot signals. Focus: a card staged
+// by the toolbar's "new card" intent, or one reached via the grid's "Edit"
+// action, lands the user in the front editor. Grow-in: only a freshly-added card
+// reveals with the height animation — edit-navigation sets no grow target, so
+// scrolling to an existing card focuses it without animating its height. Both
+// claims are gated so ordinary scroll-mounted rows fire neither.
 onMounted(() => {
-  if (!claimFocus(card.client_id)) return
-
-  focusEditor()
-  if (list_item_card.value) expandListItemIn(list_item_card.value)
+  if (claimFocus(card.client_id)) focusEditor()
+  if (claimGrow(card.client_id) && list_item_card.value) expandListItemIn(list_item_card.value)
 })
 
 // Persist both sides from local state, not just the edited one: the merge base

@@ -72,6 +72,11 @@ export function useCardListController(opts: Options) {
   // The matching row claims it on mount (see `claimFocus`) and focuses itself.
   const pending_focus_client_id = ref<string | null>(null)
 
+  // client_id of a freshly-added card awaiting its grow-in reveal. Set only by
+  // `addCardAtTop` (a brand-new row) — never by `editCard`, which navigates to
+  // an existing card and must not animate its height. Claimed once on mount.
+  const pending_grow_client_id = ref<string | null>(null)
+
   // The mounted editor list registers its `scrollToCard` here so `editCard`
   // can reach it without a template-ref chain through the mode-stack's
   // dynamic `<component :is>` panes (see list.vue).
@@ -118,12 +123,14 @@ export function useCardListController(opts: Options) {
   async function addCardAtTop() {
     if (!(await limit_gate.guardAddCards())) return
 
-    // Stage and record the autofocus target in the same synchronous block:
-    // `list.addCardAtTop` pushes the temp and queues Vue's render, which flushes
-    // before any later microtask. Assigning `pending_focus_client_id` after an
-    // `await` here would lose the race — the row mounts and claims focus before
-    // the target is set.
-    pending_focus_client_id.value = list.addCardAtTop()
+    // Stage and record the autofocus + grow-in targets in the same synchronous
+    // block: `list.addCardAtTop` pushes the temp and queues Vue's render, which
+    // flushes before any later microtask. Assigning these after an `await` here
+    // would lose the race — the row mounts and claims focus before the target is
+    // set.
+    const client_id = list.addCardAtTop()
+    pending_focus_client_id.value = client_id
+    pending_grow_client_id.value = client_id
   }
 
   /**
@@ -165,6 +172,18 @@ export function useCardListController(opts: Options) {
     return true
   }
 
+  /**
+   * One-shot grow-in claim: returns true exactly once, for the freshly-added
+   * card whose `client_id` was staged by `addCardAtTop`. The matching row calls
+   * this on mount and plays its reveal. `editCard` never sets this target, so
+   * navigating to an existing card focuses it without the grow-in.
+   */
+  function claimGrow(client_id: string): boolean {
+    if (pending_grow_client_id.value !== client_id) return false
+    pending_grow_client_id.value = null
+    return true
+  }
+
   /** Called by the mounted editor list on mount/unmount to publish its scroller. */
   function registerScroller(scroller: { scrollToCard: (client_id: string) => void } | null) {
     list_scroller.value = scroller
@@ -172,11 +191,12 @@ export function useCardListController(opts: Options) {
 
   /**
    * The grid dropdown's "Edit" intent: switch to edit mode, then scroll the
-   * chosen card into view once the editor pane has mounted. `pending_focus_client_id`
-   * is set first so the row claims focus + plays its grow-in the moment it
-   * mounts inside the virtualizer's window (same one-shot claim `addCardAtTop`
-   * uses), then `scrollToCard` pulls it into that window even when it starts
-   * outside the current virtual-scroll range.
+   * chosen card into view. The scroll waits on the mode transition settling —
+   * mode-stack owns the window scroll + pane transforms while it slides, so
+   * scrolling earlier lands at the wrong offset. `scrollToCard` pulls the row
+   * into the virtualizer's window even when it starts outside the current range,
+   * and `pending_focus_client_id` lands the editor focus on it — without the
+   * grow-in reveal, which stays reserved for freshly-added cards (`claimGrow`).
    */
   async function editCard(card_id: number) {
     const entry = list.all_cards.value.find((c) => c.id === card_id)
@@ -295,6 +315,7 @@ export function useCardListController(opts: Options) {
     newCard,
     reorderCard,
     claimFocus,
+    claimGrow,
     pending_focus_client_id,
     registerScroller,
     editCard,
