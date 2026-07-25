@@ -13,6 +13,10 @@ export type ResolvedMemberPreferences = {
   }
   study: {
     show_all_ratings: boolean
+    show_rating_buttons: boolean
+    show_button_preview: boolean
+    show_card_preview: boolean
+    multi_deck_ordering: MultiDeckOrdering
   }
 }
 
@@ -26,7 +30,11 @@ export const MEMBER_PREFERENCES_DEFAULTS: ResolvedMemberPreferences = {
     hover_sounds: BUS_DEFAULTS.hover
   },
   study: {
-    show_all_ratings: true
+    show_all_ratings: false,
+    show_rating_buttons: true,
+    show_button_preview: false,
+    show_card_preview: true,
+    multi_deck_ordering: 'random'
   }
 }
 
@@ -47,7 +55,17 @@ export function withMemberPreferencesDefaults(
     },
     study: {
       show_all_ratings:
-        partial?.study?.show_all_ratings ?? MEMBER_PREFERENCES_DEFAULTS.study.show_all_ratings
+        partial?.study?.show_all_ratings ?? MEMBER_PREFERENCES_DEFAULTS.study.show_all_ratings,
+      show_rating_buttons:
+        partial?.study?.show_rating_buttons ??
+        MEMBER_PREFERENCES_DEFAULTS.study.show_rating_buttons,
+      show_button_preview:
+        partial?.study?.show_button_preview ??
+        MEMBER_PREFERENCES_DEFAULTS.study.show_button_preview,
+      show_card_preview:
+        partial?.study?.show_card_preview ?? MEMBER_PREFERENCES_DEFAULTS.study.show_card_preview,
+      multi_deck_ordering:
+        partial?.study?.multi_deck_ordering ?? MEMBER_PREFERENCES_DEFAULTS.study.multi_deck_ordering
     }
   }
 }
