@@ -7,16 +7,15 @@ import { useI18n } from 'vue-i18n'
 
 type SessionHeaderMenuProps = {
   can_edit?: boolean
-  show_all_ratings?: boolean
 }
 
-const { can_edit = false, show_all_ratings = false } = defineProps<SessionHeaderMenuProps>()
+const { can_edit = false } = defineProps<SessionHeaderMenuProps>()
 
 const emit = defineEmits<{
   (e: 'edit'): void
   (e: 'move'): void
   (e: 'delete'): void
-  (e: 'toggle-ratings'): void
+  (e: 'settings'): void
 }>()
 
 const { t } = useI18n()
@@ -41,21 +40,17 @@ const menu_options = computed<DropdownOption[]>(() => [
     disabled: !can_edit
   },
   {
-    label: t(
-      show_all_ratings
-        ? 'study-session.flashcard.menu.enable-simple-ratings'
-        : 'study-session.flashcard.menu.disable-simple-ratings'
-    ),
-    value: 'toggle-ratings',
-    icon: 'half-star'
+    label: t('study-session.flashcard.menu.settings'),
+    value: 'settings',
+    icon: 'screwdriver-wrench'
   }
 ])
 
 function onSelect(option: DropdownOption) {
-  if (option.value === 'toggle-ratings') emit('toggle-ratings')
   if (option.value === 'edit') emit('edit')
   if (option.value === 'move') emit('move')
   if (option.value === 'delete') emit('delete')
+  if (option.value === 'settings') emit('settings')
 }
 </script>
 
@@ -63,7 +58,7 @@ function onSelect(option: DropdownOption) {
   <ui-dropdown-button
     data-testid="session-header__menu"
     trigger-only
-    trigger-icon="pencil"
+    trigger-icon="horizontal-menu-circle"
     variant="ghost"
     position="bottom-end"
     :options="menu_options"
