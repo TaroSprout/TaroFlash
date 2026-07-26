@@ -118,6 +118,32 @@ describe('useNoticeStore', () => {
     })
   })
 
+  describe('panel notices are capped to one at a time', () => {
+    test('adding a new panel notice replaces the existing one', () => {
+      const store = useNoticeStore()
+      store.info('first panel', { variant: 'panel' })
+      store.error('second panel', { variant: 'panel' })
+      expect(store.panel_notices).toHaveLength(1)
+      expect(store.panel_notices[0].message).toBe('second panel')
+    })
+
+    test('adding a panel notice does not touch existing toasts', () => {
+      const store = useNoticeStore()
+      store.info('toast msg')
+      store.error('panel msg', { variant: 'panel' })
+      expect(store.toast_notices).toHaveLength(1)
+      expect(store.toast_notices[0].message).toBe('toast msg')
+      expect(store.panel_notices).toHaveLength(1)
+    })
+
+    test('toasts still stack when multiple are added', () => {
+      const store = useNoticeStore()
+      store.info('toast one')
+      store.info('toast two')
+      expect(store.toast_notices).toHaveLength(2)
+    })
+  })
+
   describe('removeNotice', () => {
     test('removes the matching notice by id', () => {
       const store = useNoticeStore()
