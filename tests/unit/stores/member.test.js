@@ -116,7 +116,11 @@ describe('useMemberStore', () => {
         hover_sounds: expect.any(Number)
       },
       study: {
-        show_all_ratings: true
+        show_all_ratings: false,
+        show_rating_buttons: true,
+        show_button_preview: false,
+        show_card_preview: true,
+        multi_deck_ordering: 'random'
       }
     })
   })
@@ -128,7 +132,11 @@ describe('useMemberStore', () => {
     const store = useMemberStore()
 
     expect(store.preferences.study).toEqual({
-      show_all_ratings: true
+      show_all_ratings: false,
+      show_rating_buttons: true,
+      show_button_preview: false,
+      show_card_preview: true,
+      multi_deck_ordering: 'random'
     })
   })
 
@@ -139,7 +147,11 @@ describe('useMemberStore', () => {
     const store = useMemberStore()
 
     expect(store.preferences.study).toEqual({
-      show_all_ratings: false
+      show_all_ratings: false,
+      show_rating_buttons: true,
+      show_button_preview: false,
+      show_card_preview: true,
+      multi_deck_ordering: 'random'
     })
     expect(store.preferences.accessibility).toEqual({ left_hand: false })
   })

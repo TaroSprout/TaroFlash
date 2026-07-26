@@ -54,7 +54,16 @@ vi.mock('@/views/study-session/composables/session-cards', () => ({
 }))
 
 vi.mock('@/views/study-session/composables/session-prefs', () => ({
-  useSessionPrefs: () => ({ show_all_ratings: ref(false), toggleRatings: vi.fn() })
+  useSessionPrefs: () => ({
+    show_all_ratings: ref(false),
+    show_rating_buttons: ref(true),
+    show_button_preview: ref(false),
+    show_card_preview: ref(true),
+    multi_deck_ordering: ref('sequential'),
+    is_default: ref(true),
+    toggleRatings: vi.fn(),
+    resetToDefaults: vi.fn()
+  })
 }))
 
 const { mockFlushDeckReviews, mockSaveReview } = vi.hoisted(() => ({

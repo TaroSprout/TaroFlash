@@ -46,50 +46,39 @@ function mountMenu(props = {}) {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('SessionHeaderMenu', () => {
-  test('renders the dropdown menu', () => {
+  test('renders the gear-trigger dropdown menu', () => {
     const wrapper = mountMenu()
     expect(wrapper.find('[data-testid="session-header__menu"]').exists()).toBe(true)
   })
 
-  test('provides exactly four options (edit, move, delete, toggle-ratings)', () => {
+  // ── options: edit, move, delete, settings — no toggle-ratings [obligation] ─
+
+  test('provides exactly four options: edit, move, delete, settings — no toggle-ratings [obligation]', () => {
     mountMenu()
     expect(capturedOptions).toHaveLength(4)
-    expect(capturedOptions.map((o) => o.value)).toEqual([
-      'edit',
-      'move',
-      'delete',
-      'toggle-ratings'
-    ])
+    expect(capturedOptions.map((o) => o.value)).toEqual(['edit', 'move', 'delete', 'settings'])
   })
 
-  // ── can_edit gates edit/move/delete [obligation] ───────────────────────────
+  // ── can_edit gates edit/move/delete only [obligation] ──────────────────────
 
   test('edit/move/delete options are disabled when can_edit is false [obligation]', () => {
     mountMenu({ can_edit: false })
-    const action_options = capturedOptions.filter((o) => o.value !== 'toggle-ratings')
+    const action_options = capturedOptions.filter((o) => o.value !== 'settings')
     expect(action_options).toHaveLength(3)
     expect(action_options.every((o) => o.disabled === true)).toBe(true)
   })
 
   test('edit/move/delete options are enabled when can_edit is true [obligation]', () => {
     mountMenu({ can_edit: true })
-    const action_options = capturedOptions.filter((o) => o.value !== 'toggle-ratings')
+    const action_options = capturedOptions.filter((o) => o.value !== 'settings')
     expect(action_options).toHaveLength(3)
     expect(action_options.every((o) => o.disabled === false)).toBe(true)
   })
 
-  // ── toggle-ratings label swaps on show_all_ratings [obligation] ───────────
-
-  test('show_all_ratings=false → toggle-ratings label offers to disable simple ratings [obligation]', () => {
-    mountMenu({ show_all_ratings: false })
-    const toggle_option = capturedOptions.find((o) => o.value === 'toggle-ratings')
-    expect(toggle_option.label).toBe('Advanced Ratings')
-  })
-
-  test('show_all_ratings=true → toggle-ratings label offers to enable simple ratings [obligation]', () => {
-    mountMenu({ show_all_ratings: true })
-    const toggle_option = capturedOptions.find((o) => o.value === 'toggle-ratings')
-    expect(toggle_option.label).toBe('Simple Ratings')
+  test('settings option carries no disabled flag regardless of can_edit [obligation]', () => {
+    mountMenu({ can_edit: false })
+    const settings_option = capturedOptions.find((o) => o.value === 'settings')
+    expect(settings_option.disabled).toBeUndefined()
   })
 
   // ── selecting each option emits the matching event [obligation] ──────────
@@ -112,9 +101,9 @@ describe('SessionHeaderMenu', () => {
     expect(wrapper.emitted('delete')).toHaveLength(1)
   })
 
-  test('selecting toggle-ratings emits "toggle-ratings" [obligation]', async () => {
+  test('selecting settings emits "settings" [obligation]', async () => {
     const wrapper = mountMenu()
-    await wrapper.find('[data-testid="dropdown-select-toggle-ratings"]').trigger('click')
-    expect(wrapper.emitted('toggle-ratings')).toHaveLength(1)
+    await wrapper.find('[data-testid="dropdown-select-settings"]').trigger('click')
+    expect(wrapper.emitted('settings')).toHaveLength(1)
   })
 })

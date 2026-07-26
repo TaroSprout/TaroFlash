@@ -1,9 +1,23 @@
-import { describe, test, expect } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { Rating } from 'ts-fsrs'
 import AdvancedRatingButtons from '@/views/study-session/session-studying/rating-buttons/advanced.vue'
 import { PrimedGradeKey } from '@/views/study-session/session-studying/card/primed-grade-context'
+
+// ── Hoisted mocks ─────────────────────────────────────────────────────────────
+
+const { show_button_preview, rating_times } = await vi.hoisted(async () => {
+  const { ref } = await import('vue')
+  return {
+    show_button_preview: ref(false),
+    rating_times: ref({ bare: {}, label: {} })
+  }
+})
+
+vi.mock('@/views/study-session/composables/session-controller', () => ({
+  useInjectedStudySessionController: () => ({ show_button_preview, rating_times })
+}))
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -16,6 +30,56 @@ function mountAdvanced({ primed_grade = null } = {}) {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('AdvancedRatingButtons', () => {
+  beforeEach(() => {
+    show_button_preview.value = false
+    rating_times.value = { bare: {}, label: {} }
+  })
+
+  // ── show_button_preview swaps icons/words for projected intervals [obligation] ─
+
+  describe('button preview [obligation]', () => {
+    test('shows the projected interval label instead of the icon-word when preview is on and ready [obligation]', () => {
+      show_button_preview.value = true
+      rating_times.value = {
+        bare: {
+          [Rating.Again]: '1d',
+          [Rating.Hard]: '2d',
+          [Rating.Good]: '3d',
+          [Rating.Easy]: '5d'
+        },
+        label: {}
+      }
+      const wrapper = mountAdvanced()
+
+      expect(wrapper.find('[data-testid="rating-buttons__again"]').text()).toBe('1d')
+    })
+
+    test('falls back to icon-word copy when preview is on but the frozen times are not ready [obligation]', () => {
+      show_button_preview.value = true
+      rating_times.value = { bare: {}, label: {} }
+      const wrapper = mountAdvanced()
+
+      expect(wrapper.find('[data-testid="rating-buttons__again"]').text()).not.toBe('')
+      expect(wrapper.find('[data-testid="rating-buttons__again"]').text()).toContain('Fail')
+    })
+
+    test('shows the icon-word copy when preview is off, even with ready times [obligation]', () => {
+      show_button_preview.value = false
+      rating_times.value = {
+        bare: {
+          [Rating.Again]: '1d',
+          [Rating.Hard]: '2d',
+          [Rating.Good]: '3d',
+          [Rating.Easy]: '5d'
+        },
+        label: {}
+      }
+      const wrapper = mountAdvanced()
+
+      expect(wrapper.find('[data-testid="rating-buttons__again"]').text()).toContain('Fail')
+    })
+  })
+
   // ── Unconditional rendering [obligation] ───────────────────────────────────
   // Single flex row: fail button (left, shrink-0) + button group (flex-1).
 

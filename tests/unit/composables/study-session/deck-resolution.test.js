@@ -26,9 +26,10 @@ function makeDeck(overrides = {}) {
 }
 
 /** Mounts a parent that provides the resolution and a child that reads it. */
-function withDecks(decks) {
+function withDecks(decks, ordering = 'sequential') {
   let result
   const decks_ref = ref(decks)
+  const ordering_ref = ref(ordering)
 
   const Child = defineComponent({
     setup() {
@@ -39,7 +40,7 @@ function withDecks(decks) {
 
   const Parent = defineComponent({
     setup() {
-      provideDeckResolution(buildDeckResolution(decks_ref))
+      provideDeckResolution(buildDeckResolution(decks_ref, ordering_ref))
     },
     render() {
       return h(Child)
@@ -49,7 +50,7 @@ function withDecks(decks) {
   const app = createApp(Parent)
   app.mount(document.createElement('div'))
 
-  return { resolution: result, decks_ref, unmount: () => app.unmount() }
+  return { resolution: result, decks_ref, ordering_ref, unmount: () => app.unmount() }
 }
 
 // ── appearanceFor ────────────────────────────────────────────────────────────
@@ -198,41 +199,101 @@ describe('covers', () => {
   })
 })
 
-// ── shuffle: merged queue shuffles iff ANY session deck opts in [obligation] ─
+// ── orderCards [obligation] ──────────────────────────────────────────────────
+// Two orthogonal axes: (1) each deck's own `shuffle` flag governs its INTERNAL
+// order, independent of (2) the cross-deck `ordering` strategy that merges the
+// per-deck slices.
 
-describe('shuffle [obligation]', () => {
-  test('false when no deck opts into shuffle', () => {
-    const { resolution } = withDecks([
-      makeDeck({ id: 1, shuffle: false }),
-      makeDeck({ id: 2, shuffle: false })
-    ])
-    expect(resolution.shuffle.value).toBe(false)
+function makeCards(deck_id, ids) {
+  return ids.map((id) => ({ id, deck_id }))
+}
+
+describe('orderCards — sequential strategy [obligation]', () => {
+  test('returns cards grouped deck-by-deck in first-seen deck order (exact concat) [obligation]', () => {
+    const { resolution } = withDecks(
+      [makeDeck({ id: 1, shuffle: false }), makeDeck({ id: 2, shuffle: false })],
+      'sequential'
+    )
+    // Server arrival order interleaves decks; first-seen order is 1 then 2.
+    const cards = [...makeCards(1, [101, 102]), ...makeCards(2, [201]), ...makeCards(1, [103])]
+
+    const ordered = resolution.orderCards(cards)
+
+    expect(ordered.map((c) => c.id)).toEqual([101, 102, 103, 201])
   })
 
-  test('true when every deck opts into shuffle', () => {
-    const { resolution } = withDecks([
-      makeDeck({ id: 1, shuffle: true }),
-      makeDeck({ id: 2, shuffle: true })
-    ])
-    expect(resolution.shuffle.value).toBe(true)
+  test('a single-deck session returns the one deck slice verbatim — strategy is moot [obligation]', () => {
+    const { resolution } = withDecks([makeDeck({ id: 1, shuffle: false })], 'sequential')
+    const cards = makeCards(1, [1, 2, 3])
+
+    expect(resolution.orderCards(cards).map((c) => c.id)).toEqual([1, 2, 3])
+  })
+})
+
+describe.each(['even_spread', 'random'])('orderCards — %s strategy [obligation]', (strategy) => {
+  test('preserves each deck internal relative order and the full card multiset (no drops/dupes) [obligation]', () => {
+    const { resolution } = withDecks(
+      [makeDeck({ id: 1, shuffle: false }), makeDeck({ id: 2, shuffle: false })],
+      strategy
+    )
+    const deck1_cards = makeCards(1, [101, 102, 103, 104])
+    const deck2_cards = makeCards(2, [201, 202])
+    const cards = [...deck1_cards, ...deck2_cards]
+
+    // Run many iterations — random-merge paths vary run to run.
+    for (let i = 0; i < 30; i++) {
+      const ordered = resolution.orderCards(cards)
+
+      // Full multiset, no drops/dupes.
+      expect(ordered).toHaveLength(cards.length)
+      expect(new Set(ordered.map((c) => c.id))).toEqual(new Set(cards.map((c) => c.id)))
+
+      // Each deck's own relative order is preserved.
+      const deck1_order = ordered.filter((c) => c.deck_id === 1).map((c) => c.id)
+      const deck2_order = ordered.filter((c) => c.deck_id === 2).map((c) => c.id)
+      expect(deck1_order).toEqual([101, 102, 103, 104])
+      expect(deck2_order).toEqual([201, 202])
+    }
   })
 
-  test('true when only ONE of several decks opts into shuffle [obligation]', () => {
-    const { resolution } = withDecks([
-      makeDeck({ id: 1, shuffle: false }),
-      makeDeck({ id: 2, shuffle: true }),
-      makeDeck({ id: 3, shuffle: false })
-    ])
-    expect(resolution.shuffle.value).toBe(true)
+  test('a single-deck session returns the one deck slice verbatim — strategy is moot [obligation]', () => {
+    const { resolution } = withDecks([makeDeck({ id: 1, shuffle: false })], strategy)
+    const cards = makeCards(1, [1, 2, 3])
+
+    expect(resolution.orderCards(cards).map((c) => c.id)).toEqual([1, 2, 3])
+  })
+})
+
+describe('orderCards — per-deck shuffle flag governs internal order independently [obligation]', () => {
+  test('shuffle=false keeps server order for that deck even under the "random" cross-deck strategy [obligation]', () => {
+    const { resolution } = withDecks(
+      [makeDeck({ id: 1, shuffle: false }), makeDeck({ id: 2, shuffle: false })],
+      'random'
+    )
+    const deck1_cards = makeCards(1, [101, 102, 103, 104, 105])
+    const deck2_cards = makeCards(2, [201, 202])
+    const cards = [...deck1_cards, ...deck2_cards]
+
+    for (let i = 0; i < 30; i++) {
+      const ordered = resolution.orderCards(cards)
+      const deck1_order = ordered.filter((c) => c.deck_id === 1).map((c) => c.id)
+      expect(deck1_order).toEqual([101, 102, 103, 104, 105])
+    }
   })
 
-  test('reacts to the decks list changing after the initial resolve', () => {
-    const { resolution, decks_ref } = withDecks([makeDeck({ id: 1, shuffle: false })])
-    expect(resolution.shuffle.value).toBe(false)
+  test('shuffle=true reorders a deck internal order, but preserves its full multiset [obligation]', () => {
+    const { resolution } = withDecks([makeDeck({ id: 1, shuffle: true })], 'sequential')
+    const cards = makeCards(1, [1, 2, 3, 4, 5, 6, 7, 8])
 
-    decks_ref.value = [makeDeck({ id: 1, shuffle: true })]
+    const orders = new Set()
+    for (let i = 0; i < 30; i++) {
+      const ordered = resolution.orderCards(cards)
+      expect(new Set(ordered.map((c) => c.id))).toEqual(new Set(cards.map((c) => c.id)))
+      orders.add(ordered.map((c) => c.id).join(','))
+    }
 
-    expect(resolution.shuffle.value).toBe(true)
+    // Fisher-Yates over 8 items across 30 runs should produce more than one order.
+    expect(orders.size).toBeGreaterThan(1)
   })
 })
 

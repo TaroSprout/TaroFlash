@@ -90,7 +90,7 @@ describe('sessionPaneEnter', () => {
 
   test('invokes onStart callback when the tween begins [obligation]', () => {
     const onStart = vi.fn()
-    sessionPaneEnter(el, vi.fn(), onStart)
+    sessionPaneEnter(el, vi.fn(), { onStart })
     // onStart is not called until GSAP fires it
     expect(onStart).not.toHaveBeenCalled()
     const [, , to] = mockFromTo.mock.calls[0]
@@ -109,7 +109,7 @@ describe('sessionPaneEnter', () => {
 
   test('onStart is passed through to gsap.fromTo options', () => {
     const onStart = vi.fn()
-    sessionPaneEnter(el, vi.fn(), onStart)
+    sessionPaneEnter(el, vi.fn(), { onStart })
     const [, , to] = mockFromTo.mock.calls[0]
     expect(to.onStart).toBe(onStart)
   })
