@@ -58,7 +58,7 @@ function onSelect(option: DropdownOption) {
   <ui-dropdown-button
     data-testid="session-header__menu"
     trigger-only
-    trigger-icon="horizontal-menu-circle"
+    trigger-icon="hammer"
     variant="ghost"
     position="bottom-end"
     :options="menu_options"
