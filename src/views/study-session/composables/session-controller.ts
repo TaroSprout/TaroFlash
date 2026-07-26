@@ -46,13 +46,16 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
   const persisted_session = usePersistedSession()
   const flushDeckReviews = useFlushDeckReviews()
 
-  const resolution = buildDeckResolution(() => sessionDecks.value)
+  const resolution = buildDeckResolution(
+    () => sessionDecks.value,
+    () => multi_deck_ordering.value
+  )
   provideDeckResolution(resolution)
 
   const engine = useSessionEngine({
     schedulerFor: resolution.schedulerFor,
     startingSideFor: resolution.startingSideFor,
-    shuffle: () => resolution.shuffle.value,
+    orderCards: resolution.orderCards,
     onChange: persist
   })
 
