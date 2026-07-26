@@ -18,7 +18,7 @@ const { DEFAULT_STUDY, mockUpsertMember, mockMemberStore } = await vi.hoisted(as
   }
   return {
     DEFAULT_STUDY,
-    mockUpsertMember: { mutate: vi.fn() },
+    mockUpsertMember: { mutate: vi.fn(), mutateAsync: vi.fn(() => Promise.resolve()) },
     mockMemberStore: reactive({
       id: 'member-1',
       preferences: { study: { ...DEFAULT_STUDY } }
@@ -27,6 +27,13 @@ const { DEFAULT_STUDY, mockUpsertMember, mockMemberStore } = await vi.hoisted(as
 })
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
+const { mockNotice } = vi.hoisted(() => ({ mockNotice: { error: vi.fn() } }))
+
+vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (key) => key }) }))
+
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => mockNotice
+}))
 
 vi.mock('@/stores/member', () => ({
   useMemberStore: () => mockMemberStore
@@ -55,7 +62,9 @@ function runPersistTimer() {
 describe('useSessionPrefs', () => {
   beforeEach(() => {
     vi.useFakeTimers()
-    mockUpsertMember.mutate.mockClear()
+    mockUpsertMember.mutateAsync.mockClear()
+    mockUpsertMember.mutateAsync.mockImplementation(() => Promise.resolve())
+    mockNotice.error.mockClear()
     mockEmitSfx.mockClear()
     mockMemberStore.id = 'member-1'
     mockMemberStore.preferences = { study: { ...DEFAULT_STUDY } }
@@ -128,7 +137,7 @@ describe('useSessionPrefs', () => {
     runPersistTimer()
     await Promise.resolve()
 
-    expect(mockUpsertMember.mutate).not.toHaveBeenCalled()
+    expect(mockUpsertMember.mutateAsync).not.toHaveBeenCalled()
   })
 
   // ── A user edit persists the WHOLE study blob, debounced [obligation] ─────
@@ -139,7 +148,7 @@ describe('useSessionPrefs', () => {
     prefs.show_card_preview.value = false
     runPersistTimer()
 
-    expect(mockUpsertMember.mutate).toHaveBeenCalledWith({
+    expect(mockUpsertMember.mutateAsync).toHaveBeenCalledWith({
       id: 'member-1',
       preferences: {
         study: {
@@ -164,7 +173,7 @@ describe('useSessionPrefs', () => {
     prefs.multi_deck_ordering.value = 'even_spread'
     runPersistTimer()
 
-    expect(mockUpsertMember.mutate).toHaveBeenCalledWith({
+    expect(mockUpsertMember.mutateAsync).toHaveBeenCalledWith({
       id: 'member-1',
       preferences: {
         audio: { muted: true, interface_sounds: 3, hover_sounds: 2 },
@@ -181,7 +190,7 @@ describe('useSessionPrefs', () => {
     prefs.show_rating_buttons.value = false
     runPersistTimer()
 
-    expect(mockUpsertMember.mutate).toHaveBeenCalledTimes(1)
+    expect(mockUpsertMember.mutateAsync).toHaveBeenCalledTimes(1)
   })
 
   test('is a no-op upsert when the member store has no id', () => {
@@ -191,7 +200,30 @@ describe('useSessionPrefs', () => {
     prefs.show_all_ratings.value = true
     runPersistTimer()
 
-    expect(mockUpsertMember.mutate).not.toHaveBeenCalled()
+    expect(mockUpsertMember.mutateAsync).not.toHaveBeenCalled()
+  })
+
+  test('toasts an error when the save fails, keeping the local value applied [obligation]', async () => {
+    mockUpsertMember.mutateAsync.mockRejectedValueOnce(new Error('network down'))
+    const prefs = useSessionPrefs()
+
+    prefs.show_card_preview.value = false
+    await vi.advanceTimersByTimeAsync(PERSIST_DELAY)
+
+    expect(mockNotice.error).toHaveBeenCalledWith('study-session.settings-save-error', {
+      subMessage: 'study-session.settings-save-error-sub'
+    })
+    // The local value stays applied even though the write didn't persist.
+    expect(prefs.show_card_preview.value).toBe(false)
+  })
+
+  test('does not toast when the save succeeds [obligation]', async () => {
+    const prefs = useSessionPrefs()
+
+    prefs.show_card_preview.value = false
+    await vi.advanceTimersByTimeAsync(PERSIST_DELAY)
+
+    expect(mockNotice.error).not.toHaveBeenCalled()
   })
 
   // ── toggleRatings ──────────────────────────────────────────────────────────
@@ -216,7 +248,7 @@ describe('useSessionPrefs', () => {
     prefs.toggleRatings()
     runPersistTimer()
 
-    expect(mockUpsertMember.mutate).toHaveBeenCalledWith({
+    expect(mockUpsertMember.mutateAsync).toHaveBeenCalledWith({
       id: 'member-1',
       preferences: { study: { ...DEFAULT_STUDY, show_all_ratings: true } }
     })
@@ -263,7 +295,7 @@ describe('useSessionPrefs', () => {
     prefs.resetToDefaults()
     runPersistTimer()
 
-    expect(mockUpsertMember.mutate).toHaveBeenCalledWith({
+    expect(mockUpsertMember.mutateAsync).toHaveBeenCalledWith({
       id: 'member-1',
       preferences: { study: { ...DEFAULT_STUDY } }
     })
