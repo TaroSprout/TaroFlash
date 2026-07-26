@@ -12,7 +12,8 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-const { display_side, show_all_ratings, loading } = useInjectedStudySessionController()
+const { display_side, show_all_ratings, show_rating_buttons, loading } =
+  useInjectedStudySessionController()
 </script>
 
 <template>
@@ -31,8 +32,14 @@ const { display_side, show_all_ratings, loading } = useInjectedStudySessionContr
       {{ t('study.flashcard.start-button') }}
     </ui-button>
 
-    <advanced-rating-buttons v-else-if="show_all_ratings" @rated="emit('rated', $event)" />
+    <div
+      v-else
+      data-testid="rating-buttons__group"
+      :class="{ 'invisible pointer-events-none': !show_rating_buttons }"
+    >
+      <advanced-rating-buttons v-if="show_all_ratings" @rated="emit('rated', $event)" />
 
-    <simple-rating-buttons v-else @rated="emit('rated', $event)" />
+      <simple-rating-buttons v-else @rated="emit('rated', $event)" />
+    </div>
   </div>
 </template>
