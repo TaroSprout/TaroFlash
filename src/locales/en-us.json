@@ -406,7 +406,7 @@
   "study-session.settings.ratings-mode.description": "Pick how finely you grade a card — a quick pass/fail, or the full Fail · Tough · Good · Easy scale.",
   "study-session.settings.ratings-mode.simple": "Simple",
   "study-session.settings.ratings-mode.advanced": "Advanced",
-  "study-session.settings.rating-buttons.label": "Rating buttons",
+  "study-session.settings.rating-buttons.label": "Show rating buttons",
   "study-session.settings.rating-buttons.description": "Show the rating buttons below the card, or hide them and rate by swiping alone.",
   "study-session.settings.button-preview.label": "Show intervals on buttons",
   "study-session.settings.button-preview.description": "Show each button's projected next-review time — like \"10m\" or \"1d\" — instead of its icon.",
