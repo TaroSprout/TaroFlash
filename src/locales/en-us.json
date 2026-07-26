@@ -44,6 +44,8 @@
   "session.expired-error-action": "Got It",
   "member.load-error": "Couldn't load your account",
   "member.load-error-sub": "Something went wrong loading your profile.",
+  "member.account-deleted": "This account no longer exists",
+  "member.account-deleted-sub": "Your account was deleted, so we've signed you out.",
   "login-dialog.forgot-password-link": "Forgot password?",
   "forgot-password-modal.heading": "Reset Password",
   "forgot-password-modal.instructions": "Enter your email and we'll send you a link to reset your password.",

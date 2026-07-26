@@ -16,6 +16,7 @@ const {
   mockLoad,
   mockStartLoading,
   mockStopLoading,
+  mockForceLogout,
   mockSetup,
   mockInstallAudioLifecycle,
   mockInstallSafeAreaPadding,
@@ -24,6 +25,7 @@ const {
   mockLoad: vi.fn(),
   mockStartLoading: vi.fn(),
   mockStopLoading: vi.fn(),
+  mockForceLogout: vi.fn(),
   mockSetup: vi.fn(() => Promise.resolve()),
   mockInstallAudioLifecycle: vi.fn(() => vi.fn()),
   mockInstallSafeAreaPadding: vi.fn(),
@@ -35,10 +37,14 @@ vi.mock('@/stores/theme', () => ({
 }))
 
 vi.mock('@/stores/session', () => ({
-  useSessionStore: () => ({ startLoading: mockStartLoading, stopLoading: mockStopLoading })
+  useSessionStore: () => ({
+    startLoading: mockStartLoading,
+    stopLoading: mockStopLoading,
+    forceLogout: mockForceLogout
+  })
 }))
 
-const mockMember = reactive({ preferences: {}, error: null })
+const mockMember = reactive({ preferences: {}, error: null, profile_missing: false })
 
 vi.mock('@/stores/member', () => ({
   useMemberStore: () => mockMember
@@ -73,6 +79,8 @@ function mountApp() {
 
 beforeEach(() => {
   mockMember.error = null
+  mockMember.profile_missing = false
+  mockForceLogout.mockReset()
   mockInstallSafeAreaPadding.mockReset().mockReturnValue(mockTeardownSafeAreaPadding)
   mockTeardownSafeAreaPadding.mockReset()
 })
@@ -123,6 +131,36 @@ describe('App', () => {
       const notice = useNoticeStore()
 
       expect(notice.error).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('member.profile_missing watcher', () => {
+    test('tears down the session with the account-deleted reason when the profile goes missing', async () => {
+      const wrapper = mountApp()
+
+      mockMember.profile_missing = true
+      await flushPromises()
+
+      expect(mockForceLogout).toHaveBeenCalledWith('account-deleted')
+      wrapper.unmount()
+    })
+
+    test('tears down immediately when the profile is already known missing at mount', () => {
+      mockMember.profile_missing = true
+
+      const wrapper = mountApp()
+
+      expect(mockForceLogout).toHaveBeenCalledWith('account-deleted')
+      wrapper.unmount()
+    })
+
+    test('does NOT tear down while profile_missing is false', async () => {
+      const wrapper = mountApp()
+
+      await flushPromises()
+
+      expect(mockForceLogout).not.toHaveBeenCalled()
+      wrapper.unmount()
     })
   })
 })
