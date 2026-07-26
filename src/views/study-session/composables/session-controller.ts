@@ -6,6 +6,7 @@ import { useCardEdit } from './card-edit'
 import { useActiveCardActions } from './card-actions'
 import { useSessionCards } from './session-cards'
 import { useSessionPrefs } from './session-prefs'
+import { useRatingTimes } from './rating-times'
 import { usePersistedSession } from './session-persistence'
 import { buildDeckResolution, provideDeckResolution } from '../deck-resolution'
 import { useFlushDeckReviews } from '@/api/reviews'
@@ -92,6 +93,8 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
 
   const active_page = ref<'settings' | null>(null)
 
+  const rating_times = useRatingTimes(() => engine.active_card_preview.value)
+
   const can_edit = computed(() => !loading.value && !editing.value && !engine.is_cover.value)
 
   /** Open the in-pager settings page (reachable only mid-study). */
@@ -166,6 +169,7 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     current_index: engine.current_index,
     active_card: engine.active_card,
     active_card_preview: engine.active_card_preview,
+    rating_times,
     reviewed_count: engine.reviewed_count,
     is_starting_side: engine.is_starting_side,
     results: engine.results,

@@ -6,6 +6,9 @@ import UiButton from '@/components/ui-kit/button.vue'
 import UiButtonGroup, { type ButtonGroupOption } from '@/components/ui-kit/button-group.vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { usePrimedGrade } from '../card/primed-grade-context'
+import { useInjectedStudySessionController } from '@/views/study-session/composables/session-controller'
+
+const SUCCESS_GRADES: Grade[] = [Rating.Hard, Rating.Good, Rating.Easy]
 
 const primed_grade = usePrimedGrade()
 
@@ -17,15 +20,29 @@ const emit = defineEmits<{
 
 const is_mobile = useMatchMedia('w<md')
 
-const success_options = computed<ButtonGroupOption[]>(() => [
-  {
-    value: Rating.Hard,
-    label: t('study.flashcard.rating.hard-button'),
-    icon: 'smiley-unhappy'
-  },
-  { value: Rating.Good, label: t('study.flashcard.rating.good-button'), icon: 'smiley-happy' },
-  { value: Rating.Easy, label: t('study.flashcard.rating.easy-button'), icon: 'smiley-very-happy' }
-])
+const { show_button_preview, rating_times } = useInjectedStudySessionController()
+
+// Preview replaces every button's icon/word with its projected interval; falls
+// back to icons if the frozen times aren't ready (e.g. before the first card).
+const preview_on = computed(
+  () => show_button_preview.value && !!rating_times.value.bare[Rating.Good]
+)
+
+const success_options = computed<ButtonGroupOption[]>(() => {
+  if (preview_on.value) {
+    return SUCCESS_GRADES.map((grade) => ({ value: grade, label: rating_times.value.bare[grade] }))
+  }
+
+  return [
+    { value: Rating.Hard, label: t('study.flashcard.rating.hard-button'), icon: 'smiley-unhappy' },
+    { value: Rating.Good, label: t('study.flashcard.rating.good-button'), icon: 'smiley-happy' },
+    {
+      value: Rating.Easy,
+      label: t('study.flashcard.rating.easy-button'),
+      icon: 'smiley-very-happy'
+    }
+  ]
+})
 </script>
 
 <template>
@@ -34,13 +51,13 @@ const success_options = computed<ButtonGroupOption[]>(() => [
       data-testid="rating-buttons__again"
       data-palette="red"
       size="xl"
-      icon-left="dislike"
+      :icon-left="preview_on ? undefined : 'dislike'"
       class="shrink-0"
       :active="primed_grade === Rating.Again"
       :sfx="{ tap_pre: 'snappy_button_5' }"
       @press="emit('rated', Rating.Again)"
     >
-      {{ t('study.flashcard.rating.again-button') }}
+      {{ preview_on ? rating_times.bare[Rating.Again] : t('study.flashcard.rating.again-button') }}
     </ui-button>
 
     <ui-button-group
@@ -48,7 +65,7 @@ const success_options = computed<ButtonGroupOption[]>(() => [
       class="flex-1"
       neutral
       :options="success_options"
-      :icon_only="is_mobile"
+      :icon_only="is_mobile && !preview_on"
       :active_value="primed_grade ?? undefined"
       :sfx="{ tap_pre: 'snappy_button_5' }"
       @press="emit('rated', $event as Grade)"

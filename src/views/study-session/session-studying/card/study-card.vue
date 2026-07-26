@@ -2,11 +2,10 @@
 import Card from '@/components/card/index.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { computed, onMounted, ref } from 'vue'
-import { type Grade, Rating, type RecordLog } from 'ts-fsrs'
+import { type Grade, Rating } from 'ts-fsrs'
 import { emitSfx } from '@/sfx/bus'
 import { useGestures } from '@/composables/ui/gestures'
 import { useShortcuts } from '@/composables/shortcuts'
-import { useRatingFormat } from '@/composables/fsrs'
 import { useI18n } from 'vue-i18n'
 import { useDeckResolution } from '../../deck-resolution'
 
@@ -16,19 +15,20 @@ const DRAG_RATING_CONFIG = {
   [Rating.Easy]: { icon: 'smiley-very-happy', label_key: 'study.flashcard.rating.easy-button' }
 } as const
 
-const ALL_GRADES: Grade[] = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy]
-
 defineExpose({ rate, el: () => card_ref.value?.$el as HTMLElement | undefined })
 
 type StudyCardProps = {
   card?: Card
   side: CardSide
-  options?: RecordLog
+  // Projected next-review labels per grade ("Study again in 1 day"), frozen
+  // per active card upstream so they don't drift mid-drag.
+  rating_labels?: Record<Grade, string>
   show_all_ratings?: boolean
   cover_override?: DeckCover
 }
 
-const { card, side, options, show_all_ratings, cover_override } = defineProps<StudyCardProps>()
+const { card, side, rating_labels, show_all_ratings, cover_override } =
+  defineProps<StudyCardProps>()
 
 const resolution = useDeckResolution()
 
@@ -40,7 +40,6 @@ const emit = defineEmits<{
   (e: 'drag-rating', grade: Grade | null): void
 }>()
 
-const { getRatingTimeFormat } = useRatingFormat()
 const { t } = useI18n()
 
 const FLIP_THRESHOLD = 10
@@ -73,20 +72,6 @@ const failVisible = computed(() => card_offset.value < -SWIPE_DISTANCE_THRESHOLD
 const drag_rating_config = computed(
   () => DRAG_RATING_CONFIG[drag_rating.value as keyof typeof DRAG_RATING_CONFIG]
 )
-
-/**
- * Formatted once per card, not per render. `getRatingTimeFormat` diffs the
- * FSRS due-date against `Date.now()`, so calling it directly from the
- * template re-evaluates (and drifts, eventually going negative) on every
- * unrelated re-render — drag updates, the sitting-idle ticks, etc. Keying
- * this off `options` alone means it recomputes once when a new card's
- * preview arrives and stays frozen for that card's whole life.
- */
-const rating_time_labels = computed<Record<Grade, string>>(() => {
-  const labels = {} as Record<Grade, string>
-  for (const grade of ALL_GRADES) labels[grade] = getRatingTimeFormat(grade, options)
-  return labels
-})
 
 onMounted(() => {
   const el = card_ref.value?.$el as HTMLElement | null
@@ -307,7 +292,7 @@ function toSwipeZone(offset: number) {
         >
           <ui-icon src="dislike" class="size-14" />
           {{ $t('study.flashcard.rating.fail-feedback') }}
-          <p class="text-sm">{{ rating_time_labels[Rating.Again] }}</p>
+          <p class="text-sm">{{ rating_labels?.[Rating.Again] }}</p>
         </div>
         <div
           data-testid="review-label--pass"
@@ -317,12 +302,12 @@ function toSwipeZone(offset: number) {
           <template v-if="show_all_ratings">
             <ui-icon :src="drag_rating_config.icon" class="size-14" />
             {{ t(drag_rating_config.label_key) }}
-            <p class="text-sm">{{ rating_time_labels[drag_rating] }}</p>
+            <p class="text-sm">{{ rating_labels?.[drag_rating] }}</p>
           </template>
           <template v-else>
             <ui-icon src="like" class="size-14" />
             {{ $t('study.flashcard.rating.pass-feedback') }}
-            <p class="text-sm">{{ rating_time_labels[Rating.Good] }}</p>
+            <p class="text-sm">{{ rating_labels?.[Rating.Good] }}</p>
           </template>
         </div>
       </div>

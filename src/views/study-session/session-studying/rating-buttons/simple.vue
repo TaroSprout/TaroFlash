@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { type Grade, Rating } from 'ts-fsrs'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import { usePrimedGrade } from '../card/primed-grade-context'
+import { useInjectedStudySessionController } from '@/views/study-session/composables/session-controller'
 
 const primed_grade = usePrimedGrade()
 
@@ -11,6 +13,12 @@ const { t } = useI18n()
 const emit = defineEmits<{
   (e: 'rated', grade: Grade): void
 }>()
+
+const { show_button_preview, rating_times } = useInjectedStudySessionController()
+
+const preview_on = computed(
+  () => show_button_preview.value && !!rating_times.value.bare[Rating.Good]
+)
 </script>
 
 <template>
@@ -25,7 +33,7 @@ const emit = defineEmits<{
       :sfx="{ tap_pre: 'snappy_button_5' }"
       @press="emit('rated', Rating.Again)"
     >
-      {{ t('study.flashcard.rating.fail-button') }}
+      {{ preview_on ? rating_times.bare[Rating.Again] : t('study.flashcard.rating.fail-button') }}
     </ui-button>
 
     <ui-button
@@ -38,7 +46,7 @@ const emit = defineEmits<{
       :sfx="{ tap_pre: 'snappy_button_5' }"
       @press="emit('rated', Rating.Good)"
     >
-      {{ t('study.flashcard.rating.pass-button') }}
+      {{ preview_on ? rating_times.bare[Rating.Good] : t('study.flashcard.rating.pass-button') }}
     </ui-button>
   </div>
 </template>
