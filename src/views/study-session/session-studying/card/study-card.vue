@@ -292,7 +292,7 @@ function toSwipeZone(offset: number) {
         >
           <ui-icon src="dislike" class="size-14" />
           {{ $t('study.flashcard.rating.fail-feedback') }}
-          <p class="text-sm">{{ rating_labels?.[Rating.Again] }}</p>
+          <p v-if="rating_labels" class="text-sm">{{ rating_labels[Rating.Again] }}</p>
         </div>
         <div
           data-testid="review-label--pass"
@@ -302,12 +302,12 @@ function toSwipeZone(offset: number) {
           <template v-if="show_all_ratings">
             <ui-icon :src="drag_rating_config.icon" class="size-14" />
             {{ t(drag_rating_config.label_key) }}
-            <p class="text-sm">{{ rating_labels?.[drag_rating] }}</p>
+            <p v-if="rating_labels" class="text-sm">{{ rating_labels[drag_rating] }}</p>
           </template>
           <template v-else>
             <ui-icon src="like" class="size-14" />
             {{ $t('study.flashcard.rating.pass-feedback') }}
-            <p class="text-sm">{{ rating_labels?.[Rating.Good] }}</p>
+            <p v-if="rating_labels" class="text-sm">{{ rating_labels[Rating.Good] }}</p>
           </template>
         </div>
       </div>
