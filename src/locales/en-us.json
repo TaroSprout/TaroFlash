@@ -389,6 +389,8 @@
   "study-session.load-error-sub": "Check your connection and try again.",
   "study-session.review-save-error": "Couldn't save your last answer",
   "study-session.review-save-error-sub": "Your progress may be out of sync — refresh before continuing to be safe.",
+  "study-session.settings-save-error": "Couldn't save your settings",
+  "study-session.settings-save-error-sub": "Check your connection and try again.",
   "study-session.modal.title": "Studying {deck}",
   "study-session.multiple-decks-title": "Multiple Decks",
   "study-session.close-button": "Close",

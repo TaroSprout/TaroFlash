@@ -1,5 +1,7 @@
 import { computed, reactive, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useMemberStore } from '@/stores/member'
+import { useNoticeStore } from '@/stores/notice-store'
 import { useUpsertMemberMutation } from '@/api/members'
 import { emitSfx } from '@/sfx/bus'
 import { debounce } from '@/utils/debounce'
@@ -30,7 +32,9 @@ const PERSIST_KEY = 'session-prefs-persist'
  * can't seed defaults and later clobber real stored prefs on the first save.
  */
 export function useSessionPrefs() {
+  const { t } = useI18n()
   const member_store = useMemberStore()
+  const notice = useNoticeStore()
   const upsert_member = useUpsertMemberMutation()
 
   const local = reactive<StudyPrefs>({ ...member_store.preferences.study })
@@ -47,19 +51,26 @@ export function useSessionPrefs() {
   /**
    * Debounced write of the whole `study` blob. Writing every key each time (not
    * a diff) keeps concurrent auto-saves last-write-wins safe; non-study
-   * namespaces pass through untouched.
+   * namespaces pass through untouched. A failed write toasts — the local value
+   * stays applied but won't have persisted, so the user needs to know.
    */
   function persist() {
     debounce(
       () => {
         if (!member_store.id) return
-        upsert_member.mutate({
-          id: member_store.id,
-          preferences: {
-            ...member_store.preferences,
-            study: { ...member_store.preferences.study, ...local }
-          }
-        })
+        return upsert_member
+          .mutateAsync({
+            id: member_store.id,
+            preferences: {
+              ...member_store.preferences,
+              study: { ...member_store.preferences.study, ...local }
+            }
+          })
+          .catch(() => {
+            notice.error(t('study-session.settings-save-error'), {
+              subMessage: t('study-session.settings-save-error-sub')
+            })
+          })
       },
       { delay: PERSIST_DELAY, key: PERSIST_KEY }
     )
