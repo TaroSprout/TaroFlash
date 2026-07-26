@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import UiIcon from '@/components/ui-kit/icon.vue'
-import { emitSfx } from '@/sfx/bus'
+import UiTappable from '@/components/ui-kit/tappable.vue'
 import { TYPE_SFX } from '@/sfx/config'
 
 type SpinboxButtonProps = {
@@ -13,21 +13,18 @@ const { icon, disabled = false } = defineProps<SpinboxButtonProps>()
 const emit = defineEmits<{
   (e: 'click'): void
 }>()
-
-function onClick() {
-  emitSfx('select')
-  emit('click')
-}
 </script>
 
 <template>
-  <button
+  <ui-tappable
+    as="button"
     type="button"
     :disabled="disabled"
-    class="inline-flex items-center justify-center aspect-square h-8 rounded-3 text-ink cursor-pointer transition-[background-color,color,transform] duration-100 hover:bg-accent hover:text-on-accent active:scale-95 disabled:opacity-[0.35] disabled:hover:bg-transparent disabled:hover:text-ink"
-    v-sfx="{ hover: TYPE_SFX }"
-    @click="onClick"
+    :sfx="{ hover: TYPE_SFX, press: 'select' }"
+    bgx_color="var(--color-accent-pattern)"
+    class="inline-flex items-center justify-center aspect-square h-8 rounded-3 text-ink cursor-pointer transition-[background-color,color] duration-100 hover:bg-accent hover:text-on-accent data-[tap-active=true]:bg-accent data-[tap-active=true]:text-on-accent disabled:opacity-[0.35] disabled:hover:bg-transparent disabled:hover:text-ink"
+    @tap="emit('click')"
   >
     <ui-icon :src="icon" class="size-4" />
-  </button>
+  </ui-tappable>
 </template>
