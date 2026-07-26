@@ -3,7 +3,10 @@ import { useMemberStore } from '@/stores/member'
 import { useUpsertMemberMutation } from '@/api/members'
 import { emitSfx } from '@/sfx/bus'
 import { debounce } from '@/utils/debounce'
-import type { ResolvedMemberPreferences } from '@/utils/member/preferences'
+import {
+  MEMBER_PREFERENCES_DEFAULTS,
+  type ResolvedMemberPreferences
+} from '@/utils/member/preferences'
 
 type StudyPrefs = ResolvedMemberPreferences['study']
 
@@ -82,9 +85,24 @@ export function useSessionPrefs() {
   const show_card_preview = bindable('show_card_preview')
   const multi_deck_ordering = bindable('multi_deck_ordering')
 
+  const default_study = MEMBER_PREFERENCES_DEFAULTS.study
+
+  const is_default = computed(() =>
+    (Object.keys(default_study) as (keyof StudyPrefs)[]).every(
+      (key) => local[key] === default_study[key]
+    )
+  )
+
   function toggleRatings() {
     emitSfx('snappy_button_5')
     show_all_ratings.value = !show_all_ratings.value
+  }
+
+  /** Restore every study pref to its factory default (auto-saves like any edit). */
+  function resetToDefaults() {
+    Object.assign(local, default_study)
+    dirty = true
+    persist()
   }
 
   return {
@@ -93,6 +111,8 @@ export function useSessionPrefs() {
     show_button_preview,
     show_card_preview,
     multi_deck_ordering,
-    toggleRatings
+    is_default,
+    toggleRatings,
+    resetToDefaults
   }
 }

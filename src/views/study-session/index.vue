@@ -49,6 +49,13 @@ const nav_mode = computed<'close' | 'stop' | 'back'>(() => {
   return 'stop'
 })
 
+// The textured backdrop reads as busy behind the settings form, so drop it there.
+const bgx_class = computed(() =>
+  active_page.value === 'settings'
+    ? ''
+    : 'bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-(--color-element-pattern)'
+)
+
 const title = computed(() => {
   if (active_page.value === 'settings') return t('study-session.settings.title')
 
@@ -57,7 +64,7 @@ const title = computed(() => {
     : t('study-session.multiple-decks-title')
 })
 
-useModalRequestClose(onHeaderStop)
+useModalRequestClose(onRequestClose)
 
 /** Early close (close button / backdrop / esc before any review). */
 function onClosed() {
@@ -77,26 +84,40 @@ function onPaneEnterStart() {
   emitSfx(enter_sfx[current_page.value])
 }
 
-/** Header nav button, and the modal backdrop / esc handler. */
+/** Studying → stop into summary (or dismiss on the cover); summary → dismiss. */
+function leaveSession() {
+  if (phase.value === 'studying') requestClose()
+  else onClosed()
+}
+
+/** Header nav button. Back returns to the session; otherwise leaves it. */
 function onHeaderStop() {
   if (active_page.value === 'settings') {
     closeSettings()
     return
   }
 
-  if (phase.value === 'studying') requestClose()
-  else onClosed()
+  leaveSession()
+}
+
+/**
+ * Backdrop / esc. On the settings page it dismisses a not-yet-started session
+ * (still on the cover) but returns to an in-progress one; elsewhere it leaves
+ * the session as usual.
+ */
+function onRequestClose() {
+  if (active_page.value === 'settings') {
+    if (is_cover.value) onClosed()
+    else closeSettings()
+    return
+  }
+
+  leaveSession()
 }
 </script>
 
 <template>
-  <dialog-card
-    data-testid="study-session"
-    class="bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-(--color-element-pattern)"
-    bg_class="bg-surface"
-    size="lg"
-    :title="title"
-  >
+  <dialog-card data-testid="study-session" :class="bgx_class" size="lg" :title="title">
     <template #header-start>
       <session-header-nav-button :mode="nav_mode" @press="onHeaderStop" />
     </template>

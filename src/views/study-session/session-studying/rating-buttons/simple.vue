@@ -30,7 +30,7 @@ const emit = defineEmits<{
 
     <ui-button
       data-testid="rating-buttons__good"
-      data-palette="blue"
+      neutral
       size="xl"
       icon-left="like"
       full-width

@@ -16,7 +16,7 @@ const active = defineModel<T>('value', { required: true })
 const emit = defineEmits<{ (e: 'update:value', value: T): void }>()
 
 function onTap(value: T) {
-  emitSfx(value === active.value ? 'digi_powerdown' : 'snappy_button_5')
+  emitSfx(value === active.value ? 'digi_powerdown' : 'select')
   emit('update:value', value)
 }
 </script>
@@ -40,7 +40,7 @@ function onTap(value: T) {
       :data-active="option.value === active"
       bgx_color="var(--color-element-pattern)"
       :class="[
-        'cursor-pointer text-ink-muted data-[active=false]:hover:bg-element-strong data-[active=true]:bg-(--color-accent) data-[active=true]:text-(--color-on-accent)',
+        'cursor-pointer whitespace-nowrap text-ink-muted data-[active=false]:hover:bg-element-strong data-[active=true]:bg-(--color-accent) data-[active=true]:text-(--color-on-accent)',
         size === 'base' ? 'py-2 px-4 text-base rounded-3' : 'py-1.5 px-3.5 text-sm rounded-2',
         full_width && 'flex-1 justify-center'
       ]"

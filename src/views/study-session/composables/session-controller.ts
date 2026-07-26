@@ -85,7 +85,9 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     show_button_preview,
     show_card_preview,
     multi_deck_ordering,
-    toggleRatings
+    is_default: prefs_are_default,
+    toggleRatings,
+    resetToDefaults
   } = useSessionPrefs()
 
   const active_page = ref<'settings' | null>(null)
@@ -178,6 +180,7 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     show_button_preview,
     show_card_preview,
     multi_deck_ordering,
+    prefs_are_default,
     active_page,
     editing,
     saving,
@@ -192,6 +195,7 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     onMove,
     onDelete,
     toggleRatings,
+    resetToDefaults,
     openSettings,
     closeSettings,
     requestClose,

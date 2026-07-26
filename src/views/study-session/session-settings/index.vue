@@ -5,6 +5,7 @@ import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import FieldRow from '@/components/layout-kit/field-row.vue'
 import UiToggle from '@/components/ui-kit/toggle.vue'
 import UiOptionGroup from '@/components/ui-kit/option-group.vue'
+import UiButton from '@/components/ui-kit/button.vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { useInjectedStudySessionController } from '../composables/session-controller'
 
@@ -17,10 +18,13 @@ const {
   show_rating_buttons,
   show_button_preview,
   show_card_preview,
-  multi_deck_ordering
+  multi_deck_ordering,
+  prefs_are_default,
+  resetToDefaults
 } = useInjectedStudySessionController()
 
 const is_coarse = useMatchMedia('coarse')
+const is_mobile = useMatchMedia('w<sm')
 
 // Ratings mode is a boolean pref; the option group speaks string values.
 const ratings_mode = computed<RatingsMode>({
@@ -43,7 +47,14 @@ const ordering_options = computed(() => [
 </script>
 
 <template>
-  <div data-testid="session-settings" class="flex h-full w-full flex-col gap-6 overflow-y-auto p-6">
+  <div
+    data-testid="session-settings"
+    class="flex h-full w-full flex-col gap-6 overflow-x-hidden overflow-y-auto pb-6"
+  >
+    <p data-testid="session-settings__description" class="text-center text-base text-ink-muted">
+      {{ t('study-session.settings.description') }}
+    </p>
+
     <labeled-section
       data-testid="session-settings__rating"
       :label="t('study-session.settings.section.rating')"
@@ -93,13 +104,37 @@ const ordering_options = computed(() => [
       :label="t('study-session.settings.section.order')"
       :description="t('study-session.settings.ordering.description')"
     >
-      <field-row :label="t('study-session.settings.ordering.label')">
+      <template v-if="!is_mobile" #actions>
         <ui-option-group
+          data-testid="session-settings__order-control"
           v-model:value="multi_deck_ordering"
           :options="ordering_options"
           :size="option_size"
         />
-      </field-row>
+      </template>
+
+      <ui-option-group
+        v-if="is_mobile"
+        data-testid="session-settings__order-control"
+        v-model:value="multi_deck_ordering"
+        full_width
+        :options="ordering_options"
+        :size="option_size"
+      />
     </labeled-section>
+
+    <ui-button
+      neutral
+      data-testid="session-settings__reset"
+      icon-left="refresh"
+      class="mt-auto"
+      size="lg"
+      full-width
+      :disabled="prefs_are_default"
+      :sfx="{ press: 'snappy_button_5' }"
+      @press="resetToDefaults"
+    >
+      {{ t('study-session.settings.reset-button') }}
+    </ui-button>
   </div>
 </template>
