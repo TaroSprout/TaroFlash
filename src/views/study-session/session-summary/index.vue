@@ -23,7 +23,7 @@ const summary = computed(() => aggregateSession(results, thresholdFor))
 </script>
 
 <template>
-  <div data-testid="session-summary" class="h-full w-full flex flex-col gap-6 p-(--dialog-px)">
+  <div data-testid="session-summary" class="h-full w-full flex flex-col gap-6 pb-6">
     <div
       data-testid="session-summary__body"
       class="flex-1 min-h-0 flex flex-col items-center gap-6"

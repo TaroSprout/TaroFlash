@@ -24,7 +24,7 @@ function onRated(grade: Grade) {
   <div data-testid="session-flashcard" class="relative h-full w-full">
     <div
       data-testid="study-session__main"
-      class="h-full flex flex-col items-center gap-8 p-(--dialog-px)"
+      class="h-full flex flex-col items-center gap-8 pb-6"
       :class="{ 'opacity-0 pointer-events-none': state === 'summary' }"
     >
       <div
