@@ -4,7 +4,8 @@ import { defineComponent, h } from 'vue'
 import DialogCardPager from '@/components/layout-kit/dialog-card/dialog-card-pager.vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
-// Mirrors the real session-pane animation hooks' call shape (el, done, onStart?)
+// Mirrors the real session-pane animation hooks' call shape
+// (el, done, { instant?, onStart? }?)
 // so dialog-card-pager's own onEnter/onLeave wiring is under direct test —
 // the underlying tween math itself is covered in
 // tests/unit/utils/animations/session-pane.test.js.
@@ -14,9 +15,9 @@ import DialogCardPager from '@/components/layout-kit/dialog-card/dialog-card-pag
 // done() synchronously during a real (unstubbed) unmount transition crashes
 // Vue's internal removal bookkeeping (`afterLeave` reads a detached parentNode).
 const { mockSessionPaneEnter, mockSessionPaneLeave } = vi.hoisted(() => ({
-  mockSessionPaneEnter: vi.fn((_el, done, onStart) => {
+  mockSessionPaneEnter: vi.fn((_el, done, options) => {
     Promise.resolve().then(() => {
-      onStart?.()
+      options?.onStart?.()
       done()
     })
   }),

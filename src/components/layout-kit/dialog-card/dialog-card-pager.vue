@@ -3,9 +3,11 @@ import { sessionPaneEnter, sessionPaneLeave } from '@/utils/animations/session-p
 
 export type DialogCardPagerProps = {
   mode?: 'in-out' | 'out-in'
+  // Skip the entering pane's pre-enter delay (snappy reversible navigation).
+  instant?: boolean
 }
 
-const { mode } = defineProps<DialogCardPagerProps>()
+const { mode, instant = false } = defineProps<DialogCardPagerProps>()
 
 const emit = defineEmits<{
   (e: 'enter-start'): void
@@ -16,7 +18,7 @@ function onLeave(el: Element, done: () => void) {
 }
 
 function onEnter(el: Element, done: () => void) {
-  sessionPaneEnter(el, done, () => emit('enter-start'))
+  sessionPaneEnter(el, done, { instant, onStart: () => emit('enter-start') })
 }
 </script>
 

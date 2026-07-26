@@ -17,7 +17,19 @@ export function sessionPaneLeave(el: Element, done: () => void) {
   gsap.to(el, { opacity: 0, duration: LEAVE_DURATION, onComplete: done })
 }
 
-export function sessionPaneEnter(el: Element, done: () => void, onStart?: () => void) {
+type SessionPaneEnterOptions = {
+  // Skip the pre-enter delay so the incoming pane appears immediately, for
+  // reversible in-session navigation (settings) rather than the terminal
+  // summary pop.
+  instant?: boolean
+  onStart?: () => void
+}
+
+export function sessionPaneEnter(
+  el: Element,
+  done: () => void,
+  { instant = false, onStart }: SessionPaneEnterOptions = {}
+) {
   gsap.fromTo(
     el,
     { scale: 0.9, opacity: 0 },
@@ -25,7 +37,7 @@ export function sessionPaneEnter(el: Element, done: () => void, onStart?: () => 
       scale: 1,
       opacity: 1,
       duration: ENTER_DURATION,
-      delay: ENTER_DELAY,
+      delay: instant ? 0 : ENTER_DELAY,
       ease: 'back.out(1.6)',
       clearProps: 'transform',
       onStart,

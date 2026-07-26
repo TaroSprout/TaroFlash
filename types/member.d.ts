@@ -32,8 +32,17 @@ type MemberPreferences = {
   }
   study?: {
     show_all_ratings?: boolean
+    show_rating_buttons?: boolean
+    show_button_preview?: boolean
+    show_card_preview?: boolean
+    multi_deck_ordering?: MultiDeckOrdering
   }
 }
+
+// How a multi-deck session merges each deck's (already per-deck-ordered) cards
+// into one queue. Orthogonal to the per-deck `shuffle` flag, which sets each
+// deck's own internal order.
+declare type MultiDeckOrdering = 'sequential' | 'even_spread' | 'random'
 
 declare type MemberRole = 'user' | 'moderator' | 'admin'
 declare type MemberPlan = 'free' | 'paid'

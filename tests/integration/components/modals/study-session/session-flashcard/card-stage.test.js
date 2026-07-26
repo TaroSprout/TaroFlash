@@ -12,24 +12,26 @@ const {
   loading,
   editing,
   active_card,
-  active_card_preview,
+  rating_times,
   display_side,
   next_card,
   next_card_side,
   preview_style,
-  show_all_ratings
+  show_all_ratings,
+  show_card_preview
 } = await vi.hoisted(async () => {
   const { ref } = await import('vue')
   return {
     loading: ref(false),
     editing: ref(false),
     active_card: ref(undefined),
-    active_card_preview: ref(undefined),
+    rating_times: ref({ bare: {}, label: {} }),
     display_side: ref('front'),
     next_card: ref(undefined),
     next_card_side: ref('cover'),
     preview_style: ref({}),
-    show_all_ratings: ref(false)
+    show_all_ratings: ref(false),
+    show_card_preview: ref(true)
   }
 })
 
@@ -54,12 +56,13 @@ vi.mock('@/views/study-session/composables/session-controller', () => ({
     loading,
     editing,
     active_card,
-    active_card_preview,
+    rating_times,
     display_side,
     next_card,
     next_card_side,
     preview_style,
     show_all_ratings,
+    show_card_preview,
     startSession: mockStartSession,
     flipCurrentCard: mockFlipCurrentCard,
     onCardReviewed: mockOnCardReviewed,
@@ -114,7 +117,7 @@ vi.mock('@/utils/animations/session-intro', () => ({
 
 const StudyCardStub = defineComponent({
   name: 'StudyCard',
-  props: ['card', 'side', 'options', 'show_all_ratings', 'cover_override'],
+  props: ['card', 'side', 'rating_labels', 'show_all_ratings', 'cover_override'],
   emits: ['started', 'side-changed', 'reviewed', 'drag-progress', 'drag-rating'],
   setup(props, { expose }) {
     // useCoverCarousel reads the active card's element via el(); expose it so the
@@ -152,23 +155,31 @@ function makeCard(id = 1) {
   return { id, deck_id: 1, front: 'Q', back: 'A', state: 'unreviewed' }
 }
 
+// Vue Transition JS hooks use 2x rAF even with :css="false".
+const nextFrame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+
 function mountCardStage(overrides = {}) {
   loading.value = overrides.loading ?? false
   editing.value = overrides.editing ?? false
   active_card.value = 'active_card' in overrides ? overrides.active_card : undefined
-  active_card_preview.value = overrides.active_card_preview
+  rating_times.value = overrides.rating_times ?? { bare: {}, label: {} }
   display_side.value = overrides.display_side ?? 'front'
   next_card.value = 'next_card' in overrides ? overrides.next_card : undefined
   next_card_side.value = overrides.next_card_side ?? 'cover'
   show_all_ratings.value = overrides.show_all_ratings ?? false
+  show_card_preview.value = overrides.show_card_preview ?? true
 
   return mount(CardStage, {
     attachTo: document.body,
     global: {
+      // Vue Test Utils stubs the built-in <transition> by default (no JS
+      // hooks fire) — disable that so the enter/leave rise-animation tests
+      // below actually exercise onCardBeforeEnter/onCardEnter/onCardLeave.
       stubs: {
         StudyCard: StudyCardStub,
         StudyCardEdit: StudyCardEditStub,
-        Card: CardStub
+        Card: CardStub,
+        transition: false
       },
       provide: {
         [PrimedGradeKey]: { value: null }
@@ -246,23 +257,29 @@ describe('CardStage', () => {
     expect(wrapper.find('[data-testid="study-card__preview"]').exists()).toBe(false)
   })
 
-  // ── active_card_preview forwarding [obligation] ───────────────────────────
+  // ── rating_times.label forwarding, gated on show_card_preview [obligation] ─
 
-  test('forwards active_card_preview as options on the active study-card [obligation]', () => {
-    const preview = { some: 'record-log' }
+  test('forwards rating_times.label as rating_labels when show_card_preview is true [obligation]', () => {
+    const labels = { some: 'label-record' }
     const wrapper = mountCardStage({
       loading: false,
       active_card: makeCard(),
-      active_card_preview: preview
+      rating_times: { bare: {}, label: labels },
+      show_card_preview: true
     })
 
-    expect(wrapper.findComponent(StudyCardStub).props('options')).toEqual(preview)
+    expect(wrapper.findComponent(StudyCardStub).props('rating_labels')).toEqual(labels)
   })
 
-  test('options is undefined on the active study-card when active_card_preview is not set [obligation]', () => {
-    const wrapper = mountCardStage({ loading: false, active_card: makeCard() })
+  test('rating_labels is undefined on the active study-card when show_card_preview is false [obligation]', () => {
+    const wrapper = mountCardStage({
+      loading: false,
+      active_card: makeCard(),
+      rating_times: { bare: {}, label: { some: 'label-record' } },
+      show_card_preview: false
+    })
 
-    expect(wrapper.findComponent(StudyCardStub).props('options')).toBeUndefined()
+    expect(wrapper.findComponent(StudyCardStub).props('rating_labels')).toBeUndefined()
   })
 
   // ── event delegation straight to the injected controller [obligation] ─────
@@ -357,5 +374,44 @@ describe('CardStage', () => {
     const wrapper = mountCardStage({ loading: true })
 
     expect(() => wrapper.vm.rate(1)).not.toThrow()
+  })
+
+  // ── transition hooks: cover-card rise only on the cover side ──────────────
+
+  describe('card enter transition', () => {
+    test('runs the cover-card rise animation when the study-card enters on the cover side [obligation]', async () => {
+      mountCardStage({ loading: true })
+      loading.value = false
+      active_card.value = makeCard()
+      display_side.value = 'cover'
+      await nextFrame()
+
+      expect(mockCoverCardBeforeEnter).toHaveBeenCalled()
+      expect(mockCoverCardEnter).toHaveBeenCalled()
+    })
+
+    test('skips the rise animation (resolves immediately) when the entering card is not on the cover side', async () => {
+      mountCardStage({ loading: true })
+      loading.value = false
+      active_card.value = makeCard()
+      display_side.value = 'front'
+      await nextFrame()
+
+      expect(mockCoverCardBeforeEnter).not.toHaveBeenCalled()
+      expect(mockCoverCardEnter).not.toHaveBeenCalled()
+    })
+
+    test('kills the in-flight rise tween on unmount', async () => {
+      const wrapper = mountCardStage({ loading: true })
+      loading.value = false
+      active_card.value = makeCard()
+      display_side.value = 'cover'
+      await nextFrame()
+      const tween = mockCoverCardEnter.mock.results.at(-1)?.value
+
+      wrapper.unmount()
+
+      expect(tween?.kill).toHaveBeenCalled()
+    })
   })
 })

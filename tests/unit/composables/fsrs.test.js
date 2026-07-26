@@ -39,7 +39,7 @@ describe('useRatingFormat', () => {
     expect(result).toContain('"time":')
   })
 
-  test('defaults to long style when none is provided', () => {
+  test('always formats in long style (words, not abbreviations)', () => {
     const { getRatingTimeFormat } = useRatingFormat()
     // 25h, not 24h: toRelative compares against `Date.now()` again at call
     // time, so an exactly-1-day offset can fall into the "hour" bucket once
@@ -50,16 +50,6 @@ describe('useRatingFormat', () => {
 
     // Long style produces words like "day" / "days"
     expect(result).toMatch(/day/)
-  })
-
-  test('uses short style when specified', () => {
-    const { getRatingTimeFormat } = useRatingFormat()
-    const due = new Date(Date.now() + 1000 * 60 * 60 * 24)
-
-    const result = getRatingTimeFormat(Rating.Good, makeOptions(due), 'short')
-
-    // Short style abbreviates (e.g. "in 1 day" may become "in 1 d.")
-    expect(result).toContain('study.idle.next-session-cta')
   })
 
   test('selects the due date corresponding to the given grade', () => {
@@ -144,5 +134,59 @@ describe('useRatingFormat', () => {
     expect(good_result).toMatch(/day/)
     expect(easy_result).toMatch(/day/)
     expect(new Set([hard_result, good_result, easy_result]).size).toBe(3)
+  })
+})
+
+// ── getRatingTimeCompact ────────────────────────────────────────────────────
+
+describe('getRatingTimeCompact', () => {
+  test('returns empty string when options is undefined', () => {
+    const { getRatingTimeCompact } = useRatingFormat()
+    expect(getRatingTimeCompact(Rating.Good)).toBe('')
+  })
+
+  test('returns empty string when the due date is missing', () => {
+    const { getRatingTimeCompact } = useRatingFormat()
+    expect(getRatingTimeCompact(Rating.Good, makeOptions(undefined))).toBe('')
+  })
+
+  test('returns a compact abbreviation ("1d") rather than the long CTA phrase', () => {
+    const { getRatingTimeCompact } = useRatingFormat()
+    const due = new Date(Date.now() + 1000 * 60 * 60 * 24)
+
+    const result = getRatingTimeCompact(Rating.Good, makeOptions(due))
+
+    expect(result).toBe('1d')
+  })
+
+  test('selects the due date for the given grade', () => {
+    const { getRatingTimeCompact } = useRatingFormat()
+    const options = {
+      [Rating.Again]: { card: { due: new Date(Date.now() + 1000 * 60) } }, // +1 minute
+      [Rating.Hard]: { card: { due: new Date(Date.now() + 1000 * 60 * 60 * 2) } }, // +2 hours
+      [Rating.Good]: { card: { due: new Date(Date.now() + 1000 * 60 * 60 * 24) } }, // +1 day
+      [Rating.Easy]: { card: { due: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3) } } // +3 days
+    }
+
+    expect(getRatingTimeCompact(Rating.Again, options)).toBe('1min')
+    expect(getRatingTimeCompact(Rating.Good, options)).toBe('1d')
+  })
+
+  // [obligation] no collision-group formatting for the compact form — each
+  // grade's due date is read directly, independent of the other grades.
+  test('does not apply the pass-grade collision bump — reads each due date independently [obligation]', () => {
+    const { getRatingTimeCompact } = useRatingFormat()
+    const day = 24 * 60 * 60 * 1000
+    // Good/Easy would collide under toRelativeDistinct's day-bump, but the
+    // compact form has no collision group — each renders its own natural unit.
+    const options = {
+      [Rating.Again]: { card: { due: new Date(Date.now() + 1000 * 60) } },
+      [Rating.Hard]: { card: { due: new Date(Date.now() + 2 * day) } },
+      [Rating.Good]: { card: { due: new Date(Date.now() + 7.6 * day) } },
+      [Rating.Easy]: { card: { due: new Date(Date.now() + 8.6 * day) } }
+    }
+
+    expect(getRatingTimeCompact(Rating.Good, options)).toBe('8d')
+    expect(getRatingTimeCompact(Rating.Easy, options)).toBe('9d')
   })
 })

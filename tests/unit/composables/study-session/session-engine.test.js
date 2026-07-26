@@ -56,7 +56,7 @@ function makeEngine(overrides = {}) {
   const engine = useSessionEngine({
     schedulerFor: (deck_id) => FSRS_BY_DECK[deck_id] ?? FSRS_BY_DECK[1],
     startingSideFor: (deck_id) => STARTING_SIDE_BY_DECK[deck_id] ?? 'front',
-    shuffle: () => false,
+    orderCards: (cards) => cards,
     onChange,
     ...overrides
   })
@@ -453,17 +453,27 @@ describe('computed reads', () => {
   })
 })
 
-// ── Shuffle ───────────────────────────────────────────────────────────────
+// ── orderCards wiring ───────────────────────────────────────────────────────
 
-describe('shuffle', () => {
-  test('setCards shuffles the queue when shuffle() returns true, preserving every card', () => {
-    const { engine } = makeEngine({ shuffle: () => true })
+describe('orderCards', () => {
+  test('setCards runs the raw cards through the injected orderCards, preserving every card', () => {
+    const { engine } = makeEngine({ orderCards: (cards) => [...cards].reverse() })
     const cards = Array.from({ length: 8 }, (_, i) => makeCard({ id: 2000 + i, deck_id: 1 }))
 
     engine.setCards(cards)
 
     expect(engine.cards.value).toHaveLength(8)
     expect(new Set(engine.cards.value.map((c) => c.id))).toEqual(new Set(cards.map((c) => c.id)))
+  })
+
+  test('setCards uses the orderCards result verbatim as the queue order [obligation]', () => {
+    const { engine } = makeEngine({ orderCards: (cards) => [...cards].reverse() })
+    const c1 = makeCard({ id: 3001, deck_id: 1 })
+    const c2 = makeCard({ id: 3002, deck_id: 1 })
+
+    engine.setCards([c1, c2])
+
+    expect(engine.cards.value.map((c) => c.id)).toEqual([c2.id, c1.id])
   })
 })
 

@@ -1,4 +1,4 @@
-import { computed, inject, provide, watch, type InjectionKey } from 'vue'
+import { computed, inject, provide, ref, watch, type InjectionKey } from 'vue'
 import { type Grade } from 'ts-fsrs'
 import { useSessionEngine } from './session-engine'
 import { useCardPreview } from './card-preview'
@@ -6,6 +6,7 @@ import { useCardEdit } from './card-edit'
 import { useActiveCardActions } from './card-actions'
 import { useSessionCards } from './session-cards'
 import { useSessionPrefs } from './session-prefs'
+import { useRatingTimes } from './rating-times'
 import { usePersistedSession } from './session-persistence'
 import { buildDeckResolution, provideDeckResolution } from '../deck-resolution'
 import { useFlushDeckReviews } from '@/api/reviews'
@@ -45,13 +46,16 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
   const persisted_session = usePersistedSession()
   const flushDeckReviews = useFlushDeckReviews()
 
-  const resolution = buildDeckResolution(() => sessionDecks.value)
+  const resolution = buildDeckResolution(
+    () => sessionDecks.value,
+    () => multi_deck_ordering.value
+  )
   provideDeckResolution(resolution)
 
   const engine = useSessionEngine({
     schedulerFor: resolution.schedulerFor,
     startingSideFor: resolution.startingSideFor,
-    shuffle: () => resolution.shuffle.value,
+    orderCards: resolution.orderCards,
     onChange: persist
   })
 
@@ -79,9 +83,32 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     onMissingDeck: onClosed
   })
 
-  const { show_all_ratings, toggleRatings } = useSessionPrefs()
+  const {
+    show_all_ratings,
+    show_rating_buttons,
+    show_button_preview,
+    show_card_preview,
+    multi_deck_ordering,
+    is_default: prefs_are_default,
+    toggleRatings,
+    resetToDefaults
+  } = useSessionPrefs()
+
+  const active_page = ref<'settings' | null>(null)
+
+  const rating_times = useRatingTimes(() => engine.active_card_preview.value)
 
   const can_edit = computed(() => !loading.value && !editing.value && !engine.is_cover.value)
+
+  /** Open the in-pager settings page (reachable only mid-study). */
+  function openSettings() {
+    active_page.value = 'settings'
+  }
+
+  /** Return from the settings page to studying. */
+  function closeSettings() {
+    active_page.value = null
+  }
 
   /**
    * Persistence lives here, not in the engine — the engine is deck-blind, and
@@ -145,6 +172,7 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     current_index: engine.current_index,
     active_card: engine.active_card,
     active_card_preview: engine.active_card_preview,
+    rating_times,
     reviewed_count: engine.reviewed_count,
     is_starting_side: engine.is_starting_side,
     results: engine.results,
@@ -155,6 +183,12 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     loading,
     sessionDecks,
     show_all_ratings,
+    show_rating_buttons,
+    show_button_preview,
+    show_card_preview,
+    multi_deck_ordering,
+    prefs_are_default,
+    active_page,
     editing,
     saving,
     can_edit,
@@ -168,6 +202,9 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     onMove,
     onDelete,
     toggleRatings,
+    resetToDefaults,
+    openSettings,
+    closeSettings,
     requestClose,
     onCardReviewed
   }

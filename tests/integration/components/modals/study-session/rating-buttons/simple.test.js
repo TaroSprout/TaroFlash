@@ -1,9 +1,23 @@
-import { describe, test, expect } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { Rating } from 'ts-fsrs'
 import SimpleRatingButtons from '@/views/study-session/session-studying/rating-buttons/simple.vue'
 import { PrimedGradeKey } from '@/views/study-session/session-studying/card/primed-grade-context'
+
+// ── Hoisted mocks ─────────────────────────────────────────────────────────────
+
+const { show_button_preview, rating_times } = await vi.hoisted(async () => {
+  const { ref } = await import('vue')
+  return {
+    show_button_preview: ref(false),
+    rating_times: ref({ bare: {}, label: {} })
+  }
+})
+
+vi.mock('@/views/study-session/composables/session-controller', () => ({
+  useInjectedStudySessionController: () => ({ show_button_preview, rating_times })
+}))
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -16,6 +30,41 @@ function mountSimple({ primed_grade = null } = {}) {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('SimpleRatingButtons', () => {
+  beforeEach(() => {
+    show_button_preview.value = false
+    rating_times.value = { bare: {}, label: {} }
+  })
+
+  // ── show_button_preview swaps icon-words for projected intervals [obligation] ─
+
+  describe('button preview [obligation]', () => {
+    test('shows the projected interval label instead of icon-word copy when preview is on and ready [obligation]', () => {
+      show_button_preview.value = true
+      rating_times.value = { bare: { [Rating.Again]: '1d', [Rating.Good]: '3d' }, label: {} }
+      const wrapper = mountSimple()
+
+      expect(wrapper.find('[data-testid="rating-buttons__again"]').text()).toContain('1d')
+      expect(wrapper.find('[data-testid="rating-buttons__good"]').text()).toContain('3d')
+    })
+
+    test('falls back to icon-word copy when preview is on but the frozen times are not ready [obligation]', () => {
+      show_button_preview.value = true
+      rating_times.value = { bare: {}, label: {} }
+      const wrapper = mountSimple()
+
+      expect(wrapper.find('[data-testid="rating-buttons__again"]').text()).toContain('Nope')
+    })
+
+    test('shows the icon-word copy when preview is off, even with ready times [obligation]', () => {
+      show_button_preview.value = false
+      rating_times.value = { bare: { [Rating.Again]: '1d', [Rating.Good]: '3d' }, label: {} }
+      const wrapper = mountSimple()
+
+      expect(wrapper.find('[data-testid="rating-buttons__again"]').text()).toContain('Nope')
+      expect(wrapper.find('[data-testid="rating-buttons__good"]').text()).toContain('Got It')
+    })
+  })
+
   // ── Unconditional rendering [obligation] ───────────────────────────────────
   // Single grid row with again + good buttons.
 

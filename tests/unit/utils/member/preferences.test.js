@@ -18,11 +18,19 @@ describe('MEMBER_PREFERENCES_DEFAULTS', () => {
     expect(MEMBER_PREFERENCES_DEFAULTS.accessibility.left_hand).toBe(false)
   })
 
-  test('study defaults to show_all_ratings=true only — no FSRS fields [obligation]', () => {
-    // desired_retention/learning_steps/relearning_steps moved to
-    // review_pacing_presets; MemberPreferences.study was trimmed down to
-    // just show_all_ratings.
-    expect(MEMBER_PREFERENCES_DEFAULTS.study).toEqual({ show_all_ratings: true })
+  // [obligation] show_all_ratings flipped false->true regression guard
+  test('study.show_all_ratings defaults to false (regression guard on the flip from true) [obligation]', () => {
+    expect(MEMBER_PREFERENCES_DEFAULTS.study.show_all_ratings).toBe(false)
+  })
+
+  test('study defaults to the full five-key shape', () => {
+    expect(MEMBER_PREFERENCES_DEFAULTS.study).toEqual({
+      show_all_ratings: false,
+      show_rating_buttons: true,
+      show_button_preview: false,
+      show_card_preview: true,
+      multi_deck_ordering: 'random'
+    })
   })
 })
 
@@ -53,13 +61,13 @@ describe('withMemberPreferencesDefaults', () => {
   test('returns all defaults when called with null', () => {
     const result = withMemberPreferencesDefaults(null)
     expect(result.audio).toEqual({ muted: false, interface_sounds: 5, hover_sounds: 5 })
-    expect(result.study).toEqual({ show_all_ratings: true })
+    expect(result.study.show_all_ratings).toBe(false)
   })
 
   test('returns all defaults when called with undefined', () => {
     const result = withMemberPreferencesDefaults(undefined)
     expect(result.audio).toEqual({ muted: false, interface_sounds: 5, hover_sounds: 5 })
-    expect(result.study).toEqual({ show_all_ratings: true })
+    expect(result.study.show_all_ratings).toBe(false)
   })
 
   // [obligation] partial prefs with no `audio` key → all audio fields default
@@ -110,19 +118,88 @@ describe('withMemberPreferencesDefaults', () => {
 
   // ── study namespace [obligation] ──────────────────────────────────────────
 
-  test('partial prefs with no study key → study defaults to show_all_ratings=true [obligation]', () => {
+  test('partial prefs with no study key → study defaults to the full five-key shape [obligation]', () => {
     const result = withMemberPreferencesDefaults({ accessibility: { left_hand: true } })
-    expect(result.study).toEqual({ show_all_ratings: true })
+    expect(result.study).toEqual({
+      show_all_ratings: false,
+      show_rating_buttons: true,
+      show_button_preview: false,
+      show_card_preview: true,
+      multi_deck_ordering: 'random'
+    })
+  })
+
+  // [obligation] a stored `true` for show_all_ratings survives the default flip
+  test('a stored show_all_ratings=true is preserved even though the default flipped to false [obligation]', () => {
+    const result = withMemberPreferencesDefaults({ study: { show_all_ratings: true } })
+    expect(result.study.show_all_ratings).toBe(true)
   })
 
   test('partial prefs with study.show_all_ratings=false is preserved [obligation]', () => {
     const result = withMemberPreferencesDefaults({ study: { show_all_ratings: false } })
-    expect(result.study).toEqual({ show_all_ratings: false })
+    expect(result.study.show_all_ratings).toBe(false)
+  })
+
+  // [obligation] each new study key falls back to its own default independently
+  test('show_rating_buttons falls back to its default (true) when absent [obligation]', () => {
+    const result = withMemberPreferencesDefaults({ study: { show_all_ratings: true } })
+    expect(result.study.show_rating_buttons).toBe(true)
+  })
+
+  test('a stored show_rating_buttons=false is preserved [obligation]', () => {
+    const result = withMemberPreferencesDefaults({ study: { show_rating_buttons: false } })
+    expect(result.study.show_rating_buttons).toBe(false)
+  })
+
+  test('show_button_preview falls back to its default (false) when absent [obligation]', () => {
+    const result = withMemberPreferencesDefaults({ study: { show_all_ratings: true } })
+    expect(result.study.show_button_preview).toBe(false)
+  })
+
+  test('a stored show_button_preview=true is preserved [obligation]', () => {
+    const result = withMemberPreferencesDefaults({ study: { show_button_preview: true } })
+    expect(result.study.show_button_preview).toBe(true)
+  })
+
+  test('show_card_preview falls back to its default (true) when absent [obligation]', () => {
+    const result = withMemberPreferencesDefaults({ study: { show_all_ratings: true } })
+    expect(result.study.show_card_preview).toBe(true)
+  })
+
+  test('a stored show_card_preview=false is preserved [obligation]', () => {
+    const result = withMemberPreferencesDefaults({ study: { show_card_preview: false } })
+    expect(result.study.show_card_preview).toBe(false)
+  })
+
+  test('multi_deck_ordering falls back to its default ("random") when absent [obligation]', () => {
+    const result = withMemberPreferencesDefaults({ study: { show_all_ratings: true } })
+    expect(result.study.multi_deck_ordering).toBe('random')
+  })
+
+  test('a stored multi_deck_ordering="sequential" is preserved [obligation]', () => {
+    const result = withMemberPreferencesDefaults({ study: { multi_deck_ordering: 'sequential' } })
+    expect(result.study.multi_deck_ordering).toBe('sequential')
+  })
+
+  test('a partial study blob only overrides the given keys, defaulting the rest', () => {
+    const result = withMemberPreferencesDefaults({ study: { show_card_preview: false } })
+    expect(result.study).toEqual({
+      show_all_ratings: false,
+      show_rating_buttons: true,
+      show_button_preview: false,
+      show_card_preview: false,
+      multi_deck_ordering: 'random'
+    })
   })
 
   test('does not mutate MEMBER_PREFERENCES_DEFAULTS', () => {
     const before_audio = { ...MEMBER_PREFERENCES_DEFAULTS.audio }
-    withMemberPreferencesDefaults({ audio: { interface_sounds: 1 } })
+    const before_study = { ...MEMBER_PREFERENCES_DEFAULTS.study }
+    withMemberPreferencesDefaults({
+      audio: { interface_sounds: 1 },
+      study: { show_card_preview: false }
+    })
     expect(MEMBER_PREFERENCES_DEFAULTS.audio).toEqual(before_audio)
+    expect(MEMBER_PREFERENCES_DEFAULTS.study).toEqual(before_study)
   })
 })

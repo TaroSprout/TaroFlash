@@ -17,12 +17,13 @@ const {
   loading,
   editing,
   active_card,
-  active_card_preview,
+  rating_times,
   display_side,
   next_card,
   next_card_side,
   preview_style,
   show_all_ratings,
+  show_card_preview,
   startSession,
   flipCurrentCard,
   onCardReviewed,
@@ -119,7 +120,7 @@ onUnmounted(() => cover_tween?.kill())
         :key="active_card?.id"
         :card="active_card"
         :side="display_side"
-        :options="active_card_preview"
+        :rating_labels="show_card_preview ? rating_times.label : undefined"
         :show_all_ratings="show_all_ratings"
         :cover_override="current_cover"
         @started="startSession"

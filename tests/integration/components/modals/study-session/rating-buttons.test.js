@@ -9,13 +9,29 @@ import { PrimedGradeKey } from '@/views/study-session/session-studying/card/prim
 // rating-buttons/index.vue no longer takes side/show_all_ratings/loading as
 // props — it reads them off the injected StudySessionController.
 
-const { display_side, show_all_ratings, loading } = await vi.hoisted(async () => {
-  const { ref } = await import('vue')
-  return { display_side: ref('cover'), show_all_ratings: ref(false), loading: ref(false) }
-})
+const { display_side, show_all_ratings, show_rating_buttons, loading, show_button_preview } =
+  await vi.hoisted(async () => {
+    const { ref } = await import('vue')
+    return {
+      display_side: ref('cover'),
+      show_all_ratings: ref(false),
+      show_rating_buttons: ref(true),
+      loading: ref(false),
+      show_button_preview: ref(false)
+    }
+  })
+
+const rating_times = { value: { bare: {}, label: {} } }
 
 vi.mock('@/views/study-session/composables/session-controller', () => ({
-  useInjectedStudySessionController: () => ({ display_side, show_all_ratings, loading })
+  useInjectedStudySessionController: () => ({
+    display_side,
+    show_all_ratings,
+    show_rating_buttons,
+    loading,
+    show_button_preview,
+    rating_times
+  })
 }))
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -24,11 +40,13 @@ function mountRatingButtons({
   side = 'cover',
   show_all_ratings: sar = false,
   loading: is_loading = false,
-  primed_grade = null
+  primed_grade = null,
+  show_rating_buttons: srb = true
 } = {}) {
   display_side.value = side
   show_all_ratings.value = sar
   loading.value = is_loading
+  show_rating_buttons.value = srb
 
   return mount(RatingButtons, {
     global: { provide: { [PrimedGradeKey]: ref(primed_grade) } }
@@ -42,6 +60,30 @@ describe('RatingButtons', () => {
     display_side.value = 'cover'
     show_all_ratings.value = false
     loading.value = false
+    show_rating_buttons.value = true
+    show_button_preview.value = false
+    rating_times.value = { bare: {}, label: {} }
+  })
+
+  // ── show_rating_buttons: footprint preserved, not removed [obligation] ─────
+  // Buttons stay mounted (invisible via class) rather than v-if'd away, so the
+  // layout footprint holds steady. Assert via data-testid presence, not the
+  // class that drives the visual hiding.
+
+  describe('show_rating_buttons visibility [obligation]', () => {
+    test('the group and its rating buttons stay in the DOM when show_rating_buttons is false [obligation]', () => {
+      const wrapper = mountRatingButtons({ side: 'back', show_rating_buttons: false })
+      expect(wrapper.find('[data-testid="rating-buttons__group"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="rating-buttons__good"]').exists()).toBe(true)
+    })
+
+    test('the group and its rating buttons are present when show_rating_buttons is true [obligation]', () => {
+      const wrapper = mountRatingButtons({ side: 'back', show_rating_buttons: true })
+      expect(wrapper.find('[data-testid="rating-buttons__group"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="rating-buttons__good"]').exists()).toBe(true)
+    })
   })
 
   // ── side: 'front' ──────────────────────────────────────────────────────────

@@ -34,8 +34,8 @@ type SessionEngineDeps = {
   schedulerFor: (deck_id?: number) => FSRS
   /** Which face the given card's deck opens on (`random` is rolled per card here). */
   startingSideFor: (deck_id?: number) => CardStartingSide
-  /** Whether the merged queue should be shuffled. */
-  shuffle: () => boolean
+  /** Orders the raw merged cards into the study queue (per-deck + session ordering). */
+  orderCards: (cards: Card[]) => Card[]
   /** Called after every state-changing mutation, so the owner can persist. */
   onChange: () => void
 }
@@ -50,7 +50,7 @@ type SessionEngineDeps = {
 export function useSessionEngine({
   schedulerFor,
   startingSideFor,
-  shuffle,
+  orderCards,
   onChange
 }: SessionEngineDeps) {
   const { t } = useI18n()
@@ -118,7 +118,7 @@ export function useSessionEngine({
     _raw_cards.value = raw
     results.value = []
 
-    const ordered = shuffle() ? _shuffle(_raw_cards.value) : _raw_cards.value
+    const ordered = orderCards(_raw_cards.value)
     _cards_in_deck.value = ordered.map(_setupCard)
 
     active_card.value = cards.value.find((c) => c.state === 'unreviewed')
@@ -283,19 +283,6 @@ export function useSessionEngine({
   function _setupCard(card: Card): StudyCard {
     const review = card.review ?? (createEmptyCard(new Date()) as Review)
     return { ...card, review, state: 'unreviewed' }
-  }
-
-  /**
-   * Fisher-Yates. `sort(() => Math.random() - 0.5)` is a known-biased shuffle
-   * (comparator-sort shuffles skew depending on the engine's sort), not uniform.
-   */
-  function _shuffle<T>(items: T[]): T[] {
-    const result = [...items]
-    for (let i = result.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[result[i], result[j]] = [result[j], result[i]]
-    }
-    return result
   }
 
   return {

@@ -42,7 +42,13 @@ beforeEach(() => {
     preferences: {
       accessibility: { left_hand: false },
       audio: { muted: false, interface_sounds: 5, hover_sounds: 5 },
-      study: { show_all_ratings: true }
+      study: {
+        show_all_ratings: true,
+        show_rating_buttons: true,
+        show_button_preview: false,
+        show_card_preview: true,
+        multi_deck_ordering: 'random'
+      }
     },
     cover: { palette: 'green', pattern: 'bank-note' }
   })
@@ -76,7 +82,13 @@ describe('useMemberEditor', () => {
     mockMember.preferences = {
       accessibility: { left_hand: true },
       audio: { muted: false, interface_sounds: 2, hover_sounds: 3 },
-      study: { show_all_ratings: false }
+      study: {
+        show_all_ratings: false,
+        show_rating_buttons: true,
+        show_button_preview: false,
+        show_card_preview: true,
+        multi_deck_ordering: 'random'
+      }
     }
     const editor = useMemberEditor()
     expect(editor.draft.preferences).toEqual(mockMember.preferences)
@@ -158,7 +170,11 @@ describe('useMemberEditor', () => {
         accessibility: { left_hand: false },
         audio: { muted: false, interface_sounds: 5, hover_sounds: 5 },
         study: {
-          show_all_ratings: true
+          show_all_ratings: true,
+          show_rating_buttons: true,
+          show_button_preview: false,
+          show_card_preview: true,
+          multi_deck_ordering: 'random'
         }
       },
       cover_config: { palette: 'green', pattern: 'bank-note' }

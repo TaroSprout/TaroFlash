@@ -102,11 +102,11 @@ describe('UiOptionGroup', () => {
 
   // ── Sfx [obligation] ──────────────────────────────────────────────────────
 
-  test('clicking an inactive option plays snappy_button_5 [obligation]', async () => {
+  test('clicking an inactive option plays select [obligation]', async () => {
     const wrapper = mountOptionGroup({ value: 'simple' })
     await getOptions(wrapper)[1].trigger('click')
     await flushPromises()
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('select')
   })
 
   test('clicking the already-active option plays digi_powerdown [obligation]', async () => {

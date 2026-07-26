@@ -83,6 +83,34 @@ function toRelativeAtUnit(
  * to days would show "0 days" — and renders in hours instead, even while
  * its siblings stay at day granularity.
  */
+// Largest-first, with the compact abbreviation each unit prints. Weeks are
+// deliberately omitted so a "6 day" interval reads "6d", never "1w".
+const SHORT_UNITS: [number, string][] = [
+  [31_536_000, 'y'],
+  [2_592_000, 'mo'],
+  [86_400, 'd'],
+  [3_600, 'h'],
+  [60, 'min'],
+  [1, 's']
+]
+
+/**
+ * Compact absolute duration from now for tight UI (e.g. rating buttons):
+ * magnitude only, no "in"/"ago" direction and no trailing period — "1min",
+ * "1d", "2mo". Use `toRelative` instead for higher-fidelity prose. Rounds to
+ * the nearest unit.
+ */
+export function toShortDuration(input: DateInput): string {
+  const diffSeconds = Math.abs((toDate(input).getTime() - Date.now()) / 1000)
+
+  for (const [perUnit, abbr] of SHORT_UNITS) {
+    const rounded = Math.round(diffSeconds / perUnit)
+    if (rounded >= 1) return `${rounded}${abbr}`
+  }
+
+  return 'now'
+}
+
 export function toRelativeDistinct(inputs: DateInput[], options: RelativeOptions = {}): string[] {
   const labels = inputs.map((d) => toRelative(d, options))
   const has_collision = labels.some((label, i) =>

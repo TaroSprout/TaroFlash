@@ -4,7 +4,8 @@ import {
   localDayStart,
   formatShortDate,
   toRelative,
-  toRelativeDistinct
+  toRelativeDistinct,
+  toShortDuration
 } from '@/utils/date'
 
 describe('isoNow', () => {
@@ -157,6 +158,94 @@ describe('toRelative', () => {
 
     expect(toRelative(twentyEightDays, { locale: 'en-US' })).toBe('in 1 month')
     expect(toRelative(thirtyDays, { locale: 'en-US' })).toBe('in 1 month')
+  })
+})
+
+// ── toShortDuration [obligation] ────────────────────────────────────────────
+
+describe('toShortDuration [obligation]', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-15T12:00:00.000Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  test('magnitude only — no "in"/"ago" direction [obligation]', () => {
+    const inOneDay = new Date(Date.now() + 86_400_000)
+    const agoOneDay = new Date(Date.now() - 86_400_000)
+
+    expect(toShortDuration(inOneDay)).toBe('1d')
+    expect(toShortDuration(agoOneDay)).toBe('1d')
+  })
+
+  test('no trailing period on the abbreviation', () => {
+    const inOneDay = new Date(Date.now() + 86_400_000)
+    expect(toShortDuration(inOneDay)).not.toMatch(/\.$/)
+  })
+
+  test('weeks are omitted — a 6-day interval reads "6d", never "1w" [obligation]', () => {
+    const sixDays = new Date(Date.now() + 6 * 86_400_000)
+    expect(toShortDuration(sixDays)).toBe('6d')
+  })
+
+  test('a 7-day interval also reads in days, not weeks [obligation]', () => {
+    const sevenDays = new Date(Date.now() + 7 * 86_400_000)
+    expect(toShortDuration(sevenDays)).toBe('7d')
+  })
+
+  test('renders years with the "y" abbreviation', () => {
+    const twoYears = new Date(Date.now() + 2 * 31_536_000 * 1000)
+    expect(toShortDuration(twoYears)).toBe('2y')
+  })
+
+  test('renders months with the "mo" abbreviation', () => {
+    const threeMonths = new Date(Date.now() + 3 * 2_592_000 * 1000)
+    expect(toShortDuration(threeMonths)).toBe('3mo')
+  })
+
+  test('renders hours with the "h" abbreviation', () => {
+    const fiveHours = new Date(Date.now() + 5 * 3_600 * 1000)
+    expect(toShortDuration(fiveHours)).toBe('5h')
+  })
+
+  test('renders minutes with the "min" abbreviation', () => {
+    const tenMinutes = new Date(Date.now() + 10 * 60 * 1000)
+    expect(toShortDuration(tenMinutes)).toBe('10min')
+  })
+
+  test('renders seconds with the "s" abbreviation', () => {
+    // Below 30s so it doesn't round up into the minute bucket (round(x/60) >= 1
+    // needs x >= 30).
+    const fifteenSeconds = new Date(Date.now() + 15 * 1000)
+    expect(toShortDuration(fifteenSeconds)).toBe('15s')
+  })
+
+  test('rounds to the nearest unit: 1.4 days rounds down to "1d"', () => {
+    const oneAndABitDays = new Date(Date.now() + 1.4 * 86_400_000)
+    expect(toShortDuration(oneAndABitDays)).toBe('1d')
+  })
+
+  test('rounds to the nearest unit: 1.6 days rounds up to "2d"', () => {
+    const almostTwoDays = new Date(Date.now() + 1.6 * 86_400_000)
+    expect(toShortDuration(almostTwoDays)).toBe('2d')
+  })
+
+  test('sub-second differences render "now"', () => {
+    const almostNow = new Date(Date.now() + 400)
+    expect(toShortDuration(almostNow)).toBe('now')
+  })
+
+  test('accepts a Date, ISO string, and millisecond epoch', () => {
+    const inOneDay = new Date(Date.now() + 86_400_000)
+    const iso = inOneDay.toISOString()
+    const ms = inOneDay.getTime()
+
+    expect(toShortDuration(inOneDay)).toBe('1d')
+    expect(toShortDuration(iso)).toBe('1d')
+    expect(toShortDuration(ms)).toBe('1d')
   })
 })
 

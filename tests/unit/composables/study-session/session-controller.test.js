@@ -79,15 +79,16 @@ vi.mock('@/views/study-session/composables/session-engine', () => ({
 const { capturedResolution } = vi.hoisted(() => ({ capturedResolution: { current: null } }))
 
 vi.mock('@/views/study-session/deck-resolution', () => ({
-  buildDeckResolution: (decksGetter) => {
+  buildDeckResolution: (decksGetter, orderingGetter) => {
     const resolution = {
       appearanceFor: vi.fn(() => ({})),
       schedulerFor: vi.fn(),
       startingSideFor: vi.fn((deck_id) => (deck_id === 2 ? 'back' : 'front')),
       thresholdFor: vi.fn(() => 8),
       covers: { value: [] },
-      shuffle: { value: false },
-      _decksGetter: decksGetter
+      orderCards: vi.fn((cards) => cards),
+      _decksGetter: decksGetter,
+      _orderingGetter: orderingGetter
     }
     capturedResolution.current = resolution
     return resolution
@@ -139,16 +140,49 @@ vi.mock('@/views/study-session/composables/session-cards', () => ({
   }
 }))
 
-const { mockShowAllRatings, mockToggleRatings } = await vi.hoisted(async () => {
+const {
+  mockShowAllRatings,
+  mockShowRatingButtons,
+  mockShowButtonPreview,
+  mockShowCardPreview,
+  mockMultiDeckOrdering,
+  mockPrefsAreDefault,
+  mockToggleRatings,
+  mockResetToDefaults
+} = await vi.hoisted(async () => {
   const { ref } = await import('vue')
-  return { mockShowAllRatings: ref(false), mockToggleRatings: vi.fn() }
+  return {
+    mockShowAllRatings: ref(false),
+    mockShowRatingButtons: ref(true),
+    mockShowButtonPreview: ref(false),
+    mockShowCardPreview: ref(true),
+    mockMultiDeckOrdering: ref('random'),
+    mockPrefsAreDefault: ref(true),
+    mockToggleRatings: vi.fn(),
+    mockResetToDefaults: vi.fn()
+  }
 })
 
 vi.mock('@/views/study-session/composables/session-prefs', () => ({
   useSessionPrefs: () => ({
     show_all_ratings: mockShowAllRatings,
-    toggleRatings: mockToggleRatings
+    show_rating_buttons: mockShowRatingButtons,
+    show_button_preview: mockShowButtonPreview,
+    show_card_preview: mockShowCardPreview,
+    multi_deck_ordering: mockMultiDeckOrdering,
+    is_default: mockPrefsAreDefault,
+    toggleRatings: mockToggleRatings,
+    resetToDefaults: mockResetToDefaults
   })
+}))
+
+const { mockRatingTimes } = await vi.hoisted(async () => {
+  const { ref } = await import('vue')
+  return { mockRatingTimes: ref({ bare: {}, label: {} }) }
+})
+
+vi.mock('@/views/study-session/composables/rating-times', () => ({
+  useRatingTimes: () => mockRatingTimes
 }))
 
 const { mockFlushDeckReviews } = vi.hoisted(() => ({ mockFlushDeckReviews: vi.fn() }))
@@ -206,7 +240,14 @@ describe('session-controller', () => {
     mockStartingSideForCard.mockClear()
     mockFlushDeckReviews.mockClear()
     mockToggleRatings.mockClear()
+    mockResetToDefaults.mockClear()
     mockShowAllRatings.value = false
+    mockShowRatingButtons.value = true
+    mockShowButtonPreview.value = false
+    mockShowCardPreview.value = true
+    mockMultiDeckOrdering.value = 'random'
+    mockPrefsAreDefault.value = true
+    mockRatingTimes.value = { bare: {}, label: {} }
     capturedEngineDeps.current = null
     sessionStorage.clear()
   })
@@ -353,6 +394,38 @@ describe('session-controller', () => {
     expect(mockToggleRatings).toHaveBeenCalledOnce()
   })
 
+  test('resetToDefaults delegates to the session-prefs seam', () => {
+    const { controller } = makeController()
+    controller.resetToDefaults()
+    expect(mockResetToDefaults).toHaveBeenCalledOnce()
+  })
+
+  // ── settings page state ─────────────────────────────────────────────────
+
+  test('active_page starts as null', () => {
+    const { controller } = makeController()
+    expect(controller.active_page.value).toBeNull()
+  })
+
+  test('openSettings sets active_page to "settings"', () => {
+    const { controller } = makeController()
+    controller.openSettings()
+    expect(controller.active_page.value).toBe('settings')
+  })
+
+  test('closeSettings returns active_page to null', () => {
+    const { controller } = makeController()
+    controller.openSettings()
+    controller.closeSettings()
+    expect(controller.active_page.value).toBeNull()
+  })
+
+  test('exposes rating_times from useRatingTimes verbatim', () => {
+    mockRatingTimes.value = { bare: { 1: '1d' }, label: { 1: 'Study again in 1 day' } }
+    const { controller } = makeController()
+    expect(controller.rating_times.value).toEqual(mockRatingTimes.value)
+  })
+
   // ── can_edit ─────────────────────────────────────────────────────────────
 
   test('can_edit is true only when not loading, not editing, and not is_cover', () => {
@@ -394,14 +467,21 @@ describe('session-controller', () => {
 
   // ── engine deps: injected deck-resolution accessors, seed = engine.setCards ─
 
-  test('the engine is wired to the deck-resolution schedulerFor/startingSideFor and shuffle accessors [obligation]', () => {
+  test('the engine is wired to the deck-resolution schedulerFor/startingSideFor/orderCards accessors [obligation]', () => {
     makeController()
 
     expect(capturedEngineDeps.current.schedulerFor).toBe(capturedResolution.current.schedulerFor)
     expect(capturedEngineDeps.current.startingSideFor).toBe(
       capturedResolution.current.startingSideFor
     )
-    expect(capturedEngineDeps.current.shuffle()).toBe(false)
+    expect(capturedEngineDeps.current.orderCards).toBe(capturedResolution.current.orderCards)
+  })
+
+  test('buildDeckResolution receives the multi_deck_ordering pref as its ordering getter [obligation]', () => {
+    mockMultiDeckOrdering.value = 'even_spread'
+    makeController()
+
+    expect(capturedResolution.current._orderingGetter()).toBe('even_spread')
   })
 
   test('useSessionCards seed is wired straight to engine.setCards [obligation]', () => {
