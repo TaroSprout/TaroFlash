@@ -39,6 +39,16 @@ watch(
 )
 
 watch(
+  () => member.profile_missing,
+  (missing) => {
+    if (!missing) return
+
+    session.forceLogout('account-deleted')
+  },
+  { immediate: true }
+)
+
+watch(
   () => member.preferences,
   (prefs) => {
     const resolved = withMemberPreferencesDefaults(prefs)

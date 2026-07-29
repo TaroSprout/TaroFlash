@@ -10,6 +10,7 @@ export const useMemberStore = defineStore('member', () => {
   const query = useCurrentMemberQuery()
   const member = query.data
   const error = query.error
+  const status = query.status
 
   // `id` is sourced from the session (set synchronously once auth restores),
   // not the member-profile query. Downstream api calls that scope queries by
@@ -33,8 +34,18 @@ export const useMemberStore = defineStore('member', () => {
 
   const has_member = computed(() => Boolean(id.value))
 
+  // The account was deleted server-side while the JWT is still valid: auth
+  // says we're logged in, but the profile fetch succeeded with zero rows
+  // (`fetchMemberById` resolves PGRST116 to null rather than throwing, so
+  // `error` stays empty). Only trustworthy once the query has settled —
+  // `data` is null while pending too.
+  const profile_missing = computed(
+    () => session.authenticated && status.value === 'success' && member.value == null
+  )
+
   return {
     has_member,
+    profile_missing,
     display_name,
     description,
     email,

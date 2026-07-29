@@ -33,6 +33,17 @@ import { useNoticeStore } from '@/stores/notice-store'
 import { useTaroPhoneStore } from '@/stores/taro-phone'
 import { closeAll as closeAllModals } from '@/composables/modal'
 
+/** Why a session was torn down without the member asking to log out. */
+export type ForceLogoutReason = 'expired' | 'account-deleted'
+
+const FORCE_LOGOUT_COPY: Record<ForceLogoutReason, { message: string; sub_message?: string }> = {
+  expired: { message: 'session.expired-error' },
+  'account-deleted': {
+    message: 'member.account-deleted',
+    sub_message: 'member.account-deleted-sub'
+  }
+}
+
 export const useSessionStore = defineStore('sessionStore', () => {
   const router = useRouter()
   const { t } = useI18n()
@@ -115,13 +126,17 @@ export const useSessionStore = defineStore('sessionStore', () => {
   }
 
   // Same end state as logout(), but skipped when already logged out (avoids
-  // reacting to its own signOut() call below) and shows a "session expired"
-  // notice instead of silently redirecting.
-  async function forceLogout(): Promise<void> {
+  // reacting to its own signOut() call below) and explains why the session
+  // ended instead of silently redirecting. `reason` only picks the copy —
+  // every reason gets the same teardown + redirect.
+  async function forceLogout(reason: ForceLogoutReason = 'expired'): Promise<void> {
     if (!authenticated.value) return
 
+    const copy = FORCE_LOGOUT_COPY[reason]
+
     reset()
-    notice.warn(t('session.expired-error'), {
+    notice.warn(t(copy.message), {
+      subMessage: copy.sub_message ? t(copy.sub_message) : undefined,
       variant: 'panel',
       persist: true,
       closable: false,
@@ -229,6 +244,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
     checkPasswordRecovery,
     restoreSession,
     logout,
+    forceLogout,
     handleAuthError,
     signupEmail,
     signInOAuth,

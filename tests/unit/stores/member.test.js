@@ -1,17 +1,20 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { setActivePinia, createPinia } from 'pinia'
 
-const { memberRef, sessionUser } = vi.hoisted(() => ({
+const { memberRef, sessionUser, sessionAuthenticated } = vi.hoisted(() => ({
   memberRef: { value: null },
-  sessionUser: { value: null }
+  sessionUser: { value: null },
+  sessionAuthenticated: { value: false }
 }))
 
 vi.mock('@/api/members', async () => {
   const { ref } = await vi.importActual('vue')
   const errorRef = ref(null)
+  const statusRef = ref('pending')
   return {
-    useCurrentMemberQuery: () => ({ data: memberRef, error: errorRef }),
-    __mockMemberError: errorRef
+    useCurrentMemberQuery: () => ({ data: memberRef, error: errorRef, status: statusRef }),
+    __mockMemberError: errorRef,
+    __mockMemberStatus: statusRef
   }
 })
 
@@ -19,19 +22,27 @@ vi.mock('@/stores/session', () => ({
   useSessionStore: () => ({
     get user() {
       return sessionUser.value
+    },
+    get authenticated() {
+      return sessionAuthenticated.value
     }
   })
 }))
 
 import { useMemberStore } from '@/stores/member'
-import { __mockMemberError as memberErrorRef } from '@/api/members'
+import {
+  __mockMemberError as memberErrorRef,
+  __mockMemberStatus as memberStatusRef
+} from '@/api/members'
 
 describe('useMemberStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     memberRef.value = null
     sessionUser.value = null
+    sessionAuthenticated.value = false
     memberErrorRef.value = null
+    memberStatusRef.value = 'pending'
   })
 
   test('all fields are undefined and has_member is false when nothing is loaded', () => {
@@ -187,6 +198,65 @@ describe('useMemberStore', () => {
 
       expect(store.deck_limit).toBeNull()
       expect(store.cards_per_deck_limit).toBeNull()
+    })
+  })
+
+  // ── profile_missing — deleted account with a still-valid JWT ───────────────
+
+  describe('profile_missing', () => {
+    test('is false while the profile query is still pending', () => {
+      sessionAuthenticated.value = true
+      sessionUser.value = { id: 'user-1' }
+      memberStatusRef.value = 'pending'
+      memberRef.value = null
+
+      const store = useMemberStore()
+
+      expect(store.profile_missing).toBe(false)
+    })
+
+    test('is true once the query settles successfully with no row', () => {
+      sessionAuthenticated.value = true
+      sessionUser.value = { id: 'user-1' }
+      memberStatusRef.value = 'success'
+      memberRef.value = null
+
+      const store = useMemberStore()
+
+      expect(store.profile_missing).toBe(true)
+    })
+
+    test('is false when the settled query returned a member row', () => {
+      sessionAuthenticated.value = true
+      sessionUser.value = { id: 'user-1' }
+      memberStatusRef.value = 'success'
+      memberRef.value = { id: 'user-1' }
+
+      const store = useMemberStore()
+
+      expect(store.profile_missing).toBe(false)
+    })
+
+    test('is false when the query errored — that is a load failure, not a deletion', () => {
+      sessionAuthenticated.value = true
+      sessionUser.value = { id: 'user-1' }
+      memberStatusRef.value = 'error'
+      memberRef.value = null
+      memberErrorRef.value = new Error('fetch failed')
+
+      const store = useMemberStore()
+
+      expect(store.profile_missing).toBe(false)
+    })
+
+    test('is false when logged out, even with a settled empty query', () => {
+      sessionAuthenticated.value = false
+      memberStatusRef.value = 'success'
+      memberRef.value = null
+
+      const store = useMemberStore()
+
+      expect(store.profile_missing).toBe(false)
     })
   })
 

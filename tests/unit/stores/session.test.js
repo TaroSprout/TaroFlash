@@ -497,6 +497,59 @@ describe('useSessionStore', () => {
     })
   })
 
+  describe('forceLogout reason copy', () => {
+    async function authenticatedStore() {
+      mockGetSession.mockResolvedValueOnce({ user: { id: 'u1', aud: 'authenticated' } })
+      mockLogout.mockResolvedValueOnce(undefined)
+      const store = useSessionStore()
+      await store.restoreSession()
+      return store
+    }
+
+    test('defaults to the session-expired copy with no sub-message', async () => {
+      const store = await authenticatedStore()
+
+      await store.forceLogout()
+
+      expect(mockNotice.warn).toHaveBeenCalledWith(
+        'session.expired-error',
+        expect.objectContaining({ subMessage: undefined, variant: 'panel' })
+      )
+    })
+
+    test('uses the account-deleted copy when that reason is given', async () => {
+      const store = await authenticatedStore()
+
+      await store.forceLogout('account-deleted')
+
+      expect(mockNotice.warn).toHaveBeenCalledWith(
+        'member.account-deleted',
+        expect.objectContaining({
+          subMessage: 'member.account-deleted-sub',
+          variant: 'panel',
+          persist: true,
+          closable: false
+        })
+      )
+    })
+
+    test('account-deleted runs the same teardown and welcome redirect as any forced logout', async () => {
+      const store = await authenticatedStore()
+
+      await store.forceLogout('account-deleted')
+
+      expect(store.user).toBeUndefined()
+      expect(mockCloseAllModals).toHaveBeenCalled()
+      expect(mockTaroPhoneReset).toHaveBeenCalled()
+      expect(mockLogout).toHaveBeenCalledOnce()
+
+      const [, options] = mockNotice.warn.mock.calls[0]
+      options.onDismiss()
+
+      expect(mockPush).toHaveBeenCalledWith({ name: 'welcome' })
+    })
+  })
+
   describe('forceLogout guard [obligation]', () => {
     test('is a no-op when already logged out, preventing its own supaLogout from re-triggering it [obligation]', async () => {
       // Store is never authenticated in this test (no restoreSession call).
