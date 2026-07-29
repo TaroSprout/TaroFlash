@@ -152,6 +152,13 @@
   --color-ink-muted: var(--chrome-ink-muted);
 }
 
+/* The float hairline tracks --color-float, so it is fixed per mode too. Stone
+ * rather than grey in dark: float is stone-family there, and grey belongs to
+ * the surface ramp. Light base (brown-300) lives in main.css @theme. */
+:root[data-mode='dark'] {
+  --color-float-line: var(--color-stone-900);
+}
+
 /* ─── TIER 2: RAISED ELEMENTS + THE CARD EXCEPTION ──────────────────── */
 
 /* Neutral element resting on a surface (non-accent buttons, chips). It reads by

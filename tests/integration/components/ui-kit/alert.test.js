@@ -88,3 +88,39 @@ describe('UiAlert — request-close dismissal [obligation]', () => {
     expect(close).not.toHaveBeenCalled()
   })
 })
+
+// ── mobile layout utilities ───────────────────────────────────────────────────
+
+describe('UiAlert — mobile layout', () => {
+  test('alert box swaps fixed width for edge margin below the mobile threshold', () => {
+    const { wrapper } = makeWrapper()
+    const classes = wrapper.find('[data-testid="ui-kit-alert"]').classes()
+    expect(classes).toContain('w-115')
+    expect(classes).toContain('max-xs:w-auto')
+    expect(classes).toContain('max-xs:max-w-full')
+    expect(classes).toContain('max-xs:mx-4')
+  })
+
+  test('actions row stacks vertically with a horizontal divider below the mobile threshold', () => {
+    const { wrapper } = makeWrapper({ confirmLabel: 'Delete it' })
+    const classes = wrapper.find('[data-testid="ui-kit-alert__actions"]').classes()
+    expect(classes).toContain('divide-x')
+    expect(classes).toContain('max-xs:flex-col')
+    expect(classes).toContain('max-xs:divide-x-0')
+    expect(classes).toContain('max-xs:divide-y')
+  })
+})
+
+// ── Confirm palette ───────────────────────────────────────────────────────────
+
+describe('UiAlert — confirm palette', () => {
+  test('defaults to the danger palette', () => {
+    const { wrapper } = makeWrapper({ confirmLabel: 'Delete it' })
+    expect(confirmButton(wrapper).attributes('data-palette')).toBe('danger')
+  })
+
+  test('uses the info palette for info alerts', () => {
+    const { wrapper } = makeWrapper({ confirmLabel: 'Got it', type: 'info' })
+    expect(confirmButton(wrapper).attributes('data-palette')).toBe('info')
+  })
+})
