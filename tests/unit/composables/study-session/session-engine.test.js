@@ -610,16 +610,20 @@ describe('review-save failure surface [obligation]', () => {
 // ── Restore queue lock ──────────────────────────────────────────────────────
 
 describe('restore queue lock', () => {
-  test('rebuilds already-reviewed cards from results alone, without needing them in raw [obligation]', () => {
+  test('rebuilds a reviewed card from the fetched card — carrying its full back text/images, not a stub [obligation]', () => {
     const { engine } = makeEngine()
-    const c1 = makeCard({ id: 601, deck_id: 1 })
+    const c1 = makeCard({
+      id: 601,
+      deck_id: 1,
+      back_text: 'Full back text',
+      back_image_path: 'img.png'
+    })
     const c2 = makeCard({ id: 602, deck_id: 1 })
     const persisted = {
       card_ids: [c1.id, c2.id],
       results: [
         {
           card_id: c1.id,
-          front_text: 'Reviewed front',
           is_new: true,
           before_interval: 0,
           after_interval: 1,
@@ -630,21 +634,58 @@ describe('restore queue lock', () => {
       completed: false
     }
 
-    // raw only contains the unreviewed remainder (c2) — c1 is never fetched.
-    engine.restoreCards([c2], persisted)
+    // raw is the WHOLE locked queue now — reviewed cards are fetched too.
+    engine.restoreCards([c1, c2], persisted)
 
-    expect(engine.cards.value.map((c) => c.id)).toEqual([c1.id, c2.id])
-    expect(engine.cards.value.find((c) => c.id === c1.id)).toEqual({
-      id: c1.id,
-      front_text: 'Reviewed front',
-      state: 'passed'
-    })
+    const restored_c1 = engine.cards.value.find((c) => c.id === c1.id)
+    expect(restored_c1.state).toBe('passed')
+    expect(restored_c1.back_text).toBe('Full back text')
+    expect(restored_c1.back_image_path).toBe('img.png')
+  })
+
+  test('stamps a reviewed card passed/failed from results, so active_card and _advance never re-serve it [obligation]', () => {
+    const { engine } = makeEngine()
+    const c1 = makeCard({ id: 605, deck_id: 1 })
+    const c2 = makeCard({ id: 606, deck_id: 1 })
+    const persisted = {
+      card_ids: [c1.id, c2.id],
+      results: [
+        {
+          card_id: c1.id,
+          is_new: false,
+          before_interval: 1,
+          after_interval: 2,
+          lapses: 0,
+          passed: false
+        }
+      ],
+      completed: false
+    }
+
+    engine.restoreCards([c1, c2], persisted)
+
+    expect(engine.active_card.value?.id).toBe(c2.id)
+    expect(engine.cards.value.find((c) => c.id === c1.id).state).toBe('failed')
+
+    // Advance past c2 (the only unreviewed card) — c1 must never resurface.
+    engine.reviewCard(Rating.Good)
+    expect(engine.state.value).toBe('summary')
+  })
+
+  test('drops a persisted card id the restore fetch did not return (deleted mid-session) [obligation]', () => {
+    const { engine } = makeEngine()
+    const c1 = makeCard({ id: 603, deck_id: 1 })
+
+    // c2's id is persisted but not present in the fetched `raw` — deleted mid-session.
+    engine.restoreCards([c1], { card_ids: [c1.id, 999], results: [], completed: false })
+
+    expect(engine.cards.value.map((c) => c.id)).toEqual([c1.id])
   })
 
   test('excludes a raw card not present in persisted.card_ids (locked-queue guarantee)', () => {
     const { engine } = makeEngine()
-    const c1 = makeCard({ id: 603, deck_id: 1 })
-    const leaked = makeCard({ id: 604, deck_id: 1 })
+    const c1 = makeCard({ id: 607, deck_id: 1 })
+    const leaked = makeCard({ id: 608, deck_id: 1 })
 
     engine.restoreCards([c1, leaked], { card_ids: [c1.id], results: [], completed: false })
 

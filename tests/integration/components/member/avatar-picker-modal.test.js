@@ -29,6 +29,14 @@ const DialogCardStub = defineComponent({
   }
 })
 
+const DialogCardBodyStub = defineComponent({
+  name: 'DialogCardBody',
+  inheritAttrs: false,
+  setup(_props, { slots, attrs }) {
+    return () => h('div', { ...attrs }, slots.default?.())
+  }
+})
+
 import AvatarPickerModal from '@/components/member/avatar-picker-modal.vue'
 import AvatarImage from '@/components/member/avatar-image.vue'
 
@@ -36,7 +44,7 @@ function mountModal(props = {}) {
   return shallowMount(AvatarPickerModal, {
     props: { close: vi.fn(), ...props },
     global: {
-      stubs: { DialogCard: DialogCardStub },
+      stubs: { DialogCard: DialogCardStub, DialogCardBody: DialogCardBodyStub },
       directives: { sfx: {} }
     }
   })
@@ -136,6 +144,25 @@ describe('AvatarPickerModal', () => {
 
     expect(option.find('[data-testid="avatar-picker-modal__skeleton"]').exists()).toBe(false)
     expect(option.findComponent(AvatarImage).exists()).toBe(true)
+  })
+
+  // ── dialog-card-body migration [obligation] ────────────────────────────────
+  // Scrolling now belongs to dialog-card-body; the grid itself no longer owns
+  // a template ref or a viewport-driven data-full-bleed attribute.
+
+  test('the grid no longer carries a data-full-bleed attribute [obligation]', () => {
+    const wrapper = mountModal()
+    expect(
+      wrapper.find('[data-testid="avatar-picker-modal__grid"]').attributes('data-full-bleed')
+    ).toBeUndefined()
+  })
+
+  test('the scroll area is rendered by dialog-card-body, not a hand-rolled overflow div [obligation]', () => {
+    const wrapper = mountModal()
+    expect(wrapper.findComponent(DialogCardBodyStub).exists()).toBe(true)
+    expect(wrapper.findComponent(DialogCardBodyStub).attributes('data-testid')).toBe(
+      'avatar-picker-modal__scroll-area'
+    )
   })
 
   test('resolving one option does not reveal the skeleton on other options', async () => {

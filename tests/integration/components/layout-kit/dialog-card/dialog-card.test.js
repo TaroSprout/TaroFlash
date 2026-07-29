@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, shallowMount } from '@vue/test-utils'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, ref } from 'vue'
 import { provideDepth } from '@/composables/ui/depth'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
@@ -168,7 +168,7 @@ describe('DialogCard', () => {
       )
     })
 
-    test('size="lg" applies w-160 h-170, full_bleed_at "w<sm | h<md", and a 35rem content max width', () => {
+    test('size="lg" applies w-160 h-170, full_bleed_at "w<sm | h<md", and a 37rem content max width', () => {
       const wrapper = mountCard({ size: 'lg' })
       const classes = wrapper.find('[data-testid="dialog-card"]').classes()
 
@@ -177,7 +177,7 @@ describe('DialogCard', () => {
       expect(capturedQueries).toContain('w<sm | h<md')
       expect(capturedQueries).not.toContain('w<sm | h<sm')
       expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
-        '--content-grid-max-width: 35rem'
+        '--content-grid-max-width: 37rem'
       )
     })
 
@@ -489,7 +489,7 @@ describe('DialogCard', () => {
       matchState.value = false
       const wrapper = mountCard({ size: 'lg' })
       expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
-        '--content-grid-max-width: 35rem'
+        '--content-grid-max-width: 37rem'
       )
     })
 
@@ -499,6 +499,46 @@ describe('DialogCard', () => {
       expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
         '--content-grid-max-width: 50rem'
       )
+    })
+  })
+
+  // ── #toolbar slot reacts to being toggled [obligation] ──────────────────────
+  // `slots.toolbar` is read from plain functions called in the template, not a
+  // computed — useSlots() isn't reactive, so a computed would cache the first
+  // answer and never see a conditionally-rendered #toolbar slot appear.
+
+  describe('#toolbar slot reactivity [obligation]', () => {
+    test('grid-rows class and --dialog-body-pb flip when a v-if toolbar slot toggles on', async () => {
+      const Parent = defineComponent({
+        setup() {
+          const show_toolbar = ref(false)
+          return { show_toolbar }
+        },
+        render() {
+          return h(
+            DialogCard,
+            { size: 'md' },
+            this.show_toolbar ? { toolbar: () => h('div', 'toolbar') } : {}
+          )
+        }
+      })
+
+      const wrapper = mount(Parent, {
+        global: { stubs: { UiButton: UiButtonStub, DialogCardHeader: false } }
+      })
+      const card = wrapper.find('[data-testid="dialog-card"]')
+
+      expect(card.classes()).toContain('grid-rows-[auto_minmax(0,1fr)]')
+      expect(card.attributes('style')).toContain('--dialog-body-pb: var(--dialog-px)')
+      expect(wrapper.find('[data-testid="dialog-card__toolbar"]').exists()).toBe(false)
+
+      wrapper.vm.show_toolbar = true
+      await wrapper.vm.$nextTick()
+
+      const card_after = wrapper.find('[data-testid="dialog-card"]')
+      expect(card_after.classes()).toContain('grid-rows-[auto_minmax(0,1fr)_auto]')
+      expect(card_after.attributes('style')).toContain('--dialog-body-pb: 0px')
+      expect(wrapper.find('[data-testid="dialog-card__toolbar"]').exists()).toBe(true)
     })
   })
 })

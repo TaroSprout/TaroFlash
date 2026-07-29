@@ -420,6 +420,26 @@ describe('session-controller', () => {
     expect(controller.active_page.value).toBeNull()
   })
 
+  // ── summary category page state [obligation] ──────────────────────────────
+
+  test('summary_category starts as null', () => {
+    const { controller } = makeController()
+    expect(controller.summary_category.value).toBeNull()
+  })
+
+  test('openSummaryCategory sets summary_category to the given category [obligation]', () => {
+    const { controller } = makeController()
+    controller.openSummaryCategory('stuck')
+    expect(controller.summary_category.value).toBe('stuck')
+  })
+
+  test('closeSummaryCategory returns summary_category to null [obligation]', () => {
+    const { controller } = makeController()
+    controller.openSummaryCategory('stuck')
+    controller.closeSummaryCategory()
+    expect(controller.summary_category.value).toBeNull()
+  })
+
   test('exposes rating_times from useRatingTimes verbatim', () => {
     mockRatingTimes.value = { bare: { 1: '1d' }, label: { 1: 'Study again in 1 day' } }
     const { controller } = makeController()
