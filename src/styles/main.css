@@ -93,6 +93,13 @@
   --color-ink: var(--color-brown-700);
   --color-ink-muted: var(--color-brown-500);
 
+  /* Hairline that reads ON a float surface (dialog borders, action dividers).
+     --color-below is the depth-ramp's "one step down", which assumes the
+     surface above it is --color-surface; on a float it lands LIGHTER than the
+     thing it divides and disappears. Fixed per mode like --color-float itself,
+     never depth-derived. Dark rendition (stone-900) is in depth.css. */
+  --color-float-line: var(--color-brown-300);
+
   /* Raised neutral element resting on a surface (non-accent buttons, chips).
      Stone family in dark. Depth-relative — overridden per depth in depth.css. */
   --color-element: var(--color-brown-300);
