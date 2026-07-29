@@ -9,17 +9,13 @@
 // proves it's really Stripe by signing the body with a shared secret
 // (STRIPE_WEBHOOK_SECRET); we verify that before trusting anything.
 
-import Stripe from 'npm:stripe@20'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { assertWebhookVersion, makeStripe, Stripe } from '../_shared/stripe.ts'
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
-  apiVersion: '2024-06-20',
-  // Deno doesn't expose Node's `http`; swap the SDK's HTTP client for
-  // fetch-based. Same for crypto — Node's `crypto` isn't available, so we
-  // pass Deno's WebCrypto (SubtleCrypto) provider for signature verification.
-  httpClient: Stripe.createFetchHttpClient()
-})
+const stripe = makeStripe()
 
+// Node's `crypto` isn't available in Deno, so signature verification gets
+// Deno's WebCrypto (SubtleCrypto) provider.
 const cryptoProvider = Stripe.createSubtleCryptoProvider()
 
 // Service role bypasses RLS — essential here because the self-update policy
@@ -59,6 +55,8 @@ Deno.serve(async (req) => {
     console.error('Signature verification failed:', err)
     return new Response(`Invalid signature: ${(err as Error).message}`, { status: 400 })
   }
+
+  assertWebhookVersion(event)
 
   try {
     switch (event.type) {

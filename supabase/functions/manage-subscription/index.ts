@@ -4,8 +4,8 @@
 // customer resolved from members.stripe_customer_id (RLS-visible to owner).
 // Plan changes use proration_behavior: 'always_invoice' — diff charged now.
 
-import Stripe from 'npm:stripe@20'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { makeStripe, type Stripe } from '../_shared/stripe.ts'
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -227,11 +227,7 @@ export async function handler(req: Request, deps: Deps): Promise<Response> {
 }
 
 if (import.meta.main) {
-  const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
-    // Preview version — not yet in this SDK's LatestApiVersion type.
-    apiVersion: '2026-03-25.dahlia' as Stripe.LatestApiVersion,
-    httpClient: Stripe.createFetchHttpClient()
-  })
+  const stripe = makeStripe()
 
   const admin = createClient(
     Deno.env.get('SUPABASE_URL')!,
