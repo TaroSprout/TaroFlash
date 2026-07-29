@@ -22,12 +22,7 @@ function onFlip() {
 </script>
 
 <template>
-  <button
-    type="button"
-    data-testid="session-summary__card"
-    class="w-(--card-w-sm) shrink-0"
-    @click="onFlip"
-  >
+  <button type="button" data-testid="session-summary__card" class="w-full" @click="onFlip">
     <card
       :id="card.id"
       :deck_id="card.deck_id"

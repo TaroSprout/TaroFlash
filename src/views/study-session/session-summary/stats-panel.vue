@@ -26,13 +26,19 @@ const { t } = useI18n()
 // Empty categories drop out, except `correct` — a zero there is the point.
 const entries = computed<OptionsPanelEntry[]>(() =>
   CATEGORIES.filter(({ key }) => key === 'correct' || summary.groups[key].length > 0).map(
-    ({ key, icon }) => ({
-      value: key,
-      icon,
-      label: t(`session-summary.stat.${key}-label`, summary.groups[key].length)
-    })
+    ({ key, icon }) => ({ value: key, icon, label: labelFor(key) })
   )
 )
+
+// `correct` carries the whole session's score, so it reads as a fraction rather
+// than a bare count like the other rows.
+function labelFor(key: SummaryCategory) {
+  const count = summary.groups[key].length
+
+  if (key !== 'correct') return t(`session-summary.stat.${key}-label`, count)
+
+  return t('session-summary.stat.correct-label', { count, total: summary.total })
+}
 </script>
 
 <template>
