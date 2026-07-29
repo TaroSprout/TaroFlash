@@ -5,7 +5,7 @@ allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, Skill, EnterWorktree,
 argument-hint: 'pair [<ID>] | batch [--count N] [--p0|--p1|--p2|--p3]'
 arguments:
   - name: pair
-    description: Interactive mode — work one Ready ticket with you in this session. Optional ID; else top Priority→ID.
+    description: Interactive mode — work one Ready ticket with you in this session. Explores the code, then pauses for a bird's-eye plan review before implementing. Optional ID; else top Priority→ID.
   - name: batch
     description: Autonomous mode — work Queued tickets assigned to a model, sequentially, each ending in a PR.
   - name: --count N
@@ -14,7 +14,7 @@ arguments:
     description: batch only — restrict to this priority.
   - name: <ID>
     description: pair only — the specific ticket to work.
-lastUpdated: 2026-07-21T17:30:00Z
+lastUpdated: 2026-07-29T00:00:00Z
 ---
 
 ## What this skill does
@@ -65,16 +65,35 @@ ticket's `Assignee`).
    Fetch its full page (title + body). Echo what you're about to work.
 2. **CLAIM** → `In Progress`.
 3. **BRANCH** — conventional branch off `master` matching the ticket (`fix/…`, `feat/…`).
-4. **IMPLEMENT — together.** Work through the acceptance criteria in small steps. **Pause for
-   approval on every change.** If the `Area` touches `supabase/**` (migrations, RPCs, RLS, edge
-   functions), the backend teaching persona is **on** — teach as you write per CLAUDE.md. **Do not
-   touch tests** — the golden rule holds in pair mode (see the callout above); at most note in one
-   line that tests may need attention, then leave them. Follow all `.claude/rules/*`.
-5. **PR** — invoke the **`prepare-pr`** skill with `--ticket <ID> --ticket-url <url>` (the ticket's
+4. **EXPLORE & ALIGN — before any code.** Read the relevant code to ground the ticket in reality
+   (no edits yet). Then **stop and present a bird's-eye plan for approval** — this checkpoint is
+   mandatory; do **not** start implementing until the user has responded. Keep it high-level and
+   concise (the user wants the shape, not a wall of text):
+   - **The plan in brief** — the handful of steps/changes you intend to make, at altitude. Name the
+     key files/components involved, not line-by-line edits.
+   - **Assumptions & open decisions** — call out every design or feature detail you'd otherwise
+     just assume: UX/interaction choices, edge-case handling, scope boundaries, naming, which
+     variant/pattern to follow. Surface them **explicitly as questions**, don't bake them in
+     silently. This is where the user talks through decisions before they're made.
+   - **Pushback surface** — flag anything in the groomer's spec that looks like a hole, is
+     ambiguous, seems unnecessary, or that you'd propose doing differently. Make it easy for the
+     user to cut or redirect scope here.
+
+   Wait for the user to react — they may trim scope, correct an assumption, or reshape the
+   approach. Fold their answers in, then proceed. If they redirect materially, re-summarize the
+   adjusted plan before coding.
+
+5. **IMPLEMENT — together.** Work through the acceptance criteria (as adjusted in step 4) in small
+   steps. **Pause for approval on every change.** If the `Area` touches `supabase/**` (migrations,
+   RPCs, RLS, edge functions), the backend teaching persona is **on** — teach as you write per
+   CLAUDE.md. **Do not touch tests** — the golden rule holds in pair mode (see the callout above);
+   at most note in one line that tests may need attention, then leave them. Follow all
+   `.claude/rules/*`.
+6. **PR** — invoke the **`prepare-pr`** skill with `--ticket <ID> --ticket-url <url>` (the ticket's
    `TARO-<ID>` number and its Notion page URL) so the PR title is prefixed `TARO-<ID>:` and the body
    opens with a `[TARO-<ID>](<url>)` link (commits, conventional messages, lint+type gate, opens one
    PR, watches CI to green).
-6. **HANDOFF** — set the ticket's `Status = Review` and write the PR URL into its body. Then enter
+7. **HANDOFF** — set the ticket's `Status = Review` and write the PR URL into its body. Then enter
    the **Review & feedback loop** (below) and wait for the user's feedback.
 
 ## Mode: `batch [--count N] [--p0…]`
