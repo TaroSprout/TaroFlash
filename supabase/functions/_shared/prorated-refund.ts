@@ -82,24 +82,26 @@ async function findLastPaidInvoice(
 
 /**
  * Issues a credit note that refunds `amountCents` against `invoice`, capped by
- * what that invoice can still give back.
+ * what that invoice can still give back. Omit `amountCents` to refund the whole
+ * remaining amount — used when a charge should never have been collected at all,
+ * as opposed to part of a period going unused.
  *
  * Refunds are irreversible, so the cap is load-bearing: `amount_paid` minus
  * what credit notes have already returned. A retry of a run that already
  * refunded finds nothing left and reports `already_refunded` instead of paying
  * the member twice.
  */
-async function refundViaCreditNote(
+export async function refundInvoiceViaCreditNote(
   stripe: StripeRefundLike,
   invoice: Stripe.Invoice,
-  amountCents: number
+  amountCents?: number
 ): Promise<ProratedRefundOutcome> {
   const alreadyCredited = invoice.post_payment_credit_notes_amount ?? 0
   const refundable = invoice.amount_paid - alreadyCredited
 
   if (refundable <= 0) return { refunded: false, reason: 'already_refunded' }
 
-  const amount = Math.min(amountCents, refundable)
+  const amount = Math.min(amountCents ?? refundable, refundable)
   if (amount <= 0) return { refunded: false, reason: 'nothing_unused' }
 
   try {
@@ -166,6 +168,6 @@ export async function cancelWithProratedRefund(
     return { subscription, refund: { refunded: false, reason: 'no_paid_invoice' } }
   }
 
-  const refund = await refundViaCreditNote(stripe, invoice, expectedCredit)
+  const refund = await refundInvoiceViaCreditNote(stripe, invoice, expectedCredit)
   return { subscription, refund }
 }

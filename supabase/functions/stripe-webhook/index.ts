@@ -11,6 +11,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { assertWebhookVersion, makeStripe, Stripe } from '../_shared/stripe.ts'
+import { refundInvoiceViaCreditNote } from '../_shared/prorated-refund.ts'
 
 const stripe = makeStripe()
 
@@ -68,6 +69,16 @@ Deno.serve(async (req) => {
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription
         await syncSubscription(subscription)
+        break
+      }
+
+      // Boundary race: a renewal invoice can be paid in the same moments as a
+      // deletion request, so the member is charged for a month they will never
+      // use. Also the safety net for a deletion whose Stripe cancel failed —
+      // that account keeps renewing until the purge, and each renewal lands here.
+      case 'invoice.payment_succeeded': {
+        const invoice = event.data.object as Stripe.Invoice
+        await refundIfPendingDeletion(invoice.customer as string, invoice.id as string)
         break
       }
 
@@ -130,6 +141,64 @@ async function syncSubscription(subscription: Stripe.Subscription) {
   if (error) {
     console.error('members update failed', error)
     throw error
+  }
+}
+
+// Money must never be kept from an account that is on its way out.
+//
+// Only `customer` and `invoice.id` are read from the webhook payload — both
+// stable across every API version. Everything else comes from a fresh fetch at
+// our own pinned version, so the Dashboard endpoint's version can drift without
+// silently breaking this handler.
+//
+// Note we never look up the charge or payment_intent. Those moved around in the
+// 2025-03-31.basil invoice reshape (invoice.charge and invoice.payment_intent are
+// gone; the payment hangs off invoice.payments, which needs expanding). Refunding
+// through a credit note against the invoice sidesteps that entirely — Stripe
+// resolves the payment itself — so there's no version-sensitive traversal here.
+async function refundIfPendingDeletion(customerId: string, invoiceId: string) {
+  const { data: member, error } = await supabase
+    .from('members')
+    .select('id, delete_at, stripe_subscription_id')
+    .eq('stripe_customer_id', customerId)
+    .maybeSingle()
+
+  if (error) {
+    console.error('Could not check deletion state for customer', customerId, error)
+    throw error
+  }
+
+  // The overwhelmingly common case: a normal renewal for a live account.
+  if (!member?.delete_at) return
+
+  console.warn(
+    `Invoice ${invoiceId} was paid by member ${member.id}, whose account is ` +
+      `pending deletion (delete_at ${member.delete_at}). Refunding and re-asserting cancel.`
+  )
+
+  const invoice = await stripe.invoices.retrieve(invoiceId)
+
+  // Full amount, not a proration: this charge should never have been collected.
+  // Idempotent via the credit-note cap, so a Stripe retry of this event can't
+  // refund twice.
+  const refund = await refundInvoiceViaCreditNote(stripe, invoice)
+  console.log(`Refund outcome for invoice ${invoiceId}:`, refund)
+
+  await reassertCancellation(member.stripe_subscription_id)
+}
+
+// The charge proves billing was still live, so the original cancel evidently
+// didn't take. Cancel plainly — no proration, since the whole invoice was just
+// refunded and prorating on top would credit the same period twice.
+async function reassertCancellation(subscriptionId: string | null) {
+  if (!subscriptionId) return
+
+  try {
+    await stripe.subscriptions.cancel(subscriptionId)
+  } catch (err) {
+    // Already cancelled is the expected outcome here and reads as an error from
+    // Stripe. Either way the refund above is the part that matters.
+    console.warn(`Re-asserting cancel on ${subscriptionId} failed (may already be gone):`, err)
   }
 }
 
