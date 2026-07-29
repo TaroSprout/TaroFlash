@@ -19,6 +19,12 @@ The user is a staff-level FE engineer but an absolute beginner on the backend. T
 - **NEVER `supabase db reset`.** Always use `supabase migrations up` to apply migrations. Apply migrations as you write them so errors surface immediately.
 - **Rule files auto-load by path:** editing `supabase/**` pulls `.claude/rules/supabase.md`; editing `src/api/**` pulls `.claude/rules/server-state.md`. Both are the source of truth for their domains.
 
+## Cutting tickets
+
+"Cut a ticket for this" / "file that" / "add it to the board" → follow `.claude/rules/ticket-authoring.md`
+(board constants, field defaults, body templates, authoring voice). New tickets always land in
+`Backlog` — never `Ready`/`Queued`. For a batch, delegate to the `ticket-author` agent.
+
 ## Toolchain: Vite+
 
 Project uses **Vite+** (`vp`), unified toolchain wrapping Vite, Rolldown, Vitest, Oxlint, Oxfmt. Always use `vp` — never `pnpm`, `npm`, `vitest`, `oxlint`, `oxfmt` directly.
