@@ -75,18 +75,18 @@ CREATE TRIGGER set_member_id_on_card BEFORE INSERT ON public.cards FOR EACH ROW 
 ALTER TABLE public.cards ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "Enable delete for users based on user_id" ON public.cards FOR DELETE TO authenticated USING ((auth.uid() = member_id));
+CREATE POLICY "Enable delete for users based on user_id" ON public.cards FOR DELETE TO authenticated USING ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
-CREATE POLICY "Enable insert for authenticated users only" ON public.cards FOR INSERT TO authenticated WITH CHECK ((auth.uid() = member_id));
+CREATE POLICY "Enable insert for authenticated users only" ON public.cards FOR INSERT TO authenticated WITH CHECK ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
-CREATE POLICY "Read cards from public decks or own cards" ON public.cards FOR SELECT USING (((auth.uid() = member_id) OR (EXISTS ( SELECT 1
+CREATE POLICY "Read cards from public decks or own cards" ON public.cards FOR SELECT USING (((( SELECT public.active_member_id() AS active_member_id) = member_id) OR (EXISTS ( SELECT 1
    FROM public.decks
   WHERE ((decks.id = cards.deck_id) AND (decks.is_public = true))))));
 
 
-CREATE POLICY "Users can update their own cards" ON public.cards FOR UPDATE TO authenticated USING ((auth.uid() = member_id)) WITH CHECK ((auth.uid() = member_id));
+CREATE POLICY "Users can update their own cards" ON public.cards FOR UPDATE TO authenticated USING ((( SELECT public.active_member_id() AS active_member_id) = member_id)) WITH CHECK ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
 GRANT ALL ON TABLE public.cards TO anon;

@@ -7,7 +7,10 @@ CREATE FUNCTION public.reset_deck_reviews(p_deck_id bigint) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$
 DECLARE
-  v_uid uuid := auth.uid();
+  -- active_member_id(), not auth.uid() — SECURITY DEFINER bypasses RLS, so this
+  -- ownership check is the only thing standing between a suspended account and
+  -- its data. See save_review.sql for the longer note.
+  v_uid uuid := public.active_member_id();
 BEGIN
   IF v_uid IS NULL THEN
     RAISE EXCEPTION 'Not authenticated';

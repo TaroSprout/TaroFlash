@@ -184,38 +184,38 @@ ALTER TABLE public.review_pacing_presets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "Enable insert for users based on user_id" ON public.reviews FOR INSERT TO authenticated WITH CHECK (( SELECT (auth.uid() = reviews.member_id)));
+CREATE POLICY "Enable insert for users based on user_id" ON public.reviews FOR INSERT TO authenticated WITH CHECK (( SELECT (( SELECT public.active_member_id() AS active_member_id) = reviews.member_id)));
 
 
-CREATE POLICY "Enable users to view their own data only" ON public.reviews FOR SELECT TO authenticated USING ((( SELECT auth.uid() AS uid) = member_id));
+CREATE POLICY "Enable users to view their own data only" ON public.reviews FOR SELECT TO authenticated USING ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
-CREATE POLICY "Members can insert their own review logs" ON public.review_logs FOR INSERT TO authenticated WITH CHECK ((auth.uid() = member_id));
+CREATE POLICY "Members can insert their own review logs" ON public.review_logs FOR INSERT TO authenticated WITH CHECK ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
-CREATE POLICY "Members can view their own review logs" ON public.review_logs FOR SELECT TO authenticated USING ((auth.uid() = member_id));
+CREATE POLICY "Members can view their own review logs" ON public.review_logs FOR SELECT TO authenticated USING ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
-CREATE POLICY "members can delete their own presets" ON public.review_pacing_presets FOR DELETE TO authenticated USING (((member_id = auth.uid()) AND (is_system = false)));
+CREATE POLICY "members can delete their own presets" ON public.review_pacing_presets FOR DELETE TO authenticated USING (((member_id = ( SELECT public.active_member_id() AS active_member_id)) AND (is_system = false)));
 
 
-CREATE POLICY "members can insert their own presets" ON public.review_pacing_presets FOR INSERT TO authenticated WITH CHECK (((member_id = auth.uid()) AND (is_system = false)));
+CREATE POLICY "members can insert their own presets" ON public.review_pacing_presets FOR INSERT TO authenticated WITH CHECK (((member_id = ( SELECT public.active_member_id() AS active_member_id)) AND (is_system = false)));
 
 
 CREATE POLICY "members can read and write their own decks' pacing" ON public.deck_review_pacing TO authenticated USING ((EXISTS ( SELECT 1
    FROM public.decks d
-  WHERE ((d.id = deck_review_pacing.deck_id) AND (d.member_id = auth.uid()))))) WITH CHECK ((EXISTS ( SELECT 1
+  WHERE ((d.id = deck_review_pacing.deck_id) AND (d.member_id = ( SELECT public.active_member_id() AS active_member_id)))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM public.decks d
-  WHERE ((d.id = deck_review_pacing.deck_id) AND (d.member_id = auth.uid())))));
+  WHERE ((d.id = deck_review_pacing.deck_id) AND (d.member_id = ( SELECT public.active_member_id() AS active_member_id))))));
 
 
-CREATE POLICY "members can read their own or the system preset" ON public.review_pacing_presets FOR SELECT TO authenticated USING ((is_system OR (member_id = auth.uid())));
+CREATE POLICY "members can read their own or the system preset" ON public.review_pacing_presets FOR SELECT TO authenticated USING ((is_system OR (member_id = ( SELECT public.active_member_id() AS active_member_id))));
 
 
-CREATE POLICY "members can update their own presets" ON public.review_pacing_presets FOR UPDATE TO authenticated USING (((member_id = auth.uid()) AND (is_system = false))) WITH CHECK (((member_id = auth.uid()) AND (is_system = false)));
+CREATE POLICY "members can update their own presets" ON public.review_pacing_presets FOR UPDATE TO authenticated USING (((member_id = ( SELECT public.active_member_id() AS active_member_id)) AND (is_system = false))) WITH CHECK (((member_id = ( SELECT public.active_member_id() AS active_member_id)) AND (is_system = false)));
 
 
-CREATE POLICY "members can update their own reviews" ON public.reviews FOR UPDATE TO authenticated USING ((auth.uid() = member_id));
+CREATE POLICY "members can update their own reviews" ON public.reviews FOR UPDATE TO authenticated USING ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
 GRANT ALL ON TABLE public.deck_review_pacing TO anon;

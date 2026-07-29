@@ -7,7 +7,12 @@ CREATE FUNCTION public.save_review(p_card_id bigint, p_due timestamp with time z
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$
 DECLARE
-  v_uid uuid := auth.uid();
+  -- active_member_id(), not auth.uid(). SECURITY DEFINER means RLS never runs
+  -- here, so the policy sweep that suspends a pending-deletion account does not
+  -- reach this function — it would happily keep writing reviews for an account
+  -- whose data is supposed to be frozen. The ownership check below is the only
+  -- gate there is, so it has to be the one that knows about suspension.
+  v_uid uuid := public.active_member_id();
 BEGIN
   IF v_uid IS NULL THEN
     RAISE EXCEPTION 'Not authenticated';

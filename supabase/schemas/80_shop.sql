@@ -132,16 +132,16 @@ ALTER TABLE public.purchases ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shop_items ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "Enable insert for users based on user_id" ON public.purchases FOR INSERT TO authenticated WITH CHECK ((( SELECT auth.uid() AS uid) = member_id));
+CREATE POLICY "Enable insert for users based on user_id" ON public.purchases FOR INSERT TO authenticated WITH CHECK ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
 CREATE POLICY "Enable read access for all users" ON public.shop_items FOR SELECT USING (true);
 
 
-CREATE POLICY "Enable users to view their own data only" ON public.purchases FOR SELECT TO authenticated USING ((( SELECT auth.uid() AS uid) = member_id));
+CREATE POLICY "Enable users to view their own data only" ON public.purchases FOR SELECT TO authenticated USING ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
-CREATE POLICY "members can update their own purchases" ON public.purchases FOR UPDATE TO authenticated USING ((auth.uid() = member_id));
+CREATE POLICY "members can update their own purchases" ON public.purchases FOR UPDATE TO authenticated USING ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
 CREATE POLICY "plans readable by authenticated users" ON public.plans FOR SELECT TO authenticated USING ((is_active = true));

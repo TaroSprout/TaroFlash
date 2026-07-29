@@ -15,7 +15,19 @@ CREATE TABLE public.members (
     stripe_customer_id text,
     stripe_subscription_id text,
     preferences jsonb DEFAULT '{}'::jsonb NOT NULL,
-    cover_config jsonb
+    cover_config jsonb,
+    -- Soft-delete marker. NULL = live account. Non-NULL = deletion requested,
+    -- and this is the moment the purge cron may hard-delete the account.
+    --
+    -- Stores the deadline rather than the request time so the window a member
+    -- was promised stays fixed even if we change the grace period later.
+    --
+    -- NO COLUMN DEFAULT, deliberately: a DEFAULT fires on INSERT, and the
+    -- signup trigger inserts members rows without naming this column — so a
+    -- default of `now() + interval '30 days'` would mark every new signup as
+    -- pending deletion. The grace window lives in begin_account_deletion()
+    -- below, which is the only thing that ever stamps this column.
+    delete_at timestamp with time zone
 );
 
 
@@ -116,7 +128,12 @@ CREATE FUNCTION public.member_public_profile(p_member_id uuid) RETURNS SETOF pub
     AS $$
   SELECT m.display_name, m.description, m.cover_config
   FROM public.members m
-  WHERE m.id = p_member_id;
+  WHERE m.id = p_member_id
+    -- A pending-deletion member is hidden from everyone else: returning no rows
+    -- makes callers fall back to their anonymous-author display. Free to check
+    -- here — this function is already reading the row the flag lives on, so it
+    -- costs no extra lookup, unlike filtering by owner in a hot read policy.
+    AND m.delete_at IS NULL;
 $$;
 
 
@@ -127,25 +144,176 @@ GRANT EXECUTE ON FUNCTION public.member_public_profile(uuid) TO anon;
 GRANT EXECUTE ON FUNCTION public.member_public_profile(uuid) TO authenticated;
 
 
+-- --- account deletion lifecycle -------------------------------------------
+-- Two halves of one reversible operation. Both are single transactions, so the
+-- marker and the deck visibility change can never land apart from each other.
+
+-- Marks an account pending deletion and returns the deadline. Idempotent: a
+-- second call returns the original deadline untouched, so an FE retry can't
+-- silently extend the window a member was promised.
+--
+-- SECURITY INVOKER, not DEFINER. Only service_role holds EXECUTE (below), and
+-- service_role bypasses RLS, so invoker is enough to write the frozen
+-- `delete_at` column. Choosing invoker means that if this function is ever
+-- granted to `authenticated` by accident, the RLS freeze still stops a member
+-- stamping their own row — a DEFINER function would hand them that power the
+-- moment the grant slipped.
+CREATE FUNCTION public.begin_account_deletion(p_member_id uuid) RETURNS timestamp with time zone
+    LANGUAGE plpgsql
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+  -- The grace period lives here, in the only writer of delete_at. Confirm the
+  -- length with counsel before launch; GDPR wants erasure "without undue delay".
+  v_grace   interval := interval '30 days';
+  v_deadline timestamptz;
+BEGIN
+  SELECT m.delete_at INTO v_deadline
+  FROM public.members m
+  WHERE m.id = p_member_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'No member %', p_member_id USING errcode = 'no_data_found';
+  END IF;
+
+  IF v_deadline IS NOT NULL THEN
+    RETURN v_deadline;
+  END IF;
+
+  v_deadline := now() + v_grace;
+
+  UPDATE public.members
+  SET delete_at = v_deadline
+  WHERE id = p_member_id;
+
+  -- Hide the account from everyone else without taxing any read path. Flipping
+  -- their public decks private here is one write over one member's rows; the
+  -- alternative — teaching the public-read policies to check whether each deck's
+  -- owner is pending — would add a per-row members lookup to every public deck
+  -- and card read in the app, forever. The flag records which decks to put back.
+  UPDATE public.decks
+  SET is_public = false,
+      unpublished_by_deletion = true
+  WHERE member_id = p_member_id
+    AND is_public;
+
+  RETURN v_deadline;
+END;
+$$;
+
+
+ALTER FUNCTION public.begin_account_deletion(uuid) OWNER TO postgres;
+
+
+-- Only the request-account-deletion edge function may call this, using its
+-- service-role client. Keeping it off PostgREST's authenticated RPC surface is
+-- what stops a member marking themselves deleted directly and skipping the
+-- Stripe cancellation — they'd lose access while still being billed.
+REVOKE ALL ON FUNCTION public.begin_account_deletion(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.begin_account_deletion(uuid) FROM anon;
+REVOKE ALL ON FUNCTION public.begin_account_deletion(uuid) FROM authenticated;
+GRANT EXECUTE ON FUNCTION public.begin_account_deletion(uuid) TO service_role;
+
+
+-- Un-deletes the caller's own account within the grace window: clears the
+-- marker and re-publishes exactly the decks that were public before.
+--
+-- SECURITY DEFINER, and scoped to auth.uid() internally — it has to write
+-- `delete_at`, which the self-update policy freezes against the member's own
+-- client, and it has to work while the caller is suspended. Hence auth.uid()
+-- rather than active_member_id(): the whole point is to run while pending, so
+-- the suspend primitive would return NULL and match nothing.
+CREATE FUNCTION public.restore_account() RETURNS timestamp with time zone
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+  v_member_id uuid := auth.uid();
+  v_deadline  timestamptz;
+BEGIN
+  IF v_member_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated' USING errcode = 'insufficient_privilege';
+  END IF;
+
+  SELECT m.delete_at INTO v_deadline
+  FROM public.members m
+  WHERE m.id = v_member_id
+  FOR UPDATE;
+
+  IF v_deadline IS NULL THEN
+    RAISE EXCEPTION 'Account is not pending deletion' USING errcode = 'invalid_parameter_value';
+  END IF;
+
+  -- Past the deadline the purge job may already be mid-sweep; refusing here
+  -- avoids racing it and resurrecting an account whose data is being erased.
+  IF v_deadline <= now() THEN
+    RAISE EXCEPTION 'Grace period expired' USING errcode = 'invalid_parameter_value';
+  END IF;
+
+  UPDATE public.members
+  SET delete_at = NULL
+  WHERE id = v_member_id;
+
+  UPDATE public.decks
+  SET is_public = true,
+      unpublished_by_deletion = false
+  WHERE member_id = v_member_id
+    AND unpublished_by_deletion;
+
+  RETURN v_deadline;
+END;
+$$;
+
+
+ALTER FUNCTION public.restore_account() OWNER TO postgres;
+
+
+REVOKE ALL ON FUNCTION public.restore_account() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.restore_account() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.restore_account() TO service_role;
+
+
 ALTER TABLE public.members ENABLE ROW LEVEL SECURITY;
 
 
 CREATE POLICY "Enable insert for authenticated users" ON public.members FOR INSERT TO authenticated WITH CHECK ((auth.uid() = id));
 
 
+-- DELIBERATELY on auth.uid(), NOT active_member_id(). This is the one ownership
+-- policy the suspend sweep must skip: a member whose account is pending deletion
+-- has to keep reading their own row, or the app can't tell they're pending, can't
+-- render the pending screen, and can't offer them a restore. Suspending this
+-- would make the grace period unreachable and effectively irreversible.
 CREATE POLICY "members can read their own row" ON public.members FOR SELECT TO authenticated USING ((auth.uid() = id));
 
 
 CREATE POLICY "admins can update any member" ON public.members FOR UPDATE TO authenticated USING (public.can_manage_members()) WITH CHECK (public.can_manage_members());
 
 
-CREATE POLICY "members can update their own non-privileged fields" ON public.members FOR UPDATE TO authenticated USING ((auth.uid() = id)) WITH CHECK (((auth.uid() = id) AND (role = ( SELECT members_1.role
+-- Self-service profile edits. Privileged columns are frozen by requiring the
+-- new value to equal the stored one, so a PostgREST write that touches them
+-- fails the check instead of being silently ignored.
+--
+-- `delete_at` joins that frozen list: a member must not be able to mark their
+-- own account pending (which would skip the Stripe cancellation and leave them
+-- paying for an account they can't reach) or clear the marker (which would skip
+-- the deck re-publishing and the plan/subscription reality of a restore). Both
+-- directions go through the definer functions below instead.
+--
+-- USING is on active_member_id(), so a pending member's profile edits match zero
+-- rows — suspension covers writes to their own row too. The frozen-field
+-- subqueries stay on auth.uid() because they only re-read the current row, and
+-- USING has already gated whether the update happens at all.
+CREATE POLICY "members can update their own non-privileged fields" ON public.members FOR UPDATE TO authenticated USING ((( SELECT public.active_member_id() AS active_member_id) = id)) WITH CHECK (((( SELECT public.active_member_id() AS active_member_id) = id) AND (role = ( SELECT members_1.role
    FROM public.members members_1
   WHERE (members_1.id = auth.uid()))) AND (plan = ( SELECT members_1.plan
    FROM public.members members_1
   WHERE (members_1.id = auth.uid()))) AND (NOT (stripe_customer_id IS DISTINCT FROM ( SELECT members_1.stripe_customer_id
    FROM public.members members_1
   WHERE (members_1.id = auth.uid())))) AND (NOT (stripe_subscription_id IS DISTINCT FROM ( SELECT members_1.stripe_subscription_id
+   FROM public.members members_1
+  WHERE (members_1.id = auth.uid())))) AND (NOT (delete_at IS DISTINCT FROM ( SELECT members_1.delete_at
    FROM public.members members_1
   WHERE (members_1.id = auth.uid()))))));
 

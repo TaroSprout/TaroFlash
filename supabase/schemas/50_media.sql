@@ -297,16 +297,16 @@ CREATE TRIGGER trg_member_delete_soft_delete_media BEFORE DELETE ON public.membe
 ALTER TABLE public.media ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "Enable delete for users based on user_id" ON public.media FOR DELETE USING ((( SELECT auth.uid() AS uid) = member_id));
+CREATE POLICY "Enable delete for users based on user_id" ON public.media FOR DELETE USING ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
-CREATE POLICY "Enable insert for authenticated users only" ON public.media FOR INSERT TO authenticated WITH CHECK (((auth.uid() = member_id) AND ((NOT COALESCE((slot = ANY (ARRAY['card_front'::public.media_slot, 'card_back'::public.media_slot])), false)) OR (public.auth_plan() = 'paid'::text))));
+CREATE POLICY "Enable insert for authenticated users only" ON public.media FOR INSERT TO authenticated WITH CHECK (((( SELECT public.active_member_id() AS active_member_id) = member_id) AND ((NOT COALESCE((slot = ANY (ARRAY['card_front'::public.media_slot, 'card_back'::public.media_slot])), false)) OR (public.auth_plan() = 'paid'::text))));
 
 
-CREATE POLICY "Enable update for users with member_id" ON public.media FOR UPDATE TO authenticated USING ((( SELECT auth.uid() AS uid) = member_id));
+CREATE POLICY "Enable update for users with member_id" ON public.media FOR UPDATE TO authenticated USING ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
-CREATE POLICY "Read own media or media in public decks" ON public.media FOR SELECT USING (((auth.uid() = member_id) OR (EXISTS ( SELECT 1
+CREATE POLICY "Read own media or media in public decks" ON public.media FOR SELECT USING (((( SELECT public.active_member_id() AS active_member_id) = member_id) OR (EXISTS ( SELECT 1
    FROM (public.cards c
      JOIN public.decks d ON ((d.id = c.deck_id)))
   WHERE ((c.id = media.card_id) AND (d.is_public = true)))) OR (EXISTS ( SELECT 1

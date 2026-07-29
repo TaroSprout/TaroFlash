@@ -9,6 +9,10 @@ CREATE TABLE public.decks (
     updated_at timestamp with time zone,
     description text,
     is_public boolean DEFAULT false NOT NULL,
+    -- Set when begin_account_deletion() forced a public deck private, so
+    -- restore_account() can re-publish exactly those decks and not the ones the
+    -- member had already chosen to keep private.
+    unpublished_by_deletion boolean DEFAULT false NOT NULL,
     title text,
     member_id uuid NOT NULL,
     tags text[],
@@ -57,16 +61,20 @@ CREATE TRIGGER set_member_id_on_deck BEFORE INSERT ON public.decks FOR EACH ROW 
 ALTER TABLE public.decks ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "Enable delete for users based on user_id" ON public.decks FOR DELETE TO authenticated USING ((( SELECT auth.uid() AS uid) = member_id));
+CREATE POLICY "Enable delete for users based on user_id" ON public.decks FOR DELETE TO authenticated USING ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
-CREATE POLICY "Enable insert for authenticated users only" ON public.decks FOR INSERT TO authenticated WITH CHECK ((auth.uid() = member_id));
+CREATE POLICY "Enable insert for authenticated users only" ON public.decks FOR INSERT TO authenticated WITH CHECK ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
-CREATE POLICY "Enable update for authenticated users" ON public.decks FOR UPDATE TO authenticated USING ((( SELECT auth.uid() AS uid) = member_id));
+CREATE POLICY "Enable update for authenticated users" ON public.decks FOR UPDATE TO authenticated USING ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
-CREATE POLICY "Read public decks or own decks" ON public.decks FOR SELECT USING (((is_public = true) OR (auth.uid() = member_id)));
+-- The `is_public` branch needs no pending check: begin_account_deletion() flips
+-- a departing member's decks private, so nothing they own is reachable through
+-- it. That keeps this policy — one of the hottest reads in the app, and the only
+-- one anon hits — free of any per-row owner lookup.
+CREATE POLICY "Read public decks or own decks" ON public.decks FOR SELECT USING (((is_public = true) OR (( SELECT public.active_member_id() AS active_member_id) = member_id)));
 
 
 GRANT ALL ON TABLE public.decks TO anon;
