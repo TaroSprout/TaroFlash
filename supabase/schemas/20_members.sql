@@ -274,6 +274,66 @@ GRANT EXECUTE ON FUNCTION public.restore_account() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.restore_account() TO service_role;
 
 
+-- Fires the daily purge-accounts edge function. Mirrors invoke_cleanup_media()
+-- and reuses the same two Vault secrets, which already exist for it.
+--
+-- SECURITY DEFINER because vault.decrypted_secrets is readable only by the owner.
+-- That makes the EXECUTE grant the whole security boundary: on PostgREST's RPC
+-- surface this would let any holder of the public anon key trigger a
+-- service-role account purge, straight past the edge function's own caller gate.
+-- The REVOKEs live in the accompanying cron migration, since `supabase db diff`
+-- does not emit function grants.
+--
+-- net.http_post is fire-and-forget; it returns a request id and the response
+-- lands in net._http_response later:
+--   SELECT * FROM net._http_response ORDER BY created DESC LIMIT 10;
+CREATE FUNCTION public.invoke_purge_accounts() RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+DECLARE
+  v_url         text;
+  v_service_key text;
+BEGIN
+  SELECT decrypted_secret INTO v_url
+  FROM vault.decrypted_secrets
+  WHERE name = 'supabase_url'
+  LIMIT 1;
+
+  IF v_url IS NULL THEN
+    RAISE EXCEPTION
+      'Vault secret "supabase_url" not found. '
+      'Run: SELECT vault.create_secret(''<url>'', ''supabase_url'');';
+  END IF;
+
+  SELECT decrypted_secret INTO v_service_key
+  FROM vault.decrypted_secrets
+  WHERE name = 'service_role_key'
+  LIMIT 1;
+
+  IF v_service_key IS NULL THEN
+    RAISE EXCEPTION
+      'Vault secret "service_role_key" not found. '
+      'Run: SELECT vault.create_secret(''<key>'', ''service_role_key'');';
+  END IF;
+
+  PERFORM net.http_post(
+    url     := v_url || '/functions/v1/purge-accounts',
+    headers := jsonb_build_object(
+      'Authorization', 'Bearer ' || v_service_key,
+      'Content-Type',  'application/json'
+    ),
+    body    := '{}'::jsonb
+  );
+END;
+$$;
+
+
+ALTER FUNCTION public.invoke_purge_accounts() OWNER TO postgres;
+
+
+REVOKE ALL ON FUNCTION public.invoke_purge_accounts() FROM PUBLIC;
+
+
 ALTER TABLE public.members ENABLE ROW LEVEL SECURITY;
 
 
