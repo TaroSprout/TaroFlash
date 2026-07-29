@@ -73,26 +73,29 @@ describe('ChangeCardModal — has_existing_card locale switching [obligation]', 
 // ── load states ───────────────────────────────────────────────────────────────
 
 describe('ChangeCardModal — load states', () => {
-  test('shows the loading state and hides the footer while is_loading', () => {
+  test('shows the loading state and hides the submit toolbar while is_loading', () => {
     changeCardState.is_loading.value = true
     const wrapper = mountChangeCardModal()
 
     expect(wrapper.find('[data-testid="change-card-modal__loading"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="change-card-modal__footer"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="dialog-card__toolbar"]').exists()).toBe(false)
   })
 
-  test('shows the error state and hides the footer when load_error is true', () => {
+  test('shows the error state and hides the submit toolbar when load_error is true', () => {
     changeCardState.load_error.value = true
     const wrapper = mountChangeCardModal()
 
     expect(wrapper.find('[data-testid="change-card-modal__error"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="change-card-modal__footer"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="dialog-card__toolbar"]').exists()).toBe(false)
   })
 
-  test('shows the footer once loaded without error', () => {
+  test('pins the submit button in the dialog-card toolbar once loaded without error', () => {
     const wrapper = mountChangeCardModal()
 
-    expect(wrapper.find('[data-testid="change-card-modal__footer"]').exists()).toBe(true)
+    const toolbar = wrapper.find('[data-testid="dialog-card__toolbar"]')
+
+    expect(toolbar.exists()).toBe(true)
+    expect(toolbar.find('[data-testid="change-card-modal__submit"]').exists()).toBe(true)
   })
 })
 

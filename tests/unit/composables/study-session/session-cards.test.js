@@ -303,7 +303,7 @@ describe('useSessionCards', () => {
 
   // ── Restore path (refresh-resume) — restore queue lock [obligation] ───────
 
-  test('fetches only the unreviewed remainder by id — not the full card_ids list [obligation]', async () => {
+  test('fetches every persisted card id — including already-reviewed ones [obligation]', async () => {
     const persisted = {
       deck_ids: [1],
       card_ids: [10, 11, 12, 13],
@@ -331,7 +331,7 @@ describe('useSessionCards', () => {
     await nextTick()
 
     const passed_ref = cardsByIdsQueryMock.mock.calls[0][0]
-    expect(passed_ref.value).toEqual([11, 13])
+    expect(passed_ref.value).toEqual([10, 11, 12, 13])
   })
 
   test('ignores the bootstrap card list on restore — decks still come from the bootstrap', async () => {
@@ -378,7 +378,7 @@ describe('useSessionCards', () => {
     expect(setup.result.loading.value).toBe(false)
   })
 
-  test('calls restore with an empty array (skipping the fetch) when every persisted card was already reviewed [obligation]', async () => {
+  test('still fetches every persisted card even when all of them were already reviewed [obligation]', async () => {
     const persisted = {
       deck_ids: [1],
       card_ids: [10, 11],
@@ -388,6 +388,27 @@ describe('useSessionCards', () => {
       ],
       completed: true
     }
+    readPersistedSessionMock.mockReturnValue(persisted)
+    bootstrapRefetchImpl.current = vi.fn().mockResolvedValue(bootstrapSuccess([makeDeck()], []))
+    restoreRefetchImpl.current = vi.fn().mockResolvedValue({ status: 'success', data: [] })
+
+    const restore = vi.fn()
+    const setup = withSetup(() =>
+      useSessionCards({ deckIds: () => [1], seed: vi.fn(), restore, onMissingDeck: vi.fn() })
+    )
+    unmount = setup.unmount
+
+    await new Promise((r) => setTimeout(r, 0))
+    await nextTick()
+
+    const passed_ref = cardsByIdsQueryMock.mock.calls[0][0]
+    expect(passed_ref.value).toEqual([10, 11])
+    expect(restoreRefetchImpl.current).toHaveBeenCalled()
+    expect(setup.result.loading.value).toBe(false)
+  })
+
+  test('calls restore with an empty array (skipping the fetch) when card_ids itself is empty', async () => {
+    const persisted = { deck_ids: [1], card_ids: [], results: [], completed: true }
     readPersistedSessionMock.mockReturnValue(persisted)
     bootstrapRefetchImpl.current = vi.fn().mockResolvedValue(bootstrapSuccess([makeDeck()], []))
 

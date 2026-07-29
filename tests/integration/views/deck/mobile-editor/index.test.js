@@ -136,6 +136,21 @@ describe('mobile-editor/index (real modal stack) [obligation]', () => {
     ).toBeUndefined()
   })
 
+  // ── editor-controls lives in dialog-card's #toolbar [obligation] ──────────
+
+  test('editor-controls is rendered inside the dialog-card toolbar, pinned outside the scrolling body [obligation]', async () => {
+    const controller = makeController([makeCard({ client_id: 'cid-1' })])
+    const editor = useMobileCardEditor(controller)
+    editor.open_at('cid-1')
+
+    const wrapper = mountModal()
+    await nextTick()
+
+    const toolbar = wrapper.find('[data-testid="dialog-card__toolbar"]')
+    expect(toolbar.exists()).toBe(true)
+    expect(toolbar.find('[data-testid="mobile-card-editor__prev"]').exists()).toBe(true)
+  })
+
   test('calling open_at again while open updates the existing modal instead of stacking a second one [obligation]', async () => {
     const controller = makeController([
       makeCard({ client_id: 'cid-1' }),

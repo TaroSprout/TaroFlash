@@ -11,6 +11,7 @@ import { usePersistedSession } from './session-persistence'
 import { buildDeckResolution, provideDeckResolution } from '../deck-resolution'
 import { useFlushDeckReviews } from '@/api/reviews'
 import type { PersistedSession } from './session-persistence'
+import type { SummaryCategory } from '../session-summary/aggregate'
 
 export type StudySessionController = ReturnType<typeof useStudySessionController>
 
@@ -95,6 +96,7 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
   } = useSessionPrefs()
 
   const active_page = ref<'settings' | null>(null)
+  const summary_category = ref<SummaryCategory | null>(null)
 
   const rating_times = useRatingTimes(() => engine.active_card_preview.value)
 
@@ -108,6 +110,16 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
   /** Return from the settings page to studying. */
   function closeSettings() {
     active_page.value = null
+  }
+
+  /** Open the summary's per-category card page (reachable only from the summary). */
+  function openSummaryCategory(category: SummaryCategory) {
+    summary_category.value = category
+  }
+
+  /** Return from a category page to the summary's stats list. */
+  function closeSummaryCategory() {
+    summary_category.value = null
   }
 
   /**
@@ -189,6 +201,7 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     multi_deck_ordering,
     prefs_are_default,
     active_page,
+    summary_category,
     editing,
     saving,
     can_edit,
@@ -205,6 +218,8 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     resetToDefaults,
     openSettings,
     closeSettings,
+    openSummaryCategory,
+    closeSummaryCategory,
     requestClose,
     onCardReviewed
   }

@@ -29,6 +29,26 @@ vi.mock('@/views/study-session/composables/session-persistence', async (importOr
   }
 })
 
+// Deterministic replacement for the real GSAP-driven pane transition — the
+// real one delays `onStart` (and the jingle it triggers) by 150ms, which
+// `nextFrame`'s 2x rAF never reaches. Mirrors dialog-card-pager.test.js.
+const { mockSessionPaneEnter, mockSessionPaneLeave } = vi.hoisted(() => ({
+  mockSessionPaneEnter: vi.fn((_el, done, options) => {
+    Promise.resolve().then(() => {
+      options?.onStart?.()
+      done()
+    })
+  }),
+  mockSessionPaneLeave: vi.fn((_el, done) => {
+    Promise.resolve().then(() => done())
+  })
+}))
+
+vi.mock('@/utils/animations/session-pane', () => ({
+  sessionPaneEnter: mockSessionPaneEnter,
+  sessionPaneLeave: mockSessionPaneLeave
+}))
+
 // Mock viewport so provideDialogCardViewport() doesn't hit real matchMedia.
 const { mediaState, capturedQueries } = vi.hoisted(() => ({
   mediaState: { is_mobile: { value: false } },
@@ -51,6 +71,7 @@ const {
   is_cover_ref,
   can_edit_ref,
   active_page_ref,
+  summary_category_ref,
   session_decks_ref,
   mockRequestClose,
   mockStartEdit,
@@ -58,6 +79,8 @@ const {
   mockOnDelete,
   mockOpenSettings,
   mockCloseSettings,
+  mockOpenSummaryCategory,
+  mockCloseSummaryCategory,
   capturedControllerOptions
 } = await vi.hoisted(async () => {
   const { ref } = await import('vue')
@@ -67,6 +90,7 @@ const {
     is_cover_ref: ref(false),
     can_edit_ref: ref(true),
     active_page_ref: ref(null),
+    summary_category_ref: ref(null),
     session_decks_ref: ref([{ id: 1, title: 'My Deck' }]),
     mockRequestClose: vi.fn(),
     mockStartEdit: vi.fn(),
@@ -74,6 +98,8 @@ const {
     mockOnDelete: vi.fn(),
     mockOpenSettings: vi.fn(),
     mockCloseSettings: vi.fn(),
+    mockOpenSummaryCategory: vi.fn(),
+    mockCloseSummaryCategory: vi.fn(),
     capturedControllerOptions: { current: null }
   }
 })
@@ -88,12 +114,15 @@ vi.mock('@/views/study-session/composables/session-controller', () => ({
       can_edit: can_edit_ref,
       sessionDecks: session_decks_ref,
       active_page: active_page_ref,
+      summary_category: summary_category_ref,
       requestClose: mockRequestClose,
       startEdit: mockStartEdit,
       onMove: mockOnMove,
       onDelete: mockOnDelete,
       openSettings: mockOpenSettings,
-      closeSettings: mockCloseSettings
+      closeSettings: mockCloseSettings,
+      openSummaryCategory: mockOpenSummaryCategory,
+      closeSummaryCategory: mockCloseSummaryCategory
     }
   },
   useInjectedStudySessionController: vi.fn()
@@ -111,12 +140,23 @@ const SessionStudyingStub = defineComponent({
 const SessionSummaryStub = defineComponent({
   name: 'SessionSummary',
   props: ['results'],
-  emits: ['close'],
+  emits: ['open-category'],
   setup(_props, { emit }) {
     return () =>
       h('div', { 'data-testid': 'session-summary-stub' }, [
-        h('button', { 'data-testid': 'summary-close-btn', onClick: () => emit('close') })
+        h('button', {
+          'data-testid': 'summary-open-category-btn',
+          onClick: () => emit('open-category', 'stuck')
+        })
       ])
+  }
+})
+
+const SessionSummaryCategoryStub = defineComponent({
+  name: 'SessionSummaryCategory',
+  props: ['results', 'category'],
+  setup() {
+    return () => h('div', { 'data-testid': 'session-summary-category-stub' })
   }
 })
 
@@ -141,6 +181,7 @@ function makeWrapper({ close = vi.fn(), deck_ids = [1] } = {}) {
         stubs: {
           SessionStudying: SessionStudyingStub,
           SessionSummary: SessionSummaryStub,
+          SessionSummaryCategory: SessionSummaryCategoryStub,
           SessionSettings: SessionSettingsStub
         },
         provide: {
@@ -170,6 +211,13 @@ async function openSettingsPage() {
   await nextFrame()
 }
 
+/** Simulates the controller opening a summary category page. */
+async function openCategoryPage(category = 'stuck') {
+  summary_category_ref.value = category
+  await nextTick()
+  await nextFrame()
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('StudySession (index.vue)', () => {
@@ -183,11 +231,14 @@ describe('StudySession (index.vue)', () => {
     mockOnDelete.mockClear()
     mockOpenSettings.mockClear()
     mockCloseSettings.mockClear()
+    mockOpenSummaryCategory.mockClear()
+    mockCloseSummaryCategory.mockClear()
     state_ref.value = 'studying'
     results_ref.value = []
     is_cover_ref.value = false
     can_edit_ref.value = true
     active_page_ref.value = null
+    summary_category_ref.value = null
     session_decks_ref.value = [{ id: 1, title: 'My Deck' }]
     capturedControllerOptions.current = null
     mediaState.is_mobile.value = false
@@ -244,6 +295,15 @@ describe('StudySession (index.vue)', () => {
       expect(wrapper.find('[data-testid="session-header__back"]').exists()).toBe(true)
       expect(wrapper.find('[data-testid="session-header__close"]').exists()).toBe(false)
     })
+
+    test('renders "back" while a summary category page is open [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      await finishSession([])
+      await openCategoryPage()
+
+      expect(wrapper.find('[data-testid="session-header__back"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="session-header__close"]').exists()).toBe(false)
+    })
   })
 
   // ── header-end menu: only during studying, never on settings [obligation] ──
@@ -284,7 +344,7 @@ describe('StudySession (index.vue)', () => {
 
   // ── onHeaderStop is page/phase-aware [obligation] ──────────────────────────
 
-  describe('onHeaderStop: settings back vs phase-aware close/stop [obligation]', () => {
+  describe('onHeaderStop: settings/category back vs phase-aware close/stop [obligation]', () => {
     test('while on the settings page, the back button calls closeSettings — not requestClose/onClosed [obligation]', async () => {
       const { wrapper, close } = makeWrapper()
       await openSettingsPage()
@@ -292,6 +352,18 @@ describe('StudySession (index.vue)', () => {
       await wrapper.find('[data-testid="session-header__back"]').trigger('click')
 
       expect(mockCloseSettings).toHaveBeenCalledOnce()
+      expect(mockRequestClose).not.toHaveBeenCalled()
+      expect(close).not.toHaveBeenCalled()
+    })
+
+    test('while a summary category page is open, the back button calls closeSummaryCategory [obligation]', async () => {
+      const { wrapper, close } = makeWrapper()
+      await finishSession([])
+      await openCategoryPage()
+
+      await wrapper.find('[data-testid="session-header__back"]').trigger('click')
+
+      expect(mockCloseSummaryCategory).toHaveBeenCalledOnce()
       expect(mockRequestClose).not.toHaveBeenCalled()
       expect(close).not.toHaveBeenCalled()
     })
@@ -319,7 +391,7 @@ describe('StudySession (index.vue)', () => {
     })
   })
 
-  // ── useModalRequestClose (backdrop/esc) — settings-aware [obligation] ─────
+  // ── useModalRequestClose (backdrop/esc) — settings/category-aware [obligation] ─
 
   describe('useModalRequestClose (backdrop/esc) [obligation]', () => {
     test('on the settings page while still on the cover, backdrop/esc dismisses the session (onClosed) [obligation]', async () => {
@@ -346,6 +418,18 @@ describe('StudySession (index.vue)', () => {
       expect(close).not.toHaveBeenCalled()
     })
 
+    test('with a summary category page open, backdrop/esc returns to the summary stats list (closeSummaryCategory) [obligation]', async () => {
+      const { close } = makeWrapper()
+      await finishSession([])
+      await openCategoryPage()
+
+      request_close_handlers.get(TEST_MODAL_ID)()
+
+      expect(mockCloseSummaryCategory).toHaveBeenCalledOnce()
+      expect(mockRequestClose).not.toHaveBeenCalled()
+      expect(close).not.toHaveBeenCalled()
+    })
+
     test('during studying (no settings page), esc/backdrop calls the controller requestClose() [obligation]', () => {
       const { close } = makeWrapper()
 
@@ -368,7 +452,7 @@ describe('StudySession (index.vue)', () => {
     })
   })
 
-  // ── current_page: settings takes precedence over phase [obligation] ───────
+  // ── current_page: settings/category takes precedence over phase [obligation] ─
 
   test('current_page renders the settings pane when active_page is "settings", regardless of phase [obligation]', async () => {
     const { wrapper } = makeWrapper()
@@ -376,6 +460,15 @@ describe('StudySession (index.vue)', () => {
 
     expect(wrapper.find('[data-testid="session-settings-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="session-studying-stub"]').exists()).toBe(false)
+  })
+
+  test('current_page renders the summary-category pane when summary_category is set [obligation]', async () => {
+    const { wrapper } = makeWrapper()
+    await finishSession([])
+    await openCategoryPage('new')
+
+    expect(wrapper.find('[data-testid="session-summary-category-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="session-summary-stub"]').exists()).toBe(false)
   })
 
   test('state === "summary" switches phase to summary [obligation]', async () => {
@@ -414,24 +507,69 @@ describe('StudySession (index.vue)', () => {
     expect(wrapper.findComponent({ name: 'SessionSummary' }).props('results')).toEqual(results)
   })
 
-  // ── summary @close forwards to onClosed → close() [obligation] ────────────
+  test('controller results and the opened category are forwarded to session-summary-category [obligation]', async () => {
+    const { wrapper } = makeWrapper()
+    const results = [{ card_id: 1, passed: false }]
 
-  test('summary @close event calls onClosed (sfx + clear + close) [obligation]', async () => {
+    await finishSession(results)
+    await openCategoryPage('stuck')
+
+    const category_page = wrapper.findComponent({ name: 'SessionSummaryCategory' })
+    expect(category_page.props('results')).toEqual(results)
+    expect(category_page.props('category')).toBe('stuck')
+  })
+
+  // ── summary open-category forwards to the controller [obligation] ─────────
+
+  test('summary open-category event calls the controller openSummaryCategory [obligation]', async () => {
+    const { wrapper } = makeWrapper()
+
+    await finishSession([])
+    await wrapper.find('[data-testid="summary-open-category-btn"]').trigger('click')
+
+    expect(mockOpenSummaryCategory).toHaveBeenCalledWith('stuck')
+  })
+
+  // ── Toolbar close button [obligation] ──────────────────────────────────────
+  // The close button lives in study-session/index.vue's #toolbar now — moved
+  // out of session-summary/index.vue, which no longer emits close.
+
+  test('renders a toolbar close button only on the summary stats page, not on a category page [obligation]', async () => {
+    const { wrapper } = makeWrapper()
+    await finishSession([])
+
+    expect(wrapper.find('[data-testid="session-summary__close"]').exists()).toBe(true)
+
+    await openCategoryPage()
+    expect(wrapper.find('[data-testid="session-summary__close"]').exists()).toBe(false)
+  })
+
+  test('the toolbar close button calls onClosed (sfx + clear + close) [obligation]', async () => {
     const { wrapper, close } = makeWrapper()
 
     await finishSession([])
-    await wrapper.find('[data-testid="summary-close-btn"]').trigger('click')
+    await wrapper.find('[data-testid="session-summary__close"]').trigger('click')
 
     expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
     expect(mockClearPersistedSession).toHaveBeenCalledOnce()
     expect(close).toHaveBeenCalledOnce()
   })
 
-  // ── Title computation: settings vs single-deck vs multi-deck [obligation] ─
+  // ── Title computation: settings vs category vs single-deck vs multi-deck ──
 
   test('title is the settings i18n key while the settings page is active [obligation]', async () => {
     const { wrapper } = makeWrapper()
     await openSettingsPage()
+
+    const title = wrapper.find('[data-testid="dialog-card-header__title"]').text()
+    expect(title.length).toBeGreaterThan(0)
+    expect(title).not.toBe('My Deck')
+  })
+
+  test('title is the category-specific i18n key while a summary category page is open [obligation]', async () => {
+    const { wrapper } = makeWrapper()
+    await finishSession([])
+    await openCategoryPage('stuck')
 
     const title = wrapper.find('[data-testid="dialog-card-header__title"]').text()
     expect(title.length).toBeGreaterThan(0)
@@ -480,6 +618,46 @@ describe('StudySession (index.vue)', () => {
 
     expect(wrapper.find('[data-testid="session-summary-stub"]').exists()).toBe(true)
     expect(mockEmitStudySfx).not.toHaveBeenCalledWith('music_pizz_duo_hi')
+  })
+
+  // ── Jingle fires only on first summary entry [obligation] ─────────────────
+  // The pager's own enter/leave hooks run through real GSAP-backed animation
+  // helpers with a wall-clock delay — instead of waiting it out, drive the
+  // pager's `enter-start` event directly (the same event onPaneEnterStart
+  // wires up to) and assert the sfx it dispatches per page/summary_seen.
+
+  test('the pager is not instant on the first arrival at the summary, and enter-start plays the jingle [obligation]', async () => {
+    const { wrapper } = makeWrapper()
+    await finishSession([])
+
+    const pager = wrapper.findComponent({ name: 'DialogCardPager' })
+    expect(pager.props('instant')).toBe(false)
+
+    pager.vm.$emit('enter-start')
+    expect(mockEmitSfx).toHaveBeenCalledWith('music_pizz_duo_hi')
+  })
+
+  test('returning to the summary from a category page is instant and enter-start plays the light click, not the jingle again [obligation]', async () => {
+    const { wrapper } = makeWrapper()
+    await finishSession([])
+
+    // First arrival — stamps summary_seen.
+    wrapper.findComponent({ name: 'DialogCardPager' }).vm.$emit('enter-start')
+    mockEmitSfx.mockClear()
+
+    await openCategoryPage()
+    mockEmitSfx.mockClear()
+
+    summary_category_ref.value = null
+    await nextTick()
+    await nextFrame()
+
+    const pager = wrapper.findComponent({ name: 'DialogCardPager' })
+    expect(pager.props('instant')).toBe(true)
+
+    pager.vm.$emit('enter-start')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('music_pizz_duo_hi')
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_2')
   })
 
   // ── regression: outlet must not clip the swipe/drag animation ──────────────

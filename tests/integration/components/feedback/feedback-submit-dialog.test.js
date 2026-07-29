@@ -4,6 +4,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { defineComponent, h } from 'vue'
 import FeedbackSubmitDialog from '@/components/feedback/feedback-submit-dialog.vue'
 import { useNoticeStore } from '@/stores/notice-store'
+import { dialogCardViewportKey } from '@/components/layout-kit/dialog-card/dialog-card-viewport'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
@@ -34,7 +35,8 @@ const DialogCardStub = defineComponent({
           'data-testid': 'feedback-submit-dialog__dialog-close',
           onClick: () => emit('close')
         }),
-        slots.default?.({ viewport: 'desktop' })
+        slots.default?.({ viewport: 'desktop' }),
+        slots.toolbar?.()
       ])
   }
 })
@@ -99,6 +101,7 @@ function mountDialog(close = vi.fn()) {
     props: { close },
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn, stubActions: false })],
+      provide: { [dialogCardViewportKey]: { value: 'desktop' } },
       stubs: {
         DialogCard: DialogCardStub,
         UiInput: UiInputStub,

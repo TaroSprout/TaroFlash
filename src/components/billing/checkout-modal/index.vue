@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 import DialogCardPager from '@/components/layout-kit/dialog-card/dialog-card-pager.vue'
-import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
+import DialogCardBody from '@/components/layout-kit/dialog-card/dialog-card-body.vue'
 import PaymentStatus from './payment-status.vue'
 import SuccessView from './success-view.vue'
 import CheckoutFooter from './checkout-footer.vue'
@@ -21,7 +21,6 @@ const { status, is_ready, onSubmit } = useCheckout(close)
 <template>
   <dialog-card
     data-testid="checkout"
-    class="pb-6"
     size="md"
     :title="t('billing.checkout.title')"
     :show_header="status !== 'success'"
@@ -29,15 +28,11 @@ const { status, is_ready, onSubmit } = useCheckout(close)
     :close_disabled="status === 'confirming'"
     @close="close()"
   >
-    <template #default="{ viewport }">
+    <dialog-card-body data-testid="checkout__scroll-area">
       <div
-        data-testid="checkout__scroll-area"
-        :data-full-bleed="viewport === 'mobile'"
-        class="flex min-h-0 flex-1 flex-col gap-4 h-full pt-4"
-        :class="[
-          status === 'success' ? 'justify-center' : 'justify-between',
-          viewport === 'mobile' ? 'overflow-y-auto scroll-hidden' : ''
-        ]"
+        data-testid="checkout__pane"
+        class="flex flex-1 flex-col gap-4 pt-4"
+        :class="status === 'success' ? 'justify-center' : ''"
       >
         <dialog-card-pager mode="out-in">
           <div
@@ -52,21 +47,11 @@ const { status, is_ready, onSubmit } = useCheckout(close)
 
           <success-view v-else key="success" />
         </dialog-card-pager>
-
-        <checkout-footer
-          v-if="status !== 'success'"
-          :status="status"
-          :is_ready="is_ready"
-          @submit="onSubmit"
-        />
       </div>
+    </dialog-card-body>
 
-      <scroll-bar
-        v-if="viewport === 'mobile'"
-        target="[data-testid='checkout__scroll-area']"
-        min-width="sm"
-        class="absolute right-8 top-6 bottom-6"
-      />
+    <template v-if="status !== 'success'" #toolbar>
+      <checkout-footer :status="status" :is_ready="is_ready" @submit="onSubmit" />
     </template>
   </dialog-card>
 </template>

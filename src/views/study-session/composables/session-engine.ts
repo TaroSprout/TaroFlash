@@ -21,7 +21,6 @@ export type SessionState = 'loading' | 'cover' | 'studying' | 'summary'
 export type CardReviewResult = {
   card_id: number
   deck_id?: number
-  front_text?: string
   is_new: boolean
   before_interval: number
   after_interval: number
@@ -128,10 +127,10 @@ export function useSessionEngine({
 
   /**
    * Rebuilds the session from a sessionStorage snapshot after a refresh. `raw`
-   * is only the still-unreviewed remainder, fetched by id so newly-due cards
-   * can't leak into the locked queue; already-reviewed cards are rebuilt from
-   * `results` alone (they're never shown again). Lands on the cover — the owner
-   * decides whether to jump straight into studying.
+   * is the whole locked queue, fetched by id so newly-due cards can't leak in —
+   * reviewed cards come back too (the summary renders them), and are stamped
+   * with their reviewed state here so `_advance` never serves them again. Lands
+   * on the cover — the owner decides whether to jump straight into studying.
    */
   function restoreCards(
     raw: Card[],
@@ -144,15 +143,13 @@ export function useSessionEngine({
     results.value = persisted.results
 
     _cards_in_deck.value = persisted.card_ids.flatMap((id): StudyCard[] => {
-      const reviewed = reviewed_by_id.get(id)
-      if (reviewed) {
-        return [
-          { id, front_text: reviewed.front_text, state: reviewed.passed ? 'passed' : 'failed' }
-        ]
-      }
-
       const card = fetched_by_id.get(id)
-      return card ? [_setupCard(card)] : []
+      if (!card) return []
+
+      const reviewed = reviewed_by_id.get(id)
+      if (!reviewed) return [_setupCard(card)]
+
+      return [{ ..._setupCard(card), state: reviewed.passed ? 'passed' : 'failed' }]
     })
 
     active_card.value = cards.value.find((c) => c.state === 'unreviewed')
@@ -253,7 +250,6 @@ export function useSessionEngine({
       results.value.push({
         card_id: card.id,
         deck_id: card.deck_id,
-        front_text: card.front_text,
         is_new: (review.reps ?? 0) === 0,
         before_interval: review.scheduled_days ?? 0,
         after_interval: item.card.scheduled_days ?? 0,

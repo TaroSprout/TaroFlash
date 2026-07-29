@@ -93,8 +93,17 @@ const DialogCardStub = defineComponent({
       h('div', { 'data-testid': 'move-cards' }, [
         h('span', { class: 'move-cards__title' }, props.title),
         h('button', { 'data-testid': 'move-cards__dialog-close', onClick: () => emit('close') }),
-        slots.default?.({ viewport: 'desktop' })
+        slots.default?.({ viewport: 'desktop' }),
+        slots.toolbar?.()
       ])
+  }
+})
+
+const DialogCardBodyStub = defineComponent({
+  name: 'DialogCardBody',
+  inheritAttrs: false,
+  setup(_props, { slots, attrs }) {
+    return () => h('div', { ...attrs }, slots.default?.())
   }
 })
 
@@ -158,6 +167,7 @@ function mountModal({
         UiRadio: UiRadioStub,
         UiButton: UiButtonStub,
         DialogCard: DialogCardStub,
+        DialogCardBody: DialogCardBodyStub,
         UiOptionsPanel: UiOptionsPanelStub,
         ScrollBar: ScrollBarStub
       }

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { onMounted, reactive, useTemplateRef } from 'vue'
+import { onMounted, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
+import DialogCardBody from '@/components/layout-kit/dialog-card/dialog-card-body.vue'
 import AvatarImage from './avatar-image.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import { AVATAR_KEYS, loadAvatarUrl } from './avatars'
 import { emitSfx } from '@/sfx/bus'
 import { TYPE_SFX } from '@/sfx/config'
@@ -17,7 +17,6 @@ type AvatarPickerModalProps = {
 const { selected, close } = defineProps<AvatarPickerModalProps>()
 
 const { t } = useI18n()
-const grid_el = useTemplateRef<HTMLElement>('grid')
 const loaded = reactive(new Set<string>())
 
 onMounted(() => {
@@ -45,46 +44,32 @@ function onAvatarSelect(avatar: string) {
     :close_sfx="{ press: 'pop_up_close' }"
     @close="close()"
   >
-    <template #default="{ viewport }">
-      <div data-testid="avatar-picker-modal__scroll-area" class="relative h-full">
-        <div
-          ref="grid"
-          data-testid="avatar-picker-modal__grid"
-          :data-full-bleed="viewport === 'mobile'"
-          class="scroll-hidden grid grid-cols-4 gap-3 overflow-y-auto pb-(--dialog-px) pt-2 h-full"
+    <dialog-card-body data-testid="avatar-picker-modal__scroll-area">
+      <div data-testid="avatar-picker-modal__grid" class="grid grid-cols-4 gap-3 pt-2">
+        <button
+          v-for="avatar in AVATAR_KEYS"
+          :key="avatar"
+          :data-testid="`avatar-picker-modal__option-${avatar}`"
+          :data-selected="avatar === selected || undefined"
+          v-sfx="{ hover: TYPE_SFX }"
+          class="rounded-10 cursor-pointer hover:bg-(--color-accent) hover:bgx-diagonal-stripes hover:bgx-slide data-selected:bg-(--color-accent) data-selected:bgx-diagonal-stripes data-selected:border-6 border-white relative aspect-square p-2"
+          @click="onAvatarSelect(avatar)"
         >
-          <button
-            v-for="avatar in AVATAR_KEYS"
-            :key="avatar"
-            :data-testid="`avatar-picker-modal__option-${avatar}`"
-            :data-selected="avatar === selected || undefined"
-            v-sfx="{ hover: TYPE_SFX }"
-            class="rounded-10 cursor-pointer hover:bg-(--color-accent) hover:bgx-diagonal-stripes hover:bgx-slide data-selected:bg-(--color-accent) data-selected:bgx-diagonal-stripes data-selected:border-6 border-white relative aspect-square p-2"
-            @click="onAvatarSelect(avatar)"
+          <div
+            v-if="!loaded.has(avatar)"
+            data-testid="avatar-picker-modal__skeleton"
+            class="h-full w-full rounded-8 animate-pulse bg-brown-300 bgx-diagonal-stripes"
+          />
+          <avatar-image v-else :avatar="avatar" class="h-full w-full" />
+
+          <div
+            v-if="avatar === selected"
+            class="absolute -top-2 -right-2 bg-white p-1.5 size-8 rounded-full flex items-center justify-center"
           >
-            <div
-              v-if="!loaded.has(avatar)"
-              data-testid="avatar-picker-modal__skeleton"
-              class="h-full w-full rounded-8 animate-pulse bg-brown-300 bgx-diagonal-stripes"
-            />
-            <avatar-image v-else :avatar="avatar" class="h-full w-full" />
-
-            <div
-              v-if="avatar === selected"
-              class="absolute -top-2 -right-2 bg-white p-1.5 size-8 rounded-full flex items-center justify-center"
-            >
-              <ui-icon src="check" class="text-(--color-accent)" />
-            </div>
-          </button>
-        </div>
-
-        <scroll-bar
-          v-if="grid_el && viewport !== 'mobile'"
-          :target="grid_el"
-          min-width="sm"
-          class="absolute -right-6 top-1 bottom-(--dialog-px)"
-        />
+            <ui-icon src="check" class="text-(--color-accent)" />
+          </div>
+        </button>
       </div>
-    </template>
+    </dialog-card-body>
   </dialog-card>
 </template>

@@ -2,11 +2,12 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import SessionSummary from '@/views/study-session/session-summary/index.vue'
+import { dialogCardViewportKey } from '@/components/layout-kit/dialog-card/dialog-card-viewport'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
-// session-summary no longer takes a leech_threshold prop — it reads
-// thresholdFor(deck_id) off the injected DeckResolution, so the same
-// aggregateSession call can resolve a different threshold per result's deck.
+// session-summary reads thresholdFor(deck_id) off the injected DeckResolution,
+// so the same aggregateSession call can resolve a different threshold per
+// result's own deck.
 
 const { mockThresholdFor } = vi.hoisted(() => ({ mockThresholdFor: vi.fn(() => 24) }))
 
@@ -16,14 +17,16 @@ vi.mock('@/views/study-session/deck-resolution', () => ({
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
-const StatTileStub = defineComponent({
-  name: 'StatTile',
+const StatsPanelStub = defineComponent({
+  name: 'StatsPanel',
   props: ['summary'],
-  setup(props) {
+  emits: ['select'],
+  setup(props, { emit }) {
     return () =>
       h('div', {
-        'data-testid': 'stat-tile-stub',
-        'data-stuck-count': props.summary?.stuck_count
+        'data-testid': 'stats-panel-stub',
+        'data-stuck-count': props.summary?.groups?.stuck?.length,
+        onClick: () => emit('select', 'stuck')
       })
   }
 })
@@ -33,7 +36,6 @@ const StatTileStub = defineComponent({
 function makeResult(overrides = {}) {
   return {
     card_id: 1,
-    front_text: 'What is Vue?',
     is_new: false,
     before_interval: 10,
     after_interval: 20,
@@ -46,7 +48,10 @@ function makeResult(overrides = {}) {
 function mountSummary({ results = [] } = {}) {
   return mount(SessionSummary, {
     props: { results },
-    global: { stubs: { StatTile: StatTileStub } }
+    global: {
+      stubs: { StatsPanel: StatsPanelStub },
+      provide: { [dialogCardViewportKey]: { value: 'desktop' } }
+    }
   })
 }
 
@@ -79,57 +84,42 @@ describe('SessionSummary (index.vue)', () => {
     expect(wrapper.find('[data-testid="session-summary__title"]').exists()).toBe(true)
   })
 
-  // ── No title prop, no session-header [obligation] ─────────────────────────
-  // session-summary no longer owns any header chrome — the shell
-  // (flashcard-session/index.vue) renders the header via dialog-card's
-  // native slots, so session-summary only takes `results` + emits `close`.
-
-  test('does not render a session-header [obligation]', () => {
-    const wrapper = mountSummary()
-    expect(wrapper.findComponent({ name: 'SessionHeader' }).exists()).toBe(false)
-    expect(wrapper.find('[data-testid="session-header"]').exists()).toBe(false)
-  })
-
-  test('mounts fine without a title prop [obligation]', () => {
+  test('mounts fine without extra props', () => {
     expect(() => mountSummary()).not.toThrow()
   })
 
-  // ── Score blurb: recalled/total pill spans ────────────────────────────────
+  // ── Close button removed [obligation] ─────────────────────────────────────
+  // The close button moved up into study-session/index.vue's #toolbar;
+  // session-summary no longer renders it or emits close.
 
-  test('score-recalled span shows correct passed count', () => {
-    const results = [
-      makeResult({ card_id: 1, passed: true }),
-      makeResult({ card_id: 2, passed: false }),
-      makeResult({ card_id: 3, passed: true })
-    ]
-    const wrapper = mountSummary({ results })
-    expect(wrapper.find('[data-testid="session-summary__score-recalled"]').text()).toBe('2')
-  })
-
-  test('score-total span shows total count', () => {
-    const results = [makeResult({ card_id: 1 }), makeResult({ card_id: 2 })]
-    const wrapper = mountSummary({ results })
-    expect(wrapper.find('[data-testid="session-summary__score-total"]').text()).toBe('2')
-  })
-
-  test('score-recalled renders with 0 when no results', () => {
-    const wrapper = mountSummary({ results: [] })
-    expect(wrapper.find('[data-testid="session-summary__score-recalled"]').text()).toBe('0')
-    expect(wrapper.find('[data-testid="session-summary__score-total"]').text()).toBe('0')
-  })
-
-  // ── Stat tile rendered ─────────────────────────────────────────────────────
-
-  test('renders the stat-tile stub', () => {
+  test('does not render a close button [obligation]', () => {
     const wrapper = mountSummary()
-    expect(wrapper.find('[data-testid="stat-tile-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="session-summary__close"]').exists()).toBe(false)
+  })
+
+  test('does not emit close [obligation]', () => {
+    const wrapper = mountSummary()
+    expect(wrapper.emitted('close')).toBeUndefined()
+  })
+
+  // ── StatsPanel wiring ──────────────────────────────────────────────────────
+
+  test('renders the stats-panel stub', () => {
+    const wrapper = mountSummary()
+    expect(wrapper.find('[data-testid="stats-panel-stub"]').exists()).toBe(true)
+  })
+
+  test('forwards the stats-panel select event as open-category', async () => {
+    const wrapper = mountSummary()
+    await wrapper.find('[data-testid="stats-panel-stub"]').trigger('click')
+    expect(wrapper.emitted('open-category')).toEqual([['stuck']])
   })
 
   // ── thresholdFor(deck_id) threading [obligation] ──────────────────────────
   // session-summary passes DeckResolution's thresholdFor into aggregateSession —
   // a different threshold on the same results must change the derived summary.
 
-  test('passes thresholdFor into aggregateSession, changing stuck_count for the same results [obligation]', () => {
+  test('passes thresholdFor into aggregateSession, changing the stuck group for the same results [obligation]', () => {
     const results = [makeResult({ card_id: 1, passed: false, lapses: 10 })]
 
     mockThresholdFor.mockReturnValue(8)
@@ -139,10 +129,10 @@ describe('SessionSummary (index.vue)', () => {
     const high_threshold = mountSummary({ results })
 
     expect(
-      low_threshold.find('[data-testid="stat-tile-stub"]').attributes('data-stuck-count')
+      low_threshold.find('[data-testid="stats-panel-stub"]').attributes('data-stuck-count')
     ).toBe('1')
     expect(
-      high_threshold.find('[data-testid="stat-tile-stub"]').attributes('data-stuck-count')
+      high_threshold.find('[data-testid="stats-panel-stub"]').attributes('data-stuck-count')
     ).toBe('0')
   })
 
@@ -157,16 +147,10 @@ describe('SessionSummary (index.vue)', () => {
     const wrapper = mountSummary({ results })
 
     // deck 1's threshold (4) is crossed by lapses=5; deck 2's threshold (30) is not.
-    expect(wrapper.find('[data-testid="stat-tile-stub"]').attributes('data-stuck-count')).toBe('1')
+    expect(wrapper.find('[data-testid="stats-panel-stub"]').attributes('data-stuck-count')).toBe(
+      '1'
+    )
     expect(mockThresholdFor).toHaveBeenCalledWith(1)
     expect(mockThresholdFor).toHaveBeenCalledWith(2)
-  })
-
-  // ── Footer close button emits close [obligation] ──────────────────────────
-
-  test('close button emits close event [obligation]', async () => {
-    const wrapper = mountSummary()
-    await wrapper.find('[data-testid="session-summary__close"]').trigger('click')
-    expect(wrapper.emitted('close')).toHaveLength(1)
   })
 })

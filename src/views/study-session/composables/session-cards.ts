@@ -68,9 +68,14 @@ export function useSessionCards({ deckIds, seed, restore, onMissingDeck }: UseSe
     loading.value = false
   }
 
+  /**
+   * Refetches the whole locked queue by id — reviewed cards included. The
+   * summary renders real cards per category, so their back text and images have
+   * to survive a mid-session refresh; the snapshot only stores ids. Re-serving
+   * is prevented downstream, where `restoreCards` marks them from `results`.
+   */
   async function _restoreSession(persisted: PersistedSession) {
-    const reviewed_ids = new Set(persisted.results.map((r) => r.card_id))
-    restore_ids.value = persisted.card_ids.filter((id) => !reviewed_ids.has(id))
+    restore_ids.value = persisted.card_ids
 
     if (!restore_ids.value.length) {
       restore([], persisted)

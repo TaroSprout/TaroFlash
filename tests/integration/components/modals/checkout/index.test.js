@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 // Real refs so the template's auto-unwrap kicks in — vi.mock factories are
@@ -49,7 +49,14 @@ import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 function mountCheckout(close = vi.fn()) {
   return shallowMount(Checkout, {
     props: { close },
-    global: { stubs: { DialogCard: false, DialogCardHeader: false, DialogCardPager: false } }
+    global: {
+      stubs: {
+        DialogCard: false,
+        DialogCardHeader: false,
+        DialogCardPager: false,
+        DialogCardBody: false
+      }
+    }
   })
 }
 
@@ -206,44 +213,48 @@ describe('Checkout — body/success transition', () => {
   })
 })
 
-// ── Full-bleed mobile scroll area [obligation] ────────────────────────────────
+// ── dialog-card-body migration [obligation] ───────────────────────────────────
+// checkout's scroll area is now dialog-card-body itself — it owns the
+// overflow/scroll-bar, not a hand-rolled full-bleed div. The footer moved out
+// into dialog-card's #toolbar, so it's a sibling of the scroll area, not
+// nested inside it.
 
-describe('Checkout — full-bleed mobile scroll area [obligation]', () => {
-  test('[obligation] checkout__scroll-area is the overflow container in full-bleed mode', () => {
-    mediaState.is_mobile.value = true
+describe('Checkout — dialog-card-body owns the scroll area [obligation]', () => {
+  test('[obligation] checkout__scroll-area is rendered by dialog-card-body', () => {
+    const wrapper = mountCheckout()
+    expect(wrapper.findComponent({ name: 'DialogCardBody' }).attributes('data-testid')).toBe(
+      'checkout__scroll-area'
+    )
+  })
+
+  test('[obligation] the footer is a sibling of the scroll area, not nested inside it', () => {
     const wrapper = mountCheckout()
 
     const scrollArea = wrapper.find('[data-testid="checkout__scroll-area"]')
-    expect(scrollArea.attributes('data-full-bleed')).toBe('true')
+    expect(scrollArea.findComponent({ name: 'CheckoutFooter' }).exists()).toBe(false)
+    expect(wrapper.findComponent({ name: 'CheckoutFooter' }).exists()).toBe(true)
   })
 
-  test('[obligation] checkout__scroll-area is not the overflow container outside full-bleed mode', () => {
-    mediaState.is_mobile.value = false
+  test('[obligation] the scroll area still wraps the body', () => {
     const wrapper = mountCheckout()
-
-    const scrollArea = wrapper.find('[data-testid="checkout__scroll-area"]')
-    expect(scrollArea.attributes('data-full-bleed')).toBe('false')
-  })
-
-  test('[obligation] scroll-area wraps the body and footer together, not just the body', () => {
-    mediaState.is_mobile.value = true
-    const wrapper = mountCheckout()
-
     const scrollArea = wrapper.find('[data-testid="checkout__scroll-area"]')
     expect(scrollArea.find('[data-testid="checkout__body"]').exists()).toBe(true)
-    expect(scrollArea.findComponent({ name: 'CheckoutFooter' }).exists()).toBe(true)
   })
 
-  test('renders the ui-kit scroll-bar targeting the scroll-area only in full-bleed mode', () => {
-    mediaState.is_mobile.value = true
-    const wrapper = mountCheckout()
-    expect(wrapper.findComponent({ name: 'ScrollBar' }).exists()).toBe(true)
-  })
+  // dialog-card-body's own scroll-bar visibility is desktop-only (viewport !==
+  // 'mobile') — inherited default, not bespoke to checkout anymore.
 
-  test('does not render the ui-kit scroll-bar outside full-bleed mode', () => {
+  test('renders the ui-kit scroll-bar outside full-bleed (desktop) mode', async () => {
     mediaState.is_mobile.value = false
     const wrapper = mountCheckout()
-    expect(wrapper.findComponent({ name: 'ScrollBar' }).exists()).toBe(false)
+    await nextTick()
+    expect(wrapper.findComponent({ name: 'UiScrollBar' }).exists()).toBe(true)
+  })
+
+  test('does not render the ui-kit scroll-bar in full-bleed (mobile) mode', () => {
+    mediaState.is_mobile.value = true
+    const wrapper = mountCheckout()
+    expect(wrapper.findComponent({ name: 'UiScrollBar' }).exists()).toBe(false)
   })
 })
 

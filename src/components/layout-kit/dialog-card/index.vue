@@ -24,7 +24,7 @@ const SIZE_FULL_BLEED_AT: Record<DialogCardSize, string> = {
 const SIZE_CONTENT_MAX_WIDTH: Record<DialogCardSize, string> = {
   sm: '25rem',
   md: '32.5rem',
-  lg: '35rem'
+  lg: '37rem'
 }
 
 const SIZE_CONTENT_BREAKOUT_MAX_WIDTH: Record<DialogCardSize, string> = {
@@ -82,6 +82,9 @@ const slots = defineSlots<{
   'header-start'(): any
   'header-end'(): any
   default(props: { viewport: DialogCardViewport }): any
+  // Pinned bottom row, outside the body's flow — action bars that must stay put
+  // while the body scrolls.
+  toolbar?(): any
 }>()
 
 const { t } = useI18n()
@@ -91,6 +94,30 @@ const ambient_depth = useAmbientDepth()
 const depth = provideDepth(() => nextDepth(ambient_depth.value))
 
 const viewport = provideDialogCardViewport(full_bleed_at ?? SIZE_FULL_BLEED_AT[size])
+/**
+ * Both of these read `slots.toolbar`, which is NOT reactive — wrapping either in
+ * a `computed` would cache the first answer and never see a `v-if`'d toolbar
+ * appear. Called from the template instead, so they re-run every render.
+ *
+ * Each branch spells its class out in full: Tailwind only generates an
+ * arbitrary-value class it can find verbatim in the source.
+ */
+function gridRowsClass() {
+  if (float_header) {
+    return slots.toolbar ? 'grid-rows-[minmax(0,1fr)_auto]' : 'grid-rows-[minmax(0,1fr)]'
+  }
+
+  return slots.toolbar ? 'grid-rows-[auto_minmax(0,1fr)_auto]' : 'grid-rows-[auto_minmax(0,1fr)]'
+}
+
+/**
+ * Bottom padding the body should leave itself. With a toolbar the toolbar row
+ * owns that space, so the body takes none. Published as a variable rather than
+ * injected state for the same non-reactivity reason.
+ */
+function bodyPaddingStyle() {
+  return { '--dialog-body-pb': slots.toolbar ? '0px' : 'var(--dialog-px)' }
+}
 
 // `--content-grid-padding` is set here directly rather than via a
 // `content-grid-px-(--dialog-px)` class: Tailwind's arbitrary-value matcher
@@ -123,10 +150,10 @@ defineExpose({ viewport })
     :class="[
       SIZE_CLASSES[size],
       bg_class,
-      float_header ? 'grid-rows-[minmax(0,1fr)]' : 'grid-rows-[auto_minmax(0,1fr)]',
+      gridRowsClass(),
       viewport === 'mobile' ? 'h-full! w-full! rounded-none!' : 'rounded-8 bevel-lg'
     ]"
-    :style="card_style"
+    :style="[card_style, bodyPaddingStyle()]"
   >
     <slot name="header">
       <dialog-card-header
@@ -160,5 +187,9 @@ defineExpose({ viewport })
     </slot>
 
     <slot :viewport="viewport"></slot>
+
+    <div v-if="slots.toolbar" data-testid="dialog-card__toolbar" class="pb-(--dialog-px)">
+      <slot name="toolbar"></slot>
+    </div>
   </div>
 </template>
