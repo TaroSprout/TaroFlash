@@ -1,6 +1,6 @@
 # App Map — TaroFlash
 
-> Seed context for the `/groom` agent. Read this **before** forming a hunch about where a
+> Seed context for the `/triage` and `/groom` agents. Read this **before** investigating where a
 > raw task lives, so the first grep lands in the right place. Not exhaustive — a starting map.
 > Stack: Vue 3 `<script setup>` + TypeScript, Supabase, Pinia + Pinia Colada. **Feature-colocated**:
 > each view owns its components/composables in nested folders; `use-*.ts` sits next to its owner.
@@ -102,7 +102,7 @@ Use this first. Match words in the raw ticket to a starting path, then grep from
 
 ## Epics (Notion Epic Board → code area)
 
-`/groom` sets the ticket's **Epic** relation. Active (In Dev / Ready / P0) first; map to code:
+`/triage` sets the ticket's **Epic** relation. Active (In Dev / Ready / P0) first; map to code:
 
 | Epic                        | Status       | Code area                                              |
 | --------------------------- | ------------ | ------------------------------------------------------ |
