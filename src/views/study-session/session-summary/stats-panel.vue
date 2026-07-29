@@ -8,7 +8,7 @@ type StatsPanelProps = { summary: SummaryData }
 
 // Display order; `correct` leads because it's the headline stat.
 const CATEGORIES: { key: SummaryCategory; icon: string }[] = [
-  { key: 'correct', icon: 'check' },
+  { key: 'correct', icon: 'card-deck' },
   { key: 'new', icon: 'card-add' },
   { key: 'strengthened', icon: 'card-lift' },
   { key: 'weakened', icon: 'card-place' },
