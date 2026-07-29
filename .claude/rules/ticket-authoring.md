@@ -9,18 +9,20 @@ Cutting a ticket **captures**; it does not spec. `/triage` specs it later.
 
 - **Task Board**: `collection://3630953c-224c-8065-8864-000bb9fe7bad`
 - **Epic Board**: `collection://2510953c-224c-80b7-9bb0-000b5384a47d`
-- `Priority`: `⇞P0` · `↑P1` · `↓P2` · `⇟P3` — `Type`: `Bug` · `Task` · `Story`
+- `Priority`: `⇞P0` · `↑P1` · `↓P2` · `⇟P3` — `Type`: `Bug` · `Task` · `Story` · `Spike`
 - `ID` is read-only auto-increment. Never set it.
+- **The board is the source of truth for these lists, not this file.** `notion-fetch` on the
+  data-source URL returns the live options; check when a value seems not to fit, and fix this file.
 
 ## Fields
 
-| Field      | Value when cutting                                                              |
-| ---------- | ------------------------------------------------------------------------------- |
-| `Status`   | **`Backlog`**, always — a new ticket is un-triaged by definition                |
-| `Assignee` | **empty** — only set when a ticket reaches `Queued`                             |
-| `Type`     | `Bug` broken · `Task` defined change · `Story` user-facing capability           |
-| `Priority` | `⇞P0` data loss/security/broken core flow · `↑P1` real pain · `↓P2`/`⇟P3` rest  |
-| `Epic`     | match the Epic Board; if nothing fits, propose a new epic rather than force-fit |
+| Field      | Value when cutting                                                                                                                   |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `Status`   | **`Backlog`**, always — a new ticket is un-triaged by definition                                                                     |
+| `Assignee` | **empty** — only set when a ticket reaches `Queued`                                                                                  |
+| `Type`     | `Bug` broken · `Task` defined change · `Story` user-facing capability · `Spike` the deliverable is a decision, not shipped behaviour |
+| `Priority` | `⇞P0` data loss/security/broken core flow · `↑P1` real pain · `↓P2`/`⇟P3` rest                                                       |
+| `Epic`     | match the Epic Board; if nothing fits, propose a new epic rather than force-fit                                                      |
 
 Never write `Ready` or `Queued` — those assert an agent can execute the ticket, which is never true
 at capture time.

@@ -46,6 +46,11 @@ recorded under `## Blocked on`, never left as an unmarked menu.
 
 - **Task Board** data source: `collection://3630953c-224c-8065-8864-000bb9fe7bad`
 - **Epic Board** data source: `collection://2510953c-224c-80b7-9bb0-000b5384a47d`
+- `Type`: `Bug` · `Task` · `Story` · `Spike`. **`Spike` when the deliverable is a decision or
+  recommendation rather than shipped behaviour** — retype a ticket if grooming reveals that's what it
+  really is, and drop any now-redundant `"Spike:"` title prefix.
+- The board is the source of truth for every option list, not this file — `notion-fetch` on the
+  data-source URL returns the live values. Check when something seems not to fit.
 - Lanes: pulls from `Needs More Info`; lands at `Ready` / `Queued`; may park at `On Hold`.
   Never sets `In Progress` / `Review` / `Done` / `Blocked`.
 

@@ -36,11 +36,17 @@ Do **not** touch tests. Do **not** write code. This skill reads code and writes 
 - **Task Board** data source: `collection://3630953c-224c-8065-8864-000bb9fe7bad`
 - **Epic Board** data source: `collection://2510953c-224c-80b7-9bb0-000b5384a47d`
 - **Fields & vocab:**
-  - `Status`: `On Hold` · `Backlog` · `Needs More Info` · `Ready` · `Queued` · `In Progress` · `Blocked` · `Review` · `Done` · `Duplicate`
+  - `Status`: `On Hold` · `Backlog` · `Needs More Info` · `Ready` · `Queued` · `In Progress` · `Blocked` · `Review` · `Duplicate` · `Won't Do` · `Done`
   - `Priority`: `⇞P0` · `↑P1` · `↓P2` · `⇟P3`
-  - `Type`: `Bug` · `Task` · `Story`
+  - `Type`: `Bug` · `Task` · `Story` · `Spike`
   - `Assignee`: `Me` · `Fable` · `Opus` · `Sonnet`
-  - `Epic`: relation to Epic Board (single). `ID`: read-only auto-increment.
+
+> **The board is the source of truth for these lists, not this file.** A hardcoded vocabulary here
+> once went stale and `Spike` was invisible for months — tickets encoded it in their titles instead.
+> `notion-fetch` on the data-source URL returns the live option lists; check them when a value seems
+> not to fit, and fix this file rather than working around it.
+
+- `Epic`: relation to Epic Board (single). `ID`: read-only auto-increment.
 
 Two parked lanes, distinguished by what is missing:
 
@@ -271,6 +277,24 @@ i18n key paths).
 - Prior art: <the primitive/utility/rule that already governs this surface>
 - Constraints & out of scope: <…, rules, i18n key path>
 ```
+
+**Spike** — use when the deliverable is a **decision or recommendation, not shipped behaviour**.
+The acceptance criteria describe what the written output must cover, not a behaviour change.
+
+```
+## Product description
+<the question to answer and why it's open, product terms>
+## Acceptance criteria (spike deliverable)
+- [ ] A written recommendation covering: <the specific questions>
+- [ ] Follow-up implementation tickets proposed with rough scope
+## Technical notes
+- Current behaviour: <what happens today — the baseline the decision moves from>
+- Area: <path(s)>
+- Constraints: <…, rules>
+```
+
+`Type = Spike` carries the meaning, so the **title must not be prefixed `"Spike: …"`** — that
+prefix only ever existed because the Type was unavailable. Strip it when retyping an old ticket.
 
 Keep bodies tight — enough to act on, no padding. Any new user-facing copy the ticket implies gets
 its locale key path noted (`src/locales/en-us.json`).
