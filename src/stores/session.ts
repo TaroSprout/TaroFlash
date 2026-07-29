@@ -245,6 +245,10 @@ export const useSessionStore = defineStore('sessionStore', () => {
     restoreSession,
     logout,
     forceLogout,
+    // Exposed for teardown after a server-side session revocation (account
+    // deletion), where the sessions are already gone and only local state —
+    // query cache, modals, phone — still needs clearing.
+    reset,
     handleAuthError,
     signupEmail,
     signInOAuth,

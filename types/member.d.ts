@@ -9,6 +9,9 @@ type Member = {
   plan?: MemberPlan
   preferences?: MemberPreferences
   cover_config?: MemberCover
+  // Deletion deadline. Null/absent = live account. Set = pending deletion, and
+  // this is when the purge job may erase it. Only writable server-side.
+  delete_at?: string | null
   // Embedded via the `members.plan` FK — null if the plan row is inactive/missing.
   plans?: Pick<PlanLimits, 'deck_limit' | 'cards_per_deck_limit'> | null
 }

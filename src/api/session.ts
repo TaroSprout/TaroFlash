@@ -161,6 +161,47 @@ export async function logout(): Promise<void> {
   }
 }
 
+/**
+ * Requests account deletion: marks the account pending, cancels any
+ * subscription with a prorated refund, and revokes every session.
+ *
+ * Resolves with the deletion deadline. Idempotent — calling it again returns the
+ * original deadline rather than extending the grace window.
+ *
+ * The caller's session is dead once this resolves, so any teardown afterwards
+ * must not depend on an authenticated request succeeding.
+ */
+export async function requestAccountDeletion(): Promise<string> {
+  const { data, error } = await supabase.functions.invoke<{ deleteAt: string }>(
+    'request-account-deletion',
+    { body: {} }
+  )
+
+  if (error || !data?.deleteAt) {
+    logger.error(error?.message ?? 'request-account-deletion returned no deleteAt')
+    throw error ?? new Error('No deleteAt returned')
+  }
+
+  return data.deleteAt
+}
+
+/**
+ * Cancels a pending deletion within the grace window and restores access to the
+ * member's data. Their previously-public decks become public again.
+ *
+ * Does NOT resurrect the cancelled subscription — re-subscribing is manual.
+ * Throws if the account isn't pending, or if the deadline has already passed
+ * (the purge job may be mid-sweep at that point).
+ */
+export async function restoreAccount(): Promise<void> {
+  const { error } = await supabase.rpc('restore_account')
+
+  if (error) {
+    logger.error(error.message)
+    throw error
+  }
+}
+
 export async function signupEmail(
   email: string,
   password: string,
