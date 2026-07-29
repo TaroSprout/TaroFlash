@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, useTemplateRef } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { TYPE_SFX, type SoundKey } from '@/sfx/config'
 import { emitSfx } from '@/sfx/bus'
@@ -8,7 +8,7 @@ import { nextDepth, provideDepth, useAmbientDepth } from '@/composables/ui/depth
 
 export type AlertType = 'warn' | 'info'
 
-const { cancelLabel, confirmLabel, close, cancelAudio, confirmAudio } = defineProps<{
+const { cancelLabel, confirmLabel, close, cancelAudio, confirmAudio, type } = defineProps<{
   cancelLabel?: string
   confirmLabel?: string
   message?: string
@@ -30,10 +30,9 @@ const confirm_btn = useTemplateRef('confirm_btn')
 
 const cancelText = computed(() => cancelLabel ?? t('ui-kit.alert.cancel'))
 const confirmText = computed(() => confirmLabel ?? t('ui-kit.alert.continue'))
+const palette = computed(() => ((type ?? 'warn') === 'warn' ? 'danger' : 'info'))
 
 useModalRequestClose(onCancel)
-
-onMounted(() => cancel_btn.value?.focus())
 
 function onCancel() {
   if (cancelAudio) emitSfx(cancelAudio)
@@ -57,8 +56,7 @@ function onKeydown(e: KeyboardEvent) {
   <div
     data-testid="ui-kit-alert"
     :data-depth="depth"
-    class="rounded-2 shadow-lg flex w-115 max-w-115 flex-col bg-float"
-    :class="`ui-kit-alert--${type ?? 'warn'}`"
+    class="rounded-2 shadow-lg max-xs:mx-4 max-xs:w-auto max-xs:max-w-full flex w-115 max-w-115 flex-col bg-float"
   >
     <div data-testid="ui-kit-alert__body" class="flex flex-col gap-2 p-10">
       <h1 class="text-ink text-3xl">{{ title ?? t('ui-kit.alert.title-default') }}</h1>
@@ -67,7 +65,7 @@ function onKeydown(e: KeyboardEvent) {
 
     <div
       data-testid="ui-kit-alert__actions"
-      class="border-below divide-below flex w-full divide-x border-t"
+      class="border-float-line divide-float-line max-xs:flex-col max-xs:divide-x-0 max-xs:divide-y flex w-full divide-x border-t"
       @keydown="onKeydown"
     >
       <button
@@ -87,6 +85,7 @@ function onKeydown(e: KeyboardEvent) {
         v-if="confirmLabel"
         ref="confirm_btn"
         data-testid="ui-kit-alert__confirm"
+        :data-palette="palette"
         class="ui-kit-alert__confirm group"
         @click="onConfirm"
         v-sfx="{ hover: TYPE_SFX }"
@@ -134,27 +133,17 @@ function onKeydown(e: KeyboardEvent) {
 }
 
 .ui-kit-alert__cancel .ui-kit-alert__hover-effect {
-  background-color: var(--color-brown-300);
-  color: var(--color-brown-500);
+  background-color: var(--color-element-pattern);
+  color: var(--color-ink-muted);
 }
 
-.ui-kit-alert--warn .ui-kit-alert__confirm .ui-kit-alert__hover-effect {
-  color: var(--color-red-600);
+.ui-kit-alert__confirm .ui-kit-alert__hover-effect {
+  color: var(--color-accent);
   background-image: linear-gradient(
     to right bottom in oklab,
-    var(--color-red-600) 30%,
-    var(--color-red-300) 50%,
-    var(--color-red-600) 70%
-  );
-}
-
-.ui-kit-alert--info .ui-kit-alert__confirm .ui-kit-alert__hover-effect {
-  color: var(--color-blue-500);
-  background-image: linear-gradient(
-    to right bottom in oklab,
-    var(--color-blue-500) 40%,
-    var(--color-blue-400) 50%,
-    var(--color-blue-500) 80%
+    var(--color-accent) 30%,
+    var(--color-accent-muted) 50%,
+    var(--color-accent) 70%
   );
 }
 
