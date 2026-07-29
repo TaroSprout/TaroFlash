@@ -1,39 +1,27 @@
 {
   "permissions": {
     "allow": [
-      "mcp__notion",
-      "Edit",
-      "Write",
       "Bash(vp *)",
-      "Bash(pnpm type-check*)",
-      "Bash(git *)",
-      "Bash(gh *)",
-      "Bash(supabase *)",
+      "Bash(git add tests/*)",
+      "Bash(git commit*)",
+      "Bash(git checkout -b *)",
+      "Bash(git push -u origin *)",
+      "Bash(gh pr create*)",
+      "Edit(tests/**)",
       "Bash(cat:*)",
       "Bash(head:*)",
       "Bash(tail:*)",
       "Bash(grep:*)",
-      "Bash(rg:*)",
       "Bash(find:*)",
       "Bash(ls:*)",
       "Bash(wc:*)",
-      "Bash(sed:*)",
-      "Bash(awk:*)",
-      "Bash(jq:*)",
-      "Bash(sort:*)",
-      "Bash(uniq:*)",
-      "Bash(diff:*)",
-      "Bash(xargs:*)",
-      "Bash(dirname:*)",
-      "Bash(basename:*)",
       "Bash(mktemp:*)",
-      "Bash(tee /tmp/*)"
-    ],
-    "ask": [
-      "Bash(git reset --hard*)",
-      "Bash(git restore*)",
-      "Bash(git checkout -- *)",
-      "Bash(git clean*)"
+      "Bash(tee /tmp/*)",
+      "Bash(git diff:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git fetch:*)",
+      "Bash(git worktree:*)"
     ]
   },
   "hooks": {
