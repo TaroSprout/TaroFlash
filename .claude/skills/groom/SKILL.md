@@ -160,6 +160,8 @@ Then set `Status`:
 - **`Ready`** — executable, may carry an explicitly-marked deferred decision for `/work pair`
   to settle at its align step.
 - **Refuse to write `Queued` with `Assignee` = `Me` or empty**, or with any unresolved fork.
+  `Queued` needs a model (`/work batch` pins each subagent to it). **`Ready` tickets stay
+  unassigned** — leave the field empty.
 
 Also sweep for **copy that the change makes false** — existing `src/locales/en-us.json` strings
 asserting the old behaviour ("this cannot be undone"). List them in the body as required edits.

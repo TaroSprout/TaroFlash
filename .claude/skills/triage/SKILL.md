@@ -132,7 +132,8 @@ review. Per ticket:
 
 - **Title** — descriptive rewrite.
 - **Summary** — one line of product intent.
-- **Fields** — `Priority`, `Type`, `Epic`, `Assignee`. Tickets now arrive with only name +
+- **Fields** — `Priority`, `Type`, `Epic`, and `Assignee` **only when the lane is `Queued`**
+  (see § Assignee). Tickets now arrive with only name +
   description, so **propose all four**; never apply them unasked.
 - **Lane** — with the trigger that decided it.
 - **Proposals** — CREATE a new ticket, MERGE into another (name the survivor), or CREATE a new
@@ -154,7 +155,8 @@ nothing is lost. `Queued` tickets stay one-task-per-ticket — batch agents work
 Apply only what was approved, via `notion-update-page` (and `notion-create-pages` for CREATEs):
 
 - title, body, `Priority`/`Type`/`Epic`/`Assignee`, `Status`.
-- **Refuse to write `Status = Queued` when `Assignee` is `Me` or empty** — stop and ask.
+- **Refuse to write `Status = Queued` when `Assignee` is `Me` or empty** — stop and ask. `Ready`
+  tickets are left unassigned; do not set an Assignee on them.
 - **Refuse to write `Status = Queued` when any fork is unresolved** — it routes to
   `Needs More Info` instead (§ Routing).
 - **Merges:** move the merged-away ticket to `Duplicate`, prepend a body line pointing to the
@@ -176,20 +178,25 @@ The headline test:
 
 A hedge in an AC _is_ an unresolved decision. Enumerating options is not specifying.
 
-**Hard routes — always `Needs More Info`:**
+**Hard routes** — these fire when the ticket hits the area **and** carries an unresolved fork or an
+unverified load-bearing claim. They raise the evidence bar; they are not unconditional. A ticket
+that touches `supabase/` but has explicitly recorded its decisions is _resolved_ and goes straight
+to `Ready`/`Queued`.
 
 1. Touches `supabase/`, auth, billing/Stripe, RLS, or personal data.
 2. Introduces or changes **persistent state** — schema, stored shape, bucket, cache key.
 3. Changes a **contract between layers** — DB↔API↔FE shape, edge-function payload, third-party API.
-4. Bound for `Queued` **and** carries any unresolved question. No human is in the loop there, so an
-   unresolved fork means a batch agent guesses.
+4. Bound for `Queued` **and** carries any unresolved question. This one _is_ unconditional — no
+   human is in the loop there, so an unresolved fork means a batch agent guesses.
 
 **Soft triggers — any one routes:**
 
 5. The AC hedge test above.
 6. Investigation surfaced **two or more viable approaches** with real trade-offs.
 7. Needs a **UX decision** not already specified — new screen, interaction, or empty state.
-8. Touches more than one subsystem, or roughly >5 files.
+8. Touches more than one subsystem, or roughly >5 files, **and the approach across them isn't
+   settled**. Breadth alone doesn't route — a large ticket that has already recorded its execution
+   plan is resolved.
 9. Adds a dependency.
 
 **Skip to `Ready`/`Queued`** only when none fire _and_ the change is localized to one surface with
@@ -264,7 +271,13 @@ A ticket routed to `Needs More Info` still gets a full body — `/groom` builds 
 starting over. Record the open forks explicitly under Technical notes so `/groom` knows what to
 resolve.
 
-## Assignee heuristic (suggest, user overrides)
+## Assignee — `Queued` only
+
+**`Ready` tickets stay unassigned.** A pairing ticket is worked in whatever session the user starts,
+on whatever model that session runs — an Assignee there is noise. Leave the field empty.
+
+**`Queued` tickets must have a model**, since `/work batch` pins each subagent to its ticket's
+Assignee and skips anything unassigned or `Me`.
 
 **Only ever suggest a model — `Fable`, `Opus`, or `Sonnet`. Never suggest `Me`.** `Me` is the
 user's own opt-out signal, not a value triage proposes.
