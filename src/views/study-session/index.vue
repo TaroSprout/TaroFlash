@@ -7,6 +7,7 @@ import SessionHeaderNavButton from './session-header-nav-button.vue'
 import SessionHeaderMenu from './session-header-menu.vue'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import UiButton from '@/components/ui-kit/button.vue'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 import DialogCardPager from '@/components/layout-kit/dialog-card/dialog-card-pager.vue'
 import { emitSfx } from '@/sfx/bus'
@@ -184,11 +185,24 @@ function onRequestClose() {
             key="summary"
             class="absolute inset-0 z-10"
             :results="results"
-            @close="onClosed"
             @open-category="openSummaryCategory"
           />
         </dialog-card-pager>
       </div>
+    </template>
+
+    <template v-if="current_page === 'summary'" #toolbar>
+      <ui-button
+        neutral
+        data-testid="session-summary__close"
+        full-width
+        size="xl"
+        class="mx-auto max-w-95"
+        :sfx="{ press: 'slide_up' }"
+        @press="onClosed"
+      >
+        {{ t('session-summary.close-button') }}
+      </ui-button>
     </template>
   </dialog-card>
 </template>

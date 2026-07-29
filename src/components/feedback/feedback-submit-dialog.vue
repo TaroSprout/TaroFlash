@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
+import DialogCardBody from '@/components/layout-kit/dialog-card/dialog-card-body.vue'
 import UiInput from '@/components/ui-kit/input.vue'
 import UiTextarea from '@/components/ui-kit/textarea.vue'
 import UiButton from '@/components/ui-kit/button.vue'
@@ -61,33 +62,34 @@ function onClose() {
     :title="t('feedback-submit-dialog.title')"
     @close="onClose"
   >
-    <div
-      data-testid="feedback-submit-dialog__body"
-      class="h-full flex flex-col justify-between gap-4 pb-(--dialog-px)"
-    >
-      <p class="text-ink-muted text-base text-center">
-        {{ t('feedback-submit-dialog.intro') }}
-      </p>
+    <dialog-card-body data-testid="feedback-submit-dialog__body">
+      <div class="flex flex-1 flex-col justify-between gap-4">
+        <p class="text-ink-muted text-base text-center">
+          {{ t('feedback-submit-dialog.intro') }}
+        </p>
 
-      <div class="flex flex-col gap-2">
-        <ui-input
-          v-model:value="title"
-          data-testid="feedback-submit-dialog__title"
-          :placeholder="t('feedback-submit-dialog.title-placeholder')"
-          :max-length="TITLE_MAX_CHARS"
-          size="lg"
-        />
+        <div class="flex flex-col gap-2">
+          <ui-input
+            v-model:value="title"
+            data-testid="feedback-submit-dialog__title"
+            :placeholder="t('feedback-submit-dialog.title-placeholder')"
+            :max-length="TITLE_MAX_CHARS"
+            size="lg"
+          />
 
-        <ui-textarea
-          v-model:value="body"
-          data-testid="feedback-submit-dialog__body-input"
-          :placeholder="t('feedback-submit-dialog.body-placeholder')"
-          :max_chars="BODY_MAX_CHARS"
-          rows="10"
-          size="lg"
-        />
+          <ui-textarea
+            v-model:value="body"
+            data-testid="feedback-submit-dialog__body-input"
+            :placeholder="t('feedback-submit-dialog.body-placeholder')"
+            :max_chars="BODY_MAX_CHARS"
+            rows="10"
+            size="lg"
+          />
+        </div>
       </div>
+    </dialog-card-body>
 
+    <template #toolbar>
       <ui-button
         data-testid="feedback-submit-dialog__submit"
         data-palette="green"
@@ -100,6 +102,6 @@ function onClose() {
       >
         {{ t('feedback-submit-dialog.submit-button') }}
       </ui-button>
-    </div>
+    </template>
   </dialog-card>
 </template>

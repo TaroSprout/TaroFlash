@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import DialogCardBody from '@/components/layout-kit/dialog-card/dialog-card-body.vue'
 import CategorySection from './category-section.vue'
 import { aggregateSession, type SummaryCategory } from '../aggregate'
 import { useDeckResolution } from '@/views/study-session/deck-resolution'
@@ -60,24 +61,23 @@ function resolve(group: CardReviewResult[]): StudyCard[] {
 </script>
 
 <template>
-  <div
-    data-testid="session-summary-category"
-    class="h-full w-full flex flex-col gap-6 overflow-y-auto scroll-hidden pb-6"
-  >
-    <p
-      v-if="!sections.length"
-      data-testid="session-summary-category__empty"
-      class="text-center text-base text-ink"
-    >
-      {{ t('session-summary.category.empty-fallback') }}
-    </p>
+  <dialog-card-body data-testid="session-summary-category" class="h-full w-full">
+    <div data-testid="session-summary-category__content" class="flex flex-col gap-6">
+      <p
+        v-if="!sections.length"
+        data-testid="session-summary-category__empty"
+        class="text-center text-base text-ink"
+      >
+        {{ t('session-summary.category.empty-fallback') }}
+      </p>
 
-    <category-section
-      v-for="section in sections"
-      :key="section.name"
-      :name="section.name"
-      :heading="section.heading"
-      :cards="section.cards"
-    />
-  </div>
+      <category-section
+        v-for="section in sections"
+        :key="section.name"
+        :name="section.name"
+        :heading="section.heading"
+        :cards="section.cards"
+      />
+    </div>
+  </dialog-card-body>
 </template>

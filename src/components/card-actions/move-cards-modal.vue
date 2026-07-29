@@ -6,8 +6,8 @@ import { useI18n } from 'vue-i18n'
 import UiRadio from '@/components/ui-kit/radio.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
+import DialogCardBody from '@/components/layout-kit/dialog-card/dialog-card-body.vue'
 import UiOptionsPanel, { type OptionsPanelEntry } from '@/components/ui-kit/options-panel/index.vue'
-import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import { useCardLimitGate } from '@/composables/card/limit-gate'
 import { useCan } from '@/composables/can'
 import { useNoticeStore } from '@/stores/notice-store'
@@ -95,14 +95,11 @@ function onClose() {
 </script>
 
 <template>
-  <dialog-card
-    data-testid="move-cards"
-    size="md"
-    :title="title"
-    class="grid-rows-[auto_1fr_auto]! pb-(--dialog-px)"
-    @close="onClose"
-  >
-    <div data-testid="move-cards__deck-list-wrap" class="relative flex min-h-0 flex-1 flex-col">
+  <dialog-card data-testid="move-cards" size="md" :title="title" @close="onClose">
+    <dialog-card-body
+      data-testid="move-cards__deck-list-wrap"
+      scroll_target="[data-testid='move-cards__deck-list__content']"
+    >
       <ui-options-panel
         data-testid="move-cards__deck-list"
         scrollable
@@ -136,27 +133,23 @@ function onClose() {
           />
         </template>
       </ui-options-panel>
+    </dialog-card-body>
 
-      <scroll-bar
-        target="[data-testid='move-cards__deck-list__content']"
-        min-width="sm"
-        class="absolute -right-6 top-4 bottom-4"
-      />
-    </div>
-
-    <div data-testid="move-cards__actions" class="flex w-full justify-end gap-3">
-      <ui-button
-        data-testid="move-cards__move"
-        data-palette="brand"
-        icon-left="move-item"
-        size="xl"
-        full-width
-        :loading="moving"
-        @press="onMove"
-        :disabled="!selected_deck_id || moving"
-      >
-        {{ t('move-cards-modal.confirm') }}
-      </ui-button>
-    </div>
+    <template #toolbar>
+      <div data-testid="move-cards__actions" class="flex w-full justify-end gap-3">
+        <ui-button
+          data-testid="move-cards__move"
+          data-palette="brand"
+          icon-left="move-item"
+          size="xl"
+          full-width
+          :loading="moving"
+          @press="onMove"
+          :disabled="!selected_deck_id || moving"
+        >
+          {{ t('move-cards-modal.confirm') }}
+        </ui-button>
+      </div>
+    </template>
   </dialog-card>
 </template>

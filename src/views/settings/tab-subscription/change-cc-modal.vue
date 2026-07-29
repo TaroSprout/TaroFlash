@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
+import DialogCardBody from '@/components/layout-kit/dialog-card/dialog-card-body.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useChangeCard, type ChangeCardResponse } from './use-change-cc'
 
@@ -32,56 +33,44 @@ const submit_label = computed(() =>
 <template>
   <dialog-card
     data-testid="change-card-modal"
-    class="pb-6"
     size="lg"
     :title="title"
     :close_disabled="is_submitting"
     @close="close()"
   >
-    <template #default="{ viewport }">
-      <div
-        data-testid="change-card-modal__scroll-area"
-        :data-full-bleed="viewport === 'mobile'"
-        class="flex min-h-0 flex-1 flex-col justify-between gap-4 h-full pt-4"
-        :class="viewport === 'mobile' ? 'overflow-y-auto scroll-hidden' : ''"
-      >
-        <div data-testid="change-card-modal__body" class="flex flex-col gap-4">
-          <p
-            v-if="is_loading"
-            data-testid="change-card-modal__loading"
-            class="text-ink py-10 text-center"
-          >
-            {{ t('settings.subscription.change-card.loading') }}
-          </p>
-          <p
-            v-else-if="load_error"
-            data-testid="change-card-modal__error"
-            data-palette="danger"
-            class="py-10 text-center text-(--color-accent)"
-          >
-            {{ t('settings.subscription.change-card.error') }}
-          </p>
-          <div ref="container" data-testid="change-card-modal__payment-element"></div>
-        </div>
-
-        <div
-          v-if="!is_loading && !load_error"
-          data-testid="change-card-modal__footer"
-          class="shrink-0"
+    <dialog-card-body data-testid="change-card-modal__scroll-area">
+      <div data-testid="change-card-modal__body" class="flex flex-col gap-4 pt-4">
+        <p
+          v-if="is_loading"
+          data-testid="change-card-modal__loading"
+          class="text-ink py-10 text-center"
         >
-          <ui-button
-            data-testid="change-card-modal__submit"
-            data-palette="brand"
-            full-width
-            size="lg"
-            :loading="is_submitting"
-            :disabled="!is_ready"
-            @press="onSubmit"
-          >
-            {{ submit_label }}
-          </ui-button>
-        </div>
+          {{ t('settings.subscription.change-card.loading') }}
+        </p>
+        <p
+          v-else-if="load_error"
+          data-testid="change-card-modal__error"
+          data-palette="danger"
+          class="py-10 text-center text-(--color-accent)"
+        >
+          {{ t('settings.subscription.change-card.error') }}
+        </p>
+        <div ref="container" data-testid="change-card-modal__payment-element"></div>
       </div>
+    </dialog-card-body>
+
+    <template v-if="!is_loading && !load_error" #toolbar>
+      <ui-button
+        data-testid="change-card-modal__submit"
+        data-palette="brand"
+        full-width
+        size="lg"
+        :loading="is_submitting"
+        :disabled="!is_ready"
+        @press="onSubmit"
+      >
+        {{ submit_label }}
+      </ui-button>
     </template>
   </dialog-card>
 </template>

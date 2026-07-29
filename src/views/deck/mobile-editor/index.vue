@@ -28,7 +28,7 @@ onUnmounted(() => onClosed())
     :title="title"
     :close_label="t('deck-view.mobile-editor.done-button')"
     size="lg"
-    class="grid-rows-[auto_1fr_auto]! pb-(--dialog-px) bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-(--color-element-pattern)"
+    class="bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-(--color-element-pattern)"
     bg_class="bg-brown-300 dark:bg-grey-900"
     @close="close"
   >
@@ -37,6 +37,9 @@ onUnmounted(() => onClosed())
     </template>
 
     <editor-stage class="self-center" />
-    <editor-controls />
+
+    <template #toolbar>
+      <editor-controls />
+    </template>
   </dialog-card>
 </template>
