@@ -1,10 +1,19 @@
-import { describe, test, expect, vi } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, mount } from '@vue/test-utils'
 
 // ── Hoisted mocks (sfx — break the sfx/config ↔ sfx/player circular init) ────
 
-vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn(), emitHoverSfx: vi.fn() }))
+const { coarseRef, fineRef, mockEmitSfx } = vi.hoisted(() => ({
+  coarseRef: { value: false },
+  fineRef: { value: true },
+  mockEmitSfx: vi.fn()
+}))
+
+vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
 vi.mock('@/sfx/config', () => ({ TYPE_SFX: [], HOVER_SFX_SET: new Set() }))
+vi.mock('@/composables/ui/media-query', () => ({
+  useMatchMedia: (query) => (query === 'fine' ? fineRef : coarseRef)
+}))
 
 // ── Component imports (after mocks) ───────────────────────────────────────────
 
@@ -349,23 +358,63 @@ describe('UiSpinbox', () => {
 
 // ── Button clickability (regression: captureMode removed) ─────────────────
 
+function mountSpinboxButton(props = {}) {
+  return mount(SpinboxButton, { props: { icon: 'chevron-up', ...props } })
+}
+
 describe('SpinboxButton', () => {
+  beforeEach(() => {
+    mockEmitSfx.mockClear()
+    coarseRef.value = false
+    fineRef.value = true
+  })
+
   test('clicking the button emits click on a fine-pointer device', async () => {
-    const wrapper = mount(SpinboxButton, { props: { icon: 'chevron-up' } })
+    const wrapper = mountSpinboxButton()
     await wrapper.find('button').trigger('click')
     expect(wrapper.emitted('click')).toHaveLength(1)
   })
 
-  test('clicking the button calls emitSfx with ui.select', async () => {
-    const { emitSfx } = await import('@/sfx/bus')
-    const wrapper = mount(SpinboxButton, { props: { icon: 'chevron-up' } })
-    await wrapper.find('button').trigger('click')
-    expect(emitSfx).toHaveBeenCalledWith('select')
-  })
-
   test('disabled button does not emit click', async () => {
-    const wrapper = mount(SpinboxButton, { props: { icon: 'chevron-up', disabled: true } })
+    const wrapper = mountSpinboxButton({ disabled: true })
     await wrapper.find('button').trigger('click')
     expect(wrapper.emitted('click')).toBeUndefined()
+  })
+
+  // ── Kit-standard tap feedback [obligation] ──────────────────────────────
+  // TARO-242: steppers route through the kit's staged-tap path instead of the
+  // old ad-hoc emitSfx('select') + active:scale-95. The sound itself stays
+  // 'select' — only the path it travels changed.
+
+  test('clicking the button plays the select press sfx through the staged-tap path', async () => {
+    const wrapper = mountSpinboxButton()
+    await wrapper.find('button').trigger('click')
+    expect(mockEmitSfx).toHaveBeenCalledWith('select', expect.any(Object))
+  })
+
+  test('plays the press sfx exactly once per click (no double sound)', async () => {
+    const wrapper = mountSpinboxButton()
+    await wrapper.find('button').trigger('click')
+    expect(mockEmitSfx).toHaveBeenCalledTimes(1)
+  })
+
+  test('disabled button plays no press sfx', async () => {
+    const wrapper = mountSpinboxButton({ disabled: true })
+    await wrapper.find('button').trigger('click')
+    expect(mockEmitSfx).not.toHaveBeenCalled()
+  })
+
+  test('sets data-tap-active while a coarse-pointer tap is in flight', async () => {
+    coarseRef.value = true
+    const wrapper = mountSpinboxButton()
+    const p = wrapper.find('button').trigger('click')
+    await Promise.resolve()
+    expect(wrapper.find('button').attributes('data-tap-active')).toBe('true')
+    await p
+  })
+
+  test('data-tap-active is absent at rest', () => {
+    const wrapper = mountSpinboxButton()
+    expect(wrapper.find('button').attributes('data-tap-active')).toBeUndefined()
   })
 })
