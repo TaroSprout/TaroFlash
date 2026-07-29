@@ -35,8 +35,12 @@ A groomed ticket must not contain "options to evaluate", "e.g. X or Y", or an ac
 hedged with a parenthetical alternative. Every one of those is a decision handed to an
 implementation agent that has less context than this session does.
 
-If a decision genuinely cannot be made now, it is **explicitly marked as deferred with a reason** —
-never left as an unmarked menu.
+"Decide during pairing" is not a resolution — it is the thing this pass exists to remove. That
+includes **taste calls**: which icon, what an animation feels like, what the copy says, how a layout
+should look. Those are resolved _with the user, here_, not deferred into implementation.
+
+The sole exception is a decision blocked on an **external fact** nobody in the session has (§4) —
+recorded under `## Blocked on`, never left as an unmarked menu.
 
 ## Board constants
 
@@ -157,8 +161,10 @@ Two formatting notes, learned the hard way:
 Then set `Status`:
 
 - **`Queued`** — only when _zero_ decisions are unresolved. No human is in the loop.
-- **`Ready`** — executable, may carry an explicitly-marked deferred decision for `/work pair`
-  to settle at its align step.
+- **`Ready`** — executable. A ticket still carrying an unmade design or taste call does **not**
+  qualify, even labelled "decide during pairing" — that is what `Needs More Info` is for, and this
+  pass exists to settle it. The only thing that may ride into `Ready` is a decision genuinely blocked
+  on an external fact (§4), recorded under `## Blocked on`.
 - **Refuse to write `Queued` with `Assignee` = `Me` or empty**, or with any unresolved fork.
   `Queued` needs a model (`/work batch` pins each subagent to it). **`Ready` tickets stay
   unassigned** — leave the field empty.

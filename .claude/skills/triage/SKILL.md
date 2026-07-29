@@ -193,7 +193,13 @@ to `Ready`/`Queued`.
 
 5. The AC hedge test above.
 6. Investigation surfaced **two or more viable approaches** with real trade-offs.
-7. Needs a **UX decision** not already specified — new screen, interaction, or empty state.
+7. **The taste test — the one most often missed.** Would implementing this require inventing
+   something to the user's taste that they haven't stated? Which icon to pick, what an animation
+   should feel like, what the microcopy actually says, how a "looks bad" layout should instead look,
+   what a hover treatment is. **This fires independently of how well-specified the code is.** A
+   ticket can name the exact file, the exact seam, and every constraint, and still need the user —
+   swapping 11 icons is mechanical as code and pure taste as a decision. An agent guessing at taste
+   produces work the user rejects, which is more expensive than routing.
 8. Touches more than one subsystem, or roughly >5 files, **and the approach across them isn't
    settled**. Breadth alone doesn't route — a large ticket that has already recorded its execution
    plan is resolved.
@@ -206,8 +212,10 @@ one obvious implementation.
 them in the body. The bar for routing is a _genuine trade-off_, not _any choice_. If every minor
 fork routed, everything would take two passes.
 
-`Ready` tickets may carry a deferred decision, but only **explicitly marked as deferred, with a
-reason** — `/work pair` will surface it at its align step. Never leave an unmarked menu of options.
+**"To be decided during pairing" is not a resolution — it is the definition of `Needs More Info`.**
+Naming an unmade decision documents it; it does not make it. A ticket saying "exact styling TBD live"
+or "pair to land the approach" routes to `Needs More Info`, however well-specified the rest is. Do
+not treat the marking as a reason to leave it in `Ready`.
 
 ## Prior art
 
