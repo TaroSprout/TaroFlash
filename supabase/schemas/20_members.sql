@@ -224,6 +224,13 @@ GRANT EXECUTE ON FUNCTION public.begin_account_deletion(uuid) TO service_role;
 -- client, and it has to work while the caller is suspended. Hence auth.uid()
 -- rather than active_member_id(): the whole point is to run while pending, so
 -- the suspend primitive would return NULL and match nothing.
+--
+-- Idempotent, matching begin_account_deletion(): restoring an account that
+-- isn't pending returns NULL rather than raising. "Your account is already
+-- live" is the outcome the caller wanted, not a failure — and raising made it
+-- one the UI couldn't act on, since the restore dialog is deliberately
+-- non-dismissable and left the member with nothing but a sign-out button.
+-- An expired grace window still raises: there the answer is genuinely no.
 CREATE FUNCTION public.restore_account() RETURNS timestamp with time zone
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
@@ -242,7 +249,7 @@ BEGIN
   FOR UPDATE;
 
   IF v_deadline IS NULL THEN
-    RAISE EXCEPTION 'Account is not pending deletion' USING errcode = 'invalid_parameter_value';
+    RETURN NULL;
   END IF;
 
   -- Past the deadline the purge job may already be mid-sweep; refusing here
