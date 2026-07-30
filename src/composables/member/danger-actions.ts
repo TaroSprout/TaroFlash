@@ -64,7 +64,9 @@ export function useMemberDangerActions(close: () => void): MemberDangerActions {
     notice.success(t('toast.success.account-deleted'), {
       variant: 'panel',
       closable: false,
-      actions: [{ label: t('notice.close-label'), onClick: () => {}, closesOnClick: true }],
+      actions: [
+        { label: t('alert.delete-account.notice-action'), onClick: () => {}, closesOnClick: true }
+      ],
       onDismiss: () => {
         close()
         router.push({ name: 'welcome' })
