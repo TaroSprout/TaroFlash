@@ -162,6 +162,28 @@ export async function logout(): Promise<void> {
 }
 
 /**
+ * Drops the locally persisted session for the case where the server has already
+ * revoked it (account deletion). Scoped to `local` because there is nothing left
+ * to revoke globally.
+ *
+ * Not optional cleanup — leaving the token in storage is what makes a deleted
+ * account look signed in. The JWT stays signature-valid for its full lifetime
+ * (`jwt_expiry`, 1h), `getSession()` hands it back without ever asking the
+ * server, and PostgREST accepts it, so every table read and RPC keeps working.
+ * Only a call that resolves the JWT through GoTrue notices the session is gone.
+ *
+ * Logged and swallowed: this is teardown, there is nothing to retry, and
+ * supabase-js clears its stored session even when the server rejects the call.
+ */
+export async function signOutLocal(): Promise<void> {
+  const { error } = await supabase.auth.signOut({ scope: 'local' })
+
+  if (error) {
+    logger.error(`Local sign-out failed: ${error.message}`)
+  }
+}
+
+/**
  * Requests account deletion: marks the account pending, cancels any
  * subscription with a prorated refund, and revokes every session.
  *

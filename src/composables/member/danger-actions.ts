@@ -54,9 +54,12 @@ export function useMemberDangerActions(close: () => void): MemberDangerActions {
       deleting_account.value = false
     }
 
-    // The endpoint already revoked every session, so this is local teardown
-    // only — reset() clears the query cache so no stale rows outlive the account.
-    session.reset()
+    // The endpoint revoked every session server-side, but that's invisible to
+    // this tab: supabase-js still holds the token, and it stays usable against
+    // PostgREST for its full lifetime. Discard it here or the member reads as
+    // signed in on their next visit, and the first call that authenticates
+    // through GoTrue — a second delete request — fails with a 401.
+    await session.discardRevokedSession()
 
     notice.success(t('toast.success.account-deleted'), {
       variant: 'panel',

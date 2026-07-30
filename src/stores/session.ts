@@ -9,6 +9,7 @@ import {
   waitForPasswordRecovery,
   login as supaLogin,
   logout as supaLogout,
+  signOutLocal as supaSignOutLocal,
   signupEmail as supaSignupEmail,
   signInOAuth as supaSignInOAuth,
   updateEmail as supaUpdateEmail,
@@ -220,6 +221,26 @@ export const useSessionStore = defineStore('sessionStore', () => {
     taroPhone.reset()
   }
 
+  /**
+   * Teardown for a session the server has already revoked (account deletion).
+   * reset() alone isn't enough — it clears this store but leaves supabase-js
+   * holding the token, which then reads as a live session on the next visit.
+   *
+   * Flagged as intentional for the same reason logout() is: dropping the stored
+   * session fires SIGNED_OUT, and forceLogout() reacting to it would stack a
+   * "your session expired" notice on top of the caller's own messaging.
+   */
+  async function discardRevokedSession(): Promise<void> {
+    logging_out_intentionally = true
+
+    try {
+      reset()
+      await supaSignOutLocal()
+    } finally {
+      logging_out_intentionally = false
+    }
+  }
+
   /** Drop every entry from the Pinia Colada cache so stale data can't carry
    * over into the next login (Colada has no wholesale clear, so remove each). */
   function clearQueryCache() {
@@ -247,8 +268,8 @@ export const useSessionStore = defineStore('sessionStore', () => {
     forceLogout,
     // Exposed for teardown after a server-side session revocation (account
     // deletion), where the sessions are already gone and only local state —
-    // query cache, modals, phone — still needs clearing.
-    reset,
+    // stored token, query cache, modals, phone — still needs clearing.
+    discardRevokedSession,
     handleAuthError,
     signupEmail,
     signInOAuth,
