@@ -3,6 +3,7 @@ import { useSessionStore } from '@/stores/session'
 import { useMemberStore } from '@/stores/member'
 import { prefetchMemberDecks } from '@/api/decks'
 import { prefetchMemberById } from '@/api/members'
+import { usePendingDeletionModal } from '@/composables/member/pending-deletion-modal'
 import AuthenticatedView from '@/views/app-shell/authenticated.vue'
 
 const WelcomeView = () => import('@/views/welcome/index.vue')
@@ -12,15 +13,24 @@ const AuthCallbackView = () => import('@/views/auth/callback.vue')
 const Dashboard = () => import('@/views/dashboard/index.vue')
 const DeckView = () => import('@/views/deck/deck-view.vue')
 const LessonView = () => import('@/views/audio-reader/lesson/index.vue')
-const AccountPendingView = () => import('@/views/account/pending.vue')
 
-// Mirrors useCan().useAudioReader (admin-only). Awaits the member query so a
-// direct URL hit doesn't read an empty role mid-restore. The real boundary is
-// the edge functions; this just keeps non-admins out of the UI.
-async function requireAudioReader() {
+// Resolves the member row before a guard reads any field off it. The store is a
+// projection of a query App.vue starts reactively and nothing awaits, so a
+// direct URL hit can otherwise read an empty role, or an unset pending flag,
+// mid-restore. Colada dedupes, so this joins the in-flight fetch rather than
+// issuing a second one.
+async function resolveMember() {
   const id = useSessionStore().user?.id
   if (id) await prefetchMemberById(id).catch(() => {})
-  if (useMemberStore().role !== 'admin') return { name: 'dashboard' }
+
+  return useMemberStore()
+}
+
+// Mirrors useCan().useAudioReader (admin-only). The real boundary is the edge
+// functions; this just keeps non-admins out of the UI.
+async function requireAudioReader() {
+  const member = await resolveMember()
+  if (member.role !== 'admin') return { name: 'dashboard' }
 }
 
 const router = createRouter({
@@ -57,7 +67,7 @@ const router = createRouter({
       name: 'authenticated',
       component: AuthenticatedView,
       redirect: '/dashboard',
-      beforeEnter: async (to) => {
+      beforeEnter: async () => {
         const session = useSessionStore()
         const authenticated = await session.restoreSession()
 
@@ -66,20 +76,20 @@ const router = createRouter({
         // Sign-in is deliberately not blocked for a pending-deletion account —
         // blocking it would take away the session the restore needs. The divert
         // happens here instead, on the app shell rather than on the dashboard,
-        // so a bookmarked deck or a shared lesson link lands on the pending
-        // screen too. Skipped when already heading there, or it loops.
+        // so a bookmarked deck or a shared lesson link lands on the restore
+        // dialog too.
         //
-        // restoreSession() above only resolves the auth session; the member row
-        // is fetched reactively by App.vue and is not awaited anywhere, so it
-        // can still be in flight here — and an unresolved member reads as "not
-        // pending", waving a pending account through. Await it like
-        // requireAudioReader does (Colada dedupes, so this joins the in-flight
-        // fetch rather than issuing a second one).
-        const id = session.user?.id
-        if (id) await prefetchMemberById(id).catch(() => {})
+        // The dialog is opened here rather than from welcome's own mount: when
+        // the member signs in from welcome, this divert resolves to the route
+        // they're already on, so welcome never remounts and an onMounted
+        // trigger would never fire. `open()` collapses repeat calls onto one
+        // dialog, which is what makes calling it on every divert safe.
+        const member = await resolveMember()
 
-        const pending = useMemberStore().pending_deletion
-        if (pending && to.name !== 'account-pending') return { name: 'account-pending' }
+        if (member.pending_deletion) {
+          usePendingDeletionModal().open()
+          return { name: 'welcome' }
+        }
 
         // Fire decks in parallel with the lazy route chunk fetch so the
         // dashboard / deck view renders against warm cache. The member fetch
@@ -90,7 +100,7 @@ const router = createRouter({
         //
         // Pointless for a pending member (RLS returns nothing), hence after the
         // divert rather than before it.
-        if (!pending) prefetchMemberDecks()
+        prefetchMemberDecks()
       },
       children: [
         {
@@ -103,11 +113,6 @@ const router = createRouter({
           name: 'deck',
           component: DeckView,
           props: true
-        },
-        {
-          path: 'account/pending',
-          name: 'account-pending',
-          component: AccountPendingView
         },
         {
           path: 'audio-reader/collection/:collectionId/lesson/:lessonId',
