@@ -9,9 +9,17 @@ const { mockNotice } = vi.hoisted(() => ({
 const { mockRouter } = vi.hoisted(() => ({
   mockRouter: { push: vi.fn() }
 }))
+const { mockSession } = vi.hoisted(() => ({
+  mockSession: { discardRevokedSession: vi.fn() }
+}))
+const { mockRequestAccountDeletion } = vi.hoisted(() => ({
+  mockRequestAccountDeletion: vi.fn()
+}))
 
 vi.mock('@/composables/alert', () => ({ useAlert: () => mockAlert }))
 vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
+vi.mock('@/stores/session', () => ({ useSessionStore: () => mockSession }))
+vi.mock('@/api/session', () => ({ requestAccountDeletion: mockRequestAccountDeletion }))
 vi.mock('vue-router', () => ({ useRouter: () => mockRouter }))
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (k) => k }) }))
 
@@ -28,6 +36,8 @@ beforeEach(() => {
   mockNotice.success.mockReset()
   mockNotice.error.mockReset()
   mockRouter.push.mockReset()
+  mockSession.discardRevokedSession.mockReset().mockResolvedValue(undefined)
+  mockRequestAccountDeletion.mockReset().mockResolvedValue('2026-08-05T00:00:00Z')
   close.mockReset()
 })
 
@@ -38,10 +48,31 @@ describe('useMemberDangerActions', () => {
 
     await onDeleteAccount()
 
+    expect(mockRequestAccountDeletion).not.toHaveBeenCalled()
     expect(close).not.toHaveBeenCalled()
     expect(mockRouter.push).not.toHaveBeenCalled()
     expect(mockNotice.success).not.toHaveBeenCalled()
     expect(deleting_account.value).toBe(false)
+  })
+
+  test('on confirm, calls requestAccountDeletion then discards the revoked session before showing the success notice [obligation]', async () => {
+    const callOrder = []
+    mockRequestAccountDeletion.mockImplementationOnce(async () => {
+      callOrder.push('requestAccountDeletion')
+      return '2026-08-05T00:00:00Z'
+    })
+    mockSession.discardRevokedSession.mockImplementationOnce(async () => {
+      callOrder.push('discardRevokedSession')
+    })
+    mockNotice.success.mockImplementationOnce(() => {
+      callOrder.push('success-notice')
+    })
+    const { onDeleteAccount } = useMemberDangerActions(close)
+    confirmResponse(true)
+
+    await onDeleteAccount()
+
+    expect(callOrder).toEqual(['requestAccountDeletion', 'discardRevokedSession', 'success-notice'])
   })
 
   test('on confirm, fires the success notice but does not close or navigate yet', async () => {
@@ -95,5 +126,33 @@ describe('useMemberDangerActions', () => {
     await onDeleteAccount()
 
     expect(deleting_account.value).toBe(false)
+  })
+
+  // ── failure path [obligation] ────────────────────────────────────────────
+
+  describe('when requestAccountDeletion fails', () => {
+    test('shows an error notice and does NOT discard the session, close, or navigate [obligation]', async () => {
+      mockRequestAccountDeletion.mockRejectedValueOnce(new Error('network error'))
+      const { onDeleteAccount } = useMemberDangerActions(close)
+      confirmResponse(true)
+
+      await onDeleteAccount()
+
+      expect(mockNotice.error).toHaveBeenCalledWith('toast.error.account-delete-failed')
+      expect(mockSession.discardRevokedSession).not.toHaveBeenCalled()
+      expect(mockNotice.success).not.toHaveBeenCalled()
+      expect(close).not.toHaveBeenCalled()
+      expect(mockRouter.push).not.toHaveBeenCalled()
+    })
+
+    test('resets deleting_account back to false even on failure', async () => {
+      mockRequestAccountDeletion.mockRejectedValueOnce(new Error('network error'))
+      const { onDeleteAccount, deleting_account } = useMemberDangerActions(close)
+      confirmResponse(true)
+
+      await onDeleteAccount()
+
+      expect(deleting_account.value).toBe(false)
+    })
   })
 })

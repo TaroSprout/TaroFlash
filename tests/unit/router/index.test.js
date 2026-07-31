@@ -2,13 +2,19 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockSessionStore, mockMemberStore, mockPrefetchMemberDecks, mockPrefetchMemberById } =
-  vi.hoisted(() => ({
-    mockSessionStore: { user: { id: 'user-1' }, restoreSession: vi.fn() },
-    mockMemberStore: { role: 'member' },
-    mockPrefetchMemberDecks: vi.fn(),
-    mockPrefetchMemberById: vi.fn()
-  }))
+const {
+  mockSessionStore,
+  mockMemberStore,
+  mockPrefetchMemberDecks,
+  mockPrefetchMemberById,
+  mockOpenPendingDeletionNotice
+} = vi.hoisted(() => ({
+  mockSessionStore: { user: { id: 'user-1' }, restoreSession: vi.fn() },
+  mockMemberStore: { role: 'member', pending_deletion: false },
+  mockPrefetchMemberDecks: vi.fn(),
+  mockPrefetchMemberById: vi.fn(),
+  mockOpenPendingDeletionNotice: vi.fn()
+}))
 
 vi.mock('@/stores/session', () => ({
   useSessionStore: () => mockSessionStore
@@ -26,6 +32,10 @@ vi.mock('@/api/members', () => ({
   prefetchMemberById: mockPrefetchMemberById
 }))
 
+vi.mock('@/composables/member/pending-deletion-notice', () => ({
+  usePendingDeletionNotice: () => ({ open: mockOpenPendingDeletionNotice })
+}))
+
 vi.mock('@/views/app-shell/authenticated.vue', () => ({ default: {} }))
 
 import router from '@/router/index'
@@ -40,8 +50,10 @@ beforeEach(() => {
   mockSessionStore.user = { id: 'user-1' }
   mockSessionStore.restoreSession.mockReset().mockResolvedValue(true)
   mockMemberStore.role = 'member'
+  mockMemberStore.pending_deletion = false
   mockPrefetchMemberDecks.mockReset()
   mockPrefetchMemberById.mockReset().mockResolvedValue(undefined)
+  mockOpenPendingDeletionNotice.mockReset()
 })
 
 describe('router — authenticated route beforeEnter', () => {
@@ -53,16 +65,62 @@ describe('router — authenticated route beforeEnter', () => {
     expect(result).toEqual({ name: 'welcome' })
   })
 
-  test('does NOT call prefetchMemberById — the member store query already covers it [obligation]', async () => {
+  // [obligation] resolveMember() must AWAIT the member prefetch before this
+  // guard reads pending_deletion off the store — otherwise a direct URL hit
+  // reads an unset flag mid-restore and waves a pending account through.
+  test('awaits prefetchMemberById before reading member.pending_deletion [obligation]', async () => {
+    let resolvePrefetch
+    mockPrefetchMemberById.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolvePrefetch = resolve
+      })
+    )
+    mockMemberStore.pending_deletion = true
     const authenticated = router.getRoutes().find((r) => r.path === '/')
-    await authenticated.beforeEnter()
-    expect(mockPrefetchMemberById).not.toHaveBeenCalled()
+
+    const resultPromise = authenticated.beforeEnter()
+    await Promise.resolve()
+    expect(mockOpenPendingDeletionNotice).not.toHaveBeenCalled()
+
+    resolvePrefetch()
+    await resultPromise
+
+    expect(mockOpenPendingDeletionNotice).toHaveBeenCalledOnce()
   })
 
-  test('fires prefetchMemberDecks when authenticated', async () => {
+  test('calls prefetchMemberById with the session user id [obligation]', async () => {
+    const authenticated = router.getRoutes().find((r) => r.path === '/')
+    await authenticated.beforeEnter()
+    expect(mockPrefetchMemberById).toHaveBeenCalledWith('user-1')
+  })
+
+  test('fires prefetchMemberDecks when authenticated and not pending [obligation]', async () => {
     const authenticated = router.getRoutes().find((r) => r.path === '/')
     await authenticated.beforeEnter()
     expect(mockPrefetchMemberDecks).toHaveBeenCalledOnce()
+  })
+
+  // ── pending-deletion divert [obligation] ───────────────────────────────────
+
+  describe('when the member is pending deletion [obligation]', () => {
+    test('opens the pending-deletion notice and redirects to welcome [obligation]', async () => {
+      mockMemberStore.pending_deletion = true
+      const authenticated = router.getRoutes().find((r) => r.path === '/')
+
+      const result = await authenticated.beforeEnter()
+
+      expect(mockOpenPendingDeletionNotice).toHaveBeenCalledOnce()
+      expect(result).toEqual({ name: 'welcome' })
+    })
+
+    test('does NOT call prefetchMemberDecks — RLS returns zero rows for a pending member [obligation]', async () => {
+      mockMemberStore.pending_deletion = true
+      const authenticated = router.getRoutes().find((r) => r.path === '/')
+
+      await authenticated.beforeEnter()
+
+      expect(mockPrefetchMemberDecks).not.toHaveBeenCalled()
+    })
   })
 })
 
@@ -80,6 +138,27 @@ describe('router — requireAudioReader (lesson route beforeEnter)', () => {
   test('does not throw when prefetchMemberById rejects', async () => {
     mockPrefetchMemberById.mockRejectedValueOnce(new Error('network error'))
     await expect(lessonBeforeEnter()()).resolves.not.toThrow()
+  })
+
+  // [obligation] requireAudioReader must AWAIT resolveMember() (which awaits
+  // the prefetch) before reading role — otherwise a direct URL hit reads an
+  // empty role mid-restore.
+  test('awaits the member prefetch before reading member.role [obligation]', async () => {
+    let resolvePrefetch
+    mockPrefetchMemberById.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolvePrefetch = resolve
+      })
+    )
+    mockMemberStore.role = 'admin'
+
+    const resultPromise = lessonBeforeEnter()()
+    await Promise.resolve()
+
+    resolvePrefetch()
+    const result = await resultPromise
+
+    expect(result).toBeUndefined()
   })
 
   test('redirects non-admins to dashboard [obligation]', async () => {

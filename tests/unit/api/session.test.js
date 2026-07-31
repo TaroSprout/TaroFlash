@@ -14,7 +14,8 @@ const mocks = vi.hoisted(() => ({
   updateUser: vi.fn(),
   onAuthStateChange: vi.fn(),
   resetPasswordForEmail: vi.fn(),
-  rpc: vi.fn()
+  rpc: vi.fn(),
+  invoke: vi.fn()
 }))
 
 vi.mock('@/supabase-client', () => ({
@@ -34,15 +35,21 @@ vi.mock('@/supabase-client', () => ({
       onAuthStateChange: mocks.onAuthStateChange,
       resetPasswordForEmail: mocks.resetPasswordForEmail
     },
-    rpc: mocks.rpc
+    rpc: mocks.rpc,
+    functions: { invoke: mocks.invoke }
   }
 }))
+
+vi.mock('@/utils/logger', () => ({ default: { error: vi.fn() } }))
 
 import {
   getSession,
   getUser,
   login,
   logout,
+  signOutLocal,
+  requestAccountDeletion,
+  restoreAccount,
   signupEmail,
   isDisplayNameAvailable,
   signInOAuth,
@@ -57,6 +64,7 @@ import {
   onSignedOut,
   consumeOAuthPopupFlag
 } from '@/api/session'
+import logger from '@/utils/logger'
 
 beforeEach(() => {
   Object.values(mocks).forEach((m) => m.mockReset())
@@ -178,6 +186,51 @@ describe('logout', () => {
   test('throws when signOut errors', async () => {
     mocks.signOut.mockResolvedValueOnce({ error: { message: 'offline' } })
     await expect(logout()).rejects.toThrow('offline')
+  })
+})
+
+describe('signOutLocal [obligation]', () => {
+  test('calls supabase.auth.signOut scoped to local [obligation]', async () => {
+    mocks.signOut.mockResolvedValueOnce({ error: null })
+    await signOutLocal()
+    expect(mocks.signOut).toHaveBeenCalledWith({ scope: 'local' })
+  })
+
+  test('swallows the error and logs it rather than throwing [obligation]', async () => {
+    mocks.signOut.mockResolvedValueOnce({ error: { message: 'already gone' } })
+    await expect(signOutLocal()).resolves.toBeUndefined()
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('already gone'))
+  })
+})
+
+describe('requestAccountDeletion [obligation]', () => {
+  test('resolves with the deleteAt returned by the edge function [obligation]', async () => {
+    mocks.invoke.mockResolvedValueOnce({ data: { deleteAt: '2026-08-05T00:00:00Z' }, error: null })
+    await expect(requestAccountDeletion()).resolves.toBe('2026-08-05T00:00:00Z')
+    expect(mocks.invoke).toHaveBeenCalledWith('request-account-deletion', { body: {} })
+  })
+
+  test('throws when the edge function returns an error [obligation]', async () => {
+    mocks.invoke.mockResolvedValueOnce({ data: null, error: new Error('boom') })
+    await expect(requestAccountDeletion()).rejects.toThrow('boom')
+  })
+
+  test('throws when the edge function returns no deleteAt [obligation]', async () => {
+    mocks.invoke.mockResolvedValueOnce({ data: {}, error: null })
+    await expect(requestAccountDeletion()).rejects.toThrow()
+  })
+})
+
+describe('restoreAccount [obligation]', () => {
+  test('calls the restore_account RPC and resolves on success [obligation]', async () => {
+    mocks.rpc.mockResolvedValueOnce({ data: null, error: null })
+    await expect(restoreAccount()).resolves.toBeUndefined()
+    expect(mocks.rpc).toHaveBeenCalledWith('restore_account')
+  })
+
+  test('throws when the RPC errors (not pending, or grace period expired) [obligation]', async () => {
+    mocks.rpc.mockResolvedValueOnce({ data: null, error: { message: 'Grace period expired' } })
+    await expect(restoreAccount()).rejects.toThrow('Grace period expired')
   })
 })
 
