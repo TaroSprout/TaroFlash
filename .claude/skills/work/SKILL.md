@@ -53,18 +53,22 @@ need attention, then leave them; the user will invoke test work explicitly (e.g.
 
 ## Blockers — a ticket is not takeable just because it's in the lane
 
-`/groom` wires ordering between split siblings on the **`Blocked by`** self-relation (see
-[`ticket-authoring.md`](../../rules/ticket-authoring.md) § Dependencies). A ticket with an **open
-blocker** is not work — its foundation hasn't landed, and working it produces a PR against code
-that's about to change.
+`/groom` wires ordering between split siblings on the Task Board's **`Blocked By`** self-relation
+(see [`ticket-authoring.md`](../../rules/ticket-authoring.md) § Dependencies). A ticket with an
+**open blocker** is not work — its foundation hasn't landed, and working it produces a PR against
+code that's about to change.
 
-**Select `"Blocked by"` in the query** and resolve each related row's `Status`. A ticket is
-**blocked** when any `Blocked by` row is not `Done` / `Won't Do` / `Duplicate`. Blocked tickets are
-not takeable.
+`Blocked By` holds a **JSON array of page URLs**, not statuses, so the takeability check is two
+steps:
 
-> ⚠️ The `Blocked by` relation may not exist on the board yet — Notion has no native blocking, so it
-> is a self-relation someone must add by hand. If the property is absent, fall back to reading a
-> `Blocked by: #<n>` line at the top of the body, and say once that the relation isn't set up.
+1. Select `"Blocked By"` alongside the usual properties. Rows with an empty array are unblocked —
+   done, no second query needed.
+2. For the rest, collect the union of their `Blocked By` urls and resolve them in **one** follow-up
+   query (`WHERE url IN (…)`), then read each blocker's `Status`.
+
+A blocker is cleared when its `Status` is in the **`complete` group** — `Done`, `Won't Do`, or
+`Duplicate`. Any blocker outside that group makes the ticket **blocked**, and blocked tickets are not
+takeable.
 
 Because this skill never sets `Done` — the user merges and closes — a blocker only clears when the
 user does. That's intended: it's the same gate as the merge. If a run finds every candidate blocked,
@@ -85,7 +89,7 @@ Interactive, in **this** session, using **whatever model the session is running*
 ticket's `Assignee`).
 
 1. **SELECT** — query the Task Board `WHERE "Status" = 'Ready' ORDER BY "Priority" ASC,
-   "userDefined:ID" ASC`, selecting `"Blocked by"` alongside the usual properties (or take the given
+   "userDefined:ID" ASC`, selecting `"Blocked By"` alongside the usual properties (or take the given
    `<ID>`). Auto-picking takes the **first unblocked** row. Fetch its page body via `notion-fetch`.
    Echo what you're about to work.
 
@@ -146,7 +150,7 @@ never edits ticket code itself.
 1. **SELECT** — `notion-query-data-sources`:
 
    ```sql
-   SELECT "userDefined:ID" AS id, "Name", "Priority", "Assignee", "Blocked by", url
+   SELECT "userDefined:ID" AS id, "Name", "Priority", "Assignee", "Blocked By", url
    FROM "collection://3630953c-224c-8065-8864-000bb9fe7bad"
    WHERE "Status" = 'Queued' AND "Assignee" IN ('Sonnet', 'Opus', 'Fable')
    ORDER BY "Priority" ASC, "userDefined:ID" ASC
@@ -158,7 +162,7 @@ never edits ticket code itself.
    naturally excluded by the WHERE. Echo the plan (ID · priority · assignee) before starting, and
    name any ticket skipped for an open blocker so the queue's shape is visible.
 
-   Two siblings of one split are never both takeable — the `Blocked by` relation means one waits.
+   Two siblings of one split are never both takeable — the `Blocked By` relation means one waits.
    Batch is for **independent** tickets; a chain is worked a link at a time.
 
 2. **CLAIM ALL** — for each selected ticket, re-check it's still `Queued` **and still unblocked**,
@@ -208,7 +212,7 @@ never edits ticket code itself.
    c. **RESOLVE** — a branch that's clean vs master and vs its peers gets a PR **based off
    `master`**. When two branches conflict but the overlap is mechanical, **stack** the dependent
    PR on the other (base its branch on the peer's branch) so it merges cleanly. If the two tickets
-   carry a `Blocked by` relation, **that decides the stack direction** — the blocker is the base;
+   carry a `Blocked By` relation, **that decides the stack direction** — the blocker is the base;
    never invert it, and never guess a direction when the relation already states it. When a conflict needs
    **genuine human judgment** (semantic overlap, incompatible approaches), do **not** guess:
    **raise it** in the final report and set that ticket to `Blocked`.
@@ -270,7 +274,7 @@ user's call, exactly as at first handoff.
 - **Never merge, never set `Done`.** Opening the PR is a handoff into `Review`, not the end — the
   run stays live through the feedback loop until the user merges. Merging is always the user's call.
 - Claim before coding; re-check the lane to avoid double-work.
-- **Never work a ticket with an open `Blocked by` row** (§ Blockers) — batch skips it silently, pair
+- **Never work a ticket with an open `Blocked By` row** (§ Blockers) — batch skips it silently, pair
   asks first when the user named it explicitly. Lane membership alone doesn't make a ticket takeable.
 - Batch never runs the backend teaching persona and never works an `On Hold` or `Assignee = Me`
   ticket (those are the user's hands-off, and aren't `Queued` anyway). These are mode contracts — don't cross them.

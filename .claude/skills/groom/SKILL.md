@@ -1,6 +1,6 @@
 ---
 name: groom
-description: Deep second pass over a single Notion Task Board ticket sitting in `Needs More Info`. Resolves every open design decision with the user through conversation — surfacing assumptions as explicit questions, pushing back on the spec, verifying claims against real source rather than recall — then writes the decisions and their rationale into the ticket and moves it to `Ready`/`Queued`. Owns splitting oversized tickets (wiring the `Blocked by` relation between the siblings), recording external blockers, and keeping the epic's decision log and fog current. Technical and concise. Trigger on `/groom`, "groom this ticket", "resolve the design on X".
+description: Deep second pass over a single Notion Task Board ticket sitting in `Needs More Info`. Resolves every open design decision with the user through conversation — surfacing assumptions as explicit questions, pushing back on the spec, verifying claims against real source rather than recall — then writes the decisions and their rationale into the ticket and moves it to `Ready`/`Queued`. Owns splitting oversized tickets (wiring the `Blocked By` relation between the siblings), recording external blockers, and keeping the epic's decision log and fog current. Technical and concise. Trigger on `/groom`, "groom this ticket", "resolve the design on X".
 allowed-tools: Read, Grep, Glob, Bash, Agent, WebFetch, WebSearch, mcp__notion__notion-query-data-sources, mcp__notion__notion-fetch, mcp__notion__notion-update-page, mcp__notion__notion-create-pages, mcp__notion__notion-search
 argument-hint: '[<ID>]'
 arguments:
@@ -145,7 +145,7 @@ Only answerable once the design has resolved:
 
 - **Split** — if the resolved shape is clearly several tickets, propose the split with a one-line
   scope each. Groom owns this because size is only knowable after the design is settled. Say which
-  siblings must **land in order** — that ordering becomes a `Blocked by` relation in §5, not prose.
+  siblings must **land in order** — that ordering becomes a `Blocked By` relation in §5, not prose.
 - **External blockers** — facts only the user can supply (a dashboard setting, a vendor account
   detail, a product call). Record under `## Blocked on` with what it blocks. If the ticket cannot
   land without one, it stays in `Needs More Info` and the report says why.
@@ -174,11 +174,11 @@ records: most of what you learned settling a decision is rediscoverable in secon
 reach the body. Prefer **bullets over numbered lists** — Notion renumbers ordered lists and
 the churn shows up as page-history noise.
 
-**Wire the ordering.** Where a split named siblings that must land in sequence, set the `Blocked by`
-relation on each dependent sibling (see [`ticket-authoring.md`](../../rules/ticket-authoring.md) § Dependencies — check the property
-exists before relying on it, and fall back to a `Blocked by: #<n>` body line if it doesn't).
-Siblings emitted with no dependency are orphans — `/work batch` will pick up step 3 of 5 with no way
-to know step 1 must land first.
+**Wire the ordering.** Where a split named siblings that must land in sequence, set **`Blocked By`**
+on each dependent sibling — never `Blocks`, which Notion fills reciprocally on its own (see
+[`ticket-authoring.md`](../../rules/ticket-authoring.md) § Dependencies). Siblings emitted with no
+dependency are orphans — `/work batch` will pick up step 3 of 5 with no way to know step 1 must land
+first.
 
 **Update the epic** page: append the resolved ticket to `## Decisions so far` (gist + link, never a
 restatement), add any approved fog to `## Not yet specified`, delete the fog bullet that this

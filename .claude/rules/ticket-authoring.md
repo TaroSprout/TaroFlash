@@ -199,14 +199,17 @@ URL.
 ## Dependencies
 
 When a ticket must land before another can start — most often after `/groom` splits one ticket into
-several — record it on the **`Blocked by`** self-relation on the Task Board, not as a line in the
-body. A relation renders in Notion as a linked row, so what's actually takeable is visible without
-opening a ticket.
+several — record it on the Task Board's **`Blocked By`** self-relation, not as a line in the body. A
+relation renders in Notion as a linked row, so what's actually takeable is visible without opening a
+ticket.
 
-> ⚠️ **The `Blocked by` relation may not exist on the board yet.** Notion has no native issue-link
-> type, so this is a self-relation someone must add to the Task Board by hand. Check with
-> `notion-fetch` on the data-source URL before relying on it; if it's absent, say so and fall back to
-> a `Blocked by: #<n>, #<n>` line at the top of the body until it's created.
+`Blocked By` and **`Blocks`** are the two halves of one reciprocal pair: setting `Blocked By` on the
+dependent ticket fills `Blocks` on the blocker automatically. **Write only `Blocked By`** — setting
+both by hand duplicates the edge.
+
+Each column holds a **JSON array of page URLs**, not statuses, so judging takeability is two steps:
+read the `Blocked By` urls, then query the Task Board for those rows' `Status`. A blocker is cleared
+when its `Status` is in the **`complete` group** — `Done`, `Won't Do`, or `Duplicate`.
 
 A split that emits siblings with no dependency and no `## Decisions so far` entry on the epic
 produces orphans: `/work batch` picks up step 3 of 5 with no way to know step 1 must land first.
