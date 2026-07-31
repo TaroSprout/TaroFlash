@@ -14,7 +14,7 @@ arguments:
     description: batch only — restrict to this priority.
   - name: <ID>
     description: pair only — the specific ticket to work.
-lastUpdated: 2026-07-31T00:00:00Z
+lastUpdated: 2026-07-31T12:00:00Z
 ---
 
 ## What this skill does
@@ -53,6 +53,21 @@ need attention, then leave them; the user will invoke test work explicitly (e.g.
   the transition id, then `transitionJiraIssue`. Field edits (writing the PR URL into the
   description) use `editJiraIssue`.
 
+## Blockers — a ticket is not takeable just because it's in the lane
+
+`/groom` wires ordering between split siblings as native **`Blocks`** links (see
+[`ticket-authoring.md`](../../rules/ticket-authoring.md)). A ticket with an **open blocker** is not
+work — its foundation hasn't landed, and working it produces a PR against code that's about to
+change.
+
+**Request `issuelinks` in the SELECT query** (`fields: [..., "issuelinks"]`) and read it per
+candidate. A ticket is **blocked** when any `is blocked by` link points at an issue whose
+`statusCategory` is not `Done`. Blocked tickets are not takeable.
+
+Because this skill never sets `Done` — the user merges and closes — a blocker only clears when the
+user does. That's intended: it's the same gate as the merge. If a run finds every candidate blocked,
+say so and stop rather than reaching further down the queue for something unrelated.
+
 ## Claim protocol (both modes, per ticket)
 
 Before touching any code, **claim atomically**: transition the ticket to `In Progress`
@@ -68,8 +83,14 @@ Interactive, in **this** session, using **whatever model the session is running*
 ticket's `Model`).
 
 1. **SELECT** — JQL `project = TARO AND status = "Ready" ORDER BY priority DESC, created ASC` (or the
-   given key). If an ID is given, take `TARO-<ID>`; else the top row (highest priority, oldest first).
-   Fetch its issue summary + description via `getJiraIssue`. Echo what you're about to work.
+   given key), requesting `issuelinks`. If an ID is given, take `TARO-<ID>`; else the **first
+   unblocked** row (highest priority, oldest first). Fetch its issue summary + description via
+   `getJiraIssue`. Echo what you're about to work.
+
+   **If the ticket is blocked** (§ Blockers): when the user named it explicitly, say which open
+   blocker stands in the way and ask before claiming — their call, they may know it's fine. When
+   auto-picking, skip it silently and take the next.
+
 2. **CLAIM** → `In Progress`.
 3. **BRANCH** — conventional branch off `master` matching the ticket (`fix/…`, `feat/…`).
 4. **EXPLORE & ALIGN — before any code.** Read the relevant code to ground the ticket in reality
@@ -128,13 +149,17 @@ never edits ticket code itself.
    ```
 
    `--pN` adds `AND priority = Highest|High|Medium|Low`; `--count N` sets **how many tickets to work
-   in parallel** (default 1). Take the top `N` rows (highest priority first, oldest as stable tie-
-   break). `On Hold` tickets are naturally excluded — they aren't `Queued`. Echo the plan (ID ·
-   priority · model) before starting.
+   in parallel** (default 1). Request `issuelinks` and **drop every blocked row** (§ Blockers) before
+   taking the top `N` (highest priority first, oldest as stable tie-break). `On Hold` tickets are
+   naturally excluded — they aren't `Queued`. Echo the plan (ID · priority · model) before starting,
+   and name any ticket skipped for an open blocker so the queue's shape is visible.
 
-2. **CLAIM ALL** — for each selected ticket, re-check it's still `Queued` and transition it to `In
-Progress` (`getTransitionsForJiraIssue` → `transitionJiraIssue`). Drop any that another run already
-   grabbed. Claim before dispatching so parallel runs don't collide.
+   Two siblings of one split are never both takeable — the `Blocks` edge means one waits. Batch is
+   for **independent** tickets; a chain is worked a link at a time.
+
+2. **CLAIM ALL** — for each selected ticket, re-check it's still `Queued` **and still unblocked**,
+   then transition it to `In Progress` (`getTransitionsForJiraIssue` → `transitionJiraIssue`). Drop
+   any that another run already grabbed. Claim before dispatching so parallel runs don't collide.
 
 3. **FAN OUT — one subagent per ticket, in parallel.** Dispatch all subagents in a single message
    (multiple `Agent` calls) so they run concurrently. Each `Agent`:
@@ -179,8 +204,10 @@ Progress` (`getTransitionsForJiraIssue` → `transitionJiraIssue`). Drop any tha
    branches against each other to catch cross-PR conflicts (two subagents touching the same code).
    c. **RESOLVE** — a branch that's clean vs master and vs its peers gets a PR **based off
    `master`**. When two branches conflict but the overlap is mechanical, **stack** the dependent
-   PR on the other (base its branch on the peer's branch) so it merges cleanly. When a conflict
-   needs **genuine human judgment** (semantic overlap, incompatible approaches), do **not** guess:
+   PR on the other (base its branch on the peer's branch) so it merges cleanly. If the two tickets
+   carry a `Blocks` link, **that edge decides the stack direction** — the blocker is the base; never
+   invert it, and never guess a direction when an edge already states it. When a conflict needs
+   **genuine human judgment** (semantic overlap, incompatible approaches), do **not** guess:
    **raise it** in the final report and transition that ticket to `Blocked`.
    d. **OPEN** — for each non-blocked ticket, invoke the **`prepare-pr`** skill with `--ticket
 <ID> --ticket-url <url>` (the `TARO-<ID>` number and the ticket's Jira browse URL,
@@ -240,6 +267,8 @@ user's call, exactly as at first handoff.
 - **Never merge, never set `Done`.** Opening the PR is a handoff into `In Review`, not the end — the
   run stays live through the feedback loop until the user merges. Merging is always the user's call.
 - Claim before coding; re-check the lane to avoid double-work.
+- **Never work a ticket with an open `Blocks` blocker** (§ Blockers) — batch skips it silently, pair
+  asks first when the user named it explicitly. Lane membership alone doesn't make a ticket takeable.
 - Batch never runs the backend teaching persona and never works an `On Hold` ticket (those are the
   user's hands-off, and aren't `Queued` anyway). These are mode contracts — don't cross them.
 - **Tests: batch only.** The golden "no tests" rule is suspended **only in batch** — batch
