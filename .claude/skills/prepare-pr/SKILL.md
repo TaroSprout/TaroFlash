@@ -9,15 +9,15 @@ arguments:
   - name: --ticket <ID>
     description: Prefix the PR title with the ticket key `TARO-<ID>` (e.g. `TARO-207: …`). Omit for no prefix.
   - name: --ticket-url <URL>
-    description: Jira issue URL. When given alongside `--ticket`, the PR body opens with a `[TARO-<ID>](<URL>)` link line. Omit to render just `TARO-<ID>` text (or nothing if `--ticket` is also absent).
+    description: Notion ticket URL. When given alongside `--ticket`, the PR body opens with a `[TARO-<ID>](<URL>)` link line. Omit to render just `TARO-<ID>` text (or nothing if `--ticket` is also absent).
 lastUpdated: 2026-07-31T00:00:00Z
 ---
 
 ## Args
 
 - **`--no-watch`** (optional) — skip the post-create CI watch + coverage check (Step 10). Default behaviour blocks on CI after opening the PR until checks settle, then inspects coverage and writes more tests if it regressed.
-- **`--ticket <ID>`** (optional) — the Jira issue number (the `<ID>` in `TARO-<ID>`) this PR resolves. When given, the PR **title** is prefixed with `TARO-<ID>: ` and the PR **body** opens with a ticket-link line (Step 8). This affects the PR title and body only — commit subjects stay clean (ticket refs still belong in a commit-body `Refs:` trailer, per Notes). Omit to open a PR with no ticket prefix or link.
-- **`--ticket-url <URL>`** (optional) — the Jira issue URL (`https://taroflash.atlassian.net/browse/TARO-<ID>`). When given with `--ticket`, the body's top line renders as a markdown link `[TARO-<ID>](<URL>)`. Without it, the top line falls back to plain `TARO-<ID>` text. Ignored when `--ticket` is absent.
+- **`--ticket <ID>`** (optional) — the Notion Task Board ticket ID this PR resolves. When given, the PR **title** is prefixed with `TARO-<ID>: ` and the PR **body** opens with a ticket-link line (Step 8). This affects the PR title and body only — commit subjects stay clean (ticket refs still belong in a commit-body `Refs:` trailer, per Notes). Omit to open a PR with no ticket prefix or link.
+- **`--ticket-url <URL>`** (optional) — the Notion page URL for the ticket. When given with `--ticket`, the body's top line renders as a markdown link `[TARO-<ID>](<URL>)`. Without it, the top line falls back to plain `TARO-<ID>` text. Ignored when `--ticket` is absent.
 
 ## Fully autonomous — no approval gates
 
