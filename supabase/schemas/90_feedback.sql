@@ -231,19 +231,19 @@ ALTER TABLE public.feedback_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.feedback_votes ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "members can delete their own feedback vote" ON public.feedback_votes FOR DELETE TO authenticated USING ((member_id = auth.uid()));
+CREATE POLICY "members can delete their own feedback vote" ON public.feedback_votes FOR DELETE TO authenticated USING ((member_id = ( SELECT public.active_member_id() AS active_member_id)));
 
 
-CREATE POLICY "members can insert their own feedback item" ON public.feedback_items FOR INSERT TO authenticated WITH CHECK ((member_id = auth.uid()));
+CREATE POLICY "members can insert their own feedback item" ON public.feedback_items FOR INSERT TO authenticated WITH CHECK ((member_id = ( SELECT public.active_member_id() AS active_member_id)));
 
 
-CREATE POLICY "members can insert their own feedback vote" ON public.feedback_votes FOR INSERT TO authenticated WITH CHECK ((member_id = auth.uid()));
+CREATE POLICY "members can insert their own feedback vote" ON public.feedback_votes FOR INSERT TO authenticated WITH CHECK ((member_id = ( SELECT public.active_member_id() AS active_member_id)));
 
 
 CREATE POLICY "members can read feedback votes" ON public.feedback_votes FOR SELECT TO authenticated USING (true);
 
 
-CREATE POLICY "members can read public feedback items" ON public.feedback_items FOR SELECT TO authenticated USING (((visibility = 'public'::public.feedback_visibility) OR public.can_moderate_feedback() OR (member_id = auth.uid())));
+CREATE POLICY "members can read public feedback items" ON public.feedback_items FOR SELECT TO authenticated USING (((visibility = 'public'::public.feedback_visibility) OR public.can_moderate_feedback() OR (member_id = ( SELECT public.active_member_id() AS active_member_id))));
 
 
 CREATE POLICY "moderators can update feedback items" ON public.feedback_items FOR UPDATE TO authenticated USING (public.can_moderate_feedback()) WITH CHECK (public.can_moderate_feedback());

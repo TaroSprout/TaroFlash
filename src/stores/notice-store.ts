@@ -45,7 +45,9 @@ export const useNoticeStore = defineStore('notice', () => {
   const toast_notices = computed(() => notices.value.filter((n) => n.variant !== 'panel'))
   const panel_notices = computed(() => notices.value.filter((n) => n.variant === 'panel'))
 
-  function addNotice(state: NoticeState, message: string, options?: NoticeOptions): void {
+  /** Returns the created notice so a caller can dismiss it later without waiting
+   * for a user action — an action whose own work decides when the notice is done. */
+  function addNotice(state: NoticeState, message: string, options?: NoticeOptions): Notice {
     const persist = options?.persist ?? Boolean(options?.actions?.length)
     const variant = options?.variant ?? 'toast'
 
@@ -56,7 +58,7 @@ export const useNoticeStore = defineStore('notice', () => {
       for (const panel of existing_panels) removeNotice(panel)
     }
 
-    notices.value.push({
+    const notice: Notice = {
       variant: 'toast',
       delay: DEFAULT_DELAY,
       closable: true,
@@ -66,7 +68,11 @@ export const useNoticeStore = defineStore('notice', () => {
       message,
       state,
       id: generateUID()
-    })
+    }
+
+    notices.value.push(notice)
+
+    return notice
   }
 
   function removeNotice(notice: Notice): void {
@@ -74,23 +80,29 @@ export const useNoticeStore = defineStore('notice', () => {
     if (index !== -1) notices.value.splice(index, 1)
   }
 
-  function warn(message: string, options?: NoticeOptions): void {
-    addNotice('warn', message, { ...options, sfx: { open: 'etc_error_swipe', ...options?.sfx } })
+  function warn(message: string, options?: NoticeOptions): Notice {
+    return addNotice('warn', message, {
+      ...options,
+      sfx: { open: 'etc_error_swipe', ...options?.sfx }
+    })
   }
 
-  function success(message: string, options?: NoticeOptions): void {
-    addNotice('success', message, { ...options, sfx: { open: 'success_3', ...options?.sfx } })
+  function success(message: string, options?: NoticeOptions): Notice {
+    return addNotice('success', message, {
+      ...options,
+      sfx: { open: 'success_3', ...options?.sfx }
+    })
   }
 
-  function error(message: string, options?: NoticeOptions): void {
-    addNotice('error', message, {
+  function error(message: string, options?: NoticeOptions): Notice {
+    return addNotice('error', message, {
       ...options,
       sfx: { open: 'digi_powerdown', ...options?.sfx }
     })
   }
 
-  function info(message: string, options?: NoticeOptions): void {
-    addNotice('info', message, {
+  function info(message: string, options?: NoticeOptions): Notice {
+    return addNotice('info', message, {
       ...options,
       sfx: { open: 'chime_ring', ...options?.sfx }
     })

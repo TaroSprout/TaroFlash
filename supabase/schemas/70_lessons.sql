@@ -287,28 +287,28 @@ ALTER TABLE public.lesson_collections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.lessons ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY lesson_collections_owner_delete ON public.lesson_collections FOR DELETE TO authenticated USING ((( SELECT auth.uid() AS uid) = member_id));
+CREATE POLICY lesson_collections_owner_delete ON public.lesson_collections FOR DELETE TO authenticated USING ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
-CREATE POLICY lesson_collections_owner_insert ON public.lesson_collections FOR INSERT TO authenticated WITH CHECK ((( SELECT auth.uid() AS uid) = member_id));
+CREATE POLICY lesson_collections_owner_insert ON public.lesson_collections FOR INSERT TO authenticated WITH CHECK ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
-CREATE POLICY lesson_collections_owner_select ON public.lesson_collections FOR SELECT TO authenticated USING ((( SELECT auth.uid() AS uid) = member_id));
+CREATE POLICY lesson_collections_owner_select ON public.lesson_collections FOR SELECT TO authenticated USING ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
-CREATE POLICY lesson_collections_owner_update ON public.lesson_collections FOR UPDATE TO authenticated USING ((( SELECT auth.uid() AS uid) = member_id)) WITH CHECK ((( SELECT auth.uid() AS uid) = member_id));
+CREATE POLICY lesson_collections_owner_update ON public.lesson_collections FOR UPDATE TO authenticated USING ((( SELECT public.active_member_id() AS active_member_id) = member_id)) WITH CHECK ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
-CREATE POLICY lessons_owner_delete ON public.lessons FOR DELETE TO authenticated USING ((( SELECT auth.uid() AS uid) = member_id));
+CREATE POLICY lessons_owner_delete ON public.lessons FOR DELETE TO authenticated USING ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
-CREATE POLICY lessons_owner_insert ON public.lessons FOR INSERT TO authenticated WITH CHECK ((( SELECT auth.uid() AS uid) = member_id));
+CREATE POLICY lessons_owner_insert ON public.lessons FOR INSERT TO authenticated WITH CHECK ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
-CREATE POLICY lessons_owner_select ON public.lessons FOR SELECT TO authenticated USING ((( SELECT auth.uid() AS uid) = member_id));
+CREATE POLICY lessons_owner_select ON public.lessons FOR SELECT TO authenticated USING ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
-CREATE POLICY lessons_owner_update ON public.lessons FOR UPDATE TO authenticated USING ((( SELECT auth.uid() AS uid) = member_id)) WITH CHECK ((( SELECT auth.uid() AS uid) = member_id));
+CREATE POLICY lessons_owner_update ON public.lessons FOR UPDATE TO authenticated USING ((( SELECT public.active_member_id() AS active_member_id) = member_id)) WITH CHECK ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
 GRANT ALL ON TABLE public.lessons TO anon;

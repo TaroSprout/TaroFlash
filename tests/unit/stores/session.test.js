@@ -8,6 +8,7 @@ const {
   mockGetUser,
   mockLogin,
   mockLogout,
+  mockSignOutLocal,
   mockSignupEmail,
   mockSignInOAuth,
   mockUpdateEmail,
@@ -23,6 +24,7 @@ const {
   mockGetUser: vi.fn(),
   mockLogin: vi.fn(),
   mockLogout: vi.fn(),
+  mockSignOutLocal: vi.fn(),
   mockSignupEmail: vi.fn(),
   mockSignInOAuth: vi.fn(),
   mockUpdateEmail: vi.fn(),
@@ -61,6 +63,7 @@ vi.mock('@/api/session', () => ({
   getUser: mockGetUser,
   login: mockLogin,
   logout: mockLogout,
+  signOutLocal: mockSignOutLocal,
   signupEmail: mockSignupEmail,
   signInOAuth: mockSignInOAuth,
   updateEmail: mockUpdateEmail,
@@ -88,6 +91,7 @@ beforeEach(() => {
   mockGetUser.mockReset()
   mockLogin.mockReset()
   mockLogout.mockReset()
+  mockSignOutLocal.mockReset()
   mockSignupEmail.mockReset()
   mockSignInOAuth.mockReset()
   mockUpdateEmail.mockReset()
@@ -285,6 +289,77 @@ describe('useSessionStore', () => {
 
       expect(mockCloseAllModals).not.toHaveBeenCalled()
       expect(mockTaroPhoneReset).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── discardRevokedSession [obligation] ────────────────────────────────────
+
+  describe('discardRevokedSession [obligation]', () => {
+    test('runs reset() teardown AND drops the locally persisted supabase session [obligation]', async () => {
+      const user = { id: 'u1', aud: 'authenticated' }
+      mockGetSession.mockResolvedValueOnce({ user })
+      mockQueryCache.getEntries.mockReturnValueOnce(['entry-a'])
+      const store = useSessionStore()
+      await store.restoreSession()
+
+      await store.discardRevokedSession()
+
+      expect(store.user).toBeUndefined()
+      expect(mockCloseAllModals).toHaveBeenCalledOnce()
+      expect(mockQueryCache.remove).toHaveBeenCalledWith('entry-a')
+      expect(mockTaroPhoneReset).toHaveBeenCalledOnce()
+      expect(mockSignOutLocal).toHaveBeenCalledOnce()
+    })
+
+    test('runs reset() before dropping the local supabase session [obligation]', async () => {
+      const callOrder = []
+      mockQueryCache.remove.mockImplementationOnce(() => callOrder.push('reset'))
+      mockSignOutLocal.mockImplementationOnce(async () => callOrder.push('signOutLocal'))
+      mockQueryCache.getEntries.mockReturnValueOnce(['entry-a'])
+      const store = useSessionStore()
+
+      await store.discardRevokedSession()
+
+      expect(callOrder).toEqual(['reset', 'signOutLocal'])
+    })
+
+    test('holds the intentional-logout flag across reset() AND the local sign-out, so the SIGNED_OUT event does not trigger forceLogout [obligation]', async () => {
+      const user = { id: 'u1', aud: 'authenticated' }
+      mockGetSession.mockResolvedValueOnce({ user })
+      let staleTabCallback
+      mockOnSignedOut.mockImplementationOnce((cb) => {
+        staleTabCallback = cb
+        return vi.fn()
+      })
+      let resolveSignOutLocal
+      mockSignOutLocal.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveSignOutLocal = resolve
+          })
+      )
+      const store = useSessionStore()
+      await store.restoreSession()
+
+      const discardPromise = store.discardRevokedSession()
+
+      // Fire the SIGNED_OUT event mid-teardown, before signOutLocal resolves.
+      staleTabCallback()
+      await Promise.resolve()
+
+      expect(mockNotice.warn).not.toHaveBeenCalled()
+
+      resolveSignOutLocal()
+      await discardPromise
+    })
+
+    test('does not stack a forced-logout notice on the caller messaging after teardown completes [obligation]', async () => {
+      mockSignOutLocal.mockResolvedValueOnce(undefined)
+      const store = useSessionStore()
+
+      await store.discardRevokedSession()
+
+      expect(mockNotice.warn).not.toHaveBeenCalled()
     })
   })
 
@@ -653,5 +728,13 @@ describe('useSessionStore', () => {
       store.stopLoading()
       expect(store.isLoading).toBe(false)
     })
+  })
+
+  // ── public surface [obligation] ───────────────────────────────────────────
+
+  test('does not export a bare reset() — only discardRevokedSession() [obligation]', () => {
+    const store = useSessionStore()
+    expect(store.reset).toBeUndefined()
+    expect(typeof store.discardRevokedSession).toBe('function')
   })
 })

@@ -4,8 +4,9 @@
 // customer resolved from members.stripe_customer_id (RLS-visible to owner).
 // Plan changes use proration_behavior: 'always_invoice' — diff charged now.
 
-import Stripe from 'npm:stripe@20'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { makeStripe, type Stripe } from '../_shared/stripe.ts'
+import { cancelWithProratedRefund } from '../_shared/prorated-refund.ts'
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -25,7 +26,13 @@ type Payload =
 
 export type StripeLike = Pick<
   Stripe,
-  'subscriptions' | 'invoices' | 'paymentMethods' | 'customers' | 'checkout' | 'prices'
+  | 'subscriptions'
+  | 'invoices'
+  | 'paymentMethods'
+  | 'customers'
+  | 'checkout'
+  | 'prices'
+  | 'creditNotes'
 >
 
 export type AuthedUser = { id: string }
@@ -201,12 +208,23 @@ export async function handler(req: Request, deps: Deps): Promise<Response> {
 
       case 'cancel': {
         if (!member?.stripe_subscription_id) return err('No active subscription')
-        const result = payload.atPeriodEnd
-          ? await stripe.subscriptions.update(member.stripe_subscription_id, {
-              cancel_at_period_end: true
-            })
-          : await stripe.subscriptions.cancel(member.stripe_subscription_id)
-        return json({ subscription: result })
+
+        // Cancelling at period end uses every day that was paid for, so there's
+        // nothing unused to give back. Cancelling immediately does — the member
+        // loses access now, so the remainder of the period is refunded.
+        if (payload.atPeriodEnd) {
+          const scheduled = await stripe.subscriptions.update(member.stripe_subscription_id, {
+            cancel_at_period_end: true
+          })
+          return json({ subscription: scheduled })
+        }
+
+        const { subscription, refund } = await cancelWithProratedRefund(
+          stripe,
+          customerId,
+          member.stripe_subscription_id
+        )
+        return json({ subscription, refund })
       }
 
       case 'resume': {
@@ -227,11 +245,7 @@ export async function handler(req: Request, deps: Deps): Promise<Response> {
 }
 
 if (import.meta.main) {
-  const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
-    // Preview version — not yet in this SDK's LatestApiVersion type.
-    apiVersion: '2026-03-25.dahlia' as Stripe.LatestApiVersion,
-    httpClient: Stripe.createFetchHttpClient()
-  })
+  const stripe = makeStripe()
 
   const admin = createClient(
     Deno.env.get('SUPABASE_URL')!,

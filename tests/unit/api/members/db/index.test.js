@@ -55,11 +55,11 @@ beforeEach(() => {
 // ── fetchMemberById ───────────────────────────────────────────────────────────
 
 describe('fetchMemberById', () => {
-  test('selects the explicit member column list, including the plans(deck_limit, cards_per_deck_limit) embed [obligation]', async () => {
+  test('selects the explicit member column list, including delete_at and the plans(deck_limit, cards_per_deck_limit) embed [obligation]', async () => {
     makeChain({ data: baseMemberRow, error: null })
     await fetchMemberById('user-1')
     expect(mocks.selectMock).toHaveBeenCalledWith(
-      'id, display_name, description, created_at, email, avatar_url, role, plan, preferences, cover_config, plans(deck_limit, cards_per_deck_limit)'
+      'id, display_name, description, created_at, email, avatar_url, role, plan, preferences, cover_config, delete_at, plans(deck_limit, cards_per_deck_limit)'
     )
   })
 

@@ -1,5 +1,9 @@
 // supabase/functions/cleanup-media/index.ts
 import { createClient } from '@supabase/supabase-js'
+import { assertServiceRole } from '../_shared/assert-service-role.ts'
+
+// Re-exported for the existing test suite, which imports it from here.
+export { assertServiceRole }
 
 const BATCH_SIZE = 500
 
@@ -242,40 +246,6 @@ export async function handler({ supabase, sleep, retryAttempts = 3 }: Deps): Pro
     }),
     { status }
   )
-}
-
-// --- caller authorization ----------------------------------------------------
-// verify_jwt = true means the gateway has ALREADY verified this token's
-// signature before we run, so the payload is safe to *read* — a forged token
-// never reaches us. We only need the role claim. A JWT is
-// `header.payload.signature`; the payload is the base64url middle segment.
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-  const segment = token.split('.')[1]
-  if (!segment) return null
-  const b64 = segment.replace(/-/g, '+').replace(/_/g, '/')
-  const padded = b64 + '='.repeat((4 - (b64.length % 4)) % 4)
-  try {
-    return JSON.parse(atob(padded))
-  } catch {
-    return null
-  }
-}
-
-// The only legitimate caller is the pg_cron job, which authenticates with the
-// service_role key. Everyone else is rejected here — including holders of the
-// public anon key, which is a validly-signed JWT and so clears the gateway.
-export function assertServiceRole(req: Request): Response | null {
-  const authHeader = req.headers.get('Authorization')
-  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
-  const role = token ? decodeJwtPayload(token)?.role : null
-
-  if (!role) {
-    return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401 })
-  }
-  if (role !== 'service_role') {
-    return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403 })
-  }
-  return null
 }
 
 if (import.meta.main) {

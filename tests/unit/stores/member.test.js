@@ -260,6 +260,40 @@ describe('useMemberStore', () => {
     })
   })
 
+  // ── pending_deletion / delete_at [obligation] ──────────────────────────────
+
+  describe('pending_deletion / delete_at [obligation]', () => {
+    test('pending_deletion is false and delete_at is null when the member has no delete_at [obligation]', () => {
+      sessionUser.value = { id: 'user-1' }
+      memberRef.value = { id: 'user-1', delete_at: null }
+
+      const store = useMemberStore()
+
+      expect(store.pending_deletion).toBe(false)
+      expect(store.delete_at).toBeNull()
+    })
+
+    test('pending_deletion is true and delete_at reflects the deadline once the account is archived [obligation]', () => {
+      sessionUser.value = { id: 'user-1' }
+      memberRef.value = { id: 'user-1', delete_at: '2026-08-05T00:00:00Z' }
+
+      const store = useMemberStore()
+
+      expect(store.pending_deletion).toBe(true)
+      expect(store.delete_at).toBe('2026-08-05T00:00:00Z')
+    })
+
+    test('pending_deletion is false and delete_at is null when the member query has no data yet [obligation]', () => {
+      sessionUser.value = { id: 'user-1' }
+      memberRef.value = null
+
+      const store = useMemberStore()
+
+      expect(store.pending_deletion).toBe(false)
+      expect(store.delete_at).toBeNull()
+    })
+  })
+
   // ── error — passthrough from the query [obligation] ────────────────────────
 
   describe('error [obligation]', () => {

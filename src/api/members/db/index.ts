@@ -5,8 +5,10 @@ import logger from '@/utils/logger'
 // stripe_customer_id/stripe_subscription_id, which are server-only
 // (webhook + edge functions via the service-role client) and have no
 // business shipping to the browser in the fetch response.
+// `delete_at` has to be here: it's what tells the app the account is pending
+// deletion, and without it the whole divert-to-pending flow silently no-ops.
 const MEMBER_COLUMNS =
-  'id, display_name, description, created_at, email, avatar_url, role, plan, preferences, cover_config, plans(deck_limit, cards_per_deck_limit)' as const
+  'id, display_name, description, created_at, email, avatar_url, role, plan, preferences, cover_config, delete_at, plans(deck_limit, cards_per_deck_limit)' as const
 
 export async function fetchMemberById(id: string): Promise<Member | null> {
   const { data, error } = await supabase

@@ -43,9 +43,17 @@ export const useMemberStore = defineStore('member', () => {
     () => session.authenticated && status.value === 'success' && member.value == null
   )
 
+  // Deletion requested but not yet carried out. Distinct from profile_missing
+  // above, which is the *post*-purge case (the row is gone) — these are two
+  // different states and the pending one is recoverable.
+  const pending_deletion = computed(() => Boolean(member.value?.delete_at))
+  const delete_at = computed(() => member.value?.delete_at ?? null)
+
   return {
     has_member,
     profile_missing,
+    pending_deletion,
+    delete_at,
     display_name,
     description,
     email,

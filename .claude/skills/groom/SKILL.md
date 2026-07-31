@@ -6,7 +6,7 @@ argument-hint: '[<ID>]'
 arguments:
   - name: <ID>
     description: Numeric ticket ID to groom. Omit to take the top `Needs More Info` ticket by Priority → ID.
-lastUpdated: 2026-07-29T00:00:00Z
+lastUpdated: 2026-07-30T00:00:00Z
 ---
 
 ## What this skill does
@@ -56,10 +56,18 @@ recorded under `## Blocked on`, never left as an unmarked menu.
 
 ## Reporting voice
 
-**Technical, but concise.** Unlike `/triage`, filepaths, symbols, SQL, and API surface belong in
-the conversation — resolving the decision requires them.
+**Open at altitude, in product terms; drop to detail on demand.** The first present — the
+checkpoint — is a bird's-eye view: what the ticket changes for the user and the decisions that need
+settling, phrased the way a user would experience them. **No filepaths, symbols, or SQL in that
+opening** — it should be scannable in seconds, never a wall of text.
 
-But no walls of text:
+The technical depth isn't gone, it's deferred. As the user drills into a decision, that's where
+filepaths, symbols, SQL, and API surface come out — resolving the decision requires them. Pull them
+in **per decision, on demand**, not all up front. (A purely internal decision with no product
+framing — e.g. a composable's return shape — stays one plain line; hold the mechanism until it's
+opened.)
+
+Either way, no walls of text:
 
 - A decision is **one line of what + one line of why**, not an essay.
 - Options go in short lists or a table, never prose comparison.
@@ -100,15 +108,20 @@ Dispatch parallel `Agent` (Explore) subagents when the surface is wide.
 
 ### 3. PRESENT the decisions ▸ CONVERSE
 
-This is the heart of the skill. Present, in one concise pass:
+This is the heart of the skill — but the **opening present is a bird's-eye checkpoint, in product
+terms**, not a technical brief. Keep it scannable; the detail arrives as the user drills in
+(§Reporting voice). Present, in one concise pass:
 
-- **The plan in brief** — the handful of changes intended, at altitude. Name the key files, not
-  line-by-line edits.
+- **What this changes, at altitude** — a line or two on what the ticket does for the user, in the
+  terms they'd experience it. Not a file-by-file plan.
 - **Open decisions, as explicit questions.** Every design or feature detail you would otherwise
   silently assume: naming, UX choices, edge-case handling, scope boundaries, which pattern to
-  follow. One line each, with a recommendation. **Surface them — never bake them in.**
+  follow. Phrase each as the choice a user would recognise where it has one; one line, with a
+  recommendation. **Surface them — never bake them in.** Hold the filepaths and symbols until the
+  decision is actually opened.
 - **Pushback surface** — anything in the spec that looks like a hole, is ambiguous, seems
-  unnecessary, or that you would do differently. Make it easy to cut or redirect scope.
+  unnecessary, or that you would do differently. One line each; make it easy to cut or redirect
+  scope.
 
 Then **converse**. Expect the user to drill into individual decisions, and expect that drilling to
 break some of your assumptions — that is the skill working, not failing. Rules for the exchange:

@@ -87,6 +87,14 @@ verify_jwt = true
 enabled = true
 verify_jwt = true
 
+[functions.request-account-deletion]
+enabled = true
+verify_jwt = true
+
+[functions.purge-accounts]
+enabled = true
+verify_jwt = true
+
 [realtime]
 enabled = true
 # Bind realtime via either IPv4 or IPv6. (default: IPv4)

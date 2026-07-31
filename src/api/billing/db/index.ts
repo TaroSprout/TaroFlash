@@ -91,8 +91,19 @@ export function changePlan(planId: string) {
   return manage<{ subscription: StripeSubscription }>({ action: 'change-plan', planId })
 }
 
+// An immediate cancellation also refunds the unused part of the period, so the
+// response carries what Stripe actually gave back. `refunded: false` is a normal
+// outcome, not an error — a trial or a $0 invoice has nothing unused to return.
+// Absent entirely for `atPeriodEnd`, where every paid day gets used.
+export type ProratedRefundOutcome =
+  | { refunded: true; amountCents: number; currency: string; creditNoteId: string }
+  | { refunded: false; reason: string }
+
 export function cancelSubscription(atPeriodEnd: boolean) {
-  return manage<{ subscription: StripeSubscription }>({ action: 'cancel', atPeriodEnd })
+  return manage<{ subscription: StripeSubscription; refund?: ProratedRefundOutcome }>({
+    action: 'cancel',
+    atPeriodEnd
+  })
 }
 
 export function resumeSubscription() {
