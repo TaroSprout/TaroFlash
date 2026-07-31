@@ -56,12 +56,16 @@ export function usePendingDeletionNotice() {
     }
 
     // While archived, every member-owned query resolved to an empty result and
-    // cached it. Those entries are all wrong now, so drop the cache wholesale
-    // the same way a fresh login does — no per-key invalidation is worth
-    // enumerating when the answer is "everything the member owns just came
-    // back". The router guard re-reads the member row on the push below and
-    // sees a live account.
-    queryCache.getEntries().forEach((entry) => queryCache.remove(entry))
+    // cached it. Those entries are all wrong now, and there's no per-key
+    // invalidation worth enumerating when the answer is "everything the member
+    // owns just came back" — so invalidate the lot.
+    //
+    // Invalidate, never remove: the member store's query is mounted at the app
+    // root and bound to its cache entry. Removing that entry leaves the store
+    // reading the old row, `pending_deletion` stays true, and the guard below
+    // bounces straight back here. Awaited so the guard reads the refetched row
+    // rather than racing it.
+    await queryCache.invalidateQueries()
 
     dismiss()
     notice.success(t('toast.success.account-restored'))
