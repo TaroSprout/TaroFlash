@@ -1,12 +1,12 @@
 ---
 name: groom
-description: Deep second pass over a single Jira ticket (project TARO) sitting in `Needs More Info`. Resolves every open design decision with the user through conversation — surfacing assumptions as explicit questions, pushing back on the spec, verifying claims against real source rather than recall — then writes the decisions and their rationale into the ticket and moves it to `Ready`/`Queued`. Owns splitting oversized tickets and recording external blockers. Technical and concise. Trigger on `/groom`, "groom this ticket", "resolve the design on X".
-allowed-tools: Read, Grep, Glob, Bash, Agent, WebFetch, WebSearch, mcp__atlassian__searchJiraIssuesUsingJql, mcp__atlassian__getJiraIssue, mcp__atlassian__createJiraIssue, mcp__atlassian__editJiraIssue, mcp__atlassian__getTransitionsForJiraIssue, mcp__atlassian__transitionJiraIssue
+description: Deep second pass over a single Notion Task Board ticket sitting in `Needs More Info`. Resolves every open design decision with the user through conversation — surfacing assumptions as explicit questions, pushing back on the spec, verifying claims against real source rather than recall — then writes the decisions and their rationale into the ticket and moves it to `Ready`/`Queued`. Owns splitting oversized tickets (wiring the `Blocked By` relation between the siblings), recording external blockers, and keeping the epic's decision log and fog current. Technical and concise. Trigger on `/groom`, "groom this ticket", "resolve the design on X".
+allowed-tools: Read, Grep, Glob, Bash, Agent, WebFetch, WebSearch, mcp__notion__notion-query-data-sources, mcp__notion__notion-fetch, mcp__notion__notion-update-page, mcp__notion__notion-create-pages, mcp__notion__notion-search
 argument-hint: '[<ID>]'
 arguments:
   - name: <ID>
-    description: Jira ticket number to groom (the `<n>` in `TARO-<n>`). Omit to take the top `Needs More Info` ticket by Priority → creation order.
-lastUpdated: 2026-07-31T00:00:00Z
+    description: Numeric ticket ID to groom. Omit to take the top `Needs More Info` ticket by Priority → ID.
+lastUpdated: 2026-07-31T12:00:00Z
 ---
 
 ## What this skill does
@@ -25,7 +25,7 @@ Needs More Info ──/groom──┬──► Ready / Queued     (decisions res
 One ticket at a time, conversationally. This is the opposite of `/triage`'s batching — depth is
 the whole point.
 
-Do **not** touch tests. Do **not** write code. This skill reads code and writes Jira.
+Do **not** touch tests. Do **not** write code. This skill reads code and writes Notion.
 
 ## The core rule
 
@@ -44,18 +44,19 @@ recorded under `## Blocked on`, never left as an unmarked menu.
 
 ## Board constants
 
-- **Project**: `TARO` (TaroFlash) — team-managed, on Atlassian Cloud. MCP server `atlassian`; every
-  tool takes a `cloudId` — use the site URL **`taroflash.atlassian.net`**.
-- `Type` (`issueTypeName`): `Bug` · `Task` · `Story` · `Spike`. **`Spike` when the deliverable is a
-  decision or recommendation rather than shipped behaviour** — retype a ticket if grooming reveals
-  that's what it really is, and drop any now-redundant `"Spike:"` title prefix.
-- The project is the source of truth for every option list, not this file —
-  `getJiraProjectIssueTypesMetadata` / `getJiraIssueTypeMetaWithFields` return the live issue types,
-  statuses, and custom-field ids. Check when something seems not to fit.
+**[`ticket-authoring.md`](../../rules/ticket-authoring.md) is the single source** for the board data
+sources, every field and its option list, the body section list, brevity rules, and voice. Read it
+before writing anything to the board. This skill declares only its lanes and its own passes.
+
 - Lanes: pulls from `Needs More Info`; lands at `Ready` / `Queued`; may park at `On Hold`.
-  Never sets `In Progress` / `In Review` / `Done` / `Blocked`.
+  Never sets `In Progress` / `Review` / `Done` / `Blocked`.
+- **Retype to `Spike`** when grooming reveals the deliverable is a decision or recommendation rather
+  than shipped behaviour — and drop the now-redundant `"Spike:"` title prefix.
 
 ## Reporting voice
+
+This governs the **chat**; ticket bodies follow
+[`ticket-authoring.md`](../../rules/ticket-authoring.md).
 
 **Open at altitude, in product terms; drop to detail on demand.** The first present — the
 checkpoint — is a bird's-eye view: what the ticket changes for the user and the decisions that need
@@ -79,14 +80,16 @@ Either way, no walls of text:
 
 ### 1. SELECT
 
-```jql
-project = TARO AND status = "Needs More Info" ORDER BY priority DESC, created ASC
+```sql
+SELECT "userDefined:ID" AS id, "Name", "Type", "Priority", "Epic", "Assignee", url
+FROM "collection://3630953c-224c-8065-8864-000bb9fe7bad"
+WHERE "Status" = 'Needs More Info'
+ORDER BY "Priority" ASC, "userDefined:ID" ASC
 ```
 
-(`priority DESC` = Highest first; `created ASC` breaks ties oldest-first.) Take the given `<ID>`
-(`TARO-<ID>`), else the top row. Fetch its full issue with `getJiraIssue` (summary + `description`
-markdown) — `/triage` already wrote a body with the open forks recorded; build on it, don't restart.
-Echo which ticket you're grooming in one line.
+Take the given `<ID>`, else the top row. Fetch its page body with `notion-fetch` — the query returns
+properties only, and `/triage` already wrote a body with the open forks recorded; build on it, don't
+restart. Echo which ticket you're grooming in one line.
 
 Leave `Status` alone. Grooming doesn't claim.
 
@@ -141,48 +144,56 @@ break some of your assumptions — that is the skill working, not failing. Rules
 Only answerable once the design has resolved:
 
 - **Split** — if the resolved shape is clearly several tickets, propose the split with a one-line
-  scope each. Groom owns this because size is only knowable after the design is settled.
+  scope each. Groom owns this because size is only knowable after the design is settled. Say which
+  siblings must **land in order** — that ordering becomes a `Blocked By` relation in §5, not prose.
 - **External blockers** — facts only the user can supply (a dashboard setting, a vendor account
   detail, a product call). Record under `## Blocked on` with what it blocks. If the ticket cannot
   land without one, it stays in `Needs More Info` and the report says why.
 - **Wrong lane** — if it turns out to need product input rather than technical decisions, or is
   premature, propose `On Hold`.
+- **Past the goal** — if resolving the design reveals this ticket (or a sibling) sits beyond its
+  epic's scope, propose `Won't Do` plus a line on the epic's `## Out of scope`. Don't resolve work
+  that shouldn't happen.
+- **Newly exposed fog** — a resolved decision routinely exposes adjacent questions. Sharp enough to
+  phrase → a new ticket. Not sharp enough → the epic's `## Not yet specified`. Never invented into
+  a ticket to look thorough.
 
 ### 5. WRITE
 
-Rewrite the ticket **`description`** (markdown) via `editJiraIssue` `fields.description` — a single
-full-rewrite is fine. Any splits become new tickets via `createJiraIssue`. Sections, in order:
+Rewrite the ticket's **page body** via `notion-update-page` — prefer `replace_content` for a full
+rewrite over a chain of `update_content` edits. Any splits become new tickets via
+`notion-create-pages`.
 
-```
-## Product description        <what the user experiences and why — product terms>
-## Design decisions           <the point of this pass — see shape below>
-## Files                      <schema / edge functions / frontend, grouped>
-## Acceptance criteria        <observable, no "or", one per resolved behaviour>
-## Implementation steps       <ordered, each naming the decision section it implements>
-## Blocked on                 <external facts, omit if none>
-## Notes                      <branch, tests owed, overlaps, risks>
-```
+Sections and their shape live in [`ticket-authoring.md`](../../rules/ticket-authoring.md); groom
+owns `## Decisions` and `## Blocked on`, and may revise `## Acceptance criteria`. It writes no
+`Files` or `Implementation steps` section — the claiming agent explores for itself, and a decision
+that only makes sense as an ordered plan belongs in `## Decisions` as the decision it is.
 
-**Design decisions shape** — one subsection per decision:
+**The resolution is the deliverable, not the investigation.** Grooming reads far more than it
+records: most of what you learned settling a decision is rediscoverable in seconds and does not
+reach the body. Prefer **bullets over numbered lists** — Notion renumbers ordered lists and
+the churn shows up as page-history noise.
 
-- **What was decided**, concretely.
-- **Why**, in a line or two.
-- **What was rejected and why** — this is what stops a future session re-proposing it.
-- **`CONFIRMED` / `ASSUMED`**, with the source for anything confirmed.
+**Wire the ordering.** Where a split named siblings that must land in sequence, set **`Blocked By`**
+on each dependent sibling — never `Blocks`, which Notion fills reciprocally on its own (see
+[`ticket-authoring.md`](../../rules/ticket-authoring.md) § Dependencies). Siblings emitted with no
+dependency are orphans — `/work batch` will pick up step 3 of 5 with no way to know step 1 must land
+first.
 
-Prefer **bullets over numbered lists** for implementation steps — a stable style choice, not a
-tooling workaround.
+**Update the epic** page: append the resolved ticket to `## Decisions so far` (gist + link, never a
+restatement), add any approved fog to `## Not yet specified`, delete the fog bullet that this
+session **graduated** into a ticket, and add any approved `## Out of scope` ruling.
 
-Then set `Status` via `getTransitionsForJiraIssue` → `transitionJiraIssue`:
+Then set `Status`:
 
 - **`Queued`** — only when _zero_ decisions are unresolved. No human is in the loop.
 - **`Ready`** — executable. A ticket still carrying an unmade design or taste call does **not**
   qualify, even labelled "decide during pairing" — that is what `Needs More Info` is for, and this
   pass exists to settle it. The only thing that may ride into `Ready` is a decision genuinely blocked
   on an external fact (§4), recorded under `## Blocked on`.
-- **Refuse to write `Queued` with `Model` empty** (or any unresolved fork). `Queued` needs a `Model`
-  — Sonnet / Opus / Fable — because `/work batch` pins each subagent to it. **`Ready` tickets carry
-  no `Model`** — leave the field empty.
+- **Refuse to write `Queued` with `Assignee` empty or `Me`** (or any unresolved fork). `Queued` needs
+  an `Assignee` — Sonnet / Opus / Fable — because `/work batch` pins each subagent to it. **`Ready`
+  tickets carry no `Assignee`** — leave the field empty.
 
 Also sweep for **copy that the change makes false** — existing `src/locales/en-us.json` strings
 asserting the old behaviour ("this cannot be undone"). List them in the body as required edits.
@@ -190,7 +201,8 @@ Behaviour changes routinely leave lying microcopy behind.
 
 ### 6. REPORT
 
-Three lines maximum: ticket → lane, decisions resolved (count), anything blocked or split. No prose.
+Three lines maximum: ticket → lane, decisions resolved (count), anything blocked, split, or parked
+on the epic. No prose.
 
 ## Quality bar
 
@@ -202,12 +214,14 @@ it without guessing. Test it by asking:
 - Is any load-bearing fact `ASSUMED` that should be `CONFIRMED`?
 - Does the body say why the rejected alternatives were rejected — or will someone re-propose them?
 - Is the prior art named, so the implementer uses the existing primitive rather than reinventing it?
+- Is anything in the body something the claiming agent would rediscover in seconds? Cut it.
+- If this was a split: can `/work` tell which sibling must land first without reading all of them?
 
 ## Guardrails
 
-- Only ever touch project `TARO` — never a backup or duplicate.
+- Only ever touch the Task Board and Epic Board named in the rule — never a backup or duplicate.
 - Never write code, never touch tests, never open a PR. This pass ends at a ticket.
-- Never set `In Progress` / `In Review` / `Done`.
+- Never set `In Progress` / `Review` / `Done`.
 - Never resolve a decision the user should make — product calls, pricing, policy, and anything
   affecting users' money or data go to them as questions.
 - Never mark a fact `CONFIRMED` without having actually read the source.

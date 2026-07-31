@@ -1,115 +1,218 @@
 # Ticket Authoring
 
-How to cut a ticket in Jira (project **TARO**). Applies whenever the user says "cut a ticket", "file
-that", "add that to the board", or when out-of-scope work is found mid-task.
+**The single source of truth for what a ticket looks like.** Board constants, body shape, brevity,
+and voice. `/triage` and `/groom` declare their own routing and lanes — never their own templates or
+voice rules. If a body rule isn't here, it doesn't exist.
 
-Cutting a ticket **captures**; it does not spec. `/triage` specs it later.
+Applies whenever the user says "cut a ticket", "file that", "add that to the board", or when
+out-of-scope work is found mid-task.
 
-## Jira connection
+## Board constants
 
-- **Project**: `TARO` (TaroFlash) — team-managed, on Atlassian Cloud.
-- **MCP server**: `atlassian` (official remote). Every tool takes a `cloudId` — use the site URL
-  **`taroflash.atlassian.net`** (UUID `44337aa0-a241-46a1-bc42-e7b4aa1d560b` also works).
-- **Create** with `createJiraIssue` (`projectKey: TARO`, `issueTypeName`, `summary`, markdown
-  `description`, `additional_fields` for priority / parent / custom fields). **Read/search** with
-  `searchJiraIssuesUsingJql` + `getJiraIssue`. **Update** with `editJiraIssue`. **Move status** with
-  `getTransitionsForJiraIssue` → `transitionJiraIssue`.
-- The key `TARO-<n>` is Jira's own auto-assigned sequence — never set it. URL:
-  `https://taroflash.atlassian.net/browse/TARO-<n>`.
+- **Task Board** data source: `collection://3630953c-224c-8065-8864-000bb9fe7bad`
+- **Epic Board** data source: `collection://2510953c-224c-80b7-9bb0-000b5384a47d`
+- **MCP server**: `notion`. **Read** with `notion-query-data-sources` (SQL over the data source) +
+  `notion-fetch` (page body — the query returns properties only). **Create** with
+  `notion-create-pages`. **Update** with `notion-update-page`.
+- `Status`: `On Hold` · `Backlog` · `Needs More Info` · `Ready` · `Queued` · `In Progress` ·
+  `Blocked` · `Review` · `Duplicate` · `Won't Do` · `Done`. Status is a plain property write — set
+  it directly, no transition step.
+- `Priority`: `⇞P0` · `↑P1` · `↓P2` · `⇟P3` (a ticket's urgency).
+- `Type`: `Bug` · `Task` · `Story` · `Spike`.
+- `Target`: `MVP` · `Fast-follow` · `Later` — which release the ticket ships in (orthogonal to
+  Priority).
+- `Assignee`: `Me` · `Fable` · `Opus` · `Sonnet` — which agent model works the ticket in
+  `/work batch`. **`Me` means hands-off** — the user works it themselves; `/triage` and `/work`
+  leave it alone. `Status = On Hold` carries the same meaning.
+- `Epic`: relation to the Epic Board (single).
+- `ID` is a **read-only auto-increment** — never set it. Tickets are referred to as `#<n>`.
 
-## Fields & vocab
-
-- **Type** (`issueTypeName`): `Bug` · `Task` · `Story` · `Spike` (epics are type `Epic`).
-- **Priority**: `Highest` · `High` · `Medium` · `Low` (a ticket's urgency; Jira defaults new issues
-  to `Medium`).
-- **Status**: `Backlog` · `Needs More Info` · `Ready` · `Queued` · `In Progress` · `In Review` ·
-  `Blocked` · `On Hold` · `Done` · `Duplicate` · `Won't Do`. New issues are born in `To Do` and must
-  be **transitioned** to the target status.
-- **Target** (`customfield_10042`): `MVP` · `Fast Follow` · `Later` — which release the ticket ships
-  in (orthogonal to Priority).
-- **Model** (`customfield_10043`): `Sonnet` · `Opus` · `Fable` — which agent model works the ticket
-  in `/work batch`. This is the routing field (it replaced the old board's Assignee); it is **not**
-  Jira's native Assignee (a person), which stays unused.
-- **Parent**: the epic a ticket belongs to (`additional_fields.parent` = epic key, e.g. `TARO-7`).
-- `On Hold` means **hands-off** — the user works it themselves. `/triage` and `/work` leave it alone.
-
-> **The project is the source of truth for these option lists, not this file.**
-> `getJiraProjectIssueTypesMetadata` / `getJiraIssueTypeMetaWithFields` return the live issue types,
-> statuses, and custom-field ids; check when a value seems not to fit, and fix this file.
+> **The board is the source of truth for these option lists, not this file.** A hardcoded vocabulary
+> here once went stale and `Spike` was invisible for months — tickets encoded it in their titles
+> instead. `notion-fetch` on the data-source URL returns the live options; check when a value seems
+> not to fit, and fix this file.
 
 ## Fields when cutting
 
-| Field                    | Value when cutting                                                                                                         |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| `Status`                 | **`Backlog`**, always — a new ticket is un-triaged by definition. Create in `To Do`, then transition to `Backlog`.         |
-| `Model`                  | **empty** — only set when a ticket reaches `Queued`                                                                        |
-| `Type` (`issueTypeName`) | `Bug` broken · `Task` defined change · `Story` user-facing capability · `Spike` the deliverable is a decision, not shipped |
-| `Priority`               | `Highest` data loss/security/broken core flow · `High` real pain · `Medium`/`Low` rest                                     |
-| `Target`                 | **empty** at cut time — a triage/groom decision, not a capture one                                                         |
-| `Parent` (epic)          | match an existing epic; if nothing fits, propose a new epic rather than force-fit                                          |
+| Field      | Value when cutting                                                                                                         |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `Status`   | **`Backlog`**, always — a new ticket is un-triaged by definition                                                           |
+| `Assignee` | **empty** — only set when a ticket reaches `Queued`                                                                        |
+| `Type`     | `Bug` broken · `Task` defined change · `Story` user-facing capability · `Spike` the deliverable is a decision, not shipped |
+| `Priority` | `⇞P0` data loss/security/broken core flow · `↑P1` real pain · `↓P2`/`⇟P3` rest                                             |
+| `Target`   | **empty** at cut time — a triage/groom decision, not a capture one                                                         |
+| `Epic`     | match the Epic Board; if nothing fits, propose a new epic rather than force-fit                                            |
 
 Never write `Ready` or `Queued` — those assert an agent can execute the ticket, which is never true
-at capture time. Never write `On Hold` on a fresh ticket — that's the user's own hands-off marker.
+at capture time. Never write `On Hold` or `Assignee = Me` on a fresh ticket — that's the user's own
+hands-off marker.
 
 ## Priority vs Target — two axes, don't collapse them
 
 `Priority` answers **in what order** (urgency/sequencing). `Target` answers **which release**
-(scope). They are orthogonal — a pre-launch `MVP` ticket still ranges `Highest`→`Low`, so all four
+(scope). They are orthogonal — a pre-launch `MVP` ticket still ranges `P0`→`P3`, so all four
 priority tiers stay meaningful inside the launch set instead of two being spent marking the cut-line.
 
 - `MVP` — ships before launch.
-- `Fast Follow` — committed to the first post-launch cycle. Has a home; gets swept.
+- `Fast-follow` — committed to the first post-launch cycle. Has a home; gets swept.
 - `Later` — genuinely deferred, allowed to be quiet.
 
-A ticket stays under its epic regardless of `Target` — the epic is the resurfacing anchor, not a
-graveyard. `Fast Follow` items surface via a Jira board/filter view (`Target = "Fast Follow"`, all
-epics, sorted by priority) for the post-launch sweep. Leave `Target` empty at capture; `/triage` and
-`/groom` set it.
+A ticket stays in its epic regardless of `Target` — the epic is the resurfacing anchor, not a
+graveyard. `Fast-follow` items surface in the **Fast-follow** board view (all epics, sorted by
+priority) for the post-launch sweep. Leave `Target` empty at capture; `/triage` and `/groom` set it.
 
 ## Body
 
-Pass the body as the issue **`description`** with `contentFormat: markdown` — Markdown headings,
-lists, and checkboxes render natively in Jira; no ADF needed.
+The body is the Notion **page content**. Prefer `replace_content` for a full rewrite over a chain of
+`update_content` edits. Use **bullets, not numbered lists**, for anything ordered — Notion renumbers
+ordered lists and the churn shows up as noise in the page history.
 
-**Bug**
+**One section list. Each stage fills more of it — no stage invents sections.**
 
-```
-## Product description
-<1–3 lines: what the user sees and why it's wrong, product terms>
-## Repro
-1. …
-## Expected / Actual
-- Expected: … / Actual: …
-## Technical notes
-- Area: <path(s)> — <root cause if known>
-- Prior art: <the primitive/utility/rule already governing this surface>
-- Found during: <what was being worked on>
-```
+| Section                  | Owner  | Notes                                            |
+| ------------------------ | ------ | ------------------------------------------------ |
+| `## Product description` | cut    | 1–3 lines, product terms                         |
+| `## Repro`               | cut    | bugs only                                        |
+| `## Acceptance criteria` | triage | **never at cut time** — see below                |
+| `## Decisions`           | triage | seeds prior art + rejected paths; groom resolves |
+| `## Blocked on`          | groom  | external facts only; omit if none                |
 
-**Task / Story** — same, minus Repro and Expected/Actual.
+A ticket carries only the sections that have content. Length tracks how much of the work is
+**decision** rather than typing — a mechanical change gets six lines, a cross-cutting refactor earns
+its ownership table and execution order.
+
+### `## Acceptance criteria` — only what can fail independently
+
+An AC earns its place when it can fail on its own. "The menu shows the new option" cannot fail
+separately from the feature existing — that's the Product description restated as a checkbox. "Never
+reviewed cards sort last" and "survives infinite-scroll pagination" can fail on their own; those are
+the ACs.
+
+No `or`, `either`, `e.g.`, or parenthetical alternatives — a hedge in an AC is an unresolved
+decision, and it routes to `Needs More Info`.
+
+**Not written at cut time.** Writing them before investigation invites inventing scope nobody agreed
+to. Exception: acceptance the user dictates, recorded verbatim.
+
+### `## Decisions` — the only technical section
+
+There is no "Technical notes" section. Investigation findings are not recorded; **decisions are.**
+The claiming agent does its own exploration.
+
+The test for every line:
+
+> **Will the claiming agent rediscover this on its own?**
+
+| Cut — rediscovered in seconds     | Keep — won't be found, or found too late                       |
+| --------------------------------- | -------------------------------------------------------------- |
+| Which files to edit, line numbers | **Prior art** — the primitive/util/rule already governing this |
+| How the current code works        | The path deliberately **rejected**, and why                    |
+| The plumbing trace                | **Negative facts** — "no join change", "single UI surface"     |
+| Framework/API mechanics           | Confirmed root cause of a bug                                  |
+
+Prior art is the highest-value line in any ticket. An agent finds the file it needs in seconds; it
+never finds "`ui-tappable` already encodes press styling" unless pointed, because you can't grep for
+a thing you don't know exists. Negative facts are second — they delete exploration that would
+otherwise happen.
+
+Name a filepath when it's the _answer_ (the primitive to use, the seam to extend), not when it's
+merely _where the work happens_. Never cite line numbers — they go stale and grep is faster.
+
+Groom-resolved decisions carry: **what** was decided · **why**, in a line · **what was rejected and
+why** (this is what stops a future session re-proposing it) · `CONFIRMED (verified against
+
+<source>)` or `ASSUMED`. Anything touching money, auth, or a system boundary must be `CONFIRMED`.
+
+### Never restate a rule that auto-loads
+
+`.claude/rules/*` load by path; CLAUDE.md is always on. Writing "use `data-testid`", "theming
+tokens", "declarative schema then `db diff`", or "do not touch tests" into a body is pure noise.
+
+Name a rule file **only** when the ticket departs from it, or when the ticket's area wouldn't
+trigger it.
 
 ## Voice
 
-- **Product description is product terms** — screens, flows, what the user experiences. No filepaths
-  or symbols; those live in Technical notes.
+- **Product description is product terms** — screens, flows, what the user experiences. No
+  filepaths, symbols, function names, or SQL. Those live in `## Decisions`.
+- **Point, don't narrate.** `Reuse: UiDropdownButton, UiRadio; mirror grid-item.vue` — not a
+  parenthetical explaining what each one is for. The implementer opens the file.
+- **Say it once.** If Product description already carries a fact, no other section repeats it.
 - **Plain, not flowery.** Short microcopy stays plain — avoid AI-flavoured flourishes and bare
   keyword lists alike.
 - **Record only what you know.** A confirmed root cause is stated; a guess is labelled
-  `⚠️ Hunch-level — not code-confirmed`. `/triage` trusts what's written.
-- **No acceptance criteria** — writing them invites inventing scope nobody agreed to. Exception:
-  acceptance the user dictates, recorded verbatim.
-- **Never resolve a taste decision.** Which icon, what an animation feels like, what the copy says,
-  how a layout should look — record as open, never pick.
-- **Prior art is the highest-value line.** The primitive that already governs the surface is what
-  stops an implementer reinventing it.
+  `⚠️ Hunch-level — not code-confirmed`.
+- **Never resolve a taste decision at cut time.** Which icon, what an animation feels like, what the
+  copy says, how a layout should look — record as open. `/groom` settles them with the user.
 - New user-facing text → note that locale keys are needed (`src/locales/en-us.json`), see
   [`i18n`](./i18n.md).
 
-## New epics
+## Epics
 
-Propose first, never create silently. Create with `createJiraIssue` (`issueTypeName: "Epic"`,
-`summary` = the epic name); optionally set an issue colour via `additional_fields.customfield_10017`.
-Give a one-line scope, not a full spec — an epic is a resurfacing anchor.
+An epic is the resurfacing anchor for an effort, and the only place effort-level state lives. These
+sections live in the epic's Notion **page body**.
+
+```markdown
+<one-line scope>
+
+## Decisions so far
+
+<!-- one line per resolved ticket: gist + link. The index — detail lives in the ticket. -->
+
+- [#<n> <ticket name>](url) — <one-line gist of what was decided>
+
+## Not yet specified
+
+<!-- in-scope fog: questions you can tell are coming but can't phrase sharply yet -->
+
+## Out of scope
+
+<!-- ruled beyond this epic's goal; never graduates back -->
+```
+
+**`## Decisions so far`** is an index, never a store — gist and link, never restate. `/groom`
+appends a line when it lands a ticket that resolved something an adjacent ticket will need.
+
+**`## Not yet specified`** — one bullet per fog patch, deliberately **coarser than a ticket**.
+Question-shaped, not task-shaped ("moderation of board posts", not "add a hide button"). Say why
+it's still fog where you know — that's the half that tells the next session what would sharpen it.
+
+- **Ticket when** you can state the question precisely now — even if blocked, even if unanswerable.
+- **Fog when** you can't phrase it that sharply. Don't pre-slice fog into ticket-sized pieces; one
+  patch may graduate into three tickets, or none.
+- **Graduating a patch deletes its bullet.** It now lives in exactly one place — its ticket. Skip
+  this and the section becomes a stale second index that contradicts the board.
+- Excludes what's already ticketed, already decided, or out of scope.
+
+**`## Out of scope`** — work consciously ruled past this epic's goal. Scope, not sharpness, lands it
+here. One line + why. If an existing ticket turns out to sit here, move it to `Won't Do` and leave
+the line.
+
+### New epics
+
+Propose first, never create silently. Give a one-line scope, not a full spec. Set the icon to a
+Notion built-in via its hosted SVG — `https://www.notion.so/icons/<name>_<color>.svg` (colours:
+`gray|brown|orange|yellow|green|blue|purple|pink|red`). Not an emoji. The bare
+`icons/<name>_<color>` path is accepted by the API but **renders blank** — always the full `.svg`
+URL.
+
+## Dependencies
+
+When a ticket must land before another can start — most often after `/groom` splits one ticket into
+several — record it on the Task Board's **`Blocked By`** self-relation, not as a line in the body. A
+relation renders in Notion as a linked row, so what's actually takeable is visible without opening a
+ticket.
+
+`Blocked By` and **`Blocks`** are the two halves of one reciprocal pair: setting `Blocked By` on the
+dependent ticket fills `Blocks` on the blocker automatically. **Write only `Blocked By`** — setting
+both by hand duplicates the edge.
+
+Each column holds a **JSON array of page URLs**, not statuses, so judging takeability is two steps:
+read the `Blocked By` urls, then query the Task Board for those rows' `Status`. A blocker is cleared
+when its `Status` is in the **`complete` group** — `Done`, `Won't Do`, or `Duplicate`.
+
+A split that emits siblings with no dependency and no `## Decisions so far` entry on the epic
+produces orphans: `/work batch` picks up step 3 of 5 with no way to know step 1 must land first.
 
 ## Batch work
 
