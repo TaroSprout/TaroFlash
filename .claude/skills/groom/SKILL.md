@@ -1,11 +1,11 @@
 ---
 name: groom
-description: Deep second pass over a single Jira ticket (project TARO) sitting in `Needs More Info`. Resolves every open design decision with the user through conversation — surfacing assumptions as explicit questions, pushing back on the spec, verifying claims against real source rather than recall — then writes the decisions and their rationale into the ticket and moves it to `Ready`/`Queued`. Owns splitting oversized tickets (wiring `Blocks` links between the siblings), recording external blockers, and keeping the epic's decision log and fog current. Technical and concise. Trigger on `/groom`, "groom this ticket", "resolve the design on X".
-allowed-tools: Read, Grep, Glob, Bash, Agent, WebFetch, WebSearch, mcp__atlassian__searchJiraIssuesUsingJql, mcp__atlassian__getJiraIssue, mcp__atlassian__createJiraIssue, mcp__atlassian__editJiraIssue, mcp__atlassian__getTransitionsForJiraIssue, mcp__atlassian__transitionJiraIssue, mcp__atlassian__createIssueLink, mcp__atlassian__getIssueLinkTypes
+description: Deep second pass over a single Notion Task Board ticket sitting in `Needs More Info`. Resolves every open design decision with the user through conversation — surfacing assumptions as explicit questions, pushing back on the spec, verifying claims against real source rather than recall — then writes the decisions and their rationale into the ticket and moves it to `Ready`/`Queued`. Owns splitting oversized tickets (wiring the `Blocked by` relation between the siblings), recording external blockers, and keeping the epic's decision log and fog current. Technical and concise. Trigger on `/groom`, "groom this ticket", "resolve the design on X".
+allowed-tools: Read, Grep, Glob, Bash, Agent, WebFetch, WebSearch, mcp__notion__notion-query-data-sources, mcp__notion__notion-fetch, mcp__notion__notion-update-page, mcp__notion__notion-create-pages, mcp__notion__notion-search
 argument-hint: '[<ID>]'
 arguments:
   - name: <ID>
-    description: Jira ticket number to groom (the `<n>` in `TARO-<n>`). Omit to take the top `Needs More Info` ticket by Priority → creation order.
+    description: Numeric ticket ID to groom. Omit to take the top `Needs More Info` ticket by Priority → ID.
 lastUpdated: 2026-07-31T12:00:00Z
 ---
 
@@ -25,7 +25,7 @@ Needs More Info ──/groom──┬──► Ready / Queued     (decisions res
 One ticket at a time, conversationally. This is the opposite of `/triage`'s batching — depth is
 the whole point.
 
-Do **not** touch tests. Do **not** write code. This skill reads code and writes Jira.
+Do **not** touch tests. Do **not** write code. This skill reads code and writes Notion.
 
 ## The core rule
 
@@ -44,12 +44,12 @@ recorded under `## Blocked on`, never left as an unmarked menu.
 
 ## Board constants
 
-**[`ticket-authoring.md`](../../rules/ticket-authoring.md) is the single source** for the Jira
-connection, every field and its option list, the body section list, brevity rules, and voice. Read
-it before writing anything to the board. This skill declares only its lanes and its own passes.
+**[`ticket-authoring.md`](../../rules/ticket-authoring.md) is the single source** for the board data
+sources, every field and its option list, the body section list, brevity rules, and voice. Read it
+before writing anything to the board. This skill declares only its lanes and its own passes.
 
 - Lanes: pulls from `Needs More Info`; lands at `Ready` / `Queued`; may park at `On Hold`.
-  Never sets `In Progress` / `In Review` / `Done` / `Blocked`.
+  Never sets `In Progress` / `Review` / `Done` / `Blocked`.
 - **Retype to `Spike`** when grooming reveals the deliverable is a decision or recommendation rather
   than shipped behaviour — and drop the now-redundant `"Spike:"` title prefix.
 
@@ -80,14 +80,16 @@ Either way, no walls of text:
 
 ### 1. SELECT
 
-```jql
-project = TARO AND status = "Needs More Info" ORDER BY priority DESC, created ASC
+```sql
+SELECT "userDefined:ID" AS id, "Name", "Type", "Priority", "Epic", "Assignee", url
+FROM "collection://3630953c-224c-8065-8864-000bb9fe7bad"
+WHERE "Status" = 'Needs More Info'
+ORDER BY "Priority" ASC, "userDefined:ID" ASC
 ```
 
-(`priority DESC` = Highest first; `created ASC` breaks ties oldest-first.) Take the given `<ID>`
-(`TARO-<ID>`), else the top row. Fetch its full issue with `getJiraIssue` (summary + `description`
-markdown) — `/triage` already wrote a body with the open forks recorded; build on it, don't restart.
-Echo which ticket you're grooming in one line.
+Take the given `<ID>`, else the top row. Fetch its page body with `notion-fetch` — the query returns
+properties only, and `/triage` already wrote a body with the open forks recorded; build on it, don't
+restart. Echo which ticket you're grooming in one line.
 
 Leave `Status` alone. Grooming doesn't claim.
 
@@ -143,7 +145,7 @@ Only answerable once the design has resolved:
 
 - **Split** — if the resolved shape is clearly several tickets, propose the split with a one-line
   scope each. Groom owns this because size is only knowable after the design is settled. Say which
-  siblings must **land in order** — that ordering becomes `Blocks` links in §5, not prose.
+  siblings must **land in order** — that ordering becomes a `Blocked by` relation in §5, not prose.
 - **External blockers** — facts only the user can supply (a dashboard setting, a vendor account
   detail, a product call). Record under `## Blocked on` with what it blocks. If the ticket cannot
   land without one, it stays in `Needs More Info` and the report says why.
@@ -158,8 +160,9 @@ Only answerable once the design has resolved:
 
 ### 5. WRITE
 
-Rewrite the ticket **`description`** (markdown) via `editJiraIssue` `fields.description` — a single
-full-rewrite is fine. Any splits become new tickets via `createJiraIssue`.
+Rewrite the ticket's **page body** via `notion-update-page` — prefer `replace_content` for a full
+rewrite over a chain of `update_content` edits. Any splits become new tickets via
+`notion-create-pages`.
 
 Sections and their shape live in [`ticket-authoring.md`](../../rules/ticket-authoring.md); groom
 owns `## Decisions` and `## Blocked on`, and may revise `## Acceptance criteria`. It writes no
@@ -168,28 +171,29 @@ that only makes sense as an ordered plan belongs in `## Decisions` as the decisi
 
 **The resolution is the deliverable, not the investigation.** Grooming reads far more than it
 records: most of what you learned settling a decision is rediscoverable in seconds and does not
-reach the body. Prefer **bullets over numbered lists** — a stable style choice, not a tooling
-workaround.
+reach the body. Prefer **bullets over numbered lists** — Notion renumbers ordered lists and
+the churn shows up as page-history noise.
 
-**Wire the ordering.** Where a split named siblings that must land in sequence, add native `Blocks`
-links (`createIssueLink`, `inwardIssue` = blocker, `outwardIssue` = blocked). Siblings emitted with
-no edges are orphans — `/work batch` will pick up step 3 of 5 with no way to know step 1 must land
-first.
+**Wire the ordering.** Where a split named siblings that must land in sequence, set the `Blocked by`
+relation on each dependent sibling (see [`ticket-authoring.md`](../../rules/ticket-authoring.md) § Dependencies — check the property
+exists before relying on it, and fall back to a `Blocked by: #<n>` body line if it doesn't).
+Siblings emitted with no dependency are orphans — `/work batch` will pick up step 3 of 5 with no way
+to know step 1 must land first.
 
-**Update the epic** via `editJiraIssue`: append the resolved ticket to `## Decisions so far` (gist +
-link, never a restatement), add any approved fog to `## Not yet specified`, delete the fog bullet
-that this session **graduated** into a ticket, and add any approved `## Out of scope` ruling.
+**Update the epic** page: append the resolved ticket to `## Decisions so far` (gist + link, never a
+restatement), add any approved fog to `## Not yet specified`, delete the fog bullet that this
+session **graduated** into a ticket, and add any approved `## Out of scope` ruling.
 
-Then set `Status` via `getTransitionsForJiraIssue` → `transitionJiraIssue`:
+Then set `Status`:
 
 - **`Queued`** — only when _zero_ decisions are unresolved. No human is in the loop.
 - **`Ready`** — executable. A ticket still carrying an unmade design or taste call does **not**
   qualify, even labelled "decide during pairing" — that is what `Needs More Info` is for, and this
   pass exists to settle it. The only thing that may ride into `Ready` is a decision genuinely blocked
   on an external fact (§4), recorded under `## Blocked on`.
-- **Refuse to write `Queued` with `Model` empty** (or any unresolved fork). `Queued` needs a `Model`
-  — Sonnet / Opus / Fable — because `/work batch` pins each subagent to it. **`Ready` tickets carry
-  no `Model`** — leave the field empty.
+- **Refuse to write `Queued` with `Assignee` empty or `Me`** (or any unresolved fork). `Queued` needs
+  an `Assignee` — Sonnet / Opus / Fable — because `/work batch` pins each subagent to it. **`Ready`
+  tickets carry no `Assignee`** — leave the field empty.
 
 Also sweep for **copy that the change makes false** — existing `src/locales/en-us.json` strings
 asserting the old behaviour ("this cannot be undone"). List them in the body as required edits.
@@ -215,9 +219,9 @@ it without guessing. Test it by asking:
 
 ## Guardrails
 
-- Only ever touch project `TARO` — never a backup or duplicate.
+- Only ever touch the Task Board and Epic Board named in the rule — never a backup or duplicate.
 - Never write code, never touch tests, never open a PR. This pass ends at a ticket.
-- Never set `In Progress` / `In Review` / `Done`.
+- Never set `In Progress` / `Review` / `Done`.
 - Never resolve a decision the user should make — product calls, pricing, policy, and anything
   affecting users' money or data go to them as questions.
 - Never mark a fact `CONFIRMED` without having actually read the source.

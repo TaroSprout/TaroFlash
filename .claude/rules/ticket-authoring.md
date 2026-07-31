@@ -1,76 +1,85 @@
 # Ticket Authoring
 
-**The single source of truth for what a TARO ticket looks like.** Board constants, body shape,
-brevity, and voice. `/triage` and `/groom` declare their own routing and lanes — never their own
-templates or voice rules. If a body rule isn't here, it doesn't exist.
+**The single source of truth for what a ticket looks like.** Board constants, body shape, brevity,
+and voice. `/triage` and `/groom` declare their own routing and lanes — never their own templates or
+voice rules. If a body rule isn't here, it doesn't exist.
 
 Applies whenever the user says "cut a ticket", "file that", "add that to the board", or when
 out-of-scope work is found mid-task.
 
-## Jira connection
+## Board constants
 
-- **Project**: `TARO` (TaroFlash) — team-managed, on Atlassian Cloud.
-- **MCP server**: `atlassian` (official remote). Every tool takes a `cloudId` — use the site URL
-  **`taroflash.atlassian.net`** (UUID `44337aa0-a241-46a1-bc42-e7b4aa1d560b` also works).
-- **Create** with `createJiraIssue` (`projectKey: TARO`, `issueTypeName`, `summary`, markdown
-  `description`, `additional_fields` for priority / parent / custom fields). **Read/search** with
-  `searchJiraIssuesUsingJql` + `getJiraIssue`. **Update** with `editJiraIssue`. **Move status** with
-  `getTransitionsForJiraIssue` → `transitionJiraIssue`. **Link** with `createIssueLink`.
-- The key `TARO-<n>` is Jira's own auto-assigned sequence — never set it. URL:
-  `https://taroflash.atlassian.net/browse/TARO-<n>`.
+- **Task Board** data source: `collection://3630953c-224c-8065-8864-000bb9fe7bad`
+- **Epic Board** data source: `collection://2510953c-224c-80b7-9bb0-000b5384a47d`
+- **MCP server**: `notion`. **Read** with `notion-query-data-sources` (SQL over the data source) +
+  `notion-fetch` (page body — the query returns properties only). **Create** with
+  `notion-create-pages`. **Update** with `notion-update-page`.
+- `Status`: `On Hold` · `Backlog` · `Needs More Info` · `Ready` · `Queued` · `In Progress` ·
+  `Blocked` · `Review` · `Duplicate` · `Won't Do` · `Done`. Status is a plain property write — set
+  it directly, no transition step.
+- `Priority`: `⇞P0` · `↑P1` · `↓P2` · `⇟P3` (a ticket's urgency).
+- `Type`: `Bug` · `Task` · `Story` · `Spike`.
+- `Target`: `MVP` · `Fast-follow` · `Later` — which release the ticket ships in (orthogonal to
+  Priority).
+- `Assignee`: `Me` · `Fable` · `Opus` · `Sonnet` — which agent model works the ticket in
+  `/work batch`. **`Me` means hands-off** — the user works it themselves; `/triage` and `/work`
+  leave it alone. `Status = On Hold` carries the same meaning.
+- `Epic`: relation to the Epic Board (single).
+- `ID` is a **read-only auto-increment** — never set it. Tickets are referred to as `#<n>`.
 
-## Fields & vocab
-
-- **Type** (`issueTypeName`): `Bug` · `Task` · `Story` · `Spike` (epics are type `Epic`).
-- **Priority**: `Highest` · `High` · `Medium` · `Low` (urgency; Jira defaults new issues to
-  `Medium`).
-- **Status**: `Backlog` · `Needs More Info` · `Ready` · `Queued` · `In Progress` · `In Review` ·
-  `Blocked` · `On Hold` · `Done` · `Duplicate` · `Won't Do`. New issues are born in `To Do` and must
-  be **transitioned** to the target status.
-- **Target** (`customfield_10042`): `MVP` · `Fast Follow` · `Later` — which release the ticket ships
-  in (orthogonal to Priority).
-- **Model** (`customfield_10043`): `Sonnet` · `Opus` · `Fable` — which agent model works the ticket
-  in `/work batch`. This is the routing field (it replaced the old board's Assignee); it is **not**
-  Jira's native Assignee (a person), which stays unused.
-- **Parent**: the epic a ticket belongs to (`additional_fields.parent` = epic key, e.g. `TARO-7`).
-- `On Hold` means **hands-off** — the user works it themselves. `/triage` and `/work` leave it alone.
-
-> **The project is the source of truth for these option lists, not this file.**
-> `getJiraProjectIssueTypesMetadata` / `getJiraIssueTypeMetaWithFields` return the live issue types,
-> statuses, and custom-field ids; check when a value seems not to fit, and fix this file.
+> **The board is the source of truth for these option lists, not this file.** A hardcoded vocabulary
+> here once went stale and `Spike` was invisible for months — tickets encoded it in their titles
+> instead. `notion-fetch` on the data-source URL returns the live options; check when a value seems
+> not to fit, and fix this file.
 
 ## Fields when cutting
 
-| Field                    | Value when cutting                                                                                                         |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| `Status`                 | **`Backlog`**, always — a new ticket is un-triaged by definition. Create in `To Do`, then transition to `Backlog`.         |
-| `Model`                  | **empty** — only set when a ticket reaches `Queued`                                                                        |
-| `Type` (`issueTypeName`) | `Bug` broken · `Task` defined change · `Story` user-facing capability · `Spike` the deliverable is a decision, not shipped |
-| `Priority`               | `Highest` data loss/security/broken core flow · `High` real pain · `Medium`/`Low` rest                                     |
-| `Target`                 | **empty** at cut time — a triage/groom decision, not a capture one                                                         |
-| `Parent` (epic)          | match an existing epic; if nothing fits, propose a new epic rather than force-fit                                          |
+| Field      | Value when cutting                                                                                                         |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `Status`   | **`Backlog`**, always — a new ticket is un-triaged by definition                                                           |
+| `Assignee` | **empty** — only set when a ticket reaches `Queued`                                                                        |
+| `Type`     | `Bug` broken · `Task` defined change · `Story` user-facing capability · `Spike` the deliverable is a decision, not shipped |
+| `Priority` | `⇞P0` data loss/security/broken core flow · `↑P1` real pain · `↓P2`/`⇟P3` rest                                             |
+| `Target`   | **empty** at cut time — a triage/groom decision, not a capture one                                                         |
+| `Epic`     | match the Epic Board; if nothing fits, propose a new epic rather than force-fit                                            |
 
 Never write `Ready` or `Queued` — those assert an agent can execute the ticket, which is never true
-at capture time. Never write `On Hold` on a fresh ticket — that's the user's own hands-off marker.
+at capture time. Never write `On Hold` or `Assignee = Me` on a fresh ticket — that's the user's own
+hands-off marker.
+
+## Priority vs Target — two axes, don't collapse them
+
+`Priority` answers **in what order** (urgency/sequencing). `Target` answers **which release**
+(scope). They are orthogonal — a pre-launch `MVP` ticket still ranges `P0`→`P3`, so all four
+priority tiers stay meaningful inside the launch set instead of two being spent marking the cut-line.
+
+- `MVP` — ships before launch.
+- `Fast-follow` — committed to the first post-launch cycle. Has a home; gets swept.
+- `Later` — genuinely deferred, allowed to be quiet.
+
+A ticket stays in its epic regardless of `Target` — the epic is the resurfacing anchor, not a
+graveyard. `Fast-follow` items surface in the **Fast-follow** board view (all epics, sorted by
+priority) for the post-launch sweep. Leave `Target` empty at capture; `/triage` and `/groom` set it.
 
 ## Body
 
-Pass the body as the issue **`description`** with `contentFormat: markdown` — Markdown headings,
-lists, and checkboxes render natively in Jira; no ADF needed.
+The body is the Notion **page content**. Prefer `replace_content` for a full rewrite over a chain of
+`update_content` edits. Use **bullets, not numbered lists**, for anything ordered — Notion renumbers
+ordered lists and the churn shows up as noise in the page history.
 
 **One section list. Each stage fills more of it — no stage invents sections.**
 
 | Section                  | Owner  | Notes                                            |
 | ------------------------ | ------ | ------------------------------------------------ |
 | `## Product description` | cut    | 1–3 lines, product terms                         |
-| `## Repro`               | cut    | bugs only; numbered steps                        |
+| `## Repro`               | cut    | bugs only                                        |
 | `## Acceptance criteria` | triage | **never at cut time** — see below                |
 | `## Decisions`           | triage | seeds prior art + rejected paths; groom resolves |
 | `## Blocked on`          | groom  | external facts only; omit if none                |
 
 A ticket carries only the sections that have content. Length tracks how much of the work is
-**decision** rather than typing — a mechanical change gets six lines, a cross-cutting refactor
-earns its ownership table and execution order.
+**decision** rather than typing — a mechanical change gets six lines, a cross-cutting refactor earns
+its ownership table and execution order.
 
 ### `## Acceptance criteria` — only what can fail independently
 
@@ -140,7 +149,8 @@ trigger it.
 
 ## Epics
 
-An epic is the resurfacing anchor for an effort, and the only place effort-level state lives.
+An epic is the resurfacing anchor for an effort, and the only place effort-level state lives. These
+sections live in the epic's Notion **page body**.
 
 ```markdown
 <one-line scope>
@@ -149,7 +159,7 @@ An epic is the resurfacing anchor for an effort, and the only place effort-level
 
 <!-- one line per resolved ticket: gist + link. The index — detail lives in the ticket. -->
 
-- [<ticket summary>](url) — <one-line gist of what was decided>
+- [#<n> <ticket name>](url) — <one-line gist of what was decided>
 
 ## Not yet specified
 
@@ -175,29 +185,31 @@ it's still fog where you know — that's the half that tells the next session wh
 - Excludes what's already ticketed, already decided, or out of scope.
 
 **`## Out of scope`** — work consciously ruled past this epic's goal. Scope, not sharpness, lands it
-here. One line + why. If an existing ticket turns out to sit here, close it (`Won't Do`) and leave
+here. One line + why. If an existing ticket turns out to sit here, move it to `Won't Do` and leave
 the line.
 
 ### New epics
 
-Propose first, never create silently. Create with `createJiraIssue` (`issueTypeName: "Epic"`,
-`summary` = the epic name); optionally set an issue colour via `additional_fields.customfield_10017`.
-Give a one-line scope, not a full spec.
+Propose first, never create silently. Give a one-line scope, not a full spec. Set the icon to a
+Notion built-in via its hosted SVG — `https://www.notion.so/icons/<name>_<color>.svg` (colours:
+`gray|brown|orange|yellow|green|blue|purple|pink|red`). Not an emoji. The bare
+`icons/<name>_<color>` path is accepted by the API but **renders blank** — always the full `.svg`
+URL.
 
 ## Dependencies
 
 When a ticket must land before another can start — most often after `/groom` splits one ticket into
-several — wire it with Jira's native **`Blocks`** link, not a line in the body:
+several — record it on the **`Blocked by`** self-relation on the Task Board, not as a line in the
+body. A relation renders in Notion as a linked row, so what's actually takeable is visible without
+opening a ticket.
 
-```
-createIssueLink  type: "Blocks"  inwardIssue: <blocker>  outwardIssue: <blocked>
-```
+> ⚠️ **The `Blocked by` relation may not exist on the board yet.** Notion has no native issue-link
+> type, so this is a self-relation someone must add to the Task Board by hand. Check with
+> `notion-fetch` on the data-source URL before relying on it; if it's absent, say so and fall back to
+> a `Blocked by: #<n>, #<n>` line at the top of the body until it's created.
 
-(`inward` = blocker, `outward` = blocked; reads "blocked _is blocked by_ blocker".) Native links
-render in the Jira UI, so what's actually takeable is visible without opening a ticket.
-
-A split that emits siblings with no edges and no `## Decisions so far` entry on the epic produces
-orphans: `/work batch` picks up step 3 of 5 with no way to know step 1 must land first.
+A split that emits siblings with no dependency and no `## Decisions so far` entry on the epic
+produces orphans: `/work batch` picks up step 3 of 5 with no way to know step 1 must land first.
 
 ## Batch work
 
