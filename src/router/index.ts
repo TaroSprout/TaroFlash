@@ -3,7 +3,7 @@ import { useSessionStore } from '@/stores/session'
 import { useMemberStore } from '@/stores/member'
 import { prefetchMemberDecks } from '@/api/decks'
 import { prefetchMemberById } from '@/api/members'
-import { usePendingDeletionModal } from '@/composables/member/pending-deletion-modal'
+import { usePendingDeletionNotice } from '@/composables/member/pending-deletion-notice'
 import AuthenticatedView from '@/views/app-shell/authenticated.vue'
 
 const WelcomeView = () => import('@/views/welcome/index.vue')
@@ -79,15 +79,15 @@ const router = createRouter({
         // so a bookmarked deck or a shared lesson link lands on the restore
         // dialog too.
         //
-        // The dialog is opened here rather than from welcome's own mount: when
+        // The panel is opened here rather than from welcome's own mount: when
         // the member signs in from welcome, this divert resolves to the route
         // they're already on, so welcome never remounts and an onMounted
         // trigger would never fire. `open()` collapses repeat calls onto one
-        // dialog, which is what makes calling it on every divert safe.
+        // panel, which is what makes calling it on every divert safe.
         const member = await resolveMember()
 
         if (member.pending_deletion) {
-          usePendingDeletionModal().open()
+          usePendingDeletionNotice().open()
           return { name: 'welcome' }
         }
 
