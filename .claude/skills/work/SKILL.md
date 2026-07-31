@@ -1,20 +1,20 @@
 ---
 name: work
-description: Execute groomed Notion Task Board tickets. Two modes. `/work pair [ID]` works one Ready ticket interactively in this session — backend teaching on, you approve every change; tests stay untouched per the CLAUDE.md golden rule — then opens a PR. `/work batch [--count N] [--p0…]` pulls up to N Queued tickets assigned to a model (Fable/Opus/Sonnet) and works them in parallel — one worktree-isolated subagent per ticket, each pinned to that ticket's model, each writing its own tests and cleaning up its worktree when done. Subagents report back to this session (the orchestrator), which organizes the branches into non-conflicting, CI-passing PRs. Both claim the ticket to In Progress first, open a PR (Review), then iterate on your review feedback via a main-workspace subagent that checks out the PR branch — never merge. The golden "no tests" rule is suspended only in batch mode; pair mode leaves tests alone. Trigger on `/work`, "work the board", "work a ticket".
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, Skill, EnterWorktree, ExitWorktree, mcp__notion__notion-query-data-sources, mcp__notion__notion-fetch, mcp__notion__notion-update-page
+description: Execute groomed Jira tickets (project TARO). Two modes. `/work pair [ID]` works one Ready ticket interactively in this session — backend teaching on, you approve every change; tests stay untouched per the CLAUDE.md golden rule — then opens a PR. `/work batch [--count N] [--p0…]` pulls up to N Queued tickets routed to a model (Fable/Opus/Sonnet) and works them in parallel — one worktree-isolated subagent per ticket, each pinned to that ticket's model, each writing its own tests and cleaning up its worktree when done. Subagents report back to this session (the orchestrator), which organizes the branches into non-conflicting, CI-passing PRs. Both claim the ticket to In Progress first, open a PR (In Review), then iterate on your review feedback via a main-workspace subagent that checks out the PR branch — never merge. The golden "no tests" rule is suspended only in batch mode; pair mode leaves tests alone. Trigger on `/work`, "work the board", "work a ticket".
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, Skill, EnterWorktree, ExitWorktree, mcp__atlassian__searchJiraIssuesUsingJql, mcp__atlassian__getJiraIssue, mcp__atlassian__editJiraIssue, mcp__atlassian__getTransitionsForJiraIssue, mcp__atlassian__transitionJiraIssue
 argument-hint: 'pair [<ID>] | batch [--count N] [--p0|--p1|--p2|--p3]'
 arguments:
   - name: pair
-    description: Interactive mode — work one Ready ticket with you in this session. Explores the code, then pauses for a bird's-eye plan review before implementing. Optional ID; else top Priority→ID.
+    description: Interactive mode — work one Ready ticket with you in this session. Explores the code, then pauses for a bird's-eye plan review before implementing. Optional ID; else top by priority (oldest first).
   - name: batch
-    description: Autonomous mode — work Queued tickets assigned to a model, sequentially, each ending in a PR.
+    description: Autonomous mode — work Queued tickets routed to a model, sequentially, each ending in a PR.
   - name: --count N
     description: batch only — how many tickets to work in parallel this run, one worktree-isolated subagent each (default 1).
   - name: --p0|--p1|--p2|--p3
     description: batch only — restrict to this priority.
   - name: <ID>
     description: pair only — the specific ticket to work.
-lastUpdated: 2026-07-29T00:00:00Z
+lastUpdated: 2026-07-31T00:00:00Z
 ---
 
 ## What this skill does
@@ -24,15 +24,15 @@ review. It never merges and never marks a ticket `Done` — you close the loop.
 
 Two modes, chosen by the first arg. They differ deliberately:
 
-|                 | `pair`                              | `batch`                               |
-| --------------- | ----------------------------------- | ------------------------------------- |
-| Source lane     | `Status = Ready`                    | `Status = Queued`                     |
-| Model           | **this session's** model            | each ticket's **`Assignee`** model    |
-| Execution       | interactive, in-session             | parallel subagents, one worktree each |
-| Backend persona | **on** (teaching)                   | **off**                               |
-| Your approval   | **every change**                    | none — you review the PR              |
-| Tests           | **not touched** (golden rule holds) | each subagent writes its own          |
-| Ends at         | open PR → `Review` + feedback loop  | open PR → `Review` + feedback loop    |
+|                 | `pair`                                | `batch`                               |
+| --------------- | ------------------------------------- | ------------------------------------- |
+| Source lane     | `Status = Ready`                      | `Status = Queued`                     |
+| Model           | **this session's** model              | each ticket's **`Model`**             |
+| Execution       | interactive, in-session               | parallel subagents, one worktree each |
+| Backend persona | **on** (teaching)                     | **off**                               |
+| Your approval   | **every change**                      | none — you review the PR              |
+| Tests           | **not touched** (golden rule holds)   | each subagent writes its own          |
+| Ends at         | open PR → `In Review` + feedback loop | open PR → `In Review` + feedback loop |
 
 **The golden "never touch tests" rule is suspended only in `batch` mode.** Batch subagents (and
 batch feedback-fix subagents) write their own coverage for what they changed and repair any test
@@ -43,26 +43,33 @@ need attention, then leave them; the user will invoke test work explicitly (e.g.
 
 ## Board constants
 
-- **Task Board** data source: `collection://3630953c-224c-8065-8864-000bb9fe7bad`
+- **Project**: `TARO` (TaroFlash) — Jira, team-managed on Atlassian Cloud. Every `atlassian` MCP
+  tool takes a `cloudId` — use the site URL **`taroflash.atlassian.net`**.
 - `Status` lanes this skill uses: pulls from `Ready`/`Queued`; claims to `In Progress`; lands at
-  `Review`; parks stuck work at `Blocked`. Never sets `Done`/`Duplicate`.
-- `Assignee`: `Me` · `Fable` · `Opus` · `Sonnet`. `Me` is **never** batch-eligible.
+  `In Review`; parks stuck work at `Blocked`. Never sets `Done`/`Duplicate`.
+- `Model` (`customfield_10043`): `Fable` · `Opus` · `Sonnet` — which agent model works the ticket in
+  batch. `Status = On Hold` is **hands-off** (user-owned) and never batch-eligible.
+- **Status changes go through transitions, not a field write** — `getTransitionsForJiraIssue` to find
+  the transition id, then `transitionJiraIssue`. Field edits (writing the PR URL into the
+  description) use `editJiraIssue`.
 
 ## Claim protocol (both modes, per ticket)
 
-Before touching any code, **claim atomically**: `notion-update-page` set `Status = In Progress`.
-Re-query first — if the ticket is no longer in its source lane (someone/another run grabbed it),
-skip it. This is what stops two runs colliding on the same ticket.
+Before touching any code, **claim atomically**: transition the ticket to `In Progress`
+(`getTransitionsForJiraIssue` → `transitionJiraIssue`). Re-query the source lane first — if the
+ticket is no longer there (someone/another run grabbed it), skip it. This is what stops two runs
+colliding on the same ticket.
 
 ---
 
 ## Mode: `pair [ID]`
 
 Interactive, in **this** session, using **whatever model the session is running** (ignore the
-ticket's `Assignee`).
+ticket's `Model`).
 
-1. **SELECT** — `Status = Ready`. If an ID is given, take it; else the top `Priority → ID`.
-   Fetch its full page (title + body). Echo what you're about to work.
+1. **SELECT** — JQL `project = TARO AND status = "Ready" ORDER BY priority DESC, created ASC` (or the
+   given key). If an ID is given, take `TARO-<ID>`; else the top row (highest priority, oldest first).
+   Fetch its issue summary + description via `getJiraIssue`. Echo what you're about to work.
 2. **CLAIM** → `In Progress`.
 3. **BRANCH** — conventional branch off `master` matching the ticket (`fix/…`, `feat/…`).
 4. **EXPLORE & ALIGN — before any code.** Read the relevant code to ground the ticket in reality
@@ -90,11 +97,12 @@ ticket's `Assignee`).
    at most note in one line that tests may need attention, then leave them. Follow all
    `.claude/rules/*`.
 6. **PR** — invoke the **`prepare-pr`** skill with `--ticket <ID> --ticket-url <url>` (the ticket's
-   `TARO-<ID>` number and its Notion page URL) so the PR title is prefixed `TARO-<ID>:` and the body
-   opens with a `[TARO-<ID>](<url>)` link (commits, conventional messages, lint+type gate, opens one
-   PR, watches CI to green).
-7. **HANDOFF** — set the ticket's `Status = Review` and write the PR URL into its body. Then enter
-   the **Review & feedback loop** (below) and wait for the user's feedback.
+   `TARO-<ID>` number and its Jira browse URL, `https://taroflash.atlassian.net/browse/TARO-<ID>`) so
+   the PR title is prefixed `TARO-<ID>:` and the body opens with a `[TARO-<ID>](<url>)` link (commits,
+   conventional messages, lint+type gate, opens one PR, watches CI to green).
+7. **HANDOFF** — transition the ticket to `In Review` and append the PR URL into its description via
+   `editJiraIssue` (append, don't clobber the body). Then enter the **Review & feedback loop** (below)
+   and wait for the user's feedback.
 
 ## Mode: `batch [--count N] [--p0…]`
 
@@ -112,27 +120,26 @@ never edits ticket code itself.
    only work that leaves the orchestrator worktree is a **feedback-loop fix**, which must land on the
    main checkout so the user's dev server sees it (see that section for the coordination it needs).
 
-1. **SELECT**
+1. **SELECT** — `searchJiraIssuesUsingJql`:
 
-   ```sql
-   SELECT "userDefined:ID" AS id, "Name", "Priority", "Assignee", url
-   FROM "collection://3630953c-224c-8065-8864-000bb9fe7bad"
-   WHERE "Status" = 'Queued' AND "Assignee" IN ('Fable','Opus','Sonnet')
-   ORDER BY "Priority" ASC, "userDefined:ID" ASC
+   ```jql
+   project = TARO AND status = "Queued" AND Model in (Sonnet, Opus, Fable)
+   ORDER BY priority DESC, created ASC
    ```
 
-   `--pN` adds a priority filter; `--count N` sets **how many tickets to work in parallel** (default
-   1). Take the top `N` rows. Tickets with `Assignee = Me` are skipped by the query — never batch
-   them. Echo the plan (ID · priority · assignee) before starting.
+   `--pN` adds `AND priority = Highest|High|Medium|Low`; `--count N` sets **how many tickets to work
+   in parallel** (default 1). Take the top `N` rows (highest priority first, oldest as stable tie-
+   break). `On Hold` tickets are naturally excluded — they aren't `Queued`. Echo the plan (ID ·
+   priority · model) before starting.
 
-2. **CLAIM ALL** — for each selected ticket, re-check it's still `Queued` and set `Status = In
-Progress`. Drop any that another run already grabbed. Claim before dispatching so parallel runs
-   don't collide.
+2. **CLAIM ALL** — for each selected ticket, re-check it's still `Queued` and transition it to `In
+Progress` (`getTransitionsForJiraIssue` → `transitionJiraIssue`). Drop any that another run already
+   grabbed. Claim before dispatching so parallel runs don't collide.
 
 3. **FAN OUT — one subagent per ticket, in parallel.** Dispatch all subagents in a single message
    (multiple `Agent` calls) so they run concurrently. Each `Agent`:
    - `agentType: general-purpose`, `isolation: worktree` (its own worktree — they edit files in
-     parallel and must not collide), `model:` = the ticket's `Assignee` lowercased →
+     parallel and must not collide), `model:` = the ticket's `Model` lowercased →
      `fable`/`opus`/`sonnet`.
    - Prompt carries the ticket's title + body + acceptance criteria and instructs the subagent to:
      **rename** the worktree's existing branch to a conventional name (`git branch -m <fix/…|feat/…>`)
@@ -174,15 +181,16 @@ Progress`. Drop any that another run already grabbed. Claim before dispatching s
    `master`**. When two branches conflict but the overlap is mechanical, **stack** the dependent
    PR on the other (base its branch on the peer's branch) so it merges cleanly. When a conflict
    needs **genuine human judgment** (semantic overlap, incompatible approaches), do **not** guess:
-   **raise it** in the final report and set that ticket's `Status = Blocked`.
+   **raise it** in the final report and transition that ticket to `Blocked`.
    d. **OPEN** — for each non-blocked ticket, invoke the **`prepare-pr`** skill with `--ticket
-<ID> --ticket-url <url>` (the `TARO-<ID>` number and the ticket's Notion page URL) → one PR titled
-   `TARO-<ID>: …` whose body opens with a `[TARO-<ID>](<url>)` link. Pass the stack base when the PR
-   is stacked. `prepare-pr` watches CI; **a PR isn't done until it's green.** If CI fails, route it
-   through the **Review & feedback loop** (below) — a main-workspace fix subagent on the PR branch;
-   if it still can't pass after real effort, treat the ticket as stuck.
-   e. **HANDOFF** — for each opened, green PR: set `Status = Review`, write the PR URL into the
-   ticket body.
+<ID> --ticket-url <url>` (the `TARO-<ID>` number and the ticket's Jira browse URL,
+   `https://taroflash.atlassian.net/browse/TARO-<ID>`) → one PR titled `TARO-<ID>: …` whose body opens
+   with a `[TARO-<ID>](<url>)` link. Pass the stack base when the PR is stacked. `prepare-pr` watches
+   CI; **a PR isn't done until it's green.** If CI fails, route it through the **Review & feedback
+   loop** (below) — a main-workspace fix subagent on the PR branch; if it still can't pass after real
+   effort, treat the ticket as stuck.
+   e. **HANDOFF** — for each opened, green PR: transition the ticket to `In Review`, append the PR URL
+   into the ticket description via `editJiraIssue` (append, don't clobber the body).
    f. **TEAR DOWN** — once a ticket is handed off (PR open + green, branch pushed to origin),
    **remove its worktree**: `git worktree remove <path>`. The branch lives on origin and its local
    ref survives worktree removal, so the human can `git checkout <branch>` in the **main** working
@@ -191,11 +199,11 @@ Progress`. Drop any that another run already grabbed. Claim before dispatching s
    one behind. Only tear down **successful** tickets here; blocked ones keep their worktree (step 5).
 
 5. **STUCK / BLOCKED** — a ticket is stuck when its subagent can't satisfy acceptance, its gate or
-   CI won't pass after real effort, or a conflict needs human resolution. Set `Status = Blocked`,
-   write a one-line reason + what's needed into the body, and leave its branch/worktree in place
-   for the human. Never silently fail or leave a ticket stranded in `In Progress`.
+   CI won't pass after real effort, or a conflict needs human resolution. Transition it to `Blocked`,
+   append a one-line reason + what's needed into the description, and leave its branch/worktree in
+   place for the human. Never silently fail or leave a ticket stranded in `In Progress`.
 
-6. **REPORT** — tally: worked → `Review` (with PR links, noting any stacked pairs), `Blocked`
+6. **REPORT** — tally: worked → `In Review` (with PR links, noting any stacked pairs), `Blocked`
    (with reasons + which need human conflict resolution), skipped. Then enter the **Review &
    feedback loop** below.
 
@@ -211,7 +219,7 @@ needs — is handled the same way:
 1. **Dispatch a fix subagent on the MAIN workspace** (not a worktree). It **checks out the PR
    branch** in the main checkout. The user keeps a dev server running against the main workspace and
    verifies each fix **live**, so the fix must land on the branch they're looking at. Model: the
-   ticket's `Assignee` in batch, this session's model in pair. Work one PR at a time (the user goes
+   ticket's `Model` in batch, this session's model in pair. Work one PR at a time (the user goes
    in order), so only one fix subagent touches the main checkout at once.
 2. **Fix — plus a test pass in batch only.** The subagent makes the code change. In **batch**, it
    also does a fresh test pass alongside — new coverage for the new behaviour plus repairs to any
@@ -221,19 +229,19 @@ needs — is handled the same way:
 3. **Gate, push, watch green.** Run `vp check` + `vp test`, push to the PR branch, and watch CI to
    green (via `prepare-pr` or directly). A PR isn't done until it's green again.
 4. **Answer the thread.** Reply to the feedback on the PR prefixed `🤖 Claude:` so the user can tell
-   your replies from their own. Leave the ticket in `Review`.
+   your replies from their own. Leave the ticket in `In Review`.
 
 Repeat per PR until the user merges. **Never merge and never set `Done` yourself** — that stays the
 user's call, exactly as at first handoff.
 
 ## Guardrails
 
-- Only ever touch the Task Board data source above — never a backup/duplicate database.
-- **Never merge, never set `Done`.** Opening the PR is a handoff into `Review`, not the end — the
+- Only ever touch project `TARO` — never a backup/duplicate project.
+- **Never merge, never set `Done`.** Opening the PR is a handoff into `In Review`, not the end — the
   run stays live through the feedback loop until the user merges. Merging is always the user's call.
 - Claim before coding; re-check the lane to avoid double-work.
-- Batch never runs the backend teaching persona and never works a `Me` ticket. These are mode
-  contracts — don't cross them.
+- Batch never runs the backend teaching persona and never works an `On Hold` ticket (those are the
+  user's hands-off, and aren't `Queued` anyway). These are mode contracts — don't cross them.
 - **Tests: batch only.** The golden "no tests" rule is suspended **only in batch** — batch
   subagents write/repair their own tests inline (never via `update-tests`). **Pair never touches
   tests** (golden rule holds); it only notes, in one line, that tests may need attention and leaves

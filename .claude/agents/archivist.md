@@ -58,10 +58,10 @@ git show <SHA>
 
 - **Never** `git add -A`, never stage or commit anything outside `corpus/`, never
   amend or rewrite existing commits, never push.
-- **New hazards: flag, don't file.** You have no reliable Notion access here. When
+- **New hazards: flag, don't file.** You have no reliable Jira access here. When
   you add a new hazard, record it in the commit body as a line beginning
   `NEW HAZARD:` (topic id + one-line summary) so a human files the backlog ticket.
-  Do not attempt to reach Notion or any MCP.
+  Do not attempt to reach Jira or any MCP.
 - **Match the exemplars' voice** (`corpus/authz/permissions.md`,
   `corpus/media/media.md`): open cold, one idea per beat, callouts that add (never
   restate), plain declarative present tense. When in doubt, change less.

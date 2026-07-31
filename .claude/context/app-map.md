@@ -100,9 +100,9 @@ Use this first. Match words in the raw ticket to a starting path, then grep from
 
 ---
 
-## Epics (Notion Epic Board → code area)
+## Epics (TARO epics → code area)
 
-`/triage` sets the ticket's **Epic** relation. Active (In Dev / Ready / P0) first; map to code:
+`/triage` sets the ticket's **parent epic**. Active (In Dev / Ready / P0) first; map to code:
 
 | Epic                        | Status       | Code area                                              |
 | --------------------------- | ------------ | ------------------------------------------------------ |
