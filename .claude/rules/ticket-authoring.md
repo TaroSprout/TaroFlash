@@ -1,49 +1,75 @@
 # Ticket Authoring
 
-How to cut a ticket on the Notion Task Board. Applies whenever the user says "cut a ticket", "file
+How to cut a ticket in Jira (project **TARO**). Applies whenever the user says "cut a ticket", "file
 that", "add that to the board", or when out-of-scope work is found mid-task.
 
 Cutting a ticket **captures**; it does not spec. `/triage` specs it later.
 
-## Board constants
+## Jira connection
 
-- **Task Board**: `collection://3630953c-224c-8065-8864-000bb9fe7bad`
-- **Epic Board**: `collection://2510953c-224c-80b7-9bb0-000b5384a47d`
-- `Priority`: `⇞P0` · `↑P1` · `↓P2` · `⇟P3` — `Type`: `Bug` · `Task` · `Story` · `Spike`
-- `Target`: `MVP` · `Fast-follow` · `Later` — which release the ticket ships in (orthogonal to Priority)
-- `ID` is read-only auto-increment. Never set it.
-- **The board is the source of truth for these lists, not this file.** `notion-fetch` on the
-  data-source URL returns the live options; check when a value seems not to fit, and fix this file.
+- **Project**: `TARO` (TaroFlash) — team-managed, on Atlassian Cloud.
+- **MCP server**: `atlassian` (official remote). Every tool takes a `cloudId` — use the site URL
+  **`taroflash.atlassian.net`** (UUID `44337aa0-a241-46a1-bc42-e7b4aa1d560b` also works).
+- **Create** with `createJiraIssue` (`projectKey: TARO`, `issueTypeName`, `summary`, markdown
+  `description`, `additional_fields` for priority / parent / custom fields). **Read/search** with
+  `searchJiraIssuesUsingJql` + `getJiraIssue`. **Update** with `editJiraIssue`. **Move status** with
+  `getTransitionsForJiraIssue` → `transitionJiraIssue`.
+- The key `TARO-<n>` is Jira's own auto-assigned sequence — never set it. URL:
+  `https://taroflash.atlassian.net/browse/TARO-<n>`.
 
-## Fields
+## Fields & vocab
 
-| Field      | Value when cutting                                                                                                                   |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `Status`   | **`Backlog`**, always — a new ticket is un-triaged by definition                                                                     |
-| `Assignee` | **empty** — only set when a ticket reaches `Queued`                                                                                  |
-| `Type`     | `Bug` broken · `Task` defined change · `Story` user-facing capability · `Spike` the deliverable is a decision, not shipped behaviour |
-| `Priority` | `⇞P0` data loss/security/broken core flow · `↑P1` real pain · `↓P2`/`⇟P3` rest                                                       |
-| `Target`   | **empty** at cut time — a triage/groom decision, not a capture one                                                                   |
-| `Epic`     | match the Epic Board; if nothing fits, propose a new epic rather than force-fit                                                      |
+- **Type** (`issueTypeName`): `Bug` · `Task` · `Story` · `Spike` (epics are type `Epic`).
+- **Priority**: `Highest` · `High` · `Medium` · `Low` (a ticket's urgency; Jira defaults new issues
+  to `Medium`).
+- **Status**: `Backlog` · `Needs More Info` · `Ready` · `Queued` · `In Progress` · `In Review` ·
+  `Blocked` · `On Hold` · `Done` · `Duplicate` · `Won't Do`. New issues are born in `To Do` and must
+  be **transitioned** to the target status.
+- **Target** (`customfield_10042`): `MVP` · `Fast Follow` · `Later` — which release the ticket ships
+  in (orthogonal to Priority).
+- **Model** (`customfield_10043`): `Sonnet` · `Opus` · `Fable` — which agent model works the ticket
+  in `/work batch`. This is the routing field (it replaced the old board's Assignee); it is **not**
+  Jira's native Assignee (a person), which stays unused.
+- **Parent**: the epic a ticket belongs to (`additional_fields.parent` = epic key, e.g. `TARO-7`).
+- `On Hold` means **hands-off** — the user works it themselves. `/triage` and `/work` leave it alone.
+
+> **The project is the source of truth for these option lists, not this file.**
+> `getJiraProjectIssueTypesMetadata` / `getJiraIssueTypeMetaWithFields` return the live issue types,
+> statuses, and custom-field ids; check when a value seems not to fit, and fix this file.
+
+## Fields when cutting
+
+| Field                    | Value when cutting                                                                                                         |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `Status`                 | **`Backlog`**, always — a new ticket is un-triaged by definition. Create in `To Do`, then transition to `Backlog`.         |
+| `Model`                  | **empty** — only set when a ticket reaches `Queued`                                                                        |
+| `Type` (`issueTypeName`) | `Bug` broken · `Task` defined change · `Story` user-facing capability · `Spike` the deliverable is a decision, not shipped |
+| `Priority`               | `Highest` data loss/security/broken core flow · `High` real pain · `Medium`/`Low` rest                                     |
+| `Target`                 | **empty** at cut time — a triage/groom decision, not a capture one                                                         |
+| `Parent` (epic)          | match an existing epic; if nothing fits, propose a new epic rather than force-fit                                          |
 
 Never write `Ready` or `Queued` — those assert an agent can execute the ticket, which is never true
-at capture time.
+at capture time. Never write `On Hold` on a fresh ticket — that's the user's own hands-off marker.
 
 ## Priority vs Target — two axes, don't collapse them
 
 `Priority` answers **in what order** (urgency/sequencing). `Target` answers **which release**
-(scope). They are orthogonal — a pre-launch `MVP` ticket still ranges `P0`→`P3`, so all four
+(scope). They are orthogonal — a pre-launch `MVP` ticket still ranges `Highest`→`Low`, so all four
 priority tiers stay meaningful inside the launch set instead of two being spent marking the cut-line.
 
 - `MVP` — ships before launch.
-- `Fast-follow` — committed to the first post-launch cycle. Has a home; gets swept.
+- `Fast Follow` — committed to the first post-launch cycle. Has a home; gets swept.
 - `Later` — genuinely deferred, allowed to be quiet.
 
-A ticket stays in its epic regardless of `Target` — the epic is the resurfacing anchor, not a
-graveyard. `Fast-follow` items surface in the **Fast-follow** board view (all epics, sorted by
-priority) for the post-launch sweep. Leave `Target` empty at capture; `/triage` and `/groom` set it.
+A ticket stays under its epic regardless of `Target` — the epic is the resurfacing anchor, not a
+graveyard. `Fast Follow` items surface via a Jira board/filter view (`Target = "Fast Follow"`, all
+epics, sorted by priority) for the post-launch sweep. Leave `Target` empty at capture; `/triage` and
+`/groom` set it.
 
 ## Body
+
+Pass the body as the issue **`description`** with `contentFormat: markdown` — Markdown headings,
+lists, and checkboxes render natively in Jira; no ADF needed.
 
 **Bug**
 
@@ -81,9 +107,9 @@ priority) for the post-launch sweep. Leave `Target` empty at capture; `/triage` 
 
 ## New epics
 
-Propose first, never create silently. Icon is a Notion built-in via its hosted SVG —
-`https://www.notion.so/icons/<name>_<color>.svg` (`gray|brown|orange|yellow|green|blue|purple|pink|red`).
-Not an emoji. The bare `icons/<name>_<color>` path is accepted by the API but **renders blank**.
+Propose first, never create silently. Create with `createJiraIssue` (`issueTypeName: "Epic"`,
+`summary` = the epic name); optionally set an issue colour via `additional_fields.customfield_10017`.
+Give a one-line scope, not a full spec — an epic is a resurfacing anchor.
 
 ## Batch work
 

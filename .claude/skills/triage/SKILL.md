@@ -1,16 +1,16 @@
 ---
 name: triage
-description: First pass over raw Notion Task Board tickets. Investigates where each ticket lives in the code, fills in every field (Priority/Type/Epic/Assignee), writes a body from the per-Type template, and routes each ticket to its next lane — `Ready`/`Queued` when it is executable as-is, or `Needs More Info` when it carries unresolved design decisions for `/groom` to settle. Batched and checkpointed; reports in product terms only. May propose creating epics, merging tickets, or parking them. Trigger on `/triage`, "triage the backlog", "triage tickets".
-allowed-tools: Read, Grep, Glob, Bash, Agent, mcp__notion__notion-query-data-sources, mcp__notion__notion-fetch, mcp__notion__notion-update-page, mcp__notion__notion-create-pages, mcp__notion__notion-search
+description: First pass over raw Jira (project TARO) tickets. Investigates where each ticket lives in the code, fills in every field (Priority/Type/Epic/Model), writes a body from the per-Type template, and routes each ticket to its next lane — `Ready`/`Queued` when it is executable as-is, or `Needs More Info` when it carries unresolved design decisions for `/groom` to settle. Batched and checkpointed; reports in product terms only. May propose creating epics, merging tickets, or parking them. Trigger on `/triage`, "triage the backlog", "triage tickets".
+allowed-tools: Read, Grep, Glob, Bash, Agent, mcp__atlassian__searchJiraIssuesUsingJql, mcp__atlassian__getJiraIssue, mcp__atlassian__createJiraIssue, mcp__atlassian__editJiraIssue, mcp__atlassian__getTransitionsForJiraIssue, mcp__atlassian__transitionJiraIssue, mcp__atlassian__getJiraProjectIssueTypesMetadata, mcp__atlassian__getJiraIssueTypeMetaWithFields
 argument-hint: '[--p0|--p1|--p2|--p3] [--count N] [<ID> <ID> …]'
 arguments:
   - name: --p0|--p1|--p2|--p3
     description: Only triage Backlog tickets of this priority.
   - name: --count N
-    description: Cap the batch at N tickets (default 10). Ordered Priority → ID.
+    description: Cap the batch at N tickets (default 10). Ordered Priority → created.
   - name: <ID>
-    description: One or more numeric ticket IDs to triage specifically (overrides filters).
-lastUpdated: 2026-07-29T00:00:00Z
+    description: One or more Jira ticket keys (`TARO-<n>`, or the bare number) to triage specifically (overrides filters).
+lastUpdated: 2026-07-31T00:00:00Z
 ---
 
 ## What this skill does
@@ -25,32 +25,40 @@ Backlog ──/triage──┬──► Ready / Queued        (executable as-is)
 ```
 
 Output per ticket: a descriptive **title**, a **body** from the per-Type template, all four
-**fields** (Priority/Type/Epic/Assignee), and a **lane** with the routing reason stated.
+**fields** (Priority/Type/Epic/Model), and a **lane** with the routing reason stated.
 
 Batched and checkpointed: ~2 interruptions for the whole batch, not one per ticket.
 
-Do **not** touch tests. Do **not** write code. This skill reads code and writes Notion.
+Do **not** touch tests. Do **not** write code. This skill reads code and writes Jira.
 
 ## Board constants
 
-- **Task Board** data source: `collection://3630953c-224c-8065-8864-000bb9fe7bad`
-- **Epic Board** data source: `collection://2510953c-224c-80b7-9bb0-000b5384a47d`
+- **Project**: `TARO` (TaroFlash) — team-managed, on Atlassian Cloud.
+- **MCP server**: `atlassian`. Every tool takes a `cloudId` — use the site URL
+  **`taroflash.atlassian.net`**.
 - **Fields & vocab:**
-  - `Status`: `On Hold` · `Backlog` · `Needs More Info` · `Ready` · `Queued` · `In Progress` · `Blocked` · `Review` · `Duplicate` · `Won't Do` · `Done`
-  - `Priority`: `⇞P0` · `↑P1` · `↓P2` · `⇟P3`
-  - `Type`: `Bug` · `Task` · `Story` · `Spike`
-  - `Assignee`: `Me` · `Fable` · `Opus` · `Sonnet`
+  - `Status`: `On Hold` · `Backlog` · `Needs More Info` · `Ready` · `Queued` · `In Progress` · `Blocked` · `In Review` · `Duplicate` · `Won't Do` · `Done`
+  - `Priority`: `Highest` · `High` · `Medium` · `Low`
+  - `Type` (`issueTypeName`): `Bug` · `Task` · `Story` · `Spike`
+  - `Model` (`customfield_10043`): `Sonnet` · `Opus` · `Fable`
+  - `Target` (`customfield_10042`): `MVP` · `Fast Follow` · `Later`
 
-> **The board is the source of truth for these lists, not this file.** A hardcoded vocabulary here
+> **The project is the source of truth for these lists, not this file.** A hardcoded vocabulary here
 > once went stale and `Spike` was invisible for months — tickets encoded it in their titles instead.
-> `notion-fetch` on the data-source URL returns the live option lists; check them when a value seems
-> not to fit, and fix this file rather than working around it.
+> `getJiraProjectIssueTypesMetadata` / `getJiraIssueTypeMetaWithFields` return the live issue types,
+> statuses, and custom-field ids; check them when a value seems not to fit, and fix this file rather
+> than working around it.
 
-- `Epic`: relation to Epic Board (single). `ID`: read-only auto-increment.
+- `Epic`: a ticket's epic is its **parent** (`additional_fields.parent` = epic key; epics are
+  `issuetype = Epic`). The key `TARO-<n>` is Jira's own auto-assigned sequence — never set it.
+  URL: `https://taroflash.atlassian.net/browse/TARO-<n>`.
+- **Status is a transition, not a field write.** Move status with `getTransitionsForJiraIssue` →
+  `transitionJiraIssue`; never try to set `Status` via `editJiraIssue`.
 
 Two parked lanes, distinguished by what is missing:
 
-- **`On Hold`** — parked for the user's own reasons. Triage never routes here unasked.
+- **`On Hold`** — parked for the user's own reasons; this is the user's own hands-off marker. Triage
+  never routes here unasked.
 - **`Needs More Info`** — the _what_ is clear, the _how_ is not. Unresolved technical decisions.
   `/groom` picks these up.
 
@@ -74,30 +82,31 @@ every investigation.
 
 ### 1. FETCH
 
-```sql
-SELECT "userDefined:ID" AS id, "Name", "Type", "Priority", "Epic", "Assignee", url
-FROM "collection://3630953c-224c-8065-8864-000bb9fe7bad"
-WHERE "Status" = 'Backlog'
-  AND ("Assignee" IS NULL OR "Assignee" <> 'Me')   -- Me on Backlog = hands off
-ORDER BY "Priority" ASC, "userDefined:ID" ASC
+```jql
+project = TARO AND type != Epic AND status = "Backlog"
+ORDER BY priority DESC, created ASC
 ```
 
-`Assignee = Me` on a Backlog ticket is the user's "don't triage this" signal. Apply args:
-`--pN` adds `AND "Priority" = '<glyph>'`; explicit `<ID>`s replace the WHERE with
-`"userDefined:ID" IN (…)` (overriding both filters, since naming a ticket is deliberate — but
-warn if it isn't in Backlog or is assigned `Me`). `--count N` caps the batch (default 10); if it
-would exceed the cap, take the top N and say how many were left.
+`type != Epic` excludes epics; `priority DESC` sorts `Highest` first; `created ASC` is the stable
+secondary. Apply args: `--pN` adds `AND priority = Highest|High|Medium|Low`; explicit `<ID>`s
+replace the status/priority filters with `AND key IN (TARO-…, …)` (overriding both, since naming a
+ticket is deliberate — but warn if it isn't in `Backlog`). `--count N` caps the batch (default 10);
+if it would exceed the cap, take the top N and say how many were left.
+
+(`searchJiraIssuesUsingJql` returns ≤100 issues/page — paginate via `nextPageToken` only if a batch
+ever runs that large; default batches are far smaller.)
 
 ### 2. SELECT
 
-Echo the batch as a compact numbered list (ID · Priority · raw name). If args fully determined it,
+Echo the batch as a compact numbered list (key · Priority · raw name). If args fully determined it,
 proceed. If ambiguous or oversized, ask before spending investigation time.
 
 ### 3. READ existing descriptions
 
-Fetch each ticket's **page body** via `notion-fetch` — §1 pulls properties only. The user often
-writes real context into a raw ticket. Read every in-scope body and carry it through. If a
-description already dictates the approach, honour it rather than re-deriving from the name.
+Fetch each ticket's **description** via `getJiraIssue` (request the `description` field — it comes
+back as markdown). The user often writes real context into a raw ticket. Read every in-scope
+description and carry it through. If a description already dictates the approach, honour it rather
+than re-deriving from the name.
 
 ### 4. INVESTIGATE
 
@@ -121,10 +130,10 @@ One interruption for the whole batch. Per ticket, **in product terms**, ≤2 lin
 - what it turned out to be (and anything surprising),
 - proposed lane + **which routing trigger fired**, in a short phrase.
 
-> `#141` the number steppers in review-pacing settings — styling only, kit already handles it
+> `TARO-141` the number steppers in review-pacing settings — styling only, kit already handles it
 > → Ready
 >
-> `#264` deleting your account — needs decisions on the grace period and what a deleted user sees
+> `TARO-264` deleting your account — needs decisions on the grace period and what a deleted user sees
 > → Needs More Info (new stored state + billing)
 
 Separate the clean tickets from the ones needing a decision. **Stop for confirmation or redirect**
@@ -138,17 +147,16 @@ review. Per ticket:
 
 - **Title** — descriptive rewrite.
 - **Summary** — one line of product intent.
-- **Fields** — `Priority`, `Type`, `Epic`, and `Assignee` **only when the lane is `Queued`**
-  (see § Assignee). Tickets now arrive with only name +
-  description, so **propose all four**; never apply them unasked.
+- **Fields** — `Priority`, `Type`, `Epic` (parent), and `Model` **only when the lane is `Queued`**
+  (see § Model). Tickets now arrive with only name + description, so **propose all four**; never
+  apply them unasked.
 - **Lane** — with the trigger that decided it.
 - **Proposals** — CREATE a new ticket, MERGE into another (name the survivor), or CREATE a new
   epic. Never silently.
 
-**New epics.** If no existing epic fits, propose one rather than forcing a bad match. Set its icon
-to a Notion built-in via external URL — `https://www.notion.so/icons/<name>_<color>.svg` (colors:
-`gray|brown|orange|yellow|green|blue|purple|pink|red`). Not an emoji. The bare `icons/<name>_<color>`
-path is accepted by the API but renders blank — always use the full `.svg` URL.
+**New epics.** If no existing epic fits, propose one rather than forcing a bad match. Create it with
+`createJiraIssue` (`issueTypeName: "Epic"`, `summary` = the epic name, a one-line scope in the
+description) — an epic is a resurfacing anchor, not a full spec.
 
 **Consolidate for the `Ready` lane.** A pairing ticket is worked in one interactive session and can
 hold several related small tasks. When two `Ready`-bound tickets share the **same surface** or
@@ -158,21 +166,23 @@ nothing is lost. `Queued` tickets stay one-task-per-ticket — batch agents work
 
 ### 7. WRITE
 
-Apply only what was approved, via `notion-update-page` (and `notion-create-pages` for CREATEs):
+Apply only what was approved. Edit fields and body via `editJiraIssue`; move status via
+`getTransitionsForJiraIssue` → `transitionJiraIssue`; use `createJiraIssue` for CREATEs.
 
-- title, body, `Priority`/`Type`/`Epic`/`Assignee`, `Status`.
-- **Refuse to write `Status = Queued` when `Assignee` is `Me` or empty** — stop and ask. `Ready`
-  tickets are left unassigned; do not set an Assignee on them.
-- **Refuse to write `Status = Queued` when any fork is unresolved** — it routes to
+- title (`summary`), body (`description`, markdown), `Priority`/`Type`/`Epic` (parent)/`Model`, and
+  the status transition.
+- **Refuse to transition to `Queued` when `Model` is empty** — stop and ask. `Ready`
+  tickets are left without a `Model`; do not set one on them.
+- **Refuse to transition to `Queued` when any fork is unresolved** — it routes to
   `Needs More Info` instead (§ Routing).
-- **Merges:** move the merged-away ticket to `Duplicate`, prepend a body line pointing to the
-  survivor, and fold its full scope into the survivor's body.
+- **Merges:** transition the merged-away ticket to `Duplicate`, prepend a description line pointing
+  to the survivor, and fold its full scope into the survivor's description.
 
 Write sequentially; if a write fails, report which and stop rather than half-applying.
 
 ### 8. REPORT
 
-Tally, one line each: `→ Ready/Queued (assignee)`, `→ Needs More Info`, `created`, `merged`,
+Tally, one line each: `→ Ready/Queued (model)`, `→ Needs More Info`, `created`, `merged`,
 `→ On Hold`, `skipped`. No prose.
 
 ## Routing
@@ -303,16 +313,15 @@ A ticket routed to `Needs More Info` still gets a full body — `/groom` builds 
 starting over. Record the open forks explicitly under Technical notes so `/groom` knows what to
 resolve.
 
-## Assignee — `Queued` only
+## Model — `Queued` only
 
-**`Ready` tickets stay unassigned.** A pairing ticket is worked in whatever session the user starts,
-on whatever model that session runs — an Assignee there is noise. Leave the field empty.
+**`Ready` tickets stay without a `Model`.** A pairing ticket is worked in whatever session the user
+starts, on whatever model that session runs — a `Model` there is noise. Leave the field empty.
 
-**`Queued` tickets must have a model**, since `/work batch` pins each subagent to its ticket's
-Assignee and skips anything unassigned or `Me`.
+**`Queued` tickets must have a `Model`**, since `/work batch` pins each subagent to its ticket's
+`Model` and skips anything with the field empty.
 
-**Only ever suggest a model — `Fable`, `Opus`, or `Sonnet`. Never suggest `Me`.** `Me` is the
-user's own opt-out signal, not a value triage proposes.
+**Only ever suggest `Fable`, `Opus`, or `Sonnet`** — those are the only values the field takes.
 
 - **`Opus`** — architectural, cross-cutting, ambiguous, or security/backend-sensitive.
 - **`Sonnet`** — well-scoped feature/bug work with a clear spec.
@@ -320,10 +329,11 @@ user's own opt-out signal, not a value triage proposes.
 
 ## Guardrails
 
-- Only ever touch the Task Board / Epic Board data sources above — never a backup or duplicate.
-- Never set `In Progress`/`Review`/`Done` here. Triage lands tickets in `Ready`, `Queued`,
+- Only ever touch project `TARO` — never a backup or duplicate project.
+- Never set `In Progress`/`In Review`/`Done` here. Triage lands tickets in `Ready`, `Queued`,
   `Needs More Info`, `On Hold`, or `Duplicate` only.
 - Propose `Priority`/`Type` changes, never apply them unasked.
+- Never route a ticket to `On Hold` unasked — it is the user's own hands-off lane.
 - If unsure whether to merge, create, or park — ask. Never guess a destructive board edit.
 - Never resolve a genuine design fork here. Route it to `Needs More Info` and let `/groom` do it
   properly with the user.
