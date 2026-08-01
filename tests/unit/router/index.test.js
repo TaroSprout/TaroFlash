@@ -15,14 +15,12 @@ const {
   mockMemberStore,
   mockUseCan,
   mockPrefetchMemberById,
-  mockPrefetchMemberDecks,
   mockIsPasswordRecoveryUrl
 } = vi.hoisted(() => ({
   mockSessionStore: { ensureResolved: vi.fn() },
   mockMemberStore: {},
   mockUseCan: vi.fn(),
   mockPrefetchMemberById: vi.fn(),
-  mockPrefetchMemberDecks: vi.fn(),
   mockIsPasswordRecoveryUrl: vi.fn()
 }))
 
@@ -44,12 +42,6 @@ vi.mock('@/api/session', () => ({
 
 vi.mock('@/api/members', () => ({
   prefetchMemberById: mockPrefetchMemberById
-}))
-
-// The checkpoint no longer imports @/api/decks at all — mocked here only so a
-// regression (someone re-adding the prefetch call) would surface as a call.
-vi.mock('@/api/decks', () => ({
-  prefetchMemberDecks: mockPrefetchMemberDecks
 }))
 
 // Not under test here; avoids pulling in the real view (and its own composable
@@ -91,7 +83,6 @@ beforeEach(() => {
   mockMemberStore.pending_deletion = false
   mockUseCan.mockReset().mockReturnValue({ useAudioReader: { value: true } })
   mockPrefetchMemberById.mockReset().mockResolvedValue(undefined)
-  mockPrefetchMemberDecks.mockReset()
   mockIsPasswordRecoveryUrl.mockReset().mockReturnValue(false)
 })
 
@@ -261,19 +252,5 @@ describe('router — the single auth checkpoint', () => {
       expect(mockUseCan).not.toHaveBeenCalled()
       expect(mockPrefetchMemberById).not.toHaveBeenCalled()
     })
-  })
-
-  // ── prefetchMemberDecks dropped ─────────────────────────────────────────────
-
-  test('never calls prefetchMemberDecks — the old prefetch is dropped', async () => {
-    mockSessionStore.ensureResolved.mockResolvedValue(true)
-    mockUseCan.mockReturnValue({ useAudioReader: { value: true } })
-
-    await capturedGuard(resolveTo('/dashboard'))
-    await capturedGuard(resolveTo('/deck/123'))
-    await capturedGuard(resolveTo('/audio-reader/collection/1/lesson/2'))
-    await capturedGuard(resolveTo('/welcome'))
-
-    expect(mockPrefetchMemberDecks).not.toHaveBeenCalled()
   })
 })
