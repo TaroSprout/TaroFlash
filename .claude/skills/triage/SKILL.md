@@ -6,7 +6,7 @@ argument-hint: '[--N]'
 arguments:
   - name: --N
     description: Batch size (default 10). e.g. `--20`.
-lastUpdated: 2026-08-01T12:00:00Z
+lastUpdated: 2026-08-01T20:00:00Z
 ---
 
 Triage is the **first** of two grooming passes. It clarifies and files — it does **not** resolve
@@ -25,8 +25,19 @@ Board data source, field option lists, body sections, and voice all live in
    FROM "collection://3630953c-224c-8065-8864-000bb9fe7bad"
    WHERE "Status" = 'Backlog'
      AND ("Assignee" IS NULL OR "Assignee" <> 'Me')   -- Me = hands off
-   ORDER BY "Priority" ASC, "userDefined:ID" ASC
+   ORDER BY CASE "Priority"                            -- rank, NOT the raw glyph string
+              WHEN '⇞P0' THEN 0
+              WHEN '↑P1' THEN 1
+              WHEN '↓P2' THEN 2
+              WHEN '⇟P3' THEN 3
+              ELSE 4                                   -- unset Priority sorts last → propose one
+            END ASC,
+            "userDefined:ID" ASC
    ```
+
+   **Never `ORDER BY "Priority"` directly.** The priority arrows sort by codepoint, not by urgency —
+   `↑`(P1, U+2191) `↓`(P2, U+2193) `⇞`(P0, U+21DE) `⇟`(P3, U+21DF) — so a raw string sort buries every
+   `P0` below `P1`/`P2`, and a null Priority leaps to the top. Rank with the `CASE` above.
 
 2. **Read** each ticket's page body via `notion-fetch` — the query returns properties only, and the
    user often writes real context into the raw ticket. Carry it through; don't re-derive from the name.
@@ -46,10 +57,23 @@ Board data source, field option lists, body sections, and voice all live in
    `Status = Needs More Info`. Sequential; if a write fails, report which and stop rather than
    half-applying.
 
+## Self-heal
+
+The user will push back — catching a miss, a wrong batch, a baked-in assumption. Treat that as a
+**defect in this skill**, not just in the batch. Capture the lesson as a concrete edit to this skill
+(or [`ticket-authoring.md`](../../rules/ticket-authoring.md)) and ship it as its own branch + PR,
+separate from the triage work.
+
+Before writing a single file: **check the working tree.** Branch off `master` only when it is clean;
+if the current branch isn't `master` or has uncommitted changes (the user works in parallel), make
+the edit in a git worktree so nothing in the active checkout is disturbed. Conventional-commit it
+(`docs(triage): …`), open the PR, report the link — never merge.
+
 ## Guardrails
 
 - Only ever touch the Task Board named in the rule — never a backup or duplicate.
 - Every ticket ends in `Needs More Info`. Never route to `Ready`/`Queued`/`On Hold` or set
   `In Progress`/`Review`/`Done`.
 - Propose `Epic`/`Type`/`Priority`, never apply unasked.
-- Don't touch tests. Don't write code. This skill reads Notion (and lightly, code) and writes Notion.
+- Don't touch tests. Don't write code — this skill reads Notion (and lightly, code) and writes
+  Notion. Self-healing _this skill_ is the sole exception; see § Self-heal.
