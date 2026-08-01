@@ -132,7 +132,9 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     persisted_session.value = {
       deck_ids,
       card_ids: engine.cards.value.map((c) => c.id),
-      results: engine.results.value,
+      // Only durably-saved reviews are persisted, so a card whose save never
+      // confirmed is re-served as unreviewed on resume rather than rebuilt done.
+      results: engine.durableResults(),
       completed: engine.state.value === 'summary'
     }
   }
