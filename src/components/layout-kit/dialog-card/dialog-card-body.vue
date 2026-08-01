@@ -46,6 +46,7 @@ const target = computed(() => scroll_target ?? content_el.value ?? undefined)
     <div
       ref="content"
       data-testid="dialog-card-body__content"
+      :data-overflow-bleed="overflow_bleed || undefined"
       class="flex min-h-0 flex-1 flex-col pb-(--dialog-body-pb,var(--dialog-px))"
       :class="[
         scroll_target ? '' : 'overflow-y-auto scroll-hidden',
