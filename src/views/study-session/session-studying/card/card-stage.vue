@@ -115,7 +115,7 @@ onUnmounted(() => cover_tween?.kill())
       @leave="onCardLeave"
     >
       <study-card
-        v-if="card_view === 'read'"
+        v-if="card_view === 'read' && active_card"
         ref="study-card"
         :key="active_card?.id"
         :card="active_card"

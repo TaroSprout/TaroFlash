@@ -5,8 +5,11 @@ import { card } from '../../../fixtures/card'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { saveReviewMock } = vi.hoisted(() => ({
-  saveReviewMock: vi.fn().mockResolvedValue(undefined)
+// The engine drives the background save through the review-saver seam, which
+// returns a terminal 'saved' | 'failed' outcome. Its own retry/online/idempotency
+// behaviour is covered in review-saver.test.js; here we control the outcome.
+const { saveMock } = vi.hoisted(() => ({
+  saveMock: vi.fn().mockResolvedValue('saved')
 }))
 
 const { mockNotice } = vi.hoisted(() => ({
@@ -15,13 +18,16 @@ const { mockNotice } = vi.hoisted(() => ({
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 
-vi.mock('@/api/reviews', () => ({
-  useSaveReviewMutation: () => ({ mutate: vi.fn(), mutateAsync: saveReviewMock })
+vi.mock('@/views/study-session/composables/review-saver', () => ({
+  useReviewSaver: () => ({ save: saveMock })
 }))
 
 vi.mock('@/stores/notice-store', () => ({
   useNoticeStore: () => mockNotice
 }))
+
+/** Drains the microtask queue so background-save reconciliation settles. */
+const flush = () => new Promise((resolve) => setTimeout(resolve))
 
 vi.mock('@/sfx/bus', () => ({
   emitSfx: mockEmitSfx,
@@ -92,7 +98,7 @@ function makeReviewedCard(overrides = {}) {
 }
 
 beforeEach(() => {
-  saveReviewMock.mockReset().mockResolvedValue(undefined)
+  saveMock.mockReset().mockResolvedValue('saved')
   mockNotice.error.mockReset()
   mockEmitSfx.mockClear()
 })
@@ -132,12 +138,13 @@ describe('state machine [obligation]', () => {
     expect(engine.is_cover.value).toBe(false)
   })
 
-  test('reviewing the last card transitions studying -> summary', () => {
+  test('reviewing the last card transitions studying -> summary once the save settles', async () => {
     const { engine } = makeEngine()
     engine.setCards([makeCard({ deck_id: 1 })])
     engine.startSession()
 
-    engine.reviewCard(Rating.Good)
+    await engine.reviewCard(Rating.Good)
+    await flush()
 
     expect(engine.state.value).toBe('summary')
   })
@@ -438,17 +445,17 @@ describe('computed reads', () => {
     expect(engine.next_card.value).toBeUndefined()
   })
 
-  test('display_side is "front" while studying and "cover" once no active card remains', () => {
+  test('display_side is "front" while studying and "cover" once the session summarizes', async () => {
     const { engine } = makeEngine()
     engine.setCards([makeCard({ id: 1003, deck_id: 1 })])
     engine.startSession()
     expect(engine.display_side.value).toBe('front')
 
-    engine.reviewCard(Rating.Good)
+    await engine.reviewCard(Rating.Good)
+    await flush()
 
-    // display_side derives from `state`/`current_card_side` — plain refs
-    // reassigned directly by _advance/reviewCard, so (unlike reviewed_count
-    // etc.) it does reflect the post-review state on a fresh read.
+    // Once the pending save settles the engine reaches `summary`, and
+    // display_side ('studying' ? current_card_side : 'cover') resolves to cover.
     expect(engine.display_side.value).toBe('cover')
   })
 })
@@ -544,51 +551,58 @@ describe('persistence contract — onChange fires on every state-changing mutati
 // ── Review-save failure surface [obligation] ────────────────────────────────
 
 describe('review-save failure surface [obligation]', () => {
-  test('shows the error notice with a refresh action when the save mutation rejects [obligation]', async () => {
-    saveReviewMock.mockRejectedValueOnce(new Error('network error'))
+  test('a save that ultimately fails shows a non-blocking notice with no reload action [obligation]', async () => {
+    saveMock.mockResolvedValueOnce('failed')
     const { engine } = makeEngine()
-    engine.setCards([makeCard({ id: 501, deck_id: 1 })])
+    engine.setCards([makeCard({ id: 501, deck_id: 1 }), makeCard({ id: 511, deck_id: 1 })])
     engine.startSession()
 
     await engine.reviewCard(Rating.Good)
+    await flush()
 
-    expect(mockNotice.error).toHaveBeenCalledWith(
-      'study-session.review-save-error',
-      expect.objectContaining({
-        subMessage: 'study-session.review-save-error-sub',
-        variant: 'panel',
-        actions: expect.arrayContaining([
-          expect.objectContaining({ label: 'notice.refresh-label' })
-        ])
-      })
-    )
-  })
-
-  test('the refresh action reloads the page', async () => {
-    const reload_spy = vi.fn()
-    vi.stubGlobal('location', { reload: reload_spy })
-    saveReviewMock.mockRejectedValueOnce(new Error('network error'))
-    const { engine } = makeEngine()
-    engine.setCards([makeCard({ id: 503, deck_id: 1 })])
-    engine.startSession()
-
-    await engine.reviewCard(Rating.Good)
-
+    expect(mockNotice.error).toHaveBeenCalledWith('study-session.review-save-error', {
+      subMessage: 'study-session.review-save-error-sub'
+    })
+    // Non-blocking: default (toast) variant, and no page-reload action.
     const [, options] = mockNotice.error.mock.calls[0]
-    options.actions[0].onClick()
-
-    expect(reload_spy).toHaveBeenCalledOnce()
-    vi.unstubAllGlobals()
+    expect(options.variant).toBeUndefined()
+    expect(options.actions).toBeUndefined()
   })
 
-  test('the mutation payload carries card_id, deck_id, card, and log [obligation]', () => {
+  test('a failed save marks the card failed and drops it from the summary results [obligation]', async () => {
+    saveMock.mockResolvedValueOnce('failed')
+    const { engine } = makeEngine()
+    engine.setCards([makeCard({ id: 521, deck_id: 1 }), makeCard({ id: 522, deck_id: 1 })])
+    engine.startSession()
+
+    await engine.reviewCard(Rating.Good)
+    await flush()
+
+    expect(engine.cards.value.find((c) => c.id === 521).state).toBe('failed')
+    expect(engine.results.value.some((r) => r.card_id === 521)).toBe(false)
+  })
+
+  test('a confirmed save marks the card saved so it becomes durable [obligation]', async () => {
+    saveMock.mockResolvedValueOnce('saved')
+    const { engine } = makeEngine()
+    engine.setCards([makeCard({ id: 531, deck_id: 1 }), makeCard({ id: 532, deck_id: 1 })])
+    engine.startSession()
+
+    await engine.reviewCard(Rating.Good)
+    await flush()
+
+    expect(engine.cards.value.find((c) => c.id === 531).state).toBe('saved')
+    expect(engine.durableResults().map((r) => r.card_id)).toContain(531)
+  })
+
+  test('the save payload carries card_id, deck_id, card, and log [obligation]', () => {
     const { engine } = makeEngine()
     engine.setCards([makeCard({ id: 502, deck_id: 2 })])
     engine.startSession()
 
     engine.reviewCard(Rating.Good)
 
-    expect(saveReviewMock).toHaveBeenCalledWith({
+    expect(saveMock).toHaveBeenCalledWith({
       card_id: 502,
       deck_id: 2,
       card: expect.any(Object),
@@ -603,7 +617,89 @@ describe('review-save failure surface [obligation]', () => {
 
     engine.reviewCard(Rating.Good)
 
-    expect(saveReviewMock).not.toHaveBeenCalled()
+    expect(saveMock).not.toHaveBeenCalled()
+  })
+})
+
+// ── Durable-review lifecycle [obligation] ───────────────────────────────────
+
+describe('durable-review lifecycle [obligation]', () => {
+  test('a rated card is recorded pending, not counted durable, until its save confirms [obligation]', () => {
+    // A save that never resolves keeps the card pending.
+    saveMock.mockReturnValueOnce(new Promise(() => {}))
+    const { engine } = makeEngine()
+    engine.setCards([makeCard({ id: 541, deck_id: 1 }), makeCard({ id: 542, deck_id: 1 })])
+    engine.startSession()
+
+    engine.reviewCard(Rating.Good)
+
+    expect(engine.cards.value.find((c) => c.id === 541).state).toBe('pending')
+    expect(engine.reviewed_count.value).toBe(1)
+    // Pending is optimistic only — not yet safe to persist for a resume.
+    expect(engine.durableResults().some((r) => r.card_id === 541)).toBe(false)
+  })
+
+  test('re-rating a card re-served as unreviewed on resume produces a single result entry [obligation]', () => {
+    const { engine } = makeEngine()
+    const c1 = makeCard({ id: 551, deck_id: 1 })
+    const c2 = makeCard({ id: 552, deck_id: 1 })
+    // Resume where c1 was rated but its save never confirmed: only c2 is durable.
+    engine.restoreCards([c1, c2], {
+      card_ids: [c1.id, c2.id],
+      results: [
+        {
+          card_id: c2.id,
+          is_new: true,
+          before_interval: 0,
+          after_interval: 1,
+          lapses: 0,
+          passed: true
+        }
+      ],
+      completed: false
+    })
+
+    // c1 comes back unreviewed and is the active card; re-rate it.
+    expect(engine.active_card.value?.id).toBe(c1.id)
+    engine.reviewCard(Rating.Good)
+
+    expect(engine.results.value.filter((r) => r.card_id === c1.id)).toHaveLength(1)
+  })
+
+  test('holds the summary until a slow pending save resolves, then opens it [obligation]', async () => {
+    let resolveSave
+    saveMock.mockReturnValueOnce(new Promise((resolve) => (resolveSave = resolve)))
+    const { engine } = makeEngine()
+    engine.setCards([makeCard({ id: 561, deck_id: 1 })])
+    engine.startSession()
+
+    engine.reviewCard(Rating.Good)
+    await flush()
+    // Last card reviewed but its save is still in flight — summary is held.
+    expect(engine.state.value).toBe('studying')
+
+    resolveSave('saved')
+    await flush()
+
+    expect(engine.state.value).toBe('summary')
+    expect(engine.cards.value.find((c) => c.id === 561).state).toBe('saved')
+  })
+
+  test('force-fails a still-pending save at the 1s summary deadline [obligation]', async () => {
+    vi.useFakeTimers()
+    // A save that never settles on its own.
+    saveMock.mockReturnValueOnce(new Promise(() => {}))
+    const { engine } = makeEngine()
+    engine.setCards([makeCard({ id: 571, deck_id: 1 })])
+    engine.startSession()
+
+    engine.reviewCard(Rating.Good)
+    await vi.advanceTimersByTimeAsync(1000)
+
+    expect(engine.state.value).toBe('summary')
+    expect(engine.cards.value.find((c) => c.id === 571).state).toBe('failed')
+    expect(engine.results.value.some((r) => r.card_id === 571)).toBe(false)
+    vi.useRealTimers()
   })
 })
 
@@ -638,12 +734,12 @@ describe('restore queue lock', () => {
     engine.restoreCards([c1, c2], persisted)
 
     const restored_c1 = engine.cards.value.find((c) => c.id === c1.id)
-    expect(restored_c1.state).toBe('passed')
+    expect(restored_c1.state).toBe('saved')
     expect(restored_c1.back_text).toBe('Full back text')
     expect(restored_c1.back_image_path).toBe('img.png')
   })
 
-  test('stamps a reviewed card passed/failed from results, so active_card and _advance never re-serve it [obligation]', () => {
+  test('stamps a persisted (durably-saved) card as saved, so active_card and _advance never re-serve it [obligation]', async () => {
     const { engine } = makeEngine()
     const c1 = makeCard({ id: 605, deck_id: 1 })
     const c2 = makeCard({ id: 606, deck_id: 1 })
@@ -665,10 +761,11 @@ describe('restore queue lock', () => {
     engine.restoreCards([c1, c2], persisted)
 
     expect(engine.active_card.value?.id).toBe(c2.id)
-    expect(engine.cards.value.find((c) => c.id === c1.id).state).toBe('failed')
+    expect(engine.cards.value.find((c) => c.id === c1.id).state).toBe('saved')
 
     // Advance past c2 (the only unreviewed card) — c1 must never resurface.
-    engine.reviewCard(Rating.Good)
+    await engine.reviewCard(Rating.Good)
+    await flush()
     expect(engine.state.value).toBe('summary')
   })
 

@@ -1,13 +1,32 @@
 import { ref, computed, shallowRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { createEmptyCard, FSRS, Rating, type Grade, type RecordLog } from 'ts-fsrs'
-import { useSaveReviewMutation } from '@/api/reviews'
 import { useNoticeStore } from '@/stores/notice-store'
 import { emitSfx } from '@/sfx/bus'
+import { useReviewSaver } from './review-saver'
+import type { SaveReviewVars } from '@/api/reviews'
 
 export type StudyCard = Card & { state: ReviewState }
 
-type ReviewState = 'failed' | 'passed' | 'unreviewed'
+/**
+ * A card's durability lifecycle within a session (orthogonal to its pass/fail
+ * grade, which lives in the review result):
+ * - `unreviewed` — not yet rated, or re-served on resume because its save
+ *   never confirmed.
+ * - `pending` — rated and advanced past optimistically; its `save_review` is
+ *   in flight and it is not yet durable.
+ * - `saved` — its `save_review` confirmed; the review is durable.
+ * - `failed` — its save was ultimately given up; not counted as reviewed and
+ *   excluded from the summary.
+ */
+type ReviewState = 'unreviewed' | 'pending' | 'saved' | 'failed'
+
+/**
+ * How long the summary waits for still-pending saves to confirm once the last
+ * card is reviewed. Anything unresolved at the deadline is treated as `failed`
+ * so the summary is never held on a stalled network.
+ */
+const SUMMARY_HOLD_MS = 1000
 
 /** loading -> cover -> studying -> summary. The single lifecycle source. */
 export type SessionState = 'loading' | 'cover' | 'studying' | 'summary'
@@ -45,6 +64,11 @@ type SessionEngineDeps = {
  * per-card scheduling. It knows nothing about decks beyond each card's
  * `deck_id`, which it hands to the injected `schedulerFor` / `startingSideFor` —
  * so a merged multi-deck queue schedules each card against its own deck's pacing.
+ *
+ * It also coordinates the durable-save lifecycle (pending/saved/failed, in-flight
+ * tracking, the summary hold); the retry mechanics themselves live in
+ * `review-saver.ts`. If that coordination grows further, lift it into its own
+ * seam rather than letting this core keep swelling.
  */
 export function useSessionEngine({
   schedulerFor,
@@ -55,7 +79,11 @@ export function useSessionEngine({
   const { t } = useI18n()
   const notice = useNoticeStore()
 
-  const save_review_mutation = useSaveReviewMutation()
+  const saver = useReviewSaver()
+
+  // In-flight background saves, kept so the summary can wait on them when the
+  // last card is reviewed. A save removes itself once it settles.
+  const _in_flight = new Set<Promise<void>>()
 
   const state = ref<SessionState>('loading')
   const current_card_side = ref<'front' | 'back'>('front')
@@ -74,7 +102,11 @@ export function useSessionEngine({
 
   const cards = computed(() => _cards_in_deck.value)
 
-  const reviewed_count = computed(() => cards.value.filter((c) => c.state !== 'unreviewed').length)
+  // A card counts as reviewed once it's rated (pending) and stays counted once
+  // saved; a save that ultimately fails drops back out (it's re-served later).
+  const reviewed_count = computed(
+    () => cards.value.filter((c) => c.state === 'pending' || c.state === 'saved').length
+  )
 
   const current_index = computed(() => {
     if (!active_card.value) return cards.value.length
@@ -127,16 +159,18 @@ export function useSessionEngine({
 
   /**
    * Rebuilds the session from a sessionStorage snapshot after a refresh. `raw`
-   * is the whole locked queue, fetched by id so newly-due cards can't leak in —
-   * reviewed cards come back too (the summary renders them), and are stamped
-   * with their reviewed state here so `_advance` never serves them again. Lands
+   * is the whole locked queue, fetched by id so newly-due cards can't leak in.
+   * Only cards whose save durably confirmed are carried in `persisted.results`,
+   * so they're the only ones stamped `saved` (the summary renders them); a card
+   * whose save was still pending or had failed isn't persisted, so it comes
+   * back `unreviewed` and is re-served rather than silently marked done. Lands
    * on the cover — the owner decides whether to jump straight into studying.
    */
   function restoreCards(
     raw: Card[],
     persisted: { card_ids: number[]; results: CardReviewResult[]; completed: boolean }
   ) {
-    const reviewed_by_id = new Map(persisted.results.map((r) => [r.card_id, r]))
+    const saved_ids = new Set(persisted.results.map((r) => r.card_id))
     const fetched_by_id = new Map(raw.map((c) => [c.id, c]))
 
     _raw_cards.value = raw
@@ -146,10 +180,9 @@ export function useSessionEngine({
       const card = fetched_by_id.get(id)
       if (!card) return []
 
-      const reviewed = reviewed_by_id.get(id)
-      if (!reviewed) return [_setupCard(card)]
+      if (!saved_ids.has(id)) return [_setupCard(card)]
 
-      return [{ ..._setupCard(card), state: reviewed.passed ? 'passed' : 'failed' }]
+      return [{ ..._setupCard(card), state: 'saved' }]
     })
 
     active_card.value = cards.value.find((c) => c.state === 'unreviewed')
@@ -193,11 +226,50 @@ export function useSessionEngine({
     active_card.value = cards.value.find((c) => c.state === 'unreviewed')
 
     if (!active_card.value) {
-      state.value = 'summary'
+      _finishSession()
       return
     }
 
     current_card_side.value = active_starting_side.value
+  }
+
+  /**
+   * The last card is reviewed: show the summary, but if saves are still in
+   * flight hold it briefly so a just-confirmed review isn't mislabelled as
+   * failed. With nothing pending this is synchronous — the common case, and the
+   * one the drop/stop paths always hit.
+   */
+  function _finishSession() {
+    if (_in_flight.size === 0) {
+      state.value = 'summary'
+      return
+    }
+    _holdForPendingSaves()
+  }
+
+  /**
+   * Wait up to `SUMMARY_HOLD_MS` for in-flight saves to settle, then open the
+   * summary. Anything still pending at the deadline is force-failed so a stalled
+   * network can't hold the summary open (no spinner is shown during the wait).
+   */
+  async function _holdForPendingSaves() {
+    await _racePendingSaves(SUMMARY_HOLD_MS)
+
+    for (const card of _cards_in_deck.value) {
+      if (card.state === 'pending') _failSave(card.id)
+    }
+
+    state.value = 'summary'
+    onChange()
+  }
+
+  /** Resolves when every in-flight save settles, or when `timeout` elapses. */
+  function _racePendingSaves(timeout: number): Promise<unknown> {
+    let timer: ReturnType<typeof setTimeout>
+    const timed_out = new Promise((resolve) => (timer = setTimeout(resolve, timeout)))
+    return Promise.race([Promise.allSettled(_in_flight), timed_out]).finally(() =>
+      clearTimeout(timer)
+    )
   }
 
   /**
@@ -234,7 +306,7 @@ export function useSessionEngine({
     const card = active_card.value
 
     if (grade === undefined) {
-      card.state = 'passed'
+      card.state = 'saved'
       _advance()
       onChange()
       return
@@ -247,7 +319,7 @@ export function useSessionEngine({
     const item = schedulerFor(card.deck_id).next(review, new Date(), grade)
 
     if (card.id) {
-      results.value.push({
+      _recordResult({
         card_id: card.id,
         deck_id: card.deck_id,
         is_new: (review.reps ?? 0) === 0,
@@ -258,27 +330,88 @@ export function useSessionEngine({
       })
     }
 
+    // The card advances instantly and is only `pending` — it becomes durably
+    // reviewed once its background save confirms, or `failed` if it never does.
     card.review = item.card
-    card.state = grade === Rating.Again ? 'failed' : 'passed'
+    card.state = 'pending'
+
+    let save_promise: Promise<void> | undefined
+    if (card.id && card.deck_id !== undefined) {
+      save_promise = _persistReview(card.id, {
+        card_id: card.id,
+        deck_id: card.deck_id,
+        card: item.card,
+        log: item.log
+      })
+    }
+
     _advance()
     onChange()
 
-    if (card.id && card.deck_id !== undefined) {
-      return save_review_mutation
-        .mutateAsync({ card_id: card.id, deck_id: card.deck_id, card: item.card, log: item.log })
-        .catch(() => {
-          notice.error(t('study-session.review-save-error'), {
-            subMessage: t('study-session.review-save-error-sub'),
-            variant: 'panel',
-            actions: [{ label: t('notice.refresh-label'), onClick: () => location.reload() }]
-          })
-        })
-    }
+    return save_promise
+  }
+
+  /**
+   * Upserts a card's review result by card_id, so re-rating a card that was
+   * re-served on resume replaces its entry instead of adding a duplicate.
+   */
+  function _recordResult(result: CardReviewResult) {
+    const rest = results.value.filter((r) => r.card_id !== result.card_id)
+    results.value = [...rest, result]
+  }
+
+  /** Fire the durable save in the background and reconcile the card once it settles. */
+  function _persistReview(card_id: number, vars: SaveReviewVars): Promise<void> {
+    const promise = saver.save(vars).then((outcome) => {
+      if (outcome === 'saved') _confirmSave(card_id)
+      else _failSave(card_id)
+    })
+    _in_flight.add(promise)
+    void promise.finally(() => _in_flight.delete(promise))
+    return promise
+  }
+
+  /** A pending card's save confirmed — mark it durable so persistence keeps it. */
+  function _confirmSave(card_id: number) {
+    const card = _cards_in_deck.value.find((c) => c.id === card_id)
+    if (!card || card.state !== 'pending') return
+    card.state = 'saved'
+    onChange()
+  }
+
+  /**
+   * A pending card's save was ultimately given up: drop it from the summary
+   * results, mark it `failed` (re-served next session), and surface a
+   * non-blocking notice. Idempotent — a late online-retry that resolves after
+   * the summary already force-failed the card is ignored.
+   */
+  function _failSave(card_id: number) {
+    const card = _cards_in_deck.value.find((c) => c.id === card_id)
+    if (!card || card.state !== 'pending') return
+    card.state = 'failed'
+    results.value = results.value.filter((r) => r.card_id !== card_id)
+    onChange()
+    notice.error(t('study-session.review-save-error'), {
+      subMessage: t('study-session.review-save-error-sub')
+    })
   }
 
   function _setupCard(card: Card): StudyCard {
     const review = card.review ?? (createEmptyCard(new Date()) as Review)
     return { ...card, review, state: 'unreviewed' }
+  }
+
+  /**
+   * The results that are safe to persist for a resume: only cards whose save
+   * durably confirmed. A pending or failed card is deliberately left out so a
+   * refresh re-serves it as unreviewed instead of rebuilding it as done. Read
+   * fresh (not a computed) because card `state` is mutated in place.
+   */
+  function durableResults(): CardReviewResult[] {
+    const saved_ids = new Set(
+      _cards_in_deck.value.filter((c) => c.state === 'saved').map((c) => c.id)
+    )
+    return results.value.filter((r) => saved_ids.has(r.card_id))
   }
 
   return {
@@ -288,6 +421,7 @@ export function useSessionEngine({
     active_card,
     active_card_preview,
     results,
+    durableResults,
     cards,
     reviewed_count,
     current_index,

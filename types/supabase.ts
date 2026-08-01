@@ -1134,24 +1134,9 @@ export type Database = {
       }
       save_review: {
         Args: {
+          p_card: Database['public']['CompositeTypes']['review_card_state']
           p_card_id: number
-          p_card_state: number
-          p_difficulty: number
-          p_due: string
-          p_elapsed_days: number
-          p_lapses: number
-          p_last_review: string
-          p_learning_steps?: number
-          p_log_difficulty: number
-          p_log_due: string
-          p_log_scheduled_days: number
-          p_log_stability: number
-          p_rating: number
-          p_reps: number
-          p_review: string
-          p_scheduled_days: number
-          p_stability: number
-          p_state: number
+          p_log: Database['public']['CompositeTypes']['review_log_entry']
         }
         Returns: undefined
       }
@@ -1253,6 +1238,27 @@ export type Database = {
         max_new_per_day: number | null
         leech_threshold: number | null
         max_interval: number | null
+      }
+      review_card_state: {
+        due: string | null
+        stability: number | null
+        difficulty: number | null
+        elapsed_days: number | null
+        scheduled_days: number | null
+        reps: number | null
+        lapses: number | null
+        last_review: string | null
+        state: number | null
+        learning_steps: number | null
+      }
+      review_log_entry: {
+        rating: number | null
+        state: number | null
+        due: string | null
+        stability: number | null
+        difficulty: number | null
+        scheduled_days: number | null
+        review: string | null
       }
     }
   }

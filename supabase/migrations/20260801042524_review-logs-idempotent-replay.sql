@@ -1,11 +1,23 @@
--- Hand-organized declarative schema (by domain). Edit freely — this file is the
--- canonical definition. Run `supabase db diff -f <name>` after editing to
--- produce the migration.
-SET check_function_bodies = false;
+-- De-dupe existing history before the unique index can be built: any
+-- (member_id, card_id, review) that was written more than once (a pre-fix
+-- retry) collapses to its earliest row. Must run before CREATE UNIQUE INDEX or
+-- the index build fails on the existing duplicates.
+DELETE FROM public.review_logs a
+USING public.review_logs b
+WHERE a.id > b.id
+  AND a.member_id = b.member_id
+  AND a.card_id = b.card_id
+  AND a.review = b.review;
 
-CREATE FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry) RETURNS void
-    LANGUAGE plpgsql SECURITY DEFINER
-    AS $$
+CREATE UNIQUE INDEX review_logs_member_card_review_key ON public.review_logs USING btree (member_id, card_id, review);
+
+set check_function_bodies = off;
+
+CREATE OR REPLACE FUNCTION public.save_review(p_card_id bigint, p_due timestamp with time zone, p_stability real, p_difficulty real, p_elapsed_days smallint, p_scheduled_days smallint, p_reps smallint, p_lapses smallint, p_last_review timestamp with time zone, p_card_state smallint, p_rating smallint, p_state smallint, p_log_due timestamp with time zone, p_log_stability real, p_log_difficulty real, p_log_scheduled_days smallint, p_review timestamp with time zone, p_learning_steps smallint DEFAULT 0)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
 DECLARE
   -- active_member_id(), not auth.uid(). SECURITY DEFINER means RLS never runs
   -- here, so the policy sweep that suspends a pending-deletion account does not
@@ -34,9 +46,8 @@ BEGIN
   )
   VALUES (
     p_card_id, v_uid,
-    (p_card).due, (p_card).stability, (p_card).difficulty, (p_card).elapsed_days,
-    (p_card).scheduled_days, (p_card).reps, (p_card).lapses, (p_card).last_review, (p_card).state,
-    COALESCE((p_card).learning_steps, 0)
+    p_due, p_stability, p_difficulty, p_elapsed_days,
+    p_scheduled_days, p_reps, p_lapses, p_last_review, p_card_state, p_learning_steps
   )
   ON CONFLICT (card_id) DO UPDATE SET
     due            = EXCLUDED.due,
@@ -60,22 +71,17 @@ BEGIN
   )
   VALUES (
     p_card_id, v_uid,
-    (p_log).rating, (p_log).state, (p_log).due,
-    (p_log).stability, (p_log).difficulty,
-    (p_log).scheduled_days,
-    (p_log).review
+    p_rating, p_state, p_log_due,
+    p_log_stability, p_log_difficulty,
+    p_log_scheduled_days,
+    p_review
   )
   -- Idempotent replay: a retried save (offline recovery) re-runs the exact same
   -- review event, so swallow the duplicate rather than growing history. The
   -- reviews upsert above is already idempotent via ON CONFLICT (card_id).
   ON CONFLICT (member_id, card_id, review) DO NOTHING;
 END;
-$$;
+$function$
+;
 
 
-ALTER FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry) OWNER TO postgres;
-
-
-GRANT ALL ON FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry) TO anon;
-GRANT ALL ON FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry) TO authenticated;
-GRANT ALL ON FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry) TO service_role;

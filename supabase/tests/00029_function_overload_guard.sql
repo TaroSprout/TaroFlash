@@ -58,18 +58,14 @@ SELECT has_function(
   'get_session_decks_and_cards has the (p_deck_ids, p_today_start) signature the FE sends [obligation]'
 );
 
--- Test 3: save_review exists with the exact 18-arg signature the FE calls
--- (src/api/reviews/db/index.ts).
+-- Test 3: save_review exists with the exact 3-arg composite signature the FE
+-- calls (src/api/reviews/db/index.ts) — p_card_id plus the review_card_state
+-- and review_log_entry payload types the flat args were folded into.
 SELECT has_function(
   'public',
   'save_review',
-  ARRAY[
-    'bigint', 'timestamp with time zone', 'real', 'real', 'smallint',
-    'smallint', 'smallint', 'smallint', 'timestamp with time zone',
-    'smallint', 'smallint', 'smallint', 'timestamp with time zone', 'real',
-    'real', 'smallint', 'timestamp with time zone', 'smallint'
-  ],
-  'save_review has the 18-arg signature (incl. p_card_state + p_learning_steps) the FE sends'
+  ARRAY['bigint', 'review_card_state', 'review_log_entry'],
+  'save_review has the (p_card_id, review_card_state, review_log_entry) signature the FE sends'
 );
 
 SELECT * FROM finish();

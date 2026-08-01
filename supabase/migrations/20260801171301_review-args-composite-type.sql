@@ -1,11 +1,16 @@
--- Hand-organized declarative schema (by domain). Edit freely — this file is the
--- canonical definition. Run `supabase db diff -f <name>` after editing to
--- produce the migration.
-SET check_function_bodies = false;
+drop function if exists "public"."save_review"(p_card_id bigint, p_due timestamp with time zone, p_stability real, p_difficulty real, p_elapsed_days smallint, p_scheduled_days smallint, p_reps smallint, p_lapses smallint, p_last_review timestamp with time zone, p_card_state smallint, p_rating smallint, p_state smallint, p_log_due timestamp with time zone, p_log_stability real, p_log_difficulty real, p_log_scheduled_days smallint, p_review timestamp with time zone, p_learning_steps smallint);
 
-CREATE FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry) RETURNS void
-    LANGUAGE plpgsql SECURITY DEFINER
-    AS $$
+set check_function_bodies = off;
+
+create type "public"."review_card_state" as ("due" timestamp with time zone, "stability" real, "difficulty" real, "elapsed_days" smallint, "scheduled_days" smallint, "reps" smallint, "lapses" smallint, "last_review" timestamp with time zone, "state" smallint, "learning_steps" smallint);
+
+create type "public"."review_log_entry" as ("rating" smallint, "state" smallint, "due" timestamp with time zone, "stability" real, "difficulty" real, "scheduled_days" smallint, "review" timestamp with time zone);
+
+CREATE OR REPLACE FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
 DECLARE
   -- active_member_id(), not auth.uid(). SECURITY DEFINER means RLS never runs
   -- here, so the policy sweep that suspends a pending-deletion account does not
@@ -70,12 +75,14 @@ BEGIN
   -- reviews upsert above is already idempotent via ON CONFLICT (card_id).
   ON CONFLICT (member_id, card_id, review) DO NOTHING;
 END;
-$$;
+$function$
+;
 
-
-ALTER FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry) OWNER TO postgres;
-
-
+-- db diff never emits function grants, and dropping the old signature dropped
+-- its grants — hand-restore them so the new signature matches the declared
+-- schema instead of leaning on the default PUBLIC execute.
 GRANT ALL ON FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry) TO anon;
 GRANT ALL ON FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry) TO authenticated;
 GRANT ALL ON FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry) TO service_role;
+
+

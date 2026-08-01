@@ -2,7 +2,7 @@ import { useMutation, useQueryCache } from '@pinia/colada'
 import type { ReviewLog } from 'ts-fsrs'
 import { saveReview } from '../db'
 
-type SaveReviewVars = {
+export type SaveReviewVars = {
   card_id: number
   deck_id: number
   card: Review

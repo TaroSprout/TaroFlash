@@ -62,6 +62,43 @@ describe('saveReview (contract)', () => {
     expect(logs).toHaveLength(1)
     expect(logs[0].rating).toBe(3)
   })
+
+  test('replaying an identical review writes no duplicate review_logs row [obligation]', async () => {
+    const deck = await createDeck(session.client, session.userId)
+    const card = await insertCardDirect(session.client, deck.id)
+
+    const now = new Date()
+    const card_state = {
+      due: new Date(now.getTime() + 86_400_000).toISOString(),
+      stability: 1.5,
+      difficulty: 5,
+      elapsed_days: 0,
+      scheduled_days: 1,
+      reps: 1,
+      lapses: 0,
+      last_review: now.toISOString(),
+      state: 1
+    }
+    const log = {
+      rating: 3,
+      state: 1,
+      due: card_state.due,
+      stability: card_state.stability,
+      difficulty: card_state.difficulty,
+      scheduled_days: card_state.scheduled_days,
+      review: now.toISOString()
+    }
+
+    // Same (member, card, review-instant) twice — a retried save.
+    await saveReview(card.id, card_state, log)
+    await saveReview(card.id, card_state, log)
+
+    const { data: logs } = await session.client
+      .from('review_logs')
+      .select('id')
+      .eq('card_id', card.id)
+    expect(logs).toHaveLength(1)
+  })
 })
 
 describe('resetDeckReviews (contract)', () => {
