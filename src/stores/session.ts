@@ -14,6 +14,9 @@ import {
   signInOAuth as supaSignInOAuth,
   updateEmail as supaUpdateEmail,
   updatePassword as supaUpdatePassword,
+  verifyPassword as supaVerifyPassword,
+  requestReauthCode as supaRequestReauthCode,
+  verifyReauthCode as supaVerifyReauthCode,
   requestPasswordReset as supaRequestPasswordReset,
   linkGoogleIdentity as supaLinkGoogleIdentity,
   unlinkGoogleIdentity as supaUnlinkGoogleIdentity,
@@ -23,6 +26,9 @@ import {
   type OAuthProvider,
   type UpdateEmailOutcome,
   type UpdatePasswordOutcome,
+  type VerifyPasswordOutcome,
+  type RequestReauthCodeOutcome,
+  type VerifyReauthCodeOutcome,
   type RequestPasswordResetOutcome
 } from '@/api/session'
 import { useRouter } from 'vue-router'
@@ -192,6 +198,18 @@ export const useSessionStore = defineStore('sessionStore', () => {
     return supaUpdatePassword(password)
   }
 
+  function verifyPassword(password: string): Promise<VerifyPasswordOutcome> {
+    return supaVerifyPassword(password)
+  }
+
+  function requestReauthCode(): Promise<RequestReauthCodeOutcome> {
+    return supaRequestReauthCode()
+  }
+
+  function verifyReauthCode(code: string): Promise<VerifyReauthCodeOutcome> {
+    return supaVerifyReauthCode(code)
+  }
+
   function requestPasswordReset(email: string): Promise<RequestPasswordResetOutcome> {
     return supaRequestPasswordReset(email)
   }
@@ -278,6 +296,9 @@ export const useSessionStore = defineStore('sessionStore', () => {
     onAuthenticated,
     updateEmail,
     updatePassword,
+    verifyPassword,
+    requestReauthCode,
+    verifyReauthCode,
     requestPasswordReset,
     linkGoogleIdentity,
     unlinkGoogleIdentity,

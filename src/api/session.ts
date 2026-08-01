@@ -184,6 +184,22 @@ export async function signOutLocal(): Promise<void> {
 }
 
 /**
+ * Revokes every session for this account except the one making the call — the
+ * caller stays signed in where they are.
+ *
+ * Logged and swallowed: it runs after a password change has already succeeded,
+ * so failing it must not turn a completed change into a reported failure. The
+ * new password is live either way.
+ */
+export async function signOutOthers(): Promise<void> {
+  const { error } = await supabase.auth.signOut({ scope: 'others' })
+
+  if (error) {
+    logger.error(`Sign-out of other sessions failed: ${error.message}`)
+  }
+}
+
+/**
  * Requests account deletion: marks the account pending, cancels any
  * subscription with a prorated refund, and revokes every session.
  *
@@ -435,13 +451,148 @@ export async function updateEmail(email: string): Promise<UpdateEmailOutcome> {
   }
 }
 
+export type VerifyPasswordOutcome = 'success' | 'invalid-credentials' | 'error'
+
+/**
+ * Re-proves identity for a member who signs in with a password, by signing in
+ * again as them. Used as the gate in front of a password change.
+ *
+ * The email is read from the live session rather than taken as an argument —
+ * that's the same-account guard. A caller can't hand in a different address and
+ * have a successful sign-in to *someone else's* account read as proof, which
+ * would also silently swap this tab onto that account.
+ *
+ * Succeeding replaces the current session with a fresh one for the same user.
+ * Nothing in the app reacts to `SIGNED_IN`, so this is invisible to the rest of
+ * the store.
+ */
+export async function verifyPassword(password: string): Promise<VerifyPasswordOutcome> {
+  try {
+    const session = await getSession()
+    const email = session?.user.email
+
+    if (!email) {
+      logger.error('Password verification failed: no email on the current session')
+      return 'error'
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (!error) return 'success'
+    if (error.code === 'invalid_credentials') return 'invalid-credentials'
+
+    logger.error(`Password verification failed: ${error.message}`)
+    return 'error'
+  } catch (e: any) {
+    logger.error(`Password verification failed: ${e.message}`)
+    return 'error'
+  }
+}
+
+export type RequestReauthCodeOutcome = 'success' | 'rate-limited' | 'error'
+
+/**
+ * Emails a one-time sign-in code to the signed-in account. Paired with
+ * `verifyReauthCode` this is the re-proof of identity for members with no
+ * password to re-enter (Google-only).
+ *
+ * Same-account by construction twice over: the email comes off the live session,
+ * and `shouldCreateUser: false` means a stray address can't quietly mint a new
+ * account instead.
+ *
+ * Deliberately not the OAuth popup: on phones the OAuth transport falls back to
+ * a full-page redirect, which would abandon the half-filled password form. A
+ * mailed code behaves identically on every device.
+ *
+ * Also deliberately not `reauthenticate()` + `updateUser({ nonce })`, which
+ * reads like the purpose-built API but does not gate anything here. GoTrue only
+ * validates that nonce when `secure_password_change` is on AND the session is
+ * over 24h old; otherwise it ignores the value entirely (VERIFIED against local
+ * GoTrue: a deliberately wrong nonce still changed the password). A hijacked
+ * tab is by definition recent, so that path would never challenge the one
+ * attacker it exists to stop. `verifyOtp` is a real sign-in and always
+ * validates.
+ */
+export async function requestReauthCode(): Promise<RequestReauthCodeOutcome> {
+  try {
+    const session = await getSession()
+    const email = session?.user.email
+
+    if (!email) {
+      logger.error('Reauth code request failed: no email on the current session')
+      return 'error'
+    }
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: false }
+    })
+
+    if (!error) return 'success'
+    if (error.status === 429) return 'rate-limited'
+
+    logger.error(`Reauth code request failed: ${error.message}`)
+    return 'error'
+  } catch (e: any) {
+    logger.error(`Reauth code request failed: ${e.message}`)
+    return 'error'
+  }
+}
+
+export type VerifyReauthCodeOutcome = 'success' | 'invalid-code' | 'error'
+
+/**
+ * Consumes the emailed code, which signs the member in again — that fresh
+ * sign-in *is* the proof of identity.
+ *
+ * GoTrue answers a wrong code and an expired one with the same `otp_expired`,
+ * deliberately, so both collapse into one outcome here.
+ */
+export async function verifyReauthCode(code: string): Promise<VerifyReauthCodeOutcome> {
+  try {
+    const session = await getSession()
+    const email = session?.user.email
+
+    if (!email) {
+      logger.error('Reauth code verification failed: no email on the current session')
+      return 'error'
+    }
+
+    const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' })
+
+    if (!error) return 'success'
+    if (error.code === 'otp_expired') return 'invalid-code'
+
+    logger.error(`Reauth code verification failed: ${error.message}`)
+    return 'error'
+  } catch (e: any) {
+    logger.error(`Reauth code verification failed: ${e.message}`)
+    return 'error'
+  }
+}
+
 export type UpdatePasswordOutcome = 'success' | 'weak-password' | 'same-password' | 'error'
 
+/**
+ * Sets a new password, then revokes every other session for the account.
+ *
+ * The sign-out lives here rather than at the call sites so both flows that end
+ * in a new password — the account-access change and the emailed reset — close
+ * off anyone who already had access.
+ *
+ * Re-proving identity is the caller's job, ahead of this call (`verifyPassword`
+ * or `verifyReauthCode`). It can't be enforced here: both proofs work by signing
+ * in again, which leaves nothing on the session for this function to inspect.
+ */
 export async function updatePassword(password: string): Promise<UpdatePasswordOutcome> {
   try {
     const { error } = await supabase.auth.updateUser({ password })
 
-    if (!error) return 'success'
+    if (!error) {
+      await signOutOthers()
+      return 'success'
+    }
+
     if (error.code === 'weak_password') return 'weak-password'
     if (error.code === 'same_password') return 'same-password'
 
