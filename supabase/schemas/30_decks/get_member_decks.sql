@@ -31,19 +31,23 @@ CREATE FUNCTION public.get_member_decks(p_today_start timestamp with time zone) 
     stats.new_reviewed_today_count,
 
     -- new_take + review_take, matching get_study_session_cards exactly.
-    -- COALESCE(cap - used, INT_MAX) treats a NULL cap as unbounded.
-    GREATEST(
-      0,
-      LEAST(stats.new_available, stats.remaining_new, stats.remaining_total)
-    )
-    + GREATEST(
-      0,
-      LEAST(
-        stats.review_available,
-        stats.remaining_total
-          - GREATEST(0, LEAST(stats.new_available, stats.remaining_new, stats.remaining_total))
+    -- COALESCE(cap - used, INT_MAX) treats a NULL cap as unbounded. A locked
+    -- deck reports 0 so it drops out of the review inbox and "study all due" —
+    -- study is barred there too (get_study_session_cards returns nothing).
+    CASE WHEN lock.deadline IS NOT NULL THEN 0 ELSE
+      GREATEST(
+        0,
+        LEAST(stats.new_available, stats.remaining_new, stats.remaining_total)
       )
-    ) AS due_count,
+      + GREATEST(
+        0,
+        LEAST(
+          stats.review_available,
+          stats.remaining_total
+            - GREATEST(0, LEAST(stats.new_available, stats.remaining_new, stats.remaining_total))
+        )
+      )
+    END AS due_count,
 
     d.rank,
 
@@ -59,12 +63,18 @@ CREATE FUNCTION public.get_member_decks(p_today_start timestamp with time zone) 
     rp.leech_threshold,
     rp.max_interval,
 
-    dp.overrides AS pacing_overrides
+    dp.overrides AS pacing_overrides,
+
+    -- Locked flag + deletion date the dashboard renders. Both fall out of the
+    -- one deck_lock_deadline read: non-NULL deadline ⇒ locked.
+    (lock.deadline IS NOT NULL) AS is_locked,
+    lock.deadline AS locked_delete_at
 
   FROM public.decks d
   LEFT JOIN LATERAL public.member_public_profile(d.member_id) m ON true
   LEFT JOIN public.deck_review_pacing dp ON dp.deck_id = d.id
   CROSS JOIN LATERAL public.resolve_deck_pacing(d.id) AS rp
+  CROSS JOIN LATERAL (SELECT public.deck_lock_deadline(d.id) AS deadline) AS lock
   CROSS JOIN LATERAL (
     SELECT
       (

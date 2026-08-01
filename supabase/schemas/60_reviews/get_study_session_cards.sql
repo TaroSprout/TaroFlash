@@ -17,6 +17,12 @@ DECLARE
   v_new_take        int;
   v_review_take     int;
 BEGIN
+  -- A locked deck yields no study cards at all — study is barred while the
+  -- downgrade grace runs, even though the deck stays fully readable/editable.
+  IF public.deck_lock_deadline(p_deck_id) IS NOT NULL THEN
+    RETURN;
+  END IF;
+
   -- Read the resolved daily caps (NULL = unlimited) via the shared resolver.
   SELECT rp.max_reviews_per_day, rp.max_new_per_day
   INTO v_max_total, v_max_new

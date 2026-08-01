@@ -48,6 +48,9 @@ CREATE FUNCTION public.get_session_decks_and_cards(p_deck_ids bigint[], p_today_
         ) AS deck_json
         FROM public.decks dk
         WHERE dk.id = d.deck_id
+          -- A locked deck contributes nothing to a session: no deck record and
+          -- (via get_study_session_cards below) no cards.
+          AND public.deck_lock_deadline(dk.id) IS NULL
       ) AS deck_row
     ) AS decks,
 
