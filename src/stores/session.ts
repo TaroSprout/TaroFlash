@@ -41,6 +41,7 @@ import { useNoticeStore } from '@/stores/notice-store'
 import { useTaroPhoneStore } from '@/stores/taro-phone'
 import { closeAll as closeAllModals } from '@/composables/modal'
 import { clearPersistedSession } from '@/views/study-session/composables/session-persistence'
+import { consumeReturnDestination } from '@/composables/auth/return-destination'
 
 /** Why a session was torn down without the member asking to log out. */
 export type ForceLogoutReason = 'expired' | 'account-deleted'
@@ -64,6 +65,13 @@ export const useSessionStore = defineStore('sessionStore', () => {
   const has_password = ref(false)
   const loading_count = ref(0)
   let logging_out_intentionally = false
+
+  // Shared in-flight promise for the one identity resolution. The router
+  // checkpoint fires this on the first navigation and every later navigation
+  // awaits the same answer, so a cold load never pays for two round-trips or
+  // races two restores. Cleared on any auth transition (fresh sign-in, logout)
+  // so the next navigation re-resolves against the new session.
+  let resolved: Promise<boolean> | undefined
 
   const authenticated = computed(() => Boolean(user.value?.aud === 'authenticated'))
   const isLoading = computed(() => loading_count.value > 0)
@@ -108,6 +116,21 @@ export const useSessionStore = defineStore('sessionStore', () => {
     } finally {
       stopLoading()
     }
+  }
+
+  /**
+   * The one identity resolution, memoized. Every navigation awaits this single
+   * shared promise instead of each restoring the session itself. Cleared by
+   * `clearResolved()` on any auth transition so the next call re-resolves.
+   */
+  function ensureResolved(): Promise<boolean> {
+    return (resolved ??= restoreSession())
+  }
+
+  // Re-arm ensureResolved() so the next navigation reflects the current session
+  // rather than the memoized answer from before a sign-in or sign-out.
+  function clearResolved(): void {
+    resolved = undefined
   }
 
   function login(email: string, password: string): Promise<LoginOutcome> {
@@ -178,8 +201,14 @@ export const useSessionStore = defineStore('sessionStore', () => {
   // navigate without closing its modal — the gap that left the OAuth popup's
   // parent modal open on top of the dashboard.
   function onAuthenticated(): void {
+    // Re-arm identity resolution so the checkpoint on the next navigation sees
+    // the freshly established session, not the memoized signed-out answer from
+    // the welcome load.
+    clearResolved()
     closeAllModals()
-    router.push({ name: 'dashboard' })
+    // Land on where the member was originally headed (captured as `?next=` when
+    // the checkpoint bounced them here), falling back to the dashboard.
+    router.push(consumeReturnDestination() ?? { name: 'dashboard' })
   }
 
   async function signInOAuth(provider: OAuthProvider): Promise<void> {
@@ -254,6 +283,9 @@ export const useSessionStore = defineStore('sessionStore', () => {
     user.value = undefined
     has_password.value = false
 
+    // Re-arm resolution so a re-login after this teardown resolves fresh instead
+    // of returning the stale signed-in answer.
+    clearResolved()
     closeAllModals()
     clearQueryCache()
     taroPhone.reset()
@@ -304,6 +336,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
     login,
     checkPasswordRecovery,
     restoreSession,
+    ensureResolved,
     logout,
     forceLogout,
     // Exposed for teardown after a server-side session revocation (account
