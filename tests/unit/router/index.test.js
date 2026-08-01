@@ -1,19 +1,29 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
+//
+// The single checkpoint is registered via `router.beforeEach(async (to) => {...})`
+// at module scope in src/router/index.ts — there's no per-route `beforeEnter` to
+// grab anymore. We spy on `createRouter` (keeping the real implementation) so we
+// can capture the exact guard function the module registers, then invoke it
+// directly with `to` objects built from the real router's own `resolve()` — this
+// exercises the real route table's meta (including parent→child meta merge)
+// without triggering navigation, dynamic chunk loads, or component mounting.
 
 const {
   mockSessionStore,
   mockMemberStore,
-  mockPrefetchMemberDecks,
+  mockUseCan,
   mockPrefetchMemberById,
-  mockOpenPendingDeletionNotice
+  mockPrefetchMemberDecks,
+  mockIsPasswordRecoveryUrl
 } = vi.hoisted(() => ({
-  mockSessionStore: { user: { id: 'user-1' }, restoreSession: vi.fn() },
-  mockMemberStore: { role: 'member', pending_deletion: false },
-  mockPrefetchMemberDecks: vi.fn(),
+  mockSessionStore: { ensureResolved: vi.fn() },
+  mockMemberStore: {},
+  mockUseCan: vi.fn(),
   mockPrefetchMemberById: vi.fn(),
-  mockOpenPendingDeletionNotice: vi.fn()
+  mockPrefetchMemberDecks: vi.fn(),
+  mockIsPasswordRecoveryUrl: vi.fn()
 }))
 
 vi.mock('@/stores/session', () => ({
@@ -24,158 +34,246 @@ vi.mock('@/stores/member', () => ({
   useMemberStore: () => mockMemberStore
 }))
 
-vi.mock('@/api/decks', () => ({
-  prefetchMemberDecks: mockPrefetchMemberDecks
+vi.mock('@/composables/can', () => ({
+  useCan: mockUseCan
+}))
+
+vi.mock('@/api/session', () => ({
+  isPasswordRecoveryUrl: mockIsPasswordRecoveryUrl
 }))
 
 vi.mock('@/api/members', () => ({
   prefetchMemberById: mockPrefetchMemberById
 }))
 
-vi.mock('@/composables/member/pending-deletion-notice', () => ({
-  usePendingDeletionNotice: () => ({ open: mockOpenPendingDeletionNotice })
+// The checkpoint no longer imports @/api/decks at all — mocked here only so a
+// regression (someone re-adding the prefetch call) would surface as a call.
+vi.mock('@/api/decks', () => ({
+  prefetchMemberDecks: mockPrefetchMemberDecks
 }))
 
+// Not under test here; avoids pulling in the real view (and its own composable
+// tree) just to resolve the route table.
 vi.mock('@/views/app-shell/authenticated.vue', () => ({ default: {} }))
+
+const guardHolder = vi.hoisted(() => ({ current: undefined }))
+
+vi.mock('vue-router', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    createRouter: (options) => {
+      const instance = actual.createRouter(options)
+      const originalBeforeEach = instance.beforeEach.bind(instance)
+      instance.beforeEach = (guard) => {
+        guardHolder.current = guard
+        return originalBeforeEach(guard)
+      }
+      return instance
+    }
+  }
+})
 
 import router from '@/router/index'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function findRoute(name) {
-  return router.getRoutes().find((r) => r.name === name)
+function resolveTo(path) {
+  return router.resolve(path)
+}
+
+function capturedGuard(to) {
+  return guardHolder.current(to)
 }
 
 beforeEach(() => {
-  mockSessionStore.user = { id: 'user-1' }
-  mockSessionStore.restoreSession.mockReset().mockResolvedValue(true)
-  mockMemberStore.role = 'member'
+  mockSessionStore.ensureResolved.mockReset().mockResolvedValue(true)
   mockMemberStore.pending_deletion = false
-  mockPrefetchMemberDecks.mockReset()
+  mockUseCan.mockReset().mockReturnValue({ useAudioReader: { value: true } })
   mockPrefetchMemberById.mockReset().mockResolvedValue(undefined)
-  mockOpenPendingDeletionNotice.mockReset()
+  mockPrefetchMemberDecks.mockReset()
+  mockIsPasswordRecoveryUrl.mockReset().mockReturnValue(false)
 })
 
-describe('router — authenticated route beforeEnter', () => {
-  test('redirects to welcome when restoreSession resolves false', async () => {
-    mockSessionStore.restoreSession.mockResolvedValueOnce(false)
-    const authenticated =
-      findRoute('authenticated') ?? router.getRoutes().find((r) => r.path === '/')
-    const result = await authenticated.beforeEnter()
-    expect(result).toEqual({ name: 'welcome' })
+describe('router — the single auth checkpoint', () => {
+  test('registers exactly one beforeEach guard', () => {
+    expect(typeof guardHolder.current).toBe('function')
   })
 
-  // [obligation] resolveMember() must AWAIT the member prefetch before this
-  // guard reads pending_deletion off the store — otherwise a direct URL hit
-  // reads an unset flag mid-restore and waves a pending account through.
-  test('awaits prefetchMemberById before reading member.pending_deletion [obligation]', async () => {
-    let resolvePrefetch
-    mockPrefetchMemberById.mockReturnValueOnce(
-      new Promise((resolve) => {
-        resolvePrefetch = resolve
-      })
-    )
-    mockMemberStore.pending_deletion = true
-    const authenticated = router.getRoutes().find((r) => r.path === '/')
+  // ── requiresAuth ────────────────────────────────────────────────────────────
 
-    const resultPromise = authenticated.beforeEnter()
-    await Promise.resolve()
-    expect(mockOpenPendingDeletionNotice).not.toHaveBeenCalled()
+  describe('requiresAuth', () => {
+    test('a signed-out visitor hitting a shell URL is redirected to welcome carrying the original path as next', async () => {
+      mockSessionStore.ensureResolved.mockResolvedValue(false)
+      const to = resolveTo('/deck/123')
 
-    resolvePrefetch()
-    await resultPromise
+      const result = await capturedGuard(to)
 
-    expect(mockOpenPendingDeletionNotice).toHaveBeenCalledOnce()
-  })
-
-  test('calls prefetchMemberById with the session user id [obligation]', async () => {
-    const authenticated = router.getRoutes().find((r) => r.path === '/')
-    await authenticated.beforeEnter()
-    expect(mockPrefetchMemberById).toHaveBeenCalledWith('user-1')
-  })
-
-  test('fires prefetchMemberDecks when authenticated and not pending [obligation]', async () => {
-    const authenticated = router.getRoutes().find((r) => r.path === '/')
-    await authenticated.beforeEnter()
-    expect(mockPrefetchMemberDecks).toHaveBeenCalledOnce()
-  })
-
-  // ── pending-deletion divert [obligation] ───────────────────────────────────
-
-  describe('when the member is pending deletion [obligation]', () => {
-    test('opens the pending-deletion notice and redirects to welcome [obligation]', async () => {
-      mockMemberStore.pending_deletion = true
-      const authenticated = router.getRoutes().find((r) => r.path === '/')
-
-      const result = await authenticated.beforeEnter()
-
-      expect(mockOpenPendingDeletionNotice).toHaveBeenCalledOnce()
-      expect(result).toEqual({ name: 'welcome' })
+      expect(result).toEqual({ name: 'welcome', query: { next: '/deck/123' } })
     })
 
-    test('does NOT call prefetchMemberDecks — RLS returns zero rows for a pending member [obligation]', async () => {
+    test('a signed-in visitor is allowed through to a shell URL', async () => {
+      mockSessionStore.ensureResolved.mockResolvedValue(true)
+      const to = resolveTo('/dashboard')
+
+      const result = await capturedGuard(to)
+
+      expect(result).toBeUndefined()
+    })
+
+    test('a pending-deletion member is NOT diverted — auth passes and the shell route is allowed through', async () => {
+      mockSessionStore.ensureResolved.mockResolvedValue(true)
       mockMemberStore.pending_deletion = true
-      const authenticated = router.getRoutes().find((r) => r.path === '/')
+      const to = resolveTo('/dashboard')
 
-      await authenticated.beforeEnter()
+      const result = await capturedGuard(to)
 
-      expect(mockPrefetchMemberDecks).not.toHaveBeenCalled()
+      expect(result).toBeUndefined()
     })
   })
-})
 
-describe('router — requireAudioReader (lesson route beforeEnter)', () => {
-  function lessonBeforeEnter() {
-    const lesson = router.getRoutes().find((r) => r.name === 'lesson')
-    return lesson.beforeEnter
-  }
+  // ── guestOnly ──────────────────────────────────────────────────────────────
 
-  test('calls prefetchMemberById (via cache.refresh under the hood) when a user id exists [obligation]', async () => {
-    await lessonBeforeEnter()()
-    expect(mockPrefetchMemberById).toHaveBeenCalledWith('user-1')
+  describe('guestOnly', () => {
+    test('a signed-in visitor navigating to /welcome is redirected to dashboard', async () => {
+      mockSessionStore.ensureResolved.mockResolvedValue(true)
+      mockIsPasswordRecoveryUrl.mockReturnValue(false)
+      const to = resolveTo('/welcome')
+
+      const result = await capturedGuard(to)
+
+      expect(result).toEqual({ name: 'dashboard' })
+    })
+
+    test('a signed-out visitor stays on /welcome (no redirect)', async () => {
+      mockSessionStore.ensureResolved.mockResolvedValue(false)
+      const to = resolveTo('/welcome')
+
+      const result = await capturedGuard(to)
+
+      expect(result).toBeUndefined()
+    })
+
+    test('is skipped on a password-recovery link, so an authenticated visitor still lands on /welcome', async () => {
+      mockSessionStore.ensureResolved.mockResolvedValue(true)
+      mockIsPasswordRecoveryUrl.mockReturnValue(true)
+      const to = resolveTo('/welcome')
+
+      const result = await capturedGuard(to)
+
+      expect(result).toBeUndefined()
+    })
   })
 
-  test('does not throw when prefetchMemberById rejects', async () => {
-    mockPrefetchMemberById.mockRejectedValueOnce(new Error('network error'))
-    await expect(lessonBeforeEnter()()).resolves.not.toThrow()
+  // ── no policy: /privacy, /terms ────────────────────────────────────────────
+
+  describe('routes with no policy meta', () => {
+    test('/privacy allows a signed-in visitor through untouched', async () => {
+      mockSessionStore.ensureResolved.mockResolvedValue(true)
+      const to = resolveTo('/privacy')
+
+      const result = await capturedGuard(to)
+
+      expect(result).toBeUndefined()
+    })
+
+    test('/terms allows a signed-in visitor through untouched', async () => {
+      mockSessionStore.ensureResolved.mockResolvedValue(true)
+      const to = resolveTo('/terms')
+
+      const result = await capturedGuard(to)
+
+      expect(result).toBeUndefined()
+    })
   })
 
-  // [obligation] requireAudioReader must AWAIT resolveMember() (which awaits
-  // the prefetch) before reading role — otherwise a direct URL hit reads an
-  // empty role mid-restore.
-  test('awaits the member prefetch before reading member.role [obligation]', async () => {
-    let resolvePrefetch
-    mockPrefetchMemberById.mockReturnValueOnce(
-      new Promise((resolve) => {
-        resolvePrefetch = resolve
+  // ── capability ─────────────────────────────────────────────────────────────
+
+  describe('capability', () => {
+    test('a non-admin (useCan().useAudioReader false) opening the lesson route is redirected to dashboard', async () => {
+      mockSessionStore.ensureResolved.mockResolvedValue(true)
+      mockUseCan.mockReturnValue({ useAudioReader: { value: false } })
+      const to = resolveTo('/audio-reader/collection/1/lesson/2')
+
+      const result = await capturedGuard(to)
+
+      expect(result).toEqual({ name: 'dashboard' })
+    })
+
+    test('an admin (useCan().useAudioReader true) is allowed through to the lesson route', async () => {
+      mockSessionStore.ensureResolved.mockResolvedValue(true)
+      mockUseCan.mockReturnValue({ useAudioReader: { value: true } })
+      const to = resolveTo('/audio-reader/collection/1/lesson/2')
+
+      const result = await capturedGuard(to)
+
+      expect(result).toBeUndefined()
+    })
+
+    test('reads the admin rule from useCan(), not a hand-copied member.role check', async () => {
+      mockSessionStore.ensureResolved.mockResolvedValue(true)
+      mockMemberStore.role = 'admin' // if the guard ever reads this directly, it would wrongly pass
+      mockUseCan.mockReturnValue({ useAudioReader: { value: false } })
+      const to = resolveTo('/audio-reader/collection/1/lesson/2')
+
+      const result = await capturedGuard(to)
+
+      expect(mockUseCan).toHaveBeenCalled()
+      expect(result).toEqual({ name: 'dashboard' })
+    })
+
+    test('resolves the member row before reading the capability, awaiting prefetchMemberById', async () => {
+      mockSessionStore.ensureResolved.mockResolvedValue(true)
+      let resolvePrefetch
+      mockPrefetchMemberById.mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolvePrefetch = resolve
+        })
+      )
+      mockUseCan.mockReturnValue({ useAudioReader: { value: true } })
+      const to = resolveTo('/audio-reader/collection/1/lesson/2')
+
+      const resultPromise = capturedGuard(to)
+      await Promise.resolve()
+      expect(mockUseCan).not.toHaveBeenCalled()
+
+      resolvePrefetch()
+      const result = await resultPromise
+
+      expect(mockUseCan).toHaveBeenCalled()
+      expect(result).toBeUndefined()
+    })
+  })
+
+  // ── policy order: auth → guestOnly → capability, first failure wins ───────
+
+  describe('policy order', () => {
+    test('a signed-out visitor to the lesson route fails on auth and never reaches the capability check', async () => {
+      mockSessionStore.ensureResolved.mockResolvedValue(false)
+      const to = resolveTo('/audio-reader/collection/1/lesson/2')
+
+      const result = await capturedGuard(to)
+
+      expect(result).toEqual({
+        name: 'welcome',
+        query: { next: '/audio-reader/collection/1/lesson/2' }
       })
-    )
-    mockMemberStore.role = 'admin'
-
-    const resultPromise = lessonBeforeEnter()()
-    await Promise.resolve()
-
-    resolvePrefetch()
-    const result = await resultPromise
-
-    expect(result).toBeUndefined()
+      expect(mockUseCan).not.toHaveBeenCalled()
+      expect(mockPrefetchMemberById).not.toHaveBeenCalled()
+    })
   })
 
-  test('redirects non-admins to dashboard [obligation]', async () => {
-    mockMemberStore.role = 'member'
-    const result = await lessonBeforeEnter()()
-    expect(result).toEqual({ name: 'dashboard' })
-  })
+  // ── prefetchMemberDecks dropped ─────────────────────────────────────────────
 
-  test('allows admins through (no redirect) [obligation]', async () => {
-    mockMemberStore.role = 'admin'
-    const result = await lessonBeforeEnter()()
-    expect(result).toBeUndefined()
-  })
+  test('never calls prefetchMemberDecks — the old prefetch is dropped', async () => {
+    mockSessionStore.ensureResolved.mockResolvedValue(true)
+    mockUseCan.mockReturnValue({ useAudioReader: { value: true } })
 
-  test('skips prefetchMemberById when there is no session user id', async () => {
-    mockSessionStore.user = undefined
-    await lessonBeforeEnter()()
-    expect(mockPrefetchMemberById).not.toHaveBeenCalled()
+    await capturedGuard(resolveTo('/dashboard'))
+    await capturedGuard(resolveTo('/deck/123'))
+    await capturedGuard(resolveTo('/audio-reader/collection/1/lesson/2'))
+    await capturedGuard(resolveTo('/welcome'))
+
+    expect(mockPrefetchMemberDecks).not.toHaveBeenCalled()
   })
 })

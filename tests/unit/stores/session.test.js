@@ -62,6 +62,10 @@ const { mockQueryCache, mockCloseAllModals, mockTaroPhoneReset, mockClearPersist
     mockClearPersistedSession: vi.fn()
   }))
 
+const { mockConsumeReturnDestination } = vi.hoisted(() => ({
+  mockConsumeReturnDestination: vi.fn()
+}))
+
 vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (key) => key }) }))
 vi.mock('@pinia/colada', () => ({ useQueryCache: () => mockQueryCache }))
@@ -69,6 +73,9 @@ vi.mock('@/composables/modal', () => ({ closeAll: mockCloseAllModals }))
 vi.mock('@/stores/taro-phone', () => ({ useTaroPhoneStore: () => ({ reset: mockTaroPhoneReset }) }))
 vi.mock('@/views/study-session/composables/session-persistence', () => ({
   clearPersistedSession: mockClearPersistedSession
+}))
+vi.mock('@/composables/auth/return-destination', () => ({
+  consumeReturnDestination: mockConsumeReturnDestination
 }))
 
 vi.mock('@/api/session', () => ({
@@ -129,6 +136,7 @@ beforeEach(() => {
   mockOnSignedOut.mockReset()
   mockOnSignedOut.mockImplementation(() => vi.fn())
   mockIsAuthError.mockReset()
+  mockConsumeReturnDestination.mockReset().mockReturnValue(null)
   mockQueryCache.getEntries.mockReset()
   mockQueryCache.getEntries.mockReturnValue([])
   mockQueryCache.remove.mockReset()
@@ -221,6 +229,68 @@ describe('useSessionStore', () => {
       // Second call should skip the API call
       await store.restoreSession()
       expect(mockGetSession).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── ensureResolved [obligation] ────────────────────────────────────────────
+
+  describe('ensureResolved [obligation]', () => {
+    test('[obligation] concurrent calls share one in-flight promise — getSession runs only once', async () => {
+      let resolveGetSession
+      mockGetSession.mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveGetSession = resolve
+        })
+      )
+      const store = useSessionStore()
+
+      const first = store.ensureResolved()
+      const second = store.ensureResolved()
+
+      resolveGetSession({ user: { id: 'u1', aud: 'authenticated' } })
+      const [firstResult, secondResult] = await Promise.all([first, second])
+
+      expect(mockGetSession).toHaveBeenCalledOnce()
+      expect(firstResult).toBe(true)
+      expect(secondResult).toBe(true)
+    })
+
+    test('[obligation] a repeat call after the first resolves reuses the memoized answer — no second restore', async () => {
+      mockGetSession.mockResolvedValueOnce({ user: { id: 'u1', aud: 'authenticated' } })
+      const store = useSessionStore()
+
+      await store.ensureResolved()
+      mockGetSession.mockClear()
+      const result = await store.ensureResolved()
+
+      expect(mockGetSession).not.toHaveBeenCalled()
+      expect(result).toBe(true)
+    })
+
+    test('[obligation] a fresh call after reset() (via discardRevokedSession) re-resolves against the new session', async () => {
+      mockGetSession.mockResolvedValueOnce({ user: { id: 'u1', aud: 'authenticated' } })
+      const store = useSessionStore()
+      await store.ensureResolved()
+
+      await store.discardRevokedSession()
+      mockGetSession.mockReset().mockResolvedValueOnce(null)
+      const result = await store.ensureResolved()
+
+      expect(mockGetSession).toHaveBeenCalledOnce()
+      expect(result).toBe(false)
+    })
+
+    test('[obligation] a fresh call after onAuthenticated() re-resolves rather than returning the stale answer', async () => {
+      mockGetSession.mockResolvedValueOnce(null)
+      const store = useSessionStore()
+      await store.ensureResolved()
+
+      store.onAuthenticated()
+      mockGetSession.mockReset().mockResolvedValueOnce({ user: { id: 'u1', aud: 'authenticated' } })
+      const result = await store.ensureResolved()
+
+      expect(mockGetSession).toHaveBeenCalledOnce()
+      expect(result).toBe(true)
     })
   })
 
@@ -489,11 +559,38 @@ describe('useSessionStore', () => {
   describe('onAuthenticated [obligation]', () => {
     // [obligation] single post-auth funnel: every successful sign-in path routes
     // through this so no path can navigate without tearing down its modal.
-    test('closes all modals AND routes to dashboard [obligation]', () => {
+    test('closes all modals AND routes to dashboard when no return destination was captured [obligation]', () => {
+      mockConsumeReturnDestination.mockReturnValue(null)
       const store = useSessionStore()
       store.onAuthenticated()
       expect(mockCloseAllModals).toHaveBeenCalledOnce()
       expect(mockPush).toHaveBeenCalledWith({ name: 'dashboard' })
+    })
+
+    // [obligation] consumes the captured `?next=` destination and pushes it
+    // instead of the dashboard fallback when one was stashed.
+    test('[obligation] pushes the consumed return destination when one is present', () => {
+      mockConsumeReturnDestination.mockReturnValue('/deck/123')
+      const store = useSessionStore()
+      store.onAuthenticated()
+      expect(mockPush).toHaveBeenCalledWith('/deck/123')
+      expect(mockPush).not.toHaveBeenCalledWith({ name: 'dashboard' })
+    })
+
+    // [obligation] the resolution memo is cleared before navigating so the
+    // checkpoint on the very next navigation reflects the new session rather
+    // than the memoized signed-out answer from before this sign-in.
+    test('[obligation] clears the ensureResolved memo before pushing, so the next call re-resolves', async () => {
+      mockGetSession.mockResolvedValueOnce(null)
+      const store = useSessionStore()
+      await store.ensureResolved()
+
+      store.onAuthenticated()
+      mockGetSession.mockReset().mockResolvedValueOnce({ user: { id: 'u1', aud: 'authenticated' } })
+      const result = await store.ensureResolved()
+
+      expect(mockGetSession).toHaveBeenCalledOnce()
+      expect(result).toBe(true)
     })
   })
 
