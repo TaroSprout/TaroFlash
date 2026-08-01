@@ -14,7 +14,7 @@ arguments:
     description: batch only — restrict to this priority.
   - name: <ID>
     description: pair only — the specific ticket to work.
-lastUpdated: 2026-07-31T12:00:00Z
+lastUpdated: 2026-08-01T20:00:00Z
 ---
 
 ## What this skill does
@@ -268,6 +268,36 @@ needs — is handled the same way:
 Repeat per PR until the user merges. **Never merge and never set `Done` yourself** — that stays the
 user's call, exactly as at first handoff.
 
+## Self-heal
+
+Review feedback is this skill's richest signal — the user reviews each PR and says, in effect, "we
+don't do it this way." Run every correction (PR-review comments, and live pushback in `pair`) through
+four gates; what survives is a **defect in the codebase's rules**, healed per
+[`self-heal.md`](../../rules/self-heal.md) — the shared living-PR mechanics — separate from the ticket
+PR.
+
+1. **Execution, not spec.** If the feedback shows the _ticket / AC_ was wrong or ambiguous, that's a
+   `/triage`–`/groom` miss, not this skill's — note "needs regroom", fix the PR, don't heal here.
+   Only a **correct-ticket / wrong-code** miss continues.
+2. **Generalizes.** Restate the correction as a standing rule: true on the _next_ ticket, or only
+   this one? Instance-only ("the count should be 5") → fix the PR, no heal.
+3. **Code, or the pass.** About prep depth, claim, PR handoff, or review mechanics → heal **this
+   skill**. About the code itself → gate 4.
+4. **Gap, not adherence.** Grep the corpus first — CLAUDE.md, `.claude/rules/*`, memory feedback:
+   - **No rule** → write one, routed by scope: repo-wide → a CLAUDE.md guideline; a domain that has a
+     rule file → extend it; a domain with none → a new path-triggered `.claude/rules/*.md`. Bias
+     toward extending the nearest file; create a new one only when the lesson would be off-topic in
+     every existing one.
+   - **Rule exists but vague or misplaced** → sharpen or relocate it. This is a heal.
+   - **A clear rule already existed** → an _adherence_ miss, not a corpus gap; leave it — **unless**
+     the same clear rule is violated repeatedly (across PRs this batch, or across sessions), which
+     means it's weak, misplaced, or not loading, and that _is_ a heal (strengthen, relocate, or make
+     it path-load).
+
+Batch multiplies the signal: the **same correction on multiple PRs in one run** is a high-confidence
+gap — weight it up at gate 2. The healing PR is autonomous; the user's review of it confirms or kills
+the generalization, so there is no inline confirm mid-run.
+
 ## Guardrails
 
 - Only ever touch the Task Board named in the rule — never a backup/duplicate board.
@@ -283,6 +313,8 @@ user's call, exactly as at first handoff.
   tests** (golden rule holds); it only notes, in one line, that tests may need attention and leaves
   them for the user to pick up explicitly.
 - One PR per ticket (via `prepare-pr`). Don't batch multiple tickets into a single PR.
+- Self-heal ships to the shared `self-heal` PR (§ Self-heal), never merged and separate from ticket
+  PRs — a rule fix rides its own stream, never a ticket branch.
 - In batch, the orchestrator runs from its **own worktree** (step 0) and never edits ticket code —
   subagents do. Out-of-scope side requests during the run are done on that orchestrator worktree.
   Initial ticket implementation happens in per-ticket **worktrees**, which the subagent **removes
