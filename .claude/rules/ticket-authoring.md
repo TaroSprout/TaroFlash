@@ -39,13 +39,14 @@ out-of-scope work is found mid-task.
 | `Status`   | **`Backlog`**, always — a new ticket is un-triaged by definition                                                           |
 | `Assignee` | **empty** — only set when a ticket reaches `Queued`                                                                        |
 | `Type`     | `Bug` broken · `Task` defined change · `Story` user-facing capability · `Spike` the deliverable is a decision, not shipped |
-| `Priority` | `⇞P0` data loss/security/broken core flow · `↑P1` real pain · `↓P2`/`⇟P3` rest                                             |
+| `Priority` | **empty** at cut time — a triage/groom decision. Set only when the user explicitly dictates one                            |
 | `Target`   | **empty** at cut time — a triage/groom decision, not a capture one                                                         |
 | `Epic`     | match the Epic Board; if nothing fits, propose a new epic rather than force-fit                                            |
 
 Never write `Ready` or `Queued` — those assert an agent can execute the ticket, which is never true
 at capture time. Never write `On Hold` or `Assignee = Me` on a fresh ticket — that's the user's own
-hands-off marker.
+hands-off marker. Leave `Priority` and `Assignee` untouched unless the user explicitly asks for a
+value.
 
 ## Priority vs Target — two axes, don't collapse them
 
