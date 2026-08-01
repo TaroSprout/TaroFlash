@@ -24,15 +24,15 @@ review. It never merges and never marks a ticket `Done` — you close the loop.
 
 Two modes, chosen by the first arg. They differ deliberately:
 
-|                 | `pair`                                | `batch`                               |
-| --------------- | ------------------------------------- | ------------------------------------- |
-| Source lane     | `Status = Ready`                      | `Status = Queued`                     |
-| Model           | **this session's** model              | each ticket's **`Assignee`**          |
-| Execution       | interactive, in-session               | parallel subagents, one worktree each |
-| Backend persona | **on** (teaching)                     | **off**                               |
-| Your approval   | **every change**                      | none — you review the PR              |
-| Tests           | **not touched** (golden rule holds)   | each subagent writes its own          |
-| Ends at         | open PR → `Review` + feedback loop    | open PR → `Review` + feedback loop    |
+|                 | `pair`                              | `batch`                               |
+| --------------- | ----------------------------------- | ------------------------------------- |
+| Source lane     | `Status = Ready`                    | `Status = Queued`                     |
+| Model           | **this session's** model            | each ticket's **`Assignee`**          |
+| Execution       | interactive, in-session             | parallel subagents, one worktree each |
+| Backend persona | **on** (teaching)                   | **off**                               |
+| Your approval   | **every change**                    | none — you review the PR              |
+| Tests           | **not touched** (golden rule holds) | each subagent writes its own          |
+| Ends at         | open PR → `Review` + feedback loop  | open PR → `Review` + feedback loop    |
 
 **The golden "never touch tests" rule is suspended only in `batch` mode.** Batch subagents (and
 batch feedback-fix subagents) write their own coverage for what they changed and repair any test
@@ -89,7 +89,7 @@ Interactive, in **this** session, using **whatever model the session is running*
 ticket's `Assignee`).
 
 1. **SELECT** — query the Task Board `WHERE "Status" = 'Ready' ORDER BY "Priority" ASC,
-   "userDefined:ID" ASC`, selecting `"Blocked By"` alongside the usual properties (or take the given
+"userDefined:ID" ASC`, selecting `"Blocked By"` alongside the usual properties (or take the given
    `<ID>`). Auto-picking takes the **first unblocked** row. Fetch its page body via `notion-fetch`.
    Echo what you're about to work.
 
