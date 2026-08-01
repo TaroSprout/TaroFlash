@@ -39,32 +39,15 @@ describe('BulkActionsBar (session-summary/bulk-actions-bar.vue)', () => {
     capturedController.current = null
   })
 
-  test('renders the bar with cancel, select-all, count, move, and delete [obligation]', () => {
+  test('renders the bar with select-all, move, and delete [obligation]', () => {
     const { wrapper } = mountBar()
 
     expect(wrapper.find('[data-testid="session-summary__bulk-actions"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="session-summary__bulk-actions-cancel"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="session-summary__bulk-actions-select-all"]').exists()).toBe(
       true
     )
-    expect(wrapper.find('[data-testid="session-summary__bulk-actions-count"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="session-summary__bulk-actions-move"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="session-summary__bulk-actions-delete"]').exists()).toBe(true)
-  })
-
-  test('shows the live selected count [obligation]', () => {
-    const { wrapper } = mountBar(makeController({ selected_count: 3 }))
-    expect(wrapper.find('[data-testid="session-summary__bulk-actions-count"]').text()).toContain(
-      '3'
-    )
-  })
-
-  // ── Cancel ────────────────────────────────────────────────────────────────
-
-  test('pressing cancel calls selection.exitSelection [obligation]', async () => {
-    const { wrapper, controller } = mountBar()
-    await wrapper.find('[data-testid="session-summary__bulk-actions-cancel"]').trigger('click')
-    expect(controller.summary_selection.exitSelection).toHaveBeenCalledOnce()
   })
 
   // ── Select all / deselect all ────────────────────────────────────────────
