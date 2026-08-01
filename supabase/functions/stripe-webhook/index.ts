@@ -130,16 +130,39 @@ async function syncSubscription(subscription: Stripe.Subscription) {
     return
   }
 
-  const { error } = await supabase
+  const { data: member, error } = await supabase
     .from('members')
     .update({
       plan: active ? plan.id : 'free',
       stripe_subscription_id: active ? subscription.id : null
     })
     .eq('stripe_customer_id', customerId)
+    .select('id')
+    .maybeSingle()
 
   if (error) {
     console.error('members update failed', error)
+    throw error
+  }
+
+  if (!member) return
+
+  // Reconcile the downgrade lock. Upgrading (active) clears any grace deadline,
+  // unlocking every deck at once; a sync that lands the member on free stamps
+  // the 15-day grace when they are over their deck_limit. Both are idempotent.
+  await reconcileDowngradeGrace(member.id, active)
+}
+
+// Stamp or clear the free-downgrade grace deadline on the member. Locking is
+// derived from rank + plan + this deadline, so this single write is the whole
+// lock/unlock — no per-deck state to touch. Both RPCs are service_role-only and
+// idempotent (begin keeps the original deadline, clear no-ops when already clear).
+async function reconcileDowngradeGrace(memberId: string, active: boolean) {
+  const rpc = active ? 'clear_downgrade_grace' : 'begin_downgrade_grace'
+  const { error } = await supabase.rpc(rpc, { p_member_id: memberId })
+
+  if (error) {
+    console.error(`${rpc} failed for member ${memberId}`, error)
     throw error
   }
 }
@@ -203,13 +226,21 @@ async function reassertCancellation(subscriptionId: string | null) {
 }
 
 async function markFree(customerId: string) {
-  const { error } = await supabase
+  const { data: member, error } = await supabase
     .from('members')
     .update({ plan: 'free', stripe_subscription_id: null })
     .eq('stripe_customer_id', customerId)
+    .select('id')
+    .maybeSingle()
 
   if (error) {
     console.error('members downgrade failed', error)
     throw error
   }
+
+  if (!member) return
+
+  // Lock over-limit decks and schedule their deletion. Idempotent: a re-fired
+  // deletion event keeps the original 15-day deadline.
+  await reconcileDowngradeGrace(member.id, false)
 }
