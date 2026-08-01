@@ -5,6 +5,8 @@ import SessionSummaryCategory from './session-summary/category-page/index.vue'
 import SessionSettings from './session-settings/index.vue'
 import SessionHeaderNavButton from './session-header-nav-button.vue'
 import SessionHeaderMenu from './session-header-menu.vue'
+import SummarySelectButton from './session-summary/summary-select-button.vue'
+import SummaryBulkActionsBar from './session-summary/bulk-actions-bar.vue'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
@@ -30,6 +32,8 @@ const {
   sessionDecks,
   active_page,
   summary_category,
+  summary_selection,
+  summary_editing_card,
   requestClose,
   startEdit,
   onMove,
@@ -37,7 +41,8 @@ const {
   openSettings,
   closeSettings,
   openSummaryCategory,
-  closeSummaryCategory
+  closeSummaryCategory,
+  stopSummaryEdit
 } = provideStudySessionController({ deck_ids, onClosed })
 
 const summary_seen = ref(false)
@@ -75,6 +80,15 @@ const title = computed(() => {
     ? (sessionDecks.value[0]?.title ?? '')
     : t('study-session.multiple-decks-title')
 })
+
+// The Select/Done header action and the bulk bar only make sense on an open
+// category page, and hide while its editor sub-state is showing.
+const show_summary_select_button = computed(
+  () => current_page.value === 'summary-category' && !summary_editing_card.value
+)
+const show_summary_bulk_bar = computed(
+  () => current_page.value === 'summary-category' && summary_selection.is_selecting.value
+)
 
 useModalRequestClose(onRequestClose)
 
@@ -116,6 +130,11 @@ function onHeaderStop() {
     return
   }
 
+  if (summary_editing_card.value) {
+    stopSummaryEdit()
+    return
+  }
+
   if (summary_category.value) {
     closeSummaryCategory()
     return
@@ -126,13 +145,19 @@ function onHeaderStop() {
 
 /**
  * Backdrop / esc. On the settings page it dismisses a not-yet-started session
- * (still on the cover) but returns to an in-progress one; on a summary category
- * page it returns to the stats list; elsewhere it leaves the session as usual.
+ * (still on the cover) but returns to an in-progress one; a summary card's
+ * editor returns to its category page, and a category page returns to the
+ * stats list; elsewhere it leaves the session as usual.
  */
 function onRequestClose() {
   if (active_page.value === 'settings') {
     if (is_cover.value) onClosed()
     else closeSettings()
+    return
+  }
+
+  if (summary_editing_card.value) {
+    stopSummaryEdit()
     return
   }
 
@@ -142,6 +167,22 @@ function onRequestClose() {
   }
 
   leaveSession()
+}
+
+/**
+ * Header Select/Done. Enters or leaves the category page's multi-select —
+ * same sfx pair as the deck-view select/cancel seam (`actions.ts`
+ * `onSelectCard`/`onCancelSelection`), just combined into one toggle here
+ * since the header only has a single button for both directions.
+ */
+function onToggleSummarySelecting() {
+  if (summary_selection.is_selecting.value) {
+    emitSfx('digi_powerdown')
+    summary_selection.exitSelection()
+  } else {
+    emitSfx('select')
+    summary_selection.enterSelection()
+  }
 }
 </script>
 
@@ -158,6 +199,12 @@ function onRequestClose() {
         @move="onMove"
         @delete="onDelete"
         @settings="openSettings"
+      />
+    </template>
+    <template v-else-if="show_summary_select_button" #header-end>
+      <summary-select-button
+        :is_selecting="summary_selection.is_selecting.value"
+        @press="onToggleSummarySelecting"
       />
     </template>
 
@@ -203,6 +250,9 @@ function onRequestClose() {
       >
         {{ t('session-summary.close-button') }}
       </ui-button>
+    </template>
+    <template v-else-if="show_summary_bulk_bar" #toolbar>
+      <summary-bulk-actions-bar />
     </template>
   </dialog-card>
 </template>

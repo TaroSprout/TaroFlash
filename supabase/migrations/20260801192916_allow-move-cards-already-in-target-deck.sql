@@ -1,11 +1,9 @@
--- Hand-organized declarative schema (by domain). Edit freely — this file is the
--- canonical definition. Run `supabase db diff -f <name>` after editing to
--- produce the migration.
-SET check_function_bodies = false;
+set check_function_bodies = off;
 
-CREATE FUNCTION public.move_cards_to_deck(p_target_deck_id bigint, p_card_ids bigint[] DEFAULT NULL::bigint[], p_source_deck_id bigint DEFAULT NULL::bigint, p_except_ids bigint[] DEFAULT NULL::bigint[]) RETURNS void
-    LANGUAGE plpgsql
-    AS $$
+CREATE OR REPLACE FUNCTION public.move_cards_to_deck(p_target_deck_id bigint, p_card_ids bigint[] DEFAULT NULL::bigint[], p_source_deck_id bigint DEFAULT NULL::bigint, p_except_ids bigint[] DEFAULT NULL::bigint[])
+ RETURNS void
+ LANGUAGE plpgsql
+AS $function$
 DECLARE
   v_uid          uuid    := auth.uid();
   v_mode         text;
@@ -136,12 +134,7 @@ BEGIN
      WHERE c.id = ordered.id;
   END IF;
 END;
-$$;
+$function$
+;
 
 
-ALTER FUNCTION public.move_cards_to_deck(p_target_deck_id bigint, p_card_ids bigint[], p_source_deck_id bigint, p_except_ids bigint[]) OWNER TO postgres;
-
-
-GRANT ALL ON FUNCTION public.move_cards_to_deck(p_target_deck_id bigint, p_card_ids bigint[], p_source_deck_id bigint, p_except_ids bigint[]) TO anon;
-GRANT ALL ON FUNCTION public.move_cards_to_deck(p_target_deck_id bigint, p_card_ids bigint[], p_source_deck_id bigint, p_except_ids bigint[]) TO authenticated;
-GRANT ALL ON FUNCTION public.move_cards_to_deck(p_target_deck_id bigint, p_card_ids bigint[], p_source_deck_id bigint, p_except_ids bigint[]) TO service_role;

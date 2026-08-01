@@ -8,7 +8,7 @@
 --   1  explicit mode preserves input order (WITH ORDINALITY)
 --   2  select-all mode preserves source-deck rank order (ROW_NUMBER over rank)
 --   3  select-all mode moves ALL cards, not just the loaded page (>50 cards)
---   4  same-deck rejected — explicit mode
+--   4  explicit mode — a card already in the target deck is a silent no-op
 --   5  same-deck rejected — select-all mode
 --   6  dispatch validation — both args set → raises
 --   7  dispatch validation — both NULL → raises
@@ -23,11 +23,14 @@
 --  16  paid plan is unbounded (succeeds moving into a 200-card deck)
 --  17  insert_card_at P0001 retry block does NOT swallow PT402 cap error
 --  18  enforce_deck_card_limit raises immediately when deck is at cap
+--  19  the already-in-target no-op (test 4) keeps the card's original deck_id
+--  20  mixed batch — one card already in target, one not — succeeds
+--  21  mixed batch: moves only the one that wasn't there; the other untouched
 -- =============================================================================
 
 BEGIN;
 
-SELECT plan(18);
+SELECT plan(21);
 
 -- ── Setup users ────────────────────────────────────────────────────────────────
 
@@ -243,19 +246,20 @@ UPDATE public.members SET plan = 'free'
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Test 4: same-deck rejected — explicit mode
--- Cards 9001-9003 are now in deck 5001. Moving 9002 to 5001 again fails.
+-- Test 4: explicit mode — a card already in the target deck is a silent no-op
+-- Cards 9001-9003 are now in deck 5001. Moving 9002 to 5001 again no longer
+-- raises (a session-summary bulk move can select cards that already live in
+-- the chosen target) — it succeeds and leaves the card exactly where it was.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 SET LOCAL role = 'authenticated';
 
-SELECT throws_ok(
+SELECT lives_ok(
   $$ SELECT public.move_cards_to_deck(
        p_target_deck_id := 5001,
        p_card_ids       := ARRAY[9002]::bigint[]
      ) $$,
-  'One or more cards are not movable to this deck',
-  'explicit mode: card already in target deck is rejected'
+  'explicit mode: a card already in the target deck no longer raises'
 );
 
 
@@ -470,6 +474,53 @@ SELECT throws_ok(
   'PT402',
   'deck_card_limit_exceeded',
   'enforce_deck_card_limit raises PT402 immediately when deck is at the free cap'
+);
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Test 19: the already-in-target no-op (test 4) is a TRUE no-op — 9002 kept
+-- its original deck_id rather than being silently moved somewhere else.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+SET LOCAL role = 'postgres';
+
+SELECT is(
+  (SELECT deck_id FROM public.cards WHERE id = 9002),
+  5001::bigint,
+  'card already in the target deck keeps its original deck_id (true no-op)'
+);
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Test 20: explicit mode — a mixed batch (one card already in the target deck,
+-- one still elsewhere) moves only the one that isn't there yet; the
+-- already-there card is left exactly where it was.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+INSERT INTO public.decks (id, title, is_public) VALUES
+  (5015, 'Mixed Skip Source', false),
+  (5016, 'Mixed Skip Target', false);
+
+INSERT INTO public.cards (id, deck_id, front_text, back_text, rank, member_id) VALUES
+  (9042, 5016, 'Already Home', 'Already Home', 1000, 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
+  (9043, 5015, 'Needs A Move', 'Needs A Move', 1000, 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001');
+
+SET LOCAL role = 'authenticated';
+
+SELECT lives_ok(
+  $$ SELECT public.move_cards_to_deck(
+       p_target_deck_id := 5016,
+       p_card_ids       := ARRAY[9042, 9043]::bigint[]
+     ) $$,
+  'mixed batch (one card already home, one not) succeeds without raising'
+);
+
+SET LOCAL role = 'postgres';
+
+SELECT results_eq(
+  $$ SELECT id FROM public.cards WHERE deck_id = 5016 ORDER BY id $$,
+  $$ VALUES (9042::bigint), (9043::bigint) $$,
+  'both cards end up in the target deck — the already-there one untouched, the other moved'
 );
 
 

@@ -7,6 +7,7 @@ import { useActiveCardActions } from './card-actions'
 import { useSessionCards } from './session-cards'
 import { useSessionPrefs } from './session-prefs'
 import { useRatingTimes } from './rating-times'
+import { useSummarySelection } from './summary-selection'
 import { usePersistedSession } from './session-persistence'
 import { buildDeckResolution, provideDeckResolution } from '../deck-resolution'
 import { useFlushDeckReviews } from '@/api/reviews'
@@ -122,6 +123,30 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     summary_category.value = null
   }
 
+  const {
+    category_cards: summary_category_cards,
+    selection: summary_selection,
+    editing_card: summary_editing_card,
+    edit_saving: summary_edit_saving,
+    startEdit: startSummaryEdit,
+    stopEdit: stopSummaryEdit,
+    onEditUpdate: onSummaryEditUpdate,
+    selectAll: selectAllSummaryCards,
+    onDeleteSelected: onDeleteSummarySelected,
+    onMoveSelected: onMoveSummarySelected,
+    onDeleteCard: onDeleteSummaryCard,
+    onMoveCard: onMoveSummaryCard,
+    onSelectCard: onSelectSummaryCard
+  } = useSummarySelection({
+    cards: engine.cards,
+    results: engine.results,
+    category: summary_category,
+    thresholdFor: resolution.thresholdFor,
+    updateCard: engine.updateCard,
+    dropCard: engine.dropCard,
+    closeCategory: closeSummaryCategory
+  })
+
   /**
    * Persistence lives here, not in the engine — the engine is deck-blind, and
    * only the controller knows the deck ids to reopen with. Called via the
@@ -204,6 +229,10 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     prefs_are_default,
     active_page,
     summary_category,
+    summary_category_cards,
+    summary_selection,
+    summary_editing_card,
+    summary_edit_saving,
     editing,
     saving,
     can_edit,
@@ -222,6 +251,15 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     closeSettings,
     openSummaryCategory,
     closeSummaryCategory,
+    startSummaryEdit,
+    stopSummaryEdit,
+    onSummaryEditUpdate,
+    selectAllSummaryCards,
+    onDeleteSummarySelected,
+    onMoveSummarySelected,
+    onDeleteSummaryCard,
+    onMoveSummaryCard,
+    onSelectSummaryCard,
     requestClose,
     onCardReviewed
   }

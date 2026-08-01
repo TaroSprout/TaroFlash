@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCardBody from '@/components/layout-kit/dialog-card/dialog-card-body.vue'
 import CategorySection from './category-section.vue'
+import SummaryCardEditor from './summary-card-editor.vue'
 import { aggregateSession, type SummaryCategory } from '../aggregate'
 import { useDeckResolution } from '@/views/study-session/deck-resolution'
 import { useInjectedStudySessionController } from '@/views/study-session/composables/session-controller'
@@ -23,7 +24,8 @@ const { results, category } = defineProps<CategoryPageProps>()
 
 const { t } = useI18n()
 const { thresholdFor } = useDeckResolution()
-const { cards } = useInjectedStudySessionController()
+const { cards, summary_editing_card, onSummaryEditUpdate, stopSummaryEdit } =
+  useInjectedStudySessionController()
 
 const summary = computed(() => aggregateSession(results, thresholdFor))
 
@@ -61,8 +63,15 @@ function resolve(group: CardReviewResult[]): StudyCard[] {
 </script>
 
 <template>
-  <dialog-card-body data-testid="session-summary-category" class="h-full w-full">
-    <div data-testid="session-summary-category__content" class="flex flex-col gap-6">
+  <dialog-card-body data-testid="session-summary-category" overflow_bleed class="h-full w-full">
+    <summary-card-editor
+      v-if="summary_editing_card"
+      :card="summary_editing_card"
+      @update="onSummaryEditUpdate"
+      @done="stopSummaryEdit"
+    />
+
+    <div v-else data-testid="session-summary-category__content" class="flex flex-col gap-6">
       <p
         v-if="!sections.length"
         data-testid="session-summary-category__empty"

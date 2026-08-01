@@ -32,11 +32,13 @@ export function useCardPrompts() {
    * `move` runs the actual mutation once a deck is picked — the modal shows
    * its own loading state while it awaits and stays open if it throws.
    * Resolves to the chosen destination deck, or `undefined` if dismissed.
+   * `current_deck_id` is omitted for a selection spanning several decks — the
+   * modal then disables no deck, since there's no single "current" one.
    */
   function openMoveModal(
     cards: Card[],
     count: number,
-    current_deck_id: number,
+    current_deck_id: number | undefined,
     move: (deck_id: number) => Promise<void>
   ) {
     emitSfx('double_pop_up')

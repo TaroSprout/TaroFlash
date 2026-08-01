@@ -41,6 +41,38 @@ vi.mock('@/views/study-session/composables/card-actions', () => ({
   useActiveCardActions: () => ({ onMove: vi.fn(), onDelete: vi.fn() })
 }))
 
+vi.mock('@/views/study-session/composables/summary-selection', () => ({
+  useSummarySelection: () => ({
+    category_cards: ref([]),
+    selection: {
+      is_selecting: ref(false),
+      selected_count: ref(0),
+      all_cards_selected: ref(false),
+      select_all_mode: ref(false),
+      selected_card_ids: ref([]),
+      enterSelection: vi.fn(),
+      exitSelection: vi.fn(),
+      selectCard: vi.fn(),
+      deselectCard: vi.fn(),
+      toggleSelectCard: vi.fn(),
+      isCardSelected: vi.fn(() => false),
+      clearSelectedCards: vi.fn(),
+      filterSelected: vi.fn(() => [])
+    },
+    editing_card: ref(undefined),
+    edit_saving: ref(false),
+    startEdit: vi.fn(),
+    stopEdit: vi.fn(),
+    onEditUpdate: vi.fn(),
+    selectAll: vi.fn(),
+    onDeleteSelected: vi.fn(),
+    onMoveSelected: vi.fn(),
+    onDeleteCard: vi.fn(),
+    onMoveCard: vi.fn(),
+    onSelectCard: vi.fn()
+  })
+}))
+
 const { capturedSessionCardsOptions, sessionDecks } = await vi.hoisted(async () => {
   const { ref } = await import('vue')
   return { capturedSessionCardsOptions: { current: null }, sessionDecks: ref([]) }

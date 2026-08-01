@@ -49,6 +49,22 @@ describe('DialogCardBody', () => {
     })
   })
 
+  describe('overflow_bleed [obligation]', () => {
+    test('carries no data-overflow-bleed attribute by default [obligation]', () => {
+      const wrapper = mountBody()
+      const content = wrapper.find('[data-testid="dialog-card-body__content"]')
+
+      expect(content.attributes('data-overflow-bleed')).toBeUndefined()
+    })
+
+    test('sets data-overflow-bleed when enabled [obligation]', () => {
+      const wrapper = mountBody({ overflow_bleed: true })
+      const content = wrapper.find('[data-testid="dialog-card-body__content"]')
+
+      expect(content.attributes('data-overflow-bleed')).toBe('true')
+    })
+  })
+
   describe('scroll-bar visibility [obligation]', () => {
     test('renders the scroll-bar when the injected viewport is desktop', async () => {
       const wrapper = mountBody({}, 'desktop')
