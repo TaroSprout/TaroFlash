@@ -83,7 +83,7 @@ SELECT is(
 SELECT lives_ok(
   $$
     INSERT INTO public.review_logs (card_id, member_id, rating, state, due, review)
-    VALUES (1000, '11111111-1111-1111-1111-111111111111', 4, 1, now(), now())
+    VALUES (1000, '11111111-1111-1111-1111-111111111111', 4, 1, now(), now() + interval '1 minute')
   $$,
   'Alice can insert a review log for her own card'
 );
