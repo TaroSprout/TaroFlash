@@ -49,6 +49,24 @@ describe('DialogCardBody', () => {
     })
   })
 
+  describe('overflow_bleed [obligation]', () => {
+    test('adds no bleed classes by default [obligation]', () => {
+      const wrapper = mountBody()
+      const content = wrapper.find('[data-testid="dialog-card-body__content"]')
+
+      expect(content.classes()).not.toContain('px-2.5')
+      expect(content.classes()).not.toContain('-mx-2.5')
+    })
+
+    test('adds the horizontal bleed padding + negative margin when enabled [obligation]', () => {
+      const wrapper = mountBody({ overflow_bleed: true })
+      const content = wrapper.find('[data-testid="dialog-card-body__content"]')
+
+      expect(content.classes()).toContain('px-2.5')
+      expect(content.classes()).toContain('-mx-2.5')
+    })
+  })
+
   describe('scroll-bar visibility [obligation]', () => {
     test('renders the scroll-bar when the injected viewport is desktop', async () => {
       const wrapper = mountBody({}, 'desktop')

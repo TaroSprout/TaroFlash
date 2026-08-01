@@ -63,7 +63,7 @@ function resolve(group: CardReviewResult[]): StudyCard[] {
 </script>
 
 <template>
-  <dialog-card-body data-testid="session-summary-category" class="h-full w-full">
+  <dialog-card-body data-testid="session-summary-category" overflow_bleed class="h-full w-full">
     <summary-card-editor
       v-if="summary_editing_card"
       :card="summary_editing_card"

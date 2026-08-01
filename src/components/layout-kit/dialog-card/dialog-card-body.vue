@@ -22,9 +22,17 @@ type DialogCardBodyProps = {
   // Selector or element for an inner scroller (an options-panel's content, say)
   // when the overflow lives deeper than this wrapper. Omitted, the body scrolls.
   scroll_target?: string | HTMLElement
+  // Opt-in horizontal bleed for corner-overhang content (e.g. an absolutely
+  // positioned menu/tick sitting a few px outside a grid cell). `overflow-y-auto`
+  // clips the x-axis too, so without this the overhang gets cut off. Adds
+  // matching padding + negative margin on the scrolling content div, widening
+  // its clip boundary into the surrounding `--dialog-px` gutter while the
+  // slotted content's own visible position doesn't move. Horizontal only — the
+  // top edge isn't clipped, and bleeding it too could collide with a header.
+  overflow_bleed?: boolean
 }
 
-const { scroll_target } = defineProps<DialogCardBodyProps>()
+const { scroll_target, overflow_bleed = false } = defineProps<DialogCardBodyProps>()
 
 const viewport = useDialogCardViewport()
 
@@ -39,7 +47,10 @@ const target = computed(() => scroll_target ?? content_el.value ?? undefined)
       ref="content"
       data-testid="dialog-card-body__content"
       class="flex min-h-0 flex-1 flex-col pb-(--dialog-body-pb,var(--dialog-px))"
-      :class="scroll_target ? '' : 'overflow-y-auto scroll-hidden'"
+      :class="[
+        scroll_target ? '' : 'overflow-y-auto scroll-hidden',
+        overflow_bleed ? 'px-2.5 -mx-2.5' : ''
+      ]"
     >
       <slot></slot>
     </div>
