@@ -60,14 +60,11 @@ Board data source, field option lists, body sections, and voice all live in
 ## Self-heal
 
 The user will push back — catching a miss, a wrong batch, a baked-in assumption. Treat that as a
-**defect in this skill**, not just in the batch. Capture the lesson as a concrete edit to this skill
-(or [`ticket-authoring.md`](../../rules/ticket-authoring.md)) and ship it as its own branch + PR,
-separate from the triage work.
-
-Before writing a single file: **check the working tree.** Branch off `master` only when it is clean;
-if the current branch isn't `master` or has uncommitted changes (the user works in parallel), make
-the edit in a git worktree so nothing in the active checkout is disturbed. Conventional-commit it
-(`docs(triage): …`), open the PR, report the link — never merge.
+**defect in this skill**, not just in the batch. Route the lesson: a **process** miss (how this pass
+runs) → this skill; a **"what a ticket looks like"** miss → the single source,
+[`ticket-authoring.md`](../../rules/ticket-authoring.md). Ship it per
+[`self-heal.md`](../../rules/self-heal.md) — the shared living-PR mechanics — separate from the triage
+work.
 
 ## Guardrails
 

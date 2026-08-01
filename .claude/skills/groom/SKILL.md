@@ -6,7 +6,7 @@ argument-hint: '[<ID>]'
 arguments:
   - name: <ID>
     description: Numeric ticket ID to groom. Omit to take the top `Needs More Info` ticket by Priority → ID.
-lastUpdated: 2026-07-31T12:00:00Z
+lastUpdated: 2026-08-01T20:00:00Z
 ---
 
 ## What this skill does
@@ -274,14 +274,11 @@ it without guessing. Test it by asking:
 ## Self-heal
 
 The user will push back — correcting a miss, adding a granularity you skipped, rejecting a baked
-assumption. Treat that as a **defect in this skill**, not just in the ticket. Capture the lesson as a
-concrete edit to this skill (or [`ticket-authoring.md`](../../rules/ticket-authoring.md)) and ship it
-as its own branch + PR, separate from the ticket work.
-
-Before writing a single file: **check the working tree.** Branch off `master` only when it is clean;
-if the current branch isn't `master` or has uncommitted changes (the user works in parallel), make
-the edit in a git worktree so nothing in the active checkout is disturbed. Conventional-commit it
-(`docs(groom): …`), open the PR, report the link — never merge.
+assumption. Treat that as a **defect in this skill**, not just in the ticket. Route the lesson: a
+**process** miss (how this pass runs) → this skill; a **"what a ticket looks like"** miss → the
+single source, [`ticket-authoring.md`](../../rules/ticket-authoring.md). Ship it per
+[`self-heal.md`](../../rules/self-heal.md) — the shared living-PR mechanics — separate from the ticket
+work.
 
 ## Guardrails
 
