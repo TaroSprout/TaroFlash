@@ -42,6 +42,33 @@ should look. Those are resolved _with the user, here_, not deferred into impleme
 The sole exception is a decision blocked on an **external fact** nobody in the session has (§4) —
 recorded under `## Blocked on`, never left as an unmarked menu.
 
+### Resolve to buildable, not to gist
+
+A decision is resolved only when an implementer can build it **without one design or taste choice of
+their own**. Every answer spawns finer ones — a "header toggle" needs a _side_; a "floating bar"
+needs a _host_ (which primitive, which slot). After each answer ask **"what would someone still have
+to invent to build exactly this?"** and resolve that too, recursively.
+
+Pin every **design** dimension of a UI element (UX decisions, not implementation): **placement**
+(side, order) · **host** (component / primitive / slot) · **trigger** (how invoked; what it swaps or
+coexists with) · **label + icon** (signed-off copy) · **states** (default, disabled, empty, count).
+
+Two traps this closes:
+
+- **"Mirror/match X" is itself a gist.** Walk each mirrored element and confirm it fits the new
+  context — parity that reads wrong (a "Move Deck" button on a cross-deck surface) is not resolved.
+- **Survey the seam.** Before placing new content at an existing seam (slot, store, registry, layout
+  region), inspect how its sibling content is _owned_, not just whether the seam is empty. "Is the
+  slot empty?" is the wrong question; "how is its neighbour owned?" is the right one.
+
+Gist is the first question, never the last.
+
+### Copy is signed off, not settled silently
+
+For every new or changed user-facing string, **pause** and present **at least 3 reasonably-varied
+options per line**; only the user's chosen wording lands, verbatim, in the AC. Reused copy is stated
+as reused. Undecided copy keeps the ticket out of `Ready`.
+
 ## Board constants
 
 **[`ticket-authoring.md`](../../rules/ticket-authoring.md) is the single source** for the board data
@@ -165,11 +192,12 @@ rewrite over a chain of `update_content` edits. Any splits become new tickets vi
 `notion-create-pages`.
 
 Sections and their shape live in [`ticket-authoring.md`](../../rules/ticket-authoring.md). Groom
-turns each resolved decision into a **concrete acceptance criterion** — specific values, named
-mechanisms, exact copy in the criterion itself — and **deletes `## Open questions`** as it goes.
-**There is no `## Decisions` section**; a decision that only reads as an ordered plan still lands as
-ACs, not a plan. Groom also owns `## Blocked on`, and writes no `Files` or `Implementation steps`
-section — the claiming agent explores for itself.
+turns each resolved decision into a **product-observable acceptance criterion**, plus a terse
+companion line in `## Tech details` for the seam / mechanism / reuse pointer it rides on — so the ACs
+stay pure product language — and **deletes `## Open questions`** as it goes. **There is no
+`## Decisions` section**; a decision that only reads as an ordered plan still lands as ACs, not a
+plan. Groom also owns `## Blocked on`, and writes no `Files` / `Implementation steps` narration —
+`## Tech details` is terse pointers, not a file-by-file plan.
 
 **The resolution is the deliverable, not the investigation.** Grooming reads far more than it
 records: most of what you learned settling a decision is rediscoverable in seconds and does not
@@ -216,13 +244,33 @@ it without guessing. Test it by asking:
 - Does any clause survive the delete-test — rationale, plumbing, or a restatement of another AC? Cut it.
 - Is `## Open questions` gone, and every fork it held now a concrete AC?
 - Is a rejected path recorded as a negative AC, so no one re-proposes it?
-- Is the prior art an AC clause ("built from X"), and is any money/auth/boundary fact `CONFIRMED`?
+- Is the prior art a `## Tech details` clause ("built from X"), and is any money/auth/boundary fact `CONFIRMED`?
 - If this was a split: can `/work` tell which sibling must land first without reading all of them?
+- For every UI element: are placement, host/slot, trigger, label/icon, and states decided — or would
+  an implementer still choose?
+- Is every new or changed string the user-signed-off exact wording (≥3 options offered), and is
+  reused copy marked as reused?
+- Does any AC smuggle undecided design behind a competence claim, or grow into implementation mechanics (which belong on `## Tech details` lines)?
+- Was each seam this ticket touches surveyed for how its existing content is owned?
+- Do the ACs read as pure product language, with the technical encoding on companion `## Tech details` lines?
+
+## Self-heal
+
+The user will push back — correcting a miss, adding a granularity you skipped, rejecting a baked
+assumption. Treat that as a **defect in this skill**, not just in the ticket. Capture the lesson as a
+concrete edit to this skill (or [`ticket-authoring.md`](../../rules/ticket-authoring.md)) and ship it
+as its own branch + PR, separate from the ticket work.
+
+Before writing a single file: **check the working tree.** Branch off `master` only when it is clean;
+if the current branch isn't `master` or has uncommitted changes (the user works in parallel), make
+the edit in a git worktree so nothing in the active checkout is disturbed. Conventional-commit it
+(`docs(groom): …`), open the PR, report the link — never merge.
 
 ## Guardrails
 
 - Only ever touch the Task Board and Epic Board named in the rule — never a backup or duplicate.
-- Never write code, never touch tests, never open a PR. This pass ends at a ticket.
+- Never write code, never touch tests, and never open a PR **for the ticket** — this pass ends at a
+  ticket. (Self-healing _this skill_ is the sole exception; see § Self-heal.)
 - Never set `In Progress` / `Review` / `Done`.
 - Never resolve a decision the user should make — product calls, pricing, policy, and anything
   affecting users' money or data go to them as questions.
