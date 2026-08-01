@@ -93,6 +93,7 @@ watch(success, (isSuccess) => {
       <ui-button
         v-if="step === 'code'"
         neutral
+        variant="ghost"
         type="button"
         size="sm"
         class="self-end!"
