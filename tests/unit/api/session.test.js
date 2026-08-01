@@ -14,6 +14,8 @@ const mocks = vi.hoisted(() => ({
   updateUser: vi.fn(),
   onAuthStateChange: vi.fn(),
   resetPasswordForEmail: vi.fn(),
+  signInWithOtp: vi.fn(),
+  verifyOtp: vi.fn(),
   rpc: vi.fn(),
   invoke: vi.fn()
 }))
@@ -33,7 +35,9 @@ vi.mock('@/supabase-client', () => ({
       refreshSession: mocks.refreshSession,
       updateUser: mocks.updateUser,
       onAuthStateChange: mocks.onAuthStateChange,
-      resetPasswordForEmail: mocks.resetPasswordForEmail
+      resetPasswordForEmail: mocks.resetPasswordForEmail,
+      signInWithOtp: mocks.signInWithOtp,
+      verifyOtp: mocks.verifyOtp
     },
     rpc: mocks.rpc,
     functions: { invoke: mocks.invoke }
@@ -48,6 +52,7 @@ import {
   login,
   logout,
   signOutLocal,
+  signOutOthers,
   requestAccountDeletion,
   restoreAccount,
   signupEmail,
@@ -56,6 +61,10 @@ import {
   linkGoogleIdentity,
   unlinkGoogleIdentity,
   updateEmail,
+  fetchHasPassword,
+  verifyPassword,
+  requestReauthCode,
+  verifyReauthCode,
   updatePassword,
   isPasswordRecoveryUrl,
   waitForPasswordRecovery,
@@ -200,6 +209,20 @@ describe('signOutLocal [obligation]', () => {
     mocks.signOut.mockResolvedValueOnce({ error: { message: 'already gone' } })
     await expect(signOutLocal()).resolves.toBeUndefined()
     expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('already gone'))
+  })
+})
+
+describe('signOutOthers [obligation]', () => {
+  test('calls supabase.auth.signOut scoped to "others" [obligation]', async () => {
+    mocks.signOut.mockResolvedValueOnce({ error: null })
+    await signOutOthers()
+    expect(mocks.signOut).toHaveBeenCalledWith({ scope: 'others' })
+  })
+
+  test('swallows the error and logs it rather than throwing [obligation]', async () => {
+    mocks.signOut.mockResolvedValueOnce({ error: { message: 'no other sessions' } })
+    await expect(signOutOthers()).resolves.toBeUndefined()
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('no other sessions'))
   })
 })
 
@@ -712,6 +735,7 @@ describe('updateEmail', () => {
 describe('updatePassword', () => {
   test('returns "success" when updateUser succeeds', async () => {
     mocks.updateUser.mockResolvedValueOnce({ error: null })
+    mocks.signOut.mockResolvedValueOnce({ error: null })
     await expect(updatePassword('hunter22')).resolves.toBe('success')
     expect(mocks.updateUser).toHaveBeenCalledWith({ password: 'hunter22' })
   })
@@ -739,6 +763,290 @@ describe('updatePassword', () => {
   test('returns "error" when updateUser throws', async () => {
     mocks.updateUser.mockRejectedValueOnce(new Error('network failure'))
     await expect(updatePassword('hunter22')).resolves.toBe('error')
+  })
+
+  // [obligation] updatePassword calls signOutOthers() ONLY on a successful
+  // updateUser — asserted not-called on every other outcome.
+  test('[obligation] calls signOutOthers (scope: "others") on success, after updateUser succeeds', async () => {
+    mocks.updateUser.mockResolvedValueOnce({ error: null })
+    mocks.signOut.mockResolvedValueOnce({ error: null })
+
+    await updatePassword('hunter22')
+
+    expect(mocks.signOut).toHaveBeenCalledWith({ scope: 'others' })
+  })
+
+  test('[obligation] does NOT call signOutOthers on "weak-password"', async () => {
+    mocks.updateUser.mockResolvedValueOnce({ error: { code: 'weak_password', message: 'weak' } })
+    await updatePassword('weak')
+    expect(mocks.signOut).not.toHaveBeenCalled()
+  })
+
+  test('[obligation] does NOT call signOutOthers on "same-password"', async () => {
+    mocks.updateUser.mockResolvedValueOnce({ error: { code: 'same_password', message: 'same' } })
+    await updatePassword('hunter22')
+    expect(mocks.signOut).not.toHaveBeenCalled()
+  })
+
+  test('[obligation] does NOT call signOutOthers on any other error outcome', async () => {
+    mocks.updateUser.mockResolvedValueOnce({ error: { code: 'server_error', message: 'boom' } })
+    await updatePassword('hunter22')
+    expect(mocks.signOut).not.toHaveBeenCalled()
+  })
+
+  test('[obligation] does NOT call signOutOthers when updateUser throws', async () => {
+    mocks.updateUser.mockRejectedValueOnce(new Error('network failure'))
+    await updatePassword('hunter22')
+    expect(mocks.signOut).not.toHaveBeenCalled()
+  })
+
+  // [obligation] a failing signOutOthers() must NOT downgrade a successful
+  // password change — outcome stays 'success', error logged and swallowed.
+  test('[obligation] a failing signOutOthers does not downgrade the "success" outcome; error is logged and swallowed', async () => {
+    mocks.updateUser.mockResolvedValueOnce({ error: null })
+    mocks.signOut.mockResolvedValueOnce({ error: { message: 'revoke failed' } })
+
+    await expect(updatePassword('hunter22')).resolves.toBe('success')
+
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('revoke failed'))
+  })
+
+  // [obligation] regression guard — updatePassword must never send a nonce.
+  // Verified against local GoTrue: a deliberately wrong nonce still changes
+  // the password when secure_password_change is off, so the nonce gates
+  // nothing. Identity is verified before this call, never via GoTrue's nonce.
+  test('[obligation] never sends a nonce — updateUser is called with only { password }', async () => {
+    mocks.updateUser.mockResolvedValueOnce({ error: null })
+    mocks.signOut.mockResolvedValueOnce({ error: null })
+
+    await updatePassword('hunter22')
+
+    const [arg] = mocks.updateUser.mock.calls[0]
+    expect(arg).toEqual({ password: 'hunter22' })
+    expect(arg).not.toHaveProperty('nonce')
+  })
+})
+
+describe('fetchHasPassword [obligation]', () => {
+  test('returns true when the RPC resolves true [obligation]', async () => {
+    mocks.rpc.mockResolvedValueOnce({ data: true, error: null })
+    await expect(fetchHasPassword()).resolves.toBe(true)
+    expect(mocks.rpc).toHaveBeenCalledWith('member_has_password')
+  })
+
+  test('returns false when the RPC resolves false', async () => {
+    mocks.rpc.mockResolvedValueOnce({ data: false, error: null })
+    await expect(fetchHasPassword()).resolves.toBe(false)
+  })
+
+  // [obligation] falls back to false on error — false routes to the emailed-code
+  // proof, which is still a real re-proof; true would wrongly offer a
+  // current-password field to someone with no password.
+  test('[obligation] falls back to false when the RPC errors', async () => {
+    mocks.rpc.mockResolvedValueOnce({ data: null, error: { message: 'boom' } })
+    await expect(fetchHasPassword()).resolves.toBe(false)
+  })
+
+  test('falls back to false when the RPC call throws', async () => {
+    mocks.rpc.mockRejectedValueOnce(new Error('network failure'))
+    await expect(fetchHasPassword()).resolves.toBe(false)
+  })
+})
+
+describe('verifyPassword [obligation]', () => {
+  test('signs in again with the session email and the given password, returning "success"', async () => {
+    mocks.getSession.mockResolvedValueOnce({
+      data: { session: { user: { email: 'e@x.com' } } },
+      error: null
+    })
+    mocks.signInWithPassword.mockResolvedValueOnce({ error: null })
+
+    await expect(verifyPassword('hunter22')).resolves.toBe('success')
+
+    expect(mocks.signInWithPassword).toHaveBeenCalledWith({
+      email: 'e@x.com',
+      password: 'hunter22'
+    })
+  })
+
+  test('maps invalid_credentials to "invalid-credentials"', async () => {
+    mocks.getSession.mockResolvedValueOnce({
+      data: { session: { user: { email: 'e@x.com' } } },
+      error: null
+    })
+    mocks.signInWithPassword.mockResolvedValueOnce({
+      error: { code: 'invalid_credentials', message: 'bad' }
+    })
+
+    await expect(verifyPassword('wrong')).resolves.toBe('invalid-credentials')
+  })
+
+  test('maps any other error to "error"', async () => {
+    mocks.getSession.mockResolvedValueOnce({
+      data: { session: { user: { email: 'e@x.com' } } },
+      error: null
+    })
+    mocks.signInWithPassword.mockResolvedValueOnce({
+      error: { code: 'server_error', message: 'boom' }
+    })
+
+    await expect(verifyPassword('hunter22')).resolves.toBe('error')
+  })
+
+  test('returns "error" when the sign-in call throws', async () => {
+    mocks.getSession.mockResolvedValueOnce({
+      data: { session: { user: { email: 'e@x.com' } } },
+      error: null
+    })
+    mocks.signInWithPassword.mockRejectedValueOnce(new Error('network failure'))
+
+    await expect(verifyPassword('hunter22')).resolves.toBe('error')
+  })
+
+  // [obligation] the same-account guard: the email is read off the live session,
+  // never accepted as an argument. No email on the session → 'error' WITHOUT
+  // calling signInWithPassword — a caller can't hand in a different address and
+  // have a sign-in to someone else's account read as proof.
+  test('[obligation] no email on the session → returns "error" WITHOUT calling signInWithPassword', async () => {
+    mocks.getSession.mockResolvedValueOnce({ data: { session: null }, error: null })
+
+    await expect(verifyPassword('hunter22')).resolves.toBe('error')
+
+    expect(mocks.signInWithPassword).not.toHaveBeenCalled()
+  })
+
+  test('[obligation] verifyPassword does not accept an email argument — only takes the password', () => {
+    expect(verifyPassword).toHaveLength(1)
+  })
+})
+
+describe('requestReauthCode [obligation]', () => {
+  test('emails an OTP to the session email and returns "success"', async () => {
+    mocks.getSession.mockResolvedValueOnce({
+      data: { session: { user: { email: 'e@x.com' } } },
+      error: null
+    })
+    mocks.signInWithOtp.mockResolvedValueOnce({ error: null })
+
+    await expect(requestReauthCode()).resolves.toBe('success')
+
+    expect(mocks.signInWithOtp).toHaveBeenCalledWith({
+      email: 'e@x.com',
+      options: { shouldCreateUser: false }
+    })
+  })
+
+  // [obligation] shouldCreateUser: false — a stray address must not quietly mint
+  // a new account.
+  test('[obligation] always passes shouldCreateUser: false', async () => {
+    mocks.getSession.mockResolvedValueOnce({
+      data: { session: { user: { email: 'e@x.com' } } },
+      error: null
+    })
+    mocks.signInWithOtp.mockResolvedValueOnce({ error: null })
+
+    await requestReauthCode()
+
+    const [arg] = mocks.signInWithOtp.mock.calls[0]
+    expect(arg.options).toEqual({ shouldCreateUser: false })
+  })
+
+  test('maps a 429 status to "rate-limited"', async () => {
+    mocks.getSession.mockResolvedValueOnce({
+      data: { session: { user: { email: 'e@x.com' } } },
+      error: null
+    })
+    mocks.signInWithOtp.mockResolvedValueOnce({ error: { status: 429, message: 'slow down' } })
+
+    await expect(requestReauthCode()).resolves.toBe('rate-limited')
+  })
+
+  test('maps any other error to "error"', async () => {
+    mocks.getSession.mockResolvedValueOnce({
+      data: { session: { user: { email: 'e@x.com' } } },
+      error: null
+    })
+    mocks.signInWithOtp.mockResolvedValueOnce({ error: { status: 500, message: 'boom' } })
+
+    await expect(requestReauthCode()).resolves.toBe('error')
+  })
+
+  test('returns "error" when the call throws', async () => {
+    mocks.getSession.mockResolvedValueOnce({
+      data: { session: { user: { email: 'e@x.com' } } },
+      error: null
+    })
+    mocks.signInWithOtp.mockRejectedValueOnce(new Error('network failure'))
+
+    await expect(requestReauthCode()).resolves.toBe('error')
+  })
+
+  // [obligation] same session-email guard as verifyPassword.
+  test('[obligation] no email on the session → returns "error" WITHOUT calling signInWithOtp', async () => {
+    mocks.getSession.mockResolvedValueOnce({ data: { session: null }, error: null })
+
+    await expect(requestReauthCode()).resolves.toBe('error')
+
+    expect(mocks.signInWithOtp).not.toHaveBeenCalled()
+  })
+})
+
+describe('verifyReauthCode [obligation]', () => {
+  test('signs in with the emailed code against the session email, returning "success"', async () => {
+    mocks.getSession.mockResolvedValueOnce({
+      data: { session: { user: { email: 'e@x.com' } } },
+      error: null
+    })
+    mocks.verifyOtp.mockResolvedValueOnce({ error: null })
+
+    await expect(verifyReauthCode('123456')).resolves.toBe('success')
+
+    expect(mocks.verifyOtp).toHaveBeenCalledWith({
+      email: 'e@x.com',
+      token: '123456',
+      type: 'email'
+    })
+  })
+
+  // [obligation] GoTrue answers a wrong code and an expired one identically —
+  // both collapse into 'invalid-code'.
+  test('[obligation] maps otp_expired to "invalid-code" (wrong and expired codes are indistinguishable)', async () => {
+    mocks.getSession.mockResolvedValueOnce({
+      data: { session: { user: { email: 'e@x.com' } } },
+      error: null
+    })
+    mocks.verifyOtp.mockResolvedValueOnce({ error: { code: 'otp_expired', message: 'expired' } })
+
+    await expect(verifyReauthCode('000000')).resolves.toBe('invalid-code')
+  })
+
+  test('maps any other error to "error"', async () => {
+    mocks.getSession.mockResolvedValueOnce({
+      data: { session: { user: { email: 'e@x.com' } } },
+      error: null
+    })
+    mocks.verifyOtp.mockResolvedValueOnce({ error: { code: 'server_error', message: 'boom' } })
+
+    await expect(verifyReauthCode('123456')).resolves.toBe('error')
+  })
+
+  test('returns "error" when the call throws', async () => {
+    mocks.getSession.mockResolvedValueOnce({
+      data: { session: { user: { email: 'e@x.com' } } },
+      error: null
+    })
+    mocks.verifyOtp.mockRejectedValueOnce(new Error('network failure'))
+
+    await expect(verifyReauthCode('123456')).resolves.toBe('error')
+  })
+
+  // [obligation] same session-email guard as verifyPassword/requestReauthCode.
+  test('[obligation] no email on the session → returns "error" WITHOUT calling verifyOtp', async () => {
+    mocks.getSession.mockResolvedValueOnce({ data: { session: null }, error: null })
+
+    await expect(verifyReauthCode('123456')).resolves.toBe('error')
+
+    expect(mocks.verifyOtp).not.toHaveBeenCalled()
   })
 })
 

@@ -13,6 +13,10 @@ const {
   mockSignInOAuth,
   mockUpdateEmail,
   mockUpdatePassword,
+  mockVerifyPassword,
+  mockFetchHasPassword,
+  mockRequestReauthCode,
+  mockVerifyReauthCode,
   mockRequestPasswordReset,
   mockLinkGoogleIdentity,
   mockUnlinkGoogleIdentity,
@@ -29,6 +33,10 @@ const {
   mockSignInOAuth: vi.fn(),
   mockUpdateEmail: vi.fn(),
   mockUpdatePassword: vi.fn(),
+  mockVerifyPassword: vi.fn(),
+  mockFetchHasPassword: vi.fn(),
+  mockRequestReauthCode: vi.fn(),
+  mockVerifyReauthCode: vi.fn(),
   mockRequestPasswordReset: vi.fn(),
   mockLinkGoogleIdentity: vi.fn(),
   mockUnlinkGoogleIdentity: vi.fn(),
@@ -46,17 +54,22 @@ const { mockOnSignedOut, mockIsAuthError } = vi.hoisted(() => ({
   mockIsAuthError: vi.fn()
 }))
 
-const { mockQueryCache, mockCloseAllModals, mockTaroPhoneReset } = vi.hoisted(() => ({
-  mockQueryCache: { getEntries: vi.fn(() => []), remove: vi.fn() },
-  mockCloseAllModals: vi.fn(),
-  mockTaroPhoneReset: vi.fn()
-}))
+const { mockQueryCache, mockCloseAllModals, mockTaroPhoneReset, mockClearPersistedSession } =
+  vi.hoisted(() => ({
+    mockQueryCache: { getEntries: vi.fn(() => []), remove: vi.fn() },
+    mockCloseAllModals: vi.fn(),
+    mockTaroPhoneReset: vi.fn(),
+    mockClearPersistedSession: vi.fn()
+  }))
 
 vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (key) => key }) }))
 vi.mock('@pinia/colada', () => ({ useQueryCache: () => mockQueryCache }))
 vi.mock('@/composables/modal', () => ({ closeAll: mockCloseAllModals }))
 vi.mock('@/stores/taro-phone', () => ({ useTaroPhoneStore: () => ({ reset: mockTaroPhoneReset }) }))
+vi.mock('@/views/study-session/composables/session-persistence', () => ({
+  clearPersistedSession: mockClearPersistedSession
+}))
 
 vi.mock('@/api/session', () => ({
   getSession: mockGetSession,
@@ -68,6 +81,10 @@ vi.mock('@/api/session', () => ({
   signInOAuth: mockSignInOAuth,
   updateEmail: mockUpdateEmail,
   updatePassword: mockUpdatePassword,
+  verifyPassword: mockVerifyPassword,
+  fetchHasPassword: mockFetchHasPassword,
+  requestReauthCode: mockRequestReauthCode,
+  verifyReauthCode: mockVerifyReauthCode,
   requestPasswordReset: mockRequestPasswordReset,
   linkGoogleIdentity: mockLinkGoogleIdentity,
   unlinkGoogleIdentity: mockUnlinkGoogleIdentity,
@@ -96,6 +113,11 @@ beforeEach(() => {
   mockSignInOAuth.mockReset()
   mockUpdateEmail.mockReset()
   mockUpdatePassword.mockReset()
+  mockVerifyPassword.mockReset()
+  mockFetchHasPassword.mockReset()
+  mockFetchHasPassword.mockResolvedValue(false)
+  mockRequestReauthCode.mockReset()
+  mockVerifyReauthCode.mockReset()
   mockRequestPasswordReset.mockReset()
   mockLinkGoogleIdentity.mockReset()
   mockUnlinkGoogleIdentity.mockReset()
@@ -112,6 +134,7 @@ beforeEach(() => {
   mockQueryCache.remove.mockReset()
   mockCloseAllModals.mockReset()
   mockTaroPhoneReset.mockReset()
+  mockClearPersistedSession.mockReset()
 })
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
@@ -151,6 +174,27 @@ describe('useSessionStore', () => {
       const result = await store.restoreSession()
       expect(store.user).toEqual(user)
       expect(result).toBe(true)
+    })
+
+    test('[obligation] refreshes hasPassword via fetchHasPassword once authenticated', async () => {
+      const user = { id: 'u1', aud: 'authenticated' }
+      mockGetSession.mockResolvedValueOnce({ user })
+      mockFetchHasPassword.mockResolvedValueOnce(true)
+      const store = useSessionStore()
+
+      await store.restoreSession()
+
+      expect(mockFetchHasPassword).toHaveBeenCalledOnce()
+      expect(store.hasPassword).toBe(true)
+    })
+
+    test('does not call fetchHasPassword when no session is present', async () => {
+      mockGetSession.mockResolvedValueOnce(null)
+      const store = useSessionStore()
+
+      await store.restoreSession()
+
+      expect(mockFetchHasPassword).not.toHaveBeenCalled()
     })
 
     test('returns false and does not throw when getSession throws', async () => {
@@ -278,6 +322,24 @@ describe('useSessionStore', () => {
       expect(mockTaroPhoneReset).toHaveBeenCalledOnce()
     })
 
+    // [obligation] regression guard — reset() clears the persisted study-session
+    // snapshot so the next member signing in on the same tab isn't offered the
+    // previous member's session to resume.
+    test('[obligation] clears the persisted study-session snapshot and resets hasPassword', async () => {
+      const user = { id: 'u1', aud: 'authenticated' }
+      mockGetSession.mockResolvedValueOnce({ user })
+      mockFetchHasPassword.mockResolvedValueOnce(true)
+      mockLogout.mockResolvedValueOnce(undefined)
+      const store = useSessionStore()
+      await store.restoreSession()
+      expect(store.hasPassword).toBe(true)
+
+      await store.logout()
+
+      expect(mockClearPersistedSession).toHaveBeenCalledOnce()
+      expect(store.hasPassword).toBe(false)
+    })
+
     test('does NOT run teardown when supaLogout rejects (no reset reached) [obligation]', async () => {
       const user = { id: 'u1', aud: 'authenticated' }
       mockGetSession.mockResolvedValueOnce({ user })
@@ -289,6 +351,7 @@ describe('useSessionStore', () => {
 
       expect(mockCloseAllModals).not.toHaveBeenCalled()
       expect(mockTaroPhoneReset).not.toHaveBeenCalled()
+      expect(mockClearPersistedSession).not.toHaveBeenCalled()
     })
   })
 
@@ -308,6 +371,7 @@ describe('useSessionStore', () => {
       expect(mockCloseAllModals).toHaveBeenCalledOnce()
       expect(mockQueryCache.remove).toHaveBeenCalledWith('entry-a')
       expect(mockTaroPhoneReset).toHaveBeenCalledOnce()
+      expect(mockClearPersistedSession).toHaveBeenCalledOnce()
       expect(mockSignOutLocal).toHaveBeenCalledOnce()
     })
 
@@ -471,6 +535,36 @@ describe('useSessionStore', () => {
     })
   })
 
+  // ── hasPassword — RPC-backed, independent of hasPasswordIdentity [obligation] ──
+
+  describe('hasPassword vs hasPasswordIdentity [obligation]', () => {
+    // [obligation] the branch key for the password-change UI is session.hasPassword
+    // (RPC-backed), not hasPasswordIdentity. GoTrue creates no 'email' identity
+    // when a password is set on a Google-origin account, so hasPasswordIdentity
+    // stays false forever even though the account can sign in with a password.
+    test('[obligation] hasPassword is true for a google-only account whose member_has_password() RPC returns true', async () => {
+      const user = {
+        id: 'u1',
+        aud: 'authenticated',
+        identities: [{ provider: 'google' }]
+      }
+      mockGetSession.mockResolvedValueOnce({ user })
+      mockFetchHasPassword.mockResolvedValueOnce(true)
+      const store = useSessionStore()
+
+      await store.restoreSession()
+
+      expect(store.hasPasswordIdentity).toBe(false)
+      expect(store.hasGoogleIdentity).toBe(true)
+      expect(store.hasPassword).toBe(true)
+    })
+
+    test('hasPassword is false initially, before any refresh', () => {
+      const store = useSessionStore()
+      expect(store.hasPassword).toBe(false)
+    })
+  })
+
   // ── updateEmail ────────────────────────────────────────────────────────────
 
   describe('updateEmail', () => {
@@ -492,6 +586,78 @@ describe('useSessionStore', () => {
       const result = await store.updatePassword('hunter22')
       expect(result).toBe('success')
       expect(mockUpdatePassword).toHaveBeenCalledWith('hunter22')
+    })
+
+    // [obligation] has_password refreshes after a successful password change —
+    // Google-only → set password → next change asks for the current password.
+    test('[obligation] refreshes hasPassword via fetchHasPassword on a "success" outcome', async () => {
+      mockUpdatePassword.mockResolvedValueOnce('success')
+      mockFetchHasPassword.mockResolvedValueOnce(true)
+      const store = useSessionStore()
+
+      await store.updatePassword('hunter22')
+
+      expect(mockFetchHasPassword).toHaveBeenCalledOnce()
+      expect(store.hasPassword).toBe(true)
+    })
+
+    test('[obligation] does NOT refresh hasPassword on "weak-password"', async () => {
+      mockUpdatePassword.mockResolvedValueOnce('weak-password')
+      const store = useSessionStore()
+
+      await store.updatePassword('weak')
+
+      expect(mockFetchHasPassword).not.toHaveBeenCalled()
+    })
+
+    test('[obligation] does NOT refresh hasPassword on "same-password"', async () => {
+      mockUpdatePassword.mockResolvedValueOnce('same-password')
+      const store = useSessionStore()
+
+      await store.updatePassword('hunter22')
+
+      expect(mockFetchHasPassword).not.toHaveBeenCalled()
+    })
+
+    test('[obligation] does NOT refresh hasPassword on "error"', async () => {
+      mockUpdatePassword.mockResolvedValueOnce('error')
+      const store = useSessionStore()
+
+      await store.updatePassword('hunter22')
+
+      expect(mockFetchHasPassword).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── verifyPassword / requestReauthCode / verifyReauthCode ─────────────────
+
+  describe('verifyPassword', () => {
+    test('delegates to api verifyPassword and returns the outcome', async () => {
+      mockVerifyPassword.mockResolvedValueOnce('success')
+      const store = useSessionStore()
+      const result = await store.verifyPassword('hunter22')
+      expect(result).toBe('success')
+      expect(mockVerifyPassword).toHaveBeenCalledWith('hunter22')
+    })
+  })
+
+  describe('requestReauthCode', () => {
+    test('delegates to api requestReauthCode and returns the outcome', async () => {
+      mockRequestReauthCode.mockResolvedValueOnce('success')
+      const store = useSessionStore()
+      const result = await store.requestReauthCode()
+      expect(result).toBe('success')
+      expect(mockRequestReauthCode).toHaveBeenCalledOnce()
+    })
+  })
+
+  describe('verifyReauthCode', () => {
+    test('delegates to api verifyReauthCode and returns the outcome', async () => {
+      mockVerifyReauthCode.mockResolvedValueOnce('success')
+      const store = useSessionStore()
+      const result = await store.verifyReauthCode('123456')
+      expect(result).toBe('success')
+      expect(mockVerifyReauthCode).toHaveBeenCalledWith('123456')
     })
   })
 
