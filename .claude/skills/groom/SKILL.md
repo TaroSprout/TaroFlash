@@ -192,11 +192,12 @@ rewrite over a chain of `update_content` edits. Any splits become new tickets vi
 `notion-create-pages`.
 
 Sections and their shape live in [`ticket-authoring.md`](../../rules/ticket-authoring.md). Groom
-turns each resolved decision into a **concrete acceptance criterion** — specific values, named
-mechanisms, exact copy in the criterion itself — and **deletes `## Open questions`** as it goes.
-**There is no `## Decisions` section**; a decision that only reads as an ordered plan still lands as
-ACs, not a plan. Groom also owns `## Blocked on`, and writes no `Files` or `Implementation steps`
-section — the claiming agent explores for itself.
+turns each resolved decision into a **product-observable acceptance criterion**, plus a terse
+companion line in `## Tech details` for the seam / mechanism / reuse pointer it rides on — so the ACs
+stay pure product language — and **deletes `## Open questions`** as it goes. **There is no
+`## Decisions` section**; a decision that only reads as an ordered plan still lands as ACs, not a
+plan. Groom also owns `## Blocked on`, and writes no `Files` / `Implementation steps` narration —
+`## Tech details` is terse pointers, not a file-by-file plan.
 
 **The resolution is the deliverable, not the investigation.** Grooming reads far more than it
 records: most of what you learned settling a decision is rediscoverable in seconds and does not
@@ -243,14 +244,15 @@ it without guessing. Test it by asking:
 - Does any clause survive the delete-test — rationale, plumbing, or a restatement of another AC? Cut it.
 - Is `## Open questions` gone, and every fork it held now a concrete AC?
 - Is a rejected path recorded as a negative AC, so no one re-proposes it?
-- Is the prior art an AC clause ("built from X"), and is any money/auth/boundary fact `CONFIRMED`?
+- Is the prior art a `## Tech details` clause ("built from X"), and is any money/auth/boundary fact `CONFIRMED`?
 - If this was a split: can `/work` tell which sibling must land first without reading all of them?
 - For every UI element: are placement, host/slot, trigger, label/icon, and states decided — or would
   an implementer still choose?
 - Is every new or changed string the user-signed-off exact wording (≥3 options offered), and is
   reused copy marked as reused?
-- Does any AC smuggle undecided design behind a competence claim, or grow into implementation mechanics?
+- Does any AC smuggle undecided design behind a competence claim, or grow into implementation mechanics (which belong on `## Tech details` lines)?
 - Was each seam this ticket touches surveyed for how its existing content is owned?
+- Do the ACs read as pure product language, with the technical encoding on companion `## Tech details` lines?
 
 ## Self-heal
 

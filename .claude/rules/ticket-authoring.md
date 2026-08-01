@@ -73,21 +73,23 @@ ordered lists and the churn shows up as noise in the page history.
 | ------------------------ | ---------- | ------------------------------------------------------------ |
 | `## Product description` | cut        | 1–3 lines, product terms                                     |
 | `## Repro`               | cut        | bugs only                                                    |
-| `## Acceptance criteria` | triage     | the only technical section — see below                       |
+| `## Acceptance criteria` | triage     | product-observable, one pass/fail each — see below           |
+| `## Tech details`        | groom      | terse companion criteria — the encoding the ACs can't carry  |
 | `## Open questions`      | cut/triage | unresolved forks; groom settles each into an AC + deletes it |
 | `## Blocked on`          | groom      | external facts only; omit if none                            |
 
-**There is no `## Decisions` section.** A resolved decision is an acceptance criterion.
+**There is no `## Decisions` section.** A resolved decision is an acceptance criterion — product-observable, with any technical encoding on a companion `## Tech details` line.
 
 A ticket carries only the sections that have content. Length tracks how much of the work is
 **decision** rather than typing — a mechanical change gets six lines, a cross-cutting refactor earns
 its ownership table and execution order.
 
-### `## Acceptance criteria` — the only technical section
+### `## Acceptance criteria` — product-observable, one per line
 
-Every resolved decision, chosen value, named mechanism, reuse pointer, and rejected path is an
-acceptance criterion. There is no "Decisions" or "Technical notes" section — worth recording means
-worth phrasing as pass-or-fail.
+Every AC is something you could watch pass or fail in the running product, in product terms — no
+filepaths, symbols, or SQL. This is the list the reviewer checks off and the implementer builds to,
+so keep it skimmable. The technical encoding each one rides on — the seam, mechanism, or reuse
+pointer — lives on a companion line in `## Tech details`, not here.
 
 Five gates on every AC:
 
@@ -102,8 +104,8 @@ Five gates on every AC:
 - **No smuggled design; no implementation.** A competence claim ("handles X correctly", "works
   across Y") isn't concrete unless X's behaviour is spelled out — undecided behaviour is an
   `## Open questions` fork, not an AC. And an AC pins the _design_ decision (placement, host, copy,
-  states, behaviour), never the _implementation_ (which composable, how it's wired) — that's a "built
-  from X" clause at most.
+  states, behaviour), never the _implementation_ (which composable, how it's wired) — that rides a
+  companion line in `## Tech details`.
 
 **Delete-test, per clause:** if removing it leaves no criterion ambiguous or unfailable, cut it.
 Rationale, plumbing traces, and restatements of another AC all fail it.
@@ -114,16 +116,23 @@ Rationale, plumbing traces, and restatements of another AC all fail it.
 > **Lean** (the AC alone): _A rated card advances instantly and is recorded `pending`, with no saving
 > state; it becomes durably reviewed only once its save confirms._
 
-**Still earns space** — won't be rediscovered: **prior art** (the primitive/rule already governing
-the surface, as a "built from X" clause), a bug's confirmed **root cause**, **negative facts**.
-Money / auth / boundary claims: `CONFIRMED (verified against <source>)`, else `ASSUMED`. A filepath
-only when it's the _answer_, never a line number.
-
-**Never earns space** — grep finds it in seconds: which files to edit, how the current code works,
-framework mechanics.
-
 Written concrete as decisions resolve (mostly groom). At cut time, only acceptance the user dictates,
 verbatim.
+
+### `## Tech details` — the companion encoding
+
+A terse companion to the ACs: one checkbox line per AC that needs the technical detail its product
+term can't carry — the seam, slot, composable, mechanism, reuse pointer, or the single file that _is_
+the answer. Same delete-test. This is where implementation encoding lives, so the ACs stay pure
+product language and skimmable. Omit the section when there's nothing technical to record.
+
+- **Prior art** as a "built from X" clause, a bug's confirmed **root cause**, **negative facts**
+  ("does not reuse Y").
+- Money / auth / boundary claims: `CONFIRMED (verified against <source>)`, else `ASSUMED`.
+- A filepath only when it's the _answer_ (a new file's home, a confirmed root-cause location), never
+  a line number.
+- **Never here** — grep finds it in seconds: exhaustive file lists, how the current code works,
+  framework mechanics.
 
 ### `## Open questions` — unresolved forks awaiting groom
 
