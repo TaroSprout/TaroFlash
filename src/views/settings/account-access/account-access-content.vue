@@ -31,7 +31,7 @@ const title = computed(() => {
   if (page.value === 'menu') return t('account-access-modal.title')
   if (page.value === 'email' || page.value === 'email-success')
     return t('account-access-modal.email.heading')
-  return session.hasPasswordIdentity
+  return session.hasPassword
     ? t('account-access-modal.password.heading-change')
     : t('account-access-modal.password.heading-set')
 })

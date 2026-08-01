@@ -47,7 +47,7 @@ export function usePasswordActions() {
       mismatch: t('account-access-modal.password.validation-mismatch')
     })
 
-    if (session.hasPasswordIdentity && !current_password.value) {
+    if (session.hasPassword && !current_password.value) {
       e.current_password = t('account-access-modal.password.validation-current-required')
     }
 
@@ -156,7 +156,7 @@ export function usePasswordActions() {
 
     try {
       if (step.value === 'code') return await submitCode()
-      if (session.hasPasswordIdentity) return await verifyThenApply()
+      if (session.hasPassword) return await verifyThenApply()
       return await requestCode()
     } finally {
       loading.value = false

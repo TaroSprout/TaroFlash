@@ -15,6 +15,7 @@ import {
   updateEmail as supaUpdateEmail,
   updatePassword as supaUpdatePassword,
   verifyPassword as supaVerifyPassword,
+  fetchHasPassword,
   requestReauthCode as supaRequestReauthCode,
   verifyReauthCode as supaVerifyReauthCode,
   requestPasswordReset as supaRequestPasswordReset,
@@ -60,6 +61,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
   const taroPhone = useTaroPhoneStore()
 
   const user = ref<User | undefined>(undefined)
+  const has_password = ref(false)
   const loading_count = ref(0)
   let logging_out_intentionally = false
 
@@ -96,6 +98,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
       if (!authenticated.value) {
         const session = await getSession()
         user.value = session?.user
+        if (authenticated.value) await refreshHasPassword()
       }
 
       return authenticated.value
@@ -194,8 +197,12 @@ export const useSessionStore = defineStore('sessionStore', () => {
     return supaUpdateEmail(email)
   }
 
-  function updatePassword(password: string): Promise<UpdatePasswordOutcome> {
-    return supaUpdatePassword(password)
+  async function updatePassword(password: string): Promise<UpdatePasswordOutcome> {
+    const outcome = await supaUpdatePassword(password)
+
+    if (outcome === 'success') await refreshHasPassword()
+
+    return outcome
   }
 
   function verifyPassword(password: string): Promise<VerifyPasswordOutcome> {
@@ -226,6 +233,17 @@ export const useSessionStore = defineStore('sessionStore', () => {
 
   async function refreshUser(): Promise<void> {
     user.value = (await getUser()) ?? undefined
+    await refreshHasPassword()
+  }
+
+  /**
+   * Whether the account has a password has to be asked of the database — see
+   * `fetchHasPassword`. Refreshed wherever `user` is assigned, so the two never
+   * disagree, and after a password change, which flips it for Google-origin
+   * accounts setting one for the first time.
+   */
+  async function refreshHasPassword(): Promise<void> {
+    has_password.value = await fetchHasPassword()
   }
 
   // Single teardown funnel for both logout() and forceLogout(): clears auth
@@ -234,6 +252,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
   // running — logged-out surfaces still need sound.
   function reset() {
     user.value = undefined
+    has_password.value = false
 
     closeAllModals()
     clearQueryCache()
@@ -280,6 +299,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
     authenticated,
     isLoading,
     hasPasswordIdentity,
+    hasPassword: has_password,
     hasGoogleIdentity,
     login,
     checkPasswordRecovery,

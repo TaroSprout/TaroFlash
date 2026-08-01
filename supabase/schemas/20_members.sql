@@ -388,3 +388,36 @@ CREATE POLICY "members can update their own non-privileged fields" ON public.mem
 GRANT ALL ON TABLE public.members TO anon;
 GRANT ALL ON TABLE public.members TO authenticated;
 GRANT ALL ON TABLE public.members TO service_role;
+
+
+-- Whether this account can sign in with a password, which the client cannot
+-- work out for itself.
+--
+-- `user.identities` is the obvious source and is wrong: GoTrue creates the
+-- `email` identity at email signup and never on updateUser({ password }), so a
+-- Google-origin account that sets a password still shows no email identity
+-- forever. app_metadata.providers mirrors identities, so it has the same hole.
+--
+-- Definer because auth.users carries no grants to `authenticated` — an invoker
+-- function would only ever get "permission denied".
+--
+-- The empty-string check is not redundant: GoTrue stores '' rather than NULL
+-- for accounts that never had a password in some versions, and `'' IS NOT NULL`
+-- is true, which would claim a password that isn't there.
+CREATE FUNCTION public.member_has_password() RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select exists (
+    select 1
+    from auth.users
+    where id = (select auth.uid())
+      and encrypted_password is not null
+      and encrypted_password <> ''
+  );
+$$;
+
+
+REVOKE ALL ON FUNCTION public.member_has_password() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.member_has_password() FROM anon;
+GRANT EXECUTE ON FUNCTION public.member_has_password() TO authenticated;

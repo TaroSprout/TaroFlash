@@ -451,6 +451,35 @@ export async function updateEmail(email: string): Promise<UpdateEmailOutcome> {
   }
 }
 
+/**
+ * Whether this account can sign in with a password.
+ *
+ * Not derivable client-side. `user.identities` looks like the answer and isn't:
+ * GoTrue creates the `email` identity at email signup and never when a password
+ * is set, so a Google-origin account that sets one shows no email identity for
+ * good. `app_metadata.providers` mirrors identities, same hole.
+ *
+ * Falls back to `false`, which routes the member to the emailed-code proof.
+ * That's the safe direction — still a real re-proof of identity, just not the
+ * one they'd expect — where `true` would offer a current-password field to
+ * someone who has no password to type.
+ */
+export async function fetchHasPassword(): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.rpc('member_has_password')
+
+    if (error) {
+      logger.error(`Password lookup failed: ${error.message}`)
+      return false
+    }
+
+    return data === true
+  } catch (e: any) {
+    logger.error(`Password lookup failed: ${e.message}`)
+    return false
+  }
+}
+
 export type VerifyPasswordOutcome = 'success' | 'invalid-credentials' | 'error'
 
 /**

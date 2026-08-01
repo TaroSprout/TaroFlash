@@ -47,7 +47,7 @@ watch(success, (isSuccess) => {
       <form class="contents" @submit.prevent="submit">
         <template v-if="step === 'password'">
           <ui-input
-            v-if="session.hasPasswordIdentity"
+            v-if="session.hasPassword"
             v-model:value="current_password"
             type="password"
             autocomplete="current-password"
