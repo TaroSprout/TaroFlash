@@ -89,7 +89,7 @@ Every resolved decision, chosen value, named mechanism, reuse pointer, and rejec
 acceptance criterion. There is no "Decisions" or "Technical notes" section — worth recording means
 worth phrasing as pass-or-fail.
 
-Four gates on every AC:
+Five gates on every AC:
 
 - **Independently failable.** "The menu shows the new option" can't fail separately from the feature
   existing — that's Product description as a checkbox. "Never-reviewed cards sort last" can. A
@@ -99,6 +99,11 @@ Four gates on every AC:
 - **One sentence.** A second sentence means it's two ACs, or padding.
 - **No `or` / `either` / `e.g.` / parenthetical alternatives** — a hedge is an unresolved decision;
   route it to `Needs More Info`.
+- **No smuggled design; no implementation.** A competence claim ("handles X correctly", "works
+  across Y") isn't concrete unless X's behaviour is spelled out — undecided behaviour is an
+  `## Open questions` fork, not an AC. And an AC pins the _design_ decision (placement, host, copy,
+  states, behaviour), never the _implementation_ (which composable, how it's wired) — that's a "built
+  from X" clause at most.
 
 **Delete-test, per clause:** if removing it leaves no criterion ambiguous or unfailable, cut it.
 Rationale, plumbing traces, and restatements of another AC all fail it.
@@ -134,6 +139,9 @@ tokens", "declarative schema then `db diff`", or "do not touch tests" into a bod
 Name a rule file **only** when the ticket departs from it, or when the ticket's area wouldn't
 trigger it.
 
+A restated rule is still noise when it wears a section heading: an `## Out of scope: tests stay
+untouched` line is the "do not touch tests" rule in costume — delete it.
+
 ## Voice
 
 - **Product description is product terms** — screens, flows, what the user experiences. No
@@ -149,6 +157,10 @@ trigger it.
   copy says, how a layout should look — record as open. `/groom` settles them with the user.
 - New user-facing text → note that locale keys are needed (`src/locales/en-us.json`), see
   [`i18n`](./i18n.md).
+- **Copy is the user's to sign off.** Any new or changed user-facing string carries its exact final
+  wording in the AC, signed off by the user — never chosen for them, never deferred. Reused copy is
+  stated as reused (same wording, its own key — keys aren't shared across features). A ticket with
+  undecided copy is not `Ready`.
 
 ## Epics
 
