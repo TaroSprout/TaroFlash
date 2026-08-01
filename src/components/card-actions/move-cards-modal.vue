@@ -19,7 +19,9 @@ export type MoveCardsModalResponse = {
 
 type MoveCardsModalProps = {
   cards: Card[]
-  current_deck_id: number
+  // Omitted for a selection spanning several decks — there's no single
+  // "current" deck to disable, so none of them are.
+  current_deck_id?: number
   count?: number
   move: (deck_id: number) => Promise<void>
   close: (response?: MoveCardsModalResponse | boolean) => void

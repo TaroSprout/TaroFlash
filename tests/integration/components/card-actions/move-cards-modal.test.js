@@ -151,13 +151,13 @@ function makeCard(overrides = {}) {
   return card.one({ overrides })
 }
 
-function mountModal({
-  cards = [],
-  current_deck_id = 30,
-  count,
-  close = vi.fn(),
-  move = vi.fn().mockResolvedValue(undefined)
-} = {}) {
+function mountModal(opts = {}) {
+  const { cards = [], count, close = vi.fn(), move = vi.fn().mockResolvedValue(undefined) } = opts
+  // A plain destructured default can't distinguish "omitted" from an explicit
+  // `current_deck_id: undefined` (both fall back to it) — read straight off
+  // `opts` so a test can exercise the real undefined (mixed-deck) case.
+  const current_deck_id = 'current_deck_id' in opts ? opts.current_deck_id : 30
+
   const wrapper = shallowMount(MoveCardsModal, {
     props: { cards, current_deck_id, count, close, move },
     global: {
@@ -212,6 +212,23 @@ describe('MoveCardsModal', () => {
     // deck 10 (index 0) is the current deck
     expect(items[0].attributes('class')).toContain('pointer-events-none')
     expect(items[1].attributes('class')).not.toContain('pointer-events-none')
+  })
+
+  test('disables no deck when current_deck_id is undefined (mixed-deck selection) [obligation]', () => {
+    const cards = [makeCard()]
+    const { wrapper } = mountModal({ cards, current_deck_id: undefined })
+    const items = wrapper.findAll('[data-testid="options-panel__card"]')
+
+    items.forEach((item) => expect(item.attributes('class')).not.toContain('pointer-events-none'))
+  })
+
+  test('every deck stays selectable when current_deck_id is undefined [obligation]', async () => {
+    const cards = [makeCard()]
+    const { wrapper } = mountModal({ cards, current_deck_id: undefined })
+
+    await wrapper.findAll('[data-testid="options-panel__card"]')[0].trigger('click')
+
+    expect(wrapper.find('[data-testid="move-cards__move"]').attributes('disabled')).toBeUndefined()
   })
 
   // ── Title / moving_count obligation ──────────────────────────────────────────
