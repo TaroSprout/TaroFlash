@@ -164,10 +164,12 @@ Rewrite the ticket's **page body** via `notion-update-page` — prefer `replace_
 rewrite over a chain of `update_content` edits. Any splits become new tickets via
 `notion-create-pages`.
 
-Sections and their shape live in [`ticket-authoring.md`](../../rules/ticket-authoring.md); groom
-owns `## Decisions` and `## Blocked on`, and may revise `## Acceptance criteria`. It writes no
-`Files` or `Implementation steps` section — the claiming agent explores for itself, and a decision
-that only makes sense as an ordered plan belongs in `## Decisions` as the decision it is.
+Sections and their shape live in [`ticket-authoring.md`](../../rules/ticket-authoring.md). Groom
+turns each resolved decision into a **concrete acceptance criterion** — specific values, named
+mechanisms, exact copy in the criterion itself — and **deletes `## Open questions`** as it goes.
+**There is no `## Decisions` section**; a decision that only reads as an ordered plan still lands as
+ACs, not a plan. Groom also owns `## Blocked on`, and writes no `Files` or `Implementation steps`
+section — the claiming agent explores for itself.
 
 **The resolution is the deliverable, not the investigation.** Grooming reads far more than it
 records: most of what you learned settling a decision is rediscoverable in seconds and does not
@@ -209,12 +211,12 @@ on the epic. No prose.
 A groomed ticket is done when a fresh session with **no memory of this conversation** could execute
 it without guessing. Test it by asking:
 
-- Does any acceptance criterion contain "or", "either", or a parenthetical alternative?
-- Would an implementer hit a fork the body doesn't settle?
-- Is any load-bearing fact `ASSUMED` that should be `CONFIRMED`?
-- Does the body say why the rejected alternatives were rejected — or will someone re-propose them?
-- Is the prior art named, so the implementer uses the existing primitive rather than reinventing it?
-- Is anything in the body something the claiming agent would rediscover in seconds? Cut it.
+- Is every AC concrete — specific values, mechanisms, copy in the criterion, not "retries the save"?
+- Does any AC contain "or", "either", a parenthetical alternative, or a second sentence?
+- Does any clause survive the delete-test — rationale, plumbing, or a restatement of another AC? Cut it.
+- Is `## Open questions` gone, and every fork it held now a concrete AC?
+- Is a rejected path recorded as a negative AC, so no one re-proposes it?
+- Is the prior art an AC clause ("built from X"), and is any money/auth/boundary fact `CONFIRMED`?
 - If this was a split: can `/work` tell which sibling must land first without reading all of them?
 
 ## Guardrails

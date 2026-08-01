@@ -69,59 +69,62 @@ ordered lists and the churn shows up as noise in the page history.
 
 **One section list. Each stage fills more of it — no stage invents sections.**
 
-| Section                  | Owner  | Notes                                            |
-| ------------------------ | ------ | ------------------------------------------------ |
-| `## Product description` | cut    | 1–3 lines, product terms                         |
-| `## Repro`               | cut    | bugs only                                        |
-| `## Acceptance criteria` | triage | **never at cut time** — see below                |
-| `## Decisions`           | triage | seeds prior art + rejected paths; groom resolves |
-| `## Blocked on`          | groom  | external facts only; omit if none                |
+| Section                  | Owner      | Notes                                                        |
+| ------------------------ | ---------- | ------------------------------------------------------------ |
+| `## Product description` | cut        | 1–3 lines, product terms                                     |
+| `## Repro`               | cut        | bugs only                                                    |
+| `## Acceptance criteria` | triage     | the only technical section — see below                       |
+| `## Open questions`      | cut/triage | unresolved forks; groom settles each into an AC + deletes it |
+| `## Blocked on`          | groom      | external facts only; omit if none                            |
+
+**There is no `## Decisions` section.** A resolved decision is an acceptance criterion.
 
 A ticket carries only the sections that have content. Length tracks how much of the work is
 **decision** rather than typing — a mechanical change gets six lines, a cross-cutting refactor earns
 its ownership table and execution order.
 
-### `## Acceptance criteria` — only what can fail independently
+### `## Acceptance criteria` — the only technical section
 
-An AC earns its place when it can fail on its own. "The menu shows the new option" cannot fail
-separately from the feature existing — that's the Product description restated as a checkbox. "Never
-reviewed cards sort last" and "survives infinite-scroll pagination" can fail on their own; those are
-the ACs.
+Every resolved decision, chosen value, named mechanism, reuse pointer, and rejected path is an
+acceptance criterion. There is no "Decisions" or "Technical notes" section — worth recording means
+worth phrasing as pass-or-fail.
 
-No `or`, `either`, `e.g.`, or parenthetical alternatives — a hedge in an AC is an unresolved
-decision, and it routes to `Needs More Info`.
+Four gates on every AC:
 
-**Not written at cut time.** Writing them before investigation invites inventing scope nobody agreed
-to. Exception: acceptance the user dictates, recorded verbatim.
+- **Independently failable.** "The menu shows the new option" can't fail separately from the feature
+  existing — that's Product description as a checkbox. "Never-reviewed cards sort last" can. A
+  rejected path counts too, as a negative: "no cross-session outbox is added".
+- **Concrete.** Values, mechanisms, exact copy — _in_ the criterion. Not "retries the save";
+  "retries 3× at 0.5s / 1s / 2s, then marks it failed".
+- **One sentence.** A second sentence means it's two ACs, or padding.
+- **No `or` / `either` / `e.g.` / parenthetical alternatives** — a hedge is an unresolved decision;
+  route it to `Needs More Info`.
 
-### `## Decisions` — the only technical section
+**Delete-test, per clause:** if removing it leaves no criterion ambiguous or unfailable, cut it.
+Rationale, plumbing traces, and restatements of another AC all fail it.
 
-There is no "Technical notes" section. Investigation findings are not recorded; **decisions are.**
-The claiming agent does its own exploration.
+> **Bloated** (a "Decisions" bullet restating an AC): _Optimistic advance stays; only the commit is
+> gated — the card flies away instantly, tracked by a per-card pending/saved/failed status. Rejected:
+> blocking the UI._
+> **Lean** (the AC alone): _A rated card advances instantly and is recorded `pending`, with no saving
+> state; it becomes durably reviewed only once its save confirms._
 
-The test for every line:
+**Still earns space** — won't be rediscovered: **prior art** (the primitive/rule already governing
+the surface, as a "built from X" clause), a bug's confirmed **root cause**, **negative facts**.
+Money / auth / boundary claims: `CONFIRMED (verified against <source>)`, else `ASSUMED`. A filepath
+only when it's the _answer_, never a line number.
 
-> **Will the claiming agent rediscover this on its own?**
+**Never earns space** — grep finds it in seconds: which files to edit, how the current code works,
+framework mechanics.
 
-| Cut — rediscovered in seconds     | Keep — won't be found, or found too late                       |
-| --------------------------------- | -------------------------------------------------------------- |
-| Which files to edit, line numbers | **Prior art** — the primitive/util/rule already governing this |
-| How the current code works        | The path deliberately **rejected**, and why                    |
-| The plumbing trace                | **Negative facts** — "no join change", "single UI surface"     |
-| Framework/API mechanics           | Confirmed root cause of a bug                                  |
+Written concrete as decisions resolve (mostly groom). At cut time, only acceptance the user dictates,
+verbatim.
 
-Prior art is the highest-value line in any ticket. An agent finds the file it needs in seconds; it
-never finds "`ui-tappable` already encodes press styling" unless pointed, because you can't grep for
-a thing you don't know exists. Negative facts are second — they delete exploration that would
-otherwise happen.
+### `## Open questions` — unresolved forks awaiting groom
 
-Name a filepath when it's the _answer_ (the primitive to use, the seam to extend), not when it's
-merely _where the work happens_. Never cite line numbers — they go stale and grep is faster.
-
-Groom-resolved decisions carry: **what** was decided · **why**, in a line · **what was rejected and
-why** (this is what stops a future session re-proposing it) · `CONFIRMED (verified against
-
-<source>)` or `ASSUMED`. Anything touching money, auth, or a system boundary must be `CONFIRMED`.
+The forks a ticket hands to `/groom` — a taste call left open at cut, a design fork triage won't
+settle — one line each, phrased as the question. Groom settles each into a concrete AC and **deletes
+the section**; it never reaches a takeable ticket.
 
 ### Never restate a rule that auto-loads
 
@@ -134,7 +137,7 @@ trigger it.
 ## Voice
 
 - **Product description is product terms** — screens, flows, what the user experiences. No
-  filepaths, symbols, function names, or SQL. Those live in `## Decisions`.
+  filepaths, symbols, function names, or SQL. Those live in the acceptance criteria.
 - **Point, don't narrate.** `Reuse: UiDropdownButton, UiRadio; mirror grid-item.vue` — not a
   parenthetical explaining what each one is for. The implementer opens the file.
 - **Say it once.** If Product description already carries a fact, no other section repeats it.

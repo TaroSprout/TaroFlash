@@ -233,18 +233,18 @@ not treat the marking as a reason to leave it in `Ready`.
 
 Section list, brevity, and voice all live in
 [`ticket-authoring.md`](../../rules/ticket-authoring.md). Triage owns two of its sections —
-`## Acceptance criteria` and `## Decisions` — and adds neither a template nor a rule of its own.
+`## Acceptance criteria` and `## Open questions` — and adds neither a template nor a rule of its own.
 
 Three things this skill is on the hook for:
 
-- **Prior art in `## Decisions`.** The most common implementation failure isn't a wrong decision, it's
-  an agent reinventing what the codebase already encodes — a stepper hand-rolling press styling when
-  `ui-tappable` defines it, a CSS hack where a prop exists. Investigation always answers _what
-  already governs this surface?_, and the answer is written down. It converts "the agent should have
-  known" into "the ticket said so."
+- **Prior art as an acceptance criterion.** The most common implementation failure isn't a wrong
+  decision, it's an agent reinventing what the codebase already encodes — a stepper hand-rolling
+  press styling when `ui-tappable` defines it, a CSS hack where a prop exists. Answer _what already
+  governs this surface?_ and write it as a concrete AC clause ("built from `ui-tappable`"). It
+  converts "the agent should have known" into "the ticket said so."
 - **Open forks, for a `Needs More Info` ticket.** It still gets a body — `/groom` builds on it rather
-  than starting over — with the unresolved forks listed explicitly under `## Decisions` so `/groom`
-  knows what it is there to settle.
+  than starting over — with the unresolved forks listed under `## Open questions` so `/groom` knows
+  what it is there to settle.
 - **`Type = Spike` carries its own meaning**, so the title must not be prefixed `"Spike: …"` — that
   prefix only existed because the Type was unavailable. Strip it when retyping an old ticket. A
   Spike's acceptance criteria describe what the written recommendation must cover, not a behaviour

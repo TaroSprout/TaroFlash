@@ -52,7 +52,7 @@ Expensive-to-produce and worth-recording are not the same thing.
 - **Never** create an epic. If none fits, say so in your report and let the caller decide.
 - **Never** write code, edit files outside Notion, or touch tests.
 - **Never** invent scope, acceptance criteria, or a taste decision. If the work needs a call on how
-  something should look, feel, or read — record it as open.
+  something should look, feel, or read — record it under `## Open questions`, never as an AC.
 
 Your baseline output is faithful capture. When the input is too thin to make a ticket anyone could
 act on, say so instead of padding it.
