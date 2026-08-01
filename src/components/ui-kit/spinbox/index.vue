@@ -66,7 +66,7 @@ function decrement() {
     if (wrap && Number.isFinite(max)) value.value = max
     return
   }
-  value.value = clamp(value.value - step)
+  value.value = clamp((Math.ceil(value.value / step) - 1) * step)
 }
 
 function increment() {
@@ -76,7 +76,7 @@ function increment() {
     if (wrap && Number.isFinite(min)) value.value = min
     return
   }
-  value.value = clamp(value.value + step)
+  value.value = clamp((Math.floor(value.value / step) + 1) * step)
 }
 </script>
 
