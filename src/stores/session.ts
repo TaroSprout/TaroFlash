@@ -33,6 +33,7 @@ import logger from '@/utils/logger'
 import { useNoticeStore } from '@/stores/notice-store'
 import { useTaroPhoneStore } from '@/stores/taro-phone'
 import { closeAll as closeAllModals } from '@/composables/modal'
+import { clearPersistedSession } from '@/views/study-session/composables/session-persistence'
 
 /** Why a session was torn down without the member asking to log out. */
 export type ForceLogoutReason = 'expired' | 'account-deleted'
@@ -219,6 +220,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
     closeAllModals()
     clearQueryCache()
     taroPhone.reset()
+    clearPersistedSession()
   }
 
   /**
