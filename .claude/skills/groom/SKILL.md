@@ -90,6 +90,15 @@ checkpoint — is a bird's-eye view: what the ticket changes for the user and th
 settling, phrased the way a user would experience them. **No filepaths, symbols, or SQL in that
 opening** — it should be scannable in seconds, never a wall of text.
 
+**Grooming is expensive for the user's attention — spend it only on decisions.** The checkpoint has
+a hard ceiling: a one-line framing plus the open decisions, nothing else. If a draft runs longer,
+it's carrying something the user didn't need — cut it before sending. Two things routinely bloat it:
+
+- **Don't re-narrate what the user already knows.** They read the ticket. On a re-groom they wrote
+  it. Skip the "what this changes" recap unless a decision hinges on it — go straight to the forks.
+- **A settled point is not a talking point.** State it in one clause and move on; don't walk the
+  reasoning that settled it unless asked.
+
 The technical depth isn't gone, it's deferred. As the user drills into a decision, that's where
 filepaths, symbols, SQL, and API surface come out — resolving the decision requires them. Pull them
 in **per decision, on demand**, not all up front. (A purely internal decision with no product
