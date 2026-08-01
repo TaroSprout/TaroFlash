@@ -14,16 +14,18 @@ out-of-scope work is found mid-task.
 - **MCP server**: `notion`. **Read** with `notion-query-data-sources` (SQL over the data source) +
   `notion-fetch` (page body — the query returns properties only). **Create** with
   `notion-create-pages`. **Update** with `notion-update-page`.
-- `Status`: `On Hold` · `Backlog` · `Needs More Info` · `Ready` · `Queued` · `In Progress` ·
+- `Status`: `On Hold` · `Backlog` · `Needs More Info` · `Groomed` · `Ready` · `In Progress` ·
   `Blocked` · `Review` · `Duplicate` · `Won't Do` · `Done`. Status is a plain property write — set
-  it directly, no transition step.
+  it directly, no transition step. `/groom` lands tickets in `Groomed`; the user promotes them to
+  `Ready`, the lane `/work` pulls from.
 - `Priority`: `⇞P0` · `↑P1` · `↓P2` · `⇟P3` (a ticket's urgency).
 - `Type`: `Bug` · `Task` · `Story` · `Spike`.
 - `Target`: `MVP` · `Fast-follow` · `Later` — which release the ticket ships in (orthogonal to
   Priority).
-- `Assignee`: `Me` · `Fable` · `Opus` · `Sonnet` — which agent model works the ticket in
-  `/work batch`. **`Me` means hands-off** — the user works it themselves; `/triage` and `/work`
-  leave it alone. `Status = On Hold` carries the same meaning.
+- `Assignee`: `Me` · `Fable` · `Opus` · `Sonnet` — which model works the ticket in `/work`.
+  Triage/groom set `Opus` or `Sonnet` when a ticket reaches `Groomed`; **`Fable` is the user's to
+  assign**, never an agent's pick. **`Me` means hands-off** — the user works it themselves;
+  `/triage` and `/work` leave it alone. `Status = On Hold` carries the same meaning.
 - `Epic`: relation to the Epic Board (single).
 - `ID` is a **read-only auto-increment** — never set it. Tickets are referred to as `#<n>`.
 
@@ -37,14 +39,14 @@ out-of-scope work is found mid-task.
 | Field      | Value when cutting                                                                                                         |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------- |
 | `Status`   | **`Backlog`**, always — a new ticket is un-triaged by definition                                                           |
-| `Assignee` | **empty** — only set when a ticket reaches `Queued`                                                                        |
+| `Assignee` | **empty** — triage/groom set it (`Opus`/`Sonnet`) at `Groomed`, never at cut                                               |
 | `Type`     | `Bug` broken · `Task` defined change · `Story` user-facing capability · `Spike` the deliverable is a decision, not shipped |
 | `Priority` | **empty** at cut time — a triage/groom decision. Set only when the user explicitly dictates one                            |
 | `Target`   | **empty** at cut time — a triage/groom decision, not a capture one                                                         |
 | `Epic`     | match the Epic Board; if nothing fits, propose a new epic rather than force-fit                                            |
 
-Never write `Ready` or `Queued` — those assert an agent can execute the ticket, which is never true
-at capture time. Never write `On Hold` or `Assignee = Me` on a fresh ticket — that's the user's own
+Never write `Groomed` or `Ready` — those assert the ticket is executable, which is never true at
+capture time. Never write `On Hold` or `Assignee = Me` on a fresh ticket — that's the user's own
 hands-off marker. Leave `Priority` and `Assignee` untouched unless the user explicitly asks for a
 value.
 
@@ -170,7 +172,7 @@ untouched` line is the "do not touch tests" rule in costume — delete it.
 - **Copy is the user's to sign off.** Any new or changed user-facing string carries its exact final
   wording in the AC, signed off by the user — never chosen for them, never deferred. Reused copy is
   stated as reused (same wording, its own key — keys aren't shared across features). A ticket with
-  undecided copy is not `Ready`.
+  undecided copy is not `Groomed`.
 
 ## Epics
 
@@ -237,7 +239,7 @@ read the `Blocked By` urls, then query the Task Board for those rows' `Status`. 
 when its `Status` is in the **`complete` group** — `Done`, `Won't Do`, or `Duplicate`.
 
 A split that emits siblings with no dependency and no `## Decisions so far` entry on the epic
-produces orphans: `/work batch` picks up step 3 of 5 with no way to know step 1 must land first.
+produces orphans: `/work` picks up step 3 of 5 with no way to know step 1 must land first.
 
 ## Batch work
 

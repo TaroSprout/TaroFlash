@@ -21,11 +21,17 @@ Board data source, field option lists, body sections, and voice all live in
 1. **Fetch** the Backlog batch, ordered Priority → ID, capped at `--N` (default 10):
 
    ```sql
-   SELECT "userDefined:ID" AS id, "Name", "Type", "Priority", "Epic", url
+   SELECT "userDefined:ID" AS id, "Name", "Type", "Priority", "Target", "Epic", url
    FROM "collection://3630953c-224c-8065-8864-000bb9fe7bad"
    WHERE "Status" = 'Backlog'
      AND ("Assignee" IS NULL OR "Assignee" <> 'Me')   -- Me = hands off
-   ORDER BY CASE "Priority"                            -- rank, NOT the raw glyph string
+   ORDER BY CASE "Target"                              -- release first: MVP is most important
+              WHEN 'MVP'         THEN 0
+              WHEN 'Fast-follow' THEN 1
+              WHEN 'Later'       THEN 2
+              ELSE 3                                   -- unset Target sorts last → propose one
+            END ASC,
+            CASE "Priority"                            -- then urgency — rank, NOT the raw glyph string
               WHEN '⇞P0' THEN 0
               WHEN '↑P1' THEN 1
               WHEN '↓P2' THEN 2
@@ -35,9 +41,11 @@ Board data source, field option lists, body sections, and voice all live in
             "userDefined:ID" ASC
    ```
 
-   **Never `ORDER BY "Priority"` directly.** The priority arrows sort by codepoint, not by urgency —
-   `↑`(P1, U+2191) `↓`(P2, U+2193) `⇞`(P0, U+21DE) `⇟`(P3, U+21DF) — so a raw string sort buries every
-   `P0` below `P1`/`P2`, and a null Priority leaps to the top. Rank with the `CASE` above.
+   **`Target` leads, then `Priority`** — an `MVP` ticket outranks a `Fast-follow` one whatever their
+   priorities, and inside a release urgency breaks the tie. **Never `ORDER BY` either field directly.**
+   The priority arrows sort by codepoint, not urgency — `↑`(P1, U+2191) `↓`(P2, U+2193) `⇞`(P0, U+21DE)
+   `⇟`(P3, U+21DF) — so a raw string sort buries every `P0` below `P1`/`P2`, and a null leaps to the
+   top; `Target`'s options aren't ordered alphabetically either. Rank both with the `CASE`s above.
 
 2. **Read** each ticket's page body via `notion-fetch` — the query returns properties only, and the
    user often writes real context into the raw ticket. Carry it through; don't re-derive from the name.
@@ -46,9 +54,10 @@ Board data source, field option lists, body sections, and voice all live in
    product intent, plain language, no fluff. Peek at code only if the raw ticket is too cryptic to
    clarify from its text. Don't spec it, don't add acceptance criteria — leave the design for `/groom`.
 
-4. **Fields.** Fill `Epic` and `Type` **only when unset**; `Priority` **only when missing** (the user
-   usually sets it at creation). Propose values — never apply unasked. If no epic fits, propose a new
-   one per [`ticket-authoring.md` § Epics](../../rules/ticket-authoring.md) rather than force-fitting.
+4. **Fields.** Fill `Epic` and `Type` **only when unset**; `Priority` and `Target` **only when
+   missing** (the user usually sets `Priority` at creation). Propose values — never apply unasked. If
+   no epic fits, propose a new one per [`ticket-authoring.md` § Epics](../../rules/ticket-authoring.md)
+   rather than force-fitting.
 
 5. **Checkpoint.** One summary for the whole batch. Per ticket, in product terms: new title, one-line
    intent, proposed fields. Stop for approval.
@@ -60,20 +69,17 @@ Board data source, field option lists, body sections, and voice all live in
 ## Self-heal
 
 The user will push back — catching a miss, a wrong batch, a baked-in assumption. Treat that as a
-**defect in this skill**, not just in the batch. Capture the lesson as a concrete edit to this skill
-(or [`ticket-authoring.md`](../../rules/ticket-authoring.md)) and ship it as its own branch + PR,
-separate from the triage work.
-
-Before writing a single file: **check the working tree.** Branch off `master` only when it is clean;
-if the current branch isn't `master` or has uncommitted changes (the user works in parallel), make
-the edit in a git worktree so nothing in the active checkout is disturbed. Conventional-commit it
-(`docs(triage): …`), open the PR, report the link — never merge.
+**defect in this skill**, not just in the batch. Route the lesson: a **process** miss (how this pass
+runs) → this skill; a **"what a ticket looks like"** miss → the single source,
+[`ticket-authoring.md`](../../rules/ticket-authoring.md). Ship it per
+[`self-heal.md`](../../rules/self-heal.md) — the shared living-PR mechanics — separate from the triage
+work.
 
 ## Guardrails
 
 - Only ever touch the Task Board named in the rule — never a backup or duplicate.
-- Every ticket ends in `Needs More Info`. Never route to `Ready`/`Queued`/`On Hold` or set
+- Every ticket ends in `Needs More Info`. Never route to `Groomed`/`Ready`/`On Hold` or set
   `In Progress`/`Review`/`Done`.
-- Propose `Epic`/`Type`/`Priority`, never apply unasked.
+- Propose `Epic`/`Type`/`Priority`/`Target`, never apply unasked.
 - Don't touch tests. Don't write code — this skill reads Notion (and lightly, code) and writes
   Notion. Self-healing _this skill_ is the sole exception; see § Self-heal.

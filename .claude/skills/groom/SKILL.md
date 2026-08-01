@@ -1,12 +1,12 @@
 ---
 name: groom
-description: Deep second pass over a single Notion Task Board ticket sitting in `Needs More Info`. Resolves every open design decision with the user through conversation — surfacing assumptions as explicit questions, pushing back on the spec, verifying claims against real source rather than recall — then writes the decisions and their rationale into the ticket and moves it to `Ready`/`Queued`. Owns splitting oversized tickets (wiring the `Blocked By` relation between the siblings), recording external blockers, and keeping the epic's decision log and fog current. Technical and concise. Trigger on `/groom`, "groom this ticket", "resolve the design on X".
+description: Deep second pass over a single Notion Task Board ticket sitting in `Needs More Info`. Resolves every open design decision with the user through conversation — surfacing assumptions as explicit questions, pushing back on the spec, verifying claims against real source rather than recall — then writes the decisions and their rationale into the ticket, assigns a model, and lands it in `Groomed` for the user to promote to `Ready`. Owns splitting oversized tickets (wiring the `Blocked By` relation between the siblings), recording external blockers, and keeping the epic's decision log and fog current. Technical and concise. Trigger on `/groom`, "groom this ticket", "resolve the design on X".
 allowed-tools: Read, Grep, Glob, Bash, Agent, WebFetch, WebSearch, mcp__notion__notion-query-data-sources, mcp__notion__notion-fetch, mcp__notion__notion-update-page, mcp__notion__notion-create-pages, mcp__notion__notion-search
 argument-hint: '[<ID>]'
 arguments:
   - name: <ID>
     description: Numeric ticket ID to groom. Omit to take the top `Needs More Info` ticket by Priority → ID.
-lastUpdated: 2026-07-31T12:00:00Z
+lastUpdated: 2026-08-01T20:00:00Z
 ---
 
 ## What this skill does
@@ -16,11 +16,14 @@ because it carries unresolved design decisions. Groom **resolves them with the u
 what was decided and why, and lands the ticket executable.
 
 ```
-Needs More Info ──/groom──┬──► Ready / Queued     (decisions resolved)
+Needs More Info ──/groom──┬──► Groomed            (decisions resolved, model assigned)
                           ├──► split into N tickets
                           ├──► On Hold            (turned out to need product input, or premature)
                           └──► stays put          (blocked on an external fact)
 ```
+
+`Groomed` is the user's review gate: they promote it to `Ready` — the lane `/work` pulls from —
+themselves. Groom never writes `Ready`.
 
 One ticket at a time, conversationally. This is the opposite of `/triage`'s batching — depth is
 the whole point.
@@ -75,7 +78,7 @@ an invitation to redesign.
 
 For every new or changed user-facing string, **pause** and present **at least 3 reasonably-varied
 options per line**; only the user's chosen wording lands, verbatim, in the AC. Reused copy is stated
-as reused. Undecided copy keeps the ticket out of `Ready`.
+as reused. Undecided copy keeps the ticket out of `Groomed`.
 
 ## Board constants
 
@@ -83,8 +86,8 @@ as reused. Undecided copy keeps the ticket out of `Ready`.
 sources, every field and its option list, the body section list, brevity rules, and voice. Read it
 before writing anything to the board. This skill declares only its lanes and its own passes.
 
-- Lanes: pulls from `Needs More Info`; lands at `Ready` / `Queued`; may park at `On Hold`.
-  Never sets `In Progress` / `Review` / `Done` / `Blocked`.
+- Lanes: pulls from `Needs More Info`; lands at `Groomed`; may park at `On Hold`. Never sets `Ready`
+  / `In Progress` / `Review` / `Done` / `Blocked` — promoting `Groomed` → `Ready` is the user's gate.
 - **Retype to `Spike`** when grooming reveals the deliverable is a decision or recommendation rather
   than shipped behaviour — and drop the now-redundant `"Spike:"` title prefix.
 
@@ -224,23 +227,27 @@ the churn shows up as page-history noise.
 **Wire the ordering.** Where a split named siblings that must land in sequence, set **`Blocked By`**
 on each dependent sibling — never `Blocks`, which Notion fills reciprocally on its own (see
 [`ticket-authoring.md`](../../rules/ticket-authoring.md) § Dependencies). Siblings emitted with no
-dependency are orphans — `/work batch` will pick up step 3 of 5 with no way to know step 1 must land
+dependency are orphans — `/work` will pick up step 3 of 5 with no way to know step 1 must land
 first.
 
 **Update the epic** page: append the resolved ticket to `## Decisions so far` (gist + link, never a
 restatement), add any approved fog to `## Not yet specified`, delete the fog bullet that this
 session **graduated** into a ticket, and add any approved `## Out of scope` ruling.
 
-Then set `Status`:
+Then set `Status = Groomed` **and an `Assignee`** — the ticket is fully resolved and waiting for the
+user to promote it into `Ready`, the lane `/work` pulls from.
 
-- **`Queued`** — only when _zero_ decisions are unresolved. No human is in the loop.
-- **`Ready`** — executable. A ticket still carrying an unmade design or taste call does **not**
-  qualify, even labelled "decide during pairing" — that is what `Needs More Info` is for, and this
-  pass exists to settle it. The only thing that may ride into `Ready` is a decision genuinely blocked
-  on an external fact (§4), recorded under `## Blocked on`.
-- **Refuse to write `Queued` with `Assignee` empty or `Me`** (or any unresolved fork). `Queued` needs
-  an `Assignee` — Sonnet / Opus / Fable — because `/work batch` pins each subagent to it. **`Ready`
-  tickets carry no `Assignee`** — leave the field empty.
+- **`Assignee` is mandatory and is `Opus` or `Sonnet` only** — pick by fit: `Opus` for
+  architectural, cross-cutting, ambiguous, or security/backend-sensitive work; `Sonnet` for
+  well-scoped feature/bug work with a clear spec. **Never set `Fable`** — the user downgrades to
+  Fable himself when he wants it. Never leave `Assignee` empty or `Me`. `/work` pins each subagent to
+  this model.
+- A ticket still carrying an unmade design or taste call does **not** reach `Groomed`, even labelled
+  "decide during pairing" — that is what `Needs More Info` is for, and this pass exists to settle it.
+  The only thing that may ride into `Groomed` is a decision genuinely blocked on an external fact
+  (§4), recorded under `## Blocked on`; if the ticket cannot land without that fact, it stays in
+  `Needs More Info`.
+- **Never set `Ready`** — promoting `Groomed` → `Ready` is the user's own review gate, not groom's.
 
 Also sweep for **copy that the change makes false** — existing `src/locales/en-us.json` strings
 asserting the old behaviour ("this cannot be undone"). List them in the body as required edits.
@@ -274,14 +281,11 @@ it without guessing. Test it by asking:
 ## Self-heal
 
 The user will push back — correcting a miss, adding a granularity you skipped, rejecting a baked
-assumption. Treat that as a **defect in this skill**, not just in the ticket. Capture the lesson as a
-concrete edit to this skill (or [`ticket-authoring.md`](../../rules/ticket-authoring.md)) and ship it
-as its own branch + PR, separate from the ticket work.
-
-Before writing a single file: **check the working tree.** Branch off `master` only when it is clean;
-if the current branch isn't `master` or has uncommitted changes (the user works in parallel), make
-the edit in a git worktree so nothing in the active checkout is disturbed. Conventional-commit it
-(`docs(groom): …`), open the PR, report the link — never merge.
+assumption. Treat that as a **defect in this skill**, not just in the ticket. Route the lesson: a
+**process** miss (how this pass runs) → this skill; a **"what a ticket looks like"** miss → the
+single source, [`ticket-authoring.md`](../../rules/ticket-authoring.md). Ship it per
+[`self-heal.md`](../../rules/self-heal.md) — the shared living-PR mechanics — separate from the ticket
+work.
 
 ## Guardrails
 
