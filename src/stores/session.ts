@@ -14,6 +14,10 @@ import {
   signInOAuth as supaSignInOAuth,
   updateEmail as supaUpdateEmail,
   updatePassword as supaUpdatePassword,
+  verifyPassword as supaVerifyPassword,
+  fetchHasPassword,
+  requestReauthCode as supaRequestReauthCode,
+  verifyReauthCode as supaVerifyReauthCode,
   requestPasswordReset as supaRequestPasswordReset,
   linkGoogleIdentity as supaLinkGoogleIdentity,
   unlinkGoogleIdentity as supaUnlinkGoogleIdentity,
@@ -23,6 +27,9 @@ import {
   type OAuthProvider,
   type UpdateEmailOutcome,
   type UpdatePasswordOutcome,
+  type VerifyPasswordOutcome,
+  type RequestReauthCodeOutcome,
+  type VerifyReauthCodeOutcome,
   type RequestPasswordResetOutcome
 } from '@/api/session'
 import { useRouter } from 'vue-router'
@@ -33,6 +40,7 @@ import logger from '@/utils/logger'
 import { useNoticeStore } from '@/stores/notice-store'
 import { useTaroPhoneStore } from '@/stores/taro-phone'
 import { closeAll as closeAllModals } from '@/composables/modal'
+import { clearPersistedSession } from '@/views/study-session/composables/session-persistence'
 
 /** Why a session was torn down without the member asking to log out. */
 export type ForceLogoutReason = 'expired' | 'account-deleted'
@@ -53,6 +61,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
   const taroPhone = useTaroPhoneStore()
 
   const user = ref<User | undefined>(undefined)
+  const has_password = ref(false)
   const loading_count = ref(0)
   let logging_out_intentionally = false
 
@@ -89,6 +98,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
       if (!authenticated.value) {
         const session = await getSession()
         user.value = session?.user
+        if (authenticated.value) await refreshHasPassword()
       }
 
       return authenticated.value
@@ -187,8 +197,24 @@ export const useSessionStore = defineStore('sessionStore', () => {
     return supaUpdateEmail(email)
   }
 
-  function updatePassword(password: string): Promise<UpdatePasswordOutcome> {
-    return supaUpdatePassword(password)
+  async function updatePassword(password: string): Promise<UpdatePasswordOutcome> {
+    const outcome = await supaUpdatePassword(password)
+
+    if (outcome === 'success') await refreshHasPassword()
+
+    return outcome
+  }
+
+  function verifyPassword(password: string): Promise<VerifyPasswordOutcome> {
+    return supaVerifyPassword(password)
+  }
+
+  function requestReauthCode(): Promise<RequestReauthCodeOutcome> {
+    return supaRequestReauthCode()
+  }
+
+  function verifyReauthCode(code: string): Promise<VerifyReauthCodeOutcome> {
+    return supaVerifyReauthCode(code)
   }
 
   function requestPasswordReset(email: string): Promise<RequestPasswordResetOutcome> {
@@ -207,6 +233,17 @@ export const useSessionStore = defineStore('sessionStore', () => {
 
   async function refreshUser(): Promise<void> {
     user.value = (await getUser()) ?? undefined
+    await refreshHasPassword()
+  }
+
+  /**
+   * Whether the account has a password has to be asked of the database — see
+   * `fetchHasPassword`. Refreshed wherever `user` is assigned, so the two never
+   * disagree, and after a password change, which flips it for Google-origin
+   * accounts setting one for the first time.
+   */
+  async function refreshHasPassword(): Promise<void> {
+    has_password.value = await fetchHasPassword()
   }
 
   // Single teardown funnel for both logout() and forceLogout(): clears auth
@@ -215,10 +252,12 @@ export const useSessionStore = defineStore('sessionStore', () => {
   // running — logged-out surfaces still need sound.
   function reset() {
     user.value = undefined
+    has_password.value = false
 
     closeAllModals()
     clearQueryCache()
     taroPhone.reset()
+    clearPersistedSession()
   }
 
   /**
@@ -260,6 +299,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
     authenticated,
     isLoading,
     hasPasswordIdentity,
+    hasPassword: has_password,
     hasGoogleIdentity,
     login,
     checkPasswordRecovery,
@@ -276,6 +316,9 @@ export const useSessionStore = defineStore('sessionStore', () => {
     onAuthenticated,
     updateEmail,
     updatePassword,
+    verifyPassword,
+    requestReauthCode,
+    verifyReauthCode,
     requestPasswordReset,
     linkGoogleIdentity,
     unlinkGoogleIdentity,

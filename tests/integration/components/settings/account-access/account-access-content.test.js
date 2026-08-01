@@ -31,10 +31,10 @@ vi.mock('gsap', () => ({
 
 // Pinia auto-unwraps computed refs on the store instance, so the mock exposes
 // a plain boolean getter (not a raw ref) to match how the real store reads.
-const sessionState = { hasPasswordIdentity: false }
+const sessionState = { hasPassword: false }
 const mockSession = {
-  get hasPasswordIdentity() {
-    return sessionState.hasPasswordIdentity
+  get hasPassword() {
+    return sessionState.hasPassword
   }
 }
 vi.mock('@/stores/session', () => ({ useSessionStore: () => mockSession }))
@@ -108,7 +108,7 @@ function mountContent(page = 'menu', props = {}) {
 }
 
 beforeEach(() => {
-  sessionState.hasPasswordIdentity = false
+  sessionState.hasPassword = false
 })
 
 describe('AccountAccessContent — title computed [obligation]', () => {
@@ -128,19 +128,19 @@ describe('AccountAccessContent — title computed [obligation]', () => {
   })
 
   test('title is the password "set" heading when page is "password" and the member has no password identity [obligation]', () => {
-    sessionState.hasPasswordIdentity = false
+    sessionState.hasPassword = false
     const wrapper = mountContent('password')
     expect(wrapper.vm.title).toBe('Set a password')
   })
 
   test('title is the password "change" heading when page is "password" and the member already has a password identity [obligation]', () => {
-    sessionState.hasPasswordIdentity = true
+    sessionState.hasPassword = true
     const wrapper = mountContent('password')
     expect(wrapper.vm.title).toBe('Change password')
   })
 
   test('title is the password heading when page is "password-success" [obligation]', () => {
-    sessionState.hasPasswordIdentity = true
+    sessionState.hasPassword = true
     const wrapper = mountContent('password-success')
     expect(wrapper.vm.title).toBe('Change password')
   })

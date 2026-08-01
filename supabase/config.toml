@@ -209,6 +209,10 @@ content_path = "./supabase/templates/email_change.html"
 subject = "Reset your password"
 content_path = "./supabase/templates/recovery.html"
 
+[auth.email.template.magic_link]
+subject = "Your sign-in code"
+content_path = "./supabase/templates/magic_link.html"
+
 # Security notifications - sent on sensitive account changes, independent of
 # the confirmation templates above.
 [auth.email.notification.password_changed]

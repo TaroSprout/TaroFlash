@@ -37,7 +37,28 @@ function buttonHtml(button) {
             </tr>`
 }
 
-function buildEmailHtml({ title, heading, message, button, footer }) {
+function codeHtml(code) {
+  if (!code) return ''
+
+  return `
+            <tr>
+              <td style="padding: 0 32px 32px 32px" align="center">
+                <div
+                  class="text-heading"
+                  style="
+                    font-size: 32px;
+                    font-weight: 700;
+                    letter-spacing: 0.2em;
+                    color: #744e2a;
+                  "
+                >
+                  ${code}
+                </div>
+              </td>
+            </tr>`
+}
+
+function buildEmailHtml({ title, heading, message, code, button, footer }) {
   return `<!doctype html>
 <html>
   <head>
@@ -152,7 +173,7 @@ function buildEmailHtml({ title, heading, message, button, footer }) {
                   ${message}
                 </p>
               </td>
-            </tr>${buttonHtml(button)}
+            </tr>${codeHtml(code)}${buttonHtml(button)}
             <tr>
               <td class="divider" style="padding: 0 32px 32px 32px; border-top: 1px solid #e7e0d5">
                 <p
@@ -194,6 +215,13 @@ const TEMPLATES = {
     heading: 'Reset your password',
     message: 'We received a request to reset your password. Click below to choose a new one.',
     button: { href: '{{ .ConfirmationURL }}', label: 'Reset password' },
+    footer: "Didn't request this? You can safely ignore this email."
+  },
+  'magic_link.html': {
+    title: 'Your sign-in code',
+    heading: 'Your sign-in code',
+    message: 'Enter this code to confirm it’s you. It expires shortly.',
+    code: '{{ .Token }}',
     footer: "Didn't request this? You can safely ignore this email."
   },
   'password_changed.html': {
