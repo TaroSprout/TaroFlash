@@ -22,8 +22,10 @@ Needs More Info ──/groom──┬──► Groomed            (decisions res
                           └──► stays put          (blocked on an external fact)
 ```
 
-`Groomed` is the user's review gate: they promote it to `Ready` — the lane `/work` pulls from —
-themselves. Groom never writes `Ready`.
+`Groomed` is **not** the finish line — it opens the user's review. Expect the user to leave inline
+comments on the ticket and ping you to read them; folding those into the ticket is part of every
+grooming session (§7). The true end is promotion to `Ready` — the lane `/work` pulls from — which is
+the user's own gate. Groom never sets `Ready` on its own; do it only if the user explicitly asks.
 
 One ticket at a time, conversationally. This is the opposite of `/triage`'s batching — depth is
 the whole point.
@@ -257,6 +259,24 @@ Behaviour changes routinely leave lying microcopy behind.
 
 Three lines maximum: ticket → lane, decisions resolved (count), anything blocked, split, or parked
 on the epic. No prose.
+
+### 7. RESOLVE COMMENTS — the review loop
+
+Landing `Groomed` starts the user's review; it does not end the session. The user leaves inline
+comments on the ticket and pings you to read them — expect this on every groom. When pinged:
+
+- Read every open discussion with `notion-get-comments` (`include_all_blocks: true`, unresolved
+  only) so you see comments anchored to specific ACs, not just page-level ones.
+- Treat each comment as a reopened `/groom` question: answer at altitude, verify against source, and
+  resolve to **buildable** — the same bar as §3. A comment may reopen a settled decision, expose a
+  new one, or add an AC; a taste/design fork still goes back to the user, never baked.
+- Fold each resolution into the body (ACs + companion `## Tech details`) and update the epic if the
+  decision shifted a `## Decisions so far` gist or exposed fresh fog.
+- Loop until the user is satisfied. The session ends when **the user** promotes the ticket to
+  `Ready` — not when you wrote `Groomed`.
+
+The self-heal reflex still applies here: a comment that reveals a miss in how this pass runs heals
+the skill (§ Self-heal), separate from the ticket edit.
 
 ## Quality bar
 
