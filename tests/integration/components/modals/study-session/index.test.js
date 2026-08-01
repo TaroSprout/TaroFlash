@@ -72,6 +72,9 @@ const {
   can_edit_ref,
   active_page_ref,
   summary_category_ref,
+  summary_editing_card_ref,
+  is_selecting_ref,
+  selected_count_ref,
   session_decks_ref,
   mockRequestClose,
   mockStartEdit,
@@ -81,25 +84,99 @@ const {
   mockCloseSettings,
   mockOpenSummaryCategory,
   mockCloseSummaryCategory,
+  mockStopSummaryEdit,
+  mockEnterSelection,
+  mockExitSelection,
+  mockSelectAllSummaryCards,
+  mockOnDeleteSummarySelected,
+  mockOnMoveSummarySelected,
+  controllerMock,
   capturedControllerOptions
 } = await vi.hoisted(async () => {
   const { ref } = await import('vue')
+
+  const state_ref = ref('studying')
+  const results_ref = ref([])
+  const is_cover_ref = ref(false)
+  const can_edit_ref = ref(true)
+  const active_page_ref = ref(null)
+  const summary_category_ref = ref(null)
+  const summary_editing_card_ref = ref(undefined)
+  const is_selecting_ref = ref(false)
+  const selected_count_ref = ref(0)
+  const session_decks_ref = ref([{ id: 1, title: 'My Deck' }])
+  const mockRequestClose = vi.fn()
+  const mockStartEdit = vi.fn()
+  const mockOnMove = vi.fn()
+  const mockOnDelete = vi.fn()
+  const mockOpenSettings = vi.fn()
+  const mockCloseSettings = vi.fn()
+  const mockOpenSummaryCategory = vi.fn()
+  const mockCloseSummaryCategory = vi.fn()
+  const mockStopSummaryEdit = vi.fn()
+  const mockEnterSelection = vi.fn()
+  const mockExitSelection = vi.fn()
+  const mockSelectAllSummaryCards = vi.fn()
+  const mockOnDeleteSummarySelected = vi.fn()
+  const mockOnMoveSummarySelected = vi.fn()
+
+  const controllerMock = {
+    state: state_ref,
+    results: results_ref,
+    is_cover: is_cover_ref,
+    can_edit: can_edit_ref,
+    sessionDecks: session_decks_ref,
+    active_page: active_page_ref,
+    summary_category: summary_category_ref,
+    summary_editing_card: summary_editing_card_ref,
+    summary_selection: {
+      is_selecting: is_selecting_ref,
+      selected_count: selected_count_ref,
+      all_cards_selected: ref(false),
+      enterSelection: mockEnterSelection,
+      exitSelection: mockExitSelection,
+      clearSelectedCards: vi.fn()
+    },
+    requestClose: mockRequestClose,
+    startEdit: mockStartEdit,
+    onMove: mockOnMove,
+    onDelete: mockOnDelete,
+    openSettings: mockOpenSettings,
+    closeSettings: mockCloseSettings,
+    openSummaryCategory: mockOpenSummaryCategory,
+    closeSummaryCategory: mockCloseSummaryCategory,
+    stopSummaryEdit: mockStopSummaryEdit,
+    selectAllSummaryCards: mockSelectAllSummaryCards,
+    onDeleteSummarySelected: mockOnDeleteSummarySelected,
+    onMoveSummarySelected: mockOnMoveSummarySelected
+  }
+
   return {
-    state_ref: ref('studying'),
-    results_ref: ref([]),
-    is_cover_ref: ref(false),
-    can_edit_ref: ref(true),
-    active_page_ref: ref(null),
-    summary_category_ref: ref(null),
-    session_decks_ref: ref([{ id: 1, title: 'My Deck' }]),
-    mockRequestClose: vi.fn(),
-    mockStartEdit: vi.fn(),
-    mockOnMove: vi.fn(),
-    mockOnDelete: vi.fn(),
-    mockOpenSettings: vi.fn(),
-    mockCloseSettings: vi.fn(),
-    mockOpenSummaryCategory: vi.fn(),
-    mockCloseSummaryCategory: vi.fn(),
+    state_ref,
+    results_ref,
+    is_cover_ref,
+    can_edit_ref,
+    active_page_ref,
+    summary_category_ref,
+    summary_editing_card_ref,
+    is_selecting_ref,
+    selected_count_ref,
+    session_decks_ref,
+    mockRequestClose,
+    mockStartEdit,
+    mockOnMove,
+    mockOnDelete,
+    mockOpenSettings,
+    mockCloseSettings,
+    mockOpenSummaryCategory,
+    mockCloseSummaryCategory,
+    mockStopSummaryEdit,
+    mockEnterSelection,
+    mockExitSelection,
+    mockSelectAllSummaryCards,
+    mockOnDeleteSummarySelected,
+    mockOnMoveSummarySelected,
+    controllerMock,
     capturedControllerOptions: { current: null }
   }
 })
@@ -107,25 +184,9 @@ const {
 vi.mock('@/views/study-session/composables/session-controller', () => ({
   provideStudySessionController: (options) => {
     capturedControllerOptions.current = options
-    return {
-      state: state_ref,
-      results: results_ref,
-      is_cover: is_cover_ref,
-      can_edit: can_edit_ref,
-      sessionDecks: session_decks_ref,
-      active_page: active_page_ref,
-      summary_category: summary_category_ref,
-      requestClose: mockRequestClose,
-      startEdit: mockStartEdit,
-      onMove: mockOnMove,
-      onDelete: mockOnDelete,
-      openSettings: mockOpenSettings,
-      closeSettings: mockCloseSettings,
-      openSummaryCategory: mockOpenSummaryCategory,
-      closeSummaryCategory: mockCloseSummaryCategory
-    }
+    return controllerMock
   },
-  useInjectedStudySessionController: vi.fn()
+  useInjectedStudySessionController: () => controllerMock
 }))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
@@ -233,12 +294,21 @@ describe('StudySession (index.vue)', () => {
     mockCloseSettings.mockClear()
     mockOpenSummaryCategory.mockClear()
     mockCloseSummaryCategory.mockClear()
+    mockStopSummaryEdit.mockClear()
+    mockEnterSelection.mockClear()
+    mockExitSelection.mockClear()
+    mockSelectAllSummaryCards.mockClear()
+    mockOnDeleteSummarySelected.mockClear()
+    mockOnMoveSummarySelected.mockClear()
     state_ref.value = 'studying'
     results_ref.value = []
     is_cover_ref.value = false
     can_edit_ref.value = true
     active_page_ref.value = null
     summary_category_ref.value = null
+    summary_editing_card_ref.value = undefined
+    is_selecting_ref.value = false
+    selected_count_ref.value = 0
     session_decks_ref.value = [{ id: 1, title: 'My Deck' }]
     capturedControllerOptions.current = null
     mediaState.is_mobile.value = false
@@ -342,6 +412,92 @@ describe('StudySession (index.vue)', () => {
     expect(mockOpenSettings).toHaveBeenCalledOnce()
   })
 
+  // ── header-end select button: category page only [obligation] ─────────────
+
+  describe('header-end select button [obligation]', () => {
+    test('is absent during studying and on the summary landing page [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      expect(wrapper.find('[data-testid="session-summary__select-button"]').exists()).toBe(false)
+
+      await finishSession([])
+      expect(wrapper.find('[data-testid="session-summary__select-button"]').exists()).toBe(false)
+    })
+
+    test('renders on a summary category page [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      await finishSession([])
+      await openCategoryPage()
+
+      expect(wrapper.find('[data-testid="session-summary__select-button"]').exists()).toBe(true)
+    })
+
+    test('is absent on a category page while its card editor is open [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      await finishSession([])
+      await openCategoryPage()
+      summary_editing_card_ref.value = { id: 1, deck_id: 1 }
+      await nextTick()
+
+      expect(wrapper.find('[data-testid="session-summary__select-button"]').exists()).toBe(false)
+    })
+
+    test('pressing it calls enterSelection when not already selecting [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      await finishSession([])
+      await openCategoryPage()
+
+      await wrapper.find('[data-testid="session-summary__select-button"]').trigger('click')
+
+      expect(mockEnterSelection).toHaveBeenCalledOnce()
+      expect(mockExitSelection).not.toHaveBeenCalled()
+    })
+
+    test('pressing it calls exitSelection while already selecting [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      await finishSession([])
+      await openCategoryPage()
+      is_selecting_ref.value = true
+      await nextTick()
+
+      await wrapper.find('[data-testid="session-summary__select-button"]').trigger('click')
+
+      expect(mockExitSelection).toHaveBeenCalledOnce()
+      expect(mockEnterSelection).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── toolbar bulk-actions bar: category page while selecting [obligation] ──
+
+  describe('toolbar bulk-actions bar [obligation]', () => {
+    test('is absent on a category page while not selecting [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      await finishSession([])
+      await openCategoryPage()
+
+      expect(wrapper.find('[data-testid="session-summary__bulk-actions"]').exists()).toBe(false)
+    })
+
+    test('renders on a category page while selecting [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      await finishSession([])
+      await openCategoryPage()
+      is_selecting_ref.value = true
+      await nextTick()
+
+      expect(wrapper.find('[data-testid="session-summary__bulk-actions"]').exists()).toBe(true)
+    })
+
+    test('is absent on the summary landing page even while selecting [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      await finishSession([])
+      is_selecting_ref.value = true
+      await nextTick()
+
+      expect(wrapper.find('[data-testid="session-summary__bulk-actions"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="session-summary__close"]').exists()).toBe(true)
+    })
+  })
+
   // ── onHeaderStop is page/phase-aware [obligation] ──────────────────────────
 
   describe('onHeaderStop: settings/category back vs phase-aware close/stop [obligation]', () => {
@@ -365,6 +521,20 @@ describe('StudySession (index.vue)', () => {
 
       expect(mockCloseSummaryCategory).toHaveBeenCalledOnce()
       expect(mockRequestClose).not.toHaveBeenCalled()
+      expect(close).not.toHaveBeenCalled()
+    })
+
+    test('while a summary card editor is open, the back button calls stopSummaryEdit — not closeSummaryCategory [obligation]', async () => {
+      const { wrapper, close } = makeWrapper()
+      await finishSession([])
+      await openCategoryPage()
+      summary_editing_card_ref.value = { id: 1, deck_id: 1 }
+      await nextTick()
+
+      await wrapper.find('[data-testid="session-header__back"]').trigger('click')
+
+      expect(mockStopSummaryEdit).toHaveBeenCalledOnce()
+      expect(mockCloseSummaryCategory).not.toHaveBeenCalled()
       expect(close).not.toHaveBeenCalled()
     })
 
@@ -427,6 +597,20 @@ describe('StudySession (index.vue)', () => {
 
       expect(mockCloseSummaryCategory).toHaveBeenCalledOnce()
       expect(mockRequestClose).not.toHaveBeenCalled()
+      expect(close).not.toHaveBeenCalled()
+    })
+
+    test('with a summary card editor open, backdrop/esc returns to the category page (stopSummaryEdit) — not closeSummaryCategory [obligation]', async () => {
+      const { close } = makeWrapper()
+      await finishSession([])
+      await openCategoryPage()
+      summary_editing_card_ref.value = { id: 1, deck_id: 1 }
+      await nextTick()
+
+      request_close_handlers.get(TEST_MODAL_ID)()
+
+      expect(mockStopSummaryEdit).toHaveBeenCalledOnce()
+      expect(mockCloseSummaryCategory).not.toHaveBeenCalled()
       expect(close).not.toHaveBeenCalled()
     })
 

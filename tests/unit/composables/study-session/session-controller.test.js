@@ -128,6 +128,44 @@ vi.mock('@/views/study-session/composables/card-actions', () => ({
   }
 }))
 
+const { capturedSummarySelectionOptions } = vi.hoisted(() => ({
+  capturedSummarySelectionOptions: { current: null }
+}))
+
+vi.mock('@/views/study-session/composables/summary-selection', () => ({
+  useSummarySelection: (options) => {
+    capturedSummarySelectionOptions.current = options
+    return {
+      category_cards: ref([]),
+      selection: {
+        is_selecting: ref(false),
+        selected_count: ref(0),
+        all_cards_selected: ref(false),
+        select_all_mode: ref(false),
+        selected_card_ids: ref([]),
+        enterSelection: vi.fn(),
+        exitSelection: vi.fn(),
+        selectCard: vi.fn(),
+        deselectCard: vi.fn(),
+        toggleSelectCard: vi.fn(),
+        isCardSelected: vi.fn(() => false),
+        clearSelectedCards: vi.fn(),
+        filterSelected: vi.fn(() => [])
+      },
+      editing_card: ref(undefined),
+      edit_saving: ref(false),
+      startEdit: vi.fn(),
+      stopEdit: vi.fn(),
+      onEditUpdate: vi.fn(),
+      selectAll: vi.fn(),
+      onDeleteSelected: vi.fn(),
+      onMoveSelected: vi.fn(),
+      onDeleteCard: vi.fn(),
+      onMoveCard: vi.fn()
+    }
+  }
+}))
+
 const { mockOnMissingDeck, capturedSessionCardsOptions } = vi.hoisted(() => ({
   mockOnMissingDeck: { current: null },
   capturedSessionCardsOptions: { current: null }
@@ -439,6 +477,47 @@ describe('session-controller', () => {
     controller.openSummaryCategory('stuck')
     controller.closeSummaryCategory()
     expect(controller.summary_category.value).toBeNull()
+  })
+
+  // ── useSummarySelection wiring [obligation] ───────────────────────────────
+
+  test('useSummarySelection receives the engine cards/results, the summary_category ref, thresholdFor, updateCard, and dropCard [obligation]', () => {
+    cards.value = [{ id: 1, deck_id: 1 }]
+    results.value = [{ card_id: 1, passed: true }]
+    const { controller } = makeController()
+
+    const opts = capturedSummarySelectionOptions.current
+    expect(opts.cards.value).toEqual(cards.value)
+    expect(opts.results.value).toEqual(results.value)
+    expect(opts.thresholdFor).toBe(capturedResolution.current.thresholdFor)
+
+    controller.openSummaryCategory('stuck')
+    expect(opts.category.value).toBe('stuck')
+  })
+
+  test('useSummarySelection closeCategory is wired to closeSummaryCategory [obligation]', () => {
+    const { controller } = makeController()
+    controller.openSummaryCategory('stuck')
+
+    capturedSummarySelectionOptions.current.closeCategory()
+
+    expect(controller.summary_category.value).toBeNull()
+  })
+
+  test('exposes the summary selection surface from useSummarySelection [obligation]', () => {
+    const { controller } = makeController()
+
+    expect(controller.summary_category_cards).toBeDefined()
+    expect(controller.summary_selection).toBeDefined()
+    expect(controller.summary_editing_card).toBeDefined()
+    expect(typeof controller.startSummaryEdit).toBe('function')
+    expect(typeof controller.stopSummaryEdit).toBe('function')
+    expect(typeof controller.onSummaryEditUpdate).toBe('function')
+    expect(typeof controller.selectAllSummaryCards).toBe('function')
+    expect(typeof controller.onDeleteSummarySelected).toBe('function')
+    expect(typeof controller.onMoveSummarySelected).toBe('function')
+    expect(typeof controller.onDeleteSummaryCard).toBe('function')
+    expect(typeof controller.onMoveSummaryCard).toBe('function')
   })
 
   test('exposes rating_times from useRatingTimes verbatim', () => {

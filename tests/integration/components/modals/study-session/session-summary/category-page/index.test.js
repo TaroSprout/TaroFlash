@@ -6,17 +6,34 @@ import { dialogCardViewportKey } from '@/components/layout-kit/dialog-card/dialo
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockThresholdFor, mockCards } = vi.hoisted(() => ({
-  mockThresholdFor: vi.fn(() => 24),
-  mockCards: { value: [] }
-}))
+const {
+  mockThresholdFor,
+  mockCards,
+  mockEditingCard,
+  mockOnSummaryEditUpdate,
+  mockStopSummaryEdit
+} = await vi.hoisted(async () => {
+  const { ref } = await import('vue')
+  return {
+    mockThresholdFor: vi.fn(() => 24),
+    mockCards: ref([]),
+    mockEditingCard: ref(undefined),
+    mockOnSummaryEditUpdate: vi.fn(),
+    mockStopSummaryEdit: vi.fn()
+  }
+})
 
 vi.mock('@/views/study-session/deck-resolution', () => ({
   useDeckResolution: () => ({ thresholdFor: mockThresholdFor })
 }))
 
 vi.mock('@/views/study-session/composables/session-controller', () => ({
-  useInjectedStudySessionController: () => ({ cards: mockCards })
+  useInjectedStudySessionController: () => ({
+    cards: mockCards,
+    summary_editing_card: mockEditingCard,
+    onSummaryEditUpdate: mockOnSummaryEditUpdate,
+    stopSummaryEdit: mockStopSummaryEdit
+  })
 }))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
@@ -35,6 +52,19 @@ const CategorySectionStub = defineComponent({
         },
         []
       )
+  }
+})
+
+const SummaryCardEditorStub = defineComponent({
+  name: 'SummaryCardEditor',
+  props: ['card'],
+  emits: ['update', 'done'],
+  setup(props) {
+    return () =>
+      h('div', {
+        'data-testid': 'summary-card-editor-stub',
+        'data-card-id': props.card?.id
+      })
   }
 })
 
@@ -61,7 +91,7 @@ function mountPage({ results = [], category = 'correct', cards = [] } = {}) {
   return mount(CategoryPage, {
     props: { results, category },
     global: {
-      stubs: { CategorySection: CategorySectionStub },
+      stubs: { CategorySection: CategorySectionStub, SummaryCardEditor: SummaryCardEditorStub },
       provide: { [dialogCardViewportKey]: { value: 'desktop' } }
     }
   })
@@ -72,6 +102,52 @@ function mountPage({ results = [], category = 'correct', cards = [] } = {}) {
 describe('CategoryPage (category-page/index.vue)', () => {
   beforeEach(() => {
     mockThresholdFor.mockReset().mockReturnValue(24)
+    mockEditingCard.value = undefined
+    mockOnSummaryEditUpdate.mockClear()
+    mockStopSummaryEdit.mockClear()
+  })
+
+  describe('card editor sub-state [obligation]', () => {
+    test('renders the grid, not the editor, when nothing is being edited [obligation]', () => {
+      const cards = [makeCard({ id: 1 })]
+      const results = [makeResult({ card_id: 1, is_new: true })]
+      const wrapper = mountPage({ results, category: 'new', cards })
+
+      expect(wrapper.find('[data-testid="session-summary-category__content"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="summary-card-editor-stub"]').exists()).toBe(false)
+    })
+
+    test('renders the editor instead of the grid when summary_editing_card is set [obligation]', () => {
+      const cards = [makeCard({ id: 1 })]
+      const results = [makeResult({ card_id: 1, is_new: true })]
+      mockEditingCard.value = makeCard({ id: 1 })
+      const wrapper = mountPage({ results, category: 'new', cards })
+
+      expect(
+        wrapper.find('[data-testid="summary-card-editor-stub"]').attributes('data-card-id')
+      ).toBe('1')
+      expect(wrapper.find('[data-testid="session-summary-category__content"]').exists()).toBe(false)
+    })
+
+    test('forwards the editor update event to onSummaryEditUpdate [obligation]', async () => {
+      mockEditingCard.value = makeCard({ id: 1 })
+      const wrapper = mountPage({ results: [], category: 'new', cards: [] })
+
+      await wrapper
+        .findComponent(SummaryCardEditorStub)
+        .vm.$emit('update', 'front', 'New front text')
+
+      expect(mockOnSummaryEditUpdate).toHaveBeenCalledWith('front', 'New front text')
+    })
+
+    test('forwards the editor done event to stopSummaryEdit [obligation]', async () => {
+      mockEditingCard.value = makeCard({ id: 1 })
+      const wrapper = mountPage({ results: [], category: 'new', cards: [] })
+
+      await wrapper.findComponent(SummaryCardEditorStub).vm.$emit('done')
+
+      expect(mockStopSummaryEdit).toHaveBeenCalledOnce()
+    })
   })
 
   describe('correct category [obligation]', () => {
