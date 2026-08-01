@@ -63,7 +63,11 @@ BEGIN
     p_log_stability, p_log_difficulty,
     p_log_scheduled_days,
     p_review
-  );
+  )
+  -- Idempotent replay: a retried save (offline recovery) re-runs the exact same
+  -- review event, so swallow the duplicate rather than growing history. The
+  -- reviews upsert above is already idempotent via ON CONFLICT (card_id).
+  ON CONFLICT (member_id, card_id, review) DO NOTHING;
 END;
 $$;
 

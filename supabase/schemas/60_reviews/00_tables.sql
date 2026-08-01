@@ -163,6 +163,13 @@ CREATE INDEX review_logs_card_id_idx ON public.review_logs USING btree (card_id)
 CREATE INDEX review_logs_member_id_idx ON public.review_logs USING btree (member_id, review DESC);
 
 
+-- One log row per (member, card, review-instant). save_review inserts with
+-- ON CONFLICT DO NOTHING against this index so a review whose save is retried
+-- (offline recovery, at-most-once client outbox) can never write a duplicate
+-- history row for the same rating event.
+CREATE UNIQUE INDEX review_logs_member_card_review_key ON public.review_logs USING btree (member_id, card_id, review);
+
+
 CREATE INDEX reviews_card_id_due_member_id_idx ON public.reviews USING btree (card_id, due, member_id);
 
 
