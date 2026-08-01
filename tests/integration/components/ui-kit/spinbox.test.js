@@ -182,6 +182,54 @@ describe('UiSpinbox', () => {
     expect(wrapper.emitted('update:value')).toEqual([[0]])
   })
 
+  // ── Snap to nearest multiple of step [obligation] ───────────────────────────
+  // TARO-141: the steppers snap to the nearest multiple of `step` in the
+  // pressed direction rather than offsetting from an off-grid value.
+
+  test('decrement snaps an off-grid value down to the nearest lower multiple of step [obligation]', async () => {
+    const wrapper = mountSpinbox({ value: 42, step: 5, min: 0, max: 100 })
+    await findDecrement(wrapper).trigger('click')
+    expect(wrapper.emitted('update:value')).toEqual([[40]])
+  })
+
+  test('increment snaps an off-grid value up to the nearest higher multiple of step [obligation]', async () => {
+    const wrapper = mountSpinbox({ value: 42, step: 5, min: 0, max: 100 })
+    await findIncrement(wrapper).trigger('click')
+    expect(wrapper.emitted('update:value')).toEqual([[45]])
+  })
+
+  test('decrement on an on-grid value moves by exactly one step [obligation]', async () => {
+    const wrapper = mountSpinbox({ value: 40, step: 5, min: 0, max: 100 })
+    await findDecrement(wrapper).trigger('click')
+    expect(wrapper.emitted('update:value')).toEqual([[35]])
+  })
+
+  test('increment on an on-grid value moves by exactly one step [obligation]', async () => {
+    const wrapper = mountSpinbox({ value: 40, step: 5, min: 0, max: 100 })
+    await findIncrement(wrapper).trigger('click')
+    expect(wrapper.emitted('update:value')).toEqual([[45]])
+  })
+
+  test('a value typed into the field stays off-grid until a stepper is pressed [obligation]', async () => {
+    const wrapper = mountSpinbox({ value: 5, step: 5, min: 0, max: 100 })
+    const input = findInput(wrapper)
+    input.element.value = '42'
+    await input.trigger('input')
+    expect(wrapper.emitted('update:value')).toEqual([[42]])
+  })
+
+  test('increment snaps an off-grid value up then clamps to max when the snapped multiple overshoots [obligation]', async () => {
+    const wrapper = mountSpinbox({ value: 41, step: 10, min: 0, max: 44 })
+    await findIncrement(wrapper).trigger('click')
+    expect(wrapper.emitted('update:value')).toEqual([[44]])
+  })
+
+  test('decrement snaps an off-grid value down then clamps to min when the snapped multiple undershoots [obligation]', async () => {
+    const wrapper = mountSpinbox({ value: 5, step: 10, min: 3, max: 100 })
+    await findDecrement(wrapper).trigger('click')
+    expect(wrapper.emitted('update:value')).toEqual([[3]])
+  })
+
   // ── Wrap ───────────────────────────────────────────────────────────────────
 
   test('decrement at min wraps to max when wrap is enabled', async () => {
