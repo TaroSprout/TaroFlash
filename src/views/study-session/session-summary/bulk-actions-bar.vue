@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
+import { emitSfx } from '@/sfx/bus'
 import { useInjectedStudySessionController } from '../composables/session-controller'
 
 const { t } = useI18n()
@@ -21,8 +22,13 @@ const select_all_label = computed(() =>
     : t('session-summary.bulk-actions.select-all')
 )
 
-/** Positive select-all across the open category — no deck-wide except_ids concept here. */
+/**
+ * Positive select-all across the open category — no deck-wide except_ids
+ * concept here. Plays the same select sfx as deck-view's
+ * `useBulkActions.onToggleSelectAll`.
+ */
 function onToggleSelectAll() {
+  emitSfx('select')
   if (selection.all_cards_selected.value) selection.clearSelectedCards()
   else selectAllSummaryCards()
 }

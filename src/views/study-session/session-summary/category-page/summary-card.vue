@@ -10,6 +10,7 @@ import { useDeckResolution } from '@/views/study-session/deck-resolution'
 import { useInjectedStudySessionController } from '@/views/study-session/composables/session-controller'
 import { usePressHold } from '@/composables/ui/press-hold'
 import { emitSfx } from '@/sfx/bus'
+import { TYPE_SFX } from '@/sfx/config'
 import type { StudyCard } from '@/views/study-session/composables/session-engine'
 
 type SummaryCardProps = { card: StudyCard }
@@ -18,8 +19,13 @@ const { card } = defineProps<SummaryCardProps>()
 
 const { t } = useI18n()
 const { appearanceFor } = useDeckResolution()
-const { summary_selection, startSummaryEdit, onDeleteSummaryCard, onMoveSummaryCard } =
-  useInjectedStudySessionController()
+const {
+  summary_selection,
+  startSummaryEdit,
+  onDeleteSummaryCard,
+  onMoveSummaryCard,
+  onSelectSummaryCard
+} = useInjectedStudySessionController()
 
 const side = ref<'front' | 'back'>('front')
 const is_hovering = ref(false)
@@ -39,8 +45,7 @@ const menu_options = computed<DropdownOption[]>(() => [
 
 function onMenuSelect(option: DropdownOption) {
   if (option.value === 'select') {
-    summary_selection.enterSelection()
-    summary_selection.selectCard(card.id)
+    onSelectSummaryCard(card.id)
   } else if (option.value === 'move') {
     onMoveSummaryCard(card.id)
   } else if (option.value === 'edit') {
@@ -58,7 +63,7 @@ function onPointerdown(event: PointerEvent) {
 
 function onCardClick() {
   if (is_selecting.value) {
-    summary_selection.toggleSelectCard(card.id)
+    onSelectSummaryCard(card.id)
     return
   }
 
@@ -71,6 +76,7 @@ function onCardClick() {
   <div
     data-testid="session-summary__card"
     class="group relative w-full"
+    v-sfx="{ hover: is_selecting ? TYPE_SFX : undefined }"
     @mouseenter="is_hovering = true"
     @mouseleave="is_hovering = false"
     @pointerdown="onPointerdown"

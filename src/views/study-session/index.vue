@@ -169,10 +169,20 @@ function onRequestClose() {
   leaveSession()
 }
 
-/** Header Select/Done. Enters or leaves the category page's multi-select. */
+/**
+ * Header Select/Done. Enters or leaves the category page's multi-select —
+ * same sfx pair as the deck-view select/cancel seam (`actions.ts`
+ * `onSelectCard`/`onCancelSelection`), just combined into one toggle here
+ * since the header only has a single button for both directions.
+ */
 function onToggleSummarySelecting() {
-  if (summary_selection.is_selecting.value) summary_selection.exitSelection()
-  else summary_selection.enterSelection()
+  if (summary_selection.is_selecting.value) {
+    emitSfx('digi_powerdown')
+    summary_selection.exitSelection()
+  } else {
+    emitSfx('select')
+    summary_selection.enterSelection()
+  }
 }
 </script>
 

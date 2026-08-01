@@ -135,7 +135,8 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     onDeleteSelected: onDeleteSummarySelected,
     onMoveSelected: onMoveSummarySelected,
     onDeleteCard: onDeleteSummaryCard,
-    onMoveCard: onMoveSummaryCard
+    onMoveCard: onMoveSummaryCard,
+    onSelectCard: onSelectSummaryCard
   } = useSummarySelection({
     cards: engine.cards,
     results: engine.results,
@@ -258,6 +259,7 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     onMoveSummarySelected,
     onDeleteSummaryCard,
     onMoveSummaryCard,
+    onSelectSummaryCard,
     requestClose,
     onCardReviewed
   }

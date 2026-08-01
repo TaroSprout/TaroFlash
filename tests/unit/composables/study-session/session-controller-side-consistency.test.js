@@ -68,7 +68,8 @@ vi.mock('@/views/study-session/composables/summary-selection', () => ({
     onDeleteSelected: vi.fn(),
     onMoveSelected: vi.fn(),
     onDeleteCard: vi.fn(),
-    onMoveCard: vi.fn()
+    onMoveCard: vi.fn(),
+    onSelectCard: vi.fn()
   })
 }))
 

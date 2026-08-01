@@ -1,4 +1,5 @@
 import { computed, watch, type Ref } from 'vue'
+import { emitSfx } from '@/sfx/bus'
 import { useCardSelection } from '@/composables/card'
 import { useSummaryCardEdit } from './summary-card-edit'
 import { useSummaryCardActions } from './summary-card-actions'
@@ -69,6 +70,18 @@ export function useSummarySelection({
     return selection.filterSelected(category_cards.value) as StudyCard[]
   }
 
+  /**
+   * Toggle-select `id` (when given) and enter selection mode; plays the
+   * standard select sfx. The single seam for every selection entry point —
+   * the card tap and the item-options "select" action — mirrors deck-view's
+   * `actions.ts` `onSelectCard`.
+   */
+  function onSelectCard(id?: number) {
+    if (id !== undefined) selection.toggleSelectCard(id)
+    selection.enterSelection()
+    emitSfx('select')
+  }
+
   async function onDeleteSelected() {
     await deleteCards(selectedCards())
   }
@@ -112,6 +125,7 @@ export function useSummarySelection({
     onDeleteSelected,
     onMoveSelected,
     onDeleteCard,
-    onMoveCard
+    onMoveCard,
+    onSelectCard
   }
 }

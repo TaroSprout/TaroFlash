@@ -142,7 +142,8 @@ function makeController({ is_selecting = false, selected = false } = {}) {
     },
     startSummaryEdit: vi.fn(),
     onDeleteSummaryCard: vi.fn(),
-    onMoveSummaryCard: vi.fn()
+    onMoveSummaryCard: vi.fn(),
+    onSelectSummaryCard: vi.fn()
   }
 }
 
@@ -235,7 +236,7 @@ describe('SummaryCard', () => {
 
       await wrapper.find('[data-testid="card-stub"]').trigger('click')
 
-      expect(controller.summary_selection.toggleSelectCard).toHaveBeenCalledWith(1)
+      expect(controller.onSelectSummaryCard).toHaveBeenCalledWith(1)
       expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('front')
       expect(mockEmitSfx).not.toHaveBeenCalled()
     })
@@ -303,8 +304,7 @@ describe('SummaryCard', () => {
       const { wrapper, controller } = mount_()
       await wrapper.find('[data-testid="summary-card-menu-stub__select"]').trigger('click')
 
-      expect(controller.summary_selection.enterSelection).toHaveBeenCalledOnce()
-      expect(controller.summary_selection.selectCard).toHaveBeenCalledWith(1)
+      expect(controller.onSelectSummaryCard).toHaveBeenCalledWith(1)
     })
 
     test('move option calls onMoveSummaryCard with the card id [obligation]', async () => {
