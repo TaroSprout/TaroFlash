@@ -6,26 +6,30 @@ export async function saveReview(card_id: number, card: Review, log: ReviewLog):
   const { error } = await supabase.rpc('save_review', {
     p_card_id: card_id,
 
-    // Current FSRS card state
-    p_due: card.due,
-    p_stability: card.stability,
-    p_difficulty: card.difficulty,
-    p_elapsed_days: card.elapsed_days,
-    p_scheduled_days: card.scheduled_days,
-    p_reps: card.reps,
-    p_lapses: card.lapses,
-    p_last_review: card.last_review ?? null,
-    p_card_state: card.state,
-    p_learning_steps: card.learning_steps,
+    // Current FSRS card state → reviews
+    p_card: {
+      due: card.due,
+      stability: card.stability,
+      difficulty: card.difficulty,
+      elapsed_days: card.elapsed_days,
+      scheduled_days: card.scheduled_days,
+      reps: card.reps,
+      lapses: card.lapses,
+      last_review: card.last_review ?? null,
+      state: card.state,
+      learning_steps: card.learning_steps ?? null
+    },
 
-    // Review event log
-    p_rating: log.rating,
-    p_state: log.state,
-    p_log_due: log.due,
-    p_log_stability: log.stability,
-    p_log_difficulty: log.difficulty,
-    p_log_scheduled_days: log.scheduled_days,
-    p_review: log.review
+    // Review event → review_logs
+    p_log: {
+      rating: log.rating,
+      state: log.state,
+      due: log.due,
+      stability: log.stability,
+      difficulty: log.difficulty,
+      scheduled_days: log.scheduled_days,
+      review: log.review
+    }
   })
 
   if (error) {
