@@ -57,6 +57,7 @@ vi.mock('@/views/study-session/composables/session-engine', () => ({
       display_side: ref('front'),
       cards,
       results,
+      durableResults: () => results.value,
       reviewed_count,
       current_index: ref(0),
       is_starting_side: ref(true),

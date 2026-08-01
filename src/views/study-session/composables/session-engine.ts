@@ -262,7 +262,7 @@ export function useSessionEngine({
   function _racePendingSaves(timeout: number): Promise<unknown> {
     let timer: ReturnType<typeof setTimeout>
     const timed_out = new Promise((resolve) => (timer = setTimeout(resolve, timeout)))
-    return Promise.race([Promise.allSettled([..._in_flight]), timed_out]).finally(() =>
+    return Promise.race([Promise.allSettled(_in_flight), timed_out]).finally(() =>
       clearTimeout(timer)
     )
   }
