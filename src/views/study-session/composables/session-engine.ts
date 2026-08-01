@@ -64,6 +64,11 @@ type SessionEngineDeps = {
  * per-card scheduling. It knows nothing about decks beyond each card's
  * `deck_id`, which it hands to the injected `schedulerFor` / `startingSideFor` —
  * so a merged multi-deck queue schedules each card against its own deck's pacing.
+ *
+ * It also coordinates the durable-save lifecycle (pending/saved/failed, in-flight
+ * tracking, the summary hold); the retry mechanics themselves live in
+ * `review-saver.ts`. If that coordination grows further, lift it into its own
+ * seam rather than letting this core keep swelling.
  */
 export function useSessionEngine({
   schedulerFor,
