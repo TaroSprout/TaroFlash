@@ -67,19 +67,21 @@ describe('saveReview', () => {
       'save_review',
       expect.objectContaining({
         p_card_id: 42,
-        p_due: card.due,
-        p_stability: card.stability,
-        p_difficulty: card.difficulty,
-        p_elapsed_days: card.elapsed_days,
-        p_scheduled_days: card.scheduled_days,
-        p_reps: card.reps,
-        p_lapses: card.lapses,
-        p_card_state: card.state
+        p_card: expect.objectContaining({
+          due: card.due,
+          stability: card.stability,
+          difficulty: card.difficulty,
+          elapsed_days: card.elapsed_days,
+          scheduled_days: card.scheduled_days,
+          reps: card.reps,
+          lapses: card.lapses,
+          state: card.state
+        })
       })
     )
   })
 
-  test('passes p_learning_steps sourced from card.learning_steps [obligation]', async () => {
+  test('passes learning_steps under p_card sourced from card.learning_steps [obligation]', async () => {
     // Persists ts-fsrs's learning_steps step-index so a card resuming mid
     // learning/relearning sequence doesn't silently restart at step 0.
     mocks.rpcMock.mockResolvedValue({ error: null })
@@ -90,7 +92,7 @@ describe('saveReview', () => {
 
     expect(mocks.rpcMock).toHaveBeenCalledWith(
       'save_review',
-      expect.objectContaining({ p_learning_steps: 2 })
+      expect.objectContaining({ p_card: expect.objectContaining({ learning_steps: 2 }) })
     )
   })
 
@@ -103,11 +105,11 @@ describe('saveReview', () => {
 
     expect(mocks.rpcMock).toHaveBeenCalledWith(
       'save_review',
-      expect.objectContaining({ p_last_review: null })
+      expect.objectContaining({ p_card: expect.objectContaining({ last_review: null }) })
     )
   })
 
-  test('passes the review-log fields prefixed p_log_*, plus p_rating/p_state/p_review', async () => {
+  test('passes the review-log fields under p_log', async () => {
     mocks.rpcMock.mockResolvedValue({ error: null })
     const card = makeCard()
     const log = makeLog({ rating: 4, state: 2 })
@@ -117,13 +119,15 @@ describe('saveReview', () => {
     expect(mocks.rpcMock).toHaveBeenCalledWith(
       'save_review',
       expect.objectContaining({
-        p_rating: 4,
-        p_state: 2,
-        p_log_due: log.due,
-        p_log_stability: log.stability,
-        p_log_difficulty: log.difficulty,
-        p_log_scheduled_days: log.scheduled_days,
-        p_review: log.review
+        p_log: expect.objectContaining({
+          rating: 4,
+          state: 2,
+          due: log.due,
+          stability: log.stability,
+          difficulty: log.difficulty,
+          scheduled_days: log.scheduled_days,
+          review: log.review
+        })
       })
     )
   })

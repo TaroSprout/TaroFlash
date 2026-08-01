@@ -50,15 +50,15 @@ SELECT lives_ok(
   $$
     SELECT public.save_review(
       p_card_id := 1000,
-      p_due := now() + interval '1 day',
-      p_stability := 2.5, p_difficulty := 5.0,
-      p_elapsed_days := 0::smallint, p_scheduled_days := 1::smallint,
-      p_reps := 1::smallint, p_lapses := 0::smallint,
-      p_last_review := now(), p_card_state := 0::smallint,
-      p_rating := 3::smallint, p_state := 0::smallint,
-      p_log_due := now(), p_log_stability := 0.0, p_log_difficulty := 0.0,
-      p_log_scheduled_days := 0::smallint, p_review := now(),
-      p_learning_steps := 0::smallint
+      p_card := ROW(
+        now() + interval '1 day', 2.5, 5.0,
+        0::smallint, 1::smallint, 1::smallint, 0::smallint,
+        now(), 0::smallint, 0::smallint
+      )::public.review_card_state,
+      p_log := ROW(
+        3::smallint, 0::smallint, now(),
+        0.0, 0.0, 0::smallint, now()
+      )::public.review_log_entry
     )
   $$,
   'Alice can save a review for her own card'
@@ -87,15 +87,15 @@ SELECT throws_ok(
   $$
     SELECT public.save_review(
       p_card_id := 2000,
-      p_due := now() + interval '1 day',
-      p_stability := 2.5, p_difficulty := 5.0,
-      p_elapsed_days := 0::smallint, p_scheduled_days := 1::smallint,
-      p_reps := 1::smallint, p_lapses := 0::smallint,
-      p_last_review := now(), p_card_state := 0::smallint,
-      p_rating := 3::smallint, p_state := 0::smallint,
-      p_log_due := now(), p_log_stability := 0.0, p_log_difficulty := 0.0,
-      p_log_scheduled_days := 0::smallint, p_review := now(),
-      p_learning_steps := 0::smallint
+      p_card := ROW(
+        now() + interval '1 day', 2.5, 5.0,
+        0::smallint, 1::smallint, 1::smallint, 0::smallint,
+        now(), 0::smallint, 0::smallint
+      )::public.review_card_state,
+      p_log := ROW(
+        3::smallint, 0::smallint, now(),
+        0.0, 0.0, 0::smallint, now()
+      )::public.review_log_entry
     )
   $$,
   'Card not found or not owned by user',
