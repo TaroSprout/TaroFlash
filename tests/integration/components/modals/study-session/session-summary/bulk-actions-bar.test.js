@@ -1,6 +1,6 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import BulkActionsBar from '@/views/study-session/session-summary/bulk-actions-bar.vue'
 
 const { capturedController } = vi.hoisted(() => ({ capturedController: { current: null } }))
@@ -28,15 +28,29 @@ function makeController({
   }
 }
 
+const mounted_wrappers = []
+
 function mountBar(controller) {
   const ctrl = controller ?? makeController()
   capturedController.current = ctrl
-  return { wrapper: mount(BulkActionsBar), controller: ctrl }
+  const wrapper = mount(BulkActionsBar)
+  mounted_wrappers.push(wrapper)
+  return { wrapper, controller: ctrl }
+}
+
+function hover(el) {
+  el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
 }
 
 describe('BulkActionsBar (session-summary/bulk-actions-bar.vue)', () => {
   beforeEach(() => {
     capturedController.current = null
+  })
+
+  // A hovered icon-only button Teleports its tooltip label to document.body —
+  // leave a stale hover mounted and it leaks into the next test.
+  afterEach(() => {
+    while (mounted_wrappers.length > 0) mounted_wrappers.pop().unmount()
   })
 
   test('renders the bar with select-all, move, and delete [obligation]', () => {
@@ -48,6 +62,17 @@ describe('BulkActionsBar (session-summary/bulk-actions-bar.vue)', () => {
     )
     expect(wrapper.find('[data-testid="session-summary__bulk-actions-move"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="session-summary__bulk-actions-delete"]').exists()).toBe(true)
+  })
+
+  // Review removed the cancel button + count tag row outright — only
+  // select-all/move/delete remain.
+  test('does not render a cancel button or a count tag [obligation]', () => {
+    const { wrapper } = mountBar()
+
+    expect(wrapper.find('[data-testid="session-summary__bulk-actions-cancel"]').exists()).toBe(
+      false
+    )
+    expect(wrapper.find('[data-testid="session-summary__bulk-actions-count"]').exists()).toBe(false)
   })
 
   // ── Select all / deselect all ────────────────────────────────────────────
@@ -66,6 +91,16 @@ describe('BulkActionsBar (session-summary/bulk-actions-bar.vue)', () => {
 
     expect(controller.summary_selection.clearSelectedCards).toHaveBeenCalledOnce()
     expect(controller.selectAllSummaryCards).not.toHaveBeenCalled()
+  })
+
+  test('select-all shows the "Deselect all" tooltip label once everything is selected', async () => {
+    const { wrapper } = mountBar(makeController({ all_cards_selected: true }))
+    const button = wrapper.find('[data-testid="session-summary__bulk-actions-select-all"]')
+    hover(button.element)
+    await nextTick()
+
+    const tooltip = document.querySelector('[data-testid="ui-tooltip"]')
+    expect(tooltip?.textContent).toContain('Deselect all')
   })
 
   // ── Move / Delete: disabled until something is selected [obligation] ────

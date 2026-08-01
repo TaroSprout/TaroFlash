@@ -441,28 +441,32 @@ describe('StudySession (index.vue)', () => {
       expect(wrapper.find('[data-testid="session-summary__select-button"]').exists()).toBe(false)
     })
 
-    test('pressing it calls enterSelection when not already selecting [obligation]', async () => {
+    test('pressing it calls enterSelection when not already selecting, and plays the select sfx [obligation]', async () => {
       const { wrapper } = makeWrapper()
       await finishSession([])
       await openCategoryPage()
+      mockEmitSfx.mockClear()
 
       await wrapper.find('[data-testid="session-summary__select-button"]').trigger('click')
 
       expect(mockEnterSelection).toHaveBeenCalledOnce()
       expect(mockExitSelection).not.toHaveBeenCalled()
+      expect(mockEmitSfx).toHaveBeenCalledWith('select')
     })
 
-    test('pressing it calls exitSelection while already selecting [obligation]', async () => {
+    test('pressing it calls exitSelection while already selecting, and plays digi_powerdown [obligation]', async () => {
       const { wrapper } = makeWrapper()
       await finishSession([])
       await openCategoryPage()
       is_selecting_ref.value = true
       await nextTick()
+      mockEmitSfx.mockClear()
 
       await wrapper.find('[data-testid="session-summary__select-button"]').trigger('click')
 
       expect(mockExitSelection).toHaveBeenCalledOnce()
       expect(mockEnterSelection).not.toHaveBeenCalled()
+      expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
     })
   })
 
@@ -809,6 +813,16 @@ describe('StudySession (index.vue)', () => {
   // helpers with a wall-clock delay — instead of waiting it out, drive the
   // pager's `enter-start` event directly (the same event onPaneEnterStart
   // wires up to) and assert the sfx it dispatches per page/summary_seen.
+
+  test('enter-start on a non-summary page (studying) plays its own light click, not the jingle [obligation]', () => {
+    const { wrapper } = makeWrapper()
+
+    const pager = wrapper.findComponent({ name: 'DialogCardPager' })
+    pager.vm.$emit('enter-start')
+
+    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_2')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('music_pizz_duo_hi')
+  })
 
   test('the pager is not instant on the first arrival at the summary, and enter-start plays the jingle [obligation]', async () => {
     const { wrapper } = makeWrapper()

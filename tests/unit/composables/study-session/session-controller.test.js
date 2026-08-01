@@ -505,6 +505,20 @@ describe('session-controller', () => {
     expect(controller.summary_category.value).toBeNull()
   })
 
+  // Editing a card is a sub-state of an open category, not a page of its own —
+  // starting/stopping it never touches summary_category, so closing the editor
+  // always lands back on the same category page (no back-stack to pop). [obligation]
+  test('starting and stopping a summary card edit does not change or close the open category [obligation]', () => {
+    const { controller } = makeController()
+    controller.openSummaryCategory('stuck')
+
+    controller.startSummaryEdit(1)
+    expect(controller.summary_category.value).toBe('stuck')
+
+    controller.stopSummaryEdit()
+    expect(controller.summary_category.value).toBe('stuck')
+  })
+
   test('exposes the summary selection surface from useSummarySelection [obligation]', () => {
     const { controller } = makeController()
 

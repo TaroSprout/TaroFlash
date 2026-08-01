@@ -50,20 +50,18 @@ describe('DialogCardBody', () => {
   })
 
   describe('overflow_bleed [obligation]', () => {
-    test('adds no bleed classes by default [obligation]', () => {
+    test('carries no data-overflow-bleed attribute by default [obligation]', () => {
       const wrapper = mountBody()
       const content = wrapper.find('[data-testid="dialog-card-body__content"]')
 
-      expect(content.classes()).not.toContain('px-2.5')
-      expect(content.classes()).not.toContain('-mx-2.5')
+      expect(content.attributes('data-overflow-bleed')).toBeUndefined()
     })
 
-    test('adds the horizontal bleed padding + negative margin when enabled [obligation]', () => {
+    test('sets data-overflow-bleed when enabled [obligation]', () => {
       const wrapper = mountBody({ overflow_bleed: true })
       const content = wrapper.find('[data-testid="dialog-card-body__content"]')
 
-      expect(content.classes()).toContain('px-2.5')
-      expect(content.classes()).toContain('-mx-2.5')
+      expect(content.attributes('data-overflow-bleed')).toBe('true')
     })
   })
 

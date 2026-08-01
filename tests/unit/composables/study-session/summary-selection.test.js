@@ -8,9 +8,14 @@ import { useSummarySelection } from '@/views/study-session/composables/summary-s
 // useSummaryCardActions is faked here, to observe what target cards it's
 // invoked with without re-testing its own delete/move mechanics.
 
-const { deleteCardsMock, moveCardsMock } = vi.hoisted(() => ({
+const { deleteCardsMock, moveCardsMock, emitSfxMock } = vi.hoisted(() => ({
   deleteCardsMock: vi.fn().mockResolvedValue(undefined),
-  moveCardsMock: vi.fn().mockResolvedValue(undefined)
+  moveCardsMock: vi.fn().mockResolvedValue(undefined),
+  emitSfxMock: vi.fn()
+}))
+
+vi.mock('@/sfx/bus', () => ({
+  emitSfx: emitSfxMock
 }))
 
 vi.mock('@/views/study-session/composables/summary-card-actions', () => ({
@@ -78,6 +83,7 @@ function makeSetup({ cards = [], results = [], category = null, thresholdFor = (
 beforeEach(() => {
   deleteCardsMock.mockReset().mockResolvedValue(undefined)
   moveCardsMock.mockReset().mockResolvedValue(undefined)
+  emitSfxMock.mockReset()
 })
 
 // ── category_cards resolution ────────────────────────────────────────────────
@@ -237,6 +243,46 @@ describe('useSummarySelection — the shared onRemoved seam [obligation]', () =>
   })
 })
 
+// ── onSelectCard: the single selection-entry seam [obligation] ──────────────
+// Mirrors deck-view's actions.ts onSelectCard — both entering selection and
+// the sfx live here, centrally, so every entry point (card tap, item-options
+// "select") gets the same behaviour for free.
+
+describe('useSummarySelection — onSelectCard [obligation]', () => {
+  test('toggles the given card id and enters selection mode [obligation]', () => {
+    const cards = [makeCard({ id: 1 }), makeCard({ id: 2 })]
+    const results = cards.map((c) => makeResult({ card_id: c.id, is_new: true }))
+    const { result } = makeSetup({ cards, results, category: 'new' })
+
+    result.onSelectCard(1)
+
+    expect(result.selection.is_selecting.value).toBe(true)
+    expect(result.selection.isCardSelected(1)).toBe(true)
+  })
+
+  test('emits the select sfx [obligation]', () => {
+    const cards = [makeCard({ id: 1 })]
+    const results = [makeResult({ card_id: 1, is_new: true })]
+    const { result } = makeSetup({ cards, results, category: 'new' })
+
+    result.onSelectCard(1)
+
+    expect(emitSfxMock).toHaveBeenCalledWith('select')
+  })
+
+  test('enters selection mode without toggling any card when id is omitted [obligation]', () => {
+    const cards = [makeCard({ id: 1 })]
+    const results = [makeResult({ card_id: 1, is_new: true })]
+    const { result } = makeSetup({ cards, results, category: 'new' })
+
+    result.onSelectCard()
+
+    expect(result.selection.is_selecting.value).toBe(true)
+    expect(result.selection.selected_count.value).toBe(0)
+    expect(emitSfxMock).toHaveBeenCalledWith('select')
+  })
+})
+
 // ── leaving the category exits selection + editing [obligation] ─────────────
 
 describe('useSummarySelection — leaving the category resets state [obligation]', () => {
@@ -282,5 +328,17 @@ describe('useSummarySelection — auto-close on an emptied category [obligation]
     await nextTick()
 
     expect(closeCategory).not.toHaveBeenCalled()
+  })
+
+  test('calls closeCategory once the last card is moved off the open category [obligation]', async () => {
+    moveCardsMock.mockImplementationOnce((_target, onRemoved) => onRemoved(1))
+    const cards = [makeCard({ id: 1 })]
+    const results = [makeResult({ card_id: 1, is_new: true })]
+    const { result, closeCategory } = makeSetup({ cards, results, category: 'new' })
+
+    await result.onMoveCard(1)
+    await nextTick()
+
+    expect(closeCategory).toHaveBeenCalledOnce()
   })
 })
