@@ -9,27 +9,24 @@
 // proves it's really Stripe by signing the body with a shared secret
 // (STRIPE_WEBHOOK_SECRET); we verify that before trusting anything.
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { assertWebhookVersion, makeStripe, Stripe } from '../_shared/stripe.ts'
 import { refundInvoiceViaCreditNote } from '../_shared/prorated-refund.ts'
 
-const stripe = makeStripe()
+export type StripeLike = Pick<Stripe, 'webhooks' | 'subscriptions' | 'invoices' | 'creditNotes'>
 
-// Node's `crypto` isn't available in Deno, so signature verification gets
-// Deno's WebCrypto (SubtleCrypto) provider.
-const cryptoProvider = Stripe.createSubtleCryptoProvider()
+export type Deps = {
+  stripe: StripeLike
+  // Service role — bypasses RLS, which is essential here because the
+  // self-update policy deliberately blocks the client from touching
+  // `plan` / `stripe_*` / `downgrade_delete_at`. This is the ONLY writer for
+  // those columns in normal flow.
+  supabase: SupabaseClient
+  cryptoProvider: Stripe.CryptoProvider
+  webhookSecret: string
+}
 
-// Service role bypasses RLS — essential here because the self-update policy
-// deliberately blocks the client from touching `plan` / `stripe_*` fields.
-// This function is the ONLY writer for those columns in normal flow.
-const supabase = createClient(
-  Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-)
-
-const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')!
-
-Deno.serve(async (req) => {
+export async function handler(req: Request, deps: Deps): Promise<Response> {
   if (req.method !== 'POST') {
     return new Response('Method Not Allowed', { status: 405 })
   }
@@ -45,12 +42,12 @@ Deno.serve(async (req) => {
 
   let event: Stripe.Event
   try {
-    event = await stripe.webhooks.constructEventAsync(
+    event = await deps.stripe.webhooks.constructEventAsync(
       body,
       signature,
-      webhookSecret,
+      deps.webhookSecret,
       undefined,
-      cryptoProvider
+      deps.cryptoProvider
     )
   } catch (err) {
     console.error('Signature verification failed:', err)
@@ -68,7 +65,7 @@ Deno.serve(async (req) => {
       case 'customer.subscription.created':
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription
-        await syncSubscription(subscription)
+        await syncSubscription(deps, subscription)
         break
       }
 
@@ -78,14 +75,14 @@ Deno.serve(async (req) => {
       // that account keeps renewing until the purge, and each renewal lands here.
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice
-        await refundIfPendingDeletion(invoice.customer as string, invoice.id as string)
+        await refundIfPendingDeletion(deps, invoice.customer as string, invoice.id as string)
         break
       }
 
       // User (or Stripe) canceled outright. Demote to free, clear sub id.
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription
-        await markFree(subscription.customer as string)
+        await markFree(deps, subscription.customer as string)
         break
       }
 
@@ -104,11 +101,12 @@ Deno.serve(async (req) => {
   return new Response(JSON.stringify({ received: true }), {
     headers: { 'Content-Type': 'application/json' }
   })
-})
+}
 
 // Map Stripe's subscription state → our `members.plan` + stripe_subscription_id.
 // Works for both "created/updated" and the post-checkout retrieval path.
-async function syncSubscription(subscription: Stripe.Subscription) {
+async function syncSubscription(deps: Deps, subscription: Stripe.Subscription) {
+  const { supabase } = deps
   const customerId = subscription.customer as string
   const priceId = subscription.items.data[0]?.price?.id
   const active = subscription.status === 'active' || subscription.status === 'trialing'
@@ -130,16 +128,39 @@ async function syncSubscription(subscription: Stripe.Subscription) {
     return
   }
 
-  const { error } = await supabase
+  const { data: member, error } = await supabase
     .from('members')
     .update({
       plan: active ? plan.id : 'free',
       stripe_subscription_id: active ? subscription.id : null
     })
     .eq('stripe_customer_id', customerId)
+    .select('id')
+    .maybeSingle()
 
   if (error) {
     console.error('members update failed', error)
+    throw error
+  }
+
+  if (!member) return
+
+  // Reconcile the downgrade lock. Upgrading (active) clears any grace deadline,
+  // unlocking every deck at once; a sync that lands the member on free stamps
+  // the 15-day grace when they are over their deck_limit. Both are idempotent.
+  await reconcileDowngradeGrace(deps, member.id, active)
+}
+
+// Stamp or clear the free-downgrade grace deadline on the member. Locking is
+// derived from rank + plan + this deadline, so this single write is the whole
+// lock/unlock — no per-deck state to touch. Both RPCs are service_role-only and
+// idempotent (begin keeps the original deadline, clear no-ops when already clear).
+async function reconcileDowngradeGrace(deps: Deps, memberId: string, active: boolean) {
+  const rpc = active ? 'clear_downgrade_grace' : 'begin_downgrade_grace'
+  const { error } = await deps.supabase.rpc(rpc, { p_member_id: memberId })
+
+  if (error) {
+    console.error(`${rpc} failed for member ${memberId}`, error)
     throw error
   }
 }
@@ -156,7 +177,8 @@ async function syncSubscription(subscription: Stripe.Subscription) {
 // gone; the payment hangs off invoice.payments, which needs expanding). Refunding
 // through a credit note against the invoice sidesteps that entirely — Stripe
 // resolves the payment itself — so there's no version-sensitive traversal here.
-async function refundIfPendingDeletion(customerId: string, invoiceId: string) {
+async function refundIfPendingDeletion(deps: Deps, customerId: string, invoiceId: string) {
+  const { supabase, stripe } = deps
   const { data: member, error } = await supabase
     .from('members')
     .select('id, delete_at, stripe_subscription_id')
@@ -184,13 +206,13 @@ async function refundIfPendingDeletion(customerId: string, invoiceId: string) {
   const refund = await refundInvoiceViaCreditNote(stripe, invoice)
   console.log(`Refund outcome for invoice ${invoiceId}:`, refund)
 
-  await reassertCancellation(member.stripe_subscription_id)
+  await reassertCancellation(stripe, member.stripe_subscription_id)
 }
 
 // The charge proves billing was still live, so the original cancel evidently
 // didn't take. Cancel plainly — no proration, since the whole invoice was just
 // refunded and prorating on top would credit the same period twice.
-async function reassertCancellation(subscriptionId: string | null) {
+async function reassertCancellation(stripe: StripeLike, subscriptionId: string | null) {
   if (!subscriptionId) return
 
   try {
@@ -202,14 +224,40 @@ async function reassertCancellation(subscriptionId: string | null) {
   }
 }
 
-async function markFree(customerId: string) {
-  const { error } = await supabase
+async function markFree(deps: Deps, customerId: string) {
+  const { supabase } = deps
+  const { data: member, error } = await supabase
     .from('members')
     .update({ plan: 'free', stripe_subscription_id: null })
     .eq('stripe_customer_id', customerId)
+    .select('id')
+    .maybeSingle()
 
   if (error) {
     console.error('members downgrade failed', error)
     throw error
   }
+
+  if (!member) return
+
+  // Lock over-limit decks and schedule their deletion. Idempotent: a re-fired
+  // deletion event keeps the original 15-day deadline.
+  await reconcileDowngradeGrace(deps, member.id, false)
+}
+
+if (import.meta.main) {
+  const stripe = makeStripe()
+
+  // Node's `crypto` isn't available in Deno, so signature verification gets
+  // Deno's WebCrypto (SubtleCrypto) provider.
+  const cryptoProvider = Stripe.createSubtleCryptoProvider()
+
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  )
+
+  const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')!
+
+  Deno.serve((req) => handler(req, { stripe, supabase, cryptoProvider, webhookSecret }))
 }

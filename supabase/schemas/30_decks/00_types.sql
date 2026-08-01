@@ -34,7 +34,12 @@ CREATE TYPE public.member_deck AS (
     max_new_per_day               integer,
     leech_threshold               integer,
     max_interval                  integer,
-    pacing_overrides              jsonb
+    pacing_overrides              jsonb,
+    -- Downgrade-lock state, derived per read (see deck_lock_deadline). A locked
+    -- deck stays fully readable/editable but is barred from study, and its
+    -- due_count is forced to 0 so it drops out of every "due" surface.
+    is_locked                     boolean,
+    locked_delete_at              timestamp with time zone
 );
 
 

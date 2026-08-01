@@ -27,7 +27,20 @@ CREATE TABLE public.members (
     -- default of `now() + interval '30 days'` would mark every new signup as
     -- pending deletion. The grace window lives in begin_account_deletion()
     -- below, which is the only thing that ever stamps this column.
-    delete_at timestamp with time zone
+    delete_at timestamp with time zone,
+    -- Account-level grace deadline for a free downgrade with too many decks.
+    -- NULL = no pending downgrade sweep. Non-NULL = the member downgraded to
+    -- free while over their plan's deck_limit, and this is when the purge cron
+    -- may hard-delete every deck ranked beyond the limit.
+    --
+    -- Locked-ness is NOT stored per deck: a deck is locked precisely while this
+    -- is set, the member is on `free`, and the deck sits beyond deck_limit by
+    -- rank. Reordering therefore changes which decks are locked with no extra
+    -- write — the rank IS the lock state. See deck_lock_deadline().
+    --
+    -- Same NO-DEFAULT reasoning as delete_at: begin_downgrade_grace() is the
+    -- only writer, so a fresh signup never gets stamped.
+    downgrade_delete_at timestamp with time zone
 );
 
 
@@ -341,6 +354,112 @@ ALTER FUNCTION public.invoke_purge_accounts() OWNER TO postgres;
 REVOKE ALL ON FUNCTION public.invoke_purge_accounts() FROM PUBLIC;
 
 
+-- --- downgrade grace lifecycle --------------------------------------------
+-- The free-downgrade analog of the account-deletion pair above. Same shape:
+-- one writer stamps the grace deadline, one writer clears it, both single
+-- transactions, both service_role-only so a member can't self-serve either
+-- direction (which would let them dodge the deck sweep while unsubscribed).
+--
+-- Unlike the account pair there is no per-row "unpublish" bookkeeping: locking
+-- derives from rank + plan + this column (see deck_lock_deadline), so stamping
+-- the deadline IS the lock and clearing it IS the unlock — nothing to record.
+
+-- Called by the stripe-webhook markFree() path after it flips the member to
+-- `free`. Idempotent: a re-fired webhook returns the original deadline rather
+-- than sliding the window the member was promised. Stamps nothing when the
+-- member is at or under their plan's deck_limit — there is no over-limit deck to
+-- schedule, so a 10-deck downgrade gets no deadline and nothing locks.
+--
+-- SECURITY INVOKER (the plpgsql default), matching begin_account_deletion: only
+-- service_role holds EXECUTE and it bypasses RLS, so an accidental grant to
+-- `authenticated` still can't stamp a row past the members self-update freeze.
+CREATE FUNCTION public.begin_downgrade_grace(p_member_id uuid) RETURNS timestamp with time zone
+    LANGUAGE plpgsql
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+  -- The grace window lives here, in the only writer of downgrade_delete_at.
+  v_grace    interval := interval '15 days';
+  v_deadline timestamptz;
+  v_limit    int;
+  v_count    int;
+BEGIN
+  SELECT m.downgrade_delete_at, p.deck_limit
+    INTO v_deadline, v_limit
+  FROM public.members m
+  JOIN public.plans p ON p.id = m.plan
+  WHERE m.id = p_member_id
+  FOR UPDATE OF m;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'No member %', p_member_id USING errcode = 'no_data_found';
+  END IF;
+
+  IF v_deadline IS NOT NULL THEN
+    RETURN v_deadline;
+  END IF;
+
+  -- NULL deck_limit = unlimited plan: nothing is ever over the line.
+  IF v_limit IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  SELECT count(*) INTO v_count
+  FROM public.decks
+  WHERE member_id = p_member_id;
+
+  IF v_count <= v_limit THEN
+    RETURN NULL;
+  END IF;
+
+  v_deadline := now() + v_grace;
+
+  UPDATE public.members
+  SET downgrade_delete_at = v_deadline
+  WHERE id = p_member_id;
+
+  RETURN v_deadline;
+END;
+$$;
+
+
+ALTER FUNCTION public.begin_downgrade_grace(uuid) OWNER TO postgres;
+
+
+-- Keep off PostgREST's authenticated RPC surface: a member clearing this
+-- themselves would unlock every deck while still unsubscribed and dodge the
+-- sweep. Only the webhook (service role) calls it.
+REVOKE ALL ON FUNCTION public.begin_downgrade_grace(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.begin_downgrade_grace(uuid) FROM anon;
+REVOKE ALL ON FUNCTION public.begin_downgrade_grace(uuid) FROM authenticated;
+GRANT EXECUTE ON FUNCTION public.begin_downgrade_grace(uuid) TO service_role;
+
+
+-- Called by the stripe-webhook upgrade path (syncSubscription, active). Clears
+-- the deadline, which unlocks every deck at once because locking is derived.
+-- Idempotent: clearing an already-clear member is a no-op.
+CREATE FUNCTION public.clear_downgrade_grace(p_member_id uuid) RETURNS void
+    LANGUAGE plpgsql
+    SET search_path TO 'public'
+    AS $$
+BEGIN
+  UPDATE public.members
+  SET downgrade_delete_at = NULL
+  WHERE id = p_member_id
+    AND downgrade_delete_at IS NOT NULL;
+END;
+$$;
+
+
+ALTER FUNCTION public.clear_downgrade_grace(uuid) OWNER TO postgres;
+
+
+REVOKE ALL ON FUNCTION public.clear_downgrade_grace(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.clear_downgrade_grace(uuid) FROM anon;
+REVOKE ALL ON FUNCTION public.clear_downgrade_grace(uuid) FROM authenticated;
+GRANT EXECUTE ON FUNCTION public.clear_downgrade_grace(uuid) TO service_role;
+
+
 ALTER TABLE public.members ENABLE ROW LEVEL SECURITY;
 
 
@@ -368,6 +487,10 @@ CREATE POLICY "admins can update any member" ON public.members FOR UPDATE TO aut
 -- the deck re-publishing and the plan/subscription reality of a restore). Both
 -- directions go through the definer functions below instead.
 --
+-- `downgrade_delete_at` is frozen for the same reason: a member clearing it
+-- would unlock every deck while still on free and slip past the deletion sweep;
+-- only the stripe-webhook (service role) may write it.
+--
 -- USING is on active_member_id(), so a pending member's profile edits match zero
 -- rows — suspension covers writes to their own row too. The frozen-field
 -- subqueries stay on auth.uid() because they only re-read the current row, and
@@ -381,6 +504,8 @@ CREATE POLICY "members can update their own non-privileged fields" ON public.mem
   WHERE (members_1.id = auth.uid())))) AND (NOT (stripe_subscription_id IS DISTINCT FROM ( SELECT members_1.stripe_subscription_id
    FROM public.members members_1
   WHERE (members_1.id = auth.uid())))) AND (NOT (delete_at IS DISTINCT FROM ( SELECT members_1.delete_at
+   FROM public.members members_1
+  WHERE (members_1.id = auth.uid())))) AND (NOT (downgrade_delete_at IS DISTINCT FROM ( SELECT members_1.downgrade_delete_at
    FROM public.members members_1
   WHERE (members_1.id = auth.uid()))))));
 

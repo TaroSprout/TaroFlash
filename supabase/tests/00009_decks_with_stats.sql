@@ -35,7 +35,7 @@ SELECT bag_eq(
       ('review_pacing_preset_id'), ('desired_retention'), ('learning_steps'), ('relearning_steps'),
       ('max_reviews_per_day'), ('max_new_per_day'),
       ('leech_threshold'), ('max_interval'),
-      ('pacing_overrides') $$,
+      ('pacing_overrides'), ('is_locked'), ('locked_delete_at') $$,
   'get_member_decks (via public.member_deck) exposes the columns the FE consumes [obligation]'
 );
 
