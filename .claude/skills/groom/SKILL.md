@@ -53,15 +53,23 @@ Pin every **design** dimension of a UI element (UX decisions, not implementation
 (side, order) · **host** (component / primitive / slot) · **trigger** (how invoked; what it swaps or
 coexists with) · **label + icon** (signed-off copy) · **states** (default, disabled, empty, count).
 
-Two traps this closes:
+Three traps this closes:
 
 - **"Mirror/match X" is itself a gist.** Walk each mirrored element and confirm it fits the new
   context — parity that reads wrong (a "Move Deck" button on a cross-deck surface) is not resolved.
 - **Survey the seam.** Before placing new content at an existing seam (slot, store, registry, layout
   region), inspect how its sibling content is _owned_, not just whether the seam is empty. "Is the
   slot empty?" is the wrong question; "how is its neighbour owned?" is the right one.
+- **Resolve within the user's stated mechanism — never substitute your own.** When the user has said
+  _how_ something works ("keep the first 10, curate by reordering"), pin the dimensions of _that_
+  design; do not invent a richer mechanism they didn't ask for (a keep-toggle, a counter, a
+  block-at-cap rule) and then resolve _its_ finer questions. That is the exact assumption this pass
+  exists to prevent — inventing a mechanism is worse than leaving a gist, because it manufactures
+  fake decisions and buries the real design under them. If a stated mechanism seems to leave a gap,
+  surface the gap as a question against their design; don't paper over it with a design of your own.
 
-Gist is the first question, never the last.
+Gist is the first question, never the last — but a mechanism the user already named is an answer, not
+an invitation to redesign.
 
 ### Copy is signed off, not settled silently
 
