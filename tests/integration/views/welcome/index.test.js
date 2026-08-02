@@ -8,7 +8,9 @@ import { createTestingPinia } from '@pinia/testing'
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   emitSfx: vi.fn(),
-  modalOpen: vi.fn()
+  modalOpen: vi.fn(),
+  captureReturnDestination: vi.fn(),
+  routeQuery: {}
 }))
 
 vi.mock('@/router', () => ({
@@ -17,8 +19,14 @@ vi.mock('@/router', () => ({
 
 vi.mock('vue-router', () => ({
   useRouter: () => ({ push: mocks.push }),
+  useRoute: () => ({ query: mocks.routeQuery }),
   RouterLink: { template: '<a><slot /></a>' },
   RouterView: { template: '<div />' }
+}))
+
+vi.mock('@/composables/auth/return-destination', () => ({
+  captureReturnDestination: mocks.captureReturnDestination,
+  consumeReturnDestination: vi.fn()
 }))
 
 vi.mock('@/sfx/bus', () => ({
@@ -166,6 +174,8 @@ describe('WelcomeIndex', () => {
     mocks.push.mockReset()
     mocks.emitSfx.mockReset()
     mocks.modalOpen.mockReset()
+    mocks.captureReturnDestination.mockReset()
+    mocks.routeQuery = {}
   })
 
   // ── Structure ──────────────────────────────────────────────────────────────
@@ -260,49 +270,22 @@ describe('WelcomeIndex', () => {
     expect(featuresSpy).not.toHaveBeenCalled()
   })
 
-  // ── onMounted redirect when already authenticated ──────────────────────────
-
-  test('redirects to authenticated route when session restore returns true', async () => {
-    const { useSessionStore } = await import('@/stores/session')
-    const pinia = createTestingPinia({ createSpy: vi.fn, stubActions: true })
-    primeSessionStore(pinia, useSessionStore)
-    mocks.modalOpen.mockReturnValue({ response: Promise.resolve(undefined) })
-
-    // Must get the store and configure the mock BEFORE mounting so the
-    // onMounted call picks up the return value.
-    const session = useSessionStore(pinia)
-    session.restoreSession.mockResolvedValue(true)
-
-    shallowMount(WelcomeIndex, {
-      global: {
-        plugins: [pinia],
-        stubs: {
-          Splash: SplashStub,
-          SectionFeatures: SectionFeaturesStub,
-          SectionPricing: SectionPricingStub,
-          SectionRoadmap: SectionRoadmapStub,
-          WelcomeFooter: WelcomeFooterStub,
-          SignupDialog: true
-        }
-      }
-    })
-
-    await flushPromises()
-    expect(mocks.push).toHaveBeenCalledWith({ name: 'authenticated' })
-  })
-
   // ── onMounted — checkPasswordRecovery [obligation] ─────────────────────────
+  //
+  // The checkpoint already routes a signed-in visitor away before this view
+  // ever mounts, so onMounted here no longer self-redirects — it only handles
+  // the recovery-modal branch and stashing `?next=`.
 
   describe('checkPasswordRecovery [obligation]', () => {
-    test('opens the reset-password modal and skips restoreSession/redirect when it resolves true [obligation]', async () => {
+    test('opens the reset-password modal and does NOT capture a return destination when it resolves true [obligation]', async () => {
       const { useSessionStore } = await import('@/stores/session')
       const pinia = createTestingPinia({ createSpy: vi.fn, stubActions: true })
       primeSessionStore(pinia, useSessionStore)
       mocks.modalOpen.mockReturnValue({ response: Promise.resolve(undefined) })
+      mocks.routeQuery = { next: '/deck/123' }
 
       const session = useSessionStore(pinia)
       session.checkPasswordRecovery.mockResolvedValue(true)
-      session.restoreSession.mockResolvedValue(true)
 
       shallowMount(WelcomeIndex, {
         global: {
@@ -321,19 +304,18 @@ describe('WelcomeIndex', () => {
       await flushPromises()
 
       expect(mocks.modalOpen).toHaveBeenCalled()
-      expect(session.restoreSession).not.toHaveBeenCalled()
-      expect(mocks.push).not.toHaveBeenCalledWith({ name: 'authenticated' })
+      expect(mocks.captureReturnDestination).not.toHaveBeenCalled()
     })
 
-    test('runs the normal restoreSession/redirect flow when it resolves false [obligation]', async () => {
+    test('captures the ?next= route query as the return destination when recovery resolves false [obligation]', async () => {
       const { useSessionStore } = await import('@/stores/session')
       const pinia = createTestingPinia({ createSpy: vi.fn, stubActions: true })
       primeSessionStore(pinia, useSessionStore)
       mocks.modalOpen.mockReturnValue({ response: Promise.resolve(undefined) })
+      mocks.routeQuery = { next: '/deck/123' }
 
       const session = useSessionStore(pinia)
       session.checkPasswordRecovery.mockResolvedValue(false)
-      session.restoreSession.mockResolvedValue(true)
 
       shallowMount(WelcomeIndex, {
         global: {
@@ -351,8 +333,7 @@ describe('WelcomeIndex', () => {
 
       await flushPromises()
 
-      expect(session.restoreSession).toHaveBeenCalledOnce()
-      expect(mocks.push).toHaveBeenCalledWith({ name: 'authenticated' })
+      expect(mocks.captureReturnDestination).toHaveBeenCalledWith('/deck/123')
     })
   })
 })

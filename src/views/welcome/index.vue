@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import router from '@/router'
 import { useSessionStore } from '@/stores/session'
 import { onMounted, useTemplateRef } from 'vue'
+import { useRoute } from 'vue-router'
 import { useSignupModal } from './signup/signup-modal'
 import { useResetPasswordModal } from './reset-password/reset-password-modal'
+import { captureReturnDestination } from '@/composables/auth/return-destination'
 import { provideWelcomeLayout } from './welcome-layout'
 import Splash from './splash/index.vue'
 import SectionFeatures from './section-features/index.vue'
@@ -12,6 +13,7 @@ import SectionRoadmap from './section-roadmap/index.vue'
 import WelcomeFooter from '@/views/welcome/welcome-footer.vue'
 
 const session = useSessionStore()
+const route = useRoute()
 const { open: openSignup } = useSignupModal()
 const resetPasswordModal = useResetPasswordModal()
 const features = useTemplateRef('features')
@@ -19,17 +21,17 @@ const roadmap = useTemplateRef('roadmap')
 
 provideWelcomeLayout()
 
+// The checkpoint has already sent a signed-in visitor into the app, so a mount
+// here means a signed-out sign-in surface. Two things to settle: open the reset
+// dialog for a recovery link, and stash any `?next=` destination so it survives
+// the sign-in (including the full-page OAuth redirect).
 onMounted(async () => {
   if (await session.checkPasswordRecovery()) {
     resetPasswordModal.open()
     return
   }
 
-  const authenticated = await session.restoreSession()
-
-  if (authenticated) {
-    router.push({ name: 'authenticated' })
-  }
+  captureReturnDestination(route.query.next)
 })
 
 function scrollToContent() {

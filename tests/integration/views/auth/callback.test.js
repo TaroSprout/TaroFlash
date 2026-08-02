@@ -4,7 +4,8 @@ import { flushPromises, mount } from '@vue/test-utils'
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   push: vi.fn(),
-  consumeOAuthPopupFlag: vi.fn()
+  consumeOAuthPopupFlag: vi.fn(),
+  consumeReturnDestination: vi.fn()
 }))
 
 vi.mock('@/supabase-client', () => ({
@@ -19,6 +20,10 @@ vi.mock('@/api/session', () => ({
   consumeOAuthPopupFlag: mocks.consumeOAuthPopupFlag
 }))
 
+vi.mock('@/composables/auth/return-destination', () => ({
+  consumeReturnDestination: mocks.consumeReturnDestination
+}))
+
 import Callback from '@/views/auth/callback.vue'
 
 describe('auth/callback', () => {
@@ -29,6 +34,7 @@ describe('auth/callback', () => {
     mocks.getSession.mockResolvedValue({ data: { session: null }, error: null })
     mocks.push.mockReset()
     mocks.consumeOAuthPopupFlag.mockReset()
+    mocks.consumeReturnDestination.mockReset().mockReturnValue(null)
     closeSpy = vi.spyOn(window, 'close').mockImplementation(() => {})
   })
 
@@ -51,11 +57,30 @@ describe('auth/callback', () => {
     expect(mocks.push).not.toHaveBeenCalled()
   })
 
-  test('navigates to the dashboard when consumeOAuthPopupFlag returns false [obligation]', async () => {
+  test('navigates to the dashboard when consumeOAuthPopupFlag returns false and no destination was captured [obligation]', async () => {
     mocks.consumeOAuthPopupFlag.mockReturnValue(false)
+    mocks.consumeReturnDestination.mockReturnValue(null)
     mount(Callback)
     await flushPromises()
     expect(mocks.push).toHaveBeenCalledWith({ name: 'dashboard' })
     expect(closeSpy).not.toHaveBeenCalled()
+  })
+
+  // [obligation] a full-redirect OAuth round trip lands on the destination
+  // stashed before the redirect, not always the dashboard.
+  test('navigates to the consumed return destination when one was captured [obligation]', async () => {
+    mocks.consumeOAuthPopupFlag.mockReturnValue(false)
+    mocks.consumeReturnDestination.mockReturnValue('/deck/123')
+    mount(Callback)
+    await flushPromises()
+    expect(mocks.push).toHaveBeenCalledWith('/deck/123')
+    expect(mocks.push).not.toHaveBeenCalledWith({ name: 'dashboard' })
+  })
+
+  test('does not consume the return destination when the popup flow closes the window [obligation]', async () => {
+    mocks.consumeOAuthPopupFlag.mockReturnValue(true)
+    mount(Callback)
+    await flushPromises()
+    expect(mocks.consumeReturnDestination).not.toHaveBeenCalled()
   })
 })

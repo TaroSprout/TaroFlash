@@ -7,21 +7,21 @@ import { useSessionStore } from '@/stores/session'
 import { useNoticeStore, type Notice } from '@/stores/notice-store'
 import logger from '@/utils/logger'
 
-// Module-level so repeat opens collapse onto the one panel. The router guard
-// opens this on every diverted navigation, and a pending member can trigger
-// several in a row — a cold load on a deck URL diverts to welcome, then
-// welcome's own mount pushes back into the shell and diverts again. The store
-// already allows only one panel at a time, but without this each divert would
-// replace the panel and replay its open sound.
+// Module-level so repeat opens collapse onto the one panel. The shell watches
+// `member.pending_deletion` and can call this more than once — an immediate
+// fire plus the re-fire when the member row resolves the pending state — and a
+// restore-then-relapse would too. The store already allows only one panel at a
+// time, but without this each call would replace the panel and replay its open
+// sound.
 let current: Notice | null = null
 
 /**
- * The panel a member lands on while their account is archived. Opened from the
- * router guard rather than a view: the divert to welcome is often a same-route
- * navigation, so welcome never remounts and an `onMounted` trigger would miss.
+ * The panel a suspended (pending-deletion) member sees over the route skeleton.
+ * The checkpoint admits them to the shell rather than diverting to welcome; the
+ * shell reacts to `member.pending_deletion` and opens this.
  *
- * Guard-time means no component, hence `t` from the i18n instance rather than
- * `useI18n()`.
+ * Called from a watcher, not component setup, so `t`/`router` come from the
+ * module-level i18n and router instances rather than `useI18n()`/`useRouter()`.
  */
 export function usePendingDeletionNotice() {
   const member = useMemberStore()
@@ -90,8 +90,9 @@ export function usePendingDeletionNotice() {
       ],
       // Also covers the swipe-to-dismiss the panel allows regardless of
       // `closable`. Signing out is the only safe landing: an archived member
-      // reads zero rows everywhere, so leaving them on welcome with a live
-      // session strands them with no route back to this panel.
+      // reads zero rows everywhere, so leaving them in the shell with a live
+      // session strands them on an empty skeleton with no route back to this
+      // panel.
       onDismiss: () => {
         current = null
         if (member.pending_deletion) session.logout()
