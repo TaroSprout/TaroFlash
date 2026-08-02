@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
-import { coverBindings } from '@/utils/cover'
+import { SKELETON_COVER, coverBindings } from '@/utils/cover'
 import { revealFaceImage } from '@/utils/animations/face-image'
 import UiIcon from '@/components/ui-kit/icon.vue'
 
@@ -14,30 +14,25 @@ const { cover } = defineProps<{
 // both are valid <img> sources as-is (no cardImageUrl transform).
 const has_image = computed(() => !!cover?.image_path)
 
-// A cover with no chosen identity renders NEUTRAL chrome (the `element` role),
-// not an accent — this is what a loading skeleton or an un-themed deck wants.
-// `coverBindings` emits `data-palette` only when a palette is set, so the
-// `:not([data-palette])` rules below pick up the neutral case for free. Skipped
-// entirely when an image is set so the palette never flashes behind it.
-const bindings = computed(() => (has_image.value ? null : coverBindings(cover, { border: false })))
-
 const img_el = useTemplateRef<HTMLImageElement>('img')
-// Show the shimmer skeleton until the image is fully decoded, so there's no raw
+// Hold the shimmer skeleton until the image is fully decoded, so there's no raw
 // pop-in — then fade it in via the shared reveal animation.
 const decoded = ref(false)
 
-// Re-run the decode gate whenever the source changes (initial paint, replace).
-watch(
-  () => cover?.image_path,
-  (path) => {
-    if (!path) {
-      decoded.value = false
-      return
-    }
-    decodeThenReveal()
-  },
-  { immediate: true }
-)
+// A cover with no chosen identity renders NEUTRAL chrome (the `element` role),
+// not an accent — this is what a loading skeleton or an un-themed deck wants.
+// `coverBindings` emits `data-palette` only when a palette is set, so the
+// `:not([data-palette])` rules below pick up the neutral case for free.
+//
+// While a custom image is still decoding we render the SHARED skeleton cover
+// (neutral diagonal-stripes) in place of the image's own config, so the loading
+// placeholder is pixel-identical to the app's common card skeleton. Once the
+// image decodes we drop the chrome entirely (`null`) and let the borderless
+// full-bleed image below take over.
+const bindings = computed(() => {
+  if (decoded.value) return null
+  return coverBindings(has_image.value ? SKELETON_COVER : cover, { border: false })
+})
 
 async function decodeThenReveal() {
   decoded.value = false
@@ -57,6 +52,19 @@ async function decodeThenReveal() {
   await nextTick()
   if (img_el.value) revealFaceImage(img_el.value)
 }
+
+// Re-run the decode gate whenever the source changes (initial paint, replace).
+watch(
+  () => cover?.image_path,
+  (path) => {
+    if (!path) {
+      decoded.value = false
+      return
+    }
+    decodeThenReveal()
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
@@ -65,7 +73,7 @@ async function decodeThenReveal() {
     v-bind="bindings"
     class="card-cover flex items-center justify-center"
     :class="[
-      has_image
+      decoded
         ? 'card-cover--image'
         : 'bg-(--color-accent) text-(--color-on-accent) not-[[data-palette]]:bg-element not-[[data-palette]]:text-on-element',
       has_image && !decoded && 'shimmer'
@@ -111,8 +119,12 @@ async function decodeThenReveal() {
   color: var(--color-on-element);
 }
 
-/* An image cover has no chrome band — the picture goes edge-to-edge, clipped to
-   the face radius. The neutral element fill sits under it as the shimmer base. */
+/* A DECODED image cover has no chrome band — the picture goes edge-to-edge,
+   clipped to the face radius. Applied only once decoded; while the image loads
+   the cover renders the neutral bordered skeleton chrome instead (see the
+   `bindings` computed), so the loading state matches the common card skeleton.
+   The element fill sits under the picture, continuous with that skeleton's
+   element-coloured border, so the hand-off reads as the pattern fading out. */
 .card-cover--image {
   overflow: hidden;
   border: none;
