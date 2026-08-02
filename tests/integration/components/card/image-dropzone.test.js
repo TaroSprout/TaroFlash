@@ -200,22 +200,27 @@ describe('ImageDropzone', () => {
     expect(wrapper.find('[data-testid="image-dropzone"]').attributes('data-active')).toBeUndefined()
   })
 
-  // ── remove_label / replace_label overrides [obligation] ──────────────────
-  // The deck cover passes its own corner-button copy; card callers that omit
-  // the props keep the card wording (t('card.image-editor.*')).
+  // ── remove_label / replace_label are copy-agnostic [obligation] ──────────
+  // No baked-in default — the tooltip renders exactly the label the caller
+  // passes; card callers pass the card wording (t('card.image-editor.*')).
 
-  test('uses remove_label over the default remove-button copy when provided [obligation]', () => {
+  test('renders exactly the passed remove_label [obligation]', () => {
     const wrapper = mountDropzone({ mode: 'corners', remove_label: 'Remove image' })
     expect(wrapper.find('[data-testid="image-dropzone__remove"]').text()).toBe('Remove image')
   })
 
-  test('falls back to the card default remove-button copy when remove_label is omitted', () => {
+  test('renders no label text when remove_label is omitted (no baked-in default) [obligation]', () => {
     const wrapper = mountDropzone({ mode: 'corners' })
-    expect(wrapper.find('[data-testid="image-dropzone__remove"]').text()).not.toBe('')
+    expect(wrapper.find('[data-testid="image-dropzone__remove"]').text()).toBe('')
   })
 
-  test('uses replace_label over the default replace-button copy when provided [obligation]', () => {
+  test('renders exactly the passed replace_label [obligation]', () => {
     const wrapper = mountDropzone({ mode: 'corners', replace_label: 'Replace image' })
     expect(wrapper.find('[data-testid="image-dropzone__replace"]').text()).toBe('Replace image')
+  })
+
+  test('renders no label text when replace_label is omitted (no baked-in default) [obligation]', () => {
+    const wrapper = mountDropzone({ mode: 'corners' })
+    expect(wrapper.find('[data-testid="image-dropzone__replace"]').text()).toBe('')
   })
 })

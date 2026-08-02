@@ -91,7 +91,7 @@ function makeCoverImage(overrides = {}) {
   }
 }
 
-function mountLayer(props = {}) {
+function mountLayer(props = {}, mountOptions = {}) {
   return shallowMount(CoverImageLayer, {
     props: { cover_image: makeCoverImage(), root: null, ...props },
     global: {
@@ -100,7 +100,8 @@ function mountLayer(props = {}) {
         ImageDropzone: ImageDropzoneStub,
         FaceOverlay: FaceOverlayStub
       }
-    }
+    },
+    ...mountOptions
   })
 }
 
@@ -140,45 +141,46 @@ describe('CoverImageLayer — add button (empty state)', () => {
   })
 })
 
-describe('CoverImageLayer — corners dropzone (image set)', () => {
-  test('renders the corners dropzone once an image is set', () => {
+describe('CoverImageLayer — replace/remove controls (image set) [obligation]', () => {
+  test('renders its own replace/remove buttons once an image is set, not the dropzone [obligation]', () => {
     const cover_image = makeCoverImage({ has_image: { value: true } })
     const wrapper = mountLayer({ cover_image })
-    const dropzone = wrapper.findComponent(ImageDropzoneStub)
-    expect(dropzone.exists()).toBe(true)
-    expect(dropzone.props('mode')).toBe('corners')
-    expect(dropzone.props('active')).toBe(true)
-  })
-
-  test('does not render the dropzone while dragging, even with an image set', () => {
-    const cover_image = makeCoverImage({ has_image: { value: true }, dragging: { value: true } })
-    const wrapper = mountLayer({ cover_image })
+    expect(wrapper.find('[data-testid="cover-image-layer__replace"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="cover-image-layer__remove"]').exists()).toBe(true)
     expect(wrapper.findComponent(ImageDropzoneStub).exists()).toBe(false)
   })
 
-  test('does not render the dropzone while a validation error is showing', () => {
+  test('hides the controls while dragging, even with an image set', () => {
+    const cover_image = makeCoverImage({ has_image: { value: true }, dragging: { value: true } })
+    const wrapper = mountLayer({ cover_image })
+    expect(wrapper.find('[data-testid="cover-image-layer__replace"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="cover-image-layer__remove"]').exists()).toBe(false)
+  })
+
+  test('hides the controls while a validation error is showing', () => {
     const cover_image = makeCoverImage({
       has_image: { value: true },
       error_message: { value: 'invalid-type' }
     })
     const wrapper = mountLayer({ cover_image })
-    expect(wrapper.findComponent(ImageDropzoneStub).exists()).toBe(false)
+    expect(wrapper.find('[data-testid="cover-image-layer__replace"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="cover-image-layer__remove"]').exists()).toBe(false)
   })
 
-  test('the dropzone browse click calls openPicker', async () => {
+  test('replace click calls openPicker [obligation]', async () => {
     const cover_image = makeCoverImage({ has_image: { value: true } })
     const wrapper = mountLayer({ cover_image })
 
-    await wrapper.find('[data-testid="image-dropzone-stub__browse"]').trigger('click')
+    await wrapper.find('[data-testid="cover-image-layer__replace"]').trigger('click')
 
     expect(cover_image.openPicker).toHaveBeenCalled()
   })
 
-  test('the dropzone remove click calls onRemove', async () => {
+  test('remove click calls onRemove [obligation]', async () => {
     const cover_image = makeCoverImage({ has_image: { value: true } })
     const wrapper = mountLayer({ cover_image })
 
-    await wrapper.find('[data-testid="image-dropzone-stub__remove"]').trigger('click')
+    await wrapper.find('[data-testid="cover-image-layer__remove"]').trigger('click')
 
     expect(cover_image.onRemove).toHaveBeenCalled()
   })
@@ -239,6 +241,21 @@ describe('CoverImageLayer — hidden file input', () => {
     await wrapper.find('input[type="file"]').trigger('change')
 
     expect(cover_image.onFileChange).toHaveBeenCalled()
+  })
+
+  test('a click on the input does not bubble to a parent click handler [obligation]', async () => {
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+    const parentClick = vi.fn()
+    container.addEventListener('click', parentClick)
+
+    const wrapper = mountLayer({}, { attachTo: container })
+    await wrapper.find('input[type="file"]').trigger('click')
+
+    expect(parentClick).not.toHaveBeenCalled()
+
+    wrapper.unmount()
+    container.remove()
   })
 })
 

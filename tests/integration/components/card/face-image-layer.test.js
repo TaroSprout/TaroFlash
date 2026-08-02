@@ -79,7 +79,7 @@ const FaceOverlayStub = defineComponent({
 
 const ImageDropzoneStub = defineComponent({
   name: 'ImageDropzone',
-  props: ['mode', 'active', 'disabled', 'error'],
+  props: ['mode', 'active', 'disabled', 'error', 'remove_label', 'replace_label'],
   emits: ['browse', 'remove', 'dismiss-error'],
   setup: (props) => () =>
     h('div', { 'data-testid': 'image-dropzone-stub', 'data-mode': props.mode })
@@ -228,6 +228,14 @@ describe('FaceImageLayer — image dropzone (corners mode)', () => {
     const dropzone = wrapper.findComponent(ImageDropzoneStub)
     expect(dropzone.exists()).toBe(true)
     expect(dropzone.props('mode')).toBe('corners')
+  })
+
+  test('passes the card remove/replace copy to the corners dropzone [obligation]', () => {
+    state.upload.has_image.value = true
+    const wrapper = mountLayer({ attributes: { image_layout: 'behind' } })
+    const dropzone = wrapper.findComponent(ImageDropzoneStub)
+    expect(dropzone.props('remove_label')).toBe('Remove image')
+    expect(dropzone.props('replace_label')).toBe('Replace image')
   })
 
   test('does not render the corners dropzone for an above-layout image (region mode instead)', () => {

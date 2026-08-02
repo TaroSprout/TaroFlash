@@ -412,7 +412,7 @@ describe('Card — region-dropzone image slot substitution', () => {
   // face's #image slot with <image-dropzone> instead of the caller's #image
   // slot / the face's default <img> — on both the front and back faces.
 
-  test('renders image-dropzone in the front face #image slot', async () => {
+  test('renders image-dropzone in the front face #image slot, passing the card remove_label [obligation]', async () => {
     const wrapper = shallowMount(Card, {
       props: { side: 'front', mode: 'edit', image_editing: true },
       global: {
@@ -421,10 +421,12 @@ describe('Card — region-dropzone image slot substitution', () => {
       }
     })
     await wrapper.vm.$nextTick()
-    expect(wrapper.findComponent({ name: 'ImageDropzone' }).exists()).toBe(true)
+    const dropzone = wrapper.findComponent({ name: 'ImageDropzone' })
+    expect(dropzone.exists()).toBe(true)
+    expect(dropzone.props('remove_label')).toBe('Remove image')
   })
 
-  test('renders image-dropzone in the back face #image slot', async () => {
+  test('renders image-dropzone in the back face #image slot, passing the card remove_label [obligation]', async () => {
     const wrapper = shallowMount(Card, {
       props: { side: 'back', mode: 'edit', image_editing: true },
       global: {
@@ -433,6 +435,8 @@ describe('Card — region-dropzone image slot substitution', () => {
       }
     })
     await wrapper.vm.$nextTick()
-    expect(wrapper.findComponent({ name: 'ImageDropzone' }).exists()).toBe(true)
+    const dropzone = wrapper.findComponent({ name: 'ImageDropzone' })
+    expect(dropzone.exists()).toBe(true)
+    expect(dropzone.props('remove_label')).toBe('Remove image')
   })
 })

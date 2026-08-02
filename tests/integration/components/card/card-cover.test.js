@@ -80,9 +80,18 @@ describe('CardCover — image cover [obligation]', () => {
     expect(wrapper.find('[data-testid="card-cover"]').attributes('data-palette')).toBeUndefined()
   })
 
-  test('does not apply pattern-mask when an image is set, even if a pattern is also configured [obligation]', () => {
-    const wrapper = mountCover({ image_path: 'https://cdn/cover.png', pattern: 'stars' })
-    expect(wrapper.find('[data-testid="card-cover"]').classes()).not.toContain('pattern-mask')
+  test('shows the shared skeleton pattern while loading, not the deck cover pattern [obligation]', () => {
+    const wrapper = mountCover({ image_path: 'https://cdn/cover.png', pattern: 'wave' })
+    const el = wrapper.find('[data-testid="card-cover"]')
+    expect(el.classes()).toContain('pattern-mask')
+    expect(el.attributes('style')).toContain('--bgx-image: var(--bgx-diagonal-stripes)')
+  })
+
+  test('does not point --bgx-image at the deck cover pattern while loading [obligation]', () => {
+    const wrapper = mountCover({ image_path: 'https://cdn/cover.png', pattern: 'wave' })
+    expect(wrapper.find('[data-testid="card-cover"]').attributes('style')).not.toContain(
+      'var(--bgx-wave)'
+    )
   })
 
   test('renders card-cover__icon (not the image) when no image_path is set', () => {
@@ -135,5 +144,17 @@ describe('CardCover — decode resolves [obligation]', () => {
       expect(revealFaceImageMock).toHaveBeenCalledTimes(1)
     })
     expect(revealFaceImageMock.mock.calls[0][0]).toBeInstanceOf(HTMLImageElement)
+  })
+
+  test('drops the deck cover pattern-mask and data-palette once decoding resolves, even with both configured [obligation]', async () => {
+    const wrapper = mountCover({ image_path: DECODABLE_IMAGE, pattern: 'wave', palette: 'green' })
+
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="card-cover"]').attributes('data-loading')).toBeUndefined()
+    })
+
+    const el = wrapper.find('[data-testid="card-cover"]')
+    expect(el.classes()).not.toContain('pattern-mask')
+    expect(el.attributes('data-palette')).toBeUndefined()
   })
 })
