@@ -1,23 +1,22 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { SKELETON_COVER, coverBindings } from '@/utils/cover'
-import { revealFaceImage } from '@/utils/animations/face-image'
+import { useImageReveal } from '@/composables/card/image-reveal'
 import UiIcon from '@/components/ui-kit/icon.vue'
 
 const { cover } = defineProps<{
   cover?: DeckCover
 }>()
 
+const img_el = useTemplateRef<HTMLImageElement>('img')
 // A custom cover image fills the cover on its own — palette, pattern, and icon
 // are kept in the config but never shown behind it. `image_path` holds either
 // the uploaded public URL or, while staged in the designer, a local objectURL;
 // both are valid <img> sources as-is (no cardImageUrl transform).
 const has_image = computed(() => !!cover?.image_path)
-
-const img_el = useTemplateRef<HTMLImageElement>('img')
-// Hold the shimmer skeleton until the image is fully decoded, so there's no raw
-// pop-in — then fade it in via the shared reveal animation.
-const decoded = ref(false)
+// Hold the shimmer skeleton until the image is decoded, then fade it in — the
+// decode gate is shared with the card faces via useImageReveal.
+const { decoded } = useImageReveal(() => cover?.image_path, img_el)
 
 // A cover with no chosen identity renders NEUTRAL chrome (the `element` role),
 // not an accent — this is what a loading skeleton or an un-themed deck wants.
@@ -33,49 +32,6 @@ const bindings = computed(() => {
   if (decoded.value) return null
   return coverBindings(has_image.value ? SKELETON_COVER : cover, { border: false })
 })
-
-async function decodeThenReveal() {
-  decoded.value = false
-  await nextTick()
-
-  const el = img_el.value
-  if (!el) return
-
-  // A cached image (e.g. flipping the preview away from the cover and back) is
-  // already complete; decode() can reject on the reinserted element, so skip it
-  // and reveal straight away rather than waiting on a decode that never settles.
-  if (!isLoaded(el)) {
-    try {
-      await el.decode()
-    } catch {
-      // decode() also rejects if the src changed mid-flight — but only bail when
-      // the image really isn't loaded, so a newer watch run takes over. If it IS
-      // loaded, fall through and reveal so the skeleton never sticks forever.
-      if (!isLoaded(el)) return
-    }
-  }
-
-  decoded.value = true
-  await nextTick()
-  if (img_el.value) revealFaceImage(img_el.value)
-}
-
-function isLoaded(el: HTMLImageElement) {
-  return el.complete && el.naturalWidth > 0
-}
-
-// Re-run the decode gate whenever the source changes (initial paint, replace).
-watch(
-  () => cover?.image_path,
-  (path) => {
-    if (!path) {
-      decoded.value = false
-      return
-    }
-    decodeThenReveal()
-  },
-  { immediate: true }
-)
 </script>
 
 <template>
