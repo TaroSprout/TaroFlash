@@ -48,11 +48,14 @@ watch(
 </script>
 
 <template>
+  <!-- openPicker() programmatically clicks this input; stop that synthetic click
+       bubbling to the design preview's cycleSide handler on the card root. -->
   <input
     :ref="cover_image.file_input"
     type="file"
     :accept="cover_image.accept"
     class="sr-only"
+    @click.stop
     @change="cover_image.onFileChange"
   />
 
