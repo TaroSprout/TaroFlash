@@ -82,6 +82,9 @@ export function useCheckout(close: (response?: CheckoutResponse) => void) {
     is_confirming.value = true
     await waitForUpgradeSync()
     queryCache.invalidateQueries({ key: ['billing'] })
+    // Resubscribing clears the downgrade grace, so the deck list's is_locked
+    // flags flip off — refetch it (the sync above already waited for paid).
+    queryCache.invalidateQueries({ key: ['decks'] })
     is_confirming.value = false
     is_success.value = true
 
