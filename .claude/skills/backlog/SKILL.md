@@ -2,8 +2,10 @@
 name: backlog
 description: Portfolio pass over the whole Notion Task Board Backlog, before /triage. Sees every raw ticket at once and assigns the comparative classification fields — Type, Epic, Target, then Priority under a forced distribution within each Target band. Does not rewrite bodies, resolve design, or change Status — tickets stay in Backlog, now sorted, for /triage to pull the most important first. Trigger on `/backlog`, "prioritize the backlog", "organize the board".
 allowed-tools: Read, Grep, Glob, Bash, mcp__notion__notion-query-data-sources, mcp__notion__notion-fetch, mcp__notion__notion-update-page
-argument-hint: '[--epic <name>]'
+argument-hint: '[--full] [--epic <name>]'
 arguments:
+  - name: --full
+    description: Re-read and re-classify every ticket from scratch, not just the unclassified ones. Use periodically when priorities have drifted and you want a from-scratch re-rank. Default is incremental — trust existing fields, only new tickets cost body reads.
   - name: --epic <name>
     description: Scope the sweep to one epic's Backlog tickets instead of the whole board. Priority is still distributed per Target band within that scope.
 lastUpdated: 2026-08-01T00:00:00Z
@@ -25,6 +27,18 @@ Board data source, field option lists, and voice all live in
 Priority is distributed **within** each Target band, so it can't be set until Target is. Work the four
 fields in that sequence.
 
+**Incremental by default — the board is the cache.** Every classification this pass makes is persisted
+as the ticket's own fields, so a re-run reads them back for free and trusts them. Only tickets that
+are still **unclassified** (missing a field, i.e. added since the last sweep) get their bodies read
+and their fields set from scratch. The **distribution**, though, is always re-judged over the _whole_
+Backlog — a new ticket can crowd a band and nudge an existing ticket across a boundary — but that's
+cheap reasoning over field values already in hand, not more body reads. First run: everything is
+unclassified, so it reads the whole board once. Every run after: only the new tickets cost anything.
+
+Pass **`--full`** to override — re-read and re-classify every ticket from scratch, trusting no
+existing field. Reach for it periodically when priorities have drifted enough that the trusted
+classifications are stale, not on the routine "I added a few tickets" run.
+
 1. **Fetch** the whole Backlog (or one epic with `--epic`), properties only:
 
    ```sql
@@ -38,9 +52,10 @@ fields in that sequence.
    No `ORDER BY` on `Priority`/`Target` here — this pass **sets** those, and their glyphs sort by
    codepoint not urgency anyway (see triage). Order by `ID` and rank in judgment.
 
-2. **Read bodies** via `notion-fetch` for anything too cryptic to classify from its name. Read to
-   **understand**, never to rewrite — clarification is `/triage`'s job. Peek at code only when a
-   ticket is so opaque you can't even pick a Type.
+2. **Read bodies — unclassified tickets only** (or all, under `--full`). A ticket that already
+   carries its fields is trusted; skip its body entirely. For the rest, `notion-fetch` anything too
+   cryptic to classify from its name. Read to **understand**, never to rewrite — clarification is
+   `/triage`'s job. Peek at code only when a ticket is so opaque you can't even pick a Type.
 
 3. **Type** — `Bug` broken · `Task` defined change · `Story` user-facing capability · `Spike` the
    deliverable is a decision. Fill every ticket.
