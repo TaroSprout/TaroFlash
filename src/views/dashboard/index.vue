@@ -30,10 +30,13 @@ const can = useCan()
 
 const { data: decks_data, error: decks_error } = useMemberDecksQuery()
 const sort_by = useLocalRef<SortOption>('dashboard-deck-sort', 'custom')
-const decks = computed(() => {
-  return [...(decks_data.value ?? [])].sort(DECK_SORT_COMPARATORS[sort_by.value])
-})
 const editing_decks = ref(false)
+// Edit mode always shows rank order — reorder curation only makes sense against
+// the ranking it edits. Grace on its own does not override the chosen sort.
+const effective_sort = computed(() => (editing_decks.value ? 'custom' : sort_by.value))
+const decks = computed(() => {
+  return [...(decks_data.value ?? [])].sort(DECK_SORT_COMPARATORS[effective_sort.value])
+})
 
 watch(decks_error, (err) => {
   if (err) notice.error(t('dashboard.decks-load-error'))

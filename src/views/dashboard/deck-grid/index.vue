@@ -9,6 +9,7 @@ import { useDeckActions } from '@/composables/deck/actions'
 import { buildNewDeckPayload } from '@/utils/deck/defaults'
 import { popDeckIn, popDeckOut } from '@/utils/animations/deck-grid'
 import { useDeckGridReorder } from './use-deck-grid-reorder'
+import { useDeckGrace } from '@/views/dashboard/composables/deck-grace'
 
 type DeckGridProps = {
   decks: Deck[]
@@ -38,6 +39,10 @@ const reorder = useDeckGridReorder(
   () => editing,
   size
 )
+
+// Locked-deck ids during downgrade grace, recomputed from local rank so a
+// reorder across the 10th position updates the dim/lock optimistically.
+const { lockedIds } = useDeckGrace(() => decks)
 
 // Animate a slot reflow only when the deck count itself changes (delete/create)
 // — a drag-drop reorder already has its own lift/drop settle animation, and
@@ -129,6 +134,7 @@ async function onCreateDeckClicked() {
         >
           <DeckGridItem
             :deck="deck"
+            :locked="lockedIds.has(deck.id)"
             :rearranging="editing"
             :dragging="index === reorder.dragging_index.value"
             :style="reorder.jiggleStyle(index)"

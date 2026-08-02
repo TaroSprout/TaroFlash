@@ -1229,6 +1229,8 @@ export type Database = {
         leech_threshold: number | null
         max_interval: number | null
         pacing_overrides: Json | null
+        is_locked: boolean | null
+        locked_delete_at: string | null
       }
       resolved_pacing: {
         desired_retention: number | null

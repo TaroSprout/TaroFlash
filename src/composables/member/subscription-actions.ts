@@ -1,9 +1,13 @@
 import { useI18n } from 'vue-i18n'
 import { useCancelSubscriptionMutation, useResumeSubscriptionMutation } from '@/api/billing'
+import { useMemberDeckCountQuery } from '@/api/decks'
 import { useAlert } from '@/composables/alert'
 import { useNoticeStore } from '@/stores/notice-store'
 import { useModal } from '@/composables/modal'
 import Checkout from '@/components/billing/checkout-modal/index.vue'
+
+// Free-plan deck limit — over it, cancelling triggers the downgrade grace.
+const FREE_DECK_LIMIT = 10
 
 /**
  * Subscription lifecycle orchestrators for the billing plan section: upgrade a
@@ -22,6 +26,7 @@ export function useSubscriptionActions() {
   const modal = useModal()
   const cancelMutation = useCancelSubscriptionMutation()
   const resumeMutation = useResumeSubscriptionMutation()
+  const { data: deckCount } = useMemberDeckCountQuery()
 
   async function onUpgrade() {
     const { response } = modal.open(Checkout, { mode: 'popup', backdrop: true })
@@ -29,9 +34,17 @@ export function useSubscriptionActions() {
   }
 
   async function onCancel() {
+    // Over the free deck limit, cancelling starts the 15-day downgrade grace —
+    // swap in the fuller warning (self-contained, so it replaces the base line
+    // rather than stacking a duplicate "plan stays active" sentence on top).
+    const over_limit = (deckCount.value ?? 0) > FREE_DECK_LIMIT
+    const message = over_limit
+      ? t('settings.subscription.plan.cancel-over-limit')
+      : t('settings.subscription.plan.cancel-confirm')
+
     const { response } = alert.warn({
       title: t('settings.subscription.plan.cancel-confirm-title'),
-      message: t('settings.subscription.plan.cancel-confirm'),
+      message,
       confirmLabel: t('settings.subscription.plan.cancel-confirm-button'),
       cancelLabel: t('settings.subscription.plan.cancel-abort')
     })
