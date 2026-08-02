@@ -13,6 +13,11 @@ Triage is the **first** of two grooming passes. It clarifies and files — it do
 design decisions, write acceptance criteria, or investigate implementation. That is `/groom`'s job.
 Every triaged ticket lands in **`Needs More Info`**.
 
+The Backlog it pulls from is normally already classified and priority-sorted by
+[`/backlog`](../backlog/SKILL.md), the portfolio pass that runs before triage — so the
+Priority → ID fetch below surfaces the most important tickets first. Triage no longer owns the
+classification fields; it only fills **stragglers** a `/backlog` sweep hasn't reached yet (see step 4).
+
 Board data source, field option lists, body sections, and voice all live in
 [`ticket-authoring.md`](../../rules/ticket-authoring.md). Read it before writing anything.
 
@@ -54,10 +59,13 @@ Board data source, field option lists, body sections, and voice all live in
    product intent, plain language, no fluff. Peek at code only if the raw ticket is too cryptic to
    clarify from its text. Don't spec it, don't add acceptance criteria — leave the design for `/groom`.
 
-4. **Fields.** Fill `Epic` and `Type` **only when unset**; `Priority` and `Target` **only when
-   missing** (the user usually sets `Priority` at creation). Propose values — never apply unasked. If
-   no epic fits, propose a new one per [`ticket-authoring.md` § Epics](../../rules/ticket-authoring.md)
-   rather than force-fitting.
+4. **Fields (straggler fallback only).** `Type`, `Epic`, `Target`, and `Priority` are
+   [`/backlog`](../backlog/SKILL.md)'s to own — normally they're already set when a ticket reaches
+   triage. Fill them here **only when a ticket slipped in after the last `/backlog` sweep and one is
+   still unset**, and even then don't invent a Priority in isolation — a lone straggler can't be
+   distributed against the board, so leave `Priority` empty and let the next sweep place it unless the
+   user dictates one. Propose values — never apply unasked. If no epic fits, propose a new one per
+   [`ticket-authoring.md` § Epics](../../rules/ticket-authoring.md) rather than force-fitting.
 
 5. **Checkpoint.** One summary for the whole batch. Per ticket, in product terms: new title, one-line
    intent, proposed fields. Stop for approval.
