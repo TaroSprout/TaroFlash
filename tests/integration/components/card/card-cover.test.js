@@ -48,3 +48,52 @@ describe('CardCover', () => {
     expect(classes).not.toContain('pattern-mask')
   })
 })
+
+describe('CardCover — image cover [obligation]', () => {
+  // A custom cover image fills the cover on its own — the palette/pattern/icon
+  // chrome must never show behind it, not even before the image has decoded.
+
+  test('renders card-cover__image when cover.image_path is set [obligation]', () => {
+    const wrapper = mountCover({ image_path: 'https://cdn/cover.png' })
+    const img = wrapper.find('[data-testid="card-cover__image"]')
+    expect(img.exists()).toBe(true)
+    expect(img.attributes('src')).toBe('https://cdn/cover.png')
+  })
+
+  test('does not render card-cover__icon when an image is set, even if an icon is also configured [obligation]', () => {
+    const wrapper = mountCover({ image_path: 'https://cdn/cover.png', icon: 'star' })
+    expect(wrapper.find('[data-testid="card-cover__icon"]').exists()).toBe(false)
+  })
+
+  test('does not emit data-palette when an image is set, even if a palette is also configured [obligation]', () => {
+    const wrapper = mountCover({ image_path: 'https://cdn/cover.png', palette: 'green' })
+    expect(wrapper.find('[data-testid="card-cover"]').attributes('data-palette')).toBeUndefined()
+  })
+
+  test('does not apply pattern-mask when an image is set, even if a pattern is also configured [obligation]', () => {
+    const wrapper = mountCover({ image_path: 'https://cdn/cover.png', pattern: 'stars' })
+    expect(wrapper.find('[data-testid="card-cover"]').classes()).not.toContain('pattern-mask')
+  })
+
+  test('renders card-cover__icon (not the image) when no image_path is set', () => {
+    const wrapper = mountCover({ icon: 'star' })
+    expect(wrapper.find('[data-testid="card-cover__image"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="card-cover__icon"]').exists()).toBe(true)
+  })
+
+  // ── shimmer-until-decode [obligation] ────────────────────────────────────
+  // jsdom has no real HTMLImageElement.decode (and this suite runs in a real
+  // browser where decode() rejects for an unreachable test URL) — assert the
+  // deterministic initial loading state, not the post-decode reveal, and
+  // don't assert the gsap reveal animation itself.
+
+  test('sets data-loading on mount while the image has not decoded yet [obligation]', () => {
+    const wrapper = mountCover({ image_path: 'https://cdn/cover.png' })
+    expect(wrapper.find('[data-testid="card-cover"]').attributes('data-loading')).toBeDefined()
+  })
+
+  test('does not set data-loading when there is no image to decode', () => {
+    const wrapper = mountCover({ icon: 'star' })
+    expect(wrapper.find('[data-testid="card-cover"]').attributes('data-loading')).toBeUndefined()
+  })
+})

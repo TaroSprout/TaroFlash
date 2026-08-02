@@ -1,5 +1,10 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { createApp } from 'vue'
+import { createI18n } from 'vue-i18n'
+import messages from '@intlify/unplugin-vue-i18n/messages'
 import { useDeckEditor } from '@/composables/deck/editor'
+
+const i18n = createI18n({ locale: 'en-us', legacy: false, messages })
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -23,6 +28,18 @@ const { mockResetReviews, mockResetReviewsIsLoading } = vi.hoisted(() => ({
 
 const { mockEmitSfx } = vi.hoisted(() => ({
   mockEmitSfx: vi.fn()
+}))
+
+const { mockNoticeError } = vi.hoisted(() => ({
+  mockNoticeError: vi.fn()
+}))
+
+// The cover-image staging composable is its own unit (tests/unit/composables/
+// deck/cover-image.test.js) — mock it here so editor tests exercise only the
+// saveDeck/resetChanges orchestration around commit()/discardStaged().
+const { mockCoverCommit, mockCoverDiscardStaged } = vi.hoisted(() => ({
+  mockCoverCommit: vi.fn().mockResolvedValue(undefined),
+  mockCoverDiscardStaged: vi.fn()
 }))
 
 // useCardsInDeckInfiniteQuery is called inside useDeckEditor to power the
@@ -50,12 +67,23 @@ vi.mock('@/composables/deck/actions', () => ({
   })
 }))
 
+vi.mock('@/composables/deck/cover-image', () => ({
+  useCoverImage: () => ({
+    commit: mockCoverCommit,
+    discardStaged: mockCoverDiscardStaged
+  })
+}))
+
 vi.mock('@/api/reviews', () => ({
   useResetDeckReviewsMutation: () => ({
     mutate: mockResetReviews,
     mutateAsync: mockResetReviews,
     isLoading: mockResetReviewsIsLoading
   })
+}))
+
+vi.mock('@/stores/notice-store', () => ({
+  useNoticeStore: () => ({ error: mockNoticeError })
 }))
 
 vi.mock('@/sfx/bus', () => ({
@@ -79,6 +107,23 @@ function makeDeck(overrides = {}) {
   }
 }
 
+// useDeckEditor now calls useI18n() (for the cover-image save/upload toast
+// copy) directly in its setup body, which vue-i18n only allows inside an
+// active component instance — mount a headless host app, like the
+// useFaceImageUpload composable tests do.
+function withDeckEditor(deck) {
+  let result
+  const app = createApp({
+    setup() {
+      result = useDeckEditor(deck)
+      return () => null
+    }
+  })
+  app.use(i18n)
+  app.mount(document.createElement('div'))
+  return { editor: result, unmount: () => app.unmount() }
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('useDeckEditor', () => {
@@ -91,6 +136,9 @@ describe('useDeckEditor', () => {
     mockResetReviews.mockClear()
     mockResetReviews.mockResolvedValue(undefined)
     mockEmitSfx.mockClear()
+    mockNoticeError.mockClear()
+    mockCoverCommit.mockReset().mockResolvedValue(undefined)
+    mockCoverDiscardStaged.mockClear()
   })
 
   // ── Initialization ─────────────────────────────────────────────────────────
@@ -98,50 +146,62 @@ describe('useDeckEditor', () => {
   describe('initialization', () => {
     test('initializes draft settings from deck fields', () => {
       const deck = makeDeck()
-      const { draft } = useDeckEditor(deck)
+      const { editor, unmount } = withDeckEditor(deck)
 
-      expect(draft.title).toBe('My Deck')
-      expect(draft.description).toBe('A description')
-      expect(draft.is_public).toBe(true)
+      expect(editor.draft.title).toBe('My Deck')
+      expect(editor.draft.description).toBe('A description')
+      expect(editor.draft.is_public).toBe(true)
+      unmount()
     })
 
     test('initializes draft.study_config from deck.study_config, merged over defaults', () => {
       const deck = makeDeck({ study_config: { shuffle: true } })
-      const { draft } = useDeckEditor(deck)
+      const { editor, unmount } = withDeckEditor(deck)
 
-      expect(draft.study_config.shuffle).toBe(true)
-      expect(draft.study_config.starting_side).toBe('front')
+      expect(editor.draft.study_config.shuffle).toBe(true)
+      expect(editor.draft.study_config.starting_side).toBe('front')
+      unmount()
     })
 
     test('initializes draft.study_config with defaults when deck has no study_config', () => {
       const deck = makeDeck({ study_config: undefined })
-      const { draft } = useDeckEditor(deck)
+      const { editor, unmount } = withDeckEditor(deck)
 
-      expect(draft.study_config.shuffle).toBe(false)
+      expect(editor.draft.study_config.shuffle).toBe(false)
+      unmount()
     })
 
     test('initializes draft.cover_config from deck.cover_config', () => {
       const deck = makeDeck({ cover_config: { color: '#abc123' } })
-      const { draft } = useDeckEditor(deck)
+      const { editor, unmount } = withDeckEditor(deck)
 
-      expect(draft.cover_config.color).toBe('#abc123')
+      expect(editor.draft.cover_config.color).toBe('#abc123')
+      unmount()
     })
 
     test('initializes draft.cover_config as empty object when deck has no cover_config', () => {
       const deck = makeDeck({ cover_config: undefined })
-      const { draft } = useDeckEditor(deck)
+      const { editor, unmount } = withDeckEditor(deck)
 
-      expect(draft.cover_config).toEqual({})
+      expect(editor.draft.cover_config).toEqual({})
+      unmount()
     })
 
     test('works with no deck argument', () => {
-      const { draft } = useDeckEditor()
+      const { editor, unmount } = withDeckEditor()
 
-      expect(draft.title).toBeUndefined()
-      expect(draft.study_config.shuffle).toBe(false)
-      expect(draft.cover_config).toEqual({})
-      expect(draft.review_pacing_preset_id).toBeNull()
-      expect(draft.pacing_overrides).toEqual({})
+      expect(editor.draft.title).toBeUndefined()
+      expect(editor.draft.study_config.shuffle).toBe(false)
+      expect(editor.draft.cover_config).toEqual({})
+      expect(editor.draft.review_pacing_preset_id).toBeNull()
+      expect(editor.draft.pacing_overrides).toEqual({})
+      unmount()
+    })
+
+    test('exposes the cover_image staging composable', () => {
+      const { editor, unmount } = withDeckEditor(makeDeck())
+      expect(editor.cover_image.commit).toBe(mockCoverCommit)
+      unmount()
     })
   })
 
@@ -153,19 +213,21 @@ describe('useDeckEditor', () => {
         review_pacing_preset_id: 3,
         pacing_overrides: { desired_retention: 85, leech_threshold: 12 }
       })
-      const { draft } = useDeckEditor(deck)
+      const { editor, unmount } = withDeckEditor(deck)
 
-      expect(draft.review_pacing_preset_id).toBe(3)
-      expect(draft.pacing_overrides).toEqual({ desired_retention: 85, leech_threshold: 12 })
+      expect(editor.draft.review_pacing_preset_id).toBe(3)
+      expect(editor.draft.pacing_overrides).toEqual({ desired_retention: 85, leech_threshold: 12 })
+      unmount()
     })
 
     test('defaults review_pacing_preset_id to null and pacing_overrides to {} when the deck has none set', () => {
-      const { draft } = useDeckEditor(
+      const { editor, unmount } = withDeckEditor(
         makeDeck({ review_pacing_preset_id: undefined, pacing_overrides: undefined })
       )
 
-      expect(draft.review_pacing_preset_id).toBeNull()
-      expect(draft.pacing_overrides).toEqual({})
+      expect(editor.draft.review_pacing_preset_id).toBeNull()
+      expect(editor.draft.pacing_overrides).toEqual({})
+      unmount()
     })
   })
 
@@ -178,9 +240,9 @@ describe('useDeckEditor', () => {
         review_pacing_preset_id: 3,
         pacing_overrides: { desired_retention: 92 }
       })
-      const { saveDeck } = useDeckEditor(deck)
+      const { editor, unmount } = withDeckEditor(deck)
 
-      await saveDeck()
+      await editor.saveDeck()
 
       expect(mockUpsertMutateAsync).toHaveBeenCalledOnce()
       const [arg] = mockUpsertMutateAsync.mock.calls[0]
@@ -191,55 +253,120 @@ describe('useDeckEditor', () => {
       })
       expect(arg.review_pacing_preset_id).toBe(3)
       expect(arg.pacing_overrides).toEqual({ desired_retention: 92 })
+      unmount()
     })
 
     test('routes to createDeck (not the upsert mutation) when the deck has no id', async () => {
-      const { saveDeck } = useDeckEditor()
+      const { editor, unmount } = withDeckEditor()
 
-      await saveDeck()
+      await editor.saveDeck()
 
       expect(mockCreateDeck).toHaveBeenCalledOnce()
       expect(mockUpsertMutateAsync).not.toHaveBeenCalled()
+      unmount()
     })
 
     test('routes to the upsert mutation (not createDeck) when the deck has an id', async () => {
-      const { saveDeck } = useDeckEditor(makeDeck({ id: 42 }))
+      const { editor, unmount } = withDeckEditor(makeDeck({ id: 42 }))
 
-      await saveDeck()
+      await editor.saveDeck()
 
       expect(mockUpsertMutateAsync).toHaveBeenCalledOnce()
       expect(mockCreateDeck).not.toHaveBeenCalled()
+      unmount()
     })
 
     test('rebases the draft on a successful existing-deck save, so is_dirty clears without closing [obligation]', async () => {
       const deck = makeDeck({ title: 'Original' })
-      const { draft, is_dirty, saveDeck } = useDeckEditor(deck)
+      const { editor, unmount } = withDeckEditor(deck)
 
-      draft.title = 'Changed'
-      expect(is_dirty.value).toBe(true)
+      editor.draft.title = 'Changed'
+      expect(editor.is_dirty.value).toBe(true)
 
-      await saveDeck()
+      await editor.saveDeck()
 
-      expect(is_dirty.value).toBe(false)
+      expect(editor.is_dirty.value).toBe(false)
+      unmount()
     })
 
     test('returns null and does not rebase when the upsert mutation rejects', async () => {
       mockUpsertMutateAsync.mockRejectedValueOnce(new Error('Network error'))
       const deck = makeDeck({ title: 'Original' })
-      const { draft, is_dirty, saveDeck } = useDeckEditor(deck)
+      const { editor, unmount } = withDeckEditor(deck)
 
-      draft.title = 'Changed'
-      const result = await saveDeck()
+      editor.draft.title = 'Changed'
+      const result = await editor.saveDeck()
 
       expect(result).toBeNull()
-      expect(is_dirty.value).toBe(true)
+      expect(editor.is_dirty.value).toBe(true)
+      unmount()
     })
 
     test('returns the result from createDeck for a new deck', async () => {
       mockCreateDeck.mockResolvedValueOnce(null)
-      const { saveDeck } = useDeckEditor()
+      const { editor, unmount } = withDeckEditor()
 
-      await expect(saveDeck()).resolves.toBeNull()
+      await expect(editor.saveDeck()).resolves.toBeNull()
+      unmount()
+    })
+
+    // ── cover_image.commit() pre-step [obligation] ────────────────────────────
+
+    test('calls cover_image.commit() before the upsert mutation for an existing deck [obligation]', async () => {
+      const { editor, unmount } = withDeckEditor(makeDeck())
+
+      await editor.saveDeck()
+
+      expect(mockCoverCommit).toHaveBeenCalledOnce()
+      expect(mockUpsertMutateAsync).toHaveBeenCalledOnce()
+      unmount()
+    })
+
+    test('a commit() rejection with cause "insert" shows the cover-image-save-failed toast, skips the upsert, and returns null [obligation]', async () => {
+      mockCoverCommit.mockRejectedValueOnce(new Error('insert failed', { cause: 'insert' }))
+      const { editor, unmount } = withDeckEditor(makeDeck())
+
+      const result = await editor.saveDeck()
+
+      expect(mockNoticeError).toHaveBeenCalledWith("Couldn't save image — try again")
+      expect(mockUpsertMutateAsync).not.toHaveBeenCalled()
+      expect(result).toBeNull()
+      unmount()
+    })
+
+    test('a commit() rejection with cause "upload" shows the cover-image-upload-failed toast, skips the upsert, and returns null [obligation]', async () => {
+      mockCoverCommit.mockRejectedValueOnce(new Error('upload failed', { cause: 'upload' }))
+      const { editor, unmount } = withDeckEditor(makeDeck())
+
+      const result = await editor.saveDeck()
+
+      expect(mockNoticeError).toHaveBeenCalledWith("Couldn't upload your image")
+      expect(mockUpsertMutateAsync).not.toHaveBeenCalled()
+      expect(result).toBeNull()
+      unmount()
+    })
+
+    test('a non-Error commit() rejection (no .cause) shows the cover-image-upload-failed toast [obligation]', async () => {
+      mockCoverCommit.mockRejectedValueOnce('some non-error rejection')
+      const { editor, unmount } = withDeckEditor(makeDeck())
+
+      await editor.saveDeck()
+
+      expect(mockNoticeError).toHaveBeenCalledWith("Couldn't upload your image")
+      unmount()
+    })
+
+    test('a successful commit() is followed by the upsert + rebase [obligation]', async () => {
+      const deck = makeDeck({ title: 'Original' })
+      const { editor, unmount } = withDeckEditor(deck)
+
+      editor.draft.title = 'Changed'
+      await editor.saveDeck()
+
+      expect(mockCoverCommit).toHaveBeenCalledOnce()
+      expect(mockUpsertMutateAsync).toHaveBeenCalledOnce()
+      expect(editor.is_dirty.value).toBe(false)
+      unmount()
     })
   })
 
@@ -249,22 +376,24 @@ describe('useDeckEditor', () => {
 
   describe('rebase', () => {
     test('exposes the underlying useDraft rebase function [obligation]', () => {
-      const { rebase } = useDeckEditor(makeDeck())
-      expect(typeof rebase).toBe('function')
+      const { editor, unmount } = withDeckEditor(makeDeck())
+      expect(typeof editor.rebase).toBe('function')
+      unmount()
     })
 
     test('rebase([key]) adopts only that key, leaving other staged edits dirty [obligation]', () => {
       const deck = makeDeck({ title: 'Original' })
-      const { draft, is_dirty, rebase } = useDeckEditor(deck)
+      const { editor, unmount } = withDeckEditor(deck)
 
-      draft.title = 'Edited title'
-      draft.pacing_overrides.desired_retention = 0.8
+      editor.draft.title = 'Edited title'
+      editor.draft.pacing_overrides.desired_retention = 0.8
 
-      rebase(['pacing_overrides'])
+      editor.rebase(['pacing_overrides'])
 
-      expect(draft.pacing_overrides).toEqual({ desired_retention: 0.8 })
-      expect(is_dirty.value).toBe(true)
-      expect(draft.title).toBe('Edited title')
+      expect(editor.draft.pacing_overrides).toEqual({ desired_retention: 0.8 })
+      expect(editor.is_dirty.value).toBe(true)
+      expect(editor.draft.title).toBe('Edited title')
+      unmount()
     })
   })
 
@@ -278,18 +407,20 @@ describe('useDeckEditor', () => {
           back: { text_size: 'small' }
         }
       })
-      const { draft } = useDeckEditor(deck)
+      const { editor, unmount } = withDeckEditor(deck)
 
-      expect(draft.card_attributes.front.text_size).toBe('huge')
-      expect(draft.card_attributes.front.horizontal_alignment).toBe('left')
-      expect(draft.card_attributes.back.text_size).toBe('small')
+      expect(editor.draft.card_attributes.front.text_size).toBe('huge')
+      expect(editor.draft.card_attributes.front.horizontal_alignment).toBe('left')
+      expect(editor.draft.card_attributes.back.text_size).toBe('small')
+      unmount()
     })
 
     test('initializes draft.card_attributes with empty sides when deck has no card_attributes', () => {
       const deck = makeDeck({ card_attributes: undefined })
-      const { draft } = useDeckEditor(deck)
+      const { editor, unmount } = withDeckEditor(deck)
 
-      expect(draft.card_attributes).toEqual({ front: {}, back: {} })
+      expect(editor.draft.card_attributes).toEqual({ front: {}, back: {} })
+      unmount()
     })
 
     test('saveDeck includes draft.card_attributes in the mutation payload', async () => {
@@ -299,15 +430,16 @@ describe('useDeckEditor', () => {
           back: { text_size: 'medium' }
         }
       })
-      const { saveDeck } = useDeckEditor(deck)
+      const { editor, unmount } = withDeckEditor(deck)
 
-      await saveDeck()
+      await editor.saveDeck()
 
       const [arg] = mockUpsertMutateAsync.mock.calls[0]
       expect(arg.card_attributes).toEqual({
         front: { text_size: 'ginormous', vertical_alignment: 'bottom' },
         back: { text_size: 'medium' }
       })
+      unmount()
     })
   })
 
@@ -315,52 +447,60 @@ describe('useDeckEditor', () => {
 
   describe('is_dirty', () => {
     test('is false right after init for an existing deck (no edits yet)', () => {
-      const { is_dirty } = useDeckEditor(makeDeck())
-      expect(is_dirty.value).toBe(false)
+      const { editor, unmount } = withDeckEditor(makeDeck())
+      expect(editor.is_dirty.value).toBe(false)
+      unmount()
     })
 
     test('is false right after init for a new deck (no edits yet)', () => {
-      const { is_dirty } = useDeckEditor()
-      expect(is_dirty.value).toBe(false)
+      const { editor, unmount } = withDeckEditor()
+      expect(editor.is_dirty.value).toBe(false)
+      unmount()
     })
 
     test('flips to true when draft.title is mutated', () => {
-      const { draft, is_dirty } = useDeckEditor(makeDeck())
-      draft.title = 'Renamed'
-      expect(is_dirty.value).toBe(true)
+      const { editor, unmount } = withDeckEditor(makeDeck())
+      editor.draft.title = 'Renamed'
+      expect(editor.is_dirty.value).toBe(true)
+      unmount()
     })
 
     test('flips to true when draft.study_config is mutated', () => {
-      const { draft, is_dirty } = useDeckEditor(makeDeck({ study_config: { shuffle: false } }))
-      draft.study_config.shuffle = true
-      expect(is_dirty.value).toBe(true)
+      const { editor, unmount } = withDeckEditor(makeDeck({ study_config: { shuffle: false } }))
+      editor.draft.study_config.shuffle = true
+      expect(editor.is_dirty.value).toBe(true)
+      unmount()
     })
 
     test('flips to true when draft.cover_config is mutated', () => {
-      const { draft, is_dirty } = useDeckEditor(makeDeck())
-      draft.cover_config.color = '#000000'
-      expect(is_dirty.value).toBe(true)
+      const { editor, unmount } = withDeckEditor(makeDeck())
+      editor.draft.cover_config.color = '#000000'
+      expect(editor.is_dirty.value).toBe(true)
+      unmount()
     })
 
     test('flips to true when draft.card_attributes is mutated', () => {
-      const { draft, is_dirty } = useDeckEditor(makeDeck())
-      draft.card_attributes.front.text_size = 6
-      expect(is_dirty.value).toBe(true)
+      const { editor, unmount } = withDeckEditor(makeDeck())
+      editor.draft.card_attributes.front.text_size = 6
+      expect(editor.is_dirty.value).toBe(true)
+      unmount()
     })
 
     test('returns false again when a mutation is reverted to the original value', () => {
       const deck = makeDeck({ title: 'Original' })
-      const { draft, is_dirty } = useDeckEditor(deck)
-      draft.title = 'Changed'
-      expect(is_dirty.value).toBe(true)
-      draft.title = 'Original'
-      expect(is_dirty.value).toBe(false)
+      const { editor, unmount } = withDeckEditor(deck)
+      editor.draft.title = 'Changed'
+      expect(editor.is_dirty.value).toBe(true)
+      editor.draft.title = 'Original'
+      expect(editor.is_dirty.value).toBe(false)
+      unmount()
     })
 
     test('flips to true when only draft.pacing_overrides is mutated [obligation]', () => {
-      const { draft, is_dirty } = useDeckEditor(makeDeck())
-      draft.pacing_overrides.desired_retention = 80
-      expect(is_dirty.value).toBe(true)
+      const { editor, unmount } = withDeckEditor(makeDeck())
+      editor.draft.pacing_overrides.desired_retention = 80
+      expect(editor.is_dirty.value).toBe(true)
+      unmount()
     })
   })
 
@@ -377,21 +517,22 @@ describe('useDeckEditor', () => {
         }
       })
       const deck_snapshot = structuredClone(deck)
-      const { draft, resetChanges } = useDeckEditor(deck)
+      const { editor, unmount } = withDeckEditor(deck)
 
-      draft.cover_config.theme = 'midnight'
-      draft.study_config.shuffle = true
-      draft.card_attributes.front.text_size = 'huge'
+      editor.draft.cover_config.theme = 'midnight'
+      editor.draft.study_config.shuffle = true
+      editor.draft.card_attributes.front.text_size = 'huge'
 
-      resetChanges()
+      editor.resetChanges()
 
-      expect(draft.cover_config).toEqual(deck_snapshot.cover_config)
+      expect(editor.draft.cover_config).toEqual(deck_snapshot.cover_config)
       // study_config is merged over DECK_CONFIG_DEFAULTS when the draft base
       // is built, so the reset target carries the full default shape, not the
       // raw deck.study_config the test seeded.
-      expect(draft.study_config).toMatchObject(deck_snapshot.study_config)
-      expect(draft.card_attributes).toEqual(deck_snapshot.card_attributes)
+      expect(editor.draft.study_config).toMatchObject(deck_snapshot.study_config)
+      expect(editor.draft.card_attributes).toEqual(deck_snapshot.card_attributes)
       expect(deck).toEqual(deck_snapshot)
+      unmount()
     })
 
     test('is_dirty is false again after resetChanges, across title/config/cover/card_attributes/pacing edits [obligation]', () => {
@@ -399,18 +540,28 @@ describe('useDeckEditor', () => {
         cover_config: { color: '#ff0000' },
         study_config: { shuffle: false }
       })
-      const { draft, is_dirty, resetChanges } = useDeckEditor(deck)
+      const { editor, unmount } = withDeckEditor(deck)
 
-      draft.title = 'Renamed'
-      draft.study_config.shuffle = true
-      draft.cover_config.color = '#000000'
-      draft.card_attributes.front.text_size = 'huge'
-      draft.pacing_overrides.desired_retention = 80
-      expect(is_dirty.value).toBe(true)
+      editor.draft.title = 'Renamed'
+      editor.draft.study_config.shuffle = true
+      editor.draft.cover_config.color = '#000000'
+      editor.draft.card_attributes.front.text_size = 'huge'
+      editor.draft.pacing_overrides.desired_retention = 80
+      expect(editor.is_dirty.value).toBe(true)
 
-      resetChanges()
+      editor.resetChanges()
 
-      expect(is_dirty.value).toBe(false)
+      expect(editor.is_dirty.value).toBe(false)
+      unmount()
+    })
+
+    test('calls cover_image.discardStaged() [obligation]', () => {
+      const { editor, unmount } = withDeckEditor(makeDeck())
+
+      editor.resetChanges()
+
+      expect(mockCoverDiscardStaged).toHaveBeenCalledOnce()
+      unmount()
     })
   })
 
@@ -419,37 +570,42 @@ describe('useDeckEditor', () => {
   describe('deleteDeck', () => {
     test('calls the delete API with the deck id', async () => {
       const deck = makeDeck({ id: 42 })
-      const { deleteDeck } = useDeckEditor(deck)
+      const { editor, unmount } = withDeckEditor(deck)
 
-      await deleteDeck()
+      await editor.deleteDeck()
 
       expect(mockDeleteDeck).toHaveBeenCalledWith(42)
+      unmount()
     })
 
     test('resolves to true on success', async () => {
-      const { deleteDeck } = useDeckEditor(makeDeck({ id: 1 }))
-      await expect(deleteDeck()).resolves.toBe(true)
+      const { editor, unmount } = withDeckEditor(makeDeck({ id: 1 }))
+      await expect(editor.deleteDeck()).resolves.toBe(true)
+      unmount()
     })
 
     test('does not call delete API when deck has no id, and resolves false', async () => {
       const deck = makeDeck({ id: undefined })
-      const { deleteDeck } = useDeckEditor(deck)
+      const { editor, unmount } = withDeckEditor(deck)
 
-      await expect(deleteDeck()).resolves.toBe(false)
+      await expect(editor.deleteDeck()).resolves.toBe(false)
       expect(mockDeleteDeck).not.toHaveBeenCalled()
+      unmount()
     })
 
     test('resolves to false (does not throw) when delete API rejects', async () => {
       mockDeleteDeck.mockRejectedValueOnce(new Error('Network error'))
       const deck = makeDeck({ id: 1 })
-      const { deleteDeck } = useDeckEditor(deck)
+      const { editor, unmount } = withDeckEditor(deck)
 
-      await expect(deleteDeck()).resolves.toBe(false)
+      await expect(editor.deleteDeck()).resolves.toBe(false)
+      unmount()
     })
 
     test('exposes the mutation isLoading ref as `deleting`', () => {
-      const { deleting } = useDeckEditor(makeDeck({ id: 1 }))
-      expect(deleting).toBe(mockDeleteIsLoading)
+      const { editor, unmount } = withDeckEditor(makeDeck({ id: 1 }))
+      expect(editor.deleting).toBe(mockDeleteIsLoading)
+      unmount()
     })
   })
 
@@ -457,35 +613,40 @@ describe('useDeckEditor', () => {
 
   describe('resetReviews', () => {
     test('calls the reset mutation with the deck id', async () => {
-      const { resetReviews } = useDeckEditor(makeDeck({ id: 42 }))
+      const { editor, unmount } = withDeckEditor(makeDeck({ id: 42 }))
 
-      await resetReviews()
+      await editor.resetReviews()
 
       expect(mockResetReviews).toHaveBeenCalledWith(42)
+      unmount()
     })
 
     test('resolves to true on success', async () => {
-      const { resetReviews } = useDeckEditor(makeDeck({ id: 1 }))
-      await expect(resetReviews()).resolves.toBe(true)
+      const { editor, unmount } = withDeckEditor(makeDeck({ id: 1 }))
+      await expect(editor.resetReviews()).resolves.toBe(true)
+      unmount()
     })
 
     test('does not call the mutation when deck has no id, and resolves false', async () => {
-      const { resetReviews } = useDeckEditor(makeDeck({ id: undefined }))
+      const { editor, unmount } = withDeckEditor(makeDeck({ id: undefined }))
 
-      await expect(resetReviews()).resolves.toBe(false)
+      await expect(editor.resetReviews()).resolves.toBe(false)
       expect(mockResetReviews).not.toHaveBeenCalled()
+      unmount()
     })
 
     test('resolves to false (does not throw) when the mutation rejects', async () => {
       mockResetReviews.mockRejectedValueOnce(new Error('Network error'))
-      const { resetReviews } = useDeckEditor(makeDeck({ id: 1 }))
+      const { editor, unmount } = withDeckEditor(makeDeck({ id: 1 }))
 
-      await expect(resetReviews()).resolves.toBe(false)
+      await expect(editor.resetReviews()).resolves.toBe(false)
+      unmount()
     })
 
     test('exposes the mutation isLoading ref as `resetting_reviews`', () => {
-      const { resetting_reviews } = useDeckEditor(makeDeck({ id: 1 }))
-      expect(resetting_reviews).toBe(mockResetReviewsIsLoading)
+      const { editor, unmount } = withDeckEditor(makeDeck({ id: 1 }))
+      expect(editor.resetting_reviews).toBe(mockResetReviewsIsLoading)
+      unmount()
     })
   })
 
@@ -493,9 +654,10 @@ describe('useDeckEditor', () => {
 
   describe('preview_front_text / preview_back_text', () => {
     test('are undefined when the query returns no data (unsaved deck) [obligation]', () => {
-      const { preview_front_text, preview_back_text } = useDeckEditor()
-      expect(preview_front_text.value).toBeUndefined()
-      expect(preview_back_text.value).toBeUndefined()
+      const { editor, unmount } = withDeckEditor()
+      expect(editor.preview_front_text.value).toBeUndefined()
+      expect(editor.preview_back_text.value).toBeUndefined()
+      unmount()
     })
   })
 
@@ -503,37 +665,41 @@ describe('useDeckEditor', () => {
 
   describe('active_side / setActiveSide', () => {
     test('initializes active_side to "cover"', () => {
-      const { active_side } = useDeckEditor(makeDeck())
-      expect(active_side.value).toBe('cover')
+      const { editor, unmount } = withDeckEditor(makeDeck())
+      expect(editor.active_side.value).toBe('cover')
+      unmount()
     })
 
     test('setActiveSide updates active_side and emits sfx', () => {
-      const { active_side, setActiveSide } = useDeckEditor(makeDeck())
+      const { editor, unmount } = withDeckEditor(makeDeck())
 
-      setActiveSide('front')
+      editor.setActiveSide('front')
 
-      expect(active_side.value).toBe('front')
+      expect(editor.active_side.value).toBe('front')
       expect(mockEmitSfx).toHaveBeenCalledWith('slide_up')
+      unmount()
     })
 
     test('setActiveSide is a no-op when side is already active', () => {
-      const { active_side, setActiveSide } = useDeckEditor(makeDeck())
+      const { editor, unmount } = withDeckEditor(makeDeck())
 
-      setActiveSide('cover')
+      editor.setActiveSide('cover')
 
-      expect(active_side.value).toBe('cover')
+      expect(editor.active_side.value).toBe('cover')
       expect(mockEmitSfx).not.toHaveBeenCalled()
+      unmount()
     })
 
     test('setActiveSide cycles through cover/front/back', () => {
-      const { active_side, setActiveSide } = useDeckEditor(makeDeck())
+      const { editor, unmount } = withDeckEditor(makeDeck())
 
-      setActiveSide('front')
-      setActiveSide('back')
-      setActiveSide('cover')
+      editor.setActiveSide('front')
+      editor.setActiveSide('back')
+      editor.setActiveSide('cover')
 
-      expect(active_side.value).toBe('cover')
+      expect(editor.active_side.value).toBe('cover')
       expect(mockEmitSfx).toHaveBeenCalledTimes(3)
+      unmount()
     })
   })
 })

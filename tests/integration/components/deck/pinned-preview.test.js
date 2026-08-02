@@ -8,7 +8,15 @@ import PinnedPreview from '@/components/deck/pinned-preview.vue'
 // Stub for DeckDesignPreview — captures props and can emit update:side.
 const DeckDesignPreviewStub = defineComponent({
   name: 'DeckDesignPreview',
-  props: ['front_text', 'back_text', 'cover', 'card_attributes', 'side'],
+  props: [
+    'front_text',
+    'back_text',
+    'cover',
+    'card_attributes',
+    'side',
+    'cover_editing',
+    'cover_image'
+  ],
   emits: ['update:side'],
   setup(props, { emit }) {
     return () =>
@@ -140,5 +148,24 @@ describe('PinnedPreview — forwards tucked through to ui-pinned-card [obligatio
     expect(
       wrapper.find('[data-testid="ui-pinned-card__paperclip"]').attributes('data-tucked')
     ).toBe('true')
+  })
+})
+
+// ── cover_editing / cover_image pass-through ────────────────────────────────
+
+describe('PinnedPreview — cover_editing / cover_image pass-through', () => {
+  test('forwards cover_editing to DeckDesignPreview', () => {
+    const wrapper = makeWrapper({ cover_editing: true })
+    const preview = wrapper.findComponent({ name: 'DeckDesignPreview' })
+    expect(preview.props('cover_editing')).toBe(true)
+  })
+
+  test('forwards cover_image to DeckDesignPreview', () => {
+    const cover_image = { has_image: { value: false } }
+    const wrapper = makeWrapper({ cover_image })
+    const preview = wrapper.findComponent({ name: 'DeckDesignPreview' })
+    // Props cross the browser-mode component boundary serialized, so identity
+    // doesn't survive — compare structurally instead.
+    expect(preview.props('cover_image')).toEqual(cover_image)
   })
 })

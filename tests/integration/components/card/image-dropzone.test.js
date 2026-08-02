@@ -199,4 +199,23 @@ describe('ImageDropzone', () => {
     const wrapper = mountDropzone({ mode: 'region' })
     expect(wrapper.find('[data-testid="image-dropzone"]').attributes('data-active')).toBeUndefined()
   })
+
+  // ── remove_label / replace_label overrides [obligation] ──────────────────
+  // The deck cover passes its own corner-button copy; card callers that omit
+  // the props keep the card wording (t('card.image-editor.*')).
+
+  test('uses remove_label over the default remove-button copy when provided [obligation]', () => {
+    const wrapper = mountDropzone({ mode: 'corners', remove_label: 'Remove image' })
+    expect(wrapper.find('[data-testid="image-dropzone__remove"]').text()).toBe('Remove image')
+  })
+
+  test('falls back to the card default remove-button copy when remove_label is omitted', () => {
+    const wrapper = mountDropzone({ mode: 'corners' })
+    expect(wrapper.find('[data-testid="image-dropzone__remove"]').text()).not.toBe('')
+  })
+
+  test('uses replace_label over the default replace-button copy when provided [obligation]', () => {
+    const wrapper = mountDropzone({ mode: 'corners', replace_label: 'Replace image' })
+    expect(wrapper.find('[data-testid="image-dropzone__replace"]').text()).toBe('Replace image')
+  })
 })

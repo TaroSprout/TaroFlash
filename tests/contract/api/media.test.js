@@ -1,7 +1,14 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vite-plus/test'
 import { signInAsTestUser } from '../setup.js'
 import { createDeck, insertCardDirect, makeImageFile, setMemberPlan } from '../fixtures.js'
-import { uploadImage, deleteImage, getImageUrl, insertMedia, deleteMedia } from '@/api/media/db'
+import {
+  uploadImage,
+  deleteImage,
+  getImageUrl,
+  insertMedia,
+  deleteDeckCoverImage,
+  deleteMedia
+} from '@/api/media/db'
 
 let session
 let deck
@@ -66,5 +73,29 @@ describe('insertMedia / deleteMedia (contract)', () => {
     await expect(
       insertMedia({ bucket: 'member-images', path: 'x/y.png', slot: 'card_front' })
     ).rejects.toThrow(/card_id or deck_id/)
+  })
+})
+
+describe('deleteDeckCoverImage (contract)', () => {
+  test('soft-deletes the active deck_cover row for the deck', async () => {
+    const path = `${session.userId}/contract-cover.png`
+    await uploadImage('member-images', path, makeImageFile())
+    await insertMedia({ bucket: 'member-images', path, deck_id: deck.id, slot: 'deck_cover' })
+
+    await deleteDeckCoverImage(deck.id)
+
+    const { data: rows } = await session.client
+      .from('media')
+      .select('deleted_at')
+      .eq('deck_id', deck.id)
+      .eq('slot', 'deck_cover')
+    expect(rows).toHaveLength(1)
+    expect(rows[0].deleted_at).not.toBeNull()
+
+    await deleteImage('member-images', path)
+  })
+
+  test('is a no-op when the deck has no active cover image', async () => {
+    await expect(deleteDeckCoverImage(deck.id)).resolves.toBeUndefined()
   })
 })

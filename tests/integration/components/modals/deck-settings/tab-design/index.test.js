@@ -9,7 +9,18 @@ vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn() }))
 
 const DeckPreviewStub = defineComponent({
   name: 'DeckDesignPreview',
-  props: ['cover', 'card_attributes', 'side', 'front_text', 'back_text'],
+  // cover_editing typed Boolean so the template's shorthand `cover_editing`
+  // attribute (no explicit value) casts to `true` instead of the empty-string
+  // literal an untyped array-form prop would receive.
+  props: {
+    cover: null,
+    card_attributes: null,
+    side: null,
+    front_text: null,
+    back_text: null,
+    cover_editing: Boolean,
+    cover_image: null
+  },
   emits: ['update:side'],
   setup(props, { emit }) {
     return () =>
@@ -53,6 +64,7 @@ function makeEditor(overrides = {}) {
     active_side: ref('cover'),
     preview_front_text: ref(undefined),
     preview_back_text: ref(undefined),
+    cover_image: { has_image: ref(false) },
     setActiveSide: vi.fn(),
     ...overrides
   }
@@ -112,6 +124,21 @@ describe('TabDesign — inline preview visibility', () => {
     await wrapper.find('[data-testid="deck-preview-stub"]').trigger('click')
 
     expect(editor.setActiveSide).toHaveBeenCalledWith('front')
+  })
+
+  // ── cover_editing / cover_image wiring [obligation] ─────────────────────────
+
+  test('always passes cover_editing=true to the inline preview', () => {
+    const { wrapper } = makeWrapper(makeEditor(), 'phone')
+    const preview = wrapper.findComponent({ name: 'DeckDesignPreview' })
+    expect(preview.props('cover_editing')).toBe(true)
+  })
+
+  test('forwards editor.cover_image to the inline preview', () => {
+    const editor = makeEditor()
+    const { wrapper } = makeWrapper(editor, 'phone')
+    const preview = wrapper.findComponent({ name: 'DeckDesignPreview' })
+    expect(preview.props('cover_image')).toEqual(editor.cover_image)
   })
 })
 
