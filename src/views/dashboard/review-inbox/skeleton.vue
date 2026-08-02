@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import Card from '@/components/card/index.vue'
+import { SKELETON_COVER } from '@/utils/cover'
 
 type ReviewInboxSkeletonProps = {
   count?: number
 }
 
 const { count = 6 } = defineProps<ReviewInboxSkeletonProps>()
-
-const DEFAULT_COVER: DeckCover = {
-  pattern: 'diagonal-stripes'
-}
 </script>
 
 <template>
@@ -23,7 +20,7 @@ const DEFAULT_COVER: DeckCover = {
       data-testid="review-inbox-skeleton__item"
       class="flex flex-col items-center gap-2.5 shrink-0"
     >
-      <card side="cover" class="w-(--card-w-2xs)" shimmer :cover_config="DEFAULT_COVER" />
+      <card side="cover" class="w-(--card-w-2xs)" shimmer :cover_config="SKELETON_COVER" />
 
       <div
         data-testid="review-inbox-skeleton__label"

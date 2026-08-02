@@ -5,7 +5,8 @@ SET check_function_bodies = false;
 
 CREATE TYPE public.media_slot AS ENUM (
     'card_front',
-    'card_back'
+    'card_back',
+    'deck_cover'
 );
 
 
@@ -57,6 +58,9 @@ CREATE INDEX media_bucket_path_idx ON public.media USING btree (bucket, path);
 CREATE UNIQUE INDEX media_card_slot_active_uniq ON public.media USING btree (card_id, slot) WHERE ((deleted_at IS NULL) AND (card_id IS NOT NULL));
 
 
+CREATE UNIQUE INDEX media_deck_slot_active_uniq ON public.media USING btree (deck_id, slot) WHERE ((deleted_at IS NULL) AND (deck_id IS NOT NULL));
+
+
 CREATE INDEX media_card_slot_idx ON public.media USING btree (card_id, slot) WHERE (deleted_at IS NULL);
 
 
@@ -93,6 +97,14 @@ BEGIN
     UPDATE public.media
     SET deleted_at = now()
     WHERE card_id = NEW.card_id
+      AND slot = NEW.slot
+      AND deleted_at IS NULL;
+  END IF;
+
+  IF NEW.deck_id IS NOT NULL AND NEW.slot IS NOT NULL THEN
+    UPDATE public.media
+    SET deleted_at = now()
+    WHERE deck_id = NEW.deck_id
       AND slot = NEW.slot
       AND deleted_at IS NULL;
   END IF;

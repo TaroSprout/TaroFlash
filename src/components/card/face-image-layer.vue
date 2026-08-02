@@ -211,6 +211,8 @@ defineExpose({
     :active="active"
     :disabled="disabled"
     :error="error_message"
+    :remove_label="t('card.image-editor.remove-image-button')"
+    :replace_label="t('card.image-editor.replace-image-button')"
     @browse="openPicker"
     @remove="onRemove"
     @dismiss-error="onDismissError"

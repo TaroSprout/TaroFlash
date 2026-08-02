@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Card from '@/components/card/index.vue'
+import { SKELETON_COVER } from '@/utils/cover'
 import { useCardGrid } from './use-card-grid'
 import { type CardGridSize } from '@/views/deck/composables/view-shell'
 
@@ -10,10 +11,6 @@ type CardGridSkeletonProps = {
 }
 
 const { shimmer = true, size = 'md', count = 40 } = defineProps<CardGridSkeletonProps>()
-
-const DEFAULT_COVER: DeckCover = {
-  pattern: 'diagonal-stripes'
-}
 
 const { grid_style, grid_classes } = useCardGrid(() => size)
 </script>
@@ -27,7 +24,7 @@ const { grid_style, grid_classes } = useCardGrid(() => size)
         data-testid="card-grid-skeleton__item"
         class="relative aspect-card w-full"
       >
-        <card side="cover" :shimmer="shimmer" :cover_config="DEFAULT_COVER" />
+        <card side="cover" :shimmer="shimmer" :cover_config="SKELETON_COVER" />
       </div>
     </div>
   </div>

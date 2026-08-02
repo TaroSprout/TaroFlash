@@ -296,6 +296,75 @@ describe('Card — edit-state attrs owned by the card root [obligation]', () => 
   })
 })
 
+describe('Card — cover-image edit layer [obligation]', () => {
+  // The shared cover_image staging interface (from useCoverImage) — a minimal
+  // fake with just the pieces the card root + cover-image-layer read.
+  function makeCoverImage(overrides = {}) {
+    return {
+      has_image: { value: false },
+      dragging: { value: false },
+      error_message: { value: '' },
+      accept: 'image/*',
+      file_input: { value: null },
+      onFileChange: vi.fn(),
+      onDragEnter: vi.fn(),
+      onDragLeave: vi.fn(),
+      onDragOver: vi.fn(),
+      onDrop: vi.fn(),
+      openPicker: vi.fn(),
+      onRemove: vi.fn(),
+      onDismissError: vi.fn(),
+      ...overrides
+    }
+  }
+
+  test('mounts cover-image-layer when cover_editing + cover_image are set on the cover side', () => {
+    const wrapper = mountCard({ side: 'cover', cover_editing: true, cover_image: makeCoverImage() })
+    expect(wrapper.findComponent({ name: 'CoverImageLayer' }).exists()).toBe(true)
+  })
+
+  test('does not mount cover-image-layer when cover_editing is false', () => {
+    const wrapper = mountCard({
+      side: 'cover',
+      cover_editing: false,
+      cover_image: makeCoverImage()
+    })
+    expect(wrapper.findComponent({ name: 'CoverImageLayer' }).exists()).toBe(false)
+  })
+
+  test('does not mount cover-image-layer when cover_image is not provided', () => {
+    const wrapper = mountCard({ side: 'cover', cover_editing: true })
+    expect(wrapper.findComponent({ name: 'CoverImageLayer' }).exists()).toBe(false)
+  })
+
+  test('does not mount cover-image-layer on the front/back side, even with cover_editing on', () => {
+    const wrapper = mountCard({
+      side: 'front',
+      cover_editing: true,
+      cover_image: makeCoverImage()
+    })
+    expect(wrapper.findComponent({ name: 'CoverImageLayer' }).exists()).toBe(false)
+  })
+
+  test('sets data-dragging on the root from cover_image.dragging', () => {
+    const wrapper = mountCard({
+      side: 'cover',
+      cover_editing: true,
+      cover_image: makeCoverImage({ dragging: { value: true } })
+    })
+    expect(wrapper.find('[data-testid="card"]').attributes('data-dragging')).toBe('true')
+  })
+
+  test('omits data-dragging when cover_image.dragging is false and no image layer is mounted', () => {
+    const wrapper = mountCard({
+      side: 'cover',
+      cover_editing: true,
+      cover_image: makeCoverImage({ dragging: { value: false } })
+    })
+    expect(wrapper.find('[data-testid="card"]').attributes('data-dragging')).toBeUndefined()
+  })
+})
+
 describe('Card — disabled prop', () => {
   test('adds pointer-events-none to the root when disabled', () => {
     const wrapper = mountCard({ disabled: true })
@@ -343,7 +412,7 @@ describe('Card — region-dropzone image slot substitution', () => {
   // face's #image slot with <image-dropzone> instead of the caller's #image
   // slot / the face's default <img> — on both the front and back faces.
 
-  test('renders image-dropzone in the front face #image slot', async () => {
+  test('renders image-dropzone in the front face #image slot, passing the card remove_label [obligation]', async () => {
     const wrapper = shallowMount(Card, {
       props: { side: 'front', mode: 'edit', image_editing: true },
       global: {
@@ -352,10 +421,12 @@ describe('Card — region-dropzone image slot substitution', () => {
       }
     })
     await wrapper.vm.$nextTick()
-    expect(wrapper.findComponent({ name: 'ImageDropzone' }).exists()).toBe(true)
+    const dropzone = wrapper.findComponent({ name: 'ImageDropzone' })
+    expect(dropzone.exists()).toBe(true)
+    expect(dropzone.props('remove_label')).toBe('Remove image')
   })
 
-  test('renders image-dropzone in the back face #image slot', async () => {
+  test('renders image-dropzone in the back face #image slot, passing the card remove_label [obligation]', async () => {
     const wrapper = shallowMount(Card, {
       props: { side: 'back', mode: 'edit', image_editing: true },
       global: {
@@ -364,6 +435,8 @@ describe('Card — region-dropzone image slot substitution', () => {
       }
     })
     await wrapper.vm.$nextTick()
-    expect(wrapper.findComponent({ name: 'ImageDropzone' }).exists()).toBe(true)
+    const dropzone = wrapper.findComponent({ name: 'ImageDropzone' })
+    expect(dropzone.exists()).toBe(true)
+    expect(dropzone.props('remove_label')).toBe('Remove image')
   })
 })

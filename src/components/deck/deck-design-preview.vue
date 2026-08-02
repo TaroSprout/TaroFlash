@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Card from '@/components/card/index.vue'
+import { type CoverImage } from '@/composables/deck/cover-image'
 
 type DeckPreviewProps = {
   cover: DeckCover
@@ -9,6 +10,10 @@ type DeckPreviewProps = {
   side: CardSide
   front_text?: string
   back_text?: string
+  // When set, the cover face becomes an image drop/pick target driven by this
+  // shared staging interface (settings design preview only).
+  cover_editing?: boolean
+  cover_image?: CoverImage
 }
 
 const SIDE_ORDER: CardSide[] = ['cover', 'front', 'back']
@@ -41,6 +46,8 @@ function cycleSide() {
       :back_text="side === 'back' ? preview_text : undefined"
       :cover_config="cover"
       :card_attributes="card_attributes"
+      :cover_editing="cover_editing"
+      :cover_image="cover_image"
       face_classes="border-t border-l border-below"
       @click="cycleSide"
     />

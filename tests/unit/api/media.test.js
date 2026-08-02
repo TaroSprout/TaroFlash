@@ -34,6 +34,7 @@ import {
   getImageUrl,
   cardImageUrl,
   insertMedia,
+  deleteDeckCoverImage,
   deleteMedia
 } from '@/api/media/db'
 
@@ -146,6 +147,38 @@ describe('insertMedia', () => {
     const err = { message: 'rls' }
     mocks.insertMock.mockResolvedValueOnce({ error: err })
     await expect(insertMedia({ bucket: 'cards', path: 'p', card_id: 1 })).rejects.toBe(err)
+  })
+})
+
+describe('deleteDeckCoverImage', () => {
+  const eqDeckMock = vi.fn()
+  const eqSlotMock = vi.fn()
+  const isMock = vi.fn()
+
+  beforeEach(() => {
+    eqDeckMock.mockReset().mockReturnValue({ eq: eqSlotMock })
+    eqSlotMock.mockReset().mockReturnValue({ is: isMock })
+    isMock.mockReset()
+    mocks.updateMock.mockReset().mockReturnValue({ eq: eqDeckMock })
+    supabase.from.mockClear()
+  })
+
+  test('soft-deletes by setting deleted_at, filtered to the deck + deck_cover slot + active rows', async () => {
+    isMock.mockResolvedValueOnce({ error: null })
+    await deleteDeckCoverImage(7)
+
+    expect(supabase.from).toHaveBeenCalledWith('media')
+    const [patch] = mocks.updateMock.mock.calls[0]
+    expect(typeof patch.deleted_at).toBe('string')
+    expect(eqDeckMock).toHaveBeenCalledWith('deck_id', 7)
+    expect(eqSlotMock).toHaveBeenCalledWith('slot', 'deck_cover')
+    expect(isMock).toHaveBeenCalledWith('deleted_at', null)
+  })
+
+  test('throws when the update fails', async () => {
+    const err = { message: 'denied' }
+    isMock.mockResolvedValueOnce({ error: err })
+    await expect(deleteDeckCoverImage(7)).rejects.toBe(err)
   })
 })
 

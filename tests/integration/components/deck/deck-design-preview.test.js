@@ -8,7 +8,16 @@ import DeckPreview from '@/components/deck/deck-design-preview.vue'
 
 const CardStub = defineComponent({
   name: 'Card',
-  props: ['side', 'front_text', 'back_text', 'cover_config', 'card_attributes', 'face_classes'],
+  props: [
+    'side',
+    'front_text',
+    'back_text',
+    'cover_config',
+    'card_attributes',
+    'face_classes',
+    'cover_editing',
+    'cover_image'
+  ],
   emits: ['click'],
   setup(props, { emit }) {
     return () =>
@@ -115,5 +124,31 @@ describe('DeckPreview (presentational)', () => {
     const wrapper = mountPreview({ side: 'back' })
     await wrapper.find('[data-testid="card-stub"]').trigger('click')
     expect(wrapper.emitted('update:side')).toEqual([['cover']])
+  })
+})
+
+// ── cover_editing / cover_image pass-through ────────────────────────────────
+
+describe('DeckPreview — cover_editing / cover_image pass-through', () => {
+  test('forwards cover_editing to the card', () => {
+    const wrapper = mountPreview({ cover_editing: true })
+    const card = wrapper.findComponent({ name: 'Card' })
+    expect(card.props('cover_editing')).toBe(true)
+  })
+
+  test('forwards cover_image to the card', () => {
+    const cover_image = { has_image: { value: false } }
+    const wrapper = mountPreview({ cover_image })
+    const card = wrapper.findComponent({ name: 'Card' })
+    // Props cross the browser-mode component boundary serialized, so identity
+    // doesn't survive — compare structurally instead.
+    expect(card.props('cover_image')).toEqual(cover_image)
+  })
+
+  test('cover_editing defaults to false (Boolean-prop casting) and cover_image to undefined when omitted', () => {
+    const wrapper = mountPreview()
+    const card = wrapper.findComponent({ name: 'Card' })
+    expect(card.props('cover_editing')).toBe(false)
+    expect(card.props('cover_image')).toBeUndefined()
   })
 })

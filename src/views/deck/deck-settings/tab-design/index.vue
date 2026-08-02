@@ -45,6 +45,8 @@ const card_side_attributes = computed(() =>
         :side="editor.active_side.value"
         :front_text="editor.preview_front_text.value"
         :back_text="editor.preview_back_text.value"
+        cover_editing
+        :cover_image="editor.cover_image"
         @update:side="editor.setActiveSide"
       />
     </div>

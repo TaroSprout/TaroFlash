@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import Card from '@/components/card/index.vue'
+import { SKELETON_COVER } from '@/utils/cover'
 import { useMatchMedia } from '@/composables/ui/media-query'
 
 type DeckGridSkeletonProps = {
@@ -8,10 +9,6 @@ type DeckGridSkeletonProps = {
 }
 
 const { count = 12 } = defineProps<DeckGridSkeletonProps>()
-
-const DEFAULT_COVER: DeckCover = {
-  pattern: 'diagonal-stripes'
-}
 
 // Mirrors the real grid's per-breakpoint cell width (use-deck-grid CELL_WIDTH).
 const is_md = useMatchMedia('w>=md')
@@ -26,7 +23,7 @@ const card_width = computed(() => (is_md.value ? 'w-(--card-w-sm)' : 'w-(--card-
       side="cover"
       :class="card_width"
       shimmer
-      :cover_config="DEFAULT_COVER"
+      :cover_config="SKELETON_COVER"
     />
   </div>
 </template>

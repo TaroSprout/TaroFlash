@@ -9,4 +9,4 @@ declare type Media = {
   path: string
 }
 
-declare type MediaSlot = 'card_front' | 'card_back'
+declare type MediaSlot = 'card_front' | 'card_back' | 'deck_cover'

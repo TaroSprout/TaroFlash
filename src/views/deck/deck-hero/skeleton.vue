@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import Card from '@/components/card/index.vue'
-
-const DEFAULT_COVER: DeckCover = {
-  pattern: 'diagonal-stripes'
-}
+import { SKELETON_COVER } from '@/utils/cover'
 </script>
 
 <template>
@@ -11,7 +8,7 @@ const DEFAULT_COVER: DeckCover = {
     data-testid="deck-hero-skeleton"
     class="flex max-w-full flex-col items-center gap-6 md:flex-row md:items-end xl:w-max xl:flex-col xl:items-start animate-pulse"
   >
-    <card class="w-(--card-w-md)" side="cover" shimmer :cover_config="DEFAULT_COVER" />
+    <card class="w-(--card-w-md)" side="cover" shimmer :cover_config="SKELETON_COVER" />
 
     <div
       data-testid="deck-hero-skeleton__details"

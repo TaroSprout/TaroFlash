@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed, useTemplateRef } from 'vue'
+import { useI18n } from 'vue-i18n'
 import CardFace from './card-face.vue'
 import CardCover from './card-cover.vue'
 import FaceImageLayer from './face-image-layer.vue'
+import CoverImageLayer from './cover-image-layer.vue'
 import ImageDropzone from './image-dropzone.vue'
+import { type CoverImage } from '@/composables/deck/cover-image'
 import { type CardBase } from '@type/card'
 import { cardImageUrl } from '@/api/media'
 import { type SfxOptions } from '@/sfx/directive'
@@ -21,6 +24,10 @@ type CardProps = Partial<CardBase> & {
   // Edit mode only: mount the image-edit layer (dropzone / picker / overlays)
   // for the active face.
   image_editing?: boolean
+  // Cover side only: mount the cover-image edit layer. Driven by the settings
+  // design preview, which supplies the shared `cover_image` staging interface.
+  cover_editing?: boolean
+  cover_image?: CoverImage
   disabled?: boolean
 }
 
@@ -41,8 +48,12 @@ const {
   error = false,
   shimmer = false,
   image_editing = false,
+  cover_editing = false,
+  cover_image,
   disabled = false
 } = defineProps<CardProps>()
+
+const { t } = useI18n()
 
 const root_el = useTemplateRef<HTMLElement>('root')
 const image_layer = useTemplateRef<InstanceType<typeof FaceImageLayer>>('image_layer')
@@ -60,6 +71,7 @@ const back_image_url = computed(() => {
 const editing_images = computed(
   () => image_editing && mode === 'edit' && (side === 'front' || side === 'back')
 )
+const editing_cover = computed(() => cover_editing && !!cover_image && side === 'cover')
 const active_face = computed<'front' | 'back'>(() => (side === 'back' ? 'back' : 'front'))
 
 // The persisted-card slice the image layer's upload seam needs; temp cards
@@ -98,7 +110,7 @@ function onLeave(el: Element, done: () => void) {
     :class="{ 'pointer-events-none': disabled }"
     :data-error="error || undefined"
     :data-active="image_layer?.active || undefined"
-    :data-dragging="image_layer?.dragging || undefined"
+    :data-dragging="image_layer?.dragging || cover_image?.dragging.value || undefined"
     :data-loading="image_layer?.pending || undefined"
     v-sfx="sfx ?? image_layer?.card_sfx"
   >
@@ -110,6 +122,12 @@ function onLeave(el: Element, done: () => void) {
       :attributes="card_attributes?.[active_face]"
       :root="root_el"
       :disabled="disabled"
+    />
+
+    <cover-image-layer
+      v-if="editing_cover && cover_image"
+      :cover_image="cover_image"
+      :root="root_el"
     />
 
     <slot></slot>
@@ -134,6 +152,7 @@ function onLeave(el: Element, done: () => void) {
               :image="image_layer.image_url"
               :active="image_layer.active"
               :error="image_layer.error_message"
+              :remove_label="t('card.image-editor.remove-image-button')"
               @pointerenter="image_layer.onRegionPointerEnter"
               @pointerleave="image_layer.onPointerLeave"
               @browse="image_layer.openPicker"
@@ -171,6 +190,7 @@ function onLeave(el: Element, done: () => void) {
               :image="image_layer.image_url"
               :active="image_layer.active"
               :error="image_layer.error_message"
+              :remove_label="t('card.image-editor.remove-image-button')"
               @pointerenter="image_layer.onRegionPointerEnter"
               @pointerleave="image_layer.onPointerLeave"
               @browse="image_layer.openPicker"

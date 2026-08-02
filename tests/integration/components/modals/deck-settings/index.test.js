@@ -79,6 +79,7 @@ vi.mock('@/composables/deck/editor', async () => {
     preview_front_text: vueRef(undefined),
     preview_back_text: vueRef(undefined),
     is_dirty: vueRef(false),
+    cover_image: { has_image: vueRef(false) },
     saveDeck: (...args) => mockEditor.saveDeck(...args),
     deleteDeck: (...args) => mockEditor.deleteDeck(...args),
     resetReviews: (...args) => mockEditor.resetReviews(...args),
@@ -157,6 +158,7 @@ vi.mock('@/components/deck/pinned-preview.vue', async () => {
   return {
     default: defineComponent({
       name: 'DeckPinnedPreview',
+      props: { cover_editing: Boolean, cover_image: { type: Object, default: undefined } },
       emits: ['update:side'],
       setup(_props, { emit }) {
         return () =>
@@ -529,6 +531,31 @@ describe('DeckSettings — between hook drives the chrome tuck/restore', () => {
     await between()
 
     expect(mockChromeRestore).toHaveBeenCalledOnce()
+  })
+})
+
+// ── pinned-preview cover-editing wiring ────────────────────────────────────────
+
+describe('DeckSettings — pinned-preview cover_editing / cover_image wiring', () => {
+  test('cover_editing is true while the design tab is displayed', async () => {
+    const { wrapper } = makeWrapper({ initial_page: 'design' })
+    await nextTick()
+    const preview = wrapper.findComponent({ name: 'DeckPinnedPreview' })
+    expect(preview.props('cover_editing')).toBe(true)
+  })
+
+  test('cover_editing is false on a non-design tab', async () => {
+    const { wrapper } = makeWrapper({ initial_page: 'review-pacing' })
+    await nextTick()
+    const preview = wrapper.findComponent({ name: 'DeckPinnedPreview' })
+    expect(preview.props('cover_editing')).toBe(false)
+  })
+
+  test('forwards editor.cover_image to the pinned preview', async () => {
+    const { wrapper } = makeWrapper()
+    await nextTick()
+    const preview = wrapper.findComponent({ name: 'DeckPinnedPreview' })
+    expect(preview.props('cover_image')).toEqual(mockEditor.editor.cover_image)
   })
 })
 

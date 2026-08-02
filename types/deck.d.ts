@@ -88,4 +88,9 @@ type DeckCover = {
   palette?: PaletteName
   pattern?: DeckCoverPattern
   icon?: string
+  // Public URL of a custom cover image. When set it fills the cover on its own
+  // (palette/pattern/icon are kept but never shown). Lives in the `cover_config`
+  // jsonb — while staged it holds a local objectURL; on save it becomes the
+  // uploaded image's public URL.
+  image_path?: string
 }

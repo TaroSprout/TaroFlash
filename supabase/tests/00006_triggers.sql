@@ -8,7 +8,7 @@
 
 BEGIN;
 
-SELECT plan(8);
+SELECT plan(10);
 
 -- ── Setup ─────────────────────────────────────────────────────────────────────
 
@@ -145,6 +145,55 @@ SELECT throws_ok(
   '23505',
   NULL,
   'unique partial index blocks a duplicate active row when the trigger is bypassed'
+);
+
+SET LOCAL role = 'postgres';
+ALTER TABLE public.media ENABLE TRIGGER trg_media_dedupe_slot;
+
+
+-- ── dedupe_media_slot_on_insert: deck-keyed (deck_cover) rows ─────────────────
+-- Same dedupe + unique-index backstop as the card-keyed slots above, exercised
+-- on the deck_id branch (deck 100, from Setup). deck_cover carries no paywall
+-- gate, so a free member's insert is enough.
+
+-- Setup: two deck_cover rows for the same deck back-to-back — the first
+-- should be soft-deleted by the dedupe trigger when the second lands.
+SELECT tests.set_claims('11111111-1111-1111-1111-111111111111'::uuid);
+SET LOCAL role = 'authenticated';
+
+INSERT INTO public.media (deck_id, slot, bucket, path)
+VALUES (100, 'deck_cover'::public.media_slot, 'member-images', 'cover-first.png');
+
+INSERT INTO public.media (deck_id, slot, bucket, path)
+VALUES (100, 'deck_cover'::public.media_slot, 'member-images', 'cover-second.png');
+
+SET LOCAL role = 'postgres';
+
+-- Test 9: exactly one active deck_cover row remains per deck
+SELECT is(
+  (SELECT count(*) FROM public.media
+   WHERE deck_id = 100
+     AND slot = 'deck_cover'::public.media_slot
+     AND deleted_at IS NULL)::int,
+  1,
+  'exactly one active deck_cover row remains after a second insert for the same deck'
+);
+
+-- Test 10: bypass the trigger — the media_deck_slot_active_uniq partial unique
+-- index catches a second active deck_cover row on its own (SQLSTATE 23505).
+ALTER TABLE public.media DISABLE TRIGGER trg_media_dedupe_slot;
+
+SELECT tests.set_claims('11111111-1111-1111-1111-111111111111'::uuid);
+SET LOCAL role = 'authenticated';
+
+SELECT throws_ok(
+  $$
+    INSERT INTO public.media (deck_id, slot, bucket, path)
+    VALUES (100, 'deck_cover'::public.media_slot, 'member-images', 'cover-bypass.png')
+  $$,
+  '23505',
+  NULL,
+  'media_deck_slot_active_uniq blocks a duplicate active deck_cover row when the trigger is bypassed'
 );
 
 SET LOCAL role = 'postgres';
