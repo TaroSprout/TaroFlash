@@ -1,6 +1,16 @@
-import { describe, test, expect } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import CardCover from '@/components/card/card-cover.vue'
+
+const revealFaceImageMock = vi.fn()
+vi.mock('@/utils/animations/face-image', () => ({
+  revealFaceImage: (...args) => revealFaceImageMock(...args)
+}))
+
+// A real 1x1 PNG so HTMLImageElement.decode() resolves genuinely in Chromium —
+// no network fetch needed, so it stays deterministic and fast.
+const DECODABLE_IMAGE =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='
 
 function mountCover(cover) {
   return shallowMount(CardCover, { props: { cover } })
@@ -95,5 +105,35 @@ describe('CardCover — image cover [obligation]', () => {
   test('does not set data-loading when there is no image to decode', () => {
     const wrapper = mountCover({ icon: 'star' })
     expect(wrapper.find('[data-testid="card-cover"]').attributes('data-loading')).toBeUndefined()
+  })
+})
+
+describe('CardCover — decode resolves [obligation]', () => {
+  // Same decoded gate as above, exercised with a real decodable image so
+  // el.decode() actually resolves instead of rejecting — covers the reveal
+  // side of the shimmer/decoded toggle (data-loading clears; opacity classes
+  // are driven by the same `decoded` ref, not asserted directly here per the
+  // no-class-assertions rule) and confirms revealFaceImage fires.
+
+  beforeEach(() => {
+    revealFaceImageMock.mockReset()
+  })
+
+  test('clears data-loading once the image finishes decoding [obligation]', async () => {
+    const wrapper = mountCover({ image_path: DECODABLE_IMAGE })
+    expect(wrapper.find('[data-testid="card-cover"]').attributes('data-loading')).toBeDefined()
+
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="card-cover"]').attributes('data-loading')).toBeUndefined()
+    })
+  })
+
+  test('fires revealFaceImage on the decoded img element once decoding resolves [obligation]', async () => {
+    mountCover({ image_path: DECODABLE_IMAGE })
+
+    await vi.waitFor(() => {
+      expect(revealFaceImageMock).toHaveBeenCalledTimes(1)
+    })
+    expect(revealFaceImageMock.mock.calls[0][0]).toBeInstanceOf(HTMLImageElement)
   })
 })
