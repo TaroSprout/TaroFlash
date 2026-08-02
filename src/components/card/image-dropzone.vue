@@ -10,9 +10,21 @@ type ImageDropzoneProps = {
   active?: boolean
   disabled?: boolean
   error?: string
+  // Corner-button tooltips. Default to the card wording; the deck cover passes
+  // its own ("Remove image" / "Replace image" with cover-specific phrasing).
+  remove_label?: string
+  replace_label?: string
 }
 
-const { mode, image, active = false, disabled = false, error } = defineProps<ImageDropzoneProps>()
+const {
+  mode,
+  image,
+  active = false,
+  disabled = false,
+  error,
+  remove_label,
+  replace_label
+} = defineProps<ImageDropzoneProps>()
 
 const emit = defineEmits<{
   (e: 'browse'): void
@@ -58,7 +70,7 @@ const remove_position = computed(() =>
       ]"
       @click.stop="emit('remove')"
     >
-      {{ t('card.image-editor.remove-image-button') }}
+      {{ remove_label ?? t('card.image-editor.remove-image-button') }}
     </ui-button>
 
     <ui-button
@@ -71,7 +83,7 @@ const remove_position = computed(() =>
       :class="active ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'"
       @click.stop="emit('browse')"
     >
-      {{ t('card.image-editor.replace-image-button') }}
+      {{ replace_label ?? t('card.image-editor.replace-image-button') }}
     </ui-button>
 
     <face-overlay

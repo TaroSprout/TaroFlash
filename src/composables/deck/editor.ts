@@ -1,9 +1,12 @@
 import { computed, ref, watch, type InjectionKey } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useUpsertDeckMutation, useDeleteDeckMutation } from '@/api/decks'
 import { useCardsInDeckInfiniteQuery } from '@/api/cards'
 import { useResetDeckReviewsMutation } from '@/api/reviews'
 import { useDeckActions } from '@/composables/deck/actions'
+import { useCoverImage } from '@/composables/deck/cover-image'
 import { useDraft } from '@/composables/draft'
+import { useNoticeStore } from '@/stores/notice-store'
 import { DECK_SETTINGS_DEFAULTS, DECK_CONFIG_DEFAULTS } from '@/utils/deck/defaults'
 import { emitSfx } from '@/sfx/bus'
 
@@ -44,15 +47,21 @@ export function useDeckEditor(deck?: Deck) {
     }
   }
 
-  const { state: draft, is_dirty, reset: resetChanges, rebase } = useDraft(buildDeckBase)
+  const { state: draft, is_dirty, reset: resetDraft, rebase } = useDraft(buildDeckBase)
 
   const active_side = ref<CardSide>('cover')
   const title_error = ref<string>()
 
+  const { t } = useI18n()
+  const notice = useNoticeStore()
   const deck_actions = useDeckActions()
   const upsert_mutation = useUpsertDeckMutation()
   const delete_mutation = useDeleteDeckMutation()
   const reset_reviews_mutation = useResetDeckReviewsMutation()
+  const cover_image = useCoverImage(
+    () => draft.cover_config,
+    () => deck?.id
+  )
 
   // The design preview shows the deck's first card. Disabled for unsaved decks
   // (no id), so deck-create just falls back to placeholder text.
@@ -69,17 +78,40 @@ export function useDeckEditor(deck?: Deck) {
    * routes through `createDeck` for the plan-limit guard + post-create flow.
    */
   async function saveDeck(): Promise<Deck | null> {
-    const payload: Deck = { id: deck?.id as number, ...draft }
+    if (!deck?.id) return deck_actions.createDeck({ id: deck?.id as number, ...draft })
 
-    if (!payload.id) return deck_actions.createDeck(payload)
+    // Pre-step: a staged cover image uploads + records its media row here,
+    // swapping the preview objectURL for the public URL before the deck upsert
+    // persists cover_config. A failed upload/insert aborts the whole save.
+    try {
+      await cover_image.commit()
+    } catch (err) {
+      const cause = err instanceof Error ? err.cause : undefined
+      notice.error(
+        cause === 'insert'
+          ? t('toast.error.cover-image-save-failed')
+          : t('toast.error.cover-image-upload-failed')
+      )
+      return null
+    }
 
     try {
-      const saved = await upsert_mutation.mutateAsync(payload)
+      const saved = await upsert_mutation.mutateAsync({ id: deck.id, ...draft })
       rebase()
       return saved
     } catch {
       return null
     }
+  }
+
+  /**
+   * Revert the draft to its last-saved base. Also discards the staged cover
+   * File/objectURL, which lives outside the draft — the draft's own reset only
+   * restores `cover_config.image_path`.
+   */
+  function resetChanges() {
+    resetDraft()
+    cover_image.discardStaged()
   }
 
   async function deleteDeck(): Promise<boolean> {
@@ -122,6 +154,7 @@ export function useDeckEditor(deck?: Deck) {
   return {
     deck,
     draft,
+    cover_image,
     active_side,
     preview_front_text,
     preview_back_text,

@@ -43,6 +43,25 @@ export async function insertMedia(params: Media): Promise<void> {
   }
 }
 
+/**
+ * Soft-delete the active cover-image media row for a deck. Mirrors
+ * `deleteCardImage`: the storage object is left for the `cleanup-media` cron to
+ * reap. No-op when the deck has no active cover image.
+ */
+export async function deleteDeckCoverImage(deck_id: number): Promise<void> {
+  const { error } = await supabase
+    .from('media')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('deck_id', deck_id)
+    .eq('slot', 'deck_cover')
+    .is('deleted_at', null)
+
+  if (error) {
+    logger.error(`Failed to delete deck cover image: ${error}`)
+    throw error
+  }
+}
+
 export async function deleteMedia(id: string): Promise<void> {
   const { error } = await supabase.from('media').update({ deleted_at: new Date() }).eq('id', id)
 

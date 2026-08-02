@@ -239,6 +239,8 @@ watch([preview_el, aside_el], ([preview]) => {
           :tucked="chrome.is_tucked.value"
           :front_text="editor.preview_front_text.value"
           :back_text="editor.preview_back_text.value"
+          :cover_editing="displayed_page === 'design'"
+          :cover_image="editor.cover_image"
           @update:side="onPreviewSide"
         />
       </div>

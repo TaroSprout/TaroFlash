@@ -2,6 +2,7 @@
 import DeckDesignPreview from './deck-design-preview.vue'
 import Card from '@/components/card/index.vue'
 import UiPinnedCard from '@/components/ui-kit/pinned-card.vue'
+import { type CoverImage } from '@/composables/deck/cover-image'
 
 type DeckPinnedPreviewProps = {
   cover: DeckCover
@@ -10,6 +11,8 @@ type DeckPinnedPreviewProps = {
   front_text?: string
   back_text?: string
   tucked?: boolean
+  cover_editing?: boolean
+  cover_image?: CoverImage
 }
 
 const { cover, card_attributes, side, front_text, back_text, tucked } =
@@ -37,6 +40,8 @@ const emit = defineEmits<{
       :side="side"
       :front_text="front_text"
       :back_text="back_text"
+      :cover_editing="cover_editing"
+      :cover_image="cover_image"
       @update:side="emit('update:side', $event)"
     />
   </ui-pinned-card>
