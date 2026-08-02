@@ -13,7 +13,9 @@ out-of-scope work is found mid-task.
 - **Epic Board** data source: `collection://2510953c-224c-80b7-9bb0-000b5384a47d`
 - **MCP server**: `notion`. **Read** with `notion-query-data-sources` (SQL over the data source) +
   `notion-fetch` (page body — the query returns properties only). **Create** with
-  `notion-create-pages`. **Update** with `notion-update-page`.
+  `notion-create-pages`, always passing the board's default page template
+  (`template_id: 3af0953c224c800d984cf0b443d67d20`) so the ticket inherits its default icon and
+  field defaults. **Update** with `notion-update-page`.
 - `Status`: `On Hold` · `Backlog` · `Needs More Info` · `Groomed` · `Ready` · `In Progress` ·
   `Blocked` · `Review` · `Duplicate` · `Won't Do` · `Done`. Status is a plain property write — set
   it directly, no transition step. `/groom` lands tickets in `Groomed`; the user promotes them to
@@ -221,7 +223,9 @@ Propose first, never create silently. Give a one-line scope, not a full spec. Se
 Notion built-in via its hosted SVG — `https://www.notion.so/icons/<name>_<color>.svg` (colours:
 `gray|brown|orange|yellow|green|blue|purple|pink|red`). Not an emoji. The bare
 `icons/<name>_<color>` path is accepted by the API but **renders blank** — always the full `.svg`
-URL.
+URL. **Validate the name resolves first** — `curl -s -o /dev/null -w '%{http_code}'
+https://www.notion.so/icons/<name>_<color>.svg` must be `200`; an unknown name is accepted silently
+and renders blank (`gear_gray` ✓, `settings_gray` ✗).
 
 ## Dependencies
 
