@@ -9,25 +9,13 @@ const { cover } = defineProps<{
 }>()
 
 const img_el = useTemplateRef<HTMLImageElement>('img')
-// A custom cover image fills the cover on its own — palette, pattern, and icon
-// are kept in the config but never shown behind it. `image_path` holds either
-// the uploaded public URL or, while staged in the designer, a local objectURL;
-// both are valid <img> sources as-is (no cardImageUrl transform).
+// image_path (public URL or staged objectURL) makes a custom image fill the
+// cover; palette/pattern/icon stay configured but never render behind it.
 const has_image = computed(() => !!cover?.image_path)
-// Hold the shimmer skeleton until the image is decoded, then fade it in — the
-// decode gate is shared with the card faces via useImageReveal.
 const { decoded } = useImageReveal(() => cover?.image_path, img_el)
 
-// A cover with no chosen identity renders NEUTRAL chrome (the `element` role),
-// not an accent — this is what a loading skeleton or an un-themed deck wants.
-// `coverBindings` emits `data-palette` only when a palette is set, so the
-// `:not([data-palette])` rules below pick up the neutral case for free.
-//
-// While a custom image is still decoding we render the SHARED skeleton cover
-// (neutral diagonal-stripes) in place of the image's own config, so the loading
-// placeholder is pixel-identical to the app's common card skeleton. Once the
-// image decodes we drop the chrome entirely (`null`) and let the borderless
-// full-bleed image below take over.
+// While decoding, show the shared SKELETON_COVER so loading matches the app
+// skeleton; once decoded, drop chrome (null) for the full-bleed image.
 const bindings = computed(() => {
   if (decoded.value) return null
   return coverBindings(has_image.value ? SKELETON_COVER : cover, { border: false })

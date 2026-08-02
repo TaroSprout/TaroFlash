@@ -47,8 +47,7 @@ watch(
 </script>
 
 <template>
-  <!-- openPicker() programmatically clicks this input; stop that synthetic click
-       bubbling to the design preview's cycleSide handler on the card root. -->
+  <!-- @click.stop: openPicker()'s synthetic click must not bubble to the preview's cycleSide -->
   <input
     :ref="cover_image.file_input"
     type="file"
@@ -58,7 +57,6 @@ watch(
     @change="cover_image.onFileChange"
   />
 
-  <!-- Empty: a single always-visible add button in the top-right corner. -->
   <ui-button
     v-if="
       !cover_image.has_image.value &&
@@ -76,10 +74,6 @@ watch(
     {{ t('deck.settings-modal.cover.add-image') }}
   </ui-button>
 
-  <!-- Image set: replace (top-left) + remove (top-right). The cover's controls
-       are its own buttons — same overflowing neutral style as the add button
-       above — not the shared image-dropzone corners control the cards use, whose
-       button style the cover intentionally diverges from. -->
   <template
     v-if="
       cover_image.has_image.value && !cover_image.dragging.value && !cover_image.error_message.value

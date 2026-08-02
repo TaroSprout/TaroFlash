@@ -2,14 +2,12 @@ import { nextTick, ref, toValue, watch, type MaybeRefOrGetter, type ShallowRef }
 import { revealFaceImage } from '@/utils/animations/face-image'
 
 /**
- * Gate a face/cover image behind decode: keep `decoded` false (the caller shows
- * a skeleton) until the `<img>` is fully decoded, then fade it in via the shared
- * face-image reveal. Re-runs whenever `source` changes — initial paint, a
- * replace, or the element being reinserted (e.g. flipping the preview away from
- * the cover and back).
+ * Gate a face/cover image behind decode: `decoded` stays false (caller shows a
+ * skeleton) until the `<img>` decodes, then fades in via revealFaceImage. Re-runs
+ * on every `source` change, including the element being reinserted after a flip.
  *
- * @param source - getter for the image src; a falsy value clears `decoded`.
- * @param img - template ref to the `<img>` element being revealed.
+ * @param source - getter for the image src; falsy clears `decoded`.
+ * @param img - template ref to the `<img>` being revealed.
  */
 export function useImageReveal(
   source: MaybeRefOrGetter<string | undefined>,
@@ -24,16 +22,14 @@ export function useImageReveal(
     const el = img.value
     if (!el) return
 
-    // A cached image (flipping the preview away and back) is already complete;
-    // decode() can reject on the reinserted element, so skip it and reveal
-    // straight away rather than waiting on a decode that never settles.
+    // A cached image (flip away + back) is already loaded, and decode() can
+    // reject on the reinserted element — skip decode when it's already loaded.
     if (!isLoaded(el)) {
       try {
         await el.decode()
       } catch {
-        // decode() also rejects if the src changed mid-flight — but only bail
-        // when the image really isn't loaded, so a newer run takes over. If it
-        // IS loaded, fall through and reveal so the skeleton never sticks.
+        // Bail only if genuinely not loaded (src changed mid-flight); a loaded
+        // image reveals anyway so the skeleton never sticks.
         if (!isLoaded(el)) return
       }
     }
