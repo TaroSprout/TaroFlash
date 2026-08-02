@@ -1,6 +1,6 @@
 // Display names and marketing copy for each plan. Enforced numeric limits live
 // in the `plans` DB table, surfaced per-member via useMemberStore().deck_limit —
-// the `decks`/`cards` feature counts below are display copy and can drift.
+// the `cards` feature count below is still display copy and can drift.
 // `features` drives all plan-feature surfaces (welcome screen, signup, settings upsell).
 // `upgradeHighlight` marks features shown in the settings upgrade teaser.
 
@@ -26,7 +26,7 @@ export const PLANS: Record<MemberPlan, PlanConfig> = {
     displayName: 'Pocket Player',
     monthlyPriceUsd: null,
     features: [
-      { key: 'decks', count: 10 },
+      { key: 'decks', count: FREE_DECK_LIMIT },
       { key: 'cards', count: 500 },
       { key: 'deck-images' },
       { key: 'review-history', count: 1 },
