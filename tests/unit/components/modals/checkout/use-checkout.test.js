@@ -201,6 +201,21 @@ describe('useCheckout — onSubmit success path', () => {
     expect(close).toHaveBeenCalledWith({ upgraded: true })
     expect(status.value).toBe('success')
   })
+
+  // Resubscribing clears the downgrade-grace lock, so the deck list's
+  // is_locked flags need a refetch alongside billing [obligation]
+  test('[obligation] also invalidates the decks cache key so the downgrade-grace lock clears', async () => {
+    vi.useFakeTimers()
+    mockConfirm.mockResolvedValue({ status: 'success' })
+    mockRefetch.mockResolvedValue({ data: { plan: 'paid' } })
+    const { onSubmit } = withSetup(() => useCheckout(vi.fn()))
+
+    const submitPromise = onSubmit()
+    await vi.runAllTimersAsync()
+    await submitPromise
+
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ key: ['decks'] })
+  })
 })
 
 // ── onMounted / onBeforeUnmount sfx ─────────────────────────────────────────────

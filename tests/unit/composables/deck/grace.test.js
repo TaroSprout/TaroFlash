@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { ref } from 'vue'
-import { useDeckGrace } from '@/views/dashboard/composables/deck-grace'
+import { useDeckGrace } from '@/composables/deck/grace'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 

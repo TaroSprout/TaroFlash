@@ -309,6 +309,58 @@ describe('DeckThumbnail', () => {
       await wrapper.find('[data-testid="deck-thumbnail"]').trigger('click')
       expect(wrapper.emitted('press')).toHaveLength(1)
     })
+
+    test('is inert — pointer-events-none so it never intercepts taps', () => {
+      const wrapper = mountWithDeck({}, { locked: true })
+      expect(wrapper.find('[data-testid="deck-thumbnail__lock"]').classes()).toContain(
+        'pointer-events-none'
+      )
+    })
+  })
+
+  // ── lock/corner-action swap [obligation] ─────────────────────────────────────
+  // With no corner-action slot (deck-header context) the lock stays put. With
+  // one (dashboard grid), the lock and corner-action swap on hover/active —
+  // never both visible at rest.
+
+  describe('lock/corner-action swap [obligation]', () => {
+    test('lock stays visible at rest and on hover when no corner-action slot is provided', () => {
+      const wrapper = mountWithDeck({}, { locked: true })
+      expect(wrapper.find('[data-testid="deck-thumbnail__lock"]').classes()).toContain(
+        'opacity-100'
+      )
+    })
+
+    function mountWithCornerAction(extraProps = {}) {
+      return shallowMount(DeckThumbnail, {
+        props: { deck: { title: 'X' }, locked: true, ...extraProps },
+        slots: { 'corner-action': '<button data-testid="corner-button">act</button>' },
+        global: { stubs: { UiTappable: UiTappableStub } }
+      })
+    }
+
+    test('lock is visible at rest (not hovered/active) when a corner-action slot is provided', () => {
+      const wrapper = mountWithCornerAction()
+      const lock = wrapper.find('[data-testid="deck-thumbnail__lock"]')
+      expect(lock.classes()).toContain('opacity-100')
+      expect(lock.classes()).not.toContain('opacity-0')
+    })
+
+    test('corner_action_always_visible hides the lock while the corner-action stays shown', () => {
+      const wrapper = mountWithCornerAction({ corner_action_always_visible: true })
+      expect(wrapper.find('[data-testid="deck-thumbnail__lock"]').classes()).toContain('opacity-0')
+      expect(wrapper.find('[data-testid="deck-thumbnail__corner-action"]').classes()).toContain(
+        'opacity-100'
+      )
+    })
+
+    test('active hides the lock while the corner-action stays shown', () => {
+      const wrapper = mountWithCornerAction({ active: true })
+      expect(wrapper.find('[data-testid="deck-thumbnail__lock"]').classes()).toContain('opacity-0')
+      expect(wrapper.find('[data-testid="deck-thumbnail__corner-action"]').classes()).toContain(
+        'opacity-100'
+      )
+    })
   })
 
   // ── sfx prop spread (obligation 7) ───────────────────────────────────────────
