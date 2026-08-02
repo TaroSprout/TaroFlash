@@ -150,7 +150,7 @@ d. **OPEN** — for each non-blocked ticket, invoke the **`prepare-pr`** skill w
    --ticket-url <url>` (the ticket's `<ID>` and its Notion page URL) → one PR titled `TARO-<ID>: …`
 whose body opens with a `[TARO-<ID>](<url>)` link. Pass the stack base when the PR is stacked.
 `prepare-pr` watches CI; **a PR isn't done until it's green.** If CI fails, route it through the
-**Review & feedback loop** (below) — a main-workspace fix subagent on the PR branch; if it still
+**Review & feedback loop** (below) — an inline main-checkout fix on the PR branch; if it still
 can't pass after real effort, treat the ticket as stuck.
 e. **HANDOFF** — for each opened, green PR: set the ticket to `Review`, append the PR URL into the
 ticket body via `notion-update-page` (append, don't clobber the body).
@@ -182,18 +182,25 @@ usually come back **one PR at a time**, leaving comments on that PR.
 Every follow-up change — user review feedback, a red CI run, or any other fix the PR needs — is
 handled the same way:
 
-1. **Dispatch a fix subagent on the MAIN workspace** (not a worktree). It **checks out the PR branch**
-   in the main checkout. The user keeps a dev server running against the main workspace and verifies
-   each fix **live**, so the fix must land on the branch they're looking at. Model: the ticket's
-   `Assignee`. Work one PR at a time (the user goes in order), so only one fix subagent touches the
-   main checkout at once.
-2. **Fix — plus tests.** The subagent makes the code change and runs `update-tests` for it — new
-   coverage for the new behaviour plus repairs to any test the change breaks (golden "no tests" rule
-   stays suspended in `/work`).
+1. **Fix inline, in the orchestrator session — no subagent by default.** Once the PRs are open the
+   parallel build is over; dispatching a subagent per one-line review tweak is heavyweight and
+   serializes badly. The orchestrator edits the PR branch **directly in the main checkout** — the user
+   runs a dev server against it and verifies each fix **live**, so the fix must land on the branch
+   they're looking at. Check the PR branch out in the main checkout, edit, commit per logical fix. Work
+   **one PR at a time** (the user goes in order). Fall back to a fix subagent (still on the main
+   checkout, never a fresh worktree) only when an initial-build subagent is still live on that checkout
+   — editing the same tree concurrently would collide — or when the fix is large enough to warrant its
+   own agent.
+2. **Leave tests alone until the user asks.** Default to **not touching tests** during the feedback
+   loop — the golden "no tests" rule is back in force here; the user very commonly wants tests left
+   untouched while they reshape the code. Do **not** run `update-tests` per fix. When the user says
+   they're ready for tests, run **one** consolidated `update-tests` pass over everything the review
+   changed. (A user "put tests on hold" mid-review just confirms this default; honour it immediately.)
 3. **Check, push, watch green.** Run `vp check`, push to the PR branch, and let CI run (via
    `prepare-pr` or directly). A PR isn't done until CI is green again — no local full-suite run.
-4. **Answer the thread.** Reply to the feedback on the PR prefixed `🤖 Claude:` so the user can tell
-   your replies from their own. Leave the ticket in `Review`.
+4. **Answer the thread.** If the feedback came on the PR, reply prefixed `🤖 Claude:` so the user can
+   tell your replies from their own; feedback given in chat is answered in chat. Leave the ticket in
+   `Review`.
 
 Repeat per PR until the user merges. **Never merge and never set `Done` yourself** — that stays the
 user's call, exactly as at first handoff.
@@ -240,18 +247,20 @@ review of it confirms or kills the generalization, so there is no inline confirm
   takeable.
 - Never work an `On Hold` or `Assignee = Me` ticket (the user's hands-off, and not in `Ready`
   anyway), and never run a backend teaching persona — `/work` is autonomous.
-- **Tests run via `update-tests`.** The golden "no tests" rule is suspended in `/work`: each subagent
-  (and each feedback-fix subagent) invokes `update-tests` for its change. No subagent runs the full
-  `vp test` suite — CI is the gate the orchestrator watches.
+- **Tests: suspended only for the initial build.** Each initial-build subagent invokes `update-tests`
+  for its change (golden "no tests" rule suspended there); no subagent runs the full `vp test` suite —
+  CI is the gate the orchestrator watches. In the **Review & feedback loop the rule is back on**: don't
+  touch tests until the user asks, then one consolidated `update-tests` pass over all the review edits.
 - One PR per ticket (via `prepare-pr`). Don't batch multiple tickets into a single PR.
 - Self-heal ships to the shared `self-heal` PR (§ Self-heal), never merged and separate from ticket
   PRs — a rule fix rides its own stream, never a ticket branch.
-- The orchestrator runs from its **own worktree** (step 0) and never edits ticket code — subagents
-  do. Out-of-scope side requests during the run are done on that orchestrator worktree. Initial ticket
-  implementation happens in per-ticket **worktrees**, which the subagent **removes when done** (except
-  a stuck ticket, whose worktree is left for inspection). Post-open **fixes happen on the main
-  workspace** on the checked-out PR branch, one PR at a time, so the user's live dev server reflects
-  them.
+- The orchestrator runs from its **own worktree** (step 0). During the **initial build** it never
+  edits ticket code — subagents do, in per-ticket **worktrees**, which the subagent **removes when
+  done** (except a stuck ticket, whose worktree is left for inspection). Out-of-scope side requests
+  during the run are done on the orchestrator worktree. **Post-open review fixes are edited inline by
+  the orchestrator** on the checked-out PR branch in the **main checkout**, one PR at a time, so the
+  user's live dev server reflects them — a fix subagent is the fallback, not the default (§ Review &
+  feedback loop).
 - **Subagents stay inside their own worktree.** Each works only under its `.claude/worktrees/agent-<id>`
   path — never edits the shared/main checkout, and never reverts a shared-checkout file (that can
   destroy the user's uncommitted work); it stops and reports instead.
