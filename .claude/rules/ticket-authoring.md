@@ -13,7 +13,9 @@ out-of-scope work is found mid-task.
 - **Epic Board** data source: `collection://2510953c-224c-80b7-9bb0-000b5384a47d`
 - **MCP server**: `notion`. **Read** with `notion-query-data-sources` (SQL over the data source) +
   `notion-fetch` (page body — the query returns properties only). **Create** with
-  `notion-create-pages`. **Update** with `notion-update-page`.
+  `notion-create-pages`, always passing the board's default page template
+  (`template_id: 3af0953c224c800d984cf0b443d67d20`) so the ticket inherits its default icon and
+  field defaults. **Update** with `notion-update-page`.
 - `Status`: `On Hold` · `Backlog` · `Needs More Info` · `Groomed` · `Ready` · `In Progress` ·
   `Blocked` · `Review` · `Duplicate` · `Won't Do` · `Done`. Status is a plain property write — set
   it directly, no transition step. `/groom` lands tickets in `Groomed`; the user promotes them to
