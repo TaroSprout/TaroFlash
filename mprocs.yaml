@@ -15,5 +15,7 @@ procs:
     shell: 'vp dev --host'
   # Forwards Stripe webhook events to the local stripe-webhook function.
   # Requires STRIPE_WEBHOOK_SECRET cached by scripts/bootstrap-env.sh.
+  # --api-key uses the durable Doppler key (present via `doppler run`) so listen
+  # never falls back to the CLI's `stripe login` key, which expires every ~90d.
   stripe:
-    shell: 'stripe listen --forward-to http://localhost:54321/functions/v1/stripe-webhook'
+    shell: 'stripe listen --api-key "$STRIPE_SECRET_KEY" --forward-to http://localhost:54321/functions/v1/stripe-webhook'

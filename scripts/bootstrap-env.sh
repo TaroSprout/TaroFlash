@@ -14,7 +14,8 @@ touch "$ENV_FILE"
 # Signing secret is stable per Stripe CLI login, so fetch once and reuse.
 if ! grep -q '^STRIPE_WEBHOOK_SECRET=' "$ENV_FILE"; then
   echo "Fetching Stripe webhook secret..."
-  secret=$(stripe listen --print-secret)
+  # --api-key: use the durable Doppler key, not the CLI's expiring login key.
+  secret=$(stripe listen --api-key "$(doppler secrets get STRIPE_SECRET_KEY --plain)" --print-secret)
   echo "STRIPE_WEBHOOK_SECRET=$secret" >> "$ENV_FILE"
   echo "Cached STRIPE_WEBHOOK_SECRET → $ENV_FILE"
 fi
