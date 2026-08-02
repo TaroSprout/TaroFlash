@@ -1,12 +1,12 @@
 ---
 name: groom
-description: Deep second pass over a single Notion Task Board ticket sitting in `Needs More Info`. Resolves every open design decision with the user through conversation — surfacing assumptions as explicit questions, pushing back on the spec, verifying claims against real source rather than recall — then writes the decisions and their rationale into the ticket, assigns a model, and lands it in `Groomed` for the user to promote to `Ready`. Owns splitting oversized tickets (wiring the `Blocked By` relation between the siblings), recording external blockers, and keeping the epic's decision log and fog current. Technical and concise. Trigger on `/groom`, "groom this ticket", "resolve the design on X".
+description: Deep second pass over a single Notion Task Board ticket sitting in `Needs More Info`. Resolves every open design decision with the user through conversation — surfacing assumptions as explicit questions, pushing back on the spec, verifying claims against real source rather than recall — then writes the decisions and their rationale into the ticket, assigns a model, and lands it in `Groomed` for the user to promote to `Ready`. Owns splitting work into the smallest independently-verifiable tickets (wiring the `Blocked By` relation between the siblings), recording external blockers, and keeping the epic's decision log and fog current. Technical and concise. Trigger on `/groom`, "groom this ticket", "resolve the design on X".
 allowed-tools: Read, Grep, Glob, Bash, Agent, WebFetch, WebSearch, mcp__notion__notion-query-data-sources, mcp__notion__notion-fetch, mcp__notion__notion-update-page, mcp__notion__notion-create-pages, mcp__notion__notion-search
 argument-hint: '[<ID>]'
 arguments:
   - name: <ID>
     description: Numeric ticket ID to groom. Omit to take the top `Needs More Info` ticket by Priority → ID.
-lastUpdated: 2026-08-01T20:00:00Z
+lastUpdated: 2026-08-02T00:00:00Z
 ---
 
 ## What this skill does
@@ -192,9 +192,25 @@ break some of your assumptions — that is the skill working, not failing. Rules
 
 Only answerable once the design has resolved:
 
-- **Split** — if the resolved shape is clearly several tickets, propose the split with a one-line
-  scope each. Groom owns this because size is only knowable after the design is settled. Say which
-  siblings must **land in order** — that ordering becomes a `Blocked By` relation in §5, not prose.
+- **Split — bias toward it.** Once the design resolves, prefer breaking the work into the **smallest
+  slices that each stand alone** over one large ticket. Smaller independently-landing tickets are
+  what make autonomous `/work` agents manageable — each PR is reviewable and confirmable in
+  isolation. Propose the split with a one-line scope each; groom owns this because size is only
+  knowable after the design is settled.
+  - **The floor is independent verifiability.** Every sibling must be something the user can confirm
+    _works on its own_ once it lands — via a concrete check named in its ACs: exercising it in the
+    running product, a query, an API / edge-function call, a script. Split as small as this allows,
+    no smaller. A "step" whose only proof is that the _next_ step compiles is **not** a ticket — it
+    has no standalone verification.
+  - **Slice vertically, not by layer.** A migration-only or UI-only piece that is only demonstrably
+    working once its sibling also lands fails the gate. Prefer thin end-to-end slices (a real, however
+    small, observable capability) over horizontal layers. A chunk that genuinely can't stand alone
+    folds **up** into the sibling whose landing makes it verifiable — it does not become its own
+    ticket.
+  - **Coordinate the order — a relation, never prose.** Say which siblings must **land in order**;
+    that ordering becomes a `Blocked By` relation in §5. This matters more the more you split: an
+    unwired sibling lets `/work` pick up a mid-chain piece with no way to know its blocker hasn't
+    landed yet.
 - **External blockers** — facts only the user can supply (a dashboard setting, a vendor account
   detail, a product call). Record under `## Blocked on` with what it blocks. If the ticket cannot
   land without one, it stays in `Needs More Info` and the report says why.
@@ -289,7 +305,8 @@ it without guessing. Test it by asking:
 - Is `## Open questions` gone, and every fork it held now a concrete AC?
 - Is a rejected path recorded as a negative AC, so no one re-proposes it?
 - Is the prior art a `## Tech details` clause ("built from X"), and is any money/auth/boundary fact `CONFIRMED`?
-- If this was a split: can `/work` tell which sibling must land first without reading all of them?
+- If this was a split: is **every** sibling independently verifiable — a concrete standalone check
+  named in its ACs — and can `/work` tell which must land first without reading all of them?
 - For every UI element: are placement, host/slot, trigger, label/icon, and states decided — or would
   an implementer still choose?
 - Is every new or changed string the user-signed-off exact wording (≥3 options offered), and is
