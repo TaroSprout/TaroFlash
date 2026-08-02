@@ -77,7 +77,7 @@ async function decodeThenReveal() {
       ref="img"
       data-testid="card-cover__image"
       :src="cover!.image_path"
-      class="card-cover__image h-full w-full object-cover"
+      class="card-cover__image absolute inset-0 h-full w-full object-cover"
       :class="decoded ? 'opacity-100' : 'opacity-0'"
     />
 
