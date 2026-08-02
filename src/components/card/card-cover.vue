@@ -41,16 +41,27 @@ async function decodeThenReveal() {
   const el = img_el.value
   if (!el) return
 
-  try {
-    await el.decode()
-  } catch {
-    // decode() rejects if the src changes mid-flight; the next watch run takes over.
-    return
+  // A cached image (e.g. flipping the preview away from the cover and back) is
+  // already complete; decode() can reject on the reinserted element, so skip it
+  // and reveal straight away rather than waiting on a decode that never settles.
+  if (!isLoaded(el)) {
+    try {
+      await el.decode()
+    } catch {
+      // decode() also rejects if the src changed mid-flight — but only bail when
+      // the image really isn't loaded, so a newer watch run takes over. If it IS
+      // loaded, fall through and reveal so the skeleton never sticks forever.
+      if (!isLoaded(el)) return
+    }
   }
 
   decoded.value = true
   await nextTick()
   if (img_el.value) revealFaceImage(img_el.value)
+}
+
+function isLoaded(el: HTMLImageElement) {
+  return el.complete && el.naturalWidth > 0
 }
 
 // Re-run the decode gate whenever the source changes (initial paint, replace).
