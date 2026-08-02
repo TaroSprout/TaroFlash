@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, reactive } from 'vue'
+import { defineComponent, h, reactive, ref } from 'vue'
 import AuthenticatedView from '@/views/app-shell/authenticated.vue'
 
 // Renders the `v-slot="{ Component, route }"` content for real, so the
@@ -23,8 +23,11 @@ const RouterViewStub = defineComponent({
 const { mockUseResumeStudySession, mockUseRouteTransition, mockMemberStoreState, mockOpenNotice } =
   vi.hoisted(() => ({
     mockUseResumeStudySession: vi.fn(),
+    // A real ref, not a plain `{ value: false }` object — the component reads
+    // `show_skeleton_overlay.value` through the `show_skeleton` computed, so
+    // the mock must carry real ref semantics for that read to mean anything.
     mockUseRouteTransition: vi.fn(() => ({
-      show_skeleton_overlay: { value: false },
+      show_skeleton_overlay: ref(false),
       onSuspensePending: vi.fn(),
       onSuspenseResolve: vi.fn(),
       onLeave: vi.fn(),
@@ -171,6 +174,33 @@ describe('AuthenticatedView', () => {
       await flushPromises()
 
       expect(wrapper.findComponent({ name: 'RouterView' }).exists()).toBe(true)
+    })
+  })
+
+  // ── route-skeleton overlay [obligation] ─────────────────────────────────────
+  //
+  // The overlay must mask a pending-deletion member's real route content —
+  // decks are RLS-zeroed, but the dashboard/account section itself still
+  // painted behind the restore dialog before the fix.
+
+  describe('route-skeleton overlay [obligation]', () => {
+    test('[obligation] a pending-deletion member sees the route-skeleton overlay over their real route content', async () => {
+      mockMemberStore.pending_deletion = true
+
+      const wrapper = mountAuthenticated({ renderRouteSlot: true })
+      await flushPromises()
+
+      expect(wrapper.find('[data-testid="route-skeleton-overlay"]').exists()).toBe(true)
+    })
+
+    test('a resolved member in good standing does not see the overlay, and the real route component renders', async () => {
+      mockMemberStore.pending_deletion = false
+
+      const wrapper = mountAuthenticated({ renderRouteSlot: true })
+      await flushPromises()
+
+      expect(wrapper.find('[data-testid="route-skeleton-overlay"]').exists()).toBe(false)
+      expect(wrapper.findComponent({ name: 'FakeRouteComponent' }).exists()).toBe(true)
     })
   })
 })
