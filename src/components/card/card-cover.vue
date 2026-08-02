@@ -12,7 +12,7 @@ const img_el = useTemplateRef<HTMLImageElement>('img')
 // image_path (public URL or staged objectURL) makes a custom image fill the
 // cover; palette/pattern/icon stay configured but never render behind it.
 const has_image = computed(() => !!cover?.image_path)
-const { decoded } = useImageReveal(() => cover?.image_path, img_el)
+const { decoded, onLoad } = useImageReveal(() => cover?.image_path, img_el)
 
 // While decoding, show the shared SKELETON_COVER so loading matches the app
 // skeleton; once decoded, drop chrome (null) for the full-bleed image.
@@ -42,6 +42,7 @@ const bindings = computed(() => {
       :src="cover!.image_path"
       class="card-cover__image absolute inset-0 h-full w-full object-cover"
       :class="decoded ? 'opacity-100' : 'opacity-0'"
+      @load="onLoad"
     />
 
     <div

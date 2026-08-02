@@ -2,9 +2,12 @@ import { nextTick, ref, toValue, watch, type MaybeRefOrGetter, type ShallowRef }
 import { revealFaceImage } from '@/utils/animations/face-image'
 
 /**
- * Gate a face/cover image behind decode: `decoded` stays false (caller shows a
- * skeleton) until the `<img>` decodes, then fades in via revealFaceImage. Re-runs
- * on every `source` change, including the element being reinserted after a flip.
+ * Gate a face/cover image behind load: `decoded` stays false (caller shows a
+ * skeleton) until the `<img>` has loaded, then fades it in via revealFaceImage.
+ * Re-runs on every `source` change, including the element being reinserted after
+ * a flip. Bind the returned `onLoad` to the `<img>`'s `@load` — a reinserted
+ * element can reject `decode()` mid-flip and isn't `complete` on the first tick,
+ * so the load event is the reliable reveal signal; decode is only a fast path.
  *
  * @param source - getter for the image src; falsy clears `decoded`.
  * @param img - template ref to the `<img>` being revealed.
@@ -15,43 +18,41 @@ export function useImageReveal(
 ) {
   const decoded = ref(false)
 
-  async function decodeThenReveal() {
-    decoded.value = false
-    await nextTick()
-
+  async function reveal() {
     const el = img.value
-    if (!el) return
-
-    // A cached image (flip away + back) is already loaded, and decode() can
-    // reject on the reinserted element — skip decode when it's already loaded.
-    if (!isLoaded(el)) {
-      try {
-        await el.decode()
-      } catch {
-        // Bail only if genuinely not loaded (src changed mid-flight); a loaded
-        // image reveals anyway so the skeleton never sticks.
-        if (!isLoaded(el)) return
-      }
-    }
-
+    if (!el || decoded.value) return
     decoded.value = true
     await nextTick()
     if (img.value) revealFaceImage(img.value)
   }
 
+  async function decodeThenReveal() {
+    await nextTick()
+
+    const el = img.value
+    if (!el) return
+    if (isLoaded(el)) return reveal()
+
+    try {
+      await el.decode()
+      await reveal()
+    } catch {
+      // decode() can reject on an element reinserted mid-flip; reveal if it did
+      // load, else the <img>'s @load (onLoad) will — never leave it stuck.
+      if (isLoaded(el)) reveal()
+    }
+  }
+
   watch(
     () => toValue(source),
     (path) => {
-      if (!path) {
-        decoded.value = false
-        return
-      }
-      decodeThenReveal()
+      decoded.value = false
+      if (path) decodeThenReveal()
     },
     { immediate: true }
   )
 
-  return { decoded }
+  return { decoded, onLoad: reveal }
 }
 
 function isLoaded(el: HTMLImageElement) {
