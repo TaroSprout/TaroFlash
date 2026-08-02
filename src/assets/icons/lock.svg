@@ -1,22 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="Lock--Streamline-Flex">
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="Padlock-Square-1--Streamline-Flex">
   <desc>
-    Lock Streamline Icon: https://streamlinehq.com
+    Padlock Square 1 Streamline Icon: https://streamlinehq.com
   </desc>
-  <g id="lock--padlock-secure-security-locked">
-    <path
-      id="Shackle"
-      d="M4.5 6.5V4.75a2.5 2.5 0 0 1 5 0V6.5"
-      stroke="currentColor"
-      stroke-width="1.4"
-      stroke-linecap="round"
-    ></path>
-    <path
-      id="Body"
-      fill="currentColor"
-      fill-rule="evenodd"
-      clip-rule="evenodd"
-      d="M4.7 5.75H9.3a2.2 2.2 0 0 1 2.2 2.2v2.85a2.2 2.2 0 0 1 -2.2 2.2H4.7a2.2 2.2 0 0 1 -2.2 -2.2V7.95a2.2 2.2 0 0 1 2.2 -2.2Zm3.4 3.6a1.1 1.1 0 1 0 -2.2 0 1.1 1.1 0 0 0 2.2 0Z"
-      stroke-width="1"
-    ></path>
+  <g id="padlock-square-1--combination-combo-lock-locked-padlock-secure-security-shield-keyhole">
+    <path id="Subtract" fill="currentColor" fill-rule="evenodd" d="M4.3254 1.10811C5.03491 0.398599 5.99721 0 7.00061 0c1.0034 0 1.96571 0.398599 2.67522 1.10811 0.70947 0.70951 1.10807 1.67182 1.10807 2.67522v0.86309c1.1182 0.47182 1.9497 1.51871 2.1003 2.77582 0.0676 0.564 0.1168 1.14755 0.1168 1.7444 0 0.59685 -0.0492 1.18036 -0.1168 1.74436 -0.2009 1.677 -1.6135 2.9799 -3.30187 3.0426C8.75815 13.9841 7.9137 14 7 14c-0.9137 0 -1.75815 -0.0159 -2.58233 -0.0464 -1.68838 -0.0627 -3.10101 -1.3656 -3.30188 -3.0426 -0.06756 -0.564 -0.116767 -1.14751 -0.116767 -1.74436 0 -0.59685 0.049207 -1.1804 0.116767 -1.7444 0.15063 -1.25757 0.98271 -2.30477 2.1015 -2.77633v-0.86258c0 -1.0034 0.3986 -1.96571 1.10811 -2.67522Zm4.95854 2.67522v0.586C8.55399 4.34556 7.80379 4.33331 7 4.33331c-0.80334 0 -1.55315 0.01223 -2.28271 0.03598v-0.58596c0 -0.60558 0.24056 -1.18635 0.66877 -1.61456C5.81426 1.74056 6.39504 1.5 7.00061 1.5c0.60558 0 1.18635 0.24056 1.61456 0.66877s0.66877 1.00898 0.66877 1.61456ZM7.75 8.56006c0 -0.41421 -0.33579 -0.75 -0.75 -0.75s-0.75 0.33579 -0.75 0.75v1.03993c0 0.41421 0.33579 0.75001 0.75 0.75001s0.75 -0.3358 0.75 -0.75001V8.56006Z" clip-rule="evenodd" stroke-width="1"></path>
   </g>
 </svg>

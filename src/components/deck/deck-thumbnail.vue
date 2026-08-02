@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Card from '@/components/card/index.vue'
-import UiIcon from '@/components/ui-kit/icon.vue'
+import UiButton from '@/components/ui-kit/button.vue'
 import UiTappable from '@/components/ui-kit/tappable.vue'
 import { TYPE_SFX } from '@/sfx/config'
 import type { SfxOptions } from '@/sfx/directive'
@@ -71,13 +71,21 @@ const is_locked = computed(() => locked ?? deck?.is_locked ?? false)
       ]"
     />
 
-    <div
+    <ui-button
       v-if="is_locked"
       data-testid="deck-thumbnail__lock"
-      class="absolute -top-1 -left-1 z-10 grid place-items-center rounded-full bg-element p-1.5 text-ink ring-4 ring-element pointer-events-none"
-    >
-      <ui-icon src="lock" class="size-5" />
-    </div>
+      icon-only
+      icon-left="lock"
+      neutral
+      class="absolute! -top-1 -right-1 z-10 ring-4 ring-brown-100 dark:ring-grey-900 pointer-events-none"
+      :class="
+        !$slots['corner-action']
+          ? 'opacity-100'
+          : corner_action_always_visible || active
+            ? 'opacity-0'
+            : 'opacity-100 pointer-fine:group-hover/tappable:opacity-0'
+      "
+    />
 
     <div
       v-if="$slots['corner-action']"
