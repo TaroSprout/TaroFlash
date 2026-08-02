@@ -3,7 +3,6 @@ import { onBeforeUnmount, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import FaceOverlay from './face-overlay.vue'
-import ImageDropzone from './image-dropzone.vue'
 import { type CoverImage } from '@/composables/deck/cover-image'
 
 type CoverImageLayerProps = {
@@ -69,25 +68,47 @@ watch(
     data-testid="cover-image-layer__add"
     icon-only
     icon-left="add-image"
-    data-palette="brand"
-    class="absolute! top-(--face-padding) right-(--face-padding) z-20"
+    neutral
+    size="xl"
+    class="absolute! top-0 right-0 z-20"
     @click.stop="cover_image.openPicker"
   >
     {{ t('deck.settings-modal.cover.add-image') }}
   </ui-button>
 
-  <!-- Image set: reuse the corners dropzone's remove (top-right) + replace (top-left). -->
-  <image-dropzone
+  <!-- Image set: replace (top-left) + remove (top-right). The cover's controls
+       are its own buttons — same overflowing neutral style as the add button
+       above — not the shared image-dropzone corners control the cards use, whose
+       button style the cover intentionally diverges from. -->
+  <template
     v-if="
       cover_image.has_image.value && !cover_image.dragging.value && !cover_image.error_message.value
     "
-    mode="corners"
-    active
-    :remove_label="t('deck.settings-modal.cover.remove-image')"
-    :replace_label="t('deck.settings-modal.cover.replace-image')"
-    @browse="cover_image.openPicker"
-    @remove="cover_image.onRemove"
-  />
+  >
+    <ui-button
+      data-testid="cover-image-layer__replace"
+      icon-only
+      icon-left="add-image"
+      neutral
+      size="xl"
+      class="absolute! top-0 left-0 z-20"
+      @click.stop="cover_image.openPicker"
+    >
+      {{ t('deck.settings-modal.cover.replace-image') }}
+    </ui-button>
+
+    <ui-button
+      data-testid="cover-image-layer__remove"
+      icon-only
+      icon-left="remove-image"
+      data-palette="danger"
+      size="xl"
+      class="absolute! top-0 right-0 z-20"
+      @click.stop="cover_image.onRemove"
+    >
+      {{ t('deck.settings-modal.cover.remove-image') }}
+    </ui-button>
+  </template>
 
   <!-- Dragging a file / a validation error: a full-face prompt over the cover. -->
   <face-overlay
