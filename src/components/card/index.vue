@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, useTemplateRef } from 'vue'
+import { useI18n } from 'vue-i18n'
 import CardFace from './card-face.vue'
 import CardCover from './card-cover.vue'
 import FaceImageLayer from './face-image-layer.vue'
@@ -51,6 +52,8 @@ const {
   cover_image,
   disabled = false
 } = defineProps<CardProps>()
+
+const { t } = useI18n()
 
 const root_el = useTemplateRef<HTMLElement>('root')
 const image_layer = useTemplateRef<InstanceType<typeof FaceImageLayer>>('image_layer')
@@ -149,6 +152,7 @@ function onLeave(el: Element, done: () => void) {
               :image="image_layer.image_url"
               :active="image_layer.active"
               :error="image_layer.error_message"
+              :remove_label="t('card.image-editor.remove-image-button')"
               @pointerenter="image_layer.onRegionPointerEnter"
               @pointerleave="image_layer.onPointerLeave"
               @browse="image_layer.openPicker"
@@ -186,6 +190,7 @@ function onLeave(el: Element, done: () => void) {
               :image="image_layer.image_url"
               :active="image_layer.active"
               :error="image_layer.error_message"
+              :remove_label="t('card.image-editor.remove-image-button')"
               @pointerenter="image_layer.onRegionPointerEnter"
               @pointerleave="image_layer.onPointerLeave"
               @browse="image_layer.openPicker"
