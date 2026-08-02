@@ -14,9 +14,16 @@ type DeckGridItemProps = {
   rearranging?: boolean
   // this card is the one currently being dragged — opts out of the idle jiggle
   dragging?: boolean
+  // downgrade-grace lock (rank-recomputed by the grid) — dims + lock-badges the deck
+  locked?: boolean
 }
 
-const { deck, rearranging = false, dragging = false } = defineProps<DeckGridItemProps>()
+const {
+  deck,
+  rearranging = false,
+  dragging = false,
+  locked = false
+} = defineProps<DeckGridItemProps>()
 
 const emit = defineEmits<{
   press: []
@@ -51,6 +58,7 @@ function onOptionSelect(option: DropdownOption) {
   <div class="w-full" :class="{ jiggle: rearranging && !dragging }" @pointerdown="onPointerdown">
     <DeckThumbnail
       :deck="deck"
+      :locked="locked"
       :corner_action_always_visible="rearranging"
       :rearranging="rearranging"
       :dragging="dragging"

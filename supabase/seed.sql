@@ -38,6 +38,9 @@ on conflict (id) do nothing;
 -- locally.
 update public.members set role = 'admin' where id = '00000000-0000-0000-0000-000000000001';
 
+-- Pin the paid plan's test-mode Stripe price (the plans migration leaves it NULL).
+update public.plans set stripe_price_id = 'price_1Tqwq7IuBoRqjURoOfra7y5M' where id = 'paid';
+
 -- -----------------------------------------------------------------------------
 -- 2. Impersonate Cheesy so member_id / rank triggers and RLS policies behave
 --    exactly as they would for a real authenticated request (same pattern as

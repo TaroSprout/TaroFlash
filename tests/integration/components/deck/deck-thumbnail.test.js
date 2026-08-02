@@ -264,6 +264,105 @@ describe('DeckThumbnail', () => {
     })
   })
 
+  // ── lock badge / locked prop precedence [obligation] ─────────────────────────
+  // `is_locked = locked ?? deck?.is_locked ?? false` — the `locked` prop always
+  // wins when explicitly set, even against a contradicting deck.is_locked.
+
+  describe('lock badge [obligation]', () => {
+    test('does not render the lock badge when neither locked nor deck.is_locked is set', () => {
+      const wrapper = mountWithDeck()
+      expect(wrapper.find('[data-testid="deck-thumbnail__lock"]').exists()).toBe(false)
+    })
+
+    // The `locked` prop defaults to `undefined` (not `false`) so this fallback
+    // to `deck.is_locked` fires for the deck-header caller, which never passes
+    // `locked` — guards the Vue absent-Boolean-to-`false` coercion gotcha.
+    test('renders the lock badge when deck.is_locked is true and locked is unset', () => {
+      const wrapper = mountWithDeck({ is_locked: true })
+      expect(wrapper.find('[data-testid="deck-thumbnail__lock"]').exists()).toBe(true)
+    })
+
+    test('locked=false hides the badge even when deck.is_locked is true', () => {
+      const wrapper = mountWithDeck({ is_locked: true }, { locked: false })
+      expect(wrapper.find('[data-testid="deck-thumbnail__lock"]').exists()).toBe(false)
+    })
+
+    test('locked=true shows the badge even when deck.is_locked is false', () => {
+      const wrapper = mountWithDeck({ is_locked: false }, { locked: true })
+      expect(wrapper.find('[data-testid="deck-thumbnail__lock"]').exists()).toBe(true)
+    })
+
+    test('marks the thumbnail locked (dims the cover) when locked', () => {
+      const wrapper = mountWithDeck({}, { locked: true })
+      expect(wrapper.find('[data-testid="deck-thumbnail"]').attributes('data-locked')).toBe('true')
+    })
+
+    test('is not marked locked when not locked', () => {
+      const wrapper = mountWithDeck({}, { locked: false })
+      expect(
+        wrapper.find('[data-testid="deck-thumbnail"]').attributes('data-locked')
+      ).toBeUndefined()
+    })
+
+    test('emits press when tapped while locked — the badge does not block taps', async () => {
+      const wrapper = mountWithDeck({}, { locked: true })
+      await wrapper.find('[data-testid="deck-thumbnail"]').trigger('click')
+      expect(wrapper.emitted('press')).toHaveLength(1)
+    })
+
+    test('is inert — pointer-events-none so it never intercepts taps', () => {
+      const wrapper = mountWithDeck({}, { locked: true })
+      expect(wrapper.find('[data-testid="deck-thumbnail__lock"]').classes()).toContain(
+        'pointer-events-none'
+      )
+    })
+  })
+
+  // ── lock/corner-action swap [obligation] ─────────────────────────────────────
+  // With no corner-action slot (deck-header context) the lock stays put. With
+  // one (dashboard grid), the lock and corner-action swap on hover/active —
+  // never both visible at rest.
+
+  describe('lock/corner-action swap [obligation]', () => {
+    test('lock stays visible at rest and on hover when no corner-action slot is provided', () => {
+      const wrapper = mountWithDeck({}, { locked: true })
+      expect(wrapper.find('[data-testid="deck-thumbnail__lock"]').classes()).toContain(
+        'opacity-100'
+      )
+    })
+
+    function mountWithCornerAction(extraProps = {}) {
+      return shallowMount(DeckThumbnail, {
+        props: { deck: { title: 'X' }, locked: true, ...extraProps },
+        slots: { 'corner-action': '<button data-testid="corner-button">act</button>' },
+        global: { stubs: { UiTappable: UiTappableStub } }
+      })
+    }
+
+    test('lock is visible at rest (not hovered/active) when a corner-action slot is provided', () => {
+      const wrapper = mountWithCornerAction()
+      const lock = wrapper.find('[data-testid="deck-thumbnail__lock"]')
+      expect(lock.classes()).toContain('opacity-100')
+      expect(lock.classes()).not.toContain('opacity-0')
+    })
+
+    test('corner_action_always_visible hides the lock while the corner-action stays shown', () => {
+      const wrapper = mountWithCornerAction({ corner_action_always_visible: true })
+      expect(wrapper.find('[data-testid="deck-thumbnail__lock"]').classes()).toContain('opacity-0')
+      expect(wrapper.find('[data-testid="deck-thumbnail__corner-action"]').classes()).toContain(
+        'opacity-100'
+      )
+    })
+
+    test('active hides the lock while the corner-action stays shown', () => {
+      const wrapper = mountWithCornerAction({ active: true })
+      expect(wrapper.find('[data-testid="deck-thumbnail__lock"]').classes()).toContain('opacity-0')
+      expect(wrapper.find('[data-testid="deck-thumbnail__corner-action"]').classes()).toContain(
+        'opacity-100'
+      )
+    })
+  })
+
   // ── sfx prop spread (obligation 7) ───────────────────────────────────────────
 
   describe('sfx prop — default + override [obligation]', () => {

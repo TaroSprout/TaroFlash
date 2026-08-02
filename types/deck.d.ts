@@ -45,6 +45,12 @@ type Deck = {
   // (value may be null = pinned-uncapped for the caps); an absent key follows
   // the linked preset. The resolved fields above are computed from these.
   pacing_overrides?: PacingOverrides
+  // Downgrade-grace lock: true while the member is in the 15-day grace and this
+  // deck sits below the top-10 by rank. Locked decks are dimmed + can't be
+  // studied (rides due_count = 0 from the backend). Cleared once out of grace.
+  is_locked?: boolean
+  // Scheduled deletion date for a locked deck; null outside grace.
+  locked_delete_at?: string | null
 }
 
 // Keyed by resolved field name; present key = pinned. Caps allow null (pinned

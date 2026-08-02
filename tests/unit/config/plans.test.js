@@ -1,5 +1,12 @@
 import { describe, test, expect } from 'vite-plus/test'
-import { PLANS } from '@/config/plans'
+import { PLANS, FREE_DECK_LIMIT } from '@/config/plans'
+
+describe('FREE_DECK_LIMIT [obligation]', () => {
+  test('PLANS.free decks feature count mirrors FREE_DECK_LIMIT [obligation]', () => {
+    const decks_feature = PLANS.free.features.find((f) => f.key === 'decks')
+    expect(decks_feature.count).toBe(FREE_DECK_LIMIT)
+  })
+})
 
 describe('PLANS', () => {
   // ── Display names ──────────────────────────────────────────────────────────

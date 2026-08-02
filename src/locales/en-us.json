@@ -222,6 +222,7 @@
   "settings.subscription.plan.cancel": "Cancel subscription",
   "settings.subscription.plan.cancel-confirm-title": "Cancel subscription?",
   "settings.subscription.plan.cancel-confirm": "Your plan will stay active until the end of the current period.",
+  "settings.subscription.plan.cancel-over-limit": "Your plan stays active until the end of the current period. After that you're limited to 10 decks. You'll have 15 days to pick which to keep before the rest are deleted — or resubscribe to keep them all.",
   "settings.subscription.plan.cancel-confirm-button": "Confirm cancel",
   "settings.subscription.plan.cancel-abort": "Keep plan",
   "settings.subscription.plan.cancel-success": "Subscription will cancel at period end.",

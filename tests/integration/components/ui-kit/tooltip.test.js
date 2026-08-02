@@ -115,23 +115,14 @@ describe('UiTooltip', () => {
     })
   })
 
-  describe('palette — popover reads data-palette off attrs, not a prop', () => {
-    test('popover carries data-depth="overlay" and no data-palette when none is passed', async () => {
-      const wrapper = mountTooltip()
+  describe('overlay chrome — always renders, never accent [obligation]', () => {
+    test('popover carries data-depth="overlay" and no data-palette regardless of trigger attrs [obligation]', async () => {
+      const wrapper = mountTooltip({}, {}, { 'data-palette': 'danger' })
       await dispatchPointer(wrapper, 'pointerenter', 'mouse')
 
       const popover = document.body.querySelector('[data-testid="ui-tooltip"]')
       expect(popover.getAttribute('data-depth')).toBe('overlay')
       expect(popover.getAttribute('data-palette')).toBeNull()
-      wrapper.unmount()
-    })
-
-    test("a data-palette attr reaches the teleported popover (it can't inherit through the DOM)", async () => {
-      const wrapper = mountTooltip({}, {}, { 'data-palette': 'danger' })
-      await dispatchPointer(wrapper, 'pointerenter', 'mouse')
-
-      const popover = document.body.querySelector('[data-testid="ui-tooltip"]')
-      expect(popover.getAttribute('data-palette')).toBe('danger')
       wrapper.unmount()
     })
   })

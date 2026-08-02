@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import Card from '@/components/card/index.vue'
+import UiButton from '@/components/ui-kit/button.vue'
 import UiTappable from '@/components/ui-kit/tappable.vue'
 import { TYPE_SFX } from '@/sfx/config'
 import type { SfxOptions } from '@/sfx/directive'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 type DeckThumbnailProps = {
@@ -16,6 +18,10 @@ type DeckThumbnailProps = {
   dragging?: boolean
   // hold the hover/press look open (e.g. while the card's options menu is up)
   active?: boolean
+  // downgrade-grace lock override. Defaults to the deck's own `is_locked`;
+  // the dashboard grid passes a rank-recomputed value so a reorder across the
+  // 10th position updates the dim/lock optimistically, without a backend round-trip.
+  locked?: boolean
   sfx?: SfxOptions
 }
 
@@ -25,12 +31,18 @@ const {
   rearranging = false,
   dragging = false,
   active = false,
+  // Explicit `undefined` default: opt out of Vue's absent-Boolean-to-`false`
+  // coercion so the `deck?.is_locked` fallback below can still fire when a
+  // caller (the deck header) omits `locked` entirely.
+  locked = undefined,
   sfx
 } = defineProps<DeckThumbnailProps>()
 
 const emit = defineEmits<{ press: [e: MouseEvent] }>()
 
 const { t } = useI18n()
+
+const is_locked = computed(() => locked ?? deck?.is_locked ?? false)
 </script>
 
 <template>
@@ -38,6 +50,7 @@ const { t } = useI18n()
     as="div"
     :bgx="false"
     data-testid="deck-thumbnail"
+    :data-locked="is_locked || undefined"
     class="relative h-min touch-manipulation pointer-fine:hover:scale-102 pointer-fine:transition-transform duration-75"
     :class="[
       rearranging
@@ -52,7 +65,26 @@ const { t } = useI18n()
     <card
       side="cover"
       :cover_config="deck?.cover_config"
-      :class="{ 'pointer-events-none select-none': rearranging }"
+      :class="[
+        { 'pointer-events-none select-none': rearranging },
+        is_locked && 'opacity-40 pointer-fine:transition-opacity'
+      ]"
+    />
+
+    <ui-button
+      v-if="is_locked"
+      data-testid="deck-thumbnail__lock"
+      icon-only
+      icon-left="lock"
+      neutral
+      class="absolute! -top-1 -right-1 z-10 ring-4 ring-brown-100 dark:ring-grey-900 pointer-events-none"
+      :class="
+        !$slots['corner-action']
+          ? 'opacity-100'
+          : corner_action_always_visible || active
+            ? 'opacity-0'
+            : 'opacity-100 pointer-fine:group-hover/tappable:opacity-0'
+      "
     />
 
     <div

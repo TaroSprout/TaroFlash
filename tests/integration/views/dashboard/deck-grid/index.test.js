@@ -86,7 +86,7 @@ vi.mock('@/views/dashboard/deck-grid/use-deck-grid-reorder', () => ({
 
 const DeckGridItemStub = defineComponent({
   name: 'DeckGridItem',
-  props: ['deck', 'size', 'rearranging', 'dragging'],
+  props: ['deck', 'size', 'rearranging', 'dragging', 'locked'],
   emits: ['press', 'rearrange'],
   setup(props, { emit }) {
     return () =>
@@ -95,6 +95,7 @@ const DeckGridItemStub = defineComponent({
         'data-deck-id': props.deck.id,
         'data-rearranging': String(!!props.rearranging),
         'data-dragging': String(!!props.dragging),
+        'data-locked': String(!!props.locked),
         onClick: () => emit('press'),
         onContextmenu: () => emit('rearrange')
       })
@@ -122,8 +123,8 @@ import DeckGrid from '@/views/dashboard/deck-grid/index.vue'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-function makeDeck(id) {
-  return { id, title: `Deck ${id}`, due_count: 0 }
+function makeDeck(id, { rank = id, is_locked = false } = {}) {
+  return { id, title: `Deck ${id}`, due_count: 0, rank, is_locked }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -326,6 +327,27 @@ describe('DeckGrid — pointerdown wiring [obligation]', () => {
     const item_wrapper = wrapper.find('[data-testid="deck-grid__item"]')
     await item_wrapper.trigger('pointerdown')
     expect(onItemPointerdownMock).toHaveBeenCalledWith(0, expect.anything())
+  })
+})
+
+describe('DeckGrid — downgrade-grace lock forwarding [obligation]', () => {
+  test('forwards locked=true to decks ranked below the top 10, false to the rest, while in grace', () => {
+    const decks = Array.from({ length: 12 }, (_, i) =>
+      makeDeck(i + 1, { rank: i + 1, is_locked: i === 11 })
+    )
+    const wrapper = mount(decks)
+    const items = wrapper.findAllComponents(DeckGridItemStub)
+
+    for (let i = 0; i < 10; i++) expect(items[i].props('locked')).toBe(false)
+    expect(items[10].props('locked')).toBe(true)
+    expect(items[11].props('locked')).toBe(true)
+  })
+
+  test('forwards locked=false to every deck when not in grace, even with more than 10 decks', () => {
+    const decks = Array.from({ length: 12 }, (_, i) => makeDeck(i + 1))
+    const wrapper = mount(decks)
+    const items = wrapper.findAllComponents(DeckGridItemStub)
+    expect(items.every((item) => item.props('locked') === false)).toBe(true)
   })
 })
 

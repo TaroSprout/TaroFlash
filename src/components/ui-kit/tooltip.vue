@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, useAttrs, useTemplateRef, watch, onBeforeUnmount } from 'vue'
+import { computed, ref, useTemplateRef, watch, onBeforeUnmount } from 'vue'
 import { useFloating, flip, autoUpdate, offset, type Placement } from '@floating-ui/vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 
@@ -29,8 +29,6 @@ const {
   max_chars?: number
 }>()
 
-const attrs = useAttrs()
-
 const triggerRef = useTemplateRef<HTMLElement>('ui-tooltip-trigger')
 const popoverRef = useTemplateRef<HTMLElement>('ui-tooltip')
 
@@ -48,11 +46,6 @@ const should_show = computed(
 // Rough heuristic — good enough to tell whether `text` will wrap onto more
 // than one line at `max_chars`, so we can give wrapped tooltips extra breathing room.
 const is_multiline = computed(() => (text?.length ?? 0) > max_chars)
-
-// A tooltip may be given an identity (`data-palette="danger"` on an error
-// tooltip), in which case it paints in that identity instead of neutral overlay
-// chrome. Restated on the teleported node, which inherits nothing from the DOM.
-const palette = computed(() => attrs['data-palette'] as string | undefined)
 
 const { floatingStyles, update } = useFloating(triggerRef, popoverRef, {
   placement: position,
@@ -112,14 +105,10 @@ function onPointerLeave(e: PointerEvent) {
         ref="ui-tooltip"
         data-testid="ui-tooltip"
         data-depth="overlay"
-        :data-palette="palette"
         :data-multiline="is_multiline"
         :style="{ ...floatingStyles, maxWidth: `${max_chars}ch` }"
         class="ui-tooltip ui-tooltip--visible rounded-4 text-sm text-center pointer-events-none z-102 select-none"
-        :class="[
-          is_multiline ? 'py-3 px-3' : 'py-1.5 px-2',
-          palette ? 'bg-accent text-on-accent' : 'bg-surface text-ink'
-        ]"
+        :class="[is_multiline ? 'py-3 px-3' : 'py-1.5 px-2', 'bg-overlay text-ink']"
       >
         <slot name="tooltip">{{ text }}</slot>
       </div>

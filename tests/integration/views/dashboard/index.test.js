@@ -268,6 +268,42 @@ describe('DashboardIndex — deck ordering', () => {
   })
 })
 
+describe('DashboardIndex — edit mode forces rank order [obligation]', () => {
+  test('entering edit mode reorders the grid to rank ascending regardless of the chosen sort, and leaving restores it', async () => {
+    decksDataRef.value = [
+      makeDeck(3, { rank: 30, created_at: '2026-03-01' }),
+      makeDeck(1, { rank: 10, created_at: '2026-01-01' }),
+      makeDeck(2, { rank: 20, created_at: '2026-02-01' })
+    ]
+    const wrapper = mountDashboard()
+
+    wrapper.findComponent(DeckGridSortOptionsStub).vm.$emit('select', 'date-created')
+    await wrapper.vm.$nextTick()
+    expect(
+      wrapper
+        .findComponent(DeckGridStub)
+        .props('decks')
+        .map((d) => d.id)
+    ).toEqual([3, 2, 1])
+
+    await wrapper.find('[data-testid="dashboard-actions-panel"]').trigger('click')
+    expect(
+      wrapper
+        .findComponent(DeckGridStub)
+        .props('decks')
+        .map((d) => d.id)
+    ).toEqual([1, 2, 3])
+
+    await wrapper.find('[data-testid="dashboard-actions-panel"]').trigger('click')
+    expect(
+      wrapper
+        .findComponent(DeckGridStub)
+        .props('decks')
+        .map((d) => d.id)
+    ).toEqual([3, 2, 1])
+  })
+})
+
 describe('DashboardIndex — edit-decks toggle', () => {
   test('editing_decks starts false and is forwarded to deck-grid as editing', () => {
     const wrapper = mountDashboard()
