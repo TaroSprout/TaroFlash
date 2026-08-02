@@ -5,9 +5,7 @@ import { useAlert } from '@/composables/alert'
 import { useNoticeStore } from '@/stores/notice-store'
 import { useModal } from '@/composables/modal'
 import Checkout from '@/components/billing/checkout-modal/index.vue'
-
-// Free-plan deck limit — over it, cancelling triggers the downgrade grace.
-const FREE_DECK_LIMIT = 10
+import { FREE_DECK_LIMIT } from '@/config/plans'
 
 /**
  * Subscription lifecycle orchestrators for the billing plan section: upgrade a

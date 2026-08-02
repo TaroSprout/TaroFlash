@@ -1,10 +1,13 @@
-// Display names and marketing copy for each plan. The enforced numeric
-// limits (deck count, cards per deck) live in the `plans` DB table now —
-// see src/composables/plan-limits.ts — not here, so there's one source for
-// them instead of two. The `decks`/`cards` feature counts below are still
-// hardcoded display copy and will drift if the DB limits change again.
+// Display names and marketing copy for each plan. Enforced numeric limits live
+// in the `plans` DB table, surfaced per-member via useMemberStore().deck_limit —
+// the `decks`/`cards` feature counts below are display copy and can drift.
 // `features` drives all plan-feature surfaces (welcome screen, signup, settings upsell).
 // `upgradeHighlight` marks features shown in the settings upgrade teaser.
+
+// Free plan's deck limit, mirrored from the `plans` DB table. A const because
+// callers need it while the member is still `paid` (their deck_limit row is the paid one).
+export const FREE_DECK_LIMIT = 10
+
 export type PlanFeature = {
   key: string
   ok?: boolean

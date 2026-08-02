@@ -9,7 +9,7 @@ import { useDeckActions } from '@/composables/deck/actions'
 import { buildNewDeckPayload } from '@/utils/deck/defaults'
 import { popDeckIn, popDeckOut } from '@/utils/animations/deck-grid'
 import { useDeckGridReorder } from './use-deck-grid-reorder'
-import { useDeckGrace } from '@/views/dashboard/composables/deck-grace'
+import { useDeckGrace } from '@/composables/deck/grace'
 
 type DeckGridProps = {
   decks: Deck[]
