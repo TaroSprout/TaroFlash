@@ -264,6 +264,53 @@ describe('DeckThumbnail', () => {
     })
   })
 
+  // ── lock badge / locked prop precedence [obligation] ─────────────────────────
+  // `is_locked = locked ?? deck?.is_locked ?? false` — the `locked` prop always
+  // wins when explicitly set, even against a contradicting deck.is_locked.
+
+  describe('lock badge [obligation]', () => {
+    test('does not render the lock badge when neither locked nor deck.is_locked is set', () => {
+      const wrapper = mountWithDeck()
+      expect(wrapper.find('[data-testid="deck-thumbnail__lock"]').exists()).toBe(false)
+    })
+
+    // The `locked` prop defaults to `undefined` (not `false`) so this fallback
+    // to `deck.is_locked` fires for the deck-header caller, which never passes
+    // `locked` — guards the Vue absent-Boolean-to-`false` coercion gotcha.
+    test('renders the lock badge when deck.is_locked is true and locked is unset', () => {
+      const wrapper = mountWithDeck({ is_locked: true })
+      expect(wrapper.find('[data-testid="deck-thumbnail__lock"]').exists()).toBe(true)
+    })
+
+    test('locked=false hides the badge even when deck.is_locked is true', () => {
+      const wrapper = mountWithDeck({ is_locked: true }, { locked: false })
+      expect(wrapper.find('[data-testid="deck-thumbnail__lock"]').exists()).toBe(false)
+    })
+
+    test('locked=true shows the badge even when deck.is_locked is false', () => {
+      const wrapper = mountWithDeck({ is_locked: false }, { locked: true })
+      expect(wrapper.find('[data-testid="deck-thumbnail__lock"]').exists()).toBe(true)
+    })
+
+    test('marks the thumbnail locked (dims the cover) when locked', () => {
+      const wrapper = mountWithDeck({}, { locked: true })
+      expect(wrapper.find('[data-testid="deck-thumbnail"]').attributes('data-locked')).toBe('true')
+    })
+
+    test('is not marked locked when not locked', () => {
+      const wrapper = mountWithDeck({}, { locked: false })
+      expect(
+        wrapper.find('[data-testid="deck-thumbnail"]').attributes('data-locked')
+      ).toBeUndefined()
+    })
+
+    test('emits press when tapped while locked — the badge does not block taps', async () => {
+      const wrapper = mountWithDeck({}, { locked: true })
+      await wrapper.find('[data-testid="deck-thumbnail"]').trigger('click')
+      expect(wrapper.emitted('press')).toHaveLength(1)
+    })
+  })
+
   // ── sfx prop spread (obligation 7) ───────────────────────────────────────────
 
   describe('sfx prop — default + override [obligation]', () => {

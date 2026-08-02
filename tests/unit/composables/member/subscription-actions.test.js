@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
-import { createApp } from 'vue'
+import { createApp, ref } from 'vue'
 import { createI18n } from 'vue-i18n'
 import messages from '@intlify/unplugin-vue-i18n/messages'
 
@@ -25,6 +25,10 @@ const {
   modalOpenMock: vi.fn()
 }))
 
+// Reactive state read by the deck-count query mock. Created at module level
+// (not inside vi.hoisted) so Vue's ref() is available.
+const deckCountRef = ref(0)
+
 vi.mock('@/api/billing', () => ({
   useCancelSubscriptionMutation: () => ({
     mutateAsync: cancelMutateMock,
@@ -34,6 +38,10 @@ vi.mock('@/api/billing', () => ({
     mutateAsync: resumeMutateMock,
     isLoading: resumeLoadingState
   })
+}))
+
+vi.mock('@/api/decks', () => ({
+  useMemberDeckCountQuery: () => ({ data: deckCountRef })
 }))
 
 vi.mock('@/composables/alert', () => ({
@@ -86,6 +94,7 @@ beforeEach(() => {
   modalOpenMock.mockReset()
   cancelLoadingState.value = false
   resumeLoadingState.value = false
+  deckCountRef.value = 0
 })
 
 // ── onUpgrade ─────────────────────────────────────────────────────────────────
@@ -153,6 +162,39 @@ describe('useSubscriptionActions — onCancel', () => {
 
     expect(noticeErrorMock).toHaveBeenCalledOnce()
     expect(noticeSuccessMock).not.toHaveBeenCalled()
+  })
+
+  // ── deck-count boundary — over-limit copy swap [obligation] ────────────────
+  // FREE_DECK_LIMIT is 10; only STRICTLY more than that swaps in the fuller
+  // downgrade-grace warning. 10 itself still gets the base confirm copy.
+
+  test('shows the base cancel-confirm copy at exactly the free deck limit (10) [obligation]', async () => {
+    deckCountRef.value = 10
+    alertWarnMock.mockReturnValue({ response: Promise.resolve(false) })
+
+    const { onCancel } = withSetup(() => useSubscriptionActions())
+    await onCancel()
+
+    expect(alertWarnMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Your plan will stay active until the end of the current period.'
+      })
+    )
+  })
+
+  test('shows the over-limit copy once above the free deck limit (11) [obligation]', async () => {
+    deckCountRef.value = 11
+    alertWarnMock.mockReturnValue({ response: Promise.resolve(false) })
+
+    const { onCancel } = withSetup(() => useSubscriptionActions())
+    await onCancel()
+
+    expect(alertWarnMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message:
+          "Your plan stays active until the end of the current period. After that you're limited to 10 decks. You'll have 15 days to pick which to keep before the rest are deleted — or resubscribe to keep them all."
+      })
+    )
   })
 })
 

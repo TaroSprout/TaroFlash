@@ -36,7 +36,8 @@ const DeckThumbnailStub = defineComponent({
     'rearranging',
     'dragging',
     'corner_action_always_visible',
-    'active'
+    'active',
+    'locked'
   ],
   emits: ['press'],
   setup(props, { emit, slots }) {
@@ -179,6 +180,18 @@ describe('DeckGridItem — forwards rearranging/dragging to DeckThumbnail [oblig
   test('forwards dragging to DeckThumbnail', () => {
     const wrapper = mount({ deck: DECK, rearranging: true, dragging: true })
     expect(wrapper.findComponent(DeckThumbnailStub).props('dragging')).toBe(true)
+  })
+})
+
+describe('DeckGridItem — forwards locked to DeckThumbnail [obligation]', () => {
+  test('forwards locked=true from its own locked prop', () => {
+    const wrapper = mount({ deck: DECK, locked: true })
+    expect(wrapper.findComponent(DeckThumbnailStub).props('locked')).toBe(true)
+  })
+
+  test('defaults locked to false when not provided', () => {
+    const wrapper = mount({ deck: DECK })
+    expect(wrapper.findComponent(DeckThumbnailStub).props('locked')).toBe(false)
   })
 })
 
