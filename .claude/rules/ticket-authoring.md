@@ -43,14 +43,20 @@ out-of-scope work is found mid-task.
 | `Status`   | **`Backlog`**, always — a new ticket is un-triaged by definition                                                           |
 | `Assignee` | **empty** — triage/groom set it (`Opus`/`Sonnet`) at `Groomed`, never at cut                                               |
 | `Type`     | `Bug` broken · `Task` defined change · `Story` user-facing capability · `Spike` the deliverable is a decision, not shipped |
-| `Priority` | **empty** at cut time — a triage/groom decision. Set only when the user explicitly dictates one                            |
-| `Target`   | **empty** at cut time — a triage/groom decision, not a capture one                                                         |
+| `Priority` | **empty** at cut time — a `/backlog` decision. Set only when the user explicitly dictates one                              |
+| `Target`   | **empty** at cut time — a `/backlog` decision, not a capture one                                                           |
 | `Epic`     | match the Epic Board; if nothing fits, propose a new epic rather than force-fit                                            |
 
 Never write `Groomed` or `Ready` — those assert the ticket is executable, which is never true at
 capture time. Never write `On Hold` or `Assignee = Me` on a fresh ticket — that's the user's own
 hands-off marker. Leave `Priority` and `Assignee` untouched unless the user explicitly asks for a
 value.
+
+**The classification fields have an owner: `/backlog`.** `Type`, `Epic`, `Target`, and `Priority` are
+the portfolio pass's to set — it sees the whole Backlog at once and distributes them comparatively.
+Capture leaves them empty (bar an obvious `Type`/`Epic` or a user-dictated value); `/backlog` fills
+them; `/triage` and `/groom` fill only stragglers a sweep hasn't reached yet. Priority especially is
+never a per-ticket call — it's a forced distribution across the board, which only `/backlog` can see.
 
 ## Priority vs Target — two axes, don't collapse them
 
@@ -64,7 +70,9 @@ priority tiers stay meaningful inside the launch set instead of two being spent 
 
 A ticket stays in its epic regardless of `Target` — the epic is the resurfacing anchor, not a
 graveyard. `Fast-follow` items surface in the **Fast-follow** board view (all epics, sorted by
-priority) for the post-launch sweep. Leave `Target` empty at capture; `/triage` and `/groom` set it.
+priority) for the post-launch sweep. Leave `Target` empty at capture; `/backlog` sets it, and
+distributes `Priority` **within** each Target band so both axes stay meaningful (see
+[`backlog`](../skills/backlog/SKILL.md)).
 
 ## Body
 
