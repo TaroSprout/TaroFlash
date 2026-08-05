@@ -84,9 +84,10 @@ as reused. Undecided copy keeps the ticket out of `Groomed`.
 
 ## Board constants
 
-**[`ticket-authoring.md`](../../rules/ticket-authoring.md) is the single source** for the board data
-sources, every field and its option list, the body section list, brevity rules, and voice. Read it
-before writing anything to the board. This skill declares only its lanes and its own passes.
+The board **schema** — data sources, every field and its option list — lives in
+[`task-board-schema.md`](../../rules/task-board-schema.md); the **body section list, brevity rules, and
+voice** live in [`ticket-authoring.md`](../../rules/ticket-authoring.md). Read both before writing
+anything to the board. This skill declares only its lanes and its own passes.
 
 - Lanes: pulls from `Needs More Info`; lands at `Groomed`; may park at `On Hold`. Never sets `Ready`
   / `In Progress` / `Review` / `Done` / `Blocked` — promoting `Groomed` → `Ready` is the user's gate.

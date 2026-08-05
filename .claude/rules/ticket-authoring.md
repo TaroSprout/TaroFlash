@@ -1,40 +1,18 @@
 # Ticket Authoring
 
-**The single source of truth for what a ticket looks like.** Board constants, body shape, brevity,
-and voice. `/triage` and `/groom` declare their own routing and lanes — never their own templates or
-voice rules. If a body rule isn't here, it doesn't exist.
+**The single source of truth for what a ticket looks like.** Body shape, brevity, voice, and which
+stage fills each field. `/triage` and `/groom` declare their own routing and lanes — never their own
+templates or voice rules. If a body rule isn't here, it doesn't exist.
 
 Applies whenever the user says "cut a ticket", "file that", "add that to the board", or when
 out-of-scope work is found mid-task.
 
 ## Board constants
 
-- **Task Board** data source: `collection://3630953c-224c-8065-8864-000bb9fe7bad`
-- **Epic Board** data source: `collection://2510953c-224c-80b7-9bb0-000b5384a47d`
-- **MCP server**: `notion`. **Read** with `notion-query-data-sources` (SQL over the data source) +
-  `notion-fetch` (page body — the query returns properties only). **Create** with
-  `notion-create-pages`, always passing the board's default page template
-  (`template_id: 3af0953c224c800d984cf0b443d67d20`) so the ticket inherits its default icon and
-  field defaults. **Update** with `notion-update-page`.
-- `Status`: `On Hold` · `Backlog` · `Needs More Info` · `Groomed` · `Ready` · `In Progress` ·
-  `Blocked` · `Review` · `Duplicate` · `Won't Do` · `Done`. Status is a plain property write — set
-  it directly, no transition step. `/groom` lands tickets in `Groomed`; the user promotes them to
-  `Ready`, the lane `/work` pulls from.
-- `Priority`: `⇞P0` · `↑P1` · `↓P2` · `⇟P3` (a ticket's urgency).
-- `Type`: `Bug` · `Task` · `Story` · `Spike`.
-- `Target`: `MVP` · `Fast-follow` · `Later` — which release the ticket ships in (orthogonal to
-  Priority).
-- `Assignee`: `Me` · `Fable` · `Opus` · `Sonnet` — which model works the ticket in `/work`.
-  Triage/groom set `Opus` or `Sonnet` when a ticket reaches `Groomed`; **`Fable` is the user's to
-  assign**, never an agent's pick. **`Me` means hands-off** — the user works it themselves;
-  `/triage` and `/work` leave it alone. `Status = On Hold` carries the same meaning.
-- `Epic`: relation to the Epic Board (single).
-- `ID` is a **read-only auto-increment** — never set it. Tickets are referred to as `#<n>`.
-
-> **The board is the source of truth for these option lists, not this file.** A hardcoded vocabulary
-> here once went stale and `Spike` was invisible for months — tickets encoded it in their titles
-> instead. `notion-fetch` on the data-source URL returns the live options; check when a value seems
-> not to fit, and fix this file.
+The board **schema** — data sources, the MCP server + default template, and every field with its
+option list and semantics — lives in [`task-board-schema.md`](./task-board-schema.md). Read it for any
+data-source URL, field name, or option value. This file owns only how those fields are **filled** when
+authoring: what a cut sets, what each stage owns, and the two-axis Priority/Target doctrine below.
 
 ## Fields when cutting
 
@@ -56,22 +34,25 @@ value.
 the portfolio pass's to set — it sees the whole Backlog at once and distributes them comparatively.
 Capture leaves them empty (bar an obvious `Type`/`Epic` or a user-dictated value); `/backlog` fills
 them; `/triage` and `/groom` fill only stragglers a sweep hasn't reached yet. Priority especially is
-never a per-ticket call — it's a forced distribution across the board, which only `/backlog` can see.
+never a per-ticket call — it's a comparative call across the whole board, which only `/backlog` can see.
 
 ## Priority vs Target — two axes, don't collapse them
 
-`Priority` answers **in what order** (urgency/sequencing). `Target` answers **which release**
-(scope). They are orthogonal — a pre-launch `MVP` ticket still ranges `P0`→`P3`, so all four
-priority tiers stay meaningful inside the launch set instead of two being spent marking the cut-line.
+`Priority` answers **in what order** (urgency). `Target` answers **which quarter** it ships in. They
+are orthogonal — every quarter spans `P0`→`P3`, so a quarter never collapses into a single priority
+tier.
 
-- `MVP` — ships before launch.
-- `Fast-follow` — committed to the first post-launch cycle. Has a home; gets swept.
-- `Later` — genuinely deferred, allowed to be quiet.
+- `MVP` — launch scope: everything gating first ship. The current quarter's committed set, kept as its
+  own value.
+- `Q3 '26` / `Q4 '26` / `Q1 '27` — rolling quarter buckets (the live set lives in
+  [`task-board-schema.md`](./task-board-schema.md)). `Q3 '26` is current and holds `MVP` plus a few
+  high-value pull-ins.
 
 A ticket stays in its epic regardless of `Target` — the epic is the resurfacing anchor, not a
-graveyard. `Fast-follow` items surface in the **Fast-follow** board view (all epics, sorted by
-priority) for the post-launch sweep. Leave `Target` empty at capture; `/backlog` sets it, and
-distributes `Priority` **within** each Target band so both axes stay meaningful (see
+graveyard. `/backlog` fills `Target` **theme-grouped**: an epic's tickets stay together in one home
+quarter, with **priority driving cross-quarter overflow** (P0/P1 in the home quarter, P2/P3 spilling
+to the next), whole secondary/deferred epics pushed to the furthest planned quarter, and On-Hold
+tickets defaulting there too. Leave `Target` empty at capture; `/backlog` sets it (see
 [`backlog`](../skills/backlog/SKILL.md)).
 
 ## Body
