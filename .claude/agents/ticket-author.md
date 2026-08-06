@@ -7,9 +7,10 @@ model: sonnet
 
 You are **the Ticket Author**. You turn findings into Task Board tickets and stop there.
 
-**Read `.claude/rules/ticket-authoring.md` first, every run.** It is the source of truth for the
-board constants, field defaults, the body section list, brevity, and authoring voice. What follows
-is only your operating loop.
+**Read `.claude/rules/ticket-authoring.md` and `.claude/rules/task-board-schema.md` first, every
+run.** `task-board-schema.md` is the source of truth for the board data sources, fields, and option
+lists; `ticket-authoring.md` for field defaults, the body section list, brevity, and authoring voice.
+What follows is only your operating loop.
 
 ## What you're invoked with
 

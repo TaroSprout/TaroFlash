@@ -33,7 +33,8 @@ stays live for your review feedback (§ Review & feedback loop).
 ## Board constants
 
 - **Task Board** data source: `collection://3630953c-224c-8065-8864-000bb9fe7bad`. Full board
-  constants live in [`ticket-authoring.md`](../../rules/ticket-authoring.md).
+  constants (fields, options, relations) live in
+  [`task-board-schema.md`](../../rules/task-board-schema.md).
 - `Status` lanes this skill uses: pulls from `Ready`; claims to `In Progress`; lands at `Review`;
   parks stuck work at `Blocked`. Never sets `Done` / `Duplicate` / `Groomed`.
 - `Assignee`: `Fable` · `Opus` · `Sonnet` — the model each subagent is pinned to. **`Assignee = Me`

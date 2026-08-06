@@ -18,8 +18,9 @@ The Backlog it pulls from is normally already classified and priority-sorted by
 Priority → ID fetch below surfaces the most important tickets first. Triage no longer owns the
 classification fields; it only fills **stragglers** a `/backlog` sweep hasn't reached yet (see step 4).
 
-Board data source, field option lists, body sections, and voice all live in
-[`ticket-authoring.md`](../../rules/ticket-authoring.md). Read it before writing anything.
+The board **schema** (data sources, field option lists) lives in
+[`task-board-schema.md`](../../rules/task-board-schema.md); **body sections** and **voice** live in
+[`ticket-authoring.md`](../../rules/ticket-authoring.md). Read both before writing anything.
 
 ## Steps
 
@@ -30,11 +31,12 @@ Board data source, field option lists, body sections, and voice all live in
    FROM "collection://3630953c-224c-8065-8864-000bb9fe7bad"
    WHERE "Status" = 'Backlog'
      AND ("Assignee" IS NULL OR "Assignee" <> 'Me')   -- Me = hands off
-   ORDER BY CASE "Target"                              -- release first: MVP is most important
-              WHEN 'MVP'         THEN 0
-              WHEN 'Fast-follow' THEN 1
-              WHEN 'Later'       THEN 2
-              ELSE 3                                   -- unset Target sorts last → propose one
+   ORDER BY CASE "Target"                              -- quarter first: MVP / current quarter lead
+              WHEN 'MVP'     THEN 0
+              WHEN 'Q3 ''26' THEN 1
+              WHEN 'Q4 ''26' THEN 2
+              WHEN 'Q1 ''27' THEN 3
+              ELSE 9                                   -- unset Target sorts last → propose one
             END ASC,
             CASE "Priority"                            -- then urgency — rank, NOT the raw glyph string
               WHEN '⇞P0' THEN 0
@@ -46,11 +48,16 @@ Board data source, field option lists, body sections, and voice all live in
             "userDefined:ID" ASC
    ```
 
-   **`Target` leads, then `Priority`** — an `MVP` ticket outranks a `Fast-follow` one whatever their
-   priorities, and inside a release urgency breaks the tie. **Never `ORDER BY` either field directly.**
+   The `Target` `CASE` lists the **live quarter options** — refresh it from
+   [`task-board-schema.md`](../../rules/task-board-schema.md) when the roadmap rolls forward and a new
+   quarter is added.
+
+   **`Target` leads, then `Priority`** — an `MVP` ticket outranks a later-quarter one whatever their
+   priorities, and inside a quarter urgency breaks the tie. **Never `ORDER BY` either field directly.**
    The priority arrows sort by codepoint, not urgency — `↑`(P1, U+2191) `↓`(P2, U+2193) `⇞`(P0, U+21DE)
    `⇟`(P3, U+21DF) — so a raw string sort buries every `P0` below `P1`/`P2`, and a null leaps to the
-   top; `Target`'s options aren't ordered alphabetically either. Rank both with the `CASE`s above.
+   top; `Target`'s quarter options aren't ordered alphabetically either. Rank both with the `CASE`s
+   above.
 
 2. **Read** each ticket's page body via `notion-fetch` — the query returns properties only, and the
    user often writes real context into the raw ticket. Carry it through; don't re-derive from the name.
