@@ -24,8 +24,16 @@ const ROW_PITCH = 407
 const LOAD_MORE_THRESHOLD = 5
 const OVERSCAN = 3
 
-const { list, selection, reorderCard, hasNextPage, isLoading, loadNextPage, registerScroller } =
-  inject(cardEditorKey)!
+const {
+  list,
+  selection,
+  reorderCard,
+  can_reorder,
+  hasNextPage,
+  isLoading,
+  loadNextPage,
+  registerScroller
+} = inject(cardEditorKey)!
 const { all_cards } = list
 
 const list_el = useTemplateRef<HTMLElement>('list_el')
@@ -37,7 +45,7 @@ usePinScrollWhileTyping(() => list_el.value)
 const reorder = useReorderDrag({
   pitch: ROW_PITCH,
   count: () => all_cards.value.length,
-  enabled: () => is_above_md.value && !selection.is_selecting.value,
+  enabled: () => is_above_md.value && !selection.is_selecting.value && can_reorder.value,
   topInset: () => sticky_toolbar?.getBoundingClientRect().bottom ?? 0,
   // Clean, transform-immune scroll bound that grows as infinite-scroll loads
   // more rows mid-drag, so auto-scroll past the load threshold keeps going.

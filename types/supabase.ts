@@ -1056,8 +1056,10 @@ export type Database = {
       }
       move_cards_to_deck: {
         Args: {
-          p_card_ids: number[]
+          p_card_ids?: number[]
+          p_except_ids?: number[]
           p_ranks: string[]
+          p_source_deck_id?: number
           p_target_deck_id: number
         }
         Returns: undefined

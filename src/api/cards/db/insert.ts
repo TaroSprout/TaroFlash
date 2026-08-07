@@ -5,15 +5,23 @@ import { fetchDeckTailRank } from './tail-rank'
 
 export type InsertCardParams = {
   deck_id: number
-  // Position key, from `@/utils/card/rank`. Omit to append — for callers with
-  // no list on screen to resolve neighbours from (e.g. the term popover, adding
-  // to a deck the user only picked from a dropdown).
+  // Position key, from `@/utils/card/rank`. Omit to add the card at the end of
+  // the deck — for callers with no list on screen to resolve neighbours from
+  // (e.g. the term popover, adding to a deck picked from a dropdown).
   rank?: string
   front_text: string
   back_text: string
   // Optional free-text note that rides along with the card (e.g. the term
   // popover's contextual explanation). Omitted for most adds.
   note?: string | null
+}
+
+/**
+ * Key for a card added at the very end of a deck: the current last card is its
+ * only neighbour, and there is nothing on the far side.
+ */
+async function lastPositionIn(deck_id: number): Promise<string> {
+  return rankBetween({ prev: await fetchDeckTailRank(deck_id), next: null })
 }
 
 /**
@@ -25,8 +33,7 @@ export type InsertCardParams = {
  * rejects an over-cap insert with `PT402`.
  */
 export async function insertCard(params: InsertCardParams): Promise<{ id: number; rank: string }> {
-  const rank =
-    params.rank ?? rankBetween({ prev: await fetchDeckTailRank(params.deck_id), next: null })
+  const rank = params.rank ?? (await lastPositionIn(params.deck_id))
 
   const { data, error } = await supabase
     .from('cards')

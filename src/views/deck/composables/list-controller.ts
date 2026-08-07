@@ -1,4 +1,4 @@
-import { computed, ref, shallowRef, type InjectionKey, type Ref } from 'vue'
+import { computed, ref, shallowRef, toValue, type InjectionKey, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useInfiniteScroll } from '@/composables/ui/infinite-scroll'
 import { useCardsInDeckInfiniteQuery } from '@/api/cards'
@@ -82,6 +82,13 @@ export function useCardListController(opts: Options) {
   // can reach it without a template-ref chain through the mode-stack's
   // dynamic `<component :is>` panes (see list.vue).
   const list_scroller = shallowRef<{ scrollToCard: (client_id: string) => void } | null>(null)
+
+  // Drag-to-reorder only means anything while the list is in the deck's own
+  // rank order. Under a non-default sort the rendered neighbours aren't rank
+  // neighbours, so a drop has no position to express. The base grid gets this
+  // for free — `setSortBy` drops rearrange mode — but the editor list has no
+  // such toggle to hang it on.
+  const can_reorder = computed(() => toValue(opts.shell.sort_by) === 'default')
 
   const card_attributes = computed<DeckCardAttributes>(() => ({
     front: deck_query.data.value?.card_attributes?.front ?? {},
@@ -337,6 +344,7 @@ export function useCardListController(opts: Options) {
     addCardAtTop,
     newCard,
     reorderCard,
+    can_reorder,
     claimFocus,
     claimGrow,
     pending_focus_client_id,
