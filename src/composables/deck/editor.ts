@@ -66,7 +66,7 @@ export function useDeckEditor(deck?: Deck) {
   // The design preview shows the deck's first card. Disabled for unsaved decks
   // (no id), so deck-create just falls back to placeholder text.
   const cards_query = useCardsInDeckInfiniteQuery(() => deck?.id)
-  const first_card = computed(() => cards_query.data.value?.pages?.[0]?.[0])
+  const first_card = computed(() => cards_query.data.value?.pages?.[0]?.cards?.[0])
   const preview_front_text = computed(() => first_card.value?.front_text)
   const preview_back_text = computed(() => first_card.value?.back_text)
 

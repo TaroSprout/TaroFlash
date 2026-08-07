@@ -1,5 +1,6 @@
 import { computed, ref, toValue, type MaybeRefOrGetter } from 'vue'
 import uid from '@/utils/uid'
+import { resolveRankNeighbours, type RankNeighbours } from '@/utils/card/rank'
 import type { useCardsInDeckInfiniteQuery } from '@/api/cards'
 
 export type CardWithClientId = Card & { client_id: string }
@@ -76,8 +77,15 @@ export function useVirtualCardList(
   }
 
   const persisted_cards = computed<Card[]>(() => {
-    return (cards_query.data.value?.pages ?? []).flat() as Card[]
+    return (cards_query.data.value?.pages ?? []).flatMap((page) => page.cards)
   })
+
+  // Rank of the first card on the next, not-yet-loaded page. A card dropped
+  // below the last loaded row sits between it and this — without it the drop
+  // would resolve "no next neighbour" and land at the end of the whole deck.
+  const tail_rank = computed<string | null>(
+    () => cards_query.data.value?.pages?.at(-1)?.next_rank ?? null
+  )
 
   const persisted_id_set = computed(() => {
     const set = new Set<number>()
@@ -177,11 +185,17 @@ export function useVirtualCardList(
     return { anchor_id: null, side: null }
   }
 
-  /** Build the empty Card record that backs a freshly-staged temp entry. */
+  /**
+   * Build the empty Card record that backs a freshly-staged temp entry.
+   *
+   * No rank: the key is minted against live neighbours at insert time, not at
+   * stage time, so a temp that sits around while the list moves under it still
+   * lands where the user dropped it. An absent rank is also what marks an entry
+   * as un-persisted when neighbours are resolved.
+   */
   function buildEmptyCard(): Card {
     return {
       id: tempPlaceholderId(),
-      rank: 0,
       deck_id: toValue(deck_id),
       front_text: '',
       back_text: ''
@@ -249,6 +263,24 @@ export function useVirtualCardList(
   }
 
   /**
+   * The persisted keys either side of a staged card's slot in the rendered
+   * list, ready to mint its own key from.
+   *
+   * Read at insert time rather than at stage time, and against the rendered
+   * list rather than the entry's anchor — so a run of temps stacked in the same
+   * gap each resolve past one another to real neighbours, in the order the user
+   * sees them.
+   */
+  function neighbourRanksFor(client_id: string): RankNeighbours {
+    const cards = all_cards.value
+    const slot = cards.findIndex((c) => c.client_id === client_id)
+    if (slot === -1) return { prev: null, next: tail_rank.value }
+
+    const without = cards.filter((c) => c.client_id !== client_id)
+    return resolveRankNeighbours(without, slot, tail_rank.value)
+  }
+
+  /**
    * Look up the temp entry whose `card.id` matches `id`. Used by the mutation
    * layer to decide whether a save should INSERT (entry exists, `real_id`
    * still null) or UPDATE (no entry, or `real_id` already set).
@@ -278,8 +310,8 @@ export function useVirtualCardList(
    *
    * 1. **Entry stops being a temp.** `real_id` is no longer null, so the
    *    next save on this card routes to UPDATE instead of INSERT. The card's
-   *    `id` and `rank` are also overwritten with the server-assigned values,
-   *    and the just-saved text is applied so the entry mirrors server state.
+   *    `id` and `rank` are also filled in, and the just-saved text is applied
+   *    so the entry mirrors server state.
    *
    * 2. **Client_id is registered against the real id.** When the cache
    *    refetch eventually returns the same row, `wrapPersisted` will look up
@@ -294,12 +326,12 @@ export function useVirtualCardList(
    *
    * @param temp_id   - The id the temp had before this INSERT (the negative
    *                    placeholder originally minted by `addCard`).
-   * @param real_id   - The real id returned by `insert_card_at`.
-   * @param real_rank - The rank the server assigned.
+   * @param real_id   - The real id the insert returned.
+   * @param real_rank - The key the card was written with.
    * @param values    - The text values that were just persisted, applied so
    *                    the entry's card mirrors what the server now holds.
    */
-  function promoteTemp(temp_id: number, real_id: number, real_rank: number, values: Partial<Card>) {
+  function promoteTemp(temp_id: number, real_id: number, real_rank: string, values: Partial<Card>) {
     const entry = findEntryByCardId(temp_id)
     if (!entry) return
 
@@ -315,6 +347,8 @@ export function useVirtualCardList(
     persisted_cards,
     all_cards,
     temp_entries,
+    tail_rank,
+    neighbourRanksFor,
     addCard,
     appendCard,
     prependCard,

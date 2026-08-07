@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useMemberDecksQuery } from '@/api/decks'
-import { useInsertCardAtMutation } from '@/api/cards'
+import { useInsertCardMutation } from '@/api/cards'
 import { useLastDeck } from '@/composables/last-deck'
 import { useCardLimitGate } from '@/composables/card'
 import { useNoticeStore } from '@/stores/notice-store'
@@ -35,7 +35,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const notice = useNoticeStore()
-const insert_card = useInsertCardAtMutation()
+const insert_card = useInsertCardMutation()
 const { setLastDeck } = useLastDeck()
 
 const { data: decks_data } = useMemberDecksQuery()
@@ -119,10 +119,9 @@ async function onSave() {
 
   saving.value = true
   try {
+    // No rank: nothing on screen to resolve neighbours from, so it appends.
     await insert_card.mutateAsync({
       deck_id: deck_id.value,
-      anchor_id: null,
-      side: null,
       front_text: front_text.value,
       back_text: back_text.value,
       note
