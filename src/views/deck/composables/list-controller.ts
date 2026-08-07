@@ -83,11 +83,11 @@ export function useCardListController(opts: Options) {
   // dynamic `<component :is>` panes (see list.vue).
   const list_scroller = shallowRef<{ scrollToCard: (client_id: string) => void } | null>(null)
 
-  // Drag-to-reorder only means anything while the list is in the deck's own
-  // rank order. Under a non-default sort the rendered neighbours aren't rank
-  // neighbours, so a drop has no position to express. The base grid gets this
-  // for free — `setSortBy` drops rearrange mode — but the editor list has no
-  // such toggle to hang it on.
+  // Backstop, not the mechanism: entering edit mode forces the deck's own order,
+  // so the editor is normally always reorderable. The gap it closes is mobile,
+  // where the dock keeps page settings reachable mid-edit — change the sort
+  // there, widen to desktop, and drag would otherwise come back over a list
+  // whose rendered neighbours aren't rank neighbours.
   const can_reorder = computed(() => toValue(opts.shell.sort_by) === 'default')
 
   const card_attributes = computed<DeckCardAttributes>(() => ({
