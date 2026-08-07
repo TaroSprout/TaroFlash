@@ -24,9 +24,13 @@ export function invalidateDeck(
   queryCache.invalidateQueries({ key: ['cards', deck_id] })
 }
 
+// `exact` on the deck list: a bare `['decks']` filter is a prefix match, so it
+// also catches `['decks', 'count']` — the member's *deck* count, which no card
+// write can change. Without it every card insert/delete/move refires that HEAD
+// query for nothing.
 export function invalidateAllCardCounts(queryCache: QueryCache) {
   queryCache.invalidateQueries({ key: ['cards', 'count'] })
-  queryCache.invalidateQueries({ key: ['decks'] })
+  queryCache.invalidateQueries({ key: ['decks'], exact: true })
 }
 
 // The member-wide card index (front text → decks) drifts whenever a card is

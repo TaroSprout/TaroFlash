@@ -11,7 +11,10 @@ export function useInsertCardMutation() {
     onSettled: (_data, _error, params) => {
       invalidateDeck(queryCache, params.deck_id)
       invalidateAllCardCounts(queryCache)
-      invalidateCardIndex(queryCache)
+
+      // The index maps front text → decks, so a card inserted without one adds
+      // nothing to it. Skips the refetch for every eagerly-created blank card.
+      if (params.front_text) invalidateCardIndex(queryCache)
     }
   })
 }
