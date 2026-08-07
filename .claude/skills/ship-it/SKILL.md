@@ -1,7 +1,7 @@
 ---
 name: ship-it
-description: The end-of-session ritual. Pulls the current branch's work (committed + uncommitted) into an isolated git worktree, runs the `update-tests` skill and waits on it, then runs the fully-autonomous `prepare-pr` skill to open a single PR and watch CI to green — no permission prompts along the way. Notifies when done. Use when a session's work is code-complete and you want it tested, committed, and shipped as a PR without further back-and-forth.
-allowed-tools: Read, Bash, Glob, Grep, Skill
+description: The end-of-session ritual. Pulls the current branch's work (committed + uncommitted) into an isolated git worktree, runs the `update-tests` skill and waits on it, then runs the fully-autonomous `prepare-pr` skill to open a single PR and watch CI to green — no permission prompts along the way. Finishes with a `heal` sweep that captures any uncaptured lessons from the session onto the separate `self-heal` PR. Notifies when done. Use when a session's work is code-complete and you want it tested, committed, and shipped as a PR without further back-and-forth.
+allowed-tools: Read, Edit, Write, Bash, Glob, Grep, Skill, EnterWorktree, ExitWorktree
 argument-hint: '[additional-context]'
 arguments:
   - name: additional-context
@@ -16,6 +16,7 @@ This is the thing you'd otherwise do by hand at the end of every session: get th
 1. **Worktree** — move the current branch's work (committed _and_ uncommitted) into a fresh git worktree, freeing the main workspace. No dev server is started — this skill doesn't need one.
 2. **`update-tests`** — invoked in the worktree, run to completion, waited on.
 3. **`prepare-pr`** — invoked in the worktree, fully autonomous: commits everything, opens exactly one PR, watches CI until green, fixes what it can.
+4. **`heal`** — a sweep of the session for corrections that were never captured, landed on the separate `self-heal` PR.
 
 Then it reports back and stops. Nothing in this chain asks for confirmation — that's the point.
 
@@ -82,7 +83,13 @@ Invoke the `prepare-pr` skill inside the worktree. It is fully autonomous by des
 
 Don't pass `--no-watch` — the point of this chain is to land green, not just open the PR.
 
-## Step 4 — Notify
+## Step 4 — Sweep for lessons
+
+Invoke the `heal` skill with no argument. It re-reads the session for corrections that were never
+captured and lands them per [`self-heal.md`](../../rules/self-heal.md) — its own `self-heal` worktree
+and PR, never the branch just shipped. Nothing to capture is the common case and a fine outcome.
+
+## Step 5 — Notify
 
 Once `prepare-pr` returns, report to the user in one short block:
 
@@ -91,6 +98,7 @@ Worktree: ../TaroFlash-ship-<slug>  (<branch>)
 Tests:    <update-tests summary — one line>
 PR:       <url>
 CI:       <green | fixed after N attempts | needs attention — see Deferred items>
+Healed:   <nothing | <n> lesson(s) → <self-heal PR url>>
 ```
 
 If `prepare-pr` stopped early (its own "when to abort the watch" conditions), surface that clearly — this is the one case where the chain doesn't end green, and the user needs to know before treating the branch as shipped.

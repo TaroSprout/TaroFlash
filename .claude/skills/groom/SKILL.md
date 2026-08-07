@@ -319,12 +319,9 @@ it without guessing. Test it by asking:
 
 ## Self-heal
 
-The user will push back — correcting a miss, adding a granularity you skipped, rejecting a baked
-assumption. Treat that as a **defect in this skill**, not just in the ticket. Route the lesson: a
-**process** miss (how this pass runs) → this skill; a **"what a ticket looks like"** miss → the
-single source, [`ticket-authoring.md`](../../rules/ticket-authoring.md). Ship it per
-[`self-heal.md`](../../rules/self-heal.md) — the shared living-PR mechanics — separate from the ticket
-work.
+Run every pushback through [`self-heal.md`](../../rules/self-heal.md). Routing specific to this
+skill: a **process** miss (how this pass runs) → this skill; a **"what a ticket looks like"** miss →
+the single source, [`ticket-authoring.md`](../../rules/ticket-authoring.md).
 
 ## Guardrails
 

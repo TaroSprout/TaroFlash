@@ -211,34 +211,19 @@ user's call, exactly as at first handoff.
 
 ## Self-heal
 
-The **orchestrator** performs self-heal (the per-ticket subagents are gone and their worktrees torn
-down by the time feedback lands). Review feedback is this skill's richest signal — the user reviews
-each PR and says, in effect, "we don't do it this way." Run every correction through four gates; what
-survives is a **defect in the codebase's rules**, healed per
-[`self-heal.md`](../../rules/self-heal.md) — the shared living-PR mechanics — separate from the ticket
-PR.
+Run every review correction through [`self-heal.md`](../../rules/self-heal.md), separate from the
+ticket PR. Specific to this skill:
 
-1. **Execution, not spec.** If the feedback shows the _ticket / AC_ was wrong or ambiguous, that's a
-   `/triage`–`/groom` miss, not this skill's — note "needs regroom", fix the PR, don't heal here.
-   Only a **correct-ticket / wrong-code** miss continues.
-2. **Generalizes.** Restate the correction as a standing rule: true on the _next_ ticket, or only
-   this one? Instance-only ("the count should be 5") → fix the PR, no heal.
-3. **Code, or the pass.** About claim, PR handoff, or review mechanics → heal **this skill**. About
-   the code itself → gate 4.
-4. **Gap, not adherence.** Grep the corpus first — CLAUDE.md, `.claude/rules/*`, memory feedback:
-   - **No rule** → write one, routed by scope: repo-wide → a CLAUDE.md guideline; a domain that has a
-     rule file → extend it; a domain with none → a new path-triggered `.claude/rules/*.md`. Bias
-     toward extending the nearest file; create a new one only when the lesson would be off-topic in
-     every existing one.
-   - **Rule exists but vague or misplaced** → sharpen or relocate it. This is a heal.
-   - **A clear rule already existed** → an _adherence_ miss, not a corpus gap; leave it — **unless**
-     the same clear rule is violated repeatedly (across PRs this run, or across sessions), which means
-     it's weak, misplaced, or not loading, and that _is_ a heal (strengthen, relocate, or make it
-     path-load).
-
-Working several tickets at once multiplies the signal: the **same correction on multiple PRs in one
-run** is a high-confidence gap — weight it up at gate 2. The healing PR is autonomous; the user's
-review of it confirms or kills the generalization, so there is no inline confirm mid-run.
+- The **orchestrator** heals — the per-ticket subagents are gone and their worktrees torn down by the
+  time feedback lands.
+- Review feedback is this skill's richest signal. A miss about **claim, PR handoff, or review
+  mechanics** heals this skill; a miss about the **code** routes by the table in the rule.
+- Gate 2 (execution, not spec): feedback showing the _ticket / AC_ was wrong is a `/triage`–`/groom`
+  miss — note "needs regroom", fix the PR, don't heal here.
+- Working several tickets at once multiplies the signal: the **same correction on multiple PRs in one
+  run** is a high-confidence gap — weight it up at gate 1.
+- The healing PR is autonomous; the user's review of it confirms or kills the generalization, so
+  there's no inline confirm mid-run.
 
 ## Guardrails
 
