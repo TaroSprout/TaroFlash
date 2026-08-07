@@ -242,7 +242,13 @@ END;
 $function$
 ;
 
-create or replace view "public"."cards_with_images" as  SELECT c.id,
+-- security_invoker MUST be restated here. The view is dropped and recreated
+-- because the rank column changes type, and a recreate resets reloptions —
+-- `supabase db diff` generated this statement without it and then reported no
+-- drift, because migra doesn't compare view reloptions. Without it the view runs
+-- as its owner rather than the caller, so RLS on cards/media stops applying and
+-- get_cards_in_deck happily returns another member's cards.
+create or replace view "public"."cards_with_images" with (security_invoker='true') as  SELECT c.id,
     c.created_at,
     c.updated_at,
     c.front_text,
