@@ -45,9 +45,18 @@ Gate role/plan-based access through named capability functions, not inline `auth
 2. `supabase db diff -f <migration-name>` — generates the migration by diffing declared state against migration history.
 3. Review the generated file, then `supabase migration up --local`.
 
-Apply order is `schema_paths` in `config.toml` — new files must be added there. `scripts/dump-schemas` writes a raw type-bucketed snapshot of the local DB to git-ignored `supabase/.schema-snapshot/` for drift comparison; it never touches `supabase/schemas/` (the real drift check is `supabase db diff` returning empty).
+Apply order is `schema_paths` in `config.toml` — new files must be added there. `scripts/dump-schemas` writes a raw type-bucketed snapshot of the local DB to git-ignored `supabase/.schema-snapshot/` for drift comparison; it never touches `supabase/schemas/`.
 
-**Still hand-written migrations** (db diff can't track them): DML — storage bucket inserts, `cron.schedule`, vault secrets, seed rows; default privileges; comment changes.
+### `db diff` returning empty is necessary, not sufficient
+
+It compares a subset of the catalog, and is **silent** about the rest — an empty diff against a schema file that declares the missing thing reads as "no drift" and isn't. Two of these have already shipped bugs:
+
+- **Function grants** — emits none, so a new `SECURITY DEFINER` function lands executable by `anon`. Hand-write the `REVOKE`s.
+- **View reloptions** — emits none. Any change forcing a view to be dropped and recreated resets `security_invoker`, and the generated `create or replace view` omits it; the view then runs as its owner and RLS stops applying per-caller.
+
+Also untracked, so still hand-written: DML (storage bucket inserts, `cron.schedule`, vault secrets, seed rows), default privileges, comment changes.
+
+**After any migration that recreates an object, diff the object itself** — `\d+`, `pg_class.reloptions`, `has_function_privilege` — rather than trusting the tool's summary. Both blind spots above are now guarded by pgTAP (`00042_view_security_invoker_guard`, `00043_definer_function_anon_grants`), which is where a new one belongs: a class-wide catalog assertion covers the object nobody has written yet.
 
 **CREATE OR REPLACE FUNCTION only replaces an identical argument list** — a changed signature silently creates a second overload. The declarative flow generates the DROP for you; the pgTAP overload guard (`tests/00029`) fails CI if a duplicate slips through.
 
