@@ -110,16 +110,13 @@ classifications are stale, not on the routine "I added a few tickets" run.
 
 ## Self-heal
 
-This skill is in the `/triage`–`/groom`–`/work` class and heals the same way. The user will push back
-— a mis-ranked ticket, an epic in the wrong quarter, too much pulled into the current one, a Type or
-Epic call that's off. Treat it as a **defect in this skill or the rules it embodies**, not just in the
-sweep. Route the lesson: a **process** miss (how this pass ranks, groups by quarter, or sequences the
-four fields) → this skill; a **"what a ticket looks like" / field-semantics** miss (what a `Target`
-quarter means, when a new epic is warranted, the theme-grouping doctrine) → the single sources,
+Run every pushback through [`self-heal.md`](../../rules/self-heal.md) — a mis-ranked ticket, an epic
+in the wrong quarter, too much pulled into the current one, a Type or Epic call that's off. Routing
+specific to this skill: a **process** miss (how this pass ranks, groups by quarter, or sequences the
+four fields) → this skill; a **field-semantics** miss (what a `Target` quarter means, when a new epic
+is warranted, the theme-grouping doctrine) → the single sources,
 [`task-board-schema.md`](../../rules/task-board-schema.md) (schema) or
-[`ticket-authoring.md`](../../rules/ticket-authoring.md) (doctrine). Ship it per
-[`self-heal.md`](../../rules/self-heal.md) — the shared living-PR mechanics, its own `self-heal`
-worktree — separate from the backlog work itself.
+[`ticket-authoring.md`](../../rules/ticket-authoring.md) (doctrine).
 
 ## Guardrails
 

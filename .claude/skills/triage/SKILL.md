@@ -83,12 +83,9 @@ The board **schema** (data sources, field option lists) lives in
 
 ## Self-heal
 
-The user will push back — catching a miss, a wrong batch, a baked-in assumption. Treat that as a
-**defect in this skill**, not just in the batch. Route the lesson: a **process** miss (how this pass
-runs) → this skill; a **"what a ticket looks like"** miss → the single source,
-[`ticket-authoring.md`](../../rules/ticket-authoring.md). Ship it per
-[`self-heal.md`](../../rules/self-heal.md) — the shared living-PR mechanics — separate from the triage
-work.
+Run every pushback through [`self-heal.md`](../../rules/self-heal.md). Routing specific to this
+skill: a **process** miss (how this pass runs) → this skill; a **"what a ticket looks like"** miss →
+the single source, [`ticket-authoring.md`](../../rules/ticket-authoring.md).
 
 ## Guardrails
 

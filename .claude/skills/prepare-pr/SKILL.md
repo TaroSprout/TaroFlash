@@ -5,7 +5,7 @@ allowed-tools: Read, Edit, Write, Bash, Glob, Grep
 argument-hint: '[--no-watch] [--ticket <ID>] [--ticket-url <URL>]'
 arguments:
   - name: --no-watch
-    description: Skip the post-create CI watch + coverage check (Step 10).
+    description: Skip the post-create CI watch (Step 10).
   - name: --ticket <ID>
     description: Prefix the PR title with the ticket key `TARO-<ID>` (e.g. `TARO-207: …`). Omit for no prefix.
   - name: --ticket-url <URL>
@@ -15,7 +15,7 @@ lastUpdated: 2026-07-31T00:00:00Z
 
 ## Args
 
-- **`--no-watch`** (optional) — skip the post-create CI watch + coverage check (Step 10). Default behaviour blocks on CI after opening the PR until checks settle, then inspects coverage and writes more tests if it regressed.
+- **`--no-watch`** (optional) — skip the post-create CI watch (Step 10). Default behaviour blocks on CI after opening the PR until every check settles, fixing failures as they surface.
 - **`--ticket <ID>`** (optional) — the Notion Task Board ticket ID this PR resolves. When given, the PR **title** is prefixed with `TARO-<ID>: ` and the PR **body** opens with a ticket-link line (Step 8). This affects the PR title and body only — commit subjects stay clean (ticket refs still belong in a commit-body `Refs:` trailer, per Notes). Omit to open a PR with no ticket prefix or link.
 - **`--ticket-url <URL>`** (optional) — the Notion page URL for the ticket. When given with `--ticket`, the body's top line renders as a markdown link `[TARO-<ID>](<URL>)`. Without it, the top line falls back to plain `TARO-<ID>` text. Ignored when `--ticket` is absent.
 
@@ -292,9 +292,9 @@ open "<pr-url>"
 
 If `gh` is unavailable or auth failed in Step 1: print the title, body, and base as fenced blocks so the user can create manually, then note the CI watch was skipped.
 
-### Step 10 — Watch CI and coverage (skip with `--no-watch`)
+### Step 10 — Watch CI (skip with `--no-watch`)
 
-After the PR is created, block on its CI run, diagnose failures, and inspect the coverage report. Skip this step entirely if invoked with `--no-watch`.
+After the PR is created, block on its CI run and diagnose any failures. Skip this step entirely if invoked with `--no-watch`.
 
 Because Step 9 creates the PR directly, the PR number is already available — resolve it with `gh pr view --json number,url` and start watching immediately.
 
@@ -328,20 +328,6 @@ For each failing check:
 
 Never disable, mark `it.skip`, or comment out a failing test to make CI green. Treat the test as authoritative.
 
-#### 10c — Inspect coverage
-
-After CI is green, check whether coverage regressed against `master`.
-
-1. Pull the merge-base coverage baseline: `gh api repos/<owner>/<repo>/actions/artifacts` or `gh run download <master-run-id> --name coverage` — depends on how the project publishes coverage (look at `.github/workflows/` and the CI logs for the artifact name).
-2. Pull the PR's coverage: same approach on the PR's most recent run.
-3. Compare top-line `lines` / `branches` / `functions` / `statements` percentages.
-4. If any metric dropped by **more than 0.2 percentage points** relative to the baseline, treat that as a regression to fix.
-5. Drill into the per-file diff to find which changed file lost coverage. Common causes: new branch in changed file with no test, dead error path, new component with partial rendering test.
-6. Invoke the `update-tests` skill on the affected files (or, if the skill isn't a fit, write the tests directly following its conventions). Default to the bias rule in `update-tests`: don't skip just because "no test file exists yet" or "out of scope."
-7. Commit the new tests as `test(<scope>): …`, push, wait for CI to re-run, and verify coverage recovered.
-
-If the CI workflow doesn't publish a coverage artifact, note that under Deferred items rather than guessing. Don't run `vp test --coverage` locally as a substitute — it tells you the branch's coverage in isolation, not whether the PR regressed against `master`.
-
 #### When to abort the watch
 
 Stop Step 10 and hand back to the user if:
@@ -352,7 +338,7 @@ Stop Step 10 and hand back to the user if:
 
 "This test is flaky / red on master" is **not** an automatic reason to stop — default to fixing (see 10b step 3). Defer (don't stop) only when the root-cause fix would be a big lift outside this PR's scope; in that case log it under Deferred items and continue.
 
-Record what happened in the Step 11 report (CI status, fixes applied, coverage delta) so the user can see at a glance what was done after the PR opened.
+Record what happened in the Step 11 report (CI status, fixes applied) so the user can see at a glance what was done after the PR opened.
 
 ### Step 11 — Report
 
@@ -363,13 +349,13 @@ PR: <branch>   (base: master)   (was: <old-name>)   # omit "was" if unchanged
   <url>
   Commits renamed: <n>
   CI: <green | fixed after N attempts | needs attention — see Deferred items>
-  Coverage: <unchanged | regressed and fixed | flagged>
 ```
 
 If anything was deferred, skipped, or needed a judgment call instead of a real fix (gh unavailable, push blocked, an ambiguous CI failure you resolved by best guess, a flake deferred as a big lift), list it under **Deferred items** so it isn't forgotten.
 
 ## Notes
 
+- **Coverage is deliberately not checked here — don't re-add it.** The CI job still runs and still comments on the PR; this skill just doesn't read it. Percentages across runs aren't comparable, because the instrumented file set varies with what a given run touched: one recent PR reported 94.77% lines against a denominator ~620 lines smaller than its neighbours, which reads as a 5pp regression next to a normal 89.6% run and isn't one. Chasing that costs a round of tests written for a problem that doesn't exist. Coverage on the files a branch actually touches belongs to `update-tests`, which measures them directly.
 - **Scope is always `master..HEAD`.** Never rewrite or rename anything already on `master`/`main`.
 - Don't prefix subjects with ticket numbers; belong in body as `Refs: PROJ-123` trailer if used.
 - Don't add co-author trailers during rename — leave authorship alone.
