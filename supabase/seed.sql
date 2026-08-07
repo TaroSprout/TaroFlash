@@ -72,33 +72,35 @@ where not exists (
 );
 
 -- -----------------------------------------------------------------------------
--- 4. Cards — via bulk_insert_cards_in_deck, same RPC the FE card importer
---    uses (never raw cards.insert; rank must be server-computed).
+-- 4. Cards — plain inserts, the same shape the FE now writes. Ranks are
+--    fractional-indexing keys computed by the client, so there is no RPC left
+--    to route through; these are literal keys in the package's canonical form
+--    (see the rank migration for the anatomy of 'a0' + digits + '1').
+--    member_id still comes from the set_member_id trigger, and the per-deck cap
+--    still runs — as a statement trigger over the whole batch.
 -- -----------------------------------------------------------------------------
-select public.bulk_insert_cards_in_deck(
+insert into public.cards (deck_id, rank, front_text, back_text)
+select
   (select id from public.decks
-   where title = 'Deck One' and member_id = '00000000-0000-0000-0000-000000000001'),
-  (select jsonb_agg(jsonb_build_object(
-     'front_text', 'Card ' || i || ' front',
-     'back_text', 'Card ' || i || ' back'
-   ))
-   from generate_series(1, 500) i)
-)
+    where title = 'Deck One' and member_id = '00000000-0000-0000-0000-000000000001'),
+  'a0' || lpad(i::text, 6, '0') || '1',
+  'Card ' || i || ' front',
+  'Card ' || i || ' back'
+from generate_series(1, 500) i
 where not exists (
   select 1 from public.cards c
   join public.decks d on d.id = c.deck_id
   where d.title = 'Deck One' and d.member_id = '00000000-0000-0000-0000-000000000001'
 );
 
-select public.bulk_insert_cards_in_deck(
+insert into public.cards (deck_id, rank, front_text, back_text)
+select
   (select id from public.decks
-   where title = 'Deck Two' and member_id = '00000000-0000-0000-0000-000000000001'),
-  (select jsonb_agg(jsonb_build_object(
-     'front_text', 'Card ' || i || ' front',
-     'back_text', 'Card ' || i || ' back'
-   ))
-   from generate_series(1, 200) i)
-)
+    where title = 'Deck Two' and member_id = '00000000-0000-0000-0000-000000000001'),
+  'a0' || lpad(i::text, 6, '0') || '1',
+  'Card ' || i || ' front',
+  'Card ' || i || ' back'
+from generate_series(1, 200) i
 where not exists (
   select 1 from public.cards c
   join public.decks d on d.id = c.deck_id

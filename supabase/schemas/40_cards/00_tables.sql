@@ -23,7 +23,7 @@ CREATE TABLE public.cards (
     back_text text,
     deck_id bigint,
     member_id uuid,
-    rank numeric(20,6) NOT NULL,
+    rank text COLLATE pg_catalog."C" NOT NULL,
     note text
 );
 
@@ -63,7 +63,7 @@ CREATE INDEX cards_deck_front_back_text_idx ON public.cards USING btree (deck_id
 CREATE INDEX cards_deck_id_idx ON public.cards USING hash (deck_id);
 
 
-CREATE INDEX cards_deck_rank_idx ON public.cards USING btree (deck_id, rank);
+CREATE INDEX cards_deck_rank_idx ON public.cards USING btree (deck_id, rank, id);
 
 
 CREATE INDEX cards_member_id_idx ON public.cards USING hash (member_id);

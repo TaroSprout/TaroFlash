@@ -3,30 +3,33 @@
 -- produce the migration.
 SET check_function_bodies = false;
 
-CREATE FUNCTION public.move_cards_to_deck(p_target_deck_id bigint, p_card_ids bigint[] DEFAULT NULL::bigint[], p_source_deck_id bigint DEFAULT NULL::bigint, p_except_ids bigint[] DEFAULT NULL::bigint[]) RETURNS void
+-- Batched deck reassignment. The client computes the destination keys (one per
+-- card, in the order they should land) and hands them in alongside the ids —
+-- this function only owns ownership checks and the write, so a queued offline
+-- move carries everything it needs in its payload.
+--
+-- Kept as an RPC purely because PostgREST has no way to give each row of a bulk
+-- update its own value; `upsert` would fabricate blank cards for any id that
+-- didn't exist. The per-deck cap is enforced by the trigger on `cards`.
+CREATE FUNCTION public.move_cards_to_deck(p_target_deck_id bigint, p_card_ids bigint[], p_ranks text[]) RETURNS void
     LANGUAGE plpgsql
     AS $$
 DECLARE
-  v_uid          uuid    := auth.uid();
-  v_mode         text;
-  v_moving_count int;
-  v_max_rank     numeric;
-  v_step         numeric := 1000;
+  v_uid   uuid := auth.uid();
+  v_count int  := COALESCE(array_length(p_card_ids, 1), 0);
 BEGIN
   IF v_uid IS NULL THEN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
-  -- Dispatch: exactly one of p_card_ids / p_source_deck_id must be set.
-  IF p_card_ids IS NOT NULL AND p_source_deck_id IS NULL THEN
-    v_mode := 'explicit';
-  ELSIF p_source_deck_id IS NOT NULL AND p_card_ids IS NULL THEN
-    v_mode := 'select_all';
-  ELSE
-    RAISE EXCEPTION 'Pass exactly one of p_card_ids or p_source_deck_id';
+  IF v_count = 0 THEN
+    RAISE EXCEPTION 'No cards to move';
   END IF;
 
-  -- Target deck ownership (both modes).
+  IF v_count <> COALESCE(array_length(p_ranks, 1), 0) THEN
+    RAISE EXCEPTION 'p_card_ids and p_ranks must be the same length';
+  END IF;
+
   IF NOT EXISTS (
     SELECT 1 FROM public.decks
      WHERE public.decks.id = p_target_deck_id AND public.decks.member_id = v_uid
@@ -34,114 +37,29 @@ BEGIN
     RAISE EXCEPTION 'Target deck not found or not owned by user';
   END IF;
 
-  IF v_mode = 'explicit' THEN
-    v_moving_count := COALESCE(array_length(p_card_ids, 1), 0);
-
-    IF v_moving_count = 0 THEN
-      RAISE EXCEPTION 'No cards to move';
-    END IF;
-
-    -- Ownership only — cards already sitting in the target deck are a no-op,
-    -- not an error, so same-deck no longer raises here.
-    IF EXISTS (
-      SELECT 1 FROM public.cards
-       WHERE public.cards.id = ANY(p_card_ids)
-         AND public.cards.member_id <> v_uid
-    ) THEN
-      RAISE EXCEPTION 'One or more cards are not movable to this deck';
-    END IF;
-
-    -- Catches missing IDs (the EXISTS above passes vacuously for them).
-    IF (
-      SELECT count(*) FROM public.cards
-       WHERE public.cards.id = ANY(p_card_ids)
-         AND public.cards.member_id = v_uid
-    ) <> v_moving_count THEN
-      RAISE EXCEPTION 'One or more cards not found';
-    END IF;
-
-    -- Cards already in the target deck are excluded from the moved set and
-    -- the limit count below. If every selected card is already there, it's
-    -- a silent no-op rather than "No cards to move" — the caller did ask to
-    -- move real, owned cards; some just happen to already be home.
-    SELECT count(*) INTO v_moving_count
-      FROM public.cards
+  -- One count covers both "not yours" and "doesn't exist", matching the error
+  -- surface the rest of this RPC family presents.
+  IF (
+    SELECT count(*) FROM public.cards
      WHERE public.cards.id = ANY(p_card_ids)
-       AND public.cards.deck_id <> p_target_deck_id;
-
-    IF v_moving_count = 0 THEN
-      RETURN;
-    END IF;
-  ELSE
-    -- Source deck ownership + same-deck guard.
-    IF NOT EXISTS (
-      SELECT 1 FROM public.decks
-       WHERE public.decks.id = p_source_deck_id AND public.decks.member_id = v_uid
-    ) THEN
-      RAISE EXCEPTION 'Source deck not found or not owned by user';
-    END IF;
-
-    IF p_source_deck_id = p_target_deck_id THEN
-      RAISE EXCEPTION 'Source and target decks must differ';
-    END IF;
-
-    -- NULL/empty except_ids = move every card in source. The
-    -- `id <> ALL(NULL)` evaluates to NULL → guard explicitly, same trick as
-    -- delete_cards_in_deck.
-    SELECT count(*) INTO v_moving_count
-      FROM public.cards
-     WHERE public.cards.deck_id = p_source_deck_id
-       AND (p_except_ids IS NULL OR public.cards.id <> ALL(p_except_ids));
-
-    IF v_moving_count = 0 THEN
-      RAISE EXCEPTION 'No cards to move';
-    END IF;
+       AND public.cards.member_id = v_uid
+  ) <> v_count THEN
+    RAISE EXCEPTION 'One or more cards are not movable to this deck';
   END IF;
 
-  -- Plan-defined cap on the target deck.
-  PERFORM public.enforce_deck_card_limit(p_target_deck_id, v_moving_count);
-
-  -- Lock target deck against concurrent insert/move racing the tail slot.
-  -- Source deck doesn't need a lock — rows leaving don't affect any other
-  -- rank computation there.
-  PERFORM pg_advisory_xact_lock(p_target_deck_id);
-
-  SELECT COALESCE(MAX(public.cards.rank), 0)
-    INTO v_max_rank
-    FROM public.cards
-   WHERE public.cards.deck_id = p_target_deck_id;
-
-  IF v_mode = 'explicit' THEN
-    UPDATE public.cards AS c
-       SET deck_id    = p_target_deck_id,
-           rank       = v_max_rank + (ord.idx * v_step),
-           updated_at = now()
-      FROM unnest(p_card_ids) WITH ORDINALITY AS ord(card_id, idx)
-     WHERE c.id = ord.card_id
-       AND c.deck_id <> p_target_deck_id;
-  ELSE
-    -- Preserve source-deck visual order via rank-based ROW_NUMBER.
-    WITH ordered AS (
-      SELECT public.cards.id,
-             row_number() OVER (ORDER BY public.cards.rank) AS idx
-        FROM public.cards
-       WHERE public.cards.deck_id = p_source_deck_id
-         AND (p_except_ids IS NULL OR public.cards.id <> ALL(p_except_ids))
-    )
-    UPDATE public.cards AS c
-       SET deck_id    = p_target_deck_id,
-           rank       = v_max_rank + (ordered.idx * v_step),
-           updated_at = now()
-      FROM ordered
-     WHERE c.id = ordered.id;
-  END IF;
+  UPDATE public.cards AS c
+     SET deck_id    = p_target_deck_id,
+         rank       = m.rank,
+         updated_at = now()
+    FROM unnest(p_card_ids, p_ranks) AS m(card_id, rank)
+   WHERE c.id = m.card_id;
 END;
 $$;
 
 
-ALTER FUNCTION public.move_cards_to_deck(p_target_deck_id bigint, p_card_ids bigint[], p_source_deck_id bigint, p_except_ids bigint[]) OWNER TO postgres;
+ALTER FUNCTION public.move_cards_to_deck(p_target_deck_id bigint, p_card_ids bigint[], p_ranks text[]) OWNER TO postgres;
 
 
-GRANT ALL ON FUNCTION public.move_cards_to_deck(p_target_deck_id bigint, p_card_ids bigint[], p_source_deck_id bigint, p_except_ids bigint[]) TO anon;
-GRANT ALL ON FUNCTION public.move_cards_to_deck(p_target_deck_id bigint, p_card_ids bigint[], p_source_deck_id bigint, p_except_ids bigint[]) TO authenticated;
-GRANT ALL ON FUNCTION public.move_cards_to_deck(p_target_deck_id bigint, p_card_ids bigint[], p_source_deck_id bigint, p_except_ids bigint[]) TO service_role;
+GRANT ALL ON FUNCTION public.move_cards_to_deck(p_target_deck_id bigint, p_card_ids bigint[], p_ranks text[]) TO anon;
+GRANT ALL ON FUNCTION public.move_cards_to_deck(p_target_deck_id bigint, p_card_ids bigint[], p_ranks text[]) TO authenticated;
+GRANT ALL ON FUNCTION public.move_cards_to_deck(p_target_deck_id bigint, p_card_ids bigint[], p_ranks text[]) TO service_role;

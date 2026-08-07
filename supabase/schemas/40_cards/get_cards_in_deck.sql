@@ -3,7 +3,7 @@
 -- produce the migration.
 SET check_function_bodies = false;
 
-CREATE FUNCTION public.get_cards_in_deck(p_deck_id bigint, p_sort_by text DEFAULT 'default'::text, p_query text DEFAULT NULL::text, p_offset integer DEFAULT 0, p_limit integer DEFAULT 50) RETURNS TABLE(id bigint, created_at timestamp with time zone, updated_at timestamp with time zone, front_text text, back_text text, deck_id bigint, member_id uuid, rank numeric, front_image_bucket text, front_image_path text, back_image_bucket text, back_image_path text, review jsonb)
+CREATE FUNCTION public.get_cards_in_deck(p_deck_id bigint, p_sort_by text DEFAULT 'default'::text, p_query text DEFAULT NULL::text, p_offset integer DEFAULT 0, p_limit integer DEFAULT 50) RETURNS TABLE(id bigint, created_at timestamp with time zone, updated_at timestamp with time zone, front_text text, back_text text, deck_id bigint, member_id uuid, rank text, front_image_bucket text, front_image_path text, back_image_bucket text, back_image_path text, review jsonb)
     LANGUAGE plpgsql STABLE
     AS $$
 BEGIN
