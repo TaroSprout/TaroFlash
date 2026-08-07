@@ -40,7 +40,7 @@ describe('moveCardsToDeck', () => {
 
   test('whole-deck move: mints the caller-supplied count of keys, not a queried count [obligation]', async () => {
     rpcMock.mockResolvedValueOnce({ error: null })
-    ranksBetweenMock.mockReturnValueOnce(new Array(7).fill('a1'))
+    ranksBetweenMock.mockReturnValueOnce(Array.from({ length: 7 }, () => 'a1'))
 
     await moveCardsToDeck({
       target_deck_id: 20,

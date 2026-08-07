@@ -128,14 +128,17 @@ describe('useCardsInDeckInfiniteQuery', () => {
   test('getNextPageParam returns null when next_rank is null — end of the deck [obligation]', () => {
     useCardsInDeckInfiniteQuery(ref(10))
     const [{ getNextPageParam }] = useInfiniteQueryMock.mock.calls[0]
-    const short_page = { cards: new Array(10).fill({}), next_rank: null }
+    const short_page = { cards: Array.from({ length: 10 }, () => ({})), next_rank: null }
     expect(getNextPageParam(short_page, [short_page])).toBe(null)
   })
 
   test('getNextPageParam returns the summed cards length across pages when next_rank is set [obligation]', () => {
     useCardsInDeckInfiniteQuery(ref(10))
     const [{ getNextPageParam }] = useInfiniteQueryMock.mock.calls[0]
-    const full_page = { cards: new Array(CARDS_PAGE_SIZE).fill({}), next_rank: 'z9' }
+    const full_page = {
+      cards: Array.from({ length: CARDS_PAGE_SIZE }, () => ({})),
+      next_rank: 'z9'
+    }
     const all_pages = [full_page]
     expect(getNextPageParam(full_page, all_pages)).toBe(CARDS_PAGE_SIZE)
   })
@@ -143,8 +146,8 @@ describe('useCardsInDeckInfiniteQuery', () => {
   test('getNextPageParam sums cards.length across all pages, not just the last', () => {
     useCardsInDeckInfiniteQuery(ref(10))
     const [{ getNextPageParam }] = useInfiniteQueryMock.mock.calls[0]
-    const page_a = { cards: new Array(20).fill({}), next_rank: 'a5' }
-    const page_b = { cards: new Array(15).fill({}), next_rank: 'z9' }
+    const page_a = { cards: Array.from({ length: 20 }, () => ({})), next_rank: 'a5' }
+    const page_b = { cards: Array.from({ length: 15 }, () => ({})), next_rank: 'z9' }
     expect(getNextPageParam(page_b, [page_a, page_b])).toBe(35)
   })
 
@@ -152,7 +155,7 @@ describe('useCardsInDeckInfiniteQuery', () => {
     useCardsInDeckInfiniteQuery(ref(10))
     const [{ getNextPageParam }] = useInfiniteQueryMock.mock.calls[0]
     // Fewer rows than page_size but next_rank is still set — has-more is true regardless of length.
-    const short_but_more = { cards: new Array(3).fill({}), next_rank: 'b0' }
+    const short_but_more = { cards: Array.from({ length: 3 }, () => ({})), next_rank: 'b0' }
     expect(getNextPageParam(short_but_more, [short_but_more])).toBe(3)
   })
 
