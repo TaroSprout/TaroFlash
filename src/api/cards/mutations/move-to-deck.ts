@@ -7,7 +7,7 @@ import { invalidateAllCardCounts, invalidateCardIndex, invalidateDeck } from './
 // source decks without the caller doing any cache work.
 export type MoveCardsToDeckVars =
   | { target_deck_id: number; card_ids: number[]; source_deck_ids: number[] }
-  | { target_deck_id: number; source_deck_id: number; except_ids: number[] }
+  | { target_deck_id: number; source_deck_id: number; except_ids: number[]; count: number }
 
 function toDbArgs(vars: MoveCardsToDeckVars): MoveCardsToDeckArgs {
   if ('card_ids' in vars) {
@@ -16,7 +16,8 @@ function toDbArgs(vars: MoveCardsToDeckVars): MoveCardsToDeckArgs {
   return {
     target_deck_id: vars.target_deck_id,
     source_deck_id: vars.source_deck_id,
-    except_ids: vars.except_ids
+    except_ids: vars.except_ids,
+    count: vars.count
   }
 }
 

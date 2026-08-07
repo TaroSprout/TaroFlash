@@ -5,32 +5,21 @@ import { fetchDeckTailRank } from './tail-rank'
 
 export type MoveCardsToDeckArgs =
   | { target_deck_id: number; card_ids: number[] }
-  | { target_deck_id: number; source_deck_id: number; except_ids: number[] }
+  // `count` is how many cards the whole-deck move covers — the same number the
+  // move modal shows. Only an upper bound is needed (see below), so the
+  // caller's own tally serves; there's nothing to ask the server for.
+  | { target_deck_id: number; source_deck_id: number; except_ids: number[]; count: number }
 
 /**
- * How many keys the move could possibly need.
+ * How many keys to mint.
  *
- * An upper bound, not an exact count — the RPC pairs keys with the cards it
- * resolves and ignores the rest, so overshooting costs nothing while
- * undershooting fails the write. That's what keeps this to at most one cheap
- * request: an explicit selection already knows its own size, and a whole-deck
- * move asks for a row count with `head` (no rows come back, so the `max_rows`
- * cap never enters into it).
+ * An upper bound, not an exact count: the RPC pairs keys with the cards it
+ * resolves and ignores any spare, so overshooting costs nothing. Undershooting
+ * doesn't work — a card would be left without a key — and that's what the RPC
+ * rejects outright.
  */
-async function countKeysNeeded(args: MoveCardsToDeckArgs): Promise<number> {
-  if ('card_ids' in args) return args.card_ids.length
-
-  const { count, error } = await supabase
-    .from('cards')
-    .select('id', { count: 'exact', head: true })
-    .eq('deck_id', args.source_deck_id)
-
-  if (error) {
-    logger.error(error.message)
-    throw error
-  }
-
-  return count ?? 0
+function countKeysNeeded(args: MoveCardsToDeckArgs): number {
+  return 'card_ids' in args ? args.card_ids.length : args.count
 }
 
 /**
@@ -43,7 +32,7 @@ async function countKeysNeeded(args: MoveCardsToDeckArgs): Promise<number> {
  * straight back.
  */
 export async function moveCardsToDeck(args: MoveCardsToDeckArgs): Promise<void> {
-  const key_count = await countKeysNeeded(args)
+  const key_count = countKeysNeeded(args)
   if (key_count === 0) return
 
   const tail_rank = await fetchDeckTailRank(args.target_deck_id)
