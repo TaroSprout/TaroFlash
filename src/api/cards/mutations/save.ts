@@ -1,6 +1,6 @@
 import { useMutation, useQueryCache } from '@pinia/colada'
 import { debounce } from '@/utils/debounce'
-import { saveCard } from '../db'
+import { saveCard, type CardsPage } from '../db'
 import { invalidateCardIndex } from './_invalidate'
 
 type QueryCache = ReturnType<typeof useQueryCache>
@@ -19,12 +19,13 @@ type SaveCardVars = {
 function patchCardInDeckCache(queryCache: QueryCache, card: Card, values: Partial<Card>) {
   if (card.deck_id === undefined || card.id === undefined) return
 
-  queryCache.setQueriesData<{ pages: Card[][]; pageParams: unknown[] }>(
+  queryCache.setQueriesData<{ pages: CardsPage[]; pageParams: unknown[] }>(
     { key: ['cards', card.deck_id, 'pages'] },
     (old) => ({
-      pages: (old?.pages ?? []).map((page) =>
-        page.map((c) => (c.id === card.id ? { ...c, ...values } : c))
-      ),
+      pages: (old?.pages ?? []).map((page) => ({
+        ...page,
+        cards: page.cards.map((c) => (c.id === card.id ? { ...c, ...values } : c))
+      })),
       pageParams: old?.pageParams ?? []
     })
   )
