@@ -68,6 +68,16 @@ export function useCardListController(opts: Options) {
 
   const saving = ref(false)
 
+  // In-flight eager insert per staged card, keyed by client_id. `updateCard`
+  // awaits the entry's promise so a keystroke landing mid-insert becomes an
+  // UPDATE on the row it created, never a second INSERT.
+  const pending_inserts = new Map<string, Promise<void>>()
+
+  // Eager inserts run one at a time. A card's key is minted against its
+  // rendered neighbours, and a sibling staged moments earlier only carries one
+  // once its own insert resolved — minting concurrently hands both the same key.
+  let insert_queue: Promise<void> = Promise.resolve()
+
   // client_id of the card last staged through the create seam (`addFocusedCard`),
   // awaiting autofocus + grow-in. The matching row claims it on mount (see
   // `claimFocus`) and focuses itself.
@@ -96,48 +106,53 @@ export function useCardListController(opts: Options) {
   }))
 
   /**
-   * Stage a new temp card, gated on the deck's plan card cap, *without*
-   * requesting autofocus. The flag-free stage used by the mobile dock editor,
-   * which opens its own focused surface over the staged card — the desktop
-   * row's autofocus would fight it. Desktop create paths go through
-   * `addFocusedCard` instead. A capped free member gets the upgrade alert and
-   * nothing is staged.
+   * The single create seam every "add card" intent funnels through — desktop
+   * toolbar, per-row append / prepend, the editor's empty-state CTA, and the
+   * mobile dock editor. Guards the plan cap, stages the temp via `insert`,
+   * optionally records it as the autofocus + grow-in target, then fires its
+   * INSERT in the background so the card is a real, saved card before a single
+   * key is pressed. No-op past the cap.
+   *
+   * The focus target is assigned in the same synchronous block as `insert()`,
+   * after the sole `await` (the cap guard): the list insert queues Vue's render,
+   * which flushes before any later microtask, so assigning
+   * `pending_focus_client_id` after a *further* `await` would lose the race —
+   * the row would mount and claim focus before the target is set.
+   *
+   * @param insert - Virtual-list insert to run once the guard passes; returns
+   *   the staged temp's `client_id`.
+   * @param focus - Whether the new row should autofocus and grow in. Off for the
+   *   mobile dock editor, which opens its own focused surface over the staged
+   *   card and would fight the desktop row's autofocus.
+   * @returns The staged `client_id`, or `undefined` when the cap vetoes staging.
+   */
+  async function stageCard(insert: () => string, focus = false): Promise<string | undefined> {
+    if (!(await limit_gate.guardAddCards())) return
+
+    const client_id = insert()
+
+    if (focus) {
+      pending_focus_client_id.value = client_id
+      pending_grow_client_id.value = client_id
+    }
+
+    insertStaged(client_id)
+    return client_id
+  }
+
+  /**
+   * Stage a new card without autofocus — the mobile dock editor's create path.
    *
    * @param left_card_id  - If given, the new card is placed `after` this id.
    * @param right_card_id - If given (and `left_card_id` is not), `before` it.
    */
-  async function addCard(
-    left_card_id?: number,
-    right_card_id?: number
-  ): Promise<string | undefined> {
-    if (!(await limit_gate.guardAddCards())) return
-    return list.addCard(left_card_id, right_card_id)
+  function addCard(left_card_id?: number, right_card_id?: number) {
+    return stageCard(() => list.addCard(left_card_id, right_card_id))
   }
 
-  /**
-   * The single create seam every desktop "add card" intent funnels through —
-   * toolbar, per-row append / prepend, and the editor's empty-state CTA. Guards
-   * the plan cap, stages the temp via `insert`, then records it as the
-   * autofocus + grow-in target so the new card lands focused and grows in
-   * regardless of which entry point triggered it. No-op past the cap.
-   *
-   * The target is assigned in the same synchronous block as `insert()`, after
-   * the sole `await` (the cap guard): the list insert queues Vue's render, which
-   * flushes before any later microtask, so assigning `pending_focus_client_id`
-   * after a *further* `await` would lose the race — the row would mount and
-   * claim focus before the target is set.
-   *
-   * @param insert - Virtual-list insert to run once the guard passes; returns
-   *   the staged temp's `client_id`.
-   * @returns The staged `client_id`, or `undefined` when the cap vetoes staging.
-   */
-  async function addFocusedCard(insert: () => string): Promise<string | undefined> {
-    if (!(await limit_gate.guardAddCards())) return
-
-    const client_id = insert()
-    pending_focus_client_id.value = client_id
-    pending_grow_client_id.value = client_id
-    return client_id
+  /** Stage a new card that lands focused and grows in — every desktop create path. */
+  function addFocusedCard(insert: () => string) {
+    return stageCard(insert, true)
   }
 
   /** Stage a focused new temp card immediately after the card with `card_id`. */
@@ -300,10 +315,16 @@ export function useCardListController(opts: Options) {
    * runs when the temp is added — a stale `card_count` or a concurrent edit on
    * another device can still let a write reach the cap trigger and be rejected
    * here. `handleLimitError` re-surfaces the upgrade alert for that case and the
-   * temp stays staged (still `real_id: null`), so upgrading and re-saving
-   * retries the same INSERT. Any other rejection propagates.
+   * entry is left staged for the caller to keep or roll back. Any other
+   * rejection propagates.
+   *
+   * @returns `false` when the cap rejected the write, `true` on success.
    */
-  async function insertTemp(temp_id: number, entry: CardEntry, values: Partial<Card>) {
+  async function insertTemp(
+    temp_id: number,
+    entry: CardEntry,
+    values: Partial<Card>
+  ): Promise<boolean> {
     try {
       const inserted = await mutations.insertCard({
         deck_id: opts.deck_id,
@@ -313,24 +334,74 @@ export function useCardListController(opts: Options) {
       })
 
       list.promoteTemp(temp_id, inserted.id, inserted.rank, values)
+      return true
     } catch (error) {
       if (!limit_gate.handleLimitError(error)) throw error
+      return false
     }
   }
 
   /**
-   * Persist an edit. Routes to INSERT on the first save of an unpromoted
-   * temp; otherwise UPDATE. No-op when the id matches nothing.
+   * Fire the eager INSERT for a just-staged card, queued behind any insert
+   * already in flight so successive creates mint their keys in render order.
+   *
+   * Failures are swallowed: this insert only ever carries an empty card, so
+   * nothing the user typed can be lost. The entry simply stays a temp and the
+   * next edit re-inserts it — no error toast for a save the user never asked
+   * for. A cap rejection is the exception: the deck genuinely can't hold the
+   * card, so the row comes back out of the list.
    */
-  async function updateCard(id: number, values: Partial<Card>) {
-    const entry = list.findEntryByCardId(id)
+  function insertStaged(client_id: string) {
+    const entry = list.findEntryByClientId(client_id)
+    if (!entry) return
 
-    if (entry && entry.real_id === null) return withSaving(() => insertTemp(id, entry, values))
+    const temp_id = entry.card.id
+
+    const run = insert_queue
+      .then(async () => {
+        const inserted = await insertTemp(temp_id, entry, {})
+        if (!inserted) list.removeTemp(client_id)
+      })
+      .catch(() => {})
+      .finally(() => pending_inserts.delete(client_id))
+
+    insert_queue = run
+    pending_inserts.set(client_id, run)
+  }
+
+  /**
+   * Route a resolved edit to INSERT or UPDATE.
+   *
+   * @param staged - The entry the card had before any in-flight eager insert
+   *   resolved, or `undefined` for an already-persisted card. Re-read here by
+   *   client_id: the insert may have promoted it (so this is an UPDATE) or, at
+   *   the cap, rolled it out of the list entirely (so there's nothing to save).
+   */
+  function persistEdit(id: number, staged: CardEntry | undefined, values: Partial<Card>) {
+    const entry = staged && list.findEntryByClientId(staged.client_id)
+    if (staged && !entry) return
+
+    if (entry?.real_id === null) return insertTemp(id, entry, values)
 
     const card = entry?.card ?? list.findCard(id)
     if (!card) return
 
-    return withSaving(() => mutations.saveCard(card, values))
+    return mutations.saveCard(card, values)
+  }
+
+  /**
+   * Persist an edit. Waits out the card's eager INSERT when one is still in
+   * flight, so typing into a brand-new card yields exactly one card carrying
+   * the text. No-op when the id matches nothing.
+   */
+  function updateCard(id: number, values: Partial<Card>) {
+    const staged = list.findEntryByCardId(id)
+    const pending = staged && pending_inserts.get(staged.client_id)
+
+    return withSaving(async () => {
+      await pending
+      return persistEdit(id, staged, values)
+    })
   }
 
   return {

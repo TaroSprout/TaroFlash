@@ -290,6 +290,24 @@ export function useVirtualCardList(
   }
 
   /**
+   * Look up the entry with `client_id`. Unlike `findEntryByCardId` the key
+   * survives promotion, so a caller holding one across an in-flight insert can
+   * re-read the entry afterwards — or find it gone, if the insert rolled back.
+   */
+  function findEntryByClientId(client_id: string): CardEntry | undefined {
+    return temp_entries.value.find((e) => e.client_id === client_id)
+  }
+
+  /**
+   * Drop a staged entry out of the list. The rollback for an insert the backend
+   * refused (the deck's card cap) — the row never reached the server, so
+   * nothing is orphaned by removing it.
+   */
+  function removeTemp(client_id: string) {
+    temp_entries.value = temp_entries.value.filter((e) => e.client_id !== client_id)
+  }
+
+  /**
    * Resolve a card-id back to a Card. Searches persisted first, then live
    * temp entries — mirrors the merge order in `all_cards`. Returns the
    * underlying Card (no `client_id` wrapper) so callers can spread it into
@@ -354,6 +372,8 @@ export function useVirtualCardList(
     prependCard,
     addCardAtTop,
     findEntryByCardId,
+    findEntryByClientId,
+    removeTemp,
     findCard,
     promoteTemp
   }
