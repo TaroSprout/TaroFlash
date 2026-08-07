@@ -386,6 +386,7 @@ export function useCardListController(opts: Options) {
     const card = entry?.card ?? list.findCard(id)
     if (!card) return
 
+    if (entry) list.patchTemp(entry.client_id, values)
     return mutations.saveCard(card, values)
   }
 

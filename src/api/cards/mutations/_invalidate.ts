@@ -7,21 +7,24 @@ type QueryCache = ReturnType<typeof useQueryCache>
 // Pass `refetch_inactive: true` when the caller might be invalidating a deck
 // the user isn't currently viewing (e.g. cross-deck moves) — otherwise the
 // user navigates back to stale cached data.
-type InvalidateOptions = { refetch_inactive?: boolean }
+type InvalidateOptions = {
+  refetch_inactive?: boolean
+  // Set false when the caller already holds the written row on screen and only
+  // the deck's own counts need re-reading.
+  card_pages?: boolean
+}
 
 export function invalidateDeck(
   queryCache: QueryCache,
   deck_id: number | undefined,
-  options: InvalidateOptions = {}
+  { refetch_inactive = false, card_pages = true }: InvalidateOptions = {}
 ) {
   if (deck_id === undefined) return
-  if (options.refetch_inactive) {
-    queryCache.invalidateQueries({ key: ['deck', deck_id] }, 'all')
-    queryCache.invalidateQueries({ key: ['cards', deck_id] }, 'all')
-    return
-  }
-  queryCache.invalidateQueries({ key: ['deck', deck_id] })
-  queryCache.invalidateQueries({ key: ['cards', deck_id] })
+
+  const refetch = refetch_inactive ? 'all' : true
+
+  queryCache.invalidateQueries({ key: ['deck', deck_id] }, refetch)
+  if (card_pages) queryCache.invalidateQueries({ key: ['cards', deck_id] }, refetch)
 }
 
 // `exact` on the deck list: a bare `['decks']` filter is a prefix match, so it

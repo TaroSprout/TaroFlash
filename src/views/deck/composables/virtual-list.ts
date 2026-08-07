@@ -299,6 +299,22 @@ export function useVirtualCardList(
   }
 
   /**
+   * Merge `values` into an entry's own card record.
+   *
+   * An eagerly-created card is promoted in place and never refetched, so the
+   * deck's cached pages don't hold it and `saveCard`'s optimistic patch can't
+   * reach it. Without this its card would stay the empty record it was staged
+   * with — a stale merge base that the mobile editor's one-side-at-a-time saves
+   * would use to clobber the other side.
+   */
+  function patchTemp(client_id: string, values: Partial<Card>) {
+    const entry = findEntryByClientId(client_id)
+    if (!entry) return
+
+    Object.assign(entry.card, values)
+  }
+
+  /**
    * Drop a staged entry out of the list. The rollback for an insert the backend
    * refused (the deck's card cap) — the row never reached the server, so
    * nothing is orphaned by removing it.
@@ -373,6 +389,7 @@ export function useVirtualCardList(
     addCardAtTop,
     findEntryByCardId,
     findEntryByClientId,
+    patchTemp,
     removeTemp,
     findCard,
     promoteTemp
