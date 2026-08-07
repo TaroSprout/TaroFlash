@@ -124,19 +124,36 @@ describe('useCardsInDeckInfiniteQuery', () => {
     expect(key()).toEqual(cardsInDeckQueryKey(7))
   })
 
-  test('getNextPageParam returns null when last page is shorter than page_size', () => {
+  // [obligation] has-more is a fact (next_rank !== null), not inferred from page length
+  test('getNextPageParam returns null when next_rank is null — end of the deck [obligation]', () => {
     useCardsInDeckInfiniteQuery(ref(10))
     const [{ getNextPageParam }] = useInfiniteQueryMock.mock.calls[0]
-    const short_page = new Array(10).fill({})
+    const short_page = { cards: new Array(10).fill({}), next_rank: null }
     expect(getNextPageParam(short_page, [short_page])).toBe(null)
   })
 
-  test('getNextPageParam returns total loaded count when last page is full', () => {
+  test('getNextPageParam returns the summed cards length across pages when next_rank is set [obligation]', () => {
     useCardsInDeckInfiniteQuery(ref(10))
     const [{ getNextPageParam }] = useInfiniteQueryMock.mock.calls[0]
-    const full_page = new Array(CARDS_PAGE_SIZE).fill({})
+    const full_page = { cards: new Array(CARDS_PAGE_SIZE).fill({}), next_rank: 'z9' }
     const all_pages = [full_page]
     expect(getNextPageParam(full_page, all_pages)).toBe(CARDS_PAGE_SIZE)
+  })
+
+  test('getNextPageParam sums cards.length across all pages, not just the last', () => {
+    useCardsInDeckInfiniteQuery(ref(10))
+    const [{ getNextPageParam }] = useInfiniteQueryMock.mock.calls[0]
+    const page_a = { cards: new Array(20).fill({}), next_rank: 'a5' }
+    const page_b = { cards: new Array(15).fill({}), next_rank: 'z9' }
+    expect(getNextPageParam(page_b, [page_a, page_b])).toBe(35)
+  })
+
+  test('getNextPageParam still returns a short-page count when next_rank is truthy — length no longer decides has-more', () => {
+    useCardsInDeckInfiniteQuery(ref(10))
+    const [{ getNextPageParam }] = useInfiniteQueryMock.mock.calls[0]
+    // Fewer rows than page_size but next_rank is still set — has-more is true regardless of length.
+    const short_but_more = { cards: new Array(3).fill({}), next_rank: 'b0' }
+    expect(getNextPageParam(short_but_more, [short_but_more])).toBe(3)
   })
 
   test('enabled fn returns false when deck_id is undefined', () => {

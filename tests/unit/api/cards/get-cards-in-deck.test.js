@@ -1,11 +1,8 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 
-// ── Hoisted mocks ──────────────────────────────────────────────────────────────
-
-const { rpcMock } = vi.hoisted(() => {
-  const rpcMock = vi.fn()
-  return { rpcMock }
-})
+const { rpcMock } = vi.hoisted(() => ({
+  rpcMock: vi.fn()
+}))
 
 vi.mock('@/supabase-client', () => ({
   supabase: { rpc: rpcMock }
@@ -13,18 +10,18 @@ vi.mock('@/supabase-client', () => ({
 
 vi.mock('@/utils/logger', () => ({ default: { error: vi.fn() } }))
 
-// ── Import ─────────────────────────────────────────────────────────────────────
-
 import { fetchCardsInDeck } from '@/api/cards/db/get-cards-in-deck'
-
-// ── Tests ─────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
   rpcMock.mockReset()
 })
 
+function row(id) {
+  return { id, rank: `rank-${id}` }
+}
+
 describe('fetchCardsInDeck', () => {
-  test('calls the get_cards_in_deck RPC with the correct parameter mapping', async () => {
+  test('requests p_limit + 1 rows from the RPC — the lookahead row [obligation]', async () => {
     rpcMock.mockResolvedValueOnce({ data: [], error: null })
     await fetchCardsInDeck({ deck_id: 7, sort_by: 'default', query: null, offset: 0, limit: 50 })
     expect(rpcMock).toHaveBeenCalledWith('get_cards_in_deck', {
@@ -32,11 +29,11 @@ describe('fetchCardsInDeck', () => {
       p_sort_by: 'default',
       p_query: null,
       p_offset: 0,
-      p_limit: 50
+      p_limit: 51
     })
   })
 
-  test('passes a non-null query string through to p_query for ilike filtering [obligation]', async () => {
+  test('passes a non-null query string through to p_query for ilike filtering', async () => {
     rpcMock.mockResolvedValueOnce({ data: [], error: null })
     await fetchCardsInDeck({
       deck_id: 5,
@@ -51,31 +48,50 @@ describe('fetchCardsInDeck', () => {
     )
   })
 
-  test('passes null query to p_query — empty string must not reach the RPC [obligation]', async () => {
-    // The query layer converts empty string → null before calling this function.
-    // This test verifies null is preserved as-is (no accidental coercion to '').
-    rpcMock.mockResolvedValueOnce({ data: [], error: null })
-    await fetchCardsInDeck({ deck_id: 5, sort_by: 'default', query: null, offset: 100, limit: 50 })
-    expect(rpcMock).toHaveBeenCalledWith(
-      'get_cards_in_deck',
-      expect.objectContaining({ p_query: null, p_offset: 100 })
-    )
-  })
-
-  test('returns the rows from the RPC response', async () => {
-    const rows = [
-      { id: 1, front_text: 'Q' },
-      { id: 2, front_text: 'W' }
-    ]
+  test('caps cards at limit even when the RPC returns the extra lookahead row [obligation]', async () => {
+    const rows = [row(1), row(2), row(3)]
     rpcMock.mockResolvedValueOnce({ data: rows, error: null })
-    const result = await fetchCardsInDeck({
+
+    const page = await fetchCardsInDeck({
       deck_id: 10,
       sort_by: 'default',
       query: null,
       offset: 0,
-      limit: 50
+      limit: 2
     })
-    expect(result).toEqual(rows)
+
+    expect(page.cards).toEqual([row(1), row(2)])
+  })
+
+  test('next_rank is the rank of the extra row past the page [obligation]', async () => {
+    const rows = [row(1), row(2), row(3)]
+    rpcMock.mockResolvedValueOnce({ data: rows, error: null })
+
+    const page = await fetchCardsInDeck({
+      deck_id: 10,
+      sort_by: 'default',
+      query: null,
+      offset: 0,
+      limit: 2
+    })
+
+    expect(page.next_rank).toBe('rank-3')
+  })
+
+  test('next_rank is null at the end of the deck (fewer rows than limit + 1) [obligation]', async () => {
+    const rows = [row(1), row(2)]
+    rpcMock.mockResolvedValueOnce({ data: rows, error: null })
+
+    const page = await fetchCardsInDeck({
+      deck_id: 10,
+      sort_by: 'default',
+      query: null,
+      offset: 0,
+      limit: 2
+    })
+
+    expect(page.cards).toEqual([row(1), row(2)])
+    expect(page.next_rank).toBeNull()
   })
 
   test('throws when the RPC returns an error', async () => {
@@ -85,12 +101,12 @@ describe('fetchCardsInDeck', () => {
     ).rejects.toThrow('rpc boom')
   })
 
-  test('passes offset and limit as p_offset and p_limit for pagination', async () => {
+  test('passes offset through to p_offset for pagination', async () => {
     rpcMock.mockResolvedValueOnce({ data: [], error: null })
     await fetchCardsInDeck({ deck_id: 3, sort_by: 'default', query: null, offset: 150, limit: 50 })
     expect(rpcMock).toHaveBeenCalledWith(
       'get_cards_in_deck',
-      expect.objectContaining({ p_offset: 150, p_limit: 50 })
+      expect.objectContaining({ p_offset: 150, p_limit: 51 })
     )
   })
 })

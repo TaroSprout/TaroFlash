@@ -29,7 +29,7 @@ vi.mock('@/api/decks', () => ({
 }))
 
 vi.mock('@/api/cards', () => ({
-  useInsertCardAtMutation: () => ({ mutateAsync: mutateAsyncMock })
+  useInsertCardMutation: () => ({ mutateAsync: mutateAsyncMock })
 }))
 
 vi.mock('@/stores/notice-store', () => ({
@@ -375,7 +375,7 @@ describe('AddCardPanel', () => {
   })
 
   describe('save action [obligation]', () => {
-    test('calls mutateAsync with deck_id, null anchor/side, and both face texts [obligation]', async () => {
+    test('calls mutateAsync with deck_id and both face texts, no rank — nothing on screen to resolve neighbours from [obligation]', async () => {
       decksDataRef.value = TEST_DECKS
       const wrapper = mountPanel({ front: 'Dog', back: '犬' })
       await flushPromises()
@@ -386,12 +386,11 @@ describe('AddCardPanel', () => {
 
       expect(mutateAsyncMock).toHaveBeenCalledWith({
         deck_id: TEST_DECKS[0].id,
-        anchor_id: null,
-        side: null,
         front_text: 'Dog',
         back_text: '犬',
         note: null
       })
+      expect('rank' in mutateAsyncMock.mock.calls[0][0]).toBe(false)
     })
 
     test('remembers the saved deck as the last-used deck [obligation]', async () => {

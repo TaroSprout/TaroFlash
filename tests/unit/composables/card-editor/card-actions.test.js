@@ -307,6 +307,22 @@ describe('useCardActions', () => {
       expect(vars.except_ids).toEqual([3, 4])
     })
 
+    // [obligation] whole-deck move sizes its rank mint from the caller's own
+    // count rather than a server round-trip — the move closure must forward it.
+    test('select-all mode: the move closure passes the resolved count to the mutation [obligation]', async () => {
+      modalOpenMock.mockImplementationOnce((_component, options) => ({
+        response: options.props.move(55).then(() => ({ deck_id: 55 }))
+      }))
+      const { actions, mutations } = makeActions({
+        list: makeList(),
+        selection: makeSelection({ select_all: true, deselected: [3, 4] }),
+        deck_id: 10
+      })
+      await actions.onMoveCards()
+      const [vars] = mutations.moveCards.mock.calls[0]
+      expect(vars.count).toBe(9999)
+    })
+
     test('select-all mode passes count to openMoveModal so the title shows total not preview length', async () => {
       modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
       const persisted = [makeCard({ id: 1 }), makeCard({ id: 2 })]

@@ -1,11 +1,14 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 
-const { rpcMock } = vi.hoisted(() => ({
-  rpcMock: vi.fn()
-}))
+const { updateMock, eqMock, fromMock } = vi.hoisted(() => {
+  const eqMock = vi.fn()
+  const updateMock = vi.fn(() => ({ eq: eqMock }))
+  const fromMock = vi.fn(() => ({ update: updateMock }))
+  return { updateMock, eqMock, fromMock }
+})
 
 vi.mock('@/supabase-client', () => ({
-  supabase: { rpc: rpcMock }
+  supabase: { from: fromMock }
 }))
 
 vi.mock('@/utils/logger', () => ({ default: { error: vi.fn() } }))
@@ -14,28 +17,30 @@ import { moveCard } from '@/api/cards/db/move'
 
 describe('moveCard', () => {
   beforeEach(() => {
-    rpcMock.mockReset()
+    fromMock.mockClear()
+    updateMock.mockClear()
+    eqMock.mockReset()
   })
 
-  test('calls the move_card RPC with the param shape', async () => {
-    rpcMock.mockResolvedValueOnce({ data: 1500, error: null })
-    await moveCard({ card_id: 42, anchor_id: 7, side: 'after' })
-    expect(rpcMock).toHaveBeenCalledWith('move_card', {
-      p_card_id: 42,
-      p_anchor_id: 7,
-      p_side: 'after'
-    })
+  test('writes the new rank as a plain update, no RPC', async () => {
+    eqMock.mockResolvedValueOnce({ error: null })
+
+    await moveCard({ card_id: 42, rank: 'a5' })
+
+    expect(fromMock).toHaveBeenCalledWith('cards')
+    expect(updateMock).toHaveBeenCalledWith({ rank: 'a5' })
+    expect(eqMock).toHaveBeenCalledWith('id', 42)
   })
 
-  test('returns the new rank from the RPC response', async () => {
-    rpcMock.mockResolvedValueOnce({ data: 2500, error: null })
-    const rank = await moveCard({ card_id: 1, anchor_id: 2, side: 'before' })
-    expect(rank).toBe(2500)
+  test('resolves with no return value on success', async () => {
+    eqMock.mockResolvedValueOnce({ error: null })
+    const result = await moveCard({ card_id: 1, rank: 'a1' })
+    expect(result).toBeUndefined()
   })
 
-  test('throws when the RPC returns an error', async () => {
+  test('throws when the update errors', async () => {
     const err = new Error('not authorized')
-    rpcMock.mockResolvedValueOnce({ data: null, error: err })
-    await expect(moveCard({ card_id: 1, anchor_id: 2, side: 'after' })).rejects.toBe(err)
+    eqMock.mockResolvedValueOnce({ error: err })
+    await expect(moveCard({ card_id: 1, rank: 'a1' })).rejects.toBe(err)
   })
 })

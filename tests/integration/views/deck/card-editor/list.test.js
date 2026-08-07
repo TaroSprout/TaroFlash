@@ -57,7 +57,8 @@ function makeEditor({
   isLoading = ref(false),
   loadNextPage = vi.fn(),
   reorderCard = vi.fn(),
-  registerScroller = vi.fn()
+  registerScroller = vi.fn(),
+  can_reorder = ref(true)
 } = {}) {
   return {
     list: {
@@ -65,6 +66,7 @@ function makeEditor({
     },
     selection: { is_selecting: ref(false) },
     reorderCard,
+    can_reorder,
     hasNextPage,
     isLoading,
     loadNextPage,
@@ -97,6 +99,49 @@ function mount(options = {}) {
 describe('CardList (list.vue)', () => {
   beforeEach(() => {
     useWindowVirtualizerMock.mockReset()
+  })
+
+  // [obligation] entering edit mode under a non-default sort still mounts this
+  // list; can_reorder is the backstop that keeps drag disabled until the shell
+  // forces the deck's own order back.
+  test('drag-to-reorder is disabled when can_reorder is false', () => {
+    setupVirtualizer({ items: makeVirtualItems([0]), totalSize: ROW_PITCH })
+    mount({ editor: makeEditor({ cards: [{ id: 1 }], can_reorder: ref(false) }) })
+
+    const [options] = useReorderDragMock.mock.calls.at(-1)
+    expect(options.enabled()).toBe(false)
+  })
+
+  test('drag-to-reorder is enabled when can_reorder is true (and not selecting)', () => {
+    setupVirtualizer({ items: makeVirtualItems([0]), totalSize: ROW_PITCH })
+    mount({ editor: makeEditor({ cards: [{ id: 1 }], can_reorder: ref(true) }) })
+
+    const [options] = useReorderDragMock.mock.calls.at(-1)
+    expect(options.enabled()).toBe(true)
+  })
+
+  test('count reflects the current all_cards length', () => {
+    setupVirtualizer({ items: makeVirtualItems([0, 1]), totalSize: 2 * ROW_PITCH })
+    mount({ editor: makeEditor({ cards: [{ id: 1 }, { id: 2 }] }) })
+
+    const [options] = useReorderDragMock.mock.calls.at(-1)
+    expect(options.count()).toBe(2)
+  })
+
+  test('topInset falls back to 0 when no sticky toolbar is in the DOM', () => {
+    setupVirtualizer({ items: makeVirtualItems([0]), totalSize: ROW_PITCH })
+    mount({ editor: makeEditor({ cards: [{ id: 1 }] }) })
+
+    const [options] = useReorderDragMock.mock.calls.at(-1)
+    expect(options.topInset()).toBe(0)
+  })
+
+  test('maxScroll derives from scroll_margin, virtualizer total size, and viewport height', () => {
+    const virtualizer = setupVirtualizer({ items: makeVirtualItems([0]), totalSize: 500 })
+    mount({ editor: makeEditor({ cards: [{ id: 1 }] }) })
+
+    const [options] = useReorderDragMock.mock.calls.at(-1)
+    expect(options.maxScroll()).toBe(virtualizer.value.getTotalSize() - window.innerHeight)
   })
 
   test('renders one row per virtual item from the virtualizer', () => {

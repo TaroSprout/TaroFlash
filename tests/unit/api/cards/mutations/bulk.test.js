@@ -185,13 +185,13 @@ describe('useDeleteCardsInDeckMutation', () => {
 describe('useMoveCardMutation', () => {
   test('mutation delegates to moveCard, stripping deck_id from the params it forwards', async () => {
     const { mutation } = configFrom(useMoveCardMutation)
-    await mutation({ deck_id: 10, card_id: 42, anchor_id: 7, side: 'after' })
-    expect(moveCardMock).toHaveBeenCalledWith({ card_id: 42, anchor_id: 7, side: 'after' })
+    await mutation({ deck_id: 10, card_id: 42, rank: 'a15' })
+    expect(moveCardMock).toHaveBeenCalledWith({ card_id: 42, rank: 'a15' })
   })
 
   test('onSettled invalidates only the affected deck (counts unchanged by reorder)', () => {
     const { onSettled } = configFrom(useMoveCardMutation)
-    onSettled(1500, undefined, { deck_id: 10, card_id: 42, anchor_id: 7, side: 'after' })
+    onSettled(undefined, undefined, { deck_id: 10, card_id: 42, rank: 'a15' })
     const keys = invalidatedKeys()
     expect(keys).toContainEqual(['deck', 10])
     expect(keys).toContainEqual(['cards', 10])

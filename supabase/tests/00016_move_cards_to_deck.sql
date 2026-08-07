@@ -1,29 +1,32 @@
 -- =============================================================================
--- move_cards_to_deck + enforce_deck_card_limit pgTAP tests
+-- move_cards_to_deck pgTAP tests
 -- =============================================================================
--- Covers every cross-cutting obligation specified for the move_cards_to_deck
--- RPC and the enforce_deck_card_limit helper.
+-- Signature: move_cards_to_deck(p_target_deck_id, p_ranks, p_card_ids,
+-- p_source_deck_id, p_except_ids). Ranks are minted client-side and passed in
+-- as an ascending run sitting after the target deck's tail — the RPC pairs
+-- them with the cards it resolves (source's own (rank, id) order) and ignores
+-- any spare keys.
 --
 -- Test plan index:
---   1  explicit mode preserves input order (WITH ORDINALITY)
---   2  select-all mode preserves source-deck rank order (ROW_NUMBER over rank)
+--   1  explicit mode preserves the source's (rank, id) order at the destination
+--   2  select-all mode preserves source-deck rank order
 --   3  select-all mode moves ALL cards, not just the loaded page (>50 cards)
---   4  explicit mode — a card already in the target deck is a silent no-op
---   5  same-deck rejected — select-all mode
---   6  dispatch validation — both args set → raises
---   7  dispatch validation — both NULL → raises
---   8  cross-member rejected — explicit mode
---   9  cross-member rejected — select-all mode
---  10  missing card id rejected — explicit mode
---  11  empty p_card_ids rejected
---  12  review/FSRS state travels with card (reviews row)
---  13  review/FSRS state travels with card (review_logs row)
---  14  duplicates allowed — move succeeds even when front+back match target card
---  15  free plan over cap raises PT402
---  16  paid plan is unbounded (succeeds moving into a 200-card deck)
---  17  insert_card_at P0001 retry block does NOT swallow PT402 cap error
---  18  enforce_deck_card_limit raises immediately when deck is at cap
---  19  the already-in-target no-op (test 4) keeps the card's original deck_id
+--   4  spare keys are ignored — extra p_ranks beyond the moved count is fine
+--   5  too few keys raises
+--   6  explicit mode — a card already in the target deck is left untouched
+--   7  the already-in-target no-op keeps the card's original deck_id
+--   8  same-deck rejected — select-all mode
+--   9  dispatch validation — both args set → raises
+--  10  dispatch validation — both NULL → raises
+--  11  cross-member rejected — explicit mode
+--  12  cross-member rejected — select-all mode
+--  13  missing card id rejected — explicit mode
+--  14  empty p_card_ids is a silent no-op (nothing resolves to move)
+--  15  review/FSRS state travels with card (reviews row)
+--  16  review/FSRS state travels with card (review_logs row)
+--  17  duplicates allowed — move succeeds even when front+back match target card
+--  18  free plan over cap raises PT402
+--  19  paid plan is unbounded (succeeds moving into a 200-card deck)
 --  20  mixed batch — one card already in target, one not — succeeds
 --  21  mixed batch: moves only the one that wasn't there; the other untouched
 -- =============================================================================
@@ -37,12 +40,8 @@ SELECT plan(21);
 SELECT tests.create_user('aaaaaaaa-aaaa-aaaa-aaaa-000000000001'::uuid, 'alice_move');
 SELECT tests.create_user('bbbbbbbb-bbbb-bbbb-bbbb-000000000002'::uuid, 'bob_move');
 
--- ── Deck scaffold
--- Decks are inserted as postgres with set_claims active so the set_member_id
--- trigger stamps the correct member_id automatically (same pattern as 00002).
--- ─────────────────────────────────────────────────────────────────────────────
+-- ── Deck scaffold ────────────────────────────────────────────────────────────
 
--- Alice's decks
 SELECT tests.set_claims('aaaaaaaa-aaaa-aaaa-aaaa-000000000001'::uuid);
 
 INSERT INTO public.decks (id, title, is_public) VALUES
@@ -56,32 +55,20 @@ INSERT INTO public.decks (id, title, is_public) VALUES
   (5007, 'Cap One Source',     false),
   (5008, 'Paid Source',        false),
   (5009, 'Paid Target',        false),
-  (5010, 'Insert Cap Deck',    false),
   (5011, 'Review Source',      false),
   (5012, 'Review Target',      false),
   (5013, 'Dup Source',         false),
-  (5014, 'Dup Target',         false);
+  (5014, 'Dup Target',         false),
+  (5017, 'Spare Keys Source',  false),
+  (5018, 'Spare Keys Target',  false),
+  (5019, 'Too Few Keys Source', false),
+  (5020, 'Too Few Keys Target', false);
 
--- Bob's deck (for cross-member rejection tests)
 SELECT tests.set_claims('bbbbbbbb-bbbb-bbbb-bbbb-000000000002'::uuid);
 
-INSERT INTO public.decks (id, title, is_public) VALUES
-  (5099, 'Bob Deck', false);
+INSERT INTO public.decks (id, title, is_public) VALUES (5099, 'Bob Deck', false);
 
 -- ── Cards ─────────────────────────────────────────────────────────────────────
--- The set_member_id BEFORE INSERT trigger always overwrites member_id with
--- auth.uid() (even for postgres-role inserts). Set Alice's claims before
--- inserting Alice's cards so the trigger stamps the correct UUID.
---
--- Advance the card sequence above 100000 BEFORE any explicit-ID inserts so that
--- subsequent auto-ID inserts (generate_series) start above 100000 and never
--- collide with our explicit IDs (9001-9090).
---
--- setval is NON-transactional, so it survives this test's ROLLBACK. Using a flat
--- 100000 would strand the sequence below any committed card whose id is already
--- past 100000 (dev DBs accumulate these), making the NEXT insert anywhere collide
--- on Cards_pkey. GREATEST(100000, max(id)) keeps the sequence at or above the
--- real high-water mark, so it's always safe to leave behind.
 
 SELECT setval(
   pg_get_serial_sequence('public.cards', 'id'),
@@ -91,71 +78,70 @@ SELECT setval(
 SELECT tests.set_claims('aaaaaaaa-aaaa-aaaa-aaaa-000000000001'::uuid);
 
 -- Cards for explicit-mode order test (5000 → 5001).
--- Ranks: 9001@3000, 9002@1000, 9003@2000. We'll pass [9001,9002,9003] to RPC.
+-- Ranks: 9001@c, 9002@a, 9003@b. We'll pass [9001,9002,9003] to the RPC.
 INSERT INTO public.cards (id, deck_id, front_text, back_text, rank, member_id) VALUES
-  (9001, 5000, 'C', 'C', 3000, 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
-  (9002, 5000, 'A', 'A', 1000, 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
-  (9003, 5000, 'B', 'B', 2000, 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001');
+  (9001, 5000, 'C', 'C', 'c0', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
+  (9002, 5000, 'A', 'A', 'a0', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
+  (9003, 5000, 'B', 'B', 'b0', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001');
 
--- Cards for select-all rank-order test (5002 → 5003). Ranks 1000<2000<3000.
+-- Cards for select-all rank-order test (5002 → 5003).
 INSERT INTO public.cards (id, deck_id, front_text, back_text, rank, member_id) VALUES
-  (9010, 5002, 'SA', 'SA', 1000, 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
-  (9011, 5002, 'SB', 'SB', 2000, 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
-  (9012, 5002, 'SC', 'SC', 3000, 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001');
+  (9010, 5002, 'SA', 'SA', 'a0', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
+  (9011, 5002, 'SB', 'SB', 'b0', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
+  (9012, 5002, 'SC', 'SC', 'c0', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001');
 
 -- One card in 5007 to try to move into the capped deck 5006.
 INSERT INTO public.cards (id, deck_id, front_text, back_text, rank, member_id) VALUES
-  (9020, 5007, 'Move Me', 'Move Me', 1000, 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001');
+  (9020, 5007, 'Move Me', 'Move Me', 'a0', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001');
 
 -- Paid source 5008: 3 cards to move into 5009 (should succeed under paid plan).
 INSERT INTO public.cards (id, deck_id, front_text, back_text, rank, member_id) VALUES
-  (9050, 5008, 'Paid 1', 'P1', 1000, 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
-  (9051, 5008, 'Paid 2', 'P2', 2000, 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
-  (9052, 5008, 'Paid 3', 'P3', 3000, 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001');
+  (9050, 5008, 'Paid 1', 'P1', 'a0', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
+  (9051, 5008, 'Paid 2', 'P2', 'b0', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
+  (9052, 5008, 'Paid 3', 'P3', 'c0', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001');
 
 -- Review travel test card.
 INSERT INTO public.cards (id, deck_id, front_text, back_text, rank, member_id) VALUES
-  (9030, 5011, 'R-front', 'R-back', 1000, 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001');
+  (9030, 5011, 'R-front', 'R-back', 'a0', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001');
 
 -- Cards for duplicate-allowed test.
 INSERT INTO public.cards (id, deck_id, front_text, back_text, rank, member_id) VALUES
-  (9040, 5013, 'Dup-front', 'Dup-back', 1000, 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
-  (9041, 5014, 'Dup-front', 'Dup-back', 1000, 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001');
+  (9040, 5013, 'Dup-front', 'Dup-back', 'a0', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
+  (9041, 5014, 'Dup-front', 'Dup-back', 'a0', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001');
 
--- Bob's card (set Bob's claims so the trigger stamps his member_id).
+-- Cards for the spare-keys / too-few-keys tests.
+INSERT INTO public.cards (id, deck_id, front_text, back_text, rank, member_id) VALUES
+  (9060, 5017, 'Spare 1', 'S1', 'a0', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
+  (9061, 5017, 'Spare 2', 'S2', 'b0', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
+  (9070, 5019, 'Few 1', 'F1', 'a0', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
+  (9071, 5019, 'Few 2', 'F2', 'b0', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001');
+
+-- Bob's card.
 SELECT tests.set_claims('bbbbbbbb-bbbb-bbbb-bbbb-000000000002'::uuid);
 INSERT INTO public.cards (id, deck_id, front_text, back_text, rank, member_id) VALUES
-  (9090, 5099, 'Bob Card', 'Bob Card', 1000, 'bbbbbbbb-bbbb-bbbb-bbbb-000000000002');
+  (9090, 5099, 'Bob Card', 'Bob Card', 'a0', 'bbbbbbbb-bbbb-bbbb-bbbb-000000000002');
 
--- Bulk inserts (auto-generated IDs, all start at > 100000).
 SELECT tests.set_claims('aaaaaaaa-aaaa-aaaa-aaaa-000000000001'::uuid);
 
--- 210 cards in big-source deck 5004 (select-all >50 test). Alice needs 'paid'
--- at move time so the 210-card move does not hit the free cap.
+-- 210 cards in big-source deck 5004 (select-all >50 test).
 INSERT INTO public.cards (deck_id, front_text, back_text, rank, member_id)
-SELECT 5004, 'Big' || gs, 'Big' || gs, gs * 1000,
+SELECT 5004, 'Big' || gs, 'Big' || gs, 'a' || lpad(gs::text, 5, '0'),
        'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'::uuid
 FROM generate_series(1, 210) AS gs;
 
 -- Deck 5006 = free-plan cap target: pre-fill to 500 (the free limit).
 INSERT INTO public.cards (deck_id, front_text, back_text, rank, member_id)
-SELECT 5006, 'Cap' || gs, 'Cap' || gs, gs * 1000,
+SELECT 5006, 'Cap' || gs, 'Cap' || gs, 'a' || lpad(gs::text, 5, '0'),
        'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'::uuid
 FROM generate_series(1, 500) AS gs;
 
 -- Paid target 5009: pre-fill to 200 cards.
 INSERT INTO public.cards (deck_id, front_text, back_text, rank, member_id)
-SELECT 5009, 'PadFill' || gs, 'PF' || gs, gs * 1000,
+SELECT 5009, 'PadFill' || gs, 'PF' || gs, 'a' || lpad(gs::text, 5, '0'),
        'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'::uuid
 FROM generate_series(1, 200) AS gs;
 
--- Insert-cap deck 5010: fill to exactly 500 cards for cap-test-17.
-INSERT INTO public.cards (deck_id, front_text, back_text, rank, member_id)
-SELECT 5010, 'InsertCap' || gs, 'IC' || gs, gs * 1000,
-       'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'::uuid
-FROM generate_series(1, 500) AS gs;
-
--- Seed review + review_log for card 9030 (so we can assert they travel with it).
+-- Seed review + review_log for card 9030.
 INSERT INTO public.reviews (card_id, member_id, due, stability, difficulty)
 VALUES (9030, 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'::uuid,
         now() + interval '7 days', 2.5, 5.0);
@@ -173,14 +159,13 @@ SELECT tests.set_claims('aaaaaaaa-aaaa-aaaa-aaaa-000000000001'::uuid);
 SET LOCAL role = 'authenticated';
 
 
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 1: explicit mode preserves input order
--- Pass ids in order [9001, 9002, 9003] (source ranks 3000, 1000, 2000).
--- Expected result in target 5001: 9001 has lowest rank, then 9002, then 9003.
--- ─────────────────────────────────────────────────────────────────────────────
+-- Test 1: explicit mode preserves the source's (rank, id) order at the
+-- destination, not the p_card_ids input order — [9001,9002,9003] resolve by
+-- source rank (a0=9002, b0=9003, c0=9001), so the target lands 9002,9003,9001.
 
 SELECT public.move_cards_to_deck(
   p_target_deck_id := 5001,
+  p_ranks          := ARRAY['z0', 'z1', 'z2']::text[],
   p_card_ids       := ARRAY[9001, 9002, 9003]::bigint[]
 );
 
@@ -188,21 +173,18 @@ SET LOCAL role = 'postgres';
 
 SELECT results_eq(
   $$ SELECT id FROM public.cards WHERE deck_id = 5001 ORDER BY rank $$,
-  $$ VALUES (9001::bigint), (9002::bigint), (9003::bigint) $$,
-  'explicit mode: input array order is preserved in target deck ranks'
+  $$ VALUES (9002::bigint), (9003::bigint), (9001::bigint) $$,
+  'explicit mode: cards land in the source''s (rank, id) order, keyed by p_ranks in that order'
 );
 
 
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 2: select-all mode preserves source-deck rank order
--- Source deck 5002 has 9010@1000, 9011@2000, 9012@3000.
--- Expected order in target 5003: 9010, 9011, 9012.
--- ─────────────────────────────────────────────────────────────────────────────
+-- Test 2: select-all mode preserves source-deck rank order.
 
 SET LOCAL role = 'authenticated';
 
 SELECT public.move_cards_to_deck(
   p_target_deck_id := 5003,
+  p_ranks          := ARRAY['z0', 'z1', 'z2']::text[],
   p_source_deck_id := 5002
 );
 
@@ -215,10 +197,8 @@ SELECT results_eq(
 );
 
 
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 3: select-all mode moves ALL 210 cards (not just the first 50/page)
+-- Test 3: select-all mode moves ALL 210 cards (not just the first 50/page).
 -- Upgrade Alice to paid so the 210-card move clears the cap check.
--- ─────────────────────────────────────────────────────────────────────────────
 
 SET LOCAL role = 'postgres';
 UPDATE public.members SET plan = 'paid'
@@ -228,6 +208,7 @@ SET LOCAL role = 'authenticated';
 
 SELECT public.move_cards_to_deck(
   p_target_deck_id := 5005,
+  p_ranks          := ARRAY(SELECT 'z' || lpad(gs::text, 5, '0') FROM generate_series(1, 210) AS gs),
   p_source_deck_id := 5004,
   p_except_ids     := ARRAY[]::bigint[]
 );
@@ -240,36 +221,67 @@ SELECT is(
   'select-all mode moves all 210 cards (not just the first page)'
 );
 
--- Downgrade Alice back to 'free' for the remaining cap tests.
 UPDATE public.members SET plan = 'free'
  WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001';
 
 
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 4: explicit mode — a card already in the target deck is a silent no-op
--- Cards 9001-9003 are now in deck 5001. Moving 9002 to 5001 again no longer
--- raises (a session-summary bulk move can select cards that already live in
--- the chosen target) — it succeeds and leaves the card exactly where it was.
--- ─────────────────────────────────────────────────────────────────────────────
+-- Test 4: spare keys are ignored — passing more p_ranks than cards to move
+-- succeeds and only uses as many as are needed.
 
 SET LOCAL role = 'authenticated';
 
 SELECT lives_ok(
   $$ SELECT public.move_cards_to_deck(
+       p_target_deck_id := 5018,
+       p_ranks          := ARRAY['z0', 'z1', 'z2', 'z3', 'z4']::text[],
+       p_card_ids       := ARRAY[9060, 9061]::bigint[]
+     ) $$,
+  'spare keys beyond the moved count are silently ignored'
+);
+
+
+-- Test 5: too few keys raises.
+
+SELECT throws_ok(
+  $$ SELECT public.move_cards_to_deck(
+       p_target_deck_id := 5020,
+       p_ranks          := ARRAY['z0']::text[],
+       p_card_ids       := ARRAY[9070, 9071]::bigint[]
+     ) $$,
+  'Got 1 ranks for 2 cards',
+  'moving 2 cards with only 1 key raises'
+);
+
+
+-- Test 6 + 7: explicit mode — a card already in the target deck is left
+-- untouched (no-op), keeping its original deck_id.
+
+SELECT lives_ok(
+  $$ SELECT public.move_cards_to_deck(
        p_target_deck_id := 5001,
+       p_ranks          := ARRAY['z9']::text[],
        p_card_ids       := ARRAY[9002]::bigint[]
      ) $$,
   'explicit mode: a card already in the target deck no longer raises'
 );
 
+SET LOCAL role = 'postgres';
 
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 5: same-deck rejected — select-all mode
--- ─────────────────────────────────────────────────────────────────────────────
+SELECT is(
+  (SELECT deck_id FROM public.cards WHERE id = 9002),
+  5001::bigint,
+  'card already in the target deck keeps its original deck_id (true no-op)'
+);
+
+
+-- Test 8: same-deck rejected — select-all mode.
+
+SET LOCAL role = 'authenticated';
 
 SELECT throws_ok(
   $$ SELECT public.move_cards_to_deck(
        p_target_deck_id := 5001,
+       p_ranks          := ARRAY['z0']::text[],
        p_source_deck_id := 5001
      ) $$,
   'Source and target decks must differ',
@@ -277,13 +289,12 @@ SELECT throws_ok(
 );
 
 
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 6: dispatch validation — both p_card_ids AND p_source_deck_id set
--- ─────────────────────────────────────────────────────────────────────────────
+-- Test 9: dispatch validation — both p_card_ids AND p_source_deck_id set.
 
 SELECT throws_ok(
   $$ SELECT public.move_cards_to_deck(
        p_target_deck_id := 5001,
+       p_ranks          := ARRAY['z0']::text[],
        p_card_ids       := ARRAY[9010]::bigint[],
        p_source_deck_id := 5003
      ) $$,
@@ -292,42 +303,37 @@ SELECT throws_ok(
 );
 
 
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 7: dispatch validation — both NULL
--- ─────────────────────────────────────────────────────────────────────────────
+-- Test 10: dispatch validation — both NULL.
 
 SELECT throws_ok(
   $$ SELECT public.move_cards_to_deck(
-       p_target_deck_id := 5001
+       p_target_deck_id := 5001,
+       p_ranks          := ARRAY['z0']::text[]
      ) $$,
   'Pass exactly one of p_card_ids or p_source_deck_id',
   'passing neither p_card_ids nor p_source_deck_id raises dispatch error'
 );
 
 
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 8: cross-member rejected — explicit mode (Bob's card 9090)
--- ─────────────────────────────────────────────────────────────────────────────
+-- Test 11: cross-member rejected — explicit mode (Bob's card 9090).
 
--- RLS hides Bob's card from Alice's query, so the count check fires first with
--- count=0, raising 'One or more cards not found' (the vacuous-EXISTS path).
 SELECT throws_ok(
   $$ SELECT public.move_cards_to_deck(
        p_target_deck_id := 5001,
+       p_ranks          := ARRAY['z0']::text[],
        p_card_ids       := ARRAY[9090]::bigint[]
      ) $$,
-  'One or more cards not found',
-  'explicit mode: card owned by another member is rejected (not visible to caller)'
+  'One or more cards are not movable to this deck',
+  'explicit mode: card owned by another member is rejected'
 );
 
 
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 9: cross-member rejected — select-all mode (Bob's source deck 5099)
--- ─────────────────────────────────────────────────────────────────────────────
+-- Test 12: cross-member rejected — select-all mode (Bob's source deck 5099).
 
 SELECT throws_ok(
   $$ SELECT public.move_cards_to_deck(
        p_target_deck_id := 5001,
+       p_ranks          := ARRAY['z0']::text[],
        p_source_deck_id := 5099
      ) $$,
   'Source deck not found or not owned by user',
@@ -335,41 +341,36 @@ SELECT throws_ok(
 );
 
 
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 10: missing card id rejected — explicit mode
--- Card 99999 does not exist. EXISTS guard passes vacuously; count check fires.
--- ─────────────────────────────────────────────────────────────────────────────
+-- Test 13: missing card id rejected — explicit mode.
 
 SELECT throws_ok(
   $$ SELECT public.move_cards_to_deck(
        p_target_deck_id := 5001,
+       p_ranks          := ARRAY['z0']::text[],
        p_card_ids       := ARRAY[99999]::bigint[]
      ) $$,
-  'One or more cards not found',
-  'explicit mode: non-existent card id is rejected by the count check'
+  'One or more cards are not movable to this deck',
+  'explicit mode: non-existent card id is rejected'
 );
 
 
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 11: empty p_card_ids rejected
--- ─────────────────────────────────────────────────────────────────────────────
+-- Test 14: empty p_card_ids resolves nothing to move — a silent no-op.
 
-SELECT throws_ok(
+SELECT lives_ok(
   $$ SELECT public.move_cards_to_deck(
        p_target_deck_id := 5001,
+       p_ranks          := ARRAY[]::text[],
        p_card_ids       := ARRAY[]::bigint[]
      ) $$,
-  'No cards to move',
-  'explicit mode: empty card_ids array is rejected'
+  'explicit mode: empty card_ids array is a no-op, not an error'
 );
 
 
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 12: review row travels with card 9030
--- ─────────────────────────────────────────────────────────────────────────────
+-- Test 15 + 16: review + review_log rows travel with card 9030.
 
 SELECT public.move_cards_to_deck(
   p_target_deck_id := 5012,
+  p_ranks          := ARRAY['z0']::text[],
   p_card_ids       := ARRAY[9030]::bigint[]
 );
 
@@ -381,11 +382,6 @@ SELECT is(
   'review row still exists after moving card 9030'
 );
 
-
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 13: review_logs row travels with card 9030
--- ─────────────────────────────────────────────────────────────────────────────
-
 SELECT is(
   (SELECT count(*)::int FROM public.review_logs WHERE card_id = 9030),
   1,
@@ -393,30 +389,26 @@ SELECT is(
 );
 
 
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 14: duplicates allowed — card whose front+back match an existing target
--- card moves successfully without raising
--- ─────────────────────────────────────────────────────────────────────────────
+-- Test 17: duplicates allowed.
 
 SET LOCAL role = 'authenticated';
 
 SELECT lives_ok(
   $$ SELECT public.move_cards_to_deck(
        p_target_deck_id := 5014,
+       p_ranks          := ARRAY['z0']::text[],
        p_card_ids       := ARRAY[9040]::bigint[]
      ) $$,
   'moving a card whose content matches an existing target card succeeds (duplicates allowed)'
 );
 
 
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 15: free plan over cap raises PT402
--- Deck 5006 has 500 cards (at free limit). Card 9020 in 5007. Move → cap fires.
--- ─────────────────────────────────────────────────────────────────────────────
+-- Test 18: free plan over cap raises PT402.
 
 SELECT throws_ok(
   $$ SELECT public.move_cards_to_deck(
        p_target_deck_id := 5006,
+       p_ranks          := ARRAY['z0']::text[],
        p_card_ids       := ARRAY[9020]::bigint[]
      ) $$,
   'PT402',
@@ -425,10 +417,7 @@ SELECT throws_ok(
 );
 
 
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 16: paid plan is unbounded
--- Deck 5009 has 200 cards. Move 3 cards from 5008 into it under paid plan.
--- ─────────────────────────────────────────────────────────────────────────────
+-- Test 19: paid plan is unbounded.
 
 SET LOCAL role = 'postgres';
 UPDATE public.members SET plan = 'paid'
@@ -439,6 +428,7 @@ SET LOCAL role = 'authenticated';
 SELECT lives_ok(
   $$ SELECT public.move_cards_to_deck(
        p_target_deck_id := 5009,
+       p_ranks          := ARRAY['z0', 'z1', 'z2']::text[],
        p_source_deck_id := 5008
      ) $$,
   'paid plan: moving cards into a 200-card deck succeeds (no cap enforced)'
@@ -449,67 +439,24 @@ UPDATE public.members SET plan = 'free'
  WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001';
 
 
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 17: insert_card_at P0001 retry block does NOT swallow PT402 cap error
--- Deck 5010 has 500 cards (free limit). insert_card_at catches SQLSTATE 'P0001'
--- (rank-precision) and retries — but PT402 must propagate, not be caught.
--- ─────────────────────────────────────────────────────────────────────────────
-
-SET LOCAL role = 'authenticated';
-
-SELECT throws_ok(
-  $$ SELECT public.insert_card_at(5010, NULL, NULL, 'Over Cap', 'Over Cap') $$,
-  'PT402',
-  'deck_card_limit_exceeded',
-  'insert_card_at P0001 retry block does not swallow PT402 cap error'
-);
-
-
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 18: enforce_deck_card_limit raises immediately when deck is at cap
--- ─────────────────────────────────────────────────────────────────────────────
-
-SELECT throws_ok(
-  $$ SELECT public.enforce_deck_card_limit(5010, 1) $$,
-  'PT402',
-  'deck_card_limit_exceeded',
-  'enforce_deck_card_limit raises PT402 immediately when deck is at the free cap'
-);
-
-
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 19: the already-in-target no-op (test 4) is a TRUE no-op — 9002 kept
--- its original deck_id rather than being silently moved somewhere else.
--- ─────────────────────────────────────────────────────────────────────────────
-
-SET LOCAL role = 'postgres';
-
-SELECT is(
-  (SELECT deck_id FROM public.cards WHERE id = 9002),
-  5001::bigint,
-  'card already in the target deck keeps its original deck_id (true no-op)'
-);
-
-
--- ─────────────────────────────────────────────────────────────────────────────
--- Test 20: explicit mode — a mixed batch (one card already in the target deck,
--- one still elsewhere) moves only the one that isn't there yet; the
--- already-there card is left exactly where it was.
--- ─────────────────────────────────────────────────────────────────────────────
+-- Test 20 + 21: mixed batch — one card already home, one not.
 
 INSERT INTO public.decks (id, title, is_public) VALUES
   (5015, 'Mixed Skip Source', false),
   (5016, 'Mixed Skip Target', false);
 
+SELECT tests.set_claims('aaaaaaaa-aaaa-aaaa-aaaa-000000000001'::uuid);
+
 INSERT INTO public.cards (id, deck_id, front_text, back_text, rank, member_id) VALUES
-  (9042, 5016, 'Already Home', 'Already Home', 1000, 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
-  (9043, 5015, 'Needs A Move', 'Needs A Move', 1000, 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001');
+  (9042, 5016, 'Already Home', 'Already Home', 'a0', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'),
+  (9043, 5015, 'Needs A Move', 'Needs A Move', 'a0', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001');
 
 SET LOCAL role = 'authenticated';
 
 SELECT lives_ok(
   $$ SELECT public.move_cards_to_deck(
        p_target_deck_id := 5016,
+       p_ranks          := ARRAY['z0']::text[],
        p_card_ids       := ARRAY[9042, 9043]::bigint[]
      ) $$,
   'mixed batch (one card already home, one not) succeeds without raising'

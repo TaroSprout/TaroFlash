@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach, afterEach } from 'vite-plus/test'
 import { signInAsTestUser } from '../setup.js'
 import { createDeck, insertCardDirect } from '../fixtures.js'
 import {
-  insertCardAt,
+  insertCard,
   bulkInsertCardsInDeck,
   fetchCardsPageByDeckId,
   fetchCardsInDeck,
@@ -31,35 +31,31 @@ afterEach(async () => {
   deck = null
 })
 
-describe('insertCardAt (contract)', () => {
-  test('inserts a card at the head of an empty deck and returns id+rank', async () => {
-    const result = await insertCardAt({
+describe('insertCard (contract)', () => {
+  test('inserts a card at an explicit key and returns id+rank', async () => {
+    const result = await insertCard({
       deck_id: deck.id,
-      anchor_id: null,
-      side: null,
+      rank: 'a0',
       front_text: 'Front',
       back_text: 'Back'
     })
     expect(result.id).toEqual(expect.any(Number))
-    expect(result.rank).toEqual(expect.any(Number))
+    expect(result.rank).toBe('a0')
   })
 
-  test('places after the anchor when side="after"', async () => {
-    const first = await insertCardAt({
+  test('appends after the current tail when rank is omitted [obligation]', async () => {
+    const first = await insertCard({
       deck_id: deck.id,
-      anchor_id: null,
-      side: null,
+      rank: 'a0',
       front_text: 'A',
       back_text: 'a'
     })
-    const second = await insertCardAt({
+    const second = await insertCard({
       deck_id: deck.id,
-      anchor_id: first.id,
-      side: 'after',
       front_text: 'B',
       back_text: 'b'
     })
-    expect(second.rank).toBeGreaterThan(first.rank)
+    expect(second.rank > first.rank).toBe(true)
   })
 })
 
@@ -74,7 +70,7 @@ describe('bulkInsertCardsInDeck (contract)', () => {
     })
     expect(cards).toHaveLength(2)
     expect(cards.map((c) => c.front_text)).toEqual(['F1', 'F2'])
-    expect(cards[1].rank).toBeGreaterThan(cards[0].rank)
+    expect(cards[1].rank > cards[0].rank).toBe(true)
   })
 })
 
@@ -89,7 +85,7 @@ describe('fetchCardsPageByDeckId (contract)', () => {
     })
     const page = await fetchCardsPageByDeckId({ deck_id: deck.id, offset: 1, limit: 2 })
     expect(page).toHaveLength(2)
-    expect(page[0].rank).toBeLessThan(page[1].rank)
+    expect(page[0].rank < page[1].rank).toBe(true)
     expect(page[0]).toHaveProperty('review')
   })
 })
@@ -124,9 +120,9 @@ describe('fetchCardsInDeck (contract)', () => {
       offset: 0,
       limit: 50
     })
-    expect(result).toHaveLength(2)
-    expect(result[0]).toHaveProperty('front_text')
-    expect(result[0]).toHaveProperty('review')
+    expect(result.cards).toHaveLength(2)
+    expect(result.cards[0]).toHaveProperty('front_text')
+    expect(result.cards[0]).toHaveProperty('review')
   })
 
   test('filters by query with ilike when query is a non-null string [obligation]', async () => {
@@ -144,8 +140,8 @@ describe('fetchCardsInDeck (contract)', () => {
       offset: 0,
       limit: 50
     })
-    expect(result).toHaveLength(1)
-    expect(result[0].front_text).toBe('Hello world')
+    expect(result.cards).toHaveLength(1)
+    expect(result.cards[0].front_text).toBe('Hello world')
   })
 
   test('returns all cards when query is null — no spurious ilike fires [obligation]', async () => {
@@ -163,10 +159,10 @@ describe('fetchCardsInDeck (contract)', () => {
       offset: 0,
       limit: 50
     })
-    expect(result).toHaveLength(2)
+    expect(result.cards).toHaveLength(2)
   })
 
-  test('respects offset and limit for pagination', async () => {
+  test('respects offset and limit for pagination, capping cards at limit', async () => {
     await bulkInsertCardsInDeck({
       deck_id: deck.id,
       cards: Array.from({ length: 5 }, (_, i) => ({ front_text: `F${i}`, back_text: '' }))
@@ -178,12 +174,38 @@ describe('fetchCardsInDeck (contract)', () => {
       offset: 2,
       limit: 2
     })
-    expect(page).toHaveLength(2)
+    expect(page.cards).toHaveLength(2)
+  })
+
+  // [obligation] the lookahead row is what makes writes at a page boundary land correctly
+  test('next_rank carries the rank of the row past the page, null at the end of the deck [obligation]', async () => {
+    await bulkInsertCardsInDeck({
+      deck_id: deck.id,
+      cards: Array.from({ length: 3 }, (_, i) => ({ front_text: `F${i}`, back_text: '' }))
+    })
+
+    const first_page = await fetchCardsInDeck({
+      deck_id: deck.id,
+      sort_by: 'default',
+      query: null,
+      offset: 0,
+      limit: 2
+    })
+    expect(first_page.next_rank).toEqual(expect.any(String))
+
+    const last_page = await fetchCardsInDeck({
+      deck_id: deck.id,
+      sort_by: 'default',
+      query: null,
+      offset: 2,
+      limit: 2
+    })
+    expect(last_page.next_rank).toBeNull()
   })
 })
 
 describe('moveCard (contract)', () => {
-  test('updates the rank of the moved card to sit beside the anchor', async () => {
+  test('writes the given key as the card rank — a plain update, no RPC', async () => {
     const [a, b, c] = await bulkInsertCardsInDeck({
       deck_id: deck.id,
       cards: [
@@ -192,9 +214,12 @@ describe('moveCard (contract)', () => {
         { front_text: 'C', back_text: '' }
       ]
     })
-    const new_rank = await moveCard({ card_id: c.id, anchor_id: a.id, side: 'before' })
-    expect(new_rank).toBeLessThan(a.rank)
-    expect(new_rank).toEqual(expect.any(Number))
+    await moveCard({ card_id: c.id, rank: 'a0' })
+
+    const page = await fetchCardsPageByDeckId({ deck_id: deck.id, offset: 0, limit: 10 })
+    const moved = page.find((card) => card.id === c.id)
+    expect(moved.rank).toBe('a0')
+    void a
     void b
   })
 })

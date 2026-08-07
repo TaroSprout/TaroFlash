@@ -5,7 +5,7 @@ import { card } from '@tests/fixtures/card'
 const {
   cardsInfiniteQueryMock,
   deckQueryMock,
-  insertCardAtMock,
+  insertCardMock,
   saveCardMock,
   deleteCardsMock,
   deleteCardsInDeckMock,
@@ -22,7 +22,7 @@ const {
 } = vi.hoisted(() => ({
   cardsInfiniteQueryMock: vi.fn(),
   deckQueryMock: vi.fn(),
-  insertCardAtMock: vi.fn(),
+  insertCardMock: vi.fn(),
   saveCardMock: vi.fn(),
   deleteCardsMock: vi.fn(),
   deleteCardsInDeckMock: vi.fn(),
@@ -40,7 +40,7 @@ const {
 
 vi.mock('@/api/cards', () => ({
   useCardsInDeckInfiniteQuery: cardsInfiniteQueryMock,
-  useInsertCardAtMutation: () => ({ mutate: insertCardAtMock, mutateAsync: insertCardAtMock }),
+  useInsertCardMutation: () => ({ mutate: insertCardMock, mutateAsync: insertCardMock }),
   useSaveCardMutation: () => ({ mutate: saveCardMock, mutateAsync: saveCardMock }),
   useDeleteCardsMutation: () => ({ mutate: deleteCardsMock, mutateAsync: deleteCardsMock }),
   useDeleteCardsInDeckMutation: () => ({
@@ -98,9 +98,9 @@ function makeCard(overrides = {}) {
   return card.one({ overrides })
 }
 
-function makeCardsQuery(persisted = []) {
+function makeCardsQuery(persisted = [], next_rank = null) {
   return {
-    data: { value: { pages: [persisted], pageParams: [0] } },
+    data: { value: { pages: [{ cards: persisted, next_rank }], pageParams: [0] } },
     hasNextPage: { value: false },
     loadNextPage: vi.fn(),
     isLoading: { value: false }
@@ -161,8 +161,8 @@ function makeController(persisted = [], ids = persisted.map((c) => c.id), deck_q
 describe('useCardListController', () => {
   beforeEach(() => {
     localStorage.clear()
-    insertCardAtMock.mockReset()
-    insertCardAtMock.mockResolvedValue({ id: 9999, rank: 1500 })
+    insertCardMock.mockReset()
+    insertCardMock.mockResolvedValue({ id: 9999, rank: 'a5' })
     saveCardMock.mockReset()
     saveCardMock.mockResolvedValue(undefined)
     deleteCardsMock.mockReset()
@@ -172,7 +172,7 @@ describe('useCardListController', () => {
     moveCardsMock.mockReset()
     moveCardsMock.mockResolvedValue(undefined)
     reorderCardMock.mockReset()
-    reorderCardMock.mockResolvedValue(9999)
+    reorderCardMock.mockResolvedValue(undefined)
     setCardImageMock.mockReset()
     setCardImageMock.mockResolvedValue(undefined)
     deleteCardImageMock.mockReset()
@@ -215,40 +215,37 @@ describe('useCardListController', () => {
       expect(all_cards.value[0].id).toBeLessThan(0)
     })
 
-    test('uses the last persisted card as anchor (side=after) when no neighbors are passed', async () => {
-      const { addCard, updateCard, all_cards } = makeController([
-        makeCard({ id: 100 }),
-        makeCard({ id: 200 })
-      ])
+    test('mints a rank after the last persisted card when no neighbors are passed', async () => {
+      const c100 = makeCard({ id: 100 })
+      const c200 = makeCard({ id: 200 })
+      const { addCard, updateCard, all_cards } = makeController([c100, c200])
       addCard()
       const temp_id = all_cards.value.at(-1).id
       await updateCard(temp_id, { front_text: 'X' })
-      const [args] = insertCardAtMock.mock.calls[0]
-      expect(args.anchor_id).toBe(200)
-      expect(args.side).toBe('after')
+      const [args] = insertCardMock.mock.calls[0]
+      expect(args.rank > c200.rank).toBe(true)
     })
 
-    test('uses the explicit left neighbor as anchor (side=after) when given', async () => {
-      const { addCard, updateCard, all_cards } = makeController([
-        makeCard({ id: 100 }),
-        makeCard({ id: 200 })
-      ])
+    test('mints a rank after the explicit left neighbor when given', async () => {
+      const c100 = makeCard({ id: 100 })
+      const c200 = makeCard({ id: 200 })
+      const { addCard, updateCard, all_cards } = makeController([c100, c200])
       addCard(100)
       const temp_id = all_cards.value.find((c) => c.id < 0).id
       await updateCard(temp_id, { front_text: 'X' })
-      const [args] = insertCardAtMock.mock.calls[0]
-      expect(args.anchor_id).toBe(100)
-      expect(args.side).toBe('after')
+      const [args] = insertCardMock.mock.calls[0]
+      expect(args.rank > c100.rank).toBe(true)
+      expect(args.rank < c200.rank).toBe(true)
     })
 
-    test('uses the right neighbor as anchor (side=before) when only right is given', async () => {
-      const { addCard, updateCard, all_cards } = makeController([makeCard({ id: 200 })])
+    test('mints a rank before the right neighbor when only right is given', async () => {
+      const c200 = makeCard({ id: 200 })
+      const { addCard, updateCard, all_cards } = makeController([c200])
       addCard(undefined, 200)
       const temp_id = all_cards.value.find((c) => c.id < 0).id
       await updateCard(temp_id, { front_text: 'X' })
-      const [args] = insertCardAtMock.mock.calls[0]
-      expect(args.anchor_id).toBe(200)
-      expect(args.side).toBe('before')
+      const [args] = insertCardMock.mock.calls[0]
+      expect(args.rank < c200.rank).toBe(true)
     })
 
     test('positions a temp card after its left anchor in the merged list', () => {
@@ -462,7 +459,7 @@ describe('useCardListController', () => {
     })
   })
 
-  // ── updateCard — routing between insertCardAt (temp) and saveCard (real) ───
+  // ── updateCard — routing between insertCard (temp) and saveCard (real) ───
 
   describe('updateCard', () => {
     test('routes to saveCard for an existing (real-id) card', async () => {
@@ -470,15 +467,15 @@ describe('useCardListController', () => {
       const { updateCard } = makeController([real])
       await updateCard(42, { front_text: 'Updated' })
       expect(saveCardMock).toHaveBeenCalledOnce()
-      expect(insertCardAtMock).not.toHaveBeenCalled()
+      expect(insertCardMock).not.toHaveBeenCalled()
     })
 
-    test('routes to insertCardAt on first save of a temp card', async () => {
+    test('routes to insertCard on first save of a temp card', async () => {
       const { addCard, all_cards, updateCard } = makeController()
       addCard()
       const temp_id = all_cards.value[0].id
       await updateCard(temp_id, { front_text: 'Q', back_text: 'A' })
-      expect(insertCardAtMock).toHaveBeenCalledOnce()
+      expect(insertCardMock).toHaveBeenCalledOnce()
       expect(saveCardMock).not.toHaveBeenCalled()
     })
 
@@ -490,11 +487,11 @@ describe('useCardListController', () => {
       expect(all_cards.value.find((c) => c.id === temp_id)).toBeUndefined()
     })
 
-    test('passes front/back text to insertCardAt, preferring values over temp state', async () => {
+    test('passes front/back text to insertCard, preferring values over temp state', async () => {
       const { addCard, all_cards, updateCard } = makeController()
       addCard()
       await updateCard(all_cards.value[0].id, { front_text: 'from values' })
-      const [args] = insertCardAtMock.mock.calls[0]
+      const [args] = insertCardMock.mock.calls[0]
       expect(args.front_text).toBe('from values')
       expect(args.back_text).toBe('')
     })
@@ -502,7 +499,7 @@ describe('useCardListController', () => {
     test('is a no-op when the id is not found', async () => {
       const { updateCard } = makeController()
       await updateCard(999, { front_text: 'X' })
-      expect(insertCardAtMock).not.toHaveBeenCalled()
+      expect(insertCardMock).not.toHaveBeenCalled()
       expect(saveCardMock).not.toHaveBeenCalled()
     })
 
@@ -530,7 +527,7 @@ describe('useCardListController', () => {
     // that rejection through handleLimitError so the upgrade alert still fires.
     test('routes a card-limit insert rejection through handleLimitError instead of throwing', async () => {
       const limit_error = { code: 'PT402' }
-      insertCardAtMock.mockRejectedValueOnce(limit_error)
+      insertCardMock.mockRejectedValueOnce(limit_error)
       handleLimitErrorMock.mockReturnValueOnce(true)
       const { addCard, all_cards, updateCard, saving } = makeController()
       addCard()
@@ -541,7 +538,7 @@ describe('useCardListController', () => {
     })
 
     test('leaves the temp card staged when the insert is rejected by the card limit', async () => {
-      insertCardAtMock.mockRejectedValueOnce({ code: 'PT402' })
+      insertCardMock.mockRejectedValueOnce({ code: 'PT402' })
       handleLimitErrorMock.mockReturnValueOnce(true)
       const { addCard, all_cards, updateCard } = makeController()
       addCard()
@@ -552,7 +549,7 @@ describe('useCardListController', () => {
     })
 
     test('rethrows a non-limit insert rejection so generic error handling still runs', async () => {
-      insertCardAtMock.mockRejectedValueOnce(new Error('boom'))
+      insertCardMock.mockRejectedValueOnce(new Error('boom'))
       handleLimitErrorMock.mockReturnValueOnce(false)
       const { addCard, all_cards, updateCard, saving } = makeController()
       addCard()
@@ -880,24 +877,26 @@ describe('useCardListController', () => {
       expect(reorderCardMock).not.toHaveBeenCalled()
     })
 
-    // [obligation] no-op when no persisted anchor resolves
-    test('is a no-op when no persisted anchor can be resolved at the drop slot', () => {
-      // Only one persisted card; if we drag it, without = [], so resolveReorderAnchor returns null
+    // [obligation] reorder still mints a key even with a single persisted card
+    // in the list — rankBetween(null, null) mints the first key of the deck,
+    // it's not a no-op condition (only a temp/unranked drag is).
+    test('still fires the mutation when dragging the only persisted card', () => {
       const { reorderCard } = makeController([makeCard({ id: 1 })])
       reorderCard(0, 0)
-      expect(reorderCardMock).not.toHaveBeenCalled()
+      expect(reorderCardMock).toHaveBeenCalledOnce()
     })
 
-    test('calls the reorder mutation with card_id, deck_id, and the resolved anchor', () => {
-      const ctrl = makeController([makeCard({ id: 1 }), makeCard({ id: 2 }), makeCard({ id: 3 })])
+    test('calls the reorder mutation with card_id, deck_id, and a rank between the resolved neighbours', () => {
+      const c1 = makeCard({ id: 1 })
+      const c2 = makeCard({ id: 2 })
+      const c3 = makeCard({ id: 3 })
+      const ctrl = makeController([c1, c2, c3])
       ctrl.reorderCard(2, 0)
-      // Without card at idx 2 (id=3): [id=1, id=2]. to=0 → walks right for 'before' → anchor_id=1
-      expect(reorderCardMock).toHaveBeenCalledWith({
-        card_id: 3,
-        deck_id: 10,
-        anchor_id: 1,
-        side: 'before'
-      })
+      // Without card at idx 2 (id=3): [id=1, id=2]. to=0 → drops before id=1.
+      const [args] = reorderCardMock.mock.calls[0]
+      expect(args.card_id).toBe(3)
+      expect(args.deck_id).toBe(10)
+      expect(args.rank < c1.rank).toBe(true)
     })
 
     test('does not throw when the mutation rejects (floating promise)', async () => {
@@ -927,6 +926,30 @@ describe('useCardListController', () => {
       const ctrl = makeController([], [], undefined, sh)
       ctrl.onCancel()
       expect(exitMode).toHaveBeenCalledOnce()
+    })
+  })
+
+  // ── can_reorder — backstop for a non-default sort, mobile page-settings gap
+  describe('can_reorder [obligation]', () => {
+    test('is true when the shell sort_by is default', () => {
+      const sh = makeShell({ sort_by: ref('default') })
+      const ctrl = makeController([], [], undefined, sh)
+      expect(ctrl.can_reorder.value).toBe(true)
+    })
+
+    test('is false under a non-default sort — rendered neighbours are not rank neighbours', () => {
+      const sh = makeShell({ sort_by: ref('difficulty') })
+      const ctrl = makeController([], [], undefined, sh)
+      expect(ctrl.can_reorder.value).toBe(false)
+    })
+
+    test('tracks the shell sort_by reactively', () => {
+      const sort_by = ref('default')
+      const sh = makeShell({ sort_by })
+      const ctrl = makeController([], [], undefined, sh)
+      expect(ctrl.can_reorder.value).toBe(true)
+      sort_by.value = 'difficulty'
+      expect(ctrl.can_reorder.value).toBe(false)
     })
   })
 
