@@ -75,4 +75,13 @@ describe('useMemberDeckCountQuery', () => {
     const { query } = configFrom(useMemberDeckCountQuery)
     expect(query).toBe(fetchMemberDeckCountMock)
   })
+
+  // [obligation] useCan() instantiates this query and is mounted per card face
+  // editor, so a default 5s staleTime made every newly rendered card row
+  // refetch the member deck count. Freshness comes solely from explicit
+  // ['decks'] invalidation on deck create/delete/move.
+  test('staleTime is Infinity — freshness comes only from explicit ["decks"] invalidation [obligation]', () => {
+    const { staleTime } = configFrom(useMemberDeckCountQuery)
+    expect(staleTime).toBe(Infinity)
+  })
 })
