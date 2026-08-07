@@ -1,0 +1,11 @@
+# Which Doppler project/config this repo resolves to. `doppler setup` reads this
+# and needs no flags, so scoping a fresh checkout is the same command everywhere
+# — Conductor workspace, git worktree, or a teammate's clone.
+#
+# It does not scope anything by itself: the Doppler CLI keys its scopes by
+# absolute path in ~/.doppler/.doppler.yaml, so `doppler setup --no-interactive`
+# still has to run once per directory. Conductor's `setup` script does that for
+# new workspaces (.conductor/settings.local.toml).
+setup:
+  project: taroflash
+  config: dev
