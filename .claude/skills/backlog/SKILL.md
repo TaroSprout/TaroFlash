@@ -110,7 +110,7 @@ classifications are stale, not on the routine "I added a few tickets" run.
 
 ## Self-heal
 
-This skill is in the `/triage`–`/groom`–`/work` class and heals the same way. The user will push back
+This skill is in the `/triage`–`/groom`–`/batch` class and heals the same way. The user will push back
 — a mis-ranked ticket, an epic in the wrong quarter, too much pulled into the current one, a Type or
 Epic call that's off. Treat it as a **defect in this skill or the rules it embodies**, not just in the
 sweep. Route the lesson: a **process** miss (how this pass ranks, groups by quarter, or sequences the

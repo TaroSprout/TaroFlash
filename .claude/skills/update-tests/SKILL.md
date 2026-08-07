@@ -75,9 +75,9 @@ full suite — to confirm they pass. Scope by the touched-file set you already g
 
 **The full suite is CI's job, not this skill's.** Collateral breakage in _untouched_ test files — a
 moved import, a widened barrel, a reshaped `_shared/*.ts` helper a sibling test depends on — is caught
-by CI on the PR, not here. Running the whole suite locally (especially under parallel `/work`
+by CI on the PR, not here. Running the whole suite locally (especially under parallel `/batch`
 subagents) would swamp the machine for a check CI already performs. Confirm only that the tests you
-touched are green, then commit; whoever owns the PR (the `/work` orchestrator, or you directly)
+touched are green, then commit; whoever owns the PR (the `/batch` orchestrator, or you directly)
 watches CI to green.
 
 If a touched test is red:

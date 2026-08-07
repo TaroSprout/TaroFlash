@@ -1,6 +1,6 @@
 # Self-heal
 
-The interactive skills — `/triage`, `/groom`, `/work` — treat user pushback as a **defect in the
+The interactive skills — `/triage`, `/groom`, `/batch` — treat user pushback as a **defect in the
 skill or the rules it embodies**, not just in the artifact in front of them. The lesson is captured
 as a doc edit and shipped for review. _What_ each skill heals and _where_ the lesson routes is
 declared in that skill's `## Self-heal`; the mechanics below are shared.

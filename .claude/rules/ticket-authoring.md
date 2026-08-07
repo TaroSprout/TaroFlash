@@ -232,7 +232,7 @@ read the `Blocked By` urls, then query the Task Board for those rows' `Status`. 
 when its `Status` is in the **`complete` group** — `Done`, `Won't Do`, or `Duplicate`.
 
 A split that emits siblings with no dependency and no `## Decisions so far` entry on the epic
-produces orphans: `/work` picks up step 3 of 5 with no way to know step 1 must land first.
+produces orphans: `/batch` picks up step 3 of 5 with no way to know step 1 must land first.
 
 ## Batch work
 
