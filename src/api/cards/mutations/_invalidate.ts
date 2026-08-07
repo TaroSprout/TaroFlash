@@ -21,10 +21,14 @@ export function invalidateDeck(
 ) {
   if (deck_id === undefined) return
 
-  const refetch = refetch_inactive ? 'all' : true
+  if (refetch_inactive) {
+    queryCache.invalidateQueries({ key: ['deck', deck_id] }, 'all')
+    if (card_pages) queryCache.invalidateQueries({ key: ['cards', deck_id] }, 'all')
+    return
+  }
 
-  queryCache.invalidateQueries({ key: ['deck', deck_id] }, refetch)
-  if (card_pages) queryCache.invalidateQueries({ key: ['cards', deck_id] }, refetch)
+  queryCache.invalidateQueries({ key: ['deck', deck_id] })
+  if (card_pages) queryCache.invalidateQueries({ key: ['cards', deck_id] })
 }
 
 // `exact` on the deck list: a bare `['decks']` filter is a prefix match, so it

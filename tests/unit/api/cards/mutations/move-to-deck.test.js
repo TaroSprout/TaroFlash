@@ -79,7 +79,7 @@ describe('useMoveCardsToDeckMutation — onSettled()', () => {
     const { onSettled } = config()
     onSettled(undefined, undefined, { target_deck_id: 20, card_ids: [1], source_deck_ids: [5] })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 'count'] })
-    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'] })
+    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'], exact: true })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 'index'] })
   })
 })

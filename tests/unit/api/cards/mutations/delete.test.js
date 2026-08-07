@@ -49,7 +49,7 @@ describe('useDeleteCardsMutation', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['deck', 10] })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 10] })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 'count'] })
-    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'] })
+    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'], exact: true })
   })
 
   test('onSettled invalidates the card index so deleted fronts are removed from highlights [obligation]', () => {
@@ -88,7 +88,7 @@ describe('useDeleteCardsInDeckMutation', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['deck', 10] })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 10] })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 'count'] })
-    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'] })
+    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'], exact: true })
   })
 
   test('onSettled invalidates the card index so bulk-deleted fronts are removed from highlights [obligation]', () => {
