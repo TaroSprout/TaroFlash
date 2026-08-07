@@ -36,9 +36,11 @@ export function useCardsInDeckInfiniteQuery(
         offset: pageParam as number,
         limit: page_size
       }),
+    // Each page peeks one row past its own window, so "is there more?" is a
+    // fact rather than an inference from a short page.
     getNextPageParam: (lastPage, allPages) => {
-      if (lastPage.length < page_size) return null
-      return allPages.reduce((sum, page) => sum + page.length, 0)
+      if (lastPage.next_rank === null) return null
+      return allPages.reduce((sum, page) => sum + page.cards.length, 0)
     },
     enabled: () => Boolean(toValue(deck_id))
   })

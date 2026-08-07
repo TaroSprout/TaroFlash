@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { card } from '@tests/fixtures/card'
 
 const {
-  insertCardAtMock,
+  insertCardMock,
   saveCardMock,
   deleteCardsMock,
   deleteCardsInDeckMock,
@@ -12,7 +12,7 @@ const {
   setCardImageMock,
   deleteCardImageMock
 } = vi.hoisted(() => ({
-  insertCardAtMock: vi.fn(),
+  insertCardMock: vi.fn(),
   saveCardMock: vi.fn(),
   deleteCardsMock: vi.fn(),
   deleteCardsInDeckMock: vi.fn(),
@@ -23,7 +23,7 @@ const {
 }))
 
 vi.mock('@/api/cards', () => ({
-  useInsertCardAtMutation: () => ({ mutate: insertCardAtMock, mutateAsync: insertCardAtMock }),
+  useInsertCardMutation: () => ({ mutate: insertCardMock, mutateAsync: insertCardMock }),
   useSaveCardMutation: () => ({ mutate: saveCardMock, mutateAsync: saveCardMock }),
   useDeleteCardsMutation: () => ({ mutate: deleteCardsMock, mutateAsync: deleteCardsMock }),
   useDeleteCardsInDeckMutation: () => ({
@@ -50,8 +50,8 @@ function makeMutations(deck_id = 10) {
 }
 
 beforeEach(() => {
-  insertCardAtMock.mockReset()
-  insertCardAtMock.mockResolvedValue({ id: 7000, rank: 1500 })
+  insertCardMock.mockReset()
+  insertCardMock.mockResolvedValue({ id: 7000, rank: 'a5' })
   saveCardMock.mockReset()
   saveCardMock.mockResolvedValue(undefined)
   deleteCardsMock.mockReset()
@@ -61,7 +61,7 @@ beforeEach(() => {
   moveCardsMock.mockReset()
   moveCardsMock.mockResolvedValue(undefined)
   reorderCardMock.mockReset()
-  reorderCardMock.mockResolvedValue(9999)
+  reorderCardMock.mockResolvedValue(undefined)
   setCardImageMock.mockReset()
   setCardImageMock.mockResolvedValue(undefined)
   deleteCardImageMock.mockReset()
@@ -70,18 +70,25 @@ beforeEach(() => {
 
 describe('useCardMutations', () => {
   describe('insertCard', () => {
-    test('forwards params to insertCardAt and returns the result', async () => {
+    test('forwards params to insertCard and returns the result', async () => {
       const m = makeMutations()
       const params = {
         deck_id: 10,
-        anchor_id: 42,
-        side: 'after',
+        rank: 'a4',
         front_text: 'Q',
         back_text: 'A'
       }
       const result = await m.insertCard(params)
-      expect(insertCardAtMock).toHaveBeenCalledWith(params)
-      expect(result).toEqual({ id: 7000, rank: 1500 })
+      expect(insertCardMock).toHaveBeenCalledWith(params)
+      expect(result).toEqual({ id: 7000, rank: 'a5' })
+    })
+
+    test('omits rank when the caller wants an append (no rank given) [obligation]', async () => {
+      const m = makeMutations()
+      const params = { deck_id: 10, front_text: 'Q', back_text: 'A' }
+      await m.insertCard(params)
+      expect(insertCardMock).toHaveBeenCalledWith(params)
+      expect('rank' in insertCardMock.mock.calls[0][0]).toBe(false)
     })
   })
 
@@ -171,16 +178,16 @@ describe('useCardMutations', () => {
   describe('reorderCard', () => {
     test('forwards all params to useMoveCardMutation.mutateAsync', async () => {
       const m = makeMutations(10)
-      const params = { card_id: 7, deck_id: 10, anchor_id: 3, side: 'after' }
+      const params = { card_id: 7, deck_id: 10, rank: 'a15' }
       await m.reorderCard(params)
       expect(reorderCardMock).toHaveBeenCalledWith(params)
     })
 
     test('returns the resolved value from the mutation', async () => {
-      reorderCardMock.mockResolvedValueOnce(1234)
+      reorderCardMock.mockResolvedValueOnce(undefined)
       const m = makeMutations(10)
-      const result = await m.reorderCard({ card_id: 7, deck_id: 10, anchor_id: 3, side: 'after' })
-      expect(result).toBe(1234)
+      const result = await m.reorderCard({ card_id: 7, deck_id: 10, rank: 'a15' })
+      expect(result).toBeUndefined()
     })
   })
 })

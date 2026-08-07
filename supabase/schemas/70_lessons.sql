@@ -204,9 +204,13 @@ $$;
 ALTER FUNCTION public.invoke_lesson_process(p_lesson_id bigint) OWNER TO postgres;
 
 
-GRANT ALL ON FUNCTION public.invoke_lesson_process(p_lesson_id bigint) TO anon;
-GRANT ALL ON FUNCTION public.invoke_lesson_process(p_lesson_id bigint) TO authenticated;
-GRANT ALL ON FUNCTION public.invoke_lesson_process(p_lesson_id bigint) TO service_role;
+-- Cron/trigger entry point: SECURITY DEFINER with no caller check, because
+-- pg_cron and the trigger both run as postgres. No client role gets EXECUTE
+-- (see 20260807180000_lock-down-lesson-cron-functions).
+REVOKE ALL ON FUNCTION public.invoke_lesson_process(p_lesson_id bigint) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.invoke_lesson_process(p_lesson_id bigint) FROM anon;
+REVOKE ALL ON FUNCTION public.invoke_lesson_process(p_lesson_id bigint) FROM authenticated;
+REVOKE ALL ON FUNCTION public.invoke_lesson_process(p_lesson_id bigint) FROM service_role;
 
 
 CREATE FUNCTION public.reap_stalled_lessons() RETURNS integer
@@ -232,9 +236,13 @@ $$;
 ALTER FUNCTION public.reap_stalled_lessons() OWNER TO postgres;
 
 
-GRANT ALL ON FUNCTION public.reap_stalled_lessons() TO anon;
-GRANT ALL ON FUNCTION public.reap_stalled_lessons() TO authenticated;
-GRANT ALL ON FUNCTION public.reap_stalled_lessons() TO service_role;
+-- Cron/trigger entry point: SECURITY DEFINER with no caller check, because
+-- pg_cron and the trigger both run as postgres. No client role gets EXECUTE
+-- (see 20260807180000_lock-down-lesson-cron-functions).
+REVOKE ALL ON FUNCTION public.reap_stalled_lessons() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.reap_stalled_lessons() FROM anon;
+REVOKE ALL ON FUNCTION public.reap_stalled_lessons() FROM authenticated;
+REVOKE ALL ON FUNCTION public.reap_stalled_lessons() FROM service_role;
 
 
 CREATE FUNCTION public.trigger_lesson_processing() RETURNS trigger

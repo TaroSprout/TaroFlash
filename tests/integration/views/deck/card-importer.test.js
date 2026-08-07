@@ -28,7 +28,7 @@ vi.mock('@/api/cards', () => {
     useDeleteCardImageMutation: noop_mutation,
     useDeleteCardsInDeckMutation: noop_mutation,
     useDeleteCardsMutation: noop_mutation,
-    useInsertCardAtMutation: noop_mutation,
+    useInsertCardMutation: noop_mutation,
     useMemberCardCountQuery: noop_query,
     useMoveCardMutation: noop_mutation,
     useMoveCardsToDeckMutation: noop_mutation,

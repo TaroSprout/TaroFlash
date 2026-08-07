@@ -1,11 +1,13 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 
-const { useMutationSpy, invalidateSpy, upsertCardMock, insertCardAtMock } = vi.hoisted(() => ({
-  useMutationSpy: vi.fn((cfg) => cfg),
-  invalidateSpy: vi.fn(),
-  upsertCardMock: vi.fn().mockResolvedValue({}),
-  insertCardAtMock: vi.fn().mockResolvedValue({ id: 9, rank: 1000 })
-}))
+const { useMutationSpy, invalidateSpy, upsertCardMock, insertCardAtMock, insertCardMock } =
+  vi.hoisted(() => ({
+    useMutationSpy: vi.fn((cfg) => cfg),
+    invalidateSpy: vi.fn(),
+    upsertCardMock: vi.fn().mockResolvedValue({}),
+    insertCardAtMock: vi.fn().mockResolvedValue({ id: 9, rank: 1000 }),
+    insertCardMock: vi.fn().mockResolvedValue({ id: 9, rank: 'a5' })
+  }))
 
 vi.mock('@pinia/colada', () => ({
   useMutation: useMutationSpy,
@@ -14,17 +16,19 @@ vi.mock('@pinia/colada', () => ({
 
 vi.mock('@/api/cards/db', () => ({
   upsertCard: upsertCardMock,
-  insertCardAt: insertCardAtMock
+  insertCardAt: insertCardAtMock,
+  insertCard: insertCardMock
 }))
 
 import { useUpsertCardMutation } from '@/api/cards/mutations/upsert'
-import { useInsertCardAtMutation } from '@/api/cards/mutations/insert'
+import { useInsertCardMutation } from '@/api/cards/mutations/insert'
 
 beforeEach(() => {
   useMutationSpy.mockClear()
   invalidateSpy.mockClear()
   upsertCardMock.mockClear()
   insertCardAtMock.mockClear()
+  insertCardMock.mockClear()
 })
 
 function configFrom(hook) {
@@ -53,26 +57,19 @@ describe('useUpsertCardMutation', () => {
   })
 })
 
-describe('useInsertCardAtMutation', () => {
-  test('mutation delegates to insertCardAt', async () => {
-    const { mutation } = configFrom(useInsertCardAtMutation)
-    const params = {
-      deck_id: 10,
-      anchor_id: null,
-      side: null,
-      front_text: 'Q',
-      back_text: 'A'
-    }
+describe('useInsertCardMutation', () => {
+  test('mutation delegates to insertCard (plain table write, no RPC) [obligation]', async () => {
+    const { mutation } = configFrom(useInsertCardMutation)
+    const params = { deck_id: 10, rank: 'a5', front_text: 'Q', back_text: 'A' }
     await mutation(params)
-    expect(insertCardAtMock).toHaveBeenCalledWith(params)
+    expect(insertCardMock).toHaveBeenCalledWith(params)
+    expect(insertCardAtMock).not.toHaveBeenCalled()
   })
 
   test('onSettled invalidates the deck + all card counts (card creation shifts deck totals)', () => {
-    const { onSettled } = configFrom(useInsertCardAtMutation)
-    onSettled({ id: 9, rank: 1000 }, undefined, {
+    const { onSettled } = configFrom(useInsertCardMutation)
+    onSettled({ id: 9, rank: 'a5' }, undefined, {
       deck_id: 10,
-      anchor_id: null,
-      side: null,
       front_text: '',
       back_text: ''
     })
@@ -83,11 +80,9 @@ describe('useInsertCardAtMutation', () => {
   })
 
   test('onSettled invalidates card index — new front text must appear in highlights [obligation]', () => {
-    const { onSettled } = configFrom(useInsertCardAtMutation)
-    onSettled({ id: 9, rank: 1000 }, undefined, {
+    const { onSettled } = configFrom(useInsertCardMutation)
+    onSettled({ id: 9, rank: 'a5' }, undefined, {
       deck_id: 10,
-      anchor_id: null,
-      side: null,
       front_text: 'Q',
       back_text: 'A'
     })

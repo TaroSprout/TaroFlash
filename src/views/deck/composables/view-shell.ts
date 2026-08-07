@@ -67,6 +67,11 @@ export function useDeckViewShell() {
     // Reordering only applies to the base grid; leaving the view drops it.
     if (new_mode !== 'view') is_rearranging.value = false
 
+    // The card editor always shows the deck's own order: it's the surface where
+    // you rearrange cards, and a drop can only express a position when what's on
+    // screen *is* the rank order.
+    if (new_mode === 'edit') sort_by.value = 'default'
+
     const settled = new Promise<void>((resolve) => settle_waiters.add(resolve))
     mode.value = new_mode
     return settled

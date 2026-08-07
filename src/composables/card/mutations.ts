@@ -3,12 +3,12 @@ import {
   useDeleteCardImageMutation,
   useDeleteCardsMutation,
   useDeleteCardsInDeckMutation,
-  useInsertCardAtMutation,
+  useInsertCardMutation,
   useMoveCardMutation,
   useMoveCardsToDeckMutation,
   useSaveCardMutation,
   useSetCardImageMutation,
-  type InsertCardAtParams,
+  type InsertCardParams,
   type MoveCardsToDeckVars,
   type UseMoveCardMutationParams
 } from '@/api/cards'
@@ -29,7 +29,7 @@ type DeleteArgs = { cards: Card[] } | { except_ids: number[] }
  * @param deck_id - Reactive deck id, required for INSERT and bulk-delete.
  */
 export function useCardMutations(deck_id: MaybeRefOrGetter<number | undefined>) {
-  const insert_mutation = useInsertCardAtMutation()
+  const insert_mutation = useInsertCardMutation()
   const save_mutation = useSaveCardMutation()
   const delete_mutation = useDeleteCardsMutation()
   const delete_in_deck_mutation = useDeleteCardsInDeckMutation()
@@ -38,8 +38,8 @@ export function useCardMutations(deck_id: MaybeRefOrGetter<number | undefined>) 
   const set_image_mutation = useSetCardImageMutation()
   const delete_image_mutation = useDeleteCardImageMutation()
 
-  /** Insert a new card at the anchor + side described by `params`. */
-  function insertCard(params: InsertCardAtParams): Promise<{ id: number; rank: number }> {
+  /** Insert a new card at the key described by `params`, or append without one. */
+  function insertCard(params: InsertCardParams): Promise<{ id: number; rank: string }> {
     return insert_mutation.mutateAsync(params)
   }
 
@@ -76,8 +76,8 @@ export function useCardMutations(deck_id: MaybeRefOrGetter<number | undefined>) 
     await move_mutation.mutateAsync(vars)
   }
 
-  /** Reposition one card within its deck, relative to an anchor card. */
-  function reorderCard(params: UseMoveCardMutationParams): Promise<number> {
+  /** Reposition one card within its deck by writing its new key. */
+  function reorderCard(params: UseMoveCardMutationParams): Promise<void> {
     return reorder_mutation.mutateAsync(params)
   }
 

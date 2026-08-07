@@ -7,9 +7,9 @@ function makeCard(overrides = {}) {
   return card.one({ overrides })
 }
 
-function makeCardsQuery(persisted = []) {
+function makeCardsQuery(persisted = [], next_rank = null) {
   return {
-    data: { value: { pages: [persisted], pageParams: [0] } },
+    data: { value: { pages: [{ cards: persisted, next_rank }], pageParams: [0] } },
     hasNextPage: { value: false },
     isLoading: { value: false },
     loadNextPage: () => {}
@@ -26,7 +26,10 @@ describe('useVirtualCardList', () => {
       const cards_query = {
         data: {
           value: {
-            pages: [[makeCard({ id: 1 })], [makeCard({ id: 2 }), makeCard({ id: 3 })]],
+            pages: [
+              { cards: [makeCard({ id: 1 })], next_rank: null },
+              { cards: [makeCard({ id: 2 }), makeCard({ id: 3 })], next_rank: null }
+            ],
             pageParams: [0, 1]
           }
         },
@@ -256,10 +259,10 @@ describe('useVirtualCardList', () => {
       list.addCard()
       const entry = list.temp_entries.value[0]
       const placeholder = entry.card.id
-      list.promoteTemp(placeholder, 5001, 1500, { front_text: 'Q' })
+      list.promoteTemp(placeholder, 5001, 'a5', { front_text: 'Q' })
       expect(entry.real_id).toBe(5001)
       expect(entry.card.id).toBe(5001)
-      expect(entry.card.rank).toBe(1500)
+      expect(entry.card.rank).toBe('a5')
       expect(entry.card.front_text).toBe('Q')
     })
 
@@ -268,14 +271,14 @@ describe('useVirtualCardList', () => {
       list.addCard()
       const entry = list.temp_entries.value[0]
       const before = list.all_cards.value[0].client_id
-      list.promoteTemp(entry.card.id, 5002, 1600, {})
+      list.promoteTemp(entry.card.id, 5002, 'a6', {})
       const after = list.all_cards.value[0].client_id
       expect(after).toBe(before)
     })
 
     test('seeds the persisted client_id Map so refetched copy reuses the same client_id', () => {
       const cards_query = {
-        data: { value: { pages: [[]], pageParams: [0] } },
+        data: { value: { pages: [{ cards: [], next_rank: null }], pageParams: [0] } },
         hasNextPage: { value: false },
         isLoading: { value: false },
         loadNextPage: () => {}
@@ -285,10 +288,10 @@ describe('useVirtualCardList', () => {
       const entry = list.temp_entries.value[0]
       const placeholder = entry.card.id
       const original_client_id = entry.client_id
-      list.promoteTemp(placeholder, 7000, 2000, { front_text: 'X' })
+      list.promoteTemp(placeholder, 7000, 'a7', { front_text: 'X' })
 
       cards_query.data.value = {
-        pages: [[makeCard({ id: 7000, front_text: 'X' })]],
+        pages: [{ cards: [makeCard({ id: 7000, front_text: 'X' })], next_rank: null }],
         pageParams: [0]
       }
 
@@ -299,7 +302,7 @@ describe('useVirtualCardList', () => {
 
     test('once persisted refetch lands, the entry is filtered from all_cards (no duplicate id)', () => {
       const cards_query = {
-        data: { value: { pages: [[]], pageParams: [0] } },
+        data: { value: { pages: [{ cards: [], next_rank: null }], pageParams: [0] } },
         hasNextPage: { value: false },
         isLoading: { value: false },
         loadNextPage: () => {}
@@ -307,10 +310,10 @@ describe('useVirtualCardList', () => {
       const list = useVirtualCardList(cards_query, ref(10))
       list.addCard()
       const placeholder = list.temp_entries.value[0].card.id
-      list.promoteTemp(placeholder, 7100, 2100, {})
+      list.promoteTemp(placeholder, 7100, 'a8', {})
 
       cards_query.data.value = {
-        pages: [[makeCard({ id: 7100 })]],
+        pages: [{ cards: [makeCard({ id: 7100 })], next_rank: null }],
         pageParams: [0]
       }
 
@@ -320,7 +323,65 @@ describe('useVirtualCardList', () => {
 
     test('is a no-op when no matching entry exists', () => {
       const list = makeList()
-      expect(() => list.promoteTemp(-999, 1, 0, {})).not.toThrow()
+      expect(() => list.promoteTemp(-999, 1, 'a0', {})).not.toThrow()
+    })
+  })
+
+  describe('tail_rank', () => {
+    test('reads next_rank off the last loaded page [obligation]', () => {
+      const list = useVirtualCardList(makeCardsQuery([makeCard({ id: 1 })], 'z9'), ref(10))
+      expect(list.tail_rank.value).toBe('z9')
+    })
+
+    test('is null when there is no next page (end of the deck)', () => {
+      const list = makeList([makeCard({ id: 1 })])
+      expect(list.tail_rank.value).toBeNull()
+    })
+
+    test('is null when the query has no data yet', () => {
+      const cards_query = {
+        data: { value: undefined },
+        hasNextPage: { value: false },
+        isLoading: { value: false },
+        loadNextPage: () => {}
+      }
+      const list = useVirtualCardList(cards_query, ref(10))
+      expect(list.tail_rank.value).toBeNull()
+    })
+  })
+
+  describe('neighbourRanksFor', () => {
+    test('resolves the ranked neighbours around the staged slot [obligation]', () => {
+      const list = useVirtualCardList(
+        makeCardsQuery([
+          { ...makeCard({ id: 1 }), rank: 'a0' },
+          { ...makeCard({ id: 2 }), rank: 'a2' }
+        ]),
+        ref(10)
+      )
+      list.addCard(1) // stages between id=1 (a0) and id=2 (a2)
+      const client_id = list.temp_entries.value[0].client_id
+
+      const { prev, next } = list.neighbourRanksFor(client_id)
+      expect(prev).toBe('a0')
+      expect(next).toBe('a2')
+    })
+
+    test('falls back to tail_rank when the staged card sits at the loaded end [obligation]', () => {
+      const list = useVirtualCardList(
+        makeCardsQuery([{ ...makeCard({ id: 1 }), rank: 'a0' }], 'z9'),
+        ref(10)
+      )
+      list.addCard(1) // appends after the only persisted card
+      const client_id = list.temp_entries.value[0].client_id
+
+      const { next } = list.neighbourRanksFor(client_id)
+      expect(next).toBe('z9')
+    })
+
+    test('returns { prev: null, next: tail_rank } when the client_id is not found', () => {
+      const list = useVirtualCardList(makeCardsQuery([], 'z9'), ref(10))
+      expect(list.neighbourRanksFor('missing')).toEqual({ prev: null, next: 'z9' })
     })
   })
 
@@ -336,7 +397,7 @@ describe('useVirtualCardList', () => {
       const list = makeList()
       list.addCard()
       const placeholder = list.temp_entries.value[0].card.id
-      list.promoteTemp(placeholder, 8000, 100, {})
+      list.promoteTemp(placeholder, 8000, 'a1', {})
       expect(list.findEntryByCardId(8000)?.real_id).toBe(8000)
     })
 

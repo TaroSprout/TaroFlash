@@ -37,7 +37,7 @@ export type Database = {
           id: number
           member_id: string | null
           note: string | null
-          rank: number
+          rank: string
           updated_at: string | null
         }
         Insert: {
@@ -48,7 +48,7 @@ export type Database = {
           id?: number
           member_id?: string | null
           note?: string | null
-          rank: number
+          rank: string
           updated_at?: string | null
         }
         Update: {
@@ -59,7 +59,7 @@ export type Database = {
           id?: number
           member_id?: string | null
           note?: string | null
-          rank?: number
+          rank?: string
           updated_at?: string | null
         }
         Relationships: [
@@ -126,6 +126,7 @@ export type Database = {
           study_config: Json | null
           tags: string[] | null
           title: string | null
+          unpublished_by_deletion: boolean
           updated_at: string | null
         }
         Insert: {
@@ -141,6 +142,7 @@ export type Database = {
           study_config?: Json | null
           tags?: string[] | null
           title?: string | null
+          unpublished_by_deletion?: boolean
           updated_at?: string | null
         }
         Update: {
@@ -156,6 +158,7 @@ export type Database = {
           study_config?: Json | null
           tags?: string[] | null
           title?: string | null
+          unpublished_by_deletion?: boolean
           updated_at?: string | null
         }
         Relationships: [
@@ -439,8 +442,10 @@ export type Database = {
           avatar_url: string | null
           cover_config: Json | null
           created_at: string
+          delete_at: string | null
           description: string | null
           display_name: string
+          downgrade_delete_at: string | null
           email: string | null
           id: string
           plan: string
@@ -453,8 +458,10 @@ export type Database = {
           avatar_url?: string | null
           cover_config?: Json | null
           created_at?: string
+          delete_at?: string | null
           description?: string | null
           display_name: string
+          downgrade_delete_at?: string | null
           email?: string | null
           id: string
           plan?: string
@@ -467,8 +474,10 @@ export type Database = {
           avatar_url?: string | null
           cover_config?: Json | null
           created_at?: string
+          delete_at?: string | null
           description?: string | null
           display_name?: string
+          downgrade_delete_at?: string | null
           email?: string | null
           id?: string
           plan?: string
@@ -782,7 +791,7 @@ export type Database = {
           id: number | null
           is_duplicate: boolean | null
           member_id: string | null
-          rank: number | null
+          rank: string | null
           updated_at: string | null
         }
         Relationships: [
@@ -852,8 +861,13 @@ export type Database = {
       }
     }
     Functions: {
+      active_member_id: { Args: never; Returns: string }
       add_or_update_purchase: {
         Args: { item: number; member: string; qty: number }
+        Returns: undefined
+      }
+      assert_deck_card_limits: {
+        Args: { p_deck_ids: number[] }
         Returns: undefined
       }
       auth_plan: { Args: never; Returns: string }
@@ -861,36 +875,14 @@ export type Database = {
         Args: never
         Returns: Database['public']['Enums']['member_role']
       }
-      bulk_insert_cards_in_deck: {
-        Args: { p_cards: Json; p_deck_id: number }
-        Returns: {
-          back_text: string | null
-          created_at: string
-          deck_id: number | null
-          front_text: string | null
-          id: number
-          member_id: string | null
-          note: string | null
-          rank: number
-          updated_at: string | null
-        }[]
-        SetofOptions: {
-          from: '*'
-          to: 'cards'
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
+      begin_account_deletion: { Args: { p_member_id: string }; Returns: string }
+      begin_downgrade_grace: { Args: { p_member_id: string }; Returns: string }
       can_manage_members: { Args: never; Returns: boolean }
       can_moderate_feedback: { Args: never; Returns: boolean }
       can_read_lesson_audio: { Args: never; Returns: boolean }
-      card_rank_between: {
-        Args: {
-          p_deck_id: number
-          p_left_card_id: number
-          p_right_card_id: number
-        }
-        Returns: number
+      clear_downgrade_grace: {
+        Args: { p_member_id: string }
+        Returns: undefined
       }
       create_pending_lesson: {
         Args: {
@@ -926,6 +918,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      deck_lock_deadline: { Args: { p_deck_id: number }; Returns: string }
       deck_rank_between: {
         Args: {
           p_left_deck_id: number
@@ -939,10 +932,6 @@ export type Database = {
         Returns: number
       }
       delete_deck: { Args: { p_deck_id: number }; Returns: undefined }
-      enforce_deck_card_limit: {
-        Args: { p_adding: number; p_deck_id: number }
-        Returns: undefined
-      }
       feedback_items_with_votes: {
         Args: never
         Returns: {
@@ -986,7 +975,7 @@ export type Database = {
           front_text: string
           id: number
           member_id: string
-          rank: number
+          rank: string
           review: Json
           updated_at: string
         }[]
@@ -1034,7 +1023,7 @@ export type Database = {
           id: number | null
           is_duplicate: boolean | null
           member_id: string | null
-          rank: number | null
+          rank: string | null
           updated_at: string | null
         }[]
         SetofOptions: {
@@ -1044,37 +1033,32 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      insert_card_at: {
-        Args: {
-          p_anchor_id: number
-          p_back_text: string
-          p_deck_id: number
-          p_front_text: string
-          p_note?: string
-          p_side: string
-        }
-        Returns: {
-          id: number
-          rank: number
-        }[]
-      }
       invoke_cleanup_media: { Args: never; Returns: undefined }
       invoke_lesson_process: {
         Args: { p_lesson_id: number }
         Returns: undefined
       }
+      invoke_purge_accounts: { Args: never; Returns: undefined }
       is_display_name_available: {
         Args: { candidate: string }
         Returns: boolean
       }
-      move_card: {
-        Args: { p_anchor_id: number; p_card_id: number; p_side: string }
-        Returns: number
+      member_has_password: { Args: never; Returns: boolean }
+      member_public_profile: {
+        Args: { p_member_id: string }
+        Returns: Database['public']['CompositeTypes']['member_profile'][]
+        SetofOptions: {
+          from: '*'
+          to: 'member_profile'
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       move_cards_to_deck: {
         Args: {
           p_card_ids?: number[]
           p_except_ids?: number[]
+          p_ranks: string[]
           p_source_deck_id?: number
           p_target_deck_id: number
         }
@@ -1084,22 +1068,11 @@ export type Database = {
         Args: { p_anchor_id: number; p_deck_id: number; p_side: string }
         Returns: number
       }
+      purge_downgraded_decks: { Args: never; Returns: undefined }
       reap_stalled_lessons: { Args: never; Returns: number }
-      reindex_deck_ranks: { Args: { p_deck_id: number }; Returns: undefined }
       reindex_member_deck_ranks: {
         Args: { p_member_id: string }
         Returns: undefined
-      }
-      reserve_card: {
-        Args: {
-          p_deck_id: number
-          p_left_card_id: number
-          p_right_card_id: number
-        }
-        Returns: {
-          out_id: number
-          out_rank: number
-        }[]
       }
       reset_deck_reviews: { Args: { p_deck_id: number }; Returns: undefined }
       resolve_deck_pacing: {
@@ -1112,6 +1085,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      restore_account: { Args: never; Returns: string }
       save_deck: {
         Args: {
           p_card_attributes: Json
@@ -1196,7 +1170,7 @@ export type Database = {
       feedback_status: 'new' | 'accepted' | 'rejected' | 'in-progress' | 'done'
       feedback_type: 'idea' | 'bug' | 'other'
       feedback_visibility: 'public' | 'internal'
-      media_slot: 'card_front' | 'card_back'
+      media_slot: 'card_front' | 'card_back' | 'deck_cover'
       member_role: 'user' | 'moderator' | 'admin'
       shop_category: 'power_ups' | 'stationary'
     }
@@ -1231,6 +1205,11 @@ export type Database = {
         pacing_overrides: Json | null
         is_locked: boolean | null
         locked_delete_at: string | null
+      }
+      member_profile: {
+        display_name: string | null
+        description: string | null
+        cover_config: Json | null
       }
       resolved_pacing: {
         desired_retention: number | null
@@ -1391,7 +1370,7 @@ export const Constants = {
       feedback_status: ['new', 'accepted', 'rejected', 'in-progress', 'done'],
       feedback_type: ['idea', 'bug', 'other'],
       feedback_visibility: ['public', 'internal'],
-      media_slot: ['card_front', 'card_back'],
+      media_slot: ['card_front', 'card_back', 'deck_cover'],
       member_role: ['user', 'moderator', 'admin'],
       shop_category: ['power_ups', 'stationary']
     }

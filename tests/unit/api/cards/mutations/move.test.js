@@ -4,7 +4,7 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 
 const { useMutationSpy, moveCardMock } = vi.hoisted(() => ({
   useMutationSpy: vi.fn((cfg) => cfg),
-  moveCardMock: vi.fn().mockResolvedValue(9001)
+  moveCardMock: vi.fn().mockResolvedValue(undefined)
 }))
 
 // Shared mutable cache state — reset in beforeEach
@@ -37,13 +37,16 @@ import { useMoveCardMutation } from '@/api/cards/mutations/move'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function card(id) {
-  return { id, rank: id * 1000 }
+function card(id, rank) {
+  return { id, rank }
 }
 
-/** Build a cache snapshot with the given pages array */
+/** Build a cache snapshot with the given pages array — each page is a bare cards array. */
 function makeSnapshot(pages) {
-  return { pages, pageParams: pages.map((_, i) => i * 50) }
+  return {
+    pages: pages.map((cards) => ({ cards, next_rank: null })),
+    pageParams: pages.map((_, i) => i * 50)
+  }
 }
 
 /** Extract the mutation config registered by the last useMutation call */
@@ -66,13 +69,13 @@ beforeEach(() => {
 describe('useMoveCardMutation — mutation()', () => {
   test('calls moveCard with the db params (deck_id stripped)', async () => {
     const { mutation } = config()
-    await mutation({ deck_id: 10, card_id: 1, anchor_id: 2, side: 'after' })
-    expect(moveCardMock).toHaveBeenCalledWith({ card_id: 1, anchor_id: 2, side: 'after' })
+    await mutation({ deck_id: 10, card_id: 1, rank: 'a5' })
+    expect(moveCardMock).toHaveBeenCalledWith({ card_id: 1, rank: 'a5' })
   })
 
   test('does not forward deck_id to moveCard (it is a mutation-level concern only)', async () => {
     const { mutation } = config()
-    await mutation({ deck_id: 10, card_id: 1, anchor_id: 2, side: 'before' })
+    await mutation({ deck_id: 10, card_id: 1, rank: 'a5' })
     const call = moveCardMock.mock.calls[0][0]
     expect('deck_id' in call).toBe(false)
   })
@@ -81,102 +84,95 @@ describe('useMoveCardMutation — mutation()', () => {
 // ── onMutate — optimistic cache reorder ───────────────────────────────────────
 
 describe('useMoveCardMutation — onMutate()', () => {
-  // [obligation] optimistically reorders cached pages synchronously before RPC resolves
-  test('reorders the card to after the anchor synchronously on mutate [obligation]', () => {
-    cached_data = makeSnapshot([[card(1), card(2), card(3)]])
+  test('re-keys the moved card and re-sorts by rank [obligation]', () => {
+    cached_data = makeSnapshot([[card(1, 'a0'), card(2, 'a1'), card(3, 'a2')]])
     const { onMutate } = config()
 
-    onMutate({ deck_id: 10, card_id: 3, anchor_id: 1, side: 'after' })
+    // Move card 1 to a rank between 2 and 3
+    onMutate({ deck_id: 10, card_id: 1, rank: 'a15' })
 
-    expect(setQueryDataSpy).toHaveBeenCalledOnce()
     const { pages } = setQueryDataSpy.mock.calls[0][1]
-    expect(pages[0].map((c) => c.id)).toEqual([1, 3, 2])
+    expect(pages[0].cards.map((c) => c.id)).toEqual([2, 1, 3])
   })
 
-  test('reorders the card to before the anchor on side=before', () => {
-    cached_data = makeSnapshot([[card(1), card(2), card(3)]])
+  test('ties on identical rank break by ascending id [obligation]', () => {
+    cached_data = makeSnapshot([[card(2, 'a0'), card(3, 'a0')]])
     const { onMutate } = config()
 
-    onMutate({ deck_id: 10, card_id: 3, anchor_id: 2, side: 'before' })
+    onMutate({ deck_id: 10, card_id: 3, rank: 'a0' })
 
     const { pages } = setQueryDataSpy.mock.calls[0][1]
-    expect(pages[0].map((c) => c.id)).toEqual([1, 3, 2])
+    // Both cards now share rank 'a0' — id ascending breaks the tie
+    expect(pages[0].cards.map((c) => c.id)).toEqual([2, 3])
   })
 
-  // [obligation] anchor index computed AFTER removing moved card (regression guard)
-  test('places card correctly when moving first card to after a later card [obligation]', () => {
-    // A=1, B=2, C=3. Move A (idx 0) to after B.
-    // If anchor_index was computed BEFORE removing A: B is at idx 1 (stale) → splice(2,0,A) → [B,C,A] (wrong)
-    // Correct: remove A → [B,C], B is now at idx 0 → splice(1,0,A) → [B,A,C] ✓
-    cached_data = makeSnapshot([[card(1), card(2), card(3)]])
-    const { onMutate } = config()
-
-    onMutate({ deck_id: 10, card_id: 1, anchor_id: 2, side: 'after' })
-
-    const { pages } = setQueryDataSpy.mock.calls[0][1]
-    expect(pages[0].map((c) => c.id)).toEqual([2, 1, 3])
-  })
-
-  // [obligation] re-chunks into original page sizes on cross-page move
-  test('preserves original page sizes when moving a card across page boundaries [obligation]', () => {
-    // Two pages of 2. Move card 4 (page 2) to after card 1 (page 1).
+  test('preserves original page sizes when moving a card across page boundaries', () => {
+    // Two pages of 2. Move card 4 (page 2) ahead of card 1 (page 1).
     cached_data = makeSnapshot([
-      [card(1), card(2)],
-      [card(3), card(4)]
+      [card(1, 'a0'), card(2, 'a1')],
+      [card(3, 'a2'), card(4, 'a3')]
     ])
     const { onMutate } = config()
 
-    onMutate({ deck_id: 10, card_id: 4, anchor_id: 1, side: 'after' })
+    onMutate({ deck_id: 10, card_id: 4, rank: 'a05' })
 
     const { pages } = setQueryDataSpy.mock.calls[0][1]
     expect(pages).toHaveLength(2)
-    expect(pages[0]).toHaveLength(2)
-    expect(pages[1]).toHaveLength(2)
-    expect(pages[0].map((c) => c.id)).toEqual([1, 4])
-    expect(pages[1].map((c) => c.id)).toEqual([2, 3])
+    expect(pages[0].cards).toHaveLength(2)
+    expect(pages[1].cards).toHaveLength(2)
+    expect(pages[0].cards.map((c) => c.id)).toEqual([1, 4])
+    expect(pages[1].cards.map((c) => c.id)).toEqual([2, 3])
   })
 
-  // [obligation] no-op when deck not cached — returns { snapshot: undefined }
+  test('preserves next_rank on each refilled page [obligation]', () => {
+    cached_data = {
+      pages: [{ cards: [card(1, 'a0'), card(2, 'a1')], next_rank: 'z9' }],
+      pageParams: [0]
+    }
+    const { onMutate } = config()
+
+    onMutate({ deck_id: 10, card_id: 2, rank: 'a05' })
+
+    const { pages } = setQueryDataSpy.mock.calls[0][1]
+    expect(pages[0].next_rank).toBe('z9')
+  })
+
   test('is a no-op and returns { snapshot: undefined } when the deck is not cached [obligation]', () => {
     cached_data = undefined
     const { onMutate } = config()
 
-    const ctx = onMutate({ deck_id: 10, card_id: 1, anchor_id: 2, side: 'after' })
+    const ctx = onMutate({ deck_id: 10, card_id: 1, rank: 'a0' })
 
     expect(setQueryDataSpy).not.toHaveBeenCalled()
     expect(ctx).toEqual({ snapshot: undefined })
   })
 
   test('returns { snapshot } with the pre-mutate cache state for rollback', () => {
-    const initial = makeSnapshot([[card(1), card(2)]])
+    const initial = makeSnapshot([[card(1, 'a0'), card(2, 'a1')]])
     cached_data = initial
     const { onMutate } = config()
 
-    const ctx = onMutate({ deck_id: 10, card_id: 2, anchor_id: 1, side: 'before' })
+    const ctx = onMutate({ deck_id: 10, card_id: 2, rank: 'a05' })
 
     expect(ctx.snapshot).toBe(initial)
   })
 
-  test('is a no-op (no crash) when card_id is not in the cache', () => {
-    cached_data = makeSnapshot([[card(1), card(2)]])
+  test('leaves the cache unchanged when card_id is not in the cache', () => {
+    cached_data = makeSnapshot([[card(1, 'a0'), card(2, 'a1')]])
     const { onMutate } = config()
 
-    // card 99 doesn't exist — should return snapshot without patching
-    onMutate({ deck_id: 10, card_id: 99, anchor_id: 1, side: 'after' })
+    onMutate({ deck_id: 10, card_id: 99, rank: 'a05' })
 
-    // setQueryData IS called by setInfiniteQueryData but updater bails early
-    // so page order is unchanged
     const { pages } = setQueryDataSpy.mock.calls[0][1]
-    expect(pages[0].map((c) => c.id)).toEqual([1, 2])
+    expect(pages[0].cards.map((c) => c.id)).toEqual([1, 2])
   })
 })
 
 // ── onError — rollback ────────────────────────────────────────────────────────
 
 describe('useMoveCardMutation — onError()', () => {
-  // [obligation] onError restores the snapshot on failure
   test('restores the pre-mutate snapshot when the mutation errors [obligation]', () => {
-    const snapshot = makeSnapshot([[card(1), card(2)]])
+    const snapshot = makeSnapshot([[card(1, 'a0'), card(2, 'a1')]])
     const { onError } = config()
 
     onError(new Error('timeout'), { deck_id: 10 }, { snapshot })
@@ -199,7 +195,6 @@ describe('useMoveCardMutation — onError()', () => {
 // ── onSettled — invalidation ──────────────────────────────────────────────────
 
 describe('useMoveCardMutation — onSettled()', () => {
-  // [obligation] invalidates ['deck', deck_id] and ['cards', deck_id] on settle
   test('invalidates the deck query on settle [obligation]', () => {
     const { onSettled } = config()
     onSettled(undefined, undefined, { deck_id: 10 })

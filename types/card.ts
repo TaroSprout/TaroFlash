@@ -11,7 +11,9 @@ export type CardBase = {
   note?: string
   created_at?: string
   updated_at?: string
-  rank?: number
+  // Base62 fractional-indexing key. Ordering is plain lexicographic byte
+  // comparison — see `src/utils/card/rank.ts`.
+  rank?: string
   member_id?: string
 
   // View-derived fields (cards_with_images). Optional because they don't

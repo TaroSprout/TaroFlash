@@ -91,23 +91,53 @@ describe('useSaveCardMutation', () => {
     expect(filter).toEqual({ key: ['cards', 10, 'pages'] })
   })
 
-  test('onMutate updater merges values into the matching card, leaving siblings intact', () => {
+  // [obligation] regression: patchCardInDeckCache used to walk pages as Card[]
+  // directly, so `page.map` threw on every page under the { cards, next_rank }
+  // shape — a toast per keystroke with no network request. Assert against a
+  // real page object (not a bare array) so this drift can't slip back in.
+  test('onMutate updater merges values into the matching card within a { cards, next_rank } page, leaving siblings intact [obligation]', () => {
     const { onMutate } = configFrom()
     onMutate({ card: { id: 5, deck_id: 10 }, values: { front_text: 'F1' } })
 
     const [, updater] = setQueriesDataMock.mock.calls[0]
     const old = {
       pages: [
-        [
-          { id: 5, deck_id: 10, front_text: 'F0', back_text: 'B0' },
-          { id: 6, deck_id: 10, front_text: 'X', back_text: 'Y' }
-        ]
+        {
+          cards: [
+            { id: 5, deck_id: 10, front_text: 'F0', back_text: 'B0' },
+            { id: 6, deck_id: 10, front_text: 'X', back_text: 'Y' }
+          ],
+          next_rank: 'z9'
+        }
       ],
       pageParams: [0]
     }
     const next = updater(old)
-    expect(next.pages[0][0]).toEqual({ id: 5, deck_id: 10, front_text: 'F1', back_text: 'B0' })
-    expect(next.pages[0][1]).toEqual({ id: 6, deck_id: 10, front_text: 'X', back_text: 'Y' })
+    expect(next.pages[0].cards[0]).toEqual({
+      id: 5,
+      deck_id: 10,
+      front_text: 'F1',
+      back_text: 'B0'
+    })
+    expect(next.pages[0].cards[1]).toEqual({ id: 6, deck_id: 10, front_text: 'X', back_text: 'Y' })
+  })
+
+  test('onMutate updater leaves other pages untouched and preserves next_rank [obligation]', () => {
+    const { onMutate } = configFrom()
+    onMutate({ card: { id: 5, deck_id: 10 }, values: { front_text: 'F1' } })
+
+    const [, updater] = setQueriesDataMock.mock.calls[0]
+    const untouched_page = { cards: [{ id: 99, deck_id: 10, front_text: 'Z' }], next_rank: null }
+    const target_page = {
+      cards: [{ id: 5, deck_id: 10, front_text: 'F0', back_text: 'B0' }],
+      next_rank: 'z9'
+    }
+    const old = { pages: [target_page, untouched_page], pageParams: [0, 50] }
+
+    const next = updater(old)
+
+    expect(next.pages[1]).toEqual(untouched_page)
+    expect(next.pages[0].next_rank).toBe('z9')
   })
 
   test('onMutate updater handles undefined old value gracefully (empty pages)', () => {

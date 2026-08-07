@@ -1,4 +1,4 @@
-import { computed, ref, shallowRef, type InjectionKey, type Ref } from 'vue'
+import { computed, ref, shallowRef, toValue, type InjectionKey, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useInfiniteScroll } from '@/composables/ui/infinite-scroll'
 import { useCardsInDeckInfiniteQuery } from '@/api/cards'
@@ -7,7 +7,7 @@ import { useVirtualCardList, type CardEntry } from './virtual-list'
 import { useCardActions } from './actions'
 import { useCardSelection, useCardMutations, useCardLimitGate } from '@/composables/card'
 import { useNoticeStore } from '@/stores/notice-store'
-import { resolveReorderAnchor } from '@/utils/reorder'
+import { rankBetween, resolveRankNeighbours } from '@/utils/card/rank'
 import { emitSfx } from '@/sfx/bus'
 import type { DeckViewShell } from './view-shell'
 
@@ -82,6 +82,13 @@ export function useCardListController(opts: Options) {
   // can reach it without a template-ref chain through the mode-stack's
   // dynamic `<component :is>` panes (see list.vue).
   const list_scroller = shallowRef<{ scrollToCard: (client_id: string) => void } | null>(null)
+
+  // Backstop, not the mechanism: entering edit mode forces the deck's own order,
+  // so the editor is normally always reorderable. The gap it closes is mobile,
+  // where the dock keeps page settings reachable mid-edit — change the sort
+  // there, widen to desktop, and drag would otherwise come back over a list
+  // whose rendered neighbours aren't rank neighbours.
+  const can_reorder = computed(() => toValue(opts.shell.sort_by) === 'default')
 
   const card_attributes = computed<DeckCardAttributes>(() => ({
     front: deck_query.data.value?.card_attributes?.front ?? {},
@@ -231,26 +238,25 @@ export function useCardListController(opts: Options) {
 
   /**
    * Reposition a persisted card within the deck by drag index. `from`/`to` are
-   * indices into `list.all_cards`. Resolves the nearest persisted neighbour at
-   * the drop slot into a `move_card` anchor + side and fires the mutation, which
-   * optimistically reorders the cache synchronously (so the dropped row settles
-   * without a refetch) and reconciles on settle. Failures roll back in the
-   * mutation, so the reorder visibly snaps back — a toast explains why.
+   * indices into `list.all_cards`. Mints a key between the drop slot's two
+   * persisted neighbours and fires the mutation, which optimistically re-keys
+   * and re-sorts the cache synchronously (so the dropped row settles without a
+   * refetch) and reconciles on settle. Failures roll back in the mutation, so
+   * the reorder visibly snaps back — a toast explains why.
    *
-   * No-op when the dragged row is a temp (not yet persisted) or no persisted
-   * neighbour exists to anchor against.
+   * No-op when the dragged row is a temp: it has no key yet, and nothing to
+   * persist until its first save.
    */
   function reorderCard(from: number, to: number) {
     const cards = list.all_cards.value
     const dragged = cards[from]
-    if (!dragged?.id || dragged.id < 0) return
+    if (!dragged?.rank) return
 
     const without = cards.filter((_, i) => i !== from)
-    const anchor = resolveReorderAnchor(without, to)
-    if (!anchor) return
+    const rank = rankBetween(resolveRankNeighbours(without, to, list.tail_rank.value))
 
     mutations
-      .reorderCard({ card_id: dragged.id, deck_id: opts.deck_id, ...anchor })
+      .reorderCard({ card_id: dragged.id, deck_id: opts.deck_id, rank })
       .catch(() => notice.warn(t('toast.warn.reorder-failed')))
   }
 
@@ -285,21 +291,23 @@ export function useCardListController(opts: Options) {
   }
 
   /**
-   * Insert the staged temp via `insert_card_at` and promote it on success.
+   * Insert the staged temp at its rendered position and promote it on success.
+   *
+   * The key is minted here, not when the card was staged, so it reflects
+   * whatever the temp's neighbours are at the moment it's actually saved.
    *
    * `guardAddCards` already vetoes staging past the plan cap, but that check
    * runs when the temp is added — a stale `card_count` or a concurrent edit on
-   * another device can still let a write reach `enforce_deck_card_limit` and be
-   * rejected here. `handleLimitError` re-surfaces the upgrade alert for that
-   * case and the temp stays staged (still `real_id: null`), so upgrading and
-   * re-saving retries the same INSERT. Any other rejection propagates.
+   * another device can still let a write reach the cap trigger and be rejected
+   * here. `handleLimitError` re-surfaces the upgrade alert for that case and the
+   * temp stays staged (still `real_id: null`), so upgrading and re-saving
+   * retries the same INSERT. Any other rejection propagates.
    */
   async function insertTemp(temp_id: number, entry: CardEntry, values: Partial<Card>) {
     try {
       const inserted = await mutations.insertCard({
         deck_id: opts.deck_id,
-        anchor_id: entry.anchor_id,
-        side: entry.side,
+        rank: rankBetween(list.neighbourRanksFor(entry.client_id)),
         front_text: values.front_text ?? entry.card.front_text ?? '',
         back_text: values.back_text ?? entry.card.back_text ?? ''
       })
@@ -336,6 +344,7 @@ export function useCardListController(opts: Options) {
     addCardAtTop,
     newCard,
     reorderCard,
+    can_reorder,
     claimFocus,
     claimGrow,
     pending_focus_client_id,

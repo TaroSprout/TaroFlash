@@ -44,8 +44,12 @@ const { mockCoverCommit, mockCoverDiscardStaged } = vi.hoisted(() => ({
 
 // useCardsInDeckInfiniteQuery is called inside useDeckEditor to power the
 // design preview. Stub it so unit tests don't need Pinia Colada / getActivePinia.
+const { mockCardsInDeckInfiniteQuery } = vi.hoisted(() => ({
+  mockCardsInDeckInfiniteQuery: vi.fn(() => ({ data: { value: undefined } }))
+}))
+
 vi.mock('@/api/cards', () => ({
-  useCardsInDeckInfiniteQuery: () => ({ data: { value: undefined } })
+  useCardsInDeckInfiniteQuery: mockCardsInDeckInfiniteQuery
 }))
 
 vi.mock('@/api/decks', () => ({
@@ -657,6 +661,22 @@ describe('useDeckEditor', () => {
       const { editor, unmount } = withDeckEditor()
       expect(editor.preview_front_text.value).toBeUndefined()
       expect(editor.preview_back_text.value).toBeUndefined()
+      unmount()
+    })
+
+    // [obligation] regression: first_card used to read pages[0][0] directly —
+    // a page is now { cards, next_rank }, so the preview must read pages[0].cards[0]
+    test('reads the first card off pages[0].cards[0] under the { cards, next_rank } page shape [obligation]', () => {
+      mockCardsInDeckInfiniteQuery.mockReturnValueOnce({
+        data: {
+          value: {
+            pages: [{ cards: [{ front_text: 'Front A', back_text: 'Back A' }], next_rank: null }]
+          }
+        }
+      })
+      const { editor, unmount } = withDeckEditor(makeDeck({ id: 1 }))
+      expect(editor.preview_front_text.value).toBe('Front A')
+      expect(editor.preview_back_text.value).toBe('Back A')
       unmount()
     })
   })

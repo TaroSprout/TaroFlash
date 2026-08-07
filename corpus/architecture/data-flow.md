@@ -116,9 +116,8 @@ protect and why the screen's answer is only ever a hint.
 - **Not access control.** Whether an answer is _allowed_ to reach you is
   [[permissions]]'s job. This is about how the answer travels and stays fresh once
   it's permitted.
-- **Not the write rules.** _What_ a given write is allowed to do — cards only
-  written through the server so ranks stay correct — is its own topic; this is
-  only about what happens to the cache afterward.
+- **Not the write rules.** _What_ a given write is allowed to do is its own
+  topic; this is only about what happens to the cache afterward.
 - **Not the cache mechanics.** Query-key shapes, the invalidation contract table,
   and how a mutation is wired are code detail — the reference docs cover those.
 

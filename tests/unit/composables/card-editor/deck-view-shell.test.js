@@ -277,6 +277,25 @@ describe('useDeckViewShell', () => {
     expect(shell.is_rearranging.value).toBe(true)
   })
 
+  // [obligation] the editor is the surface where you rearrange cards — a drop
+  // can only express a position when what's on screen is the rank order, so
+  // entering edit mode always forces the deck's own order.
+  test('setMode("edit") forces sort_by back to default [obligation]', () => {
+    const shell = useDeckViewShell()
+    shell.setSortBy('difficulty')
+    expect(shell.sort_by.value).toBe('difficulty')
+
+    shell.setMode('edit')
+    expect(shell.sort_by.value).toBe('default')
+  })
+
+  test('setMode to a non-edit mode does not force sort_by [obligation]', () => {
+    const shell = useDeckViewShell()
+    shell.setSortBy('difficulty')
+    shell.setMode('import-export')
+    expect(shell.sort_by.value).toBe('difficulty')
+  })
+
   // ── setGridSize ────────────────────────────────────────────────────────────
 
   test('setGridSize changes grid_size', () => {

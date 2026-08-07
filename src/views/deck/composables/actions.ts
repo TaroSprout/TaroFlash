@@ -103,7 +103,7 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
                 )
               )
             }
-          : { target_deck_id, ...resolved!.args }
+          : { target_deck_id, ...resolved!.args, count: resolved!.count }
 
       await mutations.moveCards(vars)
     }

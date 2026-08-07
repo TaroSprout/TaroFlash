@@ -1,5 +1,6 @@
 import { setInfiniteQueryData, useMutation, useQueryCache } from '@pinia/colada'
 import { moveCard, type MoveCardParams } from '../db'
+import type { CardsPage } from '../db'
 import { cardsInDeckQueryKey } from '../queries/cards-page'
 import { invalidateDeck } from './_invalidate'
 
@@ -9,63 +10,66 @@ export type UseMoveCardMutationParams = MoveCardParams & {
   deck_id: number
 }
 
-type ReorderContext = { pages: Card[][]; pageParams: unknown[] } | undefined
+type ReorderContext = { pages: CardsPage[]; pageParams: unknown[] } | undefined
 
-/** Split a flat card list back into pages of the given lengths. */
-function chunkBySizes(flat: Card[], sizes: number[]): Card[][] {
-  const pages: Card[][] = []
+/** Deck order: rank ascending, id breaking ties — the server's ORDER BY. */
+function byRank(a: Card, b: Card): number {
+  if (a.rank === b.rank) return (a.id ?? 0) - (b.id ?? 0)
+  return (a.rank ?? '') < (b.rank ?? '') ? -1 : 1
+}
+
+/** Refill each page with the same number of cards it held before. */
+function refillPages(pages: CardsPage[], flat: Card[]): CardsPage[] {
   let offset = 0
 
-  for (const size of sizes) {
-    pages.push(flat.slice(offset, offset + size))
-    offset += size
-  }
-
-  return pages
+  return pages.map((page) => {
+    const cards = flat.slice(offset, offset + page.cards.length)
+    offset += page.cards.length
+    return { ...page, cards }
+  })
 }
 
 /**
- * Optimistically move `card_id` to sit `side` of `anchor_id` within the deck's
- * cached pages, in place of waiting for the refetch. Keeps the rendered order
- * in lockstep with the drop so the row doesn't snap back between drop and the
- * server round-trip. Returns the pre-move snapshot for rollback, or `undefined`
- * when the deck isn't cached (nothing to reorder).
+ * Apply the card's new key to the deck's cached pages and re-sort, in place of
+ * waiting for the refetch. Keeps the rendered order in lockstep with the drop so
+ * the row doesn't snap back between drop and the server round-trip.
+ *
+ * Re-sorting rather than splicing to the drop index means the cache lands
+ * exactly where the server will: the key alone decides the position, and plain
+ * string comparison here matches the column's C collation there.
+ *
+ * Returns the pre-move snapshot for rollback, or `undefined` when the deck
+ * isn't cached (nothing to reorder).
  */
 function reorderCardInDeckCache(
   queryCache: QueryCache,
-  { deck_id, card_id, anchor_id, side }: UseMoveCardMutationParams
+  { deck_id, card_id, rank }: UseMoveCardMutationParams
 ): ReorderContext {
   const key = cardsInDeckQueryKey(deck_id)
   const snapshot = queryCache.getQueryData(key) as ReorderContext
   if (!snapshot) return undefined
 
-  setInfiniteQueryData<Card[]>(queryCache, key, (old) => {
+  setInfiniteQueryData<CardsPage>(queryCache, key, (old) => {
     const pages = old?.pages ?? []
-    const sizes = pages.map((page) => page.length)
-    const flat = pages.flat()
+    const pageParams = old?.pageParams ?? []
 
-    const from_index = flat.findIndex((c) => c.id === card_id)
-    if (from_index === -1) return { pages, pageParams: old?.pageParams ?? [] }
+    const flat = pages
+      .flatMap((page) => page.cards)
+      .map((card) => (card.id === card_id ? { ...card, rank } : card))
+      .sort(byRank)
 
-    const [moved] = flat.splice(from_index, 1)
-    const anchor_index = flat.findIndex((c) => c.id === anchor_id)
-    if (anchor_index === -1) return { pages, pageParams: old?.pageParams ?? [] }
-
-    flat.splice(side === 'after' ? anchor_index + 1 : anchor_index, 0, moved)
-
-    return { pages: chunkBySizes(flat, sizes), pageParams: old?.pageParams ?? [] }
+    return { pages: refillPages(pages, flat), pageParams }
   })
 
   return snapshot
 }
 
 /**
- * Reposition a single card within its deck, relative to an anchor card.
+ * Reposition a single card within its deck.
  *
- * `onMutate` optimistically reorders the cached pages synchronously, so the
- * drag-reorder UI can settle the dropped row immediately. `onError` restores
- * the pre-move snapshot; `onSettled` invalidates the deck to reconcile with the
- * server-authoritative ranks.
+ * `onMutate` optimistically re-keys and re-sorts the cached pages synchronously,
+ * so the drag-reorder UI can settle the dropped row immediately. `onError`
+ * restores the pre-move snapshot; `onSettled` invalidates the deck to reconcile.
  */
 export function useMoveCardMutation() {
   const queryCache = useQueryCache()
