@@ -7,6 +7,12 @@
 # serve` actually reads.
 set -euo pipefail
 
+# Doppler scopes are keyed by absolute path, so a fresh checkout — a new
+# Conductor workspace, a git worktree — starts unscoped and every `doppler`
+# call below dies on "You must specify a config". Project and config come from
+# the repo's doppler.yaml, so this is flag-free and idempotent.
+doppler setup --no-interactive --silent
+
 ENV_FILE="supabase/functions/.env.local"
 mkdir -p "$(dirname "$ENV_FILE")"
 touch "$ENV_FILE"
