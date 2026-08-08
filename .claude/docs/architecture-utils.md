@@ -35,3 +35,15 @@ export const DECK_CONFIG_DEFAULTS: Required<DeckConfig> = { ... }
 export const DAILY_LIMIT_BOUNDS = { step: 5, min: 5, ... } as const
 export function withDeckConfigDefaults(partial?: Partial<DeckConfig>): Required<DeckConfig> { ... }
 ```
+
+## Inline before extracting
+
+A helper that's small and has exactly **one** call site stays a local function inside its consumer. Extraction pays off when the helper is reused, complex enough to hide, or needs its own tests — a three-line join-filter used once earns a file and a test file it doesn't need.
+
+Extract to `src/utils/<domain>/` once it gains a second call site, grows non-trivial, or the domain genuinely benefits from a named seam. Don't pre-emptively extract.
+
+## Extend, don't add a sibling
+
+When a new capability is a *variant* of an existing function, absorb it via overloads or variadic args rather than adding `fooRandom` / `fooBatch` / `fooWithX` beside it. `emitRandomSfx` was rejected as a sibling of `emitSfx` because the random-pick logic would have been duplicated — variadic `emitSfx(...keys, opts?)` keeps the policy, error handling and category logic in one place.
+
+If the new function would copy most of the original, merge them.
