@@ -10,6 +10,7 @@
 # Guidelines
 
 - Always use translation strings (e.g., `t('deck.settings-modal.title')`) instead of hardcoded text. If string not in `locales/en-us.json`, add it.
+- **Wiring logic doesn't license inventing UI.** When I ask you to wire up state, behaviour, or a composable, write the script side — refs, computeds, handlers — plus only the structural markup the logic actually needs (a template ref, a container something measures). Building UI out of **existing paradigms** (`ui-kit` / `layout-kit` primitives, an established pattern from a sibling view) is fine. Inventing novel controls, layouts, or one-off styled elements I didn't ask for is not — expose the state and let me build it.
 - Confirm this file loaded by printing message to console on startup.
 
 ## Backend (`supabase/`)
