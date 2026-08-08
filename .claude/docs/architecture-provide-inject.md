@@ -17,3 +17,15 @@ const { config } = inject(deckEditorKey)!
 ```
 
 Reserve plain prop drilling for leaf components that take a derived slice (e.g. a single side's `CardAttributes`) and don't need the rest of the editor.
+
+## Child→parent: expose, don't re-derive
+
+When a child already owns a derived reactive value the parent also needs, the **child is the single source** and the parent consumes it. Two independent computations of "the same" condition drift — a sidebar visible while the main column fell back to its mobile layout on wide-but-short viewports.
+
+provide/inject can't carry this direction (and inside slot content, the injecting parent is the slot *definer*, not the wrapper). Use `defineExpose` + a template ref:
+
+- child takes a configurable default-query prop so callers can override the condition
+- child resolves it once and surfaces it: `defineExpose({ has_sidebar })`
+- parent reads via `useTemplateRef('tab_sheet')` + `computed(() => tab_sheet.value?.has_sidebar ?? false)`
+
+A template-ref read of an exposed value is **one render late** — guard with a fallback, and `await nextTick()` before asserting on it in tests.
