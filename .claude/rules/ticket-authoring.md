@@ -160,10 +160,10 @@ untouched` line is the "do not touch tests" rule in costume — delete it.
   copy says, how a layout should look — record as open. `/groom` settles them with the user.
 - New user-facing text → note that locale keys are needed (`src/locales/en-us.json`), see
   [`i18n`](./i18n.md).
-- **Copy is the user's to sign off.** Any new or changed user-facing string carries its exact final
-  wording in the AC, signed off by the user — never chosen for them, never deferred. Reused copy is
-  stated as reused (same wording, its own key — keys aren't shared across features). A ticket with
-  undecided copy is not `Groomed`.
+- **Copy carries its signed-off wording.** Per CLAUDE.md's sign-off rule, any new or changed
+  user-facing string appears in the AC as its exact final wording. Reused copy is stated as reused
+  (same wording, its own key — keys aren't shared across features). A ticket with undecided copy is
+  not `Groomed`.
 
 ## Epics
 
@@ -232,7 +232,7 @@ read the `Blocked By` urls, then query the Task Board for those rows' `Status`. 
 when its `Status` is in the **`complete` group** — `Done`, `Won't Do`, or `Duplicate`.
 
 A split that emits siblings with no dependency and no `## Decisions so far` entry on the epic
-produces orphans: `/batch` picks up step 3 of 5 with no way to know step 1 must land first.
+produces orphans: `/work` picks up step 3 of 5 with no way to know step 1 must land first.
 
 ## Batch work
 

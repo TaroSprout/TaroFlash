@@ -3,20 +3,21 @@
 - When reporting information to me, be extremely concise and sacrifice grammar for the sake of conciseness.
 - **NEVER touch tests until I explicitly ask.** No checking, running, writing, or updating tests — not after edits, not after refactors, not for reported bugs, not for coverage, not "while I'm here." This holds even when tests clearly should change. At most, note in one line that tests may need attention, then leave them. I will tell you when it's test time. (User-invoked test skills/agents like `/update-tests` are the explicit ask.)
 - **Every correction is a defect in the rules, not just the artifact.** Fix what I pointed at, then run the lesson through `.claude/rules/self-heal.md` — every session, not just skill runs. `/heal` is the explicit verb for it.
+- **NEVER write user-facing copy without my sign-off.** Any new or changed string a user reads — button labels, headings, empty states, toasts, alerts, error messages, ticket ACs quoting copy — stops and asks. Offer at least 3 reasonably-varied options per line and let me pick; never choose for me, never defer it to "wording TBD". Reusing an existing string is fine, but say which one. This applies everywhere, not just in tickets.
+- **Never verify visually in the browser.** Don't open Chrome, curl the dev server, or screenshot a page to check that a change "looks right" — I always confirm visually myself and will give you that feedback directly. Your visual read is worse than mine, so it adds false confidence rather than verification. Driving the browser to *debug* something genuinely broken is fine and encouraged; the ban is on verification, not on debugging.
+- **"Rephrase that" means the framing missed, not just the length.** Re-explain in plain product terms — what the screen shows, what the user experiences — and strip the vocabulary of whatever library or subsystem the answer came from. Shorten in the same pass, but never only shorten.
 
 # Guidelines
 
 - Always use translation strings (e.g., `t('deck.settings-modal.title')`) instead of hardcoded text. If string not in `locales/en-us.json`, add it.
+- **Wiring logic doesn't license inventing UI.** When I ask you to wire up state, behaviour, or a composable, write the script side — refs, computeds, handlers — plus only the structural markup the logic actually needs (a template ref, a container something measures). Building UI out of **existing paradigms** (`ui-kit` / `layout-kit` primitives, an established pattern from a sibling view) is fine. Inventing novel controls, layouts, or one-off styled elements I didn't ask for is not — expose the state and let me build it.
 - Confirm this file loaded by printing message to console on startup.
 
-## Backend (`supabase/`) persona — always on
+## Backend (`supabase/`)
 
-The user is a staff-level FE engineer but an absolute beginner on the backend. Treat every `supabase/` edit (migrations, RPCs, RLS policies, edge functions) as a teaching moment.
-
-- **Check the log first.** Before teaching, skim `.claude/logs/learning-log.md` to see what concepts the user has already covered and at what depth. Skip or compress explanations for high-scored concepts; teach unfamiliar or low-scored ones in full.
-- **Teach as you write.** Explain like teacher to student — concise, simple, only necessary context. Stop after each chunk and let the user ask questions before continuing.
-- **Walk through syntax.** SQL syntax is the real bottleneck, not concepts — name the keywords as you use them rather than assuming they're obvious.
-- **Append to the log after.** After a teaching session, append an entry to `.claude/logs/learning-log.md` using your own read of the session. Don't ask for review every time; clarify with the user only when the concept list or scoring is genuinely ambiguous.
+- **Explain the SQL when asked.** Backend answers name the keywords they lean on (`using` vs
+  `with check`, `security definer`, `stable`, `$$` quoting, `::` casting) rather than assuming the
+  idiom is self-evident. Don't volunteer a lesson unprompted.
 - **NEVER `supabase db reset`.** Always use `supabase migrations up` to apply migrations. Apply migrations as you write them so errors surface immediately.
 - **Rule files auto-load by path:** editing `supabase/**` pulls `.claude/rules/supabase.md`; editing `src/api/**` pulls `.claude/rules/server-state.md`. Both are the source of truth for their domains.
 
@@ -44,6 +45,17 @@ vp test --watch     # Watch mode
 vp add <pkg>        # Add a dependency
 vp dlx <bin>        # Run a one-off binary (instead of npx/pnpm dlx)
 ```
+
+### Type-checking
+
+CI's authoritative type-check is `pnpm type-check` (`vue-tsc --build --force`), and it is **stricter
+than `vp check`** — `vp check` can report zero errors while `vue-tsc` fails. Run `pnpm type-check`
+before pushing anything that touches types; a green `vp check` is not evidence.
+
+### Keeping the toolchain current
+
+- **`vp install` after any dependency bump.** Never `pnpm up` / `pnpm install` directly — pnpm rewrites the lockfile importer spec away from the `@latest` override, and CI's frozen-lockfile check then fails with "specifiers in the lockfile don't match specifiers in package.json".
+- **Upgrade a tool rather than working around it.** If a CLI is too old for a feature we want, offer to upgrade it — don't accumulate one-off `curl`/SQL workarounds. Only work around when upgrading is genuinely blocked, and say why.
 
 ### Critical import rules
 
@@ -96,7 +108,7 @@ Tests use Vitest with jsdom. `tests/fixtures/` contains MSW handlers, Faker-base
 
 For any feature work or code changes:
 
-1. **Check current branch.** If on `master`, or current branch's scope doesn't match the requested work, create a new branch before editing.
+1. **Only cut a new branch off `master`, or when I ask for one.** Already on a feature branch? **Stay on it** — and if the scope widens past its name, rename in place (`git branch -m <old> <new>`) rather than branching again. Small unrelated prior commits riding along is fine; a proliferation of branches is not.
 2. **Check staleness.** At session start, verify the current branch isn't already merged (e.g. `gh pr view --json state,mergedAt` or `git log master..HEAD`). If merged, create a fresh branch off `master`.
 3. **Commit in logical chunks.** Group related changes into separate commits with clear messages — don't batch unrelated work into one commit. Commit freely as work progresses; don't wait for the end of the session.
 4. **Conventional Commits, always.** `<type>(<scope>): <summary>` — `type` is one of `feat`, `fix`, `perf`, `refactor`, `style`, `test`, `docs`, `chore`; `scope` is the touched area (component, view, api domain, `ci`, etc). `feat`/`fix`/`perf` drive semantic-release version bumps (`release.config.cjs`) — get the type right, not just the vibe. A breaking change gets a `BREAKING CHANGE:` footer or `!` after the type/scope (capped to a minor bump pre-launch, see `release.config.cjs`).
@@ -106,3 +118,6 @@ For any feature work or code changes:
    - **Already pushed to a feature branch:** `git reset --soft HEAD~N && git commit` then `git push --force-with-lease`. Force-push is allowed on a feature branch you own; never on `master`.
    - Logical chunks (e.g. `feat(...)` and the test commit covering it) stay separate. This rule applies only to repeated attempts at the same change.
 7. **No Claude attribution.** Never add `Co-Authored-By: Claude` trailers to commits, and never add the "Generated with Claude Code" footer to PR bodies.
+8. **Stage specific paths, never `git add -A`.** I often have my own uncommitted edits in the tree; a blanket add sweeps them into your commit, and a later `reset` then destroys them. Before any `git reset --hard` or `reset --soft HEAD~N`, run `git status` and confirm every pending change is yours — if the tree, or the commit being dropped, touches files you didn't author this session, stop and stash mine first. (Lost work is recoverable via `git reflog` + `git checkout <hash> -- <paths>`.)
+9. **Check the PR isn't already merged before pushing follow-ups.** `gh pr view <num> --json state,mergedAt` first — pushing to a merged branch strands the commit where it will never reach `master`. Branch fresh off `master` instead. Existing-branch pushes are only safe while the PR is open.
+10. **Prefix PR comments with `🤖 Claude:`.** Comments post under my account, so without it I can't tell your replies from my own.

@@ -2,4 +2,4 @@
 
 The question-and-answer units people study.
 
-- [[cards]] — front/back units; server-picked ordering number; duplicates flagged not blocked ⚠️
+- [[cards]] — front/back units; app-minted sort key; duplicates flagged not blocked ⚠️

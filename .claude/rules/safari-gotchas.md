@@ -24,3 +24,9 @@ Vue's class patch calls `setAttribute('class', …)` on every re-render, even wh
 Then in CSS: `@media (...) { [data-mobile-below-width="md"] { … } }`. Browser handles activation; Vue does zero work on viewport changes.
 
 Memoizing the class function to return the same string reference does **not** help — Vue still patches class on every re-render the moment any tracked dep (matchMedia, etc.) fires. The fix is to remove the reactive binding entirely from the scrolling element, not to make it cheaper.
+
+## Audio
+
+**A seek set on load is silently dropped.** iOS ignores `audio.currentTime` when there's no user gesture and the media isn't seekable yet — the element stays at 0 while a JS `current_time` ref optimistically jumps ahead, so playback starts from the beginning with the UI stranded. Defer the seek to a pending value applied **inside `play()`**, i.e. within the tap gesture; a manual seek clears the pending value.
+
+**A rAF-driven `window.scrollTo` tween starves rAF.** iOS suspends `requestAnimationFrame` mid programmatic scroll, so a scroll tween started while paused runs into the next play tap and freezes the page. Animate the scroll only while playing; jump instantly when paused.

@@ -213,3 +213,9 @@ Worktree: removed
 ```
 
 If the main workspace had a stash, surface a note: "Your main-workspace changes were re-applied on top — check `git diff` to confirm."
+
+## Once forked, everything stays in a worktree
+
+The main checkout stays on `master`, untouched, so the user can work it freely while forks run. Once fork-dev is in play, **never create a branch or commit in the main checkout** — including work that feels unrelated to the active feature, like fixing this skill itself.
+
+When CLAUDE.md's branching rules would fire while a fork is active, spin up another worktree instead. If a commit already landed in the main checkout by mistake: return that checkout to `master`, then `git worktree add ../TaroFlash-<slug> <branch>` (no `-b` — the branch exists) to relocate it.
