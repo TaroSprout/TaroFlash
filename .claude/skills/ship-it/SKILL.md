@@ -55,7 +55,7 @@ done
 (cd ../TaroFlash-ship-<slug> && CI=true vp install)
 ```
 
-Do **not** symlink `node_modules` from the main workspace here (unlike `fork-dev`, which is fine to symlink since it only starts a dev server). A symlinked `node_modules` pointing at a different project root breaks Vite's browser-mode coverage instrumentation: every Integration-project test errors with `TypeError: Failed to fetch dynamically imported module: .../@vitest/coverage-v8/browser?import`. Piped through `tail`, this is invisible and just looks like `test:fast` hanging — a `ps` CPU-time check (near-zero growth over minutes) is what actually reveals it. `CI=true` skips pnpm's interactive "remove modules dir" prompt (`ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY` otherwise). One-time cost per worktree; matches what CI itself does (a fresh install, never a symlink).
+Do **not** symlink `node_modules` from the main workspace here. A symlinked `node_modules` pointing at a different project root breaks Vite's browser-mode coverage instrumentation: every Integration-project test errors with `TypeError: Failed to fetch dynamically imported module: .../@vitest/coverage-v8/browser?import`. Piped through `tail`, this is invisible and just looks like `test:fast` hanging — a `ps` CPU-time check (near-zero growth over minutes) is what actually reveals it. `CI=true` skips pnpm's interactive "remove modules dir" prompt (`ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY` otherwise). One-time cost per worktree; matches what CI itself does (a fresh install, never a symlink).
 
 **Reapply the stash inside the worktree**:
 
