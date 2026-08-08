@@ -1,4 +1,5 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
+import { flushPromises } from '@vue/test-utils'
 import { ref } from 'vue'
 import { card } from '@tests/fixtures/card'
 
@@ -556,6 +557,214 @@ describe('useCardListController', () => {
       const temp_id = all_cards.value[0].id
       await expect(updateCard(temp_id, { front_text: 'X' })).rejects.toThrow('boom')
       expect(saving.value).toBe(false)
+    })
+  })
+
+  // ── eager insert — stageCard fires the INSERT before any keystroke ─────────
+
+  describe('eager insert on create', () => {
+    test('addFocusedCard (desktop appendCard) fires the INSERT immediately, before any text is entered [obligation]', async () => {
+      const { gated_appendCard } = makeController([makeCard({ id: 100 })])
+      await gated_appendCard(100)
+      await flushPromises()
+      expect(insertCardMock).toHaveBeenCalledOnce()
+    })
+
+    test('addCard (mobile dock editor) fires the INSERT immediately, before any text is entered [obligation]', async () => {
+      const { gated_addCard } = makeController([makeCard({ id: 100 })])
+      await gated_addCard()
+      await flushPromises()
+      expect(insertCardMock).toHaveBeenCalledOnce()
+    })
+
+    test('only the desktop seam (addFocusedCard) sets the autofocus target, not the mobile seam [obligation]', async () => {
+      const { gated_appendCard, gated_addCard, claimFocus, all_cards } = makeController([
+        makeCard({ id: 100 })
+      ])
+      await gated_appendCard(100)
+      const desktop_client_id = all_cards.value.find((c) => c.id < 0).client_id
+      expect(claimFocus(desktop_client_id)).toBe(true)
+
+      await gated_addCard()
+      const mobile_client_id = all_cards.value.find(
+        (c) => c.id < 0 && c.client_id !== desktop_client_id
+      ).client_id
+      expect(claimFocus(mobile_client_id)).toBe(false)
+    })
+
+    test('guardAddCards resolving false stages nothing AND fires no insert [obligation]', async () => {
+      guardAddCardsMock.mockResolvedValue(false)
+      const { gated_appendCard, gated_addCard, all_cards } = makeController([makeCard({ id: 100 })])
+      await gated_appendCard(100)
+      await gated_addCard()
+      await flushPromises()
+      expect(all_cards.value).toHaveLength(1)
+      expect(insertCardMock).not.toHaveBeenCalled()
+    })
+
+    // [obligation] high-value regression: `neighbourRanksFor` skips unranked
+    // siblings, so two concurrent mints would both resolve against the same
+    // persisted neighbour and collide on the same key. Serializing through
+    // one insert_queue makes the second mint read the first's resolved rank.
+    test('two cards created in rapid succession mint distinct ranks that sort in render order [obligation]', async () => {
+      let next_id = 100
+      insertCardMock.mockImplementation(async (args) => ({ id: next_id++, rank: args.rank }))
+
+      const { addCardAtTop, all_cards } = makeController([makeCard({ id: 1 })])
+      guardAddCardsMock.mockResolvedValue(true)
+
+      // Fire both creates back to back, without awaiting the first's insert.
+      addCardAtTop()
+      addCardAtTop()
+      // Two inserts serialized through insert_queue is a deeper promise chain
+      // than a single insert — flush enough microtask ticks for both to settle.
+      for (let i = 0; i < 6; i++) await flushPromises()
+
+      const temps = all_cards.value.filter((c) => c.id !== 1)
+      expect(temps).toHaveLength(2)
+
+      const [top, bottom] = temps
+      expect(top.rank).toBeTruthy()
+      expect(bottom.rank).toBeTruthy()
+      expect(top.rank).not.toBe(bottom.rank)
+      // Render order is top-to-bottom; ranks must sort the same way.
+      expect(top.rank < bottom.rank).toBe(true)
+    })
+
+    // [obligation] typing into a card whose eager INSERT is still in flight
+    // must yield exactly one card carrying the text — updateCard awaits the
+    // pending insert, then routes to saveCard (UPDATE), never a second insert.
+    test('typing while the eager insert is in flight yields exactly one card carrying the text [obligation]', async () => {
+      let resolveInsert
+      insertCardMock.mockReturnValueOnce(
+        new Promise((r) => {
+          resolveInsert = () => r({ id: 200, rank: 'm5' })
+        })
+      )
+
+      const { addCardAtTop, all_cards, updateCard } = makeController()
+      guardAddCardsMock.mockResolvedValue(true)
+      await addCardAtTop()
+
+      const client_id = all_cards.value[0].client_id
+      const temp_id = all_cards.value[0].id
+      const update_promise = updateCard(temp_id, { front_text: 'typed while inserting' })
+
+      resolveInsert()
+      await update_promise
+
+      expect(insertCardMock).toHaveBeenCalledOnce()
+      expect(saveCardMock).toHaveBeenCalledOnce()
+      const [{ values }] = saveCardMock.mock.calls[0]
+      expect(values.front_text).toBe('typed while inserting')
+      expect(all_cards.value.filter((c) => c.client_id === client_id)).toHaveLength(1)
+    })
+
+    // [obligation] a PT402 rejection on the eager insert rolls the staged row
+    // back out of the list — contrast with the updateCard→insertTemp path
+    // (see the `updateCard` describe above), which deliberately leaves the
+    // temp staged because it may carry user-typed text.
+    test('a PT402 rejection on the eager insert removes the staged card from the list [obligation]', async () => {
+      insertCardMock.mockRejectedValueOnce({ code: 'PT402' })
+      handleLimitErrorMock.mockReturnValueOnce(true)
+
+      const { addCardAtTop, all_cards } = makeController()
+      guardAddCardsMock.mockResolvedValue(true)
+      await addCardAtTop()
+      await flushPromises()
+      await flushPromises()
+
+      expect(all_cards.value).toHaveLength(0)
+    })
+
+    test('a PT402 rejection on the eager insert surfaces the upgrade alert via handleLimitError [obligation]', async () => {
+      const limit_error = { code: 'PT402' }
+      insertCardMock.mockRejectedValueOnce(limit_error)
+      handleLimitErrorMock.mockReturnValueOnce(true)
+
+      const { addCardAtTop } = makeController()
+      guardAddCardsMock.mockResolvedValue(true)
+      await addCardAtTop()
+      await flushPromises()
+      await flushPromises()
+
+      expect(handleLimitErrorMock).toHaveBeenCalledWith(limit_error)
+    })
+
+    // [obligation] a non-limit failure of the eager insert is swallowed: the
+    // insert only ever carries an empty card, so nothing typed can be lost.
+    // No toast, the entry stays a temp, and the next edit re-inserts it.
+    test('a non-limit failure of the eager insert is swallowed — no toast, entry stays a temp [obligation]', async () => {
+      insertCardMock.mockRejectedValueOnce(new Error('network down'))
+
+      const { addCardAtTop, all_cards } = makeController()
+      guardAddCardsMock.mockResolvedValue(true)
+      await addCardAtTop()
+      await flushPromises()
+      await flushPromises()
+
+      expect(all_cards.value).toHaveLength(1)
+      expect(all_cards.value[0].id).toBeLessThan(0)
+      expect(mockNotice.warn).not.toHaveBeenCalled()
+      expect(mockNotice.error).not.toHaveBeenCalled()
+    })
+
+    test('the next edit re-inserts a temp whose eager insert failed non-limit [obligation]', async () => {
+      insertCardMock.mockRejectedValueOnce(new Error('network down'))
+      insertCardMock.mockResolvedValueOnce({ id: 300, rank: 'm9' })
+
+      const { addCardAtTop, all_cards, updateCard } = makeController()
+      guardAddCardsMock.mockResolvedValue(true)
+      await addCardAtTop()
+      await flushPromises()
+      await flushPromises()
+
+      const temp_id = all_cards.value[0].id
+      await updateCard(temp_id, { front_text: 'retry' })
+
+      expect(insertCardMock).toHaveBeenCalledTimes(2)
+      const [second_call_args] = insertCardMock.mock.calls[1]
+      expect(second_call_args.front_text).toBe('retry')
+    })
+
+    // [obligation] negative: nothing removes an empty temp on blur or when
+    // leaving the deck — a successfully-inserted, still-empty card just stays.
+    test('a successfully eager-inserted, still-empty card is never auto-removed [obligation]', async () => {
+      const { addCardAtTop, all_cards } = makeController()
+      guardAddCardsMock.mockResolvedValue(true)
+      await addCardAtTop()
+      await flushPromises()
+      await flushPromises()
+
+      expect(all_cards.value).toHaveLength(1)
+      expect(all_cards.value[0].front_text).toBe('')
+      expect(all_cards.value[0].back_text).toBe('')
+    })
+
+    // [obligation] regression this branch closes: an eagerly-created card is
+    // promoted in place and never refetched, so `patchTemp` — not the optimistic
+    // cache patch — is what lets the mobile editor's one-side-at-a-time saves
+    // both land on the same entry instead of clobbering each other.
+    test('create card, save front text, then save back text — both sides survive [obligation]', async () => {
+      insertCardMock.mockResolvedValueOnce({ id: 400, rank: 'm7' })
+
+      const { addCardAtTop, all_cards, updateCard } = makeController()
+      guardAddCardsMock.mockResolvedValue(true)
+      await addCardAtTop()
+      await flushPromises()
+      await flushPromises()
+
+      const card_id = all_cards.value[0].id
+      await updateCard(card_id, { front_text: 'Question' })
+      await updateCard(card_id, { back_text: 'Answer' })
+
+      const entry = all_cards.value.find((c) => c.id === card_id)
+      expect(entry.front_text).toBe('Question')
+      expect(entry.back_text).toBe('Answer')
+      // Both saves route to UPDATE — the card was already promoted by the
+      // eager insert, so nothing here fires a second INSERT.
+      expect(insertCardMock).toHaveBeenCalledOnce()
+      expect(saveCardMock).toHaveBeenCalledTimes(2)
     })
   })
 

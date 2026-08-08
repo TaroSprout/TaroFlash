@@ -290,6 +290,40 @@ export function useVirtualCardList(
   }
 
   /**
+   * Look up the entry with `client_id`. Unlike `findEntryByCardId` the key
+   * survives promotion, so a caller holding one across an in-flight insert can
+   * re-read the entry afterwards — or find it gone, if the insert rolled back.
+   */
+  function findEntryByClientId(client_id: string): CardEntry | undefined {
+    return temp_entries.value.find((e) => e.client_id === client_id)
+  }
+
+  /**
+   * Merge `values` into an entry's own card record.
+   *
+   * An eagerly-created card is promoted in place and never refetched, so the
+   * deck's cached pages don't hold it and `saveCard`'s optimistic patch can't
+   * reach it. Without this its card would stay the empty record it was staged
+   * with — a stale merge base that the mobile editor's one-side-at-a-time saves
+   * would use to clobber the other side.
+   */
+  function patchTemp(client_id: string, values: Partial<Card>) {
+    const entry = findEntryByClientId(client_id)
+    if (!entry) return
+
+    Object.assign(entry.card, values)
+  }
+
+  /**
+   * Drop a staged entry out of the list. The rollback for an insert the backend
+   * refused (the deck's card cap) — the row never reached the server, so
+   * nothing is orphaned by removing it.
+   */
+  function removeTemp(client_id: string) {
+    temp_entries.value = temp_entries.value.filter((e) => e.client_id !== client_id)
+  }
+
+  /**
    * Resolve a card-id back to a Card. Searches persisted first, then live
    * temp entries — mirrors the merge order in `all_cards`. Returns the
    * underlying Card (no `client_id` wrapper) so callers can spread it into
@@ -354,6 +388,9 @@ export function useVirtualCardList(
     prependCard,
     addCardAtTop,
     findEntryByCardId,
+    findEntryByClientId,
+    patchTemp,
+    removeTemp,
     findCard,
     promoteTemp
   }

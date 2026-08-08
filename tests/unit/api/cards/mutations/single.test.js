@@ -70,13 +70,13 @@ describe('useInsertCardMutation', () => {
     const { onSettled } = configFrom(useInsertCardMutation)
     onSettled({ id: 9, rank: 'a5' }, undefined, {
       deck_id: 10,
-      front_text: '',
-      back_text: ''
+      front_text: 'Q',
+      back_text: 'A'
     })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['deck', 10] })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 10] })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 'count'] })
-    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'] })
+    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'], exact: true })
   })
 
   test('onSettled invalidates card index — new front text must appear in highlights [obligation]', () => {
