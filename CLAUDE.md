@@ -4,6 +4,7 @@
 - **NEVER touch tests until I explicitly ask.** No checking, running, writing, or updating tests — not after edits, not after refactors, not for reported bugs, not for coverage, not "while I'm here." This holds even when tests clearly should change. At most, note in one line that tests may need attention, then leave them. I will tell you when it's test time. (User-invoked test skills/agents like `/update-tests` are the explicit ask.)
 - **Every correction is a defect in the rules, not just the artifact.** Fix what I pointed at, then run the lesson through `.claude/rules/self-heal.md` — every session, not just skill runs. `/heal` is the explicit verb for it.
 - **NEVER write user-facing copy without my sign-off.** Any new or changed string a user reads — button labels, headings, empty states, toasts, alerts, error messages, ticket ACs quoting copy — stops and asks. Offer at least 3 reasonably-varied options per line and let me pick; never choose for me, never defer it to "wording TBD". Reusing an existing string is fine, but say which one. This applies everywhere, not just in tickets.
+- **Never verify visually in the browser.** Don't open Chrome, curl the dev server, or screenshot a page to check that a change "looks right" — I always confirm visually myself and will give you that feedback directly. Your visual read is worse than mine, so it adds false confidence rather than verification. Driving the browser to *debug* something genuinely broken is fine and encouraged; the ban is on verification, not on debugging.
 
 # Guidelines
 
