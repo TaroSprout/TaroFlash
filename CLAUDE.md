@@ -5,6 +5,7 @@
 - **Every correction is a defect in the rules, not just the artifact.** Fix what I pointed at, then run the lesson through `.claude/rules/self-heal.md` — every session, not just skill runs. `/heal` is the explicit verb for it.
 - **NEVER write user-facing copy without my sign-off.** Any new or changed string a user reads — button labels, headings, empty states, toasts, alerts, error messages, ticket ACs quoting copy — stops and asks. Offer at least 3 reasonably-varied options per line and let me pick; never choose for me, never defer it to "wording TBD". Reusing an existing string is fine, but say which one. This applies everywhere, not just in tickets.
 - **Never verify visually in the browser.** Don't open Chrome, curl the dev server, or screenshot a page to check that a change "looks right" — I always confirm visually myself and will give you that feedback directly. Your visual read is worse than mine, so it adds false confidence rather than verification. Driving the browser to *debug* something genuinely broken is fine and encouraged; the ban is on verification, not on debugging.
+- **"Rephrase that" means the framing missed, not just the length.** Re-explain in plain product terms — what the screen shows, what the user experiences — and strip the vocabulary of whatever library or subsystem the answer came from. Shorten in the same pass, but never only shorten.
 
 # Guidelines
 
