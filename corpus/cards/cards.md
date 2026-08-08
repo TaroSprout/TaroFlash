@@ -106,6 +106,17 @@ both sides match another card in the same deck.
 > blank are _not_ duplicates. Only a full front-and-back match, both sides
 > non-empty, counts. The check is per deck; the same pair in two decks is fine.
 
+## Picking mode stays on when the selection empties
+
+Selecting cards in the editor is a **mode you turn on**, not a state inferred from
+how many cards are ticked. Clearing every selection leaves the mode on, so the
+checkboxes and bulk-action bar stay put and you can keep picking. The mode ends
+only when you leave it deliberately, cancel, or finish an action that consumes the
+selection.
+
+Deriving the mode from "is anything selected" would yank the UI away the instant
+you unticked the last card.
+
 ## What this isn't
 
 - **Not the study schedule.** When a card is next due and how well it's known is
