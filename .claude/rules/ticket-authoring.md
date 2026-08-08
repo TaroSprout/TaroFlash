@@ -160,10 +160,10 @@ untouched` line is the "do not touch tests" rule in costume — delete it.
   copy says, how a layout should look — record as open. `/groom` settles them with the user.
 - New user-facing text → note that locale keys are needed (`src/locales/en-us.json`), see
   [`i18n`](./i18n.md).
-- **Copy is the user's to sign off.** Any new or changed user-facing string carries its exact final
-  wording in the AC, signed off by the user — never chosen for them, never deferred. Reused copy is
-  stated as reused (same wording, its own key — keys aren't shared across features). A ticket with
-  undecided copy is not `Groomed`.
+- **Copy carries its signed-off wording.** Per CLAUDE.md's sign-off rule, any new or changed
+  user-facing string appears in the AC as its exact final wording. Reused copy is stated as reused
+  (same wording, its own key — keys aren't shared across features). A ticket with undecided copy is
+  not `Groomed`.
 
 ## Epics
 
