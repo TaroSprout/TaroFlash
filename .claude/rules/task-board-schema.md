@@ -21,6 +21,12 @@ constants; change a field here once and every consumer follows.
 - **Default page template** (pass on every `notion-create-pages` so the ticket inherits its default
   icon + field defaults): `template_id: 3af0953c224c800d984cf0b443d67d20`
 
+**Three hard limits of the Notion MCP.** `status`-type fields are special-cased: `notion-update-data-source`
+**cannot** add, rename or recolor `Status` options — only the user can, in the Notion UI (renaming
+preserves row mappings). `select`/`multi_select` options *are* editable. There is **no archive or
+delete tool** — `notion-move-pages` only re-parents, so retiring a row means the user deletes it in the
+UI. Page titles, properties and body content are all editable via `notion-update-page`.
+
 **Read** with `notion-query-data-sources` (SQL over the data source) + `notion-fetch` (page body — the
 query returns properties only). **Create** with `notion-create-pages`. **Update** with
 `notion-update-page`. Status and all field writes are plain property writes — no transition step.
