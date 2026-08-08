@@ -97,7 +97,7 @@ Tests use Vitest with jsdom. `tests/fixtures/` contains MSW handlers, Faker-base
 
 For any feature work or code changes:
 
-1. **Check current branch.** If on `master`, or current branch's scope doesn't match the requested work, create a new branch before editing.
+1. **Only cut a new branch off `master`, or when I ask for one.** Already on a feature branch? **Stay on it** — and if the scope widens past its name, rename in place (`git branch -m <old> <new>`) rather than branching again. Small unrelated prior commits riding along is fine; a proliferation of branches is not.
 2. **Check staleness.** At session start, verify the current branch isn't already merged (e.g. `gh pr view --json state,mergedAt` or `git log master..HEAD`). If merged, create a fresh branch off `master`.
 3. **Commit in logical chunks.** Group related changes into separate commits with clear messages — don't batch unrelated work into one commit. Commit freely as work progresses; don't wait for the end of the session.
 4. **Conventional Commits, always.** `<type>(<scope>): <summary>` — `type` is one of `feat`, `fix`, `perf`, `refactor`, `style`, `test`, `docs`, `chore`; `scope` is the touched area (component, view, api domain, `ci`, etc). `feat`/`fix`/`perf` drive semantic-release version bumps (`release.config.cjs`) — get the type right, not just the vibe. A breaking change gets a `BREAKING CHANGE:` footer or `!` after the type/scope (capped to a minor bump pre-launch, see `release.config.cjs`).
