@@ -89,7 +89,7 @@ Where the blind design diverges because its assumptions were wrong (check its as
 
 ### 4. Verdict (orchestrator)
 
-Conclude explicitly: **keep** the current shape, **reshape** toward the blind design (name the concrete moves), or **hybrid** (which parts of each). Weigh blast radius, existing conventions, and whether the current shape was a deliberate recorded choice (`project_*` memory, PR history) or default-path drift. "Current shape matches the ideal" is a valid verdict only when the blind agent genuinely designed from the domain statement alone.
+Conclude explicitly: **keep** the current shape, **reshape** toward the blind design (name the concrete moves), or **hybrid** (which parts of each). Weigh blast radius, existing conventions, and whether the current shape was a deliberate recorded choice (a `corpus/` topic, a rule file, PR history) or default-path drift. "Current shape matches the ideal" is a valid verdict only when the blind agent genuinely designed from the domain statement alone.
 
 ## Phase 2 — Smell finders (parallel subagents)
 

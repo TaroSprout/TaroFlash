@@ -23,7 +23,6 @@ Mine for:
 - **Invalidation / state-flow contracts** — which query keys a mutation invalidates, what cross-cutting fields (debounce keys, deck_id, etc.) are required on the wire, what happens when they're absent.
 - **Bugs found and fixed mid-session** — the failing case is a guaranteed-valuable regression test; preserve it before moving on.
 - **`$ARGUMENTS`** — if non-empty, fold the user's additional context into the obligation list.
-- **Memory entries** — scan `memory/MEMORY.md` for project decisions relevant to the changed files (paradigm choices, topology rules, etc.) and add any that map to a missing test.
 
 Each obligation is one line: a concrete behaviour to assert, plus a one-phrase rationale. Aim for high signal — only include obligations that the subagent, reading the diff cold, would plausibly miss.
 
