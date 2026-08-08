@@ -95,6 +95,8 @@ This bites whenever a default puts the new row into a state its own SELECT polic
 
 ## Local dev
 
+- **Verifying Stripe locally** — secrets, the worktree bootstrap, and the probing traps live in [`stripe-local-probing`](../docs/stripe-local-probing.md).
+
 - **`pg_net` / `pg_cron` calling an edge function needs the kong hostname**, not loopback: the Vault `supabase_url` secret must be `http://supabase_kong_TaroFlash:8000`. From inside the DB container `127.0.0.1` is the database itself, and `host.docker.internal` resolves to IPv6, which never reaches the published IPv4 gateway. Prod and stage are fine — there the secret is the real project URL.
 
   ```sql
