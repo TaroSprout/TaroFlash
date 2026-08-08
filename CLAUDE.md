@@ -46,6 +46,17 @@ vp add <pkg>        # Add a dependency
 vp dlx <bin>        # Run a one-off binary (instead of npx/pnpm dlx)
 ```
 
+### Type-checking
+
+CI's authoritative type-check is `pnpm type-check` (`vue-tsc --build --force`), and it is **stricter
+than `vp check`** — `vp check` can report zero errors while `vue-tsc` fails. Run `pnpm type-check`
+before pushing anything that touches types; a green `vp check` is not evidence.
+
+### Keeping the toolchain current
+
+- **`vp install` after any dependency bump.** Never `pnpm up` / `pnpm install` directly — pnpm rewrites the lockfile importer spec away from the `@latest` override, and CI's frozen-lockfile check then fails with "specifiers in the lockfile don't match specifiers in package.json".
+- **Upgrade a tool rather than working around it.** If a CLI is too old for a feature we want, offer to upgrade it — don't accumulate one-off `curl`/SQL workarounds. Only work around when upgrading is genuinely blocked, and say why.
+
 ### Critical import rules
 
 - Import build/config utilities from `vite-plus`, not `vite`: `import { defineConfig } from 'vite-plus'`
