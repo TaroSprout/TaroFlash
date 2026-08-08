@@ -28,6 +28,10 @@ Gate on `auth.uid()::text = (storage.foldername(name))[1]` when paths start with
 
 `storage.protect_delete` blocks direct `DELETE FROM storage.objects`, so DELETE policies can only be verified in the UI, not via pgTAP.
 
+`auth.uid()` **does** resolve inside storage-api's SQL session — use `auth.uid()::text = (storage.foldername(name))[1]` for per-member isolation. Avoid `NEW.owner::text = foldername[1]`: that's a consistency check (the row's owner matches its own path), true regardless of caller, not real isolation.
+
+DELETE policies aren't pgTAP-testable — the `storage.protect_delete` trigger blocks direct `DELETE FROM storage.objects` regardless of RLS. Verify DELETE behaviour through a real upload-replacement flow instead.
+
 ## Capability functions for authorization
 
 Gate role/plan-based access through named capability functions, not inline `auth_role()`/`auth_plan()` checks. Mirrors `src/composables/can.ts`'s naming rule: name for the grant, not the role — `can_manage_members()`, never `is_admin()`.
@@ -63,7 +67,7 @@ Also untracked, so still hand-written: DML (storage bucket inserts, `cron.schedu
 ## Migration workflow
 
 - `supabase migration up --local` immediately after writing — catches errors while the context is fresh. Never `supabase db reset`.
-- Editing a migration file is allowed only if it's **unapplied** AND **added in the current branch**. Check via `supabase migration list --local`.
+- **Editing a migration is fair game until it ships.** If it hasn't been deployed and hasn't merged to `master`, rewrite it in place — all-local work is free game. Once it's on `master` or deployed anywhere, it's immutable: write a new timestamped migration instead. Check with `supabase migration list --local` and `git log master -- <file>`.
 - To rewrite an applied branch-local migration before PR: `supabase migration repair --status reverted --local <version>` → edit → `migration up --include-all`. Don't do this for anything already shipped.
 
 ## Views and function signatures
@@ -76,3 +80,27 @@ Also untracked, so still hand-written: DML (storage bucket inserts, `cron.schedu
 `BEGIN; SELECT plan(N); ... SELECT * FROM finish(); ROLLBACK;`. Use `tests.create_user()` + `tests.set_claims()` from `00000_helpers.sql`. Switch roles with `SET LOCAL role = 'authenticated' | 'postgres'` — re-set claims before each role switch.
 
 "Bad plan. You planned N but ran M" means an earlier statement threw — scroll up for the actual error.
+
+## Error codes crossing PostgREST
+
+PostgREST reserves the **`PT` SQLSTATE class**: raising `PTxyz` makes it respond with **HTTP status `xyz`**. `PT001` therefore becomes status `001` — an invalid status that hangs the request and returns a garbled body rather than a clean error the client can branch on.
+
+Raising a code the client matches on? Either pick a non-`PT` SQLSTATE, or use `PTxyz` with a **valid three-digit HTTP status**. The deck card-limit gate uses `PT402` (Payment Required, "upgrade your plan"), matched client-side in `useCardLimitGate`.
+
+## `INSERT … RETURNING` re-checks the SELECT policy
+
+`RETURNING` doesn't just check the INSERT policy's `WITH CHECK` — to hand the row back it also re-checks the table's **SELECT** policy against that new row, and fails with the *same* generic message (`new row violates row-level security policy`), so the error can't tell you which policy broke.
+
+This bites whenever a default puts the new row into a state its own SELECT policy hides — a `visibility` defaulting to `internal`, a pending/hidden status. Encode "you can always read the row you just created" explicitly (`OR member_id = auth.uid()`) rather than relying on the general visibility condition. If a `RETURNING` RPC starts throwing a bare RLS violation right after a default changed, check the SELECT policy first.
+
+## Local dev
+
+- **`pg_net` / `pg_cron` calling an edge function needs the kong hostname**, not loopback: the Vault `supabase_url` secret must be `http://supabase_kong_TaroFlash:8000`. From inside the DB container `127.0.0.1` is the database itself, and `host.docker.internal` resolves to IPv6, which never reaches the published IPv4 gateway. Prod and stage are fine — there the secret is the real project URL.
+
+  ```sql
+  select vault.update_secret((select id from vault.secrets where name='supabase_url'), 'http://supabase_kong_TaroFlash:8000');
+  ```
+
+  Persists across `supabase stop/start`; re-set after a reset. Inspect delivery with `select status_code, error_msg, content from net._http_response order by created desc limit 5;`
+
+- **Start the stack under Doppler** — `doppler run -- supabase start` (or `pnpm dev`). `config.toml` reads secrets via `env(...)` placeholders sourced from Doppler; a bare `supabase start` doesn't fail, it passes the literal string `env(AUTH_EXTERNAL_GOOGLE_CLIENT_ID)` to GoTrue and Google rejects the OAuth popup with `invalid_client`. A `config.toml` change needs a restart to take effect.
