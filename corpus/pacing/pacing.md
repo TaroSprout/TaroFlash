@@ -4,7 +4,7 @@ domain: pacing
 status: current
 hazard: true
 related: [scheduling]
-updated: 2026-07-23
+updated: 2026-08-08
 ---
 
 # Pacing
@@ -96,6 +96,39 @@ push, rename, and delete hit the server the moment you confirm them, and they
 flush the deck's pacing side (its preset link and pin bag) along with the change
 so the two halves never disagree. The rest of your unsaved edits still wait for
 Save.
+
+## Presets: pulling is per-field, pushing is all-or-nothing
+
+A preset is a reusable pacing configuration. A deck **follows** one and can pin its
+own value on top of any individual setting. Reconciling the two runs on four verbs,
+and their asymmetry is the point:
+
+- **Pull one setting** back to the preset's value.
+- **Pull everything** — drop all pinned values and follow the preset outright.
+- **Push everything** — promote all of this deck's pinned values into the preset.
+  There is no pushing a single setting.
+- **Fork** — save the current pinned values as a brand-new preset.
+
+Pulling is local: it changes one deck. Pushing is global — it rewrites the preset,
+which repaces **every** deck following it. Blast radius sets the granularity, so the
+safe direction is fine-grained and the dangerous one is coarse and deliberate.
+
+Pushing then clears the deck's pinned values, because a deck that still counts as
+"diverged" while nothing actually differs leaves the divergence markers lit for no
+reason.
+
+> [!RULE]
+> The built-in default preset can never be pushed to. It's a single shared row used
+> by everyone, so writing it would repace every member's decks at once. While a deck
+> follows the default, forking is the only global move available.
+
+## Pinned means present, not different
+
+A pinned setting is recorded by its **presence**, not by differing from the preset —
+so a value pinned to exactly what the preset already says is still pinned, and still
+shows its marker. Nothing auto-clears when the two happen to agree; unpinning is
+always an explicit act. Otherwise a deck would quietly stop following its own
+pinned decision the moment the preset drifted into matching it.
 
 ## What this isn't
 
