@@ -27,8 +27,6 @@ stays live for your review feedback (§ Review & feedback loop).
 - **Model** — each ticket's `Assignee` (`Fable` / `Opus` / `Sonnet`), one subagent pinned to it.
 - **Tests** — the golden "no tests" rule is **suspended here**: each subagent runs the `update-tests`
   skill to cover its own change. The orchestrator never authors ticket code or tests.
-- **No backend teaching persona** — `/batch` is autonomous, no one is in the loop to teach. Supabase
-  teaching happens when you work those tickets by hand, not here.
 
 ## Board constants
 
@@ -235,7 +233,7 @@ ticket PR. Specific to this skill:
   auto-pulling; warn when the user named it explicitly. Lane membership alone doesn't make a ticket
   takeable.
 - Never work an `On Hold` or `Assignee = Me` ticket (the user's hands-off, and not in `Ready`
-  anyway), and never run a backend teaching persona — `/batch` is autonomous.
+  anyway).
 - **Tests: suspended only for the initial build.** Each initial-build subagent invokes `update-tests`
   for its change (golden "no tests" rule suspended there); no subagent runs the full `vp test` suite —
   CI is the gate the orchestrator watches. In the **Review & feedback loop the rule is back on**: don't

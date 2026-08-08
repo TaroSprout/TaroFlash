@@ -185,9 +185,6 @@ break some of your assumptions — that is the skill working, not failing. Rules
   reversal caught here is the cheapest it will ever be.
 - **Check before asserting.** If a question turns on a fact, go read it rather than answering from
   memory.
-- **Teach the backend.** If the ticket touches `supabase/**`, the CLAUDE.md teaching persona is on:
-  check `.claude/logs/learning-log.md` first, compress what's well-scored, walk through SQL syntax
-  for what isn't. Stop after each chunk.
 - Iterate until the user is satisfied. There is no interruption budget here.
 
 ### 4. RESHAPE — split, park, or block

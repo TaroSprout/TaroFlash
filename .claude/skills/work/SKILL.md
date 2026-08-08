@@ -22,7 +22,7 @@ lastUpdated: 2026-08-07T00:00:00Z
 4. **Branch** — if the current branch's scope doesn't match, cut a fresh one off `master`.
 5. **Set `Status = In Progress`** on the ticket.
 6. **Implement** to the acceptance criteria. Follow `.claude/rules/*` and CLAUDE.md as normal —
-   including the backend teaching persona for `supabase/**` and the golden no-tests rule.
+   including the golden no-tests rule.
 7. **Commit** in logical chunks as you go, conventional messages. No PR unless asked.
 8. **Report** what landed vs. each acceptance criterion, and anything left undone. Leave the ticket
    in `In Progress` — the user promotes it.

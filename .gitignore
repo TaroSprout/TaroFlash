@@ -41,8 +41,6 @@ docs/.vitepress/dist
 .env
 *.env.*
 
-# Local-only Claude learning log
-.claude/logs/learning-log.md
 
 # Type-bucketed schema drift snapshot (scripts/dump-schemas)
 supabase/.schema-snapshot/
