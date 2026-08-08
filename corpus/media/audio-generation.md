@@ -4,7 +4,7 @@ domain: media
 status: current
 hazard: true
 related: [media]
-updated: 2026-07-23
+updated: 2026-08-08
 ---
 
 # Audio generation
@@ -88,6 +88,11 @@ old — silently doubling content instead of resuming cleanly.
 > to step one with the transcript cleared. A reaped lesson still carries its
 > half-finished transcript; whatever restarts it owns clearing that first, or the
 > next run builds on garbage.
+
+A retry also can't re-slice. Slicing happens on the uploader's device before
+anything is sent, so a lesson that was cut wrong — or never cut at all — carries
+that same slicing into every retry. The only fix is deleting it and uploading
+again.
 
 ## Enrichment is allowed to come up short
 

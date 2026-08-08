@@ -30,3 +30,7 @@ vi.mock('gsap', () => ({
 `global` is undefined in browser context — don't reach for `global.__matchMedia` in `setup-browser.js`.
 
 Teleport works natively in browser mode. In jsdom unit tests, either stub with `{ Teleport: true }` to keep content in the wrapper tree, or pass `attachTo: document.body` and query via `document.querySelector`.
+
+## Always headless
+
+Browser-mode tests run headless — `headless: true` is set on the Integration project in `vite.config.ts`. Never pass `--browser.headless=false`, never invoke `vp test --ui`, and never run anything that surfaces a browser window: it steals focus mid-session. If a flaky integration test genuinely needs a visual debug, ask first.

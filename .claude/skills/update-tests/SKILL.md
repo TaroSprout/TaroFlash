@@ -23,7 +23,6 @@ Mine for:
 - **Invalidation / state-flow contracts** — which query keys a mutation invalidates, what cross-cutting fields (debounce keys, deck_id, etc.) are required on the wire, what happens when they're absent.
 - **Bugs found and fixed mid-session** — the failing case is a guaranteed-valuable regression test; preserve it before moving on.
 - **`$ARGUMENTS`** — if non-empty, fold the user's additional context into the obligation list.
-- **Memory entries** — scan `memory/MEMORY.md` for project decisions relevant to the changed files (paradigm choices, topology rules, etc.) and add any that map to a missing test.
 
 Each obligation is one line: a concrete behaviour to assert, plus a one-phrase rationale. Aim for high signal — only include obligations that the subagent, reading the diff cold, would plausibly miss.
 
@@ -75,9 +74,9 @@ full suite — to confirm they pass. Scope by the touched-file set you already g
 
 **The full suite is CI's job, not this skill's.** Collateral breakage in _untouched_ test files — a
 moved import, a widened barrel, a reshaped `_shared/*.ts` helper a sibling test depends on — is caught
-by CI on the PR, not here. Running the whole suite locally (especially under parallel `/batch`
+by CI on the PR, not here. Running the whole suite locally (especially under parallel `/work`
 subagents) would swamp the machine for a check CI already performs. Confirm only that the tests you
-touched are green, then commit; whoever owns the PR (the `/batch` orchestrator, or you directly)
+touched are green, then commit; whoever owns the PR (the `/work` orchestrator, or you directly)
 watches CI to green.
 
 If a touched test is red:

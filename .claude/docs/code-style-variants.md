@@ -15,3 +15,9 @@ const SIZES = {
 // Good — inline the one in use; reintroduce a map when a second size lands
 class="rounded-4 p-1 …"
 ```
+
+## No transitional escape hatches
+
+Don't add a prop or flag purely to stop a call site looking broken between sequenced refactor commits. If the plan already has a later task that migrates that call site properly, let it visibly regress in the interim — an override prop whose only consumer is "temporarily, until the real fix lands" is the same speculative surface as an unused variant map.
+
+Add an override only when it's a genuine, permanent part of the API.

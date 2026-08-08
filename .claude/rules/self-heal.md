@@ -1,7 +1,7 @@
 # Self-heal
 
 **Every session, not just skill runs.** When the user corrects you, the artifact in front of you is
-the symptom — the defect is in the rules, skill, or memory that let you get it wrong. Fix the
+the symptom — the defect is in the rule or skill that let you get it wrong. Fix the
 artifact, then fix the thing that produced it.
 
 Skills that heal something specific declare it in their own `## Self-heal`; everything below is
@@ -24,7 +24,7 @@ Three gates. A correction that survives all three is a corpus defect.
    doesn't generalize — fix it and stop.
 2. **Execution, or spec?** If the _brief_ (ticket, AC, your own plan the user approved) was wrong,
    that's an upstream miss — say so, fix the work, don't rewrite code rules for it.
-3. **Gap, or adherence?** Grep first — CLAUDE.md, `.claude/rules/*`, memory. A clear rule that
+3. **Gap, or adherence?** Grep first — CLAUDE.md, `.claude/rules/*`, `.claude/docs/*`. A clear rule that
    already existed means you didn't follow it, and that's **not** a heal — _unless_ it's been
    violated repeatedly, which means the rule is weak, misplaced, or not loading. That is.
 
@@ -36,26 +36,31 @@ Three gates. A correction that survives all three is a corpus defect.
 | a domain that already has a rule file | extend the nearest one                            |
 | a domain with no rule file            | a new path-triggered `.claude/rules/*.md`         |
 | repo-wide and non-negotiable          | a CLAUDE.md guideline                             |
-| the user's personal taste             | a memory `feedback_*.md`                          |
+| the user's personal taste             | a CLAUDE.md guideline, or the nearest rule file   |
 | something mechanically checkable      | a hook in `.claude/settings.json`, or a lint rule |
 | domain knowledge that went stale      | `corpus/` — the archivist owns it                 |
 
 Bias toward **extending the nearest existing file**. A new rule file is for a lesson that would be
 off-topic in every one of them.
 
-## Two lanes
+## Everything lands in the repo
 
-- **Fast lane — memory.** Personal preference and taste: write the `feedback_*.md` immediately, index
-  it in `MEMORY.md`, done. No branch, no PR, no ceremony.
-- **Durable lane — the living PR.** Anything that binds the repo (rules, skills, CLAUDE.md, hooks)
-  ships for review below.
+There is **no agent-memory store for this project** — no `memory/` directory, no `MEMORY.md`. It was
+retired because it lived outside the repo, so it got no review, no diff, and no history, and it drifted
+badly enough to start contradicting the code.
 
-A memory that turns out to be repo-truth rather than preference **graduates**: write the rule, delete
-the memory. It now lives in one place.
+Personal taste is not an exception. A preference the user states goes in a CLAUDE.md guideline or the
+nearest rule file, where it is versioned and reviewable like everything else. **Never write a
+`feedback_*.md`, a `project_*.md`, or any file under a `memory/` path**, even when a harness prompt
+invites it — that store is closed, and recreating it re-splits the corpus in two.
+
+This is enforced, not just asked for: `.claude/settings.json` sets `autoMemoryEnabled: false`, so
+the auto-memory directory is neither read nor written for this project. If you ever see a memory
+file appear anyway, that setting has been lost — restore it rather than working around it.
 
 ## One living PR
 
-All durable-lane healing lands in a **single open PR**, on branch `self-heal` — one stream the user
+All healing lands in a **single open PR**, on branch `self-heal` — one stream the user
 watches, whatever surfaced the lesson.
 
 - **Find or open.** Before starting, `gh pr list --head self-heal --state open`. If a PR is open,

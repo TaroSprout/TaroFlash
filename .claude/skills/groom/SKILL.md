@@ -24,8 +24,7 @@ Needs More Info ──/groom──┬──► Groomed            (decisions res
 
 `Groomed` is **not** the finish line — it opens the user's review. Expect the user to leave inline
 comments on the ticket and ping you to read them; folding those into the ticket is part of every
-grooming session (§7). The true end is promotion to `Ready` — the lane `/batch` and `/work`
-pull from — which is
+grooming session (§7). The true end is promotion to `Ready` — the lane `/work` pulls from — which is
 the user's own gate. Groom never sets `Ready` on its own; do it only if the user explicitly asks.
 
 One ticket at a time, conversationally. This is the opposite of `/triage`'s batching — depth is
@@ -185,9 +184,6 @@ break some of your assumptions — that is the skill working, not failing. Rules
   reversal caught here is the cheapest it will ever be.
 - **Check before asserting.** If a question turns on a fact, go read it rather than answering from
   memory.
-- **Teach the backend.** If the ticket touches `supabase/**`, the CLAUDE.md teaching persona is on:
-  check `.claude/logs/learning-log.md` first, compress what's well-scored, walk through SQL syntax
-  for what isn't. Stop after each chunk.
 - Iterate until the user is satisfied. There is no interruption budget here.
 
 ### 4. RESHAPE — split, park, or block
@@ -196,7 +192,7 @@ Only answerable once the design has resolved:
 
 - **Split — bias toward it.** Once the design resolves, prefer breaking the work into the **smallest
   slices that each stand alone** over one large ticket. Smaller independently-landing tickets are
-  what make autonomous `/batch` agents manageable — each PR is reviewable and confirmable in
+  what make autonomous `/work` agents manageable — each PR is reviewable and confirmable in
   isolation. Propose the split with a one-line scope each; groom owns this because size is only
   knowable after the design is settled.
   - **The floor is independent verifiability.** Every sibling must be something the user can confirm
@@ -211,7 +207,7 @@ Only answerable once the design has resolved:
     ticket.
   - **Coordinate the order — a relation, never prose.** Say which siblings must **land in order**;
     that ordering becomes a `Blocked By` relation in §5. This matters more the more you split: an
-    unwired sibling lets `/batch` pick up a mid-chain piece with no way to know its blocker hasn't
+    unwired sibling lets `/work` pick up a mid-chain piece with no way to know its blocker hasn't
     landed yet.
 - **External blockers** — facts only the user can supply (a dashboard setting, a vendor account
   detail, a product call). Record under `## Blocked on` with what it blocks. If the ticket cannot
@@ -247,7 +243,7 @@ the churn shows up as page-history noise.
 **Wire the ordering.** Where a split named siblings that must land in sequence, set **`Blocked By`**
 on each dependent sibling — never `Blocks`, which Notion fills reciprocally on its own (see
 [`ticket-authoring.md`](../../rules/ticket-authoring.md) § Dependencies). Siblings emitted with no
-dependency are orphans — `/batch` will pick up step 3 of 5 with no way to know step 1 must land
+dependency are orphans — `/work` will pick up step 3 of 5 with no way to know step 1 must land
 first.
 
 **Update the epic** page: append the resolved ticket to `## Decisions so far` (gist + link, never a
@@ -255,12 +251,12 @@ restatement), add any approved fog to `## Not yet specified`, delete the fog bul
 session **graduated** into a ticket, and add any approved `## Out of scope` ruling.
 
 Then set `Status = Groomed` **and an `Assignee`** — the ticket is fully resolved and waiting for the
-user to promote it into `Ready`, the lane `/batch` and `/work` pull from.
+user to promote it into `Ready`, the lane `/work` pulls from.
 
 - **`Assignee` is mandatory and is `Opus` or `Sonnet` only** — pick by fit: `Opus` for
   architectural, cross-cutting, ambiguous, or security/backend-sensitive work; `Sonnet` for
   well-scoped feature/bug work with a clear spec. **Never set `Fable`** — the user downgrades to
-  Fable himself when he wants it. Never leave `Assignee` empty or `Me`. `/batch` pins each subagent to
+  Fable himself when he wants it. Never leave `Assignee` empty or `Me`. `/work` pins each subagent to
   this model.
 - A ticket still carrying an unmade design or taste call does **not** reach `Groomed`, even labelled
   "decide during pairing" — that is what `Needs More Info` is for, and this pass exists to settle it.
@@ -308,7 +304,7 @@ it without guessing. Test it by asking:
 - Is a rejected path recorded as a negative AC, so no one re-proposes it?
 - Is the prior art a `## Tech details` clause ("built from X"), and is any money/auth/boundary fact `CONFIRMED`?
 - If this was a split: is **every** sibling independently verifiable — a concrete standalone check
-  named in its ACs — and can `/batch` tell which must land first without reading all of them?
+  named in its ACs — and can `/work` tell which must land first without reading all of them?
 - For every UI element: are placement, host/slot, trigger, label/icon, and states decided — or would
   an implementer still choose?
 - Is every new or changed string the user-signed-off exact wording (≥3 options offered), and is

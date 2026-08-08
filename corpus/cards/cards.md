@@ -4,7 +4,7 @@ domain: cards
 status: current
 hazard: true
 related: [media, permissions]
-updated: 2026-07-23
+updated: 2026-08-08
 ---
 
 # Cards
@@ -15,64 +15,78 @@ deck keeps every card in order, and when two of them count as the same.
 A card is two pieces of text: a **front** and a **back**, sitting inside a deck.
 
 Every deck keeps its cards in a deliberate order. That order isn't stored as
-"card #1, card #2" — it's a single **number** carried by each card, and cards
-sort from smallest number to largest.
+"card #1, card #2" — it's a short **sort key** carried by each card, and cards
+sort by comparing those keys character by character.
 
 The trick that makes reordering cheap: to slip a new card _between_ two others,
-the deck picks a number halfway between its neighbours'. There's always room for
-one more in the gap — until the gap grows too small to split, at which point the
-whole deck is quietly renumbered with fresh spacing and the insert retries.
+the app mints a key that falls between its neighbours' keys. There is always a
+key available between any two, no matter how close together they already are, so
+inserting never has to renumber the rest of the deck.
 
 A card comes into being in one of two ways:
 
 1. **Placed** — dropped in _before_ or _after_ a card you point at.
 2. **Bulk-added** — a stack of cards appended to the end of the deck at once.
 
-Either way, the number that fixes its place is chosen by the **server**, never
-the app.
+Either way the key is minted by the **app**, not the server, and travels with the
+card as an ordinary write.
 
-> [!HAZARD] **A card's ordering number is trustworthy only because every create goes through one door — the table itself will accept any number you hand it.**
-> Cards are owned rows, and the database happily lets a signed-in person insert
-> their own. That openness is the convenience — it's also the flip side: nothing
-> in the table forces the ordering number to be server-picked, so a card created
-> by a raw insert can carry a made-up number that collides with a neighbour or
-> lands in the wrong spot, silently corrupting the deck's order and skipping the
-> per-deck cap along the way. The guarantee lives in the discipline of routing
-> every create through the two functions, not in the schema.
-> [See why there's only one door ↓](#every-card-comes-in-through-one-door)
+## The app picks the key, and that's deliberate
 
-## Order is a number, not a position
+This is a reversal. Ordering keys used to be computed on the server, so every
+create had to go through a dedicated function. They're now minted in the app,
+and creating a card is a plain write carrying its own key; reordering is a
+one-field update.
 
-The ordering number is fractional on purpose. Insert between two cards and the
-deck takes the midpoint of their numbers; insert at the end and it takes the
-last number plus a step; the first card in an empty deck starts at a round base.
+The reason is **working offline**. A key computed on the server can't be produced
+when there's no server to ask — an offline insert would have nothing to call, and
+a placeholder key can't be reconciled on reconnect without reshuffling whatever
+arrived first. A key the app mints itself makes a queued write self-contained: it
+already knows where it belongs. What makes this safe is that a deck has exactly
+one owner, so there is never a second person minting keys into the same deck at
+the same moment.
 
-Because the number is fractional, an insert almost never has to touch any other
-card — it just claims the space in the gap.
+> [!HAZARD] **The keys are text, and only sort correctly because the column overrides the database's default sorting rules.**
+> Sort keys are compared as plain text. The database's default text collation is
+> locale-aware — it reorders letters by case, so `a` and `A` don't land where a
+> character-by-character comparison would put them. Under that default the server
+> would sort keys differently from the app that generated them, and a deck would
+> silently read back in the wrong order. The column pins a plain byte-order
+> collation to prevent it. Nothing announces this: the schema looks ordinary, and
+> a new ordering column or index added without the same collation inherits the
+> broken default and reintroduces the bug.
 
-Almost never. Repeatedly inserting into the _same_ gap eventually leaves no room
-between two neighbours. When that happens the deck **renumbers** every card with
-wide, even spacing and the insert tries again. The order the reader sees never
-changes — only the underlying numbers do.
+## Order is a key, not a position
+
+Because the key is text rather than a number, there is always room between two
+neighbours — appending a character is enough to land between them. The deck never
+needs a wholesale renumber, which is what the old server-side scheme had to do
+when a gap ran out.
+
+The neighbours a new key sits between are read from the list **as it is on screen
+at the moment of writing**, not from whatever the order was when the card was
+staged. Staging a card and writing it are separate moments, and the deck can move
+in between.
 
 > [!NOTE]
-> Rank assignment is serialized per deck: two people adding to the same deck at
-> the same instant take turns, so they can't both claim the same gap and land on
-> the same number.
+> Deck ordering is a different mechanism — decks still use plain numbers. The two
+> aren't interchangeable.
 
-## Every card comes in through one door
+## One write path survives on the server
 
-Placing a card and bulk-adding cards are the _only_ two ways to create one. Both
-run on the server, and both do three things the app can't safely do itself:
-compute the ordering number, take the per-deck turn-taking lock, and check the
-deck hasn't hit its card ceiling.
+Moving a batch of cards to another deck is the single card-write that still runs
+as a server function, and only because the underlying protocol can't give each
+row of a bulk update its own distinct value. It still takes keys the app computed.
 
-> [!RULE]
-> A card is never created by writing straight to the cards table from the app.
-> Creation always goes through the placing or bulk-adding path — that's the only
-> place the ordering number is computed correctly. Editing an _existing_ card's
-> text is a different matter and writes directly; the one-door rule is about
-> _bringing a card into being_, where the number has to be earned.
+## The per-deck ceiling is enforced by the table, not the write path
+
+A free plan caps how many cards a deck may hold. That ceiling isn't checked by
+whichever code writes the card — it's enforced by the table itself, evaluated
+**once per statement** rather than once per row.
+
+The per-row alternative doesn't work: a check running per row can't see the other
+rows its own statement is adding, so a bulk move would test every row against the
+same stale count and let the whole batch through.
 
 The ceiling is set by the owner's plan. A free plan caps how many cards a deck
 may hold; adding past the cap fails fast, before anything is written, and the
@@ -91,6 +105,17 @@ both sides match another card in the same deck.
 > only a front — or only a back — are _not_ duplicates. Two cards that are both
 > blank are _not_ duplicates. Only a full front-and-back match, both sides
 > non-empty, counts. The check is per deck; the same pair in two decks is fine.
+
+## Picking mode stays on when the selection empties
+
+Selecting cards in the editor is a **mode you turn on**, not a state inferred from
+how many cards are ticked. Clearing every selection leaves the mode on, so the
+checkboxes and bulk-action bar stay put and you can keep picking. The mode ends
+only when you leave it deliberately, cancel, or finish an action that consumes the
+selection.
+
+Deriving the mode from "is anything selected" would yank the UI away the instant
+you unticked the last card.
 
 ## What this isn't
 

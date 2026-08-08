@@ -4,7 +4,7 @@ domain: members
 status: current
 hazard: true
 related: [permissions, scheduling]
-updated: 2026-07-23
+updated: 2026-08-08
 ---
 
 # Members
@@ -84,6 +84,45 @@ one edit you _are_ allowed: changing your own display name, description, avatar.
 > Your own edits can touch your profile, never your plan or your role. Those two
 > change only through billing and administration — paths that run with system
 > power, above the rule that pins everyone else to their own row.
+
+## Revoking a session doesn't lock the door immediately
+
+Signing someone out everywhere from the server side revokes the **session**, but
+it does not invalidate the access token they're already holding. Data reads and
+writes keep working with that token until it expires on its own — up to an hour.
+Only the identity service checks whether the session still exists, so the
+revocation shows up there and nowhere else.
+
+The app can't see it at all: asking the client library for the current session
+returns the stored token without contacting the server, so someone whose sessions
+were revoked still reads as signed in.
+
+> [!RULE]
+> Any server-side revocation is paired with clearing the token locally as well.
+> One without the other leaves a half-signed-out state where the app believes it's
+> authenticated and most requests agree.
+
+## Suspending an account is one flag, read through one function
+
+A member scheduled for deletion is suspended by a single stored date. Ownership
+rules don't read the signed-in identity directly — they read a function that
+returns it normally and returns *nobody* once that date is set, so one flag empties
+every table the member owns at once.
+
+Two rules deliberately keep reading the raw identity: a member reading their **own**
+record (otherwise they can't see that they're pending, and undoing it becomes
+unreachable), and the undo itself.
+
+> [!WATCH]
+> Functions that run with elevated privileges bypass ownership rules entirely, so
+> they don't inherit the suspension — each one has to perform the check itself.
+> Any time ownership is the enforcement mechanism, the elevated functions are a
+> separate sweep.
+
+Hiding a pending member from other people is done at request time — their public
+decks are flipped private and flagged, so undoing republishes exactly those — rather
+than by checking every row's owner on read, which would put a lookup on the hottest
+queries in the app forever.
 
 ## What this isn't
 
