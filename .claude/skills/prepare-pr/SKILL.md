@@ -250,22 +250,18 @@ Avoid repeating Conventional-Commits prefix in title — GitHub release tooling 
 
 ## Summary
 
-<1–3 sentence overview of the user-visible outcome and why this PR exists.>
-
-## Changes
-
-- <bullet per meaningful change, grouped by commit type if helpful>
-- ...
-
-## Test plan
-
-- [ ] <what to verify, manually or automated>
-- [ ] ...
+- <what changed and why>
+- <second bullet if it earns its place>
 ```
 
-Omit the ticket-link line entirely when `--ticket` is absent. If `.github/pull_request_template.md` exists, use its structure and fill sections — still prepend the ticket-link line above the template body when `--ticket` is given.
+`## Summary` and nothing else — **never add a `## Test plan` section**, or any heading the repo
+template doesn't carry. The user doesn't work a checklist per PR, and extra headings bury the point.
 
-Keep body tight. One short paragraph + handful of bullets beats wall of text.
+Omit the ticket-link line entirely when `--ticket` is absent. `.github/pull_request_template.md` is
+the source of truth for the body's shape — follow it and fill its sections, still prepending the
+ticket-link line above the template body when `--ticket` is given.
+
+Keep body tight. A handful of short bullets beats a wall of text.
 
 ### Step 9 — Create the PR
 
