@@ -35,10 +35,11 @@ transcription appends onto it.)
 
 **[[cards]]** · cards
 
-The cards table accepts any ordering number a signed-in owner hands it — no
-server-enforced default or uniqueness. Integrity holds only because every create
-routes through the two RPCs; a raw insert can collide/misorder and skip the
-per-deck cap, silently corrupting deck order.
+Sort keys are compared as text, and the database's default collation is
+locale-aware — it reorders by case, so the server would sort keys differently
+from the app that minted them. The column pins byte-order collation to prevent
+it; nothing announces this, so a new ordering column or index added without the
+same collation silently reintroduces the bug.
 
 ### The ownership stamp is empty under a backend job
 

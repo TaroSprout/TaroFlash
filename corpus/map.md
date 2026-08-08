@@ -10,7 +10,7 @@ See [CONTRIBUTING](./CONTRIBUTING.md) for how the corpus works.
 
 ## cards
 
-- [[cards]] — front/back units; server-picked ordering number; duplicates flagged not blocked ⚠️
+- [[cards]] — front/back units; app-minted sort key; duplicates flagged not blocked ⚠️
 
 ## decks
 
