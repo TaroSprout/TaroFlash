@@ -15,7 +15,7 @@ Doppler scopes are keyed by absolute path, so a new worktree starts **unscoped**
 
 So the fix in a worktree is to run it — `pnpm dev`, or `./scripts/bootstrap-env.sh` on its own. **Never hand-copy `.env` files between checkouts**; the cache is derived, and a copied one goes stale silently.
 
-`fork-dev` worktrees start `vp dev` directly and never run bootstrap. That's fine for SPA work, but any edge-function or Stripe path in a fork needs the script run there first.
+Anything that starts `vp dev` directly, rather than going through `pnpm dev`, skips bootstrap — fine for SPA-only work, but any edge-function or Stripe path needs the script run in that checkout first.
 
 ## Probing without the CLI
 
