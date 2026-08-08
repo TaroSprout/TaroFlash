@@ -40,7 +40,7 @@ lag row writes.
   when its status is in this group.
 - **`On Hold` = hands-off** (user-owned), same as `Assignee = Me`.
 - Lane ownership by stage: `/triage` → `Needs More Info`; `/groom` → `Groomed`; the user promotes
-  `Groomed` → `Ready`; `/work` / `/batch` claim `Ready` → `In Progress` → `Review`. New tickets
+  `Groomed` → `Ready`; `/work` claims `Ready` → `In Progress` → `Review`. New tickets
   are `Backlog`.
 
 ### `Priority` — `select` (a ticket's urgency)
@@ -81,11 +81,11 @@ quarter_. Every quarter spans P0→P3. How `/backlog` fills Target (theme-groupe
 overflow) lives in [`ticket-authoring.md` § Priority vs Target](./ticket-authoring.md) and the
 [`backlog`](../skills/backlog/SKILL.md) skill.
 
-### `Assignee` — `select` (which model works the ticket in `/batch`)
+### `Assignee` — `select` (which model works the ticket in `/work`)
 
 `Me` · `Fable` · `Opus` · `Sonnet`.
 
-- **`Me` = hands-off** — the user works it themselves; `/triage`, `/backlog`, and `/batch` leave it
+- **`Me` = hands-off** — the user works it themselves; `/triage`, `/backlog`, and `/work` leave it
   alone (same meaning as `Status = On Hold`).
 - **`Fable` is the user's to assign**, never an agent's pick. `/groom` sets `Opus` or `Sonnet` when a
   ticket reaches `Groomed`.
