@@ -3,6 +3,7 @@
 - When reporting information to me, be extremely concise and sacrifice grammar for the sake of conciseness.
 - **NEVER touch tests until I explicitly ask.** No checking, running, writing, or updating tests — not after edits, not after refactors, not for reported bugs, not for coverage, not "while I'm here." This holds even when tests clearly should change. At most, note in one line that tests may need attention, then leave them. I will tell you when it's test time. (User-invoked test skills/agents like `/update-tests` are the explicit ask.)
 - **Every correction is a defect in the rules, not just the artifact.** Fix what I pointed at, then run the lesson through `.claude/rules/self-heal.md` — every session, not just skill runs. `/heal` is the explicit verb for it.
+- **NEVER write user-facing copy without my sign-off.** Any new or changed string a user reads — button labels, headings, empty states, toasts, alerts, error messages, ticket ACs quoting copy — stops and asks. Offer at least 3 reasonably-varied options per line and let me pick; never choose for me, never defer it to "wording TBD". Reusing an existing string is fine, but say which one. This applies everywhere, not just in tickets.
 
 # Guidelines
 
