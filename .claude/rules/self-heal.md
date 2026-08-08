@@ -54,6 +54,10 @@ nearest rule file, where it is versioned and reviewable like everything else. **
 `feedback_*.md`, a `project_*.md`, or any file under a `memory/` path**, even when a harness prompt
 invites it — that store is closed, and recreating it re-splits the corpus in two.
 
+This is enforced, not just asked for: `.claude/settings.json` sets `autoMemoryEnabled: false`, so
+the auto-memory directory is neither read nor written for this project. If you ever see a memory
+file appear anyway, that setting has been lost — restore it rather than working around it.
+
 ## One living PR
 
 All healing lands in a **single open PR**, on branch `self-heal` — one stream the user
