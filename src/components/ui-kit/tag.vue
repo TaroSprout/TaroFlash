@@ -71,12 +71,8 @@ const mask = computed(() => {
 </template>
 
 <style>
-/* Raised neutral chip. Chrome (`element`) by default; identity is opt-in and
-   attribute-on-self via `[data-palette]`. Both are self-selectors, so an
-   ancestor palette can't leak in: the base rule never reads --color-accent, and
-   the identity rule only matches when the attribute sits on THIS element
-   (attributes don't inherit), at which point --color-accent resolves to this
-   tag's own palette. */
+/* Raised neutral chip by default; only takes on a palette's colours when
+   `data-palette` sits on the tag itself. →[K:theming-palette-identity] */
 .ui-kit-tag {
   --tag-bg: var(--color-element);
   --tag-fg: var(--color-on-element);

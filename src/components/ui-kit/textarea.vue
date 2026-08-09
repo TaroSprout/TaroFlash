@@ -89,9 +89,8 @@ function onInput() {
   color: var(--color-ink);
 }
 
-/* The field is a WELL — one step below whatever surface it sits on. It used to
-   fake `data-theme="brown-100"` to get a neutral fill, which overwrote the real
-   identity for everything inside it. */
+/* One step below whatever surface it sits on — a real depth well, not the old
+   `data-theme="brown-100"` fake that overwrote the real identity underneath. */
 .ui-kit-textarea {
   background-color: var(--color-below);
   border-radius: var(--radius-4);
