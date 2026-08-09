@@ -28,8 +28,10 @@ const is_md = useMatchMedia('w>=md')
 const deck_actions = useDeckActions()
 
 const creating_deck = ref(false)
-// Drives the reorder-grid geometry (cell width per breakpoint); the cards
-// themselves are fluid and just fill the positioned cells.
+/**
+ * Drives the reorder-grid geometry (cell width per breakpoint); the cards
+ * themselves are fluid and just fill the positioned cells.
+ */
 const size = computed(() => (is_md.value ? 'sm' : 'xs'))
 const container_el = useTemplateRef<HTMLElement>('container_el')
 
@@ -40,18 +42,23 @@ const reorder = useDeckGridReorder(
   size
 )
 
-// Locked-deck ids during downgrade grace, recomputed from local rank so a
-// reorder across the 10th position updates the dim/lock optimistically.
+/**
+ * Locked-deck ids during downgrade grace, recomputed from local rank so a
+ * reorder across the 10th position updates the dim/lock optimistically.
+ */
 const { lockedIds } = useDeckGrace(() => decks)
 
-// Animate a slot reflow only when the deck count itself changes (delete/create)
-// — a drag-drop reorder already has its own lift/drop settle animation, and
-// transitioning the resting position too would fight it (the dropped card
-// would visibly slide from its pre-persist slot to its post-persist one).
+/**
+ * Animate a slot reflow only when the deck count itself changes
+ * (delete/create) — a drag-drop reorder already has its own lift/drop settle
+ * animation, and transitioning the resting position too would fight it (the
+ * dropped card would visibly slide from its pre-persist slot to its
+ * post-persist one).
+ */
 const REFLOW_TRANSITION_DURATION = 200
 const reflowing = ref(false)
 let reflow_timeout = 0
-// The first firing is the initial query resolving, not a real reflow — skip it.
+// The first firing is the initial query resolving, not a real reflow.
 let deck_count_initialized = false
 
 watch(
@@ -70,10 +77,7 @@ watch(
   }
 )
 
-// TransitionGroup's `appear` never fires here: this route renders inside a
-// <Suspense> (authenticated.vue), and Vue skips transition hooks for elements
-// mounted within an unresolved suspense boundary — even one that resolves
-// synchronously. Play the reveal once by hand instead.
+// TransitionGroup's `appear` never fires inside authenticated.vue's unresolved <Suspense> — play the reveal once by hand instead.
 onMounted(() => {
   if (!container_el.value) return
 

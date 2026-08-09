@@ -2,8 +2,10 @@ import { onBeforeUnmount, watch, type Ref } from 'vue'
 import { emitSfx } from '@/sfx/bus'
 import { useMatchMedia } from '@/composables/ui/media-query'
 
-// Matches the "+4" gap fudge use-scroll.ts uses for its own page-size math,
-// so both stay in lockstep with the actual card pitch.
+/**
+ * Matches the "+4" gap fudge use-scroll.ts uses for its own page-size math,
+ * so both stay in lockstep with the actual card pitch.
+ */
 function cardPitch(el: HTMLElement) {
   const card_width = (el.firstElementChild as HTMLElement | null)?.offsetWidth ?? el.clientWidth
   return card_width + 4
@@ -29,8 +31,7 @@ export function useReviewInboxTickSfx(items_el: Ref<HTMLElement | null>) {
       const el = attached_el
       if (!el) return
 
-      // Elastic overscroll (iOS rubber-banding) briefly pushes scrollLeft past
-      // the real [0, max] range — clamp it so bounce doesn't count as a crossing.
+      // Clamp scrollLeft — iOS rubber-banding overscroll pushes it past [0, max].
       const max_scroll_left = el.scrollWidth - el.clientWidth
       const scroll_left = Math.min(Math.max(el.scrollLeft, 0), max_scroll_left)
 

@@ -7,9 +7,7 @@ type DashboardActionsPanelShellProps = {
 
 const { body_class = '' } = defineProps<DashboardActionsPanelShellProps>()
 
-// The body is a raised surface (its own bg), so it declares depth 1 — a
-// recessed element inside it (the options-panel well) then resolves relative to
-// this surface rather than falling through to the depth-0 page.
+// The body is a raised surface, so nested recessed elements resolve against it, not the depth-0 page.
 provideDepth(1)
 
 defineSlots<{

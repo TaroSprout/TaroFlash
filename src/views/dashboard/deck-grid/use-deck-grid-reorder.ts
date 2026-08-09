@@ -113,16 +113,18 @@ export function useDeckGridReorder(
    */
   let lifted_card: HTMLElement | null = null
 
+  /**
+   * Lift/drop must animate the innermost, transform-free element — the outer
+   * item carries the reactive `itemPosition` translate, and the middle
+   * wrapper carries the reactive drag-offset translate. GSAP caches whichever
+   * transform is on the element it tweens and rewrites the whole thing on
+   * drop, stomping either one (same reason `popDeckIn`/`popDeckOut` target
+   * the innermost child, not the position-carrying wrapper).
+   */
   function beginDrag(index: number, event: PointerEvent) {
     reorder.start(index, event)
     if (reorder.dragging_index.value === null) return
 
-    // Lift/drop must animate the innermost, transform-free element — the
-    // outer item carries the reactive itemPosition translate, and the middle
-    // wrapper carries the reactive drag-offset translate. GSAP caches
-    // whichever transform is on the element it tweens and rewrites the whole
-    // thing on drop, stomping either one (same reason popDeckIn/popDeckOut
-    // target the innermost child, not the position-carrying wrapper).
     const item = (event.target as HTMLElement).closest<HTMLElement>(
       '[data-testid="deck-grid__item"]'
     )
@@ -157,8 +159,7 @@ export function useDeckGridReorder(
     press_hold.cancel()
   })
 
-  // Settle the lifted card back to rest the moment the drag ends (the engine
-  // clears dragging_index on the window pointerup).
+  // Settle the lifted card the moment the engine clears dragging_index.
   watch(
     () => reorder.dragging_index.value,
     (current, previous) => {
