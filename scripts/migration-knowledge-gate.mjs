@@ -21,10 +21,9 @@ const NO_OBJECTS = 'no schema objects'
 const UNRECORDED = 'unrecorded'
 
 const RULE =
-  'A migration answers for the knowledge its schema change could have falsified: one ' +
-  '`-- knowledge: <objects> — <knowledge file>` header line per group, or `— unrecorded` ' +
-  'where nothing covers them. Nothing else notices when a schema change makes a recorded ' +
-  'truth false. →[K:knowledge-migration-gate]'
+  'This migration changes schema objects the knowledge layer may describe. Name them in a ' +
+  '`-- knowledge:` header with the file you checked against, or `unrecorded` if nothing ' +
+  'covers them. →[K:knowledge-migration-gate]'
 
 function parseArgs(argv) {
   const args = { base: 'origin/master', root: process.cwd() }
