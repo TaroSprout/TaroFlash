@@ -43,10 +43,10 @@ function closePhone() {
   document.removeEventListener('pointerdown', onPageClick)
 }
 
-// Listens on pointerdown (not click) so outside-detection runs before any
-// click handler in the interaction — e.g. a modal's own close button — has a
-// chance to mutate modal_stack/is_open first, which would otherwise race
-// against this check.
+/**
+ * Closes the phone on an outside click. Listens on pointerdown, not click, so this runs
+ * before an in-flight click handler (e.g. a modal's own close button) can race it.
+ */
 function onPageClick(e: Event) {
   if (!store.is_open) return
 

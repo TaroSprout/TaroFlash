@@ -19,17 +19,17 @@ const bar = useTemplateRef<HTMLElement>('bar')
 const content_wrapper = useTemplateRef<HTMLElement>('content_wrapper')
 const content = useTemplateRef<HTMLElement>('content')
 
-// Publish the dock's live height to :root so any view can pad its content clear
-// of the bar. 0 while hidden (keyboard open, or the current route's breakpoint
-// doesn't match) so layouts collapse the gap.
+/**
+ * Publishes the dock's live height to `--mobile-dock-height` on `:root`, so any view can
+ * pad content clear of the bar. Reports 0 while the dock is hidden, collapsing the gap.
+ */
 function publishHeight() {
   const visible = is_mobile.value && !is_keyboard_open.value
   const height = visible ? (content.value?.offsetHeight ?? 0) : 0
   document.documentElement.style.setProperty('--mobile-dock-height', `${height}px`)
 }
 
-// Tweens content_wrapper across route swaps (a fixed footer with tiny, cheap
-// content — real height tween is safe here, unlike the transcript case).
+// Tiny, cheap footer content — a real height tween is safe here, unlike the transcript case.
 useAnimatedHeight(
   content_wrapper,
   content,
