@@ -20,8 +20,7 @@ defineExpose({ rate, el: () => card_ref.value?.$el as HTMLElement | undefined })
 type StudyCardProps = {
   card?: Card
   side: CardSide
-  // Projected next-review labels per grade ("Study again in 1 day"), frozen
-  // per active card upstream so they don't drift mid-drag.
+  /** Projected next-review label per grade, frozen per active card upstream so it doesn't drift mid-drag. */
   rating_labels?: Record<Grade, string>
   show_all_ratings?: boolean
   cover_override?: DeckCover
@@ -55,11 +54,11 @@ const drag_rating = ref<Grade>(Rating.Good)
 const primed_grade = ref<Grade | null>(null)
 
 const is_dragging = ref(false)
-// Guards against rapid key/click spam re-triggering an action (and replaying
-// its sfx) mid-animation. For a flip it covers only the outgoing face's
-// rotate-out (cleared on `flip-out-complete`) so the card is re-flippable the
-// instant the new face shows; for a fling it stays true until this card
-// unmounts on advance.
+/**
+ * Guards against key/click spam re-triggering an action mid-animation. A flip
+ * clears it on `flip-out-complete`; a fling leaves it set until this card
+ * unmounts on advance.
+ */
 const is_animating = ref(false)
 
 const { register } = useGestures()

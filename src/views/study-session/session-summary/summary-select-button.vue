@@ -2,8 +2,7 @@
 import UiButton from '@/components/ui-kit/button.vue'
 import { useI18n } from 'vue-i18n'
 
-// The header-end action on a summary category page — mirrors
-// `session-header-nav-button.vue`'s leading action, but toggles multi-select.
+/** The header-end action on a category page — mirrors the header's leading action, but toggles multi-select. */
 type SummarySelectButtonProps = {
   is_selecting?: boolean
 }
