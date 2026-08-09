@@ -23,6 +23,6 @@
       "supabase/**/*.{sql,ts}",
       ".github/**/*.yml"
     ],
-    "exempt": ["supabase/migrations/**"]
+    "exempt": ["supabase/migrations/**", "tests/unit/scripts/knowledge-lint.test.js"]
   }
 }

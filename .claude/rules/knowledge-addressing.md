@@ -46,8 +46,9 @@ a breached line cap.
 caps, and the scan scope. Always-on = the `always_on.include` globs minus any file carrying `paths:`
 frontmatter, since a `paths:` rule is path-triggered rather than loaded every session.
 
-- `supabase/migrations/**` is exempt from the citation scan: migrations are append-only, so a
-  pointer written into one can never be corrected.
+- `slugs.exempt` skips the citation scan. `supabase/migrations/**` is exempt because migrations are
+  append-only, so a pointer written into one can never be corrected; the checker's own test file is
+  exempt because its fixtures contain literal tokens. Nothing else earns a place there.
 - Caps are `line_caps` — 80 lines for `CLAUDE.md`, 250 for the always-on total. A starting
   calibration, not a measured figure.
 - `line_caps.enforced` is `false` until the always-on payload is restructured (TARO-331); breaches
