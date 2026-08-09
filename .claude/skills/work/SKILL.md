@@ -69,8 +69,9 @@ one split are never both takeable — the `Blocked By` relation means one waits;
 ### 0. ORCHESTRATOR WORKTREE — always
 
 Before anything else, move into your **own** worktree (`EnterWorktree`, e.g. `batch-orchestrator`) and
-run the entire skill from there — claims, conflict checks, PR orchestration, teardown, the feedback
-loop, and any self-heal. This keeps the shared/main checkout free for the user to work in during the
+run the entire skill from there — claims, conflict checks, PR orchestration, teardown, and the
+feedback loop. (Self-heal is the exception: it dispatches to a subagent that makes its own worktree.)
+This keeps the shared/main checkout free for the user to work in during the
 run. **Any side request the user makes mid-run that is outside ticket scope** (a tweak to this skill,
 tooling, docs) is also done on the orchestrator worktree — branch and commit freely there; it's
 yours. The only work that leaves it is a **feedback-loop fix**, which lands on the main checkout so
@@ -210,8 +211,9 @@ user's call, exactly as at first handoff.
 Run every review correction through [`self-heal.md`](../../rules/self-heal.md), separate from the
 ticket PR. Specific to this skill:
 
-- The **orchestrator** heals — the per-ticket subagents are gone and their worktrees torn down by the
-  time feedback lands.
+- The **orchestrator** dispatches — the per-ticket subagents are gone and their worktrees torn down
+  by the time feedback lands. It dispatches in the background and returns to the feedback loop; it
+  never pauses the run to write a rule itself.
 - Review feedback is this skill's richest signal. A miss about **claim, PR handoff, or review
   mechanics** heals this skill; a miss about the **code** routes by the table in the rule.
 - Gate 2 (execution, not spec): feedback showing the _ticket / AC_ was wrong is a `/triage`–`/groom`
@@ -219,7 +221,7 @@ ticket PR. Specific to this skill:
 - Working several tickets at once multiplies the signal: the **same correction on multiple PRs in one
   run** is a high-confidence gap — weight it up at gate 1.
 - The healing PR is autonomous; the user's review of it confirms or kills the generalization, so
-  there's no inline confirm mid-run.
+  there's no inline confirm mid-run. Several dispatches across a run stack onto that one PR.
 
 ## Guardrails
 
@@ -237,8 +239,8 @@ ticket PR. Specific to this skill:
   CI is the gate the orchestrator watches. In the **Review & feedback loop the rule is back on**: don't
   touch tests until the user asks, then one consolidated `update-tests` pass over all the review edits.
 - One PR per ticket (via `prepare-pr`). Don't batch multiple tickets into a single PR.
-- Self-heal ships to the shared `self-heal` PR (§ Self-heal), never merged and separate from ticket
-  PRs — a rule fix rides its own stream, never a ticket branch.
+- Self-heal is **dispatched, never written inline** (§ Self-heal). The subagent ships to the shared
+  `self-heal` PR, never merged — a rule fix rides its own stream, never a ticket branch.
 - The orchestrator runs from its **own worktree** (step 0). During the **initial build** it never
   edits ticket code — subagents do, in per-ticket **worktrees**, which the subagent **removes when
   done** (except a stuck ticket, whose worktree is left for inspection). Out-of-scope side requests

@@ -128,4 +128,4 @@ is warranted, the theme-grouping doctrine) → the single sources,
 - Skip `Assignee = Me` and `On Hold` tickets — the user's hands-off markers.
 - Propose the whole sweep at the checkpoint; apply nothing unasked.
 - Don't touch tests. Don't write code — this skill reads Notion (and lightly, code) and writes Notion
-  fields. Self-healing _this skill_ is the sole exception; see § Self-heal.
+  fields. A lesson about this skill is dispatched, not written here; see § Self-heal.

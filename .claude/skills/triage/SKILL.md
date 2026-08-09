@@ -94,4 +94,4 @@ the single source, [`ticket-authoring.md`](../../rules/ticket-authoring.md).
   `In Progress`/`Review`/`Done`.
 - Propose `Epic`/`Type`/`Priority`/`Target`, never apply unasked.
 - Don't touch tests. Don't write code — this skill reads Notion (and lightly, code) and writes
-  Notion. Self-healing _this skill_ is the sole exception; see § Self-heal.
+  Notion. A lesson about this skill is dispatched, not written here; see § Self-heal.
