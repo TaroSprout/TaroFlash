@@ -2,7 +2,7 @@
   "always_on": {
     "include": ["CLAUDE.md", ".claude/rules/*.md"],
     "line_caps": {
-      "enforced": false,
+      "enforced": true,
       "total": 250,
       "per_file": {
         "CLAUDE.md": 80
