@@ -20,21 +20,23 @@ shared.
 
 ## The ladder
 
-Corrections only — a domain-line change goes straight to dispatch. Four gates; a correction that
-survives all four is a real gap.
+Corrections only — a domain-line change goes straight to dispatch. Three gates; a correction that
+survives all three is a real gap.
 
 1. **Standing, or instance?** Restate it as a rule true on the _next_ task. "The count should be 5"
    doesn't generalize — fix it and stop.
 2. **Execution, or spec?** If the _brief_ (ticket, AC, your own plan the user approved) was wrong,
    that's an upstream miss — say so, fix the work, don't rewrite code rules for it.
-3. **Gap, or adherence?** Grep first — CLAUDE.md, `.claude/rules/**`. A clear rule that already
-   existed means you didn't follow it, and that's **not** a heal — _unless_ it's been violated
-   repeatedly, which means the rule is weak, misplaced, or not loading. That is.
-4. **Already enforced by a check?** A lint rule, a type, a hook or CI already fails the diff — prose
+3. **Already enforced by a check?** A lint rule, a type, a hook or CI already fails the diff — prose
    restating a gate that can't be skipped is noise. Say so and stop.
 
-Gate 3 is the load-bearing one: most corrections are adherence misses, and healing everything heals
-nothing. Never heal on a taste call the user hasn't actually made — one offhand remark is an instance.
+**A rule you already had and didn't follow still heals.** Grep first, but finding the rule is the
+start of the work, not the end of it: a rule that didn't reach you is misplaced, outscoped, or too
+weak to bite, and the fix is to move it, rescope it, or make it mechanically checkable. Never wait
+for a second violation — you cannot see across sessions, so "it only happened once" is something
+only the user could ever tell you.
+
+Never heal on a taste call the user hasn't actually made — one offhand remark is an instance.
 
 ## Routing — one lesson, one home
 
@@ -66,6 +68,9 @@ surfaced the lesson — healing runs beside your work, never in front of it.
   lands. There is no foreground variant and no end-of-session sweep, in any flow.
 - **One subagent per lesson**, handed the correction verbatim and the home routing picked. Two
   lessons in one session are two dispatches and two commits on the one PR.
-- The persona owns worktree, branch, commit and PR mechanics and keeps no state between runs — see
-  [`rule-author`](../agents/rule-author.md) § Shipping.
 - **Never merge the healing PR.** The user closes that stream.
+
+## Spokes
+
+- [`shipping`](./self-heal/shipping.md) — the worktree, branch and PR sequence every healing persona
+  follows; it keeps no state between runs
