@@ -93,10 +93,12 @@ export function useDeckGridReorder(
     return `translate(${offset.x}px, ${offset.y}px)`
   }
 
-  // Idle iOS-style jiggle: vary phase and tempo per card off its index so the
-  // grid shimmers organically instead of beating in unison. Lighter rotation
-  // than the deck-view card grid — the dashboard shows more cards at once, so
-  // the default amplitude reads as too busy.
+  /**
+   * Idle iOS-style jiggle: varies phase and tempo per card off its index so
+   * the grid shimmers organically instead of beating in unison. Lighter
+   * rotation than the deck-view card grid — the dashboard shows more cards at
+   * once, so the default amplitude reads as too busy.
+   */
   function jiggleStyle(index: number) {
     return {
       '--jiggle-delay': `${-(index % 11) * 47}ms`,
@@ -105,8 +107,10 @@ export function useDeckGridReorder(
     }
   }
 
-  // The card lifted on pickup, held so the matching drop can settle it back —
-  // the drop fires from a window pointerup, not a DOM event on the card.
+  /**
+   * The card lifted on pickup, held so the matching drop can settle it back —
+   * the drop fires from a window pointerup, not a DOM event on the card.
+   */
   let lifted_card: HTMLElement | null = null
 
   function beginDrag(index: number, event: PointerEvent) {
