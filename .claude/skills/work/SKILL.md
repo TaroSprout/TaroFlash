@@ -58,11 +58,22 @@ A blocker is cleared when its `Status` is in the **`complete` group** — `Done`
 `Duplicate`. Any blocker outside that group makes the ticket **blocked**, and blocked tickets are not
 takeable.
 
-Because this skill never sets `Done` — the user merges and closes — a blocker only clears when the
-user does. That's intended: it's the same gate as the merge. If a run finds every candidate blocked,
-say so and stop rather than reaching further down the queue for something unrelated. Two siblings of
-one split are never both takeable — the `Blocked By` relation means one waits; `/work` runs
-**independent** tickets, and a chain is worked a link at a time.
+**The gate protects one thing: never land work against code that is about to change.** Two other
+things satisfy it, and a `Status` outside the complete group doesn't override either:
+
+- **The blocker's PR is merged**, while its ticket still reads `Review` — this skill never sets
+  `Done`, so the board lags every merge by design. Judge on whether the code has landed, not on the
+  `Status` field alone.
+- **The dependent branch is stacked on the blocker's branch** (§ 4c) — it branches off the blocker,
+  not `master`, so the blocker's code is already underneath it.
+
+The `Status`-only check is the default when **auto-pulling by priority with no direction from the
+user**. Once the user has chosen to stack an epic rather than wait for merges, **never re-gate a
+later wave on their merges** — name the stack order and keep going.
+
+If a run finds every candidate blocked, say so and stop rather than reaching further down the queue
+for something unrelated. Under the default check two siblings of one split are never both takeable —
+the `Blocked By` relation means one waits, and a chain is worked a link at a time.
 
 ## Procedure
 
@@ -249,9 +260,10 @@ ticket PR. Specific to this skill:
 - **Never merge, never set `Done`.** Opening the PR is a handoff into `Review`, not the end — the run
   stays live through the feedback loop until the user merges. Merging is always the user's call.
 - Claim before coding; re-check the lane to avoid double-work.
-- **Never work a ticket with an open `Blocked By` row** (§ Blockers) — skip it silently when
-  auto-pulling; warn when the user named it explicitly. Lane membership alone doesn't make a ticket
-  takeable.
+- **Never work a ticket whose blocker's code hasn't landed** (§ Blockers) — skip it silently when
+  auto-pulling; warn when the user named it explicitly. Landed means the blocker is complete, its PR
+  is merged, or this ticket's branch is stacked on it — not `Status = Done` alone. Lane membership
+  alone doesn't make a ticket takeable either.
 - Never work an `On Hold` or `Assignee = Me` ticket (the user's hands-off, and not in `Ready`
   anyway).
 - **Tests: suspended only for the initial build.** Each initial-build subagent invokes `update-tests`
