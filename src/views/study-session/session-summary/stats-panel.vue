@@ -30,8 +30,7 @@ const entries = computed<OptionsPanelEntry[]>(() =>
   )
 )
 
-// `correct` carries the whole session's score, so it reads as a fraction rather
-// than a bare count like the other rows.
+/** `correct` carries the whole session's score, so it reads as a fraction rather than a bare count like the other rows. */
 function labelFor(key: SummaryCategory) {
   const count = summary.groups[key].length
 
