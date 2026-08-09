@@ -81,8 +81,7 @@ const title = computed(() => {
     : t('study-session.multiple-decks-title')
 })
 
-// The Select/Done header action and the bulk bar only make sense on an open
-// category page, and hide while its editor sub-state is showing.
+/** Only on an open category page, and hidden while its editor sub-state is showing. */
 const show_summary_select_button = computed(
   () => current_page.value === 'summary-category' && !summary_editing_card.value
 )
@@ -100,8 +99,7 @@ function onClosed() {
 }
 
 function onPaneEnterStart() {
-  // Every swap gets a light click, distinct per direction; only the summary's
-  // first arrival gets the session-complete jingle.
+  // Only the summary's first arrival gets the session-complete jingle; every other swap gets a light click.
   const enter_sfx = {
     settings: 'snappy_button_3',
     studying: 'snappy_button_2',

@@ -13,13 +13,14 @@ type CategorySectionProps = {
 
 const { name, cards, heading } = defineProps<CategorySectionProps>()
 
-// Same geometry as the deck's card grid at its smallest size, sourced rather
-// than copied so the two can't drift.
+/** Same geometry as the deck's card grid at its smallest size, sourced rather than copied so the two can't drift. */
 const { cell_width, gap, grid_classes } = useCardGrid('base')
 
-// `auto-fit` rather than the composable's `auto-fill`: empty tracks collapse, so
-// `justify-center` can center the cards as a block instead of leaving dead space
-// on the right. Rows still fill left-to-right from a shared left edge.
+/**
+ * `auto-fit`, not the composable's `auto-fill`: empty tracks collapse, so
+ * `justify-center` centers the cards as a block instead of leaving dead space
+ * on the right — rows still fill left-to-right from a shared left edge.
+ */
 const grid_style = computed<CSSProperties>(() => ({
   gap: `${gap.value}px`,
   gridTemplateColumns: `repeat(auto-fit, ${cell_width.value}px)`

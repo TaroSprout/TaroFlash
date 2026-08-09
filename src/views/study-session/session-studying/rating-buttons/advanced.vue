@@ -22,8 +22,7 @@ const is_mobile = useMatchMedia('w<md')
 
 const { show_button_preview, rating_times } = useInjectedStudySessionController()
 
-// Preview replaces every button's icon/word with its projected interval; falls
-// back to icons if the frozen times aren't ready (e.g. before the first card).
+/** Replaces every button's icon/word with its projected interval; falls back to icons until times are frozen. */
 const preview_on = computed(
   () => show_button_preview.value && !!rating_times.value.bare[Rating.Good]
 )

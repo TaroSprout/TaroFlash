@@ -29,12 +29,10 @@ const { cards, summary_editing_card, onSummaryEditUpdate, stopSummaryEdit } =
 
 const summary = computed(() => aggregateSession(results, thresholdFor))
 
-// The session queue holds the full card for everything reviewed, so a category's
-// results resolve to real cards without a refetch.
+/** The session queue holds the full card for everything reviewed, so results resolve without a refetch. */
 const cards_by_id = computed(() => new Map(cards.value.map((card) => [card.id, card])))
 
-// `correct` is the one category with two sections — its own cards plus the ones
-// that failed; every other category is a single unlabelled list.
+/** `correct` is the one category with two sections, its own cards plus the failed ones; the rest are one unlabelled list. */
 const sections = computed<Section[]>(() => {
   if (category !== 'correct') {
     return [{ name: category, cards: resolve(summary.value.groups[category]) }]
