@@ -7,7 +7,7 @@ paths:
 
 # Sound effects
 
-Audio runs through a lightweight custom engine in `src/sfx/` (Howler was removed), surfaced as the `v-sfx` directive and the imperative `emitSfx()`.
+Audio runs through a lightweight custom engine in `src/sfx/`, surfaced as the `v-sfx` directive and the imperative `emitSfx()`.
 
 ## Buttons use the `sfx` prop
 
@@ -25,7 +25,7 @@ A sound that should play for **every** instance of an action belongs in the sing
 
 Use `{ blocking: true }` when the sound must suppress a follow-on automatic one (the add chime blocks the `slide_up` that focusing fires).
 
-Centralise only for genuine instances of *that* action — don't fold in unrelated uses of the same key.
+Centralise only for genuine instances of _that_ action — don't fold in unrelated uses of the same key.
 
 ## Options go on the existing call
 

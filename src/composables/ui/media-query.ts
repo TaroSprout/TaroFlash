@@ -126,15 +126,9 @@ function matchCached(media: string): Ref<boolean> {
 }
 
 /**
- * Reactive boolean for a responsive condition, expressed as a token query.
- *
- * **Atoms** — `w>=md` / `w<md` (width), `h>=lg` / `h<sm` (height),
- * `fine` / `coarse` (pointer), `dark` / `light` (color scheme).
- *
- * **Combinator** — `&` (all) or `|` (any); one type per query, mixing throws.
- * `>=` atoms read naturally under `&` ("big enough = every minimum met"),
- * `<` atoms under `|` ("too small = any maximum exceeded"). A `<` atom under
- * `&` throws (a width/height band would need `max-*` support — add it then).
+ * Reactive boolean for a responsive condition, written as a token query like
+ * `w>=md & fine`. The token vocabulary and which combinator each atom is legal
+ * under are spelled out at →[K:media-query-token-language].
  *
  * The returned ref is app-lifetime cached and shared across callers; it never
  * tears down, so it's safe to read from setup, render, or transition hooks.

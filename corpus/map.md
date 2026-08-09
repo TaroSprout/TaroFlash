@@ -45,6 +45,16 @@ See [corpus-authoring](../.claude/rules/corpus-authoring.md) for how the corpus 
 
 - [[theming]] — colors are roles, not shades; three switches reslot the whole screen ⚠️
 
+## sessions
+
+- [[sessions]] — a token the browser holds for an hour; the server can end a session without the browser noticing ⚠️
+- [[return-destination]] — where sign-in sends you back to, taken from an unauthenticated param ⚠️
+
+## sfx
+
+- [[sound]] — one shared audio channel; iOS breaks it on lock and only a completed tap reopens it ⚠️
+
 ## architecture
 
 - [[data-flow]] — server data is a named cache; a write owns marking its own data stale ⚠️
+- [[layering]] — a finished animation still traps the popovers inside it ⚠️

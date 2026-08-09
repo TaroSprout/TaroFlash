@@ -8,8 +8,8 @@ import { useNoticeStore } from '@/stores/notice-store'
  * Uses a requestAnimationFrame loop while playing so `current_time` updates
  * smoothly for the transcript highlight (the `timeupdate` event alone fires too
  * coarsely, ~4x/sec); it reconciles against `timeupdate` while paused/seeking.
- * Native `<audio>` (not Howler) because it streams via HTTP range requests and
- * gives free seeking — Howler is for short SFX.
+ * A native `<audio>` element rather than the sfx engine: it streams over HTTP
+ * range requests, so seeking anywhere in a long recording costs nothing.
  *
  * @param target - the audio element (template ref); binding follows it as it mounts/unmounts.
  * @example
