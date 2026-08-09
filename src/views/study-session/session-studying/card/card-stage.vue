@@ -75,9 +75,11 @@ function onCardEnter(el: Element, done: () => void) {
   cover_tween = coverCardEnter(el as HTMLElement, done)
 }
 
-// A leave fires when a card is replaced mid-rise; a modal close instead tears
-// the subtree down with no leave hook — so kill the rise tween on unmount too,
-// or a spam close leaves it running (stray slide_up + work on a detached node).
+/**
+ * A leave fires when a card is replaced mid-rise; a modal close instead tears
+ * the subtree down with no leave hook — so kill the rise tween on unmount too,
+ * or a spam close leaves it running (stray slide_up + work on a detached node).
+ */
 function onCardLeave(_el: Element, done: () => void) {
   cover_tween?.kill()
   done()

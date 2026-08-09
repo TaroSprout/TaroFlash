@@ -138,10 +138,7 @@ function flingCard(
 
   emitSfx(grade === Rating.Again ? 'music_plink_locancel' : 'music_plink_ok')
 
-  // Leave is_animating true: after `reviewed` the parent plays the incoming
-  // card's intro flip before advancing. This instance stays mounted (and so
-  // its shortcuts stay live) through that window, so the flag keeps spam from
-  // re-flinging until the next card is keyed in fresh.
+  // Leave is_animating true — this instance stays mounted through the parent's next-card intro flip, and the flag guards it from a spam re-fling.
   const onTransitionEnd = () => {
     el.removeEventListener('transitionend', onTransitionEnd)
     card_offset.value = 0
@@ -201,9 +198,7 @@ function endDrag(el: HTMLElement, { dx, dy }: { dx: number; dy: number }) {
   if (is_animating.value) return
 
   if (isTap(dx, dy)) {
-    // A tap that ends a drag-selection of the card's text shouldn't also flip.
-    // A plain tap collapses the selection on mousedown, so this only catches
-    // the release of a real selection.
+    // Skip the flip only for a real surviving selection — a plain tap already collapsed it on mousedown.
     const sel = window.getSelection()
     if (sel && !sel.isCollapsed) return
 
@@ -223,10 +218,12 @@ function isTap(dx: number, dy: number) {
   return Math.abs(dx) < FLIP_THRESHOLD && Math.abs(dy) < FLIP_THRESHOLD
 }
 
-// Spamming the flip racks up the browser's click counter, whose double/triple
-// clicks word- and line-select the card content. Suppress the default selection
-// on those multi-clicks only — a single click (and a deliberate click-drag to
-// select) keeps `detail === 1`, so manual selection still works.
+/**
+ * Spamming the flip racks up the browser's click counter, whose double/triple
+ * clicks word- and line-select the card content. Suppresses the default
+ * selection on those multi-clicks only — a single click (and a deliberate
+ * click-drag to select) keeps `detail === 1`, so manual selection still works.
+ */
 function onCardMouseDown(e: MouseEvent) {
   if (e.detail > 1) e.preventDefault()
 }
