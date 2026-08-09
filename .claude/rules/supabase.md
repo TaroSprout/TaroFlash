@@ -7,6 +7,20 @@ paths:
 
 # Supabase Conventions
 
+**Scope: `supabase/` and `src/api/` — the database, its policies, and the edge functions.**
+
+RLS gives multi-tenant isolation; complex reads go through PostgreSQL RPCs (e.g.
+`get_member_decks_with_due_count`); a trigger mints the `members` row on signup. Deno edge functions
+live in `supabase/functions/`: `cleanup-media`, `purge-accounts`, `request-account-deletion`,
+`create-subscription`, `manage-subscription`, `stripe-webhook`, `transcribe-lesson`, `translate-term`,
+`translate-transcript`, `transliterate-transcript`.
+
+Local Supabase: API on 54321, PostgreSQL on 54322. Start with `supabase start`.
+
+**Explain the SQL when asked.** Name the keywords the answer leans on (`using` vs `with check`,
+`security definer`, `stable`, `$$` quoting, `::` casting) rather than assuming the idiom is
+self-evident. Don't volunteer a lesson unprompted.
+
 ## Buckets in migrations, not config.toml
 
 Provision storage buckets via SQL migrations. `[storage.buckets.X]` in `config.toml` requires `supabase seed buckets` which doesn't run on deploy — stage/prod will diverge.
@@ -89,7 +103,7 @@ Raising a code the client matches on? Either pick a non-`PT` SQLSTATE, or use `P
 
 ## `INSERT … RETURNING` re-checks the SELECT policy
 
-`RETURNING` doesn't just check the INSERT policy's `WITH CHECK` — to hand the row back it also re-checks the table's **SELECT** policy against that new row, and fails with the *same* generic message (`new row violates row-level security policy`), so the error can't tell you which policy broke.
+`RETURNING` doesn't just check the INSERT policy's `WITH CHECK` — to hand the row back it also re-checks the table's **SELECT** policy against that new row, and fails with the _same_ generic message (`new row violates row-level security policy`), so the error can't tell you which policy broke.
 
 This bites whenever a default puts the new row into a state its own SELECT policy hides — a `visibility` defaulting to `internal`, a pending/hidden status. Encode "you can always read the row you just created" explicitly (`OR member_id = auth.uid()`) rather than relying on the general visibility condition. If a `RETURNING` RPC starts throwing a bare RLS violation right after a default changed, check the SELECT policy first.
 

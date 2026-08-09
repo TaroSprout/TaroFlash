@@ -7,6 +7,9 @@ paths:
 
 # Writing tests
 
+**Scope: `tests/`.** Vitest on jsdom; `tests/fixtures/` holds the MSW handlers and Faker-based
+fixtures; coverage is enforced by CI on every PR.
+
 **Always read before editing any test:**
 
 - [`testing-failing-tests`](../docs/testing-failing-tests.md) — verify source before patching a failing test

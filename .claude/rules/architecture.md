@@ -6,6 +6,31 @@ paths:
 
 # Architecture Conventions
 
+**Scope: `src/` — where things live and which doc governs them.**
+
+**TaroFlash** = spaced-repetition flashcard app (FSRS via `ts-fsrs`). Vue 3 SPA, Supabase backend.
+
+## Layout
+
+| Directory          | Purpose                                                                                                                                         |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/api/`         | Supabase calls — RPC + table ops per entity: `billing`, `cards`, `decks`, `feedback`, `lessons`, `media`, `members`, `review-pacing`, `reviews` |
+| `src/components/`  | Vue components; `ui-kit/` and `layout-kit/` hold the base primitives                                                                            |
+| `src/composables/` | Reusable composition functions (modal, alert, prompt, shortcuts, settings, storage, fsrs, can, per-domain folders)                              |
+| `src/stores/`      | Pinia stores: `session`, `member`, `theme`, `notice-store`, `shortcut-store`, `taro-phone`                                                      |
+| `src/views/`       | Routed pages; `authenticated.vue` wraps the protected routes                                                                                    |
+| `src/styles/`      | Global CSS + TailwindCSS 4 config; `palettes.css` defines the color tokens                                                                      |
+| `src/sfx/`         | Custom audio engine behind the `v-sfx` directive (Howler.js was removed)                                                                        |
+| `types/`           | Shared TypeScript types — outside `src/`                                                                                                        |
+
+- **Routing** — public routes (welcome, auth callback, legal) vs authenticated routes behind
+  `authenticated.vue`. Main authenticated views: dashboard (deck list), deck study view.
+- **State** — session + member profile are global Pinia stores; most other state is local or
+  composable-scoped.
+- **Card text** — a plain `contenteditable` editor (`src/components/card/text-editor.vue`).
+
+## Docs
+
 Read the relevant doc before editing:
 
 - **Composing components** → [`architecture-composition`](../docs/architecture-composition.md)
