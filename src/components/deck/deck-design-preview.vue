@@ -10,8 +10,7 @@ type DeckPreviewProps = {
   side: CardSide
   front_text?: string
   back_text?: string
-  // When set, the cover face becomes an image drop/pick target driven by this
-  // shared staging interface (settings design preview only).
+  // Turns the cover face into an image drop/pick target for the settings design preview.
   cover_editing?: boolean
   cover_image?: CoverImage
 }

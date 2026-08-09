@@ -27,8 +27,7 @@ const emit = defineEmits<{
 
 const layout_mode = inject(windowLayoutKey)
 
-// On phone the scroll container carries no padding, so the directory page owns
-// its own inset; on tablet/desktop the container already pads with `--window-px`.
+/** Phone owns its own inset, since the scroll container carries no padding there; tablet/desktop's container already pads with `--window-px`. */
 const padding_class = computed(() =>
   layout_mode?.value === 'phone' ? 'px-(--window-px) pb-(--window-px)' : ''
 )

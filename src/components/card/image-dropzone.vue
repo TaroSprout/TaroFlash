@@ -10,8 +10,7 @@ type ImageDropzoneProps = {
   active?: boolean
   disabled?: boolean
   error?: string
-  // Corner-button tooltips — no default: each caller passes its own wording so
-  // this control stays copy-agnostic (the card passes the card variant).
+  /** Corner-button tooltips — no default, so each caller passes its own wording and this control stays copy-agnostic. */
   remove_label?: string
   replace_label?: string
 }
@@ -34,10 +33,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-// Behind/full-bleed images reach the card edges with a large corner radius, so
-// controls sit inset at the face padding to clear the rounded corner (matching
-// the text inset). Region images are inset already, so the remove button pokes
-// out past the image corner.
+/** Corners mode insets controls to face padding to clear the large corner radius; region mode's image is already inset, so the button pokes out past its corner. */
 const remove_position = computed(() =>
   mode === 'corners' ? 'top-(--face-padding) right-(--face-padding)' : '-top-2 -right-2'
 )

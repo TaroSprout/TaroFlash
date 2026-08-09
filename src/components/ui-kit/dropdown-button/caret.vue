@@ -11,9 +11,8 @@ type DropdownCaretProps = {
   icon?: string
   size?: NonNullable<ButtonProps['size']>
   disabled?: boolean
-  // Chrome vs identity: a neutral caret rings itself in the `element` role;
-  // otherwise it reads `--color-accent`, which it inherits from the identity
-  // button it sits inside (that button carries the `data-palette`).
+  // A neutral caret rings itself in the `element` role; otherwise it reads
+  // `--color-accent`, inherited from the identity button it sits inside.
   neutral?: boolean
 }
 
@@ -41,12 +40,8 @@ const TRIGGER_PADDING: Record<NonNullable<ButtonProps['size']>, string> = {
 }
 const trigger_padding = computed(() => TRIGGER_PADDING[size])
 
-// A NEUTRAL caret is the two-tone companion of its button: it fills
-// --color-element-soft (a subtle adjacent neutral, brown-200 in light) at the
-// button's own ambient depth, so the pair reads as button + companion caret with
-// no ring. An IDENTITY caret has no such companion role, so it keeps the stepped
-// surface + accent pixel-seam: it sits one surface above (data-depth) and rings
-// itself in --color-accent, inherited from the identity button it sits in.
+// Only an identity caret uses this — it sits one depth surface above its
+// button to carry the stepped accent ring; a neutral caret ignores depth.
 const depth = computed(() => nextDepth(ambient_depth.value))
 
 function onEnter(el: Element, done: () => void) {

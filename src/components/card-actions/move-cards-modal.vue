@@ -19,8 +19,7 @@ export type MoveCardsModalResponse = {
 
 type MoveCardsModalProps = {
   cards: Card[]
-  // Omitted for a selection spanning several decks — there's no single
-  // "current" deck to disable, so none of them are.
+  // Omitted for a multi-deck selection, since no single deck is "current" to disable.
   current_deck_id?: number
   count?: number
   move: (deck_id: number) => Promise<void>
@@ -43,8 +42,7 @@ const title = computed(() => {
   return t('move-cards-modal.title', { count: effective_count })
 })
 
-// Authoritative moving count (unlike the title's display-only effective_count,
-// which zeroes out for a single blank placeholder card).
+/** The real count of cards being moved — the title's count may read 0 for a blank placeholder card. */
 const moving_count = computed(() => count ?? cards.length)
 
 const target_deck = computed(() => decks.value?.find((deck) => deck.id === selected_deck_id.value))

@@ -7,9 +7,7 @@ import {
 } from '@/utils/animations/crossfade-resize'
 
 type CrossfadeResizeProps = {
-  // Snaps the wrapper's height instead of tweening it — set false only for
-  // panes with heavy DOM (a long transcript); see the perf note in
-  // `crossfadeResizeEnter`.
+  /** Snaps the wrapper's height instead of tweening it; set false only for panes with heavy DOM (a long transcript) — see the perf note in `crossfadeResizeEnter`. */
   animateHeight?: boolean
 }
 
@@ -22,9 +20,7 @@ const emit = defineEmits<{
 
 const wrapper = useTemplateRef<HTMLElement>('wrapper')
 
-// Stays full-bleed (no padding) so slotted children own their inset via the
-// parent's padding var — outlines/shadows then sit clear of the overflow clip
-// the swap applies mid-tween.
+// Stays full-bleed so slotted children's own inset keeps outlines/shadows clear of the overflow clip mid-tween.
 function onBeforeLeave() {
   emit('swap-start')
   if (wrapper.value) crossfadeResizeBeforeLeave(wrapper.value)()

@@ -4,8 +4,7 @@ import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue'
 type UiScrollBarProps = {
   target?: string | HTMLElement
   // Viewport width above which the bar can show on a fine pointer. Page-level
-  // scroll-bars stay 'md' (avoid a custom bar on a narrow desktop window);
-  // container-local ones can drop to 'sm' to match their own mobile breakpoint.
+  // bars stay 'md'; container-local ones can drop to 'sm'.
   minWidth?: 'sm' | 'md'
 }
 
@@ -40,7 +39,6 @@ const thumbStyle = computed(() => ({
 onMounted(attach)
 onUnmounted(detach)
 
-/** SETUP */
 function attach() {
   scrollTarget = resolveTarget(target)
 
@@ -85,7 +83,6 @@ function detach() {
   scrollTarget = null
 }
 
-/** SCROLLBAR LOGIC */
 function scheduleUpdate() {
   if (animationFrame) return
 
@@ -141,7 +138,6 @@ function setScrollFromThumb(offsetPx: number) {
   scrollTarget.scrollTop = maxThumbTravel > 0 ? (clamped / maxThumbTravel) * maxScroll : 0
 }
 
-/** EVENT HANDLERS */
 function onThumbPointerDown(e: PointerEvent) {
   dragging.value = true
   dragStartY = e.clientY
@@ -175,7 +171,6 @@ function onTrackPointerDown(e: PointerEvent) {
   scheduleUpdate()
 }
 
-/** HELPER FUNCTIONS */
 function resolveTarget(target?: string | HTMLElement): HTMLElement | null {
   if (!target) return null
   if (typeof target !== 'string') return target

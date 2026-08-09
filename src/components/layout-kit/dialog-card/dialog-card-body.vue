@@ -3,32 +3,12 @@ import { computed, useTemplateRef } from 'vue'
 import UiScrollBar from '@/components/ui-kit/scroll-bar.vue'
 import { useDialogCardViewport } from './dialog-card-viewport'
 
-/**
- * The dialog-card's scrolling region. Opt-in: wrap the default slot in it when
- * the body can overflow, and it owns the overflow, the bottom padding, and the
- * custom scroll-bar's placement — the three things every scrolling call site
- * used to hand-roll slightly differently.
- *
- * `--dialog-body-pb` comes from the card and collapses to 0 when the card has a
- * `#toolbar`, since the toolbar row then owns the space above the bottom edge.
- * The fallback keeps a body rendered outside a dialog-card sane.
- *
- * The scroll-bar hangs in the card's own horizontal padding (`-right-6` against
- * a `--dialog-px` of 1.5–2rem), so the body has to sit in the content column
- * rather than break out of it.
- */
+/** The dialog-card's opt-in scrolling region — owns the overflow, bottom padding, and custom scroll-bar placement. →[K:dialog-card-overflow-bleed] */
 
 type DialogCardBodyProps = {
-  // Selector or element for an inner scroller (an options-panel's content, say)
-  // when the overflow lives deeper than this wrapper. Omitted, the body scrolls.
+  /** Selector or element for an inner scroller (an options-panel's content, say) when the overflow lives deeper than this wrapper; omitted, the body scrolls. */
   scroll_target?: string | HTMLElement
-  // Opt-in horizontal bleed for corner-overhang content (e.g. an absolutely
-  // positioned menu/tick sitting a few px outside a grid cell). `overflow-y-auto`
-  // clips the x-axis too, so without this the overhang gets cut off. Adds
-  // matching padding + negative margin on the scrolling content div, widening
-  // its clip boundary into the surrounding `--dialog-px` gutter while the
-  // slotted content's own visible position doesn't move. Horizontal only — the
-  // top edge isn't clipped, and bleeding it too could collide with a header.
+  /** Opt-in horizontal bleed for corner-overhang content that `overflow-y-auto` would otherwise clip. →[K:dialog-card-overflow-bleed] */
   overflow_bleed?: boolean
 }
 

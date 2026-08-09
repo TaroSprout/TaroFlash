@@ -15,9 +15,7 @@ const { image, text, attributes } = defineProps<CardFaceProps>()
 
 const layout = computed(() => attributes?.image_layout ?? CARD_ATTRIBUTES_DEFAULTS.image_layout)
 
-// Font size is fluid off the card width (cqi, see the text-region rule); the
-// per-deck text_size level (1–10) only picks the multiplier. Both the default
-// editor and any slotted editor inherit it via the cascade.
+/** Multiplier applied to the fluid, width-based font size; both the default and any slotted editor inherit it via the CSS cascade. */
 const text_scale = computed(() => cardTextScale(attributes?.text_size))
 </script>
 
@@ -88,21 +86,18 @@ const text_scale = computed(() => cardTextScale(attributes?.text_size))
   outline: 2px solid var(--color-red-500);
 }
 
-/* ----- Region placement by image layout ----------------------------------- */
-/* DOM order is image-region then text-region; layout reorders / repositions. */
-
-/* above: image on top, text below */
+/* DOM order is always image-region then text-region; layout reorders/repositions
+   below rather than changing markup order. */
 .card-face[data-layout='above'] {
   flex-direction: column;
 }
 
-/* below: image on the bottom, text above */
 .card-face[data-layout='below'] {
   flex-direction: column-reverse;
 }
 
 /* No overflow:hidden here — the editor's remove button pokes out of the corner
-   and must not be clipped. The image itself rounds via border-radius instead. */
+   and must not be clipped; the image itself rounds via border-radius instead. */
 .card-face__image-region {
   position: relative;
   flex: 1 1 auto;
@@ -115,23 +110,20 @@ const text_scale = computed(() => cardTextScale(attributes?.text_size))
   border-radius: inherit;
 }
 
-/* Clip the text to the region box so long content can't spill past the card
-   edges. Only the text is clipped — image-region controls (remove button, etc.)
-   intentionally poke out and stay unclipped above. */
+/* Clips text so long content can't spill past the card edges; image-region
+   controls (remove button, etc.) intentionally stay unclipped above. */
 .card-face__text-region {
   flex: 0 0 auto;
   min-height: 0;
 
   overflow: hidden;
 
-  /* 9.554cqi * level multiplier reproduces the historical level table exactly
-     at --card-w-full (level 4 = 30px at 314px); tiny cards floor at 4px. */
+  /* 9.554cqi * text-scale reproduces the old level table (level 4 = 30px @314px); floors at 4px for tiny cards. */
   font-size: max(4px, calc(9.554cqi * var(--card-text-scale, 1)));
 }
 
-/* In above/below, the image shrinks as the text grows — but never below half
-   the face. Past that the text region is capped at half and its overflow clips
-   (see overflow: hidden above). */
+/* Image can shrink as text grows, but never below half the face; the text
+   region caps at the other half and clips past that. */
 .card-face[data-image='true']:not([data-layout='behind']) .card-face__image-region {
   min-height: 50%;
 }
@@ -140,7 +132,6 @@ const text_scale = computed(() => cardTextScale(attributes?.text_size))
   max-height: 50%;
 }
 
-/* behind: image fills the face, text floats on top of it */
 .card-face[data-layout='behind'] .card-face__image-region {
   position: absolute;
   inset: 0;
@@ -155,7 +146,6 @@ const text_scale = computed(() => cardTextScale(attributes?.text_size))
   flex: 1 1 auto;
 }
 
-/* ----- No image: text fills the face -------------------------------------- */
 .card-face[data-image='false'] .card-face__image-region {
   display: none;
 }
@@ -164,10 +154,8 @@ const text_scale = computed(() => cardTextScale(attributes?.text_size))
   flex: 1 1 auto;
 }
 
-/* ----- Full-bleed: a behind-layout image with no text fills the face ------- */
-/* Only behind goes edge-to-edge. Above/below keep their padded image region in
-   both modes: in view the image fills the padded face (see below), in edit the
-   empty text region stays clickable so text can be typed back in. */
+/* Only `behind` goes edge-to-edge; above/below keep their padded image region
+   in both view and edit modes. */
 .card-face[data-image='true'][data-text='false'][data-layout='behind'] {
   padding: 0;
   gap: 0;
@@ -181,24 +169,21 @@ const text_scale = computed(() => cardTextScale(attributes?.text_size))
   border-radius: var(--face-radius);
 }
 
-/* View only: drop the empty text region so nothing covers the image. In edit it
-   stays (filling the face) so a click anywhere off the image controls focuses
-   the editor to type — the corners dropzone backdrop is click-through. */
+/* View only — edit mode keeps the empty text region so a click off the image
+   still focuses the editor to type. */
 .card-face[data-mode='view'][data-image='true'][data-text='false'][data-layout='behind']
   .card-face__text-region {
   display: none;
 }
 
-/* Over a full-bleed image the placeholder would just clutter the picture — the
-   text cursor already signals you can click to type. The text editor reads
-   this var instead of us reaching into its internals. */
+/* Text editor reads this var itself — don't reach into its internals to hide
+   the placeholder over a full-bleed image. */
 .card-face[data-mode='edit'][data-image='true'][data-text='false'][data-layout='behind'] {
   --text-editor-placeholder-display: none;
 }
 
-/* View, above/below, no text: drop the empty text region so the gap below the
-   image collapses and the padded image fills the face symmetrically. (In edit
-   the region is kept so it stays clickable.) */
+/* Drops the empty text region in view so the image fills the face
+   symmetrically; edit keeps it so it stays clickable. */
 .card-face[data-mode='view'][data-image='true'][data-text='false']:is(
     [data-layout='above'],
     [data-layout='below']
@@ -207,10 +192,8 @@ const text_scale = computed(() => cardTextScale(attributes?.text_size))
   display: none;
 }
 
-/* ----- Editor: hovering an image reveals a replaceable dropzone frame ------ */
-/* The image keeps its padded region in above/below (with or without text), so
-   the dashed frame sits just outside it. Behind layout uses floating corner
-   controls over the text instead, so it's excluded here. */
+/* Frames the padded image region with a dashed drop affordance; `behind`
+   layout uses floating corner controls instead and is excluded here. */
 .card-face[data-mode='edit'][data-image='true']:not([data-layout='behind'])
   .card-face__image-region {
   outline: 3px dashed transparent;
@@ -240,11 +223,8 @@ const text_scale = computed(() => cardTextScale(attributes?.text_size))
   outline-color: var(--color-blue-650);
 }
 
-/* ----- Editor: dragging a replacement over a behind-layout image ----------- */
-/* Behind images are full-bleed with floating corner controls, so there's no
-   padded region to frame. While a file is dragged over it, pull the image in to
-   gain padding and frame the whole face with the dashed drop affordance — the
-   same cue the padded layouts show. */
+/* Behind images have no padded region to frame; while dragging, pull the image
+   in and frame the whole face with the same dashed affordance instead. */
 .card-face[data-mode='edit'][data-layout='behind'][data-image='true'] .card-face__image-region {
   transition:
     inset 0.15s ease,

@@ -3,7 +3,7 @@ import { sessionPaneEnter, sessionPaneLeave } from '@/utils/animations/session-p
 
 export type DialogCardPagerProps = {
   mode?: 'in-out' | 'out-in'
-  // Skip the entering pane's pre-enter delay (snappy reversible navigation).
+  /** Skips the entering pane's pre-enter delay, for snappy reversible navigation. */
   instant?: boolean
 }
 

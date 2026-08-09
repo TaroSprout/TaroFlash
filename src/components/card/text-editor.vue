@@ -19,27 +19,18 @@ const emit = defineEmits<{
 const text_editor = useTemplateRef<HTMLDivElement>('text-editor')
 const has_content = ref(Boolean(content?.trim()))
 
-// Font size is owned by the parent card-face and inherited via the cascade —
-// see its fluid text-region rule. This surface only renders text and alignment.
-// Horizontal alignment lives on the editable (text-align); vertical lives on the
-// filling container (flex justify) so the editable can be content-height and
-// keep an empty caret centered instead of pinned to the top.
+/** Horizontal alignment lives on the editable (text-align); vertical lives on the filling container (flex justify), so an empty caret stays centered instead of pinned to the top. */
 const horizontal_alignment = computed(() => attributes?.horizontal_alignment ?? 'center')
 const vertical_alignment = computed(() => attributes?.vertical_alignment ?? 'center')
 
-// The editable surface is uncontrolled: seed it from `content` once, then let
-// the browser own the DOM. We never re-sync from the prop afterwards — `content`
-// in edit mode is only the user's own input echoed back, and re-writing it would
-// snap the caret to the start. Read-only mode renders `content` via Vue instead.
+/** Seeds the editable from `content` once; never re-synced afterward — content in edit mode is only the user's own input echoed back, and re-writing it would snap the caret to the start. */
 onMounted(() => {
   if (!text_editor.value) return
   text_editor.value.textContent = content ?? ''
 })
 
 function on_input(event: Event) {
-  // innerText tacks a trailing newline onto block content, so a cleared editor
-  // reads as "\n" not "". Collapse whitespace-only content to empty so the
-  // placeholder (and the card's data-text layout) react on the last deletion.
+  // innerText tacks a trailing newline onto cleared content ("\n" not "") — collapse whitespace-only text to empty.
   const raw = (event.target as HTMLElement).innerText ?? ''
   const text = raw.trim() ? raw : ''
   has_content.value = text.length > 0
@@ -50,11 +41,7 @@ function focus() {
   text_editor.value?.focus()
 }
 
-// The editable is only as tall as its content (so its empty caret stays
-// centered), so a click in the surrounding container won't land on it. Forward
-// those clicks: focus the editable and drop the caret at the end. Clicks on the
-// editable itself fall through to native caret placement. Uses `pointerdown` so
-// it fires for touch too — `mousedown` only arrives (late) after a tap on mobile.
+/** Forwards a click in the surrounding container (the editable is only content-height) to focus the editor and drop the caret at the end; clicks on the editable itself fall through to native placement. */
 function onContainerPointerDown(event: PointerEvent) {
   const editor = text_editor.value
   if (disabled || !editor || event.target === editor) return
@@ -73,15 +60,7 @@ function onContainerPointerDown(event: PointerEvent) {
   armGhostClickGuard()
 }
 
-// Focusing the editor here can trigger the browser's native "scroll the
-// focused input above the keyboard" behavior, shifting the layout mid-tap.
-// The tap's synthesized compatibility mouse events (`mousedown`, `mouseup`,
-// `click`) then get hit-tested at dispatch time — after that shift — instead
-// of against the original touch target, so they land on whatever now sits
-// under the finger (e.g. a button below the card). The `mousedown` in that
-// sequence is the real problem: its default action blurs the editor we just
-// focused, before `click` ever gets a say. Swallow the whole ghost sequence,
-// wherever it lands, within a short window after this gesture.
+/** Swallows the tap's synthetic mouse events after a focusing gesture, so the browser's scroll-into-view can't re-target them onto whatever now sits under the finger. →[K:text-editor-ghost-click-guard] */
 const GHOST_EVENT_WINDOW_MS = 500
 const GHOST_EVENT_TYPES = ['mousedown', 'mouseup', 'click'] as const
 let ghost_event_timer: ReturnType<typeof setTimeout> | undefined
@@ -154,9 +133,8 @@ defineExpose({ focus })
 </template>
 
 <style>
-/* The container fills the region and vertically positions the editable, which
-   sizes to its content — so an empty editor's caret centers with the text
-   instead of pinning to the top. */
+/* Vertically positions the editable, which sizes to its content, so an empty
+   editor's caret centers with the text instead of pinning to the top. */
 .text-editor-container {
   width: 100%;
   height: 100%;
@@ -164,9 +142,8 @@ defineExpose({ focus })
   flex-direction: column;
 }
 
-/* When editable, the whole filling container reads as a text target (clicks
-   anywhere focus the editor via onContainerPointerDown), not just the
-   content-height editable line. */
+/* Whole filling container reads as a text target when editable (clicks
+   anywhere focus via onContainerPointerDown), not just the content-height line. */
 .text-editor-container:has([contenteditable='plaintext-only']) {
   cursor: text;
 }
@@ -178,7 +155,6 @@ defineExpose({ focus })
   overflow-wrap: break-word;
 }
 
-/* Horizontal alignment — on the editable */
 .text-editor--h-left {
   text-align: left;
 }
@@ -191,7 +167,6 @@ defineExpose({ focus })
   text-align: right;
 }
 
-/* Vertical alignment — on the container */
 .text-editor--v-top {
   justify-content: flex-start;
 }
@@ -204,19 +179,16 @@ defineExpose({ focus })
   justify-content: flex-end;
 }
 
-/* Mirror the editor's alignment so the hint sits where typed text will land.
-   Horizontal maps to the main axis (justify-content + text-align), vertical to
-   the cross axis (align-items). */
+/* Mirrors the editor's alignment so the hint sits where typed text will land —
+   horizontal maps to justify-content + text-align, vertical to align-items. */
 .text-editor__placeholder {
   position: absolute;
   inset: 0;
-  /* Hosts (card-face, the card's loading scrim) hide the placeholder by
-     setting this var instead of selecting into our internals. */
+  /* Hosts (card-face, the loading scrim) hide this by setting the var, not by selecting into our internals. */
   display: var(--text-editor-placeholder-display, flex);
   pointer-events: none;
   color: var(--color-brown-300);
-  /* Match the editor so the hint's line box fits a content-height region
-     (otherwise the glyphs overflow it and clip). */
+  /* Matches the editor so the hint's line box fits a content-height region without clipping. */
   line-height: 1.2;
 }
 

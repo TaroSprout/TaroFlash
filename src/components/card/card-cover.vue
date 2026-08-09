@@ -9,13 +9,11 @@ const { cover } = defineProps<{
 }>()
 
 const img_el = useTemplateRef<HTMLImageElement>('img')
-// image_path (public URL or staged objectURL) makes a custom image fill the
-// cover; palette/pattern/icon stay configured but never render behind it.
+/** True once this cover has a custom image — palette/pattern/icon stay configured but stop rendering behind it. */
 const has_image = computed(() => !!cover?.image_path)
 const { decoded, onLoad } = useImageReveal(() => cover?.image_path, img_el)
 
-// While decoding, show the shared SKELETON_COVER so loading matches the app
-// skeleton; once decoded, drop chrome (null) for the full-bleed image.
+/** Chrome bindings for the cover; null once the image decodes, so the picture goes full-bleed with no chrome underneath. */
 const bindings = computed(() => {
   if (decoded.value) return null
   return coverBindings(has_image.value ? SKELETON_COVER : cover, { border: false })
@@ -75,12 +73,8 @@ const bindings = computed(() => {
   color: var(--color-on-element);
 }
 
-/* A DECODED image cover has no chrome band — the picture goes edge-to-edge,
-   clipped to the face radius. Applied only once decoded; while the image loads
-   the cover renders the neutral bordered skeleton chrome instead (see the
-   `bindings` computed), so the loading state matches the common card skeleton.
-   The element fill sits under the picture, continuous with that skeleton's
-   element-coloured border, so the hand-off reads as the pattern fading out. */
+/* Applied only once the image decodes; before that the neutral skeleton chrome
+   renders instead — see the `bindings` computed above. */
 .card-cover--image {
   overflow: hidden;
   border: none;
@@ -91,9 +85,8 @@ const bindings = computed(() => {
   border-radius: inherit;
 }
 
-/* Tiny cards shrink the pattern tile via --card-pattern-scale (set by the
-   card's container-query chrome variants) so it still reads at ~43px. The
-   inline --bgx-size from coverBindings stays the single source of tile size. */
+/* Tiny cards shrink the pattern tile via --card-pattern-scale; the inline
+   --bgx-size from coverBindings stays the single source of tile size. */
 .card-cover.pattern-mask::before {
   -webkit-mask-size: calc(var(--bgx-size) * var(--card-pattern-scale, 1));
   mask-size: calc(var(--bgx-size) * var(--card-pattern-scale, 1));

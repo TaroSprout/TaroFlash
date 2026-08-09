@@ -21,11 +21,9 @@ type CardProps = Partial<CardBase> & {
   sfx?: SfxOptions
   error?: boolean
   shimmer?: boolean
-  // Edit mode only: mount the image-edit layer (dropzone / picker / overlays)
-  // for the active face.
+  /** Edit mode only — mounts the image-edit layer (dropzone / picker / overlays) for the active face. */
   image_editing?: boolean
-  // Cover side only: mount the cover-image edit layer. Driven by the settings
-  // design preview, which supplies the shared `cover_image` staging interface.
+  /** Cover side only — mounts the cover-image edit layer, driven by the settings design preview's `cover_image` staging interface. */
   cover_editing?: boolean
   cover_image?: CoverImage
   disabled?: boolean
@@ -74,11 +72,10 @@ const editing_images = computed(
 const editing_cover = computed(() => cover_editing && !!cover_image && side === 'cover')
 const active_face = computed<'front' | 'back'>(() => (side === 'back' ? 'back' : 'front'))
 
-// The persisted-card slice the image layer's upload seam needs; temp cards
-// (id <= 0) keep the layer mounted but upload-gated.
+/** Persisted-card slice the image layer's upload seam needs; temp cards (id <= 0) keep the layer mounted but upload-gated. */
 const upload_card = computed(() => ({ id: id ?? 0, deck_id, front_image_path, back_image_path }))
 
-// Host editors (e.g. the mobile editor's menu) drive add/remove through this.
+/** Host editors (e.g. the mobile editor's menu) drive add/remove through this. */
 const image_controls = computed(() => {
   const layer = image_layer.value
   return layer ? { openPicker: layer.openPicker, onRemove: layer.onRemove } : null
@@ -217,14 +214,8 @@ function onLeave(el: Element, done: () => void) {
 </template>
 
 <style>
-/* The card is width-fluid: it fills its parent and everything inside scales
-   off the resolved width via container-query (cqi) units. The container is the
-   card root itself, so the geometry vars below live on its direct children —
-   cqi units on the container element would resolve against an ancestor.
-
-   The base rule sits in the components layer so width utilities on the card
-   (`w-[260px]`, `w-(--card-w-full)`) can override the fluid 100% default —
-   unlayered SFC CSS would always beat Tailwind's layered utilities. */
+/* In `components` layer so per-card width utilities can override the fluid
+   default — unlayered CSS always beats Tailwind's layered utilities. */
 @layer components {
   .card-container {
     container-type: inline-size;
@@ -242,17 +233,14 @@ function onLeave(el: Element, done: () => void) {
   }
 }
 
-/* Fluid geometry, calibrated so a card at --card-w-full (314px) reproduces the
-   historical full-size padding (20px); radius is deliberately rounder than the
-   historical 58px. Floors keep tiny covers from collapsing to sharp corners /
-   zero padding and keep the cover icon legible. */
+/* Calibrated so --card-w-full (314px) reproduces the historical 20px padding;
+   floors keep tiny covers from collapsing to sharp corners / illegible icons. */
 .card-container > * {
   --face-radius: clamp(14px, 22cqi, 70px);
   --face-padding: clamp(2px, 6.369cqi, 42px);
   --face-image-padding: calc(var(--face-padding) / 2);
 
-  /* Chrome (border band, cover icon, pattern tile) is two-variant, not fluid:
-     the full band here, and a deliberately chunky tiny variant below. */
+  /* Chrome (border, icon, pattern) is two-variant — full band here, chunky tiny variant below. */
   --face-border-width: 16px;
   --cover-icon-size: clamp(42px, 33%, 200px);
   --card-pattern-scale: 1;

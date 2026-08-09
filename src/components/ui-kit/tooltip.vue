@@ -3,10 +3,8 @@ import { computed, ref, useTemplateRef, watch, onBeforeUnmount } from 'vue'
 import { useFloating, flip, autoUpdate, offset, type Placement } from '@floating-ui/vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 
-// A tooltip is context-independent overlay chrome by design: it deliberately
-// contrasts with whatever it floats over, in both modes, so it inherits
-// nothing. `data-depth="overlay"` is exactly that — off the depth ramp, fixed
-// per mode (src/styles/depth.css).
+// Tooltips are context-independent overlay chrome — `data-depth="overlay"`
+// keeps them off the depth ramp entirely, fixed per mode (src/styles/depth.css).
 const {
   text,
   position = 'top',
@@ -35,10 +33,8 @@ const popoverRef = useTemplateRef<HTMLElement>('ui-tooltip')
 const is_active = ref(false)
 const is_coarse_pointer = useMatchMedia('coarse')
 
-// gates both DOM mount (v-if) and autoUpdate — keeps unused tooltips out of
-// the DOM entirely so switching modes doesn't pay the cost of mounting N
-// teleported popovers up front. Coarse pointers (touch) never show tooltips —
-// there's no hover to trigger them intentionally, only a tap-driven focus.
+// Gates both DOM mount and autoUpdate, so unused tooltips stay out of the DOM.
+// Coarse pointers never show one — there's no hover, only a tap-driven focus.
 const should_show = computed(
   () => !suppress && !is_coarse_pointer.value && (visible || is_active.value)
 )
