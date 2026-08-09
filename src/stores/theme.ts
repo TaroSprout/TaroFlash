@@ -15,10 +15,7 @@ export const useThemeStore = defineStore('theme', () => {
     return mode.value === 'dark'
   })
 
-  /* `is_dark` is the single source of truth for the resolved mode. It used to
-   * share the job with a module-scope matchMedia listener that wrote the DOM
-   * directly; the two could disagree, and consumers reading `is_dark`
-   * (getStripeAppearance) then rendered against the wrong mode. */
+  // The only place light-or-dark reaches the page. A second writer drifts from `is_dark`.
   watchEffect(() => {
     const resolved = is_dark.value ? 'dark' : 'light'
     document.documentElement.setAttribute('data-mode', resolved)

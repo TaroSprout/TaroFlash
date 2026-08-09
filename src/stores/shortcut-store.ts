@@ -49,9 +49,7 @@ function normalizeComboFromEvent(ev: KeyboardEvent): KeyCombo {
   if (ev.metaKey) mods.push('meta')
   if (ev.altKey) mods.push('alt')
   if (ev.shiftKey) mods.push('shift')
-  // Prefer a small set of names:
   const k = ev.key.toLowerCase()
-  // Map common names
   const key = k === 'escape' ? 'esc' : k === ' ' ? 'space' : k
   const parts = [...mods.sort(), key]
   return parts.join('+') as KeyCombo
@@ -159,11 +157,10 @@ export const useShortcutStore = defineStore('shortcutStore', () => {
   async function _handleKeyEvent(ev: KeyboardEvent) {
     const combo = normalizeComboFromEvent(ev)
 
-    // Walk stack from top to bottom
+    // Innermost scope first, so a dialog's key beats the page's behind it.
     for (let i = filtered_stack.value.length - 1; i >= 0; i--) {
       const scope = filtered_stack.value[i]
 
-      // find first matching, active shortcut within this scope
       for (const sc of scope.shortcuts.values()) {
         if (sc.combo !== combo) continue
 
