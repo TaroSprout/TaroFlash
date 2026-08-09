@@ -1,6 +1,9 @@
 # Self-heal
 
-**Every session, not just skill runs.** When the user corrects you, the artifact in front of you is
+**Scope: every user correction, in every session — not just skill runs.** Always in context, because
+a correction arrives without warning and has no file path to trigger on.
+
+When the user corrects you, the artifact in front of you is
 the symptom — the defect is in the rule or skill that let you get it wrong. Fix the
 artifact, then fix the thing that produced it.
 

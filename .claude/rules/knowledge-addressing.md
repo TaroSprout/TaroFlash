@@ -51,5 +51,5 @@ frontmatter, since a `paths:` rule is path-triggered rather than loaded every se
   exempt because its fixtures contain literal tokens. Nothing else earns a place there.
 - Caps are `line_caps` — 80 lines for `CLAUDE.md`, 250 for the always-on total. A starting
   calibration, not a measured figure.
-- `line_caps.enforced` is `false` until the always-on payload is restructured (TARO-331); breaches
-  report as warnings meanwhile. Flip it to `true` in the same change that lands under the caps.
+- `line_caps.enforced` is `true` — a breach fails CI. Set it to `false` only to land a deliberate,
+  temporary overshoot, and restore it in the change that gets back under.
