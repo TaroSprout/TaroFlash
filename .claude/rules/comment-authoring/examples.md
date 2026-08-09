@@ -1,0 +1,86 @@
+# Comment examples
+
+Five pairs, one per gate. The rules they encode live in
+[`comment-authoring`](../comment-authoring.md).
+
+## Everything past the first idea is load-bearing
+
+`welcome/section-header.vue`
+
+```typescript
+// Bad
+// Set when the header sits on an accent-filled section (e.g. pricing): text
+// reads as on-accent and the rule as accent-muted. Otherwise the header sits
+// on a neutral surface and reads as ink.
+onAccent?: boolean
+
+// Good
+// True when this header sits on an accent-coloured section, so the text and
+// rule switch to colours that read against it.
+onAccent?: boolean
+```
+
+## The opener completes the symbol's name
+
+`composables/card/selection.ts`
+
+```typescript
+// Bad — opens on a downstream call's parameters, and justifies itself
+/** Select-all is stored as exclusions — the delete RPC takes `except_ids`, so a
+ *  10k-card deck never materialises an id array client-side. */
+
+// Good
+/**
+ * Which cards are picked in the deck editor.
+ *
+ * Normally a list of the ones ticked. Under "select all" it flips — everything
+ * is selected except the ones since unticked.
+ *
+ * @param total_card_count - Persisted card count for the deck, passed in so
+ *   this stays independent of the decks query.
+ */
+```
+
+## Name the operation, not a consequence at one call site
+
+`views/deck/composables/virtual-list.ts`
+
+```typescript
+// Bad
+/** Keeps the same v-for key across the temp→persisted swap, so Vue reuses the DOM. */
+
+// Good
+/**
+ * Syncs a local temp card to the real id the insert returned.
+ *
+ * The row keeps its identity through the swap, so it doesn't remount and the
+ * user can carry on typing in it. →[K:deck-temp-card-handoff]
+ */
+```
+
+## A complex mechanism can still have a simple meaning
+
+`study-session/composables/session-engine.ts`
+
+```typescript
+// Bad — a compressed abstraction the reader has to unpack
+/** Durability, not grade — a card can be rated and still not saved. */
+
+// Good
+/** A card's save state, separate from whether the user got it right. →[K:study-review-durability] */
+```
+
+## Open on the situation, not the principle
+
+`ui-kit/button.vue`
+
+```css
+/* Bad */
+/* Identity is opt-in, attribute-on-self, leak-proof by construction. */
+
+/* Good */
+/* A button only takes on a palette's colours if `data-palette` is on the button
+   itself. Attributes don't inherit, so a plain button sitting inside a coloured
+   region stays neutral — deliberately, so palettes can't leak into everything
+   nested under them. →[K:theming-palette-identity] */
+```
