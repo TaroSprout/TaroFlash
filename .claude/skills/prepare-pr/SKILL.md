@@ -1,6 +1,6 @@
 ---
 name: prepare-pr
-description: Fully autonomous — prepare a branch for PR by committing all pending work, rewriting commit messages into release-notes-friendly Conventional Commits, renaming the branch if it no longer fits the changes, running a lint + type-check gate, drafting a PR title and body, then creating a single PR directly (not a draft) and watching CI until green. Never asks for permission or feedback before the PR opens. Always bundles all branch work — committed AND uncommitted (staged + unstaged) — into exactly one PR. Use when a feature branch is code-complete and ready for review.
+description: Fully autonomous — prepare a branch for PR by committing all pending work, rewriting commit messages into release-notes-friendly Conventional Commits, renaming the branch if it no longer fits the changes, running a lint + type-check + knowledge-pointer gate, drafting a PR title and body, then creating a single PR directly (not a draft) and watching CI until green. Never asks for permission or feedback before the PR opens. Always bundles all branch work — committed AND uncommitted (staged + unstaged) — into exactly one PR. Use when a feature branch is code-complete and ready for review.
 allowed-tools: Read, Edit, Write, Bash, Glob, Grep
 argument-hint: '[--no-watch] [--ticket <ID>] [--ticket-url <URL>]'
 arguments:
@@ -38,7 +38,7 @@ Output:
 2. All branch commits grouped into a single PR.
 3. Commits renamed to **Conventional Commits** (see style guide below).
 4. Branch renamed if slug no longer fits.
-5. Working tree lint-and-type-clean (gate run, issues fixed) before any push.
+5. Working tree lint-, type- and knowledge-clean (gate run, issues fixed) before any push.
 6. Branch pushed (force-with-lease if rewritten, fresh push if new).
 7. PR **created directly** via `gh pr create` — no browser, never a draft — then its CI watched until green.
 
@@ -165,22 +165,25 @@ Rename directly — no approval pause. Record old → new in the Step 11 report:
 git branch -m <old-name> <new-name>
 ```
 
-### Step 6 — Lint + type-check gate (before any push)
+### Step 6 — Lint + type-check + knowledge gate (before any push)
 
-Run the linter **and** the type-checker on the working tree and fix everything they flag **before** pushing — these are the cheapest CI failures to catch locally, and the most annoying to discover after the PR is already open.
+Run the linter, the type-checker **and** the knowledge check on the working tree and fix everything they flag **before** pushing — these are the cheapest CI failures to catch locally, and the most annoying to discover after the PR is already open.
 
 ```sh
 vp lint
 pnpm type-check
+node scripts/knowledge-lint.mjs
+node scripts/migration-knowledge-gate.mjs --base origin/master
 ```
 
 - **Type-check uses `pnpm type-check` (vue-tsc), not `vp`.** CI runs `pnpm type-check`, and vue-tsc is stricter than `vp check`'s type pass — a `vp`-clean tree can still fail CI on types. Use the same command CI uses so the gate actually matches it.
-- If both clean → continue to the push.
+- **The knowledge check runs on every branch, not just doc branches.** A pointer breaks when the code it names moves. `migration-knowledge-gate.mjs` only speaks when the branch adds a migration; its answer goes in that migration's header, per [`knowledge-addressing`](../../rules/knowledge-addressing.md).
+- If all clean → continue to the push.
 - If they report errors → fix them. Most lint hits are mechanical (unused import left by a refactor, `prefer-const`, missing return); `vp lint --fix` / `vp fmt` handle the auto-fixable ones. Type errors after a refactor are usually moved/renamed symbols or a changed signature — chase them to the changed call sites.
 - Re-run both until clean. Commit the fixes onto the branch with a `fix(<scope>):` or `chore(<scope>):` Conventional Commit (or amend into the commit that introduced the issue if it hasn't been pushed yet and belongs there) so the fix rides with the work it corrects.
 - Pre-existing lint warnings unrelated to this branch's diff aren't a blocker — don't expand scope chasing them. Errors (lint or type), and warnings in code this branch touched, must be resolved.
 
-Do not push until both `vp lint` and `pnpm type-check` are clean.
+Do not push until `vp lint`, `pnpm type-check` and the knowledge checks are clean.
 
 ### Step 7 — Push the branch
 

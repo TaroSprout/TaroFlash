@@ -9,6 +9,19 @@
       }
     }
   },
+  "reachability": {
+    "roots": [
+      "CLAUDE.md",
+      "AGENTS.md",
+      ".claude/rules/*.md",
+      ".claude/agents/*.md",
+      ".claude/skills/**/*.md",
+      ".claude/knowledge/retired-slugs.md",
+      "corpus/map.md",
+      "corpus/hazards.md",
+      "corpus/**/_map.md"
+    ]
+  },
   "slugs": {
     "retired_ledger": ".claude/knowledge/retired-slugs.md",
     "declare_in": ["CLAUDE.md", "AGENTS.md", ".claude/**/*.md", "corpus/**/*.md"],
@@ -23,6 +36,6 @@
       "supabase/**/*.{sql,ts}",
       ".github/**/*.yml"
     ],
-    "exempt": ["supabase/migrations/**", "tests/unit/scripts/knowledge-lint.test.js"]
+    "exempt": ["supabase/migrations/**", "tests/unit/scripts/**"]
   }
 }

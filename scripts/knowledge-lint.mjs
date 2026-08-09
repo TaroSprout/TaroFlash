@@ -7,126 +7,24 @@
  * the single declared place for the always-on file list and the caps.
  * See .claude/rules/knowledge-addressing.md.
  */
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { readFileSync, existsSync } from 'node:fs'
+import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import {
+  KEBAB,
+  SCOPED_FRONTMATTER,
+  TOKEN,
+  countLines,
+  matchesAny,
+  readConfig,
+  scanTokens
+} from './knowledge/scan.mjs'
 
-const CONFIG_PATH = '.claude/knowledge-lint.json'
-const SKIP_DIRS = new Set([
-  '.git',
-  'node_modules',
-  'dist',
-  'coverage',
-  '.vitest-reports',
-  '.claude/worktrees'
-])
-
-// `→[K:<slug>]` cites, bare `[K:<slug>]` declares. Angle-bracket placeholders in
-// prose (`[K:<kebab-slug>]`) deliberately fall outside the character class.
-const TOKEN = /(→\s*)?\[K:([A-Za-z0-9_-]+)\]/g
-const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const LEDGER_ENTRY = /^\s*[-*]\s*\[K:([A-Za-z0-9_-]+)\]\s*—\s*(.*)$/
-// A rule carrying `paths:` frontmatter is path-triggered, not always-on.
-const SCOPED_FRONTMATTER = /^---\r?\n[\s\S]*?^paths:/m
-// Opens or closes a markdown code fence; group 2 is the info string a close can't have.
-const FENCE = /^ {0,3}(`{3,}|~{3,})[ \t]*(.*)$/
 
-function expandBraces(glob) {
-  const match = /\{([^{}]*)\}/.exec(glob)
-  if (!match) return [glob]
-
-  return match[1]
-    .split(',')
-    .flatMap((option) =>
-      expandBraces(glob.slice(0, match.index) + option + glob.slice(match.index + match[0].length))
-    )
-}
-
-function globToRegExp(glob) {
-  let out = ''
-
-  for (let i = 0; i < glob.length; i++) {
-    const char = glob[i]
-    if (char === '*' && glob[i + 1] === '*' && glob[i + 2] === '/') {
-      out += '(?:.*/)?'
-      i += 2
-      continue
-    }
-    if (char === '*' && glob[i + 1] === '*') {
-      out += '.*'
-      i += 1
-      continue
-    }
-    if (char === '*') {
-      out += '[^/]*'
-      continue
-    }
-    if (char === '?') {
-      out += '[^/]'
-      continue
-    }
-    out += char.replace(/[.+^${}()|[\]\\]/g, '\\$&')
-  }
-
-  return new RegExp(`^${out}$`)
-}
-
-function matchesAny(path, globs) {
-  return globs.flatMap(expandBraces).some((glob) => globToRegExp(glob).test(path))
-}
-
-function listFiles(root, dir = root, found = []) {
-  for (const entry of readdirSync(dir)) {
-    const absolute = join(dir, entry)
-    const path = relative(root, absolute)
-    if (SKIP_DIRS.has(entry) || SKIP_DIRS.has(path)) continue
-
-    if (statSync(absolute).isDirectory()) {
-      listFiles(root, absolute, found)
-      continue
-    }
-    found.push(path)
-  }
-
-  return found
-}
-
-function countLines(text) {
-  const lines = text.split('\n')
-  return lines.at(-1) === '' ? lines.length - 1 : lines.length
-}
-
-/** Every `[K:…]` token in a file, tagged as citation or declaration. Markdown fences are skipped — a token inside one is an example, not a live pointer. */
-function collectTokens(path, text) {
-  const tokens = []
-  const markdown = path.endsWith('.md')
-  let fence = null
-
-  for (const [index, line] of text.split('\n').entries()) {
-    const marker = markdown && FENCE.exec(line)
-
-    if (marker && !fence) {
-      fence = marker[1]
-      continue
-    }
-    if (
-      marker &&
-      marker[1][0] === fence[0] &&
-      marker[1].length >= fence.length &&
-      !marker[2].trim()
-    ) {
-      fence = null
-      continue
-    }
-    if (fence) continue
-
-    for (const match of line.matchAll(TOKEN)) {
-      tokens.push({ path, line: index + 1, slug: match[2], cites: Boolean(match[1]), text: line })
-    }
-  }
-
-  return tokens
-}
+const RULE =
+  'A pointer that resolves to nothing, a slug declared twice, or an always-on file over its cap all ' +
+  'cost the reader the knowledge they came for. Fix the pointer, not the check. →[K:knowledge-lint]'
 
 /** Retired slugs and their epitaphs; a malformed entry is an error, not an epitaph. */
 function readLedger(root, ledgerPath) {
@@ -247,19 +145,12 @@ function checkLineCaps(root, files, alwaysOn) {
 }
 
 export function lintKnowledge(root) {
-  const config = JSON.parse(readFileSync(join(root, CONFIG_PATH), 'utf8'))
+  const config = readConfig(root)
   const { slugs, always_on } = config
-  const files = listFiles(root)
+  const { files, tokens, declarable } = scanTokens(root, config)
 
   const ledger = readLedger(root, slugs.retired_ledger)
-  const cited = files.filter(
-    (path) => matchesAny(path, slugs.cite_in) && !matchesAny(path, slugs.exempt)
-  )
-  const tokens = cited
-    .filter((path) => path !== slugs.retired_ledger)
-    .flatMap((path) => collectTokens(path, readFileSync(join(root, path), 'utf8')))
 
-  const declarable = new Set(files.filter((path) => matchesAny(path, slugs.declare_in)))
   const misplaced = tokens
     .filter((token) => !token.cites && !declarable.has(token.path))
     .map(
@@ -305,6 +196,7 @@ function main() {
 
   for (const warning of warnings) console.error(`::warning::${warning}`)
   for (const error of errors) console.error(`::error::${error}`)
+  if (errors.length) console.error(`::error::${RULE}`)
 
   console.log(
     `knowledge-lint: ${stats.declared} slugs, ${stats.citations} citations, ` +

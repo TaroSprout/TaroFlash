@@ -47,9 +47,42 @@ caps, and the scan scope. Always-on = the `always_on.include` globs minus any fi
 frontmatter, since a `paths:` rule is path-triggered rather than loaded every session.
 
 - `slugs.exempt` skips the citation scan. `supabase/migrations/**` is exempt because migrations are
-  append-only, so a pointer written into one can never be corrected; the checker's own test file is
-  exempt because its fixtures contain literal tokens. Nothing else earns a place there.
+  append-only, so a pointer written into one can never be corrected; `tests/unit/scripts/**` is
+  exempt because the checker's own fixtures contain literal tokens. Nothing else earns a place there.
 - Caps are `line_caps` — 80 lines for `CLAUDE.md`, 250 for the always-on total. A starting
   calibration, not a measured figure.
 - `line_caps.enforced` is `true` — a breach fails CI. Set it to `false` only to land a deliberate,
   temporary overshoot, and restore it in the change that gets back under.
+
+## Migrations answer for the record [K:knowledge-migration-gate]
+
+`scripts/migration-knowledge-gate.mjs` fails a PR whose added migration leaves recorded knowledge
+unanswered. Answer in the migration's own header, one line per group of schema objects:
+
+```sql
+-- knowledge: members, member_streaks — corpus/members/members.md
+-- knowledge: purge_downgraded_decks — unrecorded
+```
+
+- Name **every** table, view, function, type, index target, policy target and trigger target the
+  migration touches. The gate parses them itself and says how many you missed, never which.
+- The right side is the knowledge file you checked the change against — amended where this migration
+  made it false — or `unrecorded`. `unrecorded` fails when any knowledge file already describes that
+  object.
+- A migration that changes no schema object says `-- knowledge: no schema objects`.
+
+## The pull-request digest [K:knowledge-pr-digest]
+
+`scripts/knowledge-report.mjs` posts one comment, updated in place, and never blocks: the slugs the
+changed code cites, the slugs this change dropped to zero citations, and the knowledge files it left
+unroutable. It compares against the merge base, so it names only what this change caused.
+
+`reachability.roots` in the config lists the files a reader arrives at unaided; everything else is
+reachable only by being linked, `[[id]]`-referenced, or cited from a file that is.
+
+## Mechanising a prose rule [K:knowledge-mechanisation]
+
+- A PR landing a lint rule, hook, or CI check **deletes the prose rule it supersedes**, in the same
+  PR.
+- That check states the rationale and its `→[K:<slug>]` in its own failure message. A silent check
+  plus deleted prose loses the knowledge outright.
