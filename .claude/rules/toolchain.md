@@ -6,21 +6,6 @@ reads a single file.
 Project uses **Vite+** (`vp`), a unified toolchain wrapping Vite, Rolldown, Vitest, Oxlint, Oxfmt.
 Always use `vp` — never `pnpm`, `npm`, `vitest`, `oxlint`, `oxfmt` directly.
 
-## Commands
-
-```sh
-vp install          # Install dependencies (after pulling changes)
-vp dev              # Start dev server
-vp build            # Production build
-vp check            # Run format + lint + type-check together
-vp lint             # Lint only
-vp fmt              # Format only
-vp test             # Run tests with coverage
-vp test --watch     # Watch mode
-vp add <pkg>        # Add a dependency
-vp dlx <bin>        # Run a one-off binary (instead of npx/pnpm dlx)
-```
-
 ## The type-check gate
 
 CI's authoritative type-check is `pnpm type-check` (`vue-tsc --build --force`), and it is **stricter
@@ -42,3 +27,7 @@ before pushing anything that touches types; a green `vp check` is not evidence.
 - Build/config utilities from `vite-plus`, not `vite`: `import { defineConfig } from 'vite-plus'`
 - Test utilities from `vite-plus/test`, not `vitest`: `import { expect, test, vi } from 'vite-plus/test'`
 - Don't install `vitest`, `oxlint`, `oxfmt`, `tsdown` — bundled in Vite+
+
+## Spokes
+
+- [`commands`](./toolchain/commands.md) — the full `vp` command list

@@ -109,8 +109,6 @@ This bites whenever a default puts the new row into a state its own SELECT polic
 
 ## Local dev
 
-- **Verifying Stripe locally** — secrets, the worktree bootstrap, and the probing traps live in [`stripe-local-probing`](../docs/stripe-local-probing.md).
-
 - **`pg_net` / `pg_cron` calling an edge function needs the kong hostname**, not loopback: the Vault `supabase_url` secret must be `http://supabase_kong_TaroFlash:8000`. From inside the DB container `127.0.0.1` is the database itself, and `host.docker.internal` resolves to IPv6, which never reaches the published IPv4 gateway. Prod and stage are fine — there the secret is the real project URL.
 
   ```sql
@@ -120,3 +118,7 @@ This bites whenever a default puts the new row into a state its own SELECT polic
   Persists across `supabase stop/start`; re-set after a reset. Inspect delivery with `select status_code, error_msg, content from net._http_response order by created desc limit 5;`
 
 - **Start the stack under Doppler** — `doppler run -- supabase start` (or `pnpm dev`). `config.toml` reads secrets via `env(...)` placeholders sourced from Doppler; a bare `supabase start` doesn't fail, it passes the literal string `env(AUTH_EXTERNAL_GOOGLE_CLIENT_ID)` to GoTrue and Google rejects the OAuth popup with `invalid_client`. A `config.toml` change needs a restart to take effect.
+
+## Spokes
+
+- [`stripe-local-probing`](./supabase/stripe-local-probing.md) — Doppler secrets, the worktree bootstrap, and the probing traps

@@ -21,9 +21,9 @@ model: sonnet
 
 ## Architecture rules touched by component work
 
-@.claude/docs/architecture-composition.md
-@.claude/docs/architecture-provide-inject.md
-@.claude/docs/architecture-ui-kit.md
+@.claude/rules/architecture/composition.md
+@.claude/rules/architecture/provide-inject.md
+@.claude/rules/architecture/ui-kit.md
 
 ## Styling & theming
 

@@ -11,7 +11,7 @@ import { useMemberDecksQuery } from '@/api/decks'
 const { data: decks } = useMemberDecksQuery()
 ```
 
-If no suitable domain exists, create one as `src/api/<domain>/` with `db/`, `queries/`, `mutations/`, and `index.ts`. See [`server-state`](../rules/server-state.md) for the full topology.
+If no suitable domain exists, create one as `src/api/<domain>/` with `db/`, `queries/`, `mutations/`, and `index.ts`. See [`server-state`](../server-state.md) for the full topology.
 
 ## `src/api/` functions must not mutate their arguments
 
