@@ -35,7 +35,6 @@ export function useShortcuts(id: ScopeId, { priority }: { priority?: Priority } 
       for (const shortcut_id of shortcut_ids) store.unregister(id, shortcut_id)
     }
 
-    // unregister when the component is destroyed
     if (getCurrentScope()) {
       onScopeDispose(unregister)
     }

@@ -1,11 +1,5 @@
-// Reusable, feature-neutral card primitives. Any feature (deck editor, study
-// session, audio reader) imports from `@/composables/card`. Never reach into
-// individual modules by deep path. `useCardMutations` is the single sanctioned
-// seam for card writes.
-//
-// Deck-editor-specific orchestration (the cardEditorKey controller, actions,
-// bulk-actions, virtual-list) is colocated with its view in
-// `@/views/deck/composables` — not here.
+// Reusable, feature-neutral card primitives — import from this barrel, never a deep path.
+// Deck-editor-specific orchestration lives in `@/views/deck/composables` instead.
 
 export { useCardMutations, type CardMutations } from './mutations'
 export { useCardSelection, type CardSelection } from './selection'
