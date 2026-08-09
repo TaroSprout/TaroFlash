@@ -111,6 +111,15 @@ Dispatch all subagents in a single message (multiple `Agent` calls) so they run 
   **not** `git checkout -b`, which orphans the auto-created `worktree-agent-<id>` branch as junk —
   implement to the acceptance criteria, and follow `.claude/rules/*` — name `comment-authoring` in
   the prompt, since verbose subagent comments are a recurring review complaint.
+- **It does the work itself — it spawns no agents of its own.** State this in the prompt. A
+  depth-two agent reports to nobody the orchestrator can hear, so its output is uncollected while
+  its parent blocks waiting for it.
+- **Commit in batches of ~5 files, never one commit at the end.** A subagent that stalls mid-ticket
+  then costs one batch instead of everything it did.
+- **Irreversible or cross-ticket-critical work goes first**, named in the prompt, so partial work
+  still carries it.
+- **Partial and committed beats complete and parked.** A subagent out of road pushes what it has and
+  names what it never reached.
 - **Tests via `update-tests`, not the full suite.** After implementing, the subagent invokes the
   **`update-tests`** skill to cover its own change, then runs **`vp check`** (format + lint +
   type-check) green. It does **not** run the full `vp test` suite — parallel subagents each running
