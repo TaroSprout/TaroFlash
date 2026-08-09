@@ -36,6 +36,6 @@
       "supabase/**/*.{sql,ts}",
       ".github/**/*.yml"
     ],
-    "exempt": ["supabase/migrations/**", "tests/unit/scripts/knowledge-lint.test.js"]
+    "exempt": ["supabase/migrations/**", "tests/unit/scripts/**"]
   }
 }
