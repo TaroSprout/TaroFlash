@@ -7,9 +7,7 @@ import { emitSfx } from '@/sfx/bus'
 import { hashFile } from '@/utils/hash'
 import { bytesToMbLabel } from '@/utils/file-size'
 
-// Deck covers render large but are one-per-deck, so the cap can be generous.
-// Stays under the bucket's 10 MiB backstop. Exported so the too-large copy
-// renders the limit from the same source.
+// One-per-deck, so the cap is generous — still under the bucket's 10 MiB backstop.
 export const COVER_IMAGE_MAX_BYTES = 5 * 1024 * 1024
 
 const BUCKET = 'member-images'
@@ -17,13 +15,10 @@ const BUCKET = 'member-images'
 export type CoverImage = ReturnType<typeof useCoverImage>
 
 /**
- * The cover variant of {@link useFaceImageUpload}: drives the deck-cover image
- * interaction for the settings design preview, but STAGES the picked file
- * instead of uploading it immediately. Staging writes a local objectURL into
- * `cover_config.image_path` so the preview shows it instantly; the real upload +
- * media-tracking row happen on Save via {@link commit}.
- *
- * Unlike the card uploader there is no paid gate — a custom cover is free.
+ * Drives the deck-cover image picker for the settings design preview. Unlike the
+ * card uploader, a picked file is STAGED — a local objectURL previews instantly
+ * in `cover_config.image_path`, and the real upload + media row land on Save via
+ * {@link commit}. No paid gate; a custom cover is free.
  *
  * @param cover - Getter for the draft's reactive `cover_config`.
  * @param deckId - Getter for the deck id (absent for a brand-new deck).
@@ -115,11 +110,10 @@ export function useCoverImage(
   }
 
   /**
-   * Save pre-step. On a staged file: upload the bytes, then write the media
-   * tracking row, then swap the objectURL in `cover_config.image_path` for the
-   * uploaded image's public URL. On a cleared image: soft-delete the active
-   * cover media row so it's reaped. Throws with `cause` `'upload'` | `'insert'`
-   * so the caller can pick the right toast; aborts the deck save.
+   * Save pre-step: uploads a staged file and swaps its objectURL for the real
+   * public URL, or soft-deletes the cover row on a cleared image. Throws with
+   * `cause: 'upload' | 'insert'` so the caller picks the right toast and aborts
+   * the deck save.
    */
   async function commit() {
     const id = toValue(deckId)

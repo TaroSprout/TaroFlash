@@ -22,8 +22,6 @@ const DURATION = 0.2
  * @param animate - tween `height` with GSAP instead of snapping it in one frame. Snapping
  *   (the default) dodges the multi-frame jank a real tween causes on heavy DOM (a long
  *   transcript); reach for `animate: true` only on small, cheap wrappers (e.g. a fixed footer).
- * @example
- * useAnimatedHeight(footer_swap, footer_term, () => !swapping, reclearSelection)
  */
 export function useAnimatedHeight(
   wrapper: Ref<HTMLElement | null>,
@@ -55,10 +53,7 @@ export function useAnimatedHeight(
       return
     }
 
-    // Snap to the new height instantly rather than tweening. Animating `height`
-    // forces a layout recalculation on every rAF tick — with a large transcript
-    // DOM this caused multi-frame jank every time the term card grew. A single
-    // instant size change is one layout pass instead of twelve.
+    // One layout pass instead of the many a tweened `height` would force on heavy DOM.
     el.style.height = `${target}px`
     requestAnimationFrame(() => {
       el.style.height = ''

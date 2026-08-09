@@ -1,16 +1,16 @@
 import { onScopeDispose } from 'vue'
 
-// Shared across every consumer: a window-blur departure recorded by one card
-// may be answered by a refocus landing on a different card, so the flag can't
-// live per-instance. `pending` is true between an editor losing focus to a
-// window blur and the browser restoring focus once the window comes back.
+// True between an editor losing focus to a window blur and the window regaining focus.
+// →[K:window-refocus-guard-shared-flag]
 let consumers = 0
 let pending = false
 
+/**
+ * Sweeps up a flag nobody claimed. Coming back to the window normally refocuses an
+ * editor, which consumes it first; this only fires when none does.
+ * →[K:window-refocus-guard-self-clear]
+ */
 function clearPending() {
-  // The restoring focusin fires synchronously when the window regains focus,
-  // before this rAF runs — so it consumes `pending` first. This only sweeps up
-  // a stale flag left when the user returns without refocusing any editor.
   requestAnimationFrame(() => (pending = false))
 }
 
@@ -21,11 +21,6 @@ function clearPending() {
  *
  * Pair with `document.hasFocus()` in the focusout handler — it already reads
  * `false` when the blur is caused by the window losing focus.
- *
- * @example
- * const { flagWindowBlur, consumeWindowRefocus } = useWindowRefocusGuard()
- * function onFocusOut() { if (!document.hasFocus()) return flagWindowBlur() }
- * function onFocusIn() { if (consumeWindowRefocus()) return }
  */
 export function useWindowRefocusGuard() {
   if (consumers++ === 0) window.addEventListener('focus', clearPending)

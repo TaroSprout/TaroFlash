@@ -13,9 +13,6 @@ import { FREE_DECK_LIMIT } from '@/config/plans'
  * and resume a canceling plan. Owns the cancel/resume billing mutations and
  * surfaces their loading state, plus the notices. `onCancel` is a no-op when the
  * member dismisses the confirm-alert.
- *
- * @example
- * const { onUpgrade, onCancel, onResume, canceling, resuming } = useSubscriptionActions()
  */
 export function useSubscriptionActions() {
   const { t } = useI18n()
@@ -32,9 +29,7 @@ export function useSubscriptionActions() {
   }
 
   async function onCancel() {
-    // Over the free deck limit, cancelling starts the 15-day downgrade grace —
-    // swap in the fuller warning (self-contained, so it replaces the base line
-    // rather than stacking a duplicate "plan stays active" sentence on top).
+    // Over the free deck limit, cancelling starts the 15-day downgrade grace.
     const over_limit = (deckCount.value ?? 0) > FREE_DECK_LIMIT
     const message = over_limit
       ? t('settings.subscription.plan.cancel-over-limit')

@@ -2,23 +2,9 @@ import { onMounted, onUnmounted, toValue, type MaybeRefOrGetter } from 'vue'
 
 /**
  * Pins the document scroll position while the user types in a contenteditable
- * or text input inside `container`.
- *
- * The card editor is a window-scrolled virtualized list. Typing in a card can
- * reflow it (the text region grows, the image region shrinks) without changing
- * the card's height — but the browser still fires a caret scroll-into-view on
- * each keypress, which reaches the document scroller and shifts the whole list.
- * The same fix covers the deck search field: its debounced query reflows the
- * (also window-scrolled) result grid asynchronously, which can clamp/shift
- * scrollY once the response lands. Either way, this captures the scroll
- * position at the first keystroke and restores it on any resulting scroll, so
- * the page holds still. A deliberate wheel/touch scroll releases the pin (the
- * next keystroke re-anchors wherever the user landed), and focus leaving the
- * field clears it.
+ * or text input inside `container`. →[K:pin-scroll-typing-reflow-sources]
  *
  * @param container - the editor/field root; read lazily so it can resolve late.
- * @example
- * usePinScrollWhileTyping(() => list_el.value)
  */
 export function usePinScrollWhileTyping(
   container: MaybeRefOrGetter<HTMLElement | null | undefined>
@@ -32,9 +18,7 @@ export function usePinScrollWhileTyping(
     return is_editable && root.contains(target)
   }
 
-  // beforeinput fires before the DOM mutation and the resulting scroll, so the
-  // captured position is the pre-input one. Keep the first keystroke's anchor
-  // across a burst — re-capturing each keystroke would drift with the scroll.
+  // Fires before the DOM mutation, so the captured position is the pre-input one.
   function onBeforeInput(e: Event) {
     if (anchor_y === null && inEditor(e.target)) anchor_y = window.scrollY
   }

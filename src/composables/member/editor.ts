@@ -8,9 +8,7 @@ import {
   type ResolvedMemberPreferences
 } from '@/utils/member/preferences'
 
-// The editable surface of a member profile, keyed to the persisted columns so
-// the draft flushes straight through the upsert mutation. Defaults are merged
-// in `buildMemberBase`, so the draft is always fully populated.
+// The editable surface of a member profile — the columns saveMember persists.
 export type MemberDraft = {
   display_name: string
   description: string
@@ -21,10 +19,9 @@ export type MemberDraft = {
 export type SaveMemberOutcome = 'success' | 'duplicate-name' | 'error'
 
 /**
- * Reactive state + mutations for editing the current member's profile. A single
- * `useDraft` over the profile's editable columns backs the settings tabs and
- * the member-card preview; `is_dirty` falls out of a deep diff against the
- * last-saved base. Mirrors `useDeckEditor`, minus the pacing inheritance lens.
+ * Reactive state + mutations for editing the current member's profile — backs
+ * the settings tabs and the member-card preview. Mirrors `useDeckEditor`,
+ * minus the pacing inheritance lens.
  */
 export function useMemberEditor() {
   const member_store = useMemberStore()

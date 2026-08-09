@@ -25,13 +25,6 @@ type PromptArgs = {
  * `response` resolves to the trimmed string, or `undefined` when cancelled or
  * dismissed. The modal blocks confirm on an empty value, so a resolved string
  * is always non-empty.
- *
- * @example
- * const name = await usePrompt().ask({
- *   title: t('...'),
- *   confirmLabel: t('...')
- * }).response
- * if (!name) return
  */
 export function usePrompt() {
   const modal = useModal()

@@ -1,16 +1,11 @@
-// Where to send a member after they sign in — the in-app path they were
-// reaching when the auth checkpoint bounced them to /welcome. It rides there as
-// a `?next=` query param, then is stashed here so it survives the full-page
-// Google OAuth redirect, which wipes both router state and `history.state`.
-//
-// sessionStorage, not localStorage: the value is only meaningful within the tab
-// that started the sign-in, and the full-page OAuth redirect returns to that
-// same tab. Keyed alongside the `oauth-popup-pending` flag in api/session.
+// Where to send a member after sign-in. →[K:return-destination-open-redirect]
 const RETURN_DESTINATION_KEY = 'auth-return-destination'
 
-// In-app paths only: an absolute path rooted at our own origin. Rejects full
-// URLs, protocol-relative `//host`, and the `/\host` backslash trick browsers
-// treat as a host — the classic open-redirect footgun.
+/**
+ * Rejects anything that could leave this app — a crafted `?next=` link must
+ * never bounce a member to a lookalike site the moment they sign in.
+ * →[K:return-destination-open-redirect]
+ */
 function isInAppPath(next: unknown): next is string {
   return typeof next === 'string' && /^\/(?![/\\])/.test(next)
 }

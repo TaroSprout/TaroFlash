@@ -5,10 +5,7 @@ import { useAlert } from '@/composables/alert'
 import { useModal } from '@/composables/modal'
 import { useCan } from '@/composables/can'
 
-// SQLSTATE raised by `enforce_deck_card_limit` when a write would push a deck
-// past its plan's `cards_per_deck_limit`. The `PT` class is PostgREST's
-// HTTP-status convention, so this also makes the response a real 402 Payment
-// Required; the digits stay clear of the rank-precision `P0001` retry block.
+// Raised by `enforce_deck_card_limit` when a write exceeds the plan's card cap. →[K:card-limit-custom-errcode]
 const CARD_LIMIT_ERRCODE = 'PT402'
 
 /** True when `error` is the backend's per-deck card-limit rejection. */
@@ -32,10 +29,6 @@ function isCardLimitError(error: unknown): boolean {
  *
  * @param deck - The deck being added to. Read reactively so the cap tracks the
  *   deck's live `card_count` as cards are inserted/removed.
- *
- * @example
- * const { guardAddCards } = useCardLimitGate(() => deck_query.data.value)
- * if (!(await guardAddCards(cards.length))) return
  */
 export function useCardLimitGate(deck: MaybeRefOrGetter<Deck | undefined>) {
   const { t } = useI18n()
@@ -43,7 +36,6 @@ export function useCardLimitGate(deck: MaybeRefOrGetter<Deck | undefined>) {
   const modal = useModal()
   const can = useCan()
 
-  /** Show the upgrade alert and open Checkout on confirm. */
   async function promptUpgrade(): Promise<void> {
     const confirmed = await alert.warn({
       title: t('errors.card-limit-reached.title'),

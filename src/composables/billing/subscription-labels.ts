@@ -11,9 +11,6 @@ type SubscriptionQuery = ReturnType<typeof useSubscriptionQuery>
  * renewal/cancel line, joined). Both are ComputedRefs that re-resolve when the
  * query data or active locale changes, and are `null` when there's nothing to
  * show. `subscription` is exposed for callers that branch on cancel state.
- *
- * @example
- * const { subscription, cost, description } = useSubscriptionLabels(query)
  */
 export function useSubscriptionLabels(subscriptionQuery: SubscriptionQuery) {
   const { t, locale } = useI18n()

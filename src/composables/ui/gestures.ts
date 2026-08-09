@@ -23,9 +23,7 @@ export interface DragCallbacks {
   onCancel?: () => void
 }
 
-// ── Module-level state ────────────────────────────────────────────────────────
-// Single shared state so N components share one set of document listeners.
-
+// Shared so N registered elements ride one set of document listeners.
 interface Registration {
   id: number
   element: Element
@@ -44,8 +42,6 @@ let _next_id = 0
 const _registry = new Map<number, Registration>()
 let _tracking: Tracking | null = null
 let _listener_count = 0
-
-// ── Global pointer event handlers ─────────────────────────────────────────────
 
 function onPointerDown(e: PointerEvent): void {
   if (_tracking) return
@@ -95,6 +91,7 @@ function onPointerUp(e: PointerEvent): void {
   const result: DragResult = { x: e.clientX, y: e.clientY, dx, dy, velocity, duration }
   for (const r of active) r.callbacks.onEnd?.(result)
 
+  // A drag past this threshold swallows the trailing click the browser still fires on release.
   if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
     const elements = active.map((r) => r.element)
     const handler = (clickEvent: Event) => {
@@ -119,8 +116,6 @@ function onPointerCancel(e: PointerEvent): void {
   for (const r of active) r.callbacks.onCancel?.()
 }
 
-// ── Listener lifecycle ────────────────────────────────────────────────────────
-
 function attachListeners(): void {
   document.addEventListener('pointerdown', onPointerDown)
   document.addEventListener('pointermove', onPointerMove, { passive: false })
@@ -135,8 +130,6 @@ function detachListeners(): void {
   document.removeEventListener('pointercancel', onPointerCancel)
 }
 
-// ── Test utilities ────────────────────────────────────────────────────────────
-
 /** Reset all module-level state. Call in beforeEach in tests. */
 export function _resetGestureState(): void {
   if (_listener_count > 0) detachListeners()
@@ -145,8 +138,6 @@ export function _resetGestureState(): void {
   _listener_count = 0
   _next_id = 0
 }
-
-// ── Composable ────────────────────────────────────────────────────────────────
 
 export function useGestures() {
   /**

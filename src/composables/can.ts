@@ -16,10 +16,6 @@ import { useMemberDeckCountQuery } from '@/api/decks'
  * When a policy changes (e.g. paid users should now export analytics), edit
  * the single line in this file — every call site picks up the new behavior
  * automatically.
- *
- * @example
- * const can = useCan()
- * if (!can.createDeck.value) { ... }
  */
 export function useCan() {
   const member = useMemberStore()

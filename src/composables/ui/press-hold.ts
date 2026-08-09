@@ -26,13 +26,6 @@ type PressHoldOptions = {
  * never also fires the tap path.
  *
  * Touch-action is left untouched so idle elements keep scrolling the page.
- *
- * @example
- * const hold = usePressHold({ duration: 200 })
- * function onPointerdown(e: PointerEvent) {
- *   if (e.pointerType === 'mouse') return beginDrag(e)
- *   hold.arm(e, () => beginDrag(e))
- * }
  */
 export function usePressHold(options: PressHoldOptions = {}) {
   const { duration = DEFAULT_DURATION, tolerance = DEFAULT_TOLERANCE } = options

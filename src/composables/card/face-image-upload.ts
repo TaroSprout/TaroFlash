@@ -15,13 +15,10 @@ import { useNoticeStore } from '@/stores/notice-store'
 import { emitSfx } from '@/sfx/bus'
 import { collapseFaceImage, revealFaceImage } from '@/utils/animations/face-image'
 
-// Card images render small but are the app's highest-volume asset, so cap them
-// well below the bucket's 10 MiB backstop. Exported so the uploader can render
-// the size limit in its too-large error copy from the same source.
+// Well below the storage bucket's 10 MiB backstop — card images render small.
 export const CARD_IMAGE_MAX_BYTES = 2 * 1024 * 1024
 
-// A fresh drop/pick leaves the pointer over the card; suppress the replace
-// scrim so the new image is visible, until the pointer leaves or this elapses.
+// How long a fresh drop/pick suppresses the replace scrim, so the new image stays visible.
 const SUPPRESS_HOVER_MS = 1000
 
 type UseFaceImageUploadOptions = {
@@ -35,17 +32,7 @@ type UseFaceImageUploadOptions = {
 /**
  * Drives one card face's image-upload interaction: drag/drop + file-picker
  * plumbing, the hover/drag/error overlay state, and the upload/remove actions.
- * Layout-agnostic — the consumer decides how to present `active`/`has_image`
- * per image layout.
- *
- * @example
- * const fileInput = useTemplateRef('fileInput')
- * const upload = useFaceImageUpload({
- *   card: () => card,
- *   side,
- *   fileInput,
- *   rootEl: () => cardRef.value?.$el
- * })
+ * Layout-agnostic — the consumer decides how to present `active`/`has_image`.
  */
 export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceImageUploadOptions) {
   const { t } = useI18n()
@@ -82,17 +69,13 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
     toValue(side) === 'front' ? toValue(card).front_image_path : toValue(card).back_image_path
   )
   const has_image = computed(() => !!image_path.value)
-  // Image writes go through insert-backed RPCs that need a persisted row; temp
-  // cards (id <= 0) aren't saved yet, so disable upload until they are.
+  // Temp cards (id <= 0) aren't persisted yet, and image RPCs need a real row.
   const can_upload = computed(() => (toValue(card).id ?? 0) > 0)
-  // Keep the image in its hover (padded/rounded) state behind a visible error
-  // scrim so it doesn't pop back to full-bleed underneath the overlay.
+  // Also true on an error, so the image stays in its hover state behind the error scrim.
   const active = computed(
     () => ((hovered.value || dragging.value) && !hover_suppressed.value) || !!file_error.value
   )
-  // While a drag or error overlay covers the editor, make it inert: the user
-  // can't see what's behind the scrim, so they shouldn't be able to focus it
-  // (which would show a stray blue focus ring) or type into it.
+  // Blocks focus/typing behind a drag or error overlay the user can't see past.
   const covered = computed(() => dragging.value || !!file_error.value)
 
   onBeforeUnmount(() => {
@@ -177,9 +160,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
     clearError()
   }
 
-  // A fresh drop/pick lands with the pointer still over the card, which would
-  // immediately reveal the replace scrim over the new image. Hold the hover
-  // state off until the pointer leaves once, or until the timeout releases it.
+  // Holds the replace scrim off until the pointer leaves once, or the timeout releases it.
   function suppressHover() {
     hover_suppressed.value = true
     clearTimeout(suppress_timer)
@@ -207,10 +188,8 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
     if (now && !was && can_upload.value) emitSfx('music_plink_mid')
   })
 
-  // The upload resolves before the deck refetch propagates the new path to the
-  // prop, so the reveal can't run off the upload itself — flag the intent and
-  // animate when the path lands in the DOM. `flush: 'post'` runs after the
-  // render so the freshly-mounted <img> is queryable.
+  // Reveal waits for the refetched path to reach the DOM, not the upload call. `flush: 'post'`
+  // so the freshly-mounted <img> is queryable.
   watch(
     image_path,
     (path) => {

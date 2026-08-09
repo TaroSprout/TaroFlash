@@ -26,10 +26,6 @@ export type UseNumericInputResult = {
  * @param value Model ref to read from / write into.
  * @param bounds Getters for `min` and `max` so the composable stays reactive
  *   when the parent's bounds are reactive props.
- *
- * @example
- * const value = defineModel<number>('value', { required: true })
- * const handlers = useNumericInput(value, { min: () => min, max: () => max })
  */
 export function useNumericInput(value: Ref<number>, bounds: Bounds): UseNumericInputResult {
   function clamp(n: number) {

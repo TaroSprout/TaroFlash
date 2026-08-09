@@ -10,8 +10,7 @@ import { useNoticeStore } from '@/stores/notice-store'
 import { DECK_SETTINGS_DEFAULTS, DECK_CONFIG_DEFAULTS } from '@/utils/deck/defaults'
 import { emitSfx } from '@/sfx/bus'
 
-// The editable surface of a deck: the columns save_deck persists, defaults
-// merged in so the draft is always fully populated and dirty-diffing is clean.
+// The editable surface of a deck — the columns saveDeck persists.
 export type DeckDraft = {
   title?: string
   description?: string
@@ -24,11 +23,8 @@ export type DeckDraft = {
 }
 
 /**
- * Reactive state + mutations for editing one deck (or staging a brand-new one
- * when `deck` is omitted). A single `useDraft` over the deck's editable columns
- * replaces the old per-field clone/payload/dirty machinery — tabs and designers
- * mutate `draft` directly, and `is_dirty` falls out of a deep diff against the
- * last-saved base.
+ * Reactive state + mutations for editing one deck, or staging a brand-new one
+ * when `deck` is omitted. Tabs and designers mutate `draft` directly.
  */
 export function useDeckEditor(deck?: Deck) {
   function buildDeckBase(): DeckDraft {
@@ -80,9 +76,7 @@ export function useDeckEditor(deck?: Deck) {
   async function saveDeck(): Promise<Deck | null> {
     if (!deck?.id) return deck_actions.createDeck({ id: deck?.id as number, ...draft })
 
-    // Pre-step: a staged cover image uploads + records its media row here,
-    // swapping the preview objectURL for the public URL before the deck upsert
-    // persists cover_config. A failed upload/insert aborts the whole save.
+    // Uploads a staged cover before persisting cover_config; a failure aborts the save.
     try {
       await cover_image.commit()
     } catch (err) {
