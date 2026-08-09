@@ -15,11 +15,7 @@ export interface StagedTapOptions {
   animate?: StagedTapAnimate
   /** Phase at which action fires on coarse. Default: 'peak'. */
   triggerAt?: StagedTapPhase
-  /**
-   * 'coarse-only' (default): animation only plays on touch; fine pointer fires
-   * action immediately and skips animation. 'always': animation plays on every
-   * pointer type — for decorative pops not tied to real click events.
-   */
+  /** 'coarse-only' (default) skips animation on a fine pointer. 'always' plays it on every pointer type. */
   activeOn?: 'coarse-only' | 'always'
   /** Pop-only: yoyo the tween back to neutral. Default: false. */
   yoyo?: boolean
@@ -30,26 +26,15 @@ export interface StagedTapOptions {
 }
 
 export interface TapCallOptions {
-  /**
-   * Coarse only — fires at press, before the animation starts. Use for an
-   * "arm" cue that has no fine-pointer equivalent (e.g. a haptic-style tick).
-   */
+  /** Coarse only — fires at press, before the animation starts (an "arm" cue). */
   preAudio?: SfxKey
-  /**
-   * All pointers — the primary click-feedback sound.
-   * Fine pointer: fires immediately, before the action.
-   * Coarse pointer: fires at the action phase (peak by default).
-   */
+  /** Primary click-feedback sound; fires immediately on fine, at the action phase on coarse. */
   audio?: SfxKey
   /** Options forwarded to emitSfx for the main audio key (blocking, debounce). */
   audioOpts?: PlayOptions
   /** Coarse only — fires after the animation completes. */
   postAudio?: SfxKey
-  /**
-   * Fires on every call before any coarse/fine check — even when the tap will
-   * bail (already playing). Use for side-effects that must happen on every touch
-   * regardless of animation state (e.g. burst FX).
-   */
+  /** Fires on every call, even one that bails as already-playing. */
   onTap?: (e: MouseEvent) => void
   /** Override the composable-level triggerAt for this specific call. */
   triggerAt?: StagedTapPhase
@@ -64,11 +49,6 @@ export interface TapCallOptions {
  * - preAudio  — coarse only, fires at press before animation (arm/haptic cue)
  * - audio     — all pointers; fires immediately on fine, at the action phase on coarse
  * - postAudio — coarse only, fires after animation completes
- *
- * @example
- * const { playing, tap } = useStagedTap({ animate: 'pop', yoyo: true })
- * const handler = tap((e) => doThing(e), { audio: 'snappy_button_5' })
- * // <button @click="handler" :data-active="playing || null">
  */
 export function useStagedTap(options: StagedTapOptions = {}) {
   const {
