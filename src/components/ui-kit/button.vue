@@ -301,20 +301,10 @@ function onClick(e: MouseEvent) {
   --btn-outline-color: transparent;
 }
 
-/* ─── CHROME / IDENTITY SEAM ─────────────────────────────────────────────
- *
- * The base variant rules above read the identity role (--color-accent). A plain
- * button resolves it to the default accent; a button carrying `[data-palette]`
- * has already had --color-accent set on ITSELF by palettes.gen.css, so the
- * base rule resolves to THIS button's palette. `data-palette` is a plain HTML
- * attribute — attributes don't inherit — so a plain button nested in a
- * `data-palette="green"` region does NOT pick it up: identity is opt-in,
- * attribute-on-self, leak-proof by construction, with no extra selector needed.
- *
- * NEUTRAL — `.ui-kit-btn--neutral`. Solid defaults to accent because a solid
- * button is an action; the raised NEUTRAL button opts in explicitly and paints
- * the `element` chrome role. Ghost/outline are transparent chrome already, so
- * neutral only swaps their text/outline off accent onto ink. */
+/* A button only takes on a palette's colours if `data-palette` is on the button
+   itself. Attributes don't inherit, so a plain button sitting inside a coloured
+   region stays neutral — deliberately, so palettes can't leak into everything
+   nested under them. →[K:theming-palette-identity] */
 
 .ui-kit-btn--neutral.ui-kit-btn--solid {
   --btn-bg-color: var(--color-element);

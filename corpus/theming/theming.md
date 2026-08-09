@@ -81,6 +81,17 @@ _danger_, an informational one for _info_. Each meaning points at a real
 palette today, but the call site only ever says the meaning — so the color
 behind _danger_ can change without touching a single button.
 
+## Palette identity is opt-in [K:theming-palette-identity]
+
+A palette lands on an element as a plain HTML attribute, `data-palette`. Attributes don't inherit —
+only CSS properties do — so a component only carries a palette's colors when `data-palette` sits on
+that component's own root, never because an ancestor happens to carry one.
+
+That's deliberate. A neutral component nested inside a colored region stays neutral unless it
+explicitly opts in, so a palette can never leak into everything nested under it by accident. Giving a
+component the palette is always a conscious act at that component, not a side effect of its position
+in the tree.
+
 ## Textured backgrounds
 
 Some surfaces carry a faint pattern — stripes, clouds, a dot grid — laid over
