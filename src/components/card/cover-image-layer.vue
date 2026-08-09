@@ -7,8 +7,7 @@ import { type CoverImage } from '@/composables/deck/cover-image'
 
 type CoverImageLayerProps = {
   cover_image: CoverImage
-  // The card root element — the layer listens for drag events across the whole
-  // cover face, not just its own overlays.
+  /** Card root element — drag events are listened for across the whole cover face, not just this layer's own overlays. */
   root: HTMLElement | null
 }
 
@@ -18,8 +17,7 @@ const { t } = useI18n()
 
 onBeforeUnmount(() => detachRootListeners(root))
 
-// The drop target is the whole cover face, so listen on the card root the card
-// hands us rather than on this layer's own overlays.
+/** Listens on the card root, since the drop target is the whole cover face rather than this layer's own overlays. */
 function attachRootListeners(el: HTMLElement | null) {
   if (!el) return
   el.addEventListener('dragenter', cover_image.onDragEnter)
@@ -47,7 +45,6 @@ watch(
 </script>
 
 <template>
-  <!-- @click.stop: openPicker()'s synthetic click must not bubble to the preview's cycleSide -->
   <input
     :ref="cover_image.file_input"
     type="file"
@@ -104,7 +101,6 @@ watch(
     </ui-button>
   </template>
 
-  <!-- Dragging a file / a validation error: a full-face prompt over the cover. -->
   <face-overlay
     v-if="cover_image.dragging.value || cover_image.error_message.value"
     variant="full"

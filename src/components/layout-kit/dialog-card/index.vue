@@ -45,15 +45,9 @@ export type DialogCardProps = {
   dialog_px?: string
   content_max_width?: string
   content_breakout_max_width?: string
-  // Takes the header out of flow (absolutely pinned to the top) so the body
-  // fills the card's full height and any centering inside it is relative to
-  // that full height, not the space left over after the header. The header
-  // then visually floats over the top of the body instead of pushing it down.
+  /** Pins the header out of flow at the top so the body fills the card's full height, and the header floats over it instead of pushing it down. */
   float_header?: boolean
-  // Background utility classes. A dedicated prop rather than a `class`
-  // override so a caller's value replaces the default outright instead of
-  // both landing in the same Tailwind layer, where two conflicting bg-*
-  // utilities race unpredictably.
+  /** Dedicated prop rather than a `class` override, so a caller's value replaces the default outright instead of two conflicting bg-* utilities racing in the same Tailwind layer. */
   bg_class?: string
 }
 
@@ -82,26 +76,18 @@ const slots = defineSlots<{
   'header-start'(): any
   'header-end'(): any
   default(props: { viewport: DialogCardViewport }): any
-  // Pinned bottom row, outside the body's flow — action bars that must stay put
-  // while the body scrolls.
+  /** Pinned bottom row, outside the body's flow — action bars that must stay put while the body scrolls. */
   toolbar?(): any
 }>()
 
 const { t } = useI18n()
 
-// A dialog card always floats over the surface that opened it.
+/** Always floats over the surface that opened it. */
 const ambient_depth = useAmbientDepth()
 const depth = provideDepth(() => nextDepth(ambient_depth.value))
 
 const viewport = provideDialogCardViewport(full_bleed_at ?? SIZE_FULL_BLEED_AT[size])
-/**
- * Both of these read `slots.toolbar`, which is NOT reactive — wrapping either in
- * a `computed` would cache the first answer and never see a `v-if`'d toolbar
- * appear. Called from the template instead, so they re-run every render.
- *
- * Each branch spells its class out in full: Tailwind only generates an
- * arbitrary-value class it can find verbatim in the source.
- */
+/** Called from the template, not a `computed` — `slots.toolbar` isn't reactive. →[K:dialog-card-toolbar-slot-reactivity] */
 function gridRowsClass() {
   if (float_header) {
     return slots.toolbar ? 'grid-rows-[minmax(0,1fr)_auto]' : 'grid-rows-[minmax(0,1fr)]'
@@ -110,26 +96,15 @@ function gridRowsClass() {
   return slots.toolbar ? 'grid-rows-[auto_minmax(0,1fr)_auto]' : 'grid-rows-[auto_minmax(0,1fr)]'
 }
 
-/**
- * Bottom padding the body should leave itself. With a toolbar the toolbar row
- * owns that space, so the body takes none. Published as a variable rather than
- * injected state for the same non-reactivity reason.
- */
+/** With a toolbar, the toolbar row owns the bottom space and the body takes none. →[K:dialog-card-toolbar-slot-reactivity] */
 function bodyPaddingStyle() {
   return { '--dialog-body-pb': slots.toolbar ? '0px' : 'var(--dialog-px)' }
 }
 
-// `--content-grid-padding` is set here directly rather than via a
-// `content-grid-px-(--dialog-px)` class: Tailwind's arbitrary-value matcher
-// for that utility never actually generates a rule for a bare custom-property
-// reference, so the class silently no-ops and the padding stays at the
-// content-grid default of 0 — every direct child then renders flush against
-// the card's edge instead of inset by --dialog-px.
-//
-// --content-grid-max-width is capped to 100% on mobile so the content column
-// always resolves to `100% - padding*2` instead of the (larger, desktop-sized)
-// fixed max-width — otherwise a phone narrower than the size's max-width but
-// still wider than `100% - padding*2` renders content flush against the edge.
+/** Set directly rather than via a Tailwind arbitrary-value class. →[K:dialog-card-content-grid-padding] */
+// --content-grid-max-width caps to 100% on mobile so the content column always
+// resolves to `100% - padding*2`, rather than a fixed desktop-sized max-width
+// that could still be narrower than the phone's viewport.
 const card_style = computed(() => ({
   ...(dialog_px && { '--dialog-px': dialog_px }),
   '--content-grid-padding': 'var(--dialog-px)',

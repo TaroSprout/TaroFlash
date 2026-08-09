@@ -6,11 +6,7 @@ export const WINDOW_HEADER_BORDER_CLASS: Record<WindowHeaderBorder, string> = {
   none: ''
 }
 
-// Paints back the strip the header's border mask cuts away, on a layer above
-// the overlay, so a lowered overlay is occluded along the shaped edge rather
-// than the header's straight box bottom. `none` needs no fill — its bottom edge
-// already is the box. `cloud` has no complement utility yet; a cloud-bordered
-// window that lowers its overlay will clip on a straight line until it does.
+/** Paints back the strip the header's shaped-border mask cuts away, so a lowered overlay occludes along the shaped edge. `cloud` has no fill utility yet — clips on a straight line until one's added. */
 export const WINDOW_HEADER_FILL_CLASS: Record<WindowHeaderBorder, string> = {
   wave: 'wave-bottom-fill-[50px]',
   cloud: '',

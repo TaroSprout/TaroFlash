@@ -39,9 +39,7 @@ const {
 
 const { t } = useI18n()
 
-// The window is a raised surface: one step above whatever it opened over. The
-// body paints that surface; the sidebar is the recess beside it, so it reads
-// --color-below off the very same depth.
+/** A raised surface, one step above whatever it opened over; the sidebar recess beside it reads --color-below off this same depth. */
 const ambient_depth = useAmbientDepth()
 const depth = provideDepth(() => nextDepth(ambient_depth.value))
 
@@ -61,8 +59,7 @@ const header_border_class = computed(() => WINDOW_HEADER_BORDER_CLASS[header_bor
 const header_fill_class = computed(() => WINDOW_HEADER_FILL_CLASS[header_border])
 const close_label_text = computed(() => close_label ?? t('app-window.close-label'))
 
-// The default header owns the close button. A custom `header` slot replaces the
-// header entirely, so the caller owns its own close affordance there.
+/** Default header owns the close button; a custom `header` slot replaces the header entirely, so the caller owns its own close affordance there. */
 const show_builtin_close = computed(() => show_close_button && !slots.header)
 
 const header_bindings = computed(() =>

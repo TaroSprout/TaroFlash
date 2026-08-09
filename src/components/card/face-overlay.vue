@@ -4,8 +4,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 
 type FaceOverlayProps = {
-  // full: fills the whole face (empty-face drop target); inset: scrim over the
-  // image region (or the whole face in corners mode), revealed via `active`.
+  /** `full` fills the whole face (empty-face drop target); `inset` scrims the image region (or whole face in corners mode), revealed via `active`. */
   variant: 'full' | 'inset'
   error?: string
   heading?: string

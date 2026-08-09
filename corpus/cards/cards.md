@@ -117,6 +117,18 @@ selection.
 Deriving the mode from "is anything selected" would yank the UI away the instant
 you unticked the last card.
 
+## A focusing tap can blur itself
+
+> [!HAZARD] [K:text-editor-ghost-click-guard] **Focusing the card text editor on tap can re-target the tap's own synthetic mouse events.**
+> Focusing an element on `pointerdown` can trigger the browser's native
+> "scroll the focused input above the keyboard" behaviour, shifting the layout
+> mid-tap. The tap's synthesized compatibility events (`mousedown`, `mouseup`,
+> `click`) are then hit-tested at dispatch time — after that shift — so they
+> land on whatever now sits under the finger instead of the original target,
+> and the stray `mousedown` blurs the editor before `click` ever fires. The
+> text editor swallows the whole synthetic sequence for a short window after a
+> focusing tap rather than letting it re-target.
+
 ## What this isn't
 
 - **Not the study schedule.** When a card is next due and how well it's known is

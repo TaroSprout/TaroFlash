@@ -19,8 +19,7 @@ type FaceImageLayerProps = {
   card: Card
   side: 'front' | 'back'
   attributes?: CardAttributes
-  // The card root element — the layer listens for drag/hover on the whole card
-  // and the upload composable dismisses lingering errors on outside clicks.
+  /** Card root element — drag/hover is listened for across the whole card, and the upload composable dismisses lingering errors on outside clicks. */
   root: HTMLElement | null
   disabled?: boolean
 }
@@ -60,24 +59,18 @@ const {
   rootEl: () => root ?? undefined
 })
 
-// Touch can't hover, so the hover-reveal add button is unreachable — and its
-// invisible hit area would otherwise swallow taps meant for the editor. Coarse
-// pointers add/replace images through the card menu instead.
+/** True on touch, where hover can't reveal the add button — coarse pointers add/replace images through the card menu instead. */
 const is_coarse = useMatchMedia('coarse')
 
 const layout = computed(() => attributes?.image_layout ?? CARD_ATTRIBUTES_DEFAULTS.image_layout)
-// Behind keeps the image full-bleed under the text, so its controls float in the
-// corners; above/below give the image its own region to scope the dropzone to.
+/** 'corners' floats controls over a full-bleed behind image; 'region' scopes the dropzone to the image's own area for above/below layouts. */
 const dropzone_mode = computed(() => (layout.value === 'behind' ? 'corners' : 'region'))
 const image_url = computed(() => (image_path.value ? cardImageUrl(image_path.value) : undefined))
-// The card fills its face's image slot with the region dropzone when this says
-// so. Doubles as the hover scope: in region mode the image is only part of the
-// card, so hover comes from the dropzone's enter/leave instead of card-wide.
+/** Also the hover scope switch — in region mode hover comes from the dropzone's enter/leave instead of card-wide. */
 const region_dropzone = computed(
   () => has_image.value && !disabled && dropzone_mode.value === 'region'
 )
-// Behind/full-bleed plays the hover chime card-wide; region scopes it to the
-// image region (see onRegionPointerEnter), so the card stays silent there.
+/** Hover chime for behind/full-bleed layouts; region layout scopes its own chime instead (see onRegionPointerEnter). */
 const card_sfx = computed<SfxOptions | undefined>(() =>
   has_image.value && dropzone_mode.value === 'corners' ? { hover: 'tap_05' } : undefined
 )
@@ -96,7 +89,7 @@ const error_message = computed(() => {
 
 onBeforeUnmount(() => detachRootListeners(root))
 
-// Skip card-wide hover in region mode — the dropzone reports image-region hover.
+/** Skips card-wide hover in region mode — the dropzone reports image-region hover instead. */
 function onRootPointerEnter() {
   if (!region_dropzone.value) onPointerEnter()
 }
@@ -105,8 +98,7 @@ function onRootPointerLeave() {
   if (!region_dropzone.value) onPointerLeave()
 }
 
-// Region mode scopes the hover chime to the image region; behind/full-bleed play
-// it card-wide via the sfx the card reads off this layer.
+/** Scopes the hover chime to the image region; behind/full-bleed play it card-wide instead, via `card_sfx`. */
 function onRegionPointerEnter() {
   emitSfx('tap_05')
   onPointerEnter()
@@ -117,8 +109,7 @@ function onAddClick() {
   openPicker()
 }
 
-// The drop target and hover surface is the whole card, not just this layer's
-// own overlays — listen on the card root the card hands us.
+/** Listens on the card root — the drop target and hover surface is the whole card, not just this layer's own overlays. */
 function attachRootListeners(el: HTMLElement | null) {
   if (!el) return
   el.addEventListener('dragenter', onDragEnter)
