@@ -24,6 +24,7 @@ export type SubmitFeedbackParams = {
   type: FeedbackType
 }
 
+// Trap: a new post is hidden until a moderator publishes it →[K:posts-hidden-until-published]
 export async function submitFeedback(params: SubmitFeedbackParams): Promise<FeedbackItem> {
   const { data, error } = await supabase.rpc('submit_feedback', {
     p_title: params.title,

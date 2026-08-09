@@ -50,6 +50,7 @@ const FALLBACK_FSRS = new FSRS(generatorParameters({ enable_fuzz: true }))
 
 const DeckResolutionKey: InjectionKey<DeckResolution> = Symbol('study-session.deck-resolution')
 
+// Trap: the client owns the schedule →[K:client-owns-the-schedule]
 function buildScheduler(deck: SessionDeck): FSRS {
   return new FSRS(
     generatorParameters({

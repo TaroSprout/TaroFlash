@@ -45,8 +45,7 @@ scoped to `corpus/`, never mixed into a code commit, so the user takes or drops 
 
 One **topic** per file — a subsystem you would sit down to understand (Media, Permissions), not a
 single atomic fact, carrying enough context that any one idea in it is graspable without hunting.
-`map.md` is the root index; `hazards.md` is generated from the `hazard: true` tag and is never
-hand-edited.
+`map.md` is the root index; `hazards.md` is the trap roll-call — see below.
 
 Frontmatter is `id`, `domain`, `status` (`current`/`deprecated`), `hazard`, `related`, `updated`.
 **`id` is permanent** — rename the file freely, never change a shipped `id`; it is the address deep
@@ -88,7 +87,17 @@ A hazard is a place where the obvious assumption is quietly wrong and it costs y
 class of thing than a fact, given elevated treatment so nobody misses it. It gets a **hazard block**
 (`> [!HAZARD]`) high in the topic, right after the lead, stating the trap in one strong line plus
 the flip-side framing and a link to the deep walkthrough, and the topic's frontmatter sets
-`hazard: true` so the generated index gathers it.
+`hazard: true`.
+
+**The block is the trap's only text.** It declares the trap's permanent `[K:<slug>]`
+([`knowledge-addressing`](./knowledge-addressing.md)), and nothing else restates it:
+
+- `hazards.md` lists the slug, its topic, and where it's echoed — one line each, no prose to drift.
+- Every trap is **echoed** in the directory it bites, as a one-line `→[K:<slug>]` comment carrying a
+  label and nothing more, so it reaches whoever is standing on it without being read every session.
+  A trap with no directory to echo into is listed in `CLAUDE.md` instead.
+- **Anchor a schema fact in `supabase/schemas/`, never in `supabase/migrations/`** — a migration is
+  append-only, so a pointer written into one can never be corrected.
 
 Three tells, hunted actively on any domain-level change:
 

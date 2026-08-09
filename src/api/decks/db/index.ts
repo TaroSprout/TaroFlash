@@ -46,6 +46,7 @@ export async function fetchMemberDeckCount(): Promise<number> {
   return count ?? 0
 }
 
+// Trap: public means read-only, not shared study →[K:public-is-read-only]
 export async function upsertDeck(deck: Deck): Promise<Deck> {
   const { data, error } = await supabase.rpc('save_deck', {
     p_deck_id: deck.id ?? null,

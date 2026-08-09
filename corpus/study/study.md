@@ -4,7 +4,7 @@ domain: study
 status: current
 hazard: true
 related: [scheduling, media]
-updated: 2026-07-23
+updated: 2026-08-08
 ---
 
 # Study session
@@ -27,14 +27,18 @@ A session walks through four stages, in order:
 2. you **study** the pile;
 3. it shows a **summary** of how the run went.
 
-> [!HAZARD] **A card is marked reviewed the instant you rate it — locally, before the server confirms the save.**
-> Rating a card advances the pile and records the result on the spot; the actual
-> save to the server fires _after_, on its own. That ordering is what makes each
-> review land the moment you make it — but its flip side is a trap. If the save
-> fails, the card is already logged as done in the session's saved progress. The
-> error offers a **refresh** — and refreshing rebuilds that card as
-> already-reviewed, so it's never shown again and never retried. The review is
-> silently gone, and the card's schedule on the server stays stale.
+> [!HAZARD] [K:unconfirmed-review-loss] **The session's verdict on a save is not the server's — and a rating only survives if the session hears back before the run ends.**
+> Rating a card advances the pile on the spot and sends the save off on its own,
+> which is what makes each review land the moment you make it. The save is
+> stubborn: three quick retries, then one more when the connection comes back.
+> The flip side is that its answer has a deadline. When you rate the last card
+> the session waits **one second** for anything still in the air, then writes off
+> whatever hasn't answered — you get a "Save failed" notice and that card drops
+> out of the summary, even for a write that reaches the server a moment later.
+> Offline, the retry that waits for the connection never gets to run before that
+> cutoff. And nothing carries a rating past the tab: the resume snapshot keeps
+> only confirmed reviews, so a rating still in the air when the tab closes is
+> gone with nothing to show it existed.
 > [See how a review is saved ↓](#reviews-save-as-you-go)
 
 ## One pile, whatever the decks
@@ -69,15 +73,20 @@ summary of what you _did_ review — it isn't thrown away.
 Rating a card doesn't wait for the end. Each review is sent to the server the
 instant you make it, one at a time, as you move through the pile.
 
+A send that doesn't get through is tried again — three more times in quick
+succession, and once more the moment the connection returns. Only after all of
+those does the session give up, tell you the save failed, and put the card back
+in the queue for a later run.
+
 So the summary at the end isn't the save — by the time you get there, every
-review is already recorded. The end-of-session step only refreshes the deck
-counts so the dashboard reflects your work.
+review it lists is already recorded. The end-of-session step only refreshes the
+deck counts so the dashboard reflects your work.
 
 > [!WATCH]
-> Because reviews are already on the server card-by-card, closing the tab
-> mid-run loses no _grades_ — everything you rated is saved. What's lost is only
-> the in-tab progress marker that lets a session resume (see below); the reviews
-> themselves survive.
+> Because reviews go one at a time as you rate, closing the tab mid-run loses no
+> _grades_ that have already been confirmed. What's lost is the in-tab progress
+> marker that lets a session resume (see below) — and any rating still waiting on
+> its answer at that moment.
 
 ## Refreshing drops you back in
 

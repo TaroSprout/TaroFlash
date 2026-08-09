@@ -261,6 +261,7 @@ async function runTransliterate(admin: SupabaseClient, lesson: LessonRow): Promi
 // a live phase-in-progress from a dead one. Unlike the old worker, a failed
 // write THROWS (caught by processLessonPhase → settleFailed) rather than being
 // silently swallowed, so a row never advances on a write that didn't land.
+// Trap: the reaper strands healthy slow jobs →[K:stall-reaper-strands-slow-jobs]
 async function update(
   admin: SupabaseClient,
   id: number,

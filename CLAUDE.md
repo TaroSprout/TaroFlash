@@ -24,9 +24,11 @@ Always in context alongside this file: [`toolchain`](.claude/rules/toolchain.md)
 every artifact shares; each `*-authoring` sibling adds what is specific to a rule, ticket, corpus
 topic, test, commit, or reply — and [`rule-authoring`](.claude/rules/rule-authoring.md) shapes them all.
 
+**Traps reach you as `→[K:<slug>]` comments in the code** — resolve one with `grep -rn '\[K:<slug>\]' corpus/` and read the topic before you change what's around it. A trap with no directory to echo into is listed here by slug and one line; there are none today.
+
 | Working on                               | Loads / read                                                                                                                                                                                                                |
 | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Anything in `src/` or `supabase/`        | [`corpus`](.claude/rules/corpus.md) — domain truths + the **trap register**, `corpus/hazards.md`                                                                                                                            |
+| Anything in `src/` or `supabase/`        | [`corpus`](.claude/rules/corpus.md) — domain truths + the trap roll-call, `corpus/hazards.md`                                                                                                                               |
 | Where code lives, which doc governs it   | [`architecture`](.claude/rules/architecture.md)                                                                                                                                                                             |
 | Any `.ts` / `.vue`                       | [`code-style`](.claude/rules/code-style.md), [`FE-formatting`](.claude/rules/FE-formatting.md), [`animations`](.claude/rules/animations.md), [`safari-gotchas`](.claude/rules/safari-gotchas.md)                            |
 | A `.vue` file                            | [`vue-templates`](.claude/rules/vue-templates.md), [`vue-script-order`](.claude/rules/vue-script-order.md), [`vue-props`](.claude/rules/vue-props.md), [`css`](.claude/rules/css.md), [`theming`](.claude/rules/theming.md) |

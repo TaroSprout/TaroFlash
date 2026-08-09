@@ -7,6 +7,7 @@ import { saveDeckPacing, type DeckPacing } from '../db'
  * re-pointed preset link) has to land immediately too — waiting for the modal's
  * Save would leave the two halves disagreeing until then.
  */
+// Trap: a pin is presence, not difference →[K:pin-is-presence-not-difference]
 export function useSaveDeckPacingMutation() {
   const queryCache = useQueryCache()
   return useMutation({

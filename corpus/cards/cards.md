@@ -46,7 +46,7 @@ already knows where it belongs. What makes this safe is that a deck has exactly
 one owner, so there is never a second person minting keys into the same deck at
 the same moment.
 
-> [!HAZARD] **The keys are text, and only sort correctly because the column overrides the database's default sorting rules.**
+> [!HAZARD] [K:card-rank-byte-collation] **The keys are text, and only sort correctly because the column overrides the database's default sorting rules.**
 > Sort keys are compared as plain text. The database's default text collation is
 > locale-aware — it reorders letters by case, so `a` and `A` don't land where a
 > character-by-character comparison would put them. Under that default the server

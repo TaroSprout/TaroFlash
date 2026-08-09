@@ -30,7 +30,7 @@ Where does a single dial's number actually come from? Walk down a ladder:
 The first rung that answers wins — dial by dial, not deck by deck. A deck can
 pin two dials and let a preset drive the other five.
 
-> [!HAZARD] **A pin that matches the preset is still a pin — and it quietly stops following the preset from then on.**
+> [!HAZARD] [K:pin-is-presence-not-difference] **A pin that matches the preset is still a pin — and it quietly stops following the preset from then on.**
 > A dial is "pinned" purely because it's _present_ in the deck's override bag —
 > nothing compares its value to the preset. So dialing a control to the exact
 > number the preset already shows still pins it. It looks identical today, but

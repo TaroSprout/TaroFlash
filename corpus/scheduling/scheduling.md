@@ -25,7 +25,7 @@ Each deck tunes the algorithm with its own pacing — how much you want to
 remember, how gently new cards ramp up, how far out reviews may land. So the very
 same rating can schedule two decks differently.
 
-> [!HAZARD] **The schedule is computed on your device — the database only stores what your device tells it.**
+> [!HAZARD] [K:client-owns-the-schedule] **The schedule is computed on your device — the database only stores what your device tells it.**
 > The algorithm runs in the browser during a session; the server just records the
 > due date and stats the client already worked out. It never recomputes or checks
 > them. The upside is real — there's no second copy of the algorithm to keep in

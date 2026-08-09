@@ -11,11 +11,13 @@ paths:
 true about the system, in plain language — one altitude above the implementation detail in a rule's
 spokes. It cannot path-scope itself, so this file routes it.
 
-**Read the trap register first: [`corpus/hazards.md`](../../corpus/hazards.md).** Every known place
-the obvious assumption is quietly wrong, gathered across all domains. Generated — never hand-edit it;
-tag the topic instead.
+**Traps come to you, not the other way round.** A `→[K:<slug>]` comment in the file you're editing
+names a place the obvious assumption is quietly wrong; resolve it with `grep -rn '\[K:<slug>\]'
+corpus/` and read the topic before you change anything around it.
+[`corpus/hazards.md`](../../corpus/hazards.md) is the roll-call of every one — a slug and a topic
+per line, no prose to drift. Never hand-edit an entry's text; it lives in the topic.
 
-Then pull the topic for the area you're in:
+Pull the topic for the area you're in:
 
 | Working in                                                     | Topic                              |
 | -------------------------------------------------------------- | ---------------------------------- |

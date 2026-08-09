@@ -28,7 +28,7 @@ The lesson carries a status through this — _processing_ while the chain runs,
 _ready_ when it finishes, _failed_ if a step gives up. A reader only sees the
 finished thing.
 
-> [!HAZARD] **A stuck job and a slow-but-healthy job look identical — so the safety net that rescues the first will strangle the second.**
+> [!HAZARD] [K:stall-reaper-strands-slow-jobs] **A stuck job and a slow-but-healthy job look identical — so the safety net that rescues the first will strangle the second.**
 > Nothing watches a step from the inside. The only sign a lesson is still alive
 > is that it wrote something recently; go quiet for ten minutes and a background
 > sweep declares it dead and marks it failed. That's what rescues a job whose
