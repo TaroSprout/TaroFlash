@@ -1,69 +1,43 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { emitSfx } from '@/sfx/bus'
 
-// Auto-scroll kicks in when the pointer is within this many px of a viewport
-// edge, advancing the page so a row can be dragged past the visible window.
-// Speed ramps through these tiers the longer the drag dwells in the edge
-// without leaving or switching direction — pick the last tier whose `afterMs`
-// has elapsed. Keep ascending by `afterMs`.
+// Px from a viewport edge that triggers auto-scroll. →[K:reorder-drag-edge-scroll-ramp]
 const EDGE_ZONE = 90
 
 type EdgeTier = { afterMs: number; speed: number }
+// Ramp tiers by dwell time; keep ascending by `afterMs`.
 const EDGE_RAMP: EdgeTier[] = [
   { afterMs: 0, speed: 16 },
   { afterMs: 450, speed: 36 },
   { afterMs: 2000, speed: 64 }
 ]
 
-// Slots-past-midpoint the drag must travel before the target flips, and the
-// matching deadzone that keeps sub-pixel jitter at a boundary from re-flipping
-// (and double-firing the crossing tick).
+// Slot-fraction margin the target must cross to flip. →[K:reorder-drag-hysteresis]
 const HYSTERESIS = 0.15
 
 const ZERO: ReorderOffset = { x: 0, y: 0 }
 
 export type ReorderOffset = { x: number; y: number }
 
-/**
- * Layout strategy that adapts the engine to a list or a grid. The engine itself
- * is geometry-blind: it tracks the pointer, steps a target slot with hysteresis,
- * auto-scrolls at the edges, and plays the sfx — everything that should never
- * drift between the list and the grid. Only this mapping differs between them.
- */
+/** Maps the engine's pointer/slot math onto a list or a grid. */
 export type ReorderGeometry = {
-  // Continuous ideal slot index for the dragged row given its origin index and
-  // the pointer delta (px) from pickup. Whole-number results map to a slot; the
-  // engine steps the live target toward this with hysteresis.
+  /** Continuous ideal slot index for the dragged row at pointer delta (dx, dy) from pickup. */
   idealIndex: (from: number, dx: number, dy: number) => number
-  // Resting (x, y) px position of slot `index`. The engine derives gap-shift
-  // offsets from the difference between neighbouring slots — so a card wrapping
-  // at a grid-row edge animates to the next row for free, with no grid-specific
-  // code in the engine.
+  /** Resting (x, y) px position of slot `index`. →[K:reorder-drag-gap-shift] */
   position: (index: number) => ReorderOffset
 }
 
 export type ReorderDragOptions = {
   count: () => number
   enabled: () => boolean
-  // Px of fixed chrome (e.g. a sticky toolbar) covering the top of the list.
-  // The top edge zone is offset by this so auto-scroll-up triggers at the
-  // visible list top, not behind the chrome. Defaults to 0.
+  // Px of fixed chrome covering the top of the list, offsetting the top edge zone. Defaults to 0.
   topInset?: () => number
-  // Commit the reorder: move the row at `from` to land at index `to`. Expected
-  // to reorder the rendered list synchronously (optimistic cache write), so the
-  // engine can drop its drag state in the same tick without a snap-back.
   onReorder: (from: number, to: number) => void
-  // Fixed row pitch in px for the 1-D vertical-list case — a convenience that
-  // builds a vertical `geometry`. Ignored when `geometry` is supplied.
+  // Fixed row pitch for the 1-D vertical-list case; ignored when `geometry` is supplied.
   pitch?: number
-  // Full layout strategy — supply for a grid (or any non-uniform layout). Takes
-  // precedence over `pitch`.
+  // Full layout strategy for a grid or non-uniform layout; takes precedence over `pitch`.
   geometry?: ReorderGeometry
-  // Max page scrollY auto-scroll may reach, re-read each frame. Supply a
-  // transform-immune source (e.g. the virtualizer's total size) so it tracks
-  // content that loads in mid-drag — reading the live `scrollHeight` instead
-  // would be polluted by the dragged row's own transform. Falls back to the
-  // scrollHeight captured at pickup when omitted.
+  // Scroll ceiling, re-read each frame. →[K:reorder-drag-edge-scroll-ramp]
   maxScroll?: () => number
 }
 
@@ -80,34 +54,9 @@ function verticalGeometry(pitch: number): ReorderGeometry {
 /**
  * Pointer-driven drag-to-reorder engine for a uniform list or grid.
  *
- * Designed to coexist with a virtualizer: it never moves or clones DOM. The
- * caller renders rows as usual and applies `dragOffset(index)` as an extra
- * `translate` on each row. The dragged row follows the pointer 1:1; the rows it
- * passes shift by one slot to open a gap. The caller is responsible for keeping
- * the dragged row mounted (e.g. via the virtualizer's `rangeExtractor`) so it
- * survives auto-scroll out of the overscan window.
- *
- * Lifecycle: bind `start(index, event)` to a handle's `pointerdown`. The engine
- * attaches window-level move/up listeners for the drag duration and tears them
- * down on drop, cancel, or unmount.
- *
- * @example
- * // 1-D list
- * const reorder = useReorderDrag({
- *   pitch: ROW_PITCH,
- *   count: () => all_cards.value.length,
- *   enabled: () => is_above_md.value,
- *   onReorder: (from, to) => editor.reorderCard(from, to)
- * })
- *
- * @example
- * // 2-D grid
- * const reorder = useReorderDrag({
- *   geometry: { idealIndex, position },
- *   count: () => cards.value.length,
- *   enabled: () => is_rearranging.value,
- *   onReorder: editor.reorderCard
- * })
+ * Never moves or clones DOM — the caller applies `dragOffset(index)` as a `translate` on each row
+ * and keeps the dragged row mounted through auto-scroll. Bind `start(index, event)` to a handle's
+ * `pointerdown`.
  */
 export function useReorderDrag(opts: ReorderDragOptions) {
   const { count, enabled, topInset, onReorder } = opts
@@ -125,37 +74,23 @@ export function useReorderDrag(opts: ReorderDragOptions) {
   let pointer_y = 0
   let raf = 0
 
-  // Max page scrollY, captured at pickup before the dragged row's transform can
-  // pollute it. A translated row counts toward scrollable overflow in some
-  // browsers, so reading the live scrollHeight mid-drag would let auto-scroll
-  // chase its own tail forever off the end of the content.
+  // Fallback scroll ceiling, captured at pickup. →[K:reorder-drag-edge-scroll-ramp]
   let max_scroll_y = 0
 
-  // Direction of the current continuous edge dwell (-1 up / +1 down / 0 none)
-  // and the rAF timestamp it began at, used to ramp the scroll speed.
+  // Current edge dwell direction and when it began, for the scroll ramp.
   let edge_dir = 0
   let edge_since = 0
 
-  // Live drop slot. Stateful (not a pure round) so it can carry hysteresis:
-  // updated by `updateTarget` as the drag translate changes.
   const target_index = ref<number | null>(null)
 
-  // (x, y) px vector from slot `b`'s resting spot to slot `a`'s — i.e. the
-  // offset a card resting at `b` must travel to sit where `a` rests. On a grid
-  // this naturally wraps: the step from a row's first slot to the previous row's
-  // last carries the card up a row and across, not off the edge.
+  /** Px vector from slot `b`'s resting spot to slot `a`'s. →[K:reorder-drag-gap-shift] */
   function slotDelta(a: number, b: number): ReorderOffset {
     const pa = geometry.position(a)
     const pb = geometry.position(b)
     return { x: pa.x - pb.x, y: pa.y - pb.y }
   }
 
-  /**
-   * Extra `translate` (px) the caller should apply to the row at `index`: the
-   * live pointer offset for the dragged row, a one-slot shift for rows the drag
-   * has passed (opening the gap), 0 otherwise. The shift is the geometric gap to
-   * the neighbouring slot, so a grid card wrapping a row edge slides correctly.
-   */
+  /** Extra `translate` (px) the row at `index` should carry — pointer offset, gap shift, or none. */
   function dragOffset(index: number): ReorderOffset {
     const from = from_index.value
     const to = target_index.value
@@ -167,11 +102,7 @@ export function useReorderDrag(opts: ReorderDragOptions) {
     return ZERO
   }
 
-  /**
-   * Whether the row at `index` should animate its offset. The dragged row
-   * tracks the pointer untransitioned (so it doesn't lag the cursor); every
-   * other row transitions so the gap opens and closes smoothly as it passes.
-   */
+  /** Whether the row at `index` should animate its offset — every row but the dragged one. */
   function shouldTransition(index: number): boolean {
     if (from_index.value === null) return false
     return index !== from_index.value
@@ -183,9 +114,7 @@ export function useReorderDrag(opts: ReorderDragOptions) {
     updateTarget()
   }
 
-  // Advance the target toward the drag's ideal slot, but only once it's pushed
-  // past the midpoint by HYSTERESIS — and clear that margin again to reverse.
-  // The while-loops absorb fast multi-slot drags; one tick per real crossing.
+  // While-loops absorb fast multi-slot drags, one tick per real crossing. →[K:reorder-drag-hysteresis]
   function updateTarget() {
     if (from_index.value === null) return
 
@@ -201,18 +130,14 @@ export function useReorderDrag(opts: ReorderDragOptions) {
     target_index.value = next
   }
 
-  // Which edge the pointer sits in: -1 top, +1 bottom, 0 neither. The top zone
-  // is offset by the sticky chrome so it triggers at the visible list top.
+  // -1 top edge, +1 bottom edge, 0 neither; the top zone is offset by `topInset`.
   function edgeDirection(): number {
     if (pointer_y < (topInset?.() ?? 0) + EDGE_ZONE) return -1
     if (window.innerHeight - pointer_y < EDGE_ZONE) return 1
     return 0
   }
 
-  // Drive page scroll while the pointer sits in an edge zone, ramping through
-  // EDGE_RAMP tiers the longer the dwell lasts. Re-reads pointer position each
-  // frame and folds the scroll delta into the dragged offset, so the row stays
-  // under the cursor as the list moves beneath it.
+  // Drives page scroll while the pointer sits in an edge zone. →[K:reorder-drag-edge-scroll-ramp]
   function autoScroll() {
     if (raf) return
 
@@ -249,10 +174,7 @@ export function useReorderDrag(opts: ReorderDragOptions) {
     autoScroll()
   }
 
-  // Once a drag is live, swallow touch-scroll so the page doesn't pan under the
-  // finger — the engine drives any needed scroll via `autoScroll`. Non-passive
-  // so `preventDefault` actually cancels the scroll. Only attached for the drag
-  // duration, so normal touch scrolling is untouched the rest of the time.
+  // Swallows touch-scroll during a drag so the page doesn't pan under the finger.
   function preventTouchScroll(event: TouchEvent) {
     event.preventDefault()
   }
@@ -282,9 +204,7 @@ export function useReorderDrag(opts: ReorderDragOptions) {
 
     if (from !== null) emitSfx('snappy_button_5')
 
-    // Commit and clear in the same synchronous tick: `onReorder` reorders the
-    // list optimistically and `reset` zeroes the offsets, so a single render
-    // shows the row in its new slot with no offset — no snap-back frame.
+    // →[K:reorder-drag-commit-reset-sync]
     if (from !== null && to !== null && from !== to) onReorder(from, to)
     reset()
   }
