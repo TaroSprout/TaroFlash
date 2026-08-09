@@ -101,10 +101,13 @@ function bodyPaddingStyle() {
   return { '--dialog-body-pb': slots.toolbar ? '0px' : 'var(--dialog-px)' }
 }
 
-/** Set directly rather than via a Tailwind arbitrary-value class. →[K:dialog-card-content-grid-padding] */
-// --content-grid-max-width caps to 100% on mobile so the content column always
-// resolves to `100% - padding*2`, rather than a fixed desktop-sized max-width
-// that could still be narrower than the phone's viewport.
+/**
+ * `--content-grid-padding` is set directly rather than via a Tailwind
+ * arbitrary-value class. →[K:dialog-card-content-grid-padding]
+ *
+ * `--content-grid-max-width` caps to 100% on mobile so the content column
+ * resolves to `100% - padding*2`, not a fixed desktop-sized max-width.
+ */
 const card_style = computed(() => ({
   ...(dialog_px && { '--dialog-px': dialog_px }),
   '--content-grid-padding': 'var(--dialog-px)',
