@@ -2,9 +2,8 @@
 import UiButton from '@/components/ui-kit/button.vue'
 import { useI18n } from 'vue-i18n'
 
-// The header-end action on a summary category page — session-state-driven
-// like `session-header-nav-button.vue`'s leading action, just for entering /
-// leaving multi-select instead of navigation.
+// The header-end action on a summary category page — mirrors
+// `session-header-nav-button.vue`'s leading action, but toggles multi-select.
 type SummarySelectButtonProps = {
   is_selecting?: boolean
 }

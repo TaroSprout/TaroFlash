@@ -1,19 +1,5 @@
 import type { CardReviewResult } from '@/views/study-session/composables/session-engine'
 
-/**
- * Pure FSRS-aware aggregation for the post-session summary. Buckets the raw
- * per-card results captured during a session into the categories the summary
- * lists. No reactivity, no i18n — just data in, data out.
- *
- * Maturity bands bucket cards by their scheduled interval (the real mastery
- * signal), not by FSRS state, which is a weak proxy for how well something is
- * known. A card "levels up" when its review pushes it across a band boundary
- * and "levels down" when a failure drops it back below one.
- *
- * Each bucket keeps the results themselves, not a count — the summary opens a
- * page per category listing its cards, and counts are just `.length`.
- */
-
 export type MaturityBand = 'forming' | 'familiar' | 'strong' | 'mastered'
 
 /** The categories the summary lists, in display order. */
@@ -36,6 +22,19 @@ function levelFor(interval_days: number): number {
   return BAND_ORDER.indexOf('mastered')
 }
 
+/**
+ * Pure FSRS-aware aggregation for the post-session summary — no reactivity, no
+ * i18n, just data in, data out.
+ *
+ * Buckets each result into the categories the summary lists. Maturity bands
+ * come from a card's scheduled interval (the real mastery signal), not FSRS
+ * state, which is a weak proxy for how well something is known — a card
+ * "levels up" crossing a band boundary upward, "levels down" dropping back
+ * across one on a failure.
+ *
+ * Each bucket keeps the results themselves, not a count — the summary opens a
+ * page per category listing its cards, and counts are just `.length`.
+ */
 export function aggregateSession(
   results: CardReviewResult[],
   thresholdFor: (deck_id?: number) => number
