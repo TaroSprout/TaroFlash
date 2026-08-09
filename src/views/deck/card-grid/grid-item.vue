@@ -29,9 +29,8 @@ function onMenuSelect(option: DropdownOption) {
   onMenuOptionSelect(option, card.id!)
 }
 
-// A touch hold opens the corner more-menu; a plain tap still flows through the
-// click path (flip / select / mobile editor). In rearrange mode the grid owns
-// pointerdown (drag pickup), and mouse holds stay inert — desktop hovers the menu.
+// A touch hold opens the corner more-menu; the grid itself owns pointerdown
+// in rearrange mode, and mouse holds stay inert — desktop hovers the menu.
 function onPointerdown(event: PointerEvent) {
   if (rearranging || is_selecting.value || event.pointerType === 'mouse') return
   options_hold.arm(event, () => dropdown.value?.show())
@@ -63,14 +62,10 @@ function onCardClick() {
     return
   }
 
-  // Below md the grid is read-only — a tap opens the focused dock editor on
-  // this card instead of flipping it in place. openCard handles that and
-  // returns true; at md+ it returns false and we flip in place below.
+  // Below md a tap opens the dock editor instead of flipping in place.
   if (surface.openCard(card.client_id)) return
 
-  // A click that ends a drag-selection of the card's text shouldn't also flip.
-  // A plain click collapses the selection on mousedown, so this only catches
-  // the release of a real selection.
+  // A click ending a text drag-selection shouldn't also flip.
   const sel = window.getSelection()
   if (sel && !sel.isCollapsed) return
 
@@ -78,16 +73,13 @@ function onCardClick() {
   emitSfx(active_side.value === 'back' ? 'transition_up' : 'transition_down')
 }
 
-// Spamming the flip racks up the browser's click counter, whose double/triple
-// clicks word- and line-select the card content. Suppress the default selection
-// on those multi-clicks only — a single click (and a deliberate click-drag to
-// select) keeps `detail === 1`, so manual selection still works.
+// Suppresses text selection only on a multi-click (`detail > 1`) — spamming
+// the flip would otherwise word/line-select the card content.
 function onCardMouseDown(e: MouseEvent) {
   if (e.detail > 1) e.preventDefault()
 }
 
-// The grid's default face is a live setting — resync even a card the user
-// flipped by hand back to the new default.
+// Resyncs even a card the user flipped by hand, when the grid's default face changes.
 watch(
   () => side,
   (new_side) => (active_side.value = new_side)

@@ -10,15 +10,10 @@ import { pacingFieldsKey, usePacingFields } from './use-pacing-fields'
 import { presetActionsKey, usePresetActions } from './use-preset-actions'
 import DeckSaveButton from '../deck-save-button.vue'
 
-// This page is full-bleed, so `--deck-settings-padding` is 0 and the header row
-// would sit flush against the scrolling container's edge — clipping the preset
-// chip's 2px hover outline, which paints outside its border box. `pt-0.5` is
-// just enough room for it.
-//
-// The scheduling panel's `bgx-*` texture brings `isolation: isolate` with it
-// (its -1 pseudo-element needs the stacking context), which traps the steps
-// dropdowns' popovers inside the panel. `z-10` lifts that whole context above
-// the save button below it, which would otherwise paint over an open menu.
+// `pt-0.5` below leaves room for the preset chip's hover outline, clipped
+// otherwise by the full-bleed page's zero padding.
+// `z-10` on the scheduling panel lifts its `bgx-*` stacking context above the
+// save button, which would otherwise paint over an open steps dropdown.
 const editor = inject(deckEditorKey)!
 
 const pacing = usePacingFields(editor.deck!, editor.draft)

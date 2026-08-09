@@ -7,15 +7,8 @@ import type { MobileCardEditor } from '../mobile-editor/use-mobile-card-editor'
 /**
  * Keep the active card-editing surface aligned with the viewport. Desktop edit
  * mode and the mobile dock editor are two faces of one intent, picked once at
- * open time; resizing across the `md` breakpoint would otherwise strand the user
- * in the surface that no longer fits. On each cross this tears down the current
- * surface and opens the other on the same card. The unsaved staged card is a
- * temp already living in `all_cards`, so it survives the swap either way.
- *
- * @param shell - The deck-view shell; owns desktop `mode`.
- * @param editor - The card-list controller; its `pending_focus_client_id` queues
- *   a desktop row for autofocus so grow lands on the right card.
- * @param mobile_editor - The mobile dock editor; the cursor into `all_cards`.
+ * open time; resizing across the `md` breakpoint tears down the current
+ * surface and opens the other on the same card.
  */
 export function useEditorBreakpointSync(
   shell: DeckViewShell,

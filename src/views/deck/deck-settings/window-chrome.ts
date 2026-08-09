@@ -13,16 +13,8 @@ export type WindowChrome = ReturnType<typeof useWindowChrome>
  * Drives a tab window's surrounding chrome — the pinned card preview and the
  * form aside — in and out together, so a tab can claim the whole content area.
  *
- * `is_tucked` flips at the preview's edge-on midpoint rather than when the
- * animation starts, so the caller can restack the card behind the content page
- * on the one frame where it can't be seen.
- *
- * @param preview - the positioned wrapper around the pinned card, not the card itself
- * @param aside - the aside element sharing the content row with the tab outlet
- *
- * @example
- * const chrome = useWindowChrome(preview_el, aside_el)
- * await chrome.tuck()
+ * `is_tucked` flips at the preview's edge-on midpoint, not when the animation
+ * starts, so the caller can restack the card on the one frame it can't be seen.
  */
 export function useWindowChrome(
   preview: Readonly<Ref<HTMLElement | null | undefined>>,

@@ -113,10 +113,8 @@ export function usePacingFields(deck: Deck, draft: DeckDraft): PacingFields {
   // it's the preset relationship being reported, not any one field's state.
   const override_count = computed(() => Object.keys(draft.pacing_overrides).length)
 
-  // Every pacing field as the deck currently displays it — the same ladder the
-  // individual controls read through, collected into one preset-shaped payload.
-  // Fork and push both promote exactly this, so what the user sees is what the
-  // preset gets.
+  // Every field as it's currently displayed, collected into one preset-shaped
+  // payload — fork and push both promote exactly this.
   const resolved_pacing = computed<ReviewPacingValues>(() => {
     const values = {} as Record<PlainFieldKey | CapFieldKey, unknown>
 

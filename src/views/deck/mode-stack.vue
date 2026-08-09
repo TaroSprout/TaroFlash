@@ -24,10 +24,10 @@ const { sticky_header = null } = defineProps<ModeStackProps>()
 const shell = inject(deckViewShellKey)!
 
 const stack = useTemplateRef<HTMLElement>('stack')
-// Panes currently mid-slide, keyed by element. A Set (not a counter) so an
-// interrupted transition can't unbalance it: delete is idempotent, and the next
-// add/delete cycle reconciles a missed terminal hook.
+// A Set, not a counter — delete is idempotent, so an interrupted transition can't unbalance it.
 const sliding_panes = ref(new Set<Element>())
+// Holds the clip from mode-switch until the entering pane's transition starts
+// — a lazy overlay pane can take a beat to load, and without this the stack collapses in that gap.
 const switch_pending = ref(false)
 const clip_min_height = ref(0)
 
@@ -79,22 +79,15 @@ function onOverlayAfterLeave(el: Element) {
   sliding_panes.value.delete(el)
 }
 
-// A rapid mode flip can yank an entering/leaving pane before its slide
-// finishes; Vue fires the *-cancelled hook instead of *-after. Stop the tween
-// and drop the pane from the in-flight set so `is_transitioning` can't latch on
-// forever — which would strand the clip min-height and leave the page scrolled
-// past its content.
+// On a rapid mode flip Vue fires *-cancelled instead of *-after — drop the
+// pane from the in-flight set so `is_transitioning` can't latch on forever.
 function onOverlayCancelled(el: Element) {
   cancelOverlayAnimation(el)
   sliding_panes.value.delete(el)
 }
 
 // Sync flush: the DOM still shows the outgoing mode, so the capture reads the
-// scroll and rects the user is actually looking at. The scroll jump is never
-// seen — the transition hooks re-offset both panes before the next paint.
-// `switch_pending` holds the clip from this moment until the entering pane's
-// transition starts: a lazy overlay pane can take a beat to load on first
-// entry, and without the held min-height the stack collapses in that gap.
+// scroll and rects the user is actually looking at.
 watch(
   shell.mode,
   () => {

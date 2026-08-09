@@ -17,36 +17,17 @@ export const cardEditorKey = Symbol('cardEditor') as InjectionKey<CardListContro
 
 type Options = {
   deck_id: number
-  // intent actions hand control back to the shell: `exitMode` when a flow ends
-  // editing, `setMode` when `newCard` drops the user into edit mode
   shell: Pick<DeckViewShell, 'exitMode' | 'setMode' | 'sort_by'>
   search_query: Ref<string>
 }
 
 /**
- * Single root composable for the deck-editor card list. Wires the infinite
- * cards query, deck query, virtual list, selection, mutations, and intent
- * actions together, and exposes the consolidated surface a single
- * `provide(cardEditorKey)` hands to every consumer (list, grid, list-item,
- * list-item-card, card-importer, mode-toolbar, deck-hero).
+ * Root composable for the deck-editor card list — wires the cards query, deck
+ * query, virtual list, selection, mutations, and intent actions into the one
+ * surface `provide(cardEditorKey)` hands to every consumer.
  *
- * Pure card-data concerns: which mode/pane is on screen lives in
- * `useDeckViewShell`. Selection is orthogonal to mode: `is_selecting` flips on
- * the moment any card is selected, regardless of which mode is active. Also
- * owns the `saving` flag and the INSERT-vs-UPDATE routing in `updateCard`.
- *
- * Calls `useDeckQuery` once internally and forwards `deck.card_count` into
- * `useCardSelection`. Pinia Colada dedupes by key, so other consumers (e.g.
- * the deck overview panel) holding the same handle share the cache entry.
- *
- * @param opts.deck_id - Numeric deck id this controller is scoped to.
- * @param opts.shell - The deck-view shell; intent actions call its `exitMode`
- *   when a flow ends editing (e.g. deleting the whole selection).
- *
- * @example
- * const shell = useDeckViewShell()
- * const editor = useCardListController({ deck_id, shell })
- * provide(cardEditorKey, editor)
+ * Selection is orthogonal to mode: `is_selecting` flips on regardless of
+ * which mode is active.
  */
 export function useCardListController(opts: Options) {
   const { t } = useI18n()
@@ -68,36 +49,28 @@ export function useCardListController(opts: Options) {
 
   const saving = ref(false)
 
-  // In-flight eager insert per staged card, keyed by client_id. `updateCard`
-  // awaits the entry's promise so a keystroke landing mid-insert becomes an
-  // UPDATE on the row it created, never a second INSERT.
+  // `updateCard` awaits a staged card's entry here, so a keystroke landing
+  // mid-insert becomes an UPDATE on the row it created, never a second INSERT.
   const pending_inserts = new Map<string, Promise<void>>()
 
-  // Eager inserts run one at a time. A card's key is minted against its
-  // rendered neighbours, and a sibling staged moments earlier only carries one
-  // once its own insert resolved — minting concurrently hands both the same key.
+  // Chains eager inserts one after another, so a key is always minted against
+  // neighbours whose own insert already resolved.
   let insert_queue: Promise<void> = Promise.resolve()
 
-  // client_id of the card last staged through the create seam (`addFocusedCard`),
-  // awaiting autofocus + grow-in. The matching row claims it on mount (see
-  // `claimFocus`) and focuses itself.
+  // client_id awaiting autofocus + grow-in, claimed once on mount. →[K:deck-editor-focus-claim]
   const pending_focus_client_id = ref<string | null>(null)
 
-  // client_id of a freshly-added card awaiting its grow-in reveal. Set by the
-  // create seam (`addFocusedCard`) — never by `editCard`, which navigates to an
-  // existing card and must not animate its height. Claimed once on mount.
+  // client_id awaiting its grow-in reveal only — never set by `editCard`, which
+  // must not animate an existing card's height. →[K:deck-editor-focus-claim]
   const pending_grow_client_id = ref<string | null>(null)
 
-  // The mounted editor list registers its `scrollToCard` here so `editCard`
-  // can reach it without a template-ref chain through the mode-stack's
-  // dynamic `<component :is>` panes (see list.vue).
+  // Registered by the mounted editor list so `editCard` can scroll to a card
+  // without a template-ref chain through mode-stack's dynamic pane.
   const list_scroller = shallowRef<{ scrollToCard: (client_id: string) => void } | null>(null)
 
-  // Backstop, not the mechanism: entering edit mode forces the deck's own order,
-  // so the editor is normally always reorderable. The gap it closes is mobile,
-  // where the dock keeps page settings reachable mid-edit — change the sort
-  // there, widen to desktop, and drag would otherwise come back over a list
-  // whose rendered neighbours aren't rank neighbours.
+  // False only on mobile mid-edit, where the dock keeps the sort control
+  // reachable — drag would otherwise run over rendered neighbours that aren't
+  // rank neighbours.
   const can_reorder = computed(() => toValue(opts.shell.sort_by) === 'default')
 
   const card_attributes = computed<DeckCardAttributes>(() => ({
@@ -107,23 +80,13 @@ export function useCardListController(opts: Options) {
 
   /**
    * The single create seam every "add card" intent funnels through — desktop
-   * toolbar, per-row append / prepend, the editor's empty-state CTA, and the
-   * mobile dock editor. Guards the plan cap, stages the temp via `insert`,
-   * optionally records it as the autofocus + grow-in target, then fires its
-   * INSERT in the background so the card is a real, saved card before a single
-   * key is pressed. No-op past the cap.
+   * toolbar, per-row append / prepend, the empty-state CTA, the mobile dock
+   * editor. Stages the temp via `insert`, optionally marks it as the focus
+   * target, then fires its INSERT in the background. No-op past the plan cap.
    *
-   * The focus target is assigned in the same synchronous block as `insert()`,
-   * after the sole `await` (the cap guard): the list insert queues Vue's render,
-   * which flushes before any later microtask, so assigning
-   * `pending_focus_client_id` after a *further* `await` would lose the race —
-   * the row would mount and claim focus before the target is set.
-   *
-   * @param insert - Virtual-list insert to run once the guard passes; returns
-   *   the staged temp's `client_id`.
-   * @param focus - Whether the new row should autofocus and grow in. Off for the
-   *   mobile dock editor, which opens its own focused surface over the staged
-   *   card and would fight the desktop row's autofocus.
+   * @param focus - Off for the mobile dock editor, which opens its own
+   *   focused surface over the staged card and would fight the row's own
+   *   autofocus.
    * @returns The staged `client_id`, or `undefined` when the cap vetoes staging.
    */
   async function stageCard(insert: () => string, focus = false): Promise<string | undefined> {
@@ -131,6 +94,8 @@ export function useCardListController(opts: Options) {
 
     const client_id = insert()
 
+    // Assign in the same tick as insert — the row mounts before any later
+    // microtask. →[K:deck-focus-microtask-ordering]
     if (focus) {
       pending_focus_client_id.value = client_id
       pending_grow_client_id.value = client_id
@@ -178,50 +143,30 @@ export function useCardListController(opts: Options) {
   /**
    * The editor's "new card" intent: enter edit mode, play the add chime, then
    * stage a fresh card at the top for immediate typing. Shared by the toolbar
-   * button and the empty-state CTA so the mode-switch + chime + autofocus flow
-   * lives in one place.
-   *
-   * With cards already on screen the mode-stack is mounted, so we await its
-   * edit-pane slide before staging — the new card's focus + scroll-into-view
-   * then read final positions, not a mid-animation transform. On an empty deck
-   * the mode-stack isn't mounted (the view shows the empty state), so nothing
-   * reports the transition settled and awaiting would hang forever; the stack
-   * mounts fresh in edit mode the instant the staged card flips the view out of
-   * its empty state, so we just set the mode and stage synchronously.
-   *
-   * The add chime plays alone: the new row's autofocus is programmatic, which
-   * list-item-card's onFocusIn detects and stays silent for, so the card's own
-   * focus `slide_up` never fires to collide with it.
+   * button and the empty-state CTA.
    */
   async function newCard() {
     const stack_mounted = list.all_cards.value.length > 0
     const entered = opts.shell.setMode('edit')
 
+    // Only await the edit-pane slide when it's mounted to slide — an empty
+    // deck has no mode-stack yet, and awaiting would hang forever.
     if (stack_mounted) await entered
 
+    // The new row's autofocus is programmatic and stays silent, so the chime
+    // plays alone.
     emitSfx('snappy_button_2')
     addCardAtTop()
   }
 
-  /**
-   * One-shot autofocus claim: returns true exactly once, for the card whose
-   * `client_id` was last staged through the create seam (`addFocusedCard`). The
-   * matching row calls this on mount and focuses its editor; every other card
-   * gets false.
-   */
+  /** One-shot autofocus claim, true exactly once for the pending client_id. →[K:deck-editor-focus-claim] */
   function claimFocus(client_id: string): boolean {
     if (pending_focus_client_id.value !== client_id) return false
     pending_focus_client_id.value = null
     return true
   }
 
-  /**
-   * One-shot grow-in claim: returns true exactly once, for the freshly-added
-   * card whose `client_id` was staged through the create seam (`addFocusedCard`).
-   * The matching row calls this on mount and plays its reveal. `editCard` never
-   * sets this target, so navigating to an existing card focuses it without the
-   * grow-in.
-   */
+  /** One-shot grow-in claim, true exactly once for the pending client_id. →[K:deck-editor-focus-claim] */
   function claimGrow(client_id: string): boolean {
     if (pending_grow_client_id.value !== client_id) return false
     pending_grow_client_id.value = null
@@ -233,34 +178,23 @@ export function useCardListController(opts: Options) {
     list_scroller.value = scroller
   }
 
-  /**
-   * The grid dropdown's "Edit" intent: switch to edit mode, then scroll the
-   * chosen card into view. The scroll waits on the mode transition settling —
-   * mode-stack owns the window scroll + pane transforms while it slides, so
-   * scrolling earlier lands at the wrong offset. `scrollToCard` pulls the row
-   * into the virtualizer's window even when it starts outside the current range,
-   * and `pending_focus_client_id` lands the editor focus on it — without the
-   * grow-in reveal, which stays reserved for freshly-added cards (`claimGrow`).
-   */
+  /** The grid dropdown's "Edit" intent: switch to edit mode, then scroll the chosen card into view. */
   async function editCard(card_id: number) {
     const entry = list.all_cards.value.find((c) => c.id === card_id)
     if (!entry) return
 
+    // No grow-in — that stays reserved for freshly-added cards (`claimGrow`).
     pending_focus_client_id.value = entry.client_id
+
+    // mode-stack owns the window scroll + pane transforms while sliding, so
+    // scroll only once the transition settles.
     await opts.shell.setMode('edit')
     list_scroller.value?.scrollToCard(entry.client_id)
   }
 
   /**
-   * Reposition a persisted card within the deck by drag index. `from`/`to` are
-   * indices into `list.all_cards`. Mints a key between the drop slot's two
-   * persisted neighbours and fires the mutation, which optimistically re-keys
-   * and re-sorts the cache synchronously (so the dropped row settles without a
-   * refetch) and reconciles on settle. Failures roll back in the mutation, so
-   * the reorder visibly snaps back — a toast explains why.
-   *
-   * No-op when the dragged row is a temp: it has no key yet, and nothing to
-   * persist until its first save.
+   * Reposition a persisted card within the deck by drag index, `from`/`to`
+   * indexing `list.all_cards`. No-op on a temp row — it has no key yet.
    */
   function reorderCard(from: number, to: number) {
     const cards = list.all_cards.value
@@ -307,18 +241,12 @@ export function useCardListController(opts: Options) {
 
   /**
    * Insert the staged temp at its rendered position and promote it on success.
+   * The key is minted here, not at stage time, so it reflects the temp's
+   * neighbours as of the actual save.
    *
-   * The key is minted here, not when the card was staged, so it reflects
-   * whatever the temp's neighbours are at the moment it's actually saved.
-   *
-   * `guardAddCards` already vetoes staging past the plan cap, but that check
-   * runs when the temp is added — a stale `card_count` or a concurrent edit on
-   * another device can still let a write reach the cap trigger and be rejected
-   * here. `handleLimitError` re-surfaces the upgrade alert for that case and the
-   * entry is left staged for the caller to keep or roll back. Any other
-   * rejection propagates.
-   *
-   * @returns `false` when the cap rejected the write, `true` on success.
+   * @returns `false` when a race let the write reach the plan cap after
+   *   `guardAddCards` already passed it — `handleLimitError` re-surfaces the
+   *   upgrade alert and the entry is left staged. Any other rejection propagates.
    */
   async function insertTemp(
     temp_id: number,
@@ -345,11 +273,9 @@ export function useCardListController(opts: Options) {
    * Fire the eager INSERT for a just-staged card, queued behind any insert
    * already in flight so successive creates mint their keys in render order.
    *
-   * Failures are swallowed: this insert only ever carries an empty card, so
-   * nothing the user typed can be lost. The entry simply stays a temp and the
-   * next edit re-inserts it — no error toast for a save the user never asked
-   * for. A cap rejection is the exception: the deck genuinely can't hold the
-   * card, so the row comes back out of the list.
+   * Failures are swallowed — the staged card is still empty, so nothing the
+   * user typed is lost and the next edit re-inserts it. A cap rejection is
+   * the exception: the row comes back out of the list.
    */
   function insertStaged(client_id: string) {
     const entry = list.findEntryByClientId(client_id)
@@ -372,10 +298,9 @@ export function useCardListController(opts: Options) {
   /**
    * Route a resolved edit to INSERT or UPDATE.
    *
-   * @param staged - The entry the card had before any in-flight eager insert
-   *   resolved, or `undefined` for an already-persisted card. Re-read here by
-   *   client_id: the insert may have promoted it (so this is an UPDATE) or, at
-   *   the cap, rolled it out of the list entirely (so there's nothing to save).
+   * @param staged - The card's entry before any in-flight eager insert
+   *   resolved, re-read by client_id since that insert may have promoted it
+   *   or, at the cap, rolled it out of the list.
    */
   function persistEdit(id: number, staged: CardEntry | undefined, values: Partial<Card>) {
     const entry = staged && list.findEntryByClientId(staged.client_id)

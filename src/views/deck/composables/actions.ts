@@ -23,12 +23,7 @@ type Args = {
 /**
  * Intent handlers for the deck-editor: confirm + delete, open + move, enter
  * selection, exit mode. Composes modal / alert / sfx around the underlying
- * mutations so the controller doesn't carry that UI baggage. Flows that end
- * editing hand control back to the deck-view shell via `shell.exitMode()`.
- *
- * @example
- * const actions = useCardActions({ list, selection, mutations, deck_id, shell })
- * actions.onDeleteCards(card_id)
+ * mutations so the controller doesn't carry that UI baggage.
  */
 export function useCardActions({ list, selection, mutations, deck_query, deck_id, shell }: Args) {
   const { t } = useI18n()

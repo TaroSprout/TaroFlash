@@ -37,18 +37,15 @@ function onClick(e: MouseEvent) {
     return
   }
 
-  // If the click is on a button, let the button handle it
-  // Prevent default to avoid stealing focus state
+  // Let a button handle its own click instead of stealing focus.
   if (closest('button')) {
     e.preventDefault()
     return
   }
 
-  // If the click IS NOT on an input, prevent default to avoid stealing focus state
-  // If the click IS on an input, we expect it to steal focus and don't want to prevent that here
+  // Only a contenteditable is allowed to steal focus.
   if (!closest('[contenteditable]')) e.preventDefault()
 
-  // focus the card's front-text editor if the card doesn't already have focus
   if (!list_item_card.value?.hasFocusWithin()) list_item_card.value?.focusEditor()
 }
 </script>

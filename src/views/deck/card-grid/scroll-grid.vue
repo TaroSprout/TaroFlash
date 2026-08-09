@@ -41,8 +41,7 @@ const grid_el = useTemplateRef<HTMLElement>('grid_el')
 const sentinel = useTemplateRef<HTMLElement>('sentinel')
 const container_width = ref(0)
 const scroll_margin = ref(0)
-// container_width starts at 0, so columns/row_count fall back to a single tall
-// column for one frame — gate the rendered height on this so that never paints.
+// Gates the rendered height so the single-tall-column fallback frame never paints.
 const measured = ref(false)
 
 const { cell_width, gap, columns, row_count, row_pitch, itemPosition } = useCardGrid(
@@ -51,16 +50,13 @@ const { cell_width, gap, columns, row_count, row_pitch, itemPosition } = useCard
   () => displayed_cards.value.length
 )
 
-// Reordering shares the editor list's engine — same sounds, same gap-shift feel.
-// Only the geometry differs: a card's ideal slot is read in 2-D (column + row),
-// and a gap-shift is the px gap to the neighbouring cell, so a card wrapping a
-// row edge animates to the next row for free.
+// Shares the editor list's reorder engine; only the geometry differs — a
+// card's ideal slot is read in 2-D (column + row).
 const reorder = useReorderDrag({
   count: () => displayed_cards.value.length,
   enabled: () => is_rearranging.value && !is_active.value,
   topInset: () => sticky_toolbar?.getBoundingClientRect().bottom ?? 0,
-  // Clean, transform-immune scroll bound that grows as infinite-scroll loads
-  // more rows mid-drag, so auto-scroll past the sentinel keeps going.
+  // Grows as infinite-scroll loads more rows mid-drag, so auto-scroll past the sentinel keeps going.
   maxScroll: () => scroll_margin.value + virtualizer.value.getTotalSize() - window.innerHeight,
   onReorder: reorderCard,
   geometry: {
@@ -80,8 +76,7 @@ const virtualizer = useWindowVirtualizer(
     estimateSize: () => row_pitch.value,
     overscan: OVERSCAN,
     scrollMargin: scroll_margin.value,
-    // Keep the dragged card's row rendered even after auto-scroll carries it out
-    // of the overscan window — otherwise the card unmounts mid-drag.
+    // Keeps the dragged card's row rendered past the overscan window so it doesn't unmount mid-drag.
     rangeExtractor: (range) => {
       const rows = defaultRangeExtractor(range)
       const dragging = reorder.dragging_index.value
@@ -94,9 +89,8 @@ const virtualizer = useWindowVirtualizer(
   }))
 )
 
-// Flatten the virtualizer's visible rows into individual positioned cards, so
-// each card is laid out (and dragged) on its own. The per-card transform is the
-// seam the reorder engine's live offset is added on top of.
+// Flattens the virtualizer's visible rows into individually positioned cards,
+// so each one's transform is the seam the reorder engine's live offset adds to.
 const visible_items = computed(() => {
   const cols = columns.value
   const total = displayed_cards.value.length
@@ -114,37 +108,27 @@ const visible_items = computed(() => {
 })
 
 let resize_observer: ResizeObserver | undefined
-// The sticky toolbar (md+) covers the top of the grid; its viewport-space
-// bottom is the inset where drag auto-scroll-up should start.
+// Viewport-space bottom of the sticky toolbar (md+) — the inset drag auto-scroll-up starts from.
 let sticky_toolbar: HTMLElement | null = null
-// The card lifted on pickup, held so the matching drop can settle it back — the
-// drop fires from a window pointerup, not a DOM event on the card.
+// Held so the matching drop, which fires from a window pointerup rather than
+// a DOM event on the card, can settle it back.
 let lifted_card: HTMLElement | null = null
 
-// Measure the container, not the grid itself: during a mode-swap the grid pane
-// is transformed (it scales + drops out of flow), which would corrupt its own
-// rect. The parent stays in flow, so its width and document offset stay true.
+// Measures the parent, not the grid pane itself — the pane is transformed
+// during a mode-swap, which would corrupt its own rect.
 function measureLayout() {
   const container = grid_el.value?.parentElement
   if (!container) return
   container_width.value = container.clientWidth
   scroll_margin.value = container.getBoundingClientRect().top + window.scrollY
   measured.value = true
-  // scrollMargin flows into the virtualizer's options reactively, but its own
-  // scroll-offset tracking doesn't otherwise know to resync against it — an
-  // explicit measure() keeps the two from racing (see the resize debounce
-  // below for why this can otherwise fire mid-scroll).
+  // Explicit measure() keeps the virtualizer's own scroll-offset tracking from racing scrollMargin.
   virtualizer.value.measure()
 }
 
-// The dock publishing its live height resizes the page body (see
-// mobile-dock-host.vue), which can itself be driven by --edge-safe-padding
-// changing live while the visual viewport resizes during a scroll gesture on
-// mobile Chrome. Observing document.body means that cascade fires this
-// mid-scroll, computing `scroll_margin` from a `window.scrollY` snapshot
-// that's still moving — debounce so a resize burst settles once the scroll
-// (and the cascade it triggered) has actually stopped, instead of feeding the
-// virtualizer a scroll_margin that's already stale by the time it's set.
+// Debounced so a resize burst (the mobile dock's live height, cascading from
+// --edge-safe-padding) settles after scroll stops, instead of measuring
+// scroll_margin from a window.scrollY snapshot that's still moving.
 const RESIZE_DEBOUNCE_MS = 120
 let resize_timer: ReturnType<typeof setTimeout> | undefined
 function onBodyResize() {
@@ -152,15 +136,13 @@ function onBodyResize() {
   resize_timer = setTimeout(measureLayout, RESIZE_DEBOUNCE_MS)
 }
 
-// The drag/gap-shift offset (px) the reorder engine wants applied to the card at
-// `index`, on top of its resting slot position. Empty until a drag is live.
+/** The reorder engine's live gap-shift offset (px) for the card at `index`, on top of its resting slot. */
 function dragTransform(index: number) {
   const offset = reorder.dragOffset(index)
   return `translate(${offset.x}px, ${offset.y}px)`
 }
 
-// Idle iOS-style jiggle: vary phase and tempo per card off its index so the grid
-// shimmers organically instead of beating in unison.
+// Varies phase and tempo per card off its index so the idle jiggle shimmers organically, not in unison.
 function jiggleStyle(index: number) {
   return {
     '--jiggle-delay': `${-(index % 11) * 47}ms`,
@@ -168,8 +150,6 @@ function jiggleStyle(index: number) {
   }
 }
 
-// Begin a drag and, once it actually starts (gated to rearrange mode), lift the
-// grabbed card. The element is held so the matching drop can settle it back.
 function beginDrag(index: number, event: PointerEvent) {
   reorder.start(index, event)
   if (reorder.dragging_index.value === null) return
@@ -178,9 +158,7 @@ function beginDrag(index: number, event: PointerEvent) {
   if (lifted_card) liftListItem(lifted_card)
 }
 
-// Mouse picks up immediately; touch waits out a press-and-hold so a plain swipe
-// still scrolls the grid. The hold aborts the moment the finger drifts. Outside
-// rearrange mode each grid item owns its own long-press (see grid-item.vue).
+// Touch waits out a press-and-hold so a plain swipe still scrolls the grid; mouse picks up immediately.
 function onItemPointerdown(index: number, event: PointerEvent) {
   if (!is_rearranging.value || is_active.value) return
 

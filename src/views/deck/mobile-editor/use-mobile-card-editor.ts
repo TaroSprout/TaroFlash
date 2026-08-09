@@ -16,17 +16,11 @@ type CardSide = 'front' | 'back'
 export type ImageControls = { openPicker: () => void; onRemove: () => void }
 
 /**
- * Drives the deck view's focused single-card editor — the mobile-only surface
- * that lives in the app dock and lets the user edit one face at a time, flip
- * between sides, and cycle prev/next through the whole deck.
+ * Drives the deck view's focused single-card editor — the mobile-only
+ * surface in the app dock that edits one face at a time and cycles prev/next.
  *
- * Holds no card data of its own: the cursor is a `client_id` into the editor
- * controller's `all_cards`, so it stays valid across the temp→persisted
- * promotion (the client_id is stable) and the current card re-derives live as
- * the list changes. Saving and image upload funnel back through the same
- * controller the desktop list editor uses, so there's a single persistence path.
- *
- * @param controller - The deck's card-list controller (provided via cardEditorKey).
+ * Holds no card data of its own: the cursor is a `client_id` into the
+ * controller's `all_cards`, so it stays valid across the temp→persisted swap.
  */
 export function useMobileCardEditor(controller: CardListController) {
   const cards = controller.list.all_cards
@@ -73,14 +67,7 @@ export function useMobileCardEditor(controller: CardListController) {
     close_modal?.()
   }
 
-  /**
-   * The mobile "new card" intent: stage a fresh temp card through the shared
-   * controller (gated on the plan cap, same as the desktop toolbar) and open
-   * the mobile editor focused on it. Shared by the empty-state CTA and the
-   * dock's new-card button at phone width, so staging + opening stays in one
-   * place. No-op when the cap blocks staging — `addCard` already surfaced the
-   * upgrade alert.
-   */
+  /** The mobile "new card" intent: stage through the shared controller, then open focused on it. */
   async function openNewCard() {
     const client_id = await controller.addCard()
     if (!client_id) return
@@ -101,8 +88,7 @@ export function useMobileCardEditor(controller: CardListController) {
     emitSfx(side.value === 'back' ? 'transition_up' : 'transition_down')
   }
 
-  // Stepping always lands on the front so each card opens the same way; the
-  // editor remounts on the client_id change, re-seeding the uncontrolled face.
+  // Always lands on the front, so each card opens the same way.
   function step(delta: number) {
     const next = cards.value[index.value + delta]
     if (!next) return
@@ -119,9 +105,7 @@ export function useMobileCardEditor(controller: CardListController) {
     step(1)
   }
 
-  // One side at a time, saved sequentially, so the cached card (kept current by
-  // saveCard's optimistic patch) is a safe merge base — no need to send both
-  // sides the way the dual-editor list row does.
+  // One side at a time — unlike the dual-editor list row, never both.
   function update(edited_side: CardSide, text: string) {
     const card = current.value
     if (!card) return
@@ -129,9 +113,7 @@ export function useMobileCardEditor(controller: CardListController) {
     return controller.updateCard(card.id!, { [`${edited_side}_text`]: text })
   }
 
-  // After a move/delete removes the current card, land on whatever now sits at
-  // its old slot (or the new last card); close once the deck is empty. No-op
-  // when the card is still there — the user dismissed the confirm/move modal.
+  // Lands on whatever now sits at the removed card's old slot; closes once the deck is empty.
   function reconcileCursor(prev_index: number) {
     if (current.value) return
     if (!cards.value.length) return close()

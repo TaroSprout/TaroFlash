@@ -7,16 +7,9 @@ import { mobileCardEditorKey } from '@/views/deck/mobile-editor/use-mobile-card-
 export type EditorSurface = ReturnType<typeof useEditorSurface>
 
 /**
- * Single source of truth for *which* card-editing surface the deck view uses at
- * the current viewport. Below the `md` breakpoint the mobile dock editor is the
- * deck's only editing surface; at md+ it's the desktop mode-stack. Every entry
- * point — empty-state CTA, mobile dock button, edit menu, card tap — routes
- * through here so the breakpoint and the surface choice can never drift apart.
- *
- * @example
- * const surface = useEditorSurface()
- * surface.openNewCard()            // stage + open on the fitting surface
- * if (surface.openCard(id)) return // mobile handled it; desktop falls through
+ * Single source of truth for *which* card-editing surface the deck view uses
+ * at the current viewport — the mobile dock editor below `md`, the desktop
+ * mode-stack at md+. Every entry point routes through here.
  */
 export function useEditorSurface() {
   const editor = inject(cardEditorKey, null)
