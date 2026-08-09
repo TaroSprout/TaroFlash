@@ -12,16 +12,11 @@ export const useMemberStore = defineStore('member', () => {
   const error = query.error
   const status = query.status
 
-  // `id` is sourced from the session (set synchronously once auth restores),
-  // not the member-profile query. Downstream api calls that scope queries by
-  // member_id read this field synchronously, so racing against a pending
-  // profile fetch would stringify `undefined` into the query and fail.
+  // From the session, which lands in one step — a profile still loading reads as nobody.
   const id = computed(() => session.user?.id)
   const display_name = computed(() => member.value?.display_name)
   const description = computed(() => member.value?.description)
-  // Sourced from the session, not the member-profile query — the `members`
-  // row's email is only set once at signup and goes stale after an email
-  // change, while the session always reflects the current auth email.
+  // From the session: the profile's copy is written once at signup and never updated.
   const email = computed(() => session.user?.email)
   const created_at = computed(() => member.value?.created_at)
   const avatar_url = computed(() => member.value?.avatar_url)
@@ -34,18 +29,14 @@ export const useMemberStore = defineStore('member', () => {
 
   const has_member = computed(() => Boolean(id.value))
 
-  // The account was deleted server-side while the JWT is still valid: auth
-  // says we're logged in, but the profile fetch succeeded with zero rows
-  // (`fetchMemberById` resolves PGRST116 to null rather than throwing, so
-  // `error` stays empty). Only trustworthy once the query has settled —
-  // `data` is null while pending too.
+  // Signed in, but the account behind it is gone. Only meaningful once the
+  // profile has finished loading — it reads as absent while still in flight.
+  // →[K:deleted-account-token-outlives-deletion]
   const profile_missing = computed(
     () => session.authenticated && status.value === 'success' && member.value == null
   )
 
-  // Deletion requested but not yet carried out. Distinct from profile_missing
-  // above, which is the *post*-purge case (the row is gone) — these are two
-  // different states and the pending one is recoverable.
+  // Deletion asked for but not yet carried out — still recoverable, unlike `profile_missing`.
   const pending_deletion = computed(() => Boolean(member.value?.delete_at))
   const delete_at = computed(() => member.value?.delete_at ?? null)
 

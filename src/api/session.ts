@@ -17,9 +17,10 @@ export type LoginOutcome =
 
 export type OAuthProvider = 'google'
 
-// In dev, requests can come from a LAN hostname (e.g. testing on a phone) rather
-// than localhost — Supabase must redirect back to that same hostname, not the
-// prod URL baked into the env var.
+/**
+ * Where an auth email or consent screen sends the browser back to — the machine
+ * you're testing from in dev, the production URL everywhere else.
+ */
 function buildRedirectUrl(path: string, prodUrl: string): string {
   if (
     import.meta.env.DEV &&
@@ -39,13 +40,13 @@ const RESET_PASSWORD_REDIRECT_URL = buildRedirectUrl(
 
 const GET_SESSION_TIMEOUT_MS = 2000
 
-// getSession() triggers a background refresh_token request when the cached
-// session is expired. supabase-js wraps any network failure on that request
-// (e.g. connection refused) as retryable and retries with backoff for up to
-// 30s before surfacing an error — there's no way to special-case it sooner
-// from out here. Race it against a short timeout so a dead connection still
-// bails out fast instead of stalling anything awaiting it (e.g. the root
-// route's auth guard) for the full retry window.
+/**
+ * The session this browser is holding, or `null`.
+ *
+ * Raced against a 2s timeout: a dead connection makes the silent token renewal
+ * retry for far longer than anything waiting on identity can sit still for.
+ * →[K:session-restore-retry-storm]
+ */
 export async function getSession(): Promise<Session | null> {
   const { data, error } = await Promise.race([
     supabase.auth.getSession(),
@@ -61,9 +62,10 @@ export async function getSession(): Promise<Session | null> {
   return data?.session
 }
 
-// Unlike getSession(), this revalidates against the server rather than reading
-// the cached session — needed after linking/unlinking an identity, since that
-// doesn't rewrite the cached session's `identities` array.
+/**
+ * The account as the server currently sees it. Ask after linking or unlinking a
+ * sign-in method — the stored session keeps the old list.
+ */
 export async function getUser(): Promise<User | null> {
   const { data, error } = await supabase.auth.getUser()
 
@@ -74,10 +76,10 @@ export async function getUser(): Promise<User | null> {
   return data?.user
 }
 
-// Supabase's recovery link lands the browser back on the site with tokens in
-// the URL hash (implicit flow); the client auto-exchanges them and fires this
-// event once. Checking the URL first means a normal visit never pays for the
-// listener/await this needs.
+/**
+ * Whether this page load arrived from a password-reset link. Checked before
+ * anything else so an ordinary visit never pays for the wait that follows.
+ */
 export function isPasswordRecoveryUrl(): boolean {
   return (
     window.location.hash.includes('type=recovery') ||
@@ -87,10 +89,12 @@ export function isPasswordRecoveryUrl(): boolean {
 
 const PASSWORD_RECOVERY_TIMEOUT_MS = 8000
 
-// An expired or already-used recovery link still carries `type=recovery` but
-// Supabase never fires the event for it, so this can't just await forever —
-// it resolves false after a timeout and lets the caller fall back to a normal
-// page load instead of hanging with a dangling subscription.
+/**
+ * Whether the reset link's tokens were accepted, giving up after 8s.
+ *
+ * An expired or already-used link looks identical in the address bar and simply
+ * never arrives, so waiting on it forever would hang the page load.
+ */
 export function waitForPasswordRecovery(): Promise<boolean> {
   return new Promise((resolve) => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
@@ -111,9 +115,11 @@ export function waitForPasswordRecovery(): Promise<boolean> {
   })
 }
 
-// Fires when Supabase's client gives up on the session locally — a manual
-// sign-out, or its own background token refresh failing because the session
-// was revoked/expired elsewhere. Returns an unsubscribe function.
+/**
+ * Calls back when the auth library drops the session by itself — a sign-out
+ * here, or a renewal refused because the session was ended on another device.
+ * Returns an unsubscribe.
+ */
 export function onSignedOut(callback: () => void): () => void {
   const { data: sub } = supabase.auth.onAuthStateChange((event) => {
     if (event !== 'SIGNED_OUT') return
@@ -123,9 +129,10 @@ export function onSignedOut(callback: () => void): () => void {
   return () => sub.subscription.unsubscribe()
 }
 
-// A revoked/expired session doesn't always trigger onSignedOut before the
-// next API call — the request itself can come back 401/JWT-expired first.
-// This lets callers recognize that case and treat it the same way.
+/**
+ * Whether a request failed because the session is no longer good. An ended
+ * session usually surfaces here before `onSignedOut` gets to fire.
+ */
 export function isAuthError(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false
 
@@ -139,8 +146,7 @@ export async function login(email: string, password: string): Promise<LoginOutco
 
     if (!error) return 'success'
 
-    // Supabase folds "no such user" into invalid_credentials to prevent account
-    // enumeration, so this single code covers both wrong-password and no-account.
+    // One code covers a wrong password and no such account — the server won't say which.
     if (error.code === 'invalid_credentials') return 'invalid-credentials'
     if (error.code === 'email_not_confirmed') return 'email-not-confirmed'
     if (error.status === 429) return 'rate-limited'
@@ -161,19 +167,10 @@ export async function logout(): Promise<void> {
   }
 }
 
+// Trap: an ended session's token keeps working until it is cleared →[K:deleted-account-token-outlives-deletion]
 /**
- * Drops the locally persisted session for the case where the server has already
- * revoked it (account deletion). Scoped to `local` because there is nothing left
- * to revoke globally.
- *
- * Not optional cleanup — leaving the token in storage is what makes a deleted
- * account look signed in. The JWT stays signature-valid for its full lifetime
- * (`jwt_expiry`, 1h), `getSession()` hands it back without ever asking the
- * server, and PostgREST accepts it, so every table read and RPC keeps working.
- * Only a call that resolves the JWT through GoTrue notices the session is gone.
- *
- * Logged and swallowed: this is teardown, there is nothing to retry, and
- * supabase-js clears its stored session even when the server rejects the call.
+ * Drops this browser's copy of the session, for when the server has already
+ * ended it. Logged and swallowed — teardown with nothing left to retry.
  */
 export async function signOutLocal(): Promise<void> {
   const { error } = await supabase.auth.signOut({ scope: 'local' })
@@ -184,12 +181,10 @@ export async function signOutLocal(): Promise<void> {
 }
 
 /**
- * Revokes every session for this account except the one making the call — the
- * caller stays signed in where they are.
+ * Ends every session for this account except this one.
  *
  * Logged and swallowed: it runs after a password change has already succeeded,
- * so failing it must not turn a completed change into a reported failure. The
- * new password is live either way.
+ * so a failure here must not report the completed change as failed.
  */
 export async function signOutOthers(): Promise<void> {
   const { error } = await supabase.auth.signOut({ scope: 'others' })
@@ -200,14 +195,11 @@ export async function signOutOthers(): Promise<void> {
 }
 
 /**
- * Requests account deletion: marks the account pending, cancels any
- * subscription with a prorated refund, and revokes every session.
+ * Requests account deletion — marks the account pending, refunds any
+ * subscription pro rata, ends every session — and resolves with the deadline.
  *
- * Resolves with the deletion deadline. Idempotent — calling it again returns the
- * original deadline rather than extending the grace window.
- *
- * The caller's session is dead once this resolves, so any teardown afterwards
- * must not depend on an authenticated request succeeding.
+ * Asking twice returns the original deadline rather than extending the grace
+ * window. Nothing afterwards can depend on an authenticated request succeeding.
  */
 export async function requestAccountDeletion(): Promise<string> {
   const { data, error } = await supabase.functions.invoke<{ deleteAt: string }>(
@@ -224,12 +216,11 @@ export async function requestAccountDeletion(): Promise<string> {
 }
 
 /**
- * Cancels a pending deletion within the grace window and restores access to the
- * member's data. Their previously-public decks become public again.
+ * Calls off a pending deletion, giving the member their data back and making
+ * their previously-public decks public again.
  *
- * Does NOT resurrect the cancelled subscription — re-subscribing is manual.
- * Throws if the account isn't pending, or if the deadline has already passed
- * (the purge job may be mid-sweep at that point).
+ * The cancelled subscription does not come back — re-subscribing is manual.
+ * Throws once the deadline has passed, when the purge may already be running.
  */
 export async function restoreAccount(): Promise<void> {
   const { error } = await supabase.rpc('restore_account')
@@ -266,10 +257,10 @@ export async function signupEmail(
 }
 
 /**
- * Whether `name` is free as a display name (case-insensitive), via the
- * `is_display_name_available` RPC. Fails open — a check failure returns `true`
- * so a flaky network never blocks signup; the unique constraint is the real
- * backstop.
+ * Whether a display name is still free, ignoring case.
+ *
+ * Fails open, so a flaky connection never blocks signup — the database's own
+ * uniqueness rule is what actually holds the line.
  */
 export async function isDisplayNameAvailable(name: string): Promise<boolean> {
   const { data, error } = await supabase.rpc('is_display_name_available', {
@@ -293,36 +284,34 @@ type StartOAuth = (options: {
   skipBrowserRedirect?: boolean
 }) => Promise<{ data: { url: string | null } | null; error: unknown }>
 
-// Google's consent screen sends Cross-Origin-Opener-Policy, which forces a
-// permanent browsing-context-group switch on the popup — window.opener is
-// severed for good, and window.name (tied to that same context) doesn't
-// survive the swap either, even once the popup navigates back to our own
-// origin. localStorage isn't scoped to the browsing-context group the way
-// those are, so a flag written right before window.open() is still readable
-// once the popup lands back on our site.
+// Trap: the consent screen severs the popup's link to the window that opened it →[K:oauth-popup-loses-its-opener]
 const OAUTH_POPUP_FLAG = 'oauth-popup-pending'
 
-// Cleared unconditionally up front so a flag left behind by an abandoned
-// popup (closed before completing auth) can't misfire on a later full-page
-// redirect flow.
 function clearOAuthPopupFlag(): void {
   window.localStorage.removeItem(OAUTH_POPUP_FLAG)
 }
 
-/** Callback view checks this to decide whether to close itself or navigate to the dashboard. */
+/**
+ * Whether this page load is the return leg of a sign-in popup. Reading it
+ * clears it.
+ */
 export function consumeOAuthPopupFlag(): boolean {
   const pending = window.localStorage.getItem(OAUTH_POPUP_FLAG) === '1'
   clearOAuthPopupFlag()
   return pending
 }
 
-// Sign-in resolves on the store's own 'SIGNED_IN' auth event; linking a new
-// identity to an already-signed-in user doesn't fire that event, so it resolves
-// once the popup/redirect tab closes instead.
+/**
+ * Runs a Google flow in a popup, or as a full-page redirect on a phone.
+ *
+ * Signing in finishes on the sign-in event. Adding a new sign-in method to an
+ * account fires no such event, so that variant waits for the popup to close.
+ */
 async function runOAuthFlow(
   start: StartOAuth,
   waitFor: 'signed-in' | 'popup-closed'
 ): Promise<void> {
+  // An abandoned popup leaves the flag behind, where it would misfire on the next attempt.
   clearOAuthPopupFlag()
 
   if (prefersFullRedirect()) {
@@ -390,11 +379,13 @@ async function runOAuthFlow(
 
 export type OAuthOutcome = 'success' | 'error'
 
-// The OAuth callback URL and popup transport are owned entirely by
-// runOAuthFlow — deliberately not caller-configurable. Letting a caller pass
-// `redirectTo` here once let a UI "land on /dashboard" intent override the
-// registered `/auth/callback` URL, which both broke popup self-close and is the
-// classic open-redirect footgun. `provider` is the only knob.
+/**
+ * Signs in with Google.
+ *
+ * `provider` is the only knob on purpose: a caller-supplied return address both
+ * breaks the popup's self-close and is the classic open-redirect footgun.
+ * →[K:oauth-popup-loses-its-opener]
+ */
 export async function signInOAuth(provider: OAuthProvider): Promise<OAuthOutcome> {
   try {
     await runOAuthFlow(
@@ -408,17 +399,14 @@ export async function signInOAuth(provider: OAuthProvider): Promise<OAuthOutcome
   }
 }
 
-/** Links a Google identity to the currently signed-in user. Requires `enable_manual_linking`. */
+/** Adds Google as a second way to sign in to the account already signed in here. */
 export async function linkGoogleIdentity(): Promise<void> {
   await runOAuthFlow(
     (opts) => supabase.auth.linkIdentity({ provider: 'google', options: opts }),
     'popup-closed'
   )
 
-  // The popup closing only means the linking tab is done — it doesn't guarantee
-  // this tab's client has picked up the new identity (no 'SIGNED_IN'-style event
-  // fires for linking). Force a resync so the caller sees it immediately instead
-  // of only after a page reload.
+  // The popup closing says the other tab finished, not that this one knows about it yet.
   const { error } = await supabase.auth.refreshSession()
   if (error) throw error
 }
@@ -454,15 +442,9 @@ export async function updateEmail(email: string): Promise<UpdateEmailOutcome> {
 /**
  * Whether this account can sign in with a password.
  *
- * Not derivable client-side. `user.identities` looks like the answer and isn't:
- * GoTrue creates the `email` identity at email signup and never when a password
- * is set, so a Google-origin account that sets one shows no email identity for
- * good. `app_metadata.providers` mirrors identities, same hole.
- *
- * Falls back to `false`, which routes the member to the emailed-code proof.
- * That's the safe direction — still a real re-proof of identity, just not the
- * one they'd expect — where `true` would offer a current-password field to
- * someone who has no password to type.
+ * Falls back to `false`, which routes the member to the emailed code — still a
+ * real proof, where `true` would offer a password field to someone who has
+ * none. →[K:password-identity-not-client-derivable]
  */
 export async function fetchHasPassword(): Promise<boolean> {
   try {
@@ -483,17 +465,11 @@ export async function fetchHasPassword(): Promise<boolean> {
 export type VerifyPasswordOutcome = 'success' | 'invalid-credentials' | 'error'
 
 /**
- * Re-proves identity for a member who signs in with a password, by signing in
- * again as them. Used as the gate in front of a password change.
+ * Re-proves identity for a member who has a password, by signing them in again.
  *
- * The email is read from the live session rather than taken as an argument —
- * that's the same-account guard. A caller can't hand in a different address and
- * have a successful sign-in to *someone else's* account read as proof, which
- * would also silently swap this tab onto that account.
- *
- * Succeeding replaces the current session with a fresh one for the same user.
- * Nothing in the app reacts to `SIGNED_IN`, so this is invisible to the rest of
- * the store.
+ * The address comes off the live session rather than an argument — that is the
+ * same-account guard, so a successful sign-in to someone *else's* account can
+ * never be handed back as proof.
  */
 export async function verifyPassword(password: string): Promise<VerifyPasswordOutcome> {
   try {
@@ -521,26 +497,14 @@ export async function verifyPassword(password: string): Promise<VerifyPasswordOu
 export type RequestReauthCodeOutcome = 'success' | 'rate-limited' | 'error'
 
 /**
- * Emails a one-time sign-in code to the signed-in account. Paired with
- * `verifyReauthCode` this is the re-proof of identity for members with no
- * password to re-enter (Google-only).
+ * Emails a one-time sign-in code — the identity re-proof for a member with no
+ * password to re-enter.
  *
- * Same-account by construction twice over: the email comes off the live session,
- * and `shouldCreateUser: false` means a stray address can't quietly mint a new
- * account instead.
- *
- * Deliberately not the OAuth popup: on phones the OAuth transport falls back to
- * a full-page redirect, which would abandon the half-filled password form. A
- * mailed code behaves identically on every device.
- *
- * Also deliberately not `reauthenticate()` + `updateUser({ nonce })`, which
- * reads like the purpose-built API but does not gate anything here. GoTrue only
- * validates that nonce when `secure_password_change` is on AND the session is
- * over 24h old; otherwise it ignores the value entirely (VERIFIED against local
- * GoTrue: a deliberately wrong nonce still changed the password). A hijacked
- * tab is by definition recent, so that path would never challenge the one
- * attacker it exists to stop. `verifyOtp` is a real sign-in and always
- * validates.
+ * Same-account twice over: the address comes off the live session, and a stray
+ * one can't quietly mint a new account instead. Deliberately not the sign-in
+ * popup, which becomes a full-page redirect on a phone and would abandon the
+ * half-filled form, and deliberately not the library's own reauthenticate call,
+ * which gates nothing here. →[K:reauth-nonce-does-not-gate]
  */
 export async function requestReauthCode(): Promise<RequestReauthCodeOutcome> {
   try {
@@ -571,11 +535,11 @@ export async function requestReauthCode(): Promise<RequestReauthCodeOutcome> {
 export type VerifyReauthCodeOutcome = 'success' | 'invalid-code' | 'error'
 
 /**
- * Consumes the emailed code, which signs the member in again — that fresh
- * sign-in *is* the proof of identity.
+ * Spends the emailed code, signing the member in again — that fresh sign-in
+ * *is* the proof.
  *
- * GoTrue answers a wrong code and an expired one with the same `otp_expired`,
- * deliberately, so both collapse into one outcome here.
+ * A wrong code and an expired one come back identical, deliberately, so both
+ * collapse into one outcome here.
  */
 export async function verifyReauthCode(code: string): Promise<VerifyReauthCodeOutcome> {
   try {
@@ -603,15 +567,10 @@ export async function verifyReauthCode(code: string): Promise<VerifyReauthCodeOu
 export type UpdatePasswordOutcome = 'success' | 'weak-password' | 'same-password' | 'error'
 
 /**
- * Sets a new password, then revokes every other session for the account.
+ * Sets a new password, then ends every other session for the account.
  *
- * The sign-out lives here rather than at the call sites so both flows that end
- * in a new password — the account-access change and the emailed reset — close
- * off anyone who already had access.
- *
- * Re-proving identity is the caller's job, ahead of this call (`verifyPassword`
- * or `verifyReauthCode`). It can't be enforced here: both proofs work by signing
- * in again, which leaves nothing on the session for this function to inspect.
+ * The sign-out lives here so both flows that end in a new password close off
+ * anyone who already had access. Re-proving identity is the caller's job.
  */
 export async function updatePassword(password: string): Promise<UpdatePasswordOutcome> {
   try {
@@ -635,9 +594,10 @@ export async function updatePassword(password: string): Promise<UpdatePasswordOu
 
 export type RequestPasswordResetOutcome = 'success' | 'error'
 
-// Supabase doesn't error for an unknown email (prevents account enumeration),
-// so unlike login/signup there's no keyed outcome map — only real backend
-// failures (rate limit, network) fall through to 'error'.
+/**
+ * Emails a reset link. An unknown address succeeds like any other — the server
+ * won't reveal whether an account exists, so only real failures reach 'error'.
+ */
 export async function requestPasswordReset(email: string): Promise<RequestPasswordResetOutcome> {
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {

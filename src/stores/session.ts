@@ -66,11 +66,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
   const loading_count = ref(0)
   let logging_out_intentionally = false
 
-  // Shared in-flight promise for the one identity resolution. The router
-  // checkpoint fires this on the first navigation and every later navigation
-  // awaits the same answer, so a cold load never pays for two round-trips or
-  // races two restores. Cleared on any auth transition (fresh sign-in, logout)
-  // so the next navigation re-resolves against the new session.
+  // Every navigation awaits this one answer, so a cold load never resolves identity twice.
   let resolved: Promise<boolean> | undefined
 
   const authenticated = computed(() => Boolean(user.value?.aud === 'authenticated'))
@@ -79,19 +75,15 @@ export const useSessionStore = defineStore('sessionStore', () => {
   const hasPasswordIdentity = computed(() => identities.value.some((i) => i.provider === 'email'))
   const hasGoogleIdentity = computed(() => identities.value.some((i) => i.provider === 'google'))
 
-  // Supabase's client can locally sign itself out (e.g. a background token
-  // refresh rejected because the session was revoked on another device)
-  // without any component ever calling logout(). This is the "stale tab"
-  // case: catch it here rather than only reacting to failed API calls.
+  // The stale tab: a session ended on another device, with nothing here having asked to log out.
   onSignedOut(() => {
     if (logging_out_intentionally) return
     forceLogout()
   })
 
   /**
-   * True if this page load is a password-recovery redirect, after awaiting the
-   * session exchange. False both for a normal load and for an expired/reused
-   * recovery link (the exchange times out rather than firing the event).
+   * Whether this page load came from a working password-reset link. An expired
+   * or already-used one reads as false, same as an ordinary visit.
    */
   async function checkPasswordRecovery(): Promise<boolean> {
     if (!isPasswordRecoveryUrl()) return false
@@ -118,17 +110,12 @@ export const useSessionStore = defineStore('sessionStore', () => {
     }
   }
 
-  /**
-   * The one identity resolution, memoized. Every navigation awaits this single
-   * shared promise instead of each restoring the session itself. Cleared by
-   * `clearResolved()` on any auth transition so the next call re-resolves.
-   */
+  /** Who is signed in, resolved once and shared by every navigation after it. */
   function ensureResolved(): Promise<boolean> {
     return (resolved ??= restoreSession())
   }
 
-  // Re-arm ensureResolved() so the next navigation reflects the current session
-  // rather than the memoized answer from before a sign-in or sign-out.
+  /** Forces the next navigation to work out who is signed in again. Call on any sign-in or sign-out. */
   function clearResolved(): void {
     resolved = undefined
   }
@@ -159,10 +146,10 @@ export const useSessionStore = defineStore('sessionStore', () => {
     if (isAuthError(error)) forceLogout()
   }
 
-  // Same end state as logout(), but skipped when already logged out (avoids
-  // reacting to its own signOut() call below) and explains why the session
-  // ended instead of silently redirecting. `reason` only picks the copy —
-  // every reason gets the same teardown + redirect.
+  /**
+   * Ends a session the member didn't ask to end, telling them why rather than
+   * bouncing them silently. `reason` picks the wording; the teardown is one.
+   */
   async function forceLogout(reason: ForceLogoutReason = 'expired'): Promise<void> {
     if (!authenticated.value) return
 
@@ -195,19 +182,16 @@ export const useSessionStore = defineStore('sessionStore', () => {
     return supaSignupEmail(email, password, opts)
   }
 
-  // Single funnel for a freshly established session: tear down the auth UI and
-  // land on the dashboard. Every successful sign-in path (OAuth here, email
-  // login/signup from their dialogs) routes through this, so no path can
-  // navigate without closing its modal — the gap that left the OAuth popup's
-  // parent modal open on top of the dashboard.
+  /**
+   * Settles the app into a just-signed-in state.
+   *
+   * Every sign-in path routes through here, so none of them can navigate
+   * without first closing the dialog it was started from.
+   */
   function onAuthenticated(): void {
-    // Re-arm identity resolution so the checkpoint on the next navigation sees
-    // the freshly established session, not the memoized signed-out answer from
-    // the welcome load.
     clearResolved()
     closeAllModals()
-    // Land on where the member was originally headed (captured as `?next=` when
-    // the checkpoint bounced them here), falling back to the dashboard.
+    // Wherever they were originally headed before being sent to sign in.
     router.push(consumeReturnDestination() ?? { name: 'dashboard' })
   }
 
@@ -266,25 +250,22 @@ export const useSessionStore = defineStore('sessionStore', () => {
   }
 
   /**
-   * Whether the account has a password has to be asked of the database — see
-   * `fetchHasPassword`. Refreshed wherever `user` is assigned, so the two never
-   * disagree, and after a password change, which flips it for Google-origin
-   * accounts setting one for the first time.
+   * Re-asks whether the account can sign in with a password. Run it wherever
+   * `user` is assigned, and after a password change.
+   * →[K:password-identity-not-client-derivable]
    */
   async function refreshHasPassword(): Promise<void> {
     has_password.value = await fetchHasPassword()
   }
 
-  // Single teardown funnel for both logout() and forceLogout(): clears auth
-  // identity, then fans out to every bit of state that would otherwise leak
-  // into the next session or the logged-out surface. The audio engine is left
-  // running — logged-out surfaces still need sound.
+  /**
+   * Clears everything that would otherwise leak into the next session or onto
+   * the logged-out screens. Sound keeps playing — the welcome screen needs it.
+   */
   function reset() {
     user.value = undefined
     has_password.value = false
 
-    // Re-arm resolution so a re-login after this teardown resolves fresh instead
-    // of returning the stale signed-in answer.
     clearResolved()
     closeAllModals()
     clearQueryCache()
@@ -292,14 +273,13 @@ export const useSessionStore = defineStore('sessionStore', () => {
     clearPersistedSession()
   }
 
+  // Trap: an ended session's token keeps working until it is cleared →[K:deleted-account-token-outlives-deletion]
   /**
-   * Teardown for a session the server has already revoked (account deletion).
-   * reset() alone isn't enough — it clears this store but leaves supabase-js
-   * holding the token, which then reads as a live session on the next visit.
+   * Tears down a session the server has already ended, token included.
    *
-   * Flagged as intentional for the same reason logout() is: dropping the stored
-   * session fires SIGNED_OUT, and forceLogout() reacting to it would stack a
-   * "your session expired" notice on top of the caller's own messaging.
+   * Flagged intentional for the reason `logout()` is: dropping the token
+   * announces a sign-out, which would otherwise stack a "session expired"
+   * notice on top of whatever the caller is already telling the member.
    */
   async function discardRevokedSession(): Promise<void> {
     logging_out_intentionally = true
@@ -312,8 +292,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
     }
   }
 
-  /** Drop every entry from the Pinia Colada cache so stale data can't carry
-   * over into the next login (Colada has no wholesale clear, so remove each). */
+  /** Forgets every bit of fetched data, so none of it shows up under the next account. */
   function clearQueryCache() {
     queryCache.getEntries().forEach((entry) => queryCache.remove(entry))
   }
@@ -339,9 +318,6 @@ export const useSessionStore = defineStore('sessionStore', () => {
     ensureResolved,
     logout,
     forceLogout,
-    // Exposed for teardown after a server-side session revocation (account
-    // deletion), where the sessions are already gone and only local state —
-    // stored token, query cache, modals, phone — still needs clearing.
     discardRevokedSession,
     handleAuthError,
     signupEmail,
