@@ -17,6 +17,7 @@
     "type-check": "vue-tsc --build --force",
     "lint": "oxlint",
     "format": "vp fmt src/",
+    "knowledge:check": "node scripts/knowledge-lint.mjs",
     "build:email-templates": "node scripts/build-email-templates.mjs",
     "gen:palette-css": "node scripts/gen-palette-css.ts",
     "docs:dev": "vitepress dev docs --port 8080",

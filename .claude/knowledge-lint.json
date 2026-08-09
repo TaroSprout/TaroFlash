@@ -1,0 +1,28 @@
+{
+  "always_on": {
+    "include": ["CLAUDE.md", ".claude/rules/*.md"],
+    "line_caps": {
+      "enforced": false,
+      "total": 250,
+      "per_file": {
+        "CLAUDE.md": 80
+      }
+    }
+  },
+  "slugs": {
+    "retired_ledger": ".claude/knowledge/retired-slugs.md",
+    "declare_in": ["CLAUDE.md", "AGENTS.md", ".claude/**/*.md", "corpus/**/*.md"],
+    "cite_in": [
+      "CLAUDE.md",
+      "AGENTS.md",
+      ".claude/**/*.md",
+      "corpus/**/*.md",
+      "src/**/*.{ts,js,vue}",
+      "tests/**/*.{ts,js,vue}",
+      "scripts/**/*.{ts,js,mjs}",
+      "supabase/**/*.{sql,ts}",
+      ".github/**/*.yml"
+    ],
+    "exempt": ["supabase/migrations/**", "tests/unit/scripts/knowledge-lint.test.js"]
+  }
+}
