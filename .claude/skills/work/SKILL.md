@@ -108,10 +108,8 @@ Dispatch all subagents in a single message (multiple `Agent` calls) so they run 
 - Prompt carries the ticket's title + body + acceptance criteria and instructs the subagent to:
   **rename** the worktree's existing branch to a conventional name (`git branch -m <fix/…|feat/…>`) —
   **not** `git checkout -b`, which orphans the auto-created `worktree-agent-<id>` branch as junk —
-  implement to the acceptance criteria, and follow `.claude/rules/*` — call out `code-style` and
-  `vue-templates` explicitly in the prompt: comments are terse one-liners for the non-obvious _why_,
-  never multi-line prose, and never inside `<template>` markup. Verbose subagent comments are a
-  recurring review complaint.
+  implement to the acceptance criteria, and follow `.claude/rules/*` — name `comment-authoring` in
+  the prompt, since verbose subagent comments are a recurring review complaint.
 - **Tests via `update-tests`, not the full suite.** After implementing, the subagent invokes the
   **`update-tests`** skill to cover its own change, then runs **`vp check`** (format + lint +
   type-check) green. It does **not** run the full `vp test` suite — parallel subagents each running
