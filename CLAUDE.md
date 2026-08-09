@@ -4,120 +4,38 @@
 - **NEVER touch tests until I explicitly ask.** No checking, running, writing, or updating tests — not after edits, not after refactors, not for reported bugs, not for coverage, not "while I'm here." This holds even when tests clearly should change. At most, note in one line that tests may need attention, then leave them. I will tell you when it's test time. (User-invoked test skills/agents like `/update-tests` are the explicit ask.)
 - **Every correction is a defect in the rules, not just the artifact.** Fix what I pointed at, then run the lesson through `.claude/rules/self-heal.md` — every session, not just skill runs. `/heal` is the explicit verb for it.
 - **NEVER write user-facing copy without my sign-off.** Any new or changed string a user reads — button labels, headings, empty states, toasts, alerts, error messages, ticket ACs quoting copy — stops and asks. Offer at least 3 reasonably-varied options per line and let me pick; never choose for me, never defer it to "wording TBD". Reusing an existing string is fine, but say which one. This applies everywhere, not just in tickets.
-- **Never verify visually in the browser.** Don't open Chrome, curl the dev server, or screenshot a page to check that a change "looks right" — I always confirm visually myself and will give you that feedback directly. Your visual read is worse than mine, so it adds false confidence rather than verification. Driving the browser to *debug* something genuinely broken is fine and encouraged; the ban is on verification, not on debugging.
+- **Never verify visually in the browser.** Don't open Chrome, curl the dev server, or screenshot a page to check that a change "looks right" — I always confirm visually myself and will give you that feedback directly. Your visual read is worse than mine, so it adds false confidence rather than verification. Driving the browser to _debug_ something genuinely broken is fine and encouraged; the ban is on verification, not on debugging.
 - **"Rephrase that" means the framing missed, not just the length.** Re-explain in plain product terms — what the screen shows, what the user experiences — and strip the vocabulary of whatever library or subsystem the answer came from. Shorten in the same pass, but never only shorten.
-
-# Guidelines
-
-- Always use translation strings (e.g., `t('deck.settings-modal.title')`) instead of hardcoded text. If string not in `locales/en-us.json`, add it.
-- **Wiring logic doesn't license inventing UI.** When I ask you to wire up state, behaviour, or a composable, write the script side — refs, computeds, handlers — plus only the structural markup the logic actually needs (a template ref, a container something measures). Building UI out of **existing paradigms** (`ui-kit` / `layout-kit` primitives, an established pattern from a sibling view) is fine. Inventing novel controls, layouts, or one-off styled elements I didn't ask for is not — expose the state and let me build it.
+- **Wiring logic doesn't license inventing UI.** When I ask you to wire up state, behaviour, or a composable, write the script side — refs, computeds, handlers — plus only the structural markup the logic actually needs. Building UI out of **existing paradigms** (`ui-kit` / `layout-kit` primitives, an established pattern from a sibling view) is fine. Inventing novel controls, layouts, or one-off styled elements I didn't ask for is not — expose the state and let me build it.
+- Always use translation strings (e.g. `t('deck.settings-modal.title')`) instead of hardcoded text.
 - Confirm this file loaded by printing message to console on startup.
 
-## Backend (`supabase/`)
+# Where the knowledge lives
 
-- **Explain the SQL when asked.** Backend answers name the keywords they lean on (`using` vs
-  `with check`, `security definer`, `stable`, `$$` quoting, `::` casting) rather than assuming the
-  idiom is self-evident. Don't volunteer a lesson unprompted.
-- **NEVER `supabase db reset`.** Always use `supabase migrations up` to apply migrations. Apply migrations as you write them so errors surface immediately.
-- **Rule files auto-load by path:** editing `supabase/**` pulls `.claude/rules/supabase.md`; editing `src/api/**` pulls `.claude/rules/server-state.md`. Both are the source of truth for their domains.
+This file carries only the rules that hold everywhere. Everything else lives in a file that reaches
+you when it applies: **`.claude/rules/*.md` with a `paths:` list auto-load the moment you read a
+matching file** — don't go hunting for them, and don't restate them in tickets or code comments.
 
-## Cutting tickets
+Always in context alongside this file: [`toolchain`](.claude/rules/toolchain.md) (`vp` commands, never
+`pnpm`, the `pnpm type-check` gate) · [`git-workflow`](.claude/rules/git-workflow.md) (branching,
+Conventional Commits, PR etiquette) · [`self-heal`](.claude/rules/self-heal.md) (turning a correction
+into a rule change).
 
-"Cut a ticket for this" / "file that" / "add it to the board" → follow `.claude/rules/ticket-authoring.md`
-(board constants, field defaults, body templates, authoring voice). New tickets always land in
-`Backlog` — never `Ready`/`Queued`. For a batch, delegate to the `ticket-author` agent.
+| Working on                               | Loads / read                                                                                                                                                                                                                |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Anything in `src/` or `supabase/`        | [`corpus`](.claude/rules/corpus.md) — domain truths + the **trap register**, `corpus/hazards.md`                                                                                                                            |
+| Where code lives, which doc governs it   | [`architecture`](.claude/rules/architecture.md)                                                                                                                                                                             |
+| Any `.ts` / `.vue`                       | [`code-style`](.claude/rules/code-style.md), [`FE-formatting`](.claude/rules/FE-formatting.md), [`animations`](.claude/rules/animations.md), [`safari-gotchas`](.claude/rules/safari-gotchas.md)                            |
+| A `.vue` file                            | [`vue-templates`](.claude/rules/vue-templates.md), [`vue-script-order`](.claude/rules/vue-script-order.md), [`vue-props`](.claude/rules/vue-props.md), [`css`](.claude/rules/css.md), [`theming`](.claude/rules/theming.md) |
+| Copy, locales                            | [`i18n`](.claude/rules/i18n.md)                                                                                                                                                                                             |
+| `src/api/`, server data & caching        | [`server-state`](.claude/rules/server-state.md)                                                                                                                                                                             |
+| `src/composables/`                       | [`composables`](.claude/rules/composables.md)                                                                                                                                                                               |
+| `src/views/`                             | [`skeleton-loading`](.claude/rules/skeleton-loading.md), [`study-session-architecture`](.claude/rules/study-session-architecture.md)                                                                                        |
+| `src/sfx/`                               | [`sfx`](.claude/rules/sfx.md)                                                                                                                                                                                               |
+| `supabase/` — migrations, RLS, functions | [`supabase`](.claude/rules/supabase.md) — **never `supabase db reset`**, always `migration up`                                                                                                                              |
+| `tests/`                                 | [`testing`](.claude/rules/testing.md) and its siblings — only when I ask for tests                                                                                                                                          |
+| Skills and agents                        | [`skill-authoring`](.claude/rules/skill-authoring.md)                                                                                                                                                                       |
+| Tickets — "cut a ticket", "file that"    | [`ticket-authoring`](.claude/rules/ticket-authoring.md) + [`task-board-schema`](.claude/rules/task-board-schema.md) — read by name; they don't auto-load                                                                    |
 
-## Toolchain: Vite+
-
-Project uses **Vite+** (`vp`), unified toolchain wrapping Vite, Rolldown, Vitest, Oxlint, Oxfmt. Always use `vp` — never `pnpm`, `npm`, `vitest`, `oxlint`, `oxfmt` directly.
-
-### Common commands
-
-```sh
-vp install          # Install dependencies (after pulling changes)
-vp dev              # Start dev server
-vp build            # Production build
-vp check            # Run format + lint + type-check together
-vp lint             # Lint only
-vp fmt              # Format only
-vp test             # Run tests with coverage
-vp test --watch     # Watch mode
-vp add <pkg>        # Add a dependency
-vp dlx <bin>        # Run a one-off binary (instead of npx/pnpm dlx)
-```
-
-### Type-checking
-
-CI's authoritative type-check is `pnpm type-check` (`vue-tsc --build --force`), and it is **stricter
-than `vp check`** — `vp check` can report zero errors while `vue-tsc` fails. Run `pnpm type-check`
-before pushing anything that touches types; a green `vp check` is not evidence.
-
-### Keeping the toolchain current
-
-- **`vp install` after any dependency bump.** Never `pnpm up` / `pnpm install` directly — pnpm rewrites the lockfile importer spec away from the `@latest` override, and CI's frozen-lockfile check then fails with "specifiers in the lockfile don't match specifiers in package.json".
-- **Upgrade a tool rather than working around it.** If a CLI is too old for a feature we want, offer to upgrade it — don't accumulate one-off `curl`/SQL workarounds. Only work around when upgrading is genuinely blocked, and say why.
-
-### Critical import rules
-
-- Import build/config utilities from `vite-plus`, not `vite`: `import { defineConfig } from 'vite-plus'`
-- Import test utilities from `vite-plus/test`, not `vitest`: `import { expect, test, vi } from 'vite-plus/test'`
-- Don't install `vitest`, `oxlint`, `oxfmt`, `tsdown` — bundled in Vite+
-
-## Architecture
-
-**TaroFlash** = spaced repetition flashcard app (FSRS algorithm via `ts-fsrs`). Vue 3 SPA, Supabase backend.
-
-### Frontend (`src/`)
-
-| Directory          | Purpose                                                                                                                       |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `src/api/`         | Supabase client calls — RPC functions and table operations, organized by entity (cards, decks, members, reviews, media, shop) |
-| `src/components/`  | Vue components; `ui-kit/` contains base primitives                                                                            |
-| `src/composables/` | Reusable composition functions (modal, toast, alert, study-session, shortcuts, theme, media-query)                            |
-| `src/stores/`      | Pinia stores: `session.ts` (auth state), `member.ts` (current user profile), `shortcut-store.ts`                              |
-| `src/views/`       | Routed page components; `authenticated.vue` is the layout wrapper for protected routes                                        |
-| `src/styles/`      | Global CSS and TailwindCSS 4 config; `palettes.css` defines color tokens                                                      |
-| `types/`           | Shared TypeScript type definitions (not inside `src/`)                                                                        |
-
-**Routing**: Public routes (welcome, auth callback, legal) vs authenticated routes protected by `authenticated.vue`. Main authenticated views: dashboard (deck list), deck study view.
-
-**State**: Session + member profile = global Pinia stores. Most other state local or composable-scoped.
-
-**Card text**: Cards use a plain `contenteditable` editor (`src/components/card/text-editor.vue`).
-
-**Sound effects**: Custom `v-sfx` directive plays audio via a lightweight custom engine (`src/sfx/`) — Howler.js was removed.
-
-### Backend (`supabase/`)
-
-| Directory              | Purpose                                                                            |
-| ---------------------- | ---------------------------------------------------------------------------------- |
-| `supabase/migrations/` | SQL migrations run via Supabase CLI (`supabase db reset` applies all + `seed.sql`) |
-| `supabase/functions/`  | Deno edge functions: `create-subscription` (Stripe), `cleanup-media`               |
-
-Database uses RLS for multi-tenant data isolation. Complex queries via PostgreSQL RPC functions (e.g., `get_member_decks_with_due_count`). Trigger auto-creates `members` row on user signup.
-
-### Testing (`tests/`)
-
-Tests use Vitest with jsdom. `tests/fixtures/` contains MSW handlers, Faker-based fixtures. Coverage enforced in CI (GitHub Actions runs on all PRs).
-
-## Local development
-
-- Local Supabase runs on port 54321 (API), 54322 (PostgreSQL). Start with `supabase start`.
-
-## Branch & PR workflow
-
-For any feature work or code changes:
-
-1. **Only cut a new branch off `master`, or when I ask for one.** Already on a feature branch? **Stay on it** — and if the scope widens past its name, rename in place (`git branch -m <old> <new>`) rather than branching again. Small unrelated prior commits riding along is fine; a proliferation of branches is not.
-2. **Check staleness.** At session start, verify the current branch isn't already merged (e.g. `gh pr view --json state,mergedAt` or `git log master..HEAD`). If merged, create a fresh branch off `master`.
-3. **Commit in logical chunks.** Group related changes into separate commits with clear messages — don't batch unrelated work into one commit. Commit freely as work progresses; don't wait for the end of the session.
-4. **Conventional Commits, always.** `<type>(<scope>): <summary>` — `type` is one of `feat`, `fix`, `perf`, `refactor`, `style`, `test`, `docs`, `chore`; `scope` is the touched area (component, view, api domain, `ci`, etc). `feat`/`fix`/`perf` drive semantic-release version bumps (`release.config.cjs`) — get the type right, not just the vibe. A breaking change gets a `BREAKING CHANGE:` footer or `!` after the type/scope (capped to a minor bump pre-launch, see `release.config.cjs`).
-5. **Don't open PRs automatically.** Open or push a PR only when explicitly asked. Committing locally is fine; surfacing the work as a PR is the user's call.
-6. **Squash iterative fixes.** When several attempts go into landing the _same_ logical change (initial fix → didn't work → second fix → third fix), collapse them into a single commit before review. Don't ship `fix attempt 1` / `fix attempt 2` / `fix attempt 3` as separate commits.
-   - **Not yet pushed:** `git reset --soft HEAD~N` then re-commit, or `git commit --amend --no-edit` for each follow-up before push.
-   - **Already pushed to a feature branch:** `git reset --soft HEAD~N && git commit` then `git push --force-with-lease`. Force-push is allowed on a feature branch you own; never on `master`.
-   - Logical chunks (e.g. `feat(...)` and the test commit covering it) stay separate. This rule applies only to repeated attempts at the same change.
-7. **No Claude attribution.** Never add `Co-Authored-By: Claude` trailers to commits, and never add the "Generated with Claude Code" footer to PR bodies.
-8. **Stage specific paths, never `git add -A`.** I often have my own uncommitted edits in the tree; a blanket add sweeps them into your commit, and a later `reset` then destroys them. Before any `git reset --hard` or `reset --soft HEAD~N`, run `git status` and confirm every pending change is yours — if the tree, or the commit being dropped, touches files you didn't author this session, stop and stash mine first. (Lost work is recoverable via `git reflog` + `git checkout <hash> -- <paths>`.)
-9. **Check the PR isn't already merged before pushing follow-ups.** `gh pr view <num> --json state,mergedAt` first — pushing to a merged branch strands the commit where it will never reach `master`. Branch fresh off `master` instead. Existing-branch pushes are only safe while the PR is open.
-10. **Prefix PR comments with `🤖 Claude:`.** Comments post under my account, so without it I can't tell your replies from my own.
+New tickets always land in `Backlog` — never `Ready`/`Queued`. For a batch, delegate to the
+`ticket-author` agent.
