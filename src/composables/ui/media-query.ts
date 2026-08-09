@@ -54,20 +54,14 @@ function parseAtom(token: string): Atom {
   throw new Error(`useMatchMedia: unknown atom "${token}"`)
 }
 
-// Standalone clause — true exactly when the atom holds. Used for single atoms
-// and for each side of an OR. A `below` atom uses the L3 `not all and
-// (min-…)` form (what Tailwind's `max-*` emits): Safari-safe on every version,
-// no `calc()` and no L4 bare `not (…)`.
+// →[K:media-query-safari-below-as-negated-min]
 function orClause(atom: Atom): string {
   if (!isDimension(atom)) return atom.feature
   const feature = `(min-${atom.axis}: ${atom.length})`
   return atom.below ? `not all and ${feature}` : feature
 }
 
-// AND feature — a positive media feature `and`-joined into one clause. A
-// `below` atom can't appear here: `not` would negate the whole conjunction
-// (De Morgan), flipping every other atom. Width/height bands would need
-// `max-*` support, which no call site wants — throw until one does.
+// →[K:media-query-and-cant-negate]
 function andFeature(atom: Atom): string {
   if (!isDimension(atom)) return atom.feature
   if (atom.below) {
@@ -101,10 +95,7 @@ function compile(query: string): string {
   return orClause(parseAtom(trimmed))
 }
 
-// App-lifetime cache keyed by the compiled CSS query. matchMedia listeners are
-// permanent and shared across all callers — no refcount, no component
-// lifecycle. Safe to call from any context (setup, render, transition hooks).
-// One listener per unique compiled query, so equivalent tokens dedupe.
+// App-lifetime, keyed by compiled query — one shared listener, no refcount or teardown.
 const cache = new Map<string, Ref<boolean>>()
 
 function matchCached(media: string): Ref<boolean> {
@@ -116,10 +107,7 @@ function matchCached(media: string): Ref<boolean> {
   mq.addEventListener('change', () => (r!.value = mq.matches))
   cache.set(media, r)
 
-  // iOS Safari's viewport can still be settling (zoom/safe-area renegotiation)
-  // at the instant a fresh page's first script runs, making this initial
-  // synchronous read unreliable. Re-check once after first paint and
-  // self-correct if it drifted.
+  // →[K:media-query-ios-first-paint-stale]
   requestAnimationFrame(() => {
     if (r!.value !== mq.matches) r!.value = mq.matches
   })
@@ -140,12 +128,6 @@ function matchCached(media: string): Ref<boolean> {
  *
  * The returned ref is app-lifetime cached and shared across callers; it never
  * tears down, so it's safe to read from setup, render, or transition hooks.
- *
- * @example
- * useMatchMedia('w>=md')              // ≥ md wide
- * useMatchMedia('w<md | h<sm')        // compact: narrow OR short
- * useMatchMedia('w>=lg & fine')       // desktop sidebar (mirrors lg:pointer-fine:)
- * useMatchMedia('w<lg | h<lg | coarse') // tablet-or-below
  */
 export function useMatchMedia(query: string): Ref<boolean> {
   return matchCached(compile(query))

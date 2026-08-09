@@ -27,14 +27,6 @@ type UseImageDropzoneOptions = {
  * a rejected file sets `error` and skips the callback. Dragging is tracked
  * with an enter/leave counter so `dragging` doesn't flicker as the pointer
  * crosses child elements of the drop target.
- *
- * @example
- * const fileInput = useTemplateRef('fileInput')
- * const { dragging, onDrop, browse } = useImageDropzone({
- *   maxBytes: MAX,
- *   fileInput,
- *   onFile: (file) => upload(file)
- * })
  */
 export function useImageDropzone({
   maxBytes,
@@ -48,17 +40,14 @@ export function useImageDropzone({
 
   const dragging = computed(() => drag_counter.value > 0)
 
-  /** Clear any validation error. */
   function clearError() {
     error.value = null
   }
 
-  /** Open the native file picker. */
   function browse() {
     fileInput.value?.click()
   }
 
-  /** Validate a file picked via the input, then reset it so re-picking refires. */
   function onFileChange(event: Event) {
     const input = event.target as HTMLInputElement
     const file = input.files?.[0]
@@ -75,7 +64,6 @@ export function useImageDropzone({
     drag_counter.value++
   }
 
-  /** Track a drag leaving the drop target. */
   function onDragLeave(e: DragEvent) {
     e.preventDefault()
     drag_counter.value--
@@ -100,7 +88,6 @@ export function useImageDropzone({
     processFile(file)
   }
 
-  // Validate, then either record the error or hand the file to the consumer.
   function processFile(file: File) {
     const file_error = fileError(file)
     if (file_error) {
