@@ -1,7 +1,9 @@
 import { watch } from 'vue'
 import { useMatchMedia } from './media-query'
 
-// →[K:safe-area-viewport-gap-signal]
+// Browser chrome parked over the bottom of the page shrinks the visible area without
+// changing the window height, and that gap is what decides whether the app pads for
+// itself — never a per-browser table. →[K:safe-area-viewport-gap-signal]
 const VAR = '--edge-safe-padding'
 const GAP_THRESHOLD_PX = 10
 const DEBOUNCE_MS = 120

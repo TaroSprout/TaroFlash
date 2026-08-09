@@ -14,7 +14,11 @@ let max_height = 0
 let timeout: ReturnType<typeof setTimeout> | undefined
 let stop_pointer_watch: (() => void) | undefined
 
-// →[K:keyboard-detection-needs-editable-focus]
+/**
+ * Mobile Chrome's URL bar shrinks the viewport exactly the way a keyboard does,
+ * so a shrink only counts when something typeable holds focus.
+ * →[K:keyboard-detection-needs-editable-focus]
+ */
 function hasEditableFocus(): boolean {
   const el = document.activeElement as HTMLElement | null
   if (!el) return false

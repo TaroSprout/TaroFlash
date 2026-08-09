@@ -5,7 +5,11 @@ import { onScopeDispose } from 'vue'
 let consumers = 0
 let pending = false
 
-// →[K:window-refocus-guard-self-clear]
+/**
+ * Sweeps up a flag nobody claimed. Coming back to the window normally refocuses an
+ * editor, which consumes it first; this only fires when none does.
+ * →[K:window-refocus-guard-self-clear]
+ */
 function clearPending() {
   requestAnimationFrame(() => (pending = false))
 }

@@ -54,14 +54,22 @@ function parseAtom(token: string): Atom {
   throw new Error(`useMatchMedia: unknown atom "${token}"`)
 }
 
-// →[K:media-query-safari-below-as-negated-min]
+/**
+ * Writes a "below this width" as a negated minimum, never as `max-width` — the
+ * negated form is the one every Safari version gets right.
+ * →[K:media-query-safari-below-as-negated-min]
+ */
 function orClause(atom: Atom): string {
   if (!isDimension(atom)) return atom.feature
   const feature = `(min-${atom.axis}: ${atom.length})`
   return atom.below ? `not all and ${feature}` : feature
 }
 
-// →[K:media-query-and-cant-negate]
+/**
+ * Refuses a "below" atom here: its compiled form carries its own negation, which
+ * inside an `and` list would flip every other condition too, not just itself.
+ * →[K:media-query-and-cant-negate]
+ */
 function andFeature(atom: Atom): string {
   if (!isDimension(atom)) return atom.feature
   if (atom.below) {
@@ -107,6 +115,8 @@ function matchCached(media: string): Ref<boolean> {
   mq.addEventListener('change', () => (r!.value = mq.matches))
   cache.set(media, r)
 
+  // iOS Safari's viewport is still settling when a page's first script runs, so the
+  // very first answer can be wrong — re-check once next frame and correct it.
   // →[K:media-query-ios-first-paint-stale]
   requestAnimationFrame(() => {
     if (r!.value !== mq.matches) r!.value = mq.matches
