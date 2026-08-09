@@ -1,8 +1,9 @@
 <script lang="ts">
-// Only one dropdown menu may be open at a time, app-wide. Outside-click close
-// usually enforces this on its own, but a long-press open swallows the release
-// click (see press-hold.ts), so the previous menu would survive — the seam
-// closes it explicitly instead.
+/**
+ * The one dropdown allowed open app-wide — opening a new one closes this.
+ * Needed because a long-press open swallows the release click, so outside-click
+ * close never fires for it.
+ */
 let close_open_menu: (() => void) | null = null
 
 export type { DropdownOption } from './types'
@@ -39,13 +40,12 @@ type DropdownButtonProps = Pick<
   openOnTrigger?: boolean
   hideTrigger?: boolean
   shadow?: boolean
-  // Render only the trigger button — no primary action label alongside it.
+  // Renders only the trigger button, with no primary-action label beside it.
   triggerOnly?: boolean
-  // Disable only the primary action — the caret trigger stays live so the menu
-  // can still be opened (e.g. "already added, but add to another deck").
+  // Disables the primary action only — the caret stays live so the menu can
+  // still be opened.
   primaryDisabled?: boolean
-  // Disable the whole control — primary action AND the caret trigger, so the
-  // menu can't be opened either.
+  // Disables the primary action and the caret, so the menu can't open either.
   disabled?: boolean
 }
 
@@ -60,9 +60,8 @@ const {
   iconLeft,
   iconRight,
   sfx,
-  // Mirror ui-button's tap defaults: an absent Boolean prop casts to `false`,
-  // which would otherwise forward `:play-on-tap="false"` and suppress the
-  // button's own quiet-tap default. Keep in sync with button.vue.
+  // Mirrors button.vue's default — an absent Boolean prop casts to `false` and
+  // would otherwise suppress the button's own quiet-tap default.
   playOnTap = true,
   tapAnimate = false,
   position = 'bottom-start',
@@ -83,8 +82,7 @@ const emit = defineEmits<{
 
 const slots = defineSlots<{
   default(): unknown
-  // Raw dropdown body — replaces the options menu when provided. Receives
-  // `close` so the panel can dismiss the dropdown itself.
+  // Raw dropdown body, replacing the options menu; `close` lets it dismiss itself.
   panel(props: { close: () => void }): unknown
 }>()
 
@@ -93,43 +91,32 @@ const ambient_depth = useAmbientDepth()
 
 const popover_open = ref(false)
 
-// A dropdown trigger is CHROME by default — most are settings/overflow/option
-// menus, not accent actions. An accent dropdown opts in by passing a
-// `data-palette`, which routes onto the trigger button (and, via inheritance,
-// its caret) so the `[data-palette]` seam repaints it. Absent that, the trigger
-// button + caret render the `element` chrome roles (`neutral`).
+// Neutral (chrome) by default; opts into a palette only via `data-palette` on
+// this component. →[K:theming-palette-identity]
 const identity_palette = computed(() => attrs['data-palette'] as string | undefined)
 const is_neutral = computed(() => !identity_palette.value)
 
-// Callers reach these through a template ref: `open` to mirror the menu state
-// (e.g. keeping a card's active look while its menu is up), `show` to open the
-// menu from a gesture that isn't a trigger press (e.g. a long-press on the card).
+// `open` lets a caller mirror the menu state; `show` opens it from a gesture
+// that isn't a trigger press (e.g. a long-press on the card).
 defineExpose({ open: popover_open, show })
 
-// Class/layout attrs ride the popover container, while event handlers — the
-// consumer's primary @click — land on the inner button so they fire only from
-// the label region. Nothing is injected here: the container inherits the
-// ambient depth and identity like any other element.
+// Class/layout attrs ride the popover container; event handlers land on the
+// inner button instead, so they fire only from the label region.
 const popover_attrs = computed(() =>
   filter_attrs((key) => !key.startsWith('on') && key !== 'data-palette')
 )
-// `onClick` is handled through `onButtonClick` instead of forwarded, so the inner
-// button never receives both it and the trigger handler as a merged array — which
-// its play-on-tap intercept can't invoke (it expects a single onClick function).
+// `onClick` goes through `onButtonClick` instead, so the inner button never
+// receives it merged with the trigger handler as an array.
 const button_attrs = computed(() =>
   filter_attrs((key) => key.startsWith('on') && key !== 'onClick')
 )
 
-// The caret is the only way to open the menu unless the whole button is the
-// trigger, so it can only be hidden when `openOnTrigger` also makes the label
-// region open the popover.
+// Hideable only when `openOnTrigger` gives the label region its own way to
+// open the menu — otherwise the caret is the only trigger.
 const show_trigger = computed(() => !hideTrigger || !openOnTrigger)
 
-// The menu paints --color-element at the trigger's own ambient depth, so while
-// open the TRANSPARENT variants (ghost, outline) fill with that same element and
-// the trigger + menu read as one continuous surface. A SOLID button already fills
-// element, so it needs nothing. Neither shifts depth — the menu matches the
-// button's depth, not a stepped one.
+// Ghost/outline variants get an explicit fill while open, matching the menu's
+// background, so the two read as one surface; solid already fills.
 const trigger_style = computed(() => {
   if (variant === 'solid' || !popover_open.value) return undefined
   return { '--btn-bg-color': 'var(--color-element)', '--btn-text-color': 'var(--color-on-element)' }

@@ -19,12 +19,8 @@ function wait(ms: number) {
 }
 
 /**
- * Owns the checkout modal's Stripe Elements session and open/close chimes.
- * Collapses every loading/error/success signal into a single `status`, so
- * the UI branches on one value instead of combining several booleans.
- * `onSubmit` confirms the payment, waits for the member's plan to sync, then
- * flashes a success message and auto-closes reporting the upgrade. Closing
- * via backdrop/esc is suppressed while a submission is in flight.
+ * Owns the checkout modal's Stripe Elements session, open/close chimes, and a single
+ * `status` collapsing every loading/error/success signal the UI branches on.
  */
 export function useCheckout(close: (response?: CheckoutResponse) => void) {
   const { t } = useI18n()
@@ -63,10 +59,8 @@ export function useCheckout(close: (response?: CheckoutResponse) => void) {
     close()
   })
 
-  // The member row flips to the paid plan only once the Stripe webhook syncs
-  // it — that can lag a few seconds behind `confirm()` resolving. Poll rather
-  // than trusting the first refetch, so we don't show success against stale
-  // free-plan data.
+  // Polls instead of trusting the first refetch — the member row flips to `paid`
+  // only once the Stripe webhook syncs, which can lag a few seconds behind `confirm()`.
   async function waitForUpgradeSync() {
     for (let attempt = 0; attempt < SYNC_MAX_ATTEMPTS; attempt++) {
       const { data } = await memberQuery.refetch()
@@ -82,8 +76,7 @@ export function useCheckout(close: (response?: CheckoutResponse) => void) {
     is_confirming.value = true
     await waitForUpgradeSync()
     queryCache.invalidateQueries({ key: ['billing'] })
-    // Resubscribing clears the downgrade grace, so the deck list's is_locked
-    // flags flip off — refetch it (the sync above already waited for paid).
+    // Resubscribing clears the downgrade grace, so the deck list's is_locked flags flip off.
     queryCache.invalidateQueries({ key: ['decks'] })
     is_confirming.value = false
     is_success.value = true

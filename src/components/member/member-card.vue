@@ -28,10 +28,8 @@ const created_on = computed(() => formatShortDate(createdAt, locale.value))
 
 const body_bindings = computed(() => memberCoverBindings(cover))
 
-// The card's own chrome is a fixed brown-200 panel (not a depth-ramp surface),
-// but it IS a surface its children sit on — declare depth 1 so a neutral element
-// on it (the avatar-edit button) resolves to the lighter brown-50 pop rather
-// than the depth-0 brown-300 it would fall through to.
+// The card's fixed panel isn't itself depth-ramped, but children on it (the avatar-edit
+// button) still need to resolve to brown-50, not the depth-0 brown-300 they'd fall through to.
 provideDepth(1)
 </script>
 

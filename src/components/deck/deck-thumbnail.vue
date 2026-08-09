@@ -10,17 +10,16 @@ import { useI18n } from 'vue-i18n'
 type DeckThumbnailProps = {
   deck?: Deck
   hide_title?: boolean
-  // skip the hover-to-reveal fade — corner action stays visible unconditionally
+  // Skips the hover-to-reveal fade — the corner action stays visible unconditionally.
   corner_action_always_visible?: boolean
-  // grid is in drag-to-reorder mode: the card is a drag handle, not tappable
+  // True while the grid is in drag-to-reorder mode — the card is a drag handle, not tappable.
   rearranging?: boolean
-  // this is the card currently being picked up — show a lift shadow
+  // True for the card currently being picked up — shows a lift shadow.
   dragging?: boolean
-  // hold the hover/press look open (e.g. while the card's options menu is up)
+  // Holds the hover/press look open, e.g. while the card's options menu is up.
   active?: boolean
-  // downgrade-grace lock override. Defaults to the deck's own `is_locked`;
-  // the dashboard grid passes a rank-recomputed value so a reorder across the
-  // 10th position updates the dim/lock optimistically, without a backend round-trip.
+  // Overrides the deck's own `is_locked`, so a caller can dim/lock a card optimistically
+  // ahead of a backend round-trip (e.g. after a reorder crosses the 10th position).
   locked?: boolean
   sfx?: SfxOptions
 }
@@ -31,9 +30,8 @@ const {
   rearranging = false,
   dragging = false,
   active = false,
-  // Explicit `undefined` default: opt out of Vue's absent-Boolean-to-`false`
-  // coercion so the `deck?.is_locked` fallback below can still fire when a
-  // caller (the deck header) omits `locked` entirely.
+  // Explicit `undefined` opts out of Vue's absent-Boolean-to-`false` coercion, so the
+  // `deck?.is_locked` fallback below still fires when a caller omits `locked` entirely.
   locked = undefined,
   sfx
 } = defineProps<DeckThumbnailProps>()
