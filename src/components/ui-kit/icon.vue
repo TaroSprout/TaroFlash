@@ -6,9 +6,7 @@ const { src } = defineProps<{
   src: string
 }>()
 
-// All icons are currently eager (bundled into the main chunk).
-// To make a subset lazy, replace the eager glob with an explicit file list
-// and let the rest fall through to the lazy glob below.
+/** Every icon, bundled eagerly. To make a subset lazy, list it explicitly and let the rest fall through to `lazyIcons` below. */
 const eagerIcons: Record<string, Component> = import.meta.glob('../../assets/icons/*.svg', {
   eager: true,
   import: 'default'
