@@ -1,6 +1,6 @@
 ---
 name: revise-rules
-description: Revise rule files under `.claude/rules/` and skill files under `.claude/skills/` so they stay accurate and consistent with the code — driven by `.claude/.last-updated.json`. Unlike update-docs this is a revision task, not a write-from-scratch one; flag drift, confirm with the user, then edit minimally.
+description: Revise rule files under `.claude/rules/` and skill files under `.claude/skills/` so they stay accurate and consistent with the code — driven by `.claude/.last-updated.json`. This is a revision task, not a write-from-scratch one; flag drift, confirm with the user, then edit minimally.
 allowed-tools: Read, Edit, Write, Bash, Glob, Grep
 argument-hint: ''
 arguments: []
@@ -64,9 +64,8 @@ Stylistic tightening is out of scope unless the user has complained about it —
 Rules auto-load into the prompt whenever their `paths:` match a file in the working set. Long prose and verbose examples pollute context for every unrelated task. When writing or revising:
 
 - Favor bullets and short code blocks over narrative.
-- Cut "why" paragraphs. One-line rationale at most. Deeper reasoning belongs in `docs/`.
-- Link to `docs/src/**` for extended reference material instead of inlining it.
-- When a new rule would need more than ~50 lines to be clear, split the expository half into a doc page and keep the rule a thin pointer.
+- Cut "why" paragraphs. One-line rationale at most.
+- When a new rule would need more than ~50 lines to be clear, split the expository half into `.claude/docs/` and keep the rule a thin pointer.
 
 This applies to new rules authored under confirmation in Step 5, and to revisions — surgical edits stay surgical; don't expand surrounding prose "while you're there."
 

@@ -115,7 +115,6 @@ Valid grounds to skip are narrow and listed in Step 8: barrel re-exports with no
 2. Tests are **Deno**, not Vitest. Colocate as `index.test.ts` next to `index.ts`.
 3. Inject a fake supabase via `supabase/functions/_shared/test-utils.ts` (`makeFakeSupabase`). Never hit a real network — the handler must be exported as a pure `handler({ supabase, ... })` and `Deno.serve(...)` gated on `import.meta.main`.
 4. Run from `supabase/functions/`: `deno test --allow-net --allow-env --allow-read`.
-5. See `docs/src/supabase/edge-functions.md` for full conventions.
 
 Skip to Step 8 for these files — Steps 3–7 are frontend-specific.
 

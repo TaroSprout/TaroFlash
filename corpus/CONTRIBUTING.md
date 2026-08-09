@@ -4,13 +4,11 @@ High-level **domain & system logic** for TaroFlash, in plain language — the
 durable truths about how the system behaves, written once so both humans and
 agents can rely on them.
 
-This is **not** the reference docs (`docs/`). Those document _how the code
-works_ — API signatures, composable internals, component props — at
-implementation altitude. The corpus sits above that line: _what is true about
-the system_, in domain words a non-engineer can follow.
-
-The two never overlap. When a topic here needs a code detail, it links out to
-`docs/` rather than restating it.
+This is **not** an API reference — it doesn't document signatures, composable
+internals, or component props at implementation altitude. The corpus sits
+above that line: _what is true about the system_, in domain words a
+non-engineer can follow. When a topic here needs a code detail, it links to
+the relevant `.claude/rules/*` file or source path rather than restating it.
 
 Its real job is not to list facts — it is to **make the non-obvious obvious**:
 to surface the hazards, the silent assumptions, and the traps a reader would
