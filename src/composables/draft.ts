@@ -10,22 +10,11 @@ export type Draft<T extends object> = {
 
 /**
  * A single mutable draft over one whole row of data. `buildBase` returns the
- * last-saved shape (with defaults merged in, so `state` is always fully
- * populated); `state` is a deep reactive clone of it that forms/designers
- * mutate directly, including nested objects. Dirty-checking is clone-and-diff,
- * not write-capture — behaviourally identical for these small objects and far
- * simpler than a patch/Proxy layer, while keeping the state deeply mutable.
- *
- * @example
- * const draft = useDraft(() => buildDeckBase(deck))
- * draft.state.study_config.shuffle = true
- * if (draft.is_dirty.value) await save(draft.state)
- * draft.rebase() // adopt the saved state as the new baseline
+ * last-saved shape (with defaults merged in); `state` is a deep reactive clone
+ * of it that forms/designers mutate directly. →[K:draft-clone-and-diff]
  */
 export function useDraft<T extends object>(buildBase: () => T): Draft<T> {
-  // A ref rather than a plain variable so `rebase()`'s reassignment invalidates
-  // the `is_dirty` computed — a bare closure swap wouldn't be tracked and the
-  // stale `true` would stick until the next `state` mutation.
+  // A ref, not a plain variable — reassigning it in `rebase()` must invalidate `is_dirty`.
   const base = shallowRef(buildBase())
   const state = reactive(deepClone(base.value)) as T
 

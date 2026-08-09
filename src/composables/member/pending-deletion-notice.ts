@@ -7,12 +7,7 @@ import { useSessionStore } from '@/stores/session'
 import { useNoticeStore, type Notice } from '@/stores/notice-store'
 import logger from '@/utils/logger'
 
-// Module-level so repeat opens collapse onto the one panel. The shell watches
-// `member.pending_deletion` and can call this more than once — an immediate
-// fire plus the re-fire when the member row resolves the pending state — and a
-// restore-then-relapse would too. The store already allows only one panel at a
-// time, but without this each call would replace the panel and replay its open
-// sound.
+// Module-level so repeat opens collapse onto the one panel. →[K:pending-deletion-notice-singleton]
 let current: Notice | null = null
 
 /**
@@ -55,16 +50,7 @@ export function usePendingDeletionNotice() {
       return
     }
 
-    // While archived, every member-owned query resolved to an empty result and
-    // cached it. Those entries are all wrong now, and there's no per-key
-    // invalidation worth enumerating when the answer is "everything the member
-    // owns just came back" — so invalidate the lot.
-    //
-    // Invalidate, never remove: the member store's query is mounted at the app
-    // root and bound to its cache entry. Removing that entry leaves the store
-    // reading the old row, `pending_deletion` stays true, and the guard below
-    // bounces straight back here. Awaited so the guard reads the refetched row
-    // rather than racing it.
+    // →[K:pending-deletion-notice-invalidate-not-remove]
     await queryCache.invalidateQueries()
 
     dismiss()
@@ -88,11 +74,7 @@ export function usePendingDeletionNotice() {
           closesOnClick: true
         }
       ],
-      // Also covers the swipe-to-dismiss the panel allows regardless of
-      // `closable`. Signing out is the only safe landing: an archived member
-      // reads zero rows everywhere, so leaving them in the shell with a live
-      // session strands them on an empty skeleton with no route back to this
-      // panel.
+      // →[K:pending-deletion-notice-dismiss-signs-out]
       onDismiss: () => {
         current = null
         if (member.pending_deletion) session.logout()

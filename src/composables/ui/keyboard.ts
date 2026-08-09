@@ -1,19 +1,7 @@
 import { onScopeDispose, ref, watch } from 'vue'
 import { useMatchMedia } from './media-query'
 
-// On-screen keyboard shrinks the visual viewport. Comparing against
-// `window.innerHeight` is unreliable — mobile Safari also resizes that as its
-// own toolbar hides/shows while scrolling, which fired mid-keystroke (the
-// scroll-pin composable nudges scrollY on every result change) and made the
-// dock flicker. Comparing against the largest visualViewport height we've
-// seen sidesteps that: the toolbar hiding only ever grows the viewport
-// (raising the baseline), while the keyboard only ever shrinks it.
-//
-// That high-water mark only makes sense on touch devices though — a real
-// on-screen keyboard can't open without one. Gating on `pointer: coarse`
-// stops a plain desktop window resize (which shrinks the viewport under a
-// fine pointer) from reading as a keyboard: the baseline just tracks the
-// current height instead of accumulating a max.
+// Px the viewport must shrink below its high-water mark to count as "open". →[K:keyboard-detection-high-water-mark]
 const THRESHOLD_PX = 100
 // Coalesces the burst of resize events a keyboard transition (or predictive
 // text bar toggling) fires, so the flag settles once instead of flickering.
@@ -26,10 +14,7 @@ let max_height = 0
 let timeout: ReturnType<typeof setTimeout> | undefined
 let stop_pointer_watch: (() => void) | undefined
 
-// Mobile Chrome's own URL bar hides/reveals as the page scrolls, which — unlike
-// Safari's — shrinks the visual viewport just like the keyboard does, so the
-// height comparison alone can't tell them apart. A real on-screen keyboard is
-// never open without a focused text surface, so gate on that too.
+// →[K:keyboard-detection-needs-editable-focus]
 function hasEditableFocus(): boolean {
   const el = document.activeElement as HTMLElement | null
   if (!el) return false
@@ -55,13 +40,7 @@ function update() {
   timeout = setTimeout(measure, DEBOUNCE_MS)
 }
 
-/**
- * Tracks whether the on-screen keyboard is likely open.
- *
- * @example
- * const { is_open } = useKeyboardOpen()
- * // <footer v-show="!is_open">
- */
+/** Tracks whether the on-screen keyboard is likely open. */
 export function useKeyboardOpen() {
   if (consumers++ === 0) {
     window.visualViewport?.addEventListener('resize', update)
