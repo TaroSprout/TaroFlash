@@ -25,7 +25,7 @@ async function onSubmit() {
     return
   }
 
-  // 'invalid' shows inline field errors; only a genuine request failure alerts.
+  // Only 'error' alerts — 'invalid' already shows inline field errors.
   if (result === 'error') {
     alert.warn({
       title: t('signup-dialog.alert.error-title'),

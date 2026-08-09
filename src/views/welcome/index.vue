@@ -21,10 +21,7 @@ const roadmap = useTemplateRef('roadmap')
 
 provideWelcomeLayout()
 
-// The checkpoint has already sent a signed-in visitor into the app, so a mount
-// here means a signed-out sign-in surface. Two things to settle: open the reset
-// dialog for a recovery link, and stash any `?next=` destination so it survives
-// the sign-in (including the full-page OAuth redirect).
+// A recovery mount returns early — captureReturnDestination only runs for a normal signed-out visit.
 onMounted(async () => {
   if (await session.checkPasswordRecovery()) {
     resetPasswordModal.open()

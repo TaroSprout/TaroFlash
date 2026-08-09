@@ -33,9 +33,11 @@ const size = computed<FeatureCardTier>(() => {
   return width.value === 'tablet' ? 'xl' : 'sm'
 })
 
-// Card width + icon/heading/description scale with the tier — xl (tablet)
-// reads biggest since the card itself is largest there, lg (desktop) and sm
-// (mobile) step down from it.
+/**
+ * Card width and its icon/heading/description sizes, keyed by tier. `xl`
+ * (tablet) reads biggest since the card itself is largest there; `lg`
+ * (desktop) and `sm` (mobile) step down from it.
+ */
 const CARD_WIDTH: Record<FeatureCardTier, string> = {
   xl: 'w-(--card-w-full)',
   lg: 'w-(--card-w-md)',

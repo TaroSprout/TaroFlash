@@ -12,8 +12,7 @@ type RoadmapItem = {
 
 const { t } = useI18n()
 
-// The panel band is a fixed brown-200 surface on the depth-0 page; declare
-// depth 1 so the options-panel well inside reads `below` against it.
+// Depth 1 so the options-panel well inside reads `below` against this band's fixed brown-200 surface.
 provideDepth(1)
 
 const items: RoadmapItem[] = [
