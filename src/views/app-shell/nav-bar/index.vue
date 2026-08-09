@@ -14,8 +14,6 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- translateZ(0) pins this sticky bar to its own compositor layer; without it,
-       iOS standalone lags it during scroll. -->
   <nav
     data-testid="nav-bar-container"
     ref="nav-bar"

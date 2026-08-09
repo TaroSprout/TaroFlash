@@ -10,16 +10,13 @@ const router = useRouter()
 onMounted(async () => {
   await supabase.auth.getSession()
 
-  // Popup flow: the opener tab owns the navigation (and consumes the return
-  // destination), so this tab just closes itself.
+  // Popup flow: the opener tab owns the navigation, so this tab just closes itself.
   if (consumeOAuthPopupFlag()) {
     window.close()
     return
   }
 
-  // Full-page redirect flow: this tab landed back here after the OAuth round
-  // trip. Land on the originally-intended destination (stashed in
-  // sessionStorage before the redirect), falling back to the dashboard.
+  // Redirect flow: land on the destination stashed before the OAuth round trip, falling back to the dashboard.
   router.push(consumeReturnDestination() ?? { name: 'dashboard' })
 })
 </script>
