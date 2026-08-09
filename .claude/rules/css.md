@@ -14,7 +14,7 @@ paths:
 
 When you do reach for a `<style>` block:
 
-- Write plain CSS with `var(--theme-*)` / `var(--color-*)` tokens — never `@apply` (see `no-apply` rule).
+- Write plain CSS with `var(--theme-*)` / `var(--color-*)` tokens — never `@apply`.
 - Keep the rule scoped to the component; don't leak global selectors.
 
 If none of the conditions apply, keep it inline — even when the class list looks long, utilities beat a one-off style block.
