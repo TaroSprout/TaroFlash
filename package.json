@@ -18,6 +18,7 @@
     "lint": "oxlint",
     "format": "vp fmt src/",
     "knowledge:check": "node scripts/knowledge-lint.mjs",
+    "knowledge:migrations": "node scripts/migration-knowledge-gate.mjs",
     "build:email-templates": "node scripts/build-email-templates.mjs",
     "gen:palette-css": "node scripts/gen-palette-css.ts"
   },
