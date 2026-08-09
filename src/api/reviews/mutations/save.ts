@@ -9,6 +9,7 @@ export type SaveReviewVars = {
   log: ReviewLog
 }
 
+// Trap: a missed invalidation fails silently →[K:silent-stale-cache]
 export function useSaveReviewMutation() {
   const queryCache = useQueryCache()
   return useMutation({

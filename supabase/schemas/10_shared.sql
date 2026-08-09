@@ -83,6 +83,7 @@ GRANT ALL ON FUNCTION public.auth_role() TO authenticated;
 GRANT ALL ON FUNCTION public.auth_role() TO service_role;
 
 
+-- Trap: widening a capability ripples into every query leaning on it →[K:permission-widening-ripples]
 CREATE FUNCTION public.can_manage_members() RETURNS boolean
     LANGUAGE sql STABLE
     SET search_path TO 'public'
@@ -131,6 +132,7 @@ GRANT ALL ON FUNCTION public.can_read_lesson_audio() TO service_role;
 GRANT ALL ON FUNCTION public.can_read_lesson_audio() TO authenticated;
 
 
+-- Trap: the ownership stamp is empty under the service role →[K:ownership-stamp-empty-under-service-role]
 CREATE FUNCTION public.set_member_id() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$

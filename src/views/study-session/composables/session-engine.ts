@@ -26,6 +26,7 @@ type ReviewState = 'unreviewed' | 'pending' | 'saved' | 'failed'
  * card is reviewed. Anything unresolved at the deadline is treated as `failed`
  * so the summary is never held on a stalled network.
  */
+// Trap: unconfirmed review loss →[K:unconfirmed-review-loss]
 const SUMMARY_HOLD_MS = 1000
 
 /** loading -> cover -> studying -> summary. The single lifecycle source. */

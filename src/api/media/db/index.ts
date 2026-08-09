@@ -30,6 +30,7 @@ export function cardImageUrl(path: string): string {
   return getImageUrl('member-images', path)
 }
 
+// Trap: a file lives or dies by its notes, not the bucket →[K:media-lifetime-follows-notes]
 export async function insertMedia(params: Media): Promise<void> {
   if (!params.card_id && !params.deck_id) {
     throw new Error('insertMedia requires either card_id or deck_id')

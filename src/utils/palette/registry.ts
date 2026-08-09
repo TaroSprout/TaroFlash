@@ -27,6 +27,7 @@
  * After editing this file run `pnpm gen:palette-css` to regenerate
  * src/styles/palettes.gen.css.
  */
+// Trap: the color set is closed; an out-of-set color renders bare →[K:closed-color-set-fails-bare]
 export const PALETTES = {
   blue: {
     light: { accent: 'blue-500', accentMuted: 'blue-400', onAccent: 'brown-100' },

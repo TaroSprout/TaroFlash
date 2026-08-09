@@ -23,6 +23,7 @@ CREATE TABLE public.cards (
     back_text text,
     deck_id bigint,
     member_id uuid,
+    -- Trap: card rank needs byte-order collation →[K:card-rank-byte-collation]
     rank text COLLATE pg_catalog."C" NOT NULL,
     note text
 );
