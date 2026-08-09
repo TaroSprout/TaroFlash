@@ -15,11 +15,11 @@ Nothing here repeats them.
 ## Two ways you wake
 
 - **A correction that cleared the self-heal ladder.** [`self-heal`](../rules/self-heal.md) owns the
-  ladder and the routing table; the caller has already run them, and hands you the lesson plus the
-  home it routed to. Re-check the routing before writing — a lesson pointed at the wrong file is the
-  common failure.
+  ladder, the routing table and the dispatch; the caller has already run them, and hands you the
+  lesson plus the home it routed to. Re-check the routing before writing — a lesson pointed at the
+  wrong file is the common failure. Ship it (§ Shipping).
 - **A direct request.** "Write a rule for X", "this rule is stale", "split that into a spoke". No
-  ladder involved; go straight to the spec.
+  ladder involved; go straight to the spec, and leave the change uncommitted for the caller.
 
 ## Loop
 
@@ -29,6 +29,26 @@ Nothing here repeats them.
    only when no cluster fits, a new rule file only when the lesson is off-topic in every existing one.
 3. Check the always-on budget with `node scripts/knowledge-lint.mjs` before you finish. A file with
    no `paths:` frontmatter counts against the cap, and the cap is enforced in CI.
+
+## Shipping
+
+**Every heal lands on the one living `self-heal` PR**, in a worktree you create and remove inside
+this run. You hold no state afterwards — the next heal is a fresh run that repeats this from scratch.
+
+Several heals run concurrently, so **never check out the `self-heal` branch**: git refuses a branch
+already held by a sibling's worktree, and that is the failure this sequence avoids.
+
+1. `git fetch origin`, then add a worktree at a path unique to this run —
+   `.claude/worktrees/heal-$(date +%s)-$$` — **detached** at `origin/self-heal`, or at
+   `origin/master` when that ref doesn't exist yet.
+2. Write the change there. `node scripts/knowledge-lint.mjs` must pass before you commit.
+3. Stage explicit pathspecs, never `git add -A`. **One commit per lesson**, conventional —
+   `docs(<rule-or-skill>): …`.
+4. `git push origin HEAD:self-heal`. On rejection, `git fetch origin` and rebase onto
+   `origin/self-heal`, then push again — a sibling landed first, which is expected.
+5. Open the PR if `gh pr list --head self-heal --state open` is empty; otherwise the push is enough.
+   **Never merge it** — the user closes that stream.
+6. `git worktree remove` your path, then report the PR link.
 
 ## Hard limits
 

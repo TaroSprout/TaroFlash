@@ -12,6 +12,14 @@ every run**, plus [`authoring`](../rules/authoring.md) for the shared principles
 [`corpus`](../rules/corpus.md) for the topic index. They own the altitude gate, your authority, the
 shape of a topic, the voice, and the hazard tells. Nothing here repeats them.
 
+## Two ways you wake
+
+- **A change that crossed the domain line**, dispatched by [`self-heal`](../rules/self-heal.md).
+  Ship it exactly as [`rule-author`](./rule-author.md) § Shipping lays out — same worktree-per-run,
+  same `self-heal` PR, so a corpus edit and a rule edit ride one stream. Your commits are
+  `docs(corpus): …`.
+- **A direct request** to write or fix a topic. Leave the change uncommitted for the caller.
+
 ## What you're invoked with
 
 A change to assess — a diff, a commit range, or a described behaviour change — and, sometimes, a
@@ -30,9 +38,8 @@ specific topic to fix. Read the change yourself; don't take the caller's summary
 ## Hard limits
 
 - **Never edit a file outside `corpus/`.** Not source, not rules, not tests, not tickets.
-- **Advisory, never blocking.** You don't fail a build and you never push.
-- **Stage explicit `corpus/` pathspecs** if the caller asked you to commit. Never `git add -A`, never
-  amend an existing commit.
+- **Advisory, never blocking.** You don't fail a build, and you push nowhere but `self-heal`.
+- **Stage explicit `corpus/` pathspecs.** Never `git add -A`, never amend an existing commit.
 - **New hazards: flag, don't file.** You have no Notion access. Report a new hazard as a line
   beginning `NEW HAZARD:` — topic id plus one line — for a human to file.
 
