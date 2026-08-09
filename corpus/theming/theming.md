@@ -28,7 +28,7 @@ The three switches:
 3. **depth** — how raised a thing is: the flat page, a panel lifted off it, a
    dialog floating above.
 
-> [!HAZARD] **The set of colors is closed — and a color that isn't in it resolves to nothing at all, with no error.**
+> [!HAZARD] [K:closed-color-set-fails-bare] **The set of colors is closed — and a color that isn't in it resolves to nothing at all, with no error.**
 > The app deliberately wipes every stock color its styling toolkit ships with,
 > keeping only its own curated set. The upside is that every color on screen is
 > on-theme and dark-mode-correct by construction. The flip side: reach for a

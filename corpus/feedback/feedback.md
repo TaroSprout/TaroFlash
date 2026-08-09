@@ -22,7 +22,7 @@ Two things a member can do to a post:
 A smaller group — the moderators — can do a third thing: decide which posts the
 wall shows, and mark where each one stands.
 
-> [!HAZARD] **A new submission does not land on the wall. It waits, unseen, until a moderator lets it through.**
+> [!HAZARD] [K:posts-hidden-until-published] **A new submission does not land on the wall. It waits, unseen, until a moderator lets it through.**
 > Posting feels finished — the member gets a "thanks, submitted" and the box
 > closes. But every fresh post starts _hidden_, and the wall only ever shows the
 > ones a moderator has published. So the obvious assumption — "I posted it, it's

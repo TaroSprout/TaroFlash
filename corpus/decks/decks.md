@@ -28,7 +28,7 @@ entire sharing model.
 The dashboard asks for _your_ decks and shows each one with a count of the cards
 due today.
 
-> [!HAZARD] **Making a deck public lets other people _read_ it — never _study_ it.**
+> [!HAZARD] [K:public-is-read-only] **Making a deck public lets other people _read_ it — never _study_ it.**
 > "Public" sounds like "shared, and everyone builds their own progress on it." It
 > isn't. Recording a review is gated to the card's owner, and the progress table
 > holds exactly **one** row per card for the whole platform — not one per viewer.

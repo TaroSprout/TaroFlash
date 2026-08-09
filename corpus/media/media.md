@@ -26,7 +26,7 @@ So a file is never thrown away the moment a card stops using it. It stays until
 _nothing_ — no card, deck, or lesson — points to it. Then a background cleanup
 job quietly removes it.
 
-> [!HAZARD] **A file lives or dies by its notes — not by the bucket it sits in.**
+> [!HAZARD] [K:media-lifetime-follows-notes] **A file lives or dies by its notes — not by the bucket it sits in.**
 > The cleanup job decides a file is garbage the instant no live note points at
 > it. That makes the note the file's lifeline, with a blade on each side: delete
 > a _shared_ file directly and you yank it out from under every other card still

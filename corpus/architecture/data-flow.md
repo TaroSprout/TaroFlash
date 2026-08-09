@@ -28,7 +28,7 @@ The cache doesn't refresh itself. Something has to say "the decks I remembered a
 stale now." Getting that _something_ right — always, and in exactly one place — is
 what this topic is about.
 
-> [!HAZARD] **A write that succeeds but forgets to mark the right thing stale leaves the screen showing old data — and nothing anywhere reports an error.**
+> [!HAZARD] [K:silent-stale-cache] **A write that succeeds but forgets to mark the right thing stale leaves the screen showing old data — and nothing anywhere reports an error.**
 > The convenience below is that a caller never thinks about the cache. The flip
 > side is that when the cache _does_ drift, there's no error to chase and no clue
 > at the call site: the save worked, the server is correct, and the screen quietly

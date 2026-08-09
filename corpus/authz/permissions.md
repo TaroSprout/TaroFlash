@@ -26,7 +26,7 @@ That check gets asked in two very different spots:
 Only the server's answer counts. What the screen does with it is a courtesy — it
 keeps people from reaching for buttons they can't use.
 
-> [!HAZARD] **Widen a permission, and every query that was leaning on the old, tighter rule silently widens with it — including screens you forgot were leaning on it.**
+> [!HAZARD] [K:permission-widening-ripples] **Widen a permission, and every query that was leaning on the old, tighter rule silently widens with it — including screens you forgot were leaning on it.**
 > This is the flip side of the "change it in one place" convenience below. The
 > same wiring that updates every screen at once will also ripple a loosened rule
 > into queries you never meant to touch — turning an ordinary dashboard into a

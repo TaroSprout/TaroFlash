@@ -23,7 +23,7 @@ From then on, almost everything you make carries a quiet stamp of your name.
 That stamp is what keeps your stuff yours and everyone else's out of reach. You
 never write it; the app writes it for you, from whoever you're signed in as.
 
-> [!HAZARD] **The ownership stamp is copied from _whoever is asking_ — and a trusted backend job asks as nobody.**
+> [!HAZARD] [K:ownership-stamp-empty-under-service-role] **The ownership stamp is copied from _whoever is asking_ — and a trusted backend job asks as nobody.**
 > Stamping "this belongs to you" from the signed-in person is exactly what makes
 > it effortless — you never have to set it. The flip side: a privileged backend
 > job runs with _no_ signed-in person, so the stamp comes back **empty**. On a
@@ -106,7 +106,7 @@ were revoked still reads as signed in.
 
 A member scheduled for deletion is suspended by a single stored date. Ownership
 rules don't read the signed-in identity directly — they read a function that
-returns it normally and returns *nobody* once that date is set, so one flag empties
+returns it normally and returns _nobody_ once that date is set, so one flag empties
 every table the member owns at once.
 
 Two rules deliberately keep reading the raw identity: a member reading their **own**
