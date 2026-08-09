@@ -2,14 +2,14 @@
 lastUpdated: 2026-08-08T00:00:00Z
 paths:
   - 'corpus/**/*.md'
-  - '.claude/agents/archivist.md'
+  - '.claude/agents/corpus-author.md'
 ---
 
 # Corpus authoring
 
 **Owns how a `corpus/` topic is written and when it may be edited.** Reading the corpus is routed by
 [`corpus`](./corpus.md); the five shared principles live in [`authoring`](./authoring.md). The
-`archivist` agent is the only writer — don't rewrite a topic in passing.
+`corpus-author` agent is the only writer — don't rewrite a topic in passing.
 
 The corpus holds durable domain truths in plain language: _what is true about the system_, in words
 a non-engineer follows. A rule file's spokes sit an altitude below, documenting how the code works.

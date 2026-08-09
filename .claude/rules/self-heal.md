@@ -41,10 +41,10 @@ Three gates. A correction that survives all three is a corpus defect.
 | repo-wide and non-negotiable          | a CLAUDE.md guideline                             |
 | the user's personal taste             | a CLAUDE.md guideline, or the nearest rule file   |
 | something mechanically checkable      | a hook in `.claude/settings.json`, or a lint rule |
-| domain knowledge that went stale      | `corpus/` — the archivist owns it                 |
+| domain knowledge that went stale      | `corpus/` — `corpus-author` owns it               |
 
-Bias toward **extending the nearest existing file**. A new rule file is for a lesson that would be
-off-topic in every one of them.
+Bias toward **extending the nearest existing file**; a new one is for a lesson off-topic in every
+existing file. A lesson routed to `.claude/rules/**` or CLAUDE.md is written by `rule-author`.
 
 ## Everything lands in the repo
 
