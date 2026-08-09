@@ -12,7 +12,7 @@ export type SummaryData = {
   incorrect: CardReviewResult[]
 }
 
-// Ordered weakest → strongest; the index is the comparable "level".
+/** Ordered weakest → strongest; the index is the comparable "level". */
 const BAND_ORDER: MaturityBand[] = ['forming', 'familiar', 'strong', 'mastered']
 
 function levelFor(interval_days: number): number {

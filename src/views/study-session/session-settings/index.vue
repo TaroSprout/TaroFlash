@@ -26,7 +26,7 @@ const {
 const is_coarse = useMatchMedia('coarse')
 const is_mobile = useMatchMedia('w<sm')
 
-// Ratings mode is a boolean pref; the option group speaks string values.
+/** Ratings mode is a boolean pref; the option group speaks string values. */
 const ratings_mode = computed<RatingsMode>({
   get: () => (show_all_ratings.value ? 'advanced' : 'simple'),
   set: (value) => (show_all_ratings.value = value === 'advanced')

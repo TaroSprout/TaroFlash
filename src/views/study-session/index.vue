@@ -63,7 +63,7 @@ const nav_mode = computed<'close' | 'stop' | 'back'>(() => {
   return 'stop'
 })
 
-// The textured backdrop reads as busy behind the settings form, so drop it there.
+/** The textured backdrop reads as busy behind the settings form, so drop it there. */
 const bgx_class = computed(() =>
   active_page.value === 'settings'
     ? ''

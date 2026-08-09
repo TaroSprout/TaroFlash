@@ -6,7 +6,7 @@ import type { SummaryCategory, SummaryData } from './aggregate'
 
 type StatsPanelProps = { summary: SummaryData }
 
-// Display order; `correct` leads because it's the headline stat.
+/** Display order; `correct` leads because it's the headline stat. */
 const CATEGORIES: { key: SummaryCategory; icon: string }[] = [
   { key: 'correct', icon: 'card-deck' },
   { key: 'new', icon: 'card-add' },
@@ -23,7 +23,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-// Empty categories drop out, except `correct` — a zero there is the point.
+/** Empty categories drop out, except `correct` — a zero there is the point. */
 const entries = computed<OptionsPanelEntry[]>(() =>
   CATEGORIES.filter(({ key }) => key === 'correct' || summary.groups[key].length > 0).map(
     ({ key, icon }) => ({ value: key, icon, label: labelFor(key) })
