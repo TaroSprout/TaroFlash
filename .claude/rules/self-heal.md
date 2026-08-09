@@ -27,7 +27,7 @@ Three gates. A correction that survives all three is a corpus defect.
    doesn't generalize — fix it and stop.
 2. **Execution, or spec?** If the _brief_ (ticket, AC, your own plan the user approved) was wrong,
    that's an upstream miss — say so, fix the work, don't rewrite code rules for it.
-3. **Gap, or adherence?** Grep first — CLAUDE.md, `.claude/rules/*`, `.claude/docs/*`. A clear rule that
+3. **Gap, or adherence?** Grep first — CLAUDE.md, `.claude/rules/**`. A clear rule that
    already existed means you didn't follow it, and that's **not** a heal — _unless_ it's been
    violated repeatedly, which means the rule is weak, misplaced, or not loading. That is.
 
@@ -86,8 +86,7 @@ Healing everything heals nothing — bloated rules stop being read, and the `sel
 reviewable.
 
 - **Gate 3 is the load-bearing one.** Most corrections are adherence misses. Leave them.
-- **Delete-test the prose you add**, same as a ticket AC: if removing the sentence changes no future
-  decision, cut it. Rule files are tight references, not essays.
-- **Never restate a rule that already exists elsewhere** — sharpen or relocate the original instead.
+- **The prose you add answers to [`authoring`](./authoring.md) and [`rule-authoring`](./rule-authoring.md).**
+  Rule files are tight references, not essays.
 - **Never heal silently on a taste call** the user hasn't actually made. A single offhand remark is
   an instance; wait for the pattern.

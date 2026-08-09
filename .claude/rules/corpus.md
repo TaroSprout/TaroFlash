@@ -8,8 +8,8 @@ paths:
 # Corpus — domain knowledge for the area you're touching
 
 **Scope: any change to app or backend code.** `corpus/` holds the durable domain truths — what is
-true about the system, in plain language — one altitude above `docs/` implementation reference. It
-cannot path-scope itself, so this file routes it.
+true about the system, in plain language — one altitude above the implementation detail in a rule's
+spokes. It cannot path-scope itself, so this file routes it.
 
 **Read the trap register first: [`corpus/hazards.md`](../../corpus/hazards.md).** Every known place
 the obvious assumption is quietly wrong, gathered across all domains. Generated — never hand-edit it;
@@ -32,7 +32,7 @@ Then pull the topic for the area you're in:
 | `src/views/study-session/**`, a run through a pile             | `corpus/study/study.md`            |
 | `src/styles/**`, `src/stores/theme.ts`, palettes               | `corpus/theming/theming.md`        |
 
-[`corpus/map.md`](../../corpus/map.md) is the full index; [`corpus/CONTRIBUTING.md`](../../corpus/CONTRIBUTING.md)
+[`corpus/map.md`](../../corpus/map.md) is the full index; [`corpus-authoring`](./corpus-authoring.md)
 covers how topics are written. The `archivist` agent owns edits — don't rewrite a topic in passing.
 
 **A diff that contradicts a stated invariant is a bug.** A diff that changes one, or exposes a new

@@ -16,10 +16,10 @@ Colors go through the `data-theme` token layer — never raw hex, never hardcode
 - Use `--theme-*` tokens only for colors that should signal the active theme. For base chrome use the static brown/grey palette utilities, not `--theme-*`.
 - Never use `@apply` — write plain CSS with `var(--theme-*)` directly (see [`css`](./css.md)).
 
-## Deeper reading
+## Spokes
 
-- [`theming-how-it-works`](../docs/theming-how-it-works.md) — `palettes.css` selector mechanics + dark-mode root
-- [`theming-usage`](../docs/theming-usage.md) — call-site, inside-component, CSS examples
-- [`theming-when-to-theme`](../docs/theming-when-to-theme.md) — themed tokens vs base palette decision rule
-- [`theming-semantic-tokens`](../docs/theming-semantic-tokens.md) — promoting recurring brown/grey pairs to `--color-*` roles
-- [`theming-bgx`](../docs/theming-bgx.md) — textured-background `bgx-*` utilities
+- [`how-it-works`](./theming/how-it-works.md) — `palettes.css` selector mechanics + dark-mode root
+- [`usage`](./theming/usage.md) — call-site, inside-component, CSS examples
+- [`when-to-theme`](./theming/when-to-theme.md) — themed tokens vs base palette decision rule
+- [`semantic-tokens`](./theming/semantic-tokens.md) — promoting recurring brown/grey pairs to `--color-*` roles
+- [`bgx`](./theming/bgx.md) — textured-background `bgx-*` utilities

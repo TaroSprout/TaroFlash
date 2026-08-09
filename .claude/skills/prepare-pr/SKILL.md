@@ -44,42 +44,14 @@ Output:
 
 History may be published — **user pre-authorised force-push on this branch** — don't block on upstream.
 
-## Conventional Commits — style guide
+## Conventional Commits
 
-### Why
+Message format, the allowed type list, scope, and squash discipline are owned by
+[`commit-authoring`](../../rules/commit-authoring.md). Rewrite every message to that spec — this
+skill adds only the PR-time constraints below.
 
-Release-notes tools (release-please, semantic-release, git-cliff, Changesets) read commit subject to categorise:
-
-- `feat:` → **Features**, often minor bump
-- `fix:` → **Bug Fixes**, patch bump
-- `refactor:`, `perf:`, `docs:`, `test:`, `chore:`, `style:`, `build:`, `ci:`, `revert:` → **Internal** or omitted from user-facing notes
-- `feat!:` / trailer `BREAKING CHANGE:` → **Breaking Changes**, major bump
-
-Even without automation, format reads well in changelog and makes git log skim productive.
-
-### Format
-
-```
-<type>(<scope>): <description>
-```
-
-- **type** — one of `feat`, `fix`, `refactor`, `perf`, `docs`, `test`, `chore`, `style`, `build`, `ci`, `revert`. Pick by user-facing effect, not biggest file changed.
-- **scope** — short domain tag (`study-session`, `cards`, `auth`, `deck-settings`). Omit only if truly cross-cutting. Prefer existing scope from branch or recent git log.
-- **description** — imperative ("add X", not "added X" or "adds X"), lowercase, no trailing period, no ticket numbers. Describe user-visible change or concrete outcome — not mechanics. Under ~72 chars.
-
-### Examples
-
-Good:
-
-- `feat(study-session): edit card text mid-session`
-- `fix(auth): prevent infinite redirect after session refresh`
-- `refactor(cards): replace CardRecord class with saveCard API`
-
-Bad:
-
-- `updates` — no type, no info
-- `refactor study-session to be cleaner` — no scope, vague
-- `fix: fixed the bug where clicking the button didn't work` — past tense, imprecise, redundant "fix"
+- Keep the subject under ~72 chars so it reads in a changelog and in `git log --oneline`.
+- Prefer a scope already used on this branch or in recent `git log` over inventing a new one.
 
 ## Workflow
 

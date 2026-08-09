@@ -175,7 +175,7 @@ Integration tests run in **Chromium browser mode** — not jsdom. This means:
 - Don't find elements by auto-generated stub tag names (`ui-icon-stub`) — use `findComponent({ name: '...' })`
 - `global` is not available — the browser setup file (`tests/setup-browser.js`) handles i18n only
 
-See `.claude/docs/testing-browser-mode.md` for full details and examples.
+See `.claude/rules/test-authoring.md` for full details and examples.
 
 ## Step 6 — Validate all tests pass
 
@@ -213,7 +213,7 @@ If the failure really is a test-scaffolding issue (and you've eliminated source 
 
 ## Step 7 — Review and quality check
 
-Once all tests are written and passing, review the full set of new tests for quality using the flakiness audit in `.claude/docs/testing-flakiness.md`.
+Once all tests are written and passing, review the full set of new tests for quality using the flakiness audit in `.claude/rules/test-authoring.md`.
 
 **Fix any critical issues** — specifically anything that would cause intermittent CI failures or mask real regressions. Call out non-critical issues (low severity style/practice notes) in the report but do not auto-fix them.
 
