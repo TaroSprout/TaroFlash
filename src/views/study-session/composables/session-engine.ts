@@ -8,17 +8,7 @@ import type { SaveReviewVars } from '@/api/reviews'
 
 export type StudyCard = Card & { state: ReviewState }
 
-/**
- * A card's durability lifecycle within a session (orthogonal to its pass/fail
- * grade, which lives in the review result):
- * - `unreviewed` — not yet rated, or re-served on resume because its save
- *   never confirmed.
- * - `pending` — rated and advanced past optimistically; its `save_review` is
- *   in flight and it is not yet durable.
- * - `saved` — its `save_review` confirmed; the review is durable.
- * - `failed` — its save was ultimately given up; not counted as reviewed and
- *   excluded from the summary.
- */
+/** A card's save state, separate from whether the user got it right. →[K:study-review-durability] */
 type ReviewState = 'unreviewed' | 'pending' | 'saved' | 'failed'
 
 /**
@@ -66,10 +56,9 @@ type SessionEngineDeps = {
  * `deck_id`, which it hands to the injected `schedulerFor` / `startingSideFor` —
  * so a merged multi-deck queue schedules each card against its own deck's pacing.
  *
- * It also coordinates the durable-save lifecycle (pending/saved/failed, in-flight
- * tracking, the summary hold); the retry mechanics themselves live in
- * `review-saver.ts`. If that coordination grows further, lift it into its own
- * seam rather than letting this core keep swelling.
+ * It also coordinates the durable-save lifecycle — in-flight tracking, the
+ * summary hold — while the retry mechanics live in `review-saver.ts`.
+ * →[K:study-review-durability]
  */
 export function useSessionEngine({
   schedulerFor,
@@ -82,8 +71,7 @@ export function useSessionEngine({
 
   const saver = useReviewSaver()
 
-  // In-flight background saves, kept so the summary can wait on them when the
-  // last card is reviewed. A save removes itself once it settles.
+  /** In-flight background saves the summary waits on; each removes itself once it settles. */
   const _in_flight = new Set<Promise<void>>()
 
   const state = ref<SessionState>('loading')
@@ -94,17 +82,15 @@ export function useSessionEngine({
   const active_card = shallowRef<StudyCard | undefined>(undefined)
   const results = shallowRef<CardReviewResult[]>([])
 
-  // A `random` deck rolls each card's side once, the first time it's asked for,
-  // and remembers it for the rest of the session. Without the memo the roll
-  // would land differently on every read — and the preview card's intro flip
-  // (played before the engine advances) would disagree with the side the card
-  // actually opens on.
+  /**
+   * Memoized per card so a `random` deck's rolled side stays stable — otherwise
+   * the preview card's intro flip could disagree with the side it opens on.
+   */
   const _rolled_sides = new Map<number, 'front' | 'back'>()
 
   const cards = computed(() => _cards_in_deck.value)
 
-  // A card counts as reviewed once it's rated (pending) and stays counted once
-  // saved; a save that ultimately fails drops back out (it's re-served later).
+  /** Counts `pending` through `saved`; a `failed` save drops back out and is re-served later. */
   const reviewed_count = computed(
     () => cards.value.filter((c) => c.state === 'pending' || c.state === 'saved').length
   )
@@ -118,8 +104,7 @@ export function useSessionEngine({
     cards.value.slice(current_index.value + 1).find((c) => c.state === 'unreviewed')
   )
 
-  // The cover is showing whenever we're not actively studying or done — that
-  // includes the loading window, where the cover card rises in.
+  /** True through the loading window too, so the cover card is already up when it arrives. */
   const is_cover = computed(() => state.value === 'loading' || state.value === 'cover')
 
   const active_starting_side = computed<'front' | 'back'>(() =>
@@ -313,9 +298,6 @@ export function useSessionEngine({
       return
     }
 
-    // Compute scheduling at the moment the user rates, against this card's own
-    // deck scheduler. next() is the single-grade repeat() — item.card.due is
-    // calculated from now.
     const review = card.review ?? (createEmptyCard(new Date()) as Review)
     const item = schedulerFor(card.deck_id).next(review, new Date(), grade)
 
@@ -331,8 +313,7 @@ export function useSessionEngine({
       })
     }
 
-    // The card advances instantly and is only `pending` — it becomes durably
-    // reviewed once its background save confirms, or `failed` if it never does.
+    // Advances instantly as `pending` — durable only once the background save confirms.
     card.review = item.card
     card.state = 'pending'
 
