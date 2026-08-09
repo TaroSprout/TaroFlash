@@ -9,9 +9,10 @@ paths:
 
 # Ticket Authoring
 
-**The single source of truth for what a ticket looks like.** Body shape, brevity, voice, and which
-stage fills each field. `/triage` and `/groom` declare their own routing and lanes — never their own
-templates or voice rules. If a body rule isn't here, it doesn't exist.
+**Owns what a ticket looks like** — body shape, brevity, voice, and which stage fills each field.
+`/triage` and `/groom` declare their own routing and lanes, never their own templates or voice
+rules. If a body rule isn't here, it doesn't exist. The five shared writing principles live in
+[`authoring`](./authoring.md) and are not restated below.
 
 Applies whenever the user says "cut a ticket", "file that", "add that to the board", or when
 out-of-scope work is found mid-task.
@@ -99,19 +100,16 @@ Five gates on every AC:
 - **Independently failable.** "The menu shows the new option" can't fail separately from the feature
   existing — that's Product description as a checkbox. "Never-reviewed cards sort last" can. A
   rejected path counts too, as a negative: "no cross-session outbox is added".
-- **Concrete.** Values, mechanisms, exact copy — _in_ the criterion. Not "retries the save";
-  "retries 3× at 0.5s / 1s / 2s, then marks it failed".
 - **One sentence.** A second sentence means it's two ACs, or padding.
-- **No `or` / `either` / `e.g.` / parenthetical alternatives** — a hedge is an unresolved decision;
-  route it to `Needs More Info`.
-- **No smuggled design; no implementation.** A competence claim ("handles X correctly", "works
-  across Y") isn't concrete unless X's behaviour is spelled out — undecided behaviour is an
-  `## Open questions` fork, not an AC. And an AC pins the _design_ decision (placement, host, copy,
-  states, behaviour), never the _implementation_ (which composable, how it's wired) — that rides a
-  companion line in `## Tech details`.
+- **No smuggled design; no implementation.** Undecided behaviour is an `## Open questions` fork, not
+  an AC. And an AC pins the _design_ decision (placement, host, copy, states, behaviour), never the
+  _implementation_ (which composable, how it's wired) — that rides a companion line in
+  `## Tech details`.
+- A hedge in an AC is an unresolved decision: route the ticket to `Needs More Info` rather than
+  writing the fork into the criterion.
 
-**Delete-test, per clause:** if removing it leaves no criterion ambiguous or unfailable, cut it.
-Rationale, plumbing traces, and restatements of another AC all fail it.
+Apply the delete-test per clause — a clause whose removal leaves no criterion ambiguous or unfailable
+is cut.
 
 > **Bloated** (a "Decisions" bullet restating an AC): _Optimistic advance stays; only the commit is
 > gated — the card flies away instantly, tracked by a per-card pending/saved/failed status. Rejected:
@@ -160,11 +158,8 @@ untouched` line is the "do not touch tests" rule in costume — delete it.
   filepaths, symbols, function names, or SQL. Those live in the acceptance criteria.
 - **Point, don't narrate.** `Reuse: UiDropdownButton, UiRadio; mirror grid-item.vue` — not a
   parenthetical explaining what each one is for. The implementer opens the file.
-- **Say it once.** If Product description already carries a fact, no other section repeats it.
 - **Plain, not flowery.** Short microcopy stays plain — avoid AI-flavoured flourishes and bare
   keyword lists alike.
-- **Record only what you know.** A confirmed root cause is stated; a guess is labelled
-  `⚠️ Hunch-level — not code-confirmed`.
 - **Never resolve a taste decision at cut time.** Which icon, what an animation feels like, what the
   copy says, how a layout should look — record as open. `/groom` settles them with the user.
 - New user-facing text → note that locale keys are needed (`src/locales/en-us.json`), see

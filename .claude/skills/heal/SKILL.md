@@ -19,7 +19,7 @@ The mechanics — the ladder, the routing table, the two lanes, the living PR, a
    the same fix twice) — and lists them.
 2. **Ladder each one** (`self-heal.md` § The ladder). Say out loud which gate kills the ones you drop;
    a silent drop looks like you missed it.
-3. **Grep before writing.** CLAUDE.md, `.claude/rules/*`, `.claude/skills/*`, `.claude/docs/*`. Existing
+3. **Grep before writing.** CLAUDE.md, `.claude/rules/**`, `.claude/skills/*`. Existing
    coverage means sharpen or relocate, never add a second copy.
 4. **Route** by the table in `self-heal.md`. Every lesson lands in the repo — there is no memory
    store — so every route continues to step 5.
