@@ -17,9 +17,6 @@ type WindowLayoutOptions = {
  *
  * `desktop` requires `desktop_query` to be set and matched; otherwise the window
  * only ever toggles between `phone` and `tablet`.
- *
- * @example
- * const { layout_mode, window_px } = useWindowLayout({ desktop_query: 'w>=lg & fine' })
  */
 export function useWindowLayout(opts?: WindowLayoutOptions) {
   const phone_query = opts?.phone_query ?? 'w<md'
