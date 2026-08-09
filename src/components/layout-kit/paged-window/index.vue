@@ -17,8 +17,7 @@ export type Page = {
   value: string
   icon?: string
   danger?: boolean
-  // Whether this page appears as a sidebar entry on desktop. Defaults to true;
-  // set false for pages only reachable via the directory or an aside affordance.
+  /** Whether this page appears as a sidebar entry on desktop; defaults to true, set false for pages only reachable via the directory or an aside affordance. */
   sidebar?: boolean
 }
 
@@ -42,9 +41,7 @@ export type PagedWindowProps = PagedWindowFrameProps & {
   hover_sfx?: SoundKey | SoundKey[] | ''
   select_sfx?: SoundKey | ''
   reselect_sfx?: SoundKey | ''
-  // Stretch the page column to the full content height instead of sizing it to
-  // its content, so a page can pin its own footer to the bottom. Off by
-  // default — pages sit at the top and end where their content does.
+  /** Stretches the page column to the full content height instead of sizing to its content, so a page can pin its own footer to the bottom. Off by default. */
   stretch_page?: boolean
 }
 
@@ -116,9 +113,7 @@ const directory_groups = computed<DirectoryPageGroup[]>(() =>
   }))
 )
 
-// Window's own close button shows on phone/tablet (no sidebar), where it doubles
-// as a back affordance once a page is open. Desktop navigates via the sidebar,
-// which carries its own close button.
+/** Shows on phone/tablet (no sidebar), doubling as a back affordance once a page is open; desktop navigates via the sidebar's own close button instead. */
 const window_close_button = computed(
   () => (!has_pages.value || !has_sidebar.value) && show_close_button
 )

@@ -4,8 +4,7 @@ import { tabSlideEnter, tabSlideLeave } from '@/utils/animations/tab-slide'
 import type { WindowLayout } from './layout'
 
 type PageTransitionOptions = {
-  // Runs in the empty gap between the leaving and entering page — the one frame
-  // with no page mounted, so any reflow it triggers can't shift live content.
+  /** Runs in the empty gap between the leaving and entering page — the one frame with no page mounted, so any reflow it triggers can't shift live content. */
   between?: () => void | Promise<void>
 }
 

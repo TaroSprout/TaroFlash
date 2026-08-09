@@ -5,8 +5,7 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 type FieldRowProps = {
   label: string
   tooltip?: string
-  // Stack the label above the control below `md` — for wide controls that don't
-  // fit beside the label on narrow screens.
+  /** Stacks the label above the control below `md`, for wide controls that don't fit beside the label on narrow screens. */
   stack?: boolean
 }
 
