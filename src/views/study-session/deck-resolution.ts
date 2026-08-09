@@ -44,8 +44,7 @@ type ResolvedDeck = {
   shuffle: boolean
 }
 
-// Used until a card's deck lands (or for a card whose deck somehow isn't in the
-// session). The cover gates on loading, so this never schedules a real review.
+/** Used until a card's deck lands; the cover gates on loading, so this never schedules a real review. */
 const FALLBACK_FSRS = new FSRS(generatorParameters({ enable_fuzz: true }))
 
 const DeckResolutionKey: InjectionKey<DeckResolution> = Symbol('study-session.deck-resolution')
