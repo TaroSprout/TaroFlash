@@ -1,13 +1,9 @@
 /**
- * Tracks coarse pointer activity so the hover gate can tell a real hover from a
- * spurious one. A hover that fires without the pointer having moved since the
- * last click means the UI shifted under a stationary cursor (a panel opened
- * where the mouse was) — a `pointerenter` that isn't a real hover. A genuine
- * hover is always preceded by pointer movement.
+ * Remembers when the pointer last moved and last pressed, so a hover sound can
+ * tell a real hover from the UI shifting under a still cursor.
  *
- * Until `trackPointerActivity()` is installed (from `installAudioLifecycle`)
- * the timestamps stay 0 and the gate reads "not stationary", so hovers play
- * normally — the safe default for SSR and for tests that import the bus alone.
+ * Uninstalled, this reports "moving", so hovers play normally — the safe
+ * default for tests importing the bus on its own.
  */
 let last_pointer_down = 0
 let last_pointer_move = 0

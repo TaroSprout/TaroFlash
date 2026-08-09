@@ -1,13 +1,6 @@
 /**
- * Keeps the SFX AudioContext alive across page visibility, focus, and audio
- * interruptions.
- *
- * Mobile browsers suspend the context when the tab hides or the device locks;
- * iOS goes further and drops it into WebKit's non-standard 'interrupted' state
- * (device lock / app switch / a call), which a plain `resume()` often can't
- * revive. This module resumes on every wake signal, and arms a one-shot gesture
- * listener that hands off to `engine.unlock()` — which rebuilds the context
- * inside the gesture, the only reliable cure for 'interrupted'.
+ * Brings sound back after the tab hides, the device locks, or another app takes
+ * over. →[K:ios-audio-interruption]
  */
 import engine from '@/sfx/engine'
 import { trackPointerActivity } from '@/sfx/pointer-activity'
@@ -15,22 +8,21 @@ import { trackPointerActivity } from '@/sfx/pointer-activity'
 let installed = false
 let gesture_armed = false
 
-// iOS only treats a *completed* gesture as audio-activating — touchend / click,
-// never touchstart / pointerdown. Listening on pointerdown unlocks on an event
-// iOS ignores, so audio stays muted.
+// Never swap in a press event — only a completed gesture reactivates audio.
+// →[K:ios-audio-interruption]
 const GESTURE_EVENTS = ['touchend', 'click', 'keydown'] as const
 
-// How long to wait after a gesture-triggered unlock attempt before checking
-// whether it actually landed, and re-arming if not.
+// How long to leave an unlock attempt to land before re-arming for the next one.
 const UNLOCK_CHECK_MS = 300
 
-// Calling context.resume() before any user gesture has happened is exactly what
-// autoplay-blocking browsers reject — and Chrome logs a console warning about it
-// natively, even though we handle the rejection. Skip the speculative call
-// until a real gesture is on record; the gesture-armed listener still unlocks
-// on first tap regardless. Unsupported in Safari, where resume() before a
-// gesture was already unreliable — this only removes a call that wasn't doing
-// anything useful there either.
+/**
+ * Whether the user has interacted with this page at any point.
+ *
+ * Gate every speculative resume behind it — resuming before the first
+ * interaction is what autoplay blockers reject. →[K:ios-audio-interruption]
+ * Safari doesn't implement it, so this reads false there and the gesture
+ * listener does all the work.
+ */
 function hasUserActivation(): boolean {
   return (
     typeof navigator !== 'undefined' &&
@@ -40,15 +32,12 @@ function hasUserActivation(): boolean {
 }
 
 /**
- * Wires `visibilitychange`, `pageshow`, `focus`, and context `statechange`
- * listeners that resume the engine, plus a one-shot `touchend`/`click`/`keydown`
- * listener that unlocks (and, if needed, rebuilds) the context on the next
- * interaction. If that attempt doesn't land within `UNLOCK_CHECK_MS`, it
- * re-arms for the next gesture rather than leaving audio dead for the session.
+ * Starts watching for the page waking up, and repairs audio on the next tap.
  *
- * Returns a teardown function that removes every listener it registered.
- * Calling `installAudioLifecycle` while already installed is a no-op and returns
- * a no-op teardown — the original teardown remains the only way to uninstall.
+ * A second call while already installed does nothing and hands back a no-op —
+ * the teardown from the first call stays the only way to uninstall.
+ *
+ * @returns A teardown that removes every listener registered here.
  */
 export function installAudioLifecycle(): () => void {
   if (installed || typeof window === 'undefined') return () => {}
@@ -57,52 +46,40 @@ export function installAudioLifecycle(): () => void {
   let forced_unlock = false
   let was_hidden = false
 
-  // Arm the gesture retry up front whenever the context isn't running, then try
-  // an opportunistic resume. Crucially we do NOT gate arming on the resume
-  // result: a browser that blocks autoplay leaves `resume()` pending forever
-  // (it never resolves to tell us it failed), so awaiting it would mean the
-  // gesture listener — the only thing that actually unlocks audio — never gets
-  // armed. The resume is fire-and-forget; the gesture is what we rely on.
+  // Arm before resuming, and never await the resume — a blocked one stays
+  // pending forever, so the gesture listener would never get armed at all.
   const recover = () => {
     if (engine.state() === 'running') return
     armGestureRetry(false)
     if (hasUserActivation()) void engine.resume()
   }
 
-  // iOS can report the context as 'running' after an app-switch even though the
-  // audio hardware is actually dead — state can't be trusted on the way back
-  // from background. Skip the `state === 'running'` short-circuit entirely: arm
-  // the gesture retry unconditionally and force a full rebuild on the next tap.
+  // Force the rebuild here rather than checking state first — coming back from
+  // the background, the context lies about being healthy.
+  // →[K:ios-audio-interruption]
   const recoverFromBackground = () => {
     armGestureRetry(true)
     if (hasUserActivation()) void engine.resume()
   }
 
-  // Synchronous so the unlock's priming source + resume() fire inside the
-  // gesture — iOS ignores them otherwise. engine.unlock() owns the resume/rebuild
-  // dance; we just hand off the gesture.
+  // Keep this synchronous — an await here pushes the rebuild outside the
+  // gesture, where it no longer counts. →[K:ios-audio-interruption]
   const gestureRecover = () => {
     removeGestureListeners()
     gesture_armed = false
     engine.unlock(forced_unlock)
     forced_unlock = false
 
-    // This attempt's unlock is confirmed asynchronously, via the fresh
-    // context's `statechange` event — but heavy synchronous work sharing the
-    // same gesture (e.g. a modal mounting) can starve that transition
-    // entirely, so it may never fire at all. When that happens there's no
-    // event left to re-arm on, so nothing would ever retry and audio would
-    // stay dead for the rest of the session. Check back shortly and, if still
-    // locked, re-arm for the next gesture.
+    // Don't rely on the confirming `statechange` alone — heavy work sharing
+    // this gesture can starve it, leaving nothing to re-arm on and audio dead
+    // for the rest of the visit.
     setTimeout(() => {
       if (!engine.isUnlocked()) armGestureRetry(false)
     }, UNLOCK_CHECK_MS)
   }
 
-  // Capture phase, not bubble: handlers like the dropdown caret's `@click.stop`
-  // swallow propagation before the event reaches `window` in the bubble phase,
-  // so a bubble-phase listener would miss those gestures and leave audio locked.
-  // Capture runs window→target first, ahead of any descendant's stopPropagation.
+  // Keep these on the capture phase — a control that stops propagation would
+  // otherwise swallow the one tap that restores sound.
   const armGestureRetry = (force: boolean) => {
     if (force) forced_unlock = true
     if (gesture_armed) return
@@ -132,9 +109,8 @@ export function installAudioLifecycle(): () => void {
     }
   }
 
-  // `persisted` marks a bfcache restore — Safari can serve one after an
-  // app-switch instead of a fresh load, which is the same state-lie risk as
-  // the visibilitychange path above.
+  // Treat a restored page (`persisted`) as a background return — Safari serves
+  // one after an app-switch instead of a fresh load.
   const onPageShow = (e: PageTransitionEvent) => {
     if (e.persisted || was_hidden) {
       was_hidden = false
@@ -144,8 +120,8 @@ export function installAudioLifecycle(): () => void {
     }
   }
 
-  // statechange fires the moment iOS interrupts the context — a more direct
-  // signal than waiting for the page to become visible again.
+  // Catches an interruption the moment it happens, rather than waiting for the
+  // page to become visible again.
   const onStateChange = () => {
     if (engine.state() !== 'running') recover()
   }
@@ -156,8 +132,7 @@ export function installAudioLifecycle(): () => void {
   const offStateChange = engine.onStateChange(onStateChange)
   const offPointerActivity = trackPointerActivity()
 
-  // Arm now so the first user gesture unlocks the freshly-created (suspended)
-  // context, the same way Howler's global unlock handler used to.
+  // Arm now, so the very first tap of the visit unlocks the new context.
   recover()
 
   return () => {
