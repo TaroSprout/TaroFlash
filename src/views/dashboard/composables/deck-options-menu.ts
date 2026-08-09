@@ -9,8 +9,8 @@ import type { DropdownOption } from '@/components/ui-kit/dropdown-button/index.v
 export type DeckOptionsMenu = ReturnType<typeof useDeckOptionsMenu>
 
 type DeckOptionsMenuConfig = {
-  // Enter the dashboard's rearrange (editing) mode. Owned by the dashboard
-  // view; the grid forwards it up so this composable never touches that state.
+  /** Enter the dashboard's rearrange (editing) mode, owned by the dashboard
+   *  view — the grid only forwards it up, never touches that state itself. */
   onRearrange: () => void
 }
 
@@ -19,10 +19,6 @@ type DeckOptionsMenuConfig = {
  * card's gear dropdown and the mobile long-press popover so the two entry points
  * never drift. Options are deck-agnostic; the acting deck is passed to
  * `onSelect`, which lets a single popover instance serve every card.
- *
- * @example
- * const { options, onSelect } = useDeckOptionsMenu({ onRearrange: () => emit('rearrange') })
- * // <dropdown-menu :options="options" @select="onSelect($event, deck)" />
  */
 export function useDeckOptionsMenu({ onRearrange }: DeckOptionsMenuConfig) {
   const { t } = useI18n()
