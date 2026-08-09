@@ -46,19 +46,14 @@ export function useMemberDangerActions(close: () => void): MemberDangerActions {
     try {
       await requestAccountDeletion()
     } catch {
-      // Nothing partial to undo: the endpoint marks the account before touching
-      // Stripe, so a failure here means the account is still fully live.
+      // The account is marked deleted before Stripe runs, so a failure here leaves it fully live.
       notice.error(t('toast.error.account-delete-failed'))
       return
     } finally {
       deleting_account.value = false
     }
 
-    // The endpoint revoked every session server-side, but that's invisible to
-    // this tab: supabase-js still holds the token, and it stays usable against
-    // PostgREST for its full lifetime. Discard it here or the member reads as
-    // signed in on their next visit, and the first call that authenticates
-    // through GoTrue — a second delete request — fails with a 401.
+    // The server-side revoke doesn't clear this tab's still-usable local token.
     await session.discardRevokedSession()
 
     notice.success(t('toast.success.account-deleted'), {

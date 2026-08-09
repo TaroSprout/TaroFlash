@@ -9,10 +9,6 @@ import { useCan } from '@/composables/can'
  * `useDeckActions.guardCreateDeck`: the FE check is UX only — the real boundary
  * is the `media` INSERT RLS policy. Free members get an upgrade alert that opens
  * the subscription Checkout modal on confirm.
- *
- * @example
- * const { guardCardImage } = useCardImageGate()
- * if (!(await guardCardImage())) return
  */
 export function useCardImageGate() {
   const { t } = useI18n()
