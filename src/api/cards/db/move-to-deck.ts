@@ -5,31 +5,25 @@ import { fetchDeckTailRank } from './tail-rank'
 
 export type MoveCardsToDeckArgs =
   | { target_deck_id: number; card_ids: number[] }
-  // `count` is how many cards the whole-deck move covers — the same number the
-  // move modal shows. Only an upper bound is needed (see below), so the
-  // caller's own tally serves; there's nothing to ask the server for.
+  // The caller's own tally is enough — only an upper bound is needed, see below.
   | { target_deck_id: number; source_deck_id: number; except_ids: number[]; count: number }
 
 /**
- * How many keys to mint.
+ * How many positions to mint.
  *
- * An upper bound, not an exact count: the RPC pairs keys with the cards it
- * resolves and ignores any spare, so overshooting costs nothing. Undershooting
- * doesn't work — a card would be left without a key — and that's what the RPC
- * rejects outright.
+ * An upper bound, not an exact count: spares are ignored, but a shortfall would
+ * leave a card with nowhere to go and is rejected outright.
  */
 function countKeysNeeded(args: MoveCardsToDeckArgs): number {
   return 'card_ids' in args ? args.card_ids.length : args.count
 }
 
 /**
- * Move cards into another deck, appended after whatever is already there and
- * keeping their relative order.
+ * Moves cards into another deck, after whatever is already there and keeping
+ * their order.
  *
- * Split of labour: the client mints a run of keys sitting after the target
- * deck's last card, and the RPC decides which cards get them. Resolving that set
- * here instead would mean paging every id out past `max_rows` only to send it
- * straight back.
+ * Here decides *where* they land; the server decides *which* cards move.
+ * Working out that set here would mean paging every id out only to send it back.
  */
 export async function moveCardsToDeck(args: MoveCardsToDeckArgs): Promise<void> {
   const key_count = countKeysNeeded(args)

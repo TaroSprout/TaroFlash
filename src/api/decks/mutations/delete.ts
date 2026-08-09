@@ -7,9 +7,7 @@ export function useDeleteDeckMutation() {
     mutation: (id: number) => deleteDeck(id),
     onSettled: (_data, error, id) => {
       queryCache.invalidateQueries({ key: ['decks'] })
-      // On success the row is gone — drop the cached entry without refetch
-      // (a refetch would 404). On error the row still exists; leave its
-      // cache alone.
+      // Forget it rather than reload it — there's nothing left there to ask for.
       if (!error) queryCache.invalidateQueries({ key: ['deck', id] }, false)
     }
   })

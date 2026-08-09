@@ -9,8 +9,7 @@ export type NoticeVariant = 'toast' | 'panel'
 export type NoticeAction = {
   label: string
   onClick: () => void
-  // Also dismiss the notice (through the same path as the close button /
-  // auto-dismiss timer) after running onClick.
+  // Dismiss the notice once onClick has run.
   closesOnClick?: boolean
   sfx?: { press?: SoundKey }
 }
@@ -22,8 +21,7 @@ type NoticeOptions = {
   variant?: NoticeVariant
   actions?: NoticeAction[]
   onDismiss?: () => void
-  // Panel-only: dims the page behind the panel. Ignored by the toast variant.
-  // Defaults to true.
+  // Dims the page behind a panel; a toast ignores it. Defaults to true.
   backdrop?: boolean
   // Show the close (x) button. Defaults to true.
   closable?: boolean

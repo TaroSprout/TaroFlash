@@ -41,9 +41,8 @@ async function manage<T>(body: ManagePayload): Promise<T> {
   return data
 }
 
-// Normalized subscription view returned by the edge function — flat domain
-// fields, no raw Stripe shapes. `null` for free members. Money is in minor
-// units and `currentPeriodEnd` is a UNIX second; the FE formats both.
+// Money is in the currency's smallest unit and the date is a UNIX second —
+// both are formatted for display elsewhere.
 export type SubscriptionView = {
   priceCents: number | null
   currency: string | null
@@ -91,10 +90,8 @@ export function changePlan(planId: string) {
   return manage<{ subscription: StripeSubscription }>({ action: 'change-plan', planId })
 }
 
-// An immediate cancellation also refunds the unused part of the period, so the
-// response carries what Stripe actually gave back. `refunded: false` is a normal
-// outcome, not an error — a trial or a $0 invoice has nothing unused to return.
-// Absent entirely for `atPeriodEnd`, where every paid day gets used.
+// `refunded: false` is a normal outcome, not a failure — a trial has nothing
+// unused to give back.
 export type ProratedRefundOutcome =
   | { refunded: true; amountCents: number; currency: string; creditNoteId: string }
   | { refunded: false; reason: string }

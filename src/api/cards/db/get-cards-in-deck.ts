@@ -18,11 +18,8 @@ export type CardsPage = {
 /**
  * One page of a deck's cards, plus a peek at the row after it.
  *
- * The peek is what makes the page boundary safe to write against: a card
- * dropped below the last loaded row needs the key of the row *after* it to sit
- * between the two. Without it that card would resolve "no next neighbour" and
- * be sent to the end of the entire deck. It doubles as the has-more signal, so
- * paging no longer has to infer it from a short page.
+ * The peek is what makes the bottom of a page safe to drop a card onto —
+ * without it, a card dropped there is sent to the end of the whole deck.
  */
 export async function fetchCardsInDeck({
   deck_id,

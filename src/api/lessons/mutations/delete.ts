@@ -3,7 +3,7 @@ import { deleteLesson } from '../db'
 
 export type DeleteLessonVars = {
   id: number
-  // The owning collection, so we invalidate the right lesson list + its count.
+  // Carried so the caller never has to reload the collection itself.
   collection_id: number
 }
 
@@ -14,10 +14,8 @@ export function useDeleteLessonMutation() {
     mutation: ({ id }: DeleteLessonVars) => deleteLesson(id),
     onSettled: (_data, error, { id, collection_id }) => {
       queryCache.invalidateQueries({ key: ['lessons', collection_id] })
-      // The collection's lesson_count (counts view) dropped by one.
       queryCache.invalidateQueries({ key: ['lesson-collections'] })
-      // On success the row is gone — drop the cached entry without a refetch
-      // (which would 404). On error the row still exists; leave its cache alone.
+      // Forget it rather than reload it — there's nothing left there to ask for.
       if (!error) queryCache.invalidateQueries({ key: ['lesson', id] }, false)
     }
   })

@@ -5,9 +5,8 @@ import { fetchCardsInDeck } from '../db'
 export const CARDS_PAGE_SIZE = 50
 
 /**
- * Cache key for the deck's paginated cards query. Includes sort_by and query
- * so Pinia Colada gives separate cache entries per active filter state, and
- * mutations can target the default view by passing the `'default'`/`''` pair.
+ * Names one deck's card list. Sort and search are part of the name, so each
+ * combination is kept separately — pass `'default'` and `''` for the plain list.
  */
 export function cardsInDeckQueryKey(
   deck_id: number | undefined,
@@ -36,8 +35,7 @@ export function useCardsInDeckInfiniteQuery(
         offset: pageParam as number,
         limit: page_size
       }),
-    // Each page peeks one row past its own window, so "is there more?" is a
-    // fact rather than an inference from a short page.
+    // Each page looks one row further than it shows, so "is there more" is known, not guessed.
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.next_rank === null) return null
       return allPages.reduce((sum, page) => sum + page.cards.length, 0)

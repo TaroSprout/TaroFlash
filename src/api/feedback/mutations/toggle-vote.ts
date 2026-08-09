@@ -5,9 +5,8 @@ type QueryCache = ReturnType<typeof useQueryCache>
 type VoteSnapshot = FeedbackItem[] | undefined
 
 /**
- * Optimistically flips `voted_by_me` and adjusts `vote_count` for the given
- * item, in place of waiting for the refetch. Returns the pre-toggle
- * snapshot for rollback, or `undefined` when the list isn't cached.
+ * Flips the vote and its tally on the loaded post straight away, so the heart
+ * responds under the finger. Returns the state to undo back to.
  */
 function toggleVoteInCache(queryCache: QueryCache, feedback_id: number): VoteSnapshot {
   const snapshot = queryCache.getQueryData(['feedback-items']) as VoteSnapshot
@@ -29,12 +28,7 @@ function toggleVoteInCache(queryCache: QueryCache, feedback_id: number): VoteSna
   return snapshot
 }
 
-/**
- * Toggle the current member's vote on a feedback item. `onMutate`
- * optimistically flips the cached vote so the heart responds immediately;
- * `onError` restores the pre-toggle snapshot; `onSettled` invalidates to
- * reconcile with the server-authoritative count.
- */
+/** Adds or takes back the member's vote on a post. */
 export function useToggleFeedbackVoteMutation() {
   const queryCache = useQueryCache()
   return useMutation({

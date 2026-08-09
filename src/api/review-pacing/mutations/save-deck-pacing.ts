@@ -1,20 +1,19 @@
 import { useMutation, useQueryCache } from '@pinia/colada'
 import { saveDeckPacing, type DeckPacing } from '../db'
 
-/**
- * Persists one deck's pacing sidecar on its own. Preset actions write to the
- * server immediately, so the deck half of that work (a cleared override bag, a
- * re-pointed preset link) has to land immediately too — waiting for the modal's
- * Save would leave the two halves disagreeing until then.
- */
 // Trap: a pin is presence, not difference →[K:pin-is-presence-not-difference]
+/**
+ * Saves which preset a deck follows and what it pins, on its own.
+ *
+ * Preset actions save the moment they're taken, so the deck's half has to land
+ * with them — held back until Save, the two would disagree in between.
+ */
 export function useSaveDeckPacingMutation() {
   const queryCache = useQueryCache()
   return useMutation({
     mutation: (pacing: DeckPacing) => saveDeckPacing(pacing),
     onSettled: () => {
-      // The deck's pacing values are resolved server-side, so a changed link or
-      // override bag restates every one of them.
+      // A changed preset link restates every one of the deck's pacing values.
       queryCache.invalidateQueries({ key: ['decks'] })
     }
   })

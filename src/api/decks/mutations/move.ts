@@ -13,15 +13,11 @@ function interpolateRank(before: number | undefined, after: number | undefined):
 }
 
 /**
- * Optimistically move `deck_id` to sit `side` of `anchor_id` within the
- * cached deck list, in place of waiting for the refetch. Returns the pre-move
- * snapshot for rollback, or `undefined` when the list isn't cached.
+ * Settles a dragged deck beside its anchor immediately, so it doesn't snap
+ * back while the server catches up. Returns the order to undo back to.
  *
- * The dashboard displays decks sorted by `rank`, but the cache array itself
- * isn't in rank order (the fetching RPC has no `ORDER BY rank`) — so instead
- * of splicing the raw array, find `anchor_id`'s neighbour in a rank-sorted
- * view and patch only the moved deck's `rank`. The render-order sort then
- * places it correctly on its own.
+ * Only the moved deck's position is rewritten — the loaded list isn't held in
+ * display order, so moving it within that array would place it wrongly.
  */
 function reorderDeckCache(
   queryCache: QueryCache,
@@ -46,14 +42,7 @@ function reorderDeckCache(
   return snapshot
 }
 
-/**
- * Reposition a single deck within the dashboard, relative to an anchor deck.
- *
- * `onMutate` optimistically reorders the cached list synchronously, so the
- * drag-reorder UI can settle the dropped card immediately. `onError` restores
- * the pre-move snapshot; `onSettled` invalidates to reconcile with the
- * server-authoritative ranks.
- */
+/** Moves a single deck on the dashboard, to either side of another one. */
 export function useMoveDeckMutation() {
   const queryCache = useQueryCache()
   return useMutation({

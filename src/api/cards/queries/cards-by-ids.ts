@@ -3,8 +3,8 @@ import { toValue, type MaybeRefOrGetter } from 'vue'
 import { fetchCardsByIds } from '../db'
 
 /**
- * Fetches cards by explicit id, bypassing the due-cards filter — used to
- * restore a study session's locked queue after a refresh.
+ * Named cards, whether or not they're due — how a study session picks its pile
+ * back up after a reload.
  */
 export function useCardsByIdsQuery(card_ids: MaybeRefOrGetter<number[]>) {
   return useQuery({

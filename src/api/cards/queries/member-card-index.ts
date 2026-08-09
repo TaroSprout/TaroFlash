@@ -3,8 +3,7 @@ import { fetchMemberCardIndex } from '../db'
 
 export type { CardIndexEntry } from '../db'
 
-// Member-wide index of every distinct card front + its decks. Fetched once and
-// reused across every lesson in the session; invalidated by card mutations.
+/** Every term the member has a card for, and which decks hold it. */
 export function useMemberCardIndexQuery() {
   return useQuery({
     key: () => ['cards', 'index'],

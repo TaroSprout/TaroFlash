@@ -33,8 +33,7 @@ export async function fetchLessonCollection(id: number): Promise<LessonCollectio
 }
 
 export async function createLessonCollection(title: string): Promise<LessonCollection> {
-  // member_id is stamped by the set_member_id trigger, so the client only sends
-  // the title.
+  // Ownership is stamped by the database, never sent from here.
   const { data, error } = await supabase
     .from('lesson_collections')
     .insert({ title })
@@ -49,14 +48,12 @@ export async function createLessonCollection(title: string): Promise<LessonColle
   return data as LessonCollection
 }
 
+/** Bookmarks where the member got to — which chapter, and how far into it. */
 export async function setCollectionProgress(
   collection_id: number,
   lesson_id: number,
   position_seconds = 0
 ): Promise<void> {
-  // Bookmark the chapter the member is on plus the audio offset within it. The
-  // owner-update RLS policy already scopes this to the caller's own collection,
-  // so no RPC is needed.
   const { error } = await supabase
     .from('lesson_collections')
     .update({ last_lesson_id: lesson_id, last_position_seconds: position_seconds })
@@ -68,10 +65,8 @@ export async function setCollectionProgress(
   }
 }
 
+/** Deletes a collection. Its chapters and their audio go with it, on their own. */
 export async function deleteLessonCollection(id: number): Promise<void> {
-  // FK is ON DELETE CASCADE, so removing the collection removes its lessons,
-  // and each lesson-delete trigger soft-deletes its audio media row for the
-  // cleanup cron — no client-side storage delete needed.
   const { error } = await supabase.from('lesson_collections').delete().eq('id', id)
 
   if (error) {

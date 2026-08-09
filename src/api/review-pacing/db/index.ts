@@ -1,7 +1,7 @@
 import { supabase } from '@/supabase-client'
 import logger from '@/utils/logger'
 
-/** Every pacing field a preset carries, minus its identity — the shape a deck resolves down to. */
+/** Every dial a preset sets, without the preset itself — what a deck ends up with. */
 export type ReviewPacingValues = Pick<
   ReviewPacingPreset,
   | 'desired_retention'
@@ -15,7 +15,7 @@ export type ReviewPacingValues = Pick<
 
 export type NewReviewPacingPreset = ReviewPacingValues & Pick<ReviewPacingPreset, 'name'>
 
-/** Fetches the current member's preset library plus the one system preset — RLS scopes the rest. */
+/** The member's own presets, plus the built-in one everybody gets. */
 export async function fetchPresets(): Promise<ReviewPacingPreset[]> {
   const { data, error } = await supabase
     .from('review_pacing_presets')
@@ -65,7 +65,7 @@ export async function updatePreset({
   return data as ReviewPacingPreset
 }
 
-/** A deck's pacing sidecar row — which preset it follows, and what it pins locally. */
+/** Which preset a deck follows, and which dials it pins for itself. */
 export type DeckPacing = {
   deck_id: number
   review_pacing_preset_id: number | null
@@ -73,9 +73,8 @@ export type DeckPacing = {
 }
 
 /**
- * Writes just a deck's pacing sidecar. Narrower than `save_deck`, which rewrites
- * every editable deck column; this lets a preset action persist the deck half of
- * its own work without flushing the rest of an open draft.
+ * Saves a deck's pacing and nothing else, so a preset action can't flush the
+ * rest of an open, unsaved deck edit along with it.
  */
 export async function saveDeckPacing(pacing: DeckPacing): Promise<void> {
   const { error } = await supabase

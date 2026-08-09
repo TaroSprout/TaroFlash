@@ -8,11 +8,8 @@ import { buildCardPayload } from '@/utils/card/payload'
 import { type CardBase } from '@type/card'
 
 /**
- * Upserts a card with `values` merged over the current state. Leaves `card`
- * untouched — optimistic apply and rollback are the caller's concern.
- * Caller-side debouncing lives in the `useSaveCardMutation` wrapper, and the
- * no-change short-circuit lives in the composable that calls it (both must
- * happen before any optimistic mutation is applied to `card`).
+ * Saves a card with `values` written over it, leaving `card` itself untouched —
+ * showing the change early, and undoing it, are the caller's job.
  */
 export async function saveCard(card: Card, values: Partial<Card>): Promise<void> {
   if (!card.id) return
@@ -64,19 +61,11 @@ export async function setCardImage(card_id: number, file: File, side: 'front' | 
 
   const bucket = 'member-images'
   const slot = `card_${side}` as const
-  // Content-addressed path: hashing the bytes means the same image reused
-  // across cards (or as a deck bg) collapses to one storage object. member_id
-  // stays the first segment — it scopes dedup per-member and satisfies the
-  // storage RLS foldername check. Which card/side uses the image lives in
-  // `media` (card_id + slot), not in the path.
+  // Named after the bytes, so one picture used on ten cards is stored once. The
+  // owner has to stay the first segment for storage's own access check.
   const path = `${member_id}/${await hashFile(file)}.${file.type.split('/')[1]}`
 
-  // Upload first so we don't soft-delete the previous image (via the DB
-  // trigger on insertMedia) until the new file is actually in storage.
-  // Failure mode: upload fails → nothing changed.
-  //                insertMedia fails → storage file is orphaned, reaped by
-  //                cleanup-media cron.
-  // `cause` tags which step failed so the UI can tell the two apart.
+  // Upload before recording it, so the old picture isn't dropped until the new one lands.
   try {
     await uploadImage(bucket, path, file)
   } catch {

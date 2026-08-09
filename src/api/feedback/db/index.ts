@@ -1,9 +1,8 @@
 import { supabase } from '@/supabase-client'
 import logger from '@/utils/logger'
 
-// The community board only ever shows public items — RLS also lets moderators/admins
-// read internal ones (for the future admin dashboard), so this filter is required
-// on top of RLS, not redundant with it.
+// A moderator is allowed to read unpublished posts, so the board has to ask for
+// published ones itself rather than assume it can only see those.
 export async function fetchFeedbackItems(): Promise<FeedbackItem[]> {
   const { data, error } = await supabase
     .rpc('feedback_items_with_votes')

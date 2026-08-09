@@ -3,16 +3,14 @@ import { toValue, type MaybeRefOrGetter } from 'vue'
 import { fetchSessionBootstrap } from '../db'
 
 /**
- * Server-built study-session bootstrap merged across the given decks, in deck
- * order. Returns the resolved decks + the merged study queue in one round-trip;
- * caps + new/review partition stay per deck on the backend.
+ * Everything a study session opens with — the decks, and their cards merged
+ * into one pile — in a single request.
  */
 export function useSessionBootstrapQuery(deck_ids: MaybeRefOrGetter<number[]>) {
   return useQuery({
     key: () => ['cards', 'session-bootstrap', toValue(deck_ids)],
     query: () => fetchSessionBootstrap(toValue(deck_ids)),
-    // Driven manually via refetch() by the session bootstrap (which must await
-    // server truth, never seed from cache) — auto-fetch would double the call.
+    // Asked for by hand: a session must open on the server's answer, never a stored one.
     enabled: () => false
   })
 }

@@ -4,15 +4,12 @@ import logger from '@/utils/logger'
 
 const BUCKET = 'audio-lessons'
 
-// The bucket is private, so playback uses a short-lived signed URL rather than a
-// public URL (contrast with member-images). One hour is generous for a single
-// listening session; the reader re-mints if it expires.
+// Lesson audio is private, so playing it needs a temporary address. An hour
+// covers a listening session; the reader asks again if it runs out.
 export const SIGNED_URL_TTL_SECONDS = 60 * 60
 
-// Supabase Storage routes through Cloudflare, which rejects single request bodies
-// over 100 MB. Audio playback files for long books can far exceed that, so all
-// uploads use TUS (resumable, chunked) rather than the standard POST endpoint.
-// 6 MiB is the Supabase-recommended TUS chunk size.
+// Uploads go up in pieces — a single request tops out at 100 MB, and an
+// audiobook is far bigger than that.
 const TUS_CHUNK_BYTES = 6 * 1024 * 1024
 
 export async function uploadLessonAudio(path: string, file: File | Blob): Promise<void> {
@@ -56,8 +53,7 @@ export async function uploadLessonAudio(path: string, file: File | Blob): Promis
   })
 }
 
-// Remove several objects at once (best-effort orphan cleanup when a start fails
-// after some chunks already uploaded). A single remove call takes all paths.
+/** Deletes several audio files at once, for cleaning up after a failed upload. */
 export async function deleteLessonAudioPaths(paths: string[]): Promise<void> {
   if (paths.length === 0) return
   const { error } = await supabase.storage.from(BUCKET).remove(paths)

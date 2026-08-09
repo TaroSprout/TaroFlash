@@ -3,10 +3,8 @@ import logger from '@/utils/logger'
 import { localDayStart } from '@/utils/date'
 
 /**
- * Single-request study-session bootstrap: the resolved decks plus the merged,
- * server-capped study queue for all of them, in the given deck order. Replaces
- * the old fan-out of one get_study_session_cards call per deck — the RPC embeds
- * each card's review row and each deck's resolved pacing/appearance itself.
+ * Everything a study session opens with, in one request: the decks themselves
+ * plus their cards merged into a single pile, already capped for the day.
  */
 export async function fetchSessionBootstrap(deck_ids: number[]): Promise<SessionBootstrap> {
   const { data, error } = await supabase.rpc('get_session_decks_and_cards', {

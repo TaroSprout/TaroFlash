@@ -6,8 +6,7 @@ export function useDeletePresetMutation() {
   return useMutation({
     mutation: (id: number) => deletePreset(id),
     onSettled: () => {
-      // Deleting a preset also reverts any deck that had it assigned (FK is
-      // ON DELETE SET NULL) — decks need a refetch too, not just the list.
+      // Every deck that was following the preset falls back to its own settings.
       queryCache.invalidateQueries({ key: ['review-pacing-presets'] })
       queryCache.invalidateQueries({ key: ['decks'] })
     }

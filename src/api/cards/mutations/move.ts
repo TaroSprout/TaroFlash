@@ -12,7 +12,7 @@ export type UseMoveCardMutationParams = MoveCardParams & {
 
 type ReorderContext = { pages: CardsPage[]; pageParams: unknown[] } | undefined
 
-/** Deck order: rank ascending, id breaking ties — the server's ORDER BY. */
+/** The order a deck reads in, matching the server's exactly. */
 function byRank(a: Card, b: Card): number {
   if (a.rank === b.rank) return (a.id ?? 0) - (b.id ?? 0)
   return (a.rank ?? '') < (b.rank ?? '') ? -1 : 1
@@ -30,16 +30,11 @@ function refillPages(pages: CardsPage[], flat: Card[]): CardsPage[] {
 }
 
 /**
- * Apply the card's new key to the deck's cached pages and re-sort, in place of
- * waiting for the refetch. Keeps the rendered order in lockstep with the drop so
- * the row doesn't snap back between drop and the server round-trip.
+ * Settles a dropped card into its new place immediately, so the row doesn't
+ * snap back while the server catches up. Returns the order to undo back to.
  *
- * Re-sorting rather than splicing to the drop index means the cache lands
- * exactly where the server will: the key alone decides the position, and plain
- * string comparison here matches the column's C collation there.
- *
- * Returns the pre-move snapshot for rollback, or `undefined` when the deck
- * isn't cached (nothing to reorder).
+ * Re-sorted rather than spliced to the drop index, so it lands exactly where
+ * the server will put it.
  */
 function reorderCardInDeckCache(
   queryCache: QueryCache,
@@ -64,13 +59,7 @@ function reorderCardInDeckCache(
   return snapshot
 }
 
-/**
- * Reposition a single card within its deck.
- *
- * `onMutate` optimistically re-keys and re-sorts the cached pages synchronously,
- * so the drag-reorder UI can settle the dropped row immediately. `onError`
- * restores the pre-move snapshot; `onSettled` invalidates the deck to reconcile.
- */
+/** Moves a single card to a new place in its deck. */
 export function useMoveCardMutation() {
   const queryCache = useQueryCache()
   return useMutation({

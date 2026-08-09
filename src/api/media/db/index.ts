@@ -25,7 +25,7 @@ export function getImageUrl(bucket: string, path: string): string {
   return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl
 }
 
-/** Public URL for a card-face image, which lives in the `member-images` bucket. */
+/** A displayable address for a picture on a card. */
 export function cardImageUrl(path: string): string {
   return getImageUrl('member-images', path)
 }
@@ -45,9 +45,8 @@ export async function insertMedia(params: Media): Promise<void> {
 }
 
 /**
- * Soft-delete the active cover-image media row for a deck. Mirrors
- * `deleteCardImage`: the storage object is left for the `cleanup-media` cron to
- * reap. No-op when the deck has no active cover image.
+ * Drops a deck's cover image, doing nothing when it has none. The file itself
+ * is cleaned up later, on its own schedule.
  */
 export async function deleteDeckCoverImage(deck_id: number): Promise<void> {
   const { error } = await supabase
