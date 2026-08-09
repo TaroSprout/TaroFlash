@@ -6,23 +6,20 @@ gsap.registerPlugin(ScrollTrigger)
 // Delay between consecutive cards as the row reveals.
 const FEATURE_STAGGER = 0.12
 
-// Cards are active only while the row overlaps this vertical band of the viewport
-// (measured from the top). Outside it — above or below — they go inactive, giving
-// a deadzone at the top and bottom of the screen. The band is intentionally
-// taller above center so cards linger active a little longer when scrolling down.
+// The band of the screen a row has to reach to come alive. Deliberately
+// lopsided — cards stay awake a little longer on the way down.
 const BAND_TOP = '25%'
 const BAND_BOTTOM = '60%'
 
 /**
- * Drive a set of feature cards active/inactive in a staggered sequence as
- * `trigger` passes through the central band of the viewport: active on entry,
- * inactive on exit, in either scroll direction. `indices` are the card indices
- * this trigger controls (the whole row on desktop, one grid row on tablet, the
- * whole stack on mobile); they fire in array order. `setActive` is called per
- * card on a GSAP-scheduled timeline — the caller decides what "active" means
- * (flip cover→front, or reveal a stacked card).
+ * Wakes a group of welcome-page cards one after another as they scroll into
+ * the middle of the screen, and puts them back to sleep on the way out.
  *
- * Returns the ScrollTrigger so the caller can `kill()` it on unmount.
+ * @param indices - The cards this trigger owns, woken in the order given.
+ *   How the page is grouped varies by screen size.
+ * @param setActive - What waking means here: turning a card over, or
+ *   revealing one from a stack.
+ * @returns The trigger, which the caller must kill on unmount.
  */
 export function createFeatureReveal(
   trigger: Element,

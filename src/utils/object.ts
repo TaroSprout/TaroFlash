@@ -1,8 +1,8 @@
 /**
- * Deep-clone a plain data value (objects, arrays, primitives), reading through
- * Vue reactive proxies to produce a detached, non-reactive snapshot. Used to
- * capture a draft's base state so later mutations don't write back into it.
- * Plain-data only — no Dates, Maps, class instances, or cycles.
+ * Takes a detached snapshot of reactive data, for holding on to what a form
+ * looked like before the member started editing.
+ *
+ * Plain data only — Dates, Maps, class instances, and cycles do not survive.
  */
 export function deepClone<T>(value: T): T {
   if (typeof value !== 'object' || value === null) return value
@@ -16,10 +16,11 @@ export function deepClone<T>(value: T): T {
 }
 
 /**
- * Structural equality for plain data. Keys whose value is `undefined` are
- * ignored on both sides, so a merged-in default that leaves a field `undefined`
- * doesn't read as a change. Replaces the fragile key-order `JSON.stringify`
- * comparison the editors used for dirty-checking.
+ * Whether two plain values hold the same data, whatever order their keys are
+ * in. Use it for "has the member changed anything" checks.
+ *
+ * A missing key and an explicitly empty one count as equal, so filling in
+ * defaults doesn't make an untouched form look edited.
  */
 export function deepEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true

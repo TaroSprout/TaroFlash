@@ -3,12 +3,11 @@ import { gsap } from 'gsap'
 const ENTER_DURATION = 0.3
 
 /**
- * Reveal a freshly-added card row, growing it in from a collapsed top edge.
- * Driven imperatively (not a Vue Transition) because the editor list is
- * windowed: every row's slot is reserved up front, so a transition would fire
- * for rows scrolling into view too. The caller gates this to the one card it
- * just added, animating it within its reserved slot rather than reflowing the
- * list.
+ * Grows a newly added card row into view.
+ *
+ * Call it directly, on the one row that was just added — the editor list
+ * reserves every row's space up front, so a transition would fire this for
+ * rows merely scrolled past too.
  */
 export function expandListItemIn(el: HTMLElement) {
   gsap.from(el, {
@@ -24,11 +23,11 @@ export function expandListItemIn(el: HTMLElement) {
 const LIFT_SCALE = 1.03
 
 /**
- * Pickup pop for a reorder drag: a quick scale up with a little overshoot that
- * settles to a held, slightly-lifted scale (the row reads as "picked up" for
- * the whole drag). Pair with `dropListItem` on release. Animates `scale` only —
- * no clearProps — so it composes with the row's reactive drag transform
- * (translate) and the held scale persists until the drop.
+ * Lifts a row as it's picked up for a reorder drag, holding it raised until
+ * `dropListItem` puts it back.
+ *
+ * Deliberately leaves its scale behind — the row is still being dragged, and
+ * clearing it would both drop the lift and wipe the drag's own offset.
  */
 export function liftListItem(el: HTMLElement) {
   gsap

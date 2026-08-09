@@ -1,17 +1,16 @@
 import { CARD_ATTRIBUTES_DEFAULTS } from '@/utils/deck/defaults'
 
-// Font px per text-size level (1–10) on the enshrined full-size card
-// (--card-w-full, 314px). Level 4 is the deck default and the calibration
-// anchor: every other level is expressed as a multiplier of its 30px.
+// Calibrated against a full-size card. Level 4 is the anchor every other level
+// is measured from, so changing it rescales all ten.
 const LEVEL_PX_AT_FULL = [16, 20, 24, 30, 36, 44, 52, 60, 70, 84]
 const FULL_BASE_PX = LEVEL_PX_AT_FULL[CARD_ATTRIBUTES_DEFAULTS.text_size - 1]
 
 export const DEFAULT_TEXT_LEVEL = CARD_ATTRIBUTES_DEFAULTS.text_size
 
 /**
- * Multiplier the card face applies to its fluid base font size for a deck's
- * text-size level. Out-of-range / fractional levels clamp and round the same
- * way the old per-size px table did.
+ * How much to scale a card's text for a deck's chosen size. A multiplier, not
+ * a pixel size — the card's own font size already varies with how big the card
+ * is being drawn.
  */
 export function cardTextScale(level?: number): number {
   const clamped = Math.min(

@@ -7,10 +7,7 @@ export type Tip = {
   body_key: string
 }
 
-/**
- * Single source of truth for tip content. The dashboard rotates through these;
- * a future standalone tips app will browse/filter the same list by `category`.
- */
+/** The study tips the dashboard rotates through. */
 export const TIPS: Tip[] = [
   {
     id: 'sound',

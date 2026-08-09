@@ -3,9 +3,8 @@ export function isoNow(): string {
 }
 
 /**
- * ISO timestamp of the start of the caller's local day (00:00 in their
- * current timezone). Used to scope "today's" daily-cap counts on the
- * backend without baking a timezone assumption into SQL.
+ * Midnight this morning, where the member actually is. Send this with any
+ * "today" question rather than letting the server decide when today began.
  */
 export function localDayStart(): string {
   const now = new Date()
@@ -73,18 +72,15 @@ function toRelativeAtUnit(
 }
 
 /**
- * Formats a batch of dates that are displayed together (e.g. one per FSRS
- * rating). If any two would otherwise render identical text, every date in
- * the batch collapses to day-level granularity instead, so "1 week" / "1
- * week" / "9 days" becomes "8 days" / "8 days" / "9 days" — one clash bumps
- * the whole group, keeping their granularity consistent with each other.
+ * Formats dates shown side by side — the four rating buttons — so no two of
+ * them read the same.
  *
- * A date under a day away is exempted from the day-level bump — rounding it
- * to days would show "0 days" — and renders in hours instead, even while
- * its siblings stay at day granularity.
+ * When any two would collide, the whole group drops to days together, since
+ * "1 week / 1 week / 9 days" is worse than "8 days / 8 days / 9 days". Anything
+ * less than a day out stays in hours regardless, rather than showing "0 days".
  */
-// Largest-first, with the compact abbreviation each unit prints. Weeks are
-// deliberately omitted so a "6 day" interval reads "6d", never "1w".
+// Largest first. No week unit, deliberately — a six-day gap should read "6d"
+// rather than rounding up to "1w".
 const SHORT_UNITS: [number, string][] = [
   [31_536_000, 'y'],
   [2_592_000, 'mo'],
@@ -95,10 +91,9 @@ const SHORT_UNITS: [number, string][] = [
 ]
 
 /**
- * Compact absolute duration from now for tight UI (e.g. rating buttons):
- * magnitude only, no "in"/"ago" direction and no trailing period — "1min",
- * "1d", "2mo". Use `toRelative` instead for higher-fidelity prose. Rounds to
- * the nearest unit.
+ * How far off a date is, squeezed to fit a button — "1min", "1d", "2mo". Says
+ * nothing about direction, so only use it where past and future can't be
+ * confused. `toRelative` is the one that reads as prose.
  */
 export function toShortDuration(input: DateInput): string {
   const diffSeconds = Math.abs((toDate(input).getTime() - Date.now()) / 1000)

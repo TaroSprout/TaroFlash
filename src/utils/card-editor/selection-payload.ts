@@ -6,12 +6,10 @@ export type DeleteArgs = { except_ids: number[] } | { cards: Card[] }
 export type MoveArgs = { card_ids: number[] } | { source_deck_id: number; except_ids: number[] }
 
 /**
- * Loaded persisted cards covered by the current selection, with `review`
- * stripped so the result is safe to spread into write payloads.
+ * The saved cards the selection covers, of those scrolled into view.
  *
- * In select-all mode this is incomplete by design — only the loaded pages
- * are reflected. The select-all delete path uses `{ except_ids }` instead so
- * the FE never has to enumerate every card.
+ * Under "select all" that's a partial answer — only what's loaded — so never
+ * build a whole-deck operation from it.
  */
 export function loadedSelectedCards(
   selection: Pick<CardSelection, 'filterSelected'>,
@@ -23,15 +21,13 @@ export function loadedSelectedCards(
 }
 
 /**
- * Build a card-set payload by combining the current selection with an
- * optional additional card id:
+ * The selection, plus one more card when the action was aimed at a card
+ * outside it — right-clicking an unselected row while others are ticked.
  *
- * - `additional_card_id` undefined            → just the current selection.
- * - `additional_card_id` already in selection → just the current selection.
- * - `additional_card_id` new                  → selection plus that card.
+ * Leaves the selection itself alone.
  *
- * Strips `review` from the appended card so the result is safe to spread
- * into write payloads. Does not mutate selection state.
+ * @param additional_card_id - The aimed-at card. Already-selected or unknown
+ *   ids change nothing.
  */
 export function collectCards(
   selection: Pick<CardSelection, 'filterSelected' | 'isCardSelected'>,
@@ -51,11 +47,11 @@ export function collectCards(
 }
 
 /**
- * Resolve the args for the underlying delete mutation, deduced from the
- * current selection state. Returns `null` when there is nothing to delete.
+ * What to hand the delete, and how many cards it covers. `null` when nothing
+ * would be deleted.
  *
- * - select-all mode → `{ except_ids }` for deck-wide delete.
- * - otherwise       → `{ cards }` enumerated from selection + optional id.
+ * Under "select all" it describes the deck by what was *un*ticked, so deleting
+ * ten thousand cards never means listing ten thousand ids.
  */
 export function resolveDeleteArgs(
   selection: Pick<
@@ -79,17 +75,11 @@ export function resolveDeleteArgs(
 }
 
 /**
- * Resolve the args for the underlying move mutation. Returns `null` when
- * nothing is movable.
+ * What to hand the move, how many cards it covers, and a few of them to show
+ * in the confirmation. `null` when nothing would move.
  *
- * - select-all mode → `{ source_deck_id, except_ids }`; the BE moves every
- *   card in the source deck except the deselected ones, so the FE doesn't
- *   have to enumerate ids that aren't even loaded yet.
- * - otherwise       → `{ card_ids }` enumerated from selection + optional id.
- *
- * Also returns `preview_cards` — the loaded subset of the moving set, used
- * by the modal title for representative front/back display. In select-all
- * mode this is incomplete (only loaded pages); the BE works off the args.
+ * Same "select all" shape as the delete above. `preview_cards` is only ever
+ * for display — the count is the honest number, that list may be shorter.
  */
 export function resolveMoveArgs(
   selection: Pick<

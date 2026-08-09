@@ -1,14 +1,9 @@
 /**
  * Web Audio engine for one-shot sound effects.
  *
- * Replaces Howler for SFX. We only ever used a sliver of Howler — load, one-shot
- * play, per-sound volume — and the part we leaned on, its AudioContext
- * lifecycle, is exactly what wedges on iOS: locking the phone or switching apps
- * drops the context into WebKit's non-standard 'interrupted' state, which
- * `resume()` often can't revive. Owning the context lets us close and rebuild it
- * on demand. AudioBuffers aren't bound to a context, so decoded sounds survive a
- * rebuild untouched — only the cheap one-shot BufferSourceNodes are recreated
- * per play.
+ * Owns the context outright so it can be closed and rebuilt on demand — the
+ * only cure for an interrupted one. →[K:ios-audio-interruption] Decoded buffers
+ * aren't bound to a context, so a rebuild costs no reloading.
  */
 
 type AudioContextCtor = new () => AudioContext
@@ -30,9 +25,8 @@ function resolveCtor(): AudioContextCtor | undefined {
   return win.AudioContext ?? win.webkitAudioContext
 }
 
-// The context fires statechange on every transition. 'running' fires the unlock
-// signal. Any non-running state resets the latch so the next 'running' transition
-// re-fires unlock_listeners — allowing queued sounds to retry after recovery.
+// Clearing the latch on every non-running state is what lets a later recovery
+// re-fire the unlock listeners and drain whatever queued up meanwhile.
 function notifyState(): void {
   if (ctx?.state === 'running') {
     markUnlocked()
@@ -42,22 +36,22 @@ function notifyState(): void {
   state_listeners.forEach((cb) => cb())
 }
 
-// Fires whenever the context transitions to 'running' — either via statechange
-// or the synchronous check in unlock() when a fresh context is born running.
-// notifyState() resets `unlocked` on every non-running transition, so this fires
-// again on each recovery, re-draining any queued sounds.
+// Call from both paths that can reach 'running': the statechange event, and
+// unlock()'s synchronous check for a fresh context born running.
 function markUnlocked(): void {
   if (unlocked) return
   unlocked = true
   unlock_listeners.forEach((cb) => cb())
 }
 
-// iOS Safari only opens audio output when a source is *started* inside the
-// unlocking gesture — resume() alone leaves it muted. A one-sample silent buffer
-// does the trick. Best-effort and fully guarded: priming must never break the
-// resume/unlock path (an earlier unguarded version rejected resume() and killed
-// audio on every platform). Synchronous (no await before start) so it stays
-// within the user gesture.
+/**
+ * Plays one silent sample to actually open audio output.
+ *
+ * Resuming alone leaves iOS muted — output opens only when a source starts
+ * inside the gesture. →[K:ios-audio-interruption] Keep it synchronous, and keep
+ * the try/catch: an unguarded version once rejected the resume and killed audio
+ * on every platform.
+ */
 function primeOutput(context: AudioContext): void {
   try {
     const source = context.createBufferSource()
@@ -90,9 +84,12 @@ async function decode(url: string): Promise<AudioBuffer> {
   return context.decodeAudioData(data)
 }
 
-// Resumes the context if needed, starts the buffer, and returns a promise that
-// settles when the sound ends. The fallback timer ensures settlement even when
-// the context suspends mid-play and onended never fires.
+/**
+ * Plays a decoded buffer once, resolving when it finishes.
+ *
+ * The fallback timer is load-bearing: a context that suspends mid-play never
+ * fires `onended`, so without it the promise would hang.
+ */
 async function play(buffer: AudioBuffer, volume: number): Promise<void> {
   const running = await resume()
   if (!running) return
@@ -125,8 +122,11 @@ async function play(buffer: AudioBuffer, volume: number): Promise<void> {
   })
 }
 
-// Wake a suspended context and report whether it ended up running. Used to gate
-// playback; the actual unlock/rebuild lives in unlock().
+/**
+ * Wakes a suspended context, reporting whether it actually ended up running.
+ *
+ * Gates playback only. Repairing a context that won't wake is `unlock`'s job.
+ */
 async function resume(): Promise<boolean> {
   const context = ensureContext()
   if (!context) return false
@@ -147,13 +147,15 @@ async function resume(): Promise<boolean> {
   return (context.state as AudioContextState) === 'running'
 }
 
-// Synchronous unlock for the user gesture. Everything here runs inside the
-// gesture's synchronous turn — iOS ignores audio work that happens after an await.
-//
-// `force` bypasses the running-state shortcut. iOS can report the context as
-// 'running' after an app-switch while the audio hardware is actually dead —
-// state alone isn't trustworthy on the way back from background, so
-// lifecycle.ts asks for a forced rebuild there regardless of what state claims.
+/**
+ * Reopens audio, from inside a user gesture.
+ *
+ * Never introduce an await before the rebuild — work after one falls outside
+ * the gesture and stops counting. →[K:ios-audio-interruption]
+ *
+ * @param force - Rebuild even when the context claims to be running, for
+ *   callers that know its own account of itself can't be trusted.
+ */
 function unlock(force = false): void {
   const current = ensureContext()
   if (!current) return
@@ -163,12 +165,8 @@ function unlock(force = false): void {
     return
   }
 
-  // A context created outside a user gesture is unrecoverable on iOS — its
-  // resume() promise never settles, and the same is true after an interruption.
-  // Rebuild synchronously inside this gesture so the new context is
-  // gesture-blessed. Buffers are context-agnostic, so nothing reloads.
-  // markUnlocked then fires via statechange once the fresh context reaches
-  // running (or immediately below if it is born running).
+  // Throw the old context away rather than trying to revive it — a context
+  // born outside a gesture can never be recovered. →[K:ios-audio-interruption]
   current.removeEventListener('statechange', notifyState)
   void current.close()
 

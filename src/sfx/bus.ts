@@ -17,11 +17,11 @@ export function emitSfx(keys: SoundKey | SoundKey[], opts: PlayOptions = {}): Pr
 }
 
 /**
- * Plays a sound effect, unless it's a spurious hover. Skips when touch is the
- * primary input, or when the pointer hasn't moved since the last click — i.e.
- * the UI shifted under a stationary cursor (a panel opened where the mouse was),
- * firing a `pointerenter` that isn't a real hover and would collide with the
- * click's own sound. A genuine hover is always preceded by pointer movement.
+ * Plays a hover sound, unless the hover isn't real.
+ *
+ * Silent on touch, and silent when the pointer hasn't moved since the last
+ * click — that means the UI moved under a still cursor rather than the person
+ * moving onto something, and the sound would collide with the click's own.
  *
  * @returns A promise that resolves when the sound has finished playing.
  */

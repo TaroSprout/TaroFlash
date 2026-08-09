@@ -1,9 +1,6 @@
-// Shared Appearance config for the Stripe Payment Element — reused by the
-// initial checkout flow and the change-card modal so both share the same
-// colors, typography, and control styles as the rest of the app.
-//
-// Colors are resolved from Tailwind's :root CSS variables at call time so a
-// palette tweak propagates everywhere without another hand-edit here.
+// Makes the payment form look like the rest of the app. Colours are read from
+// the stylesheet when this runs, so never paste literal ones in — a palette
+// change would leave the card fields behind.
 
 import type { Appearance } from '@stripe/stripe-js'
 import { FONT_FAMILY, FONT_URL } from '@/styles/fonts'
@@ -22,9 +19,8 @@ function withAlpha(hex: string, percent: number): string {
 }
 
 /**
- * Builds the shared Payment Element appearance, in either light or dark
- * palette. `is_dark` should mirror the app's own `useThemeStore().is_dark`
- * so the Stripe form always matches the surrounding modal chrome.
+ * @param is_dark - Pass the app's own dark-mode flag, not the system
+ *   preference — the form has to match the panel it sits in.
  */
 export function getStripeAppearance(is_dark: boolean): Appearance {
   const danger = token(is_dark ? '--color-red-600' : '--color-red-500')
@@ -74,8 +70,8 @@ export function getStripeAppearance(is_dark: boolean): Appearance {
         borderColor: accent,
         backgroundColor: surface
       },
-      // Selected-tab label/icon default to a primary-tinted color that reads
-      // low-contrast against the surface — pin them back to the base text color.
+      // Pin these back to the base text colour — Stripe's own selected-tab
+      // tint is too faint to read against our surface.
       '.TabLabel--selected': {
         color: text
       },

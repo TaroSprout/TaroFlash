@@ -8,8 +8,8 @@ const FADE = 0.2
 
 type Edges = { left: number; right: number }
 
-// Per-element edge state so each move animates from where the highlight
-// actually is, and stale tweens get killed cleanly (they target this object).
+// Keyed per element so a move starts from where that highlight actually is,
+// and so an interrupted tween has something specific to be killed on.
 const edgesByEl = new WeakMap<HTMLElement, Edges>()
 
 function paint(el: HTMLElement, edges: Edges) {
@@ -18,10 +18,12 @@ function paint(el: HTMLElement, edges: Edges) {
 }
 
 /**
- * Glide a floating highlight `el` to cover `box` (coordinates relative to its
- * offset parent), moving both edges together. `duration` overrides the default
- * edge/vertical speed so the pointer-driven pill can answer the pointer quickly.
- * The first call drops the highlight onto the box with no animation.
+ * Glides the reading highlight onto a word, both edges moving together. The
+ * first call drops it into place instead, with no glide from nowhere.
+ *
+ * @param box - Where to land, relative to the highlight's offset parent.
+ * @param duration - Override the default speed. The pointer-driven pill runs
+ *   faster so it keeps up with the finger.
  */
 export function moveReaderCursor(
   el: HTMLElement,
@@ -59,9 +61,8 @@ export function moveReaderCursor(
 }
 
 /**
- * Fade the highlight out and forget its position, so the next
- * `moveReaderCursor` drops fresh onto the new word instead of sliding across
- * the page from a stale spot.
+ * Fades the highlight out and forgets where it was, so it reappears on the
+ * next word rather than streaking across the page to reach it.
  */
 export function hideReaderCursor(el: HTMLElement) {
   const edges = edgesByEl.get(el)

@@ -1,22 +1,19 @@
 import { gsap } from 'gsap'
 
 const DURATION = 0.25
-// Both panes share one easing/duration so they translate as a single rigid strip
-// — the incoming pane reads as pushing the outgoing one over.
+// Keep both panes on one easing and duration — any difference and they drift
+// apart instead of reading as one strip being pushed across.
 const EASE = 'power2.inOut'
 
 export type SlideDirection = 'forward' | 'back'
 
 /**
- * Horizontal push for swapping a card's whole face — the term translation and the
- * inline add-card panel. Wire the returned hooks on a single-child `<Transition>`
- * whose direct parent is `position: relative; overflow: hidden`.
+ * Swaps a card's whole face by pushing the new one in against the old.
  *
- * The entering pane stays in normal flow so it dictates the container's height
- * (and, in the footer, the height animation that follows it); the leaving pane
- * pins absolute and slides in lockstep, so the incoming pane pushes the outgoing
- * one off. `forward` pushes leftward (new pane from the right); `back` reverses
- * it (new pane from the left) so cancelling looks like the term card sliding back.
+ * Wire the hooks on a single-child `<Transition>` inside a `relative`,
+ * `overflow-hidden` parent. Use `back` for anything that undoes a `forward` —
+ * the reversed direction is what makes cancelling read as going back rather
+ * than as another step onward.
  */
 export function cardSlideEnter(direction: SlideDirection) {
   const from = direction === 'forward' ? 100 : -100

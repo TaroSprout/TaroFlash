@@ -5,8 +5,7 @@ import { BUS_DEFAULTS, SOUNDS, type Bus, type SoundDef, type SoundKey } from '@/
 export type PlayOptions = {
   volume?: number
   debounce?: number
-  // Override the bus this sound is routed through. Falls back to the sound's
-  // defaultBus, then 'interface'.
+  // Overrides the sound's own bus, which otherwise falls back to 'interface'.
   bus?: Bus
 }
 
@@ -16,10 +15,8 @@ type LoadedSound = {
   default_bus: Bus
 }
 
-// Audio files ship as separate hashed assets; setup() fetches and decodes them
-// at runtime. The glob captures URL strings only — no binary payload lands in
-// the JS bundle. setup() itself is invoked post-paint from App.vue so audio
-// download never blocks first paint.
+// Keep `query: '?url'` — it captures URL strings only, so no audio payload
+// lands in the JS bundle.
 const AUDIO_FILES = import.meta.glob('@/assets/audio/**/*.{wav,mp3,ogg}', {
   eager: true,
   query: '?url',
@@ -35,25 +32,24 @@ class AudioPlayer {
   loaded_sounds = new Map<SoundKey, LoadedSound>()
   initialized = false
   queued_sound: { key: SoundKey; options: PlayOptions } | undefined
-  // Resting setting per bus. setVolumeConfig (called from App.vue) overwrites
-  // this once member prefs load.
+  // The levels actually used to play. A preview can drift these off the
+  // baseline below, so never read them to decide what to save.
   volume_settings: Record<Bus, number> = { ...BUS_DEFAULTS }
-  // The committed baseline — what the server gave us (or defaults). previewVolumeConfig
-  // can drift volume_settings off this for live UI feedback; resetSettings restores it.
+  // The member's saved levels — what a discarded preview falls back to.
   committed_volume_settings: Record<Bus, number> = { ...BUS_DEFAULTS }
 
-  // Commit a new baseline and apply it (App.vue, on member-pref load/save).
+  // Commits a new baseline and applies it.
   setVolumeConfig = (settings: Record<Bus, number>) => {
     this.committed_volume_settings = { ...settings }
     this.volume_settings = { ...settings }
   }
 
-  // Apply settings live without committing — for previewing edits mid-drag.
+  // Applies settings without committing, so a slider drag can be heard live.
   previewVolumeConfig = (settings: Record<Bus, number>) => {
     this.volume_settings = { ...settings }
   }
 
-  // Discard any preview and fall back to the committed baseline.
+  // Discards any preview and falls back to the committed baseline.
   resetSettings = () => {
     this.volume_settings = { ...this.committed_volume_settings }
   }
@@ -105,18 +101,16 @@ class AudioPlayer {
     const sound = this.loaded_sounds.get(key)
     if (!sound) throw new Error(`Sound "${key}" not loaded.`)
 
-    // Bail before touching the context — resume() steals media-session focus
-    // and pauses background music even for a silent buffer.
+    // Bail before touching the context — waking it steals audio focus and
+    // pauses whatever the person is listening to, even at zero volume.
     const volume = options.volume ?? sound.base_volume * this._getVolumeMultiplier(sound, options)
     if (volume <= 0) return
 
     return engine.play(sound.buffer, volume)
   }
 
-  // Bus is resolved most-specific-first: explicit option, then the sound's own
-  // default, then 'interface' (baked into default_bus). 5 is the resting
-  // setting, so dividing by 5 yields a 1.0× multiplier at rest — sounds play at
-  // their designed volume unchanged.
+  // 5 is the resting setting, so the divisor keeps a rested bus at 1.0× and
+  // sounds play at exactly the volume they were designed at.
   private _getVolumeMultiplier(sound: LoadedSound, options: PlayOptions): number {
     const bus = options.bus ?? sound.default_bus
     return this.volume_settings[bus] / 5
@@ -144,5 +138,4 @@ class AudioPlayer {
   }
 }
 
-// Export instance as a singleton
 export default new AudioPlayer()

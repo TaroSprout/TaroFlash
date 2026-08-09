@@ -1,7 +1,6 @@
 /**
- * Default values for member-editor staging + the settings UI. Both the
- * profile tab and the member-card preview pull initial values from here when
- * the underlying member record is missing a field.
+ * What a member's card looks like before they've chosen anything. Read here
+ * from both the settings form and its preview, so the two always agree.
  */
 
 export const MEMBER_SETTINGS_DEFAULTS = {

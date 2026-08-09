@@ -1,16 +1,15 @@
-// Where the active line rests in the scroll viewport (0 = top, 1 = bottom). A
-// little above centre keeps the upcoming lines visible while never letting the
-// current line jam against the top or bottom edge.
+// Where the active line rests down the screen. Keep it above centre so the
+// upcoming lines stay visible and the current one never jams against an edge.
 const ANCHOR_RATIO = 0.4
 
-// Deadzone boundaries for word-level scroll. Words inside this band don't
-// trigger a scroll; words outside snap to SCROLL_ANCHOR.
+// The band a word may sit in without triggering a scroll. Widen it and the
+// followed word drifts; narrow it and every word jitters the page.
 const DEADZONE_TOP = 0.15
 const DEADZONE_BOTTOM = 0.35
 const SCROLL_ANCHOR = 0.2
 
-// The transcript always scrolls the page itself — there's no bounded internal
-// column on any breakpoint.
+// The transcript scrolls the page itself — there's no bounded inner column on
+// any screen size.
 function metrics() {
   const doc = document.documentElement
   return {
@@ -25,19 +24,18 @@ function scrollTo(target: number, animate: boolean) {
 }
 
 /**
- * Stop any in-flight smooth scroll. Used when the member takes the scroll over
- * by hand, so the active-word follow lets go instead of fighting them. Issuing
- * a fresh `scrollTo` at the current position interrupts the browser's own
- * smooth-scroll animation immediately.
+ * Stops any scroll still in flight, so the follow lets go the moment the member
+ * takes over by hand rather than fighting them.
  */
 export function cancelScroll() {
   window.scrollTo({ top: window.scrollY, behavior: 'auto' })
 }
 
 /**
- * Lift `el` clear above `limit_bottom` (a viewport Y, e.g. a fixed footer's top
- * edge) by scrolling the page up just enough. No-op when `el` already sits
- * above the limit. Used to re-clear a selected word after the term footer grows.
+ * Scrolls just enough to lift an element clear of something covering the bottom
+ * of the screen — re-exposing a selected word after the footer grows over it.
+ *
+ * @param limit_bottom - Screen position of the covering edge.
  */
 export function scrollClearOf(el: HTMLElement, limit_bottom: number, animate = true) {
   const overshoot = el.getBoundingClientRect().bottom - limit_bottom
@@ -48,10 +46,7 @@ export function scrollClearOf(el: HTMLElement, limit_bottom: number, animate = t
   scrollTo(target, animate)
 }
 
-/**
- * Scroll the page so `el` rests ~40% down the viewport, clamped to the
- * scrollable range. Used to follow the active transcript line as audio plays.
- */
+/** Follows the line being spoken, parking it a little above centre. */
 export function scrollLineIntoView(el: HTMLElement, animate = true) {
   const el_rect = el.getBoundingClientRect()
   const { current, viewport, max } = metrics()
@@ -63,10 +58,9 @@ export function scrollLineIntoView(el: HTMLElement, animate = true) {
 }
 
 /**
- * Scroll the page only when `el` has drifted outside the deadzone band
- * (15%–35% of the viewport). When outside, snaps it to the top of the band.
- * No-ops when the word is already visible inside the band, so mid-sentence
- * words don't cause jitter.
+ * Follows the word being spoken, but only once it has drifted out of the band —
+ * so the page holds still through most of a sentence instead of nudging along
+ * under every word.
  */
 export function scrollWordIntoDeadzone(el: HTMLElement, animate = true) {
   const el_rect = el.getBoundingClientRect()

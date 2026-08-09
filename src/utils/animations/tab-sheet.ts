@@ -1,10 +1,8 @@
 import { gsap } from 'gsap'
 
 const ENTER_DURATION = 0.18
-// Tab body leave duration gates the lifetime of any overlay teleported by
-// the leaving tab — tab-sheet's mode="out-in" Transition keeps the leaving
-// pane mounted for exactly this window. Per-tab overlay leave animations
-// must complete in ≤ TAB_LEAVE_DURATION or they get cut off.
+// Also the deadline for anything a leaving tab put on screen elsewhere — the
+// pane stays mounted for exactly this long, and slower exits get cut off.
 export const TAB_LEAVE_DURATION = 0.22
 const OFFSET = 16
 
@@ -16,9 +14,8 @@ export function tabContentEnter(el: Element, done: () => void) {
     opacity: 1,
     duration: ENTER_DURATION,
     ease: 'expo.out',
-    // Strip the transform inline style on completion — a lingering transform
-    // creates a stacking context that traps z-indexed children (e.g. popovers)
-    // beneath later siblings.
+    // Strip the transform once landed, or the tab traps its own popovers.
+    // →[K:settled-transform-traps-overlays]
     clearProps: 'transform,opacity',
     onComplete: done
   })

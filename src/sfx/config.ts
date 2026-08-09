@@ -3,16 +3,13 @@ export type Bus = 'interface' | 'hover'
 export type SoundDef = {
   ext?: string
   default_volume?: number
-  // The volume bus a sound answers to when the caller doesn't override it.
-  // Only set for sounds that are intrinsically one bus regardless of trigger
-  // (the type_0x chatter is always 'hover'). Everything else defaults to
-  // 'interface'.
+  // Set this only for a sound that is one bus whatever triggers it — the
+  // typing chatter is always 'hover'. Anything else takes 'interface'.
   defaultBus?: Bus
 }
 
-// Flat registry — one entry per audio file, one decoded buffer. A sound's
-// identity is its file; its volume bus is resolved at emit time (see player.ts),
-// not baked into a namespace.
+// One entry per audio file — keep the list flat. A sound's identity is its
+// file, and its bus is resolved when it's emitted, not by where it sits here.
 export const SOUNDS = {
   bell_ping_high_pitched: {},
   card_drop: { default_volume: 0.3 },

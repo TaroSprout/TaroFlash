@@ -4,8 +4,8 @@ export type ResolvedMemberPreferences = {
   accessibility: {
     left_hand: boolean
   }
-  // Persisted audio prefs — one slider per bus, named with the `_sounds` suffix
-  // the settings UI and DB use. `toBusVolumes` maps them onto the player's buses.
+  // One slider each, stored under the names the settings screen and the
+  // database use. `toBusVolumes` translates them for the player.
   audio: {
     muted: boolean
     interface_sounds: number
@@ -71,8 +71,9 @@ export function withMemberPreferencesDefaults(
 }
 
 /**
- * Map persisted `*_sounds` prefs onto the bus-keyed volumes the player consumes.
- * When `muted` is set, every bus resolves to 0 regardless of its slider value.
+ * Turns the member's saved sound settings into the volumes the player wants.
+ * Muted wins over every slider, so their individual levels survive being
+ * muted and come back as they were.
  */
 export function toBusVolumes(audio: ResolvedMemberPreferences['audio']): Record<Bus, number> {
   if (audio.muted) return { interface: 0, hover: 0 }
