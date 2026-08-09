@@ -162,7 +162,7 @@ function handleDrag(el: HTMLElement, dx: number, dy: number) {
   updateDragRating(dx, dy)
 }
 
-/** Updates drag_rating from vertical position and emits primed_grade when the zone or rating changes. */
+/** Derives the vertical-drag rating and emits it only when the swipe zone or the rating actually changes. */
 function updateDragRating(dx: number, dy: number) {
   if (show_all_ratings && dx > SWIPE_DISTANCE_THRESHOLD) {
     const new_rating = toDragRating(dy)
