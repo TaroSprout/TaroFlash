@@ -1,10 +1,9 @@
 ---
 lastUpdated: 2026-08-08T00:00:00Z
 # Board vocabulary is dead weight in a code session — scoped so it loads only for board work.
-# Skills and the ticket-author agent pull it by name when the user asks for a ticket.
+# The board skills and the ticket-author agent name this file in their own body and read it; a
+# glob on their paths would not fire, since invoking a skill never reads its file.
 paths:
-  - '.claude/skills/{triage,groom,backlog}/**'
-  - '.claude/agents/ticket-author.md'
   - '.claude/rules/task-board-schema.md'
 ---
 
