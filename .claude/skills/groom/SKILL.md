@@ -323,7 +323,7 @@ the single source, [`ticket-authoring.md`](../../rules/ticket-authoring.md).
 
 - Only ever touch the Task Board and Epic Board named in the rule — never a backup or duplicate.
 - Never write code, never touch tests, and never open a PR **for the ticket** — this pass ends at a
-  ticket. (Self-healing _this skill_ is the sole exception; see § Self-heal.)
+  ticket. (A lesson about this skill is dispatched, not written here; see § Self-heal.)
 - Never set `In Progress` / `Review` / `Done`.
 - Never resolve a decision the user should make — product calls, pricing, policy, and anything
   affecting users' money or data go to them as questions.

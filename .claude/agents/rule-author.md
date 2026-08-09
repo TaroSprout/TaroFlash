@@ -15,11 +15,11 @@ Nothing here repeats them.
 ## Two ways you wake
 
 - **A correction that cleared the self-heal ladder.** [`self-heal`](../rules/self-heal.md) owns the
-  ladder and the routing table; the caller has already run them, and hands you the lesson plus the
-  home it routed to. Re-check the routing before writing — a lesson pointed at the wrong file is the
-  common failure.
+  ladder, the routing table and the dispatch; the caller has already run them, and hands you the
+  lesson plus the home it routed to. Re-check the routing before writing — a lesson pointed at the
+  wrong file is the common failure. Ship it (§ Shipping).
 - **A direct request.** "Write a rule for X", "this rule is stale", "split that into a spoke". No
-  ladder involved; go straight to the spec.
+  ladder involved; go straight to the spec, and leave the change uncommitted for the caller.
 
 ## Loop
 
@@ -29,6 +29,12 @@ Nothing here repeats them.
    only when no cluster fits, a new rule file only when the lesson is off-topic in every existing one.
 3. Check the always-on budget with `node scripts/knowledge-lint.mjs` before you finish. A file with
    no `paths:` frontmatter counts against the cap, and the cap is enforced in CI.
+
+## Shipping
+
+Follow [`self-heal → shipping`](../rules/self-heal/shipping.md) exactly — worktree per run, detached
+at `origin/self-heal`, one commit per lesson, worktree removed before you report. Your commits are
+`docs(<rule-or-skill>): …`.
 
 ## Hard limits
 

@@ -365,3 +365,63 @@ describe('lintKnowledge — line caps', () => {
     expect(stats.citations).toBe(0)
   })
 })
+
+describe('lintKnowledge — orphan citations', () => {
+  test('a citation that is the whole comment is an error', () => {
+    const root = makeRoot({
+      'corpus/a.md': '# A\n\nThe fact [K:a-fact]\n',
+      'src/a.ts': '// →[K:a-fact]\nconst VALUE = 1\n'
+    })
+
+    const { errors } = lintKnowledge(root)
+
+    expect(errors).toHaveLength(1)
+    expect(errors[0]).toContain('src/a.ts:1')
+    expect(errors[0]).toContain('is the whole comment')
+  })
+
+  test('a citation suffixed to a sentence is fine', () => {
+    const root = makeRoot({
+      'corpus/a.md': '# A\n\nThe fact [K:a-fact]\n',
+      'src/a.ts': '// Clearing this drops the pending write. →[K:a-fact]\nconst VALUE = 1\n'
+    })
+
+    expect(lintKnowledge(root).errors).toEqual([])
+  })
+
+  test('a citation on its own line is fine when the line above carries the sentence', () => {
+    const root = makeRoot({
+      'corpus/a.md': '# A\n\nThe fact [K:a-fact]\n',
+      'src/a.ts': '// Clearing this drops the pending write.\n// →[K:a-fact]\nconst VALUE = 1\n'
+    })
+
+    expect(lintKnowledge(root).errors).toEqual([])
+  })
+
+  test('a JSDoc line carrying only the citation, under a prose line, is fine', () => {
+    const root = makeRoot({
+      'corpus/a.md': '# A\n\nThe fact [K:a-fact]\n',
+      'src/a.ts': '/**\n * Drops the pending write.\n * →[K:a-fact]\n */\nconst VALUE = 1\n'
+    })
+
+    expect(lintKnowledge(root).errors).toEqual([])
+  })
+
+  test('a citation whose only neighbour is code, not a comment, is an error', () => {
+    const root = makeRoot({
+      'corpus/a.md': '# A\n\nThe fact [K:a-fact]\n',
+      'src/a.ts': 'const OTHER = 0\n// →[K:a-fact]\nconst VALUE = 1\n'
+    })
+
+    expect(lintKnowledge(root).errors).toHaveLength(1)
+  })
+
+  test('markdown is never checked for orphan citations', () => {
+    const root = makeRoot({
+      'corpus/a.md': '# A\n\nThe fact [K:a-fact]\n',
+      '.claude/rules/b.md': '→[K:a-fact]\n'
+    })
+
+    expect(lintKnowledge(root).errors).toEqual([])
+  })
+})
